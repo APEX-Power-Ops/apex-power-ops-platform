@@ -248,7 +248,7 @@ RESA_Power_Build/
 - Solution import permissions
 
 **Getting Started:**
-1. Clone repository: `git clone https://github.com/jasonlswenson-sys/RESA-Power-Project-Tracker.git`
+1. Clone repository: `git clone https://github.com/jasonlswenson-sys/RESA-Power-Project-Management.git`
 2. Import solution: `Solution_Exports/v1.3.0.1/`
 3. Review architecture: `Documentation/01_Architecture/`
 4. Follow build guides: `Documentation/02_Implementation/`
@@ -269,7 +269,7 @@ RESA_Power_Build/
 ## 📞 Support & Contact
 
 **Project Lead:** Jason Swenson  
-**Repository:** [github.com/jasonlswenson-sys/RESA-Power-Project-Tracker](https://github.com/jasonlswenson-sys/RESA-Power-Project-Tracker)  
+**Repository:** [github.com/jasonlswenson-sys/RESA-Power-Project-Management](https://github.com/jasonlswenson-sys/RESA-Power-Project-Management)  
 **Status:** Active development, production-ready foundation
 
 **For Questions:**
@@ -323,7 +323,7 @@ RESA_Power_Build/
 3. Follow `Documentation/02_Build_Guides/Implementation_Checklist.md`
 
 ### For Git/GitHub Workflow
-1. Clone repository: `git clone https://github.com/jasonlswenson-sys/RESA-Power-Project-Tracker.git`
+1. Clone repository: `git clone https://github.com/jasonlswenson-sys/RESA-Power-Project-Management.git`
 2. Create feature branch: `git checkout -b feature/your-feature-name`
 3. Make changes and commit: `git commit -m "Description"`
 4. Push to GitHub: `git push origin feature/your-feature-name`

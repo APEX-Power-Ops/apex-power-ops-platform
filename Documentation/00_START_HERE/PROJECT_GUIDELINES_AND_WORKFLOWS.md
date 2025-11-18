@@ -38,7 +38,7 @@ Modernize RESA Power's electrical testing project management through Power Platf
 ### Team Structure
 - **Primary Developer**: Jason Swenson (jason.swenson@resapower.com)
 - **Development Environment**: org04ad071f.crm.dynamics.com
-- **Repository**: https://github.com/jasonlswenson-sys/RESA-Power-Project-Tracker
+- **Repository**: https://github.com/jasonlswenson-sys/RESA-Power-Project-Management
 
 ---
 
@@ -57,8 +57,8 @@ psql --version         # PostgreSQL client (optional)
 
 **1. Clone Repository**
 ```powershell
-git clone https://github.com/jasonlswenson-sys/RESA-Power-Project-Tracker.git
-cd RESA-Power-Project-Tracker
+git clone https://github.com/jasonlswenson-sys/RESA-Power-Project-Management.git
+cd RESA-Power-Project-Management
 ```
 
 **2. MCP Server Setup**
@@ -1068,7 +1068,7 @@ node server.js                     # Test locally
 - jason.swenson@resapower.com
 
 **Resources:**
-- GitHub: https://github.com/jasonlswenson-sys/RESA-Power-Project-Tracker
+- GitHub: https://github.com/jasonlswenson-sys/RESA-Power-Project-Management
 - Dataverse: org04ad071f.crm.dynamics.com
 - Documentation: C:\RESA_Power_Build\Documentation\
 

@@ -178,7 +178,7 @@ See `Documentation/08_Testing_QA/` for test scenarios.
 
 ## Repository Status
 
-🔒 **Private Repository**  
+🌐 **Public Repository**  
 🚧 **Development Phase** (v1.3.0.1)  
 📅 **Target Pilot:** Q1 2026
 

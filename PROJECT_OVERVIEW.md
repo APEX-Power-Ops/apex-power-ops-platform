@@ -3,7 +3,7 @@
 **Version:** 1.3.0.1  
 **Last Updated:** November 17, 2025  
 **Project Lead:** Jason Swenson  
-**Repository:** [github.com/jasonlswenson-sys/RESA-Power-Project-Tracker](https://github.com/jasonlswenson-sys/RESA-Power-Project-Tracker)
+**Repository:** [github.com/jasonlswenson-sys/RESA-Power-Project-Management](https://github.com/jasonlswenson-sys/RESA-Power-Project-Management)
 
 ---
 
@@ -470,7 +470,7 @@ gantt
 - `Documentation/02_Implementation/` - Build specs
 
 **Key Resources:**
-- [GitHub Repository](https://github.com/jasonlswenson-sys/RESA-Power-Project-Tracker)
+- [GitHub Repository](https://github.com/jasonlswenson-sys/RESA-Power-Project-Management)
 - `REVENUE_ARCHITECTURE.md` - Complete revenue chain documentation
 - `USER_EXPERIENCE_SYSTEM_ARCHITECTURE.md` - UX and role design
 - `REVENUE_RECOGNITION_FLOW_SPEC.md` - Workflow specifications

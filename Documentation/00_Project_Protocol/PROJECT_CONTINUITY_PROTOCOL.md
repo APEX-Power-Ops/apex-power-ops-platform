@@ -13,7 +13,7 @@
 ### **Technology**: Microsoft Dataverse (Power Platform)
 ### **Environment**: RESAPower_PM (org04ad071f.crm.dynamics.com)
 ### **Version**: v1.2.0.3 (current state being analyzed/enhanced)
-### **Repository**: https://github.com/jasonlswenson-sys/RESA-Power-Project-Tracker
+### **Repository**: https://github.com/jasonlswenson-sys/RESA-Power-Project-Management
 ### **Primary User**: Jason Swenson (Project Manager, Phoenix Services)
 ### **Organization**: RESA Power - Southwest Region (Phoenix, Las Vegas, Denver, San Diego)
 
@@ -629,7 +629,7 @@ AI: [Shows stored facts]
    - SESSION_SUMMARY_NOV15_ARCHITECTURAL_FOUNDATION.md (foundation work)
 
 8. **Repository = Source of Truth**
-   - GitHub: https://github.com/jasonlswenson-sys/RESA-Power-Project-Tracker
+   - GitHub: https://github.com/jasonlswenson-sys/RESA-Power-Project-Management
    - All work must be committed
    - Documents are definitive
    - If conflict between memory and GitHub, GitHub wins

@@ -93,4 +93,4 @@ Your GitHub repository now focuses exclusively on:
 
 No experimental integrations or sensitive access patterns are visible. The repository demonstrates professional Power Platform development skills and thorough documentation practices.
 
-**GitHub Repository:** https://github.com/jasonlswenson-sys/RESA-Power-Project-Tracker
+**GitHub Repository:** https://github.com/jasonlswenson-sys/RESA-Power-Project-Management
