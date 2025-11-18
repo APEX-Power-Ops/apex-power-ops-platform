@@ -35,10 +35,12 @@ Logs/
 # ============================================
 # POWER PLATFORM FILES
 # ============================================
-*.zip
 *.tmp
 *.temp
 ~$*
+
+# Keep solution exports for version control
+!Solution_Exports/*.zip
 
 # msbuild output directories
 /bin
