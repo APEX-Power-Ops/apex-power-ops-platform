@@ -1,0 +1,4 @@
+Scope_Name,Project_Job_Number,NETA_Standard,SLD_Reference,Scope_Status,Total_Apparatus_Hours,Notes
+PPM01,674414,ATS,DWG-001,In Progress,157.8,Primary switchgear testing
+PPM02,674414,ATS,DWG-002,Not Started,89.5,Secondary distribution
+MTS01,674414,MTS,DWG-003,Not Started,45.2,Maintenance testing for existing gear

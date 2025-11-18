@@ -1,0 +1,5 @@
+Location_Code,Location_Name,Location_Abbreviation,Region,Active,Sort_Order,Office_Address,Office_Manager,Notes
+575,San Diego,SD,Southwest,Yes,1,"San Diego, CA",TBD,San Diego Service Unit
+571,Las Vegas,LAS,Southwest,Yes,2,"Las Vegas, NV",TBD,Las Vegas Service Unit
+578,Phoenix,PHX,Southwest,Yes,3,"Phoenix, AZ",Jason Smith,Phoenix Service Unit - Primary office
+574,Denver,DEN,Southwest,Yes,4,"Denver, CO",TBD,Denver Service Unit

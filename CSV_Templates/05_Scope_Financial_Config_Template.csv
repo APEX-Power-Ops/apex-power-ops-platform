@@ -1,0 +1,4 @@
+Scope_Name,Project_Job_Number,Base_Labor_Rate,Commute_Multiplier,PM_Multiplier,Daily_Report_Multiplier,Travel_Multiplier,Final_Report_Multiplier,Fixed_Cost_Travel,Fixed_Cost_Materials_Equipment,Scope_Multiplier,Notes
+PPM01,674414,150,0.025,0.05,0.043,0.065,0.1,2500,1200,1.15,Standard ATS testing rates
+PPM02,674414,150,0.025,0.05,0.043,0.065,0.1,1800,800,1.15,Secondary distribution rates
+MTS01,674414,135,0.02,0.045,0.04,0.06,0.09,1500,500,1.1,Maintenance testing rates (lower complexity)

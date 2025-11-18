@@ -1,0 +1,5 @@
+Apparatus_Number,Project_Job_Number,Scope_Name,Apparatus_Tag,Labor_Hours,Base_Labor_Rate,Applied_Multipliers,Scope_Multiplier,Calculated_Revenue,Revenue_Recognized_Date,Manual_Override_Revenue,Manual_Override_Reason,Billing_Status,
+1,674414,PPM01,XFMR-001,12,150,0.183,1.15,2055.9,11/10/2025,,,Billed,
+2,674414,PPM01,XFMR-002,12,150,0.183,1.15,2055.9,11/10/2025,,,Billed,
+3,674414,PPM01,CB-001,2.5,150,0.183,1.15,428.31,11/11/2025,,,Not Billed,
+4,674414,PPM01,CB-002,2.5,150,0.183,1.15,,,,500,Customer negotiated fixed rate,Not Billed

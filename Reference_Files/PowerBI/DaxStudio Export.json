@@ -1,0 +1,17 @@
+[
+  {
+    "Duration": 1,
+    "Query": "<Subscribe xmlns=\"http://schemas.microsoft.com/analysisservices/2003/engine\">\n          <Object>\n            <TraceID>DaxStudio_Session_67B56EBF-BEE7-40F1-B681-BBAFC0DC10F9_all</TraceID>\n          </Object>\n          <SubscriptionId xmlns=\"http://schemas.microsoft.com/analysisservices/2018/engine/800\">TRACE_SUBSCRIPTION_67d60b14-c2fe-4c18-8ac3-5a7dab43d041</SubscriptionId>\n        </Subscribe>",
+    "StartTime": "2025-09-30T12:29:49.7-07:00",
+    "EndTime": "0001-01-01T00:00:00",
+    "Username": "JASON_SWENSON\\jjswe",
+    "DatabaseName": "RESAPowerPowerBITemplate",
+    "QueryType": "Xmla",
+    "RequestID": "DB12F836-5528-484B-8318-F11186BBA218",
+    "AggregationMatchCount": 0,
+    "AggregationMissCount": 0,
+    "RequestProperties": null,
+    "RequestParameters": null,
+    "ActivityID": "DB12F836-5528-484B-8318-F11186BBA218"
+  }
+]

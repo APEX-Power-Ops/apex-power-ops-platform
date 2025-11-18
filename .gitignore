@@ -1,0 +1,96 @@
+# RESA Power Project - Ignore sensitive and generated files
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# ============================================
+# SECURITY - NEVER COMMIT THESE
+# ============================================
+*.env
+.env.*
+*secret*
+*password*
+*credential*
+
+# Azure credentials
+client_secret.txt
+service_principal.json
+
+# ============================================
+# NODE / NPM
+# ============================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+.npm
+
+# ============================================
+# LOGS
+# ============================================
+*.log
+logs/
+Logs/
+*.log.*
+
+# ============================================
+# POWER PLATFORM FILES
+# ============================================
+*.zip
+*.tmp
+*.temp
+~$*
+
+# msbuild output directories
+/bin
+/obj
+
+# MSBuild Binary and Structured Log
+*.binlog
+
+# ============================================
+# DEVELOPMENT / IDE
+# ============================================
+.vscode/
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# ============================================
+# OPERATING SYSTEM
+# ============================================
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ============================================
+# WORKING / SCRATCH FILES
+# ============================================
+Working/
+scratch/
+temp/
+*.backup
+
+# ============================================
+# LARGE BINARY FILES
+# ============================================
+*.xlsx
+*.pdf
+*.xls
+
+# But KEEP reference files
+!Reference_Files/**/*.xlsx
+!Reference_Files/**/*.pdf
+
+# ============================================
+# EXTERNAL DEPENDENCIES
+# ============================================
+LASNAP16/
+
+# Archive folder (local only)
+Documentation/99_Archive/MCP_Servers_Archive/
+Documentation/99_Archive/*.archive
+
+# MCP Automation documentation (local only - experimental)
+Documentation/06_MCP_Automation/

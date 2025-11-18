@@ -1,0 +1,5 @@
+Apparatus_Number,Project_Job_Number,Scope_Name,Task_Name,Apparatus_Type_Name,Apparatus_Tag,Equipment_Description,Labor_Hours,NETA_Section,Test_Voltage,Manufacturer,Model_Number,Completion_Status,Priority,Availability
+1,674414,PPM01,Pad Mount Transformers,Transformer - Pad Mount Oil,XFMR-001,1500kVA pad mount transformer,12,7.2,15kV,Cooper,PMH15,Not Started,High,Ready
+2,674414,PPM01,Pad Mount Transformers,Transformer - Pad Mount Oil,XFMR-002,1500kVA pad mount transformer,12,7.2,15kV,Cooper,PMH15,Not Started,High,Ready
+3,674414,PPM01,Circuit Breakers - Low Voltage,Circuit Breaker - Molded Case,CB-001,400A MCCB main breaker,2.5,7.4.1,480V,Square D,QD32400,Not Started,Medium,Ready
+4,674414,PPM01,Circuit Breakers - Low Voltage,Circuit Breaker - Molded Case,CB-002,400A MCCB main breaker,2.5,7.4.1,480V,Square D,QD32400,Not Started,Medium,Waiting on Customer

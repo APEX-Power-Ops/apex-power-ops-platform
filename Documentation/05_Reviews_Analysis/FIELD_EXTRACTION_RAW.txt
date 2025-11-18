@@ -1,0 +1,1424 @@
+================================================================================
+v1.2.0.3 COMPLETE FIELD EXTRACTION
+Date: 2025-11-15 18:53:46
+================================================================================
+
+
+================================================================================
+ENTITY: cr950_Apparatus
+================================================================================
+
+Total Custom Fields: 20
+
+--------------------------------------------------------------------------------
+FIELD #1 : cr950_actual_hours
+--------------------------------------------------------------------------------
+Display Name: Actual_Hours
+Type: decimal
+Required: none
+Min Value: -100000000000
+Max Value: 100000000000
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #2 : cr950_apparatus_assessment
+--------------------------------------------------------------------------------
+Display Name: Apparatus_Assessment
+Type: picklist
+Required: recommended
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #3 : cr950_apparatus_designation
+--------------------------------------------------------------------------------
+Display Name: Apparatus Designation
+Type: nvarchar
+Required: required
+Format: text
+Max Length: 200
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #4 : cr950_apparatus_number
+--------------------------------------------------------------------------------
+Display Name: Apparatus_Number
+Description: WBS field
+Type: int
+Required: required
+Format: none
+Min Value: -2147483648
+Max Value: 2147483647
+IME Mode: disabled
+
+--------------------------------------------------------------------------------
+FIELD #5 : cr950_apparatus_type
+--------------------------------------------------------------------------------
+Display Name: Apparatus_Type
+Type: lookup
+Required: required
+
+--------------------------------------------------------------------------------
+FIELD #6 : cr950_apparatusid
+--------------------------------------------------------------------------------
+Display Name: Apparatus
+Description: Unique identifier for entity instances
+Type: primarykey
+Required: systemrequired
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #7 : cr950_completed_hours
+--------------------------------------------------------------------------------
+Display Name: Completed_Hours
+Type: decimal
+Required: none
+Min Value: -100000000000
+Max Value: 100000000000
+IME Mode: auto
+Calculated: Yes
+
+--------------------------------------------------------------------------------
+FIELD #8 : cr950_completion_status
+--------------------------------------------------------------------------------
+Display Name: Completion_Status
+Type: picklist
+Required: none
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #9 : cr950_datasheet_completed
+--------------------------------------------------------------------------------
+Display Name: Datasheet_Completed
+Type: bit
+Required: required
+IME Mode: auto
+Option Set:
+  - 1: Yes
+  - 0: No
+
+--------------------------------------------------------------------------------
+FIELD #10 : cr950_delays
+--------------------------------------------------------------------------------
+Display Name: Delays
+Description: Manual entry for site delays
+Type: decimal
+Required: none
+Min Value: -100000000000
+Max Value: 100000000000
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #11 : cr950_equipment_description
+--------------------------------------------------------------------------------
+Display Name: Equipment_Description
+Type: ntext
+Required: none
+Format: text
+Max Length: 2000
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #12 : cr950_labor_hours
+--------------------------------------------------------------------------------
+Display Name: Labor_Hours
+Type: decimal
+Required: required
+Min Value: -100000000000
+Max Value: 100000000000
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #13 : cr950_manufacturer
+--------------------------------------------------------------------------------
+Display Name: Manufacturer
+Type: nvarchar
+Required: none
+Format: text
+Max Length: 100
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #14 : cr950_notes
+--------------------------------------------------------------------------------
+Display Name: Notes
+Type: ntext
+Required: none
+Format: text
+Max Length: 2000
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #15 : cr950_project
+--------------------------------------------------------------------------------
+Display Name: Project
+Type: lookup
+Required: required
+
+--------------------------------------------------------------------------------
+FIELD #16 : cr950_remaining_hours
+--------------------------------------------------------------------------------
+Display Name: Remaining_Hours
+Type: decimal
+Required: none
+Min Value: -100000000000
+Max Value: 100000000000
+IME Mode: auto
+Calculated: Yes
+
+--------------------------------------------------------------------------------
+FIELD #17 : cr950_scope
+--------------------------------------------------------------------------------
+Display Name: Scope
+Type: lookup
+Required: required
+
+--------------------------------------------------------------------------------
+FIELD #18 : cr950_serial_number
+--------------------------------------------------------------------------------
+Display Name: Serial_Number
+Type: nvarchar
+Required: none
+Format: text
+Max Length: 100
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #19 : cr950_task
+--------------------------------------------------------------------------------
+Display Name: Task
+Type: lookup
+Required: required
+
+--------------------------------------------------------------------------------
+FIELD #20 : cr950_voltage_class
+--------------------------------------------------------------------------------
+Display Name: Voltage_Class
+Type: nvarchar
+Required: none
+Format: text
+Max Length: 100
+IME Mode: auto
+
+
+================================================================================
+ENTITY: cr950_ApparatusRevenue
+================================================================================
+
+Total Custom Fields: 5
+
+--------------------------------------------------------------------------------
+FIELD #1 : cr950_apparatus
+--------------------------------------------------------------------------------
+Display Name: Apparatus
+Type: lookup
+Required: required
+
+--------------------------------------------------------------------------------
+FIELD #2 : cr950_apparatusrevenueid
+--------------------------------------------------------------------------------
+Display Name: Apparatus Revenue
+Description: Unique identifier for entity instances
+Type: primarykey
+Required: systemrequired
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #3 : cr950_project
+--------------------------------------------------------------------------------
+Display Name: Project
+Type: lookup
+Required: required
+
+--------------------------------------------------------------------------------
+FIELD #4 : cr950_revenue_record_id
+--------------------------------------------------------------------------------
+Display Name: Revenue Record ID
+Type: nvarchar
+Required: none
+Format: text
+Max Length: 100
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #5 : cr950_scope_labor_detail
+--------------------------------------------------------------------------------
+Display Name: Scope_Labor_Detail
+Type: lookup
+Required: required
+
+
+================================================================================
+ENTITY: cr950_ApparatusTypeMaster
+================================================================================
+
+Total Custom Fields: 7
+
+--------------------------------------------------------------------------------
+FIELD #1 : cr950_apparatus_category
+--------------------------------------------------------------------------------
+Display Name: Apparatus_Category
+Type: nvarchar
+Required: none
+Format: text
+Max Length: 100
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #2 : cr950_apparatus_type_name
+--------------------------------------------------------------------------------
+Display Name: Apparatus Type Name
+Type: nvarchar
+Required: none
+Format: text
+Max Length: 200
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #3 : cr950_apparatustypemasterid
+--------------------------------------------------------------------------------
+Display Name: Apparatus Type Master
+Description: Unique identifier for entity instances
+Type: primarykey
+Required: systemrequired
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #4 : cr950_ats_labor_hours
+--------------------------------------------------------------------------------
+Display Name: ATS_Labor_Hours
+Description: Apparatus acceptance labor hours
+Type: decimal
+Required: none
+Min Value: 0
+Max Value: 1000
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #5 : cr950_ats_section
+--------------------------------------------------------------------------------
+Display Name: ATS_Section
+Description: NETA 2025 ATS Apparatus Reference Section
+Type: nvarchar
+Required: none
+Format: text
+Max Length: 50
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #6 : cr950_mts_labor_hours
+--------------------------------------------------------------------------------
+Display Name: MTS_Labor_Hours
+Type: decimal
+Required: none
+Min Value: 0
+Max Value: 2000
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #7 : cr950_mts_section
+--------------------------------------------------------------------------------
+Display Name: MTS_Section
+Description: NETA MTS 2023 Apparatus Reference Section
+Type: nvarchar
+Required: none
+Format: text
+Max Length: 50
+IME Mode: auto
+
+
+================================================================================
+ENTITY: cr950_BusinessUnit
+================================================================================
+
+Total Custom Fields: 6
+
+--------------------------------------------------------------------------------
+FIELD #1 : cr950_active
+--------------------------------------------------------------------------------
+Display Name: Active
+Type: bit
+Required: none
+IME Mode: auto
+Option Set:
+  - 1: Yes
+  - 0: No
+
+--------------------------------------------------------------------------------
+FIELD #2 : cr950_businessunitid
+--------------------------------------------------------------------------------
+Display Name: Business Unit
+Description: Unique identifier for entity instances
+Type: primarykey
+Required: systemrequired
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #3 : cr950_location_abbreviation
+--------------------------------------------------------------------------------
+Display Name: Location_Abbreviation
+Type: nvarchar
+Required: none
+Format: text
+Max Length: 10
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #4 : cr950_location_code
+--------------------------------------------------------------------------------
+Display Name: Location_Code
+Type: nvarchar
+Required: required
+Format: text
+Max Length: 10
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #5 : cr950_location_name
+--------------------------------------------------------------------------------
+Display Name: Location Name
+Type: nvarchar
+Required: none
+Format: text
+Max Length: 100
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #6 : cr950_region
+--------------------------------------------------------------------------------
+Display Name: Region
+Type: nvarchar
+Required: none
+Format: text
+Max Length: 50
+IME Mode: auto
+
+
+================================================================================
+ENTITY: cr950_Projects
+================================================================================
+
+Total Custom Fields: 20
+
+--------------------------------------------------------------------------------
+FIELD #1 : cr950_client_name
+--------------------------------------------------------------------------------
+Display Name: Client_Name
+Type: nvarchar
+Required: required
+Format: text
+Max Length: 200
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #2 : cr950_client_short_name
+--------------------------------------------------------------------------------
+Display Name: Client_Short_Name
+Type: nvarchar
+Required: none
+Format: text
+Max Length: 100
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #3 : cr950_completed_apparatus_count
+--------------------------------------------------------------------------------
+Display Name: Completed_Apparatus_Count
+Type: int
+Required: none
+Format: none
+Min Value: -2147483648
+Max Value: 2147483647
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #4 : cr950_contract_value
+--------------------------------------------------------------------------------
+Display Name: Contract_Value
+Type: money
+Required: none
+Min Value: -922337203685477
+Max Value: 922337203685477
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #5 : cr950_contract_value_base
+--------------------------------------------------------------------------------
+Display Name: Contract_Value (Base)
+Description: Value of the Contract_Value in base currency.
+Type: money
+Required: none
+Min Value: -922337203685477
+Max Value: 922337203685477
+IME Mode: disabled
+
+--------------------------------------------------------------------------------
+FIELD #6 : cr950_description
+--------------------------------------------------------------------------------
+Display Name: Description
+Type: ntext
+Required: none
+Format: text
+Max Length: 2000
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #7 : cr950_job_number
+--------------------------------------------------------------------------------
+Display Name: Job Number
+Type: nvarchar
+Required: none
+Format: text
+Max Length: 20
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #8 : cr950_location
+--------------------------------------------------------------------------------
+Display Name: Location
+Type: lookup
+Required: none
+
+--------------------------------------------------------------------------------
+FIELD #9 : cr950_percent_complete
+--------------------------------------------------------------------------------
+Display Name: Percent_Complete
+Type: decimal
+Required: none
+Min Value: -100000000000
+Max Value: 100000000000
+IME Mode: auto
+Calculated: Yes
+
+--------------------------------------------------------------------------------
+FIELD #10 : cr950_project_manager
+--------------------------------------------------------------------------------
+Display Name: Project_Manager
+Type: nvarchar
+Required: none
+Format: text
+Max Length: 100
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #11 : cr950_project_name
+--------------------------------------------------------------------------------
+Display Name: Project_Name
+Type: nvarchar
+Required: none
+Format: text
+Max Length: 200
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #12 : cr950_projectsid
+--------------------------------------------------------------------------------
+Display Name: Projects
+Description: Unique identifier for entity instances
+Type: primarykey
+Required: systemrequired
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #13 : cr950_start_date
+--------------------------------------------------------------------------------
+Display Name: Start_Date
+Type: datetime
+Required: none
+Format: date
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #14 : cr950_target_completion_date
+--------------------------------------------------------------------------------
+Display Name: Target_Completion_Date
+Type: datetime
+Required: none
+Format: date
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #15 : cr950_total_actual_hours
+--------------------------------------------------------------------------------
+Display Name: Total_Actual_Hours
+Type: decimal
+Required: none
+Min Value: -100000000000
+Max Value: 100000000000
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #16 : cr950_total_apparatus_count
+--------------------------------------------------------------------------------
+Display Name: Total_Apparatus_Count
+Type: int
+Required: none
+Format: none
+Min Value: -2147483648
+Max Value: 2147483647
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #17 : cr950_total_apparatus_hours
+--------------------------------------------------------------------------------
+Display Name: Total_Apparatus_Hours
+Type: decimal
+Required: none
+Min Value: -100000000000
+Max Value: 100000000000
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #18 : cr950_total_completed_hours
+--------------------------------------------------------------------------------
+Display Name: Total_Completed_Hours
+Type: decimal
+Required: none
+Min Value: -100000000000
+Max Value: 100000000000
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #19 : cr950_total_delays
+--------------------------------------------------------------------------------
+Display Name: Total_Delays
+Type: decimal
+Required: none
+Min Value: -100000000000
+Max Value: 100000000000
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #20 : cr950_total_remaining_hours
+--------------------------------------------------------------------------------
+Display Name: Total_Remaining_Hours
+Type: decimal
+Required: none
+Min Value: -100000000000
+Max Value: 100000000000
+IME Mode: auto
+
+
+================================================================================
+ENTITY: cr950_ProjectScope
+================================================================================
+
+Total Custom Fields: 15
+
+--------------------------------------------------------------------------------
+FIELD #1 : cr950_completed_apparatus_count
+--------------------------------------------------------------------------------
+Display Name: Completed_Apparatus_Count
+Type: decimal
+Required: none
+Min Value: -100000000000
+Max Value: 100000000000
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #2 : cr950_description
+--------------------------------------------------------------------------------
+Display Name: Description
+Type: ntext
+Required: none
+Format: text
+Max Length: 2000
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #3 : cr950_percent_complete
+--------------------------------------------------------------------------------
+Display Name: Percent_Complete
+Type: decimal
+Required: none
+Min Value: -100000000000
+Max Value: 100000000000
+IME Mode: auto
+Calculated: Yes
+
+--------------------------------------------------------------------------------
+FIELD #4 : cr950_project
+--------------------------------------------------------------------------------
+Display Name: Project
+Type: lookup
+Required: none
+
+--------------------------------------------------------------------------------
+FIELD #5 : cr950_projectscopeid
+--------------------------------------------------------------------------------
+Display Name: Project Scope
+Description: Unique identifier for entity instances
+Type: primarykey
+Required: systemrequired
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #6 : cr950_scope_name
+--------------------------------------------------------------------------------
+Display Name: Scope Name
+Type: nvarchar
+Required: none
+Format: text
+Max Length: 200
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #7 : cr950_scope_number
+--------------------------------------------------------------------------------
+Display Name: Scope_Number
+Description: WBS Field
+Type: int
+Required: none
+Format: none
+Min Value: -2147483648
+Max Value: 2147483647
+IME Mode: disabled
+
+--------------------------------------------------------------------------------
+FIELD #8 : cr950_sld_reference
+--------------------------------------------------------------------------------
+Display Name: SLD_Reference
+Description: Schematic or Drawing Detail
+Type: nvarchar
+Required: none
+Format: text
+Max Length: 100
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #9 : cr950_testing_standard
+--------------------------------------------------------------------------------
+Display Name: Testing_Standard
+Type: picklist
+Required: required
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #10 : cr950_total_actual_hours
+--------------------------------------------------------------------------------
+Display Name: Total_Actual_Hours
+Type: decimal
+Required: none
+Min Value: -100000000000
+Max Value: 100000000000
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #11 : cr950_total_apparatus_count
+--------------------------------------------------------------------------------
+Display Name: Total_Apparatus_Count
+Type: int
+Required: none
+Format: none
+Min Value: -2147483648
+Max Value: 2147483647
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #12 : cr950_total_apparatus_hours
+--------------------------------------------------------------------------------
+Display Name: Total_Apparatus_Hours
+Type: decimal
+Required: none
+Min Value: -100000000000
+Max Value: 100000000000
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #13 : cr950_total_completed_hours
+--------------------------------------------------------------------------------
+Display Name: Total_Completed_Hours
+Type: decimal
+Required: none
+Min Value: -100000000000
+Max Value: 100000000000
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #14 : cr950_total_delays
+--------------------------------------------------------------------------------
+Display Name: Total_Delays
+Type: decimal
+Required: none
+Min Value: -100000000000
+Max Value: 100000000000
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #15 : cr950_total_remaining_hours
+--------------------------------------------------------------------------------
+Display Name: Total_Remaining_Hours
+Type: decimal
+Required: none
+Min Value: -100000000000
+Max Value: 100000000000
+IME Mode: auto
+
+
+================================================================================
+ENTITY: cr950_ScopeLaborDetail
+================================================================================
+
+Total Custom Fields: 49
+
+--------------------------------------------------------------------------------
+FIELD #1 : cr950_base_labor_rate
+--------------------------------------------------------------------------------
+Display Name: Base_Labor_Rate
+Type: money
+Required: recommended
+Min Value: -922337203685477
+Max Value: 922337203685477
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #2 : cr950_base_labor_rate_base
+--------------------------------------------------------------------------------
+Display Name: Base_Labor_Rate (Base)
+Description: Value of the Base_Labor_Rate in base currency.
+Type: money
+Required: none
+Min Value: -922337203685477
+Max Value: 922337203685477
+IME Mode: disabled
+
+--------------------------------------------------------------------------------
+FIELD #3 : cr950_car_rental_fixed
+--------------------------------------------------------------------------------
+Display Name: Car_Rental_Fixed
+Type: money
+Required: none
+Min Value: -922337203685477
+Max Value: 922337203685477
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #4 : cr950_car_rental_fixed_base
+--------------------------------------------------------------------------------
+Display Name: Car_Rental_Fixed (Base)
+Description: Value of the Car_Rental_Fixed in base currency.
+Type: money
+Required: none
+Min Value: -922337203685477
+Max Value: 922337203685477
+IME Mode: disabled
+
+--------------------------------------------------------------------------------
+FIELD #5 : cr950_daily_commute_pct
+--------------------------------------------------------------------------------
+Display Name: Daily_Commute_Pct
+Type: decimal
+Required: none
+Min Value: -100000000000
+Max Value: 100000000000
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #6 : cr950_daily_commute_rate
+--------------------------------------------------------------------------------
+Display Name: Daily_Commute_Rate
+Type: money
+Required: none
+Min Value: -922337203685477
+Max Value: 922337203685477
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #7 : cr950_daily_commute_rate_base
+--------------------------------------------------------------------------------
+Display Name: Daily_Commute_Rate (Base)
+Description: Value of the Daily_Commute_Rate in base currency.
+Type: money
+Required: none
+Min Value: -922337203685477
+Max Value: 922337203685477
+IME Mode: disabled
+
+--------------------------------------------------------------------------------
+FIELD #8 : cr950_detail_name
+--------------------------------------------------------------------------------
+Display Name: Detail Name
+Type: nvarchar
+Required: recommended
+Format: text
+Max Length: 100
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #9 : cr950_flights_fixed
+--------------------------------------------------------------------------------
+Display Name: Flights_Fixed
+Type: money
+Required: none
+Min Value: -922337203685477
+Max Value: 922337203685477
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #10 : cr950_flights_fixed_base
+--------------------------------------------------------------------------------
+Display Name: Flights_Fixed (Base)
+Description: Value of the Flights_Fixed in base currency.
+Type: money
+Required: none
+Min Value: -922337203685477
+Max Value: 922337203685477
+IME Mode: disabled
+
+--------------------------------------------------------------------------------
+FIELD #11 : cr950_generator_rental_fixed
+--------------------------------------------------------------------------------
+Display Name: Generator_Rental_Fixed
+Type: money
+Required: none
+Min Value: -922337203685477
+Max Value: 922337203685477
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #12 : cr950_generator_rental_fixed_base
+--------------------------------------------------------------------------------
+Display Name: Generator_Rental_Fixed (Base)
+Description: Value of the Generator_Rental_Fixed in base currency.
+Type: money
+Required: none
+Min Value: -922337203685477
+Max Value: 922337203685477
+IME Mode: disabled
+
+--------------------------------------------------------------------------------
+FIELD #13 : cr950_hotel_perdiem_fixed
+--------------------------------------------------------------------------------
+Display Name: Hotel_PerDiem_Fixed
+Type: money
+Required: none
+Min Value: -922337203685477
+Max Value: 922337203685477
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #14 : cr950_hotel_perdiem_fixed_base
+--------------------------------------------------------------------------------
+Display Name: Hotel_PerDiem_Fixed (Base)
+Description: Value of the Hotel_PerDiem_Fixed in base currency.
+Type: money
+Required: none
+Min Value: -922337203685477
+Max Value: 922337203685477
+IME Mode: disabled
+
+--------------------------------------------------------------------------------
+FIELD #15 : cr950_misc_fixed
+--------------------------------------------------------------------------------
+Display Name: Misc_Fixed
+Type: money
+Required: none
+Min Value: -922337203685477
+Max Value: 922337203685477
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #16 : cr950_misc_fixed_base
+--------------------------------------------------------------------------------
+Display Name: Misc_Fixed (Base)
+Description: Value of the Misc_Fixed in base currency.
+Type: money
+Required: none
+Min Value: -922337203685477
+Max Value: 922337203685477
+IME Mode: disabled
+
+--------------------------------------------------------------------------------
+FIELD #17 : cr950_misc_travel_fixed
+--------------------------------------------------------------------------------
+Display Name: Misc_Travel_Fixed
+Type: money
+Required: none
+Min Value: -922337203685477
+Max Value: 922337203685477
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #18 : cr950_misc_travel_fixed_base
+--------------------------------------------------------------------------------
+Display Name: Misc_Travel_Fixed (Base)
+Description: Value of the Misc_Travel_Fixed in base currency.
+Type: money
+Required: none
+Min Value: -922337203685477
+Max Value: 922337203685477
+IME Mode: disabled
+
+--------------------------------------------------------------------------------
+FIELD #19 : cr950_mobilization_pct
+--------------------------------------------------------------------------------
+Display Name: Mobilization_Pct
+Type: decimal
+Required: none
+Min Value: -100000000000
+Max Value: 100000000000
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #20 : cr950_mobilization_rate
+--------------------------------------------------------------------------------
+Display Name: Mobilization_Rate
+Type: money
+Required: none
+Min Value: -922337203685477
+Max Value: 922337203685477
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #21 : cr950_mobilization_rate_base
+--------------------------------------------------------------------------------
+Display Name: Mobilization_Rate (Base)
+Description: Value of the Mobilization_Rate in base currency.
+Type: money
+Required: none
+Min Value: -922337203685477
+Max Value: 922337203685477
+IME Mode: disabled
+
+--------------------------------------------------------------------------------
+FIELD #22 : cr950_office_pm_pct
+--------------------------------------------------------------------------------
+Display Name: Office_PM_Pct
+Type: decimal
+Required: none
+Min Value: -100000000000
+Max Value: 100000000000
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #23 : cr950_office_pm_rate
+--------------------------------------------------------------------------------
+Display Name: Office_PM_Rate
+Type: money
+Required: none
+Min Value: -922337203685477
+Max Value: 922337203685477
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #24 : cr950_office_pm_rate_base
+--------------------------------------------------------------------------------
+Display Name: Office_PM_Rate (Base)
+Description: Value of the Office_PM_Rate in base currency.
+Type: money
+Required: none
+Min Value: -922337203685477
+Max Value: 922337203685477
+IME Mode: disabled
+
+--------------------------------------------------------------------------------
+FIELD #25 : cr950_office_report_pct
+--------------------------------------------------------------------------------
+Display Name: Office_Report_Pct
+Type: decimal
+Required: none
+Min Value: -100000000000
+Max Value: 100000000000
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #26 : cr950_office_report_rate
+--------------------------------------------------------------------------------
+Display Name: Office_Report_Rate
+Type: money
+Required: none
+Min Value: -922337203685477
+Max Value: 922337203685477
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #27 : cr950_office_report_rate_base
+--------------------------------------------------------------------------------
+Display Name: Office_Report_Rate (Base)
+Description: Value of the Office_Report_Rate in base currency.
+Type: money
+Required: none
+Min Value: -922337203685477
+Max Value: 922337203685477
+IME Mode: disabled
+
+--------------------------------------------------------------------------------
+FIELD #28 : cr950_onsite_loto_pct
+--------------------------------------------------------------------------------
+Display Name: Onsite_LOTO_Pct
+Type: decimal
+Required: none
+Min Value: -100000000000
+Max Value: 100000000000
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #29 : cr950_onsite_loto_rate
+--------------------------------------------------------------------------------
+Display Name: Onsite_LOTO_Rate
+Type: money
+Required: none
+Min Value: -922337203685477
+Max Value: 922337203685477
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #30 : cr950_onsite_loto_rate_base
+--------------------------------------------------------------------------------
+Display Name: Onsite_LOTO_Rate (Base)
+Description: Value of the Onsite_LOTO_Rate in base currency.
+Type: money
+Required: none
+Min Value: -922337203685477
+Max Value: 922337203685477
+IME Mode: disabled
+
+--------------------------------------------------------------------------------
+FIELD #31 : cr950_onsite_misc_pct
+--------------------------------------------------------------------------------
+Display Name: Onsite_Misc_Pct
+Type: decimal
+Required: none
+Min Value: -100000000000
+Max Value: 100000000000
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #32 : cr950_onsite_misc_rate
+--------------------------------------------------------------------------------
+Display Name: Onsite_Misc_Rate
+Type: money
+Required: none
+Min Value: -922337203685477
+Max Value: 922337203685477
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #33 : cr950_onsite_misc_rate_base
+--------------------------------------------------------------------------------
+Display Name: Onsite_Misc_Rate (Base)
+Description: Value of the Onsite_Misc_Rate in base currency.
+Type: money
+Required: none
+Min Value: -922337203685477
+Max Value: 922337203685477
+IME Mode: disabled
+
+--------------------------------------------------------------------------------
+FIELD #34 : cr950_onsite_pm_pct
+--------------------------------------------------------------------------------
+Display Name: Onsite_PM_Pct
+Type: decimal
+Required: none
+Min Value: -100000000000
+Max Value: 100000000000
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #35 : cr950_onsite_pm_rate
+--------------------------------------------------------------------------------
+Display Name: Onsite_PM_Rate
+Type: money
+Required: none
+Min Value: -922337203685477
+Max Value: 922337203685477
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #36 : cr950_onsite_pm_rate_base
+--------------------------------------------------------------------------------
+Display Name: Onsite_PM_Rate (Base)
+Description: Value of the Onsite_PM_Rate in base currency.
+Type: money
+Required: none
+Min Value: -922337203685477
+Max Value: 922337203685477
+IME Mode: disabled
+
+--------------------------------------------------------------------------------
+FIELD #37 : cr950_project
+--------------------------------------------------------------------------------
+Display Name: Project
+Type: lookup
+Required: required
+
+--------------------------------------------------------------------------------
+FIELD #38 : cr950_scope
+--------------------------------------------------------------------------------
+Display Name: Scope
+Type: lookup
+Required: required
+
+--------------------------------------------------------------------------------
+FIELD #39 : cr950_scope_multiplier
+--------------------------------------------------------------------------------
+Display Name: Scope_Multiplier
+Type: decimal
+Required: none
+Min Value: -100000000000
+Max Value: 100000000000
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #40 : cr950_scope_total_value
+--------------------------------------------------------------------------------
+Display Name: Scope_Total_Value
+Type: money
+Required: none
+Min Value: -922337203685477
+Max Value: 922337203685477
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #41 : cr950_scope_total_value_base
+--------------------------------------------------------------------------------
+Display Name: Scope_Total_Value (Base)
+Description: Value of the Scope_Total_Value in base currency.
+Type: money
+Required: none
+Min Value: -922337203685477
+Max Value: 922337203685477
+IME Mode: disabled
+
+--------------------------------------------------------------------------------
+FIELD #42 : cr950_scopelabordetailid
+--------------------------------------------------------------------------------
+Display Name: Scope Labor Detail
+Description: Unique identifier for entity instances
+Type: primarykey
+Required: systemrequired
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #43 : cr950_test_equipment_fixed
+--------------------------------------------------------------------------------
+Display Name: Test_Equipment_Fixed
+Type: money
+Required: none
+Min Value: -922337203685477
+Max Value: 922337203685477
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #44 : cr950_test_equipment_fixed_base
+--------------------------------------------------------------------------------
+Display Name: Test_Equipment_Fixed (Base)
+Description: Value of the Test_Equipment_Fixed in base currency.
+Type: money
+Required: none
+Min Value: -922337203685477
+Max Value: 922337203685477
+IME Mode: disabled
+
+--------------------------------------------------------------------------------
+FIELD #45 : cr950_total_apparatus_hours
+--------------------------------------------------------------------------------
+Display Name: Total_Apparatus_Hours
+Type: decimal
+Required: recommended
+Min Value: -100000000000
+Max Value: 100000000000
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #46 : cr950_travel_fixed_cost
+--------------------------------------------------------------------------------
+Display Name: Travel_Fixed
+Type: money
+Required: none
+Min Value: -922337203685477
+Max Value: 922337203685477
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #47 : cr950_travel_fixed_cost_base
+--------------------------------------------------------------------------------
+Display Name: Travel_Fixed (Base)
+Description: Value of the Travel_Fixed_Cost in base currency.
+Type: money
+Required: none
+Min Value: -922337203685477
+Max Value: 922337203685477
+IME Mode: disabled
+
+--------------------------------------------------------------------------------
+FIELD #48 : cr950_xfmr_lab_fixed
+--------------------------------------------------------------------------------
+Display Name: XFMR_LAB_Fixed
+Type: money
+Required: none
+Min Value: -922337203685477
+Max Value: 922337203685477
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #49 : cr950_xfmr_lab_fixed_base
+--------------------------------------------------------------------------------
+Display Name: XFMR_LAB_Fixed (Base)
+Description: Value of the XFMR_LAB_Fixed in base currency.
+Type: money
+Required: none
+Min Value: -922337203685477
+Max Value: 922337203685477
+IME Mode: disabled
+
+
+================================================================================
+ENTITY: cr950_Tasks
+================================================================================
+
+Total Custom Fields: 15
+
+--------------------------------------------------------------------------------
+FIELD #1 : cr950_apparatus_type
+--------------------------------------------------------------------------------
+Display Name: Apparatus_Type
+Type: nvarchar
+Required: none
+Format: text
+Max Length: 200
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #2 : cr950_completed_apparatus_count
+--------------------------------------------------------------------------------
+Display Name: Completed_Apparatus_Count
+Type: int
+Required: none
+Format: none
+Min Value: -2147483648
+Max Value: 2147483647
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #3 : cr950_description
+--------------------------------------------------------------------------------
+Display Name: Description
+Type: ntext
+Required: none
+Format: text
+Max Length: 2000
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #4 : cr950_percent_complete
+--------------------------------------------------------------------------------
+Display Name: Percent_Complete
+Type: decimal
+Required: none
+Min Value: -100000000000
+Max Value: 100000000000
+IME Mode: auto
+Calculated: Yes
+
+--------------------------------------------------------------------------------
+FIELD #5 : cr950_project
+--------------------------------------------------------------------------------
+Display Name: Project
+Type: lookup
+Required: none
+
+--------------------------------------------------------------------------------
+FIELD #6 : cr950_scope
+--------------------------------------------------------------------------------
+Display Name: Scope
+Type: lookup
+Required: none
+
+--------------------------------------------------------------------------------
+FIELD #7 : cr950_task_name
+--------------------------------------------------------------------------------
+Display Name: Task Name
+Type: nvarchar
+Required: required
+Format: text
+Max Length: 200
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #8 : cr950_task_number
+--------------------------------------------------------------------------------
+Display Name: Task_Number
+Type: int
+Required: required
+Format: none
+Min Value: -2147483648
+Max Value: 2147483647
+IME Mode: disabled
+
+--------------------------------------------------------------------------------
+FIELD #9 : cr950_tasksid
+--------------------------------------------------------------------------------
+Display Name: Tasks
+Description: Unique identifier for entity instances
+Type: primarykey
+Required: systemrequired
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #10 : cr950_total_actual_hours
+--------------------------------------------------------------------------------
+Display Name: Total_Actual_Hours
+Type: decimal
+Required: none
+Min Value: -100000000000
+Max Value: 100000000000
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #11 : cr950_total_apparatus_count
+--------------------------------------------------------------------------------
+Display Name: Total_Apparatus_Count
+Type: int
+Required: none
+Format: none
+Min Value: -2147483648
+Max Value: 2147483647
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #12 : cr950_total_apparatus_hours
+--------------------------------------------------------------------------------
+Display Name: Total_Apparatus_Hours
+Type: decimal
+Required: none
+Min Value: -100000000000
+Max Value: 100000000000
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #13 : cr950_total_completed_hours
+--------------------------------------------------------------------------------
+Display Name: Total_Completed_Hours
+Type: decimal
+Required: none
+Min Value: -100000000000
+Max Value: 100000000000
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #14 : cr950_total_delays
+--------------------------------------------------------------------------------
+Display Name: Total_Delays
+Type: decimal
+Required: none
+Min Value: -100000000000
+Max Value: 100000000000
+IME Mode: auto
+
+--------------------------------------------------------------------------------
+FIELD #15 : cr950_total_remaining_hours
+--------------------------------------------------------------------------------
+Display Name: Total_Remaining_Hours
+Type: decimal
+Required: none
+Min Value: -100000000000
+Max Value: 100000000000
+IME Mode: auto
+
+
+================================================================================
+SUMMARY
+================================================================================
+Total Entities: 8
+Total Custom Fields: 137
+

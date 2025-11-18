@@ -1,0 +1,4 @@
+Task_Name,Task_Number,Project_Job_Number,Scope_Name,Apparatus_Type,NETA_Section,Description,Assigned_To,Due_Date,Task_Status
+Pad Mount Transformers,1,674414,PPM01,Transformer - Pad Mount Oil,7.2,Testing of all pad-mounted transformers in primary distribution,Brandon Valdavis,6/15/2025,In Progress
+Circuit Breakers - Low Voltage,2,674414,PPM01,Circuit Breaker - Molded Case,7.4.1,MCCB testing per NETA ATS specs,Sarah Chen,6/20/2025,Not Started
+Motor Control Centers,3,674414,PPM02,MCC Bucket,7.1,Full bucket testing including controls,Brandon Valdavis,7/10/2025,Not Started

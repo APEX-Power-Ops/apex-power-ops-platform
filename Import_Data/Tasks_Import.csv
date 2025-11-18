@@ -1,0 +1,1906 @@
+TaskID,TaskName,Scope,NETAStandard,Apparatus,Designation,Status,Priority,ApparatusHours,ActualHours,PercentComplete
+5.1.1,Main Switchgear,LAS16.PPM05,PPM,Switchboard - Low Voltage,,,,4.0,4.0,0
+5.1.2,Main Switchgear,LAS16.PPM05,PPM,Circuit Breaker LV - Draw-Out,5000AF / 4200AT,,,4.0,4.0,0
+5.1.3,Main Switchgear,LAS16.PPM05,PPM,Circuit Breaker LV - Draw-Out,5000AF / 4200AT,,,4.0,4.0,0
+5.1.4,Main Switchgear,LAS16.PPM05,PPM,Circuit Breaker LV - (LS/LSI),400AF / 400AT,,,3.0,3.0,0
+5.1.5,Main Switchgear,LAS16.PPM05,PPM,Circuit Breaker LV - (LS/LSI),400AF / 400AT,,,3.0,3.0,0
+5.1.6,Main Switchgear,LAS16.PPM05,PPM,Circuit Breaker LV - (LS/LSI),600AF / 400 AT,,,3.0,3.0,0
+5.1.7,Main Switchgear,LAS16.PPM05,PPM,Circuit Breaker LV - (LS/LSI),600AF / 400 AT,,,3.0,3.0,0
+5.1.8,Main Switchgear,LAS16.PPM05,PPM,Circuit Breaker LV - (LS/LSI),600AF / 400 AT,,,3.0,3.0,0
+5.1.9,Main Switchgear,LAS16.PPM05,PPM,Circuit Breaker LV - (LS/LSI),1200AF / 800AT,,,3.0,3.0,0
+5.1.10,Main Switchgear,LAS16.PPM05,PPM,Circuit Breaker LV - (LS/LSI),1200AF / 800AT,,,3.0,3.0,0
+5.1.11,Main Switchgear,LAS16.PPM05,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+5.1.12,Main Switchgear,LAS16.PPM05,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+5.1.13,Main Switchgear,LAS16.PPM05,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+5.1.14,Main Switchgear,LAS16.PPM05,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+5.1.15,Main Switchgear,LAS16.PPM05,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+5.1.16,Main Switchgear,LAS16.PPM05,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+5.1.17,Main Switchgear,LAS16.PPM05,PPM,Circuit Breaker LV - (LS/LSI),3000AT / 2500AT,,,3.0,3.0,0
+5.1.18,Main Switchgear,LAS16.PPM05,PPM,Circuit Breaker LV - (LS/LSI),3000AT / 2500AT,,,3.0,3.0,0
+5.1.19,Main Switchgear,LAS16.PPM05,PPM,Circuit Breaker LV - (LS/LSI),HLP02A MAIN,,,3.0,3.0,0
+5.1.20,Main Switchgear,LAS16.PPM05,PPM,Conductors LV - 3 Phase Feeder (Lot),,,,18.6,18.6,0
+5.1.21,Main Switchgear,LAS16.PPM05,PPM,Panelboard - Low Voltage,HLP01A,,,0.5,0.5,0
+5.1.22,Main Switchgear,LAS16.PPM05,PPM,Panelboard - Low Voltage,HLP02A,,,0.5,0.5,0
+5.1.23,Main Switchgear,LAS16.PPM05,PPM,Transformer (Dry Type up to 499kVA),TLVP,,,2.0,2.0,0
+5.1.24,Main Switchgear,LAS16.PPM05,PPM,Switch LV - Fused Disconnect,,,,1.5,1.5,0
+5.2.1,PDU,LAS16.PPM05,PPM,Circuit Breaker LV - Secondary Injection,1600AF / 1600AT,,,2.0,2.0,0
+5.2.2,PDU,LAS16.PPM05,PPM,Circuit Breaker LV - Secondary Injection,1600AF / 1600AT,,,2.0,2.0,0
+5.2.3,PDU,LAS16.PPM05,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+5.2.4,PDU,LAS16.PPM05,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+5.2.5,PDU,LAS16.PPM05,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+5.2.6,PDU,LAS16.PPM05,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+5.2.7,PDU,LAS16.PPM05,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+5.2.8,PDU,LAS16.PPM05,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+5.2.9,PDU,LAS16.PPM05,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+5.2.10,PDU,LAS16.PPM05,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+5.2.11,PDU,LAS16.PPM05,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+5.2.12,PDU,LAS16.PPM05,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+5.2.13,PDU,LAS16.PPM05,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+5.2.14,PDU,LAS16.PPM05,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+5.2.15,PDU,LAS16.PPM05,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+5.2.16,PDU,LAS16.PPM05,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+5.2.17,PDU,LAS16.PPM05,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+5.2.18,PDU,LAS16.PPM05,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+5.2.19,PDU,LAS16.PPM05,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+5.2.20,PDU,LAS16.PPM05,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+5.2.21,PDU,LAS16.PPM05,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+5.2.22,PDU,LAS16.PPM05,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+5.2.23,PDU,LAS16.PPM05,PPM,Transformer (Dry Type 500kVA & larger),,,,4.0,4.0,0
+5.2.24,PDU,LAS16.PPM05,PPM,Transformer (Dry Type 500kVA & larger),,,,4.0,4.0,0
+5.2.25,PDU,LAS16.PPM05,PPM,Switchboard - Low Voltage,,,,4.0,4.0,0
+5.2.26,PDU,LAS16.PPM05,PPM,Switchboard - Low Voltage,,,,4.0,4.0,0
+5.2.27,PDU,LAS16.PPM05,PPM,PDU Load Banking (Switch),,,,5.0,5.0,0
+5.2.28,PDU,LAS16.PPM05,PPM,PDU Load Banking (Switch),,,,5.0,5.0,0
+5.3.1,Grounding,LAS16.PPM05,PPM,Ground Resistance Test -  Two-Point (PPM Lot),,,,1.5,1.5,0
+5.3.2,Grounding,LAS16.PPM05,PPM,Ground Resistance Test - Clamp Method,,,,2.0,2.0,0
+6.1.1,Main Switchgear,LAS16.PPM06,PPM,Switchboard - Low Voltage,,,,4.0,4.0,0
+6.1.2,Main Switchgear,LAS16.PPM06,PPM,Circuit Breaker LV - Draw-Out,5000AF / 4200AT,,,4.0,4.0,0
+6.1.3,Main Switchgear,LAS16.PPM06,PPM,Circuit Breaker LV - Draw-Out,5000AF / 4200AT,,,4.0,4.0,0
+6.1.4,Main Switchgear,LAS16.PPM06,PPM,Circuit Breaker LV - (LS/LSI),400AF / 400AT,,,3.0,3.0,0
+6.1.5,Main Switchgear,LAS16.PPM06,PPM,Circuit Breaker LV - (LS/LSI),400AF / 400AT,,,3.0,3.0,0
+6.1.6,Main Switchgear,LAS16.PPM06,PPM,Circuit Breaker LV - (LS/LSI),600AF / 400 AT,,,3.0,3.0,0
+6.1.7,Main Switchgear,LAS16.PPM06,PPM,Circuit Breaker LV - (LS/LSI),600AF / 400 AT,,,3.0,3.0,0
+6.1.8,Main Switchgear,LAS16.PPM06,PPM,Circuit Breaker LV - (LS/LSI),600AF / 400 AT,,,3.0,3.0,0
+6.1.9,Main Switchgear,LAS16.PPM06,PPM,Circuit Breaker LV - (LS/LSI),1200AF / 800AT,,,3.0,3.0,0
+6.1.10,Main Switchgear,LAS16.PPM06,PPM,Circuit Breaker LV - (LS/LSI),1200AF / 800AT,,,3.0,3.0,0
+6.1.11,Main Switchgear,LAS16.PPM06,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+6.1.12,Main Switchgear,LAS16.PPM06,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+6.1.13,Main Switchgear,LAS16.PPM06,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+6.1.14,Main Switchgear,LAS16.PPM06,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+6.1.15,Main Switchgear,LAS16.PPM06,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+6.1.16,Main Switchgear,LAS16.PPM06,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+6.1.17,Main Switchgear,LAS16.PPM06,PPM,Circuit Breaker LV - (LS/LSI),3000AT / 2500AT,,,3.0,3.0,0
+6.1.18,Main Switchgear,LAS16.PPM06,PPM,Circuit Breaker LV - (LS/LSI),3000AT / 2500AT,,,3.0,3.0,0
+6.1.19,Main Switchgear,LAS16.PPM06,PPM,Circuit Breaker LV - (LS/LSI),HLP02A MAIN,,,3.0,3.0,0
+6.1.20,Main Switchgear,LAS16.PPM06,PPM,Conductors LV - 3 Phase Feeder (Lot),,,,18.6,18.6,0
+6.1.21,Main Switchgear,LAS16.PPM06,PPM,Panelboard - Low Voltage,HLP01A,,,0.5,0.5,0
+6.1.22,Main Switchgear,LAS16.PPM06,PPM,Panelboard - Low Voltage,HLP02A,,,0.5,0.5,0
+6.1.23,Main Switchgear,LAS16.PPM06,PPM,Transformer (Dry Type up to 499kVA),TLVP,,,2.0,2.0,0
+6.1.24,Main Switchgear,LAS16.PPM06,PPM,Switch LV - Fused Disconnect,,,,1.5,1.5,0
+6.2.1,PDU,LAS16.PPM06,PPM,Circuit Breaker LV - Secondary Injection,1600AF / 1600AT,,,2.0,2.0,0
+6.2.2,PDU,LAS16.PPM06,PPM,Circuit Breaker LV - Secondary Injection,1600AF / 1600AT,,,2.0,2.0,0
+6.2.3,PDU,LAS16.PPM06,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+6.2.4,PDU,LAS16.PPM06,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+6.2.5,PDU,LAS16.PPM06,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+6.2.6,PDU,LAS16.PPM06,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+6.2.7,PDU,LAS16.PPM06,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+6.2.8,PDU,LAS16.PPM06,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+6.2.9,PDU,LAS16.PPM06,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+6.2.10,PDU,LAS16.PPM06,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+6.2.11,PDU,LAS16.PPM06,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+6.2.12,PDU,LAS16.PPM06,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+6.2.13,PDU,LAS16.PPM06,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+6.2.14,PDU,LAS16.PPM06,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+6.2.15,PDU,LAS16.PPM06,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+6.2.16,PDU,LAS16.PPM06,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+6.2.17,PDU,LAS16.PPM06,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+6.2.18,PDU,LAS16.PPM06,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+6.2.19,PDU,LAS16.PPM06,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+6.2.20,PDU,LAS16.PPM06,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+6.2.21,PDU,LAS16.PPM06,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+6.2.22,PDU,LAS16.PPM06,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+6.2.23,PDU,LAS16.PPM06,PPM,Transformer (Dry Type 500kVA & larger),,,,4.0,4.0,0
+6.2.24,PDU,LAS16.PPM06,PPM,Transformer (Dry Type 500kVA & larger),,,,4.0,4.0,0
+6.2.25,PDU,LAS16.PPM06,PPM,Switchboard - Low Voltage,,,,4.0,4.0,0
+6.2.26,PDU,LAS16.PPM06,PPM,Switchboard - Low Voltage,,,,4.0,4.0,0
+6.2.27,PDU,LAS16.PPM06,PPM,PDU Load Banking (Switch),,,,5.0,5.0,0
+6.2.28,PDU,LAS16.PPM06,PPM,PDU Load Banking (Switch),,,,5.0,5.0,0
+6.3.1,Grounding,LAS16.PPM06,PPM,Ground Resistance Test -  Two-Point (PPM Lot),,,,1.5,1.5,0
+6.3.2,Grounding,LAS16.PPM06,PPM,Ground Resistance Test - Clamp Method,,,,2.0,2.0,0
+7.1.1,Main Switchgear,LAS16.PPM07,PPM,Switchboard - Low Voltage,,,,4.0,4.0,0
+7.1.2,Main Switchgear,LAS16.PPM07,PPM,Circuit Breaker LV - Draw-Out,5000AF / 4200AT,,,4.0,4.0,0
+7.1.3,Main Switchgear,LAS16.PPM07,PPM,Circuit Breaker LV - Draw-Out,5000AF / 4200AT,,,4.0,4.0,0
+7.1.4,Main Switchgear,LAS16.PPM07,PPM,Circuit Breaker LV - (LS/LSI),400AF / 400AT,,,3.0,3.0,0
+7.1.5,Main Switchgear,LAS16.PPM07,PPM,Circuit Breaker LV - (LS/LSI),400AF / 400AT,,,3.0,3.0,0
+7.1.6,Main Switchgear,LAS16.PPM07,PPM,Circuit Breaker LV - (LS/LSI),600AF / 400 AT,,,3.0,3.0,0
+7.1.7,Main Switchgear,LAS16.PPM07,PPM,Circuit Breaker LV - (LS/LSI),600AF / 400 AT,,,3.0,3.0,0
+7.1.8,Main Switchgear,LAS16.PPM07,PPM,Circuit Breaker LV - (LS/LSI),600AF / 400 AT,,,3.0,3.0,0
+7.1.9,Main Switchgear,LAS16.PPM07,PPM,Circuit Breaker LV - (LS/LSI),1200AF / 800AT,,,3.0,3.0,0
+7.1.10,Main Switchgear,LAS16.PPM07,PPM,Circuit Breaker LV - (LS/LSI),1200AF / 800AT,,,3.0,3.0,0
+7.1.11,Main Switchgear,LAS16.PPM07,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+7.1.12,Main Switchgear,LAS16.PPM07,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+7.1.13,Main Switchgear,LAS16.PPM07,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+7.1.14,Main Switchgear,LAS16.PPM07,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+7.1.15,Main Switchgear,LAS16.PPM07,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+7.1.16,Main Switchgear,LAS16.PPM07,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+7.1.17,Main Switchgear,LAS16.PPM07,PPM,Circuit Breaker LV - (LS/LSI),3000AT / 2500AT,,,3.0,3.0,0
+7.1.18,Main Switchgear,LAS16.PPM07,PPM,Circuit Breaker LV - (LS/LSI),3000AT / 2500AT,,,3.0,3.0,0
+7.1.19,Main Switchgear,LAS16.PPM07,PPM,Circuit Breaker LV - (LS/LSI),HLP02A MAIN,,,3.0,3.0,0
+7.1.20,Main Switchgear,LAS16.PPM07,PPM,Conductors LV - 3 Phase Feeder (Lot),,,,18.6,18.6,0
+7.1.21,Main Switchgear,LAS16.PPM07,PPM,Panelboard - Low Voltage,HLP01A,,,0.5,0.5,0
+7.1.22,Main Switchgear,LAS16.PPM07,PPM,Panelboard - Low Voltage,HLP02A,,,0.5,0.5,0
+7.1.23,Main Switchgear,LAS16.PPM07,PPM,Transformer (Dry Type up to 499kVA),TLVP,,,2.0,2.0,0
+7.1.24,Main Switchgear,LAS16.PPM07,PPM,Switch LV - Fused Disconnect,,,,1.5,1.5,0
+7.2.1,PDU,LAS16.PPM07,PPM,Circuit Breaker LV - Secondary Injection,1600AF / 1600AT,,,2.0,2.0,0
+7.2.2,PDU,LAS16.PPM07,PPM,Circuit Breaker LV - Secondary Injection,1600AF / 1600AT,,,2.0,2.0,0
+7.2.3,PDU,LAS16.PPM07,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+7.2.4,PDU,LAS16.PPM07,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+7.2.5,PDU,LAS16.PPM07,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+7.2.6,PDU,LAS16.PPM07,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+7.2.7,PDU,LAS16.PPM07,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+7.2.8,PDU,LAS16.PPM07,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+7.2.9,PDU,LAS16.PPM07,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+7.2.10,PDU,LAS16.PPM07,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+7.2.11,PDU,LAS16.PPM07,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+7.2.12,PDU,LAS16.PPM07,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+7.2.13,PDU,LAS16.PPM07,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+7.2.14,PDU,LAS16.PPM07,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+7.2.15,PDU,LAS16.PPM07,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+7.2.16,PDU,LAS16.PPM07,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+7.2.17,PDU,LAS16.PPM07,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+7.2.18,PDU,LAS16.PPM07,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+7.2.19,PDU,LAS16.PPM07,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+7.2.20,PDU,LAS16.PPM07,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+7.2.21,PDU,LAS16.PPM07,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+7.2.22,PDU,LAS16.PPM07,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+7.2.23,PDU,LAS16.PPM07,PPM,Transformer (Dry Type 500kVA & larger),,,,4.0,4.0,0
+7.2.24,PDU,LAS16.PPM07,PPM,Transformer (Dry Type 500kVA & larger),,,,4.0,4.0,0
+7.2.25,PDU,LAS16.PPM07,PPM,Switchboard - Low Voltage,,,,4.0,4.0,0
+7.2.26,PDU,LAS16.PPM07,PPM,Switchboard - Low Voltage,,,,4.0,4.0,0
+7.2.27,PDU,LAS16.PPM07,PPM,PDU Load Banking (Switch),,,,5.0,5.0,0
+7.2.28,PDU,LAS16.PPM07,PPM,PDU Load Banking (Switch),,,,5.0,5.0,0
+7.3.1,Grounding,LAS16.PPM07,PPM,Ground Resistance Test -  Two-Point (PPM Lot),,,,1.5,1.5,0
+7.3.2,Grounding,LAS16.PPM07,PPM,Ground Resistance Test - Clamp Method,,,,2.0,2.0,0
+8.1.1,Main Switchgear,LAS16.PPM08,PPM,Switchboard - Low Voltage,,,,4.0,4.0,0
+8.1.2,Main Switchgear,LAS16.PPM08,PPM,Circuit Breaker LV - Draw-Out,5000AF / 4200AT,,,4.0,4.0,0
+8.1.3,Main Switchgear,LAS16.PPM08,PPM,Circuit Breaker LV - Draw-Out,5000AF / 4200AT,,,4.0,4.0,0
+8.1.4,Main Switchgear,LAS16.PPM08,PPM,Circuit Breaker LV - (LS/LSI),400AF / 400AT,,,3.0,3.0,0
+8.1.5,Main Switchgear,LAS16.PPM08,PPM,Circuit Breaker LV - (LS/LSI),400AF / 400AT,,,3.0,3.0,0
+8.1.6,Main Switchgear,LAS16.PPM08,PPM,Circuit Breaker LV - (LS/LSI),600AF / 400 AT,,,3.0,3.0,0
+8.1.7,Main Switchgear,LAS16.PPM08,PPM,Circuit Breaker LV - (LS/LSI),600AF / 400 AT,,,3.0,3.0,0
+8.1.8,Main Switchgear,LAS16.PPM08,PPM,Circuit Breaker LV - (LS/LSI),600AF / 400 AT,,,3.0,3.0,0
+8.1.9,Main Switchgear,LAS16.PPM08,PPM,Circuit Breaker LV - (LS/LSI),1200AF / 800AT,,,3.0,3.0,0
+8.1.10,Main Switchgear,LAS16.PPM08,PPM,Circuit Breaker LV - (LS/LSI),1200AF / 800AT,,,3.0,3.0,0
+8.1.11,Main Switchgear,LAS16.PPM08,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+8.1.12,Main Switchgear,LAS16.PPM08,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+8.1.13,Main Switchgear,LAS16.PPM08,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+8.1.14,Main Switchgear,LAS16.PPM08,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+8.1.15,Main Switchgear,LAS16.PPM08,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+8.1.16,Main Switchgear,LAS16.PPM08,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+8.1.17,Main Switchgear,LAS16.PPM08,PPM,Circuit Breaker LV - (LS/LSI),3000AT / 2500AT,,,3.0,3.0,0
+8.1.18,Main Switchgear,LAS16.PPM08,PPM,Circuit Breaker LV - (LS/LSI),3000AT / 2500AT,,,3.0,3.0,0
+8.1.19,Main Switchgear,LAS16.PPM08,PPM,Circuit Breaker LV - (LS/LSI),HLP02A MAIN,,,3.0,3.0,0
+8.1.20,Main Switchgear,LAS16.PPM08,PPM,Conductors LV - 3 Phase Feeder (Lot),,,,18.6,18.6,0
+8.1.21,Main Switchgear,LAS16.PPM08,PPM,Panelboard - Low Voltage,HLP01A,,,0.5,0.5,0
+8.1.22,Main Switchgear,LAS16.PPM08,PPM,Panelboard - Low Voltage,HLP02A,,,0.5,0.5,0
+8.1.23,Main Switchgear,LAS16.PPM08,PPM,Transformer (Dry Type up to 499kVA),TLVP,,,2.0,2.0,0
+8.1.24,Main Switchgear,LAS16.PPM08,PPM,Switch LV - Fused Disconnect,,,,1.5,1.5,0
+8.2.1,PDU,LAS16.PPM08,PPM,Circuit Breaker LV - Secondary Injection,1600AF / 1600AT,,,2.0,2.0,0
+8.2.2,PDU,LAS16.PPM08,PPM,Circuit Breaker LV - Secondary Injection,1600AF / 1600AT,,,2.0,2.0,0
+8.2.3,PDU,LAS16.PPM08,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+8.2.4,PDU,LAS16.PPM08,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+8.2.5,PDU,LAS16.PPM08,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+8.2.6,PDU,LAS16.PPM08,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+8.2.7,PDU,LAS16.PPM08,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+8.2.8,PDU,LAS16.PPM08,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+8.2.9,PDU,LAS16.PPM08,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+8.2.10,PDU,LAS16.PPM08,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+8.2.11,PDU,LAS16.PPM08,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+8.2.12,PDU,LAS16.PPM08,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+8.2.13,PDU,LAS16.PPM08,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+8.2.14,PDU,LAS16.PPM08,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+8.2.15,PDU,LAS16.PPM08,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+8.2.16,PDU,LAS16.PPM08,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+8.2.17,PDU,LAS16.PPM08,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+8.2.18,PDU,LAS16.PPM08,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+8.2.19,PDU,LAS16.PPM08,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+8.2.20,PDU,LAS16.PPM08,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+8.2.21,PDU,LAS16.PPM08,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+8.2.22,PDU,LAS16.PPM08,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+8.2.23,PDU,LAS16.PPM08,PPM,Transformer (Dry Type 500kVA & larger),,,,4.0,4.0,0
+8.2.24,PDU,LAS16.PPM08,PPM,Transformer (Dry Type 500kVA & larger),,,,4.0,4.0,0
+8.2.25,PDU,LAS16.PPM08,PPM,Switchboard - Low Voltage,,,,4.0,4.0,0
+8.2.26,PDU,LAS16.PPM08,PPM,Switchboard - Low Voltage,,,,4.0,4.0,0
+8.2.27,PDU,LAS16.PPM08,PPM,PDU Load Banking (Switch),,,,5.0,5.0,0
+8.2.28,PDU,LAS16.PPM08,PPM,PDU Load Banking (Switch),,,,5.0,5.0,0
+8.3.1,Grounding,LAS16.PPM08,PPM,Ground Resistance Test -  Two-Point (PPM Lot),,,,1.5,1.5,0
+8.3.2,Grounding,LAS16.PPM08,PPM,Ground Resistance Test - Clamp Method,,,,2.0,2.0,0
+9.1.1,Main Switchgear,LAS16.PPM09,PPM,Switchboard - Low Voltage,,,,4.0,4.0,0
+9.1.2,Main Switchgear,LAS16.PPM09,PPM,Circuit Breaker LV - Draw-Out,5000AF / 4200AT,,,4.0,4.0,0
+9.1.3,Main Switchgear,LAS16.PPM09,PPM,Circuit Breaker LV - Draw-Out,5000AF / 4200AT,,,4.0,4.0,0
+9.1.4,Main Switchgear,LAS16.PPM09,PPM,Circuit Breaker LV - (LS/LSI),400AF / 400AT,,,3.0,3.0,0
+9.1.5,Main Switchgear,LAS16.PPM09,PPM,Circuit Breaker LV - (LS/LSI),400AF / 400AT,,,3.0,3.0,0
+9.1.6,Main Switchgear,LAS16.PPM09,PPM,Circuit Breaker LV - (LS/LSI),600AF / 400 AT,,,3.0,3.0,0
+9.1.7,Main Switchgear,LAS16.PPM09,PPM,Circuit Breaker LV - (LS/LSI),600AF / 400 AT,,,3.0,3.0,0
+9.1.8,Main Switchgear,LAS16.PPM09,PPM,Circuit Breaker LV - (LS/LSI),600AF / 400 AT,,,3.0,3.0,0
+9.1.9,Main Switchgear,LAS16.PPM09,PPM,Circuit Breaker LV - (LS/LSI),1200AF / 800AT,,,3.0,3.0,0
+9.1.10,Main Switchgear,LAS16.PPM09,PPM,Circuit Breaker LV - (LS/LSI),1200AF / 800AT,,,3.0,3.0,0
+9.1.11,Main Switchgear,LAS16.PPM09,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+9.1.12,Main Switchgear,LAS16.PPM09,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+9.1.13,Main Switchgear,LAS16.PPM09,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+9.1.14,Main Switchgear,LAS16.PPM09,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+9.1.15,Main Switchgear,LAS16.PPM09,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+9.1.16,Main Switchgear,LAS16.PPM09,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+9.1.17,Main Switchgear,LAS16.PPM09,PPM,Circuit Breaker LV - (LS/LSI),3000AT / 2500AT,,,3.0,3.0,0
+9.1.18,Main Switchgear,LAS16.PPM09,PPM,Circuit Breaker LV - (LS/LSI),3000AT / 2500AT,,,3.0,3.0,0
+9.1.19,Main Switchgear,LAS16.PPM09,PPM,Circuit Breaker LV - (LS/LSI),HLP02A MAIN,,,3.0,3.0,0
+9.1.20,Main Switchgear,LAS16.PPM09,PPM,Conductors LV - 3 Phase Feeder (Lot),,,,18.6,18.6,0
+9.1.21,Main Switchgear,LAS16.PPM09,PPM,Panelboard - Low Voltage,HLP01A,,,0.5,0.5,0
+9.1.22,Main Switchgear,LAS16.PPM09,PPM,Panelboard - Low Voltage,HLP02A,,,0.5,0.5,0
+9.1.23,Main Switchgear,LAS16.PPM09,PPM,Transformer (Dry Type up to 499kVA),TLVP,,,2.0,2.0,0
+9.1.24,Main Switchgear,LAS16.PPM09,PPM,Switch LV - Fused Disconnect,,,,1.5,1.5,0
+9.2.1,PDU,LAS16.PPM09,PPM,Circuit Breaker LV - Secondary Injection,1600AF / 1600AT,,,2.0,2.0,0
+9.2.2,PDU,LAS16.PPM09,PPM,Circuit Breaker LV - Secondary Injection,1600AF / 1600AT,,,2.0,2.0,0
+9.2.3,PDU,LAS16.PPM09,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+9.2.4,PDU,LAS16.PPM09,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+9.2.5,PDU,LAS16.PPM09,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+9.2.6,PDU,LAS16.PPM09,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+9.2.7,PDU,LAS16.PPM09,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+9.2.8,PDU,LAS16.PPM09,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+9.2.9,PDU,LAS16.PPM09,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+9.2.10,PDU,LAS16.PPM09,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+9.2.11,PDU,LAS16.PPM09,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+9.2.12,PDU,LAS16.PPM09,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+9.2.13,PDU,LAS16.PPM09,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+9.2.14,PDU,LAS16.PPM09,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+9.2.15,PDU,LAS16.PPM09,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+9.2.16,PDU,LAS16.PPM09,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+9.2.17,PDU,LAS16.PPM09,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+9.2.18,PDU,LAS16.PPM09,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+9.2.19,PDU,LAS16.PPM09,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+9.2.20,PDU,LAS16.PPM09,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+9.2.21,PDU,LAS16.PPM09,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+9.2.22,PDU,LAS16.PPM09,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+9.2.23,PDU,LAS16.PPM09,PPM,Transformer (Dry Type 500kVA & larger),,,,4.0,4.0,0
+9.2.24,PDU,LAS16.PPM09,PPM,Transformer (Dry Type 500kVA & larger),,,,4.0,4.0,0
+9.2.25,PDU,LAS16.PPM09,PPM,Switchboard - Low Voltage,,,,4.0,4.0,0
+9.2.26,PDU,LAS16.PPM09,PPM,Switchboard - Low Voltage,,,,4.0,4.0,0
+9.2.27,PDU,LAS16.PPM09,PPM,PDU Load Banking (Switch),,,,5.0,5.0,0
+9.2.28,PDU,LAS16.PPM09,PPM,PDU Load Banking (Switch),,,,5.0,5.0,0
+9.3.1,Grounding,LAS16.PPM09,PPM,Ground Resistance Test -  Two-Point (PPM Lot),,,,1.5,1.5,0
+9.3.2,Grounding,LAS16.PPM09,PPM,Ground Resistance Test - Clamp Method,,,,2.0,2.0,0
+10.1.1,Main Switchgear,LAS16.PPM10,PPM,Switchboard - Low Voltage,,,,4.0,4.0,0
+10.1.2,Main Switchgear,LAS16.PPM10,PPM,Circuit Breaker LV - Draw-Out,5000AF / 4200AT,,,4.0,4.0,0
+10.1.3,Main Switchgear,LAS16.PPM10,PPM,Circuit Breaker LV - Draw-Out,5000AF / 4200AT,,,4.0,4.0,0
+10.1.4,Main Switchgear,LAS16.PPM10,PPM,Circuit Breaker LV - (LS/LSI),400AF / 400AT,,,3.0,3.0,0
+10.1.5,Main Switchgear,LAS16.PPM10,PPM,Circuit Breaker LV - (LS/LSI),400AF / 400AT,,,3.0,3.0,0
+10.1.6,Main Switchgear,LAS16.PPM10,PPM,Circuit Breaker LV - (LS/LSI),600AF / 400 AT,,,3.0,3.0,0
+10.1.7,Main Switchgear,LAS16.PPM10,PPM,Circuit Breaker LV - (LS/LSI),600AF / 400 AT,,,3.0,3.0,0
+10.1.8,Main Switchgear,LAS16.PPM10,PPM,Circuit Breaker LV - (LS/LSI),600AF / 400 AT,,,3.0,3.0,0
+10.1.9,Main Switchgear,LAS16.PPM10,PPM,Circuit Breaker LV - (LS/LSI),1200AF / 800AT,,,3.0,3.0,0
+10.1.10,Main Switchgear,LAS16.PPM10,PPM,Circuit Breaker LV - (LS/LSI),1200AF / 800AT,,,3.0,3.0,0
+10.1.11,Main Switchgear,LAS16.PPM10,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+10.1.12,Main Switchgear,LAS16.PPM10,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+10.1.13,Main Switchgear,LAS16.PPM10,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+10.1.14,Main Switchgear,LAS16.PPM10,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+10.1.15,Main Switchgear,LAS16.PPM10,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+10.1.16,Main Switchgear,LAS16.PPM10,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+10.1.17,Main Switchgear,LAS16.PPM10,PPM,Circuit Breaker LV - (LS/LSI),3000AT / 2500AT,,,3.0,3.0,0
+10.1.18,Main Switchgear,LAS16.PPM10,PPM,Circuit Breaker LV - (LS/LSI),3000AT / 2500AT,,,3.0,3.0,0
+10.1.19,Main Switchgear,LAS16.PPM10,PPM,Circuit Breaker LV - (LS/LSI),HLP02A MAIN,,,3.0,3.0,0
+10.1.20,Main Switchgear,LAS16.PPM10,PPM,Conductors LV - 3 Phase Feeder (Lot),,,,18.6,18.6,0
+10.1.21,Main Switchgear,LAS16.PPM10,PPM,Panelboard - Low Voltage,HLP01A,,,0.5,0.5,0
+10.1.22,Main Switchgear,LAS16.PPM10,PPM,Panelboard - Low Voltage,HLP02A,,,0.5,0.5,0
+10.1.23,Main Switchgear,LAS16.PPM10,PPM,Transformer (Dry Type up to 499kVA),TLVP,,,2.0,2.0,0
+10.1.24,Main Switchgear,LAS16.PPM10,PPM,Switch LV - Fused Disconnect,,,,1.5,1.5,0
+10.2.1,PDU,LAS16.PPM10,PPM,Circuit Breaker LV - Secondary Injection,1600AF / 1600AT,,,2.0,2.0,0
+10.2.2,PDU,LAS16.PPM10,PPM,Circuit Breaker LV - Secondary Injection,1600AF / 1600AT,,,2.0,2.0,0
+10.2.3,PDU,LAS16.PPM10,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+10.2.4,PDU,LAS16.PPM10,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+10.2.5,PDU,LAS16.PPM10,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+10.2.6,PDU,LAS16.PPM10,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+10.2.7,PDU,LAS16.PPM10,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+10.2.8,PDU,LAS16.PPM10,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+10.2.9,PDU,LAS16.PPM10,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+10.2.10,PDU,LAS16.PPM10,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+10.2.11,PDU,LAS16.PPM10,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+10.2.12,PDU,LAS16.PPM10,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+10.2.13,PDU,LAS16.PPM10,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+10.2.14,PDU,LAS16.PPM10,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+10.2.15,PDU,LAS16.PPM10,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+10.2.16,PDU,LAS16.PPM10,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+10.2.17,PDU,LAS16.PPM10,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+10.2.18,PDU,LAS16.PPM10,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+10.2.19,PDU,LAS16.PPM10,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+10.2.20,PDU,LAS16.PPM10,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+10.2.21,PDU,LAS16.PPM10,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+10.2.22,PDU,LAS16.PPM10,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+10.2.23,PDU,LAS16.PPM10,PPM,Transformer (Dry Type 500kVA & larger),,,,4.0,4.0,0
+10.2.24,PDU,LAS16.PPM10,PPM,Transformer (Dry Type 500kVA & larger),,,,4.0,4.0,0
+10.2.25,PDU,LAS16.PPM10,PPM,Switchboard - Low Voltage,,,,4.0,4.0,0
+10.2.26,PDU,LAS16.PPM10,PPM,Switchboard - Low Voltage,,,,4.0,4.0,0
+10.2.27,PDU,LAS16.PPM10,PPM,PDU Load Banking (Switch),,,,5.0,5.0,0
+10.2.28,PDU,LAS16.PPM10,PPM,PDU Load Banking (Switch),,,,5.0,5.0,0
+10.3.1,Grounding,LAS16.PPM10,PPM,Ground Resistance Test -  Two-Point (PPM Lot),,,,1.5,1.5,0
+10.3.2,Grounding,LAS16.PPM10,PPM,Ground Resistance Test - Clamp Method,,,,2.0,2.0,0
+11.1.1,Main Switchgear,LAS16.PPM11,PPM,Switchboard - Low Voltage,,,,4.0,4.0,0
+11.1.2,Main Switchgear,LAS16.PPM11,PPM,Circuit Breaker LV - Draw-Out,5000AF / 4200AT,,,4.0,4.0,0
+11.1.3,Main Switchgear,LAS16.PPM11,PPM,Circuit Breaker LV - Draw-Out,5000AF / 4200AT,,,4.0,4.0,0
+11.1.4,Main Switchgear,LAS16.PPM11,PPM,Circuit Breaker LV - (LS/LSI),400AF / 400AT,,,3.0,3.0,0
+11.1.5,Main Switchgear,LAS16.PPM11,PPM,Circuit Breaker LV - (LS/LSI),400AF / 400AT,,,3.0,3.0,0
+11.1.6,Main Switchgear,LAS16.PPM11,PPM,Circuit Breaker LV - (LS/LSI),600AF / 400 AT,,,3.0,3.0,0
+11.1.7,Main Switchgear,LAS16.PPM11,PPM,Circuit Breaker LV - (LS/LSI),600AF / 400 AT,,,3.0,3.0,0
+11.1.8,Main Switchgear,LAS16.PPM11,PPM,Circuit Breaker LV - (LS/LSI),600AF / 400 AT,,,3.0,3.0,0
+11.1.9,Main Switchgear,LAS16.PPM11,PPM,Circuit Breaker LV - (LS/LSI),1200AF / 800AT,,,3.0,3.0,0
+11.1.10,Main Switchgear,LAS16.PPM11,PPM,Circuit Breaker LV - (LS/LSI),1200AF / 800AT,,,3.0,3.0,0
+11.1.11,Main Switchgear,LAS16.PPM11,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+11.1.12,Main Switchgear,LAS16.PPM11,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+11.1.13,Main Switchgear,LAS16.PPM11,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+11.1.14,Main Switchgear,LAS16.PPM11,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+11.1.15,Main Switchgear,LAS16.PPM11,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+11.1.16,Main Switchgear,LAS16.PPM11,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+11.1.17,Main Switchgear,LAS16.PPM11,PPM,Circuit Breaker LV - (LS/LSI),3000AT / 2500AT,,,3.0,3.0,0
+11.1.18,Main Switchgear,LAS16.PPM11,PPM,Circuit Breaker LV - (LS/LSI),3000AT / 2500AT,,,3.0,3.0,0
+11.1.19,Main Switchgear,LAS16.PPM11,PPM,Circuit Breaker LV - (LS/LSI),HLP02A MAIN,,,3.0,3.0,0
+11.1.20,Main Switchgear,LAS16.PPM11,PPM,Conductors LV - 3 Phase Feeder (Lot),,,,18.6,18.6,0
+11.1.21,Main Switchgear,LAS16.PPM11,PPM,Panelboard - Low Voltage,HLP01A,,,0.5,0.5,0
+11.1.22,Main Switchgear,LAS16.PPM11,PPM,Panelboard - Low Voltage,HLP02A,,,0.5,0.5,0
+11.1.23,Main Switchgear,LAS16.PPM11,PPM,Transformer (Dry Type up to 499kVA),TLVP,,,2.0,2.0,0
+11.1.24,Main Switchgear,LAS16.PPM11,PPM,Switch LV - Fused Disconnect,,,,1.5,1.5,0
+11.2.1,PDU,LAS16.PPM11,PPM,Circuit Breaker LV - Secondary Injection,1600AF / 1600AT,,,2.0,2.0,0
+11.2.2,PDU,LAS16.PPM11,PPM,Circuit Breaker LV - Secondary Injection,1600AF / 1600AT,,,2.0,2.0,0
+11.2.3,PDU,LAS16.PPM11,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+11.2.4,PDU,LAS16.PPM11,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+11.2.5,PDU,LAS16.PPM11,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+11.2.6,PDU,LAS16.PPM11,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+11.2.7,PDU,LAS16.PPM11,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+11.2.8,PDU,LAS16.PPM11,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+11.2.9,PDU,LAS16.PPM11,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+11.2.10,PDU,LAS16.PPM11,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+11.2.11,PDU,LAS16.PPM11,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+11.2.12,PDU,LAS16.PPM11,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+11.2.13,PDU,LAS16.PPM11,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+11.2.14,PDU,LAS16.PPM11,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+11.2.15,PDU,LAS16.PPM11,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+11.2.16,PDU,LAS16.PPM11,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+11.2.17,PDU,LAS16.PPM11,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+11.2.18,PDU,LAS16.PPM11,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+11.2.19,PDU,LAS16.PPM11,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+11.2.20,PDU,LAS16.PPM11,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+11.2.21,PDU,LAS16.PPM11,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+11.2.22,PDU,LAS16.PPM11,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+11.2.23,PDU,LAS16.PPM11,PPM,Transformer (Dry Type 500kVA & larger),,,,4.0,4.0,0
+11.2.24,PDU,LAS16.PPM11,PPM,Transformer (Dry Type 500kVA & larger),,,,4.0,4.0,0
+11.2.25,PDU,LAS16.PPM11,PPM,Switchboard - Low Voltage,,,,4.0,4.0,0
+11.2.26,PDU,LAS16.PPM11,PPM,Switchboard - Low Voltage,,,,4.0,4.0,0
+11.2.27,PDU,LAS16.PPM11,PPM,PDU Load Banking (Switch),,,,5.0,5.0,0
+11.2.28,PDU,LAS16.PPM11,PPM,PDU Load Banking (Switch),,,,5.0,5.0,0
+11.3.1,Grounding,LAS16.PPM11,PPM,Ground Resistance Test -  Two-Point (PPM Lot),,,,1.5,1.5,0
+11.3.2,Grounding,LAS16.PPM11,PPM,Ground Resistance Test - Clamp Method,,,,2.0,2.0,0
+12.1.1,Main Switchgear,LAS16.PPM12,PPM,Switchboard - Low Voltage,,,,4.0,4.0,0
+12.1.2,Main Switchgear,LAS16.PPM12,PPM,Circuit Breaker LV - Draw-Out,5000AF / 4200AT,,,4.0,4.0,0
+12.1.3,Main Switchgear,LAS16.PPM12,PPM,Circuit Breaker LV - Draw-Out,5000AF / 4200AT,,,4.0,4.0,0
+12.1.4,Main Switchgear,LAS16.PPM12,PPM,Circuit Breaker LV - (LS/LSI),400AF / 400AT,,,3.0,3.0,0
+12.1.5,Main Switchgear,LAS16.PPM12,PPM,Circuit Breaker LV - (LS/LSI),400AF / 400AT,,,3.0,3.0,0
+12.1.6,Main Switchgear,LAS16.PPM12,PPM,Circuit Breaker LV - (LS/LSI),600AF / 400 AT,,,3.0,3.0,0
+12.1.7,Main Switchgear,LAS16.PPM12,PPM,Circuit Breaker LV - (LS/LSI),600AF / 400 AT,,,3.0,3.0,0
+12.1.8,Main Switchgear,LAS16.PPM12,PPM,Circuit Breaker LV - (LS/LSI),600AF / 400 AT,,,3.0,3.0,0
+12.1.9,Main Switchgear,LAS16.PPM12,PPM,Circuit Breaker LV - (LS/LSI),1200AF / 800AT,,,3.0,3.0,0
+12.1.10,Main Switchgear,LAS16.PPM12,PPM,Circuit Breaker LV - (LS/LSI),1200AF / 800AT,,,3.0,3.0,0
+12.1.11,Main Switchgear,LAS16.PPM12,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+12.1.12,Main Switchgear,LAS16.PPM12,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+12.1.13,Main Switchgear,LAS16.PPM12,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+12.1.14,Main Switchgear,LAS16.PPM12,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+12.1.15,Main Switchgear,LAS16.PPM12,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+12.1.16,Main Switchgear,LAS16.PPM12,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+12.1.17,Main Switchgear,LAS16.PPM12,PPM,Circuit Breaker LV - (LS/LSI),3000AT / 2500AT,,,3.0,3.0,0
+12.1.18,Main Switchgear,LAS16.PPM12,PPM,Circuit Breaker LV - (LS/LSI),3000AT / 2500AT,,,3.0,3.0,0
+12.1.19,Main Switchgear,LAS16.PPM12,PPM,Circuit Breaker LV - (LS/LSI),HLP02A MAIN,,,3.0,3.0,0
+12.1.20,Main Switchgear,LAS16.PPM12,PPM,Conductors LV - 3 Phase Feeder (Lot),,,,18.6,18.6,0
+12.1.21,Main Switchgear,LAS16.PPM12,PPM,Panelboard - Low Voltage,HLP01A,,,0.5,0.5,0
+12.1.22,Main Switchgear,LAS16.PPM12,PPM,Panelboard - Low Voltage,HLP02A,,,0.5,0.5,0
+12.1.23,Main Switchgear,LAS16.PPM12,PPM,Transformer (Dry Type up to 499kVA),TLVP,,,2.0,2.0,0
+12.1.24,Main Switchgear,LAS16.PPM12,PPM,Switch LV - Fused Disconnect,,,,1.5,1.5,0
+12.2.1,PDU,LAS16.PPM12,PPM,Circuit Breaker LV - Secondary Injection,1600AF / 1600AT,,,2.0,2.0,0
+12.2.2,PDU,LAS16.PPM12,PPM,Circuit Breaker LV - Secondary Injection,1600AF / 1600AT,,,2.0,2.0,0
+12.2.3,PDU,LAS16.PPM12,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+12.2.4,PDU,LAS16.PPM12,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+12.2.5,PDU,LAS16.PPM12,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+12.2.6,PDU,LAS16.PPM12,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+12.2.7,PDU,LAS16.PPM12,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+12.2.8,PDU,LAS16.PPM12,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+12.2.9,PDU,LAS16.PPM12,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+12.2.10,PDU,LAS16.PPM12,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+12.2.11,PDU,LAS16.PPM12,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+12.2.12,PDU,LAS16.PPM12,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+12.2.13,PDU,LAS16.PPM12,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+12.2.14,PDU,LAS16.PPM12,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+12.2.15,PDU,LAS16.PPM12,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+12.2.16,PDU,LAS16.PPM12,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+12.2.17,PDU,LAS16.PPM12,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+12.2.18,PDU,LAS16.PPM12,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+12.2.19,PDU,LAS16.PPM12,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+12.2.20,PDU,LAS16.PPM12,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+12.2.21,PDU,LAS16.PPM12,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+12.2.22,PDU,LAS16.PPM12,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+12.2.23,PDU,LAS16.PPM12,PPM,Transformer (Dry Type 500kVA & larger),,,,4.0,4.0,0
+12.2.24,PDU,LAS16.PPM12,PPM,Transformer (Dry Type 500kVA & larger),,,,4.0,4.0,0
+12.2.25,PDU,LAS16.PPM12,PPM,Switchboard - Low Voltage,,,,4.0,4.0,0
+12.2.26,PDU,LAS16.PPM12,PPM,Switchboard - Low Voltage,,,,4.0,4.0,0
+12.2.27,PDU,LAS16.PPM12,PPM,PDU Load Banking (Switch),,,,5.0,5.0,0
+12.2.28,PDU,LAS16.PPM12,PPM,PDU Load Banking (Switch),,,,5.0,5.0,0
+12.3.1,Grounding,LAS16.PPM12,PPM,Ground Resistance Test -  Two-Point (PPM Lot),,,,1.5,1.5,0
+12.3.2,Grounding,LAS16.PPM12,PPM,Ground Resistance Test - Clamp Method,,,,2.0,2.0,0
+13.1.1,Main Switchgear,LAS16.PPM13,PPM,Switchboard - Low Voltage,,,,4.0,4.0,0
+13.1.2,Main Switchgear,LAS16.PPM13,PPM,Circuit Breaker LV - Draw-Out,5000AF / 4200AT,,,4.0,4.0,0
+13.1.3,Main Switchgear,LAS16.PPM13,PPM,Circuit Breaker LV - Draw-Out,5000AF / 4200AT,,,4.0,4.0,0
+13.1.4,Main Switchgear,LAS16.PPM13,PPM,Circuit Breaker LV - (LS/LSI),400AF / 400AT,,,3.0,3.0,0
+13.1.5,Main Switchgear,LAS16.PPM13,PPM,Circuit Breaker LV - (LS/LSI),400AF / 400AT,,,3.0,3.0,0
+13.1.6,Main Switchgear,LAS16.PPM13,PPM,Circuit Breaker LV - (LS/LSI),600AF / 400 AT,,,3.0,3.0,0
+13.1.7,Main Switchgear,LAS16.PPM13,PPM,Circuit Breaker LV - (LS/LSI),600AF / 400 AT,,,3.0,3.0,0
+13.1.8,Main Switchgear,LAS16.PPM13,PPM,Circuit Breaker LV - (LS/LSI),600AF / 400 AT,,,3.0,3.0,0
+13.1.9,Main Switchgear,LAS16.PPM13,PPM,Circuit Breaker LV - (LS/LSI),1200AF / 800AT,,,3.0,3.0,0
+13.1.10,Main Switchgear,LAS16.PPM13,PPM,Circuit Breaker LV - (LS/LSI),1200AF / 800AT,,,3.0,3.0,0
+13.1.11,Main Switchgear,LAS16.PPM13,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+13.1.12,Main Switchgear,LAS16.PPM13,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+13.1.13,Main Switchgear,LAS16.PPM13,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+13.1.14,Main Switchgear,LAS16.PPM13,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+13.1.15,Main Switchgear,LAS16.PPM13,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+13.1.16,Main Switchgear,LAS16.PPM13,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+13.1.17,Main Switchgear,LAS16.PPM13,PPM,Circuit Breaker LV - (LS/LSI),3000AT / 2500AT,,,3.0,3.0,0
+13.1.18,Main Switchgear,LAS16.PPM13,PPM,Circuit Breaker LV - (LS/LSI),3000AT / 2500AT,,,3.0,3.0,0
+13.1.19,Main Switchgear,LAS16.PPM13,PPM,Circuit Breaker LV - (LS/LSI),HLP02A MAIN,,,3.0,3.0,0
+13.1.20,Main Switchgear,LAS16.PPM13,PPM,Conductors LV - 3 Phase Feeder (Lot),,,,18.6,18.6,0
+13.1.21,Main Switchgear,LAS16.PPM13,PPM,Panelboard - Low Voltage,HLP01A,,,0.5,0.5,0
+13.1.22,Main Switchgear,LAS16.PPM13,PPM,Panelboard - Low Voltage,HLP02A,,,0.5,0.5,0
+13.1.23,Main Switchgear,LAS16.PPM13,PPM,Transformer (Dry Type up to 499kVA),TLVP,,,2.0,2.0,0
+13.1.24,Main Switchgear,LAS16.PPM13,PPM,Switch LV - Fused Disconnect,,,,1.5,1.5,0
+13.2.1,PDU,LAS16.PPM13,PPM,Circuit Breaker LV - Secondary Injection,1600AF / 1600AT,,,2.0,2.0,0
+13.2.2,PDU,LAS16.PPM13,PPM,Circuit Breaker LV - Secondary Injection,1600AF / 1600AT,,,2.0,2.0,0
+13.2.3,PDU,LAS16.PPM13,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+13.2.4,PDU,LAS16.PPM13,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+13.2.5,PDU,LAS16.PPM13,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+13.2.6,PDU,LAS16.PPM13,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+13.2.7,PDU,LAS16.PPM13,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+13.2.8,PDU,LAS16.PPM13,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+13.2.9,PDU,LAS16.PPM13,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+13.2.10,PDU,LAS16.PPM13,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+13.2.11,PDU,LAS16.PPM13,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+13.2.12,PDU,LAS16.PPM13,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+13.2.13,PDU,LAS16.PPM13,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+13.2.14,PDU,LAS16.PPM13,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+13.2.15,PDU,LAS16.PPM13,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+13.2.16,PDU,LAS16.PPM13,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+13.2.17,PDU,LAS16.PPM13,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+13.2.18,PDU,LAS16.PPM13,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+13.2.19,PDU,LAS16.PPM13,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+13.2.20,PDU,LAS16.PPM13,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+13.2.21,PDU,LAS16.PPM13,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+13.2.22,PDU,LAS16.PPM13,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+13.2.23,PDU,LAS16.PPM13,PPM,Transformer (Dry Type 500kVA & larger),,,,4.0,4.0,0
+13.2.24,PDU,LAS16.PPM13,PPM,Transformer (Dry Type 500kVA & larger),,,,4.0,4.0,0
+13.2.25,PDU,LAS16.PPM13,PPM,Switchboard - Low Voltage,,,,4.0,4.0,0
+13.2.26,PDU,LAS16.PPM13,PPM,Switchboard - Low Voltage,,,,4.0,4.0,0
+13.2.27,PDU,LAS16.PPM13,PPM,PDU Load Banking (Switch),,,,5.0,5.0,0
+13.2.28,PDU,LAS16.PPM13,PPM,PDU Load Banking (Switch),,,,5.0,5.0,0
+13.3.1,Grounding,LAS16.PPM13,PPM,Ground Resistance Test -  Two-Point (PPM Lot),,,,1.5,1.5,0
+13.3.2,Grounding,LAS16.PPM13,PPM,Ground Resistance Test - Clamp Method,,,,2.0,2.0,0
+14.1.1,Main Switchgear,LAS16.PPM14,PPM,Switchboard - Low Voltage,,,,4.0,4.0,0
+14.1.2,Main Switchgear,LAS16.PPM14,PPM,Circuit Breaker LV - Draw-Out,5000AF / 4200AT,,,4.0,4.0,0
+14.1.3,Main Switchgear,LAS16.PPM14,PPM,Circuit Breaker LV - Draw-Out,5000AF / 4200AT,,,4.0,4.0,0
+14.1.4,Main Switchgear,LAS16.PPM14,PPM,Circuit Breaker LV - (LS/LSI),400AF / 400AT,,,3.0,3.0,0
+14.1.5,Main Switchgear,LAS16.PPM14,PPM,Circuit Breaker LV - (LS/LSI),400AF / 400AT,,,3.0,3.0,0
+14.1.6,Main Switchgear,LAS16.PPM14,PPM,Circuit Breaker LV - (LS/LSI),600AF / 400 AT,,,3.0,3.0,0
+14.1.7,Main Switchgear,LAS16.PPM14,PPM,Circuit Breaker LV - (LS/LSI),600AF / 400 AT,,,3.0,3.0,0
+14.1.8,Main Switchgear,LAS16.PPM14,PPM,Circuit Breaker LV - (LS/LSI),600AF / 400 AT,,,3.0,3.0,0
+14.1.9,Main Switchgear,LAS16.PPM14,PPM,Circuit Breaker LV - (LS/LSI),1200AF / 800AT,,,3.0,3.0,0
+14.1.10,Main Switchgear,LAS16.PPM14,PPM,Circuit Breaker LV - (LS/LSI),1200AF / 800AT,,,3.0,3.0,0
+14.1.11,Main Switchgear,LAS16.PPM14,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+14.1.12,Main Switchgear,LAS16.PPM14,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+14.1.13,Main Switchgear,LAS16.PPM14,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+14.1.14,Main Switchgear,LAS16.PPM14,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+14.1.15,Main Switchgear,LAS16.PPM14,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+14.1.16,Main Switchgear,LAS16.PPM14,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+14.1.17,Main Switchgear,LAS16.PPM14,PPM,Circuit Breaker LV - (LS/LSI),3000AT / 2500AT,,,3.0,3.0,0
+14.1.18,Main Switchgear,LAS16.PPM14,PPM,Circuit Breaker LV - (LS/LSI),3000AT / 2500AT,,,3.0,3.0,0
+14.1.19,Main Switchgear,LAS16.PPM14,PPM,Circuit Breaker LV - (LS/LSI),HLP02A MAIN,,,3.0,3.0,0
+14.1.20,Main Switchgear,LAS16.PPM14,PPM,Conductors LV - 3 Phase Feeder (Lot),,,,18.6,18.6,0
+14.1.21,Main Switchgear,LAS16.PPM14,PPM,Panelboard - Low Voltage,HLP01A,COMPLETED,,0.5,0.5,1
+14.1.22,Main Switchgear,LAS16.PPM14,PPM,Panelboard - Low Voltage,HLP02A,COMPLETED,,0.5,0.5,1
+14.1.23,Main Switchgear,LAS16.PPM14,PPM,Transformer (Dry Type up to 499kVA),TLVP,COMPLETED,,2.0,2.0,1
+14.1.24,Main Switchgear,LAS16.PPM14,PPM,Switch LV - Fused Disconnect,,COMPLETED,,1.5,1.5,1
+14.2.1,PDU,LAS16.PPM14,PPM,Circuit Breaker LV - Secondary Injection,1600AF / 1600AT,,,2.0,2.0,0
+14.2.2,PDU,LAS16.PPM14,PPM,Circuit Breaker LV - Secondary Injection,1600AF / 1600AT,,,2.0,2.0,0
+14.2.3,PDU,LAS16.PPM14,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+14.2.4,PDU,LAS16.PPM14,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+14.2.5,PDU,LAS16.PPM14,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+14.2.6,PDU,LAS16.PPM14,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+14.2.7,PDU,LAS16.PPM14,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+14.2.8,PDU,LAS16.PPM14,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+14.2.9,PDU,LAS16.PPM14,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+14.2.10,PDU,LAS16.PPM14,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+14.2.11,PDU,LAS16.PPM14,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+14.2.12,PDU,LAS16.PPM14,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+14.2.13,PDU,LAS16.PPM14,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+14.2.14,PDU,LAS16.PPM14,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+14.2.15,PDU,LAS16.PPM14,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+14.2.16,PDU,LAS16.PPM14,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+14.2.17,PDU,LAS16.PPM14,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+14.2.18,PDU,LAS16.PPM14,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+14.2.19,PDU,LAS16.PPM14,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+14.2.20,PDU,LAS16.PPM14,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+14.2.21,PDU,LAS16.PPM14,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+14.2.22,PDU,LAS16.PPM14,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+14.2.23,PDU,LAS16.PPM14,PPM,Transformer (Dry Type 500kVA & larger),,COMPLETED,,4.0,4.0,1
+14.2.24,PDU,LAS16.PPM14,PPM,Transformer (Dry Type 500kVA & larger),,COMPLETED,,4.0,4.0,1
+14.2.25,PDU,LAS16.PPM14,PPM,Switchboard - Low Voltage,,NOT STARTED,,4.0,4.0,0
+14.2.26,PDU,LAS16.PPM14,PPM,Switchboard - Low Voltage,,NOT STARTED,,4.0,4.0,0
+14.2.27,PDU,LAS16.PPM14,PPM,PDU Load Banking (Switch),,,,5.0,5.0,0
+14.2.28,PDU,LAS16.PPM14,PPM,PDU Load Banking (Switch),,,,5.0,5.0,0
+14.3.1,Grounding,LAS16.PPM14,PPM,Ground Resistance Test -  Two-Point (PPM Lot),,,,1.5,1.5,0
+14.3.2,Grounding,LAS16.PPM14,PPM,Ground Resistance Test - Clamp Method,,,,2.0,2.0,0
+15.1.1,Main Switchgear,LAS16.PPM15,PPM,Switchboard - Low Voltage,,,,4.0,4.0,0
+15.1.2,Main Switchgear,LAS16.PPM15,PPM,Circuit Breaker LV - Draw-Out,5000AF / 4200AT,,,4.0,4.0,0
+15.1.3,Main Switchgear,LAS16.PPM15,PPM,Circuit Breaker LV - Draw-Out,5000AF / 4200AT,,,4.0,4.0,0
+15.1.4,Main Switchgear,LAS16.PPM15,PPM,Circuit Breaker LV - (LS/LSI),400AF / 400AT,,,3.0,3.0,0
+15.1.5,Main Switchgear,LAS16.PPM15,PPM,Circuit Breaker LV - (LS/LSI),400AF / 400AT,,,3.0,3.0,0
+15.1.6,Main Switchgear,LAS16.PPM15,PPM,Circuit Breaker LV - (LS/LSI),600AF / 400 AT,,,3.0,3.0,0
+15.1.7,Main Switchgear,LAS16.PPM15,PPM,Circuit Breaker LV - (LS/LSI),600AF / 400 AT,,,3.0,3.0,0
+15.1.8,Main Switchgear,LAS16.PPM15,PPM,Circuit Breaker LV - (LS/LSI),600AF / 400 AT,,,3.0,3.0,0
+15.1.9,Main Switchgear,LAS16.PPM15,PPM,Circuit Breaker LV - (LS/LSI),1200AF / 800AT,,,3.0,3.0,0
+15.1.10,Main Switchgear,LAS16.PPM15,PPM,Circuit Breaker LV - (LS/LSI),1200AF / 800AT,,,3.0,3.0,0
+15.1.11,Main Switchgear,LAS16.PPM15,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+15.1.12,Main Switchgear,LAS16.PPM15,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+15.1.13,Main Switchgear,LAS16.PPM15,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+15.1.14,Main Switchgear,LAS16.PPM15,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+15.1.15,Main Switchgear,LAS16.PPM15,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+15.1.16,Main Switchgear,LAS16.PPM15,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+15.1.17,Main Switchgear,LAS16.PPM15,PPM,Circuit Breaker LV - (LS/LSI),3000AT / 2500AT,,,3.0,3.0,0
+15.1.18,Main Switchgear,LAS16.PPM15,PPM,Circuit Breaker LV - (LS/LSI),3000AT / 2500AT,,,3.0,3.0,0
+15.1.19,Main Switchgear,LAS16.PPM15,PPM,Circuit Breaker LV - (LS/LSI),HLP02A MAIN,,,3.0,3.0,0
+15.1.20,Main Switchgear,LAS16.PPM15,PPM,Conductors LV - 3 Phase Feeder (Lot),,,,18.6,18.6,0
+15.1.21,Main Switchgear,LAS16.PPM15,PPM,Panelboard - Low Voltage,HLP01A,COMPLETED,,0.5,0.5,1
+15.1.22,Main Switchgear,LAS16.PPM15,PPM,Panelboard - Low Voltage,HLP02A,COMPLETED,,0.5,0.5,1
+15.1.23,Main Switchgear,LAS16.PPM15,PPM,Transformer (Dry Type up to 499kVA),TLVP,COMPLETED,,2.0,2.0,1
+15.1.24,Main Switchgear,LAS16.PPM15,PPM,Switch LV - Fused Disconnect,,COMPLETED,,1.5,1.5,1
+15.2.1,PDU,LAS16.PPM15,PPM,Circuit Breaker LV - Secondary Injection,1600AF / 1600AT,,,2.0,2.0,0
+15.2.2,PDU,LAS16.PPM15,PPM,Circuit Breaker LV - Secondary Injection,1600AF / 1600AT,,,2.0,2.0,0
+15.2.3,PDU,LAS16.PPM15,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+15.2.4,PDU,LAS16.PPM15,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+15.2.5,PDU,LAS16.PPM15,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+15.2.6,PDU,LAS16.PPM15,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+15.2.7,PDU,LAS16.PPM15,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+15.2.8,PDU,LAS16.PPM15,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+15.2.9,PDU,LAS16.PPM15,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+15.2.10,PDU,LAS16.PPM15,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+15.2.11,PDU,LAS16.PPM15,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+15.2.12,PDU,LAS16.PPM15,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+15.2.13,PDU,LAS16.PPM15,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+15.2.14,PDU,LAS16.PPM15,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+15.2.15,PDU,LAS16.PPM15,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+15.2.16,PDU,LAS16.PPM15,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+15.2.17,PDU,LAS16.PPM15,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+15.2.18,PDU,LAS16.PPM15,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+15.2.19,PDU,LAS16.PPM15,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+15.2.20,PDU,LAS16.PPM15,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+15.2.21,PDU,LAS16.PPM15,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+15.2.22,PDU,LAS16.PPM15,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+15.2.23,PDU,LAS16.PPM15,PPM,Transformer (Dry Type 500kVA & larger),,COMPLETED,,4.0,4.0,1
+15.2.24,PDU,LAS16.PPM15,PPM,Transformer (Dry Type 500kVA & larger),,COMPLETED,,4.0,4.0,1
+15.2.25,PDU,LAS16.PPM15,PPM,Switchboard - Low Voltage,,,,4.0,4.0,0
+15.2.26,PDU,LAS16.PPM15,PPM,Switchboard - Low Voltage,,,,4.0,4.0,0
+15.2.27,PDU,LAS16.PPM15,PPM,PDU Load Banking (Switch),,,,5.0,5.0,0
+15.2.28,PDU,LAS16.PPM15,PPM,PDU Load Banking (Switch),,,,5.0,5.0,0
+15.3.1,Grounding,LAS16.PPM15,PPM,Ground Resistance Test -  Two-Point (PPM Lot),,,,1.5,1.5,0
+15.3.2,Grounding,LAS16.PPM15,PPM,Ground Resistance Test - Clamp Method,,,,2.0,2.0,0
+16.1.1,Main Switchgear,LAS16.PPM16,PPM,Switchboard - Low Voltage,,,,4.0,4.0,0
+16.1.2,Main Switchgear,LAS16.PPM16,PPM,Circuit Breaker LV - Draw-Out,5000AF / 4200AT,,,4.0,4.0,0
+16.1.3,Main Switchgear,LAS16.PPM16,PPM,Circuit Breaker LV - Draw-Out,5000AF / 4200AT,,,4.0,4.0,0
+16.1.4,Main Switchgear,LAS16.PPM16,PPM,Circuit Breaker LV - (LS/LSI),400AF / 400AT,,,3.0,3.0,0
+16.1.5,Main Switchgear,LAS16.PPM16,PPM,Circuit Breaker LV - (LS/LSI),400AF / 400AT,,,3.0,3.0,0
+16.1.6,Main Switchgear,LAS16.PPM16,PPM,Circuit Breaker LV - (LS/LSI),600AF / 400 AT,,,3.0,3.0,0
+16.1.7,Main Switchgear,LAS16.PPM16,PPM,Circuit Breaker LV - (LS/LSI),600AF / 400 AT,,,3.0,3.0,0
+16.1.8,Main Switchgear,LAS16.PPM16,PPM,Circuit Breaker LV - (LS/LSI),600AF / 400 AT,,,3.0,3.0,0
+16.1.9,Main Switchgear,LAS16.PPM16,PPM,Circuit Breaker LV - (LS/LSI),1200AF / 800AT,,,3.0,3.0,0
+16.1.10,Main Switchgear,LAS16.PPM16,PPM,Circuit Breaker LV - (LS/LSI),1200AF / 800AT,,,3.0,3.0,0
+16.1.11,Main Switchgear,LAS16.PPM16,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+16.1.12,Main Switchgear,LAS16.PPM16,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+16.1.13,Main Switchgear,LAS16.PPM16,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+16.1.14,Main Switchgear,LAS16.PPM16,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+16.1.15,Main Switchgear,LAS16.PPM16,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+16.1.16,Main Switchgear,LAS16.PPM16,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+16.1.17,Main Switchgear,LAS16.PPM16,PPM,Circuit Breaker LV - (LS/LSI),3000AT / 2500AT,,,3.0,3.0,0
+16.1.18,Main Switchgear,LAS16.PPM16,PPM,Circuit Breaker LV - (LS/LSI),3000AT / 2500AT,,,3.0,3.0,0
+16.1.19,Main Switchgear,LAS16.PPM16,PPM,Circuit Breaker LV - (LS/LSI),HLP02A MAIN,,,3.0,3.0,0
+16.1.20,Main Switchgear,LAS16.PPM16,PPM,Conductors LV - 3 Phase Feeder (Lot),,,,18.6,18.6,0
+16.1.21,Main Switchgear,LAS16.PPM16,PPM,Panelboard - Low Voltage,HLP01A,COMPLETED,,0.5,0.5,1
+16.1.22,Main Switchgear,LAS16.PPM16,PPM,Panelboard - Low Voltage,HLP02A,COMPLETED,,0.5,0.5,1
+16.1.23,Main Switchgear,LAS16.PPM16,PPM,Transformer (Dry Type up to 499kVA),TLVP,COMPLETED,,2.0,2.0,1
+16.1.24,Main Switchgear,LAS16.PPM16,PPM,Switch LV - Fused Disconnect,,COMPLETED,,1.5,1.5,1
+16.2.1,PDU,LAS16.PPM16,PPM,Circuit Breaker LV - Secondary Injection,1600AF / 1600AT,,,2.0,2.0,0
+16.2.2,PDU,LAS16.PPM16,PPM,Circuit Breaker LV - Secondary Injection,1600AF / 1600AT,,,2.0,2.0,0
+16.2.3,PDU,LAS16.PPM16,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+16.2.4,PDU,LAS16.PPM16,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+16.2.5,PDU,LAS16.PPM16,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+16.2.6,PDU,LAS16.PPM16,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+16.2.7,PDU,LAS16.PPM16,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+16.2.8,PDU,LAS16.PPM16,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+16.2.9,PDU,LAS16.PPM16,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+16.2.10,PDU,LAS16.PPM16,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+16.2.11,PDU,LAS16.PPM16,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+16.2.12,PDU,LAS16.PPM16,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+16.2.13,PDU,LAS16.PPM16,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+16.2.14,PDU,LAS16.PPM16,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+16.2.15,PDU,LAS16.PPM16,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+16.2.16,PDU,LAS16.PPM16,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+16.2.17,PDU,LAS16.PPM16,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+16.2.18,PDU,LAS16.PPM16,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+16.2.19,PDU,LAS16.PPM16,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+16.2.20,PDU,LAS16.PPM16,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+16.2.21,PDU,LAS16.PPM16,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+16.2.22,PDU,LAS16.PPM16,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+16.2.23,PDU,LAS16.PPM16,PPM,Transformer (Dry Type 500kVA & larger),,COMPLETED,,4.0,4.0,1
+16.2.24,PDU,LAS16.PPM16,PPM,Transformer (Dry Type 500kVA & larger),,COMPLETED,,4.0,4.0,1
+16.2.25,PDU,LAS16.PPM16,PPM,Switchboard - Low Voltage,,,,4.0,4.0,0
+16.2.26,PDU,LAS16.PPM16,PPM,Switchboard - Low Voltage,,,,4.0,4.0,0
+16.2.27,PDU,LAS16.PPM16,PPM,PDU Load Banking (Switch),,,,5.0,5.0,0
+16.2.28,PDU,LAS16.PPM16,PPM,PDU Load Banking (Switch),,,,5.0,5.0,0
+16.3.1,Grounding,LAS16.PPM16,PPM,Ground Resistance Test -  Two-Point (PPM Lot),,,,1.5,1.5,0
+16.3.2,Grounding,LAS16.PPM16,PPM,Ground Resistance Test - Clamp Method,,,,2.0,2.0,0
+17.1.1,Main Switchgear,LAS16.PPM17,PPM,Switchboard - Low Voltage,,,,4.0,4.0,0
+17.1.2,Main Switchgear,LAS16.PPM17,PPM,Circuit Breaker LV - Draw-Out,5000AF / 4200AT,,,4.0,4.0,0
+17.1.3,Main Switchgear,LAS16.PPM17,PPM,Circuit Breaker LV - Draw-Out,5000AF / 4200AT,,,4.0,4.0,0
+17.1.4,Main Switchgear,LAS16.PPM17,PPM,Circuit Breaker LV - (LS/LSI),400AF / 400AT,,,3.0,3.0,0
+17.1.5,Main Switchgear,LAS16.PPM17,PPM,Circuit Breaker LV - (LS/LSI),400AF / 400AT,,,3.0,3.0,0
+17.1.6,Main Switchgear,LAS16.PPM17,PPM,Circuit Breaker LV - (LS/LSI),600AF / 400 AT,,,3.0,3.0,0
+17.1.7,Main Switchgear,LAS16.PPM17,PPM,Circuit Breaker LV - (LS/LSI),600AF / 400 AT,,,3.0,3.0,0
+17.1.8,Main Switchgear,LAS16.PPM17,PPM,Circuit Breaker LV - (LS/LSI),600AF / 400 AT,,,3.0,3.0,0
+17.1.9,Main Switchgear,LAS16.PPM17,PPM,Circuit Breaker LV - (LS/LSI),1200AF / 800AT,,,3.0,3.0,0
+17.1.10,Main Switchgear,LAS16.PPM17,PPM,Circuit Breaker LV - (LS/LSI),1200AF / 800AT,,,3.0,3.0,0
+17.1.11,Main Switchgear,LAS16.PPM17,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+17.1.12,Main Switchgear,LAS16.PPM17,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+17.1.13,Main Switchgear,LAS16.PPM17,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+17.1.14,Main Switchgear,LAS16.PPM17,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+17.1.15,Main Switchgear,LAS16.PPM17,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+17.1.16,Main Switchgear,LAS16.PPM17,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+17.1.17,Main Switchgear,LAS16.PPM17,PPM,Circuit Breaker LV - (LS/LSI),3000AT / 2500AT,,,3.0,3.0,0
+17.1.18,Main Switchgear,LAS16.PPM17,PPM,Circuit Breaker LV - (LS/LSI),3000AT / 2500AT,,,3.0,3.0,0
+17.1.19,Main Switchgear,LAS16.PPM17,PPM,Circuit Breaker LV - (LS/LSI),HLP02A MAIN,,,3.0,3.0,0
+17.1.20,Main Switchgear,LAS16.PPM17,PPM,Conductors LV - 3 Phase Feeder (Lot),,,,18.6,18.6,0
+17.1.21,Main Switchgear,LAS16.PPM17,PPM,Panelboard - Low Voltage,HLP01A,COMPLETED,,0.5,0.5,1
+17.1.22,Main Switchgear,LAS16.PPM17,PPM,Panelboard - Low Voltage,HLP02A,COMPLETED,,0.5,0.5,1
+17.1.23,Main Switchgear,LAS16.PPM17,PPM,Transformer (Dry Type up to 499kVA),TLVP,COMPLETED,,2.0,2.0,1
+17.1.24,Main Switchgear,LAS16.PPM17,PPM,Switch LV - Fused Disconnect,,COMPLETED,,1.5,1.5,1
+17.2.1,PDU,LAS16.PPM17,PPM,Circuit Breaker LV - Secondary Injection,1600AF / 1600AT,,,2.0,2.0,0
+17.2.2,PDU,LAS16.PPM17,PPM,Circuit Breaker LV - Secondary Injection,1600AF / 1600AT,,,2.0,2.0,0
+17.2.3,PDU,LAS16.PPM17,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+17.2.4,PDU,LAS16.PPM17,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+17.2.5,PDU,LAS16.PPM17,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+17.2.6,PDU,LAS16.PPM17,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+17.2.7,PDU,LAS16.PPM17,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+17.2.8,PDU,LAS16.PPM17,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+17.2.9,PDU,LAS16.PPM17,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+17.2.10,PDU,LAS16.PPM17,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+17.2.11,PDU,LAS16.PPM17,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+17.2.12,PDU,LAS16.PPM17,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+17.2.13,PDU,LAS16.PPM17,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+17.2.14,PDU,LAS16.PPM17,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+17.2.15,PDU,LAS16.PPM17,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+17.2.16,PDU,LAS16.PPM17,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+17.2.17,PDU,LAS16.PPM17,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+17.2.18,PDU,LAS16.PPM17,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+17.2.19,PDU,LAS16.PPM17,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+17.2.20,PDU,LAS16.PPM17,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+17.2.21,PDU,LAS16.PPM17,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+17.2.22,PDU,LAS16.PPM17,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+17.2.23,PDU,LAS16.PPM17,PPM,Transformer (Dry Type 500kVA & larger),,COMPLETED,,4.0,4.0,1
+17.2.24,PDU,LAS16.PPM17,PPM,Transformer (Dry Type 500kVA & larger),,COMPLETED,,4.0,4.0,1
+17.2.25,PDU,LAS16.PPM17,PPM,Switchboard - Low Voltage,,,,4.0,4.0,0
+17.2.26,PDU,LAS16.PPM17,PPM,Switchboard - Low Voltage,,,,4.0,4.0,0
+17.2.27,PDU,LAS16.PPM17,PPM,PDU Load Banking (Switch),,,,5.0,5.0,0
+17.2.28,PDU,LAS16.PPM17,PPM,PDU Load Banking (Switch),,,,5.0,5.0,0
+17.3.1,Grounding,LAS16.PPM17,PPM,Ground Resistance Test -  Two-Point (PPM Lot),,,,1.5,1.5,0
+17.3.2,Grounding,LAS16.PPM17,PPM,Ground Resistance Test - Clamp Method,,,,2.0,2.0,0
+18.1.1,Main Switchgear,LAS16.PPM18,PPM,Switchboard - Low Voltage,,,,4.0,4.0,0
+18.1.2,Main Switchgear,LAS16.PPM18,PPM,Circuit Breaker LV - Draw-Out,5000AF / 4200AT,,,4.0,4.0,0
+18.1.3,Main Switchgear,LAS16.PPM18,PPM,Circuit Breaker LV - Draw-Out,5000AF / 4200AT,,,4.0,4.0,0
+18.1.4,Main Switchgear,LAS16.PPM18,PPM,Circuit Breaker LV - (LS/LSI),400AF / 400AT,,,3.0,3.0,0
+18.1.5,Main Switchgear,LAS16.PPM18,PPM,Circuit Breaker LV - (LS/LSI),400AF / 400AT,,,3.0,3.0,0
+18.1.6,Main Switchgear,LAS16.PPM18,PPM,Circuit Breaker LV - (LS/LSI),600AF / 400 AT,,,3.0,3.0,0
+18.1.7,Main Switchgear,LAS16.PPM18,PPM,Circuit Breaker LV - (LS/LSI),600AF / 400 AT,,,3.0,3.0,0
+18.1.8,Main Switchgear,LAS16.PPM18,PPM,Circuit Breaker LV - (LS/LSI),600AF / 400 AT,,,3.0,3.0,0
+18.1.9,Main Switchgear,LAS16.PPM18,PPM,Circuit Breaker LV - (LS/LSI),1200AF / 800AT,,,3.0,3.0,0
+18.1.10,Main Switchgear,LAS16.PPM18,PPM,Circuit Breaker LV - (LS/LSI),1200AF / 800AT,,,3.0,3.0,0
+18.1.11,Main Switchgear,LAS16.PPM18,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+18.1.12,Main Switchgear,LAS16.PPM18,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+18.1.13,Main Switchgear,LAS16.PPM18,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+18.1.14,Main Switchgear,LAS16.PPM18,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+18.1.15,Main Switchgear,LAS16.PPM18,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+18.1.16,Main Switchgear,LAS16.PPM18,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+18.1.17,Main Switchgear,LAS16.PPM18,PPM,Circuit Breaker LV - (LS/LSI),3000AT / 2500AT,,,3.0,3.0,0
+18.1.18,Main Switchgear,LAS16.PPM18,PPM,Circuit Breaker LV - (LS/LSI),3000AT / 2500AT,,,3.0,3.0,0
+18.1.19,Main Switchgear,LAS16.PPM18,PPM,Circuit Breaker LV - (LS/LSI),HLP02A MAIN,,,3.0,3.0,0
+18.1.20,Main Switchgear,LAS16.PPM18,PPM,Conductors LV - 3 Phase Feeder (Lot),,,,18.6,18.6,0
+18.1.21,Main Switchgear,LAS16.PPM18,PPM,Panelboard - Low Voltage,HLP01A,COMPLETED,,0.5,0.5,1
+18.1.22,Main Switchgear,LAS16.PPM18,PPM,Panelboard - Low Voltage,HLP02A,COMPLETED,,0.5,0.5,1
+18.1.23,Main Switchgear,LAS16.PPM18,PPM,Transformer (Dry Type up to 499kVA),TLVP,COMPLETED,,2.0,2.0,1
+18.1.24,Main Switchgear,LAS16.PPM18,PPM,Switch LV - Fused Disconnect,,COMPLETED,,1.5,1.5,1
+18.2.1,PDU,LAS16.PPM18,PPM,Circuit Breaker LV - Secondary Injection,1600AF / 1600AT,,,2.0,2.0,0
+18.2.2,PDU,LAS16.PPM18,PPM,Circuit Breaker LV - Secondary Injection,1600AF / 1600AT,,,2.0,2.0,0
+18.2.3,PDU,LAS16.PPM18,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+18.2.4,PDU,LAS16.PPM18,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+18.2.5,PDU,LAS16.PPM18,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+18.2.6,PDU,LAS16.PPM18,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+18.2.7,PDU,LAS16.PPM18,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+18.2.8,PDU,LAS16.PPM18,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+18.2.9,PDU,LAS16.PPM18,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+18.2.10,PDU,LAS16.PPM18,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+18.2.11,PDU,LAS16.PPM18,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+18.2.12,PDU,LAS16.PPM18,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+18.2.13,PDU,LAS16.PPM18,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+18.2.14,PDU,LAS16.PPM18,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+18.2.15,PDU,LAS16.PPM18,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+18.2.16,PDU,LAS16.PPM18,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+18.2.17,PDU,LAS16.PPM18,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+18.2.18,PDU,LAS16.PPM18,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+18.2.19,PDU,LAS16.PPM18,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+18.2.20,PDU,LAS16.PPM18,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+18.2.21,PDU,LAS16.PPM18,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+18.2.22,PDU,LAS16.PPM18,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+18.2.23,PDU,LAS16.PPM18,PPM,Transformer (Dry Type 500kVA & larger),,COMPLETED,,4.0,4.0,1
+18.2.24,PDU,LAS16.PPM18,PPM,Transformer (Dry Type 500kVA & larger),,COMPLETED,,4.0,4.0,1
+18.2.25,PDU,LAS16.PPM18,PPM,Switchboard - Low Voltage,,,,4.0,4.0,0
+18.2.26,PDU,LAS16.PPM18,PPM,Switchboard - Low Voltage,,,,4.0,4.0,0
+18.2.27,PDU,LAS16.PPM18,PPM,PDU Load Banking (Switch),,,,5.0,5.0,0
+18.2.28,PDU,LAS16.PPM18,PPM,PDU Load Banking (Switch),,,,5.0,5.0,0
+18.3.1,Grounding,LAS16.PPM18,PPM,Ground Resistance Test -  Two-Point (PPM Lot),,,,1.5,1.5,0
+18.3.2,Grounding,LAS16.PPM18,PPM,Ground Resistance Test - Clamp Method,,,,2.0,2.0,0
+19.1.1,Main Switchgear,LAS16.PPM19,PPM,Switchboard - Low Voltage,,,,4.0,4.0,0
+19.1.2,Main Switchgear,LAS16.PPM19,PPM,Circuit Breaker LV - Draw-Out,5000AF / 4200AT,,,4.0,4.0,0
+19.1.3,Main Switchgear,LAS16.PPM19,PPM,Circuit Breaker LV - Draw-Out,5000AF / 4200AT,,,4.0,4.0,0
+19.1.4,Main Switchgear,LAS16.PPM19,PPM,Circuit Breaker LV - (LS/LSI),400AF / 400AT,,,3.0,3.0,0
+19.1.5,Main Switchgear,LAS16.PPM19,PPM,Circuit Breaker LV - (LS/LSI),400AF / 400AT,,,3.0,3.0,0
+19.1.6,Main Switchgear,LAS16.PPM19,PPM,Circuit Breaker LV - (LS/LSI),600AF / 400 AT,,,3.0,3.0,0
+19.1.7,Main Switchgear,LAS16.PPM19,PPM,Circuit Breaker LV - (LS/LSI),600AF / 400 AT,,,3.0,3.0,0
+19.1.8,Main Switchgear,LAS16.PPM19,PPM,Circuit Breaker LV - (LS/LSI),600AF / 400 AT,,,3.0,3.0,0
+19.1.9,Main Switchgear,LAS16.PPM19,PPM,Circuit Breaker LV - (LS/LSI),1200AF / 800AT,,,3.0,3.0,0
+19.1.10,Main Switchgear,LAS16.PPM19,PPM,Circuit Breaker LV - (LS/LSI),1200AF / 800AT,,,3.0,3.0,0
+19.1.11,Main Switchgear,LAS16.PPM19,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+19.1.12,Main Switchgear,LAS16.PPM19,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+19.1.13,Main Switchgear,LAS16.PPM19,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+19.1.14,Main Switchgear,LAS16.PPM19,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+19.1.15,Main Switchgear,LAS16.PPM19,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+19.1.16,Main Switchgear,LAS16.PPM19,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+19.1.17,Main Switchgear,LAS16.PPM19,PPM,Circuit Breaker LV - (LS/LSI),3000AT / 2500AT,,,3.0,3.0,0
+19.1.18,Main Switchgear,LAS16.PPM19,PPM,Circuit Breaker LV - (LS/LSI),3000AT / 2500AT,,,3.0,3.0,0
+19.1.19,Main Switchgear,LAS16.PPM19,PPM,Circuit Breaker LV - (LS/LSI),HLP02A MAIN,,,3.0,3.0,0
+19.1.20,Main Switchgear,LAS16.PPM19,PPM,Conductors LV - 3 Phase Feeder (Lot),,,,18.6,18.6,0
+19.1.21,Main Switchgear,LAS16.PPM19,PPM,Panelboard - Low Voltage,HLP01A,COMPLETED,,0.5,0.5,1
+19.1.22,Main Switchgear,LAS16.PPM19,PPM,Panelboard - Low Voltage,HLP02A,COMPLETED,,0.5,0.5,1
+19.1.23,Main Switchgear,LAS16.PPM19,PPM,Transformer (Dry Type up to 499kVA),TLVP,COMPLETED,,2.0,2.0,1
+19.1.24,Main Switchgear,LAS16.PPM19,PPM,Switch LV - Fused Disconnect,,COMPLETED,,1.5,1.5,1
+19.2.1,PDU,LAS16.PPM19,PPM,Circuit Breaker LV - Secondary Injection,1600AF / 1600AT,,,2.0,2.0,0
+19.2.2,PDU,LAS16.PPM19,PPM,Circuit Breaker LV - Secondary Injection,1600AF / 1600AT,,,2.0,2.0,0
+19.2.3,PDU,LAS16.PPM19,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+19.2.4,PDU,LAS16.PPM19,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+19.2.5,PDU,LAS16.PPM19,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+19.2.6,PDU,LAS16.PPM19,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+19.2.7,PDU,LAS16.PPM19,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+19.2.8,PDU,LAS16.PPM19,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+19.2.9,PDU,LAS16.PPM19,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+19.2.10,PDU,LAS16.PPM19,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+19.2.11,PDU,LAS16.PPM19,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+19.2.12,PDU,LAS16.PPM19,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+19.2.13,PDU,LAS16.PPM19,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+19.2.14,PDU,LAS16.PPM19,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+19.2.15,PDU,LAS16.PPM19,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+19.2.16,PDU,LAS16.PPM19,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+19.2.17,PDU,LAS16.PPM19,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+19.2.18,PDU,LAS16.PPM19,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+19.2.19,PDU,LAS16.PPM19,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+19.2.20,PDU,LAS16.PPM19,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+19.2.21,PDU,LAS16.PPM19,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+19.2.22,PDU,LAS16.PPM19,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+19.2.23,PDU,LAS16.PPM19,PPM,Transformer (Dry Type 500kVA & larger),,COMPLETED,,4.0,4.0,1
+19.2.24,PDU,LAS16.PPM19,PPM,Transformer (Dry Type 500kVA & larger),,COMPLETED,,4.0,4.0,1
+19.2.25,PDU,LAS16.PPM19,PPM,Switchboard - Low Voltage,,,,4.0,4.0,0
+19.2.26,PDU,LAS16.PPM19,PPM,Switchboard - Low Voltage,,,,4.0,4.0,0
+19.2.27,PDU,LAS16.PPM19,PPM,PDU Load Banking (Switch),,,,5.0,5.0,0
+19.2.28,PDU,LAS16.PPM19,PPM,PDU Load Banking (Switch),,,,5.0,5.0,0
+19.3.1,Grounding,LAS16.PPM19,PPM,Ground Resistance Test -  Two-Point (PPM Lot),,,,1.5,1.5,0
+19.3.2,Grounding,LAS16.PPM19,PPM,Ground Resistance Test - Clamp Method,,,,2.0,2.0,0
+20.1.1,Main Switchgear,LAS16.PPM20,PPM,Switchboard - Low Voltage,,,,4.0,4.0,0
+20.1.2,Main Switchgear,LAS16.PPM20,PPM,Circuit Breaker LV - Draw-Out,5000AF / 4200AT,,,4.0,4.0,0
+20.1.3,Main Switchgear,LAS16.PPM20,PPM,Circuit Breaker LV - Draw-Out,5000AF / 4200AT,,,4.0,4.0,0
+20.1.4,Main Switchgear,LAS16.PPM20,PPM,Circuit Breaker LV - (LS/LSI),400AF / 400AT,,,3.0,3.0,0
+20.1.5,Main Switchgear,LAS16.PPM20,PPM,Circuit Breaker LV - (LS/LSI),400AF / 400AT,,,3.0,3.0,0
+20.1.6,Main Switchgear,LAS16.PPM20,PPM,Circuit Breaker LV - (LS/LSI),600AF / 400 AT,,,3.0,3.0,0
+20.1.7,Main Switchgear,LAS16.PPM20,PPM,Circuit Breaker LV - (LS/LSI),600AF / 400 AT,,,3.0,3.0,0
+20.1.8,Main Switchgear,LAS16.PPM20,PPM,Circuit Breaker LV - (LS/LSI),600AF / 400 AT,,,3.0,3.0,0
+20.1.9,Main Switchgear,LAS16.PPM20,PPM,Circuit Breaker LV - (LS/LSI),1200AF / 800AT,,,3.0,3.0,0
+20.1.10,Main Switchgear,LAS16.PPM20,PPM,Circuit Breaker LV - (LS/LSI),1200AF / 800AT,,,3.0,3.0,0
+20.1.11,Main Switchgear,LAS16.PPM20,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+20.1.12,Main Switchgear,LAS16.PPM20,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+20.1.13,Main Switchgear,LAS16.PPM20,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+20.1.14,Main Switchgear,LAS16.PPM20,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+20.1.15,Main Switchgear,LAS16.PPM20,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+20.1.16,Main Switchgear,LAS16.PPM20,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+20.1.17,Main Switchgear,LAS16.PPM20,PPM,Circuit Breaker LV - (LS/LSI),3000AT / 2500AT,,,3.0,3.0,0
+20.1.18,Main Switchgear,LAS16.PPM20,PPM,Circuit Breaker LV - (LS/LSI),3000AT / 2500AT,,,3.0,3.0,0
+20.1.19,Main Switchgear,LAS16.PPM20,PPM,Circuit Breaker LV - (LS/LSI),HLP02A MAIN,,,3.0,3.0,0
+20.1.20,Main Switchgear,LAS16.PPM20,PPM,Conductors LV - 3 Phase Feeder (Lot),,,,18.6,18.6,0
+20.1.21,Main Switchgear,LAS16.PPM20,PPM,Panelboard - Low Voltage,HLP01A,COMPLETED,,0.5,0.5,1
+20.1.22,Main Switchgear,LAS16.PPM20,PPM,Panelboard - Low Voltage,HLP02A,COMPLETED,,0.5,0.5,1
+20.1.23,Main Switchgear,LAS16.PPM20,PPM,Transformer (Dry Type up to 499kVA),TLVP,COMPLETED,,2.0,2.0,1
+20.1.24,Main Switchgear,LAS16.PPM20,PPM,Switch LV - Fused Disconnect,,COMPLETED,,1.5,1.5,1
+20.2.1,PDU,LAS16.PPM20,PPM,Circuit Breaker LV - Secondary Injection,1600AF / 1600AT,,,2.0,2.0,0
+20.2.2,PDU,LAS16.PPM20,PPM,Circuit Breaker LV - Secondary Injection,1600AF / 1600AT,,,2.0,2.0,0
+20.2.3,PDU,LAS16.PPM20,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+20.2.4,PDU,LAS16.PPM20,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+20.2.5,PDU,LAS16.PPM20,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+20.2.6,PDU,LAS16.PPM20,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+20.2.7,PDU,LAS16.PPM20,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+20.2.8,PDU,LAS16.PPM20,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+20.2.9,PDU,LAS16.PPM20,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+20.2.10,PDU,LAS16.PPM20,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+20.2.11,PDU,LAS16.PPM20,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+20.2.12,PDU,LAS16.PPM20,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+20.2.13,PDU,LAS16.PPM20,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+20.2.14,PDU,LAS16.PPM20,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+20.2.15,PDU,LAS16.PPM20,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+20.2.16,PDU,LAS16.PPM20,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+20.2.17,PDU,LAS16.PPM20,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+20.2.18,PDU,LAS16.PPM20,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+20.2.19,PDU,LAS16.PPM20,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+20.2.20,PDU,LAS16.PPM20,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+20.2.21,PDU,LAS16.PPM20,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+20.2.22,PDU,LAS16.PPM20,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+20.2.23,PDU,LAS16.PPM20,PPM,Transformer (Dry Type 500kVA & larger),,COMPLETED,,4.0,4.0,1
+20.2.24,PDU,LAS16.PPM20,PPM,Transformer (Dry Type 500kVA & larger),,COMPLETED,,4.0,4.0,1
+20.2.25,PDU,LAS16.PPM20,PPM,Switchboard - Low Voltage,,,,4.0,4.0,0
+20.2.26,PDU,LAS16.PPM20,PPM,Switchboard - Low Voltage,,,,4.0,4.0,0
+20.2.27,PDU,LAS16.PPM20,PPM,PDU Load Banking (Switch),,,,5.0,5.0,0
+20.2.28,PDU,LAS16.PPM20,PPM,PDU Load Banking (Switch),,,,5.0,5.0,0
+20.3.1,Grounding,LAS16.PPM20,PPM,Ground Resistance Test -  Two-Point (PPM Lot),,,,1.5,1.5,0
+20.3.2,Grounding,LAS16.PPM20,PPM,Ground Resistance Test - Clamp Method,,,,2.0,2.0,0
+21.1.1,Main Switchgear,LAS16.PPM21,PPM,Switchboard - Low Voltage,,,,4.0,4.0,0
+21.1.2,Main Switchgear,LAS16.PPM21,PPM,Circuit Breaker LV - Draw-Out,5000AF / 4200AT,,,4.0,4.0,0
+21.1.3,Main Switchgear,LAS16.PPM21,PPM,Circuit Breaker LV - Draw-Out,5000AF / 4200AT,,,4.0,4.0,0
+21.1.4,Main Switchgear,LAS16.PPM21,PPM,Circuit Breaker LV - (LS/LSI),400AF / 400AT,,,3.0,3.0,0
+21.1.5,Main Switchgear,LAS16.PPM21,PPM,Circuit Breaker LV - (LS/LSI),400AF / 400AT,,,3.0,3.0,0
+21.1.6,Main Switchgear,LAS16.PPM21,PPM,Circuit Breaker LV - (LS/LSI),600AF / 400 AT,,,3.0,3.0,0
+21.1.7,Main Switchgear,LAS16.PPM21,PPM,Circuit Breaker LV - (LS/LSI),600AF / 400 AT,,,3.0,3.0,0
+21.1.8,Main Switchgear,LAS16.PPM21,PPM,Circuit Breaker LV - (LS/LSI),600AF / 400 AT,,,3.0,3.0,0
+21.1.9,Main Switchgear,LAS16.PPM21,PPM,Circuit Breaker LV - (LS/LSI),1200AF / 800AT,,,3.0,3.0,0
+21.1.10,Main Switchgear,LAS16.PPM21,PPM,Circuit Breaker LV - (LS/LSI),1200AF / 800AT,,,3.0,3.0,0
+21.1.11,Main Switchgear,LAS16.PPM21,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+21.1.12,Main Switchgear,LAS16.PPM21,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+21.1.13,Main Switchgear,LAS16.PPM21,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+21.1.14,Main Switchgear,LAS16.PPM21,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+21.1.15,Main Switchgear,LAS16.PPM21,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+21.1.16,Main Switchgear,LAS16.PPM21,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+21.1.17,Main Switchgear,LAS16.PPM21,PPM,Circuit Breaker LV - (LS/LSI),3000AT / 2500AT,,,3.0,3.0,0
+21.1.18,Main Switchgear,LAS16.PPM21,PPM,Circuit Breaker LV - (LS/LSI),3000AT / 2500AT,,,3.0,3.0,0
+21.1.19,Main Switchgear,LAS16.PPM21,PPM,Circuit Breaker LV - (LS/LSI),HLP02A MAIN,,,3.0,3.0,0
+21.1.20,Main Switchgear,LAS16.PPM21,PPM,Conductors LV - 3 Phase Feeder (Lot),,,,18.6,18.6,0
+21.1.21,Main Switchgear,LAS16.PPM21,PPM,Panelboard - Low Voltage,HLP01A,COMPLETED,,0.5,0.5,1
+21.1.22,Main Switchgear,LAS16.PPM21,PPM,Panelboard - Low Voltage,HLP02A,COMPLETED,,0.5,0.5,1
+21.1.23,Main Switchgear,LAS16.PPM21,PPM,Transformer (Dry Type up to 499kVA),TLVP,COMPLETED,,2.0,2.0,1
+21.1.24,Main Switchgear,LAS16.PPM21,PPM,Switch LV - Fused Disconnect,,COMPLETED,,1.5,1.5,1
+21.2.1,PDU,LAS16.PPM21,PPM,Circuit Breaker LV - Secondary Injection,1600AF / 1600AT,,,2.0,2.0,0
+21.2.2,PDU,LAS16.PPM21,PPM,Circuit Breaker LV - Secondary Injection,1600AF / 1600AT,,,2.0,2.0,0
+21.2.3,PDU,LAS16.PPM21,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+21.2.4,PDU,LAS16.PPM21,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+21.2.5,PDU,LAS16.PPM21,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+21.2.6,PDU,LAS16.PPM21,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+21.2.7,PDU,LAS16.PPM21,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+21.2.8,PDU,LAS16.PPM21,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+21.2.9,PDU,LAS16.PPM21,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+21.2.10,PDU,LAS16.PPM21,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+21.2.11,PDU,LAS16.PPM21,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+21.2.12,PDU,LAS16.PPM21,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+21.2.13,PDU,LAS16.PPM21,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+21.2.14,PDU,LAS16.PPM21,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+21.2.15,PDU,LAS16.PPM21,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+21.2.16,PDU,LAS16.PPM21,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+21.2.17,PDU,LAS16.PPM21,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+21.2.18,PDU,LAS16.PPM21,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+21.2.19,PDU,LAS16.PPM21,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+21.2.20,PDU,LAS16.PPM21,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+21.2.21,PDU,LAS16.PPM21,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+21.2.22,PDU,LAS16.PPM21,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,,,2.0,2.0,0
+21.2.23,PDU,LAS16.PPM21,PPM,Transformer (Dry Type 500kVA & larger),,COMPLETED,,4.0,4.0,1
+21.2.24,PDU,LAS16.PPM21,PPM,Transformer (Dry Type 500kVA & larger),,COMPLETED,,4.0,4.0,1
+21.2.25,PDU,LAS16.PPM21,PPM,Switchboard - Low Voltage,,NOT STARTED,,4.0,4.0,0
+21.2.26,PDU,LAS16.PPM21,PPM,Switchboard - Low Voltage,,NOT STARTED,,4.0,4.0,0
+21.2.27,PDU,LAS16.PPM21,PPM,PDU Load Banking (Switch),,,,5.0,5.0,0
+21.2.28,PDU,LAS16.PPM21,PPM,PDU Load Banking (Switch),,,,5.0,5.0,0
+21.3.1,Grounding,LAS16.PPM21,PPM,Ground Resistance Test -  Two-Point (PPM Lot),,,,1.5,1.5,0
+21.3.2,Grounding,LAS16.PPM21,PPM,Ground Resistance Test - Clamp Method,,,,2.0,2.0,0
+22.1.1,Main Switchgear,LAS16.PPM22,PPM,Switchboard - Low Voltage,,,,4.0,4.0,0
+22.1.2,Main Switchgear,LAS16.PPM22,PPM,Circuit Breaker LV - Draw-Out,5000AF / 4200AT,,,4.0,4.0,0
+22.1.3,Main Switchgear,LAS16.PPM22,PPM,Circuit Breaker LV - Draw-Out,5000AF / 4200AT,,,4.0,4.0,0
+22.1.4,Main Switchgear,LAS16.PPM22,PPM,Circuit Breaker LV - (LS/LSI),400AF / 400AT,,,3.0,3.0,0
+22.1.5,Main Switchgear,LAS16.PPM22,PPM,Circuit Breaker LV - (LS/LSI),400AF / 400AT,,,3.0,3.0,0
+22.1.6,Main Switchgear,LAS16.PPM22,PPM,Circuit Breaker LV - (LS/LSI),600AF / 400 AT,,,3.0,3.0,0
+22.1.7,Main Switchgear,LAS16.PPM22,PPM,Circuit Breaker LV - (LS/LSI),600AF / 400 AT,,,3.0,3.0,0
+22.1.8,Main Switchgear,LAS16.PPM22,PPM,Circuit Breaker LV - (LS/LSI),600AF / 400 AT,,,3.0,3.0,0
+22.1.9,Main Switchgear,LAS16.PPM22,PPM,Circuit Breaker LV - (LS/LSI),1200AF / 800AT,,,3.0,3.0,0
+22.1.10,Main Switchgear,LAS16.PPM22,PPM,Circuit Breaker LV - (LS/LSI),1200AF / 800AT,,,3.0,3.0,0
+22.1.11,Main Switchgear,LAS16.PPM22,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+22.1.12,Main Switchgear,LAS16.PPM22,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+22.1.13,Main Switchgear,LAS16.PPM22,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+22.1.14,Main Switchgear,LAS16.PPM22,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+22.1.15,Main Switchgear,LAS16.PPM22,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+22.1.16,Main Switchgear,LAS16.PPM22,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+22.1.17,Main Switchgear,LAS16.PPM22,PPM,Circuit Breaker LV - (LS/LSI),3000AT / 2500AT,,,3.0,3.0,0
+22.1.18,Main Switchgear,LAS16.PPM22,PPM,Circuit Breaker LV - (LS/LSI),3000AT / 2500AT,,,3.0,3.0,0
+22.1.19,Main Switchgear,LAS16.PPM22,PPM,Circuit Breaker LV - (LS/LSI),HLP02A MAIN,,,3.0,3.0,0
+22.1.20,Main Switchgear,LAS16.PPM22,PPM,Conductors LV - 3 Phase Feeder (Lot),,,,18.6,18.6,0
+22.1.21,Main Switchgear,LAS16.PPM22,PPM,Panelboard - Low Voltage,HLP01A,COMPLETED,,0.5,0.5,1
+22.1.22,Main Switchgear,LAS16.PPM22,PPM,Panelboard - Low Voltage,HLP02A,COMPLETED,,0.5,0.5,1
+22.1.23,Main Switchgear,LAS16.PPM22,PPM,Transformer (Dry Type up to 499kVA),TLVP,COMPLETED,,2.0,2.0,1
+22.1.24,Main Switchgear,LAS16.PPM22,PPM,Switch LV - Fused Disconnect,,COMPLETED,,1.5,1.5,1
+22.2.1,PDU,LAS16.PPM22,PPM,Circuit Breaker LV - Secondary Injection,1600AF / 1600AT,COMPLETED,,2.0,2.0,1
+22.2.2,PDU,LAS16.PPM22,PPM,Circuit Breaker LV - Secondary Injection,1600AF / 1600AT,COMPLETED,,2.0,2.0,1
+22.2.3,PDU,LAS16.PPM22,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,COMPLETED,,2.0,2.0,1
+22.2.4,PDU,LAS16.PPM22,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,COMPLETED,,2.0,2.0,1
+22.2.5,PDU,LAS16.PPM22,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,COMPLETED,,2.0,2.0,1
+22.2.6,PDU,LAS16.PPM22,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,COMPLETED,,2.0,2.0,1
+22.2.7,PDU,LAS16.PPM22,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,COMPLETED,,2.0,2.0,1
+22.2.8,PDU,LAS16.PPM22,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,COMPLETED,,2.0,2.0,1
+22.2.9,PDU,LAS16.PPM22,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,COMPLETED,,2.0,2.0,1
+22.2.10,PDU,LAS16.PPM22,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,COMPLETED,,2.0,2.0,1
+22.2.11,PDU,LAS16.PPM22,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,COMPLETED,,2.0,2.0,1
+22.2.12,PDU,LAS16.PPM22,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,COMPLETED,,2.0,2.0,1
+22.2.13,PDU,LAS16.PPM22,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,COMPLETED,,2.0,2.0,1
+22.2.14,PDU,LAS16.PPM22,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,COMPLETED,,2.0,2.0,1
+22.2.15,PDU,LAS16.PPM22,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,COMPLETED,,2.0,2.0,1
+22.2.16,PDU,LAS16.PPM22,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,COMPLETED,,2.0,2.0,1
+22.2.17,PDU,LAS16.PPM22,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,COMPLETED,,2.0,2.0,1
+22.2.18,PDU,LAS16.PPM22,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,COMPLETED,,2.0,2.0,1
+22.2.19,PDU,LAS16.PPM22,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,COMPLETED,,2.0,2.0,1
+22.2.20,PDU,LAS16.PPM22,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,COMPLETED,,2.0,2.0,1
+22.2.21,PDU,LAS16.PPM22,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,COMPLETED,,2.0,2.0,1
+22.2.22,PDU,LAS16.PPM22,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,COMPLETED,,2.0,2.0,1
+22.2.23,PDU,LAS16.PPM22,PPM,Transformer (Dry Type 500kVA & larger),,COMPLETED,,4.0,4.0,1
+22.2.24,PDU,LAS16.PPM22,PPM,Transformer (Dry Type 500kVA & larger),,COMPLETED,,4.0,4.0,1
+22.2.25,PDU,LAS16.PPM22,PPM,Switchboard - Low Voltage,,COMPLETED,,4.0,4.0,1
+22.2.26,PDU,LAS16.PPM22,PPM,Switchboard - Low Voltage,,COMPLETED,,4.0,4.0,1
+22.2.27,PDU,LAS16.PPM22,PPM,PDU Load Banking (Switch),,,LOW,5.0,5.0,0
+22.2.28,PDU,LAS16.PPM22,PPM,PDU Load Banking (Switch),,,LOW,5.0,5.0,0
+22.3.1,Grounding,LAS16.PPM22,PPM,Ground Resistance Test -  Two-Point (PPM Lot),,,LOW,1.5,1.5,0
+22.3.2,Grounding,LAS16.PPM22,PPM,Ground Resistance Test - Clamp Method,,,LOW,2.0,2.0,0
+23.1.1,Main Switchgear,LAS16.PPM23,PPM,Switchboard - Low Voltage,,,,4.0,4.0,0
+23.1.2,Main Switchgear,LAS16.PPM23,PPM,Circuit Breaker LV - Draw-Out,5000AF / 4200AT,,,4.0,4.0,0
+23.1.3,Main Switchgear,LAS16.PPM23,PPM,Circuit Breaker LV - Draw-Out,5000AF / 4200AT,,,4.0,4.0,0
+23.1.4,Main Switchgear,LAS16.PPM23,PPM,Circuit Breaker LV - (LS/LSI),400AF / 400AT,,,3.0,3.0,0
+23.1.5,Main Switchgear,LAS16.PPM23,PPM,Circuit Breaker LV - (LS/LSI),400AF / 400AT,,,3.0,3.0,0
+23.1.6,Main Switchgear,LAS16.PPM23,PPM,Circuit Breaker LV - (LS/LSI),600AF / 400 AT,,,3.0,3.0,0
+23.1.7,Main Switchgear,LAS16.PPM23,PPM,Circuit Breaker LV - (LS/LSI),600AF / 400 AT,,,3.0,3.0,0
+23.1.8,Main Switchgear,LAS16.PPM23,PPM,Circuit Breaker LV - (LS/LSI),600AF / 400 AT,,,3.0,3.0,0
+23.1.9,Main Switchgear,LAS16.PPM23,PPM,Circuit Breaker LV - (LS/LSI),1200AF / 800AT,,,3.0,3.0,0
+23.1.10,Main Switchgear,LAS16.PPM23,PPM,Circuit Breaker LV - (LS/LSI),1200AF / 800AT,,,3.0,3.0,0
+23.1.11,Main Switchgear,LAS16.PPM23,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+23.1.12,Main Switchgear,LAS16.PPM23,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+23.1.13,Main Switchgear,LAS16.PPM23,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+23.1.14,Main Switchgear,LAS16.PPM23,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+23.1.15,Main Switchgear,LAS16.PPM23,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+23.1.16,Main Switchgear,LAS16.PPM23,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+23.1.17,Main Switchgear,LAS16.PPM23,PPM,Circuit Breaker LV - (LS/LSI),3000AT / 2500AT,,,3.0,3.0,0
+23.1.18,Main Switchgear,LAS16.PPM23,PPM,Circuit Breaker LV - (LS/LSI),3000AT / 2500AT,,,3.0,3.0,0
+23.1.19,Main Switchgear,LAS16.PPM23,PPM,Circuit Breaker LV - (LS/LSI),HLP02A MAIN,,,3.0,3.0,0
+23.1.20,Main Switchgear,LAS16.PPM23,PPM,Conductors LV - 3 Phase Feeder (Lot),,,,18.6,18.6,0
+23.1.21,Main Switchgear,LAS16.PPM23,PPM,Panelboard - Low Voltage,HLP01A,COMPLETED,,0.5,0.5,1
+23.1.22,Main Switchgear,LAS16.PPM23,PPM,Panelboard - Low Voltage,HLP02A,COMPLETED,,0.5,0.5,1
+23.1.23,Main Switchgear,LAS16.PPM23,PPM,Transformer (Dry Type up to 499kVA),TLVP,COMPLETED,,2.0,2.0,1
+23.1.24,Main Switchgear,LAS16.PPM23,PPM,Switch LV - Fused Disconnect,,COMPLETED,,1.5,1.5,1
+23.2.1,PDU,LAS16.PPM23,PPM,Circuit Breaker LV - Secondary Injection,1600AF / 1600AT,COMPLETED,,2.0,2.0,1
+23.2.2,PDU,LAS16.PPM23,PPM,Circuit Breaker LV - Secondary Injection,1600AF / 1600AT,COMPLETED,,2.0,2.0,1
+23.2.3,PDU,LAS16.PPM23,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,COMPLETED,,2.0,2.0,1
+23.2.4,PDU,LAS16.PPM23,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,COMPLETED,,2.0,2.0,1
+23.2.5,PDU,LAS16.PPM23,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,COMPLETED,,2.0,2.0,1
+23.2.6,PDU,LAS16.PPM23,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,COMPLETED,,2.0,2.0,1
+23.2.7,PDU,LAS16.PPM23,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,COMPLETED,,2.0,2.0,1
+23.2.8,PDU,LAS16.PPM23,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,COMPLETED,,2.0,2.0,1
+23.2.9,PDU,LAS16.PPM23,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,COMPLETED,,2.0,2.0,1
+23.2.10,PDU,LAS16.PPM23,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,COMPLETED,,2.0,2.0,1
+23.2.11,PDU,LAS16.PPM23,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,COMPLETED,,2.0,2.0,1
+23.2.12,PDU,LAS16.PPM23,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,COMPLETED,,2.0,2.0,1
+23.2.13,PDU,LAS16.PPM23,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,COMPLETED,,2.0,2.0,1
+23.2.14,PDU,LAS16.PPM23,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,COMPLETED,,2.0,2.0,1
+23.2.15,PDU,LAS16.PPM23,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,COMPLETED,,2.0,2.0,1
+23.2.16,PDU,LAS16.PPM23,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,COMPLETED,,2.0,2.0,1
+23.2.17,PDU,LAS16.PPM23,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,COMPLETED,,2.0,2.0,1
+23.2.18,PDU,LAS16.PPM23,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,COMPLETED,,2.0,2.0,1
+23.2.19,PDU,LAS16.PPM23,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,COMPLETED,,2.0,2.0,1
+23.2.20,PDU,LAS16.PPM23,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,COMPLETED,,2.0,2.0,1
+23.2.21,PDU,LAS16.PPM23,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,COMPLETED,,2.0,2.0,1
+23.2.22,PDU,LAS16.PPM23,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,COMPLETED,,2.0,2.0,1
+23.2.23,PDU,LAS16.PPM23,PPM,Transformer (Dry Type 500kVA & larger),,COMPLETED,,4.0,4.0,1
+23.2.24,PDU,LAS16.PPM23,PPM,Transformer (Dry Type 500kVA & larger),,COMPLETED,,4.0,4.0,1
+23.2.25,PDU,LAS16.PPM23,PPM,Switchboard - Low Voltage,,COMPLETED,,4.0,4.0,1
+23.2.26,PDU,LAS16.PPM23,PPM,Switchboard - Low Voltage,,COMPLETED,,4.0,4.0,1
+23.2.27,PDU,LAS16.PPM23,PPM,PDU Load Banking (Switch),,,LOW,5.0,5.0,0
+23.2.28,PDU,LAS16.PPM23,PPM,PDU Load Banking (Switch),,,LOW,5.0,5.0,0
+23.3.1,Grounding,LAS16.PPM23,PPM,Ground Resistance Test -  Two-Point (PPM Lot),,,LOW,1.5,1.5,0
+23.3.2,Grounding,LAS16.PPM23,PPM,Ground Resistance Test - Clamp Method,,,LOW,2.0,2.0,0
+24.1.1,Main Switchgear,LAS16.PPM24,PPM,Switchboard - Low Voltage,,,,4.0,4.0,0
+24.1.2,Main Switchgear,LAS16.PPM24,PPM,Circuit Breaker LV - Draw-Out,5000AF / 4200AT,,,4.0,4.0,0
+24.1.3,Main Switchgear,LAS16.PPM24,PPM,Circuit Breaker LV - Draw-Out,5000AF / 4200AT,,,4.0,4.0,0
+24.1.4,Main Switchgear,LAS16.PPM24,PPM,Circuit Breaker LV - (LS/LSI),400AF / 400AT,,,3.0,3.0,0
+24.1.5,Main Switchgear,LAS16.PPM24,PPM,Circuit Breaker LV - (LS/LSI),400AF / 400AT,,,3.0,3.0,0
+24.1.6,Main Switchgear,LAS16.PPM24,PPM,Circuit Breaker LV - (LS/LSI),600AF / 400 AT,,,3.0,3.0,0
+24.1.7,Main Switchgear,LAS16.PPM24,PPM,Circuit Breaker LV - (LS/LSI),600AF / 400 AT,,,3.0,3.0,0
+24.1.8,Main Switchgear,LAS16.PPM24,PPM,Circuit Breaker LV - (LS/LSI),600AF / 400 AT,,,3.0,3.0,0
+24.1.9,Main Switchgear,LAS16.PPM24,PPM,Circuit Breaker LV - (LS/LSI),1200AF / 800AT,,,3.0,3.0,0
+24.1.10,Main Switchgear,LAS16.PPM24,PPM,Circuit Breaker LV - (LS/LSI),1200AF / 800AT,,,3.0,3.0,0
+24.1.11,Main Switchgear,LAS16.PPM24,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+24.1.12,Main Switchgear,LAS16.PPM24,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+24.1.13,Main Switchgear,LAS16.PPM24,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+24.1.14,Main Switchgear,LAS16.PPM24,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+24.1.15,Main Switchgear,LAS16.PPM24,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+24.1.16,Main Switchgear,LAS16.PPM24,PPM,Circuit Breaker LV - (LS/LSI),2000AF / 1600AT,,,3.0,3.0,0
+24.1.17,Main Switchgear,LAS16.PPM24,PPM,Circuit Breaker LV - (LS/LSI),3000AT / 2500AT,,,3.0,3.0,0
+24.1.18,Main Switchgear,LAS16.PPM24,PPM,Circuit Breaker LV - (LS/LSI),3000AT / 2500AT,,,3.0,3.0,0
+24.1.19,Main Switchgear,LAS16.PPM24,PPM,Circuit Breaker LV - (LS/LSI),HLP02A MAIN,,,3.0,3.0,0
+24.1.20,Main Switchgear,LAS16.PPM24,PPM,Conductors LV - 3 Phase Feeder (PPM01&24),,,,19.8,19.8,0
+24.1.21,Main Switchgear,LAS16.PPM24,PPM,Panelboard - Low Voltage,HLP01A,COMPLETED,,0.5,0.5,1
+24.1.22,Main Switchgear,LAS16.PPM24,PPM,Panelboard - Low Voltage,HLP02A,COMPLETED,,0.5,0.5,1
+24.1.23,Main Switchgear,LAS16.PPM24,PPM,Transformer (Dry Type up to 499kVA),TLVP,COMPLETED,,2.0,2.0,1
+24.1.24,Main Switchgear,LAS16.PPM24,PPM,Switch LV - Fused Disconnect,,COMPLETED,,1.5,1.5,1
+24.2.1,PDU,LAS16.PPM24,PPM,Circuit Breaker LV - Secondary Injection,1600AF / 1600AT,COMPLETED,,2.0,2.0,1
+24.2.2,PDU,LAS16.PPM24,PPM,Circuit Breaker LV - Secondary Injection,1600AF / 1600AT,COMPLETED,,2.0,2.0,1
+24.2.3,PDU,LAS16.PPM24,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,COMPLETED,,2.0,2.0,1
+24.2.4,PDU,LAS16.PPM24,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,COMPLETED,,2.0,2.0,1
+24.2.5,PDU,LAS16.PPM24,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,COMPLETED,,2.0,2.0,1
+24.2.6,PDU,LAS16.PPM24,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,COMPLETED,,2.0,2.0,1
+24.2.7,PDU,LAS16.PPM24,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,COMPLETED,,2.0,2.0,1
+24.2.8,PDU,LAS16.PPM24,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,COMPLETED,,2.0,2.0,1
+24.2.9,PDU,LAS16.PPM24,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,COMPLETED,,2.0,2.0,1
+24.2.10,PDU,LAS16.PPM24,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,COMPLETED,,2.0,2.0,1
+24.2.11,PDU,LAS16.PPM24,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,COMPLETED,,2.0,2.0,1
+24.2.12,PDU,LAS16.PPM24,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,COMPLETED,,2.0,2.0,1
+24.2.13,PDU,LAS16.PPM24,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,COMPLETED,,2.0,2.0,1
+24.2.14,PDU,LAS16.PPM24,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,COMPLETED,,2.0,2.0,1
+24.2.15,PDU,LAS16.PPM24,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,COMPLETED,,2.0,2.0,1
+24.2.16,PDU,LAS16.PPM24,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,COMPLETED,,2.0,2.0,1
+24.2.17,PDU,LAS16.PPM24,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,COMPLETED,,2.0,2.0,1
+24.2.18,PDU,LAS16.PPM24,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,COMPLETED,,2.0,2.0,1
+24.2.19,PDU,LAS16.PPM24,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,COMPLETED,,2.0,2.0,1
+24.2.20,PDU,LAS16.PPM24,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,COMPLETED,,2.0,2.0,1
+24.2.21,PDU,LAS16.PPM24,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,COMPLETED,,2.0,2.0,1
+24.2.22,PDU,LAS16.PPM24,PPM,Circuit Breaker LV - Secondary Injection,400AF / 400AT,COMPLETED,,2.0,2.0,1
+24.2.23,PDU,LAS16.PPM24,PPM,Transformer (Dry Type 500kVA & larger),,COMPLETED,,4.0,4.0,1
+24.2.24,PDU,LAS16.PPM24,PPM,Transformer (Dry Type 500kVA & larger),,COMPLETED,,4.0,4.0,1
+24.2.25,PDU,LAS16.PPM24,PPM,Switchboard - Low Voltage,,COMPLETED,,4.0,4.0,1
+24.2.26,PDU,LAS16.PPM24,PPM,Switchboard - Low Voltage,,COMPLETED,,4.0,4.0,1
+24.2.27,PDU,LAS16.PPM24,PPM,PDU Load Banking (Switch),,,LOW,5.0,5.0,0
+24.2.28,PDU,LAS16.PPM24,PPM,PDU Load Banking (Switch),,,LOW,5.0,5.0,0
+24.3.1,Grounding,LAS16.PPM24,PPM,Ground Resistance Test -  Two-Point (PPM Lot),,,LOW,1.5,1.5,0
+24.3.2,Grounding,LAS16.PPM24,PPM,Ground Resistance Test - Clamp Method,,,LOW,2.0,2.0,0
+25.1.1,GDB01,LAS16.GDB01-12,GDB,Switchboard - Low Voltage,GDB SWBD,,,4.0,4.0,0
+25.1.2,GDB01,LAS16.GDB01-12,GDB,Circuit Breaker LV - Draw-Out,GDB MAIN,,,4.0,4.0,0
+25.1.3,GDB01,LAS16.GDB01-12,GDB,Circuit Breaker LV - Draw-Out,GDB LB,,,4.0,4.0,0
+25.1.4,GDB01,LAS16.GDB01-12,GDB,Transformer (Dry Type up to 499kVA),,,,2.0,2.0,0
+25.1.5,GDB01,LAS16.GDB01-12,GDB,Panelboard - Low Voltage,,,,0.5,0.5,0
+25.1.6,GDB01,LAS16.GDB01-12,GDB,Conductors LV - 3 Phase Feeder,,,,0.3,0.3,0
+25.1.7,GDB01,LAS16.GDB01-12,GDB,Ground Resistance Test - FOP (Gen),,,,4.0,4.0,0
+25.1.8,GDB01,LAS16.GDB01-12,GDB,Ground Resistance Test -  Two-Point (Gen),,,,1.0,1.0,0
+25.2.1,GDB02,LAS16.GDB01-12,GDB,Switchboard - Low Voltage,GDB SWBD,,,4.0,4.0,0
+25.2.2,GDB02,LAS16.GDB01-12,GDB,Circuit Breaker LV - Draw-Out,GDB MAIN,,,4.0,4.0,0
+25.2.3,GDB02,LAS16.GDB01-12,GDB,Circuit Breaker LV - Draw-Out,GDB LB,,,4.0,4.0,0
+25.2.4,GDB02,LAS16.GDB01-12,GDB,Transformer (Dry Type up to 499kVA),,,,2.0,2.0,0
+25.2.5,GDB02,LAS16.GDB01-12,GDB,Panelboard - Low Voltage,,,,0.5,0.5,0
+25.2.6,GDB02,LAS16.GDB01-12,GDB,Conductors LV - 3 Phase Feeder,,,,0.3,0.3,0
+25.2.7,GDB02,LAS16.GDB01-12,GDB,Ground Resistance Test - FOP (Gen),,,,4.0,4.0,0
+25.2.8,GDB02,LAS16.GDB01-12,GDB,Ground Resistance Test -  Two-Point (Gen),,,,1.0,1.0,0
+25.3.1,GDB03,LAS16.GDB01-12,GDB,Switchboard - Low Voltage,GDB SWBD,,,4.0,4.0,0
+25.3.2,GDB03,LAS16.GDB01-12,GDB,Circuit Breaker LV - Draw-Out,GDB MAIN,,,4.0,4.0,0
+25.3.3,GDB03,LAS16.GDB01-12,GDB,Circuit Breaker LV - Draw-Out,GDB LB,,,4.0,4.0,0
+25.3.4,GDB03,LAS16.GDB01-12,GDB,Transformer (Dry Type up to 499kVA),,,,2.0,2.0,0
+25.3.5,GDB03,LAS16.GDB01-12,GDB,Panelboard - Low Voltage,,,,0.5,0.5,0
+25.3.6,GDB03,LAS16.GDB01-12,GDB,Conductors LV - 3 Phase Feeder,,,,0.3,0.3,0
+25.3.7,GDB03,LAS16.GDB01-12,GDB,Ground Resistance Test - FOP (Gen),,,,4.0,4.0,0
+25.3.8,GDB03,LAS16.GDB01-12,GDB,Ground Resistance Test -  Two-Point (Gen),,,,1.0,1.0,0
+25.4.1,GDB04,LAS16.GDB01-12,GDB,Switchboard - Low Voltage,GDB SWBD,,,4.0,4.0,0
+25.4.2,GDB04,LAS16.GDB01-12,GDB,Circuit Breaker LV - Draw-Out,GDB MAIN,,,4.0,4.0,0
+25.4.3,GDB04,LAS16.GDB01-12,GDB,Circuit Breaker LV - Draw-Out,GDB LB,,,4.0,4.0,0
+25.4.4,GDB04,LAS16.GDB01-12,GDB,Transformer (Dry Type up to 499kVA),,,,2.0,2.0,0
+25.4.5,GDB04,LAS16.GDB01-12,GDB,Panelboard - Low Voltage,,,,0.5,0.5,0
+25.4.6,GDB04,LAS16.GDB01-12,GDB,Conductors LV - 3 Phase Feeder,,,,0.3,0.3,0
+25.4.7,GDB04,LAS16.GDB01-12,GDB,Ground Resistance Test - FOP (Gen),,,,4.0,4.0,0
+25.4.8,GDB04,LAS16.GDB01-12,GDB,Ground Resistance Test -  Two-Point (Gen),,,,1.0,1.0,0
+25.5.1,GDB05,LAS16.GDB01-12,GDB,Switchboard - Low Voltage,GDB SWBD,,,4.0,4.0,0
+25.5.2,GDB05,LAS16.GDB01-12,GDB,Circuit Breaker LV - Draw-Out,GDB MAIN,,,4.0,4.0,0
+25.5.3,GDB05,LAS16.GDB01-12,GDB,Circuit Breaker LV - Draw-Out,GDB LB,,,4.0,4.0,0
+25.5.4,GDB05,LAS16.GDB01-12,GDB,Transformer (Dry Type up to 499kVA),,,,2.0,2.0,0
+25.5.5,GDB05,LAS16.GDB01-12,GDB,Panelboard - Low Voltage,,,,0.5,0.5,0
+25.5.6,GDB05,LAS16.GDB01-12,GDB,Conductors LV - 3 Phase Feeder,,,,0.3,0.3,0
+25.5.7,GDB05,LAS16.GDB01-12,GDB,Ground Resistance Test - FOP (Gen),,,,4.0,4.0,0
+25.5.8,GDB05,LAS16.GDB01-12,GDB,Ground Resistance Test -  Two-Point (Gen),,,,1.0,1.0,0
+25.6.1,GDB06,LAS16.GDB01-12,GDB,Switchboard - Low Voltage,GDB SWBD,,,4.0,4.0,0
+25.6.2,GDB06,LAS16.GDB01-12,GDB,Circuit Breaker LV - Draw-Out,GDB MAIN,,,4.0,4.0,0
+25.6.3,GDB06,LAS16.GDB01-12,GDB,Circuit Breaker LV - Draw-Out,GDB LB,,,4.0,4.0,0
+25.6.4,GDB06,LAS16.GDB01-12,GDB,Transformer (Dry Type up to 499kVA),,,,2.0,2.0,0
+25.6.5,GDB06,LAS16.GDB01-12,GDB,Panelboard - Low Voltage,,,,0.5,0.5,0
+25.6.6,GDB06,LAS16.GDB01-12,GDB,Conductors LV - 3 Phase Feeder,,,,0.3,0.3,0
+25.6.7,GDB06,LAS16.GDB01-12,GDB,Ground Resistance Test - FOP (Gen),,,,4.0,4.0,0
+25.6.8,GDB06,LAS16.GDB01-12,GDB,Ground Resistance Test -  Two-Point (Gen),,,,1.0,1.0,0
+25.7.1,GDB07,LAS16.GDB01-12,GDB,Switchboard - Low Voltage,GDB SWBD,,,4.0,4.0,0
+25.7.2,GDB07,LAS16.GDB01-12,GDB,Circuit Breaker LV - Draw-Out,GDB MAIN,,,4.0,4.0,0
+25.7.3,GDB07,LAS16.GDB01-12,GDB,Circuit Breaker LV - Draw-Out,GDB LB,,,4.0,4.0,0
+25.7.4,GDB07,LAS16.GDB01-12,GDB,Transformer (Dry Type up to 499kVA),,,,2.0,2.0,0
+25.7.5,GDB07,LAS16.GDB01-12,GDB,Panelboard - Low Voltage,,,,0.5,0.5,0
+25.7.6,GDB07,LAS16.GDB01-12,GDB,Conductors LV - 3 Phase Feeder,,,,0.3,0.3,0
+25.7.7,GDB07,LAS16.GDB01-12,GDB,Ground Resistance Test - FOP (Gen),,,,4.0,4.0,0
+25.7.8,GDB07,LAS16.GDB01-12,GDB,Ground Resistance Test -  Two-Point (Gen),,,,1.0,1.0,0
+25.8.1,GDB08,LAS16.GDB01-12,GDB,Switchboard - Low Voltage,GDB SWBD,,,4.0,4.0,0
+25.8.2,GDB08,LAS16.GDB01-12,GDB,Circuit Breaker LV - Draw-Out,GDB MAIN,,,4.0,4.0,0
+25.8.3,GDB08,LAS16.GDB01-12,GDB,Circuit Breaker LV - Draw-Out,GDB LB,,,4.0,4.0,0
+25.8.4,GDB08,LAS16.GDB01-12,GDB,Transformer (Dry Type up to 499kVA),,,,2.0,2.0,0
+25.8.5,GDB08,LAS16.GDB01-12,GDB,Panelboard - Low Voltage,,,,0.5,0.5,0
+25.8.6,GDB08,LAS16.GDB01-12,GDB,Conductors LV - 3 Phase Feeder,,,,0.3,0.3,0
+25.8.7,GDB08,LAS16.GDB01-12,GDB,Ground Resistance Test - FOP (Gen),,,,4.0,4.0,0
+25.8.8,GDB08,LAS16.GDB01-12,GDB,Ground Resistance Test -  Two-Point (Gen),,,,1.0,1.0,0
+25.9.1,GDB09,LAS16.GDB01-12,GDB,Switchboard - Low Voltage,GDB SWBD,,,4.0,4.0,0
+25.9.2,GDB09,LAS16.GDB01-12,GDB,Circuit Breaker LV - Draw-Out,GDB MAIN,,,4.0,4.0,0
+25.9.3,GDB09,LAS16.GDB01-12,GDB,Circuit Breaker LV - Draw-Out,GDB LB,,,4.0,4.0,0
+25.9.4,GDB09,LAS16.GDB01-12,GDB,Transformer (Dry Type up to 499kVA),,,,2.0,2.0,0
+25.9.5,GDB09,LAS16.GDB01-12,GDB,Panelboard - Low Voltage,,,,0.5,0.5,0
+25.9.6,GDB09,LAS16.GDB01-12,GDB,Conductors LV - 3 Phase Feeder,,,,0.3,0.3,0
+25.9.7,GDB09,LAS16.GDB01-12,GDB,Ground Resistance Test - FOP (Gen),,,,4.0,4.0,0
+25.9.8,GDB09,LAS16.GDB01-12,GDB,Ground Resistance Test -  Two-Point (Gen),,,,1.0,1.0,0
+25.10.1,GDB10,LAS16.GDB01-12,GDB,Switchboard - Low Voltage,GDB SWBD,,,4.0,4.0,0
+25.10.2,GDB10,LAS16.GDB01-12,GDB,Circuit Breaker LV - Draw-Out,GDB MAIN,,,4.0,4.0,0
+25.10.3,GDB10,LAS16.GDB01-12,GDB,Circuit Breaker LV - Draw-Out,GDB LB,,,4.0,4.0,0
+25.10.4,GDB10,LAS16.GDB01-12,GDB,Transformer (Dry Type up to 499kVA),,,,2.0,2.0,0
+25.10.5,GDB10,LAS16.GDB01-12,GDB,Panelboard - Low Voltage,,,,0.5,0.5,0
+25.10.6,GDB10,LAS16.GDB01-12,GDB,Conductors LV - 3 Phase Feeder,,,,0.3,0.3,0
+25.10.7,GDB10,LAS16.GDB01-12,GDB,Ground Resistance Test - FOP (Gen),,,,4.0,4.0,0
+25.10.8,GDB10,LAS16.GDB01-12,GDB,Ground Resistance Test -  Two-Point (Gen),,,,1.0,1.0,0
+25.11.1,GDB11,LAS16.GDB01-12,GDB,Switchboard - Low Voltage,GDB SWBD,,,4.0,4.0,0
+25.11.2,GDB11,LAS16.GDB01-12,GDB,Circuit Breaker LV - Draw-Out,GDB MAIN,,,4.0,4.0,0
+25.11.3,GDB11,LAS16.GDB01-12,GDB,Circuit Breaker LV - Draw-Out,GDB LB,,,4.0,4.0,0
+25.11.4,GDB11,LAS16.GDB01-12,GDB,Transformer (Dry Type up to 499kVA),,,,2.0,2.0,0
+25.11.5,GDB11,LAS16.GDB01-12,GDB,Panelboard - Low Voltage,,,,0.5,0.5,0
+25.11.6,GDB11,LAS16.GDB01-12,GDB,Conductors LV - 3 Phase Feeder,,,,0.3,0.3,0
+25.11.7,GDB11,LAS16.GDB01-12,GDB,Ground Resistance Test - FOP (Gen),,,,4.0,4.0,0
+25.11.8,GDB11,LAS16.GDB01-12,GDB,Ground Resistance Test -  Two-Point (Gen),,,,1.0,1.0,0
+25.12.1,GDB12,LAS16.GDB01-12,GDB,Switchboard - Low Voltage,GDB SWBD,,,4.0,4.0,0
+25.12.2,GDB12,LAS16.GDB01-12,GDB,Circuit Breaker LV - Draw-Out,GDB MAIN,,,4.0,4.0,0
+25.12.3,GDB12,LAS16.GDB01-12,GDB,Circuit Breaker LV - Draw-Out,GDB LB,,,4.0,4.0,0
+25.12.4,GDB12,LAS16.GDB01-12,GDB,Transformer (Dry Type up to 499kVA),,,,2.0,2.0,0
+25.12.5,GDB12,LAS16.GDB01-12,GDB,Panelboard - Low Voltage,,,,0.5,0.5,0
+25.12.6,GDB12,LAS16.GDB01-12,GDB,Conductors LV - 3 Phase Feeder,,,,0.3,0.3,0
+25.12.7,GDB12,LAS16.GDB01-12,GDB,Ground Resistance Test - FOP (Gen),,,,4.0,4.0,0
+25.12.8,GDB12,LAS16.GDB01-12,GDB,Ground Resistance Test -  Two-Point (Gen),,,,1.0,1.0,0
+26.1.1,GDB13,LAS16.GDB13-24,GDB,Switchboard - Low Voltage,GDB SWBD,COMPLETED,,4.0,4.0,1
+26.1.2,GDB13,LAS16.GDB13-24,GDB,Circuit Breaker LV - Draw-Out,GDB MAIN,,,4.0,4.0,0
+26.1.3,GDB13,LAS16.GDB13-24,GDB,Circuit Breaker LV - Draw-Out,GDB LB,,,4.0,4.0,0
+26.1.4,GDB13,LAS16.GDB13-24,GDB,Transformer (Dry Type up to 499kVA),,COMPLETED,,2.0,2.0,1
+26.1.5,GDB13,LAS16.GDB13-24,GDB,Panelboard - Low Voltage,,COMPLETED,,0.5,0.5,1
+26.1.6,GDB13,LAS16.GDB13-24,GDB,Conductors LV - 3 Phase Feeder,,,,0.3,0.3,0
+26.1.7,GDB13,LAS16.GDB13-24,GDB,Ground Resistance Test - FOP (Gen),,,,4.0,4.0,0
+26.1.8,GDB13,LAS16.GDB13-24,GDB,Ground Resistance Test -  Two-Point (Gen),,,,1.0,1.0,0
+26.2.1,GDB14,LAS16.GDB13-24,GDB,Switchboard - Low Voltage,GDB SWBD,COMPLETED,,4.0,4.0,1
+26.2.2,GDB14,LAS16.GDB13-24,GDB,Circuit Breaker LV - Draw-Out,GDB MAIN,,,4.0,4.0,0
+26.2.3,GDB14,LAS16.GDB13-24,GDB,Circuit Breaker LV - Draw-Out,GDB LB,,,4.0,4.0,0
+26.2.4,GDB14,LAS16.GDB13-24,GDB,Transformer (Dry Type up to 499kVA),,COMPLETED,,2.0,2.0,1
+26.2.5,GDB14,LAS16.GDB13-24,GDB,Panelboard - Low Voltage,,COMPLETED,,0.5,0.5,1
+26.2.6,GDB14,LAS16.GDB13-24,GDB,Conductors LV - 3 Phase Feeder,,,,0.3,0.3,0
+26.2.7,GDB14,LAS16.GDB13-24,GDB,Ground Resistance Test - FOP (Gen),,,,4.0,4.0,0
+26.2.8,GDB14,LAS16.GDB13-24,GDB,Ground Resistance Test -  Two-Point (Gen),,,,1.0,1.0,0
+26.3.1,GDB15,LAS16.GDB13-24,GDB,Switchboard - Low Voltage,GDB SWBD,COMPLETED,,4.0,4.0,1
+26.3.2,GDB15,LAS16.GDB13-24,GDB,Circuit Breaker LV - Draw-Out,GDB MAIN,,,4.0,4.0,0
+26.3.3,GDB15,LAS16.GDB13-24,GDB,Circuit Breaker LV - Draw-Out,GDB LB,,,4.0,4.0,0
+26.3.4,GDB15,LAS16.GDB13-24,GDB,Transformer (Dry Type up to 499kVA),,COMPLETED,,2.0,2.0,1
+26.3.5,GDB15,LAS16.GDB13-24,GDB,Panelboard - Low Voltage,,COMPLETED,,0.5,0.5,1
+26.3.6,GDB15,LAS16.GDB13-24,GDB,Conductors LV - 3 Phase Feeder,,,,0.3,0.3,0
+26.3.7,GDB15,LAS16.GDB13-24,GDB,Ground Resistance Test - FOP (Gen),,,,4.0,4.0,0
+26.3.8,GDB15,LAS16.GDB13-24,GDB,Ground Resistance Test -  Two-Point (Gen),,,,1.0,1.0,0
+26.4.1,GDB16,LAS16.GDB13-24,GDB,Switchboard - Low Voltage,GDB SWBD,COMPLETED,,4.0,4.0,1
+26.4.2,GDB16,LAS16.GDB13-24,GDB,Circuit Breaker LV - Draw-Out,GDB MAIN,,,4.0,4.0,0
+26.4.3,GDB16,LAS16.GDB13-24,GDB,Circuit Breaker LV - Draw-Out,GDB LB,,,4.0,4.0,0
+26.4.4,GDB16,LAS16.GDB13-24,GDB,Transformer (Dry Type up to 499kVA),,COMPLETED,,2.0,2.0,1
+26.4.5,GDB16,LAS16.GDB13-24,GDB,Panelboard - Low Voltage,,COMPLETED,,0.5,0.5,1
+26.4.6,GDB16,LAS16.GDB13-24,GDB,Conductors LV - 3 Phase Feeder,,,,0.3,0.3,0
+26.4.7,GDB16,LAS16.GDB13-24,GDB,Ground Resistance Test - FOP (Gen),,,,4.0,4.0,0
+26.4.8,GDB16,LAS16.GDB13-24,GDB,Ground Resistance Test -  Two-Point (Gen),,,,1.0,1.0,0
+26.5.1,GDB17,LAS16.GDB13-24,GDB,Switchboard - Low Voltage,GDB SWBD,COMPLETED,,4.0,4.0,1
+26.5.2,GDB17,LAS16.GDB13-24,GDB,Circuit Breaker LV - Draw-Out,GDB MAIN,,,4.0,4.0,0
+26.5.3,GDB17,LAS16.GDB13-24,GDB,Circuit Breaker LV - Draw-Out,GDB LB,,,4.0,4.0,0
+26.5.4,GDB17,LAS16.GDB13-24,GDB,Transformer (Dry Type up to 499kVA),,COMPLETED,,2.0,2.0,1
+26.5.5,GDB17,LAS16.GDB13-24,GDB,Panelboard - Low Voltage,,COMPLETED,,0.5,0.5,1
+26.5.6,GDB17,LAS16.GDB13-24,GDB,Conductors LV - 3 Phase Feeder,,,,0.3,0.3,0
+26.5.7,GDB17,LAS16.GDB13-24,GDB,Ground Resistance Test - FOP (Gen),,,,4.0,4.0,0
+26.5.8,GDB17,LAS16.GDB13-24,GDB,Ground Resistance Test -  Two-Point (Gen),,,,1.0,1.0,0
+26.6.1,GDB18,LAS16.GDB13-24,GDB,Switchboard - Low Voltage,GDB SWBD,COMPLETED,,4.0,4.0,1
+26.6.2,GDB18,LAS16.GDB13-24,GDB,Circuit Breaker LV - Draw-Out,GDB MAIN,,,4.0,4.0,0
+26.6.3,GDB18,LAS16.GDB13-24,GDB,Circuit Breaker LV - Draw-Out,GDB LB,,,4.0,4.0,0
+26.6.4,GDB18,LAS16.GDB13-24,GDB,Transformer (Dry Type up to 499kVA),,COMPLETED,,2.0,2.0,1
+26.6.5,GDB18,LAS16.GDB13-24,GDB,Panelboard - Low Voltage,,COMPLETED,,0.5,0.5,1
+26.6.6,GDB18,LAS16.GDB13-24,GDB,Conductors LV - 3 Phase Feeder,,,,0.3,0.3,0
+26.6.7,GDB18,LAS16.GDB13-24,GDB,Ground Resistance Test - FOP (Gen),,,,4.0,4.0,0
+26.6.8,GDB18,LAS16.GDB13-24,GDB,Ground Resistance Test -  Two-Point (Gen),,,,1.0,1.0,0
+26.7.1,GDB19,LAS16.GDB13-24,GDB,Switchboard - Low Voltage,GDB SWBD,COMPLETED,,4.0,4.0,1
+26.7.2,GDB19,LAS16.GDB13-24,GDB,Circuit Breaker LV - Draw-Out,GDB MAIN,,,4.0,4.0,0
+26.7.3,GDB19,LAS16.GDB13-24,GDB,Circuit Breaker LV - Draw-Out,GDB LB,,,4.0,4.0,0
+26.7.4,GDB19,LAS16.GDB13-24,GDB,Transformer (Dry Type up to 499kVA),,NOT STARTED,HIGH,2.0,2.0,0
+26.7.5,GDB19,LAS16.GDB13-24,GDB,Panelboard - Low Voltage,,COMPLETED,,0.5,0.5,1
+26.7.6,GDB19,LAS16.GDB13-24,GDB,Conductors LV - 3 Phase Feeder,,,,0.3,0.3,0
+26.7.7,GDB19,LAS16.GDB13-24,GDB,Ground Resistance Test - FOP (Gen),,,,4.0,4.0,0
+26.7.8,GDB19,LAS16.GDB13-24,GDB,Ground Resistance Test -  Two-Point (Gen),,,,1.0,1.0,0
+26.8.1,GDB20,LAS16.GDB13-24,GDB,Switchboard - Low Voltage,GDB SWBD,COMPLETED,,4.0,4.0,1
+26.8.2,GDB20,LAS16.GDB13-24,GDB,Circuit Breaker LV - Draw-Out,GDB MAIN,,,4.0,4.0,0
+26.8.3,GDB20,LAS16.GDB13-24,GDB,Circuit Breaker LV - Draw-Out,GDB LB,,,4.0,4.0,0
+26.8.4,GDB20,LAS16.GDB13-24,GDB,Transformer (Dry Type up to 499kVA),,COMPLETED,,2.0,2.0,1
+26.8.5,GDB20,LAS16.GDB13-24,GDB,Panelboard - Low Voltage,,COMPLETED,,0.5,0.5,1
+26.8.6,GDB20,LAS16.GDB13-24,GDB,Conductors LV - 3 Phase Feeder,,,,0.3,0.3,0
+26.8.7,GDB20,LAS16.GDB13-24,GDB,Ground Resistance Test - FOP (Gen),,,,4.0,4.0,0
+26.8.8,GDB20,LAS16.GDB13-24,GDB,Ground Resistance Test -  Two-Point (Gen),,,,1.0,1.0,0
+26.9.1,GDB21,LAS16.GDB13-24,GDB,Switchboard - Low Voltage,GDB SWBD,COMPLETED,,4.0,4.0,1
+26.9.2,GDB21,LAS16.GDB13-24,GDB,Circuit Breaker LV - Draw-Out,GDB MAIN,,,4.0,4.0,0
+26.9.3,GDB21,LAS16.GDB13-24,GDB,Circuit Breaker LV - Draw-Out,GDB LB,,,4.0,4.0,0
+26.9.4,GDB21,LAS16.GDB13-24,GDB,Transformer (Dry Type up to 499kVA),,COMPLETED,,2.0,2.0,1
+26.9.5,GDB21,LAS16.GDB13-24,GDB,Panelboard - Low Voltage,,COMPLETED,,0.5,0.5,1
+26.9.6,GDB21,LAS16.GDB13-24,GDB,Conductors LV - 3 Phase Feeder,,,,0.3,0.3,0
+26.9.7,GDB21,LAS16.GDB13-24,GDB,Ground Resistance Test - FOP (Gen),,,,4.0,4.0,0
+26.9.8,GDB21,LAS16.GDB13-24,GDB,Ground Resistance Test -  Two-Point (Gen),,,,1.0,1.0,0
+26.10.1,GDB22,LAS16.GDB13-24,GDB,Switchboard - Low Voltage,GDB SWBD,COMPLETED,,4.0,4.0,1
+26.10.2,GDB22,LAS16.GDB13-24,GDB,Circuit Breaker LV - Draw-Out,GDB MAIN,,,4.0,4.0,0
+26.10.3,GDB22,LAS16.GDB13-24,GDB,Circuit Breaker LV - Draw-Out,GDB LB,,,4.0,4.0,0
+26.10.4,GDB22,LAS16.GDB13-24,GDB,Transformer (Dry Type up to 499kVA),,COMPLETED,,2.0,2.0,1
+26.10.5,GDB22,LAS16.GDB13-24,GDB,Panelboard - Low Voltage,,COMPLETED,,0.5,0.5,1
+26.10.6,GDB22,LAS16.GDB13-24,GDB,Conductors LV - 3 Phase Feeder,,,,0.3,0.3,0
+26.10.7,GDB22,LAS16.GDB13-24,GDB,Ground Resistance Test - FOP (Gen),,,,4.0,4.0,0
+26.10.8,GDB22,LAS16.GDB13-24,GDB,Ground Resistance Test -  Two-Point (Gen),,,,1.0,1.0,0
+26.11.1,GDB23,LAS16.GDB13-24,GDB,Switchboard - Low Voltage,GDB SWBD,COMPLETED,,4.0,4.0,1
+26.11.2,GDB23,LAS16.GDB13-24,GDB,Circuit Breaker LV - Draw-Out,GDB MAIN,NOT STARTED,,4.0,4.0,0
+26.11.3,GDB23,LAS16.GDB13-24,GDB,Circuit Breaker LV - Draw-Out,GDB LB,NOT STARTED,,4.0,4.0,0
+26.11.4,GDB23,LAS16.GDB13-24,GDB,Transformer (Dry Type up to 499kVA),,COMPLETED,,2.0,2.0,1
+26.11.5,GDB23,LAS16.GDB13-24,GDB,Panelboard - Low Voltage,,COMPLETED,,0.5,0.5,1
+26.11.6,GDB23,LAS16.GDB13-24,GDB,Conductors LV - 3 Phase Feeder,,,,0.3,0.3,0
+26.11.7,GDB23,LAS16.GDB13-24,GDB,Ground Resistance Test - FOP (Gen),,,,4.0,4.0,0
+26.11.8,GDB23,LAS16.GDB13-24,GDB,Ground Resistance Test -  Two-Point (Gen),,,,1.0,1.0,0
+26.12.1,GDB24,LAS16.GDB13-24,GDB,Switchboard - Low Voltage,GDB SWBD,COMPLETED,,4.0,4.0,1
+26.12.2,GDB24,LAS16.GDB13-24,GDB,Circuit Breaker LV - Draw-Out,GDB MAIN,NOT STARTED,,4.0,4.0,0
+26.12.3,GDB24,LAS16.GDB13-24,GDB,Circuit Breaker LV - Draw-Out,GDB LB,NOT STARTED,,4.0,4.0,0
+26.12.4,GDB24,LAS16.GDB13-24,GDB,Transformer (Dry Type up to 499kVA),,COMPLETED,,2.0,2.0,1
+26.12.5,GDB24,LAS16.GDB13-24,GDB,Panelboard - Low Voltage,,COMPLETED,,0.5,0.5,1
+26.12.6,GDB24,LAS16.GDB13-24,GDB,Conductors LV - 3 Phase Feeder,,,,0.3,0.3,0
+26.12.7,GDB24,LAS16.GDB13-24,GDB,Ground Resistance Test - FOP (Gen),,,,4.0,4.0,0
+26.12.8,GDB24,LAS16.GDB13-24,GDB,Ground Resistance Test -  Two-Point (Gen),,,,1.0,1.0,0
+27.1.1,GEN-H,LAS16.HOUSE,HOUSE,Circuit Breaker LV - (LS/LSI),1200AT / 1200AT,,,3.0,3.0,0
+27.1.2,GEN-H,LAS16.HOUSE,HOUSE,Panelboard - Low Voltage,LGH1,,,0.5,0.5,0
+27.1.3,GEN-H,LAS16.HOUSE,HOUSE,Conductors LV - 3 Phase Feeder (GEN-H),,,,1.2,1.2,0
+27.1.4,GEN-H,LAS16.HOUSE,HOUSE,Ground Resistance Test - FOP (Gen),,,,4.0,4.0,0
+27.2.1,SES-H,LAS16.HOUSE,HOUSE,Switchboard - Low Voltage,SES-H,,,4.0,4.0,0
+27.2.2,SES-H,LAS16.HOUSE,HOUSE,Circuit Breaker LV - Draw-Out,1200AT / 1200AT,,,4.0,4.0,0
+27.2.3,SES-H,LAS16.HOUSE,HOUSE,Conductors LV - 3 Phase Feeder (SES-H),,,,1.2,1.2,0
+27.3.1,DB-H,LAS16.HOUSE,HOUSE,Panelboard - Low Voltage,DB-H,,,0.5,0.5,0
+27.3.2,DB-H,LAS16.HOUSE,HOUSE,Conductors LV - 3 Phase Feeder (DB-H),,,,2.7,2.7,0
+27.3.3,DB-H,LAS16.HOUSE,HOUSE,Circuit Breaker LV - (LS/LSI),HP1,,,3.0,3.0,0
+27.3.4,DB-H,LAS16.HOUSE,HOUSE,Circuit Breaker LV - (LS/LSI),HP2,,,3.0,3.0,0
+27.3.5,DB-H,LAS16.HOUSE,HOUSE,Panelboard - Low Voltage,HP1,,,0.5,0.5,0
+27.4.1,HP1,LAS16.HOUSE,HOUSE,Conductors LV - 3 Phase Feeder (HP1/HP2),,,,1.5,1.5,0
+27.4.2,HP1,LAS16.HOUSE,HOUSE,Circuit Breaker LV - (LS/LSI),400AF / 400AT,,,3.0,3.0,0
+27.4.3,HP1,LAS16.HOUSE,HOUSE,Circuit Breaker LV - (LS/LSI),400AF / 400AT,,,3.0,3.0,0
+27.4.4,HP1,LAS16.HOUSE,HOUSE,Circuit Breaker LV - (LS/LSI),400AF / 400AT,,,3.0,3.0,0
+27.5.1,HP2,LAS16.HOUSE,HOUSE,Panelboard - Low Voltage,HP2,,,0.5,0.5,0
+27.5.2,HP2,LAS16.HOUSE,HOUSE,Conductors LV - 3 Phase Feeder (HP1/HP2),,,,1.5,1.5,0
+27.5.3,HP2,LAS16.HOUSE,HOUSE,Circuit Breaker LV - (LS/LSI),400AF / 400AT,,,3.0,3.0,0
+27.5.4,HP2,LAS16.HOUSE,HOUSE,Circuit Breaker LV - (LS/LSI),400AF / 400AT,,,3.0,3.0,0
+27.5.5,HP2,LAS16.HOUSE,HOUSE,Circuit Breaker LV - (LS/LSI),400AF / 400AT,,,3.0,3.0,0
+27.6.1,HUPS1,LAS16.HOUSE,HOUSE,Transformer (Dry Type up to 499kVA),,,,2.0,2.0,0
+27.6.2,HUPS1,LAS16.HOUSE,HOUSE,Conductors LV - 3 Phase Feeder (HUPS1/HUPS2),,,,0.9,0.9,0
+27.6.3,HUPS1,LAS16.HOUSE,HOUSE,Panelboard - Low Voltage,U1A1,,,0.5,0.5,0
+27.6.4,HUPS1,LAS16.HOUSE,HOUSE,Panelboard - Low Voltage,U1A2,,,0.5,0.5,0
+27.7.1,HUPS2,LAS16.HOUSE,HOUSE,Transformer (Dry Type up to 499kVA),,,,2.0,2.0,0
+27.7.2,HUPS2,LAS16.HOUSE,HOUSE,Conductors LV - 3 Phase Feeder (HUPS1/HUPS2),,,,0.9,0.9,0
+27.7.3,HUPS2,LAS16.HOUSE,HOUSE,Panelboard - Low Voltage,U2A1,,,0.5,0.5,0
+27.7.4,HUPS2,LAS16.HOUSE,HOUSE,Panelboard - Low Voltage,U2A2,,,0.5,0.5,0
+27.8.1,HPP1.1,LAS16.HOUSE,HOUSE,Conductors LV - 3 Phase Feeder (HPP1.1/2.1),,,,1.2,1.2,0
+27.8.2,HPP1.1,LAS16.HOUSE,HOUSE,Transformer (Dry Type up to 499kVA),TLPP1.1,,,2.0,2.0,0
+27.8.3,HPP1.1,LAS16.HOUSE,HOUSE,Transformer (Dry Type up to 499kVA),TLPP1.1A,,,2.0,2.0,0
+27.8.4,HPP1.1,LAS16.HOUSE,HOUSE,Panelboard - Low Voltage,HPP1.1,,,0.5,0.5,0
+27.8.5,HPP1.1,LAS16.HOUSE,HOUSE,Panelboard - Low Voltage,LPP1.1,,,0.5,0.5,0
+27.8.6,HPP1.1,LAS16.HOUSE,HOUSE,Panelboard - Low Voltage,LPP1.1A,,,0.5,0.5,0
+27.9.1,HPP2.1,LAS16.HOUSE,HOUSE,Conductors LV - 3 Phase Feeder (HPP1.1/2.1),,,,1.2,1.2,0
+27.9.2,HPP2.1,LAS16.HOUSE,HOUSE,Transformer (Dry Type up to 499kVA),TLPP2.1,,,2.0,2.0,0
+27.9.3,HPP2.1,LAS16.HOUSE,HOUSE,Transformer (Dry Type up to 499kVA),TLPP2.1A,,,2.0,2.0,0
+27.9.4,HPP2.1,LAS16.HOUSE,HOUSE,Panelboard - Low Voltage,HPP2.1,,,0.5,0.5,0
+27.9.5,HPP2.1,LAS16.HOUSE,HOUSE,Panelboard - Low Voltage,LPP2.1,,,0.5,0.5,0
+27.9.6,HPP2.1,LAS16.HOUSE,HOUSE,Panelboard - Low Voltage,LPP2.1A,,,0.5,0.5,0
+27.10.1,HPC1.1,LAS16.HOUSE,HOUSE,Conductors LV - 3 Phase Feeder (HPC1.1/2.1),,,,1.8,1.8,0
+27.10.2,HPC1.1,LAS16.HOUSE,HOUSE,Transformer (Dry Type up to 499kVA),TLPC1,,,2.0,2.0,0
+27.10.3,HPC1.1,LAS16.HOUSE,HOUSE,Panelboard - Low Voltage,HPC1.1,,,0.5,0.5,0
+27.10.4,HPC1.1,LAS16.HOUSE,HOUSE,Panelboard - Low Voltage,LPC1.1,,,0.5,0.5,0
+27.10.5,HPC1.1,LAS16.HOUSE,HOUSE,Panelboard - Low Voltage,LPC1.2,,,0.5,0.5,0
+27.11.1,HPC2.1,LAS16.HOUSE,HOUSE,Conductors LV - 3 Phase Feeder (HPC1.1/2.1),,,,1.8,1.8,0
+27.11.2,HPC2.1,LAS16.HOUSE,HOUSE,Transformer (Dry Type up to 499kVA),TLPC2,,,2.0,2.0,0
+27.11.3,HPC2.1,LAS16.HOUSE,HOUSE,Panelboard - Low Voltage,HPC2.1,,,0.5,0.5,0
+27.11.4,HPC2.1,LAS16.HOUSE,HOUSE,Panelboard - Low Voltage,LPC2.1,,,0.5,0.5,0
+27.11.5,HPC2.1,LAS16.HOUSE,HOUSE,Panelboard - Low Voltage,LPC2.2,,,0.5,0.5,0
+27.12.1,H1,LAS16.HOUSE,HOUSE,Panelboard - Low Voltage,H1,,,0.5,0.5,0
+27.12.2,H1,LAS16.HOUSE,HOUSE,Panelboard - Low Voltage,L1,,,0.5,0.5,0
+27.12.3,H1,LAS16.HOUSE,HOUSE,Panelboard - Low Voltage,LT1,,,0.5,0.5,0
+27.12.4,H1,LAS16.HOUSE,HOUSE,Panelboard - Low Voltage,LCC-P1,,,0.5,0.5,0
+27.12.5,H1,LAS16.HOUSE,HOUSE,Transformer (Dry Type up to 499kVA),TH1,,,2.0,2.0,0
+27.12.6,H1,LAS16.HOUSE,HOUSE,Transformer (Dry Type up to 499kVA),TL1,,,2.0,2.0,0
+27.13.1,H2,LAS16.HOUSE,HOUSE,Panelboard - Low Voltage,H2,,,0.5,0.5,0
+27.13.2,H2,LAS16.HOUSE,HOUSE,Panelboard - Low Voltage,L2,,,0.5,0.5,0
+27.13.3,H2,LAS16.HOUSE,HOUSE,Panelboard - Low Voltage,LT2,,,0.5,0.5,0
+27.13.4,H2,LAS16.HOUSE,HOUSE,Panelboard - Low Voltage,LCC-P2,,,0.5,0.5,0
+27.13.5,H2,LAS16.HOUSE,HOUSE,Transformer (Dry Type up to 499kVA),TH2,,,2.0,2.0,0
+27.13.6,H2,LAS16.HOUSE,HOUSE,Transformer (Dry Type up to 499kVA),TL2,,,2.0,2.0,0
+27.14.1,U1B1,LAS16.HOUSE,HOUSE,Panelboard - Low Voltage,U1B1,,,0.5,0.5,0
+27.14.2,U1B1,LAS16.HOUSE,HOUSE,Panelboard - Low Voltage,U1B2,,,0.5,0.5,0
+27.14.3,U1B1,LAS16.HOUSE,HOUSE,Transformer (Dry Type up to 499kVA),TU1B,,,2.0,2.0,0
+27.14.4,U1B1,LAS16.HOUSE,HOUSE,Panelboard - Low Voltage,U2B1,,,0.5,0.5,0
+27.14.5,U1B1,LAS16.HOUSE,HOUSE,Panelboard - Low Voltage,U2B2,,,0.5,0.5,0
+27.14.6,U1B1,LAS16.HOUSE,HOUSE,Transformer (Dry Type up to 499kVA),TU2B,,,2.0,2.0,0
+27.15.1,LPP3.EV,LAS16.HOUSE,HOUSE,Panelboard - Low Voltage,LPP3.EV,,,0.5,0.5,0
+27.15.2,LPP3.EV,LAS16.HOUSE,HOUSE,Transformer (Dry Type up to 499kVA),TLPP3.EV,,,2.0,2.0,0
+27.16.1,ATS,LAS16.HOUSE,HOUSE,Automatic Transfer Switch - (IR/DLRO),DQ-1,,,4.0,4.0,0
+27.16.2,ATS,LAS16.HOUSE,HOUSE,Automatic Transfer Switch - (IR/DLRO),DQ-1,,,4.0,4.0,0
+27.16.3,ATS,LAS16.HOUSE,HOUSE,Automatic Transfer Switch - (IR/DLRO),ATS-H,,,4.0,4.0,0
+28.1.1,MV Cables,MV,MV,Conductors MV - Substation 2x3 (DC Hipotential),SUB03A-MVS01R,,,8.0,8.0,0
+28.1.2,MV Cables,MV,MV,Conductors MV - Substation 2x3 (DC Hipotential),SUB03A-MVS02,,,8.0,8.0,0
+28.1.3,MV Cables,MV,MV,Conductors MV - Substation 2x3 (DC Hipotential),SUB03A-MVS04,,,8.0,8.0,0
+28.1.4,MV Cables,MV,MV,Conductors MV - Substation 2x3 (DC Hipotential),SUB03A-MVS06,,,8.0,8.0,0
+28.1.5,MV Cables,MV,MV,Conductors MV - Substation 2x3 (DC Hipotential),SUB03B-MVS01,,,8.0,8.0,0
+28.1.6,MV Cables,MV,MV,Conductors MV - Substation 2x3 (DC Hipotential),SUB03B-MVS03,,,8.0,8.0,0
+28.1.7,MV Cables,MV,MV,Conductors MV - Substation 2x3 (DC Hipotential),SUB03B-MVS02R,,,8.0,8.0,0
+28.1.8,MV Cables,MV,MV,Conductors MV - Substation 2x3 (DC Hipotential),SUB03B-MVS05,,,8.0,8.0,0
+28.1.9,MV Cables,MV,MV,Conductors MV - Set of 3 (DC Hipotential),MVS01-MVTH1,,,4.0,4.0,0
+28.1.10,MV Cables,MV,MV,Conductors MV - Set of 3 (DC Hipotential),MVS01-MVT01,,,4.0,4.0,0
+28.1.11,MV Cables,MV,MV,Conductors MV - Set of 3 (DC Hipotential),MVT01-MVT02,,,4.0,4.0,0
+28.1.12,MV Cables,MV,MV,Conductors MV - Set of 3 (DC Hipotential),MVT02-MVT03,,,4.0,4.0,0
+28.1.13,MV Cables,MV,MV,Conductors MV - Set of 3 (DC Hipotential),MVT03-MVT04,,,4.0,4.0,0
+28.1.14,MV Cables,MV,MV,Conductors MV - Set of 3 (DC Hipotential),MVS01R-PMS01R,,,4.0,4.0,0
+28.1.15,MV Cables,MV,MV,Conductors MV - Set of 3 (DC Hipotential),PMS01R-MVT04,,,4.0,4.0,0
+28.1.16,MV Cables,MV,MV,Conductors MV - Set of 3 (DC Hipotential),PMS01R-PMS0T1R,,,4.0,4.0,0
+28.1.17,MV Cables,MV,MV,Conductors MV - Set of 3 (DC Hipotential),PMS01R-MVT05,,,4.0,4.0,0
+28.1.18,MV Cables,MV,MV,Conductors MV - Set of 3 (DC Hipotential),MVT05-MVT06,,,4.0,4.0,0
+28.1.19,MV Cables,MV,MV,Conductors MV - Set of 3 (DC Hipotential),MVT06-MVT07,,,4.0,4.0,0
+28.1.20,MV Cables,MV,MV,Conductors MV - Set of 3 (DC Hipotential),MVT07-MVT08,,,4.0,4.0,0
+28.1.21,MV Cables,MV,MV,Conductors MV - Set of 3 (DC Hipotential),MVS02-MVT08,,,4.0,4.0,0
+28.1.22,MV Cables,MV,MV,Conductors MV - Set of 3 (DC Hipotential),MVS03-MVT12,,,4.0,4.0,0
+28.1.23,MV Cables,MV,MV,Conductors MV - Set of 3 (DC Hipotential),PMS0T1R-MVT09,,,4.0,4.0,0
+28.1.24,MV Cables,MV,MV,Conductors MV - Set of 3 (DC Hipotential),MVT09-MVT10,,,4.0,4.0,0
+28.1.25,MV Cables,MV,MV,Conductors MV - Set of 3 (DC Hipotential),MVT10-MVT11,,,4.0,4.0,0
+28.1.26,MV Cables,MV,MV,Conductors MV - Set of 3 (DC Hipotential),MVT11-MVT12,,,4.0,4.0,0
+28.1.27,MV Cables,MV,MV,Conductors MV - Set of 3 (DC Hipotential),PMS0T1R-PMS02R,,,4.0,4.0,0
+28.1.28,MV Cables,MV,MV,Conductors MV - Set of 3 (DC Hipotential),PMS0T1R-MVT13,,,4.0,4.0,0
+28.1.29,MV Cables,MV,MV,Conductors MV - Set of 3 (DC Hipotential),MVT13-MVT14,,,4.0,4.0,0
+28.1.30,MV Cables,MV,MV,Conductors MV - Set of 3 (DC Hipotential),MVT14-MVT15,,,4.0,4.0,0
+28.1.31,MV Cables,MV,MV,Conductors MV - Set of 3 (DC Hipotential),MVT15-MVT16,,,4.0,4.0,0
+28.1.32,MV Cables,MV,MV,Conductors MV - Set of 3 (DC Hipotential),MVS04-MVT16,,,4.0,4.0,0
+28.1.33,MV Cables,MV,MV,Conductors MV - Set of 3 (DC Hipotential),MVS05-MVT20,,,4.0,4.0,0
+28.1.34,MV Cables,MV,MV,Conductors MV - Set of 3 (DC Hipotential),MVS02R-PMS02R,,,4.0,4.0,0
+28.1.35,MV Cables,MV,MV,Conductors MV - Set of 3 (DC Hipotential),PMS02R-MVT17,,,4.0,4.0,0
+28.1.36,MV Cables,MV,MV,Conductors MV - Set of 3 (DC Hipotential),MVT17-MVT18,,,4.0,4.0,0
+28.1.37,MV Cables,MV,MV,Conductors MV - Set of 3 (DC Hipotential),MVT18-MVT19,,,4.0,4.0,0
+28.1.38,MV Cables,MV,MV,Conductors MV - Set of 3 (DC Hipotential),MVT19-MVT20,,,4.0,4.0,0
+28.1.39,MV Cables,MV,MV,Conductors MV - Set of 3 (DC Hipotential),PMS02R-MVT21,,,4.0,4.0,0
+28.1.40,MV Cables,MV,MV,Conductors MV - Set of 3 (DC Hipotential),MVT21-MVT22,,,4.0,4.0,0
+28.1.41,MV Cables,MV,MV,Conductors MV - Set of 3 (DC Hipotential),MVT22-MVT23,,,4.0,4.0,0
+28.1.42,MV Cables,MV,MV,Conductors MV - Set of 3 (DC Hipotential),MVT23-MVT24,,,4.0,4.0,0
+28.1.43,MV Cables,MV,MV,Conductors MV - Set of 3 (DC Hipotential),MVT24-MVS06,,,4.0,4.0,0
+28.2.1,MV Switches,MV,MV,"Switch MV - Fused, Metal-Enclosed Disconnect",MVS01R,,,2.0,2.0,0
+28.2.2,MV Switches,MV,MV,"Switch MV - Fused, Metal-Enclosed Disconnect",MVS02,,,2.0,2.0,0
+28.2.3,MV Switches,MV,MV,"Switch MV - Fused, Metal-Enclosed Disconnect",MVS02R,,,2.0,2.0,0
+28.2.4,MV Switches,MV,MV,"Switch MV - Fused, Metal-Enclosed Disconnect",MVS03,,,2.0,2.0,0
+28.2.5,MV Switches,MV,MV,"Switch MV - Fused, Metal-Enclosed Disconnect",MVS05,,,2.0,2.0,0
+28.2.6,MV Switches,MV,MV,"Switch MV - Fused, Metal-Enclosed Disconnect",MVS06,,,2.0,2.0,0
+28.3.1,Padmount Vista,MV,MV,Switch (Pad Mount Vista) - Medium Voltage,PMS01R,,,4.0,4.0,0
+28.3.2,Padmount Vista,MV,MV,Switch (Pad Mount Vista) - Medium Voltage,PMS0T1R,,,4.0,4.0,0
+28.3.3,Padmount Vista,MV,MV,Switch (Pad Mount Vista) - Medium Voltage,PMS02R,,,4.0,4.0,0
+28.3.4,Padmount Vista,MV,MV,Switch (Pad Mount Vista) - Medium Voltage,MVS01,,,4.0,4.0,0
+28.3.5,Padmount Vista,MV,MV,Switch (Pad Mount Vista) - Medium Voltage,MVS04,,,4.0,4.0,0
+28.4.1,Oil-Filled XFMR's,MV,MV,Transformer - Pad Mount Oil (TTR/IR/WR/PF/Oil),MVTH1,NOT STARTED,,12.0,12.0,0
+28.4.2,Oil-Filled XFMR's,MV,MV,Transformer - Pad Mount Oil (TTR/IR/WR/PF/Oil),MVT01,COMPLETED,,12.0,12.0,1
+28.4.3,Oil-Filled XFMR's,MV,MV,Transformer - Pad Mount Oil (TTR/IR/WR/PF/Oil),MVT02,COMPLETED,,12.0,12.0,1
+28.4.4,Oil-Filled XFMR's,MV,MV,Transformer - Pad Mount Oil (TTR/IR/WR/PF/Oil),MVT03,COMPLETED,,12.0,12.0,1
+28.4.5,Oil-Filled XFMR's,MV,MV,Transformer - Pad Mount Oil (TTR/IR/WR/PF/Oil),MVT04,COMPLETED,,12.0,12.0,1
+28.4.6,Oil-Filled XFMR's,MV,MV,Transformer - Pad Mount Oil (TTR/IR/WR/PF/Oil),MVT05,COMPLETED,,12.0,12.0,1
+28.4.7,Oil-Filled XFMR's,MV,MV,Transformer - Pad Mount Oil (TTR/IR/WR/PF/Oil),MVT06,COMPLETED,,12.0,12.0,1
+28.4.8,Oil-Filled XFMR's,MV,MV,Transformer - Pad Mount Oil (TTR/IR/WR/PF/Oil),MVT07,COMPLETED,,12.0,12.0,1
+28.4.9,Oil-Filled XFMR's,MV,MV,Transformer - Pad Mount Oil (TTR/IR/WR/PF/Oil),MVT08,COMPLETED,,12.0,12.0,1
+28.4.10,Oil-Filled XFMR's,MV,MV,Transformer - Pad Mount Oil (TTR/IR/WR/PF/Oil),MVT09,COMPLETED,,12.0,12.0,1
+28.4.11,Oil-Filled XFMR's,MV,MV,Transformer - Pad Mount Oil (TTR/IR/WR/PF/Oil),MVT10,COMPLETED,,12.0,12.0,1
+28.4.12,Oil-Filled XFMR's,MV,MV,Transformer - Pad Mount Oil (TTR/IR/WR/PF/Oil),MVT11,COMPLETED,,12.0,12.0,1
+28.4.13,Oil-Filled XFMR's,MV,MV,Transformer - Pad Mount Oil (TTR/IR/WR/PF/Oil),MVT12,COMPLETED,,12.0,12.0,1
+28.4.14,Oil-Filled XFMR's,MV,MV,Transformer - Pad Mount Oil (TTR/IR/WR/PF/Oil),MVT13,COMPLETED,,12.0,12.0,1
+28.4.15,Oil-Filled XFMR's,MV,MV,Transformer - Pad Mount Oil (TTR/IR/WR/PF/Oil),MVT14,COMPLETED,,12.0,12.0,1
+28.4.16,Oil-Filled XFMR's,MV,MV,Transformer - Pad Mount Oil (TTR/IR/WR/PF/Oil),MVT15,COMPLETED,,12.0,12.0,1
+28.4.17,Oil-Filled XFMR's,MV,MV,Transformer - Pad Mount Oil (TTR/IR/WR/PF/Oil),MVT16,COMPLETED,,12.0,12.0,1
+28.4.18,Oil-Filled XFMR's,MV,MV,Transformer - Pad Mount Oil (TTR/IR/WR/PF/Oil),MVT17,,,12.0,12.0,0
+28.4.19,Oil-Filled XFMR's,MV,MV,Transformer - Pad Mount Oil (TTR/IR/WR/PF/Oil),MVT18,,,12.0,12.0,0
+28.4.20,Oil-Filled XFMR's,MV,MV,Transformer - Pad Mount Oil (TTR/IR/WR/PF/Oil),MVT19,,,12.0,12.0,0
+28.4.21,Oil-Filled XFMR's,MV,MV,Transformer - Pad Mount Oil (TTR/IR/WR/PF/Oil),MVT20,,,12.0,12.0,0
+28.4.22,Oil-Filled XFMR's,MV,MV,Transformer - Pad Mount Oil (TTR/IR/WR/PF/Oil),MVT21,,,12.0,12.0,0
+28.4.23,Oil-Filled XFMR's,MV,MV,Transformer - Pad Mount Oil (TTR/IR/WR/PF/Oil),MVT22,,,12.0,12.0,0
+28.4.24,Oil-Filled XFMR's,MV,MV,Transformer - Pad Mount Oil (TTR/IR/WR/PF/Oil),MVT23,,,12.0,12.0,0
+28.4.25,Oil-Filled XFMR's,MV,MV,Transformer - Pad Mount Oil (TTR/IR/WR/PF/Oil),MVT24,,,12.0,12.0,0
+29.1.1,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.2,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.3,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.4,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.5,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.6,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.7,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.8,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.9,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.10,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.11,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.12,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.13,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.14,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.15,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.16,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.17,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.18,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.19,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.20,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.21,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.22,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.23,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.24,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.25,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.26,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.27,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.28,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.29,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.30,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.31,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.32,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.33,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.34,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.35,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.36,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.37,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.38,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.39,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.40,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.41,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.42,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.43,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.44,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.45,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.46,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.47,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.48,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.49,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.50,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.51,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.52,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.53,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.54,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.55,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.56,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.57,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.58,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.59,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.60,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.61,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.62,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.63,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.64,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.65,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.66,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.67,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.68,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.69,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.70,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.71,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.72,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.73,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.74,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.75,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.76,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.77,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.78,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.79,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.80,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.81,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.82,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.83,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.84,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.85,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.86,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.87,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.88,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.89,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.90,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.91,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.92,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.93,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.94,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.95,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.96,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.97,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.98,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.99,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.100,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.101,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.102,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.103,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.104,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.105,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.106,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.107,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.108,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.109,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.110,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.111,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.112,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.113,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.114,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.115,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.116,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.117,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.118,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.119,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+29.1.120,RPP's,RPP's (1-120),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.1,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.2,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.3,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.4,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.5,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.6,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.7,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.8,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.9,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.10,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.11,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.12,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.13,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.14,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.15,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.16,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.17,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.18,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.19,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.20,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.21,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.22,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.23,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.24,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.25,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.26,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.27,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.28,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.29,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.30,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.31,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.32,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.33,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.34,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.35,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.36,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.37,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.38,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.39,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.40,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.41,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.42,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.43,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.44,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.45,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.46,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.47,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.48,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.49,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.50,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.51,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.52,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.53,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.54,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.55,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.56,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.57,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.58,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.59,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.60,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.61,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.62,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.63,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.64,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.65,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.66,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.67,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.68,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.69,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.70,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.71,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.72,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.73,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.74,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.75,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.76,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.77,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.78,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.79,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.80,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.81,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.82,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.83,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.84,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.85,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.86,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.87,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.88,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.89,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.90,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.91,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.92,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.93,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.94,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.95,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.96,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.97,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.98,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.99,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.100,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.101,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.102,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.103,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.104,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.105,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.106,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.107,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.108,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.109,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.110,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.111,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,,2.5,2.5,1
+30.1.112,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,COMPLETED,HIGH,2.5,2.5,1
+30.1.113,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+30.1.114,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+30.1.115,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+30.1.116,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+30.1.117,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+30.1.118,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+30.1.119,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+30.1.120,RPP's,RPP's (121-240),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.1,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.2,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.3,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.4,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.5,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.6,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.7,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.8,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.9,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.10,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.11,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.12,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.13,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.14,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.15,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.16,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.17,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.18,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.19,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.20,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.21,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.22,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.23,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.24,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.25,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.26,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.27,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.28,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.29,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.30,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.31,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.32,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.33,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.34,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.35,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.36,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.37,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.38,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.39,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.40,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.41,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.42,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.43,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.44,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.45,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.46,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.47,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.48,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.49,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.50,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.51,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.52,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.53,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.54,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.55,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.56,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.57,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.58,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.59,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.60,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.61,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.62,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.63,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.64,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.65,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.66,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.67,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.68,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.69,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.70,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.71,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.72,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.73,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.74,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.75,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.76,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.77,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.78,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.79,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.80,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.81,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.82,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.83,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.84,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.85,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.86,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.87,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.88,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.89,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.90,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.91,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.92,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.93,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.94,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.95,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.96,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.97,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.98,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.99,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.100,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.101,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.102,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.103,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.104,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.105,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.106,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.107,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.108,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.109,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.110,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.111,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.112,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.113,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.114,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.115,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.116,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.117,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.118,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.119,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+31.1.120,RPP's,RPP's (241-360),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.1,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.2,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.3,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.4,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.5,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.6,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.7,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.8,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.9,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.10,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.11,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.12,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.13,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.14,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.15,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.16,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.17,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.18,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.19,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.20,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.21,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.22,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.23,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.24,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.25,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.26,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.27,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.28,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.29,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.30,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.31,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.32,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.33,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.34,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.35,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.36,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.37,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.38,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.39,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.40,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.41,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.42,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.43,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.44,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.45,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.46,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.47,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.48,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.49,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.50,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.51,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.52,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.53,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.54,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.55,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.56,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.57,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.58,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.59,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.60,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.61,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.62,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.63,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.64,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.65,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.66,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.67,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.68,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.69,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.70,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.71,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.72,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.73,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.74,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.75,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.76,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.77,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.78,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.79,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.80,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.81,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.82,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.83,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.84,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.85,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.86,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.87,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.88,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.89,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.90,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.91,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.92,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.93,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.94,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.95,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.96,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.97,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.98,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.99,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.100,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.101,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.102,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.103,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.104,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.105,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.106,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.107,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.108,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.109,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.110,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.111,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.112,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.113,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.114,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.115,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.116,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.117,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.118,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.119,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0
+32.1.120,RPP's,RPP's (361-480),RPP,RPP - Remote Power Panel,,,,2.5,2.5,0

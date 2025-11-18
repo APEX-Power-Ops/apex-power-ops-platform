@@ -1,0 +1,53 @@
+graph TB
+    subgraph "Notification Flows"
+        NF1[Task Assignment<br/>Notification]
+        NF2[Overdue Task<br/>Alert]
+        NF3[Status Change<br/>Notification]
+    end
+    
+    subgraph "Approval Flows"
+        AF1[Time Entry<br/>Approval]
+        AF2[Billing<br/>Approval]
+    end
+    
+    subgraph "Scheduled Flows"
+        SF1[Weekly Billing<br/>Report]
+        SF2[Daily Status<br/>Digest]
+    end
+    
+    subgraph "Document Flows"
+        DF1[Datasheet Upload<br/>to SharePoint]
+        DF2[Document Tagging]
+    end
+    
+    subgraph "Triggers"
+        T1[Dataverse Change]
+        T2[Schedule]
+        T3[Manual]
+    end
+    
+    subgraph "Actions"
+        AC1[Send Email]
+        AC2[Post to Teams]
+        AC3[Update Record]
+        AC4[Create Document]
+    end
+    
+    T1 --> NF1 & NF3 & AF1 & AF2 & DF1
+    T2 --> NF2 & SF1 & SF2
+    T3 --> SF1
+    
+    NF1 & NF2 & NF3 --> AC1 & AC2
+    AF1 & AF2 --> AC3
+    SF1 & SF2 --> AC4 & AC1
+    DF1 & DF2 --> AC3
+    
+    style NF1 fill:#0066FF,color:#fff
+    style NF2 fill:#0066FF,color:#fff
+    style NF3 fill:#0066FF,color:#fff
+    style AF1 fill:#0066FF,color:#fff
+    style AF2 fill:#0066FF,color:#fff
+    style SF1 fill:#0066FF,color:#fff
+    style SF2 fill:#0066FF,color:#fff
+    style DF1 fill:#0066FF,color:#fff
+    style DF2 fill:#0066FF,color:#fff
