@@ -291,30 +291,39 @@ git push origin main
 **Next Review**: [When to pick this back up]
 ```
 
-#### **3. Store Key Facts to Memory MCP** ⚠️ CRITICAL
+#### **3. Update PROJECT_CONTEXT.json** ⚠️ CRITICAL
 **Execute this command at session end**:
 
-⚠️ **IMPORTANT**: Memory MCP tools are only available in **fresh chat sessions**. If you don't see memory tools available:
-- This is expected for existing sessions
-- Memory will be available when you start your next fresh chat
-- File-based documentation (Git + Session Summaries) provides full continuity
-
-Store essential project state that must survive session restart:
-- Current project status
-- Critical technical facts
-- Open decisions/blockers
-- Document index
-- Next steps
-
-**What to Store** (see section below)
-
-**To Test if Memory MCP is Available**:
+```powershell
+.\Scripts\PowerShell\Update-ProjectContext.ps1 -SessionTopic "What_You_Did" -QuickUpdate
 ```
-Simply ask: "Can you create a memory entity for this project?"
 
-If available: AI will show memory creation tools
-If not available: AI will explain Memory MCP not loaded (expected in existing sessions)
+**What it does**:
+- Updates `lastUpdated` timestamp
+- Sets `sessionId` to current date + topic (e.g., NOV19_What_You_Did)
+- Provides quick context for next session
+
+**When to add more details**:
+```powershell
+# If you discovered critical facts
+.\Scripts\PowerShell\Update-ProjectContext.ps1 -AddCriticalFact "Important discovery here"
+
+# If you completed tasks or need full status update
+.\Scripts\PowerShell\Update-ProjectContext.ps1 -UpdateStatus
 ```
+
+**Alternative - Memory MCP (Claude Desktop Only)**:
+
+⚠️ **NOTE**: Memory MCP only works in Claude Desktop, not VS Code/Copilot.
+
+If using Claude Desktop and Memory MCP is available:
+```
+Store these facts to Memory MCP: [key information]
+```
+
+**For VS Code/Copilot users**: Use the Update-ProjectContext.ps1 script instead (recommended approach).
+
+See: `Documentation/00_START_HERE/UPDATE_CONTEXT_GUIDE.md` for full script documentation.
 
 #### **4. Update Todo List** (If significant progress)
 **Location**: Conversation memory (tracked by AI)
@@ -326,11 +335,12 @@ Update phase statuses:
 - Adjust time estimates based on learnings
 
 #### **5. Verify All Critical Files Saved**
+
 **Checklist**:
 ```
 □ All .md documents committed to GitHub
 □ Session summary created
-□ Memory MCP updated
+□ PROJECT_CONTEXT.json updated (via script)
 □ Todo list current
 □ No unsaved work in editors
 □ PowerShell scripts committed (if created)
@@ -698,7 +708,7 @@ AI: [Shows stored facts]
 
 □ **Git**: All work committed and pushed to main  
 □ **Session Summary**: Created/updated in `03_Progress_Tracking/`  
-□ **Memory MCP**: Key facts stored (10 max)  
+□ **PROJECT_CONTEXT.json**: Updated via `.\Scripts\PowerShell\Update-ProjectContext.ps1 -SessionTopic "Topic" -QuickUpdate`  
 □ **Todo List**: Updated if significant progress  
 □ **Documents**: All saved with clear headers  
 □ **No Loose Ends**: No "I'll document this later"  
@@ -736,11 +746,16 @@ cd C:\RESA_Power_Build
 ```
 
 ### **Most Important AI Prompts**:
+
 ```
-# Retrieve context
-"Check Memory MCP for RESA Power Project Tracker"
-"Read SESSION_SUMMARY_NOV15_ARCHITECTURAL_FOUNDATION.md"
+# Retrieve context (VS Code/Copilot)
+"Read PROJECT_CONTEXT.json"
+"Read SESSION_SUMMARY_[LATEST].md"
 "Show me the current todo list"
+
+# Retrieve context (Claude Desktop with Memory MCP)
+"Check Memory MCP for RESA Power Project Tracker"
+"Read SESSION_SUMMARY_[LATEST].md"
 
 # Start work
 "I'm back from stakeholder meeting with decisions"
@@ -761,10 +776,11 @@ cd C:\RESA_Power_Build
 | 1.1 | Nov 16, 2025 | Excel architecture analyzed, VBA documented, Excel MCP foundation ready |
 | 1.2 | Nov 16, 2025 | Added context-based git commit methods (Claude Desktop/VS Code/Manual) with clear guidance on when to use each |
 | 1.3 | Nov 19, 2025 | Updated environment details (correct IDs, repository URL), added Memory MCP testing instructions, corrected solution name to RESAPowerProjectTracker, updated Memory MCP storage template to v1.3.0.4 state |
+| 1.4 | Nov 19, 2025 | Added PROJECT_CONTEXT.json update script to session end protocol, updated checklist and prompts to prioritize PROJECT_CONTEXT.json over Memory MCP for VS Code/Copilot users |
 
 ---
 
-**STATUS**: Protocol active and current - Environment details verified Nov 19, 2025  
-**LAST SESSION**: Nov 19, 2025 - Documentation alignment, Memory MCP testing guide created  
-**NEXT REVIEW**: After first fresh session with Memory MCP test  
+**STATUS**: Protocol active and current - PROJECT_CONTEXT.json system implemented Nov 19, 2025  
+**LAST SESSION**: Nov 19, 2025 - Memory MCP verification, VS Code continuity system created  
+**NEXT REVIEW**: After testing PROJECT_CONTEXT.json in next session  
 **OWNER**: Jason Swenson + AI Assistant (Claude)
