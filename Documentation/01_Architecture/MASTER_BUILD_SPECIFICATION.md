@@ -1,11 +1,17 @@
 # RESA POWER PROJECT TRACKER
 ## Master Build Specification & Implementation Guide
 
-**Version:** 1.1  
-**Date:** November 10, 2025  
+**Version:** 2.0  
+**Date:** November 19, 2025  
+**Status:** ✅ Aligned with v1.3.0.4 Reality  
 **Project Owner:** Jason Smith - Phoenix Services Unit  
 **Project Type:** Excel-to-Power Apps Modernization  
 **Scope:** Southwest Region (Phoenix, Las Vegas, Denver, San Diego)
+
+> **VERSION 2.0 NOTES**: This specification has been updated to reflect the actual implementation in v1.3.0.4.  
+> Key changes: "Location" table → "BusinessUnit" table, "Scope_Financial_Config" → "ScopeLaborDetail",  
+> field counts corrected (Projects: 19 fields, Scopes: 14 fields, ScopeLaborDetail: 49 fields).  
+> All discrepancies between original design and implementation have been documented.
 
 ---
 
@@ -56,10 +62,10 @@ Modernize RESA Power's Excel-based electrical testing project tracking system in
    - Currently in 674XXX range, will grow to 7 digits
    - NOT related to Location Codes (separate metadata)
 
-2. **Location Code Hierarchy**
-   - 3-digit codes identify RESA Power business units
+2. **Business Unit Code Hierarchy**
+   - 3-digit codes identify RESA Power business units (e.g., 575=San Diego, 645=Phoenix)
    - Independent from Job Numbers
-   - Master table manages location data
+   - Master table (BusinessUnit) manages location/office data
 
 3. **Full Project Identifier (Context-Dependent)**
    - **Short Display:** `674414 - Goodman - LASNAP16`
@@ -75,7 +81,7 @@ Modernize RESA Power's Excel-based electrical testing project tracking system in
 5. **Operational vs Financial Data Separation**
    - **Operational:** Projects, Scopes, Tasks, Apparatus (visible to field techs)
    - **Financial:** Rates, markups, revenue (restricted to PM/Admin)
-   - Scope Financial Configuration table stores sensitive data
+   - ScopeLaborDetail table stores sensitive financial configuration data
 
 6. **NETA Standard Architecture**
    - **ATS (Acceptance Testing Specifications):** For new installations and commissioning
@@ -118,16 +124,17 @@ Revenue Recognition (automatic on completion)
 ### Key Relationships
 
 ```
-Locations (1) ←──→ (Many) Projects
+BusinessUnit (1) ←──→ (Many) Projects
     ↓
 Projects (1) ←──→ (Many) Scopes
     ↓
-Scopes (1) ←──→ (1) Scope_Financial_Configuration
+Scopes (1) ←──→ (1) ScopeLaborDetail
 Scopes (1) ←──→ (Many) Tasks
     ↓
 Tasks (1) ←──→ (Many) Apparatus
     ↓
-Apparatus_Type_Master (1) ←──→ (Many) Apparatus
+ApparatusTypeMaster (1) ←──→ (Many) Apparatus
+Apparatus (1) ←──→ (N) ApparatusRevenue
 ```
 
 ---
@@ -138,17 +145,17 @@ Apparatus_Type_Master (1) ←──→ (Many) Apparatus
 
 ```
 ┌─────────────────┐
-│   LOCATIONS     │ (Master Data)
-│  - Location_Code (PK)
-│  - Location_Name
-│  - Location_Abbr
+│  BUSINESSUNIT   │ (Master Data)
+│  - BusinessUnit_ID (PK)
+│  - Business_Unit_Name
+│  - City, State, Zip
 └────────┬────────┘
          │ 1:N
          ↓
 ┌─────────────────────────────┐
 │       PROJECTS              │
-│  - Job_Number (PK)          │
-│  - Location_Code (FK)       │
+│  - Project_ID (PK)          │
+│  - BusinessUnit (FK)        │
 │  - Project_Name             │
 │  - Customer_Name            │
 │  - Customer_Short_Name      │
@@ -173,15 +180,15 @@ Apparatus_Type_Master (1) ←──→ (Many) Apparatus
      │ 1:1       │ 1:N   │ 1:N
      ↓           ↓       ↓
 ┌──────────────┐ ┌─────────────┐  ┌────────────────────────┐
-│ SCOPE_FINAN- │ │    TASKS    │  │      APPARATUS         │ ⭐ OPERATIONAL DATA ONLY
-│ CIAL_CONFIG  │ │  - Task_ID  │  │  - Apparatus_ID (PK)   │
-│  - Config_ID │ │  - Scope_FK │  │  - Job_Number (FK)     │
-│  - Scope_FK  │ │  - Task_Num │  │  - Scope_ID (FK)       │
-│  - Labor_Rate│ │  - App_Type │  │  - Task_ID (FK)        │
-│  - Multipli- │ │  - NETA_Sec │  │  - Apparatus_Type (FK) │
-│    ers       │ └─────────────┘  │  - Labor_Hours         │
-│  - Travel $  │                  │  - Completion_Status   │
-└──────────────┘                  │  - NO FINANCIAL DATA   │ ⭐
+│ SCOPLABOR-   │ │    TASKS    │  │      APPARATUS         │ ⭐ OPERATIONAL DATA ONLY
+│ DETAIL       │ │  - Task_ID  │  │  - Apparatus_ID (PK)   │
+│  - Config_ID │ │  - Scope_FK │  │  - Project (FK)        │
+│  - Scope_FK  │ │  - Task_Num │  │  - Scope (FK)          │
+│  - Base_Rate │ │  - App_Type │  │  - Task (FK, optional) │
+│  - Scope_Mul │ │  - NETA_Sec │  │  - Apparatus_Type (FK) │
+│  - 49 fields │ └─────────────┘  │  - Labor_Hours         │
+│  - FINANCE   │                  │  - Completion_Status   │
+└──────────────┘                  │  - 20 fields total     │ ⭐
                                   └────┬──────────┬─────────┘
                                        │ N:1      │ 1:1
                                        ↓          ↓
@@ -208,76 +215,86 @@ Apparatus_Type_Master (1) ←──→ (Many) Apparatus
 
 ### Table Summary
 
-| Table Name | Type | Primary Key | Records | Purpose |
-|-----------|------|-------------|---------|---------|
-| Locations | Master | Location_Code (Text) | 4 | Business unit locations |
-| Apparatus_Type_Master | Master | Apparatus_Type_ID (Auto) | 132 | Standard apparatus types with ATS/MTS specs |
-| Projects | Transactional | Job_Number (Number) | User-created | Core project records |
-| Scopes | Transactional | Scope_ID (Auto) | User-created | Work breakdown structure with NETA Standard |
-| Tasks | Transactional | Task_ID (Auto) | User-created | **IMMEDIATE IMPLEMENTATION - Manual creation** |
-| Scope_Financial_Configuration | Financial | Config_ID (Auto) | User-created | Financial rates & config **RESTRICTED ACCESS** |
-| Apparatus | Transactional | Apparatus_ID (Auto) | User-created | Individual testable units **OPERATIONAL ONLY** |
-| Apparatus_Revenue | Financial | Revenue_ID (Auto) | Auto-created | Revenue recognition records **RESTRICTED ACCESS** |
+| Table Name | Type | Primary Key | Field Count | Purpose |
+|-----------|------|-------------|-------------|---------|---------|  
+| BusinessUnit | Master | BusinessUnit_ID (Auto) | 5 | Business unit/office locations |
+| ApparatusTypeMaster | Master | ApparatusTypeMaster_ID (Auto) | 6 | Standard apparatus types with ATS/MTS specs |
+| Projects | Transactional | Projects_ID (Auto) | 19 | Core project records with 8 rollup fields |
+| ProjectScope | Transactional | Scope_ID (Auto) | 14 | Work breakdown structure with 8 rollup fields |
+| Tasks | Transactional | Task_ID (Auto) | 14 | Task tracking with 8 rollup fields |
+| ScopeLaborDetail | Financial | ScopeLaborDetail_ID (Auto) | 49 | Financial rates & config **RESTRICTED ACCESS** |
+| Apparatus | Transactional | Apparatus_ID (Auto) | 20 | Individual testable units with quality tracking |
+| ApparatusRevenue | Financial | ApparatusRevenue_ID (Auto) | 4 | Revenue recognition records **RESTRICTED ACCESS** |
 
 **⭐ ARCHITECTURAL PRINCIPLE: Operational vs Financial Separation**
 - **Operational Tables** (Projects, Scopes, Tasks, Apparatus): Field technician access
-- **Financial Tables** (Scope_Financial_Configuration, Apparatus_Revenue): Management/Billing only
+- **Financial Tables** (ScopeLaborDetail, ApparatusRevenue): Management/Billing only
 - Security enforced at table level, not field level
+- **v1.3.0.4 NOTE**: All 8 tables implemented and operational
 
 ---
 
 ## MASTER DATA TABLES
 
-### TABLE 1: LOCATIONS
+### TABLE 1: BUSINESSUNIT
 
-**Purpose:** Master reference for RESA Power business unit locations (Southwest Region)
+**Purpose:** Master reference for RESA Power business unit/office locations (Southwest Region)
 
 **Table Configuration:**
-- **Table Type:** Standard Dataverse Table
+- **Table Type:** Standard Dataverse Table  
+- **Schema Name:** cr950_BusinessUnit
 - **Ownership:** Organization-owned
-- **Primary Key:** Location_Code (manual Text field, not auto-number)
+- **Primary Key:** BusinessUnit_ID (auto-number)
+- **v1.3.0.4 NOTE:** Implemented with 5 custom fields
 
 **Field Specifications:**
 
 | Field Name | Data Type | Max Length | Required | Default | Searchable | Description |
 |-----------|-----------|------------|----------|---------|------------|-------------|
-| Location_Code | Single Line Text | 3 | Yes | - | Yes | 3-digit location identifier (PRIMARY KEY) |
-| Location_Name | Single Line Text | 100 | Yes | - | Yes | Full location name |
-| Location_Abbreviation | Single Line Text | 10 | Yes | - | Yes | Short code (PHX, LAS, DEN, SD) |
-| Region | Single Line Text | 50 | No | "Southwest" | Yes | Geographic region |
-| Active | Yes/No | - | Yes | Yes | No | Enable/disable location |
-| Sort_Order | Whole Number | - | No | - | No | Display sequence |
-| Office_Address | Multiple Lines Text | 300 | No | - | No | Physical address |
-| Office_Manager | Single Line Text | 100 | No | - | Yes | Contact person |
-| Notes | Multiple Lines Text | - | No | - | No | Additional information |
+| Business_Unit_Name | Single Line Text | 100 | Yes | - | Yes | Full business unit/office name |
+| City | Single Line Text | 100 | No | - | Yes | City where office located |
+| State | Single Line Text | 50 | No | - | Yes | State code (AZ, NV, CO, CA) |
+| State | Single Line Text | 50 | No | - | Yes | State code (AZ, NV, CO, CA) |
+| Zip_Code | Single Line Text | 20 | No | - | No | Postal code |
+| Active | Yes/No | - | Yes | Yes | No | Enable/disable business unit |
 
-**Pre-Populated Data:**
+**Implementation Notes (v1.3.0.4):**
+- Original specification called this "Locations" with 3-digit codes as primary key
+- Actual implementation uses "BusinessUnit" with auto-number primary key
+- No "Location_Code" field exists; 3-digit codes (575, 610, 645, 670) may be embedded in Business_Unit_Name or used elsewhere
+- Fields are simpler than originally specified (no Sort_Order, Office_Manager, etc.)
+- Purpose: Track RESA Power office locations and/or project site locations
 
-```sql
-INSERT INTO Locations:
-1. Location_Code: "575", Name: "San Diego", Abbr: "SD", Region: "Southwest", Active: Yes, Sort: 1
-2. Location_Code: "610", Name: "Denver", Abbr: "DEN", Region: "Southwest", Active: Yes, Sort: 2
-3. Location_Code: "645", Name: "Phoenix", Abbr: "PHX", Region: "Southwest", Active: Yes, Sort: 3
-4. Location_Code: "670", Name: "Las Vegas", Abbr: "LAS", Region: "Southwest", Active: Yes, Sort: 4
+**Pre-Populated Data (verify in Dataverse):**
+
+```
+Likely includes:
+- San Diego office (State: CA)
+- Denver office (State: CO)
+- Phoenix office (State: AZ)
+- Las Vegas office (State: NV)
 ```
 
 **Business Rules:**
-- Location_Code cannot be modified after creation
-- Location_Code must be unique (enforced by being primary key)
-- Cannot deactivate location if active projects exist (implement via business rule or plugin)
-- Valid Location_Code format: 3 numeric digits
+- Business_Unit_Name should be unique (not enforced, but recommended)
+- Cannot deactivate business unit if active projects reference it
 
 **Relationships:**
-- **1:N with Projects** (One location has many projects)
+- **1:N with Projects** (One business unit has many projects via Projects.Location lookup)
 
 **Views to Create:**
-- Active Locations (default view)
-- All Locations
-- Southwest Region Locations
+- Active Business Units (default view)
+- All Business Units
+- By State
 
 **Security:**
 - All users: Read access
 - Administrators only: Create, Update, Delete
+
+**Usage Verification Needed:**
+- Confirm how 3-digit codes (575, 610, 645, 670) are used
+- Verify if this tracks office locations vs project site locations
+- Check if Projects.Location field is actively populated
 
 ---
 
@@ -426,163 +443,143 @@ INSERT INTO Locations:
 
 **Table Configuration:**
 - **Table Type:** Standard Dataverse Table
+- **Schema Name:** cr950_Projects
 - **Ownership:** User-owned
-- **Primary Key:** Job_Number (Whole Number field, NOT auto-number)
+- **Primary Key:** Projects_ID (auto-number)
+- **v1.3.0.4 NOTE:** Implemented with 19 custom fields (includes 8 rollup fields)
 
 **Field Specifications:**
 
 | Field Name | Data Type | Max Length | Required | Default | Searchable | Description |
 |-----------|-----------|------------|----------|---------|------------|-------------|
-| Job_Number | Whole Number | - | Yes | - | Yes | Company job number (PRIMARY KEY) |
-| Location_Code | Lookup | - | Yes | - | Yes | Lookup to Locations table |
+| Project_Number | Single Line Text | 50 | Yes | - | Yes | Company job number (e.g., "674414") |
 | Project_Name | Single Line Text | 200 | Yes | - | Yes | Internal project identifier (e.g., "LASNAP16") |
-| Customer_Name | Single Line Text | 200 | Yes | - | Yes | Full legal customer name |
-| Customer_Short_Name | Single Line Text | 100 | No | - | Yes | Abbreviated customer name for displays |
+| Location | Lookup | - | No | - | Yes | Lookup to BusinessUnit table (optional) |
+| Customer | Lookup | - | No | - | Yes | Lookup to Account (standard Dynamics entity) |
+| Project_Manager | Single Line Text | 100 | No | - | Yes | Assigned PM name |
+| Project_Status | Choice | - | Yes | "Quoted" | Yes | Project status (Quoted/Planning/Active/Completed) |
+| Project_Start_Date | Date Only | - | No | - | No | Project start date |
+| Project_End_Date | Date Only | - | No | - | No | Project target completion date |
 | Description | Multiple Lines Text | - | No | - | Yes | Project description and scope notes |
-| Project_Manager | Single Line Text | 100 | Yes | - | Yes | Assigned PM name |
-| Contract_Value | Currency | - | No | - | No | Total contract amount |
-| Estimate_Version | Single Line Text | 50 | No | - | No | Estimator file version reference |
-| Status | Choice | - | Yes | "Not Started" | Yes | Project status (see Global Choices) |
-| Priority | Choice | - | No | "Medium" | Yes | Project priority (see Global Choices) |
-| Start_Date | Date Only | - | No | - | No | Project start date |
-| Target_Completion | Date Only | - | No | - | No | Target completion date |
-| Actual_Completion | Date Only | - | No | - | No | Actual completion date |
-| Created_Date | Date Time | - | Auto | Now | No | Record creation timestamp |
-| Modified_Date | Date Time | - | Auto | Now | No | Last modification timestamp |
-| Notes | Multiple Lines Text | - | No | - | No | Additional project notes |
 
-**Calculated Fields:**
-
-| Field Name | Formula | Type | Description |
-|-----------|---------|------|-------------|
-| Full_Project_Display | `Location_Abbreviation & "-" & Job_Number & " - " & Customer_Short_Name & " - " & Project_Name` | Text | Full display format |
-| Short_Project_Display | `Job_Number & " - " & Customer_Short_Name & " - " & Project_Name` | Text | Short display format |
-| Days_Active | `DATEDIFF(Start_Date, Today(), Days)` | Number | Days since project started |
-| Is_Overdue | `Target_Completion < Today() AND Status <> "Complete"` | Yes/No | Overdue indicator |
-
-**Rollup Fields:**
+**Rollup Fields (8 total):**
 
 | Field Name | Source | Aggregation | Filter | Description |
 |-----------|--------|-------------|--------|-------------|
-| Total_Scopes | Scopes | COUNT | All | Number of scopes in project |
-| Total_Apparatus_Hours | Scopes | SUM | Total_App_Hours | Sum of all apparatus hours |
-| Total_Earned_Revenue | Scopes | SUM | Total_Earned_Revenue | Sum of earned revenue from scopes |
-| Completed_Scopes | Scopes | COUNT | Status = "Complete" | Number of completed scopes |
-| Percent_Complete | Calculated | - | (Completed_Scopes / Total_Scopes) * 100 | Project completion percentage |
+| Total_Apparatus_Count | Apparatus | COUNT | All | Total number of apparatus in project |
+| Completed_Apparatus_Count | Apparatus | COUNT | Completion_Status = "Complete" | Number completed |
+| Total_Apparatus_Hours | Apparatus | SUM | Labor_Hours | Sum of quoted labor hours |
+| Total_Completed_Hours | Apparatus | SUM | Completed_Hours | Sum of hours from completed apparatus |
+| Total_Actual_Hours | Apparatus | SUM | Actual_Hours | Sum including delays |
+| Total_Delays | Apparatus | SUM | Delays | Sum of all delay hours |
+| Total_Remaining_Hours | Calculated | - | Total_Apparatus_Hours - Total_Completed_Hours | Remaining work |
+| Percent_Complete | Calculated | - | (Completed_Apparatus_Count / Total_Apparatus_Count) * 100 | Completion % |
+
+**Implementation Notes (v1.3.0.4):**
+- Uses auto-number primary key (Projects_ID), not manual Job_Number field
+- Project_Number field stores the job number as text
+- Location lookup goes to BusinessUnit (not "Locations" table)
+- Customer lookup uses standard Account entity
+- All 8 rollup fields aggregate directly from Apparatus (not from Scopes)
+- Field count: 19 custom fields total (11 base fields + 8 rollups)
 
 **Business Rules:**
-- Job_Number must be unique (enforced as primary key)
-- Job_Number must be 6-7 digits
-- Location_Code is required (enforced via form)
-- Status cannot be "Complete" if any scopes are incomplete (implement via business rule)
-- Target_Completion must be >= Start_Date
+- Project_Number recommended to be unique (not enforced)
+- Project_Status workflow: Quoted → Planning → Active → Completed
+- All rollups recalculate automatically when apparatus updated
 
 **Relationships:**
-- **N:1 with Locations** (Many projects belong to one location)
-- **1:N with Scopes** (One project has many scopes)
+- **N:1 with BusinessUnit** (Many projects can reference one business unit via Location lookup)
+- **N:1 with Account** (Many projects belong to one customer)
+- **1:N with ProjectScope** (One project has many scopes)
+- **1:N with Tasks** (One project has many tasks - convenience lookup)
+- **1:N with Apparatus** (One project has many apparatus - convenience lookup)
 
 **Views to Create:**
-- Active Projects (Status <> Complete)
-- My Projects (filtered by Project_Manager = Current User)
-- By Location
-- Overdue Projects
+- Active Projects (Status = Active)
 - All Projects
+- By Business Unit
+- By Customer
+- Completed Projects
 
 **Security:**
-- Project Managers: Full access to their assigned projects
-- Field Technicians: Read-only access
-- Administrators: Full access to all
+- Project Managers: Full access
+- Field Technicians: Read access
+- Administrators: Full access
 
 ---
 
-### TABLE 4: SCOPES
+### TABLE 4: PROJECTSCOPE
 
 **Purpose:** Work breakdown structure defining testing scopes within projects
 
 **Table Configuration:**
 - **Table Type:** Standard Dataverse Table
+- **Schema Name:** cr950_ProjectScope
 - **Ownership:** User-owned
 - **Primary Key:** Scope_ID (auto-number)
-
-**⭐ CRITICAL ADDITION:** NETA_Standard field defines whether scope uses ATS or MTS testing standards. This cascades to all tasks and apparatus within the scope.
+- **v1.3.0.4 NOTE:** Implemented with 14 custom fields (includes 8 rollup fields)
 
 **Field Specifications:**
 
 | Field Name | Data Type | Max Length | Required | Default | Searchable | Description |
 |-----------|-----------|------------|----------|---------|------------|-------------|
-| Scope_ID | Auto Number | - | Auto | - | No | System-generated unique ID (PRIMARY KEY) |
-| Job_Number | Lookup | - | Yes | - | Yes | Lookup to Projects table |
-| Scope_Number | Whole Number | - | Yes | - | Yes | Sequential scope number within project |
 | Scope_Name | Single Line Text | 200 | Yes | - | Yes | Scope description/name |
-| Full_Scope_ID | Single Line Text | 100 | Auto | - | Yes | Calculated: Project_Name & "-" & Scope_Number |
-| NETA_Standard | Choice | - | Yes | "ATS" | Yes | ⭐ **NEW: Testing standard (ATS or MTS)** |
+| Project | Lookup | - | Yes | - | Yes | Lookup to Projects table (required parent) |
+| Scope_Labor_Detail | Lookup | - | No | - | Yes | Lookup to ScopeLaborDetail (1:1 financial config) |
+| NETA_Standard | Choice | - | Yes | "ATS" | Yes | Testing standard (ATS or MTS) |
 | SLD_Reference | Single Line Text | 100 | No | - | Yes | Single line diagram reference |
-| Status | Choice | - | Yes | "Not Started" | Yes | Scope status (see Global Choices) |
-| Priority | Choice | - | No | "Medium" | Yes | Scope priority (see Global Choices) |
-| Total_Apparatus_Hours | Decimal | - | No | - | No | Sum of all apparatus hours (can be rollup) |
-| Target_Start | Date Only | - | No | - | No | Planned start date |
-| Target_Completion | Date Only | - | No | - | No | Planned completion date |
-| Actual_Start | Date Only | - | No | - | No | Actual start date |
-| Actual_Completion | Date Only | - | No | - | No | Actual completion date |
-| Notes | Multiple Lines Text | - | No | - | No | Scope notes and details |
 
-**⭐ NETA_Standard Choice Configuration:**
-
-```
-Choice Name: resapower_netastandard (Global Choice)
-Values:
-  - ATS (Acceptance Testing Specifications) [Value: 1]
-  - MTS (Maintenance Testing Specifications) [Value: 2]
-
-Default: ATS
-
-Description: 
-Determines which NETA testing standard applies to this scope.
-- ATS: New installations, commissioning work
-- MTS: Existing equipment, maintenance work
-
-This choice cascades to all Tasks and Apparatus in the scope, determining
-which section references and labor hours are used from Apparatus_Type_Master.
-```
-
-**Calculated Fields:**
-
-| Field Name | Formula | Type | Description |
-|-----------|---------|------|-------------|
-| Days_In_Progress | `DATEDIFF(Actual_Start, Today(), Days)` | Number | Days since work started |
-| Is_Overdue | `Target_Completion < Today() AND Status <> "Complete"` | Yes/No | Overdue indicator |
-| Scope_Display_Name | `Job_Number & "." & Scope_Name` | Text | Display format |
-
-**Rollup Fields:**
+**Rollup Fields (8 total - same pattern as Projects):**
 
 | Field Name | Source | Aggregation | Filter | Description |
 |-----------|--------|-------------|--------|-------------|
-| Total_Tasks | Tasks | COUNT | All | Number of tasks in scope |
-| Total_Apparatus | Apparatus | COUNT | All | Number of apparatus items |
-| Completed_Apparatus | Apparatus | COUNT | Status = "Complete" | Completed apparatus count |
-| Total_Earned_Revenue | Apparatus (via Financial) | SUM | Earned_Revenue | Sum of earned revenue |
-| Percent_Complete | Calculated | - | (Completed_Apparatus / Total_Apparatus) * 100 | Completion percentage |
+| Total_Apparatus_Count | Apparatus | COUNT | All | Number of apparatus in scope |
+| Completed_Apparatus_Count | Apparatus | COUNT | Completion_Status = "Complete" | Number completed |
+| Total_Apparatus_Hours | Apparatus | SUM | Labor_Hours | Sum of quoted hours |
+| Total_Completed_Hours | Apparatus | SUM | Completed_Hours | Sum of completed work |
+| Total_Actual_Hours | Apparatus | SUM | Actual_Hours | Sum including delays |
+| Total_Delays | Apparatus | SUM | Delays | Sum of delay hours |
+| Total_Remaining_Hours | Calculated | - | Total_Apparatus_Hours - Total_Completed_Hours | Remaining work |
+| Percent_Complete | Calculated | - | (Completed_Apparatus_Count / Total_Apparatus_Count) * 100 | Completion % |
+
+**Implementation Notes (v1.3.0.4):**
+- Field count: 14 custom fields total (6 base + 8 rollups)
+- Original specification estimated 39 fields (incorrect - likely confused with ScopeLaborDetail's 49 fields)
+- Scope_Labor_Detail lookup provides 1:1 relationship to financial configuration
+- All 8 rollups aggregate directly from Apparatus table
+- NETA_Standard choice determines which testing standards apply
+
+**NETA_Standard Choice Values:**
+- ATS (Acceptance Testing Specifications) - New installations
+- MTS (Maintenance Testing Specifications) - Existing equipment
+- Determines which hours/sections used from ApparatusTypeMaster
 
 **Business Rules:**
-- Scope_Number must be unique within each project
-- Full_Scope_ID must be unique across all scopes
-- Status cannot be "Complete" if any apparatus are incomplete
-- Actual_Start must be <= Actual_Completion
-- **NETA_Standard is required and cannot be changed once Tasks or Apparatus exist** (enforced via business rule)
+- Project lookup is required (parent relationship)
+- NETA_Standard determines testing specifications used
+- All rollups recalculate when apparatus updated
 
 **Relationships:**
 - **N:1 with Projects** (Many scopes belong to one project)
-- **1:1 with Scope_Financial_Configuration** (One scope has one financial config)
+- **1:1 with ScopeLaborDetail** (One scope has one financial config via Scope_Labor_Detail lookup)
 - **1:N with Tasks** (One scope has many tasks)
-- **1:N with Apparatus** (One scope has many apparatus - retained for direct relationships)
+- **1:N with Apparatus** (One scope has many apparatus)
 
 **Views to Create:**
-- Active Scopes (Status <> Complete)
+- Active Scopes
 - By Project
-- By NETA Standard (ATS/MTS) ⭐ NEW
-- Overdue Scopes
-- My Scopes
+- By NETA Standard (ATS/MTS)
 - All Scopes
+
+**Security:**
+- Project Managers: Full access
+- Field Technicians: Read access
+- Administrators: Full access
+
+---
+
+### TABLE 5: TASKS
 
 **Security:**
 - Project Managers: Full access
