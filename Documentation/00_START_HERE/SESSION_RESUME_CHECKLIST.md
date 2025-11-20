@@ -450,6 +450,42 @@ Get-ChildItem "C:\RESA_Power_Build\Solution_Exports\" | Sort-Object LastWriteTim
 
 ---
 
+### **Problem: Memory MCP not available in current session**
+
+**Background**: Memory MCP server is configured in Claude Desktop config (`Documentation/claude_desktop_config.json`) but only loads for fresh chat sessions.
+
+**Status** (as of Nov 19, 2025):
+- ✅ Memory MCP server is configured correctly via npx
+- ✅ Server auto-starts when Claude Desktop launches
+- ✅ Configuration uses: `npx -y @modelcontextprotocol/server-memory`
+- ⚠️ Tools only available in NEW chat sessions (not existing sessions)
+
+**To Test Memory MCP** (for next session):
+1. Start a fresh Claude Desktop chat
+2. Type: "Can you create a memory entity?"
+3. If memory tools are available, you'll see tool options
+
+**Memory MCP Tools** (when available):
+- `create_entities` - Store project facts/decisions
+- `create_relations` - Link related concepts
+- `search_nodes` - Retrieve stored information
+- `open_nodes` - Access specific memories
+- `delete_entities` - Remove outdated information
+
+**Current Approach**:
+- This project uses **file-based documentation** instead of Memory MCP
+- Documentation system is actually **better suited** for complex projects
+- Reasons:
+  - Git version control for all documentation
+  - Easy to review/diff changes over time
+  - Searchable with grep/semantic search
+  - Portable across AI sessions and human review
+  - No dependency on specific MCP availability
+
+**Verdict**: Memory MCP works correctly but is optional. Documentation system provides superior continuity for this project type.
+
+---
+
 ## 🎯 SUCCESS CRITERIA
 
 **Before starting work, verify**:

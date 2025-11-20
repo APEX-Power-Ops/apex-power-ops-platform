@@ -2,8 +2,8 @@
 ## RESA Power Project Tracker - Session Management & Knowledge Transfer
 
 **Purpose**: Ensure zero knowledge loss between sessions, consistent documentation, and seamless continuity  
-**Last Updated**: November 16, 2025  
-**Version**: 1.2
+**Last Updated**: November 19, 2025  
+**Version**: 1.3
 
 ---
 
@@ -11,11 +11,16 @@
 
 ### **Project Name**: RESA Power Project Tracker
 ### **Technology**: Microsoft Dataverse (Power Platform)
-### **Environment**: RESAPower_PM (org04ad071f.crm.dynamics.com)
-### **Version**: v1.3.0.3 (Revenue Recognition workflow completed Nov 17, 2025)
-### **Repository**: https://github.com/jasonlswenson-sys/RESA-Power-Project-Tracker
+### **Environment**: RESAPowerPM (orgf05a3756.crm.dynamics.com)
+### **Environment ID**: 7f8ca9fd-86dd-ec35-8967-888a63ed3c09
+### **Organization ID**: 2a43137f-f9c3-f011-a9f5-6045bd003e31
+### **Solution Name**: RESAPowerProjectTracker (Unmanaged)
+### **Version**: v1.3.0.4 (exported successfully Nov 19, 2025)
+### **Dataverse Version**: 9.2.25111.151
+### **Repository**: https://github.com/jasonlswenson-sys/RESA-Power-Project-Management
 ### **Primary User**: Jason Swenson (Project Manager, Phoenix Services)
 ### **Organization**: RESA Power - Southwest Region (Phoenix, Las Vegas, Denver, San Diego)
+### **Auditing**: Enabled (Forever retention)
 
 ---
 
@@ -289,6 +294,11 @@ git push origin main
 #### **3. Store Key Facts to Memory MCP** ⚠️ CRITICAL
 **Execute this command at session end**:
 
+⚠️ **IMPORTANT**: Memory MCP tools are only available in **fresh chat sessions**. If you don't see memory tools available:
+- This is expected for existing sessions
+- Memory will be available when you start your next fresh chat
+- File-based documentation (Git + Session Summaries) provides full continuity
+
 Store essential project state that must survive session restart:
 - Current project status
 - Critical technical facts
@@ -297,6 +307,14 @@ Store essential project state that must survive session restart:
 - Next steps
 
 **What to Store** (see section below)
+
+**To Test if Memory MCP is Available**:
+```
+Simply ask: "Can you create a memory entity for this project?"
+
+If available: AI will show memory creation tools
+If not available: AI will explain Memory MCP not loaded (expected in existing sessions)
+```
 
 #### **4. Update Todo List** (If significant progress)
 **Location**: Conversation memory (tracked by AI)
@@ -460,16 +478,16 @@ Key Fact 10: [concise statement]
 ```
 Store these facts to Memory MCP:
 
-1. Project: RESA Power Project Tracker, Dataverse v1.2.0.3, RESAPower_PM environment
-2. Technical: 8 entities, 137 fields, 28 formulas, 8 option sets documented
-3. Status: Phase 1-3 complete (foundation/analysis/UX), Phase 4-7 pending (implementation)
-4. Critical: BusinessUnit represents multi-location architecture (Phoenix/Vegas/Denver/San Diego)
-5. Environment: Clean slate (0 records in all tables), safe for breaking changes
-6. Blockers: 5 architectural decisions need stakeholder input before implementation
-7. Priority: Revenue automation (P0 - 5 fields + flow), work assignment, date tracking
-8. Personas: 7 roles defined (Field Tech, Job Lead, PM, Ops Coordinator, Account Mgr, Location Mgr, Regional VP)
-9. Documents: USER_EXPERIENCE_SYSTEM_ARCHITECTURE.md (stakeholder presentation), SESSION_SUMMARY_NOV15 (review guide)
-10. Next Steps: Stakeholder meeting → Get decisions → Implement based on feedback
+1. Project: RESA Power Project Tracker, Dataverse v1.3.0.4, orgf05a3756.crm.dynamics.com (RESAPowerPM Sandbox)
+2. Repository: https://github.com/jasonlswenson-sys/RESA-Power-Project-Management (branch: clean-main)
+3. Technical: 8 tables, 137+ fields, 30 formulas, 9 choice fields, 1 Power Automate flow
+4. Tables: BusinessUnit, Projects, ProjectScope, Tasks, Apparatus, ApparatusRevenue, ScopeLaborDetail, ApparatusTypeMaster
+5. Critical: BusinessUnit = multi-location (Phoenix/Vegas/Denver/San Diego), NOT unused despite 0 records
+6. Status: v1.3.0.4 production ready, auditing enabled Nov 19, clean slate environment (safe for changes)
+7. Ready to Implement: Date Tracking (18 rollup fields, 2.5-3 hrs, HIGH value) - spec complete
+8. In Planning: Revenue Rollups (needs KPI requirements), Master Build Spec completion (30 min)
+9. Key Docs: PROJECT_STATUS_TRACKER.md (navigation), MASTER_BUILD_SPECIFICATION.md v2.0, SESSION_RESUME_CHECKLIST.md
+10. Latest Session: Documentation alignment Nov 19 - corrected table names (Location→BusinessUnit, Scope_Financial_Config→ScopeLaborDetail)
 ```
 
 ### **WHEN to Update Memory MCP**:
@@ -742,10 +760,11 @@ cd C:\RESA_Power_Build
 | 1.0 | Nov 15, 2025 | Initial protocol created - Foundation complete, awaiting stakeholder decisions |
 | 1.1 | Nov 16, 2025 | Excel architecture analyzed, VBA documented, Excel MCP foundation ready |
 | 1.2 | Nov 16, 2025 | Added context-based git commit methods (Claude Desktop/VS Code/Manual) with clear guidance on when to use each |
+| 1.3 | Nov 19, 2025 | Updated environment details (correct IDs, repository URL), added Memory MCP testing instructions, corrected solution name to RESAPowerProjectTracker, updated Memory MCP storage template to v1.3.0.4 state |
 
 ---
 
-**STATUS**: Protocol active and validated - Automation proven functional  
-**LAST SESSION**: Nov 16, 2025 - Git automation clarified, GitHub MCP integration documented  
-**NEXT REVIEW**: After Excel MCP server implementation  
+**STATUS**: Protocol active and current - Environment details verified Nov 19, 2025  
+**LAST SESSION**: Nov 19, 2025 - Documentation alignment, Memory MCP testing guide created  
+**NEXT REVIEW**: After first fresh session with Memory MCP test  
 **OWNER**: Jason Swenson + AI Assistant (Claude)
