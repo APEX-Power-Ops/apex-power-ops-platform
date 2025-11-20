@@ -1,0 +1,96 @@
+{
+  "lastUpdated": "2025-11-19T20:35:00Z",
+  "sessionId": "NOV19_MEMORY_MCP_VERIFICATION",
+  "project": {
+    "name": "RESA Power Project Tracker",
+    "version": "v1.3.0.4",
+    "status": "production-ready",
+    "environment": {
+      "url": "https://orgf05a3756.crm.dynamics.com",
+      "orgId": "2a43137f-f9c3-f011-a9f5-6045bd003e31",
+      "envId": "7f8ca9fd-86dd-ec35-8967-888a63ed3c09",
+      "solution": "RESAPowerProjectTracker"
+    },
+    "repository": {
+      "url": "https://github.com/jasonlswenson-sys/RESA-Power-Project-Management",
+      "branch": "clean-main"
+    }
+  },
+  "technical": {
+    "tables": 8,
+    "tableNames": [
+      "BusinessUnit",
+      "Projects", 
+      "ProjectScope",
+      "Tasks",
+      "Apparatus",
+      "ApparatusRevenue",
+      "ScopeLaborDetail",
+      "ApparatusTypeMaster"
+    ],
+    "totalFields": 137,
+    "formulas": 30,
+    "choiceFields": 9,
+    "flows": 1,
+    "auditingEnabled": "2025-11-19"
+  },
+  "criticalFacts": [
+    "BusinessUnit represents multi-location architecture (Phoenix/Vegas/Denver/San Diego) - NOT unused despite 0 records",
+    "Clean slate environment - all tables have 0 records as of Nov 19, 2025 - safe for changes",
+    "Table naming corrected Nov 19: Location→BusinessUnit, Scope_Financial_Config→ScopeLaborDetail",
+    "Field counts corrected Nov 19: Projects=19 (not 7), ProjectScope=14 (not 39), ScopeLaborDetail=49 (not 30)"
+  ],
+  "currentStatus": {
+    "readyToImplement": [
+      {
+        "name": "Date Tracking",
+        "timeEstimate": "2.5-3 hours",
+        "priority": "HIGH",
+        "value": "Schedule visibility, capacity planning, KPI reporting",
+        "spec": "Documentation/02_Implementation/DATE_TRACKING_IMPLEMENTATION.md",
+        "fields": 18
+      }
+    ],
+    "inPlanning": [
+      {
+        "name": "Revenue Rollups",
+        "blockers": "Need business KPI requirements",
+        "timeEstimate": "1-2 hours planning, then 1 hour implementation"
+      },
+      {
+        "name": "Master Build Spec Completion",
+        "priority": "LOW",
+        "timeEstimate": "30 minutes"
+      }
+    ],
+    "blockers": []
+  },
+  "keyDocuments": {
+    "navigation": "Documentation/00_START_HERE/PROJECT_STATUS_TRACKER.md",
+    "systemDesign": "Documentation/01_Architecture/MASTER_BUILD_SPECIFICATION.md",
+    "sessionResume": "Documentation/00_START_HERE/SESSION_RESUME_CHECKLIST.md",
+    "latestSession": "Documentation/03_Progress_Tracking/SESSION_SUMMARY_NOV19_DOCUMENTATION_ALIGNMENT.md",
+    "choiceFields": "Documentation/01_Architecture/STATUS_FIELD_ARCHITECTURE.md"
+  },
+  "sessionProtocol": {
+    "onSessionStart": [
+      "Read this file (PROJECT_CONTEXT.json)",
+      "Check criticalFacts array for must-remember information",
+      "Review currentStatus for next tasks",
+      "Read latestSession summary if resuming work"
+    ],
+    "onSessionEnd": [
+      "Update lastUpdated timestamp",
+      "Update sessionId with date and topic",
+      "Update currentStatus if progress made",
+      "Add new criticalFacts if discovered",
+      "Commit to Git"
+    ]
+  },
+  "notes": [
+    "This file serves as a lightweight Memory MCP alternative for VS Code/Copilot sessions",
+    "Quick-reference for AI to understand project state without reading multiple markdown files",
+    "Update this file when major milestones reached or critical facts discovered",
+    "Do not replace documentation - this supplements PROJECT_STATUS_TRACKER.md"
+  ]
+}
