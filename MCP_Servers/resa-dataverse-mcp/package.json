@@ -1,0 +1,24 @@
+{
+  "name": "resa-dataverse-mcp",
+  "version": "1.0.0",
+  "description": "MCP server for Microsoft Dataverse integration",
+  "main": "build/index.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "start": "node build/index.js"
+  },
+  "keywords": ["mcp", "dataverse", "power-platform"],
+  "author": "Jason Swenson",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^0.5.0",
+    "@azure/identity": "^4.0.0",
+    "axios": "^1.6.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.0"
+  }
+}

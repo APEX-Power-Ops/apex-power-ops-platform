@@ -24,6 +24,9 @@ yarn-error.log*
 package-lock.json
 .npm
 
+# MCP Server build outputs
+MCP_Servers/*/build/
+
 # ============================================
 # LOGS
 # ============================================
