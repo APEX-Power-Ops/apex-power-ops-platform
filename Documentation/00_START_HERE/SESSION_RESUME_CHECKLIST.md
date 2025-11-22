@@ -3,20 +3,23 @@
 
 **Purpose**: This document provides a systematic verification process when resuming work, whether you're returning after a break or a new AI instance is picking up where the previous session left off.
 
-**Last Updated**: November 19, 2025  
-**Current Version**: v1.3.0.4 (production ready)
+**Last Updated**: November 22, 2025  
+**Current Version**: v1.3.0.5 (importing to isolated dev environment)
+
+**🚨 CRITICAL UPDATE**: Now using isolated personal dev environment (org90c66be2.crm.dynamics.com) after RESA IT deleted original environment. All MCP development happens here. Production deployments manual only.
 
 ---
 
 ## 🚀 QUICK START (30 Seconds)
 
-### **Step 1: Read Latest Session Summary**
-📄 **Location**: `Documentation/03_Progress_Tracking/SESSION_SUMMARY_NOV19_DOCUMENTATION_ALIGNMENT.md`
+### **Step 1: Verify Development Environment**
+📄 **Location**: `Documentation/00_START_HERE/MY_DEV_ENVIRONMENT.md`
 
 **What to verify**:
-- ✅ What was accomplished in last session
-- ✅ What's ready to implement next
-- ✅ Any blockers or open questions
+- ✅ Dev Environment: org90c66be2.crm.dynamics.com (YOUR safe environment)
+- ❌ Production: org04ad071f.crm.dynamics.com (NEVER connect MCP here)
+- ✅ Solution v1.3.0.5 imported
+- ✅ Backups in 3 locations (local, GitHub, Box)
 
 ### **Step 2: Check Git Status**
 ```powershell
@@ -27,16 +30,17 @@ git log --oneline -5
 
 **What to verify**:
 - ✅ Working on `clean-main` branch
-- ✅ No uncommitted changes (or understand what they are)
-- ✅ Recent commits show expected work
+- ✅ Solution exports backed up
+- ✅ Recent commits show v1.3.0.5
 
-### **Step 3: Identify Next Task**
+### **Step 3: Current Status**
 📄 **Read**: `Documentation/00_START_HERE/PROJECT_STATUS_TRACKER.md`
 
-**Options** (as of Nov 19, 2025):
-1. **Date Tracking Implementation** (2.5-3 hrs, HIGH VALUE)
-2. **Revenue Rollup Requirements** (1-2 hrs planning needed)
-3. **Complete Master Build Spec** (30 min, lower priority)
+**Current Focus** (Nov 22, 2025):
+1. **Setting up isolated dev environment** (IN PROGRESS)
+2. **Configuring Azure app registration** (NEXT)
+3. **MCP server setup with safeguards** (NEXT)
+4. **Test MCP connection safely** (NEXT)
 
 ---
 
@@ -46,18 +50,22 @@ git log --oneline -5
 
 #### **1.1 Environment Check**
 ```powershell
-# Verify environment connection
-$env:DATAVERSE_ENV_URL = "https://orgf05a3756.crm.dynamics.com"
-$env:SOLUTION_NAME = "RESAPowerPM"
+# DEVELOPMENT Environment (isolated, safe for MCP)
+$env:DEV_DATAVERSE_URL = "https://org90c66be2.crm.dynamics.com"
+$env:DEV_ENVIRONMENT_NAME = "Jason Swenson's Environment"
 
-# Check PAC CLI authentication
-pac auth list
+# PRODUCTION Environment (RESA, NEVER use with MCP)
+$env:PROD_DATAVERSE_URL = "https://org04ad071f.crm.dynamics.com"
+
+# Verify you're using DEV
+Write-Host "Using DEV environment: $env:DEV_DATAVERSE_URL" -ForegroundColor Green
+Write-Host "Production blocked for MCP: $env:PROD_DATAVERSE_URL" -ForegroundColor Red
 ```
 
 **Expected**:
-- ✅ Environment: `orgf05a3756.crm.dynamics.com`
-- ✅ Solution: `RESAPowerPM`
-- ✅ PAC CLI: Authenticated and active
+- ✅ Dev Environment: `org90c66be2.crm.dynamics.com`  
+- ✅ Solution v1.3.0.5 in dev
+- ❌ MCP NEVER points to production (org04ad071f)
 
 **If not authenticated**:
 ```powershell
