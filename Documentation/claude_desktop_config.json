@@ -1,0 +1,38 @@
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "C:\\RESA_Power_Build",
+        "C:\\Users\\jjswe\\Projects"
+      ]
+    },
+    "github": {
+      "command": "npx",
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "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"
+      },
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-github"
+      ]
+    },
+    "postgres": {
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-postgres",
+        "postgresql://postgres:TCC_v5_2025@localhost:5432/tcc_v5"
+      ],
+      "command": "npx"
+    },
+    "memory": {
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-memory"
+      ],
+      "command": "npx"
+    }
+  }
+}
