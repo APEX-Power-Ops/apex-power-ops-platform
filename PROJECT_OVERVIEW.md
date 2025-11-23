@@ -1,7 +1,7 @@
 # RESA Power Project Tracker - System Overview
 
-**Version:** 1.3.0.1  
-**Last Updated:** November 17, 2025  
+**Version:** 1.4.0.0  
+**Last Updated:** November 22, 2025  
 **Project Lead:** Jason Swenson  
 **Repository:** [github.com/jasonlswenson-sys/RESA-Power-Project-Management](https://github.com/jasonlswenson-sys/RESA-Power-Project-Management)
 
@@ -17,6 +17,14 @@ Modern Dataverse-based project management system for electrical testing projects
 - ✅ **Multi-location support** for Phoenix, Las Vegas, Denver, San Diego
 - ✅ **NETA compliance** built into data structure
 - ✅ **Audit trail** for all financial and completion data
+- ✅ **Expanded functionality** with customer, resource, and asset management (v1.4.0.0)
+
+**System Scale (v1.4.0.0):**
+- **14 Tables**: 8 core + 6 supporting tables
+- **291+ Fields**: Comprehensive data model
+- **19+ Relationships**: Fully integrated architecture
+- **30 Formulas**: Automated calculations
+- **1 Flow**: Revenue recognition automation
 
 ---
 
@@ -91,18 +99,91 @@ graph TB
 
 ## 🏗️ Data Model
 
-### Entity Relationship Diagram
+### Entity Relationship Diagram (v1.4.0.0)
+
+**Updated:** November 22, 2025  
+**New Tables:** Clients, Sites, Employees, Quotes, Resource Assignments, Equipment
 
 ```mermaid
 erDiagram
-    BUSINESSUNIT ||--o{ PROJECTS : "has"
+    %% Core Project Relationships
+    BUSINESSUNIT ||--o{ PROJECTS : "manages"
+    CLIENT ||--o{ PROJECTS : "contracts"
+    SITE ||--o{ PROJECTS : "located_at"
+    CLIENT ||--o{ SITE : "owns"
+    CLIENT ||--o{ QUOTE : "requests"
+    SITE ||--o{ QUOTE : "for_location"
+    QUOTE ||--o| PROJECTS : "converts_to"
+    
     PROJECTS ||--o{ PROJECTSCOPE : "contains"
     PROJECTSCOPE ||--o{ TASKS : "organizes"
     PROJECTSCOPE ||--|| SCOPELABORDETAIL : "budgeted_by"
     TASKS ||--o{ APPARATUS : "includes"
     APPARATUS ||--o{ APPARATUSREVENUE : "generates"
     SCOPELABORDETAIL ||--o{ APPARATUSREVENUE : "rates_for"
+    APPARATUS }o--|| APPARATUSTYPEMASTER : "classified_as"
     
+    %% Resource Management (New v1.4.0.0)
+    EMPLOYEE ||--o{ RESOURCE_ASSIGNMENT : "assigned_via"
+    RESOURCE_ASSIGNMENT }o--|| PROJECTS : "staffs"
+    EQUIPMENT }o--o| EMPLOYEE : "assigned_to"
+    EQUIPMENT }o--o| PROJECTS : "used_on"
+    
+    %% New Tables (v1.4.0.0)
+    CLIENT {
+        string Client_Name
+        string Client_Number
+        string Primary_Contact
+        string Billing_Contact
+        currency Credit_Limit
+    }
+    
+    SITE {
+        string Site_Name
+        string Site_Number
+        lookup Client
+        string Address
+        decimal Latitude
+        decimal Longitude
+        string Access_Requirements
+    }
+    
+    EMPLOYEE {
+        string Employee_Number
+        string Full_Name
+        string Skillset
+        string Certifications
+        currency Billing_Rate
+        string Availability
+    }
+    
+    QUOTE {
+        string Quote_Number
+        lookup Client
+        lookup Site
+        currency Total_Quote
+        decimal Margin_Percent
+        boolean Converted_To_Project
+    }
+    
+    RESOURCE_ASSIGNMENT {
+        lookup Project
+        lookup Employee
+        string Role
+        decimal Allocated_Hours
+        decimal Actual_Hours
+    }
+    
+    EQUIPMENT {
+        string Equipment_Number
+        string Equipment_Type
+        boolean Calibration_Required
+        date Next_Calibration_Due
+        lookup Assigned_To_Employee
+        lookup Current_Project
+    }
+    
+    %% Original Core Tables
     BUSINESSUNIT {
         string Name
         string Location
@@ -113,6 +194,8 @@ erDiagram
         string Project_Name
         string Project_Number
         lookup BusinessUnit
+        lookup Client
+        lookup Site
         date Start_Date
         date Target_Completion
     }
@@ -159,6 +242,12 @@ erDiagram
         currency Effective_Labor_Rate
         currency Revenue_Amount
         choice Revenue_Status
+    }
+    
+    APPARATUSTYPEMASTER {
+        string Apparatus_Type_Name
+        decimal ATS_Hours
+        decimal MTS_Hours
     }
 ```
 

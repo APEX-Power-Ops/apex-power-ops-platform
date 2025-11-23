@@ -40,11 +40,11 @@ function Connect-Dataverse {
         
         Write-Host "✅ Connected to Dataverse!" -ForegroundColor Green
         Write-Host "   Environment: org99cd6c6e (Dev)" -ForegroundColor Gray
-        return $true
+        return $script:DataverseToken
     }
     catch {
         Write-Host "❌ Connection failed: $($_.Exception.Message)" -ForegroundColor Red
-        return $false
+        return $null
     }
 }
 

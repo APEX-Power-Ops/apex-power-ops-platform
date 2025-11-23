@@ -1,0 +1,62 @@
+Dataverse MCP Server in VS Code
+1
+2
+Dataverse-MCP/lab03/README.md at main · microsoft/Dataverse-…
+https://github.com/microsoft/Dataverse-MCP/blob/main/lab03/README.md
+Use MCP servers in VS Code
+https://code.visualstudio.com/docs/copilot/customization/mcp-servers
+The Dataverse MCP (Model Context Protocol) server allows seamless integration with Visual Studio Code, enabling advanced interactions with Dataverse. Below are the steps to configure and use the Dataverse MCP server in VS Code.
+
+1. Install and Enable MCP Support
+
+Ensure you have the latest version of Visual Studio Code installed.
+
+Enable MCP support by navigating to Settings (Ctrl+,) and searching for chat.mcp.enabled. Set it to true.
+
+2. Add the Dataverse MCP Server
+
+Open the Command Palette (Ctrl+Shift+P) and run MCP: Add Server.
+
+Provide the following configuration in settings.json:
+
+"Dataverse MCP Server": {
+"command": "Microsoft.PowerPlatform.Dataverse.MCP",
+"args": [
+"--ConnectionUrl", "<Connection URL>",
+"--MCPServerName", "DataverseMCPServer",
+"--TenantId", "<Tenant Id>",
+"--EnableHttpLogging", "true",
+"--EnableMsalLogging", "false",
+"--Debug", "false",
+"--BackendProtocol", "HTTP"
+]
+}
+Copy
+3. Start the MCP Server
+
+Open the Command Palette and run MCP: List Servers.
+
+Select the Dataverse MCP Server from the list and click Start Server.
+
+Verify that the server starts successfully by checking the Output window.
+
+4. Use Dataverse MCP Tools
+
+Open the Chat view (Ctrl+Alt+I) in VS Code.
+
+Switch to Agent Mode and select tools provided by the Dataverse MCP server.
+
+Example commands: List tables: "List tables from Dataverse" Query data: "List items in the contact table"
+
+Best Practices
+
+Always verify server configurations for security.
+
+Use parent-child relationships in Dataverse for better rollup functionality.
+
+Regularly update your tools and extensions for compatibility.
+
+This setup enhances productivity by integrating Dataverse operations directly into your development workflow
+1
+2
+.

@@ -1,6 +1,6 @@
 {
-  "lastUpdated": "2025-11-20T05:30:07Z",
-  "sessionId": "NOV19_Memory_MCP_Update_and_Project_Audit",
+  "lastUpdated": "2025-11-22T19:45:00Z",
+  "sessionId": "NOV22_Rollup_Field_Web_API_Investigation",
   "project": {
     "name": "RESA Power Project Tracker",
     "version": "v1.3.0.4",
@@ -39,17 +39,39 @@
     "Clean slate environment - all tables have 0 records as of Nov 19, 2025 - safe for changes",
     "Table naming corrected Nov 19: Location→BusinessUnit, Scope_Financial_Config→ScopeLaborDetail",
     "Field counts corrected Nov 19: Projects=19 (not 7), ProjectScope=14 (not 39), ScopeLaborDetail=49 (not 30)",
-    "VS Code continuity system implemented: PROJECT_CONTEXT.json + Update-ProjectContext.ps1 script replaces Memory MCP functionality"
+    "VS Code continuity system implemented: PROJECT_CONTEXT.json + Update-ProjectContext.ps1 script replaces Memory MCP functionality",
+    "Nov 22 Discovery: Dataverse Web API CANNOT create rollup fields - RollupAttributeMetadata type not exposed in OData model",
+    "Nov 22 Decision: Manual UI creation recommended for 32 rollup fields (2-3 hours) vs Organization Service SDK (6-8 hours setup)",
+    "18 simple rollup field containers exist from failed script - must delete via UI before creating proper rollup fields"
   ],
   "currentStatus": {
+    "nextImmediate": [
+      {
+        "name": "Create Manual Rollup Field Implementation Guide",
+        "timeEstimate": "30 minutes",
+        "priority": "IMMEDIATE",
+        "description": "Step-by-step checklist for creating 32 rollup fields via Power Apps UI",
+        "location": "Documentation/06_Implementation_Guides/MANUAL_ROLLUP_FIELD_CREATION_GUIDE.md",
+        "blockers": "None - ready to create on resume"
+      },
+      {
+        "name": "Delete Simple Rollup Field Containers",
+        "timeEstimate": "15-20 minutes",
+        "priority": "HIGH",
+        "description": "Delete 18 existing DateTime fields that should be rollup fields (Tasks/Scopes/Projects)",
+        "method": "Manual via Power Apps UI",
+        "reason": "API deletion failed with 401, must use UI"
+      }
+    ],
     "readyToImplement": [
       {
-        "name": "Date Tracking",
-        "timeEstimate": "2.5-3 hours",
+        "name": "Date Tracking Rollup Fields",
+        "timeEstimate": "2-3 hours",
         "priority": "HIGH",
         "value": "Schedule visibility, capacity planning, KPI reporting",
         "spec": "Documentation/02_Implementation/DATE_TRACKING_IMPLEMENTATION.md",
-        "fields": 18
+        "fields": 18,
+        "method": "Manual UI creation (Web API confirmed impossible)"
       }
     ],
     "inPlanning": [
@@ -64,14 +86,22 @@
         "timeEstimate": "30 minutes"
       }
     ],
-    "blockers": []
+    "blockers": [
+      {
+        "issue": "18 simple rollup field containers in environment",
+        "impact": "Must delete before creating proper rollup fields",
+        "resolution": "Delete via UI (15-20 min)",
+        "status": "Identified, ready to resolve"
+      }
+    ]
   },
   "keyDocuments": {
     "navigation": "Documentation/00_START_HERE/PROJECT_STATUS_TRACKER.md",
     "systemDesign": "Documentation/01_Architecture/MASTER_BUILD_SPECIFICATION.md",
     "sessionResume": "Documentation/00_START_HERE/SESSION_RESUME_CHECKLIST.md",
-    "latestSession": "Documentation/03_Progress_Tracking/SESSION_SUMMARY_NOV19_DOCUMENTATION_ALIGNMENT.md",
-    "choiceFields": "Documentation/01_Architecture/STATUS_FIELD_ARCHITECTURE.md"
+    "latestSession": "Documentation/03_Progress_Tracking/SESSION_SUMMARY_NOV22_ROLLUP_FIELD_INVESTIGATION.md",
+    "choiceFields": "Documentation/01_Architecture/STATUS_FIELD_ARCHITECTURE.md",
+    "dateTracking": "Documentation/02_Implementation/DATE_TRACKING_IMPLEMENTATION.md"
   },
   "sessionProtocol": {
     "onSessionStart": [

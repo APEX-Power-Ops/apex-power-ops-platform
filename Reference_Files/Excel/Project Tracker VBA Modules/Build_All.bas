@@ -146,14 +146,11 @@ Sub BuildAll()
             wsOut.Cells(outRow, Global_Constants.SC_COL_DATE_DUE).formula = _
                 "=IFERROR(IF(AGGREGATE(5,6,IF(LEFT(E" & (outRow + 1) & ":E200,LEN(E" & outRow & ")+1)=E" & outRow & "&""."",I" & (outRow + 1) & ":I200))>0,AGGREGATE(5,6,IF(LEFT(E" & (outRow + 1) & ":E200,LEN(E" & outRow & ")+1)=E" & outRow & "&""."",I" & (outRow + 1) & ":I200)),""""),"""")"
             
-            ' Parent date completion - REAPPLY FORMAT AND COLOR AFTER FORMULA
+            ' Parent date completion - preserve format and color, VBA handles auto-population
             With wsOut.Cells(outRow, Global_Constants.SC_COL_DATE_COMP)
                 .Clear
                 .NumberFormat = dateCompFormat
                 .Interior.Color = dateCompColor
-                If wsOut.Range(Global_Constants.SC_MODE_TOGGLE_CELL).Value = "AUTO" Then
-                    .formula = "=IF(B" & outRow & "=""COMPLETED"",NOW(),"""")"
-                End If
             End With
             
             outRow = outRow + 1
@@ -182,11 +179,10 @@ Sub BuildAll()
             wsOut.Cells(outRow, Global_Constants.SC_COL_DRW).Value = drw
             wsOut.Cells(outRow, Global_Constants.SC_COL_AHRS).Value = ahrs
 
-            ' Child date completion - REAPPLY FORMAT AND COLOR AFTER FORMULA
+            ' Child date completion - preserve format and color, VBA handles auto-population
             With wsOut.Cells(outRow, Global_Constants.SC_COL_DATE_COMP)
                 .NumberFormat = dateCompFormat
                 .Interior.Color = dateCompColor
-                ' Leave empty - Worksheet_Change event will populate when status changes
             End With
 
             ' Child percentage formula
@@ -242,9 +238,6 @@ NextRow:
 
     Application.DisplayAlerts = True
     Application.ScreenUpdating = True
-    
-    ' Add mode toggle button
-    Call AddModeToggleButtonToSheet(wsOut)
     
     MsgBox "Scope sheet '" & newName & "' created successfully!" & vbCrLf & _
            "Row 5: Headers preserved" & vbCrLf & _
@@ -619,8 +612,6 @@ Private Sub FixSingleExistingSheetWithGlobalConstants(ws As Worksheet, wsTpl As 
     If totalsRow > 0 Then
         Call RemoveValidationFromTotalsDown(ws, totalsRow)
     End If
-    
-    Call AddModeToggleButtonToSheet(ws)
 End Sub
 
 Private Sub FixDateCompletionFormulasWithGlobalConstants(ws As Worksheet)
@@ -650,11 +641,6 @@ Private Sub FixDateCompletionFormulasWithGlobalConstants(ws As Worksheet)
     End If
     On Error GoTo 0
     
-    ' Ensure mode toggle exists
-    If ws.Range(Global_Constants.SC_MODE_TOGGLE_CELL).Value = "" Then
-        ws.Range(Global_Constants.SC_MODE_TOGGLE_CELL).Value = "AUTO"
-    End If
-    
     ' Start from row 6 (first data row)
     For currentRow = 6 To maxRow
         Dim taskId As String
@@ -662,11 +648,10 @@ Private Sub FixDateCompletionFormulasWithGlobalConstants(ws As Worksheet)
         
         If Len(taskId) > 0 And taskId <> "TOTALS" Then
             If CountDots(taskId) = 1 Then
-                ' Parent row - apply all parent formulas
+                ' Parent row - apply formatting only, VBA handles auto-population
                 With ws.Cells(currentRow, Global_Constants.SC_COL_DATE_COMP)
                     .NumberFormat = dateCompFormat
                     .Interior.Color = dateCompColorParent
-                    .formula = "=IF(" & GetColumnLetter(Global_Constants.SC_COL_STATUS) & currentRow & "=""COMPLETED"",NOW(),"""")"
                 End With
                 
                 ' Parent Date Due rollup formula
@@ -681,11 +666,10 @@ Private Sub FixDateCompletionFormulasWithGlobalConstants(ws As Worksheet)
                     "IF(AND(N" & currentRow & ">0,N" & currentRow & "<1),""IN PROGRESS"",""""))))"
                 
             ElseIf CountDots(taskId) > 1 Then
-                ' Child row - only apply date completion formula
+                ' Child row - apply formatting only, VBA handles auto-population
                 With ws.Cells(currentRow, Global_Constants.SC_COL_DATE_COMP)
                     .NumberFormat = dateCompFormat
                     .Interior.Color = dateCompColorChild
-                    .formula = "=IF($T$2=""AUTO"",IF(B" & currentRow & "=""COMPLETED"",NOW(),""""),"""")"
                 End With
             End If
         End If
@@ -1059,47 +1043,7 @@ Private Sub CleanupStrayBorders(ws As Worksheet, totalsRow As Long)
     On Error GoTo 0
 End Sub
 
-Private Sub AddModeToggleButtonToSheet(ws As Worksheet)
-    Dim existingBtn As Shape
-    On Error Resume Next
-    Set existingBtn = ws.Shapes("ModeToggleBtn")
-    On Error GoTo 0
-    
-    If Not existingBtn Is Nothing Then Exit Sub
-    
-    On Error Resume Next
-    Dim btn As Shape
-    Set btn = ws.Shapes.AddShape(msoShapeRectangle, 1100, 10, 120, 30)
-    
-    If Not btn Is Nothing Then
-        With btn
-            .Name = "ModeToggleBtn"
-            .TextFrame2.TextRange.Text = "Toggle Mode"
-            .Fill.ForeColor.RGB = RGB(70, 130, 180)
-            .TextFrame2.TextRange.Font.Fill.ForeColor.RGB = RGB(255, 255, 255)
-            .TextFrame2.TextRange.Font.Size = 10
-            .OnAction = "ToggleDateCompletionMode"
-        End With
-    End If
-    On Error GoTo 0
-End Sub
 
-' Mode toggle function
-Sub ToggleDateCompletionMode()
-    Dim ws As Worksheet
-    Set ws = ActiveSheet
-    
-    Dim currentMode As String
-    currentMode = UCase(Trim(CStr(ws.Range(Global_Constants.SC_MODE_TOGGLE_CELL).Value)))
-    
-    If currentMode = "AUTO" Then
-        ws.Range(Global_Constants.SC_MODE_TOGGLE_CELL).Value = "MANUAL"
-    Else
-        ws.Range(Global_Constants.SC_MODE_TOGGLE_CELL).Value = "AUTO"
-    End If
-    
-    MsgBox "Switched to " & ws.Range(Global_Constants.SC_MODE_TOGGLE_CELL).Value & " mode!", vbInformation
-End Sub
 
 ' ============================================================================
 ' UTILITY FUNCTIONS

@@ -58,22 +58,320 @@ graph TB
 
 ## Dataverse Entity Relationship Diagram
 
+**Version:** 2.0 (Updated November 22, 2025)  
+**Tables:** 14 (8 original + 6 new)  
+**Status:** Reflects v1.4.0.0 architecture
+
 ```mermaid
 erDiagram
+    %% Core Project Management Tables
+    BUSINESSUNIT ||--o{ PROJECT : "manages"
+    CLIENT ||--o{ PROJECT : "contracts"
+    SITE ||--o{ PROJECT : "located_at"
+    CLIENT ||--o{ SITE : "owns"
+    CLIENT ||--o{ QUOTE : "requests"
+    SITE ||--o{ QUOTE : "for_location"
+    QUOTE ||--o| PROJECT : "converts_to"
+    
     PROJECT ||--o{ SCOPE : "has many"
     PROJECT ||--o{ TASK : "contains"
-    PROJECT ||--o{ TIME_ENTRY : "tracks"
+    PROJECT ||--o{ APPARATUS_REVENUE : "recognizes"
+    PROJECT ||--o{ RESOURCE_ASSIGNMENT : "staffed_by"
+    PROJECT ||--o{ EQUIPMENT : "uses"
     
     SCOPE ||--o{ TASK : "includes"
-    SCOPE ||--o{ BILLING_LINE : "generates"
-    SCOPE ||--o{ LABOR_RATE_CONFIG : "uses"
+    SCOPE ||--|| SCOPE_LABOR_DETAIL : "budgeted_by"
+    SCOPE ||--o{ APPARATUS_REVENUE : "bills"
     
-    TASK ||--o{ TIME_ENTRY : "logs"
-    TASK ||--o{ BILLING_LINE : "bills"
-    TASK }o--|| APPARATUS : "uses"
+    TASK ||--o{ APPARATUS : "tests"
     
-    USER ||--o{ TASK : "assigned to"
-    USER ||--o{ TIME_ENTRY : "creates"
+    APPARATUS }o--|| APPARATUS_TYPE_MASTER : "classified_as"
+    APPARATUS ||--o{ APPARATUS_REVENUE : "generates"
+    
+    SCOPE_LABOR_DETAIL ||--o{ APPARATUS_REVENUE : "rates_for"
+    
+    %% Resource Management
+    EMPLOYEE ||--o{ RESOURCE_ASSIGNMENT : "assigned_via"
+    EMPLOYEE ||--o{ EQUIPMENT : "uses"
+    
+    %% Original relationships maintained
+    TASK }o--|| APPARATUS_TYPE_MASTER : "specifies"
+    
+    %% NEW TABLES (Added November 22, 2025)
+    CLIENT {
+        guid ClientID PK
+        string Client_Number
+        string Client_Name
+        string Client_Type
+        string Industry
+        string Account_Status
+        string Primary_Contact_Name
+        string Primary_Contact_Email
+        string Primary_Contact_Phone
+        string Billing_Contact_Name
+        string Billing_Contact_Email
+        string Mailing_Address
+        string Mailing_City
+        string Mailing_State
+        string Mailing_ZIP
+        string Tax_ID
+        string Payment_Terms
+        currency Credit_Limit
+        string Insurance_Certificate
+        date Insurance_Expiration
+        string Notes
+    }
+    
+    SITE {
+        guid SiteID PK
+        string Site_Number
+        string Site_Name
+        lookup Client FK
+        string Site_Type
+        string Status
+        string Address
+        string City
+        string State
+        string ZIP
+        string County
+        decimal Latitude
+        decimal Longitude
+        string Site_Contact
+        string Site_Contact_Phone
+        string Site_Contact_Email
+        string Access_Requirements
+        string Safety_Protocols
+        string Parking_Instructions
+        string Special_Equipment
+        string Utility_Company
+        string Utility_Account_Number
+        string Notes
+    }
+    
+    EMPLOYEE {
+        guid EmployeeID PK
+        string Employee_Number
+        string Full_Name
+        string Employee_Type
+        string Status
+        string Title
+        string Department
+        string Email
+        string Phone
+        date Hire_Date
+        string Skillset
+        string Certifications
+        string License_Number
+        date License_Expiration
+        currency Hourly_Rate
+        currency Overtime_Rate
+        currency Billing_Rate
+        string Availability
+        string Emergency_Contact
+        string Emergency_Phone
+        string Notes
+    }
+    
+    QUOTE {
+        guid QuoteID PK
+        string Quote_Number
+        string Quote_Name
+        lookup Client FK
+        lookup Site FK
+        string Quote_Type
+        string Status
+        date Quote_Date
+        date Expiration_Date
+        string Requested_By
+        string Requested_Email
+        string Prepared_By
+        string Approved_By
+        date Approval_Date
+        string Scope_Description
+        decimal Estimated_Hours
+        currency Labor_Rate
+        currency Labor_Cost
+        currency Material_Cost
+        currency Equipment_Cost
+        currency Other_Costs
+        currency Subtotal
+        decimal Margin_Percent
+        currency Total_Quote
+        boolean Converted_To_Project
+        date Conversion_Date
+        string Loss_Reason
+        string Notes
+    }
+    
+    RESOURCE_ASSIGNMENT {
+        guid AssignmentID PK
+        string Assignment_Number
+        lookup Project FK
+        lookup Employee FK
+        string Role
+        string Assignment_Type
+        string Status
+        date Start_Date
+        date End_Date
+        decimal Allocated_Hours
+        decimal Actual_Hours
+        decimal Remaining_Hours
+        currency Billing_Rate
+        boolean Billable
+        string Notes
+    }
+    
+    EQUIPMENT {
+        guid EquipmentID PK
+        string Equipment_Number
+        string Equipment_Name
+        string Equipment_Type
+        string Category
+        string Status
+        string Manufacturer
+        string Model
+        string Serial_Number
+        date Purchase_Date
+        currency Purchase_Cost
+        boolean Calibration_Required
+        date Last_Calibration_Date
+        date Next_Calibration_Due
+        int Calibration_Interval_Days
+        string Maintenance_Schedule
+        date Last_Maintenance_Date
+        date Next_Maintenance_Due
+        string Current_Location
+        lookup Assigned_To_Employee FK
+        lookup Current_Project FK
+        string Notes
+    }
+    
+    %% ORIGINAL CORE TABLES (v1.3.0.5)
+    BUSINESSUNIT {
+        guid BusinessUnitID PK
+        string Name
+        string Location_Code
+        string City
+        string State
+        string Region
+    }
+    
+    PROJECT {
+        guid ProjectID PK
+        string Project_Number
+        string Project_Name
+        lookup BusinessUnit FK
+        lookup Client FK
+        lookup Site FK
+        lookup Converted_From_Quote FK
+        date Start_Date
+        date Target_Completion
+        choice Status
+        decimal Total_Apparatus_Count
+        decimal Completed_Apparatus_Count
+        decimal Total_Apparatus_Hours
+        decimal Total_Completed_Hours
+        decimal Total_Actual_Hours
+        decimal Total_Delays
+        decimal Total_Remaining_Hours
+        decimal Percent_Complete
+    }
+    
+    SCOPE {
+        guid ScopeID PK
+        lookup Project FK
+        string Scope_Name
+        int Scope_Number
+        choice NETA_Standard
+        choice Status
+        decimal Total_Apparatus_Count
+        decimal Completed_Apparatus_Count
+        decimal Total_Apparatus_Hours
+        decimal Total_Completed_Hours
+        decimal Total_Actual_Hours
+        decimal Total_Delays
+        decimal Total_Remaining_Hours
+        decimal Percent_Complete
+    }
+    
+    SCOPE_LABOR_DETAIL {
+        guid ConfigID PK
+        lookup Project_Scope FK "1:1"
+        decimal Total_Apparatus_Hours
+        currency Offsite_Labor_Total
+        currency Onsite_Labor_Total
+        currency Travel_Total
+        currency Outside_Services_Total
+        decimal Offsite_Labor_Percent
+        decimal Onsite_Labor_Percent
+        decimal Travel_Percent
+        decimal Outside_Services_Percent
+        currency Equipment_Fixed_Total
+        currency Travel_Fixed_Total
+        decimal Scope_Multiplier
+        currency Effective_Labor_Rate "Calculated"
+    }
+    
+    TASK {
+        guid TaskID PK
+        lookup Project FK
+        lookup ProjectScope FK
+        string Task_Name
+        choice Task_Type
+        choice Status
+        decimal Total_Apparatus_Count
+        decimal Completed_Apparatus_Count
+        decimal Total_Apparatus_Hours
+        decimal Total_Completed_Hours
+        decimal Total_Actual_Hours
+        decimal Total_Delays
+        decimal Total_Remaining_Hours
+        decimal Percent_Complete
+    }
+    
+    APPARATUS {
+        guid ApparatusID PK
+        lookup Project FK
+        lookup ProjectScope FK
+        lookup Task FK
+        lookup ApparatusTypeMaster FK
+        string Designation
+        string Serial_Number
+        decimal Apparatus_Hours
+        decimal Delays
+        decimal Actual_Hours "Calculated"
+        decimal Completed_Hours "Calculated"
+        decimal Remaining_Hours "Calculated"
+        choice Completion_Status
+        date Date_Completed
+        choice Apparatus_Assessment
+        choice Witness_Test
+        string Notes
+    }
+    
+    APPARATUS_REVENUE {
+        guid RevenueID PK
+        lookup Apparatus FK
+        lookup Project FK
+        lookup Scope_Labor_Detail FK
+        decimal Apparatus_Hours
+        decimal Delays
+        currency Effective_Labor_Rate
+        currency Revenue_Amount "Calculated"
+        choice Revenue_Status
+        datetime Created_On
+    }
+    
+    APPARATUS_TYPE_MASTER {
+        guid TypeID PK
+        string Apparatus_Type_Name
+        string Category
+        decimal ATS_Hours
+        decimal MTS_Hours
+        boolean Is_Active
+        string Description
+    }
+```
     
     PROJECT {
         string ProjectNumber PK

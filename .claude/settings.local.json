@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(\"C:\\Users\\jjswe\\OneDrive - Resa Power, LLC\\J Swenson\\Software\\accessdatabaseengine_X64.exe\" /quiet /passive /norestart)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
