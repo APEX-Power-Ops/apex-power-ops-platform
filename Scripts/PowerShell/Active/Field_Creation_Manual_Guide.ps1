@@ -4,7 +4,7 @@
 
 param(
     [Parameter(Mandatory=$false)]
-    [string]$EnvironmentUrl = "https://org99cd6c6e.crm.dynamics.com"
+    [string]$EnvironmentUrl = "https://orgf05a3756.crm.dynamics.com"
 )
 
 Write-Host "`n========================================" -ForegroundColor Cyan
