@@ -37,7 +37,7 @@ Modernize RESA Power's electrical testing project management through Power Platf
 
 ### Team Structure
 - **Primary Developer**: Jason Swenson (jason.swenson@resapower.com)
-- **Development Environment**: org04ad071f.crm.dynamics.com
+- **Development Environment**: org99cd6c6e.crm.dynamics.com
 - **Repository**: https://github.com/jasonlswenson-sys/RESA-Power-Project-Management
 
 ---
@@ -430,7 +430,7 @@ Current: `v1.2.0.3`
 
 #### Export Process
 ```powershell
-# 1. Make changes in Dataverse (org04ad071f.crm.dynamics.com)
+# 1. Make changes in Dataverse (org99cd6c6e.crm.dynamics.com)
 # 2. Test thoroughly in dev environment
 # 3. Export solution (managed and unmanaged)
 # 4. Save to Solution_Exports/vX.X.X.X/
@@ -1069,7 +1069,7 @@ node server.js                     # Test locally
 
 **Resources:**
 - GitHub: https://github.com/jasonlswenson-sys/RESA-Power-Project-Management
-- Dataverse: org04ad071f.crm.dynamics.com
+- Dataverse: org99cd6c6e.crm.dynamics.com
 - Documentation: C:\RESA_Power_Build\Documentation\
 
 ### Document Maintenance

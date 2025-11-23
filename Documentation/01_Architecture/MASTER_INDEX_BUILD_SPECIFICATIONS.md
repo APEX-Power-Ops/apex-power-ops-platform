@@ -1,7 +1,7 @@
 # RESA POWER PROJECT - MASTER BUILD SPECIFICATIONS INDEX
 
 **Project**: RESA Power Project Tracker Modernization  
-**Environment**: org04ad071f.crm.dynamics.com (Development)  
+**Environment**: org99cd6c6e.crm.dynamics.com (Development)  
 **Solution Version**: v1.2.0.3 → Target: v2.0.0  
 **Last Updated**: November 15, 2025  
 **Status**: 🟡 In Specification Phase - Build on Hold Until Complete

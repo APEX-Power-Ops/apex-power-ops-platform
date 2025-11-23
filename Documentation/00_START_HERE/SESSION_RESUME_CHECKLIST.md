@@ -6,7 +6,7 @@
 **Last Updated**: November 22, 2025  
 **Current Version**: v1.3.0.5 (importing to isolated dev environment)
 
-**🚨 CRITICAL UPDATE**: Now using isolated personal dev environment (org90c66be2.crm.dynamics.com) after RESA IT deleted original environment. All MCP development happens here. Production deployments manual only.
+**🚨 CRITICAL UPDATE**: Now using isolated personal dev environment (org99cd6c6e.crm.dynamics.com) after RESA IT deleted original environment. All MCP development happens here. Production deployments manual only.
 
 ---
 
@@ -16,8 +16,8 @@
 📄 **Location**: `Documentation/00_START_HERE/MY_DEV_ENVIRONMENT.md`
 
 **What to verify**:
-- ✅ Dev Environment: org90c66be2.crm.dynamics.com (YOUR safe environment)
-- ❌ Production: org04ad071f.crm.dynamics.com (NEVER connect MCP here)
+- ✅ Dev Environment: org99cd6c6e.crm.dynamics.com (YOUR safe environment)
+- ❌ Production: org99cd6c6e.crm.dynamics.com (NEVER connect MCP here)
 - ✅ Solution v1.3.0.5 imported
 - ✅ Backups in 3 locations (local, GitHub, Box)
 
@@ -51,11 +51,11 @@ git log --oneline -5
 #### **1.1 Environment Check**
 ```powershell
 # DEVELOPMENT Environment (isolated, safe for MCP)
-$env:DEV_DATAVERSE_URL = "https://org90c66be2.crm.dynamics.com"
+$env:DEV_DATAVERSE_URL = "https://org99cd6c6e.crm.dynamics.com"
 $env:DEV_ENVIRONMENT_NAME = "Jason Swenson's Environment"
 
 # PRODUCTION Environment (RESA, NEVER use with MCP)
-$env:PROD_DATAVERSE_URL = "https://org04ad071f.crm.dynamics.com"
+$env:PROD_DATAVERSE_URL = "https://org99cd6c6e.crm.dynamics.com"
 
 # Verify you're using DEV
 Write-Host "Using DEV environment: $env:DEV_DATAVERSE_URL" -ForegroundColor Green
@@ -63,13 +63,13 @@ Write-Host "Production blocked for MCP: $env:PROD_DATAVERSE_URL" -ForegroundColo
 ```
 
 **Expected**:
-- ✅ Dev Environment: `org90c66be2.crm.dynamics.com`  
+- ✅ Dev Environment: `org99cd6c6e.crm.dynamics.com`  
 - ✅ Solution v1.3.0.5 in dev
 - ❌ MCP NEVER points to production (org04ad071f)
 
 **If not authenticated**:
 ```powershell
-pac auth create --environment https://orgf05a3756.crm.dynamics.com
+pac auth create --environment https://org99cd6c6e.crm.dynamics.com
 ```
 
 ---
@@ -170,14 +170,14 @@ Get-ChildItem "C:\RESA_Power_Build\Solution_Exports\v1.3.0.4\" -Recurse | Select
 
 **Expected**:
 - ✅ Folder: `Solution_Exports/v1.3.0.4/`
-- ✅ Files: `RESAPowerPM.zip` and `customizations.xml`
+- ✅ Files: `RESA-Dev.zip` and `customizations.xml`
 - ✅ Date: Nov 19, 2025 or later
 
 **If missing or older**:
 ```powershell
 # Export current solution
 cd C:\RESA_Power_Build
-pac solution export --name RESAPowerPM --path ".\Solution_Exports\v1.3.0.4\RESAPowerPM.zip" --managed false
+pac solution export --name RESA-Dev --path ".\Solution_Exports\v1.3.0.4\RESA-Dev.zip" --managed false
 ```
 
 ---
@@ -282,7 +282,7 @@ pac org who
 
 **If dependencies missing**:
 - Install Power Platform CLI: `winget install Microsoft.PowerPlatformCLI`
-- Authenticate: `pac auth create --environment https://orgf05a3756.crm.dynamics.com`
+- Authenticate: `pac auth create --environment https://org99cd6c6e.crm.dynamics.com`
 
 ---
 
@@ -414,7 +414,7 @@ START
 pac auth clear
 
 # Re-authenticate
-pac auth create --environment https://orgf05a3756.crm.dynamics.com
+pac auth create --environment https://org99cd6c6e.crm.dynamics.com
 
 # Verify
 pac org who
@@ -432,7 +432,7 @@ pac org who
 
 ### **Problem: Field counts don't match specs**
 1. This is OKAY if user customized
-2. Export current solution: `pac solution export --name RESAPowerPM`
+2. Export current solution: `pac solution export --name RESA-Dev`
 3. Count actual fields in Power Apps maker portal
 4. Update PROJECT_STATUS_TRACKER.md "Current State" section
 5. Document changes in new session summary
@@ -532,7 +532,7 @@ Get-ChildItem "C:\RESA_Power_Build\Solution_Exports\" | Sort-Object LastWriteTim
 
 1. **Export Solution** (if changes made):
    ```powershell
-   pac solution export --name RESAPowerPM --path ".\Solution_Exports\v1.X.X.X\RESAPowerPM.zip" --managed false
+   pac solution export --name RESA-Dev --path ".\Solution_Exports\v1.X.X.X\RESA-Dev.zip" --managed false
    ```
 
 2. **Commit to Git**:
