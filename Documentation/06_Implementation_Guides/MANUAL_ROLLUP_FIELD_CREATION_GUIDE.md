@@ -22,9 +22,9 @@ This guide provides step-by-step instructions for creating 32 rollup fields in D
 
 ### **Before You Begin**:
 ✅ All base date fields exist on Apparatus table:
-- `cr950_anticipated_start` (Date and Time, User Local)
-- `cr950_actual_start` (Date and Time, User Local)
-- `cr950_date_completed` (Date and Time, User Local)
+- `cr950_anticipatedstart` (Date and Time, User Local)
+- `cr950_actualstart` (Date and Time, User Local)
+- `cr950_datecompleted` (Date and Time, User Local)
 
 ✅ Financial summary tables exist:
 - `cr950_scopefinancialsummary`
@@ -67,7 +67,7 @@ Data type: Rollup
 Related Entity: Apparatus (cr950_apparatus)
 Aggregation:
   - Source Entity: Apparatus
-  - Source Attribute: Anticipated Start (cr950_anticipated_start)
+  - Source Attribute: Anticipated Start (cr950_anticipatedstart)
   - Aggregate Function: MIN
   - Filter: None (leave blank - include all apparatus)
 ```
@@ -89,7 +89,7 @@ Data type: Rollup
 Related Entity: Apparatus (cr950_apparatus)
 Aggregation:
   - Source Entity: Apparatus
-  - Source Attribute: Anticipated Start (cr950_anticipated_start)
+  - Source Attribute: Anticipated Start (cr950_anticipatedstart)
   - Aggregate Function: MAX
   - Filter: None
 ```
@@ -111,14 +111,14 @@ Data type: Rollup
 Related Entity: Apparatus (cr950_apparatus)
 Aggregation:
   - Source Entity: Apparatus
-  - Source Attribute: Actual Start (cr950_actual_start)
+  - Source Attribute: Actual Start (cr950_actualstart)
   - Aggregate Function: MIN
   - Filter: Actual Start is not null
 ```
 
 **Filter Setup**:
 1. Click "Add filter" in Rollup configuration
-2. Select: `cr950_actual_start` Does Not Equal Null
+2. Select: `cr950_actualstart` Does Not Equal Null
 3. This ensures we only consider apparatus that have actually started
 
 **Save and Close**
@@ -138,7 +138,7 @@ Data type: Rollup
 Related Entity: Apparatus (cr950_apparatus)
 Aggregation:
   - Source Entity: Apparatus
-  - Source Attribute: Actual Start (cr950_actual_start)
+  - Source Attribute: Actual Start (cr950_actualstart)
   - Aggregate Function: MAX
   - Filter: Actual Start is not null
 ```
@@ -160,7 +160,7 @@ Data type: Rollup
 Related Entity: Apparatus (cr950_apparatus)
 Aggregation:
   - Source Entity: Apparatus
-  - Source Attribute: Date Completed (cr950_date_completed)
+  - Source Attribute: Date Completed (cr950_datecompleted)
   - Aggregate Function: MIN
   - Filter: Date Completed is not null
 ```
@@ -182,7 +182,7 @@ Data type: Rollup
 Related Entity: Apparatus (cr950_apparatus)
 Aggregation:
   - Source Entity: Apparatus
-  - Source Attribute: Date Completed (cr950_date_completed)
+  - Source Attribute: Date Completed (cr950_datecompleted)
   - Aggregate Function: MAX
   - Filter: Date Completed is not null
 ```
@@ -399,7 +399,7 @@ Data type: Rollup
 Related Entity: ApparatusRevenue
 Aggregation:
   - Source Entity: ApparatusRevenue
-  - Source Attribute: Date Completed (cr950_date_completed)
+  - Source Attribute: Date Completed (cr950_datecompleted)
   - Aggregate Function: MAX
   - Filter: Date Completed is not null
 ```
