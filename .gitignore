@@ -99,3 +99,19 @@ Documentation/99_Archive/*.archive
 
 # MCP Automation documentation (local only - experimental)
 Documentation/06_MCP_Automation/
+
+# === SENSITIVE CREDENTIALS (Added Nov 23, 2025) ===
+**/Credentials/
+RESA-Dev-MCP-Access.txt
+**/MCP-Access*.txt
+*.env
+.env.local
+**/*secret*.txt
+**/*password*.txt
+**/*token*.txt
+**/claude_desktop_config.json
+
+# === TEMPORARY FILES ===
+I'm working on*.txt
+The *error*.txt
+**/*temp*.txt

@@ -1,9 +1,0 @@
-"I'm working on RESA Power Project Tracker.
-
-Please read:
-1. PROJECT_CONTEXT.json (current state)
-2. SESSION_SUMMARY_NOV22_ROLLUP_FIELD_INVESTIGATION.md (last session)
-
-Current focus: Create manual rollup field implementation guide
-
-Status: Ready to implement - Web API investigation complete, manual path selected"
