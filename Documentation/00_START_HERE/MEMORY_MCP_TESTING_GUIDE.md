@@ -96,7 +96,7 @@ Ask: "Can you create a memory entity for this project?"
 ```
 Store these facts to Memory MCP:
 
-1. Project: RESA Power Project Tracker, Dataverse v1.3.0.4, orgf05a3756.crm.dynamics.com (RESAPowerPM Sandbox)
+1. Project: RESA Power Project Tracker, Dataverse v1.3.0.4, org99cd6c6e.crm.dynamics.com (RESA-Dev Sandbox)
 2. Repository: https://github.com/jasonlswenson-sys/RESA-Power-Project-Management (branch: clean-main)
 3. Technical: 8 tables, 137+ fields, 30 formulas, 9 choice fields, 1 Power Automate flow
 4. Tables: BusinessUnit, Projects, ProjectScope, Tasks, Apparatus, ApparatusRevenue, ScopeLaborDetail, ApparatusTypeMaster
@@ -307,7 +307,7 @@ Can you create a memory entity for this project?
 ```
 Store these facts to Memory MCP:
 
-1. Project: RESA Power Project Tracker, Dataverse v1.3.0.4, orgf05a3756.crm.dynamics.com (RESAPowerPM Sandbox)
+1. Project: RESA Power Project Tracker, Dataverse v1.3.0.4, org99cd6c6e.crm.dynamics.com (RESA-Dev Sandbox)
 2. Repository: https://github.com/jasonlswenson-sys/RESA-Power-Project-Management (branch: clean-main)
 3. Technical: 8 tables, 137+ fields, 30 formulas, 9 choice fields, 1 Power Automate flow
 4. Tables: BusinessUnit, Projects, ProjectScope, Tasks, Apparatus, ApparatusRevenue, ScopeLaborDetail, ApparatusTypeMaster

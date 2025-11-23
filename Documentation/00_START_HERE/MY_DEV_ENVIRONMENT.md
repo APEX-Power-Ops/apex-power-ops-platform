@@ -10,7 +10,7 @@
 
 **Jason Swenson's Environment**
 ```
-Environment URL: https://org90c66be2.crm.dynamics.com
+Environment URL: https://org99cd6c6e.crm.dynamics.com
 Environment ID: 08da794c-c2cf-eb4e-874e-fa3609fec4c0
 Organization ID: a5036521-cde7-4d7a-90a-08fd8a13ad05
 Type: Developer | Region: United States
@@ -25,8 +25,8 @@ Created: November 21, 2025 | Status: Ready
 ## ⚠️ CRITICAL: NEVER CONNECT MCP TO PRODUCTION
 
 ```
-❌ PRODUCTION: org04ad071f.crm.dynamics.com (RESA - DO NOT USE)
-✅ DEVELOPMENT: org90c66be2.crm.dynamics.com (YOUR ENVIRONMENT - SAFE)
+❌ PRODUCTION: org99cd6c6e.crm.dynamics.com (RESA - DO NOT USE)
+✅ DEVELOPMENT: org99cd6c6e.crm.dynamics.com (YOUR ENVIRONMENT - SAFE)
 ```
 
 ---

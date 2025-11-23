@@ -51,7 +51,7 @@
 
 ### **What's Live and Working**
 
-#### **1. Core Database (14 Tables)**
+#### **1. Core Database (16 Tables)**
 
 **ORIGINAL 8 TABLES (v1.3.0.4):**
 

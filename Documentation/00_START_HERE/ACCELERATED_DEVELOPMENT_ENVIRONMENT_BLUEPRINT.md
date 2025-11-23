@@ -160,9 +160,9 @@ C:\RESA_Power_Build\
         "C:\\RESA_Power_Build\\MCP_Servers\\resa-dataverse-mcp\\build\\index.js"
       ],
       "env": {
-        "AZURE_TENANT_ID": "6f93b183-1bd3-41c6-bdf7-eefcc992ae6f",
-        "AZURE_CLIENT_ID": "19f68ef1-90a0-4813-be5f-22bb10dd9afd",
-        "DATAVERSE_URL": "https://org04ad071f.crm.dynamics.com"
+        "AZURE_TENANT_ID": "270d5723-4b30-4f3b-b9cb-6527be741b42",
+        "AZURE_CLIENT_ID": "9df3350f-b3b4-47c4-97b5-499a8b02acc7",
+        "DATAVERSE_URL": "https://org99cd6c6e.crm.dynamics.com"
       }
     },
     "resa-validation": {
@@ -171,7 +171,7 @@ C:\RESA_Power_Build\
         "C:\\RESA_Power_Build\\MCP_Servers\\resa-validation-mcp\\build\\index.js"
       ],
       "env": {
-        "DATAVERSE_URL": "https://org04ad071f.crm.dynamics.com"
+        "DATAVERSE_URL": "https://org99cd6c6e.crm.dynamics.com"
       }
     }
   }
