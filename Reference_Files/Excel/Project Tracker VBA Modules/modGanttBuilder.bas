@@ -112,11 +112,29 @@ Public Sub BuildGanttFromSheets(ByVal selectedSheets As Variant)
         Set ws = ThisWorkbook.Worksheets(CStr(nm))
         On Error GoTo 0
         If Not ws Is Nothing Then
+            If GB_DEBUG Then Debug.Print "Checking sheet: " & ws.Name & " | IsScopeSheet=" & IsScopeSheet(ws)
             If IsScopeSheet(ws) Then AccumulateFromSheet ws, agg
         ElseIf GB_DEBUG Then
             Debug.Print "Ignoring missing sheet: "; nm
         End If
     Next nm
+    
+    ' DIAGNOSTIC: Check what was collected
+    If GB_DEBUG Then
+        Dim pAgg As Object: Set pAgg = agg(PARENTS_KEY)
+        Dim gAgg As Object: Set gAgg = agg(GROUPS_KEY)
+        Debug.Print "=== ACCUMULATION RESULTS ==="
+        Debug.Print "Parent buckets collected: " & pAgg.Count
+        Debug.Print "Group buckets collected: " & gAgg.Count
+        If pAgg.Count > 0 Then
+            Dim k As Variant
+            Debug.Print "Parent IDs found:"
+            For Each k In pAgg.keys
+                Debug.Print "  " & k
+            Next k
+        End If
+        Debug.Print "=========================="
+    End If
 
     '----- write to output sheet
     Dim writeRow As Long: writeRow = hdr + 2
@@ -154,7 +172,7 @@ Private Sub AccumulateFromSheet(ByVal ws As Worksheet, _
     Dim cID As Long, cname As Long, cQty As Long, cDue As Long, cPct As Long
 
     ' Use Global_Constants for header row
-    hdr = Global_Constants.SC_FIRST_DATA_ROW
+    hdr = Global_Constants.SC_HEADER_ROW  ' FIXED: Use HEADER_ROW for finding columns
     If hdr = 0 Then Exit Sub
 
     ' Use Global_Constants for column positions
@@ -163,19 +181,6 @@ Private Sub AccumulateFromSheet(ByVal ws As Worksheet, _
     cQty = FindColStrict(ws, hdr, Array("apparatusquantity", "apparatusqty", "qty"))
     cDue = Global_Constants.SC_COL_DATE_DUE    ' Column I - Date Due
     cPct = Global_Constants.SC_COL_PCT         ' Column N for % completion
-    
-    ' DIAGNOSTIC: Verify columns on first sheet processed
-    Static debugShown As Boolean
-    If GB_DEBUG And Not debugShown Then
-        debugShown = True
-        Debug.Print "=== DIAGNOSTIC: " & ws.Name & " Column Check (Using Global_Constants) ==="
-        Debug.Print "Headers (Row " & hdr & "):"
-        Debug.Print "  Col " & cID & " (Task_ID): " & ws.Cells(hdr, cID).Value
-        Debug.Print "  Col " & cname & " (Task Name): " & ws.Cells(hdr, cname).Value
-        Debug.Print "  Col " & cDue & " (Due Date): " & ws.Cells(hdr, cDue).Value
-        Debug.Print "  Col " & cPct & " (% Complete): " & ws.Cells(hdr, cPct).Value
-        Debug.Print "================================"
-    End If
     
     If cID = 0 Or cDue = 0 Or cPct = 0 Then
         If GB_DEBUG Then
@@ -190,6 +195,19 @@ Private Sub AccumulateFromSheet(ByVal ws As Worksheet, _
         LastUsedRowIn(ws, cQty), LastUsedRowIn(ws, cDue), _
         LastUsedRowIn(ws, cPct))
     If lastR < hdr + 1 Then Exit Sub
+    
+    ' DIAGNOSTIC: Verify columns on EVERY sheet processed
+    If GB_DEBUG Then
+        Debug.Print "=== DIAGNOSTIC: " & ws.Name & " Column Check (Using Global_Constants) ==="
+        Debug.Print "Headers (Row " & hdr & "):"
+        Debug.Print "  Col " & cID & " (Task_ID): " & ws.Cells(hdr, cID).Value
+        Debug.Print "  Col " & cname & " (Task Name): " & ws.Cells(hdr, cname).Value
+        Debug.Print "  Col " & cDue & " (Due Date): " & ws.Cells(hdr, cDue).Value
+        Debug.Print "  Col " & cPct & " (% Complete): " & ws.Cells(hdr, cPct).Value
+        Debug.Print "  cQty search result: " & cQty
+        Debug.Print "  Last row calculated: " & lastR
+        Debug.Print "================================"
+    End If
 
     Dim pAgg As Object: Set pAgg = aggContainer(PARENTS_KEY)
     Dim gAgg As Object: Set gAgg = aggContainer(GROUPS_KEY)
@@ -208,11 +226,17 @@ Private Sub AccumulateFromSheet(ByVal ws As Worksheet, _
     Dim parentId As String, gKey As String, appNorm As String
     Dim leafN As Long, a As Variant, twoKey As String, topKey As String
     Dim segCount As Long
+    Dim rowsProcessed As Long: rowsProcessed = 0
 
     For r = hdr + 1 To lastR
 
         idTxt = Trim$(CStr(ws.Cells(r, cID).Value2))
         If Len(idTxt) = 0 Then GoTo NextR
+        
+        If GB_DEBUG And GB_DEEP_TRACE And rowsProcessed < 5 Then
+            Debug.Print "Row " & r & " | Task_ID: '" & idTxt & "' | Name: '" & ws.Cells(r, cname).Value & "'"
+        End If
+        rowsProcessed = rowsProcessed + 1
 
         twoKey = GB_TwoSegKey(idTxt)
         If Len(twoKey) = 0 Then GoTo NextR
@@ -284,7 +308,7 @@ Private Sub AccumulateFromSheet(ByVal ws As Worksheet, _
         a = pAgg(parentId)
 
         If segCount = 1 Then
-            ' Two-segment parent row – capture the "task" text and sheet name
+            ' Two-segment parent row ï¿½ capture the "task" text and sheet name
             If Len(Trim$(a(6))) = 0 And Len(Trim$(nm)) > 0 Then a(6) = Trim$(nm)
             a(7) = ws.Name  ' Store sheet name
             pAgg(parentId) = a
@@ -308,7 +332,7 @@ Private Sub AccumulateFromSheet(ByVal ws As Worksheet, _
                 rightPart = nm
             End If
             ' Preserve original case from G4
-            a(1) = scopeTitle & " – " & Trim$(rightPart)
+            a(1) = scopeTitle & " | " & Trim$(rightPart)
         End If
         pAgg(parentId) = a
 
@@ -342,6 +366,10 @@ Private Sub AccumulateFromSheet(ByVal ws As Worksheet, _
 
 NextR:
     Next r
+    
+    If GB_DEBUG Then
+        Debug.Print "Sheet " & ws.Name & " processed " & rowsProcessed & " rows with Task IDs"
+    End If
     Exit Sub
 
 '---- Qty exception handler ----------------
@@ -352,7 +380,7 @@ QTY_EH:
                " ID='" & idTxt & "'" & _
                " cQty=" & cQty & _
                " Addr=" & IIf(cQty > 0, ws.Cells(r, cQty).Address(False, False), "<n/a>") & _
-               " Val='" & IIf(cQty > 0, CStr(ws.Cells(r, cQty).Text), "") & "'"
+               " Val='" & IIf(cQty > 0, CStr(ws.Cells(r, cQty).text), "") & "'"
         GB_LogFlush
     End If
     Resume Next
@@ -540,25 +568,25 @@ Public Sub WriteAggregation( _
                 Next key
 
                 ' Parent formulas - weighted average for %
-                Dim sR As Long, eR As Long
-                sR = childStart
+                Dim sr As Long, eR As Long
+                sr = childStart
                 eR = writeRow - 1
-                If eR >= sR Then
+                If eR >= sr Then
                     ' Quantity sum
                     outWS.Cells(parentRow, cQty).FormulaR1C1 = _
-                        "=SUM(R" & sR & "C" & cQty & ":R" & eR & "C" & cQty & ")"
+                        "=SUM(R" & sr & "C" & cQty & ":R" & eR & "C" & cQty & ")"
                     
                     ' Start date left blank for manual entry
                     
                     ' Due date: MAX of children due dates
                     outWS.Cells(parentRow, cDue).FormulaR1C1 = _
-                        "=IF(COUNT(R" & sR & "C" & cDue & ":R" & eR & "C" & cDue & ")=0,"""",MAX(R" & sR & "C" & cDue & ":R" & eR & "C" & cDue & "))"
+                        "=IF(COUNT(R" & sr & "C" & cDue & ":R" & eR & "C" & cDue & ")=0,"""",MAX(R" & sr & "C" & cDue & ":R" & eR & "C" & cDue & "))"
                     
                     ' Percentage: weighted average based on live child % values
                     outWS.Cells(parentRow, cPct).FormulaR1C1 = _
-                        "=IF(SUM(R" & sR & "C" & cQty & ":R" & eR & "C" & cQty & ")=0,""""," & _
-                          "SUMPRODUCT(R" & sR & "C" & cQty & ":R" & eR & "C" & cQty & ",R" & sR & "C" & cPct & ":R" & eR & "C" & cPct & ")/" & _
-                          "SUM(R" & sR & "C" & cQty & ":R" & eR & "C" & cQty & "))"
+                        "=IF(SUM(R" & sr & "C" & cQty & ":R" & eR & "C" & cQty & ")=0,""""," & _
+                          "SUMPRODUCT(R" & sr & "C" & cQty & ":R" & eR & "C" & cQty & ",R" & sr & "C" & cPct & ":R" & eR & "C" & cPct & ")/" & _
+                          "SUM(R" & sr & "C" & cQty & ":R" & eR & "C" & cQty & "))"
                 End If
             Else
                 ' Parent with no children
@@ -751,7 +779,7 @@ End Function
 '==================== HEADER FINDERS / MATCHERS =======================
 Public Function IsScopeSheet(ByVal ws As Worksheet) As Boolean
     ' Check for headers in row defined by Global_Constants
-    Dim hdr As Long: hdr = Global_Constants.SC_FIRST_DATA_ROW
+    Dim hdr As Long: hdr = Global_Constants.SC_HEADER_ROW  ' FIXED: Use HEADER_ROW not FIRST_DATA_ROW
     If hdr = 0 Then Exit Function
 
     Dim cID As Long, cPct As Long
@@ -764,6 +792,15 @@ Public Function IsScopeSheet(ByVal ws As Worksheet) As Boolean
     idHeader = UCase$(Trim$(CStr(ws.Cells(hdr, cID).Value)))
     pctHeader = UCase$(Trim$(CStr(ws.Cells(hdr, cPct).Value)))
     On Error GoTo 0
+    
+    ' DIAGNOSTIC: Show what we're checking
+    If GB_DEBUG Then
+        Debug.Print "IsScopeSheet check for '" & ws.Name & "':"
+        Debug.Print "  Row " & hdr & ", Col " & cID & " (E" & hdr & "): '" & idHeader & "'"
+        Debug.Print "  Row " & hdr & ", Col " & cPct & " (N" & hdr & "): '" & pctHeader & "'"
+        Debug.Print "  Has 'TASK' AND 'ID': " & (InStr(idHeader, "TASK") > 0 And InStr(idHeader, "ID") > 0)
+        Debug.Print "  Has 'COMPLETION' OR '%': " & (InStr(pctHeader, "COMPLETION") > 0 Or InStr(pctHeader, "%") > 0)
+    End If
     
     IsScopeSheet = (InStr(idHeader, "TASK") > 0 And InStr(idHeader, "ID") > 0) And _
                    (InStr(pctHeader, "COMPLETION") > 0 Or InStr(pctHeader, "%") > 0)

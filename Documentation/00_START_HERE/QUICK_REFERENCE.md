@@ -11,7 +11,7 @@
 URL:         https://org99cd6c6e.crm.dynamics.com
 Tenant:      270d5723-4b30-4f3b-b9cb-6527be741b42
 Client:      9df3350f-b3b4-47c4-97b5-499a8b02acc7
-Secret:      REDACTED-AZURE-AD-CLIENT-SECRET-2026-05-27-1
+Secret:      <see .env file - contact project admin>
 Org ID:      e550d661-edc7-f011-8729-000d3a33a005
 App:         RESA-Dev-MCP-Access
 ```
@@ -25,13 +25,9 @@ App:         RESA-Dev-MCP-Access
 .\Scripts\PowerShell\Test-DataverseConnection.ps1
 
 # 2. Create .env file (10 minutes)
-@"
-AZURE_TENANT_ID=270d5723-4b30-4f3b-b9cb-6527be741b42
-AZURE_CLIENT_ID=9df3350f-b3b4-47c4-97b5-499a8b02acc7
-AZURE_CLIENT_SECRET=REDACTED-AZURE-AD-CLIENT-SECRET-2026-05-27-1
-DATAVERSE_URL=https://org99cd6c6e.crm.dynamics.com
-ENVIRONMENT=DEVELOPMENT
-"@ | Out-File .env -Encoding UTF8
+# Copy from .env.example and fill in secrets from project admin
+Copy-Item ".env.example" ".env"
+# Then edit .env with actual values - see SECRETS_MANAGEMENT.md
 
 # 3. Start building
 cd MCP_Servers

@@ -1,10 +1,10 @@
 {
-  "lastUpdated": "2025-11-23T22:30:00Z",
-  "sessionId": "NOV23_Complete_Project_Folder_Cleanup",
+  "lastUpdated": "2025-11-28T04:30:00Z",
+  "sessionId": "NOV27_v1.5.1.0_Complete",
   "project": {
     "name": "RESA Power Project Tracker",
-    "version": "v1.4.0.0",
-    "status": "clean-baseline-established",
+    "version": "v1.5.1.0",
+    "status": "v1.5.1.0-exported",
     "environment": {
       "url": "https://org99cd6c6e.crm.dynamics.com",
       "orgId": "e550d661-edc7-f011-8729-000d3a33a005",
@@ -38,147 +38,135 @@
       "ResourceAssignment",
       "Equipment"
     ],
-    "totalFields": 291,
-    "lookupRelationships": 10,
-    "formulas": 30,
+    "totalFields": 650,
+    "lookupRelationships": 26,
+    "formulas": 65,
     "choiceFields": 9,
     "flows": 1,
-    "auditingEnabled": "2025-11-19"
+    "views": 10,
+    "auditingEnabled": "2025-11-19",
+    "importPipeline": {
+      "vbaModule": "DataverseExport.bas",
+      "importScript": "import-estimator.js (v2.0 with ScopeLaborDetail)",
+      "mcpServer": "resa-dataverse-mcp",
+      "testedWith": "Central Mesa Reuse Plant - 143 apparatus"
+    }
   },
   "criticalFacts": [
     "SINGLE ENVIRONMENT: Only org99cd6c6e.crm.dynamics.com is active - all other references are outdated",
     "Azure App Registration: RESA-Dev-MCP-Access (9df3350f-b3b4-47c4-97b5-499a8b02acc7)",
-    "Nov 23 Audit: Solution contains 16 tables (14 original + ProjectFinancialSummary + ScopeFinancialSummary)",
-    "Nov 23 Cleanup: Duplicate date fields resolved on Apparatus - kept PascalCase versions",
-    "Nov 23 Documentation Audit: 75+ outdated references eliminated - zero ambiguity achieved",
-    "Nov 23 Project Cleanup: Complete folder structure audit - clean baseline for development",
+    "Nov 27 Import Pipeline: Excel→JSON (VBA) → Dataverse (Node.js) fully operational",
+    "Nov 27 First Real Import: Garney Central Mesa Reuse Plant - 143 apparatus, 4 scopes, rollups calculating",
+    "Nov 27 MCP Fixed: resa-dataverse-mcp now uses dotenv for credentials (.env file required)",
+    "Nov 27 Import v2: import-estimator.js now creates ScopeLaborDetail records with financial data",
+    "Nov 27 Claude Desktop Audit: Schema B+ rating, 16 tables confirmed, 25 relationships verified",
+    "GAP IDENTIFIED: Apparatus table missing cr950_assigned_employee lookup to Employee (Equipment has it, Apparatus doesn't)",
+    "DOCUMENTATION GAP: MASTER_BUILD_SPECIFICATION.md 2 versions behind - see VS_CLAUDE_MASTER_BUILD_TASK.md",
     "BusinessUnit represents multi-location architecture (Phoenix/Vegas/Denver/San Diego) - NOT unused despite 0 records",
-    "Clean slate environment - all tables have 0 records as of Nov 19, 2025 - safe for changes",
-    "Table naming corrected Nov 19: Location→BusinessUnit, Scope_Financial_Config→ScopeLaborDetail",
-    "Field counts corrected Nov 19: Projects=19 (not 7), ProjectScope=14 (not 39), ScopeLaborDetail=49 (not 30)",
-    "VS Code continuity system implemented: PROJECT_CONTEXT.json + Update-ProjectContext.ps1 script replaces Memory MCP functionality",
-    "Nov 22 Discovery: Dataverse Web API CANNOT create rollup fields - RollupAttributeMetadata type not exposed in OData model",
-    "Nov 22 Success: Dataverse Web API CAN create lookup relationships - 8/9 automated via PowerShell in 5 seconds",
-    "Nov 22 Complete: 10 lookup relationships operational (Sites→Clients, Quotes→Clients/Sites/Projects, Projects→Clients/Sites, ResourceAssignments→Projects/Employees, Equipment→Employees/Projects)",
-    "Nov 22 Complete: MANUAL_ROLLUP_FIELD_CREATION_GUIDE.md created (400+ lines) - comprehensive checklist for 32 rollup fields ready to execute",
-    "Nov 23 Complete: MCP Server ecosystem strategy documented - 5 servers prioritized for implementation",
-    "Table naming in Dataverse: SINGULAR not plural (cr950_client not cr950_clients) - critical for API calls"
+    "Table naming in Dataverse: EntitySetName is PLURAL (cr950_clients), LogicalName is SINGULAR (cr950_client)",
+    "Navigation properties are CASE-SENSITIVE: cr950_Project, cr950_Scope, cr950_client (varies by table)",
+    "VS Code continuity system: PROJECT_CONTEXT.json + session summaries replaces Memory MCP functionality"
   ],
   "currentStatus": {
     "completed": [
       {
-        "name": "v1.4.0.0 Priority 1A: Configure Lookups",
-        "completedDate": "2025-11-22",
-        "result": "10 lookup relationships created (8 via script + 2 manual)",
-        "automation": "Add-V1.4.0.0-Lookups.ps1 script successful"
-      },
-      {
-        "name": "Rollup Field Implementation Guide",
-        "completedDate": "2025-11-22",
-        "result": "MANUAL_ROLLUP_FIELD_CREATION_GUIDE.md complete (400+ lines)",
-        "coverage": "32 rollup fields with step-by-step instructions"
-      },
-      {
-        "name": "Solution v1.4.0.0 Export",
-        "completedDate": "2025-11-22",
-        "result": "Managed and unmanaged solution packages exported",
-        "location": "Solution_Exports/v1.4.0.0/",
-        "milestone": "v1.4.0.0 Priority 1A complete (14 tables, 10 lookups)"
-      },
-      {
-        "name": "MCP Server Ecosystem Strategy",
-        "completedDate": "2025-11-23",
-        "result": "Complete prioritization and implementation roadmap",
-        "deliverables": "5 strategic documents + 1 PowerShell script",
-        "nextAction": "Build resa-testing-mcp Week 1"
-      },
-      {
-        "name": "Complete Project Folder Cleanup",
-        "completedDate": "2025-11-23",
-        "result": "Clean baseline established - 5 major cleanup phases",
-        "phases": [
-          "Root directory: 10+ files removed, credentials secured",
-          "Scripts: Organized into Active/Archive/Rollup structure",
-          "Logs: 30-day retention policy established",
-          "Solution_Exports: Version management documented",
-          "Master documentation: FOLDER_STRUCTURE.md created"
+        "name": "Excel→Dataverse Import Pipeline",
+        "completedDate": "2025-11-27",
+        "result": "Full pipeline operational: VBA export + Node.js import + MCP integration",
+        "components": [
+          "DataverseExport.bas - VBA module for Excel→JSON",
+          "import-estimator.js v2.0 - Node.js for JSON→Dataverse with ScopeLaborDetail",
+          "resa-dataverse-mcp - MCP server with dotenv credentials"
         ],
-        "impact": "Professional structure, zero confusion, ready for intensive development"
+        "validation": "143 apparatus imported, rollups calculating correctly"
+      },
+      {
+        "name": "MCP Dataverse Connection Fixed",
+        "completedDate": "2025-11-27",
+        "result": "Added dotenv support, created .env file with Azure credentials",
+        "impact": "All CRUD operations now working via MCP"
+      },
+      {
+        "name": "Claude Desktop Independent Audit",
+        "completedDate": "2025-11-27",
+        "result": "Schema audit B+ rating, validation passed, gaps documented",
+        "deliverables": [
+          "DATAVERSE_SCHEMA_AUDIT_20251127.md",
+          "VALIDATION_REPORT_20251127.md",
+          "IMPORT_PIPELINE_SOP.md",
+          "DOCUMENTATION_AUDIT_20251127.md"
+        ]
+      },
+      {
+        "name": "v1.5.0.0 Rollup Fields Complete",
+        "completedDate": "2025-11-23",
+        "result": "65 rollup/calculated fields implemented",
+        "milestone": "Financial tracking and KPI functionality ready"
       }
     ],
     "nextImmediate": [
       {
-        "name": "Build resa-testing-mcp",
-        "timeEstimate": "20-30 hours (Week 1)",
-        "priority": "CRITICAL",
-        "description": "Automated testing framework for rollup field validation",
-        "roi": "$24,800-$47,000/year",
-        "blockers": "None - ready to start Monday"
+        "name": "Add cr950_assigned_employee to Apparatus",
+        "timeEstimate": "5 minutes",
+        "priority": "P0 - Critical Gap",
+        "description": "Add lookup field Apparatus→Employee via Power Platform maker portal",
+        "why": "Required for technician assignment workflow - Equipment has it, Apparatus doesn't"
       },
       {
-        "name": "Implement 18 Date Tracking Rollup Fields",
-        "timeEstimate": "2.5-3 hours",
+        "name": "Run Create-DataverseViews.ps1",
+        "timeEstimate": "5 minutes",
         "priority": "HIGH",
-        "description": "Follow MANUAL_ROLLUP_FIELD_CREATION_GUIDE.md Part 1 for Tasks, Scopes, Projects rollups",
-        "location": "Documentation/06_Implementation_Guides/MANUAL_ROLLUP_FIELD_CREATION_GUIDE.md",
-        "blockers": "Complete resa-testing-mcp first for validation",
-        "milestone": "v1.5.0.0 KPI functionality"
+        "description": "Create 10 standard views: Active Projects, Projects by Client, All Scopes, etc.",
+        "location": "Scripts/PowerShell/Create-DataverseViews.ps1"
       },
       {
-        "name": "Implement 14 Revenue Rollup Fields",
-        "timeEstimate": "1.5-2 hours",
-        "priority": "HIGH",
-        "description": "Follow MANUAL_ROLLUP_FIELD_CREATION_GUIDE.md Part 2 for Scope and Project Financial Summary rollups",
-        "blockers": "Complete resa-testing-mcp first for validation",
-        "milestone": "v1.5.0.0 financial tracking"
+        "name": "Update MASTER_BUILD_SPECIFICATION.md",
+        "timeEstimate": "3-4 hours",
+        "priority": "P1 - Documentation Debt",
+        "description": "Sync from v1.3.0.4 to v1.5.0.0 using VS_CLAUDE_MASTER_BUILD_TASK.md checklist",
+        "gap": "Document claims 8 tables/350 fields, reality is 16 tables/649 fields"
       }
     ],
     "readyToImplement": [
       {
-        "name": "Build resa-docs-mcp",
-        "timeEstimate": "15-20 hours (Week 2)",
+        "name": "Test Import v2 with New Project",
+        "timeEstimate": "15 minutes",
         "priority": "HIGH",
-        "description": "Auto-generate documentation from schema for pilot training materials",
-        "roi": "$41,700-$47,600/year"
-      },
-      {
-        "name": "Create 6 KPI Views",
-        "timeEstimate": "1 hour",
-        "priority": "MEDIUM",
-        "description": "Upcoming Work, Overdue Starts, Work In Progress, Recently Completed, Resource Timeline, Schedule Performance",
-        "blockers": "Should complete after rollup fields created"
+        "description": "Run import-estimator.js on a new Estimator to verify ScopeLaborDetail creation",
+        "validation": "Check ScopeLaborDetail records created with financial data"
       },
       {
         "name": "Create Forms for 6 New Tables",
         "timeEstimate": "8-12 hours",
         "priority": "HIGH",
         "value": "Usability - make new tables accessible",
-        "tables": "Client, Site, Employee, Quote, ResourceAssignment, Equipment",
-        "approach": "Prioritize Client/Site/Employee first (6-8 hours), others can use defaults"
+        "tables": "Client, Site, Employee, Quote, ResourceAssignment, Equipment"
+      },
+      {
+        "name": "Add TimeEntry Table",
+        "timeEstimate": "2-3 hours",
+        "priority": "P1",
+        "description": "Critical for field operations - track actual time vs estimated",
+        "gap": "Identified in Claude Desktop audit as missing"
       }
     ],
     "blockers": []
   },
   "keyDocuments": {
     "navigation": "Documentation/00_START_HERE/PROJECT_STATUS_TRACKER.md",
-    "folderStructure": "Documentation/00_START_HERE/FOLDER_STRUCTURE.md",
     "systemDesign": "Documentation/01_Architecture/MASTER_BUILD_SPECIFICATION.md",
     "sessionResume": "Documentation/00_START_HERE/SESSION_RESUME_CHECKLIST.md",
-    "latestSession": "Documentation/03_Progress_Tracking/SESSION_SUMMARY_NOV22_ROLLUP_FIELD_INVESTIGATION.md",
-    "rollupGuide": "Documentation/06_Implementation_Guides/MANUAL_ROLLUP_FIELD_CREATION_GUIDE.md",
-    "mcpStrategy": "Documentation/06_Implementation_Guides/MCP_SERVER_PRIORITIZATION_AND_ROADMAP.md",
-    "mcpQuickStart": "Documentation/00_START_HERE/MCP_SERVER_QUICK_START.md",
-    "mondayChecklist": "Documentation/00_START_HERE/MONDAY_MORNING_CHECKLIST.md",
-    "roadmap": "Documentation/00_START_HERE/V1_4_0_0_ROADMAP_AND_PRIORITIES.md",
-    "choiceFields": "Documentation/01_Architecture/STATUS_FIELD_ARCHITECTURE.md",
-    "dateTracking": "Documentation/02_Implementation/DATE_TRACKING_IMPLEMENTATION.md"
+    "importSOP": "Documentation/06_Implementation_Guides/IMPORT_PIPELINE_SOP.md",
+    "claudeDesktopAudit": "Documentation/05_Reviews_Analysis/DATAVERSE_SCHEMA_AUDIT_20251127.md",
+    "masterBuildTask": "Documentation/03_Progress_Tracking/VS_CLAUDE_MASTER_BUILD_TASK.md",
+    "versionHistory": "Solution_Exports/VERSION_HISTORY.md"
   },
   "sessionProtocol": {
     "onSessionStart": [
       "Read this file (PROJECT_CONTEXT.json)",
       "Check criticalFacts array for must-remember information",
       "Review currentStatus for next tasks",
-      "Read latestSession summary if resuming work"
+      "Check keyDocuments for latest session artifacts"
     ],
     "onSessionEnd": [
       "Update lastUpdated timestamp",
@@ -192,7 +180,6 @@
     "This file serves as a lightweight Memory MCP alternative for VS Code/Copilot sessions",
     "Quick-reference for AI to understand project state without reading multiple markdown files",
     "Update this file when major milestones reached or critical facts discovered",
-    "Do not replace documentation - this supplements PROJECT_STATUS_TRACKER.md",
-    "ENVIRONMENT CORRECTION Nov 23: Only org99cd6c6e.crm.dynamics.com is valid - previous references outdated"
+    "ENVIRONMENT CORRECTION Nov 23: Only org99cd6c6e.crm.dynamics.com is valid"
   ]
 }

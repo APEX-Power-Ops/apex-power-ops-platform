@@ -9,13 +9,18 @@
     "watch": "tsc --watch",
     "start": "node build/index.js"
   },
-  "keywords": ["mcp", "dataverse", "power-platform"],
+  "keywords": [
+    "mcp",
+    "dataverse",
+    "power-platform"
+  ],
   "author": "Jason Swenson",
   "license": "MIT",
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^0.5.0",
     "@azure/identity": "^4.0.0",
-    "axios": "^1.6.0"
+    "@modelcontextprotocol/sdk": "^0.5.0",
+    "axios": "^1.6.0",
+    "dotenv": "^17.2.3"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",

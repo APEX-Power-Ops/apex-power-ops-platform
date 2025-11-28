@@ -1,13 +1,68 @@
 # RESA Power Build - Solution Version History
-**Current Version**: v1.4.0.0  
-**Last Updated**: November 23, 2025
+**Current Version**: v1.5.1.0  
+**Last Updated**: November 27, 2025
 
 ---
 
 ## 📦 Active Versions
 
-### **v1.4.0.0** (CURRENT - Nov 22, 2025)
+### **v1.5.1.0** (CURRENT - Nov 27, 2025)
 **Status**: ✅ Deployed to org99cd6c6e.crm.dynamics.com
+
+**Changes from v1.5.0.0**:
+- Added `cr950_assigned_employee` lookup on Apparatus → Employee
+- Created 10 new views via API:
+  - Projects: Active Projects, Projects by Client
+  - Scopes: All Scopes
+  - Apparatus: All Apparatus, Pending Work, In Progress, Completed
+  - Clients: All Clients
+  - Sites: All Sites
+- Revenue Recognition flow verified and corrected
+- ScopeLaborDetail records populated with financial data
+- Import pipeline v2 operational (creates ScopeLaborDetail)
+
+**Technical Details**:
+- 16 Tables (unchanged)
+- 650+ Fields (added assigned_employee lookup)
+- 10 Lookup relationships + 1 new (Apparatus → Employee)
+- 65 Rollup/Formula fields
+- 10 Custom views
+- PAC CLI auth configured for org99cd6c6e.crm.dynamics.com
+
+---
+
+### **v1.5.0.0** (PREVIOUS - Nov 27, 2025)
+**Status**: 🔄 Superseded by v1.5.1.0
+
+**Major Changes**:
+- 16 Tables (unchanged from v1.4.0.0)
+- 350+ Fields total (added 65 rollup/formula fields)
+- 10 Lookup relationships (operational)
+- 65 Formula/Rollup fields (NEW - up from 30)
+
+**Rollup Fields Added by Table**:
+| Table | Count | Fields |
+|-------|-------|--------|
+| Projects | 14 | Dates (earliest/latest), hours, counts, % complete |
+| ProjectScope | 14 | Same pattern as Projects |
+| Tasks | 14 | Same pattern as Projects |
+| Apparatus | 2 | completed_hours, remaining_hours |
+| ApparatusRevenue | 2 | revenueamount, totalhours |
+| ProjectFinancialSummary | 7 | Revenue, hours, rates, counts |
+| ScopeFinancialSummary | 7 | Revenue, hours, rates, counts |
+| ScopeLaborDetails | 5 | Labor rate calculations |
+
+**Technical Details**:
+- All 32 planned rollup fields from MANUAL_ROLLUP_FIELD_CREATION_GUIDE.md: COMPLETE
+- KPI calculations now operational
+- Date tracking aggregates working
+- Financial summary rollups active
+- Export files: Both managed and unmanaged
+
+---
+
+### **v1.4.0.0** (PREVIOUS - Nov 22, 2025)
+**Status**: 🔄 Kept for rollback safety
 
 **Major Changes**:
 - 16 Tables (added 6 new tables from v1.3.0.5)

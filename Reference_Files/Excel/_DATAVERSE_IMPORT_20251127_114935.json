@@ -1,0 +1,547 @@
+{
+  "metadata": {
+    "exportDate": "2025-11-27T11:49:35",
+    "workbookName": "434469 REV6 - Garney Central Mesa Reuse (Estimator Quoted R7).xlsm",
+    "version": "1.0"
+  },
+  "client": {
+    "name": "Garney"
+  },
+  "site": {
+    "name": "Central Mesa Reuse Plant",
+    "address": "3626 E. Thomas Road",
+    "city": "Mesa",
+    "state": "AZ",
+    "zipCode": "85213",
+    "contactName": "Terry Huston",
+    "contactPhone": "",
+    "contactEmail": "terry.huston@garney.com"
+  },
+  "project": {
+    "name": "Central Mesa Reuse Plant",
+    "projectNumber": "677562",
+    "projectLead": "Phillip Pentecost",
+    "businessUnit": "",
+    "startDate": "2025-11-17",
+    "quoteDate": "",
+    "quoteRevision": ""
+  },
+  "scopes": [
+    {
+      "scopeIndex": 1,
+      "name": "IPS NETA ATS",
+      "scopeType": "ATS",
+      "totalHours": 333.75,
+      "multiplier": 1.00,
+      "quotedAmount": 61025.63,
+      "financials": {
+        "onsiteLaborTotal": 57822.19,
+        "offsiteLaborTotal": 2753.44,
+        "travelTotal": 0.00,
+        "outsideServicesTotal": 450.00
+      },
+      "apparatus": [
+        {
+          "row": 8,
+          "section": "Power Distribution SLD - SES-00-001",
+          "quantity": 1,
+          "equipmentType": "Switchgear - Medium Voltage",
+          "hoursPerUnit": 2.50,
+          "totalHours": 2.50
+        },
+        {
+          "row": 9,
+          "section": "Power Distribution SLD - SES-00-001",
+          "quantity": 1,
+          "equipmentType": "Arrestor - Medium Voltage (Set)",
+          "hoursPerUnit": 2.00,
+          "totalHours": 2.00
+        },
+        {
+          "row": 10,
+          "section": "Power Distribution SLD - SES-00-001",
+          "quantity": 1,
+          "equipmentType": "Control Power Transformer - MV Swgr",
+          "hoursPerUnit": 2.50,
+          "totalHours": 2.50
+        },
+        {
+          "row": 11,
+          "section": "Power Distribution SLD - SES-00-001",
+          "quantity": 1,
+          "equipmentType": "Potential Transformer - MV SWGR",
+          "hoursPerUnit": 2.50,
+          "totalHours": 2.50
+        },
+        {
+          "row": 12,
+          "section": "Power Distribution SLD - SES-00-001",
+          "quantity": 1,
+          "equipmentType": "Circuit Breaker MV - Vacuum Bkr",
+          "hoursPerUnit": 4.00,
+          "totalHours": 4.00
+        },
+        {
+          "row": 13,
+          "section": "Power Distribution SLD - SES-00-001",
+          "quantity": 1,
+          "equipmentType": "Current Transformer MV - Set of 3",
+          "hoursPerUnit": 2.00,
+          "totalHours": 2.00
+        },
+        {
+          "row": 14,
+          "section": "Power Distribution SLD - SES-00-001",
+          "quantity": 1,
+          "equipmentType": "Current Transformer - MV",
+          "hoursPerUnit": 0.75,
+          "totalHours": 0.75
+        },
+        {
+          "row": 15,
+          "section": "Power Distribution SLD - SES-00-001",
+          "quantity": 1,
+          "equipmentType": "Protective Relay (Feeder Protection)",
+          "hoursPerUnit": 5.00,
+          "totalHours": 5.00
+        },
+        {
+          "row": 16,
+          "section": "Power Distribution SLD - SES-00-001",
+          "quantity": 1,
+          "equipmentType": "Ground Resistance Test - FOP or Clamp Method",
+          "hoursPerUnit": 2.50,
+          "totalHours": 2.50
+        },
+        {
+          "row": 17,
+          "section": "Power Distribution SLD - SES-00-001",
+          "quantity": 1,
+          "equipmentType": "Conductors MV - Set of 3 (VLF Hipotential)",
+          "hoursPerUnit": 4.00,
+          "totalHours": 4.00
+        },
+        {
+          "row": 20,
+          "section": "Power Distribution SLD - SWGR-00-001",
+          "quantity": 1,
+          "equipmentType": "Switchgear - Medium Voltage",
+          "hoursPerUnit": 2.50,
+          "totalHours": 2.50
+        },
+        {
+          "row": 21,
+          "section": "Power Distribution SLD - SWGR-00-001",
+          "quantity": 6,
+          "equipmentType": "Arrestor - Medium Voltage (Set)",
+          "hoursPerUnit": 2.00,
+          "totalHours": 12.00
+        },
+        {
+          "row": 22,
+          "section": "Power Distribution SLD - SWGR-00-001",
+          "quantity": 2,
+          "equipmentType": "Control Power Transformer - MV Swgr",
+          "hoursPerUnit": 2.50,
+          "totalHours": 5.00
+        },
+        {
+          "row": 23,
+          "section": "Power Distribution SLD - SWGR-00-001",
+          "quantity": 3,
+          "equipmentType": "Potential Transformer - MV SWGR",
+          "hoursPerUnit": 2.50,
+          "totalHours": 7.50
+        },
+        {
+          "row": 24,
+          "section": "Power Distribution SLD - SWGR-00-001",
+          "quantity": 6,
+          "equipmentType": "Circuit Breaker MV - Vacuum Bkr",
+          "hoursPerUnit": 4.00,
+          "totalHours": 24.00
+        },
+        {
+          "row": 25,
+          "section": "Power Distribution SLD - SWGR-00-001",
+          "quantity": 12,
+          "equipmentType": "Current Transformer MV - Set of 3",
+          "hoursPerUnit": 2.00,
+          "totalHours": 24.00
+        },
+        {
+          "row": 26,
+          "section": "Power Distribution SLD - SWGR-00-001",
+          "quantity": 6,
+          "equipmentType": "Current Transformer - MV",
+          "hoursPerUnit": 0.75,
+          "totalHours": 4.50
+        },
+        {
+          "row": 27,
+          "section": "Power Distribution SLD - SWGR-00-001",
+          "quantity": 6,
+          "equipmentType": "Protective Relay (Feeder Protection)",
+          "hoursPerUnit": 5.00,
+          "totalHours": 30.00
+        },
+        {
+          "row": 28,
+          "section": "Power Distribution SLD - SWGR-00-001",
+          "quantity": 1,
+          "equipmentType": "Protective Relay - (Bus Differential)",
+          "hoursPerUnit": 5.00,
+          "totalHours": 5.00
+        },
+        {
+          "row": 29,
+          "section": "Power Distribution SLD - SWGR-00-001",
+          "quantity": 1,
+          "equipmentType": "Meter - PQM/Microprocessor Based",
+          "hoursPerUnit": 2.50,
+          "totalHours": 2.50
+        },
+        {
+          "row": 32,
+          "section": "Power Distribution SLD - MV Distribution",
+          "quantity": 1,
+          "equipmentType": "Switchgear - Medium Voltage",
+          "hoursPerUnit": 2.50,
+          "totalHours": 2.50
+        },
+        {
+          "row": 33,
+          "section": "Power Distribution SLD - MV Distribution",
+          "quantity": 1,
+          "equipmentType": "Transformer - Pad Mount Oil (TTR/IR/WR/PF/Oil)",
+          "hoursPerUnit": 12.00,
+          "totalHours": 12.00
+        },
+        {
+          "row": 34,
+          "section": "Power Distribution SLD - MV Distribution",
+          "quantity": 5,
+          "equipmentType": "Conductors MV - Set of 3 (VLF Hipotential)",
+          "hoursPerUnit": 4.00,
+          "totalHours": 20.00
+        },
+        {
+          "row": 35,
+          "section": "Power Distribution SLD - MV Distribution",
+          "quantity": 1,
+          "equipmentType": "Transformer - Oil Sample Draw",
+          "hoursPerUnit": 1.00,
+          "totalHours": 1.00
+        },
+        {
+          "row": 36,
+          "section": "Power Distribution SLD - MV Distribution",
+          "quantity": 1,
+          "equipmentType": "Circuit Breaker LV - Insulated Case (LSIG)",
+          "hoursPerUnit": 3.50,
+          "totalHours": 3.50
+        },
+        {
+          "row": 39,
+          "section": "4160 VFD & Motor Control - MV Distribution",
+          "quantity": 6,
+          "equipmentType": "Motor Starter (Contactor) MV",
+          "hoursPerUnit": 4.00,
+          "totalHours": 24.00
+        },
+        {
+          "row": 40,
+          "section": "4160 VFD & Motor Control - MV Distribution",
+          "quantity": 3,
+          "equipmentType": "Switch MV - Fused Disconnect",
+          "hoursPerUnit": 2.50,
+          "totalHours": 7.50
+        },
+        {
+          "row": 41,
+          "section": "4160 VFD & Motor Control - MV Distribution",
+          "quantity": 3,
+          "equipmentType": "Arrestor - Medium Voltage (Set)",
+          "hoursPerUnit": 2.00,
+          "totalHours": 6.00
+        },
+        {
+          "row": 42,
+          "section": "4160 VFD & Motor Control - MV Distribution",
+          "quantity": 3,
+          "equipmentType": "Potential Transformer - MV Set",
+          "hoursPerUnit": 2.50,
+          "totalHours": 7.50
+        },
+        {
+          "row": 43,
+          "section": "4160 VFD & Motor Control - MV Distribution",
+          "quantity": 3,
+          "equipmentType": "Current Transformer LV - Set of 3",
+          "hoursPerUnit": 2.00,
+          "totalHours": 6.00
+        },
+        {
+          "row": 44,
+          "section": "4160 VFD & Motor Control - MV Distribution",
+          "quantity": 3,
+          "equipmentType": "Reactors - (Shunt and Current-Limiting) Dry-Type",
+          "hoursPerUnit": 2.00,
+          "totalHours": 6.00
+        },
+        {
+          "row": 45,
+          "section": "4160 VFD & Motor Control - MV Distribution",
+          "quantity": 3,
+          "equipmentType": "Protective Relay (Motor Control)",
+          "hoursPerUnit": 8.00,
+          "totalHours": 24.00
+        },
+        {
+          "row": 46,
+          "section": "4160 VFD & Motor Control - MV Distribution",
+          "quantity": 3,
+          "equipmentType": "Transformer - Dry Type (TTR/WR/IR)",
+          "hoursPerUnit": 3.00,
+          "totalHours": 9.00
+        },
+        {
+          "row": 47,
+          "section": "4160 VFD & Motor Control - MV Distribution",
+          "quantity": 3,
+          "equipmentType": "Conductors MV - Set of 3 (VLF Hipotential)",
+          "hoursPerUnit": 4.00,
+          "totalHours": 12.00
+        },
+        {
+          "row": 51,
+          "section": "600V MCC SLD - LV Distribution",
+          "quantity": 1,
+          "equipmentType": "Motor Control Center LV",
+          "hoursPerUnit": 8.00,
+          "totalHours": 8.00
+        },
+        {
+          "row": 52,
+          "section": "600V MCC SLD - LV Distribution",
+          "quantity": 1,
+          "equipmentType": "Circuit Breaker LV - Draw-Out (LSIG)",
+          "hoursPerUnit": 4.00,
+          "totalHours": 4.00
+        },
+        {
+          "row": 53,
+          "section": "600V MCC SLD - LV Distribution",
+          "quantity": 1,
+          "equipmentType": "Meter - PQM/Microprocessor Based",
+          "hoursPerUnit": 2.50,
+          "totalHours": 2.50
+        },
+        {
+          "row": 54,
+          "section": "600V MCC SLD - LV Distribution",
+          "quantity": 1,
+          "equipmentType": "Current Transformer LV - Set of 3",
+          "hoursPerUnit": 2.00,
+          "totalHours": 2.00
+        },
+        {
+          "row": 55,
+          "section": "600V MCC SLD - LV Distribution",
+          "quantity": 1,
+          "equipmentType": "Potential Transformer - LV Set",
+          "hoursPerUnit": 1.50,
+          "totalHours": 1.50
+        },
+        {
+          "row": 56,
+          "section": "600V MCC SLD - LV Distribution",
+          "quantity": 1,
+          "equipmentType": "Control Power Transformer - LV Swbd",
+          "hoursPerUnit": 1.50,
+          "totalHours": 1.50
+        },
+        {
+          "row": 57,
+          "section": "600V MCC SLD - LV Distribution",
+          "quantity": 3,
+          "equipmentType": "Arrestor (SPD) - Low Voltage",
+          "hoursPerUnit": 0.50,
+          "totalHours": 1.50
+        },
+        {
+          "row": 58,
+          "section": "600V MCC SLD - LV Distribution",
+          "quantity": 2,
+          "equipmentType": "Panelboard - Low Voltage",
+          "hoursPerUnit": 0.50,
+          "totalHours": 1.00
+        },
+        {
+          "row": 59,
+          "section": "600V MCC SLD - LV Distribution",
+          "quantity": 2,
+          "equipmentType": "Circuit Breaker LV - Panelboard MCB",
+          "hoursPerUnit": 2.50,
+          "totalHours": 5.00
+        },
+        {
+          "row": 60,
+          "section": "600V MCC SLD - LV Distribution",
+          "quantity": 2,
+          "equipmentType": "Transformer - Dry Type (TTR/IR)",
+          "hoursPerUnit": 1.50,
+          "totalHours": 3.00
+        },
+        {
+          "row": 61,
+          "section": "600V MCC SLD - LV Distribution",
+          "quantity": 2,
+          "equipmentType": "Switch LV - Fused Disconnect",
+          "hoursPerUnit": 1.00,
+          "totalHours": 2.00
+        },
+        {
+          "row": 62,
+          "section": "600V MCC SLD - LV Distribution",
+          "quantity": 1,
+          "equipmentType": "Uninterruptible Power Supply - UPS",
+          "hoursPerUnit": 3.00,
+          "totalHours": 3.00
+        },
+        {
+          "row": 63,
+          "section": "600V MCC SLD - LV Distribution",
+          "quantity": 1,
+          "equipmentType": "Ground Resistance Test -  Two-Point (Half Day)",
+          "hoursPerUnit": 5.00,
+          "totalHours": 5.00
+        },
+        {
+          "row": 64,
+          "section": "600V MCC SLD - LV Distribution",
+          "quantity": 8,
+          "equipmentType": "Conductors LV - 3 Phase Feeder",
+          "hoursPerUnit": 1.00,
+          "totalHours": 8.00
+        }
+      ]
+    },
+    {
+      "scopeIndex": 2,
+      "name": "NWWRP NETA ATS",
+      "scopeType": "ATS",
+      "totalHours": 19.00,
+      "multiplier": 1.00,
+      "quotedAmount": 3448.50,
+      "financials": {
+        "onsiteLaborTotal": 3291.75,
+        "offsiteLaborTotal": 156.75,
+        "travelTotal": 0.00,
+        "outsideServicesTotal": 0.00
+      },
+      "apparatus": [
+        {
+          "row": 8,
+          "section": "NWWRP - E-00-104 IFC",
+          "quantity": 1,
+          "equipmentType": "Motor Control Center LV",
+          "hoursPerUnit": 8.00,
+          "totalHours": 8.00
+        },
+        {
+          "row": 9,
+          "section": "NWWRP - E-00-104 IFC",
+          "quantity": 2,
+          "equipmentType": "Ground Resistance Test - FOP or Clamp Method",
+          "hoursPerUnit": 2.50,
+          "totalHours": 5.00
+        },
+        {
+          "row": 10,
+          "section": "NWWRP - E-00-104 IFC",
+          "quantity": 1,
+          "equipmentType": "Switchboard - Service Entrance",
+          "hoursPerUnit": 1.50,
+          "totalHours": 1.50
+        },
+        {
+          "row": 11,
+          "section": "NWWRP - E-00-104 IFC",
+          "quantity": 1,
+          "equipmentType": "Arrestor (SPD) - Low Voltage",
+          "hoursPerUnit": 0.50,
+          "totalHours": 0.50
+        },
+        {
+          "row": 12,
+          "section": "NWWRP - E-00-104 IFC",
+          "quantity": 1,
+          "equipmentType": "Circuit Breaker LV - Molded Case Thermal/Mag",
+          "hoursPerUnit": 4.00,
+          "totalHours": 4.00
+        }
+      ]
+    },
+    {
+      "scopeIndex": 5,
+      "name": "SEWRP NETA ATS",
+      "scopeType": "ATS",
+      "totalHours": 8.00,
+      "multiplier": 1.00,
+      "quotedAmount": 1518.00,
+      "financials": {
+        "onsiteLaborTotal": 1452.00,
+        "offsiteLaborTotal": 66.00,
+        "travelTotal": 0.00,
+        "outsideServicesTotal": 0.00
+      },
+      "apparatus": [
+        {
+          "row": 7,
+          "section": "General",
+          "quantity": 4,
+          "equipmentType": "Conductors LV - 3 Phase Feeder",
+          "hoursPerUnit": 1.00,
+          "totalHours": 4.00
+        },
+        {
+          "row": 8,
+          "section": "General",
+          "quantity": 2,
+          "equipmentType": "Motor - Low Voltage",
+          "hoursPerUnit": 2.00,
+          "totalHours": 4.00
+        }
+      ]
+    },
+    {
+      "scopeIndex": 6,
+      "name": "GWRP NETA ATS",
+      "scopeType": "ATS",
+      "totalHours": 11.00,
+      "multiplier": 1.00,
+      "quotedAmount": 2087.25,
+      "financials": {
+        "onsiteLaborTotal": 1996.50,
+        "offsiteLaborTotal": 90.75,
+        "travelTotal": 0.00,
+        "outsideServicesTotal": 0.00
+      },
+      "apparatus": [
+        {
+          "row": 7,
+          "section": "General",
+          "quantity": 11,
+          "equipmentType": "Conductors LV - 3 Phase Feeder",
+          "hoursPerUnit": 1.00,
+          "totalHours": 11.00
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "totalScopes": 4,
+    "grandTotal": 97139.38
+  }
+}

@@ -12,12 +12,12 @@ Write-Host "  URL: https://org99cd6c6e.crm.dynamics.com"
 Write-Host "  Tenant: 270d5723-4b30-4f3b-b9cb-6527be741b42"
 Write-Host "  App: RESA-Dev-MCP-Access`n"
 
-# Environment credentials from RESA-Dev-MCP-Access.txt
+# Environment credentials - load from .env file
 $env = @{
     Name = "RESA-Dev Environment"
     TenantId = "270d5723-4b30-4f3b-b9cb-6527be741b42"
     ClientId = "9df3350f-b3b4-47c4-97b5-499a8b02acc7"
-    ClientSecret = "REDACTED-AZURE-AD-CLIENT-SECRET-2026-05-27-1"
+    ClientSecret = $env:AZURE_CLIENT_SECRET  # Load from environment
     DataverseUrl = "https://org99cd6c6e.crm.dynamics.com"
 }
 
@@ -130,7 +130,7 @@ try {
     Write-Host "DATAVERSE_URL=https://org99cd6c6e.crm.dynamics.com"
     Write-Host "AZURE_TENANT_ID=270d5723-4b30-4f3b-b9cb-6527be741b42"
     Write-Host "AZURE_CLIENT_ID=9df3350f-b3b4-47c4-97b5-499a8b02acc7"
-    Write-Host "AZURE_CLIENT_SECRET=REDACTED-AZURE-AD-CLIENT-SECRET-2026-05-27-1"
+    Write-Host "AZURE_CLIENT_SECRET=<see .env file - contact project admin>"
     Write-Host "ENVIRONMENT=DEVELOPMENT`n"
     
     Write-Host "NEXT STEPS:" -ForegroundColor Yellow

@@ -1,14 +1,14 @@
 # RESA POWER PROJECT - COMPREHENSIVE STATUS TRACKER
 
-**Last Updated**: November 22, 2025  
-**Solution Version**: v1.4.0.0 (6 New Tables Added)  
-**Dev Environment**: org90c66be2.crm.dynamics.com (Jason Swenson's Environment) ✅  
+**Last Updated**: November 23, 2025  
+**Solution Version**: v1.5.0.0 (32 Rollup Fields Added)  
+**Dev Environment**: org99cd6c6e.crm.dynamics.com (Jason Swenson's Dev) ✅  
 **Prod Environment**: org04ad071f.crm.dynamics.com (RESA Production) - MCP NEVER connects here ❌  
 **Purpose**: Single source of truth for project status, preventing scope creep and tracking all work
 
 **🚨 CRITICAL UPDATE**: RESA IT deleted original dev environment. Now using isolated personal dev environment for all MCP testing and development. Solution exports backed up to local + GitHub + Box.com.
 
-**🎉 NEW**: 6 additional tables created (Clients, Sites, Employees, Quotes, Resource Assignments, Equipment) expanding system to 14 total tables with 291+ fields.
+**🎉 LATEST**: All 32 rollup fields created (18 date tracking + 14 revenue) in v1.5.0.0. Power Automate flow updated. MCP servers operational (resa-docs, resa-dataverse-dev, resa-testing, resa-deploy).
 
 ---
 
