@@ -1,786 +1,710 @@
-# PROJECT CONTINUITY PROTOCOL
+# PROJECT CONTINUITY PROTOCOL v2.0
 ## RESA Power Project Tracker - Session Management & Knowledge Transfer
 
 **Purpose**: Ensure zero knowledge loss between sessions, consistent documentation, and seamless continuity  
-**Last Updated**: November 19, 2025  
-**Version**: 1.3
+**Created**: November 19, 2025  
+**Last Updated**: November 28, 2025  
+**Version**: 2.0  
+**Status**: ✅ ACTIVE
+
+---
+
+## 📋 DOCUMENT HISTORY
+
+| Version | Date | Changes |
+|---------|------|---------|
+| 1.0 | Nov 15, 2025 | Initial protocol created |
+| 1.1-1.4 | Nov 15-19, 2025 | Incremental updates |
+| 2.0 | Nov 28, 2025 | **Complete rewrite** - Updated to v1.5.1.0, 16 tables, 649 fields, added Box.com integration, VS Claude workflow, Import Pipeline, MCP server documentation |
 
 ---
 
 ## 🎯 PROJECT IDENTITY
 
-### **Project Name**: RESA Power Project Tracker
-### **Technology**: Microsoft Dataverse (Power Platform)
-### **Environment**: RESA-Dev (org99cd6c6e.crm.dynamics.com)
-### **Environment ID**: 7f8ca9fd-86dd-ec35-8967-888a63ed3c09
-### **Organization ID**: 2a43137f-f9c3-f011-a9f5-6045bd003e31
-### **Solution Name**: RESAPowerProjectTracker (Unmanaged)
-### **Version**: v1.3.0.4 (exported successfully Nov 19, 2025)
-### **Dataverse Version**: 9.2.25111.151
-### **Repository**: https://github.com/jasonlswenson-sys/RESA-Power-Project-Management
-### **Primary User**: Jason Swenson (Project Manager, Phoenix Services)
-### **Organization**: RESA Power - Southwest Region (Phoenix, Las Vegas, Denver, San Diego)
-### **Auditing**: Enabled (Forever retention)
+### Core Information
+
+| Attribute | Value |
+|-----------|-------|
+| **Project Name** | RESA Power Project Tracker |
+| **Technology** | Microsoft Dataverse (Power Platform) |
+| **Environment** | RESA-Dev |
+| **Environment URL** | https://org99cd6c6e.crm.dynamics.com |
+| **Tenant ID** | 270d5723-4b30-4f3b-b9cb-6527be741b42 |
+| **Client ID** | 9df3350f-b3b4-47c4-97b5-499a8b02acc7 |
+| **Solution Name** | RESAPowerProjectTracker (Unmanaged) |
+| **Current Version** | v1.5.1.0 |
+| **Table Prefix** | cr950_ |
+| **Repository** | https://github.com/jasonlswenson-sys/RESA-Power-Project-Management |
+
+### Stakeholders
+
+| Role | Name | Responsibility |
+|------|------|----------------|
+| **Project Lead** | Jason Swenson | Architecture, implementation, strategy |
+| **Organization** | RESA Power | Southwest Region (Phoenix, Las Vegas, Denver, San Diego) |
+| **Primary Users** | Field Technicians, Project Managers | Daily operations |
+
+### Solution Scale
+
+| Metric | Count | Notes |
+|--------|-------|-------|
+| **Tables** | 16 | 8 core + 6 v1.4.0.0 + 2 v1.5.0.0 |
+| **Fields** | 649 | Custom fields across all tables |
+| **Rollup/Calculated** | 65 | Automated aggregation fields |
+| **Power Automate Flows** | 1 | Revenue Recognition (verified working) |
+| **Views** | 10 | Created Nov 27, 2025 |
+
+### The 16 Tables
+
+**Core Tables (v1.0-v1.3):**
+1. BusinessUnit - Multi-location support (Phoenix, Las Vegas, Denver, San Diego)
+2. Projects - Top-level project containers
+3. ProjectScope - Work breakdown by scope
+4. Tasks - Logical groupings of apparatus
+5. Apparatus - Individual equipment items
+6. ScopeLaborDetail - Financial rates per scope
+7. ApparatusRevenue - Revenue recognition records
+8. ApparatusTypeMaster - NETA standards reference
+
+**Added v1.4.0.0 (Nov 22, 2025):**
+9. Client - Customer information
+10. Site - Physical locations
+11. Employee - Resource management
+12. Quote - Estimating/proposals
+13. ResourceAssignment - Project staffing
+14. Equipment - Test equipment tracking
+
+**Added v1.5.0.0 (Nov 23, 2025):**
+15. ProjectFinancialSummary - Project-level financial rollups
+16. ScopeFinancialSummary - Scope-level financial rollups
 
 ---
 
-## 📁 FILE ORGANIZATION STRUCTURE
+## 📁 FILE ORGANIZATION
 
-### **Root Directory**: `C:\RESA_Power_Build\`
+### Root Directory: `C:\RESA_Power_Build\`
 
 ```
 C:\RESA_Power_Build\
 ├── Documentation/
-│   ├── 00_Project_Protocol/          ← YOU ARE HERE (Session management, protocols)
+│   ├── 00_Project_Protocol/          ← SESSION MANAGEMENT (this doc)
 │   │   └── PROJECT_CONTINUITY_PROTOCOL.md
 │   │
-│   ├── 01_Architecture/              ← System design, personas, decisions
-│   │   └── USER_EXPERIENCE_SYSTEM_ARCHITECTURE.md (7 personas, 5 decisions)
+│   ├── 00_START_HERE/                ← QUICK REFERENCES
+│   │   ├── PROJECT_STATUS_TRACKER.md     (navigation hub)
+│   │   ├── CLAUDE_DESKTOP_SESSION_STARTER.md
+│   │   ├── PROJECT_GUIDELINES_AND_WORKFLOWS.md
+│   │   └── QUICK_REFERENCE.md
 │   │
-│   ├── 02_Reviews_Analysis/          ← Gap analysis, field catalogs, inventories
-│   │   ├── GAP_ANALYSIS_FINAL_REPORT.md (v1.2.0.3 complete analysis)
-│   │   ├── V1_2_0_3_COMPLETE_FIELD_CATALOG.md (137 fields)
-│   │   ├── CALCULATED_FIELDS_FORMULAS.md (28 formulas)
-│   │   ├── CHOICE_FIELDS_OPTIONSETS.md (8 option sets)
-│   │   └── DATA_VERIFICATION_FINDINGS.md (clean slate discovery)
+│   ├── 01_Architecture/              ← SYSTEM DESIGN
+│   │   ├── MASTER_BUILD_SPECIFICATION.md  (16 tables, 649 fields)
+│   │   ├── REVENUE_ARCHITECTURE.md
+│   │   ├── HOURS_ARCHITECTURE_GUIDE.md
+│   │   └── USER_EXPERIENCE_SYSTEM_ARCHITECTURE.md
 │   │
-│   ├── 03_Progress_Tracking/         ← Session summaries, status reports
-│   │   ├── SESSION_SUMMARY_NOV15_ARCHITECTURAL_FOUNDATION.md
-│   │   └── v1_2_0_2_Session_Artifacts/ (historical)
+│   ├── 02_Implementation/            ← BUILD SPECIFICATIONS
+│   │   ├── REVENUE_RECOGNITION_FLOW_SPEC.md  (v1.5.0.1 - verified)
+│   │   └── [other implementation specs]
 │   │
-│   ├── 04_Data_Migration/            ← Excel analysis, migration scripts
-│   │   └── EXCEL_ARCHITECTURE_ANALYSIS_COMPLETE.md
+│   ├── 03_Progress_Tracking/         ← SESSION SUMMARIES
+│   │   ├── SESSION_SUMMARY_[DATE]_[TOPIC].md
+│   │   ├── VERSION_HISTORY.md
+│   │   └── VS_CLAUDE_MASTER_BUILD_TASK.md
 │   │
-│   ├── 05_Build_Guides/              ← How-to guides, checklists
-│   │   ├── COMPREHENSIVE_AUDIT_CHECKLIST.md
-│   │   ├── ARCHITECTURE_CLEANUP_GUIDE.md
-│   │   └── Export_Forms_Guide.md
+│   ├── 06_Implementation_Guides/     ← HOW-TO GUIDES
+│   │   ├── IMPORT_PIPELINE_SOP.md        (Excel → Dataverse)
+│   │   └── [other guides]
 │   │
-│   ├── 06_Implementation_Guides/     ← Step-by-step implementation docs
-│   │   └── (future: field additions, flow builds, etc.)
-│   │
-│   ├── 07_Application_Specs/         ← UI/UX specifications
-│   │   └── FIELD_TECH_APPLICATION_SPEC.md (mobile app design)
-│   │
-│   └── 08_MCP_Automation/            ← Automation scripts
-│       └── Export_Dataverse_Tables.ps1
+│   └── 99_Archive/                   ← DEPRECATED DOCS
 │
-├── Reference_Files/                   ← Source materials (DO NOT MODIFY)
-│   ├── Dataverse_Solutions/
-│   │   └── RESAPowerProjectTracker_1_1_0_1.zip (v1.2.0.3 export)
+├── Solution_Exports/                 ← VERSION CONTROL
+│   ├── v1.5.0.0_extracted/
+│   │   ├── customizations.xml            (source of truth)
+│   │   └── Workflows/
+│   └── v1.5.1.0/                         (latest)
+│
+├── MCP_Servers/                      ← AUTOMATION
+│   ├── resa-dataverse-mcp/               (Dataverse operations)
+│   ├── resa-docs-mcp/                    (Documentation generation)
+│   └── resa-testing-mcp/                 (Validation tools)
+│
+├── Reference_Files/                  ← SOURCE MATERIALS
 │   ├── Excel/
-│   │   └── Project Tracker VBA Modules/ (11 .bas files)
-│   └── Scripts/
-│       └── LASNAP16_Import_C#_PowerBI.txt
+│   │   ├── Estimator VBA Modules/
+│   │   └── _DATAVERSE_IMPORT_*.json
+│   └── Dataverse_Solutions/
 │
-└── Working_Files/                     ← Temporary/scratch work
-    └── (exports, temp analysis, etc.)
+├── Scripts/                          ← AUTOMATION SCRIPTS
+│   └── PowerShell/
+│       ├── Update-ProjectContext.ps1
+│       └── Create-DataverseViews.ps1
+│
+└── PROJECT_CONTEXT.json              ← CRITICAL STATE FILE
+```
+
+### Box.com Integration (Mobile Access)
+
+**Purpose**: Access documentation from any device (phone, tablet, web Claude)
+
+**Location**: Box.com folder structure mirrors GitHub repository
+
+**30 Organized Folders:**
+- 00_START_HERE - Quick references
+- 01_Architecture - System design
+- 02_Implementation - Build specs
+- 03_Progress_Tracking - Session summaries
+- [continues to mirror Documentation structure]
+
+**Sync Protocol**: After major documentation updates, sync to Box.com
+
+---
+
+## 🔧 MCP SERVER STATUS
+
+### Available Servers
+
+| Server | Status | Purpose | Notes |
+|--------|--------|---------|-------|
+| **resa-dataverse-dev** | ✅ Partial | Dataverse CRUD | Query works, Create has 404 issues |
+| **resa-docs** | ✅ Working | Generate table documentation | Fully functional |
+| **resa-testing** | ✅ Working | Validate rollup fields | Fully functional |
+| **filesystem** | ✅ Working | Local file operations | Standard MCP |
+| **github** | ✅ Working | Repository operations | Commits, reads |
+| **memory** | ✅ Optional | Knowledge graph | For persistent facts |
+
+### Dataverse API Notes
+
+```
+QUERY (GET): Use PLURAL EntitySetName
+  cr950_projectses, cr950_apparatuses, cr950_scopelabordetailses
+
+CREATE (POST): Use SINGULAR table name
+  cr950_projects, cr950_apparatus, cr950_scopelabordetails
+
+LOOKUPS: Use OData bind format
+  "cr950_Project@odata.bind": "/cr950_projectses(guid)"
 ```
 
 ---
 
-## 📋 DOCUMENTATION STANDARDS
+## 📥 IMPORT PIPELINE
 
-### **File Naming Convention**:
+### Excel → Dataverse Workflow
+
 ```
-[CATEGORY]_[DESCRIPTION]_[VERSION].md
-
-Examples:
-✅ GAP_ANALYSIS_FINAL_REPORT.md
-✅ SESSION_SUMMARY_NOV15_ARCHITECTURAL_FOUNDATION.md
-✅ USER_EXPERIENCE_SYSTEM_ARCHITECTURE.md
-✅ FIELD_TECH_APPLICATION_SPEC.md
-
-❌ gap analysis.md (no spaces)
-❌ notes.txt (no context)
-❌ temp_doc_v3_final_FINAL.md (version chaos)
+Excel Estimator (.xlsm)
+    ↓ VBA Export (Alt+F8 → ExportToDataverse)
+JSON File (_DATAVERSE_IMPORT_*.json)
+    ↓ Node.js Import (node import-estimator.js)
+Dataverse Tables
+    ↓ PM Review
+Task Creation (manual grouping)
+    ↓ Flow Trigger
+Revenue Recognition (automated)
 ```
 
-### **Document Header Template**:
+### What Gets Created
+
+| Entity | Source | Notes |
+|--------|--------|-------|
+| Client | Dataverse_Import sheet | 1 per import |
+| Site | Dataverse_Import sheet | 1 per import |
+| Project | Dataverse_Import sheet | 1 per import |
+| Scopes | Active scope sheets | Typically 1-6 |
+| ScopeLaborDetail | Scope financial data | 1 per scope |
+| Apparatus | Scope sheets | Typically 50-500 |
+
+### Key Files
+
+| File | Location | Purpose |
+|------|----------|---------|
+| VBA Module | Reference_Files/Excel/Estimator VBA Modules/DataverseExport.bas | Export macro |
+| Import Script | MCP_Servers/resa-dataverse-mcp/import-estimator.js | Node.js import |
+| SOP | Documentation/06_Implementation_Guides/IMPORT_PIPELINE_SOP.md | Full procedure |
+
+---
+
+## 🔄 REVENUE RECOGNITION FLOW
+
+### Status: ✅ VERIFIED WORKING (Nov 27, 2025)
+
+### Trigger
+- Apparatus.Completion_Status changed to "Complete" (value = 2)
+
+### What Happens
+1. Flow checks if Date_Completed is empty (using `empty()` function)
+2. If empty, sets Date_Completed = utcNow()
+3. Gets related Scope record
+4. Lists ScopeLaborDetail for rate lookup
+5. Checks for existing revenue (duplicate prevention)
+6. Creates ApparatusRevenue record with:
+   - Apparatus Hours
+   - Effective Labor Rate
+   - Revenue Amount (calculated: Hours × Rate)
+   - Revenue Status = RECOGNIZED
+   - Revenue Recognition Date = utcNow()
+
+### Critical Fix (Nov 27, 2025)
+
+**Problem**: `contains()` function fails on null DateTime values
+
+**Solution**: Use `empty()` function with equality check:
+```
+empty(triggerOutputs()?['body/cr950_datecompleted']) is equal to true
+```
+
+### Test Results (Nov 27, 2025)
+
+| Field | Result |
+|-------|--------|
+| Date Completed | 2025-11-28T04:17:47Z ✅ |
+| Revenue Amount | $869.63 ✅ |
+| Calculation | 2.5 hrs × $347.85 = $869.63 ✅ |
+
+---
+
+## 👥 MULTI-CLAUDE WORKFLOW
+
+### When Working with Multiple Claude Instances
+
+**Scenario**: Claude Desktop + VS Claude (or web Claude) simultaneously
+
+**Protocol**:
+
+1. **Designate Lead Instance**
+   - One instance owns the session
+   - Other instances work on delegated tasks
+
+2. **Task Delegation Format**
+   - Create task brief document
+   - Specify: Objective, scope, constraints, deliverables
+   - Example: `VS_CLAUDE_MASTER_BUILD_TASK.md`
+
+3. **Handoff Points**
+   - Lead instance creates task brief
+   - Delegate instance reads brief, executes, reports back
+   - Lead instance verifies and integrates
+
+4. **Avoid Conflicts**
+   - Don't edit same files simultaneously
+   - Coordinate git commits
+   - Use clear ownership of deliverables
+
+### Example Task Brief Template
+
+```markdown
+# Task Brief: [TITLE]
+
+**Assigned To**: VS Claude / Web Claude
+**Created By**: Claude Desktop
+**Date**: [DATE]
+**Priority**: [P0/P1/P2]
+
+## Objective
+[Clear statement of what needs to be done]
+
+## Scope
+- Include: [what to do]
+- Exclude: [what not to do]
+
+## Source Files
+[List files to read/reference]
+
+## Deliverables
+[Specific outputs expected]
+
+## Constraints
+[Any limitations or requirements]
+
+## Verification
+[How to confirm task is complete]
+```
+
+---
+
+## 📝 DOCUMENTATION STANDARDS
+
+### File Naming Convention
+
+```
+[CATEGORY]_[DESCRIPTION].md
+
+✓ IMPORT_PIPELINE_SOP.md
+✓ SESSION_SUMMARY_NOV27_REVENUE_FLOW.md
+✓ REVENUE_RECOGNITION_FLOW_SPEC.md
+
+✗ import pipeline.md (no spaces)
+✗ notes.txt (no context)
+✗ temp_doc_v3_final_FINAL.md (version chaos)
+```
+
+### Document Header Template
+
 ```markdown
 # [DOCUMENT TITLE]
 
-**Purpose**: [Why this document exists]  
-**Created**: [Date]  
-**Last Updated**: [Date]  
-**Version**: [X.Y - description of version]  
-**Status**: [Draft/In Progress/Complete/Archived]
+**Version**: [X.Y]
+**Last Updated**: [Date]
+**Status**: [Draft/Active/Deprecated]
+**Owner**: [Who maintains this]
+
+---
+
+## Purpose
+[Why this document exists]
 
 ---
 ```
 
-### **Markdown Standards**:
-- Use `##` for major sections
-- Use `###` for subsections
-- Use `####` for detailed breakdowns
-- Code blocks: Use ` ```language ` for syntax highlighting
-- Tables: Use for comparisons, decision matrices
-- Checkboxes: `- [ ]` for incomplete, `- [x]` for complete
-- Emoji: Use sparingly for visual hierarchy (🎯 goals, ✅ complete, ❌ missing, ⚠️ caution)
+### Version Numbering
+
+**Solution Versions**: `v{Major}.{Minor}.{Patch}.{Build}`
+- Major: Breaking changes, new table categories
+- Minor: New tables or significant features
+- Patch: Field additions, formula changes
+- Build: Bug fixes, view changes
+
+**Examples**:
+- v1.4.0.0 - Added 6 new tables
+- v1.5.0.0 - Added 65 rollup fields
+- v1.5.0.1 - Fixed revenue flow condition
+- v1.5.1.0 - Added views, Assigned Employee lookup
 
 ---
 
-## 🔄 SESSION END PROTOCOL
+## ▶️ SESSION START PROTOCOL
 
-### **MANDATORY STEPS (In Order)**:
+### Step 1: Read Context Files (MANDATORY)
 
-#### **1. Commit All Work to GitHub** ⚠️ CRITICAL
+**Order matters:**
 
-**Choose the method that fits your current context:**
+```
+1. PROJECT_CONTEXT.json
+   Location: C:\RESA_Power_Build\PROJECT_CONTEXT.json
+   Contains: Environment, version, last session, critical facts
 
----
+2. Most Recent Session Summary
+   Location: Documentation/03_Progress_Tracking/SESSION_SUMMARY_*.md
+   Find: Sort by date, read most recent
 
-### **METHOD A: Claude Desktop Automation** (GitHub MCP)
-**When:** Using Claude Desktop for session work  
-**How:** Claude can automatically commit via GitHub API  
+3. PROJECT_STATUS_TRACKER.md (if needed)
+   Location: Documentation/00_START_HERE/PROJECT_STATUS_TRACKER.md
+   Contains: Comprehensive status overview
+```
 
-**What Happens:**
-1. Claude detects modified files
-2. Creates commit with protocol-standard message
-3. Pushes directly to main branch via GitHub API
-4. Provides commit link for verification
+### Step 2: Confirm Understanding
 
-**Advantages:**
-- ✅ Fastest (fully automated)
-- ✅ Protocol-compliant messages
-- ✅ No manual steps
-- ✅ Works from anywhere (API-based)
+**Before doing any work, state:**
 
-**Limitations:**
-- ⚠️ Cannot handle merge conflicts (use manual git)
-- ⚠️ Limited to 100MB file sizes
-- ⚠️ Requires internet connection
+```
+"Current state:
+- Solution version: v1.5.1.0
+- Last session accomplished: [X]
+- Next priority flagged: [Y]
 
-**When to Use:**
-- Session end automation
-- Quick documentation updates
-- Single-file commits
-- Protocol-compliant quick saves
+What would you like to work on?"
+```
 
-**When NOT to Use:**
-- Learning git (use manual for learning)
-- Complex merge scenarios
-- Large binary files
-- When you want manual review first
+### Step 3: Verify Environment
+
+**If doing Dataverse work:**
+- Confirm environment: org99cd6c6e.crm.dynamics.com
+- Never use any other environment URL
+- Check MCP server connectivity if needed
 
 ---
 
-### **METHOD B: VS Code Git Integration**
-**When:** Working in Visual Studio Code  
-**How:** Use VS Code's built-in Source Control panel  
+## ⏹️ SESSION END PROTOCOL
 
-**Steps:**
-1. Open Source Control panel (Ctrl+Shift+G)
-2. Review changed files
-3. Stage changes (click + icon or "Stage All Changes")
-4. Enter commit message
-5. Click ✓ Commit button
-6. Click "Sync Changes" or Push button
+### Step 1: Git Commit & Push (MANDATORY)
 
-**Advantages:**
-- ✅ Visual diff viewing
-- ✅ Integrated with code editing
-- ✅ GitLens extensions available
-- ✅ GUI-based (easier for beginners)
-
-**When to Use:**
-- Actively coding in VS Code
-- Want to review diffs visually
-- Prefer GUI over command line
-- Working with code files
-
----
-
-### **METHOD C: Manual Git Commands** (Always Available)
-**When:** Learning git, complex operations, or automation fails  
-**How:** Use Git Bash, PowerShell, or Command Prompt  
+**All documentation changes must be committed:**
 
 ```powershell
 cd C:\RESA_Power_Build
 git add -A
-git status  # Review what's being committed
-git commit -m "[category]: [clear description]
+git status  # Review changes
+git commit -m "[category]: [description]
 
-[Detailed breakdown of changes]
 - Item 1
 - Item 2
-- Item 3
-
-[Status notes]"
-
+- Item 3"
 git push origin main
 ```
 
-**Advantages:**
-- ✅ Full git capabilities
-- ✅ Works offline (commit locally, push later)
-- ✅ Best for learning git
-- ✅ Handles complex scenarios (merge, rebase, etc.)
-- ✅ Universal (works everywhere)
-
-**When to Use:**
-- Learning git fundamentals
-- Complex git operations needed
-- Automation methods fail
-- Working offline
-- Need full control
-
----
-
-**Commit Message Format** (All Methods):
-```
-[category]: [Brief summary - 50 chars max]
-
-[Detailed explanation]
-- What was accomplished
-- Why it matters
-- What's next
-
-[Status/Notes]
-```
-
-**Categories**:
+**Commit Categories:**
 - `docs:` - Documentation changes
 - `feat:` - New features/fields
 - `fix:` - Bug fixes
-- `refactor:` - Code/structure improvements
+- `refactor:` - Structure improvements
 - `chore:` - Maintenance tasks
-- `analysis:` - Research/analysis work
-- `test:` - Testing and validation
 
-**🎯 RECOMMENDATION:**
-- **Learning git?** Use Method C (Manual) to understand the fundamentals
-- **Working in VS Code?** Use Method B (VS Code) for integrated workflow
-- **Session ending with Claude Desktop?** Use Method A (Automation) for speed
-- **Complex git operation?** Always use Method C (Manual)
+### Step 2: Create Session Summary (MANDATORY)
 
-**Note:** All methods produce the same result - committed code in GitHub. Choose based on your current context and comfort level.
-
-#### **2. Create/Update Session Summary**
 **Location**: `Documentation/03_Progress_Tracking/SESSION_SUMMARY_[DATE]_[TOPIC].md`
 
-**Template**:
+**Template:**
+
 ```markdown
 # SESSION SUMMARY - [DATE]
 ## [MAIN TOPIC]
 
-**Session Duration**: [hours]  
-**Focus**: [main objectives]  
+**Session Duration**: [hours]
+**Solution Version**: [before] → [after] (if changed)
+**Focus**: [main objectives]
 **Status**: [outcome]
 
 ---
 
-## WHAT WAS ACCOMPLISHED
-[Bulleted list of concrete deliverables]
+## ✅ ACCOMPLISHED
 
-## KEY DECISIONS/INSIGHTS
-[Important realizations or choices made]
+- [Concrete deliverable 1]
+- [Concrete deliverable 2]
+- [Concrete deliverable 3]
 
-## DOCUMENTS CREATED/UPDATED
-[List with locations]
+## 🔑 KEY DECISIONS/INSIGHTS
 
-## NEXT STEPS
-[Immediate/Short-term/Long-term]
+- [Decision or realization 1]
+- [Decision or realization 2]
 
-## BLOCKERS/OPEN QUESTIONS
-[Anything preventing progress]
+## 📄 DOCUMENTS CREATED/UPDATED
+
+| Document | Action | Location |
+|----------|--------|----------|
+| [Name] | Created/Updated | [Path] |
+
+## ⏭️ NEXT STEPS
+
+**Immediate:**
+- [ ] [Next task 1]
+- [ ] [Next task 2]
+
+**Flagged for Future:**
+- [ ] [Future task]
+
+## 🚧 BLOCKERS/OPEN QUESTIONS
+
+- [Any blocking issues]
+- [Questions needing answers]
 
 ---
 
-**Session Status**: [Complete/Paused/Ongoing]  
-**Next Review**: [When to pick this back up]
+**Session Status**: Complete
+**Next Priority**: [What to do next]
 ```
 
-#### **3. Update PROJECT_CONTEXT.json** ⚠️ CRITICAL
-**Execute this command at session end**:
+### Step 3: Update PROJECT_CONTEXT.json (MANDATORY)
 
+**Option A: PowerShell Script**
 ```powershell
-.\Scripts\PowerShell\Update-ProjectContext.ps1 -SessionTopic "What_You_Did" -QuickUpdate
+.\Scripts\PowerShell\Update-ProjectContext.ps1 -SessionTopic "Topic" -QuickUpdate
 ```
 
-**What it does**:
-- Updates `lastUpdated` timestamp
-- Sets `sessionId` to current date + topic (e.g., NOV19_What_You_Did)
-- Provides quick context for next session
+**Option B: Manual Update**
+- Update `lastUpdated` timestamp
+- Update `sessionId` to current date + topic
+- Update `currentStatus` section
+- Add any new `criticalFacts`
 
-**When to add more details**:
-```powershell
-# If you discovered critical facts
-.\Scripts\PowerShell\Update-ProjectContext.ps1 -AddCriticalFact "Important discovery here"
+### Step 4: Solution Export (IF SCHEMA CHANGED)
 
-# If you completed tasks or need full status update
-.\Scripts\PowerShell\Update-ProjectContext.ps1 -UpdateStatus
+**When to export:**
+- Added/modified fields
+- Added/modified tables
+- Changed relationships
+- Modified calculated fields
+- Added views
+
+**How to export:**
+1. Power Apps → Solutions → RESAPowerProjectTracker
+2. Export → Unmanaged
+3. Save to `Solution_Exports/v{X.Y.Z.W}/`
+4. Extract ZIP
+5. Update version in PROJECT_CONTEXT.json
+
+### Step 5: Verify Checklist
+
+```
+☐ All work committed to GitHub
+☐ Session summary created
+☐ PROJECT_CONTEXT.json updated
+☐ Solution exported (if schema changed)
+☐ No unsaved work in editors
+☐ Can answer: "What accomplished? What's next?"
 ```
 
-**Alternative - Memory MCP (Claude Desktop Only)**:
-
-⚠️ **NOTE**: Memory MCP only works in Claude Desktop, not VS Code/Copilot.
-
-If using Claude Desktop and Memory MCP is available:
-```
-Store these facts to Memory MCP: [key information]
-```
-
-**For VS Code/Copilot users**: Use the Update-ProjectContext.ps1 script instead (recommended approach).
-
-See: `Documentation/00_START_HERE/UPDATE_CONTEXT_GUIDE.md` for full script documentation.
-
-#### **4. Update Todo List** (If significant progress)
-**Location**: Conversation memory (tracked by AI)
-
-Update phase statuses:
-- Mark completed phases as ✅
-- Update in-progress descriptions
-- Add new phases if discovered
-- Adjust time estimates based on learnings
-
-#### **5. Verify All Critical Files Saved**
-
-**Checklist**:
-```
-□ All .md documents committed to GitHub
-□ Session summary created
-□ PROJECT_CONTEXT.json updated (via script)
-□ Todo list current
-□ No unsaved work in editors
-□ PowerShell scripts committed (if created)
-□ Reference materials organized
-```
+**If any item unchecked: Do not end session until fixed.**
 
 ---
 
-## 🚀 SESSION RESUME PROTOCOL
+## 🔄 CONTEXT RECOVERY
 
-### **SCENARIO 1: Continuing in Same Chat**
+### If Starting Fresh (New Chat)
 
-**What AI Has**:
-- ✅ Full conversation history
-- ✅ Todo list state
-- ✅ Memory MCP facts
-- ✅ GitHub access
+**Standard Opening:**
 
-**What YOU Say**:
 ```
-Option A (Simple continuation):
-"I'm back. Let's [specific task]."
+I'm working on the RESA Power Project Tracker.
 
-Option B (After stakeholder meeting):
-"Back from meeting. Here are the decisions:
-1. [Decision 1]
-2. [Decision 2]
-Let's implement based on these."
+Please read these files in order:
+1. C:\RESA_Power_Build\PROJECT_CONTEXT.json
+2. Most recent file in C:\RESA_Power_Build\Documentation\03_Progress_Tracking\
 
-Option C (Need context refresh):
-"What were we working on? Remind me of status."
+Then tell me:
+- Current solution version
+- What was accomplished last session
+- What's flagged as next priority
+
+Then ask what I'd like to work on.
 ```
 
-**What AI Will Do**:
-- Check conversation history
-- Recall todo list state
-- Review last few messages
-- Confirm current context
-- Ask clarifying questions if needed
+### If Claude Says "I Don't Remember"
+
+**Recovery Steps:**
+
+1. Point to PROJECT_CONTEXT.json
+2. Point to most recent session summary
+3. Provide key facts:
+   - Environment: org99cd6c6e.crm.dynamics.com
+   - Version: v1.5.1.0
+   - Tables: 16
+   - Fields: 649
+
+### If Documentation Conflicts
+
+**Resolution Order:**
+1. `Solution_Exports/v{latest}/customizations.xml` - Absolute truth for schema
+2. `PROJECT_CONTEXT.json` - Truth for current state
+3. Most recent session summary - Truth for recent work
+4. Architecture documents - May be stale, verify against XML
 
 ---
 
-### **SCENARIO 2: New Chat Session**
+## 🚨 CRITICAL KNOWLEDGE
 
-**What AI Has**:
-- ✅ Memory MCP facts (if stored)
-- ✅ GitHub access (can read repo)
-- ❌ Prior conversation history
+### Facts That MUST Survive Every Session
 
-**What YOU MUST Say** (Critical Opening):
-```
-"I'm working on RESA Power Project Tracker.
+1. **Environment URL**: org99cd6c6e.crm.dynamics.com (ONLY this one)
 
-Context:
-- Check Memory MCP for project facts
-- Read SESSION_SUMMARY_[MOST_RECENT].md for last session
-- Current focus: [what you want to work on]
+2. **Solution Version**: v1.5.1.0 (as of Nov 28, 2025)
 
-Status: [where you left off or what changed]"
-```
+3. **Table Count**: 16 tables (not 8 - that's outdated)
 
-**What AI Will Do**:
-1. Retrieve Memory MCP facts
-2. Read specified session summary
-3. Scan recent commits in GitHub
-4. Ask clarifying questions about:
-   - What changed since last session?
-   - Any stakeholder decisions made?
-   - What's the immediate goal?
+4. **Field Count**: 649 fields (not 137 - that's outdated)
 
----
+5. **Revenue Flow**: WORKING (verified Nov 27, 2025)
+   - Uses `empty()` function for null check
+   - Creates ApparatusRevenue when Apparatus marked Complete
 
-### **SCENARIO 3: Long Break (Weeks/Months)**
-
-**What YOU MUST Say**:
-```
-"Returning to RESA Power Project Tracker after [time].
-
-Please review:
-1. Memory MCP stored facts
-2. All SESSION_SUMMARY documents in chronological order
-3. Most recent Git commits
-4. Current todo list state
-
-Then summarize:
-- Where we left off
-- What was completed
-- What's pending
-- What I should review before continuing"
-```
-
-**What AI Will Do**:
-1. Read ALL session summaries
-2. Review Git commit history
-3. Retrieve Memory MCP
-4. Generate comprehensive status report
-5. Recommend review materials
-6. Confirm current understanding before proceeding
-
----
-
-## 💾 MEMORY MCP STORAGE PROTOCOL
-
-### **WHAT to Store** (Keep Under 10 Items - Most Critical Only):
-
-```
-CATEGORY 1: PROJECT IDENTITY
-- Project name, tech stack, environment URL
-- Repository location
-- Current version being worked on
-
-CATEGORY 2: TECHNICAL STATE
-- Entity count (8), field count (137), formula count (28)
-- Clean slate status (0 records in all tables)
-- Critical architecture: BusinessUnit = multi-location
-
-CATEGORY 3: CURRENT STATUS
-- Phase completion (Phase 1-3 complete, 4-7 pending)
-- Blockers (awaiting stakeholder decisions)
-- Priority items (revenue automation P0)
-
-CATEGORY 4: CRITICAL DECISIONS
-- What's been decided (e.g., "BusinessUnit is critical, NOT unused")
-- What's pending (5 architectural decisions need stakeholder input)
-
-CATEGORY 5: DOCUMENT INDEX
-- Primary doc: USER_EXPERIENCE_SYSTEM_ARCHITECTURE.md
-- Session summary: SESSION_SUMMARY_NOV15_ARCHITECTURAL_FOUNDATION.md
-- Gap analysis: GAP_ANALYSIS_FINAL_REPORT.md
-```
-
-### **HOW to Store to Memory MCP**:
-
-**Command Format**:
-```
-Store these facts to Memory MCP:
-
-Key Fact 1: [concise statement]
-Key Fact 2: [concise statement]
-...
-Key Fact 10: [concise statement]
-```
-
-**Example**:
-```
-Store these facts to Memory MCP:
-
-1. Project: RESA Power Project Tracker, Dataverse v1.3.0.4, orgf05a3756.crm.dynamics.com (RESAPowerPM Sandbox)
-2. Repository: https://github.com/jasonlswenson-sys/RESA-Power-Project-Management (branch: clean-main)
-3. Technical: 8 tables, 137+ fields, 30 formulas, 9 choice fields, 1 Power Automate flow
-4. Tables: BusinessUnit, Projects, ProjectScope, Tasks, Apparatus, ApparatusRevenue, ScopeLaborDetail, ApparatusTypeMaster
-5. Critical: BusinessUnit = multi-location (Phoenix/Vegas/Denver/San Diego), NOT unused despite 0 records
-6. Status: v1.3.0.4 production ready, auditing enabled Nov 19, clean slate environment (safe for changes)
-7. Ready to Implement: Date Tracking (18 rollup fields, 2.5-3 hrs, HIGH value) - spec complete
-8. In Planning: Revenue Rollups (needs KPI requirements), Master Build Spec completion (30 min)
-9. Key Docs: PROJECT_STATUS_TRACKER.md (navigation), MASTER_BUILD_SPECIFICATION.md v2.0, SESSION_RESUME_CHECKLIST.md
-10. Latest Session: Documentation alignment Nov 19 - corrected table names (Location→BusinessUnit, Scope_Financial_Config→ScopeLaborDetail)
-```
-
-### **WHEN to Update Memory MCP**:
-- ✅ End of every major session
-- ✅ After critical decisions are made
-- ✅ When project status changes significantly
-- ✅ When new blockers emerge
-- ❌ NOT for minor edits or small updates
-
----
-
-## 🔍 CONTEXT RECOVERY PROTOCOL
-
-### **If AI Says "I Don't Remember This Project"**:
-
-**Step 1: Trigger Memory Retrieval**
-```
-YOU: "This is RESA Power Project Tracker. Check Memory MCP."
-AI: [Retrieves stored facts]
-```
-
-**Step 2: Point to Session Summary**
-```
-YOU: "Read Documentation/03_Progress_Tracking/SESSION_SUMMARY_NOV15_ARCHITECTURAL_FOUNDATION.md"
-AI: [Reads document, gets full context]
-```
-
-**Step 3: Confirm Understanding**
-```
-AI: "I now understand:
-- You're working on [project]
-- Current status is [X]
-- Last session accomplished [Y]
-- You want to [Z]
-Is this correct?"
-
-YOU: "Yes" or "No, here's what changed..."
-```
-
----
-
-## 📊 PROJECT STATUS TRACKING
-
-### **How to Check Current Status**:
-
-**Option 1: Read Most Recent Session Summary**
-- Location: `Documentation/03_Progress_Tracking/`
-- Filename pattern: `SESSION_SUMMARY_[DATE]_[TOPIC].md`
-- Sort by date, read most recent
-
-**Option 2: Check Git Commit History**
-```powershell
-cd C:\RESA_Power_Build
-git log --oneline -10  # Last 10 commits
-git log --since="2 days ago" --oneline  # Recent commits
-```
-
-**Option 3: Review Todo List** (Ask AI)
-```
-YOU: "What's the current todo list state?"
-AI: [Shows current phase completion]
-```
-
-**Option 4: Memory MCP Recall** (Ask AI)
-```
-YOU: "Retrieve RESA Power Project Tracker facts from Memory MCP"
-AI: [Shows stored facts]
-```
-
----
-
-## 🎯 DECISION TRACKING
-
-### **How We Track Architectural Decisions**:
-
-**Document**: `USER_EXPERIENCE_SYSTEM_ARCHITECTURE.md` (Section: CRITICAL ARCHITECTURAL DECISIONS)
-
-**For Each Decision**:
-```markdown
-### DECISION [N]: [Question]
-
-#### OPTION A: [Name]
-**What It Means**: [Plain English]
-**System Impact**: [Fields/Views/Security required]
-**Pros**: [Benefits]
-**Cons**: [Drawbacks]
-**Cascade Effects**: [What else changes]
-
-#### OPTION B: [Name]
-[Same structure]
-
-#### OPTION C: [Name] ✅ [RECOMMENDED] or [STAKEHOLDER CHOICE]
-[Same structure]
-
-**Status**: 
-- [ ] Pending stakeholder input
-- [x] Decided: [Decision] on [Date] by [Who]
-
-**Rationale**: [Why this choice]
-```
-
-### **When Decision is Made**:
-1. Update the decision document
-2. Mark status as decided
-3. Document rationale
-4. Update Memory MCP with decision
-5. Create implementation task in todo list
-6. Commit to GitHub
-
----
-
-## 🚨 CRITICAL KNOWLEDGE - NEVER LOSE THIS
-
-### **Facts That MUST Survive Every Session**:
-
-1. **BusinessUnit Entity is CRITICAL**
+6. **BusinessUnit Entity is CRITICAL**
    - Represents multi-location architecture
    - Phoenix, Las Vegas, Denver, San Diego
    - DO NOT remove or deprecate
-   - Initial analysis said "0 records, unused" - THIS WAS WRONG
 
-2. **Clean Slate Environment**
-   - All tables have 0 records
-   - Safe to make breaking changes
-   - No data migration concerns
-   - Verified via Export_Dataverse_Tables.ps1
+7. **API Naming**:
+   - Query: PLURAL names (cr950_projectses)
+   - Create: SINGULAR names (cr950_projects)
 
-3. **Current Architecture**
-   - 8 entities: Projects, ProjectScope, Tasks, Apparatus, ApparatusRevenue, ScopeLaborDetail, BusinessUnit, ApparatusTypeMaster
-   - 137 custom fields documented
-   - 28 calculated fields (rollups)
-   - 8 option sets (choice fields)
+8. **Table Prefix**: cr950_
 
-4. **Revenue Recognition Trigger**
-   - When: Apparatus.Completion_Status = "Complete" (value 2)
-   - Action: Create ApparatusRevenue record
-   - Status: INCOMPLETE (5 fields + flow missing)
-   - Priority: P0 - BLOCKING
+### Documents to Never Delete
 
-5. **7 User Personas**
-   - Field Tech, Job Lead, PM, Operations Coordinator, Account Manager, Location Manager, Regional VP
-   - Current system supports: Field Tech, PM (partial), Regional VP (architecture only)
-   - Missing support: Job Lead, Ops Coordinator, Account Manager
-
-6. **5 Pending Architectural Decisions**
-   - Work Assignment Model (Individual/Team/Hybrid)
-   - Team Structure (Formal/Dynamic)
-   - Visibility Boundaries (My work/Team work/All work)
-   - Accountability Tracking (Assigned/Completed/Contributors)
-   - Multi-Location Coordination (Strict/Flexible)
-   - Status: Awaiting stakeholder input
-
-7. **Documents to Never Delete**
-   - USER_EXPERIENCE_SYSTEM_ARCHITECTURE.md (master design)
-   - GAP_ANALYSIS_FINAL_REPORT.md (v1.2.0.3 complete inventory)
-   - V1_2_0_3_COMPLETE_FIELD_CATALOG.md (137 fields)
-   - SESSION_SUMMARY_NOV15_ARCHITECTURAL_FOUNDATION.md (foundation work)
-
-8. **Repository = Source of Truth**
-   - GitHub: https://github.com/jasonlswenson-sys/RESA-Power-Project-Tracker
-   - All work must be committed
-   - Documents are definitive
-   - If conflict between memory and GitHub, GitHub wins
-   - Solution exports stored in `Solution_Exports/` for version control
+| Document | Purpose |
+|----------|---------|
+| PROJECT_CONTEXT.json | Current state |
+| MASTER_BUILD_SPECIFICATION.md | Complete schema |
+| REVENUE_ARCHITECTURE.md | Financial system |
+| REVENUE_RECOGNITION_FLOW_SPEC.md | Flow documentation |
+| IMPORT_PIPELINE_SOP.md | Import process |
+| This protocol | Session management |
 
 ---
 
-## 🛠️ TROUBLESHOOTING
+## 🔧 TROUBLESHOOTING
 
-### **Problem: "I can't find the project context"**
-**Solution**:
-1. Check Memory MCP: "Retrieve RESA Power Project Tracker facts"
-2. Read session summary: `SESSION_SUMMARY_NOV15_ARCHITECTURAL_FOUNDATION.md`
-3. Check Git log: `git log --oneline -5`
+### Problem: "Flow not triggering"
 
-### **Problem: "Memory MCP retrieval failed"**
-**Solution**:
-1. Don't panic - GitHub has everything
-2. Read session summary manually
-3. Ask AI to read specific documents from GitHub
-4. Rebuild context from documents
+**Check:**
+1. Is flow turned ON in Power Automate?
+2. Is Completion_Status being set to 2 (Complete)?
+3. Check flow run history for errors
+4. Verify ScopeLaborDetail exists for the Scope
 
-### **Problem: "I don't remember what we decided"**
-**Solution**:
-1. Check `USER_EXPERIENCE_SYSTEM_ARCHITECTURE.md` decision sections
-2. Search session summaries for "DECISION" or "decided"
-3. Check git commits for "decision" keyword
+### Problem: "Can't connect to Dataverse"
 
-### **Problem: "Documentation is inconsistent"**
-**Solution**:
-1. GitHub version is truth
-2. Session summary points to correct docs
-3. If conflict, check git commit dates (newest wins)
+**Check:**
+1. Correct environment URL (org99cd6c6e.crm.dynamics.com)
+2. .env file has correct credentials
+3. Azure App Registration is valid
+4. Token not expired
 
-### **Problem: "I'm starting after a long break"**
-**Solution**:
-1. Read ALL session summaries chronologically
-2. Review Git commit history
-3. Check Memory MCP for stored facts
-4. Ask AI to summarize current state
-5. Verify understanding before making changes
+### Problem: "Import script failing"
+
+**Check:**
+1. JSON file exists and is valid
+2. Node.js environment set up
+3. .env file in correct location
+4. Check for 401 (auth) or 400 (data) errors
+
+### Problem: "Documentation is inconsistent"
+
+**Resolution:**
+1. customizations.xml is truth for schema
+2. SESSION_SUMMARY is truth for recent work
+3. Update stale documents or mark deprecated
 
 ---
 
-## ✅ SESSION END CHECKLIST (Print This)
+## ✅ QUICK REFERENCE CHECKLIST
 
-**Before Closing Session**:
-
-□ **Git**: All work committed and pushed to main  
-□ **Session Summary**: Created/updated in `03_Progress_Tracking/`  
-□ **PROJECT_CONTEXT.json**: Updated via `.\Scripts\PowerShell\Update-ProjectContext.ps1 -SessionTopic "Topic" -QuickUpdate`  
-□ **Todo List**: Updated if significant progress  
-□ **Documents**: All saved with clear headers  
-□ **No Loose Ends**: No "I'll document this later"  
-
-**Verify You Can Answer**:
-□ What did I accomplish today?  
-□ Where is that work documented?  
-□ What's the next step?  
-□ What's blocking progress?  
-□ Where would I start next session?  
-
-**If Any "No" Above**: Don't end session until fixed.
-
----
-
-## 📖 QUICK REFERENCE
-
-### **Most Important Documents**:
-1. `PROJECT_CONTINUITY_PROTOCOL.md` (this document)
-2. `SESSION_SUMMARY_[LATEST].md` (what happened last)
-3. `USER_EXPERIENCE_SYSTEM_ARCHITECTURE.md` (system design)
-4. `GAP_ANALYSIS_FINAL_REPORT.md` (what exists)
-
-### **Most Important Commands**:
-```powershell
-# Save work
-git add -A && git commit -m "message" && git push origin main
-
-# Check status
-git status
-git log --oneline -5
-
-# Navigate
-cd C:\RESA_Power_Build
+### Session Start
+```
+☐ Read PROJECT_CONTEXT.json
+☐ Read most recent SESSION_SUMMARY
+☐ State current version and status
+☐ Confirm what user wants to work on
 ```
 
-### **Most Important AI Prompts**:
-
+### Session End
 ```
-# Retrieve context (VS Code/Copilot)
-"Read PROJECT_CONTEXT.json"
-"Read SESSION_SUMMARY_[LATEST].md"
-"Show me the current todo list"
+☐ Git commit all changes
+☐ Create session summary
+☐ Update PROJECT_CONTEXT.json
+☐ Export solution (if schema changed)
+☐ Verify no unsaved work
+```
 
-# Retrieve context (Claude Desktop with Memory MCP)
-"Check Memory MCP for RESA Power Project Tracker"
-"Read SESSION_SUMMARY_[LATEST].md"
+### Before Dataverse Work
+```
+☐ Confirm environment: org99cd6c6e.crm.dynamics.com
+☐ Know current version: v1.5.1.0
+☐ Table prefix: cr950_
+☐ API names: plural for query, singular for create
+```
 
-# Start work
-"I'm back from stakeholder meeting with decisions"
-"Let's implement [specific task]"
-
-# Verify understanding
-"Summarize where we left off"
-"What's blocking progress?"
+### Before Documentation Work
+```
+☐ Check if document exists
+☐ Check version/date of existing doc
+☐ Use proper naming convention
+☐ Include header with version/date
 ```
 
 ---
 
-## 📝 VERSION HISTORY
+## 📊 VERSION HISTORY SUMMARY
 
-| Version | Date | Changes |
-|---------|------|---------|  
-| 1.0 | Nov 15, 2025 | Initial protocol created - Foundation complete, awaiting stakeholder decisions |
-| 1.1 | Nov 16, 2025 | Excel architecture analyzed, VBA documented, Excel MCP foundation ready |
-| 1.2 | Nov 16, 2025 | Added context-based git commit methods (Claude Desktop/VS Code/Manual) with clear guidance on when to use each |
-| 1.3 | Nov 19, 2025 | Updated environment details (correct IDs, repository URL), added Memory MCP testing instructions, corrected solution name to RESAPowerProjectTracker, updated Memory MCP storage template to v1.3.0.4 state |
-| 1.4 | Nov 19, 2025 | Added PROJECT_CONTEXT.json update script to session end protocol, updated checklist and prompts to prioritize PROJECT_CONTEXT.json over Memory MCP for VS Code/Copilot users |
+| Version | Date | Key Changes |
+|---------|------|-------------|
+| v1.0.0.0 - v1.3.0.4 | Oct-Nov 2025 | Foundation: 8 tables, 137 fields |
+| v1.4.0.0 | Nov 22, 2025 | Added 6 tables: Client, Site, Employee, Quote, ResourceAssignment, Equipment |
+| v1.5.0.0 | Nov 23, 2025 | Added 65 rollup fields, 2 financial summary tables |
+| v1.5.0.1 | Nov 27, 2025 | Fixed revenue flow condition (empty() function) |
+| v1.5.1.0 | Nov 28, 2025 | Added 10 views, Assigned Employee lookup |
 
 ---
 
-**STATUS**: Protocol active and current - PROJECT_CONTEXT.json system implemented Nov 19, 2025  
-**LAST SESSION**: Nov 19, 2025 - Memory MCP verification, VS Code continuity system created  
-**NEXT REVIEW**: After testing PROJECT_CONTEXT.json in next session  
-**OWNER**: Jason Swenson + AI Assistant (Claude)
+**PROTOCOL STATUS**: Active  
+**LAST UPDATED**: November 28, 2025  
+**OWNER**: Jason Swenson + Claude AI  
+**REVIEW FREQUENCY**: After each version bump or major session
