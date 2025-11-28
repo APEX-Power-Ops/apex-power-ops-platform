@@ -1,0 +1,26 @@
+DATAVERSE IMPORT
+
+Client:
+Project:
+Job #:
+Project Start Date:
+Site Address:
+Site City:
+Site State:
+Site Zip Code:
+Site Contact:
+Site Contact Phone #:
+Contact Email Address:
+Project Lead:
+Business Unit:
+
+Quote Date:
+Quote Revision:
+
+STATUS
+Import Status:	Not Imported
+Last Import Date:
+
+---
+DROPDOWN VALUES FOR BUSINESS UNIT:
+Phoenix,Las Vegas,Denver,San Diego

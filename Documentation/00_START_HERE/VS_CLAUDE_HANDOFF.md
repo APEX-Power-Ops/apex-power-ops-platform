@@ -201,7 +201,7 @@ main().catch(console.error);
 const DATAVERSE_URL = "https://org99cd6c6e.crm.dynamics.com";
 const AZURE_TENANT_ID = "270d5723-4b30-4f3b-b9cb-6527be741b42";
 const AZURE_CLIENT_ID = "9df3350f-b3b4-47c4-97b5-499a8b02acc7";
-const AZURE_CLIENT_SECRET = "uAs8Q~NedRt8yRWqOjSr9izIuePpRzHNKVse5a9k";
+const AZURE_CLIENT_SECRET = process.env.AZURE_CLIENT_SECRET; // See .env file
 ```
 
 **Claude Desktop Config Template:**
@@ -215,7 +215,7 @@ const AZURE_CLIENT_SECRET = "uAs8Q~NedRt8yRWqOjSr9izIuePpRzHNKVse5a9k";
         "DATAVERSE_URL": "https://org99cd6c6e.crm.dynamics.com",
         "AZURE_TENANT_ID": "270d5723-4b30-4f3b-b9cb-6527be741b42",
         "AZURE_CLIENT_ID": "9df3350f-b3b4-47c4-97b5-499a8b02acc7",
-        "AZURE_CLIENT_SECRET": "uAs8Q~NedRt8yRWqOjSr9izIuePpRzHNKVse5a9k",
+        "AZURE_CLIENT_SECRET": "<see .env file - contact project admin>",
         "ENVIRONMENT": "DEVELOPMENT"
       }
     }

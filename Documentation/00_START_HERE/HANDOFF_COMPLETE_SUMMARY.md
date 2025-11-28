@@ -99,7 +99,7 @@ Start building resa-testing-mcp. Update MCP_BUILD_PROGRESS.md as you go.
 DATAVERSE_URL=https://org99cd6c6e.crm.dynamics.com
 AZURE_TENANT_ID=270d5723-4b30-4f3b-b9cb-6527be741b42
 AZURE_CLIENT_ID=9df3350f-b3b4-47c4-97b5-499a8b02acc7
-AZURE_CLIENT_SECRET=uAs8Q~NedRt8yRWqOjSr9izIuePpRzHNKVse5a9k
+AZURE_CLIENT_SECRET=<see .env file - contact project admin>
 ENVIRONMENT=DEVELOPMENT
 ```
 

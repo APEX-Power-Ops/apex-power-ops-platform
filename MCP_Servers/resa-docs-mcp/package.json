@@ -1,0 +1,35 @@
+{
+  "name": "resa-docs-mcp",
+  "version": "1.0.0",
+  "description": "MCP server for automated documentation generation from Dataverse schema",
+  "main": "build/index.js",
+  "type": "module",
+  "scripts": {
+    "prebuild": "node -e \"require('fs').rmSync('build', {recursive: true, force: true})\"",
+    "build": "tsc && node -e \"require('fs').cpSync('src/templates', 'build/templates', {recursive: true})\"",
+    "start": "node build/index.js",
+    "dev": "npm run build && npm start",
+    "test": "jest"
+  },
+  "keywords": ["mcp", "resa-power", "dataverse", "documentation"],
+  "author": "Jason Swenson",
+  "license": "MIT",
+  "dependencies": {
+    "@azure/identity": "^4.13.0",
+    "@azure/msal-node": "^3.8.3",
+    "@modelcontextprotocol/sdk": "^1.22.0",
+    "axios": "^1.13.2",
+    "date-fns": "^4.1.0",
+    "handlebars": "^4.7.8",
+    "lodash": "^4.17.21",
+    "markdown-it": "^14.1.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "@types/lodash": "^4.17.21",
+    "@types/node": "^24.10.1",
+    "jest": "^30.2.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  }
+}

@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import "dotenv/config";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import {
@@ -64,8 +65,18 @@ async function queryDataverse(
   let url = `${DATAVERSE_URL}/api/data/v9.2/${entityName}`;
   const params: string[] = [];
   
-  if (select) params.push(`$select=${select}`);
-  if (filter) params.push(`$filter=${filter}`);
+  // Defensive: strip $select= prefix if user included it
+  if (select) {
+    const cleanSelect = select.startsWith('$select=') ? select.substring(8) : select;
+    params.push(`$select=${cleanSelect}`);
+  }
+  
+  // Defensive: strip $filter= prefix if user included it
+  if (filter) {
+    const cleanFilter = filter.startsWith('$filter=') ? filter.substring(8) : filter;
+    params.push(`$filter=${cleanFilter}`);
+  }
+  
   if (top) params.push(`$top=${top}`);
   
   if (params.length > 0) {
@@ -162,11 +173,11 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             select: {
               type: "string",
-              description: "Comma-separated list of fields to retrieve",
+              description: "Comma-separated list of field names (e.g., 'field1,field2,field3'). Do NOT include '$select=' prefix.",
             },
             filter: {
               type: "string",
-              description: "OData filter expression",
+              description: "OData filter expression (e.g., 'statecode eq 0'). Do NOT include '$filter=' prefix.",
             },
             top: {
               type: "number",

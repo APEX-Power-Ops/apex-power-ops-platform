@@ -390,7 +390,27 @@ Aggregation:
 
 #### **Field 7 of 14: Latest Revenue Date**
 
-**Configure**:
+**⚠️ PREREQUISITE**: Before creating this rollup, add a **Revenue Recognition Date** field to the ApparatusRevenue table:
+
+1. Tables → **ApparatusRevenue** → Columns → + New column
+2. Configure:
+   ```
+   Display name: Revenue Recognition Date
+   Name: cr950_revenue_recognition_date
+   Data type: Date and Time
+   Behavior: User Local
+   Format: Date Only
+   ```
+3. Save
+4. **Update your revenue flow** to populate this field when creating ApparatusRevenue records
+
+**Power Automate Flow Expressions**:
+```
+Apparatus.Date Completed: utcNow()
+ApparatusRevenue.Revenue Recognition Date: utcNow()
+```
+
+**Configure Rollup**:
 ```
 Display name: Latest Revenue Date
 Name: cr950_latest_revenue_date
@@ -399,9 +419,9 @@ Data type: Rollup
 Related Entity: ApparatusRevenue
 Aggregation:
   - Source Entity: ApparatusRevenue
-  - Source Attribute: Date Completed (cr950_datecompleted)
+  - Source Attribute: Revenue Recognition Date (cr950_revenue_recognition_date)
   - Aggregate Function: MAX
-  - Filter: Date Completed is not null
+  - Filter: Revenue Recognition Date is not null
 ```
 
 **Purpose**: Track most recent revenue recognition date for billing period tracking.

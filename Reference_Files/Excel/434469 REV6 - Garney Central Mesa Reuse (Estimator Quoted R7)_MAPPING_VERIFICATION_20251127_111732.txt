@@ -1,0 +1,397 @@
+============================================================
+ESTIMATOR TO DATAVERSE MAPPING VERIFICATION
+============================================================
+Workbook: 434469 REV6 - Garney Central Mesa Reuse (Estimator Quoted R7).xlsm
+Path: https://resapowersolutions.sharepoint.com/sites/ops/Phoenix Files/Jason/Project Turnover/Garney (Ludvik) Central Mesa Reuse/434469 REV6 - Garney Central Mesa Reuse (Estimator Quoted R7).xlsm
+Generated: 2025-11-27 11:17:32
+
+============================================================
+SECTION 1: PROJECT HEADER (-> cr950_projects)
+============================================================
+
+Project Number (from filename): 434469
+  -> Maps to: cr950_projectnumber
+
+============================================================
+SECTION 2: EQUIPMENT REFERENCE SHEET
+============================================================
+
+GRAND TOTAL (all scopes):
+  Cell M3 Value: 97139.375
+  -> Maps to: Project-level total (informational)
+
+SCOPE SHEET LIST (L4:L23) and TOTALS (M4:M23):
+  Row | Sheet Name (Col L) | Total (Col M)
+  ----|--------------------|--------------
+  04  | IPS NETA ATS       | $61,025.63
+  05  | NWWRP NETA ATS     | $3,448.50
+  06  | IPS PSS            | $26,910.00
+  07  | NWWRP PSS          | $2,150.00
+  08  | SEWRP NETA ATS     | $1,518.00
+  09  | GWRP NETA ATS      | $2,087.25
+  10  | 7.X                | $0.00
+  11  | 8.X                | $0.00
+  12  | 9.X                | $0.00
+  13  | 10.X               | $0.00
+  14  | 11.X               | $0.00
+  15  | 12.X               | $0.00
+  16  | 13.X               | $0.00
+  17  | 14.X               | $0.00
+  18  | 15.X               | $0.00
+  19  | 16.X               | $0.00
+  20  | 17.X               | $0.00
+  21  | 18.X               | $0.00
+  22  | 19.X               | $0.00
+  23  | 20.X               | $0.00
+
+EQUIPMENT TABLE (tblEquipment):
+  Location: B3:F486
+  Hours Used Column: H
+  Equipment Types Found: 121
+  -> Maps to: cr950_apparatustypemaster (reference table)
+
+TOTAL ONSITE HOURS SUMMARY (R3:R8):
+
+============================================================
+SECTION 3: SCOPE SHEETS (-> cr950_projectscopes)
+============================================================
+
+------------------------------------------------------------
+SCOPE 1: IPS NETA ATS
+  VBA CodeName: Scope1
+------------------------------------------------------------
+
+SCOPE HEADER:
+  A1 (Project Name): 
+  C4 (Job Type): ATS
+    -> Maps to: cr950_scopetype (MTS/ATS choice)
+
+SCOPE TOTALS:
+  J3 (Total Onsite Hours): 333.75
+    -> Maps to: cr950_totalestimatedhours
+  M4 (Multiplier): 1
+    -> Maps to: cr950_multiplier
+  P3 (Grand Total): $61,025.63
+    -> Maps to: cr950_quotedamount
+  P4 (Adjusted Total): $61,025.63
+
+FINANCIAL SECTIONS (-> cr950_scopelabordetails):
+
+  Scanning Columns L-P for financial data...
+
+  Row 03 | L: TOTAL SHEET $$$ -NOT ADJU | M: NA     | N: NA     | O: NA     | P: $61,02
+  Row 04 | L: TOTAL SHEET $$$ - ADJUSTE | M: 1.00   | N: 1.00   | O: 0.0%   | P: $61,02
+  Row 05 | L: Onsite Labor              | M: % of A | N: Hrs    | O: Bill R | P: Bill T
+  Row 06 | L: Labor - Blended 10hr Rate | M: 1.00   | N: $334   | O: $165   | P: $55,06
+  Row 07 | L: Labor - Blended 12hr Rate | M: 0.0%   | N: 0.0%   | O: $188   | P: 0.0%  
+  Row 08 | L: Labor - OT Rate           | M: 0.0%   | N: 0.0%   | O: $225   | P: 0.0%  
+  Row 09 | L: Labor - DT Rate           | M: 0.0%   | N: 0.0%   | O: $300   | P: 0.0%  
+  Row 10 | L: Onsite Badging/Parking/Mi | M: 0.0%   | N: 0.0%   | O: $165   | P: 0.0%  
+  Row 14 | L: Onsite Labor Totals       | M: 1.05   | N: $350   | O: $165   | P: $57,82
+  Row 15 | L: Offsite Labor             | M: % of A | N: Hrs    | O: Bill R | P: Bill T
+  Row 16 | L: Report Hours - Office     | M: 5.0%   | N: 16.69  | O: $165   | P: $2,753
+  Row 17 | L: Project Mgmt - Office     | M: 0.0%   | N: 0.0%   | O: $150   | P: 0.0%  
+  Row 18 | L: Loading/Prep/Misc - Offic | M: 0.0%   | N: 0.0%   | O: $150   | P: 0.0%  
+  Row 19 | L: Offsite Labor Totals      | M: 5.0%   | N: 16.69  | O: $165   | P: $2,753
+  Row 20 | L: Travel Cost/Rate Groups   | M: Units  | N: Cost   | O: Mult(x | P: Totals
+  Row 21 | L: Travel Hours              | M: 0.0%   | N: $150   | O: 1.00   | P: 0.0%  
+  Row 22 | L: Hotel & Per Diem (Tech Da | M: 0.0%   | N: $275   | O: 1.50   | P: 0.0%  
+  Row 23 | L: Flights                   | M: 0.0%   | N: $650   | O: 1.50   | P: 0.0%  
+  Row 24 | L: Car Rental (Tech Days/2)  | M: 0.0%   | N: $100   | O: 1.50   | P: 0.0%  
+  Row 25 | L: Misc                      | M: 0.0%   | N: 0.0%   | O: 1.50   | P: 0.0%  
+  Row 26 | L: Travel Totals             | M:        | N:        | O:        | P: 0.0%  
+  Row 27 | L: Outside Services          | M: Units  | N: Cost   | O: Mult(x | P: Totals
+  Row 28 | L: Generator Rental          | M: 0.0%   | N: $750   | O: 1.50   | P: 0.0%  
+  Row 29 | L: Test Equipment Rental     | M: 0.0%   | N: $500   | O: 1.50   | P: 0.0%  
+  Row 30 | L: Oil Sample (Lab)          | M: 1.00   | N: $300   | O: 1.50   | P: $450  
+  Row 31 | L: Misc                      | M: 0.0%   | N: 0.0%   | O: 1.50   | P: 0.0%  
+  Row 32 | L: Misc                      | M: 0.0%   | N: 0.0%   | O: 1.50   | P: 0.0%  
+  Row 33 | L: Outside Services Totals   | M:        | N:        | O:        | P: $450  
+
+APPARATUS DATA (-> cr950_apparatus via cr950_tasks):
+  Row | Qty | Equipment Type (Col E) | Hours (Col I) | Total (Col J)
+  ----|-----|------------------------|---------------|-------------
+  007 | -- | [SECTION: Power Distribution SLD - SES-00-001]
+  008 | 01  | Switchgear - Medium Vo | 2.50          | 2.50
+  009 | 01  | Arrestor - Medium Volt | 2.00          | 2.00
+  010 | 01  | Control Power Transfor | 2.50          | 2.50
+  011 | 01  | Potential Transformer  | 2.50          | 2.50
+  012 | 01  | Circuit Breaker MV - V | 4.00          | 4.00
+  013 | 01  | Current Transformer MV | 2.00          | 2.00
+  014 | 01  | Current Transformer -  | 0.75          | 0.75
+  015 | 01  | Protective Relay (Feed | 5.00          | 5.00
+  016 | 01  | Ground Resistance Test | 2.50          | 2.50
+  017 | 01  | Conductors MV - Set of | 4.00          | 4.00
+  019 | -- | [SECTION: Power Distribution SLD - SWGR-00-001]
+  020 | 01  | Switchgear - Medium Vo | 2.50          | 2.50
+  021 | 06  | Arrestor - Medium Volt | 2.00          | 12.00
+  022 | 02  | Control Power Transfor | 2.50          | 5.00
+  023 | 03  | Potential Transformer  | 2.50          | 7.50
+  024 | 06  | Circuit Breaker MV - V | 4.00          | 24.00
+  025 | 12  | Current Transformer MV | 2.00          | 24.00
+  026 | 06  | Current Transformer -  | 0.75          | 4.50
+  027 | 06  | Protective Relay (Feed | 5.00          | 30.00
+  028 | 01  | Protective Relay - (Bu | 5.00          | 5.00
+  029 | 01  | Meter - PQM/Microproce | 2.50          | 2.50
+  031 | -- | [SECTION: Power Distribution SLD - MV Distribution]
+  032 | 01  | Switchgear - Medium Vo | 2.50          | 2.50
+  033 | 01  | Transformer - Pad Moun | 12.00          | 12.00
+  034 | 05  | Conductors MV - Set of | 4.00          | 20.00
+  035 | 01  | Transformer - Oil Samp | 1.00          | 1.00
+  036 | 01  | Circuit Breaker LV - I | 3.50          | 3.50
+  038 | -- | [SECTION: 4160 VFD & Motor Control - MV Distribution]
+  039 | 06  | Motor Starter (Contact | 4.00          | 24.00
+  040 | 03  | Switch MV - Fused Disc | 2.50          | 7.50
+  041 | 03  | Arrestor - Medium Volt | 2.00          | 6.00
+  042 | 03  | Potential Transformer  | 2.50          | 7.50
+  043 | 03  | Current Transformer LV | 2.00          | 6.00
+  044 | 03  | Reactors - (Shunt and  | 2.00          | 6.00
+  045 | 03  | Protective Relay (Moto | 8.00          | 24.00
+  046 | 03  | Transformer - Dry Type | 3.00          | 9.00
+  047 | 03  | Conductors MV - Set of | 4.00          | 12.00
+  050 | -- | [SECTION: 600V MCC SLD - LV Distribution]
+  051 | 01  | Motor Control Center L | 8.00          | 8.00
+  052 | 01  | Circuit Breaker LV - D | 4.00          | 4.00
+  053 | 01  | Meter - PQM/Microproce | 2.50          | 2.50
+  054 | 01  | Current Transformer LV | 2.00          | 2.00
+  055 | 01  | Potential Transformer  | 1.50          | 1.50
+  056 | 01  | Control Power Transfor | 1.50          | 1.50
+  057 | 03  | Arrestor (SPD) - Low V | 0.50          | 1.50
+  058 | 02  | Panelboard - Low Volta | 0.50          | 1.00
+  059 | 02  | Circuit Breaker LV - P | 2.50          | 5.00
+  060 | 02  | Transformer - Dry Type | 1.50          | 3.00
+  061 | 02  | Switch LV - Fused Disc | 1.00          | 2.00
+  062 | 01  | Uninterruptible Power  | 3.00          | 3.00
+  063 | 01  | Ground Resistance Test | 5.00          | 5.00
+  064 | 08  | Conductors LV - 3 Phas | 1.00          | 8.00
+
+  Total Apparatus Records to Create: 120
+    -> Each qty=N creates N apparatus records
+
+------------------------------------------------------------
+SCOPE 2: NWWRP NETA ATS
+  VBA CodeName: Scope2
+------------------------------------------------------------
+
+SCOPE HEADER:
+  A1 (Project Name): 
+  C4 (Job Type): ATS
+    -> Maps to: cr950_scopetype (MTS/ATS choice)
+
+SCOPE TOTALS:
+  J3 (Total Onsite Hours): 19
+    -> Maps to: cr950_totalestimatedhours
+  M4 (Multiplier): 1
+    -> Maps to: cr950_multiplier
+  P3 (Grand Total): $3,448.50
+    -> Maps to: cr950_quotedamount
+  P4 (Adjusted Total): $3,448.50
+
+FINANCIAL SECTIONS (-> cr950_scopelabordetails):
+
+  Scanning Columns L-P for financial data...
+
+  Row 03 | L: TOTAL SHEET $$$ -NOT ADJU | M: NA     | N: NA     | O: NA     | P: $3,449
+  Row 04 | L: TOTAL SHEET $$$ - ADJUSTE | M: 1.00   | N: 1.00   | O: 0.0%   | P: $3,449
+  Row 05 | L: Onsite Labor              | M: % of A | N: Hrs    | O: Bill R | P: Bill T
+  Row 06 | L: Labor - Blended 10hr Rate | M: 1.00   | N: 19.00  | O: $165   | P: $3,135
+  Row 07 | L: Labor - Blended 12hr Rate | M: 0.0%   | N: 0.0%   | O: $188   | P: 0.0%  
+  Row 08 | L: Labor - OT Rate           | M: 0.0%   | N: 0.0%   | O: $225   | P: 0.0%  
+  Row 09 | L: Labor - DT Rate           | M: 0.0%   | N: 0.0%   | O: $300   | P: 0.0%  
+  Row 10 | L: Onsite Badging/Parking/Mi | M: 0.0%   | N: 0.0%   | O: $165   | P: 0.0%  
+  Row 14 | L: Onsite Labor Totals       | M: 1.05   | N: 19.95  | O: $165   | P: $3,292
+  Row 15 | L: Offsite Labor             | M: % of A | N: Hrs    | O: Bill R | P: Bill T
+  Row 16 | L: Report Hours - Office     | M: 5.0%   | N: 95.0%  | O: $165   | P: $157  
+  Row 17 | L: Project Mgmt - Office     | M: 0.0%   | N: 0.0%   | O: $150   | P: 0.0%  
+  Row 18 | L: Loading/Prep/Misc - Offic | M: 0.0%   | N: 0.0%   | O: $150   | P: 0.0%  
+  Row 19 | L: Offsite Labor Totals      | M: 5.0%   | N: 95.0%  | O: $165   | P: $157  
+  Row 20 | L: Travel Cost/Rate Groups   | M: Units  | N: Cost   | O: Mult(x | P: Totals
+  Row 21 | L: Travel Hours              | M: 0.0%   | N: $150   | O: 1.00   | P: 0.0%  
+  Row 22 | L: Hotel & Per Diem (Tech Da | M: 0.0%   | N: $275   | O: 1.50   | P: 0.0%  
+  Row 23 | L: Flights                   | M: 0.0%   | N: $650   | O: 1.50   | P: 0.0%  
+  Row 24 | L: Car Rental (Tech Days/2)  | M: 0.0%   | N: $100   | O: 1.50   | P: 0.0%  
+  Row 25 | L: Misc                      | M: 0.0%   | N: 0.0%   | O: 1.50   | P: 0.0%  
+  Row 26 | L: Travel Totals             | M:        | N:        | O:        | P: 0.0%  
+  Row 27 | L: Outside Services          | M: Units  | N: Cost   | O: Mult(x | P: Totals
+  Row 28 | L: Generator Rental          | M: 0.0%   | N: $750   | O: 1.50   | P: 0.0%  
+  Row 29 | L: Test Equipment Rental     | M: 0.0%   | N: $500   | O: 1.50   | P: 0.0%  
+  Row 30 | L: Oil Sample (Lab)          | M: 0.0%   | N: $250   | O: 1.50   | P: 0.0%  
+  Row 31 | L: Misc                      | M: 0.0%   | N: 0.0%   | O: 1.50   | P: 0.0%  
+  Row 32 | L: Misc                      | M: 0.0%   | N: 0.0%   | O: 1.50   | P: 0.0%  
+  Row 33 | L: Outside Services Totals   | M:        | N:        | O:        | P: 0.0%  
+
+APPARATUS DATA (-> cr950_apparatus via cr950_tasks):
+  Row | Qty | Equipment Type (Col E) | Hours (Col I) | Total (Col J)
+  ----|-----|------------------------|---------------|-------------
+  007 | -- | [SECTION: NWWRP - E-00-104 IFC]
+  008 | 01  | Motor Control Center L | 8.00          | 8.00
+  009 | 02  | Ground Resistance Test | 2.50          | 5.00
+  010 | 01  | Switchboard - Service  | 1.50          | 1.50
+  011 | 01  | Arrestor (SPD) - Low V | 0.50          | 0.50
+  012 | 01  | Circuit Breaker LV - M | 4.00          | 4.00
+
+  Total Apparatus Records to Create: 6
+    -> Each qty=N creates N apparatus records
+
+------------------------------------------------------------
+SCOPE 5: SEWRP NETA ATS
+  VBA CodeName: Scope5
+------------------------------------------------------------
+
+SCOPE HEADER:
+  A1 (Project Name): 
+  C4 (Job Type): ATS
+    -> Maps to: cr950_scopetype (MTS/ATS choice)
+
+SCOPE TOTALS:
+  J3 (Total Onsite Hours): 8
+    -> Maps to: cr950_totalestimatedhours
+  M4 (Multiplier): 1
+    -> Maps to: cr950_multiplier
+  P3 (Grand Total): $1,518.00
+    -> Maps to: cr950_quotedamount
+  P4 (Adjusted Total): $1,518.00
+
+FINANCIAL SECTIONS (-> cr950_scopelabordetails):
+
+  Scanning Columns L-P for financial data...
+
+  Row 03 | L: TOTAL SHEET $$$ -NOT ADJU | M: NA     | N: NA     | O: NA     | P: $1,518
+  Row 04 | L: TOTAL SHEET $$$ - ADJUSTE | M: 1.00   | N: 1.00   | O: 0.0%   | P: $1,518
+  Row 05 | L: Onsite Labor              | M: % of A | N: Hrs    | O: Bill R | P: Bill T
+  Row 06 | L: Labor - Blended 10hr Rate | M: 1.00   | N: 8.00   | O: $165   | P: $1,320
+  Row 07 | L: Labor - Blended 12hr Rate | M: 0.0%   | N: 0.0%   | O: $188   | P: 0.0%  
+  Row 08 | L: Labor - OT Rate           | M: 0.0%   | N: 0.0%   | O: $225   | P: 0.0%  
+  Row 09 | L: Labor - DT Rate           | M: 0.0%   | N: 0.0%   | O: $300   | P: 0.0%  
+  Row 10 | L: Onsite Badging/Parking/Mi | M: 0.0%   | N: 0.0%   | O: $165   | P: 0.0%  
+  Row 14 | L: Onsite Labor Totals       | M: 1.10   | N: 8.80   | O: $165   | P: $1,452
+  Row 15 | L: Offsite Labor             | M: % of A | N: Hrs    | O: Bill R | P: Bill T
+  Row 16 | L: Report Hours - Office     | M: 5.0%   | N: 40.0%  | O: $165   | P: 66.00 
+  Row 17 | L: Project Mgmt - Office     | M: 0.0%   | N: 0.0%   | O: $150   | P: 0.0%  
+  Row 18 | L: Loading/Prep/Misc - Offic | M: 0.0%   | N: 0.0%   | O: $150   | P: 0.0%  
+  Row 19 | L: Offsite Labor Totals      | M: 5.0%   | N: 40.0%  | O: $165   | P: 66.00 
+  Row 20 | L: Travel Cost/Rate Groups   | M: Units  | N: Cost   | O: Mult(x | P: Totals
+  Row 21 | L: Travel Hours              | M: 0.0%   | N: $150   | O: 1.00   | P: 0.0%  
+  Row 22 | L: Hotel & Per Diem (Tech Da | M: 0.0%   | N: $275   | O: 1.50   | P: 0.0%  
+  Row 23 | L: Flights                   | M: 0.0%   | N: $650   | O: 1.50   | P: 0.0%  
+  Row 24 | L: Car Rental (Tech Days/2)  | M: 0.0%   | N: $100   | O: 1.50   | P: 0.0%  
+  Row 25 | L: Misc                      | M: 0.0%   | N: 0.0%   | O: 1.50   | P: 0.0%  
+  Row 26 | L: Travel Totals             | M:        | N:        | O:        | P: 0.0%  
+  Row 27 | L: Outside Services          | M: Units  | N: Cost   | O: Mult(x | P: Totals
+  Row 28 | L: Generator Rental          | M: 0.0%   | N: $750   | O: 1.50   | P: 0.0%  
+  Row 29 | L: Test Equipment Rental     | M: 0.0%   | N: $500   | O: 1.50   | P: 0.0%  
+  Row 30 | L: Oil Sample (Lab)          | M: 0.0%   | N: $250   | O: 1.50   | P: 0.0%  
+  Row 31 | L: Misc                      | M: 0.0%   | N: 0.0%   | O: 1.50   | P: 0.0%  
+  Row 32 | L: Misc                      | M: 0.0%   | N: 0.0%   | O: 1.50   | P: 0.0%  
+  Row 33 | L: Outside Services Totals   | M:        | N:        | O:        | P: 0.0%  
+
+APPARATUS DATA (-> cr950_apparatus via cr950_tasks):
+  Row | Qty | Equipment Type (Col E) | Hours (Col I) | Total (Col J)
+  ----|-----|------------------------|---------------|-------------
+  007 | 04  | Conductors LV - 3 Phas | 1.00          | 4.00
+  008 | 02  | Motor - Low Voltage    | 2.00          | 4.00
+
+  Total Apparatus Records to Create: 6
+    -> Each qty=N creates N apparatus records
+
+------------------------------------------------------------
+SCOPE 6: GWRP NETA ATS
+  VBA CodeName: Scope6
+------------------------------------------------------------
+
+SCOPE HEADER:
+  A1 (Project Name): 
+  C4 (Job Type): ATS
+    -> Maps to: cr950_scopetype (MTS/ATS choice)
+
+SCOPE TOTALS:
+  J3 (Total Onsite Hours): 11
+    -> Maps to: cr950_totalestimatedhours
+  M4 (Multiplier): 1
+    -> Maps to: cr950_multiplier
+  P3 (Grand Total): $2,087.25
+    -> Maps to: cr950_quotedamount
+  P4 (Adjusted Total): $2,087.25
+
+FINANCIAL SECTIONS (-> cr950_scopelabordetails):
+
+  Scanning Columns L-P for financial data...
+
+  Row 03 | L: TOTAL SHEET $$$ -NOT ADJU | M: NA     | N: NA     | O: NA     | P: $2,087
+  Row 04 | L: TOTAL SHEET $$$ - ADJUSTE | M: 1.00   | N: 1.00   | O: 0.0%   | P: $2,087
+  Row 05 | L: Onsite Labor              | M: % of A | N: Hrs    | O: Bill R | P: Bill T
+  Row 06 | L: Labor - Blended 10hr Rate | M: 1.00   | N: 11.00  | O: $165   | P: $1,815
+  Row 07 | L: Labor - Blended 12hr Rate | M: 0.0%   | N: 0.0%   | O: $188   | P: 0.0%  
+  Row 08 | L: Labor - OT Rate           | M: 0.0%   | N: 0.0%   | O: $225   | P: 0.0%  
+  Row 09 | L: Labor - DT Rate           | M: 0.0%   | N: 0.0%   | O: $300   | P: 0.0%  
+  Row 10 | L: Onsite Badging/Parking/Mi | M: 0.0%   | N: 0.0%   | O: $165   | P: 0.0%  
+  Row 14 | L: Onsite Labor Totals       | M: 1.10   | N: 12.10  | O: $165   | P: $1,997
+  Row 15 | L: Offsite Labor             | M: % of A | N: Hrs    | O: Bill R | P: Bill T
+  Row 16 | L: Report Hours - Office     | M: 5.0%   | N: 55.0%  | O: $165   | P: 90.75 
+  Row 17 | L: Project Mgmt - Office     | M: 0.0%   | N: 0.0%   | O: $150   | P: 0.0%  
+  Row 18 | L: Loading/Prep/Misc - Offic | M: 0.0%   | N: 0.0%   | O: $150   | P: 0.0%  
+  Row 19 | L: Offsite Labor Totals      | M: 5.0%   | N: 55.0%  | O: $165   | P: 90.75 
+  Row 20 | L: Travel Cost/Rate Groups   | M: Units  | N: Cost   | O: Mult(x | P: Totals
+  Row 21 | L: Travel Hours              | M: 0.0%   | N: $150   | O: 1.00   | P: 0.0%  
+  Row 22 | L: Hotel & Per Diem (Tech Da | M: 0.0%   | N: $275   | O: 1.50   | P: 0.0%  
+  Row 23 | L: Flights                   | M: 0.0%   | N: $650   | O: 1.50   | P: 0.0%  
+  Row 24 | L: Car Rental (Tech Days/2)  | M: 0.0%   | N: $100   | O: 1.50   | P: 0.0%  
+  Row 25 | L: Misc                      | M: 0.0%   | N: 0.0%   | O: 1.50   | P: 0.0%  
+  Row 26 | L: Travel Totals             | M:        | N:        | O:        | P: 0.0%  
+  Row 27 | L: Outside Services          | M: Units  | N: Cost   | O: Mult(x | P: Totals
+  Row 28 | L: Generator Rental          | M: 0.0%   | N: $750   | O: 1.50   | P: 0.0%  
+  Row 29 | L: Test Equipment Rental     | M: 0.0%   | N: $500   | O: 1.50   | P: 0.0%  
+  Row 30 | L: Oil Sample (Lab)          | M: 0.0%   | N: $250   | O: 1.50   | P: 0.0%  
+  Row 31 | L: Misc                      | M: 0.0%   | N: 0.0%   | O: 1.50   | P: 0.0%  
+  Row 32 | L: Misc                      | M: 0.0%   | N: 0.0%   | O: 1.50   | P: 0.0%  
+  Row 33 | L: Outside Services Totals   | M:        | N:        | O:        | P: 0.0%  
+
+APPARATUS DATA (-> cr950_apparatus via cr950_tasks):
+  Row | Qty | Equipment Type (Col E) | Hours (Col I) | Total (Col J)
+  ----|-----|------------------------|---------------|-------------
+  007 | 11  | Conductors LV - 3 Phas | 1.00          | 11.00
+
+  Total Apparatus Records to Create: 11
+    -> Each qty=N creates N apparatus records
+
+============================================================
+SECTION 4: MAPPING SUMMARY
+============================================================
+
+DATAVERSE TABLE MAPPING REFERENCE:
+
+  cr950_projects (Projects)
+    - cr950_name: From A1 of first scope sheet
+    - cr950_projectnumber: From workbook filename
+    - cr950_clientid: User selection/lookup
+    - cr950_siteid: User selection/lookup
+
+  cr950_projectscopes (Scopes)
+    - cr950_name: Scope sheet name
+    - cr950_projectid: Parent project
+    - cr950_scopetype: C4 (MTS/ATS)
+    - cr950_quotedamount: P3
+    - cr950_totalestimatedhours: J3
+    - cr950_multiplier: M4
+
+  cr950_scopelabordetails (Financial Config)
+    - cr950_projectscopeid: Parent scope
+    - cr950_onsitelaborhours: J3
+    - cr950_offsitelabortotal: Financial section totals
+    - cr950_traveltotal: Travel section total
+    - cr950_outsideservicestotal: Outside Services total
+
+  cr950_tasks (Tasks)
+    - cr950_name: Equipment type category
+    - cr950_projectscopeid: Parent scope
+    - cr950_projectid: Parent project
+
+  cr950_apparatus (Apparatus)
+    - cr950_name: Equipment designation
+    - cr950_taskid: Parent task
+    - cr950_apparatushours: Column I value
+    - cr950_apparatustypemasterid: Lookup to master
+
+============================================================
+END OF VERIFICATION REPORT
+============================================================

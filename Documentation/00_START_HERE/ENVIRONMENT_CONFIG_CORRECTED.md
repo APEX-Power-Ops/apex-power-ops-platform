@@ -15,7 +15,7 @@ Application Name:    RESA-Dev-MCP-Access
 Application ID:      9df3350f-b3b4-47c4-97b5-499a8b02acc7
 Object ID:           bf270233-917a-411e-baed-8ab93cbe62fb
 Tenant ID:           270d5723-4b30-4f3b-b9cb-6527be741b42
-Client Secret:       uAs8Q~NedRt8yRWqOjSr9izIuePpRzHNKVse5a9k
+Client Secret:       <see .env file - contact project admin>
 Secret ID:           795b408f-4a55-4710-825d-8fe64e98fcb9
 ```
 
@@ -46,7 +46,7 @@ Owner:               Jason Swenson
 # Azure AD Authentication
 AZURE_TENANT_ID=270d5723-4b30-4f3b-b9cb-6527be741b42
 AZURE_CLIENT_ID=9df3350f-b3b4-47c4-97b5-499a8b02acc7
-AZURE_CLIENT_SECRET=uAs8Q~NedRt8yRWqOjSr9izIuePpRzHNKVse5a9k
+AZURE_CLIENT_SECRET=<your-client-secret-here>
 
 # Dataverse Environment
 DATAVERSE_URL=https://org99cd6c6e.crm.dynamics.com
@@ -74,7 +74,7 @@ Location: `%APPDATA%\Claude\claude_desktop_config.json`
         "DATAVERSE_URL": "https://org99cd6c6e.crm.dynamics.com",
         "AZURE_TENANT_ID": "270d5723-4b30-4f3b-b9cb-6527be741b42",
         "AZURE_CLIENT_ID": "9df3350f-b3b4-47c4-97b5-499a8b02acc7",
-        "AZURE_CLIENT_SECRET": "uAs8Q~NedRt8yRWqOjSr9izIuePpRzHNKVse5a9k",
+        "AZURE_CLIENT_SECRET": "<see .env file>",
         "ENVIRONMENT": "DEVELOPMENT"
       }
     },
@@ -85,7 +85,7 @@ Location: `%APPDATA%\Claude\claude_desktop_config.json`
         "DATAVERSE_URL": "https://org99cd6c6e.crm.dynamics.com",
         "AZURE_TENANT_ID": "270d5723-4b30-4f3b-b9cb-6527be741b42",
         "AZURE_CLIENT_ID": "9df3350f-b3b4-47c4-97b5-499a8b02acc7",
-        "AZURE_CLIENT_SECRET": "uAs8Q~NedRt8yRWqOjSr9izIuePpRzHNKVse5a9k",
+        "AZURE_CLIENT_SECRET": "<see .env file>",
         "ENVIRONMENT": "DEVELOPMENT"
       }
     }

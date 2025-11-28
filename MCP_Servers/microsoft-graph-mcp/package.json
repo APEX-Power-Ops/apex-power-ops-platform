@@ -1,0 +1,29 @@
+{
+  "name": "microsoft-graph-mcp",
+  "version": "1.0.0",
+  "description": "MCP server for Microsoft 365 integration (SharePoint, Teams, Outlook, Calendar)",
+  "main": "build/index.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "node build/index.js",
+    "dev": "ts-node src/index.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": ["mcp", "resa-power", "microsoft-graph", "microsoft-365", "sharepoint", "teams", "outlook"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@azure/identity": "^4.13.0",
+    "@microsoft/microsoft-graph-client": "^3.0.7",
+    "@modelcontextprotocol/sdk": "^1.22.0",
+    "axios": "^1.13.2",
+    "isomorphic-fetch": "^3.0.0"
+  },
+  "devDependencies": {
+    "@types/isomorphic-fetch": "^0.0.39",
+    "@types/node": "^24.10.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  }
+}

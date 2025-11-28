@@ -1,0 +1,138 @@
+# {{displayName}}
+
+**Logical Name:** `{{logicalName}}`  
+**Schema Name:** `{{schemaName}}`  
+**Primary Key:** `{{primaryKey}}`  
+**Created:** {{createdOn}}  
+**Last Modified:** {{modifiedOn}}
+
+---
+
+## Description
+
+{{description}}
+
+---
+
+## Fields ({{fieldCount}})
+
+| Display Name | Logical Name | Type | Required | Max Length | Description |
+|--------------|--------------|------|----------|------------|-------------|
+{{#each fields}}
+| {{displayName}} | `{{logicalName}}` | {{type}} | {{#if isRequired}}✅ Yes{{else}}⬜ No{{/if}} | {{#if maxLength}}{{maxLength}}{{else}}-{{/if}} | {{description}} |
+{{/each}}
+
+---
+
+## Relationships ({{relationshipCount}})
+
+### Many-to-One (Lookups)
+
+{{#each manyToOneRelationships}}
+| Display Name | Logical Name | Related Table | Related Field |
+|--------------|--------------|---------------|---------------|
+| {{displayName}} | `{{logicalName}}` | {{relatedTable}} | {{relatedField}} |
+{{/each}}
+
+### One-to-Many (Child Records)
+
+{{#each oneToManyRelationships}}
+| Display Name | Logical Name | Related Table | Related Field |
+|--------------|--------------|---------------|---------------|
+| {{displayName}} | `{{logicalName}}` | {{relatedTable}} | {{relatedField}} |
+{{/each}}
+
+---
+
+## Calculated Fields
+
+{{#if calculatedFields}}
+{{#each calculatedFields}}
+### {{displayName}} (`{{logicalName}}`)
+
+**Formula:** {{formula}}  
+**Data Type:** {{dataType}}  
+**Description:** {{description}}
+
+{{/each}}
+{{else}}
+*No calculated fields defined for this table.*
+{{/if}}
+
+---
+
+## Rollup Fields
+
+{{#if rollupFields}}
+{{#each rollupFields}}
+### {{displayName}} (`{{logicalName}}`)
+
+**Source Entity:** {{sourceEntity}}  
+**Source Field:** {{sourceField}}  
+**Aggregate Function:** {{aggregateFunction}}  
+**Filter:** {{filter}}
+
+{{/each}}
+{{else}}
+*No rollup fields defined for this table.*
+{{/if}}
+
+---
+
+## Business Rules
+
+{{#if businessRules}}
+{{#each businessRules}}
+### {{name}}
+
+**Scope:** {{scope}}  
+**Conditions:** {{conditions}}  
+**Actions:** {{actions}}
+
+{{/each}}
+{{else}}
+*No business rules defined for this table.*
+{{/if}}
+
+---
+
+## Usage Examples
+
+### Query Records
+
+```javascript
+// Query all active {{displayName}} records
+const records = await queryDataverse(
+  "{{logicalName}}s",
+  "{{#each sampleFields}}{{logicalName}}{{#unless @last}},{{/unless}}{{/each}}",
+  "statecode eq 0",
+  10
+);
+```
+
+### Create Record
+
+```javascript
+// Create new {{displayName}}
+const newRecord = await createRecord("{{logicalName}}", {
+  {{#each requiredFields}}
+  "{{logicalName}}": "{{sampleValue}}"{{#unless @last}},{{/unless}}
+  {{/each}}
+});
+```
+
+### Update Record
+
+```javascript
+// Update {{displayName}}
+await updateRecord("{{logicalName}}", recordId, {
+  {{#each updateableFields}}
+  "{{logicalName}}": "{{sampleValue}}"{{#unless @last}},{{/unless}}
+  {{/each}}
+});
+```
+
+---
+
+**Generated:** {{generatedDate}}  
+**Generator:** resa-docs-mcp v1.0.0

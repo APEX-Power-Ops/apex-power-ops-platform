@@ -1,0 +1,32 @@
+{
+  "name": "resa-testing-mcp",
+  "version": "1.0.0",
+  "description": "MCP server for automated testing and validation of RESA Power Dataverse solution",
+  "main": "build/index.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "node build/index.js",
+    "dev": "npm run build && npm start",
+    "test": "jest"
+  },
+  "keywords": ["mcp", "resa-power", "dataverse", "testing"],
+  "author": "Jason Swenson",
+  "license": "MIT",
+  "dependencies": {
+    "@azure/identity": "^4.13.0",
+    "@azure/msal-node": "^3.8.3",
+    "@modelcontextprotocol/sdk": "^1.22.0",
+    "axios": "^1.13.2",
+    "date-fns": "^4.1.0",
+    "lodash": "^4.17.21"
+  },
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "@types/lodash": "^4.17.21",
+    "@types/node": "^24.10.1",
+    "jest": "^30.2.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  }
+}
