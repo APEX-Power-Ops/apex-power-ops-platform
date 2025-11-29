@@ -1,0 +1,361 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_sharepointonline": {
+        "api": {
+          "name": "shared_sharepointonline"
+        },
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedsharepointonline_aa00f"
+        },
+        "runtimeSource": "embedded"
+      },
+      "shared_commondataserviceforapps": {
+        "api": {
+          "name": "shared_commondataserviceforapps"
+        },
+        "connection": {
+          "connectionReferenceLogicalName": "cr950_sharedcommondataserviceforapps_fc294"
+        },
+        "runtimeSource": "embedded"
+      },
+      "shared_office365": {
+        "api": {
+          "name": "shared_office365"
+        },
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedoffice365_99ee3"
+        },
+        "runtimeSource": "embedded"
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        },
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        }
+      },
+      "triggers": {
+        "When_a_file_is_created_(properties_only)": {
+          "type": "OpenApiConnection",
+          "inputs": {
+            "parameters": {
+              "dataset": "https://jswensonllc.sharepoint.com/sites/PhoenixProjects",
+              "table": "bf92590a-261e-4ed4-8074-42dcf26db632",
+              "view": "a00198a5-5ec1-4d1b-a428-dc43788f5fe1"
+            },
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+              "operationId": "GetOnNewFileItems",
+              "connectionName": "shared_sharepointonline"
+            }
+          },
+          "recurrence": {
+            "interval": 5,
+            "frequency": "Minute"
+          },
+          "splitOn": "@triggerOutputs()?['body/value']",
+          "metadata": {
+            "operationMetadataId": "d8748658-dbcd-4e1b-8d87-e46f3be1425a"
+          }
+        }
+      },
+      "actions": {
+        "Get_File_Properties_Validate_File_Type": {
+          "type": "If",
+          "expression": {
+            "and": [
+              {
+                "equals": [
+                  "@endsWith(triggerBody()?['{FilenameWithExtension}'], '.xlsm')",
+                  true
+                ]
+              }
+            ]
+          },
+          "actions": {
+            "Client_Name": {
+              "type": "Compose",
+              "inputs": "@split(triggerOutputs()?['body/{Path}'], '/')[2]",
+              "metadata": {
+                "operationMetadataId": "c9a97003-4b97-4c49-9220-668b60070532"
+              }
+            },
+            "Project_Name": {
+              "type": "Compose",
+              "inputs": "@split(triggerOutputs()?['body/{Path}'], '/')[3]",
+              "runAfter": {
+                "Client_Name": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "71cfd996-2fe3-4816-964c-38266cef3753"
+              }
+            }
+          },
+          "else": {
+            "actions": {
+              "Terminate": {
+                "type": "Terminate",
+                "inputs": {
+                  "runStatus": "Cancelled"
+                },
+                "metadata": {
+                  "operationMetadataId": "150953b5-3e9a-4c84-a2b8-6cf32260aeea"
+                }
+              }
+            }
+          },
+          "runAfter": {},
+          "metadata": {
+            "operationMetadataId": "f4371b69-040e-43c1-9f98-29df1d064594"
+          }
+        },
+        "Validate_Client_Exists_in_Dataverse": {
+          "type": "OpenApiConnection",
+          "inputs": {
+            "parameters": {
+              "organization": "https://org99cd6c6e.crm.dynamics.com",
+              "entityName": "cr950_clients",
+              "$filter": "cr950_name eq '@{outputs('Client_Name')}'"
+            },
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+              "operationId": "ListRecordsWithOrganization",
+              "connectionName": "shared_commondataserviceforapps"
+            }
+          },
+          "runAfter": {
+            "Get_File_Properties_Validate_File_Type": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "18ff4c5c-fd94-4597-b889-3fad8044329b"
+          }
+        },
+        "Does_Client_Exist": {
+          "type": "If",
+          "expression": {
+            "greater": [
+              "@length(outputs('Validate_Client_Exists_in_Dataverse')?['body/value'])",
+              0
+            ]
+          },
+          "actions": {
+            "Filename": {
+              "type": "Compose",
+              "inputs": "@triggerOutputs()?['body/{FilenameWithExtension}']",
+              "metadata": {
+                "operationMetadataId": "e3f9d630-98e8-4b6e-ab18-4597ffe1c52b"
+              }
+            },
+            "ExtractDateRevision": {
+              "type": "Compose",
+              "inputs": "@substring(triggerBody()?['{Name}'], sub(lastIndexOf(triggerBody()?['{Name}'], '_Rev'), 8), 8)",
+              "runAfter": {
+                "Filename": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "34806296-3234-452b-a657-38db915f45e7"
+              }
+            },
+            "EstimateDate": {
+              "type": "Compose",
+              "inputs": "@concat(substring(outputs('ExtractDateRevision'), 0, 4), '-', substring(outputs('ExtractDateRevision'), 4, 2), '-', substring(outputs('ExtractDateRevision'), 6, 2))",
+              "runAfter": {
+                "ExtractDateRevision": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "84e4cd71-698f-4eef-9ef2-2261b6e38ca7"
+              }
+            },
+            "RevisionNumber": {
+              "type": "Compose",
+              "inputs": "@int(outputs('ExtractDateRevision'))",
+              "runAfter": {
+                "EstimateDate": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "b784d459-f11e-487f-8d99-733ebf2f2c36"
+              }
+            },
+            "EstimatorFileUrl": {
+              "type": "Compose",
+              "inputs": "@concat(\r\n  'https://jswensonllc.sharepoint.com/sites/PhoenixProjects/Shared%20Documents',\r\n  replace(triggerOutputs()?['body/{Path}'], ' ', '%20')\r\n)",
+              "runAfter": {
+                "RevisionNumber": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "fe8b2cb3-556b-435b-862e-645a65976c33"
+              }
+            }
+          },
+          "else": {
+            "actions": {
+              "Send_an_email_(V2)": {
+                "type": "OpenApiConnection",
+                "inputs": {
+                  "parameters": {
+                    "emailMessage/To": "jason.swenson@resapower.com",
+                    "emailMessage/Subject": "Estimator Import Error: Invalid Client Folder",
+                    "emailMessage/Body": "<p class=\"editor-paragraph\">An estimator file was saved to an invalid client folder.<br><br>Client Folder: @{outputs('Client_Name')}<br>File: @{triggerOutputs()?['body/{FilenameWithExtension}']}<br>Path: @{triggerOutputs()?['body/{Path}']}<br><br>This client does not exist in Dataverse. Please either:<br>1. Create the client in Dataverse first, OR<br>2. Move the file to an existing client folder<br><br>No estimator record was created.</p>",
+                    "emailMessage/Importance": "Normal"
+                  },
+                  "host": {
+                    "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
+                    "operationId": "SendEmailV2",
+                    "connectionName": "shared_office365"
+                  }
+                },
+                "metadata": {
+                  "operationMetadataId": "5b594dbb-e3dc-4662-a065-2835317a2f68"
+                }
+              },
+              "Terminate_1": {
+                "type": "Terminate",
+                "inputs": {
+                  "runStatus": "Succeeded"
+                },
+                "runAfter": {
+                  "Send_an_email_(V2)": [
+                    "Succeeded"
+                  ]
+                },
+                "metadata": {
+                  "operationMetadataId": "b17be2ae-9046-4a04-9881-115344ef15b6"
+                }
+              }
+            }
+          },
+          "runAfter": {
+            "Validate_Client_Exists_in_Dataverse": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "833d45c1-c33c-4eb3-8f6d-fcde67c8d3ae"
+          }
+        },
+        "Estimator_Exists": {
+          "type": "If",
+          "expression": {
+            "and": [
+              {
+                "greater": [
+                  "@length(outputs('Check_for_Existing_Estimator_Record')?['body/value'])",
+                  0
+                ]
+              }
+            ]
+          },
+          "actions": {
+            "Update_a_row_in_selected_environment": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "parameters": {
+                  "organization": "https://org99cd6c6e.crm.dynamics.com",
+                  "entityName": "cr950_estimators",
+                  "recordId": "@first(outputs('Check_for_Existing_Estimator_Record')?['body/value'])?['cr950_estimatorid']",
+                  "item/cr950_currentrevision": "@outputs('RevisionNumber')",
+                  "item/cr950_estimatedate": "@outputs('EstimateDate')",
+                  "item/cr950_estimator_file_url": "@outputs('EstimatorFileUrl')",
+                  "item/cr950_filename": "@outputs('Filename')",
+                  "item/cr950_lastmodified": "@outputs('Filename')"
+                },
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                  "operationId": "UpdateOnlyRecordWithOrganization",
+                  "connectionName": "shared_commondataserviceforapps"
+                }
+              },
+              "metadata": {
+                "operationMetadataId": "12f187f7-d03b-4334-a60f-db5a0c8386ab"
+              }
+            }
+          },
+          "else": {
+            "actions": {
+              "Create_New_Estimator_Record": {
+                "type": "OpenApiConnection",
+                "inputs": {
+                  "parameters": {
+                    "organization": "https://org99cd6c6e.crm.dynamics.com",
+                    "entityName": "cr950_estimators",
+                    "item/cr950_name": "@{outputs('Project_Name')} (display name)",
+                    "item/cr950_clientid@odata.bind": "@first(outputs('Validate_Client_Exists_in_Dataverse')?['body/value'])?['cr950_clientsid']",
+                    "item/cr950_currentrevision": "@int(last(split(first(split(triggerOutputs()?['body/{FilenameWithExtension}'], '.xlsm')), '_Rev')))",
+                    "item/cr950_estimatedate": "@outputs('EstimateDate')",
+                    "item/cr950_estimator_file_url": " @{outputs('EstimatorFileUrl')}",
+                    "item/cr950_filename": "@outputs('Filename')",
+                    "item/cr950_projectname": "@outputs('Project_Name')",
+                    "item/cr950_status": 864340000,
+                    "item/statuscode": 1
+                  },
+                  "host": {
+                    "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                    "operationId": "CreateRecordWithOrganization",
+                    "connectionName": "shared_commondataserviceforapps"
+                  }
+                },
+                "metadata": {
+                  "operationMetadataId": "6e49b47e-4485-499c-a001-387dbebd2b07"
+                }
+              }
+            }
+          },
+          "runAfter": {
+            "Check_for_Existing_Estimator_Record": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "765a7977-34be-4171-ba56-359bde5d6631"
+          }
+        },
+        "Check_for_Existing_Estimator_Record": {
+          "type": "OpenApiConnection",
+          "inputs": {
+            "parameters": {
+              "organization": "https://org99cd6c6e.crm.dynamics.com",
+              "entityName": "cr950_estimators",
+              "$filter": "_cr950_clientid_value eq '@{first(outputs('Validate_Client_Exists_in_Dataverse')?['body/value'])?['cr950_clientid']}' and cr950_projectname eq '@{outputs('Project_Name')}'"
+            },
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+              "operationId": "ListRecordsWithOrganization",
+              "connectionName": "shared_commondataserviceforapps"
+            }
+          },
+          "runAfter": {
+            "Does_Client_Exist": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "9bcfadea-7ba4-4449-b9a3-ea33adcbcb78"
+          }
+        }
+      },
+      "outputs": {}
+    },
+    "templateName": null
+  },
+  "schemaVersion": "1.0.0.0"
+}

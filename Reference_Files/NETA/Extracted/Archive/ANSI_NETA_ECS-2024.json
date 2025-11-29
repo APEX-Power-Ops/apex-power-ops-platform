@@ -1,0 +1,240 @@
+{
+  "source_file": "ANSI NETA ECS-2024.pdf",
+  "document_type": "ECS",
+  "extraction_version": "1.0",
+  "sections": [
+    {
+      "section_number": "7.1",
+      "title": "Low-Voltage Systems (< 1 kV)",
+      "equipment_type": "Switchgear and Switchboard Assemblies",
+      "visual_mechanical_tests": [],
+      "electrical_tests": []
+    },
+    {
+      "section_number": "7.1",
+      "title": "Low-Voltage Systems (< 1 kV) (continued)",
+      "equipment_type": "Switchgear and Switchboard Assemblies",
+      "visual_mechanical_tests": [],
+      "electrical_tests": []
+    },
+    {
+      "section_number": "7.1",
+      "title": "Low-Voltage Systems (< 1 kV) (continued)",
+      "equipment_type": "Switchgear and Switchboard Assemblies",
+      "visual_mechanical_tests": [],
+      "electrical_tests": []
+    },
+    {
+      "section_number": "7.1",
+      "title": "Low-Voltage Systems (< 1 kV) (continued)",
+      "equipment_type": "Switchgear and Switchboard Assemblies",
+      "visual_mechanical_tests": [],
+      "electrical_tests": []
+    },
+    {
+      "section_number": "7.2",
+      "title": "Medium-Voltage Systems, (> 1 kV and < 100 kV)",
+      "equipment_type": "Switches",
+      "visual_mechanical_tests": [],
+      "electrical_tests": []
+    },
+    {
+      "section_number": "7.2",
+      "title": "Medium-Voltage Systems, (> 1 kV and < 100 kV) (continued)",
+      "equipment_type": "Switches",
+      "visual_mechanical_tests": [],
+      "electrical_tests": []
+    },
+    {
+      "section_number": "7.2",
+      "title": "Medium-Voltage Systems, (> 1 kV and < 100 kV) (continued)",
+      "equipment_type": "Switches",
+      "visual_mechanical_tests": [],
+      "electrical_tests": []
+    },
+    {
+      "section_number": "7.2",
+      "title": "Medium-Voltage Systems, (> 1 kV and < 100 kV) (continued)",
+      "equipment_type": "Switches",
+      "visual_mechanical_tests": [],
+      "electrical_tests": []
+    },
+    {
+      "section_number": "7.2",
+      "title": "Medium-Voltage Systems, (> 1 kV and < 100 kV) (continued)",
+      "equipment_type": "Switches",
+      "visual_mechanical_tests": [],
+      "electrical_tests": []
+    },
+    {
+      "section_number": "7.3",
+      "title": "High-Voltage and Extra-High Voltage Systems (> 100 kV and < 1,000 kV)",
+      "equipment_type": "Metal-Enclosed Busways",
+      "visual_mechanical_tests": [],
+      "electrical_tests": []
+    },
+    {
+      "section_number": "7.3",
+      "title": "High-Voltage and Extra-High Voltage Systems (> 100 kV and < 1,000 kV)",
+      "equipment_type": "Metal-Enclosed Busways",
+      "visual_mechanical_tests": [],
+      "electrical_tests": []
+    },
+    {
+      "section_number": "7.3",
+      "title": "High-Voltage and Extra-High Voltage Systems (> 100 kV and < 1,000 kV)",
+      "equipment_type": "Metal-Enclosed Busways",
+      "visual_mechanical_tests": [],
+      "electrical_tests": []
+    },
+    {
+      "section_number": "7.3",
+      "title": "High-Voltage and Extra-High Voltage Systems (> 100 kV and < 1,000 kV)",
+      "equipment_type": "Metal-Enclosed Busways",
+      "visual_mechanical_tests": [
+        {
+          "number": "1",
+          "description": "Remove panel covers or view the equipment through viewing ports designed to transmit applicable signals being measured. *2. Perform a follow-up thermographic survey within 12 months of final acceptance by the owner. 9.2 Report Provide a report which contains the following:",
+          "acceptance_criteria": "",
+          "notes": "",
+          "category": "Visual/Mechanical"
+        },
+        {
+          "number": "1",
+          "description": "Description of equipment tested.",
+          "acceptance_criteria": "",
+          "notes": "",
+          "category": "Visual/Mechanical"
+        },
+        {
+          "number": "2",
+          "description": "Discrepancies.",
+          "acceptance_criteria": "",
+          "notes": "",
+          "category": "Visual/Mechanical"
+        },
+        {
+          "number": "3",
+          "description": "Temperature difference between the area of concern and the reference area.",
+          "acceptance_criteria": "",
+          "notes": "",
+          "category": "Visual/Mechanical"
+        },
+        {
+          "number": "4",
+          "description": "Probable cause of temperature difference.",
+          "acceptance_criteria": "",
+          "notes": "",
+          "category": "Visual/Mechanical"
+        },
+        {
+          "number": "5",
+          "description": "Areas inspected. Identify inaccessible and/or unobservable areas and/or equipment.",
+          "acceptance_criteria": "",
+          "notes": "",
+          "category": "Visual/Mechanical"
+        },
+        {
+          "number": "6",
+          "description": "Load conditions at time of inspection.",
+          "acceptance_criteria": "",
+          "notes": "",
+          "category": "Visual/Mechanical"
+        },
+        {
+          "number": "7",
+          "description": "Photographs and thermograms of the deficient area.",
+          "acceptance_criteria": "",
+          "notes": "",
+          "category": "Visual/Mechanical"
+        },
+        {
+          "number": "8",
+          "description": "Recommended action. 9.3 Test Parameters",
+          "acceptance_criteria": "",
+          "notes": "",
+          "category": "Visual/Mechanical"
+        },
+        {
+          "number": "1",
+          "description": "Inspect distribution systems with imaging equipment capable of detecting a minimum temperature difference of 1\u00b0 C at 30\u00b0 C.",
+          "acceptance_criteria": "",
+          "notes": "",
+          "category": "Visual/Mechanical"
+        },
+        {
+          "number": "2",
+          "description": "Equipment shall detect emitted radiation and convert detected radiation to visual signal.",
+          "acceptance_criteria": "",
+          "notes": "",
+          "category": "Visual/Mechanical"
+        },
+        {
+          "number": "3",
+          "description": "Thermographic surveys should be performed during periods of maximum possible loading, but not less than 40 percent of nominal circuit loading. Refer to NFPA 70B. 9.4 Test Results For suggested actions based on temperature rise, refer to ANSI/NETA ATS, Table 100.18. *Optional Test Page 39 NETA ECS-2024",
+          "acceptance_criteria": "",
+          "notes": "",
+          "category": "Visual/Mechanical"
+        },
+        {
+          "number": "10",
+          "description": "Transfer to Owner/Operator",
+          "acceptance_criteria": "",
+          "notes": "",
+          "category": "Visual/Mechanical"
+        },
+        {
+          "number": "1",
+          "description": "A formal and documented turnover of the project and the facility shall be performed.",
+          "acceptance_criteria": "",
+          "notes": "",
+          "category": "Visual/Mechanical"
+        },
+        {
+          "number": "2",
+          "description": "The operator receiving the turnover shall be informed of any outstanding deficiencies and any abnormal operating conditions.",
+          "acceptance_criteria": "",
+          "notes": "",
+          "category": "Visual/Mechanical"
+        },
+        {
+          "number": "3",
+          "description": "The turnover shall include all documentation, drawings, and operational responsibilities required.",
+          "acceptance_criteria": "",
+          "notes": "",
+          "category": "Visual/Mechanical"
+        },
+        {
+          "number": "4",
+          "description": "Remove commissioning organization locks and tags and place operator locks and tags where required. Page 40 ANSI/NETA ECS-2024 APPENDIX A Definitions NETA recognizes the IEEE Standards Dictionary as its official source for electrical definitions. The definitions in the list provided by NETA either are not included in the IEEE reference or are more specific to",
+          "acceptance_criteria": "",
+          "notes": "",
+          "category": "Visual/Mechanical"
+        }
+      ],
+      "electrical_tests": [
+        {
+          "number": "1",
+          "description": "Pre-Energization",
+          "acceptance_criteria": "",
+          "notes": "",
+          "category": "Electrical"
+        },
+        {
+          "number": "2",
+          "description": "Energization",
+          "acceptance_criteria": "",
+          "notes": "",
+          "category": "Electrical"
+        },
+        {
+          "number": "3",
+          "description": "Post Energization Date Name Tel No. Company Fax No. Address E-Mail Please indicate organization represented (if any) NETA document title Year Section/Number Note 1: Type or print legibly in black ink. Note 2: If supplementary material (photographs, diagrams, reports, etc.) is included, you may be required to submit additional copies. I hereby grant NETA the nonexclusive, royalty-free rights, including nonexclusive, royalty-free rights in copyright, in this proposal. I understand that I acquire no rights in any publication of NETA in which this proposal in this or another similar analogous form is used. Signature (required) This form is available electronically on NETA\u2019s website at www.netaworld.org under Standards Activities. Send to: Standards Review Council 3050 Old Centre Road, Suite 101 Portage, MI 49024 Phone: 888.300.6382 FAX: 269.488.6383 Email: neta@netaworld.org Page 49 ANSI/NETA ECS-2024",
+          "acceptance_criteria": "",
+          "notes": "",
+          "category": "Electrical"
+        }
+      ]
+    }
+  ]
+}

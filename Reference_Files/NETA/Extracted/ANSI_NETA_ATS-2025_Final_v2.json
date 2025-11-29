@@ -1,0 +1,2879 @@
+{
+  "source_file": "ANSI NETA ATS-2025_Final.pdf",
+  "document_type": "ATS",
+  "extraction_version": "2.0",
+  "equipment_categories": {
+    "7.1": "Switchgear and Switchboard Assemblies",
+    "7.2": "Switches",
+    "7.3": "Metal-Enclosed Busways",
+    "7.4": "Motor Control",
+    "7.5": "Adjustable Frequency Drives",
+    "7.6": "Circuit Breakers",
+    "7.7": "Protective Relays",
+    "7.8": "Instrument Transformers",
+    "7.9": "Metering",
+    "7.10": "Grounding Systems",
+    "7.11": "Ground-Fault Systems",
+    "7.12": "Power Transformers",
+    "7.13": "Cables",
+    "7.14": "Surge Protection",
+    "7.15": "Automatic Transfer Switches",
+    "7.16": "Generators",
+    "7.17": "UPS Systems",
+    "7.18": "DC Batteries",
+    "7.19": "Emergency Systems",
+    "7.20": "Rotating Machinery",
+    "7.21": "Capacitors",
+    "7.22": "Photovoltaic Systems",
+    "7.23": "Wind Turbines",
+    "7.24": "Energy Storage",
+    "7.25": "HVDC",
+    "7.26": "EV Charging"
+  },
+  "sections": {
+    "7.1.1": {
+      "section_number": "7.1.1",
+      "title": "Switchgear and Switchboard Assemblies",
+      "parent_section": "7.1",
+      "equipment_category": "Switchgear and Switchboard Assemblies",
+      "visual_mechanical_tests": [
+        {
+          "number": "1",
+          "description": "Compare equipment nameplate data with drawings.",
+          "optional": false
+        },
+        {
+          "number": "2",
+          "description": "Inspect physical, electrical, and mechanical condition.",
+          "optional": false
+        },
+        {
+          "number": "3",
+          "description": "Inspect anchorage, alignment, grounding, and required area clearances.",
+          "optional": false
+        },
+        {
+          "number": "4",
+          "description": "Verify the unit is clean and all shipping bracing, loose parts, and documentation shipped inside cubicles have been removed.",
+          "optional": false
+        },
+        {
+          "number": "5",
+          "description": "Compare mimic diagram and device labeling with drawings.",
+          "optional": false
+        },
+        {
+          "number": "6",
+          "description": "Verify that fuse and circuit breaker sizes and types correspond to drawings and coordination study as well as to the circuit breaker address for microprocessor- communication packages.",
+          "optional": false
+        },
+        {
+          "number": "7",
+          "description": "Verify that current and voltage transformer ratios correspond to drawings.",
+          "optional": false
+        },
+        {
+          "number": "8",
+          "description": "Verify that wiring connections are tight and that wiring is secure to prevent damage during routine operation of moving parts.",
+          "optional": false
+        },
+        {
+          "number": "9",
+          "description": "Verify tightness of accessible bolted electrical connections by calibrated torque-wrench method or in accordance with 7.1.1.B.1. Torque values shall be in accordance with manufacturer\u2019s published data. In the absence of manufacturer\u2019s data, use Table 100.12.",
+          "optional": false
+        },
+        {
+          "number": "10",
+          "description": "Confirm correct operation and sequencing of electrical and mechanical interlock systems.",
+          "optional": false
+        },
+        {
+          "number": "1",
+          "description": "Attempt closure on locked-open devices. Attempt to open locked-closed devices.",
+          "optional": false
+        },
+        {
+          "number": "2",
+          "description": "Make key exchange with all devices included in the interlock scheme.",
+          "optional": false
+        },
+        {
+          "number": "11",
+          "description": "Verify appropriate lubrication on moving current-carrying parts and on moving and sliding surfaces.",
+          "optional": false
+        },
+        {
+          "number": "12",
+          "description": "Inspect insulators for evidence of physical damage or contaminated surfaces.",
+          "optional": false
+        },
+        {
+          "number": "13",
+          "description": "Verify correct barrier and shutter installation and operation.",
+          "optional": false
+        },
+        {
+          "number": "14",
+          "description": "Exercise all active components.",
+          "optional": false
+        },
+        {
+          "number": "15",
+          "description": "Inspect mechanical indicating devices for correct operation.",
+          "optional": false
+        },
+        {
+          "number": "16",
+          "description": "Verify that filters are in place and vents are clear. Page 35",
+          "optional": false
+        }
+      ],
+      "electrical_tests": []
+    },
+    "7.1.2": {
+      "section_number": "7.1.2",
+      "title": "Panelboard Assemblies",
+      "parent_section": "7.1",
+      "equipment_category": "Switchgear and Switchboard Assemblies",
+      "visual_mechanical_tests": [
+        {
+          "number": "1",
+          "description": "Compare equipment nameplate data with drawings.",
+          "optional": false
+        },
+        {
+          "number": "2",
+          "description": "Inspect physical, electrical, and mechanical condition.",
+          "optional": false
+        },
+        {
+          "number": "3",
+          "description": "Inspect anchorage, alignment, grounding, bonding, and required area clearances.",
+          "optional": false
+        },
+        {
+          "number": "4",
+          "description": "Verify the unit is clean and all shipping bracing and loose parts have been removed.",
+          "optional": false
+        },
+        {
+          "number": "5",
+          "description": "Verify that fuse and circuit breaker sizes and types correspond to drawings and coordination study.",
+          "optional": false
+        },
+        {
+          "number": "6",
+          "description": "Verify that wiring connections are tight, and that wiring is secure to prevent damage during routine operation of moving parts.",
+          "optional": false
+        },
+        {
+          "number": "7",
+          "description": "Verify tightness of accessible bolted electrical connections by calibrated torque-wrench method. Torque values shall be in accordance with manufacturer\u2019s published data. In the absence of manufacturer's data, use Table 100.12.",
+          "optional": false
+        },
+        {
+          "number": "8",
+          "description": "Inspect insulators for evidence of physical damage or contaminated surfaces.",
+          "optional": false
+        },
+        {
+          "number": "9",
+          "description": "Verify correct barrier installation.",
+          "optional": false
+        },
+        {
+          "number": "10",
+          "description": "Perform visual and mechanical inspection on surge protective devices.",
+          "optional": false
+        },
+        {
+          "number": "11",
+          "description": "Exercise all active components.",
+          "optional": false
+        },
+        {
+          "number": "12",
+          "description": "Perform thermographic survey in accordance with Section 9",
+          "optional": true
+        }
+      ],
+      "electrical_tests": [
+        {
+          "number": "1",
+          "description": "Perform insulation-resistance tests for one minute on each bus section, phase-to-phase and phase-to-ground. Apply voltage in accordance with manufacturer\u2019s published data. In the absence of manufacturer\u2019s data, use Table 100.1.",
+          "optional": false
+        },
+        {
+          "number": "2",
+          "description": "Perform ground-resistance tests in accordance with Section 7.13.",
+          "optional": false
+        }
+      ]
+    },
+    "7.2.2": {
+      "section_number": "7.2.2",
+      "title": "Transformers, Liquid-Filled",
+      "parent_section": "7.2",
+      "equipment_category": "Switches",
+      "visual_mechanical_tests": [
+        {
+          "number": "1",
+          "description": "Compare equipment nameplate data with drawings.",
+          "optional": false
+        },
+        {
+          "number": "2",
+          "description": "Inspect physical and mechanical condition.",
+          "optional": false
+        },
+        {
+          "number": "3",
+          "description": "Inspect impact recorder prior to unloading.",
+          "optional": false
+        },
+        {
+          "number": "4",
+          "description": "Test dew point of tank gases.",
+          "optional": true
+        },
+        {
+          "number": "5",
+          "description": "Inspect anchorage, alignment, and grounding.",
+          "optional": false
+        },
+        {
+          "number": "6",
+          "description": "Verify the presence of PCB content labeling.",
+          "optional": false
+        },
+        {
+          "number": "7",
+          "description": "Verify removal of any shipping bracing after placement.",
+          "optional": false
+        },
+        {
+          "number": "8",
+          "description": "Verify the bushings are clean.",
+          "optional": false
+        },
+        {
+          "number": "9",
+          "description": "Verify that alarm, control, and trip settings on temperature and level indicators are as specified.",
+          "optional": false
+        },
+        {
+          "number": "10",
+          "description": "Verify operation of alarm, control, and trip circuits from temperature and level indicators, pressure relief device, gas accumulator, and fault pressure relay.",
+          "optional": false
+        },
+        {
+          "number": "11",
+          "description": "Verify that cooling fans and pumps operate correctly and have appropriate overcurrent protection.",
+          "optional": false
+        },
+        {
+          "number": "12",
+          "description": "Verify tightness of accessible bolted electrical connections by calibrated torque-wrench method or in accordance with 7.2.2.B.1. Torque values shall be in accordance with manufacturer\u2019s published data. In the absence of manufacturer\u2019s data, use Table 100.12.",
+          "optional": false
+        },
+        {
+          "number": "13",
+          "description": "Verify correct liquid level in tanks and bushings.",
+          "optional": false
+        },
+        {
+          "number": "14",
+          "description": "Verify valves are in the correct operating position.",
+          "optional": false
+        },
+        {
+          "number": "15",
+          "description": "Verify that positive pressure is maintained on gas-blanketed transformers.",
+          "optional": false
+        },
+        {
+          "number": "16",
+          "description": "Perform inspections and mechanical tests as recommended by the manufacturer.",
+          "optional": false
+        },
+        {
+          "number": "17",
+          "description": "Test load tap-changer in accordance with Section 7.12.3.",
+          "optional": false
+        },
+        {
+          "number": "18",
+          "description": "Verify presence of transformer surge arresters.",
+          "optional": false
+        },
+        {
+          "number": "19",
+          "description": "Verify de-energized tap-changer position is left as specified. Page 47",
+          "optional": false
+        }
+      ],
+      "electrical_tests": []
+    },
+    "7.3.1": {
+      "section_number": "7.3.1",
+      "title": "Cables, Low-Voltage, Low-Energy",
+      "parent_section": "7.3",
+      "equipment_category": "Metal-Enclosed Busways",
+      "visual_mechanical_tests": [
+        {
+          "number": "1",
+          "description": "Compare cable data with drawings and specifications.",
+          "optional": false
+        },
+        {
+          "number": "2",
+          "description": "Inspect exposed sections of cables and connectors for physical damage, proper termination, and correct connection in accordance with the single-line diagram.",
+          "optional": false
+        },
+        {
+          "number": "3",
+          "description": "Verify tightness of accessible bolted electrical connections by calibrated torque-wrench method. Torque values shall be in accordance with manufacturer\u2019s published data. In the absence of manufacturer\u2019s data, use Table 100.12.",
+          "optional": false
+        },
+        {
+          "number": "4",
+          "description": "Inspect compression-applied connectors for correct cable match and indentation.",
+          "optional": false
+        },
+        {
+          "number": "5",
+          "description": "Inspect for correct identification and arrangements.",
+          "optional": false
+        },
+        {
+          "number": "6",
+          "description": "Inspect cable jacket insulation and condition.",
+          "optional": false
+        },
+        {
+          "number": "7",
+          "description": "If cables are terminated through window-type current transformers, inspect to verify that neutral and ground conductors are correctly placed for operation of protective devices.",
+          "optional": false
+        },
+        {
+          "number": "8",
+          "description": "Perform thermographic survey in accordance with Section 9.",
+          "optional": true
+        }
+      ],
+      "electrical_tests": [
+        {
+          "number": "1",
+          "description": "Perform an insulation-resistance test on each phase/conductor with all other phase/conductors grounded. Applied potential shall be 500 volts dc for 300-volt rated cable and 1000 volts dc for 600-volt rated cable. Test duration shall be one minute.",
+          "optional": false
+        },
+        {
+          "number": "2",
+          "description": "Perform continuity tests to ensure correct cable connection.",
+          "optional": false
+        },
+        {
+          "number": "3",
+          "description": "Verify uniform resistance of parallel conductors.",
+          "optional": true
+        }
+      ]
+    },
+    "7.3.3": {
+      "section_number": "7.3.3",
+      "title": "Shielded Cables, Medium- and High-Voltage",
+      "parent_section": "7.3",
+      "equipment_category": "Metal-Enclosed Busways",
+      "visual_mechanical_tests": [
+        {
+          "number": "1",
+          "description": "Compare cable data with drawings and specifications.",
+          "optional": false
+        },
+        {
+          "number": "2",
+          "description": "Inspect terminations, splices, and exposed sections of cables for physical damage.",
+          "optional": false
+        },
+        {
+          "number": "3",
+          "description": "Verify tightness of accessible bolted electrical connections by calibrated torque-wrench method. Torque values shall be in accordance with manufacturer\u2019s published data. In the absence of manufacturer\u2019s data, use Table 100.12.",
+          "optional": false
+        },
+        {
+          "number": "4",
+          "description": "Inspect compression-applied connectors for correct cable match and indentation.",
+          "optional": false
+        },
+        {
+          "number": "5",
+          "description": "Inspect shield grounding and cable supports.",
+          "optional": false
+        },
+        {
+          "number": "6",
+          "description": "Verify that visible cable bends are not less than ICEA and/or manufacturer\u2019s minimum allowable bending radius.",
+          "optional": false
+        },
+        {
+          "number": "7",
+          "description": "Inspect fireproofing in common cable areas.",
+          "optional": true
+        },
+        {
+          "number": "8",
+          "description": "If cables are terminated through window-type current transformers, inspect to verify that neutral and ground conductors are correctly placed and that shields are correctly terminated for operation of protective devices.",
+          "optional": false
+        },
+        {
+          "number": "9",
+          "description": "Inspect for correct identification and arrangements.",
+          "optional": false
+        },
+        {
+          "number": "10",
+          "description": "Perform thermographic survey in accordance with Section 9.",
+          "optional": true
+        }
+      ],
+      "electrical_tests": [
+        {
+          "number": "1",
+          "description": "Perform an insulation-resistance test individually between each phase/conductor and its shield with all other phase/conductors and shields grounded. Apply voltage in accordance with manufacturer\u2019s published data. In the absence of manufacturer\u2019s published data, use Table 100.1.",
+          "optional": false
+        },
+        {
+          "number": "2",
+          "description": "Perform a shield-continuity test on each power cable by ohmmeter method. Page 55",
+          "optional": false
+        }
+      ]
+    },
+    "7.5.2": {
+      "section_number": "7.5.2",
+      "title": "Switches, Oil, Medium-Voltage",
+      "parent_section": "7.5",
+      "equipment_category": "Adjustable Frequency Drives",
+      "visual_mechanical_tests": [
+        {
+          "number": "1",
+          "description": "Compare equipment nameplate data with drawings.",
+          "optional": false
+        },
+        {
+          "number": "2",
+          "description": "Inspect physical and mechanical condition.",
+          "optional": false
+        },
+        {
+          "number": "3",
+          "description": "Inspect anchorage, alignment, grounding, and required clearances.",
+          "optional": false
+        },
+        {
+          "number": "4",
+          "description": "Verify the unit is clean.",
+          "optional": false
+        },
+        {
+          "number": "5",
+          "description": "Perform mechanical operator tests in accordance with manufacturer\u2019s published data.",
+          "optional": false
+        },
+        {
+          "number": "6",
+          "description": "Verify correct operation and adjustment of motor operator limit switches and mechanical interlocks.",
+          "optional": false
+        },
+        {
+          "number": "7",
+          "description": "Test all electrical and mechanical interlock systems for correct operation and sequencing.",
+          "optional": false
+        },
+        {
+          "number": "8",
+          "description": "Verify that each fuse has adequate mechanical support and contact integrity.",
+          "optional": false
+        },
+        {
+          "number": "9",
+          "description": "Verify that fuse sizes and types are in accordance with drawings, short-circuit study, and coordination study.",
+          "optional": false
+        },
+        {
+          "number": "10",
+          "description": "Verify tightness of accessible bolted electrical connections by calibrated torque-wrench method or in accordance with 7.5.2.B.1. Torque values shall be in accordance with manufacturer\u2019s published data. In the absence of manufacturer\u2019s data, use Table 100.12.",
+          "optional": false
+        },
+        {
+          "number": "11",
+          "description": "Verify that insulating oil level is correct.",
+          "optional": false
+        },
+        {
+          "number": "12",
+          "description": "Verify appropriate lubrication on moving current-carrying parts and on moving and sliding surfaces.",
+          "optional": false
+        },
+        {
+          "number": "13",
+          "description": "Record as-found and as-left operation counter readings.",
+          "optional": false
+        },
+        {
+          "number": "14",
+          "description": "Perform thermographic survey in accordance with Section 9.",
+          "optional": true
+        }
+      ],
+      "electrical_tests": [
+        {
+          "number": "1",
+          "description": "Perform resistance measurements through bolted connections with a low-resistance ohmmeter.",
+          "optional": false
+        },
+        {
+          "number": "2",
+          "description": "Perform a contact/pole-resistance test. Page 70",
+          "optional": false
+        }
+      ]
+    },
+    "7.5.3": {
+      "section_number": "7.5.3",
+      "title": "Switches, Vacuum, Medium-Voltage",
+      "parent_section": "7.5",
+      "equipment_category": "Adjustable Frequency Drives",
+      "visual_mechanical_tests": [
+        {
+          "number": "1",
+          "description": "Compare equipment nameplate data with drawings.",
+          "optional": false
+        },
+        {
+          "number": "2",
+          "description": "Inspect physical and mechanical condition.",
+          "optional": false
+        },
+        {
+          "number": "3",
+          "description": "Inspect anchorage, alignment, grounding, and required clearances.",
+          "optional": false
+        },
+        {
+          "number": "4",
+          "description": "Verify the unit is clean.",
+          "optional": false
+        },
+        {
+          "number": "5",
+          "description": "Perform mechanical operator tests in accordance with manufacturer\u2019s published data.",
+          "optional": false
+        },
+        {
+          "number": "6",
+          "description": "Verify correct operation and adjustment of motor operator limit switches and mechanical interlocks.",
+          "optional": false
+        },
+        {
+          "number": "7",
+          "description": "Verify critical distances on operating mechanism as recommended by the manufacturer.",
+          "optional": false
+        },
+        {
+          "number": "8",
+          "description": "Test all electrical and mechanical interlock systems for correct operation and sequencing.",
+          "optional": false
+        },
+        {
+          "number": "9",
+          "description": "Verify that each fuse has adequate support and contact integrity.",
+          "optional": false
+        },
+        {
+          "number": "10",
+          "description": "Verify that fuse sizes and types are in accordance with drawings, the short-circuit study, and the coordination study.",
+          "optional": false
+        },
+        {
+          "number": "11",
+          "description": "Verify tightness of accessible bolted electrical connections by calibrated torque-wrench method or in accordance with 7.5.3.B.1. Torque values shall be in accordance with manufacturer\u2019s published data. In the absence of manufacturer\u2019s data, use Table 100.12.",
+          "optional": false
+        },
+        {
+          "number": "12",
+          "description": "Verify that insulating oil level is correct.",
+          "optional": false
+        },
+        {
+          "number": "13",
+          "description": "Verify appropriate lubrication on moving current-carrying parts and on moving and sliding surfaces.",
+          "optional": false
+        },
+        {
+          "number": "14",
+          "description": "Record as-left operation counter reading.",
+          "optional": false
+        },
+        {
+          "number": "15",
+          "description": "Perform thermographic survey in accordance with Section 9.",
+          "optional": true
+        }
+      ],
+      "electrical_tests": [
+        {
+          "number": "1",
+          "description": "Perform resistance measurements through bolted electrical connections with a low resistance ohmmeter.",
+          "optional": false
+        },
+        {
+          "number": "2",
+          "description": "Perform a contact/pole-resistance test. Page 73",
+          "optional": false
+        }
+      ]
+    },
+    "7.5.5": {
+      "section_number": "7.5.5",
+      "title": "Switches, Cutouts",
+      "parent_section": "7.5",
+      "equipment_category": "Adjustable Frequency Drives",
+      "visual_mechanical_tests": [
+        {
+          "number": "1",
+          "description": "Compare equipment nameplate data with drawings.",
+          "optional": false
+        },
+        {
+          "number": "2",
+          "description": "Inspect physical and mechanical condition.",
+          "optional": false
+        },
+        {
+          "number": "3",
+          "description": "Inspect anchorage, alignment, grounding, and required clearances.",
+          "optional": false
+        },
+        {
+          "number": "4",
+          "description": "Verify the unit is clean.",
+          "optional": false
+        },
+        {
+          "number": "5",
+          "description": "Verify correct blade alignment, blade penetration, travel stops, latching mechanism, and mechanical operation.",
+          "optional": false
+        },
+        {
+          "number": "6",
+          "description": "Verify that each fuseholder has adequate mechanical support and contact integrity.",
+          "optional": false
+        },
+        {
+          "number": "7",
+          "description": "Verify that fuse size and types are in accordance with drawings, short-circuit study, and coordination study.",
+          "optional": false
+        },
+        {
+          "number": "8",
+          "description": "Verify tightness of accessible bolted electrical connections by calibrated torque-wrench method or in accordance with 7.5.5.B.1. Torque values shall be in accordance with manufacturer\u2019s published data. In the absence of manufacturer\u2019s data, use Table 100.12.",
+          "optional": false
+        },
+        {
+          "number": "9",
+          "description": "Perform thermographic survey in accordance with Section 9.",
+          "optional": true
+        }
+      ],
+      "electrical_tests": [
+        {
+          "number": "1",
+          "description": "Perform resistance measurements through bolted connections with a low-resistance ohmmeter.",
+          "optional": false
+        },
+        {
+          "number": "2",
+          "description": "Measure contact resistance across each cutout.",
+          "optional": false
+        },
+        {
+          "number": "3",
+          "description": "Perform insulation-resistance tests for one minute on each pole, phase-to-phase and phase-to-ground with switch closed and across each open pole. Apply voltage in accordance with manufacturer's published data. In the absence of manufacturer's data, use Table 100.1.",
+          "optional": false
+        },
+        {
+          "number": "4",
+          "description": "Perform a dielectric withstand voltage test on each pole, phase-to-ground with cutout closed. Ground adjacent cutouts. Test voltage shall be in accordance with manufacturer\u2019s published data. In the absence of manufacturer\u2019s data, use Table 100.1.",
+          "optional": false
+        },
+        {
+          "number": "5",
+          "description": "Measure fuse resistance. Page 79",
+          "optional": false
+        }
+      ]
+    },
+    "7.6.2": {
+      "section_number": "7.6.2",
+      "title": "Circuit Breakers, Oil, Medium- and High-Voltage",
+      "parent_section": "7.6",
+      "equipment_category": "Circuit Breakers",
+      "visual_mechanical_tests": [
+        {
+          "number": "1",
+          "description": "Compare equipment nameplate data with drawings.",
+          "optional": false
+        },
+        {
+          "number": "2",
+          "description": "Inspect physical and mechanical condition.",
+          "optional": false
+        },
+        {
+          "number": "3",
+          "description": "Inspect anchorage, alignment, grounding, and required clearances.",
+          "optional": false
+        },
+        {
+          "number": "4",
+          "description": "Verify that all maintenance devices such as special tools and gauges specified by the manufacturer are available for servicing and operating the breaker.",
+          "optional": false
+        },
+        {
+          "number": "5",
+          "description": "Verify correct oil level in all tanks and bushings.",
+          "optional": false
+        },
+        {
+          "number": "6",
+          "description": "Verify that breather vents are clear.",
+          "optional": false
+        },
+        {
+          "number": "7",
+          "description": "Verify the unit is clean.",
+          "optional": false
+        },
+        {
+          "number": "8",
+          "description": "Inspect hydraulic system and air compressor in accordance with manufacturer\u2019s published data.",
+          "optional": false
+        },
+        {
+          "number": "9",
+          "description": "Test alarms and pressure-limit switches for pneumatic and hydraulic operators as recommended by the manufacturer.",
+          "optional": false
+        },
+        {
+          "number": "10",
+          "description": "Perform mechanical operation tests on the operating mechanism in accordance with manufacturer\u2019s published data.",
+          "optional": false
+        },
+        {
+          "number": "11",
+          "description": "Perform internal inspection:",
+          "optional": true
+        },
+        {
+          "number": "1",
+          "description": "Remove oil. Lower tanks or remove manhole covers as necessary. Inspect bottom of tank for broken parts and debris.",
+          "optional": false
+        },
+        {
+          "number": "2",
+          "description": "Inspect lift rod and toggle assemblies, contacts, interrupters, bumpers, dashpots, bushing current transformers, tank liners, and gaskets.",
+          "optional": false
+        },
+        {
+          "number": "3",
+          "description": "Verify that contact sequence is in accordance with manufacturer\u2019s published data. In the absence of manufacturer\u2019s data, use IEEE C37.04.",
+          "optional": false
+        },
+        {
+          "number": "4",
+          "description": "Fill tank(s) with filtered oil.",
+          "optional": false
+        },
+        {
+          "number": "12",
+          "description": "Verify tightness of accessible bolted electrical connections by calibrated torque-wrench method or in accordance with 7.6.2.B.1. Torque values shall be in accordance with manufacturer\u2019s published data. In the absence of manufacturer\u2019s data, use Table 100.12.",
+          "optional": false
+        },
+        {
+          "number": "13",
+          "description": "Verify racking mechanism operation. Page 93",
+          "optional": false
+        }
+      ],
+      "electrical_tests": []
+    },
+    "7.6.3": {
+      "section_number": "7.6.3",
+      "title": "Circuit Breakers, Vacuum, Medium-Voltage",
+      "parent_section": "7.6",
+      "equipment_category": "Circuit Breakers",
+      "visual_mechanical_tests": [
+        {
+          "number": "1",
+          "description": "Compare equipment nameplate data with drawings.",
+          "optional": false
+        },
+        {
+          "number": "2",
+          "description": "Inspect physical and mechanical condition.",
+          "optional": false
+        },
+        {
+          "number": "3",
+          "description": "Inspect anchorage, alignment, and grounding.",
+          "optional": false
+        },
+        {
+          "number": "4",
+          "description": "Verify that all maintenance devices such as special tools and gauges specified by the manufacturer are available for servicing and operating the breaker.",
+          "optional": false
+        },
+        {
+          "number": "5",
+          "description": "Verify the unit is clean.",
+          "optional": false
+        },
+        {
+          "number": "6",
+          "description": "Perform all mechanical operation tests on the operating mechanism in accordance with manufacturer\u2019s published data.",
+          "optional": false
+        },
+        {
+          "number": "7",
+          "description": "Measure critical distances such as contact gap as recommended by manufacturer.",
+          "optional": false
+        },
+        {
+          "number": "8",
+          "description": "Verify tightness of accessible bolted electrical connections by calibrated torque-wrench method. Torque values shall be in accordance with manufacturer\u2019s published data. In the absence of manufacturer\u2019s data, use Table 100.12.",
+          "optional": false
+        },
+        {
+          "number": "9",
+          "description": "Verify cell fit and element alignment.",
+          "optional": false
+        },
+        {
+          "number": "10",
+          "description": "Verify racking mechanism operation.",
+          "optional": false
+        },
+        {
+          "number": "11",
+          "description": "Verify appropriate lubrication on moving, current-carrying parts and on moving and sliding surfaces.",
+          "optional": false
+        },
+        {
+          "number": "12",
+          "description": "Perform contact-timing test.",
+          "optional": false
+        },
+        {
+          "number": "13",
+          "description": "Perform trip/close coil current signature analysis.",
+          "optional": true
+        },
+        {
+          "number": "14",
+          "description": "Perform mechanism motion analysis.",
+          "optional": true
+        },
+        {
+          "number": "15",
+          "description": "Record as-found and as-left operation counter readings.",
+          "optional": false
+        },
+        {
+          "number": "16",
+          "description": "Perform thermographic survey in accordance with Section 9. Page 98",
+          "optional": true
+        }
+      ],
+      "electrical_tests": []
+    },
+    "7.6.4": {
+      "section_number": "7.6.4",
+      "title": "Circuit Breakers, SF",
+      "parent_section": "7.6",
+      "equipment_category": "Circuit Breakers",
+      "visual_mechanical_tests": [
+        {
+          "number": "1",
+          "description": "Compare equipment nameplate data with drawings.",
+          "optional": false
+        },
+        {
+          "number": "2",
+          "description": "Inspect physical and mechanical condition.",
+          "optional": false
+        },
+        {
+          "number": "3",
+          "description": "Inspect anchorage, alignment, and grounding.",
+          "optional": false
+        },
+        {
+          "number": "4",
+          "description": "Verify that all maintenance devices such as special tools and gauges specified by the manufacturer are available for servicing and operating the breaker.",
+          "optional": false
+        },
+        {
+          "number": "5",
+          "description": "Verify the unit is clean.",
+          "optional": false
+        },
+        {
+          "number": "6",
+          "description": "When provisions are made for sampling, remove a sample of SF6 gas and test in accordance with Table 100.13. Do not break seal or distort \u201csealed-for-life\u201d interrupters.",
+          "optional": false
+        },
+        {
+          "number": "7",
+          "description": "Inspect operating mechanism and/or hydraulic or pneumatic system and SF6 gas- insulated system in accordance with manufacturer\u2019s published data.",
+          "optional": false
+        },
+        {
+          "number": "8",
+          "description": "Test for SF6 gas leaks in accordance with manufacturer\u2019s published data.",
+          "optional": false
+        },
+        {
+          "number": "9",
+          "description": "Verify correct operation of alarms and pressure-limit switches for pneumatic, hydraulic, and SF6 gas pressure in accordance with manufacturer\u2019s published data.",
+          "optional": false
+        },
+        {
+          "number": "10",
+          "description": "If recommended by manufacturer, slow close/open breaker and check for binding, friction, contact alignment, and penetration. Verify that contact sequence is in accordance with manufacturer\u2019s published data. In the absence of manufacturer\u2019s data, refer to IEEE C37.04.",
+          "optional": false
+        },
+        {
+          "number": "11",
+          "description": "Perform all mechanical operation tests on the operating mechanism in accordance with the manufacturer\u2019s published data.",
+          "optional": false
+        },
+        {
+          "number": "12",
+          "description": "Verify tightness of accessible bolted electrical connections by calibrated torque-wrench method or in accordance with 7.6.4.B.1. Torque values shall be in accordance with manufacturer\u2019s published data. In the absence of manufacturer\u2019s data, use Table 100.12.",
+          "optional": false
+        },
+        {
+          "number": "13",
+          "description": "Verify the appropriate lubrication on moving current-carrying parts and on moving and sliding surfaces.",
+          "optional": false
+        },
+        {
+          "number": "14",
+          "description": "Perform contact-timing test.",
+          "optional": false
+        },
+        {
+          "number": "15",
+          "description": "Perform trip/close coil signature analysis.",
+          "optional": true
+        },
+        {
+          "number": "16",
+          "description": "Perform mechanism motion analysis for breakers rated 38kV and above. Page 102",
+          "optional": false
+        },
+        {
+          "number": "17",
+          "description": "Record as-found and as-left operation counter readings.",
+          "optional": false
+        },
+        {
+          "number": "18",
+          "description": "Perform thermographic survey in accordance with Section 9.",
+          "optional": true
+        }
+      ],
+      "electrical_tests": [
+        {
+          "number": "1",
+          "description": "Perform resistance measurements through all bolted connections with a low-resistance ohmmeter.",
+          "optional": false
+        },
+        {
+          "number": "2",
+          "description": "Perform insulation-resistance tests in accordance with Table 100.1 from each pole-to- ground with breaker closed and across open poles at each phase. For single-tank breakers, perform insulation resistance tests in accordance with Table 100.1 from pole-to-pole.",
+          "optional": false
+        },
+        {
+          "number": "3",
+          "description": "Perform a static contact/resistance test.",
+          "optional": false
+        },
+        {
+          "number": "4",
+          "description": "Perform a dynamic contact/pole resistance test.",
+          "optional": true
+        },
+        {
+          "number": "5",
+          "description": "Perform insulation-resistance tests on all control wiring with respect to ground. Applied potential shall be 500 volts dc for 300-volt rated cable and 1000 volts dc for 600-volt rated cable. Test duration shall be one minute. For units with solid-state components or for control devices that cannot tolerate the voltage, follow manufacturer\u2019s recommendation.",
+          "optional": true
+        },
+        {
+          "number": "6",
+          "description": "Perform minimum pickup voltage tests on trip and close coils in accordance with manufacturer\u2019s published data.",
+          "optional": false
+        },
+        {
+          "number": "7",
+          "description": "Verify correct operation of any auxiliary features such as electrical close and trip operation, trip-free, and antipump function. Reset all trip logs and indicators.",
+          "optional": false
+        },
+        {
+          "number": "8",
+          "description": "Trip circuit breaker by operation of each protective device.",
+          "optional": false
+        },
+        {
+          "number": "9",
+          "description": "Perform power-factor or dissipation-factor tests on each pole with the breaker open and on each phase with the breaker closed.",
+          "optional": false
+        },
+        {
+          "number": "10",
+          "description": "Perform power-factor or dissipation-factor tests on each bushing equipped with a power- factor/capacitance tap. In the absence of a power-factor/capacitance tap, perform hot- collar tests. These tests shall be in accordance with the test equipment manufacturer\u2019s published data.",
+          "optional": false
+        },
+        {
+          "number": "11",
+          "description": "Perform a dielectric withstand voltage test in accordance with manufacturer\u2019s published data.",
+          "optional": true
+        },
+        {
+          "number": "12",
+          "description": "Verify operation of heaters.",
+          "optional": false
+        },
+        {
+          "number": "13",
+          "description": "Test instrument transformers in accordance with Section 7.10. Page 103",
+          "optional": false
+        }
+      ]
+    },
+    "7.9.1": {
+      "section_number": "7.9.1",
+      "title": "Protective Relays, Electromechanical and Solid-State",
+      "parent_section": "7.9",
+      "equipment_category": "Metering",
+      "visual_mechanical_tests": [
+        {
+          "number": "1",
+          "description": "Compare equipment nameplate data with drawings.",
+          "optional": false
+        },
+        {
+          "number": "2",
+          "description": "Inspect relays and cases for physical damage. Remove shipping restraint material.",
+          "optional": false
+        },
+        {
+          "number": "3",
+          "description": "Verify the unit is clean.",
+          "optional": false
+        },
+        {
+          "number": "4",
+          "description": "Inspect the unit.",
+          "optional": false
+        },
+        {
+          "number": "1",
+          "description": "Tighten case connections.",
+          "optional": false
+        },
+        {
+          "number": "2",
+          "description": "Inspect cover for correct gasket seal.",
+          "optional": false
+        },
+        {
+          "number": "3",
+          "description": "Inspect shorting hardware, connection paddles, and knife switches.",
+          "optional": false
+        },
+        {
+          "number": "4",
+          "description": "Remove any foreign material from the case.",
+          "optional": false
+        },
+        {
+          "number": "5",
+          "description": "Verify target reset.",
+          "optional": false
+        },
+        {
+          "number": "6",
+          "description": "Clean cover glass.",
+          "optional": false
+        },
+        {
+          "number": "1",
+          "description": "Inspect relay for foreign material, particularly in disk slots of the damping and electromagnets.",
+          "optional": false
+        },
+        {
+          "number": "2",
+          "description": "Verify disk clearance throughout its travel. Verify contact follow and spring tension.",
+          "optional": false
+        },
+        {
+          "number": "3",
+          "description": "Inspect spiral spring convolutions.",
+          "optional": false
+        },
+        {
+          "number": "4",
+          "description": "Inspect disk and contacts for freedom of movement and correct travel.",
+          "optional": false
+        },
+        {
+          "number": "5",
+          "description": "Verify tightness of mounting hardware and connections.",
+          "optional": false
+        },
+        {
+          "number": "6",
+          "description": "Burnish contacts.",
+          "optional": false
+        },
+        {
+          "number": "7",
+          "description": "Inspect bearings and pivots.",
+          "optional": false
+        },
+        {
+          "number": "5",
+          "description": "Verify that all settings are in accordance with coordination study or setting sheet supplied by owner. Page 113",
+          "optional": false
+        }
+      ],
+      "electrical_tests": []
+    },
+    "7.9.2": {
+      "section_number": "7.9.2",
+      "title": "Protective Relays, Microprocessor-Based",
+      "parent_section": "7.9",
+      "equipment_category": "Metering",
+      "visual_mechanical_tests": [
+        {
+          "number": "1",
+          "description": "Record model number, style number, serial number, firmware revision, software revision, and rated control voltage.",
+          "optional": false
+        },
+        {
+          "number": "2",
+          "description": "Verify operation of light-emitting diodes, display, and targets.",
+          "optional": false
+        },
+        {
+          "number": "3",
+          "description": "Record passwords for all access levels.",
+          "optional": false
+        },
+        {
+          "number": "4",
+          "description": "Clean the front panel and remove foreign material from the case.",
+          "optional": false
+        },
+        {
+          "number": "5",
+          "description": "Check tightness of connections.",
+          "optional": false
+        },
+        {
+          "number": "6",
+          "description": "Verify that the frame is grounded in accordance with manufacturer\u2019s instructions.",
+          "optional": false
+        },
+        {
+          "number": "7",
+          "description": "Upload owner supplied relay settings file.",
+          "optional": false
+        },
+        {
+          "number": "8",
+          "description": "Download settings and logic from the relay and compare the settings to those specified in the coordination study or setting sheet supplied by owner.",
+          "optional": false
+        },
+        {
+          "number": "9",
+          "description": "Set clock if not controlled externally and verify relay displays the correct date and time.",
+          "optional": false
+        },
+        {
+          "number": "10",
+          "description": "Check with setting engineer for applicable firmware updates and product recalls.",
+          "optional": false
+        },
+        {
+          "number": "11",
+          "description": "Inspect, clean, and verify operation of shorting devices.",
+          "optional": false
+        }
+      ],
+      "electrical_tests": [
+        {
+          "number": "1",
+          "description": "Perform insulation-resistance tests from each circuit to the grounded frame in accordance with manufacturer\u2019s published data.",
+          "optional": false
+        },
+        {
+          "number": "2",
+          "description": "Apply voltage or current to all analog inputs and verify correct registration of the relay meter functions.",
+          "optional": false
+        },
+        {
+          "number": "3",
+          "description": "Verify SCADA metering values and digital status points at remote terminals.",
+          "optional": true
+        },
+        {
+          "number": "4",
+          "description": "Protection Elements Check functional operation of each element used in the protection scheme as described for electromechanical and solid-state relays in 7.9.1.B.3. When not otherwise specified, use manufacturer\u2019s recommended tolerances.",
+          "optional": false
+        },
+        {
+          "number": "5",
+          "description": "Control Verification",
+          "optional": false
+        },
+        {
+          "number": "1",
+          "description": "Check operation of all active digital inputs. Page 121",
+          "optional": false
+        }
+      ]
+    },
+    "7.10.1": {
+      "section_number": "7.10.1",
+      "title": "Instrument Transformers, Current Transformer",
+      "parent_section": "7.10",
+      "equipment_category": "Grounding Systems",
+      "visual_mechanical_tests": [
+        {
+          "number": "1",
+          "description": "Compare equipment nameplate data with drawings.",
+          "optional": false
+        },
+        {
+          "number": "2",
+          "description": "Inspect physical and mechanical condition.",
+          "optional": false
+        },
+        {
+          "number": "3",
+          "description": "Verify correct connection of transformers with system requirements.",
+          "optional": false
+        },
+        {
+          "number": "4",
+          "description": "Verify that adequate clearances exist between primary and secondary circuit wiring.",
+          "optional": false
+        },
+        {
+          "number": "5",
+          "description": "Verify the unit is clean.",
+          "optional": false
+        },
+        {
+          "number": "6",
+          "description": "Verify tightness of accessible bolted electrical connections by calibrated torque-wrench method. Torque values shall be in accordance with manufacturer\u2019s published data. In the absence of manufacturer\u2019s data, use Table 100.12.",
+          "optional": false
+        },
+        {
+          "number": "7",
+          "description": "Verify that all required grounding and shorting connections provide contact.",
+          "optional": false
+        },
+        {
+          "number": "8",
+          "description": "Verify appropriate lubrication on moving current-carrying parts and on moving and sliding surfaces.",
+          "optional": false
+        },
+        {
+          "number": "9",
+          "description": "Perform thermographic survey in accordance with Section 9.",
+          "optional": true
+        }
+      ],
+      "electrical_tests": [
+        {
+          "number": "1",
+          "description": "Perform insulation-resistance test of each current transformer and its secondary wiring with respect to ground at 1000 volts dc for one minute. For units with solid-state components that cannot tolerate the applied voltage, follow manufacturer\u2019s recommendations.",
+          "optional": false
+        },
+        {
+          "number": "2",
+          "description": "Perform a polarity test of each current transformer in accordance with IEEE C57.13.1.",
+          "optional": false
+        },
+        {
+          "number": "3",
+          "description": "Perform a ratio-verification test using the voltage or current method in accordance with IEEE C57.13.1.",
+          "optional": false
+        },
+        {
+          "number": "4",
+          "description": "Perform an excitation test on transformers used for relaying applications in accordance with IEEE C57.13.1.",
+          "optional": false
+        },
+        {
+          "number": "5",
+          "description": "Measure current circuit burdens at CT shorting terminal block in accordance with IEEE C57.13.1",
+          "optional": false
+        },
+        {
+          "number": "6",
+          "description": "Perform insulation-resistance tests on the primary winding of bar-type CTs with the secondary grounded. Test voltages shall be in accordance with Table 100.5. Page 124",
+          "optional": false
+        }
+      ]
+    },
+    "7.10.2": {
+      "section_number": "7.10.2",
+      "title": "Instrument Transformers, Voltage Transformers",
+      "parent_section": "7.10",
+      "equipment_category": "Grounding Systems",
+      "visual_mechanical_tests": [
+        {
+          "number": "1",
+          "description": "Compare equipment nameplate data with drawings.",
+          "optional": false
+        },
+        {
+          "number": "2",
+          "description": "Inspect physical and mechanical condition.",
+          "optional": false
+        },
+        {
+          "number": "3",
+          "description": "Verify correct connection of transformers with system requirements.",
+          "optional": false
+        },
+        {
+          "number": "4",
+          "description": "Verify that adequate clearances exist between primary and secondary circuit wiring.",
+          "optional": false
+        },
+        {
+          "number": "5",
+          "description": "Verify the unit is clean.",
+          "optional": false
+        },
+        {
+          "number": "6",
+          "description": "Verify tightness of accessible bolted electrical connections by calibrated torque-wrench method. Torque values shall be in accordance with manufacturer\u2019s published data. In the absence of manufacturer\u2019s data, use Table 100.12.",
+          "optional": false
+        },
+        {
+          "number": "7",
+          "description": "Verify that all required grounding and connections provide contact.",
+          "optional": false
+        },
+        {
+          "number": "8",
+          "description": "Verify correct primary and secondary fuse sizes for voltage transformers.",
+          "optional": false
+        },
+        {
+          "number": "9",
+          "description": "Verify appropriate lubrication on moving current-carrying parts and on moving and sliding surfaces.",
+          "optional": false
+        },
+        {
+          "number": "10",
+          "description": "Perform as-left tests.",
+          "optional": false
+        },
+        {
+          "number": "11",
+          "description": "Perform thermographic survey in accordance with Section 9.",
+          "optional": true
+        }
+      ],
+      "electrical_tests": [
+        {
+          "number": "1",
+          "description": "Perform insulation-resistance tests for one minute winding-to-winding and each winding- to-ground. Test voltages shall be applied for one minute in accordance with Table 100.5. For units with solid-state components that cannot tolerate the applied voltage, follow manufacturer\u2019s recommendations.",
+          "optional": false
+        },
+        {
+          "number": "2",
+          "description": "Perform a polarity test on each transformer to verify the polarity marks or H1-X1 relationship as applicable.",
+          "optional": false
+        },
+        {
+          "number": "3",
+          "description": "Perform a turns-ratio test on all tap positions.",
+          "optional": false
+        },
+        {
+          "number": "4",
+          "description": "Measure voltage circuit burdens at transformer terminals. Page 126",
+          "optional": false
+        }
+      ]
+    },
+    "7.10.3": {
+      "section_number": "7.10.3",
+      "title": "Instrument Transformers, Coupling-Capacitor Voltage Transformers",
+      "parent_section": "7.10",
+      "equipment_category": "Grounding Systems",
+      "visual_mechanical_tests": [
+        {
+          "number": "1",
+          "description": "Compare equipment nameplate data with drawings.",
+          "optional": false
+        },
+        {
+          "number": "2",
+          "description": "Inspect physical and mechanical condition.",
+          "optional": false
+        },
+        {
+          "number": "3",
+          "description": "Verify correct connection of transformers with system requirements.",
+          "optional": false
+        },
+        {
+          "number": "4",
+          "description": "Verify that adequate clearances exist between primary and secondary circuit wiring.",
+          "optional": false
+        },
+        {
+          "number": "5",
+          "description": "Verify the unit is clean.",
+          "optional": false
+        },
+        {
+          "number": "6",
+          "description": "Verify tightness of accessible bolted electrical connections by calibrated torque-wrench method or in accordance with 7.10.3.B.1. Torque values shall be in accordance with manufacturer\u2019s published data. In the absence of manufacturer\u2019s data, use Table 100.12.",
+          "optional": false
+        },
+        {
+          "number": "7",
+          "description": "Verify that all required grounding and connections provide contact.",
+          "optional": false
+        },
+        {
+          "number": "8",
+          "description": "Verify correct primary and secondary fuse sizes for voltage transformers.",
+          "optional": false
+        },
+        {
+          "number": "9",
+          "description": "Verify appropriate lubrication on moving current-carrying parts and on moving and sliding surfaces.",
+          "optional": false
+        },
+        {
+          "number": "10",
+          "description": "Perform as-left tests.",
+          "optional": false
+        },
+        {
+          "number": "11",
+          "description": "Perform thermographic survey in accordance with Section 9.",
+          "optional": true
+        }
+      ],
+      "electrical_tests": [
+        {
+          "number": "1",
+          "description": "Perform resistance measurements through bolted connections with a low-resistance ohmmeter.",
+          "optional": false
+        },
+        {
+          "number": "2",
+          "description": "Perform insulation-resistance tests for one minute winding-to-winding and each winding- to-ground. Test voltages shall be applied for one minute in accordance with Table 100.5. For units with solid-state components that cannot tolerate the applied voltage, follow manufacturer\u2019s recommendations.",
+          "optional": false
+        },
+        {
+          "number": "3",
+          "description": "Perform a polarity test on each transformer to verify the polarity marking. See IEEE C93.1 for standard polarity marking.",
+          "optional": false
+        },
+        {
+          "number": "4",
+          "description": "Perform a ratio test on all tap positions.",
+          "optional": false
+        },
+        {
+          "number": "5",
+          "description": "Measure voltage circuit burdens at transformer terminals. Page 129",
+          "optional": false
+        }
+      ]
+    },
+    "7.11.1": {
+      "section_number": "7.11.1",
+      "title": "Metering Devices, Electromechanical and Solid-State",
+      "parent_section": "7.11",
+      "equipment_category": "Ground-Fault Systems",
+      "visual_mechanical_tests": [
+        {
+          "number": "1",
+          "description": "Compare equipment nameplate data with drawings.",
+          "optional": false
+        },
+        {
+          "number": "2",
+          "description": "Inspect physical and mechanical condition.",
+          "optional": false
+        },
+        {
+          "number": "3",
+          "description": "Verify tightness of electrical connections.",
+          "optional": false
+        },
+        {
+          "number": "4",
+          "description": "Inspect cover gasket, cover glass, condition of spiral spring, disk clearance, contacts, and case-shorting contacts, as applicable.",
+          "optional": false
+        },
+        {
+          "number": "5",
+          "description": "Verify the unit is clean.",
+          "optional": false
+        },
+        {
+          "number": "6",
+          "description": "Verify freedom of movement, end play, and alignment of rotating disk(s).",
+          "optional": false
+        }
+      ],
+      "electrical_tests": [
+        {
+          "number": "1",
+          "description": "Verify accuracy of meters per manufacturer\u2019s published data.",
+          "optional": false
+        },
+        {
+          "number": "2",
+          "description": "Calibrate meters in accordance with manufacturer\u2019s published data.",
+          "optional": false
+        },
+        {
+          "number": "3",
+          "description": "Verify all instrument multipliers.",
+          "optional": false
+        },
+        {
+          "number": "4",
+          "description": "Verify that current transformer and voltage transformer secondary circuits are intact.",
+          "optional": false
+        }
+      ]
+    },
+    "7.11.2": {
+      "section_number": "7.11.2",
+      "title": "Metering Devices, Microprocessor-Based",
+      "parent_section": "7.11",
+      "equipment_category": "Ground-Fault Systems",
+      "visual_mechanical_tests": [
+        {
+          "number": "1",
+          "description": "Compare equipment nameplate data with drawings.",
+          "optional": false
+        },
+        {
+          "number": "2",
+          "description": "Inspect meters and cases for physical damage.",
+          "optional": false
+        },
+        {
+          "number": "3",
+          "description": "Verify the unit is clean.",
+          "optional": false
+        },
+        {
+          "number": "4",
+          "description": "Verify tightness of electrical connections.",
+          "optional": false
+        },
+        {
+          "number": "5",
+          "description": "Record model number, serial number, firmware revision, software revision, and rated control voltage.",
+          "optional": false
+        },
+        {
+          "number": "6",
+          "description": "Verify operation of display and indicating devices.",
+          "optional": false
+        },
+        {
+          "number": "7",
+          "description": "Record passwords.",
+          "optional": false
+        },
+        {
+          "number": "8",
+          "description": "Verify unit is grounded in accordance with manufacturer\u2019s instructions.",
+          "optional": false
+        },
+        {
+          "number": "9",
+          "description": "Verify unit is connected in accordance with manufacturer\u2019s instructions and project drawings.",
+          "optional": false
+        },
+        {
+          "number": "10",
+          "description": "Upload owner supplied settings file.",
+          "optional": false
+        }
+      ],
+      "electrical_tests": [
+        {
+          "number": "1",
+          "description": "Apply voltage or current as appropriate to each analog input and verify correct measurement and indication.",
+          "optional": false
+        },
+        {
+          "number": "2",
+          "description": "Confirm correct operation and setting of each auxiliary input/output feature in use, including mechanical relay, digital, and analog.",
+          "optional": false
+        },
+        {
+          "number": "3",
+          "description": "After initial system energization, confirm measurements and indications are consistent with loads present in accordance with ANSI/NETA ECS Standard for Electrical Commissioning Specifications for Electrical Power Equipment and Systems.",
+          "optional": false
+        }
+      ]
+    },
+    "7.12.3": {
+      "section_number": "7.12.3",
+      "title": "Regulating Apparatus, Load Tap-Changers",
+      "parent_section": "7.12",
+      "equipment_category": "Power Transformers",
+      "visual_mechanical_tests": [
+        {
+          "number": "1",
+          "description": "Compare equipment nameplate data with drawings.",
+          "optional": false
+        },
+        {
+          "number": "2",
+          "description": "Inspect physical and mechanical condition.",
+          "optional": false
+        },
+        {
+          "number": "3",
+          "description": "Inspect anchorage, alignment, and grounding.",
+          "optional": false
+        },
+        {
+          "number": "4",
+          "description": "Inspect impact recorder.",
+          "optional": false
+        },
+        {
+          "number": "5",
+          "description": "Verify removal of any shipping bracing and vent plugs.",
+          "optional": false
+        },
+        {
+          "number": "6",
+          "description": "Verify the unit is clean.",
+          "optional": false
+        },
+        {
+          "number": "7",
+          "description": "Verify tightness of accessible bolted electrical connections by calibrated torque-wrench method. Torque values shall be in accordance with manufacturer\u2019s published data. In the absence of manufacturer\u2019s data, use Table 100.12.",
+          "optional": false
+        },
+        {
+          "number": "8",
+          "description": "Verify correct auxiliary device operation.",
+          "optional": false
+        },
+        {
+          "number": "9",
+          "description": "Verify correct operation of motor and drive train and automatic motor cutoff at maximum lower and maximum raise positions.",
+          "optional": false
+        },
+        {
+          "number": "10",
+          "description": "Verify appropriate liquid level in all tanks.",
+          "optional": false
+        },
+        {
+          "number": "11",
+          "description": "Perform specific inspections and mechanical tests as recommended by the manufacturer.",
+          "optional": false
+        },
+        {
+          "number": "12",
+          "description": "Verify appropriate lubrication on motor components.",
+          "optional": false
+        },
+        {
+          "number": "13",
+          "description": "Record as-found and as-left operation counter readings.",
+          "optional": false
+        },
+        {
+          "number": "14",
+          "description": "Perform thermographic survey in accordance with Section 9.",
+          "optional": true
+        }
+      ],
+      "electrical_tests": [
+        {
+          "number": "1",
+          "description": "Perform insulation-resistance tests in any off-neutral position in accordance with Section 7.2.2.",
+          "optional": false
+        },
+        {
+          "number": "2",
+          "description": "Perform insulation power-factor or dissipation-factor tests in accordance with Section 7.2.2.",
+          "optional": false
+        },
+        {
+          "number": "3",
+          "description": "Perform winding-resistance test at each tap position.",
+          "optional": true
+        },
+        {
+          "number": "4",
+          "description": "Perform special tests and adjustments as recommended by the manufacturer. Page 143",
+          "optional": false
+        }
+      ]
+    },
+    "7.15.1": {
+      "section_number": "7.15.1",
+      "title": "Rotating Machinery, AC Induction Motors and Generators",
+      "parent_section": "7.15",
+      "equipment_category": "Automatic Transfer Switches",
+      "visual_mechanical_tests": [
+        {
+          "number": "1",
+          "description": "Compare equipment nameplate data with drawings.",
+          "optional": false
+        },
+        {
+          "number": "2",
+          "description": "Inspect physical and mechanical condition.",
+          "optional": false
+        },
+        {
+          "number": "3",
+          "description": "Inspect anchorage, alignment, and grounding.",
+          "optional": false
+        },
+        {
+          "number": "4",
+          "description": "Inspect air baffles, filter media, stator winding, stator core, rotor, cooling fans, slip rings, brushes, brush rigging, and bearings.",
+          "optional": false
+        },
+        {
+          "number": "5",
+          "description": "Verify tightness of accessible bolted electrical connections by calibrated torque-wrench method or in accordance with 7.15.1.B.1. Torque values shall be in accordance with manufacturer\u2019s published data. In the absence of manufacturer\u2019s data, use Table 100.12.",
+          "optional": false
+        },
+        {
+          "number": "6",
+          "description": "Perform special tests such as air-gap spacing and machine alignment.",
+          "optional": true
+        },
+        {
+          "number": "7",
+          "description": "Manually rotate the rotor and check for problems with the bearings or shaft.",
+          "optional": true
+        },
+        {
+          "number": "8",
+          "description": "Rotate the shaft and measure and record the shaft extension runout.",
+          "optional": true
+        },
+        {
+          "number": "9",
+          "description": "Verify the application of appropriate lubrication and lubrication systems.",
+          "optional": false
+        },
+        {
+          "number": "10",
+          "description": "Verify that resistance temperature detector (RTD) circuits conform to drawings.",
+          "optional": false
+        },
+        {
+          "number": "11",
+          "description": "Perform thermographic survey in accordance with Section 9.",
+          "optional": true
+        }
+      ],
+      "electrical_tests": [
+        {
+          "number": "1",
+          "description": "Perform resistance measurements through bolted connections with a low-resistance ohmmeter.",
+          "optional": false
+        },
+        {
+          "number": "2",
+          "description": "Perform insulation-resistance tests in accordance with IEEE Standard 43.",
+          "optional": false
+        },
+        {
+          "number": "1",
+          "description": "Machines larger than 200 horsepower (150 kilowatts): Test duration shall be ten minutes. Calculate polarization index.",
+          "optional": false
+        },
+        {
+          "number": "2",
+          "description": "Machines 200 horsepower (150 kilowatts) and less: Test duration shall be one minute. Calculate dielectric-absorption ratio for 60/30 second periods.",
+          "optional": false
+        },
+        {
+          "number": "3",
+          "description": "On machines rated at 2300 volts and greater, perform dielectric withstand voltage tests in accordance with: Page 150",
+          "optional": false
+        }
+      ]
+    },
+    "7.15.2": {
+      "section_number": "7.15.2",
+      "title": "Rotating Machinery, Synchronous Motors and Generators",
+      "parent_section": "7.15",
+      "equipment_category": "Automatic Transfer Switches",
+      "visual_mechanical_tests": [
+        {
+          "number": "1",
+          "description": "Compare equipment nameplate data with drawings.",
+          "optional": false
+        },
+        {
+          "number": "2",
+          "description": "Inspect physical and mechanical condition.",
+          "optional": false
+        },
+        {
+          "number": "3",
+          "description": "Inspect anchorage, alignment, and grounding.",
+          "optional": false
+        },
+        {
+          "number": "4",
+          "description": "Inspect air baffles, filter media, stator windings, stator core, rotor, cooling fans, slip rings, brushes, brush rigging, and bearings.",
+          "optional": false
+        },
+        {
+          "number": "5",
+          "description": "Verify tightness of accessible bolted electrical connections by calibrated torque-wrench method or in accordance with 7.15.2.B.1. Torque values shall be in accordance with manufacturer\u2019s published data. In the absence of manufacturer\u2019s data, use Table 100.12.",
+          "optional": false
+        },
+        {
+          "number": "6",
+          "description": "Perform special tests such as air-gap spacing and machine alignment.",
+          "optional": false
+        },
+        {
+          "number": "7",
+          "description": "Manually rotate the rotor and check for problems with the bearings or shaft.",
+          "optional": false
+        },
+        {
+          "number": "8",
+          "description": "Rotate the shaft and measure and record the shaft extension runout.",
+          "optional": false
+        },
+        {
+          "number": "9",
+          "description": "Verify the application of appropriate lubrication and lubrication systems.",
+          "optional": false
+        },
+        {
+          "number": "10",
+          "description": "Verify that resistance temperature detector (RTD) circuits conform to drawings.",
+          "optional": false
+        },
+        {
+          "number": "11",
+          "description": "Perform thermographic survey in accordance with Section 9.",
+          "optional": true
+        }
+      ],
+      "electrical_tests": [
+        {
+          "number": "1",
+          "description": "Perform resistance measurements through bolted connections with a low-resistance ohmmeter.",
+          "optional": false
+        },
+        {
+          "number": "2",
+          "description": "Perform insulation-resistance tests in accordance with IEEE Standard 43.",
+          "optional": false
+        },
+        {
+          "number": "1",
+          "description": "Machines larger than 200 horsepower (150 kilowatts): Test duration shall be for ten minutes. Calculate polarization index.",
+          "optional": false
+        },
+        {
+          "number": "2",
+          "description": "Machines 200 horsepower (150 kilowatts) and less: Test duration shall be for one minute. Calculate dielectric-absorption ratio.",
+          "optional": false
+        },
+        {
+          "number": "3",
+          "description": "On machines rated at 2300 volts and greater perform dielectric withstand voltage tests in accordance with:",
+          "optional": false
+        },
+        {
+          "number": "1",
+          "description": "IEEE Standard 95 for dc dielectric withstand voltage tests. Page 154",
+          "optional": false
+        }
+      ]
+    },
+    "7.15.3": {
+      "section_number": "7.15.3",
+      "title": "Rotating Machinery, DC Motors and Generators",
+      "parent_section": "7.15",
+      "equipment_category": "Automatic Transfer Switches",
+      "visual_mechanical_tests": [
+        {
+          "number": "1",
+          "description": "Compare equipment nameplate data with drawings.",
+          "optional": false
+        },
+        {
+          "number": "2",
+          "description": "Inspect physical and mechanical condition.",
+          "optional": false
+        },
+        {
+          "number": "3",
+          "description": "Inspect anchorage, alignment, and grounding.",
+          "optional": false
+        },
+        {
+          "number": "4",
+          "description": "Inspect air baffles, filter media, field poles and yokes, armature, cooling fans, commutator, brushes, brush rigging, and bearings.",
+          "optional": false
+        },
+        {
+          "number": "5",
+          "description": "Verify tightness of accessible bolted electrical connections by calibrated torque-wrench method or in accordance with 7.15.3.B.1. Torque values shall be in accordance with manufacturer\u2019s published data. In the absence of manufacturer\u2019s data, use Table 100.12.",
+          "optional": false
+        },
+        {
+          "number": "6",
+          "description": "Inspect commutator and tachometer generator.",
+          "optional": false
+        },
+        {
+          "number": "7",
+          "description": "Perform special tests such as air-gap spacing, bar tightness of commutator, and machine alignment.",
+          "optional": true
+        },
+        {
+          "number": "8",
+          "description": "If the armature can be manually rotated, check for any obvious problems with the bearings or shaft.",
+          "optional": true
+        },
+        {
+          "number": "9",
+          "description": "If the motor shaft can be rotated, measure and record the shaft extension runout.",
+          "optional": true
+        },
+        {
+          "number": "10",
+          "description": "Perform thermographic survey in accordance with Section 9.",
+          "optional": true
+        }
+      ],
+      "electrical_tests": [
+        {
+          "number": "1",
+          "description": "Perform resistance measurements through bolted connections with a low-resistance ohmmeter.",
+          "optional": false
+        },
+        {
+          "number": "2",
+          "description": "Perform insulation-resistance tests on all windings in accordance with IEEE Standard 43.",
+          "optional": false
+        },
+        {
+          "number": "1",
+          "description": "Machines larger than 200 horsepower (150 kilowatts): Test duration shall be for ten minutes. Calculate polarization index.",
+          "optional": false
+        },
+        {
+          "number": "2",
+          "description": "Machines 200 horsepower (150 kilowatts) and less: Test duration shall be for one minute. Calculate dielectric absorption ratio for 60/30 second periods.",
+          "optional": false
+        },
+        {
+          "number": "3",
+          "description": "Perform high-potential test in accordance with NEMA MG 1, Section 3.01.",
+          "optional": true
+        },
+        {
+          "number": "4",
+          "description": "Perform an ac voltage-drop test on all field poles. Page 160",
+          "optional": true
+        }
+      ]
+    },
+    "7.18.2": {
+      "section_number": "7.18.2",
+      "title": "Direct-Current Systems, Chargers",
+      "parent_section": "7.18",
+      "equipment_category": "DC Batteries",
+      "visual_mechanical_tests": [
+        {
+          "number": "1",
+          "description": "Compare equipment nameplate data with drawings.",
+          "optional": false
+        },
+        {
+          "number": "2",
+          "description": "Inspect for physical and mechanical condition.",
+          "optional": false
+        },
+        {
+          "number": "3",
+          "description": "Inspect anchorage, alignment, and grounding.",
+          "optional": false
+        },
+        {
+          "number": "4",
+          "description": "Verify the unit is clean.",
+          "optional": false
+        },
+        {
+          "number": "5",
+          "description": "Verify tightness of accessible bolted electrical connections by calibrated torque-wrench method or in accordance with 7.18.2.B.1. Torque values shall be in accordance with manufacturer\u2019s published data. In the absence of manufacturer\u2019s data, use Table 100.12.",
+          "optional": false
+        },
+        {
+          "number": "6",
+          "description": "Inspect filter and tank capacitors.",
+          "optional": false
+        },
+        {
+          "number": "7",
+          "description": "Verify operation of cooling fans and presence of filters.",
+          "optional": false
+        },
+        {
+          "number": "8",
+          "description": "Perform thermographic survey in accordance with Section 9.",
+          "optional": false
+        }
+      ],
+      "electrical_tests": [
+        {
+          "number": "1",
+          "description": "Perform resistance measurements through all bolted connections with a low-resistance ohmmeter.",
+          "optional": false
+        },
+        {
+          "number": "2",
+          "description": "Verify float voltage and equalize voltage.",
+          "optional": false
+        },
+        {
+          "number": "3",
+          "description": "Verify high-voltage shutdown settings.",
+          "optional": false
+        },
+        {
+          "number": "4",
+          "description": "Verify correct load sharing (parallel chargers).",
+          "optional": false
+        },
+        {
+          "number": "5",
+          "description": "Verify calibration of meters in accordance with Section 7.11.",
+          "optional": false
+        },
+        {
+          "number": "6",
+          "description": "Verify operation of alarms.",
+          "optional": false
+        },
+        {
+          "number": "7",
+          "description": "Measure and record input and output voltage and current.",
+          "optional": false
+        },
+        {
+          "number": "8",
+          "description": "Measure and record ac ripple current and voltage imposed on the battery.",
+          "optional": false
+        },
+        {
+          "number": "9",
+          "description": "Perform full load testing and verify current limit of charger.",
+          "optional": true
+        }
+      ]
+    },
+    "7.19.1": {
+      "section_number": "7.19.1",
+      "title": "Surge Protective Devices, Low-Voltage",
+      "parent_section": "7.19",
+      "equipment_category": "Emergency Systems",
+      "visual_mechanical_tests": [
+        {
+          "number": "1",
+          "description": "Compare equipment nameplate data with drawings.",
+          "optional": false
+        },
+        {
+          "number": "2",
+          "description": "Inspect physical and mechanical condition.",
+          "optional": false
+        },
+        {
+          "number": "3",
+          "description": "Inspect anchorage, alignment, grounding, and clearances.",
+          "optional": false
+        },
+        {
+          "number": "4",
+          "description": "Verify the device is clean.",
+          "optional": false
+        },
+        {
+          "number": "5",
+          "description": "Verify tightness of accessible bolted electrical connections by calibrated torque-wrench method. Torque values shall be in accordance with manufacturer\u2019s published data. In the absence of manufacturer\u2019s data, use Table 100.12.",
+          "optional": false
+        },
+        {
+          "number": "6",
+          "description": "Verify that the ground lead is attached to ground with the shortest wire length possible.",
+          "optional": false
+        }
+      ],
+      "electrical_tests": [
+        {
+          "number": "1",
+          "description": "Verify self-test operation, alarms, counter-indication, and status indicators.",
+          "optional": false
+        },
+        {
+          "number": "2",
+          "description": "Test grounding connection in accordance with Section 7.13.",
+          "optional": false
+        }
+      ]
+    },
+    "7.19.2": {
+      "section_number": "7.19.2",
+      "title": "Surge Arresters, Medium- and High-Voltage",
+      "parent_section": "7.19",
+      "equipment_category": "Emergency Systems",
+      "visual_mechanical_tests": [
+        {
+          "number": "1",
+          "description": "Compare equipment nameplate data with drawings.",
+          "optional": false
+        },
+        {
+          "number": "2",
+          "description": "Inspect physical and mechanical condition.",
+          "optional": false
+        },
+        {
+          "number": "3",
+          "description": "Inspect anchorage, alignment, grounding, and clearances.",
+          "optional": false
+        },
+        {
+          "number": "4",
+          "description": "Verify the arresters are clean.",
+          "optional": false
+        },
+        {
+          "number": "5",
+          "description": "Verify tightness of accessible bolted electrical connections by calibrated torque-wrench method or in accordance with 7.19.2.B.1. Torque values shall be in accordance with manufacturer\u2019s published data. In the absence of manufacturer\u2019s data, use Table 100.12.",
+          "optional": false
+        },
+        {
+          "number": "6",
+          "description": "Verify that the ground lead on each device is individually attached to ground with the shortest wire length possible.",
+          "optional": false
+        },
+        {
+          "number": "7",
+          "description": "Verify that the stroke counter is correctly mounted and electrically connected.",
+          "optional": false
+        },
+        {
+          "number": "8",
+          "description": "Record the stroke counter reading.",
+          "optional": false
+        }
+      ],
+      "electrical_tests": [
+        {
+          "number": "1",
+          "description": "Perform resistance measurements through bolted connections with a low-resistance ohmmeter.",
+          "optional": false
+        },
+        {
+          "number": "2",
+          "description": "Perform an insulation-resistance test on each arrester, phase terminal-to-ground. Apply voltage in accordance with manufacturer\u2019s published data. In the absence of manufacturer\u2019s data, use Table 100.1.",
+          "optional": false
+        },
+        {
+          "number": "3",
+          "description": "Test grounding connection in accordance with Section 7.13.",
+          "optional": false
+        },
+        {
+          "number": "4",
+          "description": "Perform a watts-loss test for substation class surge arresters.",
+          "optional": false
+        }
+      ]
+    },
+    "7.20.1": {
+      "section_number": "7.20.1",
+      "title": "Capacitors",
+      "parent_section": "7.20",
+      "equipment_category": "Rotating Machinery",
+      "visual_mechanical_tests": [
+        {
+          "number": "1",
+          "description": "Compare equipment nameplate data with drawings.",
+          "optional": false
+        },
+        {
+          "number": "2",
+          "description": "Inspect physical and mechanical condition.",
+          "optional": false
+        },
+        {
+          "number": "3",
+          "description": "Inspect anchorage, alignment, grounding, and clearances.",
+          "optional": false
+        },
+        {
+          "number": "4",
+          "description": "Verify the unit is clean.",
+          "optional": false
+        },
+        {
+          "number": "5",
+          "description": "Verify that capacitors are electrically connected in their specified configuration.",
+          "optional": false
+        },
+        {
+          "number": "6",
+          "description": "Verify tightness of accessible-bolted electrical connections by calibrated torque-wrench method or in accordance with 7.20.1.B.1. Torque values shall be in accordance with manufacturer\u2019s published data. In the absence of manufacturer\u2019s data, use Table 100.12.",
+          "optional": false
+        },
+        {
+          "number": "7",
+          "description": "Perform thermographic survey in accordance with Section 9.",
+          "optional": true
+        }
+      ],
+      "electrical_tests": [
+        {
+          "number": "1",
+          "description": "Perform resistance measurements through bolted connections with a low-resistance ohmmeter.",
+          "optional": false
+        },
+        {
+          "number": "2",
+          "description": "Perform insulation-resistance tests from phase terminal(s) to case for one minute. Test voltage shall be in accordance with manufacturer\u2019s published data. In the absence of manufacturer\u2019s data, use Table 100.1.",
+          "optional": false
+        },
+        {
+          "number": "3",
+          "description": "Measure the capacitance of all terminal combinations.",
+          "optional": false
+        },
+        {
+          "number": "4",
+          "description": "Measure resistance of the internal discharge resistors.",
+          "optional": false
+        }
+      ]
+    },
+    "7.20.2": {
+      "section_number": "7.20.2",
+      "title": "Capacitor Control Devices",
+      "parent_section": "7.20",
+      "equipment_category": "Rotating Machinery",
+      "visual_mechanical_tests": [
+        {
+          "number": "1",
+          "description": "Compare equipment nameplate data with drawings.",
+          "optional": false
+        },
+        {
+          "number": "2",
+          "description": "Inspect physical and mechanical condition.",
+          "optional": false
+        },
+        {
+          "number": "3",
+          "description": "Inspect anchorage, alignment, and grounding.",
+          "optional": false
+        },
+        {
+          "number": "4",
+          "description": "Verify the unit is clean.",
+          "optional": false
+        },
+        {
+          "number": "5",
+          "description": "Perform insulation power-factor or dissipation-factor tests on all windings in accordance with test equipment manufacturer\u2019s published data.",
+          "optional": true
+        },
+        {
+          "number": "6",
+          "description": "Verify tightness of accessible bolted electrical connections by calibrated torque-wrench method or in accordance with 7.20.3.1.B.1. Torque values shall be in accordance with manufacturer\u2019s published data. In the absence of manufacturer\u2019s data, use Table 100.12.",
+          "optional": false
+        },
+        {
+          "number": "7",
+          "description": "Verify that tap connections are as specified.",
+          "optional": false
+        },
+        {
+          "number": "8",
+          "description": "Perform thermographic survey in accordance with Section 9.",
+          "optional": true
+        }
+      ],
+      "electrical_tests": [
+        {
+          "number": "1",
+          "description": "Perform resistance measurements through bolted connections with low-resistance ohmmeter.",
+          "optional": false
+        },
+        {
+          "number": "2",
+          "description": "Perform winding-to-ground insulation-resistance tests. Test voltage shall be in accordance with manufacturer\u2019s published data. In the absence of manufacturer\u2019s data, refer to Table 100.1.",
+          "optional": false
+        },
+        {
+          "number": "3",
+          "description": "Measure winding resistance.",
+          "optional": false
+        },
+        {
+          "number": "4",
+          "description": "Perform dielectric withstand voltage tests on each winding to ground.",
+          "optional": true
+        },
+        {
+          "number": "5",
+          "description": "Perform insulation resistance power-factor or dissipation-factor tests on all windings in accordance with test equipment manufacturer\u2019s published data.",
+          "optional": true
+        }
+      ]
+    },
+    "7.20.4": {
+      "section_number": "7.20.4",
+      "title": "Resistors",
+      "parent_section": "7.20",
+      "equipment_category": "Rotating Machinery",
+      "visual_mechanical_tests": [
+        {
+          "number": "1",
+          "description": "Compare equipment nameplate data with drawings.",
+          "optional": false
+        },
+        {
+          "number": "2",
+          "description": "Inspect physical and mechanical condition.",
+          "optional": false
+        },
+        {
+          "number": "3",
+          "description": "Verify proper anchorage, alignment, and grounding.",
+          "optional": false
+        },
+        {
+          "number": "4",
+          "description": "Verify the unit is clean.",
+          "optional": false
+        },
+        {
+          "number": "5",
+          "description": "Verify tightness of accessible bolted electrical connections by calibrated torque-wrench method or in accordance with 7.20.4.B.1. Torque values shall be in accordance with manufacturer\u2019s published data. In the absence of manufacturer\u2019s data, use Table 100.12.",
+          "optional": false
+        },
+        {
+          "number": "6",
+          "description": "Verify correct liquid level in all tanks and bushings.",
+          "optional": false
+        },
+        {
+          "number": "7",
+          "description": "Perform mechanical inspections and tests as recommended by the manufacturer.",
+          "optional": false
+        },
+        {
+          "number": "8",
+          "description": "Verify that filters are in place and vents are clear.",
+          "optional": false
+        },
+        {
+          "number": "9",
+          "description": "Perform visual and mechanical inspection of instrument transformers in accordance with Section 7.10.",
+          "optional": false
+        },
+        {
+          "number": "10",
+          "description": "Verify monitoring and auxiliary systems.",
+          "optional": false
+        },
+        {
+          "number": "11",
+          "description": "Perform a thermographic survey in accordance with Section 9.",
+          "optional": true
+        }
+      ],
+      "electrical_tests": [
+        {
+          "number": "1",
+          "description": "Perform resistance measurements through bolted connections with low-resistance ohmmeter.",
+          "optional": false
+        },
+        {
+          "number": "2",
+          "description": "Perform resistor-to-ground insulation-resistance tests. Apply voltage in accordance with manufacturer\u2019s published data. In the absence of manufacturer\u2019s published data, use Table 100.1.",
+          "optional": false
+        },
+        {
+          "number": "3",
+          "description": "Measure resistance value.",
+          "optional": false
+        },
+        {
+          "number": "4",
+          "description": "Perform electrical tests on instrument transformers in accordance with Section 7.10.",
+          "optional": false
+        }
+      ]
+    },
+    "7.22.1": {
+      "section_number": "7.22.1",
+      "title": "Emergency Systems, Engine Generator",
+      "parent_section": "7.22",
+      "equipment_category": "Photovoltaic Systems",
+      "visual_mechanical_tests": [
+        {
+          "number": "1",
+          "description": "Compare equipment nameplate data with drawings.",
+          "optional": false
+        },
+        {
+          "number": "2",
+          "description": "Inspect physical and mechanical condition.",
+          "optional": false
+        },
+        {
+          "number": "3",
+          "description": "Inspect anchorage, alignment, and grounding.",
+          "optional": false
+        },
+        {
+          "number": "4",
+          "description": "Verify the unit is clean.",
+          "optional": false
+        },
+        {
+          "number": "1",
+          "description": "Perform insulation-resistance tests in accordance with IEEE 43.",
+          "optional": false
+        },
+        {
+          "number": "1",
+          "description": "Machines larger than 200 horsepower (150 kilowatts): Test duration shall be ten minutes. Calculate polarization index.",
+          "optional": false
+        },
+        {
+          "number": "2",
+          "description": "Machines 200 horsepower (150 kilowatts) and less: Test duration shall be one minute. Calculate the dielectric-absorption ratio.",
+          "optional": false
+        },
+        {
+          "number": "2",
+          "description": "Test protective relay devices in accordance with Section 7.9.",
+          "optional": false
+        },
+        {
+          "number": "3",
+          "description": "Verify phase rotation, phasing, and synchronized operation as required by the application.",
+          "optional": false
+        },
+        {
+          "number": "4",
+          "description": "Functionally test engine shutdown for low oil pressure, overtemperature, overspeed, and other protection features as applicable.",
+          "optional": false
+        },
+        {
+          "number": "5",
+          "description": "Perform vibration test for each main bearing cap.",
+          "optional": true
+        },
+        {
+          "number": "6",
+          "description": "Conduct performance test in accordance with NFPA 110.",
+          "optional": false
+        },
+        {
+          "number": "7",
+          "description": "Verify correct functioning of the governor and regulator.",
+          "optional": false
+        }
+      ],
+      "electrical_tests": []
+    },
+    "7.22.2": {
+      "section_number": "7.22.2",
+      "title": "Emergency Systems, Uninterruptible Power Systems",
+      "parent_section": "7.22",
+      "equipment_category": "Photovoltaic Systems",
+      "visual_mechanical_tests": [
+        {
+          "number": "1",
+          "description": "Compare equipment nameplate data with drawings.",
+          "optional": false
+        },
+        {
+          "number": "2",
+          "description": "Inspect physical and mechanical condition.",
+          "optional": false
+        },
+        {
+          "number": "3",
+          "description": "Inspect anchorage, alignment, grounding, and required clearances.",
+          "optional": false
+        },
+        {
+          "number": "4",
+          "description": "Verify that fuse sizes and types correspond to drawings.",
+          "optional": false
+        },
+        {
+          "number": "5",
+          "description": "Verify the unit is clean.",
+          "optional": false
+        },
+        {
+          "number": "6",
+          "description": "Test electrical and mechanical interlock systems for correct operation and sequencing.",
+          "optional": false
+        },
+        {
+          "number": "7",
+          "description": "Verify tightness of accessible bolted electrical connections by calibrated torque-wrench method or in accordance with 7.22.2.B.1. Torque values shall be in accordance with manufacturer\u2019s published data. In the absence of manufacturer\u2019s data, use Table 100.12.",
+          "optional": false
+        },
+        {
+          "number": "8",
+          "description": "Verify operation of forced ventilation.",
+          "optional": false
+        },
+        {
+          "number": "9",
+          "description": "Verify that filters are in place and/or vents are clear.",
+          "optional": false
+        },
+        {
+          "number": "10",
+          "description": "Perform thermographic survey in accordance with Section 9.",
+          "optional": true
+        }
+      ],
+      "electrical_tests": [
+        {
+          "number": "1",
+          "description": "Perform resistance measurements through bolted connections with a low-resistance ohmmeter.",
+          "optional": false
+        },
+        {
+          "number": "2",
+          "description": "Test static transfer from inverter to bypass and back. Use normal load, if possible.",
+          "optional": false
+        },
+        {
+          "number": "3",
+          "description": "Set free running frequency of oscillator.",
+          "optional": false
+        },
+        {
+          "number": "4",
+          "description": "Test dc undervoltage trip level on inverter input breaker. Set according to manufacturer\u2019s published data.",
+          "optional": false
+        },
+        {
+          "number": "5",
+          "description": "Test alarm circuits. Page 200",
+          "optional": false
+        }
+      ]
+    },
+    "7.22.3": {
+      "section_number": "7.22.3",
+      "title": "Emergency Systems, Automatic Transfer Switches",
+      "parent_section": "7.22",
+      "equipment_category": "Photovoltaic Systems",
+      "visual_mechanical_tests": [
+        {
+          "number": "1",
+          "description": "Compare equipment nameplate data with drawings.",
+          "optional": false
+        },
+        {
+          "number": "2",
+          "description": "Inspect physical and mechanical condition.",
+          "optional": false
+        },
+        {
+          "number": "3",
+          "description": "Inspect anchorage, alignment, grounding, and required clearances.",
+          "optional": false
+        },
+        {
+          "number": "4",
+          "description": "Verify the unit is clean.",
+          "optional": false
+        },
+        {
+          "number": "5",
+          "description": "Verify appropriate lubrication on moving current-carrying parts and on moving and sliding surfaces.",
+          "optional": false
+        },
+        {
+          "number": "6",
+          "description": "Verify that warning labels are attached and visible.",
+          "optional": false
+        },
+        {
+          "number": "7",
+          "description": "Verify tightness of all control connections.",
+          "optional": false
+        },
+        {
+          "number": "8",
+          "description": "Verify tightness of accessible bolted electrical connections by calibrated torque-wrench method or in accordance with 7.22.3.B.1. Torque values shall be in accordance with manufacturer\u2019s published data. In the absence of manufacturer\u2019s data, use Table 100.12.",
+          "optional": false
+        },
+        {
+          "number": "9",
+          "description": "Perform manual transfer operation.",
+          "optional": false
+        },
+        {
+          "number": "10",
+          "description": "Verify positive mechanical interlocking between normal and alternate sources.",
+          "optional": false
+        },
+        {
+          "number": "11",
+          "description": "Perform thermographic survey in accordance with Section 9.",
+          "optional": true
+        }
+      ],
+      "electrical_tests": [
+        {
+          "number": "1",
+          "description": "Perform resistance measurements through bolted connections with a low-resistance ohmmeter.",
+          "optional": false
+        },
+        {
+          "number": "2",
+          "description": "Perform insulation resistance tests for one minute on each pole, phase-to-phase and phase-to-ground with switch in both source positions and across each open pole. Test voltage shall be in accordance with manufacturer\u2019s published data. In the absence of manufacturer\u2019s published data, use Table 100.1.",
+          "optional": false
+        },
+        {
+          "number": "3",
+          "description": "Perform insulation-resistance tests on all control wiring with respect to ground. The applied potential shall be 500 volts dc for 300-volt rated cable and 1000 volts dc for 600- volt rated cable. Test duration shall be one minute. For units with solid-state components or for control devices that cannot tolerate the applied voltage, follow manufacturer\u2019s recommendation.",
+          "optional": true
+        },
+        {
+          "number": "4",
+          "description": "Perform a contact/pole-resistance test. Page 202",
+          "optional": false
+        }
+      ]
+    },
+    "7.24.1": {
+      "section_number": "7.24.1",
+      "title": "Automatic Circuit Reclosers and Line Sectionalizers, Automatic Circuit Reclosers, Oil/Vacuum",
+      "parent_section": "7.24",
+      "equipment_category": "Energy Storage",
+      "visual_mechanical_tests": [
+        {
+          "number": "1",
+          "description": "Compare equipment nameplate data with drawings.",
+          "optional": false
+        },
+        {
+          "number": "2",
+          "description": "Inspect physical and mechanical condition.",
+          "optional": false
+        },
+        {
+          "number": "3",
+          "description": "Inspect anchorage, alignment, and grounding.",
+          "optional": false
+        },
+        {
+          "number": "4",
+          "description": "Verify the unit is clean.",
+          "optional": false
+        },
+        {
+          "number": "5",
+          "description": "Perform all mechanical operation and contact alignment tests on both the recloser and its operating mechanism in accordance with manufacturer\u2019s published data.",
+          "optional": false
+        },
+        {
+          "number": "6",
+          "description": "Verify tightness of accessible bolted electrical connections by calibrated torque-wrench method or in accordance with 7.24.1.B.1. Torque values shall be in accordance with manufacturer\u2019s published data. In the absence of manufacturer\u2019s published data, use Table 100.12.",
+          "optional": false
+        },
+        {
+          "number": "7",
+          "description": "Verify appropriate insulating liquid level.",
+          "optional": false
+        },
+        {
+          "number": "8",
+          "description": "Perform thermographic survey in accordance with Section 9.",
+          "optional": true
+        }
+      ],
+      "electrical_tests": [
+        {
+          "number": "1",
+          "description": "Perform resistance measurements through bolted connections with a low-resistance ohmmeter.",
+          "optional": false
+        },
+        {
+          "number": "2",
+          "description": "Perform insulation-resistance tests for one minute on each pole, phase-to-phase and phase-to-ground with recloser closed, and across each open pole. Apply voltage in accordance with manufacturer\u2019s published data. In the absence of manufacturer\u2019s published data, use Table 100.1.",
+          "optional": false
+        },
+        {
+          "number": "3",
+          "description": "Perform a contact/pole-resistance test.",
+          "optional": false
+        },
+        {
+          "number": "4",
+          "description": "Perform insulation-resistance tests on all control wiring with respect to ground. Applied potential shall be 500 volts dc for 300-volt rated cable and 1000 volts dc for 600-volt rated cable. Test duration shall be one minute. For units with solid-state components, follow manufacturer\u2019s recommendation.",
+          "optional": true
+        },
+        {
+          "number": "5",
+          "description": "Remove a sample of insulating liquid in accordance with ASTM D 923. Sample shall be tested in accordance with the referenced standard.",
+          "optional": false
+        },
+        {
+          "number": "1",
+          "description": "Dielectric breakdown voltage: ASTM D 877 Page 207",
+          "optional": false
+        }
+      ]
+    },
+    "7.24.2": {
+      "section_number": "7.24.2",
+      "title": "Automatic Circuit Reclosers and Line Sectionalizers, Automatic Line Sectionalizers, Oil",
+      "parent_section": "7.24",
+      "equipment_category": "Energy Storage",
+      "visual_mechanical_tests": [
+        {
+          "number": "1",
+          "description": "Compare equipment nameplate data with drawings.",
+          "optional": false
+        },
+        {
+          "number": "2",
+          "description": "Inspect physical and mechanical condition.",
+          "optional": false
+        },
+        {
+          "number": "3",
+          "description": "Inspect anchorage, alignment, and grounding.",
+          "optional": false
+        },
+        {
+          "number": "4",
+          "description": "Verify the unit is clean.",
+          "optional": false
+        },
+        {
+          "number": "5",
+          "description": "Perform all mechanical operation and contact alignment tests on both the sectionalizer and its operating mechanism in accordance with manufacturer\u2019s published data.",
+          "optional": false
+        },
+        {
+          "number": "6",
+          "description": "Verify tightness of accessible bolted electrical connections by calibrated torque-wrench method or in accordance with 7.24.2.B.1. Torque values shall be in accordance with manufacturer\u2019s published data. In the absence of manufacturer\u2019s data, use Table 100.12.",
+          "optional": false
+        },
+        {
+          "number": "7",
+          "description": "Verify appropriate insulating liquid level.",
+          "optional": false
+        },
+        {
+          "number": "8",
+          "description": "Perform thermographic survey in accordance with Section 9.",
+          "optional": true
+        }
+      ],
+      "electrical_tests": [
+        {
+          "number": "1",
+          "description": "Perform resistance measurements through bolted connections with a low-resistance ohmmeter.",
+          "optional": false
+        },
+        {
+          "number": "2",
+          "description": "Perform insulation-resistance tests for one minute on each pole, phase-to-phase and phase-to-ground with sectionalizer closed, and across each open pole. Apply voltage in accordance with manufacturer\u2019s published data. In the absence of manufacturer\u2019s published data, use Table 100.1.",
+          "optional": false
+        },
+        {
+          "number": "3",
+          "description": "Perform a contact/pole-resistance test.",
+          "optional": false
+        },
+        {
+          "number": "4",
+          "description": "Remove a sample of insulating liquid in accordance with ASTM D923. The sample shall be tested in accordance with the referenced standard.",
+          "optional": false
+        },
+        {
+          "number": "1",
+          "description": "Dielectric breakdown voltage: ASTM D877",
+          "optional": false
+        },
+        {
+          "number": "2",
+          "description": "Color: ASTM D 1500",
+          "optional": false
+        },
+        {
+          "number": "3",
+          "description": "Visual condition: ASTM D 1524 Page 211",
+          "optional": false
+        }
+      ]
+    }
+  }
+}
