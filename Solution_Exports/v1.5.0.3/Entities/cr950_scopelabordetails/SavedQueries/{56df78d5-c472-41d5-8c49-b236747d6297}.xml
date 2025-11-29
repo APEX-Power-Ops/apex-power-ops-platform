@@ -1,0 +1,66 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<savedqueries xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <savedquery>
+    <IsCustomizable>1</IsCustomizable>
+    <CanBeDeleted>0</CanBeDeleted>
+    <isquickfindquery>0</isquickfindquery>
+    <isprivate>0</isprivate>
+    <isdefault>1</isdefault>
+    <savedqueryid>{56df78d5-c472-41d5-8c49-b236747d6297}</savedqueryid>
+    <layoutxml>
+      <grid name="resultset" jump="cr950_name" select="1" icon="1" preview="1">
+        <row name="result" id="cr950_scopelabordetailsid">
+          <cell name="cr950_name" width="300" />
+          <cell name="createdon" width="125" />
+          <cell name="cr950_effectivelaborrate" width="158" />
+          <cell name="cr950_offsitelaborrate" width="145" />
+          <cell name="cr950_offsitelabortotal" width="148" />
+          <cell name="cr950_onsitelaborrate" width="143" />
+          <cell name="cr950_onsitelabortotal" width="146" />
+          <cell name="cr950_outsideservicesrate" width="164" />
+          <cell name="cr950_outsideservicestotal" width="167" />
+          <cell name="cr950_projectscope_id" width="118" />
+          <cell name="cr950_scopemultiplier" width="135" />
+          <cell name="cr950_scope_total_value" width="142" />
+          <cell name="cr950_travelrate" width="106" />
+          <cell name="cr950_traveltotal" width="109" />
+          <cell name="cr950_total_apparatus_hours" width="168" />
+          <cell name="cr950_datasource" width="109" />
+          <cell name="cr950_scopelabordetailsid" width="149" />
+        </row>
+      </grid>
+    </layoutxml>
+    <querytype>0</querytype>
+    <fetchxml>
+      <fetch version="1.0" mapping="logical">
+        <entity name="cr950_scopelabordetails">
+          <attribute name="cr950_scopelabordetailsid" />
+          <attribute name="cr950_name" />
+          <attribute name="createdon" />
+          <order attribute="cr950_name" descending="false" />
+          <filter type="and">
+            <condition attribute="statecode" operator="eq" value="0" />
+          </filter>
+          <attribute name="cr950_effectivelaborrate" />
+          <attribute name="cr950_offsitelaborrate" />
+          <attribute name="cr950_offsitelabortotal" />
+          <attribute name="cr950_onsitelaborrate" />
+          <attribute name="cr950_onsitelabortotal" />
+          <attribute name="cr950_outsideservicesrate" />
+          <attribute name="cr950_outsideservicestotal" />
+          <attribute name="cr950_projectscope_id" />
+          <attribute name="cr950_scopemultiplier" />
+          <attribute name="cr950_scope_total_value" />
+          <attribute name="cr950_travelrate" />
+          <attribute name="cr950_traveltotal" />
+          <attribute name="cr950_total_apparatus_hours" />
+          <attribute name="cr950_datasource" />
+        </entity>
+      </fetch>
+    </fetchxml>
+    <IntroducedVersion>1.0</IntroducedVersion>
+    <LocalizedNames>
+      <LocalizedName description="Active Scope Labor Details" languagecode="1033" />
+    </LocalizedNames>
+  </savedquery>
+</savedqueries>

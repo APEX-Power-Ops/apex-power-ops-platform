@@ -1,0 +1,51 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<savedqueries xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <savedquery>
+    <IsCustomizable>1</IsCustomizable>
+    <CanBeDeleted>1</CanBeDeleted>
+    <isquickfindquery>0</isquickfindquery>
+    <isprivate>0</isprivate>
+    <isdefault>0</isdefault>
+    <savedqueryid>{005357ea-0dcc-f011-bbd2-6045bd0391a9}</savedqueryid>
+    <layoutxml>
+      <grid name="resultset" jump="cr950_scope_name" select="1" icon="1" preview="1">
+        <row name="result" id="cr950_projectscopeid">
+          <cell name="cr950_project" width="180" />
+          <cell name="cr950_scope_name" width="150" />
+          <cell name="cr950_testing_standard" width="100" />
+          <cell name="cr950_percent_complete" width="80" />
+          <cell name="cr950_total_apparatus_count" width="80" />
+          <cell name="cr950_total_apparatus_hours" width="100" />
+          <cell name="cr950_total_completed_hours" width="100" />
+        </row>
+      </grid>
+    </layoutxml>
+    <querytype>0</querytype>
+    <fetchxml>
+      <fetch version="1.0" output-format="xml-platform" mapping="logical">
+        <entity name="cr950_projectscope">
+          <attribute name="cr950_scope_name" />
+          <attribute name="cr950_project" />
+          <attribute name="cr950_testing_standard" />
+          <attribute name="cr950_percent_complete" />
+          <attribute name="cr950_total_apparatus_count" />
+          <attribute name="cr950_total_apparatus_hours" />
+          <attribute name="cr950_total_completed_hours" />
+          <attribute name="cr950_projectscopeid" />
+          <order attribute="cr950_project" />
+          <order attribute="cr950_scope_name" />
+          <filter type="and">
+            <condition attribute="statecode" operator="eq" value="0" />
+          </filter>
+        </entity>
+      </fetch>
+    </fetchxml>
+    <IntroducedVersion>1.0</IntroducedVersion>
+    <LocalizedNames>
+      <LocalizedName description="All Scopes" languagecode="1033" />
+    </LocalizedNames>
+    <Descriptions>
+      <Description description="All project scopes with progress metrics" languagecode="1033" />
+    </Descriptions>
+  </savedquery>
+</savedqueries>

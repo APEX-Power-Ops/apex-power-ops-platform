@@ -1,0 +1,137 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ImportExportXml version="9.2.25103.175" SolutionPackageVersion="9.2" languagecode="1033" generatedBy="CrmLive" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" OrganizationVersion="9.2.25103.175" OrganizationSchemaType="Standard" CRMServerServiceabilityVersion="9.2.25103.00175">
+  <SolutionManifest>
+    <UniqueName>RESAPowerProjectTracker</UniqueName>
+    <LocalizedNames>
+      <LocalizedName description="RESA Power Project Tracker" languagecode="1033" />
+    </LocalizedNames>
+    <Descriptions>
+      <Description description="Upgrade of RESA Power Project Tracker" languagecode="1033" />
+    </Descriptions>
+    <Version>1.5.0.2</Version>
+    <Managed>0</Managed>
+    <Publisher>
+      <UniqueName>resapower</UniqueName>
+      <LocalizedNames>
+        <LocalizedName description="RESA Power" languagecode="1033" />
+      </LocalizedNames>
+      <Descriptions>
+        <Description description="RESA Power electrical testing solutions" languagecode="1033" />
+      </Descriptions>
+      <EMailAddress xsi:nil="true"></EMailAddress>
+      <SupportingWebsiteUrl xsi:nil="true"></SupportingWebsiteUrl>
+      <CustomizationPrefix>cr950</CustomizationPrefix>
+      <CustomizationOptionValuePrefix>35237</CustomizationOptionValuePrefix>
+      <Addresses>
+        <Address>
+          <AddressNumber>1</AddressNumber>
+          <AddressTypeCode>1</AddressTypeCode>
+          <City xsi:nil="true"></City>
+          <County xsi:nil="true"></County>
+          <Country xsi:nil="true"></Country>
+          <Fax xsi:nil="true"></Fax>
+          <FreightTermsCode xsi:nil="true"></FreightTermsCode>
+          <ImportSequenceNumber xsi:nil="true"></ImportSequenceNumber>
+          <Latitude xsi:nil="true"></Latitude>
+          <Line1 xsi:nil="true"></Line1>
+          <Line2 xsi:nil="true"></Line2>
+          <Line3 xsi:nil="true"></Line3>
+          <Longitude xsi:nil="true"></Longitude>
+          <Name xsi:nil="true"></Name>
+          <PostalCode xsi:nil="true"></PostalCode>
+          <PostOfficeBox xsi:nil="true"></PostOfficeBox>
+          <PrimaryContactName xsi:nil="true"></PrimaryContactName>
+          <ShippingMethodCode>1</ShippingMethodCode>
+          <StateOrProvince xsi:nil="true"></StateOrProvince>
+          <Telephone1 xsi:nil="true"></Telephone1>
+          <Telephone2 xsi:nil="true"></Telephone2>
+          <Telephone3 xsi:nil="true"></Telephone3>
+          <TimeZoneRuleVersionNumber xsi:nil="true"></TimeZoneRuleVersionNumber>
+          <UPSZone xsi:nil="true"></UPSZone>
+          <UTCOffset xsi:nil="true"></UTCOffset>
+          <UTCConversionTimeZoneCode xsi:nil="true"></UTCConversionTimeZoneCode>
+        </Address>
+        <Address>
+          <AddressNumber>2</AddressNumber>
+          <AddressTypeCode>1</AddressTypeCode>
+          <City xsi:nil="true"></City>
+          <County xsi:nil="true"></County>
+          <Country xsi:nil="true"></Country>
+          <Fax xsi:nil="true"></Fax>
+          <FreightTermsCode xsi:nil="true"></FreightTermsCode>
+          <ImportSequenceNumber xsi:nil="true"></ImportSequenceNumber>
+          <Latitude xsi:nil="true"></Latitude>
+          <Line1 xsi:nil="true"></Line1>
+          <Line2 xsi:nil="true"></Line2>
+          <Line3 xsi:nil="true"></Line3>
+          <Longitude xsi:nil="true"></Longitude>
+          <Name xsi:nil="true"></Name>
+          <PostalCode xsi:nil="true"></PostalCode>
+          <PostOfficeBox xsi:nil="true"></PostOfficeBox>
+          <PrimaryContactName xsi:nil="true"></PrimaryContactName>
+          <ShippingMethodCode>1</ShippingMethodCode>
+          <StateOrProvince xsi:nil="true"></StateOrProvince>
+          <Telephone1 xsi:nil="true"></Telephone1>
+          <Telephone2 xsi:nil="true"></Telephone2>
+          <Telephone3 xsi:nil="true"></Telephone3>
+          <TimeZoneRuleVersionNumber xsi:nil="true"></TimeZoneRuleVersionNumber>
+          <UPSZone xsi:nil="true"></UPSZone>
+          <UTCOffset xsi:nil="true"></UTCOffset>
+          <UTCConversionTimeZoneCode xsi:nil="true"></UTCConversionTimeZoneCode>
+        </Address>
+      </Addresses>
+    </Publisher>
+    <RootComponents>
+      <RootComponent type="1" schemaName="cr950_apparatus" behavior="0" />
+      <RootComponent type="1" schemaName="cr950_apparatusrevenue" behavior="0" />
+      <RootComponent type="1" schemaName="cr950_apparatussubmission" behavior="0" />
+      <RootComponent type="1" schemaName="cr950_apparatustestchecklist" behavior="0" />
+      <RootComponent type="1" schemaName="cr950_apparatustypemaster" behavior="0" />
+      <RootComponent type="1" schemaName="cr950_businessunit" behavior="0" />
+      <RootComponent type="1" schemaName="cr950_client" behavior="0" />
+      <RootComponent type="1" schemaName="cr950_employee" behavior="0" />
+      <RootComponent type="1" schemaName="cr950_equipment" behavior="0" />
+      <RootComponent type="1" schemaName="cr950_estimator" behavior="0" />
+      <RootComponent type="1" schemaName="cr950_netatesttemplate" behavior="0" />
+      <RootComponent type="1" schemaName="cr950_projectfinancialsummary" behavior="0" />
+      <RootComponent type="1" schemaName="cr950_projects" behavior="0" />
+      <RootComponent type="1" schemaName="cr950_projectscope" behavior="0" />
+      <RootComponent type="1" schemaName="cr950_quote" behavior="0" />
+      <RootComponent type="1" schemaName="cr950_resourceassignment" behavior="0" />
+      <RootComponent type="1" schemaName="cr950_scopefinancialsummary" behavior="0" />
+      <RootComponent type="1" schemaName="cr950_scopelabordetails" behavior="0" />
+      <RootComponent type="1" schemaName="cr950_site" behavior="0" />
+      <RootComponent type="1" schemaName="cr950_tasks" behavior="0" />
+      <RootComponent type="29" id="{8f6329b1-cdcc-f011-bbd2-6045bd0391a9}" behavior="0" />
+      <RootComponent type="29" id="{99416e85-35c4-f011-8544-000d3a5be227}" behavior="0" />
+      <RootComponent type="9" schemaName="cr950_apparatusassessment" behavior="0" />
+      <RootComponent type="9" schemaName="cr950_availability" behavior="0" />
+      <RootComponent type="9" schemaName="cr950_datasource" behavior="0" />
+      <RootComponent type="9" schemaName="cr950_externalsystemname" behavior="0" />
+      <RootComponent type="9" schemaName="cr950_geocodestatus" behavior="0" />
+      <RootComponent type="9" schemaName="cr950_priority" behavior="0" />
+      <RootComponent type="9" schemaName="cr950_projectstatus" behavior="0" />
+      <RootComponent type="9" schemaName="cr950_revenuestatus" behavior="0" />
+      <RootComponent type="9" schemaName="cr950_scopestatus" behavior="0" />
+      <RootComponent type="9" schemaName="cr950_syncstatus" behavior="0" />
+      <RootComponent type="9" schemaName="cr950_taskstatus" behavior="0" />
+      <RootComponent type="9" schemaName="cr950_testing_standard" behavior="0" />
+      <RootComponent type="9" schemaName="cr950_workstatus" behavior="0" />
+    </RootComponents>
+    <MissingDependencies>
+      <MissingDependency>
+        <Required type="9" schemaName="syncstatus" displayName="Sync Status" solution="msft_ActivitiesInfra_Extensions (9.2.0.73)">
+          <package appName="msdynce_Activities" version="9.0.25103.251017001">msdynce_EnableUCIByDefault (9.0.25103.251017001)</package>
+          <package appName="ActivitiesInfra Package" version="1.0.0.0">msft_ActivitiesInfra_Anchor (1.0.0.0)</package>
+        </Required>
+        <Dependent type="2" schemaName="cr950_syncstatus" displayName="Sync Status" parentSchemaName="cr950_projects" parentDisplayName="Projects" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="SettingDefinition" displayName="EnableFormInsightsAppSetting" solution="msdyn_FormsInsightSettings (1.0.0.5)" id.uniquename="EnableFormInsightsAppSetting">
+          <package appName="PowerAppsFormsApp Package" version="1.0.0.5">msdyn_FormsInsightSettings (1.0.0.5)</package>
+        </Required>
+        <Dependent type="OrganizationSetting" displayName="EnableFormInsightsAppSetting" id.settingdefinitionid.uniquename="EnableFormInsightsAppSetting" />
+      </MissingDependency>
+    </MissingDependencies>
+  </SolutionManifest>
+</ImportExportXml>
