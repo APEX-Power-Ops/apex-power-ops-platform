@@ -1,0 +1,48 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<savedqueries xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <savedquery>
+    <IsCustomizable>1</IsCustomizable>
+    <CanBeDeleted>0</CanBeDeleted>
+    <isquickfindquery>0</isquickfindquery>
+    <isprivate>0</isprivate>
+    <isdefault>1</isdefault>
+    <savedqueryid>{2b6f04e5-d793-42e6-95da-c41ce0e7936b}</savedqueryid>
+    <layoutxml>
+      <grid name="cr950_estimators" jump="cr950_name" select="1" icon="1" preview="1">
+        <row name="cr950_estimator" id="cr950_estimatorid">
+          <cell name="cr950_name" width="300" />
+          <cell name="createdon" width="125" />
+          <cell name="cr950_convertedtoproject" width="156" />
+          <cell name="cr950_currentrevision" width="137" />
+          <cell name="cr950_estimatedate" width="119" />
+          <cell name="cr950_estimator_file_url" width="152" />
+          <cell name="cr950_estimatorid" width="100" />
+          <cell name="cr950_filename" width="100" />
+        </row>
+      </grid>
+    </layoutxml>
+    <querytype>2</querytype>
+    <fetchxml>
+      <fetch version="1.0" mapping="logical">
+        <entity name="cr950_estimator">
+          <attribute name="cr950_estimatorid" />
+          <attribute name="cr950_name" />
+          <attribute name="createdon" />
+          <order attribute="cr950_name" descending="false" />
+          <filter type="and">
+            <condition attribute="statecode" operator="eq" value="0" />
+          </filter>
+          <attribute name="cr950_convertedtoproject" />
+          <attribute name="cr950_currentrevision" />
+          <attribute name="cr950_estimatedate" />
+          <attribute name="cr950_estimator_file_url" />
+          <attribute name="cr950_filename" />
+        </entity>
+      </fetch>
+    </fetchxml>
+    <IntroducedVersion>1.0</IntroducedVersion>
+    <LocalizedNames>
+      <LocalizedName description="Estimator Associated View" languagecode="1033" />
+    </LocalizedNames>
+  </savedquery>
+</savedqueries>

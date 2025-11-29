@@ -1,0 +1,204 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<forms xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <systemform>
+    <formid>{28d52362-146d-44e2-933d-ff949c0c445b}</formid>
+    <IntroducedVersion>1.0</IntroducedVersion>
+    <FormPresentation>1</FormPresentation>
+    <FormActivationState>1</FormActivationState>
+    <form>
+      <tabs>
+        <tab verticallayout="true" id="{ab155992-b26c-46f6-98d6-f6ed38fbcef0}" IsUserDefined="1">
+          <labels>
+            <label description="General" languagecode="1033" />
+          </labels>
+          <columns>
+            <column width="100%">
+              <sections>
+                <section showlabel="false" showbar="false" IsUserDefined="0" id="{0068fbea-3eff-458f-a21b-ef5c59b3238f}">
+                  <labels>
+                    <label description="General" languagecode="1033" />
+                  </labels>
+                  <rows>
+                    <row>
+                      <cell id="{7702ab08-ff9b-4025-aecd-2f99bd3af8ff}">
+                        <labels>
+                          <label description="Name" languagecode="1033" />
+                        </labels>
+                        <control id="cr950_name" classid="{4273EDBD-AC1D-40d3-9FB2-095C621B552D}" datafieldname="cr950_name" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{98c9508f-4086-4394-95df-884a487631fc}" locklevel="0" rowspan="1" colspan="1">
+                        <labels>
+                          <label description="Effective Labor Rate" languagecode="1033" />
+                        </labels>
+                        <control id="cr950_effectivelaborrate" classid="{533B9E00-756B-4312-95A0-DC888637AC78}" datafieldname="cr950_effectivelaborrate" disabled="false" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{951c7873-73f3-4a34-be8a-a14aca75ff67}" locklevel="0" rowspan="1" colspan="1">
+                        <labels>
+                          <label description="Offsite Labor Rate" languagecode="1033" />
+                        </labels>
+                        <control id="cr950_offsitelaborrate" classid="{533B9E00-756B-4312-95A0-DC888637AC78}" datafieldname="cr950_offsitelaborrate" disabled="false" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{fc628fc2-a0f0-4ff6-89b5-3b571707ae10}" locklevel="0" rowspan="1" colspan="1">
+                        <labels>
+                          <label description="Offsite Labor Total" languagecode="1033" />
+                        </labels>
+                        <control id="cr950_offsitelabortotal" classid="{533B9E00-756B-4312-95A0-DC888637AC78}" datafieldname="cr950_offsitelabortotal" disabled="false" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{0620dd60-57df-44ff-830b-b19531474509}" locklevel="0" rowspan="1" colspan="1">
+                        <labels>
+                          <label description="Onsite Labor Rate" languagecode="1033" />
+                        </labels>
+                        <control id="cr950_onsitelaborrate" classid="{533B9E00-756B-4312-95A0-DC888637AC78}" datafieldname="cr950_onsitelaborrate" disabled="false" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{a6fb1dae-159d-4330-bc50-fdf1c254cc19}" locklevel="0" rowspan="1" colspan="1">
+                        <labels>
+                          <label description="Onsite Labor Total" languagecode="1033" />
+                        </labels>
+                        <control id="cr950_onsitelabortotal" classid="{533B9E00-756B-4312-95A0-DC888637AC78}" datafieldname="cr950_onsitelabortotal" disabled="false" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{19d57d51-2d26-4b45-b088-842b0ac36756}" locklevel="0" rowspan="1" colspan="1">
+                        <labels>
+                          <label description="Outside Services Rate" languagecode="1033" />
+                        </labels>
+                        <control id="cr950_outsideservicesrate" classid="{533B9E00-756B-4312-95A0-DC888637AC78}" datafieldname="cr950_outsideservicesrate" disabled="false" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{e995d1a9-c5a7-4187-af7d-03c2089f2daf}" locklevel="0" rowspan="1" colspan="1">
+                        <labels>
+                          <label description="Outside Services Total" languagecode="1033" />
+                        </labels>
+                        <control id="cr950_outsideservicestotal" classid="{533B9E00-756B-4312-95A0-DC888637AC78}" datafieldname="cr950_outsideservicestotal" disabled="false" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{4ded71b7-ef0f-4eed-b8a2-57a1a4d4855b}" locklevel="0" rowspan="1" colspan="1">
+                        <labels>
+                          <label description="Project Scope" languagecode="1033" />
+                        </labels>
+                        <control id="cr950_projectscope_id" classid="{270BD3DB-D9AF-4782-9025-509E298DEC0A}" datafieldname="cr950_projectscope_id" disabled="false" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{2c9abd09-3f04-4cf2-82ec-92ae529f7b1b}" locklevel="0" rowspan="1" colspan="1">
+                        <labels>
+                          <label description="Scope Multiplier" languagecode="1033" />
+                        </labels>
+                        <control id="cr950_scopemultiplier" classid="{C3EFE0C3-0EC6-42BE-8349-CBD9079DFD8E}" datafieldname="cr950_scopemultiplier" disabled="false" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{528d7d95-f717-4a2c-a416-d794ee6f5947}" locklevel="0" rowspan="1" colspan="1">
+                        <labels>
+                          <label description="Scope Total Value" languagecode="1033" />
+                        </labels>
+                        <control id="cr950_scope_total_value" classid="{533B9E00-756B-4312-95A0-DC888637AC78}" datafieldname="cr950_scope_total_value" disabled="false" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{a634d0dc-04f2-4a0c-b033-97760b2ab1ae}" locklevel="0" rowspan="1" colspan="1">
+                        <labels>
+                          <label description="Travel Rate" languagecode="1033" />
+                        </labels>
+                        <control id="cr950_travelrate" classid="{533B9E00-756B-4312-95A0-DC888637AC78}" datafieldname="cr950_travelrate" disabled="false" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{85a1e47e-5272-4829-a334-9172061102b5}" locklevel="0" rowspan="1" colspan="1">
+                        <labels>
+                          <label description="Travel Total" languagecode="1033" />
+                        </labels>
+                        <control id="cr950_traveltotal" classid="{533B9E00-756B-4312-95A0-DC888637AC78}" datafieldname="cr950_traveltotal" disabled="false" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{1d003354-18c6-4566-9ae3-59492cbb45b6}" locklevel="0" rowspan="1" colspan="1">
+                        <labels>
+                          <label description="Total Apparatus Hours" languagecode="1033" />
+                        </labels>
+                        <control id="cr950_total_apparatus_hours" classid="{C3EFE0C3-0EC6-42BE-8349-CBD9079DFD8E}" datafieldname="cr950_total_apparatus_hours" disabled="false" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{0ec4247c-1394-4622-b51b-2101ea5eb22a}" locklevel="0" rowspan="1" colspan="1">
+                        <labels>
+                          <label description="Data Source" languagecode="1033" />
+                        </labels>
+                        <control id="cr950_datasource" classid="{3EF39988-22BB-4F0B-BBBE-64B5A3748AEE}" datafieldname="cr950_datasource" disabled="false" />
+                      </cell>
+                    </row>
+                  </rows>
+                </section>
+              </sections>
+            </column>
+          </columns>
+        </tab>
+      </tabs>
+      <header id="{c4bc9320-08db-4f8e-87d8-cb8c97f96ad3}" celllabelposition="Top" columns="111" labelwidth="115" celllabelalignment="Left">
+        <rows>
+          <row>
+            <cell id="{3310c59c-c3fc-4444-b27b-5c24db361a62}" showlabel="false">
+              <labels>
+                <label description="" languagecode="1033" />
+              </labels>
+            </cell>
+            <cell id="{a3e8f9b2-322d-486b-94b0-65e994effa34}" showlabel="false">
+              <labels>
+                <label description="" languagecode="1033" />
+              </labels>
+            </cell>
+            <cell id="{c94a0dd3-93b0-453d-8846-b3ae76fa05e3}" showlabel="false">
+              <labels>
+                <label description="" languagecode="1033" />
+              </labels>
+            </cell>
+          </row>
+        </rows>
+      </header>
+      <footer id="{7fdb9a70-d15c-4f2a-87ee-9303f607f058}" celllabelposition="Top" columns="111" labelwidth="115" celllabelalignment="Left">
+        <rows>
+          <row>
+            <cell id="{9cc0c8cb-fa6c-48f5-879e-7e0175c880b5}" showlabel="false">
+              <labels>
+                <label description="" languagecode="1033" />
+              </labels>
+            </cell>
+            <cell id="{560c917b-9868-4753-8304-b38225a16d57}" showlabel="false">
+              <labels>
+                <label description="" languagecode="1033" />
+              </labels>
+            </cell>
+            <cell id="{893cfbce-a1c4-4e1a-9f1d-2279bfe8beb0}" showlabel="false">
+              <labels>
+                <label description="" languagecode="1033" />
+              </labels>
+            </cell>
+          </row>
+        </rows>
+      </footer>
+      <DisplayConditions Order="0" FallbackForm="true">
+        <Everyone />
+      </DisplayConditions>
+    </form>
+    <IsCustomizable>1</IsCustomizable>
+    <CanBeDeleted>1</CanBeDeleted>
+    <LocalizedNames>
+      <LocalizedName description="Information" languagecode="1033" />
+    </LocalizedNames>
+    <Descriptions>
+      <Description description="A form for this entity." languagecode="1033" />
+    </Descriptions>
+  </systemform>
+</forms>

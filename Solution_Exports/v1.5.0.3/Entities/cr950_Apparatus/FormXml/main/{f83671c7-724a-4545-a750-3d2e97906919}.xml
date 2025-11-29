@@ -1,0 +1,220 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<forms xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <systemform>
+    <formid>{f83671c7-724a-4545-a750-3d2e97906919}</formid>
+    <IntroducedVersion>1.0</IntroducedVersion>
+    <FormPresentation>1</FormPresentation>
+    <FormActivationState>1</FormActivationState>
+    <form>
+      <tabs>
+        <tab verticallayout="true" id="{aef40388-9be9-4ddc-9e9a-658c0c33f4d9}" IsUserDefined="1">
+          <labels>
+            <label description="General" languagecode="1033" />
+          </labels>
+          <columns>
+            <column width="100%">
+              <sections>
+                <section showlabel="false" showbar="false" IsUserDefined="0" id="{49e46de1-ed00-443f-b5fd-9b869d024d66}">
+                  <labels>
+                    <label description="General" languagecode="1033" />
+                  </labels>
+                  <rows>
+                    <row>
+                      <cell id="{e4da7a12-de5b-4a40-af68-faf2b2253625}">
+                        <labels>
+                          <label description="Apparatus Designation" languagecode="1033" />
+                        </labels>
+                        <control id="cr950_apparatus_designation" classid="{4273EDBD-AC1D-40d3-9FB2-095C621B552D}" datafieldname="cr950_apparatus_designation" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{ae642255-2b64-4ccb-9e68-c907ad3ce45b}">
+                        <labels>
+                          <label description="Owner" languagecode="1033" />
+                        </labels>
+                        <control id="ownerid" classid="{270BD3DB-D9AF-4782-9025-509E298DEC0A}" datafieldname="ownerid" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{81f2c343-491d-4c32-a270-84cb3eb31d8c}" locklevel="0" rowspan="1" colspan="1">
+                        <labels>
+                          <label description="Actual Hours" languagecode="1033" />
+                        </labels>
+                        <control id="cr950_actual_hours" classid="{C3EFE0C3-0EC6-42BE-8349-CBD9079DFD8E}" datafieldname="cr950_actual_hours" disabled="false" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{6a6d5e95-f46d-4b59-ae7d-1ae8f40f30ec}" locklevel="0" rowspan="1" colspan="1">
+                        <labels>
+                          <label description="Actual Start" languagecode="1033" />
+                        </labels>
+                        <control id="cr950_actualstart" classid="{5B773807-9FB2-42DB-97C3-7A91EFF8ADFF}" datafieldname="cr950_actualstart" disabled="false" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{c502dc09-b331-4bbb-b623-4d88961f3258}" locklevel="0" rowspan="1" colspan="1">
+                        <labels>
+                          <label description="Anticipated Start" languagecode="1033" />
+                        </labels>
+                        <control id="cr950_anticipatedstart" classid="{5B773807-9FB2-42DB-97C3-7A91EFF8ADFF}" datafieldname="cr950_anticipatedstart" disabled="false" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{66f62a64-8a24-4dfc-928b-474faf48c59a}" locklevel="0" rowspan="1" colspan="1">
+                        <labels>
+                          <label description="Apparatus Assessment" languagecode="1033" />
+                        </labels>
+                        <control id="cr950_apparatus_assessment" classid="{3EF39988-22BB-4F0B-BBBE-64B5A3748AEE}" datafieldname="cr950_apparatus_assessment" disabled="false" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{ea3e462d-9e8b-4beb-bb3e-ba22271fb765}" locklevel="0" rowspan="1" colspan="1">
+                        <labels>
+                          <label description="Apparatus_Number" languagecode="1033" />
+                        </labels>
+                        <control id="cr950_apparatus_number" classid="{C6D124CA-7EDA-4A60-AEA9-7FB8D318B68F}" datafieldname="cr950_apparatus_number" disabled="false" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{2e0804df-feb9-43ff-a8d5-e3d2264f7ff9}" locklevel="0" rowspan="1" colspan="1">
+                        <labels>
+                          <label description="Apparatus Hours" languagecode="1033" />
+                        </labels>
+                        <control id="cr950_labor_hours" classid="{C3EFE0C3-0EC6-42BE-8349-CBD9079DFD8E}" datafieldname="cr950_labor_hours" disabled="false" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{717075ac-e268-454f-aefd-3010e2ce53ca}" locklevel="0" rowspan="1" colspan="1">
+                        <labels>
+                          <label description="Apparatus Type" languagecode="1033" />
+                        </labels>
+                        <control id="cr950_apparatus_type" classid="{270BD3DB-D9AF-4782-9025-509E298DEC0A}" datafieldname="cr950_apparatus_type" disabled="false" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{d6770a6d-fb82-4199-af2b-7ba76a6586a2}" locklevel="0" rowspan="1" colspan="1">
+                        <labels>
+                          <label description="Completed Hours" languagecode="1033" />
+                        </labels>
+                        <control id="cr950_completed_hours" classid="{C3EFE0C3-0EC6-42BE-8349-CBD9079DFD8E}" datafieldname="cr950_completed_hours" disabled="false" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{85d2462a-2f13-4913-9841-09dfbf1de92a}" locklevel="0" rowspan="1" colspan="1">
+                        <labels>
+                          <label description="Completion Status" languagecode="1033" />
+                        </labels>
+                        <control id="cr950_completion_status" classid="{3EF39988-22BB-4F0B-BBBE-64B5A3748AEE}" datafieldname="cr950_completion_status" disabled="false" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{1a4d5eb3-6ff6-490d-a0ac-ca9aa2768d5e}" locklevel="0" rowspan="1" colspan="1">
+                        <labels>
+                          <label description="Datasheet_Completed" languagecode="1033" />
+                        </labels>
+                        <control id="cr950_datasheet_completed" classid="{67FAC785-CD58-4F9F-ABB3-4B7DDC6ED5ED}" datafieldname="cr950_datasheet_completed" disabled="false" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{240af879-9da7-4d6d-a69f-b408d6873621}" locklevel="0" rowspan="1" colspan="1">
+                        <labels>
+                          <label description="Delays" languagecode="1033" />
+                        </labels>
+                        <control id="cr950_delays" classid="{C3EFE0C3-0EC6-42BE-8349-CBD9079DFD8E}" datafieldname="cr950_delays" disabled="false" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{bbf4b7ed-dc09-488d-a679-eb2f343f052a}" locklevel="0" rowspan="1" colspan="1">
+                        <labels>
+                          <label description="Project" languagecode="1033" />
+                        </labels>
+                        <control id="cr950_project" classid="{270BD3DB-D9AF-4782-9025-509E298DEC0A}" datafieldname="cr950_project" disabled="false" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{12977036-6a9b-473c-9687-e1e56a54e826}" locklevel="0" rowspan="1" colspan="1">
+                        <labels>
+                          <label description="Scope" languagecode="1033" />
+                        </labels>
+                        <control id="cr950_scope" classid="{270BD3DB-D9AF-4782-9025-509E298DEC0A}" datafieldname="cr950_scope" disabled="false" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{8ff8f5a2-2272-40cc-a4ee-48875bd51e3b}" locklevel="0" rowspan="1" colspan="1">
+                        <labels>
+                          <label description="Task" languagecode="1033" />
+                        </labels>
+                        <control id="cr950_task" classid="{270BD3DB-D9AF-4782-9025-509E298DEC0A}" datafieldname="cr950_task" disabled="false" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{a8e2c4c4-fd68-42c5-8700-f90fc9094b27}" locklevel="0" rowspan="1" colspan="1">
+                        <labels>
+                          <label description="Remaining Hours" languagecode="1033" />
+                        </labels>
+                        <control id="cr950_remaining_hours" classid="{C3EFE0C3-0EC6-42BE-8349-CBD9079DFD8E}" datafieldname="cr950_remaining_hours" disabled="false" />
+                      </cell>
+                    </row>
+                  </rows>
+                </section>
+              </sections>
+            </column>
+          </columns>
+        </tab>
+      </tabs>
+      <header id="{47202de5-3859-4447-8da5-8ede4dbba24d}" celllabelposition="Top" columns="111" labelwidth="115" celllabelalignment="Left">
+        <rows>
+          <row>
+            <cell id="{f29c801f-446f-4531-b544-9090d47a0e2d}" showlabel="false">
+              <labels>
+                <label description="" languagecode="1033" />
+              </labels>
+            </cell>
+            <cell id="{3f7c9a17-0e89-47e5-a1b5-f04736fb72d7}" showlabel="false">
+              <labels>
+                <label description="" languagecode="1033" />
+              </labels>
+            </cell>
+            <cell id="{b000c7cc-956f-43b5-bbca-43f7b64f8163}" showlabel="false">
+              <labels>
+                <label description="" languagecode="1033" />
+              </labels>
+            </cell>
+          </row>
+        </rows>
+      </header>
+      <footer id="{96141dbe-35f2-402f-ae41-2f188391d4fe}" celllabelposition="Top" columns="111" labelwidth="115" celllabelalignment="Left">
+        <rows>
+          <row>
+            <cell id="{04f6422d-ddde-4acc-9176-888534d78643}" showlabel="false">
+              <labels>
+                <label description="" languagecode="1033" />
+              </labels>
+            </cell>
+            <cell id="{c498b9d0-8c57-458c-a49d-2d50658a1820}" showlabel="false">
+              <labels>
+                <label description="" languagecode="1033" />
+              </labels>
+            </cell>
+            <cell id="{9d889f26-a1a5-4703-971c-fe61ff314ef1}" showlabel="false">
+              <labels>
+                <label description="" languagecode="1033" />
+              </labels>
+            </cell>
+          </row>
+        </rows>
+      </footer>
+      <DisplayConditions Order="0" FallbackForm="true">
+        <Everyone />
+      </DisplayConditions>
+    </form>
+    <IsCustomizable>1</IsCustomizable>
+    <CanBeDeleted>1</CanBeDeleted>
+    <LocalizedNames>
+      <LocalizedName description="Information" languagecode="1033" />
+    </LocalizedNames>
+    <Descriptions>
+      <Description description="A form for this entity." languagecode="1033" />
+    </Descriptions>
+  </systemform>
+</forms>
