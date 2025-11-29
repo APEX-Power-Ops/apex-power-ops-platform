@@ -58,9 +58,131 @@ graph TB
 
 ## Dataverse Entity Relationship Diagram
 
-**Version:** 2.0 (Updated November 22, 2025)  
+**Version:** 3.0 (Updated November 28, 2025)  
+**Tables:** 19 (16 existing + 3 new NETA tables)  
+**Status:** Reflects v1.6.0.0 architecture with NETA Checklists
+
+```mermaid
+erDiagram
+    %% Core Project Management Tables
+    BUSINESSUNIT ||--o{ PROJECT : "manages"
+    CLIENT ||--o{ PROJECT : "contracts"
+    SITE ||--o{ PROJECT : "located_at"
+    CLIENT ||--o{ SITE : "owns"
+    CLIENT ||--o{ QUOTE : "requests"
+    SITE ||--o{ QUOTE : "for_location"
+    QUOTE ||--o| PROJECT : "converts_to"
+    
+    PROJECT ||--o{ SCOPE : "has many"
+    PROJECT ||--o{ TASK : "contains"
+    PROJECT ||--o{ APPARATUS_REVENUE : "recognizes"
+    PROJECT ||--o{ RESOURCE_ASSIGNMENT : "staffed_by"
+    PROJECT ||--o{ EQUIPMENT : "uses"
+    
+    SCOPE ||--o{ TASK : "includes"
+    SCOPE ||--|| SCOPE_LABOR_DETAIL : "budgeted_by"
+    SCOPE ||--o{ APPARATUS_REVENUE : "bills"
+    
+    TASK ||--o{ APPARATUS : "tests"
+    
+    APPARATUS }o--|| APPARATUS_TYPE_MASTER : "classified_as"
+    APPARATUS ||--o{ APPARATUS_REVENUE : "generates"
+    
+    %% NEW v1.6.0.0: NETA Checklist System
+    APPARATUS_TYPE_MASTER ||--o{ NETA_TEST_TEMPLATE : "defines_tests_via_section"
+    APPARATUS ||--o{ APPARATUS_TEST_CHECKLIST : "has_checklist"
+    NETA_TEST_TEMPLATE ||--o{ APPARATUS_TEST_CHECKLIST : "template_for"
+    APPARATUS ||--o{ APPARATUS_SUBMISSION : "submitted_via"
+    
+    %% Resource Management
+    EMPLOYEE ||--o{ RESOURCE_ASSIGNMENT : "assigned_via"
+    EMPLOYEE ||--o{ EQUIPMENT : "uses"
+    
+    %% v1.6.0.0 NEW TABLES
+    NETA_TEST_TEMPLATE {
+        guid id PK
+        string test_description
+        string neta_section "e.g. 7.6.3"
+        choice test_type "Visual or Electrical"
+        choice neta_standard "ATS or MTS"
+        bool requires_value
+        int sort_order
+        bool active
+    }
+    
+    APPARATUS_TEST_CHECKLIST {
+        guid id PK
+        lookup apparatus FK
+        lookup test_template FK
+        choice status "Not Started/Complete/N-A/Failed"
+        bool is_complete
+        string recorded_value
+        string notes
+        datetime completed_date
+    }
+    
+    APPARATUS_SUBMISSION {
+        guid id PK
+        lookup apparatus FK
+        datetime submitted_date
+        choice review_status "Pending/Approved/Rejected"
+        datetime reviewed_date
+        string rejection_reason
+    }
+```
+
+---
+
+## NETA Checklist Workflow (v1.6.0.0)
+
+```mermaid
+flowchart LR
+    subgraph Templates["📚 Master Templates"]
+        NETA[NETA Test Template<br/>~800 test items]
+        ATM[ApparatusTypeMaster<br/>links to NETA sections]
+    end
+    
+    subgraph Execution["👷 Field Execution"]
+        APP[Apparatus Created]
+        CHK[Test Checklist Generated]
+        WORK[Tech Completes Tests]
+    end
+    
+    subgraph Review["✅ Approval"]
+        SUB[Submission Created]
+        REV[PM Reviews]
+        APR{Approved?}
+    end
+    
+    subgraph Complete["🏁 Completion"]
+        DONE[Apparatus Complete]
+        REV_REC[Revenue Recognition]
+    end
+    
+    NETA --> ATM
+    ATM --> APP
+    APP -->|Auto-generate| CHK
+    CHK --> WORK
+    WORK --> SUB
+    SUB --> REV
+    REV --> APR
+    APR -->|Yes| DONE
+    APR -->|No| WORK
+    DONE --> REV_REC
+    
+    style Templates fill:#e3f2fd
+    style Execution fill:#fff3e0
+    style Review fill:#e8f5e9
+    style Complete fill:#f3e5f5
+```
+
+---
+
+## Legacy Dataverse Entity Relationship Diagram (Pre-v1.6.0.0)
+
+**Version:** 2.0 (November 22, 2025)  
 **Tables:** 14 (8 original + 6 new)  
-**Status:** Reflects v1.4.0.0 architecture
+**Status:** Archived - superseded by v3.0 above
 
 ```mermaid
 erDiagram
@@ -963,6 +1085,7 @@ These diagrams use Mermaid syntax and can be viewed in:
 
 ---
 
-*Document Version: 1.0*
-*Created: November 7, 2025*
+*Document Version: 2.0*  
+*Created: November 7, 2025*  
+*Updated: November 28, 2025 - Added v1.6.0.0 NETA Checklist ERD and workflow*  
 *For: RESA Power Architecture Documentation*

@@ -1,0 +1,3 @@
+Test Description,NETA Section,Equipment Type,Test Type,Test Number,NETA Standard,Is Optional,Requires Value,Sort Order,Active
+"Compare equipment nameplate data with drawings.","7.1.1","Switchgear and Switchboard Assemblies","Visual/Mechanical","A.1","ATS (Acceptance)","No","No",1,"Yes"
+"Inspect physical, electrical, and mechanical condition.","7.1.1","Switchgear and Switchboard Assemblies","Visual/Mechanical","A.2","ATS (Acceptance)","No","No",2,"Yes"

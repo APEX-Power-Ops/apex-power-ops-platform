@@ -1,7 +1,7 @@
 # RESA Power Project Tracker - System Overview
 
-**Version:** 1.4.0.0  
-**Last Updated:** November 22, 2025  
+**Version:** 1.5.0.0  
+**Last Updated:** November 28, 2025  
 **Project Lead:** Jason Swenson  
 **Repository:** [github.com/jasonlswenson-sys/RESA-Power-Project-Management](https://github.com/jasonlswenson-sys/RESA-Power-Project-Management)
 
@@ -19,16 +19,18 @@ Modern Dataverse-based project management system for electrical testing projects
 - ✅ **Audit trail** for all financial and completion data
 - ✅ **Expanded functionality** with customer, resource, and asset management (v1.4.0.0)
 
-**System Scale (v1.4.0.0):**
+**System Scale (v1.5.0.0):**
 - **14 Tables**: 8 core + 6 supporting tables
 - **291+ Fields**: Comprehensive data model
-- **19+ Relationships**: Fully integrated architecture
+- **20+ Relationships**: Fully integrated architecture (includes new Scope → Site)
 - **30 Formulas**: Automated calculations
 - **1 Flow**: Revenue recognition automation
 
 ---
 
 ## 📊 System Architecture
+
+> 📘 **Terminology Reference:** For detailed definitions of Business Unit, Client, and Site terminology, see [DATA_MODEL_REFERENCE.md](Documentation/01_Architecture/DATA_MODEL_REFERENCE.md)
 
 ### High-Level Architecture
 
@@ -99,10 +101,10 @@ graph TB
 
 ## 🏗️ Data Model
 
-### Entity Relationship Diagram (v1.4.0.0)
+### Entity Relationship Diagram (v1.5.0.0)
 
-**Updated:** November 22, 2025  
-**New Tables:** Clients, Sites, Employees, Quotes, Resource Assignments, Equipment
+**Updated:** November 28, 2025  
+**New in v1.5.0.0:** Scope → Site lookup for multi-site project support
 
 ```mermaid
 erDiagram
@@ -116,6 +118,7 @@ erDiagram
     QUOTE ||--o| PROJECTS : "converts_to"
     
     PROJECTS ||--o{ PROJECTSCOPE : "contains"
+    SITE ||--o{ PROJECTSCOPE : "work_at"
     PROJECTSCOPE ||--o{ TASKS : "organizes"
     PROJECTSCOPE ||--|| SCOPELABORDETAIL : "budgeted_by"
     TASKS ||--o{ APPARATUS : "includes"
@@ -123,13 +126,13 @@ erDiagram
     SCOPELABORDETAIL ||--o{ APPARATUSREVENUE : "rates_for"
     APPARATUS }o--|| APPARATUSTYPEMASTER : "classified_as"
     
-    %% Resource Management (New v1.4.0.0)
+    %% Resource Management
     EMPLOYEE ||--o{ RESOURCE_ASSIGNMENT : "assigned_via"
     RESOURCE_ASSIGNMENT }o--|| PROJECTS : "staffs"
     EQUIPMENT }o--o| EMPLOYEE : "assigned_to"
     EQUIPMENT }o--o| PROJECTS : "used_on"
     
-    %% New Tables (v1.4.0.0)
+    %% Tables with key fields
     CLIENT {
         string Client_Name
         string Client_Number
@@ -203,6 +206,7 @@ erDiagram
     PROJECTSCOPE {
         string Scope_Name
         lookup Project
+        lookup Site
         decimal Total_Apparatus_Hours
         decimal Total_Actual_Hours
     }
