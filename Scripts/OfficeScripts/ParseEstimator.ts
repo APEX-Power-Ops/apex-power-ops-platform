@@ -1,4 +1,19 @@
 /**
+ * ⚠️ DEPRECATED - November 29, 2025
+ * 
+ * This Office Script approach has been replaced by VBA macro export.
+ * See: Reference_Files/Excel/Estimator VBA Modules/DataverseExport.bas
+ * 
+ * Reasons for deprecation:
+ * - Performance warnings with cell-by-cell reads
+ * - Complex debugging in browser environment  
+ * - SharePoint URL paths incompatible with some operations
+ * 
+ * The VBA macro exports JSON directly, which Power Automate then imports.
+ * See: Documentation/06_Implementation_Guides/ESTIMATOR_FLOW_SPECIFICATION.md
+ */
+
+/**
  * Office Script: Parse RESA Estimator Excel File
  * 
  * This script extracts project data from the Estimator workbook format

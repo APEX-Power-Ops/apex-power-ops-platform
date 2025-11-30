@@ -1,14 +1,34 @@
 # Estimator to Dataverse Import Automation
 ## Implementation Specification
 
-**Version:** 1.0  
+**Version:** 2.0  
 **Created:** November 27, 2025  
-**Approach:** Office Scripts + Power Automate  
-**Status:** Design Complete - Ready for Implementation
+**Updated:** November 29, 2025  
+**Approach:** ~~Office Scripts + Power Automate~~ → **VBA JSON Export**  
+**Status:** ⚠️ DEPRECATED - See ESTIMATOR_FLOW_SPECIFICATION.md v3.0
 
 ---
 
-## Executive Summary
+## ⚠️ DEPRECATION NOTICE
+
+This specification has been **superseded** by the simplified VBA JSON export approach.
+
+**See:** [ESTIMATOR_FLOW_SPECIFICATION.md](./ESTIMATOR_FLOW_SPECIFICATION.md) (v3.0)
+
+### Why This Was Deprecated
+- Office Scripts had performance warnings with cell-by-cell reads
+- Complex TypeScript debugging in browser environment
+- SharePoint URL paths incompatible with some operations
+- VBA macro approach is simpler, faster, and already working
+
+### What Replaced It
+- **VBA Macro:** `DataverseExport.bas` exports JSON file
+- **Power Automate:** Simple flow parses JSON, creates Dataverse records
+- **User Experience:** Click button → Save As → Done
+
+---
+
+## Historical Reference (Original Approach)
 
 One-click button in Excel Estimator that sends quote data to Dataverse, creating a complete project hierarchy (Project → Scopes → Tasks → Apparatus) with all financial configuration.
 

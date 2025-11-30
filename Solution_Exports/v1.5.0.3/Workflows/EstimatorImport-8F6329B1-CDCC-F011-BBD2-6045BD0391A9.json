@@ -10,12 +10,12 @@
         },
         "runtimeSource": "embedded"
       },
-      "shared_commondataserviceforapps": {
+      "shared_commondataserviceforapps-1": {
         "api": {
           "name": "shared_commondataserviceforapps"
         },
         "connection": {
-          "connectionReferenceLogicalName": "cr950_sharedcommondataserviceforapps_fc294"
+          "connectionReferenceLogicalName": "new_sharedcommondataserviceforapps_4c81d"
         },
         "runtimeSource": "embedded"
       },
@@ -25,6 +25,15 @@
         },
         "connection": {
           "connectionReferenceLogicalName": "new_sharedoffice365_99ee3"
+        },
+        "runtimeSource": "embedded"
+      },
+      "shared_commondataserviceforapps": {
+        "api": {
+          "name": "shared_commondataserviceforapps"
+        },
+        "connection": {
+          "connectionReferenceLogicalName": "cr950_sharedcommondataserviceforapps_fc294"
         },
         "runtimeSource": "embedded"
       }
@@ -40,6 +49,14 @@
         "$connections": {
           "defaultValue": {},
           "type": "Object"
+        }
+      },
+      "staticResults": {
+        "Run_script0": {
+          "status": "Succeeded",
+          "outputs": {
+            "statusCode": "OK"
+          }
         }
       },
       "triggers": {
@@ -130,7 +147,7 @@
             "host": {
               "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
               "operationId": "ListRecordsWithOrganization",
-              "connectionName": "shared_commondataserviceforapps"
+              "connectionName": "shared_commondataserviceforapps-1"
             }
           },
           "runAfter": {
@@ -266,7 +283,7 @@
             ]
           },
           "actions": {
-            "Update_a_row_in_selected_environment": {
+            "Update_Existing_Estimator_Record": {
               "type": "OpenApiConnection",
               "inputs": {
                 "parameters": {
@@ -275,7 +292,7 @@
                   "recordId": "@first(outputs('Check_for_Existing_Estimator_Record')?['body/value'])?['cr950_estimatorid']",
                   "item/cr950_currentrevision": "@int(last(split(first(split(triggerOutputs()?['body/{FilenameWithExtension}'], '.xlsm')), '_Rev')))",
                   "item/cr950_estimatedate": "@outputs('EstimateDate')",
-                  "item/cr950_estimator_file_url": "@outputs('EstimatorFileUrl')",
+                  "item/cr950_estimator_file_url": "@concat('https://jswensonllc.sharepoint.com/sites/PhoenixProjects/', replace(triggerOutputs()?['body/{Path}'], ' ', '%20'))",
                   "item/cr950_filename": "@outputs('Filename')",
                   "item/cr950_lastmodified": "@utcNow()"
                 },
