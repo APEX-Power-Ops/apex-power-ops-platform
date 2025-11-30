@@ -1,6 +1,6 @@
 {
-  "lastUpdated": "2025-11-28T04:30:00Z",
-  "sessionId": "NOV27_v1.5.1.0_Complete",
+  "lastUpdated": "2025-11-29T21:30:00Z",
+  "sessionId": "NOV29_EstimatorFlowSimplification",
   "project": {
     "name": "RESA Power Project Tracker",
     "version": "v1.5.1.0",
@@ -55,11 +55,14 @@
   "criticalFacts": [
     "SINGLE ENVIRONMENT: Only org99cd6c6e.crm.dynamics.com is active - all other references are outdated",
     "Azure App Registration: RESA-Dev-MCP-Access (9df3350f-b3b4-47c4-97b5-499a8b02acc7)",
+    "Nov 29 ARCHITECTURE CHANGE: Office Scripts DEPRECATED, now using VBA JSON export → Power Automate import",
+    "Nov 29 VBA Macro Fixed: DataverseExport.bas uses Documents folder (ChDir fails on SharePoint URLs)",
+    "Nov 29 Test Export Success: Garney Central Mesa Reuse - 4 scopes, 52 apparatus, $97K grand total",
+    "Nov 29 Documentation v3.0: ESTIMATOR_FLOW_SPECIFICATION.md completely rewritten for JSON approach",
     "Nov 27 Import Pipeline: Excel→JSON (VBA) → Dataverse (Node.js) fully operational",
     "Nov 27 First Real Import: Garney Central Mesa Reuse Plant - 143 apparatus, 4 scopes, rollups calculating",
     "Nov 27 MCP Fixed: resa-dataverse-mcp now uses dotenv for credentials (.env file required)",
     "Nov 27 Import v2: import-estimator.js now creates ScopeLaborDetail records with financial data",
-    "Nov 27 Claude Desktop Audit: Schema B+ rating, 16 tables confirmed, 25 relationships verified",
     "GAP IDENTIFIED: Apparatus table missing cr950_assigned_employee lookup to Employee (Equipment has it, Apparatus doesn't)",
     "DOCUMENTATION GAP: MASTER_BUILD_SPECIFICATION.md 2 versions behind - see VS_CLAUDE_MASTER_BUILD_TASK.md",
     "BusinessUnit represents multi-location architecture (Phoenix/Vegas/Denver/San Diego) - NOT unused despite 0 records",
@@ -106,18 +109,18 @@
     ],
     "nextImmediate": [
       {
-        "name": "Add cr950_assigned_employee to Apparatus",
-        "timeEstimate": "5 minutes",
-        "priority": "P0 - Critical Gap",
-        "description": "Add lookup field Apparatus→Employee via Power Platform maker portal",
-        "why": "Required for technician assignment workflow - Equipment has it, Apparatus doesn't"
+        "name": "Build JSON Import Power Automate Flow",
+        "timeEstimate": "1-2 hours",
+        "priority": "P0 - Next Session",
+        "description": "Create flow that triggers on JSON file in SharePoint, parses and creates Dataverse records",
+        "why": "Completes VBA→JSON→Dataverse pipeline"
       },
       {
-        "name": "Run Create-DataverseViews.ps1",
+        "name": "Add cr950_assigned_employee to Apparatus",
         "timeEstimate": "5 minutes",
-        "priority": "HIGH",
-        "description": "Create 10 standard views: Active Projects, Projects by Client, All Scopes, etc.",
-        "location": "Scripts/PowerShell/Create-DataverseViews.ps1"
+        "priority": "P1 - Critical Gap",
+        "description": "Add lookup field Apparatus→Employee via Power Platform maker portal",
+        "why": "Required for technician assignment workflow - Equipment has it, Apparatus doesn't"
       },
       {
         "name": "Update MASTER_BUILD_SPECIFICATION.md",

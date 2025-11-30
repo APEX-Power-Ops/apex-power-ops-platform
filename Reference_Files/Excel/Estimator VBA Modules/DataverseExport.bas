@@ -58,19 +58,29 @@ Public Sub ExportToDataverse()
     ' Build JSON
     json = BuildExportJSON(metaSheet)
     
-    ' Determine output path
-    Dim basePath As String
-    If Len(ThisWorkbook.Path) = 0 Or InStr(ThisWorkbook.Path, "https://") > 0 Then
-        basePath = Environ("USERPROFILE") & "\Desktop"
-    Else
-        basePath = ThisWorkbook.Path
+    ' Build default filename
+    Dim defaultFilename As String
+    
+    defaultFilename = SanitizeFilename(GetMetaValue(metaSheet, "Job #")) & "_" & _
+                      "DATAVERSE_IMPORT_" & Format(Now, "yyyymmdd_hhmmss") & ".json"
+    
+    ' Use Documents folder as default - works regardless of SharePoint/OneDrive
+    Dim initialPath As String
+    initialPath = Environ("USERPROFILE") & "\Documents\" & defaultFilename
+    
+    ' Show Save As dialog
+    outputPath = Application.GetSaveAsFilename( _
+        InitialFileName:=initialPath, _
+        FileFilter:="JSON Files (*.json), *.json", _
+        Title:="Save Dataverse Export")
+    
+    ' User cancelled
+    If outputPath = "False" Or outputPath = "" Then
+        MsgBox "Export cancelled.", vbInformation
+        Exit Sub
     End If
     
-    ' Create output file with timestamp
-    outputPath = basePath & "\" & _
-                 SanitizeFilename(GetMetaValue(metaSheet, "Job #")) & "_" & _
-                 "DATAVERSE_IMPORT_" & Format(Now, "yyyymmdd_hhmmss") & ".json"
-    
+    ' Save the JSON file
     fileNum = FreeFile
     Open outputPath For Output As #fileNum
     Print #fileNum, json
@@ -82,14 +92,8 @@ Public Sub ExportToDataverse()
     
     MsgBox "Export Complete!" & vbCrLf & vbCrLf & _
            "JSON file saved to:" & vbCrLf & outputPath & vbCrLf & vbCrLf & _
-           "Next Steps:" & vbCrLf & _
-           "1. Open Power Automate" & vbCrLf & _
-           "2. Run the Dataverse Import flow" & vbCrLf & _
-           "3. Select this JSON file", _
+           "The Power Automate flow will automatically import this data.", _
            vbInformation, "Export Complete"
-    
-    ' Open file location
-    Shell "explorer.exe /select,""" & outputPath & """", vbNormalFocus
     
     Exit Sub
     

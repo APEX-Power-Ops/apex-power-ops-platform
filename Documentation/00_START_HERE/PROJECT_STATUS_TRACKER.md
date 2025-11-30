@@ -1,6 +1,6 @@
 # RESA POWER PROJECT - COMPREHENSIVE STATUS TRACKER
 
-**Last Updated**: November 23, 2025  
+**Last Updated**: November 29, 2025  
 **Solution Version**: v1.5.0.0 (32 Rollup Fields Added)  
 **Dev Environment**: org99cd6c6e.crm.dynamics.com (Jason Swenson's Dev) ✅  
 **Prod Environment**: org04ad071f.crm.dynamics.com (RESA Production) - MCP NEVER connects here ❌  
@@ -8,7 +8,11 @@
 
 **🚨 CRITICAL UPDATE**: RESA IT deleted original dev environment. Now using isolated personal dev environment for all MCP testing and development. Solution exports backed up to local + GitHub + Box.com.
 
-**🎉 LATEST**: All 32 rollup fields created (18 date tracking + 14 revenue) in v1.5.0.0. Power Automate flow updated. MCP servers operational (resa-docs, resa-dataverse-dev, resa-testing, resa-deploy).
+**🎉 LATEST (Nov 29)**: 
+- Simplified Estimator import architecture: VBA JSON export → Power Automate import
+- Deprecated Office Scripts approach (performance issues, SharePoint path incompatibility)
+- `DataverseExport.bas` macro working - exports clean JSON from Estimator workbooks
+- Documentation updated: ESTIMATOR_FLOW_SPECIFICATION.md v3.0
 
 ---
 
