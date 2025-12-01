@@ -1,0 +1,323 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_sharepointonline": {
+        "api": {
+          "name": "shared_sharepointonline"
+        },
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedsharepointonline_aa00f"
+        },
+        "runtimeSource": "embedded"
+      },
+      "shared_commondataserviceforapps": {
+        "api": {
+          "name": "shared_commondataserviceforapps"
+        },
+        "connection": {
+          "connectionReferenceLogicalName": "cr950_sharedcommondataserviceforapps_fc294"
+        },
+        "runtimeSource": "embedded"
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        },
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        }
+      },
+      "triggers": {
+        "When_JSON_file_created": {
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_sharepointonline",
+              "operationId": "GetOnNewFileItems",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+            },
+            "parameters": {
+              "dataset": "https://jswensonllc.sharepoint.com/sites/PhoenixProjects",
+              "table": "bf92590a-261e-4ed4-8074-42dcf26db632",
+              "folderPath": "/Shared Documents/Estimators/Dataverse_Exports"
+            },
+            "authentication": "@parameters('$authentication')"
+          },
+          "recurrence": {
+            "interval": 1,
+            "frequency": "Minute"
+          },
+          "splitOn": "@triggerOutputs()?['body/value']"
+        }
+      },
+      "actions": {
+        "Get_file_content": {
+          "type": "OpenApiConnection",
+          "runAfter": {},
+          "inputs": {
+            "host": {
+              "connectionName": "shared_sharepointonline",
+              "operationId": "GetFileContent",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+            },
+            "parameters": {
+              "dataset": "https://jswensonllc.sharepoint.com/sites/PhoenixProjects",
+              "id": "@triggerOutputs()?['body/Id']"
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        },
+        "Parse_JSON": {
+          "type": "ParseJson",
+          "runAfter": {
+            "Get_file_content": ["Succeeded"]
+          },
+          "inputs": {
+            "content": "@{body('Get_file_content')}",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "exportDate": { "type": "string" },
+                "client": {
+                  "type": "object",
+                  "properties": {
+                    "name": { "type": "string" }
+                  }
+                },
+                "site": {
+                  "type": "object",
+                  "properties": {
+                    "name": { "type": "string" },
+                    "address": { "type": "string" },
+                    "city": { "type": "string" },
+                    "state": { "type": "string" },
+                    "zipCode": { "type": "string" },
+                    "contactEmail": { "type": "string" }
+                  }
+                },
+                "project": {
+                  "type": "object",
+                  "properties": {
+                    "name": { "type": "string" },
+                    "projectNumber": { "type": "string" }
+                  }
+                },
+                "scopes": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "name": { "type": "string" },
+                      "scopeType": { "type": "string" },
+                      "totalHours": { "type": "number" },
+                      "quotedAmount": { "type": "number" },
+                      "multiplier": { "type": "number" },
+                      "financials": {
+                        "type": "object",
+                        "properties": {
+                          "onsiteLaborTotal": { "type": "number" },
+                          "offsiteLaborTotal": { "type": "number" },
+                          "travelTotal": { "type": "number" },
+                          "outsideServicesTotal": { "type": "number" }
+                        }
+                      },
+                      "apparatus": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "equipmentType": { "type": "string" },
+                            "quantity": { "type": "integer" },
+                            "hoursPerUnit": { "type": "number" },
+                            "section": { "type": "string" }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "summary": {
+                  "type": "object",
+                  "properties": {
+                    "grandTotal": { "type": "number" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "Create_Client": {
+          "type": "OpenApiConnection",
+          "runAfter": {
+            "Parse_JSON": ["Succeeded"]
+          },
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "CreateRecord",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "entityName": "cr950_clients",
+              "item/cr950_name": "@body('Parse_JSON')?['client']?['name']"
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        },
+        "Create_Site": {
+          "type": "OpenApiConnection",
+          "runAfter": {
+            "Create_Client": ["Succeeded"]
+          },
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "CreateRecord",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "entityName": "cr950_sites",
+              "item/cr950_name": "@body('Parse_JSON')?['site']?['name']",
+              "item/cr950_address": "@body('Parse_JSON')?['site']?['address']",
+              "item/cr950_city": "@body('Parse_JSON')?['site']?['city']",
+              "item/cr950_state": "@body('Parse_JSON')?['site']?['state']",
+              "item/cr950_zip": "@body('Parse_JSON')?['site']?['zipCode']",
+              "item/cr950_sitecontactemail": "@body('Parse_JSON')?['site']?['contactEmail']",
+              "item/cr950_client@odata.bind": "cr950_clients(@{outputs('Create_Client')?['body/cr950_clientid']})"
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        },
+        "Create_Project": {
+          "type": "OpenApiConnection",
+          "runAfter": {
+            "Create_Site": ["Succeeded"]
+          },
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "CreateRecord",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "entityName": "cr950_projectses",
+              "item/cr950_project_name": "@body('Parse_JSON')?['project']?['name']",
+              "item/cr950_job_number": "@body('Parse_JSON')?['project']?['projectNumber']",
+              "item/cr950_client@odata.bind": "cr950_clients(@{outputs('Create_Client')?['body/cr950_clientid']})",
+              "item/cr950_site@odata.bind": "cr950_sites(@{outputs('Create_Site')?['body/cr950_siteid']})"
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        },
+        "Loop_Scopes": {
+          "type": "Foreach",
+          "runAfter": {
+            "Create_Project": ["Succeeded"]
+          },
+          "foreach": "@body('Parse_JSON')?['scopes']",
+          "actions": {
+            "Create_Scope": {
+              "type": "OpenApiConnection",
+              "runAfter": {},
+              "inputs": {
+                "host": {
+                  "connectionName": "shared_commondataserviceforapps",
+                  "operationId": "CreateRecord",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                },
+                "parameters": {
+                  "entityName": "cr950_projectscopes",
+                  "item/cr950_scope_name": "@items('Loop_Scopes')?['name']",
+                  "item/cr950_testing_standard": "@if(equals(items('Loop_Scopes')?['scopeType'], 'ATS'), 0, 1)",
+                  "item/cr950_Project@odata.bind": "cr950_projectses(@{outputs('Create_Project')?['body/cr950_projectsid']})"
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            },
+            "Create_ScopeLaborDetail": {
+              "type": "OpenApiConnection",
+              "runAfter": {
+                "Create_Scope": ["Succeeded"]
+              },
+              "inputs": {
+                "host": {
+                  "connectionName": "shared_commondataserviceforapps",
+                  "operationId": "CreateRecord",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                },
+                "parameters": {
+                  "entityName": "cr950_scopelabordetailses",
+                  "item/cr950_name": "@concat(items('Loop_Scopes')?['name'], ' - Labor Details')",
+                  "item/cr950_total_apparatus_hours": "@items('Loop_Scopes')?['totalHours']",
+                  "item/cr950_scope_total_value": "@items('Loop_Scopes')?['quotedAmount']",
+                  "item/cr950_scopemultiplier": "@coalesce(items('Loop_Scopes')?['multiplier'], 1.0)",
+                  "item/cr950_onsitelabortotal": "@coalesce(items('Loop_Scopes')?['financials']?['onsiteLaborTotal'], 0)",
+                  "item/cr950_offsitelabortotal": "@coalesce(items('Loop_Scopes')?['financials']?['offsiteLaborTotal'], 0)",
+                  "item/cr950_traveltotal": "@coalesce(items('Loop_Scopes')?['financials']?['travelTotal'], 0)",
+                  "item/cr950_outsideservicestotal": "@coalesce(items('Loop_Scopes')?['financials']?['outsideServicesTotal'], 0)",
+                  "item/cr950_iscurrentversion": true,
+                  "item/cr950_projectscope_id@odata.bind": "cr950_projectscopes(@{outputs('Create_Scope')?['body/cr950_projectscopeid']})"
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            },
+            "Loop_Apparatus": {
+              "type": "Foreach",
+              "runAfter": {
+                "Create_ScopeLaborDetail": ["Succeeded"]
+              },
+              "foreach": "@items('Loop_Scopes')?['apparatus']",
+              "actions": {
+                "Create_Apparatus_Records": {
+                  "type": "Foreach",
+                  "runAfter": {},
+                  "foreach": "@range(0, items('Loop_Apparatus')?['quantity'])",
+                  "actions": {
+                    "Create_Apparatus": {
+                      "type": "OpenApiConnection",
+                      "runAfter": {},
+                      "inputs": {
+                        "host": {
+                          "connectionName": "shared_commondataserviceforapps",
+                          "operationId": "CreateRecord",
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                        },
+                        "parameters": {
+                          "entityName": "cr950_apparatuses",
+                          "item/cr950_apparatustype": "@items('Loop_Apparatus')?['equipmentType']",
+                          "item/cr950_labor_hours": "@items('Loop_Apparatus')?['hoursPerUnit']",
+                          "item/cr950_notes": "@items('Loop_Apparatus')?['section']",
+                          "item/cr950_Scope@odata.bind": "cr950_projectscopes(@{outputs('Create_Scope')?['body/cr950_projectscopeid']})",
+                          "item/cr950_Project@odata.bind": "cr950_projectses(@{outputs('Create_Project')?['body/cr950_projectsid']})"
+                        },
+                        "authentication": "@parameters('$authentication')"
+                      }
+                    }
+                  },
+                  "runtimeConfiguration": {
+                    "concurrency": {
+                      "repetitions": 1
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "runtimeConfiguration": {
+            "concurrency": {
+              "repetitions": 1
+            }
+          }
+        }
+      },
+      "outputs": {}
+    }
+  },
+  "schemaVersion": "1.0.0.0"
+}

@@ -1,0 +1,4 @@
+<organizationsetting settingdefinitionid.uniquename="EnableFormInsightsAppSetting">
+  <iscustomizable>1</iscustomizable>
+  <value>1</value>
+</organizationsetting>

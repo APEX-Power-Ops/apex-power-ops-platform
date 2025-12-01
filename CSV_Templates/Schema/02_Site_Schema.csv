@@ -1,0 +1,14 @@
+FieldLogicalName,DisplayName,Type,MaxLength,Required,Description,LookupTarget
+cr950_site_name,Site Name,String,200,true,Site/facility name - primary field,
+cr950_site_code,Site Code,String,20,false,Short reference code,
+cr950_site_client,Client,Lookup,,true,Parent client,cr950_client
+cr950_site_address,Address,Memo,2000,false,Physical address,
+cr950_site_city,City,String,100,false,City,
+cr950_site_state,State,String,50,false,State or province,
+cr950_site_zip,Zip Code,String,20,false,Postal code,
+cr950_site_country,Country,String,100,false,Country,
+cr950_site_contact_name,Contact Name,String,200,false,Primary site contact,
+cr950_site_contact_phone,Contact Phone,String,50,false,Contact phone,
+cr950_site_contact_email,Contact Email,String,200,false,Contact email,
+cr950_site_notes,Notes,Memo,4000,false,Site-specific notes,
+cr950_site_active,Active,Boolean,,false,Is site currently active,

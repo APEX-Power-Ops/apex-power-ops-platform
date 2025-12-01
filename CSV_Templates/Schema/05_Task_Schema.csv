@@ -1,0 +1,15 @@
+FieldLogicalName,DisplayName,Type,MaxLength,Required,Description,LookupTarget
+cr950_task_name,Task Name,String,200,true,Task description - primary field,
+cr950_task_number,Task Number,String,50,false,Task number within scope,
+cr950_task_scope,Scope,Lookup,,true,Parent scope,cr950_scope
+cr950_task_type,Task Type,String,100,false,Type of task/test,
+cr950_task_status,Status,String,50,false,Task status,
+cr950_task_quantity,Quantity,Integer,,false,Number of units,
+cr950_task_unit_price,Unit Price,Currency,,false,Price per unit,
+cr950_task_total,Task Total,Currency,,false,Quantity x Unit Price,
+cr950_task_labor_hours,Labor Hours,Decimal,,false,Estimated labor hours,
+cr950_task_labor_rate,Labor Rate,Currency,,false,Hourly labor rate,
+cr950_task_labor_total,Labor Total,Currency,,false,Hours x Rate,
+cr950_task_sequence,Sequence,Integer,,false,Display order,
+cr950_task_notes,Notes,Memo,4000,false,Task notes,
+cr950_task_active,Active,Boolean,,false,Is task active,

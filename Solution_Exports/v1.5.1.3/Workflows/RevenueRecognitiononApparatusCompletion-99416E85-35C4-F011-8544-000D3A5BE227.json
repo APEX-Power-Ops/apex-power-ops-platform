@@ -1,0 +1,268 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_commondataserviceforapps": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "cr950_sharedcommondataserviceforapps_fc294"
+        },
+        "api": {
+          "name": "shared_commondataserviceforapps"
+        }
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        },
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        }
+      },
+      "triggers": {
+        "Configure_Trigger": {
+          "metadata": {
+            "operationMetadataId": "6e2393ab-a91a-4079-b63b-6c73f5f75ee6"
+          },
+          "type": "OpenApiConnectionWebhook",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "SubscribeWebhookTrigger",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "subscriptionRequest/message": 3,
+              "subscriptionRequest/entityname": "cr950_apparatus",
+              "subscriptionRequest/scope": 4,
+              "subscriptionRequest/filteringattributes": "cr950_completion_status",
+              "subscriptionRequest/filterexpression": "cr950_completion_status eq 2"
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        }
+      },
+      "actions": {
+        "Condition_-_Check_Date_Completed": {
+          "actions": {
+            "Update_Date_Completed": {
+              "runAfter": {},
+              "metadata": {
+                "operationMetadataId": "eabc2c84-3628-4910-a8e8-b091ebc6547b"
+              },
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "connectionName": "shared_commondataserviceforapps",
+                  "operationId": "UpdateOnlyRecordWithOrganization",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                },
+                "parameters": {
+                  "organization": "https://org99cd6c6e.crm.dynamics.com",
+                  "entityName": "cr950_apparatuses",
+                  "recordId": "@triggerOutputs()?['body/cr950_apparatusid']",
+                  "item/cr950_datecompleted": "@utcNow()"
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            }
+          },
+          "runAfter": {},
+          "expression": {
+            "equals": [
+              "@empty(triggerOutputs()?['body/cr950_datecompleted'])",
+              "@true"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "1f83d355-365d-44a2-8227-b697fbf6ef13"
+          },
+          "type": "If"
+        },
+        "Get_Scope": {
+          "runAfter": {
+            "Condition_-_Check_Date_Completed": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "09aa33ff-6f0e-42dd-9644-cc7d63736e69"
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "GetItemWithOrganization",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "organization": "https://org99cd6c6e.crm.dynamics.com",
+              "entityName": "cr950_projectscopes",
+              "recordId": "@triggerOutputs()?['body/_cr950_scope_value']"
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        },
+        "List_ScopeLaborDetail": {
+          "runAfter": {
+            "Get_Scope": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "324b5bc6-0fc8-472e-bc11-00ca17ef7328"
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "ListRecordsWithOrganization",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "organization": "https://org99cd6c6e.crm.dynamics.com",
+              "entityName": "cr950_scopelabordetailses",
+              "$filter": "_cr950_projectscope_id_value eq @{outputs('Get_Scope')?['body/cr950_projectscopeid']}"
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        },
+        "Condition_-_ScopeLaborDetail_Found": {
+          "actions": {
+            "List_Existing_Revenue": {
+              "runAfter": {},
+              "metadata": {
+                "operationMetadataId": "c710ec45-be6e-49d8-a20b-304836a276ec"
+              },
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "connectionName": "shared_commondataserviceforapps",
+                  "operationId": "ListRecordsWithOrganization",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                },
+                "parameters": {
+                  "organization": "https://org99cd6c6e.crm.dynamics.com",
+                  "entityName": "cr950_apparatusrevenues",
+                  "$filter": "_cr950_apparatus_value eq @{triggerOutputs()?['body/cr950_apparatusid']}",
+                  "$top": 1
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            }
+          },
+          "runAfter": {
+            "List_ScopeLaborDetail": [
+              "Succeeded"
+            ]
+          },
+          "else": {
+            "actions": {
+              "Terminate": {
+                "runAfter": {},
+                "metadata": {
+                  "operationMetadataId": "3a1e057a-eda2-42e5-b411-769bc97ca61d"
+                },
+                "type": "Terminate",
+                "inputs": {
+                  "runStatus": "Failed",
+                  "runError": {
+                    "code": "MissingRates",
+                    "message": "Cannot recognize revenue: No labor rates defined for this scope"
+                  }
+                }
+              }
+            }
+          },
+          "expression": {
+            "greater": [
+              "@length(outputs('List_ScopeLaborDetail')?['body/value'])",
+              0
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "e24dd2a3-40f6-4295-b767-906b6595b68c"
+          },
+          "type": "If"
+        },
+        "Condition___Revenue_Exists": {
+          "actions": {
+            "Apply_to_each": {
+              "foreach": "@outputs('List_ScopeLaborDetail')?['body/value']",
+              "actions": {
+                "Create_Apparatus_Revenue": {
+                  "runAfter": {},
+                  "metadata": {
+                    "operationMetadataId": "b6ccc32c-487e-464b-8497-1173d16c3832"
+                  },
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "connectionName": "shared_commondataserviceforapps",
+                      "operationId": "CreateRecordWithOrganization",
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                    },
+                    "parameters": {
+                      "organization": "https://org99cd6c6e.crm.dynamics.com",
+                      "entityName": "cr950_apparatusrevenues",
+                      "item/cr950_Apparatus@odata.bind": "@concat('cr950_apparatuses(',triggerOutputs()?['body/cr950_apparatusid'],')')",
+                      "item/cr950_apparatushours": "@triggerOutputs()?['body/cr950_completed_hours']",
+                      "item/cr950_Project@odata.bind": "@concat('cr950_projectses(',outputs('Get_Scope')?['body/_cr950_project_value'],')')",
+                      "item/cr950_revenuestatus": 2,
+                      "item/cr950_ScopeLaborDetail@odata.bind": "@concat('cr950_scopelabordetailses(',items('Apply_to_each')?['cr950_scopelabordetailsid'],')')",
+                      "item/cr950_delays": "@triggerOutputs()?['body/cr950_delays']",
+                      "item/cr950_effectivelaborrate": "@items('Apply_to_each')?['cr950_effectivelaborrate']",
+                      "item/cr950_revenuerecognitiondate": "@utcNow()"
+                    },
+                    "authentication": "@parameters('$authentication')"
+                  }
+                }
+              },
+              "runAfter": {},
+              "metadata": {
+                "operationMetadataId": "461b9e72-30b7-4a32-97ea-7c3f2e113146"
+              },
+              "type": "Foreach"
+            }
+          },
+          "runAfter": {
+            "Condition_-_ScopeLaborDetail_Found": [
+              "Succeeded"
+            ]
+          },
+          "else": {
+            "actions": {
+              "Terminate_2": {
+                "runAfter": {},
+                "metadata": {
+                  "operationMetadataId": "f7cc76ab-baaa-483c-b2be-cf52eafd1687"
+                },
+                "type": "Terminate",
+                "inputs": {
+                  "runStatus": "Succeeded"
+                }
+              }
+            }
+          },
+          "expression": {
+            "equals": [
+              "@length(outputs('List_Existing_Revenue')?['body/value'])",
+              0
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "ff7b7c78-e68c-4a24-9e83-c85673e08eb8"
+          },
+          "type": "If"
+        }
+      }
+    },
+    "templateName": ""
+  },
+  "schemaVersion": "1.0.0.0"
+}
