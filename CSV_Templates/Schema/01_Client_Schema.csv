@@ -1,0 +1,13 @@
+FieldLogicalName,DisplayName,Type,MaxLength,Required,Description,LookupTarget
+cr950_client_name,Client Name,String,200,true,Official company name - primary field,
+cr950_client_code,Client Code,String,20,false,Short code for reference (e.g. LAFA),
+cr950_client_address,Address,Memo,2000,false,Full mailing address,
+cr950_client_city,City,String,100,false,City,
+cr950_client_state,State,String,50,false,State or province,
+cr950_client_zip,Zip Code,String,20,false,Postal code,
+cr950_client_country,Country,String,100,false,Country,
+cr950_client_phone,Phone,String,50,false,Primary phone number,
+cr950_client_email,Email,String,200,false,Primary contact email,
+cr950_client_website,Website,String,500,false,Company website URL,
+cr950_client_notes,Notes,Memo,4000,false,General notes about client,
+cr950_client_active,Active,Boolean,,false,Is this an active client,

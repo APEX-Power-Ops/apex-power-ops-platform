@@ -1,10 +1,10 @@
 {
-  "lastUpdated": "2025-11-29T21:30:00Z",
-  "sessionId": "NOV29_EstimatorFlowSimplification",
+  "lastUpdated": "2025-12-01T05:00:00Z",
+  "sessionId": "NOV30_Schema_Dashboard_Complete",
   "project": {
     "name": "RESA Power Project Tracker",
-    "version": "v1.5.1.0",
-    "status": "v1.5.1.0-exported",
+    "version": "v1.5.1.5",
+    "status": "schema-rebuild-ready-dashboard-poc-complete",
     "environment": {
       "url": "https://org99cd6c6e.crm.dynamics.com",
       "orgId": "e550d661-edc7-f011-8729-000d3a33a005",
@@ -18,171 +18,78 @@
       "branch": "clean-main"
     }
   },
-  "technical": {
-    "tables": 16,
-    "tableNames": [
-      "BusinessUnit",
-      "Projects",
-      "ProjectScope",
-      "Tasks",
-      "Apparatus",
-      "ApparatusRevenue",
-      "ScopeLaborDetail",
-      "ApparatusTypeMaster",
-      "ProjectFinancialSummary",
-      "ScopeFinancialSummary",
-      "Client",
-      "Site",
-      "Employee",
-      "Quote",
-      "ResourceAssignment",
-      "Equipment"
+  "webApp": {
+    "location": "C:\\Users\\jjswe\\Projects\\resa-web-app",
+    "framework": "Next.js 16.0.5 (Turbopack)",
+    "status": "OPERATIONAL",
+    "url": "http://localhost:3000",
+    "routes": {
+      "/": "Dashboard placeholder",
+      "/import": "JSON paste/upload page",
+      "/import/configure": "Task config + Dataverse submit"
+    },
+    "auth": "MSAL - Azure AD",
+    "ui": "Tailwind CSS + shadcn/ui"
+  },
+  "vbaModule": {
+    "location": "Reference_Files/Excel/Estimator VBA Modules/DataverseExport.bas",
+    "version": "1.1",
+    "functions": ["ExportToDataverse", "ExportToClipboardOnly", "QuickValidate"]
+  },
+  "schemaRebuild": {
+    "status": "PREPARED",
+    "schemaFolder": "CSV_Templates/Schema",
+    "creationScript": "Scripts/PowerShell/Active/Create-Tables-From-Schema.ps1",
+    "tables": [
+      {"order": 1, "name": "cr950_client", "plural": "cr950_clients"},
+      {"order": 2, "name": "cr950_site", "plural": "cr950_sites"},
+      {"order": 3, "name": "cr950_project", "plural": "cr950_projects"},
+      {"order": 4, "name": "cr950_scope", "plural": "cr950_scopes"},
+      {"order": 5, "name": "cr950_task", "plural": "cr950_tasks"},
+      {"order": 6, "name": "cr950_apparatus", "plural": "cr950_apparatuses"},
+      {"order": 7, "name": "cr950_scopelabordetail", "plural": "cr950_scopelabordetails"}
     ],
-    "totalFields": 650,
-    "lookupRelationships": 26,
-    "formulas": 65,
-    "choiceFields": 9,
-    "flows": 1,
-    "views": 10,
-    "auditingEnabled": "2025-11-19",
-    "importPipeline": {
-      "vbaModule": "DataverseExport.bas",
-      "importScript": "import-estimator.js (v2.0 with ScopeLaborDetail)",
-      "mcpServer": "resa-dataverse-mcp",
-      "testedWith": "Central Mesa Reuse Plant - 143 apparatus"
+    "namingConvention": "cr950_{tablename}_{fieldpurpose}",
+    "nextSteps": [
+      "1. Export existing data as backup",
+      "2. Run script with -DeleteExisting to rebuild",
+      "3. Update web app field mappings",
+      "4. Re-import test data"
+    ]
+  },
+  "dataverseSchema": {
+    "totalTables": 21,
+    "tablesInActiveUse": 7,
+    "totalCustomFields": 650,
+    "coreTables": ["clients", "sites", "projectses", "projectscopes", "taskses", "apparatuses", "scopelabordetailses"],
+    "fieldMappingNote": "OData bindings are case-sensitive: cr950_Project, cr950_Scope, cr950_Task",
+    "REBUILD_PLANNED": "New schema in CSV_Templates/Schema - cleaner naming, proper EntitySetNames"
+  },
+  "importPipeline": {
+    "status": "FULLY OPERATIONAL",
+    "primaryFlow": "Excel VBA → JSON Clipboard → Web App → Dataverse API",
+    "fieldMappings": {
+      "sites": "cr950_name, cr950_address, cr950_city, cr950_state, cr950_zip",
+      "projects": "cr950_project_name, cr950_job_number, cr950_project_manager",
+      "scopes": "cr950_scope_name, cr950_scope_number, cr950_Project@odata.bind",
+      "tasks": "cr950_task_name, cr950_task_number, cr950_Scope@odata.bind",
+      "apparatus": "cr950_apparatus_designation, cr950_apparatustype, cr950_labor_hours"
     }
   },
   "criticalFacts": [
-    "SINGLE ENVIRONMENT: Only org99cd6c6e.crm.dynamics.com is active - all other references are outdated",
-    "Azure App Registration: RESA-Dev-MCP-Access (9df3350f-b3b4-47c4-97b5-499a8b02acc7)",
-    "Nov 29 ARCHITECTURE CHANGE: Office Scripts DEPRECATED, now using VBA JSON export → Power Automate import",
-    "Nov 29 VBA Macro Fixed: DataverseExport.bas uses Documents folder (ChDir fails on SharePoint URLs)",
-    "Nov 29 Test Export Success: Garney Central Mesa Reuse - 4 scopes, 52 apparatus, $97K grand total",
-    "Nov 29 Documentation v3.0: ESTIMATOR_FLOW_SPECIFICATION.md completely rewritten for JSON approach",
-    "Nov 27 Import Pipeline: Excel→JSON (VBA) → Dataverse (Node.js) fully operational",
-    "Nov 27 First Real Import: Garney Central Mesa Reuse Plant - 143 apparatus, 4 scopes, rollups calculating",
-    "Nov 27 MCP Fixed: resa-dataverse-mcp now uses dotenv for credentials (.env file required)",
-    "Nov 27 Import v2: import-estimator.js now creates ScopeLaborDetail records with financial data",
-    "GAP IDENTIFIED: Apparatus table missing cr950_assigned_employee lookup to Employee (Equipment has it, Apparatus doesn't)",
-    "DOCUMENTATION GAP: MASTER_BUILD_SPECIFICATION.md 2 versions behind - see VS_CLAUDE_MASTER_BUILD_TASK.md",
-    "BusinessUnit represents multi-location architecture (Phoenix/Vegas/Denver/San Diego) - NOT unused despite 0 records",
-    "Table naming in Dataverse: EntitySetName is PLURAL (cr950_clients), LogicalName is SINGULAR (cr950_client)",
-    "Navigation properties are CASE-SENSITIVE: cr950_Project, cr950_Scope, cr950_client (varies by table)",
-    "VS Code continuity system: PROJECT_CONTEXT.json + session summaries replaces Memory MCP functionality"
+    "SCHEMA REBUILD READY: CSV definitions in CSV_Templates/Schema, creation script ready",
+    "NEW NAMING: cr950_{table}_{field} convention (e.g., cr950_project_name not cr950_project_name)",
+    "ENTITYSETNAME FIX: projects not projectses, tasks not taskses, scopes not projectscopes",
+    "WEB APP: Will need field mapping updates after rebuild",
+    "ODATA CASE SENSITIVITY: Lookup bindings use SchemaName case",
+    "SINGLE ENVIRONMENT: Only org99cd6c6e.crm.dynamics.com is active"
   ],
   "currentStatus": {
-    "completed": [
-      {
-        "name": "Excel→Dataverse Import Pipeline",
-        "completedDate": "2025-11-27",
-        "result": "Full pipeline operational: VBA export + Node.js import + MCP integration",
-        "components": [
-          "DataverseExport.bas - VBA module for Excel→JSON",
-          "import-estimator.js v2.0 - Node.js for JSON→Dataverse with ScopeLaborDetail",
-          "resa-dataverse-mcp - MCP server with dotenv credentials"
-        ],
-        "validation": "143 apparatus imported, rollups calculating correctly"
-      },
-      {
-        "name": "MCP Dataverse Connection Fixed",
-        "completedDate": "2025-11-27",
-        "result": "Added dotenv support, created .env file with Azure credentials",
-        "impact": "All CRUD operations now working via MCP"
-      },
-      {
-        "name": "Claude Desktop Independent Audit",
-        "completedDate": "2025-11-27",
-        "result": "Schema audit B+ rating, validation passed, gaps documented",
-        "deliverables": [
-          "DATAVERSE_SCHEMA_AUDIT_20251127.md",
-          "VALIDATION_REPORT_20251127.md",
-          "IMPORT_PIPELINE_SOP.md",
-          "DOCUMENTATION_AUDIT_20251127.md"
-        ]
-      },
-      {
-        "name": "v1.5.0.0 Rollup Fields Complete",
-        "completedDate": "2025-11-23",
-        "result": "65 rollup/calculated fields implemented",
-        "milestone": "Financial tracking and KPI functionality ready"
-      }
-    ],
-    "nextImmediate": [
-      {
-        "name": "Build JSON Import Power Automate Flow",
-        "timeEstimate": "1-2 hours",
-        "priority": "P0 - Next Session",
-        "description": "Create flow that triggers on JSON file in SharePoint, parses and creates Dataverse records",
-        "why": "Completes VBA→JSON→Dataverse pipeline"
-      },
-      {
-        "name": "Add cr950_assigned_employee to Apparatus",
-        "timeEstimate": "5 minutes",
-        "priority": "P1 - Critical Gap",
-        "description": "Add lookup field Apparatus→Employee via Power Platform maker portal",
-        "why": "Required for technician assignment workflow - Equipment has it, Apparatus doesn't"
-      },
-      {
-        "name": "Update MASTER_BUILD_SPECIFICATION.md",
-        "timeEstimate": "3-4 hours",
-        "priority": "P1 - Documentation Debt",
-        "description": "Sync from v1.3.0.4 to v1.5.0.0 using VS_CLAUDE_MASTER_BUILD_TASK.md checklist",
-        "gap": "Document claims 8 tables/350 fields, reality is 16 tables/649 fields"
-      }
-    ],
-    "readyToImplement": [
-      {
-        "name": "Test Import v2 with New Project",
-        "timeEstimate": "15 minutes",
-        "priority": "HIGH",
-        "description": "Run import-estimator.js on a new Estimator to verify ScopeLaborDetail creation",
-        "validation": "Check ScopeLaborDetail records created with financial data"
-      },
-      {
-        "name": "Create Forms for 6 New Tables",
-        "timeEstimate": "8-12 hours",
-        "priority": "HIGH",
-        "value": "Usability - make new tables accessible",
-        "tables": "Client, Site, Employee, Quote, ResourceAssignment, Equipment"
-      },
-      {
-        "name": "Add TimeEntry Table",
-        "timeEstimate": "2-3 hours",
-        "priority": "P1",
-        "description": "Critical for field operations - track actual time vs estimated",
-        "gap": "Identified in Claude Desktop audit as missing"
-      }
-    ],
-    "blockers": []
+    "completed": ["Web App Import Pipeline", "Data Model Review", "Schema CSV Definitions", "Creation Script"],
+    "nextImmediate": ["Export existing data backup", "Execute schema rebuild", "Update web app mappings"]
   },
   "keyDocuments": {
-    "navigation": "Documentation/00_START_HERE/PROJECT_STATUS_TRACKER.md",
-    "systemDesign": "Documentation/01_Architecture/MASTER_BUILD_SPECIFICATION.md",
-    "sessionResume": "Documentation/00_START_HERE/SESSION_RESUME_CHECKLIST.md",
-    "importSOP": "Documentation/06_Implementation_Guides/IMPORT_PIPELINE_SOP.md",
-    "claudeDesktopAudit": "Documentation/05_Reviews_Analysis/DATAVERSE_SCHEMA_AUDIT_20251127.md",
-    "masterBuildTask": "Documentation/03_Progress_Tracking/VS_CLAUDE_MASTER_BUILD_TASK.md",
-    "versionHistory": "Solution_Exports/VERSION_HISTORY.md"
-  },
-  "sessionProtocol": {
-    "onSessionStart": [
-      "Read this file (PROJECT_CONTEXT.json)",
-      "Check criticalFacts array for must-remember information",
-      "Review currentStatus for next tasks",
-      "Check keyDocuments for latest session artifacts"
-    ],
-    "onSessionEnd": [
-      "Update lastUpdated timestamp",
-      "Update sessionId with date and topic",
-      "Update currentStatus if progress made",
-      "Add new criticalFacts if discovered",
-      "Commit to Git"
-    ]
-  },
-  "notes": [
-    "This file serves as a lightweight Memory MCP alternative for VS Code/Copilot sessions",
-    "Quick-reference for AI to understand project state without reading multiple markdown files",
-    "Update this file when major milestones reached or critical facts discovered",
-    "ENVIRONMENT CORRECTION Nov 23: Only org99cd6c6e.crm.dynamics.com is valid"
-  ]
+    "dataModelReview": "Documentation/00_START_HERE/SYSTEM_STATE_AND_DATA_MODEL_REVIEW.md",
+    "sessionResume": "Documentation/00_START_HERE/SESSION_RESUME_CHECKLIST.md"
+  }
 }

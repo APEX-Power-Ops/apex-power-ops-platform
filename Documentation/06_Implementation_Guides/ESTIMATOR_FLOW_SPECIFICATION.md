@@ -8,6 +8,7 @@
 **Related Documents:**
 - [DATA_MODEL_REFERENCE.md](../01_Architecture/DATA_MODEL_REFERENCE.md) - Authoritative data model (Business Unit / Client / Site)
 - [DataverseExport.bas](../../Reference_Files/Excel/Estimator%20VBA%20Modules/DataverseExport.bas) - VBA JSON export module
+- [JSON_IMPORT_FLOW_BUILD_SPEC.md](./JSON_IMPORT_FLOW_BUILD_SPEC.md) - **Complete Power Automate code view JSON for implementation**
 
 ---
 

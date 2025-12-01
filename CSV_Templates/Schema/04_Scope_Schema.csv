@@ -1,0 +1,14 @@
+FieldLogicalName,DisplayName,Type,MaxLength,Required,Description,LookupTarget
+cr950_scope_name,Scope Name,String,200,true,Scope identifier - primary field,
+cr950_scope_number,Scope Number,String,50,false,Scope number within project,
+cr950_scope_project,Project,Lookup,,true,Parent project,cr950_project
+cr950_scope_type,Scope Type,String,100,false,Type of work (Acceptance/Maintenance/etc),
+cr950_scope_status,Status,String,50,false,Current scope status,
+cr950_scope_description,Description,Memo,4000,false,Scope description,
+cr950_scope_due_date,Due Date,DateTime,,false,Scope completion target,
+cr950_scope_labor_total,Labor Total,Currency,,false,Total labor cost,
+cr950_scope_material_total,Material Total,Currency,,false,Total material cost,
+cr950_scope_revenue_total,Revenue Total,Currency,,false,Total scope revenue,
+cr950_scope_margin_percent,Margin Percent,Decimal,,false,Profit margin percentage,
+cr950_scope_notes,Notes,Memo,4000,false,Scope notes,
+cr950_scope_active,Active,Boolean,,false,Is scope active,

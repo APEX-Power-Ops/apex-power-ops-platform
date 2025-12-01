@@ -1,0 +1,13 @@
+FieldLogicalName,DisplayName,Type,MaxLength,Required,Description,LookupTarget
+cr950_project_name,Project Name,String,200,true,Project identifier - primary field,
+cr950_project_number,Project Number,String,50,false,Internal project number,
+cr950_project_site,Site,Lookup,,true,Parent site (location),cr950_site
+cr950_project_client,Client,Lookup,,false,Denormalized client lookup for convenience,cr950_client
+cr950_project_status,Status,String,50,false,Current project status,
+cr950_project_start_date,Start Date,DateTime,,false,Planned or actual start,
+cr950_project_end_date,End Date,DateTime,,false,Planned or actual completion,
+cr950_project_description,Description,Memo,4000,false,Project description,
+cr950_project_po_number,PO Number,String,100,false,Client purchase order,
+cr950_project_contract_value,Contract Value,Currency,,false,Total contract amount,
+cr950_project_notes,Notes,Memo,4000,false,General project notes,
+cr950_project_active,Active,Boolean,,false,Is project active,
