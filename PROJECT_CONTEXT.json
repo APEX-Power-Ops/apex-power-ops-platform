@@ -1,12 +1,12 @@
 {
-  "lastUpdated": "2025-12-01T12:00:00Z",
-  "sessionId": "DEC01_VBA_Schema_Mapping_Review",
+  "lastUpdated": "2025-12-02T10:00:00Z",
+  "sessionId": "DEC02_Location_Estimator_Tables",
   "project": {
     "name": "RESA Power Project Tracker",
     "version": "v1.5.1.5",
-    "status": "import-script-ready-decisions-pending",
+    "status": "adding-location-estimator-tables",
     "environment": {
-      "url": "https://org99cd6c6e.crm.dynamics.com",
+      "url": "https://org284447bd.crm.dynamics.com",
       "orgId": "e550d661-edc7-f011-8729-000d3a33a005",
       "envId": "988ad729-62cf-e0b8-8266-ff32689fce02",
       "tenantId": "270d5723-4b30-4f3b-b9cb-6527be741b42",

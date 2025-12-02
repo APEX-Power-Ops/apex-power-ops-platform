@@ -1,0 +1,118 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_sharepointonline": {
+        "api": {
+          "name": "shared_sharepointonline"
+        },
+        "connection": {
+          "connectionReferenceLogicalName": "cr950_sharedsharepointonline_a9dba"
+        },
+        "runtimeSource": "embedded"
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        },
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        }
+      },
+      "triggers": {
+        "When_a_file_is_created_(properties_only)": {
+          "type": "OpenApiConnection",
+          "inputs": {
+            "parameters": {
+              "dataset": "https://jswensonllc.sharepoint.com/sites/PhoenixProjects",
+              "table": "bf92590a-261e-4ed4-8074-42dcf26db632",
+              "folderPath": "/Shared Documents/Estimators"
+            },
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+              "operationId": "GetOnNewFileItems",
+              "connectionName": "shared_sharepointonline"
+            }
+          },
+          "recurrence": {
+            "frequency": "Minute",
+            "interval": 1
+          },
+          "splitOn": "@triggerOutputs()?['body/value']"
+        }
+      },
+      "actions": {
+        "Condition": {
+          "type": "If",
+          "expression": {
+            "and": [
+              {
+                "equals": [
+                  "@endsWith(triggerBody()?['{FilenameWithExtension}'], '.xlsm')",
+                  "@true"
+                ]
+              }
+            ]
+          },
+          "actions": {
+            "Compose": {
+              "type": "Compose",
+              "inputs": "@split(triggerBody()?['{Path}'],'/')"
+            },
+            "Compose_ClientName": {
+              "type": "Scope",
+              "actions": {
+                "ParsePath": {
+                  "type": "Compose",
+                  "inputs": "split(triggerOutputs()?['{Path}'],'/')"
+                },
+                "ClientName": {
+                  "type": "Compose",
+                  "inputs": "outputs('ParsePath')[2]",
+                  "runAfter": {
+                    "ParsePath": [
+                      "Succeeded"
+                    ]
+                  }
+                },
+                "ProjectName": {
+                  "type": "Compose",
+                  "inputs": "outputs('ParsePath')[3]",
+                  "runAfter": {
+                    "ClientName": [
+                      "Succeeded"
+                    ]
+                  }
+                }
+              },
+              "runAfter": {
+                "Compose": [
+                  "Succeeded"
+                ]
+              }
+            }
+          },
+          "else": {
+            "actions": {
+              "Terminate": {
+                "type": "Terminate",
+                "inputs": {
+                  "runStatus": "Failed"
+                }
+              }
+            }
+          },
+          "runAfter": {}
+        }
+      },
+      "outputs": {}
+    },
+    "templateName": null
+  },
+  "schemaVersion": "1.0.0.0"
+}
