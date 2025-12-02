@@ -1,98 +1,79 @@
 {
-  "lastUpdated": "2025-12-02T10:00:00Z",
-  "sessionId": "DEC02_Location_Estimator_Tables",
-  "project": {
-    "name": "RESA Power Project Tracker",
-    "version": "v1.5.1.5",
-    "status": "adding-location-estimator-tables",
-    "environment": {
-      "url": "https://org284447bd.crm.dynamics.com",
-      "orgId": "e550d661-edc7-f011-8729-000d3a33a005",
-      "envId": "988ad729-62cf-e0b8-8266-ff32689fce02",
-      "tenantId": "270d5723-4b30-4f3b-b9cb-6527be741b42",
-      "clientId": "9df3350f-b3b4-47c4-97b5-499a8b02acc7",
-      "solution": "RESAPowerProjectTracker"
-    },
-    "repository": {
-      "url": "https://github.com/jasonlswenson-sys/RESA-Power-Project-Management",
-      "branch": "clean-main"
-    }
-  },
-  "webApp": {
-    "location": "C:\\Users\\jjswe\\Projects\\resa-web-app",
-    "framework": "Next.js 16.0.5 (Turbopack)",
-    "status": "OPERATIONAL",
-    "url": "http://localhost:3000",
-    "routes": {
-      "/": "Dashboard placeholder",
-      "/import": "JSON paste/upload page",
-      "/import/configure": "Task config + Dataverse submit"
-    },
-    "auth": "MSAL - Azure AD",
-    "ui": "Tailwind CSS + shadcn/ui"
-  },
-  "vbaModule": {
-    "location": "Reference_Files/Excel/Estimator VBA Modules/DataverseExport.bas",
-    "version": "1.1",
-    "functions": ["ExportToDataverse", "ExportToClipboardOnly", "QuickValidate"]
-  },
-  "schemaRebuild": {
-    "status": "PREPARED",
-    "schemaFolder": "CSV_Templates/Schema",
-    "creationScript": "Scripts/PowerShell/Active/Create-Tables-From-Schema.ps1",
-    "tables": [
-      {"order": 1, "name": "cr950_client", "plural": "cr950_clients"},
-      {"order": 2, "name": "cr950_site", "plural": "cr950_sites"},
-      {"order": 3, "name": "cr950_project", "plural": "cr950_projects"},
-      {"order": 4, "name": "cr950_scope", "plural": "cr950_scopes"},
-      {"order": 5, "name": "cr950_task", "plural": "cr950_tasks"},
-      {"order": 6, "name": "cr950_apparatus", "plural": "cr950_apparatuses"},
-      {"order": 7, "name": "cr950_scopelabordetail", "plural": "cr950_scopelabordetails"}
-    ],
-    "namingConvention": "cr950_{tablename}_{fieldpurpose}",
-    "nextSteps": [
-      "1. Export existing data as backup",
-      "2. Run script with -DeleteExisting to rebuild",
-      "3. Update web app field mappings",
-      "4. Re-import test data"
-    ]
-  },
-  "dataverseSchema": {
-    "totalTables": 21,
-    "tablesInActiveUse": 7,
-    "totalCustomFields": 650,
-    "coreTables": ["clients", "sites", "projectses", "projectscopes", "taskses", "apparatuses", "scopelabordetailses"],
-    "fieldMappingNote": "OData bindings are case-sensitive: cr950_Project, cr950_Scope, cr950_Task",
-    "REBUILD_PLANNED": "New schema in CSV_Templates/Schema - cleaner naming, proper EntitySetNames"
-  },
-  "importPipeline": {
-    "status": "FULLY OPERATIONAL",
-    "primaryFlow": "Excel VBA → JSON Clipboard → Web App → Dataverse API",
-    "fieldMappings": {
-      "sites": "cr950_name, cr950_address, cr950_city, cr950_state, cr950_zip",
-      "projects": "cr950_project_name, cr950_job_number, cr950_project_manager",
-      "scopes": "cr950_scope_name, cr950_scope_number, cr950_Project@odata.bind",
-      "tasks": "cr950_task_name, cr950_task_number, cr950_Scope@odata.bind",
-      "apparatus": "cr950_apparatus_designation, cr950_apparatustype, cr950_labor_hours"
-    }
-  },
-  "criticalFacts": [
-    "⚠️ RESUME: Read SESSION_REVIEW_2025-12-01.md FIRST - 7 decisions pending",
-    "⚠️ RESUME: Read SESSION_TRANSCRIPT_2025-12-01.md for full context",
-    "IMPORT SCRIPT: Import-EstimatorJSON.ps1 created & WhatIf tested successfully",
-    "SCHEMA GAP: 4 Project fields missing (projectLead, businessUnit, quoteDate, quoteRevision)",
-    "ENVIRONMENT: Script uses org284447bd but PROJECT_CONTEXT says org99cd6c6e - VERIFY",
-    "DENORMALIZED FIELDS: Discussed but not decided - enable flat views for Tasks/Apparatus",
-    "SCHEMA REBUILD READY: CSV definitions in CSV_Templates/Schema, creation script ready",
-    "ODATA CASE SENSITIVITY: Lookup bindings use SchemaName case"
-  ],
   "currentStatus": {
-    "completed": ["Import-EstimatorJSON.ps1 created", "WhatIf test passed", "VBA-Dataverse field mapping documented", "Session docs created"],
-    "nextImmediate": ["DECIDE: 7 items in SESSION_REVIEW_2025-12-01.md", "Fix environment URL", "Add missing schema fields"]
+    "estimatorFlowDeployed": true,
+    "solutionDeployed": true,
+    "pendingUserAction": "Refresh Azure AD client secret",
+    "mcpConnectivity": "blocked_credential_expired"
   },
-  "keyDocuments": {
-    "sessionReview": "Documentation/03_Progress_Tracking/SESSION_REVIEW_2025-12-01.md",
-    "sessionTranscript": "Documentation/03_Progress_Tracking/SESSION_TRANSCRIPT_2025-12-01.md",
-    "dataModelReview": "Documentation/00_START_HERE/SYSTEM_STATE_AND_DATA_MODEL_REVIEW.md"
+  "tables": [
+    {
+      "logicalName": "cr950_client",
+      "displayName": "Client",
+      "entitySetName": "cr950_clients"
+    },
+    {
+      "logicalName": "cr950_site",
+      "displayName": "Site",
+      "entitySetName": "cr950_sites"
+    },
+    {
+      "recordCount": 4,
+      "logicalName": "cr950_location",
+      "displayName": "Location",
+      "entitySetName": "cr950_locations"
+    },
+    {
+      "logicalName": "cr950_projects",
+      "displayName": "Project",
+      "entitySetName": "cr950_projectses"
+    },
+    {
+      "logicalName": "cr950_projectscope",
+      "displayName": "Scope",
+      "entitySetName": "cr950_projectscopes"
+    },
+    {
+      "logicalName": "cr950_tasks",
+      "displayName": "Task",
+      "entitySetName": "cr950_taskses"
+    },
+    {
+      "logicalName": "cr950_apparatus",
+      "displayName": "Apparatus",
+      "entitySetName": "cr950_apparatuses"
+    },
+    {
+      "logicalName": "cr950_scopelabordetails",
+      "displayName": "Scope Labor Detail",
+      "entitySetName": "cr950_scopelabordetailses"
+    },
+    {
+      "recordCount": 0,
+      "logicalName": "cr950_estimator",
+      "displayName": "Estimator",
+      "entitySetName": "cr950_estimators"
+    }
+  ],
+  "updatedBy": "VS Code Claude",
+  "systemDocs": {
+    "desktopClaudeFindings": "Working/DESKTOP_CLAUDE_FINDINGS.md",
+    "taskList": "COORDINATED_TASK_LIST.md",
+    "primaryReference": "WORKSPACE_SYSTEM.md",
+    "sessionProtocol": "Documentation/00_START_HERE/SESSION_START_PROTOCOL.md"
+  },
+  "connectionReferences": {
+    "sharepoint": "cr950_sharedsharepointonline_a9dba",
+    "dataverse": "new_sharedcommondataserviceforapps_f7a26"
+  },
+  "lastUpdated": "2025-12-02T15:30:00Z",
+  "environment": {
+    "branch": "clean-main",
+    "wrongOrgUrl_DONOTUSE": "org99cd6c6e.crm.dynamics.com",
+    "solutionVersion": "1.0.0.1",
+    "dataverseUrl": "https://org284447bd.crm.dynamics.com",
+    "solutionName": "RESA_Power_Build_V2",
+    "tenantId": "270d5723-4b30-4f3b-b9cb-6527be741b42",
+    "clientId": "9df3350f-b3b4-47c4-97b5-499a8b02acc7",
+    "repository": "github.com/jasonlswenson-sys/RESA-Power-Project-Management"
   }
 }
