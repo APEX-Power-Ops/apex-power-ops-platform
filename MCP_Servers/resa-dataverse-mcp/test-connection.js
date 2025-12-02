@@ -8,7 +8,7 @@ import 'dotenv/config';
 import axios from 'axios';
 
 // Load environment from .env if exists
-const DATAVERSE_URL = process.env.DATAVERSE_URL || "https://org99cd6c6e.crm.dynamics.com";
+const DATAVERSE_URL = process.env.DATAVERSE_URL || "https://org7bdbc942.crm.dynamics.com";
 const AZURE_TENANT_ID = process.env.AZURE_TENANT_ID || "";
 const AZURE_CLIENT_ID = process.env.AZURE_CLIENT_ID || "";
 const AZURE_CLIENT_SECRET = process.env.AZURE_CLIENT_SECRET || "";
@@ -95,10 +95,15 @@ async function main() {
   
   const testCases = [
     { name: "systemusers", desc: "System table (known good)" },
-    { name: "cr950_projects", desc: "Singular form" },
-    { name: "cr950_projectses", desc: "Plural form (Dataverse convention)" },
-    { name: "cr950_apparatus", desc: "Apparatus (singular)" },
-    { name: "cr950_apparatuses", desc: "Apparatus (plural)" },
+    { name: "cr950_clients", desc: "Clients" },
+    { name: "cr950_sites", desc: "Sites" },
+    { name: "cr950_projects", desc: "Projects" },
+    { name: "cr950_scopes", desc: "Scopes" },
+    { name: "cr950_scopelabordetails", desc: "Scope Labor Details" },
+    { name: "cr950_apparatuses", desc: "Apparatus" },
+    { name: "cr950_tasks", desc: "Tasks" },
+    { name: "cr950_estimators", desc: "Estimators" },
+    { name: "cr950_locations", desc: "Locations" },
   ];
   
   const results = [];
