@@ -1,0 +1,227 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_sharepointonline": {
+        "api": {
+          "name": "shared_sharepointonline"
+        },
+        "connection": {
+          "connectionReferenceLogicalName": "cr950_sharedsharepointonline_a9dba"
+        },
+        "runtimeSource": "embedded"
+      },
+      "shared_commondataserviceforapps": {
+        "api": {
+          "name": "shared_commondataserviceforapps"
+        },
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedcommondataserviceforapps_f7a26"
+        },
+        "runtimeSource": "embedded"
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        },
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        }
+      },
+      "triggers": {
+        "When_a_file_is_created_(properties_only)": {
+          "type": "OpenApiConnection",
+          "inputs": {
+            "parameters": {
+              "dataset": "https://jswensonllc.sharepoint.com/sites/PhoenixProjects",
+              "table": "bf92590a-261e-4ed4-8074-42dcf26db632",
+              "folderPath": "/Shared Documents/Estimators"
+            },
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+              "operationId": "GetOnNewFileItems",
+              "connectionName": "shared_sharepointonline"
+            }
+          },
+          "recurrence": {
+            "frequency": "Minute",
+            "interval": 3
+          },
+          "splitOn": "@triggerOutputs()?['body/value']"
+        }
+      },
+      "actions": {
+        "Check_File_Extension": {
+          "type": "If",
+          "expression": {
+            "or": [
+              {
+                "endsWith": [
+                  "@triggerBody()?['{FilenameWithExtension}']",
+                  ".xlsm"
+                ]
+              },
+              {
+                "endsWith": [
+                  "@triggerBody()?['{FilenameWithExtension}']",
+                  ".xlsx"
+                ]
+              }
+            ]
+          },
+          "actions": {
+            "Parse_File_Path": {
+              "type": "Compose",
+              "inputs": "@split(triggerBody()?['{Path}'],'/')"
+            },
+            "Extract_Client_Name": {
+              "type": "Compose",
+              "inputs": "@outputs('Parse_File_Path')[2]",
+              "runAfter": {
+                "Parse_File_Path": ["Succeeded"]
+              }
+            },
+            "Extract_Project_Name": {
+              "type": "Compose",
+              "inputs": "@outputs('Parse_File_Path')[3]",
+              "runAfter": {
+                "Extract_Client_Name": ["Succeeded"]
+              }
+            },
+            "Lookup_Client_in_Dataverse": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "parameters": {
+                  "entityName": "cr950_clients",
+                  "$filter": "cr950_clientname eq '@{outputs('Extract_Client_Name')}'"
+                },
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                  "operationId": "ListRecords",
+                  "connectionName": "shared_commondataserviceforapps"
+                }
+              },
+              "runAfter": {
+                "Extract_Project_Name": ["Succeeded"]
+              }
+            },
+            "Check_Client_Found": {
+              "type": "If",
+              "expression": {
+                "greater": [
+                  "@length(outputs('Lookup_Client_in_Dataverse')?['body/value'])",
+                  0
+                ]
+              },
+              "actions": {
+                "Get_Client_ID": {
+                  "type": "Compose",
+                  "inputs": "@first(outputs('Lookup_Client_in_Dataverse')?['body/value'])?['cr950_clientid']"
+                },
+                "Check_Existing_Estimator": {
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "parameters": {
+                      "entityName": "cr950_estimators",
+                      "$filter": "cr950_estimator_filename eq '@{triggerBody()?['{FilenameWithExtension}']}'"
+                    },
+                    "host": {
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                      "operationId": "ListRecords",
+                      "connectionName": "shared_commondataserviceforapps"
+                    }
+                  },
+                  "runAfter": {
+                    "Get_Client_ID": ["Succeeded"]
+                  }
+                },
+                "Create_or_Update_Estimator": {
+                  "type": "If",
+                  "expression": {
+                    "greater": [
+                      "@length(outputs('Check_Existing_Estimator')?['body/value'])",
+                      0
+                    ]
+                  },
+                  "actions": {
+                    "Update_Estimator_Record": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "parameters": {
+                          "entityName": "cr950_estimators",
+                          "recordId": "@first(outputs('Check_Existing_Estimator')?['body/value'])?['cr950_estimatorid']",
+                          "item/cr950_estimator_fileurl": "@triggerBody()?['{Link}']",
+                          "item/cr950_estimator_estimatedate": "@utcNow()",
+                          "item/cr950_estimator_currentrevision": "@add(first(outputs('Check_Existing_Estimator')?['body/value'])?['cr950_estimator_currentrevision'], 1)"
+                        },
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                          "operationId": "UpdateRecord",
+                          "connectionName": "shared_commondataserviceforapps"
+                        }
+                      }
+                    }
+                  },
+                  "else": {
+                    "actions": {
+                      "Create_Estimator_Record": {
+                        "type": "OpenApiConnection",
+                        "inputs": {
+                          "parameters": {
+                            "entityName": "cr950_estimators",
+                            "item/cr950_estimator_filename": "@triggerBody()?['{FilenameWithExtension}']",
+                            "item/cr950_estimator_fileurl": "@triggerBody()?['{Link}']",
+                            "item/cr950_estimator_projectname": "@outputs('Extract_Project_Name')",
+                            "item/cr950_estimator_estimatedate": "@utcNow()",
+                            "item/cr950_estimator_currentrevision": 1,
+                            "item/cr950_estimator_ClientId@odata.bind": "/cr950_clients(@{outputs('Get_Client_ID')})"
+                          },
+                          "host": {
+                            "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                            "operationId": "CreateRecord",
+                            "connectionName": "shared_commondataserviceforapps"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "runAfter": {
+                    "Check_Existing_Estimator": ["Succeeded"]
+                  }
+                }
+              },
+              "else": {
+                "actions": {
+                  "Log_Client_Not_Found": {
+                    "type": "Compose",
+                    "inputs": "Client not found: @{outputs('Extract_Client_Name')}"
+                  }
+                }
+              },
+              "runAfter": {
+                "Lookup_Client_in_Dataverse": ["Succeeded"]
+              }
+            }
+          },
+          "else": {
+            "actions": {
+              "Skip_Non_Excel_File": {
+                "type": "Compose",
+                "inputs": "Skipped - Not an Excel file"
+              }
+            }
+          },
+          "runAfter": {}
+        }
+      },
+      "outputs": {}
+    },
+    "templateName": null
+  },
+  "schemaVersion": "1.0.0.0"
+}
