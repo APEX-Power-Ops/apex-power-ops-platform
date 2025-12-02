@@ -2,22 +2,18 @@
 
 ## Project Context
 This is a Dataverse/Power Platform project for RESA Power electrical testing company.
-- **Environment**: org284447bd.crm.dynamics.com (CORRECT)
-- **Solution**: RESA_Power_Build_V2 v1.0.0.1
+- **Environment**: org7bdbc942.crm.dynamics.com (Developer)
+- **Solution**: RESA_Power_Build_V2 (importing)
 - **Repository**: RESA-Power-Project-Management on GitHub
 
-**WRONG - DO NOT USE**: org99cd6c6e.crm.dynamics.com (old/incorrect)
+**WRONG - DO NOT USE**: 
+- org99cd6c6e.crm.dynamics.com (jswensonllc default)
+- org284447bd.crm.dynamics.com (old dev)
 
 ## Critical Files to Read First
 1. `WORKSPACE_SYSTEM.md` - Single source of truth
 2. `COORDINATED_TASK_LIST.md` - Current tasks  
 3. `PROJECT_CONTEXT.json` - Machine-readable state
-
-## Connection References
-| Name | Type |
-|------|------|
-| cr950_sharedsharepointonline_a9dba | SharePoint |
-| new_sharedcommondataserviceforapps_f7a26 | Dataverse |
 
 ## Key Table Names (EntitySetName for API)
 `

@@ -12,16 +12,15 @@
 ## Project Overview
 - **What**: Dataverse/Power Platform project management system for electrical testing
 - **Who**: RESA Power LLC (multi-location company)
-- **Environment**: `org284447bd.crm.dynamics.com` (CORRECT)
-- **Solution**: `RESA_Power_Build_V2` v1.0.0.1
+- **Environment**: `org7bdbc942.crm.dynamics.com` (Developer)
+- **Solution**: `RESA_Power_Build_V2` (importing)
 
-**WRONG - DO NOT USE**: `org99cd6c6e.crm.dynamics.com` (old/incorrect)
+**WRONG - DO NOT USE**: 
+- `org99cd6c6e.crm.dynamics.com` (jswensonllc default)
+- `org284447bd.crm.dynamics.com` (old dev)
 
 ## Connection References (Power Platform)
-| Name | Type |
-|------|------|
-| `cr950_sharedsharepointonline_a9dba` | SharePoint |
-| `new_sharedcommondataserviceforapps_f7a26` | Dataverse |
+TBD after solution import
 
 ## Correct Table Names (EntitySetName for API queries)
 | LogicalName | EntitySetName | Display |
@@ -34,9 +33,6 @@
 | cr950_apparatus | cr950_apparatuses | Apparatus |
 | cr950_estimator | cr950_estimators | Estimator |
 
-## Reusable Templates
-Location: `Scripts/PowerShell/Templates/`
-
 ## MCP Server
 - Location: `MCP_Servers/resa-dataverse-mcp/`
 - Credentials: `.env` file (Azure AD client credentials)
@@ -45,11 +41,11 @@ Location: `Scripts/PowerShell/Templates/`
 - Scripts/PowerShell/Templates/ - Reusable PowerShell templates
 - Working/ - Power Automate code view samples
 - MCP_Servers/resa-dataverse-mcp/ - Dataverse MCP server
-- Solution_Exports/v2.0.0/ - Current solution version
+- Solution_Exports/ - Solution versions
 
 ## Session Protocol
 ### On Start
-- Read `WORKSPACE_SYSTEM.md` 
+- Read `WORKSPACE_SYSTEM.md`
 - Read `COORDINATED_TASK_LIST.md`
 - Check `Working/DESKTOP_CLAUDE_FINDINGS.md`
 
