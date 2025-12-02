@@ -1,71 +1,51 @@
 # My Development Environment
-## Isolated Power Platform Setup
+## Power Platform Developer Environment
 
-**Created:** November 22, 2025  
-**Status:** Active ✅ | Solution importing...
-
----
-
-## 🎯 ENVIRONMENT DETAILS
-
-**Jason Swenson's Environment**
-```
-Environment URL: https://org99cd6c6e.crm.dynamics.com
-Environment ID: 08da794c-c2cf-eb4e-874e-fa3609fec4c0
-Organization ID: a5036521-cde7-4d7a-90a-08fd8a13ad05
-Type: Developer | Region: United States
-Created: November 21, 2025 | Status: Ready
-```
-
-**Solution Version:** 1.3.0.5 (importing)  
-**Source:** c:\RESA_Power_Build\Solution_Exports\v1.3.0.5\
+**Created:** December 2, 2025  
+**Status:** Active
 
 ---
 
-## ⚠️ CRITICAL: NEVER CONNECT MCP TO PRODUCTION
+## ENVIRONMENT DETAILS
 
-```
-❌ PRODUCTION: org99cd6c6e.crm.dynamics.com (RESA - DO NOT USE)
-✅ DEVELOPMENT: org99cd6c6e.crm.dynamics.com (YOUR ENVIRONMENT - SAFE)
-```
+**Jason Swenson's Developer Environment**
 
----
+| Property | Value |
+|----------|-------|
+| Environment URL | https://org7bdbc942.crm.dynamics.com |
+| Environment ID | 7829fa91-a0a0-e7e6-bb40-e413c331c0f |
+| Organization ID | 8ade6433-7ccf-f011-95c7-000d3a37fe0c |
+| Type | Developer |
+| Region | United States |
+| Created | December 2, 2025 |
 
-## 📋 SETUP CHECKLIST
-
-**Environment Setup:**
-- [x] Created Power Platform developer environment
-- [x] Importing solution v1.3.0.5
-- [ ] Create Azure app registration
-- [ ] Configure API permissions & client secret
-- [ ] Update MCP server configuration
-- [ ] Test MCP connection
-- [ ] Verify all safeguards active
-
-**Safety Verification:**
-- [ ] MCP points to dev (org90c66be2) ✅
-- [ ] Production URL blocked (org04ad071f) ❌
-- [ ] Rate limiting (60/min), Circuit breaker (5 failures)
-- [ ] Request logging active
+**Solution:** RESA_Power_Build_V2
 
 ---
 
-## 🔧 NEXT STEPS
+## DEPRECATED ENVIRONMENTS - DO NOT USE
 
-1. **Wait for solution import** to complete
-2. **Create Azure app registration** for authentication
-3. **Configure MCP servers** with dev environment
-4. **Test safely** - READ-ONLY initially
-
----
-
-## 📦 BACKUP LOCATIONS
-
-- ✅ Local: c:\RESA_Power_Build\Solution_Exports\
-- ✅ GitHub: jasonlswenson-sys/RESA-Power-Project-Tracker
-- ✅ Box.com: Auto-synced
+| Environment | Org ID | Reason |
+|-------------|--------|--------|
+| jswensonllc default | org99cd6c6e | Not a developer environment |
+| Old dev | org284447bd | Replaced Dec 2, 2025 |
 
 ---
 
-**Last Updated:** November 22, 2025  
-**Documentation:** c:\RESA_Power_Build\Documentation\
+## CREDENTIALS
+
+**Azure AD App Registration**
+| Property | Value |
+|----------|-------|
+| Tenant ID | 270d5723-4b30-4f3b-b9cb-6527be741b42 |
+| Client ID | 9df3350f-b3b4-47c4-97b5-499a8b02acc7 |
+| Secret ID | d706e910-15be-4aa4-9108-f56a8c84fa64 |
+| Secret | Stored in .env files |
+
+**Credential Locations:**
+- MCP Server: C:\RESA_Power_Build\MCP_Servers\resa-dataverse-mcp\.env
+- Desktop Claude: %APPDATA%\Claude\claude_desktop_config.json
+
+---
+
+**Last Updated:** December 2, 2025
