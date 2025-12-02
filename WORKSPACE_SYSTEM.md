@@ -7,10 +7,11 @@
 | Item | Value |
 |------|-------|
 | **Dataverse URL** | `https://org7bdbc942.crm.dynamics.com` |
-| **Solution** | `RESA_Power_Build_V2` (importing) |
+| **Solution** | `RESA_Power_Build_V2` v1.0.0.4 |
 | **Repository** | `github.com/jasonlswenson-sys/RESA-Power-Project-Management` |
 | **Branch** | `clean-main` |
 | **Environment Type** | Developer |
+| **Solution Export** | `Solution_Exports/v1.0.0.4/` |
 
 > **WRONG URLs - DO NOT USE**: 
 > - `org99cd6c6e.crm.dynamics.com` (jswensonllc default - NOT developer)
