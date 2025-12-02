@@ -1,10 +1,10 @@
 {
-  "lastUpdated": "2025-12-01T05:00:00Z",
-  "sessionId": "NOV30_Schema_Dashboard_Complete",
+  "lastUpdated": "2025-12-01T12:00:00Z",
+  "sessionId": "DEC01_VBA_Schema_Mapping_Review",
   "project": {
     "name": "RESA Power Project Tracker",
     "version": "v1.5.1.5",
-    "status": "schema-rebuild-ready-dashboard-poc-complete",
+    "status": "import-script-ready-decisions-pending",
     "environment": {
       "url": "https://org99cd6c6e.crm.dynamics.com",
       "orgId": "e550d661-edc7-f011-8729-000d3a33a005",
@@ -77,19 +77,22 @@
     }
   },
   "criticalFacts": [
+    "⚠️ RESUME: Read SESSION_REVIEW_2025-12-01.md FIRST - 7 decisions pending",
+    "⚠️ RESUME: Read SESSION_TRANSCRIPT_2025-12-01.md for full context",
+    "IMPORT SCRIPT: Import-EstimatorJSON.ps1 created & WhatIf tested successfully",
+    "SCHEMA GAP: 4 Project fields missing (projectLead, businessUnit, quoteDate, quoteRevision)",
+    "ENVIRONMENT: Script uses org284447bd but PROJECT_CONTEXT says org99cd6c6e - VERIFY",
+    "DENORMALIZED FIELDS: Discussed but not decided - enable flat views for Tasks/Apparatus",
     "SCHEMA REBUILD READY: CSV definitions in CSV_Templates/Schema, creation script ready",
-    "NEW NAMING: cr950_{table}_{field} convention (e.g., cr950_project_name not cr950_project_name)",
-    "ENTITYSETNAME FIX: projects not projectses, tasks not taskses, scopes not projectscopes",
-    "WEB APP: Will need field mapping updates after rebuild",
-    "ODATA CASE SENSITIVITY: Lookup bindings use SchemaName case",
-    "SINGLE ENVIRONMENT: Only org99cd6c6e.crm.dynamics.com is active"
+    "ODATA CASE SENSITIVITY: Lookup bindings use SchemaName case"
   ],
   "currentStatus": {
-    "completed": ["Web App Import Pipeline", "Data Model Review", "Schema CSV Definitions", "Creation Script"],
-    "nextImmediate": ["Export existing data backup", "Execute schema rebuild", "Update web app mappings"]
+    "completed": ["Import-EstimatorJSON.ps1 created", "WhatIf test passed", "VBA-Dataverse field mapping documented", "Session docs created"],
+    "nextImmediate": ["DECIDE: 7 items in SESSION_REVIEW_2025-12-01.md", "Fix environment URL", "Add missing schema fields"]
   },
   "keyDocuments": {
-    "dataModelReview": "Documentation/00_START_HERE/SYSTEM_STATE_AND_DATA_MODEL_REVIEW.md",
-    "sessionResume": "Documentation/00_START_HERE/SESSION_RESUME_CHECKLIST.md"
+    "sessionReview": "Documentation/03_Progress_Tracking/SESSION_REVIEW_2025-12-01.md",
+    "sessionTranscript": "Documentation/03_Progress_Tracking/SESSION_TRANSCRIPT_2025-12-01.md",
+    "dataModelReview": "Documentation/00_START_HERE/SYSTEM_STATE_AND_DATA_MODEL_REVIEW.md"
   }
 }

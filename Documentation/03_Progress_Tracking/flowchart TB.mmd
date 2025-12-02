@@ -1,0 +1,56 @@
+flowchart TB
+    subgraph EXCEL["📊 EXCEL ESTIMATOR"]
+        EST[Switch Estimator.xlsm]
+        VBA[DataverseExport.bas v1.1]
+        EST --> VBA
+        VBA -->|JSON to Clipboard| JSON_OUT((JSON))
+    end
+
+    subgraph WEBAPP["🌐 NEXT.JS WEB APP"]
+        direction TB
+        PASTE[/Paste JSON/]
+        CONFIG[Task Configuration]
+        SUBMIT[Submit to Dataverse]
+        PASTE --> CONFIG --> SUBMIT
+    end
+
+    subgraph DATAVERSE["☁️ DATAVERSE"]
+        direction TB
+        subgraph TABLES["Tables"]
+            CLIENT[Client]
+            SITE[Site]
+            PROJECT[Project]
+            SCOPE[Scope]
+            TASK[Task]
+            APPARATUS[Apparatus]
+            LABOR[ScopeLaborDetail]
+        end
+        
+        CLIENT --> SITE --> PROJECT --> SCOPE
+        SCOPE --> TASK --> APPARATUS
+        SCOPE --> LABOR
+    end
+
+    subgraph AUTOMATE["⚡ POWER AUTOMATE"]
+        direction TB
+        TRIGGER1[On ScopeLaborDetail Create/Update]
+        CALC_RATES[Calculate All Rates]
+        TRIGGER2[On Apparatus Status Change]
+        CALC_REV[Calculate Revenue]
+        ROLLUP[Rollup to Scope/Project]
+        
+        TRIGGER1 --> CALC_RATES
+        TRIGGER2 --> CALC_REV --> ROLLUP
+    end
+
+    subgraph OUTPUTS["📈 OUTPUTS"]
+        VIEWS[Web App Views]
+        APPS[Model-Driven Apps]
+        BI[Power BI Dashboards]
+    end
+
+    JSON_OUT --> PASTE
+    SUBMIT -->|OData API| DATAVERSE
+    DATAVERSE --> AUTOMATE
+    AUTOMATE -->|Updates| DATAVERSE
+    DATAVERSE --> OUTPUTS
