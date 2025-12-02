@@ -40,7 +40,7 @@
 
 ### 5. Dashboard Proof of Concept 🎉
 **Web dashboard with live Dataverse data:**
-- Installed Recharts (React 19 compatible)
+- Installed Recharts (React 19 compatible)![1764642582252](image/SESSION_SUMMARY_2025-11-30/1764642582252.png)![1764642862641](image/SESSION_SUMMARY_2025-11-30/1764642862641.png)![1764644331578](image/SESSION_SUMMARY_2025-11-30/1764644331578.png)![1764644337516](image/SESSION_SUMMARY_2025-11-30/1764644337516.png)![1764644343159](image/SESSION_SUMMARY_2025-11-30/1764644343159.png)![1764644354602](image/SESSION_SUMMARY_2025-11-30/1764644354602.png)
 - Created `src/app/dashboard/page.tsx`
 - KPI cards: Total Projects, Scopes, Apparatus, Hours
 - Pie chart: Apparatus by scope
