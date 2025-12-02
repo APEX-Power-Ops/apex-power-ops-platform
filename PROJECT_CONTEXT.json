@@ -1,59 +1,14 @@
 {
   "currentStatus": {
-    "estimatorFlowDeployed": true,
-    "solutionDeployed": true,
-    "pendingUserAction": "Refresh Azure AD client secret",
-    "mcpConnectivity": "blocked_credential_expired"
+    "mcpConnectivity": "pending_test",
+    "pendingAction": "Import solution and test connectivity",
+    "environmentCreated": true,
+    "solutionImported": false
   },
-  "tables": [
-    {
-      "logicalName": "cr950_client",
-      "displayName": "Client",
-      "entitySetName": "cr950_clients"
-    },
-    {
-      "logicalName": "cr950_site",
-      "displayName": "Site",
-      "entitySetName": "cr950_sites"
-    },
-    {
-      "recordCount": 4,
-      "logicalName": "cr950_location",
-      "displayName": "Location",
-      "entitySetName": "cr950_locations"
-    },
-    {
-      "logicalName": "cr950_projects",
-      "displayName": "Project",
-      "entitySetName": "cr950_projectses"
-    },
-    {
-      "logicalName": "cr950_projectscope",
-      "displayName": "Scope",
-      "entitySetName": "cr950_projectscopes"
-    },
-    {
-      "logicalName": "cr950_tasks",
-      "displayName": "Task",
-      "entitySetName": "cr950_taskses"
-    },
-    {
-      "logicalName": "cr950_apparatus",
-      "displayName": "Apparatus",
-      "entitySetName": "cr950_apparatuses"
-    },
-    {
-      "logicalName": "cr950_scopelabordetails",
-      "displayName": "Scope Labor Detail",
-      "entitySetName": "cr950_scopelabordetailses"
-    },
-    {
-      "recordCount": 0,
-      "logicalName": "cr950_estimator",
-      "displayName": "Estimator",
-      "entitySetName": "cr950_estimators"
-    }
-  ],
+  "credentialLocations": {
+    "desktopClaude": "%APPDATA%/Claude/claude_desktop_config.json",
+    "mcpServer": "MCP_Servers/resa-dataverse-mcp/.env"
+  },
   "updatedBy": "VS Code Claude",
   "systemDocs": {
     "desktopClaudeFindings": "Working/DESKTOP_CLAUDE_FINDINGS.md",
@@ -61,19 +16,22 @@
     "primaryReference": "WORKSPACE_SYSTEM.md",
     "sessionProtocol": "Documentation/00_START_HERE/SESSION_START_PROTOCOL.md"
   },
-  "connectionReferences": {
-    "sharepoint": "cr950_sharedsharepointonline_a9dba",
-    "dataverse": "new_sharedcommondataserviceforapps_f7a26"
-  },
-  "lastUpdated": "2025-12-02T15:30:00Z",
+  "lastUpdated": "2025-12-02T16:00:00Z",
   "environment": {
-    "branch": "clean-main",
-    "wrongOrgUrl_DONOTUSE": "org99cd6c6e.crm.dynamics.com",
-    "solutionVersion": "1.0.0.1",
-    "dataverseUrl": "https://org284447bd.crm.dynamics.com",
-    "solutionName": "RESA_Power_Build_V2",
-    "tenantId": "270d5723-4b30-4f3b-b9cb-6527be741b42",
+    "environmentId": "7829fa91-a0a0-e7e6-bb40-e413c331c0f",
     "clientId": "9df3350f-b3b4-47c4-97b5-499a8b02acc7",
-    "repository": "github.com/jasonlswenson-sys/RESA-Power-Project-Management"
+    "solutionName": "RESA_Power_Build_V2",
+    "organizationId": "8ade6433-7ccf-f011-95c7-000d3a37fe0c",
+    "tenantId": "270d5723-4b30-4f3b-b9cb-6527be741b42",
+    "environmentType": "Developer",
+    "dataverseUrl": "https://org7bdbc942.crm.dynamics.com",
+    "secretId": "d706e910-15be-4aa4-9108-f56a8c84fa64",
+    "solutionVersion": "pending import",
+    "repository": "github.com/jasonlswenson-sys/RESA-Power-Project-Management",
+    "branch": "clean-main",
+    "deprecatedUrls": [
+      "org99cd6c6e.crm.dynamics.com",
+      "org284447bd.crm.dynamics.com"
+    ]
   }
 }

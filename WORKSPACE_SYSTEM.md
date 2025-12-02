@@ -6,12 +6,15 @@
 
 | Item | Value |
 |------|-------|
-| **Dataverse URL** | `https://org284447bd.crm.dynamics.com` |
-| **Solution** | `RESA_Power_Build_V2` v1.0.0.1 |
+| **Dataverse URL** | `https://org7bdbc942.crm.dynamics.com` |
+| **Solution** | `RESA_Power_Build_V2` (importing) |
 | **Repository** | `github.com/jasonlswenson-sys/RESA-Power-Project-Management` |
 | **Branch** | `clean-main` |
+| **Environment Type** | Developer |
 
-> **WRONG VALUE - DO NOT USE**: `org99cd6c6e.crm.dynamics.com` (appears in old docs)
+> **WRONG URLs - DO NOT USE**: 
+> - `org99cd6c6e.crm.dynamics.com` (jswensonllc default - NOT developer)
+> - `org284447bd.crm.dynamics.com` (old dev environment)
 
 ---
 
@@ -22,13 +25,14 @@
 |----------|-------|
 | Tenant ID | `270d5723-4b30-4f3b-b9cb-6527be741b42` |
 | Client ID | `9df3350f-b3b4-47c4-97b5-499a8b02acc7` |
+| Secret ID | `d706e910-15be-4aa4-9108-f56a8c84fa64` |
 | Client Secret | Stored in `.env` files (see Credential Locations) |
 
 ### Connection References (Power Platform)
 | Name | Type |
 |------|------|
-| `cr950_sharedsharepointonline_a9dba` | SharePoint |
-| `new_sharedcommondataserviceforapps_f7a26` | Dataverse |
+| TBD after solution import | SharePoint |
+| TBD after solution import | Dataverse |
 
 ### Credential Locations
 1. **MCP Server**: `C:\RESA_Power_Build\MCP_Servers\resa-dataverse-mcp\.env`
@@ -36,19 +40,19 @@
 
 ---
 
-## Dataverse Tables (9 Custom)
+## Dataverse Tables (To be imported)
 
-| Display Name | Logical Name | EntitySetName | Records |
-|--------------|--------------|---------------|---------|
-| Client | cr950_client | cr950_clients | TBD |
-| Site | cr950_site | cr950_sites | TBD |
-| Location | cr950_location | cr950_locations | 4 |
-| Project | cr950_projects | cr950_projectses | TBD |
-| Scope | cr950_projectscope | cr950_projectscopes | TBD |
-| Task | cr950_tasks | cr950_taskses | TBD |
-| Apparatus | cr950_apparatus | cr950_apparatuses | TBD |
-| Scope Labor Detail | cr950_scopelabordetails | cr950_scopelabordetailses | TBD |
-| Estimator | cr950_estimator | cr950_estimators | 0 |
+| Display Name | Logical Name | EntitySetName |
+|--------------|--------------|---------------|
+| Client | cr950_client | cr950_clients |
+| Site | cr950_site | cr950_sites |
+| Location | cr950_location | cr950_locations |
+| Project | cr950_projects | cr950_projectses |
+| Scope | cr950_projectscope | cr950_projectscopes |
+| Task | cr950_tasks | cr950_taskses |
+| Apparatus | cr950_apparatus | cr950_apparatuses |
+| Scope Labor Detail | cr950_scopelabordetails | cr950_scopelabordetailses |
+| Estimator | cr950_estimator | cr950_estimators |
 
 ---
 
@@ -61,7 +65,7 @@ C:\RESA_Power_Build\
 - CLAUDE.md                    # VS Code Claude instructions
 - Documentation/00_START_HERE/SESSION_START_PROTOCOL.md
 - MCP_Servers/resa-dataverse-mcp/.env
-- Solution_Exports/v2.0.0/unpacked/Workflows/
+- Solution_Exports/
 - Working/DESKTOP_CLAUDE_FINDINGS.md
 
 ---
@@ -75,33 +79,33 @@ C:\RESA_Power_Build\
 
 ### Desktop Claude
 1. Read `WORKSPACE_SYSTEM.md` for correct credentials
-2. Test MCP: Query `cr950_locations` table
+2. Test MCP: Query `cr950_locations` table (after solution import)
 3. Write findings to `Working/DESKTOP_CLAUDE_FINDINGS.md`
 
 ---
 
 ## Known Issues
 
-### Azure AD Secret Expiration
-- **Symptom**: 401 Unauthorized errors from MCP
-- **Fix**: User must refresh secret in Azure Portal -> App registrations -> Certificates & secrets
-- **Update Locations**: Both `.env` and `claude_desktop_config.json`
+### Azure AD Secret Rotation
+- **Current Secret ID**: d706e910-15be-4aa4-9108-f56a8c84fa64
+- **Created**: December 2, 2025
+- **Expiration**: Check Azure Portal
 
-### Old Org URL in Documentation
-- Many older docs reference `org99cd6c6e.crm.dynamics.com`
-- This is WRONG - always use `org284447bd.crm.dynamics.com`
+### Environment History
+- Dec 2, 2025: NEW `org7bdbc942` (Developer environment)
+- Previous: `org284447bd` (old dev - deprecated)
+- Previous: `org99cd6c6e` (jswensonllc default - NOT developer)
 
 ---
 
 ## Current Status (2025-12-02)
 
-COMPLETED:
-- Solution RESA_Power_Build_V2 deployed
-- Estimator Import Flow V2 deployed
-- Location table has 4 records
-- Workspace system documentation created
+IN PROGRESS:
+- New Developer environment created
+- Solution export in progress
+- Credentials updated
 
 PENDING:
-- User refresh of Azure AD client secret
-- Desktop Claude connectivity verification
-- Archive old Solution_V2/ and Solution_V3/ folders
+- Import solution to new environment
+- Update Desktop Claude config
+- Test MCP connectivity
