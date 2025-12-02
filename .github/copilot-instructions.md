@@ -2,49 +2,38 @@
 
 ## Project Context
 This is a Dataverse/Power Platform project for RESA Power electrical testing company.
-- **Environment**: org99cd6c6e.crm.dynamics.com (RESA-Dev)
-- **Solution**: RESAPowerProjectTracker v1.5.1.0
+- **Environment**: org284447bd.crm.dynamics.com (CORRECT)
+- **Solution**: RESA_Power_Build_V2 v1.0.0.1
 - **Repository**: RESA-Power-Project-Management on GitHub
 
+**WRONG - DO NOT USE**: org99cd6c6e.crm.dynamics.com (old/incorrect)
+
 ## Critical Files to Read First
-1. `PROJECT_CONTEXT.json` - Current state, next tasks, critical facts
-2. `Documentation/00_START_HERE/SESSION_RESUME_CHECKLIST.md` - Session startup guide
+1. `WORKSPACE_SYSTEM.md` - Single source of truth
+2. `COORDINATED_TASK_LIST.md` - Current tasks  
+3. `PROJECT_CONTEXT.json` - Machine-readable state
 
-## Reusable Templates (USE THESE!)
-Location: `Scripts/PowerShell/Templates/`
-
-| Template | Purpose |
-|----------|---------|
-| `Dataverse-TableDiscovery.ps1` | Discover correct table names, EntitySetNames |
-| `Dataverse-FieldOperations.ps1` | Add/query Dataverse fields |
-| `Dataverse-Functions.ps1` | Record CRUD operations (parent folder) |
-
-### How to Use Templates
-```powershell
-# Load a template
-. "C:\RESA_Power_Build\Scripts\PowerShell\Templates\Dataverse-TableDiscovery.ps1"
-Connect-DataverseAPI
-Get-AllCustomTables
-```
-
-## MCP Server Configuration
-- **Location**: `MCP_Servers/resa-dataverse-mcp/`
-- **Credentials**: `.env` file (uses Azure AD app registration)
-- **Table Reference**: `TABLE_NAMES_REFERENCE.md`
+## Connection References
+| Name | Type |
+|------|------|
+| cr950_sharedsharepointonline_a9dba | SharePoint |
+| new_sharedcommondataserviceforapps_f7a26 | Dataverse |
 
 ## Key Table Names (EntitySetName for API)
-```
+`
 cr950_clients          - Clients
-cr950_sites            - Sites  
+cr950_sites            - Sites
+cr950_locations        - Locations  
 cr950_projectses       - Projects
 cr950_projectscopes    - Scopes
 cr950_apparatuses      - Apparatus
 cr950_estimators       - Estimators
-```
+`
 
-## Working Folder
-`Working/` contains code view JSON from Power Automate flows - use as reference patterns.
+## MCP Server Configuration
+- **Location**: MCP_Servers/resa-dataverse-mcp/
+- **Credentials**: .env file (uses Azure AD app registration)
 
 ## Session Protocol
-- **On Start**: Read `PROJECT_CONTEXT.json`, check Templates folder
-- **On End**: Update `PROJECT_CONTEXT.json`, commit to Git, create session summary if significant work
+- **On Start**: Read WORKSPACE_SYSTEM.md, COORDINATED_TASK_LIST.md
+- **On End**: Update PROJECT_CONTEXT.json, commit to Git
