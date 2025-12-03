@@ -11,18 +11,20 @@
 ### Starting a New Session
 
 ```
-1. READ: C:\RESA_Power_Build\Sessions\CURRENT_STATE.md
-2. READ: C:\RESA_Power_Build\Sessions\HANDOFF.md (if tasks assigned to you)
-3. ASK: "What would you like to focus on today?" (if no specific handoff)
-4. UPDATE: CURRENT_STATE.md when session ends
+1. READ: C:\RESA_Power_Build\Sessions\CLAUDE_NOTES.md    ← Quick context from last Claude
+2. READ: C:\RESA_Power_Build\Sessions\CURRENT_STATE.md   ← Project state
+3. READ: C:\RESA_Power_Build\Sessions\HANDOFF.md         ← Tasks assigned to you
+4. ASK: "What would you like to focus on today?" (if no specific handoff)
+5. UPDATE: CLAUDE_NOTES.md and CURRENT_STATE.md when session ends
 ```
 
 ### Resuming After Interruption
 
 ```
-1. READ: C:\RESA_Power_Build\Sessions\CURRENT_STATE.md
-2. LOCATE: "Last Action" and "Next Steps" sections
-3. CONTINUE: From where we left off
+1. READ: C:\RESA_Power_Build\Sessions\CLAUDE_NOTES.md
+2. READ: C:\RESA_Power_Build\Sessions\CURRENT_STATE.md
+3. LOCATE: "Last Action" and "Next Steps" sections
+4. CONTINUE: From where we left off
 ```
 
 ---
@@ -32,9 +34,11 @@
 ```
 C:\RESA_Power_Build\Sessions\
 ├── SESSION_PROTOCOL.md      ← You are here (how to use this system)
+├── CLAUDE_NOTES.md          ← Quick context from last Claude instance (READ FIRST!)
 ├── CURRENT_STATE.md         ← Single source of truth for project state
 ├── HANDOFF.md               ← Tasks to pass between Claude instances
 ├── SESSION_LOG.md           ← Chronological history of all sessions
+├── QUICK_REFERENCE.md       ← Schema names, API endpoints, common commands
 ├── Templates\               ← Reusable document templates
 │   ├── AUDIT_TEMPLATE.md
 │   ├── BUILD_SPEC_TEMPLATE.md
