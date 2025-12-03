@@ -1,22 +1,27 @@
 {
   "currentStatus": {
-    "mcpConnectivity": "pending_test",
-    "pendingAction": "Import solution and test connectivity",
+    "mcpConnectivity": "working",
+    "pendingAction": "Add 7 lookup fields via Power Apps UI, then build flows",
     "environmentCreated": true,
-    "solutionImported": false
+    "solutionImported": true,
+    "tablesCreated": 12,
+    "financialTablesAdded": ["ApparatusRevenue", "ScopeFinancialSummary", "ProjectFinancialSummary"]
   },
   "credentialLocations": {
     "desktopClaude": "%APPDATA%/Claude/claude_desktop_config.json",
     "mcpServer": "MCP_Servers/resa-dataverse-mcp/.env"
   },
-  "updatedBy": "VS Code Claude",
+  "updatedBy": "VS Code Claude - Session 2025-12-02",
   "systemDocs": {
     "desktopClaudeFindings": "Working/DESKTOP_CLAUDE_FINDINGS.md",
     "taskList": "COORDINATED_TASK_LIST.md",
     "primaryReference": "WORKSPACE_SYSTEM.md",
-    "sessionProtocol": "Documentation/00_START_HERE/SESSION_START_PROTOCOL.md"
+    "sessionProtocol": "Documentation/00_START_HERE/SESSION_START_PROTOCOL.md",
+    "latestSessionSummary": "Documentation/03_Progress_Tracking/SESSION_SUMMARY_2025-12-02_REVENUE_ARCHITECTURE_REBUILD.md",
+    "buildStatus": "Documentation/03_Progress_Tracking/BUILD_STATUS_2025-12-02.md",
+    "decisionLog": "Documentation/03_Progress_Tracking/SESSION_DECISIONS_2025-12-02.md"
   },
-  "lastUpdated": "2025-12-02T16:00:00Z",
+  "lastUpdated": "2025-12-02T22:00:00Z",
   "environment": {
     "environmentId": "7829fa91-a0a0-e7e6-bb40-e413c331c0f",
     "clientId": "9df3350f-b3b4-47c4-97b5-499a8b02acc7",
@@ -26,12 +31,18 @@
     "environmentType": "Developer",
     "dataverseUrl": "https://org7bdbc942.crm.dynamics.com",
     "secretId": "d706e910-15be-4aa4-9108-f56a8c84fa64",
-    "solutionVersion": "pending import",
+    "solutionVersion": "v1.0.0.5",
     "repository": "github.com/jasonlswenson-sys/RESA-Power-Project-Management",
     "branch": "clean-main",
     "deprecatedUrls": [
       "org99cd6c6e.crm.dynamics.com",
       "org284447bd.crm.dynamics.com"
     ]
+  },
+  "sessionNotes": {
+    "lastSession": "2025-12-02",
+    "majorDecision": "Financial/Operations Separation pattern - dedicated financial tables for role-based visibility",
+    "nextPriority": "Claude Desktop schema review, then add lookups in Power Apps UI",
+    "blockers": "7 lookup fields must be added via UI (API limitation)"
   }
 }
