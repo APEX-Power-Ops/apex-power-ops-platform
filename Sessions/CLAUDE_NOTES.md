@@ -1,101 +1,70 @@
-# Claude Notes - Cross-Instance Communication
+# Claude Notes - Quick Context for Next Session
 
-**Purpose:** Quick context notes from one Claude instance to the next  
-**Rule:** Each session, read this first and update it before ending
-
----
-
-## 📝 Latest Note
-
-**From:** VS Code Claude (Claude Opus 4.5)  
-**Date:** December 2, 2025, ~10:00 PM  
-**Session Focus:** Revenue Architecture Rebuild
-
-### What I Did
-- Decided on Financial/Operations separation pattern (3 dedicated financial tables)
-- Created ApparatusRevenue, ScopeFinancialSummary, ProjectFinancialSummary tables via API
-- Added `cr950_completion_status` (Choice field) to Apparatus for reliable flow triggers
-- Discovered API limitation: lookup fields can't be created via Web API (must use Power Apps UI)
-- Created comprehensive session documentation (decisions log, build status, session summary)
-
-### What I Learned
-- Schema naming changed significantly from v1.5.x: `projectscope` → `scope`, EntitySetNames differ
-- The old Revenue Recognition flow from v1.5.1.3 can be used as logic reference but NOT imported directly
-- MCP server at `MCP_Servers/resa-dataverse-mcp/` is working well for queries and creates
-
-### What's Blocking
-- **7 lookup fields** must be added manually in Power Apps UI (API limitation)
-- Can't build flows until lookups are established (flows need relationships)
-
-### What You Should Know
-- Jason chose separation pattern because "it keeps things simple" and allows role-based visibility
-- The pattern was already proven in v1.5.x - we're re-implementing, not inventing
-- v1.0.0.5 solution export is in `Solution_Exports/v1.0.0.5/` for schema review
-- I created a `Sessions/` folder structure per your schema review suggestions
-
-### Suggested Next Focus
-1. Schema comparison (v1.0.0.5 vs v1.5.1.3) to find all gaps
-2. Review session protocol improvements (this new folder structure)
-3. Help Jason add lookups via Power Apps guidance if needed
+**Read this first.** This tells you where we are and what matters right now.
 
 ---
 
-## 📜 Previous Notes (Keep Last 5)
+## 🎯 Right Now (December 2, 2025)
 
-*No previous notes yet - this is the first entry*
+**Environment:** org7bdbc942.crm.dynamics.com (the ONLY correct one)  
+**Branch:** clean-main  
+**Solution:** RESA_Power_Build_V2 v1.0.0.5
 
----
+### Where We Are
+We just rebuilt the financial architecture. 3 new tables exist but need lookup fields added manually (API can't do it). Jason wants Financial/Operations separation for role-based visibility.
 
-## How to Use This File
+### What's Working
+- MCP server at `MCP_Servers/resa-dataverse-mcp/` - use `node build/index.js` to start
+- 12 tables in Dataverse (9 core + 3 financial)
+- All basic CRUD operations via API
 
-### On Session Start
-1. Read the "Latest Note" section
-2. Note who wrote it and when
-3. Use context to avoid asking questions that were already answered
+### What's Broken/Blocked
+- **7 lookup fields missing** - Must add via Power Apps UI, not API
+- **Flows not built yet** - Need lookups first
+- Can't import old flows - schema names changed too much
 
-### On Session End
-1. Move current "Latest Note" to "Previous Notes"
-2. Write new "Latest Note" with your session context
-3. Be concise but include the "What You Should Know" insights
-4. Commit to git with other session files
-
-### What to Include
-- **What I Did** - Actions taken, not just topics discussed
-- **What I Learned** - Discoveries that save time for the next Claude
-- **What's Blocking** - Issues that couldn't be resolved
-- **What You Should Know** - Insights, user preferences, gotchas
-- **Suggested Next Focus** - Your recommendation based on context
-
-### What NOT to Include
-- Detailed technical specs (put those in proper docs)
-- Full conversation summaries (that's SESSION_LOG.md)
-- Duplicate info from CURRENT_STATE.md
+### Jason's Preferences (Important!)
+- Wants separation pattern: financial tables separate from operational
+- Values "reliability and consistency" over speed
+- Likes checkpoint documentation before rushing ahead
+- Appreciates decision rationale being captured
 
 ---
 
-## Note Template
+## 📍 Key Locations
 
-```markdown
-**From:** [VS Code Claude / Claude Desktop / Web Claude]  
-**Date:** [Date, Time]  
-**Session Focus:** [2-4 word topic]
-
-### What I Did
-- 
-
-### What I Learned
-- 
-
-### What's Blocking
-- 
-
-### What You Should Know
-- 
-
-### Suggested Next Focus
-1. 
-```
+| Need | Location |
+|------|----------|
+| Current build status | `Documentation/03_Progress_Tracking/BUILD_STATUS_2025-12-02.md` |
+| Why decisions were made | `Documentation/03_Progress_Tracking/SESSION_DECISIONS_2025-12-02.md` |
+| Revenue architecture spec | `Documentation/02_Build_Guides/REVENUE_RECOGNITION_BUILD_SPEC.md` |
+| Old working flow (reference) | `Solution_Exports/Archive/v1.5.1.3/Workflows/RevenueRecognition*.json` |
+| Current clean export | `Solution_Exports/v1.0.0.5/customizations.xml` |
 
 ---
 
-*This file bridges the gap between formal documentation and quick context sharing*
+## ⚠️ Gotchas
+
+1. **Wrong environments exist** - org99cd6c6e and org284447bd are DEPRECATED. Only use org7bdbc942.
+2. **Schema names changed** - Old: `cr950_projectscope`, New: `cr950_scope`. Check mapping in BUILD_STATUS doc.
+3. **Lookup fields via API = 404** - Dataverse Web API can't create lookups. Don't waste time trying.
+4. **Choice field for triggers** - We use `cr950_completion_status` (Choice: 1=Planned, 2=Complete), NOT a string field.
+
+---
+
+## 🔜 Likely Next Steps
+
+1. **If Jason asks about schema review** → Claude Desktop was assigned to compare v1.0.0.5 vs v1.5.1.3
+2. **If Jason wants to add lookups** → Guide him through Power Apps UI (make.powerapps.com)
+3. **If Jason wants to build flows** → Need lookups first, then start with ScopeLaborDetail rate calculation
+4. **If Jason asks about the old build** → Reference `Solution_Exports/Archive/v1.5.1.3/` but don't import - adapt instead
+
+---
+
+## 📝 Last Session Summary (VS Code Claude, Dec 2)
+
+Created 3 financial tables, added trigger fields to Apparatus, documented everything. Session ended at a good checkpoint - all committed to git. Claude Desktop was given schema review task but ran out of context space.
+
+---
+
+*Update this file before ending your session. Keep it short and useful.*
