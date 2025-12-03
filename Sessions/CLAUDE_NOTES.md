@@ -29,6 +29,9 @@ Don't be passive - be a thinking partner.
 ### Where We Are
 We just rebuilt the financial architecture. 3 new tables exist but need lookup fields added manually (API can't do it). Jason wants Financial/Operations separation for role-based visibility.
 
+### Recent Side Project: PowerDB Schema Audit
+Completed comprehensive audit of PowerDB test form database (80 tables, 1209 columns, 163 GUIDs). Documentation in `Documentation/06_Implementation_Guides/POWERDB_*.md/csv`. Key insight: Use `JobNumber` as natural key for integration - no complex GUID sync needed.
+
 ### What's Working
 - MCP server at `MCP_Servers/resa-dataverse-mcp/` - use `node build/index.js` to start
 - 12 tables in Dataverse (9 core + 3 financial)
