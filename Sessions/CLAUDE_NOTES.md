@@ -41,14 +41,26 @@ The first 3 DDR decisions established foundational workflow architecture. But 5 
 
 ---
 
-## 🎯 Right Now (December 3, 2025)
+## 🎯 Right Now (December 3, 2025 - Evening)
 
 **Environment:** org7bdbc942.crm.dynamics.com (the ONLY correct one)  
 **Branch:** clean-main  
 **Solution:** RESA_Power_Build_V2 v1.0.0.5
 
+### ⭐ NEW: MASTER_SCHEMA.md - READ THIS FIRST
+**Location:** `MASTER_SCHEMA.md` (repo root)
+
+This is the **ONLY authoritative source** for entity/field names. Created after hours of debugging V1→V2 naming issues. Contains:
+- All 12 entities with exact EntitySetName, LogicalName, PrimaryKey
+- All fields with correct naming convention
+- Lookup binding syntax with examples
+- Validation queries
+
+**NEVER guess entity or field names. ALWAYS check MASTER_SCHEMA.md first.**
+
 ### Where We Are
-Schema audit COMPLETE (Layers 1-3). We now have a detailed gap analysis between old (v1.5.1.3) and new (v1.0.0.5) builds.
+1. Schema audit COMPLETE (Layers 1-3) - gap analysis done
+2. **Web app import flow 80% fixed** - gets through Client→Site→Project, fails at Scope (type issue fixed, needs testing)
 
 ### Critical Findings from Audit
 | Gap | Count | Status |
@@ -90,8 +102,10 @@ See: `Documentation/03_Progress_Tracking/WORKFLOW_INTEGRATION_ANALYSIS.md`
 
 | Need | Location |
 |------|----------|
+| **⭐ MASTER SCHEMA (USE THIS!)** | `MASTER_SCHEMA.md` |
 | **⚠️ QUICK STATUS (START HERE)** | `Sessions/QUICK_STATUS.md` |
-| **Session Summary (Dec 3)** | `Sessions/SESSION_SUMMARY_2025-12-03.md` |
+| **Session Summary (Dec 3 PM)** | `Documentation/03_Progress_Tracking/SESSION_SUMMARY_2025-12-03_WEBAPP_SCHEMA_FIXES.md` |
+| **Session Summary (Dec 3 AM)** | `Sessions/SESSION_SUMMARY_2025-12-03.md` |
 | **Schema Gap Report** | `Documentation/03_Progress_Tracking/SCHEMA_GAP_REPORT_v1.0.0.5_vs_v1.5.1.3.md` |
 | **Action Checklist** | `Documentation/03_Progress_Tracking/SCHEMA_AUDIT_ACTION_CHECKLIST.md` |
 | **Workflow Integration** | `Documentation/03_Progress_Tracking/WORKFLOW_INTEGRATION_ANALYSIS.md` |
@@ -111,14 +125,14 @@ See: `Documentation/03_Progress_Tracking/WORKFLOW_INTEGRATION_ANALYSIS.md`
 ## ⚠️ Gotchas
 
 1. **Wrong environments exist** - org99cd6c6e and org284447bd are DEPRECATED. Only use org7bdbc942.
-2. **Schema names changed** - See full mapping in SCHEMA_GAP_REPORT
-   - `cr950_projects` → `cr950_project`
-   - `cr950_projectscope` → `cr950_scope`
-   - `cr950_tasks` → `cr950_task`
-   - `cr950_scopelabordetails` → `cr950_scopelabordetail`
+2. **MASTER_SCHEMA.md is authoritative** - Don't trust old code. V1→V2 naming changed significantly:
+   - EntitySets: `cr950_projects` (NOT projectses), `cr950_scopes` (NOT projectscopes)
+   - Fields use entity prefix: `cr950_clientname`, `cr950_sitename`, `cr950_projectname`
+   - Lookups use SchemaName: `cr950_SiteClient@odata.bind`, `cr950_ProjectClient@odata.bind`
 3. **Lookup fields via API = 404** - Dataverse Web API can't create lookups. Don't waste time trying.
-4. **Choice field for triggers** - We use `cr950_completion_status` (Choice: 1=Planned, 2=Complete), NOT a string field.
-5. **Field naming convention changed** - Old: `cr950_field_name`, New: `cr950_tablefieldname` (entity prefix, no underscores)
+4. **String vs Int matters** - Dataverse is strict. `cr950_scopenumber` is STRING, not int.
+5. **Web app is OUTSIDE main workspace** - Location: `C:\Users\jjswe\Projects\resa-web-app`. Use terminal commands to edit.
+6. **Choice field for triggers** - We use `cr950_completion_status` (Choice: 1=Planned, 2=Complete), NOT a string field.
 
 ---
 
@@ -143,7 +157,37 @@ See: `Documentation/03_Progress_Tracking/WORKFLOW_INTEGRATION_ANALYSIS.md`
 
 ---
 
-## 📝 Last Session Summary (Claude Desktop, Dec 3)
+## 📝 Last Session Summary (VS Code Claude, Dec 3 PM)
+
+**Focus:** Fix web app import flow, create authoritative schema documentation
+
+**Completed:**
+1. **Created MASTER_SCHEMA.md** - THE authoritative schema reference
+   - All 12 entities with EntitySetName, LogicalName, PrimaryKey
+   - All fields with correct V2 naming
+   - Lookup binding syntax examples
+   - **USE THIS for all future development**
+
+2. **Fixed 20+ schema naming issues in web app**
+   - EntitySets: cr950_projects (not projectses), cr950_scopes (not projectscopes)
+   - Fields: cr950_clientname, cr950_sitename, cr950_projectname, etc.
+   - Lookups: cr950_SiteClient, cr950_ProjectClient, cr950_ScopeProject, etc.
+   - Type conversions: scopenumber/tasknumber cast to String()
+
+3. **Implemented cleanup-on-failure** ✅ VERIFIED WORKING
+   - Tracks all created records
+   - Auto-deletes partial imports on error
+   - Error UI with "Try Again" button
+
+**Current State:**
+- Import flow: Client ✅ → Site ✅ → Project ✅ → Scope ⏳ (type fix applied, needs test)
+- Last error: "Cannot convert literal '1' to Edm.String" - FIXED with String() cast
+
+**Next:** Test import after scopenumber fix, complete full flow
+
+---
+
+## 📝 Earlier Session (Claude Desktop, Dec 3 AM)
 
 **Completed:** 
 1. Schema Audit Layers 1-3
