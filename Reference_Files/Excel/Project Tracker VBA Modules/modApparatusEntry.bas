@@ -54,14 +54,14 @@ Public Sub QuickAddApparatus()
     qtyStr = InputBox("How many '" & apparatus & "' to add?", "Quantity", "1")
     If Len(qtyStr) = 0 Then Exit Sub
     
-    If Not IsNumeric(qtyStr) Or Val(qtyStr) < 1 Then
+    If Not IsNumeric(qtyStr) Or val(qtyStr) < 1 Then
         MsgBox "Invalid quantity!", vbExclamation
         Exit Sub
     End If
     qty = CLng(qtyStr)
     
     ' Find next empty row
-    nextRow = ws.Cells(ws.Rows.Count, Global_Constants.TE_COL_APP).End(xlUp).Row + 1
+    nextRow = ws.Cells(ws.Rows.Count, Global_Constants.TE_COL_APP).End(xlUp).row + 1
     If nextRow < Global_Constants.TE_FIRST_DATA_ROW Then
         nextRow = Global_Constants.TE_FIRST_DATA_ROW
     End If
@@ -95,7 +95,7 @@ Private Function GetApparatusFromList() As String
         Set ws = ThisWorkbook.Worksheets("Apparatus_List_w_Hours")
         If Not ws Is Nothing Then
             Dim lastRow As Long
-            lastRow = ws.Cells(ws.Rows.Count, 1).End(xlUp).Row
+            lastRow = ws.Cells(ws.Rows.Count, 1).End(xlUp).row
             Set apparatusList = ws.Range("A2:A" & lastRow)
         End If
     End If
@@ -114,6 +114,14 @@ Private Function GetApparatusFromList() As String
             i = i + 1
         End If
     Next cell
+    
+    ' Check if any items were found
+    If i = 1 Then
+        ' No apparatus found - fall back to manual input
+        GetApparatusFromList = InputBox("Enter apparatus name:", "Apparatus")
+        Exit Function
+    End If
+    
     ReDim Preserve apparatusArray(1 To i - 1)
     
     ' Use InputBox with hint (simple approach)
@@ -165,7 +173,7 @@ Public Sub InsertApparatusRows(apparatus As String, qty As Long)
     If ws Is Nothing Then Exit Sub
     
     ' Find next empty row
-    nextRow = ws.Cells(ws.Rows.Count, Global_Constants.TE_COL_APP).End(xlUp).Row + 1
+    nextRow = ws.Cells(ws.Rows.Count, Global_Constants.TE_COL_APP).End(xlUp).row + 1
     If nextRow < Global_Constants.TE_FIRST_DATA_ROW Then
         nextRow = Global_Constants.TE_FIRST_DATA_ROW
     End If
@@ -199,7 +207,7 @@ Public Function GetApparatusArray() As Variant
         Set ws = ThisWorkbook.Worksheets("Apparatus_List_w_Hours")
         If Not ws Is Nothing Then
             Dim lastRow As Long
-            lastRow = ws.Cells(ws.Rows.Count, 1).End(xlUp).Row
+            lastRow = ws.Cells(ws.Rows.Count, 1).End(xlUp).row
             Set apparatusList = ws.Range("A2:A" & lastRow)
         End If
     End If
