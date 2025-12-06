@@ -1,0 +1,431 @@
+PSS Portal
+
+**Database Schema & Data Model**
+
+Airtable Implementation Guide
+
+**RESA Power**
+
+Version 1.0
+
+December 2025
+
+# 1. Data Model Overview
+
+This document defines the database schema for the PSS Portal. The model is designed for implementation in Airtable but can be adapted to any relational database system.
+
+## 1.1 Entity Relationship Summary
+
+The data model consists of 9 interconnected tables:
+
+| **Table** | **Purpose** | **Key Relationships** |
+| --- | --- | --- |
+| Projects | Core project records | Links to Clients, Engineers, Documents, RFIs |
+| Clients | Customer companies | Links to Projects, Contacts |
+| Engineers | Engineering vendors (e.g., Shaw) | Links to Projects, Contacts |
+| Contacts | Individual people | Links to Clients or Engineers |
+| Documents | Individual document tracking | Links to Projects, Document Templates |
+| Document Templates | Master checklist definitions | Defines required docs by study type |
+| RFIs | Requests for Information | Links to Projects, Contacts |
+| Activity Log | Communication & action history | Links to Projects |
+| Users | Portal user accounts | Links to Contacts |
+
+## 1.2 Relationship Diagram
+
+[PROJECTS] ←→ [CLIENTS] (Many-to-One)
+[PROJECTS] ←→ [ENGINEERS] (Many-to-One)
+[PROJECTS] ←→ [DOCUMENTS] (One-to-Many)
+[PROJECTS] ←→ [RFIs] (One-to-Many)
+[PROJECTS] ←→ [ACTIVITY LOG] (One-to-Many)
+[CLIENTS] ←→ [CONTACTS] (One-to-Many)
+[ENGINEERS] ←→ [CONTACTS] (One-to-Many)
+[DOCUMENTS] ←→ [DOCUMENT TEMPLATES] (Many-to-One)
+[USERS] ←→ [CONTACTS] (One-to-One)
+
+# 2. PROJECTS Table
+
+The central table tracking all Power System Study projects. Each record represents one study engagement.
+
+## 2.1 Field Definitions
+
+| **Field Name** | **Field Type** | **Description** | **Required** |
+| --- | --- | --- | --- |
+| Project ID | Auto Number | Unique system-generated identifier | Auto |
+| RESA Job # | Text | RESA's internal job number (e.g., 629266) | Yes |
+| Project Name | Text | Descriptive name (e.g., SWA Tech Ops) | Yes |
+| Client | Link to Clients | Linked record to Clients table | Yes |
+| Engineer | Link to Engineers | Linked record to Engineers table | No |
+| Service Type | Single Select | Type of study being performed | Yes |
+| Status | Single Select | Current project status | Yes |
+| Stage | Formula | Auto-calculated from Status | Auto |
+| Order Date | Date | Date project was initiated | Yes |
+| Target Report Date | Date | Expected delivery date for report | No |
+| Report Sent Date | Date | Actual date report sent to client | No |
+| Report Approved Date | Date | Date client approved final report | No |
+| Stickers Applied Date | Date | Date stickers/settings applied in field | No |
+| Data Collection By | Single Select | Who is collecting data (RESA/Client/Shaw) | Yes |
+| Stickers/Settings By | Single Select | Who applies stickers (RESA/Client/Shaw) | No |
+| PO Number | Text | RESA Purchase Order number | No |
+| PO Date | Date | Date PO was issued | No |
+| PO Amount | Currency | Value of the PO | No |
+| Invoice Date | Date | Date invoice sent | No |
+| Notes | Long Text | General notes and comments | No |
+| Days in Current Status | Formula | Calculated days since last status change | Auto |
+| Documents (Link) | Link to Documents | Linked records to Documents table | Auto |
+| RFIs (Link) | Link to RFIs | Linked records to RFIs table | Auto |
+| Activity (Link) | Link to Activity Log | Linked records to Activity Log | Auto |
+
+## 2.2 Field Options
+
+### Service Type Options
+
+* PSS - Power System Study
+* Arc Flash - Arc Flash Study
+* PSS + Arc Flash - Combined Study
+* Coordination - Protective Device Coordination
+
+### Status Options (with Stage mapping)
+
+| **Status** | **Stage** | **Color Code** |
+| --- | --- | --- |
+| New Request | 1. Intake | Light Blue |
+| Awaiting Documents | 2. Data Collection | Yellow |
+| Partial Documents | 2. Data Collection | Orange |
+| Ready for Engineer | 3. Engineer Handoff | Teal |
+| In Progress | 4. Study In Progress | Blue |
+| RFI Pending | 4. Study In Progress | Purple |
+| Draft Submitted | 5. Review | Cyan |
+| Revisions Requested | 5. Review | Pink |
+| Report Approved | 6. Final Delivery | Light Green |
+| Stickers Pending | 6. Final Delivery | Lime |
+| Closed | 7. Complete | Gray |
+
+## 2.3 Sample Data (From Current Tracker)
+
+| **Job #** | **Client** | **Project Name** | **Status** | **Data Sent** | **PO Amt** |
+| --- | --- | --- | --- | --- | --- |
+| 629266 | Rosendin | SWA Tech Ops | Partial Docs | Partial | $1,250 |
+| 627687 | DP Electric | Hydro | Stickers Pending | 2025-11-07 | $20,000 |
+| 659189 | ICON | Airport Center | Draft Submitted | 2025-11-01 | $2,000 |
+| 673518 | City of Buckeye | P7 Lift Station | In Progress | 2025-11-11 | $1,250 |
+| 626206 | K2 | Scottsdale Ranch Park | Awaiting Docs | - | - |
+
+# 3. CLIENTS Table
+
+Stores information about customer companies who request studies.
+
+## 3.1 Field Definitions
+
+| **Field Name** | **Field Type** | **Description** | **Required** |
+| --- | --- | --- | --- |
+| Client ID | Auto Number | Unique system-generated identifier | Auto |
+| Company Name | Text | Client company name (e.g., Rosendin) | Yes |
+| Primary Contact | Link to Contacts | Main point of contact | No |
+| Address | Text | Company address | No |
+| City | Text | City | No |
+| State | Text | State abbreviation | No |
+| Phone | Phone | Main phone number | No |
+| Website | URL | Company website | No |
+| Notes | Long Text | General notes about client | No |
+| Projects (Link) | Link to Projects | All projects for this client (auto) | Auto |
+| Contacts (Link) | Link to Contacts | All contacts at this company | Auto |
+| Active Projects (Rollup) | Rollup | Count of non-closed projects | Auto |
+| Total Revenue (Rollup) | Rollup | Sum of all PO amounts | Auto |
+
+## 3.2 Sample Data
+
+| **Company Name** | **Primary Contact** | **Active Projects** | **Total Revenue** |
+| --- | --- | --- | --- |
+| Rosendin | Terri Aguiar | 1 | $1,250 |
+| DP Electric | Joe Essay | 3 | $23,000 |
+| City of Buckeye | - | 2 | $2,500 |
+| ICON | Nick Valentine | 1 | $2,000 |
+| K2 | Sydney Trujillo | 2 | - |
+| Garney | - | 2 | $16,000 |
+| BCBS | - | 4 | - |
+
+# 4. ENGINEERS Table
+
+Stores information about engineering vendors/contractors who perform studies.
+
+## 4.1 Field Definitions
+
+| **Field Name** | **Field Type** | **Description** | **Required** |
+| --- | --- | --- | --- |
+| Engineer ID | Auto Number | Unique system-generated identifier | Auto |
+| Company Name | Text | Engineering firm name (e.g., Shaw) | Yes |
+| Primary Contact | Link to Contacts | Main point of contact | No |
+| Address | Text | Company address | No |
+| City | Text | City | No |
+| State | Text | State abbreviation | No |
+| Phone | Phone | Main phone number | No |
+| Email | Email | Primary email | No |
+| Dropbox/Share Link | URL | Link to shared file location | No |
+| Notes | Long Text | General notes about engineer | No |
+| Projects (Link) | Link to Projects | All assigned projects (auto) | Auto |
+| Active Projects (Rollup) | Rollup | Count of non-closed projects | Auto |
+| Is Active | Checkbox | Currently accepting new projects | Yes |
+
+## 4.2 Sample Data
+
+| **Company Name** | **Primary Contact** | **Active Projects** | **Is Active** |
+| --- | --- | --- | --- |
+| Shaw Engineering | Paul (per email) | 18 | Yes |
+
+# 5. CONTACTS Table
+
+Individual people at client companies or engineering firms.
+
+## 5.1 Field Definitions
+
+| **Field Name** | **Field Type** | **Description** | **Required** |
+| --- | --- | --- | --- |
+| Contact ID | Auto Number | Unique system-generated identifier | Auto |
+| Full Name | Text | Person's full name | Yes |
+| Email | Email | Email address | Yes |
+| Phone | Phone | Phone number | No |
+| Role/Title | Text | Job title or role | No |
+| Contact Type | Single Select | Client Contact or Engineer Contact | Yes |
+| Client | Link to Clients | If client contact, linked company | Conditional |
+| Engineer | Link to Engineers | If engineer contact, linked company | Conditional |
+| Is Primary | Checkbox | Is this the primary contact for company | No |
+| Notes | Long Text | Notes about this contact | No |
+| User Account | Link to Users | If they have portal access | No |
+
+## 5.2 Sample Data (extracted from tracker/emails)
+
+| **Name** | **Email** | **Type** | **Company** |
+| --- | --- | --- | --- |
+| Terri Aguiar | taguiar@rosendin.com | Client | Rosendin |
+| Hunter Wright Waddell | hwaddell@rosendin.com | Client | Rosendin |
+| Chad Sheffield | chad.sheffield@resapower.com | RESA | RESA Power |
+| Nick Valentine | - | Client | ICON |
+| Sydney Trujillo | - | Client | K2 |
+| Bret Riggs | - | Client | Swain Electric |
+| Joe Essay | - | Client | DP Electric |
+| Jeff Nihart | - | Client | Jenco |
+
+# 6. DOCUMENTS Table
+
+Tracks individual documents for each project with item-level status. This is the key table that replaces 'Partial Data Sent' notes with specific tracking.
+
+## 6.1 Field Definitions
+
+| **Field Name** | **Field Type** | **Description** | **Required** |
+| --- | --- | --- | --- |
+| Document ID | Auto Number | Unique system-generated identifier | Auto |
+| Project | Link to Projects | Which project this document belongs to | Yes |
+| Document Type | Link to Doc Templates | Type of document from master list | Yes |
+| Document Name | Text | Actual filename or description | No |
+| Status | Single Select | Current document status | Yes |
+| Requested Date | Date | When document was requested | Auto |
+| Received Date | Date | When document was uploaded | No |
+| Reviewed Date | Date | When engineer reviewed | No |
+| Uploaded By | Link to Contacts | Who uploaded the document | No |
+| Reviewed By | Link to Contacts | Who reviewed/approved | No |
+| File | Attachment | The actual file | No |
+| Notes | Long Text | Notes (e.g., why rejected) | No |
+| Days Outstanding | Formula | Days since requested (if not received) | Auto |
+
+## 6.2 Document Status Options
+
+| **Status** | **Description** | **Color** |
+| --- | --- | --- |
+| Not Requested | Document not yet requested from client | Gray |
+| Requested | Request sent; awaiting upload | Yellow |
+| Received | Client uploaded; pending review | Light Green |
+| Under Review | Engineer reviewing for completeness | Blue |
+| Rejected | Document insufficient; new version needed | Red |
+| Accepted | Document approved for use in study | Green |
+| N/A | Not applicable to this project | Gray Strikethrough |
+
+## 6.3 Sample Data - Rosendin SWA Tech Ops (Job 629266)
+
+This shows how the Documents table would track the specific items mentioned in the email:
+
+| **Document Type** | **Status** | **Received** | **Notes** |
+| --- | --- | --- | --- |
+| Single-Line Diagram | Accepted | 2025-11-10 | - |
+| Utility Fault Current | Requested | - | Prefer actual from APS; can use table max |
+| Main Breaker Info | Requested | - | Need catalog # and trip unit catalog # |
+| Equipment Schedules | Received | 2025-11-10 | - |
+| Cable Schedules | Not Requested | - | - |
+
+# 7. DOCUMENT TEMPLATES Table
+
+Master list of all possible document types by study type. Used to generate project-specific checklists.
+
+## 7.1 Field Definitions
+
+| **Field Name** | **Field Type** | **Description** | **Required** |
+| --- | --- | --- | --- |
+| Template ID | Auto Number | Unique identifier | Auto |
+| Document Name | Text | Name of document type | Yes |
+| Study Types | Multiple Select | Which study types require this doc | Yes |
+| Is Required | Checkbox | Required vs. optional | Yes |
+| Description | Long Text | What this document should contain | No |
+| Example Notes | Long Text | Guidance for client on what to provide | No |
+| Sort Order | Number | Display order in checklist | No |
+
+## 7.2 Master Document Checklist
+
+| **Document Name** | **Study Types** | **Required** | **Description** |
+| --- | --- | --- | --- |
+| Single-Line Diagram | PSS, Arc Flash | Yes | One-line showing electrical distribution |
+| Utility Fault Current Data | PSS, Arc Flash | Yes | Available fault current from utility provider |
+| Main Breaker Information | PSS, Arc Flash | Yes | Manufacturer, catalog #, trip unit catalog # |
+| Panel Schedules | PSS, Arc Flash | Yes | Panel schedules showing breaker sizes |
+| Transformer Data | PSS, Arc Flash | Yes | kVA, voltage, impedance |
+| Cable/Conductor Schedule | PSS, Arc Flash | Conditional | Sizes, lengths, types |
+| Motor Schedules | PSS, Arc Flash | Conditional | HP, FLA, starting method |
+| Generator Data | PSS, Arc Flash | Conditional | kW, voltage, subtransient reactance |
+| Existing Relay Settings | PSS, Coordination | Conditional | Current protective device settings |
+| Working Distances | Arc Flash | Yes | Distance from equipment during work |
+| Equipment Enclosure Types | Arc Flash | Yes | Open, box, MCC, etc. |
+| Existing Arc Flash Labels | Arc Flash | No | Photos or data from existing labels |
+
+# 8. RFIs Table
+
+Request for Information records - when the engineer needs clarification or additional information from the client.
+
+## 8.1 Field Definitions
+
+| **Field Name** | **Field Type** | **Description** | **Required** |
+| --- | --- | --- | --- |
+| RFI ID | Auto Number | Unique identifier | Auto |
+| RFI Number | Formula | Display format: RFI-[Project#]-[Seq] | Auto |
+| Project | Link to Projects | Which project this RFI belongs to | Yes |
+| Subject | Text | Brief subject line | Yes |
+| Question | Long Text | Detailed question or request | Yes |
+| Related Document | Link to Documents | If related to a specific document | No |
+| Priority | Single Select | Low / Medium / High / Urgent | Yes |
+| Status | Single Select | Open / Responded / Closed | Yes |
+| Submitted By | Link to Contacts | Engineer who submitted | Yes |
+| Submitted Date | Date | When RFI was created | Auto |
+| Response | Long Text | Client's response | No |
+| Response By | Link to Contacts | Who responded | No |
+| Response Date | Date | When response was received | No |
+| Response Attachments | Attachment | Any files with response | No |
+| Days Open | Formula | Days since submitted (if not closed) | Auto |
+
+## 8.2 Sample RFI - Rosendin SWA Tech Ops
+
+Based on the email exchange shown earlier:
+
+|  |  |
+| --- | --- |
+| **Field** | **Value** |
+| RFI Number | RFI-629266-001 |
+| Project | SWA Tech Ops (629266) |
+| Subject | Main Breaker Model Information Required |
+| Question | Need main breaker info (breaker catalog number and trip unit catalog number) for the 3000A main shown on one-line. |
+| Priority | Medium |
+| Status | Open |
+| Submitted By | Shaw Engineering (via Chad Sheffield) |
+| Submitted Date | 2025-12-05 |
+
+# 9. ACTIVITY LOG Table
+
+Tracks all communications and actions on a project - replaces searching through email chains.
+
+## 9.1 Field Definitions
+
+| **Field Name** | **Field Type** | **Description** | **Required** |
+| --- | --- | --- | --- |
+| Activity ID | Auto Number | Unique identifier | Auto |
+| Project | Link to Projects | Which project | Yes |
+| Date/Time | Date (w/ time) | When activity occurred | Auto |
+| Activity Type | Single Select | Type of activity | Yes |
+| Description | Long Text | Details of what happened | Yes |
+| Performed By | Link to Contacts | Who performed action | Yes |
+| Related RFI | Link to RFIs | If related to an RFI | No |
+| Related Document | Link to Documents | If related to a document | No |
+| Attachments | Attachment | Any supporting files | No |
+| Visible to Client | Checkbox | Should client see this entry | Yes |
+| Visible to Engineer | Checkbox | Should engineer see this entry | Yes |
+
+## 9.2 Activity Type Options
+
+* Status Change - Project status was updated
+* Document Uploaded - File was added
+* Document Reviewed - Document status changed
+* RFI Submitted - New RFI created
+* RFI Responded - Response provided
+* Email Sent - Outbound communication
+* Email Received - Inbound communication
+* Phone Call - Phone conversation logged
+* Note Added - Internal note
+* Reminder Sent - Automated reminder
+
+# 10. USERS Table
+
+Portal user accounts with role-based access control.
+
+## 10.1 Field Definitions
+
+| **Field Name** | **Field Type** | **Description** | **Required** |
+| --- | --- | --- | --- |
+| User ID | Auto Number | Unique identifier | Auto |
+| Email | Email | Login email (unique) | Yes |
+| Contact | Link to Contacts | Linked contact record | Yes |
+| Role | Single Select | Portal access role | Yes |
+| Is Active | Checkbox | Can log into portal | Yes |
+| Last Login | Date (w/ time) | Most recent login | Auto |
+| Created Date | Date | When account was created | Auto |
+| Created By | Link to Users | Who created this account | Auto |
+
+## 10.2 Role Options
+
+| **Role** | **Access Level** |
+| --- | --- |
+| RESA Admin | Full access to all projects, users, settings, and reports |
+| RESA Staff | View all projects; limited admin functions |
+| Client | View only their company's projects; upload docs; respond to RFIs; approve reports |
+| Engineer | View assigned projects; download docs; submit RFIs; upload deliverables |
+
+# 11. Recommended Views
+
+These pre-built views make the data actionable for each user type.
+
+## 11.1 Projects Table Views
+
+| **View Name** | **For** | **Filter/Sort** |
+| --- | --- | --- |
+| All Active Projects | RESA Admin | Status ≠ Closed, sorted by Days in Current Status (desc) |
+| Awaiting Documents | RESA Admin | Status = Awaiting Docs OR Partial Docs |
+| Ready for Engineer | Engineer | Status = Ready for Engineer |
+| My Active Projects | Engineer | Engineer = [Current User], Status ≠ Closed |
+| Pending Client Approval | RESA Admin | Status = Draft Submitted |
+| Stickers Pending | RESA Admin | Status = Report Approved OR Stickers Pending |
+| Aging Report | RESA Admin | Days in Current Status > 7, grouped by Status |
+| By Client | RESA Admin | Grouped by Client, sorted by Order Date |
+| Pipeline by Stage | RESA Admin | Kanban view grouped by Stage |
+
+## 11.2 Documents Table Views
+
+| **View Name** | **For** | **Filter/Sort** |
+| --- | --- | --- |
+| Outstanding Documents | RESA Admin | Status = Requested, sorted by Days Outstanding (desc) |
+| Needs Review | Engineer | Status = Received, grouped by Project |
+| My Uploads Needed | Client | Project.Client = [My Company], Status = Requested |
+| Rejected - Action Needed | Client | Status = Rejected |
+
+## 11.3 RFIs Table Views
+
+| **View Name** | **For** | **Filter/Sort** |
+| --- | --- | --- |
+| Open RFIs | All | Status = Open, sorted by Days Open (desc) |
+| Awaiting My Response | Client | Project.Client = [My Company], Status = Open |
+| My Submitted RFIs | Engineer | Submitted By = [Current User] |
+
+# 12. Next Steps
+
+1. Review and refine field definitions with stakeholders
+2. Build tables in Airtable (or selected platform)
+3. Populate Document Templates with complete checklist
+4. Migrate existing projects from Excel tracker
+5. Create views and configure permissions
+6. Build automations for notifications/reminders
+7. Connect portal front-end (Softr or Airtable Interfaces)
+
+*— End of Document —*

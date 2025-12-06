@@ -1,0 +1,777 @@
+
+============================================================
+FILE: Screenshot 2025-12-05 194644.png
+BUS DUCT: None
+RECORDS: 0
+============================================================
+BUS DUT NE
+
+1 FOEL-BD-A-O3B
+LoS
+Te
+
+*800A AND ABOVE BUS PLUGS REQUIRE TOTAL LOAD (kVA)
+
+
+============================================================
+FILE: Screenshot 2025-12-05 195649.png
+BUS DUCT: None
+RECORDS: 0
+============================================================
+BS DUET TE
+|iFOEL-BD-AO1
+as Aue ‘iP va
+cavevert wt vars mue_tee | 1090 oem 100 | na
+[RROSET NOTA pO wee 80 et soo | srr oa st aed
+[oos=)no.t=z pO wR 80 0 800 | 77 oat | ae |
+[soos Wo.1=3 PO wee Sat so0_| 77 oat] ae |
+[oo Wo.I=4 PO wR a8 eo soo | 77 ost | ae |
+Poog=) LIST woe 88a soo | oa se [ae |
+pics) no.I=e woes a8 40000" | a0 oa se [ee |
+fico) no.t=s woEg a8 eso | aoa se | ae |
+fico) no.t=t woggr a8 a0 oo | a0 on se | ae |
+[aioe HOST POWER OST sae 400 oo | a2 oa ss |e fd
+PsoeK=) HG2=1 66 wn 4 80 eto soo | 77 on st [ae |
+[aNODE(=) w0.2=2_ POWER. 15490600500. | 3770.8 151] sa |
+scoe(2) n0.2-3-Fo_wnER 16420600 soo | 57704 st | oe |}
+scoet2) n0.2=4-FO_wnER 17460600500 | 377 98 asi ee | |
+[wiooc=) noa=T weep 188040000 | oon se |e |
+fwioost) noz=e weep 1848040000 | soa se | ee |
+fioos)no=5 woe 20480 eo soo | soon se | ee |
+fico) noz=4 woEg aaa soo | soon se | vee |
+[siooe HOST POWER OST a a8 400 soo | se@oa ss | oo |
+(oe) WOS=1 60 wee a8 eto soo | sor oa or er |
+[ioos=) NOSE FO wER a8 a8 eto soo | 77 oa sr |e |
+fico) NOS FO wnER 28a soo| 77 oa st | ae |
+Pog) not PO wER 3a soo_| 77 on sr | ae |
+fioog =) nOS=T weep 180 a0 oo | 0 on se fae |
+fioon) noS=I wee 58000 oo | 30 on se | vee |
+[aNoDeC=)-Wo.3=1 woCes 33490600500 | 13004 52 | 56 |
+sooe) no. 3=1 woces 3460400300 | 1509s 52 [tse |
+[siooe Dar Soni 9x0 Wa GOMER —36 ae 280100 | 9 oa ae J |]
+[aioe ROT PowER OST 38a 40000 | 6a oa ss | oe |
+froee0e=s ot a8 eto eon | vas noes [ase |
+eX |
+{eco oar wen WoTOR CoP aaa oo ooo | see oe es [woo |
+ores
+Teton vo AsO us Pues Tora. Loam ceva)|_ 6367 zo0s|ToTA. DEMAND LOAD (evs)
+Bug PLATE” SEE POWER PLAN FOR 3491.6 DEMAND AMPS
+Sean 13000 RATING (9)
+70 % LOADING
+
+
+============================================================
+FILE: Screenshot 2025-12-05 195750.png
+BUS DUCT: None
+RECORDS: 0
+============================================================
+BUS DUT NE
+1 FOEL-BD-A-O3B
+cqursent wo # vous reaue tmp | 100 oem tow | ra frores
+[pNoBE=) WOT GlewER GOR] 00 280 aes | eo ee |
+[aioDe(=) no TOP sLURRy TRANS PAL» 90150” 100-| 59 ome | |
+[aioDe(=) TRANSFER tave V@00.) Tor 5490250150 | 7904 32 | os | +
+[aioDe(=) TRANSFER Tave e001) TOR 4480250150 | 7904 32 | os [+d
+[aNODE(=) TRANSFER Tave a(@00.) TOR 5480280150 | 790432 [os |
+[aNODE(=) TRANSFER TaVe 2(@00,) TOR 6480280150 [7904 32 [os |
+[avooe(=) FEED vesseu 1(500u) to 7480280150 [79042 | os
+[asooe(=) FEED vesseu 1(S00u) Top 8480280150 | 79 os | es
+[asooe(=) FEED vesseu 2(500u) Top 8480280150 [790s os
+[aiooe(=) FEED vEsseL_2(500u) Top 10480280150 [79 os? | os |
+[awooe(=) comreR pus Paver ago tgs | aso
+[aioDe(=) coMTER Acen POWER PEL 12490250” p00 | is o4 a7 | ee |
+[aNoDE(=) COATER-Ao4B POWER PangL 1380250200 | 1300482 | v6 | +d
+[aNoDE(=) COMTER ACS POWER PaNL 14480250250 | 14104 s7_[ vo] |
+[aioDe(=) cOMTER PUB PaNEL 15480150. so| 23049 [28 [+d
+[asoDe(=) COMTER Ac4n POWER PEL 16480280200 | tip o4 a7 [a2 |
+[asoDe(=) CoMTER-Ao4B- POWER Panet 17480280200 | 13004 sve
+[asooe(=) comer Acs Power Paver 18480280” 250 [at oa 87 [oJ
+[aiooe(=) ConTeR HEATER PANEL 1=i 19480600600 | sso og 37 [sy |
+[aio0e(=) ComTeR HenTER Pavel t=7 20480600600 | 36009347 [ as? |
+[aio0e(=) ConTeR HENTER PaNeL 1-521 480600” 600 | 3600934 [ as? |
+[>NOOE(=)-cONER-AC3@_ POWER PaNEL 22480280200 [ 1500452 [ss |
+[>NOOE(=) cONER-AG3@_POWER PaNEL 2548028000 [15004 52 [ss | id
+[aioDe(=) COATER-Acsn POWER PaNeL 24490250200 | 1104 a7 | veo |_|
+[aoDe(=) COATER ACSA POWER Pane 25 480250200 | 11604 a7 [vex | +d
+a
+*B00A AND ABOVE BUS PLUGS REQUIRE TOTAL LOAD (KVA)| 3269] 1878] TOTAL DEMAND LOAD (kVA)
+Rt AeiORER msPuieh- Bos RLATE
+SEE POWER PLAN FOR LOCATION 2258.56 DEMAND AMPS
+2500 RATING (0)
+90 % LOADING
+
+
+============================================================
+FILE: Screenshot 2025-12-05 195816.png
+BUS DUCT: None
+RECORDS: 0
+============================================================
+BOS UT Nae
+1 FOEL-BD-B-O1A
+couevent vo # vos raue tae | 1010 ow 100 | na_fvores
+Se RO
+[contRotomne PaCS ats | eo fd
+a
+[conteoL/onve PARE agg Of 0 a
+[RvenTeR paek St 000500 | 77 ons | ess Pd
+[contRot/onne Pa» #01500 | 2204 9 | a7 [|_|
+[nventeR pwek 740600500 | 377 04 st | ess |
+[contRotonne Paige #8015040 | 2204 9 _|_a7 une
+[nvenreR pavec 80800800 |W Noor
+[verter paver 48060000 | 377 ost | ass rors
+[contRotonne PANES ago 500 [zoo (re
+[ivenren paec 1S as0 60000 | 377 ois | ass (rmure
+[contRocfonne PaREL Casts 40 || a rotune
+[nveRTeR pave 18 480-600-200 | 57704 isi ass Yruwune
+[rromsnPest F040 250 | Ss |
+[contRoLomne pmiec_——18 #0015040 | 22 04 9 | a7 [|_|
+[contRotyonne pact 19 #80 150.40 | 2204 9 | a7 [|_|
+[contRotonne-panet 20 #0 150.40 | 22049 [a7 [+4
+[controtyonne-panet 21a 15040 | 220 9 | a fd
+[contRotyonne panera ao t50 40 | zo 9 | fd
+[controcyonne panera ao tg0 a0 | ze fd
+[controconne panera tg a0 | ze fd
+[anone(=) waw panel CHULER Fiz 2840028080 | tee 04s | ae | id
+[avonei=) nam DRYER MAN Pawer fiZ_———26— 4604007400 | 25504 vor | soe | id
+800A AND ABOVE BUS PLUGS REQUIRE TOTAL LOAD (kvA)| 3800 1529|TOTAL DEMAND LOAD (KVA)
+een Ne ee spusep Ses Beate L_aszafrorat ewano
+See EOHER PLAN FOR LOCATON
+‘2500 RATING (A)
+v4 % LOADING
+
+
+============================================================
+FILE: Screenshot 2025-12-05 195825.png
+BUS DUCT: None
+RECORDS: 0
+============================================================
+1 FOEL-BD-B-OiB
+oureuent vio # wouts rae rer | vor cow sono | rua_fuores
+[aRooeC) WN Paver cHMLER F850 20 [eos Pe |
+[axooe(=) fae DRYER MAN PANEL F_2 4807400400. [ 755 ca vor [soe [iY
+PaNooE(=) wan PaiEL cHUiER #2580260 250-[ vez oe 75 | vie |
+[aNooE(=) Ram DIVER WAN paieL 24480400 —400-[ zs oe vor | soe |
+[wioDE(=) WAN PANEL cHLIER g5_5 480250250. | vez os 7s fare |
+[wioDe(=) RoR ORER WAN PANEL FB 648000 #00. | 25504 vor | soe | id
+[anoDE(=) WAN PANEL CHLLER ga 7480250250 | 1e2__o# 7s_[ a1 | id
+[aioDE(=) RR DRYER WAN PANEL Ga 8 480.400 #00. | 25504 vor | soe| id
+[>NODE(=) WAN PANEL CHEER ys__9 480250250. [ 1e2 04 75 [ a9 |
+[asoDe(=) RR DRYER MAN PANEL gS 10480400 #00 [ 25504 vor | soe[ iY
+[axoDe(=) wan PANEL cHuteR Je 114807250250 [ ie? on 7s fae |
+[anooe(=) fae DRYER MAN PANEL G6 12480400400 [ 25504 vor [soe [iY
+[axooe(=) wan PaNer cHuieR §7 134807260280. [ ie? od 73 ae |
+[axooe(=) nam DRYER WAN PANEL G7 144807400 —400.[ 75504 vor [soe |
+[aNooE(=) WAN POEL cHUIER #6 15480260 250-| tea oe 75 | zie |]
+[wioDe(=) Rak DRVER WAN PANEL Jo 16480400400. | 255 os vor | soe |
+[pioDE(=) WAN PANEL cHLLER p17 480250250. | 1ez os 7s_p are |
+[aioDe(=) RR DRYER WAN PANEL go 18480400 #00. | 255 08 vor | soe| +d
+[aioDe(=) WAN PANEL cHLLER i019 480250250. | 1e2 08 7s_[ a9 | iY
+[aioDe(=) RR DRYER WAN PANEL #120 480400 #00 | 25504 vor | soe[ +d
+[asoDe(=) wan paner cHuceR gi} 21480250250. [ 1e2 08 75a |
+[asooe(=) nae DRYER WAN PANEL gi 22480” 400 #00. | 25504 vor [soe [SY
+[romeo aso we PY
+*800A AND ABOVE BUS PLUGS REQUIRE TOTAL LOAD (KVA)| 4847] 1976]TOTAL DEMAND LOAD (KVA)
+WERUEACIORER ISPALED- BUS BLITE
+SEE POWER PLAN FOR LOCATION 2376.57 DEMAND AMPS:
+2500 RATING (A)
+95 % LOADING
+
+
+============================================================
+FILE: Screenshot 2025-12-05 195932.png
+BUS DUCT: None
+RECORDS: 0
+============================================================
+|i FOEL-BD-C-O2
+ns Pa en 01
+courant tw 4 vours reaver | 10m new 1.010 | rua_|nores
+[eamOOES) NOTE eu WERT 80 000 500 | se on tse [ao ||
+[cxmone(s) no i=2-eTu WER 480000 s00- | sot nse | ao |
+[exmo0e(s) no T=3 BTM WER 3460600 s00-| ssa ns | ao |
+fexmooe(s) no =r-wocg1 44800300 | 76a ro | ae |
+[emooe(s) wo =z woehi 4800300 | 76a ro] ae |
+[oxo0e(s) wo 3 wochI 6460400300 | 17604 70] ae ||
+[oxo0E() no T= 1_wocde GRE WER) 7480600 eoo | 494 a4 186 | so4 [|
+[cxmone(s) no 2 Woche (Pee nem) — 8 400 —o00 600 | 494 04 198 | soa [|
+[cxmone(s) no 1-5 wood Pee wneR) 9 480 600 —e00 | 494 a4 198 | so]
+[cxmone(s) no = 1-eurSuuRR) 10480280175 | tie a4 a7 [a |]
+[cth00e(s) No = 1=1=2 euF(PRE WEA) 1480280175 [ine oar fa |
+fexmone(s) no a1 netSGH 12480280200 | tne aaa | a |
+fcamo0e(s) no =I NET2SGH 18480280200 | tne oar | aa |
+[exo0e(s) no =I NET2SCH 14480280200 | tne aaa |
+[exmo0e(s)-no2=1 BTM wxER 18480600 sto | ss at ist | aon
+[exio0e(s)-no2=2 emu WER 19460600200 | ss oa ns _| ao
+[exo0e(s) no2=s om wnER 20460 600200 | ss a4 rsh _| aoe |
+foxmooe(s) woz=1wochr 2148000300 | 176 a4 70 | ae |
+[oxooe(s) woz=2 woch #2 4800300] 176 0470 | a8 |
+[cxmone(s) no 2=5 ween 25 4¢0 00300 | 176 04 70 [212 | |
+[cxmone(s)-no2= wood GRE wna) — 24 400 00 eo0 | 494 a4 198 | so [| ——]
+[cxmone(s)-no2=2-wocHa (PRE WER) ——75 480 600 eo0 | 494 a4 198 | soa [|]
+[camone(s)-No2=swocy2 (PRE MER) 26 480600 eto | 494 a4 198 | so [|
+fcxmone(s) No2=1 EurSUURRY) 27460280175 | wwe oa ar | a |
+[camo0e(s) no2=1=2=2 EWF(PRE WER) 78460280175 | wwe aa ar | a |
+fexmone(s) no2=1 neon 20480280200 | tne an ar | ae |
+fexmooe(s) no2=1-NETzscH 50480280200 | nea ar |e |
+feaio0e(s)-no2=1-NET2SCH 1400280200 | nie oar vae |
+[oxo0e(4) noS-1_om wxER 36460600200 | 594 a4 ist | aoe fd
+[oxmo0e(s) no -2 emu wnER 36480 600200 | 53404 134 | aoa [|_|
+[oxHOoet) wo=3 ome MOER 878g sg [sense | aoe | Y
+[cxnone(s) nost PoweR os 38 400 ("400 ao0\_e2 os 35 | o9 |]
+[cxno0e(s) Host power os 39 480 § 400300 [e204 35 [99 [|]
+[cxo0e(+) Host PowER-osT 38480400300 a2 oa 3s_| oe [+
+*800A AND ABOVE BUS PLUGS REQUIRE TOTAL LOAD (KVA)|_ 8453] 3381|TOTAL DEMAND LOAD (KVA)
+eieeloree nshieD Bus FLA
+SEE POWER PLAN FOR LOCATION 4067 DEMAND AMPS:
+$000 RATING 0)
+31% LOWONG
+
+
+============================================================
+FILE: Screenshot 2025-12-05 200016.png
+BUS DUCT: None
+RECORDS: 0
+============================================================
+fas OT
+HFOELEDCo3s
+“RATINGS. ee |
+
+Bee Slee lake |
+i
+rT
+fesoortsaeex rower mex 3 ao a80 0 | 102 on ee | ise |
+rr
+JcaTso0e() acs PoweR Pee, Sa 500 | ton | to [|
+[snes etree) te [wae or [|]
+laments) set Pomer |
+fesroocsy cone pox pia 0 isos [anos fe |
+fearooesy cone poem 90 so soos oe fe |
+a
+a
+feanooesy erm vessie wiccuivi(sm) toe va a0 aso eo [sa oe me | |
+fexnooe) rem vesserwnccviv(sny go vs a0 aso [oo oe me |
+feawoory rec vesseewncczivim noe ve ao aso ea [oa oe me
+feanoort) ocr wien ws=t-weccaror ve ao as0 oo [ea oe as | |
+feanoort noc ws wo s=x-weccanor wo as0 oo [ea oe as | |
+feanoort ocr wr wo s=a-weccasor 7 wo s50 o> [ea oe as | |
+fexnooctoy ew wher nor Gaur ve wo aso [aoe fs PY
+a ee
+a
+rr ee
+[caTiO0e(e) PRE wKER NO. So omusR a2 aad 500 | oa | st [|
+[snes wm wares eco ten nee [rae sf |]
+Jomecr(s) enor cn ne w-cOT es
+feoocy noo ame na2=r wencamo1 28 90 aso [ea oes | |
+fesnoocy noo ane yaa=s weccaso1 a8 490 aso oo [ea oes | we |
+fewnoorts aw wnee noa-1 ome ar ao aso [aoe fs |
+fexnooets) aw wee noa-2 omue a8 ao aso [oe fs |
+ee a
+a
+feanoort) eRe wer noa-z Gauee ot ao a0 [oe
+feanoorty one wer nos oRumR soso [oe fs |
+fcanooct enocr wen ist wecchTor 80 ss0 oo [ea oe a | |
+feanwort) enoor wt wo ime weccigor seo 3509 [eg on as |e |
+i
+fensort atu wiex nor=r Geum 9¢_—ago 350 | ao ir | so |
+[caTaO0e(e) er uea no.t=2 GmueR Yaa 500 | oa | sof |
+[snes me watts eu 9» ene vo [we ae |}
+Jomesr(s) eRe MEET tot Os a |
+a
+fesnoocsy eae wer wos omupe at ago aso [gon fae |
+feanooes) wo. o> Suen eres Buz a0 1s0 oo [so oe me | |
+feanooes) wo. 1 sume wsres ue, es a0 120 oo | soon me | |
+a
+a ee
+ee a a
+eT
+_
+a
+rr
+fenwort wo.r2 wcede r_wnex) a0 e00 o> [aoe 04 noe | sme |
+fenwortno.3-wced> at_wnes) 35.0 e00 oon | ane on 108 | soe |
+Joes) na tose DoD oe a TZ
+Jeoortcy nr HES $8460 2900 [ ie a ee |
+Jomeors) n= Mr 304902900 ie a we |
+ra Cs
+feanwoocty cone vos et 0 ano ass oe ae | ee
+re es
+eS a a
+ee
+Be oe, ns ae vow woe col red [aaufone case 0 co
+UR Aeowen NeIAES BUS FONE See Powe ae
+PON on tocaton
+
+00 Rate (A)
+
+70 % (OHO
+
+
+============================================================
+FILE: Screenshot 2025-12-05 200033.png
+BUS DUCT: None
+RECORDS: 0
+============================================================
+fa DET TE
+i FOELEDDO2s
+a CT
+coo ‘iP or
+souruoe 64 vrs rowe_tee | we oor woo | a
+
+a
+rr ss
+er
+a
+a
+a
+rr
+[eOuD Ou CONTROL PANEL Yo 4901507 | 35 oe a | ae P|
+eeu ox comREUR Pe TT a |
+bone 1za59 80 —o0-| “e994 ae |r|]
+coc ox COTE Pe |
+fcown0F ou commcucn ict 1s aso 0 100-| eee ar foe f
+a
+re
+a
+[cou ox cOMROLET ome C]_———20 sto vo wo | at ea 8 ye
+[cow on cOWRELEN ane, 31 eto 0100 eee ar a [|
+a a
+a a
+a a EN RN mn
+a
+a a a a
+moa 9 _|27_fftrue
+ce ox CORRELA Pe a a
+[conor ou commoucn pcs a8 aso 0 100-| me 04 ah fo [|
+fcow-on commer mex 4 aso ovo fe eee we |
+[cow-ox commouen mex (i) a8 ato 0 0 | or ea 5 | yee
+a A TE EN
+a es
+[cou on coWRELEN anc, a9 eto 0100 | Te ea ar ag [|
+[cow ox comes ewe 00 no vo eae
+a es
+RN nd
+a es
+[sob ox cOWRELER rnc a5 no 9100 me oa ata PM]
+[cos ox cores pw —ae wo ome [oa fe
+a a rs
+ref]
+froin oF oor ss | J
+woes
+"Be ne sone ors vor wwe coma [shone sam i com
+Soe Pot See Pome Pow FR Tear oewwo urs
+Bean 300 Rat (0)
+
+4 LOuoNG
+
+
+============================================================
+FILE: Screenshot 2025-12-05 200042.png
+BUS DUCT: None
+RECORDS: 0
+============================================================
+BUS DUCT NAME
+1 FOEL-BD-D-02B
+aus Aue Ae oa
+cauevent of vous rave tmp | 1os0 oot toro | na _huores
+[avemreR pm a8 600 000 | ass oe se |
+[cou nor OL CONTROLER PEL 7 ¥80 250100 | 76 ost fe |
+[iwenteR pmmeL a8 000600 | 488 one foe |
+[cou nor ox CONTROLLER PIE 480250100 | 76 oa i | o |_|
+lrwenteR purer 7 480000600 | 036 04 ara [ sxe | |
+[cou nor Ox CONTROLER Pm 480250100 | 78 04st [ oY
+fiwenteR Panet 10480600600 | 458 ore [se |
+[cou nor OL CONTROULER Pw 11480250100 | 76 04st PP
+[cou nor OL CONTROLLER Pw 1448050100 [76 04st P92 PSS
+[cou nor OL CONROULER PwEL 17480250100 | 75 04st P92 PSS
+[cou nor OL COMTROULER Pan —20 48050100 | 78 04 si _|_99 }_SSISI
+[coud nor ox CONTROLLER PIE 25 480250 100 | 78 04 1 |p [PS
+a |
+NOTES
+{3008 AND ABOVE. Bus PLUGS REQUIRE TOTAL LOAD (KVA)|_ 4097] 1639|TOTAL DEMAND LOAD (KVA)
+SEE POWER PLAN FOR LOCATION 1971.2 DEMAND AMPS
+2500 RATING (A)
+79 % LOADING
+
+
+============================================================
+FILE: Screenshot 2025-12-05 200119.png
+BUS DUCT: None
+RECORDS: 0
+============================================================
+Bas DOE TE
+iFOASBD-AO1
+ns Fas mPa oa
+cornet wo # vrs rave xe | 1000 ew tom | nia ones
+
+[SE OER WELT wesewaty yas feo) a oes fs |
+[os-useh_wetoerassewsty 1 asso eo Psy oe as ws |
+[oe usth_wetoeesssewaiy 2s aos (eo Ps oe as [ws |
+[ons LASER WELDER_ASSEWSLY 2 a 48059 (60) 5704 25 | ee fd
+[os user weber asseusty 36 420 (250 Jeo | sos as [os |
+[os user weber asseusty 47480 Po" eo | soe as ws |
+[os-useR weber asseusty 48 480-0") eo | sos es | ws |
+[os see weer asseusty 58480 Y2s0} eo | 57 os es | ws |
+[s-USeR weer asseuRLy Sto 480 (0 eo | sy os es ws |
+ee
+a
+a a
+[rowan ow gi aa Ps so soe
+A SE)
+[soon was € as SS] os oe so |e |
+[sowwon wisi <¢ 9 as Geo vo [ae eo fe
+[WsHinG-weaT 418400 ®60 soo_| 5250418 | ses ranean) |
+[Washing weAT™# 19490600 soo | 26504115 |-s4o-(ruune ) |
+a Re 2
+[soon wncoRSER ar a800)as [rsa es
+[exten etetTon ae a8 Case) as [ass | oo
+[axe ot cowon as eo eee
+[sua nPecTOn COMMON e480 (50 too) tet a
+[common wiSiNG S FUTVRE 2 aan] soso sd | sot fee) |
+[comoncwsin sa aso wo | eos ee
+[RAS EAT 5 FUTURE ar aan 0 soo | soso as | ee ee) |
+[RASA EAT =: runURE as as 000 | aes oe ris | sao (roe) |
+SS OC
+[somone unkONOEN 5 TURE 0a (Caso) tos | oe
+[wea peecTON s mune an aso Pod ros [es oe ss [oof
+[SLAC SPECTOR common = FUTORE sz aa0-( aso) 100 [tao 7 fa} |
+[ine ct cowon s runme sae Ys [oe | so me)
+“ook ao agove_ BUS PLUGS REQUIRE ror. toA0 (n|_sser 725fT078. DEMAND LOAD (VA)
+tiutceunth histuico Bus Sue Lvaslrona. opto
+eee pois Bian FoR Location
+
+7500 RATING (8)
+
+oom conoine
+
+
+============================================================
+FILE: Screenshot 2025-12-05 200152.png
+BUS DUCT: None
+RECORDS: 0
+============================================================
+fs DOT TE
+|i. FOAS-BD-BO2
+as Ae AP RP va
+
+courvent wo # vars reme_ee | too cen tow | Ar
+a a
+a EE
+a
+[sow eo 5a ses [sss |e
+=
+[somone CORBET go ses [seer
+[somvon sew eekoeR a0 ses [ss eae ar Pd
+a
+EE
+EE
+Ee
+a
+so oo a ie
+re
+[common cw tonger i 20 800 | 26a fd
+[common is woe 20 soo [2s oof |
+[common eon 20 eo [aso |e]
+[sta ao [aso s |d
+[sao as [gos
+<a
+<a |
+[somone ong a a sas [sees [ef
+[somone Gewese sas [sees fe |
+a Ee
+Ee
+[ne cexc Test_——~37 308 250150 | #00416 Ps | |
+ee |
+[convoy tra 28 208400 0 | oro sf aes Pd
+[common beg ewe 50 20 a0 oo | isos | eo |
+[sowvon LER Pw 120000 | or ons | aes |
+[somvon ebrR2 L520 0 | sone] seo |
+[iow woven ABE CLERER 33 a0 aso as | ot oe fe |
+[Hon WOVEN HERE clpweR aa aso a | eto |e |
+SA
+[somvon ws paiey 520s | ase |
+cc
+a
+a
+[et-vea_pecrecroR “to 308150125 [3604 14-100 |]
+|WSUAL_WSPECTOR COmmoN +1 208150100 [ 310417 | o6 |]
+[sun nseecTon comoy #2 208180100 | soa [os |
+[common wisn 1 a 20 et soo | atone | sor |
+[rasan ea ya 206 so | oe | is |
+= |
+[common wimg Ea 20 soo [tatoos | son |
+[somone wncoRbER ar ao so es [sees [es
+[somwon -wnconoeR azo is es [sees [es Pd
+a
+|
+a
+ck
+cc
+SeoDk ao agove_ Bus PLUGS REQUIRE ToTA. LOAD] rorz}rome pewano L0%0 (4m)
+tigueceTonth mistuico Bus Bue 7903 OEUAN Aus
+See pores Hat FoR cocsion
+
+200 RATING (0)
+
+
+============================================================
+FILE: Screenshot 2025-12-05 200232.png
+BUS DUCT: None
+RECORDS: 0
+============================================================
+BOS DCT NE
+ji FOAS-BD-C-O2A4
+Bs FUE roa EM
+couent ue # voxrs reve me | vom new uo | ra_|wores
+
+[samo waren woes 08 so oof os |
+[soumon noreunec-wnoeR 27081900 [ #049 | |
+[soumon norenne-wnoeR 3208190 o_[ #2 04 9 | @ | |
+[counon-voronne-wnoeR 420815080 | 22049 | eo |
+[couon-norcnnec-wnoee 5208 1500 [22 04 9] eo |
+[coumon-norcunc-wnoee 208 1500 [zz 04 9] eo |
+[couon-norcnnc-wnoee 7208 150022 0s 9] eo |
+[coumon-norcHnG whose 208 50 eof ze 0s 9 eo |
+[coumon-norcHns-wnosR 9708150 oof ze 0s 9 | eo |
+[coumon-norcHNs whose 107081500 [zz 0s 9 | eo |
+[soumon-norcHNs-wnoeR 170815060 feos 9 eo |
+[soumon-norcHNs-wnoeR 12708150 o[ 20s 9 | |
+[common norcHnG-wnoeR 1520815002 0s 9 | |
+[coumon noreune-wnoeR 4708190 o_[ #204 9 | |
+[coumon norennec-wnoeR 1208190 0_[ #2049 | @ |_|
+[COMMON NOTCHING WINDER 16208 15080 | 2204 9 | 6 | —~*+Y;
+COMMON NOTCHING WINDER, 7208 1590 80 | 22 of 98 | 6 | ‘|
+[coumon-worcunc-wnoee 1208 1500 [ “zz 04 9 [eo |]
+[coumon-worcrnc-wnoee i208 iso oo [zz 04 9 [eo |
+[coumon-norcHns whose 202081500 [zz 0s 9 | eo |
+[coumon-norcHns whose a1 208150 oo [ze os 9 | eo |
+[coumon-norcHNG-wnoeR 27081500 ze 0s 9 | eo |
+[soumon-norcHNs-wnosR 237081500 zz 0s 9 | |
+[soumon NoTGHNG-wnOER 28708150 o_[ 204 9 | |
+i
+a
+“EGO p40 AGO ys ugg ReaURE Tora. Lovo ¢kva)|__sss a2a}tora. oewsNo LOAD («vA)
+
+‘200 Rate)
+
+25 % LOADING
+
+
+============================================================
+FILE: Screenshot 2025-12-05 200251.png
+BUS DUCT: None
+RECORDS: 0
+============================================================
+fos Boer AE
+|i FOEL-BD-AO2
+oo
+cavrvert wo # vars reue_ter | 100 pero | nv ores
+[oyna awe pwn ae 50 eas oe ee is |
+[icon now ewe ALE 2a so eas | os is |
+[icon nous ewe FIwER Sats eas | ooee is |
+[rion nos CMR (GRY sees | oo ss is |
+[rio no. CWE COR) 88 oes | oo
+[rion No.5 Bee Sw AS PRL 6 eos roo | see PY
+[ou no.5 Tor SLURRY TRAES PANEL Pass 10o-| see
+[oat FeED VESSEL SOR) (BK) 8 aa soso | see |
+[aioe FEED VESSEL 00.) (SoH) 8a soso | see ee |
+[avout FeED VESSEL s(300) COR) 10480 soso [see ee P|
+[aioe FEED ESSE s(n) (0p) asso so [seek ee fm |
+[aNooe(=)-coareR Pus Pave — 124801500 | 25 oa 9 [28 | _}
+[aNooe(=) cOATER Aco POWER Pawel 18480400 400 | 270 04 vos_[-sa5 |_|
+[oon conte azz POWER Pmt 4 480400400. | 27004 108 [sas | |
+[oy conte ocak POWER PwEE 1 a80 290200 | sek we |
+[a= ONT aG38 POWER PwiEL 1680290200 | soe se se |
+[ao CONTR acoA POWER Pw 178090200 | ne eka ae |
+[a= oNTER aces POWER PmEL 188090200 | sok sess |
+[ou ONES acs FOWER PmEL 1848090 aso | ees re |
+[ioe erento (oO) HERO so eee
+[aoe eareR TaN 3 Co0L)_(HGH) at asso so| see |
+[aioe=)neaisreR-tanC 3_(60.) (OF) ez asso so| see ee |
+[aioe neairen tan 3 (600) COR) 23 asso so | se eee |
+[ANOOE(=) COATER PUA PANEL 480150 as | Hoa va fm | |
+[~Nooe(=)-COATER vEATER panei T=i 25480600 600 | seo 09 sa as7 J |
+[oor conter HER pm I=z 2642000000 | e009 | wr |
+[oor conten HER Pm 1-527 48000000 | seo 0s esr |
+[ioe Gumi Hewat asa so eas | ne is |
+aC
+[soe GERI WHER 980 oes | oe is
+[oat OWEN WENER PMEL ESS aso 000 | Seo os |
+[0K ONE HEATER PmEL 2=5 848060000 | Seo os ae | 57 rues
+[aioe now BHC SRY A PME oo | see
+[aioe FEED VESSEL (SOR) BAG eae soso | se eee PP
+[ANODE(—) FEED VESSEL 2(s0n1) Back 37480250150 | 59 oe ae | mn J
+[ANODE(—) TRANSFER TANK 2(800L) BACK 38480250150 | 59 oe ae | ay J
+ANODE(=) TRANSFER TANK 28001) BACK 39480250150 | 59 oe aa | fT
+[oon=) no. TOF SURRY TRANS PNET 41480180100] 59 PY
+a |
+“008 AND ABOVE BUS PLUGS Ae ms Lomo (eves ND LOAD (A
+Uhnuracrugen INSTALLED BUS PLATE SEE TOTAL LowD (wva)|_s2Ae] 407]TOTA. DEMAND LOAD (vA)
+POWER PLAN FOR LOCATION 4098.7 DEMAND AMPS:
+3000 RATING (8)
+22 % LOADING
+
+
+============================================================
+FILE: Screenshot 2025-12-05 200315.png
+BUS DUCT: None
+RECORDS: 0
+============================================================
+1 FOEL-BD-A-04
+aus Pave AIP a
+cauewent vic # wars hae ree | vor oem 1080 | sta frores
+[RODE NOT Clemen (OG a0 250s | 9 ose Ps |
+[2xo06(=) No.1 Bice SLURRY TRANS PEL 2460150100 590s ze |
+[2iooe(=) FEED VESSEL 15001) cK S460 7e0 e059 ozs PP
+[2xo06(=) FEED vESSEL_1(500)) BkcK 4480760 180-[ 590s ze | PY
+[aiode(=) TemsreR tave (260) BAG 5 —4e0 250 150| 5904 20 | 71 | |
+[aiode(=) TemisreR tave 1(e00.) ence 6 4e0 250 150| 5904 20 | 71 | |
+[aiooe(=) conten véneR pans 2-1 7 #0600 e00| 36009 sea [sy [iY
+[siooe(=) conten HeneR pant 2-2 @4¢0 600600 | 36009 | as7 | Y
+[siooe(=) cowreR neweR pace a=3 9 e0600600| 36009 se | as7 [|
+[2iooe(=) cowteR HEATER pane a=1104€0—e00600| 56009 se as7 (forum)
+[2iooe(=) cowreR HEATER Pance a=3 12 4€0e00 600] 36009 se | esr Qrumuee
+[2io06(=) cOWTER ACO POWER paNEL 15460 —400400.| 27004 108 325 PS]
+[wioDE(=) coNTER Aco-POWER PANEL 14480400400 | 27004 vos | ssf
+[aiooe(=)-coweR ace PoweR Pavel 15 4e0 400 000| 270 0.4 105 | a5 |
+[siooe(=) conten ace PoweR Pavel 16 4e0 400 000 | 2700.4 105 [sas
+[aiooe(=)-cowen Pua pmeu——17 eo 150 100[ 71 04 28 [5 [|
+[aiooe(=)-coweR Pua pag 18 ae0 1501007704 28s J
+[siooe(=) cowee weATER pave Toi 19 4e0 «00 600| 36009302 wor (futume
+[2io05(=) cowteR HEATER pack J=s" 27 4€0—e00600.| 56009 sea | as rome
+a |
+NOTES
+*800A AND ABOVE BUS PLUGS REQUIRE TOTAL LOAD (kvA)|_4642 3722|TOTAL DEMAND LOAD (kVA)
+Roane ied
+‘SEE POWER PLAN FOR LOCATION 4477.53 DEMAND AMPS
+5000 RATING (A)
+90 % LOADING
+BUS DUCT LOAD SCHEDULE
+@ea
+
+
+============================================================
+FILE: Screenshot 2025-12-05 200338.png
+BUS DUCT: None
+RECORDS: 0
+============================================================
+BOS DUET NRE
+|i FOEL-BD-C-O4A
+ms FUE ro al
+soupsent io # vous rome ep | wow ceva | na [roms
+[SAROOES) ACA POWER Pov a0 280250 | os ono [of
+[cai00e(+) ACS POWER Panee a0 28280 | 176 0470 | are |
+[cxi008(+) ACAA POWER Pav a0 280250 | 1650 08 | vos
+[ox00e(+) ACA POWER pace 40280280 | 17604 70 | are
+[cxrooete) 005 POWER paieL S80 250280 | woof
+[crmooe(s) Ace Power paver 6 40 #00400 | 270 04 108 | 05 [|
+[camo0e(s) Ac7 Power payer 7 4s0 #00100 | 270 04 108 [305 [|
+[carno0e(+) conte Pua paner———'4so 150125 |e oa 38 [9 [PY
+[cawo0e(s) comm pus paket 9 aso s0 | a5 of
+[cawo0e(+) ACSA POWER Paks 1040280250 | 6504 68 | os [|
+[cawo0e(+) ACSB POWER Pance——a0280 260 | 17604 70 | af
+[cao0e(s) ACaA POWER Pan 1240280260 | 16504 08 | os [
+[eaio0e(+) ACA POWER panee Sao 280 260 | 1760470] ae |
+[oaiooe(+) ACs POWER Pavey 40280250 | rato a [vo PY
+[caiO0e(+) Ace POWER: Pave 1580400400 | 27004 108 | sas [|
+[oxn008(+) ACT POWER Pavek 16480400400 | 27004 108 | 325 [|
+[cxO0e(4) CONTR PUR pane aos 005 | 82 0 as | os
+ee eet as | eo et |]
+[CaTHODE(+) NO.5 BACK SLURRY TRANSFER PANEL 19480150100 | 59042 | 71 JSS
+[cxmo0e(s) reo VESSEL wi-cSIvis0a)) Tor 20480280150 | 510420 |r [|
+[cathooe(+) reo VESSEL Wicsavis0a.) BKK 21480280150 | soa 20 |r [|
+[caHo0e(s)-NoTOP SLURRY TRANSFER pany 22490150100 | soa ae | rf
+[catio0e(+) TRANSFER TAM Wi=cS1Wi(G000) TOB25 40280150 | 5904 a9 | mf)
+[caH00e(+) TRANSFER TaWE_Wi=CS2uI(G00)) GAC 2540280150 | 5904 m9 | mf
+[caHo0e(+) TRANSFER_TaWe_Wi=c22Mi(G00)) BACK 2740280150 | 5904 m9 | mf
+[oaio0e(+) Fem VESSEL Wi-cH2VIQOGL) BK 2940280150 | 5904 me | mf)
+[camooe(s) cone vps S000 00 | 55 onze | oes
+NOTES
+*B00A AND ABOVE BUS PLUGS REQUIRE TOTAL LOAD (KVA)|_ 3973] 1589)TOTAL DEMAND LOAD (KVA)
+crscinte NSIAED BOS BLATEsece POWER
+BON Eoe tocar Tat DEWAND APS
+7500 RATING 0)
+78 % LOADING
+
+
+============================================================
+FILE: Screenshot 2025-12-05 200346.png
+BUS DUCT: None
+RECORDS: 0
+============================================================
+|i FOEL-BD-D-O3.
+as Pune roa oa
+[CRODET wa PoNeL CHU GIAO 250200 Ios 7 OY
+[cahooece) wan PaNEL-CHULR f22 480250. 200_[ #104 a7] vo | iY
+[caooece) wan PaNEL-CHULR JS 3480250. 200.[ #104 a7] vo | +d
+[caoos(e) wan PaNeL CHER Ja #480250. 200.[ 104 a7] vo |
+[cxrooece) wan PaveL_CHUER 4s 480250. 200.[ #1047] vo | |
+[caTHODEC+) MAIN PANEL CHILLER #7 7480250200 ee
+[cxnooe(+) wan -Pavet-cHUER fe 8 480250200. | i 04 7] |]
+[cxnooet+) wan -Pavet-cHUER fo 9480250 200.[ i047 | vo |]
+[cxwooe(+) wan PANEL CHUER p10 10480250 200.[ #104 7 | vo |
+[cxhooec+) wan PANEL cHUER 1111480250 200-[ 104 7 | vo |
+[cxhooe(e) wan PANEL CHULR 1212480250 200-[ 10s 7 | vo |
+[pace nemnoeR cnviooe Wo Pe 14480350" t00 "|e 0s ae |
+[Paicace RENNER CATHODE MU PaNEL 15480250100 J-s9 04 aa |
+[POCAE AEHNOER CAWOOE HU PEL Tg 460250, 100) e904 asf 7 |
+oe
+WanetaeloRee MSIALED SoS PLATE
+See pone PAN FOR LocaeN STOSTS DEMAND MPs
+
+1800 RATING (2)
+
+Or LOADING
+
+
+============================================================
+FILE: Screenshot 2025-12-05 200540.png
+BUS DUCT: None
+RECORDS: 0
+============================================================
+AL NO SCALE
+A
+a Ce
+[zai wovinssemecyes [rao] soo [sis [| ere [oe |
+[To ratings [cows Toren TT
+[iroasessos eo sooo | seso | ser [aris |e |
+[[iross=nop=-2 07 [eo | 1900 as [aoe 775330 |e |
+[[iross=nop=2 08 [eo | 1200 | sar [90x [739 [ee |e |
+[iross=nop=2-09 [aso] 1200 | a3 [ 90% [755 [908 | 708]
+[see eo | 1600 J 0 90 0 oe
+[[irons=Woe=z Os [seo | 600 | te 90 [iss [ese
+[iross=eue2 01 [aso | S00 | 88 [90 [ses |e
+[seas [ aso | i600 [0 soe 0 foe
+[lirorocars=+ toxin cewiea) [a0 | 1600 | —ee0 | —s0x [eis [rao] ax]
+a
+[nzievorSFomaTowa [raw | eo [ise [| ani [rs |e |
+ee
+[reoroseaca «0 | sooo | —pes2 [| aan [07 | an]
+[ iroro-ror=7 05 ——~aeo | e00 | — 50 | —o0z | s5 [sae | on |
+[roro=tor=2 og | ~ae0 | —s00 | 397 [a0 | ~357 [aso] sae]
+[[irorocars=s (owe caves) [400 | 1600 | ves [90x [evs [610] si
+[seme eo t600 Jo aoe fo fo Pe
+[[irorocH6e== oF ————“ae0 | “1900 358 90 |e s05 | soe]
+[[irorocnor=a 11 (our Cow) 460 | 600 | 257 [90x [ase [si |e |
+[irorocwor=ror | 460 | iz00 [0 [soe [0 fo fe
+cc
+
+
+============================================================
+FILE: Screenshot 2025-12-05 200551.png
+BUS DUCT: None
+RECORDS: 0
+============================================================
+ns on ore
+rc
+Jeremronscscaree [ [om [vm | | tw | vow | om fn ne conn ra cas oma |
+ee
+SS
+[iecroumpnaoa | «eo [veo [as7 [| 7a [ome [sex |
+["iroro-vesioe=-7 ora] 460 | — a0 [sas [aon [a7 | se | 71 [75 RACKS @7000N BOR, SIENA]
+["iroro=enop=2 om | 480 | a0 [ssa [ox [209 | seo [ee PY
+ee 2 A
+a
+[tecroumenaos | ae0 | reo [esr [| v8 | os see
+["iroro-vsioe=7 aoe | ~4e0 | — a0 | ~sa5 | aon [a7 | se | 71 [75 RiGKS 970000 GH, SIENA]
+[Cirorocenop=2 05x | ~4e0 | —a00 [356 [oon [son [soe ee Pd
+/5\ GENERATOR LOAD CALCULATION
+

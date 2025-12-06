@@ -1,0 +1,280 @@
+
+Write File
+Request
+
+{
+  `path`: `C:\\RESA_Power_Build\\Reference_Files\\Project Alpha\\available_equipment_analysis.py`,
+  `content`: `import pandas as pd
+import re
+from collections import defaultdict
+
+# Customer's available equipment list
+available_equipment = \"\"\"1F0AS-TR-2 04 / E16-Y7
+1F0EL-ATS-2 02 / E12-Y4
+1F0EL-BD-B-01A / E16-Y3 (PENDING TERMS)
+1F0EL-BD-B-01B / E17.5-Y3 (PENDING TERMS)
+1F0EL-BD-D-02A / E14-Y8 (PENDING TERMS)
+1F0EL-BD-D-02B / E16-Y8 (PENDING TERMS)
+1F0EL-ELP-2 03 / E3-Y9.5
+1F0EL-ELP-2 04 / E10-Y4
+1F0EL-ELP-2 06 / E3-Y4.5
+1F0EL-ELP-2 09 / E16-Y5
+1F0EL-ELP-2 10 / E20-Y1A
+1F0EL-HDP-2 01 / E13.5-Y2C
+1F0EL-HPP-1 04 / E19-Y7
+1F0EL-HPP-1 07 / E10-Y2.5
+1F0EL-HPP-1 10 / E19.5-Y1A
+1F0EL-HPP-1 11 / E19-Y7
+1F0EL-HPP-2 02 / E9-Y2
+1F0EL-HPP-2 03 / E8-Y12
+1F0EL-HPP-2 04 / E9-Y2
+1F0EL-HPP-2 05 / E8-Y12
+1F0EL-HRP-1 02 / E2-Y12
+1F0EL-HRP-1 04 / E8-Y9.5
+1F0EL-HRP-1 11 / E8-Y1
+1F0EL-HRP-1 13 / E14-Y13
+1F0EL-HRP-2 01 / E8-Y2
+1F0EL-HRP-2 03 / E12-Y13
+1F0EL-HRP-2 05 / E8-Y2
+1F0EL-HRP-2 06 / A5.5-Y1A
+1F0EL-HRP-2 07 / A5.5-Y1A
+1F0EL-LP-1 01 / E9.5-Y12
+1F0EL-LP-1 02 / E11-Y7
+1F0EL-LP-1 03 / E3-Y11
+1F0EL-LP-1 04 / E2.5-Y7
+1F0EL-LP-1 05 / E8-Y1
+1F0EL-LP-1 06 / E3-Y3
+1F0EL-LP-1 09 / E12-Y6
+1F0EL-LP-1 11 / E16-Y1A
+1F0EL-LP-1 12 / E13.5-Y1A
+1F0EL-LP-2 01 / E12-Y11
+1F0EL-LP-2 03 / E3-Y9.5
+1F0EL-LP-2 04 / E10-Y4
+1F0EL-LP-2 06 / E3-Y4.5
+1F0EL-LP-2 09 / E16-Y5
+1F0EL-LP-2 10 / E20-Y1A
+1F0EL-LPDP-1 02 / E2-Y13
+1F0EL-LPDP-1 09 / E19-Y7
+1F0EL-LRP-1 01A / E3-Y4.5
+1F0EL-LRP-1 02 / E2-Y2
+1F0EL-LRP-1 10 / E9.5-Y11.5
+1F0EL-LRP-2 01 / E12-Y2
+1F0EL-LRP-2 06 / E3-Y9.5
+1F0EL-LRP-2 08 / E3-Y4.5
+1F0EL-LRP-2 09 / E14-Y9D
+1F0EL-LRP-2 11 / A5.5-Y1A
+1F0EL-LRP-2 12 / A5.5-Y1A
+1F0EL-LRP-3 02 / E3-Y9
+1F0EL-PZ-2 01 / E8-Y2
+1F0EL-PZ-2 02 / E9-Y11
+1F0EL-TR-2 01 / E8-Y2
+1F0FO-EHDP-2 05A / F3-Y5C\"\"\"
+
+output_file = r'C:\\RESA_Power_Build\\Reference_Files\\Project Alpha\\available_equipment_analysis.txt'
+
+with open(output_file, 'w', encoding='utf-8') as f:
+    f.write(\"=\" * 70 + \"\
+\")
+    f.write(\"CUSTOMER AVAILABLE EQUIPMENT ANALYSIS\
+\")
+    f.write(\"=\" * 70 + \"\
+\
+\")
+    
+    # Parse each line
+    equipment_list = []
+    for line in available_equipment.strip().split('\
+'):
+        parts = line.split(' / ')
+        designation = parts[0].strip()
+        location = parts[1].strip() if len(parts) > 1 else ''
+        
+        # Extract prefix pattern (area-type-level number)
+        # Pattern: 1F0XX-YYY-N NN or 1F0XX-YYY-N NNA
+        match = re.match(r'(1F0\\w+)-(\\w+)-(\\d)\\s*(\\d+\\w*)?', designation)
+        if match:
+            area_code = match.group(1)  # 1F0EL, 1F0AS, 1F0FO
+            equip_type = match.group(2)  # LP, HRP, BD, ATS, TR, etc.
+            level = match.group(3)       # 1, 2, etc.
+            number = match.group(4) if match.group(4) else ''
+        else:
+            area_code = ''
+            equip_type = ''
+            level = ''
+            number = ''
+        
+        equipment_list.append({
+            'Designation': designation,
+            'Location': location,
+            'Area_Code': area_code,
+            'Equip_Type': equip_type,
+            'Level': level,
+            'Number': number
+        })
+    
+    df = pd.DataFrame(equipment_list)
+    
+    f.write(f\"Total Available Items: {len(df)}\
+\
+\")
+    
+    # Group by equipment type
+    f.write(\"=\" * 50 + \"\
+\")
+    f.write(\"EQUIPMENT TYPE BREAKDOWN\
+\")
+    f.write(\"=\" * 50 + \"\
+\
+\")
+    
+    type_counts = df.groupby('Equip_Type').size().sort_values(ascending=False)
+    
+    # Equipment type mapping (best guess)
+    type_mapping = {
+        'LP': 'Low Voltage Panel / Panelboard',
+        'HRP': 'High Voltage Relay Panel?',
+        'HPP': 'High Power Panel',
+        'LRP': 'Low Voltage Relay Panel?',
+        'ELP': 'Electrical Load Panel',
+        'BD': 'Bus Duct',
+        'TR': 'Transformer',
+        'ATS': 'Automatic Transfer Switch',
+        'HDP': 'High Distribution Panel',
+        'LPDP': 'Low Power Distribution Panel',
+        'PZ': 'Panel Zone / Power Zone',
+        'EHDP': 'Emergency High Distribution Panel'
+    }
+    
+    for eq_type, count in type_counts.items():
+        desc = type_mapping.get(eq_type, 'Unknown Type')
+        f.write(f\"{eq_type}: {count} items - {desc}\
+\")
+        items = df[df['Equip_Type'] == eq_type]['Designation'].tolist()
+        for item in items:
+            f.write(f\"    {item}\
+\")
+        f.write(\"\
+\")
+    
+    # Area breakdown
+    f.write(\"\
+\" + \"=\" * 50 + \"\
+\")
+    f.write(\"AREA CODE BREAKDOWN\
+\")
+    f.write(\"=\" * 50 + \"\
+\
+\")
+    
+    area_counts = df.groupby('Area_Code').size()
+    area_mapping = {
+        '1F0EL': 'Main Electrical (E1/E2 Rooms?)',
+        '1F0AS': 'Auxiliary Substation (A1/A2 Rooms?)',
+        '1F0FO': 'Formation Operations (F1/F2 Rooms?)'
+    }
+    
+    for area, count in area_counts.items():
+        desc = area_mapping.get(area, 'Unknown Area')
+        f.write(f\"{area}: {count} items - {desc}\
+\")
+    
+    # Location grid analysis
+    f.write(\"\
+\" + \"=\" * 50 + \"\
+\")
+    f.write(\"GRID LOCATION ANALYSIS\
+\")
+    f.write(\"=\" * 50 + \"\
+\
+\")
+    
+    # Extract grid patterns
+    grid_zones = defaultdict(list)
+    for _, row in df.iterrows():
+        loc = row['Location']
+        # Remove pending notes
+        loc_clean = re.sub(r'\\s*\\(.*\\)', '', loc)
+        # Extract grid zone letter (E, A, F)
+        zone_match = re.match(r'([A-Z])', loc_clean)
+        if zone_match:
+            zone = zone_match.group(1)
+            grid_zones[zone].append(row['Designation'])
+    
+    for zone in sorted(grid_zones.keys()):
+        items = grid_zones[zone]
+        f.write(f\"Zone {zone}: {len(items)} items\
+\")
+    
+    # Full list
+    f.write(\"\
+\" + \"=\" * 50 + \"\
+\")
+    f.write(\"COMPLETE PARSED LIST\
+\")
+    f.write(\"=\" * 50 + \"\
+\
+\")
+    
+    f.write(df.to_string(index=False))
+    
+    # Comparison with tracker counts
+    f.write(\"\
+\
+\" + \"=\" * 50 + \"\
+\")
+    f.write(\"COMPARISON WITH TRACKER APPARATUS COUNTS\
+\")
+    f.write(\"=\" * 50 + \"\
+\
+\")
+    
+    tracker_counts = {
+        'Switchboard': 2,
+        'Circuit Breaker - Primary': 346,
+        'ATS': 9,
+        'Distribution Board': 95,
+        'Panelboard': 249,
+        'Circuit Breaker - Secondary': 644,
+        'Transformer': 32,
+        'Bus Duct': 19,
+        'Grounding': 9
+    }
+    
+    # Map customer types to tracker categories
+    customer_to_tracker = {
+        'LP': 'Panelboard',
+        'HRP': 'Panelboard',  # or Distribution Board?
+        'HPP': 'Panelboard',  # or Distribution Board?
+        'LRP': 'Panelboard',
+        'ELP': 'Panelboard',
+        'BD': 'Bus Duct',
+        'TR': 'Transformer',
+        'ATS': 'ATS',
+        'HDP': 'Distribution Board',
+        'LPDP': 'Distribution Board',
+        'PZ': 'Distribution Board',  # Power Zone
+        'EHDP': 'Distribution Board'
+    }
+    
+    f.write(\"Customer 'Available' vs Tracker Total Counts:\
+\
+\")
+    f.write(f\"{'Tracker Category':<30} {'Tracker Total':<15} {'Customer Avail':<15} {'% Available':<12}\
+\")
+    f.write(\"-\" * 72 + \"\
+\")
+    
+    # Aggregate customer counts by tracker category
+    customer_by_tracker = defaultdict(int)
+    for eq_type, count in type_counts.items():
+        tracker_cat = customer_to_tracker.get(eq_type, 'Unknown')
+        customer_by_tracker[tracker_cat] += count
+    
+    for cat, total in tracker_counts.items():
+        avail = customer_by_tracker.get(cat, 0)
+        pct = (avail / total * 100) if total > 0 else 0
+        f.write(f\"{cat:<30} {total:<15} {avail:<15} {pct:.1f}%\
+\")
+
+print(f\"Analysis written to {output_file}\")
+`

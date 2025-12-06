@@ -1,0 +1,222 @@
+======================================================================
+ALL_TASKS ANALYSIS - TASK COLUMN VALUES
+======================================================================
+
+Total Rows: 2855
+Tasks with values: 1405
+Designations filled: 0
+Drawings filled: 0
+
+Unique Task Values: 50
+
+TOP 50 TASK VALUES (by frequency):
+--------------------------------------------------
+  72x  1F0EL-SS-D-01
+  59x  1F0AS-SS-C-03
+  57x  1F0EL-SS-C-03
+  55x  1F0EL-SS-B-01
+  52x  1F0EL-SS-B-03
+  48x  1F0EL-SS-B-04
+  48x  1F0EL-SS-D-03
+  41x  1F0AS-SS-A-01
+  40x  1F0EL-SS-A-01
+  40x  1F0EL-SS-B-02
+  38x  1F0AS-SS-B-05
+  37x  1F0EL-SS-C-01
+  37x  1F0EL-SS-C-02
+  36x  1F0EL-SS-A-02
+  34x  1F0AS-SS-B-03
+  34x  1F0AS-SS-C-01
+  33x  1F0FO-SS-C-02
+  33x  1F0FO-SS-C-03
+  33x  1F0FO-SS-D-01
+  32x  SLD 1FO-E654
+  32x  1F0AS-SS-B-04
+  31x  A1 & A2 Emerg Distribution
+  31x  1F0FO-SS-A-03
+  31x  1F0FO-SS-D-02
+  29x  1F0FO-SS-C-01
+  29x  1F0FO-SS-D-03
+  28x  1F0AS-SS-A-02
+  28x  1F0EL-SS-A-03
+  28x  1F0FO-SS-D-04
+  26x  1F0FO-SS-C-04
+  25x  1F0EL-SS-D-02
+  24x  1F0FO-SS-A-02
+  21x  1F0EL-SS-A-04
+  20x  1F0AS-SS-C-04
+  18x  1F0FO-SS-B-02
+  17x  Electrode Room
+  15x  SLD 1FO-E653
+  13x  1F0AS-SS-B-02
+  13x  1F0AS-SS-C-02
+  11x  1F0FO-SS-B-01
+   9x  Equip Grounding P-T-P
+   9x  1F0FO-SS-A-01
+   9x  1F0FO-SS-A-04
+   9x  1F0FO-SS-A-05
+   9x  1F0FO-SS-B-03
+   9x  1F0FO-SS-B-04
+   9x  1F0FO-SS-B-05
+   5x  1F0AS-SS-B-01
+   4x  2.0MW Gen Distribution
+   4x  1.5MW Gen Distribution
+
+
+SCOPE BREAKDOWN:
+--------------------------------------------------
+ 320x  E1 Electrical Room
+ 285x  E2 Electrical Room
+ 242x  F2 Electrical Room
+ 191x  A1 Electrical Room
+ 138x  F1 Electrical Room
+ 126x  A2 Electrical Room
+  56x  Emergency Generator Dist
+  47x  Datacenter Distribution
+
+
+SAMPLE ROWS WITH 1F0 PREFIX IN TASK:
+----------------------------------------------------------------------
+
+Row 105:
+  Scope: A1 Electrical Room
+  Task: 1F0AS-SS-A-01
+  Apparatus: Circuit Breaker LV - Insulated Case (LSIG)
+  Designation: None
+  Drawing: None
+
+Row 106:
+  Scope: A1 Electrical Room
+  Task: 1F0AS-SS-A-01
+  Apparatus: Circuit Breaker LV - Insulated Case (LSIG)
+  Designation: None
+  Drawing: None
+
+Row 107:
+  Scope: A1 Electrical Room
+  Task: 1F0AS-SS-A-01
+  Apparatus: Circuit Breaker LV - Insulated Case (LSIG)
+  Designation: None
+  Drawing: None
+
+Row 108:
+  Scope: A1 Electrical Room
+  Task: 1F0AS-SS-A-01
+  Apparatus: Circuit Breaker LV - Insulated Case (LSIG)
+  Designation: None
+  Drawing: None
+
+Row 109:
+  Scope: A1 Electrical Room
+  Task: 1F0AS-SS-A-01
+  Apparatus: Circuit Breaker LV - Insulated Case (LSIG)
+  Designation: None
+  Drawing: None
+
+Row 110:
+  Scope: A1 Electrical Room
+  Task: 1F0AS-SS-A-01
+  Apparatus: Circuit Breaker LV - Insulated Case (LSIG)
+  Designation: None
+  Drawing: None
+
+Row 111:
+  Scope: A1 Electrical Room
+  Task: 1F0AS-SS-A-01
+  Apparatus: Circuit Breaker LV - Insulated Case (LSIG)
+  Designation: None
+  Drawing: None
+
+Row 112:
+  Scope: A1 Electrical Room
+  Task: 1F0AS-SS-A-01
+  Apparatus: Switchboard - Distribution LV
+  Designation: None
+  Drawing: None
+
+Row 113:
+  Scope: A1 Electrical Room
+  Task: 1F0AS-SS-A-01
+  Apparatus: Switchboard - Distribution LV
+  Designation: None
+  Drawing: None
+
+Row 114:
+  Scope: A1 Electrical Room
+  Task: 1F0AS-SS-A-01
+  Apparatus: Switchboard - Distribution LV
+  Designation: None
+  Drawing: None
+
+Row 115:
+  Scope: A1 Electrical Room
+  Task: 1F0AS-SS-A-01
+  Apparatus: Panelboard - Low Voltage
+  Designation: None
+  Drawing: None
+
+Row 116:
+  Scope: A1 Electrical Room
+  Task: 1F0AS-SS-A-01
+  Apparatus: Panelboard - Low Voltage
+  Designation: None
+  Drawing: None
+
+Row 117:
+  Scope: A1 Electrical Room
+  Task: 1F0AS-SS-A-01
+  Apparatus: Panelboard - Low Voltage
+  Designation: None
+  Drawing: None
+
+Row 118:
+  Scope: A1 Electrical Room
+  Task: 1F0AS-SS-A-01
+  Apparatus: Panelboard - Low Voltage
+  Designation: None
+  Drawing: None
+
+Row 119:
+  Scope: A1 Electrical Room
+  Task: 1F0AS-SS-A-01
+  Apparatus: Panelboard - Low Voltage
+  Designation: None
+  Drawing: None
+
+Row 120:
+  Scope: A1 Electrical Room
+  Task: 1F0AS-SS-A-01
+  Apparatus: Panelboard - Low Voltage
+  Designation: None
+  Drawing: None
+
+Row 121:
+  Scope: A1 Electrical Room
+  Task: 1F0AS-SS-A-01
+  Apparatus: Circuit Breaker LV - Secondary Injection
+  Designation: None
+  Drawing: None
+
+Row 122:
+  Scope: A1 Electrical Room
+  Task: 1F0AS-SS-A-01
+  Apparatus: Circuit Breaker LV - Secondary Injection
+  Designation: None
+  Drawing: None
+
+Row 123:
+  Scope: A1 Electrical Room
+  Task: 1F0AS-SS-A-01
+  Apparatus: Circuit Breaker LV - Secondary Injection
+  Designation: None
+  Drawing: None
+
+Row 124:
+  Scope: A1 Electrical Room
+  Task: 1F0AS-SS-A-01
+  Apparatus: Circuit Breaker LV - Secondary Injection
+  Designation: None
+  Drawing: None
+
+
+Analysis complete.
