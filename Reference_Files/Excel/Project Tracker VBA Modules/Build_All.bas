@@ -1,6 +1,8 @@
 Attribute VB_Name = "Build_All"
-' Updated to use Global_Constants DIRECTLY - 2025-09-22
-' ? COMPLIANCE: NO LOCAL CONSTANTS - All references use Global_Constants.*
+' Updated to use Global_Constants DIRECTLY - 2025-11-25
+' ✅ COMPLIANCE: NO LOCAL CONSTANTS - All references use Global_Constants.*
+' ✅ REMOVED: Datasheet validation (per user request)
+' ✅ FIXED: All Global_Constants. prefixes added
 
 Option Explicit
 
@@ -116,7 +118,7 @@ Sub BuildAll()
             ' Need to insert a new row if not the first one
             If outRow > 6 Then
                 ' Copy parent template format from row 6
-                wsTpl.Rows(SC_TEMPLATE_PARENT_ROW).Copy
+                wsTpl.Rows(Global_Constants.SC_TEMPLATE_PARENT_ROW).Copy
                 wsOut.Rows(outRow).Insert Shift:=xlDown
             End If
             
@@ -159,7 +161,7 @@ Sub BuildAll()
         ' CHILD row (leaf) - uses row 7 template
         If inGroup And (Len(app & des & drw) > 0 Or Len(CStr(ahrs)) > 0) Then
             ' Copy child template format from row 7
-            wsTpl.Rows(SC_TEMPLATE_CHILD_ROW).Copy
+            wsTpl.Rows(Global_Constants.SC_TEMPLATE_CHILD_ROW).Copy
             wsOut.Rows(outRow).Insert Shift:=xlDown
             
             ' PRESERVE DATE FORMAT AND FILL COLOR from template
@@ -212,7 +214,7 @@ NextRow:
     End With
     
     ' Now copy only formatting from template
-    wsTpl.Rows(SC_TEMPLATE_TOTALS_ROW).Copy
+    wsTpl.Rows(Global_Constants.SC_TEMPLATE_TOTALS_ROW).Copy
     wsOut.Rows(totalsRow).PasteSpecial xlPasteFormats
     Application.CutCopyMode = False
 
@@ -282,14 +284,14 @@ Sub FixExistingSheets()
            ws.Name = Global_Constants.SHEET_ALL_LISTS Or _
            ws.Name = Global_Constants.SHEET_GANTT_TEMPLATE Or _
            ws.Name = Global_Constants.SHEET_SCOPE_LABOR_RATES Then
-            Debug.Print "  ? System sheet - skipping"
+            Debug.Print "  → System sheet - skipping"
             GoTo NextSheet
         End If
         
         ' Check if this is a scope sheet
         If IsScopeSheetByContent(ws) Then
             identifiedSheets = identifiedSheets & ws.Name & ", "
-            Debug.Print "  ? Identified as SCOPE SHEET - processing..."
+            Debug.Print "  ✓ Identified as SCOPE SHEET - processing..."
             
             On Error Resume Next
             
@@ -367,136 +369,74 @@ Sub TestNuclearValidationClear()
 End Sub
 
 ' ===== POPULATE ALL_TASKS FUNCTION =====
-Sub PopulateAllTasks()
-    ' Populates All_Tasks sheet from all scope sheets
-    
-    Dim wsAllTasks As Worksheet, ws As Worksheet
-    Dim lastRow As Long, currentRow As Long, targetRow As Long
-    
-    Set wsAllTasks = GetSheet(ThisWorkbook, Global_Constants.SHEET_ALL_TASKS)
-    If wsAllTasks Is Nothing Then
-        MsgBox "All_Tasks sheet not found!", vbCritical
-        Exit Sub
-    End If
-    
-    Application.ScreenUpdating = False
-    
-    ' Clear existing data (keep headers)
-    lastRow = wsAllTasks.Cells(wsAllTasks.Rows.Count, Global_Constants.AT_COL_SCOPE).End(xlUp).row
-    If lastRow > Global_Constants.AT_FIRST_DATA_ROW Then
-        wsAllTasks.Rows(Global_Constants.AT_FIRST_DATA_ROW & ":" & lastRow).Delete
-    End If
-    
-    targetRow = Global_Constants.AT_FIRST_DATA_ROW
-    
-    ' Loop through all scope sheets
-    For Each ws In ThisWorkbook.Worksheets
-        If IsScopeSheetByContent(ws) And ws.Name <> Global_Constants.SHEET_SCOPE_TEMPLATE Then
-            ' Data starts at row 6 in scope sheets
-            lastRow = ws.Cells(ws.Rows.Count, Global_Constants.SC_COL_TASK_ID).End(xlUp).row
-            
-            For currentRow = 6 To lastRow  ' Start from row 6 (first data row)
-                Dim taskId As String
-                taskId = Trim(CStr(ws.Cells(currentRow, Global_Constants.SC_COL_TASK_ID).Value))
-                
-                If Len(taskId) > 0 And taskId <> "TOTALS" Then
-                    ' Copy data using correct column mapping
-                    With wsAllTasks
-                        .Cells(targetRow, Global_Constants.AT_COL_SCOPE).Value = ws.Range(Global_Constants.SC_SCOPE_CELL).Value
-                        .Cells(targetRow, Global_Constants.AT_COL_NETA).Value = ws.Range(Global_Constants.SC_NETA_CELL).Value
-                        .Cells(targetRow, Global_Constants.AT_COL_TID).Value = taskId
-                        .Cells(targetRow, Global_Constants.AT_COL_TASK).Value = ws.Cells(currentRow, Global_Constants.SC_COL_NAME_APP).Value
-                        .Cells(targetRow, Global_Constants.AT_COL_APP).Value = ws.Cells(currentRow, Global_Constants.SC_COL_NAME_APP).Value
-                        .Cells(targetRow, Global_Constants.AT_COL_DES).Value = ws.Cells(currentRow, Global_Constants.SC_COL_DES).Value
-                        .Cells(targetRow, Global_Constants.AT_COL_DRW).Value = ws.Cells(currentRow, Global_Constants.SC_COL_DRW).Value
-                        .Cells(targetRow, Global_Constants.AT_COL_DATE_DUE).Value = ws.Cells(currentRow, Global_Constants.SC_COL_DATE_DUE).Value
-                        .Cells(targetRow, Global_Constants.AT_COL_ASSESSMENT).Value = ws.Cells(currentRow, Global_Constants.SC_COL_ASSESSMENT).Value
-                        .Cells(targetRow, Global_Constants.AT_COL_DATASHEET).Value = ws.Cells(currentRow, Global_Constants.SC_COL_DATASHEET).Value
-                        .Cells(targetRow, Global_Constants.AT_COL_DATE_COMP).Value = ws.Cells(currentRow, Global_Constants.SC_COL_DATE_COMP).Value
-                        .Cells(targetRow, Global_Constants.AT_COL_PCT).Value = ws.Cells(currentRow, Global_Constants.SC_COL_PCT).Value
-                        .Cells(targetRow, Global_Constants.AT_COL_DELAY).Value = ws.Cells(currentRow, Global_Constants.SC_COL_DELAY).Value
-                        .Cells(targetRow, Global_Constants.AT_COL_AHRS).Value = ws.Cells(currentRow, Global_Constants.SC_COL_AHRS).Value
-                        .Cells(targetRow, Global_Constants.AT_COL_REMHRS).Value = ws.Cells(currentRow, Global_Constants.SC_COL_REMHRS).Value
-                        .Cells(targetRow, Global_Constants.AT_COL_ACTHRS).Value = ws.Cells(currentRow, Global_Constants.SC_COL_ACTHRS).Value
-                        .Cells(targetRow, Global_Constants.AT_COL_STATUS).Value = ws.Cells(currentRow, Global_Constants.SC_COL_STATUS).Value
-                        .Cells(targetRow, Global_Constants.AT_COL_AVAIL).Value = ws.Cells(currentRow, Global_Constants.SC_COL_AVAIL).Value
-                        .Cells(targetRow, Global_Constants.AT_COL_PRIORITY).Value = ws.Cells(currentRow, Global_Constants.SC_COL_PRIORITY).Value
-                    End With
-                    
-                    targetRow = targetRow + 1
-                End If
-            Next currentRow
-        End If
-    Next ws
-    
-    Application.ScreenUpdating = True
-    
-    MsgBox "All_Tasks populated!" & vbCrLf & _
-           "Processed " & (targetRow - Global_Constants.AT_FIRST_DATA_ROW) & " records.", vbInformation
-End Sub
+
 
 ' ============================================================================
 ' HELPER FUNCTIONS
 ' ============================================================================
 
-Private Function GetSheet(ByVal wb As Workbook, ByVal Name As String) As Worksheet
-    Dim ws As Worksheet
+Private Function GetSheet(wb As Workbook, sheetName As String) As Worksheet
     On Error Resume Next
-    Set ws = wb.Worksheets(Name)
+    Set GetSheet = wb.Worksheets(sheetName)
     On Error GoTo 0
-    Set GetSheet = ws
 End Function
 
-Private Function GetSheetStrict(ByVal Name As String) As Worksheet
+Private Function GetSheetStrict(sheetName As String) As Worksheet
     Dim ws As Worksheet
-    Set ws = GetSheet(ThisWorkbook, Name)
-    If ws Is Nothing Then Err.Raise vbObjectError + 513, , "Sheet not found: '" & Name & "'"
+    Set ws = GetSheet(ThisWorkbook, sheetName)
+    If ws Is Nothing Then
+        MsgBox "Required sheet '" & sheetName & "' not found!", vbCritical
+        End
+    End If
     Set GetSheetStrict = ws
 End Function
 
-Private Function SafeSheetName(ByVal s As String) As String
-    Dim bad, j As Long
-    bad = Array("\", "/", ":", "*", "?", """", "<", ">", "|", "[", "]")
-    For j = LBound(bad) To UBound(bad)
-        s = Replace(s, bad(j), "_")
-    Next j
-    s = Trim(s)
-    If Len(s) = 0 Then s = "Scope"
-    If Len(s) > 31 Then s = Left(s, 31)
-    SafeSheetName = s
+Private Function SafeSheetName(s As String) As String
+    Dim result As String: result = Trim(s)
+    Dim illegal As Variant, ch As Variant
+    illegal = Array(":", "\", "/", "?", "*", "[", "]")
+    For Each ch In illegal: result = Replace(result, ch, "_"): Next
+    If Len(result) > 31 Then result = Left(result, 31)
+    SafeSheetName = result
 End Function
 
-Private Function MaxLastDataRow(ByVal ws As Worksheet, ByVal firstCol As Long, ByVal lastCol As Long) As Long
-    Dim c As Long, m As Long, r As Long
-    For c = firstCol To lastCol
-        r = ws.Cells(ws.Rows.Count, c).End(xlUp).row
-        If r > m Then m = r
+Private Function MaxLastDataRow(ws As Worksheet, ParamArray cols() As Variant) As Long
+    Dim mx As Long: mx = 1
+    Dim c As Variant
+    For Each c In cols
+        Dim lr As Long: lr = ws.Cells(ws.Rows.Count, c).End(xlUp).row
+        If lr > mx Then mx = lr
     Next c
-    MaxLastDataRow = m
+    MaxLastDataRow = mx
 End Function
 
-Private Function CountNonBlank(ByVal ws As Worksheet, ByVal rowN As Long, ByVal firstCol As Long, ByVal lastCol As Long) As Long
-    CountNonBlank = Application.WorksheetFunction.CountA(ws.Range(ws.Cells(rowN, firstCol), ws.Cells(rowN, lastCol)))
+Private Function CountNonBlank(ws As Worksheet, rowNum As Long, startCol As Long, endCol As Long) As Long
+    Dim cnt As Long: cnt = 0
+    Dim c As Long
+    For c = startCol To endCol
+        If Len(Trim(CStr(ws.Cells(rowNum, c).Value))) > 0 Then cnt = cnt + 1
+    Next c
+    CountNonBlank = cnt
 End Function
 
-Private Function FirstTwoParts(ByVal s As String) As String
-    Dim p As Long, q As Long
-    p = InStr(1, s, ".")
-    If p = 0 Then
-        FirstTwoParts = s
-        Exit Function
-    End If
-    q = InStr(p + 1, s, ".")
-    If q = 0 Then
-        FirstTwoParts = s
+Private Function FirstTwoParts(taskID As String) As String
+    Dim parts() As String
+    parts = Split(taskID, ".")
+    If UBound(parts) >= 1 Then
+        FirstTwoParts = parts(0) & "." & parts(1)
     Else
-        FirstTwoParts = Left(s, q - 1)
+        FirstTwoParts = taskID
     End If
 End Function
 
 Private Function IsScopeSheetByContent(ws As Worksheet) As Boolean
-    ' Special handling for Scope_Template
-    If ws.Name = Global_Constants.SHEET_SCOPE_TEMPLATE Then
+    ' Determines if a worksheet is a scope sheet by checking its content
+    IsScopeSheetByContent = False
+    
+    On Error GoTo NotScopeSheet
+    
+    ' Check for known scope sheet name patterns
+    If ws.Name Like "*.PPM*" Or ws.Name Like "*.GDB*" Or ws.Name Like "*RPP*" Then
         IsScopeSheetByContent = True
         Exit Function
     End If
@@ -513,15 +453,15 @@ Private Function IsScopeSheetByContent(ws As Worksheet) As Boolean
     Dim hasTaskID As Boolean, hasStatus As Boolean, hasPct As Boolean
     
     Dim taskIDHeader As String
-    taskIDHeader = UCase$(Trim$(CStr(ws.Cells(SC_HEADER_ROW, Global_Constants.SC_COL_TASK_ID).Value)))
+    taskIDHeader = UCase$(Trim$(CStr(ws.Cells(Global_Constants.SC_HEADER_ROW, Global_Constants.SC_COL_TASK_ID).Value)))
     hasTaskID = (InStr(taskIDHeader, "TASK") > 0 And InStr(taskIDHeader, "ID") > 0)
     
     Dim statusHeader As String
-    statusHeader = UCase$(Trim$(CStr(ws.Cells(SC_HEADER_ROW, Global_Constants.SC_COL_STATUS).Value)))
+    statusHeader = UCase$(Trim$(CStr(ws.Cells(Global_Constants.SC_HEADER_ROW, Global_Constants.SC_COL_STATUS).Value)))
     hasStatus = (InStr(statusHeader, "STATUS") > 0)
     
     Dim pctHeader As String
-    pctHeader = UCase$(Trim$(CStr(ws.Cells(SC_HEADER_ROW, Global_Constants.SC_COL_PCT).Value)))
+    pctHeader = UCase$(Trim$(CStr(ws.Cells(Global_Constants.SC_HEADER_ROW, Global_Constants.SC_COL_PCT).Value)))
     hasPct = (InStr(pctHeader, "COMPLETION") > 0 Or InStr(pctHeader, "%") > 0)
     
     ' Also check for scope name in G4
@@ -538,17 +478,21 @@ Private Function IsScopeSheetByContent(ws As Worksheet) As Boolean
     If hasScopeCell Then score = score + 1
     
     IsScopeSheetByContent = (score >= 3)
+    Exit Function
+    
+NotScopeSheet:
+    IsScopeSheetByContent = False
 End Function
 
 ' NEW HELPER: Find the TOTALS row in a worksheet
 Private Function FindTotalsRow(ws As Worksheet) As Long
     Dim currentRow As Long
     Dim maxRow As Long
-    maxRow = ws.Cells(ws.Rows.Count, SC_COL_TASK_ID).End(xlUp).row
+    maxRow = ws.Cells(ws.Rows.Count, Global_Constants.SC_COL_TASK_ID).End(xlUp).row
     
     ' Look for "TOTALS" in the NOTES column
     For currentRow = 6 To maxRow + 10
-        If UCase(Trim(ws.Cells(currentRow, SC_COL_NOTES).Value)) = "TOTALS" Then
+        If UCase(Trim(ws.Cells(currentRow, Global_Constants.SC_COL_NOTES).Value)) = "TOTALS" Then
             FindTotalsRow = currentRow
             Exit Function
         End If
@@ -582,6 +526,7 @@ End Sub
 Private Sub ApplyDataValidationToNewSheet(ws As Worksheet, lastDataRow As Long)
     ' Apply validation to newly created sheet
     ' This is called by BuildAll after creating a new scope sheet
+    ' ✅ REMOVED: Datasheet validation (per user request)
     
     ' Apply validation only to actual data rows (6 to lastDataRow)
     If lastDataRow >= 6 Then  ' Only apply if we have data rows
@@ -590,7 +535,7 @@ Private Sub ApplyDataValidationToNewSheet(ws As Worksheet, lastDataRow As Long)
         Call ApplyPriorityValidationWithGlobalConstants(ws, 6, lastDataRow)
         Call ApplyDateDueValidationWithGlobalConstants(ws, 6, lastDataRow)
         Call ApplyAssessmentValidationWithGlobalConstants(ws, 6, lastDataRow)
-        Call ApplyDatasheetValidationWithGlobalConstants(ws, 6, lastDataRow)
+        ' REMOVED: Call ApplyDatasheetValidationWithGlobalConstants(ws, 6, lastDataRow)
     End If
 End Sub
 
@@ -630,9 +575,9 @@ Private Sub FixDateCompletionFormulasWithGlobalConstants(ws As Worksheet)
     Set wsTpl = GetSheet(ThisWorkbook, Global_Constants.SHEET_SCOPE_TEMPLATE)
     If Not wsTpl Is Nothing Then
         ' Get format and color from parent template row
-        dateCompFormat = wsTpl.Cells(SC_TEMPLATE_PARENT_ROW, Global_Constants.SC_COL_DATE_COMP).NumberFormat
-        dateCompColorParent = wsTpl.Cells(SC_TEMPLATE_PARENT_ROW, Global_Constants.SC_COL_DATE_COMP).Interior.Color
-        dateCompColorChild = wsTpl.Cells(SC_TEMPLATE_CHILD_ROW, Global_Constants.SC_COL_DATE_COMP).Interior.Color
+        dateCompFormat = wsTpl.Cells(Global_Constants.SC_TEMPLATE_PARENT_ROW, Global_Constants.SC_COL_DATE_COMP).NumberFormat
+        dateCompColorParent = wsTpl.Cells(Global_Constants.SC_TEMPLATE_PARENT_ROW, Global_Constants.SC_COL_DATE_COMP).Interior.Color
+        dateCompColorChild = wsTpl.Cells(Global_Constants.SC_TEMPLATE_CHILD_ROW, Global_Constants.SC_COL_DATE_COMP).Interior.Color
     Else
         ' Use default date format if template not accessible
         dateCompFormat = "mm/dd/yyyy"
@@ -643,11 +588,11 @@ Private Sub FixDateCompletionFormulasWithGlobalConstants(ws As Worksheet)
     
     ' Start from row 6 (first data row)
     For currentRow = 6 To maxRow
-        Dim taskId As String
-        taskId = Trim(CStr(ws.Cells(currentRow, Global_Constants.SC_COL_TASK_ID).Value))
+        Dim taskID As String
+        taskID = Trim(CStr(ws.Cells(currentRow, Global_Constants.SC_COL_TASK_ID).Value))
         
-        If Len(taskId) > 0 And taskId <> "TOTALS" Then
-            If CountDots(taskId) = 1 Then
+        If Len(taskID) > 0 And taskID <> "TOTALS" Then
+            If CountDots(taskID) = 1 Then
                 ' Parent row - apply formatting only, VBA handles auto-population
                 With ws.Cells(currentRow, Global_Constants.SC_COL_DATE_COMP)
                     .NumberFormat = dateCompFormat
@@ -665,7 +610,7 @@ Private Sub FixDateCompletionFormulasWithGlobalConstants(ws As Worksheet)
                     "IF(N" & currentRow & "=0,""NOT STARTED""," & _
                     "IF(AND(N" & currentRow & ">0,N" & currentRow & "<1),""IN PROGRESS"",""""))))"
                 
-            ElseIf CountDots(taskId) > 1 Then
+            ElseIf CountDots(taskID) > 1 Then
                 ' Child row - apply formatting only, VBA handles auto-population
                 With ws.Cells(currentRow, Global_Constants.SC_COL_DATE_COMP)
                     .NumberFormat = dateCompFormat
@@ -677,12 +622,13 @@ Private Sub FixDateCompletionFormulasWithGlobalConstants(ws As Worksheet)
 End Sub
 
 ' UPDATED: Apply validation to existing sheet with proper limits
+' ✅ REMOVED: Datasheet validation (per user request)
 Private Sub ApplyDataValidationToExistingSheetWithGlobalConstants(ws As Worksheet)
     ' Apply data validation to existing sheet
     Dim maxRow As Long
     Dim totalsRow As Long
     
-    maxRow = ws.Cells(ws.Rows.Count, SC_COL_TASK_ID).End(xlUp).row
+    maxRow = ws.Cells(ws.Rows.Count, Global_Constants.SC_COL_TASK_ID).End(xlUp).row
     
     ' Find the TOTALS row to ensure we don't apply validation to it or beyond
     totalsRow = FindTotalsRow(ws)
@@ -699,31 +645,32 @@ Private Sub ApplyDataValidationToExistingSheetWithGlobalConstants(ws As Workshee
         Call ApplyPriorityValidationWithGlobalConstants(ws, 6, maxRow)
         Call ApplyDateDueValidationWithGlobalConstants(ws, 6, maxRow)
         Call ApplyAssessmentValidationWithGlobalConstants(ws, 6, maxRow)
-        Call ApplyDatasheetValidationWithGlobalConstants(ws, 6, maxRow)
+        ' REMOVED: Call ApplyDatasheetValidationWithGlobalConstants(ws, 6, maxRow)
     End If
 End Sub
 
 ' Individual validation functions with input messages
+' ✅ FIXED: All use Global_Constants. prefix
 
 Private Sub ApplyStatusValidationWithGlobalConstants(ws As Worksheet, startRow As Long, endRow As Long)
     Dim currentRow As Long
-    Dim taskId As String
+    Dim taskID As String
     
     On Error Resume Next
     
     For currentRow = startRow To endRow
-        taskId = Trim(CStr(ws.Cells(currentRow, SC_COL_TASK_ID).Value))
+        taskID = Trim(CStr(ws.Cells(currentRow, Global_Constants.SC_COL_TASK_ID).Value))
         
-        If Len(taskId) > 0 And UCase(taskId) <> "TOTALS" Then
-            If CountDots(taskId) = 1 Then
+        If Len(taskID) > 0 And UCase(taskID) <> "TOTALS" Then
+            If CountDots(taskID) = 1 Then
                 ' Parent rows - no validation (formula controlled)
-                ws.Cells(currentRow, SC_COL_STATUS).Validation.Delete
-            ElseIf CountDots(taskId) > 1 Then
+                ws.Cells(currentRow, Global_Constants.SC_COL_STATUS).Validation.Delete
+            ElseIf CountDots(taskID) > 1 Then
                 ' Child rows - apply validation with input message
-                With ws.Cells(currentRow, SC_COL_STATUS).Validation
+                With ws.Cells(currentRow, Global_Constants.SC_COL_STATUS).Validation
                     .Delete
                     .Add Type:=xlValidateList, AlertStyle:=xlValidAlertStop, _
-                         Formula1:=VAL_STATUS_CHILD_RANGE
+                         Formula1:=Global_Constants.VAL_STATUS_CHILD_RANGE
                     .IgnoreBlank = True
                     .InCellDropdown = True
                     .InputTitle = "Task Status"
@@ -746,14 +693,14 @@ Private Sub ApplyAvailabilityValidationWithGlobalConstants(ws As Worksheet, star
     ' Only apply to rows with actual task IDs (not TOTALS)
     Dim currentRow As Long
     For currentRow = startRow To endRow
-        Dim taskId As String
-        taskId = Trim(CStr(ws.Cells(currentRow, SC_COL_TASK_ID).Value))
+        Dim taskID As String
+        taskID = Trim(CStr(ws.Cells(currentRow, Global_Constants.SC_COL_TASK_ID).Value))
         
-        If Len(taskId) > 0 And UCase(taskId) <> "TOTALS" Then
-            With ws.Cells(currentRow, SC_COL_AVAIL).Validation
+        If Len(taskID) > 0 And UCase(taskID) <> "TOTALS" Then
+            With ws.Cells(currentRow, Global_Constants.SC_COL_AVAIL).Validation
                 .Delete
                 .Add Type:=xlValidateList, AlertStyle:=xlValidAlertStop, _
-                     Formula1:=VAL_AVAILABILITY_RANGE
+                     Formula1:=Global_Constants.VAL_AVAILABILITY_RANGE
                 .IgnoreBlank = True
                 .InCellDropdown = True
                 .InputTitle = "Resource Availability"
@@ -775,14 +722,14 @@ Private Sub ApplyPriorityValidationWithGlobalConstants(ws As Worksheet, startRow
     ' Only apply to rows with actual task IDs (not TOTALS)
     Dim currentRow As Long
     For currentRow = startRow To endRow
-        Dim taskId As String
-        taskId = Trim(CStr(ws.Cells(currentRow, SC_COL_TASK_ID).Value))
+        Dim taskID As String
+        taskID = Trim(CStr(ws.Cells(currentRow, Global_Constants.SC_COL_TASK_ID).Value))
         
-        If Len(taskId) > 0 And UCase(taskId) <> "TOTALS" Then
-            With ws.Cells(currentRow, SC_COL_PRIORITY).Validation
+        If Len(taskID) > 0 And UCase(taskID) <> "TOTALS" Then
+            With ws.Cells(currentRow, Global_Constants.SC_COL_PRIORITY).Validation
                 .Delete
                 .Add Type:=xlValidateList, AlertStyle:=xlValidAlertStop, _
-                     Formula1:=VAL_PRIORITY_RANGE
+                     Formula1:=Global_Constants.VAL_PRIORITY_RANGE
                 .IgnoreBlank = True
                 .InCellDropdown = True
                 .InputTitle = "Task Priority"
@@ -804,12 +751,12 @@ Private Sub ApplyDateDueValidationWithGlobalConstants(ws As Worksheet, startRow 
     ' Only apply to child rows (parent rows have rollup formula)
     Dim currentRow As Long
     For currentRow = startRow To endRow
-        Dim taskId As String
-        taskId = Trim(CStr(ws.Cells(currentRow, SC_COL_TASK_ID).Value))
+        Dim taskID As String
+        taskID = Trim(CStr(ws.Cells(currentRow, Global_Constants.SC_COL_TASK_ID).Value))
         
-        If Len(taskId) > 0 And UCase(taskId) <> "TOTALS" And CountDots(taskId) > 1 Then
+        If Len(taskID) > 0 And UCase(taskID) <> "TOTALS" And CountDots(taskID) > 1 Then
             ' Only apply to child rows
-            With ws.Cells(currentRow, SC_COL_DATE_DUE).Validation
+            With ws.Cells(currentRow, Global_Constants.SC_COL_DATE_DUE).Validation
                 .Delete
                 .Add Type:=xlValidateDate, AlertStyle:=xlValidAlertStop, _
                      Operator:=xlGreaterEqual, Formula1:="=TODAY()"
@@ -833,20 +780,20 @@ Private Sub ApplyAssessmentValidationWithGlobalConstants(ws As Worksheet, startR
     ' Only apply to rows with actual task IDs (not TOTALS)
     Dim currentRow As Long
     For currentRow = startRow To endRow
-        Dim taskId As String
-        taskId = Trim(CStr(ws.Cells(currentRow, SC_COL_TASK_ID).Value))
+        Dim taskID As String
+        taskID = Trim(CStr(ws.Cells(currentRow, Global_Constants.SC_COL_TASK_ID).Value))
         
-        If Len(taskId) > 0 And UCase(taskId) <> "TOTALS" Then
-            With ws.Cells(currentRow, SC_COL_ASSESSMENT).Validation
+        If Len(taskID) > 0 And UCase(taskID) <> "TOTALS" Then
+            With ws.Cells(currentRow, Global_Constants.SC_COL_ASSESSMENT).Validation
                 .Delete
                 .Add Type:=xlValidateList, AlertStyle:=xlValidAlertStop, _
-                     Formula1:=VAL_ASSESSMENT_RANGE
+                     Formula1:=Global_Constants.VAL_ASSESSMENT_RANGE
                 .IgnoreBlank = True
                 .InCellDropdown = True
                 .InputTitle = "Assessment Status"
-                .InputMessage = "Select Yes or No for assessment requirement"
+                .InputMessage = "Select assessment result"
                 .ErrorTitle = "Invalid Assessment"
-                .ErrorMessage = "Please select Yes or No"
+                .ErrorMessage = "Please select a valid assessment from the list"
                 .ShowInput = True
                 .ShowError = True
             End With
@@ -856,34 +803,12 @@ Private Sub ApplyAssessmentValidationWithGlobalConstants(ws As Worksheet, startR
     On Error GoTo 0
 End Sub
 
-Private Sub ApplyDatasheetValidationWithGlobalConstants(ws As Worksheet, startRow As Long, endRow As Long)
-    On Error Resume Next
-    
-    ' Only apply to rows with actual task IDs (not TOTALS)
-    Dim currentRow As Long
-    For currentRow = startRow To endRow
-        Dim taskId As String
-        taskId = Trim(CStr(ws.Cells(currentRow, SC_COL_TASK_ID).Value))
-        
-        If Len(taskId) > 0 And UCase(taskId) <> "TOTALS" Then
-            With ws.Cells(currentRow, SC_COL_DATASHEET).Validation
-                .Delete
-                .Add Type:=xlValidateList, AlertStyle:=xlValidAlertStop, _
-                     Formula1:=VAL_DATASHEET_LIST
-                .IgnoreBlank = True
-                .InCellDropdown = True
-                .InputTitle = "Datasheet Requirement"
-                .InputMessage = "Select Yes or No for datasheet requirement"
-                .ErrorTitle = "Invalid Datasheet"
-                .ErrorMessage = "Please select Yes or No"
-                .ShowInput = True
-                .ShowError = True
-            End With
-        End If
-    Next currentRow
-    
-    On Error GoTo 0
-End Sub
+' ============================================================================
+' DATASHEET VALIDATION FUNCTION - REMOVED PER USER REQUEST
+' ============================================================================
+' The following function has been intentionally removed:
+' Private Sub ApplyDatasheetValidationWithGlobalConstants(ws As Worksheet, startRow As Long, endRow As Long)
+
 
 ' ============================================================================
 ' ROLLUP AND FORMULA FUNCTIONS
@@ -895,10 +820,10 @@ Private Sub UpdateParentStatusFormulasWithGlobalConstants(ws As Worksheet)
     maxRow = ws.Cells(ws.Rows.Count, Global_Constants.SC_COL_TASK_ID).End(xlUp).row
     
     For currentRow = 6 To maxRow  ' Start from row 6
-        Dim taskId As String
-        taskId = Trim(CStr(ws.Cells(currentRow, Global_Constants.SC_COL_TASK_ID).Value))
+        Dim taskID As String
+        taskID = Trim(CStr(ws.Cells(currentRow, Global_Constants.SC_COL_TASK_ID).Value))
         
-        If Len(taskId) > 0 And CountDots(taskId) = 1 Then
+        If Len(taskID) > 0 And CountDots(taskID) = 1 Then
             ' Parent row - update status formula
             ws.Cells(currentRow, Global_Constants.SC_COL_STATUS).formula = _
                 "=IF(AND(I" & currentRow & "<>"""",N" & currentRow & "<1,I" & currentRow & "<TODAY()),""OVERDUE""," & _
@@ -917,14 +842,14 @@ Private Sub UpdatePercentageAndRollupFormulasWithGlobalConstants(ws As Worksheet
     Application.Calculation = xlCalculationManual
     
     For currentRow = 6 To maxRow  ' Start from row 6
-        Dim taskId As String
-        taskId = Trim(CStr(ws.Cells(currentRow, Global_Constants.SC_COL_TASK_ID).Value))
+        Dim taskID As String
+        taskID = Trim(CStr(ws.Cells(currentRow, Global_Constants.SC_COL_TASK_ID).Value))
         
-        If Len(taskId) > 0 And taskId <> "TOTALS" Then
-            If CountDots(taskId) = 1 Then
+        If Len(taskID) > 0 And taskID <> "TOTALS" Then
+            If CountDots(taskID) = 1 Then
                 ' Parent row - setup rollup formulas
                 Call BuildParentRollupForRow(ws, currentRow)
-            ElseIf CountDots(taskId) > 1 Then
+            ElseIf CountDots(taskID) > 1 Then
                 ' Child row - percentage formula
                 ws.Cells(currentRow, Global_Constants.SC_COL_PCT).formula = _
                     "=IFERROR(IF(" & ws.Cells(currentRow, Global_Constants.SC_COL_AHRS).Address(False, False) & ">0," & _
@@ -942,10 +867,10 @@ Private Sub BuildParentRollupFormulas(ws As Worksheet, startRow As Long, endRow 
     Dim currentRow As Long
     
     For currentRow = startRow To endRow
-        Dim taskId As String
-        taskId = Trim(CStr(ws.Cells(currentRow, Global_Constants.SC_COL_TASK_ID).Value))
+        Dim taskID As String
+        taskID = Trim(CStr(ws.Cells(currentRow, Global_Constants.SC_COL_TASK_ID).Value))
         
-        If Len(taskId) > 0 And CountDots(taskId) = 1 Then
+        If Len(taskID) > 0 And CountDots(taskID) = 1 Then
             Call BuildParentRollupForRow(ws, currentRow)
         End If
     Next currentRow
@@ -1063,6 +988,3 @@ Private Function GetColumnLetter(columnNumber As Long) As String
     ' Converts column number to Excel column letter (1=A, 2=B, etc.)
     GetColumnLetter = Replace(Cells(1, columnNumber).Address(True, False), "$1", "")
 End Function
-
-
-

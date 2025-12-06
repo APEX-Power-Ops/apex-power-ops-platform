@@ -105,6 +105,7 @@ Documentation/99_Archive/*.archive
 Documentation/06_MCP_Automation/
 
 # === SENSITIVE CREDENTIALS (Added Nov 23, 2025) ===
+.secrets/
 **/Credentials/
 RESA-Dev-MCP-Access.txt
 **/MCP-Access*.txt

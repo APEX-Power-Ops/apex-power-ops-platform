@@ -1,7 +1,62 @@
 Attribute VB_Name = "modGanttBuilder"
 
-' Updated to use Global_Constants - 2025-09-22
+
+' Updated to use Global_Constants - 2025-11-23
 ' ? COMPLIANCE: All column references now use Global_Constants.*
+' ? NEW: Added support for REMAINING_QUANTITY column (GT_COL_REMAINING_QTY)
+'
+' CRITICAL FIXES APPLIED - 2025-12-04
+' ?? FIX #1: Timeline Row Reference - Gantt formulas now reference Row 7 (dates) not Row 10 (day letters)
+'    - Added FixGanttFormulaRowReference() function
+'    - Replaces $10 with $7 in all timeline formulas after blueprint copy
+'    - RESULT: Gantt bars now display correctly
+'
+' ?? FIX #2: Date Due Formulas - Date Due now uses formulas instead of static values
+'    - Single tasks: VLOOKUP with IF wrapper =IFERROR(IF(VLOOKUP(...)=0,"",VLOOKUP(...)),"")
+'    - Aggregated tasks: MAXIFS with IF wrapper =IFERROR(IF(MAXIFS(...)=0,"",MAXIFS(...)),"")
+'    - RESULT: Live links to scope sheets, hides zero dates, auto-updates when source changes
+'
+' ?? PERFORMANCE FIXES - 2025-12-04 (Fix freezing/hang issues)
+' ?? FIX #3: Batch Formula Fix - Moved timeline fix from per-row to batch at end
+'    - OLD: Called FixGanttFormulaRowReference() inside InsertFromBlueprint (per-row)
+'    - NEW: Single call to FixGanttFormulaRowReferenceRange() after all rows written
+'    - Uses Range.Replace instead of cell-by-cell loop (orders of magnitude faster)
+'    - RESULT: 100 rows × 300 cols now fixed in one operation vs 30,000 cell operations
+'
+' ?? FIX #4: Application.Calculation = xlManual during bulk operations
+'    - Prevents Excel recalc after every formula write
+'    - RESULT: Massive speedup for formula-heavy operations
+'
+' ?? FIX #5: Error handler with guaranteed cleanup
+'    - Added WriteAggregation_Error and WriteAggregation_Cleanup labels
+'    - Ensures ScreenUpdating/EnableEvents/Calculation are ALWAYS restored
+'    - RESULT: No more frozen Excel if error occurs mid-operation
+'
+' ?? FIX #6: Scope Sheet Cache - 2025-12-04
+'    - Added BuildScopeSheetCache() function to pre-identify valid scope sheets
+'    - OLD: For Each ws In Worksheets + IsScopeSheet() inside WriteAggregation loop
+'    - NEW: Cache built once, then Dictionary lookup by name
+'    - RESULT: 100 rows × 30 sheets = 3000 IsScopeSheet calls reduced to 30
+'
+' ?? FIX #7: Direct Column Constants - 2025-12-04
+'    - Replaced ALL FindColStrict/FindGanttHeaderRow calls with Global_Constants
+'    - OLD: FindColStrict(outWS, hdr, Array("taskid", "id")) - string search per column
+'    - NEW: Global_Constants.GANTT_COL_TASK_ID - direct constant reference
+'    - RESULT: Eliminates 8+ header string searches per build, ensures consistency
+'    - BONUS: No more "header not found" errors from misspelled column names
+'
+' ?? FIX #8: Parent Rows - No Timeline Formulas - 2025-12-04
+'    - Parent rows should NOT have Gantt bar formulas (they're section headers)
+'    - Changed: InsertFromBlueprint tmp, 1, outWS, writeRow, cPct, lastCol, False
+'    - Was: True (incorrectly copying timeline formulas to parent rows)
+'    - RESULT: Parent rows show clean headers without formula clutter
+'
+' FORMULA PATTERNS (for Gantt_Template reference):
+' ================================================
+' Date (VLOOKUP):   =IFERROR(IF(VLOOKUP("taskId",Sheet!$E:$I,5,FALSE)=0,"",VLOOKUP(...)),"")
+' Date (MAXIFS):    =IFERROR(IF(MAXIFS(Sheet!$I:$I,Sheet!$E:$E,">=start",Sheet!$E:$E,"<=end")=0,"",MAXIFS(...)),"")
+' Timeline fill:    =IF(AND(ISNUMBER($Fnn),ISNUMBER($Gnn),$Fnn<=$Col$7,$Col$7<=$Gnn,$Inn<1),1,"")
+'                   Note: $Inn<1 hides bars for 100% complete tasks
 
 Option Explicit
 
@@ -60,45 +115,44 @@ Public Sub BuildGanttFromSheets(ByVal selectedSheets As Variant)
 
     Dim outWS As Worksheet: Set outWS = PrepareGanttSheet()
 
-    '----- locate header row on new output sheet
+    '----- Use Global_Constants for ALL column positions (FIX #7: No more dynamic lookups)
     Dim hdr As Long
-    Dim cID As Long, cname As Long, cQty As Long, cStart As Long
+    Dim cID As Long, cname As Long, cQty As Long, cRemQty As Long, cStart As Long
     Dim cDue As Long, cPct As Long, cDur As Long
 
-    hdr = FindGanttHeaderRow(outWS)
-    If hdr = 0 Then Err.Raise vbObjectError + 102, , _
-        "Could not locate headers on Gantt output sheet."
+    ' ?? PERFORMANCE: Use constants directly instead of FindColStrict/FindGanttHeaderRow
+    ' This eliminates 8+ string searches across header row on every build
+    hdr = Global_Constants.GANTT_HEADER_ROW          ' Row 9
+    cID = Global_Constants.GANTT_COL_TASK_ID         ' Column B (2)
+    cname = Global_Constants.GANTT_COL_NAME          ' Column C (3)
+    cQty = Global_Constants.GANTT_COL_QTY            ' Column D (4)
+    cRemQty = Global_Constants.GANTT_COL_REM_QTY     ' Column E (5)
+    cStart = Global_Constants.GANTT_COL_START        ' Column F (6)
+    cDue = Global_Constants.GANTT_COL_DUE            ' Column G (7)
+    cDur = Global_Constants.GANTT_COL_DURATION       ' Column H (8)
+    cPct = Global_Constants.GANTT_COL_PCT            ' Column I (9)
 
-    cID = FindColStrict(outWS, hdr, Array("taskid", "taskid", "id"))
-    cname = FindColStrict(outWS, hdr, Array("scope+task+apparatus", "scope+task"))
-    cQty = FindColStrict(outWS, hdr, Array("apparatusquantity", "apparatusqty", "qty"))
-    cStart = FindColStrict(outWS, hdr, Array("startdate", "start"))
-    cDue = FindColStrict(outWS, hdr, Array("duedate", "datedue", "due"))
-    
-    ' Use Global_Constants for Gantt template column
-    cPct = Global_Constants.GT_COL_PCT_COMP  ' Column H for % completion
-    
-    cDur = FindColStrict(outWS, hdr, Array("durationindays", "duration", "days"))
-
-    If (cID = 0 Or cname = 0 Or cQty = 0 Or cDue = 0 Or cPct = 0 Or cDur = 0) Then
+    If (cID = 0 Or cname = 0 Or cQty = 0 Or cRemQty = 0 Or cDue = 0 Or cPct = 0 Or cDur = 0) Then
         Err.Raise vbObjectError + 103, , _
-           "Output mapping failed (Task/Name/Qty/Start/Due/%/Duration columns)."
+           "Output mapping failed (Task/Name/Qty/RemQty/Start/Due/%/Duration columns)."
     End If
 
-    ' Update header text in Pct column
+    ' Update header text in columns
     outWS.Cells(hdr, cPct).Value = "% COMPLETION"
     outWS.Cells(hdr + 1, cPct).Value = "% COMPLETION"
+    outWS.Cells(hdr, cRemQty).Value = "REMAINING QUANTITY"
+    outWS.Cells(hdr + 1, cRemQty).Value = "REMAINING QTY"
 
-    ' Format date columns as long date
+    ' Format date columns
     If cStart > 0 Then
-        outWS.Columns(cStart).NumberFormat = "dddd, mmmm dd, yyyy"
+        outWS.Columns(cStart).NumberFormat = "mmm-dd-yyyy"
     End If
     If cDue > 0 Then
-        outWS.Columns(cDue).NumberFormat = "dddd, mmmm dd, yyyy"
+        outWS.Columns(cDue).NumberFormat = "mmm-dd-yyyy"
     End If
 
     ' Step-2: dump the header map of the output (for quick verification)
-    DebugDumpHeaderMap outWS, hdr, cID, cname, cQty, cStart, cDue, cPct, cDur
+    DebugDumpHeaderMap outWS, hdr, cID, cname, cQty, cRemQty, cStart, cDue, cPct, cDur
 
     '----- aggregate across selected scope sheets
     Dim agg As Object: Set agg = CreateObject("Scripting.Dictionary")
@@ -138,7 +192,7 @@ Public Sub BuildGanttFromSheets(ByVal selectedSheets As Variant)
 
     '----- write to output sheet
     Dim writeRow As Long: writeRow = hdr + 2
-    Call WriteAggregation(outWS, hdr, cID, cname, cQty, cStart, cDue, cPct, cDur, agg, writeRow)
+    Call WriteAggregation(outWS, hdr, cID, cname, cQty, cRemQty, cStart, cDue, cPct, cDur, agg, writeRow)
 
     If GB_DEBUG Then
         Debug.Print "Build complete. Rows written (not counting totals): "; _
@@ -163,8 +217,8 @@ Public Function PrepareGanttSheet() As Worksheet
     PrepareGanttSheet.Name = nm
     PrepareGanttSheet.Visible = xlSheetVisible
 End Function
-
 '========================== ACCUMULATOR ================================
+' (AccumulateFromSheet remains unchanged - it just collects quantities)
 Private Sub AccumulateFromSheet(ByVal ws As Worksheet, _
                                 ByRef aggContainer As Object)
 
@@ -172,7 +226,7 @@ Private Sub AccumulateFromSheet(ByVal ws As Worksheet, _
     Dim cID As Long, cname As Long, cQty As Long, cDue As Long, cPct As Long
 
     ' Use Global_Constants for header row
-    hdr = Global_Constants.SC_HEADER_ROW  ' FIXED: Use HEADER_ROW for finding columns
+    hdr = Global_Constants.SC_HEADER_ROW
     If hdr = 0 Then Exit Sub
 
     ' Use Global_Constants for column positions
@@ -295,20 +349,20 @@ Private Sub AccumulateFromSheet(ByVal ws As Worksheet, _
 
         ' Ensure parent bucket exists
         If Not pAgg.Exists(parentId) Then
-            ReDim a(1 To 7)  ' INCREASED to 7 to store sheet name
+            ReDim a(1 To 7)  ' Array to store parent data
             a(1) = ""       ' Display name
             a(2) = 0#       ' Quantity sum
             a(3) = Empty    ' Due date (MAX)
             a(4) = 0#       ' % complete weighted sum
             a(5) = 0#       ' Not used
             a(6) = ""       ' Task text
-            a(7) = ws.Name  ' NEW: Store source sheet name
+            a(7) = ws.Name  ' Source sheet name
             pAgg.Add parentId, a
         End If
         a = pAgg(parentId)
 
         If segCount = 1 Then
-            ' Two-segment parent row ï¿½ capture the "task" text and sheet name
+            ' Two-segment parent row – capture the "task" text and sheet name
             If Len(Trim$(a(6))) = 0 And Len(Trim$(nm)) > 0 Then a(6) = Trim$(nm)
             a(7) = ws.Name  ' Store sheet name
             pAgg(parentId) = a
@@ -340,7 +394,7 @@ Private Sub AccumulateFromSheet(ByVal ws As Worksheet, _
         appNorm = LCase$(Trim$(nm))
         gKey = parentId & "||" & appNorm
         If Not gAgg.Exists(gKey) Then
-            ReDim a(1 To 8)  ' INCREASED from 7 to 8 to store sheet name
+            ReDim a(1 To 8)  ' Array for group data with sheet name
             a(1) = parentId
             a(2) = nm
             a(3) = q
@@ -348,7 +402,7 @@ Private Sub AccumulateFromSheet(ByVal ws As Worksheet, _
             a(5) = pctV * q
             a(6) = leafN
             a(7) = leafN
-            a(8) = ws.Name  ' NEW: Store source sheet name
+            a(8) = ws.Name  ' Source sheet name
             gAgg.Add gKey, a
         Else
             a = gAgg(gKey)
@@ -375,7 +429,7 @@ NextR:
 '---- Qty exception handler ----------------
 QTY_EH:
     If GB_DEBUG And GB_DEEP_TRACE Then
-        GB_Log "QTY_EH ? Sheet=" & ws.Name & _
+        GB_Log "QTY_EH – Sheet=" & ws.Name & _
                " r=" & r & _
                " ID='" & idTxt & "'" & _
                " cQty=" & cQty & _
@@ -385,11 +439,10 @@ QTY_EH:
     End If
     Resume Next
 End Sub
-
 '=========================== WRITER ===================================
 Public Sub WriteAggregation( _
     ByVal outWS As Worksheet, ByVal hdr As Long, _
-    ByVal cID As Long, ByVal cname As Long, ByVal cQty As Long, _
+    ByVal cID As Long, ByVal cname As Long, ByVal cQty As Long, ByVal cRemQty As Long, _
     ByVal cStart As Long, ByVal cDue As Long, ByVal cPct As Long, _
     ByVal cDur As Long, ByRef agg As Object, ByRef writeRow As Long)
 
@@ -401,8 +454,24 @@ Public Sub WriteAggregation( _
     If agg.Exists(GROUPS_KEY) Then Set gAgg = agg(GROUPS_KEY) Else Set gAgg = CreateObject("Scripting.Dictionary")
     If agg.Exists(SCOPES_KEY) Then Set sAgg = agg(SCOPES_KEY) Else Set sAgg = Nothing
 
+    ' ?? PERFORMANCE: Disable all Excel overhead during bulk operations
+    Dim calcMode As XlCalculation
+    calcMode = Application.Calculation
+    Application.Calculation = xlCalculationManual
     Application.ScreenUpdating = False
     Application.EnableEvents = False
+    
+    On Error GoTo WriteAggregation_Error
+    
+    ' ?? PERFORMANCE: Build scope sheet cache ONCE (avoids repeated IsScopeSheet calls)
+    Dim scopeSheetCache As Object
+    Set scopeSheetCache = BuildScopeSheetCache()
+    If GB_DEBUG Then Debug.Print "Scope sheet cache built: " & scopeSheetCache.Count & " sheets"
+    
+    ' ?? PERFORMANCE: Track first/last data rows for batch formula fix at end
+    Dim firstDataRow As Long, lastDataRowWritten As Long
+    firstDataRow = 0
+    lastDataRowWritten = 0
 
     '--- blueprints (rows 11/12/13/14) to a temporary sheet
     Dim tmp As Worksheet
@@ -424,7 +493,7 @@ Public Sub WriteAggregation( _
     writeRow = 11
 
     '--- header merge (left block) just in case
-    MergeHeaderIfNeeded outWS, hdr, Array(cID, cname, cQty, cStart, cDue, cPct, cDur)
+    MergeHeaderIfNeeded outWS, hdr, Array(cID, cname, cQty, cRemQty, cStart, cDue, cPct, cDur)
 
     '--- cache last column of timeline
     Dim lastCol As Long
@@ -436,10 +505,12 @@ Public Sub WriteAggregation( _
     Dim lastChildRow As Long
 
     If Not IsEmpty(pIds) Then
+        firstDataRow = 11  ' Track for batch formula fix
+        
         For i = LBound(pIds) To UBound(pIds)
 
-            '----- parent row
-            InsertFromBlueprint tmp, 1, outWS, writeRow, cPct, lastCol, True
+            '----- parent row (NO timeline formulas - parents don't show Gantt bars)
+            InsertFromBlueprint tmp, 1, outWS, writeRow, cPct, lastCol, False
             Dim parentRow As Long: parentRow = writeRow
             If firstParentRow = 0 Then firstParentRow = parentRow
 
@@ -493,40 +564,115 @@ Public Sub WriteAggregation( _
                     outWS.Cells(writeRow, cname).Value = Nz(g(2), "")
                     outWS.Cells(writeRow, cQty).Value = q
                     
-                    ' Write due date if valid
-                    If cDue > 0 And IsDate(g(4)) Then
-                        Dim dueDate As Date
-                        dueDate = CDate(g(4))
-                        If Year(dueDate) >= 2000 And Year(dueDate) <= 2100 Then
-                            outWS.Cells(writeRow, cDue).Value = dueDate
+                    ' ?? NEW: REMAINING_QUANTITY Formula for child rows
+                    ' Get source sheet name for this task
+                    Dim sourceSheetName As String
+                    sourceSheetName = CStr(g(8))  ' Sheet name stored in index 8
+                    
+                    If Len(sourceSheetName) > 0 Then
+                        ' Escape apostrophes in sheet name for formula
+                        Dim escapedSheetName As String
+                        escapedSheetName = Replace(sourceSheetName, "'", "''")
+                        
+                        ' Create formula to count incomplete apparatus
+                        ' Formula: Total Qty - COUNTIFS(matching Task_IDs where STATUS="COMPLETED")
+                        Dim remainingFormula As String
+                        
+                        If mins = maxs Then
+                            ' Single task - count exact match
+                            remainingFormula = "=" & q & "-COUNTIFS('" & escapedSheetName & "'!$" & _
+                                Global_Constants.GetColumnLetter(Global_Constants.SC_COL_TASK_ID) & ":$" & _
+                                Global_Constants.GetColumnLetter(Global_Constants.SC_COL_TASK_ID) & ",""" & _
+                                pid & "." & mins & """,'" & escapedSheetName & "'!$" & _
+                                Global_Constants.GetColumnLetter(Global_Constants.SC_COL_STATUS) & ":$" & _
+                                Global_Constants.GetColumnLetter(Global_Constants.SC_COL_STATUS) & ",""COMPLETED"")"
+                        Else
+                            ' Multiple tasks - sum remaining for range
+                            ' Use SUMPRODUCT to count incomplete tasks in range
+                            remainingFormula = "=" & q & "-SUMPRODUCT(('" & escapedSheetName & "'!$" & _
+                                Global_Constants.GetColumnLetter(Global_Constants.SC_COL_TASK_ID) & ":$" & _
+                                Global_Constants.GetColumnLetter(Global_Constants.SC_COL_TASK_ID) & ">=""" & _
+                                pid & "." & mins & """)*('" & escapedSheetName & "'!$" & _
+                                Global_Constants.GetColumnLetter(Global_Constants.SC_COL_TASK_ID) & ":$" & _
+                                Global_Constants.GetColumnLetter(Global_Constants.SC_COL_TASK_ID) & "<=""" & _
+                                pid & "." & maxs & """)*('" & escapedSheetName & "'!$" & _
+                                Global_Constants.GetColumnLetter(Global_Constants.SC_COL_STATUS) & ":$" & _
+                                Global_Constants.GetColumnLetter(Global_Constants.SC_COL_STATUS) & "=""COMPLETED""))"
+                        End If
+                        
+                        outWS.Cells(writeRow, cRemQty).formula = remainingFormula
+                        outWS.Cells(writeRow, cRemQty).NumberFormat = "0"
+                    Else
+                        ' No source sheet - just show total quantity
+                        outWS.Cells(writeRow, cRemQty).Value = q
+                    End If
+                    
+                    ' ?? CREATE DATE DUE FORMULA (matching % completion approach)
+                    If cDue > 0 Then
+                        ' sourceSheetName and escapedSheetName already set above (lines 501-507)
+                        If Len(sourceSheetName) > 0 Then
+                            Dim dueDateFormula As String
+                            
+                            If mins = maxs Then
+                                ' Single task - VLOOKUP with IF wrapper to hide zero dates
+                                ' Pattern: =IFERROR(IF(VLOOKUP(...)=0,"",VLOOKUP(...)),"")
+                                Dim vlookupPart As String
+                                vlookupPart = "VLOOKUP(""" & pid & "." & mins & """,'" & escapedSheetName & "'!$" & _
+                                    Global_Constants.GetColumnLetter(Global_Constants.SC_COL_TASK_ID) & ":$" & _
+                                    Global_Constants.GetColumnLetter(Global_Constants.SC_COL_DATE_DUE) & ",5,FALSE)"
+                                dueDateFormula = "=IFERROR(IF(" & vlookupPart & "=0,""""," & vlookupPart & "),"""")"
+                            Else
+                                ' Multiple tasks - MAXIFS with IF wrapper to hide zero dates
+                                ' Pattern: =IFERROR(IF(MAXIFS(...)=0,"",MAXIFS(...)),"")
+                                Dim maxifsPart As String
+                                maxifsPart = "MAXIFS('" & escapedSheetName & "'!$" & _
+                                    Global_Constants.GetColumnLetter(Global_Constants.SC_COL_DATE_DUE) & ":$" & _
+                                    Global_Constants.GetColumnLetter(Global_Constants.SC_COL_DATE_DUE) & ",'" & _
+                                    escapedSheetName & "'!$" & Global_Constants.GetColumnLetter(Global_Constants.SC_COL_TASK_ID) & ":$" & _
+                                    Global_Constants.GetColumnLetter(Global_Constants.SC_COL_TASK_ID) & ","">=" & pid & "." & mins & """,'" & _
+                                    escapedSheetName & "'!$" & Global_Constants.GetColumnLetter(Global_Constants.SC_COL_TASK_ID) & ":$" & _
+                                    Global_Constants.GetColumnLetter(Global_Constants.SC_COL_TASK_ID) & ",""<=" & pid & "." & maxs & """)"
+                                dueDateFormula = "=IFERROR(IF(" & maxifsPart & "=0,""""," & maxifsPart & "),"""")"
+                            End If
+                            
+                            outWS.Cells(writeRow, cDue).formula = dueDateFormula
+                            outWS.Cells(writeRow, cDue).NumberFormat = "dddd, mmmm dd, yyyy"
+                            
+                            If GB_DEBUG Then Debug.Print "Created Date Due formula for " & showId & " on sheet " & sourceSheetName
+                        Else
+                            ' Fallback: No source sheet found - use static value
+                            If IsDate(g(4)) Then
+                                Dim dueDate As Date
+                                dueDate = CDate(g(4))
+                                If Year(dueDate) >= 2000 And Year(dueDate) <= 2100 Then
+                                    outWS.Cells(writeRow, cDue).Value = dueDate
+                                    outWS.Cells(writeRow, cDue).NumberFormat = "dddd, mmmm dd, yyyy"
+                                End If
+                            End If
                         End If
                     End If
                     
                     ' CRITICAL: Create formula for % completion with dynamic lookup
                     If cPct > 0 Then
-                        ' Find which scope sheet contains this task ID
-                        Dim sourceSheetName As String
-                        sourceSheetName = ""
-                        
+                        ' ?? PERFORMANCE: Use cached scope sheets instead of checking all worksheets
                         Dim srcWS As Worksheet
-                        For Each srcWS In ThisWorkbook.Worksheets
-                            If IsScopeSheet(srcWS) Then
-                                Dim findID As Range
-                                Set findID = Nothing
-                                On Error Resume Next
-                                Set findID = srcWS.Columns(Global_Constants.SC_COL_TASK_ID).Find(What:=pid & "." & mins, LookIn:=xlValues, LookAt:=xlWhole)
-                                On Error GoTo 0
-                                
-                                If Not findID Is Nothing Then
-                                    sourceSheetName = srcWS.Name
-                                    Exit For
-                                End If
+                        Dim srcSheetName As Variant
+                        For Each srcSheetName In scopeSheetCache.keys
+                            Set srcWS = scopeSheetCache(srcSheetName)
+                            Dim findID As Range
+                            Set findID = Nothing
+                            On Error Resume Next
+                            Set findID = srcWS.Columns(Global_Constants.SC_COL_TASK_ID).Find(What:=pid & "." & mins, LookIn:=xlValues, LookAt:=xlWhole)
+                            On Error GoTo 0
+                            
+                            If Not findID Is Nothing Then
+                                sourceSheetName = srcWS.Name
+                                Exit For
                             End If
-                        Next srcWS
+                        Next srcSheetName
                         
                         If sourceSheetName <> "" Then
                             ' CRITICAL FIX: Escape apostrophes in sheet name for formula
-                            Dim escapedSheetName As String
                             escapedSheetName = Replace(sourceSheetName, "'", "''")
                             
                             ' Create VLOOKUP formula to the source sheet using Global_Constants
@@ -576,6 +722,10 @@ Public Sub WriteAggregation( _
                     outWS.Cells(parentRow, cQty).FormulaR1C1 = _
                         "=SUM(R" & sr & "C" & cQty & ":R" & eR & "C" & cQty & ")"
                     
+                    ' ?? NEW: Remaining Quantity sum
+                    outWS.Cells(parentRow, cRemQty).FormulaR1C1 = _
+                        "=SUM(R" & sr & "C" & cRemQty & ":R" & eR & "C" & cRemQty & ")"
+                    
                     ' Start date left blank for manual entry
                     
                     ' Due date: MAX of children due dates
@@ -591,6 +741,7 @@ Public Sub WriteAggregation( _
             Else
                 ' Parent with no children
                 outWS.Cells(parentRow, cQty).ClearContents
+                outWS.Cells(parentRow, cRemQty).ClearContents
                 outWS.Cells(parentRow, cStart).ClearContents
                 outWS.Cells(parentRow, cDue).ClearContents
                 outWS.Cells(parentRow, cPct).ClearContents
@@ -632,6 +783,10 @@ Public Sub WriteAggregation( _
         outWS.Cells(writeRow, cQty).FormulaR1C1 = _
             "=SUM(R" & sP & "C" & cQty & ":R" & eP & "C" & cQty & ")"
         
+        ' ?? NEW: Remaining Quantity sum
+        outWS.Cells(writeRow, cRemQty).FormulaR1C1 = _
+            "=SUM(R" & sP & "C" & cRemQty & ":R" & eP & "C" & cRemQty & ")"
+        
         ' Start date left blank for manual entry
         
         ' Due date: MAX of all parent due dates
@@ -651,10 +806,17 @@ Public Sub WriteAggregation( _
 
     ' Format date columns
     If cStart > 0 And writeRow > 11 Then
-        outWS.Range(outWS.Cells(11, cStart), outWS.Cells(writeRow, cStart)).NumberFormat = "yyyy-dd-mm"
+        outWS.Range(outWS.Cells(11, cStart), outWS.Cells(writeRow, cStart)).NumberFormat = "mmm-dd-yyyy"
     End If
     If cDue > 0 And writeRow > 11 Then
-        outWS.Range(outWS.Cells(11, cDue), outWS.Cells(writeRow, cDue)).NumberFormat = "yyyy-dd-mm"
+        outWS.Range(outWS.Cells(11, cDue), outWS.Cells(writeRow, cDue)).NumberFormat = "mmm-dd-yyyy"
+    End If
+
+    ' ?? PERFORMANCE: Apply formula row fix ONCE for ALL rows (not per-row)
+    lastDataRowWritten = writeRow
+    If firstDataRow > 0 And lastDataRowWritten >= firstDataRow Then
+        If GB_DEBUG Then Debug.Print "Batch fixing timeline formulas: rows " & firstDataRow & " to " & lastDataRowWritten
+        FixGanttFormulaRowReferenceRange outWS, firstDataRow, lastDataRowWritten, cPct + 1, lastCol
     End If
 
     ' Clean up temporary blueprint sheet
@@ -666,10 +828,18 @@ Public Sub WriteAggregation( _
     Application.DisplayAlerts = True
     On Error GoTo 0
 
+WriteAggregation_Cleanup:
+    ' ?? CRITICAL: Always restore Application settings
+    Application.Calculation = calcMode
     Application.EnableEvents = True
     Application.ScreenUpdating = True
+    Exit Sub
+    
+WriteAggregation_Error:
+    If GB_DEBUG Then Debug.Print "ERROR in WriteAggregation: " & Err.Description
+    Resume WriteAggregation_Cleanup
+    
 End Sub
-
 '=========================== HELPERS ==================================
 Private Sub MergeHeaderIfNeeded(ByVal ws As Worksheet, ByVal hdr As Long, ByVal colList As Variant)
     Dim i As Long, c As Long
@@ -699,6 +869,81 @@ Private Sub InsertFromBlueprint(ByVal tmp As Worksheet, ByVal tmpRow As Long, _
         outWS.Range(outWS.Cells(outRow, cPct + 1), outWS.Cells(outRow, lastCol)). _
             PasteSpecial xlPasteFormulas
         Application.CutCopyMode = False
+        
+        ' ?? REMOVED per-row fix - now done in batch at end (FixGanttFormulaRowReferenceRange)
+        ' This was the main cause of freezing - called 100+ times × 300+ columns
+    End If
+End Sub
+
+'======================= SCOPE SHEET CACHE =============================
+' ?? PERFORMANCE: Build cache of scope sheets ONCE to avoid repeated IsScopeSheet calls
+' Before: 100 child rows × 30 worksheets × IsScopeSheet check = 3,000 checks
+' After:  30 worksheets × IsScopeSheet check = 30 checks (built once, reused)
+
+Private Function BuildScopeSheetCache() As Object
+    ' Returns Dictionary: key = sheet name, value = Worksheet object
+    Dim cache As Object
+    Set cache = CreateObject("Scripting.Dictionary")
+    
+    Dim ws As Worksheet
+    For Each ws In ThisWorkbook.Worksheets
+        If IsScopeSheet(ws) Then
+            cache.Add ws.Name, ws
+            If GB_DEBUG Then Debug.Print "  Cached scope sheet: " & ws.Name
+        End If
+    Next ws
+    
+    Set BuildScopeSheetCache = cache
+End Function
+
+'======================= FIX TIMELINE ROW REFERENCE ====================
+' ?? CRITICAL: Gantt timeline formulas must reference Row 7 (dates) not Row 10 (day letters)
+
+' ?? PERFORMANCE: Single-row version (kept for backward compatibility, but not used)
+Private Sub FixGanttFormulaRowReference(ByVal ws As Worksheet, ByVal rowNum As Long, _
+                                       ByVal startCol As Long, ByVal endCol As Long)
+    ' Fixes timeline formula row references from $10 to $7
+    ' Critical for gantt bars to display correctly
+    ' NOTE: Use FixGanttFormulaRowReferenceRange for bulk operations!
+    
+    Dim col As Long
+    Dim cell As Range
+    Dim formula As String
+    
+    For col = startCol To endCol
+        Set cell = ws.Cells(rowNum, col)
+        If cell.HasFormula Then
+            formula = cell.formula
+            If InStr(formula, "$10") > 0 Then
+                formula = Replace(formula, "$10", "$7")
+                cell.formula = formula
+            End If
+        End If
+    Next col
+End Sub
+
+' ?? NEW: BATCH version - Fixes ALL rows at once using Range.Replace (MUCH faster)
+Private Sub FixGanttFormulaRowReferenceRange(ByVal ws As Worksheet, _
+                                            ByVal startRow As Long, ByVal endRow As Long, _
+                                            ByVal startCol As Long, ByVal endCol As Long)
+    ' Fixes timeline formula row references from $10 to $7 for entire range
+    ' Uses Range.Replace which is orders of magnitude faster than cell-by-cell
+    
+    If endRow < startRow Or endCol < startCol Then Exit Sub
+    
+    Dim rng As Range
+    Set rng = ws.Range(ws.Cells(startRow, startCol), ws.Cells(endRow, endCol))
+    
+    ' Use Replace on the entire range - Excel handles this efficiently
+    On Error Resume Next
+    rng.Replace What:="$10", Replacement:="$7", LookAt:=xlPart, _
+                SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, _
+                ReplaceFormat:=False, FormulaVersion:=xlReplaceFormula2
+    On Error GoTo 0
+    
+    If GB_DEBUG Then
+        Debug.Print "Batch fixed timeline formulas: " & rng.Address & _
+                    " (" & (endRow - startRow + 1) & " rows x " & (endCol - startCol + 1) & " cols)"
     End If
 End Sub
 
@@ -748,7 +993,7 @@ Private Function CoalesceChildGroups(ByVal gAgg As Object, _
 
             tmp(norm) = t
         Else
-            ReDim t(1 To 8)  ' INCREASED to 8 to include sheet name
+            ReDim t(1 To 8)  ' Array size 8 to include sheet name
             t(1) = pid
             t(2) = a(2)
             t(3) = Nz(a(3), 0#)
@@ -756,7 +1001,7 @@ Private Function CoalesceChildGroups(ByVal gAgg As Object, _
             t(5) = Nz(a(5), 0#)
             t(6) = CLng(a(6))
             t(7) = CLng(a(7))
-            t(8) = a(8)  ' NEW: Preserve source sheet name
+            t(8) = a(8)  ' Preserve source sheet name
             tmp.Add norm, t
         End If
     Next k
@@ -779,7 +1024,7 @@ End Function
 '==================== HEADER FINDERS / MATCHERS =======================
 Public Function IsScopeSheet(ByVal ws As Worksheet) As Boolean
     ' Check for headers in row defined by Global_Constants
-    Dim hdr As Long: hdr = Global_Constants.SC_HEADER_ROW  ' FIXED: Use HEADER_ROW not FIRST_DATA_ROW
+    Dim hdr As Long: hdr = Global_Constants.SC_HEADER_ROW
     If hdr = 0 Then Exit Function
 
     Dim cID As Long, cPct As Long
@@ -838,6 +1083,7 @@ Private Function IsKnownHeaderKey(ByVal k As String) As Boolean
         Or k = "taskname" Or k = "tasknames" _
         Or k = "tasknames+apparatus" Or k = "taskname+apparatus" _
         Or k = "apparatusquantity" Or k = "apparatusqty" Or k = "qty" _
+        Or k = "remainingquantity" Or k = "remainingqty" Or k = "remqty" _
         Or k = "startdate" Or k = "start" _
         Or k = "duedate" Or k = "datedue" Or k = "due" _
         Or k = "pctoftaskcomplete" Or k = "pctcomplete" _
@@ -866,11 +1112,11 @@ End Function
 '==================== DEBUG HELPERS ===================================
 Private Sub DebugDumpHeaderMap(ByVal ws As Worksheet, ByVal hdr As Long, _
                                ByVal cID As Long, ByVal cname As Long, ByVal cQty As Long, _
-                               ByVal cStart As Long, ByVal cDue As Long, ByVal cPct As Long, _
-                               ByVal cDur As Long)
+                               ByVal cRemQty As Long, ByVal cStart As Long, ByVal cDue As Long, _
+                               ByVal cPct As Long, ByVal cDur As Long)
     If Not GB_DEBUG Then Exit Sub
     GB_Log "===== HEADER MAP on '" & ws.Name & "' (hdr=" & hdr & ") ====="
-    GB_Log "ID=" & cID & ", Name=" & cname & ", Qty=" & cQty & _
+    GB_Log "ID=" & cID & ", Name=" & cname & ", Qty=" & cQty & ", RemQty=" & cRemQty & _
            ", Start=" & cStart & ", Due=" & cDue & ", %=" & cPct & ", Dur=" & cDur
     GB_LogFlush
 End Sub
@@ -1104,4 +1350,5 @@ Public Sub DiagnoseScope()
     Debug.Print ""
     Debug.Print "? All column references using Global_Constants!"
 End Sub
+
 
