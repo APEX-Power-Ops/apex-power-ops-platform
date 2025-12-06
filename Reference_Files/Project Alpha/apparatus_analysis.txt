@@ -1,0 +1,73 @@
+============================================================
+PROJECT ALPHA - MASTER APPARATUS LIST ANALYSIS
+============================================================
+
+Total Equipment Items: 1405
+
+--- UNIQUE SCOPES (Areas/Systems) ---
+  Emergency Generator Dist: 56 items
+  Datacenter Distribution: 47 items
+  A1 Electrical Room: 191 items
+  A2 Electrical Room: 126 items
+  E1 Electrical Room: 320 items
+  E2 Electrical Room: 285 items
+  F1 Electrical Room: 138 items
+  F2 Electrical Room: 242 items
+
+--- UNIQUE APPARATUS CATEGORIES ---
+  Switchboard: 2 items
+  Circuit Breaker - Primary: 346 items
+  ATS: 9 items
+  Distribution Board: 95 items
+  Panelboard: 249 items
+  Circuit Breaker - Secondary: 644 items
+  Transformer: 32 items
+  Bus Duct: 19 items
+  Grounding: 9 items
+
+--- DESIGNATION FIELD STATUS ---
+  With Designation: 0
+  Missing Designation: 1405
+  Completion: 0.0%
+
+--- DRAWING FIELD STATUS ---
+  With Drawing Reference: 0
+  Missing Drawing: 1405
+  Completion: 0.0%
+
+--- UNIQUE TASKS (Test Types) ---
+  2.0MW Gen Distribution: 4 items
+  Electrode Room: 17 items
+  1.5MW Gen Distribution: 4 items
+  A1 & A2 Emerg Distribution: 31 items
+  SLD 1FO-E653: 15 items
+  SLD 1FO-E654: 32 items
+  1F0AS-SS-A-01: 41 items
+  1F0AS-SS-A-02: 28 items
+  1F0AS-SS-B-01: 5 items
+  1F0AS-SS-B-02: 13 items
+  1F0AS-SS-B-03: 34 items
+  1F0AS-SS-B-04: 32 items
+  1F0AS-SS-B-05: 38 items
+  1F0AS-SS-C-01: 34 items
+  1F0AS-SS-C-02: 13 items
+  1F0AS-SS-C-03: 59 items
+  1F0AS-SS-C-04: 20 items
+  1F0EL-SS-A-01: 40 items
+  1F0EL-SS-A-02: 36 items
+  1F0EL-SS-A-03: 28 items
+  1F0EL-SS-A-04: 21 items
+  1F0EL-SS-B-01: 55 items
+  1F0EL-SS-B-02: 40 items
+  1F0EL-SS-B-03: 52 items
+  1F0EL-SS-B-04: 48 items
+  1F0EL-SS-C-01: 37 items
+  1F0EL-SS-C-02: 37 items
+  1F0EL-SS-C-03: 57 items
+  1F0EL-SS-D-02: 25 items
+  1F0EL-SS-D-01: 72 items
+
+--- SAMPLE: ITEMS WITH DESIGNATIONS ---
+Empty DataFrame
+Columns: [Task_ID, Apparatus, Designation, Scope]
+Index: []

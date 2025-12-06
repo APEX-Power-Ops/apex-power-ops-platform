@@ -1,0 +1,35 @@
+flowchart TD
+    Start([Field Tech Marks<br/>Apparatus Complete]) --> Trigger{Completion Status<br/>= Complete?}
+    
+    Trigger -->|Yes| CheckDate{Date Completed<br/>is null?}
+    Trigger -->|No| End1([Flow Does Not Run])
+    
+    CheckDate -->|Yes| SetDate[Set Date_Completed<br/>= NOW]
+    CheckDate -->|No| GetScope[Get Related Scope]
+    
+    SetDate --> GetScope
+    
+    GetScope --> GetRates[List ScopeLaborDetail<br/>for this Scope]
+    
+    GetRates --> RatesFound{Labor Rates<br/>Found?}
+    
+    RatesFound -->|No| Error1([Terminate: No rates defined])
+    RatesFound -->|Yes| CheckDupe[List Existing<br/>ApparatusRevenue]
+    
+    CheckDupe --> DupeExists{Revenue Record<br/>Already Exists?}
+    
+    DupeExists -->|Yes| End2([Terminate: Duplicate prevention])
+    DupeExists -->|No| CreateRevenue[Create ApparatusRevenue Record]
+    
+    CreateRevenue --> PopulateFields[Populate Fields:<br/>• Apparatus Hours<br/>• Delays<br/>• Effective Labor Rate<br/>• Revenue Status = RECOGNIZED]
+    
+    PopulateFields --> Calculate[Dataverse Auto-Calculates<br/>Revenue Amount]
+    
+    Calculate --> Success([Revenue Recognition Complete])
+    
+    style Start fill:#90EE90
+    style CreateRevenue fill:#FFD700
+    style Calculate fill:#87CEEB
+    style Success fill:#98FB98
+    style Error1 fill:#FFB6C1
+    style End2 fill:#FFE4B5

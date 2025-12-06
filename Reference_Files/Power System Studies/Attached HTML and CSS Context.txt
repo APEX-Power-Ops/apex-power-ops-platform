@@ -1,0 +1,563 @@
+Attached HTML and CSS Context
+
+<div class="min-h-screen bg-slate-50"><header class="bg-white border-b border-slate-200 sticky top-0 z-10"><div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"><div class="flex justify-between items-center h-16"><div class="flex items-center gap-3"><a class="flex items-center gap-3" href="/"><div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center"><span class="text-white font-bold text-sm">R</span></div><h1 class="text-xl font-semibold text-slate-900">RESA Power</h1></a></div><nav class="flex items-center gap-6"><a class="text-sm font-medium text-slate-600 hover:text-slate-900" href="/">Dashboard</a><a class="text-sm font-medium text-blue-600" href="/import">Import</a></nav></div></div></header><main class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8"><div class="mb-8"><h2 class="text-2xl font-bold text-slate-900">Import Estimator Data</h2><p class="text-slate-500 mt-1">Upload a JSON file or paste JSON from your Excel estimator</p></div><div data-slot="card" class="bg-card text-card-foreground flex flex-col gap-6 rounded-xl border py-6 shadow-sm"><div data-slot="card-content" class="px-6 flex flex-col items-center justify-center py-12"><p class="text-slate-500 mb-4">Sign in to import project data</p><button data-slot="button" class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg:not([class*='size-'])]:size-4 shrink-0 [&amp;_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 py-2 has-[>svg]:px-3">Sign in with Microsoft</button></div></div></main></div>
+
+
+/* Matched Rule from user-agent */
+div {
+  display: block;
+}
+
+/* Matched Rule from user-agent */
+address, blockquote, center, div, figure, figcaption, footer, form, header, hr, legend, listing, main, p, plaintext, pre, summary, xmp, article, aside, h1, h2, h3, h4, h5, h6, hgroup, nav, section, search, table, caption, colgroup, col, thead, tbody, tfoot, tr, td, th, dir, dd, dl, dt, menu, ol, ul, li, bdi, output, [dir="ltr" i], [dir="rtl" i], [dir="auto" i] {
+  unicode-bidi: isolate;
+}
+
+/* Matched Rule from regular */
+*, :after, :before, ::backdrop {
+  box-sizing: border-box;
+  border: 0 solid;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  border-top-width: 0px;
+  border-right-width: 0px;
+  border-bottom-width: 0px;
+  border-left-width: 0px;
+  border-top-style: solid;
+  border-right-style: solid;
+  border-bottom-style: solid;
+  border-left-style: solid;
+  border-top-color: initial;
+  border-right-color: initial;
+  border-bottom-color: initial;
+  border-left-color: initial;
+  border-image-source: initial;
+  border-image-slice: initial;
+  border-image-width: initial;
+  border-image-outset: initial;
+  border-image-repeat: initial;
+  margin-top: 0px;
+  margin-right: 0px;
+  margin-bottom: 0px;
+  margin-left: 0px;
+  padding-top: 0px;
+  padding-right: 0px;
+  padding-bottom: 0px;
+  padding-left: 0px;
+}
+
+/* Matched Rule from regular */
+* {
+  border-color: var(--border);
+  outline-color: var(--ring);
+  outline-color: var(--ring);
+}
+
+/* Matched Rule from regular */
+* {
+  outline-color: color-mix(in oklab, var(--ring) 50%, transparent);
+  outline-color: color-mix(in oklab, var(--ring) 50%, transparent);
+}
+
+/* Matched Rule from regular */
+.min-h-screen {
+  min-height: 100vh;
+  min-height: 100vh;
+}
+
+/* Matched Rule from regular */
+.bg-slate-50 {
+  background-color: var(--color-slate-50);
+  background-color: var(--color-slate-50);
+}
+
+/* Inherited from ancestor level 1 (user-agent) */
+body {
+  display: block;
+  margin-top: 8px;
+  margin-right: 8px;
+  margin-bottom: 8px;
+  margin-left: 8px;
+}
+
+/* Inherited from ancestor level 1 (regular) */
+*, :after, :before, ::backdrop {
+  box-sizing: border-box;
+  border: 0 solid;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  border-top-width: 0px;
+  border-right-width: 0px;
+  border-bottom-width: 0px;
+  border-left-width: 0px;
+  border-top-style: solid;
+  border-right-style: solid;
+  border-bottom-style: solid;
+  border-left-style: solid;
+  border-top-color: initial;
+  border-right-color: initial;
+  border-bottom-color: initial;
+  border-left-color: initial;
+  border-image-source: initial;
+  border-image-slice: initial;
+  border-image-width: initial;
+  border-image-outset: initial;
+  border-image-repeat: initial;
+  margin-top: 0px;
+  margin-right: 0px;
+  margin-bottom: 0px;
+  margin-left: 0px;
+  padding-top: 0px;
+  padding-right: 0px;
+  padding-bottom: 0px;
+  padding-left: 0px;
+}
+
+/* Inherited from ancestor level 1 (regular) */
+* {
+  border-color: var(--border);
+  outline-color: var(--ring);
+  outline-color: var(--ring);
+}
+
+/* Inherited from ancestor level 1 (regular) */
+* {
+  outline-color: color-mix(in oklab, var(--ring) 50%, transparent);
+  outline-color: color-mix(in oklab, var(--ring) 50%, transparent);
+}
+
+/* Inherited from ancestor level 1 (regular) */
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  background-color: var(--background);
+  color: var(--foreground);
+}
+
+/* Inherited from ancestor level 1 (regular) */
+.antialiased {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Inherited from ancestor level 1 (regular) */
+.geist_a71539c9-module__T19VSG__variable {
+  --font-geist-sans: "Geist", "Geist Fallback";
+  --font-geist-sans: "Geist", "Geist Fallback";
+}
+
+/* Inherited from ancestor level 1 (regular) */
+.geist_mono_8d43a2aa-module__8Li5zG__variable {
+  --font-geist-mono: "Geist Mono", "Geist Mono Fallback";
+  --font-geist-mono: "Geist Mono", "Geist Mono Fallback";
+}
+
+/* Inherited from ancestor level 2 (user-agent) */
+html {
+  display: block;
+}
+
+/* Inherited from ancestor level 2 (user-agent) */
+:root {
+  view-transition-name: root;
+}
+
+/* Inherited from ancestor level 2 (regular) */
+:root, :host {
+  --color-red-50: #fef2f2;
+  --color-red-200: #ffcaca;
+  --color-red-500: #fb2c36;
+  --color-red-600: #e40014;
+  --color-red-700: #bf000f;
+  --color-amber-500: #f99c00;
+  --color-green-200: #b9f8cf;
+  --color-green-500: #00c758;
+  --color-green-600: #00a544;
+  --color-blue-50: #eff6ff;
+  --color-blue-200: #bedbff;
+  --color-blue-300: #90c5ff;
+  --color-blue-400: #54a2ff;
+  --color-blue-500: #3080ff;
+  --color-blue-600: #155dfc;
+  --color-blue-700: #1447e6;
+  --color-blue-900: #1c398e;
+  --color-purple-600: #9810fa;
+  --color-slate-50: #f8fafc;
+  --color-slate-100: #f1f5f9;
+  --color-slate-200: #e2e8f0;
+  --color-slate-400: #90a1b9;
+  --color-slate-500: #62748e;
+  --color-slate-600: #45556c;
+  --color-slate-900: #0f172b;
+  --color-gray-50: #f9fafb;
+  --color-gray-200: #e5e7eb;
+  --color-gray-400: #99a1af;
+  --color-gray-500: #6a7282;
+  --color-gray-600: #4a5565;
+  --color-gray-900: #101828;
+  --color-black: #000;
+  --color-white: #fff;
+  --spacing: .25rem;
+  --container-lg: 32rem;
+  --container-4xl: 56rem;
+  --container-7xl: 80rem;
+  --text-xs: .75rem;
+  --text-xs--line-height: calc(1 / .75);
+  --text-sm: .875rem;
+  --text-sm--line-height: calc(1.25 / .875);
+  --text-base: 1rem;
+  --text-base--line-height: calc(1.5 / 1);
+  --text-lg: 1.125rem;
+  --text-lg--line-height: calc(1.75 / 1.125);
+  --text-xl: 1.25rem;
+  --text-xl--line-height: calc(1.75 / 1.25);
+  --text-2xl: 1.5rem;
+  --text-2xl--line-height: calc(2 / 1.5);
+  --text-3xl: 1.875rem;
+  --text-3xl--line-height: calc(2.25 / 1.875);
+  --text-4xl: 2.25rem;
+  --text-4xl--line-height: calc(2.5 / 2.25);
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --tracking-wide: .025em;
+  --tracking-wider: .05em;
+  --tracking-widest: .1em;
+  --radius-xs: .125rem;
+  --default-transition-duration: .15s;
+  --default-transition-timing-function: cubic-bezier(.4, 0, .2, 1);
+  --default-font-family: var(--font-geist-sans);
+  --default-mono-font-family: var(--font-geist-mono);
+  --color-red-50: #fef2f2;
+  --color-red-200: #ffcaca;
+  --color-red-500: #fb2c36;
+  --color-red-600: #e40014;
+  --color-red-700: #bf000f;
+  --color-amber-500: #f99c00;
+  --color-green-200: #b9f8cf;
+  --color-green-500: #00c758;
+  --color-green-600: #00a544;
+  --color-blue-50: #eff6ff;
+  --color-blue-200: #bedbff;
+  --color-blue-300: #90c5ff;
+  --color-blue-400: #54a2ff;
+  --color-blue-500: #3080ff;
+  --color-blue-600: #155dfc;
+  --color-blue-700: #1447e6;
+  --color-blue-900: #1c398e;
+  --color-purple-600: #9810fa;
+  --color-slate-50: #f8fafc;
+  --color-slate-100: #f1f5f9;
+  --color-slate-200: #e2e8f0;
+  --color-slate-400: #90a1b9;
+  --color-slate-500: #62748e;
+  --color-slate-600: #45556c;
+  --color-slate-900: #0f172b;
+  --color-gray-50: #f9fafb;
+  --color-gray-200: #e5e7eb;
+  --color-gray-400: #99a1af;
+  --color-gray-500: #6a7282;
+  --color-gray-600: #4a5565;
+  --color-gray-900: #101828;
+  --color-black: #000;
+  --color-white: #fff;
+  --spacing: .25rem;
+  --container-lg: 32rem;
+  --container-4xl: 56rem;
+  --container-7xl: 80rem;
+  --text-xs: .75rem;
+  --text-xs--line-height: calc(1 / .75);
+  --text-sm: .875rem;
+  --text-sm--line-height: calc(1.25 / .875);
+  --text-base: 1rem;
+  --text-base--line-height: calc(1.5 / 1);
+  --text-lg: 1.125rem;
+  --text-lg--line-height: calc(1.75 / 1.125);
+  --text-xl: 1.25rem;
+  --text-xl--line-height: calc(1.75 / 1.25);
+  --text-2xl: 1.5rem;
+  --text-2xl--line-height: calc(2 / 1.5);
+  --text-3xl: 1.875rem;
+  --text-3xl--line-height: calc(2.25 / 1.875);
+  --text-4xl: 2.25rem;
+  --text-4xl--line-height: calc(2.5 / 2.25);
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --tracking-wide: .025em;
+  --tracking-wider: .05em;
+  --tracking-widest: .1em;
+  --radius-xs: .125rem;
+  --default-transition-duration: .15s;
+  --default-transition-timing-function: cubic-bezier(.4, 0, .2, 1);
+  --default-font-family: var(--font-geist-sans);
+  --default-mono-font-family: var(--font-geist-mono);
+}
+
+/* Inherited from ancestor level 2 (regular) */
+:root, :host {
+  --color-red-50: lab(96.5005% 4.18511 1.52329);
+  --color-red-200: lab(86.017% 19.8815 7.75869);
+  --color-red-500: lab(55.4814% 75.0732 48.8528);
+  --color-red-600: lab(48.4493% 77.4328 61.5452);
+  --color-red-700: lab(40.4273% 67.2623 53.7441);
+  --color-amber-500: lab(72.7183% 31.8672 97.9407);
+  --color-green-200: lab(92.4222% -26.4702 12.9427);
+  --color-green-500: lab(70.5521% -66.5147 45.8072);
+  --color-green-600: lab(59.0978% -58.6621 41.2579);
+  --color-blue-50: lab(96.492% -1.14647 -5.11479);
+  --color-blue-200: lab(86.15% -4.04379 -21.0797);
+  --color-blue-300: lab(77.5052% -6.4629 -36.42);
+  --color-blue-400: lab(65.0361% -1.42062 -56.9803);
+  --color-blue-500: lab(54.1736% 13.3368 -74.6839);
+  --color-blue-600: lab(44.0605% 29.0279 -86.0352);
+  --color-blue-700: lab(36.9089% 35.0961 -85.6872);
+  --color-blue-900: lab(26.1542% 15.7545 -51.5504);
+  --color-purple-600: lab(43.0295% 75.21 -86.5669);
+  --color-slate-50: lab(98.1434% -.369549 -1.05968);
+  --color-slate-100: lab(96.286% -.852466 -2.46847);
+  --color-slate-200: lab(91.7353% -.998765 -4.76968);
+  --color-slate-400: lab(65.5349% -2.25151 -14.5072);
+  --color-slate-500: lab(48.0876% -2.03595 -16.5814);
+  --color-slate-600: lab(35.5623% -1.74978 -15.4316);
+  --color-slate-900: lab(7.78673% 1.82346 -15.0537);
+  --color-gray-50: lab(98.2596% -.247031 -.706708);
+  --color-gray-200: lab(91.6229% -.159085 -2.26791);
+  --color-gray-400: lab(65.9269% -.832707 -8.17474);
+  --color-gray-500: lab(47.7841% -.393212 -10.0268);
+  --color-gray-600: lab(35.6337% -1.58697 -10.8425);
+  --color-gray-900: lab(8.11897% .811279 -12.254);
+  --color-red-50: lab(96.5005% 4.18511 1.52329);
+  --color-red-200: lab(86.017% 19.8815 7.75869);
+  --color-red-500: lab(55.4814% 75.0732 48.8528);
+  --color-red-600: lab(48.4493% 77.4328 61.5452);
+  --color-red-700: lab(40.4273% 67.2623 53.7441);
+  --color-amber-500: lab(72.7183% 31.8672 97.9407);
+  --color-green-200: lab(92.4222% -26.4702 12.9427);
+  --color-green-500: lab(70.5521% -66.5147 45.8072);
+  --color-green-600: lab(59.0978% -58.6621 41.2579);
+  --color-blue-50: lab(96.492% -1.14647 -5.11479);
+  --color-blue-200: lab(86.15% -4.04379 -21.0797);
+  --color-blue-300: lab(77.5052% -6.4629 -36.42);
+  --color-blue-400: lab(65.0361% -1.42062 -56.9803);
+  --color-blue-500: lab(54.1736% 13.3368 -74.6839);
+  --color-blue-600: lab(44.0605% 29.0279 -86.0352);
+  --color-blue-700: lab(36.9089% 35.0961 -85.6872);
+  --color-blue-900: lab(26.1542% 15.7545 -51.5504);
+  --color-purple-600: lab(43.0295% 75.21 -86.5669);
+  --color-slate-50: lab(98.1434% -.369549 -1.05968);
+  --color-slate-100: lab(96.286% -.852466 -2.46847);
+  --color-slate-200: lab(91.7353% -.998765 -4.76968);
+  --color-slate-400: lab(65.5349% -2.25151 -14.5072);
+  --color-slate-500: lab(48.0876% -2.03595 -16.5814);
+  --color-slate-600: lab(35.5623% -1.74978 -15.4316);
+  --color-slate-900: lab(7.78673% 1.82346 -15.0537);
+  --color-gray-50: lab(98.2596% -.247031 -.706708);
+  --color-gray-200: lab(91.6229% -.159085 -2.26791);
+  --color-gray-400: lab(65.9269% -.832707 -8.17474);
+  --color-gray-500: lab(47.7841% -.393212 -10.0268);
+  --color-gray-600: lab(35.6337% -1.58697 -10.8425);
+  --color-gray-900: lab(8.11897% .811279 -12.254);
+}
+
+/* Inherited from ancestor level 2 (regular) */
+*, :after, :before, ::backdrop {
+  box-sizing: border-box;
+  border: 0 solid;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  border-top-width: 0px;
+  border-right-width: 0px;
+  border-bottom-width: 0px;
+  border-left-width: 0px;
+  border-top-style: solid;
+  border-right-style: solid;
+  border-bottom-style: solid;
+  border-left-style: solid;
+  border-top-color: initial;
+  border-right-color: initial;
+  border-bottom-color: initial;
+  border-left-color: initial;
+  border-image-source: initial;
+  border-image-slice: initial;
+  border-image-width: initial;
+  border-image-outset: initial;
+  border-image-repeat: initial;
+  margin-top: 0px;
+  margin-right: 0px;
+  margin-bottom: 0px;
+  margin-left: 0px;
+  padding-top: 0px;
+  padding-right: 0px;
+  padding-bottom: 0px;
+  padding-left: 0px;
+}
+
+/* Inherited from ancestor level 2 (regular) */
+* {
+  border-color: var(--border);
+  outline-color: var(--ring);
+  outline-color: var(--ring);
+}
+
+/* Inherited from ancestor level 2 (regular) */
+* {
+  outline-color: color-mix(in oklab, var(--ring) 50%, transparent);
+  outline-color: color-mix(in oklab, var(--ring) 50%, transparent);
+}
+
+/* Inherited from ancestor level 2 (regular) */
+html, :host {
+  -webkit-text-size-adjust: 100%;
+  tab-size: 4;
+  line-height: 1.5;
+  font-family: var(--default-font-family, ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji");
+  font-feature-settings: var(--default-font-feature-settings, normal);
+  font-variation-settings: var(--default-font-variation-settings, normal);
+  -webkit-tap-highlight-color: transparent;
+  text-size-adjust: 100%;
+  tab-size: 4;
+  line-height: 1.5;
+  font-family: var(--default-font-family, ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji");
+  font-feature-settings: var(--default-font-feature-settings, normal);
+  font-variation-settings: var(--default-font-variation-settings, normal);
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Inherited from ancestor level 2 (regular) */
+:root {
+  --radius: .625rem;
+  --background: #fff;
+  --foreground: #0a0a0a;
+  --card: #fff;
+  --card-foreground: #0a0a0a;
+  --popover: #fff;
+  --popover-foreground: #0a0a0a;
+  --primary: #171717;
+  --primary-foreground: #fafafa;
+  --secondary: #f5f5f5;
+  --secondary-foreground: #171717;
+  --muted: #f5f5f5;
+  --muted-foreground: #737373;
+  --accent: #f5f5f5;
+  --accent-foreground: #171717;
+  --destructive: #e40014;
+  --border: #e5e5e5;
+  --input: #e5e5e5;
+  --ring: #a1a1a1;
+  --chart-1: #f05100;
+  --chart-2: #009588;
+  --chart-3: #104e64;
+  --chart-4: #fcbb00;
+  --chart-5: #f99c00;
+  --sidebar: #fafafa;
+  --sidebar-foreground: #0a0a0a;
+  --sidebar-primary: #171717;
+  --sidebar-primary-foreground: #fafafa;
+  --sidebar-accent: #f5f5f5;
+  --sidebar-accent-foreground: #171717;
+  --sidebar-border: #e5e5e5;
+  --sidebar-ring: #a1a1a1;
+  --radius: .625rem;
+  --background: #fff;
+  --foreground: #0a0a0a;
+  --card: #fff;
+  --card-foreground: #0a0a0a;
+  --popover: #fff;
+  --popover-foreground: #0a0a0a;
+  --primary: #171717;
+  --primary-foreground: #fafafa;
+  --secondary: #f5f5f5;
+  --secondary-foreground: #171717;
+  --muted: #f5f5f5;
+  --muted-foreground: #737373;
+  --accent: #f5f5f5;
+  --accent-foreground: #171717;
+  --destructive: #e40014;
+  --border: #e5e5e5;
+  --input: #e5e5e5;
+  --ring: #a1a1a1;
+  --chart-1: #f05100;
+  --chart-2: #009588;
+  --chart-3: #104e64;
+  --chart-4: #fcbb00;
+  --chart-5: #f99c00;
+  --sidebar: #fafafa;
+  --sidebar-foreground: #0a0a0a;
+  --sidebar-primary: #171717;
+  --sidebar-primary-foreground: #fafafa;
+  --sidebar-accent: #f5f5f5;
+  --sidebar-accent-foreground: #171717;
+  --sidebar-border: #e5e5e5;
+  --sidebar-ring: #a1a1a1;
+}
+
+/* Inherited from ancestor level 2 (regular) */
+:root {
+  --background: lab(100% 0 0);
+  --foreground: lab(2.75381% 0 0);
+  --card: lab(100% 0 0);
+  --card-foreground: lab(2.75381% 0 0);
+  --popover: lab(100% 0 0);
+  --popover-foreground: lab(2.75381% 0 0);
+  --primary: lab(7.78201% -.0000149012 0);
+  --primary-foreground: lab(98.26% 0 0);
+  --secondary: lab(96.52% -.0000596046 0);
+  --secondary-foreground: lab(7.78201% -.0000149012 0);
+  --muted: lab(96.52% -.0000596046 0);
+  --muted-foreground: lab(48.496% 0 0);
+  --accent: lab(96.52% -.0000596046 0);
+  --accent-foreground: lab(7.78201% -.0000149012 0);
+  --destructive: lab(48.4493% 77.4328 61.5452);
+  --border: lab(90.952% -.0000596046 0);
+  --input: lab(90.952% -.0000596046 0);
+  --ring: lab(66.128% -.0000298023 .0000119209);
+  --chart-1: lab(57.1026% 64.2584 89.8886);
+  --chart-2: lab(55.0223% -41.0774 -3.90277);
+  --chart-3: lab(30.372% -13.1853 -18.7887);
+  --chart-4: lab(80.1641% 16.6016 99.2089);
+  --chart-5: lab(72.7183% 31.8672 97.9407);
+  --sidebar: lab(98.26% 0 0);
+  --sidebar-foreground: lab(2.75381% 0 0);
+  --sidebar-primary: lab(7.78201% -.0000149012 0);
+  --sidebar-primary-foreground: lab(98.26% 0 0);
+  --sidebar-accent: lab(96.52% -.0000596046 0);
+  --sidebar-accent-foreground: lab(7.78201% -.0000149012 0);
+  --sidebar-border: lab(90.952% -.0000596046 0);
+  --sidebar-ring: lab(66.128% -.0000298023 .0000119209);
+  --background: lab(100% 0 0);
+  --foreground: lab(2.75381% 0 0);
+  --card: lab(100% 0 0);
+  --card-foreground: lab(2.75381% 0 0);
+  --popover: lab(100% 0 0);
+  --popover-foreground: lab(2.75381% 0 0);
+  --primary: lab(7.78201% -.0000149012 0);
+  --primary-foreground: lab(98.26% 0 0);
+  --secondary: lab(96.52% -.0000596046 0);
+  --secondary-foreground: lab(7.78201% -.0000149012 0);
+  --muted: lab(96.52% -.0000596046 0);
+  --muted-foreground: lab(48.496% 0 0);
+  --accent: lab(96.52% -.0000596046 0);
+  --accent-foreground: lab(7.78201% -.0000149012 0);
+  --destructive: lab(48.4493% 77.4328 61.5452);
+  --border: lab(90.952% -.0000596046 0);
+  --input: lab(90.952% -.0000596046 0);
+  --ring: lab(66.128% -.0000298023 .0000119209);
+  --chart-1: lab(57.1026% 64.2584 89.8886);
+  --chart-2: lab(55.0223% -41.0774 -3.90277);
+  --chart-3: lab(30.372% -13.1853 -18.7887);
+  --chart-4: lab(80.1641% 16.6016 99.2089);
+  --chart-5: lab(72.7183% 31.8672 97.9407);
+  --sidebar: lab(98.26% 0 0);
+  --sidebar-foreground: lab(2.75381% 0 0);
+  --sidebar-primary: lab(7.78201% -.0000149012 0);
+  --sidebar-primary-foreground: lab(98.26% 0 0);
+  --sidebar-accent: lab(96.52% -.0000596046 0);
+  --sidebar-accent-foreground: lab(7.78201% -.0000149012 0);
+  --sidebar-border: lab(90.952% -.0000596046 0);
+  --sidebar-ring: lab(66.128% -.0000298023 .0000119209);
+}
