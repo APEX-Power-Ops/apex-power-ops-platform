@@ -1,54 +1,91 @@
 # Desktop ↔ VS Code Claude Coordination
 
-**Purpose**: Share information between Claude sessions  
-**Updated**: 2025-12-10 by VS Code Claude
+**Purpose**: Share information between Claude sessions
+**Updated**: 2025-12-10 (Session 2) by VS Code Claude
 
 ---
 
-## 🎉 RESOURCE LINKING SCHEMA DEPLOYED!
+## 🎉 SESSION 2 COMPLETE (Dec 10, PM)
 
-**Status**: ✅ 6 new tables deployed to Supabase via MCP  
-**Database**: 29 tables, 38 ENUMs, 18 views  
-**New Tables**: NETA procedures, SOPs, Safety docs, Datasheets
+### Major Accomplishments
+
+| Feature | Status | Details |
+|---------|--------|---------|
+| Equipment Project Assignment | ✅ Deployed | Track equipment by employee, project, or warehouse |
+| Two-Stage Approval Workflow | ✅ Deployed | Tech submits → Lead approves → Revenue recognized |
+| UI Requirements Document | ✅ Created | Mockups for stakeholder review |
+
+### Database Now At:
+- **31 tables** (added `equipment_assignments`)
+- **15 views** (added 5 new views)
+- **38+ ENUMs**
+- **3 new functions** for approval workflow
+
+### Git Commits This Session:
+- `f008afd` - Equipment project assignment schema
+- `0294b72` - Documentation updates (30 tables)
+- `1c3f740` - UI Requirements Review document
+- `6afa662` - Apparatus completion workflow
+- `f7aba92` - Added approval workflow mockups to UI doc
+
+### New Schema Files Created:
+- `Supabase/schema/07_equipment_project_assignment.sql`
+- `Supabase/schema/08_apparatus_completion_workflow.sql`
+
+### New Views:
+- `v_equipment_current_status` - Equipment with assignment details
+- `v_project_equipment` - Equipment assigned to each project
+- `v_equipment_movement_history` - Full movement audit trail
+- `v_apparatus_approval_queue` - Pending approvals for lead review
+- `v_approval_queue_summary` - Dashboard summary by project
+
+### New Functions:
+- `submit_apparatus_for_review()` - Tech marks complete (Pending Review)
+- `approve_apparatus_completion()` - Lead approves (triggers revenue)
+- `reject_apparatus_submission()` - Lead rejects (back to In Progress)
 
 ---
 
-## ✅ COMPLETED THIS SESSION (Dec 10)
+## 📋 KEY DOCUMENT FOR GM REVIEW
 
-| Task | Owner | Status |
-|------|-------|--------|
-| Design NETA/SOP schema | VS Code Claude | ✅ |
-| Add Safety placeholder table | VS Code Claude | ✅ |
-| Add Datasheets placeholder table | VS Code Claude | ✅ |
-| Deploy via Supabase MCP | VS Code Claude | ✅ 9 migrations |
-| Update SCHEMA_REFERENCE.md | VS Code Claude | ✅ v1.1.0 |
-| Update PROJECT_STATUS.md | VS Code Claude | ✅ |
-| Create 06_neta_sop_tables.sql | VS Code Claude | ✅ |
-| Git commit and push | VS Code Claude | ✅ fca8eda |
+**`Documentation/07_Application_Specs/UI_REQUIREMENTS_REVIEW.md`**
 
-### New Tables Added:
-- `neta_procedures` - NETA ATS/MTS/ECS standards
-- `neta_test_items` - Individual test items
-- `sops` - Standard Operating Procedures  
-- `safety_documents` - JSAs, safety bulletins
-- `datasheets` - Manufacturer data sheets
-- `apparatus_type_resources` - Junction table
+Contains:
+- Dashboard layout options (3 choices)
+- Project detail screen options (3 choices)
+- Mobile tech view options (3 choices)
+- Two-stage approval workflow mockups
+- Module priority ranking table
+- Workflow questions for stakeholder input
 
-### New Views Added:
-- `v_apparatus_type_resources` - Resource lookup by type
-- `v_neta_test_details` - Full NETA test info
-- `v_apparatus_resources` - Resources by apparatus
+**Action**: Have GM review and mark preferences before UI development begins.
 
 ---
 
-## 🔜 NEXT STEPS (Phase 1.6)
+## 🔜 NEXT STEPS
 
-1. **Import NETA JSON data** - Parse Reference_Files/NETA/Extracted JSON files
-2. **Map apparatus_types** - Set neta_section columns
-3. **Link types to procedures** - Create junction records
-4. **Add sample SOPs** - Company testing procedures
-5. **Add safety documents** - JSAs for equipment types
-6. **Resource lookup UI** - Mobile-friendly tech view
+### Immediate (When Resuming):
+1. **Get GM feedback** on UI Requirements doc
+2. **Import NETA JSON data** - Parse extracted files into `neta_procedures`
+3. **Map apparatus_types** - Set neta_section columns
+4. **Test approval workflow** - Create test submissions
+
+### Future Phases:
+- Project detail page UI
+- Field tech mobile app
+- Lead approval queue UI
+- Equipment tracking dashboard
+
+---
+
+## Previous Session (Dec 10, AM)
+
+### NETA/SOP Resource Linking Complete
+
+- Deployed 6 new tables via Supabase MCP
+- `neta_procedures`, `neta_test_items`, `sops`
+- `safety_documents`, `datasheets`, `apparatus_type_resources`
+- Created schema file `06_neta_sop_tables.sql`
 
 ---
 
@@ -56,17 +93,18 @@
 
 ### SUPABASE SWAP COMPLETE!
 
-**Status**: ✅ App connected to Supabase and working!
-**URL**: http://localhost:3000
-**Data showing**: LASNAP16 project with 47 apparatus
+- App connected to Supabase and working
+- LASNAP16 test data loaded (47 apparatus)
+- Trigger cascade verified working
 
-### Completed Dec 5:
+---
 
-| Task | Owner | Status |
-|------|-------|--------|
-| Locate Node.js app | VS Code Claude | ✅ Found |
-| Load test data | VS Code Claude | ✅ LASNAP16 loaded |
-| Fix trigger bug | VS Code Claude | ✅ Cascade rollup works |
-| Install supabase-js | VS Code Claude | ✅ |
-| Update page.tsx | VS Code Claude | ✅ |
-| Test connection | VS Code Claude | ✅ Working! |
+## Environment Quick Reference
+
+| Component | Location/URL |
+|-----------|--------------|
+| Build Repo | `C:\RESA_Power_Build` |
+| Web App | `C:\Users\jjswe\Projects\resa-web-app` |
+| Supabase Project | `fxoyniqnrlkxfligbxmg` |
+| API URL | `https://fxoyniqnrlkxfligbxmg.supabase.co` |
+| Branch | `clean-main` |
