@@ -428,33 +428,24 @@ Technicians need a mobile-friendly interface. What should they see?
 
 ### 5.1 Apparatus Completion Flow
 
-When a technician marks apparatus complete, what should happen?
+**IMPLEMENTED: Two-Stage Approval Workflow**
 
-```
-CURRENT DATABASE BEHAVIOR:
-+-------------------------------------------------------------+
-|  Tech marks "MV Breaker #1" complete                        |
-|       |                                                     |
-|       v                                                     |
-|  System creates revenue record ($X based on hours x rate)   |
-|       |                                                     |
-|       v                                                     |
-|  Task completion % updates                                  |
-|       |                                                     |
-|       v                                                     |
-|  Scope completion % updates                                 |
-|       |                                                     |
-|       v                                                     |
-|  Project completion % updates                               |
-+-------------------------------------------------------------+
-```
+See **Part 5A** above for full details. Key points:
 
-**Question**: Should techs also record:
-- [ ] Assessment (Acceptable / Minor Deficiency / Major Deficiency / Non-Serviceable)?
-- [ ] Actual hours worked vs estimated?
-- [ ] Delay hours and reason?
-- [ ] Photos?
-- [ ] Notes?
+- Tech submits apparatus -> Status = "Pending Review" (NO revenue yet)
+- Lead reviews and approves -> Status = "Complete" + Revenue created
+- Lead can reject -> Returns to "In Progress" with notes
+
+**Tech captures on submission:**
+- [x] Actual hours worked
+- [x] Assessment (Acceptable / Minor / Major Deficiency / Non-Serviceable)
+- [x] Delay hours and reason (customer-caused delays)
+- [x] Notes
+- [ ] Photos (future enhancement)
+
+**Lead can override during approval:**
+- Hours (if tech estimate seems wrong)
+- Assessment (if tech judgment needs correction)
 
 ---
 
@@ -586,3 +577,214 @@ Once we have your input, we can create detailed specs for the highest-priority m
 
 *Document created: December 10, 2025*  
 *For questions: Contact Jason*
+
+---
+
+## Part 5A: Apparatus Completion Workflow (CRITICAL)
+
+### Two-Stage Approval Architecture
+
+Revenue is only recognized when a **Lead/PM approves** the tech's submission, not when the tech marks it complete. This prevents premature revenue recognition and reduces errors.
+
+```
++---------------------------------------------------------------------+
+|                    APPARATUS COMPLETION FLOW                        |
++---------------------------------------------------------------------+
+|                                                                     |
+|  TECH (Mobile App)                    LEAD/PM (Dashboard)           |
+|  -----------------                    -------------------           |
+|                                                                     |
+|  1. Tech completes testing                                          |
+|     |                                                               |
+|     v                                                               |
+|  2. Tech opens apparatus                                            |
+|     and fills in:                                                   |
+|     - Actual hours worked                                           |
+|     - Assessment (Acceptable/                                       |
+|       Minor/Major Deficiency)                                       |
+|     - Delay hours (if any)                                          |
+|     - Notes                                                         |
+|     |                                                               |
+|     v                                                               |
+|  3. Tech taps [Submit for Review]                                   |
+|     |                                                               |
+|     +---------------+                                               |
+|                     |                                               |
+|                     v                                               |
+|              Status = "Pending Review"                              |
+|              (NO revenue yet)                                       |
+|                     |                                               |
+|                     +------------------+                            |
+|                                        |                            |
+|                                        v                            |
+|                             4. Item appears in                      |
+|                                Lead's Approval Queue                |
+|                                        |                            |
+|                                        v                            |
+|                             5. Lead reviews:                        |
+|                                - Hours reasonable?                  |
+|                                - Assessment correct?                |
+|                                - Delay justified?                   |
+|                                        |                            |
+|                          +-------------+-------------+              |
+|                          |                           |              |
+|                          v                           v              |
+|                     [APPROVE]                   [REJECT]            |
+|                          |                           |              |
+|                          v                           v              |
+|                   Status = "Complete"         Status = "In Progress"|
+|                          |                    (back to tech w/note) |
+|                          v                                          |
+|                   REVENUE RECORD CREATED                            |
+|                   (automatic trigger)                               |
+|                                                                     |
++---------------------------------------------------------------------+
+```
+
+### Lead Approval Queue Screen
+
+```
++---------------------------------------------------------------------+
+|  <- Back           Approval Queue                    [Filter v]     |
++---------------------------------------------------------------------+
+|                                                                     |
+|  PENDING APPROVALS (12)                          3 overdue (>24hr)  |
+|                                                                     |
+|  +----------------------------------------------------------------+ |
+|  | LASNAP16 - LA DWP Substation                     5 pending     | |
+|  | Oldest: 2 hrs ago                                              | |
+|  | [Review Items ->]                                              | |
+|  +----------------------------------------------------------------+ |
+|  | DALGAR01 - Garney Construction                   4 pending     | |
+|  | Oldest: 6 hrs ago                                              | |
+|  | [Review Items ->]                                              | |
+|  +----------------------------------------------------------------+ |
+|  | PHXRES02 - Phoenix Retail                        3 pending     | |
+|  | Oldest: 28 hrs ago  [!OVERDUE]                                 | |
+|  | [Review Items ->]                                              | |
+|  +----------------------------------------------------------------+ |
+|                                                                     |
++---------------------------------------------------------------------+
+```
+
+### Individual Item Review Screen
+
+```
++---------------------------------------------------------------------+
+|  <- Queue     Review Submission                                     |
++---------------------------------------------------------------------+
+|                                                                     |
+|  MV Breaker #4                                                      |
+|  Circuit Breaker - Eaton VCP-W 15kV                                 |
+|  LASNAP16 > Switchgear Testing > MV Equipment                       |
+|                                                                     |
+|  +--------------------------------------------------------------+  |
+|  | SUBMITTED BY          | Mike Thompson                        |  |
+|  | SUBMITTED             | Dec 10, 2025 2:34 PM (2 hrs ago)     |  |
+|  +--------------------------------------------------------------+  |
+|  | QUOTED HOURS          | 2.5 hrs                              |  |
+|  | ACTUAL HOURS          | 3.0 hrs        [Edit]                |  |
+|  | VARIANCE              | +0.5 hrs (20% over)                  |  |
+|  +--------------------------------------------------------------+  |
+|  | ASSESSMENT            | Acceptable     [Edit v]              |  |
+|  +--------------------------------------------------------------+  |
+|  | DELAY HOURS           | 0.5 hrs                              |  |
+|  | DELAY REASON          | Waited for client to de-energize     |  |
+|  +--------------------------------------------------------------+  |
+|  | TECH NOTES            |                                      |  |
+|  | "Breaker tested good. Replaced worn arc chutes per client    |  |
+|  | request. Lubricated operating mechanism."                    |  |
+|  +--------------------------------------------------------------+  |
+|                                                                     |
+|  REVENUE IMPACT                                                     |
+|  Rate: $125/hr x 3.0 hrs = $375.00                                  |
+|                                                                     |
+|  +---------------------------+  +-----------------------------+     |
+|  |      [APPROVE]            |  |    [REJECT WITH REASON]     |     |
+|  +---------------------------+  +-----------------------------+     |
+|                                                                     |
+|  [<- Previous Item]                           [Next Item ->]        |
+|                                                                     |
++---------------------------------------------------------------------+
+```
+
+### Tech Mobile Submission Screen
+
+```
++-------------------------------+
+|  =  RESA Power        Bell    |
++-------------------------------+
+|                               |
+|  <- Back to List              |
+|                               |
+|  COMPLETE APPARATUS           |
+|  MV Breaker #4                |
+|  ----------------------------|
+|                               |
+|  Quoted Hours: 2.5            |
+|                               |
+|  Actual Hours Worked:         |
+|  +-------------------------+  |
+|  |  3.0                    |  |
+|  +-------------------------+  |
+|                               |
+|  Assessment:                  |
+|  +-------------------------+  |
+|  |  Acceptable           v |  |
+|  +-------------------------+  |
+|  - Acceptable                 |
+|  - Minor Deficiency           |
+|  - Major Deficiency           |
+|  - Non-Serviceable            |
+|                               |
+|  Delay Hours (customer-caused)|
+|  +-------------------------+  |
+|  |  0.5                    |  |
+|  +-------------------------+  |
+|                               |
+|  Delay Reason:                |
+|  +-------------------------+  |
+|  | Waited for client to   |  |
+|  | de-energize            |  |
+|  +-------------------------+  |
+|                               |
+|  Notes:                       |
+|  +-------------------------+  |
+|  | Breaker tested good.   |  |
+|  | Replaced worn arc      |  |
+|  | chutes per client...   |  |
+|  +-------------------------+  |
+|                               |
+|  +-------------------------+  |
+|  |   SUBMIT FOR REVIEW    |  |
+|  +-------------------------+  |
+|                               |
+|  (Lead will review before     |
+|   marking complete)           |
+|                               |
++-------------------------------+
+```
+
+### Workflow Status Indicators
+
+| Status | Color | Meaning |
+|--------|-------|---------|
+| Not Started | Gray | Work not begun |
+| In Progress | Blue | Tech actively working |
+| **Pending Review** | **Orange** | **Submitted, awaiting lead approval** |
+| Complete | Green | Approved, revenue recognized |
+| Cancelled | Red | Work cancelled |
+
+### Database Support
+
+This workflow is fully implemented in the database:
+
+| Function | Purpose |
+|----------|---------|
+| `submit_apparatus_for_review()` | Tech submits - sets status to Pending Review |
+| `approve_apparatus_completion()` | Lead approves - triggers revenue creation |
+| `reject_apparatus_submission()` | Lead rejects - returns to In Progress with note |
+| `v_apparatus_approval_queue` | View of all pending items for lead review |
+| `v_approval_queue_summary` | Dashboard summary by project |
+
+
