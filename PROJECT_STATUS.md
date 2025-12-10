@@ -1,7 +1,7 @@
 # RESA Power Platform - Project Status
 
 > **Last Updated**: December 10, 2025  
-> **Phase**: Database Migration Complete, Web App Connected  
+> **Phase**: Database Migration Complete, Resource Linking Active  
 > **See Also**: `PROJECT_OVERVIEW.md` for full system architecture
 
 ---
@@ -10,10 +10,11 @@
 
 | Milestone | Status | Notes |
 |-----------|--------|-------|
-| Supabase Schema Design | ✅ Complete | 23 tables, 31 ENUMs, 12 triggers |
+| Supabase Schema Design | ✅ Complete | 29 tables, 38 ENUMs, 12+ triggers |
 | Database Deployment | ✅ Complete | All migrations applied |
 | Test Data Load | ✅ Complete | LASNAP16 project (47 apparatus) |
 | Web App Connection | ✅ Complete | Next.js app fetching from Supabase |
+| Resource Linking | ✅ Complete | NETA/SOP/Safety/Datasheets tables deployed |
 | Revenue Recognition Flow | ⏳ Ready | Triggers in place, needs UI testing |
 | Equipment Tracking | 📋 Schema Ready | `equipment` table deployed |
 | Resource Management | 📋 Schema Ready | `resource_assignments` table deployed |
@@ -28,16 +29,24 @@
 
 | Component | Count | Details |
 |-----------|-------|---------|
-| Tables | 23 | Core (10) + Financial (6) + PSS (6) + Reference (1) |
-| Views | 7 | Dashboard, revenue, apparatus tracking |
-| ENUMs | 31 | All status types, roles, assessments |
-| Triggers | 12 | Rollup counts, revenue recognition, audit |
+| Tables | 29 | Core (10) + Financial (6) + PSS (6) + Resources (6) + Reference (1) |
+| Views | 18 | Dashboard, revenue, apparatus tracking |
+| ENUMs | 38 | All status types, roles, assessments |
+| Triggers | 12+ | Rollup counts, revenue recognition, audit |
 | Indexes | ~50 | Performance optimization |
 | Seed Data | ✓ | 5 locations, 15 apparatus types, 2 estimators |
 | Test Data | ✓ | LASNAP16: 47 apparatus, 4 scopes, 12 tasks |
 
+**Resource Linking Tables (NEW - Dec 10):**
+- `neta_procedures` - NETA standards (ATS, MTS, ECS) with frequency requirements
+- `neta_test_items` - Individual test items within procedures
+- `sops` - Company Standard Operating Procedures
+- `safety_documents` - JSAs, safety bulletins, hazard assessments
+- `datasheets` - Manufacturer data, spec sheets, test forms
+- `apparatus_type_resources` - Junction table linking types to resources
+
 **Key Files:**
-- `Supabase/schema/*.sql` - 6 schema files
+- `Supabase/schema/*.sql` - 7 schema files (added `06_neta_sop_tables.sql`)
 - `Supabase/data/*.sql` - 3 data files
 - `Supabase/DEPLOY_ALL.sql` - Single-file deployment
 - `Supabase/SCHEMA_REFERENCE.md` - Quick reference
@@ -98,6 +107,17 @@ These tables are deployed and can be enabled with UI work:
 | **Equipment Tracking** | `equipment` | Low | Track company test equipment, calibration due dates |
 | **Resource Management** | `resource_assignments` | Medium | Employee allocation across projects |
 | **NETA Templates** | `neta_test_templates` | Low | Standard test procedures with hour estimates |
+
+### Phase 1.6: Resource Linking Activation (NEW)
+
+| Task | Complexity | Description |
+|------|------------|-------------|
+| Import NETA JSON data | Medium | Parse extracted JSON → `neta_procedures` + `neta_test_items` |
+| Map apparatus_types | Low | Populate neta_section_ats/mts/ecs columns |
+| Link types to procedures | Low | Create `apparatus_type_resources` records |
+| Add sample SOPs | Low | Create company SOP records |
+| Add safety documents | Low | JSAs for common equipment types |
+| Resource lookup UI | Medium | Mobile-friendly tech resource view |
 
 ### Phase 2: PSS Portal
 
@@ -244,9 +264,14 @@ As of December 5, 2025:
 |------|---------|---------|
 | 2025-12-05 | 1.0.0 | Initial Supabase deployment |
 | 2025-12-05 | 1.0.1 | LASNAP16 test data loaded |
-| 2025-12-05 | 1.0.2 | Web app connected to Supabase |
+| 2025-12-05 | 1.0.2 | Resource Linking Active to Supabase |
 | 2025-12-05 | 1.0.3 | Fixed trigger cascade bug |
 
 ---
 
 *This document replaces COORDINATED_TASK_LIST.md as the primary status tracker.*
+
+
+
+
+
