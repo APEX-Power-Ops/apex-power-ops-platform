@@ -10,13 +10,14 @@
 
 | Milestone | Status | Notes |
 |-----------|--------|-------|
-| Supabase Schema Design | ✅ Complete | 29 tables, 38 ENUMs, 12+ triggers |
+| Supabase Schema Design | ✅ Complete | 30 tables, 38+ ENUMs, 12+ triggers |
 | Database Deployment | ✅ Complete | All migrations applied |
 | Test Data Load | ✅ Complete | LASNAP16 project (47 apparatus) |
 | Web App Connection | ✅ Complete | Next.js app fetching from Supabase |
 | Resource Linking | ✅ Complete | NETA/SOP/Safety/Datasheets tables deployed |
 | Revenue Recognition Flow | ⏳ Ready | Triggers in place, needs UI testing |
-| Equipment Tracking | 📋 Schema Ready | `equipment` table deployed |
+| Equipment Project Assignment | ✅ Complete | Movement tracking between employees/projects |
+| Equipment Tracking | 📋 Schema Ready | `equipment` table enhanced with project assignment |
 | Resource Management | 📋 Schema Ready | `resource_assignments` table deployed |
 | PSS Portal | 📋 Schema Ready | 6 tables deployed, UI not started |
 | Production Deployment | 🔜 Planned | Dev environment only |
@@ -29,8 +30,8 @@
 
 | Component | Count | Details |
 |-----------|-------|---------|
-| Tables | 29 | Core (10) + Financial (6) + PSS (6) + Resources (6) + Reference (1) |
-| Views | 18 | Dashboard, revenue, apparatus tracking |
+| Tables | 30 | Core (10) + Financial (6) + PSS (6) + Resources (6) + Reference (1) |
+| Views | 20+ | Dashboard, revenue, apparatus tracking |
 | ENUMs | 38 | All status types, roles, assessments |
 | Triggers | 12+ | Rollup counts, revenue recognition, audit |
 | Indexes | ~50 | Performance optimization |
@@ -46,7 +47,7 @@
 - `apparatus_type_resources` - Junction table linking types to resources
 
 **Key Files:**
-- `Supabase/schema/*.sql` - 7 schema files (added `06_neta_sop_tables.sql`)
+- `Supabase/schema/*.sql` - 8 schema files (added `07_equipment_project_assignment.sql`)
 - `Supabase/data/*.sql` - 3 data files
 - `Supabase/DEPLOY_ALL.sql` - Single-file deployment
 - `Supabase/SCHEMA_REFERENCE.md` - Quick reference
@@ -270,6 +271,8 @@ As of December 5, 2025:
 ---
 
 *This document replaces COORDINATED_TASK_LIST.md as the primary status tracker.*
+
+
 
 
 

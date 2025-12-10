@@ -1,6 +1,6 @@
 # RESA Power Supabase Schema - Quick Reference
 
-> **Version:** 1.0.0  
+> **Version:** 1.1.0  
 > **Created:** December 5, 2025  
 > **Source:** Merged from Dataverse V1.5.1.3 + V2 + PSS Portal Requirements
 
@@ -16,7 +16,7 @@ C:\RESA_Power_Build\Supabase\001_complete_schema.sql
 
 ---
 
-## Table Summary (24 Tables)
+## Table Summary (30 Tables)
 
 | # | Table | Purpose | Key Fields |
 |---|-------|---------|------------|
@@ -128,7 +128,7 @@ SELECT table_name FROM information_schema.tables
 WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
 ORDER BY table_name;
 ```
-Should return 24 tables.
+Should return 30 Tables.
 
 ### 4. Configure Auth
 - Enable Email auth in Supabase Dashboard
@@ -180,4 +180,5 @@ Should return 24 tables.
 5. 🔲 Update web app to use Supabase client
 6. 🔲 Build PSS Portal UI
 7. 🔲 Import PSS tracker data
+
 
