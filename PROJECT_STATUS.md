@@ -1,7 +1,8 @@
 # RESA Power Platform - Project Status
 
-> **Last Updated**: December 5, 2025  
-> **Phase**: Database Migration Complete, Web App Connected
+> **Last Updated**: December 10, 2025  
+> **Phase**: Database Migration Complete, Web App Connected  
+> **See Also**: `PROJECT_OVERVIEW.md` for full system architecture
 
 ---
 
@@ -9,12 +10,14 @@
 
 | Milestone | Status | Notes |
 |-----------|--------|-------|
-| Dataverse Schema Design | ✅ Complete | V1.5.0.3 vision achieved in Supabase |
-| Supabase Migration | ✅ Complete | 23 tables, 7 views, 31 ENUMs deployed |
+| Supabase Schema Design | ✅ Complete | 23 tables, 31 ENUMs, 12 triggers |
+| Database Deployment | ✅ Complete | All migrations applied |
 | Test Data Load | ✅ Complete | LASNAP16 project (47 apparatus) |
 | Web App Connection | ✅ Complete | Next.js app fetching from Supabase |
-| Revenue Recognition Flow | ⏳ Ready | Triggers in place, needs testing |
-| PSS Portal | 🔜 Planned | Schema ready, UI not started |
+| Revenue Recognition Flow | ⏳ Ready | Triggers in place, needs UI testing |
+| Equipment Tracking | 📋 Schema Ready | `equipment` table deployed |
+| Resource Management | 📋 Schema Ready | `resource_assignments` table deployed |
+| PSS Portal | 📋 Schema Ready | 6 tables deployed, UI not started |
 | Production Deployment | 🔜 Planned | Dev environment only |
 
 ---
@@ -25,7 +28,7 @@
 
 | Component | Count | Details |
 |-----------|-------|---------|
-| Tables | 23 | Core + Financial + PSS + Reference |
+| Tables | 23 | Core (10) + Financial (6) + PSS (6) + Reference (1) |
 | Views | 7 | Dashboard, revenue, apparatus tracking |
 | ENUMs | 31 | All status types, roles, assessments |
 | Triggers | 12 | Rollup counts, revenue recognition, audit |
@@ -77,7 +80,7 @@ Apparatus marked complete
 
 ## 📋 What's Remaining
 
-### Phase 1: Field Testing App (Priority)
+### Phase 1: Field Testing App (Priority - This Week)
 
 | Task | Complexity | Description |
 |------|------------|-------------|
@@ -86,14 +89,33 @@ Apparatus marked complete
 | Test revenue trigger | Low | Complete an apparatus, verify revenue record |
 | Import Garney data | Medium | Real project data from Excel tracker |
 
+### Phase 1.5: Ready-to-Activate Features
+
+These tables are deployed and can be enabled with UI work:
+
+| Feature | Tables | Effort | Business Value |
+|---------|--------|--------|----------------|
+| **Equipment Tracking** | `equipment` | Low | Track company test equipment, calibration due dates |
+| **Resource Management** | `resource_assignments` | Medium | Employee allocation across projects |
+| **NETA Templates** | `neta_test_templates` | Low | Standard test procedures with hour estimates |
+
 ### Phase 2: PSS Portal
 
 | Task | Complexity | Description |
 |------|------------|-------------|
-| Engineer login | High | Supabase Auth for external users |
+| Engineer portal UI | High | External user interface |
+| Supabase Auth setup | Medium | Email/password for engineers |
 | Document upload | Medium | Storage bucket integration |
 | RFI workflow | Medium | Status transitions, notifications |
 | Dashboard views | Low | SQL views already exist |
+
+**PSS Tables Ready:**
+- `pss_engineers` - External engineer registry
+- `pss_studies` - Study tracking with full lifecycle
+- `pss_documents` - Document management with versions
+- `pss_rfis` - RFI workflow with priorities
+- `pss_document_templates` - Reusable templates
+- `pss_activity_log` - Full audit trail
 
 ### Phase 3: Production
 
@@ -113,18 +135,19 @@ Apparatus marked complete
 | File | Location | Purpose |
 |------|----------|---------|
 | PROJECT_STATUS.md | Root | **This file** - Overall status |
+| PROJECT_OVERVIEW.md | Root | System architecture (v2.0.0) |
 | COORDINATION.md | `.claude/` | Desktop ↔ VS Code handoff |
 | OPEN_DECISIONS.md | `.claude/` | Architecture decisions made |
 | SCHEMA_REFERENCE.md | `Supabase/` | Quick DB reference |
 | README.md | `Supabase/docs/` | Supabase folder overview |
 
-### Outdated (Need Update)
+### Archived/Outdated
 
 | File | Issue | Action |
 |------|-------|--------|
-| WORKSPACE_SYSTEM.md | References Dataverse | Update or archive |
-| COORDINATED_TASK_LIST.md | Old tasks | Replace with PROJECT_STATUS.md |
-| MASTER_SCHEMA.md | Dataverse-focused | Archive (Supabase has own docs) |
+| WORKSPACE_SYSTEM.md | References Dataverse | See ARCHIVE_NOTICE.md |
+| COORDINATED_TASK_LIST.md | Old tasks | Replaced by PROJECT_STATUS.md |
+| MASTER_SCHEMA.md | Dataverse-focused | Archived |
 | copilot-instructions.md | References Dataverse | Update for Supabase |
 
 ### Can Archive
