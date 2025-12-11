@@ -1,52 +1,96 @@
 # RESA Power Supabase Schema - Quick Reference
 
-> **Version:** 1.1.0  
-> **Created:** December 5, 2025  
-> **Source:** Merged from Dataverse V1.5.1.3 + V2 + PSS Portal Requirements
+> **Version:** 2.0.0  
+> **Updated:** December 11, 2025  
+> **Status:** ✅ DEPLOYED - Database live with test data
 
 ---
 
 ## Schema Location
 
 ```
-C:\RESA_Power_Build\Supabase\001_complete_schema.sql
+C:\RESA_Power_Build\Supabase\schema\
+├── 00_enums.sql
+├── 01_tables.sql
+├── 02_relationships.sql
+├── 03_triggers.sql
+├── 04_views.sql
+├── 05_indexes.sql
+├── 06_neta_sop_tables.sql          # Resource linking tables
+├── 07_equipment_project_assignment.sql
+└── 08_apparatus_completion_workflow.sql
 ```
-
-**File Stats:** ~2,000 lines, 64KB
 
 ---
 
 ## Table Summary (30 Tables)
 
-| # | Table | Purpose | Key Fields |
-|---|-------|---------|------------|
+| # | Table | Purpose | Rows |
+|---|-------|---------|------|
 | **Organization** ||||
-| 1 | `locations` | Business units | name, code, region |
-| 2 | `clients` | Customer companies | name, code, address |
-| 3 | `sites` | Physical locations | name, client_id, address |
-| 4 | `employees` | RESA staff | full_name, email, department |
-| 5 | `contacts` | External people | full_name, client_id, contact_type |
-| 6 | `portal_users` | Auth & access | email, role, auth_user_id |
-| **Equipment** ||||
-| 7 | `apparatus_types` | Equipment categories | name, default_hours, neta_section |
+| 1 | `locations` | Business units (Phoenix, Denver, Las Vegas, San Diego) | 5 |
+| 2 | `clients` | Customer companies | 1 |
+| 3 | `sites` | Physical locations | 1 |
+| 4 | `employees` | RESA staff | 5 |
+| 5 | `estimators` | Quote creators | 2 |
 | **Project Hierarchy** ||||
-| 8 | `projects` | Master jobs | project_number, client_id, status |
-| 9 | `scopes` | Deliverables | scope_number, project_id, status |
-| 10 | `scope_labor_details` | Rate config | scope_id, effective_rate |
-| 11 | `tasks` | Work items | task_number, scope_id, status |
-| 12 | `apparatus` | Equipment items | name, scope_id, completion_status |
-| 13 | `apparatus_revenue` | Revenue records | apparatus_id, revenue_amount |
-| 14 | `scope_financial_summaries` | Scope rollups | scope_id, total_revenue_* |
-| 15 | `project_financial_summaries` | Project rollups | project_id, total_revenue_* |
+| 6 | `projects` | Master jobs | 1 |
+| 7 | `scopes` | Deliverables/phases | 4 |
+| 8 | `tasks` | Work items | 12 |
+| 9 | `apparatus` | Equipment being tested | 47 |
+| **Equipment & Types** ||||
+| 10 | `apparatus_types` | Equipment categories (MV CB, Transformer, etc.) | 15 |
+| 11 | `equipment` | Company-owned test equipment | 0 |
+| 12 | `equipment_assignments` | Equipment checkout history | 0 |
+| **Financials** ||||
+| 13 | `apparatus_revenue` | Revenue recognition per apparatus | 0 |
+| 14 | `scope_labor_details` | Labor line items | 6 |
+| 15 | `scope_financial_summaries` | Scope rollups (trigger-updated) | 0 |
+| 16 | `project_financial_summaries` | Project rollups (trigger-updated) | 0 |
+| **Resource Assignments** ||||
+| 17 | `resource_assignments` | Employee-to-project/scope | 8 |
 | **PSS Portal** ||||
-| 16 | `engineers` | Engineering vendors | company_name, code |
-| 17 | `pss_studies` | PSS projects | project_id, pss_status |
-| 18 | `document_templates` | Doc checklist | name, study_types |
-| 19 | `pss_documents` | Doc tracking | pss_study_id, status |
-| 20 | `rfis` | Info requests | rfi_number, status |
-| 21 | `activity_log` | History | activity_type, description |
-| **Import** ||||
-| 22 | `estimators` | SharePoint import | file_name, scope_json |
+| 18 | `pss_engineers` | External engineering vendors | 0 |
+| 19 | `pss_studies` | Power System Studies | 0 |
+| 20 | `pss_document_templates` | Doc checklist templates | 6 |
+| 21 | `pss_documents` | Study documents | 0 |
+| 22 | `pss_rfis` | Requests for Information | 0 |
+| 23 | `pss_activity_log` | Audit trail | 0 |
+| **NETA & Resource Linking** ||||
+| 24 | `neta_procedures` | NETA standard sections (ATS/MTS/ECS/ETT) | 0 |
+| 25 | `neta_test_items` | Individual test steps per procedure | 0 |
+| 26 | `neta_test_templates` | Legacy test templates | 0 |
+| 27 | `sops` | Company Standard Operating Procedures | 0 |
+| 28 | `safety_documents` | JSAs, PPE requirements, arc flash | 0 |
+| 29 | `datasheets` | Manufacturer specs, product data | 0 |
+| 30 | `apparatus_type_resources` | **Junction table** linking types → resources | 0 |
+
+---
+
+## Resource Linking Architecture
+
+```
+┌──────────────────┐         ┌──────────────────────────────┐
+│  apparatus_types │─────────│  apparatus_type_resources    │
+│  (e.g., MV CB)   │    1:N  │  (junction table)            │
+│  + neta_section_ │         └──────────────┬───────────────┘
+│    ats/mts/ecs   │                        │
+└──────────────────┘         ┌──────────────┼───────────────┐
+                             │              │               │
+                             ▼              ▼               ▼
+                  ┌─────────────┐  ┌─────────────┐  ┌────────────┐
+                  │    neta_    │  │    sops     │  │  safety_   │
+                  │ procedures  │  │             │  │ documents  │
+                  └──────┬──────┘  └─────────────┘  └────────────┘
+                         │                                │
+                         ▼                                ▼
+                  ┌─────────────┐                  ┌────────────┐
+                  │ neta_test_  │                  │ datasheets │
+                  │   items     │                  └────────────┘
+                  └─────────────┘
+```
+
+**Flow:** Apparatus → apparatus_type → apparatus_type_resources → All linked resources automatically available to techs
 
 ---
 
@@ -54,36 +98,40 @@ C:\RESA_Power_Build\Supabase\001_complete_schema.sql
 
 | Enum | Values |
 |------|--------|
-| `project_status` | NOT_STARTED, IN_PROGRESS, ON_HOLD, COMPLETED, CANCELLED |
-| `project_type` | FIELD_TESTING, PSS_STUDY, ARC_FLASH_STUDY, MAINTENANCE, etc. |
-| `completion_status` | PLANNED, IN_PROGRESS, COMPLETE, DEFERRED, CANCELLED |
-| `apparatus_assessment` | ACCEPTABLE, MINOR_DEFICIENCY, MAJOR_DEFICIENCY, NON_SERVICEABLE |
-| `revenue_status` | PENDING, RECOGNIZED, INVOICED, PAID, ADJUSTED |
-| `pss_status` | NEW_REQUEST → AWAITING_DOCUMENTS → ... → CLOSED |
-| `document_status` | NOT_REQUESTED, REQUESTED, RECEIVED, ACCEPTED, REJECTED |
-| `portal_role` | RESA_ADMIN, RESA_PM, RESA_TECH, CLIENT, ENGINEER |
+| `project_status` | Draft, Quoted, Won, Active, On Hold, Complete, Cancelled |
+| `scope_status` | Not Started, In Progress, On Hold, Complete, Cancelled |
+| `apparatus_status` | Not Started, In Progress, Pending Review, Complete, Cancelled |
+| `apparatus_assessment` | Pass, Fail, Marginal, Needs Repair, Deferred, Not Tested |
+| `revenue_type` | Testing, Travel, Per Diem, Materials, Equipment, Engineering, Report, Other |
+| `neta_standard_type` | ATS, MTS, ECS, ETT |
+| `neta_test_type` | visual_mechanical, electrical, optional |
+| `sop_category` | safety, testing, commissioning, maintenance, documentation, quality, administrative, equipment_specific, other |
+| `safety_document_type` | jsa, sds, hazard_alert, ppe_requirement, lockout_tagout, arc_flash, confined_space, hot_work, electrical_safety, environmental, other |
+| `resource_type` | neta_procedure, sop, safety_document, datasheet, document, video, checklist |
 
 ---
 
-## Automatic Features
+## Apparatus Types with NETA Section Links
 
-### Triggers
+The `apparatus_types` table includes columns to directly link equipment categories to NETA standards:
+
+| Column | Purpose | Example |
+|--------|---------|---------|
+| `neta_section_ats` | ATS (Acceptance) reference | "7.6.1" |
+| `neta_section_mts` | MTS (Maintenance) reference | "7.6.1" |
+| `neta_section_ecs` | ECS (Commissioning) reference | "7.6" |
+| `neta_section_ett` | ETT (Technician) reference | NULL |
+
+---
+
+## Triggers & Automatic Features
 
 | Trigger | Function |
 |---------|----------|
 | Apparatus completion | Creates `apparatus_revenue` record automatically |
-| PSS status change | Logs to `activity_log`, updates `last_status_change` |
-| Rollup updates | Cascades counts/hours up: apparatus → task → scope → project |
-| Financial summaries | Updates when revenue records change |
-
-### Computed Columns
-
-- `percent_complete` on projects, scopes, tasks
-- `effective_rate` on scope_labor_details
-- `revenue_amount` on apparatus_revenue
-- `days_in_current_status` on pss_studies
-- `days_outstanding` on pss_documents
-- `days_open` on rfis
+| Financial rollups | Updates scope/project summaries when revenue changes |
+| PSS status change | Logs to `pss_activity_log` |
+| Rollup counts | Cascades: apparatus → task → scope → project |
 
 ---
 
@@ -93,92 +141,27 @@ C:\RESA_Power_Build\Supabase\001_complete_schema.sql
 |------|---------|
 | `v_project_dashboard` | Projects with client, site, progress, revenue |
 | `v_scope_dashboard` | Scopes with project context, labor rates |
-| `v_apparatus_tracking` | Apparatus with full hierarchy, revenue status |
+| `v_apparatus_tracking` | Apparatus with full hierarchy |
 | `v_pss_dashboard` | PSS studies with doc/RFI counts |
-| `v_revenue_summary` | Revenue aggregates by project |
-| `v_outstanding_documents` | Awaiting PSS documents |
-| `v_open_rfis` | Open RFIs sorted by priority |
 
 ---
 
-## Seed Data Included
+## Supabase Connection
 
-- **5 Locations:** Phoenix, Dallas, Austin, LA, Denver
-- **35 Apparatus Types:** Switchgear, breakers, transformers, cables, etc. with standard hours
-- **12 Document Templates:** SLD, utility bill, transformer nameplate, etc.
-- **3 Engineers:** Shaw Engineering, Power Studies Inc, Electrical Consultants
-
----
-
-## Deployment Steps
-
-### 1. Create Supabase Project
-- Go to [supabase.com](https://supabase.com)
-- Create new project
-- Note the project URL and anon key
-
-### 2. Run Schema
-- Open SQL Editor in Supabase Dashboard
-- Copy contents of `001_complete_schema.sql`
-- Execute (takes ~5 seconds)
-
-### 3. Verify
-```sql
-SELECT table_name FROM information_schema.tables 
-WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
-ORDER BY table_name;
-```
-Should return 30 Tables.
-
-### 4. Configure Auth
-- Enable Email auth in Supabase Dashboard
-- (Optional) Add Azure AD OAuth provider
-
-### 5. Connect Web App
-- Install `@supabase/supabase-js`
-- Create `supabase.ts` client
-- Replace Dataverse API calls with Supabase queries
+- **Project**: resa-power-db (fxoyniqnrlkxfligbxmg)
+- **API URL**: https://fxoyniqnrlkxfligbxmg.supabase.co
+- **Credentials**: `.secrets/SUPABASE_CREDENTIALS.md`
 
 ---
 
-## Migration Notes
+## Next Steps - Data Population
 
-### From Dataverse V2
+The resource linking tables are deployed but empty. Next:
 
-| Dataverse Table | Supabase Table | Notes |
-|-----------------|----------------|-------|
-| cr950_clients | clients | Same fields, different format |
-| cr950_sites | sites | Same fields |
-| cr950_projects | projects | Added rollup fields |
-| cr950_scopes | scopes | Added rollup fields |
-| cr950_tasks | tasks | Added rollup fields |
-| cr950_apparatuses | apparatus | Added computed columns |
-| cr950_estimators | estimators | Same structure |
-| cr950_apparatusrevenues | apparatus_revenue | Computed revenue |
-| cr950_scopelabordetails | scope_labor_details | Computed effective_rate |
-| cr950_scopefinancialsummaries | scope_financial_summaries | Trigger-updated |
-| cr950_projectfinancialsummaries | project_financial_summaries | Trigger-updated |
-| cr950_locations | locations | Same structure |
-
-### From V1.5.1.3 (Restored)
-
-| Feature | V1.5.1.3 | Supabase |
-|---------|----------|----------|
-| Rollup fields | Power Platform rollup | PostgreSQL triggers |
-| Calculated fields | Dataverse formulas | Generated columns |
-| Option sets | Global choice | PostgreSQL enums |
-| Revenue flow | Power Automate | Database triggers |
-
----
-
-## Next Steps
-
-1. ✅ Schema created
-2. 🔲 Create Supabase project
-3. 🔲 Run migration script
-4. 🔲 Migrate existing data (1 client, 1 estimator)
-5. 🔲 Update web app to use Supabase client
-6. 🔲 Build PSS Portal UI
-7. 🔲 Import PSS tracker data
+1. 🔲 Import NETA procedures from `Reference_Files/NETA/Extracted/` JSON files
+2. 🔲 Create initial SOPs
+3. 🔲 Link apparatus_types to NETA sections via apparatus_type_resources
+4. 🔲 Add safety documents (JSAs, arc flash)
+5. 🔲 Populate datasheets for common manufacturers
 
 
