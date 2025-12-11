@@ -1,8 +1,8 @@
 # Claude Session State
 
-**Last Updated**: 2025-12-05 23:00  
-**Current Phase**: APP CONNECTION  
-**Status**: Supabase deployed, awaiting app swap
+**Last Updated**: 2025-12-11 (Desktop Session 6 - Documentation Audit)  
+**Current Phase**: DOCUMENTATION UPDATED + NETA IMPORT IN PROGRESS  
+**Status**: PROJECT_OVERVIEW.md & PROJECT_STATUS.md audited and updated with Mermaid charts
 
 ---
 
@@ -10,50 +10,45 @@
 
 | Component | Status | Next Action |
 |-----------|--------|-------------|
-| Database Schema | ✅ Deployed | - |
-| Seed Data | ✅ Loaded | - |
-| Test Data | ✅ Loaded (LASNAP16) | - |
-| Node.js App | ✅ Found | Swap to Supabase |
-| App ↔ Supabase | ⏳ Pending | VS Code Claude executing |
+| Database Schema | ✅ 30 tables deployed | - |
+| NETA Procedures | ✅ 33 ATS loaded | Import MTS/ECS/ETT |
+| NETA Test Items | ⚠️ 77 items (5/33 sections) | VS Code continue |
+| Documentation | ✅ Updated | - |
+| Core Data | ✅ LASNAP16 loaded | - |
+| Node.js App | ✅ Connected | UI development |
 
 ---
 
-## What's Complete
+## 📄 Documentation Audit Complete
 
-### Database (Desktop Claude)
-- ✅ 7 migrations applied to Supabase
-- ✅ 24 tables created
-- ✅ All triggers, views, indexes working
-- ✅ Seed data: 5 locations, 15 apparatus_types, 6 templates
-- ✅ Test data: LASNAP16 project, 4 scopes, 47 apparatus
+### Files Updated (Dec 11, Session 6)
 
-### Application (VS Code Claude)  
-- ✅ App located: `C:\Users\jjswe\Projects\resa-web-app`
-- ✅ Framework: Next.js 16 + React 19 + shadcn/ui
-- ✅ Structure documented in COORDINATION.md
-- ✅ Supabase client library ready: `Supabase/lib/supabase.ts`
+| File | Version | Changes |
+|------|---------|---------|
+| `PROJECT_OVERVIEW.md` | 2.2.0 | Added Mermaid architecture, Phase 1.6 diagram, UI capabilities mindmap, updated table counts |
+| `PROJECT_STATUS.md` | 1.3.0 | Added Phase 1.6 flowchart, gantt roadmap, NETA import status, role mindmap |
 
-### Documentation (Both)
-- ✅ OPEN_DECISIONS.md - Key decisions made
-- ✅ SUPABASE_SWAP_GUIDE.md - Step-by-step for VS Code Claude
-- ✅ COORDINATION.md - Task allocation
-- ✅ ACTION_PLAN.md - Overall roadmap
+### Key Additions
+- ✅ **Phase 1.6 Resource Linking** flowchart showing NETA import progress
+- ✅ **Role-Based Dashboard** mindmap (Executive, PM, Estimator, Tech, Admin)
+- ✅ **UI Capabilities** flowchart showing Ready/In Spec/Phase 2 features
+- ✅ **Implementation Roadmap** gantt chart with dates
+- ✅ **Revenue Recognition Flow** trigger cascade diagram
+- ✅ Updated NETA import status (33 procedures, 77 test items)
+- ✅ Updated table inventory with current record counts
 
 ---
 
-## Current Task Allocation
+## 🔥 CURRENT TASK: NETA Import Continuation
 
-### VS Code Claude - ACTIVE NOW
-1. Read OPEN_DECISIONS.md
-2. Execute SUPABASE_SWAP_GUIDE.md
-3. Test app connects to Supabase
-4. Update COORDINATION.md with results
+**Assigned to**: VS Code Claude  
+**Handoff File**: `Supabase/scripts/NETA_IMPORT_HANDOFF.md`
 
-### Desktop Claude - NEXT SESSION
-1. Wait for VS Code Claude confirmation
-2. Create Garney Excel migration script
-3. Add any missing schema fields
-4. Help debug app issues if needed
+### Progress
+- ✅ 33 ATS-2025 procedures inserted
+- ✅ Test items complete for: 7.1.1, 7.1.2, 7.6.3, 7.9.2, 7.10.1
+- ⚠️ 28 ATS procedures still need test items
+- ⏳ MTS-2023, ECS-2024, ETT-2022 not started
 
 ---
 
@@ -61,12 +56,12 @@
 
 | Purpose | Path |
 |---------|------|
+| Project Overview | `PROJECT_OVERVIEW.md` (v2.2.0) |
+| Project Status | `PROJECT_STATUS.md` (v1.3.0) |
+| NETA Handoff | `Supabase/scripts/NETA_IMPORT_HANDOFF.md` |
 | Task Coordination | `.claude/COORDINATION.md` |
-| Decisions Made | `.claude/OPEN_DECISIONS.md` |
-| VS Code Instructions | `.claude/SUPABASE_SWAP_GUIDE.md` |
-| Supabase Credentials | `.secrets/SUPABASE_CREDENTIALS.md` |
-| Supabase Client | `Supabase/lib/supabase.ts` |
-| App Location | `C:\Users\jjswe\Projects\resa-web-app` |
+| NETA JSON Files | `Reference_Files/NETA/Extracted/*.json` |
+| UI Specifications | `Documentation/07_Application_Specs/` |
 
 ---
 
@@ -77,33 +72,37 @@
 | Project Name | `resa-power-db` |
 | Project Ref | `fxoyniqnrlkxfligbxmg` |
 | API URL | `https://fxoyniqnrlkxfligbxmg.supabase.co` |
-| Environment | Development |
 
 ---
 
-## Session Rules Reminder
+## Documentation Structure
+
+```
+Key Documents:
+├── PROJECT_OVERVIEW.md     # Architecture + Mermaid diagrams (502 lines)
+├── PROJECT_STATUS.md       # Status + Mermaid charts (343 lines)
+├── .claude/
+│   ├── STATE.md           # This file - session state
+│   └── COORDINATION.md    # Task allocation
+└── Documentation/
+    └── 07_Application_Specs/
+        ├── UI_SPECIFICATION_GUIDE.md      # 927 lines - design system
+        ├── ROLE_DEMO_PROMPT.md            # 1193 lines - v0.dev prototype
+        ├── REPORT_GENERATOR_DEMO_PROMPT.md
+        └── FIELD_TECH_APPLICATION_SPEC.md
+```
+
+---
+
+## Session Rules
 
 | Rule | Why |
 |------|-----|
 | Read STATE.md first | Instant context |
 | Read COORDINATION.md | Know task allocation |
 | Keep under 50 messages | Quality degrades after |
-| Update STATE.md at end | Next session knows where we are |
+| Update STATE.md at end | Next session knows |
 
 ---
 
-## Resume Prompts
-
-### Desktop Claude
-```
-Read C:\RESA_Power_Build\.claude\STATE.md and C:\RESA_Power_Build\.claude\COORDINATION.md, then continue RESA Power project.
-```
-
-### VS Code Claude
-```
-Read C:\RESA_Power_Build\.claude\COORDINATION.md and execute C:\RESA_Power_Build\.claude\SUPABASE_SWAP_GUIDE.md to connect the app to Supabase.
-```
-
----
-
-**Status**: Awaiting VS Code Claude to complete Supabase swap
+*Last updated by Desktop Claude - 2025-12-11*

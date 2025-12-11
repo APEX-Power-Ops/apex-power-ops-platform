@@ -1,12 +1,19 @@
 # RESA Power Platform - Project Status
 
-> **Last Updated**: December 10, 2025 (Session 2)  
-> **Phase**: Database Migration Complete, Approval Workflow Implemented  
+> **Last Updated**: December 11, 2025 (Session 6 - Desktop Claude)  
+> **Phase**: NETA Import In Progress, UI Demos Ready  
 > **See Also**: `PROJECT_OVERVIEW.md` for full system architecture
 
 ---
 
 ## 🎯 Executive Summary
+
+```mermaid
+pie title Project Completion Status
+    "Complete" : 75
+    "In Progress" : 15
+    "Planned" : 10
+```
 
 | Milestone | Status | Notes |
 |-----------|--------|-------|
@@ -14,111 +21,267 @@
 | Database Deployment | ✅ Complete | All migrations applied |
 | Test Data Load | ✅ Complete | LASNAP16 project (47 apparatus) |
 | Web App Connection | ✅ Complete | Next.js app fetching from Supabase |
-| Resource Linking | ✅ Complete | NETA/SOP/Safety/Datasheets tables deployed |
-| Revenue Recognition Flow | ⏳ Ready | Triggers in place, needs UI testing |
-| Equipment Project Assignment | ✅ Complete | Movement tracking between employees/projects |
-| Equipment Tracking | 📋 Schema Ready | `equipment` table enhanced with project assignment |
-| Resource Management | 📋 Schema Ready | `resource_assignments` table deployed |
+| UI Specification | ✅ Complete | Full spec + v0.dev prompts |
+| Role-Based Demo | ✅ Ready | 5-role interactive prototype |
+| **NETA Procedures Import** | ⚠️ In Progress | 33 ATS loaded, 3 standards pending |
+| **NETA Test Items** | ⚠️ In Progress | 77 items (5/33 sections done) |
+| Revenue Recognition Flow | ⏳ Ready | Triggers deployed, needs UI testing |
 | PSS Portal | 📋 Schema Ready | 6 tables deployed, UI not started |
 | Production Deployment | 🔜 Planned | Dev environment only |
 
 ---
 
-## ✅ What's Done
+## 🔥 Current Focus: Phase 1.6 Resource Linking
 
-### Database Layer (Supabase)
-
-| Component | Count | Details |
-|-----------|-------|---------|
-| Tables | 30 | Core (10) + Financial (6) + PSS (6) + Resources (6) + Reference (1) |
-| Views | 20+ | Dashboard, revenue, apparatus tracking |
-| ENUMs | 38 | All status types, roles, assessments |
-| Triggers | 12+ | Rollup counts, revenue recognition, audit |
-| Indexes | ~50 | Performance optimization |
-| Seed Data | ✓ | 5 locations, 15 apparatus types, 2 estimators |
-| Test Data | ✓ | LASNAP16: 47 apparatus, 4 scopes, 12 tasks |
-
-**Resource Linking Tables (NEW - Dec 10):**
-- `neta_procedures` - NETA standards (ATS, MTS, ECS) with frequency requirements
-- `neta_test_items` - Individual test items within procedures
-- `sops` - Company Standard Operating Procedures
-- `safety_documents` - JSAs, safety bulletins, hazard assessments
-- `datasheets` - Manufacturer data, spec sheets, test forms
-- `apparatus_type_resources` - Junction table linking types to resources
-
-**Key Files:**
-- `Supabase/schema/*.sql` - 8 schema files (added `07_equipment_project_assignment.sql`)
-- `Supabase/data/*.sql` - 3 data files
-- `Supabase/DEPLOY_ALL.sql` - Single-file deployment
-- `Supabase/SCHEMA_REFERENCE.md` - Quick reference
-
-### Web Application (Next.js)
-
-| Component | Status | Location |
-|-----------|--------|----------|
-| Framework | Next.js 16.0.5 | `C:\Users\jjswe\Projects\resa-web-app` |
-| UI Library | shadcn/ui + Radix | Installed |
-| Supabase Client | ✅ Connected | `src/lib/supabase.ts` |
-| Main Dashboard | ✅ Working | Shows LASNAP16 project |
-| Project Detail | ❌ 404 | Page not implemented |
-| Import Tool | ⚠️ Partial | UI exists, data layer needs update |
-
-**App Features Working:**
-- Project list from Supabase
-- Client name display
-- Status badge
-- Stats cards (project count, apparatus count)
-- "Supabase Connected" indicator
-
-### Trigger Cascade (Revenue Recognition Flow)
-
-```
-Apparatus marked complete
-    ↓ tr_create_revenue_on_apparatus_complete
-    → Creates apparatus_revenue record
-    ↓ tr_apparatus_count_to_task
-    → Updates task.total_apparatus_count
-    ↓ tr_task_count_to_scope
-    → Updates scope.total_*_counts
-    ↓ tr_scope_count_to_project
-    → Updates project.total_*_counts
+```mermaid
+flowchart TB
+    subgraph "Phase 1.6: Resource Linking Activation"
+        direction TB
+        
+        subgraph "Step 1: NETA Import"
+            A1[📄 Parse ATS-2025 JSON] --> A2[✅ 33 Procedures Loaded]
+            A2 --> A3[⚠️ Test Items: 5/33 Sections]
+            A3 --> A4[⏳ Import MTS-2023]
+            A4 --> A5[⏳ Import ECS-2024]
+            A5 --> A6[⏳ Import ETT-2022]
+        end
+        
+        subgraph "Step 2: Type Mapping"
+            B1[Map apparatus_types.neta_section_ats] 
+            B2[Map apparatus_types.neta_section_mts]
+            B3[Create apparatus_type_resources junction]
+        end
+        
+        subgraph "Step 3: Resource Content"
+            C1[Add sample SOPs]
+            C2[Add safety documents]
+            C3[Add datasheets]
+        end
+        
+        subgraph "Step 4: Mobile UI"
+            D1[Resource lookup component]
+            D2[Field tech resource view]
+        end
+        
+        A6 --> B1
+        B1 --> B2
+        B2 --> B3
+        B3 --> C1
+        C1 --> C2
+        C2 --> C3
+        C3 --> D1
+        D1 --> D2
+    end
+    
+    style A2 fill:#22c55e,color:#fff
+    style A3 fill:#f59e0b,color:#fff
+    style A4 fill:#94a3b8,color:#fff
+    style A5 fill:#94a3b8,color:#fff
+    style A6 fill:#94a3b8,color:#fff
 ```
 
-**Verified:** Rollup shows 47 apparatus on project record ✅
+### NETA Import Progress
+
+| Standard | File | Procedures | Test Items | Status |
+|----------|------|------------|------------|--------|
+| **ATS-2025** | `ANSI_NETA_ATS-2025_Final_v2.json` | ✅ 33 loaded | ⚠️ 77/~500 | In Progress |
+| **MTS-2023** | `ANSI_NETA_MTS-2023_FINAL_v2.json` | ⏳ Pending | ⏳ Pending | Not Started |
+| **ECS-2024** | `ANSI_NETA_ECS-2024_v2.json` | ⏳ Pending | ⏳ Pending | Not Started |
+| **ETT-2022** | `ANSI_NETA_ETT-2022_FINAL_v2.json` | ⏳ Pending | ⏳ Pending | Not Started |
+
+**JSON Files Location:** `Reference_Files/NETA/Extracted/`  
+**Handoff Document:** `Supabase/scripts/NETA_IMPORT_HANDOFF.md`
 
 ---
 
-## 📋 What's Remaining
+## 🖥️ UI/Application Capabilities
 
-### Phase 1: Field Testing App (Priority - This Week)
+```mermaid
+flowchart LR
+    subgraph "Ready Now"
+        direction TB
+        R1[📊 Executive Dashboard]
+        R2[📋 Project List]
+        R3[🏢 Client Management]
+        R4[⚙️ Apparatus Tracking]
+        R5[📄 Report Generator]
+    end
+    
+    subgraph "In Specification"
+        direction TB
+        S1[👷 Field Tech View]
+        S2[📐 Estimator Dashboard]
+        S3[👔 PM Dashboard]
+        S4[🏛️ Admin Settings]
+    end
+    
+    subgraph "Phase 2"
+        direction TB
+        P1[⚡ PSS Portal]
+        P2[👤 Engineer Login]
+        P3[📁 Document Upload]
+        P4[❓ RFI Workflow]
+    end
+    
+    R1 --> S1
+    S4 --> P1
+    
+    style R1 fill:#22c55e,color:#fff
+    style R2 fill:#22c55e,color:#fff
+    style R3 fill:#22c55e,color:#fff
+    style R4 fill:#22c55e,color:#fff
+    style R5 fill:#22c55e,color:#fff
+    style S1 fill:#3b82f6,color:#fff
+    style S2 fill:#3b82f6,color:#fff
+    style S3 fill:#3b82f6,color:#fff
+    style S4 fill:#3b82f6,color:#fff
+    style P1 fill:#94a3b8,color:#fff
+    style P2 fill:#94a3b8,color:#fff
+    style P3 fill:#94a3b8,color:#fff
+    style P4 fill:#94a3b8,color:#fff
+```
+
+### UI Specification Documents
+
+| Document | Location | Purpose |
+|----------|----------|---------|
+| `UI_SPECIFICATION_GUIDE.md` | `Documentation/07_Application_Specs/` | Complete design system, 927 lines |
+| `ROLE_DEMO_PROMPT.md` | `Documentation/07_Application_Specs/` | v0.dev prompt - 5 role views, 1193 lines |
+| `REPORT_GENERATOR_DEMO_PROMPT.md` | `Documentation/07_Application_Specs/` | Standalone report flow |
+| `FIELD_TECH_APPLICATION_SPEC.md` | `Documentation/07_Application_Specs/` | Mobile field app requirements |
+
+### Role-Based Dashboard Features
+
+```mermaid
+mindmap
+  root((RESA Power<br/>Dashboards))
+    Executive
+      Revenue KPIs
+      Project Pipeline
+      Multi-location View
+      Financial Trends
+    Project Manager
+      Active Projects
+      Resource Allocation
+      Budget vs Actual
+      Schedule Tracking
+    Estimator
+      Quote Pipeline
+      Win Rate
+      Pending Approvals
+      Historical Data
+    Field Technician
+      My Assignments
+      Today's Work
+      Apparatus Status
+      Quick Entry
+    Office Admin
+      All Projects
+      User Management
+      Reports
+      System Settings
+```
+
+---
+
+## 📊 Database Statistics (Dec 11, 2025)
+
+### Table Counts
+
+| Table | Records | Change |
+|-------|---------|--------|
+| `neta_procedures` | **33** | +33 (NEW) |
+| `neta_test_items` | **77** | +77 (NEW) |
+| `apparatus` | 47 | - |
+| `apparatus_types` | 15 | - |
+| `tasks` | 12 | - |
+| `resource_assignments` | 8 | - |
+| `scope_labor_details` | 6 | - |
+| `pss_document_templates` | 6 | - |
+| `locations` | 5 | - |
+| `employees` | 5 | - |
+| `scopes` | 4 | - |
+| `estimators` | 2 | - |
+| `projects` | 1 | - |
+| `clients` | 1 | - |
+| `sites` | 1 | - |
+
+### Schema Summary
+
+| Component | Count | Details |
+|-----------|-------|---------|
+| **Tables** | 30 | Core(5) + Hierarchy(4) + Equipment(3) + Financial(4) + Resource(1) + PSS(6) + NETA(7) |
+| **ENUMs** | 38+ | All status types, roles, assessments |
+| **Triggers** | 12+ | Rollup counts, revenue recognition, audit |
+| **Views** | 15+ | Dashboard aggregations |
+| **Indexes** | ~50 | Performance optimization |
+
+---
+
+## 🗺️ Implementation Roadmap
+
+```mermaid
+gantt
+    title RESA Power Development Roadmap
+    dateFormat YYYY-MM-DD
+    
+    section Phase 1 - Foundation
+    Schema Design           :done, p1a, 2025-12-01, 3d
+    Database Deployment     :done, p1b, 2025-12-04, 1d
+    Test Data Load          :done, p1c, 2025-12-05, 1d
+    Web App Connection      :done, p1d, 2025-12-05, 1d
+    UI Specification        :done, p1e, 2025-12-11, 1d
+    
+    section Phase 1.6 - Resource Linking
+    NETA ATS Import         :active, p16a, 2025-12-11, 2d
+    NETA MTS/ECS/ETT Import :p16b, after p16a, 2d
+    Type-Procedure Mapping  :p16c, after p16b, 1d
+    Resource Content        :p16d, after p16c, 2d
+    Mobile Resource UI      :p16e, after p16d, 2d
+    
+    section Phase 1.7 - Field Testing App
+    Project Detail Page     :f1, after p16e, 2d
+    Apparatus Completion    :f2, after f1, 2d
+    Revenue Testing         :f3, after f2, 1d
+    Real Data Import        :f4, after f3, 2d
+    
+    section Phase 2 - Auth & PSS
+    Supabase Auth           :a1, 2025-12-28, 3d
+    RLS Policies            :a2, after a1, 2d
+    PSS Portal UI           :p2a, 2026-01-06, 5d
+    Document Management     :p2b, after p2a, 3d
+    
+    section Phase 3 - Production
+    Production Deploy       :p3, 2026-01-20, 3d
+```
+
+---
+
+## 📋 Task Breakdown by Phase
+
+### Phase 1.6: Resource Linking (Current)
+
+| Task | Owner | Status | Description |
+|------|-------|--------|-------------|
+| Import ATS procedures | ✅ Desktop | Done | 33 procedures loaded |
+| Import ATS test items | VS Code | ⚠️ 5/33 | Continuing from handoff |
+| Import MTS-2023 | TBD | ⏳ | ~similar structure |
+| Import ECS-2024 | TBD | ⏳ | ~similar structure |
+| Import ETT-2022 | TBD | ⏳ | ~similar structure |
+| Map apparatus_types | TBD | ⏳ | Populate neta_section columns |
+| Create junction records | TBD | ⏳ | apparatus_type_resources |
+| Add sample SOPs | TBD | ⏳ | Company procedures |
+| Add safety docs | TBD | ⏳ | JSAs, bulletins |
+| Resource lookup UI | TBD | ⏳ | Mobile component |
+
+### Phase 1.7: Field Testing App
 
 | Task | Complexity | Description |
 |------|------------|-------------|
 | Project detail page | Medium | Show scopes, tasks, apparatus hierarchy |
 | Apparatus completion UI | Medium | Mark complete with delay hours |
-| Test revenue trigger | Low | Complete an apparatus, verify revenue record |
-| Import Garney data | Medium | Real project data from Excel tracker |
-
-### Phase 1.5: Ready-to-Activate Features
-
-These tables are deployed and can be enabled with UI work:
-
-| Feature | Tables | Effort | Business Value |
-|---------|--------|--------|----------------|
-| **Equipment Tracking** | `equipment` | Low | Track company test equipment, calibration due dates |
-| **Resource Management** | `resource_assignments` | Medium | Employee allocation across projects |
-| **NETA Templates** | `neta_test_templates` | Low | Standard test procedures with hour estimates |
-
-### Phase 1.6: Resource Linking Activation (NEW)
-
-| Task | Complexity | Description |
-|------|------------|-------------|
-| Import NETA JSON data | Medium | Parse extracted JSON → `neta_procedures` + `neta_test_items` |
-| Map apparatus_types | Low | Populate neta_section_ats/mts/ecs columns |
-| Link types to procedures | Low | Create `apparatus_type_resources` records |
-| Add sample SOPs | Low | Create company SOP records |
-| Add safety documents | Low | JSAs for common equipment types |
-| Resource lookup UI | Medium | Mobile-friendly tech resource view |
+| Test revenue trigger | Low | Complete apparatus, verify revenue |
+| Import Garney data | Medium | Real project from Excel tracker |
 
 ### Phase 2: PSS Portal
 
@@ -128,56 +291,6 @@ These tables are deployed and can be enabled with UI work:
 | Supabase Auth setup | Medium | Email/password for engineers |
 | Document upload | Medium | Storage bucket integration |
 | RFI workflow | Medium | Status transitions, notifications |
-| Dashboard views | Low | SQL views already exist |
-
-**PSS Tables Ready:**
-- `pss_engineers` - External engineer registry
-- `pss_studies` - Study tracking with full lifecycle
-- `pss_documents` - Document management with versions
-- `pss_rfis` - RFI workflow with priorities
-- `pss_document_templates` - Reusable templates
-- `pss_activity_log` - Full audit trail
-
-### Phase 3: Production
-
-| Task | Complexity | Description |
-|------|------------|-------------|
-| Create production project | Low | New Supabase project |
-| Migrate schema | Low | Run DEPLOY_ALL.sql |
-| Environment variables | Low | Production keys |
-| Domain setup | Medium | Custom domain for app |
-
----
-
-## 🗂️ Documentation Inventory
-
-### Current (Accurate)
-
-| File | Location | Purpose |
-|------|----------|---------|
-| PROJECT_STATUS.md | Root | **This file** - Overall status |
-| PROJECT_OVERVIEW.md | Root | System architecture (v2.0.0) |
-| COORDINATION.md | `.claude/` | Desktop ↔ VS Code handoff |
-| OPEN_DECISIONS.md | `.claude/` | Architecture decisions made |
-| SCHEMA_REFERENCE.md | `Supabase/` | Quick DB reference |
-| README.md | `Supabase/docs/` | Supabase folder overview |
-
-### Archived/Outdated
-
-| File | Issue | Action |
-|------|-------|--------|
-| WORKSPACE_SYSTEM.md | References Dataverse | See ARCHIVE_NOTICE.md |
-| COORDINATED_TASK_LIST.md | Old tasks | Replaced by PROJECT_STATUS.md |
-| MASTER_SCHEMA.md | Dataverse-focused | Archived |
-| copilot-instructions.md | References Dataverse | Update for Supabase |
-
-### Can Archive
-
-| File | Reason |
-|------|--------|
-| Solution_Exports/ | Dataverse artifacts |
-| MCP_Servers/ | Dataverse MCP no longer needed |
-| RESA_Power_Build.cdsproj | Dataverse project file |
 
 ---
 
@@ -190,7 +303,6 @@ Project:     resa-power-db
 Ref:         fxoyniqnrlkxfligbxmg
 API URL:     https://fxoyniqnrlkxfligbxmg.supabase.co
 Environment: Development
-Credentials: .secrets/SUPABASE_CREDENTIALS.md
 ```
 
 ### Web App
@@ -199,63 +311,19 @@ Credentials: .secrets/SUPABASE_CREDENTIALS.md
 Location:    C:\Users\jjswe\Projects\resa-web-app
 Framework:   Next.js 16.0.5 (App Router)
 React:       19.2.0
-TypeScript:  Yes
-UI:          shadcn/ui + Radix
-Dev Server:  npm run dev → http://localhost:3000
+UI:          shadcn/ui + Radix + Tailwind CSS
 ```
 
 ### Key Files
 
-| Purpose | File |
+| Purpose | Path |
 |---------|------|
-| Supabase client | `resa-web-app/src/lib/supabase.ts` |
-| Main page | `resa-web-app/src/app/page.tsx` |
-| Environment | `resa-web-app/.env.local` |
-| Schema source | `RESA_Power_Build/Supabase/schema/` |
-| Test data | `RESA_Power_Build/Supabase/data/` |
-
----
-
-## 🚀 Recommended Next Steps
-
-### Immediate (This Week)
-
-1. **Create project detail page** - Navigate from dashboard to `/projects/[id]`
-2. **Add apparatus completion** - Button to mark apparatus complete
-3. **Test revenue trigger** - Verify the flow end-to-end
-4. **Import real data** - Garney Central Mesa from Excel
-
-### Short Term (Next 2 Weeks)
-
-5. **Add Supabase Auth** - Login page for RESA users
-6. **Build scope management** - Add/edit scopes and tasks
-7. **Create apparatus forms** - Add new apparatus records
-8. **Dashboard improvements** - Charts, KPIs
-
-### Medium Term (Month)
-
-9. **PSS Portal basic** - Engineer login, document status
-10. **Mobile-responsive** - Test on tablets (field use)
-11. **Production deploy** - New Supabase project + domain
-
----
-
-## 📊 Database Stats
-
-As of December 5, 2025:
-
-| Table | Records | Notes |
-|-------|---------|-------|
-| locations | 5 | RESA branch offices |
-| clients | 1 | Louisiana Snap Foods |
-| sites | 1 | LASNAP16 |
-| projects | 1 | LASNAP16 |
-| scopes | 4 | MAIN, LABOR, PSS, MISC |
-| tasks | 12 | 3 per scope |
-| apparatus | 47 | Switchgear, breakers, etc. |
-| employees | 5 | Test crew |
-| apparatus_types | 15 | Seed data |
-| estimators | 2 | Test records |
+| Session State | `.claude/STATE.md` |
+| Task Coordination | `.claude/COORDINATION.md` |
+| NETA Import Handoff | `Supabase/scripts/NETA_IMPORT_HANDOFF.md` |
+| UI Specifications | `Documentation/07_Application_Specs/` |
+| Schema Reference | `Supabase/SCHEMA_REFERENCE.md` |
+| Supabase Client | `resa-web-app/src/lib/supabase.ts` |
 
 ---
 
@@ -265,17 +333,10 @@ As of December 5, 2025:
 |------|---------|---------|
 | 2025-12-05 | 1.0.0 | Initial Supabase deployment |
 | 2025-12-05 | 1.0.1 | LASNAP16 test data loaded |
-| 2025-12-05 | 1.0.2 | Resource Linking Active to Supabase |
-| 2025-12-05 | 1.0.3 | Fixed trigger cascade bug |
+| 2025-12-10 | 1.1.0 | Resource Linking schema deployed |
+| 2025-12-11 | 1.2.0 | UI Specification complete |
+| 2025-12-11 | **1.3.0** | NETA import started (33 procedures, 77 test items) |
 
 ---
 
-*This document replaces COORDINATED_TASK_LIST.md as the primary status tracker.*
-
-
-
-
-
-
-
-
+*Document Version: 1.3.0 | Last Updated: December 11, 2025*
