@@ -1,187 +1,450 @@
-# RESA Power - Project Tracker
+# RESA Power - Project Management Platform
 
-Internal project tracking solution for electrical testing operations. Built on Microsoft Power Platform to replace Excel-based processes.
+> **Modern PostgreSQL-based project tracking for electrical testing operations**  
+> Migrated from Microsoft Dataverse to Supabase in December 2025
 
----
-
-## What This Does
-
-Tracks apparatus-level work through projects (switchgear, transformers, breakers, etc.) with labor hours, costs, and revenue calculation. Replaces manual Excel tracking with real-time Dataverse database.
-
-**Key Features:**
-- Project hierarchy: Projects → Scopes → Tasks → Apparatus
-- Labor cost tracking (4 categories: Onsite, Offsite, Travel, Outside Services)
-- Automatic revenue recognition based on completed hours
-- Multi-location support with business unit isolation
-- Role-based access for different user types
+[![Version](https://img.shields.io/badge/version-2.2.0-blue.svg)](./PROJECT_STATUS.md)
+[![Platform](https://img.shields.io/badge/platform-Supabase-green.svg)](https://supabase.com)
+[![Framework](https://img.shields.io/badge/framework-Next.js%2016-black.svg)](https://nextjs.org)
+[![License](https://img.shields.io/badge/license-Private-red.svg)]()
 
 ---
 
-## Why This Was Built
+## 🎯 Overview
 
-**Problems with old Excel process:**
-- Each location maintained separate spreadsheets
-- Month-end consolidation took days of manual copying/pasting
-- No real-time visibility into project status
-- Difficult to track revenue by project manager or equipment type
-- High risk of duplicate entries or formula errors
+Full-stack project management system for RESA Power's electrical field testing operations. Tracks apparatus-level work (switchgear, transformers, breakers) through the complete project lifecycle with automated revenue recognition, NETA standards compliance, and Power System Studies (PSS) portal.
 
-**What this solves:**
-- Single source of truth in Dataverse
-- Automatic revenue calculation when apparatus marked complete
-- Real-time dashboards instead of stale Excel reports
-- Standardized process across multiple business units
-- Audit trail for all changes
+```mermaid
+graph LR
+    subgraph "RESA Power Platform"
+        A[📱 Next.js App] --> B[🔌 Supabase API]
+        B --> C[(PostgreSQL)]
+        C --> D[⚡ Triggers]
+        D --> E[📊 Views]
+    end
+    
+    style A fill:#000,color:#fff
+    style B fill:#3ecf8e,color:#fff
+    style C fill:#336791,color:#fff
+```
 
----
-
-## Repository Structure
-
-- **`Documentation/00_START_HERE/`** - Getting started guides and roadmap
-- **`Documentation/01_Architecture/`** - Technical design and data models
-- **`Documentation/02_Implementation/`** - Build specifications and field definitions
-- **`Documentation/03_Progress_Tracking/`** - Development logs and version history
-- **`Documentation/04_Data_Migration/`** - Excel templates and import guides
-- **`Documentation/05_Reviews_Analysis/`** - Technical audits and recommendations
-- **`Documentation/08_Testing_QA/`** - Testing scenarios and validation
-- **`Documentation/09_Training_Materials/`** - User training and rollout plans
-- **`Documentation/10_Analytics_Reporting/`** - Dashboard designs
-- **`Documentation/11_Mobile_Apps/`** - Field app design concepts
-- **`Solution_Exports/`** - Power Platform solution packages (.zip files)
-- **`PROJECT_OVERVIEW.md`** - Comprehensive overview with diagrams
+**Key Capabilities:**
+- 🏗️ **Project Hierarchy**: Projects → Scopes → Tasks → Apparatus
+- 💰 **Revenue Recognition**: Automatic calculation on apparatus completion
+- 📋 **NETA Compliance**: 33+ test procedures with checklists
+- ⚡ **PSS Portal**: Power System Studies tracking with document management
+- 👥 **Multi-Role Access**: Executive, PM, Estimator, Field Tech, Admin views
+- 🔄 **Real-Time Updates**: Supabase subscriptions for live dashboards
 
 ---
 
-## Current Status
+## 📊 System Architecture
 
-**Version:** v1.3.0.1 (Development Environment)
+```mermaid
+graph TB
+    subgraph "Client Layer"
+        WEB[🖥️ Next.js 16 Web App<br/>React 19 + shadcn/ui]
+        MOBILE[📱 Mobile PWA<br/>Future]
+    end
+    
+    subgraph "Supabase Platform"
+        API[REST API]
+        RT[Real-time<br/>Subscriptions]
+        AUTH[Auth<br/>Planned]
+        
+        subgraph "PostgreSQL Database"
+            TABLES[30 Tables]
+            ENUMS[38+ ENUMs]
+            TRIGGERS[12+ Triggers]
+            VIEWS[15+ Views]
+        end
+    end
+    
+    WEB --> API
+    WEB --> RT
+    MOBILE --> API
+    API --> TABLES
+    TRIGGERS --> TABLES
+    
+    style WEB fill:#000,color:#fff
+    style TABLES fill:#336791,color:#fff
+    style TRIGGERS fill:#22c55e,color:#fff
+```
 
-**What's Built:**
-- 8 custom Dataverse tables (BusinessUnit, Projects, Scopes, Tasks, Apparatus, ScopeLaborDetail, ApparatusRevenue, TestRecords)
-- 137 custom fields with calculated formulas
-- 4 Power Apps (model-driven apps for different user roles)
-- Revenue architecture complete (labor rates, cost tracking, revenue calculation)
+### Tech Stack
 
-**Next Steps:**
-- Build Power Automate flow for automatic revenue recognition
-- User testing with pilot project managers
-- Create quick-start training guides
-- Deploy to initial business units
-
----
-
-## Technical Details
-
-**Platform:** Microsoft Power Platform
-- Dataverse (database)
-- Power Apps (user interface)
-- Power Automate (workflows)
-- Power BI (reporting - planned)
-
-**Architecture Highlights:**
-- Hierarchical project structure (4 levels)
-- Calculated fields for revenue recognition
-- Business unit security (users only see their location's data)
-- Audit logging (all changes tracked with user/timestamp)
-- NETA standards compliance (apparatus types, testing workflows)
-
-**Key Calculations:**
-- Effective Labor Rate = Total Labor Cost ÷ Total Hours
-- Revenue Amount = Apparatus Hours × Effective Labor Rate
-- Automatic status changes (Pending → Recognized when apparatus completed)
-
----
-
-## Implementation Plan
-
-### **Phase 1: Pilot (Q1 2026)**
-- Deploy to 4 Phoenix-region business units
-- User acceptance testing with 2 project managers
-- Create training materials (quick-start guides)
-- Gather feedback and iterate
-
-### **Phase 2: Expansion**
-- Roll out based on pilot results
-- Add Power BI dashboards for reporting
-- Build mobile app for field technicians
-- Continue refinement based on user needs
+| Layer | Technology | Version |
+|-------|------------|---------|
+| **Database** | PostgreSQL via Supabase | 17.x |
+| **Backend** | Supabase REST + Realtime | Latest |
+| **Frontend** | Next.js (App Router) | 16.0.5 |
+| **UI Components** | shadcn/ui + Radix | Latest |
+| **Styling** | Tailwind CSS | 4.x |
+| **Language** | TypeScript | 5.x |
 
 ---
 
-## Training Approach
+## 🗄️ Database Schema
 
-Different training for different roles:
+### Table Summary (30 Tables)
 
-- **Field Technicians:** 15 minutes - How to mark apparatus complete
-- **Job Leads:** 30 minutes - Work assignment and team coordination
-- **Project Managers:** 90 minutes - Full project lifecycle and reporting
-- **Operations Staff:** 60 minutes - Data entry and administrative tasks
-- **Location Managers:** 60 minutes - Multi-project view and dashboards
+| Category | Tables | Description |
+|----------|--------|-------------|
+| **Organization** | 5 | Locations, Clients, Sites, Employees, Estimators |
+| **Project Hierarchy** | 4 | Projects, Scopes, Tasks, Apparatus |
+| **Equipment** | 3 | Apparatus Types, Equipment, Assignments |
+| **Financial** | 4 | Revenue, Labor Details, Financial Summaries |
+| **Resource Mgmt** | 1 | Resource Assignments |
+| **PSS Portal** | 6 | Studies, Documents, RFIs, Engineers, Templates, Activity Log |
+| **NETA/Resources** | 7 | Procedures, Test Items, Templates, SOPs, Safety, Datasheets |
 
-Training materials include quick-start PDFs, video tutorials, and hands-on workshops.
+### Core Data Model
 
-See `Documentation/09_Training_Materials/` for details.
+```mermaid
+erDiagram
+    PROJECTS ||--o{ SCOPES : contains
+    SCOPES ||--o{ TASKS : organizes
+    SCOPES ||--o{ APPARATUS : includes
+    APPARATUS }o--|| APPARATUS_TYPES : classified_as
+    APPARATUS ||--o{ APPARATUS_REVENUE : generates
+    
+    APPARATUS_TYPES ||--o{ NETA_PROCEDURES : references
+    NETA_PROCEDURES ||--o{ NETA_TEST_ITEMS : contains
+    
+    PROJECTS ||--o{ PSS_STUDIES : includes
+    PSS_STUDIES ||--o{ PSS_DOCUMENTS : produces
+```
 
----
+### Automated Workflows (Triggers)
 
-## Testing
-
-Testing focuses on real-world scenarios:
-
-1. **Revenue Recognition:** Compare automatic calculations to manual Excel
-2. **Duplicate Prevention:** Verify apparatus can't be entered twice
-3. **Missing Rates:** Handle projects without labor rates defined
-4. **Performance:** Test with realistic data volumes
-5. **User Acceptance:** Pilot PMs run real projects for 30 days
-
-See `Documentation/08_Testing_QA/` for test scenarios.
-
----
-
-## Security Model
-
-**Role-Based Access:**
-- Field Tech: Can only update assigned apparatus
-- Job Lead: Can assign work and view team status
-- Project Manager: Full access to their projects
-- Operations: Data entry and administrative functions
-- Location Manager: View all projects at their business unit
-
-**Business Unit Isolation:**
-- Users only see projects from their assigned location(s)
-- Regional managers can see multiple locations
-- Security enforced by Dataverse at database level
-
-**Audit Trail:**
-- All changes logged with user ID and timestamp
-- No data deletion (soft deletes only)
-- Complete history available for compliance
+```mermaid
+flowchart LR
+    A[✅ Apparatus Complete] --> B[Create Revenue Record]
+    A --> C[Update Task Count]
+    C --> D[Update Scope Count]
+    D --> E[Update Project Count]
+    B --> F[Recalculate Scope Financials]
+    F --> G[Recalculate Project Financials]
+    
+    style A fill:#22c55e,color:#fff
+    style G fill:#3b82f6,color:#fff
+```
 
 ---
 
-## Documentation
+## 🚀 Quick Start
 
-**Start Here:**
-- `PROJECT_OVERVIEW.md` - System overview with architecture diagrams
-- `Documentation/00_START_HERE/PLATFORM_ROADMAP_STRATEGIC_VISION.md` - Long-term vision
+### Prerequisites
 
-**Technical Details:**
-- `Documentation/01_Architecture/REVENUE_ARCHITECTURE.md` - Revenue calculation design
-- `Documentation/01_Architecture/USER_EXPERIENCE_SYSTEM_ARCHITECTURE.md` - User roles and workflows
-- `Documentation/02_Implementation/` - Build specifications for each component
+- Node.js 18+
+- npm or yarn
+- Supabase account (or use existing project)
 
-**For Project Managers:**
-- `Documentation/09_Training_Materials/TRAINING_PROGRAM_OVERVIEW.md` - Training details
-- `Documentation/04_Data_Migration/` - How to import existing Excel data
+### 1. Clone Repository
+
+```bash
+git clone https://github.com/jasonlswenson-sys/RESA-Power-Project-Management.git
+cd RESA-Power-Project-Management
+```
+
+### 2. Database Setup (Supabase)
+
+```bash
+# Option A: Use existing project
+# Project ref: fxoyniqnrlkxfligbxmg
+
+# Option B: Deploy to new project
+# Run in Supabase SQL Editor:
+cat Supabase/DEPLOY_ALL.sql | supabase db push
+```
+
+### 3. Web App Setup
+
+```bash
+cd ../resa-web-app  # Separate repo location
+
+# Install dependencies
+npm install
+
+# Configure environment
+cp .env.example .env.local
+# Add your Supabase URL and anon key
+
+# Start development server
+npm run dev
+```
+
+### 4. Access Application
+
+Open [http://localhost:3000](http://localhost:3000)
 
 ---
 
-## Repository Status
+## 📁 Repository Structure
 
-🌐 **Public Repository**  
-🚧 **Development Phase** (v1.3.0.1)  
-📅 **Target Pilot:** Q1 2026
+```
+RESA_Power_Build/
+├── 📄 README.md                    # This file
+├── 📄 PROJECT_OVERVIEW.md          # Architecture + diagrams
+├── 📄 PROJECT_STATUS.md            # Current status + roadmap
+│
+├── 📂 Supabase/
+│   ├── schema/                     # SQL schema files (00-07)
+│   │   ├── 00_enums.sql           # 38+ ENUM types
+│   │   ├── 01_tables.sql          # Core tables
+│   │   ├── 02_relationships.sql   # Foreign keys
+│   │   ├── 03_triggers.sql        # 12+ trigger functions
+│   │   ├── 04_views.sql           # Dashboard views
+│   │   └── 05_indexes.sql         # Performance indexes
+│   ├── data/
+│   │   ├── 10_seed_data.sql       # Reference data
+│   │   ├── 11_test_data.sql       # LASNAP16 test project
+│   │   └── 20_neta_procedures.sql # NETA standards
+│   ├── scripts/
+│   │   └── NETA_IMPORT_HANDOFF.md # Import instructions
+│   ├── lib/supabase.ts            # Client library
+│   ├── SCHEMA_REFERENCE.md        # Quick reference
+│   └── DEPLOY_ALL.sql             # Single-file deployment
+│
+├── 📂 .claude/
+│   ├── STATE.md                   # Session state
+│   ├── COORDINATION.md            # Task allocation
+│   └── OPEN_DECISIONS.md          # Architecture decisions
+│
+├── 📂 Documentation/
+│   ├── 07_Application_Specs/      # ⭐ UI Specifications
+│   │   ├── UI_SPECIFICATION_GUIDE.md    # Design system (927 lines)
+│   │   ├── ROLE_DEMO_PROMPT.md          # v0.dev prototype (1193 lines)
+│   │   ├── REPORT_GENERATOR_DEMO_PROMPT.md
+│   │   └── FIELD_TECH_APPLICATION_SPEC.md
+│   └── [other documentation folders]
+│
+├── 📂 Reference_Files/
+│   └── NETA/Extracted/            # NETA JSON source files
+│       ├── ANSI_NETA_ATS-2025_Final_v2.json
+│       ├── ANSI_NETA_MTS-2023_FINAL_v2.json
+│       ├── ANSI_NETA_ECS-2024_v2.json
+│       └── ANSI_NETA_ETT-2022_FINAL_v2.json
+│
+└── 📂 CSV_Templates/              # Import templates
+```
 
 ---
 
-*Built to solve real operational problems across multiple business units. Started as a personal initiative to improve inefficient Excel processes.*
+## 🎨 UI Features
+
+### Role-Based Dashboards
+
+```mermaid
+mindmap
+  root((RESA Power))
+    Executive
+      Revenue KPIs
+      Project Pipeline
+      Multi-location
+    Project Manager
+      Active Projects
+      Budget vs Actual
+      Resource Allocation
+    Estimator
+      Quote Pipeline
+      Win Rate
+      Historical Data
+    Field Technician
+      My Assignments
+      NETA Procedures
+      Quick Entry
+    Admin
+      User Management
+      System Config
+      Reports
+```
+
+### Feature Highlights
+
+| Feature | Status | Description |
+|---------|--------|-------------|
+| Project Dashboard | ✅ Ready | Overview with KPIs and project list |
+| Apparatus Tracking | ✅ Ready | Status, hours, completion workflow |
+| Revenue Recognition | ✅ Ready | Auto-calculation via triggers |
+| NETA Procedures | ⚠️ Loading | 33 ATS procedures imported |
+| PSS Portal | 📋 Schema Ready | Studies, documents, RFIs |
+| Report Generator | 📋 Specified | Auto-generate PDF reports |
+| Mobile Field App | 🔜 Planned | PWA for field technicians |
+
+### UI Specification Documents
+
+Located in `Documentation/07_Application_Specs/`:
+
+| Document | Lines | Purpose |
+|----------|-------|---------|
+| `UI_SPECIFICATION_GUIDE.md` | 927 | Complete design system |
+| `ROLE_DEMO_PROMPT.md` | 1193 | v0.dev interactive prototype |
+| `REPORT_GENERATOR_DEMO_PROMPT.md` | ~300 | Report flow specification |
+| `FIELD_TECH_APPLICATION_SPEC.md` | ~400 | Mobile app requirements |
+
+---
+
+## 📈 Current Status
+
+### Database Statistics
+
+| Metric | Count |
+|--------|-------|
+| **Tables** | 30 |
+| **ENUM Types** | 38+ |
+| **Triggers** | 12+ |
+| **Views** | 15+ |
+| **Indexes** | ~50 |
+| **NETA Procedures** | 33 (ATS-2025) |
+| **Test Items** | 77+ |
+
+### Test Data (LASNAP16 Project)
+
+| Table | Records |
+|-------|---------|
+| Apparatus | 47 |
+| Tasks | 12 |
+| Scopes | 4 |
+| Employees | 5 |
+| Apparatus Types | 15 |
+
+### Implementation Progress
+
+```mermaid
+pie title Completion Status
+    "Complete" : 75
+    "In Progress" : 15
+    "Planned" : 10
+```
+
+---
+
+## 🗺️ Roadmap
+
+```mermaid
+gantt
+    title Development Roadmap
+    dateFormat YYYY-MM-DD
+    
+    section Phase 1 - Foundation
+    Schema + Data           :done, 2025-12-01, 10d
+    UI Specification        :done, 2025-12-11, 1d
+    
+    section Phase 1.6 - NETA
+    Import Procedures       :active, 2025-12-11, 4d
+    Type Mapping           :2025-12-15, 2d
+    
+    section Phase 1.7 - Field App
+    Project Detail UI      :2025-12-17, 3d
+    Apparatus Completion   :2025-12-20, 2d
+    
+    section Phase 2 - Auth
+    Supabase Auth          :2025-12-28, 5d
+    PSS Portal UI          :2026-01-06, 7d
+```
+
+---
+
+## 🔐 Security
+
+### Planned Authentication
+
+1. **Phase 1** (Current): Development with anon key
+2. **Phase 2**: Supabase Auth with email/password
+3. **Phase 3**: Row-Level Security (RLS) policies
+4. **Phase 4**: Optional Azure AD SSO
+
+### Role-Based Access
+
+| Role | Scope |
+|------|-------|
+| Field Tech | Own assignments only |
+| Lead Tech | Team assignments |
+| Project Manager | Full project access |
+| Estimator | Quotes + project creation |
+| Admin | Full system access |
+| Executive | Read-only dashboards |
+
+---
+
+## 📚 Documentation
+
+### Essential Reading
+
+| Document | Description |
+|----------|-------------|
+| [PROJECT_OVERVIEW.md](./PROJECT_OVERVIEW.md) | Architecture diagrams and data model |
+| [PROJECT_STATUS.md](./PROJECT_STATUS.md) | Current status with Mermaid charts |
+| [Supabase/SCHEMA_REFERENCE.md](./Supabase/SCHEMA_REFERENCE.md) | Quick database reference |
+| [.claude/STATE.md](./.claude/STATE.md) | Session state for Claude AI |
+
+### Technical Specifications
+
+| Document | Location |
+|----------|----------|
+| UI Design System | `Documentation/07_Application_Specs/UI_SPECIFICATION_GUIDE.md` |
+| Role Demo Prompt | `Documentation/07_Application_Specs/ROLE_DEMO_PROMPT.md` |
+| Report Workflow | `SUPABASE_REPORT_WORKFLOW.md` |
+
+---
+
+## 🤝 Development
+
+### Claude AI Coordination
+
+This project uses a dual-Claude workflow:
+- **Desktop Claude**: Database schema, SQL, architecture decisions
+- **VS Code Claude**: Application code, UI development
+
+Session state is maintained in `.claude/STATE.md` and `.claude/COORDINATION.md`.
+
+### Key Commands
+
+```bash
+# View current session state
+cat .claude/STATE.md
+
+# Deploy schema to Supabase
+psql $DATABASE_URL < Supabase/DEPLOY_ALL.sql
+
+# Run web app
+cd ../resa-web-app && npm run dev
+```
+
+---
+
+## 📞 References
+
+| Resource | Link |
+|----------|------|
+| **Supabase Dashboard** | [supabase.com/dashboard](https://supabase.com/dashboard) |
+| **Project API** | `https://fxoyniqnrlkxfligbxmg.supabase.co` |
+| **Next.js Docs** | [nextjs.org/docs](https://nextjs.org/docs) |
+| **shadcn/ui** | [ui.shadcn.com](https://ui.shadcn.com) |
+
+---
+
+## 🔄 Migration History
+
+**December 2025**: Migrated from Microsoft Dataverse to Supabase
+
+| Aspect | Before (Dataverse) | After (Supabase) |
+|--------|-------------------|------------------|
+| Tables | 8 | **30** |
+| Triggers | 1 Power Automate | **12+ PostgreSQL** |
+| UI | Power Apps | **Next.js 16** |
+| Cost | Power Platform licensing | **$25/month** |
+| Flexibility | Limited | **Full SQL access** |
+
+---
+
+## 📄 License
+
+Private repository - RESA Power internal use only.
+
+---
+
+**Version:** 2.2.0  
+**Last Updated:** December 11, 2025  
+**Maintainer:** Jason Swenson
