@@ -2,6 +2,12 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # ============================================
+# PRIVATE - Internal context, NOT for GitHub
+# ============================================
+.private/
+.secrets/
+
+# ============================================
 # SECURITY - NEVER COMMIT THESE
 # ============================================
 *.env
