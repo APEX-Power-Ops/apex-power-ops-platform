@@ -2,8 +2,7 @@
 ## Strategic Vision Document
 
 **Created:** 2025-12-11  
-**Author:** Jason Swenson  
-**Audience:** Internal / Future PE Presentation  
+**Author:** Jason Swenson, Arizona Services  
 **Status:** Foundation Built, Demos In Progress
 
 ---
