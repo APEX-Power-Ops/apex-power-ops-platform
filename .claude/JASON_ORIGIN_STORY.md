@@ -138,6 +138,42 @@ This isn't just a tool. It's Jason's path to converting 3-4 years of personal in
 
 ---
 
+## The Learning Journey
+
+### From Novice to Proficient
+> "Along the way I forced myself to become technically functional to allow Desktop Claude to help me create things. From total novice to gradually becoming proficient enough to make the process much more efficient. I could communicate effectively - much more so - with Claude."
+
+### The Training Ground: TCC v5 Backend
+**Location:** `C:\Users\jjswe\Projects\tcc_v5_backend`
+
+A Time-Current Curve Calculator backend:
+- **Database:** Local PostgreSQL, 33 tables, **2.47 million rows**
+- **Stack:** Python, FastAPI, SQLAlchemy ORM
+- **Models built:** Circuit breakers, SST curves, equations, settings, TMT
+- **Status:** Production ready
+
+This is where Jason learned:
+- Database design and normalization
+- ORM patterns (SQLAlchemy)
+- API architecture (FastAPI)
+- Python project structure
+
+**This wasn't a toy project.** 2.47 million rows of real circuit breaker test data. Real industry domain knowledge encoded in code.
+
+### The Skill Stack Developed
+| Skill | How Acquired |
+|-------|--------------|
+| Database design | TCC v5 (33 tables, 2.4M rows) |
+| SQL/PostgreSQL | Hands-on with real data |
+| Python | Building TCC backend |
+| API design | FastAPI endpoints |
+| Claude communication | Months of iteration |
+| MCP servers | 6-7 weeks ago - breakthrough |
+| Supabase | Current project |
+| Next.js | resa-web-app |
+
+---
+
 ## The Insight
 
 This isn't a side project. This isn't a hobby.
@@ -145,6 +181,8 @@ This isn't a side project. This isn't a hobby.
 This is:
 - A survival response to unmanageable growth
 - 3-4 years of learning compressed into a real solution
+- Self-taught technical skills to communicate with AI effectively
+- Proven database experience (2.47M row production system)
 - Enabled by AI (Claude + MCP) in the last 6-7 weeks
 - Positioned against a failed corporate alternative
 - Backed by PE ownership equity upside
