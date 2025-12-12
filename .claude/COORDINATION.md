@@ -1,7 +1,9 @@
 # Desktop ↔ VS Code Claude Coordination
 
 **Purpose**: Share information between Claude sessions
-**Updated**: 2025-12-11 (Session 5 - Schema Operations) by VS Code
+**Updated**: 2025-12-12 by VS Code
+
+**See Also**: `.claude/REVIEW_ITEMS.md` for pending decisions, ideas, and considerations that arise mid-session
 
 ---
 
