@@ -1,7 +1,38 @@
 # Desktop ↔ VS Code Claude Coordination
 
 **Purpose**: Share information between Claude sessions
-**Updated**: 2025-12-11 (Session 4 - Desktop Audit) by Claude Desktop
+**Updated**: 2025-12-11 (Session 5 - Schema Operations) by VS Code
+
+---
+
+## 🔥 SESSION 5 - CRITICAL READ FIRST (Dec 11)
+
+### Deep Strategic Discussion - Operations Visibility
+
+**READ THIS FILE FIRST**: `.claude/SESSION_2025-12-11_SCHEMA_OPERATIONS.md`
+
+This session captured 2+ hours of strategic discussion about:
+- Multi-project operations visibility requirements
+- Schema additions for operational fields
+- Excel tracker data analysis (Garney - 2,249 rows, 48 columns)
+- Master operations views for resource allocation
+- Dashboard KPI requirements
+
+### Files Created (Not Yet Deployed)
+| File | Purpose | Status |
+|------|---------|--------|
+| `Supabase/schema/09_schema_additions.sql` | Operational fields + 11 views | 📝 Ready to deploy |
+| `Supabase/schema/09b_enum_updates.sql` | Assessment enum alignment | 📝 Ready to deploy |
+| `Supabase/EXCEL_TO_DATABASE_MAPPING.md` | Field transformation guide | ✅ Complete |
+
+### Key Quote
+> "Visibility internally is the critical aspect. Centralized visibility of everything."
+
+### TODO - See Full List in Session Notes
+- Deploy schema additions to Supabase
+- Test operational views
+- Update import with new field mappings
+- Build dashboard UI
 
 ---
 

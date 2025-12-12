@@ -1,7 +1,7 @@
 # RESA Power Platform - Project Status
 
-> **Last Updated**: December 11, 2025 (Session 6 - Desktop Claude)  
-> **Phase**: NETA Import In Progress, UI Demos Ready  
+> **Last Updated**: December 11, 2025 (Session 7 - VS Code Claude)  
+> **Phase**: Operations Visibility Schema Ready, NETA Import Complete  
 > **See Also**: `PROJECT_OVERVIEW.md` for full system architecture
 
 ---
@@ -10,8 +10,8 @@
 
 ```mermaid
 pie title Project Completion Status
-    "Complete" : 75
-    "In Progress" : 15
+    "Complete" : 78
+    "In Progress" : 12
     "Planned" : 10
 ```
 
@@ -23,78 +23,48 @@ pie title Project Completion Status
 | Web App Connection | ✅ Complete | Next.js app fetching from Supabase |
 | UI Specification | ✅ Complete | Full spec + v0.dev prompts |
 | Role-Based Demo | ✅ Ready | 5-role interactive prototype |
-| **NETA Procedures Import** | ⚠️ In Progress | 33 ATS loaded, 3 standards pending |
-| **NETA Test Items** | ⚠️ In Progress | 77 items (5/33 sections done) |
+| **NETA Procedures Import** | ✅ Complete | 66 procedures (ATS + MTS) |
+| **NETA Test Items** | ✅ Complete | 956 test items across standards |
+| **Operations Schema** | 📝 Ready to Deploy | 09_schema_additions.sql |
 | Revenue Recognition Flow | ⏳ Ready | Triggers deployed, needs UI testing |
 | PSS Portal | 📋 Schema Ready | 6 tables deployed, UI not started |
 | Production Deployment | 🔜 Planned | Dev environment only |
 
 ---
 
-## 🔥 Current Focus: Phase 1.6 Resource Linking
+## 🔥 Current Focus: Operations Visibility (Session 7 Output)
 
-```mermaid
-flowchart TB
-    subgraph "Phase 1.6: Resource Linking Activation"
-        direction TB
-        
-        subgraph "Step 1: NETA Import"
-            A1[📄 Parse ATS-2025 JSON] --> A2[✅ 33 Procedures Loaded]
-            A2 --> A3[⚠️ Test Items: 5/33 Sections]
-            A3 --> A4[⏳ Import MTS-2023]
-            A4 --> A5[⏳ Import ECS-2024]
-            A5 --> A6[⏳ Import ETT-2022]
-        end
-        
-        subgraph "Step 2: Type Mapping"
-            B1[Map apparatus_types.neta_section_ats] 
-            B2[Map apparatus_types.neta_section_mts]
-            B3[Create apparatus_type_resources junction]
-        end
-        
-        subgraph "Step 3: Resource Content"
-            C1[Add sample SOPs]
-            C2[Add safety documents]
-            C3[Add datasheets]
-        end
-        
-        subgraph "Step 4: Mobile UI"
-            D1[Resource lookup component]
-            D2[Field tech resource view]
-        end
-        
-        A6 --> B1
-        B1 --> B2
-        B2 --> B3
-        B3 --> C1
-        C1 --> C2
-        C2 --> C3
-        C3 --> D1
-        D1 --> D2
-    end
-    
-    style A2 fill:#22c55e,color:#fff
-    style A3 fill:#f59e0b,color:#fff
-    style A4 fill:#94a3b8,color:#fff
-    style A5 fill:#94a3b8,color:#fff
-    style A6 fill:#94a3b8,color:#fff
-```
+### Requirements Discovery Complete
 
-### NETA Import Progress
+Key questions answered this session - see `.claude/SESSION_2025-12-11_SCHEMA_OPERATIONS.md`:
 
-| Standard | File | Procedures | Test Items | Status |
-|----------|------|------------|------------|--------|
-| **ATS-2025** | `ANSI_NETA_ATS-2025_Final_v2.json` | ✅ 33 loaded | ⚠️ 77/~500 | In Progress |
-| **MTS-2023** | `ANSI_NETA_MTS-2023_FINAL_v2.json` | ⏳ Pending | ⏳ Pending | Not Started |
-| **ECS-2024** | `ANSI_NETA_ECS-2024_v2.json` | ⏳ Pending | ⏳ Pending | Not Started |
-| **ETT-2022** | `ANSI_NETA_ETT-2022_FINAL_v2.json` | ⏳ Pending | ⏳ Pending | Not Started |
+1. **Pain Point**: Connecteam shows WHO/WHERE/WHEN, not WHAT can be worked or WHY blocked
+2. **Current Workaround**: Excel trackers built to fill visibility gaps
+3. **Scaling Problem**: 5→15 projects broke "fits in your head" approach
+4. **Success Criteria**: Centralized real-time visibility of everything
+5. **MVP**: Operations dashboard answering resource allocation questions
 
-**JSON Files Location:** `Reference_Files/NETA/Extracted/`  
-**Handoff Document:** `Supabase/scripts/NETA_IMPORT_HANDOFF.md`
+### Schema Additions Ready (Not Yet Deployed)
+
+| File | Contents | Status |
+|------|----------|--------|
+| `09_schema_additions.sql` | Operational fields + 11 views | 📝 Deploy next |
+| `09b_enum_updates.sql` | Assessment enum alignment | 📝 Deploy next |
+| `EXCEL_TO_DATABASE_MAPPING.md` | Field transformation guide | ✅ Complete |
+
+### New Operational Views Designed
+
+| View | Purpose |
+|------|---------|
+| `v_master_operations` | Multi-project "God View" |
+| `v_project_apparatus_summary` | Per-project KPIs |
+| `v_resource_allocation` | Where to send people |
+| `v_equipment_needs` | Test equipment planning |
+| `v_blockers_summary` | What's stopping progress |
 
 ---
 
-## 🖥️ UI/Application Capabilities
+## 📊 Phase 1.6 Resource Linking (Complete)
 
 ```mermaid
 flowchart LR
