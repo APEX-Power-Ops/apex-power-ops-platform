@@ -1,8 +1,8 @@
 # RESA Power Supabase Schema - Quick Reference
 
-> **Version:** 2.0.0  
+> **Version:** 2.1.0  
 > **Updated:** December 11, 2025  
-> **Status:** ✅ DEPLOYED - Database live with test data
+> **Status:** ✅ DEPLOYED - Database live with test data + operational fields pending
 
 ---
 
@@ -18,8 +18,14 @@ C:\RESA_Power_Build\Supabase\schema\
 ├── 05_indexes.sql
 ├── 06_neta_sop_tables.sql          # Resource linking tables
 ├── 07_equipment_project_assignment.sql
-└── 08_apparatus_completion_workflow.sql
+├── 08_apparatus_completion_workflow.sql
+├── 09_schema_additions.sql         # ⭐ NEW: Operational fields + rollup views
+└── 09b_enum_updates.sql            # ⭐ NEW: Assessment value additions
 ```
+
+## 📋 Additional Documentation
+
+- [EXCEL_TO_DATABASE_MAPPING.md](EXCEL_TO_DATABASE_MAPPING.md) - Field mapping from Excel trackers
 
 ---
 
@@ -101,7 +107,8 @@ C:\RESA_Power_Build\Supabase\schema\
 | `project_status` | Draft, Quoted, Won, Active, On Hold, Complete, Cancelled |
 | `scope_status` | Not Started, In Progress, On Hold, Complete, Cancelled |
 | `apparatus_status` | Not Started, In Progress, Pending Review, Complete, Cancelled |
-| `apparatus_assessment` | Pass, Fail, Marginal, Needs Repair, Deferred, Not Tested |
+| `apparatus_assessment` | Pass, Fail, Marginal, Needs Repair, Deferred, Not Tested, **Acceptable**, **Non-Serviceable**, **Minor Deficiency** |
+| `apparatus_availability` | **Ready, On Hold, Not Available** ⭐ NEW |
 | `revenue_type` | Testing, Travel, Per Diem, Materials, Equipment, Engineering, Report, Other |
 | `neta_standard_type` | ATS, MTS, ECS, ETT |
 | `neta_test_type` | visual_mechanical, electrical, optional |
@@ -144,6 +151,45 @@ The `apparatus_types` table includes columns to directly link equipment categori
 | `v_apparatus_tracking` | Apparatus with full hierarchy |
 | `v_pss_dashboard` | PSS studies with doc/RFI counts |
 
+### ⭐ NEW Operational Views (09_schema_additions.sql)
+
+| View | Purpose | Answers |
+|------|---------|---------|
+| `v_apparatus_operational` | Daily scheduling | What's ready to work? |
+| `v_project_apparatus_summary` | Per-project KPIs | Your Excel dashboard header |
+| `v_apparatus_by_category` | Category breakdown | Which equipment types need work? |
+| **`v_master_operations`** | **Multi-project dashboard** | **All 10-15 projects at once** |
+| `v_resource_allocation` | Staffing decisions | Where should I send people? |
+| `v_equipment_needs` | Test equipment planning | What equipment goes where? |
+| `v_blockers_summary` | Bottleneck identification | What's stopping us? |
+| `v_schedule_health` | Risk identification | What's at risk/overdue? |
+| `v_task_rollup_dates` | Task-level aggregations | Task date rollups |
+| `v_scope_rollup_dates` | Scope-level aggregations | Scope date rollups |
+| `v_project_rollup_dates` | Executive summary | All project rollups |
+
+---
+
+## ⭐ New Operational Fields (09_schema_additions.sql)
+
+### Apparatus Table Additions
+| Column | Type | Purpose |
+|--------|------|---------|
+| `availability` | enum | Ready/On Hold/Not Available |
+| `date_due` | DATE | Target completion date |
+| `designation` | VARCHAR | Equipment designation ID |
+| `drawing_reference` | VARCHAR | Reference to electrical drawing |
+| `datasheet_complete` | BOOLEAN | Data collection status |
+| `task_delays` | INTEGER | Delay count |
+| `priority` | INTEGER | Work priority (1=High) |
+
+### Rollup Date Fields
+All levels (Task, Scope, Project) now support:
+- `date_due` - Target date
+- `earliest_*_due` - MIN of child due dates
+- `latest_*_due` - MAX of child due dates  
+- `earliest_*_start` - First work started
+- `latest_*_complete` - Last work finished
+
 ---
 
 ## Supabase Connection
@@ -154,14 +200,22 @@ The `apparatus_types` table includes columns to directly link equipment categori
 
 ---
 
-## Next Steps - Data Population
+## Next Steps - Schema Deployment
 
-The resource linking tables are deployed but empty. Next:
+### Immediate (Run Once)
+1. ✅ Core schema deployed
+2. ✅ NETA data imported (66 procedures, 956 test items)
+3. 🔲 **Deploy `09_schema_additions.sql`** - Operational fields + views
+4. 🔲 **Deploy `09b_enum_updates.sql`** - Assessment enum values
 
-1. 🔲 Import NETA procedures from `Reference_Files/NETA/Extracted/` JSON files
-2. 🔲 Create initial SOPs
-3. 🔲 Link apparatus_types to NETA sections via apparatus_type_resources
-4. 🔲 Add safety documents (JSAs, arc flash)
-5. 🔲 Populate datasheets for common manufacturers
+### Data Population
+1. 🔲 Link apparatus_types to NETA sections via apparatus_type_resources
+2. 🔲 Add safety documents (JSAs, arc flash)
+3. 🔲 Populate datasheets for common manufacturers
+
+### Import Development
+1. 🔲 Update import function with new field mappings
+2. 🔲 Test with Garney tracker data
+3. 🔲 Build Excel → JSON export for new fields
 
 
