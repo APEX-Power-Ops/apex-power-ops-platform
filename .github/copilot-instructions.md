@@ -16,7 +16,8 @@ RESA Power electrical testing company project management platform.
 
 1. `PROJECT_STATUS.md` - Overall status, what's done, what's remaining
 2. `.claude/COORDINATION.md` - Handoff notes between Claude sessions
-3. `Supabase/SCHEMA_REFERENCE.md` - Database tables, views, triggers
+3. `.claude/REVIEW_ITEMS.md` - Pending decisions, ideas, considerations
+4. `Supabase/SCHEMA_REFERENCE.md` - Database tables, views, triggers
 
 ## Key Table Names (Supabase)
 
@@ -48,5 +49,6 @@ estimators             - Quote creators
 
 ## Session Protocol
 
-- **On Start**: Read PROJECT_STATUS.md, .claude/COORDINATION.md
+- **On Start**: Read PROJECT_STATUS.md, .claude/COORDINATION.md, .claude/REVIEW_ITEMS.md
+- **During**: Capture ideas/questions in REVIEW_ITEMS.md (don't derail focus)
 - **On End**: Update PROJECT_STATUS.md if milestones completed
