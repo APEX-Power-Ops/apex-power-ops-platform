@@ -1,9 +1,0 @@
-pdfplumber: AVAILABLE
-PyMuPDF (fitz): NOT INSTALLED - No module named 'fitz'
-pdf2image: NOT INSTALLED - No module named 'pdf2image'
-PyPDF2: NOT INSTALLED - No module named 'PyPDF2'
-
-Installed packages with 'pdf' in name:
-  pdfminer.six       20251107
-  pdfplumber         0.11.8
-  pypdfium2          5.1.0
