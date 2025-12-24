@@ -1,8 +1,8 @@
 # RESA Power Supabase Schema - Quick Reference
 
-> **Version:** 2.1.0  
-> **Updated:** December 11, 2025  
-> **Status:** ✅ DEPLOYED - Database live with test data + operational fields pending
+> **Version:** 3.0.0  
+> **Updated:** December 24, 2025  
+> **Status:** ✅ DEPLOYED - Operations schema + AI Orchestration Layer LIVE
 
 ---
 
@@ -19,8 +19,10 @@ C:\RESA_Power_Build\Supabase\schema\
 ├── 06_neta_sop_tables.sql          # Resource linking tables
 ├── 07_equipment_project_assignment.sql
 ├── 08_apparatus_completion_workflow.sql
-├── 09_schema_additions.sql         # ⭐ NEW: Operational fields + rollup views
-└── 09b_enum_updates.sql            # ⭐ NEW: Assessment value additions
+├── 09_schema_additions.sql         # Operational fields + rollup views
+├── 09b_enum_updates.sql            # Assessment value additions
+├── 10_ai_orchestration.sql         # ⭐ AI task queue, agent state, handoffs
+└── 11_ai_orchestration_functions.sql # ⭐ RPC functions for coordination
 ```
 
 ## 📋 Additional Documentation
@@ -29,7 +31,7 @@ C:\RESA_Power_Build\Supabase\schema\
 
 ---
 
-## Table Summary (30 Tables)
+## Table Summary (36 Tables)
 
 | # | Table | Purpose | Rows |
 |---|-------|---------|------|
@@ -217,5 +219,67 @@ All levels (Task, Scope, Project) now support:
 1. 🔲 Update import function with new field mappings
 2. 🔲 Test with Garney tracker data
 3. 🔲 Build Excel → JSON export for new fields
+
+---
+
+## AI Orchestration Layer (NEW - December 24, 2025)
+
+### Schema Files
+```
+schema/10_ai_orchestration.sql        # Tables, enums, triggers, views
+schema/11_ai_orchestration_functions.sql  # RPC functions for task management
+```
+
+### Deployment
+```sql
+-- Run in Supabase SQL Editor
+\i DEPLOY_ORCHESTRATION.sql
+```
+
+### New Tables (6)
+
+| Table | Purpose |
+|-------|---------|
+| `ai_tasks` | Central task queue for agent coordination |
+| `ai_agent_state` | Real-time status of each AI agent |
+| `ai_task_history` | Audit trail of all task changes |
+| `ai_knowledge` | Structured knowledge base for RAG |
+| `content_registry` | Inventory of all produced content |
+| `ai_handoffs` | Explicit agent-to-agent transfers |
+
+### New Enums
+
+| Enum | Values |
+|------|--------|
+| `task_type` | create, enhance, review, assemble, migrate, document, test, deploy |
+| `task_status` | pending, claimed, blocked, review, complete, failed |
+| `ai_agent` | desktop-claude, codex-max, vs-code-claude, local-ai, human |
+| `task_priority` | critical, high, normal, low, background |
+
+### Key Functions
+
+| Function | Purpose |
+|----------|---------|
+| `claim_task()` | Agent claims next available task |
+| `complete_task()` | Mark task done with output |
+| `fail_task()` | Mark task failed with error |
+| `create_task()` | Add new task to queue |
+| `handoff_task()` | Transfer work between agents |
+| `acknowledge_handoff()` | Confirm receipt of handoff |
+| `get_my_tasks()` | List tasks for an agent |
+| `get_pending_handoffs()` | Check for incoming work |
+| `agent_heartbeat()` | Agent status check-in |
+| `register_content()` | Add to content registry |
+
+### Views
+
+| View | Purpose |
+|------|---------|
+| `v_active_tasks` | Current work in progress |
+| `v_agent_dashboard` | Agent status overview |
+| `v_pending_handoffs` | Waiting transfers |
+
+### Documentation
+- [AI_ORCHESTRATION_PROTOCOL.md](docs/AI_ORCHESTRATION_PROTOCOL.md) - Full protocol guide
 
 
