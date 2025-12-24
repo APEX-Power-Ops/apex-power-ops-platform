@@ -1,141 +1,122 @@
-# RESA Power Project - Current State
-
-**Last Updated:** December 2, 2025, 6:45 PM  
-**Updated By:** Web Claude (Opus 4.5)  
-**Session Type:** Schema Audit
+# RESA Power Build - Current State
+## Updated: December 24, 2025
 
 ---
 
-## Quick Context (30 Second Read)
+## 🎯 EXECUTIVE SUMMARY
 
-RESA Power Project Tracker is undergoing a **ground-up V2 rebuild** in a new Dataverse environment (org7bdbc942). The core hierarchy tables (Client → Site → Project → Scope → ScopeLaborDetail) are deployed and working with verified relationships. Tasks and Apparatus tables exist but are empty. Revenue recognition tables are **intentionally not yet deployed** - that's the active work stream. We're at the point of defining the workflow and splitting tasks between Claude instances.
-
-**Current Phase:** Schema Foundation Complete → Revenue Recognition Design  
-**Environment:** org7bdbc942.crm.dynamics.com (V2 - Dev)  
-**Solution Version:** V2 Fresh Build
+**Platform Status:** AI Orchestration Layer DEPLOYED  
+**Database:** Supabase live with 36 tables (30 operations + 6 orchestration)  
+**Next Focus:** NETA Level III/IV study completion (exam Dec 30)
 
 ---
 
-## Active Work Items
+## ✅ COMPLETED THIS SESSION
 
-| Priority | Item | Status | Owner | Notes |
-|----------|------|--------|-------|-------|
-| P0 | Define Revenue Recognition Workflow | 🟡 IN PROGRESS | Jason + Both Claudes | Splitting workload soon |
-| P0 | Deploy ApparatusRevenue table | ⚪ NOT STARTED | TBD | Blocked by workflow definition |
-| P0 | Deploy ApparatusTypeMaster table | ⚪ NOT STARTED | TBD | Needed for NETA hours lookup |
-| P1 | Update MCP server entity map | ⚪ NOT STARTED | TBD | Use V2 naming conventions |
-| P1 | Create Task test data | ⚪ NOT STARTED | TBD | Blocked by schema completion |
-| P1 | Create Apparatus test data | ⚪ NOT STARTED | TBD | Blocked by Task data |
-| P2 | Deploy Employee table | ⚪ NOT STARTED | Future | For technician tracking |
-| P2 | Deploy Quote table | ⚪ NOT STARTED | Future | For estimate conversion |
+### AI Orchestration Layer - DEPLOYED TO PRODUCTION
 
----
+| Component | Status | Details |
+|-----------|--------|---------|
+| **Enums** | ✅ | `ai_task_type`, `ai_task_status`, `ai_agent`, `ai_task_priority` |
+| **Tables** | ✅ | 6 tables: tasks, agent_state, history, knowledge, registry, handoffs |
+| **Functions** | ✅ | 10 RPC functions for claim/complete/handoff/query |
+| **Views** | ✅ | 3 views: active_tasks, agent_dashboard, pending_handoffs |
+| **Triggers** | ✅ | Auto-timestamps, status change logging |
+| **pgvector** | ✅ | Extension enabled for RAG embeddings |
+| **Initial Data** | ✅ | 5 agents initialized (desktop-claude, codex-max, vs-code-claude, local-ai, human) |
 
-## Last Session
-
-- **Date:** December 2, 2025
-- **Duration:** ~45 minutes
-- **Focus:** Comprehensive schema audit of org7bdbc942 environment
-
-**Accomplishments:**
-1. ✅ Verified 9 tables exist with correct V2 naming
-2. ✅ Confirmed all lookup relationships working (Client→Site→Project→Scope→ScopeLaborDetail)
-3. ✅ Documented complete field schemas for all populated tables
-4. ✅ Identified 7 missing tables (by design - not yet deployed)
-5. ✅ Created comprehensive audit report: `Documentation\SCHEMA_AUDIT_org7bdbc942_Dec2025.md`
-6. ✅ Created session management system (this file structure)
-
-**Blockers Encountered:**
-- None - audit completed successfully
+### First Task Created
+- **Title:** Build Operations Dashboard MVP
+- **Priority:** HIGH
+- **Status:** Pending (ready to claim when RESA work resumes)
 
 ---
 
-## Next Steps (Priority Order)
+## 📁 FILES CREATED/UPDATED
 
-1. **Jason to split workload** between Web Claude and VS Claude for revenue recognition work
-2. **Define ApparatusRevenue table schema** - fields, relationships, calculated fields
-3. **Define ApparatusTypeMaster schema** - NETA standard hours by apparatus type
-4. **Build Power Automate flow** for revenue recognition trigger
-5. **Create test data pipeline** - Tasks and Apparatus records
-
----
-
-## Environment Details
-
-| Setting | Value |
-|---------|-------|
-| **Dataverse URL** | https://org7bdbc942.crm.dynamics.com |
-| **Tenant ID** | 270d5723-4b30-4f3b-b9cb-6527be741b42 |
-| **Client ID** | 9df3350f-b3b4-47c4-97b5-499a8b02acc7 |
-| **Publisher Prefix** | cr950_ |
-| **Environment Type** | Development (V2 Fresh Build) |
-
-### Tables Deployed (9)
-- cr950_clients ✅
-- cr950_sites ✅
-- cr950_projects ✅
-- cr950_scopes ✅
-- cr950_scopelabordetails ✅
-- cr950_tasks ✅ (empty)
-- cr950_apparatuses ✅ (empty)
-- cr950_estimators ✅
-- cr950_locations ✅ (empty)
-
-### Tables NOT YET Deployed (7)
-- cr950_apparatusrevenues ❌
-- cr950_apparatustypemasters ❌
-- cr950_employees ❌
-- cr950_quotes ❌
-- cr950_resourceassignments ❌
-- cr950_equipment ❌
-- cr950_businessunits ❌ (replaced by locations)
+```
+C:\RESA_Power_Build\Supabase\
+├── schema\
+│   ├── 10_ai_orchestration.sql       # 297 lines - Tables, enums, views, triggers
+│   └── 11_ai_orchestration_functions.sql  # 360 lines - RPC functions
+├── docs\
+│   └── AI_ORCHESTRATION_PROTOCOL.md  # 343 lines - Full coordination protocol
+└── SCHEMA_REFERENCE.md               # Updated to v3.0.0
+```
 
 ---
 
-## Key File Locations
+## 🗄️ DATABASE STATE
 
-| Purpose | Path |
-|---------|------|
-| **Session Files** | `C:\RESA_Power_Build\Sessions\` |
-| **Schema Audit** | `Documentation\SCHEMA_AUDIT_org7bdbc942_Dec2025.md` |
-| **Flow Migration Guide** | `Documentation\FLOW_SCHEMA_AUDIT_DEC2025.md` |
-| **MCP Server Config** | `MCP_Servers\resa-dataverse-mcp\.env` |
-| **Previous Audits** | `Documentation\03_Progress_Tracking\` |
+**Project:** fxoyniqnrlkxfligbxmg  
+**URL:** https://fxoyniqnrlkxfligbxmg.supabase.co  
+**Plan:** Paid (restored from pause)
 
----
+### Table Count by Category
+- **Operations:** 30 tables (projects, scopes, apparatus, financials, NETA, PSS)
+- **AI Orchestration:** 6 tables (tasks, agents, history, knowledge, registry, handoffs)
+- **Total:** 36 tables
 
-## Test Data Present
-
-| Table | Records | Sample |
-|-------|---------|--------|
-| Clients | 1 | Garney |
-| Sites | 1 | Central Mesa Reuse Plant |
-| Projects | 1 | 677562 - Central Mesa Reuse Plant |
-| Scopes | 1 | IPS NETA ATS |
-| ScopeLaborDetails | 1 | $61,025.63 / 333.75 hrs / $182.85 rate |
-| Estimators | 1 | Garney - Central Mesa Reuse (Rev 2) |
+### AI Agent Status
+| Agent | Status | Notes |
+|-------|--------|-------|
+| desktop-claude | idle | Ready for orchestration |
+| codex-max | idle | Ready for bulk work |
+| vs-code-claude | idle | Ready for precision work |
+| local-ai | offline | Not yet configured |
+| human | idle | Jason available |
 
 ---
 
-## Decision Log
+## 🔜 NEXT PRIORITIES
 
-| Date | Decision | Rationale |
-|------|----------|-----------|
-| 2025-12-02 | Ground-up V2 rebuild | Clean schema design for defined workflow |
-| 2025-12-02 | V2 entity naming | Cleaner names: projects, scopes, scopelabordetails |
-| 2025-12-02 | Location replaces BusinessUnit | Simpler hierarchy |
-| 2025-12-02 | Revenue tables deployed later | Part of active workflow design |
+### Immediate: NETA Level III Exam (Dec 30)
+1. Complete Level IV staging folder work
+2. Review 3 new resource files from GPT Codex
+3. Study time allocation before exam
+4. **$5k bonus → Olares purchase for always-on infrastructure**
 
----
-
-## Notes for Next Claude Instance
-
-- The MCP server `resa-dataverse` is configured for org7bdbc942 but entity map may need V2 name updates
-- PowerShell direct queries work fine (see audit report for examples)
-- Scope type is stored as TEXT ("ATS") not option set in V2
-- All money fields have `_base` counterparts (base currency)
-- Lookup fields use `_cr950_[field]_value` pattern
+### Post-Exam: RESA Dashboard
+1. Claim "Build Operations Dashboard MVP" task
+2. Build project list, scope detail, apparatus grid views
+3. Use AI orchestration layer for coordination
 
 ---
 
-*State file maintained per SESSION_PROTOCOL.md*
+## 📋 QUICK REFERENCE
+
+### Check AI Queue
+```sql
+SELECT * FROM v_active_tasks;
+SELECT * FROM v_agent_dashboard;
+```
+
+### Claim a Task
+```sql
+SELECT claim_task('desktop-claude', 'resa');
+```
+
+### Complete a Task
+```sql
+SELECT complete_task(
+    'task-uuid',
+    'desktop-claude',
+    '{"result": "success"}'::jsonb,
+    ARRAY['path/to/output.html']
+);
+```
+
+---
+
+## 🔗 KEY FILES
+
+| File | Purpose |
+|------|---------|
+| `Supabase/SCHEMA_REFERENCE.md` | Complete schema documentation |
+| `Supabase/docs/AI_ORCHESTRATION_PROTOCOL.md` | Agent coordination guide |
+| `.secrets/SUPABASE_CREDENTIALS.md` | Connection credentials |
+| `Sessions/CURRENT_STATE.md` | This file |
+
+---
+
+*Infrastructure first → Operations naturally follow*
