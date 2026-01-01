@@ -1,8 +1,25 @@
 # RESA Power Supabase Schema - Quick Reference
 
-> **Version:** 3.0.0  
-> **Updated:** December 24, 2025  
-> **Status:** ✅ DEPLOYED - Operations schema + AI Orchestration Layer LIVE
+> **Version:** 3.1.0  
+> **Updated:** December 26, 2025  
+> **Status:** ✅ DEPLOYED - Operations + AI Orchestration + Study Content
+
+---
+
+## 🎯 THE VISION
+
+**One platform. Everything connected. Always available when it matters.**
+
+When a field tech opens their task for a 12.47kV padmount transformer, they don't search scattered folders. Everything is there:
+- NETA ATS 7.2.2 test requirements
+- RESA transformer testing SOP
+- Transformer safety JSA
+- Manufacturer datasheet
+- **Study guide: Transformer Testing Protocol**
+- **Reference sheet: TTR Calculations**
+- **Practice questions: Transformer Testing**
+
+Same query. Same UI. Same junction table. All linked through `apparatus_type`.
 
 ---
 
@@ -16,22 +33,24 @@ C:\RESA_Power_Build\Supabase\schema\
 ├── 03_triggers.sql
 ├── 04_views.sql
 ├── 05_indexes.sql
-├── 06_neta_sop_tables.sql          # Resource linking tables
+├── 06_neta_sop_tables.sql              # Resource linking tables
 ├── 07_equipment_project_assignment.sql
 ├── 08_apparatus_completion_workflow.sql
-├── 09_schema_additions.sql         # Operational fields + rollup views
-├── 09b_enum_updates.sql            # Assessment value additions
-├── 10_ai_orchestration.sql         # ⭐ AI task queue, agent state, handoffs
-└── 11_ai_orchestration_functions.sql # ⭐ RPC functions for coordination
+├── 09_schema_additions.sql             # Operational fields + rollup views
+├── 09b_enum_updates.sql                # Assessment value additions
+├── 10_ai_orchestration.sql             # AI task queue, agent state, handoffs
+├── 11_ai_orchestration_functions.sql   # RPC functions for coordination
+└── 12_study_content.sql                # ⭐ NEW - Study guides, questions, progress
 ```
 
 ## 📋 Additional Documentation
 
 - [EXCEL_TO_DATABASE_MAPPING.md](EXCEL_TO_DATABASE_MAPPING.md) - Field mapping from Excel trackers
+- [AI_ORCHESTRATION_PROTOCOL.md](docs/AI_ORCHESTRATION_PROTOCOL.md) - Agent coordination guide
 
 ---
 
-## Table Summary (36 Tables)
+## Table Summary (40 Tables)
 
 | # | Table | Purpose | Rows |
 |---|-------|---------|------|
@@ -65,40 +84,147 @@ C:\RESA_Power_Build\Supabase\schema\
 | 22 | `pss_rfis` | Requests for Information | 0 |
 | 23 | `pss_activity_log` | Audit trail | 0 |
 | **NETA & Resource Linking** ||||
-| 24 | `neta_procedures` | NETA standard sections (ATS/MTS/ECS/ETT) | 0 |
-| 25 | `neta_test_items` | Individual test steps per procedure | 0 |
+| 24 | `neta_procedures` | NETA standard sections (ATS/MTS/ECS/ETT) | 66 |
+| 25 | `neta_test_items` | Individual test steps per procedure | 956 |
 | 26 | `neta_test_templates` | Legacy test templates | 0 |
 | 27 | `sops` | Company Standard Operating Procedures | 0 |
 | 28 | `safety_documents` | JSAs, PPE requirements, arc flash | 0 |
 | 29 | `datasheets` | Manufacturer specs, product data | 0 |
 | 30 | `apparatus_type_resources` | **Junction table** linking types → resources | 0 |
+| **AI Orchestration** ||||
+| 31 | `ai_tasks` | Central task queue for agent coordination | 1 |
+| 32 | `ai_agent_state` | Real-time status of each AI agent | 5 |
+| 33 | `ai_task_history` | Audit trail of all task changes | 0 |
+| 34 | `ai_knowledge` | Structured knowledge base for RAG | 0 |
+| 35 | `content_registry` | Inventory of all produced content | 0 |
+| 36 | `ai_handoffs` | Explicit agent-to-agent transfers | 0 |
+| **Study Content** ⭐ NEW ||||
+| 37 | `study_content` | Study guides, reference sheets (markdown/HTML) | 0 |
+| 38 | `study_questions` | Practice question bank | 0 |
+| 39 | `apparatus_type_questions` | Junction: questions ↔ apparatus types | 0 |
+| 40 | `user_study_progress` | User progress tracking (auth Phase 2) | 0 |
 
 ---
 
-## Resource Linking Architecture
+## 🔗 Resource Linking Architecture - THE CORE PATTERN
+
+**Everything flows through `apparatus_type_resources`.**
 
 ```
 ┌──────────────────┐         ┌──────────────────────────────┐
 │  apparatus_types │─────────│  apparatus_type_resources    │
-│  (e.g., MV CB)   │    1:N  │  (junction table)            │
-│  + neta_section_ │         └──────────────┬───────────────┘
-│    ats/mts/ecs   │                        │
-└──────────────────┘         ┌──────────────┼───────────────┐
-                             │              │               │
-                             ▼              ▼               ▼
-                  ┌─────────────┐  ┌─────────────┐  ┌────────────┐
-                  │    neta_    │  │    sops     │  │  safety_   │
-                  │ procedures  │  │             │  │ documents  │
-                  └──────┬──────┘  └─────────────┘  └────────────┘
-                         │                                │
-                         ▼                                ▼
-                  ┌─────────────┐                  ┌────────────┐
-                  │ neta_test_  │                  │ datasheets │
-                  │   items     │                  └────────────┘
-                  └─────────────┘
+│  (e.g., Power    │    1:N  │  (THE JUNCTION TABLE)        │
+│   Transformer)   │         │  resource_id + resource_type │
+└──────────────────┘         └──────────────┬───────────────┘
+                                            │
+         ┌──────────────┬───────────────────┼───────────────────┬──────────────┐
+         │              │                   │                   │              │
+         ▼              ▼                   ▼                   ▼              ▼
+  ┌─────────────┐ ┌─────────────┐   ┌─────────────┐   ┌────────────┐ ┌────────────────┐
+  │    neta_    │ │    sops     │   │   safety_   │   │ datasheets │ │ study_content  │
+  │ procedures  │ │             │   │  documents  │   │            │ │   ⭐ NEW       │
+  │  (66 rows)  │ │             │   │             │   │            │ │                │
+  └──────┬──────┘ └─────────────┘   └─────────────┘   └────────────┘ └────────────────┘
+         │
+         ▼
+  ┌─────────────┐
+  │ neta_test_  │
+  │   items     │
+  │ (956 rows)  │
+  └─────────────┘
 ```
 
-**Flow:** Apparatus → apparatus_type → apparatus_type_resources → All linked resources automatically available to techs
+**Field Tech Query Flow:**
+```
+Tech opens: "TRF-001 | 12.47kV Padmount Transformer"
+    └── apparatus.apparatus_type_id = 'Power Transformer'
+        └── apparatus_type_resources WHERE apparatus_type_id = [transformer-uuid]
+            ├── neta_procedures (ATS 7.2.2, MTS 7.2.2)
+            ├── sops (RESA-SOP-TRF-001)
+            ├── safety_documents (JSA-Transformer)
+            ├── datasheets (Cooper Envirotemp FR3)
+            └── study_content (Transformer Testing Guide, Oil/DGA Analysis, TTR Reference)
+```
+
+**One query. All resources. Always connected.**
+
+---
+
+## ⭐ Study Content Schema (NEW - December 26, 2025)
+
+### Tables
+
+| Table | Purpose | Key Columns |
+|-------|---------|-------------|
+| `study_content` | Guides, reference sheets | slug, certification_level, domain, body_markdown, quality_tier, embedding |
+| `study_questions` | Practice question bank | stem, choices, explanation, difficulty, ksa_mappings, analytics |
+| `apparatus_type_questions` | Question ↔ Type linking | apparatus_type_id, question_id, relevance_score |
+| `user_study_progress` | User progress tracking | user_id, content_id, mastery_level, time_spent |
+
+### New Enums
+
+| Enum | Values |
+|------|--------|
+| `certification_level` | I, II, III, IV |
+| `content_quality_tier` | gold, high_quality, complete, draft, needs_review |
+| `question_type` | multiple_choice, true_false, calculation, scenario, fill_blank, matching |
+
+### Resource Type Enum Extensions
+
+Added to existing `resource_type`:
+- `study_guide` - Comprehensive study materials
+- `reference_sheet` - Quick reference cards
+- `practice_questions` - Question collections
+
+### Key Functions
+
+| Function | Purpose |
+|----------|---------|
+| `register_study_content()` | Migration helper - load from HTML files |
+| `link_content_to_apparatus_type()` | Connect content to equipment types |
+| `publish_study_content()` | Make content live |
+| `get_apparatus_resources()` | **Field tech query** - all resources for apparatus |
+| `register_question()` | Add question to bank |
+| `get_apparatus_type_questions()` | Get practice questions for equipment type |
+| `record_content_progress()` | Track user study time/completion |
+| `record_question_attempt()` | Track question answers with analytics |
+
+### Views
+
+| View | Purpose |
+|------|---------|
+| `v_apparatus_type_all_resources` | Unified view: NETA + SOPs + Safety + Study Content |
+| `v_apparatus_study_content` | Study content for specific apparatus |
+| `v_study_content_inventory` | Content inventory by domain/level/quality |
+| `v_question_bank_stats` | Question analytics by domain/level |
+
+### Migration Path
+
+```sql
+-- 1. Register content from existing HTML
+SELECT register_study_content(
+    'Transformer Testing Protocol',           -- title
+    'transformer-testing-protocol',           -- slug
+    'study_guide',                            -- resource_type
+    'III',                                    -- certification_level
+    'transformers',                           -- domain
+    '# Transformer Testing Protocol...',      -- body_markdown
+    'Complete testing guide...',              -- summary
+    '10-Transformer-Testing-Protocol.html',   -- original_file
+    1057,                                     -- line_count
+    ARRAY['ETT-III-2.4', 'ETT-III-2.7'],     -- ksa_mappings
+    ARRAY['ATS-7.2.2', 'MTS-7.2.2']          -- neta_sections
+);
+
+-- 2. Link to apparatus type
+SELECT link_content_to_apparatus_type(
+    'transformer-testing-protocol',
+    'Power Transformer'
+);
+
+-- 3. Publish
+SELECT publish_study_content('transformer-testing-protocol');
+```
 
 ---
 
@@ -109,14 +235,21 @@ C:\RESA_Power_Build\Supabase\schema\
 | `project_status` | Draft, Quoted, Won, Active, On Hold, Complete, Cancelled |
 | `scope_status` | Not Started, In Progress, On Hold, Complete, Cancelled |
 | `apparatus_status` | Not Started, In Progress, Pending Review, Complete, Cancelled |
-| `apparatus_assessment` | Pass, Fail, Marginal, Needs Repair, Deferred, Not Tested, **Acceptable**, **Non-Serviceable**, **Minor Deficiency** |
-| `apparatus_availability` | **Ready, On Hold, Not Available** ⭐ NEW |
+| `apparatus_assessment` | Pass, Fail, Marginal, Needs Repair, Deferred, Not Tested, Acceptable, Non-Serviceable, Minor Deficiency |
+| `apparatus_availability` | Ready, On Hold, Not Available |
 | `revenue_type` | Testing, Travel, Per Diem, Materials, Equipment, Engineering, Report, Other |
 | `neta_standard_type` | ATS, MTS, ECS, ETT |
 | `neta_test_type` | visual_mechanical, electrical, optional |
 | `sop_category` | safety, testing, commissioning, maintenance, documentation, quality, administrative, equipment_specific, other |
 | `safety_document_type` | jsa, sds, hazard_alert, ppe_requirement, lockout_tagout, arc_flash, confined_space, hot_work, electrical_safety, environmental, other |
-| `resource_type` | neta_procedure, sop, safety_document, datasheet, document, video, checklist |
+| `resource_type` | neta_procedure, sop, safety_document, datasheet, document, video, checklist, **study_guide**, **reference_sheet**, **practice_questions** |
+| `ai_task_type` | create, enhance, review, assemble, migrate, document, test, deploy |
+| `ai_task_status` | pending, claimed, blocked, review, complete, failed |
+| `ai_agent` | desktop-claude, codex-max, vs-code-claude, local-ai, human |
+| `ai_task_priority` | critical, high, normal, low, background |
+| `certification_level` | I, II, III, IV |
+| `content_quality_tier` | gold, high_quality, complete, draft, needs_review |
+| `question_type` | multiple_choice, true_false, calculation, scenario, fill_blank, matching |
 
 ---
 
@@ -141,6 +274,8 @@ The `apparatus_types` table includes columns to directly link equipment categori
 | Financial rollups | Updates scope/project summaries when revenue changes |
 | PSS status change | Logs to `pss_activity_log` |
 | Rollup counts | Cascades: apparatus → task → scope → project |
+| Study content updated | Auto-updates `updated_at` timestamp |
+| Question analytics | Updates `times_shown`, `times_correct` on attempts |
 
 ---
 
@@ -152,45 +287,44 @@ The `apparatus_types` table includes columns to directly link equipment categori
 | `v_scope_dashboard` | Scopes with project context, labor rates |
 | `v_apparatus_tracking` | Apparatus with full hierarchy |
 | `v_pss_dashboard` | PSS studies with doc/RFI counts |
-
-### ⭐ NEW Operational Views (09_schema_additions.sql)
-
-| View | Purpose | Answers |
-|------|---------|---------|
-| `v_apparatus_operational` | Daily scheduling | What's ready to work? |
-| `v_project_apparatus_summary` | Per-project KPIs | Your Excel dashboard header |
-| `v_apparatus_by_category` | Category breakdown | Which equipment types need work? |
-| **`v_master_operations`** | **Multi-project dashboard** | **All 10-15 projects at once** |
-| `v_resource_allocation` | Staffing decisions | Where should I send people? |
-| `v_equipment_needs` | Test equipment planning | What equipment goes where? |
-| `v_blockers_summary` | Bottleneck identification | What's stopping us? |
-| `v_schedule_health` | Risk identification | What's at risk/overdue? |
-| `v_task_rollup_dates` | Task-level aggregations | Task date rollups |
-| `v_scope_rollup_dates` | Scope-level aggregations | Scope date rollups |
-| `v_project_rollup_dates` | Executive summary | All project rollups |
+| `v_apparatus_operational` | Daily scheduling - what's ready? |
+| `v_project_apparatus_summary` | Per-project KPIs |
+| `v_apparatus_by_category` | Category breakdown |
+| **`v_master_operations`** | Multi-project dashboard |
+| `v_resource_allocation` | Staffing decisions |
+| `v_equipment_needs` | Test equipment planning |
+| `v_blockers_summary` | Bottleneck identification |
+| `v_schedule_health` | Risk identification |
+| `v_active_tasks` | AI tasks in progress |
+| `v_agent_dashboard` | AI agent status |
+| `v_pending_handoffs` | AI handoffs waiting |
+| **`v_apparatus_type_all_resources`** | **All resources for equipment type** |
+| **`v_apparatus_study_content`** | **Study content for apparatus** |
+| **`v_study_content_inventory`** | **Content by domain/level** |
+| **`v_question_bank_stats`** | **Question analytics** |
 
 ---
 
-## ⭐ New Operational Fields (09_schema_additions.sql)
+## AI Orchestration Layer
 
-### Apparatus Table Additions
-| Column | Type | Purpose |
-|--------|------|---------|
-| `availability` | enum | Ready/On Hold/Not Available |
-| `date_due` | DATE | Target completion date |
-| `designation` | VARCHAR | Equipment designation ID |
-| `drawing_reference` | VARCHAR | Reference to electrical drawing |
-| `datasheet_complete` | BOOLEAN | Data collection status |
-| `task_delays` | INTEGER | Delay count |
-| `priority` | INTEGER | Work priority (1=High) |
+### Tables (6)
+| Table | Purpose |
+|-------|---------|
+| `ai_tasks` | Central task queue for agent coordination |
+| `ai_agent_state` | Real-time status of each AI agent |
+| `ai_task_history` | Audit trail of all task changes |
+| `ai_knowledge` | Structured knowledge base for RAG |
+| `content_registry` | Inventory of all produced content |
+| `ai_handoffs` | Explicit agent-to-agent transfers |
 
-### Rollup Date Fields
-All levels (Task, Scope, Project) now support:
-- `date_due` - Target date
-- `earliest_*_due` - MIN of child due dates
-- `latest_*_due` - MAX of child due dates  
-- `earliest_*_start` - First work started
-- `latest_*_complete` - Last work finished
+### Key Functions
+| Function | Purpose |
+|----------|---------|
+| `claim_task()` | Agent claims next available task |
+| `complete_task()` | Mark task done with output |
+| `create_task()` | Add new task to queue |
+| `handoff_task()` | Transfer work between agents |
+| `agent_heartbeat()` | Agent status check-in |
 
 ---
 
@@ -202,84 +336,68 @@ All levels (Task, Scope, Project) now support:
 
 ---
 
-## Next Steps - Schema Deployment
+## Deployment Status
 
-### Immediate (Run Once)
-1. ✅ Core schema deployed
-2. ✅ NETA data imported (66 procedures, 956 test items)
-3. 🔲 **Deploy `09_schema_additions.sql`** - Operational fields + views
-4. 🔲 **Deploy `09b_enum_updates.sql`** - Assessment enum values
+### ✅ Deployed
+- Core schema (01-05)
+- NETA/Resource linking (06)
+- Equipment assignment (07)
+- Apparatus workflow (08)
+- Operational views (09, 09b)
+- AI Orchestration (10, 11)
 
-### Data Population
-1. 🔲 Link apparatus_types to NETA sections via apparatus_type_resources
-2. 🔲 Add safety documents (JSAs, arc flash)
-3. 🔲 Populate datasheets for common manufacturers
+### 🔲 Ready to Deploy
+- **Study Content (12)** - Run `schema/12_study_content.sql`
 
-### Import Development
-1. 🔲 Update import function with new field mappings
-2. 🔲 Test with Garney tracker data
-3. 🔲 Build Excel → JSON export for new fields
+### Data Loaded
+- 66 NETA procedures (33 ATS + 33 MTS)
+- 956 test items
+- 5 AI agents initialized
+- 1 task queued (Dashboard MVP)
+
+### Next: Content Migration
+1. Deploy `12_study_content.sql`
+2. Build HTML → Markdown migration script
+3. Load NETA 2/3/4 study guides
+4. Link to apparatus_types
+5. Generate embeddings for RAG
 
 ---
 
-## AI Orchestration Layer (NEW - December 24, 2025)
+## The Connected Platform
 
-### Schema Files
 ```
-schema/10_ai_orchestration.sql        # Tables, enums, triggers, views
-schema/11_ai_orchestration_functions.sql  # RPC functions for task management
+┌─────────────────────────────────────────────────────────────────────────┐
+│                         RESA POWER PLATFORM                             │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                         │
+│   FIELD TECH                    PM                      EXECUTIVE       │
+│   ┌─────────────────┐   ┌─────────────────┐   ┌─────────────────┐      │
+│   │ My Tasks        │   │ Project Status  │   │ Multi-Project   │      │
+│   │ ├─ TRF-001     │   │ ├─ Progress     │   │ Dashboard       │      │
+│   │ │  └─ Resources│   │ ├─ Budget       │   │ ├─ Revenue      │      │
+│   │ │     ├─ NETA  │   │ ├─ Resources    │   │ ├─ Utilization  │      │
+│   │ │     ├─ SOP   │   │ └─ Timeline     │   │ └─ Pipeline     │      │
+│   │ │     ├─ Safety│   └─────────────────┘   └─────────────────┘      │
+│   │ │     ├─ Study │                                                   │
+│   │ │     └─ Quiz  │   SHARED FOUNDATION                               │
+│   │ └─ Hours Entry │   ═══════════════════════════════════════════     │
+│   └─────────────────┘   apparatus_type_resources (junction table)      │
+│                         └─ NETA procedures (66)                        │
+│                         └─ SOPs                                        │
+│                         └─ Safety documents                            │
+│                         └─ Datasheets                                  │
+│                         └─ Study content (guides, refs, questions)     │
+│                                                                         │
+│   AI ORCHESTRATION          STUDY PLATFORM         ANALYTICS            │
+│   ┌─────────────────┐   ┌─────────────────┐   ┌─────────────────┐      │
+│   │ Task Queue      │   │ Study Guides    │   │ Progress Track  │      │
+│   │ Agent State     │   │ Practice Tests  │   │ Question Stats  │      │
+│   │ Handoffs        │   │ Reference Sheets│   │ Mastery Levels  │      │
+│   │ Knowledge Base  │   │ RAG Search      │   │ Team Readiness  │      │
+│   └─────────────────┘   └─────────────────┘   └─────────────────┘      │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+
+Everything connected. Everything queryable. Everything available when it matters.
 ```
-
-### Deployment
-```sql
--- Run in Supabase SQL Editor
-\i DEPLOY_ORCHESTRATION.sql
-```
-
-### New Tables (6)
-
-| Table | Purpose |
-|-------|---------|
-| `ai_tasks` | Central task queue for agent coordination |
-| `ai_agent_state` | Real-time status of each AI agent |
-| `ai_task_history` | Audit trail of all task changes |
-| `ai_knowledge` | Structured knowledge base for RAG |
-| `content_registry` | Inventory of all produced content |
-| `ai_handoffs` | Explicit agent-to-agent transfers |
-
-### New Enums
-
-| Enum | Values |
-|------|--------|
-| `task_type` | create, enhance, review, assemble, migrate, document, test, deploy |
-| `task_status` | pending, claimed, blocked, review, complete, failed |
-| `ai_agent` | desktop-claude, codex-max, vs-code-claude, local-ai, human |
-| `task_priority` | critical, high, normal, low, background |
-
-### Key Functions
-
-| Function | Purpose |
-|----------|---------|
-| `claim_task()` | Agent claims next available task |
-| `complete_task()` | Mark task done with output |
-| `fail_task()` | Mark task failed with error |
-| `create_task()` | Add new task to queue |
-| `handoff_task()` | Transfer work between agents |
-| `acknowledge_handoff()` | Confirm receipt of handoff |
-| `get_my_tasks()` | List tasks for an agent |
-| `get_pending_handoffs()` | Check for incoming work |
-| `agent_heartbeat()` | Agent status check-in |
-| `register_content()` | Add to content registry |
-
-### Views
-
-| View | Purpose |
-|------|---------|
-| `v_active_tasks` | Current work in progress |
-| `v_agent_dashboard` | Agent status overview |
-| `v_pending_handoffs` | Waiting transfers |
-
-### Documentation
-- [AI_ORCHESTRATION_PROTOCOL.md](docs/AI_ORCHESTRATION_PROTOCOL.md) - Full protocol guide
-
-
