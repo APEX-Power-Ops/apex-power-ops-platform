@@ -4,38 +4,32 @@ Check this file at the start of each session.
 
 ---
 
-_No messages yet._
+*No pending messages*
 
 ---
 
-## Template
+## Message Template
 
 ```markdown
-## [Date] [Time] - From [Desktop/Jason]
+## YYYY-MM-DD HH:MM - From [Desktop/Jason]
 
 **Subject:** [Brief description]
-
-[Message content]
-
-**Action needed:** [Yes/No]
+**Priority:** [High/Medium/Low]
+**Action Required:** [Yes/No]
 **Blocking:** [Yes/No]
-```
 
-## 2025-12-11 20:00 - From Desktop
+### Context
+[Why this handoff exists]
 
-**Subject:** Session 8 Complete - Ready for Reassessment
+### Details
+[Specific information, file paths, decisions]
 
-**Completed:**
-- Verified git cleanup already committed by you (58d8dfd)
-- Updated SYNC.md with current state
-- Appended to SESSION_LOG.md
+### What You Need to Do
+[Clear action items]
 
-**Status:**
-- Strategic reassessment pending
-- Jason will provide clarifying answers in next session
-- Both of us should complete independent assessments
-
-**No action needed** - Just FYI on handoff state.
+### Acceptance Criteria
+- [ ] [Criterion 1]
+- [ ] [Criterion 2]
 
 ---
-
+```
