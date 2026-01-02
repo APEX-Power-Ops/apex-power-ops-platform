@@ -1,0 +1,1647 @@
+﻿================================================================================
+ALL FORMULAS BY SHEET
+================================================================================
+
+============================================================
+SHEET: Submittal Specs
+============================================================
+
+============================================================
+SHEET: Equipment Reference
+============================================================
+
+Pattern (used 3x):
+  Example: M1 : IFERROR(INDIRECT("'" & L1 & "'!P4"),"")
+  Cells: M1, M2, M4
+
+Pattern (used 19x):
+  Example: M5 : IFERROR(INDIRECT("'"&L5&"'!P4"),"")
+  Cells: M5, M6, M7, M8, M9...
+
+Pattern (used 2x):
+  Example: U3 : IFERROR(R3/(S3*T3),"")
+  Cells: U3, U4
+
+Pattern (used 2x):
+  Example: T5 : IFERROR(R5/(S5*U5),"")
+  Cells: T5, T6
+
+Pattern (used 2x):
+  Example: S7 : IFERROR(R7/(T7*U7),"")
+  Cells: S7, S8
+
+Pattern (used 1x):
+  Example: M3 : SUM(M4:M23)
+  Cells: M3
+
+============================================================
+SHEET: Print_Template
+============================================================
+
+Pattern (used 1x):
+  Example: D46 : IF(E46="","",IF($D$3="MTS",_xlfn.XLOOKUP(E46,'Equipment Reference'!D:D,'Equipment Reference'!C:C,0,0,1),IF($D$3="ATS",_xlfn.XLOOKUP(E46,'Equipment Reference'!D:D,'Equipment Reference'!B:B,0,0,1),"Job Type?")))
+  Cells: D46
+
+Pattern (used 1x):
+  Example: B2 : RIGHT(CELL("filename", B2), LEN(CELL("filename", B2)) - FIND("]", CELL("filename", B2)))
+  Cells: B2
+
+============================================================
+SHEET: 1.X
+============================================================
+
+Pattern (used 11x):
+  Example: N6 : $J$3*M6
+  Cells: N6, N7, N8, N9, N10...
+
+Pattern (used 483x):
+  Example: I6 : IF(OR(C6="",ISBLANK(C6)),"",IF($C$4="MTS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[MTS23],0,0,1),IF($C$4="ATS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[ATS25],0,0,1),"Job Type?")))
+  Cells: I6, I7, I8, I9, I10...
+
+Pattern (used 483x):
+  Example: J6 : IF(OR(C6="",ISBLANK(C6)),"",IFERROR(C6*I6,""))
+  Cells: J6, J7, J8, J9, J10...
+
+Pattern (used 483x):
+  Example: D6 : IF(OR(E6="",ISBLANK(E6)),"",IF($C$4="MTS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[MTS],0,0,1),IF($C$4="ATS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[ATS],0,0,1),"Job Type?")))
+  Cells: D6, D7, D8, D9, D10...
+
+Pattern (used 2x):
+  Example: T6 : IFERROR($N$13/(R6*U6),"")
+  Cells: T6, T7
+
+Pattern (used 2x):
+  Example: S9 : IFERROR($N$13/(T9*U9),"")
+  Cells: S9, S10
+
+Pattern (used 1x):
+  Example: O4 : IFERROR((P4-P3)/P3,"0%")
+  Cells: O4
+
+Pattern (used 6x):
+  Example: R3 : IFERROR((SUM(N14)*M4),"")
+  Cells: R3, R4, R6, R7, R9...
+
+Pattern (used 2x):
+  Example: O14 : IFERROR(P14/N14,"$0")
+  Cells: O14, O19
+
+Pattern (used 2x):
+  Example: U3 : IFERROR(R3/(S3*T3),"")
+  Cells: U3, U4
+
+Pattern (used 10x):
+  Example: P21 : M21*N21*O21
+  Cells: P21, P22, P23, P24, P25...
+
+Pattern (used 11x):
+  Example: P6 : N6*O6
+  Cells: P6, P7, P8, P9, P10...
+
+Pattern (used 1x):
+  Example: P4 : P3*M4*N4
+  Cells: P4
+
+Pattern (used 1x):
+  Example: B2 : RIGHT(CELL("filename", B2), LEN(CELL("filename", B2)) - FIND("]", CELL("filename", B2)))
+  Cells: B2
+
+Pattern (used 2x):
+  Example: M14 : SUM(M6:M13)
+  Cells: M14, M19
+
+Pattern (used 2x):
+  Example: N14 : SUM(N6:N13)
+  Cells: N14, N19
+
+Pattern (used 1x):
+  Example: P3 : SUM(P14,P19,P26,P33)
+  Cells: P3
+
+Pattern (used 4x):
+  Example: P14 : SUM(P6:P13)
+  Cells: P14, P19, P26, P33
+
+Pattern (used 1x):
+  Example: J3 : SUMIF(J6:J488,"<>",J6:J488)
+  Cells: J3
+
+============================================================
+SHEET: 2.X
+============================================================
+
+Pattern (used 11x):
+  Example: N6 : $J$3*M6
+  Cells: N6, N7, N8, N9, N10...
+
+Pattern (used 483x):
+  Example: I6 : IF(OR(C6="",ISBLANK(C6)),"",IF($C$4="MTS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[MTS23],0,0,1),IF($C$4="ATS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[ATS25],0,0,1),"Job Type?")))
+  Cells: I6, I7, I8, I9, I10...
+
+Pattern (used 483x):
+  Example: J6 : IF(OR(C6="",ISBLANK(C6)),"",IFERROR(C6*I6,""))
+  Cells: J6, J7, J8, J9, J10...
+
+Pattern (used 483x):
+  Example: D6 : IF(OR(E6="",ISBLANK(E6)),"",IF($C$4="MTS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[MTS],0,0,1),IF($C$4="ATS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[ATS],0,0,1),"Job Type?")))
+  Cells: D6, D7, D8, D9, D10...
+
+Pattern (used 2x):
+  Example: T6 : IFERROR($N$13/(R6*U6),"")
+  Cells: T6, T7
+
+Pattern (used 2x):
+  Example: S9 : IFERROR($N$13/(T9*U9),"")
+  Cells: S9, S10
+
+Pattern (used 1x):
+  Example: O4 : IFERROR((P4-P3)/P3,"0%")
+  Cells: O4
+
+Pattern (used 6x):
+  Example: R3 : IFERROR((SUM(N14)*M4),"")
+  Cells: R3, R4, R6, R7, R9...
+
+Pattern (used 2x):
+  Example: O14 : IFERROR(P14/N14,"$0")
+  Cells: O14, O19
+
+Pattern (used 2x):
+  Example: U3 : IFERROR(R3/(S3*T3),"")
+  Cells: U3, U4
+
+Pattern (used 10x):
+  Example: P21 : M21*N21*O21
+  Cells: P21, P22, P23, P24, P25...
+
+Pattern (used 11x):
+  Example: P6 : N6*O6
+  Cells: P6, P7, P8, P9, P10...
+
+Pattern (used 1x):
+  Example: P4 : P3*M4*N4
+  Cells: P4
+
+Pattern (used 1x):
+  Example: B2 : RIGHT(CELL("filename", B2), LEN(CELL("filename", B2)) - FIND("]", CELL("filename", B2)))
+  Cells: B2
+
+Pattern (used 2x):
+  Example: M14 : SUM(M6:M13)
+  Cells: M14, M19
+
+Pattern (used 2x):
+  Example: N14 : SUM(N6:N13)
+  Cells: N14, N19
+
+Pattern (used 1x):
+  Example: P3 : SUM(P14,P19,P26,P33)
+  Cells: P3
+
+Pattern (used 4x):
+  Example: P14 : SUM(P6:P13)
+  Cells: P14, P19, P26, P33
+
+Pattern (used 1x):
+  Example: J3 : SUMIF(J6:J488,"<>",J6:J488)
+  Cells: J3
+
+============================================================
+SHEET: 3.X
+============================================================
+
+Pattern (used 11x):
+  Example: N6 : $J$3*M6
+  Cells: N6, N7, N8, N9, N10...
+
+Pattern (used 483x):
+  Example: I6 : IF(OR(C6="",ISBLANK(C6)),"",IF($C$4="MTS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[MTS23],0,0,1),IF($C$4="ATS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[ATS25],0,0,1),"Job Type?")))
+  Cells: I6, I7, I8, I9, I10...
+
+Pattern (used 483x):
+  Example: J6 : IF(OR(C6="",ISBLANK(C6)),"",IFERROR(C6*I6,""))
+  Cells: J6, J7, J8, J9, J10...
+
+Pattern (used 483x):
+  Example: D6 : IF(OR(E6="",ISBLANK(E6)),"",IF($C$4="MTS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[MTS],0,0,1),IF($C$4="ATS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[ATS],0,0,1),"Job Type?")))
+  Cells: D6, D7, D8, D9, D10...
+
+Pattern (used 2x):
+  Example: T6 : IFERROR($N$13/(R6*U6),"")
+  Cells: T6, T7
+
+Pattern (used 2x):
+  Example: S9 : IFERROR($N$13/(T9*U9),"")
+  Cells: S9, S10
+
+Pattern (used 1x):
+  Example: O4 : IFERROR((P4-P3)/P3,"0%")
+  Cells: O4
+
+Pattern (used 6x):
+  Example: R3 : IFERROR((SUM(N14)*M4),"")
+  Cells: R3, R4, R6, R7, R9...
+
+Pattern (used 2x):
+  Example: O14 : IFERROR(P14/N14,"$0")
+  Cells: O14, O19
+
+Pattern (used 2x):
+  Example: U3 : IFERROR(R3/(S3*T3),"")
+  Cells: U3, U4
+
+Pattern (used 10x):
+  Example: P21 : M21*N21*O21
+  Cells: P21, P22, P23, P24, P25...
+
+Pattern (used 11x):
+  Example: P6 : N6*O6
+  Cells: P6, P7, P8, P9, P10...
+
+Pattern (used 1x):
+  Example: P4 : P3*M4*N4
+  Cells: P4
+
+Pattern (used 1x):
+  Example: B2 : RIGHT(CELL("filename", B2), LEN(CELL("filename", B2)) - FIND("]", CELL("filename", B2)))
+  Cells: B2
+
+Pattern (used 2x):
+  Example: M14 : SUM(M6:M13)
+  Cells: M14, M19
+
+Pattern (used 2x):
+  Example: N14 : SUM(N6:N13)
+  Cells: N14, N19
+
+Pattern (used 1x):
+  Example: P3 : SUM(P14,P19,P26,P33)
+  Cells: P3
+
+Pattern (used 4x):
+  Example: P14 : SUM(P6:P13)
+  Cells: P14, P19, P26, P33
+
+Pattern (used 1x):
+  Example: J3 : SUMIF(J6:J488,"<>",J6:J488)
+  Cells: J3
+
+============================================================
+SHEET: 4.X
+============================================================
+
+Pattern (used 11x):
+  Example: N6 : $J$3*M6
+  Cells: N6, N7, N8, N9, N10...
+
+Pattern (used 483x):
+  Example: I6 : IF(OR(C6="",ISBLANK(C6)),"",IF($C$4="MTS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[MTS23],0,0,1),IF($C$4="ATS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[ATS25],0,0,1),"Job Type?")))
+  Cells: I6, I7, I8, I9, I10...
+
+Pattern (used 483x):
+  Example: J6 : IF(OR(C6="",ISBLANK(C6)),"",IFERROR(C6*I6,""))
+  Cells: J6, J7, J8, J9, J10...
+
+Pattern (used 483x):
+  Example: D6 : IF(OR(E6="",ISBLANK(E6)),"",IF($C$4="MTS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[MTS],0,0,1),IF($C$4="ATS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[ATS],0,0,1),"Job Type?")))
+  Cells: D6, D7, D8, D9, D10...
+
+Pattern (used 2x):
+  Example: T6 : IFERROR($N$13/(R6*U6),"")
+  Cells: T6, T7
+
+Pattern (used 2x):
+  Example: S9 : IFERROR($N$13/(T9*U9),"")
+  Cells: S9, S10
+
+Pattern (used 1x):
+  Example: O4 : IFERROR((P4-P3)/P3,"0%")
+  Cells: O4
+
+Pattern (used 6x):
+  Example: R3 : IFERROR((SUM(N14)*M4),"")
+  Cells: R3, R4, R6, R7, R9...
+
+Pattern (used 2x):
+  Example: O14 : IFERROR(P14/N14,"$0")
+  Cells: O14, O19
+
+Pattern (used 2x):
+  Example: U3 : IFERROR(R3/(S3*T3),"")
+  Cells: U3, U4
+
+Pattern (used 10x):
+  Example: P21 : M21*N21*O21
+  Cells: P21, P22, P23, P24, P25...
+
+Pattern (used 11x):
+  Example: P6 : N6*O6
+  Cells: P6, P7, P8, P9, P10...
+
+Pattern (used 1x):
+  Example: P4 : P3*M4*N4
+  Cells: P4
+
+Pattern (used 1x):
+  Example: B2 : RIGHT(CELL("filename", B2), LEN(CELL("filename", B2)) - FIND("]", CELL("filename", B2)))
+  Cells: B2
+
+Pattern (used 2x):
+  Example: M14 : SUM(M6:M13)
+  Cells: M14, M19
+
+Pattern (used 2x):
+  Example: N14 : SUM(N6:N13)
+  Cells: N14, N19
+
+Pattern (used 1x):
+  Example: P3 : SUM(P14,P19,P26,P33)
+  Cells: P3
+
+Pattern (used 4x):
+  Example: P14 : SUM(P6:P13)
+  Cells: P14, P19, P26, P33
+
+Pattern (used 1x):
+  Example: J3 : SUMIF(J6:J488,"<>",J6:J488)
+  Cells: J3
+
+============================================================
+SHEET: 5.X
+============================================================
+
+Pattern (used 11x):
+  Example: N6 : $J$3*M6
+  Cells: N6, N7, N8, N9, N10...
+
+Pattern (used 483x):
+  Example: I6 : IF(OR(C6="",ISBLANK(C6)),"",IF($C$4="MTS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[MTS23],0,0,1),IF($C$4="ATS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[ATS25],0,0,1),"Job Type?")))
+  Cells: I6, I7, I8, I9, I10...
+
+Pattern (used 483x):
+  Example: J6 : IF(OR(C6="",ISBLANK(C6)),"",IFERROR(C6*I6,""))
+  Cells: J6, J7, J8, J9, J10...
+
+Pattern (used 483x):
+  Example: D6 : IF(OR(E6="",ISBLANK(E6)),"",IF($C$4="MTS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[MTS],0,0,1),IF($C$4="ATS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[ATS],0,0,1),"Job Type?")))
+  Cells: D6, D7, D8, D9, D10...
+
+Pattern (used 2x):
+  Example: T6 : IFERROR($N$13/(R6*U6),"")
+  Cells: T6, T7
+
+Pattern (used 2x):
+  Example: S9 : IFERROR($N$13/(T9*U9),"")
+  Cells: S9, S10
+
+Pattern (used 1x):
+  Example: O4 : IFERROR((P4-P3)/P3,"0%")
+  Cells: O4
+
+Pattern (used 6x):
+  Example: R3 : IFERROR((SUM(N14)*M4),"")
+  Cells: R3, R4, R6, R7, R9...
+
+Pattern (used 2x):
+  Example: O14 : IFERROR(P14/N14,"$0")
+  Cells: O14, O19
+
+Pattern (used 2x):
+  Example: U3 : IFERROR(R3/(S3*T3),"")
+  Cells: U3, U4
+
+Pattern (used 10x):
+  Example: P21 : M21*N21*O21
+  Cells: P21, P22, P23, P24, P25...
+
+Pattern (used 11x):
+  Example: P6 : N6*O6
+  Cells: P6, P7, P8, P9, P10...
+
+Pattern (used 1x):
+  Example: P4 : P3*M4*N4
+  Cells: P4
+
+Pattern (used 1x):
+  Example: B2 : RIGHT(CELL("filename", B2), LEN(CELL("filename", B2)) - FIND("]", CELL("filename", B2)))
+  Cells: B2
+
+Pattern (used 2x):
+  Example: M14 : SUM(M6:M13)
+  Cells: M14, M19
+
+Pattern (used 2x):
+  Example: N14 : SUM(N6:N13)
+  Cells: N14, N19
+
+Pattern (used 1x):
+  Example: P3 : SUM(P14,P19,P26,P33)
+  Cells: P3
+
+Pattern (used 4x):
+  Example: P14 : SUM(P6:P13)
+  Cells: P14, P19, P26, P33
+
+Pattern (used 1x):
+  Example: J3 : SUMIF(J6:J488,"<>",J6:J488)
+  Cells: J3
+
+============================================================
+SHEET: 6.X
+============================================================
+
+Pattern (used 11x):
+  Example: N6 : $J$3*M6
+  Cells: N6, N7, N8, N9, N10...
+
+Pattern (used 483x):
+  Example: I6 : IF(OR(C6="",ISBLANK(C6)),"",IF($C$4="MTS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[MTS23],0,0,1),IF($C$4="ATS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[ATS25],0,0,1),"Job Type?")))
+  Cells: I6, I7, I8, I9, I10...
+
+Pattern (used 483x):
+  Example: J6 : IF(OR(C6="",ISBLANK(C6)),"",IFERROR(C6*I6,""))
+  Cells: J6, J7, J8, J9, J10...
+
+Pattern (used 483x):
+  Example: D6 : IF(OR(E6="",ISBLANK(E6)),"",IF($C$4="MTS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[MTS],0,0,1),IF($C$4="ATS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[ATS],0,0,1),"Job Type?")))
+  Cells: D6, D7, D8, D9, D10...
+
+Pattern (used 2x):
+  Example: T6 : IFERROR($N$13/(R6*U6),"")
+  Cells: T6, T7
+
+Pattern (used 2x):
+  Example: S9 : IFERROR($N$13/(T9*U9),"")
+  Cells: S9, S10
+
+Pattern (used 1x):
+  Example: O4 : IFERROR((P4-P3)/P3,"0%")
+  Cells: O4
+
+Pattern (used 6x):
+  Example: R3 : IFERROR((SUM(N14)*M4),"")
+  Cells: R3, R4, R6, R7, R9...
+
+Pattern (used 2x):
+  Example: O14 : IFERROR(P14/N14,"$0")
+  Cells: O14, O19
+
+Pattern (used 2x):
+  Example: U3 : IFERROR(R3/(S3*T3),"")
+  Cells: U3, U4
+
+Pattern (used 10x):
+  Example: P21 : M21*N21*O21
+  Cells: P21, P22, P23, P24, P25...
+
+Pattern (used 11x):
+  Example: P6 : N6*O6
+  Cells: P6, P7, P8, P9, P10...
+
+Pattern (used 1x):
+  Example: P4 : P3*M4*N4
+  Cells: P4
+
+Pattern (used 1x):
+  Example: B2 : RIGHT(CELL("filename", B2), LEN(CELL("filename", B2)) - FIND("]", CELL("filename", B2)))
+  Cells: B2
+
+Pattern (used 2x):
+  Example: M14 : SUM(M6:M13)
+  Cells: M14, M19
+
+Pattern (used 2x):
+  Example: N14 : SUM(N6:N13)
+  Cells: N14, N19
+
+Pattern (used 1x):
+  Example: P3 : SUM(P14,P19,P26,P33)
+  Cells: P3
+
+Pattern (used 4x):
+  Example: P14 : SUM(P6:P13)
+  Cells: P14, P19, P26, P33
+
+Pattern (used 1x):
+  Example: J3 : SUMIF(J6:J488,"<>",J6:J488)
+  Cells: J3
+
+============================================================
+SHEET: 7.X
+============================================================
+
+Pattern (used 11x):
+  Example: N6 : $J$3*M6
+  Cells: N6, N7, N8, N9, N10...
+
+Pattern (used 483x):
+  Example: I6 : IF(OR(C6="",ISBLANK(C6)),"",IF($C$4="MTS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[MTS23],0,0,1),IF($C$4="ATS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[ATS25],0,0,1),"Job Type?")))
+  Cells: I6, I7, I8, I9, I10...
+
+Pattern (used 483x):
+  Example: J6 : IF(OR(C6="",ISBLANK(C6)),"",IFERROR(C6*I6,""))
+  Cells: J6, J7, J8, J9, J10...
+
+Pattern (used 483x):
+  Example: D6 : IF(OR(E6="",ISBLANK(E6)),"",IF($C$4="MTS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[MTS],0,0,1),IF($C$4="ATS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[ATS],0,0,1),"Job Type?")))
+  Cells: D6, D7, D8, D9, D10...
+
+Pattern (used 2x):
+  Example: T6 : IFERROR($N$13/(R6*U6),"")
+  Cells: T6, T7
+
+Pattern (used 2x):
+  Example: S9 : IFERROR($N$13/(T9*U9),"")
+  Cells: S9, S10
+
+Pattern (used 1x):
+  Example: O4 : IFERROR((P4-P3)/P3,"0%")
+  Cells: O4
+
+Pattern (used 6x):
+  Example: R3 : IFERROR((SUM(N14)*M4),"")
+  Cells: R3, R4, R6, R7, R9...
+
+Pattern (used 2x):
+  Example: O14 : IFERROR(P14/N14,"$0")
+  Cells: O14, O19
+
+Pattern (used 2x):
+  Example: U3 : IFERROR(R3/(S3*T3),"")
+  Cells: U3, U4
+
+Pattern (used 10x):
+  Example: P21 : M21*N21*O21
+  Cells: P21, P22, P23, P24, P25...
+
+Pattern (used 11x):
+  Example: P6 : N6*O6
+  Cells: P6, P7, P8, P9, P10...
+
+Pattern (used 1x):
+  Example: P4 : P3*M4*N4
+  Cells: P4
+
+Pattern (used 1x):
+  Example: B2 : RIGHT(CELL("filename", B2), LEN(CELL("filename", B2)) - FIND("]", CELL("filename", B2)))
+  Cells: B2
+
+Pattern (used 2x):
+  Example: M14 : SUM(M6:M13)
+  Cells: M14, M19
+
+Pattern (used 2x):
+  Example: N14 : SUM(N6:N13)
+  Cells: N14, N19
+
+Pattern (used 1x):
+  Example: P3 : SUM(P14,P19,P26,P33)
+  Cells: P3
+
+Pattern (used 4x):
+  Example: P14 : SUM(P6:P13)
+  Cells: P14, P19, P26, P33
+
+Pattern (used 1x):
+  Example: J3 : SUMIF(J6:J488,"<>",J6:J488)
+  Cells: J3
+
+============================================================
+SHEET: 8.X
+============================================================
+
+Pattern (used 11x):
+  Example: N6 : $J$3*M6
+  Cells: N6, N7, N8, N9, N10...
+
+Pattern (used 483x):
+  Example: I6 : IF(OR(C6="",ISBLANK(C6)),"",IF($C$4="MTS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[MTS23],0,0,1),IF($C$4="ATS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[ATS25],0,0,1),"Job Type?")))
+  Cells: I6, I7, I8, I9, I10...
+
+Pattern (used 483x):
+  Example: J6 : IF(OR(C6="",ISBLANK(C6)),"",IFERROR(C6*I6,""))
+  Cells: J6, J7, J8, J9, J10...
+
+Pattern (used 483x):
+  Example: D6 : IF(OR(E6="",ISBLANK(E6)),"",IF($C$4="MTS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[MTS],0,0,1),IF($C$4="ATS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[ATS],0,0,1),"Job Type?")))
+  Cells: D6, D7, D8, D9, D10...
+
+Pattern (used 2x):
+  Example: T6 : IFERROR($N$13/(R6*U6),"")
+  Cells: T6, T7
+
+Pattern (used 2x):
+  Example: S9 : IFERROR($N$13/(T9*U9),"")
+  Cells: S9, S10
+
+Pattern (used 1x):
+  Example: O4 : IFERROR((P4-P3)/P3,"0%")
+  Cells: O4
+
+Pattern (used 6x):
+  Example: R3 : IFERROR((SUM(N14)*M4),"")
+  Cells: R3, R4, R6, R7, R9...
+
+Pattern (used 2x):
+  Example: O14 : IFERROR(P14/N14,"$0")
+  Cells: O14, O19
+
+Pattern (used 2x):
+  Example: U3 : IFERROR(R3/(S3*T3),"")
+  Cells: U3, U4
+
+Pattern (used 10x):
+  Example: P21 : M21*N21*O21
+  Cells: P21, P22, P23, P24, P25...
+
+Pattern (used 11x):
+  Example: P6 : N6*O6
+  Cells: P6, P7, P8, P9, P10...
+
+Pattern (used 1x):
+  Example: P4 : P3*M4*N4
+  Cells: P4
+
+Pattern (used 1x):
+  Example: B2 : RIGHT(CELL("filename", B2), LEN(CELL("filename", B2)) - FIND("]", CELL("filename", B2)))
+  Cells: B2
+
+Pattern (used 2x):
+  Example: M14 : SUM(M6:M13)
+  Cells: M14, M19
+
+Pattern (used 2x):
+  Example: N14 : SUM(N6:N13)
+  Cells: N14, N19
+
+Pattern (used 1x):
+  Example: P3 : SUM(P14,P19,P26,P33)
+  Cells: P3
+
+Pattern (used 4x):
+  Example: P14 : SUM(P6:P13)
+  Cells: P14, P19, P26, P33
+
+Pattern (used 1x):
+  Example: J3 : SUMIF(J6:J488,"<>",J6:J488)
+  Cells: J3
+
+============================================================
+SHEET: 9.X
+============================================================
+
+Pattern (used 11x):
+  Example: N6 : $J$3*M6
+  Cells: N6, N7, N8, N9, N10...
+
+Pattern (used 483x):
+  Example: I6 : IF(OR(C6="",ISBLANK(C6)),"",IF($C$4="MTS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[MTS23],0,0,1),IF($C$4="ATS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[ATS25],0,0,1),"Job Type?")))
+  Cells: I6, I7, I8, I9, I10...
+
+Pattern (used 483x):
+  Example: J6 : IF(OR(C6="",ISBLANK(C6)),"",IFERROR(C6*I6,""))
+  Cells: J6, J7, J8, J9, J10...
+
+Pattern (used 483x):
+  Example: D6 : IF(OR(E6="",ISBLANK(E6)),"",IF($C$4="MTS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[MTS],0,0,1),IF($C$4="ATS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[ATS],0,0,1),"Job Type?")))
+  Cells: D6, D7, D8, D9, D10...
+
+Pattern (used 2x):
+  Example: T6 : IFERROR($N$13/(R6*U6),"")
+  Cells: T6, T7
+
+Pattern (used 2x):
+  Example: S9 : IFERROR($N$13/(T9*U9),"")
+  Cells: S9, S10
+
+Pattern (used 1x):
+  Example: O4 : IFERROR((P4-P3)/P3,"0%")
+  Cells: O4
+
+Pattern (used 6x):
+  Example: R3 : IFERROR((SUM(N14)*M4),"")
+  Cells: R3, R4, R6, R7, R9...
+
+Pattern (used 2x):
+  Example: O14 : IFERROR(P14/N14,"$0")
+  Cells: O14, O19
+
+Pattern (used 2x):
+  Example: U3 : IFERROR(R3/(S3*T3),"")
+  Cells: U3, U4
+
+Pattern (used 10x):
+  Example: P21 : M21*N21*O21
+  Cells: P21, P22, P23, P24, P25...
+
+Pattern (used 11x):
+  Example: P6 : N6*O6
+  Cells: P6, P7, P8, P9, P10...
+
+Pattern (used 1x):
+  Example: P4 : P3*M4*N4
+  Cells: P4
+
+Pattern (used 1x):
+  Example: B2 : RIGHT(CELL("filename", B2), LEN(CELL("filename", B2)) - FIND("]", CELL("filename", B2)))
+  Cells: B2
+
+Pattern (used 2x):
+  Example: M14 : SUM(M6:M13)
+  Cells: M14, M19
+
+Pattern (used 2x):
+  Example: N14 : SUM(N6:N13)
+  Cells: N14, N19
+
+Pattern (used 1x):
+  Example: P3 : SUM(P14,P19,P26,P33)
+  Cells: P3
+
+Pattern (used 4x):
+  Example: P14 : SUM(P6:P13)
+  Cells: P14, P19, P26, P33
+
+Pattern (used 1x):
+  Example: J3 : SUMIF(J6:J488,"<>",J6:J488)
+  Cells: J3
+
+============================================================
+SHEET: 10.X
+============================================================
+
+Pattern (used 11x):
+  Example: N6 : $J$3*M6
+  Cells: N6, N7, N8, N9, N10...
+
+Pattern (used 483x):
+  Example: I6 : IF(OR(C6="",ISBLANK(C6)),"",IF($C$4="MTS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[MTS23],0,0,1),IF($C$4="ATS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[ATS25],0,0,1),"Job Type?")))
+  Cells: I6, I7, I8, I9, I10...
+
+Pattern (used 483x):
+  Example: J6 : IF(OR(C6="",ISBLANK(C6)),"",IFERROR(C6*I6,""))
+  Cells: J6, J7, J8, J9, J10...
+
+Pattern (used 483x):
+  Example: D6 : IF(OR(E6="",ISBLANK(E6)),"",IF($C$4="MTS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[MTS],0,0,1),IF($C$4="ATS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[ATS],0,0,1),"Job Type?")))
+  Cells: D6, D7, D8, D9, D10...
+
+Pattern (used 2x):
+  Example: T6 : IFERROR($N$13/(R6*U6),"")
+  Cells: T6, T7
+
+Pattern (used 2x):
+  Example: S9 : IFERROR($N$13/(T9*U9),"")
+  Cells: S9, S10
+
+Pattern (used 1x):
+  Example: O4 : IFERROR((P4-P3)/P3,"0%")
+  Cells: O4
+
+Pattern (used 6x):
+  Example: R3 : IFERROR((SUM(N14)*M4),"")
+  Cells: R3, R4, R6, R7, R9...
+
+Pattern (used 2x):
+  Example: O14 : IFERROR(P14/N14,"$0")
+  Cells: O14, O19
+
+Pattern (used 2x):
+  Example: U3 : IFERROR(R3/(S3*T3),"")
+  Cells: U3, U4
+
+Pattern (used 10x):
+  Example: P21 : M21*N21*O21
+  Cells: P21, P22, P23, P24, P25...
+
+Pattern (used 11x):
+  Example: P6 : N6*O6
+  Cells: P6, P7, P8, P9, P10...
+
+Pattern (used 1x):
+  Example: P4 : P3*M4*N4
+  Cells: P4
+
+Pattern (used 1x):
+  Example: B2 : RIGHT(CELL("filename", B2), LEN(CELL("filename", B2)) - FIND("]", CELL("filename", B2)))
+  Cells: B2
+
+Pattern (used 2x):
+  Example: M14 : SUM(M6:M13)
+  Cells: M14, M19
+
+Pattern (used 2x):
+  Example: N14 : SUM(N6:N13)
+  Cells: N14, N19
+
+Pattern (used 1x):
+  Example: P3 : SUM(P14,P19,P26,P33)
+  Cells: P3
+
+Pattern (used 4x):
+  Example: P14 : SUM(P6:P13)
+  Cells: P14, P19, P26, P33
+
+Pattern (used 1x):
+  Example: J3 : SUMIF(J6:J488,"<>",J6:J488)
+  Cells: J3
+
+============================================================
+SHEET: 11.X
+============================================================
+
+Pattern (used 11x):
+  Example: N6 : $J$3*M6
+  Cells: N6, N7, N8, N9, N10...
+
+Pattern (used 483x):
+  Example: I6 : IF(OR(C6="",ISBLANK(C6)),"",IF($C$4="MTS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[MTS23],0,0,1),IF($C$4="ATS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[ATS25],0,0,1),"Job Type?")))
+  Cells: I6, I7, I8, I9, I10...
+
+Pattern (used 483x):
+  Example: J6 : IF(OR(C6="",ISBLANK(C6)),"",IFERROR(C6*I6,""))
+  Cells: J6, J7, J8, J9, J10...
+
+Pattern (used 483x):
+  Example: D6 : IF(OR(E6="",ISBLANK(E6)),"",IF($C$4="MTS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[MTS],0,0,1),IF($C$4="ATS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[ATS],0,0,1),"Job Type?")))
+  Cells: D6, D7, D8, D9, D10...
+
+Pattern (used 2x):
+  Example: T6 : IFERROR($N$13/(R6*U6),"")
+  Cells: T6, T7
+
+Pattern (used 2x):
+  Example: S9 : IFERROR($N$13/(T9*U9),"")
+  Cells: S9, S10
+
+Pattern (used 1x):
+  Example: O4 : IFERROR((P4-P3)/P3,"0%")
+  Cells: O4
+
+Pattern (used 6x):
+  Example: R3 : IFERROR((SUM(N14)*M4),"")
+  Cells: R3, R4, R6, R7, R9...
+
+Pattern (used 2x):
+  Example: O14 : IFERROR(P14/N14,"$0")
+  Cells: O14, O19
+
+Pattern (used 2x):
+  Example: U3 : IFERROR(R3/(S3*T3),"")
+  Cells: U3, U4
+
+Pattern (used 10x):
+  Example: P21 : M21*N21*O21
+  Cells: P21, P22, P23, P24, P25...
+
+Pattern (used 11x):
+  Example: P6 : N6*O6
+  Cells: P6, P7, P8, P9, P10...
+
+Pattern (used 1x):
+  Example: P4 : P3*M4*N4
+  Cells: P4
+
+Pattern (used 1x):
+  Example: B2 : RIGHT(CELL("filename", B2), LEN(CELL("filename", B2)) - FIND("]", CELL("filename", B2)))
+  Cells: B2
+
+Pattern (used 2x):
+  Example: M14 : SUM(M6:M13)
+  Cells: M14, M19
+
+Pattern (used 2x):
+  Example: N14 : SUM(N6:N13)
+  Cells: N14, N19
+
+Pattern (used 1x):
+  Example: P3 : SUM(P14,P19,P26,P33)
+  Cells: P3
+
+Pattern (used 4x):
+  Example: P14 : SUM(P6:P13)
+  Cells: P14, P19, P26, P33
+
+Pattern (used 1x):
+  Example: J3 : SUMIF(J6:J488,"<>",J6:J488)
+  Cells: J3
+
+============================================================
+SHEET: 12.X
+============================================================
+
+Pattern (used 11x):
+  Example: N6 : $J$3*M6
+  Cells: N6, N7, N8, N9, N10...
+
+Pattern (used 483x):
+  Example: I6 : IF(OR(C6="",ISBLANK(C6)),"",IF($C$4="MTS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[MTS23],0,0,1),IF($C$4="ATS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[ATS25],0,0,1),"Job Type?")))
+  Cells: I6, I7, I8, I9, I10...
+
+Pattern (used 483x):
+  Example: J6 : IF(OR(C6="",ISBLANK(C6)),"",IFERROR(C6*I6,""))
+  Cells: J6, J7, J8, J9, J10...
+
+Pattern (used 483x):
+  Example: D6 : IF(OR(E6="",ISBLANK(E6)),"",IF($C$4="MTS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[MTS],0,0,1),IF($C$4="ATS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[ATS],0,0,1),"Job Type?")))
+  Cells: D6, D7, D8, D9, D10...
+
+Pattern (used 2x):
+  Example: T6 : IFERROR($N$13/(R6*U6),"")
+  Cells: T6, T7
+
+Pattern (used 2x):
+  Example: S9 : IFERROR($N$13/(T9*U9),"")
+  Cells: S9, S10
+
+Pattern (used 1x):
+  Example: O4 : IFERROR((P4-P3)/P3,"0%")
+  Cells: O4
+
+Pattern (used 6x):
+  Example: R3 : IFERROR((SUM(N14)*M4),"")
+  Cells: R3, R4, R6, R7, R9...
+
+Pattern (used 2x):
+  Example: O14 : IFERROR(P14/N14,"$0")
+  Cells: O14, O19
+
+Pattern (used 2x):
+  Example: U3 : IFERROR(R3/(S3*T3),"")
+  Cells: U3, U4
+
+Pattern (used 10x):
+  Example: P21 : M21*N21*O21
+  Cells: P21, P22, P23, P24, P25...
+
+Pattern (used 11x):
+  Example: P6 : N6*O6
+  Cells: P6, P7, P8, P9, P10...
+
+Pattern (used 1x):
+  Example: P4 : P3*M4*N4
+  Cells: P4
+
+Pattern (used 1x):
+  Example: B2 : RIGHT(CELL("filename", B2), LEN(CELL("filename", B2)) - FIND("]", CELL("filename", B2)))
+  Cells: B2
+
+Pattern (used 2x):
+  Example: M14 : SUM(M6:M13)
+  Cells: M14, M19
+
+Pattern (used 2x):
+  Example: N14 : SUM(N6:N13)
+  Cells: N14, N19
+
+Pattern (used 1x):
+  Example: P3 : SUM(P14,P19,P26,P33)
+  Cells: P3
+
+Pattern (used 4x):
+  Example: P14 : SUM(P6:P13)
+  Cells: P14, P19, P26, P33
+
+Pattern (used 1x):
+  Example: J3 : SUMIF(J6:J488,"<>",J6:J488)
+  Cells: J3
+
+============================================================
+SHEET: 13.X
+============================================================
+
+Pattern (used 11x):
+  Example: N6 : $J$3*M6
+  Cells: N6, N7, N8, N9, N10...
+
+Pattern (used 483x):
+  Example: I6 : IF(OR(C6="",ISBLANK(C6)),"",IF($C$4="MTS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[MTS23],0,0,1),IF($C$4="ATS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[ATS25],0,0,1),"Job Type?")))
+  Cells: I6, I7, I8, I9, I10...
+
+Pattern (used 483x):
+  Example: J6 : IF(OR(C6="",ISBLANK(C6)),"",IFERROR(C6*I6,""))
+  Cells: J6, J7, J8, J9, J10...
+
+Pattern (used 483x):
+  Example: D6 : IF(OR(E6="",ISBLANK(E6)),"",IF($C$4="MTS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[MTS],0,0,1),IF($C$4="ATS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[ATS],0,0,1),"Job Type?")))
+  Cells: D6, D7, D8, D9, D10...
+
+Pattern (used 2x):
+  Example: T6 : IFERROR($N$13/(R6*U6),"")
+  Cells: T6, T7
+
+Pattern (used 2x):
+  Example: S9 : IFERROR($N$13/(T9*U9),"")
+  Cells: S9, S10
+
+Pattern (used 1x):
+  Example: O4 : IFERROR((P4-P3)/P3,"0%")
+  Cells: O4
+
+Pattern (used 6x):
+  Example: R3 : IFERROR((SUM(N14)*M4),"")
+  Cells: R3, R4, R6, R7, R9...
+
+Pattern (used 2x):
+  Example: O14 : IFERROR(P14/N14,"$0")
+  Cells: O14, O19
+
+Pattern (used 2x):
+  Example: U3 : IFERROR(R3/(S3*T3),"")
+  Cells: U3, U4
+
+Pattern (used 10x):
+  Example: P21 : M21*N21*O21
+  Cells: P21, P22, P23, P24, P25...
+
+Pattern (used 11x):
+  Example: P6 : N6*O6
+  Cells: P6, P7, P8, P9, P10...
+
+Pattern (used 1x):
+  Example: P4 : P3*M4*N4
+  Cells: P4
+
+Pattern (used 1x):
+  Example: B2 : RIGHT(CELL("filename", B2), LEN(CELL("filename", B2)) - FIND("]", CELL("filename", B2)))
+  Cells: B2
+
+Pattern (used 2x):
+  Example: M14 : SUM(M6:M13)
+  Cells: M14, M19
+
+Pattern (used 2x):
+  Example: N14 : SUM(N6:N13)
+  Cells: N14, N19
+
+Pattern (used 1x):
+  Example: P3 : SUM(P14,P19,P26,P33)
+  Cells: P3
+
+Pattern (used 4x):
+  Example: P14 : SUM(P6:P13)
+  Cells: P14, P19, P26, P33
+
+Pattern (used 1x):
+  Example: J3 : SUMIF(J6:J488,"<>",J6:J488)
+  Cells: J3
+
+============================================================
+SHEET: 14.X
+============================================================
+
+Pattern (used 11x):
+  Example: N6 : $J$3*M6
+  Cells: N6, N7, N8, N9, N10...
+
+Pattern (used 483x):
+  Example: I6 : IF(OR(C6="",ISBLANK(C6)),"",IF($C$4="MTS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[MTS23],0,0,1),IF($C$4="ATS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[ATS25],0,0,1),"Job Type?")))
+  Cells: I6, I7, I8, I9, I10...
+
+Pattern (used 483x):
+  Example: J6 : IF(OR(C6="",ISBLANK(C6)),"",IFERROR(C6*I6,""))
+  Cells: J6, J7, J8, J9, J10...
+
+Pattern (used 483x):
+  Example: D6 : IF(OR(E6="",ISBLANK(E6)),"",IF($C$4="MTS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[MTS],0,0,1),IF($C$4="ATS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[ATS],0,0,1),"Job Type?")))
+  Cells: D6, D7, D8, D9, D10...
+
+Pattern (used 2x):
+  Example: T6 : IFERROR($N$13/(R6*U6),"")
+  Cells: T6, T7
+
+Pattern (used 2x):
+  Example: S9 : IFERROR($N$13/(T9*U9),"")
+  Cells: S9, S10
+
+Pattern (used 1x):
+  Example: O4 : IFERROR((P4-P3)/P3,"0%")
+  Cells: O4
+
+Pattern (used 6x):
+  Example: R3 : IFERROR((SUM(N14)*M4),"")
+  Cells: R3, R4, R6, R7, R9...
+
+Pattern (used 2x):
+  Example: O14 : IFERROR(P14/N14,"$0")
+  Cells: O14, O19
+
+Pattern (used 2x):
+  Example: U3 : IFERROR(R3/(S3*T3),"")
+  Cells: U3, U4
+
+Pattern (used 10x):
+  Example: P21 : M21*N21*O21
+  Cells: P21, P22, P23, P24, P25...
+
+Pattern (used 11x):
+  Example: P6 : N6*O6
+  Cells: P6, P7, P8, P9, P10...
+
+Pattern (used 1x):
+  Example: P4 : P3*M4*N4
+  Cells: P4
+
+Pattern (used 1x):
+  Example: B2 : RIGHT(CELL("filename", B2), LEN(CELL("filename", B2)) - FIND("]", CELL("filename", B2)))
+  Cells: B2
+
+Pattern (used 2x):
+  Example: M14 : SUM(M6:M13)
+  Cells: M14, M19
+
+Pattern (used 2x):
+  Example: N14 : SUM(N6:N13)
+  Cells: N14, N19
+
+Pattern (used 1x):
+  Example: P3 : SUM(P14,P19,P26,P33)
+  Cells: P3
+
+Pattern (used 4x):
+  Example: P14 : SUM(P6:P13)
+  Cells: P14, P19, P26, P33
+
+Pattern (used 1x):
+  Example: J3 : SUMIF(J6:J488,"<>",J6:J488)
+  Cells: J3
+
+============================================================
+SHEET: 15.X
+============================================================
+
+Pattern (used 11x):
+  Example: N6 : $J$3*M6
+  Cells: N6, N7, N8, N9, N10...
+
+Pattern (used 483x):
+  Example: I6 : IF(OR(C6="",ISBLANK(C6)),"",IF($C$4="MTS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[MTS23],0,0,1),IF($C$4="ATS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[ATS25],0,0,1),"Job Type?")))
+  Cells: I6, I7, I8, I9, I10...
+
+Pattern (used 483x):
+  Example: J6 : IF(OR(C6="",ISBLANK(C6)),"",IFERROR(C6*I6,""))
+  Cells: J6, J7, J8, J9, J10...
+
+Pattern (used 483x):
+  Example: D6 : IF(OR(E6="",ISBLANK(E6)),"",IF($C$4="MTS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[MTS],0,0,1),IF($C$4="ATS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[ATS],0,0,1),"Job Type?")))
+  Cells: D6, D7, D8, D9, D10...
+
+Pattern (used 2x):
+  Example: T6 : IFERROR($N$13/(R6*U6),"")
+  Cells: T6, T7
+
+Pattern (used 2x):
+  Example: S9 : IFERROR($N$13/(T9*U9),"")
+  Cells: S9, S10
+
+Pattern (used 1x):
+  Example: O4 : IFERROR((P4-P3)/P3,"0%")
+  Cells: O4
+
+Pattern (used 6x):
+  Example: R3 : IFERROR((SUM(N14)*M4),"")
+  Cells: R3, R4, R6, R7, R9...
+
+Pattern (used 2x):
+  Example: O14 : IFERROR(P14/N14,"$0")
+  Cells: O14, O19
+
+Pattern (used 2x):
+  Example: U3 : IFERROR(R3/(S3*T3),"")
+  Cells: U3, U4
+
+Pattern (used 10x):
+  Example: P21 : M21*N21*O21
+  Cells: P21, P22, P23, P24, P25...
+
+Pattern (used 11x):
+  Example: P6 : N6*O6
+  Cells: P6, P7, P8, P9, P10...
+
+Pattern (used 1x):
+  Example: P4 : P3*M4*N4
+  Cells: P4
+
+Pattern (used 1x):
+  Example: B2 : RIGHT(CELL("filename", B2), LEN(CELL("filename", B2)) - FIND("]", CELL("filename", B2)))
+  Cells: B2
+
+Pattern (used 2x):
+  Example: M14 : SUM(M6:M13)
+  Cells: M14, M19
+
+Pattern (used 2x):
+  Example: N14 : SUM(N6:N13)
+  Cells: N14, N19
+
+Pattern (used 1x):
+  Example: P3 : SUM(P14,P19,P26,P33)
+  Cells: P3
+
+Pattern (used 4x):
+  Example: P14 : SUM(P6:P13)
+  Cells: P14, P19, P26, P33
+
+Pattern (used 1x):
+  Example: J3 : SUMIF(J6:J488,"<>",J6:J488)
+  Cells: J3
+
+============================================================
+SHEET: 16.X
+============================================================
+
+Pattern (used 11x):
+  Example: N6 : $J$3*M6
+  Cells: N6, N7, N8, N9, N10...
+
+Pattern (used 483x):
+  Example: I6 : IF(OR(C6="",ISBLANK(C6)),"",IF($C$4="MTS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[MTS23],0,0,1),IF($C$4="ATS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[ATS25],0,0,1),"Job Type?")))
+  Cells: I6, I7, I8, I9, I10...
+
+Pattern (used 483x):
+  Example: J6 : IF(OR(C6="",ISBLANK(C6)),"",IFERROR(C6*I6,""))
+  Cells: J6, J7, J8, J9, J10...
+
+Pattern (used 483x):
+  Example: D6 : IF(OR(E6="",ISBLANK(E6)),"",IF($C$4="MTS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[MTS],0,0,1),IF($C$4="ATS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[ATS],0,0,1),"Job Type?")))
+  Cells: D6, D7, D8, D9, D10...
+
+Pattern (used 2x):
+  Example: T6 : IFERROR($N$13/(R6*U6),"")
+  Cells: T6, T7
+
+Pattern (used 2x):
+  Example: S9 : IFERROR($N$13/(T9*U9),"")
+  Cells: S9, S10
+
+Pattern (used 1x):
+  Example: O4 : IFERROR((P4-P3)/P3,"0%")
+  Cells: O4
+
+Pattern (used 6x):
+  Example: R3 : IFERROR((SUM(N14)*M4),"")
+  Cells: R3, R4, R6, R7, R9...
+
+Pattern (used 2x):
+  Example: O14 : IFERROR(P14/N14,"$0")
+  Cells: O14, O19
+
+Pattern (used 2x):
+  Example: U3 : IFERROR(R3/(S3*T3),"")
+  Cells: U3, U4
+
+Pattern (used 10x):
+  Example: P21 : M21*N21*O21
+  Cells: P21, P22, P23, P24, P25...
+
+Pattern (used 11x):
+  Example: P6 : N6*O6
+  Cells: P6, P7, P8, P9, P10...
+
+Pattern (used 1x):
+  Example: P4 : P3*M4*N4
+  Cells: P4
+
+Pattern (used 1x):
+  Example: B2 : RIGHT(CELL("filename", B2), LEN(CELL("filename", B2)) - FIND("]", CELL("filename", B2)))
+  Cells: B2
+
+Pattern (used 2x):
+  Example: M14 : SUM(M6:M13)
+  Cells: M14, M19
+
+Pattern (used 2x):
+  Example: N14 : SUM(N6:N13)
+  Cells: N14, N19
+
+Pattern (used 1x):
+  Example: P3 : SUM(P14,P19,P26,P33)
+  Cells: P3
+
+Pattern (used 4x):
+  Example: P14 : SUM(P6:P13)
+  Cells: P14, P19, P26, P33
+
+Pattern (used 1x):
+  Example: J3 : SUMIF(J6:J488,"<>",J6:J488)
+  Cells: J3
+
+============================================================
+SHEET: 17.X
+============================================================
+
+Pattern (used 11x):
+  Example: N6 : $J$3*M6
+  Cells: N6, N7, N8, N9, N10...
+
+Pattern (used 483x):
+  Example: I6 : IF(OR(C6="",ISBLANK(C6)),"",IF($C$4="MTS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[MTS23],0,0,1),IF($C$4="ATS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[ATS25],0,0,1),"Job Type?")))
+  Cells: I6, I7, I8, I9, I10...
+
+Pattern (used 483x):
+  Example: J6 : IF(OR(C6="",ISBLANK(C6)),"",IFERROR(C6*I6,""))
+  Cells: J6, J7, J8, J9, J10...
+
+Pattern (used 483x):
+  Example: D6 : IF(OR(E6="",ISBLANK(E6)),"",IF($C$4="MTS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[MTS],0,0,1),IF($C$4="ATS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[ATS],0,0,1),"Job Type?")))
+  Cells: D6, D7, D8, D9, D10...
+
+Pattern (used 2x):
+  Example: T6 : IFERROR($N$13/(R6*U6),"")
+  Cells: T6, T7
+
+Pattern (used 2x):
+  Example: S9 : IFERROR($N$13/(T9*U9),"")
+  Cells: S9, S10
+
+Pattern (used 1x):
+  Example: O4 : IFERROR((P4-P3)/P3,"0%")
+  Cells: O4
+
+Pattern (used 6x):
+  Example: R3 : IFERROR((SUM(N14)*M4),"")
+  Cells: R3, R4, R6, R7, R9...
+
+Pattern (used 2x):
+  Example: O14 : IFERROR(P14/N14,"$0")
+  Cells: O14, O19
+
+Pattern (used 2x):
+  Example: U3 : IFERROR(R3/(S3*T3),"")
+  Cells: U3, U4
+
+Pattern (used 10x):
+  Example: P21 : M21*N21*O21
+  Cells: P21, P22, P23, P24, P25...
+
+Pattern (used 11x):
+  Example: P6 : N6*O6
+  Cells: P6, P7, P8, P9, P10...
+
+Pattern (used 1x):
+  Example: P4 : P3*M4*N4
+  Cells: P4
+
+Pattern (used 1x):
+  Example: B2 : RIGHT(CELL("filename", B2), LEN(CELL("filename", B2)) - FIND("]", CELL("filename", B2)))
+  Cells: B2
+
+Pattern (used 2x):
+  Example: M14 : SUM(M6:M13)
+  Cells: M14, M19
+
+Pattern (used 2x):
+  Example: N14 : SUM(N6:N13)
+  Cells: N14, N19
+
+Pattern (used 1x):
+  Example: P3 : SUM(P14,P19,P26,P33)
+  Cells: P3
+
+Pattern (used 4x):
+  Example: P14 : SUM(P6:P13)
+  Cells: P14, P19, P26, P33
+
+Pattern (used 1x):
+  Example: J3 : SUMIF(J6:J488,"<>",J6:J488)
+  Cells: J3
+
+============================================================
+SHEET: 18.X
+============================================================
+
+Pattern (used 11x):
+  Example: N6 : $J$3*M6
+  Cells: N6, N7, N8, N9, N10...
+
+Pattern (used 483x):
+  Example: I6 : IF(OR(C6="",ISBLANK(C6)),"",IF($C$4="MTS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[MTS23],0,0,1),IF($C$4="ATS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[ATS25],0,0,1),"Job Type?")))
+  Cells: I6, I7, I8, I9, I10...
+
+Pattern (used 483x):
+  Example: J6 : IF(OR(C6="",ISBLANK(C6)),"",IFERROR(C6*I6,""))
+  Cells: J6, J7, J8, J9, J10...
+
+Pattern (used 483x):
+  Example: D6 : IF(OR(E6="",ISBLANK(E6)),"",IF($C$4="MTS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[MTS],0,0,1),IF($C$4="ATS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[ATS],0,0,1),"Job Type?")))
+  Cells: D6, D7, D8, D9, D10...
+
+Pattern (used 2x):
+  Example: T6 : IFERROR($N$13/(R6*U6),"")
+  Cells: T6, T7
+
+Pattern (used 2x):
+  Example: S9 : IFERROR($N$13/(T9*U9),"")
+  Cells: S9, S10
+
+Pattern (used 1x):
+  Example: O4 : IFERROR((P4-P3)/P3,"0%")
+  Cells: O4
+
+Pattern (used 6x):
+  Example: R3 : IFERROR((SUM(N14)*M4),"")
+  Cells: R3, R4, R6, R7, R9...
+
+Pattern (used 2x):
+  Example: O14 : IFERROR(P14/N14,"$0")
+  Cells: O14, O19
+
+Pattern (used 2x):
+  Example: U3 : IFERROR(R3/(S3*T3),"")
+  Cells: U3, U4
+
+Pattern (used 10x):
+  Example: P21 : M21*N21*O21
+  Cells: P21, P22, P23, P24, P25...
+
+Pattern (used 11x):
+  Example: P6 : N6*O6
+  Cells: P6, P7, P8, P9, P10...
+
+Pattern (used 1x):
+  Example: P4 : P3*M4*N4
+  Cells: P4
+
+Pattern (used 1x):
+  Example: B2 : RIGHT(CELL("filename", B2), LEN(CELL("filename", B2)) - FIND("]", CELL("filename", B2)))
+  Cells: B2
+
+Pattern (used 2x):
+  Example: M14 : SUM(M6:M13)
+  Cells: M14, M19
+
+Pattern (used 2x):
+  Example: N14 : SUM(N6:N13)
+  Cells: N14, N19
+
+Pattern (used 1x):
+  Example: P3 : SUM(P14,P19,P26,P33)
+  Cells: P3
+
+Pattern (used 4x):
+  Example: P14 : SUM(P6:P13)
+  Cells: P14, P19, P26, P33
+
+Pattern (used 1x):
+  Example: J3 : SUMIF(J6:J488,"<>",J6:J488)
+  Cells: J3
+
+============================================================
+SHEET: 19.X
+============================================================
+
+Pattern (used 11x):
+  Example: N6 : $J$3*M6
+  Cells: N6, N7, N8, N9, N10...
+
+Pattern (used 483x):
+  Example: I6 : IF(OR(C6="",ISBLANK(C6)),"",IF($C$4="MTS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[MTS23],0,0,1),IF($C$4="ATS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[ATS25],0,0,1),"Job Type?")))
+  Cells: I6, I7, I8, I9, I10...
+
+Pattern (used 483x):
+  Example: J6 : IF(OR(C6="",ISBLANK(C6)),"",IFERROR(C6*I6,""))
+  Cells: J6, J7, J8, J9, J10...
+
+Pattern (used 483x):
+  Example: D6 : IF(OR(E6="",ISBLANK(E6)),"",IF($C$4="MTS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[MTS],0,0,1),IF($C$4="ATS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[ATS],0,0,1),"Job Type?")))
+  Cells: D6, D7, D8, D9, D10...
+
+Pattern (used 2x):
+  Example: T6 : IFERROR($N$13/(R6*U6),"")
+  Cells: T6, T7
+
+Pattern (used 2x):
+  Example: S9 : IFERROR($N$13/(T9*U9),"")
+  Cells: S9, S10
+
+Pattern (used 1x):
+  Example: O4 : IFERROR((P4-P3)/P3,"0%")
+  Cells: O4
+
+Pattern (used 6x):
+  Example: R3 : IFERROR((SUM(N14)*M4),"")
+  Cells: R3, R4, R6, R7, R9...
+
+Pattern (used 2x):
+  Example: O14 : IFERROR(P14/N14,"$0")
+  Cells: O14, O19
+
+Pattern (used 2x):
+  Example: U3 : IFERROR(R3/(S3*T3),"")
+  Cells: U3, U4
+
+Pattern (used 10x):
+  Example: P21 : M21*N21*O21
+  Cells: P21, P22, P23, P24, P25...
+
+Pattern (used 11x):
+  Example: P6 : N6*O6
+  Cells: P6, P7, P8, P9, P10...
+
+Pattern (used 1x):
+  Example: P4 : P3*M4*N4
+  Cells: P4
+
+Pattern (used 1x):
+  Example: B2 : RIGHT(CELL("filename", B2), LEN(CELL("filename", B2)) - FIND("]", CELL("filename", B2)))
+  Cells: B2
+
+Pattern (used 2x):
+  Example: M14 : SUM(M6:M13)
+  Cells: M14, M19
+
+Pattern (used 2x):
+  Example: N14 : SUM(N6:N13)
+  Cells: N14, N19
+
+Pattern (used 1x):
+  Example: P3 : SUM(P14,P19,P26,P33)
+  Cells: P3
+
+Pattern (used 4x):
+  Example: P14 : SUM(P6:P13)
+  Cells: P14, P19, P26, P33
+
+Pattern (used 1x):
+  Example: J3 : SUMIF(J6:J488,"<>",J6:J488)
+  Cells: J3
+
+============================================================
+SHEET: 20.X
+============================================================
+
+Pattern (used 11x):
+  Example: N6 : $J$3*M6
+  Cells: N6, N7, N8, N9, N10...
+
+Pattern (used 483x):
+  Example: I6 : IF(OR(C6="",ISBLANK(C6)),"",IF($C$4="MTS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[MTS23],0,0,1),IF($C$4="ATS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[ATS25],0,0,1),"Job Type?")))
+  Cells: I6, I7, I8, I9, I10...
+
+Pattern (used 483x):
+  Example: J6 : IF(OR(C6="",ISBLANK(C6)),"",IFERROR(C6*I6,""))
+  Cells: J6, J7, J8, J9, J10...
+
+Pattern (used 483x):
+  Example: D6 : IF(OR(E6="",ISBLANK(E6)),"",IF($C$4="MTS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[MTS],0,0,1),IF($C$4="ATS",_xlfn.XLOOKUP(E6,tblEquipment[Scope of Work],tblEquipment[ATS],0,0,1),"Job Type?")))
+  Cells: D6, D7, D8, D9, D10...
+
+Pattern (used 2x):
+  Example: T6 : IFERROR($N$13/(R6*U6),"")
+  Cells: T6, T7
+
+Pattern (used 2x):
+  Example: S9 : IFERROR($N$13/(T9*U9),"")
+  Cells: S9, S10
+
+Pattern (used 1x):
+  Example: O4 : IFERROR((P4-P3)/P3,"0%")
+  Cells: O4
+
+Pattern (used 6x):
+  Example: R3 : IFERROR((SUM(N14)*M4),"")
+  Cells: R3, R4, R6, R7, R9...
+
+Pattern (used 2x):
+  Example: O14 : IFERROR(P14/N14,"$0")
+  Cells: O14, O19
+
+Pattern (used 2x):
+  Example: U3 : IFERROR(R3/(S3*T3),"")
+  Cells: U3, U4
+
+Pattern (used 10x):
+  Example: P21 : M21*N21*O21
+  Cells: P21, P22, P23, P24, P25...
+
+Pattern (used 11x):
+  Example: P6 : N6*O6
+  Cells: P6, P7, P8, P9, P10...
+
+Pattern (used 1x):
+  Example: P4 : P3*M4*N4
+  Cells: P4
+
+Pattern (used 1x):
+  Example: B2 : RIGHT(CELL("filename", B2), LEN(CELL("filename", B2)) - FIND("]", CELL("filename", B2)))
+  Cells: B2
+
+Pattern (used 2x):
+  Example: M14 : SUM(M6:M13)
+  Cells: M14, M19
+
+Pattern (used 2x):
+  Example: N14 : SUM(N6:N13)
+  Cells: N14, N19
+
+Pattern (used 1x):
+  Example: P3 : SUM(P14,P19,P26,P33)
+  Cells: P3
+
+Pattern (used 4x):
+  Example: P14 : SUM(P6:P13)
+  Cells: P14, P19, P26, P33
+
+Pattern (used 1x):
+  Example: J3 : SUMIF(J6:J488,"<>",J6:J488)
+  Cells: J3

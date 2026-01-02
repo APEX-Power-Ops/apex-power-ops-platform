@@ -1,0 +1,91 @@
+﻿================================================================================
+ALL FORMULAS BY SHEET
+================================================================================
+
+============================================================
+SHEET: All_Tasks_Billing
+============================================================
+
+Pattern (used 1x):
+  Example: AI2 : AE2+AH2
+  Cells: AI2
+
+Pattern (used 1x):
+  Example: AH2 : AF2+AG2
+  Cells: AH2
+
+Pattern (used 1x):
+  Example: AK2 : AI2*AJ2
+  Cells: AK2
+
+Pattern (used 1x):
+  Example: AT2 : AS2-AK2
+  Cells: AT2
+
+Pattern (used 1x):
+  Example: U2 : IFERROR(VLOOKUP(B2,Scope_Labor_Rates!A:C,3,FALSE),0)
+  Cells: U2
+
+Pattern (used 1x):
+  Example: AR2 : Q2-R2
+  Cells: AR2
+
+Pattern (used 1x):
+  Example: V2 : R2*0.8*U2
+  Cells: V2
+
+Pattern (used 1x):
+  Example: X2 : R2*0.05*U2*2
+  Cells: X2
+
+Pattern (used 1x):
+  Example: W2 : R2*0.15*U2*1.5
+  Cells: W2
+
+Pattern (used 1x):
+  Example: AF2 : R2*VLOOKUP(B2,Scope_Labor_Rates!A:O,20,FALSE)
+  Cells: AF2
+
+Pattern (used 1x):
+  Example: AG2 : R2*VLOOKUP(B2,Scope_Labor_Rates!A:S,22,FALSE)
+  Cells: AG2
+
+Pattern (used 1x):
+  Example: AL2 : SUMIF($B$2:$B2,B2,$AK$2:$AK2)
+  Cells: AL2
+
+Pattern (used 1x):
+  Example: Y2 : V2+W2+X2
+  Cells: Y2
+
+Pattern (used 1x):
+  Example: AJ2 : VLOOKUP(B2,Scope_Labor_Rates!A:X,25,FALSE)
+  Cells: AJ2
+
+Pattern (used 1x):
+  Example: Z2 : Y2*VLOOKUP(B2,Scope_Labor_Rates!A:E,9,FALSE)
+  Cells: Z2
+
+Pattern (used 1x):
+  Example: AA2 : Y2*VLOOKUP(B2,Scope_Labor_Rates!A:G,12,FALSE)
+  Cells: AA2
+
+Pattern (used 1x):
+  Example: AB2 : Y2*VLOOKUP(B2,Scope_Labor_Rates!A:I,15,FALSE)
+  Cells: AB2
+
+Pattern (used 1x):
+  Example: AC2 : Y2*VLOOKUP(B2,Scope_Labor_Rates!A:K,18,FALSE)
+  Cells: AC2
+
+Pattern (used 1x):
+  Example: AE2 : Y2+AD2
+  Cells: AE2
+
+Pattern (used 1x):
+  Example: AD2 : Z2+AA2+AB2+AC2
+  Cells: AD2
+
+============================================================
+SHEET: Scope_Labor_Rates
+============================================================

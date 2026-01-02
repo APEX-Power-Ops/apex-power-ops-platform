@@ -1,0 +1,103 @@
+﻿================================================================================
+SHEET: Equipment Reference
+================================================================================
+Used Range: A1:V485
+Rows: 485, Columns: 22
+
+----------------------------------------
+COLUMN HEADERS (Row 1)
+----------------------------------------
+  A1 : 
+  B1 : NETA '25
+  C1 : NETA '23
+  D1 : 
+  E1 : Labor
+  F1 : Labor2
+  G1 : 
+  H1 : Project
+  I1 : 
+  J1 : 
+  K1 : 
+  L1 : 
+  M1 :  [FORMULA: IFERROR(INDIRECT("'" & L1 & "'!P4"),"")]
+  N1 : 
+  O1 : 
+  P1 : 
+  Q1 : 
+  R1 : Total Onsite
+  S1 : 
+  T1 : 
+  U1 : 
+  V1 : 
+
+----------------------------------------
+TABLES
+----------------------------------------
+  Table: tblEquipment
+    Range: B2:F485
+    Columns: 5
+
+----------------------------------------
+FORMULAS
+----------------------------------------
+  Total formulas: 29
+
+  UNIQUE FORMULA PATTERNS:
+
+  Pattern (used 3x):
+    Example: M1 : IFERROR(INDIRECT("'" & L1 & "'!P4"),"")
+    Cells: M1, M2, M4
+
+  Pattern (used 19x):
+    Example: M5 : IFERROR(INDIRECT("'"&L5&"'!P4"),"")
+    Cells: M5, M6, M7, M8, M9...
+
+  Pattern (used 2x):
+    Example: U3 : IFERROR(R3/(S3*T3),"")
+    Cells: U3, U4
+
+  Pattern (used 2x):
+    Example: T5 : IFERROR(R5/(S5*U5),"")
+    Cells: T5, T6
+
+  Pattern (used 2x):
+    Example: S7 : IFERROR(R7/(T7*U7),"")
+    Cells: S7, S8
+
+  Pattern (used 1x):
+    Example: M3 : SUM(M4:M23)
+    Cells: M3
+
+----------------------------------------
+SAMPLE DATA (First 30 rows)
+----------------------------------------
+Row 1 :  | NETA '25 | NETA '23 |  | Labor | Labor2 |  | Project |  |  |  |  |  |  |  |  |  | Total Onsite |  | 
+Row 2 :  | ATS | MTS | Scope of Work | ATS25 | MTS23 |  | Totals |  |  |  |  |  |  |  |  |  | Hrs Adjusted | # Techs /Day | Hours/Day
+Row 3 :  | 7.19 | 7.19 | Arrester - SS, High Voltage (Set) | 4 | 4 |  | 0 |  |  |  | TOTAL | 0 |  |  |  |  | 0 |  | 
+Row 4 :  | 7.19 | 7.19 | Arrester - SS, Medium Volatge (Set) | 3.5 | 3.5 |  | 0 |  |  |  | 1.X | 0 |  |  |  |  | 0 |  | 
+Row 5 :  | 7.19 | 7.19 | Arrestor - Medium Voltage (Set) | 1.5 | 1.5 |  | 0 |  |  |  | 2.X | 0 |  |  |  |  | 0 |  | 
+Row 6 :  | 7.19 | 7.19 | Arrestor (SPD) - Low Voltage | 0.5 | 1 |  | 0 |  |  |  | 3.X | 0 |  |  |  |  | 0 |  | 
+Row 7 :  | 7.22 | 7.22 | Automatic Transfer Switch - (IR/DLRO) | 3 | 4 |  | 0 |  |  |  | 4.X | 0 |  |  |  |  | 0 |  | 
+Row 8 :  | 7.22 | 7.22 | Automatic Transfer Switch - Iso Bypas... | 4 | 6 |  | 0 |  |  |  | 5.X | 0 |  |  |  |  | 0 |  | 
+Row 9 :  | 7.18 | 7.18 | Automatic Transfer Switch (Functional... | NA | 4 |  | 0 |  |  |  | 6.X | 0 |  |  |  |  |  |  | 
+Row 10 :  | 7.4 | 7.4 | Bus Duct - Low Voltage (IR/DLRO) | 3 | 4 |  | 0 |  |  |  | 7.X | 0 |  |  |  |  |  |  | 
+Row 11 :  | 7.21 | 7.21 | Bus Duct - Medium Voltage (IR/CR) | 6 | 8 |  | 0 |  |  |  | 8.X | 0 |  |  |  |  |  |  | 
+Row 12 :  | 7.2 | 7.2 | Bus Structure - Outdoor (IR/DLRO) | 16 | 16 |  | 0 |  |  |  | 9.X | 0 |  |  |  |  |  |  | 
+Row 13 :  | 7.2 | 7.2 | Capacitor - Power Factor Correction (... | 1 | 1.5 |  | 0 |  |  |  | 10.X | 0 |  |  |  |  |  |  | 
+Row 14 :  | 7.1 | 7.1 | Capcitors - Per Unit | 1 | 1.5 |  | 0 |  |  |  | 11.X | 0 |  |  |  |  |  |  | 
+Row 15 :  | 7.1 | 7.1 | CCVT Voltage Transformer - Individual | 5 | 5 |  | 0 |  |  |  | 12.X | 0 |  |  |  |  |  |  | 
+Row 16 :  | 7.6 | 7.6 | CCVT Voltage Transformer - Set of 3 | 12 | 12 |  | 0 |  |  |  | 13.X | 0 |  |  |  |  |  |  | 
+Row 17 :  | 7.6 | 7.6 | Circuit Breaker LV - Draw-Out (LS/LSI) | 3 | 3.5 |  | 0 |  |  |  | 14.X | 0 |  |  |  |  |  |  | 
+Row 18 :  | 7.6 | 7.6 | Circuit Breaker LV - Draw-Out (LSIG) | 4 | 4.5 |  | 0 |  |  |  | 15.X | 0 |  |  |  |  |  |  | 
+Row 19 :  | 7.6 | 7.6 | Circuit Breaker LV - Electrically Ope... | 4 | 4.5 |  | 0 |  |  |  | 16.X | 0 |  |  |  |  |  |  | 
+Row 20 :  | 7.6 | 7.6 | Circuit Breaker LV - Electrically Ope... | 5 | 5.5 |  | 0 |  |  |  | 17.X | 0 |  |  |  |  |  |  | 
+Row 21 :  | 7.6 | 7.6 | Circuit Breaker LV - Generator Main | 6 | 8 |  | 0 |  |  |  | 18.X | 0 |  |  |  |  |  |  | 
+Row 22 :  | 7.6 | 7.6 | Circuit Breaker LV - Insulated Case (... | 2 | 3 |  | 0 |  |  |  | 19.X | 0 |  |  |  |  |  |  | 
+Row 23 :  | 7.6 | 7.6 | Circuit Breaker LV - Insulated Case (... | 3 | 4 |  | 0 |  |  |  | 20.X | 0 |  |  |  |  |  |  | 
+Row 24 :  | 7.6 | 7.6 | Circuit Breaker LV - Molded Case Ther... | 2 | 2 |  | 0 |  |  |  |  |  |  |  |  |  |  |  | 
+Row 25 :  | 7.6 | 7.6 | Circuit Breaker LV - Panelboard MCB | 2.5 | 2.5 |  | 0 |  |  |  |  |  |  |  |  |  |  |  | 
+Row 26 :  | 7.6 | 7.6 | Circuit Breaker LV - Primary Injectio... | 4 | 4.5 |  | 0 |  |  |  |  |  |  |  |  |  |  |  | 
+Row 27 :  | 7.6 | 7.6 | Circuit Breaker LV - Primary Injectio... | 3 | 3.5 |  | 0 |  |  |  |  |  |  |  |  |  |  |  | 
+Row 28 :  | 7.6 | 7.6 | Circuit Breaker LV - Primary Injectio... | 2 | 2.5 |  | 0 |  |  |  |  |  |  |  |  |  |  |  | 
+Row 29 :  | 7.6 | 7.6 | Circuit Breaker LV - Secondary Injection | 1.5 | 2 |  | 0 |  |  |  |  |  |  |  |  |  |  |  | 
+Row 30 :  | 7.6 | 7.6 | Circuit Breaker MV - Air Frame | 6 | 8 |  | 0 |  |  |  |  |  |  |  |  |  |  |  | 

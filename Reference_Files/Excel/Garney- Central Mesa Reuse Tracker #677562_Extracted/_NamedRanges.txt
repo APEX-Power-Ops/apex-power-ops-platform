@@ -1,0 +1,299 @@
+﻿================================================================================
+NAMED RANGES
+================================================================================
+
+Name: _ITEM1
+Formula: #REF!
+  (Could not read)
+
+Name: _ITEM2
+Formula: #REF!
+  (Could not read)
+
+Name: _ITEM3
+Formula: #REF!
+  (Could not read)
+
+Name: _ITEM4
+Formula: #REF!
+  (Could not read)
+
+Name: _ITEM5
+Formula: #REF!
+  (Could not read)
+
+Name: _ITEM6
+Formula: #REF!
+  (Could not read)
+
+Name: _xlcn.WorksheetConnection_GarneyCentralMesaReuseTracker677562.xlsmtbl_PowerBI_Data1
+Formula: All_Tasks_Billing!A2
+  (Could not read)
+
+Name: _xlcn.WorksheetConnection_PowerBI_DataD1U1441
+Formula: 
+  (Could not read)
+
+Name: _xlcn.WorksheetConnection_RESAPowerProjectDataEntryForm.xlsmApparatus_Quantity1
+Formula: Apparatus_Quantity
+  (Could not read)
+
+Name: _xleta.COLUMN
+Formula: #NAME?
+  (Could not read)
+
+Name: _xleta.COLUMNS
+Formula: #NAME?
+  (Could not read)
+
+Name: _xleta.DAY
+Formula: #NAME?
+  (Could not read)
+
+Name: _xleta.IFERROR
+Formula: #NAME?
+  (Could not read)
+
+Name: _xleta.INFO
+Formula: #NAME?
+  (Could not read)
+
+Name: _xleta.N
+Formula: #NAME?
+  (Could not read)
+
+Name: _xleta.NOT
+Formula: #NAME?
+  (Could not read)
+
+Name: _xleta.ROW
+Formula: #NAME?
+  (Could not read)
+
+Name: _xleta.ROWS
+Formula: #NAME?
+  (Could not read)
+
+Name: _xleta.SHEET
+Formula: #NAME?
+  (Could not read)
+
+Name: _xleta.T
+Formula: #NAME?
+  (Could not read)
+
+Name: _xlpm.H
+Formula: #NAME?
+  (Could not read)
+
+Name: _xlpm.M
+Formula: #NAME?
+  (Could not read)
+
+Name: _xlpm.R
+Formula: #NAME?
+  (Could not read)
+
+Name: ACTUAL_HOURS
+Formula: #REF!
+  (Could not read)
+
+Name: Apparatus
+Formula: #REF!
+  (Could not read)
+
+Name: ApparatusHours
+Formula: #REF!:#REF!
+  (Could not read)
+
+Name: AssessmentFilter
+Formula: #REF!
+  (Could not read)
+
+Name: AVAILABILITY
+Formula: #REF!
+  (Could not read)
+
+Name: AvailabilityFilter
+Formula: #REF!
+  (Could not read)
+
+Name: CommutePercent
+Formula: #REF!
+  (Could not read)
+
+Name: CommuteRates
+Formula: #REF!
+  (Could not read)
+
+Name: COMPLETE
+Formula: #REF!
+  (Could not read)
+
+Name: DailyReportPercent
+Formula: #REF!
+  (Could not read)
+
+Name: DailyReportRates
+Formula: #REF!
+  (Could not read)
+
+Name: Designation
+Formula: #REF!
+  (Could not read)
+
+Name: Drawing
+Formula: #REF!
+  (Could not read)
+
+Name: FinalReportPercent
+Formula: #REF!
+  (Could not read)
+
+Name: FinalReportRates
+Formula: #REF!
+  (Could not read)
+
+Name: Interval
+Formula: #REF!
+  (Could not read)
+
+Name: MEFixedTotal
+Formula: #REF!
+  (Could not read)
+
+Name: NETA_Standard
+Formula: #REF!
+  (Could not read)
+
+Name: Notes
+Formula: #REF!
+  (Could not read)
+
+Name: OtherPercent
+Formula: #REF!
+  (Could not read)
+
+Name: OtherRates
+Formula: #REF!
+  (Could not read)
+
+Name: PMPercent
+Formula: #REF!
+  (Could not read)
+
+Name: PMRates
+Formula: #REF!
+  (Could not read)
+
+Name: PRIORITY
+Formula: #REF!
+  (Could not read)
+
+Name: PriorityFilter
+Formula: #REF!
+  (Could not read)
+
+Name: ProjectEndFilter
+Formula: #REF!
+  (Could not read)
+
+Name: ProjectLaborRate
+Formula: #REF!
+  (Could not read)
+
+Name: ProjectStartFilter
+Formula: #REF!
+  (Could not read)
+
+Name: ProjectStatusFilter
+Formula: #REF!
+  (Could not read)
+
+Name: QUOTED_HOURS
+Formula: #REF!
+  (Could not read)
+
+Name: REMAINING_HOURS
+Formula: #REF!
+  (Could not read)
+
+Name: ScheduleStart
+Formula: #REF!
+  (Could not read)
+
+Name: Scope
+Formula: #REF!
+  (Could not read)
+
+Name: ScopeBillRates
+Formula: #REF!
+  (Could not read)
+
+Name: ScopeMultipliers
+Formula: #REF!
+  (Could not read)
+
+Name: ScopeNames
+Formula: #REF!
+  (Could not read)
+
+Name: ScopeWeightedLaborHr
+Formula: #REF!
+  (Could not read)
+
+Name: STATUS
+Formula: #REF!
+  (Could not read)
+
+Name: StatusFilter
+Formula: #REF!
+  (Could not read)
+
+Name: Task
+Formula: #REF!
+  (Could not read)
+
+Name: TASK_DELAYS
+Formula: #REF!
+  (Could not read)
+
+Name: Task_ID
+Formula: #REF!
+  (Could not read)
+
+Name: TeamMembersFilter
+Formula: #REF!
+  (Could not read)
+
+Name: TotalApparatusHours
+Formula: #REF!
+  (Could not read)
+
+Name: TotalMEFixed
+Formula: #REF!
+  (Could not read)
+
+Name: TotalTravelFixed
+Formula: #REF!
+  (Could not read)
+
+Name: TravelFixedTotal
+Formula: #REF!
+  (Could not read)
+
+Name: TravelPercent
+Formula: #REF!
+  (Could not read)
+
+Name: TravelPerHour
+Formula: #REF!
+  (Could not read)
+
+Name: TravelRates
+Formula: #REF!
+  (Could not read)
+
+Name: Type
+Formula: #REF!
+  (Could not read)

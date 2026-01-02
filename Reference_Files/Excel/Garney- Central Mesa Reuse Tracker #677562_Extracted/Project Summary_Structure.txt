@@ -1,0 +1,160 @@
+﻿================================================================================
+SHEET: Project Summary
+================================================================================
+Used Range: A1:AI50
+Rows: 50, Columns: 35
+
+----------------------------------------
+COLUMN HEADERS (Row 1)
+----------------------------------------
+  A1 : 
+  B1 : 
+  C1 : 
+  D1 : 
+  E1 : 
+  F1 : 
+  G1 : 
+  H1 : 
+  I1 : 
+  J1 : 
+  K1 : 
+  L1 : 
+  M1 : 
+  N1 : 
+  O1 : 
+  P1 : 
+  Q1 : 
+  R1 : 
+  S1 : 
+  T1 : 
+  U1 : 
+  V1 : 
+  W1 : 
+  X1 : 
+  Y1 : 
+  Z1 : 
+  AA1 : 
+  AB1 : 
+  AC1 : 
+  AD1 : 
+  AE1 : 
+  AF1 : 
+  AG1 : 
+  AH1 : 
+  AI1 : 
+
+----------------------------------------
+TABLES
+----------------------------------------
+  Table: ApparatusSummary
+    Range: B12:H27
+    Columns: 7
+
+----------------------------------------
+FORMULAS
+----------------------------------------
+  Total formulas: 97
+
+  UNIQUE FORMULA PATTERNS:
+
+  Pattern (used 1x):
+    Example: V28 : _xlfn.UNIQUE(tbl_PowerBI_Data[Apparatus])
+    Cells: V28
+
+  Pattern (used 14x):
+    Example: C13 : COUNTIF(tbl_PowerBI_Data[Apparatus],ApparatusSummary[[#This Row],[Apparatus Category]])
+    Cells: C13, C14, C15, C16, C17...
+
+  Pattern (used 28x):
+    Example: D13 : COUNTIFS(tbl_PowerBI_Data[Apparatus],ApparatusSummary[[#This Row],[Apparatus Category]],tbl_PowerBI_Data[Completion],1)
+    Cells: D13, E13, D14, E14, D15...
+
+  Pattern (used 14x):
+    Example: H13 : COUNTIFS(tbl_PowerBI_Data[Apparatus],ApparatusSummary[[#This Row],[Apparatus Category]],tbl_PowerBI_Data[STATUS],"<>COMPLETED",tbl_PowerBI_Data[AVAILABILITY],"ON HOLD")+COUNTIFS(tbl_PowerBI_Data[Apparatus],ApparatusSummary[[#This Row],[Apparatus Category]],tbl_PowerBI_Data[STATUS],"<>COMPLETED",tbl_PowerBI_Data[AVAILABILITY],"NOT AVAILABLE")
+    Cells: H13, H14, H15, H16, H17...
+
+  Pattern (used 14x):
+    Example: G13 : COUNTIFS(tbl_PowerBI_Data[Apparatus],ApparatusSummary[[#This Row],[Apparatus Category]],tbl_PowerBI_Data[STATUS],"<>COMPLETED",tbl_PowerBI_Data[AVAILABILITY],"READY")
+    Cells: G13, G14, G15, G16, G17...
+
+  Pattern (used 1x):
+    Example: G4 : COUNTIFS(tbl_PowerBI_Data[Assessment],"NON-SERVICEABLE")
+    Cells: G4
+
+  Pattern (used 1x):
+    Example: B4 : COUNTIFS(tbl_PowerBI_Data[STATUS],"<>COMPLETED",tbl_PowerBI_Data[AVAILABILITY],"READY")
+    Cells: B4
+
+  Pattern (used 1x):
+    Example: H4 : COUNTIFS(tbl_PowerBI_Data[STATUS],"<>COMPLETED",tbl_PowerBI_Data[Date Due],"<="&EOMONTH(TODAY(),0),tbl_PowerBI_Data[Date Due],"<>")
+    Cells: H4
+
+  Pattern (used 1x):
+    Example: F4 : IFERROR(1-(SUM(tbl_PowerBI_Data[Remaining Hours])/SUM(tbl_PowerBI_Data[Apparatus Hours])),0)
+    Cells: F4
+
+  Pattern (used 14x):
+    Example: F13 : IFERROR(ApparatusSummary[[#This Row],[Total Apparatus Completed]]/ApparatusSummary[[#This Row],[Total Apparatus Count]],0)
+    Cells: F13, F14, F15, F16, F17...
+
+  Pattern (used 1x):
+    Example: H27 : SUBTOTAL(109,ApparatusSummary[Apparatus Blocked])
+    Cells: H27
+
+  Pattern (used 1x):
+    Example: G27 : SUBTOTAL(109,ApparatusSummary[Ready to Work])
+    Cells: G27
+
+  Pattern (used 1x):
+    Example: D27 : SUBTOTAL(109,ApparatusSummary[Total Apparatus Completed])
+    Cells: D27
+
+  Pattern (used 1x):
+    Example: C27 : SUBTOTAL(109,ApparatusSummary[Total Apparatus Count])
+    Cells: C27
+
+  Pattern (used 1x):
+    Example: E27 : SUBTOTAL(109,ApparatusSummary[Total Apparatus Remaining])
+    Cells: E27
+
+  Pattern (used 1x):
+    Example: C4 : SUMPRODUCT((tbl_PowerBI_Data[Task_ID]<>"")*(tbl_PowerBI_Data[Task_ID]<>0)*1)
+    Cells: C4
+
+  Pattern (used 2x):
+    Example: D4 : SUMPRODUCT((tbl_PowerBI_Data[Task_ID]<>"")*(tbl_PowerBI_Data[Task_ID]<>0)*(tbl_PowerBI_Data[Completion]=1)*1)
+    Cells: D4, E4
+
+----------------------------------------
+SAMPLE DATA (First 30 rows)
+----------------------------------------
+Row 1 :  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Row 2 :  | READY TO WORK | TOTAL APPARATUS | TOTAL COMPLETED | TOTAL REMAINING | COMPLETION % | ISSUE LOG / FAILED | PAST DUE / DUE NOW |  |  |  |  |  |  |  |  |  |  |  | 
+Row 3 :  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Row 4 :  | 12 | 143 | 99 | 44 | 0.612642905178211 | 4 | 0 |  |  |  |  |  |  |  |  |  |  |  | 
+Row 5 :  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Row 6 :  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Row 7 :  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Row 8 :  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Row 9 :  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Row 10 :  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Row 11 :  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Row 12 :  | Apparatus Category | Total Apparatus Count | Total Apparatus Completed | Total Apparatus Remaining | Percent Completion | Ready to Work | Apparatus Blocked |  |  |  |  |  |  |  |  |  |  |  | 
+Row 13 :  | Instrument Transformers | 36 | 36 | 0 | 1 | 0 | 0 |  |  |  |  |  |  |  |  |  |  |  | 
+Row 14 :  | Conductors | 32 | 16 | 16 | 0.5 | 0 | 16 |  |  |  |  |  |  |  |  |  |  |  | 
+Row 15 :  | Arresters | 14 | 11 | 3 | 0.785714285714286 | 3 | 0 |  |  |  |  |  |  |  |  |  |  |  | 
+Row 16 :  | Circuit Breaker | 12 | 11 | 1 | 0.916666666666667 | 0 | 0 |  |  |  |  |  |  |  |  |  |  |  | 
+Row 17 :  | Protective Relay | 11 | 1 | 10 | 0.0909090909090909 | 0 | 10 |  |  |  |  |  |  |  |  |  |  |  | 
+Row 18 :  | Motor Control | 8 | 5 | 3 | 0.625 | 3 | 0 |  |  |  |  |  |  |  |  |  |  |  | 
+Row 19 :  | Transformer | 7 | 4 | 3 | 0.571428571428571 | 3 | 0 |  |  |  |  |  |  |  |  |  |  |  | 
+Row 20 :  | Distribution | 6 | 6 | 0 | 1 | 0 | 0 |  |  |  |  |  |  |  |  |  |  |  | 
+Row 21 :  | Switch | 5 | 3 | 2 | 0.6 | 0 | 2 |  |  |  |  |  |  |  |  |  |  |  | 
+Row 22 :  | Grounding | 4 | 4 | 0 | 1 | 0 | 0 |  |  |  |  |  |  |  |  |  |  |  | 
+Row 23 :  | Reactor | 3 | 0 | 3 | 0 | 3 | 0 |  |  |  |  |  |  |  |  |  |  |  | 
+Row 24 :  | PQM | 2 | 0 | 2 | 0 | 0 | 2 |  |  |  |  |  |  |  |  |  |  |  | 
+Row 25 :  | Motor | 2 | 2 | 0 | 1 | 0 | 0 |  |  |  |  |  |  |  |  |  |  |  | 
+Row 26 :  | UPS | 1 | 0 | 1 | 0 | 0 | 1 |  |  |  |  |  |  |  |  |  |  |  | 
+Row 27 :  | Total | 143 | 99 | 44 |  | 12 | 31 |  |  |  |  |  |  |  |  |  |  |  | 
+Row 28 :  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Row 29 :  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Row 30 :  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 

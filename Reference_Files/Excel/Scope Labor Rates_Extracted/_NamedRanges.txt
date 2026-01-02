@@ -1,0 +1,139 @@
+﻿================================================================================
+NAMED RANGES
+================================================================================
+
+Name: _ITEM1
+Formula: '[1]Clinical Research Audit'!#REF!
+  (Could not read)
+
+Name: _ITEM2
+Formula: '[1]Clinical Research Audit'!#REF!
+  (Could not read)
+
+Name: _ITEM3
+Formula: '[1]Clinical Research Audit'!#REF!
+  (Could not read)
+
+Name: _ITEM4
+Formula: '[1]Clinical Research Audit'!#REF!
+  (Could not read)
+
+Name: _ITEM5
+Formula: '[1]Clinical Research Audit'!#REF!
+  (Could not read)
+
+Name: _ITEM6
+Formula: '[1]Clinical Research Audit'!#REF!
+  (Could not read)
+
+Name: _xlcn.WorksheetConnection_RESAPowerProjectDataEntryForm.xlsmApparatus_Quantity1
+Formula: Apparatus_Quantity
+  (Could not read)
+
+Name: ACTUAL_HOURS
+Formula: #REF!
+  (Could not read)
+
+Name: Apparatus
+Formula: #REF!
+  (Could not read)
+
+Name: AssessmentFilter
+Formula: #REF!
+  (Could not read)
+
+Name: AVAILABILITY
+Formula: #REF!
+  (Could not read)
+
+Name: AvailabilityFilter
+Formula: #REF!
+  (Could not read)
+
+Name: COMPLETE
+Formula: #REF!
+  (Could not read)
+
+Name: Designation
+Formula: #REF!
+  (Could not read)
+
+Name: Drawing
+Formula: #REF!
+  (Could not read)
+
+Name: Interval
+Formula: '[2]Office Work Schedule'!#REF!
+  (Could not read)
+
+Name: NETA_Standard
+Formula: #REF!
+  (Could not read)
+
+Name: Notes
+Formula: #REF!
+  (Could not read)
+
+Name: PRIORITY
+Formula: #REF!
+  (Could not read)
+
+Name: PriorityFilter
+Formula: #REF!
+  (Could not read)
+
+Name: ProjectEndFilter
+Formula: #REF!
+  (Could not read)
+
+Name: ProjectStartFilter
+Formula: #REF!
+  (Could not read)
+
+Name: ProjectStatusFilter
+Formula: #REF!
+  (Could not read)
+
+Name: QUOTED_HOURS
+Formula: #REF!
+  (Could not read)
+
+Name: REMAINING_HOURS
+Formula: #REF!
+  (Could not read)
+
+Name: ScheduleStart
+Formula: '[2]Office Work Schedule'!#REF!
+  (Could not read)
+
+Name: Scope
+Formula: #REF!
+  (Could not read)
+
+Name: STATUS
+Formula: #REF!
+  (Could not read)
+
+Name: StatusFilter
+Formula: #REF!
+  (Could not read)
+
+Name: Task
+Formula: #REF!
+  (Could not read)
+
+Name: TASK_DELAYS
+Formula: #REF!
+  (Could not read)
+
+Name: Task_ID
+Formula: #REF!
+  (Could not read)
+
+Name: TeamMembersFilter
+Formula: #REF!
+  (Could not read)
+
+Name: Type
+Formula: '[3]Maintenance Work Order'!#REF!
+  (Could not read)

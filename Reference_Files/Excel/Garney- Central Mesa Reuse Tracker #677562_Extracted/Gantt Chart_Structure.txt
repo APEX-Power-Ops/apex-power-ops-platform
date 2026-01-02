@@ -1,0 +1,872 @@
+﻿================================================================================
+SHEET: Gantt Chart
+================================================================================
+Used Range: A1:BQ94
+Rows: 94, Columns: 69
+
+----------------------------------------
+COLUMN HEADERS (Row 1)
+----------------------------------------
+  A1 : 
+  B1 : PROJECT GANTT CHART
+  C1 : 
+  D1 : 
+  E1 : 
+  F1 : 
+  G1 : 
+  H1 : 
+  I1 : 
+  J1 : 
+  K1 : 
+  L1 : 
+  M1 : 
+  N1 : 
+  O1 : 
+  P1 : 
+  Q1 : 
+  R1 : 
+  S1 : 
+  T1 : 
+  U1 : 
+  V1 : 
+  W1 : 
+  X1 : 
+  Y1 : 
+  Z1 : 
+  AA1 : 
+  AB1 : 
+  AC1 : 
+  AD1 : 
+  AE1 : 
+  AF1 : 
+  AG1 : 
+  AH1 : 
+  AI1 : 
+  AJ1 : 
+  AK1 : 
+  AL1 : 
+  AM1 : 
+  AN1 : 
+  AO1 : 
+  AP1 : 
+  AQ1 : 
+  AR1 : 
+  AS1 : 
+  AT1 : 
+  AU1 : 
+  AV1 : 
+  AW1 : 
+  AX1 : 
+
+----------------------------------------
+FORMULAS
+----------------------------------------
+  Total formulas: 4557
+
+  UNIQUE FORMULA PATTERNS:
+
+  Pattern (used 50x):
+    Example: E12 : 1-COUNTIFS(IPS!$E:$E,"1.1.1",IPS!$B:$B,"COMPLETED")
+    Cells: E12, E13, E14, E15, E16...
+
+  Pattern (used 18x):
+    Example: E24 : 6-SUMPRODUCT((IPS!$E:$E>="1.2.2")*(IPS!$E:$E<="1.2.7")*(IPS!$B:$B="COMPLETED"))
+    Cells: E24, E26, E27, E29, E31...
+
+  Pattern (used 1x):
+    Example: AB7 : AA7+IF(WEEKDAY(AA7,2)=5,3,1)
+    Cells: AB7
+
+  Pattern (used 1x):
+    Example: AC7 : AB7+IF(WEEKDAY(AB7,2)=5,3,1)
+    Cells: AC7
+
+  Pattern (used 1x):
+    Example: AD7 : AC7+IF(WEEKDAY(AC7,2)=5,3,1)
+    Cells: AD7
+
+  Pattern (used 1x):
+    Example: AE7 : AD7+IF(WEEKDAY(AD7,2)=5,3,1)
+    Cells: AE7
+
+  Pattern (used 1x):
+    Example: AF7 : AE7+IF(WEEKDAY(AE7,2)=5,3,1)
+    Cells: AF7
+
+  Pattern (used 1x):
+    Example: AG7 : AF7+IF(WEEKDAY(AF7,2)=5,3,1)
+    Cells: AG7
+
+  Pattern (used 1x):
+    Example: AH7 : AG7+IF(WEEKDAY(AG7,2)=5,3,1)
+    Cells: AH7
+
+  Pattern (used 1x):
+    Example: AI7 : AH7+IF(WEEKDAY(AH7,2)=5,3,1)
+    Cells: AI7
+
+  Pattern (used 1x):
+    Example: AJ7 : AI7+IF(WEEKDAY(AI7,2)=5,3,1)
+    Cells: AJ7
+
+  Pattern (used 1x):
+    Example: AK7 : AJ7+IF(WEEKDAY(AJ7,2)=5,3,1)
+    Cells: AK7
+
+  Pattern (used 1x):
+    Example: AL7 : AK7+IF(WEEKDAY(AK7,2)=5,3,1)
+    Cells: AL7
+
+  Pattern (used 1x):
+    Example: AM7 : AL7+IF(WEEKDAY(AL7,2)=5,3,1)
+    Cells: AM7
+
+  Pattern (used 1x):
+    Example: AN7 : AM7+IF(WEEKDAY(AM7,2)=5,3,1)
+    Cells: AN7
+
+  Pattern (used 1x):
+    Example: AO7 : AN7+IF(WEEKDAY(AN7,2)=5,3,1)
+    Cells: AO7
+
+  Pattern (used 1x):
+    Example: AP7 : AO7+IF(WEEKDAY(AO7,2)=5,3,1)
+    Cells: AP7
+
+  Pattern (used 1x):
+    Example: AQ7 : AP7+IF(WEEKDAY(AP7,2)=5,3,1)
+    Cells: AQ7
+
+  Pattern (used 1x):
+    Example: AR7 : AQ7+IF(WEEKDAY(AQ7,2)=5,3,1)
+    Cells: AR7
+
+  Pattern (used 1x):
+    Example: AS7 : AR7+IF(WEEKDAY(AR7,2)=5,3,1)
+    Cells: AS7
+
+  Pattern (used 1x):
+    Example: AT7 : AS7+IF(WEEKDAY(AS7,2)=5,3,1)
+    Cells: AT7
+
+  Pattern (used 1x):
+    Example: AU7 : AT7+IF(WEEKDAY(AT7,2)=5,3,1)
+    Cells: AU7
+
+  Pattern (used 1x):
+    Example: AV7 : AU7+IF(WEEKDAY(AU7,2)=5,3,1)
+    Cells: AV7
+
+  Pattern (used 1x):
+    Example: AW7 : AV7+IF(WEEKDAY(AV7,2)=5,3,1)
+    Cells: AW7
+
+  Pattern (used 1x):
+    Example: AX7 : AW7+IF(WEEKDAY(AW7,2)=5,3,1)
+    Cells: AX7
+
+  Pattern (used 1x):
+    Example: AY7 : AX7+IF(WEEKDAY(AX7,2)=5,3,1)
+    Cells: AY7
+
+  Pattern (used 1x):
+    Example: AZ7 : AY7+IF(WEEKDAY(AY7,2)=5,3,1)
+    Cells: AZ7
+
+  Pattern (used 1x):
+    Example: BA7 : AZ7+IF(WEEKDAY(AZ7,2)=5,3,1)
+    Cells: BA7
+
+  Pattern (used 1x):
+    Example: BB7 : BA7+IF(WEEKDAY(BA7,2)=5,3,1)
+    Cells: BB7
+
+  Pattern (used 1x):
+    Example: BC7 : BB7+IF(WEEKDAY(BB7,2)=5,3,1)
+    Cells: BC7
+
+  Pattern (used 1x):
+    Example: BD7 : BC7+IF(WEEKDAY(BC7,2)=5,3,1)
+    Cells: BD7
+
+  Pattern (used 1x):
+    Example: BE7 : BD7+IF(WEEKDAY(BD7,2)=5,3,1)
+    Cells: BE7
+
+  Pattern (used 1x):
+    Example: BF7 : BE7+IF(WEEKDAY(BE7,2)=5,3,1)
+    Cells: BF7
+
+  Pattern (used 1x):
+    Example: BG7 : BF7+IF(WEEKDAY(BF7,2)=5,3,1)
+    Cells: BG7
+
+  Pattern (used 1x):
+    Example: BH7 : BG7+IF(WEEKDAY(BG7,2)=5,3,1)
+    Cells: BH7
+
+  Pattern (used 1x):
+    Example: BI7 : BH7+IF(WEEKDAY(BH7,2)=5,3,1)
+    Cells: BI7
+
+  Pattern (used 1x):
+    Example: BJ7 : BI7+IF(WEEKDAY(BI7,2)=5,3,1)
+    Cells: BJ7
+
+  Pattern (used 1x):
+    Example: BK7 : BJ7+IF(WEEKDAY(BJ7,2)=5,3,1)
+    Cells: BK7
+
+  Pattern (used 1x):
+    Example: BL7 : BK7+IF(WEEKDAY(BK7,2)=5,3,1)
+    Cells: BL7
+
+  Pattern (used 1x):
+    Example: BM7 : BL7+IF(WEEKDAY(BL7,2)=5,3,1)
+    Cells: BM7
+
+  Pattern (used 1x):
+    Example: BN7 : BM7+IF(WEEKDAY(BM7,2)=5,3,1)
+    Cells: BN7
+
+  Pattern (used 1x):
+    Example: BO7 : BN7+IF(WEEKDAY(BN7,2)=5,3,1)
+    Cells: BO7
+
+  Pattern (used 1x):
+    Example: BP7 : BO7+IF(WEEKDAY(BO7,2)=5,3,1)
+    Cells: BP7
+
+  Pattern (used 1x):
+    Example: BQ7 : BP7+IF(WEEKDAY(BP7,2)=5,3,1)
+    Cells: BQ7
+
+  Pattern (used 1x):
+    Example: J7 : H8-WEEKDAY(H8,2)+1
+    Cells: J7
+
+  Pattern (used 84x):
+    Example: H11 : IF(AND(ISNUMBER($F11),ISNUMBER($G11)),$G11-$F11+1,"")
+    Cells: H11, H12, H13, H14, H15...
+
+  Pattern (used 68x):
+    Example: AA12 : IF(AND(ISNUMBER($F12),ISNUMBER($G12),$F12<=$AA$7,$AA$7<=$G12,$I12<1),1,"")
+    Cells: AA12, AA13, AA14, AA15, AA16...
+
+  Pattern (used 68x):
+    Example: AB12 : IF(AND(ISNUMBER($F12),ISNUMBER($G12),$F12<=$AB$7,$AB$7<=$G12,$I12<1),1,"")
+    Cells: AB12, AB13, AB14, AB15, AB16...
+
+  Pattern (used 68x):
+    Example: AC12 : IF(AND(ISNUMBER($F12),ISNUMBER($G12),$F12<=$AC$7,$AC$7<=$G12,$I12<1),1,"")
+    Cells: AC12, AC13, AC14, AC15, AC16...
+
+  Pattern (used 68x):
+    Example: AD12 : IF(AND(ISNUMBER($F12),ISNUMBER($G12),$F12<=$AD$7,$AD$7<=$G12,$I12<1),1,"")
+    Cells: AD12, AD13, AD14, AD15, AD16...
+
+  Pattern (used 68x):
+    Example: AE12 : IF(AND(ISNUMBER($F12),ISNUMBER($G12),$F12<=$AE$7,$AE$7<=$G12,$I12<1),1,"")
+    Cells: AE12, AE13, AE14, AE15, AE16...
+
+  Pattern (used 68x):
+    Example: AF12 : IF(AND(ISNUMBER($F12),ISNUMBER($G12),$F12<=$AF$7,$AF$7<=$G12,$I12<1),1,"")
+    Cells: AF12, AF13, AF14, AF15, AF16...
+
+  Pattern (used 68x):
+    Example: AG12 : IF(AND(ISNUMBER($F12),ISNUMBER($G12),$F12<=$AG$7,$AG$7<=$G12,$I12<1),1,"")
+    Cells: AG12, AG13, AG14, AG15, AG16...
+
+  Pattern (used 68x):
+    Example: AH12 : IF(AND(ISNUMBER($F12),ISNUMBER($G12),$F12<=$AH$7,$AH$7<=$G12,$I12<1),1,"")
+    Cells: AH12, AH13, AH14, AH15, AH16...
+
+  Pattern (used 68x):
+    Example: AI12 : IF(AND(ISNUMBER($F12),ISNUMBER($G12),$F12<=$AI$7,$AI$7<=$G12,$I12<1),1,"")
+    Cells: AI12, AI13, AI14, AI15, AI16...
+
+  Pattern (used 68x):
+    Example: AJ12 : IF(AND(ISNUMBER($F12),ISNUMBER($G12),$F12<=$AJ$7,$AJ$7<=$G12,$I12<1),1,"")
+    Cells: AJ12, AJ13, AJ14, AJ15, AJ16...
+
+  Pattern (used 68x):
+    Example: AK12 : IF(AND(ISNUMBER($F12),ISNUMBER($G12),$F12<=$AK$7,$AK$7<=$G12,$I12<1),1,"")
+    Cells: AK12, AK13, AK14, AK15, AK16...
+
+  Pattern (used 68x):
+    Example: AL12 : IF(AND(ISNUMBER($F12),ISNUMBER($G12),$F12<=$AL$7,$AL$7<=$G12,$I12<1),1,"")
+    Cells: AL12, AL13, AL14, AL15, AL16...
+
+  Pattern (used 68x):
+    Example: AM12 : IF(AND(ISNUMBER($F12),ISNUMBER($G12),$F12<=$AM$7,$AM$7<=$G12,$I12<1),1,"")
+    Cells: AM12, AM13, AM14, AM15, AM16...
+
+  Pattern (used 68x):
+    Example: AN12 : IF(AND(ISNUMBER($F12),ISNUMBER($G12),$F12<=$AN$7,$AN$7<=$G12,$I12<1),1,"")
+    Cells: AN12, AN13, AN14, AN15, AN16...
+
+  Pattern (used 68x):
+    Example: AO12 : IF(AND(ISNUMBER($F12),ISNUMBER($G12),$F12<=$AO$7,$AO$7<=$G12,$I12<1),1,"")
+    Cells: AO12, AO13, AO14, AO15, AO16...
+
+  Pattern (used 68x):
+    Example: AP12 : IF(AND(ISNUMBER($F12),ISNUMBER($G12),$F12<=$AP$7,$AP$7<=$G12,$I12<1),1,"")
+    Cells: AP12, AP13, AP14, AP15, AP16...
+
+  Pattern (used 68x):
+    Example: AQ12 : IF(AND(ISNUMBER($F12),ISNUMBER($G12),$F12<=$AQ$7,$AQ$7<=$G12,$I12<1),1,"")
+    Cells: AQ12, AQ13, AQ14, AQ15, AQ16...
+
+  Pattern (used 68x):
+    Example: AR12 : IF(AND(ISNUMBER($F12),ISNUMBER($G12),$F12<=$AR$7,$AR$7<=$G12,$I12<1),1,"")
+    Cells: AR12, AR13, AR14, AR15, AR16...
+
+  Pattern (used 68x):
+    Example: AS12 : IF(AND(ISNUMBER($F12),ISNUMBER($G12),$F12<=$AS$7,$AS$7<=$G12,$I12<1),1,"")
+    Cells: AS12, AS13, AS14, AS15, AS16...
+
+  Pattern (used 68x):
+    Example: AT12 : IF(AND(ISNUMBER($F12),ISNUMBER($G12),$F12<=$AT$7,$AT$7<=$G12,$I12<1),1,"")
+    Cells: AT12, AT13, AT14, AT15, AT16...
+
+  Pattern (used 68x):
+    Example: AU12 : IF(AND(ISNUMBER($F12),ISNUMBER($G12),$F12<=$AU$7,$AU$7<=$G12,$I12<1),1,"")
+    Cells: AU12, AU13, AU14, AU15, AU16...
+
+  Pattern (used 68x):
+    Example: AV12 : IF(AND(ISNUMBER($F12),ISNUMBER($G12),$F12<=$AV$7,$AV$7<=$G12,$I12<1),1,"")
+    Cells: AV12, AV13, AV14, AV15, AV16...
+
+  Pattern (used 68x):
+    Example: AW12 : IF(AND(ISNUMBER($F12),ISNUMBER($G12),$F12<=$AW$7,$AW$7<=$G12,$I12<1),1,"")
+    Cells: AW12, AW13, AW14, AW15, AW16...
+
+  Pattern (used 68x):
+    Example: AX12 : IF(AND(ISNUMBER($F12),ISNUMBER($G12),$F12<=$AX$7,$AX$7<=$G12,$I12<1),1,"")
+    Cells: AX12, AX13, AX14, AX15, AX16...
+
+  Pattern (used 68x):
+    Example: AY12 : IF(AND(ISNUMBER($F12),ISNUMBER($G12),$F12<=$AY$7,$AY$7<=$G12,$I12<1),1,"")
+    Cells: AY12, AY13, AY14, AY15, AY16...
+
+  Pattern (used 68x):
+    Example: AZ12 : IF(AND(ISNUMBER($F12),ISNUMBER($G12),$F12<=$AZ$7,$AZ$7<=$G12,$I12<1),1,"")
+    Cells: AZ12, AZ13, AZ14, AZ15, AZ16...
+
+  Pattern (used 68x):
+    Example: BA12 : IF(AND(ISNUMBER($F12),ISNUMBER($G12),$F12<=$BA$7,$BA$7<=$G12,$I12<1),1,"")
+    Cells: BA12, BA13, BA14, BA15, BA16...
+
+  Pattern (used 68x):
+    Example: BB12 : IF(AND(ISNUMBER($F12),ISNUMBER($G12),$F12<=$BB$7,$BB$7<=$G12,$I12<1),1,"")
+    Cells: BB12, BB13, BB14, BB15, BB16...
+
+  Pattern (used 68x):
+    Example: BC12 : IF(AND(ISNUMBER($F12),ISNUMBER($G12),$F12<=$BC$7,$BC$7<=$G12,$I12<1),1,"")
+    Cells: BC12, BC13, BC14, BC15, BC16...
+
+  Pattern (used 68x):
+    Example: BD12 : IF(AND(ISNUMBER($F12),ISNUMBER($G12),$F12<=$BD$7,$BD$7<=$G12,$I12<1),1,"")
+    Cells: BD12, BD13, BD14, BD15, BD16...
+
+  Pattern (used 68x):
+    Example: BE12 : IF(AND(ISNUMBER($F12),ISNUMBER($G12),$F12<=$BE$7,$BE$7<=$G12,$I12<1),1,"")
+    Cells: BE12, BE13, BE14, BE15, BE16...
+
+  Pattern (used 68x):
+    Example: BF12 : IF(AND(ISNUMBER($F12),ISNUMBER($G12),$F12<=$BF$7,$BF$7<=$G12,$I12<1),1,"")
+    Cells: BF12, BF13, BF14, BF15, BF16...
+
+  Pattern (used 68x):
+    Example: BG12 : IF(AND(ISNUMBER($F12),ISNUMBER($G12),$F12<=$BG$7,$BG$7<=$G12,$I12<1),1,"")
+    Cells: BG12, BG13, BG14, BG15, BG16...
+
+  Pattern (used 68x):
+    Example: BH12 : IF(AND(ISNUMBER($F12),ISNUMBER($G12),$F12<=$BH$7,$BH$7<=$G12,$I12<1),1,"")
+    Cells: BH12, BH13, BH14, BH15, BH16...
+
+  Pattern (used 68x):
+    Example: BI12 : IF(AND(ISNUMBER($F12),ISNUMBER($G12),$F12<=$BI$7,$BI$7<=$G12,$I12<1),1,"")
+    Cells: BI12, BI13, BI14, BI15, BI16...
+
+  Pattern (used 68x):
+    Example: BJ12 : IF(AND(ISNUMBER($F12),ISNUMBER($G12),$F12<=$BJ$7,$BJ$7<=$G12,$I12<1),1,"")
+    Cells: BJ12, BJ13, BJ14, BJ15, BJ16...
+
+  Pattern (used 68x):
+    Example: BK12 : IF(AND(ISNUMBER($F12),ISNUMBER($G12),$F12<=$BK$7,$BK$7<=$G12,$I12<1),1,"")
+    Cells: BK12, BK13, BK14, BK15, BK16...
+
+  Pattern (used 68x):
+    Example: BL12 : IF(AND(ISNUMBER($F12),ISNUMBER($G12),$F12<=$BL$7,$BL$7<=$G12,$I12<1),1,"")
+    Cells: BL12, BL13, BL14, BL15, BL16...
+
+  Pattern (used 68x):
+    Example: BM12 : IF(AND(ISNUMBER($F12),ISNUMBER($G12),$F12<=$BM$7,$BM$7<=$G12,$I12<1),1,"")
+    Cells: BM12, BM13, BM14, BM15, BM16...
+
+  Pattern (used 68x):
+    Example: BN12 : IF(AND(ISNUMBER($F12),ISNUMBER($G12),$F12<=$BN$7,$BN$7<=$G12,$I12<1),1,"")
+    Cells: BN12, BN13, BN14, BN15, BN16...
+
+  Pattern (used 68x):
+    Example: BO12 : IF(AND(ISNUMBER($F12),ISNUMBER($G12),$F12<=$BO$7,$BO$7<=$G12,$I12<1),1,"")
+    Cells: BO12, BO13, BO14, BO15, BO16...
+
+  Pattern (used 68x):
+    Example: BP12 : IF(AND(ISNUMBER($F12),ISNUMBER($G12),$F12<=$BP$7,$BP$7<=$G12,$I12<1),1,"")
+    Cells: BP12, BP13, BP14, BP15, BP16...
+
+  Pattern (used 68x):
+    Example: BQ12 : IF(AND(ISNUMBER($F12),ISNUMBER($G12),$F12<=$BQ$7,$BQ$7<=$G12,$I12<1),1,"")
+    Cells: BQ12, BQ13, BQ14, BQ15, BQ16...
+
+  Pattern (used 68x):
+    Example: J12 : IF(AND(ISNUMBER($F12),ISNUMBER($G12),$F12<=$J$7,$J$7<=$G12,$I12<1),1,"")
+    Cells: J12, J13, J14, J15, J16...
+
+  Pattern (used 68x):
+    Example: K12 : IF(AND(ISNUMBER($F12),ISNUMBER($G12),$F12<=$K$7,$K$7<=$G12,$I12<1),1,"")
+    Cells: K12, K13, K14, K15, K16...
+
+  Pattern (used 68x):
+    Example: L12 : IF(AND(ISNUMBER($F12),ISNUMBER($G12),$F12<=$L$7,$L$7<=$G12,$I12<1),1,"")
+    Cells: L12, L13, L14, L15, L16...
+
+  Pattern (used 68x):
+    Example: M12 : IF(AND(ISNUMBER($F12),ISNUMBER($G12),$F12<=$M$7,$M$7<=$G12,$I12<1),1,"")
+    Cells: M12, M13, M14, M15, M16...
+
+  Pattern (used 68x):
+    Example: N12 : IF(AND(ISNUMBER($F12),ISNUMBER($G12),$F12<=$N$7,$N$7<=$G12,$I12<1),1,"")
+    Cells: N12, N13, N14, N15, N16...
+
+  Pattern (used 68x):
+    Example: O12 : IF(AND(ISNUMBER($F12),ISNUMBER($G12),$F12<=$O$7,$O$7<=$G12,$I12<1),1,"")
+    Cells: O12, O13, O14, O15, O16...
+
+  Pattern (used 68x):
+    Example: P12 : IF(AND(ISNUMBER($F12),ISNUMBER($G12),$F12<=$P$7,$P$7<=$G12,$I12<1),1,"")
+    Cells: P12, P13, P14, P15, P16...
+
+  Pattern (used 68x):
+    Example: Q12 : IF(AND(ISNUMBER($F12),ISNUMBER($G12),$F12<=$Q$7,$Q$7<=$G12,$I12<1),1,"")
+    Cells: Q12, Q13, Q14, Q15, Q16...
+
+  Pattern (used 68x):
+    Example: R12 : IF(AND(ISNUMBER($F12),ISNUMBER($G12),$F12<=$R$7,$R$7<=$G12,$I12<1),1,"")
+    Cells: R12, R13, R14, R15, R16...
+
+  Pattern (used 68x):
+    Example: S12 : IF(AND(ISNUMBER($F12),ISNUMBER($G12),$F12<=$S$7,$S$7<=$G12,$I12<1),1,"")
+    Cells: S12, S13, S14, S15, S16...
+
+  Pattern (used 68x):
+    Example: T12 : IF(AND(ISNUMBER($F12),ISNUMBER($G12),$F12<=$T$7,$T$7<=$G12,$I12<1),1,"")
+    Cells: T12, T13, T14, T15, T16...
+
+  Pattern (used 68x):
+    Example: U12 : IF(AND(ISNUMBER($F12),ISNUMBER($G12),$F12<=$U$7,$U$7<=$G12,$I12<1),1,"")
+    Cells: U12, U13, U14, U15, U16...
+
+  Pattern (used 68x):
+    Example: V12 : IF(AND(ISNUMBER($F12),ISNUMBER($G12),$F12<=$V$7,$V$7<=$G12,$I12<1),1,"")
+    Cells: V12, V13, V14, V15, V16...
+
+  Pattern (used 68x):
+    Example: W12 : IF(AND(ISNUMBER($F12),ISNUMBER($G12),$F12<=$W$7,$W$7<=$G12,$I12<1),1,"")
+    Cells: W12, W13, W14, W15, W16...
+
+  Pattern (used 68x):
+    Example: X12 : IF(AND(ISNUMBER($F12),ISNUMBER($G12),$F12<=$X$7,$X$7<=$G12,$I12<1),1,"")
+    Cells: X12, X13, X14, X15, X16...
+
+  Pattern (used 68x):
+    Example: Y12 : IF(AND(ISNUMBER($F12),ISNUMBER($G12),$F12<=$Y$7,$Y$7<=$G12,$I12<1),1,"")
+    Cells: Y12, Y13, Y14, Y15, Y16...
+
+  Pattern (used 68x):
+    Example: Z12 : IF(AND(ISNUMBER($F12),ISNUMBER($G12),$F12<=$Z$7,$Z$7<=$G12,$I12<1),1,"")
+    Cells: Z12, Z13, Z14, Z15, Z16...
+
+  Pattern (used 16x):
+    Example: G11 : IF(COUNT($G$12:$G$21)=0,"",MAX($G$12:$G$21))
+    Cells: G11, G22, G25, G28, G30...
+
+  Pattern (used 16x):
+    Example: I11 : IF(SUM($D$12:$D$21)=0,"",SUMPRODUCT($D$12:$D$21,$I$12:$I$21)/SUM($D$12:$D$21))
+    Cells: I11, I22, I25, I28, I30...
+
+  Pattern (used 18x):
+    Example: I24 : IFERROR(AVERAGEIFS(IPS!$N:$N,IPS!$E:$E,">=1.2.2",IPS!$E:$E,"<=1.2.7"),0)
+    Cells: I24, I26, I27, I29, I31...
+
+  Pattern (used 18x):
+    Example: G24 : IFERROR(IF(_xlfn.MAXIFS(IPS!$I:$I,IPS!$E:$E,">=1.2.2",IPS!$E:$E,"<=1.2.7")=0,"",_xlfn.MAXIFS(IPS!$I:$I,IPS!$E:$E,">=1.2.2",IPS!$E:$E,"<=1.2.7")),"")
+    Cells: G24, G26, G27, G29, G31...
+
+  Pattern (used 50x):
+    Example: G12 : IFERROR(IF(VLOOKUP("1.1.1",IPS!$E:$I,5,FALSE)=0,"",VLOOKUP("1.1.1",IPS!$E:$I,5,FALSE)),"")
+    Cells: G12, G13, G14, G15, G16...
+
+  Pattern (used 50x):
+    Example: I12 : IFERROR(VLOOKUP("1.1.1",IPS!$E:$N,10,FALSE),0)
+    Cells: I12, I13, I14, I15, I16...
+
+  Pattern (used 1x):
+    Example: K7 : J7+IF(WEEKDAY(J7,2)=5,3,1)
+    Cells: K7
+
+  Pattern (used 1x):
+    Example: L7 : K7+IF(WEEKDAY(K7,2)=5,3,1)
+    Cells: L7
+
+  Pattern (used 1x):
+    Example: M7 : L7+IF(WEEKDAY(L7,2)=5,3,1)
+    Cells: M7
+
+  Pattern (used 1x):
+    Example: N7 : M7+IF(WEEKDAY(M7,2)=5,3,1)
+    Cells: N7
+
+  Pattern (used 1x):
+    Example: O7 : N7+IF(WEEKDAY(N7,2)=5,3,1)
+    Cells: O7
+
+  Pattern (used 1x):
+    Example: P7 : O7+IF(WEEKDAY(O7,2)=5,3,1)
+    Cells: P7
+
+  Pattern (used 1x):
+    Example: Q7 : P7+IF(WEEKDAY(P7,2)=5,3,1)
+    Cells: Q7
+
+  Pattern (used 4x):
+    Example: C2 : Project_Form!C4
+    Cells: C2, C3, C4, C5
+
+  Pattern (used 1x):
+    Example: R7 : Q7+IF(WEEKDAY(Q7,2)=5,3,1)
+    Cells: R7
+
+  Pattern (used 1x):
+    Example: S7 : R7+IF(WEEKDAY(R7,2)=5,3,1)
+    Cells: S7
+
+  Pattern (used 1x):
+    Example: T7 : S7+IF(WEEKDAY(S7,2)=5,3,1)
+    Cells: T7
+
+  Pattern (used 16x):
+    Example: D11 : SUM($D$12:$D$21)
+    Cells: D11, D22, D25, D28, D30...
+
+  Pattern (used 16x):
+    Example: E11 : SUM($E$12:$E$21)
+    Cells: E11, E22, E25, E28, E30...
+
+  Pattern (used 1x):
+    Example: U7 : T7+IF(WEEKDAY(T7,2)=5,3,1)
+    Cells: U7
+
+  Pattern (used 1x):
+    Example: AA9 : TEXT(DAY(AA7),"00")
+    Cells: AA9
+
+  Pattern (used 1x):
+    Example: AB9 : TEXT(DAY(AB7),"00")
+    Cells: AB9
+
+  Pattern (used 1x):
+    Example: AC9 : TEXT(DAY(AC7),"00")
+    Cells: AC9
+
+  Pattern (used 1x):
+    Example: AD9 : TEXT(DAY(AD7),"00")
+    Cells: AD9
+
+  Pattern (used 1x):
+    Example: AE9 : TEXT(DAY(AE7),"00")
+    Cells: AE9
+
+  Pattern (used 1x):
+    Example: AF9 : TEXT(DAY(AF7),"00")
+    Cells: AF9
+
+  Pattern (used 1x):
+    Example: AG9 : TEXT(DAY(AG7),"00")
+    Cells: AG9
+
+  Pattern (used 1x):
+    Example: AH9 : TEXT(DAY(AH7),"00")
+    Cells: AH9
+
+  Pattern (used 1x):
+    Example: AI9 : TEXT(DAY(AI7),"00")
+    Cells: AI9
+
+  Pattern (used 1x):
+    Example: AJ9 : TEXT(DAY(AJ7),"00")
+    Cells: AJ9
+
+  Pattern (used 1x):
+    Example: AK9 : TEXT(DAY(AK7),"00")
+    Cells: AK9
+
+  Pattern (used 1x):
+    Example: AL9 : TEXT(DAY(AL7),"00")
+    Cells: AL9
+
+  Pattern (used 1x):
+    Example: AM9 : TEXT(DAY(AM7),"00")
+    Cells: AM9
+
+  Pattern (used 1x):
+    Example: AN9 : TEXT(DAY(AN7),"00")
+    Cells: AN9
+
+  Pattern (used 1x):
+    Example: AO9 : TEXT(DAY(AO7),"00")
+    Cells: AO9
+
+  Pattern (used 1x):
+    Example: AP9 : TEXT(DAY(AP7),"00")
+    Cells: AP9
+
+  Pattern (used 1x):
+    Example: AQ9 : TEXT(DAY(AQ7),"00")
+    Cells: AQ9
+
+  Pattern (used 1x):
+    Example: AR9 : TEXT(DAY(AR7),"00")
+    Cells: AR9
+
+  Pattern (used 1x):
+    Example: AS9 : TEXT(DAY(AS7),"00")
+    Cells: AS9
+
+  Pattern (used 1x):
+    Example: AT9 : TEXT(DAY(AT7),"00")
+    Cells: AT9
+
+  Pattern (used 1x):
+    Example: AU9 : TEXT(DAY(AU7),"00")
+    Cells: AU9
+
+  Pattern (used 1x):
+    Example: AV9 : TEXT(DAY(AV7),"00")
+    Cells: AV9
+
+  Pattern (used 1x):
+    Example: AW9 : TEXT(DAY(AW7),"00")
+    Cells: AW9
+
+  Pattern (used 1x):
+    Example: AX9 : TEXT(DAY(AX7),"00")
+    Cells: AX9
+
+  Pattern (used 1x):
+    Example: AY9 : TEXT(DAY(AY7),"00")
+    Cells: AY9
+
+  Pattern (used 1x):
+    Example: AZ9 : TEXT(DAY(AZ7),"00")
+    Cells: AZ9
+
+  Pattern (used 1x):
+    Example: BA9 : TEXT(DAY(BA7),"00")
+    Cells: BA9
+
+  Pattern (used 1x):
+    Example: BB9 : TEXT(DAY(BB7),"00")
+    Cells: BB9
+
+  Pattern (used 1x):
+    Example: BC9 : TEXT(DAY(BC7),"00")
+    Cells: BC9
+
+  Pattern (used 1x):
+    Example: BD9 : TEXT(DAY(BD7),"00")
+    Cells: BD9
+
+  Pattern (used 1x):
+    Example: BE9 : TEXT(DAY(BE7),"00")
+    Cells: BE9
+
+  Pattern (used 1x):
+    Example: BF9 : TEXT(DAY(BF7),"00")
+    Cells: BF9
+
+  Pattern (used 1x):
+    Example: BG9 : TEXT(DAY(BG7),"00")
+    Cells: BG9
+
+  Pattern (used 1x):
+    Example: BH9 : TEXT(DAY(BH7),"00")
+    Cells: BH9
+
+  Pattern (used 1x):
+    Example: BI9 : TEXT(DAY(BI7),"00")
+    Cells: BI9
+
+  Pattern (used 1x):
+    Example: BJ9 : TEXT(DAY(BJ7),"00")
+    Cells: BJ9
+
+  Pattern (used 1x):
+    Example: BK9 : TEXT(DAY(BK7),"00")
+    Cells: BK9
+
+  Pattern (used 1x):
+    Example: BL9 : TEXT(DAY(BL7),"00")
+    Cells: BL9
+
+  Pattern (used 1x):
+    Example: BM9 : TEXT(DAY(BM7),"00")
+    Cells: BM9
+
+  Pattern (used 1x):
+    Example: BN9 : TEXT(DAY(BN7),"00")
+    Cells: BN9
+
+  Pattern (used 1x):
+    Example: BO9 : TEXT(DAY(BO7),"00")
+    Cells: BO9
+
+  Pattern (used 1x):
+    Example: BP9 : TEXT(DAY(BP7),"00")
+    Cells: BP9
+
+  Pattern (used 1x):
+    Example: BQ9 : TEXT(DAY(BQ7),"00")
+    Cells: BQ9
+
+  Pattern (used 1x):
+    Example: J9 : TEXT(DAY(J7),"00")
+    Cells: J9
+
+  Pattern (used 1x):
+    Example: K9 : TEXT(DAY(K7),"00")
+    Cells: K9
+
+  Pattern (used 1x):
+    Example: L9 : TEXT(DAY(L7),"00")
+    Cells: L9
+
+  Pattern (used 1x):
+    Example: M9 : TEXT(DAY(M7),"00")
+    Cells: M9
+
+  Pattern (used 1x):
+    Example: N9 : TEXT(DAY(N7),"00")
+    Cells: N9
+
+  Pattern (used 1x):
+    Example: O9 : TEXT(DAY(O7),"00")
+    Cells: O9
+
+  Pattern (used 1x):
+    Example: P9 : TEXT(DAY(P7),"00")
+    Cells: P9
+
+  Pattern (used 1x):
+    Example: Q9 : TEXT(DAY(Q7),"00")
+    Cells: Q9
+
+  Pattern (used 1x):
+    Example: R9 : TEXT(DAY(R7),"00")
+    Cells: R9
+
+  Pattern (used 1x):
+    Example: S9 : TEXT(DAY(S7),"00")
+    Cells: S9
+
+  Pattern (used 1x):
+    Example: T9 : TEXT(DAY(T7),"00")
+    Cells: T9
+
+  Pattern (used 1x):
+    Example: U9 : TEXT(DAY(U7),"00")
+    Cells: U9
+
+  Pattern (used 1x):
+    Example: V9 : TEXT(DAY(V7),"00")
+    Cells: V9
+
+  Pattern (used 1x):
+    Example: W9 : TEXT(DAY(W7),"00")
+    Cells: W9
+
+  Pattern (used 1x):
+    Example: X9 : TEXT(DAY(X7),"00")
+    Cells: X9
+
+  Pattern (used 1x):
+    Example: Y9 : TEXT(DAY(Y7),"00")
+    Cells: Y9
+
+  Pattern (used 1x):
+    Example: Z9 : TEXT(DAY(Z7),"00")
+    Cells: Z9
+
+  Pattern (used 1x):
+    Example: C6 : TODAY()
+    Cells: C6
+
+  Pattern (used 1x):
+    Example: V7 : U7+IF(WEEKDAY(U7,2)=5,3,1)
+    Cells: V7
+
+  Pattern (used 1x):
+    Example: W7 : V7+IF(WEEKDAY(V7,2)=5,3,1)
+    Cells: W7
+
+  Pattern (used 1x):
+    Example: X7 : W7+IF(WEEKDAY(W7,2)=5,3,1)
+    Cells: X7
+
+  Pattern (used 1x):
+    Example: Y7 : X7+IF(WEEKDAY(X7,2)=5,3,1)
+    Cells: Y7
+
+  Pattern (used 1x):
+    Example: Z7 : Y7+IF(WEEKDAY(Y7,2)=5,3,1)
+    Cells: Z7
+
+  Pattern (used 1x):
+    Example: AA7 : Z7+IF(WEEKDAY(Z7,2)=5,3,1)
+    Cells: AA7
+
+----------------------------------------
+SAMPLE DATA (First 30 rows)
+----------------------------------------
+Row 1 :  | PROJECT GANTT CHART |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Row 2 :  | CLIENT | Garney |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Row 3 :  | PROJECT TITLE | Central Mesa Reuse Plant |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Row 4 :  | JOB # | 677562 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Row 5 :  | PROJECT LEAD | Phillip Pentecost |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Row 6 :  | DATE | 46020 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Row 7 :  |  |  |  |  |  |  |  |  | 46020 | 46021 | 46022 | 46023 | 46024 | 46027 | 46028 | 46029 | 46030 | 46031 | 46034
+Row 8 :  |  |  |  | SET TIMELINE DATE -> |  |  | 12/29/2025 00:00:00 |  | WEEK 1 |  |  |  |  | WEEK 2 |  |  |  |  | WEEK 3
+Row 9 :  | TASK ID | SCOPE + TASK + APPARATUS | APPARATUS QUANTITY | REMAINING QUANTITY | START DATE | DATE DUE | DURATION IN DAYS | % COMPLETION | 29 | 30 | 31 | 01 | 02 | 05 | 06 | 07 | 08 | 09 | 12
+Row 10 :  |  |  |  |  |  |  |  |  | M | T | W | R | F | M | T | W | R | F | M
+Row 11 :  | 1.1 | IPS | SES-00-001 | 10 | 2 |  | 46027 |  | 0.8 |  |  |  |  |  |  |  |  |  |  | 
+Row 12 :  | 1.1.1 | Switchgear - Medium Voltage | 1 | 0 |  | 46027 |  | 1 |  |  |  |  |  |  |  |  |  |  | 
+Row 13 :  | 1.1.2 | Arrestor - Medium Voltage (Set) | 1 | 0 |  | 46027 |  | 1 |  |  |  |  |  |  |  |  |  |  | 
+Row 14 :  | 1.1.3 | Control Power Transformer - MV Swgr | 1 | 0 |  | 46027 |  | 1 |  |  |  |  |  |  |  |  |  |  | 
+Row 15 :  | 1.1.4 | Potential Transformer - MV SWGR | 1 | 0 |  | 46027 |  | 1 |  |  |  |  |  |  |  |  |  |  | 
+Row 16 :  | 1.1.5 | Circuit Breaker MV - Vacuum Bkr | 1 | 0 |  | 46027 |  | 1 |  |  |  |  |  |  |  |  |  |  | 
+Row 17 :  | 1.1.6 | Current Transformer MV - Set of 3 | 1 | 0 |  | 46027 |  | 1 |  |  |  |  |  |  |  |  |  |  | 
+Row 18 :  | 1.1.7 | Current Transformer - MV | 1 | 0 |  | 46027 |  | 1 |  |  |  |  |  |  |  |  |  |  | 
+Row 19 :  | 1.1.8 | Protective Relay (Feeder Protection) | 1 | 1 |  | 46027 |  | 0 |  |  |  |  |  |  |  |  |  |  | 
+Row 20 :  | 1.1.9 | Ground Resistance Test - FOP or Clamp... | 1 | 0 |  | 46027 |  | 1 |  |  |  |  |  |  |  |  |  |  | 
+Row 21 :  | 1.1.10 | Conductors MV - Set of 3 (VLF Hipoten... | 1 | 1 |  | 46027 |  | 0 |  |  |  |  |  |  |  |  |  |  | 
+Row 22 :  | 1.2 | IPS | SWGR-00-001 | 7 | 0 |  |  |  | 1 |  |  |  |  |  |  |  |  |  |  | 
+Row 23 :  | 1.2.1 | Switchgear - Medium Voltage | 1 | 0 |  |  |  | 1 |  |  |  |  |  |  |  |  |  |  | 
+Row 24 :  | 1.2.2 - 1.2.7 | Arrestor - Medium Voltage (Set) | 6 | 0 |  |  |  | 1 |  |  |  |  |  |  |  |  |  |  | 
+Row 25 :  | 1.3 | IPS | Instrument Transformers | 5 | 0 |  |  |  | 1 |  |  |  |  |  |  |  |  |  |  | 
+Row 26 :  | 1.3.1 - 1.3.2 | Control Power Transformer - MV Swgr | 2 | 0 |  |  |  | 1 |  |  |  |  |  |  |  |  |  |  | 
+Row 27 :  | 1.3.3 - 1.3.5 | Potential Transformer - MV SWGR | 3 | 0 |  |  |  | 1 |  |  |  |  |  |  |  |  |  |  | 
+Row 28 :  | 1.4 | IPS | Overcurrent CT's | 6 | 0 |  |  |  | 1 |  |  |  |  |  |  |  |  |  |  | 
+Row 29 :  | 1.4.1 - 1.4.6 | Current Transformer MV - Set of 3 | 6 | 0 |  |  |  | 1 |  |  |  |  |  |  |  |  |  |  | 
+Row 30 :  | 1.5 | IPS | Bus Differential CT's | 6 | 0 |  |  |  | 1 |  |  |  |  |  |  |  |  |  |  | 

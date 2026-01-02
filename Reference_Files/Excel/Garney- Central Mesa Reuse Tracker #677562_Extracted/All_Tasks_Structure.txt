@@ -1,0 +1,300 @@
+﻿================================================================================
+SHEET: All_Tasks
+================================================================================
+Used Range: A1:V2858
+Rows: 2858, Columns: 22
+
+----------------------------------------
+COLUMN HEADERS (Row 1)
+----------------------------------------
+  A1 : Scope
+  B1 : NETA_Standard
+  C1 : Task_ID
+  D1 : Task
+  E1 : Apparatus
+  F1 : Designation
+  G1 : Drawing
+  H1 : Date Due
+  I1 : Notes
+  J1 : Assessment
+  K1 : DATASHEET
+  L1 : DATE COMPLETED
+  M1 : NOTES2
+  N1 : % COMPLETION
+  O1 : TASK DELAYS
+  P1 : Apparatus Hours
+  Q1 : Remaining Hours
+  R1 : ACTUAL HOURS
+  S1 : STATUS
+  T1 : AVAILABILITY
+  U1 : PRIORITY
+  V1 : Apparatus Category
+
+----------------------------------------
+FORMULAS
+----------------------------------------
+  Total formulas: 5002
+
+  UNIQUE FORMULA PATTERNS:
+
+  Pattern (used 11x):
+    Example: S128 : IF(GWRP!B7="","",GWRP!B7)
+    Cells: S128, S129, S130, S131, S132...
+
+  Pattern (used 11x):
+    Example: T128 : IF(GWRP!C7="","",GWRP!C7)
+    Cells: T128, T129, T130, T131, T132...
+
+  Pattern (used 11x):
+    Example: U128 : IF(GWRP!D7="","",GWRP!D7)
+    Cells: U128, U129, U130, U131, U132...
+
+  Pattern (used 11x):
+    Example: G128 : IF(GWRP!H7="","",GWRP!H7)
+    Cells: G128, G129, G130, G131, G132...
+
+  Pattern (used 11x):
+    Example: H128 : IF(GWRP!I7="","",GWRP!I7)
+    Cells: H128, H129, H130, H131, H132...
+
+  Pattern (used 11x):
+    Example: J128 : IF(GWRP!J7="","",GWRP!J7)
+    Cells: J128, J129, J130, J131, J132...
+
+  Pattern (used 11x):
+    Example: K128 : IF(GWRP!K7="","",GWRP!K7)
+    Cells: K128, K129, K130, K131, K132...
+
+  Pattern (used 11x):
+    Example: L128 : IF(GWRP!L7="","",GWRP!L7)
+    Cells: L128, L129, L130, L131, L132...
+
+  Pattern (used 22x):
+    Example: I128 : IF(GWRP!M7="","",GWRP!M7)
+    Cells: I128, M128, I129, M129, I130...
+
+  Pattern (used 11x):
+    Example: N128 : IF(GWRP!N7="","",GWRP!N7)
+    Cells: N128, N129, N130, N131, N132...
+
+  Pattern (used 11x):
+    Example: O128 : IF(GWRP!O7="","",GWRP!O7)
+    Cells: O128, O129, O130, O131, O132...
+
+  Pattern (used 11x):
+    Example: P128 : IF(GWRP!P7="","",GWRP!P7)
+    Cells: P128, P129, P130, P131, P132...
+
+  Pattern (used 11x):
+    Example: Q128 : IF(GWRP!Q7="","",GWRP!Q7)
+    Cells: Q128, Q129, Q130, Q131, Q132...
+
+  Pattern (used 11x):
+    Example: R128 : IF(GWRP!R7="","",GWRP!R7)
+    Cells: R128, R129, R130, R131, R132...
+
+  Pattern (used 120x):
+    Example: S2 : IF(IPS!B7="","",IPS!B7)
+    Cells: S2, S3, S4, S5, S6...
+
+  Pattern (used 120x):
+    Example: T2 : IF(IPS!C7="","",IPS!C7)
+    Cells: T2, T3, T4, T5, T6...
+
+  Pattern (used 120x):
+    Example: U2 : IF(IPS!D7="","",IPS!D7)
+    Cells: U2, U3, U4, U5, U6...
+
+  Pattern (used 120x):
+    Example: G2 : IF(IPS!H7="","",IPS!H7)
+    Cells: G2, G3, G4, G5, G6...
+
+  Pattern (used 120x):
+    Example: H2 : IF(IPS!I7="","",IPS!I7)
+    Cells: H2, H3, H4, H5, H6...
+
+  Pattern (used 120x):
+    Example: J2 : IF(IPS!J7="","",IPS!J7)
+    Cells: J2, J3, J4, J5, J6...
+
+  Pattern (used 120x):
+    Example: K2 : IF(IPS!K7="","",IPS!K7)
+    Cells: K2, K3, K4, K5, K6...
+
+  Pattern (used 120x):
+    Example: L2 : IF(IPS!L7="","",IPS!L7)
+    Cells: L2, L3, L4, L5, L6...
+
+  Pattern (used 240x):
+    Example: I2 : IF(IPS!M7="","",IPS!M7)
+    Cells: I2, M2, I3, M3, I4...
+
+  Pattern (used 120x):
+    Example: N2 : IF(IPS!N7="","",IPS!N7)
+    Cells: N2, N3, N4, N5, N6...
+
+  Pattern (used 120x):
+    Example: O2 : IF(IPS!O7="","",IPS!O7)
+    Cells: O2, O3, O4, O5, O6...
+
+  Pattern (used 120x):
+    Example: P2 : IF(IPS!P7="","",IPS!P7)
+    Cells: P2, P3, P4, P5, P6...
+
+  Pattern (used 120x):
+    Example: Q2 : IF(IPS!Q7="","",IPS!Q7)
+    Cells: Q2, Q3, Q4, Q5, Q6...
+
+  Pattern (used 120x):
+    Example: R2 : IF(IPS!R7="","",IPS!R7)
+    Cells: R2, R3, R4, R5, R6...
+
+  Pattern (used 6x):
+    Example: S122 : IF(NWWRP!B7="","",NWWRP!B7)
+    Cells: S122, S123, S124, S125, S126...
+
+  Pattern (used 6x):
+    Example: T122 : IF(NWWRP!C7="","",NWWRP!C7)
+    Cells: T122, T123, T124, T125, T126...
+
+  Pattern (used 6x):
+    Example: U122 : IF(NWWRP!D7="","",NWWRP!D7)
+    Cells: U122, U123, U124, U125, U126...
+
+  Pattern (used 6x):
+    Example: G122 : IF(NWWRP!H7="","",NWWRP!H7)
+    Cells: G122, G123, G124, G125, G126...
+
+  Pattern (used 6x):
+    Example: H122 : IF(NWWRP!I7="","",NWWRP!I7)
+    Cells: H122, H123, H124, H125, H126...
+
+  Pattern (used 6x):
+    Example: J122 : IF(NWWRP!J7="","",NWWRP!J7)
+    Cells: J122, J123, J124, J125, J126...
+
+  Pattern (used 6x):
+    Example: K122 : IF(NWWRP!K7="","",NWWRP!K7)
+    Cells: K122, K123, K124, K125, K126...
+
+  Pattern (used 6x):
+    Example: L122 : IF(NWWRP!L7="","",NWWRP!L7)
+    Cells: L122, L123, L124, L125, L126...
+
+  Pattern (used 12x):
+    Example: I122 : IF(NWWRP!M7="","",NWWRP!M7)
+    Cells: I122, M122, I123, M123, I124...
+
+  Pattern (used 6x):
+    Example: N122 : IF(NWWRP!N7="","",NWWRP!N7)
+    Cells: N122, N123, N124, N125, N126...
+
+  Pattern (used 6x):
+    Example: O122 : IF(NWWRP!O7="","",NWWRP!O7)
+    Cells: O122, O123, O124, O125, O126...
+
+  Pattern (used 6x):
+    Example: P122 : IF(NWWRP!P7="","",NWWRP!P7)
+    Cells: P122, P123, P124, P125, P126...
+
+  Pattern (used 6x):
+    Example: Q122 : IF(NWWRP!Q7="","",NWWRP!Q7)
+    Cells: Q122, Q123, Q124, Q125, Q126...
+
+  Pattern (used 6x):
+    Example: R122 : IF(NWWRP!R7="","",NWWRP!R7)
+    Cells: R122, R123, R124, R125, R126...
+
+  Pattern (used 6x):
+    Example: S139 : IF(SEWRP!B7="","",SEWRP!B7)
+    Cells: S139, S140, S141, S142, S143...
+
+  Pattern (used 6x):
+    Example: T139 : IF(SEWRP!C7="","",SEWRP!C7)
+    Cells: T139, T140, T141, T142, T143...
+
+  Pattern (used 6x):
+    Example: U139 : IF(SEWRP!D7="","",SEWRP!D7)
+    Cells: U139, U140, U141, U142, U143...
+
+  Pattern (used 6x):
+    Example: G139 : IF(SEWRP!H7="","",SEWRP!H7)
+    Cells: G139, G140, G141, G142, G143...
+
+  Pattern (used 6x):
+    Example: H139 : IF(SEWRP!I7="","",SEWRP!I7)
+    Cells: H139, H140, H141, H142, H143...
+
+  Pattern (used 6x):
+    Example: J139 : IF(SEWRP!J7="","",SEWRP!J7)
+    Cells: J139, J140, J141, J142, J143...
+
+  Pattern (used 6x):
+    Example: K139 : IF(SEWRP!K7="","",SEWRP!K7)
+    Cells: K139, K140, K141, K142, K143...
+
+  Pattern (used 6x):
+    Example: L139 : IF(SEWRP!L7="","",SEWRP!L7)
+    Cells: L139, L140, L141, L142, L143...
+
+  Pattern (used 12x):
+    Example: I139 : IF(SEWRP!M7="","",SEWRP!M7)
+    Cells: I139, M139, I140, M140, I141...
+
+  Pattern (used 6x):
+    Example: N139 : IF(SEWRP!N7="","",SEWRP!N7)
+    Cells: N139, N140, N141, N142, N143...
+
+  Pattern (used 6x):
+    Example: O139 : IF(SEWRP!O7="","",SEWRP!O7)
+    Cells: O139, O140, O141, O142, O143...
+
+  Pattern (used 6x):
+    Example: P139 : IF(SEWRP!P7="","",SEWRP!P7)
+    Cells: P139, P140, P141, P142, P143...
+
+  Pattern (used 6x):
+    Example: Q139 : IF(SEWRP!Q7="","",SEWRP!Q7)
+    Cells: Q139, Q140, Q141, Q142, Q143...
+
+  Pattern (used 6x):
+    Example: R139 : IF(SEWRP!R7="","",SEWRP!R7)
+    Cells: R139, R140, R141, R142, R143...
+
+  Pattern (used 2857x):
+    Example: V2 : IFERROR(_xlfn.XLOOKUP($E2,Apparatus_Categories[Apparatus_Type],Apparatus_Categories[Category]),"")
+    Cells: V2, V3, V4, V5, V6...
+
+----------------------------------------
+SAMPLE DATA (First 30 rows)
+----------------------------------------
+Row 1 : Scope | NETA_Standard | Task_ID | Task | Apparatus | Designation | Drawing | Date Due | Notes | Assessment | DATASHEET | DATE COMPLETED | NOTES2 | % COMPLETION | TASK DELAYS | Apparatus Hours | Remaining Hours | ACTUAL HOURS | STATUS | AVAILABILITY
+Row 2 : IPS | ATS | 1.1.1 | SES-00-001 | Switchgear - Medium Voltage |  |  | 46027 | Needs to be retested due to not meeti... | NON-SERVICEABLE | False |  | Needs to be retested due to not meeti... | 1 |  | 2.5 | 0 | 2.5 | COMPLETED | ON HOLD
+Row 3 : IPS | ATS | 1.1.2 | SES-00-001 | Arrestor - Medium Voltage (Set) |  |  | 46027 |  |  | False |  |  | 1 |  | 2 | 0 | 2 | COMPLETED | READY
+Row 4 : IPS | ATS | 1.1.3 | SES-00-001 | Control Power Transformer - MV Swgr |  |  | 46027 |  |  | False | 45994 |  | 1 |  | 2.5 | 0 | 2.5 | COMPLETED | READY
+Row 5 : IPS | ATS | 1.1.4 | SES-00-001 | Potential Transformer - MV SWGR |  |  | 46027 |  |  | False | 45994 |  | 1 |  | 2.5 | 0 | 2.5 | COMPLETED | READY
+Row 6 : IPS | ATS | 1.1.5 | SES-00-001 | Circuit Breaker MV - Vacuum Bkr |  |  | 46027 |  |  | False | 45993 |  | 1 |  | 4 | 0 | 4 | COMPLETED | READY
+Row 7 : IPS | ATS | 1.1.6 | SES-00-001 | Current Transformer MV - Set of 3 |  |  | 46027 |  |  | False | 45994 |  | 1 |  | 2 | 0 | 2 | COMPLETED | READY
+Row 8 : IPS | ATS | 1.1.7 | SES-00-001 | Current Transformer - MV |  |  | 46027 |  |  | False | 45994 |  | 1 |  | 0.75 | 0 | 0.75 | COMPLETED | READY
+Row 9 : IPS | ATS | 1.1.8 | SES-00-001 | Protective Relay (Feeder Protection) |  |  | 46027 |  |  | False |  |  | 0 |  | 5 | 5 | 5 | NOT STARTED | NOT AVAILABLE
+Row 10 : IPS | ATS | 1.1.9 | SES-00-001 | Ground Resistance Test - FOP or Clamp... |  |  | 46027 | Completed however clamp on showed 0.0... |  | False |  | Completed however clamp on showed 0.0... | 1 |  | 2.5 | 0 | 2.5 | COMPLETED | READY
+Row 11 : IPS | ATS | 1.1.10 | SES-00-001 | Conductors MV - Set of 3 (VLF Hipoten... |  |  | 46027 |  |  | False |  |  | 0 |  | 4 | 4 | 4 | NOT STARTED | NOT AVAILABLE
+Row 12 : IPS | ATS | 1.2.1 | SWGR-00-001 | Switchgear - Medium Voltage |  |  |  | Needs to be retested due to not being... | ACCEPTABLE | False | 45994 | Needs to be retested due to not being... | 1 | 2 | 2.5 | 0 | 4.5 | COMPLETED | READY
+Row 13 : IPS | ATS | 1.2.2 | SWGR-00-001 | Arrestor - Medium Voltage (Set) |  |  |  |  | ACCEPTABLE | False | 45994 |  | 1 |  | 2 | 0 | 2 | COMPLETED | READY
+Row 14 : IPS | ATS | 1.2.3 | SWGR-00-001 | Arrestor - Medium Voltage (Set) |  |  |  |  | ACCEPTABLE | False | 45994 |  | 1 |  | 2 | 0 | 2 | COMPLETED | READY
+Row 15 : IPS | ATS | 1.2.4 | SWGR-00-001 | Arrestor - Medium Voltage (Set) |  |  |  |  | ACCEPTABLE | False | 45994 |  | 1 |  | 2 | 0 | 2 | COMPLETED | READY
+Row 16 : IPS | ATS | 1.2.5 | SWGR-00-001 | Arrestor - Medium Voltage (Set) |  |  |  |  | ACCEPTABLE | False | 45994 |  | 1 |  | 2 | 0 | 2 | COMPLETED | READY
+Row 17 : IPS | ATS | 1.2.6 | SWGR-00-001 | Arrestor - Medium Voltage (Set) |  |  |  |  | ACCEPTABLE | False | 45994 |  | 1 |  | 2 | 0 | 2 | COMPLETED | READY
+Row 18 : IPS | ATS | 1.2.7 | SWGR-00-001 | Arrestor - Medium Voltage (Set) |  |  |  |  | ACCEPTABLE | False | 45994 |  | 1 |  | 2 | 0 | 2 | COMPLETED | READY
+Row 19 : IPS | ATS | 1.3.1 | Instrument Transformers | Control Power Transformer - MV Swgr |  |  |  | 52M1 CPT failed insulation resistance... | NON-SERVICEABLE | True | 45994 | 52M1 CPT failed insulation resistance... | 1 | 1 | 2.5 | 0 | 3.5 | COMPLETED | ON HOLD
+Row 20 : IPS | ATS | 1.3.2 | Instrument Transformers | Control Power Transformer - MV Swgr |  |  |  |  | ACCEPTABLE | True | 45994 |  | 1 |  | 2.5 | 0 | 2.5 | COMPLETED | READY
+Row 21 : IPS | ATS | 1.3.3 | Instrument Transformers | Potential Transformer - MV SWGR |  |  |  |  | ACCEPTABLE | False | 45994 |  | 1 |  | 2.5 | 0 | 2.5 | COMPLETED | READY
+Row 22 : IPS | ATS | 1.3.4 | Instrument Transformers | Potential Transformer - MV SWGR |  |  |  |  | ACCEPTABLE | False | 45994 |  | 1 |  | 2.5 | 0 | 2.5 | COMPLETED | READY
+Row 23 : IPS | ATS | 1.3.5 | Instrument Transformers | Potential Transformer - MV SWGR |  |  |  |  | ACCEPTABLE | False | 45994 |  | 1 |  | 2.5 | 0 | 2.5 | COMPLETED | READY
+Row 24 : IPS | ATS | 1.4.1 | Overcurrent CT's | Current Transformer MV - Set of 3 |  |  |  |  | ACCEPTABLE | False | 45994 |  | 1 |  | 2 | 0 | 2 | COMPLETED | READY
+Row 25 : IPS | ATS | 1.4.2 | Overcurrent CT's | Current Transformer MV - Set of 3 |  |  |  |  | ACCEPTABLE | False | 45994 |  | 1 |  | 2 | 0 | 2 | COMPLETED | READY
+Row 26 : IPS | ATS | 1.4.3 | Overcurrent CT's | Current Transformer MV - Set of 3 |  |  |  |  | ACCEPTABLE | False | 45994 |  | 1 |  | 2 | 0 | 2 | COMPLETED | READY
+Row 27 : IPS | ATS | 1.4.4 | Overcurrent CT's | Current Transformer MV - Set of 3 |  |  |  | Swapped with Differential CTs. | MINOR DEFICIENCY | False | 45994 | Swapped with Differential CTs. | 1 |  | 2 | 0 | 2 | COMPLETED | READY
+Row 28 : IPS | ATS | 1.4.5 | Overcurrent CT's | Current Transformer MV - Set of 3 |  |  |  | Print issue on CT 4/5/6. See red lines | ACCEPTABLE | False | 45994 | Print issue on CT 4/5/6. See red lines | 1 | 2 | 2 | 0 | 4 | COMPLETED | READY
+Row 29 : IPS | ATS | 1.4.6 | Overcurrent CT's | Current Transformer MV - Set of 3 |  |  |  | Need islet crimps to switch core mark... | ACCEPTABLE | False | 45994 | Need islet crimps to switch core mark... | 1 |  | 2 | 0 | 2 | COMPLETED | READY
+Row 30 : IPS | ATS | 1.5.1 | Bus Differential CT's | Current Transformer MV - Set of 3 |  |  |  |  | ACCEPTABLE | False | 45994 |  | 1 |  | 2 | 0 | 2 | COMPLETED | READY

@@ -1,0 +1,66 @@
+﻿================================================================================
+SHEET: All_Lists
+================================================================================
+Used Range: A1:I826
+Rows: 826, Columns: 9
+
+----------------------------------------
+COLUMN HEADERS (Row 1)
+----------------------------------------
+  A1 : ASSESSMENT KEY
+  B1 : STATUS KEY
+  C1 : AVAILABILITY KEY
+  D1 : PRIORITY KEY
+  E1 : 
+  F1 : NETA_Standard
+  G1 : 
+  H1 : Designations
+  I1 : Category Not Found
+
+----------------------------------------
+TABLES
+----------------------------------------
+  Table: Table4
+    Range: A1:D6
+    Columns: 4
+
+----------------------------------------
+FORMULAS
+----------------------------------------
+  Total formulas: 0
+
+  (No formulas found)
+
+----------------------------------------
+SAMPLE DATA (First 30 rows)
+----------------------------------------
+Row 1 : ASSESSMENT KEY | STATUS KEY | AVAILABILITY KEY | PRIORITY KEY |  | NETA_Standard |  | Designations | Category Not Found
+Row 2 : ACCEPTABLE | COMPLETED | READY | HIGH |  | ATS |  | SES-00-001 | Category Not Found
+Row 3 : MINOR DEFICIENCY | NOT STARTED | ON HOLD | MEDIUM |  | MTS |  | SWGR-00-001 | Category Not Found
+Row 4 : NON-SERVICEABLE | IN PROGRESS | NOT AVAILABLE | LOW |  |  |  | Docking Station | Category Not Found
+Row 5 :  | OVERDUE |  |  |  |  |  | XFMR00001-1 | Category Not Found
+Row 6 :  | ISSUE LOG |  |  |  |  |  | MCC-00-001 | Category Not Found
+Row 7 :  |  |  |  |  |  |  | SWGR00001-1 | Category Not Found
+Row 8 :  |  |  |  |  |  |  | SWGR00001-2 | Category Not Found
+Row 9 :  |  |  |  |  |  |  | SWGR00001-3 | Category Not Found
+Row 10 :  |  |  |  |  |  |  | SWGR00001-4 | Category Not Found
+Row 11 :  |  |  |  |  |  |  | SWGR00001-5 | Category Not Found
+Row 12 :  |  |  |  |  |  |  | VFD-00-011 | Category Not Found
+Row 13 :  |  |  |  |  |  |  | VFD-00-012 | Category Not Found
+Row 14 :  |  |  |  |  |  |  | VFD-00-013 | Category Not Found
+Row 15 :  |  |  |  |  |  |  | XFMR00001-1 LVCB | Category Not Found
+Row 16 :  |  |  |  |  |  |  | VFD00011-1 | Category Not Found
+Row 17 :  |  |  |  |  |  |  | VFD00012-1 | Category Not Found
+Row 18 :  |  |  |  |  |  |  | VFD00013-1 | Category Not Found
+Row 19 :  |  |  |  |  |  |  |  | Category Not Found
+Row 20 :  |  |  |  |  |  |  |  | Category Not Found
+Row 21 :  |  |  |  |  |  |  |  | Category Not Found
+Row 22 :  |  |  |  |  |  |  |  | Category Not Found
+Row 23 :  |  |  |  |  |  |  |  | Category Not Found
+Row 24 :  |  |  |  |  |  |  |  | Category Not Found
+Row 25 :  |  |  |  |  |  |  |  | Category Not Found
+Row 26 :  |  |  |  |  |  |  |  | Category Not Found
+Row 27 :  |  |  |  |  |  |  |  | Category Not Found
+Row 28 :  |  |  |  |  |  |  |  | Category Not Found
+Row 29 :  |  |  |  |  |  |  |  | Category Not Found
+Row 30 :  |  |  |  |  |  |  |  | Category Not Found
