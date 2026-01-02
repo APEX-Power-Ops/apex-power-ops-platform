@@ -1,0 +1,136 @@
+﻿================================================================================
+EXCEL WORKBOOK ANALYSIS
+================================================================================
+File: Garney- Central Mesa Reuse Tracker #677562.xlsm
+Size: 4407.33 KB
+Modified: 12/29/2025 08:36:56
+Sheets: 16
+
+
+----------------------------------------
+Sheet: Scope_Template
+----------------------------------------
+  Used Range: A1:V62
+  Rows: 62, Columns: 22
+  Formulas: 60
+  Tables: 0
+
+----------------------------------------
+Sheet: Gantt_Template
+----------------------------------------
+  Used Range: A1:BQ20
+  Rows: 20, Columns: 69
+  Formulas: 247
+  Tables: 0
+
+----------------------------------------
+Sheet: Project_Form
+----------------------------------------
+  Used Range: A1:H44
+  Rows: 44, Columns: 8
+  Formulas: 0
+  Tables: 0
+
+----------------------------------------
+Sheet: All_Lists
+----------------------------------------
+  Used Range: A1:I826
+  Rows: 826, Columns: 9
+  Formulas: 0
+  Tables: 1
+
+----------------------------------------
+Sheet: Apparatus_List_w_Hours
+----------------------------------------
+  Used Range: A1:T39
+  Rows: 39, Columns: 20
+  Formulas: 2
+  Tables: 2
+
+----------------------------------------
+Sheet: All_Tasks
+----------------------------------------
+  Used Range: A1:V2858
+  Rows: 2858, Columns: 22
+  Formulas: 5002
+  Tables: 0
+
+----------------------------------------
+Sheet: All_Tasks_Billing
+----------------------------------------
+  Used Range: A1:AZ2250
+  Rows: 2250, Columns: 52
+  Formulas: 105703
+  Tables: 0
+
+----------------------------------------
+Sheet: PowerBI_Data
+----------------------------------------
+  Used Range: A1:AV2250
+  Rows: 2250, Columns: 48
+  Formulas: 107952
+  Tables: 1
+
+----------------------------------------
+Sheet: Scope_Labor_Rates
+----------------------------------------
+  Used Range: A1:V69
+  Rows: 69, Columns: 22
+  Formulas: 205
+  Tables: 1
+
+----------------------------------------
+Sheet: Task_Entry
+----------------------------------------
+  Used Range: A1:U205
+  Rows: 205, Columns: 21
+  Formulas: 819
+  Tables: 1
+
+----------------------------------------
+Sheet: Gantt Chart
+----------------------------------------
+  Used Range: A1:BQ94
+  Rows: 94, Columns: 69
+  Formulas: 4557
+  Tables: 0
+
+----------------------------------------
+Sheet: IPS
+----------------------------------------
+  Used Range: A1:V141
+  Rows: 141, Columns: 22
+  Formulas: 471
+  Tables: 0
+
+----------------------------------------
+Sheet: NWWRP
+----------------------------------------
+  Used Range: A1:V13
+  Rows: 13, Columns: 22
+  Formulas: 31
+  Tables: 0
+
+----------------------------------------
+Sheet: GWRP
+----------------------------------------
+  Used Range: A1:V18
+  Rows: 18, Columns: 22
+  Formulas: 46
+  Tables: 0
+
+----------------------------------------
+Sheet: SEWRP
+----------------------------------------
+  Used Range: A1:V14
+  Rows: 14, Columns: 22
+  Formulas: 38
+  Tables: 0
+
+----------------------------------------
+Sheet: Project Summary
+----------------------------------------
+  Used Range: A1:AI50
+  Rows: 50, Columns: 35
+  Formulas: 97
+  Tables: 1

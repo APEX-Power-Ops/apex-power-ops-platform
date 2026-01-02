@@ -1,0 +1,292 @@
+﻿================================================================================
+SHEET: All_Tasks_Billing
+================================================================================
+Used Range: A1:AZ2250
+Rows: 2250, Columns: 52
+
+----------------------------------------
+COLUMN HEADERS (Row 1)
+----------------------------------------
+  A1 : Scope
+  B1 : NETA_Standard
+  C1 : Task_ID
+  D1 : Task
+  E1 : Apparatus
+  F1 : Designation
+  G1 : Drawing
+  H1 : Date Due
+  I1 : Notes
+  J1 : Assessment
+  K1 : DATASHEET
+  L1 : DATE COMPLETED
+  M1 : NOTES2
+  N1 : % COMPLETION
+  O1 : TASK DELAYS
+  P1 : Apparatus Hours
+  Q1 : Remaining Hours
+  R1 : ACTUAL HOURS
+  S1 : STATUS
+  T1 : AVAILABILITY
+  U1 : PRIORITY
+  V1 : Scope_Helper
+  W1 : Base_Rate
+  X1 : Scope_Budget
+  Y1 : Multiplier
+  Z1 : Completion
+  AA1 : Week_Ending
+  AB1 : Billing_Period
+  AC1 : Base_Labor_$
+  AD1 : Commute_Hrs
+  AE1 : Commute_$
+  AF1 : PM_Hrs
+  AG1 : PM_$
+  AH1 : Report_Hrs
+  AI1 : Report_$
+  AJ1 : Travel_Hrs
+  AK1 : Travel_$
+  AL1 : Final_Hrs
+  AM1 : Final_$
+  AN1 : Travel_Fixed_$
+  AO1 : ME_Fixed_$
+  AP1 : Total_Var_Hrs
+  AQ1 : Total_Var_$
+  AR1 : Total_Fixed_$
+  AS1 : Subtotal_$
+  AT1 : Total_Billable_$
+  AU1 : Total_Billable_$
+  AV1 : 
+  AW1 : 
+  AX1 : 
+
+----------------------------------------
+FORMULAS
+----------------------------------------
+  Total formulas: 105703
+
+  UNIQUE FORMULA PATTERNS:
+
+  Pattern (used 2249x):
+    Example: AS2 : AC2+AQ2+AR2
+    Cells: AS2, AS3, AS4, AS5, AS6...
+
+  Pattern (used 2249x):
+    Example: AP2 : AD2+AF2+AH2+AJ2+AL2
+    Cells: AP2, AP3, AP4, AP5, AP6...
+
+  Pattern (used 2249x):
+    Example: AQ2 : AE2+AG2+AI2+AK2+AM2
+    Cells: AQ2, AQ3, AQ4, AQ5, AQ6...
+
+  Pattern (used 2249x):
+    Example: AR2 : AN2+AO2
+    Cells: AR2, AR3, AR4, AR5, AR6...
+
+  Pattern (used 2249x):
+    Example: AT2 : AS2*Y2
+    Cells: AT2, AT3, AT4, AT5, AT6...
+
+  Pattern (used 2249x):
+    Example: AU2 : AT2*Z2
+    Cells: AU2, AU3, AU4, AU5, AU6...
+
+  Pattern (used 2249x):
+    Example: V2 : IF(A2="",0,IFERROR(MATCH(A2,Scope_Labor_Rates!$A$6:$A$46,0)+5,0))
+    Cells: V2, V3, V4, V5, V6...
+
+  Pattern (used 2249x):
+    Example: AB2 : IF(AA2="","",IF(DAY(AA2)<=23,TEXT(AA2,"MMM-yyyy"),TEXT(EOMONTH(AA2,0)+1,"MMM-yyyy")))
+    Cells: AB2, AB3, AB4, AB5, AB6...
+
+  Pattern (used 2249x):
+    Example: A2 : IF(All_Tasks!A2="","",All_Tasks!A2)
+    Cells: A2, A3, A4, A5, A6...
+
+  Pattern (used 2249x):
+    Example: B2 : IF(All_Tasks!B2="","",All_Tasks!B2)
+    Cells: B2, B3, B4, B5, B6...
+
+  Pattern (used 2249x):
+    Example: C2 : IF(All_Tasks!C2="","",All_Tasks!C2)
+    Cells: C2, C3, C4, C5, C6...
+
+  Pattern (used 2249x):
+    Example: D2 : IF(All_Tasks!D2="","",All_Tasks!D2)
+    Cells: D2, D3, D4, D5, D6...
+
+  Pattern (used 33x):
+    Example: E267 : IF(All_Tasks!E267<>"",All_Tasks!E267,IF(All_Tasks!E267<>"",All_Tasks!E267,""))
+    Cells: E267, E268, E269, E270, E271...
+
+  Pattern (used 2249x):
+    Example: F2 : IF(All_Tasks!F2="","",All_Tasks!F2)
+    Cells: F2, F3, F4, F5, F6...
+
+  Pattern (used 2249x):
+    Example: G2 : IF(All_Tasks!G2="","",All_Tasks!G2)
+    Cells: G2, G3, G4, G5, G6...
+
+  Pattern (used 2249x):
+    Example: H2 : IF(All_Tasks!H2="","",All_Tasks!H2)
+    Cells: H2, H3, H4, H5, H6...
+
+  Pattern (used 2249x):
+    Example: I2 : IF(All_Tasks!I2="","",All_Tasks!I2)
+    Cells: I2, I3, I4, I5, I6...
+
+  Pattern (used 2249x):
+    Example: J2 : IF(All_Tasks!J2="","",All_Tasks!J2)
+    Cells: J2, J3, J4, J5, J6...
+
+  Pattern (used 2249x):
+    Example: K2 : IF(All_Tasks!K2="","",All_Tasks!K2)
+    Cells: K2, K3, K4, K5, K6...
+
+  Pattern (used 2249x):
+    Example: L2 : IF(All_Tasks!L2="","",All_Tasks!L2)
+    Cells: L2, L3, L4, L5, L6...
+
+  Pattern (used 2249x):
+    Example: M2 : IF(All_Tasks!M2="","",All_Tasks!M2)
+    Cells: M2, M3, M4, M5, M6...
+
+  Pattern (used 2249x):
+    Example: N2 : IF(All_Tasks!N2="","",All_Tasks!N2)
+    Cells: N2, N3, N4, N5, N6...
+
+  Pattern (used 2249x):
+    Example: O2 : IF(All_Tasks!O2="","",All_Tasks!O2)
+    Cells: O2, O3, O4, O5, O6...
+
+  Pattern (used 2249x):
+    Example: P2 : IF(All_Tasks!P2="",0,All_Tasks!P2)
+    Cells: P2, P3, P4, P5, P6...
+
+  Pattern (used 2249x):
+    Example: Q2 : IF(All_Tasks!Q2="",0,All_Tasks!Q2)
+    Cells: Q2, Q3, Q4, Q5, Q6...
+
+  Pattern (used 2249x):
+    Example: R2 : IF(All_Tasks!R2="",0,All_Tasks!R2)
+    Cells: R2, R3, R4, R5, R6...
+
+  Pattern (used 2249x):
+    Example: S2 : IF(All_Tasks!S2="","",All_Tasks!S2)
+    Cells: S2, S3, S4, S5, S6...
+
+  Pattern (used 2249x):
+    Example: T2 : IF(All_Tasks!T2="","",All_Tasks!T2)
+    Cells: T2, T3, T4, T5, T6...
+
+  Pattern (used 2249x):
+    Example: U2 : IF(All_Tasks!U2="","",All_Tasks!U2)
+    Cells: U2, U3, U4, U5, U6...
+
+  Pattern (used 2216x):
+    Example: E2 : IF(All_Tasks!V2<>"",All_Tasks!V2,IF(All_Tasks!E2<>"",All_Tasks!E2,""))
+    Cells: E2, E3, E4, E5, E6...
+
+  Pattern (used 2249x):
+    Example: AA2 : IF(L2="","",L2-WEEKDAY(L2,3)+6)
+    Cells: AA2, AA3, AA4, AA5, AA6...
+
+  Pattern (used 2249x):
+    Example: Z2 : IF(OR(L2<>"",UPPER(S2)="COMPLETED"),1,0)
+    Cells: Z2, Z3, Z4, Z5, Z6...
+
+  Pattern (used 2249x):
+    Example: AE2 : IF(V2>0,AD2*INDEX(Scope_Labor_Rates!$D$6:$D$46,V2-5)*Z2,0)
+    Cells: AE2, AE3, AE4, AE5, AE6...
+
+  Pattern (used 2249x):
+    Example: AG2 : IF(V2>0,AF2*INDEX(Scope_Labor_Rates!$F$6:$F$46,V2-5)*Z2,0)
+    Cells: AG2, AG3, AG4, AG5, AG6...
+
+  Pattern (used 2249x):
+    Example: AI2 : IF(V2>0,AH2*INDEX(Scope_Labor_Rates!$H$6:$H$46,V2-5)*Z2,0)
+    Cells: AI2, AI3, AI4, AI5, AI6...
+
+  Pattern (used 2249x):
+    Example: AK2 : IF(V2>0,AJ2*INDEX(Scope_Labor_Rates!$J$6:$J$46,V2-5)*Z2,0)
+    Cells: AK2, AK3, AK4, AK5, AK6...
+
+  Pattern (used 2249x):
+    Example: AM2 : IF(V2>0,AL2*INDEX(Scope_Labor_Rates!$L$6:$L$46,V2-5)*Z2,0)
+    Cells: AM2, AM3, AM4, AM5, AM6...
+
+  Pattern (used 2249x):
+    Example: W2 : IF(V2>0,INDEX(Scope_Labor_Rates!$C$6:$C$46,V2-5),0)
+    Cells: W2, W3, W4, W5, W6...
+
+  Pattern (used 2249x):
+    Example: Y2 : IF(V2>0,INDEX(Scope_Labor_Rates!$R$6:$R$46,V2-5),1)
+    Cells: Y2, Y3, Y4, Y5, Y6...
+
+  Pattern (used 2249x):
+    Example: X2 : IF(V2>0,INDEX(Scope_Labor_Rates!$S$6:$S$46,V2-5),0)
+    Cells: X2, X3, X4, X5, X6...
+
+  Pattern (used 2249x):
+    Example: AD2 : IF(V2>0,P2*INDEX(Scope_Labor_Rates!$E$6:$E$46,V2-5),0)
+    Cells: AD2, AD3, AD4, AD5, AD6...
+
+  Pattern (used 2249x):
+    Example: AF2 : IF(V2>0,P2*INDEX(Scope_Labor_Rates!$G$6:$G$46,V2-5),0)
+    Cells: AF2, AF3, AF4, AF5, AF6...
+
+  Pattern (used 2249x):
+    Example: AH2 : IF(V2>0,P2*INDEX(Scope_Labor_Rates!$I$6:$I$46,V2-5),0)
+    Cells: AH2, AH3, AH4, AH5, AH6...
+
+  Pattern (used 2249x):
+    Example: AJ2 : IF(V2>0,P2*INDEX(Scope_Labor_Rates!$K$6:$K$46,V2-5),0)
+    Cells: AJ2, AJ3, AJ4, AJ5, AJ6...
+
+  Pattern (used 2249x):
+    Example: AL2 : IF(V2>0,P2*INDEX(Scope_Labor_Rates!$M$6:$M$46,V2-5),0)
+    Cells: AL2, AL3, AL4, AL5, AL6...
+
+  Pattern (used 2249x):
+    Example: AN2 : IF(V2>0,P2*INDEX(Scope_Labor_Rates!$O$6:$O$46,V2-5)*Z2,0)
+    Cells: AN2, AN3, AN4, AN5, AN6...
+
+  Pattern (used 2249x):
+    Example: AO2 : IF(V2>0,P2*INDEX(Scope_Labor_Rates!$Q$6:$Q$46,V2-5)*Z2,0)
+    Cells: AO2, AO3, AO4, AO5, AO6...
+
+  Pattern (used 2249x):
+    Example: AC2 : P2*W2*Z2
+    Cells: AC2, AC3, AC4, AC5, AC6...
+
+----------------------------------------
+SAMPLE DATA (First 30 rows)
+----------------------------------------
+Row 1 : Scope | NETA_Standard | Task_ID | Task | Apparatus | Designation | Drawing | Date Due | Notes | Assessment | DATASHEET | DATE COMPLETED | NOTES2 | % COMPLETION | TASK DELAYS | Apparatus Hours | Remaining Hours | ACTUAL HOURS | STATUS | AVAILABILITY
+Row 2 : IPS | ATS | 1.1.1 | SES-00-001 | Distribution |  |  | 46027 | Needs to be retested due to not meeti... | NON-SERVICEABLE | False |  | Needs to be retested due to not meeti... | 1 |  | 2.5 | 0 | 2.5 | COMPLETED | ON HOLD
+Row 3 : IPS | ATS | 1.1.2 | SES-00-001 | Arresters |  |  | 46027 |  |  | False |  |  | 1 |  | 2 | 0 | 2 | COMPLETED | READY
+Row 4 : IPS | ATS | 1.1.3 | SES-00-001 | Instrument Transformers |  |  | 46027 |  |  | False | 45994 |  | 1 |  | 2.5 | 0 | 2.5 | COMPLETED | READY
+Row 5 : IPS | ATS | 1.1.4 | SES-00-001 | Instrument Transformers |  |  | 46027 |  |  | False | 45994 |  | 1 |  | 2.5 | 0 | 2.5 | COMPLETED | READY
+Row 6 : IPS | ATS | 1.1.5 | SES-00-001 | Circuit Breaker |  |  | 46027 |  |  | False | 45993 |  | 1 |  | 4 | 0 | 4 | COMPLETED | READY
+Row 7 : IPS | ATS | 1.1.6 | SES-00-001 | Instrument Transformers |  |  | 46027 |  |  | False | 45994 |  | 1 |  | 2 | 0 | 2 | COMPLETED | READY
+Row 8 : IPS | ATS | 1.1.7 | SES-00-001 | Instrument Transformers |  |  | 46027 |  |  | False | 45994 |  | 1 |  | 0.75 | 0 | 0.75 | COMPLETED | READY
+Row 9 : IPS | ATS | 1.1.8 | SES-00-001 | Protective Relay |  |  | 46027 |  |  | False |  |  | 0 |  | 5 | 5 | 5 | NOT STARTED | NOT AVAILABLE
+Row 10 : IPS | ATS | 1.1.9 | SES-00-001 | Grounding |  |  | 46027 | Completed however clamp on showed 0.0... |  | False |  | Completed however clamp on showed 0.0... | 1 |  | 2.5 | 0 | 2.5 | COMPLETED | READY
+Row 11 : IPS | ATS | 1.1.10 | SES-00-001 | Conductors |  |  | 46027 |  |  | False |  |  | 0 |  | 4 | 4 | 4 | NOT STARTED | NOT AVAILABLE
+Row 12 : IPS | ATS | 1.2.1 | SWGR-00-001 | Distribution |  |  |  | Needs to be retested due to not being... | ACCEPTABLE | False | 45994 | Needs to be retested due to not being... | 1 | 2 | 2.5 | 0 | 4.5 | COMPLETED | READY
+Row 13 : IPS | ATS | 1.2.2 | SWGR-00-001 | Arresters |  |  |  |  | ACCEPTABLE | False | 45994 |  | 1 |  | 2 | 0 | 2 | COMPLETED | READY
+Row 14 : IPS | ATS | 1.2.3 | SWGR-00-001 | Arresters |  |  |  |  | ACCEPTABLE | False | 45994 |  | 1 |  | 2 | 0 | 2 | COMPLETED | READY
+Row 15 : IPS | ATS | 1.2.4 | SWGR-00-001 | Arresters |  |  |  |  | ACCEPTABLE | False | 45994 |  | 1 |  | 2 | 0 | 2 | COMPLETED | READY
+Row 16 : IPS | ATS | 1.2.5 | SWGR-00-001 | Arresters |  |  |  |  | ACCEPTABLE | False | 45994 |  | 1 |  | 2 | 0 | 2 | COMPLETED | READY
+Row 17 : IPS | ATS | 1.2.6 | SWGR-00-001 | Arresters |  |  |  |  | ACCEPTABLE | False | 45994 |  | 1 |  | 2 | 0 | 2 | COMPLETED | READY
+Row 18 : IPS | ATS | 1.2.7 | SWGR-00-001 | Arresters |  |  |  |  | ACCEPTABLE | False | 45994 |  | 1 |  | 2 | 0 | 2 | COMPLETED | READY
+Row 19 : IPS | ATS | 1.3.1 | Instrument Transformers | Instrument Transformers |  |  |  | 52M1 CPT failed insulation resistance... | NON-SERVICEABLE | True | 45994 | 52M1 CPT failed insulation resistance... | 1 | 1 | 2.5 | 0 | 3.5 | COMPLETED | ON HOLD
+Row 20 : IPS | ATS | 1.3.2 | Instrument Transformers | Instrument Transformers |  |  |  |  | ACCEPTABLE | True | 45994 |  | 1 |  | 2.5 | 0 | 2.5 | COMPLETED | READY
+Row 21 : IPS | ATS | 1.3.3 | Instrument Transformers | Instrument Transformers |  |  |  |  | ACCEPTABLE | False | 45994 |  | 1 |  | 2.5 | 0 | 2.5 | COMPLETED | READY
+Row 22 : IPS | ATS | 1.3.4 | Instrument Transformers | Instrument Transformers |  |  |  |  | ACCEPTABLE | False | 45994 |  | 1 |  | 2.5 | 0 | 2.5 | COMPLETED | READY
+Row 23 : IPS | ATS | 1.3.5 | Instrument Transformers | Instrument Transformers |  |  |  |  | ACCEPTABLE | False | 45994 |  | 1 |  | 2.5 | 0 | 2.5 | COMPLETED | READY
+Row 24 : IPS | ATS | 1.4.1 | Overcurrent CT's | Instrument Transformers |  |  |  |  | ACCEPTABLE | False | 45994 |  | 1 |  | 2 | 0 | 2 | COMPLETED | READY
+Row 25 : IPS | ATS | 1.4.2 | Overcurrent CT's | Instrument Transformers |  |  |  |  | ACCEPTABLE | False | 45994 |  | 1 |  | 2 | 0 | 2 | COMPLETED | READY
+Row 26 : IPS | ATS | 1.4.3 | Overcurrent CT's | Instrument Transformers |  |  |  |  | ACCEPTABLE | False | 45994 |  | 1 |  | 2 | 0 | 2 | COMPLETED | READY
+Row 27 : IPS | ATS | 1.4.4 | Overcurrent CT's | Instrument Transformers |  |  |  | Swapped with Differential CTs. | MINOR DEFICIENCY | False | 45994 | Swapped with Differential CTs. | 1 |  | 2 | 0 | 2 | COMPLETED | READY
+Row 28 : IPS | ATS | 1.4.5 | Overcurrent CT's | Instrument Transformers |  |  |  | Print issue on CT 4/5/6. See red lines | ACCEPTABLE | False | 45994 | Print issue on CT 4/5/6. See red lines | 1 | 2 | 2 | 0 | 4 | COMPLETED | READY
+Row 29 : IPS | ATS | 1.4.6 | Overcurrent CT's | Instrument Transformers |  |  |  | Need islet crimps to switch core mark... | ACCEPTABLE | False | 45994 | Need islet crimps to switch core mark... | 1 |  | 2 | 0 | 2 | COMPLETED | READY
+Row 30 : IPS | ATS | 1.5.1 | Bus Differential CT's | Instrument Transformers |  |  |  |  | ACCEPTABLE | False | 45994 |  | 1 |  | 2 | 0 | 2 | COMPLETED | READY

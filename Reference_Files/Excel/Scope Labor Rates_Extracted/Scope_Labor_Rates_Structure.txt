@@ -1,0 +1,80 @@
+﻿================================================================================
+SHEET: Scope_Labor_Rates
+================================================================================
+Used Range: A1:AB25
+Rows: 25, Columns: 28
+
+----------------------------------------
+COLUMN HEADERS (Row 1)
+----------------------------------------
+  A1 : Scope_ID
+  B1 : Total_Apparatus_Hours
+  C1 : Base_Labor_Rate
+  D1 : Onsite_Misc_Rate
+  E1 : Onsite_Miscellaneous_Percent
+  F1 : Onsite_LOTO_Rate
+  G1 : Onsite_LOTO_Percent
+  H1 : Onsite_PM_Rate
+  I1 : Onsite_PM_Percent
+  J1 : Daily_Commute_Rate
+  K1 : Daily_Commute_Percent
+  L1 : Office_Report_Rate
+  M1 : Office_Report_Percent
+  N1 : Office_PM_Rate
+  O1 : Office_PM_Percent
+  P1 : Mobilization_Rate
+  Q1 : Mobilization_Percent
+  R1 : Travel_Fixed_Cost
+  S1 : Hotel_PerDiem_Fixed
+  T1 : Flights_Fixed
+  U1 : Car_Rental_Fixed
+  V1 : Miscellaneous_Travel_Fixed_Cost
+  W1 : Generator_Rental_Fixed
+  X1 : Test_Equipment_Fixed_Cost
+  Y1 : XFMR_LAB_Fixed_Cost
+  Z1 : Miscellaneous_Fixed_Cost
+  AA1 : Scope_Multiplier
+  AB1 : Scope_Total_Value
+
+----------------------------------------
+TABLES
+----------------------------------------
+  Table: ScopeLaborRates
+    Range: A1:AB2
+    Columns: 28
+
+----------------------------------------
+FORMULAS
+----------------------------------------
+  Total formulas: 0
+
+  (No formulas found)
+
+----------------------------------------
+SAMPLE DATA (First 30 rows)
+----------------------------------------
+Row 1 : Scope_ID | Total_Apparatus_Hours | Base_Labor_Rate | Onsite_Misc_Rate | Onsite_Miscellaneous_Percent | Onsite_LOTO_Rate | Onsite_LOTO_Percent | Onsite_PM_Rate | Onsite_PM_Percent | Daily_Commute_Rate | Daily_Commute_Percent | Office_Report_Rate | Office_Report_Percent | Office_PM_Rate | Office_PM_Percent | Mobilization_Rate | Mobilization_Percent | Travel_Fixed_Cost | Hotel_PerDiem_Fixed | Flights_Fixed
+Row 2 :  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Row 3 :  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Row 4 :  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Row 5 :  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Row 6 :  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Row 7 :  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Row 8 :  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Row 9 :  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Row 10 :  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Row 11 :  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Row 12 :  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Row 13 :  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Row 14 :  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Row 15 :  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Row 16 :  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Row 17 :  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Row 18 :  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Row 19 :  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Row 20 :  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Row 21 :  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Row 22 :  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Row 23 :  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Row 24 :  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Row 25 :  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 

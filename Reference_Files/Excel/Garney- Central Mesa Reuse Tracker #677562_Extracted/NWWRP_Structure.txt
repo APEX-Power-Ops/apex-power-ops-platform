@@ -1,0 +1,115 @@
+﻿================================================================================
+SHEET: NWWRP
+================================================================================
+Used Range: A1:V13
+Rows: 13, Columns: 22
+
+----------------------------------------
+COLUMN HEADERS (Row 1)
+----------------------------------------
+  A1 : 46020 [FORMULA: TODAY()]
+  B1 : 
+  C1 : 
+  D1 : 
+  E1 : 
+  F1 : 
+  G1 : 
+  H1 : 
+  I1 : 
+  J1 : 
+  K1 : 
+  L1 : 
+  M1 : 
+  N1 : 
+  O1 : 
+  P1 : 
+  Q1 : 
+  R1 : 
+  S1 : 
+  T1 : 
+  U1 : 
+  V1 : 
+
+----------------------------------------
+FORMULAS
+----------------------------------------
+  Total formulas: 31
+
+  UNIQUE FORMULA PATTERNS:
+
+  Pattern (used 1x):
+    Example: B6 : IF(AND(I6<>"",N6<1,I6<TODAY()),"OVERDUE",IF(N6=1,"COMPLETED",IF(N6=0,"NOT STARTED",IF(AND(N6>0,N6<1),"IN PROGRESS",""))))
+    Cells: B6
+
+  Pattern (used 6x):
+    Example: Q7 : IF(P7="","",IF(UPPER(TRIM(B7))="COMPLETED",0,P7))
+    Cells: Q7, Q8, Q9, Q10, Q11...
+
+  Pattern (used 1x):
+    Example: I6 : IFERROR(IF(_xlfn.AGGREGATE(5,6,IF(LEFT(E13:E206,LEN(E6)+1)=E6&".",I13:I206))>0,_xlfn.AGGREGATE(5,6,IF(LEFT(E13:E206,LEN(E6)+1)=E6&".",I13:I206)),""),"")
+    Cells: I6
+
+  Pattern (used 7x):
+    Example: N6 : IFERROR(IF(P6>0,1-(Q6/P6),0),0)
+    Cells: N6, N7, N8, N9, N10...
+
+  Pattern (used 1x):
+    Example: N13 : IFERROR(IF(P13>0,1-Q13/P13,0),0)
+    Cells: N13
+
+  Pattern (used 6x):
+    Example: R7 : SUM(O7,P7)
+    Cells: R7, R8, R9, R10, R11...
+
+  Pattern (used 1x):
+    Example: O6 : SUM(O7:O12)
+    Cells: O6
+
+  Pattern (used 1x):
+    Example: P6 : SUM(P7:P12)
+    Cells: P6
+
+  Pattern (used 1x):
+    Example: Q6 : SUM(Q7:Q12)
+    Cells: Q6
+
+  Pattern (used 1x):
+    Example: R6 : SUM(R7:R12)
+    Cells: R6
+
+  Pattern (used 1x):
+    Example: O13 : SUMPRODUCT((O6:O12)*(LEN(E6:E12)-LEN(SUBSTITUTE(E6:E12,".",""))=1))
+    Cells: O13
+
+  Pattern (used 1x):
+    Example: P13 : SUMPRODUCT((P6:P12)*(LEN(E6:E12)-LEN(SUBSTITUTE(E6:E12,".",""))=1))
+    Cells: P13
+
+  Pattern (used 1x):
+    Example: Q13 : SUMPRODUCT((Q6:Q12)*(LEN(E6:E12)-LEN(SUBSTITUTE(E6:E12,".",""))=1))
+    Cells: Q13
+
+  Pattern (used 1x):
+    Example: R13 : SUMPRODUCT((R6:R12)*(LEN(E6:E12)-LEN(SUBSTITUTE(E6:E12,".",""))=1))
+    Cells: R13
+
+  Pattern (used 1x):
+    Example: A1 : TODAY()
+    Cells: A1
+
+----------------------------------------
+SAMPLE DATA (First 30 rows)
+----------------------------------------
+Row 1 : 46020 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Row 2 :  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Row 3 :  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Row 4 :  |  |  |  | SCOPE |  | NWWRP | ATS |  | DELIVERABLES |  |  |  |  | HOURS |  |  |  |  | 
+Row 5 :  | STATUS | AVAILABILITY | PRIORITY | TASK_ID | TASK NAMES + APPARATUS | DESIGNATION | DRAWING | DATE DUE | ASSESSMENT | DATASHEET | DATE COMPLETED | NOTES | % COMPLETION | TASK DELAYS | APPARATUS HOURS | REMAINING HOURS | ACTUAL HOURS |  | 
+Row 6 :  | COMPLETED |  |  | 2.1 | ATS |  |  |  |  |  |  |  | 1 | 0 | 19 | 0 | 19 |  | 
+Row 7 :  | COMPLETED | NOT AVAILABLE |  | 2.1.1 | Motor Control Center LV |  |  |  |  | False | 46000 |  | 1 |  | 8 | 0 | 8 |  | 
+Row 8 :  | COMPLETED | NOT AVAILABLE |  | 2.1.2 | Ground Resistance Test - FOP or Clamp... |  |  |  |  | False | 46000 |  | 1 |  | 2.5 | 0 | 2.5 |  | 
+Row 9 :  | COMPLETED | NOT AVAILABLE |  | 2.1.3 | Ground Resistance Test - FOP or Clamp... |  |  |  |  | False | 46000 |  | 1 |  | 2.5 | 0 | 2.5 |  | 
+Row 10 :  | COMPLETED | NOT AVAILABLE |  | 2.1.4 | Switchboard - Service Entrance |  |  |  |  | False | 46000 |  | 1 |  | 1.5 | 0 | 1.5 |  | 
+Row 11 :  | COMPLETED | NOT AVAILABLE |  | 2.1.5 | Arrestor (SPD) - Low Voltage |  |  |  |  | False | 46000 |  | 1 |  | 0.5 | 0 | 0.5 |  | 
+Row 12 :  | COMPLETED | NOT AVAILABLE |  | 2.1.6 | Circuit Breaker LV - Molded Case Ther... |  |  |  |  | False | 46000 |  | 1 |  | 4 | 0 | 4 |  | 
+Row 13 :  |  |  |  |  |  |  |  |  |  |  |  | TOTALS | 1 | 0 | 19 | 0 | 19 |  | 

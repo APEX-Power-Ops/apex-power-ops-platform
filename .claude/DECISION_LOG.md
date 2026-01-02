@@ -139,10 +139,23 @@
 
 | # | Question | Status | Decision | Rationale |
 |---|----------|--------|----------|-----------|
-| 4.2.1 | What are the valid apparatus statuses? | ⬜ | | Current: Not Started, In Progress, Pending Review, Complete, Cancelled |
-| 4.2.2 | Can status go backward? | ⬜ | | Complete → In Progress if issue found? |
-| 4.2.3 | Does status change trigger any action? | ⬜ | | Notification? Revenue recognition? |
-| 4.2.4 | Who can change status? | ⬜ | | Tech, PM, anyone assigned? |
+| 4.2.1 | What are the valid apparatus statuses? | ✅ | **NOT_STARTED, IN_PROGRESS, PENDING_REVIEW, COMPLETED, ISSUE_LOG** | Status is system-calculated from workflow state, except ISSUE_LOG which is manual. |
+| 4.2.2 | Can status go backward? | ✅ | **Yes - Job Lead can reject PENDING_REVIEW → IN_PROGRESS** | Rejection sends back to tech with notes. |
+| 4.2.3 | Does status change trigger any action? | ✅ | **COMPLETED (via approval) triggers revenue recognition** | approved_at timestamp = earned revenue. |
+| 4.2.4 | Who can change status? | ✅ | **System sets most. Job Lead sets ISSUE_LOG and approves/rejects.** | Tech submits work, system transitions to PENDING_REVIEW. |
+
+**Status Flow Diagram:**
+```
+NOT_STARTED
+    ↓ (Tech begins work)
+IN_PROGRESS
+    ↓ (Tech submits)
+PENDING_REVIEW
+    ↓
+├── COMPLETED (Job Lead approves → Revenue)
+├── IN_PROGRESS (Job Lead rejects → Back to tech)
+└── ISSUE_LOG (Can't complete / Failed testing)
+```
 
 ### 4.3 Availability States
 
@@ -177,9 +190,48 @@
 | # | Question | Status | Decision | Rationale |
 |---|----------|--------|----------|-----------|
 | 4.6.1 | What defines "complete" for an apparatus? | ⬜ | | Status set? Assessment entered? Hours logged? |
-| 4.6.2 | Is there a review/approval step before final complete? | ⬜ | | PM sign-off? |
+| 4.6.2 | Is there a review/approval step before final complete? | ✅ | **Yes - Job Lead approval triggers revenue recognition** | Tech submits → PENDING_REVIEW → Job Lead approves → COMPLETED. Approval timestamp = earned revenue. |
 | 4.6.3 | What happens when all apparatus in a scope complete? | ⬜ | | Auto-update scope status? |
 | 4.6.4 | What happens when all scopes complete? | ⬜ | | Project status update? Trigger billing? |
+
+### 4.7 Field Requirements (Contextual Validation)
+
+**Key Insight:** "Required" depends on WHEN and WHO. Power Apps failed by requiring everything upfront.
+
+**Three Validation Contexts:**
+
+| Context | Who | When | Purpose |
+|---------|-----|------|--------|
+| **Project Build** | PM / Import | Creating tracker from Estimator | Populate apparatus rows |
+| **Field Work** | Tech | Submitting completed work | Capture test results |
+| **Review/Approval** | Job Lead | Approving for revenue | Quality gate |
+
+| # | Question | Status | Decision | Rationale |
+|---|----------|--------|----------|-----------|
+| 4.7.1 | What fields are required at **Project Build**? | ⬜ | | Core fields from Estimator JSON: Scope, Equipment Type, Hours, Section? |
+| 4.7.2 | What fields are required at **Tech Submit**? | ⬜ | | Assessment (required), Task Delays (default 0), Notes (optional)? |
+| 4.7.3 | What fields are required at **Job Lead Approval**? | ⬜ | | Just confirmation? Or additional fields? |
+| 4.7.4 | What fields are "Business Recommended" but not blocking? | ⬜ | | Priority? Due Date? |
+| 4.7.5 | Can validation rules be enforced in UI vs database? | ⬜ | | UI for UX, DB for integrity |
+| 4.7.6 | What happens if required field is missing at submit? | ⬜ | | Block submit? Warning? |
+| 4.7.7 | Should defaults auto-populate to reduce friction? | ⬜ | | Task Delays = 0, Availability = NOT_AVAILABLE? |
+
+**Draft Field Requirements Matrix:**
+
+| Field | Project Build | Tech Submit | Job Lead Approval | Notes |
+|-------|---------------|-------------|-------------------|-------|
+| scope | ✅ Required | - | - | From Estimator |
+| equipment_type | ✅ Required | - | - | From Estimator |
+| quoted_hours | ✅ Required | - | - | From Estimator |
+| availability | Default: NOT_AVAILABLE | - | ⚠️ Recommended | Job Lead flips to AVAILABLE |
+| priority | - | - | Optional | PM decision flag |
+| due_date | - | - | ⚠️ Recommended | For overdue calc |
+| assessment | - | ✅ Required | - | NETA test result |
+| task_delays | - | ✅ Required (default 0) | - | Hours beyond quote |
+| notes | - | Optional | Optional | Free text |
+| has_issue | - | Optional | Optional | Flag for attention |
+
+*Status: ⬜ Open - needs business decision on each field*
 
 ---
 

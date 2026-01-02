@@ -30,6 +30,17 @@ param(
     [string]$ExcelFilePath
 )
 
+# Configuration
+$ErrorActionPreference = 'Stop'
+
+# Constants
+$MAX_CSV_ROWS = 10000
+$MAX_VALIDATION_SCAN_ROWS = 100
+$MAX_VALIDATION_SCAN_COLS = 30
+$MAX_SAMPLE_ROWS = 30
+$MAX_SAMPLE_COLS = 20
+$MAX_HEADER_COLS = 50
+
 # Validate file exists
 if (-not (Test-Path $ExcelFilePath)) {
     Write-Error "File not found: $ExcelFilePath"
@@ -57,8 +68,16 @@ Write-Host ""
 # Initialize Excel COM object
 Write-Host "Opening Excel..." -ForegroundColor Gray
 $excel = New-Object -ComObject Excel.Application
-$excel.Visible = $false
-$excel.DisplayAlerts = $false
+try {
+    $excel.Visible = $false
+} catch {
+    # Ignore Visible property error - not critical
+}
+try {
+    $excel.DisplayAlerts = $false
+} catch {
+    # Ignore DisplayAlerts error - not critical
+}
 
 try {
     $workbook = $excel.Workbooks.Open($file.FullName, $false, $true) # ReadOnly
@@ -176,7 +195,7 @@ try {
         $structure += "-" * 40
         
         $headers = @()
-        for ($col = 1; $col -le [Math]::Min($colCount, 50); $col++) {
+        for ($col = 1; $col -le [Math]::Min($colCount, $MAX_HEADER_COLS); $col++) {
             $cell = $ws.Cells.Item($startRow, $startCol + $col - 1)
             $colLetter = $cell.Address($false, $false) -replace '\d+', ''
             $value = $cell.Value2
@@ -214,8 +233,8 @@ try {
         $structure += "-" * 40
         
         $validationFound = $false
-        for ($col = 1; $col -le [Math]::Min($colCount, 30); $col++) {
-            for ($row = 1; $row -le [Math]::Min($rowCount, 100); $row++) {
+        for ($col = 1; $col -le [Math]::Min($colCount, $MAX_VALIDATION_SCAN_COLS); $col++) {
+            for ($row = 1; $row -le [Math]::Min($rowCount, $MAX_VALIDATION_SCAN_ROWS); $row++) {
                 try {
                     $cell = $ws.Cells.Item($startRow + $row - 1, $startCol + $col - 1)
                     $validation = $cell.Validation
@@ -298,13 +317,13 @@ try {
         # SAMPLE DATA (First 30 rows)
         # ============================================
         $structure += "-" * 40
-        $structure += "SAMPLE DATA (First 30 rows)"
+        $structure += "SAMPLE DATA (First $MAX_SAMPLE_ROWS rows)"
         $structure += "-" * 40
         
-        $sampleRows = [Math]::Min($rowCount, 30)
+        $sampleRows = [Math]::Min($rowCount, $MAX_SAMPLE_ROWS)
         for ($row = 1; $row -le $sampleRows; $row++) {
             $rowData = @()
-            for ($col = 1; $col -le [Math]::Min($colCount, 20); $col++) {
+            for ($col = 1; $col -le [Math]::Min($colCount, $MAX_SAMPLE_COLS); $col++) {
                 try {
                     $cell = $ws.Cells.Item($startRow + $row - 1, $startCol + $col - 1)
                     $val = $cell.Value2
@@ -328,30 +347,43 @@ try {
         Write-Host "  Exporting to CSV..." -ForegroundColor Gray
         
         try {
-            # Read all data into array
-            $data = @()
-            for ($row = 1; $row -le [Math]::Min($rowCount, 5000); $row++) {
+            # Read entire range as 2D array (much faster than cell-by-cell)
+            $maxRows = [Math]::Min($rowCount, $MAX_CSV_ROWS)
+            $rangeData = $ws.Range(
+                $ws.Cells.Item($startRow, $startCol),
+                $ws.Cells.Item($startRow + $maxRows - 1, $startCol + $colCount - 1)
+            ).Value2
+            
+            $csvLines = @()
+            for ($row = 1; $row -le $maxRows; $row++) {
                 $rowData = @()
                 for ($col = 1; $col -le $colCount; $col++) {
-                    try {
-                        $cell = $ws.Cells.Item($startRow + $row - 1, $startCol + $col - 1)
-                        $val = $cell.Value2
-                        if ($null -eq $val) { $val = "" }
-                        # Escape for CSV
-                        $val = "$val" -replace '"', '""'
-                        if ($val -match '[,"\n\r]') {
-                            $val = "`"$val`""
-                        }
-                        $rowData += $val
-                    } catch {
-                        $rowData += ""
+                    # Handle single cell vs array
+                    $val = if ($rangeData -is [System.Array]) { 
+                        if ($maxRows -eq 1) { $rangeData[$col] } 
+                        elseif ($colCount -eq 1) { $rangeData[$row] }
+                        else { $rangeData[$row, $col] }
+                    } else { $rangeData }
+                    
+                    if ($null -eq $val) { $val = "" }
+                    # Escape for CSV
+                    $val = "$val" -replace '"', '""'
+                    if ($val -match '[,"\n\r]') {
+                        $val = "`"$val`""
                     }
+                    $rowData += $val
                 }
-                $data += ($rowData -join ",")
+                $csvLines += ($rowData -join ",")
             }
-            $data | Out-File $csvFile -Encoding UTF8
+            $csvLines | Out-File $csvFile -Encoding UTF8
+            
+            if ($rowCount -gt $MAX_CSV_ROWS) {
+                Write-Host "  Note: CSV limited to first $MAX_CSV_ROWS rows (sheet has $rowCount)" -ForegroundColor Yellow
+                $summary += "  CSV Export: First $MAX_CSV_ROWS of $rowCount rows"
+            }
         } catch {
             Write-Host "  CSV export failed: $_" -ForegroundColor Red
+            $summary += "  CSV Export: FAILED - $($_.Exception.Message)"
         }
         
         $summary += "  Formulas: $formulaCount"
@@ -409,7 +441,14 @@ try {
     }
     
 } catch {
-    Write-Error "Error processing workbook: $_"
+    Write-Host "" -ForegroundColor Red
+    Write-Host "========================================" -ForegroundColor Red
+    Write-Host "ERROR: Failed to process workbook" -ForegroundColor Red
+    Write-Host "========================================" -ForegroundColor Red
+    Write-Host $_.Exception.Message -ForegroundColor Red
+    Write-Host "" -ForegroundColor Red
+    Read-Host "Press Enter to exit"
+    exit 1
 } finally {
     # Cleanup
     if ($workbook) {
@@ -427,3 +466,4 @@ try {
 Write-Host ""
 Write-Host "Press Enter to exit..." -ForegroundColor Cyan
 Read-Host
+exit 0

@@ -1,0 +1,267 @@
+﻿================================================================================
+NAMED RANGES
+================================================================================
+
+Name: _xleta.SUM
+Formula: #NAME?
+  (Could not read)
+
+Name: CalcArea_Scope1
+Formula: [Scope1]Scope1!$J$6:$J$488
+  (Could not read)
+
+Name: CalcArea_Scope10
+Formula: [Scope10]Scope10!$J$6:$J$488
+  (Could not read)
+
+Name: CalcArea_Scope11
+Formula: [Scope11]Scope11!$J$6:$J$488
+  (Could not read)
+
+Name: CalcArea_Scope12
+Formula: [Scope12]Scope12!$J$6:$J$488
+  (Could not read)
+
+Name: CalcArea_Scope13
+Formula: [Scope13]Scope13!$J$6:$J$488
+  (Could not read)
+
+Name: CalcArea_Scope14
+Formula: [Scope14]Scope14!$J$6:$J$488
+  (Could not read)
+
+Name: CalcArea_Scope15
+Formula: [Scope15]Scope15!$J$6:$J$488
+  (Could not read)
+
+Name: CalcArea_Scope16
+Formula: [Scope16]Scope16!$J$6:$J$488
+  (Could not read)
+
+Name: CalcArea_Scope17
+Formula: [Scope17]Scope17!$J$6:$J$488
+  (Could not read)
+
+Name: CalcArea_Scope18
+Formula: [Scope18]Scope18!$J$6:$J$488
+  (Could not read)
+
+Name: CalcArea_Scope19
+Formula: [Scope19]Scope19!$J$6:$J$488
+  (Could not read)
+
+Name: CalcArea_Scope2
+Formula: [Scope2]Scope2!$J$6:$J$488
+  (Could not read)
+
+Name: CalcArea_Scope20
+Formula: [Scope20]Scope20!$J$6:$J$488
+  (Could not read)
+
+Name: CalcArea_Scope3
+Formula: [Scope3]Scope3!$J$6:$J$488
+  (Could not read)
+
+Name: CalcArea_Scope4
+Formula: [Scope4]Scope4!$J$6:$J$488
+  (Could not read)
+
+Name: CalcArea_Scope5
+Formula: [Scope5]Scope5!$J$6:$J$488
+  (Could not read)
+
+Name: CalcArea_Scope6
+Formula: [Scope6]Scope6!$J$6:$J$488
+  (Could not read)
+
+Name: CalcArea_Scope7
+Formula: [Scope7]Scope7!$J$6:$J$488
+  (Could not read)
+
+Name: CalcArea_Scope8
+Formula: [Scope8]Scope8!$J$6:$J$488
+  (Could not read)
+
+Name: CalcArea_Scope9
+Formula: [Scope9]Scope9!$J$6:$J$488
+  (Could not read)
+
+Name: JobType_Scope1
+Formula: [Scope1]Scope1!$D$3
+  (Could not read)
+
+Name: JobType_Scope10
+Formula: [Scope10]Scope10!$D$3
+  (Could not read)
+
+Name: JobType_Scope11
+Formula: [Scope11]Scope11!$D$3
+  (Could not read)
+
+Name: JobType_Scope12
+Formula: [Scope12]Scope12!$D$3
+  (Could not read)
+
+Name: JobType_Scope13
+Formula: [Scope13]Scope13!$D$3
+  (Could not read)
+
+Name: JobType_Scope14
+Formula: [Scope14]Scope14!$D$3
+  (Could not read)
+
+Name: JobType_Scope15
+Formula: [Scope15]Scope15!$D$3
+  (Could not read)
+
+Name: JobType_Scope16
+Formula: [Scope16]Scope16!$D$3
+  (Could not read)
+
+Name: JobType_Scope17
+Formula: [Scope17]Scope17!$D$3
+  (Could not read)
+
+Name: JobType_Scope18
+Formula: [Scope18]Scope18!$D$3
+  (Could not read)
+
+Name: JobType_Scope19
+Formula: [Scope19]Scope19!$D$3
+  (Could not read)
+
+Name: JobType_Scope2
+Formula: [Scope2]Scope2!$D$3
+  (Could not read)
+
+Name: JobType_Scope20
+Formula: [Scope20]Scope20!$D$3
+  (Could not read)
+
+Name: JobType_Scope3
+Formula: [Scope3]Scope3!$D$3
+  (Could not read)
+
+Name: JobType_Scope4
+Formula: [Scope4]Scope4!$D$3
+  (Could not read)
+
+Name: JobType_Scope5
+Formula: [Scope5]Scope5!$D$3
+  (Could not read)
+
+Name: JobType_Scope6
+Formula: [Scope6]Scope6!$D$3
+  (Could not read)
+
+Name: JobType_Scope7
+Formula: [Scope7]Scope7!$D$3
+  (Could not read)
+
+Name: JobType_Scope8
+Formula: [Scope8]Scope8!$D$3
+  (Could not read)
+
+Name: JobType_Scope9
+Formula: [Scope9]Scope9!$D$3
+  (Could not read)
+
+Name: PrintArea_Template
+Formula: 
+  (Could not read)
+
+Name: PrintDestRange
+Formula: 
+  (Could not read)
+
+Name: ProjectTotals
+Formula: 
+  (Could not read)
+
+Name: RefreshSourceRange
+Formula: 
+  (Could not read)
+
+Name: ScopeTtlAdj_Scope1
+Formula: [Scope1]Scope1!$P$4
+  (Could not read)
+
+Name: ScopeTtlAdj_Scope10
+Formula: [Scope10]Scope10!$P$4
+  (Could not read)
+
+Name: ScopeTtlAdj_Scope11
+Formula: [Scope11]Scope11!$P$4
+  (Could not read)
+
+Name: ScopeTtlAdj_Scope12
+Formula: [Scope12]Scope12!$P$4
+  (Could not read)
+
+Name: ScopeTtlAdj_Scope13
+Formula: [Scope13]Scope13!$P$4
+  (Could not read)
+
+Name: ScopeTtlAdj_Scope14
+Formula: [Scope14]Scope14!$P$4
+  (Could not read)
+
+Name: ScopeTtlAdj_Scope15
+Formula: [Scope15]Scope15!$P$4
+  (Could not read)
+
+Name: ScopeTtlAdj_Scope16
+Formula: [Scope16]Scope16!$P$4
+  (Could not read)
+
+Name: ScopeTtlAdj_Scope17
+Formula: [Scope17]Scope17!$P$4
+  (Could not read)
+
+Name: ScopeTtlAdj_Scope18
+Formula: [Scope18]Scope18!$P$4
+  (Could not read)
+
+Name: ScopeTtlAdj_Scope19
+Formula: [Scope19]Scope19!$P$4
+  (Could not read)
+
+Name: ScopeTtlAdj_Scope2
+Formula: [Scope2]Scope2!$P$4
+  (Could not read)
+
+Name: ScopeTtlAdj_Scope20
+Formula: [Scope20]Scope20!$P$4
+  (Could not read)
+
+Name: ScopeTtlAdj_Scope3
+Formula: [Scope3]Scope3!$P$4
+  (Could not read)
+
+Name: ScopeTtlAdj_Scope4
+Formula: [Scope4]Scope4!$P$4
+  (Could not read)
+
+Name: ScopeTtlAdj_Scope5
+Formula: [Scope5]Scope5!$P$4
+  (Could not read)
+
+Name: ScopeTtlAdj_Scope6
+Formula: [Scope6]Scope6!$P$4
+  (Could not read)
+
+Name: ScopeTtlAdj_Scope7
+Formula: [Scope7]Scope7!$P$4
+  (Could not read)
+
+Name: ScopeTtlAdj_Scope8
+Formula: [Scope8]Scope8!$P$4
+  (Could not read)
+
+Name: ScopeTtlAdj_Scope9
+Formula: [Scope9]Scope9!$P$4
+  (Could not read)
+
+Name: TotalOnsiteHoursAdjRange
+Formula: 
+  (Could not read)

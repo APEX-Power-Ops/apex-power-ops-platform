@@ -1,0 +1,84 @@
+﻿================================================================================
+SHEET: Apparatus_List_w_Hours
+================================================================================
+Used Range: A1:T39
+Rows: 39, Columns: 20
+
+----------------------------------------
+COLUMN HEADERS (Row 1)
+----------------------------------------
+  A1 : Apparatus
+  B1 : ATS_Hours
+  C1 : MTS_Hours
+  D1 : 
+  E1 : Apparatus_Type
+  F1 : Category
+  G1 : ATS_Hours
+  H1 : 
+  I1 : 
+  J1 : 
+  K1 : 
+  L1 : 
+  M1 : 
+  N1 : 
+  O1 : 
+  P1 : 
+  Q1 : 
+  R1 : 
+  S1 : 
+  T1 : 
+
+----------------------------------------
+TABLES
+----------------------------------------
+  Table: Apparatus_Categories
+    Range: E1:G39
+    Columns: 3
+  Table: Apparatus_List
+    Range: A1:C39
+    Columns: 3
+
+----------------------------------------
+FORMULAS
+----------------------------------------
+  Total formulas: 2
+
+  UNIQUE FORMULA PATTERNS:
+
+  Pattern (used 2x):
+    Example: L29 : IF($T$2="AUTO",IF(B29="COMPLETED",NOW(),""),"")
+    Cells: L29, L30
+
+----------------------------------------
+SAMPLE DATA (First 30 rows)
+----------------------------------------
+Row 1 : Apparatus | ATS_Hours | MTS_Hours |  | Apparatus_Type | Category | ATS_Hours |  |  |  |  |  |  |  |  |  |  |  |  | 
+Row 2 : Conductors LV - 3 Phase Feeder | 1 | 0.5 |  | Conductors LV - 3 Phase Feeder | Conductors |  |  |  |  |  |  |  |  |  |  |  |  |  | AUTO
+Row 3 : Current Transformer MV - Set of 3 | 2 | 2.5 |  | Current Transformer MV - Set of 3 | Instrument Transformers |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Row 4 : Arrestor - Medium Voltage (Set) | 2 | 1.5 |  | Arrestor - Medium Voltage (Set) | Arresters |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Row 5 : Conductors MV - Set of 3 (VLF Hipoten... | 4 | 5 |  | Conductors MV - Set of 3 (VLF Hipoten... | Conductors |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Row 6 : Circuit Breaker MV - Vacuum Bkr | 4 | 6 |  | Circuit Breaker MV - Vacuum Bkr | Circuit Breaker |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Row 7 : Current Transformer - MV | 0.75 | `.75 |  | Current Transformer - MV | Instrument Transformers |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Row 8 : Protective Relay (Feeder Protection) | 5 | 5 |  | Protective Relay (Feeder Protection) | Protective Relay |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Row 9 : Motor Starter (Contactor) MV | 4 | 6 |  | Motor Starter (Contactor) MV | Motor Control |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Row 10 : Potential Transformer - MV SWGR | 2.5 | 3 |  | Potential Transformer - MV SWGR | Instrument Transformers |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Row 11 : Arrestor (SPD) - Low Voltage | 0.5 | 1 |  | Arrestor (SPD) - Low Voltage | Arresters |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Row 12 : Current Transformer LV - Set of 3 | 2 | 2.5 |  | Current Transformer LV - Set of 3 | Instrument Transformers |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Row 13 : Control Power Transformer - MV Swgr | 2.5 | 2.5 |  | Control Power Transformer - MV Swgr | Instrument Transformers |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Row 14 : Ground Resistance Test - FOP or Clamp... | 2.5 | 6 |  | Ground Resistance Test - FOP or Clamp... | Grounding |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Row 15 : Protective Relay (Motor Control) | 8 | 8 |  | Protective Relay (Motor Control) | Protective Relay |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Row 16 : Switch MV - Fused Disconnect | 2.5 | 3 |  | Switch MV - Fused Disconnect | Switch |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Row 17 : Switchgear - Medium Voltage | 2.5 | 10 |  | Switchgear - Medium Voltage | Distribution |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Row 18 : Transformer - Dry Type (TTR/WR/IR) | 3 | 4 |  | Transformer - Dry Type (TTR/WR/IR) | Transformer |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Row 19 : Reactors - (Shunt and Current-Limitin... | 2 | 2.5 |  | Reactors - (Shunt and Current-Limitin... | Reactor |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Row 20 : Potential Transformer - MV Set | 2.5 | 3 |  | Potential Transformer - MV Set | Instrument Transformers |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Row 21 : Circuit Breaker LV - Panelboard MCB | 2.5 | 3 |  | Circuit Breaker LV - Panelboard MCB | Circuit Breaker |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Row 22 : Meter - PQM/Microprocessor Based | 2.5 | 3 |  | Meter - PQM/Microprocessor Based | PQM |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Row 23 : Motor - Low Voltage | 2 | 3 |  | Motor - Low Voltage | Motor |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Row 24 : Motor Control Center LV | 8 | 6 |  | Motor Control Center LV | Motor Control |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Row 25 : Panelboard - Low Voltage | 0.5 | 1 |  | Panelboard - Low Voltage | Distribution |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Row 26 : Switch LV - Fused Disconnect | 1 | 1.5 |  | Switch LV - Fused Disconnect | Switch |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Row 27 : Transformer - Dry Type (TTR/IR) | 1.5 | 2 |  | Transformer - Dry Type (TTR/IR) | Transformer |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Row 28 : Circuit Breaker LV - Draw-Out (LSIG) | 4 | 4.5 |  | Circuit Breaker LV - Draw-Out (LSIG) | Circuit Breaker |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Row 29 : Circuit Breaker LV - Molded Case Ther... | 4 | 2 |  | Circuit Breaker LV - Molded Case Ther... | Circuit Breaker |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Row 30 : Control Power Transformer - LV Swbd | 1.5 | 2 |  | Control Power Transformer - LV Swbd | Instrument Transformers |  |  |  |  |  |  |  |  |  |  |  |  |  | 
