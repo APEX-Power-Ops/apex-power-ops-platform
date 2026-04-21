@@ -1,4 +1,4 @@
-# RESA Power Platform - Project Status
+# Apex Power Ops - Project Status
 
 > **Last Updated**: December 11, 2025 (Session 7 - VS Code Claude)  
 > **Phase**: Operations Visibility Schema Ready, NETA Import Complete  
@@ -124,7 +124,7 @@ flowchart LR
 
 ```mermaid
 mindmap
-  root((RESA Power<br/>Dashboards))
+  root((Apex Power Ops<br/>Dashboards))
     Executive
       Revenue KPIs
       Project Pipeline
@@ -192,7 +192,7 @@ mindmap
 
 ```mermaid
 gantt
-    title RESA Power Development Roadmap
+    title Apex Power Ops Development Roadmap
     dateFormat YYYY-MM-DD
     
     section Phase 1 - Foundation
