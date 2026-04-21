@@ -18,6 +18,8 @@ The project has migrated to **Supabase** as the database backend.
 | `PROJECT_CONTEXT.json` | Dataverse-era environment snapshot moved behind archive boundary |
 | `RESA_BLUE_SKY_ARCHITECTURE.md` | Legacy RESA-era strategy doc moved out of active root lane |
 | `resa-blue-sky-architecture.jsx` | Legacy RESA-era prototype moved out of active root lane |
+| `My Questions _ Decisions Needed.md` | Early coordination note moved out of the active root lane |
+| `analyze_pdf.py` | One-off local PDF utility moved out of the active root lane |
 
 ### Keep for Reference
 | File/Folder | Reason |
