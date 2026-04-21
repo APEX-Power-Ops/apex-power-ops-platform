@@ -275,10 +275,10 @@ API URL:     https://fxoyniqnrlkxfligbxmg.supabase.co
 Environment: Development
 ```
 
-### Web App
+### Legacy External Web App Snapshot
 
 ```
-Location:    C:\Users\jjswe\Projects\resa-web-app
+External Path: C:\Users\jjswe\Projects\resa-web-app
 Framework:   Next.js 16.0.5 (App Router)
 React:       19.2.0
 UI:          shadcn/ui + Radix + Tailwind CSS
@@ -293,7 +293,7 @@ UI:          shadcn/ui + Radix + Tailwind CSS
 | NETA Import Handoff | `Supabase/scripts/NETA_IMPORT_HANDOFF.md` |
 | UI Specifications | `Documentation/07_Application_Specs/` |
 | Schema Reference | `Supabase/SCHEMA_REFERENCE.md` |
-| Supabase Client | `resa-web-app/src/lib/supabase.ts` |
+| Supabase Client | `legacy external app: resa-web-app/src/lib/supabase.ts` |
 
 ---
 

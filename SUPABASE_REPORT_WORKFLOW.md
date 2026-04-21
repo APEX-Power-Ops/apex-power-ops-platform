@@ -1,4 +1,4 @@
-# RESA Power - Automated Report Generation Workflow
+# Apex Power Ops - Automated Report Generation Workflow
 
 ## Overview
 
@@ -229,7 +229,7 @@ serve(async (req) => {
     employee: {
       full_name: report.employee.employee_name,
       title: report.employee.title || 'Power Systems Technician',
-      office: report.employee.office || 'RESA Power',
+      office: report.employee.office || 'Apex Power Ops',
       phone: report.employee.phone,
       email: report.employee.email,
       signature_url: getSignatureUrl(report.employee.signature_storage_path),

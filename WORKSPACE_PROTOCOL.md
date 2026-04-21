@@ -1,15 +1,15 @@
-# RESA Power - Optimal Development Environment Protocol
+# Apex Power Ops - Workspace Protocol
 
 **Version:** 1.0  
 **Created:** December 5, 2025  
-**Purpose:** Establish consistent, efficient workspace for Claude + VS Code collaboration
+**Purpose:** Establish consistent, efficient workspace conventions for Apex Power Ops collaboration
 
 ---
 
 ## 1. Directory Structure (Clean & Predictable)
 
 ```
-C:\RESA_Power_Build\
+C:\Repos\apex-power-ops\
 │
 ├── .claude/                          # SESSION CONTINUITY (NEW)
 │   ├── CURRENT_STATE.md              # What's in progress, blockers, next steps
@@ -124,7 +124,7 @@ CURRENT_STATE.md                # Session continuity
 ### Header Block (Required)
 ```sql
 -- ============================================================================
--- RESA POWER DATABASE - [FILE NAME]
+-- APEX POWER OPS DATABASE - [FILE NAME]
 -- ============================================================================
 -- Purpose: [One-line description]
 -- Dependencies: [List files that must run first, or "None"]
@@ -271,7 +271,7 @@ Refs: Part of schema merge
 ## 9. Environment Checklist
 
 ### Before Starting Work
-- [ ] Workspace folder open: `C:\RESA_Power_Build`
+- [ ] Workspace folder open: `C:\Repos\apex-power-ops`
 - [ ] Read `.claude/CURRENT_STATE.md`
 - [ ] Confirm which Claude instance (Desktop/VS Code)
 - [ ] Understand assigned tasks

@@ -1,8 +1,9 @@
-# RESA Power - Optimal Development Environment Design
+# Apex Power Ops - Workspace Design Notes
 
 **Purpose:** Design workspace structure and protocols that optimize AI-assisted development  
 **Stakeholders:** Jason (Owner), Desktop Claude, VS Code Claude  
 **Created:** December 5, 2025
+**Status:** Design reference for the unified repo lane; folder examples below are conceptual targets rather than the exact live tree.
 
 ---
 
@@ -31,7 +32,7 @@ Every folder has one clear purpose. Nothing miscellaneous.
 ## Proposed Folder Structure
 
 ```
-C:\RESA_Power\                          # Clean root (renamed from RESA_Power_Build)
+C:\Repos\apex-power-ops\               # Conceptual clean local root for this repo
 │
 ├── .claude/                            # AI COLLABORATION HUB
 │   ├── PROJECT_STATE.md                # Current status - READ FIRST EVERY SESSION
@@ -298,30 +299,30 @@ Starting with 11_test_data.sql..."
 ### Phase 1: Create Structure (30 min)
 ```powershell
 # Create new structure
-mkdir C:\RESA_Power
-mkdir C:\RESA_Power\.claude
-mkdir C:\RESA_Power\.claude\PROMPTS
-mkdir C:\RESA_Power\docs
-mkdir C:\RESA_Power\docs\requirements
-mkdir C:\RESA_Power\docs\decisions
-mkdir C:\RESA_Power\database
-mkdir C:\RESA_Power\database\schema
-mkdir C:\RESA_Power\database\seed
-mkdir C:\RESA_Power\database\test
-mkdir C:\RESA_Power\database\migrations
-mkdir C:\RESA_Power\app
-mkdir C:\RESA_Power\scripts
-mkdir C:\RESA_Power\archive
+mkdir C:\Repos\apex-power-ops
+mkdir C:\Repos\apex-power-ops\.claude
+mkdir C:\Repos\apex-power-ops\.claude\PROMPTS
+mkdir C:\Repos\apex-power-ops\docs
+mkdir C:\Repos\apex-power-ops\docs\requirements
+mkdir C:\Repos\apex-power-ops\docs\decisions
+mkdir C:\Repos\apex-power-ops\database
+mkdir C:\Repos\apex-power-ops\database\schema
+mkdir C:\Repos\apex-power-ops\database\seed
+mkdir C:\Repos\apex-power-ops\database\test
+mkdir C:\Repos\apex-power-ops\database\migrations
+mkdir C:\Repos\apex-power-ops\app
+mkdir C:\Repos\apex-power-ops\scripts
+mkdir C:\Repos\apex-power-ops\archive
 ```
 
 ### Phase 2: Migrate Content (1 hour)
 | Source | Destination | Action |
 |--------|-------------|--------|
-| RESA_Power_Build\Documentation\ | RESA_Power\docs\ | Move + reorganize |
-| RESA_Power_Build\Supabase\*.sql | RESA_Power\archive\schema_drafts\ | Archive old versions |
-| RESA_Power_Build\Database_Setup\ | RESA_Power\archive\schema_drafts\ | Archive old versions |
-| PSS Portal requirements docs | RESA_Power\docs\requirements\ | Move |
-| Audit reports | RESA_Power\docs\decisions\ | Move + convert to ADRs |
+| apex-power-ops\Documentation\ | apex-power-ops\docs\ | Move + reorganize |
+| apex-power-ops\Supabase\*.sql | apex-power-ops\archive\schema_drafts\ | Archive old versions |
+| apex-power-ops\Database_Setup\ | apex-power-ops\archive\schema_drafts\ | Archive old versions |
+| PSS Portal requirements docs | apex-power-ops\docs\requirements\ | Move |
+| Audit reports | apex-power-ops\docs\decisions\ | Move + convert to ADRs |
 
 ### Phase 3: Create Control Files (30 min)
 - Create PROJECT_STATE.md with current status
@@ -341,7 +342,7 @@ mkdir C:\RESA_Power\archive
 
 ### If Using Git
 ```
-C:\RESA_Power\
+C:\Repos\apex-power-ops\
 ├── .git/                   # Git repository
 ├── .gitignore              # Ignore sensitive files
 ├── .claude/                # Tracked - collaboration hub
@@ -436,7 +437,7 @@ Set up version control if desired.
 
 ## Questions for Jason
 
-1. **Root folder name:** `C:\RESA_Power\` or keep `C:\RESA_Power_Build\`?
+1. **Root folder convention:** `C:\Repos\apex-power-ops\` or another local path that still maps cleanly to the repo root?
 
 2. **Git repository:** 
    - Yes, local only
