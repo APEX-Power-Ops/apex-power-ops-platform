@@ -34,7 +34,7 @@ Apex Power Ops is the operating system for electrical testing workflows, apparat
 ## Current Delivery Posture
 
 - Active source-of-truth material lives in the root docs and non-archive directories.
-- Legacy RESA naming may still appear inside historical docs, legacy file names, and archived materials where changing it would reduce traceability.
+- Legacy RESA naming is expected only inside archived materials and intentionally retained historical references where changing it would reduce traceability.
 - GitHub Actions remains intentionally unconfigured until a single active build or test entrypoint is extracted from the live repo surface.
 
 ## Platform Snapshot
