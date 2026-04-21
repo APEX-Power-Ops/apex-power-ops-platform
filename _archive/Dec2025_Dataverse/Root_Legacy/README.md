@@ -8,3 +8,5 @@ Typical contents:
 - Dataverse-era environment snapshots
 - RESA-era strategy notes
 - UI or architecture prototypes that are no longer active root surfaces
+- early coordination or decision-capture notes
+- one-off local utility scripts tied to historical workflows
