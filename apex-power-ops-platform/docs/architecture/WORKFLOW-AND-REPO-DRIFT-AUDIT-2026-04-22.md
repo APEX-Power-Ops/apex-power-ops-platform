@@ -18,7 +18,7 @@ Verified from the parent git root at `C:/APEX Platform`:
 
 1. current branch is `clean-main`
 2. current `HEAD` matches `origin/clean-main`
-3. current `HEAD` is `83fda73`
+3. current `HEAD` is `b827835`
 4. the first bounded platform bootstrap slice is tracked on parent-root `clean-main`
 5. the next bounded Class A scaffold tranche is also now published on parent-root `clean-main`
 6. the bounded package source tranche for `packages/forms-engine` and `packages/calc-engine` is also now published on parent-root `clean-main`
@@ -31,9 +31,10 @@ Verified from the parent git root at `C:/APEX Platform`:
 13. the bounded `infra/database` tranche is also now published on parent-root `clean-main`
 14. the bounded `docs/` tranche is also now published on parent-root `clean-main`
 15. the bounded `ops/knowledge-control-plane/registry` tranche is also now published on parent-root `clean-main`
-16. normal `git status`, `git diff`, and bounded `git add -- <paths>` now work against tracked `HEAD` for those already-introduced `apex-power-ops-platform/` paths
-17. much of the broader subtree still remains untracked and therefore still requires deliberate introduction rather than assuming routine diff coverage
-18. the parent root remains the actual git boundary even though day-to-day implementation work is platform-first inside the subtree
+16. the bounded `ops/agents/legacy-governance` tranche is also now published on parent-root `clean-main`
+17. normal `git status`, `git diff`, and bounded `git add -- <paths>` now work against tracked `HEAD` for those already-introduced `apex-power-ops-platform/` paths
+18. much of the broader subtree still remains untracked and therefore still requires deliberate introduction rather than assuming routine diff coverage
+19. the parent root remains the actual git boundary even though day-to-day implementation work is platform-first inside the subtree
 
 ## Drift That Was Present
 
@@ -65,7 +66,7 @@ Use this posture going forward:
 1. work from `C:/APEX Platform/apex-power-ops-platform` for implementation, but treat `C:/APEX Platform` as the authoritative git root
 2. use routine `git diff` and bounded `git add -- <paths>` against tracked `HEAD` for already-introduced paths
 3. keep whole-subtree staging reserved for explicit broad publication or cutover work
-4. treat the 2026-04-22 bootstrap, Class A scaffold, package source, operations-web runtime, mutation-seam runtime, control-plane core, control-plane support, control-plane tests, residual scaffold, infra database, docs, ops knowledge-control-plane registry, and reconciliation handoffs as historical records, not as active blockers or active workflow instructions
+4. treat the 2026-04-22 bootstrap, Class A scaffold, package source, operations-web runtime, mutation-seam runtime, control-plane core, control-plane support, control-plane tests, residual scaffold, infra database, docs, ops knowledge-control-plane registry, ops legacy-governance, and reconciliation handoffs as historical records, not as active blockers or active workflow instructions
 5. keep `C:/APEX Platform/apex-power-ops-platform-deploy-worktree` as a separate optional publication lane
 6. keep `C:/APEX Platform/apex-power-ops-platform-clean-main-reconcile` as the historical clean review-fix worktree, not as the live authority surface
 7. treat broader subtree publication beyond the already-tracked slice as explicit incremental introduction work
@@ -86,9 +87,10 @@ These remain useful, but only as historical context:
 10. `ops/agents/handoffs/2026-04-22-parent-root-infra-database-publication-handoff.md`
 11. `ops/agents/handoffs/2026-04-22-parent-root-docs-publication-handoff.md`
 12. `ops/agents/handoffs/2026-04-22-parent-root-ops-knowledge-control-plane-registry-publication-handoff.md`
-13. `ops/agents/handoffs/2026-04-22-parent-root-clean-main-reconciliation-handoff.md`
-14. `C:/APEX-safety-snapshots/live-root-pre-merge-divergence-2026-04-22/RECOVERY-NOTES.md`
-15. `C:/APEX-safety-snapshots/live-root-pre-merge-divergence-2026-04-22/INTEGRITY-REPORT.md`
+13. `ops/agents/handoffs/2026-04-22-parent-root-ops-legacy-governance-publication-handoff.md`
+14. `ops/agents/handoffs/2026-04-22-parent-root-clean-main-reconciliation-handoff.md`
+15. `C:/APEX-safety-snapshots/live-root-pre-merge-divergence-2026-04-22/RECOVERY-NOTES.md`
+16. `C:/APEX-safety-snapshots/live-root-pre-merge-divergence-2026-04-22/INTEGRITY-REPORT.md`
 
 ## Residual Constraints
 
@@ -103,4 +105,4 @@ The repo is cleaner, but these constraints still matter:
 
 The workflow drift is closed.
 
-The platform subtree is no longer in a wholly untracked first-introduction bootstrap state. Its first bounded publication slice, its Class A scaffold tranche, its package source tranche, its `operations-web` runtime tranche, its `mutation-seam` runtime tranche, the full bounded `control-plane-api` lane (runtime core, support, and tests), the residual scaffold/doc tranche, the `infra/database` tranche, the `docs/` tranche, and the `ops/knowledge-control-plane/registry` tranche are now published on `clean-main`, and future parent-root publication should distinguish between routine bounded staging for already-introduced paths and deliberate incremental introduction for the still-untracked majority of the subtree.
+The platform subtree is no longer in a wholly untracked first-introduction bootstrap state. Its first bounded publication slice, its Class A scaffold tranche, its package source tranche, its `operations-web` runtime tranche, its `mutation-seam` runtime tranche, the full bounded `control-plane-api` lane (runtime core, support, and tests), the residual scaffold/doc tranche, the `infra/database` tranche, the `docs/` tranche, the `ops/knowledge-control-plane/registry` tranche, and the `ops/agents/legacy-governance` tranche are now published on `clean-main`, and future parent-root publication should distinguish between routine bounded staging for already-introduced paths and deliberate incremental introduction for the still-untracked majority of the subtree.
