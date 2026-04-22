@@ -15,7 +15,7 @@ Use these files first:
 
 Historical hosted execution handoffs are not bundled inside this bootstrap packet.
 
-Current local truth for the now-closed lane:
+Historical blocker state for the now-closed lane before closure:
 
 1. the public host is otherwise healthy
 2. the deployed OpenAPI document still omits `/api/v1/neta/apparatus/{apparatus_id}/resources`
