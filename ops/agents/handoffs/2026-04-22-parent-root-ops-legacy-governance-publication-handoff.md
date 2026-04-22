@@ -1,13 +1,19 @@
 # Parent-Root Ops Legacy-Governance Publication Handoff
 ## Date: 2026-04-22
 ## Updated by: GitHub Copilot (GPT-5.4)
-## Scope: Active next-step packet for the bounded `ops/agents/legacy-governance` lane under `C:/APEX Platform/apex-power-ops-platform`
+## Scope: Historical record for the bounded `ops/agents/legacy-governance` lane under `C:/APEX Platform/apex-power-ops-platform`
 
 ## 1. Summary
 
 The active shared packages, active app lanes, residual scaffold/doc surfaces, infra-database lane, docs lane, and ops knowledge-control-plane registry lane are now published on parent-root `clean-main`.
 
-The next smallest remaining substantive packet is `ops/agents/legacy-governance`, which currently stages cleanly at 8 files. This packet introduces the next smallest coherent `ops/` sublane before the much larger `ops/agents/handoffs`, `ops/agents/packets`, `knowledge`, and `archive` backlogs.
+The next smallest remaining substantive packet was `ops/agents/legacy-governance`, which staged cleanly at 8 files. This packet introduced the next smallest coherent `ops/` sublane before the much larger `ops/agents/handoffs`, `ops/agents/packets`, `knowledge`, and `archive` backlogs.
+
+Publication outcome:
+
+1. committed on parent-root `clean-main` as `b827835`
+2. pushed to `origin/clean-main` on 2026-04-22
+3. closed as the published legacy-governance follow-on to the ops knowledge-control-plane registry tranche
 
 ## 2. Why This Packet Is Next
 
@@ -20,7 +26,7 @@ Measured from the parent git root at `C:/APEX Platform` on 2026-04-22 after the 
 
 ## 3. Packet Intent
 
-Use this packet to introduce the legacy-governance pattern library:
+This packet introduced the legacy-governance pattern library:
 
 1. `README.md`
 2. `root/WORKSPACE_DESIGN.md`
@@ -37,7 +43,7 @@ From the parent git root at `C:/APEX Platform`, the bounded packet path is:
 
 1. `apex-power-ops-platform/ops/agents/legacy-governance`
 
-Current measured contents: 8 files under the legacy-governance path.
+Published contents: 8 files under the legacy-governance path.
 
 ## 5. Why This Packet Is Bounded Correctly
 
@@ -48,9 +54,9 @@ This packet is intentionally narrow:
 3. it does not widen into `knowledge/` or `archive/`
 4. it does not mix in generated local artifacts from app lanes
 
-## 6. Operator Execution Path
+## 6. Historical Execution Path
 
-Preferred task path from `C:/APEX Platform/apex-power-ops-platform`:
+Preferred task path from `C:/APEX Platform/apex-power-ops-platform` when this packet was executed:
 
 1. run `Preview parent-root ops legacy-governance packet`
 2. run `Stage parent-root ops legacy-governance packet` only when the preview is correct

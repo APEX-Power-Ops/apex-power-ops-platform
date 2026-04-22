@@ -205,6 +205,7 @@ Exit condition:
 - [x] define the post-infra docs follow-on packet in `ops/agents/handoffs/2026-04-22-parent-root-docs-publication-handoff.md`
 - [x] define the post-docs ops knowledge-control-plane registry follow-on packet in `ops/agents/handoffs/2026-04-22-parent-root-ops-knowledge-control-plane-registry-publication-handoff.md`
 - [x] define the post-registry ops legacy-governance follow-on packet in `ops/agents/handoffs/2026-04-22-parent-root-ops-legacy-governance-publication-handoff.md`
+- [x] define the post-legacy-governance ops knowledge-resource-operations follow-on packet in `ops/agents/handoffs/2026-04-22-parent-root-ops-knowledge-resource-operations-publication-handoff.md`
 - [ ] default future publication work to explicit platform file paths or bounded packet pathspecs rather than whole-subtree staging
 - [ ] reserve `git add -- apex-power-ops-platform/` for explicit cutover or intentionally broad publication work only
 - [ ] treat unrelated tracked changes elsewhere under `C:/APEX Platform` as separate lanes unless a cross-lane operation is explicitly intended
