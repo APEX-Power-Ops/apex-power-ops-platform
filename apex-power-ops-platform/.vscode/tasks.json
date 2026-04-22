@@ -525,6 +525,39 @@
       "problemMatcher": []
     },
     {
+      "label": "Preview parent-root control-plane support packet",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-Command",
+        "$paths = @('apex-power-ops-platform/apps/control-plane-api/_invariant_probe_019g.py', 'apex-power-ops-platform/apps/control-plane-api/api', 'apex-power-ops-platform/apps/control-plane-api/DEPLOYMENT_VALIDATION.md', 'apex-power-ops-platform/apps/control-plane-api/migrations', 'apex-power-ops-platform/apps/control-plane-api/PUBLIC-APPARATUS-ROUTE-PROMOTION-CHECKLIST-2026-04-21.md', 'apex-power-ops-platform/apps/control-plane-api/scripts', 'apex-power-ops-platform/apps/control-plane-api/supabase', 'apex-power-ops-platform/apps/control-plane-api/utils'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Stage parent-root control-plane support packet",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-Command",
+        "$paths = @('apex-power-ops-platform/apps/control-plane-api/_invariant_probe_019g.py', 'apex-power-ops-platform/apps/control-plane-api/api', 'apex-power-ops-platform/apps/control-plane-api/DEPLOYMENT_VALIDATION.md', 'apex-power-ops-platform/apps/control-plane-api/migrations', 'apex-power-ops-platform/apps/control-plane-api/PUBLIC-APPARATUS-ROUTE-PROMOTION-CHECKLIST-2026-04-21.md', 'apex-power-ops-platform/apps/control-plane-api/scripts', 'apex-power-ops-platform/apps/control-plane-api/supabase', 'apex-power-ops-platform/apps/control-plane-api/utils'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Parent-root control-plane support packet staged diff",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-Command",
+        "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/apps/control-plane-api/_invariant_probe_019g.py apex-power-ops-platform/apps/control-plane-api/api apex-power-ops-platform/apps/control-plane-api/DEPLOYMENT_VALIDATION.md apex-power-ops-platform/apps/control-plane-api/migrations apex-power-ops-platform/apps/control-plane-api/PUBLIC-APPARATUS-ROUTE-PROMOTION-CHECKLIST-2026-04-21.md apex-power-ops-platform/apps/control-plane-api/scripts apex-power-ops-platform/apps/control-plane-api/supabase apex-power-ops-platform/apps/control-plane-api/utils"
+      ],
+      "problemMatcher": []
+    },
+    {
       "label": "Platform subtree staged diff",
       "type": "shell",
       "command": "pwsh",

@@ -1,13 +1,13 @@
 # Parent-Root Control-Plane Core Publication Handoff
 ## Date: 2026-04-22
 ## Updated by: GitHub Copilot (GPT-5.4)
-## Scope: Active next-step packet for bounded `apps/control-plane-api` runtime-core introduction under `C:/APEX Platform/apex-power-ops-platform`
+## Scope: Historical record for the published bounded `apps/control-plane-api` runtime-core introduction under `C:/APEX Platform/apex-power-ops-platform`
 
 ## 1. Summary
 
 The bootstrap, Class A scaffold, package source, operations-web runtime, and mutation-seam runtime tranches are already published on parent-root `clean-main`.
 
-The next natural publication step should still avoid broad subtree cutover. The remaining active app lane is `apps/control-plane-api`, but its full backlog is larger than a single clean packet. The next bounded follow-on is the control-plane runtime core that already has focused executable proof:
+The next natural publication step after those tranches still avoided broad subtree cutover. The remaining active app lane was `apps/control-plane-api`, but its full backlog was larger than a single clean packet. The bounded follow-on was the control-plane runtime core that already had focused executable proof:
 
 1. `config.py`
 2. `main.py`
@@ -18,7 +18,13 @@ The next natural publication step should still avoid broad subtree cutover. The 
 7. `scripts/smoke_deployed_control_plane.py`
 8. focused test slice under `tests/`
 
-This packet introduces the live FastAPI runtime, MCP and route handlers, the demo HTML required by the consent-route surface, the public-host smoke helper, and the focused tests already used to validate the bounded runtime core.
+This packet introduced the live FastAPI runtime, MCP and route handlers, the demo HTML required by the consent-route surface, the public-host smoke helper, and the focused tests already used to validate the bounded runtime core.
+
+Publication outcome:
+
+1. committed on parent-root `clean-main` as `d8c498b`
+2. pushed to `origin/clean-main` on 2026-04-22
+3. closed as the published control-plane runtime-core follow-on to the mutation-seam tranche
 
 ## 2. Why This Packet Is Next
 
@@ -38,7 +44,7 @@ Measured from the parent git root at `C:/APEX Platform` on 2026-04-22:
 
 ## 3. Packet Intent
 
-Use this packet to introduce the active control-plane runtime core and its focused validation surfaces:
+This packet introduced the active control-plane runtime core and its focused validation surfaces:
 
 1. FastAPI entrypoint and DB configuration
 2. route, auth, MCP, NETA, ops, work, and control-plane services
@@ -47,7 +53,7 @@ Use this packet to introduce the active control-plane runtime core and its focus
 5. the deployed-surface smoke helper script
 6. the focused tests that already validate this slice
 
-Do not treat this packet as authorization to publish the full control-plane backlog in one step.
+Do not treat this historical packet as authorization to publish the full control-plane backlog in one step.
 
 ## 4. Exact Packet Contents
 
@@ -87,9 +93,9 @@ This packet is intentionally narrow:
 3. it keeps the remaining control-plane test bulk separate from the first runtime-core publication
 4. it avoids reopening broader `ops/` historical bulk or non-control-plane paths
 
-## 6. Operator Execution Path
+## 6. Historical Execution Path
 
-Preferred task path from `C:/APEX Platform/apex-power-ops-platform`:
+Preferred task path from `C:/APEX Platform/apex-power-ops-platform` when this packet was executed:
 
 1. run `Preview parent-root control-plane core packet`
 2. run `Stage parent-root control-plane core packet` only when the preview is correct
@@ -118,7 +124,7 @@ $env:DATABASE_URL='postgresql://postgres:postgres@localhost:5432/postgres'
 & 'C:/APEX Platform/.venv/Scripts/python.exe' -m pytest tests/test_oauth_consent_route.py tests/test_mcp_transport.py tests/test_supabase_mcp_transport.py tests/test_github_mcp_transport.py tests/test_smoke_deployed_control_plane.py tests/test_health.py -q
 ```
 
-This packet is suitable for executable validation because it already maps cleanly to the focused control-plane runtime proof.
+This packet was suitable for executable validation because it already mapped cleanly to the focused control-plane runtime proof.
 
 ## 8. Do Not Do
 
@@ -131,8 +137,8 @@ This packet is suitable for executable validation because it already maps cleanl
 
 If this packet lands cleanly, the next logical tranches are:
 
-1. control-plane support packet for migrations, Supabase SQL, and remaining operational scripts
+1. control-plane support packet for migrations, Supabase SQL, remaining operational scripts, and still-untracked lane-local support surfaces
 2. remaining control-plane validation and browser/demo test packet
 3. selective `docs/` and `ops/` authority packets needed to operate the fully introduced control-plane lane
 
-Those follow-ons remain separate from this control-plane runtime-core packet.
+Those follow-ons remain separate from this now-published control-plane runtime-core packet.
