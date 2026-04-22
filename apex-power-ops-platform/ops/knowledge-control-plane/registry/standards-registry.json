@@ -1,0 +1,368 @@
+{
+  "_meta": {
+    "description": "Canonical standards registry for NETA ETT study content. All standards_refs in study guide frontmatter must match an entry here. Ingestion scripts validate against this file.",
+    "spec_reference": "CONTENT-FORMAT-SPEC-v2.md, Section 2 — Standards Reference Normalization",
+    "created": "2026-03-01",
+    "last_updated": "2026-03-10"
+  },
+  "standards": [
+    {
+      "standard": "NETA ATS",
+      "org": "NETA",
+      "full_title": "Standard for Acceptance Testing Specifications for Electrical Power Equipment and Systems",
+      "versions": ["2025", "2021", "2017", "2013"],
+      "current_version": "2025",
+      "scope": "Acceptance testing procedures, test values, and frequency tables for electrical power equipment"
+    },
+    {
+      "standard": "NETA MTS",
+      "org": "NETA",
+      "full_title": "Standard for Maintenance Testing Specifications for Electrical Power Equipment and Systems",
+      "versions": ["2023", "2019", "2015", "2011"],
+      "current_version": "2023",
+      "scope": "Maintenance testing procedures, test values, and frequency tables for electrical power equipment"
+    },
+    {
+      "standard": "NETA ECS",
+      "org": "NETA",
+      "full_title": "Standard for Electrical Commissioning of Electrical Power Equipment and Systems",
+      "versions": ["2020", "2015"],
+      "current_version": "2020",
+      "scope": "Commissioning procedures for electrical power systems"
+    },
+    {
+      "standard": "IEEE C37.016",
+      "org": "IEEE",
+      "full_title": "IEEE Standard for AC High-Voltage Circuit Switchers Rated 15.5 kV Through 245 kV",
+      "versions": ["2018"],
+      "current_version": "2018",
+      "scope": "Ratings, construction, type tests, and production tests for circuit switchers"
+    },
+    {
+      "standard": "IEEE C37.09",
+      "org": "IEEE",
+      "full_title": "IEEE Standard Test Procedure for AC High-Voltage Circuit Breakers",
+      "versions": ["2018", "1999"],
+      "current_version": "2018",
+      "scope": "Test procedures for circuit breakers rated above 1000 V"
+    },
+    {
+      "standard": "ANSI C37.32",
+      "org": "ANSI",
+      "full_title": "American National Standard for High Voltage Air Switches, Bus Supports, and Switch Accessories",
+      "versions": ["2002"],
+      "current_version": "2002",
+      "scope": "Ratings, specifications, and tests for HV air disconnect switches"
+    },
+    {
+      "standard": "IEEE C37.06",
+      "org": "IEEE",
+      "full_title": "IEEE Standard for AC High-Voltage Circuit Breakers Rated on a Symmetrical Current Basis - Preferred Ratings and Related Required Capabilities",
+      "versions": ["2009"],
+      "current_version": "2009",
+      "scope": "Preferred ratings for circuit breakers"
+    },
+    {
+      "standard": "NFPA 70E",
+      "org": "NFPA",
+      "full_title": "Standard for Electrical Safety in the Workplace",
+      "versions": ["2024", "2021", "2018", "2015"],
+      "current_version": "2024",
+      "scope": "Electrical safety requirements, arc flash, PPE, lockout/tagout"
+    },
+    {
+      "standard": "NFPA 70",
+      "org": "NFPA",
+      "full_title": "National Electrical Code (NEC)",
+      "versions": ["2023", "2020", "2017"],
+      "current_version": "2023",
+      "scope": "Electrical installation requirements"
+    },
+    {
+      "standard": "IEEE 43",
+      "org": "IEEE",
+      "full_title": "IEEE Recommended Practice for Testing Insulation Resistance of Electric Machinery",
+      "versions": ["2013", "2000"],
+      "current_version": "2013",
+      "scope": "Insulation resistance testing procedures for rotating machinery"
+    },
+    {
+      "standard": "IEEE 62",
+      "org": "IEEE",
+      "full_title": "IEEE Guide for Diagnostic Field Testing of Electric Power Apparatus — Part 1: Oil Filled Power Transformers, Regulators, and Reactors",
+      "versions": ["1995"],
+      "current_version": "1995",
+      "scope": "Field testing procedures for oil-filled power transformers"
+    },
+    {
+      "standard": "IEEE C57.12.00",
+      "org": "IEEE",
+      "full_title": "IEEE Standard for General Requirements for Liquid-Immersed Distribution, Power, and Regulating Transformers",
+      "versions": ["2021", "2015", "2010"],
+      "current_version": "2021",
+      "scope": "General requirements for liquid-immersed transformers"
+    },
+    {
+      "standard": "IEEE C57.152",
+      "org": "IEEE",
+      "full_title": "IEEE Guide for Diagnostic Field Testing of Fluid-Filled Power Transformers, Regulators, and Reactors",
+      "versions": ["2013"],
+      "current_version": "2013",
+      "scope": "Diagnostic field testing of fluid-filled transformers"
+    },
+    {
+      "standard": "IEEE C57.110",
+      "org": "IEEE",
+      "full_title": "IEEE Recommended Practice for Establishing Liquid-Immersed and Dry-Type Power and Distribution Transformer Capability When Supplying Nonsinusoidal Load Currents",
+      "versions": ["2018", "2008"],
+      "current_version": "2018",
+      "scope": "Transformer derating and capability evaluation under harmonic (nonsinusoidal) load currents"
+    },
+    {
+      "standard": "IEEE 400",
+      "org": "IEEE",
+      "full_title": "IEEE Guide for Field Testing and Evaluation of the Insulation of Shielded Power Cable Systems Rated 5 kV and Above",
+      "versions": ["2023", "2012"],
+      "current_version": "2023",
+      "scope": "Omnibus cable testing guide — method selection, testing philosophy, evaluation"
+    },
+    {
+      "standard": "IEEE 400.2",
+      "org": "IEEE",
+      "full_title": "IEEE Guide for Field Testing of Shielded Power Cable Systems Using Very Low Frequency (VLF)",
+      "versions": ["2024", "2013"],
+      "current_version": "2024",
+      "scope": "VLF withstand and tan delta diagnostic testing of MV/HV cables"
+    },
+    {
+      "standard": "IEEE 400.3",
+      "org": "IEEE",
+      "full_title": "IEEE Guide for Partial-Discharge Testing of Shielded Power Cable Systems in a Field Environment",
+      "versions": ["2022", "2006"],
+      "current_version": "2022",
+      "scope": "PD testing methods, sensor types, PRPD pattern interpretation for cables"
+    },
+    {
+      "standard": "IEEE 400.4",
+      "org": "IEEE",
+      "full_title": "IEEE Guide for Field-Testing of Shielded Power Cable Systems Rated 5 kV and Above with Damped Alternating Current (DAC) Voltage",
+      "versions": ["2015"],
+      "current_version": "2015",
+      "scope": "DAC voltage testing and diagnostics for shielded power cables"
+    },
+    {
+      "standard": "IEEE 575",
+      "org": "IEEE",
+      "full_title": "IEEE Guide for Bonding Shields and Sheaths of Single-Conductor Power Cables Rated 5 kV through 500 kV",
+      "versions": ["2014", "1988"],
+      "current_version": "2014",
+      "scope": "Shield bonding methods, SVL selection, jacket testing for single-conductor cables"
+    },
+    {
+      "standard": "ICEA S93-639",
+      "org": "ICEA/NEMA",
+      "full_title": "Utility Shielded Power Cable Rated 5 Through 46 kV",
+      "versions": ["2017"],
+      "current_version": "2017",
+      "scope": "Cable construction, bending radius, insulation levels for utility shielded power cables"
+    },
+    {
+      "standard": "IEEE 81",
+      "org": "IEEE",
+      "full_title": "IEEE Guide for Measuring Earth Resistivity, Ground Impedance, and Earth Surface Potentials of a Grounding System",
+      "versions": ["2012"],
+      "current_version": "2012",
+      "scope": "Grounding system measurement procedures"
+    },
+    {
+      "standard": "IEEE 242",
+      "org": "IEEE",
+      "full_title": "IEEE Recommended Practice for Protection and Coordination of Industrial and Commercial Power Systems (Buff Book)",
+      "versions": ["2001"],
+      "current_version": "2001",
+      "scope": "Protection coordination for industrial/commercial power systems"
+    },
+    {
+      "standard": "IEEE C37.20.1",
+      "org": "IEEE",
+      "full_title": "IEEE Standard for Metal-Enclosed Low-Voltage (1000 Vac and below, 3200 Vdc and below) Power Circuit Breaker Switchgear",
+      "versions": ["2015"],
+      "current_version": "2015",
+      "scope": "LV metal-enclosed switchgear ratings and test procedures"
+    },
+    {
+      "standard": "IEEE C37.20.2",
+      "org": "IEEE",
+      "full_title": "IEEE Standard for Metal-Clad Switchgear",
+      "versions": ["2022", "2015", "1999"],
+      "current_version": "2022",
+      "scope": "MV metal-clad switchgear ratings and test procedures"
+    },
+    {
+      "standard": "IEEE C37.20.3",
+      "org": "IEEE",
+      "full_title": "IEEE Standard for Metal-Enclosed Interrupter Switchgear Rated above 1 kV AC up to and Including 48.3 kV AC",
+      "versions": ["2023", "2013"],
+      "current_version": "2023",
+      "scope": "MEI switchgear assemblies: interrupter switches, selector switches, power fuses, circuit breakers, control/instrumentation/metering, protective equipment"
+    },
+    {
+      "standard": "IEEE C37.20.7",
+      "org": "IEEE",
+      "full_title": "IEEE Guide for Testing Alternating Current Metal-Enclosed Switchgear for Internal Arcing Faults",
+      "versions": ["2017"],
+      "current_version": "2017",
+      "scope": "Arc-resistant switchgear testing — Type 1, 2, 2B, 2C accessibility ratings and internal arcing fault test procedures"
+    },
+    {
+      "standard": "IEEE C37.23",
+      "org": "IEEE",
+      "full_title": "IEEE Standard for Metal-Enclosed Bus",
+      "versions": ["2015", "2003", "1987"],
+      "current_version": "2015",
+      "scope": "Metal-enclosed bus assemblies (nonsegregated-phase, cable bus, segregated-phase, isolated-phase) rated 1058 V through 38 kV, 600 A through 26000 A"
+    },
+    {
+      "standard": "ASTM D877",
+      "org": "ASTM",
+      "full_title": "Standard Test Method for Dielectric Breakdown Voltage of Insulating Liquids Using Disk Electrodes",
+      "versions": ["2019"],
+      "current_version": "2019",
+      "scope": "Dielectric breakdown voltage test for insulating oil"
+    },
+    {
+      "standard": "ASTM D924",
+      "org": "ASTM",
+      "full_title": "Standard Test Method for Dissipation Factor (or Power Factor) and Relative Permittivity (Dielectric Constant) of Electrical Insulating Liquids",
+      "versions": ["2015"],
+      "current_version": "2015",
+      "scope": "Power factor testing of insulating oil"
+    },
+    {
+      "standard": "IEEE C62.92.1",
+      "org": "IEEE",
+      "full_title": "IEEE Guide for the Application of Neutral Grounding in Electrical Utility Systems - Part I: Introduction",
+      "versions": ["2016", "2000"],
+      "current_version": "2016",
+      "scope": "Neutral grounding application in three-phase electrical utility systems"
+    },
+    {
+      "standard": "IEEE C93.3",
+      "org": "IEEE",
+      "full_title": "IEEE Standard Requirements for Power-Line Carrier Line Traps (30 kHz to 500 kHz)",
+      "versions": ["2017"],
+      "current_version": "2017",
+      "scope": "Requirements for power-line carrier line traps used in PLC communication systems"
+    },
+    {
+      "standard": "IEEE C37.63",
+      "org": "IEEE",
+      "full_title": "IEEE Standard Requirements for Overhead, Pad-Mounted, Dry-Vault, and Submersible Automatic Line Sectionalizers for AC Systems Up to 38 kV",
+      "versions": ["2013", "2005"],
+      "current_version": "2013",
+      "scope": "Requirements for automatic line sectionalizers including ratings, design tests, and production tests"
+    },
+    {
+      "standard": "NEMA 250",
+      "org": "NEMA",
+      "full_title": "Enclosures for Electrical Equipment (1000 Volts Maximum)",
+      "versions": ["2020", "2014"],
+      "current_version": "2020",
+      "scope": "Enclosure types (1-13), environmental protection ratings, and test requirements for electrical equipment enclosures",
+      "extraction_id": "EXT-NEMA-006"
+    },
+    {
+      "standard": "NEMA ICS 2",
+      "org": "NEMA",
+      "full_title": "Industrial Control and Systems Controllers, Contactors and Overload Relays Rated 600 Volts",
+      "versions": ["2000 (R2005, R2020)"],
+      "current_version": "2000 (R2020)",
+      "scope": "Selection, installation, and maintenance of controllers, contactors, and overload relays for industrial control systems",
+      "extraction_id": "EXT-NEMA-005"
+    },
+    {
+      "standard": "IEEE 48",
+      "org": "IEEE",
+      "full_title": "IEEE Standard for Test Procedures and Requirements for Alternating-Current Cable Terminations Used on Shielded Cables Having Laminated Insulation Rated 2.5 kV Through 765 kV or Extruded Insulation Rated 2.5 kV Through 500 kV",
+      "versions": ["2020", "2009"],
+      "current_version": "2020",
+      "scope": "Cable termination classification (Class 1/2/3), indoor/outdoor categories, voltage ratings, test procedures for MV/HV cable terminations"
+    },
+    {
+      "standard": "IEEE 386",
+      "org": "IEEE",
+      "full_title": "IEEE Standard for Separable Insulated Connector Systems for Power Distribution Systems Rated 2.5 kV Through 35 kV",
+      "versions": ["2016", "2006"],
+      "current_version": "2016",
+      "scope": "Separable insulated connectors (elbows): dead-front design, loadbreak/deadbreak/live break ratings, 200A/600A/900A current classes, interface types, color codes"
+    },
+    {
+      "standard": "IEEE 404",
+      "org": "IEEE",
+      "full_title": "IEEE Standard for Extruded and Laminated Dielectric Shielded Cable Joints Rated 2.5 kV to 500 kV",
+      "versions": ["2012", "2006"],
+      "current_version": "2012",
+      "scope": "Cable joint/splice classification, construction types (premolded, cold-shrink, heat-shrink, taped, field vulcanized), design test sequences, production testing requirements"
+    },
+    {
+      "standard": "IEEE 3007.2",
+      "org": "IEEE",
+      "full_title": "IEEE Recommended Practice for the Maintenance of Industrial and Commercial Power Systems",
+      "versions": ["2010"],
+      "current_version": "2010",
+      "scope": "Maintenance program structure, RCM methodology, FMEA/FMECA, CBM vs TBM strategies, maintenance testing overview, standby power equipment maintenance"
+    },
+    {
+      "standard": "IEEE 3003.1",
+      "org": "IEEE",
+      "full_title": "IEEE Recommended Practice for System Grounding of Industrial and Commercial Power Systems",
+      "versions": ["2019"],
+      "current_version": "2019",
+      "scope": "System grounding methods (ungrounded, HRG, LRG, hybrid, reactance, resonant, solid), grounding transformer sizing, generator grounding, UPS grounding. Successor to IEEE 142 Green Book Ch. 1"
+    },
+    {
+      "standard": "IEEE 367",
+      "org": "IEEE",
+      "full_title": "IEEE Recommended Practice for Determining the Electric Power Station Ground Potential Rise and Induced Voltage from a Power Fault",
+      "versions": ["2012"],
+      "current_version": "2012",
+      "scope": "GPR calculation methodology, induced voltage on communication/control circuits, zone of influence determination, shield factors, fault current considerations"
+    },
+    {
+      "standard": "IEEE C57.135",
+      "org": "IEEE",
+      "full_title": "IEEE Guide for the Application, Specification, and Testing of Phase-Shifting Transformers",
+      "versions": ["2011", "2001"],
+      "current_version": "2011",
+      "scope": "Phase-shifting transformer application theory, single-core and two-core types, OLTC features, protection schemes, rating data, testing, tolerances, bid document checklist",
+      "extraction_id": "EXT-IEEE-061"
+    },
+    {
+      "standard": "IEEE C57.140",
+      "org": "IEEE",
+      "full_title": "IEEE Guide for the Evaluation and Reconditioning of Liquid Immersed Power Transformers",
+      "versions": ["2017", "2006"],
+      "current_version": "2017",
+      "scope": "Transformer evaluation and reconditioning — risk assessment with fault tree analysis, 10 diagnostic tests (DGA, liquid quality, corrosive sulfur, solid insulation, C/PF/DF, FRA, PD, IR, DP, vibration), reconditioning procedures for 8 component areas, degassing and moisture removal, decision framework",
+      "extraction_id": "EXT-IEEE-062"
+    },
+    {
+      "standard": "IEEE 1300",
+      "org": "IEEE",
+      "full_title": "IEEE Guide for Cable Connections for Gas-Insulated Substations",
+      "versions": ["2011", "1996"],
+      "current_version": "2011",
+      "scope": "Cable-to-GIS connections (72.5-550 kV) — termination types (fluid-filled, dry-type, pipe-type), dimensional tables, ratings, dielectric tests, mechanical force limits, grounding, field installation and acceptance procedures",
+      "extraction_id": "EXT-IEEE-063"
+    },
+    {
+      "standard": "CIGRE TB 761",
+      "org": "CIGRE",
+      "full_title": "Condition Assessment of Power Transformers",
+      "versions": ["2019"],
+      "current_version": "2019",
+      "scope": "Transformer condition assessment framework — TAIs, health indices, scoring matrices, component-specific assessment (active part, bushings, OLTC/DETC, cooling, insulating liquid), integration of multiple diagnostics into composite indices, remaining life estimation",
+      "extraction_id": "EXT-TXT-004"
+    }
+  ]
+}

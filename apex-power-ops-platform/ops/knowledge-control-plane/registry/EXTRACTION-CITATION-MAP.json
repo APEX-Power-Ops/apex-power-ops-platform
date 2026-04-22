@@ -1,0 +1,2026 @@
+{
+  "EXT-ATS-022": {
+    "title": "Insulation Resistance Testing - Values and Temperature Correction",
+    "source_path": "Resources/Extractions/ATS-2025/ATS-2025-100.1-100.14-Insulation-Resistance.md"
+  },
+  "EXT-ATS-023": {
+    "title": "Insulation Resistance Test Values - Circuit Breakers and Electrical Apparatus",
+    "source_path": "Resources/Extractions/ATS-2025/ATS-2025-100.1-Breakers.md"
+  },
+  "EXT-ATS-024": {
+    "title": "Rotating Machinery Testing - Vibration & Insulation Resistance",
+    "source_path": "Resources/Extractions/ATS-2025/ATS-2025-100.10-100.11-Rotating-Machinery.md"
+  },
+  "EXT-ATS-025": {
+    "title": "Bolt Torque Values for Electrical Connections",
+    "source_path": "Resources/Extractions/ATS-2025/ATS-2025-100.12-Bolt-Torque.md"
+  },
+  "EXT-ATS-026": {
+    "title": "SF₆ Gas Testing for Switchgear",
+    "source_path": "Resources/Extractions/ATS-2025/ATS-2025-100.13-SF6-Gas.md"
+  },
+  "EXT-ATS-027": {
+    "title": "Distribution Equipment High-Potential Testing",
+    "source_path": "Resources/Extractions/ATS-2025/ATS-2025-100.15-100.16-Distribution-Equipment.md"
+  },
+  "EXT-ATS-028": {
+    "title": "Dielectric Withstand Test Voltages",
+    "source_path": "Resources/Extractions/ATS-2025/ATS-2025-100.17-100.19-Dielectric-Withstand.md"
+  },
+  "EXT-ATS-029": {
+    "title": "Thermographic Survey Action Guidelines",
+    "source_path": "Resources/Extractions/ATS-2025/ATS-2025-100.18-Thermographic-Survey.md"
+  },
+  "EXT-ATS-030": {
+    "title": "Switchgear Dielectric Withstand Test Voltages",
+    "source_path": "Resources/Extractions/ATS-2025/ATS-2025-100.2-Switchgear-Withstand.md"
+  },
+  "EXT-ATS-031": {
+    "title": "Circuit Breaker Control Voltages",
+    "source_path": "Resources/Extractions/ATS-2025/ATS-2025-100.20-CB-Control-Voltages.md"
+  },
+  "EXT-ATS-032": {
+    "title": "Medium Voltage Cable Bending Radius",
+    "source_path": "Resources/Extractions/ATS-2025/ATS-2025-100.22-Cable-Bending-Radius.md"
+  },
+  "EXT-ATS-033": {
+    "title": "Online Partial Discharge Survey for Switchgear",
+    "source_path": "Resources/Extractions/ATS-2025/ATS-2025-100.23-Partial-Discharge.md"
+  },
+  "EXT-ATS-034": {
+    "title": "Power Factor and Dissipation Factor Testing",
+    "source_path": "Resources/Extractions/ATS-2025/ATS-2025-100.3-Power-Factor-DF.md"
+  },
+  "EXT-ATS-035": {
+    "title": "Transformer Insulating Oil Test Limits",
+    "source_path": "Resources/Extractions/ATS-2025/ATS-2025-100.4-Insulating-Oil.md"
+  },
+  "EXT-ATS-036": {
+    "title": "Transformer Insulating Fluid Limits - Extracted Content",
+    "source_path": "Resources/Extractions/ATS-2025/ATS-2025-100.4-Transformers.md"
+  },
+  "EXT-ATS-037": {
+    "title": "Transformer Insulation Resistance - Extracted Content",
+    "source_path": "Resources/Extractions/ATS-2025/ATS-2025-100.5-Cables.md"
+  },
+  "EXT-ATS-038": {
+    "title": "Transformer Insulation Resistance - Acceptance Testing",
+    "source_path": "Resources/Extractions/ATS-2025/ATS-2025-100.5-Transformer-IR.md"
+  },
+  "EXT-ATS-039": {
+    "title": "Medium-Voltage Cable Testing - Complete Guide",
+    "source_path": "Resources/Extractions/ATS-2025/ATS-2025-100.6-Cable-Testing-Complete.md"
+  },
+  "EXT-ATS-040": {
+    "title": "Circuit Breaker Trip Testing - Tolerances and Time Values",
+    "source_path": "Resources/Extractions/ATS-2025/ATS-2025-100.7-100.8-CB-Trip-Testing.md"
+  },
+  "EXT-ATS-041": {
+    "title": "Circuit Breaker Instantaneous Trip Tolerances - Extracted Content",
+    "source_path": "Resources/Extractions/ATS-2025/ATS-2025-100.8-Relays.md"
+  },
+  "EXT-ATS-042": {
+    "title": "Instrument Transformer Dielectric Tests - Extracted Content",
+    "source_path": "Resources/Extractions/ATS-2025/ATS-2025-100.9-Motors.md"
+  },
+  "EXT-CIGRE-001": {
+    "title": "CIGRE TB-761 — Condition Assessment of Power Transformers",
+    "source_path": null
+  },
+  "EXT-CT-001": {
+    "title": "Current Transformer Testing — Additional Reference",
+    "source_path": "Resources/Source-PDFs/Instrument-Transformers/Testing-CT.pdf"
+  },
+  "EXT-ETT-001": {
+    "title": "Busways Outdoor Bus Fact Sheet",
+    "source_path": "Resources/Extractions/ETT-Study-Aids/Busways-Outdoor-Bus-Fact-Sheet.md"
+  },
+  "EXT-ETT-002": {
+    "title": "Network Protector Fact Sheet",
+    "source_path": "Resources/Extractions/ETT-Study-Aids/Network-Protector-Fact-Sheet.md"
+  },
+  "EXT-ETT-003": {
+    "title": "Rotating Machinery Fact Sheet",
+    "source_path": "Resources/Extractions/ETT-Study-Aids/Rotating-Machinery-Fact-Sheet.md"
+  },
+  "EXT-ETT-004": {
+    "title": "VFD Fact Sheet",
+    "source_path": "Resources/Extractions/ETT-Study-Aids/VFD-Fact-Sheet.md"
+  },
+  "EXT-ETT-005": {
+    "title": "L2 Practice Exam",
+    "source_path": "Resources/Extractions/ETT-Study-Aids/L2-Practice-Exam.md"
+  },
+  "EXT-ETT-006": {
+    "title": "L2 Practice Exam Answer Key",
+    "source_path": "Resources/Extractions/ETT-Study-Aids/L2-Practice-Exam-Answer-Key.md"
+  },
+  "EXT-ETT-007": {
+    "title": "L2 L3 Study Guide",
+    "source_path": "Resources/Extractions/ETT-Study-Aids/L2-L3-Study-Guide.md"
+  },
+  "EXT-ETT-008": {
+    "title": "L2 L3 Study Guide Answer Key",
+    "source_path": "Resources/Extractions/ETT-Study-Aids/L2-L3-Study-Guide-Answer-Key.md"
+  },
+  "EXT-ETT-009": {
+    "title": "L3 Math Help",
+    "source_path": "Resources/Extractions/ETT-Study-Aids/L3-Math-Help.md"
+  },
+  "EXT-ETT-010": {
+    "title": "Math Study Guide Answers",
+    "source_path": "Resources/Extractions/ETT-Study-Aids/Math-Study-Guide-Answers.md"
+  },
+  "EXT-ETT-011": {
+    "title": "Cable Insulation Fact Sheet",
+    "source_path": "Resources/Extractions/ETT-Study-Aids/Cable-Insulation-Fact-Sheet.md"
+  },
+  "EXT-ETT-012": {
+    "title": "Capacitor Reactor Fact Sheet",
+    "source_path": "Resources/Extractions/ETT-Study-Aids/Capacitor-Reactor-Fact-Sheet.md"
+  },
+  "EXT-ETT-013": {
+    "title": "Circuit Breakers Fact Sheet",
+    "source_path": "Resources/Extractions/ETT-Study-Aids/Circuit-Breakers-Fact-Sheet.md"
+  },
+  "EXT-ETT-014": {
+    "title": "Current Testing Fact Sheet",
+    "source_path": "Resources/Extractions/ETT-Study-Aids/Current-Testing-Fact-Sheet.md"
+  },
+  "EXT-ETT-015": {
+    "title": "Emergency Systems Fact Sheet",
+    "source_path": "Resources/Extractions/ETT-Study-Aids/Emergency-Systems-Fact-Sheet.md"
+  },
+  "EXT-ETT-016": {
+    "title": "Electrical Fundamentals Fact Sheet",
+    "source_path": "Resources/Extractions/ETT-Study-Aids/Electrical-Fundamentals-Fact-Sheet.md"
+  },
+  "EXT-ETT-017": {
+    "title": "Fuse Class Fact Sheet",
+    "source_path": "Resources/Extractions/ETT-Study-Aids/Fuse-Class-Fact-Sheet.md"
+  },
+  "EXT-ETT-018": {
+    "title": "Ground Fault Systems Fact Sheet",
+    "source_path": "Resources/Extractions/ETT-Study-Aids/Ground-Fault-Systems-Fact-Sheet.md"
+  },
+  "EXT-ETT-019": {
+    "title": "Instrument Transformers Fact Sheet",
+    "source_path": "Resources/Extractions/ETT-Study-Aids/Instrument-Transformers-Fact-Sheet.md"
+  },
+  "EXT-ETT-020": {
+    "title": "Insulating Fluid Fact Sheet",
+    "source_path": "Resources/Extractions/ETT-Study-Aids/Insulating-Fluid-Fact-Sheet.md"
+  },
+  "EXT-ETT-021": {
+    "title": "AC Insulation Testing Fact Sheet",
+    "source_path": "Resources/Extractions/ETT-Study-Aids/AC-Insulation-Testing-Fact-Sheet.md"
+  },
+  "EXT-ETT-022": {
+    "title": "DC Insulation Testing Fact Sheet",
+    "source_path": "Resources/Extractions/ETT-Study-Aids/DC-Insulation-Testing-Fact-Sheet.md"
+  },
+  "EXT-ETT-023": {
+    "title": "Protective Relaying Fact Sheet",
+    "source_path": "Resources/Extractions/ETT-Study-Aids/Protective-Relaying-Fact-Sheet.md"
+  },
+  "EXT-ETT-024": {
+    "title": "Resistance Testing Fact Sheet",
+    "source_path": "Resources/Extractions/ETT-Study-Aids/Resistance-Testing-Fact-Sheet.md"
+  },
+  "EXT-ETT-025": {
+    "title": "Safety Fact Sheet",
+    "source_path": "Resources/Extractions/ETT-Study-Aids/Safety-Fact-Sheet.md"
+  },
+  "EXT-ETT-026": {
+    "title": "System Test Analysis Fact Sheet",
+    "source_path": "Resources/Extractions/ETT-Study-Aids/System-Test-Analysis-Fact-Sheet.md"
+  },
+  "EXT-ETT-027": {
+    "title": "Transformer Fact Sheet",
+    "source_path": "Resources/Extractions/ETT-Study-Aids/Transformer-Fact-Sheet.md"
+  },
+  "EXT-ETT-028": {
+    "title": "CCVT Testing Fact Sheet",
+    "source_path": "Resources/Extractions/ETT-Study-Aids/CCVT-Testing-Fact-Sheet.md"
+  },
+  "EXT-ETT-033": {
+    "title": "ETT-2022 Extraction Index",
+    "source_path": "Resources/Extractions/ETT-2022/ETT-2022-EXTRACTION-INDEX.md"
+  },
+  "EXT-ETT-034": {
+    "title": "ETT-2022 Level II KSA Extraction",
+    "source_path": "Resources/Extractions/ETT-2022/ETT-2022-KSA-LEVEL-II.md"
+  },
+  "EXT-ETT-035": {
+    "title": "ETT-2022 Level III KSA Extraction",
+    "source_path": "Resources/Extractions/ETT-2022/ETT-2022-KSA-LEVEL-III.md"
+  },
+  "EXT-ETT-036": {
+    "title": "ETT-2022 Level IV KSA Extraction",
+    "source_path": "Resources/Extractions/ETT-2022/ETT-2022-KSA-LEVEL-IV.md"
+  },
+  "EXT-FLD-001": {
+    "title": "A Guide to Transformer Winding Resistance Measurements — Megger",
+    "source_path": "Resources/Source-PDFs/NEW/Guide-to-Transformer-Resistance-Testing_AG_EN_100406V02.pdf"
+  },
+  "EXT-FLD-002": {
+    "title": "Transformers Course Manual — Emerson/Electrical Reliability Services",
+    "source_path": "Resources/Source-PDFs/NEW/Transformers Manual.pdf"
+  },
+  "EXT-FLD-003": {
+    "title": "DC Test of Vacuum Integrity in MV Switchgear — Megger VIDAR",
+    "source_path": "Resources/Source-PDFs/NEW/Megger VIDAR - DC Test Vacuum Integrity MV Switchgear.pdf"
+  },
+  "EXT-FLD-004": {
+    "title": "Field Test on Capacitors — General Electric (GET-2002E)",
+    "source_path": "Resources/Testing Resources/Other Specs/Capacitor Field Testing.pdf"
+  },
+  "EXT-FLD-005": {
+    "title": "Oil Sample Definitions and Recommendations — Insulating Oil Testing Reference",
+    "source_path": "Resources/Testing Resources/Other Specs/Oil Sample Definitions-Recommendations.pdf"
+  },
+  "EXT-FLD-006": {
+    "title": "XFMR Testing — BPA Power Transformer Field Testing Guide",
+    "source_path": "Resources/Testing Resources/XFMRs/XFMR TESTING.pdf"
+  },
+  "EXT-FLD-007": {
+    "title": "Protective Relay Course Manual",
+    "source_path": "Resources/Extractions/Manufacturer/"
+  },
+  "EXT-FLD-008": {
+    "title": "Low and Medium Voltage Circuit Breaker Maintenance Manual",
+    "source_path": "Resources/Extractions/Manufacturer/"
+  },
+  "EXT-FLD-009": {
+    "title": "Electrical Diagram Analysis Manual",
+    "source_path": "Resources/Extractions/Manufacturer/"
+  },
+  "EXT-FLD-010": {
+    "title": "Getting Down to Earth - Megger Grounding Testing Guide",
+    "source_path": "Resources/Extractions/Megger/"
+  },
+  "EXT-FLD-011": {
+    "title": "The Art and Science of Protective Relaying",
+    "source_path": "Resources/Extractions/Manufacturer/"
+  },
+  "EXT-FLD-012": {
+    "title": "Megger Baker MTR105 — Guide to Low Voltage Motor Testing",
+    "source_path": "Resources/Source-PDFs/Textbooks/Megger Baker MTR105 - Guide to Low Voltage Motor Testing.pdf"
+  },
+  "EXT-FLD-013": {
+    "title": "GE 2019 — Protection Fundamentals Reference",
+    "source_path": "Resources/Source-PDFs/Textbooks/2019-GE-Protection-Fundamentals.pdf"
+  },
+  "EXT-FLD-014": {
+    "title": "Protective Relaying: Principles & Applications — Blackburn & Domin (Ch 9-12)",
+    "source_path": "Resources/Source-PDFs/Textbooks/Protective Relaying Principles and Applications - Blackburn Domin.pdf"
+  },
+  "EXT-FLD-015": {
+    "title": "Megger — Oil Testing Quick Reference",
+    "source_path": "Resources/Source-PDFs/Textbooks/Megger - Oil Testing Datasheet.pdf"
+  },
+  "EXT-FLD-016": {
+    "title": "Protective Relaying: Principles & Applications — Blackburn & Domin (Ch 3-6, 8)",
+    "source_path": "Resources/Source-PDFs/Textbooks/Protective Relaying Principles and Applications - Blackburn Domin.pdf"
+  },
+  "EXT-FLD-017": {
+    "title": "Relay Testing Handbook Vol. 1 — Principles and Practice",
+    "source_path": null
+  },
+  "EXT-FLD-018": {
+    "title": "Relay Testing Handbook Vol. 2 — Generator Protection",
+    "source_path": null
+  },
+  "EXT-FLD-019": {
+    "title": "Relay Testing Handbook Vol. 3 — Motor Relay Testing",
+    "source_path": null
+  },
+  "EXT-FLD-020": {
+    "title": "Relay Testing Handbook Vol. 4 — End-to-End Testing",
+    "source_path": null
+  },
+  "EXT-FLD-028": {
+    "title": "PEARL Extraction: Electrical Test Equipment & Insulation Theory",
+    "source_path": "Resources/Extractions/PEARL/PEARL-01-Test-Equipment-Insulation.md"
+  },
+  "EXT-FLD-029": {
+    "title": "PEARL Extraction: Low Voltage Power Breakers",
+    "source_path": "Resources/Extractions/PEARL/PEARL-02-LV-Power-Breakers.md"
+  },
+  "EXT-FLD-030": {
+    "title": "PEARL-03: Protective Relays - Fundamental Testing and ANSI Device Numbers",
+    "source_path": "Resources/Extractions/PEARL/PEARL-03-Protective-Relays.md"
+  },
+  "EXT-FLD-031": {
+    "title": "PEARL-04: Transformers - Operation, Calculations, and Configuration",
+    "source_path": "Resources/Extractions/PEARL/PEARL-04-Transformers.md"
+  },
+  "EXT-GOV-001": {
+    "title": "FIST 3-31 — Transformer Diagnostics (Bureau of Reclamation, 2003)",
+    "source_path": "Resources/Source-PDFs/_Unsorted/fist3-31.pdf"
+  },
+  "EXT-GOV-002": {
+    "title": "FIST 3-6 — Storage Batteries: Maintenance & Principles (Bureau of Reclamation, 2020)",
+    "source_path": "Resources/Source-PDFs/_Unsorted/fist3-6.pdf"
+  },
+  "EXT-GOV-003": {
+    "title": "FIST 3-30 — Transformer Maintenance (Bureau of Reclamation, 2000)",
+    "source_path": "Resources/Source-PDFs/_Unsorted/fist3_30.pdf"
+  },
+  "EXT-GOV-004": {
+    "title": "FIST 3-8 — Protective Relaying: Operation, Maintenance & Field Test Procedures (Bureau of Reclamation, 2011)",
+    "source_path": "Resources/Source-PDFs/_Unsorted/vol3-8.pdf"
+  },
+  "EXT-IEC-001": {
+    "title": "IEC 61869-3:2011 — Instrument Transformers — Part 3: Additional Requirements for Inductive Voltage Transformers",
+    "source_path": "Resources/Source-PDFs/Instrument-Transformers/IEC-61869-3-2011-Inductive-Voltage-Transformers.pdf"
+  },
+  "EXT-IEC-002": {
+    "title": "IEC 61869-2:2012 — Instrument Transformers — Part 2: Additional Requirements for Current Transformers",
+    "source_path": "Resources/Source-PDFs/Instrument-Transformers/IEC-61869-2-2012-Current-Transformers.pdf"
+  },
+  "EXT-IEC-003": {
+    "title": "IEC 61869-6:2016 — Additional General Requirements for Low-Power Instrument Transformers",
+    "source_path": "Resources/Source-PDFs/Instrument-Transformers/IEC-61869-6-2016-Low-Power-Instrument-Transformers.pdf"
+  },
+  "EXT-IEC-004": {
+    "title": "IEC 61439-6:2012 — Low-Voltage Switchgear and Controlgear Assemblies — Part 6: Busbar Trunking Systems (Busways)",
+    "source_path": "Resources/Extractions/IEC/IEC-61439-6-2012-LV-Busbar-Trunking-Systems.md"
+  },
+  "EXT-IEC-005": {
+    "title": "IEC 62196-1:2003 -- Plugs, Socket-Outlets, Vehicle Connectors and Vehicle Inlets for EV Charging",
+    "source_path": "Resources/Extractions/IEC/IEC-62196-1-2003-EV-Charging-Connectors.md"
+  },
+  "EXT-IEC-006": {
+    "title": "IEC 61131-3:2013 - Programmable Controllers: Programming Languages",
+    "source_path": "Resources/Source-PDFs/IEC-Standards/IEC-61131-3-2013-PLC-Programming-Languages-OCR.pdf"
+  },
+  "EXT-IEC-007": {
+    "title": "IEC 61499 - Function Block Model for Distributed Automation and Substation Control",
+    "source_path": "Resources/Source-PDFs/IEC-Standards/IEC-61499-61850-Substation-Automation-Paper.pdf"
+  },
+  "EXT-IEC-62040-3": {
+    "title": "IEC 62040-3:2021 -- UPS Performance and Test Requirements (Extraction)",
+    "source_path": "Resources/Source-PDFs/IEC-Standards/IEC-62040-3-2021-UPS-Performance-Test-Requirements.pdf"
+  },
+  "EXT-IEEE-001": {
+    "title": "IEEE 605 2008 Substation Bus Design",
+    "source_path": "Resources/Extractions/IEEE/IEEE-605-2008-Substation-Bus-Design.md"
+  },
+  "EXT-IEEE-002": {
+    "title": "IEEE C62.11 1999 Surge Arresters",
+    "source_path": "Resources/Extractions/IEEE/IEEE-C62.11-1999-Surge-Arresters.md"
+  },
+  "EXT-IEEE-003": {
+    "title": "IEEE C62.22 1997 Surge Arrester Application",
+    "source_path": "Resources/Extractions/IEEE/IEEE-C62.22-1997-Surge-Arrester-Application.md"
+  },
+  "EXT-IEEE-004": {
+    "title": "IEEE C37.23 1987 Metal Enclosed Bus",
+    "source_path": "Resources/Extractions/IEEE/IEEE-C37.23-1987-Metal-Enclosed-Bus.md"
+  },
+  "EXT-IEEE-005": {
+    "title": "IEEE C37.06 1987 HV Circuit Breaker Ratings",
+    "source_path": "Resources/Extractions/IEEE/IEEE-C37.06-1987-HV-Circuit-Breaker-Ratings.md"
+  },
+  "EXT-IEEE-006": {
+    "title": "IEEE 3004.11 2019 Bus Switchgear Protection",
+    "source_path": "Resources/Extractions/IEEE/IEEE-3004.11-2019-Bus-Switchgear-Protection.md"
+  },
+  "EXT-IEEE-007": {
+    "title": "IEEE C57.12.44 2000 Network Protectors",
+    "source_path": "Resources/Extractions/IEEE/IEEE-C57.12.44-2000-Network-Protectors.md"
+  },
+  "EXT-IEEE-008": {
+    "title": "IEEE C37.108 2002 Network Transformer Protection",
+    "source_path": "Resources/Extractions/IEEE/IEEE-C37.108-2002-Network-Transformer-Protection.md"
+  },
+  "EXT-IEEE-009": {
+    "title": "IEEE C37.102 2006 Generator Protection",
+    "source_path": "Resources/Extractions/IEEE/IEEE-C37.102-2006-Generator-Protection.md"
+  },
+  "EXT-IEEE-010": {
+    "title": "IEEE 1547.1 2020 DER Interconnection Testing",
+    "source_path": "Resources/Extractions/IEEE/IEEE-1547.1-2020-DER-Interconnection-Testing.md"
+  },
+  "EXT-IEEE-011": {
+    "title": "IEEE 3002.8 2018 Harmonic Studies",
+    "source_path": "Resources/Extractions/IEEE/IEEE-3002.8-2018-Harmonic-Studies.md"
+  },
+  "EXT-IEEE-012": {
+    "title": "IEEE 400.3 2022 PD Cable Testing",
+    "source_path": "Resources/Extractions/IEEE/IEEE-400.3-2022-PD-Cable-Testing.md"
+  },
+  "EXT-IEEE-013": {
+    "title": "IEEE C57.19.00 2004 Bushings",
+    "source_path": "Resources/Extractions/IEEE/IEEE-C57.19.00-2004-Bushings.md"
+  },
+  "EXT-IEEE-014": {
+    "title": "IEEE C57.93 2019 Transformer Install Maint",
+    "source_path": "Resources/Extractions/IEEE/IEEE-C57.93-2019-Transformer-Install-Maint.md"
+  },
+  "EXT-IEEE-015": {
+    "title": "IEEE C57.113 2023 Transformer PD",
+    "source_path": "Resources/Extractions/IEEE/IEEE-C57.113-2023-Transformer-PD.md"
+  },
+  "EXT-IEEE-016": {
+    "title": "IEEE 1584 2018 Arc Flash Hazard Calculations",
+    "source_path": "Resources/Extractions/IEEE/IEEE-1584-2018-Arc-Flash-Calculations.md"
+  },
+  "EXT-IEEE-017": {
+    "title": "IEEE 62.2 2004 Diagnostic Machinery Testing",
+    "source_path": "Resources/Extractions/IEEE/IEEE-62.2-2004-Diagnostic-Machinery-Testing.md"
+  },
+  "EXT-IEEE-018": {
+    "title": "IEEE 112 2004 Induction Motor Testing",
+    "source_path": "Resources/Extractions/IEEE/IEEE-112-2004-Induction-Motor-Testing.md"
+  },
+  "EXT-IEEE-019": {
+    "title": "IEEE 575 1988 Cable Shield Bonding",
+    "source_path": "Resources/Extractions/IEEE/IEEE-575-1988-Cable-Shield-Bonding.md"
+  },
+  "EXT-IEEE-020": {
+    "title": "IEEE 3001.8 2013 Instrumentation and Metering",
+    "source_path": "Resources/Extractions/IEEE/IEEE-3001.8-2013-Instrumentation-Metering.md"
+  },
+  "EXT-IEEE-021": {
+    "title": "IEEE C37.41 2008 HV Fuse Design Tests",
+    "source_path": "Resources/Extractions/IEEE/IEEE-C37.41-2008-HV-Fuse-Design-Tests.md"
+  },
+  "EXT-IEEE-022": {
+    "title": "IEEE C57.104 1991 DGA Guide (Original)",
+    "source_path": "Resources/Extractions/IEEE/IEEE-C57.104-1991-DGA-Guide-Original.md"
+  },
+  "EXT-IEEE-023": {
+    "title": "IEEE C57.104 2019 DGA Guide (Current)",
+    "source_path": "Resources/Extractions/IEEE/IEEE-C57.104-2019-DGA-Guide-Current.md"
+  },
+  "EXT-IEEE-024": {
+    "title": "IEEE 519 1992 Harmonics Power Quality",
+    "source_path": "Resources/Extractions/IEEE/"
+  },
+  "EXT-IEEE-025": {
+    "title": "IEEE 242 2001 Buff Book Protection Coordination",
+    "source_path": "Resources/Extractions/IEEE/"
+  },
+  "EXT-IEEE-026": {
+    "title": "IEEE 80 2000 Substation Grounding",
+    "source_path": "Resources/Extractions/IEEE/"
+  },
+  "EXT-IEEE-027": {
+    "title": "IEEE 142 2007 Green Book Grounding",
+    "source_path": "Resources/Extractions/IEEE/"
+  },
+  "EXT-IEEE-028": {
+    "title": "IEEE C57.12.00-2000 — General Requirements for Liquid-Immersed Transformers",
+    "source_path": "Resources/Testing Resources/Other Specs/Power Transformers/Standards/C57.12.00-2000.pdf"
+  },
+  "EXT-IEEE-029": {
+    "title": "IEEE C57.12.90-1999 — Standard Test Code for Liquid-Immersed Transformers",
+    "source_path": "Resources/Testing Resources/Other Specs/Power Transformers/Standards/C57.12.90-1999.pdf"
+  },
+  "EXT-IEEE-030": {
+    "title": "IEEE C57.13-1993 — Standard Requirements for Instrument Transformers",
+    "source_path": "Resources/Testing Resources/Other Specs/Power Transformers/Standards/C57.13-1993.pdf"
+  },
+  "EXT-IEEE-031": {
+    "title": "IEEE C57.15-1999 — Standard for Step-Voltage Regulators",
+    "source_path": "Resources/Testing Resources/Other Specs/Power Transformers/Standards/C57.15-1999.pdf"
+  },
+  "EXT-IEEE-032": {
+    "title": "IEEE 95-2002 — Recommended Practice for Insulation Testing of AC Electric Machinery",
+    "source_path": "Resources/Testing Resources/Other Specs/Motors & Generators/IEEE 95.pdf"
+  },
+  "EXT-IEEE-033": {
+    "title": "IEEE 315-1975 — Graphic Symbols for Electrical and Electronics Diagrams",
+    "source_path": "Resources/Source-PDFs/IEEE-Standards/546990523-IEEE-315-1975-ANSI-Y32-2-1975-Graphic-Symbols-for-Electrical-and-Electronics-Diagrams.pdf"
+  },
+  "EXT-IEEE-034": {
+    "title": "IEEE 644-1994 (R2008) — Standard Procedures for Measurement of Power Frequency EMF",
+    "source_path": "Resources/Testing Resources/Other Specs/IEEE 644-2008.pdf"
+  },
+  "EXT-IEEE-036": {
+    "title": "IEEE C37.104-2022 — Guide for Automatic Reclosing on AC Distribution & Transmission Lines",
+    "source_path": "Resources/Source-PDFs/IEEE-Standards/IEEE C37.104-2022-en.pdf"
+  },
+  "EXT-IEEE-037": {
+    "title": "IEEE C37.230-2020 — Guide for Protective Relay Applications to Distribution Lines",
+    "source_path": "Resources/Source-PDFs/IEEE-Standards/IEEE C37.230-2020-en.pdf"
+  },
+  "EXT-IEEE-038": {
+    "title": "IEEE C37.246-2017 — Guide for Protection Systems of Transmission-to-Generation Interconnections",
+    "source_path": "Resources/Source-PDFs/IEEE-Standards/IEEE C37.246-2017-en.pdf"
+  },
+  "EXT-IEEE-039": {
+    "title": "IEEE C37.37-1996 — Loading Guide for AC High-Voltage Air Switches (>1000V)",
+    "source_path": "Resources/Source-PDFs/IEEE-Standards/IEEE C37.37-1996-en.pdf"
+  },
+  "EXT-IEEE-040": {
+    "title": "IEEE C37.20.1-2002 — Metal-Enclosed LV Power Circuit Breaker Switchgear",
+    "source_path": "Resources/Source-PDFs/IEEE-Standards/ANSI IEEE C37.20.1-2002 Standard for Metal-Enclosed Low-Voltage Power....pdf"
+  },
+  "EXT-IEEE-041": {
+    "title": "IEEE Std 739-1995 — Bronze Book: Energy Management in Industrial and Commercial Facilities (Selected Chapters)",
+    "source_path": "Resources/Source-PDFs/IEEE-Standards/IEEE-Std-739-1995-Recommended-Practice-for-Energy-Management-in-Industrial-and-Commercial-Facilities.pdf"
+  },
+  "EXT-IEEE-042": {
+    "title": "IEEE Std 2030.100-2017 — Recommended Practice for Implementing an IEC 61850-Based Substation Communications, Protection, Monitoring, and Control System",
+    "source_path": "Resources/Source-PDFs/IEEE-Standards/IEEE-Recommended-Practice-for-Implementing-an-IEC-61850-Based-Substation-Communications-Protection-Monitoring-and-Control-System.pdf"
+  },
+  "EXT-IEEE-043": {
+    "title": "IEEE C57.13-2016 — Standard Requirements for Instrument Transformers (Revision of IEEE Std C57.13-2008)",
+    "source_path": "Resources/Source-PDFs/IEEE-Standards/IEEE C57.13-2016.pdf"
+  },
+  "EXT-IEEE-044": {
+    "title": "IEEE Std C37.123-2023 — Guide for Specifications for High-Voltage Gas-Insulated Substations Rated 52 kV and Above",
+    "source_path": "Resources/Source-PDFs/IEEE-Standards/C37123-2023.pdf"
+  },
+  "EXT-IEEE-045": {
+    "title": "IEEE Std C37.74-2014 — Standard for Subsurface, Vault, and Padmounted Load-Interrupter Switchgear and Fused Load-Interrupter Switchgear for AC Systems up to 38 kV",
+    "source_path": "Resources/Source-PDFs/IEEE-Standards/IEEE-C37-74-2014-Requirements-for-Subsurface-Vault-and-Padmounted-Load-Interrupter-Switchgear-and-Fused-Load-Interrupter-Switchgear-for-Alternating.pdf"
+  },
+  "EXT-IEEE-046": {
+    "title": "IEEE Std C37.20.2-1999 — Standard for Metal-Clad Switchgear",
+    "source_path": "Resources/Source-PDFs/IEEE-Standards/IEEE Std C37.20.2-1999 - Metal-Clad Switchgear.pdf"
+  },
+  "EXT-IEEE-047": {
+    "title": "S-727 — Supplementary Specification to IEEE Std C37.20.1 — Metal-Enclosed Low-Voltage Power Circuit Breaker Switchgear (JIP33, Rev 4.0, 2021)",
+    "source_path": "Resources/Source-PDFs/IEEE-Standards/Supplementary Spec S-727 to IEEE Std C37.20.1 - Metal-Enclosed LV Switchgear (2021).pdf"
+  },
+  "EXT-IEEE-048": {
+    "title": "IEEE Std C37.20.1-2015 — Standard for Metal-Enclosed Low-Voltage Power Circuit Breaker Switchgear",
+    "source_path": "Resources/Source-PDFs/IEEE-Standards/IEEE C37.20.1-2015.pdf"
+  },
+  "EXT-IEEE-049": {
+    "title": "IEEE Std C37.20.2-2022 — Standard for Metal-Clad Switchgear",
+    "source_path": "Resources/Source-PDFs/IEEE-Standards/IEEE C37.20.2-2022.pdf"
+  },
+  "EXT-IEEE-050": {
+    "title": "IEEE Std C37.20.3-2023 — Standard for Metal-Enclosed Interrupter Switchgear (1 kV–48.3 kV)",
+    "source_path": "Resources/Source-PDFs/IEEE-Standards/IEEE C37.20.3-2023.pdf"
+  },
+  "EXT-IEEE-051": {
+    "title": "IEEE Std C62.11-2020 — Standard for Metal-Oxide Surge Arresters for AC Power Circuits (> 1 kV)",
+    "source_path": "Resources/Source-PDFs/IEEE-Standards/IEEE C62.11-2020.pdf"
+  },
+  "EXT-IEEE-052": {
+    "title": "IEEE Std C37.23-2015 — Guide for Metal-Enclosed Bus",
+    "source_path": "Resources/Source-PDFs/IEEE-Standards/ieee-standard-for-metalenclosed-bus.pdf"
+  },
+  "EXT-IEEE-053": {
+    "title": "IEEE Std C37.122-2010 -- Standard for High Voltage Gas-Insulated Substations Rated Above 52 kV",
+    "source_path": null
+  },
+  "EXT-IEEE-054": {
+    "title": "IEEE Std C37.122.1-2014 -- Guide for Gas-Insulated Substations Rated Above 52 kV",
+    "source_path": null
+  },
+  "EXT-IEEE-055": {
+    "title": "ANSI C37.20.6-1997 -- Standard for 4.76 kV to 38 kV Rated Grounding and Testing Devices Used in Enclosures",
+    "source_path": null
+  },
+  "EXT-IEEE-056": {
+    "title": "IEEE Std 1818-2017 -- Guide for the Design of Low-Voltage Auxiliary Systems for Electric Power Substations",
+    "source_path": null
+  },
+  "EXT-IEEE-057": {
+    "title": "IEEE C57.13.1-2017 — Field Testing of Relaying Current Transformers",
+    "source_path": "Resources/Source-PDFs/IEEE-Standards/IEEE C57.13.1-2017 - Field Testing of Relaying Current Transformers.pdf"
+  },
+  "EXT-IEEE-058": {
+    "title": "IEEE 3007.2-2010 — Recommended Practice for the Maintenance of Industrial and Commercial Power Systems",
+    "source_path": "Resources/Source-PDFs/IEEE-Standards/IEEE Std 3007.2 - Maintenance of Industrial and Commercial Power Systems.pdf"
+  },
+  "EXT-IEEE-059": {
+    "title": "IEEE 3003.1-2019 -- Recommended Practice for System Grounding of Industrial and Commercial Power Systems",
+    "source_path": "Resources/Source-PDFs/IEEE-Standards/IEEE Std 3003.1-2019 - System Grounding Industrial and Commercial Power.pdf"
+  },
+  "EXT-IEEE-060": {
+    "title": "IEEE Std 367-2012 -- Ground Potential Rise and Induced Voltage",
+    "source_path": "Resources/Source-PDFs/IEEE-Standards/IEEE Std 367-2012 - Ground Potential Rise and Induced Voltage.pdf"
+  },
+  "EXT-IEEE-061": {
+    "title": "IEEE C57.135-2011 — Guide for the Application, Specification, and Testing of Phase-Shifting Transformers",
+    "source_path": "Resources/Source-PDFs/IEEE-Standards/IEEE C57.135 - Phase-Shifting Transformers Application and Testing (Redline).pdf"
+  },
+  "EXT-IEEE-062": {
+    "title": "IEEE Std C57.140-2017 -- Guide for Evaluation and Reconditioning of Liquid Immersed Power Transformers",
+    "source_path": "Resources/Source-PDFs/IEEE-Standards/IEEE C57.140-2017 - Evaluation and Reconditioning Liquid-Immersed Transformers.pdf"
+  },
+  "EXT-IEEE-063": {
+    "title": "IEEE Std 1300-2011 -- Guide for Cable Connections for Gas-Insulated Substations",
+    "source_path": "Resources/Source-PDFs/IEEE-Standards/IEEE Std 1300 - Cable Connections for Gas-Insulated Substations.pdf"
+  },
+  "EXT-IEEE-064": {
+    "title": "IEEE Std 1679.1-2017 — Guide for the Characterization and Evaluation of Lithium-Based Batteries in Stationary Applications",
+    "source_path": "Resources/Extractions/IEEE/IEEE-1679.1-2017-Characterization-Evaluation-LiIon-Batteries.md"
+  },
+  "EXT-IEEE-065": {
+    "title": "IEEE Std C57.149-2024 — Guide for the Application and Interpretation of Frequency Response Analysis for Oil-Immersed Transformers",
+    "source_path": "Resources/Extractions/IEEE/IEEE-C57.149-2024-FRA-Oil-Immersed-Transformers.md"
+  },
+  "EXT-IEEE-066": {
+    "title": "IEEE C57.155-2014 — Guide for Interpretation of Gases Generated in Natural Ester and Synthetic Ester-Immersed Transformers",
+    "source_path": "Resources/Source-PDFs/IEEE-Standards/IEEE-C57.155-2014.pdf"
+  },
+  "EXT-IEEE-067": {
+    "title": "IEEE C57.13.3-2014 — Guide for Grounding of Instrument Transformer Secondary Circuits and Cases",
+    "source_path": "Resources/Source-PDFs/IEEE-Standards/IEEE-C57.13.3-2014.pdf"
+  },
+  "EXT-IEEE-068": {
+    "title": "IEEE C57.13.2-2005 — Standard Conformance Test Procedure for Instrument Transformers",
+    "source_path": "Resources/Source-PDFs/IEEE-Standards/IEEE-C57.13.2-2005.pdf"
+  },
+  "EXT-IEEE-069": {
+    "title": "IEEE C57.13.5-2019 — Standard for Performance and Test Requirements for Instrument Transformers of a Nominal System Voltage of 115 kV and Above",
+    "source_path": "Resources/Source-PDFs/IEEE-Standards/IEEE-C57.13.5-2019.pdf"
+  },
+  "EXT-IEEE-070": {
+    "title": "IEEE Std C57.12.01-2020 — Standard General Requirements for Dry-Type Distribution and Power Transformers",
+    "source_path": "Resources/Source-PDFs/IEEE-Standards/IEEE-C57.12.01-2020-Dry-Type-Transformer-General-Requirements.pdf"
+  },
+  "EXT-IEEE-071": {
+    "title": "IEEE Std C37.243-2015 — Guide for Application of Digital Line Current Differential Relays Using Digital Communication",
+    "source_path": "Resources/Extractions/IEEE/IEEE-C37.243-2015-Line-Current-Differential-Relays.md"
+  },
+  "EXT-IEEE-072": {
+    "title": "IEEE Std C57.12.40-2017 — Standard for Network, Three-Phase Transformers, 2500 kVA and Smaller; High Voltage, 34 500 V and Below; Low Voltage, 600 V and Below; Subway and Vault Types (Liquid Immersed)",
+    "source_path": "Resources/Extractions/IEEE/IEEE-C57.12.40-2017-Network-Transformers.md"
+  },
+  "EXT-IEEE-073": {
+    "title": "IEEE Std 142-2007 - Recommended Practice for Grounding of Industrial and Commercial Power Systems (Green Book)",
+    "source_path": null
+  },
+  "EXT-IEEE-1184": {
+    "title": "IEEE 1184-2022 - Guide for Batteries for UPS Systems (Extraction)",
+    "source_path": null
+  },
+  "EXT-IEEE-152": {
+    "title": "ANSI C37.32-2002 — High Voltage Switches, Bus Supports, and Accessories",
+    "source_path": "Resources/Extractions/IEEE/ANSI-C37.32-2002-HV-Switch-Ratings.md"
+  },
+  "EXT-IEEE-153": {
+    "title": "IEEE 1015 (Blue Book) - Low-Voltage Circuit Breakers",
+    "source_path": "Resources/Extractions/IEEE/IEEE-1015-BLUE-BOOK-SUMMARY.md"
+  },
+  "EXT-IEEE-154": {
+    "title": "IEEE Std 112-2004 -- Standard Test Procedure for Polyphase Induction Motors and Generators",
+    "source_path": "Resources/Extractions/IEEE/IEEE-112-2004-Induction-Motor-Testing.md"
+  },
+  "EXT-IEEE-155": {
+    "title": "IEEE 1184-2022 - Guide for Batteries for Uninterruptible Power Supply Systems",
+    "source_path": "Resources/Extractions/IEEE/IEEE-1184-2022-Batteries-UPS-Systems.md"
+  },
+  "EXT-IEEE-156": {
+    "title": "IEEE 1234-2019: Guide for Fault-Locating Techniques on Shielded Power Cable Systems",
+    "source_path": "Resources/Extractions/IEEE/IEEE-1234-2019-Cable-Fault-Location.md"
+  },
+  "EXT-IEEE-157": {
+    "title": "IEEE Std 1300-2011 -- Guide for Cable Connections for Gas-Insulated Substations",
+    "source_path": "Resources/Extractions/IEEE/IEEE-1300-Cable-Connections-GIS.md"
+  },
+  "EXT-IEEE-158": {
+    "title": "IEEE 141-1993 (Red Book) -- Equipment & Protection Guide",
+    "source_path": "Resources/Extractions/IEEE/IEEE-141-Red-Book-Equipment-Guide.md"
+  },
+  "EXT-IEEE-159": {
+    "title": "IEEE 142-2007 (Green Book) - Summary",
+    "source_path": "Resources/Extractions/IEEE/IEEE-142-GREEN-BOOK-SUMMARY.md"
+  },
+  "EXT-IEEE-160": {
+    "title": "IEEE Std 1547.1-2020: Conformance Test Procedures for DER Interconnection",
+    "source_path": "Resources/Extractions/IEEE/IEEE-1547.1-2020-DER-Interconnection-Testing.md"
+  },
+  "EXT-IEEE-161": {
+    "title": "IEEE Std 1584-2018 -- Guide for Performing Arc-Flash Hazard Calculations",
+    "source_path": "Resources/Extractions/IEEE/IEEE-1584-2018-Arc-Flash-Calculations.md"
+  },
+  "EXT-IEEE-162": {
+    "title": "IEEE Std 1679.1-2017 -- Guide for the Characterization and Evaluation of Lithium-Based Batteries in Stationary Applications",
+    "source_path": "Resources/Extractions/IEEE/IEEE-1679.1-2017-Characterization-Evaluation-LiIon-Batteries.md"
+  },
+  "EXT-IEEE-163": {
+    "title": "IEEE 1695-2024: Guide for Understanding, Diagnosing, and Mitigating Stray and Contact Voltage",
+    "source_path": "Resources/Extractions/IEEE/IEEE-1695-2024-Stray-Contact-Voltage.md"
+  },
+  "EXT-IEEE-164": {
+    "title": "IEEE 242-2001 (Buff Book) - Summary",
+    "source_path": "Resources/Extractions/IEEE/IEEE-242-BUFF-BOOK-SUMMARY.md"
+  },
+  "EXT-IEEE-165": {
+    "title": "IEEE Std 3001.8-2013 --- Recommended Practice for Instrumentation and Metering of Industrial and Commercial Power Systems",
+    "source_path": "Resources/Extractions/IEEE/IEEE-3001.8-2013-Instrumentation-Metering.md"
+  },
+  "EXT-IEEE-166": {
+    "title": "IEEE 3002.8-2018 -- Recommended Practice for Conducting Harmonic Studies and Analysis of Industrial and Commercial Power Systems",
+    "source_path": "Resources/Extractions/IEEE/IEEE-3002.8-2018-Harmonic-Studies.md"
+  },
+  "EXT-IEEE-167": {
+    "title": "IEEE 3003.1-2019 -- Recommended Practice for System Grounding of Industrial and Commercial Power Systems",
+    "source_path": "Resources/Extractions/IEEE/IEEE-3003.1-2019-System-Grounding.md"
+  },
+  "EXT-IEEE-168": {
+    "title": "IEEE 3004.11-2019 — Recommended Practice for Bus and Switchgear Protection in Industrial and Commercial Power Systems",
+    "source_path": "Resources/Extractions/IEEE/IEEE-3004.11-2019-Bus-Switchgear-Protection.md"
+  },
+  "EXT-IEEE-1683": {
+    "title": "IEEE Std 1683-2014 — Guide for Motor Control Centers (Curated Extraction)",
+    "source_path": "Resources/Source-PDFs/IEEE-Standards/IEEE-1683-2014-Motor-Control-Centers-Guide.pdf"
+  },
+  "EXT-IEEE-169": {
+    "title": "IEEE 3007.2-2010 — Recommended Practice for the Maintenance of Industrial and Commercial Power Systems",
+    "source_path": "Resources/Extractions/IEEE/IEEE-3007.2-Maintenance-Industrial-Commercial.md"
+  },
+  "EXT-IEEE-170": {
+    "title": "IEEE 315-1975 (ANSI Y32.2-1975) — Graphic Symbols for Electrical and Electronics Diagrams",
+    "source_path": "Resources/Extractions/IEEE/IEEE-315-1975-Graphic-Symbols.md"
+  },
+  "EXT-IEEE-171": {
+    "title": "IEEE Std 367-2012 -- Ground Potential Rise and Induced Voltage",
+    "source_path": "Resources/Extractions/IEEE/IEEE-367-2012-Ground-Potential-Rise.md"
+  },
+  "EXT-IEEE-172": {
+    "title": "IEEE Std 386-2016 — Standard for Separable Insulated Connectors",
+    "source_path": "Resources/Extractions/IEEE/IEEE-386-2016-Separable-Connectors.md"
+  },
+  "EXT-IEEE-173": {
+    "title": "IEEE 399-1997 Brown Book Summary",
+    "source_path": "Resources/Extractions/IEEE/IEEE-399-BROWN-BOOK-SUMMARY.md"
+  },
+  "EXT-IEEE-174": {
+    "title": "IEEE 400 Series - Complete Cable Testing Guide",
+    "source_path": "Resources/Extractions/IEEE/IEEE-400-Cable-Testing.md"
+  },
+  "EXT-IEEE-175": {
+    "title": "IEEE 400.2-2024 — Guide for Field Testing of Shielded Power Cable Systems Using Very Low Frequency (VLF) (less than 1 Hz)",
+    "source_path": "Resources/Extractions/IEEE/IEEE-400.2-2024-VLF-Cable-Testing.md"
+  },
+  "EXT-IEEE-176": {
+    "title": "IEEE 400.3-2022 — Guide for Partial Discharge Field Diagnostic Testing of Shielded Power Cable Systems",
+    "source_path": "Resources/Extractions/IEEE/IEEE-400.3-2022-PD-Cable-Testing.md"
+  },
+  "EXT-IEEE-177": {
+    "title": "IEEE Std 404-2012 — Standard for Extruded and Laminated Dielectric Shielded Cable Joints Rated 2.5 kV to 500 kV",
+    "source_path": "Resources/Extractions/IEEE/IEEE-404-2012-Cable-Joints.md"
+  },
+  "EXT-IEEE-178": {
+    "title": "Minimum Insulation Resistance Values - Rotating Machinery",
+    "source_path": "Resources/Extractions/IEEE/IEEE-43-Minimum-IR-Values.md"
+  },
+  "EXT-IEEE-179": {
+    "title": "IEEE 43 - Complete Motor Insulation Testing Guide",
+    "source_path": "Resources/Extractions/IEEE/IEEE-43-Motor-Testing-Complete.md"
+  },
+  "EXT-IEEE-180": {
+    "title": "Polarization Index (PI) Interpretation - Rotating Machinery",
+    "source_path": "Resources/Extractions/IEEE/IEEE-43-PI-Interpretation.md"
+  },
+  "EXT-IEEE-181": {
+    "title": "Temperature Correction for Insulation Resistance - Extracted Content",
+    "source_path": "Resources/Extractions/IEEE/IEEE-43-Temperature-Correction.md"
+  },
+  "EXT-IEEE-182": {
+    "title": "IEEE 446 (Orange Book) - Emergency & Standby Power Systems",
+    "source_path": "Resources/Extractions/IEEE/IEEE-446-ORANGE-BOOK-SUMMARY.md"
+  },
+  "EXT-IEEE-183": {
+    "title": "IEEE 450 & 1188 - Complete Battery Testing Guide",
+    "source_path": "Resources/Extractions/IEEE/IEEE-450-1188-Battery-Testing.md"
+  },
+  "EXT-IEEE-184": {
+    "title": "IEEE Std 48-2020 -- Standard for Cable Terminations",
+    "source_path": "Resources/Extractions/IEEE/IEEE-48-2020-Cable-Terminations.md"
+  },
+  "EXT-IEEE-185": {
+    "title": "IEEE 493-1997 Gold Book Summary",
+    "source_path": "Resources/Extractions/IEEE/IEEE-493-GOLD-BOOK-SUMMARY.md"
+  },
+  "EXT-IEEE-186": {
+    "title": "IEEE Std 575-2014 -- Guide for the Application of Sheath-Bonding Methods for Single-Conductor Cables and the Calculation of Induced Voltages and Currents in Cable Sheaths",
+    "source_path": "Resources/Extractions/IEEE/IEEE-575-1988-Cable-Shield-Bonding.md"
+  },
+  "EXT-IEEE-187": {
+    "title": "IEEE 605-2008 — Substation Bus Design",
+    "source_path": "Resources/Extractions/IEEE/IEEE-605-2008-Substation-Bus-Design.md"
+  },
+  "EXT-IEEE-188": {
+    "title": "IEEE C57.12.91 - Dry-Type Transformer Testing Guide",
+    "source_path": "Resources/Extractions/IEEE/IEEE-62-Dry-Type-Transformers.md"
+  },
+  "EXT-IEEE-189": {
+    "title": "IEEE Std 62.2-2004 -- Diagnostic Field Testing of Electrical Machinery",
+    "source_path": "Resources/Extractions/IEEE/IEEE-62.2-2004-Diagnostic-Machinery-Testing.md"
+  },
+  "EXT-IEEE-190": {
+    "title": "IEEE Std 739-1995 — Bronze Book: Energy Management in Industrial and Commercial Facilities",
+    "source_path": "Resources/Extractions/IEEE/IEEE-739-1995-Bronze-Book-Energy-Management.md"
+  },
+  "EXT-IEEE-191": {
+    "title": "IEEE 80-2013 — Guide for Safety in AC Substation Grounding",
+    "source_path": "Resources/Extractions/IEEE/IEEE-80-2013-Substation-Grounding.md"
+  },
+  "EXT-IEEE-192": {
+    "title": "IEEE 81 - Complete Ground Resistance Testing Guide",
+    "source_path": "Resources/Extractions/IEEE/IEEE-81-Ground-Testing.md"
+  },
+  "EXT-IEEE-193": {
+    "title": "IEEE 902 (Yellow Book) - Maintenance, Operation, and Safety",
+    "source_path": "Resources/Extractions/IEEE/IEEE-902-YELLOW-BOOK-SUMMARY.md"
+  },
+  "EXT-IEEE-194": {
+    "title": "IEEE C37.06-1987 — HV Circuit Breaker Ratings",
+    "source_path": "Resources/Extractions/IEEE/IEEE-C37.06-1987-HV-Circuit-Breaker-Ratings.md"
+  },
+  "EXT-IEEE-195": {
+    "title": "IEEE C37.102-2006 — Guide for AC Generator Protection",
+    "source_path": "Resources/Extractions/IEEE/IEEE-C37.102-2006-Generator-Protection.md"
+  },
+  "EXT-IEEE-196": {
+    "title": "IEEE C37.108-2002: Guide for the Protection of Network Transformers",
+    "source_path": "Resources/Extractions/IEEE/IEEE-C37.108-2002-Network-Transformer-Protection.md"
+  },
+  "EXT-IEEE-197": {
+    "title": "IEEE C37.23-1987 — Metal-Enclosed Bus Assemblies",
+    "source_path": "Resources/Extractions/IEEE/IEEE-C37.23-1987-Metal-Enclosed-Bus.md"
+  },
+  "EXT-IEEE-198": {
+    "title": "IEEE C37.233-2023 — Guide for Power System Protection Testing",
+    "source_path": "Resources/Extractions/IEEE/IEEE-C37.233-2023-Protection-Testing.md"
+  },
+  "EXT-IEEE-199": {
+    "title": "IEEE C37.246-2017 — Guide for Protection Systems of Transmission-to-Generation Interconnections",
+    "source_path": "Resources/Extractions/IEEE/IEEE-C37.246-2017-Transmission-Generation-Protection.md"
+  },
+  "EXT-IEEE-200": {
+    "title": "IEEE Std C37.30.1a-2017 — AC High-Voltage Air Switches Amendment 1: Criteria for Acceptance",
+    "source_path": "Resources/Extractions/IEEE/IEEE-C37.30.1a-2017-HV-Switch-Amendment.md"
+  },
+  "EXT-IEEE-201": {
+    "title": "IEEE Std C37.41-2008 -- Standard Design Tests for High-Voltage Fuses",
+    "source_path": "Resources/Extractions/IEEE/IEEE-C37.41-2008-HV-Fuse-Design-Tests.md"
+  },
+  "EXT-IEEE-202": {
+    "title": "IEEE Std C57.104-1991 -- Guide for the Interpretation of Gases Generated in Oil-Immersed Transformers",
+    "source_path": "Resources/Extractions/IEEE/IEEE-C57.104-1991-DGA-Guide-Original.md"
+  },
+  "EXT-IEEE-203": {
+    "title": "IEEE Std C57.104-2019 -- Guide for the Interpretation of Gases Generated in Mineral Oil-Immersed Transformers",
+    "source_path": "Resources/Extractions/IEEE/IEEE-C57.104-2019-DGA-Guide-Current.md"
+  },
+  "EXT-IEEE-204": {
+    "title": "IEEE C57.104 - Dissolved Gas Analysis (DGA) Interpretation Guide",
+    "source_path": "Resources/Extractions/IEEE/IEEE-C57.104-DGA-Interpretation.md"
+  },
+  "EXT-IEEE-205": {
+    "title": "IEEE C57.106-2015 Extraction",
+    "source_path": "Resources/Extractions/IEEE/IEEE-C57.106-2015-mineral-oil-acceptance.md"
+  },
+  "EXT-IEEE-206": {
+    "title": "IEEE Std C57.107-2024 — Developing Short-Term Overexcitation V/Hz Curves for Transformers",
+    "source_path": "Resources/Extractions/IEEE/IEEE-C57.107-2024-Transformer-V-Hz.md"
+  },
+  "EXT-IEEE-207": {
+    "title": "IEEE C57.113-2023 — Recommended Practice for Partial Discharge Measurement in Liquid-Filled Power Transformers and Shunt Reactors",
+    "source_path": "Resources/Extractions/IEEE/IEEE-C57.113-2023-Transformer-PD.md"
+  },
+  "EXT-IEEE-208": {
+    "title": "IEEE C57.12.00-2000 — General Requirements for Liquid-Immersed Transformers",
+    "source_path": "Resources/Extractions/IEEE/IEEE-C57.12.00-2000-Transformer-General-Requirements.md"
+  },
+  "EXT-IEEE-209": {
+    "title": "IEEE C57.12.44-2000: Standard Requirements for Secondary Network Protectors",
+    "source_path": "Resources/Extractions/IEEE/IEEE-C57.12.44-2000-Network-Protectors.md"
+  },
+  "EXT-IEEE-210": {
+    "title": "IEEE C57.12.90-1999 — Standard Test Code for Liquid-Immersed Transformers",
+    "source_path": "Resources/Extractions/IEEE/IEEE-C57.12.90-1999-Transformer-Test-Code.md"
+  },
+  "EXT-IEEE-211": {
+    "title": "IEEE C57.125-2015: Guide for Failure Investigation, Documentation, Analysis, and Reporting for Power Transformers and Shunt Reactors",
+    "source_path": "Resources/Extractions/IEEE/IEEE-C57.125-2015-Transformer-Failure-Investigation.md"
+  },
+  "EXT-IEEE-212": {
+    "title": "IEEE C57.13-1993 — Standard Requirements for Instrument Transformers",
+    "source_path": "Resources/Extractions/IEEE/IEEE-C57.13-1993-Instrument-Transformers.md"
+  },
+  "EXT-IEEE-213": {
+    "title": "IEEE C57.13-2016 — Standard for Requirements for Instrument Transformers",
+    "source_path": "Resources/Extractions/IEEE/IEEE-C57.13-2016-Instrument-Transformers.md"
+  },
+  "EXT-IEEE-214": {
+    "title": "IEEE C57.13.1-2017 — Field Testing of Relaying Current Transformers",
+    "source_path": "Resources/Extractions/IEEE/IEEE-C57.13.1-2017-CT-Field-Testing.md"
+  },
+  "EXT-IEEE-215": {
+    "title": "IEEE C57.13.2-2005 - Conformance Test Procedure for Instrument Transformers",
+    "source_path": "Resources/Extractions/IEEE/IEEE-C57.13.2-2005-IT-Conformance-Testing.md"
+  },
+  "EXT-IEEE-216": {
+    "title": "IEEE C57.13.3-2014 - Grounding of Instrument Transformer Secondary Circuits",
+    "source_path": "Resources/Extractions/IEEE/IEEE-C57.13.3-2014-IT-Secondary-Grounding.md"
+  },
+  "EXT-IEEE-217": {
+    "title": "IEEE Std C57.140-2017 -- Guide for Evaluation and Reconditioning of Liquid Immersed Power Transformers",
+    "source_path": "Resources/Extractions/IEEE/IEEE-C57.140-2017-Transformer-Reconditioning.md"
+  },
+  "EXT-IEEE-218": {
+    "title": "IEEE C57.147-2018 Extraction",
+    "source_path": "Resources/Extractions/IEEE/IEEE-C57.147-2018-natural-ester-acceptance.md"
+  },
+  "EXT-IEEE-219": {
+    "title": "IEEE C57.149-2012 — Guide for Application and Interpretation of Frequency Response Analysis for Oil-Immersed Transformers",
+    "source_path": "Resources/Extractions/IEEE/IEEE-C57.149-2012-SFRA.md"
+  },
+  "EXT-IEEE-220": {
+    "title": "IEEE Std C57.149-2024 -- Guide for the Application and Interpretation of Frequency Response Analysis for Oil-Immersed Transformers",
+    "source_path": "Resources/Extractions/IEEE/IEEE-C57.149-2024-FRA-Oil-Immersed-Transformers.md"
+  },
+  "EXT-IEEE-221": {
+    "title": "IEEE C57.15-1999 — Standard for Step-Voltage Regulators",
+    "source_path": "Resources/Extractions/IEEE/IEEE-C57.15-1999-Step-Voltage-Regulators.md"
+  },
+  "EXT-IEEE-222": {
+    "title": "IEEE C57.152 - Transformer Field Testing Guide",
+    "source_path": "Resources/Extractions/IEEE/IEEE-C57.152-Transformer-Testing.md"
+  },
+  "EXT-IEEE-223": {
+    "title": "IEEE C57.155-2014 - DGA for Natural and Synthetic Ester-Immersed Transformers",
+    "source_path": "Resources/Extractions/IEEE/IEEE-C57.155-2014-DGA-Natural-Synthetic-Ester.md"
+  },
+  "EXT-IEEE-224": {
+    "title": "IEEE C57.19.00-2004 — Standard General Requirements and Test Procedure for Power Apparatus Bushings",
+    "source_path": "Resources/Extractions/IEEE/IEEE-C57.19.00-2004-Bushings.md"
+  },
+  "EXT-IEEE-225": {
+    "title": "IEEE C57.93-2019 — Guide for Installation and Maintenance of Liquid-Immersed Power Transformers",
+    "source_path": "Resources/Extractions/IEEE/IEEE-C57.93-2019-Transformer-Install-Maint.md"
+  },
+  "EXT-IEEE-226": {
+    "title": "IEEE C62.11-1999 — Metal-Oxide Surge Arresters",
+    "source_path": "Resources/Extractions/IEEE/IEEE-C62.11-1999-Surge-Arresters.md"
+  },
+  "EXT-IEEE-227": {
+    "title": "IEEE C62.22-1997 — Surge Arrester Application Guide",
+    "source_path": "Resources/Extractions/IEEE/IEEE-C62.22-1997-Surge-Arrester-Application.md"
+  },
+  "EXT-IEEE-228": {
+    "title": "IEEE Color Books - ETT Exam Quick Reference",
+    "source_path": "Resources/Extractions/IEEE/IEEE-Color-Books-Exam-Reference.md"
+  },
+  "EXT-IEEE-229": {
+    "title": "IEEE Std 2030.100-2017 — Recommended Practice for Implementing an IEC 61850-Based Substation Communications, Protection, Monitoring, and Control System",
+    "source_path": "Resources/Extractions/IEEE/IEEE-IEC-61850-Implementation-Practice.md"
+  },
+  "EXT-IEEE-230": {
+    "title": "IEEE 1159-2019 - PQ Monitoring Recommended Practice",
+    "source_path": "Resources/Source-PDFs/IEEE-Standards/IEEE-1159-2019-PQ-Monitoring-Recommended-Practice.pdf"
+  },
+  "EXT-IEEE-231": {
+    "title": "IEEE 3002.2-2018 - Load-Flow Studies Industrial/Commercial",
+    "source_path": "Resources/Source-PDFs/IEEE-Standards/IEEE-3002.2-2018-Load-Flow-Studies-Industrial-Commercial.pdf"
+  },
+  "EXT-IEEE-232": {
+    "title": "IEEE 3004.8 - Motor Protection Industrial/Commercial",
+    "source_path": "Resources/Source-PDFs/IEEE-Standards/IEEE-3004.8-Motor-Protection-Industrial-Commercial.pdf"
+  },
+  "EXT-IEEE-233": {
+    "title": "IEEE 3004.5-2014 - LV Circuit Breakers Industrial/Commercial",
+    "source_path": "Resources/Source-PDFs/IEEE-Standards/IEEE-3004.5-2014-Protection-Industrial-Commercial.pdf"
+  },
+  "EXT-IEEE-234": {
+    "title": "IEEE C37.20.4-2013 - Indoor AC Switches (1-38 kV) Metal-Enclosed Switchgear",
+    "source_path": "Resources/Source-PDFs/IEEE-Standards/IEEE-C37.20.4-2013-Indoor-AC-Switches-1-38kV.pdf"
+  },
+  "EXT-IEEE-235": {
+    "title": "IEEE C37.30.1-2011 - AC High-Voltage Air Disconnect Switches",
+    "source_path": "Resources/Source-PDFs/IEEE-Standards/IEEE-C37.30.1-2011-AC-HV-Disconnect-Switches.pdf"
+  },
+  "EXT-IEEE-236": {
+    "title": "IEEE C37.10-2011 - Power Circuit Breaker Failure Investigation",
+    "source_path": "Resources/Source-PDFs/IEEE-Standards/IEEE-C37.10-2011-CB-Failure-Investigation.pdf"
+  },
+  "EXT-IEEE-237": {
+    "title": "IEEE C37.92-2023 — Standard for Low-Energy Analog Interfaces between Protective Relays and Power System Signal Sources",
+    "source_path": "Resources/Extractions/IEEE/EXT-IEEE-237-IEEE-C37.92-2023-Analog-Inputs-Protective-Relays.md"
+  },
+  "EXT-IEEE-238": {
+    "title": "IEEE 450-2020 — Maintenance, Testing, and Replacement of Vented Lead-Acid Batteries for Stationary Applications",
+    "source_path": "Resources/Extractions/IEEE/EXT-IEEE-238-IEEE-450-2020-Battery-Maintenance-Testing.md"
+  },
+  "EXT-IEEE-239": {
+    "title": "IEEE C57.158-2017 -- Guide for the Application of Tertiary and Closely Coupled Windings in Power Transformers",
+    "source_path": "Resources/Extractions/IEEE/EXT-IEEE-239-IEEE-C57.158-2017-Tertiary-Windings-Transformers.md"
+  },
+  "EXT-IEEE-240": {
+    "title": "IEEE C62.72a-2020 — Guide for the Application of Surge-Protective Devices for Low-Voltage (1000 V rms or Less) AC Power Circuits — Amendment",
+    "source_path": "Resources/Extractions/IEEE/EXT-IEEE-240-IEEE-C62.72a-2020-SPD-Amendment.md"
+  },
+  "EXT-IEEE-241": {
+    "title": "IEEE 2030.2.1-2019 — Guide for Design, Operation, and Maintenance of Battery Energy Storage Systems",
+    "source_path": "Resources/Extractions/IEEE/EXT-IEEE-241-IEEE-2030.2.1-2019-Battery-Energy-Storage.md"
+  },
+  "EXT-IEEE-242": {
+    "title": "IEEE C37.1-2007 -- Standard for SCADA and Automation Systems",
+    "source_path": "Resources/Extractions/IEEE/EXT-IEEE-242-IEEE-C37.1-2007-SCADA-Automation.md"
+  },
+  "EXT-IEEE-243": {
+    "title": "IEEE 3006.7-2013 — Recommended Practice for Determining the Reliability of 7x24 Continuous Power Systems in Industrial and Commercial Facilities",
+    "source_path": "Resources/Extractions/IEEE/EXT-IEEE-243-IEEE-3006.7-2013-Reliability-Continuous-Power.md"
+  },
+  "EXT-IEEE-244": {
+    "title": "IEEE 1613-2009 -- Standard Environmental and Testing Requirements for Communications Networking Devices Installed in Electric Power Substations",
+    "source_path": "Resources/Extractions/IEEE/EXT-IEEE-244-IEEE-1613-2009-Environmental-Testing-Substation-Comms.md"
+  },
+  "EXT-IEEE-245": {
+    "title": "IEEE C37.91-2021 — Guide for Protective Relay Applications to Power Transformers",
+    "source_path": "Resources/Source-PDFs/IEEE-Standards/IEEE-C37.91-2021-Transformer-Protection-Guide.pdf"
+  },
+  "EXT-IEEE-246": {
+    "title": "IEEE 519-2014 — Recommended Practice and Requirements for Harmonic Control in Electric Power Systems",
+    "source_path": "Resources/Source-PDFs/IEEE-Standards/IEEE-519-2014-Harmonic-Control-Requirements.pdf"
+  },
+  "EXT-IEEE-247": {
+    "title": "IEEE 484-2019 — Recommended Practice for Installation Design and Installation of Vented Lead-Acid Batteries for Stationary Applications",
+    "source_path": "Resources/Source-PDFs/IEEE-Standards/IEEE-484-2019-Installation-Vented-Lead-Acid-Batteries.pdf"
+  },
+  "EXT-IEEE-248": {
+    "title": "IEEE 485-2020 — Recommended Practice for Sizing Lead-Acid Batteries for Stationary Applications",
+    "source_path": "Resources/Source-PDFs/IEEE-Standards/IEEE-485-Sizing-Lead-Acid-Batteries.pdf"
+  },
+  "EXT-IEEE-249": {
+    "title": "IEEE 1188-2005 — Recommended Practice for Maintenance, Testing, and Replacement of Valve-Regulated Lead-Acid (VRLA) Batteries for Stationary Applications",
+    "source_path": "Resources/Source-PDFs/IEEE-Standards/IEEE-1188-2005-Maintenance-Testing-VRLA-Batteries.pdf"
+  },
+  "EXT-IEEE-250": {
+    "title": "IEEE C37.122.5-2013 — Guide for Moisture Measurement and Control in SF6 Gas-Insulated Equipment",
+    "source_path": "Resources/Source-PDFs/IEEE-Standards/IEEE-C37.122.5-2013-Moisture-Measurement-SF6-GIS.pdf"
+  },
+  "EXT-IEEE-251": {
+    "title": "IEEE C62.92.1-2016 — Application of Neutral Grounding in Electrical Utility Systems, Part I",
+    "source_path": null
+  },
+  "EXT-IEEE-252": {
+    "title": "IEEE 3007.3-2012 — Electrical Grounding of Industrial and Commercial Power Systems",
+    "source_path": null
+  },
+  "EXT-IEEE-253": {
+    "title": "IEEE C62.92.5-2020 — Application of Neutral Grounding, Part V: Transmission and Subtransmission",
+    "source_path": null
+  },
+  "EXT-IEEE-254": {
+    "title": "IEEE C37.106-2003 — Guide for Abnormal Frequency Protection for Power Generating Plants",
+    "source_path": null
+  },
+  "EXT-IEEE-255": {
+    "title": "IEEE C37.63-2013 — Requirements for Automatic Line Sectionalizers",
+    "source_path": null
+  },
+  "EXT-IEEE-256": {
+    "title": "IEEE 2800-2022 — Interconnection of Inverter-Based Resources with Transmission Systems",
+    "source_path": null
+  },
+  "EXT-IEEE-257": {
+    "title": "IEEE C62.41.1-2002 — Guide on the Surge Environment in Low-Voltage (1000 V and Less) AC Power Circuits",
+    "source_path": null
+  },
+  "EXT-IEEE-258": {
+    "title": "IEEE C62.42.4-2020 — Guide for the Application of Surge-Protective Component Devices, Part 4: Thermally Activated Current Limiters",
+    "source_path": null
+  },
+  "EXT-IEEE-259": {
+    "title": "IEEE C62.32-2004 — Standard Test Specifications for Low-Voltage Air Gap Surge-Protective Devices",
+    "source_path": null
+  },
+  "EXT-IEEE-260": {
+    "title": "IEEE C62.21-2003 — Guide for the Application of Surge Voltage Protective Equipment on AC Rotating Machinery",
+    "source_path": null
+  },
+  "EXT-IEEE-261": {
+    "title": "IEEE C62.92.4-2014 — Guide for the Application of Neutral Grounding in Electrical Utility Systems, Part IV — Distribution",
+    "source_path": null
+  },
+  "EXT-IEEE-262": {
+    "title": "IEEE C62.92.6-2017 — Guide for the Application of Neutral Grounding in Electrical Utility Systems, Part VI — Systems Supplied by Current-Regulated Sources",
+    "source_path": null
+  },
+  "EXT-IEEE-263": {
+    "title": "IEEE C62.62-2000 — Standard Test Specifications for Surge-Protective Devices for Low-Voltage AC Power Circuits",
+    "source_path": null
+  },
+  "EXT-IEEE-265": {
+    "title": "IEEE C62.45-2002 — Recommended Practice on Surge Testing for Equipment Connected to Low-Voltage (1000 V and Less) AC Power Circuits",
+    "source_path": null
+  },
+  "EXT-IEEE-266": {
+    "title": "IEEE C62.22a-2013 — Amendment to IEEE Guide for the Application of Metal-Oxide Surge Arresters for Alternating-Current Systems",
+    "source_path": null
+  },
+  "EXT-IEEE-290": {
+    "title": "IEEE C37.04-2018 — Rating Structure for AC High-Voltage Circuit Breakers",
+    "source_path": null
+  },
+  "EXT-IEEE-291": {
+    "title": "IEEE C37.2-2008 — Standard Electrical Power System Device Function Numbers, Acronyms, and Contact Designations",
+    "source_path": null
+  },
+  "EXT-IEEE-292": {
+    "title": "IEEE C37.112-2018 — Standard Inverse-Time Characteristic Equations for Overcurrent Relays",
+    "source_path": null
+  },
+  "EXT-IEEE-293": {
+    "title": "IEEE C37.119-2016 — Guide for Breaker Failure Protection of Power Circuit Breakers",
+    "source_path": null
+  },
+  "EXT-IEEE-294": {
+    "title": "IEEE C37.62-2020 — Standard for Padmounted and Dry Vault Fault Interrupters",
+    "source_path": null
+  },
+  "EXT-IEEE-295": {
+    "title": "IEEE C37.121-2020 — Standard for Switchgear — Unit Substations — Requirements",
+    "source_path": null
+  },
+  "EXT-IEEE-296": {
+    "title": "IEEE C37.100.1-2018 — Common Requirements for High-Voltage Power Switchgear",
+    "source_path": null
+  },
+  "EXT-IEEE-297": {
+    "title": "IEEE C37.122.3-2011 — Guide for SF6 Gas Handling for High-Voltage Equipment",
+    "source_path": null
+  },
+  "EXT-IND-001": {
+    "title": "Symmetrical Fault Analysis Short Circuit Study",
+    "source_path": "Resources/Extractions/Industry-Guides/Symmetrical-Fault-Analysis-Short-Circuit.md"
+  },
+  "EXT-IND-002": {
+    "title": "IEC 62196-1 2003 EV Charging Connectors",
+    "source_path": "Resources/Extractions/IEC/IEC-62196-1-2003-EV-Charging-Connectors.md"
+  },
+  "EXT-IND-003": {
+    "title": "NECA/FOA 301-2016 — Standard for Installing and Testing Fiber Optics",
+    "source_path": "Resources/Extractions/Industry-Guides/NECA-FOA-301-2016-Fiber-Optic-Installation-Testing.md"
+  },
+  "EXT-IND-004": {
+    "title": "Demystifying Fiber Test Methods — Back to Basics",
+    "source_path": "Resources/Extractions/Industry-Guides/Demystifying-Fiber-Test-Methods.md"
+  },
+  "EXT-IND-005": {
+    "title": "Handbook for Electricity Metering — Selected Chapters (Ch 9-12)",
+    "source_path": "Resources/Source-PDFs/Textbooks/Handbook for Electricity Metering 9th Edition.pdf"
+  },
+  "EXT-IND-010": {
+    "title": "FOA Reference Guide to Fiber Optics (Selected Testing Content)",
+    "source_path": "Resources/Source-PDFs/Textbooks/FOA Reference Guide to Fiber Optics - Prem Hayes Jim.pdf"
+  },
+  "EXT-IND-011": {
+    "title": "VFD Panel Configuration & Troubleshooting",
+    "source_path": "Resources/Source-PDFs/VFD/electrical-engineering-portal.com-Inside Variable Frequency Drive VFD Panel Configuration...pdf"
+  },
+  "EXT-IND-012": {
+    "title": "Handbook for Electricity Metering — Expansion (Ch 18: Meter Wiring Diagrams)",
+    "source_path": "Resources/Source-PDFs/Textbooks/Handbook for Electricity Metering 9th Edition.pdf"
+  },
+  "EXT-IND-013": {
+    "title": "Elements of Power System Analysis — Stevenson (Ch 8, 10-13)",
+    "source_path": "Resources/Source-PDFs/Textbooks/Elements of Power System Analysis 4th Ed - William D Stevenson.pdf"
+  },
+  "EXT-IND-014": {
+    "title": "American Electricians' Handbook — Selected Divisions (4, 5, 7)",
+    "source_path": "Resources/Source-PDFs/Textbooks/American ElectriciansHandbook15th Edition.pdf"
+  },
+  "EXT-IND-015": {
+    "title": "Metal-Enclosed Switchgear — Custom Specification Guide (S&C Electric, Feb 2020)",
+    "source_path": "Resources/Source-PDFs/Industry-NETA/Metal-Enclosed Switchgear - Specification Template.pdf"
+  },
+  "EXT-IND-016": {
+    "title": "Condition Assessment of High Voltage Insulation in Power System Equipment — R.E. James and Q. Su (IET, 2008)",
+    "source_path": "Resources/Source-PDFs/Textbooks/Condition Assessment of High Voltage Insulation in Power System Equipment.pdf"
+  },
+  "EXT-IND-017": {
+    "title": "Power System Analysis and Design, 5th ed. (SI) — Glover, Sarma, Overbye (Cengage, 2012) — Selective Extraction",
+    "source_path": "Resources/Source-PDFs/Textbooks/Power System Analysis and Design 5e - Glover Sarma Overbye.pdf"
+  },
+  "EXT-IND-018": {
+    "title": "E05 — Condition Monitoring of Rotating Electrical Machines (2020)",
+    "source_path": "Resources/Source-PDFs/Textbooks/E05-Condition-Monitoring-Rotating-Electrical-Machines-2020.pdf"
+  },
+  "EXT-IND-019": {
+    "title": "Doble 2014 — Comprehensive Testing of Harmonic Filters",
+    "source_path": "Resources/Source-PDFs/Industry-Guides/Doble-2014-Harmonic-Filter-Testing.pdf"
+  },
+  "EXT-IND-020": {
+    "title": "ATS Design and Construction Academic Paper (Curated Extraction)",
+    "source_path": "Resources/Source-PDFs/Industry-Guides/ATS-Design-Construction-Academic-Paper-2011.pdf"
+  },
+  "EXT-IND-023": {
+    "title": "American Electricians' Handbook -- Selected Extraction",
+    "source_path": "Resources/Extractions/Industry-Guides/American-Electricians-Handbook-Selected.md"
+  },
+  "EXT-IND-024": {
+    "title": "Protective Relaying: Principles and Applications — Expansion Extraction",
+    "source_path": "Resources/Extractions/Industry-Guides/Blackburn-Domin-Protective-Relaying-Expansion.md"
+  },
+  "EXT-IND-025": {
+    "title": "Electric Motor Energy Efficiency Reference Guide",
+    "source_path": "Resources/Extractions/Industry-Guides/Electric-Motor-Energy-Efficiency-Guide.md"
+  },
+  "EXT-IND-026": {
+    "title": "Electrical Motors and Variable Frequency Drives — Energy Efficiency Reference Guide",
+    "source_path": "Resources/Extractions/Industry-Guides/Motors-VFD-EE-Guide.md"
+  },
+  "EXT-IND-027": {
+    "title": "Stevenson -- Elements of Power System Analysis -- Selected Extraction",
+    "source_path": "Resources/Extractions/Industry-Guides/Stevenson-Power-System-Analysis-Selected.md"
+  },
+  "EXT-IND-028": {
+    "title": "Symmetrical Fault Analysis -- Short Circuit Study",
+    "source_path": "Resources/Extractions/Industry-Guides/Symmetrical-Fault-Analysis-Short-Circuit.md"
+  },
+  "EXT-IND-029": {
+    "title": "ASTM D3487-16e1 Extraction",
+    "source_path": "Resources/Extractions/ASTM/D3487-16e1-mineral-oil-spec.md"
+  },
+  "EXT-IND-030": {
+    "title": "ASTM D923-15(2023) Extraction",
+    "source_path": "Resources/Extractions/ASTM/D923-15-2023-sampling-practices.md"
+  },
+  "EXT-IND-035": {
+    "title": "Megger — Circuit Breaker Testing Guide",
+    "source_path": null
+  },
+  "EXT-IND-036": {
+    "title": "A Systematic Approach to High-Voltage Circuit Breaker Testing (OMICRON/Sweetser)",
+    "source_path": null
+  },
+  "EXT-IND-037": {
+    "title": "Circuit Breakers Fact Sheet — Quick Reference",
+    "source_path": null
+  },
+  "EXT-IT-003": {
+    "title": "CVT — Capacitive Voltage Transformer Testing: Diagnostic Measurements Part II",
+    "source_path": "Resources/Source-PDFs/Instrument-Transformers/CVT-Capacitive-Voltage-Transformer-Testing.pdf"
+  },
+  "EXT-IT-004": {
+    "title": "ABB Standard CT/VT Ratings Reference Tables — ABB Inc.",
+    "source_path": "Resources/Extractions/Instrument-Transformers/ABB-CT-VT-Standard-Ratings.md"
+  },
+  "EXT-IT-005": {
+    "title": "CT Testing — Back to the Basics — Valence Electrical Training Services",
+    "source_path": "Resources/Extractions/Instrument-Transformers/CT-Testing-Back-to-Basics.md"
+  },
+  "EXT-IT-006": {
+    "title": "CVT — Capacitive Voltage Transformer Testing: Diagnostic Measurements Part II",
+    "source_path": "Resources/Extractions/Instrument-Transformers/CVT-Capacitive-Voltage-Transformer-Testing.md"
+  },
+  "EXT-LIB-WP-001": {
+    "title": "Considerations for Lithium-Ion Batteries in UPS Modules",
+    "source_path": "Resources/Source-PDFs/Textbooks/Considerations-Lithium-Ion-Batteries-UPS-Modules.pdf"
+  },
+  "EXT-LIEBERT-CAT-001": {
+    "title": "Vertiv/Liebert UPS Product Catalogue — Selective Extraction (Battery & UPS Specs)",
+    "source_path": "Resources/Source-PDFs/Equipment-Manuals/Liebert-UPS-Product-Catalogue.pdf"
+  },
+  "EXT-MFR-001": {
+    "title": "Castell Trapped Key Interlocks — Switchgear Applications Guide",
+    "source_path": "Resources\\Extractions\\Equipment-Manuals/"
+  },
+  "EXT-MFR-002": {
+    "title": "Eaton Pow-R-Way III Low Voltage Busway — Technical Data",
+    "source_path": "Resources\\Extractions\\Equipment-Manuals/"
+  },
+  "EXT-MFR-003": {
+    "title": "Eaton Freedom 2100 Motor Control Center — Installation and Maintenance Manual",
+    "source_path": "Resources\\Extractions\\Equipment-Manuals/"
+  },
+  "EXT-MFR-004": {
+    "title": "Pacific Chloride SCR FLX Series Industrial Battery Charger — Installation & Operating Instructions",
+    "source_path": "Resources\\Extractions\\Equipment-Manuals/"
+  },
+  "EXT-MFR-005": {
+    "title": "ABB ZX2 Gas-Insulated MV Switchgear — Installation and Operating Manual",
+    "source_path": "Resources\\Extractions\\Equipment-Manuals/"
+  },
+  "EXT-MFR-006": {
+    "title": "ABB SafeRing/SafePlus SF6 Ring Main Unit — Installation Instructions",
+    "source_path": "Resources\\Extractions\\Equipment-Manuals/"
+  },
+  "EXT-MFR-007": {
+    "title": "OMICRON — Dynamic OLTC Scan (DRM) Application Note",
+    "source_path": "Resources/Source-PDFs/Equipment-Manuals/Omicron-CPC100-Testrano600-Dynamic-OLTC-Scan-Appnote-2019.pdf"
+  },
+  "EXT-MFR-008": {
+    "title": "Vertiv EnergyCore Lithium-Ion Battery Cabinet — Installation & Operation Manual (SL-71251)",
+    "source_path": "Resources/Source-PDFs/Equipment-Manuals/Vertiv-Energycore-LiIon-Battery-Cabinet-IOM.pdf"
+  },
+  "EXT-MFR-009": {
+    "title": "Vertiv Data Center Power Train Architecture — Engineering Brief (SL-80203)",
+    "source_path": "Resources/Source-PDFs/Equipment-Manuals/Vertiv-DataCenter-PowerTrain-EB.pdf"
+  },
+  "EXT-MFR-010": {
+    "title": "Vertiv — Design for Reliability in UPS Systems White Paper (SL-80062)",
+    "source_path": "Resources/Source-PDFs/Equipment-Manuals/Vertiv-UPS-Design-Reliability-WP.pdf"
+  },
+  "EXT-MFR-011": {
+    "title": "Vertiv Trinergy UPS 1500–2500 kW Brochure (SL-71331)",
+    "source_path": "Resources/Source-PDFs/Equipment-Manuals/Vertiv-Trinergy-UPS-Brochure.pdf"
+  },
+  "EXT-MFR-012": {
+    "title": "Vertiv UPS & Battery Systems — Consolidated Supplementary Extractions (5 Documents)",
+    "source_path": "Resources/Source-PDFs/Equipment-Manuals/ (5 PDFs — see extraction file for manifest)"
+  },
+  "EXT-MFR-013": {
+    "title": "Series 95 Switches — Product Catalog",
+    "source_path": "Resources\\Extractions\\Equipment-Manuals/"
+  },
+  "EXT-MFR-014": {
+    "title": "Siemens 81000 MV Vacuum Contactor 5-7kV — Installation, Operation and Maintenance",
+    "source_path": "Resources\\Extractions\\Equipment-Manuals/"
+  },
+  "EXT-MFR-015": {
+    "title": "ABB LTB 145D1 SF6 Circuit Breaker — Schematic Diagram",
+    "source_path": "Resources\\Extractions\\Equipment-Manuals/"
+  },
+  "EXT-MFR-016": {
+    "title": "ABB Generator Circuit Breaker HECS/HEC7/HEC8 — Technical Datasheet",
+    "source_path": "Resources\\Extractions\\Equipment-Manuals/"
+  },
+  "EXT-MFR-017": {
+    "title": "Siemens High-Voltage Circuit Breakers 72–800kV — Product Catalog",
+    "source_path": "Resources\\Extractions\\Equipment-Manuals/"
+  },
+  "EXT-MFR-018": {
+    "title": "Siemens SPS2 Circuit Breaker Family — Product Catalog",
+    "source_path": "Resources\\Extractions\\Equipment-Manuals/"
+  },
+  "EXT-MFR-019": {
+    "title": "Cooper Form 6 Recloser Control — Installation, Operation and Maintenance",
+    "source_path": "Resources\\Extractions\\Equipment-Manuals/"
+  },
+  "EXT-MFR-020": {
+    "title": "JinKwang SF6 Recloser FTU-R200 — Technical Manual",
+    "source_path": "Resources\\Extractions\\Equipment-Manuals/"
+  },
+  "EXT-MFR-021": {
+    "title": "Cooper Power Systems HV Equipment — Comprehensive Operating Manual",
+    "source_path": "Resources\\Extractions\\Equipment-Manuals/"
+  },
+  "EXT-MFR-022": {
+    "title": "Coupling Capacitor Voltage Transformer — Installation Manual",
+    "source_path": "Resources\\Extractions\\Equipment-Manuals/"
+  },
+  "EXT-MFR-023": {
+    "title": "Encapsulated Interposing Current Transformer — Technical Datasheet",
+    "source_path": "Resources\\Extractions\\Equipment-Manuals/"
+  },
+  "EXT-MFR-024": {
+    "title": "Medium-Voltage Outdoor Instrument Transformers — Product Catalog",
+    "source_path": "Resources\\Extractions\\Equipment-Manuals/"
+  },
+  "EXT-MFR-025": {
+    "title": "Siemens Capacitive Voltage Transformer Outdoor 72–800kV — Datasheet",
+    "source_path": "Resources\\Extractions\\Equipment-Manuals/"
+  },
+  "EXT-MFR-026": {
+    "title": "DA1 Series MV Surge Arrester 4–39kV — Technical Datasheet",
+    "source_path": "Resources\\Extractions\\Equipment-Manuals/"
+  },
+  "EXT-MFR-027": {
+    "title": "Siemens 3EX5 Arrester Monitor — Operating Manual",
+    "source_path": "Resources\\Extractions\\Equipment-Manuals/"
+  },
+  "EXT-MFR-028": {
+    "title": "ABB COTA/COBA Bushings — Installation Manual",
+    "source_path": "Resources\\Extractions\\Equipment-Manuals/"
+  },
+  "EXT-MFR-029": {
+    "title": "Reinhausen VACUTAP V On-Load Tap Changer — Technical Data",
+    "source_path": "Resources\\Extractions\\Equipment-Manuals/"
+  },
+  "EXT-MFR-030": {
+    "title": "Trench Dry-Type Shunt Reactors up to 500kV — Datasheet",
+    "source_path": "Resources\\Extractions\\Equipment-Manuals/"
+  },
+  "EXT-MFR-031": {
+    "title": "Eaton CL-7 Voltage Regulator Control — Installation, Operation and Maintenance",
+    "source_path": "Resources\\Extractions\\Equipment-Manuals/"
+  },
+  "EXT-MFR-032": {
+    "title": "Ferraz Shawmut Fuses and Fusegear — Comprehensive Selection Guide 2007",
+    "source_path": "Resources\\Extractions\\Equipment-Manuals/"
+  },
+  "EXT-MFR-033": {
+    "title": "Schneider Electric VAH -- Heavy-Duty MV Vacuum Circuit Breaker 12-17.5 kV",
+    "source_path": null
+  },
+  "EXT-MFR-034": {
+    "title": "ABB Sectos NXA -- SF6 Gas-Insulated Pole-Mounted Load-Break Switch-Disconnector",
+    "source_path": null
+  },
+  "EXT-MFR-035": {
+    "title": "Cooper Power Systems Types H, 4H, and V4H -- Recloser Maintenance Instructions",
+    "source_path": null
+  },
+  "EXT-MFR-036": {
+    "title": "Lithium-Ion Battery U6A4-250520 — Operation and Maintenance Manual",
+    "source_path": "Resources/Extractions/Manufacturer/LiIon-Battery-U6A4-OandM-Manual.md"
+  },
+  "EXT-MFR-037": {
+    "title": "Omicron — A Guide for Power Factor Testing: CCVTs, PTs, and CTs (Rev 1, April 2019)",
+    "source_path": "Resources/Source-PDFs/Instrument-Transformers/Omicron-Power-Factor-Testing-CCVTs-PTs-CTs-Guide-2019.pdf"
+  },
+  "EXT-MFR-038": {
+    "title": "Omicron — Diagnostic Testing of Instrument Transformers",
+    "source_path": "Resources/Source-PDFs/Instrument-Transformers/Omicron-Diagnostic-Testing-Instrument-Transformers-Brochure.pdf"
+  },
+  "EXT-MFR-039": {
+    "title": "Eaton Ground Fault Protection Presentation (Curated Extraction)",
+    "source_path": "Resources/Source-PDFs/Manufacturer-Docs/Eaton-2020-Ground-Fault-Protection-Presentation.pdf"
+  },
+  "EXT-MFR-040": {
+    "title": "ASCO 7000 Series Closed Transition Transfer & Bypass-Isolation (Curated Extraction)",
+    "source_path": "Resources/Source-PDFs/Unsorted/ASCO-7000-Closed-Transition-Wiring-Drawing-725715.pdf"
+  },
+  "EXT-MFR-041": {
+    "title": "ASCO 7000 Series MV Transfer with Bypass — Wiring Diagrams (Curated Extraction)",
+    "source_path": "Resources/Source-PDFs/Unsorted/ASCO-7000-MV-Transfer-Bypass-Drawing-1130011.pdf"
+  },
+  "EXT-MFR-042": {
+    "title": "ASCO 7000 Series MV Transfer — Wiring Diagrams (Curated Extraction)",
+    "source_path": "Resources/Source-PDFs/Unsorted/ASCO-7000-MV-Transfer-Drawing-942096.pdf"
+  },
+  "EXT-MFR-043": {
+    "title": "Russelectric RTS03 Bypass-Isolation Transfer Switch O&M Manual (Curated Extraction)",
+    "source_path": "Resources/Source-PDFs/Unsorted/Russelectric-RTS03-OM-Manual-90E1720004.pdf"
+  },
+  "EXT-MFR-044": {
+    "title": "Russelectric MV Circuit Breaker ATS Brochure (Curated Extraction)",
+    "source_path": "Resources/Source-PDFs/Unsorted/Russelectric-RTS-MVCB3-Brochure-Nov2015.pdf"
+  },
+  "EXT-MFR-045": {
+    "title": "Eaton ATC-900 Bypass Isolation Contactor ATS FAQ (Curated Extraction)",
+    "source_path": "Resources/Source-PDFs/Unsorted/Eaton-ATC-900-Bypass-Isolation-FAQ-SA140008EN.pdf"
+  },
+  "EXT-MFR-046": {
+    "title": "Eaton Transfer Switch 101 White Paper (Curated Extraction)",
+    "source_path": "Resources/Source-PDFs/Unsorted/Eaton-Transfer-Switch-101-WP140001EN.pdf"
+  },
+  "EXT-MFR-047": {
+    "title": "ASCO Basic Automatic Transfer Switch Functions (Curated Extraction)",
+    "source_path": "Resources/Source-PDFs/Unsorted/ASCO-Basic-ATS-Functions-TechBrief-2023.pdf"
+  },
+  "EXT-MFR-048": {
+    "title": "Schneider Electric WP-50035 — Surge Protective Devices and UL 1449 4th Edition",
+    "source_path": null
+  },
+  "EXT-MFR-079": {
+    "title": "The Art and Science of Protective Relaying",
+    "source_path": "Resources/Extractions/Manufacturer/Art-Science-Protective-Relaying.md"
+  },
+  "EXT-MFR-080": {
+    "title": "Field Test on Capacitors — General Electric (GET-2002E)",
+    "source_path": "Resources/Extractions/Manufacturer/Capacitor-Field-Testing-Guide.md"
+  },
+  "EXT-MFR-081": {
+    "title": "Cooper Power Systems: Electrical Distribution-System Protection",
+    "source_path": "Resources/Extractions/Manufacturer/Cooper-Power-Distribution-Protection.md"
+  },
+  "EXT-MFR-082": {
+    "title": "Eaton Bussmann Fuseology Guide — Overcurrent Protection Fundamentals",
+    "source_path": "Resources/Extractions/Manufacturer/Eaton-Bussmann-Fuseology-Guide.md"
+  },
+  "EXT-MFR-083": {
+    "title": "Electrical Diagram Analysis — Emerson Network Power",
+    "source_path": "Resources/Extractions/Manufacturer/Electrical-Diagram-Analysis-Manual.md"
+  },
+  "EXT-MFR-084": {
+    "title": "GE GEI-48907: Ground Fault Protection -- Application & Testing",
+    "source_path": "Resources/Extractions/Manufacturer/GE-GEI-48907-Ground-Fault-Protection.md"
+  },
+  "EXT-MFR-085": {
+    "title": "Low & Medium Voltage Circuit Breaker Maintenance Manual",
+    "source_path": "Resources/Extractions/Manufacturer/LMVV-Circuit-Breaker-Maintenance-Manual.md"
+  },
+  "EXT-MFR-086": {
+    "title": "Lithium-Ion Battery U6A4-250520 — Operation and Maintenance Manual",
+    "source_path": "Resources/Extractions/Manufacturer/LiIon-Battery-U6A4-OandM-Manual.md"
+  },
+  "EXT-MFR-087": {
+    "title": "OMICRON — A Systematic Approach to High-Voltage Circuit Breaker Testing",
+    "source_path": "Resources/Extractions/Manufacturer/OMICRON-HV-CB-Testing-Systematic.md"
+  },
+  "EXT-MFR-088": {
+    "title": "Oil Sample Definitions and Recommendations — Insulating Oils and Liquids Reference",
+    "source_path": "Resources/Extractions/Manufacturer/Oil-Sample-Definitions-Recommendations.md"
+  },
+  "EXT-MFR-089": {
+    "title": "OMICRON — Dynamic OLTC Scan (DRM) Application Note",
+    "source_path": "Resources/Extractions/Manufacturer/Omicron-CPC100-Dynamic-OLTC-Scan-2019.md"
+  },
+  "EXT-MFR-090": {
+    "title": "PG&E TD-3322M — Substation Maintenance and Construction Manual: Circuit Breakers Booklet",
+    "source_path": "Resources/Extractions/Manufacturer/PGE-TD-3322M-CB-Maintenance.md"
+  },
+  "EXT-MFR-091": {
+    "title": "Protective Relay Course Manual",
+    "source_path": "Resources/Extractions/Manufacturer/Protective-Relay-Course-Manual.md"
+  },
+  "EXT-MFR-092": {
+    "title": "S&C Mark VI Circuit-Switchers — Inspection Recommendations",
+    "source_path": "Resources/Extractions/Manufacturer/S&C-Mark-VI-Inspection-712-590.md"
+  },
+  "EXT-MFR-093": {
+    "title": "S&C Series 2000 Circuit-Switchers — Product Guide",
+    "source_path": "Resources/Extractions/Manufacturer/S&C-Series-2000-Circuit-Switcher-Guide.md"
+  },
+  "EXT-MFR-094": {
+    "title": "S&C Series 2000 Circuit-Switchers — Inspection Recommendations",
+    "source_path": "Resources/Extractions/Manufacturer/S&C-Series-2000-Inspection-716-590.md"
+  },
+  "EXT-MFR-095": {
+    "title": "Special Requirements of IEEE C37.013 for Generator Circuit Breaker Applications — Siemens",
+    "source_path": "Resources/Extractions/Manufacturer/Siemens-C37.013-Generator-CB.md"
+  },
+  "EXT-MFR-096": {
+    "title": "Transformers Course Manual — Emerson/Electrical Reliability Services",
+    "source_path": "Resources/Extractions/Manufacturer/Transformers-Course-Manual.md"
+  },
+  "EXT-MFR-097": {
+    "title": "Vertiv Data Center Power Train — Architecture Overview",
+    "source_path": "Resources/Extractions/Manufacturer/Vertiv-DataCenter-PowerTrain.md"
+  },
+  "EXT-MFR-098": {
+    "title": "Vertiv Energycore Lithium-Ion Battery Cabinet — Installation & Operation Manual",
+    "source_path": "Resources/Extractions/Manufacturer/Vertiv-Energycore-LiIon-Battery-Cabinet.md"
+  },
+  "EXT-MFR-099": {
+    "title": "Vertiv Trinergy UPS — Product Brochure",
+    "source_path": "Resources/Extractions/Manufacturer/Vertiv-Trinergy-UPS.md"
+  },
+  "EXT-MFR-100": {
+    "title": "Vertiv UPS & Battery Systems — Consolidated Supplementary Extractions",
+    "source_path": "Resources/Extractions/Manufacturer/Vertiv-UPS-Battery-Supplementary.md"
+  },
+  "EXT-MFR-101": {
+    "title": "Vertiv Design for Reliability in UPS Systems — White Paper",
+    "source_path": "Resources/Extractions/Manufacturer/Vertiv-UPS-Design-Reliability.md"
+  },
+  "EXT-MFR-102": {
+    "title": "XFMR Testing — BPA Power Transformer Field Testing Guide",
+    "source_path": "Resources/Extractions/Manufacturer/XFMR-Testing-Field-Notes.md"
+  },
+  "EXT-MFR-103": {
+    "title": "Getting Down to Earth - A Practical Guide to Earth Resistance Testing",
+    "source_path": "Resources/Extractions/Megger/Megger-Getting-Down-to-Earth-Grounding-Guide.md"
+  },
+  "EXT-MFR-104": {
+    "title": "Megger Guide to Insulation Testing — Complete Study Guide",
+    "source_path": "Resources/Extractions/Megger/Megger-Insulation-Testing-Complete-Guide.md"
+  },
+  "EXT-MFR-105": {
+    "title": "Megger Guide to Low Resistance Testing",
+    "source_path": "Resources/Extractions/Megger/Megger-Low-Resistance-Testing-Guide.md"
+  },
+  "EXT-MFR-106": {
+    "title": "A Guide to Transformer Winding Resistance Measurements — Megger",
+    "source_path": "Resources/Extractions/Megger/Megger-Transformer-Resistance-Testing-Guide.md"
+  },
+  "EXT-MFR-107": {
+    "title": "DC Test of Vacuum Integrity in MV Switchgear — Megger (VIDAR)",
+    "source_path": "Resources/Extractions/Megger/Megger-VIDAR-Vacuum-Integrity-Testing.md"
+  },
+  "EXT-MFR-139": {
+    "title": "SD Meyers - Understanding Transformer Testing",
+    "source_path": "Resources/Extractions/SD-Meyers/SDMyers-Transformer-Oil-Testing-Complete.md"
+  },
+  "EXT-MFR-140": {
+    "title": "Applying SFRA and Leakage Reactance to Determine Mechanical Faults in Power Transformers — OMICRON",
+    "source_path": "Resources/Extractions/Transformer-Testing/OMICRON-SFRA-Leakage-Reactance-Faults.md"
+  },
+  "EXT-MFR-141": {
+    "title": "OMICRON Transformer Diagnostic Training: Low-Voltage Tests, SFRA, and Case Studies",
+    "source_path": "Resources/Extractions/Transformer-Testing/OMICRON-Transformer-SFRA-Slides.md"
+  },
+  "EXT-MFR-142": {
+    "title": "OMICRON Transformer Testing Toolbox: Troubleshooting Checklists, Test Plans, and Analysis Tips",
+    "source_path": "Resources/Extractions/Transformer-Testing/OMICRON-Transformer-Testing-Toolbox.md"
+  },
+  "EXT-MFR-143": {
+    "title": "Considerations for Using Lithium-Ion Batteries with UPS Modules",
+    "source_path": "Resources/Extractions/Equipment-Manuals/Considerations-LIB-UPS-Modules.md"
+  },
+  "EXT-MFR-144": {
+    "title": "Vertiv Liebert Three Phase UPS Catalogue - Battery & UPS Specifications Extraction",
+    "source_path": "Resources/Extractions/Equipment-Manuals/Liebert-UPS-Product-Catalogue.md"
+  },
+  "EXT-MFR-145": {
+    "title": "Hitachi Energy — MV Surge Arrester Application Guidelines",
+    "source_path": null
+  },
+  "EXT-MFR-146": {
+    "title": "ABB — Dimensioning, Testing and Application of MV Metal Oxide Surge Arresters",
+    "source_path": null
+  },
+  "EXT-MFR-147": {
+    "title": "ABB/Elastimold — Shielded Surge Arresters for Underground Distribution (2019)",
+    "source_path": null
+  },
+  "EXT-MFR-148": {
+    "title": "Siemens Energy — Station and Intermediate Class Surge Arresters Product Overview",
+    "source_path": null
+  },
+  "EXT-MTS-001": {
+    "title": "ATS vs MTS: Acceptance vs Maintenance Testing Limits",
+    "source_path": "Resources/Extractions/MTS-2023/ATS-vs-MTS-Comparison.md"
+  },
+  "EXT-MTS-002": {
+    "title": "MTS-2023 Table 100.1: General Insulation Resistance (Maintenance Testing)",
+    "source_path": "Resources/Extractions/MTS-2023/MTS-2023-100.1-General-IR.md"
+  },
+  "EXT-MTS-003": {
+    "title": "MTS-2023 Table 100.10: Rotating Machinery Vibration Limits (Maintenance)",
+    "source_path": "Resources/Extractions/MTS-2023/MTS-2023-100.10-Vibration.md"
+  },
+  "EXT-MTS-004": {
+    "title": "Rotating Machinery Insulation Resistance Testing",
+    "source_path": "Resources/Extractions/MTS-2023/MTS-2023-100.11-Rotating-Machinery-IR.md"
+  },
+  "EXT-MTS-005": {
+    "title": "MTS-2023 Table 100.12 Series: Bolt Torque Values for Electrical Connections (Maintenance)",
+    "source_path": "Resources/Extractions/MTS-2023/MTS-2023-100.12-Bolt-Torque.md"
+  },
+  "EXT-MTS-006": {
+    "title": "MTS-2023 Table 100.13: SF6 Gas Test Limits (Maintenance)",
+    "source_path": "Resources/Extractions/MTS-2023/MTS-2023-100.13-SF6-Gas.md"
+  },
+  "EXT-MTS-007": {
+    "title": "MTS-2023 Tables 100.14.1 & 100.14.2: Insulation Resistance Temperature Correction Factors",
+    "source_path": "Resources/Extractions/MTS-2023/MTS-2023-100.14-Temperature-Correction.md"
+  },
+  "EXT-MTS-008": {
+    "title": "MTS-2023 Tables 100.15-100.19: Dielectric Withstand Test Voltages (Maintenance)",
+    "source_path": "Resources/Extractions/MTS-2023/MTS-2023-100.15-100.19-Withstand-Tests.md"
+  },
+  "EXT-MTS-009": {
+    "title": "MTS-2023 Table 100.2: Switchgear Withstand Test Voltages (Maintenance Testing)",
+    "source_path": "Resources/Extractions/MTS-2023/MTS-2023-100.2-Switchgear-Withstand.md"
+  },
+  "EXT-MTS-010": {
+    "title": "MTS-2023 Tables 100.20-100.20.2: Rated Control Voltages for Circuit Breakers",
+    "source_path": "Resources/Extractions/MTS-2023/MTS-2023-100.20-Control-Voltages.md"
+  },
+  "EXT-MTS-011": {
+    "title": "MTS-2023 Tables 100.22 & 100.23: Cable Bending Radius and Partial Discharge Monitoring",
+    "source_path": "Resources/Extractions/MTS-2023/MTS-2023-100.22-100.23-Cable-PD.md"
+  },
+  "EXT-MTS-012": {
+    "title": "MTS-2023 Table 100.3: Power Factor / Dissipation Factor (Maintenance Testing)",
+    "source_path": "Resources/Extractions/MTS-2023/MTS-2023-100.3-Power-Factor.md"
+  },
+  "EXT-MTS-013": {
+    "title": "Service-Aged Transformer Insulating Fluids",
+    "source_path": "Resources/Extractions/MTS-2023/MTS-2023-100.4-Service-Aged-Fluids.md"
+  },
+  "EXT-MTS-014": {
+    "title": "MTS-2023 Table 100.5: Transformer Insulation Resistance (Maintenance Testing)",
+    "source_path": "Resources/Extractions/MTS-2023/MTS-2023-100.5-Transformer-IR.md"
+  },
+  "EXT-MTS-015": {
+    "title": "MTS-2023 Table 100.6 Series: Cable Testing (Maintenance Testing)",
+    "source_path": "Resources/Extractions/MTS-2023/MTS-2023-100.6-Cable-Testing.md"
+  },
+  "EXT-MTS-016": {
+    "title": "MTS-2023 Tables 100.7 & 100.8: Molded-Case Circuit Breaker Trip Testing (Maintenance)",
+    "source_path": "Resources/Extractions/MTS-2023/MTS-2023-100.7-100.8-CB-Trip.md"
+  },
+  "EXT-MTS-017": {
+    "title": "MTS-2023 Table 100.9: Instrument Transformer Dielectric Testing (Maintenance)",
+    "source_path": "Resources/Extractions/MTS-2023/MTS-2023-100.9-Instrument-Transformers.md"
+  },
+  "EXT-NEMA-001": {
+    "title": "NEMA BU 1.1 Busway Install Maint",
+    "source_path": "Resources/Extractions/NEMA/NEMA-BU-1.1-Busway-Install-Maint.md"
+  },
+  "EXT-NEMA-004": {
+    "title": "NEMA AB 4-2017 — Guidelines for Inspection and Preventive Maintenance of Molded Case Circuit Breakers Used in Commercial and Industrial Applications",
+    "source_path": "Resources/Source-PDFs/IEEE-Standards/NEMA-AB-4-2017-WATERMARKED-pdf.pdf"
+  },
+  "EXT-NEMA-005": {
+    "title": "NEMA ICS 2-2000 (R2005, R2020) — Industrial Control and Systems: Controllers, Contactors and Overload Relays Rated 600 Volts",
+    "source_path": "Resources/Source-PDFs/IEEE-Standards/723109671-NEMA-ICS-2-2000-R2020-WATERMARKED-2024-02-19.pdf"
+  },
+  "EXT-NEMA-006": {
+    "title": "ANSI/NEMA 250-2020 — Enclosures for Electrical Equipment (1000 Volts Maximum)",
+    "source_path": "Resources/Source-PDFs/IEEE-Standards/666911396-Ansi-Nema-250-2020.pdf"
+  },
+  "EXT-NEMA-007": {
+    "title": "ICEA S-93-639 / NEMA WC 74-2017 -- Standard for 5-46 kV Shielded Power Cable",
+    "source_path": "Resources/Extractions/NEMA/ICEA-S-93-639-Cable-Construction.md"
+  },
+  "EXT-NEMA-008": {
+    "title": "NEMA BU 1.1 — Installation and Maintenance of Busways",
+    "source_path": "Resources/Extractions/NEMA/NEMA-BU-1.1-Busway-Install-Maint.md"
+  },
+  "EXT-NETA-002": {
+    "title": "NETA Handbook Series I -- Insulating Oils",
+    "source_path": "Resources/Extractions/NETA-Handbooks/NETA-Handbook-Series-I-Insulating-Oils.md"
+  },
+  "EXT-NETA-003": {
+    "title": "NETA Maintenance Handbook Series III, Volume 3",
+    "source_path": "Resources/Extractions/NETA-Handbooks/NETA-Handbook-Series-III-Vol3.md"
+  },
+  "EXT-NETA-010": {
+    "title": "NETA Arc-Flash Handbook Series III",
+    "source_path": "Resources/Extractions/NETA/NETA-Arc-Flash-Handbook-III.md"
+  },
+  "EXT-NETA-ECS-2024": {
+    "title": "NETA ECS-2024 - Electrical Commissioning Specifications",
+    "source_path": "Resources/Source-PDFs/NETA-Standards/ANSI-NETA-ECS-2024.pdf"
+  },
+  "EXT-NETA-EXAM-OUTLINE": {
+    "title": "NETA ETT Exam Content Outline",
+    "source_path": "Resources/Extractions/Exam-Resources/NETA-ETT-Exam-Content-Outline.md"
+  },
+  "EXT-NETA-HANDBOOK-I-OILS": {
+    "title": "NETA Handbook Series I — Insulating Oils (2009)",
+    "source_path": "Resources/Source-PDFs/Industry-NETA/NETA Handbook Series I - Insulating Oils.pdf"
+  },
+  "EXT-NETA-HANDBOOK-I-V1": {
+    "title": "NETA Handbook Series I — Protective Relay Vol 1",
+    "source_path": "Resources/Source-PDFs/Industry-NETA/NETA-Handbook-Series-I-Protective-Relay-Vol-1-PDF.pdf"
+  },
+  "EXT-NETA-HANDBOOK-I-XFMR": {
+    "title": "NETA Handbook Series I — Transformers Vol 1",
+    "source_path": "Resources/Source-PDFs/Industry-NETA/NETA Handbook Series I - Transformers Vol 1.pdf"
+  },
+  "EXT-NETA-HANDBOOK-II-AF": {
+    "title": "NETA Handbook Series II — Arc Flash Vol 2 (2013)",
+    "source_path": "Resources/Source-PDFs/Industry-NETA/NETA Handbook Series II - Arc Flash Vol 2.pdf"
+  },
+  "EXT-NETA-HANDBOOK-II-PR": {
+    "title": "NETA Handbook Series II — Protective Relay Vol 3",
+    "source_path": "Resources/Source-PDFs/Industry-NETA/NETA Handbook Series II - Protective Relay Vol 3.pdf"
+  },
+  "EXT-NETA-HANDBOOK-II-SAF1": {
+    "title": "NETA Handbook Series II — Safety Vol 1",
+    "source_path": "Resources/Source-PDFs/Industry-NETA/NETA Handbook Series II - Safety Vol 1.pdf"
+  },
+  "EXT-NETA-HANDBOOK-II-SAF2": {
+    "title": "NETA Handbook Series II — Safety Vol 2",
+    "source_path": "Resources/Source-PDFs/Industry-NETA/NETA Handbook Series II - Safety Vol 2.pdf"
+  },
+  "EXT-NETA-HANDBOOK-II-XFMR": {
+    "title": "NETA Handbook Series II — Transformers",
+    "source_path": "Resources/Source-PDFs/Industry-NETA/NETA Handbook Series II - Transformers.pdf"
+  },
+  "EXT-NETA-HANDBOOK-III": {
+    "title": "NETA Handbook Series III Vol3",
+    "source_path": "Resources/Extractions/NETA-Handbooks/NETA-Handbook-Series-III-Vol3.md"
+  },
+  "EXT-NETA-STUDY-GUIDE": {
+    "title": "NETA ETT Study Guide 2023",
+    "source_path": "Resources/Extractions/Exam-Resources/NETA-ETT-Study-Guide-2023.md"
+  },
+  "EXT-NFPA-001": {
+    "title": "NFPA 79-2002 — Electrical Standard for Industrial Machinery",
+    "source_path": "Resources/Source-PDFs/NFPA-OSHA/NFPA 79-2002 - Electrical Standard for Industrial Machinery.pdf"
+  },
+  "EXT-NFPA-002": {
+    "title": "NFPA 70-2017 — National Electrical Code (NEC) — NETA ETT Exam-Relevant Articles",
+    "source_path": "Resources/Source-PDFs/NFPA-OSHA/NFPA-70-2017-National-Electrical-Code.pdf"
+  },
+  "EXT-NFPA-003": {
+    "title": "NFPA 70E-2024 — Standard for Electrical Safety in the Workplace — Comprehensive Gap-Fill Extraction",
+    "source_path": "Resources/Source-PDFs/NFPA-OSHA/NFPA 70E 2024.pdf"
+  },
+  "EXT-NFPA-004": {
+    "title": "NFPA 70-2020 — National Electrical Code (NEC) — NETA ETT Exam-Relevant Articles",
+    "source_path": "Resources/Source-PDFs/NFPA-OSHA/NFPA-70-2020-National-Electrical-Code.pdf"
+  },
+  "EXT-NFPA-005": {
+    "title": "NFPA 70-2023 — National Electrical Code (NEC) — NETA ETT Exam-Relevant Articles",
+    "source_path": "Resources/Source-PDFs/NFPA-OSHA/NFPA-70-2023-National-Electrical-Code.pdf"
+  },
+  "EXT-NFPA-006": {
+    "title": "NFPA 70B-2002 — Recommended Practice for Electrical Equipment Maintenance",
+    "source_path": "Resources/Source-PDFs/NFPA-OSHA/NFPA-70B-2002.pdf"
+  },
+  "EXT-NFPA-007": {
+    "title": "NFPA 99-2021 Health Care Facilities Code — Electrical Systems (Curated Extraction)",
+    "source_path": "Resources/Source-PDFs/NFPA-OSHA/NFPA-99-2021-Health-Care-Facilities-Code.pdf"
+  },
+  "EXT-NFPA-008": {
+    "title": "NFPA 101-2018 Life Safety Code Handbook — Electrical Systems (Curated Extraction)",
+    "source_path": "Resources/Source-PDFs/NFPA-OSHA/NFPA-101-2018-Life-Safety-Code-Handbook.pdf"
+  },
+  "EXT-NFPA-009": {
+    "title": "Source: NFPA 70B-2002 Edition",
+    "source_path": "Resources/Extractions/NFPA-70E/NFPA-70B-2002-Electrical-Equipment-Maintenance.md"
+  },
+  "EXT-NFPA-010": {
+    "title": "NFPA 70B-2023 - Standard for Electrical Equipment Maintenance",
+    "source_path": "Resources/Extractions/NFPA-70E/NFPA-70B-2023-Standard-Electrical-Equipment-Maintenance.md"
+  },
+  "EXT-NFPA-011": {
+    "title": "NFPA 70E Article 110 - General Requirements for Electrical Safety Programs",
+    "source_path": "Resources/Extractions/NFPA-70E/NFPA-70E-110-General-Requirements.md"
+  },
+  "EXT-NFPA-012": {
+    "title": "NFPA 70E Article 120 - Establishing an Electrically Safe Work Condition",
+    "source_path": "Resources/Extractions/NFPA-70E/NFPA-70E-120-ESWC-Procedures.md"
+  },
+  "EXT-NFPA-013": {
+    "title": "Shock Protection Approach Boundaries (AC Systems)",
+    "source_path": "Resources/Extractions/NFPA-70E/NFPA-70E-130.4Ea-Approach-Boundaries.md"
+  },
+  "EXT-NFPA-014": {
+    "title": "Arc Flash PPE Requirements (Incident Energy Method)",
+    "source_path": "Resources/Extractions/NFPA-70E/NFPA-70E-130.5G-PPE-Incident-Energy.md"
+  },
+  "EXT-NFPA-015": {
+    "title": "Arc Flash PPE Categories",
+    "source_path": "Resources/Extractions/NFPA-70E/NFPA-70E-130.7C15c-PPE-Categories.md"
+  },
+  "EXT-NFPA-016": {
+    "title": "NFPA 70E - Energized Electrical Work Permit",
+    "source_path": "Resources/Extractions/NFPA-70E/NFPA-70E-Energized-Work-Permit.md"
+  },
+  "EXT-NFPA-017": {
+    "title": "NFPA 70E-2024 Informative Annexes C, D, F, and H",
+    "source_path": "Resources/Extractions/NFPA-70E/NFPA-70E-Informative-Annexes-CDFH.md"
+  },
+  "EXT-NFPA-018": {
+    "title": "NFPA 70E - Critical Tables Quick Reference",
+    "source_path": "Resources/Extractions/NFPA-70E/NFPA-70E-Table-Compilation.md"
+  },
+  "EXT-NFPA-019": {
+    "title": "NFPA 79-2002 — Electrical Standard for Industrial Machinery",
+    "source_path": "Resources/Extractions/NFPA-70E/NFPA-79-2002-Industrial-Machinery-Electrical.md"
+  },
+  "EXT-OSHA-001": {
+    "title": "OSHA 1910.147 - Lockout/Tagout",
+    "source_path": "Resources/Extractions/OSHA/OSHA-1910.147-LOTO.md"
+  },
+  "EXT-OSHA-002": {
+    "title": "OSHA 1910 Subpart S - Electrical Safety Summary",
+    "source_path": "Resources/Extractions/OSHA/OSHA-1910.301-399-Subpart-S-Summary.md"
+  },
+  "EXT-OSHA-003": {
+    "title": "OSHA 1910.331-335 - Electrical Safety-Related Work Practices",
+    "source_path": "Resources/Extractions/OSHA/OSHA-1910.331-335-Electrical-Safety.md"
+  },
+  "EXT-OSHA-004": {
+    "title": "OSHA 1926 Subpart K - Electrical Safety Summary",
+    "source_path": "Resources/Extractions/OSHA/OSHA-1926.400-449-Subpart-K-Summary.md"
+  },
+  "EXT-OSHA-005": {
+    "title": "OSHA Qualified Person Definition",
+    "source_path": "Resources/Extractions/OSHA/OSHA-Qualified-Person-Definition.md"
+  },
+  "EXT-TXT-001": {
+    "title": "Krueger -- Diagnostic Measurements on HV Bushings (CEPED 2015)",
+    "source_path": "Resources/Source-PDFs/Textbooks/Krueger-Diagnostic-Measurements-HV-Bushings.pdf"
+  },
+  "EXT-TXT-002": {
+    "title": "Patel & Chothani -- Digital Protective Schemes for Power Transformers",
+    "source_path": "Resources/Source-PDFs/Textbooks/Digital-Protective-Schemes-Power-Transformers.pdf"
+  },
+  "EXT-TXT-003": {
+    "title": "Villanueva -- Partial Discharge Measurement of GIS (OMICRON Academy 2024)",
+    "source_path": "Resources/Source-PDFs/Textbooks/Webinar-2024-Partial-Discharge-Measurement-GIS.pdf"
+  },
+  "EXT-TXT-004": {
+    "title": "Condition Assessment of Power Transformers (CIGRE Technical Brochure 761)",
+    "source_path": "Resources/Source-PDFs/CIGRE/CIGRE-TB-761-Condition-Assessment-Power-Transformers.pdf"
+  },
+  "EXT-TXT-005": {
+    "title": "Paul Gill - Maintenance Strategies & RCM Field Guide",
+    "source_path": "Resources/Extractions/Paul-Gill/CURATED/Paul-Gill-01-Maintenance-Strategies-RCM.md"
+  },
+  "EXT-TXT-006": {
+    "title": "Paul Gill - DC Voltage Testing Field Methods Guide",
+    "source_path": "Resources/Extractions/Paul-Gill/CURATED/Paul-Gill-02-DC-Voltage-Testing-Field-Methods.md"
+  },
+  "EXT-TXT-007": {
+    "title": "Paul Gill - Power Factor & Dissipation Factor Testing: Complete Field Master Guide",
+    "source_path": "Resources/Extractions/Paul-Gill/CURATED/Paul-Gill-03-Power-Factor-DF-Testing-Field-Master-Guide.md"
+  },
+  "EXT-TXT-008": {
+    "title": "Paul Gill - Insulating Oils & Dissolved Gas Analysis: Complete Field Reference",
+    "source_path": "Resources/Extractions/Paul-Gill/CURATED/Paul-Gill-04-Insulating-Oils-DGA-Complete-Field-Guide.md"
+  },
+  "EXT-TXT-009": {
+    "title": "Paul Gill - Transformer Field Methods Guide",
+    "source_path": "Resources/Extractions/Paul-Gill/CURATED/Paul-Gill-05-Transformers-Field-Methods.md"
+  },
+  "EXT-TXT-010": {
+    "title": "Paul Gill - Cable Testing Field Methods Guide",
+    "source_path": "Resources/Extractions/Paul-Gill/CURATED/Paul-Gill-06-Cables-Field-Guide.md"
+  },
+  "EXT-TXT-011": {
+    "title": "Paul Gill - MV Switchgear Field Testing Guide",
+    "source_path": "Resources/Extractions/Paul-Gill/CURATED/Paul-Gill-07-MV-Switchgear-Field-Guide.md"
+  },
+  "EXT-TXT-012": {
+    "title": "Paul Gill Chapter 7 - Medium-Voltage Vacuum Circuit Breakers",
+    "source_path": "Resources/Extractions/Paul-Gill/CURATED/Paul-Gill-07-MV-Vacuum-Circuit-Breakers.md"
+  },
+  "EXT-TXT-013": {
+    "title": "Paul Gill Chapter 8 - Low-Voltage Power Circuit Breakers",
+    "source_path": "Resources/Extractions/Paul-Gill/CURATED/Paul-Gill-08-LV-Power-Circuit-Breakers.md"
+  },
+  "EXT-TXT-014": {
+    "title": "Paul Gill - LV Switchgear Field Methods Guide",
+    "source_path": "Resources/Extractions/Paul-Gill/CURATED/Paul-Gill-08-LV-Switchgear-Field-Guide.md"
+  },
+  "EXT-TXT-015": {
+    "title": "Paul Gill - Protective Relays & Instrument Transformers Field Guide",
+    "source_path": "Resources/Extractions/Paul-Gill/CURATED/Paul-Gill-09-Relays-CT-PT-Field-Guide.md"
+  },
+  "EXT-TXT-016": {
+    "title": "Paul Gill - Motor & Generator Testing Field Methods",
+    "source_path": "Resources/Extractions/Paul-Gill/CURATED/Paul-Gill-10-Motor-Testing-Field-Methods.md"
+  },
+  "EXT-TXT-017": {
+    "title": "Paul Gill - Ground Resistance Testing Field Methods",
+    "source_path": "Resources/Extractions/Paul-Gill/CURATED/Paul-Gill-11-Ground-Testing-Field-Methods.md"
+  },
+  "EXT-TXT-018": {
+    "title": "Paul Gill - Power Quality & Harmonics Field Guide",
+    "source_path": "Resources/Extractions/Paul-Gill/CURATED/Paul-Gill-12-Power-Quality-Harmonics.md"
+  },
+  "EXT-TXT-019": {
+    "title": "ANSI/IEEE Standard Device Function Numbers",
+    "source_path": "Resources/Extractions/Paul-Gill/CURATED/Paul-Gill-AppB-ANSI-Device-Numbers.md"
+  },
+  "EXT-TXT-020": {
+    "title": "Condition Assessment of Power Transformers (CIGRE Technical Brochure 761)",
+    "source_path": "Resources/Extractions/Textbooks/CIGRE-TB-761-Transformer-Condition-Assessment.md"
+  },
+  "EXT-TXT-021": {
+    "title": "EXT-TXT-002 | Patel & Chothani -- Digital Protective Schemes for Power Transformers",
+    "source_path": "Resources/Extractions/Textbooks/Digital-Protective-Schemes-Power-Transformers.md"
+  },
+  "EXT-TXT-022": {
+    "title": "E05 — Condition Monitoring of Rotating Electrical Machines (2020)",
+    "source_path": "Resources/Extractions/Textbooks/E05-Condition-Monitoring-Rotating-Machines-2020.md"
+  },
+  "EXT-TXT-023": {
+    "title": "EXT-IND-017 | Glover, Sarma, Overbye -- Power System Analysis and Design, 5e (SI) -- Selective Extraction",
+    "source_path": "Resources/Extractions/Textbooks/Glover-Power-System-Analysis-Selective.md"
+  },
+  "EXT-TXT-024": {
+    "title": "EXT-IND-018 | Horowitz, Phadke, Henville -- Power System Relaying, 5e -- Selective Extraction",
+    "source_path": "Resources/Extractions/Textbooks/Horowitz-Power-System-Relaying-5e-Selective.md"
+  },
+  "EXT-TXT-025": {
+    "title": "Condition Assessment of High Voltage Insulation in Power System Equipment",
+    "source_path": "Resources/Extractions/Textbooks/James-Su-HV-Insulation-Condition-Assessment.md"
+  },
+  "EXT-TXT-026": {
+    "title": "EXT-TXT-001 | Krueger -- Diagnostic Measurements on HV Bushings (CEPED 2015)",
+    "source_path": "Resources/Extractions/Textbooks/Krueger-Diagnostic-Measurements-HV-Bushings.md"
+  },
+  "EXT-TXT-027": {
+    "title": "Kuphaldt Lessons in Electric Circuits — AC Circuit Theory Worksheets",
+    "source_path": "Resources/Extractions/Textbooks/Kuphaldt-ECC-AC-Circuits.md"
+  },
+  "EXT-TXT-028": {
+    "title": "Kuphaldt Lessons in Electric Circuits — DC Circuit Analysis Worksheets",
+    "source_path": "Resources/Extractions/Textbooks/Kuphaldt-ECC-DC-Circuits.md"
+  },
+  "EXT-TXT-029": {
+    "title": "Kuphaldt Lessons in Electric Circuits — Foundations, Safety & Troubleshooting Worksheets",
+    "source_path": "Resources/Extractions/Textbooks/Kuphaldt-ECC-Safety-Foundations.md"
+  },
+  "EXT-TXT-030": {
+    "title": "EXT-TXT-003 | Villanueva -- Partial Discharge Measurement of GIS (OMICRON Academy 2024)",
+    "source_path": "Resources/Extractions/Textbooks/Webinar-2024-PD-Measurement-GIS.md"
+  },
+  "EXT-TXT-031": {
+    "title": "IEEE PES/IAS — Insulation Coordination and Voltage Transients for Industrial Power Systems (2019 Seminar)",
+    "source_path": null
+  },
+  "EXT-UL-001": {
+    "title": "UL 1449, 3rd Edition (2006) — Standard for Surge Protective Devices",
+    "source_path": null
+  },
+  "EXT-UL-1008-WCR": {
+    "title": "UL 1008, 7th Edition -- Withstand and Closing Rating (WCR) Requirements (Extraction)",
+    "source_path": "Resources/Source-PDFs/UL-Standards/UL-1008-7th-Edition-WCR-Whitepaper.pdf"
+  },
+  "EXT-UL-1778": {
+    "title": "UL 1778 -- UPS Equipment Safety, 2nd Edition (Extraction)",
+    "source_path": "Resources/Source-PDFs/UL-Standards/UL-1778-2000-UPS-Equipment-Safety-2nd-Ed.pdf"
+  },
+  "EXT-WS-001": {
+    "title": "Kuphaldt Lessons in Electric Circuits — AC Circuit Theory Worksheets",
+    "source_path": "N/A (Creative Commons textbook)"
+  },
+  "EXT-WS-002": {
+    "title": "Kuphaldt Lessons in Electric Circuits — DC Circuit Analysis Worksheets",
+    "source_path": "N/A (Creative Commons textbook)"
+  },
+  "EXT-WS-003": {
+    "title": "Kuphaldt Lessons in Electric Circuits — Foundations, Safety & Troubleshooting Worksheets",
+    "source_path": "N/A (Creative Commons textbook)"
+  }
+}
