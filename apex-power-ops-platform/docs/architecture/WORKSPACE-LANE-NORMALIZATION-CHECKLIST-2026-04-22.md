@@ -205,7 +205,7 @@ Exit condition:
 
 - [ ] keep `C:/APEX Platform/apex-power-ops-platform-deploy-worktree` treated as a separate publication or reconciliation lane
 - [ ] do not use that lane as evidence that hosted packet `001af` has reopened
-- [ ] route any continuation through `ops/agents/handoffs/2026-04-22-deploy-worktree-reconciliation-and-publication-handoff.md`
+- [ ] treat any later deploy-worktree handoff as a separate follow-on artifact rather than assuming it is already bundled inside this bootstrap packet
 
 Exit condition:
 

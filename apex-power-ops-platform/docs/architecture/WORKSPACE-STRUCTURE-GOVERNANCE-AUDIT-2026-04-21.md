@@ -27,7 +27,6 @@ Use these documents together:
 1. `docs/architecture/WORKSPACE-STRUCTURE-GOVERNANCE-AUDIT-2026-04-21.md` -> current cleanup and structure baseline
 2. `docs/architecture/WORKSPACE-CURRENT-STATUS-2026-04-21.md` -> current operational status snapshot
 3. `docs/architecture/WORKSPACE-IMPLEMENTATION-ROADMAP-2026-04-21.md` -> sequencing surface
-4. `docs/architecture/WORKSPACE-MASTER-PLAN-2026-04-21.md` -> higher-order planning surface
 
 Use this audit as the authority for workspace-shape and cleanup classification. Use the status and roadmap documents for execution sequencing.
 
@@ -36,7 +35,7 @@ Use this audit as the authority for workspace-shape and cleanup classification. 
 Use this order when structure, migration boundaries, or repo-shape decisions are involved:
 
 1. `C:/APEX Platform/Platform-Authority/`
-2. `docs/authority/`
+2. `C:/APEX Platform/Platform-Authority/` documents that have not yet been re-homed into this bootstrap subtree
 3. `README.md`
 4. `docs/OPERATOR-BOOTSTRAP-RUNBOOK.md`
 5. source-domain docs only when a slice has not yet been re-homed
@@ -129,11 +128,11 @@ This lane must stay explicitly separated from active implementation work.
 
 ### 1. In-repo authority is still a bridge, not the final strategic authority
 
-`docs/authority/README.md` still correctly frames the in-repo authority layer as a bridge beneath `C:/APEX Platform/Platform-Authority`.
+The strategic authority layer still sits above this bootstrap subtree in `C:/APEX Platform/Platform-Authority`.
 
 Implication:
 
-- do not let `docs/authority/` drift into an unplanned replacement for the strategic authority stack
+- do not let any future in-repo authority bridge drift into an unplanned replacement for the strategic authority stack
 - any future promotion or rename must be explicit
 
 ### 2. Ownership governance is now present and should no longer be tracked as a gap
@@ -284,7 +283,7 @@ Required posture:
 
 1. do not treat that folder as part of this repo's governed structure baseline
 2. do not use its residue as evidence that hosted packet `001af` has reopened
-3. route any continuation through `ops/agents/handoffs/2026-04-22-deploy-worktree-reconciliation-and-publication-handoff.md`
+3. treat any later deploy-worktree handoff as a separate follow-on artifact rather than assuming it is already bundled in this bootstrap packet
 
 ## Workspace Standards Enforced By This Audit
 

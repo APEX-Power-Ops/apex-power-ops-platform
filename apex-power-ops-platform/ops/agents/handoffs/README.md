@@ -1,6 +1,6 @@
 # Handoff Register
 
-This directory is the operator-facing packet archive for bounded execution, blocker packets, and delegateable next-step records.
+This directory is the operator-facing packet archive for bounded execution, blocker packets, and delegable next-step records.
 
 ## Current Hosted Route Promotion Status
 
@@ -10,12 +10,12 @@ Packet `2026-04-21-apex-unification-001af` is now the completed execution record
 
 Use these files first:
 
-1. `2026-04-21-apex-unification-001af-public-control-plane-route-promotion-execution-handoff.md`
-2. `2026-04-21-unified-platform-next-delegateable-packet-set-refresh-handoff.md`
-3. `../../apps/control-plane-api/PUBLIC-APPARATUS-ROUTE-PROMOTION-CHECKLIST-2026-04-21.md`
-4. `2026-04-21-apex-unification-001ae-public-control-plane-route-deployment-blocker-refresh-handoff.md`
+1. `../../../../apps/control-plane-api/PUBLIC-APPARATUS-ROUTE-PROMOTION-CHECKLIST-2026-04-21.md`
+2. `2026-04-22-parent-root-bootstrap-publication-handoff.md`
 
-Historical blocker evidence for the now-closed lane:
+Historical hosted execution handoffs are not bundled inside this bootstrap packet.
+
+Historical blocker state for the now-closed lane before closure:
 
 1. the public host is otherwise healthy
 2. the deployed OpenAPI document still omits `/api/v1/neta/apparatus/{apparatus_id}/resources`
@@ -29,10 +29,6 @@ Hosted proof captured for closure:
 4. the repo-owned smoke script returned `RESULT PASS` against `https://control.apexpowerops.com`
 
 ## Operator Use
-
-Use packet `001af` when you need the exact hosted closure evidence and final truthful disposition.
-
-Use packet `001ae` when you need the pre-closure blocker evidence that justified the external execution.
 
 Use the promotion checklist when you need the smallest repo-owned rerun path after a future regression or deploy change:
 
@@ -59,5 +55,5 @@ Any later promoted-host browser proof is now a separate follow-on activity, not 
 These are maintenance items only. They do not reopen packet `001af`:
 
 1. broader documentation refresh outside the closure packet and checklist surfaces
-2. separate deploy-worktree reconciliation or publication if that tranche is being promoted next; start with `2026-04-22-deploy-worktree-reconciliation-and-publication-handoff.md`
+2. separate deploy-worktree reconciliation or publication if that tranche is being promoted next; a deploy-worktree handoff is not bundled inside this bootstrap packet yet
 3. initial parent-root bootstrap publication for `C:/APEX Platform/apex-power-ops-platform` if that tranche is being promoted next; start with `2026-04-22-parent-root-bootstrap-publication-handoff.md`

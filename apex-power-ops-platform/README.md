@@ -63,6 +63,11 @@ The parent-root `.gitignore` now carries a scoped exception for `apex-power-ops-
 
 For the first parent-root introduction packet, use `ops/agents/handoffs/2026-04-22-parent-root-bootstrap-publication-handoff.md`.
 
+Current packet constraint:
+1. this bootstrap subtree does not yet bundle the full active platform lane set under `apex-power-ops-platform/`
+2. paths below that start with `../` intentionally point at the current parent-root lanes that exist today under `C:/APEX Platform`
+3. lane names without `../` are target topology or intended import scope, not a claim that the folder already exists inside this subtree
+
 Git safety rules:
 1. do not use `git add .` or repo-root-wide staging from `C:/APEX Platform` unless a cross-lane operation is explicitly intended
 2. if `apex-power-ops-platform/` is still untracked, expect status to show `??` entries until files are explicitly staged
@@ -89,19 +94,19 @@ Current operator entrypoints:
 - `Calc engine offline tests` in `.vscode/tasks.json`
 - `Operations web browser smoke` in `.vscode/tasks.json`
 - `Operations web promoted-host smoke` in `.vscode/tasks.json`
-- `apps/control-plane-api/scripts/smoke_remote_control_plane_authoring_queue.py`
+- `../apps/control-plane-api/scripts/smoke_remote_control_plane_authoring_queue.py`
 
 Primary local contract and authority surfaces:
-- `docs/authority/`
-- `apps/control-plane-api/docs/contracts/CHATGPT-REMOTE-CONTROL-PLANE-TOOL-SCHEMAS-2026-03-28.json`
-- `apps/control-plane-api/README.md`
-- `apps/control-plane-api/PUBLIC-APPARATUS-ROUTE-PROMOTION-CHECKLIST-2026-04-21.md` for future hosted rerun validation if the deployed seam regresses
+- `C:/APEX Platform/Platform-Authority/`
+- `../apps/control-plane-api/docs/contracts/CHATGPT-REMOTE-CONTROL-PLANE-TOOL-SCHEMAS-2026-03-28.json`
+- `../apps/control-plane-api/README.md`
+- `../apps/control-plane-api/PUBLIC-APPARATUS-ROUTE-PROMOTION-CHECKLIST-2026-04-21.md` for future hosted rerun validation if the deployed seam regresses
 
 Current external frontier:
 1. the workstation-local control-plane lane is green
 2. the hosted apparatus-route deployment lane on `https://control.apexpowerops.com` is now closed for packet `001af`
-3. use `apps/control-plane-api/PUBLIC-APPARATUS-ROUTE-PROMOTION-CHECKLIST-2026-04-21.md` plus `ops/agents/handoffs/2026-04-21-apex-unification-001af-public-control-plane-route-promotion-execution-handoff.md` for the current hosted proof and rerun path
-4. treat `C:/APEX Platform/apex-power-ops-platform-deploy-worktree` as a separate optional reconciliation or publication lane, not as evidence that hosted packet `001af` has reopened; route that tranche through `ops/agents/handoffs/2026-04-22-deploy-worktree-reconciliation-and-publication-handoff.md`
+3. use `../apps/control-plane-api/PUBLIC-APPARATUS-ROUTE-PROMOTION-CHECKLIST-2026-04-21.md` for the bootstrap-local hosted rerun path; earlier hosted execution handoffs are not bundled inside this packet
+4. treat `C:/APEX Platform/apex-power-ops-platform-deploy-worktree` as a separate optional reconciliation or publication lane, not as evidence that hosted packet `001af` has reopened; a deploy-worktree handoff is not bundled inside this bootstrap packet yet
 
 Initial scope in this bootstrap:
 - `apps/control-plane-api`
