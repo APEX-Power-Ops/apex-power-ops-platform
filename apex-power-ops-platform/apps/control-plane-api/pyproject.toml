@@ -1,0 +1,10 @@
+[project]
+name = "apex-control-plane-api"
+version = "0.1.0"
+description = "Imported FastAPI control-plane runtime for the Apex Power Ops platform bootstrap"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+markers = [
+    "integration: tests that exercise live database-backed integration surfaces",
+]

@@ -160,7 +160,7 @@ Required deliverables:
 1. reduce bridge-only dependence in `docs/authority`
 2. promote the live workspace plan, status, and roadmap as normal operating documents
 3. confirm that repo-local docs are sufficient for daily operator decisions
-4. prepare the first parent-root bootstrap publication packet as an explicit bounded tranche instead of treating it like routine incremental staging
+4. keep future parent-root publication bounded and routine for already-introduced paths now that the first bootstrap publication tranche has already landed on `clean-main`, while treating wider subtree introduction as explicit incremental publication work
 
 Exit criteria:
 
@@ -223,7 +223,7 @@ Tasks:
 1. continue bounded slice migration from source domains
 2. reduce residual sibling-repo dependency
 3. prepare authority cutover package
-4. if parent-root publication becomes necessary before cutover, route it through `ops/agents/handoffs/2026-04-22-parent-root-bootstrap-publication-handoff.md`
+4. if parent-root publication becomes necessary before cutover, use routine bounded staging against tracked `HEAD` for already-introduced paths, keep `ops/agents/handoffs/2026-04-22-parent-root-bootstrap-publication-handoff.md` only as historical context, and treat wider subtree introduction as a distinct follow-on tranche
 
 Result:
 - the workspace behaves like the platform root by default
