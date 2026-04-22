@@ -1,0 +1,868 @@
+<\!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>APEX Lead Surface — Prototype</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f3f4f6; margin: 0; }
+    .status-not_started { background: #e5e7eb; color: #374151; }
+    .status-ready { background: #dbeafe; color: #1e40af; }
+    .status-active { background: #d1fae5; color: #065f46; }
+    .status-on_hold { background: #fef3c7; color: #92400e; }
+    .status-complete { background: #c7d2fe; color: #3730a3; }
+    .status-awaiting_review { background: #fbcfe8; color: #9d174d; }
+    .status-rejected { background: #fecaca; color: #991b1b; }
+    .status-open { background: #fef3c7; color: #92400e; }
+    .status-in_review { background: #dbeafe; color: #1e40af; }
+    .status-escalated { background: #fecaca; color: #991b1b; }
+    .status-resolved { background: #d1fae5; color: #065f46; }
+    .severity-high { color: #dc2626; font-weight: 700; }
+    .severity-medium { color: #d97706; font-weight: 600; }
+    .severity-low { color: #059669; }
+    .resa-blue { color: #015687; }
+    .resa-bg { background: #015687; }
+    .resa-green { color: #5FA844; }
+    .nav-item { cursor: pointer; padding: 10px 16px; border-radius: 6px; margin-bottom: 4px; font-size: 14px; }
+    .nav-item:hover { background: rgba(1,86,135,0.08); }
+    .nav-item.active { background: #015687; color: white; }
+    .card { background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 16px; margin-bottom: 12px; }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 9999px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
+    .readiness-green { background: #d1fae5; color: #065f46; }
+    .readiness-yellow { background: #fef3c7; color: #92400e; }
+    .readiness-red { background: #fecaca; color: #991b1b; }
+    .sidebar { width: 220px; min-height: 100vh; background: white; border-right: 1px solid #e5e7eb; padding: 16px 12px; position: fixed; left: 0; top: 0; }
+    .main-content { margin-left: 220px; padding: 24px; }
+    .btn { padding: 6px 14px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; }
+    .btn-primary { background: #015687; color: white; }
+    .btn-primary:hover { background: #014a73; }
+    .btn-warning { background: #d97706; color: white; }
+    .btn-warning:hover { background: #b45309; }
+    .btn-danger { background: #dc2626; color: white; }
+    .btn-danger:hover { background: #b91c1c; }
+    .btn-success { background: #059669; color: white; }
+    .btn-success:hover { background: #047857; }
+    .btn-outline { background: white; color: #015687; border: 1px solid #015687; }
+    .btn-outline:hover { background: #f0f7ff; }
+    table { width: 100%; border-collapse: collapse; }
+    th { text-align: left; padding: 8px 12px; font-size: 11px; text-transform: uppercase; color: #6b7280; border-bottom: 2px solid #e5e7eb; }
+    td { padding: 8px 12px; border-bottom: 1px solid #f3f4f6; font-size: 13px; }
+    tr:hover { background: #f9fafb; }
+    .progress-bar { height: 6px; background: #e5e7eb; border-radius: 3px; overflow: hidden; }
+    .progress-fill { height: 100%; background: #5FA844; border-radius: 3px; transition: width 0.3s; }
+    select, input { padding: 6px 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useEffect, useCallback, useMemo } = React;
+
+    // ===== CONFIGURATION =====
+    const SEAM_BASE = 'http://localhost:8000/api/v1/mutations';
+    const READS_BASE = 'http://localhost:8000/api/v1/reads';
+    const LEAD_ACTOR = {
+      actor_id: 'lead-001',
+      actor_role: 'lead',
+      project_scope: ['proj-001'],
+    };
+
+    // ===== AUTH =====
+    function makeToken(actor) {
+      return 'Bearer ' + btoa(JSON.stringify(actor));
+    }
+
+    // ===== API HELPERS =====
+    async function seamPost(endpoint, actionType, mutationClass, entityId, payload, reason) {
+      const body = {
+        idempotency_key: crypto.randomUUID(),
+        mutation_class: mutationClass,
+        action_type: actionType,
+        entity_id: entityId,
+        payload: payload,
+        reason: reason || '',
+        source: 'online',
+        client_timestamp: new Date().toISOString(),
+      };
+      const resp = await fetch(`${SEAM_BASE}/${endpoint}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': makeToken(LEAD_ACTOR),
+        },
+        body: JSON.stringify(body),
+      });
+      return resp.json();
+    }
+
+    async function readData(endpoint) {
+      const resp = await fetch(`${READS_BASE}/${endpoint}`, {
+        headers: { 'Authorization': makeToken(LEAD_ACTOR) },
+      });
+      return resp.json();
+    }
+
+    // ===== DATA CONTEXT =====
+    function useProjectData() {
+      const [apparatus, setApparatus] = useState([]);
+      const [tasks, setTasks] = useState([]);
+      const [workpackages, setWorkpackages] = useState([]);
+      const [issues, setIssues] = useState([]);
+      const [assignments, setAssignments] = useState([]);
+      const [loading, setLoading] = useState(true);
+      const [error, setError] = useState(null);
+      const [lastRefresh, setLastRefresh] = useState(null);
+
+      const refresh = useCallback(async () => {
+        try {
+          setLoading(true);
+          const [app, tsk, wp, iss, asgn] = await Promise.all([
+            readData('apparatus'),
+            readData('tasks'),
+            readData('workpackages'),
+            readData('issues'),
+            readData('assignments'),
+          ]);
+          setApparatus(app);
+          setTasks(tsk);
+          setWorkpackages(wp);
+          setIssues(iss);
+          setAssignments(asgn);
+          setLastRefresh(new Date());
+          setError(null);
+        } catch (e) {
+          setError('Failed to load data: ' + e.message);
+        } finally {
+          setLoading(false);
+        }
+      }, []);
+
+      useEffect(() => { refresh(); }, [refresh]);
+
+      return { apparatus, tasks, workpackages, issues, assignments, loading, error, refresh, lastRefresh };
+    }
+
+    // ===== STATUS HELPERS =====
+    function StatusBadge({ status }) {
+      return React.createElement('span', { className: `badge status-${status}` }, status?.replace(/_/g, ' '));
+    }
+    function SeverityLabel({ severity }) {
+      return React.createElement('span', { className: `severity-${severity}` }, severity);
+    }
+    function ReadinessBadge({ apparatus, issues, checklistItems }) {
+      const total = apparatus.length;
+      const complete = apparatus.filter(a => a.status === 'complete').length;
+      const blocking = issues.filter(i => i.blocks_completion && i.status \!== 'resolved').length;
+      let level = 'red', label = 'Not Ready';
+      if (complete === total && blocking === 0) { level = 'green'; label = 'Ready'; }
+      else if (complete >= total * 0.7 && blocking === 0) { level = 'yellow'; label = 'Nearly Ready'; }
+      return React.createElement('span', { className: `badge readiness-${level}` }, label);
+    }
+
+    // ===== SCREEN 1: DAILY PRIORITY BOARD =====
+    function DailyPriorityBoard({ data, navigate }) {
+      const { apparatus, tasks, issues, assignments, workpackages } = data;
+      const blockingIssues = issues.filter(i => i.blocks_completion && i.status \!== 'resolved');
+      const statusGroups = {};
+      apparatus.forEach(a => {
+        if (\!statusGroups[a.status]) statusGroups[a.status] = [];
+        statusGroups[a.status].push(a);
+      });
+      const statusOrder = ['active', 'on_hold', 'ready', 'not_started', 'complete'];
+
+      // Crew summary
+      const crewMap = {};
+      assignments.forEach(a => {
+        if (\!crewMap[a.assigned_to]) crewMap[a.assigned_to] = { count: 0, apparatus: [] };
+        crewMap[a.assigned_to].count++;
+        const app = apparatus.find(ap => ap.id === a.apparatus_id);
+        if (app) crewMap[a.assigned_to].apparatus.push(app);
+      });
+
+      return React.createElement('div', null,
+        React.createElement('h1', { className: 'text-xl font-bold resa-blue mb-4' }, 'Daily Priority Board'),
+
+        // Critical Alerts
+        blockingIssues.length > 0 && React.createElement('div', { className: 'card', style: { borderLeft: '4px solid #dc2626' } },
+          React.createElement('h2', { className: 'text-sm font-bold text-red-600 mb-2' }, `⚠ Critical Alerts (${blockingIssues.length})`),
+          blockingIssues.map(issue =>
+            React.createElement('div', { key: issue.id, className: 'flex justify-between items-center py-2 cursor-pointer hover:bg-gray-50 px-2 rounded', onClick: () => navigate('issues') },
+              React.createElement('div', null,
+                React.createElement('span', { className: 'font-medium text-sm' }, issue.title),
+                React.createElement('span', { className: 'text-xs text-gray-500 ml-2' }, `Apparatus: ${issue.apparatus_id}`),
+              ),
+              React.createElement(SeverityLabel, { severity: issue.severity }),
+            )
+          )
+        ),
+
+        // Crew Status
+        React.createElement('div', { className: 'card' },
+          React.createElement('h2', { className: 'text-sm font-bold text-gray-700 mb-3' }, "Today's Crew Status"),
+          Object.entries(crewMap).map(([techId, info]) =>
+            React.createElement('div', { key: techId, className: 'flex justify-between items-center py-2 border-b border-gray-100 last:border-0' },
+              React.createElement('span', { className: 'font-medium text-sm' }, techId),
+              React.createElement('span', { className: 'text-xs text-gray-500' }, `${info.count} assignments`),
+              React.createElement('div', { className: 'flex gap-1' },
+                info.apparatus.map(a =>
+                  React.createElement(StatusBadge, { key: a.id, status: a.status })
+                )
+              ),
+            )
+          ),
+          Object.keys(crewMap).length === 0 && React.createElement('p', { className: 'text-sm text-gray-400' }, 'No crew assignments yet'),
+        ),
+
+        // Apparatus Progress by Status
+        React.createElement('div', { className: 'card' },
+          React.createElement('h2', { className: 'text-sm font-bold text-gray-700 mb-3' }, 'Apparatus Progress'),
+          React.createElement('div', { className: 'grid grid-cols-5 gap-3' },
+            statusOrder.map(s => {
+              const items = statusGroups[s] || [];
+              return React.createElement('div', { key: s, className: 'text-center p-3 rounded-lg bg-gray-50' },
+                React.createElement('div', { className: 'text-2xl font-bold resa-blue' }, items.length),
+                React.createElement(StatusBadge, { status: s }),
+              );
+            })
+          ),
+        ),
+
+        // WorkPackage Summary
+        React.createElement('div', { className: 'card' },
+          React.createElement('h2', { className: 'text-sm font-bold text-gray-700 mb-3' }, 'Scope Overview'),
+          workpackages.map(wp => {
+            const wpApparatus = apparatus.filter(a => {
+              const task = tasks.find(t => t.id === a.task_id);
+              return task && task.workpackage_id === wp.id;
+            });
+            const wpIssues = issues.filter(i => {
+              const app = apparatus.find(a => a.id === i.apparatus_id);
+              if (\!app) return false;
+              const task = tasks.find(t => t.id === app.task_id);
+              return task && task.workpackage_id === wp.id;
+            });
+            const complete = wpApparatus.filter(a => a.status === 'complete').length;
+            const pct = wpApparatus.length > 0 ? Math.round((complete / wpApparatus.length) * 100) : 0;
+            return React.createElement('div', { key: wp.id, className: 'flex justify-between items-center py-3 border-b border-gray-100 cursor-pointer hover:bg-gray-50 px-2 rounded', onClick: () => navigate('scope', wp.id) },
+              React.createElement('div', null,
+                React.createElement('span', { className: 'font-medium' }, wp.name),
+                React.createElement(StatusBadge, { status: wp.status }),
+              ),
+              React.createElement('div', { className: 'flex items-center gap-3' },
+                React.createElement('div', { style: { width: 120 } },
+                  React.createElement('div', { className: 'progress-bar' },
+                    React.createElement('div', { className: 'progress-fill', style: { width: `${pct}%` } }),
+                  ),
+                ),
+                React.createElement('span', { className: 'text-xs text-gray-500' }, `${complete}/${wpApparatus.length}`),
+                React.createElement(ReadinessBadge, { apparatus: wpApparatus, issues: wpIssues, checklistItems: [] }),
+              ),
+            );
+          }),
+        ),
+      );
+    }
+
+    // ===== SCREEN 2: ASSIGNMENT MANAGER =====
+    function AssignmentManager({ data, onMutate }) {
+      const { apparatus, assignments, tasks, workpackages } = data;
+      const [assignModal, setAssignModal] = useState(null);
+      const [selectedTech, setSelectedTech] = useState('');
+      const crewRoster = ['tech-001', 'tech-002', 'tech-003'];
+
+      const handleAssign = async (apparatusId) => {
+        if (\!selectedTech) return;
+        // Check if assignment exists
+        const existing = assignments.find(a => a.apparatus_id === apparatusId);
+        if (existing) {
+          await seamPost('assignments', 'reassign', 'B', existing.id, { assigned_to: selectedTech }, 'Lead reassignment');
+        } else {
+          const newId = 'assign-' + crypto.randomUUID().slice(0,6);
+          await seamPost('assignments', 'assign', 'B', newId, {
+            apparatus_id: apparatusId, assigned_to: selectedTech, assigned_by: 'lead-001',
+            task_id: apparatus.find(a => a.id === apparatusId)?.task_id, project_id: 'proj-001',
+          }, 'Lead assignment');
+        }
+        setAssignModal(null);
+        setSelectedTech('');
+        onMutate();
+      };
+
+      const handleReprioritize = async (assignmentId, newPriority) => {
+        await seamPost('assignments', 'reprioritize', 'B', assignmentId, { priority: newPriority }, 'Priority update');
+        onMutate();
+      };
+
+      // Group by workpackage
+      const grouped = {};
+      workpackages.forEach(wp => { grouped[wp.id] = { wp, items: [] }; });
+      apparatus.forEach(app => {
+        const task = tasks.find(t => t.id === app.task_id);
+        if (task && grouped[task.workpackage_id]) {
+          const asgn = assignments.find(a => a.apparatus_id === app.id);
+          grouped[task.workpackage_id].items.push({ ...app, task, assignment: asgn });
+        }
+      });
+
+      return React.createElement('div', null,
+        React.createElement('h1', { className: 'text-xl font-bold resa-blue mb-4' }, 'Assignment Manager'),
+
+        // Crew Sidebar
+        React.createElement('div', { className: 'card mb-4' },
+          React.createElement('h3', { className: 'text-sm font-bold text-gray-700 mb-2' }, 'Crew Roster'),
+          React.createElement('div', { className: 'flex gap-4' },
+            crewRoster.map(tech => {
+              const count = assignments.filter(a => a.assigned_to === tech).length;
+              return React.createElement('div', { key: tech, className: 'bg-gray-50 p-3 rounded-lg text-center flex-1' },
+                React.createElement('div', { className: 'font-medium text-sm' }, tech),
+                React.createElement('div', { className: 'text-xs text-gray-500' }, `${count} assignments`),
+              );
+            }),
+          ),
+        ),
+
+        // Apparatus by WP
+        Object.values(grouped).map(({ wp, items }) =>
+          React.createElement('div', { key: wp.id, className: 'card' },
+            React.createElement('h3', { className: 'text-sm font-bold text-gray-600 mb-2' }, wp.name),
+            React.createElement('table', null,
+              React.createElement('thead', null,
+                React.createElement('tr', null,
+                  React.createElement('th', null, 'Apparatus'),
+                  React.createElement('th', null, 'Standard'),
+                  React.createElement('th', null, 'Status'),
+                  React.createElement('th', null, 'Assigned To'),
+                  React.createElement('th', null, 'Task'),
+                  React.createElement('th', null, 'Actions'),
+                ),
+              ),
+              React.createElement('tbody', null,
+                items.map(item =>
+                  React.createElement('tr', { key: item.id },
+                    React.createElement('td', { className: 'font-medium' }, item.name),
+                    React.createElement('td', null, item.neta_standard),
+                    React.createElement('td', null, React.createElement(StatusBadge, { status: item.status })),
+                    React.createElement('td', null, item.assignment?.assigned_to || React.createElement('span', { className: 'text-gray-400 italic' }, 'Unassigned')),
+                    React.createElement('td', { className: 'text-xs text-gray-500' }, item.task.name),
+                    React.createElement('td', null,
+                      React.createElement('button', { className: 'btn btn-outline mr-1', onClick: () => { setAssignModal(item.id); setSelectedTech(item.assignment?.assigned_to || ''); } },
+                        item.assignment ? 'Reassign' : 'Assign'
+                      ),
+                    ),
+                  )
+                ),
+              ),
+            ),
+          )
+        ),
+
+        // Assign Modal
+        assignModal && React.createElement('div', {
+          style: { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 },
+          onClick: (e) => { if (e.target === e.currentTarget) setAssignModal(null); }
+        },
+          React.createElement('div', { className: 'card', style: { width: 360 } },
+            React.createElement('h3', { className: 'text-sm font-bold mb-3' }, `Assign ${apparatus.find(a => a.id === assignModal)?.name}`),
+            React.createElement('select', { value: selectedTech, onChange: e => setSelectedTech(e.target.value), className: 'w-full mb-3' },
+              React.createElement('option', { value: '' }, 'Select technician...'),
+              crewRoster.map(t => React.createElement('option', { key: t, value: t }, t)),
+            ),
+            React.createElement('div', { className: 'flex gap-2 justify-end' },
+              React.createElement('button', { className: 'btn btn-outline', onClick: () => setAssignModal(null) }, 'Cancel'),
+              React.createElement('button', { className: 'btn btn-primary', onClick: () => handleAssign(assignModal), disabled: \!selectedTech }, 'Confirm'),
+            ),
+          ),
+        ),
+      );
+    }
+
+    // ===== SCREEN 3: SCOPE DETAIL =====
+    function ScopeDetail({ wpId, data, navigate, onMutate }) {
+      const { apparatus, tasks, issues, workpackages, assignments } = data;
+      const wp = workpackages.find(w => w.id === wpId);
+      if (\!wp) return React.createElement('div', { className: 'card' }, 'WorkPackage not found');
+
+      const wpTasks = tasks.filter(t => t.workpackage_id === wpId);
+      const wpApparatus = apparatus.filter(a => wpTasks.some(t => t.id === a.task_id));
+      const wpIssues = issues.filter(i => wpApparatus.some(a => a.id === i.apparatus_id));
+      const blocking = wpIssues.filter(i => i.blocks_completion && i.status \!== 'resolved');
+      const completeApparatus = wpApparatus.filter(a => a.status === 'complete').length;
+      const completeTasks = wpTasks.filter(t => t.status === 'complete').length;
+
+      return React.createElement('div', null,
+        React.createElement('button', { className: 'text-sm resa-blue mb-3 cursor-pointer', onClick: () => navigate('priority') }, '← Back to Priority Board'),
+        React.createElement('h1', { className: 'text-xl font-bold resa-blue mb-1' }, wp.name),
+        React.createElement('div', { className: 'flex gap-2 mb-4' },
+          React.createElement(StatusBadge, { status: wp.status }),
+          React.createElement(ReadinessBadge, { apparatus: wpApparatus, issues: wpIssues, checklistItems: [] }),
+        ),
+
+        // Summary cards
+        React.createElement('div', { className: 'grid grid-cols-4 gap-3 mb-4' },
+          React.createElement('div', { className: 'card text-center' },
+            React.createElement('div', { className: 'text-2xl font-bold resa-blue' }, `${completeTasks}/${wpTasks.length}`),
+            React.createElement('div', { className: 'text-xs text-gray-500' }, 'Tasks Complete'),
+          ),
+          React.createElement('div', { className: 'card text-center' },
+            React.createElement('div', { className: 'text-2xl font-bold resa-blue' }, `${completeApparatus}/${wpApparatus.length}`),
+            React.createElement('div', { className: 'text-xs text-gray-500' }, 'Apparatus Complete'),
+          ),
+          React.createElement('div', { className: 'card text-center' },
+            React.createElement('div', { className: 'text-2xl font-bold', style: { color: blocking.length > 0 ? '#dc2626' : '#059669' } }, blocking.length),
+            React.createElement('div', { className: 'text-xs text-gray-500' }, 'Blocking Issues'),
+          ),
+          React.createElement('div', { className: 'card text-center' },
+            React.createElement('div', { className: 'text-2xl font-bold resa-blue' }, `${wpApparatus.length > 0 ? Math.round((completeApparatus/wpApparatus.length)*100) : 0}%`),
+            React.createElement('div', { className: 'text-xs text-gray-500' }, 'Progress'),
+          ),
+        ),
+
+        // Tasks
+        React.createElement('div', { className: 'card' },
+          React.createElement('h3', { className: 'text-sm font-bold text-gray-700 mb-2' }, 'Tasks'),
+          React.createElement('table', null,
+            React.createElement('thead', null, React.createElement('tr', null,
+              React.createElement('th', null, 'Task'), React.createElement('th', null, 'Status'),
+              React.createElement('th', null, 'Apparatus'), React.createElement('th', null, 'Actions'),
+            )),
+            React.createElement('tbody', null,
+              wpTasks.map(task => {
+                const taskApparatus = wpApparatus.filter(a => a.task_id === task.id);
+                return React.createElement('tr', { key: task.id },
+                  React.createElement('td', { className: 'font-medium' }, task.name),
+                  React.createElement('td', null, React.createElement(StatusBadge, { status: task.status })),
+                  React.createElement('td', { className: 'text-xs' }, `${taskApparatus.filter(a=>a.status==='complete').length}/${taskApparatus.length} complete`),
+                  React.createElement('td', null,
+                    task.status === 'not_started' && React.createElement('button', { className: 'btn btn-primary', onClick: async () => { await seamPost('tasks', 'start', 'B', task.id, { status: 'active' }, 'Lead start'); onMutate(); } }, 'Start'),
+                    task.status === 'active' && React.createElement('button', { className: 'btn btn-warning', onClick: async () => { await seamPost('tasks', 'pause', 'B', task.id, { status: 'on_hold' }, 'Lead pause'); onMutate(); } }, 'Pause'),
+                    task.status === 'on_hold' && React.createElement('button', { className: 'btn btn-primary', onClick: async () => { await seamPost('tasks', 'resume', 'B', task.id, { status: 'active' }, 'Lead resume'); onMutate(); } }, 'Resume'),
+                  ),
+                );
+              })
+            ),
+          ),
+        ),
+
+        // Apparatus
+        React.createElement('div', { className: 'card' },
+          React.createElement('h3', { className: 'text-sm font-bold text-gray-700 mb-2' }, 'Apparatus'),
+          React.createElement('table', null,
+            React.createElement('thead', null, React.createElement('tr', null,
+              React.createElement('th', null, 'Name'), React.createElement('th', null, 'Standard'),
+              React.createElement('th', null, 'Status'), React.createElement('th', null, 'Assignee'),
+              React.createElement('th', null, 'Issues'),
+            )),
+            React.createElement('tbody', null,
+              wpApparatus.map(app => {
+                const appIssues = wpIssues.filter(i => i.apparatus_id === app.id);
+                const asgn = assignments.find(a => a.apparatus_id === app.id);
+                return React.createElement('tr', { key: app.id, className: 'cursor-pointer', onClick: () => navigate('apparatus', app.id) },
+                  React.createElement('td', { className: 'font-medium' }, app.name),
+                  React.createElement('td', null, app.neta_standard),
+                  React.createElement('td', null, React.createElement(StatusBadge, { status: app.status })),
+                  React.createElement('td', null, asgn?.assigned_to || app.assigned_to || '—'),
+                  React.createElement('td', null, appIssues.length > 0 ? React.createElement('span', { className: 'text-red-500 font-bold text-xs' }, `${appIssues.length} issues`) : '—'),
+                );
+              })
+            ),
+          ),
+        ),
+
+        // Issues
+        wpIssues.length > 0 && React.createElement('div', { className: 'card' },
+          React.createElement('h3', { className: 'text-sm font-bold text-gray-700 mb-2' }, 'Issues'),
+          wpIssues.map(issue =>
+            React.createElement('div', { key: issue.id, className: 'flex justify-between items-center py-2 border-b border-gray-100' },
+              React.createElement('div', null,
+                React.createElement('span', { className: 'font-medium text-sm' }, issue.title),
+                issue.blocks_completion && React.createElement('span', { className: 'badge bg-red-100 text-red-700 ml-2' }, 'BLOCKING'),
+              ),
+              React.createElement('div', { className: 'flex gap-2 items-center' },
+                React.createElement(SeverityLabel, { severity: issue.severity }),
+                React.createElement(StatusBadge, { status: issue.status }),
+              ),
+            )
+          ),
+        ),
+      );
+    }
+
+    // ===== SCREEN 4: APPARATUS DETAIL (LEAD VIEW) =====
+    function ApparatusDetail({ apparatusId, data, navigate, onMutate }) {
+      const { apparatus, issues, tasks, assignments } = data;
+      const app = apparatus.find(a => a.id === apparatusId);
+      if (\!app) return React.createElement('div', { className: 'card' }, 'Apparatus not found');
+
+      const appIssues = issues.filter(i => i.apparatus_id === apparatusId);
+      const task = tasks.find(t => t.id === app.task_id);
+      const asgn = assignments.find(a => a.apparatus_id === apparatusId);
+      const [overrideStatus, setOverrideStatus] = useState('');
+
+      const handleOverride = async () => {
+        if (\!overrideStatus) return;
+        const result = await seamPost('apparatus', 'update_status', 'B', apparatusId, { status: overrideStatus }, 'Lead override');
+        if (result.status === 'accepted') { setOverrideStatus(''); onMutate(); }
+        else { alert('Override failed: ' + JSON.stringify(result.error || result)); }
+      };
+
+      return React.createElement('div', null,
+        React.createElement('button', { className: 'text-sm resa-blue mb-3 cursor-pointer', onClick: () => navigate('priority') }, '← Back'),
+        React.createElement('h1', { className: 'text-xl font-bold resa-blue mb-1' }, app.name),
+        React.createElement('div', { className: 'flex gap-2 mb-4' },
+          React.createElement(StatusBadge, { status: app.status }),
+          React.createElement('span', { className: 'text-sm text-gray-500' }, `NETA: ${app.neta_standard}`),
+          React.createElement('span', { className: 'text-sm text-gray-500' }, `Task: ${task?.name || app.task_id}`),
+        ),
+
+        // Field-captured context (read-only)
+        React.createElement('div', { className: 'card' },
+          React.createElement('h3', { className: 'text-sm font-bold text-gray-700 mb-2' }, 'Field-Captured Status'),
+          React.createElement('div', { className: 'grid grid-cols-2 gap-4 text-sm' },
+            React.createElement('div', null,
+              React.createElement('span', { className: 'text-gray-500' }, 'Current Status: '),
+              React.createElement(StatusBadge, { status: app.status }),
+            ),
+            React.createElement('div', null,
+              React.createElement('span', { className: 'text-gray-500' }, 'Assigned To: '),
+              React.createElement('span', null, asgn?.assigned_to || app.assigned_to || 'Unassigned'),
+            ),
+          ),
+        ),
+
+        // Lead Controls
+        React.createElement('div', { className: 'card' },
+          React.createElement('h3', { className: 'text-sm font-bold text-gray-700 mb-2' }, 'Lead Controls'),
+          React.createElement('div', { className: 'flex gap-2 items-center mb-3' },
+            React.createElement('label', { className: 'text-sm font-medium' }, 'Override Status:'),
+            React.createElement('select', { value: overrideStatus, onChange: e => setOverrideStatus(e.target.value) },
+              React.createElement('option', { value: '' }, 'Select...'),
+              ['not_started', 'ready', 'active', 'on_hold', 'complete'].map(s =>
+                React.createElement('option', { key: s, value: s }, s.replace(/_/g, ' '))
+              ),
+            ),
+            React.createElement('button', { className: 'btn btn-warning', onClick: handleOverride, disabled: \!overrideStatus }, 'Apply Override'),
+          ),
+          React.createElement('p', { className: 'text-xs text-gray-400' }, 'Overrides field tech status. Tech will see updated status on next sync.'),
+        ),
+
+        // Issues
+        React.createElement('div', { className: 'card' },
+          React.createElement('h3', { className: 'text-sm font-bold text-gray-700 mb-2' }, `Issues (${appIssues.length})`),
+          appIssues.length === 0
+            ? React.createElement('p', { className: 'text-sm text-gray-400' }, 'No issues reported')
+            : appIssues.map(issue =>
+                React.createElement('div', { key: issue.id, className: 'border-b border-gray-100 py-2' },
+                  React.createElement('div', { className: 'flex justify-between items-center' },
+                    React.createElement('span', { className: 'font-medium text-sm' }, issue.title),
+                    React.createElement('div', { className: 'flex gap-2' },
+                      React.createElement(SeverityLabel, { severity: issue.severity }),
+                      React.createElement(StatusBadge, { status: issue.status }),
+                      issue.blocks_completion && React.createElement('span', { className: 'badge bg-red-100 text-red-700' }, 'BLOCKING'),
+                    ),
+                  ),
+                )
+              ),
+          React.createElement('button', { className: 'btn btn-outline mt-2', onClick: () => navigate('issues') }, 'Go to Issue Triage →'),
+        ),
+      );
+    }
+
+    // ===== SCREEN 5: ISSUE TRIAGE QUEUE =====
+    function IssueTriage({ data, onMutate }) {
+      const { issues, apparatus, workpackages, tasks } = data;
+      const [actionResult, setActionResult] = useState(null);
+
+      const sortedIssues = [...issues].sort((a, b) => {
+        if (a.blocks_completion && \!b.blocks_completion) return -1;
+        if (\!a.blocks_completion && b.blocks_completion) return 1;
+        const sevOrder = { high: 0, medium: 1, low: 2 };
+        return (sevOrder[a.severity] || 3) - (sevOrder[b.severity] || 3);
+      });
+
+      const triageAction = async (issueId, action, cls, payload, reason) => {
+        const result = await seamPost('issues', action, cls, issueId, payload, reason);
+        setActionResult({ issueId, action, result });
+        onMutate();
+      };
+
+      const getWpName = (issue) => {
+        const app = apparatus.find(a => a.id === issue.apparatus_id);
+        if (\!app) return '—';
+        const task = tasks.find(t => t.id === app.task_id);
+        if (\!task) return '—';
+        const wp = workpackages.find(w => w.id === task.workpackage_id);
+        return wp?.name || '—';
+      };
+
+      return React.createElement('div', null,
+        React.createElement('h1', { className: 'text-xl font-bold resa-blue mb-4' }, 'Issue Triage Queue'),
+
+        actionResult && React.createElement('div', {
+          className: `card text-sm mb-3 ${actionResult.result.status === 'accepted' ? 'bg-green-50' : 'bg-red-50'}`,
+          onClick: () => setActionResult(null),
+        },
+          actionResult.result.status === 'accepted'
+            ? `✓ ${actionResult.action} on ${actionResult.issueId} accepted`
+            : `✗ ${actionResult.action} failed: ${JSON.stringify(actionResult.result.error || actionResult.result)}`,
+        ),
+
+        React.createElement('div', { className: 'card' },
+          React.createElement('table', null,
+            React.createElement('thead', null, React.createElement('tr', null,
+              React.createElement('th', null, 'Severity'),
+              React.createElement('th', null, 'Blocks'),
+              React.createElement('th', null, 'Title'),
+              React.createElement('th', null, 'Apparatus'),
+              React.createElement('th', null, 'WorkPackage'),
+              React.createElement('th', null, 'State'),
+              React.createElement('th', null, 'Reporter'),
+              React.createElement('th', null, 'Actions'),
+            )),
+            React.createElement('tbody', null,
+              sortedIssues.map(issue => {
+                const app = apparatus.find(a => a.id === issue.apparatus_id);
+                return React.createElement('tr', { key: issue.id },
+                  React.createElement('td', null, React.createElement(SeverityLabel, { severity: issue.severity })),
+                  React.createElement('td', null, issue.blocks_completion
+                    ? React.createElement('span', { className: 'badge bg-red-100 text-red-700' }, 'YES')
+                    : React.createElement('span', { className: 'text-gray-400' }, 'No')
+                  ),
+                  React.createElement('td', { className: 'font-medium' }, issue.title),
+                  React.createElement('td', { className: 'text-xs' }, app?.name || issue.apparatus_id),
+                  React.createElement('td', { className: 'text-xs' }, getWpName(issue)),
+                  React.createElement('td', null, React.createElement(StatusBadge, { status: issue.status })),
+                  React.createElement('td', { className: 'text-xs' }, issue.reported_by),
+                  React.createElement('td', null,
+                    React.createElement('div', { className: 'flex gap-1 flex-wrap' },
+                      issue.status === 'open' && React.createElement('button', {
+                        className: 'btn btn-primary', style: { fontSize: 11, padding: '3px 8px' },
+                        onClick: () => triageAction(issue.id, 'begin_review', 'B', { status: 'in_review' }, 'Lead triage'),
+                      }, 'Review'),
+                      issue.status === 'in_review' && React.createElement('button', {
+                        className: 'btn btn-success', style: { fontSize: 11, padding: '3px 8px' },
+                        onClick: () => triageAction(issue.id, 'resolve', 'B', { status: 'resolved' }, 'Lead resolve'),
+                      }, 'Resolve'),
+                      issue.status === 'in_review' && React.createElement('button', {
+                        className: 'btn btn-danger', style: { fontSize: 11, padding: '3px 8px' },
+                        onClick: () => triageAction(issue.id, 'escalate_to_pm', 'C', { status: 'escalated' }, 'Lead escalation'),
+                      }, 'Escalate'),
+                      (issue.status === 'open' || issue.status === 'in_review') && React.createElement('button', {
+                        className: 'btn btn-outline', style: { fontSize: 11, padding: '3px 8px' },
+                        onClick: () => triageAction(issue.id, 'set_blocking', 'B', { blocks_completion: \!issue.blocks_completion }, 'Toggle blocking'),
+                      }, issue.blocks_completion ? 'Unblock' : 'Block'),
+                    ),
+                  ),
+                );
+              })
+            ),
+          ),
+        ),
+      );
+    }
+
+    // ===== SCREEN 6: PROGRESS RELAY =====
+    function ProgressRelay({ data, navigate, onMutate }) {
+      const { apparatus, tasks, issues, workpackages } = data;
+      const [submitModal, setSubmitModal] = useState(null);
+      const [submitNote, setSubmitNote] = useState('');
+
+      const wpStats = workpackages.map(wp => {
+        const wpTasks = tasks.filter(t => t.workpackage_id === wp.id);
+        const wpApparatus = apparatus.filter(a => wpTasks.some(t => t.id === a.task_id));
+        const wpIssues = issues.filter(i => wpApparatus.some(a => a.id === i.apparatus_id));
+        const blocking = wpIssues.filter(i => i.blocks_completion && i.status \!== 'resolved');
+        const completeTasks = wpTasks.filter(t => t.status === 'complete').length;
+        const completeApparatus = wpApparatus.filter(a => a.status === 'complete').length;
+        const pct = wpApparatus.length > 0 ? Math.round((completeApparatus / wpApparatus.length) * 100) : 0;
+
+        let readiness = 'red';
+        if (completeApparatus === wpApparatus.length && blocking.length === 0) readiness = 'green';
+        else if (completeApparatus >= wpApparatus.length * 0.7 && blocking.length === 0) readiness = 'yellow';
+
+        return { wp, wpTasks, wpApparatus, wpIssues, blocking, completeTasks, completeApparatus, pct, readiness };
+      });
+
+      const handleSubmit = async (wpId) => {
+        const result = await seamPost('workpackages', 'submit_for_review', 'C', wpId,
+          { status: 'awaiting_review' }, submitNote || 'Submitted for review');
+        if (result.status === 'accepted') {
+          setSubmitModal(null);
+          setSubmitNote('');
+          onMutate();
+        } else {
+          alert('Submit failed: ' + JSON.stringify(result.error || result));
+        }
+      };
+
+      const handleWithdraw = async (wpId) => {
+        const result = await seamPost('workpackages', 'withdraw_submission', 'C', wpId,
+          { status: 'active' }, 'Withdrawal');
+        if (result.status === 'accepted') onMutate();
+        else alert('Withdraw failed: ' + JSON.stringify(result.error || result));
+      };
+
+      return React.createElement('div', null,
+        React.createElement('h1', { className: 'text-xl font-bold resa-blue mb-4' }, 'Progress Relay & Review Readiness'),
+
+        React.createElement('div', { className: 'card' },
+          React.createElement('table', null,
+            React.createElement('thead', null, React.createElement('tr', null,
+              React.createElement('th', null, 'WorkPackage'),
+              React.createElement('th', null, 'State'),
+              React.createElement('th', null, 'Tasks'),
+              React.createElement('th', null, 'Apparatus'),
+              React.createElement('th', null, 'Progress'),
+              React.createElement('th', null, 'Blocking'),
+              React.createElement('th', null, 'Readiness'),
+              React.createElement('th', null, 'Actions'),
+            )),
+            React.createElement('tbody', null,
+              wpStats.map(({ wp, completeTasks, wpTasks, completeApparatus, wpApparatus, blocking, pct, readiness }) =>
+                React.createElement('tr', { key: wp.id },
+                  React.createElement('td', { className: 'font-medium cursor-pointer resa-blue', onClick: () => navigate('scope', wp.id) }, wp.name),
+                  React.createElement('td', null, React.createElement(StatusBadge, { status: wp.status })),
+                  React.createElement('td', { className: 'text-xs' }, `${completeTasks}/${wpTasks.length}`),
+                  React.createElement('td', { className: 'text-xs' }, `${completeApparatus}/${wpApparatus.length}`),
+                  React.createElement('td', null,
+                    React.createElement('div', { className: 'flex items-center gap-2' },
+                      React.createElement('div', { className: 'progress-bar', style: { width: 80 } },
+                        React.createElement('div', { className: 'progress-fill', style: { width: `${pct}%` } }),
+                      ),
+                      React.createElement('span', { className: 'text-xs' }, `${pct}%`),
+                    ),
+                  ),
+                  React.createElement('td', null,
+                    blocking.length > 0
+                      ? React.createElement('span', { className: 'text-red-600 font-bold text-xs' }, blocking.length)
+                      : React.createElement('span', { className: 'text-green-600 text-xs' }, '0'),
+                  ),
+                  React.createElement('td', null, React.createElement('span', { className: `badge readiness-${readiness}` },
+                    readiness === 'green' ? 'Ready' : readiness === 'yellow' ? 'Nearly' : 'Not Ready'
+                  )),
+                  React.createElement('td', null,
+                    wp.status === 'active' && React.createElement('button', {
+                      className: 'btn btn-primary', style: { fontSize: 11, padding: '3px 8px' },
+                      onClick: () => setSubmitModal(wp.id),
+                    }, 'Submit for Review'),
+                    wp.status === 'awaiting_review' && React.createElement('button', {
+                      className: 'btn btn-outline', style: { fontSize: 11, padding: '3px 8px' },
+                      onClick: () => handleWithdraw(wp.id),
+                    }, 'Withdraw'),
+                  ),
+                )
+              )
+            ),
+          ),
+        ),
+
+        // Submit Modal
+        submitModal && React.createElement('div', {
+          style: { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 },
+          onClick: (e) => { if (e.target === e.currentTarget) setSubmitModal(null); }
+        },
+          React.createElement('div', { className: 'card', style: { width: 420 } },
+            (() => {
+              const stats = wpStats.find(s => s.wp.id === submitModal);
+              if (\!stats) return null;
+              return React.createElement('div', null,
+                React.createElement('h3', { className: 'text-sm font-bold mb-3' }, `Submit "${stats.wp.name}" for Review`),
+                React.createElement('div', { className: 'text-sm mb-3 space-y-1' },
+                  React.createElement('div', null, `Tasks: ${stats.completeTasks}/${stats.wpTasks.length} complete`,
+                    stats.completeTasks < stats.wpTasks.length && React.createElement('span', { className: 'text-yellow-600 ml-1' }, '⚠'),
+                  ),
+                  React.createElement('div', null, `Apparatus: ${stats.completeApparatus}/${stats.wpApparatus.length} complete`,
+                    stats.completeApparatus < stats.wpApparatus.length && React.createElement('span', { className: 'text-yellow-600 ml-1' }, '⚠'),
+                  ),
+                  React.createElement('div', null, `Blocking issues: ${stats.blocking.length}`,
+                    stats.blocking.length > 0 && React.createElement('span', { className: 'text-red-600 ml-1' }, '⚠ PM will not be able to approve'),
+                  ),
+                ),
+                React.createElement('textarea', {
+                  className: 'w-full border border-gray-300 rounded p-2 text-sm mb-3', rows: 3,
+                  placeholder: 'Submission note (optional)...',
+                  value: submitNote, onChange: e => setSubmitNote(e.target.value),
+                }),
+                React.createElement('p', { className: 'text-xs text-gray-400 mb-3' }, 'This is a Class C action — requires server validation (cannot be performed offline).'),
+                React.createElement('div', { className: 'flex gap-2 justify-end' },
+                  React.createElement('button', { className: 'btn btn-outline', onClick: () => setSubmitModal(null) }, 'Cancel'),
+                  React.createElement('button', { className: 'btn btn-primary', onClick: () => handleSubmit(submitModal) }, 'Submit for Review'),
+                ),
+              );
+            })(),
+          ),
+        ),
+      );
+    }
+
+    // ===== APP SHELL =====
+    function App() {
+      const data = useProjectData();
+      const [screen, setScreen] = useState('priority');
+      const [detailId, setDetailId] = useState(null);
+
+      const navigate = useCallback((target, id) => {
+        setScreen(target);
+        setDetailId(id || null);
+      }, []);
+
+      const navItems = [
+        { key: 'priority', label: 'Priority Board', icon: '📋' },
+        { key: 'assignments', label: 'Assignments', icon: '👥' },
+        { key: 'issues', label: 'Issue Triage', icon: '⚠️' },
+        { key: 'progress', label: 'Progress Relay', icon: '📊' },
+      ];
+
+      const renderScreen = () => {
+        if (data.loading) return React.createElement('div', { className: 'card text-center p-8' }, 'Loading project data...');
+        if (data.error) return React.createElement('div', { className: 'card text-center p-8 text-red-500' }, data.error);
+
+        switch (screen) {
+          case 'priority': return React.createElement(DailyPriorityBoard, { data, navigate });
+          case 'assignments': return React.createElement(AssignmentManager, { data, onMutate: data.refresh });
+          case 'scope': return React.createElement(ScopeDetail, { wpId: detailId, data, navigate, onMutate: data.refresh });
+          case 'apparatus': return React.createElement(ApparatusDetail, { apparatusId: detailId, data, navigate, onMutate: data.refresh });
+          case 'issues': return React.createElement(IssueTriage, { data, onMutate: data.refresh });
+          case 'progress': return React.createElement(ProgressRelay, { data, navigate, onMutate: data.refresh });
+          default: return React.createElement(DailyPriorityBoard, { data, navigate });
+        }
+      };
+
+      return React.createElement('div', null,
+        // Sidebar
+        React.createElement('div', { className: 'sidebar' },
+          React.createElement('div', { className: 'mb-6' },
+            React.createElement('div', { className: 'font-bold text-lg resa-blue' }, 'APEX Lead'),
+            React.createElement('div', { className: 'text-xs resa-green font-semibold' }, 'Operations Surface'),
+            React.createElement('div', { className: 'text-xs text-gray-400 mt-1' }, 'lead-001 • proj-001'),
+          ),
+          navItems.map(item =>
+            React.createElement('div', {
+              key: item.key,
+              className: `nav-item ${screen === item.key ? 'active' : ''}`,
+              onClick: () => navigate(item.key),
+            },
+              `${item.icon} ${item.label}`
+            )
+          ),
+          React.createElement('div', { className: 'mt-6 pt-4 border-t border-gray-200' },
+            React.createElement('div', { className: 'text-xs text-gray-400' }, 'Last refresh:'),
+            React.createElement('div', { className: 'text-xs text-gray-500' }, data.lastRefresh?.toLocaleTimeString() || '—'),
+            React.createElement('button', {
+              className: 'btn btn-outline mt-2 w-full text-xs',
+              onClick: data.refresh,
+            }, 'Refresh Data'),
+          ),
+        ),
+        // Main content
+        React.createElement('div', { className: 'main-content' }, renderScreen()),
+      );
+    }
+
+    ReactDOM.render(React.createElement(App), document.getElementById('root'));
+  </script>
+</body>
+</html>
