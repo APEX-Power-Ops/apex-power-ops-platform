@@ -1,0 +1,25 @@
+ERMHDR	16.2	2026-04-18	Project	APEX	StackDC-BaselineGolden-020h	USER_APEX	Databases	mm/dd/yyyy	USD
+%T	PROJECT
+%F	proj_id	proj_short_name	proj_url	sum_base_proj_id	plan_start_date	plan_end_date	last_recalc_date	act_start_date	act_end_date	scd_end_date
+%R	1001	StackDC	sanitized://stackdc/live	9998	2026-05-04 07:00	2026-06-01 17:00	2026-04-18 00:00			2026-06-01 17:00
+%R	9998	StackDC-BL-R01	sanitized://stackdc/baseline/r01		2026-04-27 07:00	2026-05-15 17:00	2026-02-01 00:00			2026-05-15 17:00
+%T	PROJWBS
+%F	wbs_id	proj_id	wbs_name	wbs_short_name	seq_num	proj_node_flag	parent_wbs_id
+%R	5001	1001	StackDC Root	ROOT	1
+%T	TASK
+%F	task_id	proj_id	wbs_id	task_code	task_name	status_code	task_type	target_drtn_hr_cnt	target_start_date	target_end_date	total_float_hr_cnt	free_float_hr_cnt	driving_path_flag
+%R	7001	1001	5001	A10	Mobilize	TK_NotStart	TT_Task	16	2026-05-04 07:00	2026-05-05 17:00	0	0	N
+%R	7002	1001	5001	A20	Demo existing switchgear	TK_NotStart	TT_Task	24	2026-05-06 07:00	2026-05-08 17:00	0	0	Y
+%R	7003	1001	5001	A30	Install new busway	TK_NotStart	TT_Task	40	2026-05-11 07:00	2026-05-15 17:00	0	0	Y
+%R	7004	1001	5001	A99	Commissioning tests	TK_NotStart	TT_Task	40	2026-05-18 07:00	2026-05-22 17:00	0	0	Y
+%R	7101	9998	5001	A10	Mobilize	TK_Complete	TT_Task	16	2026-04-27 07:00	2026-04-28 17:00	0	0	N
+%R	7102	9998	5001	A20	Demo existing switchgear	TK_Complete	TT_Task	24	2026-04-29 07:00	2026-05-01 17:00	0	0	Y
+%R	7103	9998	5001	A30	Install new busway	TK_Complete	TT_Task	40	2026-05-04 07:00	2026-05-08 17:00	0	0	Y
+%R	7190	9998	5001	A90	Retired lift plan	TK_Complete	TT_Task	24	2026-05-11 07:00	2026-05-13 17:00	0	0	N
+%T	TASKPRED
+%F	task_pred_id	task_id	pred_task_id	proj_id	pred_proj_id	pred_type	lag_hr_cnt
+%R	9001	7002	7001	1001	1001	PR_FS	0
+%T	PROJBASELINE
+%F	proj_id	base_proj_id	base_type_name	last_update_date
+%R	1001	9998	Stack DC — Original Baseline R01	2026-02-01 00:00
+%E

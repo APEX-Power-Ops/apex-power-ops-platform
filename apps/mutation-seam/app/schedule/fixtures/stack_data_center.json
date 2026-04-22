@@ -1,0 +1,208 @@
+{
+  "_comment": "Packet UI-002a P6 schedule-context fixture for the Stack Data Center prototype. Aligned to the seeded seam entities from packet UI-001e so the read-only bridge returns context that joins against existing seam.tasks. NOT a real XER export — a minimal hand-authored representation used when PyP6Xer cannot find a .xer file under fixtures/. Scope links (scope_project_id, scope_id) reference seam.* row IDs as soft text references only; the seam schema remains canonical owner of execution truth.",
+  "source": {
+    "type": "json-fixture",
+    "source_file": "stack_data_center.json",
+    "data_date": "2026-04-15T00:00:00Z"
+  },
+  "projects": [
+    {
+      "id": "sched-proj-001",
+      "p6_project_id": "SDCX-2026",
+      "name": "Stack Data Center — RESA Commissioning",
+      "scope_project_id": "proj-001",
+      "data_date": "2026-04-15T00:00:00Z",
+      "planned_start": "2026-03-01T00:00:00Z",
+      "planned_finish": "2026-09-30T00:00:00Z",
+      "actual_start": "2026-03-03T07:00:00Z",
+      "actual_finish": null,
+      "must_finish_by": "2026-10-15T00:00:00Z"
+    }
+  ],
+  "wbs_nodes": [
+    {
+      "id": "sched-wbs-root",
+      "p6_wbs_id": "SDCX-2026.ROOT",
+      "schedule_project_id": "sched-proj-001",
+      "parent_wbs_id": null,
+      "name": "Stack Data Center",
+      "short_name": "SDCX",
+      "seq": 1,
+      "level": 1
+    },
+    {
+      "id": "sched-wbs-001",
+      "p6_wbs_id": "SDCX-2026.COMM",
+      "schedule_project_id": "sched-proj-001",
+      "parent_wbs_id": "sched-wbs-root",
+      "name": "Commissioning Phase 1",
+      "short_name": "COMM1",
+      "seq": 1,
+      "level": 2
+    },
+    {
+      "id": "sched-wbs-002",
+      "p6_wbs_id": "SDCX-2026.TEST",
+      "schedule_project_id": "sched-proj-001",
+      "parent_wbs_id": "sched-wbs-root",
+      "name": "Acceptance Testing",
+      "short_name": "TEST",
+      "seq": 2,
+      "level": 2
+    }
+  ],
+  "tasks": [
+    {
+      "id": "sched-task-001",
+      "p6_task_id": "SDCX-2026.T1010",
+      "schedule_project_id": "sched-proj-001",
+      "schedule_wbs_id": "sched-wbs-001",
+      "scope_id": "task-001",
+      "p6_status": "TK_NotStart",
+      "apex_status": "not_started",
+      "task_code": "A1010",
+      "task_name": "Medium Voltage Switchgear — Visual + Mechanical",
+      "task_type": "TT_Task",
+      "duration_hours": 40,
+      "planned_start": "2026-04-20T07:00:00Z",
+      "planned_finish": "2026-04-24T17:00:00Z",
+      "actual_start": null,
+      "actual_finish": null,
+      "total_float_hours": 16,
+      "free_float_hours": 0,
+      "critical_flag": false,
+      "constraint_type": null,
+      "constraint_date": null
+    },
+    {
+      "id": "sched-task-002",
+      "p6_task_id": "SDCX-2026.T1020",
+      "schedule_project_id": "sched-proj-001",
+      "schedule_wbs_id": "sched-wbs-001",
+      "scope_id": "task-002",
+      "p6_status": "TK_NotStart",
+      "apex_status": "not_started",
+      "task_code": "A1020",
+      "task_name": "MV Switchgear — Electrical Testing",
+      "task_type": "TT_Task",
+      "duration_hours": 64,
+      "planned_start": "2026-04-27T07:00:00Z",
+      "planned_finish": "2026-05-04T17:00:00Z",
+      "actual_start": null,
+      "actual_finish": null,
+      "total_float_hours": 0,
+      "free_float_hours": 0,
+      "critical_flag": true,
+      "constraint_type": null,
+      "constraint_date": null
+    },
+    {
+      "id": "sched-task-003",
+      "p6_task_id": "SDCX-2026.T2010",
+      "schedule_project_id": "sched-proj-001",
+      "schedule_wbs_id": "sched-wbs-002",
+      "scope_id": "task-003",
+      "p6_status": "TK_NotStart",
+      "apex_status": "not_started",
+      "task_code": "A2010",
+      "task_name": "LV Distribution Panels — Acceptance Test",
+      "task_type": "TT_Task",
+      "duration_hours": 48,
+      "planned_start": "2026-05-11T07:00:00Z",
+      "planned_finish": "2026-05-15T17:00:00Z",
+      "actual_start": null,
+      "actual_finish": null,
+      "total_float_hours": 24,
+      "free_float_hours": 8,
+      "critical_flag": false,
+      "constraint_type": "CS_MSO",
+      "constraint_date": "2026-05-11T07:00:00Z"
+    },
+    {
+      "id": "sched-task-004",
+      "p6_task_id": "SDCX-2026.T2020",
+      "schedule_project_id": "sched-proj-001",
+      "schedule_wbs_id": "sched-wbs-002",
+      "scope_id": "task-004",
+      "p6_status": "TK_NotStart",
+      "apex_status": "not_started",
+      "task_code": "A2020",
+      "task_name": "UPS System — Commissioning",
+      "task_type": "TT_Task",
+      "duration_hours": 32,
+      "planned_start": "2026-05-18T07:00:00Z",
+      "planned_finish": "2026-05-21T17:00:00Z",
+      "actual_start": null,
+      "actual_finish": null,
+      "total_float_hours": 0,
+      "free_float_hours": 0,
+      "critical_flag": true,
+      "constraint_type": null,
+      "constraint_date": null
+    }
+  ],
+  "relationships": [
+    {
+      "id": "sched-rel-001",
+      "p6_taskpred_id": "SDCX-2026.R001",
+      "schedule_project_id": "sched-proj-001",
+      "predecessor_task_id": "sched-task-001",
+      "successor_task_id": "sched-task-002",
+      "rel_type": "FS",
+      "lag_hours": 8
+    },
+    {
+      "id": "sched-rel-002",
+      "p6_taskpred_id": "SDCX-2026.R002",
+      "schedule_project_id": "sched-proj-001",
+      "predecessor_task_id": "sched-task-002",
+      "successor_task_id": "sched-task-003",
+      "rel_type": "FS",
+      "lag_hours": 0
+    },
+    {
+      "id": "sched-rel-003",
+      "p6_taskpred_id": "SDCX-2026.R003",
+      "schedule_project_id": "sched-proj-001",
+      "predecessor_task_id": "sched-task-003",
+      "successor_task_id": "sched-task-004",
+      "rel_type": "SS",
+      "lag_hours": 48
+    }
+  ],
+  "_baselines_comment": "Packet 020c fixture extension. Baseline values below are synthetic-for-development ONLY because this fixture represents a hand-authored stand-in for a P6 export that includes a PROJBASELINE link. They land via the authorized baseline lane (not by freezing planned_*), and they carry explicit source=p6_import + p6_baseline_proj_id so the invariants from 020b §3-§5 are satisfied. For real P6 imports, the loader's XER path must supply baselines parsed from the actual PROJBASELINE table — not synthesized from planned_* values.",
+  "baselines": [
+    {
+      "id": "blev-fixture-original",
+      "schedule_project_id": "sched-proj-001",
+      "baseline_source": "p6_import",
+      "baseline_name": "Original Baseline (SDCX 2026 Kickoff)",
+      "p6_baseline_proj_id": "SDCX-2026-BL1",
+      "source_file": "stack_data_center.json",
+      "captured_at": "2026-03-01T00:00:00Z",
+      "captured_by_actor_id": null,
+      "tasks": [
+        {
+          "schedule_task_id": "sched-task-001",
+          "baseline_start":  "2026-04-20T07:00:00Z",
+          "baseline_finish": "2026-04-24T17:00:00Z"
+        },
+        {
+          "schedule_task_id": "sched-task-002",
+          "baseline_start":  "2026-04-27T07:00:00Z",
+          "baseline_finish": "2026-05-04T17:00:00Z"
+        },
+        {
+          "schedule_task_id": "sched-task-003",
+          "baseline_start":  "2026-05-11T07:00:00Z",
+          "baseline_finish": "2026-05-15T17:00:00Z"
+        },
+        {
+          "schedule_task_id": "sched-task-004",
+          "baseline_start":  "2026-05-18T07:00:00Z",
+          "baseline_finish": "2026-05-21T17:00:00Z"
+        }
+      ]
+    }
+  ]
+}
