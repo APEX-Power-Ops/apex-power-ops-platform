@@ -249,7 +249,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$repoRoot = (Resolve-Path (Join-Path '${workspaceFolder}' '..')).Path; $lane = Join-Path $repoRoot 'apps/operations-web'; if (-not (Test-Path $lane)) { throw 'apps/operations-web is not present under the parent repo root for this bootstrap packet.' }; pnpm --dir $repoRoot --filter @apex/operations-web dev"
+        "$repoRoot = (Resolve-Path (Join-Path '${workspaceFolder}' '..')).Path; $lane = Join-Path $repoRoot 'apps/operations-web'; if (-not (Test-Path $lane)) { throw 'apps/operations-web is not present under the parent repo root for this bootstrap packet.' }; pnpm --dir $repoRoot --filter '@apex/operations-web' dev"
       ],
       "isBackground": true,
       "problemMatcher": [],
@@ -262,7 +262,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$repoRoot = (Resolve-Path (Join-Path '${workspaceFolder}' '..')).Path; $lane = Join-Path $repoRoot 'apps/operations-web'; if (-not (Test-Path $lane)) { throw 'apps/operations-web is not present under the parent repo root for this bootstrap packet.' }; pnpm --dir $repoRoot --filter @apex/operations-web typecheck"
+        "$repoRoot = (Resolve-Path (Join-Path '${workspaceFolder}' '..')).Path; $lane = Join-Path $repoRoot 'apps/operations-web'; if (-not (Test-Path $lane)) { throw 'apps/operations-web is not present under the parent repo root for this bootstrap packet.' }; pnpm --dir $repoRoot --filter '@apex/operations-web' typecheck"
       ],
       "problemMatcher": [],
       "group": "test"
@@ -274,7 +274,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$repoRoot = (Resolve-Path (Join-Path '${workspaceFolder}' '..')).Path; $lane = Join-Path $repoRoot 'apps/operations-web'; if (-not (Test-Path $lane)) { throw 'apps/operations-web is not present under the parent repo root for this bootstrap packet.' }; pnpm --dir $repoRoot --filter @apex/operations-web smoke:browser"
+        "$repoRoot = (Resolve-Path (Join-Path '${workspaceFolder}' '..')).Path; $lane = Join-Path $repoRoot 'apps/operations-web'; if (-not (Test-Path $lane)) { throw 'apps/operations-web is not present under the parent repo root for this bootstrap packet.' }; pnpm --dir $repoRoot --filter '@apex/operations-web' smoke:browser"
       ],
       "problemMatcher": [],
       "group": "test"
@@ -286,7 +286,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$repoRoot = (Resolve-Path (Join-Path '${workspaceFolder}' '..')).Path; $lane = Join-Path $repoRoot 'apps/operations-web'; if (-not (Test-Path $lane)) { throw 'apps/operations-web is not present under the parent repo root for this bootstrap packet.' }; $env:OPERATIONS_WEB_CONTROL_PLANE_BASE_URL='https://control.apexpowerops.com'; pnpm --dir $repoRoot --filter @apex/operations-web smoke:promoted-host"
+        "$repoRoot = (Resolve-Path (Join-Path '${workspaceFolder}' '..')).Path; $lane = Join-Path $repoRoot 'apps/operations-web'; if (-not (Test-Path $lane)) { throw 'apps/operations-web is not present under the parent repo root for this bootstrap packet.' }; $env:OPERATIONS_WEB_CONTROL_PLANE_BASE_URL='https://control.apexpowerops.com'; pnpm --dir $repoRoot --filter '@apex/operations-web' smoke:promoted-host"
       ],
       "problemMatcher": [],
       "group": "test"
@@ -375,10 +375,10 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$repoRoot = (Resolve-Path (Join-Path '${workspaceFolder}' '..')).Path; $lane = Join-Path $repoRoot 'apps/mutation-seam'; if (-not (Test-Path $lane)) { throw 'apps/mutation-seam is not present under the parent repo root for this bootstrap packet.' }; & '${workspaceFolder}\\.venv\\Scripts\\python.exe' -m uvicorn app.main:app --reload --port 8000"
+        "$repoRoot = (Resolve-Path (Join-Path '${workspaceFolder}' '..')).Path; $lane = Join-Path $repoRoot 'apps/mutation-seam'; if (-not (Test-Path $lane)) { throw 'apps/mutation-seam is not present under the parent repo root for this bootstrap packet.' }; Set-Location $lane; & '${workspaceFolder}\\.venv\\Scripts\\python.exe' -m uvicorn app.main:app --reload --port 8000"
       ],
       "options": {
-        "cwd": "${workspaceFolder}\\..\\apps\\mutation-seam"
+        "cwd": "${workspaceFolder}\\.."
       },
       "isBackground": true,
       "problemMatcher": [],
@@ -391,10 +391,10 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$repoRoot = (Resolve-Path (Join-Path '${workspaceFolder}' '..')).Path; $lane = Join-Path $repoRoot 'apps/mutation-seam/tests'; if (-not (Test-Path $lane)) { throw 'apps/mutation-seam is not present under the parent repo root for this bootstrap packet.' }; $env:SEAM_STORE_BACKEND='memory'; & '${workspaceFolder}\\.venv\\Scripts\\python.exe' -m pytest tests/ -v"
+        "$repoRoot = (Resolve-Path (Join-Path '${workspaceFolder}' '..')).Path; $lane = Join-Path $repoRoot 'apps/mutation-seam'; if (-not (Test-Path $lane)) { throw 'apps/mutation-seam is not present under the parent repo root for this bootstrap packet.' }; Set-Location $lane; $env:SEAM_STORE_BACKEND='memory'; & '${workspaceFolder}\\.venv\\Scripts\\python.exe' -m pytest tests/ -v"
       ],
       "options": {
-        "cwd": "${workspaceFolder}\\..\\apps\\mutation-seam"
+        "cwd": "${workspaceFolder}\\.."
       },
       "problemMatcher": [],
       "group": "test"
