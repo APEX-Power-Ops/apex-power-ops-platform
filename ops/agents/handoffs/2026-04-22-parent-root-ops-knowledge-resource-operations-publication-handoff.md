@@ -1,13 +1,19 @@
 # Parent-Root Ops Knowledge-Resource-Operations Publication Handoff
 ## Date: 2026-04-22
 ## Updated by: GitHub Copilot (GPT-5.4)
-## Scope: Active next-step packet for the bounded `ops/knowledge-resource-operations` lane under `C:/APEX Platform/apex-power-ops-platform`
+## Scope: Historical record for the bounded `ops/knowledge-resource-operations` lane under `C:/APEX Platform/apex-power-ops-platform`
 
 ## 1. Summary
 
 The active shared packages, active app lanes, residual scaffold/doc surfaces, infra-database lane, docs lane, ops knowledge-control-plane registry lane, and ops legacy-governance lane are now published on parent-root `clean-main`.
 
-The next smallest remaining substantive packet is `ops/knowledge-resource-operations`, which currently stages cleanly at 10 files. This packet introduces the remaining small non-agent `ops/` documentation lane before the much larger `ops/agents`, `knowledge`, and `archive` backlogs.
+The next smallest remaining substantive packet was `ops/knowledge-resource-operations`, which staged cleanly at 10 files. This packet introduced the remaining small non-agent `ops/` documentation lane before the much larger `ops/agents`, `knowledge`, and `archive` backlogs.
+
+Publication outcome:
+
+1. committed on parent-root `clean-main` as `82d43f6`
+2. pushed to `origin/clean-main` on 2026-04-22
+3. closed as the published knowledge-resource-operations follow-on to the legacy-governance tranche
 
 ## 2. Why This Packet Is Next
 
@@ -20,7 +26,7 @@ Measured from the parent git root at `C:/APEX Platform` on 2026-04-22 after the 
 
 ## 3. Packet Intent
 
-Use this packet to introduce the remaining resource-operations documentation lane:
+This packet introduced the remaining resource-operations documentation lane:
 
 1. extraction gap and load-gap reporting
 2. extraction priority and remaining-queue planning
@@ -33,7 +39,7 @@ From the parent git root at `C:/APEX Platform`, the bounded packet path is:
 
 1. `apex-power-ops-platform/ops/knowledge-resource-operations`
 
-Current measured contents: 10 files under the knowledge-resource-operations path.
+Published contents: 10 files under the knowledge-resource-operations path.
 
 ## 5. Why This Packet Is Bounded Correctly
 
@@ -44,9 +50,9 @@ This packet is intentionally narrow:
 3. it does not widen into `knowledge/` or `archive/`
 4. it does not mix in generated local artifacts from app lanes
 
-## 6. Operator Execution Path
+## 6. Historical Execution Path
 
-Preferred task path from `C:/APEX Platform/apex-power-ops-platform`:
+Preferred task path from `C:/APEX Platform/apex-power-ops-platform` when this packet was executed:
 
 1. run `Preview parent-root ops knowledge-resource-operations packet`
 2. run `Stage parent-root ops knowledge-resource-operations packet` only when the preview is correct
@@ -81,6 +87,7 @@ This lane is documentation-heavy, so diff discipline matters more than executabl
 
 If this packet lands cleanly, the next logical lanes are:
 
-1. broader `ops/agents` packet strategy decisions
-2. `knowledge/` packet(s)
-3. `archive/` strategy decisions rather than automatic publication
+1. bounded `ops/agents/packets/draft` packet families such as the forms-import pair
+2. broader `ops/agents` packet strategy decisions
+3. `knowledge/` packet(s)
+4. `archive/` strategy decisions rather than automatic publication
