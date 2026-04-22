@@ -1,20 +1,26 @@
 # Parent-Root Package Source Publication Handoff
 ## Date: 2026-04-22
 ## Updated by: GitHub Copilot (GPT-5.4)
-## Scope: Active next-step packet for bounded recursive package-source introduction under `C:/APEX Platform/apex-power-ops-platform`
+## Scope: Historical record for the published bounded recursive package-source introduction under `C:/APEX Platform/apex-power-ops-platform`
 
 ## 1. Summary
 
 The bootstrap slice and the Class A scaffold tranche are already published on parent-root `clean-main`.
 
-The next natural publication step should still avoid broad subtree cutover. The smallest code-bearing follow-on is a bounded recursive packet for the shared package lanes:
+The next natural publication step after those packets still avoided broad subtree cutover. It was a bounded recursive packet for the shared package lanes:
 
 1. `packages/forms-engine/src`
 2. `packages/forms-engine/tests`
 3. `packages/calc-engine/src`
 4. `packages/calc-engine/tests`
 
-This packet introduces executable shared package logic and tests without pulling in the larger app-lane backlog under `apps/control-plane-api`, `apps/mutation-seam`, or `apps/operations-web`.
+This packet introduced executable shared package logic and tests without pulling in the larger app-lane backlog under `apps/control-plane-api`, `apps/mutation-seam`, or `apps/operations-web`.
+
+Publication outcome:
+
+1. committed on parent-root `clean-main` as `0916a38`
+2. pushed to `origin/clean-main` on 2026-04-22
+3. closed as the published package-source follow-on to the Class A scaffold tranche
 
 ## 2. Why This Packet Is Next
 
@@ -30,13 +36,13 @@ Measured from the parent git root at `C:/APEX Platform` on 2026-04-22:
 
 ## 3. Packet Intent
 
-Use this packet to introduce the recursive source and test trees for the two shared package lanes that already have published manifests:
+This packet introduced the recursive source and test trees for the two shared package lanes that already had published manifests:
 
 1. package implementation modules
 2. package test surfaces
 3. package fixture assets required by those tests
 
-Do not treat this packet as authorization to publish deferred `packages/api-contracts` or to widen into app lanes.
+Do not treat this historical packet as authorization to publish deferred `packages/api-contracts` or to widen into app lanes.
 
 ## 4. Exact Packet Contents
 
@@ -63,9 +69,9 @@ This packet is intentionally narrow:
 4. it preserves the deferred status of `packages/api-contracts`
 5. it provides executable follow-on value because package tests can validate the tranche immediately
 
-## 6. Operator Execution Path
+## 6. Historical Execution Path
 
-Preferred task path from `C:/APEX Platform/apex-power-ops-platform`:
+Preferred task path from `C:/APEX Platform/apex-power-ops-platform` when this packet was executed:
 
 1. run `Preview parent-root package source packet`
 2. run `Stage parent-root package source packet` only when the preview is correct
@@ -90,7 +96,7 @@ Before commit, the smallest relevant checks are:
    - `packages/calc-engine/tests/test_golden_fixtures.py`
    - `packages/forms-engine/tests/test_smoke.py`
 
-This packet is suitable for executable validation because it is source-and-test-bearing, not just publication-shape scaffolding.
+This packet was suitable for executable validation because it was source-and-test-bearing, not just publication-shape scaffolding.
 
 ## 8. Do Not Do
 
@@ -108,4 +114,4 @@ If this packet lands cleanly, the next logical tranches are the app-lane recursi
 3. `apps/control-plane-api` recursive runtime packet
 4. selective `docs/` and `ops/` authority packets needed to operate those expanded lanes
 
-Those follow-ons remain separate from this package-source packet.
+Those follow-ons remain separate from this now-published package-source packet.
