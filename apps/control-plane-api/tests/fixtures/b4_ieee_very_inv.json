@@ -1,0 +1,99 @@
+{
+  "description": "IEEE Very Inverse (Method 2) \u2014 Sensor 5817",
+  "sensor_id": 5817,
+  "curve_name": "V Inv",
+  "curve_id": 4,
+  "coefficients": {
+    "A_open": 19.610001,
+    "B_open": 0.491,
+    "p_open": 2.0,
+    "min_open": 0.045,
+    "min_clear": 0.045
+  },
+  "bands": [
+    {
+      "band_label": "0.2",
+      "open_time": 0.2
+    },
+    {
+      "band_label": "5",
+      "open_time": 5.0
+    }
+  ],
+  "golden_points_open": [
+    {
+      "band_mult": 0.2,
+      "points": [
+        {
+          "I_multiple": 1.5,
+          "expected_time_sec": 3.2358
+        },
+        {
+          "I_multiple": 2.0,
+          "expected_time_sec": 1.405533
+        },
+        {
+          "I_multiple": 3.0,
+          "expected_time_sec": 0.58845
+        },
+        {
+          "I_multiple": 5.0,
+          "expected_time_sec": 0.261617
+        },
+        {
+          "I_multiple": 8.0,
+          "expected_time_sec": 0.160454
+        },
+        {
+          "I_multiple": 10.0,
+          "expected_time_sec": 0.137816
+        },
+        {
+          "I_multiple": 15.0,
+          "expected_time_sec": 0.115709
+        },
+        {
+          "I_multiple": 20.0,
+          "expected_time_sec": 0.10803
+        }
+      ]
+    },
+    {
+      "band_mult": 5.0,
+      "points": [
+        {
+          "I_multiple": 1.5,
+          "expected_time_sec": 80.895
+        },
+        {
+          "I_multiple": 2.0,
+          "expected_time_sec": 35.138333
+        },
+        {
+          "I_multiple": 3.0,
+          "expected_time_sec": 14.71125
+        },
+        {
+          "I_multiple": 5.0,
+          "expected_time_sec": 6.540417
+        },
+        {
+          "I_multiple": 8.0,
+          "expected_time_sec": 4.011349
+        },
+        {
+          "I_multiple": 10.0,
+          "expected_time_sec": 3.445404
+        },
+        {
+          "I_multiple": 15.0,
+          "expected_time_sec": 2.892723
+        },
+        {
+          "I_multiple": 20.0,
+          "expected_time_sec": 2.700739
+        }
+      ]
+    }
+  ]
+}
