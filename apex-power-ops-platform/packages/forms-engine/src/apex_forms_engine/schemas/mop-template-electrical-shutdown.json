@@ -1,0 +1,547 @@
+{
+  "metadata": {
+    "mopId": "MOP-2025-000",
+    "title": "Electrical Shutdown - [Equipment Description]",
+    "version": "1.0",
+    "status": "Draft",
+    "createdDate": "",
+    "revisionDate": "",
+    "scheduledDate": "",
+    "classification": "Standard",
+    "voltageClass": "Medium Voltage (1-35kV)",
+    "relatedDocuments": [
+      {
+        "docId": "SOP-ISO-001",
+        "docType": "SOP",
+        "title": "Equipment Isolation Procedure",
+        "required": true
+      },
+      {
+        "docId": "SOP-GRD-001",
+        "docType": "SOP",
+        "title": "Temporary Protective Grounding",
+        "required": true
+      },
+      {
+        "docId": "IVF-001",
+        "docType": "Form",
+        "title": "Isolation Verification Form",
+        "required": true
+      },
+      {
+        "docId": "LCF-001",
+        "docType": "Form",
+        "title": "Lifted Conductor Form",
+        "required": false
+      }
+    ]
+  },
+  "description": {
+    "overview": "",
+    "objectives": [
+      "Safely de-energize equipment",
+      "Perform required work scope",
+      "Restore equipment to service",
+      "Document all work performed"
+    ],
+    "outOfScope": [],
+    "assumptions": [
+      "All required approvals obtained prior to execution",
+      "Equipment is accessible and in normal operating condition",
+      "Qualified personnel available for all work phases"
+    ],
+    "impactAssessment": {
+      "affectedSystems": [],
+      "expectedDowntime": "",
+      "riskLevel": "Medium",
+      "mitigations": []
+    }
+  },
+  "project": {
+    "projectName": "",
+    "projectNumber": "",
+    "customer": "",
+    "siteAddress": "",
+    "facilityType": "Data Center",
+    "equipmentLocation": "",
+    "equipmentId": ""
+  },
+  "contacts": {
+    "crewLead": {
+      "name": "",
+      "role": "Crew Lead",
+      "company": "",
+      "phone": "",
+      "email": "",
+      "certification": ""
+    },
+    "crewMembers": [],
+    "customerContact": {
+      "name": "",
+      "role": "Customer Representative",
+      "company": "",
+      "phone": "",
+      "email": ""
+    },
+    "systemOperator": {
+      "name": "",
+      "role": "System Operator",
+      "company": "",
+      "phone": ""
+    },
+    "emergencyContacts": [
+      {
+        "name": "Site Emergency",
+        "phone": "911"
+      },
+      {
+        "name": "Site Security/Control Room",
+        "phone": ""
+      },
+      {
+        "name": "Nearest Hospital",
+        "phone": ""
+      }
+    ]
+  },
+  "prerequisites": {
+    "approvals": [
+      {
+        "approvalType": "Work Permit / Clearance",
+        "approver": "",
+        "status": "Pending",
+        "reference": ""
+      },
+      {
+        "approvalType": "Customer Authorization",
+        "approver": "",
+        "status": "Pending",
+        "reference": ""
+      },
+      {
+        "approvalType": "MOP Approval",
+        "approver": "",
+        "status": "Pending",
+        "reference": ""
+      }
+    ],
+    "notifications": [
+      {
+        "recipient": "System Operator / Control Room",
+        "method": "Phone",
+        "requiredLeadTime": "Prior to work",
+        "completed": false
+      },
+      {
+        "recipient": "Affected Stakeholders",
+        "method": "Email",
+        "requiredLeadTime": "24 hours",
+        "completed": false
+      }
+    ],
+    "permits": [],
+    "documentationReview": [
+      {
+        "document": "One-Line Diagram (current revision)",
+        "reviewedBy": "",
+        "reviewDate": null
+      },
+      {
+        "document": "Arc Flash Study",
+        "reviewedBy": "",
+        "reviewDate": null
+      }
+    ],
+    "siteConditions": [
+      {
+        "condition": "Equipment accessible",
+        "verified": false,
+        "verifiedBy": ""
+      },
+      {
+        "condition": "Work area clear and safe",
+        "verified": false,
+        "verifiedBy": ""
+      }
+    ]
+  },
+  "safety": {
+    "hazards": [
+      {
+        "hazard": "Electrical Shock",
+        "riskLevel": "High",
+        "controls": ["LOTO", "Voltage verification", "Rated gloves"]
+      },
+      {
+        "hazard": "Arc Flash",
+        "riskLevel": "High",
+        "controls": ["Arc-rated PPE", "Maintain boundaries", "De-energize when possible"]
+      },
+      {
+        "hazard": "Stored Energy (Capacitors)",
+        "riskLevel": "Medium",
+        "controls": ["Allow discharge time", "Verify zero energy"]
+      }
+    ],
+    "ppeRequired": [
+      {
+        "item": "Arc-Rated Clothing",
+        "specification": "Minimum Category 2 (8 cal/cm²) or per Arc Flash label",
+        "mandatory": true
+      },
+      {
+        "item": "Voltage-Rated Gloves",
+        "specification": "Class appropriate for voltage level",
+        "mandatory": true
+      },
+      {
+        "item": "Safety Glasses",
+        "specification": "ANSI Z87.1",
+        "mandatory": true
+      },
+      {
+        "item": "Hard Hat",
+        "specification": "Class E",
+        "mandatory": true
+      },
+      {
+        "item": "Arc-Rated Face Shield",
+        "specification": "As required per incident energy",
+        "mandatory": false
+      }
+    ],
+    "arcFlash": {
+      "incidentEnergy": "",
+      "arcFlashBoundary": "",
+      "ppeCategory": null,
+      "limitedApproachBoundary": "",
+      "restrictedApproachBoundary": ""
+    },
+    "lotoRequirements": {
+      "isolationPoints": [],
+      "lockQuantity": 0,
+      "tagQuantity": 0
+    },
+    "emergencyProcedures": {
+      "evacuationRoute": "",
+      "assemblyPoint": "",
+      "nearestAED": "",
+      "nearestFirstAid": "",
+      "nearestHospital": "",
+      "hospitalDistance": ""
+    }
+  },
+  "toolsAndMaterials": {
+    "tools": [
+      {
+        "item": "Insulated Hand Tools",
+        "specification": "1000V rated",
+        "quantity": 1,
+        "onSite": false
+      },
+      {
+        "item": "Torque Wrench",
+        "specification": "As required for connections",
+        "quantity": 1,
+        "onSite": false
+      }
+    ],
+    "testEquipment": [
+      {
+        "item": "Voltage Detector / Meter",
+        "make": "",
+        "model": "",
+        "serialNumber": "",
+        "calibrationDue": "",
+        "calibrationValid": false
+      }
+    ],
+    "materials": []
+  },
+  "workScript": {
+    "estimatedDuration": "",
+    "actualDuration": "",
+    "steps": [
+      {
+        "stepNumber": 1,
+        "phase": "Pre-Work",
+        "procedure": "Conduct safety briefing with all personnel. Review MOP, hazards, PPE requirements, and emergency procedures.",
+        "expectedResult": "All crew members understand scope, hazards, and procedures",
+        "responsibleParty": "Crew Lead",
+        "estimatedDuration": "15 min",
+        "riskLevel": "Low",
+        "isHoldPoint": true,
+        "notes": "All personnel must sign attendance"
+      },
+      {
+        "stepNumber": 2,
+        "phase": "Pre-Work",
+        "procedure": "Verify all required approvals, permits, and clearances are in place.",
+        "expectedResult": "All approvals documented and valid",
+        "responsibleParty": "Crew Lead",
+        "estimatedDuration": "10 min",
+        "riskLevel": "Low",
+        "isHoldPoint": true,
+        "notes": "Cannot proceed without valid clearance"
+      },
+      {
+        "stepNumber": 3,
+        "phase": "Pre-Work",
+        "procedure": "Contact System Operator / Control Room. Confirm readiness to proceed.",
+        "expectedResult": "Verbal confirmation received, clearance number documented",
+        "responsibleParty": "Crew Lead",
+        "estimatedDuration": "10 min",
+        "riskLevel": "Low",
+        "isHoldPoint": true,
+        "notes": "Document clearance number and operator name"
+      },
+      {
+        "stepNumber": 4,
+        "phase": "Isolation",
+        "procedure": "Perform switching/isolation per approved switching order. Open disconnects, rack out breakers as required.",
+        "expectedResult": "Equipment isolated at all identified points",
+        "responsibleParty": "Switching Authority / Crew Lead",
+        "estimatedDuration": "30 min",
+        "riskLevel": "High",
+        "isHoldPoint": false,
+        "sopReference": "SOP-ISO-001"
+      },
+      {
+        "stepNumber": 5,
+        "phase": "Isolation",
+        "procedure": "Apply LOTO devices at all isolation points. Verify all personnel locks applied.",
+        "expectedResult": "All isolation points locked and tagged",
+        "responsibleParty": "All Crew",
+        "estimatedDuration": "15 min",
+        "riskLevel": "Medium",
+        "isHoldPoint": false
+      },
+      {
+        "stepNumber": 6,
+        "phase": "Isolation",
+        "procedure": "Perform voltage absence verification using three-point method: (1) Test known live, (2) Test work location, (3) Re-test known live.",
+        "expectedResult": "Zero voltage confirmed at all phases to ground and phase-to-phase",
+        "responsibleParty": "Qualified Technician",
+        "estimatedDuration": "15 min",
+        "riskLevel": "High",
+        "isHoldPoint": true,
+        "formReference": "IVF-001",
+        "notes": "CRITICAL: Do not proceed if any voltage present"
+      },
+      {
+        "stepNumber": 7,
+        "phase": "Isolation",
+        "procedure": "Install Temporary Protective Grounds (TPG) if required per SOP-GRD-001.",
+        "expectedResult": "Grounds installed and verified. Equipotential zone established.",
+        "responsibleParty": "Qualified Technician",
+        "estimatedDuration": "20 min",
+        "riskLevel": "Medium",
+        "isHoldPoint": false,
+        "sopReference": "SOP-GRD-001",
+        "formReference": "IVF-001"
+      },
+      {
+        "stepNumber": 8,
+        "phase": "Execution",
+        "procedure": "[WORK SCOPE - Define specific tasks to be performed]",
+        "expectedResult": "[Define expected outcome]",
+        "responsibleParty": "",
+        "estimatedDuration": "",
+        "riskLevel": "Medium",
+        "isHoldPoint": false,
+        "notes": "Add additional steps as needed for specific work scope"
+      },
+      {
+        "stepNumber": 9,
+        "phase": "Verification",
+        "procedure": "Perform post-work verification. Confirm all work complete, no tools or debris in equipment.",
+        "expectedResult": "Work area clean, all connections verified, panels closed",
+        "responsibleParty": "Crew Lead",
+        "estimatedDuration": "15 min",
+        "riskLevel": "Low",
+        "isHoldPoint": true
+      },
+      {
+        "stepNumber": 10,
+        "phase": "Restoration",
+        "procedure": "Remove Temporary Protective Grounds in reverse order of installation (line-end first, ground-end last).",
+        "expectedResult": "All TPGs removed and accounted for",
+        "responsibleParty": "Qualified Technician",
+        "estimatedDuration": "15 min",
+        "riskLevel": "Medium",
+        "isHoldPoint": false,
+        "sopReference": "SOP-GRD-001"
+      },
+      {
+        "stepNumber": 11,
+        "phase": "Restoration",
+        "procedure": "Notify System Operator / Control Room of readiness to restore. Obtain authorization to remove LOTO.",
+        "expectedResult": "Verbal authorization received",
+        "responsibleParty": "Crew Lead",
+        "estimatedDuration": "10 min",
+        "riskLevel": "Low",
+        "isHoldPoint": true
+      },
+      {
+        "stepNumber": 12,
+        "phase": "Restoration",
+        "procedure": "Remove all LOTO devices. Verify all personnel locks removed.",
+        "expectedResult": "All locks and tags removed",
+        "responsibleParty": "All Crew",
+        "estimatedDuration": "10 min",
+        "riskLevel": "Medium",
+        "isHoldPoint": false
+      },
+      {
+        "stepNumber": 13,
+        "phase": "Restoration",
+        "procedure": "Perform restoration switching per approved switching order. Close disconnects, rack in breakers as required.",
+        "expectedResult": "Equipment restored to service",
+        "responsibleParty": "Switching Authority / Crew Lead",
+        "estimatedDuration": "30 min",
+        "riskLevel": "High",
+        "isHoldPoint": false
+      },
+      {
+        "stepNumber": 14,
+        "phase": "Restoration",
+        "procedure": "Verify equipment energized and operating normally. Check for alarms, abnormal indications.",
+        "expectedResult": "No alarms, normal operation confirmed",
+        "responsibleParty": "Crew Lead",
+        "estimatedDuration": "15 min",
+        "riskLevel": "Medium",
+        "isHoldPoint": false
+      },
+      {
+        "stepNumber": 15,
+        "phase": "Closeout",
+        "procedure": "Notify System Operator / Control Room of work complete. Release clearance.",
+        "expectedResult": "Clearance released, documented",
+        "responsibleParty": "Crew Lead",
+        "estimatedDuration": "10 min",
+        "riskLevel": "Low",
+        "isHoldPoint": false
+      },
+      {
+        "stepNumber": 16,
+        "phase": "Closeout",
+        "procedure": "Complete all documentation. Obtain customer sign-off.",
+        "expectedResult": "All forms complete, customer acceptance obtained",
+        "responsibleParty": "Crew Lead",
+        "estimatedDuration": "15 min",
+        "riskLevel": "Low",
+        "isHoldPoint": false
+      }
+    ]
+  },
+  "backoutPlan": {
+    "triggerConditions": [
+      "Unexpected equipment condition discovered",
+      "Safety concern identified",
+      "Unable to complete work within maintenance window",
+      "Customer requests abort",
+      "Equipment damage observed"
+    ],
+    "decisionAuthority": "Crew Lead in consultation with Customer Representative",
+    "steps": [
+      {
+        "stepNumber": 1,
+        "procedure": "Stop all work immediately. Secure equipment in current state.",
+        "riskLevel": "Medium"
+      },
+      {
+        "stepNumber": 2,
+        "procedure": "Notify System Operator / Control Room of backout decision.",
+        "riskLevel": "Low"
+      },
+      {
+        "stepNumber": 3,
+        "procedure": "Document reason for backout and equipment condition.",
+        "riskLevel": "Low"
+      },
+      {
+        "stepNumber": 4,
+        "procedure": "If safe to restore: Remove TPGs, remove LOTO, restore per switching order.",
+        "riskLevel": "High"
+      },
+      {
+        "stepNumber": 5,
+        "procedure": "Verify equipment restored to safe operating state.",
+        "riskLevel": "Medium"
+      },
+      {
+        "stepNumber": 6,
+        "procedure": "Release clearance. Document final equipment status.",
+        "riskLevel": "Low"
+      }
+    ],
+    "estimatedBackoutTime": "1-2 hours depending on progress at time of backout"
+  },
+  "verification": {
+    "checklist": [
+      {
+        "item": "All work scope items completed",
+        "verified": false
+      },
+      {
+        "item": "All connections torqued to specification",
+        "verified": false
+      },
+      {
+        "item": "No tools or foreign material left in equipment",
+        "verified": false
+      },
+      {
+        "item": "All covers and panels reinstalled",
+        "verified": false
+      },
+      {
+        "item": "Equipment operating normally",
+        "verified": false
+      },
+      {
+        "item": "All documentation complete",
+        "verified": false
+      }
+    ],
+    "testResults": ""
+  },
+  "approvals": {
+    "preparedBy": {
+      "name": "",
+      "title": "",
+      "company": "",
+      "signature": "",
+      "timestamp": ""
+    },
+    "reviewedBy": {
+      "name": "",
+      "title": "",
+      "company": "",
+      "signature": "",
+      "timestamp": ""
+    },
+    "approvedBy": {
+      "name": "",
+      "title": "",
+      "company": "",
+      "signature": "",
+      "timestamp": ""
+    },
+    "customerAcceptance": {
+      "name": "",
+      "title": "",
+      "company": "",
+      "signature": "",
+      "timestamp": ""
+    }
+  },
+  "execution": {
+    "actualStartDate": "",
+    "actualEndDate": "",
+    "outcome": "",
+    "deviations": [],
+    "incidents": [],
+    "lessonsLearned": []
+  }
+}

@@ -1,0 +1,109 @@
+{
+  "description": "Thermal I2T (Method 1) \u2014 Sensor 15561",
+  "sensor_id": 15561,
+  "rating": 200,
+  "ltpu_calc": 1,
+  "ltpu_pickup_setting": 1.0,
+  "pickup_current": 200.0,
+  "ltd_method": 1,
+  "curve_name": "I2T",
+  "curve_id": 0,
+  "coefficients": {
+    "Ipu_open": 1.05,
+    "K_open": 0.8,
+    "n_open": 2.0,
+    "Ithresh_open": 3.0,
+    "min_time_open": 0.02,
+    "Ipu_clear": 1.2,
+    "K_clear": 1.2,
+    "n_clear": 2.0,
+    "Ithresh_clear": 3.0,
+    "min_time_clear": 0.08
+  },
+  "bands": [
+    {
+      "band_label": "1",
+      "open_time": 1.0
+    },
+    {
+      "band_label": "10",
+      "open_time": 10.0
+    }
+  ],
+  "golden_points_open": [
+    {
+      "band_mult": 1.0,
+      "points": [
+        {
+          "I_multiple": 1.1511,
+          "expected_time_sec": 10.924869
+        },
+        {
+          "I_multiple": 1.5,
+          "expected_time_sec": 4.12215
+        },
+        {
+          "I_multiple": 2.0,
+          "expected_time_sec": 1.973983
+        },
+        {
+          "I_multiple": 3.0,
+          "expected_time_sec": 0.8
+        },
+        {
+          "I_multiple": 5.0,
+          "expected_time_sec": 0.27611
+        },
+        {
+          "I_multiple": 8.0,
+          "expected_time_sec": 0.106378
+        },
+        {
+          "I_multiple": 10.0,
+          "expected_time_sec": 0.067869
+        },
+        {
+          "I_multiple": 15.0,
+          "expected_time_sec": 0.030071
+        }
+      ]
+    },
+    {
+      "band_mult": 10.0,
+      "points": [
+        {
+          "I_multiple": 1.1511,
+          "expected_time_sec": 109.24869
+        },
+        {
+          "I_multiple": 1.5,
+          "expected_time_sec": 41.221499
+        },
+        {
+          "I_multiple": 2.0,
+          "expected_time_sec": 19.739835
+        },
+        {
+          "I_multiple": 3.0,
+          "expected_time_sec": 8.0
+        },
+        {
+          "I_multiple": 5.0,
+          "expected_time_sec": 2.761099
+        },
+        {
+          "I_multiple": 8.0,
+          "expected_time_sec": 1.063783
+        },
+        {
+          "I_multiple": 10.0,
+          "expected_time_sec": 0.678688
+        },
+        {
+          "I_multiple": 15.0,
+          "expected_time_sec": 0.300711
+        }
+      ]
+    }
+  ]
+}

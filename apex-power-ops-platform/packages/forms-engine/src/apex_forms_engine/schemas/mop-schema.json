@@ -1,0 +1,579 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://resapower.com/schemas/mop/v1.0",
+  "title": "Method of Procedure (MOP) Schema",
+  "description": "Schema for electrical infrastructure Method of Procedure documents per Uptime Institute best practices",
+  "version": "1.0.0",
+  "type": "object",
+  "required": ["metadata", "description", "contacts", "workScript"],
+  "properties": {
+    "metadata": {
+      "type": "object",
+      "description": "Document control and identification",
+      "required": ["mopId", "title", "version", "status"],
+      "properties": {
+        "mopId": {
+          "type": "string",
+          "description": "Unique identifier (e.g., MOP-2025-001)",
+          "pattern": "^MOP-[0-9]{4}-[0-9]{3}$"
+        },
+        "title": {
+          "type": "string",
+          "description": "Descriptive title of the procedure",
+          "maxLength": 200
+        },
+        "version": {
+          "type": "string",
+          "description": "Document version (semantic versioning)",
+          "pattern": "^[0-9]+\\.[0-9]+$"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["Draft", "Pending Approval", "Approved", "In Execution", "Complete", "Cancelled"],
+          "description": "Current document status"
+        },
+        "createdDate": {
+          "type": "string",
+          "format": "date",
+          "description": "Date MOP was created"
+        },
+        "revisionDate": {
+          "type": "string",
+          "format": "date",
+          "description": "Date of last revision"
+        },
+        "scheduledDate": {
+          "type": "string",
+          "format": "date",
+          "description": "Scheduled execution date"
+        },
+        "classification": {
+          "type": "string",
+          "enum": ["Routine", "Standard", "Critical", "Emergency"],
+          "description": "Risk/criticality classification"
+        },
+        "voltageClass": {
+          "type": "string",
+          "enum": ["Low Voltage (<1kV)", "Medium Voltage (1-35kV)", "High Voltage (>35kV)"],
+          "description": "Voltage classification of work"
+        },
+        "relatedDocuments": {
+          "type": "array",
+          "description": "References to related SOPs, forms, drawings",
+          "items": {
+            "type": "object",
+            "properties": {
+              "docId": { "type": "string" },
+              "docType": { 
+                "type": "string",
+                "enum": ["SOP", "Form", "Drawing", "Study", "Manual", "Permit"]
+              },
+              "title": { "type": "string" },
+              "required": { "type": "boolean" }
+            }
+          }
+        }
+      }
+    },
+    "description": {
+      "type": "object",
+      "description": "Scope and overview of the procedure",
+      "required": ["overview", "objectives"],
+      "properties": {
+        "overview": {
+          "type": "string",
+          "description": "Brief description of the work to be performed",
+          "maxLength": 1000
+        },
+        "objectives": {
+          "type": "array",
+          "description": "Specific objectives/deliverables",
+          "items": { "type": "string" }
+        },
+        "outOfScope": {
+          "type": "array",
+          "description": "Explicitly excluded items",
+          "items": { "type": "string" }
+        },
+        "assumptions": {
+          "type": "array",
+          "description": "Key assumptions for this procedure",
+          "items": { "type": "string" }
+        },
+        "impactAssessment": {
+          "type": "object",
+          "properties": {
+            "affectedSystems": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "expectedDowntime": {
+              "type": "string",
+              "description": "Estimated duration of impact"
+            },
+            "riskLevel": {
+              "type": "string",
+              "enum": ["Low", "Medium", "High", "Critical"]
+            },
+            "mitigations": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "project": {
+      "type": "object",
+      "description": "Project and site information",
+      "properties": {
+        "projectName": { "type": "string" },
+        "projectNumber": { "type": "string" },
+        "customer": { "type": "string" },
+        "siteAddress": { "type": "string" },
+        "facilityType": {
+          "type": "string",
+          "enum": ["Data Center", "Industrial", "Commercial", "Healthcare", "Utility", "Other"]
+        },
+        "equipmentLocation": { "type": "string" },
+        "equipmentId": { "type": "string" }
+      }
+    },
+    "contacts": {
+      "type": "object",
+      "description": "Key personnel and emergency contacts",
+      "required": ["crewLead", "customerContact"],
+      "properties": {
+        "crewLead": {
+          "$ref": "#/definitions/contact"
+        },
+        "crewMembers": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/contact" }
+        },
+        "customerContact": {
+          "$ref": "#/definitions/contact"
+        },
+        "systemOperator": {
+          "$ref": "#/definitions/contact"
+        },
+        "safetyOfficer": {
+          "$ref": "#/definitions/contact"
+        },
+        "emergencyContacts": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/contact" }
+        }
+      }
+    },
+    "prerequisites": {
+      "type": "object",
+      "description": "Actions/conditions required before starting",
+      "properties": {
+        "approvals": {
+          "type": "array",
+          "description": "Required approvals before execution",
+          "items": {
+            "type": "object",
+            "properties": {
+              "approvalType": { "type": "string" },
+              "approver": { "type": "string" },
+              "status": { 
+                "type": "string",
+                "enum": ["Pending", "Approved", "Rejected", "N/A"]
+              },
+              "approvalDate": { "type": "string", "format": "date-time" },
+              "reference": { "type": "string" }
+            }
+          }
+        },
+        "notifications": {
+          "type": "array",
+          "description": "Required notifications before work",
+          "items": {
+            "type": "object",
+            "properties": {
+              "recipient": { "type": "string" },
+              "method": { "type": "string" },
+              "requiredLeadTime": { "type": "string" },
+              "completed": { "type": "boolean" },
+              "completedDate": { "type": "string", "format": "date-time" }
+            }
+          }
+        },
+        "permits": {
+          "type": "array",
+          "description": "Required permits",
+          "items": {
+            "type": "object",
+            "properties": {
+              "permitType": { "type": "string" },
+              "permitNumber": { "type": "string" },
+              "issuedBy": { "type": "string" },
+              "validFrom": { "type": "string", "format": "date-time" },
+              "validTo": { "type": "string", "format": "date-time" }
+            }
+          }
+        },
+        "documentationReview": {
+          "type": "array",
+          "description": "Documents to review before starting",
+          "items": {
+            "type": "object",
+            "properties": {
+              "document": { "type": "string" },
+              "reviewedBy": { "type": "string" },
+              "reviewDate": { "type": "string", "format": "date-time" }
+            }
+          }
+        },
+        "siteConditions": {
+          "type": "array",
+          "description": "Site conditions to verify",
+          "items": {
+            "type": "object",
+            "properties": {
+              "condition": { "type": "string" },
+              "verified": { "type": "boolean" },
+              "verifiedBy": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "safety": {
+      "type": "object",
+      "description": "Safety requirements and hazard assessment",
+      "properties": {
+        "hazards": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "hazard": { "type": "string" },
+              "riskLevel": { 
+                "type": "string",
+                "enum": ["Low", "Medium", "High", "Critical"]
+              },
+              "controls": {
+                "type": "array",
+                "items": { "type": "string" }
+              }
+            }
+          }
+        },
+        "ppeRequired": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "item": { "type": "string" },
+              "specification": { "type": "string" },
+              "mandatory": { "type": "boolean" }
+            }
+          }
+        },
+        "arcFlash": {
+          "type": "object",
+          "properties": {
+            "incidentEnergy": { "type": "string" },
+            "arcFlashBoundary": { "type": "string" },
+            "ppeCategory": { "type": "integer", "minimum": 0, "maximum": 4 },
+            "limitedApproachBoundary": { "type": "string" },
+            "restrictedApproachBoundary": { "type": "string" }
+          }
+        },
+        "lotoRequirements": {
+          "type": "object",
+          "properties": {
+            "isolationPoints": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "deviceId": { "type": "string" },
+                  "location": { "type": "string" },
+                  "normalState": { "type": "string" },
+                  "isolatedState": { "type": "string" }
+                }
+              }
+            },
+            "lockQuantity": { "type": "integer" },
+            "tagQuantity": { "type": "integer" }
+          }
+        },
+        "emergencyProcedures": {
+          "type": "object",
+          "properties": {
+            "evacuationRoute": { "type": "string" },
+            "assemblyPoint": { "type": "string" },
+            "nearestAED": { "type": "string" },
+            "nearestFirstAid": { "type": "string" },
+            "nearestHospital": { "type": "string" },
+            "hospitalDistance": { "type": "string" }
+          }
+        }
+      }
+    },
+    "toolsAndMaterials": {
+      "type": "object",
+      "description": "Required tools, test equipment, and materials",
+      "properties": {
+        "tools": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "item": { "type": "string" },
+              "specification": { "type": "string" },
+              "quantity": { "type": "integer" },
+              "onSite": { "type": "boolean" }
+            }
+          }
+        },
+        "testEquipment": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "item": { "type": "string" },
+              "make": { "type": "string" },
+              "model": { "type": "string" },
+              "serialNumber": { "type": "string" },
+              "calibrationDue": { "type": "string", "format": "date" },
+              "calibrationValid": { "type": "boolean" }
+            }
+          }
+        },
+        "materials": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "item": { "type": "string" },
+              "partNumber": { "type": "string" },
+              "quantity": { "type": "integer" },
+              "onSite": { "type": "boolean" }
+            }
+          }
+        }
+      }
+    },
+    "workScript": {
+      "type": "object",
+      "description": "The core work procedure - time-sequenced steps",
+      "required": ["steps"],
+      "properties": {
+        "estimatedDuration": { "type": "string" },
+        "actualDuration": { "type": "string" },
+        "steps": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/workStep" }
+        }
+      }
+    },
+    "backoutPlan": {
+      "type": "object",
+      "description": "Procedure to return to safe/original state",
+      "properties": {
+        "triggerConditions": {
+          "type": "array",
+          "description": "Conditions that would trigger backout",
+          "items": { "type": "string" }
+        },
+        "decisionAuthority": {
+          "type": "string",
+          "description": "Who can authorize backout"
+        },
+        "steps": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/workStep" }
+        },
+        "estimatedBackoutTime": { "type": "string" }
+      }
+    },
+    "verification": {
+      "type": "object",
+      "description": "Final verification and acceptance",
+      "properties": {
+        "checklist": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "item": { "type": "string" },
+              "verified": { "type": "boolean" },
+              "verifiedBy": { "type": "string" },
+              "verifiedDate": { "type": "string", "format": "date-time" }
+            }
+          }
+        },
+        "testResults": {
+          "type": "string",
+          "description": "Reference to test results document"
+        }
+      }
+    },
+    "approvals": {
+      "type": "object",
+      "description": "Document approvals and sign-offs",
+      "properties": {
+        "preparedBy": { "$ref": "#/definitions/signature" },
+        "reviewedBy": { "$ref": "#/definitions/signature" },
+        "approvedBy": { "$ref": "#/definitions/signature" },
+        "customerAcceptance": { "$ref": "#/definitions/signature" }
+      }
+    },
+    "execution": {
+      "type": "object",
+      "description": "Execution tracking",
+      "properties": {
+        "actualStartDate": { "type": "string", "format": "date-time" },
+        "actualEndDate": { "type": "string", "format": "date-time" },
+        "outcome": {
+          "type": "string",
+          "enum": ["Successful", "Successful with Deviations", "Backed Out", "Cancelled", "Failed"]
+        },
+        "deviations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "stepNumber": { "type": "integer" },
+              "description": { "type": "string" },
+              "reason": { "type": "string" },
+              "approvedBy": { "type": "string" },
+              "timestamp": { "type": "string", "format": "date-time" }
+            }
+          }
+        },
+        "incidents": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "description": { "type": "string" },
+              "severity": { "type": "string" },
+              "timestamp": { "type": "string", "format": "date-time" },
+              "resolution": { "type": "string" }
+            }
+          }
+        },
+        "lessonsLearned": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "contact": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "role": { "type": "string" },
+        "company": { "type": "string" },
+        "phone": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "certification": { "type": "string" }
+      },
+      "required": ["name"]
+    },
+    "workStep": {
+      "type": "object",
+      "required": ["stepNumber", "procedure"],
+      "properties": {
+        "stepNumber": {
+          "type": "integer",
+          "description": "Sequential step number"
+        },
+        "phase": {
+          "type": "string",
+          "description": "Work phase grouping (e.g., Pre-Work, Isolation, Execution, Restoration)"
+        },
+        "procedure": {
+          "type": "string",
+          "description": "Description of the action to be performed"
+        },
+        "expectedResult": {
+          "type": "string",
+          "description": "Expected outcome of this step"
+        },
+        "responsibleParty": {
+          "type": "string",
+          "description": "Who performs this step"
+        },
+        "estimatedStart": {
+          "type": "string",
+          "format": "time",
+          "description": "Estimated start time"
+        },
+        "estimatedDuration": {
+          "type": "string",
+          "description": "Estimated duration (e.g., '30 min', '1 hr')"
+        },
+        "actualStart": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Actual start timestamp"
+        },
+        "actualEnd": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Actual completion timestamp"
+        },
+        "riskLevel": {
+          "type": "string",
+          "enum": ["Low", "Medium", "High", "Critical"],
+          "description": "Risk level for this step"
+        },
+        "isHoldPoint": {
+          "type": "boolean",
+          "description": "Requires verification before proceeding"
+        },
+        "holdPointVerifiedBy": {
+          "type": "string",
+          "description": "Who verified the hold point"
+        },
+        "sopReference": {
+          "type": "string",
+          "description": "Reference to detailed SOP if applicable"
+        },
+        "formReference": {
+          "type": "string",
+          "description": "Form to complete during this step"
+        },
+        "notes": {
+          "type": "string",
+          "description": "Additional notes or warnings"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["Not Started", "In Progress", "Complete", "Skipped", "Failed"],
+          "default": "Not Started"
+        },
+        "completedBy": {
+          "type": "string",
+          "description": "Name/initials of person who completed step"
+        },
+        "witnessedBy": {
+          "type": "string",
+          "description": "Name/initials of witness (for critical steps)"
+        }
+      }
+    },
+    "signature": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "title": { "type": "string" },
+        "company": { "type": "string" },
+        "signature": { 
+          "type": "string",
+          "description": "Base64 encoded signature image or digital signature hash"
+        },
+        "timestamp": { "type": "string", "format": "date-time" }
+      }
+    }
+  }
+}

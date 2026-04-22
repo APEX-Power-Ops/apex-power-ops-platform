@@ -1,24 +1,30 @@
 # Parent-Root Class A Scaffold Publication Handoff
 ## Date: 2026-04-22
 ## Updated by: GitHub Copilot (GPT-5.4)
-## Scope: Active next-step packet for bounded Class A introduction under `C:/APEX Platform/apex-power-ops-platform`
+## Scope: Historical record for the published bounded Class A introduction under `C:/APEX Platform/apex-power-ops-platform`
 
 ## 1. Summary
 
 The first governance-first bootstrap slice is already tracked on parent-root `clean-main`.
 
-The next natural publication step is not broad subtree cutover. It is a bounded Class A scaffold packet that introduces:
+The next natural publication step after bootstrap was not broad subtree cutover. It was a bounded Class A scaffold packet that introduced:
 
 1. platform root manifests
 2. repo-owned workflow surfaces
 3. scaffold and contract files for the active runtime lanes
 4. package boundary files for the active packages
 
-This packet is intentionally narrower than full recursive lane publication. It expands the tracked platform shape without bundling archive, knowledge, or historical ops bulk.
+This packet was intentionally narrower than full recursive lane publication. It expanded the tracked platform shape without bundling archive, knowledge, or historical ops bulk.
+
+Publication outcome:
+
+1. committed on parent-root `clean-main` as `ebb75aa`
+2. pushed to `origin/clean-main` on 2026-04-22
+3. closed as the published scaffold follow-on to the first bootstrap slice
 
 ## 2. Packet Intent
 
-Use this packet to introduce the active platform boundary that operators and follow-on publication work depend on:
+This packet introduced the active platform boundary that operators and follow-on publication work depend on:
 
 1. root workspace manifests and ownership surfaces
 2. CI and smoke workflow definitions
@@ -26,7 +32,7 @@ Use this packet to introduce the active platform boundary that operators and fol
 4. package manifests for `packages/forms-engine` and `packages/calc-engine`
 5. the current fixture-contract test entrypoint
 
-Do not treat this packet as authorization to recursively publish the full source trees under those lanes.
+Do not treat this historical packet as authorization to recursively publish the full source trees under those lanes.
 
 ## 3. Exact Packet Contents
 
@@ -85,9 +91,9 @@ This packet follows the bounded publication plan on purpose:
 3. it makes the live runtime, package, and CI contract visible in git before later recursive code publication packets
 4. it gives future operators a concrete follow-on artifact instead of re-deriving the next tranche from raw untracked counts
 
-## 5. Operator Execution Path
+## 5. Historical Execution Path
 
-Preferred task path from `C:/APEX Platform/apex-power-ops-platform`:
+Preferred task path from `C:/APEX Platform/apex-power-ops-platform` when this packet was executed:
 
 1. run `Preview parent-root Class A scaffold packet`
 2. run `Stage parent-root Class A scaffold packet` only when the preview is correct
@@ -110,7 +116,7 @@ Before commit, the smallest relevant checks are:
 2. staged diff review for the packet paths only
 3. file-error validation for touched task and markdown surfaces if the packet definition changes
 
-This packet is a publication-shape tranche, not a runtime-behavior proof packet.
+This packet was a publication-shape tranche, not a runtime-behavior proof packet.
 
 ## 7. Do Not Do
 
@@ -130,4 +136,4 @@ If this packet lands cleanly, the next logical tranche is recursive bounded publ
 5. `packages/calc-engine`
 6. selected `docs/` and `ops/` authority surfaces needed to operate those lanes
 
-That follow-on is separate from this scaffold packet.
+That follow-on remains separate from this now-published scaffold packet.

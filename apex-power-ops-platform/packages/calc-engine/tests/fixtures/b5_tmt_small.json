@@ -1,0 +1,25 @@
+{
+  "description": "TMT Direct Copy \u2014 Small dataset (< 4 points)",
+  "note": "Synthetic test case: when < 4 points, return directly without spline",
+  "frame_id": "synthetic",
+  "raw_points": [
+    {
+      "current_amp": 2.0,
+      "time_sec": 50.0
+    },
+    {
+      "current_amp": 5.0,
+      "time_sec": 5.0
+    },
+    {
+      "current_amp": 10.0,
+      "time_sec": 0.5
+    }
+  ],
+  "point_count": 3,
+  "expected_behavior": {
+    "interpolation_type": "direct_copy",
+    "reason": "point_count < 4",
+    "output_equals_input": true
+  }
+}
