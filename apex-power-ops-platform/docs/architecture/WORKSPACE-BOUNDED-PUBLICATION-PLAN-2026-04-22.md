@@ -14,13 +14,13 @@ This document provides that bounded plan.
 
 ## Verified Inventory Baseline
 
-Measured from the parent git root at `C:/APEX Platform` on 2026-04-22 after the `ops/agents/legacy-governance` publication:
+Measured from the parent git root at `C:/APEX Platform` on 2026-04-22 after the `ops/knowledge-resource-operations` publication:
 
-- total untracked paths under `apex-power-ops-platform/`: 3988
+- total untracked paths under `apex-power-ops-platform/`: 3978
 - `apps`: 2
 - `archive`: 2516
 - `knowledge`: 974
-- `ops`: 496
+- `ops`: 486
 
 Interpretation:
 
@@ -112,11 +112,11 @@ Current concrete artifact for the completed scaffold step:
 
 Current next-step interpretation:
 
-- the scaffold, package-source, active app-lane runtime/support/test steps, shared package-source steps, the residual scaffold/doc step, the `infra` database step, the `docs` step, the `ops/knowledge-control-plane/registry` step, and the `ops/agents/legacy-governance` step are complete; the next bounded follow-on is the `ops/knowledge-resource-operations` packet before the larger `ops/agents` backlog, `knowledge`, and `archive`
+- the scaffold, package-source, active app-lane runtime/support/test steps, shared package-source steps, the residual scaffold/doc step, the `infra` database step, the `docs` step, the `ops/knowledge-control-plane/registry` step, the `ops/agents/legacy-governance` step, and the `ops/knowledge-resource-operations` step are complete; the next bounded follow-on is the completed forms-import draft pair before the larger `ops/agents/handoffs`, `ops/agents/packets/draft`, `knowledge`, and `archive` backlogs
 
 Current concrete artifact for that next step:
 
-- `ops/agents/handoffs/2026-04-22-parent-root-ops-knowledge-resource-operations-publication-handoff.md`
+- `ops/agents/handoffs/2026-04-22-parent-root-forms-import-draft-publication-handoff.md`
 
 ## Guardrails
 
