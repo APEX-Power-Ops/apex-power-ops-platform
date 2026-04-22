@@ -1,0 +1,11 @@
+{
+  "name": "@apex/field-surface",
+  "version": "0.1.0",
+  "private": true,
+  "description": "APEX field apparatus workflow prototype — bounded to UI-001a scope",
+  "scripts": {
+    "dev": "echo 'Open public/index.html or run mutation-seam + serve public/'",
+    "test": "echo 'See mutation-seam tests for backend validation'"
+  },
+  "dependencies": {}
+}
