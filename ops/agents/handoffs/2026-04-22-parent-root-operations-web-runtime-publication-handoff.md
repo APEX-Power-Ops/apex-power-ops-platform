@@ -1,13 +1,13 @@
 # Parent-Root Operations-Web Runtime Publication Handoff
 ## Date: 2026-04-22
 ## Updated by: GitHub Copilot (GPT-5.4)
-## Scope: Active next-step packet for bounded recursive `apps/operations-web` runtime introduction under `C:/APEX Platform/apex-power-ops-platform`
+## Scope: Historical record for the published bounded recursive `apps/operations-web` runtime introduction under `C:/APEX Platform/apex-power-ops-platform`
 
 ## 1. Summary
 
 The bootstrap, Class A scaffold, and package source tranches are already published on parent-root `clean-main`.
 
-The next natural publication step should still avoid broad subtree cutover. The smallest remaining app-lane follow-on is a bounded recursive runtime packet for `apps/operations-web`:
+The next natural publication step after those tranches still avoided broad subtree cutover. The smallest remaining app-lane follow-on was a bounded recursive runtime packet for `apps/operations-web`:
 
 1. `app/`
 2. `lib/`
@@ -17,7 +17,13 @@ The next natural publication step should still avoid broad subtree cutover. The 
 6. `tests/`
 7. `DEPLOYMENT_VALIDATION.md`
 
-This packet introduces the active operations browser runtime, its static PM review assets, its smoke scripts, and its lane-local validation note without widening into generated browser residue or other app lanes.
+This packet introduced the active operations browser runtime, its static PM review assets, its smoke scripts, and its lane-local validation note without widening into generated browser residue or other app lanes.
+
+Publication outcome:
+
+1. committed on parent-root `clean-main` as `ec657d8`
+2. pushed to `origin/clean-main` on 2026-04-22
+3. closed as the published operations-web runtime follow-on to the package source tranche
 
 ## 2. Why This Packet Is Next
 
@@ -33,7 +39,7 @@ Measured from the parent git root at `C:/APEX Platform` on 2026-04-22:
 
 ## 3. Packet Intent
 
-Use this packet to introduce the recursive runtime surface for the smallest active browser lane that already has its manifests and top-level config published:
+This packet introduced the recursive runtime surface for the smallest active browser lane that already had its manifests and top-level config published:
 
 1. Next app shell files under `app/`
 2. lane-local helpers under `lib/`
@@ -41,7 +47,7 @@ Use this packet to introduce the recursive runtime surface for the smallest acti
 4. smoke scripts and browser tests
 5. the local deployment-validation note for the lane
 
-Do not treat this packet as authorization to publish generated `.next/`, `node_modules/`, or `test-results/` residue.
+Do not treat this historical packet as authorization to publish generated `.next/`, `node_modules/`, or `test-results/` residue.
 
 ## 4. Exact Packet Contents
 
@@ -72,9 +78,9 @@ This packet is intentionally narrow:
 4. it leaves broader `ops/` historical bulk out of the review surface
 5. it creates a clean first recursive app-lane publication after the package tranche
 
-## 6. Operator Execution Path
+## 6. Historical Execution Path
 
-Preferred task path from `C:/APEX Platform/apex-power-ops-platform`:
+Preferred task path from `C:/APEX Platform/apex-power-ops-platform` when this packet was executed:
 
 1. run `Preview parent-root operations-web runtime packet`
 2. run `Stage parent-root operations-web runtime packet` only when the preview is correct
@@ -97,7 +103,7 @@ Before commit, the smallest relevant checks are:
 2. staged diff review for those operations-web paths only
 3. lane-local executable checks such as `typecheck` and the focused browser smoke path if the environment is available
 
-This packet is a recursive app-lane runtime tranche, so executable validation matters more than it did for the scaffold-only packet.
+This packet was a recursive app-lane runtime tranche, so executable validation mattered more than it did for the scaffold-only packet.
 
 ## 8. Do Not Do
 
@@ -114,4 +120,4 @@ If this packet lands cleanly, the next logical tranches are:
 2. `apps/control-plane-api` recursive runtime packet
 3. selective `docs/` and `ops/` authority packets needed to operate the expanded app lanes
 
-Those follow-ons remain separate from this operations-web runtime packet.
+Those follow-ons remain separate from this now-published operations-web runtime packet.
