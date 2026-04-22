@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>APEX PM Approval Surface — Prototype</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f3f4f6; margin: 0; }
+    .status-awaiting_review { background: #fbcfe8; color: #9d174d; }
+    .status-submitted { background: #fbcfe8; color: #9d174d; }
+    .status-complete { background: #c7d2fe; color: #3730a3; }
+    .status-approved { background: #d1fae5; color: #065f46; }
+    .status-rejected { background: #fecaca; color: #991b1b; }
+    .status-active { background: #d1fae5; color: #065f46; }
+    .status-escalated { background: #fecaca; color: #991b1b; }
+    .status-resolved { background: #d1fae5; color: #065f46; }
+    .status-in_review { background: #dbeafe; color: #1e40af; }
+    .status-open { background: #fef3c7; color: #92400e; }
+    .status-not_started { background: #e5e7eb; color: #374151; }
+    .status-on_hold { background: #fef3c7; color: #92400e; }
+    .status-ready { background: #dbeafe; color: #1e40af; }
+    .status-draft { background: #e5e7eb; color: #374151; }
+    .severity-high { color: #dc2626; font-weight: 700; }
+    .severity-medium { color: #d97706; font-weight: 600; }
+    .severity-low { color: #059669; }
+    .resa-blue { color: #015687; }
+    .resa-bg { background: #015687; }
+    .resa-green { color: #5FA844; }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 9999px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
+    .type-badge-workpackage { background: #ede9fe; color: #5b21b6; }
+    .type-badge-task { background: #dbeafe; color: #1e40af; }
+    .type-badge-snapshot { background: #fef3c7; color: #92400e; }
+    .type-badge-issue { background: #fecaca; color: #991b1b; }
+    .sidebar { width: 220px; min-height: 100vh; background: white; border-right: 1px solid #e5e7eb; padding: 16px 12px; position: fixed; left: 0; top: 0; }
+    .main-content { margin-left: 220px; padding: 24px; }
+    .nav-item { cursor: pointer; padding: 10px 16px; border-radius: 6px; margin-bottom: 4px; font-size: 14px; }
+    .nav-item:hover { background: rgba(1,86,135,0.08); }
+    .nav-item.active { background: #015687; color: white; }
+    .card { background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 16px; margin-bottom: 12px; }
+    .btn { padding: 6px 14px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; }
+    .btn-approve { background: #059669; color: white; }
+    .btn-approve:hover { background: #047857; }
+    .btn-approve:disabled { background: #9ca3af; cursor: not-allowed; }
+    .btn-reject { background: #dc2626; color: white; }
+    .btn-reject:hover { background: #b91c1c; }
+    .btn-escalate { background: #d97706; color: white; }
+    .btn-escalate:hover { background: #b45309; }
+    .btn-outline { background: white; color: #015687; border: 1px solid #015687; }
+    .btn-outline:hover { background: #f0f7ff; }
+    .btn-return { background: #6366f1; color: white; }
+    .btn-return:hover { background: #4f46e5; }
+    table { width: 100%; border-collapse: collapse; }
+    th { text-align: left; padding: 8px 12px; font-size: 11px; text-transform: uppercase; color: #6b7280; border-bottom: 2px solid #e5e7eb; }
+    td { padding: 8px 12px; border-bottom: 1px solid #f3f4f6; font-size: 13px; }
+    tr:hover { background: #f9fafb; }
+    tr.clickable { cursor: pointer; }
+    .progress-bar { height: 6px; background: #e5e7eb; border-radius: 3px; overflow: hidden; }
+    .progress-fill { height: 100%; background: #5FA844; border-radius: 3px; }
+    .online-indicator { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #059669; margin-right: 6px; }
+    .offline-indicator { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #dc2626; margin-right: 6px; }
+    select, input, textarea { padding: 6px 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px; }
+    .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; z-index: 100; }
+    .blocker-warning { background: #fef2f2; border: 1px solid #fecaca; border-radius: 6px; padding: 12px; margin-bottom: 12px; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script src="schedule.js?v=f8" type="text/babel"></script>
+  <script src="variance.js?v=f8" type="text/babel"></script>
+  <script src="drivers.js?v=f8" type="text/babel"></script>
+  <script src="tracer.js?v=f8" type="text/babel"></script>
+  <script type="text/babel">
+    const { useState, useEffect, useCallback, useMemo } = React;
+
+    const SEAM_BASE = 'http://localhost:8000/api/v1/mutations';
+    const READS_BASE = 'http://localhost:8000/api/v1/reads';
+    const PM_ACTOR = { actor_id: 'pm-001', actor_role: 'pm', project_scope: ['proj-001'] };
+
+    function makeToken(actor) { return 'Bearer ' + btoa(JSON.stringify(actor)); }
+
+    async function seamPost(endpoint, actionType, mutationClass, entityId, payload, reason) {
+      const body = {
+        idempotency_key: crypto.randomUUID(), mutation_class: mutationClass,
+        action_type: actionType, entity_id: entityId, payload: payload,
+        reason: reason || '', source: 'online', client_timestamp: new Date().toISOString(),
+      };
+      const resp = await fetch(`${SEAM_BASE}/${endpoint}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': makeToken(PM_ACTOR) },
+        body: JSON.stringify(body),
+      });
+      return resp.json();
+    }
+
+    async function readData(endpoint) {
+      const resp = await fetch(`${READS_BASE}/${endpoint}`, { headers: { 'Authorization': makeToken(PM_ACTOR) } });
+      return resp.json();
+    }
+
+    function useProjectData() {
+      const [queue, setQueue] = useState({ tasks: [], workpackages: [], snapshots: [], escalated_issues: [], total_count: 0 });
+      const [history, setHistory] = useState([]);
+      const [apparatus, setApparatus] = useState([]);
+      const [tasks, setTasks] = useState([]);
+      const [workpackages, setWorkpackages] = useState([]);
+      const [issues, setIssues] = useState([]);
+      const [assignments, setAssignments] = useState([]);
+      const [loading, setLoading] = useState(true);
+      const [online, setOnline] = useState(true);
+      const [lastRefresh, setLastRefresh] = useState(null);
+
+      const refresh = useCallback(async () => {
+        try {
+          setLoading(true);
+          const [q, h, app, tsk, wp, iss, asgn] = await Promise.all([
+            readData('approval-queue'), readData('decision-history'),
+            readData('apparatus'), readData('tasks'), readData('workpackages'),
+            readData('issues'), readData('assignments'),
+          ]);
+          setQueue(q); setHistory(h); setApparatus(app); setTasks(tsk);
+          setWorkpackages(wp); setIssues(iss); setAssignments(asgn);
+          setOnline(true); setLastRefresh(new Date());
+        } catch (e) { setOnline(false); }
+        finally { setLoading(false); }
+      }, []);
+
+      useEffect(() => { refresh(); const id = setInterval(refresh, 15000); return () => clearInterval(id); }, [refresh]);
+      return { queue, history, apparatus, tasks, workpackages, issues, assignments, loading, online, refresh, lastRefresh };
+    }
+
+    function StatusBadge({ status }) {
+      return React.createElement('span', { className: `badge status-${status}` }, status?.replace(/_/g, ' '));
+    }
+    function TypeBadge({ type }) {
+      return React.createElement('span', { className: `badge type-badge-${type}` }, type);
+    }
+    function SeverityLabel({ severity }) {
+      return React.createElement('span', { className: `severity-${severity}` }, severity);
+    }
+
+    function ApprovalQueue({ data, navigate }) {
+      const { queue } = data;
+      const allItems = [
+        ...queue.workpackages.map(w => ({ ...w, _type: 'workpackage', _name: w.name })),
+        ...queue.tasks.map(t => ({ ...t, _type: 'task', _name: t.name })),
+        ...queue.snapshots.map(s => ({ ...s, _type: 'snapshot', _name: `Snapshot: ${s.workpackage_id} (${s.period_start} - ${s.period_end})` })),
+      ];
+
+      return React.createElement('div', null,
+        React.createElement('h1', { className: 'text-xl font-bold resa-blue mb-1' }, 'Approval Queue'),
+        React.createElement('p', { className: 'text-sm text-gray-500 mb-4' }, `${queue.total_count} items awaiting review`),
+
+        allItems.length === 0
+          ? React.createElement('div', { className: 'card text-center text-gray-400 py-8' }, 'No items awaiting review')
+          : React.createElement('div', { className: 'card' },
+              React.createElement('table', null,
+                React.createElement('thead', null, React.createElement('tr', null,
+                  React.createElement('th', null, 'Type'),
+                  React.createElement('th', null, 'Name'),
+                  React.createElement('th', null, 'State'),
+                  React.createElement('th', null, 'Project'),
+                  React.createElement('th', null, 'Action'),
+                )),
+                React.createElement('tbody', null,
+                  allItems.map(item =>
+                    React.createElement('tr', { key: item.id, className: 'clickable',
+                      onClick: () => navigate(item._type === 'workpackage' ? 'wp-review' : item._type === 'task' ? 'task-review' : 'snapshot-review', item.id)
+                    },
+                      React.createElement('td', null, React.createElement(TypeBadge, { type: item._type })),
+                      React.createElement('td', { className: 'font-medium' }, item._name),
+                      React.createElement('td', null, React.createElement(StatusBadge, { status: item.status })),
+                      React.createElement('td', { className: 'text-xs text-gray-500' }, item.project_id),
+                      React.createElement('td', null,
+                        React.createElement('button', { className: 'btn btn-outline', style: { fontSize: 11, padding: '3px 8px' } }, 'Review →')
+                      ),
+                    )
+                  )
+                ),
+              ),
+            ),
+
+        queue.escalated_issues.length > 0 && React.createElement('div', { className: 'card mt-4', style: { borderLeft: '4px solid #dc2626' } },
+          React.createElement('h3', { className: 'text-sm font-bold text-red-600 mb-2' }, `Escalated Issues (${queue.escalated_issues.length})`),
+          React.createElement('p', { className: 'text-xs text-gray-500 mb-2' }, 'Issues escalated to PM for disposition'),
+          queue.escalated_issues.map(issue =>
+            React.createElement('div', { key: issue.id, className: 'flex justify-between items-center py-2 border-b border-gray-100 cursor-pointer', onClick: () => navigate('escalations') },
+              React.createElement('span', { className: 'font-medium text-sm' }, issue.title),
+              React.createElement('div', { className: 'flex gap-2' },
+                React.createElement(SeverityLabel, { severity: issue.severity }),
+                issue.blocks_completion && React.createElement('span', { className: 'badge bg-red-100 text-red-700' }, 'BLOCKING'),
+              ),
+            )
+          ),
+        ),
+      );
+    }
+
+    function WorkPackageReview({ wpId, data, navigate, onMutate }) {
+      const { workpackages, tasks, apparatus, issues, assignments } = data;
+      const wp = workpackages.find(w => w.id === wpId);
+      if (!wp) return React.createElement('div', { className: 'card' }, 'WorkPackage not found');
+
+      const [reason, setReason] = useState('');
+      const [result, setResult] = useState(null);
+
+      const wpTasks = tasks.filter(t => t.workpackage_id === wpId);
+      const wpApparatus = apparatus.filter(a => wpTasks.some(t => t.id === a.task_id));
+      const wpIssues = issues.filter(i => wpApparatus.some(a => a.id === i.apparatus_id));
+      const blocking = wpIssues.filter(i => i.blocks_completion && i.status !== 'resolved' && i.status !== 'closed');
+      const completeTasks = wpTasks.filter(t => t.status === 'complete').length;
+      const completeApparatus = wpApparatus.filter(a => a.status === 'complete').length;
+      const canApprove = wp.status === 'awaiting_review' && blocking.length === 0;
+
+      const doAction = async (action, payload) => {
+        if (!reason.trim()) { alert('Reason/note required'); return; }
+        const r = await seamPost('workpackages', action, 'C', wpId, payload, reason);
+        setResult(r);
+        if (r.status === 'accepted') { setTimeout(() => { onMutate(); navigate('queue'); }, 800); }
+      };
+
+      return React.createElement('div', null,
+        React.createElement('button', { className: 'text-sm resa-blue mb-3 cursor-pointer', onClick: () => navigate('queue') }, '← Back to Queue'),
+        React.createElement('div', { className: 'flex items-center gap-3 mb-4' },
+          React.createElement(TypeBadge, { type: 'workpackage' }),
+          React.createElement('h1', { className: 'text-xl font-bold resa-blue' }, wp.name),
+          React.createElement(StatusBadge, { status: wp.status }),
+        ),
+        React.createElement('div', { className: 'grid grid-cols-4 gap-3 mb-4' },
+          React.createElement('div', { className: 'card text-center' },
+            React.createElement('div', { className: 'text-2xl font-bold resa-blue' }, `${completeTasks}/${wpTasks.length}`),
+            React.createElement('div', { className: 'text-xs text-gray-500' }, 'Tasks Complete'),
+          ),
+          React.createElement('div', { className: 'card text-center' },
+            React.createElement('div', { className: 'text-2xl font-bold resa-blue' }, `${completeApparatus}/${wpApparatus.length}`),
+            React.createElement('div', { className: 'text-xs text-gray-500' }, 'Apparatus Complete'),
+          ),
+          React.createElement('div', { className: 'card text-center' },
+            React.createElement('div', { className: 'text-2xl font-bold', style: { color: blocking.length > 0 ? '#dc2626' : '#059669' } }, blocking.length),
+            React.createElement('div', { className: 'text-xs text-gray-500' }, 'Blocking Issues'),
+          ),
+          React.createElement('div', { className: 'card text-center' },
+            React.createElement('div', { className: 'text-2xl font-bold resa-blue' }, `${wpApparatus.length > 0 ? Math.round((completeApparatus/wpApparatus.length)*100) : 0}%`),
+            React.createElement('div', { className: 'text-xs text-gray-500' }, 'Progress'),
+          ),
+        ),
+        blocking.length > 0 && React.createElement('div', { className: 'blocker-warning' },
+          React.createElement('h3', { className: 'text-sm font-bold text-red-700 mb-1' }, `⚠ ${blocking.length} Unresolved Blocking Issue(s) — Approval Disabled`),
+          blocking.map(i => React.createElement('div', { key: i.id, className: 'text-sm py-1' },
+            React.createElement(SeverityLabel, { severity: i.severity }), ' ', i.title,
+          )),
+          React.createElement('p', { className: 'text-xs text-red-500 mt-2' }, 'Blocking issues must be resolved before this WorkPackage can be approved. This is a server-enforced precondition.'),
+        ),
+        React.createElement('div', { className: 'card' },
+          React.createElement('h3', { className: 'text-sm font-bold text-gray-700 mb-2' }, 'Tasks'),
+          React.createElement('table', null,
+            React.createElement('thead', null, React.createElement('tr', null,
+              React.createElement('th', null, 'Task'), React.createElement('th', null, 'Status'),
+              React.createElement('th', null, 'Apparatus'), React.createElement('th', null, 'Issues'),
+            )),
+            React.createElement('tbody', null, wpTasks.map(t => {
+              const tApp = wpApparatus.filter(a => a.task_id === t.id);
+              const tIss = wpIssues.filter(i => tApp.some(a => a.id === i.apparatus_id));
+              return React.createElement('tr', { key: t.id },
+                React.createElement('td', { className: 'font-medium' }, t.name),
+                React.createElement('td', null, React.createElement(StatusBadge, { status: t.status })),
+                React.createElement('td', { className: 'text-xs' }, `${tApp.filter(a=>a.status==='complete').length}/${tApp.length}`),
+                React.createElement('td', null, tIss.length > 0 ? React.createElement('span', { className: 'text-red-500 text-xs font-bold' }, `${tIss.length}`) : '—'),
+              );
+            })),
+          ),
+        ),
+        wpIssues.length > 0 && React.createElement('div', { className: 'card' },
+          React.createElement('h3', { className: 'text-sm font-bold text-gray-700 mb-2' }, `Issues (${wpIssues.length})`),
+          wpIssues.map(i => React.createElement('div', { key: i.id, className: 'flex justify-between py-1 border-b border-gray-100 text-sm' },
+            React.createElement('span', null, i.title),
+            React.createElement('div', { className: 'flex gap-2' },
+              React.createElement(SeverityLabel, { severity: i.severity }),
+              React.createElement(StatusBadge, { status: i.status }),
+              i.blocks_completion && React.createElement('span', { className: 'badge bg-red-100 text-red-700' }, 'BLOCKING'),
+            ),
+          )),
+        ),
+        React.createElement('div', { className: 'card', style: { borderTop: '3px solid #015687' } },
+          React.createElement('h3', { className: 'text-sm font-bold resa-blue mb-3' }, 'Decision'),
+          React.createElement('textarea', { className: 'w-full border border-gray-300 rounded p-2 text-sm mb-3', rows: 3,
+            placeholder: 'Decision reason/note (required)...', value: reason, onChange: e => setReason(e.target.value) }),
+          React.createElement('p', { className: 'text-xs text-gray-400 mb-3' }, 'Class C server-authoritative — requires online connectivity.'),
+          result && React.createElement('div', { className: `text-sm mb-3 p-2 rounded ${result.status === 'accepted' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}` },
+            result.status === 'accepted' ? '✓ Decision recorded' : `✗ ${result.error?.message || JSON.stringify(result)}`),
+          React.createElement('div', { className: 'flex gap-2' },
+            React.createElement('button', { className: 'btn btn-approve', disabled: !canApprove,
+              onClick: () => doAction('approve', { status: 'complete' }),
+              title: !canApprove ? 'Blocked by unresolved issues' : '',
+            }, canApprove ? 'Approve' : 'Approve (blocked)'),
+            React.createElement('button', { className: 'btn btn-reject', onClick: () => doAction('reject', { status: 'active' }) }, 'Reject'),
+            React.createElement('button', { className: 'btn btn-escalate', onClick: () => doAction('escalate_review', {}) }, 'Escalate'),
+          ),
+        ),
+      );
+    }
+
+    function TaskReview({ taskId, data, navigate, onMutate }) {
+      const { tasks, apparatus, issues, workpackages } = data;
+      const task = tasks.find(t => t.id === taskId);
+      if (!task) return React.createElement('div', { className: 'card' }, 'Task not found');
+
+      const [reason, setReason] = useState('');
+      const [result, setResult] = useState(null);
+
+      const wp = workpackages.find(w => w.id === task.workpackage_id);
+      const taskApparatus = apparatus.filter(a => a.task_id === taskId);
+      const taskIssues = issues.filter(i => taskApparatus.some(a => a.id === i.apparatus_id));
+      const blocking = taskIssues.filter(i => i.blocks_completion && i.status !== 'resolved' && i.status !== 'closed');
+      const canApprove = task.status === 'awaiting_review' && blocking.length === 0;
+
+      const doAction = async (action, payload) => {
+        if (!reason.trim()) { alert('Reason/note required'); return; }
+        const r = await seamPost('tasks', action, 'C', taskId, payload, reason);
+        setResult(r);
+        if (r.status === 'accepted') { setTimeout(() => { onMutate(); navigate('queue'); }, 800); }
+      };
+
+      return React.createElement('div', null,
+        React.createElement('button', { className: 'text-sm resa-blue mb-3 cursor-pointer', onClick: () => navigate('queue') }, '← Back to Queue'),
+        React.createElement('div', { className: 'flex items-center gap-3 mb-4' },
+          React.createElement(TypeBadge, { type: 'task' }),
+          React.createElement('h1', { className: 'text-xl font-bold resa-blue' }, task.name),
+          React.createElement(StatusBadge, { status: task.status }),
+        ),
+        React.createElement('p', { className: 'text-sm text-gray-500 mb-4' }, `WorkPackage: ${wp?.name || task.workpackage_id}`),
+        React.createElement('div', { className: 'grid grid-cols-3 gap-3 mb-4' },
+          React.createElement('div', { className: 'card text-center' },
+            React.createElement('div', { className: 'text-2xl font-bold resa-blue' }, `${taskApparatus.filter(a=>a.status==='complete').length}/${taskApparatus.length}`),
+            React.createElement('div', { className: 'text-xs text-gray-500' }, 'Apparatus Complete'),
+          ),
+          React.createElement('div', { className: 'card text-center' },
+            React.createElement('div', { className: 'text-2xl font-bold', style: { color: blocking.length > 0 ? '#dc2626' : '#059669' } }, blocking.length),
+            React.createElement('div', { className: 'text-xs text-gray-500' }, 'Blocking Issues'),
+          ),
+          React.createElement('div', { className: 'card text-center' },
+            React.createElement('div', { className: 'text-2xl font-bold resa-blue' }, taskIssues.length),
+            React.createElement('div', { className: 'text-xs text-gray-500' }, 'Total Issues'),
+          ),
+        ),
+        blocking.length > 0 && React.createElement('div', { className: 'blocker-warning' },
+          React.createElement('h3', { className: 'text-sm font-bold text-red-700 mb-1' }, `⚠ ${blocking.length} Blocking Issue(s) — Approval Disabled`),
+          blocking.map(i => React.createElement('div', { key: i.id, className: 'text-sm py-1' },
+            React.createElement(SeverityLabel, { severity: i.severity }), ' ', i.title)),
+        ),
+        React.createElement('div', { className: 'card' },
+          React.createElement('h3', { className: 'text-sm font-bold text-gray-700 mb-2' }, 'Apparatus'),
+          taskApparatus.map(a => React.createElement('div', { key: a.id, className: 'flex justify-between py-1 border-b border-gray-100 text-sm' },
+            React.createElement('span', { className: 'font-medium' }, a.name),
+            React.createElement('div', { className: 'flex gap-2' },
+              React.createElement('span', { className: 'text-xs text-gray-500' }, a.neta_standard),
+              React.createElement(StatusBadge, { status: a.status }),
+            ),
+          )),
+        ),
+        React.createElement('div', { className: 'card', style: { borderTop: '3px solid #015687' } },
+          React.createElement('h3', { className: 'text-sm font-bold resa-blue mb-3' }, 'Decision'),
+          React.createElement('textarea', { className: 'w-full border border-gray-300 rounded p-2 text-sm mb-3', rows: 3,
+            placeholder: 'Decision reason/note (required)...', value: reason, onChange: e => setReason(e.target.value) }),
+          result && React.createElement('div', { className: `text-sm mb-3 p-2 rounded ${result.status === 'accepted' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}` },
+            result.status === 'accepted' ? '✓ Decision recorded' : `✗ ${result.error?.message || JSON.stringify(result)}`),
+          React.createElement('div', { className: 'flex gap-2' },
+            React.createElement('button', { className: 'btn btn-approve', disabled: !canApprove, onClick: () => doAction('approve', { status: 'complete' }) }, canApprove ? 'Approve' : 'Approve (blocked)'),
+            React.createElement('button', { className: 'btn btn-reject', onClick: () => doAction('reject', { status: 'rejected' }) }, 'Reject'),
+            React.createElement('button', { className: 'btn btn-escalate', onClick: () => doAction('escalate_review', {}) }, 'Escalate'),
+          ),
+        ),
+      );
+    }
+
+    function SnapshotReview({ snapId, data, navigate, onMutate }) {
+      const allSnaps = [...(data.queue.snapshots || [])];
+      const [snapshots, setSnapshots] = useState([]);
+      useEffect(() => { readData('snapshots').then(setSnapshots); }, []);
+      const snap = snapshots.find(s => s.id === snapId) || allSnaps.find(s => s.id === snapId);
+      if (!snap) return React.createElement('div', { className: 'card' }, 'Snapshot not found');
+
+      const [reason, setReason] = useState('');
+      const [result, setResult] = useState(null);
+      const wp = data.workpackages.find(w => w.id === snap.workpackage_id);
+
+      const doAction = async (action, payload) => {
+        if (!reason.trim()) { alert('Reason/note required'); return; }
+        const r = await seamPost('snapshots', action, 'C', snapId, payload, reason);
+        setResult(r);
+        if (r.status === 'accepted') { setTimeout(() => { onMutate(); navigate('queue'); }, 800); }
+      };
+
+      return React.createElement('div', null,
+        React.createElement('button', { className: 'text-sm resa-blue mb-3 cursor-pointer', onClick: () => navigate('queue') }, '← Back to Queue'),
+        React.createElement('div', { className: 'flex items-center gap-3 mb-4' },
+          React.createElement(TypeBadge, { type: 'snapshot' }),
+          React.createElement('h1', { className: 'text-xl font-bold resa-blue' }, 'Progress Snapshot'),
+          React.createElement(StatusBadge, { status: snap.status }),
+        ),
+        React.createElement('div', { className: 'card' },
+          React.createElement('div', { className: 'grid grid-cols-2 gap-4 text-sm' },
+            React.createElement('div', null, React.createElement('span', { className: 'text-gray-500' }, 'WorkPackage: '), React.createElement('span', { className: 'font-medium' }, wp?.name || snap.workpackage_id)),
+            React.createElement('div', null, React.createElement('span', { className: 'text-gray-500' }, 'Period: '), React.createElement('span', null, `${snap.period_start} — ${snap.period_end}`)),
+            React.createElement('div', null, React.createElement('span', { className: 'text-gray-500' }, 'Completion: '), React.createElement('span', { className: 'font-bold' }, `${snap.percent_complete}%`)),
+            React.createElement('div', null, React.createElement('span', { className: 'text-gray-500' }, 'Hours Reported: '), React.createElement('span', null, snap.hours_reported)),
+            React.createElement('div', null, React.createElement('span', { className: 'text-gray-500' }, 'Submitted By: '), React.createElement('span', null, snap.submitted_by)),
+          ),
+        ),
+        React.createElement('div', { className: 'card' },
+          React.createElement('div', { className: 'mb-3' },
+            React.createElement('span', { className: 'text-sm text-gray-500' }, 'Progress'),
+            React.createElement('div', { className: 'progress-bar mt-1', style: { height: 10 } },
+              React.createElement('div', { className: 'progress-fill', style: { width: `${snap.percent_complete}%` } }),
+            ),
+          ),
+          React.createElement('p', { className: 'text-xs text-gray-400' }, 'Approved snapshot becomes period truth. Does not trigger billing (Class D deferred).'),
+        ),
+        React.createElement('div', { className: 'card', style: { borderTop: '3px solid #015687' } },
+          React.createElement('h3', { className: 'text-sm font-bold resa-blue mb-3' }, 'Decision'),
+          React.createElement('textarea', { className: 'w-full border border-gray-300 rounded p-2 text-sm mb-3', rows: 3,
+            placeholder: 'Decision reason/note (required)...', value: reason, onChange: e => setReason(e.target.value) }),
+          result && React.createElement('div', { className: `text-sm mb-3 p-2 rounded ${result.status === 'accepted' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}` },
+            result.status === 'accepted' ? '✓ Decision recorded' : `✗ ${result.error?.message || JSON.stringify(result)}`),
+          React.createElement('div', { className: 'flex gap-2' },
+            React.createElement('button', { className: 'btn btn-approve', disabled: snap.status !== 'submitted', onClick: () => doAction('approve', { status: 'approved' }) }, 'Approve'),
+            React.createElement('button', { className: 'btn btn-reject', onClick: () => doAction('reject', { status: 'rejected' }) }, 'Reject'),
+          ),
+        ),
+      );
+    }
+
+    function EscalationQueue({ data, onMutate }) {
+      const { issues, apparatus, tasks, workpackages } = data;
+      const escalated = issues.filter(i => i.status === 'escalated');
+      const [reason, setReason] = useState('');
+      const [activeIssue, setActiveIssue] = useState(null);
+      const [result, setResult] = useState(null);
+
+      const doAction = async (issueId, action, payload) => {
+        if (!reason.trim()) { alert('Reason required'); return; }
+        const r = await seamPost('issues', action, 'C', issueId, payload, reason);
+        setResult({ id: issueId, ...r });
+        if (r.status === 'accepted') { setActiveIssue(null); setReason(''); onMutate(); }
+      };
+
+      return React.createElement('div', null,
+        React.createElement('h1', { className: 'text-xl font-bold resa-blue mb-4' }, 'Escalation Queue'),
+        escalated.length === 0
+          ? React.createElement('div', { className: 'card text-center text-gray-400 py-8' }, 'No escalated items')
+          : escalated.map(issue => {
+              const app = apparatus.find(a => a.id === issue.apparatus_id);
+              const task = app ? tasks.find(t => t.id === app.task_id) : null;
+              const wp = task ? workpackages.find(w => w.id === task.workpackage_id) : null;
+              const isActive = activeIssue === issue.id;
+
+              return React.createElement('div', { key: issue.id, className: 'card', style: isActive ? { borderLeft: '4px solid #015687' } : {} },
+                React.createElement('div', { className: 'flex justify-between items-start mb-2' },
+                  React.createElement('div', null,
+                    React.createElement('h3', { className: 'font-medium' }, issue.title),
+                    React.createElement('div', { className: 'flex gap-2 mt-1' },
+                      React.createElement(SeverityLabel, { severity: issue.severity }),
+                      React.createElement(StatusBadge, { status: issue.status }),
+                      issue.blocks_completion && React.createElement('span', { className: 'badge bg-red-100 text-red-700' }, 'BLOCKING'),
+                    ),
+                  ),
+                  !isActive && React.createElement('button', { className: 'btn btn-outline', onClick: () => setActiveIssue(issue.id) }, 'Take Action'),
+                ),
+                React.createElement('div', { className: 'text-xs text-gray-500 mb-2' },
+                  `Apparatus: ${app?.name || issue.apparatus_id} • Task: ${task?.name || '—'} • WP: ${wp?.name || '—'} • Reporter: ${issue.reported_by}`
+                ),
+                isActive && React.createElement('div', { className: 'mt-3 pt-3 border-t border-gray-200' },
+                  React.createElement('textarea', { className: 'w-full border border-gray-300 rounded p-2 text-sm mb-3', rows: 2,
+                    placeholder: 'Disposition reason (required)...', value: reason, onChange: e => setReason(e.target.value) }),
+                  result && result.id === issue.id && React.createElement('div', { className: `text-sm mb-2 p-2 rounded ${result.status === 'accepted' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}` },
+                    result.status === 'accepted' ? '✓ Done' : `✗ ${result.error?.message || 'Failed'}`),
+                  React.createElement('div', { className: 'flex gap-2' },
+                    React.createElement('button', { className: 'btn btn-approve', onClick: () => doAction(issue.id, 'resolve_escalated', { status: 'resolved' }) }, 'Resolve'),
+                    React.createElement('button', { className: 'btn btn-escalate', onClick: () => doAction(issue.id, 're_escalate', {}) }, 'Re-escalate'),
+                    React.createElement('button', { className: 'btn btn-return', onClick: () => doAction(issue.id, 'return_to_lead', { status: 'in_review' }) }, 'Return to Lead'),
+                    React.createElement('button', { className: 'btn btn-outline', onClick: () => { setActiveIssue(null); setReason(''); } }, 'Cancel'),
+                  ),
+                ),
+              );
+            }),
+      );
+    }
+
+    function DecisionHistory({ data }) {
+      const { history } = data;
+      const [filterType, setFilterType] = useState('all');
+      const [filterAction, setFilterAction] = useState('all');
+      const [search, setSearch] = useState('');
+
+      const filtered = history.filter(e => {
+        if (filterType !== 'all' && e.entity_type !== filterType) return false;
+        if (filterAction !== 'all' && e.action_type !== filterAction) return false;
+        if (search && !JSON.stringify(e).toLowerCase().includes(search.toLowerCase())) return false;
+        return true;
+      });
+
+      return React.createElement('div', null,
+        React.createElement('h1', { className: 'text-xl font-bold resa-blue mb-4' }, 'Decision History'),
+        React.createElement('div', { className: 'card flex gap-3 items-center mb-4' },
+          React.createElement('select', { value: filterType, onChange: e => setFilterType(e.target.value) },
+            React.createElement('option', { value: 'all' }, 'All Types'),
+            ['task','workpackage','snapshot','issue'].map(t => React.createElement('option', { key: t, value: t }, t)),
+          ),
+          React.createElement('select', { value: filterAction, onChange: e => setFilterAction(e.target.value) },
+            React.createElement('option', { value: 'all' }, 'All Actions'),
+            ['approve','reject','escalate_review','resolve_escalated','re_escalate','return_to_lead'].map(a => React.createElement('option', { key: a, value: a }, a.replace(/_/g,' '))),
+          ),
+          React.createElement('input', { type: 'text', placeholder: 'Search...', value: search, onChange: e => setSearch(e.target.value), className: 'flex-1' }),
+        ),
+        filtered.length === 0
+          ? React.createElement('div', { className: 'card text-center text-gray-400 py-8' }, 'No decisions recorded yet')
+          : React.createElement('div', { className: 'card' },
+              React.createElement('table', null,
+                React.createElement('thead', null, React.createElement('tr', null,
+                  React.createElement('th', null, 'Time'),
+                  React.createElement('th', null, 'Type'),
+                  React.createElement('th', null, 'Entity'),
+                  React.createElement('th', null, 'Action'),
+                  React.createElement('th', null, 'Actor'),
+                  React.createElement('th', null, 'From → To'),
+                  React.createElement('th', null, 'Reason'),
+                )),
+                React.createElement('tbody', null,
+                  filtered.map((e, idx) =>
+                    React.createElement('tr', { key: idx },
+                      React.createElement('td', { className: 'text-xs text-gray-500' }, e.timestamp ? new Date(e.timestamp).toLocaleString() : '—'),
+                      React.createElement('td', null, React.createElement(TypeBadge, { type: e.entity_type || 'unknown' })),
+                      React.createElement('td', { className: 'text-xs font-medium' }, e.entity_id),
+                      React.createElement('td', null, React.createElement('span', { className: 'badge bg-gray-100 text-gray-700' }, e.action_type?.replace(/_/g,' '))),
+                      React.createElement('td', { className: 'text-xs' }, `${e.actor_id} (${e.actor_role})`),
+                      React.createElement('td', { className: 'text-xs' }, `${e.from_state?.status || '—'} → ${e.to_state?.status || '—'}`),
+                      React.createElement('td', { className: 'text-xs text-gray-500', style: { maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis' } }, e.reason || '—'),
+                    )
+                  )
+                ),
+              ),
+            ),
+      );
+    }
+
+    function App() {
+      const data = useProjectData();
+      const [screen, setScreen] = useState('queue');
+      const [detailId, setDetailId] = useState(null);
+      const [tracerTask, setTracerTask] = useState(null);
+      const [focusTaskId, setFocusTaskId] = useState(null);
+
+      const navigate = useCallback((target, id) => { setScreen(target); setDetailId(id || null); }, []);
+      const onTraceTask = useCallback((t) => {
+        setTracerTask(t);
+        setScreen('tracer');
+        setDetailId(null);
+      }, []);
+      const onViewVariance = useCallback((taskId) => {
+        setFocusTaskId(taskId || null);
+        setScreen('variance');
+        setDetailId(null);
+      }, []);
+      const onViewSchedule = useCallback((taskId) => {
+        setFocusTaskId(taskId || null);
+        setScreen('schedule');
+        setDetailId(null);
+      }, []);
+      const onViewDrivers = useCallback((taskId) => {
+        setFocusTaskId(taskId || null);
+        setScreen('drivers');
+        setDetailId(null);
+      }, []);
+
+      const navItems = [
+        { key: 'queue', label: 'Approval Queue', icon: '📋' },
+        { key: 'escalations', label: 'Escalations', icon: '⚠️' },
+        { key: 'history', label: 'Decision History', icon: '📜' },
+        { key: 'schedule', label: 'Schedule', icon: '📊' },
+        { key: 'drivers', label: 'Drivers', icon: '🎯' },
+        { key: 'tracer', label: 'Tracer', icon: '🔍' },
+        { key: 'variance', label: 'Variance', icon: '📈' },
+      ];
+
+      const renderScreen = () => {
+        if (data.loading) return React.createElement('div', { className: 'card text-center p-8' }, 'Loading...');
+        switch (screen) {
+          case 'queue': return React.createElement(ApprovalQueue, { data, navigate });
+          case 'wp-review': return React.createElement(WorkPackageReview, { wpId: detailId, data, navigate, onMutate: data.refresh });
+          case 'task-review': return React.createElement(TaskReview, { taskId: detailId, data, navigate, onMutate: data.refresh });
+          case 'snapshot-review': return React.createElement(SnapshotReview, { snapId: detailId, data, navigate, onMutate: data.refresh });
+          case 'escalations': return React.createElement(EscalationQueue, { data, onMutate: data.refresh });
+          case 'history': return React.createElement(DecisionHistory, { data });
+          case 'schedule':
+            return window.ApexSchedule && window.ApexSchedule.ScheduleView
+              ? React.createElement(window.ApexSchedule.ScheduleView, {
+                  onTraceTask, onViewVariance, onViewDrivers, focusTaskId,
+                })
+              : React.createElement('div', { className: 'card' },
+                  'Schedule module not loaded. Reload the page; schedule.js must load alongside index.html.');
+          case 'drivers':
+            return window.ApexDrivers && window.ApexDrivers.DriversReviewView
+              ? React.createElement(window.ApexDrivers.DriversReviewView, {
+                  onTraceTask, onViewVariance, onViewSchedule, focusTaskId,
+                })
+              : React.createElement('div', { className: 'card' },
+                  'Drivers module not loaded. Reload the page; drivers.js must load alongside index.html.');
+          case 'tracer':
+            return window.ApexTracer && window.ApexTracer.TracerReviewView
+              ? React.createElement(window.ApexTracer.TracerReviewView, {
+                  taskId: tracerTask ? tracerTask.taskId : null,
+                  maxDepth: 10,
+                  taskLabel: tracerTask ? tracerTask.taskLabel : null,
+                  onTraceTask,
+                })
+              : React.createElement('div', { className: 'card' },
+                  'Tracer module not loaded. Reload the page; tracer.js must load alongside index.html.');
+          case 'variance':
+            return window.ApexVariance && window.ApexVariance.VarianceReviewView
+              ? React.createElement(window.ApexVariance.VarianceReviewView, {
+                  onTraceTask, onViewSchedule, onViewDrivers, focusTaskId,
+                })
+              : React.createElement('div', { className: 'card' },
+                  'Variance module not loaded. Reload the page; variance.js must load alongside index.html.');
+          default: return React.createElement(ApprovalQueue, { data, navigate });
+        }
+      };
+
+      return React.createElement('div', null,
+        React.createElement('div', { className: 'sidebar' },
+          React.createElement('div', { className: 'mb-6' },
+            React.createElement('div', { className: 'font-bold text-lg resa-blue' }, 'APEX PM'),
+            React.createElement('div', { className: 'text-xs resa-green font-semibold' }, 'Approval Surface'),
+            React.createElement('div', { className: 'text-xs text-gray-400 mt-1' }, 'pm-001 • proj-001'),
+            React.createElement('div', { className: 'text-xs mt-2' },
+              React.createElement('span', { className: data.online ? 'online-indicator' : 'offline-indicator' }),
+              data.online ? 'Online' : 'Offline — decisions disabled',
+            ),
+          ),
+          navItems.map(item =>
+            React.createElement('div', { key: item.key, className: `nav-item ${screen === item.key ? 'active' : ''}`, onClick: () => navigate(item.key) },
+              `${item.icon} ${item.label}`,
+              item.key === 'queue' && data.queue.total_count > 0 && React.createElement('span', {
+                style: { marginLeft: 8, background: '#dc2626', color: 'white', borderRadius: '50%', padding: '1px 6px', fontSize: 10 }
+              }, data.queue.total_count),
+              item.key === 'escalations' && data.queue.escalated_issues?.length > 0 && React.createElement('span', {
+                style: { marginLeft: 8, background: '#d97706', color: 'white', borderRadius: '50%', padding: '1px 6px', fontSize: 10 }
+              }, data.queue.escalated_issues.length),
+            )
+          ),
+          React.createElement('div', { className: 'mt-6 pt-4 border-t border-gray-200' },
+            React.createElement('div', { className: 'text-xs text-gray-400' }, 'Last refresh:'),
+            React.createElement('div', { className: 'text-xs text-gray-500' }, data.lastRefresh?.toLocaleTimeString() || '—'),
+            React.createElement('button', { className: 'btn btn-outline mt-2 w-full text-xs', onClick: data.refresh }, 'Refresh'),
+          ),
+        ),
+        React.createElement('div', { className: 'main-content' },
+          !data.online && React.createElement('div', {
+            style: { background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 6, padding: '8px 12px', marginBottom: 12 }
+          },
+            React.createElement('span', { className: 'offline-indicator' }),
+            React.createElement('span', { className: 'text-sm text-red-700 font-medium' }, 'Connectivity lost — all decision actions are disabled. Queue data may be stale.'),
+          ),
+          renderScreen(),
+        ),
+      );
+    }
+
+    ReactDOM.render(React.createElement(App), document.getElementById('root'));
+  </script>
+</body>
+</html>
