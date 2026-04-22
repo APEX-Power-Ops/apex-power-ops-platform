@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "apex-forms-engine"
+version = "0.1.0"
+description = "Bounded forms-engine pilot extracted into the Apex unified platform repo"
+requires-python = ">=3.11"
+dependencies = [
+    "openpyxl>=3.1.0",
+    "pypdf>=5.0.0",
+    "python-docx>=1.1.0",
+    "reportlab>=4.0.0",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=8.0.0",
+]
+
+[project.scripts]
+apex-forms-smoke = "apex_forms_engine.smoke:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+apex_forms_engine = ["schemas/*.json"]

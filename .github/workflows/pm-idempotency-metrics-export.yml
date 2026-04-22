@@ -1,0 +1,364 @@
+name: PM Idempotency Metrics Export
+
+# Packet: 2026-04-16-pm-schema-019j (scheduled scrape + export)
+# Packet: 2026-04-16-pm-schema-019k (threshold evaluation)
+#
+# Scheduled (and on-demand) scraping of the two existing read-only PM
+# idempotency ops endpoints:
+#   * GET /api/v1/ops/pm-idempotency/stats
+#   * GET /api/v1/ops/pm-idempotency/by-route
+#
+# The exporter writes the fetched JSON payloads plus a consolidated
+# export manifest into a GitHub Actions artifact (packet 019j).  Packet
+# 019k layers a bounded threshold-evaluation step onto the same workflow
+# that consumes ONLY the existing 019j export payload, emits a pass/fail
+# step-summary table, fails the job on breach, and writes a
+# threshold-evaluation.json record into the same artifact.
+#
+# This is deliberately the smallest deployment-layer metrics-export +
+# threshold surface available in this repo: no application-runtime
+# code changes, no background worker, no new HTTP route, no database
+# writes, and no second metrics implementation path.
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: pm-idempotency-metrics-export
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    name: Scrape PM idempotency ops endpoints
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      PM_IDEMPOTENCY_OPS_BASE_URL: ${{ vars['PM_IDEMPOTENCY_OPS_BASE_URL'] }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Skip gracefully when PM_IDEMPOTENCY_OPS_BASE_URL is not configured
+        id: guard
+        run: |
+          if [ -z "${PM_IDEMPOTENCY_OPS_BASE_URL:-}" ]; then
+            echo "PM_IDEMPOTENCY_OPS_BASE_URL repo variable is not set; skipping metrics export. Configure the variable in repo settings to enable the scheduled cadence." >&2
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Export PM idempotency metrics
+        if: steps.guard.outputs.skip != 'true'
+        env:
+          GITHUB_STEP_SUMMARY: ${{ env.GITHUB_STEP_SUMMARY }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from datetime import datetime, timezone
+          from pathlib import Path
+          from urllib.request import Request, urlopen
+
+
+          BASE_URL = os.environ["PM_IDEMPOTENCY_OPS_BASE_URL"].rstrip("/")
+          OUTPUT_DIR = Path("pm-idempotency-metrics-export")
+          OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+
+          ENDPOINTS = {
+              "stats": "/api/v1/ops/pm-idempotency/stats",
+              "by_route": "/api/v1/ops/pm-idempotency/by-route",
+          }
+          EXPECTED_ROUTES = [
+              "/assignments",
+              "/dependencies",
+              "/execution-issues",
+              "/progress-snapshots",
+              "/projects",
+              "/tasks",
+              "/work-packages",
+          ]
+
+
+          def fetch_json(path: str):
+              url = f"{BASE_URL}{path}"
+              request = Request(url, headers={"Accept": "application/json"})
+              with urlopen(request, timeout=30) as response:
+                  if response.status != 200:
+                      raise RuntimeError(f"{url} returned unexpected status {response.status}")
+                  return json.load(response), url
+
+
+          stats_payload, stats_url = fetch_json(ENDPOINTS["stats"])
+          by_route_payload, by_route_url = fetch_json(ENDPOINTS["by_route"])
+
+          missing_stats_keys = {
+              "count",
+              "expired_count",
+              "oldest_expires_at",
+              "backend_kind",
+          } - set(stats_payload)
+          if missing_stats_keys:
+              raise RuntimeError(f"stats payload missing keys: {sorted(missing_stats_keys)}")
+
+          missing_by_route_keys = {"by_route", "backend_kind"} - set(by_route_payload)
+          if missing_by_route_keys:
+              raise RuntimeError(
+                  f"by-route payload missing keys: {sorted(missing_by_route_keys)}"
+              )
+
+          rows = by_route_payload["by_route"]
+          if len(rows) != 7:
+              raise RuntimeError(f"expected 7 by-route rows, got {len(rows)}")
+
+          actual_routes = [row.get("route") for row in rows]
+          if actual_routes != EXPECTED_ROUTES:
+              raise RuntimeError(
+                  f"unexpected by-route inventory order/content: {actual_routes}"
+              )
+
+          fetched_at = datetime.now(timezone.utc).isoformat()
+          export_payload = {
+              "fetched_at": fetched_at,
+              "base_url": BASE_URL,
+              "endpoints": {
+                  "stats": {"url": stats_url, "payload": stats_payload},
+                  "by_route": {"url": by_route_url, "payload": by_route_payload},
+              },
+          }
+
+          (OUTPUT_DIR / "stats.json").write_text(
+              json.dumps(stats_payload, indent=2, sort_keys=True) + "\n",
+              encoding="utf-8",
+          )
+          (OUTPUT_DIR / "by-route.json").write_text(
+              json.dumps(by_route_payload, indent=2, sort_keys=True) + "\n",
+              encoding="utf-8",
+          )
+          (OUTPUT_DIR / "export.json").write_text(
+              json.dumps(export_payload, indent=2, sort_keys=True) + "\n",
+              encoding="utf-8",
+          )
+
+          summary_lines = [
+              "# PM Idempotency Metrics Export",
+              "",
+              f"- fetched_at: `{fetched_at}`",
+              f"- base_url: `{BASE_URL}`",
+              f"- stats backend_kind: `{stats_payload['backend_kind']}`",
+              f"- total rows: `{stats_payload['count']}`",
+              f"- expired rows: `{stats_payload['expired_count']}`",
+              f"- oldest_expires_at: `{stats_payload['oldest_expires_at']}`",
+              "",
+              "## By Route",
+              "",
+              "| Route | Count | Expired | Oldest Expires At |",
+              "|---|---:|---:|---|",
+          ]
+
+          for row in rows:
+              summary_lines.append(
+                  f"| {row['route']} | {row['count']} | {row['expired_count']} | {row['oldest_expires_at']} |"
+              )
+
+          step_summary_path = os.environ.get("GITHUB_STEP_SUMMARY", "").strip()
+          if step_summary_path:
+              Path(step_summary_path).write_text(
+                  "\n".join(summary_lines) + "\n",
+                  encoding="utf-8",
+              )
+          PY
+
+      - name: Evaluate PM idempotency thresholds
+        id: thresholds
+        if: steps.guard.outputs.skip != 'true'
+        run: |
+          python - <<'PY'
+          # Packet 2026-04-16-pm-schema-019k — bounded threshold
+          # evaluation over the packet-019j export payload.
+          #
+          # Reads the stats.json and by-route.json files that the
+          # preceding Export step just wrote into
+          # pm-idempotency-metrics-export/.  Does NOT re-fetch the
+          # ops endpoints and does NOT introduce a second scrape path.
+          #
+          # Thresholds are pinned constants in this workflow file and
+          # are mirrored in docs/PM-IDEMPOTENCY-METRICS-EXPORT-RUNBOOK.md.
+          # Breach of ANY threshold fails the job (sys.exit(1)); the
+          # subsequent upload step runs on `if: always()` so the
+          # exported artifact plus the threshold-evaluation.json
+          # breach record are always preserved for operators.
+          import json
+          import os
+          import sys
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+
+          OUTPUT_DIR = Path("pm-idempotency-metrics-export")
+          stats = json.loads((OUTPUT_DIR / "stats.json").read_text(encoding="utf-8"))
+          by_route = json.loads((OUTPUT_DIR / "by-route.json").read_text(encoding="utf-8"))
+
+          # -----------------------------------------------------------
+          # Pinned threshold contract — bounded to existing exported
+          # fields only (stats.count, stats.expired_count,
+          # stats.oldest_expires_at, by_route[*].count,
+          # by_route[*].expired_count).  Tune by editing this file +
+          # the runbook; do NOT move thresholds into repo variables or
+          # external config.
+          # -----------------------------------------------------------
+          MAX_TOTAL_COUNT = 100_000
+          MAX_EXPIRED_COUNT = 1_000
+          MAX_OLDEST_EXPIRY_AGE_HOURS = 2
+          MAX_PER_ROUTE_COUNT = 20_000
+          MAX_PER_ROUTE_EXPIRED_COUNT = 500
+
+          now = datetime.now(timezone.utc)
+          checks = []
+
+          # Check 1: total count ceiling
+          total_count = int(stats.get("count", 0))
+          checks.append({
+              "threshold": "total_count",
+              "limit": MAX_TOTAL_COUNT,
+              "observed": total_count,
+              "passed": total_count <= MAX_TOTAL_COUNT,
+          })
+
+          # Check 2: expired count ceiling (sweep backlog pressure)
+          expired_count = int(stats.get("expired_count", 0))
+          checks.append({
+              "threshold": "expired_count",
+              "limit": MAX_EXPIRED_COUNT,
+              "observed": expired_count,
+              "passed": expired_count <= MAX_EXPIRED_COUNT,
+          })
+
+          # Check 3: oldest-expiry staleness (sweep stall detector)
+          oldest_raw = stats.get("oldest_expires_at")
+          if oldest_raw is None:
+              oldest_age_hours = 0.0
+              oldest_passed = True
+              oldest_observed = "none"
+          else:
+              oldest_dt = datetime.fromisoformat(oldest_raw.replace("Z", "+00:00"))
+              if oldest_dt.tzinfo is None:
+                  oldest_dt = oldest_dt.replace(tzinfo=timezone.utc)
+              age_delta = now - oldest_dt
+              oldest_age_hours = age_delta.total_seconds() / 3600.0
+              # Breach only if oldest_expires_at is IN THE PAST by more
+              # than MAX_OLDEST_EXPIRY_AGE_HOURS (i.e. sweep hasn't
+              # cleared an expired row for that long).  Future
+              # expires_at values are healthy and never breach.
+              oldest_passed = oldest_age_hours <= MAX_OLDEST_EXPIRY_AGE_HOURS
+              oldest_observed = f"{oldest_raw} ({oldest_age_hours:+.2f}h)"
+          checks.append({
+              "threshold": "oldest_expiry_age_hours",
+              "limit": MAX_OLDEST_EXPIRY_AGE_HOURS,
+              "observed": oldest_observed,
+              "passed": oldest_passed,
+          })
+
+          # Checks 4..10: per-route count ceilings
+          # Checks 11..17: per-route expired-count ceilings
+          for row in by_route.get("by_route", []):
+              route = row.get("route", "?")
+              rc = int(row.get("count", 0))
+              re_ = int(row.get("expired_count", 0))
+              checks.append({
+                  "threshold": f"per_route_count[{route}]",
+                  "limit": MAX_PER_ROUTE_COUNT,
+                  "observed": rc,
+                  "passed": rc <= MAX_PER_ROUTE_COUNT,
+              })
+              checks.append({
+                  "threshold": f"per_route_expired_count[{route}]",
+                  "limit": MAX_PER_ROUTE_EXPIRED_COUNT,
+                  "observed": re_,
+                  "passed": re_ <= MAX_PER_ROUTE_EXPIRED_COUNT,
+              })
+
+          overall_passed = all(c["passed"] for c in checks)
+          failed_checks = [c for c in checks if not c["passed"]]
+
+          evaluation = {
+              "evaluated_at": now.isoformat(),
+              "overall": "pass" if overall_passed else "fail",
+              "limits": {
+                  "max_total_count": MAX_TOTAL_COUNT,
+                  "max_expired_count": MAX_EXPIRED_COUNT,
+                  "max_oldest_expiry_age_hours": MAX_OLDEST_EXPIRY_AGE_HOURS,
+                  "max_per_route_count": MAX_PER_ROUTE_COUNT,
+                  "max_per_route_expired_count": MAX_PER_ROUTE_EXPIRED_COUNT,
+              },
+              "checks": checks,
+              "failed_checks": failed_checks,
+          }
+
+          (OUTPUT_DIR / "threshold-evaluation.json").write_text(
+              json.dumps(evaluation, indent=2, sort_keys=True) + "\n",
+              encoding="utf-8",
+          )
+
+          summary_lines = [
+              "",
+              "# PM Idempotency Threshold Evaluation",
+              "",
+              f"- overall: `{evaluation['overall'].upper()}`",
+              f"- evaluated_at: `{evaluation['evaluated_at']}`",
+              "",
+              "## Thresholds",
+              "",
+              "| Threshold | Limit | Observed | Result |",
+              "|---|---:|---|:---:|",
+          ]
+          for c in checks:
+              result = "PASS" if c["passed"] else "FAIL"
+              summary_lines.append(
+                  f"| `{c['threshold']}` | {c['limit']} | {c['observed']} | {result} |"
+              )
+          summary_lines.append("")
+          if failed_checks:
+              summary_lines.append("## Failed Checks")
+              summary_lines.append("")
+              for c in failed_checks:
+                  summary_lines.append(
+                      f"- `{c['threshold']}`: observed `{c['observed']}` "
+                      f"exceeds limit `{c['limit']}`"
+                  )
+
+          step_summary_path = os.environ.get("GITHUB_STEP_SUMMARY", "").strip()
+          if step_summary_path:
+              with open(step_summary_path, "a", encoding="utf-8") as fh:
+                  fh.write("\n".join(summary_lines) + "\n")
+
+          if not overall_passed:
+              print(
+                  f"::error::PM idempotency thresholds breached: "
+                  f"{len(failed_checks)} of {len(checks)} checks failed"
+              )
+              for c in failed_checks:
+                  print(
+                      f"::error::threshold {c['threshold']} observed "
+                      f"{c['observed']} exceeds limit {c['limit']}"
+                  )
+              sys.exit(1)
+
+          print(f"PM idempotency thresholds all green ({len(checks)} checks)")
+          PY
+
+      - name: Upload PM idempotency metrics export artifact
+        if: always() && steps.guard.outputs.skip != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: pm-idempotency-metrics-export-${{ github.run_id }}
+          path: pm-idempotency-metrics-export/
+          retention-days: 14

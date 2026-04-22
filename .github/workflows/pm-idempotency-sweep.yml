@@ -1,0 +1,105 @@
+name: PM Idempotency Sweep
+
+# Packet: 2026-04-16-pm-schema-019h
+#
+# Scheduled (and on-demand) invocation of the packet-019g sweep CLI that
+# deletes expired rows from ``pm.idempotency_keys``.  Deliberately the
+# smallest deployment-layer schedule artifact available in this repo:
+# no Kubernetes manifest lane exists under ``infra/`` (only
+# ``infra/database`` for SQL migrations), so GitHub Actions is the
+# legitimate existing scheduled infra surface.
+#
+# What this workflow does:
+#   * On a fixed cadence (see ``schedule`` below), or on-demand via
+#     ``workflow_dispatch``, runs
+#     ``python apps/control-plane-api/scripts/sweep_pm_idempotency.py``.
+#   * The CLI binds ``idempotency_cache`` to the durable backend and
+#     calls ``IdempotencyCache.sweep_expired()`` — a single bounded
+#     ``DELETE FROM pm.idempotency_keys WHERE expires_at <= now()``.
+#   * No application-runtime files are touched by this workflow.  It
+#     reuses the exact same runtime surface that the FastAPI app and
+#     the packet-019g unit tests exercise.
+#
+# What this workflow does NOT do:
+#   * No new PM write endpoint; no new HTTP route at all.
+#   * No DDL; no new SQL; no changes to ``pm.idempotency_keys`` shape.
+#   * No widening of ``/api/v1/work/*`` (still 15) or
+#     ``/api/v1/ops/*`` (still 1 — the packet-019g stats endpoint).
+#   * No second sweep implementation — uses the one CLI from 019g.
+#
+# Environment contract (see docs/PM-IDEMPOTENCY-SWEEP-SCHEDULE-RUNBOOK.md):
+#   * ``DATABASE_URL`` — a PostgreSQL URL pointing at the Supabase
+#     instance that hosts the ``pm`` schema.  Provided as a GitHub
+#     Actions secret named ``PM_IDEMPOTENCY_SWEEP_DATABASE_URL`` so the
+#     sweep cadence can target a different role / search_path from
+#     the request-path ``DATABASE_URL`` if the operator prefers.  If
+#     the secret is empty or unset the job is a no-op that logs why.
+#   * ``APEX_LOG_LEVEL`` — optional log level; defaults to INFO.
+
+on:
+  # Default cadence: every 15 minutes.  Chosen because the packet-019f
+  # default TTL is 24h and the packet-019f insert-time opportunistic
+  # prune already keeps the table bounded under normal load — the
+  # scheduled sweep is a safety net, not the primary prune path.
+  schedule:
+    - cron: '*/15 * * * *'
+  # On-demand invocation path — operators can run the sweep from the
+  # Actions UI without waiting for the next scheduled tick.
+  workflow_dispatch:
+    inputs:
+      log_level:
+        description: Log level (DEBUG | INFO | WARNING | ERROR)
+        required: false
+        default: INFO
+
+# Safety: only one sweep job may run at a time.  Two concurrent sweeps
+# against the same table are safe (the DELETE is idempotent and the
+# second sweep just finds nothing), but serialising keeps logs clean.
+concurrency:
+  group: pm-idempotency-sweep
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  sweep:
+    name: Sweep expired pm.idempotency_keys rows
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: apps/control-plane-api
+    env:
+      # Secret drives the durable sweep.  If unset the CLI will bail
+      # out gracefully (see skip-guard in the "Sweep" step below).
+      DATABASE_URL: ${{ secrets.PM_IDEMPOTENCY_SWEEP_DATABASE_URL }}
+      APEX_LOG_LEVEL: ${{ github.event.inputs.log_level || 'INFO' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install runtime dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Skip gracefully when DATABASE_URL is not configured
+        id: guard
+        run: |
+          if [ -z "${DATABASE_URL:-}" ]; then
+            echo "PM_IDEMPOTENCY_SWEEP_DATABASE_URL secret is not set; "\
+                 "skipping sweep.  Configure the secret in repo settings "\
+                 "to enable the scheduled cadence." >&2
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Sweep expired PM idempotency rows
+        if: steps.guard.outputs.skip != 'true'
+        run: |
+          python scripts/sweep_pm_idempotency.py

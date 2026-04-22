@@ -360,6 +360,39 @@
       "problemMatcher": []
     },
     {
+      "label": "Preview parent-root Class A scaffold packet",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-Command",
+        "$paths = @('apex-power-ops-platform/.github/CODEOWNERS', 'apex-power-ops-platform/.github/WORKSPACE-OWNERSHIP-APPROVAL-MAP.md', 'apex-power-ops-platform/.github/workflows/calc-engine-ci.yml', 'apex-power-ops-platform/.github/workflows/control-plane-api-ci.yml', 'apex-power-ops-platform/.github/workflows/deployed-control-plane-smoke.yml', 'apex-power-ops-platform/.github/workflows/forms-engine-ci.yml', 'apex-power-ops-platform/.github/workflows/operations-web-browser-smoke.yml', 'apex-power-ops-platform/.github/workflows/operations-web-hosted-smoke.yml', 'apex-power-ops-platform/.github/workflows/pm-idempotency-metrics-export.yml', 'apex-power-ops-platform/.github/workflows/pm-idempotency-sweep.yml', 'apex-power-ops-platform/.gitignore', 'apex-power-ops-platform/AGENTS.md', 'apex-power-ops-platform/package.json', 'apex-power-ops-platform/pnpm-lock.yaml', 'apex-power-ops-platform/pnpm-workspace.yaml', 'apex-power-ops-platform/pyproject.toml', 'apex-power-ops-platform/apps/control-plane-api/.gitignore', 'apex-power-ops-platform/apps/control-plane-api/README.md', 'apex-power-ops-platform/apps/control-plane-api/pyproject.toml', 'apex-power-ops-platform/apps/control-plane-api/pytest.ini', 'apex-power-ops-platform/apps/control-plane-api/render.yaml', 'apex-power-ops-platform/apps/control-plane-api/requirements-dev.txt', 'apex-power-ops-platform/apps/control-plane-api/requirements.txt', 'apex-power-ops-platform/apps/operations-web/.gitignore', 'apex-power-ops-platform/apps/operations-web/README.md', 'apex-power-ops-platform/apps/operations-web/next.config.ts', 'apex-power-ops-platform/apps/operations-web/package.json', 'apex-power-ops-platform/apps/operations-web/playwright.config.ts', 'apex-power-ops-platform/apps/operations-web/tsconfig.json', 'apex-power-ops-platform/apps/mutation-seam/.gitignore', 'apex-power-ops-platform/apps/mutation-seam/ARCHITECTURE.md', 'apex-power-ops-platform/apps/mutation-seam/DEPLOYMENT.md', 'apex-power-ops-platform/apps/mutation-seam/FILES_MANIFEST.md', 'apex-power-ops-platform/apps/mutation-seam/Makefile', 'apex-power-ops-platform/apps/mutation-seam/pyproject.toml', 'apex-power-ops-platform/apps/mutation-seam/QUICKSTART.md', 'apex-power-ops-platform/apps/mutation-seam/README.md', 'apex-power-ops-platform/apps/mutation-seam/requirements.txt', 'apex-power-ops-platform/packages/forms-engine/README.md', 'apex-power-ops-platform/packages/forms-engine/pyproject.toml', 'apex-power-ops-platform/packages/calc-engine/README.md', 'apex-power-ops-platform/packages/calc-engine/pyproject.toml', 'apex-power-ops-platform/tests/test_fixture_contract_020f.py'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Stage parent-root Class A scaffold packet",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-Command",
+        "$paths = @('apex-power-ops-platform/.github/CODEOWNERS', 'apex-power-ops-platform/.github/WORKSPACE-OWNERSHIP-APPROVAL-MAP.md', 'apex-power-ops-platform/.github/workflows/calc-engine-ci.yml', 'apex-power-ops-platform/.github/workflows/control-plane-api-ci.yml', 'apex-power-ops-platform/.github/workflows/deployed-control-plane-smoke.yml', 'apex-power-ops-platform/.github/workflows/forms-engine-ci.yml', 'apex-power-ops-platform/.github/workflows/operations-web-browser-smoke.yml', 'apex-power-ops-platform/.github/workflows/operations-web-hosted-smoke.yml', 'apex-power-ops-platform/.github/workflows/pm-idempotency-metrics-export.yml', 'apex-power-ops-platform/.github/workflows/pm-idempotency-sweep.yml', 'apex-power-ops-platform/.gitignore', 'apex-power-ops-platform/AGENTS.md', 'apex-power-ops-platform/package.json', 'apex-power-ops-platform/pnpm-lock.yaml', 'apex-power-ops-platform/pnpm-workspace.yaml', 'apex-power-ops-platform/pyproject.toml', 'apex-power-ops-platform/apps/control-plane-api/.gitignore', 'apex-power-ops-platform/apps/control-plane-api/README.md', 'apex-power-ops-platform/apps/control-plane-api/pyproject.toml', 'apex-power-ops-platform/apps/control-plane-api/pytest.ini', 'apex-power-ops-platform/apps/control-plane-api/render.yaml', 'apex-power-ops-platform/apps/control-plane-api/requirements-dev.txt', 'apex-power-ops-platform/apps/control-plane-api/requirements.txt', 'apex-power-ops-platform/apps/operations-web/.gitignore', 'apex-power-ops-platform/apps/operations-web/README.md', 'apex-power-ops-platform/apps/operations-web/next.config.ts', 'apex-power-ops-platform/apps/operations-web/package.json', 'apex-power-ops-platform/apps/operations-web/playwright.config.ts', 'apex-power-ops-platform/apps/operations-web/tsconfig.json', 'apex-power-ops-platform/apps/mutation-seam/.gitignore', 'apex-power-ops-platform/apps/mutation-seam/ARCHITECTURE.md', 'apex-power-ops-platform/apps/mutation-seam/DEPLOYMENT.md', 'apex-power-ops-platform/apps/mutation-seam/FILES_MANIFEST.md', 'apex-power-ops-platform/apps/mutation-seam/Makefile', 'apex-power-ops-platform/apps/mutation-seam/pyproject.toml', 'apex-power-ops-platform/apps/mutation-seam/QUICKSTART.md', 'apex-power-ops-platform/apps/mutation-seam/README.md', 'apex-power-ops-platform/apps/mutation-seam/requirements.txt', 'apex-power-ops-platform/packages/forms-engine/README.md', 'apex-power-ops-platform/packages/forms-engine/pyproject.toml', 'apex-power-ops-platform/packages/calc-engine/README.md', 'apex-power-ops-platform/packages/calc-engine/pyproject.toml', 'apex-power-ops-platform/tests/test_fixture_contract_020f.py'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Parent-root Class A scaffold packet staged diff",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-Command",
+        "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/.github apex-power-ops-platform/.gitignore apex-power-ops-platform/AGENTS.md apex-power-ops-platform/package.json apex-power-ops-platform/pnpm-lock.yaml apex-power-ops-platform/pnpm-workspace.yaml apex-power-ops-platform/pyproject.toml apex-power-ops-platform/apps/control-plane-api apex-power-ops-platform/apps/operations-web apex-power-ops-platform/apps/mutation-seam apex-power-ops-platform/packages/forms-engine apex-power-ops-platform/packages/calc-engine apex-power-ops-platform/tests/test_fixture_contract_020f.py"
+      ],
+      "problemMatcher": []
+    },
+    {
       "label": "Platform subtree staged diff",
       "type": "shell",
       "command": "pwsh",

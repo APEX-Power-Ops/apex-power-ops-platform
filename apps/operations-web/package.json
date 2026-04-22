@@ -1,0 +1,27 @@
+{
+  "name": "@apex/operations-web",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Governed browser shell for the APEX operations web surface.",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "smoke:hosted": "node scripts/smoke-hosted-routes.mjs",
+    "smoke:browser": "pnpm build && playwright test",
+    "smoke:promoted-host": "node scripts/smoke-promoted-host.mjs"
+  },
+  "dependencies": {
+    "next": "16.0.5",
+    "react": "19.2.0",
+    "react-dom": "19.2.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.53.1",
+    "@types/node": "24.6.0",
+    "@types/react": "19.2.2",
+    "@types/react-dom": "19.2.2",
+    "typescript": "5.9.3"
+  }
+}

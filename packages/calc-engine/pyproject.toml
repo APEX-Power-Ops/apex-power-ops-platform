@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "apex-calc-engine"
+version = "0.1.0"
+description = "Shared calc-domain package extracted from the Apex control-plane bootstrap"
+requires-python = ">=3.11"
+dependencies = [
+    "sqlalchemy>=2.0.0",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=8.0.0",
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]

@@ -1,0 +1,129 @@
+name: Deployed Control Plane Smoke
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: Public control-plane base URL to validate
+        required: false
+        default: https://control.apexpowerops.com
+        type: string
+      initial_wait_seconds:
+        description: Optional wait before the first validation attempt
+        required: false
+        default: "0"
+        type: string
+      environment:
+        description: Logical environment label for the validation run
+        required: false
+        default: production
+        type: string
+      require_apparatus_study_route:
+        description: Require the deployed apparatus study-resource route and OpenAPI advertisement
+        required: false
+        default: false
+        type: boolean
+  workflow_call:
+    inputs:
+      base_url:
+        required: false
+        type: string
+        default: https://control.apexpowerops.com
+      initial_wait_seconds:
+        required: false
+        type: string
+        default: "0"
+      environment:
+        required: false
+        type: string
+        default: production
+      require_apparatus_study_route:
+        required: false
+        type: boolean
+        default: false
+    secrets:
+      PUBLIC_CONTROL_PLANE_BEARER_TOKEN:
+        required: false
+      SUPABASE_URL:
+        required: false
+      SUPABASE_ANON_KEY:
+        required: false
+      SUPABASE_SERVICE_ROLE_KEY:
+        required: false
+      CONTROL_PLANE_SMOKE_ALERT_WEBHOOK_URL:
+        required: false
+  repository_dispatch:
+    types:
+      - control-plane-deploy-complete
+  schedule:
+    - cron: "17 9 * * *"
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      BASE_URL: ${{ inputs.base_url || github.event.client_payload.base_url || 'https://control.apexpowerops.com' }}
+      INITIAL_WAIT_SECONDS: ${{ inputs.initial_wait_seconds || github.event.client_payload.initial_wait_seconds || '0' }}
+      ENVIRONMENT_LABEL: ${{ inputs.environment || github.event.client_payload.environment || 'production' }}
+      REQUIRE_APPARATUS_STUDY_ROUTE: ${{ inputs.require_apparatus_study_route || github.event.client_payload.require_apparatus_study_route || 'false' }}
+      PUBLIC_CONTROL_PLANE_BEARER_TOKEN: ${{ secrets.PUBLIC_CONTROL_PLANE_BEARER_TOKEN }}
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      CONTROL_PLANE_SMOKE_ALERT_WEBHOOK_URL: ${{ secrets.CONTROL_PLANE_SMOKE_ALERT_WEBHOOK_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Wait for deployment propagation if requested
+        shell: bash
+        run: |
+          wait_seconds="${INITIAL_WAIT_SECONDS:-0}"
+          if [[ "$wait_seconds" =~ ^[0-9]+$ ]] && [[ "$wait_seconds" != "0" ]]; then
+            echo "Sleeping ${wait_seconds}s before smoke validation"
+            sleep "$wait_seconds"
+          fi
+      - name: Run deployed control-plane smoke validation
+        shell: bash
+        run: |
+          set -o pipefail
+          args=(apps/control-plane-api/scripts/smoke_deployed_control_plane.py --base-url "$BASE_URL")
+          if [[ "${REQUIRE_APPARATUS_STUDY_ROUTE}" == "true" || "${REQUIRE_APPARATUS_STUDY_ROUTE}" == "True" ]]; then
+            args+=(--skip-authenticated-checks --require-apparatus-study-route)
+          fi
+          python "${args[@]}" | tee deployed-control-plane-smoke-output.txt
+      - name: Upload smoke output artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployed-control-plane-smoke-output
+          path: deployed-control-plane-smoke-output.txt
+      - name: Send failure alert
+        if: failure() && env.CONTROL_PLANE_SMOKE_ALERT_WEBHOOK_URL != '' && (github.event_name == 'schedule' || github.event_name == 'repository_dispatch')
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import urllib.request
+
+          webhook = os.environ["CONTROL_PLANE_SMOKE_ALERT_WEBHOOK_URL"]
+          payload = {
+              "text": (
+                  "Deployed control-plane smoke failed "
+                  f"for {os.environ.get('BASE_URL', '')} "
+                  f"(environment={os.environ.get('ENVIRONMENT_LABEL', '')}, "
+                  f"require_apparatus_study_route={os.environ.get('REQUIRE_APPARATUS_STUDY_ROUTE', '')})."
+              )
+          }
+          request = urllib.request.Request(
+              webhook,
+              data=json.dumps(payload).encode("utf-8"),
+              headers={"Content-Type": "application/json"},
+              method="POST",
+          )
+          with urllib.request.urlopen(request, timeout=15) as response:
+              print(f"ALERT_STATUS {response.status}")
+          PY

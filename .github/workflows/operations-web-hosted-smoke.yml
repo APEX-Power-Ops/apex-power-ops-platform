@@ -1,0 +1,96 @@
+name: Operations Web Promoted Host Smoke
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: Hosted operations-web base URL to validate
+        required: true
+        type: string
+      control_plane_base_url:
+        description: Control-plane base URL to validate before frontend smoke
+        required: false
+        default: https://control.apexpowerops.com
+        type: string
+      initial_wait_seconds:
+        description: Optional wait before the first validation attempt
+        required: false
+        default: "0"
+        type: string
+      environment:
+        description: Logical environment label for the validation run
+        required: false
+        default: production
+        type: string
+  workflow_call:
+    inputs:
+      base_url:
+        required: true
+        type: string
+      control_plane_base_url:
+        required: false
+        type: string
+        default: https://control.apexpowerops.com
+      initial_wait_seconds:
+        required: false
+        type: string
+        default: "0"
+      environment:
+        required: false
+        type: string
+        default: production
+  repository_dispatch:
+    types:
+      - operations-web-deploy-complete
+
+jobs:
+  promoted-host-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      BASE_URL: ${{ inputs.base_url || github.event.client_payload.base_url }}
+      CONTROL_PLANE_BASE_URL: ${{ inputs.control_plane_base_url || github.event.client_payload.control_plane_base_url || 'https://control.apexpowerops.com' }}
+      INITIAL_WAIT_SECONDS: ${{ inputs.initial_wait_seconds || github.event.client_payload.initial_wait_seconds || '0' }}
+      ENVIRONMENT_LABEL: ${{ inputs.environment || github.event.client_payload.environment || 'production' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.0.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.11.1'
+          cache: 'pnpm'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Validate required base URL
+        shell: bash
+        run: |
+          if [[ -z "${BASE_URL}" ]]; then
+            echo "BASE_URL is required for operations-web hosted smoke" >&2
+            exit 1
+          fi
+      - name: Wait for deployment propagation if requested
+        shell: bash
+        run: |
+          wait_seconds="${INITIAL_WAIT_SECONDS:-0}"
+          if [[ "$wait_seconds" =~ ^[0-9]+$ ]] && [[ "$wait_seconds" != "0" ]]; then
+            echo "Sleeping ${wait_seconds}s before promoted-host smoke"
+            sleep "$wait_seconds"
+          fi
+      - name: Install workspace dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Install Playwright browsers
+        run: pnpm --filter @apex/operations-web exec playwright install --with-deps chromium
+      - name: Run promoted-host operations-web smoke
+        shell: bash
+        run: |
+          set -o pipefail
+          pnpm --filter @apex/operations-web smoke:promoted-host -- --operations-web-base-url "$BASE_URL" --control-plane-base-url "$CONTROL_PLANE_BASE_URL" --skip-authenticated-checks | tee operations-web-promoted-host-smoke-output.txt
+      - name: Upload smoke output artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: operations-web-promoted-host-smoke-output
+          path: operations-web-promoted-host-smoke-output.txt
