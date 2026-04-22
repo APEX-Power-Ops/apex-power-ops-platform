@@ -94,7 +94,7 @@ Current operator entrypoints:
 - `Calc engine offline tests` in `.vscode/tasks.json`
 - `Operations web browser smoke` in `.vscode/tasks.json`
 - `Operations web promoted-host smoke` in `.vscode/tasks.json`
-- `apps/control-plane-api/scripts/smoke_remote_control_plane_authoring_queue.py`
+- `../apps/control-plane-api/scripts/smoke_remote_control_plane_authoring_queue.py`
 
 Primary local contract and authority surfaces:
 - `C:/APEX Platform/Platform-Authority/`

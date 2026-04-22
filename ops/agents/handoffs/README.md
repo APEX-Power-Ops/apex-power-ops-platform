@@ -10,7 +10,7 @@ Packet `2026-04-21-apex-unification-001af` is now the completed execution record
 
 Use these files first:
 
-1. `../../../apps/control-plane-api/PUBLIC-APPARATUS-ROUTE-PROMOTION-CHECKLIST-2026-04-21.md`
+1. `../../../../apps/control-plane-api/PUBLIC-APPARATUS-ROUTE-PROMOTION-CHECKLIST-2026-04-21.md`
 2. `2026-04-22-parent-root-bootstrap-publication-handoff.md`
 
 Historical hosted execution handoffs are not bundled inside this bootstrap packet.
