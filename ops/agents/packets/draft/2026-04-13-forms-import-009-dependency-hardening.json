@@ -1,0 +1,56 @@
+{
+  "packet_id": "2026-04-13-forms-import-009",
+  "title": "Forms Engine Dependency Hardening",
+  "objective": "Harden the already-imported forms-engine package in the platform root by verifying declared dependencies, running representative generator smoke tests, and documenting the smallest remaining runtime gaps without expanding the approved import scope.",
+  "domain": "forms-domain",
+  "active_role": "Forms Runtime Hardening Operator",
+  "repo_paths": [
+    "c:/APEX Platform/Platform-Authority/UNIFIED-REPO-NEXT-PACKET-PLAN-2026-04-13.md",
+    "c:/APEX Platform/Platform-Authority/FORMS-ENGINE-FIRST-IMPORT-BLOCKER-RESOLUTION-2026-04-13.md",
+    "c:/APEX Platform/apex-power-ops-platform/packages/forms-engine",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-13-forms-import-008-engine-core-handoff.md",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft"
+  ],
+  "dependencies": [
+    "2026-04-13-forms-import-008",
+    "FORMS-ENGINE-FIRST-IMPORT-BLOCKER-RESOLUTION-2026-04-13.md"
+  ],
+  "required_inputs": [
+    "UNIFIED-REPO-NEXT-PACKET-PLAN-2026-04-13.md",
+    "FORMS-ENGINE-FIRST-IMPORT-BLOCKER-RESOLUTION-2026-04-13.md",
+    "2026-04-13-forms-import-008-engine-core-handoff.md",
+    "packages/forms-engine package boundary",
+    "configured local Python environment for the platform workspace"
+  ],
+  "constrained_outputs": [
+    "Dependency/runtime hardening updates limited to packages/forms-engine and closely related package notes or smoke harnesses",
+    "A handoff note under c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/",
+    "No app-shell build-out, no broad template import, no database integration"
+  ],
+  "write_scope": [
+    "c:/APEX Platform/apex-power-ops-platform/packages/forms-engine",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "validation_steps": [
+    "Confirm work stays within the existing forms-engine package boundary rather than widening the import scope",
+    "Confirm declared runtime dependencies are sufficient for representative generator execution or explicitly report the remaining dependency blockers",
+    "Confirm smoke-test results distinguish successful generator validation from later deferred forms-domain work",
+    "Confirm apps/forms-studio, broad templates, and forms-domain database/service contracts remain out of scope"
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "output_artifacts": [
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-13-forms-import-009-dependency-hardening-handoff.md"
+  ],
+  "handoff_note": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-13-forms-import-009-dependency-hardening-handoff.md",
+  "implementation_ready_candidate": true,
+  "sql_permission": false,
+  "sql_permission_note": "This packet is limited to package dependency/runtime hardening. It does not authorize forms-domain schema or database work.",
+  "created_at": "2026-04-14",
+  "updated_at": "2026-04-14",
+  "completed_at": "2026-04-14",
+  "delegation_status": "complete",
+  "validation_disposition": "runtime-validated-with-nonfatal-pypdf-warnings",
+  "delegation_prompt": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-13-desktop-claude-forms-import-009-prompt.md"
+}
