@@ -196,6 +196,7 @@ Exit condition:
 - [x] establish a bounded classification baseline for the still-untracked majority of the subtree in `docs/architecture/WORKSPACE-BOUNDED-PUBLICATION-PLAN-2026-04-22.md`
 - [x] define the post-Class-A recursive package-source follow-on packet in `ops/agents/handoffs/2026-04-22-parent-root-package-source-publication-handoff.md`
 - [x] define the post-package operations-web runtime follow-on packet in `ops/agents/handoffs/2026-04-22-parent-root-operations-web-runtime-publication-handoff.md`
+- [x] define the post-operations-web mutation-seam runtime follow-on packet in `ops/agents/handoffs/2026-04-22-parent-root-mutation-seam-runtime-publication-handoff.md`
 - [ ] default future publication work to explicit platform file paths or bounded packet pathspecs rather than whole-subtree staging
 - [ ] reserve `git add -- apex-power-ops-platform/` for explicit cutover or intentionally broad publication work only
 - [ ] treat unrelated tracked changes elsewhere under `C:/APEX Platform` as separate lanes unless a cross-lane operation is explicitly intended

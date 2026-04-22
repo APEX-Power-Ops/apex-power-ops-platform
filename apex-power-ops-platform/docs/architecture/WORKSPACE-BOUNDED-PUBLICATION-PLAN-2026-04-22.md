@@ -123,11 +123,11 @@ Current concrete artifact for the completed scaffold step:
 
 Current next-step interpretation:
 
-- the scaffold and package-source steps are complete; the next bounded follow-on is recursive publication for the smallest app lane and its minimum supporting runtime surfaces
+- the scaffold, package-source, and operations-web runtime steps are complete; the next bounded follow-on is recursive publication for the next-smallest app lane and its minimum supporting runtime surfaces
 
 Current concrete artifact for that next step:
 
-- `ops/agents/handoffs/2026-04-22-parent-root-operations-web-runtime-publication-handoff.md`
+- `ops/agents/handoffs/2026-04-22-parent-root-mutation-seam-runtime-publication-handoff.md`
 
 ## Guardrails
 
