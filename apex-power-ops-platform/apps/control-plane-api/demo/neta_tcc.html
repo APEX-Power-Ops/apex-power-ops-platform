@@ -1,0 +1,3213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NETA ETT — TCC Demo</title>
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --bg: #f8f9fa; --surface: #fff; --border: #dee2e6; --text: #212529;
+    --muted: #6c757d; --primary: #0d6efd; --success: #198754; --danger: #dc3545;
+    --warning-bg: #fff3cd; --warning-border: #ffc107;
+    --radius: 6px; --shadow: 0 1px 3px rgba(0,0,0,.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+         background: var(--bg); color: var(--text); line-height: 1.5; }
+
+  .container { max-width: 1280px; margin: 0 auto; padding: 24px 20px; }
+
+  header { background: var(--text); color: #fff; padding: 16px 20px; }
+  header h1 { font-size: 18px; font-weight: 600; }
+  header p { font-size: 13px; color: #adb5bd; margin-top: 2px; }
+
+  .section { background: var(--surface); border: 1px solid var(--border);
+             border-radius: var(--radius); padding: 20px; margin-bottom: 16px;
+             box-shadow: var(--shadow); }
+  .section h2 { font-size: 15px; font-weight: 600; margin-bottom: 12px;
+                 color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+  .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 12px; }
+
+  label { display: block; font-size: 12px; font-weight: 600; color: var(--muted);
+          margin-bottom: 4px; text-transform: uppercase; letter-spacing: .3px; }
+  select, input[type="number"], input[type="email"], input[type="text"] {
+    width: 100%; padding: 8px 10px; border: 1px solid var(--border);
+    border-radius: var(--radius); font-size: 14px; background: #fff;
+  }
+  select:disabled { background: #e9ecef; }
+
+  .field { margin-bottom: 0; }
+
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 20px;
+         border: none; border-radius: var(--radius); font-size: 14px; font-weight: 600;
+         cursor: pointer; transition: opacity .15s; }
+  .btn:hover { opacity: .85; }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
+  .btn-primary { background: var(--primary); color: #fff; }
+  .btn-success { background: var(--success); color: #fff; }
+  .btn-row { display: flex; gap: 10px; margin-top: 16px; }
+  .btn-row-wrap { flex-wrap: wrap; align-items: center; }
+  .plan-name-input { min-width: 260px; flex: 1 1 260px; }
+  .plan-input-hint { font-size: 12px; color: var(--muted); }
+
+  .warnings { background: var(--warning-bg); border: 1px solid var(--warning-border);
+              border-radius: var(--radius); padding: 10px 14px; margin-bottom: 12px;
+              font-size: 13px; }
+  .warnings ul { margin: 4px 0 0 18px; }
+
+  .meta-bar { display: flex; flex-wrap: wrap; gap: 16px; font-size: 13px;
+              padding: 10px 14px; background: #f1f3f5; border-radius: var(--radius);
+              margin-bottom: 12px; }
+  .meta-bar .tag { padding: 2px 8px; border-radius: 3px; font-weight: 600; font-size: 12px; }
+  .tag-pass { background: #d1e7dd; color: var(--success); }
+  .tag-fail { background: #f8d7da; color: var(--danger); }
+  .tag-maint { background: #cff4fc; color: #055160; }
+  .tag-none { background: #e9ecef; color: var(--muted); }
+
+  table.results { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table.results th { background: #f1f3f5; font-weight: 600; text-align: left;
+                     padding: 8px 10px; border-bottom: 2px solid var(--border); }
+  table.results td { padding: 7px 10px; border-bottom: 1px solid #eee; }
+  table.results tr:hover td { background: #f8f9fa; }
+  .pass-cell { color: var(--success); font-weight: 600; }
+  .fail-cell { color: var(--danger); font-weight: 600; }
+
+  #tcc-plot { width: 100%; height: 520px; }
+
+  .two-col { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; }
+  @media (max-width: 900px) { .two-col { grid-template-columns: 1fr; } }
+
+  .hidden { display: none; }
+  .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid #fff;
+             border-top-color: transparent; border-radius: 50%; animation: spin .6s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .disclaimer { font-size: 12px; color: var(--muted); font-style: italic;
+                margin-top: 8px; }
+  .maint-banner { background: #cff4fc; color: #055160; border: 1px solid #9eeaf9;
+                   border-radius: 6px; padding: 8px 14px; margin-top: 10px;
+                   font-size: 13px; font-weight: 600; display: none; }
+  .maint-banner.visible { display: block; }
+
+  /* Data-mode status badge */
+  .data-mode-badge { display: inline-flex; align-items: center; gap: 6px;
+                     padding: 4px 10px; border-radius: 4px; font-size: 12px;
+                     font-weight: 600; letter-spacing: .3px; }
+  .data-mode-badge .dot { width: 8px; height: 8px; border-radius: 50%; }
+  .data-mode-live     { background: #d1e7dd; color: #0f5132; }
+  .data-mode-live .dot { background: #198754; }
+  .data-mode-fallback { background: #fff3cd; color: #664d03; }
+  .data-mode-fallback .dot { background: #ffc107; }
+  .data-mode-checking { background: #e9ecef; color: #6c757d; }
+  .data-mode-checking .dot { background: #6c757d; }
+
+  /* Save/Load plan controls */
+  .plan-tag { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px;
+              border-radius: 4px; font-size: 12px; font-weight: 600;
+              background: #e0e7ff; color: #3730a3; }
+  .saved-plans-list { max-height: 200px; overflow-y: auto; margin-top: 8px; }
+  .saved-plan-item { display: flex; align-items: center; justify-content: space-between;
+                     padding: 6px 10px; border: 1px solid var(--border); border-radius: 4px;
+                     margin-bottom: 4px; font-size: 13px; cursor: pointer;
+                     transition: background .1s; }
+  .saved-plan-item:hover { background: #f0f4ff; }
+  .saved-plan-item .plan-name { font-weight: 600; }
+  .saved-plan-item .plan-meta { color: var(--muted); font-size: 11px; }
+  .btn-sm { padding: 4px 10px; font-size: 12px; }
+  .btn-outline { background: transparent; border: 1px solid var(--primary); color: var(--primary); }
+  .btn-outline:hover { background: var(--primary); color: #fff; }
+  .save-success { color: var(--success); font-size: 12px; font-weight: 600; }
+  .save-warning { color: #b45309; font-size: 12px; font-weight: 600; }
+  .save-error   { color: var(--danger); font-size: 12px; font-weight: 600; }
+
+  .auth-banner { border-radius: var(--radius); padding: 10px 14px; font-size: 13px; margin-top: 10px; }
+  .auth-success { background: #d1e7dd; color: #0f5132; border: 1px solid #badbcc; }
+  .auth-warning { background: #fff3cd; color: #664d03; border: 1px solid #ffecb5; }
+  .auth-error { background: #f8d7da; color: #842029; border: 1px solid #f5c2c7; }
+  .auth-pending { background: #e2e3e5; color: #41464b; border: 1px solid #d3d6d8; }
+
+  .family-tabs { display: flex; gap: 10px; flex-wrap: wrap; }
+  .family-tab {
+    padding: 10px 14px; border: 1px solid var(--border); border-radius: var(--radius);
+    background: #fff; cursor: pointer; min-width: 180px;
+  }
+  .family-tab.active { border-color: var(--primary); background: #eff6ff; box-shadow: inset 0 0 0 1px rgba(13,110,253,.15); }
+  .family-tab strong { display: block; font-size: 13px; margin-bottom: 2px; }
+  .family-tab span { font-size: 12px; color: var(--muted); }
+  .family-panel { display: none; }
+  .family-panel.visible { display: block; }
+  .family-note { font-size: 12px; color: var(--muted); margin-top: 8px; }
+  .family-summary { margin-top: 12px; }
+  .inline-note { font-size: 12px; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<header>
+  <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+    <div>
+      <h1>NETA ETT Circuit Breaker Testing — TCC Demo</h1>
+      <p>Internal demo &middot; family-aware ETU, TMT, and EMT selection with bounded workflow-specific actions</p>
+    </div>
+    <div id="data-mode-badge" class="data-mode-badge data-mode-checking">
+      <span class="dot"></span>
+      <span id="data-mode-label">Checking...</span>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- ───── Auth Panel ───── -->
+  <div id="auth-section" class="section" style="background: #fff7ed; border-color: #fdba74;">
+    <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+      <div>
+        <h2 style="margin-bottom:2px;">Authentication</h2>
+        <span id="auth-status-detail" style="font-size:13px; color:var(--muted);">Checking Magic Link configuration...</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+        <input id="auth-email" type="email" placeholder="you@example.com" style="min-width:260px;">
+        <button class="btn btn-primary" id="btn-send-magic-link" disabled>Send Magic Link</button>
+        <div id="auth-test-controls" class="hidden" style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+          <select id="auth-test-user" style="min-width:220px;" aria-label="Local test auth user selector">
+            <option value="">Choose local test user...</option>
+          </select>
+          <button class="btn btn-outline" id="btn-test-sign-in" disabled>Use Test User</button>
+        </div>
+        <button class="btn btn-outline btn-sm" id="btn-sign-out" disabled>Sign Out</button>
+      </div>
+    </div>
+    <div id="auth-status-banner" class="auth-banner auth-pending">Checking auth configuration...</div>
+    <div class="disclaimer">When `SUPABASE_URL` and `SUPABASE_ANON_KEY` are set, this page can send Email Magic Links and attach the Supabase bearer token to API requests. When local test auth is enabled, AI can sign in as deterministic test users without mailbox access.</div>
+  </div>
+
+  <!-- ───── Family Selector ───── -->
+  <div class="section" style="background:#f8fafc; border-color:#cbd5e1;">
+    <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+      <div>
+        <h2 style="margin-bottom:2px;">Family Workflow</h2>
+        <span class="inline-note">Choose the active family first so the page can branch into the correct sensor-rooted or frame-rooted workflow.</span>
+      </div>
+      <div class="family-tabs" id="family-tabs">
+        <button class="family-tab active" data-family="etu" type="button">
+          <strong>ETU</strong>
+          <span>Sensor-rooted calculate/evaluate workflow</span>
+        </button>
+        <button class="family-tab" data-family="tmt" type="button">
+          <strong>TMT</strong>
+          <span>Frame-rooted nominal plot workflow</span>
+        </button>
+        <button class="family-tab" data-family="emt" type="button">
+          <strong>EMT</strong>
+          <span>Frame/section raw point-data workflow</span>
+        </button>
+      </div>
+    </div>
+    <div id="family-mode-note" class="family-note">ETU keeps the existing technician test flow. TMT and EMT render bounded family-specific panels instead of being forced through the ETU sensor cascade.</div>
+  </div>
+
+  <!-- ───── Demo Scenario Loader ───── -->
+  <div id="quick-start-section" class="section" style="background: #eef2ff; border-color: #c7d2fe;">
+    <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+      <div>
+        <h2 style="margin-bottom:2px;">Quick Start</h2>
+        <span style="font-size:13px; color:var(--muted);">Load a pre-configured scenario to skip manual selection</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <select id="preset-select" style="min-width:260px;" aria-label="Demo scenario selector">
+          <option value="">Choose a demo scenario...</option>
+        </select>
+        <button class="btn btn-primary" id="btn-load-preset" disabled>Load Demo Scenario</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ───── Saved Plans Panel ───── -->
+  <div id="saved-plans-panel" class="section hidden" style="background: #f0fdf4; border-color: #86efac;">
+    <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+      <div>
+        <h2 style="margin-bottom:2px;">Saved Plans</h2>
+        <span style="font-size:13px; color:var(--muted);">Load a previously saved plan from Supabase</span>
+      </div>
+      <button class="btn btn-sm btn-outline" id="btn-refresh-plans" title="Refresh saved plans list">Refresh</button>
+    </div>
+    <div id="saved-plans-list" class="saved-plans-list"></div>
+    <div id="saved-plans-empty" class="hidden" style="padding:8px 0; font-size:13px; color:var(--muted);">No saved plans yet.</div>
+    <div id="saved-plan-status" style="margin-top:6px;"></div>
+  </div>
+
+  <!-- ───── Active Plan Indicator ───── -->
+  <div id="active-plan-bar" class="meta-bar hidden" style="background:#e0e7ff; margin-bottom:16px;">
+    <span class="plan-tag" id="active-plan-tag"></span>
+    <span id="active-plan-source" style="font-size:12px; color:var(--muted);"></span>
+  </div>
+
+  <!-- ───── Section 1: Cascade Selection ───── -->
+  <div id="etu-selection-section" class="section family-panel visible">
+    <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+      <div>
+        <h2>1 &middot; ETU Equipment Match</h2>
+        <div class="inline-note">Use the visible trip-unit markings and breaker context to converge on the matched ETU record. Cross-filtering keeps the remaining valid options synchronized.</div>
+      </div>
+      <button class="btn btn-sm btn-outline" id="btn-clear-etu-filters" type="button">Clear ETU Filters</button>
+    </div>
+    <div class="grid-4">
+      <div class="field">
+        <label for="sel-mfr">Trip Unit Manufacturer</label>
+        <select id="sel-mfr"><option value="">Loading...</option></select>
+      </div>
+      <div class="field">
+        <label for="sel-type">Trip Unit Type</label>
+        <select id="sel-type" disabled><option value="">Select manufacturer first</option></select>
+      </div>
+      <div class="field">
+        <label for="sel-style">Trip Unit Style</label>
+        <select id="sel-style" disabled><option value="">Select trip type first</option></select>
+      </div>
+      <div class="field">
+        <label for="sel-sensor">Sensor / Rating</label>
+        <select id="sel-sensor" disabled><option value="">Select trip style first</option></select>
+      </div>
+    </div>
+    <div id="sensor-summary" class="meta-bar hidden" style="margin-top:12px;"></div>
+  </div>
+
+  <!-- ───── TMT Selection ───── -->
+  <div id="tmt-selection-section" class="section family-panel">
+    <h2>1 &middot; TMT Frame Selection</h2>
+    <div class="grid-3">
+      <div class="field">
+        <label for="tmt-breaker-class">Breaker Class</label>
+        <select id="tmt-breaker-class">
+          <option value="">Any class</option>
+          <option value="ICCB">ICCB</option>
+          <option value="MCCB">MCCB</option>
+          <option value="PCB">PCB</option>
+        </select>
+      </div>
+      <div class="field"><label for="tmt-manufacturer">Manufacturer</label><input type="text" id="tmt-manufacturer" placeholder="Square D"></div>
+      <div class="field"><label for="tmt-breaker-name">Breaker Type</label><input type="text" id="tmt-breaker-name" placeholder="PowerPact"></div>
+      <div class="field"><label for="tmt-style-name">Breaker Style</label><input type="text" id="tmt-style-name" placeholder="PXR"></div>
+      <div class="field"><label for="tmt-frame-size">Frame Size</label><input type="text" id="tmt-frame-size" placeholder="600AF"></div>
+      <div class="field"><label for="tmt-amp-filter">Amp Rating</label><input type="number" id="tmt-amp-filter" placeholder="600"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="btn-tmt-search">Search TMT Frames</button>
+    </div>
+    <div class="grid-2" style="margin-top:16px; gap:24px;">
+      <div>
+        <label for="tmt-frame-select">Matching Frames</label>
+        <select id="tmt-frame-select" disabled><option value="">Search for frames first</option></select>
+      </div>
+      <div>
+        <label for="tmt-trip-class">Trip Class</label>
+        <select id="tmt-trip-class" disabled><option value="">Choose frame first</option></select>
+      </div>
+    </div>
+    <div id="tmt-summary" class="meta-bar hidden family-summary"></div>
+    <div id="tmt-settings-section" class="hidden" style="margin-top:16px;">
+      <h3 style="font-size:13px; margin-bottom:8px; color:var(--muted);">TMT Settings</h3>
+      <div class="grid-3">
+        <div class="field" id="tmt-row-amp-rating"><label for="tmt-amp-rating">Amp Rating</label><select id="tmt-amp-rating"></select></div>
+        <div class="field" id="tmt-row-setting-value"><label for="tmt-setting-value">Setting</label><select id="tmt-setting-value"></select></div>
+        <div class="field" id="tmt-row-thermal-adjustment"><label for="tmt-thermal-adjustment">Thermal Adjustment</label><select id="tmt-thermal-adjustment"></select></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-success" id="btn-tmt-plot" disabled>View Nominal TMT Curve</button>
+      </div>
+      <div class="family-note">TMT selections are validated and surfaced in metadata, but the plotted curve remains the nominal class curve in the current bounded contract.</div>
+    </div>
+  </div>
+
+  <!-- ───── EMT Selection ───── -->
+  <div id="emt-selection-section" class="section family-panel">
+    <h2>1 &middot; EMT Frame And Section Selection</h2>
+    <div class="grid-4">
+      <div class="field"><label for="emt-manufacturer-id">Manufacturer ID</label><input type="number" id="emt-manufacturer-id" placeholder="10"></div>
+      <div class="field"><label for="emt-trip-char">Trip Char</label><input type="number" id="emt-trip-char" placeholder="7"></div>
+      <div class="field"><label for="emt-trip-plug">Trip Plug</label><input type="number" id="emt-trip-plug" placeholder="0"></div>
+      <div class="field"><label for="emt-query">Search</label><input type="text" id="emt-query" placeholder="EMT"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="btn-emt-search">Search EMT Frames</button>
+    </div>
+    <div class="grid-2" style="margin-top:16px; gap:24px;">
+      <div>
+        <label for="emt-frame-select">Matching EMT Frames</label>
+        <select id="emt-frame-select" disabled><option value="">Search for EMT frames first</option></select>
+      </div>
+      <div>
+        <label for="emt-section-select">Section</label>
+        <select id="emt-section-select" disabled><option value="">Choose frame first</option></select>
+      </div>
+    </div>
+    <div id="emt-summary" class="meta-bar hidden family-summary"></div>
+    <div id="emt-settings-section" class="hidden" style="margin-top:16px;">
+      <h3 style="font-size:13px; margin-bottom:8px; color:var(--muted);">EMT Section Settings</h3>
+      <div class="grid-3">
+        <div class="field" id="emt-row-pickup"><label for="emt-pickup-select">Pickup</label><select id="emt-pickup-select"></select></div>
+        <div class="field" id="emt-row-band"><label for="emt-band-select">Band</label><select id="emt-band-select"></select></div>
+        <div class="field" id="emt-row-curve-class"><label for="emt-curve-class-select">Curve Class</label><select id="emt-curve-class-select"></select></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-success" id="btn-emt-plot" disabled>View Raw EMT Points</button>
+      </div>
+      <div class="family-note">EMT currently exposes discovery, section settings, and raw stored point-data plotting only. It does not claim ETU-style calculate/evaluate parity.</div>
+    </div>
+  </div>
+
+  <!-- ───── Section 2: Settings + Measured Inputs ───── -->
+  <div id="settings-section" class="section hidden">
+    <h2>2 &middot; Settings &amp; Measured Values</h2>
+    <div class="grid-2" style="gap:24px;">
+      <div>
+        <h3 style="font-size:13px; margin-bottom:8px; color:var(--muted);">Dial Settings</h3>
+        <div class="grid-2">
+          <div class="field" id="etu-row-plug"><label>Plug Rating</label><select id="set-plug"></select></div>
+          <div class="field" id="etu-row-ltpu"><label>Long-Time Pickup (LTPU)</label><select id="set-ltpu"></select></div>
+          <div class="field" id="etu-row-ltd"><label>Long-Time Delay Band (LTD)</label><select id="set-ltd"></select></div>
+          <div class="field" id="etu-row-stpu"><label>Short-Time Pickup (STPU)</label><select id="set-stpu"></select></div>
+          <div class="field" id="etu-row-std"><label>Short-Time Delay Band (STD)</label><select id="set-std"></select></div>
+          <div class="field" id="etu-row-inst"><label>Instantaneous Pickup (INST)</label><select id="set-inst"></select></div>
+          <div class="field" id="etu-row-gfpu"><label>Ground-Fault Pickup (GFPU)</label><select id="set-gfpu"></select></div>
+          <div class="field" id="etu-row-gfd"><label>Ground-Fault Delay Band (GFD)</label><select id="set-gfd"></select></div>
+        </div>
+        <div class="field" id="etu-row-maint-toggle" style="margin-top:12px;">
+          <label><input type="checkbox" id="chk-maint"> Enable Maintenance Mode</label>
+        </div>
+        <div id="maint-banner" class="maint-banner">
+          MAINT MODE ACTIVE — INST/GFPU will use maintenance tolerances and timing
+        </div>
+      </div>
+      <div>
+        <h3 style="font-size:13px; margin-bottom:8px; color:var(--muted);">Measured Values (optional)</h3>
+        <div class="grid-2">
+          <div class="field" id="etu-row-meas-ltpu"><label>Long-Time Pickup Measured (LTPU, A)</label><input type="number" id="meas-ltpu" step="0.1" placeholder="—"></div>
+          <div class="field" id="etu-row-meas-ltd"><label>Long-Time Delay Measured (LTD, s)</label><input type="number" id="meas-ltd" step="0.001" placeholder="—"></div>
+          <div class="field" id="etu-row-meas-stpu"><label>Short-Time Pickup Measured (STPU, A)</label><input type="number" id="meas-stpu" step="0.1" placeholder="—"></div>
+          <div class="field" id="etu-row-meas-std"><label>Short-Time Delay Measured (STD, s)</label><input type="number" id="meas-std" step="0.001" placeholder="—"></div>
+          <div class="field" id="etu-row-meas-inst"><label>Instantaneous Pickup Measured (INST, A)</label><input type="number" id="meas-inst" step="0.1" placeholder="—"></div>
+          <div class="field" id="etu-row-meas-gfpu"><label>Ground-Fault Pickup Measured (GFPU, A)</label><input type="number" id="meas-gfpu" step="0.1" placeholder="—"></div>
+          <div class="field" id="etu-row-meas-gfd"><label>Ground-Fault Delay Measured (GFD, s)</label><input type="number" id="meas-gfd" step="0.001" placeholder="—"></div>
+        </div>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="btn-calc" disabled>Calculate</button>
+      <button class="btn btn-success" id="btn-tcc" disabled>View Results on TCC</button>
+    </div>
+    <div class="btn-row btn-row-wrap">
+      <input type="text" id="save-plan-name" class="plan-name-input" placeholder="Plan name">
+      <button class="btn btn-outline btn-sm" id="btn-save-plan" disabled title="Save current configuration as a named plan">Save Plan</button>
+      <span class="plan-input-hint">Uses the entered name, or falls back to the current preset.</span>
+    </div>
+    <div id="save-plan-status" style="margin-top:6px;"></div>
+  </div>
+
+  <!-- ───── Section 3: Calculate Results ───── -->
+  <div id="calc-section" class="section hidden">
+    <h2>3 &middot; Calculated Test Currents</h2>
+    <div id="calc-warnings"></div>
+    <div id="calc-meta" class="meta-bar hidden"></div>
+    <table class="results" id="calc-table">
+      <thead><tr>
+        <th>Element</th><th>Expected</th><th>Limit Low</th>
+        <th>Limit High</th><th>Multiplier</th><th>Method</th>
+      </tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <!-- ───── Section 3b: Evaluate Results ───── -->
+  <div id="eval-section" class="section hidden">
+    <h2>3b &middot; Evaluation Results</h2>
+    <div id="eval-warnings"></div>
+    <div id="eval-meta" class="meta-bar"></div>
+    <table class="results" id="eval-table">
+      <thead><tr>
+        <th>Element</th><th>Expected</th><th>Measured</th>
+        <th>Limit Low</th><th>Limit High</th>
+        <th>Deviation</th><th>Result</th>
+      </tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <!-- ───── Section 4: TCC Plot + Summary Table ───── -->
+  <div id="tcc-section" class="section hidden">
+    <h2>4 &middot; TCC Overlay Plot</h2>
+    <div id="tcc-warnings"></div>
+    <div id="tcc-meta" class="meta-bar"></div>
+    <div class="two-col">
+      <div><div id="tcc-plot"></div></div>
+      <div>
+        <h3 style="font-size:13px; margin-bottom:8px; color:var(--muted);">Acceptance Summary</h3>
+        <table class="results" id="tcc-table">
+          <thead><tr>
+            <th>Element</th><th>Test @</th><th>Expected</th>
+            <th>Min</th><th>Max</th>
+            <th>Measured</th><th>Dev.</th><th>Result</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+        <div id="tcc-disclaimer" class="disclaimer"></div>
+      </div>
+    </div>
+    <div class="btn-row" style="margin-top:16px;">
+      <button class="btn btn-primary" id="btn-export" disabled>Export Report (JSON)</button>
+      <button class="btn btn-success btn-sm" id="btn-save-result" disabled title="Save result to Supabase">Save Result</button>
+    </div>
+    <div id="save-result-status" style="margin-top:6px;"></div>
+  </div>
+
+  <!-- ───── TMT Plot Section ───── -->
+  <div id="tmt-plot-section" class="section hidden">
+    <h2>2 &middot; TMT Nominal Plot</h2>
+    <div id="tmt-warnings"></div>
+    <div id="tmt-meta" class="meta-bar"></div>
+    <div id="tmt-plot" style="width:100%; height:520px;"></div>
+    <div id="tmt-disclaimer" class="disclaimer"></div>
+  </div>
+
+  <!-- ───── EMT Plot Section ───── -->
+  <div id="emt-plot-section" class="section hidden">
+    <h2>2 &middot; EMT Raw Point-Data Plot</h2>
+    <div id="emt-warnings"></div>
+    <div id="emt-meta" class="meta-bar"></div>
+    <div id="emt-plot" style="width:100%; height:520px;"></div>
+    <div id="emt-disclaimer" class="disclaimer"></div>
+  </div>
+
+</div>
+
+<script>
+// ─── API helpers ───
+
+const API = '';  // same-origin
+let authConfig = null;
+let supabaseClient = null;
+let currentSession = null;
+
+function testAuthConfig() {
+  return authConfig?.test_auth || { enabled: false, users: [], storage_key: 'neta_test_auth_session' };
+}
+
+function authHasAnyProvider() {
+  return Boolean(authConfig?.enabled);
+}
+
+function isLocalTestSession() {
+  return currentSession?.provider === 'local-test-auth';
+}
+
+function testAuthStorageKey() {
+  return testAuthConfig().storage_key || 'neta_test_auth_session';
+}
+
+function loadStoredTestSession() {
+  try {
+    const raw = window.localStorage.getItem(testAuthStorageKey());
+    if (!raw) return null;
+    const session = JSON.parse(raw);
+    if (!session?.access_token || !session?.user?.email) return null;
+    return session;
+  } catch (_e) {
+    return null;
+  }
+}
+
+function persistTestSession(session) {
+  window.localStorage.setItem(testAuthStorageKey(), JSON.stringify(session));
+}
+
+function clearStoredTestSession() {
+  window.localStorage.removeItem(testAuthStorageKey());
+}
+
+function populateTestAuthUsers() {
+  const sel = $('auth-test-user');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">Choose local test user...</option>';
+  (testAuthConfig().users || []).forEach(user => {
+    const label = user.label || user.email;
+    sel.innerHTML += `<option value="${user.email}">${label} (${user.email})</option>`;
+  });
+}
+
+async function api(method, path, body) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (currentSession?.access_token) {
+    headers.Authorization = `Bearer ${currentSession.access_token}`;
+  }
+  const opts = { method, headers };
+  if (body) opts.body = JSON.stringify(body);
+  const r = await fetch(API + path, opts);
+  if (!r.ok) throw new Error(`${r.status} ${r.statusText}`);
+  return r.json();
+}
+
+const get  = (path) => api('GET', path);
+const post = (path, body) => api('POST', path, body);
+
+
+// ─── DOM refs ───
+
+const $  = (id) => document.getElementById(id);
+const $$ = (sel) => document.querySelectorAll(sel);
+
+const selMfr   = $('sel-mfr'),   selType = $('sel-type'),
+      selStyle = $('sel-style'), selSensor = $('sel-sensor');
+
+let currentSensorId = null;
+let currentSettings = null;
+let currentSensorRating = null;
+let currentSensorContext = null;
+let lastCascadeResponse = null;
+let currentCascadeSensor = null;
+let lastCalcResponse = null;
+let lastEvalResponse = null;
+let lastPlotTccResponse = null;
+let lastPresetName = null;
+let catalogMode = 'checking'; // 'live', 'fallback', 'checking'
+let currentFamily = 'etu';
+let currentTmtFrameId = null;
+let currentTmtContext = null;
+let currentTmtSettings = null;
+let currentTmtPlotResponse = null;
+let currentEmtFrameId = null;
+let currentEmtSectionId = null;
+let currentEmtContext = null;
+let currentEmtSettings = null;
+let currentEmtPlotResponse = null;
+
+
+// ─── Auth ───
+
+function setAuthBanner(kind, message) {
+  const banner = $('auth-status-banner');
+  const detail = $('auth-status-detail');
+  banner.className = `auth-banner auth-${kind}`;
+  banner.textContent = message;
+  detail.textContent = message;
+}
+
+function authIsEnforcedByUi() {
+  return authHasAnyProvider();
+}
+
+function updateAuthDependentUi() {
+  const signedIn = Boolean(currentSession?.user);
+  const authReady = !authIsEnforcedByUi() || signedIn;
+  const supabaseEnabled = Boolean(authConfig?.supabase_enabled);
+  const localTestEnabled = Boolean(testAuthConfig().enabled);
+  const etuFamilyActive = currentFamily === 'etu';
+
+  $('btn-send-magic-link').disabled = !supabaseEnabled || signedIn;
+  $('btn-sign-out').disabled = !signedIn;
+  $('auth-email').disabled = signedIn || !supabaseEnabled;
+  $('auth-test-controls').classList.toggle('hidden', !localTestEnabled);
+  $('auth-test-user').disabled = !localTestEnabled || signedIn;
+  $('btn-test-sign-in').disabled = !localTestEnabled || signedIn || !$('auth-test-user').value;
+
+  if (etuFamilyActive && currentSensorId) {
+    $('btn-save-plan').disabled = !authReady;
+  } else {
+    $('btn-save-plan').disabled = true;
+  }
+  if (etuFamilyActive && lastEvalResponse && currentPlanId) {
+    $('btn-save-result').disabled = !authReady;
+  } else {
+    $('btn-save-result').disabled = true;
+  }
+  $('btn-refresh-plans').disabled = !authReady || !etuFamilyActive;
+
+  if (currentFamily !== 'etu' || (authIsEnforcedByUi() && !signedIn)) {
+    $('saved-plans-panel').classList.add('hidden');
+  }
+}
+
+function refreshAuthUi() {
+  if (!authHasAnyProvider()) {
+    setAuthBanner('warning', 'Auth UI is disabled until either Supabase auth or local test auth is configured.');
+    updateAuthDependentUi();
+    return;
+  }
+
+  if (isLocalTestSession() && currentSession?.user?.email) {
+    setAuthBanner('success', `Signed in as ${currentSession.user.email} (local test auth)`);
+  } else if (currentSession?.user?.email) {
+    setAuthBanner('success', `Signed in as ${currentSession.user.email}`);
+  } else if (testAuthConfig().enabled && !authConfig?.supabase_enabled) {
+    setAuthBanner('pending', 'Local test auth is ready for unattended browser testing.');
+  } else if (testAuthConfig().enabled && authConfig?.supabase_enabled) {
+    setAuthBanner('pending', `Magic Link and local test auth are ready. Redirect target: ${authConfig.email_redirect_to}`);
+  } else {
+    setAuthBanner('pending', `Magic Link is ready. Redirect target: ${authConfig.email_redirect_to}`);
+  }
+
+  updateAuthDependentUi();
+}
+
+async function handleMagicLinkCallback() {
+  const params = new URLSearchParams(window.location.search);
+  const tokenHash = params.get('token_hash');
+  const type = params.get('type');
+
+  if (!tokenHash || !type) return;
+
+  setAuthBanner('pending', 'Completing Magic Link sign-in...');
+  const { error } = await supabaseClient.auth.verifyOtp({ token_hash: tokenHash, type });
+  if (error) {
+    setAuthBanner('error', `Magic Link verification failed: ${error.message}`);
+    return;
+  }
+
+  const cleanUrl = new URL(authConfig.email_redirect_to, window.location.origin);
+  window.history.replaceState({}, document.title, cleanUrl.pathname + cleanUrl.search + cleanUrl.hash);
+}
+
+async function initAuth() {
+  try {
+    authConfig = await get('/api/v1/auth/config');
+  } catch (e) {
+    setAuthBanner('error', `Failed to load auth config: ${e.message}`);
+    return;
+  }
+
+  populateTestAuthUsers();
+  if (testAuthConfig().enabled) {
+    currentSession = loadStoredTestSession();
+  }
+
+  if (!authHasAnyProvider()) {
+    refreshAuthUi();
+    return;
+  }
+
+  if (currentSession?.user && isLocalTestSession()) {
+    refreshAuthUi();
+    return;
+  }
+
+  if (!authConfig.supabase_enabled) {
+    refreshAuthUi();
+    return;
+  }
+
+  if (!window.supabase?.createClient) {
+    setAuthBanner('error', 'Supabase client library failed to load.');
+    return;
+  }
+
+  supabaseClient = window.supabase.createClient(
+    authConfig.supabase_url,
+    authConfig.supabase_anon_key,
+  );
+
+  await handleMagicLinkCallback();
+  const { data, error } = await supabaseClient.auth.getSession();
+  if (error) {
+    setAuthBanner('error', `Failed to load session: ${error.message}`);
+  }
+  currentSession = data?.session || null;
+  refreshAuthUi();
+
+  supabaseClient.auth.onAuthStateChange((_event, session) => {
+    currentSession = session;
+    refreshAuthUi();
+    if (catalogMode === 'live' && (!authIsEnforcedByUi() || session)) {
+      refreshSavedPlans();
+    }
+  });
+}
+
+$('btn-send-magic-link').addEventListener('click', async () => {
+  if (!supabaseClient) return;
+
+  const email = $('auth-email').value.trim();
+  if (!email) {
+    setAuthBanner('warning', 'Enter an email address first.');
+    return;
+  }
+
+  const btn = $('btn-send-magic-link');
+  btn.disabled = true;
+  setAuthBanner('pending', `Sending Magic Link to ${email}...`);
+
+  const { error } = await supabaseClient.auth.signInWithOtp({
+    email,
+    options: {
+      shouldCreateUser: true,
+      emailRedirectTo: authConfig.email_redirect_to,
+    },
+  });
+
+  if (error) {
+    setAuthBanner('error', `Failed to send Magic Link: ${error.message}`);
+  } else {
+    setAuthBanner('success', `Magic Link sent to ${email}. Check your inbox.`);
+  }
+
+  btn.disabled = false;
+  updateAuthDependentUi();
+});
+
+$('auth-test-user').addEventListener('change', () => {
+  updateAuthDependentUi();
+});
+
+$('btn-test-sign-in').addEventListener('click', async () => {
+  const email = $('auth-test-user').value;
+  if (!email) {
+    setAuthBanner('warning', 'Choose a local test user first.');
+    return;
+  }
+
+  const btn = $('btn-test-sign-in');
+  btn.disabled = true;
+  setAuthBanner('pending', `Signing in as ${email} with local test auth...`);
+
+  try {
+    const session = await post('/api/v1/auth/test-session', { email });
+    currentSession = { ...session, provider: 'local-test-auth' };
+    persistTestSession(currentSession);
+    refreshAuthUi();
+    if (catalogMode === 'live') {
+      refreshSavedPlans();
+    }
+  } catch (e) {
+    setAuthBanner('error', `Local test auth sign-in failed: ${e.message}`);
+  } finally {
+    updateAuthDependentUi();
+  }
+});
+
+$('btn-sign-out').addEventListener('click', async () => {
+  if (isLocalTestSession()) {
+    clearStoredTestSession();
+    currentSession = null;
+    refreshAuthUi();
+    return;
+  }
+
+  if (!supabaseClient) return;
+
+  const { error } = await supabaseClient.auth.signOut();
+  if (error) {
+    setAuthBanner('error', `Sign out failed: ${error.message}`);
+    return;
+  }
+
+  currentSession = null;
+  refreshAuthUi();
+});
+
+
+// ─── Data Mode Detection ───
+
+function setDataMode(mode, detail) {
+  catalogMode = mode;
+  const badge = $('data-mode-badge');
+  const label = $('data-mode-label');
+  badge.className = 'data-mode-badge';
+
+  if (mode === 'live') {
+    badge.classList.add('data-mode-live');
+    label.textContent = detail || 'LIVE — Supabase catalog';
+  } else if (mode === 'fallback') {
+    badge.classList.add('data-mode-fallback');
+    label.textContent = detail || 'FALLBACK — Demo presets only';
+  } else {
+    badge.classList.add('data-mode-checking');
+    label.textContent = 'Checking...';
+  }
+}
+
+async function checkCatalogStatus() {
+  try {
+    const status = await get('/api/v1/neta/catalog/status');
+    if (status.catalog === 'live' && status.manufacturer_count > 0) {
+      setDataMode('live', `LIVE — ${status.manufacturer_count} manufacturers, ${status.sensor_count} sensors`);
+      return true;
+    } else {
+      setDataMode('fallback', 'FALLBACK — Catalog unavailable');
+      return false;
+    }
+  } catch (e) {
+    setDataMode('fallback', 'FALLBACK — Database unreachable');
+    return false;
+  }
+}
+
+
+// ─── Family Mode ───
+
+function familyDescription(family) {
+  if (family === 'tmt') return 'TMT uses a frame-rooted selection path and a nominal plot workflow.';
+  if (family === 'emt') return 'EMT uses a frame and section workflow with raw stored point-data plotting only.';
+  return 'ETU uses the sensor-rooted technician workflow: settings, calculate, evaluate, and TCC overlay.';
+}
+
+function clearFamilyOutputs() {
+  $('calc-section').classList.add('hidden');
+  $('eval-section').classList.add('hidden');
+  $('tcc-section').classList.add('hidden');
+  $('tmt-plot-section').classList.add('hidden');
+  $('emt-plot-section').classList.add('hidden');
+  $('btn-export').disabled = true;
+  $('btn-save-result').disabled = true;
+  lastCalcResponse = null;
+  lastEvalResponse = null;
+  lastPlotTccResponse = null;
+  currentTmtPlotResponse = null;
+  currentEmtPlotResponse = null;
+}
+
+function updateFamilyUi() {
+  $$('[data-family]').forEach(el => el.classList.toggle('active', el.dataset.family === currentFamily));
+  $('family-mode-note').textContent = familyDescription(currentFamily);
+  $('quick-start-section').classList.toggle('hidden', currentFamily !== 'etu');
+  $('etu-selection-section').classList.toggle('visible', currentFamily === 'etu');
+  $('tmt-selection-section').classList.toggle('visible', currentFamily === 'tmt');
+  $('emt-selection-section').classList.toggle('visible', currentFamily === 'emt');
+  $('settings-section').classList.toggle('hidden', currentFamily !== 'etu' || !currentSettings);
+  $('saved-plans-panel').classList.toggle('hidden', currentFamily !== 'etu');
+  clearFamilyOutputs();
+  updateAuthDependentUi();
+}
+
+function setFamily(family) {
+  currentFamily = family;
+  setActivePlan(null, null, null);
+  setSavedPlanStatus();
+  updateFamilyUi();
+}
+
+$('family-tabs').addEventListener('click', (event) => {
+  const target = event.target.closest('[data-family]');
+  if (!target) return;
+  if (target.dataset.family === currentFamily) return;
+  setFamily(target.dataset.family);
+});
+
+
+// ─── 1. Cascade ───
+
+async function loadManufacturers() {
+  const isLive = await checkCatalogStatus();
+  if (!isLive) {
+    selMfr.innerHTML = '<option value="">Database unavailable — use presets</option>';
+    selMfr.disabled = true;
+    selType.innerHTML = '<option value="">Database unavailable — use presets</option>';
+    selType.disabled = true;
+    selStyle.innerHTML = '<option value="">Database unavailable — use presets</option>';
+    selStyle.disabled = true;
+    selSensor.innerHTML = '<option value="">Database unavailable — use presets</option>';
+    selSensor.disabled = true;
+    return;
+  }
+  try {
+    await refreshCascadeOptions();
+  } catch (e) {
+    selMfr.innerHTML = '<option value="">Error loading manufacturers</option>';
+    setDataMode('fallback', 'FALLBACK — Cascade load failed');
+  }
+}
+
+function setSelectPlaceholder(el, placeholder, disabled = true) {
+  el.innerHTML = `<option value="">${placeholder}</option>`;
+  el.disabled = disabled;
+}
+
+function formatCascadeCount(count, noun) {
+  if (!count) return '';
+  return ` (${count} ${noun})`;
+}
+
+function syncSelectOptions(el, items, valueKey, labelBuilder, placeholder, selectedValue) {
+  const normalizedSelected = selectedValue != null && selectedValue !== '' ? String(selectedValue) : '';
+  const availableValues = new Set((items || []).map(item => String(item[valueKey])));
+  const resolvedValue = normalizedSelected && availableValues.has(normalizedSelected) ? normalizedSelected : '';
+
+  el.innerHTML = `<option value="">${placeholder}</option>`;
+  (items || []).forEach(item => {
+    const selected = String(item[valueKey]) === resolvedValue ? ' selected' : '';
+    el.innerHTML += `<option value="${item[valueKey]}"${selected}>${labelBuilder(item)}</option>`;
+  });
+  el.disabled = (items || []).length === 0;
+  return resolvedValue;
+}
+
+function selectedInt(el) {
+  return el.value ? parseInt(el.value, 10) : null;
+}
+
+function buildCascadeQuery(selection) {
+  const params = new URLSearchParams();
+  Object.entries(selection || {}).forEach(([key, value]) => {
+    if (value != null && value !== '') params.set(key, String(value));
+  });
+  return params.toString();
+}
+
+function clearEtuExecutionState() {
+  currentSensorId = null;
+  currentSettings = null;
+  currentSensorRating = null;
+  currentSensorContext = null;
+  currentCascadeSensor = null;
+  lastCalcResponse = null;
+  lastEvalResponse = null;
+  lastPlotTccResponse = null;
+  $('settings-section').classList.add('hidden');
+  $('calc-section').classList.add('hidden');
+  $('eval-section').classList.add('hidden');
+  $('tcc-section').classList.add('hidden');
+  $('tmt-plot-section').classList.add('hidden');
+  $('emt-plot-section').classList.add('hidden');
+  $('sensor-summary').classList.add('hidden');
+  $('btn-export').disabled = true;
+  $('btn-save-plan').disabled = true;
+  $('btn-save-result').disabled = true;
+  $('save-plan-name').value = '';
+  setActivePlan(null, null, null);
+}
+
+function currentCascadeSelection() {
+  return {
+    manufacturer_id: selectedInt(selMfr),
+    trip_type_id: selectedInt(selType),
+    trip_style_id: selectedInt(selStyle),
+    sensor_id: selectedInt(selSensor),
+  };
+}
+
+async function refreshCascadeOptions(preferredSelection = null, options = {}) {
+  const { loadSensor = true, preserveActivePlan = false } = options;
+  const desiredSelection = preferredSelection || currentCascadeSelection();
+  const query = buildCascadeQuery(desiredSelection);
+  const data = await get(`/api/v1/neta/cascade${query ? `?${query}` : ''}`);
+  lastCascadeResponse = data;
+
+  const resolvedManufacturerId = syncSelectOptions(
+    selMfr,
+    data.manufacturers || [],
+    'manufacturer_id',
+    item => `${item.manufacturer_name}${formatCascadeCount(item.trip_type_count, 'types')}`,
+    'Select manufacturer...',
+    desiredSelection.manufacturer_id,
+  );
+
+  const resolvedTripTypeId = syncSelectOptions(
+    selType,
+    data.trip_types || [],
+    'trip_type_id',
+    item => `${item.trip_type_name}${formatCascadeCount(item.trip_style_count, 'styles')}`,
+    resolvedManufacturerId ? 'Select trip type...' : 'Choose manufacturer or type...',
+    desiredSelection.trip_type_id,
+  );
+
+  const resolvedTripStyleId = syncSelectOptions(
+    selStyle,
+    data.trip_styles || [],
+    'trip_style_id',
+    item => `${item.trip_style_name}${formatCascadeCount(item.sensor_count, 'sensors')}`,
+    resolvedTripTypeId || resolvedManufacturerId ? 'Select trip style...' : 'Choose manufacturer, type, or style...',
+    desiredSelection.trip_style_id,
+  );
+
+  let resolvedSensorId = '';
+  if (resolvedTripStyleId || desiredSelection.sensor_id) {
+    resolvedSensorId = syncSelectOptions(
+      selSensor,
+      data.sensors || [],
+      'sensor_id',
+      item => item.sensor_rating != null ? `${item.sensor_desc} (${item.sensor_rating}A)` : item.sensor_desc,
+      'Select sensor...',
+      desiredSelection.sensor_id,
+    );
+  } else {
+    setSelectPlaceholder(selSensor, 'Select trip style first');
+  }
+
+  currentCascadeSensor = (data.sensors || []).find(item => String(item.sensor_id) === resolvedSensorId) || null;
+
+  const resolvedSensorInt = resolvedSensorId ? parseInt(resolvedSensorId, 10) : null;
+  const sensorChanged = resolvedSensorInt !== currentSensorId;
+  if (!resolvedSensorInt) {
+    clearEtuExecutionState();
+    if (preserveActivePlan) {
+      updateAuthDependentUi();
+    }
+    return data;
+  }
+
+  if (sensorChanged) {
+    clearEtuExecutionState();
+  }
+
+  if (loadSensor && (sensorChanged || !currentSettings)) {
+    currentSensorId = resolvedSensorInt;
+    await loadSettings(resolvedSensorInt);
+  } else {
+    currentSensorId = resolvedSensorInt;
+  }
+
+  if (!preserveActivePlan && sensorChanged) {
+    setActivePlan(null, null, null);
+  }
+
+  return data;
+}
+
+async function handleCascadeChange() {
+  try {
+    await refreshCascadeOptions();
+  } catch (e) {
+    console.error('Failed to refresh ETU cascade:', e);
+  }
+}
+
+selMfr.addEventListener('change', handleCascadeChange);
+selType.addEventListener('change', handleCascadeChange);
+selStyle.addEventListener('change', handleCascadeChange);
+
+async function applyEtuCascadeSelection(cascade, options = {}) {
+  const selection = {
+    manufacturer_id: cascade?.manufacturer_id ?? null,
+    trip_type_id: cascade?.trip_type_id ?? null,
+    trip_style_id: cascade?.trip_style_id ?? null,
+    sensor_id: cascade?.sensor_id ?? null,
+  };
+  return refreshCascadeOptions(selection, options);
+}
+selSensor.addEventListener('change', handleCascadeChange);
+
+$('btn-clear-etu-filters').addEventListener('click', async () => {
+  lastPresetName = null;
+  clearEtuExecutionState();
+  try {
+    await refreshCascadeOptions({
+      manufacturer_id: null,
+      trip_type_id: null,
+      trip_style_id: null,
+      sensor_id: null,
+    }, { loadSensor: false });
+  } catch (e) {
+    console.error('Failed to clear ETU cascade filters:', e);
+  }
+});
+
+
+// ─── 2. Settings ───
+
+async function loadSettings(sensorId) {
+  try {
+    const [settings, ctx] = await Promise.all([
+      get(`/api/v1/neta/settings/${sensorId}`),
+      get(`/api/v1/neta/context/${sensorId}`),
+    ]);
+    currentSettings = settings;
+    currentSensorContext = ctx;
+    currentSensorRating = ctx.rating != null ? Number(ctx.rating) : null;
+
+    // Show sensor summary
+    const sum = $('sensor-summary');
+    const identity = getCurrentEtuIdentity();
+    const resolvedEquipment = ctx.resolved_equipment || getCurrentEtuResolvedEquipment();
+    sum.classList.remove('hidden');
+    sum.innerHTML = renderFamilySummaryMarkup(resolvedEquipment, {
+      primaryLabel: identity.sensorDesc || ctx.sensor_desc,
+      breakerLabel: identity.breakerContextLabel,
+      tripUnitLabel: identity.tripUnitLabel,
+      ratingLabel: ctx.rating != null ? `${fmt(ctx.rating)}A` : (identity.sensorDesc ? `Sensor ${identity.sensorDesc}` : null),
+      tags: `<span>Elements: ${['LTPU','STPU','INST','GFPU'].filter(e => ctx['has_'+e.toLowerCase()]).join(', ') || 'none'}</span>${ctx.maint_capable ? '<span class="tag tag-maint">MAINT capable</span>' : ''}`,
+    });
+
+    // Populate dropdowns
+    fillNumSelect($('set-plug'), settings.plug_values, 'Select plug...');
+    fillNumSelect($('set-ltpu'), settings.ltpu_settings, 'Select LTPU...');
+    fillLtdSelect($('set-ltd'), settings.ltd_settings);
+    fillNumSelect($('set-stpu'), settings.stpu_settings, 'Select STPU...');
+    fillDelayBandSelect($('set-std'), settings.std_settings, 'Select STD band...');
+    fillNumSelect($('set-inst'), settings.inst_settings, 'Select INST...');
+    fillNumSelect($('set-gfpu'), settings.gfpu_settings, 'Select GFPU...');
+    fillDelayBandSelect($('set-gfd'), settings.gfd_settings, 'Select GFD band...');
+    syncEtuApplicableRows(settings, ctx);
+
+    $('settings-section').classList.remove('hidden');
+    $('btn-calc').disabled = false;
+    $('btn-tcc').disabled = false;
+    $('btn-save-plan').disabled = false;
+    syncSavePlanName();
+    updateAuthDependentUi();
+  } catch (e) {
+    console.error('Failed to load settings:', e);
+  }
+}
+
+function fillNumSelect(el, values, placeholder) {
+  el.innerHTML = `<option value="">${placeholder || '—'}</option>`;
+  (values || []).forEach(v => {
+    el.innerHTML += `<option value="${v}">${v}</option>`;
+  });
+}
+
+function validatePlugAgainstSensor(payload) {
+  if (!payload.plug_rating || !currentSensorRating) return null;
+  if (payload.plug_rating > currentSensorRating) {
+    return `Plug rating ${payload.plug_rating} exceeds sensor rating ${currentSensorRating}. Plug can only be equal to or less than the selected sensor.`;
+  }
+  return null;
+}
+
+function fillLtdSelect(el, bands) {
+  fillDelayBandSelect(el, bands, 'Select LTD band...');
+}
+
+function fillDelayBandSelect(el, bands, placeholder) {
+  el.innerHTML = `<option value="">${placeholder || 'Select delay band...'}</option>`;
+  const seen = new Set();
+  (bands || []).forEach(b => {
+    const key = b && b.open_time != null ? `time:${b.open_time}` : `label:${b?.label || ''}|band:${b?.band || ''}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    const displayLabel = b.label || b.band;
+    const defaultTag = b.is_default ? ' [default]' : '';
+    el.innerHTML += `<option value="${b.open_time}">${displayLabel}${defaultTag} (${b.open_time}s)</option>`;
+  });
+}
+
+function setControlVisibility(rowId, visible, controlIds = []) {
+  const row = $(rowId);
+  if (!row) return;
+  row.classList.toggle('hidden', !visible);
+  controlIds.forEach((controlId) => {
+    const control = $(controlId);
+    if (!control) return;
+    control.disabled = !visible;
+    if (!visible) {
+      if (control.tagName === 'SELECT') {
+        control.value = '';
+      } else if (control.type === 'checkbox') {
+        control.checked = false;
+      } else {
+        control.value = '';
+      }
+    }
+  });
+}
+
+function isControlApplicable(controlId) {
+  const control = $(controlId);
+  if (!control || control.disabled) return false;
+  const row = control.closest('.field');
+  return !(row && row.classList.contains('hidden'));
+}
+
+function syncEtuApplicableRows(settings, ctx) {
+  const capabilities = {
+    plug: (settings.plug_values || []).length > 0,
+    ltpu: Boolean(ctx.has_ltpu) || (settings.ltpu_settings || []).length > 0,
+    ltd: (settings.ltd_settings || []).length > 0,
+    stpu: Boolean(ctx.has_stpu) || (settings.stpu_settings || []).length > 0,
+    std: (settings.std_settings || []).length > 0,
+    inst: Boolean(ctx.has_inst) || (settings.inst_settings || []).length > 0,
+    gfpu: Boolean(ctx.has_gfpu) || (settings.gfpu_settings || []).length > 0,
+    gfd: (settings.gfd_settings || []).length > 0,
+    maint: Boolean(ctx.maint_capable),
+  };
+
+  setControlVisibility('etu-row-plug', capabilities.plug, ['set-plug']);
+  setControlVisibility('etu-row-ltpu', capabilities.ltpu, ['set-ltpu']);
+  setControlVisibility('etu-row-ltd', capabilities.ltd, ['set-ltd']);
+  setControlVisibility('etu-row-stpu', capabilities.stpu, ['set-stpu']);
+  setControlVisibility('etu-row-std', capabilities.std, ['set-std']);
+  setControlVisibility('etu-row-inst', capabilities.inst, ['set-inst']);
+  setControlVisibility('etu-row-gfpu', capabilities.gfpu, ['set-gfpu']);
+  setControlVisibility('etu-row-gfd', capabilities.gfd, ['set-gfd']);
+  setControlVisibility('etu-row-maint-toggle', capabilities.maint, ['chk-maint']);
+  setControlVisibility('etu-row-meas-ltpu', capabilities.ltpu, ['meas-ltpu']);
+  setControlVisibility('etu-row-meas-ltd', capabilities.ltd, ['meas-ltd']);
+  setControlVisibility('etu-row-meas-stpu', capabilities.stpu, ['meas-stpu']);
+  setControlVisibility('etu-row-meas-std', capabilities.std, ['meas-std']);
+  setControlVisibility('etu-row-meas-inst', capabilities.inst, ['meas-inst']);
+  setControlVisibility('etu-row-meas-gfpu', capabilities.gfpu, ['meas-gfpu']);
+  setControlVisibility('etu-row-meas-gfd', capabilities.gfd, ['meas-gfd']);
+  if (!capabilities.maint) {
+    $('maint-banner').classList.remove('visible');
+  }
+}
+
+
+// ─── Payload builder ───
+
+function buildPayload() {
+  const p = { sensor_id: currentSensorId, maint_mode: isControlApplicable('chk-maint') ? $('chk-maint').checked : false };
+  const plug = isControlApplicable('set-plug') ? $('set-plug').value : ''; if (plug) p.plug_rating = parseFloat(plug);
+  const ltpu = isControlApplicable('set-ltpu') ? $('set-ltpu').value : ''; if (ltpu) p.ltpu_setting = parseFloat(ltpu);
+  const ltd  = isControlApplicable('set-ltd') ? $('set-ltd').value : '';  if (ltd)  p.ltd_setting = parseFloat(ltd);
+  const stpu = isControlApplicable('set-stpu') ? $('set-stpu').value : ''; if (stpu) p.stpu_setting = parseFloat(stpu);
+  const std  = isControlApplicable('set-std') ? $('set-std').value : '';  if (std)  p.std_setting = parseFloat(std);
+  const inst = isControlApplicable('set-inst') ? $('set-inst').value : ''; if (inst) p.inst_setting = parseFloat(inst);
+  const gfpu = isControlApplicable('set-gfpu') ? $('set-gfpu').value : ''; if (gfpu) p.gfpu_setting = parseFloat(gfpu);
+  const gfd  = isControlApplicable('set-gfd') ? $('set-gfd').value : '';  if (gfd)  p.gfd_setting = parseFloat(gfd);
+  const identity = getCurrentEtuIdentity();
+  if (identity.breakerContextLabel) p.breaker_context_label = identity.breakerContextLabel;
+  if (identity.breakerContextSource) p.breaker_context_source = identity.breakerContextSource;
+  if (identity.manufacturerName) p.trip_unit_manufacturer_name = identity.manufacturerName;
+  if (identity.tripTypeName) p.trip_unit_type_name = identity.tripTypeName;
+  if (identity.tripStyleName) p.trip_unit_style_name = identity.tripStyleName;
+  p.resolved_equipment = getCurrentEtuResolvedEquipment();
+  return p;
+}
+
+function buildMeasurements() {
+  const m = [];
+  const ltpu = isControlApplicable('meas-ltpu') ? $('meas-ltpu').value : ''; if (ltpu) m.push({ element: 'LTPU', measured_current: parseFloat(ltpu) });
+  const ltd = isControlApplicable('meas-ltd') ? $('meas-ltd').value : ''; if (ltd) m.push({ element: 'LTD', measured_time: parseFloat(ltd) });
+  const stpu = isControlApplicable('meas-stpu') ? $('meas-stpu').value : ''; if (stpu) m.push({ element: 'STPU', measured_current: parseFloat(stpu) });
+  const std = isControlApplicable('meas-std') ? $('meas-std').value : ''; if (std) m.push({ element: 'STD', measured_time: parseFloat(std) });
+  const inst = isControlApplicable('meas-inst') ? $('meas-inst').value : ''; if (inst) m.push({ element: 'INST', measured_current: parseFloat(inst) });
+  const gfpu = isControlApplicable('meas-gfpu') ? $('meas-gfpu').value : ''; if (gfpu) m.push({ element: 'GFPU', measured_current: parseFloat(gfpu) });
+  const gfd = isControlApplicable('meas-gfd') ? $('meas-gfd').value : ''; if (gfd) m.push({ element: 'GFD', measured_time: parseFloat(gfd) });
+  return m.length > 0 ? m : null;
+}
+
+function defaultPlanName() {
+  return lastPresetName || `Plan - sensor ${currentSensorId}`;
+}
+
+function syncSavePlanName(force = false) {
+  const input = $('save-plan-name');
+  if (!input) return;
+  if (force || !input.value.trim()) {
+    input.value = currentSensorId ? defaultPlanName() : '';
+  }
+}
+
+function formatResultValue(kind, expectedCurrent, expectedTime) {
+  if (kind === 'delay') return expectedTime != null ? expectedTime.toFixed(3) + ' s' : '—';
+  return expectedCurrent != null ? fmt(expectedCurrent) + ' A' : '—';
+}
+
+function formatLimitValue(kind, limitCurrent, limitTime) {
+  if (kind === 'delay') return limitTime != null ? limitTime.toFixed(3) + ' s' : '—';
+  return limitCurrent != null ? fmt(limitCurrent) + ' A' : '—';
+}
+
+function formatMeasuredValue(kind, measuredCurrent, measuredTime) {
+  if (kind === 'delay') return measuredTime != null ? measuredTime.toFixed(3) + ' s' : '—';
+  return measuredCurrent != null ? fmt(measuredCurrent) + ' A' : '—';
+}
+
+function formatMaintSupportLevel(level) {
+  if (level === 'full') return 'Full branch data';
+  if (level === 'partial_inst_gfpu') return 'INST/GFPU only';
+  return 'No MAINT branch data';
+}
+
+function buildBreakerContextLabel(identity) {
+  if (!identity) return null;
+  const parts = [];
+  if (identity.tripStyleName) parts.push(identity.tripStyleName);
+  if (identity.sensorRating != null && identity.sensorRating !== '') parts.push(`${fmt(identity.sensorRating)}A`);
+  return parts.length ? parts.join(' · ') : null;
+}
+
+function getCurrentEtuIdentity() {
+  const ctx = currentSensorContext || {};
+  const sensor = currentCascadeSensor || {};
+  const manufacturerName = ctx.manufacturer_name || sensor.manufacturer_name || '';
+  const tripTypeName = ctx.trip_type_name || sensor.trip_type_name || '';
+  const tripStyleName = ctx.trip_style_name || sensor.trip_style_name || '';
+  const sensorDesc = ctx.sensor_desc || sensor.sensor_desc || '';
+  const sensorRating = ctx.rating != null ? Number(ctx.rating) : (sensor.sensor_rating != null ? Number(sensor.sensor_rating) : currentSensorRating);
+  const tripUnitLabel = [manufacturerName, tripTypeName, tripStyleName].filter(Boolean).join(' · ');
+  return {
+    manufacturerName,
+    tripTypeName,
+    tripStyleName,
+    sensorDesc,
+    sensorRating,
+    tripUnitLabel,
+    breakerContextLabel: buildBreakerContextLabel({ tripStyleName, sensorRating }),
+    breakerContextSource: tripStyleName || sensorRating != null ? 'trip_style_sensor_rating' : null,
+  };
+}
+
+function getCurrentEtuResolvedEquipment() {
+  if (currentSensorContext?.resolved_equipment) return currentSensorContext.resolved_equipment;
+  const identity = getCurrentEtuIdentity();
+  return {
+    family: 'etu',
+    family_label: 'ETU',
+    resolved_id: currentSensorId ? `sensor:${currentSensorId}` : null,
+    primary_label: identity.tripUnitLabel || identity.sensorDesc || null,
+    secondary_label: identity.breakerContextLabel || (identity.sensorDesc ? `Sensor ${identity.sensorDesc}` : null),
+    breaker_context: {
+      label: identity.breakerContextLabel || null,
+      source: identity.breakerContextSource || null,
+      manufacturer_name: identity.manufacturerName || null,
+      breaker_style_name: identity.tripStyleName || null,
+    },
+    trip_unit: {
+      manufacturer_name: identity.manufacturerName || null,
+      trip_type_name: identity.tripTypeName || null,
+      trip_style_name: identity.tripStyleName || null,
+      label: identity.tripUnitLabel || null,
+    },
+    rating_context: {
+      label: identity.sensorDesc ? `Sensor ${identity.sensorDesc}` : null,
+      sensor_id: currentSensorId || null,
+      sensor_desc: identity.sensorDesc || null,
+      sensor_rating: identity.sensorRating ?? null,
+    },
+  };
+}
+
+function renderFamilySummaryMarkup(summary, fallbacks = {}) {
+  const breakerLabel = summary?.breaker_context?.label || fallbacks.breakerLabel || 'Unspecified';
+  const tripUnitLabel = summary?.trip_unit?.label || fallbacks.tripUnitLabel || 'Unspecified';
+  const ratingLabel = summary?.rating_context?.label || fallbacks.ratingLabel || '—';
+  const primaryLabel = summary?.primary_label || fallbacks.primaryLabel || 'Resolved equipment';
+  const tags = fallbacks.tags || '';
+  return `
+      <span><strong>${esc(primaryLabel)}</strong></span>
+      <span>Breaker Context: ${esc(breakerLabel)}</span>
+      <span>Trip Unit: ${esc(tripUnitLabel)}</span>
+      <span>Rating Context: ${esc(ratingLabel)}</span>
+      ${tags}
+    `;
+}
+
+
+// ─── 3. Calculate ───
+
+$('btn-calc').addEventListener('click', async () => {
+  const btn = $('btn-calc');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Calculating...';
+  try {
+    const payload = buildPayload();
+    if (!payload.plug_rating) { alert('Please select a plug rating.'); return; }
+    const plugError = validatePlugAgainstSensor(payload);
+    if (plugError) { alert(plugError); return; }
+    const resp = await post('/api/v1/neta/calculate', payload);
+    lastCalcResponse = resp;
+    renderCalcResults(resp);
+    $('calc-section').classList.remove('hidden');
+  } catch (e) {
+    alert('Calculate failed: ' + e.message);
+    console.error(e);
+  } finally {
+    btn.disabled = false; btn.textContent = 'Calculate';
+  }
+});
+
+function renderCalcResults(resp) {
+  // Warnings
+  const wEl = $('calc-warnings');
+  if (resp.warnings && resp.warnings.length) {
+    wEl.innerHTML = `<div class="warnings"><strong>Warnings:</strong><ul>${resp.warnings.map(w => `<li>${esc(w)}</li>`).join('')}</ul></div>`;
+  } else { wEl.innerHTML = ''; }
+
+  // Meta
+  const meta = $('calc-meta');
+  const identity = getCurrentEtuIdentity();
+  meta.classList.remove('hidden');
+  meta.innerHTML = `
+    <span><strong>${esc(identity.sensorDesc || resp.sensor_desc)}</strong></span>
+    <span>Breaker Context: ${esc(identity.breakerContextLabel || 'Unspecified')}</span>
+    <span>Trip Unit: ${esc(identity.tripUnitLabel || 'Unspecified')}</span>
+    <span>Plug: ${resp.plug_rating}</span>
+    ${resp.maint_mode ? '<span class="tag tag-maint">MAINT ON</span>' : ''}
+    ${resp.maint_capable ? `<span class="tag tag-maint">Support: ${formatMaintSupportLevel(resp.maint_support_level)}</span>` : ''}
+  `;
+
+  // Table
+  const tbody = $('calc-table').querySelector('tbody');
+  tbody.innerHTML = '';
+  (resp.elements || []).forEach(el => {
+    const expectedVal = formatResultValue(el.kind, el.test_current, el.delay_seconds);
+    const lowVal = formatLimitValue(el.kind, el.limit_low, el.time_limit_low);
+    const highVal = formatLimitValue(el.kind, el.limit_high, el.time_limit_high);
+    tbody.innerHTML += `<tr>
+      <td><strong>${el.element}</strong><br><span style="font-size:11px;color:var(--muted);">${el.kind || 'pickup'}</span></td>
+      <td>${expectedVal}</td>
+      <td>${lowVal}</td>
+      <td>${highVal}</td>
+      <td>${el.multiplier}x</td>
+      <td>${el.calc_method || '—'}</td>
+    </tr>`;
+  });
+}
+
+
+// ─── 3b. Evaluate ───
+
+function buildEvalPayload(basePayload, measurements) {
+  const mMap = {};
+  measurements.forEach(m => { mMap[m.element] = m; });
+  return {
+    sensor_id: basePayload.sensor_id,
+    plug_rating: basePayload.plug_rating,
+    ltpu_setting: basePayload.ltpu_setting,
+    ltd_setting: basePayload.ltd_setting,
+    stpu_setting: basePayload.stpu_setting,
+    std_setting: basePayload.std_setting,
+    inst_setting: basePayload.inst_setting,
+    gfpu_setting: basePayload.gfpu_setting,
+    gfd_setting: basePayload.gfd_setting,
+    maint_mode: basePayload.maint_mode,
+    measurements: measurements,
+  };
+}
+
+function renderEvalResults(resp) {
+  // Warnings
+  const wEl = $('eval-warnings');
+  if (resp.warnings && resp.warnings.length) {
+    wEl.innerHTML = `<div class="warnings"><strong>Warnings:</strong><ul>${resp.warnings.map(w => `<li>${esc(w)}</li>`).join('')}</ul></div>`;
+  } else { wEl.innerHTML = ''; }
+
+  // Meta bar with overall pass/fail
+  const passTag = resp.overall_pass ? '<span class="tag tag-pass">OVERALL PASS</span>'
+    : '<span class="tag tag-fail">OVERALL FAIL</span>';
+  const identity = getCurrentEtuIdentity();
+  $('eval-meta').innerHTML = `
+    <span><strong>${esc(identity.sensorDesc || resp.sensor_desc)}</strong></span>
+    <span>Breaker Context: ${esc(identity.breakerContextLabel || 'Unspecified')}</span>
+    <span>Trip Unit: ${esc(identity.tripUnitLabel || 'Unspecified')}</span>
+    ${passTag}
+    <span>Tested: ${resp.tested_count} &middot; Passed: ${resp.passed_count} &middot; Failed: ${resp.failed_count}</span>
+    ${resp.maint_mode ? '<span class="tag tag-maint">MAINT ON</span>' : ''}
+    ${resp.maint_capable ? `<span class="tag tag-maint">Support: ${formatMaintSupportLevel(resp.maint_support_level)}</span>` : ''}
+  `;
+
+  // Table
+  const tbody = $('eval-table').querySelector('tbody');
+  tbody.innerHTML = '';
+  (resp.elements || []).forEach(el => {
+    const passCell = el.passed ? '<span class="pass-cell">PASS</span>' : '<span class="fail-cell">FAIL</span>';
+    const devPct = el.deviation_pct != null ? el.deviation_pct.toFixed(1) + '%' : '—';
+    const expectedVal = formatResultValue(el.kind, el.test_current, el.delay_seconds);
+    const measuredVal = formatMeasuredValue(el.kind, el.measured_current, el.measured_time);
+    const lowVal = formatLimitValue(el.kind, el.limit_low, el.time_limit_low);
+    const highVal = formatLimitValue(el.kind, el.limit_high, el.time_limit_high);
+    tbody.innerHTML += `<tr>
+      <td><strong>${el.element}</strong><br><span style="font-size:11px;color:var(--muted);">${el.kind || 'pickup'}</span></td>
+      <td>${expectedVal}</td>
+      <td>${measuredVal}</td>
+      <td>${lowVal}</td>
+      <td>${highVal}</td>
+      <td>${devPct}</td>
+      <td>${passCell}</td>
+    </tr>`;
+  });
+}
+
+
+// ─── 4. View Results on TCC ───
+
+$('btn-tcc').addEventListener('click', async () => {
+  const btn = $('btn-tcc');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Loading TCC...';
+  try {
+    const payload = buildPayload();
+    if (!payload.plug_rating) { alert('Please select a plug rating.'); return; }
+    const plugError = validatePlugAgainstSensor(payload);
+    if (plugError) { alert(plugError); return; }
+    const measurements = buildMeasurements();
+
+    // Step 1: If measurements present, call /evaluate first
+    $('eval-section').classList.add('hidden');
+    lastEvalResponse = null;
+    if (measurements) {
+      const evalPayload = buildEvalPayload(payload, measurements);
+      const evalResp = await post('/api/v1/neta/evaluate', evalPayload);
+      lastEvalResponse = evalResp;
+      renderEvalResults(evalResp);
+      $('eval-section').classList.remove('hidden');
+    }
+
+    // Step 2: Call /plot-tcc
+    payload.measurements = measurements;
+    payload.include_nominal_curve = true;
+    payload.include_expected_markers = true;
+    payload.include_measured_markers = !!measurements;
+
+    const resp = await post('/api/v1/neta/plot-tcc', payload);
+    lastPlotTccResponse = resp;
+    renderTcc(resp);
+    $('tcc-section').classList.remove('hidden');
+    $('btn-export').disabled = false;
+    $('btn-save-result').disabled = !currentPlanId;
+    updateAuthDependentUi();
+
+    // Scroll to evaluate section first if present, else TCC
+    const scrollTarget = measurements ? 'eval-section' : 'tcc-section';
+    $(scrollTarget).scrollIntoView({ behavior: 'smooth' });
+  } catch (e) {
+    alert('View Results failed: ' + e.message);
+    console.error(e);
+  } finally {
+    btn.disabled = false; btn.textContent = 'View Results on TCC';
+  }
+});
+
+function renderTcc(resp) {
+  // Warnings
+  const wEl = $('tcc-warnings');
+  if (resp.warnings && resp.warnings.length) {
+    wEl.innerHTML = `<div class="warnings"><strong>Warnings:</strong><ul>${resp.warnings.map(w => `<li>${esc(w)}</li>`).join('')}</ul></div>`;
+  } else { wEl.innerHTML = ''; }
+
+  // Meta bar
+  const m = resp.meta;
+  const passTag = m.overall_pass === true ? '<span class="tag tag-pass">PASS</span>'
+    : m.overall_pass === false ? '<span class="tag tag-fail">FAIL</span>'
+    : '<span class="tag tag-none">No eval</span>';
+  $('tcc-meta').innerHTML = `
+    <span><strong>${esc(m.sensor_desc)}</strong></span>
+    <span>Breaker Context: ${esc(m.breaker_context_label || 'Unspecified')}</span>
+    <span>Trip Unit: ${esc(m.trip_unit_manufacturer || m.manufacturer || '')} &middot; ${esc(m.trip_unit_type || m.trip_type || '')} &middot; ${esc(m.trip_unit_style || m.trip_style || '')}</span>
+    <span>Plug: ${m.plug_rating}</span>
+    ${passTag}
+    ${m.maint_mode ? '<span class="tag tag-maint">MAINT ON</span>' : ''}
+    ${m.maint_capable ? `<span class="tag tag-maint">Support: ${formatMaintSupportLevel(m.maint_support_level)}</span>` : ''}
+  `;
+
+  // Disclaimer
+  $('tcc-disclaimer').textContent = m.plot_disclaimer || '';
+
+  // Summary table — pickup rows show current tolerance, delay rows show time tolerance
+  const tbody = $('tcc-table').querySelector('tbody');
+  tbody.innerHTML = '';
+  (resp.table_rows || []).forEach(r => {
+    const passCell = r.passed === true ? '<span class="pass-cell">PASS</span>'
+      : r.passed === false ? '<span class="fail-cell">FAIL</span>' : '—';
+    const devCell = r.deviation_pct != null ? r.deviation_pct.toFixed(1) + '%' : '—';
+    const isDelay = r.kind === 'delay';
+
+    // For pickup: show current limits; for delay: show time limits
+    let minVal, maxVal, expectedVal, measuredVal;
+    if (isDelay) {
+      expectedVal = r.expected_time != null ? r.expected_time.toFixed(3) + 's' : '—';
+      minVal = r.time_limit_low != null ? r.time_limit_low.toFixed(3) + 's' : '—';
+      maxVal = r.time_limit_high != null ? r.time_limit_high.toFixed(3) + 's' : '—';
+      measuredVal = r.measured_time != null ? r.measured_time.toFixed(3) + 's' : '—';
+    } else {
+      expectedVal = fmt(r.expected_current) + ' A';
+      minVal = r.limit_low != null ? fmt(r.limit_low) + ' A' : '—';
+      maxVal = r.limit_high != null ? fmt(r.limit_high) + ' A' : '—';
+      measuredVal = r.measured_current != null ? fmt(r.measured_current) + ' A' : '—';
+    }
+
+    tbody.innerHTML += `<tr>
+      <td><strong>${r.element}</strong><br><span style="font-size:11px;color:var(--muted);">${isDelay ? 'delay' : 'pickup'}</span></td>
+      <td>${r.test_multiple}x</td>
+      <td>${expectedVal}</td>
+      <td>${minVal}</td>
+      <td>${maxVal}</td>
+      <td>${measuredVal}</td>
+      <td>${devCell}</td>
+      <td>${passCell}</td>
+    </tr>`;
+  });
+
+  // Plot
+  renderPlot(resp);
+}
+
+
+// ─── Plot rendering ───
+
+const CURVE_COLORS = {
+  LTD: { open: '#2563eb', clear: '#93c5fd' },
+  STD: { open: '#dc2626', clear: '#fca5a5' },
+  INST: { open: '#7c3aed', clear: '#c4b5fd' },
+  GFD: { open: '#059669', clear: '#6ee7b7' },
+};
+
+function getTableRow(resp, element) {
+  return (resp.table_rows || []).find(r => r.element === element) || null;
+}
+
+function getCurve(resp, id) {
+  return (resp.curves || []).find(c => c.id === id) || null;
+}
+
+function currentBand(row) {
+  if (!row) return [null, null];
+  return [
+    row.limit_low != null ? row.limit_low : row.expected_current,
+    row.limit_high != null ? row.limit_high : row.expected_current,
+  ];
+}
+
+function timeBand(row, fallbackLow = null, fallbackHigh = null) {
+  if (!row) return [fallbackLow, fallbackHigh];
+  const low = row.time_limit_low != null ? row.time_limit_low : (row.expected_time != null ? row.expected_time : fallbackLow);
+  const high = row.time_limit_high != null ? row.time_limit_high : (row.expected_time != null ? row.expected_time : (fallbackHigh != null ? fallbackHigh : low));
+  return [low, high != null ? high : low];
+}
+
+function curveTime(resp, id, reducer) {
+  const curve = getCurve(resp, id);
+  if (!curve || !(curve.points || []).length) return null;
+  const values = curve.points.map(p => p.seconds).filter(v => v != null);
+  if (!values.length) return null;
+  return reducer === 'max' ? Math.max(...values) : Math.min(...values);
+}
+
+function plotBounds(resp) {
+  const currents = [];
+  const times = [];
+
+  (resp.curves || []).forEach(c => (c.points || []).forEach(p => {
+    if (p.amps != null) currents.push(p.amps);
+    if (p.seconds != null) times.push(p.seconds);
+  }));
+  (resp.expected_markers || []).forEach(m => {
+    if (m.expected_current != null) currents.push(m.expected_current);
+    if (m.expected_time != null) times.push(m.expected_time);
+    if (m.limit_low != null) currents.push(m.limit_low);
+    if (m.limit_high != null) currents.push(m.limit_high);
+  });
+  (resp.measured_markers || []).forEach(m => {
+    if (m.measured_current != null) currents.push(m.measured_current);
+    if (m.measured_time != null) times.push(m.measured_time);
+  });
+  (resp.table_rows || []).forEach(r => {
+    if (r.expected_current != null) currents.push(r.expected_current);
+    if (r.limit_low != null) currents.push(r.limit_low);
+    if (r.limit_high != null) currents.push(r.limit_high);
+    if (r.expected_time != null) times.push(r.expected_time);
+    if (r.time_limit_low != null) times.push(r.time_limit_low);
+    if (r.time_limit_high != null) times.push(r.time_limit_high);
+    if (r.measured_time != null) times.push(r.measured_time);
+  });
+
+  const maxCurrent = currents.length ? Math.max(...currents) : 1000;
+  const maxTime = times.length ? Math.max(...times) : 10;
+  return {
+    xMax: Math.max(maxCurrent * 1.8, 1000),
+    yTop: Math.max(Math.min(maxTime * 8, 1000), 1),
+  };
+}
+
+function buildPhaseEnvelope(resp) {
+  const ltpu = getTableRow(resp, 'LTPU');
+  if (!ltpu) return null;
+
+  const ltd = getTableRow(resp, 'LTD');
+  const stpu = getTableRow(resp, 'STPU');
+  const std = getTableRow(resp, 'STD');
+  const inst = getTableRow(resp, 'INST');
+  const bounds = plotBounds(resp);
+  const [ltpuLow, ltpuHigh] = currentBand(ltpu);
+  let [currentLowTime, currentHighTime] = ltd ? timeBand(ltd, bounds.yTop, bounds.yTop) : [bounds.yTop, bounds.yTop];
+
+  const lowPoints = [{ amps: ltpuLow, seconds: bounds.yTop }];
+  const highPoints = [{ amps: ltpuHigh, seconds: bounds.yTop }];
+
+  function pushPoint(points, amps, seconds) {
+    const last = points[points.length - 1];
+    if (last && last.amps === amps && last.seconds === seconds) return;
+    points.push({ amps, seconds });
+  }
+
+  if (ltd) {
+    pushPoint(lowPoints, ltpuLow, currentLowTime);
+    pushPoint(highPoints, ltpuHigh, currentHighTime);
+  }
+
+  const fastCandidates = [];
+  if (stpu && std) {
+    const [pickupLow, pickupHigh] = currentBand(stpu);
+    const [timeLow, timeHigh] = timeBand(std);
+    if (pickupLow != null && timeLow != null) {
+      fastCandidates.push({ element: 'STD', pickupLow, pickupHigh, timeLow, timeHigh });
+    }
+  }
+  if (inst) {
+    const [pickupLow, pickupHigh] = currentBand(inst);
+    const timeLow = curveTime(resp, 'inst_open', 'min') || 0.05;
+    const timeHigh = curveTime(resp, 'inst_clear', 'max') || timeLow;
+    if (pickupLow != null && timeLow != null) {
+      fastCandidates.push({ element: 'INST', pickupLow, pickupHigh, timeLow, timeHigh });
+    }
+  }
+
+  fastCandidates.sort((left, right) => left.pickupLow - right.pickupLow);
+
+  let lastIncludedTimeLow = currentLowTime;
+  let lastIncludedTimeHigh = currentHighTime;
+  let lastIncludedPickupLow = ltpuLow;
+  let lastIncludedPickupHigh = ltpuHigh;
+  let includedCount = 0;
+
+  fastCandidates.forEach(candidate => {
+    if (includedCount > 0 && candidate.timeLow >= lastIncludedTimeLow - 1e-9) {
+      return;
+    }
+    const needsShoulder = candidate.pickupLow !== lastIncludedPickupLow || candidate.pickupHigh !== lastIncludedPickupHigh;
+    if (needsShoulder) {
+      pushPoint(lowPoints, candidate.pickupLow, lastIncludedTimeLow);
+      pushPoint(highPoints, candidate.pickupHigh, lastIncludedTimeHigh);
+    }
+    pushPoint(lowPoints, candidate.pickupLow, candidate.timeLow);
+    pushPoint(highPoints, candidate.pickupHigh, candidate.timeHigh);
+    lastIncludedPickupLow = candidate.pickupLow;
+    lastIncludedPickupHigh = candidate.pickupHigh;
+    lastIncludedTimeLow = candidate.timeLow;
+    lastIncludedTimeHigh = candidate.timeHigh;
+    includedCount += 1;
+  });
+
+  const lastLow = lowPoints[lowPoints.length - 1];
+  const lastHigh = highPoints[highPoints.length - 1];
+  pushPoint(lowPoints, bounds.xMax, lastLow.seconds);
+  pushPoint(highPoints, bounds.xMax, lastHigh.seconds);
+
+  return { label: 'Phase trip envelope', color: '#9333ea', lowPoints, highPoints };
+}
+
+function buildGroundFaultEnvelope(resp) {
+  const gfpu = getTableRow(resp, 'GFPU');
+  const gfd = getTableRow(resp, 'GFD');
+  if (!gfpu || !gfd) return null;
+
+  const bounds = plotBounds(resp);
+  const [gfpuLow, gfpuHigh] = currentBand(gfpu);
+  const [gfdLow, gfdHigh] = timeBand(gfd, bounds.yTop, bounds.yTop);
+  if (gfpuLow == null || gfdLow == null) return null;
+
+  return {
+    label: 'Ground-fault envelope',
+    color: '#059669',
+    lowPoints: [
+      { amps: gfpuLow, seconds: bounds.yTop },
+      { amps: gfpuLow, seconds: gfdLow },
+      { amps: bounds.xMax, seconds: gfdLow },
+    ],
+    highPoints: [
+      { amps: gfpuHigh, seconds: bounds.yTop },
+      { amps: gfpuHigh, seconds: gfdHigh },
+      { amps: bounds.xMax, seconds: gfdHigh },
+    ],
+  };
+}
+
+function addUnifiedEnvelope(traces, envelope) {
+  if (!envelope) return false;
+  const polygonX = envelope.highPoints.map(p => p.amps).concat([...envelope.lowPoints].reverse().map(p => p.amps));
+  const polygonY = envelope.highPoints.map(p => p.seconds).concat([...envelope.lowPoints].reverse().map(p => p.seconds));
+
+  traces.push({
+    x: polygonX,
+    y: polygonY,
+    mode: 'lines',
+    name: envelope.label,
+    line: { color: envelope.color, width: 2.5 },
+    fill: 'toself',
+    fillcolor: envelope.color === '#059669' ? 'rgba(5,150,105,0.18)' : 'rgba(147,51,234,0.22)',
+    hoverinfo: 'skip',
+  });
+  traces.push({
+    x: envelope.lowPoints.map(p => p.amps),
+    y: envelope.lowPoints.map(p => p.seconds),
+    mode: 'lines',
+    name: `${envelope.label} lower`,
+    line: { color: envelope.color, width: 2, dash: 'solid' },
+    hovertemplate: `${envelope.label}<br>%{x:.0f} A<br>%{y:.4f} s<extra></extra>`,
+    showlegend: false,
+  });
+  traces.push({
+    x: envelope.highPoints.map(p => p.amps),
+    y: envelope.highPoints.map(p => p.seconds),
+    mode: 'lines',
+    name: `${envelope.label} upper`,
+    line: { color: envelope.color, width: 2, dash: 'dot' },
+    hovertemplate: `${envelope.label}<br>%{x:.0f} A<br>%{y:.4f} s<extra></extra>`,
+    showlegend: false,
+  });
+  return true;
+}
+
+function renderPlot(resp) {
+  const traces = [];
+  let plotShapes = [];
+
+  let hasUnifiedEnvelope = false;
+  hasUnifiedEnvelope = addUnifiedEnvelope(traces, buildPhaseEnvelope(resp)) || hasUnifiedEnvelope;
+  hasUnifiedEnvelope = addUnifiedEnvelope(traces, buildGroundFaultEnvelope(resp)) || hasUnifiedEnvelope;
+
+  if (!hasUnifiedEnvelope) {
+    (resp.curves || []).forEach(c => {
+      const colors = CURVE_COLORS[c.element] || { open: '#888', clear: '#ccc' };
+      traces.push({
+        x: c.points.map(p => p.amps),
+        y: c.points.map(p => p.seconds),
+        mode: 'lines',
+        name: `${c.element} ${c.phase}`,
+        line: {
+          color: colors[c.phase] || '#888',
+          dash: c.line_style === 'dashed' ? 'dash' : 'solid',
+          width: c.phase === 'open' ? 2.5 : 1.5,
+        },
+        hovertemplate: `${c.element} ${c.phase}<br>%{x:.0f} A<br>%{y:.4f} s<extra></extra>`,
+      });
+    });
+  }
+
+  // Expected markers — pickup (vertical lines with shaded tolerance bands)
+  const expPickup = (resp.expected_markers || []).filter(m => m.kind === 'pickup');
+  if (expPickup.length) {
+    // Shaded tolerance bands as vertical rectangles (shapes)
+    const shapes = [];
+    expPickup.forEach(m => {
+      if (m.limit_low != null && m.limit_high != null) {
+        shapes.push({
+          type: 'rect', xref: 'x', yref: 'paper',
+          x0: m.limit_low, x1: m.limit_high, y0: 0, y1: 1,
+          fillcolor: 'rgba(13,110,253,0.08)', line: { width: 1, color: 'rgba(13,110,253,0.25)', dash: 'dot' },
+          layer: 'below',
+        });
+      }
+    });
+    if (shapes.length) plotShapes = shapes;
+
+    traces.push({
+      x: expPickup.map(m => m.expected_current),
+      y: expPickup.map(() => 0.01), // bottom of log plot
+      mode: 'markers+text',
+      name: 'Expected pickups',
+      marker: { symbol: 'triangle-up', size: 12, color: '#0d6efd', line: { width: 1, color: '#fff' } },
+      text: expPickup.map(m => m.label),
+      textposition: 'top center',
+      textfont: { size: 10, color: '#0d6efd' },
+      hovertemplate: '%{text}<br>%{x:.0f} A<br>Range: ' +
+        expPickup.map(m => `${fmt(m.limit_low)}-${fmt(m.limit_high)} A`).join(', ') + '<extra></extra>',
+    });
+    // Tolerance band edge markers for legend visibility
+    traces.push({
+      x: expPickup.flatMap(m => [m.limit_low, m.limit_high].filter(v => v != null)),
+      y: expPickup.flatMap(() => [0.01, 0.01]),
+      mode: 'markers',
+      name: 'Pickup tolerance band',
+      marker: { size: 6, symbol: 'line-ns', color: 'rgba(13,110,253,0.5)', line: { width: 2, color: 'rgba(13,110,253,0.5)' } },
+      hoverinfo: 'skip',
+    });
+  }
+
+  // Expected markers — delay (points on curve with time tolerance bands)
+  const expDelay = (resp.expected_markers || []).filter(m => m.kind === 'delay');
+  if (expDelay.length) {
+    traces.push({
+      x: expDelay.map(m => m.expected_current),
+      y: expDelay.map(m => m.expected_time || 0.01),
+      mode: 'markers+text',
+      name: 'Expected delays',
+      marker: { symbol: 'diamond', size: 10, color: '#f59e0b', line: { width: 1.5, color: '#fff' } },
+      text: expDelay.map(m => m.label),
+      textposition: 'top right',
+      textfont: { size: 10, color: '#92400e' },
+      hovertemplate: '%{text}<br>%{x:.0f} A, %{y:.3f} s<extra></extra>',
+    });
+
+    // Time tolerance error bars (vertical) for delay elements from table_rows
+    const delayWithTol = (resp.table_rows || []).filter(r =>
+      r.kind === 'delay' && r.time_limit_low != null && r.time_limit_high != null && r.expected_time != null
+    );
+    if (delayWithTol.length) {
+      traces.push({
+        x: delayWithTol.map(r => r.expected_current),
+        y: delayWithTol.map(r => r.expected_time),
+        mode: 'markers',
+        name: 'Delay time tolerance',
+        marker: { size: 0.1, color: 'rgba(0,0,0,0)' },
+        error_y: {
+          type: 'data', symmetric: false,
+          array: delayWithTol.map(r => r.time_limit_high - r.expected_time),
+          arrayminus: delayWithTol.map(r => r.expected_time - r.time_limit_low),
+          color: 'rgba(245,158,11,0.4)', thickness: 3, width: 6,
+        },
+        showlegend: true,
+        hoverinfo: 'skip',
+      });
+    }
+  }
+
+  // Measured markers
+  const measured = resp.measured_markers || [];
+  if (measured.length) {
+    const pickupPassing = measured.filter(m => m.kind === 'pickup' && m.passed && m.measured_current != null);
+    const pickupFailing = measured.filter(m => m.kind === 'pickup' && !m.passed && m.measured_current != null);
+    const delayPassing = measured.filter(m => m.kind === 'delay' && m.passed && m.measured_current != null && m.measured_time != null);
+    const delayFailing = measured.filter(m => m.kind === 'delay' && !m.passed && m.measured_current != null && m.measured_time != null);
+
+    if (pickupPassing.length) {
+      traces.push({
+        x: pickupPassing.map(m => m.measured_current),
+        y: pickupPassing.map(() => 0.015),
+        mode: 'markers',
+        name: 'Measured pickups (pass)',
+        marker: { symbol: 'circle', size: 11, color: '#198754', line: { width: 2, color: '#fff' } },
+        hovertemplate: '%{text}<br>%{x:.0f} A<extra></extra>',
+        text: pickupPassing.map(m => `${m.element} ${m.deviation_pct != null ? '(' + m.deviation_pct.toFixed(1) + '%)' : ''}`),
+      });
+    }
+    if (pickupFailing.length) {
+      traces.push({
+        x: pickupFailing.map(m => m.measured_current),
+        y: pickupFailing.map(() => 0.015),
+        mode: 'markers',
+        name: 'Measured pickups (fail)',
+        marker: { symbol: 'x', size: 11, color: '#dc3545', line: { width: 2 } },
+        hovertemplate: '%{text}<br>%{x:.0f} A<extra></extra>',
+        text: pickupFailing.map(m => `${m.element} ${m.deviation_pct != null ? '(' + m.deviation_pct.toFixed(1) + '%)' : ''}`),
+      });
+    }
+    if (delayPassing.length) {
+      traces.push({
+        x: delayPassing.map(m => m.measured_current),
+        y: delayPassing.map(m => m.measured_time),
+        mode: 'markers',
+        name: 'Measured delays (pass)',
+        marker: { symbol: 'circle', size: 11, color: '#198754', line: { width: 2, color: '#fff' } },
+        hovertemplate: '%{text}<br>%{x:.0f} A<br>%{y:.3f} s<extra></extra>',
+        text: delayPassing.map(m => `${m.element} ${m.deviation_pct != null ? '(' + m.deviation_pct.toFixed(1) + '%)' : ''}`),
+      });
+    }
+    if (delayFailing.length) {
+      traces.push({
+        x: delayFailing.map(m => m.measured_current),
+        y: delayFailing.map(m => m.measured_time),
+        mode: 'markers',
+        name: 'Measured delays (fail)',
+        marker: { symbol: 'x', size: 11, color: '#dc3545', line: { width: 2 } },
+        hovertemplate: '%{text}<br>%{x:.0f} A<br>%{y:.3f} s<extra></extra>',
+        text: delayFailing.map(m => `${m.element} ${m.deviation_pct != null ? '(' + m.deviation_pct.toFixed(1) + '%)' : ''}`),
+      });
+    }
+  }
+
+  const layout = {
+    xaxis: { type: 'log', title: { text: 'Current (A)', font: { size: 13 } },
+             gridcolor: '#e9ecef', minor: { showgrid: true, gridcolor: '#f1f3f5' } },
+    yaxis: { type: 'log', title: { text: 'Time (s)', font: { size: 13 } },
+             gridcolor: '#e9ecef', minor: { showgrid: true, gridcolor: '#f1f3f5' } },
+    margin: { t: 30, r: 20, b: 50, l: 60 },
+    legend: { orientation: 'h', y: -0.18, x: 0.5, xanchor: 'center', font: { size: 11 } },
+    plot_bgcolor: '#fff',
+    paper_bgcolor: '#fff',
+    hovermode: 'closest',
+    shapes: plotShapes,
+  };
+
+  Plotly.newPlot('tcc-plot', traces, layout, { responsive: true, displayModeBar: true,
+    modeBarButtonsToRemove: ['lasso2d', 'select2d'] });
+}
+
+
+// ─── TMT Workflow ───
+
+function fillTextSelect(el, items, valueKey, labelBuilder, placeholder, selectedValue = null) {
+  const normalizedSelected = selectedValue != null && selectedValue !== '' ? String(selectedValue) : '';
+  const availableValues = new Set((items || []).map(item => String(item[valueKey])));
+  const resolvedValue = normalizedSelected && availableValues.has(normalizedSelected) ? normalizedSelected : '';
+  el.innerHTML = `<option value="">${placeholder}</option>`;
+  (items || []).forEach(item => {
+    const selected = String(item[valueKey]) === resolvedValue ? ' selected' : '';
+    el.innerHTML += `<option value="${item[valueKey]}"${selected}>${labelBuilder(item)}</option>`;
+  });
+  el.disabled = (items || []).length === 0;
+  return resolvedValue;
+}
+
+function fillSimpleSelect(el, values, placeholder, formatter = (v) => String(v), selectedValue = null) {
+  const normalizedSelected = selectedValue != null && selectedValue !== '' ? String(selectedValue) : '';
+  const availableValues = new Set((values || []).map(value => String(value)));
+  const resolvedValue = normalizedSelected && availableValues.has(normalizedSelected) ? normalizedSelected : '';
+  el.innerHTML = `<option value="">${placeholder}</option>`;
+  (values || []).forEach(value => {
+    const selected = String(value) === resolvedValue ? ' selected' : '';
+    el.innerHTML += `<option value="${value}"${selected}>${formatter(value)}</option>`;
+  });
+  el.disabled = (values || []).length === 0;
+  return resolvedValue;
+}
+
+function valuesMatch(a, b) {
+  return String(a ?? '') === String(b ?? '');
+}
+
+function clearTmtPlotState() {
+  $('tmt-plot-section').classList.add('hidden');
+  $('tmt-meta').innerHTML = '';
+  $('tmt-disclaimer').textContent = '';
+  $('tmt-warnings').innerHTML = '';
+  currentTmtPlotResponse = null;
+}
+
+function syncTmtPlotButton() {
+  $('btn-tmt-plot').disabled = !(currentTmtFrameId && $('tmt-trip-class').value);
+}
+
+function captureCurrentTmtSelections() {
+  return {
+    frameId: $('tmt-frame-select').value,
+    tripClass: $('tmt-trip-class').value,
+    ampRating: $('tmt-amp-rating').value,
+    settingValue: $('tmt-setting-value').value,
+    thermalAdjustment: $('tmt-thermal-adjustment').value,
+  };
+}
+
+function clearTmtResolvedState(options = {}) {
+  const { preserveFrameOptions = false } = options;
+  currentTmtFrameId = null;
+  currentTmtContext = null;
+  currentTmtSettings = null;
+  if (!preserveFrameOptions) {
+    setSelectPlaceholder($('tmt-frame-select'), 'Search for frames first');
+  } else {
+    $('tmt-frame-select').value = '';
+  }
+  setSelectPlaceholder($('tmt-trip-class'), 'Choose frame first');
+  setSelectPlaceholder($('tmt-amp-rating'), 'Choose frame first');
+  setSelectPlaceholder($('tmt-setting-value'), 'Choose frame first');
+  setSelectPlaceholder($('tmt-thermal-adjustment'), 'Choose frame first');
+  $('tmt-summary').classList.add('hidden');
+  $('tmt-summary').innerHTML = '';
+  $('tmt-settings-section').classList.add('hidden');
+  clearTmtPlotState();
+  syncTmtPlotButton();
+}
+
+function syncTmtApplicableRows(settings) {
+  setControlVisibility('tmt-row-amp-rating', (settings.amp_ratings || []).length > 0, ['tmt-amp-rating']);
+  setControlVisibility('tmt-row-setting-value', (settings.settings || []).length > 0, ['tmt-setting-value']);
+  setControlVisibility('tmt-row-thermal-adjustment', (settings.thermal_adjustments || []).length > 0, ['tmt-thermal-adjustment']);
+}
+
+async function searchTmtFrames() {
+  const previousSelections = captureCurrentTmtSelections();
+  const params = new URLSearchParams();
+  const mappings = [
+    ['tmt-breaker-class', 'breaker_class'],
+    ['tmt-manufacturer', 'manufacturer_name'],
+    ['tmt-breaker-name', 'breaker_name'],
+    ['tmt-style-name', 'breaker_style_name'],
+    ['tmt-frame-size', 'frame_size'],
+    ['tmt-amp-filter', 'amp_rating'],
+  ];
+  mappings.forEach(([id, key]) => {
+    const value = $(id).value.trim();
+    if (value) params.set(key, value);
+  });
+
+  const resp = await get(`/api/v1/neta/tmt/frames?${params.toString()}`);
+  fillTextSelect(
+    $('tmt-frame-select'),
+    resp.frames,
+    'frame_id',
+    (frame) => `${frame.manufacturer_name || '—'} · ${frame.breaker_name || '—'} · ${frame.breaker_style_name || '—'} · ${frame.frame_size || '—'}`,
+    resp.frames.length ? 'Choose a TMT frame...' : 'No TMT frames found',
+    previousSelections.frameId,
+  );
+  const resolvedFrameId = $('tmt-frame-select').value;
+  if (!resolvedFrameId) {
+    clearTmtResolvedState({ preserveFrameOptions: true });
+    return;
+  }
+
+  if (!valuesMatch(resolvedFrameId, currentTmtFrameId)) {
+    await loadTmtFrame(parseInt(resolvedFrameId, 10), { preferredSelections: previousSelections });
+    return;
+  }
+
+  syncTmtPlotButton();
+}
+
+async function loadTmtFrame(frameId, options = {}) {
+  const previousSelections = captureCurrentTmtSelections();
+  const sameFrame = valuesMatch(frameId, currentTmtFrameId);
+  const preferredSelections = options.preferredSelections || (sameFrame ? previousSelections : {});
+  const [context, settings] = await Promise.all([
+    get(`/api/v1/neta/tmt/context/${frameId}`),
+    get(`/api/v1/neta/tmt/settings/${frameId}`),
+  ]);
+  currentTmtFrameId = frameId;
+  currentTmtContext = context;
+  currentTmtSettings = settings;
+  const resolvedEquipment = context.resolved_equipment || null;
+
+  $('tmt-summary').classList.remove('hidden');
+  $('tmt-summary').innerHTML = renderFamilySummaryMarkup(resolvedEquipment, {
+    primaryLabel: context.manufacturer_name || '—',
+    breakerLabel: [context.breaker_class || '—', context.frame_size || '—'].join(' · '),
+    tripUnitLabel: [context.breaker_name || '—', context.breaker_style_name || '—'].join(' · '),
+    ratingLabel: context.frame_size || '—',
+    tags: `<span>Trip classes: ${(context.available_trip_classes || []).join(', ') || '—'}</span>`,
+  });
+
+  const resolvedTripClass = fillSimpleSelect(
+    $('tmt-trip-class'),
+    settings.available_trip_classes,
+    'Choose trip class...',
+    (value) => String(value),
+    preferredSelections.tripClass,
+  );
+  fillSimpleSelect(
+    $('tmt-amp-rating'),
+    settings.amp_ratings.map(a => a.rating),
+    'Choose amp rating...',
+    (value) => String(value),
+    preferredSelections.ampRating,
+  );
+  fillTextSelect(
+    $('tmt-setting-value'),
+    settings.settings,
+    'value',
+    (setting) => `${setting.label || setting.value} (${setting.value ?? '—'})`,
+    'Choose setting...',
+    preferredSelections.settingValue,
+  );
+  fillSimpleSelect(
+    $('tmt-thermal-adjustment'),
+    settings.thermal_adjustments,
+    'Choose thermal adjustment...',
+    (v) => `${v}`,
+    preferredSelections.thermalAdjustment,
+  );
+  syncTmtApplicableRows(settings);
+  $('tmt-settings-section').classList.remove('hidden');
+  syncTmtPlotButton();
+
+  if (!sameFrame || !valuesMatch(previousSelections.tripClass, resolvedTripClass)) {
+    clearTmtPlotState();
+  }
+}
+
+function renderSimpleFamilyPlot(containerId, title, curves, palette = ['#2563eb', '#dc2626', '#059669', '#7c3aed']) {
+  const traces = (curves || []).map((curve, index) => ({
+    x: (curve.points || []).map(point => point.amps),
+    y: (curve.points || []).map(point => point.seconds),
+    mode: 'lines',
+    name: curve.id || `${title} ${index + 1}`,
+    line: {
+      color: palette[index % palette.length],
+      dash: curve.line_style === 'dashed' ? 'dash' : 'solid',
+      width: 2.5,
+    },
+    hovertemplate: '%{x:.0f} A<br>%{y:.4f} s<extra></extra>',
+  }));
+
+  Plotly.newPlot(containerId, traces, {
+    xaxis: { type: 'log', title: { text: 'Current (A)' }, gridcolor: '#e9ecef' },
+    yaxis: { type: 'log', title: { text: 'Time (s)' }, gridcolor: '#e9ecef' },
+    margin: { t: 30, r: 20, b: 50, l: 60 },
+    legend: { orientation: 'h', y: -0.18, x: 0.5, xanchor: 'center', font: { size: 11 } },
+    plot_bgcolor: '#fff',
+    paper_bgcolor: '#fff',
+  }, { responsive: true, displayModeBar: true, modeBarButtonsToRemove: ['lasso2d', 'select2d'] });
+}
+
+function renderTmtPlot(resp) {
+  $('tmt-plot-section').classList.remove('hidden');
+  $('tmt-meta').innerHTML = `
+    <span><strong>${esc(resp.meta.manufacturer_name || '—')}</strong></span>
+    <span>${esc(resp.meta.breaker_name || '—')} &middot; ${esc(resp.meta.breaker_style_name || '—')}</span>
+    <span>Class: ${resp.meta.breaker_class || '—'}</span>
+    <span>Trip class: ${resp.meta.selected_trip_class}</span>
+    <span>Amp rating: ${resp.meta.selected_amp_rating ?? '—'}</span>
+  `;
+  $('tmt-disclaimer').textContent = resp.meta.plot_disclaimer || '';
+  $('tmt-warnings').innerHTML = resp.warnings?.length
+    ? `<div class="warnings"><strong>Warnings:</strong><ul>${resp.warnings.map(w => `<li>${esc(w)}</li>`).join('')}</ul></div>`
+    : '';
+  renderSimpleFamilyPlot('tmt-plot', 'TMT', resp.curves, ['#ea580c']);
+}
+
+
+// ─── EMT Workflow ───
+
+async function searchEmtFrames() {
+  const previousSelections = captureCurrentEmtSelections();
+  const params = new URLSearchParams();
+  [['emt-manufacturer-id', 'manufacturer_id'], ['emt-trip-char', 'trip_char'], ['emt-trip-plug', 'trip_plug'], ['emt-query', 'q']].forEach(([id, key]) => {
+    const value = $(id).value.trim();
+    if (value) params.set(key, value);
+  });
+
+  const resp = await get(`/api/v1/neta/emt/frames?${params.toString()}`);
+  fillTextSelect(
+    $('emt-frame-select'),
+    resp.frames,
+    'frame_id',
+    (frame) => `${frame.manufacturer_name || '—'} · ${frame.style_name || '—'} · ${frame.frame_desc || frame.frame_size || '—'}`,
+    resp.frames.length ? 'Choose an EMT frame...' : 'No EMT frames found',
+    previousSelections.frameId,
+  );
+  const resolvedFrameId = $('emt-frame-select').value;
+  if (!resolvedFrameId) {
+    clearEmtFrameState({ preserveFrameOptions: true });
+    return;
+  }
+
+  if (!valuesMatch(resolvedFrameId, currentEmtFrameId)) {
+    await loadEmtFrame(parseInt(resolvedFrameId, 10), { preferredSelections: previousSelections });
+    return;
+  }
+
+  syncEmtPlotButton();
+}
+
+function clearEmtPlotState() {
+  $('emt-plot-section').classList.add('hidden');
+  $('emt-meta').innerHTML = '';
+  $('emt-disclaimer').textContent = '';
+  $('emt-warnings').innerHTML = '';
+  currentEmtPlotResponse = null;
+}
+
+function syncEmtPlotButton() {
+  $('btn-emt-plot').disabled = !(currentEmtSectionId && $('emt-band-select').value);
+}
+
+function captureCurrentEmtSelections() {
+  return {
+    frameId: $('emt-frame-select').value,
+    sectionId: $('emt-section-select').value,
+    pickup: $('emt-pickup-select').value,
+    bandId: $('emt-band-select').value,
+    curveClass: $('emt-curve-class-select').value,
+  };
+}
+
+function clearEmtSectionState(options = {}) {
+  const { preserveSectionOptions = false } = options;
+  currentEmtSectionId = null;
+  currentEmtSettings = null;
+  if (!preserveSectionOptions) {
+    setSelectPlaceholder($('emt-section-select'), 'Choose frame first');
+  } else {
+    $('emt-section-select').value = '';
+  }
+  setSelectPlaceholder($('emt-pickup-select'), 'Choose section first');
+  setSelectPlaceholder($('emt-band-select'), 'Choose section first');
+  setSelectPlaceholder($('emt-curve-class-select'), 'All stored classes');
+  $('emt-settings-section').classList.add('hidden');
+  clearEmtPlotState();
+  syncEmtPlotButton();
+}
+
+function clearEmtFrameState(options = {}) {
+  const { preserveFrameOptions = false } = options;
+  currentEmtFrameId = null;
+  currentEmtContext = null;
+  if (!preserveFrameOptions) {
+    setSelectPlaceholder($('emt-frame-select'), 'Search for EMT frames first');
+  } else {
+    $('emt-frame-select').value = '';
+  }
+  $('emt-summary').classList.add('hidden');
+  $('emt-summary').innerHTML = '';
+  clearEmtSectionState();
+}
+
+function syncEmtApplicableRows(settings) {
+  setControlVisibility('emt-row-pickup', (settings.pickups || []).length > 0, ['emt-pickup-select']);
+  setControlVisibility('emt-row-band', (settings.bands || []).length > 0, ['emt-band-select']);
+}
+
+async function loadEmtFrame(frameId, options = {}) {
+  const sameFrame = valuesMatch(frameId, currentEmtFrameId);
+  const preferredSelections = options.preferredSelections || (sameFrame ? captureCurrentEmtSelections() : {});
+  const context = await get(`/api/v1/neta/emt/context/${frameId}`);
+  currentEmtFrameId = frameId;
+  currentEmtContext = context;
+  const resolvedEquipment = context.resolved_equipment || null;
+  $('emt-summary').classList.remove('hidden');
+  $('emt-summary').innerHTML = renderFamilySummaryMarkup(resolvedEquipment, {
+    primaryLabel: context.manufacturer_name || '—',
+    breakerLabel: [context.type_name || '—', context.style_name || '—'].join(' · '),
+    tripUnitLabel: context.tcc_number || 'N/A',
+    ratingLabel: context.frame_desc || context.frame_size || '—',
+    tags: `<span>Sections: ${(context.sections || []).length}</span><span>Amp ratings: ${(context.amp_ratings || []).join(', ') || '—'}</span>`,
+  });
+  fillTextSelect(
+    $('emt-section-select'),
+    context.sections,
+    'section_id',
+    (section) => `${section.name || 'Section'} · bands ${section.band_count} · pickups ${section.pickup_count}`,
+    'Choose section...',
+    preferredSelections.sectionId,
+  );
+
+  const resolvedSectionId = $('emt-section-select').value;
+  if (!resolvedSectionId) {
+    clearEmtSectionState({ preserveSectionOptions: true });
+    return;
+  }
+
+  if (!sameFrame || !valuesMatch(resolvedSectionId, currentEmtSectionId) || !currentEmtSettings) {
+    await loadEmtSection(parseInt(resolvedSectionId, 10), { preferredSelections });
+    return;
+  }
+
+  syncEmtPlotButton();
+}
+
+async function loadEmtSection(sectionId, options = {}) {
+  const sameSection = valuesMatch(sectionId, currentEmtSectionId);
+  const preferredSelections = options.preferredSelections || (sameSection ? captureCurrentEmtSelections() : {});
+  const previousBandId = $('emt-band-select').value;
+  const previousCurveClass = $('emt-curve-class-select').value;
+  const settings = await get(`/api/v1/neta/emt/settings/${sectionId}`);
+  currentEmtSectionId = sectionId;
+  currentEmtSettings = settings;
+  fillTextSelect(
+    $('emt-pickup-select'),
+    settings.pickups,
+    'setting',
+    (pickup) => pickup.description ? `${pickup.description} (${pickup.setting ?? '—'})` : `${pickup.setting ?? '—'}`,
+    'Optional pickup...',
+    preferredSelections.pickup,
+  );
+  const resolvedBandId = fillTextSelect(
+    $('emt-band-select'),
+    settings.bands,
+    'band_id',
+    (band) => `${band.band_name || 'Band'} · classes ${(band.curve_classes || []).join(', ') || '—'}`,
+    'Choose band...',
+    preferredSelections.bandId,
+  );
+  syncEmtApplicableRows(settings);
+  syncEmtCurveClasses(preferredSelections.curveClass);
+  $('emt-settings-section').classList.remove('hidden');
+  syncEmtPlotButton();
+
+  if (!sameSection || !valuesMatch(previousBandId, resolvedBandId) || !valuesMatch(previousCurveClass, $('emt-curve-class-select').value)) {
+    clearEmtPlotState();
+  }
+}
+
+function syncEmtCurveClasses(preferredCurveClass = null) {
+  const bandId = $('emt-band-select').value;
+  const band = (currentEmtSettings?.bands || []).find(item => String(item.band_id) === String(bandId));
+  if (!band) {
+    setControlVisibility('emt-row-curve-class', false, ['emt-curve-class-select']);
+    fillSimpleSelect($('emt-curve-class-select'), [], 'All stored classes');
+    syncEmtPlotButton();
+    return '';
+  }
+  const hasCurveClasses = (band.curve_classes || []).length > 0;
+  setControlVisibility('emt-row-curve-class', hasCurveClasses, ['emt-curve-class-select']);
+  const resolvedCurveClass = fillSimpleSelect(
+    $('emt-curve-class-select'),
+    band.curve_classes || [],
+    'All stored classes',
+    (value) => String(value),
+    preferredCurveClass != null ? preferredCurveClass : $('emt-curve-class-select').value,
+  );
+  syncEmtPlotButton();
+  return resolvedCurveClass;
+}
+
+function renderEmtPlot(resp) {
+  $('emt-plot-section').classList.remove('hidden');
+  $('emt-meta').innerHTML = `
+    <span><strong>${esc(resp.meta.manufacturer_name || '—')}</strong></span>
+    <span>${esc(resp.meta.type_name || '—')} &middot; ${esc(resp.meta.style_name || '—')}</span>
+    <span>Section: ${esc(resp.meta.section_name || '—')}</span>
+    <span>Band: ${esc(resp.meta.band_name || '—')}</span>
+    <span>Curve classes: ${(resp.meta.available_curve_classes || []).join(', ') || '—'}</span>
+  `;
+  $('emt-disclaimer').textContent = resp.meta.plot_disclaimer || '';
+  $('emt-warnings').innerHTML = resp.warnings?.length
+    ? `<div class="warnings"><strong>Warnings:</strong><ul>${resp.warnings.map(w => `<li>${esc(w)}</li>`).join('')}</ul></div>`
+    : '';
+  renderSimpleFamilyPlot('emt-plot', 'EMT', resp.curves, ['#0f766e', '#14b8a6']);
+}
+
+$('btn-tmt-search').addEventListener('click', async () => {
+  try {
+    await searchTmtFrames();
+  } catch (e) {
+    alert('TMT frame search failed: ' + e.message);
+  }
+});
+
+$('tmt-frame-select').addEventListener('change', async () => {
+  if (!$('tmt-frame-select').value) {
+    clearTmtResolvedState({ preserveFrameOptions: true });
+    return;
+  }
+  try {
+    await loadTmtFrame(parseInt($('tmt-frame-select').value, 10));
+  } catch (e) {
+    alert('TMT frame load failed: ' + e.message);
+  }
+});
+
+['tmt-trip-class', 'tmt-amp-rating', 'tmt-setting-value', 'tmt-thermal-adjustment'].forEach((id) => {
+  $(id).addEventListener('change', () => {
+    clearTmtPlotState();
+    syncTmtPlotButton();
+  });
+});
+
+$('btn-tmt-plot').addEventListener('click', async () => {
+  if (!currentTmtFrameId || !$('tmt-trip-class').value) {
+    alert('Choose a TMT frame and trip class first.');
+    return;
+  }
+  try {
+    const resp = await post('/api/v1/neta/tmt/plot-tcc', {
+      frame_id: currentTmtFrameId,
+      trip_class: parseInt($('tmt-trip-class').value, 10),
+      amp_rating: $('tmt-amp-rating').value ? parseFloat($('tmt-amp-rating').value) : null,
+      setting_value: $('tmt-setting-value').value ? parseFloat($('tmt-setting-value').value) : null,
+      thermal_adjustment: $('tmt-thermal-adjustment').value ? parseFloat($('tmt-thermal-adjustment').value) : null,
+      include_raw_points: true,
+    });
+    currentTmtPlotResponse = resp;
+    renderTmtPlot(resp);
+  } catch (e) {
+    alert('TMT plot failed: ' + e.message);
+  }
+});
+
+$('btn-emt-search').addEventListener('click', async () => {
+  try {
+    await searchEmtFrames();
+  } catch (e) {
+    alert('EMT frame search failed: ' + e.message);
+  }
+});
+
+$('emt-frame-select').addEventListener('change', async () => {
+  if (!$('emt-frame-select').value) {
+    clearEmtFrameState({ preserveFrameOptions: true });
+    return;
+  }
+  try {
+    await loadEmtFrame(parseInt($('emt-frame-select').value, 10));
+  } catch (e) {
+    alert('EMT frame load failed: ' + e.message);
+  }
+});
+
+$('emt-section-select').addEventListener('change', async () => {
+  if (!$('emt-section-select').value) {
+    clearEmtSectionState({ preserveSectionOptions: true });
+    return;
+  }
+  try {
+    await loadEmtSection(parseInt($('emt-section-select').value, 10));
+  } catch (e) {
+    alert('EMT section load failed: ' + e.message);
+  }
+});
+
+$('emt-band-select').addEventListener('change', () => {
+  syncEmtCurveClasses();
+  clearEmtPlotState();
+  syncEmtPlotButton();
+});
+
+$('emt-curve-class-select').addEventListener('change', () => {
+  clearEmtPlotState();
+  syncEmtPlotButton();
+});
+
+$('btn-emt-plot').addEventListener('click', async () => {
+  if (!currentEmtSectionId || !$('emt-band-select').value) {
+    alert('Choose an EMT section and band first.');
+    return;
+  }
+  try {
+    const payload = {
+      section_id: currentEmtSectionId,
+      band_id: parseInt($('emt-band-select').value, 10),
+    };
+    if ($('emt-curve-class-select').value) {
+      payload.curve_class = parseInt($('emt-curve-class-select').value, 10);
+    }
+    const resp = await post('/api/v1/neta/emt/plot-tcc', payload);
+    currentEmtPlotResponse = resp;
+    renderEmtPlot(resp);
+  } catch (e) {
+    alert('EMT plot failed: ' + e.message);
+  }
+});
+
+
+// ─── Utilities ───
+
+function fmt(v) { return v != null ? v.toLocaleString(undefined, { maximumFractionDigits: 1 }) : '—'; }
+function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+
+// ─── Demo Presets ───
+
+const DEMO_PRESETS = [
+  {
+    name: 'GE MVT RMS-9 ICCB 800A — Normal Mode',
+    description: 'PLUGTAP LTPU/INST, cascade STPU, SENSORFRAME GFPU',
+    cascade: {
+      manufacturer_id: 9, manufacturer_name: 'GE',
+      trip_type_id: 75, trip_type_name: 'MVT RMS-9',
+      trip_style_id: 3, trip_style_name: 'ICCB',
+      sensor_id: 25, sensor_desc: '800',
+    },
+    settings: {
+      plug_rating: 800,
+      ltpu_setting: 0.8,
+      ltd_setting: 6,     // band "2" open_time=6s
+      stpu_setting: 4.0,
+      std_setting: 0.21,
+      inst_setting: 10.0,
+      gfpu_setting: 0.4,
+      gfd_setting: 0.21,
+      maint_mode: false,
+    },
+    measurements: {
+      ltpu: 650,    // within 640–768 tolerance
+      stpu: 3100,   // within 2880–3520 tolerance
+      inst: null,
+      gfpu: 310,    // within 288–352 tolerance
+    },
+  },
+  {
+    name: 'GE MVT RMS-9 ICCB 800A — MAINT Mode',
+    description: 'Same sensor with Maintenance Mode enabled; INST/GFPU use maint tolerances',
+    cascade: {
+      manufacturer_id: 9, manufacturer_name: 'GE',
+      trip_type_id: 75, trip_type_name: 'MVT RMS-9',
+      trip_style_id: 3, trip_style_name: 'ICCB',
+      sensor_id: 25, sensor_desc: '800',
+    },
+    settings: {
+      plug_rating: 800,
+      ltpu_setting: 0.8,
+      ltd_setting: 6,     // band "2" open_time=6s
+      stpu_setting: 4.0,
+      std_setting: 0.21,
+      inst_setting: 10.0,
+      gfpu_setting: 0.4,
+      gfd_setting: 0.21,
+      maint_mode: true,
+    },
+    measurements: {
+      ltpu: 650,
+      stpu: 3100,
+      inst: 7800,   // INST measured — exercises maint tolerance path
+      gfpu: 310,
+    },
+  },
+];
+
+// Populate preset dropdown
+(function initPresets() {
+  const sel = $('preset-select');
+  DEMO_PRESETS.forEach((p, i) => {
+    sel.innerHTML += `<option value="${i}">${p.name}</option>`;
+  });
+  sel.addEventListener('change', () => {
+    $('btn-load-preset').disabled = !sel.value;
+  });
+})();
+
+$('btn-load-preset').addEventListener('click', async () => {
+  const idx = $('preset-select').value;
+  if (idx === '') return;
+  const preset = DEMO_PRESETS[parseInt(idx)];
+  if (currentFamily !== 'etu') {
+    setFamily('etu');
+  }
+  lastPresetName = preset.name;
+  const btn = $('btn-load-preset');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Loading...';
+
+  try {
+    // Reset state
+    $('calc-section').classList.add('hidden');
+    $('eval-section').classList.add('hidden');
+    $('tcc-section').classList.add('hidden');
+    $('btn-export').disabled = true;
+    lastEvalResponse = null;
+    lastPlotTccResponse = null;
+
+    await applyEtuCascadeSelection(preset.cascade);
+
+    // Apply preset settings to form
+    const s = preset.settings;
+    applySelectValueIfApplicable('set-plug', s.plug_rating);
+    applySelectValueIfApplicable('set-ltpu', s.ltpu_setting);
+    applySelectValueIfApplicable('set-ltd', s.ltd_setting);
+    applySelectValueIfApplicable('set-stpu', s.stpu_setting);
+    applyInputValueIfApplicable('set-std', s.std_setting);
+    applySelectValueIfApplicable('set-inst', s.inst_setting);
+    applySelectValueIfApplicable('set-gfpu', s.gfpu_setting);
+    applyInputValueIfApplicable('set-gfd', s.gfd_setting);
+    $('chk-maint').checked = isControlApplicable('chk-maint') ? Boolean(s.maint_mode) : false;
+    updateMaintBanner();
+
+    // Apply preset measurements
+    const m = preset.measurements;
+    applyInputValueIfApplicable('meas-ltpu', m.ltpu);
+    applyInputValueIfApplicable('meas-stpu', m.stpu);
+    applyInputValueIfApplicable('meas-inst', m.inst);
+    applyInputValueIfApplicable('meas-gfpu', m.gfpu);
+    syncSavePlanName(true);
+
+  } catch (e) {
+    alert('Failed to load preset: ' + e.message);
+    console.error(e);
+  } finally {
+    btn.disabled = false; btn.textContent = 'Load Demo Scenario';
+  }
+});
+
+function setSelectValue(el, val) {
+  el.style.outline = '';
+  el.title = '';
+  // Try to match value in existing options
+  for (let i = 0; i < el.options.length; i++) {
+    const optionValue = el.options[i].value;
+    if (String(optionValue) === String(val) || parseFloat(optionValue) === val) {
+      el.selectedIndex = i;
+      return true;
+    }
+  }
+  // No match — flag it visibly so a stale preset is obvious
+  const label = el.id || el.name || 'unknown';
+  const msg = `Preset value ${val} not found in ${label} options`;
+  console.warn(msg);
+  el.style.outline = '2px solid orange';
+  el.title = msg;
+  return false;
+}
+
+function applySelectValueIfApplicable(controlId, value) {
+  if (value == null) return null;
+  if (!isControlApplicable(controlId)) return false;
+  return setSelectValue($(controlId), value);
+}
+
+function applyInputValueIfApplicable(controlId, value) {
+  if (value == null) return null;
+  if (!isControlApplicable(controlId)) return false;
+  const control = $(controlId);
+  if (control.tagName === 'SELECT') {
+    return setSelectValue(control, value);
+  }
+  control.value = value;
+  return true;
+}
+
+
+// ─── 5. Export Report ───
+
+$('btn-export').addEventListener('click', () => {
+  if (!lastPlotTccResponse) {
+    alert('Run the full workflow first (Calculate → View Results on TCC).');
+    return;
+  }
+
+  const payload = buildPayload();
+  const plugError = validatePlugAgainstSensor(payload);
+  if (plugError) {
+    status.innerHTML = `<span class="save-error">${esc(plugError)}</span>`;
+    btn.disabled = false;
+    return;
+  }
+  const measurements = buildMeasurements();
+  const meta = lastPlotTccResponse.meta || {};
+
+  const report = {
+    report_version: '1.0',
+    generated_at: new Date().toISOString(),
+    scenario: lastPresetName || 'Manual entry',
+    resolved_equipment: meta.resolved_equipment || getCurrentEtuResolvedEquipment(),
+
+    breaker_selection: {
+      breaker_context_label: meta.resolved_equipment?.breaker_context?.label || meta.breaker_context_label || null,
+      breaker_context_source: meta.resolved_equipment?.breaker_context?.source || meta.breaker_context_source || null,
+      manufacturer: meta.resolved_equipment?.breaker_context?.manufacturer_name || meta.manufacturer || null,
+      sensor_id: meta.sensor_id,
+      sensor_desc: meta.sensor_desc || null,
+      plug_rating: meta.plug_rating || null,
+    },
+
+    trip_unit_selection: {
+      manufacturer: meta.resolved_equipment?.trip_unit?.manufacturer_name || meta.trip_unit_manufacturer || meta.manufacturer || null,
+      trip_type: meta.resolved_equipment?.trip_unit?.trip_type_name || meta.trip_unit_type || meta.trip_type || null,
+      trip_style: meta.resolved_equipment?.trip_unit?.trip_style_name || meta.trip_unit_style || meta.trip_style || null,
+    },
+
+    settings: {
+      plug_rating: payload.plug_rating,
+      ltpu_setting: payload.ltpu_setting,
+      ltd_setting: payload.ltd_setting,
+      stpu_setting: payload.stpu_setting,
+      std_setting: payload.std_setting,
+      inst_setting: payload.inst_setting,
+      gfpu_setting: payload.gfpu_setting,
+      gfd_setting: payload.gfd_setting,
+      maint_mode: payload.maint_mode,
+    },
+
+    maint_state: {
+      maint_mode: meta.maint_mode,
+      maint_capable: meta.maint_capable,
+      maint_support_level: meta.maint_support_level,
+      plot_disclaimer: meta.plot_disclaimer || null,
+    },
+
+    plan_reference: currentPlanId ? {
+      plan_id: currentPlanId,
+      plan_source: currentPlanSource,
+    } : null,
+
+    calculate: lastCalcResponse ? {
+      sensor_desc: lastCalcResponse.sensor_desc,
+      maint_mode: lastCalcResponse.maint_mode,
+      element_count: (lastCalcResponse.elements || []).length,
+      elements: (lastCalcResponse.elements || []).map(e => ({
+        element: e.element,
+        test_current: e.test_current,
+        limit_low: e.limit_low,
+        limit_high: e.limit_high,
+        multiplier: e.multiplier,
+        calc_method: e.calc_method,
+      })),
+      warnings: lastCalcResponse.warnings || [],
+    } : null,
+
+    evaluate: lastEvalResponse ? {
+      overall_pass: lastEvalResponse.overall_pass,
+      tested_count: lastEvalResponse.tested_count,
+      passed_count: lastEvalResponse.passed_count,
+      failed_count: lastEvalResponse.failed_count,
+      maint_mode: lastEvalResponse.maint_mode,
+      elements: (lastEvalResponse.elements || []).map(e => ({
+        element: e.element,
+        test_current: e.test_current,
+        measured_current: e.measured_current,
+        limit_low: e.limit_low,
+        limit_high: e.limit_high,
+        passed: e.passed,
+        deviation_pct: e.deviation_pct,
+      })),
+      warnings: lastEvalResponse.warnings || [],
+    } : null,
+
+    plot_tcc: {
+      overall_pass: meta.overall_pass,
+      curve_count: (lastPlotTccResponse.curves || []).length,
+      expected_marker_count: (lastPlotTccResponse.expected_markers || []).length,
+      measured_marker_count: (lastPlotTccResponse.measured_markers || []).length,
+      table_rows: (lastPlotTccResponse.table_rows || []).map(r => ({
+        element: r.element,
+        kind: r.kind,
+        test_multiple: r.test_multiple,
+        expected_current: r.expected_current,
+        limit_low: r.limit_low,
+        limit_high: r.limit_high,
+        expected_time: r.expected_time,
+        time_limit_low: r.time_limit_low,
+        time_limit_high: r.time_limit_high,
+        measured_current: r.measured_current,
+        measured_time: r.measured_time,
+        passed: r.passed,
+        deviation_pct: r.deviation_pct,
+      })),
+      warnings: lastPlotTccResponse.warnings || [],
+      disclaimer: meta.plot_disclaimer || null,
+    },
+
+    measurements_provided: measurements ? measurements.map(m => ({
+      element: m.element,
+      measured_current: m.measured_current,
+      measured_time: m.measured_time,
+    })) : [],
+  };
+
+  // Trigger download
+  const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+  const maint = report.maint_state.maint_mode ? '_MAINT' : '';
+  a.href = url;
+  a.download = `neta-tcc-report_${ts}${maint}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+});
+
+
+function updateMaintBanner() {
+  const banner = $('maint-banner');
+  if (!isControlApplicable('chk-maint')) {
+    banner.classList.remove('visible');
+    return;
+  }
+  if ($('chk-maint').checked) {
+    banner.classList.add('visible');
+  } else {
+    banner.classList.remove('visible');
+  }
+}
+$('chk-maint').addEventListener('change', updateMaintBanner);
+
+
+// ─── 6. Plan Persistence ───
+
+let currentPlanId = null;
+let currentPlanSource = null; // 'saved', 'preset', null
+
+function setActivePlan(id, name, source) {
+  currentPlanId = id;
+  currentPlanSource = source;
+  const bar = $('active-plan-bar');
+  const tag = $('active-plan-tag');
+  const src = $('active-plan-source');
+
+  if (name) {
+    tag.textContent = name;
+    src.textContent = source === 'saved' ? `Saved plan ${String(id).slice(0, 8)}` : 'Built-in preset';
+    bar.classList.remove('hidden');
+  } else {
+    bar.classList.add('hidden');
+  }
+}
+
+function setSavedPlanStatus(kind = '', message = '') {
+  const status = $('saved-plan-status');
+  if (!status) return;
+  if (!message) {
+    status.innerHTML = '';
+    return;
+  }
+  const klass = kind === 'success' ? 'save-success' : (kind === 'warning' ? 'save-warning' : 'save-error');
+  status.innerHTML = `<span class="${klass}">${esc(message)}</span>`;
+}
+
+function getPlanCascadeState(plan) {
+  const cascade = plan?.cascade_state || {};
+  return {
+    family: cascade.family || plan?.family || 'etu',
+    manufacturer_id: cascade.manufacturer_id ?? plan?.manufacturer_id ?? null,
+    trip_type_id: cascade.trip_type_id ?? plan?.trip_type_id ?? null,
+    trip_style_id: cascade.trip_style_id ?? plan?.trip_style_id ?? null,
+    sensor_id: cascade.sensor_id ?? plan?.sensor_id ?? null,
+    resolved_id: cascade.resolved_id || plan?.resolved_equipment?.resolved_id || (plan?.sensor_id ? `sensor:${plan.sensor_id}` : null),
+  };
+}
+
+function describeRestoredEtuCascadeLevel() {
+  const selection = currentCascadeSelection();
+  if (selection.sensor_id) return 'sensor';
+  if (selection.trip_style_id) return 'trip style';
+  if (selection.trip_type_id) return 'trip type';
+  if (selection.manufacturer_id) return 'manufacturer';
+  return 'none';
+}
+
+function recordRestoreFieldResult(skippedFields, label, result) {
+  if (result === false) {
+    skippedFields.push(label);
+  }
+}
+
+// ── Save Plan ──
+
+$('btn-save-plan').addEventListener('click', async () => {
+  if (currentFamily !== 'etu' || !currentSensorId) return;
+
+  const defaultName = defaultPlanName();
+  const planNameInput = $('save-plan-name');
+  const name = (planNameInput?.value || '').trim() || defaultName;
+  if (planNameInput && !planNameInput.value.trim()) {
+    planNameInput.value = name;
+  }
+
+  const btn = $('btn-save-plan');
+  const status = $('save-plan-status');
+  btn.disabled = true;
+  status.innerHTML = '<span style="color:var(--muted);">Saving...</span>';
+
+  const payload = buildPayload();
+  const measurements = buildMeasurements();
+  const measObj = {};
+  const identity = getCurrentEtuIdentity();
+  if (measurements) {
+    measurements.forEach(m => { measObj[m.element.toLowerCase()] = m.measured_current ?? m.measured_time ?? null; });
+  }
+
+  // Gather display metadata from cascade dropdowns
+  const mfrText = selMfr.options[selMfr.selectedIndex]?.text || '';
+  const typeText = selType.options[selType.selectedIndex]?.text || '';
+  const styleText = selStyle.options[selStyle.selectedIndex]?.text || '';
+  const sensorText = currentCascadeSensor?.sensor_desc || selSensor.options[selSensor.selectedIndex]?.text || '';
+
+  try {
+    const resp = await post('/api/v1/neta/plans', {
+      family: 'etu',
+      name: name.trim(),
+      sensor_id: currentSensorId,
+      manufacturer_id: selMfr.value ? parseInt(selMfr.value) : null,
+      manufacturer_name: mfrText || null,
+      trip_type_id: selType.value ? parseInt(selType.value) : null,
+      trip_type_name: typeText || null,
+      trip_style_id: selStyle.value ? parseInt(selStyle.value) : null,
+      trip_style_name: styleText || null,
+      breaker_context_label: identity.breakerContextLabel || null,
+      breaker_context_source: identity.breakerContextSource || null,
+      sensor_desc: sensorText || null,
+      resolved_equipment: getCurrentEtuResolvedEquipment(),
+      settings: {
+        plug_rating: payload.plug_rating || 0,
+        ltpu_setting: payload.ltpu_setting || null,
+        ltd_setting: payload.ltd_setting || null,
+        stpu_setting: payload.stpu_setting || null,
+        std_setting: payload.std_setting || null,
+        inst_setting: payload.inst_setting || null,
+        gfpu_setting: payload.gfpu_setting || null,
+        gfd_setting: payload.gfd_setting || null,
+        maint_mode: payload.maint_mode || false,
+      },
+      measurements: Object.keys(measObj).length > 0 ? measObj : null,
+    });
+
+    setActivePlan(resp.id, resp.name, 'saved');
+    if (planNameInput) {
+      planNameInput.value = resp.name;
+    }
+    status.innerHTML = `<span class="save-success">Saved as plan #${resp.id}</span>`;
+    refreshSavedPlans();
+  } catch (e) {
+    status.innerHTML = `<span class="save-error">Save failed: ${e.message}</span>`;
+    console.error('Plan save failed:', e);
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+// ── List / Load Plans ──
+
+async function refreshSavedPlans() {
+  const panel = $('saved-plans-panel');
+  const listEl = $('saved-plans-list');
+  const emptyEl = $('saved-plans-empty');
+
+  if (currentFamily !== 'etu' || catalogMode !== 'live') {
+    panel.classList.add('hidden');
+    setSavedPlanStatus();
+    return;
+  }
+
+  if (authIsEnforcedByUi() && !currentSession?.user) {
+    panel.classList.add('hidden');
+    setSavedPlanStatus();
+    return;
+  }
+
+  try {
+    const plans = await get('/api/v1/neta/plans');
+    panel.classList.remove('hidden');
+
+    if (plans.length === 0) {
+      listEl.innerHTML = '';
+      emptyEl.classList.remove('hidden');
+      return;
+    }
+
+    emptyEl.classList.add('hidden');
+    listEl.innerHTML = plans.map(p => {
+      const maintBadge = p.maint_mode ? '<span class="tag tag-maint" style="margin-left:6px;">MAINT</span>' : '';
+      const ts = new Date(p.created_at).toLocaleDateString();
+      const breakerContext = p.breaker_context_label ? ' · ' + esc(p.breaker_context_label) : '';
+      return `<div class="saved-plan-item" data-plan-id="${p.id}">
+        <div>
+          <span class="plan-name">${esc(p.name)}</span>${maintBadge}
+          <div class="plan-meta">Sensor ${p.sensor_id}${p.sensor_desc ? ' · ' + esc(p.sensor_desc) : ''}${breakerContext} · ${ts}</div>
+        </div>
+        <button class="btn btn-sm btn-primary" onclick="loadSavedPlan('${p.id}')">Load</button>
+      </div>`;
+    }).join('');
+  } catch (e) {
+    panel.classList.add('hidden');
+    console.warn('Failed to load saved plans:', e);
+  }
+}
+
+async function loadSavedPlan(planId) {
+  try {
+    setSavedPlanStatus();
+    const plan = await get(`/api/v1/neta/plans/${planId}`);
+    if ((plan.family || 'etu') !== 'etu') {
+      setSavedPlanStatus('error', `Saved plan family ${plan.family} is not supported by the current ETU-only persistence flow.`);
+      return;
+    }
+    if (currentFamily !== 'etu') {
+      setFamily('etu');
+    }
+    const cascadeState = getPlanCascadeState(plan);
+
+    // Reset UI state
+    $('calc-section').classList.add('hidden');
+    $('eval-section').classList.add('hidden');
+    $('tcc-section').classList.add('hidden');
+    $('btn-export').disabled = true;
+    $('btn-save-result').disabled = true;
+    lastCalcResponse = null;
+    lastEvalResponse = null;
+
+    await applyEtuCascadeSelection({
+      manufacturer_id: cascadeState.manufacturer_id,
+      trip_type_id: cascadeState.trip_type_id,
+      trip_style_id: cascadeState.trip_style_id,
+      sensor_id: cascadeState.sensor_id,
+    }, { preserveActivePlan: true });
+
+    const currentResolvedId = currentSensorContext?.resolved_equipment?.resolved_id
+      || getCurrentEtuResolvedEquipment()?.resolved_id
+      || null;
+    const fullyRevalidated = valuesMatch(currentSensorId, cascadeState.sensor_id)
+      && (!cascadeState.resolved_id || valuesMatch(currentResolvedId, cascadeState.resolved_id));
+
+    if (!fullyRevalidated || !currentSettings) {
+      const restoredLevel = describeRestoredEtuCascadeLevel();
+      setActivePlan(null, null, null);
+      $('save-plan-name').value = plan.name || defaultPlanName();
+      if (restoredLevel === 'none') {
+        setSavedPlanStatus(
+          'warning',
+          `Saved plan "${plan.name}" could not be revalidated against the live ETU catalog. The saved cascade path is no longer available.`,
+        );
+      } else {
+        setSavedPlanStatus(
+          'warning',
+          `Saved plan "${plan.name}" could not be fully revalidated against the live ETU catalog. The UI restored the path through ${restoredLevel}, but the saved sensor is no longer available.`,
+        );
+      }
+      return;
+    }
+
+    // Apply saved settings
+    const s = plan.settings;
+    const skippedFields = [];
+    recordRestoreFieldResult(skippedFields, 'Plug rating', applySelectValueIfApplicable('set-plug', s.plug_rating));
+    recordRestoreFieldResult(skippedFields, 'LTPU setting', applySelectValueIfApplicable('set-ltpu', s.ltpu_setting));
+    recordRestoreFieldResult(skippedFields, 'LTD setting', applySelectValueIfApplicable('set-ltd', s.ltd_setting));
+    recordRestoreFieldResult(skippedFields, 'STPU setting', applySelectValueIfApplicable('set-stpu', s.stpu_setting));
+    recordRestoreFieldResult(skippedFields, 'STD setting', applyInputValueIfApplicable('set-std', s.std_setting));
+    recordRestoreFieldResult(skippedFields, 'INST setting', applySelectValueIfApplicable('set-inst', s.inst_setting));
+    recordRestoreFieldResult(skippedFields, 'GFPU setting', applySelectValueIfApplicable('set-gfpu', s.gfpu_setting));
+    recordRestoreFieldResult(skippedFields, 'GFD setting', applyInputValueIfApplicable('set-gfd', s.gfd_setting));
+    if (isControlApplicable('chk-maint')) {
+      $('chk-maint').checked = Boolean(s.maint_mode);
+    } else if (s.maint_mode) {
+      skippedFields.push('Maintenance mode');
+    }
+    updateMaintBanner();
+
+    // Apply saved measurements
+    if (plan.measurements) {
+      recordRestoreFieldResult(skippedFields, 'LTPU measured value', applyInputValueIfApplicable('meas-ltpu', plan.measurements.ltpu));
+      recordRestoreFieldResult(skippedFields, 'LTD measured value', applyInputValueIfApplicable('meas-ltd', plan.measurements.ltd));
+      recordRestoreFieldResult(skippedFields, 'STPU measured value', applyInputValueIfApplicable('meas-stpu', plan.measurements.stpu));
+      recordRestoreFieldResult(skippedFields, 'STD measured value', applyInputValueIfApplicable('meas-std', plan.measurements.std));
+      recordRestoreFieldResult(skippedFields, 'INST measured value', applyInputValueIfApplicable('meas-inst', plan.measurements.inst));
+      recordRestoreFieldResult(skippedFields, 'GFPU measured value', applyInputValueIfApplicable('meas-gfpu', plan.measurements.gfpu));
+      recordRestoreFieldResult(skippedFields, 'GFD measured value', applyInputValueIfApplicable('meas-gfd', plan.measurements.gfd));
+    }
+
+    setActivePlan(plan.id, plan.name, 'saved');
+    $('save-plan-name').value = plan.name || defaultPlanName();
+    if (skippedFields.length > 0) {
+      setSavedPlanStatus(
+        'warning',
+        `Saved plan "${plan.name}" revalidated through the live ETU cascade, but some saved values are no longer applicable and were skipped: ${skippedFields.join(', ')}.`,
+      );
+    } else {
+      setSavedPlanStatus('success', `Saved plan "${plan.name}" revalidated through the live ETU cascade.`);
+    }
+
+  } catch (e) {
+    setActivePlan(null, null, null);
+    setSavedPlanStatus('error', `Plan load failed: ${e.message}`);
+    console.error('Plan load failed:', e);
+  }
+}
+
+$('btn-refresh-plans').addEventListener('click', refreshSavedPlans);
+
+// ── Save Result ──
+
+$('btn-save-result').addEventListener('click', async () => {
+  if (!currentPlanId || !lastEvalResponse) {
+    alert('Save a plan first, then run the workflow to save results.');
+    return;
+  }
+
+  const btn = $('btn-save-result');
+  const status = $('save-result-status');
+  btn.disabled = true;
+  status.innerHTML = '<span style="color:var(--muted);">Saving result...</span>';
+
+  try {
+    const evalResp = lastEvalResponse;
+    const resp = await post(`/api/v1/neta/plans/${currentPlanId}/results`, {
+      overall_pass: evalResp.overall_pass,
+      tested_count: evalResp.tested_count || 0,
+      passed_count: evalResp.passed_count || 0,
+      failed_count: evalResp.failed_count || 0,
+      maint_mode: evalResp.maint_mode || false,
+      elements: (evalResp.elements || []).map(e => ({
+        element: e.element,
+        test_current: e.test_current,
+        measured_current: e.measured_current,
+        limit_low: e.limit_low,
+        limit_high: e.limit_high,
+        passed: e.passed,
+        deviation_pct: e.deviation_pct,
+      })),
+      warnings: evalResp.warnings || [],
+    });
+
+    const passLabel = resp.overall_pass ? 'PASS' : 'FAIL';
+    status.innerHTML = `<span class="save-success">Result #${resp.id} saved (${passLabel})</span>`;
+  } catch (e) {
+    status.innerHTML = `<span class="save-error">Result save failed: ${e.message}</span>`;
+    console.error('Result save failed:', e);
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+
+// ─── Init ───
+(async function init() {
+  await initAuth();
+  await loadManufacturers();
+  if (catalogMode === 'live' && (!authIsEnforcedByUi() || currentSession?.user)) {
+    refreshSavedPlans();
+  }
+})();
+</script>
+</body>
+</html>
