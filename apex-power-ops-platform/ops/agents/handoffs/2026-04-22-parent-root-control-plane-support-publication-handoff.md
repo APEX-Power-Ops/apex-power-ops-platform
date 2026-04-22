@@ -1,13 +1,13 @@
 # Parent-Root Control-Plane Support Publication Handoff
 ## Date: 2026-04-22
 ## Updated by: GitHub Copilot (GPT-5.4)
-## Scope: Active next-step packet for bounded `apps/control-plane-api` support-surface introduction under `C:/APEX Platform/apex-power-ops-platform`
+## Scope: Historical record for the published bounded `apps/control-plane-api` support-surface introduction under `C:/APEX Platform/apex-power-ops-platform`
 
 ## 1. Summary
 
 The bootstrap, Class A scaffold, package source, operations-web runtime, mutation-seam runtime, and control-plane runtime-core tranches are already published on parent-root `clean-main`.
 
-The next natural publication step should still avoid broad subtree cutover. After the control-plane core landed, the remaining untracked residue in `apps/control-plane-api` split into a 58-file support packet and a 66-file residual test backlog. The smaller follow-on is the support packet:
+The next natural publication step after those tranches still avoided broad subtree cutover. After the control-plane core landed, the remaining untracked residue in `apps/control-plane-api` split into a 58-file support packet and a 66-file residual test backlog. The smaller follow-on was the support packet:
 
 1. `_invariant_probe_019g.py`
 2. `api/`
@@ -18,7 +18,13 @@ The next natural publication step should still avoid broad subtree cutover. Afte
 7. `supabase/`
 8. `utils/`
 
-This packet introduces the remaining control-plane operational and migration surfaces without widening into the still-separate broader test backlog.
+This packet introduced the remaining control-plane operational and migration surfaces without widening into the still-separate broader test backlog.
+
+Publication outcome:
+
+1. committed on parent-root `clean-main` as `1215d1b`
+2. pushed to `origin/clean-main` on 2026-04-22
+3. closed as the published control-plane support follow-on to the control-plane runtime-core tranche
 
 ## 2. Why This Packet Is Next
 
@@ -40,14 +46,14 @@ Measured from the parent git root at `C:/APEX Platform` on 2026-04-22 after the 
 
 ## 3. Packet Intent
 
-Use this packet to introduce the remaining support surfaces for the control-plane lane after the runtime core is already tracked:
+This packet introduced the remaining support surfaces for the control-plane lane after the runtime core was already tracked:
 
 1. migration SQL and helper scripts
 2. Supabase migration lane artifacts
 3. operational helper scripts and validation docs
 4. lane-local support modules not needed for the first runtime-core publication
 
-Do not treat this packet as authorization to publish the remaining control-plane test backlog in the same review unit.
+Do not treat this historical packet as authorization to publish the remaining control-plane test backlog in the same review unit.
 
 ## 4. Exact Packet Contents
 
@@ -76,9 +82,9 @@ This packet is intentionally narrow:
 3. it avoids reopening already-published runtime-core files
 4. it avoids widening into unrelated repo surfaces outside `apps/control-plane-api`
 
-## 6. Operator Execution Path
+## 6. Historical Execution Path
 
-Preferred task path from `C:/APEX Platform/apex-power-ops-platform`:
+Preferred task path from `C:/APEX Platform/apex-power-ops-platform` when this packet was executed:
 
 1. run `Preview parent-root control-plane support packet`
 2. run `Stage parent-root control-plane support packet` only when the preview is correct
@@ -117,4 +123,4 @@ If this packet lands cleanly, the next logical tranches are:
 1. remaining control-plane test backlog packet
 2. selective `docs/` and `ops/` authority packets needed to operate the fully introduced control-plane lane
 
-Those follow-ons remain separate from this control-plane support packet.
+Those follow-ons remain separate from this now-published control-plane support packet.
