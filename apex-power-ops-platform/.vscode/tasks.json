@@ -657,6 +657,39 @@
       "problemMatcher": []
     },
     {
+      "label": "Preview parent-root docs packet",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-Command",
+        "$paths = @('apex-power-ops-platform/docs'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Stage parent-root docs packet",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-Command",
+        "$paths = @('apex-power-ops-platform/docs'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Parent-root docs packet staged diff",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-Command",
+        "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/docs"
+      ],
+      "problemMatcher": []
+    },
+    {
       "label": "Platform subtree staged diff",
       "type": "shell",
       "command": "pwsh",
