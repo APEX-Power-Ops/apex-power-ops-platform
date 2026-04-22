@@ -14,30 +14,19 @@ This document provides that bounded plan.
 
 ## Verified Inventory Baseline
 
-Measured from the parent git root at `C:/APEX Platform` on 2026-04-22:
+Measured from the parent git root at `C:/APEX Platform` on 2026-04-22 after the `docs` publication:
 
-- total untracked paths under `apex-power-ops-platform/`: 4483
-- `.github`: 10
-- `.gitignore`: 1
-- `AGENTS.md`: 1
-- `apps`: 307
+- total untracked paths under `apex-power-ops-platform/`: 4000
+- `apps`: 2
 - `archive`: 2516
-- `docs`: 62
-- `infra`: 46
 - `knowledge`: 974
 - `ops`: 508
-- `package.json`: 1
-- `packages`: 53
-- `pnpm-lock.yaml`: 1
-- `pnpm-workspace.yaml`: 1
-- `pyproject.toml`: 1
-- `tests`: 1
 
 Interpretation:
 
 1. the dominant untracked mass is not active runtime code; it is `archive/`, `knowledge/`, and parts of `ops/`
-2. the code-bearing and operator-bearing lanes are much smaller and can be introduced deliberately without bundling the historical residue
-3. the next publication tranche after the published Class A scaffold should separate recursive active-code admission from archival accumulation
+2. the remaining `apps` residue is generated local output and should stay excluded from publication packets
+3. the next publication tranche should keep decomposing `ops/` into bounded packets rather than widening into the full lane
 
 ## Publication Classes
 
@@ -123,11 +112,11 @@ Current concrete artifact for the completed scaffold step:
 
 Current next-step interpretation:
 
-- the scaffold, package-source, active app-lane runtime/support/test steps, shared package-source steps, the residual scaffold/doc step, and the `infra` database step are complete; the next bounded follow-on is the `docs` lane before the larger `ops`, `knowledge`, and `archive` backlogs
+- the scaffold, package-source, active app-lane runtime/support/test steps, shared package-source steps, the residual scaffold/doc step, the `infra` database step, and the `docs` step are complete; the next bounded follow-on is the `ops/knowledge-control-plane/registry` packet before the larger `ops/agents`, `knowledge`, and `archive` backlogs
 
 Current concrete artifact for that next step:
 
-- `ops/agents/handoffs/2026-04-22-parent-root-docs-publication-handoff.md`
+- `ops/agents/handoffs/2026-04-22-parent-root-ops-knowledge-control-plane-registry-publication-handoff.md`
 
 ## Guardrails
 
@@ -136,6 +125,7 @@ Current concrete artifact for that next step:
 3. review each staged diff before commit from `C:/APEX Platform`
 4. do not bundle `archive/` or `knowledge/` with active code-bearing publication
 5. treat `ops/agents/handoffs/` as mixed content; introduce only the live authority subset unless a historical tranche is explicitly intended
+6. prefer the smallest coherent `ops/` sublane rather than broad `ops/` publication when a cleaner packet exists
 
 ## Completion Standard
 
