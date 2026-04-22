@@ -1,13 +1,13 @@
 # Parent-Root Residual Scaffold Publication Handoff
 ## Date: 2026-04-22
 ## Updated by: GitHub Copilot (GPT-5.4)
-## Scope: Active next-step packet for the remaining small scaffold/doc residue under `C:/APEX Platform/apex-power-ops-platform`
+## Scope: Historical record for the published remaining small scaffold/doc residue under `C:/APEX Platform/apex-power-ops-platform`
 
 ## 1. Summary
 
 The active shared packages and active app lanes are now fully introduced on parent-root `clean-main`.
 
-The next bounded follow-on should stay small and intentional. After the active app lanes closed, the remaining non-generated low-cardinality residue is an 8-file scaffold/doc packet:
+The next bounded follow-on stayed small and intentional. After the active app lanes closed, the remaining non-generated low-cardinality residue was an 8-file scaffold/doc packet:
 
 1. `apps/field-surface/README.md`
 2. `apps/field-surface/package.json`
@@ -18,7 +18,13 @@ The next bounded follow-on should stay small and intentional. After the active a
 7. `apps/pm-surface/README.md`
 8. `packages/api-contracts/README.md`
 
-This packet introduces the last small non-generated scaffold/doc surfaces before the remaining work shifts mainly into archive, knowledge, ops, infra, and broader docs lanes.
+This packet introduced the last small non-generated scaffold/doc surfaces before the remaining work shifted mainly into archive, knowledge, ops, infra, and broader docs lanes.
+
+Publication outcome:
+
+1. committed on parent-root `clean-main` as `8d597e9`
+2. pushed to `origin/clean-main` on 2026-04-22
+3. closed as the published residual scaffold/doc follow-on to the control-plane tests tranche
 
 ## 2. Why This Packet Is Next
 
@@ -34,7 +40,7 @@ Measured from the parent git root at `C:/APEX Platform` on 2026-04-22 after the 
 
 ## 3. Packet Intent
 
-Use this packet to introduce the remaining small scaffold/doc surfaces while continuing to exclude generated local artifacts.
+This packet introduced the remaining small scaffold/doc surfaces while continuing to exclude generated local artifacts.
 
 ## 4. Exact Packet Contents
 
@@ -64,9 +70,9 @@ This packet is intentionally narrow:
 3. it leaves generated local artifacts excluded
 4. it prevents the next publication step from jumping straight into thousand-file archive or knowledge lanes
 
-## 6. Operator Execution Path
+## 6. Historical Execution Path
 
-Preferred task path from `C:/APEX Platform/apex-power-ops-platform`:
+Preferred task path from `C:/APEX Platform/apex-power-ops-platform` when this packet was executed:
 
 1. run `Preview parent-root residual scaffold packet`
 2. run `Stage parent-root residual scaffold packet` only when the preview is correct
@@ -100,8 +106,8 @@ This packet is document- and scaffold-heavy, so diff discipline matters more tha
 
 If this packet lands cleanly, the next logical work shifts to larger intentional publication lanes such as:
 
-1. broader `docs/` packet(s)
-2. `ops/` packet(s)
-3. `knowledge/` packet(s)
-4. `infra/` packet(s)
+1. `infra/` packet(s)
+2. broader `docs/` packet(s)
+3. `ops/` packet(s)
+4. `knowledge/` packet(s)
 5. `archive/` strategy decisions rather than automatic publication
