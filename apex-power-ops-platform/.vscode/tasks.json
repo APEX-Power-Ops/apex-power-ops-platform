@@ -8,11 +8,12 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$repoRoot = (Resolve-Path (Join-Path '${workspaceFolder}' '..')).Path; $script = Join-Path $repoRoot 'apps/control-plane-api/scripts/run_platform_api_local.ps1'; if (-not (Test-Path $script)) { throw 'apps/control-plane-api is not present under the parent repo root for this bootstrap packet.' }; & $script"
+        "$repoRoot = (Resolve-Path (Join-Path '${workspaceFolder}' '..')).Path; $script = Join-Path $repoRoot 'apps/control-plane-api/scripts/run_platform_api_local.ps1'; if (-not (Test-Path $script)) { throw 'apps/control-plane-api is not present under the parent repo root for this bootstrap packet.' }; Set-Location $repoRoot; & $script"
       ],
       "options": {
-        "cwd": "${workspaceFolder}",
+        "cwd": "${workspaceFolder}\\..",
         "env": {
+          "APEX_PLATFORM_PYTHON": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
           "PYTHONPATH": "packages/calc-engine/src"
         }
       },
@@ -27,11 +28,12 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$repoRoot = (Resolve-Path (Join-Path '${workspaceFolder}' '..')).Path; $script = Join-Path $repoRoot 'apps/control-plane-api/scripts/run_platform_api_local.ps1'; if (-not (Test-Path $script)) { throw 'apps/control-plane-api is not present under the parent repo root for this bootstrap packet.' }; & $script -Restart"
+        "$repoRoot = (Resolve-Path (Join-Path '${workspaceFolder}' '..')).Path; $script = Join-Path $repoRoot 'apps/control-plane-api/scripts/run_platform_api_local.ps1'; if (-not (Test-Path $script)) { throw 'apps/control-plane-api is not present under the parent repo root for this bootstrap packet.' }; Set-Location $repoRoot; & $script -Restart"
       ],
       "options": {
-        "cwd": "${workspaceFolder}",
+        "cwd": "${workspaceFolder}\\..",
         "env": {
+          "APEX_PLATFORM_PYTHON": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
           "PYTHONPATH": "packages/calc-engine/src"
         }
       },
