@@ -1,0 +1,43 @@
+# Apex Power Ops Platform
+# Review routing currently resolves to the maintainer of record.
+# Steward roles and approval lanes are documented in
+# .github/WORKSPACE-OWNERSHIP-APPROVAL-MAP.md.
+
+# Root governance and workspace contracts
+/AGENTS.md @jasonlswenson-sys
+/README.md @jasonlswenson-sys
+/.gitignore @jasonlswenson-sys
+/package.json @jasonlswenson-sys
+/pnpm-lock.yaml @jasonlswenson-sys
+/pnpm-workspace.yaml @jasonlswenson-sys
+/pyproject.toml @jasonlswenson-sys
+/.vscode/ @jasonlswenson-sys
+/.github/ @jasonlswenson-sys
+
+# Application lanes
+/apps/control-plane-api/ @jasonlswenson-sys
+/apps/operations-web/ @jasonlswenson-sys
+/apps/mutation-seam/ @jasonlswenson-sys
+/apps/forms-studio/ @jasonlswenson-sys
+/apps/field-surface/ @jasonlswenson-sys
+/apps/integration-surface/ @jasonlswenson-sys
+/apps/lead-surface/ @jasonlswenson-sys
+/apps/pm-surface/ @jasonlswenson-sys
+
+# Shared packages
+/packages/calc-engine/ @jasonlswenson-sys
+/packages/forms-engine/ @jasonlswenson-sys
+/packages/api-contracts/ @jasonlswenson-sys
+
+# Infrastructure, operations, knowledge, and docs
+/infra/ @jasonlswenson-sys
+/ops/ @jasonlswenson-sys
+/knowledge/ @jasonlswenson-sys
+/docs/ @jasonlswenson-sys
+
+# Validation and archive lanes
+/tests/ @jasonlswenson-sys
+/archive/ @jasonlswenson-sys
+
+# Fallback
+* @jasonlswenson-sys

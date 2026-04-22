@@ -27,7 +27,7 @@ git add -- apex-power-ops-platform/.vscode/tasks.json apex-power-ops-platform/RE
 git diff --cached -- apex-power-ops-platform/
 ```
 
-Whole-subtree staging is not the default operator move while `apex-power-ops-platform/` is still an untracked subtree inside the parent repo. Reserve `git add -- apex-power-ops-platform/` for explicit cutover or intentionally broad publication work only.
+Whole-subtree staging is not the default operator move even though `apex-power-ops-platform/` is now a tracked subtree inside the parent repo. Reserve `git add -- apex-power-ops-platform/` for explicit cutover or intentionally broad publication work only.
 
 Bounded packet staging example for the `Stage named platform paths` task:
 
@@ -37,16 +37,16 @@ $env:APEX_PLATFORM_GIT_PATHSPEC='apex-power-ops-platform/.vscode/tasks.json;apex
 
 After setting the pathspec, run `Stage named platform paths` and then `Platform subtree staged diff` before any commit.
 
-The parent-root `.gitignore` now carries a scoped exception for `apex-power-ops-platform/.vscode/tasks.json`, so the workspace task surface can be included in a bounded bootstrap packet without `git add -f`.
+The parent-root `.gitignore` now carries a scoped exception for `apex-power-ops-platform/.vscode/tasks.json`, so the workspace task surface can be included in bounded parent-root staging without `git add -f`.
 
-For the first parent-root introduction packet, use `ops/agents/handoffs/2026-04-22-parent-root-bootstrap-publication-handoff.md`.
+For historical context on the completed first parent-root introduction packet, use `ops/agents/handoffs/2026-04-22-parent-root-bootstrap-publication-handoff.md`.
 
 Current packet constraint:
 - this bootstrap subtree does not yet contain every active platform lane under `apex-power-ops-platform/`; parent-root active lanes that already exist today are referenced below with `../...` paths from the subtree root
 
 Git safety rules:
 - do not use `git add .` from `C:/APEX Platform` unless an explicit cross-lane operation is intended
-- if the platform subtree is still untracked, expect `git diff` against `HEAD` to remain sparse until files are staged
+- a bounded slice of the platform subtree is now tracked on parent-root `clean-main`, so normal `git diff` against `HEAD` is available for already-introduced paths; still keep staging bounded when unrelated parent-root changes are present and treat broader subtree publication as deliberate introduction work
 - default to staging explicit platform file paths or a bounded packet pathspec rather than the whole subtree
 - review the staged diff before any commit so unrelated parent-repo changes remain outside the publication set
 
@@ -105,6 +105,7 @@ Get-ChildItem 'C:/APEX Platform/apex-power-ops-platform' -Recurse -File |
 ## Primary Operator Entry Points
 
 VS Code tasks:
+- the bootstrap-packet helper tasks remain available for historical packet review and narrow bounded staging, but routine publication work can now use normal parent-root `git diff` and `git add -- <paths>` against tracked `HEAD`
 - `Run platform API local`
 - `Restart platform API local`
 - `Platform subtree git status`

@@ -190,16 +190,17 @@ Exit condition:
 
 ### 7. Git publication boundary
 
-- [ ] keep git status, diff, stage, and commit decisions aligned to the current parent repo root at `C:/APEX Platform`
-- [ ] do not assume `apex-power-ops-platform/` is already an independent git repository
-- [ ] acknowledge that the platform subtree is still wholly untracked at the parent root, so normal diff-based packet publication against `HEAD` is not yet available
+- [x] keep git status, diff, stage, and commit decisions aligned to the current parent repo root at `C:/APEX Platform`
+- [x] do not assume `apex-power-ops-platform/` is already an independent git repository
+- [x] acknowledge that the first bounded platform tranche is now tracked at the parent root, so normal diff-based packet publication against `HEAD` is available again for already-introduced paths
+- [x] establish a bounded classification baseline for the still-untracked majority of the subtree in `docs/architecture/WORKSPACE-BOUNDED-PUBLICATION-PLAN-2026-04-22.md`
 - [ ] default future publication work to explicit platform file paths or bounded packet pathspecs rather than whole-subtree staging
 - [ ] reserve `git add -- apex-power-ops-platform/` for explicit cutover or intentionally broad publication work only
 - [ ] treat unrelated tracked changes elsewhere under `C:/APEX Platform` as separate lanes unless a cross-lane operation is explicitly intended
 
 Exit condition:
 
-- future git publication work can isolate the platform subtree without pulling unrelated parent-repo changes into scope
+- future git publication work can isolate already-introduced platform paths from unrelated parent-repo changes while still using normal diff-based review against tracked `HEAD`, and broader subtree introduction remains deliberate
 
 ### 8. Deploy-worktree separation
 
@@ -229,5 +230,5 @@ This checklist is complete for the current cycle when:
 2. no deferred lane has been activated speculatively
 3. active re-home work continues to land in governed destination lanes
 4. generated roots remain excluded from workspace-shape authority
-5. future git publication work remains isolatable from unrelated parent-repo changes, and any first parent-root introduction of platform paths is treated as a deliberate bootstrap packet rather than an implicit routine commit
+5. future git publication work remains isolatable from unrelated parent-repo changes while using routine bounded staging against tracked `HEAD` for already-introduced paths and deliberate introduction for wider subtree material
 6. deploy-worktree residue remains separated from active repo normalization

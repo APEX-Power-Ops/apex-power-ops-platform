@@ -148,12 +148,13 @@ Implication:
 - review routing is now governed at the repo level
 - future structure audits must treat ownership governance as closed unless those files regress or stop matching the live lane model
 
-### 3. Root ignore coverage for generated workspace residue is present
+### 3. Platform-local ignore coverage for generated residue is present and parent-root ignore remains intentionally narrower
 
-The root `.gitignore` already covers the major generated or workstation residue patterns observed in the workspace, including:
+The platform subtree `.gitignore` already covers the major generated or workstation residue patterns observed inside `C:/APEX Platform/apex-power-ops-platform`, including:
 
 - `node_modules/`
 - `.venv/`
+- `__pycache__/`
 - `.pytest_cache/`
 - `pytest-cache-files-*/`
 - `*.egg-info/`
@@ -163,9 +164,12 @@ The root `.gitignore` already covers the major generated or workstation residue 
 - `build/`
 - `.env` and `.env.*`
 
+The parent-root `.gitignore` remains intentionally narrower and still focuses on secrets, IDE residue, and the scoped `.vscode/tasks.json` exception required for bounded platform task-surface publication.
+
 Implication:
 
-- cleanup work should focus on classification and lane use, not on adding a second ignore-policy sweep unless new residue classes appear
+- cleanup work should focus on classification and lane use
+- expand parent-root ignore only when root-level generated residue becomes a recurring operator problem rather than assuming the subtree policy should be copied upward wholesale
 
 ### 4. Placeholder and silent lanes now have explicit local markers
 
@@ -223,14 +227,16 @@ Current operator work should happen from `C:/APEX Platform/apex-power-ops-platfo
 
 Observed current fact:
 
-- parent-root status still reports the platform subtree as untracked (`?? apex-power-ops-platform/`)
-- `git ls-files -- apex-power-ops-platform/` currently returns no tracked paths
+- parent-root `clean-main` now tracks a bounded platform bootstrap slice on current `HEAD`
+- `git diff -- apex-power-ops-platform/` and `git ls-files -- apex-power-ops-platform/` now operate against those already-introduced paths
+- the broader subtree still contains substantial untracked platform material that has not yet been deliberately introduced to the parent repo index
 
 Implication:
 
 - git status, diff, stage, and commit operations must still respect the parent repo boundary
-- normal diff-based packet publication against tracked `HEAD` state is not yet available until an intentional initial add or cutover introduces tracked paths
-- staging must default to explicit paths or bounded packet pathspecs until that initial introduction event is deliberately executed
+- normal diff-based packet publication against tracked `HEAD` state is now available for already-introduced platform paths
+- broader subtree publication still requires explicit bounded introduction decisions rather than assuming the entire subtree is already under routine diff coverage
+- staging should still default to explicit paths or bounded packet pathspecs when unrelated parent-root changes are present
 - unrelated tracked changes elsewhere under `C:/APEX Platform` should be treated as separate lanes, not as default companions to platform work
 
 ## Remaining Cleanup And Organization Backlog
@@ -320,7 +326,7 @@ Required posture:
 1. Preserve `apps/field-surface` as a seed lane until field-runtime work proves a harder boundary.
 2. Keep `apps/forms-studio` and `packages/api-contracts` explicitly deferred until their first real implementation packets land.
 3. Keep current ownership and approval surfaces aligned with the real lane map as future re-home work lands.
-4. if publication becomes necessary before cutover, treat the first parent-root introduction of platform paths as a distinct bootstrap packet rather than as routine incremental staging.
+4. if publication becomes necessary before cutover, use routine bounded parent-root staging for already-tracked paths, keep the first bootstrap publication handoff only as historical context, and treat wider subtree introduction as an explicit follow-on tranche.
 
 ### Priority 3
 

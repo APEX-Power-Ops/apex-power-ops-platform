@@ -1,0 +1,29 @@
+name: Control Plane API CI
+
+on:
+  push:
+    paths:
+      - apps/control-plane-api/**
+      - .github/workflows/control-plane-api-ci.yml
+  pull_request:
+    paths:
+      - apps/control-plane-api/**
+      - .github/workflows/control-plane-api-ci.yml
+
+jobs:
+  compile:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/control-plane-api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install runtime and dev dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+      - name: Syntax compile active runtime paths
+        run: python -m compileall api services scripts tests utils main.py config.py

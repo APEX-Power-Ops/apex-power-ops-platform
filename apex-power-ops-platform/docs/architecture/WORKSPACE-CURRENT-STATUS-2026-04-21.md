@@ -25,7 +25,7 @@ What is not yet true:
 2. placeholder lanes are documented and explicitly deferred rather than implemented
 3. the repo does not yet expose a final deployment and validation map for deferred, seed, or future lanes beyond the currently active runtimes
 4. source-domain re-home is still only partially materialized in platform-local lanes
-5. the platform subtree is still wholly untracked in the parent repo, so diff-based packet publication against `HEAD` is not yet available until an intentional initial add or cutover event occurs
+5. parent-root git authority still sits at `C:/APEX Platform`, so bounded path staging remains necessary whenever unrelated parent-repo changes are present; the first platform bootstrap tranche is now tracked and diff-based publication against `HEAD` is available for those introduced paths, but much of the broader subtree still remains untracked and requires deliberate introduction
 
 ## Lane Status
 
@@ -91,7 +91,7 @@ Confirmed still open:
 
 1. broader hosted browser-proof and deployment-proof follow-through remains optional, but the governed backend seam on `https://control.apexpowerops.com` is no longer the active blocker because the public host now advertises and serves `/api/v1/neta/apparatus/{apparatus_id}/resources`
 2. local deploy-worktree reconciliation and publication remain a separate optional lane: treat `C:/APEX Platform/apex-power-ops-platform-deploy-worktree` as divergent publication residue rather than as evidence that hosted packet `001af` has reopened; a dedicated deploy-worktree handoff is not bundled inside this bootstrap packet
-3. initial parent-root publication remains a separate bootstrap concern because the platform subtree still appears as `?? apex-power-ops-platform/` from `C:/APEX Platform`; bounded path staging is now governed, but normal diff-based packet publication against tracked `HEAD` state is not yet available, so route that tranche through `ops/agents/handoffs/2026-04-22-parent-root-bootstrap-publication-handoff.md`
+3. the first parent-root publication is no longer an open bootstrap concern because the initial bounded tranche is now tracked on parent-root `clean-main`; keep `ops/agents/handoffs/2026-04-22-parent-root-bootstrap-publication-handoff.md` as the historical record of that completed first-introduction tranche while treating broader subtree publication as a still-deliberate incremental follow-on
 
 ## Structural Assessment
 
@@ -110,7 +110,7 @@ Confirmed still open:
 4. active app entrypoints are now documented and task-aligned, and `apps/operations-web` now has hosted route smoke, local browser smoke, and a promoted-host browser-plus-seam smoke path for the current governed shell contract; the latest public-host rerun shows health, readiness, OAuth discovery, MCP metadata, unauthenticated `401 Bearer` behavior, deployed OpenAPI advertisement, and handler-owned apparatus-route responses all green on `https://control.apexpowerops.com`
 5. workstation-level host validation for `apps/control-plane-api` is now a repo-owned readiness-and-seam lane with bootstrap, readiness, restart, and local apparatus smoke tasks; on the current workstation the lane now closes as `host-ready`, and the default local host on `8010` passes bounded apparatus seam smoke after a deterministic restart while the hosted lane is separately closed with public proof
 6. the hosted route-promotion step is now closed and proof-backed rather than implicit: use `../apps/control-plane-api/PUBLIC-APPARATUS-ROUTE-PROMOTION-CHECKLIST-2026-04-21.md` for the bootstrap-local rerun path; earlier hosted execution handoffs are not bundled inside this packet
-7. parent-root git operations are now safer and more explicit, but the current publication reality is still bootstrap-level because the platform subtree has not yet been intentionally introduced to the parent repo index
+7. parent-root git operations are now safer and more explicit, and the initial platform bootstrap tranche is now intentionally tracked on `clean-main`; the remaining publication risk is a mix of unrelated parent-root drift plus the still-untracked majority of the subtree, not the already-closed first-introduction event itself
 
 ## Current Implementation Posture
 
@@ -138,4 +138,4 @@ The next implementation work should focus on:
 3. extending `apps/operations-web` browser proof from local Playwright smoke to promoted-host seam-aware automation
 4. keeping merge-target lane markers current if any new hard deployment boundary is later proven
 5. treating deploy-worktree reconciliation or publication as a distinct bounded follow-through lane rather than as remaining hosted route-promotion work
-6. treating any future parent-root publication as an explicit initial-bootstrap or cutover packet instead of assuming routine diff-based packet publication is already available
+6. treating future publication of already-introduced platform paths as routine bounded staging against tracked `HEAD` state while handling still-untracked subtree material as explicit incremental introduction work

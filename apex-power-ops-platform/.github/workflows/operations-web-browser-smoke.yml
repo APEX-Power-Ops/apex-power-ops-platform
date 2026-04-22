@@ -1,0 +1,42 @@
+name: Operations Web Browser Smoke
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - clean-main
+    paths:
+      - 'apps/operations-web/**'
+      - '.github/workflows/operations-web-browser-smoke.yml'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+  pull_request:
+    paths:
+      - 'apps/operations-web/**'
+      - '.github/workflows/operations-web-browser-smoke.yml'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+
+jobs:
+  browser-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.0.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.11.1'
+          cache: 'pnpm'
+      - name: Install workspace dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Install Playwright browsers
+        run: pnpm --filter @apex/operations-web exec playwright install --with-deps chromium
+      - name: Run operations-web browser smoke
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: browser-smoke-anon-key
+          NEXT_PUBLIC_CONTROL_PLANE_BASE_URL: http://127.0.0.1:8010
+        run: pnpm --filter @apex/operations-web smoke:browser

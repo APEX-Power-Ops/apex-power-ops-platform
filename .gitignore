@@ -91,6 +91,21 @@ Working/
 scratch/
 temp/
 *.backup
+untracked_files*.txt
+
+# ============================================
+# ADJACENT WORKSPACE LANES / PARKED WORKTREES
+# ============================================
+/APEX_Schema_V2/
+/Platform-Authority/
+/Reference_Files/
+/Sessions/
+/source-domains/
+/apex-power-ops-platform-clean-main-reconcile/
+/apex-power-ops-platform-deploy-worktree/
+
+# Local Claude scratch note; keep tracked state files separate.
+/.claude/TASK_GIT_COMMIT_*.md
 
 # ============================================
 # LARGE BINARY FILES

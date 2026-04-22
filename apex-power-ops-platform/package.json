@@ -1,0 +1,11 @@
+{
+  "name": "apex-power-ops-platform",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@10.0.0",
+  "scripts": {
+    "lint": "echo bootstrap-lint",
+    "test": "echo bootstrap-test",
+    "check": "pnpm lint && pnpm test"
+  }
+}
