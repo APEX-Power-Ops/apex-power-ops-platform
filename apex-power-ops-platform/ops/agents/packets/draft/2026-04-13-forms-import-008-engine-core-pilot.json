@@ -1,0 +1,55 @@
+{
+  "packet_id": "2026-04-13-forms-import-008",
+  "title": "Forms Engine Core Bounded Import Pilot",
+  "objective": "Execute the first bounded import of the forms-engine core from the NETA-Forms source repo into the platform root using the approved engine-core scope only.",
+  "domain": "forms-domain",
+  "active_role": "Forms Import Operator",
+  "repo_paths": [
+    "c:/APEX Platform/Platform-Authority/FORMS-SOURCE-INVENTORY-AND-TARGET-MAPPING-2026-04-13.md",
+    "c:/APEX Platform/Platform-Authority/FORMS-ENGINE-FIRST-IMPORT-BLOCKER-RESOLUTION-2026-04-13.md",
+    "C:/APEX Platform/source-domains/neta-forms",
+    "c:/APEX Platform/apex-power-ops-platform/packages/forms-engine",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft"
+  ],
+  "dependencies": [
+    "2026-04-13-forms-import-007",
+    "FORMS-ENGINE-FIRST-IMPORT-BLOCKER-RESOLUTION-2026-04-13.md"
+  ],
+  "required_inputs": [
+    "FORMS-SOURCE-INVENTORY-AND-TARGET-MAPPING-2026-04-13.md",
+    "FORMS-ENGINE-FIRST-IMPORT-BLOCKER-RESOLUTION-2026-04-13.md",
+    "2026-04-13-forms-import-007-inventory-handoff.md",
+    "NETA-Forms source repo"
+  ],
+  "constrained_outputs": [
+    "Initial bounded forms-engine import under c:/APEX Platform/apex-power-ops-platform/packages/forms-engine",
+    "Import handoff note under c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/",
+    "No wholesale repo import, no brand-asset tree import, no app-shell build-out, no database integration"
+  ],
+  "write_scope": [
+    "c:/APEX Platform/apex-power-ops-platform/packages/forms-engine",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "validation_steps": [
+    "Confirm the import scope is limited to the approved engine-core assets only",
+    "Confirm imported generators remain self-contained and do not pull in unresolved template, brand, or database surfaces",
+    "Confirm packages/forms-engine has a clear boundary and minimal run instructions",
+    "Confirm deferred forms-domain questions remain deferred and explicitly documented"
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "output_artifacts": [
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-13-forms-import-008-engine-core-handoff.md"
+  ],
+  "handoff_note": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-13-forms-import-008-engine-core-handoff.md",
+  "implementation_ready_candidate": false,
+  "sql_permission": false,
+  "sql_permission_note": "This packet is a bounded code/content import pilot only. It does not authorize forms-domain schema or database work.",
+  "created_at": "2026-04-13",
+  "updated_at": "2026-04-13",
+  "completed_at": "2026-04-13",
+  "delegation_status": "completed",
+  "validation_disposition": "imported-with-runtime-gaps",
+  "delegation_prompt": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-13-desktop-claude-forms-import-008-prompt.md"
+}
