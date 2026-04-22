@@ -426,6 +426,39 @@
       "problemMatcher": []
     },
     {
+      "label": "Preview parent-root operations-web runtime packet",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-Command",
+        "$paths = @('apex-power-ops-platform/apps/operations-web/DEPLOYMENT_VALIDATION.md', 'apex-power-ops-platform/apps/operations-web/app', 'apex-power-ops-platform/apps/operations-web/lib', 'apex-power-ops-platform/apps/operations-web/next-env.d.ts', 'apex-power-ops-platform/apps/operations-web/public', 'apex-power-ops-platform/apps/operations-web/scripts', 'apex-power-ops-platform/apps/operations-web/tests'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Stage parent-root operations-web runtime packet",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-Command",
+        "$paths = @('apex-power-ops-platform/apps/operations-web/DEPLOYMENT_VALIDATION.md', 'apex-power-ops-platform/apps/operations-web/app', 'apex-power-ops-platform/apps/operations-web/lib', 'apex-power-ops-platform/apps/operations-web/next-env.d.ts', 'apex-power-ops-platform/apps/operations-web/public', 'apex-power-ops-platform/apps/operations-web/scripts', 'apex-power-ops-platform/apps/operations-web/tests'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Parent-root operations-web runtime packet staged diff",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-Command",
+        "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/apps/operations-web/DEPLOYMENT_VALIDATION.md apex-power-ops-platform/apps/operations-web/app apex-power-ops-platform/apps/operations-web/lib apex-power-ops-platform/apps/operations-web/next-env.d.ts apex-power-ops-platform/apps/operations-web/public apex-power-ops-platform/apps/operations-web/scripts apex-power-ops-platform/apps/operations-web/tests"
+      ],
+      "problemMatcher": []
+    },
+    {
       "label": "Platform subtree staged diff",
       "type": "shell",
       "command": "pwsh",

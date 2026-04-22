@@ -18,12 +18,13 @@ Verified from the parent git root at `C:/APEX Platform`:
 
 1. current branch is `clean-main`
 2. current `HEAD` matches `origin/clean-main`
-3. current `HEAD` is `ebb75aaa78aa00568c445a30d85fcbd72fa2879b`
+3. current `HEAD` is `0916a38`
 4. the first bounded platform bootstrap slice is tracked on parent-root `clean-main`
 5. the next bounded Class A scaffold tranche is also now published on parent-root `clean-main`
-6. normal `git status`, `git diff`, and bounded `git add -- <paths>` now work against tracked `HEAD` for those already-introduced `apex-power-ops-platform/` paths
-7. much of the broader subtree still remains untracked and therefore still requires deliberate introduction rather than assuming routine diff coverage
-8. the parent root remains the actual git boundary even though day-to-day implementation work is platform-first inside the subtree
+6. the bounded package source tranche for `packages/forms-engine` and `packages/calc-engine` is also now published on parent-root `clean-main`
+7. normal `git status`, `git diff`, and bounded `git add -- <paths>` now work against tracked `HEAD` for those already-introduced `apex-power-ops-platform/` paths
+8. much of the broader subtree still remains untracked and therefore still requires deliberate introduction rather than assuming routine diff coverage
+9. the parent root remains the actual git boundary even though day-to-day implementation work is platform-first inside the subtree
 
 ## Drift That Was Present
 
@@ -55,7 +56,7 @@ Use this posture going forward:
 1. work from `C:/APEX Platform/apex-power-ops-platform` for implementation, but treat `C:/APEX Platform` as the authoritative git root
 2. use routine `git diff` and bounded `git add -- <paths>` against tracked `HEAD` for already-introduced paths
 3. keep whole-subtree staging reserved for explicit broad publication or cutover work
-4. treat the 2026-04-22 bootstrap, Class A scaffold, and reconciliation handoffs as historical records, not as active blockers or active workflow instructions
+4. treat the 2026-04-22 bootstrap, Class A scaffold, package source, and reconciliation handoffs as historical records, not as active blockers or active workflow instructions
 5. keep `C:/APEX Platform/apex-power-ops-platform-deploy-worktree` as a separate optional publication lane
 6. keep `C:/APEX Platform/apex-power-ops-platform-clean-main-reconcile` as the historical clean review-fix worktree, not as the live authority surface
 7. treat broader subtree publication beyond the already-tracked slice as explicit incremental introduction work
@@ -66,9 +67,10 @@ These remain useful, but only as historical context:
 
 1. `ops/agents/handoffs/2026-04-22-parent-root-bootstrap-publication-handoff.md`
 2. `ops/agents/handoffs/2026-04-22-parent-root-class-a-scaffold-publication-handoff.md`
-3. `ops/agents/handoffs/2026-04-22-parent-root-clean-main-reconciliation-handoff.md`
-4. `C:/APEX-safety-snapshots/live-root-pre-merge-divergence-2026-04-22/RECOVERY-NOTES.md`
-5. `C:/APEX-safety-snapshots/live-root-pre-merge-divergence-2026-04-22/INTEGRITY-REPORT.md`
+3. `ops/agents/handoffs/2026-04-22-parent-root-package-source-publication-handoff.md`
+4. `ops/agents/handoffs/2026-04-22-parent-root-clean-main-reconciliation-handoff.md`
+5. `C:/APEX-safety-snapshots/live-root-pre-merge-divergence-2026-04-22/RECOVERY-NOTES.md`
+6. `C:/APEX-safety-snapshots/live-root-pre-merge-divergence-2026-04-22/INTEGRITY-REPORT.md`
 
 ## Residual Constraints
 
@@ -83,4 +85,4 @@ The repo is cleaner, but these constraints still matter:
 
 The workflow drift is closed.
 
-The platform subtree is no longer in a wholly untracked first-introduction bootstrap state. Its first bounded publication slice and its next Class A scaffold tranche are both now published on `clean-main`, and future parent-root publication should distinguish between routine bounded staging for already-introduced paths and deliberate incremental introduction for the still-untracked majority of the subtree.
+The platform subtree is no longer in a wholly untracked first-introduction bootstrap state. Its first bounded publication slice, its Class A scaffold tranche, and its package source tranche are now published on `clean-main`, and future parent-root publication should distinguish between routine bounded staging for already-introduced paths and deliberate incremental introduction for the still-untracked majority of the subtree.
