@@ -1,13 +1,19 @@
 # Parent-Root Ops Knowledge-Control-Plane Registry Publication Handoff
 ## Date: 2026-04-22
 ## Updated by: GitHub Copilot (GPT-5.4)
-## Scope: Active next-step packet for the bounded `ops/knowledge-control-plane/registry` lane under `C:/APEX Platform/apex-power-ops-platform`
+## Scope: Historical record for the bounded `ops/knowledge-control-plane/registry` lane under `C:/APEX Platform/apex-power-ops-platform`
 
 ## 1. Summary
 
 The active shared packages, active app lanes, residual scaffold/doc surfaces, infra-database lane, and docs lane are now published on parent-root `clean-main`.
 
-The next smallest remaining substantive packet is `ops/knowledge-control-plane/registry`, which currently stages cleanly at 4 files. This packet introduces the smallest coherent `ops/` sublane before the much larger `ops/agents`, `knowledge`, and `archive` backlogs.
+The next smallest remaining substantive packet was `ops/knowledge-control-plane/registry`, which staged cleanly at 4 files. This packet introduced the smallest coherent `ops/` sublane before the much larger `ops/agents`, `knowledge`, and `archive` backlogs.
+
+Publication outcome:
+
+1. committed on parent-root `clean-main` as `83fda73`
+2. pushed to `origin/clean-main` on 2026-04-22
+3. closed as the published registry follow-on to the docs tranche
 
 ## 2. Why This Packet Is Next
 
@@ -20,7 +26,7 @@ Measured from the parent git root at `C:/APEX Platform` on 2026-04-22 after the 
 
 ## 3. Packet Intent
 
-Use this packet to introduce the current knowledge-control-plane registry surface:
+This packet introduced the current knowledge-control-plane registry surface:
 
 1. `CITATION-MAP.json`
 2. `EXTRACTION-CITATION-MAP.json`
@@ -33,7 +39,7 @@ From the parent git root at `C:/APEX Platform`, the bounded packet path is:
 
 1. `apex-power-ops-platform/ops/knowledge-control-plane/registry`
 
-Current measured contents: 4 files under the registry path.
+Published contents: 4 files under the registry path.
 
 ## 5. Why This Packet Is Bounded Correctly
 
@@ -44,9 +50,9 @@ This packet is intentionally narrow:
 3. it does not widen into `knowledge/` or `archive/`
 4. it does not mix in generated local artifacts from app lanes
 
-## 6. Operator Execution Path
+## 6. Historical Execution Path
 
-Preferred task path from `C:/APEX Platform/apex-power-ops-platform`:
+Preferred task path from `C:/APEX Platform/apex-power-ops-platform` when this packet was executed:
 
 1. run `Preview parent-root ops knowledge-control-plane registry packet`
 2. run `Stage parent-root ops knowledge-control-plane registry packet` only when the preview is correct
