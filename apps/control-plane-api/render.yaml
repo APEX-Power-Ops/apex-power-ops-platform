@@ -1,0 +1,133 @@
+services:
+  - type: web
+    name: apex-platform-control-plane-api
+    runtime: python
+    region: oregon
+    plan: starter
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.11
+      - key: APP_ENV
+        value: production
+      - key: LOG_LEVEL
+        value: INFO
+      - key: ENABLE_LOCAL_TEST_AUTH
+        value: "false"
+      - key: DATABASE_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: SUPABASE_JWKS_URL
+        sync: false
+      - key: SUPABASE_EMAIL_REDIRECT_URL
+        sync: false
+      - key: PUBLIC_MCP_BASE_URL
+        sync: false
+      - key: PUBLIC_OAUTH_AUTHORIZATION_URL
+        sync: false
+      - key: PUBLIC_OAUTH_TOKEN_URL
+        sync: false
+      - key: PUBLIC_OAUTH_JWKS_URL
+        sync: false
+      - key: PUBLIC_OAUTH_REGISTRATION_URL
+        sync: false
+      - key: PUBLIC_OAUTH_ISSUER
+        sync: false
+      - key: PUBLIC_OAUTH_AUDIENCE
+        sync: false
+      - key: PUBLIC_OAUTH_CLIENT_ID
+        sync: false
+      - key: PUBLIC_OAUTH_REDIRECT_URIS
+        sync: false
+      - key: PUBLIC_OAUTH_SCOPES
+        value: openid profile email
+      - key: PUBLIC_OAUTH_USERINFO_URL
+        sync: false
+      - key: SUPABASE_MCP_PUBLIC_BASE_URL
+        sync: false
+      - key: SUPABASE_MCP_OAUTH_AUTHORIZATION_URL
+        sync: false
+      - key: SUPABASE_MCP_OAUTH_TOKEN_URL
+        sync: false
+      - key: SUPABASE_MCP_OAUTH_JWKS_URL
+        sync: false
+      - key: SUPABASE_MCP_OAUTH_REGISTRATION_URL
+        sync: false
+      - key: SUPABASE_MCP_OAUTH_ISSUER
+        sync: false
+      - key: SUPABASE_MCP_OAUTH_AUDIENCE
+        sync: false
+      - key: SUPABASE_MCP_OAUTH_CLIENT_ID
+        sync: false
+      - key: SUPABASE_MCP_OAUTH_REDIRECT_URIS
+        sync: false
+      - key: SUPABASE_MCP_OAUTH_SCOPES
+        value: openid profile email
+      - key: SUPABASE_MCP_OAUTH_USERINFO_URL
+        sync: false
+      - key: SUPABASE_ALLOWED_PROJECTS_JSON
+        sync: false
+      - key: SUPABASE_MANAGEMENT_API_URL
+        value: https://api.supabase.com/v1
+      - key: SUPABASE_MANAGEMENT_TOKEN
+        sync: false
+      - key: SUPABASE_MANAGEMENT_TIMEOUT_SECONDS
+        value: "30"
+      - key: SUPABASE_ALLOWED_MIGRATION_ROOTS
+        value: supabase/migrations,migrations
+      - key: SUPABASE_ALLOWED_FUNCTION_ROOTS
+        sync: false
+      - key: SUPABASE_ENABLE_MIGRATION_APPLY
+        value: "false"
+      - key: SUPABASE_ENABLE_EDGE_FUNCTION_DEPLOY
+        value: "false"
+      - key: SUPABASE_CLI_PROJECT_DIR
+        sync: false
+      - key: SUPABASE_CLI_PATH
+        value: supabase
+      - key: SUPABASE_CLI_TIMEOUT_SECONDS
+        value: "600"
+      - key: SUPABASE_ACCESS_TOKEN
+        sync: false
+      - key: GITHUB_MCP_PUBLIC_BASE_URL
+        sync: false
+      - key: GITHUB_MCP_OAUTH_AUTHORIZATION_URL
+        sync: false
+      - key: GITHUB_MCP_OAUTH_TOKEN_URL
+        sync: false
+      - key: GITHUB_MCP_OAUTH_JWKS_URL
+        sync: false
+      - key: GITHUB_MCP_OAUTH_REGISTRATION_URL
+        sync: false
+      - key: GITHUB_MCP_OAUTH_ISSUER
+        sync: false
+      - key: GITHUB_MCP_OAUTH_AUDIENCE
+        sync: false
+      - key: GITHUB_MCP_OAUTH_CLIENT_ID
+        sync: false
+      - key: GITHUB_MCP_OAUTH_REDIRECT_URIS
+        sync: false
+      - key: GITHUB_MCP_OAUTH_SCOPES
+        value: openid profile email
+      - key: GITHUB_MCP_OAUTH_USERINFO_URL
+        sync: false
+      - key: GITHUB_ALLOWED_REPOS_JSON
+        sync: false
+      - key: GITHUB_APP_ID
+        sync: false
+      - key: GITHUB_APP_PRIVATE_KEY
+        sync: false
+      - key: GITHUB_APP_INSTALLATION_IDS_JSON
+        sync: false
+      - key: GITHUB_ALLOWED_WORKFLOW_DISPATCHES_JSON
+        sync: false
+      - key: GITHUB_COPILOT_REVIEWERS_JSON
+        sync: false

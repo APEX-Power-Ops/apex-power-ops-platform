@@ -1,0 +1,26 @@
+-- TCC v5 Supabase live baseline marker
+-- Date: 2026-03-22
+-- Status: no-op marker migration
+-- Purpose: record the accepted live schema baseline after historical ad hoc
+-- schema work so all future tracked schema changes can be sequenced forward
+-- from this point.
+--
+-- Important:
+-- 1. This file is not a fresh-bootstrap schema.
+-- 2. Historical schema construction still lives in legacy artifacts such as
+--    migrations/001_tcc_schema.sql and follow-on one-off migration utilities.
+-- 3. The governed baseline and drift packet for this marker lives in:
+--    Development/Platform/TCC/TCC-SUPABASE-SCHEMA-BASELINE-AND-DRIFT-2026-03-22.md
+--
+-- Baseline notes captured at this marker:
+-- 1. all 33 active SQLAlchemy model tables were present in the live database
+-- 2. extra live TCC tables existed for EMT and tcc_etu_settings
+-- 3. live tcc_test_plans.user_id was nullable even though the tracked base
+--    schema expected NOT NULL
+-- 4. RLS was enabled on tcc_test_plans and tcc_test_results, but the current
+--    runtime path had not yet been reconciled to authenticated ownership
+--
+-- Future tracked schema changes should create new migration files after this
+-- marker rather than relying on dashboard-only edits.
+
+SELECT 1;

@@ -1,0 +1,911 @@
+{
+  "b4_ieee_ext_inv": {
+    "description": "IEEE Extremely Inverse (Method 2) \u2014 Sensor 5817",
+    "sensor_id": 5817,
+    "rating": 100,
+    "ltpu_calc": 1,
+    "plug_value": 100,
+    "ltpu_pickup_setting": 1.0,
+    "pickup_current": 100.0,
+    "ltd_method": 2,
+    "curve_name": "Ext Inv",
+    "curve_id": 2,
+    "coefficients": {
+      "A_open": 28.200001,
+      "B_open": 0.1217,
+      "p_open": 2.0,
+      "C6_open": 0.0,
+      "A_clear": 28.200001,
+      "B_clear": 0.1217,
+      "p_clear": 2.0,
+      "C6_clear": 0.0,
+      "min_open": 0.045,
+      "min_clear": 0.045,
+      "fillet": 0.09
+    },
+    "bands": [
+      {
+        "band_label": "0.2",
+        "open_time": 0.2
+      },
+      {
+        "band_label": "5",
+        "open_time": 5.0
+      }
+    ],
+    "golden_points_open": [
+      {
+        "band_mult": 0.2,
+        "points": [
+          {
+            "I_multiple": 1.5,
+            "expected_time_sec": 4.53634
+          },
+          {
+            "I_multiple": 2.0,
+            "expected_time_sec": 1.90434
+          },
+          {
+            "I_multiple": 3.0,
+            "expected_time_sec": 0.72934
+          },
+          {
+            "I_multiple": 5.0,
+            "expected_time_sec": 0.25934
+          },
+          {
+            "I_multiple": 8.0,
+            "expected_time_sec": 0.113864
+          },
+          {
+            "I_multiple": 10.0,
+            "expected_time_sec": 0.08131
+          },
+          {
+            "I_multiple": 15.0,
+            "expected_time_sec": 0.049519
+          },
+          {
+            "I_multiple": 20.0,
+            "expected_time_sec": 0.045
+          }
+        ]
+      },
+      {
+        "band_mult": 5.0,
+        "points": [
+          {
+            "I_multiple": 1.5,
+            "expected_time_sec": 113.408504
+          },
+          {
+            "I_multiple": 2.0,
+            "expected_time_sec": 47.608502
+          },
+          {
+            "I_multiple": 3.0,
+            "expected_time_sec": 18.233501
+          },
+          {
+            "I_multiple": 5.0,
+            "expected_time_sec": 6.4835
+          },
+          {
+            "I_multiple": 8.0,
+            "expected_time_sec": 2.846595
+          },
+          {
+            "I_multiple": 10.0,
+            "expected_time_sec": 2.032742
+          },
+          {
+            "I_multiple": 15.0,
+            "expected_time_sec": 1.237964
+          },
+          {
+            "I_multiple": 20.0,
+            "expected_time_sec": 0.961883
+          }
+        ]
+      }
+    ]
+  },
+  "b4_ieee_mod_inv": {
+    "description": "IEEE Moderately Inverse (Method 2) \u2014 Sensor 5817",
+    "sensor_id": 5817,
+    "curve_name": "Mod Inv",
+    "curve_id": 3,
+    "coefficients": {
+      "A_open": 0.0515,
+      "B_open": 0.114,
+      "p_open": 0.02,
+      "min_open": 0.045,
+      "min_clear": 0.045
+    },
+    "bands": [
+      {
+        "band_label": "0.1",
+        "open_time": 0.1
+      },
+      {
+        "band_label": "5",
+        "open_time": 5.0
+      }
+    ],
+    "golden_points_open": [
+      {
+        "band_mult": 0.1,
+        "points": [
+          {
+            "I_multiple": 1.5,
+            "expected_time_sec": 0.643902
+          },
+          {
+            "I_multiple": 2.0,
+            "expected_time_sec": 0.380325
+          },
+          {
+            "I_multiple": 3.0,
+            "expected_time_sec": 0.243221
+          },
+          {
+            "I_multiple": 5.0,
+            "expected_time_sec": 0.168833
+          },
+          {
+            "I_multiple": 8.0,
+            "expected_time_sec": 0.132674
+          },
+          {
+            "I_multiple": 10.0,
+            "expected_time_sec": 0.120676
+          },
+          {
+            "I_multiple": 15.0,
+            "expected_time_sec": 0.103935
+          },
+          {
+            "I_multiple": 20.0,
+            "expected_time_sec": 0.094806
+          }
+        ]
+      },
+      {
+        "band_mult": 5.0,
+        "points": [
+          {
+            "I_multiple": 1.5,
+            "expected_time_sec": 32.195081
+          },
+          {
+            "I_multiple": 2.0,
+            "expected_time_sec": 19.016246
+          },
+          {
+            "I_multiple": 3.0,
+            "expected_time_sec": 12.161052
+          },
+          {
+            "I_multiple": 5.0,
+            "expected_time_sec": 8.441628
+          },
+          {
+            "I_multiple": 8.0,
+            "expected_time_sec": 6.633709
+          },
+          {
+            "I_multiple": 10.0,
+            "expected_time_sec": 6.03378
+          },
+          {
+            "I_multiple": 15.0,
+            "expected_time_sec": 5.196755
+          },
+          {
+            "I_multiple": 20.0,
+            "expected_time_sec": 4.740316
+          }
+        ]
+      }
+    ]
+  },
+  "b4_ieee_very_inv": {
+    "description": "IEEE Very Inverse (Method 2) \u2014 Sensor 5817",
+    "sensor_id": 5817,
+    "curve_name": "V Inv",
+    "curve_id": 4,
+    "coefficients": {
+      "A_open": 19.610001,
+      "B_open": 0.491,
+      "p_open": 2.0,
+      "min_open": 0.045,
+      "min_clear": 0.045
+    },
+    "bands": [
+      {
+        "band_label": "0.2",
+        "open_time": 0.2
+      },
+      {
+        "band_label": "5",
+        "open_time": 5.0
+      }
+    ],
+    "golden_points_open": [
+      {
+        "band_mult": 0.2,
+        "points": [
+          {
+            "I_multiple": 1.5,
+            "expected_time_sec": 3.2358
+          },
+          {
+            "I_multiple": 2.0,
+            "expected_time_sec": 1.405533
+          },
+          {
+            "I_multiple": 3.0,
+            "expected_time_sec": 0.58845
+          },
+          {
+            "I_multiple": 5.0,
+            "expected_time_sec": 0.261617
+          },
+          {
+            "I_multiple": 8.0,
+            "expected_time_sec": 0.160454
+          },
+          {
+            "I_multiple": 10.0,
+            "expected_time_sec": 0.137816
+          },
+          {
+            "I_multiple": 15.0,
+            "expected_time_sec": 0.115709
+          },
+          {
+            "I_multiple": 20.0,
+            "expected_time_sec": 0.10803
+          }
+        ]
+      },
+      {
+        "band_mult": 5.0,
+        "points": [
+          {
+            "I_multiple": 1.5,
+            "expected_time_sec": 80.895
+          },
+          {
+            "I_multiple": 2.0,
+            "expected_time_sec": 35.138333
+          },
+          {
+            "I_multiple": 3.0,
+            "expected_time_sec": 14.71125
+          },
+          {
+            "I_multiple": 5.0,
+            "expected_time_sec": 6.540417
+          },
+          {
+            "I_multiple": 8.0,
+            "expected_time_sec": 4.011349
+          },
+          {
+            "I_multiple": 10.0,
+            "expected_time_sec": 3.445404
+          },
+          {
+            "I_multiple": 15.0,
+            "expected_time_sec": 2.892723
+          },
+          {
+            "I_multiple": 20.0,
+            "expected_time_sec": 2.700739
+          }
+        ]
+      }
+    ]
+  },
+  "b4_thermal": {
+    "description": "Thermal I2T (Method 1) \u2014 Sensor 15561",
+    "sensor_id": 15561,
+    "rating": 200,
+    "ltpu_calc": 1,
+    "ltpu_pickup_setting": 1.0,
+    "pickup_current": 200.0,
+    "ltd_method": 1,
+    "curve_name": "I2T",
+    "curve_id": 0,
+    "coefficients": {
+      "Ipu_open": 1.05,
+      "K_open": 0.8,
+      "n_open": 2.0,
+      "Ithresh_open": 3.0,
+      "min_time_open": 0.02,
+      "Ipu_clear": 1.2,
+      "K_clear": 1.2,
+      "n_clear": 2.0,
+      "Ithresh_clear": 3.0,
+      "min_time_clear": 0.08
+    },
+    "bands": [
+      {
+        "band_label": "1",
+        "open_time": 1.0
+      },
+      {
+        "band_label": "10",
+        "open_time": 10.0
+      }
+    ],
+    "golden_points_open": [
+      {
+        "band_mult": 1.0,
+        "points": [
+          {
+            "I_multiple": 1.1511,
+            "expected_time_sec": 10.924869
+          },
+          {
+            "I_multiple": 1.5,
+            "expected_time_sec": 4.12215
+          },
+          {
+            "I_multiple": 2.0,
+            "expected_time_sec": 1.973983
+          },
+          {
+            "I_multiple": 3.0,
+            "expected_time_sec": 0.8
+          },
+          {
+            "I_multiple": 5.0,
+            "expected_time_sec": 0.27611
+          },
+          {
+            "I_multiple": 8.0,
+            "expected_time_sec": 0.106378
+          },
+          {
+            "I_multiple": 10.0,
+            "expected_time_sec": 0.067869
+          },
+          {
+            "I_multiple": 15.0,
+            "expected_time_sec": 0.030071
+          }
+        ]
+      },
+      {
+        "band_mult": 10.0,
+        "points": [
+          {
+            "I_multiple": 1.1511,
+            "expected_time_sec": 109.24869
+          },
+          {
+            "I_multiple": 1.5,
+            "expected_time_sec": 41.221499
+          },
+          {
+            "I_multiple": 2.0,
+            "expected_time_sec": 19.739835
+          },
+          {
+            "I_multiple": 3.0,
+            "expected_time_sec": 8.0
+          },
+          {
+            "I_multiple": 5.0,
+            "expected_time_sec": 2.761099
+          },
+          {
+            "I_multiple": 8.0,
+            "expected_time_sec": 1.063783
+          },
+          {
+            "I_multiple": 10.0,
+            "expected_time_sec": 0.678688
+          },
+          {
+            "I_multiple": 15.0,
+            "expected_time_sec": 0.300711
+          }
+        ]
+      }
+    ]
+  },
+  "b4_thermal_tu": {
+    "description": "Thermal-TU I^2T (Method 4) \u2014 Sensor 7102",
+    "sensor_id": 7102,
+    "rating": 800,
+    "ltpu_calc": 1,
+    "ltpu_pickup_setting": 1.0,
+    "pickup_current": 800.0,
+    "ltd_method": 4,
+    "curve_name": "Thermal (I^2T)",
+    "curve_id": 0,
+    "coefficients": {
+      "Ipu_open": 1.12,
+      "alpha_open": -0.1,
+      "K_open": 825.0,
+      "n_open": 2.0,
+      "min_time_open": 0.025,
+      "Ithresh_open": 18.0,
+      "Ipu_clear": 1.12,
+      "alpha_clear": 0.1,
+      "K_clear": 825.0,
+      "n_clear": 2.0,
+      "min_time_clear": 0.08,
+      "Ithresh_clear": 18.0
+    },
+    "bands": [],
+    "golden_points_open": [
+      {
+        "band_mult": 1.0,
+        "points": [
+          {
+            "I_multiple": 1.0692,
+            "expected_time_sec": 1958.124343
+          },
+          {
+            "I_multiple": 1.5,
+            "expected_time_sec": 509.504761
+          },
+          {
+            "I_multiple": 2.0,
+            "expected_time_sec": 247.49084
+          },
+          {
+            "I_multiple": 3.0,
+            "expected_time_sec": 100.9638
+          },
+          {
+            "I_multiple": 5.0,
+            "expected_time_sec": 34.940474
+          },
+          {
+            "I_multiple": 8.0,
+            "expected_time_sec": 13.473054
+          },
+          {
+            "I_multiple": 10.0,
+            "expected_time_sec": 8.597369
+          }
+        ]
+      }
+    ]
+  },
+  "b4_thermal_tuf": {
+    "description": "Thermal-TUF Fuse I^4T (Method 5) \u2014 Sensor 7102",
+    "sensor_id": 7102,
+    "rating": 800,
+    "ltd_method": 5,
+    "curve_name": "Fuse (I^4T)",
+    "curve_id": 2,
+    "note": "Simplified TU formula: T = (rating/(I*(1-alpha)))^n \u00d7 K \u00d7 band_mult + TU_offset",
+    "golden_points_open": [
+      {
+        "band_mult": 1.0,
+        "points": [
+          {
+            "I_multiple": 1.5,
+            "expected_time_sec": 0.134916
+          },
+          {
+            "I_multiple": 2.0,
+            "expected_time_sec": 0.042688
+          },
+          {
+            "I_multiple": 3.0,
+            "expected_time_sec": 0.025
+          },
+          {
+            "I_multiple": 5.0,
+            "expected_time_sec": 0.025
+          },
+          {
+            "I_multiple": 8.0,
+            "expected_time_sec": 0.025
+          },
+          {
+            "I_multiple": 10.0,
+            "expected_time_sec": 0.025
+          }
+        ]
+      }
+    ]
+  },
+  "b5_tmt_spline": {
+    "description": "TMT Catmull-Rom Spline \u2014 Frame 3773, Class 0 (PCB 100A)",
+    "frame_id": 3773,
+    "breaker_class": "pcb",
+    "size": "100.0",
+    "trip_class": 0,
+    "raw_points": [
+      {
+        "current_amp": 1.03,
+        "time_sec": 9243.4053
+      },
+      {
+        "current_amp": 1.03,
+        "time_sec": 5023.7842
+      },
+      {
+        "current_amp": 1.03,
+        "time_sec": 2953.9114
+      },
+      {
+        "current_amp": 1.03,
+        "time_sec": 1771.3567
+      },
+      {
+        "current_amp": 1.08,
+        "time_sec": 702.8024
+      },
+      {
+        "current_amp": 1.16,
+        "time_sec": 273.4125
+      },
+      {
+        "current_amp": 1.21,
+        "time_sec": 180.8993
+      },
+      {
+        "current_amp": 1.34,
+        "time_sec": 96.4037
+      },
+      {
+        "current_amp": 1.47,
+        "time_sec": 58.9582
+      },
+      {
+        "current_amp": 1.61,
+        "time_sec": 38.2491
+      },
+      {
+        "current_amp": 2.03,
+        "time_sec": 18.1145
+      },
+      {
+        "current_amp": 2.51,
+        "time_sec": 10.0408
+      },
+      {
+        "current_amp": 3.08,
+        "time_sec": 6.0211
+      },
+      {
+        "current_amp": 3.6,
+        "time_sec": 4.0629
+      },
+      {
+        "current_amp": 4.02,
+        "time_sec": 3.0249
+      },
+      {
+        "current_amp": 4.66,
+        "time_sec": 1.8867
+      },
+      {
+        "current_amp": 5.45,
+        "time_sec": 1.0054
+      },
+      {
+        "current_amp": 5.87,
+        "time_sec": 0.6919
+      },
+      {
+        "current_amp": 6.14,
+        "time_sec": 0.5151
+      },
+      {
+        "current_amp": 6.43,
+        "time_sec": 0.3213
+      },
+      {
+        "current_amp": 6.8,
+        "time_sec": 0.1852
+      },
+      {
+        "current_amp": 7.12,
+        "time_sec": 0.1007
+      },
+      {
+        "current_amp": 7.25,
+        "time_sec": 0.0616
+      },
+      {
+        "current_amp": 7.45,
+        "time_sec": 0.0392
+      },
+      {
+        "current_amp": 7.54,
+        "time_sec": 0.0303
+      },
+      {
+        "current_amp": 7.73,
+        "time_sec": 0.0213
+      },
+      {
+        "current_amp": 8.1,
+        "time_sec": 0.0155
+      },
+      {
+        "current_amp": 8.72,
+        "time_sec": 0.0123
+      },
+      {
+        "current_amp": 9.56,
+        "time_sec": 0.0101
+      },
+      {
+        "current_amp": 10.68,
+        "time_sec": 0.0088
+      },
+      {
+        "current_amp": 11.82,
+        "time_sec": 0.0083
+      },
+      {
+        "current_amp": 13.82,
+        "time_sec": 0.0081
+      },
+      {
+        "current_amp": 20.16,
+        "time_sec": 0.0081
+      },
+      {
+        "current_amp": 30.25,
+        "time_sec": 0.0081
+      },
+      {
+        "current_amp": 101.13,
+        "time_sec": 0.0081
+      },
+      {
+        "current_amp": 144.87,
+        "time_sec": 0.0081
+      },
+      {
+        "current_amp": 200.0,
+        "time_sec": 0.0081
+      }
+    ],
+    "point_count": 37,
+    "expected_behavior": {
+      "interpolation_type": "catmull_rom_spline",
+      "reason": "point_count >= 4",
+      "output_passes_through_control_points": true,
+      "output_count_greater_than_input": true,
+      "monotonic_time_decrease": "generally true (some flat regions at extremes)",
+      "first_point_matches": {
+        "current_amp": 1.03,
+        "time_sec": 9243.4053
+      },
+      "last_point_matches": {
+        "current_amp": 200.0,
+        "time_sec": 0.0081
+      }
+    },
+    "validation_spot_checks": [
+      {
+        "description": "At I=2.03x, time should be ~18.1s (control point)",
+        "current_amp": 2.03,
+        "expected_time_sec": 18.1145,
+        "tolerance_pct": 0.1
+      },
+      {
+        "description": "At I=5.45x, time should be ~1.0s (control point)",
+        "current_amp": 5.45,
+        "expected_time_sec": 1.0054,
+        "tolerance_pct": 0.1
+      },
+      {
+        "description": "At I=10.68x, time should be ~0.009s (control point)",
+        "current_amp": 10.68,
+        "expected_time_sec": 0.0088,
+        "tolerance_pct": 0.1
+      }
+    ]
+  },
+  "b5_tmt_small": {
+    "description": "TMT Direct Copy \u2014 Small dataset (< 4 points)",
+    "note": "Synthetic test case: when < 4 points, return directly without spline",
+    "frame_id": "synthetic",
+    "raw_points": [
+      {
+        "current_amp": 2.0,
+        "time_sec": 50.0
+      },
+      {
+        "current_amp": 5.0,
+        "time_sec": 5.0
+      },
+      {
+        "current_amp": 10.0,
+        "time_sec": 0.5
+      }
+    ],
+    "point_count": 3,
+    "expected_behavior": {
+      "interpolation_type": "direct_copy",
+      "reason": "point_count < 4",
+      "output_equals_input": true
+    }
+  },
+  "b6_merge_lt_st_inst": {
+    "description": "Merge LT+ST+INST \u2014 Sensor 1 (100A)",
+    "sensor_id": 1,
+    "rating": 100,
+    "elements_present": {
+      "ltpu": true,
+      "stpu": true,
+      "inst": true,
+      "gfpu": false
+    },
+    "expected_merge_variant": "merge_lt_st_inst",
+    "std_bands": [
+      {
+        "band": "Min",
+        "open_time": 0.095,
+        "clear_time": 0.19
+      },
+      {
+        "band": "Intermediate",
+        "open_time": 0.21,
+        "clear_time": 0.32
+      },
+      {
+        "band": "Max",
+        "open_time": 0.35,
+        "clear_time": 0.5
+      }
+    ],
+    "synthetic_input_curves": {
+      "note": "These are simplified synthetic curves for testing merge logic",
+      "ltd_curve": [
+        [
+          1.1,
+          1000.0
+        ],
+        [
+          1.5,
+          100.0
+        ],
+        [
+          2.0,
+          30.0
+        ],
+        [
+          3.0,
+          10.0
+        ],
+        [
+          5.0,
+          3.0
+        ],
+        [
+          8.0,
+          1.0
+        ],
+        [
+          10.0,
+          0.5
+        ],
+        [
+          15.0,
+          0.2
+        ],
+        [
+          20.0,
+          0.1
+        ]
+      ],
+      "std_curve": [
+        [
+          3.0,
+          0.35
+        ],
+        [
+          5.0,
+          0.35
+        ],
+        [
+          8.0,
+          0.35
+        ],
+        [
+          10.0,
+          0.35
+        ],
+        [
+          15.0,
+          0.35
+        ],
+        [
+          20.0,
+          0.35
+        ],
+        [
+          50.0,
+          0.35
+        ]
+      ],
+      "inst_curve": [
+        [
+          10.0,
+          0.05
+        ],
+        [
+          10.0,
+          0.001
+        ],
+        [
+          100.0,
+          0.001
+        ]
+      ]
+    },
+    "merge_validation": {
+      "description": "The merged curve should follow LTD at low currents, transition to STD at ~3-5x, then to INST at ~10x",
+      "expected_transitions": [
+        {
+          "from": "LTD",
+          "to": "STD",
+          "approximate_current_range": [
+            3.0,
+            8.0
+          ],
+          "description": "LTD curve drops below STD flat band"
+        },
+        {
+          "from": "STD",
+          "to": "INST",
+          "approximate_current_range": [
+            8.0,
+            10.0
+          ],
+          "description": "STD flat band reaches INST pickup"
+        }
+      ],
+      "fillet_radius": 0.09,
+      "output_properties": [
+        "Monotonically decreasing time with increasing current",
+        "Smooth transitions (fillets) at element boundaries",
+        "Starts at LTD starting current",
+        "Ends at INST maximum current or max_amps"
+      ]
+    },
+    "log_log_intersection_test": {
+      "description": "Unit test for the log-log intersection helper",
+      "seg1": [
+        [
+          2.0,
+          30.0
+        ],
+        [
+          5.0,
+          3.0
+        ]
+      ],
+      "seg2": [
+        [
+          3.0,
+          0.35
+        ],
+        [
+          50.0,
+          0.35
+        ]
+      ],
+      "expected_intersection": {
+        "current": 11.7563,
+        "time": 0.35,
+        "note": "log-log intersection at I=11.76A, T=0.3500s"
+      }
+    }
+  }
+}

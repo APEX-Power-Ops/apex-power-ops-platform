@@ -1,0 +1,8 @@
+Metadata-Version: 2.4
+Name: apex-calc-engine
+Version: 0.1.0
+Summary: Shared calc-domain package extracted from the Apex control-plane bootstrap
+Requires-Python: >=3.11
+Requires-Dist: sqlalchemy>=2.0.0
+Provides-Extra: test
+Requires-Dist: pytest>=8.0.0; extra == "test"
