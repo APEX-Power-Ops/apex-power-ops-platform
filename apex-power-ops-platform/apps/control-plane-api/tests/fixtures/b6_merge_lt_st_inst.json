@@ -1,0 +1,172 @@
+{
+  "description": "Merge LT+ST+INST \u2014 Sensor 1 (100A)",
+  "sensor_id": 1,
+  "rating": 100,
+  "elements_present": {
+    "ltpu": true,
+    "stpu": true,
+    "inst": true,
+    "gfpu": false
+  },
+  "expected_merge_variant": "merge_lt_st_inst",
+  "std_bands": [
+    {
+      "band": "Min",
+      "open_time": 0.095,
+      "clear_time": 0.19
+    },
+    {
+      "band": "Intermediate",
+      "open_time": 0.21,
+      "clear_time": 0.32
+    },
+    {
+      "band": "Max",
+      "open_time": 0.35,
+      "clear_time": 0.5
+    }
+  ],
+  "synthetic_input_curves": {
+    "note": "These are simplified synthetic curves for testing merge logic",
+    "ltd_curve": [
+      [
+        1.1,
+        1000.0
+      ],
+      [
+        1.5,
+        100.0
+      ],
+      [
+        2.0,
+        30.0
+      ],
+      [
+        3.0,
+        10.0
+      ],
+      [
+        5.0,
+        3.0
+      ],
+      [
+        8.0,
+        1.0
+      ],
+      [
+        10.0,
+        0.5
+      ],
+      [
+        15.0,
+        0.2
+      ],
+      [
+        20.0,
+        0.1
+      ]
+    ],
+    "std_curve": [
+      [
+        3.0,
+        0.35
+      ],
+      [
+        5.0,
+        0.35
+      ],
+      [
+        8.0,
+        0.35
+      ],
+      [
+        10.0,
+        0.35
+      ],
+      [
+        15.0,
+        0.35
+      ],
+      [
+        20.0,
+        0.35
+      ],
+      [
+        50.0,
+        0.35
+      ]
+    ],
+    "inst_curve": [
+      [
+        10.0,
+        0.05
+      ],
+      [
+        10.0,
+        0.001
+      ],
+      [
+        100.0,
+        0.001
+      ]
+    ]
+  },
+  "merge_validation": {
+    "description": "The merged curve should follow LTD at low currents, transition to STD at ~3-5x, then to INST at ~10x",
+    "expected_transitions": [
+      {
+        "from": "LTD",
+        "to": "STD",
+        "approximate_current_range": [
+          3.0,
+          8.0
+        ],
+        "description": "LTD curve drops below STD flat band"
+      },
+      {
+        "from": "STD",
+        "to": "INST",
+        "approximate_current_range": [
+          8.0,
+          10.0
+        ],
+        "description": "STD flat band reaches INST pickup"
+      }
+    ],
+    "fillet_radius": 0.09,
+    "output_properties": [
+      "Monotonically decreasing time with increasing current",
+      "Smooth transitions (fillets) at element boundaries",
+      "Starts at LTD starting current",
+      "Ends at INST maximum current or max_amps"
+    ]
+  },
+  "log_log_intersection_test": {
+    "description": "Unit test for the log-log intersection helper",
+    "seg1": [
+      [
+        2.0,
+        30.0
+      ],
+      [
+        5.0,
+        3.0
+      ]
+    ],
+    "seg2": [
+      [
+        3.0,
+        0.35
+      ],
+      [
+        50.0,
+        0.35
+      ]
+    ],
+    "expected_intersection": {
+      "current": 11.7563,
+      "time": 0.35,
+      "note": "log-log intersection at I=11.76A, T=0.3500s"
+    }
+  }
+}
