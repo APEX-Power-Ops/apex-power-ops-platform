@@ -1,0 +1,11 @@
+# Runtime dependencies
+-e ../../packages/calc-engine
+sqlalchemy>=2.0.0
+psycopg2-binary>=2.9.0
+python-dotenv>=1.0.0
+fastapi>=0.100.0
+uvicorn>=0.23.0
+pydantic>=2.0.0
+PyJWT[crypto]>=2.10.0
+
+# Install test and local-development tools from requirements-dev.txt

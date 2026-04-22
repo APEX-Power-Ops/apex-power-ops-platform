@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>APEX Power Operations - Authorization</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --bg: #f8fafc;
+    --panel: #ffffff;
+    --text: #0f172a;
+    --muted: #475569;
+    --border: #cbd5e1;
+    --primary: #2563eb;
+    --primary-dark: #1d4ed8;
+    --success-bg: #dcfce7;
+    --success-text: #166534;
+    --warning-bg: #fef3c7;
+    --warning-text: #92400e;
+    --error-bg: #fee2e2;
+    --error-text: #991b1b;
+    --pending-bg: #e0f2fe;
+    --pending-text: #0c4a6e;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    background: linear-gradient(180deg, #eff6ff 0%, var(--bg) 100%);
+    color: var(--text);
+  }
+
+  .shell {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  .card {
+    width: 100%;
+    max-width: 760px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(15, 23, 42, 0.12);
+  }
+
+  .hero {
+    padding: 28px 28px 20px;
+    background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 60%, #3b82f6 100%);
+    color: #fff;
+  }
+
+  .hero h1 {
+    margin: 0;
+    font-size: 30px;
+    line-height: 1.1;
+  }
+
+  .hero p {
+    margin: 8px 0 0;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 14px;
+  }
+
+  .body {
+    padding: 24px 28px 28px;
+  }
+
+  .banner {
+    padding: 12px 14px;
+    border-radius: 10px;
+    margin-bottom: 18px;
+    font-size: 14px;
+    border: 1px solid transparent;
+  }
+
+  .banner.pending { background: var(--pending-bg); color: var(--pending-text); border-color: #bae6fd; }
+  .banner.success { background: var(--success-bg); color: var(--success-text); border-color: #86efac; }
+  .banner.warning { background: var(--warning-bg); color: var(--warning-text); border-color: #fcd34d; }
+  .banner.error { background: var(--error-bg); color: var(--error-text); border-color: #fca5a5; }
+
+  .section { margin-top: 20px; }
+  .section h2 {
+    margin: 0 0 10px;
+    font-size: 15px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+  }
+
+  .copy {
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--muted);
+  }
+
+  .list {
+    margin: 14px 0 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 10px;
+  }
+
+  .list li {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: #f8fafc;
+  }
+
+  .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #16a34a;
+    margin-top: 5px;
+    flex: 0 0 auto;
+  }
+
+  .meta {
+    display: grid;
+    gap: 10px;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    margin-top: 12px;
+  }
+
+  .meta-card {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    background: #f8fafc;
+  }
+
+  .meta-card .label {
+    font-size: 12px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 6px;
+  }
+
+  .meta-card .value {
+    font-size: 14px;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+  }
+
+  .auth-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  input[type="email"],
+  input[type="password"] {
+    flex: 1 1 280px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 14px;
+  }
+
+  .signin-stack {
+    display: grid;
+    gap: 12px;
+  }
+
+  .signin-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--muted);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .signin-divider::before,
+  .signin-divider::after {
+    content: "";
+    flex: 1 1 auto;
+    height: 1px;
+    background: var(--border);
+  }
+
+  button {
+    border: none;
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  button:disabled {
+    opacity: 0.6;
+    cursor: wait;
+  }
+
+  .btn-primary { background: var(--primary); color: #fff; }
+  .btn-primary:hover:not(:disabled) { background: var(--primary-dark); }
+  .btn-secondary { background: #fff; color: var(--text); border: 1px solid var(--border); }
+  .btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
+
+  .hidden { display: none; }
+
+  .footnote {
+    margin-top: 18px;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--muted);
+  }
+  code { font-family: Consolas, monospace; font-size: 12px; }
+  @media (max-width: 640px) {
+    .hero, .body { padding-left: 18px; padding-right: 18px; }
+    .hero h1 { font-size: 24px; }
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="card">
+    <div class="hero">
+      <h1>APEX Power Operations</h1>
+      <p>Governed authorization for ChatGPT Desktop control-plane access</p>
+    </div>
+    <div class="body">
+      <div id="status-banner" class="banner pending">Loading authorization request...</div>
+
+      <div id="missing-state" class="section hidden">
+        <h2>Authorization Request</h2>
+        <p class="copy">This page must be reached through the OAuth authorization flow. Start the connection again from ChatGPT Desktop so Supabase can provide a valid <code>authorization_id</code>.</p>
+      </div>
+
+      <div id="signin-state" class="section hidden">
+        <h2>Sign In</h2>
+        <p class="copy">Sign in with your existing account password, or fall back to a Magic Link if you do not have a password session yet. Once your session is active, this page will load the pending authorization request automatically.</p>
+        <div class="signin-stack">
+          <div class="auth-row">
+            <input id="email-input" type="email" placeholder="you@example.com" autocomplete="email username">
+            <input id="password-input" type="password" placeholder="Password" autocomplete="current-password">
+            <button id="signin-btn" class="btn-primary">Sign In with Password</button>
+          </div>
+          <div class="signin-divider">or</div>
+          <div class="auth-row">
+            <input id="magic-link-email-input" type="email" placeholder="you@example.com" autocomplete="email">
+            <button id="send-link-btn" class="btn-secondary">Send Magic Link</button>
+          </div>
+        </div>
+        <p class="footnote">Password sign-in stays on this page. The Magic Link fallback redirects back to this consent page and preserves the pending authorization.</p>
+      </div>
+
+      <div id="consent-state" class="hidden">
+        <div class="section">
+          <h2>Authorization Request</h2>
+          <p class="copy">ChatGPT Desktop is requesting bounded access to the APEX control plane. Approval grants only the governed workflow surface exposed by the MCP service.</p>
+
+          <ul class="list">
+            <li><span class="dot"></span><span><strong>Task Packets:</strong> Retrieve approved work packets and bounded workflow context.</span></li>
+            <li><span class="dot"></span><span><strong>Controlled Writes:</strong> Submit packet-scoped actions and review decisions only through governed endpoints.</span></li>
+            <li><span class="dot"></span><span><strong>Read-Only State:</strong> View lane status, job runs, queue artifacts, and validation evidence.</span></li>
+          </ul>
+        </div>
+
+        <div class="section">
+          <h2>Request Details</h2>
+          <div class="meta">
+            <div class="meta-card">
+              <div class="label">Signed In User</div>
+              <div id="signed-in-user" class="value">-</div>
+            </div>
+            <div class="meta-card">
+              <div class="label">Requesting Client</div>
+              <div id="client-name" class="value">-</div>
+            </div>
+            <div class="meta-card">
+              <div class="label">Redirect URI</div>
+              <div id="redirect-uri" class="value">-</div>
+            </div>
+            <div class="meta-card">
+              <div class="label">Requested Scope</div>
+              <div id="requested-scope" class="value">openid profile email</div>
+            </div>
+          </div>
+
+          <div class="btn-row">
+            <button id="approve-btn" class="btn-primary">Approve and Continue</button>
+            <button id="deny-btn" class="btn-secondary">Deny</button>
+            <button id="signout-btn" class="btn-secondary">Sign Out</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let authConfig = null;
+let supabaseClient = null;
+let authDetails = null;
+let currentUser = null;
+let actionInFlight = false;
+
+function $(id) {
+  return document.getElementById(id);
+}
+
+function setBanner(kind, message) {
+  const banner = $('status-banner');
+  banner.className = `banner ${kind}`;
+  banner.textContent = message;
+}
+
+function showState(stateId) {
+  for (const id of ['missing-state', 'signin-state', 'consent-state']) {
+    $(id).classList.add('hidden');
+  }
+  $(stateId).classList.remove('hidden');
+}
+
+function currentConsentUrl() {
+  return new URL(window.location.href);
+}
+
+async function getJson(url) {
+  const resp = await fetch(url, { credentials: 'same-origin' });
+  if (!resp.ok) {
+    const body = await resp.text();
+    throw new Error(body || `HTTP ${resp.status}`);
+  }
+  return resp.json();
+}
+
+async function loadAuthConfig() {
+  authConfig = await getJson('/api/v1/auth/config');
+  if (!authConfig.supabase_enabled) {
+    throw new Error('Supabase browser auth is not configured on this host.');
+  }
+  if (!window.supabase?.createClient) {
+    throw new Error('Supabase client library failed to load.');
+  }
+
+  supabaseClient = window.supabase.createClient(
+    authConfig.supabase_url,
+    authConfig.supabase_anon_key,
+  );
+}
+
+async function completeMagicLinkIfPresent() {
+  const url = currentConsentUrl();
+  const tokenHash = url.searchParams.get('token_hash');
+  const type = url.searchParams.get('type');
+
+  if (!tokenHash || !type) return;
+
+  setBanner('pending', 'Completing Magic Link sign-in...');
+  const { error } = await supabaseClient.auth.verifyOtp({ token_hash: tokenHash, type });
+  if (error) {
+    throw new Error(`Magic Link verification failed: ${error.message}`);
+  }
+
+  url.searchParams.delete('token_hash');
+  url.searchParams.delete('type');
+  url.searchParams.delete('access_token');
+  url.searchParams.delete('refresh_token');
+  window.history.replaceState({}, document.title, url.pathname + url.search + url.hash);
+}
+
+async function refreshUser() {
+  const { data: sessionData, error: sessionError } = await supabaseClient.auth.getSession();
+  if (sessionError) {
+    throw new Error(`Failed to load auth session: ${sessionError.message}`);
+  }
+
+  currentUser = sessionData?.session?.user || null;
+  return currentUser;
+}
+
+function updateConsentDetails() {
+  $('signed-in-user').textContent = currentUser?.email || currentUser?.id || '-';
+  $('client-name').textContent = authDetails?.client?.name || authDetails?.client_name || authDetails?.client_id || '-';
+  $('redirect-uri').textContent = authDetails?.redirect_uri || '-';
+  $('requested-scope').textContent = authDetails?.scope || 'openid profile email';
+}
+
+async function handleAuthorizationDetailsError(error) {
+  const message = String(error?.message || error || '').trim();
+  const normalized = message.toLowerCase();
+
+  if (normalized.includes('user from sub claim in jwt does not exist')) {
+    try {
+      await supabaseClient.auth.signOut();
+    } catch (_unused) {
+      // Best-effort cleanup only.
+    }
+    currentUser = null;
+    authDetails = null;
+    showState('signin-state');
+    setBanner('warning', 'Your saved sign-in session is no longer valid. Sign in again to continue with this authorization request.');
+    return true;
+  }
+
+  if (
+    normalized.includes('authorization request cannot be processed') ||
+    normalized.includes('authorization not found')
+  ) {
+    currentUser = null;
+    authDetails = null;
+    showState('missing-state');
+    setBanner('warning', 'This authorization request expired or was already used. Restart the connection from ChatGPT Desktop to create a fresh request.');
+    return true;
+  }
+
+  return false;
+}
+
+async function loadAuthorizationRequest() {
+  const authorizationId = currentConsentUrl().searchParams.get('authorization_id');
+  if (!authorizationId) {
+    showState('missing-state');
+    setBanner('warning', 'Missing authorization request context.');
+    return;
+  }
+
+  if (!currentUser) {
+    showState('signin-state');
+    setBanner('pending', 'Sign in to continue with this authorization request.');
+    return;
+  }
+
+  setBanner('pending', 'Loading authorization details...');
+  const { data, error } = await supabaseClient.auth.oauth.getAuthorizationDetails(authorizationId);
+  if (error) {
+    if (await handleAuthorizationDetailsError(error)) {
+      return;
+    }
+    throw new Error(`Failed to load authorization details: ${error.message}`);
+  }
+
+  authDetails = data;
+  updateConsentDetails();
+  showState('consent-state');
+  setBanner('success', 'Authorization request loaded. Review the bounded scope below.');
+}
+
+function setSignInControlsDisabled(disabled) {
+  $('signin-btn').disabled = disabled;
+  $('send-link-btn').disabled = disabled;
+}
+
+async function signInWithPassword() {
+  if (actionInFlight) return;
+  const email = $('email-input').value.trim();
+  const password = $('password-input').value;
+  if (!email) {
+    setBanner('warning', 'Enter an email address first.');
+    return;
+  }
+  if (!password) {
+    setBanner('warning', 'Enter your password first.');
+    return;
+  }
+
+  actionInFlight = true;
+  setSignInControlsDisabled(true);
+  setBanner('pending', `Signing in as ${email}...`);
+  try {
+    const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+    if (error) {
+      throw new Error(`Password sign-in failed: ${error.message}`);
+    }
+    $('password-input').value = '';
+    setBanner('success', 'Signed in. Loading authorization request...');
+    await refreshUser();
+    await loadAuthorizationRequest();
+  } catch (error) {
+    setBanner('error', error.message || String(error));
+  } finally {
+    actionInFlight = false;
+    setSignInControlsDisabled(false);
+  }
+}
+
+async function sendMagicLink() {
+  if (actionInFlight) return;
+  const email = $('magic-link-email-input').value.trim();
+  if (!email) {
+    setBanner('warning', 'Enter an email address first.');
+    return;
+  }
+
+  actionInFlight = true;
+  setSignInControlsDisabled(true);
+  setBanner('pending', `Sending Magic Link to ${email}...`);
+  try {
+    const redirectTo = currentConsentUrl().toString();
+    const { error } = await supabaseClient.auth.signInWithOtp({
+      email,
+      options: {
+        shouldCreateUser: true,
+        emailRedirectTo: redirectTo,
+      },
+    });
+    if (error) {
+      throw new Error(`Failed to send Magic Link: ${error.message}`);
+    }
+    setBanner('success', `Magic Link sent to ${email}. Return here after sign-in completes.`);
+  } catch (error) {
+    setBanner('error', error.message || String(error));
+  } finally {
+    actionInFlight = false;
+    setSignInControlsDisabled(false);
+  }
+}
+
+async function approveRequest() {
+  if (actionInFlight || !authDetails) return;
+  actionInFlight = true;
+  $('approve-btn').disabled = true;
+  $('deny-btn').disabled = true;
+  $('signout-btn').disabled = true;
+  setBanner('pending', 'Approving request and redirecting back to ChatGPT...');
+  try {
+    const authorizationId = currentConsentUrl().searchParams.get('authorization_id');
+    const { data, error } = await supabaseClient.auth.oauth.approveAuthorization(authorizationId);
+    if (error) {
+      throw new Error(`Failed to approve authorization: ${error.message}`);
+    }
+    if (!data?.redirect_to) {
+      throw new Error('Authorization approval did not return a redirect target.');
+    }
+    window.location.href = data.redirect_to;
+  } catch (error) {
+    setBanner('error', error.message || String(error));
+    actionInFlight = false;
+    $('approve-btn').disabled = false;
+    $('deny-btn').disabled = false;
+    $('signout-btn').disabled = false;
+  }
+}
+
+async function denyRequest() {
+  if (actionInFlight || !authDetails) return;
+  actionInFlight = true;
+  $('approve-btn').disabled = true;
+  $('deny-btn').disabled = true;
+  $('signout-btn').disabled = true;
+  setBanner('pending', 'Denying request...');
+  try {
+    const authorizationId = currentConsentUrl().searchParams.get('authorization_id');
+    const { data, error } = await supabaseClient.auth.oauth.denyAuthorization(authorizationId);
+    if (error) {
+      throw new Error(`Failed to deny authorization: ${error.message}`);
+    }
+    if (!data?.redirect_to) {
+      throw new Error('Authorization denial did not return a redirect target.');
+    }
+    window.location.href = data.redirect_to;
+  } catch (error) {
+    setBanner('error', error.message || String(error));
+    actionInFlight = false;
+    $('approve-btn').disabled = false;
+    $('deny-btn').disabled = false;
+    $('signout-btn').disabled = false;
+  }
+}
+
+async function signOut() {
+  if (!supabaseClient || actionInFlight) return;
+  actionInFlight = true;
+  $('signout-btn').disabled = true;
+  setBanner('pending', 'Signing out...');
+  try {
+    const { error } = await supabaseClient.auth.signOut();
+    if (error) {
+      throw new Error(`Sign out failed: ${error.message}`);
+    }
+    currentUser = null;
+    authDetails = null;
+    showState('signin-state');
+    setBanner('pending', 'Signed out. Sign in again to continue with this authorization request.');
+  } catch (error) {
+    setBanner('error', error.message || String(error));
+  } finally {
+    actionInFlight = false;
+    $('signout-btn').disabled = false;
+  }
+}
+
+async function boot() {
+  try {
+    await loadAuthConfig();
+    await completeMagicLinkIfPresent();
+    await refreshUser();
+    await loadAuthorizationRequest();
+
+    supabaseClient.auth.onAuthStateChange(async (_event, session) => {
+      currentUser = session?.user || null;
+      try {
+        await loadAuthorizationRequest();
+      } catch (error) {
+        setBanner('error', error.message || String(error));
+      }
+    });
+  } catch (error) {
+    showState('missing-state');
+    setBanner('error', error.message || String(error));
+  }
+}
+
+$('signin-btn').addEventListener('click', signInWithPassword);
+$('send-link-btn').addEventListener('click', sendMagicLink);
+$('approve-btn').addEventListener('click', approveRequest);
+$('deny-btn').addEventListener('click', denyRequest);
+$('signout-btn').addEventListener('click', signOut);
+
+boot();
+</script>
+</body>
+</html>
