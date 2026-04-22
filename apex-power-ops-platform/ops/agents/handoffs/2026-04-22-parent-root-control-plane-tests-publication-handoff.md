@@ -1,7 +1,7 @@
 # Parent-Root Control-Plane Tests Publication Handoff
 ## Date: 2026-04-22
 ## Updated by: GitHub Copilot (GPT-5.4)
-## Scope: Active next-step packet for the remaining `apps/control-plane-api/tests` backlog under `C:/APEX Platform/apex-power-ops-platform`
+## Scope: Historical record for the published remaining `apps/control-plane-api/tests` backlog under `C:/APEX Platform/apex-power-ops-platform`
 
 ## 1. Summary
 
@@ -9,7 +9,13 @@ The bootstrap, Class A scaffold, package source, operations-web runtime, mutatio
 
 After the control-plane support packet landed, the remaining untracked residue under `apps/control-plane-api` collapsed to a single lane-local backlog: 66 files, all under `tests/`.
 
-This packet introduces the remaining fixtures, route tests, integration tests, queue/worker tests, and demo/browser tests so the control-plane lane is fully introduced.
+This packet introduced the remaining fixtures, route tests, integration tests, queue/worker tests, and demo/browser tests so the control-plane lane is fully introduced.
+
+Publication outcome:
+
+1. committed on parent-root `clean-main` as `211cbac`
+2. pushed to `origin/clean-main` on 2026-04-22
+3. closed as the published control-plane tests follow-on to the control-plane support tranche
 
 ## 2. Why This Packet Is Next
 
@@ -22,7 +28,7 @@ Measured from the parent git root at `C:/APEX Platform` on 2026-04-22 after the 
 
 ## 3. Packet Intent
 
-Use this packet to introduce the remaining control-plane validation assets:
+This packet introduced the remaining control-plane validation assets:
 
 1. lane-local pytest fixtures in `tests/conftest.py`
 2. JSON golden fixtures under `tests/fixtures/`
@@ -44,9 +50,9 @@ This packet is intentionally narrow:
 2. it does not reopen already-published runtime-core or support files
 3. it closes the lane cleanly without mixing in unrelated repo surfaces
 
-## 6. Operator Execution Path
+## 6. Historical Execution Path
 
-Preferred task path from `C:/APEX Platform/apex-power-ops-platform`:
+Preferred task path from `C:/APEX Platform/apex-power-ops-platform` when this packet was executed:
 
 1. run `Preview parent-root control-plane tests packet`
 2. run `Stage parent-root control-plane tests packet` only when the preview is correct
@@ -79,4 +85,4 @@ Before commit, the smallest relevant checks are:
 
 If this packet lands cleanly, the active code-bearing app lanes and shared package lanes are fully introduced on parent-root `clean-main`.
 
-The next logical work then shifts to selective `docs/`, `ops/`, `knowledge/`, or deferred package surfaces such as `packages/api-contracts`, each as its own bounded publication lane.
+The next logical work then shifts to selective `docs/`, `ops/`, `knowledge/`, or deferred small scaffold/package surfaces such as `packages/api-contracts`, each as its own bounded publication lane.

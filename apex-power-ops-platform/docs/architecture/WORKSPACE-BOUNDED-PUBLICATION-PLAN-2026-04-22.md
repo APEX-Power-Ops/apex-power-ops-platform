@@ -123,11 +123,11 @@ Current concrete artifact for the completed scaffold step:
 
 Current next-step interpretation:
 
-- the scaffold, package-source, operations-web runtime, mutation-seam runtime, control-plane runtime-core, and control-plane support steps are complete; the next bounded follow-on is publication for the remaining control-plane test backlog so the active app lanes are fully introduced
+- the scaffold, package-source, active app-lane runtime/support/test steps, and shared package-source steps are complete; the next bounded follow-on is the residual scaffold/doc packet outside the active app lanes
 
 Current concrete artifact for that next step:
 
-- `ops/agents/handoffs/2026-04-22-parent-root-control-plane-tests-publication-handoff.md`
+- `ops/agents/handoffs/2026-04-22-parent-root-residual-scaffold-publication-handoff.md`
 
 ## Guardrails
 
