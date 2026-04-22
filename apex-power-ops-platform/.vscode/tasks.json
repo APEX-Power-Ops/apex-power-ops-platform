@@ -624,6 +624,39 @@
       "problemMatcher": []
     },
     {
+      "label": "Preview parent-root infra database packet",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-Command",
+        "$paths = @('apex-power-ops-platform/infra'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Stage parent-root infra database packet",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-Command",
+        "$paths = @('apex-power-ops-platform/infra'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Parent-root infra database packet staged diff",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-Command",
+        "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/infra"
+      ],
+      "problemMatcher": []
+    },
+    {
       "label": "Platform subtree staged diff",
       "type": "shell",
       "command": "pwsh",

@@ -123,11 +123,11 @@ Current concrete artifact for the completed scaffold step:
 
 Current next-step interpretation:
 
-- the scaffold, package-source, active app-lane runtime/support/test steps, and shared package-source steps are complete; the next bounded follow-on is the residual scaffold/doc packet outside the active app lanes
+- the scaffold, package-source, active app-lane runtime/support/test steps, shared package-source steps, and the residual scaffold/doc step are complete; the next bounded follow-on is the `infra` database lane before the larger docs, ops, knowledge, and archive backlogs
 
 Current concrete artifact for that next step:
 
-- `ops/agents/handoffs/2026-04-22-parent-root-residual-scaffold-publication-handoff.md`
+- `ops/agents/handoffs/2026-04-22-parent-root-infra-database-publication-handoff.md`
 
 ## Guardrails
 
