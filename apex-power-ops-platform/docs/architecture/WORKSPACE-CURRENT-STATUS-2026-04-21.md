@@ -90,7 +90,7 @@ Confirmed resolved in this audit cycle:
 Confirmed still open:
 
 1. broader hosted browser-proof and deployment-proof follow-through remains optional, but the governed backend seam on `https://control.apexpowerops.com` is no longer the active blocker because the public host now advertises and serves `/api/v1/neta/apparatus/{apparatus_id}/resources`
-2. local deploy-worktree reconciliation and publication remain a separate optional lane: treat `C:/APEX Platform/apex-power-ops-platform-deploy-worktree` as divergent publication residue rather than as evidence that hosted packet `001af` has reopened, and route any continuation through `ops/agents/handoffs/2026-04-22-deploy-worktree-reconciliation-and-publication-handoff.md`
+2. local deploy-worktree reconciliation and publication remain a separate optional lane: treat `C:/APEX Platform/apex-power-ops-platform-deploy-worktree` as divergent publication residue rather than as evidence that hosted packet `001af` has reopened; a dedicated deploy-worktree handoff is not bundled inside this bootstrap packet
 3. initial parent-root publication remains a separate bootstrap concern because the platform subtree still appears as `?? apex-power-ops-platform/` from `C:/APEX Platform`; bounded path staging is now governed, but normal diff-based packet publication against tracked `HEAD` state is not yet available, so route that tranche through `ops/agents/handoffs/2026-04-22-parent-root-bootstrap-publication-handoff.md`
 
 ## Structural Assessment
@@ -109,7 +109,7 @@ Confirmed still open:
 3. source-domain import strategy is understood, but not yet fully materialized through lane-by-lane implementation plans
 4. active app entrypoints are now documented and task-aligned, and `apps/operations-web` now has hosted route smoke, local browser smoke, and a promoted-host browser-plus-seam smoke path for the current governed shell contract; the latest public-host rerun shows health, readiness, OAuth discovery, MCP metadata, unauthenticated `401 Bearer` behavior, deployed OpenAPI advertisement, and handler-owned apparatus-route responses all green on `https://control.apexpowerops.com`
 5. workstation-level host validation for `apps/control-plane-api` is now a repo-owned readiness-and-seam lane with bootstrap, readiness, restart, and local apparatus smoke tasks; on the current workstation the lane now closes as `host-ready`, and the default local host on `8010` passes bounded apparatus seam smoke after a deterministic restart while the hosted lane is separately closed with public proof
-6. the hosted route-promotion step is now closed and proof-backed rather than implicit: use `ops/agents/handoffs/2026-04-21-apex-unification-001af-public-control-plane-route-promotion-execution-handoff.md` plus `apps/control-plane-api/PUBLIC-APPARATUS-ROUTE-PROMOTION-CHECKLIST-2026-04-21.md` for hosted proof and future rerun handling
+6. the hosted route-promotion step is now closed and proof-backed rather than implicit: use `../apps/control-plane-api/PUBLIC-APPARATUS-ROUTE-PROMOTION-CHECKLIST-2026-04-21.md` for the bootstrap-local rerun path; earlier hosted execution handoffs are not bundled inside this packet
 7. parent-root git operations are now safer and more explicit, but the current publication reality is still bootstrap-level because the platform subtree has not yet been intentionally introduced to the parent repo index
 
 ## Current Implementation Posture

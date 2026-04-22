@@ -41,6 +41,9 @@ The parent-root `.gitignore` now carries a scoped exception for `apex-power-ops-
 
 For the first parent-root introduction packet, use `ops/agents/handoffs/2026-04-22-parent-root-bootstrap-publication-handoff.md`.
 
+Current packet constraint:
+- this bootstrap subtree does not yet contain every active platform lane under `apex-power-ops-platform/`; parent-root active lanes that already exist today are referenced below with `../...` paths from the subtree root
+
 Git safety rules:
 - do not use `git add .` from `C:/APEX Platform` unless an explicit cross-lane operation is intended
 - if the platform subtree is still untracked, expect `git diff` against `HEAD` to remain sparse until files are staged
@@ -61,11 +64,13 @@ Preferred local tooling for analysis and inventory work:
 Bootstrap commands on Windows:
 
 ```powershell
-Set-Location 'C:/APEX Platform/apex-power-ops-platform'
+$platformRoot = 'C:/APEX Platform/apex-power-ops-platform'
+$repoRoot = 'C:/APEX Platform'
+Set-Location $platformRoot
 python -m venv .venv
-.venv/Scripts/python.exe -m pip install --upgrade pip setuptools wheel
-Set-Location 'apps/control-plane-api'
-../../.venv/Scripts/python.exe -m pip install -r requirements-dev.txt
+& "$platformRoot/.venv/Scripts/python.exe" -m pip install --upgrade pip setuptools wheel
+Set-Location "$repoRoot/apps/control-plane-api"
+& "$platformRoot/.venv/Scripts/python.exe" -m pip install -r requirements-dev.txt
 ```
 
 If a different interpreter must be used for workspace tasks, set:
@@ -121,19 +126,19 @@ VS Code tasks:
 - `Operations web promoted-host smoke`
 
 Direct script entry points:
-- `apps/control-plane-api/scripts/smoke_remote_control_plane_authoring_queue.py`
-- `apps/control-plane-api/scripts/check_local_host_readiness.py`
-- `apps/control-plane-api/scripts/bootstrap_local_env.py`
-- `apps/control-plane-api/scripts/smoke_deployed_control_plane.py`
-- `apps/control-plane-api/scripts/check_schema_drift.py`
+- `../apps/control-plane-api/scripts/smoke_remote_control_plane_authoring_queue.py`
+- `../apps/control-plane-api/scripts/check_local_host_readiness.py`
+- `../apps/control-plane-api/scripts/bootstrap_local_env.py`
+- `../apps/control-plane-api/scripts/smoke_deployed_control_plane.py`
+- `../apps/control-plane-api/scripts/check_schema_drift.py`
 
 ## Local Contract Sources
 
 Use these local files first:
-- `docs/authority/`
-- `apps/control-plane-api/docs/contracts/CHATGPT-REMOTE-CONTROL-PLANE-TOOL-SCHEMAS-2026-03-28.json`
-- `apps/control-plane-api/README.md`
-- `apps/control-plane-api/PUBLIC-APPARATUS-ROUTE-PROMOTION-CHECKLIST-2026-04-21.md` when a future hosted regression needs a compact rerun checklist rather than repo-local runtime repair
+- `C:/APEX Platform/Platform-Authority/`
+- `../apps/control-plane-api/docs/contracts/CHATGPT-REMOTE-CONTROL-PLANE-TOOL-SCHEMAS-2026-03-28.json`
+- `../apps/control-plane-api/README.md`
+- `../apps/control-plane-api/PUBLIC-APPARATUS-ROUTE-PROMOTION-CHECKLIST-2026-04-21.md` when a future hosted regression needs a compact rerun checklist rather than repo-local runtime repair
 
 Use `C:/APEX Platform/Platform-Authority/` for strategic authority above the bootstrap root.
 
@@ -142,14 +147,14 @@ Use `C:/APEX Platform/Platform-Authority/` for strategic authority above the boo
 Current expected local validation slices:
 
 ```powershell
-Set-Location 'C:/APEX Platform/apex-power-ops-platform/apps/control-plane-api'
+Set-Location 'C:/APEX Platform/apps/control-plane-api'
 $env:DATABASE_URL='postgresql://placeholder:placeholder@localhost:5432/placeholder'
-../../.venv/Scripts/python.exe -m pytest tests/test_control_plane.py tests/test_control_plane_worker.py tests/test_control_plane_sync.py tests/test_dispatch_dedicated_mcp_surface_check.py tests/test_dispatch_deployed_control_plane_smoke.py tests/test_github_mcp_transport.py -q
+& 'C:/APEX Platform/apex-power-ops-platform/.venv/Scripts/python.exe' -m pytest tests/test_control_plane.py tests/test_control_plane_worker.py tests/test_control_plane_sync.py tests/test_dispatch_dedicated_mcp_surface_check.py tests/test_dispatch_deployed_control_plane_smoke.py tests/test_github_mcp_transport.py -q
 ```
 
 ```powershell
 Set-Location 'C:/APEX Platform/apex-power-ops-platform'
-.venv/Scripts/python.exe apps/control-plane-api/scripts/smoke_remote_control_plane_authoring_queue.py --task-id demo-task --target-path Development/staging/example-guide/SG-CT-EXAMPLE-GUIDE.md --content 'draft content' --dry-run
+.venv/Scripts/python.exe ../apps/control-plane-api/scripts/smoke_remote_control_plane_authoring_queue.py --task-id demo-task --target-path Development/staging/example-guide/SG-CT-EXAMPLE-GUIDE.md --content 'draft content' --dry-run
 ```
 
 ## Governance Intent
@@ -160,8 +165,8 @@ Current external frontier:
 
 1. the workstation-local control-plane lane is green
 2. the hosted apparatus-route deployment lane on `https://control.apexpowerops.com` is now closed for packet `001af`
-3. use `apps/control-plane-api/PUBLIC-APPARATUS-ROUTE-PROMOTION-CHECKLIST-2026-04-21.md` as the compact rerun checklist if a future deploy regresses the hosted seam
-4. treat `C:/APEX Platform/apex-power-ops-platform-deploy-worktree` as a separate optional reconciliation or publication lane, not as evidence that hosted packet `001af` has reopened; route that tranche through `ops/agents/handoffs/2026-04-22-deploy-worktree-reconciliation-and-publication-handoff.md`
+3. use `../apps/control-plane-api/PUBLIC-APPARATUS-ROUTE-PROMOTION-CHECKLIST-2026-04-21.md` as the compact rerun checklist if a future deploy regresses the hosted seam
+4. treat `C:/APEX Platform/apex-power-ops-platform-deploy-worktree` as a separate optional reconciliation or publication lane, not as evidence that hosted packet `001af` has reopened; a deploy-worktree handoff is not bundled inside this bootstrap packet yet
 
 That means:
 - live operator docs should prefer platform-root paths
