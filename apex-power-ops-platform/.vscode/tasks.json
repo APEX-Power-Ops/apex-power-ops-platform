@@ -459,6 +459,39 @@
       "problemMatcher": []
     },
     {
+      "label": "Preview parent-root mutation-seam runtime packet",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-Command",
+        "$paths = @('apex-power-ops-platform/apps/mutation-seam/app', 'apex-power-ops-platform/apps/mutation-seam/migrations', 'apex-power-ops-platform/apps/mutation-seam/run_persisted_validation.py', 'apex-power-ops-platform/apps/mutation-seam/run_schedule_bootstrap.py', 'apex-power-ops-platform/apps/mutation-seam/test_store.py', 'apex-power-ops-platform/apps/mutation-seam/tests', 'apex-power-ops-platform/apps/mutation-seam/validate.py'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Stage parent-root mutation-seam runtime packet",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-Command",
+        "$paths = @('apex-power-ops-platform/apps/mutation-seam/app', 'apex-power-ops-platform/apps/mutation-seam/migrations', 'apex-power-ops-platform/apps/mutation-seam/run_persisted_validation.py', 'apex-power-ops-platform/apps/mutation-seam/run_schedule_bootstrap.py', 'apex-power-ops-platform/apps/mutation-seam/test_store.py', 'apex-power-ops-platform/apps/mutation-seam/tests', 'apex-power-ops-platform/apps/mutation-seam/validate.py'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Parent-root mutation-seam runtime packet staged diff",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-Command",
+        "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/apps/mutation-seam/app apex-power-ops-platform/apps/mutation-seam/migrations apex-power-ops-platform/apps/mutation-seam/run_persisted_validation.py apex-power-ops-platform/apps/mutation-seam/run_schedule_bootstrap.py apex-power-ops-platform/apps/mutation-seam/test_store.py apex-power-ops-platform/apps/mutation-seam/tests apex-power-ops-platform/apps/mutation-seam/validate.py"
+      ],
+      "problemMatcher": []
+    },
+    {
       "label": "Platform subtree staged diff",
       "type": "shell",
       "command": "pwsh",
