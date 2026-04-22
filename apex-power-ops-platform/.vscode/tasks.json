@@ -492,6 +492,39 @@
       "problemMatcher": []
     },
     {
+      "label": "Preview parent-root control-plane core packet",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-Command",
+        "$paths = @('apex-power-ops-platform/apps/control-plane-api/config.py', 'apex-power-ops-platform/apps/control-plane-api/main.py', 'apex-power-ops-platform/apps/control-plane-api/demo', 'apex-power-ops-platform/apps/control-plane-api/docs/contracts/CHATGPT-REMOTE-CONTROL-PLANE-TOOL-SCHEMAS-2026-03-28.json', 'apex-power-ops-platform/apps/control-plane-api/models', 'apex-power-ops-platform/apps/control-plane-api/services', 'apex-power-ops-platform/apps/control-plane-api/scripts/smoke_deployed_control_plane.py', 'apex-power-ops-platform/apps/control-plane-api/tests/__init__.py', 'apex-power-ops-platform/apps/control-plane-api/tests/test_control_plane.py', 'apex-power-ops-platform/apps/control-plane-api/tests/test_github_mcp_transport.py', 'apex-power-ops-platform/apps/control-plane-api/tests/test_health.py', 'apex-power-ops-platform/apps/control-plane-api/tests/test_mcp_transport.py', 'apex-power-ops-platform/apps/control-plane-api/tests/test_oauth_consent_route.py', 'apex-power-ops-platform/apps/control-plane-api/tests/test_smoke_deployed_control_plane.py', 'apex-power-ops-platform/apps/control-plane-api/tests/test_supabase_mcp_transport.py'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Stage parent-root control-plane core packet",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-Command",
+        "$paths = @('apex-power-ops-platform/apps/control-plane-api/config.py', 'apex-power-ops-platform/apps/control-plane-api/main.py', 'apex-power-ops-platform/apps/control-plane-api/demo', 'apex-power-ops-platform/apps/control-plane-api/docs/contracts/CHATGPT-REMOTE-CONTROL-PLANE-TOOL-SCHEMAS-2026-03-28.json', 'apex-power-ops-platform/apps/control-plane-api/models', 'apex-power-ops-platform/apps/control-plane-api/services', 'apex-power-ops-platform/apps/control-plane-api/scripts/smoke_deployed_control_plane.py', 'apex-power-ops-platform/apps/control-plane-api/tests/__init__.py', 'apex-power-ops-platform/apps/control-plane-api/tests/test_control_plane.py', 'apex-power-ops-platform/apps/control-plane-api/tests/test_github_mcp_transport.py', 'apex-power-ops-platform/apps/control-plane-api/tests/test_health.py', 'apex-power-ops-platform/apps/control-plane-api/tests/test_mcp_transport.py', 'apex-power-ops-platform/apps/control-plane-api/tests/test_oauth_consent_route.py', 'apex-power-ops-platform/apps/control-plane-api/tests/test_smoke_deployed_control_plane.py', 'apex-power-ops-platform/apps/control-plane-api/tests/test_supabase_mcp_transport.py'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Parent-root control-plane core packet staged diff",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-Command",
+        "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/apps/control-plane-api/config.py apex-power-ops-platform/apps/control-plane-api/main.py apex-power-ops-platform/apps/control-plane-api/demo apex-power-ops-platform/apps/control-plane-api/docs/contracts/CHATGPT-REMOTE-CONTROL-PLANE-TOOL-SCHEMAS-2026-03-28.json apex-power-ops-platform/apps/control-plane-api/models apex-power-ops-platform/apps/control-plane-api/services apex-power-ops-platform/apps/control-plane-api/scripts/smoke_deployed_control_plane.py apex-power-ops-platform/apps/control-plane-api/tests/__init__.py apex-power-ops-platform/apps/control-plane-api/tests/test_control_plane.py apex-power-ops-platform/apps/control-plane-api/tests/test_github_mcp_transport.py apex-power-ops-platform/apps/control-plane-api/tests/test_health.py apex-power-ops-platform/apps/control-plane-api/tests/test_mcp_transport.py apex-power-ops-platform/apps/control-plane-api/tests/test_oauth_consent_route.py apex-power-ops-platform/apps/control-plane-api/tests/test_smoke_deployed_control_plane.py apex-power-ops-platform/apps/control-plane-api/tests/test_supabase_mcp_transport.py"
+      ],
+      "problemMatcher": []
+    },
+    {
       "label": "Platform subtree staged diff",
       "type": "shell",
       "command": "pwsh",
