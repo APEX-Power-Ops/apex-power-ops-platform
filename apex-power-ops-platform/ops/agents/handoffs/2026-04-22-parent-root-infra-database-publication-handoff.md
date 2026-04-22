@@ -1,13 +1,19 @@
 # Parent-Root Infra Database Publication Handoff
 ## Date: 2026-04-22
 ## Updated by: GitHub Copilot (GPT-5.4)
-## Scope: Active next-step packet for the bounded `infra/database` lane under `C:/APEX Platform/apex-power-ops-platform`
+## Scope: Historical record for the bounded `infra/database` lane under `C:/APEX Platform/apex-power-ops-platform`
 
 ## 1. Summary
 
 The active shared packages, active app lanes, and residual scaffold/doc surfaces are now published on parent-root `clean-main`.
 
-The next smallest remaining substantive lane is `infra`, which currently consists entirely of 46 files under `infra/database`. This packet introduces the bounded infra-database lane before the larger `docs`, `ops`, `knowledge`, and `archive` backlogs.
+The next smallest remaining substantive lane was `infra`, which consisted entirely of 46 files under `infra/database`. This packet introduced the bounded infra-database lane before the larger `docs`, `ops`, `knowledge`, and `archive` backlogs.
+
+Publication outcome:
+
+1. committed on parent-root `clean-main` as `73b7df4`
+2. pushed to `origin/clean-main` on 2026-04-22
+3. closed as the published infra-database follow-on to the residual scaffold tranche
 
 ## 2. Why This Packet Is Next
 
@@ -22,7 +28,7 @@ Measured from the parent git root at `C:/APEX Platform` on 2026-04-22 after the 
 
 ## 3. Packet Intent
 
-Use this packet to introduce the bounded infra-database lane:
+This packet introduced the bounded infra-database lane:
 
 1. migration manifests and staging runbooks for identity, org, and work domains
 2. source-lineage SQL/data reference slices preserved for future comparison
@@ -45,9 +51,9 @@ This packet is intentionally narrow:
 3. it does not mix in generated local artifacts from app lanes
 4. it avoids reopening already-published application and package surfaces
 
-## 6. Operator Execution Path
+## 6. Historical Execution Path
 
-Preferred task path from `C:/APEX Platform/apex-power-ops-platform`:
+Preferred task path from `C:/APEX Platform/apex-power-ops-platform` when this packet was executed:
 
 1. run `Preview parent-root infra database packet`
 2. run `Stage parent-root infra database packet` only when the preview is correct
