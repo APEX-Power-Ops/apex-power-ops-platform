@@ -200,6 +200,7 @@ Exit condition:
 - [x] define the post-mutation-seam control-plane core follow-on packet in `ops/agents/handoffs/2026-04-22-parent-root-control-plane-core-publication-handoff.md`
 - [x] define the post-control-plane-core support follow-on packet in `ops/agents/handoffs/2026-04-22-parent-root-control-plane-support-publication-handoff.md`
 - [x] define the post-control-plane-support test follow-on packet in `ops/agents/handoffs/2026-04-22-parent-root-control-plane-tests-publication-handoff.md`
+- [x] define the post-control-plane residual scaffold/doc follow-on packet in `ops/agents/handoffs/2026-04-22-parent-root-residual-scaffold-publication-handoff.md`
 - [ ] default future publication work to explicit platform file paths or bounded packet pathspecs rather than whole-subtree staging
 - [ ] reserve `git add -- apex-power-ops-platform/` for explicit cutover or intentionally broad publication work only
 - [ ] treat unrelated tracked changes elsewhere under `C:/APEX Platform` as separate lanes unless a cross-lane operation is explicitly intended

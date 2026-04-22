@@ -591,6 +591,39 @@
       "problemMatcher": []
     },
     {
+      "label": "Preview parent-root residual scaffold packet",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-Command",
+        "$paths = @('apex-power-ops-platform/apps/field-surface/README.md', 'apex-power-ops-platform/apps/field-surface/package.json', 'apex-power-ops-platform/apps/field-surface/public', 'apex-power-ops-platform/apps/forms-studio/README.md', 'apex-power-ops-platform/apps/integration-surface/README.md', 'apex-power-ops-platform/apps/lead-surface/README.md', 'apex-power-ops-platform/apps/pm-surface/README.md', 'apex-power-ops-platform/packages/api-contracts/README.md'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Stage parent-root residual scaffold packet",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-Command",
+        "$paths = @('apex-power-ops-platform/apps/field-surface/README.md', 'apex-power-ops-platform/apps/field-surface/package.json', 'apex-power-ops-platform/apps/field-surface/public', 'apex-power-ops-platform/apps/forms-studio/README.md', 'apex-power-ops-platform/apps/integration-surface/README.md', 'apex-power-ops-platform/apps/lead-surface/README.md', 'apex-power-ops-platform/apps/pm-surface/README.md', 'apex-power-ops-platform/packages/api-contracts/README.md'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Parent-root residual scaffold packet staged diff",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-Command",
+        "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/apps/field-surface/README.md apex-power-ops-platform/apps/field-surface/package.json apex-power-ops-platform/apps/field-surface/public apex-power-ops-platform/apps/forms-studio/README.md apex-power-ops-platform/apps/integration-surface/README.md apex-power-ops-platform/apps/lead-surface/README.md apex-power-ops-platform/apps/pm-surface/README.md apex-power-ops-platform/packages/api-contracts/README.md"
+      ],
+      "problemMatcher": []
+    },
+    {
       "label": "Platform subtree staged diff",
       "type": "shell",
       "command": "pwsh",
