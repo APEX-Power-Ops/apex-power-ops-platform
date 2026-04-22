@@ -1,0 +1,281 @@
+{
+  "version": "2026-03-28",
+  "purpose": "Machine-readable input schemas and approval modes for the first remote ChatGPT control-plane MCP service.",
+  "tools": [
+    {
+      "name": "list_task_packets",
+      "approval_mode": "policy_allowed",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "lane": { "type": "string" },
+          "status": { "type": "string" },
+          "primary_repo": { "type": "string" },
+          "risk_level": { "type": "string" },
+          "limit": { "type": "integer", "minimum": 1, "maximum": 100 }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "fetch_task_packet",
+      "approval_mode": "policy_allowed",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "task_id": { "type": "string" }
+        },
+        "required": ["task_id"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "update_task_packet_status",
+      "approval_mode": "policy_allowed",
+      "allowedTransitions": [
+        ["pending", "prepared"],
+        ["prepared", "in_review"],
+        ["in_review", "escalated"],
+        ["in_review", "approved_for_local_action"],
+        ["approved_for_local_action", "awaiting_results"],
+        ["awaiting_results", "ready_for_closeout"]
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "task_id": { "type": "string" },
+          "new_status": { "type": "string" },
+          "reasoning_summary": { "type": "string" }
+        },
+        "required": ["task_id", "new_status", "reasoning_summary"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "create_review_decision",
+      "approval_mode": "policy_allowed",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "subject_type": { "type": "string" },
+          "subject_id": { "type": "string" },
+          "decision": { "type": "string" },
+          "reasoning_summary": { "type": "string" },
+          "required_next_action": { "type": "string" },
+          "evidence_links": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        },
+        "required": ["subject_type", "subject_id", "decision", "reasoning_summary"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_lane_priorities",
+      "approval_mode": "policy_allowed",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "lane": { "type": "string" },
+          "limit": { "type": "integer", "minimum": 1, "maximum": 50 }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "fetch_priority_item",
+      "approval_mode": "policy_allowed",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "lane": { "type": "string" },
+          "item_id": { "type": "string" }
+        },
+        "required": ["lane", "item_id"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_image_assets",
+      "approval_mode": "policy_allowed",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "guide_slug": { "type": "string" },
+          "status": { "type": "string" },
+          "sourcing_method": { "type": "string" },
+          "limit": { "type": "integer", "minimum": 1, "maximum": 100 }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "fetch_image_asset",
+      "approval_mode": "policy_allowed",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "asset_id": { "type": "string" }
+        },
+        "required": ["asset_id"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "update_image_asset_status",
+      "approval_mode": "policy_allowed",
+      "allowedTransitions": [
+        ["tagged", "in_progress"],
+        ["in_progress", "review"],
+        ["review", "integrated"],
+        ["review", "deferred"]
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "asset_id": { "type": "string" },
+          "new_status": { "type": "string" },
+          "decision_basis": { "type": "string" }
+        },
+        "required": ["asset_id", "new_status", "decision_basis"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "queue_local_action",
+      "approval_mode": "explicit_user_confirmation_required",
+      "allowedActionTypes": [
+        "prepare_packet_briefing",
+        "run_image_integration",
+        "run_render_validation",
+        "collect_validation_evidence",
+        "write_staging_authoring_candidate"
+      ],
+      "actionPolicies": {
+        "write_staging_authoring_candidate": {
+          "requiredTaskPacketStatuses": [
+            "approved_for_local_action",
+            "awaiting_results"
+          ],
+          "requiredTaskPacketFields": [
+            "authoring.enabled",
+            "authoring.mode",
+            "authoring.allowed_target_files",
+            "route.allow_auto_apply"
+          ],
+          "requiredRequestPayloadFields": [
+            "path",
+            "content"
+          ],
+          "requiredSubjectType": "authoring_target",
+          "subjectIdMustMatchPayloadPath": true,
+          "pathConstraint": "Development/staging/**",
+          "queueAcceptedStatusTransition": [
+            "approved_for_local_action",
+            "awaiting_results"
+          ],
+          "notes": "Remote callers may request packet-scoped staging authoring only when the packet is already approved for local action or is still awaiting results from the same bounded authoring run, the packet explicitly enables authoring, the target file matches the packet allowlist, and the queue request keeps subject_id aligned with request_payload.path."
+        }
+      },
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "action_type": { "type": "string" },
+          "task_id": { "type": "string" },
+          "subject_type": { "type": "string" },
+          "subject_id": { "type": "string" },
+          "request_payload": { "type": "object" },
+          "priority": {
+            "type": "string",
+            "enum": ["low", "normal", "high", "urgent"]
+          },
+          "confirmed_by_user": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "required": ["action_type", "subject_type", "subject_id", "request_payload", "confirmed_by_user"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "queue_render_validation",
+      "approval_mode": "policy_allowed",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "guide_slug": { "type": "string" },
+          "validation_target": { "type": "string" },
+          "expected_asset_ids": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        },
+        "required": ["guide_slug", "validation_target", "expected_asset_ids"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_job_runs",
+      "approval_mode": "policy_allowed",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string" },
+          "subject_type": { "type": "string" },
+          "subject_id": { "type": "string" },
+          "limit": { "type": "integer", "minimum": 1, "maximum": 100 }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "fetch_job_run",
+      "approval_mode": "policy_allowed",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "job_id": { "type": "string" }
+        },
+        "required": ["job_id"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "fetch_validation_artifact",
+      "approval_mode": "policy_allowed",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "artifact_id": { "type": "string" },
+          "subject_type": { "type": "string" },
+          "subject_id": { "type": "string" }
+        },
+        "additionalProperties": false,
+        "allOf": [
+          {
+            "anyOf": [
+              { "required": ["artifact_id"] },
+              { "required": ["subject_type", "subject_id"] }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "attach_closeout_note",
+      "approval_mode": "policy_allowed",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "subject_type": { "type": "string" },
+          "subject_id": { "type": "string" },
+          "note": { "type": "string" }
+        },
+        "required": ["subject_type", "subject_id", "note"],
+        "additionalProperties": false
+      }
+    }
+  ]
+}
