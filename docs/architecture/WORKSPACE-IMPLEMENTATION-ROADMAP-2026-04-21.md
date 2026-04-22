@@ -6,7 +6,7 @@ Scope: `C:/APEX Platform/apex-power-ops-platform`
 
 ## Purpose
 
-This roadmap defines the implementation sequence required to turn the current bootstrap repo into the fully realized platform workspace described in `docs/architecture/WORKSPACE-MASTER-PLAN-2026-04-21.md`.
+This roadmap defines the implementation sequence required to turn the current bootstrap repo into a fully realized platform workspace using the audit, status, and checklist surfaces bundled in this packet today.
 
 It is intentionally execution-focused. The goal is not to keep auditing the workspace; the goal is to finish normalizing it.
 
@@ -242,6 +242,5 @@ The roadmap is complete when:
 
 ## Companion Documents
 
-- `docs/architecture/WORKSPACE-MASTER-PLAN-2026-04-21.md`
 - `docs/architecture/WORKSPACE-CURRENT-STATUS-2026-04-21.md`
 - `docs/architecture/WORKSPACE-STRUCTURE-GOVERNANCE-AUDIT-2026-04-21.md`

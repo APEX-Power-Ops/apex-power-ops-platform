@@ -7,8 +7,8 @@
       "command": "pwsh",
       "args": [
         "-NoProfile",
-        "-File",
-        "apps/control-plane-api/scripts/run_platform_api_local.ps1"
+        "-Command",
+        "$repoRoot = (Resolve-Path (Join-Path '${workspaceFolder}' '..')).Path; $script = Join-Path $repoRoot 'apps/control-plane-api/scripts/run_platform_api_local.ps1'; if (-not (Test-Path $script)) { throw 'apps/control-plane-api is not present under the parent repo root for this bootstrap packet.' }; & $script"
       ],
       "options": {
         "cwd": "${workspaceFolder}",
@@ -26,9 +26,8 @@
       "command": "pwsh",
       "args": [
         "-NoProfile",
-        "-File",
-        "apps/control-plane-api/scripts/run_platform_api_local.ps1",
-        "-Restart"
+        "-Command",
+        "$repoRoot = (Resolve-Path (Join-Path '${workspaceFolder}' '..')).Path; $script = Join-Path $repoRoot 'apps/control-plane-api/scripts/run_platform_api_local.ps1'; if (-not (Test-Path $script)) { throw 'apps/control-plane-api is not present under the parent repo root for this bootstrap packet.' }; & $script -Restart"
       ],
       "options": {
         "cwd": "${workspaceFolder}",
@@ -55,7 +54,7 @@
         "-q"
       ],
       "options": {
-        "cwd": "${workspaceFolder}\\apps\\control-plane-api",
+        "cwd": "${workspaceFolder}\\..\\apps\\control-plane-api",
         "env": {
           "DATABASE_URL": "postgresql://postgres:postgres@localhost:5432/postgres"
         }
@@ -75,7 +74,7 @@
         "--require-apparatus-study-route"
       ],
       "options": {
-        "cwd": "${workspaceFolder}"
+        "cwd": "${workspaceFolder}\\.."
       },
       "problemMatcher": [],
       "group": "test"
@@ -92,7 +91,7 @@
         "--dry-run"
       ],
       "options": {
-        "cwd": "${workspaceFolder}"
+        "cwd": "${workspaceFolder}\\.."
       },
       "problemMatcher": [],
       "group": "test"
@@ -108,7 +107,7 @@
         "--require-apparatus-study-route"
       ],
       "options": {
-        "cwd": "${workspaceFolder}"
+        "cwd": "${workspaceFolder}\\.."
       },
       "problemMatcher": [],
       "group": "test"
@@ -121,7 +120,7 @@
         "apps/control-plane-api/scripts/check_local_host_readiness.py"
       ],
       "options": {
-        "cwd": "${workspaceFolder}"
+        "cwd": "${workspaceFolder}\\.."
       },
       "problemMatcher": [],
       "group": "test"
@@ -139,7 +138,7 @@
         "--require-apparatus-study-route"
       ],
       "options": {
-        "cwd": "${workspaceFolder}"
+        "cwd": "${workspaceFolder}\\.."
       },
       "problemMatcher": [],
       "group": "test"
@@ -152,7 +151,7 @@
         "apps/control-plane-api/scripts/bootstrap_local_env.py"
       ],
       "options": {
-        "cwd": "${workspaceFolder}"
+        "cwd": "${workspaceFolder}\\.."
       },
       "problemMatcher": [],
       "group": "test"
@@ -176,16 +175,14 @@
     {
       "label": "Forms engine smoke",
       "type": "shell",
-      "command": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
+      "command": "pwsh",
       "args": [
-        "-m",
-        "apex_forms_engine.smoke"
+        "-NoProfile",
+        "-Command",
+        "$repoRoot = (Resolve-Path (Join-Path '${workspaceFolder}' '..')).Path; $lane = Join-Path $repoRoot 'packages/forms-engine/src'; if (-not (Test-Path $lane)) { throw 'packages/forms-engine is not present under the parent repo root for this bootstrap packet.' }; $env:PYTHONPATH='packages/forms-engine/src'; & '${workspaceFolder}\\.venv\\Scripts\\python.exe' -m apex_forms_engine.smoke"
       ],
       "options": {
-        "cwd": "${workspaceFolder}",
-        "env": {
-          "PYTHONPATH": "packages/forms-engine/src"
-        }
+        "cwd": "${workspaceFolder}\\.."
       },
       "problemMatcher": [],
       "group": "test"
@@ -193,18 +190,14 @@
     {
       "label": "Forms engine tests",
       "type": "shell",
-      "command": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
+      "command": "pwsh",
       "args": [
-        "-m",
-        "pytest",
-        "packages/forms-engine/tests",
-        "-q"
+        "-NoProfile",
+        "-Command",
+        "$repoRoot = (Resolve-Path (Join-Path '${workspaceFolder}' '..')).Path; $lane = Join-Path $repoRoot 'packages/forms-engine/tests'; if (-not (Test-Path $lane)) { throw 'packages/forms-engine is not present under the parent repo root for this bootstrap packet.' }; $env:PYTHONPATH='packages/forms-engine/src'; & '${workspaceFolder}\\.venv\\Scripts\\python.exe' -m pytest packages/forms-engine/tests -q"
       ],
       "options": {
-        "cwd": "${workspaceFolder}",
-        "env": {
-          "PYTHONPATH": "packages/forms-engine/src"
-        }
+        "cwd": "${workspaceFolder}\\.."
       },
       "problemMatcher": [],
       "group": "test"
@@ -212,9 +205,14 @@
     {
       "label": "Forms engine clean artifacts",
       "type": "shell",
-      "command": "Get-ChildItem -Path \"packages/forms-engine/src/apex_forms_engine/artifacts/*\" -Exclude \".gitignore\" | Remove-Item -Force",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-Command",
+        "$repoRoot = (Resolve-Path (Join-Path '${workspaceFolder}' '..')).Path; $artifacts = Join-Path $repoRoot 'packages/forms-engine/src/apex_forms_engine/artifacts'; if (-not (Test-Path $artifacts)) { throw 'packages/forms-engine artifacts are not present under the parent repo root for this bootstrap packet.' }; Get-ChildItem -Path (Join-Path $artifacts '*') -Exclude '.gitignore' | Remove-Item -Force"
+      ],
       "options": {
-        "cwd": "${workspaceFolder}"
+        "cwd": "${workspaceFolder}\\.."
       },
       "problemMatcher": [],
       "group": "test"
@@ -222,15 +220,14 @@
       {
         "label": "Forms engine compile",
         "type": "shell",
-        "command": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
+        "command": "pwsh",
         "args": [
-          "-m",
-          "compileall",
-          "packages/forms-engine/src",
-          "packages/forms-engine/tests"
+          "-NoProfile",
+          "-Command",
+          "$repoRoot = (Resolve-Path (Join-Path '${workspaceFolder}' '..')).Path; $src = Join-Path $repoRoot 'packages/forms-engine/src'; if (-not (Test-Path $src)) { throw 'packages/forms-engine is not present under the parent repo root for this bootstrap packet.' }; & '${workspaceFolder}\\.venv\\Scripts\\python.exe' -m compileall packages/forms-engine/src packages/forms-engine/tests"
         ],
         "options": {
-          "cwd": "${workspaceFolder}"
+          "cwd": "${workspaceFolder}\\.."
         },
         "problemMatcher": [],
         "group": "test"
@@ -248,13 +245,11 @@
     {
       "label": "Run operations web local",
       "type": "shell",
-      "command": "pnpm",
+      "command": "pwsh",
       "args": [
-        "--dir",
-        "c:\\APEX Platform\\apex-power-ops-platform",
-        "--filter",
-        "@apex/operations-web",
-        "dev"
+        "-NoProfile",
+        "-Command",
+        "$repoRoot = (Resolve-Path (Join-Path '${workspaceFolder}' '..')).Path; $lane = Join-Path $repoRoot 'apps/operations-web'; if (-not (Test-Path $lane)) { throw 'apps/operations-web is not present under the parent repo root for this bootstrap packet.' }; pnpm --dir $repoRoot --filter @apex/operations-web dev"
       ],
       "isBackground": true,
       "problemMatcher": [],
@@ -263,13 +258,11 @@
     {
       "label": "Operations web typecheck",
       "type": "shell",
-      "command": "pnpm",
+      "command": "pwsh",
       "args": [
-        "--dir",
-        "c:\\APEX Platform\\apex-power-ops-platform",
-        "--filter",
-        "@apex/operations-web",
-        "typecheck"
+        "-NoProfile",
+        "-Command",
+        "$repoRoot = (Resolve-Path (Join-Path '${workspaceFolder}' '..')).Path; $lane = Join-Path $repoRoot 'apps/operations-web'; if (-not (Test-Path $lane)) { throw 'apps/operations-web is not present under the parent repo root for this bootstrap packet.' }; pnpm --dir $repoRoot --filter @apex/operations-web typecheck"
       ],
       "problemMatcher": [],
       "group": "test"
@@ -277,13 +270,11 @@
     {
       "label": "Operations web browser smoke",
       "type": "shell",
-      "command": "pnpm",
+      "command": "pwsh",
       "args": [
-        "--dir",
-        "c:\\APEX Platform\\apex-power-ops-platform",
-        "--filter",
-        "@apex/operations-web",
-        "smoke:browser"
+        "-NoProfile",
+        "-Command",
+        "$repoRoot = (Resolve-Path (Join-Path '${workspaceFolder}' '..')).Path; $lane = Join-Path $repoRoot 'apps/operations-web'; if (-not (Test-Path $lane)) { throw 'apps/operations-web is not present under the parent repo root for this bootstrap packet.' }; pnpm --dir $repoRoot --filter @apex/operations-web smoke:browser"
       ],
       "problemMatcher": [],
       "group": "test"
@@ -291,20 +282,12 @@
     {
       "label": "Operations web promoted-host smoke",
       "type": "shell",
-      "command": "pnpm",
+      "command": "pwsh",
       "args": [
-        "--dir",
-        "c:\\APEX Platform\\apex-power-ops-platform",
-        "--filter",
-        "@apex/operations-web",
-        "smoke:promoted-host"
+        "-NoProfile",
+        "-Command",
+        "$repoRoot = (Resolve-Path (Join-Path '${workspaceFolder}' '..')).Path; $lane = Join-Path $repoRoot 'apps/operations-web'; if (-not (Test-Path $lane)) { throw 'apps/operations-web is not present under the parent repo root for this bootstrap packet.' }; $env:OPERATIONS_WEB_CONTROL_PLANE_BASE_URL='https://control.apexpowerops.com'; pnpm --dir $repoRoot --filter @apex/operations-web smoke:promoted-host"
       ],
-      "options": {
-        "cwd": "${workspaceFolder}",
-        "env": {
-          "OPERATIONS_WEB_CONTROL_PLANE_BASE_URL": "https://control.apexpowerops.com"
-        }
-      },
       "problemMatcher": [],
       "group": "test"
     },
@@ -388,17 +371,14 @@
     {
       "label": "Run mutation seam local",
       "type": "shell",
-      "command": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
+      "command": "pwsh",
       "args": [
-        "-m",
-        "uvicorn",
-        "app.main:app",
-        "--reload",
-        "--port",
-        "8000"
+        "-NoProfile",
+        "-Command",
+        "$repoRoot = (Resolve-Path (Join-Path '${workspaceFolder}' '..')).Path; $lane = Join-Path $repoRoot 'apps/mutation-seam'; if (-not (Test-Path $lane)) { throw 'apps/mutation-seam is not present under the parent repo root for this bootstrap packet.' }; & '${workspaceFolder}\\.venv\\Scripts\\python.exe' -m uvicorn app.main:app --reload --port 8000"
       ],
       "options": {
-        "cwd": "${workspaceFolder}\\apps\\mutation-seam"
+        "cwd": "${workspaceFolder}\\..\\apps\\mutation-seam"
       },
       "isBackground": true,
       "problemMatcher": [],
@@ -407,18 +387,14 @@
     {
       "label": "Mutation seam tests",
       "type": "shell",
-      "command": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
+      "command": "pwsh",
       "args": [
-        "-m",
-        "pytest",
-        "tests/",
-        "-v"
+        "-NoProfile",
+        "-Command",
+        "$repoRoot = (Resolve-Path (Join-Path '${workspaceFolder}' '..')).Path; $lane = Join-Path $repoRoot 'apps/mutation-seam/tests'; if (-not (Test-Path $lane)) { throw 'apps/mutation-seam is not present under the parent repo root for this bootstrap packet.' }; $env:SEAM_STORE_BACKEND='memory'; & '${workspaceFolder}\\.venv\\Scripts\\python.exe' -m pytest tests/ -v"
       ],
       "options": {
-        "cwd": "${workspaceFolder}\\apps\\mutation-seam",
-        "env": {
-          "SEAM_STORE_BACKEND": "memory"
-        }
+        "cwd": "${workspaceFolder}\\..\\apps\\mutation-seam"
       },
       "problemMatcher": [],
       "group": "test"
