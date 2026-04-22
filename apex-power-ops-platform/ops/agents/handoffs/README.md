@@ -11,9 +11,10 @@ Packet `2026-04-21-apex-unification-001af` is now the completed execution record
 Use these files first:
 
 1. `../../../../apps/control-plane-api/PUBLIC-APPARATUS-ROUTE-PROMOTION-CHECKLIST-2026-04-21.md`
-2. `2026-04-22-parent-root-package-source-publication-handoff.md` for the current next bounded parent-root publication tranche
-3. `2026-04-22-parent-root-class-a-scaffold-publication-handoff.md` when historical context on the published Class A scaffold tranche is needed
-4. `2026-04-22-parent-root-bootstrap-publication-handoff.md` only when historical context on the completed first parent-root publication tranche is needed
+2. `2026-04-22-parent-root-operations-web-runtime-publication-handoff.md` for the current next bounded parent-root publication tranche
+3. `2026-04-22-parent-root-package-source-publication-handoff.md` when historical context on the published package source tranche is needed
+4. `2026-04-22-parent-root-class-a-scaffold-publication-handoff.md` when historical context on the published Class A scaffold tranche is needed
+5. `2026-04-22-parent-root-bootstrap-publication-handoff.md` only when historical context on the completed first parent-root publication tranche is needed
 
 Historical hosted execution handoffs are not bundled inside this bootstrap packet.
 
@@ -58,4 +59,4 @@ These are maintenance items only. They do not reopen packet `001af`:
 
 1. broader documentation refresh outside the closure packet and checklist surfaces
 2. separate deploy-worktree reconciliation or publication if that tranche is being promoted next; a deploy-worktree handoff is not bundled inside this bootstrap packet yet
-3. future parent-root publication for `C:/APEX Platform/apex-power-ops-platform` as routine bounded staging against tracked `HEAD`; use `2026-04-22-parent-root-package-source-publication-handoff.md` for the current active tranche and review the Class A and bootstrap handoffs only as historical closure records
+3. future parent-root publication for `C:/APEX Platform/apex-power-ops-platform` as routine bounded staging against tracked `HEAD`; use `2026-04-22-parent-root-operations-web-runtime-publication-handoff.md` for the current active tranche and review the package, Class A, and bootstrap handoffs only as historical closure records
