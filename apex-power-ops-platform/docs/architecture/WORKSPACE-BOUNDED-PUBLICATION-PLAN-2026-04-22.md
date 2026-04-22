@@ -37,13 +37,13 @@ Interpretation:
 
 1. the dominant untracked mass is not active runtime code; it is `archive/`, `knowledge/`, and parts of `ops/`
 2. the code-bearing and operator-bearing lanes are much smaller and can be introduced deliberately without bundling the historical residue
-3. the next publication tranche should separate active platform operation from archival accumulation
+3. the next publication tranche after the published Class A scaffold should separate recursive active-code admission from archival accumulation
 
 ## Publication Classes
 
-### Class A: Next bounded introduction tranche
+### Class A: Published scaffold tranche
 
-These are the best candidates for the next deliberate publication packet because they define active platform shape, build boundaries, or execution lanes:
+These were the best candidates for the first deliberate follow-on publication packet because they define active platform shape, build boundaries, or execution lanes:
 
 - `.github/`
 - `.gitignore`
@@ -64,6 +64,10 @@ Rule:
 Rationale:
 
 - these lanes carry the active runtime, package, CI, and operator-contract surface that should define the live platform lane before archival or lineage-heavy material is added
+
+Publication result:
+
+- this scaffold tranche was published on 2026-04-22 as commit `ebb75aa` on parent-root `clean-main`
 
 ### Class B: Selective authority-doc introduction
 
@@ -113,9 +117,17 @@ These are not publication tranches; they are discipline rules:
 3. introduce the current authority docs and minimal active ops guidance from Class B
 4. leave Class C untouched until there is an explicit archive or knowledge publication decision
 
-Current concrete artifact for step 1:
+Current concrete artifact for the completed scaffold step:
 
 - `ops/agents/handoffs/2026-04-22-parent-root-class-a-scaffold-publication-handoff.md`
+
+Current next-step interpretation:
+
+- the scaffold step is complete; the next bounded follow-on is recursive publication for the active code-bearing lanes and their minimum supporting authority surfaces
+
+Current concrete artifact for that next step:
+
+- `ops/agents/handoffs/2026-04-22-parent-root-package-source-publication-handoff.md`
 
 ## Guardrails
 
@@ -129,6 +141,6 @@ Current concrete artifact for step 1:
 
 This plan is satisfied for the next cycle when:
 
-1. the next bounded publication tranche introduces active platform shape without broad subtree staging
-2. the tracked lane expands through explicit packets rather than accidental archive or knowledge bulk introduction
+1. the published scaffold tranche introduced active platform shape without broad subtree staging
+2. the tracked lane continues to expand through explicit packets rather than accidental archive or knowledge bulk introduction
 3. the remaining untracked majority is reduced intentionally, not just documented

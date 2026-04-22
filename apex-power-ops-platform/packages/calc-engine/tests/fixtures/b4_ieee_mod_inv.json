@@ -1,0 +1,99 @@
+{
+  "description": "IEEE Moderately Inverse (Method 2) \u2014 Sensor 5817",
+  "sensor_id": 5817,
+  "curve_name": "Mod Inv",
+  "curve_id": 3,
+  "coefficients": {
+    "A_open": 0.0515,
+    "B_open": 0.114,
+    "p_open": 0.02,
+    "min_open": 0.045,
+    "min_clear": 0.045
+  },
+  "bands": [
+    {
+      "band_label": "0.1",
+      "open_time": 0.1
+    },
+    {
+      "band_label": "5",
+      "open_time": 5.0
+    }
+  ],
+  "golden_points_open": [
+    {
+      "band_mult": 0.1,
+      "points": [
+        {
+          "I_multiple": 1.5,
+          "expected_time_sec": 0.643902
+        },
+        {
+          "I_multiple": 2.0,
+          "expected_time_sec": 0.380325
+        },
+        {
+          "I_multiple": 3.0,
+          "expected_time_sec": 0.243221
+        },
+        {
+          "I_multiple": 5.0,
+          "expected_time_sec": 0.168833
+        },
+        {
+          "I_multiple": 8.0,
+          "expected_time_sec": 0.132674
+        },
+        {
+          "I_multiple": 10.0,
+          "expected_time_sec": 0.120676
+        },
+        {
+          "I_multiple": 15.0,
+          "expected_time_sec": 0.103935
+        },
+        {
+          "I_multiple": 20.0,
+          "expected_time_sec": 0.094806
+        }
+      ]
+    },
+    {
+      "band_mult": 5.0,
+      "points": [
+        {
+          "I_multiple": 1.5,
+          "expected_time_sec": 32.195081
+        },
+        {
+          "I_multiple": 2.0,
+          "expected_time_sec": 19.016246
+        },
+        {
+          "I_multiple": 3.0,
+          "expected_time_sec": 12.161052
+        },
+        {
+          "I_multiple": 5.0,
+          "expected_time_sec": 8.441628
+        },
+        {
+          "I_multiple": 8.0,
+          "expected_time_sec": 6.633709
+        },
+        {
+          "I_multiple": 10.0,
+          "expected_time_sec": 6.03378
+        },
+        {
+          "I_multiple": 15.0,
+          "expected_time_sec": 5.196755
+        },
+        {
+          "I_multiple": 20.0,
+          "expected_time_sec": 4.740316
+        }
+      ]
+    }
+  ]
+}

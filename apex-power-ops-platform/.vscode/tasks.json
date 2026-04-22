@@ -393,6 +393,39 @@
       "problemMatcher": []
     },
     {
+      "label": "Preview parent-root package source packet",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-Command",
+        "$paths = @('apex-power-ops-platform/packages/forms-engine/src', 'apex-power-ops-platform/packages/forms-engine/tests', 'apex-power-ops-platform/packages/calc-engine/src', 'apex-power-ops-platform/packages/calc-engine/tests'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Stage parent-root package source packet",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-Command",
+        "$paths = @('apex-power-ops-platform/packages/forms-engine/src', 'apex-power-ops-platform/packages/forms-engine/tests', 'apex-power-ops-platform/packages/calc-engine/src', 'apex-power-ops-platform/packages/calc-engine/tests'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Parent-root package source packet staged diff",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-Command",
+        "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/packages/forms-engine/src apex-power-ops-platform/packages/forms-engine/tests apex-power-ops-platform/packages/calc-engine/src apex-power-ops-platform/packages/calc-engine/tests"
+      ],
+      "problemMatcher": []
+    },
+    {
       "label": "Platform subtree staged diff",
       "type": "shell",
       "command": "pwsh",
