@@ -1,0 +1,427 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Run platform API local",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-File",
+        "apps/control-plane-api/scripts/run_platform_api_local.ps1"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "PYTHONPATH": "packages/calc-engine/src"
+        }
+      },
+      "isBackground": true,
+      "problemMatcher": [],
+      "group": "build"
+    },
+    {
+      "label": "Restart platform API local",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-File",
+        "apps/control-plane-api/scripts/run_platform_api_local.ps1",
+        "-Restart"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "PYTHONPATH": "packages/calc-engine/src"
+        }
+      },
+      "isBackground": true,
+      "problemMatcher": [],
+      "group": "build"
+    },
+    {
+      "label": "Platform API focused tests",
+      "type": "shell",
+      "command": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
+      "args": [
+        "-m",
+        "pytest",
+        "tests/test_oauth_consent_route.py",
+        "tests/test_mcp_transport.py",
+        "tests/test_supabase_mcp_transport.py",
+        "tests/test_github_mcp_transport.py",
+        "tests/test_smoke_deployed_control_plane.py",
+        "-q"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}\\apps\\control-plane-api",
+        "env": {
+          "DATABASE_URL": "postgresql://postgres:postgres@localhost:5432/postgres"
+        }
+      },
+      "problemMatcher": [],
+      "group": "test"
+    },
+    {
+      "label": "Control-plane public apparatus-route gate",
+      "type": "shell",
+      "command": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
+      "args": [
+        "apps/control-plane-api/scripts/smoke_deployed_control_plane.py",
+        "--base-url",
+        "https://control.apexpowerops.com",
+        "--skip-authenticated-checks",
+        "--require-apparatus-study-route"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "group": "test"
+    },
+    {
+      "label": "Control-plane public apparatus-route dispatch dry-run",
+      "type": "shell",
+      "command": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
+      "args": [
+        "apps/control-plane-api/scripts/dispatch_deployed_control_plane_smoke.py",
+        "--initial-wait-seconds",
+        "90",
+        "--require-apparatus-study-route",
+        "--dry-run"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "group": "test"
+    },
+    {
+      "label": "Control-plane public apparatus-route dispatch",
+      "type": "shell",
+      "command": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
+      "args": [
+        "apps/control-plane-api/scripts/dispatch_deployed_control_plane_smoke.py",
+        "--initial-wait-seconds",
+        "90",
+        "--require-apparatus-study-route"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "group": "test"
+    },
+    {
+      "label": "Control-plane local host readiness",
+      "type": "shell",
+      "command": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
+      "args": [
+        "apps/control-plane-api/scripts/check_local_host_readiness.py"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "group": "test"
+    },
+    {
+      "label": "Control-plane local apparatus-route smoke",
+      "type": "shell",
+      "command": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
+      "args": [
+        "apps/control-plane-api/scripts/smoke_deployed_control_plane.py",
+        "--base-url",
+        "http://127.0.0.1:8010",
+        "--local-runtime",
+        "--skip-authenticated-checks",
+        "--require-apparatus-study-route"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "group": "test"
+    },
+    {
+      "label": "Bootstrap control-plane local env",
+      "type": "shell",
+      "command": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
+      "args": [
+        "apps/control-plane-api/scripts/bootstrap_local_env.py"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "group": "test"
+    },
+    {
+      "label": "Calc engine offline tests",
+      "type": "shell",
+      "command": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
+      "args": [
+        "-m",
+        "pytest",
+        "packages/calc-engine/tests/test_golden_fixtures.py",
+        "-q"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "group": "test"
+    },
+    {
+      "label": "Forms engine smoke",
+      "type": "shell",
+      "command": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
+      "args": [
+        "-m",
+        "apex_forms_engine.smoke"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "PYTHONPATH": "packages/forms-engine/src"
+        }
+      },
+      "problemMatcher": [],
+      "group": "test"
+    },
+    {
+      "label": "Forms engine tests",
+      "type": "shell",
+      "command": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
+      "args": [
+        "-m",
+        "pytest",
+        "packages/forms-engine/tests",
+        "-q"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "PYTHONPATH": "packages/forms-engine/src"
+        }
+      },
+      "problemMatcher": [],
+      "group": "test"
+    },
+    {
+      "label": "Forms engine clean artifacts",
+      "type": "shell",
+      "command": "Get-ChildItem -Path \"packages/forms-engine/src/apex_forms_engine/artifacts/*\" -Exclude \".gitignore\" | Remove-Item -Force",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "group": "test"
+    },
+      {
+        "label": "Forms engine compile",
+        "type": "shell",
+        "command": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
+        "args": [
+          "-m",
+          "compileall",
+          "packages/forms-engine/src",
+          "packages/forms-engine/tests"
+        ],
+        "options": {
+          "cwd": "${workspaceFolder}"
+        },
+        "problemMatcher": [],
+        "group": "test"
+      },
+      {
+        "label": "Forms engine CI check",
+        "dependsOrder": "sequence",
+        "dependsOn": [
+          "Forms engine compile",
+          "Forms engine tests"
+        ],
+        "problemMatcher": [],
+        "group": "test"
+      },
+    {
+      "label": "Run operations web local",
+      "type": "shell",
+      "command": "pnpm",
+      "args": [
+        "--dir",
+        "c:\\APEX Platform\\apex-power-ops-platform",
+        "--filter",
+        "@apex/operations-web",
+        "dev"
+      ],
+      "isBackground": true,
+      "problemMatcher": [],
+      "group": "build"
+    },
+    {
+      "label": "Operations web typecheck",
+      "type": "shell",
+      "command": "pnpm",
+      "args": [
+        "--dir",
+        "c:\\APEX Platform\\apex-power-ops-platform",
+        "--filter",
+        "@apex/operations-web",
+        "typecheck"
+      ],
+      "problemMatcher": [],
+      "group": "test"
+    },
+    {
+      "label": "Operations web browser smoke",
+      "type": "shell",
+      "command": "pnpm",
+      "args": [
+        "--dir",
+        "c:\\APEX Platform\\apex-power-ops-platform",
+        "--filter",
+        "@apex/operations-web",
+        "smoke:browser"
+      ],
+      "problemMatcher": [],
+      "group": "test"
+    },
+    {
+      "label": "Operations web promoted-host smoke",
+      "type": "shell",
+      "command": "pnpm",
+      "args": [
+        "--dir",
+        "c:\\APEX Platform\\apex-power-ops-platform",
+        "--filter",
+        "@apex/operations-web",
+        "smoke:promoted-host"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "OPERATIONS_WEB_CONTROL_PLANE_BASE_URL": "https://control.apexpowerops.com"
+        }
+      },
+      "problemMatcher": [],
+      "group": "test"
+    },
+    {
+      "label": "Platform subtree git status",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-Command",
+        "Set-Location 'C:/APEX Platform'; git status --short -- apex-power-ops-platform/"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Stage named platform paths",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-Command",
+        "$raw = $env:APEX_PLATFORM_GIT_PATHSPEC; if (-not $raw) { throw 'Set APEX_PLATFORM_GIT_PATHSPEC to one or more semicolon-delimited paths under apex-power-ops-platform/ before running this task.' }; $paths = $raw -split ';' | ForEach-Object { $_.Trim() } | Where-Object { $_ }; if (-not $paths) { throw 'APEX_PLATFORM_GIT_PATHSPEC did not contain any usable paths.' }; $invalid = $paths | Where-Object { $_ -notlike 'apex-power-ops-platform/*' }; if ($invalid) { throw ('All staged paths must stay under apex-power-ops-platform/. Invalid: ' + ($invalid -join ', ')) }; Set-Location 'C:/APEX Platform'; git add -- @paths"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Stage entire platform subtree (cutover only)",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-Command",
+        "Set-Location 'C:/APEX Platform'; git add -- apex-power-ops-platform/"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Preview parent-root bootstrap packet",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-Command",
+        "$paths = @('.gitignore', 'apex-power-ops-platform/.vscode/tasks.json', 'apex-power-ops-platform/README.md', 'apex-power-ops-platform/docs/OPERATOR-BOOTSTRAP-RUNBOOK.md', 'apex-power-ops-platform/docs/architecture/WORKSPACE-CURRENT-STATUS-2026-04-21.md', 'apex-power-ops-platform/docs/architecture/WORKSPACE-STRUCTURE-GOVERNANCE-AUDIT-2026-04-21.md', 'apex-power-ops-platform/docs/architecture/WORKSPACE-LANE-NORMALIZATION-CHECKLIST-2026-04-22.md', 'apex-power-ops-platform/docs/architecture/WORKSPACE-IMPLEMENTATION-ROADMAP-2026-04-21.md', 'apex-power-ops-platform/ops/agents/handoffs/README.md', 'apex-power-ops-platform/ops/agents/handoffs/2026-04-22-parent-root-bootstrap-publication-handoff.md'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Stage parent-root bootstrap packet",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-Command",
+        "$paths = @('.gitignore', 'apex-power-ops-platform/.vscode/tasks.json', 'apex-power-ops-platform/README.md', 'apex-power-ops-platform/docs/OPERATOR-BOOTSTRAP-RUNBOOK.md', 'apex-power-ops-platform/docs/architecture/WORKSPACE-CURRENT-STATUS-2026-04-21.md', 'apex-power-ops-platform/docs/architecture/WORKSPACE-STRUCTURE-GOVERNANCE-AUDIT-2026-04-21.md', 'apex-power-ops-platform/docs/architecture/WORKSPACE-LANE-NORMALIZATION-CHECKLIST-2026-04-22.md', 'apex-power-ops-platform/docs/architecture/WORKSPACE-IMPLEMENTATION-ROADMAP-2026-04-21.md', 'apex-power-ops-platform/ops/agents/handoffs/README.md', 'apex-power-ops-platform/ops/agents/handoffs/2026-04-22-parent-root-bootstrap-publication-handoff.md'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Parent-root bootstrap packet staged diff",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-Command",
+        "Set-Location 'C:/APEX Platform'; git diff --cached -- .gitignore apex-power-ops-platform/"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Platform subtree staged diff",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-Command",
+        "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Run mutation seam local",
+      "type": "shell",
+      "command": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
+      "args": [
+        "-m",
+        "uvicorn",
+        "app.main:app",
+        "--reload",
+        "--port",
+        "8000"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}\\apps\\mutation-seam"
+      },
+      "isBackground": true,
+      "problemMatcher": [],
+      "group": "build"
+    },
+    {
+      "label": "Mutation seam tests",
+      "type": "shell",
+      "command": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
+      "args": [
+        "-m",
+        "pytest",
+        "tests/",
+        "-v"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}\\apps\\mutation-seam",
+        "env": {
+          "SEAM_STORE_BACKEND": "memory"
+        }
+      },
+      "problemMatcher": [],
+      "group": "test"
+    }
+  ]
+}
