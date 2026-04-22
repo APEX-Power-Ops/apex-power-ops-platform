@@ -1,0 +1,61 @@
+{
+  "description": "Thermal-TU I^2T (Method 4) \u2014 Sensor 7102",
+  "sensor_id": 7102,
+  "rating": 800,
+  "ltpu_calc": 1,
+  "ltpu_pickup_setting": 1.0,
+  "pickup_current": 800.0,
+  "ltd_method": 4,
+  "curve_name": "Thermal (I^2T)",
+  "curve_id": 0,
+  "coefficients": {
+    "Ipu_open": 1.12,
+    "alpha_open": -0.1,
+    "K_open": 825.0,
+    "n_open": 2.0,
+    "min_time_open": 0.025,
+    "Ithresh_open": 18.0,
+    "Ipu_clear": 1.12,
+    "alpha_clear": 0.1,
+    "K_clear": 825.0,
+    "n_clear": 2.0,
+    "min_time_clear": 0.08,
+    "Ithresh_clear": 18.0
+  },
+  "bands": [],
+  "golden_points_open": [
+    {
+      "band_mult": 1.0,
+      "points": [
+        {
+          "I_multiple": 1.0692,
+          "expected_time_sec": 1958.124343
+        },
+        {
+          "I_multiple": 1.5,
+          "expected_time_sec": 509.504761
+        },
+        {
+          "I_multiple": 2.0,
+          "expected_time_sec": 247.49084
+        },
+        {
+          "I_multiple": 3.0,
+          "expected_time_sec": 100.9638
+        },
+        {
+          "I_multiple": 5.0,
+          "expected_time_sec": 34.940474
+        },
+        {
+          "I_multiple": 8.0,
+          "expected_time_sec": 13.473054
+        },
+        {
+          "I_multiple": 10.0,
+          "expected_time_sec": 8.597369
+        }
+      ]
+    }
+  ]
+}
