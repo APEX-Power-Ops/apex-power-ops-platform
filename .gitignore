@@ -72,6 +72,11 @@ Logs/
 *.userosscache
 *.sln.docstates
 
+# Allow the platform bootstrap task surface to be versioned as part of the
+# parent-root bootstrap publication packet without reopening global .vscode staging.
+!apex-power-ops-platform/.vscode/
+!apex-power-ops-platform/.vscode/tasks.json
+
 # ============================================
 # OPERATING SYSTEM
 # ============================================
