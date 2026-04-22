@@ -4,6 +4,26 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+$repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..\..')).Path
+$appDir = Join-Path $repoRoot 'apps/control-plane-api'
+$subtreePython = Join-Path $repoRoot 'apex-power-ops-platform/.venv/Scripts/python.exe'
+$rootPython = Join-Path $repoRoot '.venv/Scripts/python.exe'
+
+if ($env:APEX_PLATFORM_PYTHON) {
+    $python = $env:APEX_PLATFORM_PYTHON
+} elseif (Test-Path $subtreePython) {
+    $python = $subtreePython
+} elseif (Test-Path $rootPython) {
+    $python = $rootPython
+} else {
+    $python = 'python'
+}
+
+if (-not (Test-Path $appDir)) {
+    Write-Error "apps/control-plane-api is not present under the parent repo root."
+    exit 1
+}
+
 $listener = Get-NetTCPConnection -LocalPort 8010 -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1
 if ($listener) {
     if (-not $Restart) {
@@ -30,4 +50,4 @@ if ($listener) {
     }
 }
 
-& ".\.venv\Scripts\python.exe" -m uvicorn main:app --app-dir apps/control-plane-api --host 0.0.0.0 --port 8010
+& $python -m uvicorn main:app --app-dir $appDir --host 0.0.0.0 --port 8010
