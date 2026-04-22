@@ -1,13 +1,13 @@
 # Parent-Root Mutation-Seam Runtime Publication Handoff
 ## Date: 2026-04-22
 ## Updated by: GitHub Copilot (GPT-5.4)
-## Scope: Active next-step packet for bounded recursive `apps/mutation-seam` runtime introduction under `C:/APEX Platform/apex-power-ops-platform`
+## Scope: Historical record for the published bounded recursive `apps/mutation-seam` runtime introduction under `C:/APEX Platform/apex-power-ops-platform`
 
 ## 1. Summary
 
 The bootstrap, Class A scaffold, package source, and operations-web runtime tranches are already published on parent-root `clean-main`.
 
-The next natural publication step should still avoid broad subtree cutover. The smallest remaining app-lane follow-on is a bounded recursive runtime packet for `apps/mutation-seam`:
+The next natural publication step after those tranches still avoided broad subtree cutover. The smallest remaining app-lane follow-on was a bounded recursive runtime packet for `apps/mutation-seam`:
 
 1. `app/`
 2. `migrations/`
@@ -17,7 +17,13 @@ The next natural publication step should still avoid broad subtree cutover. The 
 6. `test_store.py`
 7. `validate.py`
 
-This packet introduces the governed FastAPI mutation boundary, its schedule/bootstrap runtime surfaces, and its focused tests without widening into generated residue or the much larger `control-plane-api` lane.
+This packet introduced the governed FastAPI mutation boundary, its schedule/bootstrap runtime surfaces, and its focused tests without widening into generated residue or the much larger `control-plane-api` lane.
+
+Publication outcome:
+
+1. committed on parent-root `clean-main` as `b7b66f8`
+2. pushed to `origin/clean-main` on 2026-04-22
+3. closed as the published mutation-seam runtime follow-on to the operations-web tranche
 
 ## 2. Why This Packet Is Next
 
@@ -35,14 +41,14 @@ Measured from the parent git root at `C:/APEX Platform` on 2026-04-22:
 
 ## 3. Packet Intent
 
-Use this packet to introduce the active mutation runtime surface and its direct tests:
+This packet introduced the active mutation runtime surface and its direct tests:
 
 1. FastAPI application code under `app/`
 2. database migration files under `migrations/`
 3. focused runtime and integration tests under `tests/`
 4. lane-local runtime scripts used for persisted validation and schedule bootstrap
 
-Do not treat this packet as authorization to publish logs, caches, generated output files, or the remaining `control-plane-api` backlog.
+Do not treat this historical packet as authorization to publish logs, caches, generated output files, or the remaining `control-plane-api` backlog.
 
 ## 4. Exact Packet Contents
 
@@ -75,9 +81,9 @@ This packet is intentionally narrow:
 4. it leaves broader `ops/` historical bulk out of the review surface
 5. it creates the next clean recursive app-lane publication after operations-web
 
-## 6. Operator Execution Path
+## 6. Historical Execution Path
 
-Preferred task path from `C:/APEX Platform/apex-power-ops-platform`:
+Preferred task path from `C:/APEX Platform/apex-power-ops-platform` when this packet was executed:
 
 1. run `Preview parent-root mutation-seam runtime packet`
 2. run `Stage parent-root mutation-seam runtime packet` only when the preview is correct
@@ -100,7 +106,7 @@ Before commit, the smallest relevant checks are:
 2. staged diff review for those mutation-seam paths only
 3. lane-local focused pytest for the published packet slice using the lane venv or workspace Python
 
-This packet is a recursive app-lane runtime tranche, so executable validation matters more than it did for the scaffold-only packet.
+This packet was a recursive app-lane runtime tranche, so executable validation mattered more than it did for the scaffold-only packet.
 
 ## 8. Do Not Do
 
@@ -113,7 +119,7 @@ This packet is a recursive app-lane runtime tranche, so executable validation ma
 
 If this packet lands cleanly, the next logical tranches are:
 
-1. `apps/control-plane-api` recursive runtime packet
+1. `apps/control-plane-api` bounded runtime core packet
 2. selective `docs/` and `ops/` authority packets needed to operate the expanded app lanes
 
-Those follow-ons remain separate from this mutation-seam runtime packet.
+Those follow-ons remain separate from this now-published mutation-seam runtime packet.
