@@ -1,0 +1,70 @@
+{
+  "packet_id": "2026-04-15-pm-schema-ui-001b",
+  "title": "PM Schema V2 UI Lead Operations Surface And Extended Seam Wiring",
+  "objective": "Implement the bounded lead operations surface against the already working mutation seam and field prototype, proving lead-scope Class B and Class C actions, field-to-lead state visibility, lead-over-tech authority, and review-submission flow preparation without implementing the PM approval queue, Gantt surface, PM schema redesign, or direct client writes for controlled operational state.",
+  "domain": "pm-ui-domain",
+  "active_role": "PM UI Lead Surface Implementation Architect",
+  "repo_paths": [
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-UI-NEXT-PACKET-PLAN-2026-04-15.md",
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-UI-NEEDS-AND-CONSTRAINTS-MATRIX-2026-04-15.md",
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-UI-SOURCE-OF-TRUTH-AND-MUTATION-AUTHORITY-2026-04-15.md",
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-UI-DESIGN-GOVERNANCE-BASELINE-2026-04-15.md",
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-UI-LAYER-BY-LAYER-TOOL-EVALUATION-MATRIX-2026-04-15.md",
+    "c:/APEX Platform/Platform-Authority/APEX-UI-FRAMEWORK-SPEC-REVIEWED-INPUT-MAPPING-2026-04-15.md",
+    "c:/APEX Platform/APEX_Schema_V2",
+    "c:/APEX Platform/apex-power-ops-platform",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "dependencies": [
+    "2026-04-15-pm-schema-ui-004",
+    "2026-04-15-pm-schema-ui-005",
+    "2026-04-15-pm-schema-ui-006",
+    "2026-04-15-pm-schema-ui-001a"
+  ],
+  "required_inputs": [
+    "PM-SCHEMA-V2-UI-NEXT-PACKET-PLAN-2026-04-15.md",
+    "PM-SCHEMA-V2-UI-NEEDS-AND-CONSTRAINTS-MATRIX-2026-04-15.md",
+    "PM-SCHEMA-V2-UI-SOURCE-OF-TRUTH-AND-MUTATION-AUTHORITY-2026-04-15.md",
+    "PM-SCHEMA-V2-UI-DESIGN-GOVERNANCE-BASELINE-2026-04-15.md",
+    "PM-SCHEMA-V2-UI-LAYER-BY-LAYER-TOOL-EVALUATION-MATRIX-2026-04-15.md",
+    "APEX-UI-FRAMEWORK-SPEC-REVIEWED-INPUT-MAPPING-2026-04-15.md",
+    "2026-04-15-pm-schema-ui-004-lead-operations-surface-prototype-design-handoff.md",
+    "2026-04-15-pm-schema-ui-005-cross-surface-integration-spec-handoff.md",
+    "2026-04-15-pm-schema-ui-006-mutation-seam-api-spec-and-implementation-scaffold-handoff.md",
+    "2026-04-15-pm-schema-ui-001a-field-apparatus-workflow-and-seam-co-implementation-handoff.md",
+    "APEX_UI_Framework_Spec.docx"
+  ],
+  "constrained_outputs": [
+    "One working lead surface slice covering daily priority board, assignment manager, scope detail, apparatus detail, issue queue, and progress relay",
+    "One working seam wiring extension for lead-scope assignment, issue-triage, task-control, and review-submission actions",
+    "One execution handoff documenting cross-surface field-to-lead visibility, lead-over-tech authority behavior, mocked or deferred areas, and validation results",
+    "No implementation beyond the bounded lead surface and the seam/frontend modules it directly requires"
+  ],
+  "write_scope": [
+    "c:/APEX Platform/apex-power-ops-platform",
+    "c:/APEX Platform/Platform-Authority",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "validation_steps": [
+    "Confirm packet UI-001b implements only the bounded lead operations surface and the seam/frontend modules it directly requires",
+    "Confirm all lead-controlled writes route through the mutation seam rather than direct client writes",
+    "Confirm lead-scope Class B and Class C actions work for the bounded prototype scope, including cross-surface visibility from field outputs",
+    "Confirm no PM approval queue, Gantt, Class D behavior, or broad production-hardening is implemented by convenience"
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "output_artifacts": [
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-15-pm-schema-ui-001b-lead-operations-surface-and-extended-seam-wiring-handoff.md"
+  ],
+  "handoff_note": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-15-pm-schema-ui-001b-lead-operations-surface-and-extended-seam-wiring-handoff.md",
+  "implementation_ready_candidate": true,
+  "sql_permission": false,
+  "sql_permission_note": "Packet UI-001b authorizes only the bounded lead surface and extended seam implementation slice. It does not authorize PM approval queue implementation, direct client writes, Gantt implementation, or finance-affecting workflow design.",
+  "landing_lane": "ui_lead_plus_existing_seam_implementation",
+  "migration_strategy": "bounded_second_runtime_slice",
+  "created_at": "2026-04-16",
+  "updated_at": "2026-04-16",
+  "delegation_status": "executed",
+  "delegation_prompt": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-15-desktop-claude-pm-schema-ui-packet-001b-prompt.md"
+}
