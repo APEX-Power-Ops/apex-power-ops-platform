@@ -1,0 +1,64 @@
+{
+  "packet_id": "2026-04-17-pm-schema-020c",
+  "title": "Persisted Schedule Baseline DDL And Loader Lane",
+  "objective": "Implement the smallest bounded persistence follow-on after packets 020a and 020b by landing a persisted `schedule` baseline lane and loader upsert path for authorized baseline truth, without adding bridge routes, Gantt/UI changes, schedule-write behavior, or synthetic baseline fabrication.",
+  "domain": "pm-domain",
+  "active_role": "PM Schedule Baseline SQL And Loader Author",
+  "repo_paths": [
+    "c:/APEX Platform/Platform-Authority/PM-DOMAIN-BASELINE-FIELD-AUTHORITY-PROMOTION-2026-04-17.md",
+    "c:/APEX Platform/Platform-Authority/PM-DOMAIN-P6-INTEGRATION-BOUNDARY-SPEC-2026-04-12.md",
+    "c:/APEX Platform/APEX_Schema_V2/XER_Import_Export_Spec.md",
+    "c:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/migrations",
+    "c:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/schedule/loader.py",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-15-pm-schema-ui-002a-p6-schedule-context-import-and-read-bridge-implementation-handoff.md",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-17-pm-schema-ui-002c-baseline-overlay-and-read-model-hardening-handoff.md"
+  ],
+  "dependencies": [
+    "2026-04-17-pm-schema-020a",
+    "2026-04-17-pm-schema-020b",
+    "2026-04-15-pm-schema-ui-002a",
+    "2026-04-17-pm-schema-ui-002c"
+  ],
+  "required_inputs": [
+    "PM-DOMAIN-BASELINE-FIELD-AUTHORITY-PROMOTION-2026-04-17.md",
+    "PM-DOMAIN-P6-INTEGRATION-BOUNDARY-SPEC-2026-04-12.md",
+    "APEX_Schema_V2/XER_Import_Export_Spec.md",
+    "apps/mutation-seam/migrations/001_schedule_schema.sql",
+    "apps/mutation-seam/app/schedule/loader.py",
+    "2026-04-15-pm-schema-ui-002a-p6-schedule-context-import-and-read-bridge-implementation-handoff.md",
+    "2026-04-17-pm-schema-ui-002c-baseline-overlay-and-read-model-hardening-handoff.md"
+  ],
+  "constrained_outputs": [
+    "One bounded schedule baseline migration in the existing mutation-seam schedule migration lane",
+    "One loader extension that upserts only authorized baseline truth into the new persisted baseline lane",
+    "Validation evidence proving no bridge routes, no PM UI files, and no schedule-write behavior changed",
+    "One execution handoff documenting schema shape, loader behavior, and remaining follow-on work for a later GET-only bridge and UI packet"
+  ],
+  "write_scope": [
+    "c:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/migrations",
+    "c:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/schedule",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "validation_steps": [
+    "Confirm packet 020c lands only persisted baseline DDL and loader upsert behavior in the existing schedule lane",
+    "Confirm no GET bridge routes, no schedule queries, no PM surface files, and no Gantt rendering changes are introduced",
+    "Confirm the loader writes only authorized baseline truth from explicitly mapped baseline sources and does not fabricate baseline rows",
+    "Confirm no governed mutation-seam write path or operational-state authority changes are introduced"
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "output_artifacts": [
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-17-pm-schema-020c-persisted-schedule-baseline-ddl-and-loader-lane-handoff.md"
+  ],
+  "handoff_note": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-17-pm-schema-020c-persisted-schedule-baseline-ddl-and-loader-lane-handoff.md",
+  "implementation_ready_candidate": true,
+  "sql_permission": true,
+  "sql_permission_note": "Packet 020c authorizes only bounded schedule baseline DDL and loader upsert work inside the existing mutation-seam schedule lane. No bridge route, UI, or broader PM schema changes are authorized.",
+  "landing_lane": "c:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/migrations/",
+  "migration_strategy": "incremental_schedule_lane_extension",
+  "created_at": "2026-04-17",
+  "updated_at": "2026-04-18",
+  "delegation_status": "complete",
+  "delegation_prompt": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-17-desktop-claude-pm-schema-packet-020c-prompt.md"
+}
