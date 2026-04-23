@@ -1,13 +1,19 @@
 # Parent-Root Apex-Unification-001F Draft Publication Handoff
 ## Date: 2026-04-22
 ## Updated by: GitHub Copilot (GPT-5.4)
-## Scope: Active next-step packet for the bounded `apex-unification-001f` archive-and-residue routing tranche singleton under `C:/APEX Platform/apex-power-ops-platform`
+## Scope: Historical record for the bounded `apex-unification-001f` archive-and-residue routing tranche singleton under `C:/APEX Platform/apex-power-ops-platform`
 
 ## 1. Summary
 
-The unification lineage family is now advanced through `apex-unification-001e`.
+The unification lineage family was advanced through `apex-unification-001e` before this packet landed.
 
-The next smallest remaining substantive packet is `apex-unification-001f`, which stages cleanly at 1 file. It is the remaining bounded archive-and-residue routing tranche in the same unification family and still beats the broader cross-family `knowledge-import-001a` low-weight knowledge landing packet on immediate boundedness.
+The next smallest remaining substantive packet was `apex-unification-001f`, which staged cleanly at 1 file. It advanced the unification family through the archive-and-residue routing tranche and left the planning-only deployment-helper boundary review in `apex-unification-001g` as the next narrower follow-on.
+
+Publication outcome:
+
+1. committed on parent-root `clean-main` as `c2403f5`
+2. pushed to `origin/clean-main` on 2026-04-22
+3. closed as the published apex-unification `001f` archive-and-residue routing tranche
 
 ## 2. Why This Packet Is Next
 
@@ -22,7 +28,7 @@ Measured from the parent git root at `C:/APEX Platform` on 2026-04-22 after the 
 
 ## 3. Packet Intent
 
-Use this packet to introduce the bounded `apex-unification-001f` archive-and-residue routing tranche singleton:
+This packet introduced the bounded `apex-unification-001f` archive-and-residue routing tranche singleton:
 
 1. `2026-04-13-apex-unification-001f-archive-and-residue-routing-tranche.json`
 
@@ -32,7 +38,7 @@ From the parent git root at `C:/APEX Platform`, the bounded packet path is:
 
 1. `apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-apex-unification-001f-archive-and-residue-routing-tranche.json`
 
-Current measured contents: 1 file.
+Published contents: 1 file.
 
 ## 5. Why This Packet Is Bounded Correctly
 
@@ -43,9 +49,9 @@ This packet is intentionally narrow:
 3. it stays inside the same unification family already extended through `apex-unification-001e`
 4. it still beats the broader cross-family `knowledge-import-001a` landing work on immediate boundedness
 
-## 6. Operator Execution Path
+## 6. Historical Execution Path
 
-Preferred task path from `C:/APEX Platform/apex-power-ops-platform`:
+Preferred task path from `C:/APEX Platform/apex-power-ops-platform` when this packet was executed:
 
 1. run `Preview parent-root apex-unification-001f draft packet`
 2. run `Stage parent-root apex-unification-001f draft packet` only when the preview is correct
@@ -76,4 +82,4 @@ This lane is packet-definition JSON, so diff discipline matters more than execut
 
 ## 9. Follow-On After This Packet
 
-If this packet lands cleanly, re-evaluate whether `knowledge-import-001a` or any remaining unification slice is the truthful next bounded follow-on.
+If this packet lands cleanly, queue `apex-unification-001g` as the remaining planning-only deployment-helper boundary review.
