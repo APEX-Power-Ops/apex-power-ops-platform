@@ -2273,6 +2273,39 @@
         ],
         "problemMatcher": []
       },
+      {
+        "label": "Preview parent-root pm-schema-020e.1 draft packet",
+        "type": "shell",
+        "command": "pwsh",
+        "args": [
+          "-NoProfile",
+          "-Command",
+          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-18-pm-schema-020e.1-loader-working-copy-restoration-and-integrity-gate.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+        ],
+        "problemMatcher": []
+      },
+      {
+        "label": "Stage parent-root pm-schema-020e.1 draft packet",
+        "type": "shell",
+        "command": "pwsh",
+        "args": [
+          "-NoProfile",
+          "-Command",
+          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-18-pm-schema-020e.1-loader-working-copy-restoration-and-integrity-gate.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+        ],
+        "problemMatcher": []
+      },
+      {
+        "label": "Parent-root pm-schema-020e.1 draft packet staged diff",
+        "type": "shell",
+        "command": "pwsh",
+        "args": [
+          "-NoProfile",
+          "-Command",
+          "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-18-pm-schema-020e.1-loader-working-copy-restoration-and-integrity-gate.json"
+        ],
+        "problemMatcher": []
+      },
     {
       "label": "Platform subtree staged diff",
       "type": "shell",
