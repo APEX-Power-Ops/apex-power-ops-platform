@@ -1,0 +1,43 @@
+{
+  "packet_id": "2026-04-12-pm-schema-001",
+  "title": "PM Domain Entity Field Candidate Matrix",
+  "objective": "Define the candidate field matrix for the PM/work bounded domain, mapping Schema V2 carryforward concepts into canonical Project, WorkPackage, Task, Dependency, Assignment, ScheduleWindow, ExecutionIssue, and ProgressSnapshot entities.",
+  "domain": "pm-domain",
+  "active_role": "Platform Architect",
+  "repo_paths": [
+    "c:/APEX Platform/Platform-Authority/PM-WORK-DOMAIN-SPEC-2026-04-12.md",
+    "c:/APEX Platform/Platform-Authority/APEX-SCHEMA-V2-CANONICAL-MAPPING-2026-04-12.md",
+    "c:/APEX Platform/APEX_Schema_V2/SCHEMA_MAP.md",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft"
+  ],
+  "dependencies": [
+    "PM-WORK-DOMAIN-SPEC-2026-04-12.md",
+    "APEX-SCHEMA-V2-CANONICAL-MAPPING-2026-04-12.md"
+  ],
+  "required_inputs": [
+    "PM-WORK-DOMAIN-SPEC-2026-04-12.md",
+    "APEX-SCHEMA-V2-REVIEW-2026-04-12.md",
+    "APEX-SCHEMA-V2-CANONICAL-MAPPING-2026-04-12.md",
+    "PLATFORM-DATA-AND-SCHEMA-STRATEGY-2026-04-12.md",
+    "CANONICAL-ENTITY-MAP-2026-04-12.md",
+    "APEX_Schema_V2/SCHEMA_MAP.md",
+    "APEX_Schema_V2/APEX_PM_Schema_V2.xlsx"
+  ],
+  "constrained_outputs": [
+    "One PM-domain field candidate matrix document under c:/APEX Platform/Platform-Authority",
+    "Explicit distinction between required, optional, derived, imported, and deferred fields",
+    "No SQL DDL"
+  ],
+  "write_scope": [
+    "c:/APEX Platform/Platform-Authority"
+  ],
+  "validation_steps": [
+    "Confirm WorkPackage is the operating center rather than Project, WBSNode, or Apparatus",
+    "Confirm P6 fields are identified as schedule truth rather than labor truth",
+    "Confirm non-PM concerns are routed out of the field matrix"
+  ],
+  "handoff_target": "Reviewer And Release Gate",
+  "status": "review",
+  "created_at": "2026-04-12",
+  "updated_at": "2026-04-12"
+}
