@@ -1,0 +1,64 @@
+{
+  "packet_id": "2026-04-13-pm-schema-007",
+  "title": "PM Domain First SQL DDL Migration",
+  "objective": "Produce the first shared-infra SQL DDL bundle for the PM/work domain, implementing the packet-006 implementation-ready schema specification in the approved shared database lane and validating it against the packet-006 validation plan.",
+  "domain": "pm-domain",
+  "active_role": "PM SQL Author",
+  "repo_paths": [
+    "c:/APEX Platform/Platform-Authority/PM-DOMAIN-SQL-LANDING-LANE-DECISION-2026-04-13.md",
+    "c:/APEX Platform/Platform-Authority/PM-DOMAIN-IMPLEMENTATION-READY-SCHEMA-SPEC-2026-04-12.md",
+    "c:/APEX Platform/Platform-Authority/PM-DOMAIN-SQL-WRITE-SCOPE-2026-04-12.md",
+    "c:/APEX Platform/Platform-Authority/PM-DOMAIN-SQL-VALIDATION-PLAN-2026-04-12.md",
+    "c:/APEX Platform/Platform-Authority/DATABASE-OWNERSHIP-SPLIT-2026-04-12.md",
+    "c:/APEX Platform/apex-power-ops-platform/infra/database/migrations"
+  ],
+  "dependencies": [
+    "2026-04-12-pm-schema-006",
+    "PM-DOMAIN-SQL-LANDING-LANE-DECISION-2026-04-13.md"
+  ],
+  "required_inputs": [
+    "PM-DOMAIN-SQL-LANDING-LANE-DECISION-2026-04-13.md",
+    "PM-DOMAIN-IMPLEMENTATION-READY-SCHEMA-SPEC-2026-04-12.md",
+    "PM-DOMAIN-SQL-WRITE-SCOPE-2026-04-12.md",
+    "PM-DOMAIN-SQL-VALIDATION-PLAN-2026-04-12.md",
+    "DATABASE-OWNERSHIP-SPLIT-2026-04-12.md",
+    "PM packet 006 handoff"
+  ],
+  "constrained_outputs": [
+    "SQL migration files under c:/APEX Platform/apex-power-ops-platform/infra/database/migrations/work",
+    "Execution-order manifest for the PM/work SQL bundle",
+    "Validation summary in the packet handoff note",
+    "No RLS, seed data, RPC endpoints, or non-PM tables"
+  ],
+  "write_scope": [
+    "c:/APEX Platform/apex-power-ops-platform/infra/database/migrations",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "validation_steps": [
+    "Confirm all SQL lands in the shared-infra PM/work lane rather than an app-local migration lane",
+    "Confirm the SQL implements the packet-006 schema spec with no unauthorized additions or renames",
+    "Confirm the SQL bundle satisfies every stage in PM-DOMAIN-SQL-VALIDATION-PLAN-2026-04-12.md",
+    "Confirm deferred cross-domain FKs, audit hooks, or integration views are documented explicitly if prerequisites are absent"
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "output_artifacts": [
+    "c:/APEX Platform/apex-power-ops-platform/infra/database/migrations/work/001_work_enums.sql",
+    "c:/APEX Platform/apex-power-ops-platform/infra/database/migrations/work/002_work_tables.sql",
+    "c:/APEX Platform/apex-power-ops-platform/infra/database/migrations/work/003_work_indexes.sql",
+    "c:/APEX Platform/apex-power-ops-platform/infra/database/migrations/work/004_work_triggers_and_functions.sql",
+    "c:/APEX Platform/apex-power-ops-platform/infra/database/migrations/work/005_work_views.sql",
+    "c:/APEX Platform/apex-power-ops-platform/infra/database/migrations/work/MANIFEST.md",
+    "c:/APEX Platform/apex-power-ops-platform/infra/database/migrations/work/LOCAL_STAGING_RUNBOOK.md"
+  ],
+  "handoff_note": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-13-pm-schema-v2-next-steps-handoff.md",
+  "implementation_ready_candidate": false,
+  "sql_permission": true,
+  "sql_permission_note": "SQL authoring is authorized in packet 007, but only inside the shared-infra PM/work lane defined by PM-DOMAIN-SQL-LANDING-LANE-DECISION-2026-04-13.md and only within the packet-006 write scope.",
+  "landing_lane": "c:/APEX Platform/apex-power-ops-platform/infra/database/migrations/work/",
+  "migration_strategy": "clean_database",
+  "created_at": "2026-04-13",
+  "updated_at": "2026-04-13",
+  "completed_at": "2026-04-13"
+}
