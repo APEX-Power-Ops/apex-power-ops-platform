@@ -1,0 +1,74 @@
+{
+  "packet_id": "2026-04-15-pm-schema-ui-001e",
+  "title": "PM Schema V2 UI Supabase Read Model And Mutation Store Migration",
+  "objective": "Replace the prototype in-memory mutation seam store and read-model plumbing with a bounded Supabase-backed implementation while preserving the governed mutation seam as the only controlled write boundary, validating that the already proven field, lead, PM, and integration surfaces continue to operate against real persisted state without implementing Gantt visualization, Class D behavior, billing finalization, or direct client writes for controlled operational state.",
+  "domain": "pm-ui-domain",
+  "active_role": "PM UI Seam Persistence Migration Architect",
+  "repo_paths": [
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-UI-NEXT-PACKET-PLAN-2026-04-15.md",
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-UI-NEEDS-AND-CONSTRAINTS-MATRIX-2026-04-15.md",
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-UI-SOURCE-OF-TRUTH-AND-MUTATION-AUTHORITY-2026-04-15.md",
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-UI-DESIGN-GOVERNANCE-BASELINE-2026-04-15.md",
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-UI-LAYER-BY-LAYER-TOOL-EVALUATION-MATRIX-2026-04-15.md",
+    "c:/APEX Platform/Platform-Authority/APEX-UI-FRAMEWORK-SPEC-REVIEWED-INPUT-MAPPING-2026-04-15.md",
+    "c:/APEX Platform/APEX_Schema_V2",
+    "c:/APEX Platform/apex-power-ops-platform",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "dependencies": [
+    "2026-04-15-pm-schema-ui-005",
+    "2026-04-15-pm-schema-ui-006",
+    "2026-04-15-pm-schema-ui-001a",
+    "2026-04-15-pm-schema-ui-001b",
+    "2026-04-15-pm-schema-ui-001c",
+    "2026-04-15-pm-schema-ui-001d"
+  ],
+  "required_inputs": [
+    "PM-SCHEMA-V2-UI-NEXT-PACKET-PLAN-2026-04-15.md",
+    "PM-SCHEMA-V2-UI-NEEDS-AND-CONSTRAINTS-MATRIX-2026-04-15.md",
+    "PM-SCHEMA-V2-UI-SOURCE-OF-TRUTH-AND-MUTATION-AUTHORITY-2026-04-15.md",
+    "PM-SCHEMA-V2-UI-DESIGN-GOVERNANCE-BASELINE-2026-04-15.md",
+    "PM-SCHEMA-V2-UI-LAYER-BY-LAYER-TOOL-EVALUATION-MATRIX-2026-04-15.md",
+    "APEX-UI-FRAMEWORK-SPEC-REVIEWED-INPUT-MAPPING-2026-04-15.md",
+    "2026-04-15-pm-schema-ui-005-cross-surface-integration-spec-handoff.md",
+    "2026-04-15-pm-schema-ui-006-mutation-seam-api-spec-and-implementation-scaffold-handoff.md",
+    "2026-04-15-pm-schema-ui-001a-field-apparatus-workflow-and-seam-co-implementation-handoff.md",
+    "2026-04-15-pm-schema-ui-001b-lead-operations-surface-and-extended-seam-wiring-handoff.md",
+    "2026-04-15-pm-schema-ui-001c-pm-approval-queue-and-cross-surface-review-flow-implementation-handoff.md",
+    "2026-04-15-pm-schema-ui-001d-cross-surface-integration-test-surface-and-validation-harness-handoff.md",
+    "APEX_UI_Framework_Spec.docx"
+  ],
+  "constrained_outputs": [
+    "One bounded persistence migration replacing MemoryStore and prototype read endpoints with Supabase-backed equivalents behind the mutation seam",
+    "One validation run proving the existing field, lead, PM, and integration surfaces still work against persisted Supabase state",
+    "One execution handoff documenting migrated storage paths, preserved seam boundaries, and validation results",
+    "No implementation beyond the bounded persistence migration and the seam/frontend modules it directly requires"
+  ],
+  "write_scope": [
+    "c:/APEX Platform/apex-power-ops-platform",
+    "c:/APEX Platform/Platform-Authority",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "validation_steps": [
+    "Confirm packet UI-001e replaces only the bounded prototype persistence and read-model layer required by the current role surfaces and harness",
+    "Confirm all controlled writes still route through the mutation seam rather than direct client writes",
+    "Confirm the existing surface and integration validations still pass against Supabase-backed state",
+    "Confirm no Gantt implementation, Class D behavior, billing finalization workflow, or broad production-hardening is implemented by convenience"
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "output_artifacts": [
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-15-pm-schema-ui-001e-supabase-read-model-and-mutation-store-migration-handoff.md"
+  ],
+  "handoff_note": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-15-pm-schema-ui-001e-supabase-read-model-and-mutation-store-migration-handoff.md",
+  "implementation_ready_candidate": true,
+  "sql_permission": false,
+  "sql_permission_note": "Packet UI-001e authorizes only the bounded Supabase-backed persistence migration behind the governed mutation seam. It does not authorize Gantt implementation, Class D finance behavior, billing finalization design, or direct client-write bypass of the seam.",
+  "landing_lane": "ui_supabase_persistence_migration",
+  "migration_strategy": "bounded_backend_persistence_slice",
+  "created_at": "2026-04-16",
+  "updated_at": "2026-04-16",
+  "delegation_status": "complete",
+  "delegation_prompt": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-15-desktop-claude-pm-schema-ui-packet-001e-prompt.md"
+}
