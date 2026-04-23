@@ -1,13 +1,19 @@
 # Parent-Root PM-Schema 019i Draft Publication Handoff
 ## Date: 2026-04-22
 ## Updated by: GitHub Copilot (GPT-5.4)
-## Scope: Active next-step packet for the bounded `pm-schema-019i` idempotency by-route ops breakdown singleton under `C:/APEX Platform/apex-power-ops-platform`
+## Scope: Historical record for the bounded `pm-schema-019i` idempotency by-route ops breakdown singleton under `C:/APEX Platform/apex-power-ops-platform`
 
 ## 1. Summary
 
 The active shared packages, active app lanes, residual scaffold/doc surfaces, infra-database lane, docs lane, ops knowledge-control-plane registry lane, ops legacy-governance lane, ops knowledge-resource-operations lane, the forms-import draft pair, the `001af` draft, the `apex-unification-001` draft pair, the `knowledge-import-001` draft pair, the `pm-schema-009` draft family, the `pm-schema-010` draft trio, the `pm-schema-011` dependency-activation family, the `pm-schema-012` identity and joined-read family, the `pm-schema-013` work-package write family, the `pm-schema-014` task-write pair, the `pm-schema-015` assignment-write pair, the `pm-schema-016` dependency-write singleton, the `pm-schema-017` execution-issue-write singleton, the `pm-schema-018` progress-snapshot-write singleton, the top-level `pm-schema-019` write-surface consolidation singleton, the `pm-schema-019f` durable DB-backed idempotency store singleton, the `pm-schema-019g` idempotency sweep and ops metrics singleton, and the `pm-schema-019h` sweep schedule wiring singleton are now published on parent-root `clean-main`.
 
-The next smallest remaining substantive packet is the bounded `pm-schema-019i` idempotency by-route ops breakdown singleton, which currently stages cleanly at 1 file. It is the next dependency-safe follow-on after the published `pm-schema-019h` schedule wiring runtime work.
+The next smallest remaining substantive packet was the bounded `pm-schema-019i` idempotency by-route ops breakdown singleton, which staged cleanly at 1 file. It is the next dependency-safe follow-on after the published `pm-schema-019h` schedule wiring runtime work.
+
+Publication outcome:
+
+1. committed on parent-root `clean-main` as `bb3f032`
+2. pushed to `origin/clean-main` on 2026-04-22
+3. closed as the published pm-schema `019i` draft follow-on to the `pm-schema-019h` draft tranche
 
 ## 2. Why This Packet Is Next
 
@@ -21,7 +27,7 @@ Measured from the parent git root at `C:/APEX Platform` on 2026-04-22 after the 
 
 ## 3. Packet Intent
 
-Use this packet to introduce the bounded `pm-schema-019i` idempotency by-route ops breakdown singleton:
+This packet introduced the bounded `pm-schema-019i` idempotency by-route ops breakdown singleton:
 
 1. `2026-04-16-pm-schema-019i-idempotency-by-route-ops-breakdown.json`
 
@@ -31,7 +37,7 @@ From the parent git root at `C:/APEX Platform`, the bounded packet path is:
 
 1. `apex-power-ops-platform/ops/agents/packets/draft/2026-04-16-pm-schema-019i-idempotency-by-route-ops-breakdown.json`
 
-Current measured contents: 1 file.
+Published contents: 1 file.
 
 ## 5. Why This Packet Is Bounded Correctly
 
@@ -42,9 +48,9 @@ This packet is intentionally narrow:
 3. it avoids the 333-file handoff backlog and the remaining 108-file draft backlog beyond this singleton
 4. it does not widen into `knowledge/` or `archive/`
 
-## 6. Operator Execution Path
+## 6. Historical Execution Path
 
-Preferred task path from `C:/APEX Platform/apex-power-ops-platform`:
+Preferred task path from `C:/APEX Platform/apex-power-ops-platform` when this packet was executed:
 
 1. run `Preview parent-root pm-schema 019i draft packet`
 2. run `Stage parent-root pm-schema 019i draft packet` only when the preview is correct
@@ -79,7 +85,7 @@ This lane is packet-definition JSON, so diff discipline matters more than execut
 
 If this packet lands cleanly, the next logical lanes are:
 
-1. the `pm-schema-019j` deployment-side follow-on singleton
+1. the `pm-schema-019j` ops metrics export schedule scrape singleton
 2. the `pm-schema-019k` deployment-side follow-on singleton
 3. broader `ops/agents` packet strategy decisions
 4. `knowledge/` packet(s)
