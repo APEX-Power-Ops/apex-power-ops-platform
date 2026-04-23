@@ -2340,6 +2340,39 @@
         "problemMatcher": []
       },
       {
+        "label": "Preview parent-root residual archive formula pair",
+        "type": "shell",
+        "command": "pwsh",
+        "args": [
+          "-NoProfile",
+          "-Command",
+          "$paths = @('apex-power-ops-platform/archive/legacy-repos/apex-platform/root-archive/_archive/Dec2025_Dataverse/Solution_Exports/Archive/v1.5.0.3/Entities/cr950_projectfinancialsummary/Formulas/cr950_projectfinancialsummary-cr950_apparatusrevenuecount.xaml','apex-power-ops-platform/archive/legacy-repos/apex-platform/root-archive/_archive/Dec2025_Dataverse/Solution_Exports/Archive/v1.5.0.3/Entities/cr950_projectfinancialsummary/Formulas/cr950_projectfinancialsummary-cr950_totalrevenuerecognized.xaml'); Set-Location 'C:/APEX Platform'; git -c core.longpaths=true add -n -- @paths"
+        ],
+        "problemMatcher": []
+      },
+      {
+        "label": "Stage parent-root residual archive formula pair",
+        "type": "shell",
+        "command": "pwsh",
+        "args": [
+          "-NoProfile",
+          "-Command",
+          "$paths = @('apex-power-ops-platform/archive/legacy-repos/apex-platform/root-archive/_archive/Dec2025_Dataverse/Solution_Exports/Archive/v1.5.0.3/Entities/cr950_projectfinancialsummary/Formulas/cr950_projectfinancialsummary-cr950_apparatusrevenuecount.xaml','apex-power-ops-platform/archive/legacy-repos/apex-platform/root-archive/_archive/Dec2025_Dataverse/Solution_Exports/Archive/v1.5.0.3/Entities/cr950_projectfinancialsummary/Formulas/cr950_projectfinancialsummary-cr950_totalrevenuerecognized.xaml'); Set-Location 'C:/APEX Platform'; git -c core.longpaths=true add -- @paths"
+        ],
+        "problemMatcher": []
+      },
+      {
+        "label": "Parent-root residual archive formula pair staged diff",
+        "type": "shell",
+        "command": "pwsh",
+        "args": [
+          "-NoProfile",
+          "-Command",
+          "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/archive/legacy-repos/apex-platform/root-archive/_archive/Dec2025_Dataverse/Solution_Exports/Archive/v1.5.0.3/Entities/cr950_projectfinancialsummary/Formulas/cr950_projectfinancialsummary-cr950_apparatusrevenuecount.xaml apex-power-ops-platform/archive/legacy-repos/apex-platform/root-archive/_archive/Dec2025_Dataverse/Solution_Exports/Archive/v1.5.0.3/Entities/cr950_projectfinancialsummary/Formulas/cr950_projectfinancialsummary-cr950_totalrevenuerecognized.xaml"
+        ],
+        "problemMatcher": []
+      },
+      {
         "label": "Preview parent-root apex-unification-001h draft packet",
         "type": "shell",
         "command": "pwsh",
