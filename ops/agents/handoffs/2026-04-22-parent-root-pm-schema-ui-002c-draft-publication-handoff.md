@@ -1,15 +1,19 @@
 # Parent-Root PM-Schema-UI 002C Draft Publication Handoff
 ## Date: 2026-04-22
 ## Updated by: GitHub Copilot (GPT-5.4)
-## Scope: Active next-step packet for the bounded `pm-schema-ui-002c` baseline overlay and read-model hardening singleton under `C:/APEX Platform/apex-power-ops-platform`
+## Scope: Historical record for the bounded `pm-schema-ui-002c` baseline overlay and read-model hardening singleton under `C:/APEX Platform/apex-power-ops-platform`
 
 ## 1. Summary
 
-The active shared packages, active app lanes, residual scaffold/doc surfaces, infra-database lane, docs lane, ops knowledge-control-plane registry lane, ops legacy-governance lane, ops knowledge-resource-operations lane, the forms-import draft pair, the `001af` draft, the `apex-unification-001` draft pair, the `knowledge-import-001` draft pair, the `pm-schema-009` draft family, the `pm-schema-010` draft trio, the `pm-schema-011` dependency-activation family, the `pm-schema-012` identity and joined-read family, the `pm-schema-013` work-package write family, the `pm-schema-014` task-write pair, the `pm-schema-015` assignment-write pair, the `pm-schema-016` dependency-write singleton, the `pm-schema-017` execution-issue-write singleton, the `pm-schema-018` progress-snapshot-write singleton, the top-level `pm-schema-019` write-surface consolidation singleton, the full `pm-schema-019f` through `pm-schema-019k` follow-on chain, the `pm-schema-ui-002g` comparative schedule analytics read surface and host validation singleton, the `pm-schema-ui-002g` host-variance shell wiring and browser validation singleton, the `pm-schema-ui-002e-host` drivers shell wiring and browser validation singleton, the `pm-schema-ui-002f-host` tracer shell wiring and browser validation singleton, the `pm-schema-ui-001` field apparatus workflow prototype design singleton, the `pm-schema-ui-002` gantt layer comparison decision singleton, the `pm-schema-ui-003` PM approval queue prototype design singleton, the `pm-schema-ui-004` lead operations surface prototype design singleton, the `pm-schema-ui-005` cross-surface integration spec singleton, the `pm-schema-ui-006` mutation seam API spec and implementation scaffold singleton, the full `pm-schema-ui-001a` through `pm-schema-ui-001e` implementation chain, the `pm-schema-ui-002a` P6 schedule context import and read bridge implementation singleton, and the `pm-schema-ui-002b` read-only Gantt prototype implementation singleton are now published on parent-root `clean-main`.
+The active shared packages, active app lanes, residual scaffold/doc surfaces, infra-database lane, docs lane, ops knowledge-control-plane registry lane, ops legacy-governance lane, ops knowledge-resource-operations lane, the forms-import draft pair, the `001af` draft, the `apex-unification-001` draft pair, the `knowledge-import-001` draft pair, the `pm-schema-009` draft family, the `pm-schema-010` draft trio, the `pm-schema-011` dependency-activation family, the `pm-schema-012` identity and joined-read family, the `pm-schema-013` work-package write family, the `pm-schema-014` task-write pair, the `pm-schema-015` assignment-write pair, the `pm-schema-016` dependency-write singleton, the `pm-schema-017` execution-issue-write singleton, the `pm-schema-018` progress-snapshot-write singleton, the top-level `pm-schema-019` write-surface consolidation singleton, the full `pm-schema-019f` through `pm-schema-019k` follow-on chain, the `pm-schema-ui-002g` comparative schedule analytics read surface and host validation singleton, the `pm-schema-ui-002g` host-variance shell wiring and browser validation singleton, the `pm-schema-ui-002e-host` drivers shell wiring and browser validation singleton, the `pm-schema-ui-002f-host` tracer shell wiring and browser validation singleton, the `pm-schema-ui-001` field apparatus workflow prototype design singleton, the `pm-schema-ui-002` gantt layer comparison decision singleton, the `pm-schema-ui-003` PM approval queue prototype design singleton, the `pm-schema-ui-004` lead operations surface prototype design singleton, the `pm-schema-ui-005` cross-surface integration spec singleton, the `pm-schema-ui-006` mutation seam API spec and implementation scaffold singleton, the full `pm-schema-ui-001a` through `pm-schema-ui-001e` implementation chain, the `pm-schema-ui-002a` P6 schedule context import and read bridge implementation singleton, and the `pm-schema-ui-002b` read-only Gantt prototype implementation singleton were already published on parent-root `clean-main`.
 
-The next smallest remaining substantive packet is the preauthored bounded `pm-schema-ui-002c` baseline overlay and read-model hardening singleton, which stages cleanly at 1 file. Its dependencies on `pm-schema-ui-002`, `pm-schema-ui-002a`, `pm-schema-ui-002b`, `pm-schema-ui-005`, `pm-schema-ui-006`, and `pm-schema-ui-001e` are now satisfied.
+The next smallest remaining substantive packet was the preauthored bounded `pm-schema-ui-002c` baseline overlay and read-model hardening singleton, which staged cleanly at 1 file. It made the first baseline blocker explicit and pivoted the active backlog into the `pm-schema-020*` authority chain.
 
-This packet is also the first blocker-stop boundary in the `002` family: its `completion_disposition` explicitly records `blocker-stop-no-authorized-persisted-baseline-source`. That means it is the truthful next active tranche, but it should be treated as the point where the baseline-authority substrate question must be made explicit rather than silently skipping ahead to `002d`.
+Publication outcome:
+
+1. committed on parent-root `clean-main` as `31e9247`
+2. pushed to `origin/clean-main` on 2026-04-22
+3. closed as the published pm-schema-ui `002c` baseline blocker tranche for the residual UI backlog
 
 ## 2. Why This Packet Is Next
 
@@ -23,7 +27,7 @@ Measured from the parent git root at `C:/APEX Platform` on 2026-04-22 after the 
 
 ## 3. Packet Intent
 
-Use this packet to introduce the bounded `pm-schema-ui-002c` baseline overlay and read-model hardening singleton:
+This packet introduced the bounded `pm-schema-ui-002c` baseline overlay and read-model hardening singleton:
 
 1. `2026-04-17-pm-schema-ui-002c-baseline-overlay-and-read-model-hardening.json`
 
@@ -33,20 +37,20 @@ From the parent git root at `C:/APEX Platform`, the bounded packet path is:
 
 1. `apex-power-ops-platform/ops/agents/packets/draft/2026-04-17-pm-schema-ui-002c-baseline-overlay-and-read-model-hardening.json`
 
-Current measured contents: 1 file.
+Published contents: 1 file.
 
 ## 5. Why This Packet Is Bounded Correctly
 
 This packet is intentionally narrow:
 
-1. it introduces only the next dependency-safe `002` family packet and does not widen into `002d`, `002e`, or later schedule-driver and host slices
+1. it introduced only the next dependency-safe `002` family packet and did not widen into `002d`, `002e`, or later schedule-driver and host slices
 2. it preserves dependency order while making the first baseline-authority blocker explicit instead of skipping over it
 3. it avoids the 333-file handoff backlog and the remaining 90-file draft backlog beyond this singleton
 4. it does not widen into `knowledge/` or `archive`
 
-## 6. Operator Execution Path
+## 6. Historical Execution Path
 
-Preferred task path from `C:/APEX Platform/apex-power-ops-platform`:
+Preferred task path from `C:/APEX Platform/apex-power-ops-platform` when this packet was executed:
 
 1. run `Preview parent-root pm-schema-ui 002c draft packet`
 2. run `Stage parent-root pm-schema-ui 002c draft packet` only when the preview is correct
@@ -80,7 +84,7 @@ This lane is packet-definition JSON, so diff discipline matters more than execut
 
 If this packet lands cleanly, the next logical lanes are:
 
-1. confirm whether the baseline-authority substrate required beyond `002c` is already published and therefore whether `pm-schema-ui-002d` is truly next
-2. if that substrate is not already published on parent-root `clean-main`, treat the relevant `pm-schema-020*` baseline authority/publication chain as the next blocker boundary rather than skipping ahead inside `ui-002`
+1. the authority-only `pm-schema-020a` baseline field authority promotion singleton
+2. the remaining baseline-authority substrate chain `020b` and `020c` before re-entering the later `ui-002` implementation packets
 3. `knowledge/` packet(s)
 4. `archive/` strategy decisions rather than automatic publication
