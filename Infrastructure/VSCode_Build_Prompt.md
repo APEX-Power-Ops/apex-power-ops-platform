@@ -2,6 +2,8 @@
 
 _Paste everything below the `--- BEGIN PROMPT ---` line into a fresh Claude Code (or Cursor / Copilot Chat) session opened at the APEX monorepo root. The prompt is self-contained — no prior chat history required._
 
+_This file is an execution bootstrap artifact. It is not the governance or authority layer._
+
 _Last updated 2026-04-23. Re-paste after major architecture shifts._
 
 ---
@@ -103,6 +105,7 @@ APEX apps use Olares' **Authelia** as OIDC provider, backed by **LLDAP**. Groups
 Jason's repo authority now includes these Olares documents — read them before writing anything:
 
 - `Infrastructure/Olares_Workspace_Authority_Framework.md` — authoritative repo-transition framework; if anything else conflicts, this file wins
+- `Infrastructure/Olares_MVP_Execution_Roadmap.md` — active MVP delivery plan and sequencing authority
 - `Infrastructure/Olares_Build_Guide.md` — full design rationale, zone-by-zone plan, all Market app choices
 - `Infrastructure/Olares_Checklist.md` — 14-phase provisioning checklist, line-item
 - `Infrastructure/Olares_Architecture.svg` — visual layout (open in browser to inspect)
@@ -174,7 +177,7 @@ Scaffold the infrastructure layer of the monorepo. Specifically, produce:
 
 # WORKING RHYTHM
 
-1. **Read first.** Start by reading `Infrastructure/Olares_Workspace_Authority_Framework.md`, `Infrastructure/Olares_Build_Guide.md`, and `Infrastructure/Olares_Checklist.md` in full. Glance at the SVG.
+1. **Read first.** Start by reading `Infrastructure/Olares_Workspace_Authority_Framework.md`, `Infrastructure/Olares_MVP_Execution_Roadmap.md`, `Infrastructure/Olares_Build_Guide.md`, and `Infrastructure/Olares_Checklist.md` in full. Glance at the SVG.
 2. **Plan before writing.** Use your todo tool (TodoWrite or equivalent) to lay out the scaffolding tasks in execution order. Group related files so you can batch tool calls.
 3. **Scaffold → implement → test.** A running `docker compose up` beats a half-finished chart. Get the dev zone breathing first, then the MCP fabric, then the chart skeleton.
 4. **Commit as you go.** After each major deliverable (compose stack; each MCP server; claude config; chart skeleton; guardrails), commit with a clear, prefixed message (`infra:`, `mcp:`, `claude:`, `chart:`, `tools:`). New commits, never amend.
@@ -215,7 +218,7 @@ A feature branch (suggested name: `infra/olares-bootstrap`) containing all the a
 4. **Smoke-test evidence** — `docker compose ps` output, `tools/list` responses from the three MCP servers.
 5. **Constraint check** — explicitly confirm no LiteLLM→Anthropic, no public endpoints, every chart has an OIDC client, every run path emits an `env` tag.
 
-Begin by reading the authority framework and the two reference docs, then produce a todo plan before writing any files. If anything in this brief contradicts what you find in the authority framework or the reference docs, the authority framework wins, then the reference docs — flag the contradiction before proceeding.
+Begin by reading the authority framework, the MVP roadmap, and the reference docs, then produce a todo plan before writing any files. If anything in this brief contradicts what you find in the framework or roadmap, the framework wins, then the roadmap, then the reference docs — flag the contradiction before proceeding.
 
 --- END PROMPT ---
 
@@ -226,5 +229,5 @@ Begin by reading the authority framework and the two reference docs, then produc
 - Paste everything between the BEGIN/END markers into a Claude Code session opened at the APEX monorepo root (`~/code/apex` on the Olares One, or your laptop's equivalent path).
 - Claude Code will auto-load `.claude/CLAUDE.md` once it exists — the prompt is designed to create that file as part of its work, so the first run bootstraps its own future context.
 - If you're using Cursor or Copilot Chat instead, the prompt works but you'll miss some Claude-Code-specific niceties (subagent configs, MCP auto-discovery). Port the MCP config to whatever your tool expects.
-- Re-paste this prompt any time you start a fresh build session where context has been lost. It's the single source of truth for "what are we doing on the Olares One."
-- When architecture decisions change, update this file first, then re-paste. Don't let the running AI session drift from the prompt.
+- Re-paste this prompt any time you start a fresh build session where context has been lost. It is the preferred execution bootstrap for implementation sessions, not the authority source.
+- When architecture or MVP decisions change, update the framework or roadmap first, then update this file to match. Don't let the prompt drift from repo authority.
