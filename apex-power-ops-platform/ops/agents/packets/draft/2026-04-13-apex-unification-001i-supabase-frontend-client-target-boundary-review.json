@@ -1,0 +1,107 @@
+{
+  "packet_id": "2026-04-13-apex-unification-001i",
+  "title": "APEX Supabase Frontend Client Target Boundary Review",
+  "objective": "Review the remaining deferred frontend client artifact `C:/APEX Platform/Supabase/lib/supabase.ts` against the current bootstrap app topology and determine whether any current app surface is an approved target home now, or whether the correct outcome remains explicit defer pending a future frontend app-boundary packet.",
+  "domain": "repo-unification",
+  "active_role": "APEX Frontend Boundary Reviewer",
+  "repo_paths": [
+    "c:/APEX Platform/Supabase",
+    "c:/APEX Platform/Platform-Authority",
+    "c:/APEX Platform/apex-power-ops-platform/apps",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "dependencies": [
+    "2026-04-13-apex-unification-001h"
+  ],
+  "dependency_note": "Packet 001h completed the approved helper-residue and lineage-wrapper routing tranche and left lib/supabase.ts as the only intentionally deferred artifact from the original Supabase helper slice.",
+  "required_inputs": [
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-apex-unification-001g-supabase-deployment-utility-and-env-helper-review.json",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-13-apex-unification-001g-supabase-deployment-utility-and-env-helper-review-handoff.md",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-apex-unification-001h-supabase-helper-residue-and-orchestration-wrapper-routing.json",
+    "c:/APEX Platform/Platform-Authority/MONOREPO-TARGET-TOPOLOGY-2026-04-12.md",
+    "c:/APEX Platform/Platform-Authority/UNIFIED-REPO-NEXT-PACKET-PLAN-2026-04-13.md",
+    "c:/APEX Platform/Supabase/lib/supabase.ts"
+  ],
+  "constrained_outputs": [
+    "A planning-only review handoff for the deferred frontend Supabase client artifact",
+    "An explicit assessment of current candidate app homes such as operations-web, field-surface, forms-studio, integration-surface, and control-plane-api",
+    "A bounded recommendation for either a real import packet or an explicit defer-closeout packet"
+  ],
+  "write_scope": [
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "validation_steps": [
+    "Confirm packet 001i remains planning-only and does not move or edit lib/supabase.ts",
+    "Confirm each current app surface is evaluated against actual on-disk readiness rather than target-state aspiration alone",
+    "Confirm the review distinguishes target-state app names from currently usable app boundaries",
+    "Confirm the recommendation is either a concrete import lane or an explicit defer-closeout decision"
+  ],
+  "output_artifacts": [
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-13-apex-unification-001i-supabase-frontend-client-target-boundary-review-handoff.md"
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "handoff_note": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-13-apex-unification-001i-supabase-frontend-client-target-boundary-review-handoff.md",
+  "implementation_ready_candidate": false,
+  "sql_permission": false,
+  "sql_permission_note": "Packet 001i is a planning-only frontend boundary review. It does not authorize file movement, runtime edits, environment activation, or dependency installation.",
+  "created_at": "2026-04-21",
+  "updated_at": "2026-04-21",
+  "delegation_status": "complete",
+  "delegation_prompt": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-13-desktop-claude-apex-unification-001i-prompt.md"
+}{
+  "packet_id": "2026-04-13-apex-unification-001i",
+  "title": "APEX Supabase Frontend Client Target Boundary Review",
+  "objective": "Review the remaining deferred frontend client artifact `C:/APEX Platform/Supabase/lib/supabase.ts` against the current bootstrap app topology and determine whether any current app surface is an approved target home now, or whether the correct outcome remains explicit defer pending a future frontend app-boundary packet.",
+  "domain": "repo-unification",
+  "active_role": "APEX Frontend Boundary Reviewer",
+  "repo_paths": [
+    "c:/APEX Platform/Supabase",
+    "c:/APEX Platform/Platform-Authority",
+    "c:/APEX Platform/apex-power-ops-platform/apps",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "dependencies": [
+    "2026-04-13-apex-unification-001h"
+  ],
+  "dependency_note": "Packet 001h completed the approved helper-residue and lineage-wrapper routing tranche and left lib/supabase.ts as the only intentionally deferred artifact from the original Supabase helper slice.",
+  "required_inputs": [
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-apex-unification-001g-supabase-deployment-utility-and-env-helper-review.json",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-13-apex-unification-001g-supabase-deployment-utility-and-env-helper-review-handoff.md",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-apex-unification-001h-supabase-helper-residue-and-orchestration-wrapper-routing.json",
+    "c:/APEX Platform/Platform-Authority/MONOREPO-TARGET-TOPOLOGY-2026-04-12.md",
+    "c:/APEX Platform/Platform-Authority/UNIFIED-REPO-NEXT-PACKET-PLAN-2026-04-13.md",
+    "c:/APEX Platform/Supabase/lib/supabase.ts"
+  ],
+  "constrained_outputs": [
+    "A planning-only review handoff for the deferred frontend Supabase client artifact",
+    "An explicit assessment of current candidate app homes such as operations-web, field-surface, forms-studio, integration-surface, and control-plane-api",
+    "A bounded recommendation for either a real import packet or an explicit defer-closeout packet"
+  ],
+  "write_scope": [
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "validation_steps": [
+    "Confirm packet 001i remains planning-only and does not move or edit lib/supabase.ts",
+    "Confirm each current app surface is evaluated against actual on-disk readiness rather than target-state aspiration alone",
+    "Confirm the review distinguishes target-state app names from currently usable app boundaries",
+    "Confirm the recommendation is either a concrete import lane or an explicit defer-closeout decision"
+  ],
+  "output_artifacts": [
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-13-apex-unification-001i-supabase-frontend-client-target-boundary-review-handoff.md"
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "handoff_note": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-13-apex-unification-001i-supabase-frontend-client-target-boundary-review-handoff.md",
+  "implementation_ready_candidate": false,
+  "sql_permission": false,
+  "sql_permission_note": "Packet 001i is a planning-only frontend boundary review. It does not authorize file movement, runtime edits, environment activation, or dependency installation.",
+  "created_at": "2026-04-21",
+  "updated_at": "2026-04-21",
+  "delegation_status": "complete",
+  "delegation_prompt": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-13-desktop-claude-apex-unification-001i-prompt.md"
+}
