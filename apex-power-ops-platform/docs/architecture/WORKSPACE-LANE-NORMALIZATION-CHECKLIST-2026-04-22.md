@@ -230,6 +230,7 @@ Exit condition:
 - [x] define the post-pm-schema `019k` pm-schema-ui `002g` draft follow-on packet in `ops/agents/handoffs/2026-04-22-parent-root-pm-schema-ui-002g-draft-publication-handoff.md`
 - [x] define the post-pm-schema-ui `002g` pm-schema-ui `002g` host-variance draft follow-on packet in `ops/agents/handoffs/2026-04-22-parent-root-pm-schema-ui-002g-host-variance-draft-publication-handoff.md`
 - [x] define the post-pm-schema-ui `002g` host-variance pm-schema-ui `002e` host draft follow-on packet in `ops/agents/handoffs/2026-04-22-parent-root-pm-schema-ui-002e-host-draft-publication-handoff.md`
+- [x] define the post-pm-schema-ui `002e` host pm-schema-ui `002f` host draft follow-on packet in `ops/agents/handoffs/2026-04-22-parent-root-pm-schema-ui-002f-host-draft-publication-handoff.md`
 - [ ] default future publication work to explicit platform file paths or bounded packet pathspecs rather than whole-subtree staging
 - [ ] reserve `git add -- apex-power-ops-platform/` for explicit cutover or intentionally broad publication work only
 - [ ] treat unrelated tracked changes elsewhere under `C:/APEX Platform` as separate lanes unless a cross-lane operation is explicitly intended
