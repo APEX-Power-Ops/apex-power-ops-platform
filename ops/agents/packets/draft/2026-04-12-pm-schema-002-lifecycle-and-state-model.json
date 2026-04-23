@@ -1,0 +1,39 @@
+{
+  "packet_id": "2026-04-12-pm-schema-002",
+  "title": "PM Domain Lifecycle And State Model",
+  "objective": "Define the lifecycle and state model for PM/work entities, including WorkPackage, Task, ExecutionIssue, ProgressSnapshot, and approval-relevant transitions that must be auditable before SQL design begins.",
+  "domain": "pm-domain",
+  "active_role": "Platform Architect",
+  "repo_paths": [
+    "c:/APEX Platform/Platform-Authority/PM-WORK-DOMAIN-SPEC-2026-04-12.md",
+    "c:/APEX Platform/APEX_Schema_V2/PM_Lifecycle_Workflow.mermaid",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft"
+  ],
+  "dependencies": [
+    "PM-WORK-DOMAIN-SPEC-2026-04-12.md",
+    "APEX-SCHEMA-V2-REVIEW-AND-FINALIZATION-PROTOCOL-2026-04-12.md"
+  ],
+  "required_inputs": [
+    "PM-WORK-DOMAIN-SPEC-2026-04-12.md",
+    "APEX-SCHEMA-V2-CANONICAL-MAPPING-2026-04-12.md",
+    "APEX_Schema_V2/PM_Lifecycle_Workflow.mermaid",
+    "APEX_Schema_V2/P6_Enum_Alignment.md"
+  ],
+  "constrained_outputs": [
+    "One lifecycle/state model document under c:/APEX Platform/Platform-Authority",
+    "Explicit state transitions, approvals, derived statuses, and audit expectations",
+    "No SQL DDL"
+  ],
+  "write_scope": [
+    "c:/APEX Platform/Platform-Authority"
+  ],
+  "validation_steps": [
+    "Separate schedule state from execution state",
+    "Separate derived display state from stored lifecycle state",
+    "Identify which transitions require audit and approval records"
+  ],
+  "handoff_target": "Reviewer And Release Gate",
+  "status": "review",
+  "created_at": "2026-04-12",
+  "updated_at": "2026-04-12"
+}
