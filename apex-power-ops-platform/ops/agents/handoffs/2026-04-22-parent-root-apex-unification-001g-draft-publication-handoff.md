@@ -1,13 +1,19 @@
 # Parent-Root Apex-Unification-001G Draft Publication Handoff
 ## Date: 2026-04-22
 ## Updated by: GitHub Copilot (GPT-5.4)
-## Scope: Active next-step packet for the bounded `apex-unification-001g` Supabase deployment-utility and environment-helper review singleton under `C:/APEX Platform/apex-power-ops-platform`
+## Scope: Historical record for the bounded `apex-unification-001g` Supabase deployment-utility and environment-helper review singleton under `C:/APEX Platform/apex-power-ops-platform`
 
 ## 1. Summary
 
-The unification lineage family is now advanced through `apex-unification-001f`.
+The unification lineage family was advanced through `apex-unification-001f` before this packet landed.
 
-The next smallest remaining substantive packet is `apex-unification-001g`, which stages cleanly at 1 file. It is the remaining planning-only deployment-utility and environment-helper boundary review in the same unification family and remains narrower than switching sideways into the broader cross-family `knowledge-import-001a` low-weight knowledge landing packet.
+The next smallest remaining substantive packet was `apex-unification-001g`, which staged cleanly at 1 file. It completed the planning-only deployment-utility and environment-helper boundary review and unlocked the smallest safe follow-on routing tranche in `apex-unification-001h`.
+
+Publication outcome:
+
+1. committed on parent-root `clean-main` as `61df703`
+2. pushed to `origin/clean-main` on 2026-04-22
+3. closed as the published apex-unification `001g` deployment-utility and environment-helper review tranche
 
 ## 2. Why This Packet Is Next
 
@@ -22,7 +28,7 @@ Measured from the parent git root at `C:/APEX Platform` on 2026-04-22 after the 
 
 ## 3. Packet Intent
 
-Use this packet to introduce the bounded `apex-unification-001g` Supabase deployment-utility and environment-helper review singleton:
+This packet introduced the bounded `apex-unification-001g` Supabase deployment-utility and environment-helper review singleton:
 
 1. `2026-04-13-apex-unification-001g-supabase-deployment-utility-and-env-helper-review.json`
 
@@ -32,7 +38,7 @@ From the parent git root at `C:/APEX Platform`, the bounded packet path is:
 
 1. `apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-apex-unification-001g-supabase-deployment-utility-and-env-helper-review.json`
 
-Current measured contents: 1 file.
+Published contents: 1 file.
 
 ## 5. Why This Packet Is Bounded Correctly
 
@@ -43,9 +49,9 @@ This packet is intentionally narrow:
 3. it stays inside the same unification family already extended through `apex-unification-001f`
 4. it remains narrower than switching to the broader cross-family `knowledge-import-001a` landing work
 
-## 6. Operator Execution Path
+## 6. Historical Execution Path
 
-Preferred task path from `C:/APEX Platform/apex-power-ops-platform`:
+Preferred task path from `C:/APEX Platform/apex-power-ops-platform` when this packet was executed:
 
 1. run `Preview parent-root apex-unification-001g draft packet`
 2. run `Stage parent-root apex-unification-001g draft packet` only when the preview is correct
@@ -76,4 +82,4 @@ This lane is packet-definition JSON, so diff discipline matters more than execut
 
 ## 9. Follow-On After This Packet
 
-If this packet lands cleanly, re-evaluate whether `knowledge-import-001a` or any later unification review/follow-on packet is the truthful next bounded step.
+If this packet lands cleanly, queue `apex-unification-001h` as the smallest safe helper-residue and orchestration-wrapper routing follow-on.
