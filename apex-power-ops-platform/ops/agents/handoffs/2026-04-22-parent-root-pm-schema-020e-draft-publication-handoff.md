@@ -1,13 +1,19 @@
 # Parent-Root PM-Schema-020E Draft Publication Handoff
 ## Date: 2026-04-22
 ## Updated by: GitHub Copilot (GPT-5.4)
-## Scope: Active next-step packet for the bounded `pm-schema-020e` RESA internal baseline capture planning singleton under `C:/APEX Platform/apex-power-ops-platform`
+## Scope: Historical record for the bounded `pm-schema-020e` RESA internal baseline capture planning singleton under `C:/APEX Platform/apex-power-ops-platform`
 
 ## 1. Summary
 
 The active shared packages, active app lanes, residual scaffold/doc surfaces, infra-database lane, docs lane, ops knowledge-control-plane registry lane, ops legacy-governance lane, ops knowledge-resource-operations lane, the forms-import draft pair, the `001af` draft, the `apex-unification-001` draft pair, the `knowledge-import-001` draft pair, the `pm-schema-009` draft family, the `pm-schema-010` draft trio, the `pm-schema-011` dependency-activation family, the `pm-schema-012` identity and joined-read family, the `pm-schema-013` work-package write family, the `pm-schema-014` task-write pair, the `pm-schema-015` assignment-write pair, the `pm-schema-016` dependency-write singleton, the `pm-schema-017` execution-issue-write singleton, the `pm-schema-018` progress-snapshot-write singleton, the top-level `pm-schema-019` write-surface consolidation singleton, the full `pm-schema-019f` through `pm-schema-019k` follow-on chain, the `pm-schema-ui-002g` comparative schedule analytics read surface and host validation singleton, the `pm-schema-ui-002g` host-variance shell wiring and browser validation singleton, the `pm-schema-ui-002e-host` drivers shell wiring and browser validation singleton, the `pm-schema-ui-002f-host` tracer shell wiring and browser validation singleton, the `pm-schema-ui-001` field apparatus workflow prototype design singleton, the `pm-schema-ui-002` gantt layer comparison decision singleton, the `pm-schema-ui-003` PM approval queue prototype design singleton, the `pm-schema-ui-004` lead operations surface prototype design singleton, the `pm-schema-ui-005` cross-surface integration spec singleton, the `pm-schema-ui-006` mutation seam API spec and implementation scaffold singleton, the full `pm-schema-ui-001a` through `pm-schema-ui-001e` implementation chain, the `pm-schema-ui-002a` P6 schedule context import and read bridge implementation singleton, the `pm-schema-ui-002b` read-only Gantt prototype implementation singleton, the `pm-schema-ui-002c` baseline overlay and read-model hardening singleton, the `pm-schema-ui-002d` baseline overlay re-issue singleton, the `pm-schema-ui-002e` schedule drivers read surface and host validation singleton, the `pm-schema-ui-002f` schedule tracer read surface and host validation singleton, and the full `pm-schema-020a` through `pm-schema-020h` adjacent baseline substrate chain were already published on parent-root `clean-main`.
 
-The next smallest remaining substantive packet is the planning-only `pm-schema-020e` RESA internal baseline capture singleton, which stages cleanly at 1 file. It is the remaining ready follow-on within the adjacent baseline lane after `020a` and `020c`, while `020g-b` remains an alternative branch rather than a simultaneously required successor after landed `020g-a`.
+The next smallest remaining substantive packet was the planning-only `pm-schema-020e` RESA internal baseline capture singleton, which staged cleanly at 1 file. It closed the adjacent internal baseline planning branch and left `020g-b` as the only remaining untracked `020*` packet in the draft lane.
+
+Publication outcome:
+
+1. committed on parent-root `clean-main` as `0e1159c`
+2. pushed to `origin/clean-main` on 2026-04-22
+3. closed as the published pm-schema `020e` internal baseline capture planning tranche
 
 ## 2. Why This Packet Is Next
 
@@ -23,7 +29,7 @@ Measured from the parent git root at `C:/APEX Platform` on 2026-04-22 after the 
 
 ## 3. Packet Intent
 
-Use this packet to introduce the bounded `pm-schema-020e` RESA internal baseline capture planning singleton:
+This packet introduced the bounded `pm-schema-020e` RESA internal baseline capture planning singleton:
 
 1. `2026-04-18-pm-schema-020e-resa-internal-baseline-capture-planning.json`
 
@@ -33,7 +39,7 @@ From the parent git root at `C:/APEX Platform`, the bounded packet path is:
 
 1. `apex-power-ops-platform/ops/agents/packets/draft/2026-04-18-pm-schema-020e-resa-internal-baseline-capture-planning.json`
 
-Current measured contents: 1 file.
+Published contents: 1 file.
 
 ## 5. Why This Packet Is Bounded Correctly
 
@@ -44,9 +50,9 @@ This packet is intentionally narrow:
 3. it avoids conflating the landed `020g-a` parser-reconciliation strategy with the separate optional `020g-b` companion-JSON branch
 4. it does not widen into `knowledge/` or `archive`
 
-## 6. Operator Execution Path
+## 6. Historical Execution Path
 
-Preferred task path from `C:/APEX Platform/apex-power-ops-platform`:
+Preferred task path from `C:/APEX Platform/apex-power-ops-platform` when this packet was executed:
 
 1. run `Preview parent-root pm-schema-020e draft packet`
 2. run `Stage parent-root pm-schema-020e draft packet` only when the preview is correct
@@ -79,4 +85,4 @@ This lane is packet-definition JSON, so diff discipline matters more than execut
 
 ## 9. Follow-On After This Packet
 
-If this packet lands cleanly, re-evaluate the remaining non-UI backlog again from current dependencies and tracked-vs-untracked state rather than assuming `020g-b` or the older foundational backlog is automatically next.
+If this packet lands cleanly, queue `pm-schema-020g-b` as the next bounded adjacent packet because it is the only remaining untracked `020*` draft file.
