@@ -1,0 +1,82 @@
+# Parent-Root PM-Schema-020G-B Draft Publication Handoff
+## Date: 2026-04-22
+## Updated by: GitHub Copilot (GPT-5.4)
+## Scope: Active next-step packet for the bounded `pm-schema-020g-b` governed baseline companion JSON path singleton under `C:/APEX Platform/apex-power-ops-platform`
+
+## 1. Summary
+
+The active shared packages, active app lanes, residual scaffold/doc surfaces, infra-database lane, docs lane, ops knowledge-control-plane registry lane, ops legacy-governance lane, ops knowledge-resource-operations lane, the forms-import draft pair, the `001af` draft, the `apex-unification-001` draft pair, the `knowledge-import-001` draft pair, the `pm-schema-009` draft family, the `pm-schema-010` draft trio, the `pm-schema-011` dependency-activation family, the `pm-schema-012` identity and joined-read family, the `pm-schema-013` work-package write family, the `pm-schema-014` task-write pair, the `pm-schema-015` assignment-write pair, the `pm-schema-016` dependency-write singleton, the `pm-schema-017` execution-issue-write singleton, the `pm-schema-018` progress-snapshot-write singleton, the top-level `pm-schema-019` write-surface consolidation singleton, the full `pm-schema-019f` through `pm-schema-019k` follow-on chain, the `pm-schema-ui-002g` comparative schedule analytics read surface and host validation singleton, the `pm-schema-ui-002g` host-variance shell wiring and browser validation singleton, the `pm-schema-ui-002e-host` drivers shell wiring and browser validation singleton, the `pm-schema-ui-002f-host` tracer shell wiring and browser validation singleton, the `pm-schema-ui-001` field apparatus workflow prototype design singleton, the `pm-schema-ui-002` gantt layer comparison decision singleton, the `pm-schema-ui-003` PM approval queue prototype design singleton, the `pm-schema-ui-004` lead operations surface prototype design singleton, the `pm-schema-ui-005` cross-surface integration spec singleton, the `pm-schema-ui-006` mutation seam API spec and implementation scaffold singleton, the full `pm-schema-ui-001a` through `pm-schema-ui-001e` implementation chain, the `pm-schema-ui-002a` P6 schedule context import and read bridge implementation singleton, the `pm-schema-ui-002b` read-only Gantt prototype implementation singleton, the `pm-schema-ui-002c` baseline overlay and read-model hardening singleton, the `pm-schema-ui-002d` baseline overlay re-issue singleton, the `pm-schema-ui-002e` schedule drivers read surface and host validation singleton, the `pm-schema-ui-002f` schedule tracer read surface and host validation singleton, and the full `pm-schema-020a` through `pm-schema-020h` adjacent baseline substrate chain plus the `pm-schema-020e` planning branch were already published on parent-root `clean-main`.
+
+The next smallest remaining substantive packet is `pm-schema-020g-b`, which stages cleanly at 1 file. It is now the only remaining untracked `020*` packet, so it remains the last adjacent baseline-lane singleton before the queue falls back to the older foundational `pm-schema-001` through `pm-schema-008` backlog.
+
+## 2. Why This Packet Is Next
+
+Measured from the parent git root at `C:/APEX Platform` on 2026-04-22 after the `pm-schema-020e` draft publication:
+
+1. remaining untracked top-level distribution is `ops` 410, `knowledge` 974, `archive` 2516, plus 2 excluded generated app artifacts
+2. the remaining `ops/agents` backlog is still split into `handoffs` 333 and `packets/draft` 77
+3. `git add -n --` on the bounded `pm-schema-020g-b` packet stages exactly this file cleanly:
+   - `2026-04-18-pm-schema-020g-b-governed-baseline-companion-json-path.json`
+4. `git ls-files --others --exclude-standard -- "apex-power-ops-platform/ops/agents/packets/draft/*pm-schema-020*.json"` now returns only `020g-b`
+5. `020g-b` remains positioned as an alternative companion-data strategy rather than a second simultaneously required path after landed `020g-a`, but it is still the last remaining adjacent `020*` publication candidate
+6. the older untracked `pm-schema-001` through `pm-schema-008` backlog remains a separate foundational lane and does not outrank the last remaining adjacent `020*` singleton
+
+## 3. Packet Intent
+
+Use this packet to introduce the bounded `pm-schema-020g-b` governed baseline companion JSON path singleton:
+
+1. `2026-04-18-pm-schema-020g-b-governed-baseline-companion-json-path.json`
+
+## 4. Exact Packet Contents
+
+From the parent git root at `C:/APEX Platform`, the bounded packet path is:
+
+1. `apex-power-ops-platform/ops/agents/packets/draft/2026-04-18-pm-schema-020g-b-governed-baseline-companion-json-path.json`
+
+Current measured contents: 1 file.
+
+## 5. Why This Packet Is Bounded Correctly
+
+This packet is intentionally narrow:
+
+1. it introduces only the governed companion JSON path definition and does not widen into UI behavior, bridge routes, SQL changes, or broader schedule-write surfaces
+2. it stays within the adjacent baseline lane even though its packet semantics keep it distinct from the landed `020g-a` parser-reconciliation strategy
+3. it clears the final remaining untracked `020*` packet without backfilling the older foundational `pm-schema-001` through `pm-schema-008` backlog into the same slice
+4. it does not widen into `knowledge/` or `archive`
+
+## 6. Operator Execution Path
+
+Preferred task path from `C:/APEX Platform/apex-power-ops-platform`:
+
+1. run `Preview parent-root pm-schema-020g-b draft packet`
+2. run `Stage parent-root pm-schema-020g-b draft packet` only when the preview is correct
+3. run `Parent-root pm-schema-020g-b draft packet staged diff`
+
+Direct parent-root path if tasks are not used:
+
+```powershell
+Set-Location 'C:/APEX Platform'
+git add -n -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-18-pm-schema-020g-b-governed-baseline-companion-json-path.json
+git add -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-18-pm-schema-020g-b-governed-baseline-companion-json-path.json
+git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-18-pm-schema-020g-b-governed-baseline-companion-json-path.json
+```
+
+## 7. Validation Expectation
+
+Before commit, the smallest relevant checks are:
+
+1. `git add -n` preview of the exact path
+2. staged diff review for that draft packet file only
+
+This lane is packet-definition JSON, so diff discipline matters more than executable validation.
+
+## 8. Do Not Do
+
+1. do not widen this packet into UI, bridge-route, SQL, or write-surface implementation work
+2. do not misstate `020g-b` as a simultaneously required successor to landed `020g-a`; preserve its alternative-path framing
+3. do not bundle the older foundational `pm-schema-001` through `pm-schema-008` backlog into this adjacent baseline-lane publication
+4. do not mix this packet with `ops/agents/handoffs`
+
+## 9. Follow-On After This Packet
+
+If this packet lands cleanly, re-evaluate the remaining non-UI draft backlog from current dependencies and tracked-vs-untracked state, because the adjacent `020*` packet family will then be fully published.
