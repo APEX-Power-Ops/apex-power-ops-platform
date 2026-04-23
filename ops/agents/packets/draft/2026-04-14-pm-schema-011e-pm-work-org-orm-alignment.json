@@ -1,0 +1,65 @@
+{
+  "packet_id": "2026-04-14-pm-schema-011e",
+  "title": "PM Work Org ORM Alignment",
+  "objective": "Align the PM/work SQLAlchemy and read-schema layer to the six now-active org foreign keys by adding minimal org models, relationship declarations, and bounded regression coverage without changing database schema or opening write-side runtime implementation.",
+  "domain": "pm-domain",
+  "active_role": "PM Org ORM Alignment Author",
+  "repo_paths": [
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-NEXT-PACKET-PLAN-2026-04-13.md",
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-IMPLEMENTATION-PLAN-2026-04-13.md",
+    "c:/APEX Platform/apex-power-ops-platform/apps/control-plane-api",
+    "c:/APEX Platform/apex-power-ops-platform/infra/database/migrations/work/",
+    "c:/APEX Platform/apex-power-ops-platform/infra/database/migrations/org/",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-14-pm-schema-011d-pm-work-org-fk-activation-handoff.md"
+  ],
+  "dependencies": [
+    "2026-04-13-pm-schema-010a",
+    "2026-04-13-pm-schema-010b",
+    "2026-04-14-pm-schema-011a",
+    "2026-04-14-pm-schema-011b",
+    "2026-04-14-pm-schema-011c",
+    "2026-04-14-pm-schema-011d"
+  ],
+  "required_inputs": [
+    "PM-SCHEMA-V2-NEXT-PACKET-PLAN-2026-04-13.md",
+    "PM-SCHEMA-V2-IMPLEMENTATION-PLAN-2026-04-13.md",
+    "2026-04-13-pm-schema-010a-work-schema-orm-model-authoring-handoff.md",
+    "2026-04-13-pm-schema-010b-work-read-api-surface-handoff.md",
+    "2026-04-14-pm-schema-011a-org-domain-schema-design-handoff.md",
+    "2026-04-14-pm-schema-011b-org-schema-ddl-authoring-local-validation-handoff.md",
+    "2026-04-14-pm-schema-011c-org-seed-data-population-handoff.md",
+    "2026-04-14-pm-schema-011d-pm-work-org-fk-activation-handoff.md"
+  ],
+  "constrained_outputs": [
+    "Minimal org SQLAlchemy models for clients, sites, business_units, and contracts",
+    "Relationship declarations on Project and WorkPackage for the six active org foreign keys",
+    "Bounded schema/test updates proving the ORM layer matches the activated FK reality",
+    "No database-schema changes and no write-side runtime implementation"
+  ],
+  "write_scope": [
+    "c:/APEX Platform/Platform-Authority",
+    "c:/APEX Platform/apex-power-ops-platform/apps/control-plane-api",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "validation_steps": [
+    "Confirm the ORM layer reflects only the six active org foreign keys from packet 011d and introduces only the minimum org models and relationships needed for alignment",
+    "Confirm no database schema changes are made and packet 011e does not re-open FK activation or write-side API implementation",
+    "Confirm packet-010a model tests and packet-010b API tests still pass with the aligned ORM layer",
+    "Confirm the resulting runtime layer is ready for later write-side PM API work with org-backed relationships available"
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "output_artifacts": [
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-14-pm-schema-011e-pm-work-org-orm-alignment-handoff.md"
+  ],
+  "handoff_note": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-14-pm-schema-011e-pm-work-org-orm-alignment-handoff.md",
+  "implementation_ready_candidate": true,
+  "sql_permission": false,
+  "sql_permission_note": "Packet 011e is runtime-layer alignment only. The six org foreign keys are already active. No new SQL or schema changes are authorized.",
+  "landing_lane": "runtime_alignment_only",
+  "migration_strategy": "orm_relationship_alignment",
+  "created_at": "2026-04-14",
+  "updated_at": "2026-04-14",
+  "delegation_status": "complete"
+}

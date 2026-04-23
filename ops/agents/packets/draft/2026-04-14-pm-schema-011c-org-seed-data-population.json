@@ -1,0 +1,63 @@
+{
+  "packet_id": "2026-04-14-pm-schema-011c",
+  "title": "PM Org Seed-Data Population From V1 Supabase Sources",
+  "objective": "Populate the bounded org shared-infra tables in staging from read-only V1 Supabase sources, preserve V1 client and site UUIDs, create business-unit lookup rows, and verify zero orphaned PM/work org references without activating PM/work foreign keys, modifying PM/work SQL, or implementing runtime code.",
+  "domain": "pm-domain",
+  "active_role": "PM Org Seed Data Operator",
+  "repo_paths": [
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-NEXT-PACKET-PLAN-2026-04-13.md",
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-IMPLEMENTATION-PLAN-2026-04-13.md",
+    "c:/APEX Platform/Platform-Authority/DATABASE-OWNERSHIP-SPLIT-2026-04-12.md",
+    "c:/APEX Platform/apex-power-ops-platform/infra/database/migrations/org/",
+    "c:/APEX Platform/apex-power-ops-platform/infra/database/migrations/work/",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-14-pm-schema-011a-org-domain-schema-design-handoff.md",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-14-pm-schema-011b-org-schema-ddl-authoring-local-validation-handoff.md"
+  ],
+  "dependencies": [
+    "2026-04-13-pm-schema-011",
+    "2026-04-14-pm-schema-011a",
+    "2026-04-14-pm-schema-011b",
+    "PM-SCHEMA-V2-NEXT-PACKET-PLAN-2026-04-13.md"
+  ],
+  "required_inputs": [
+    "PM-SCHEMA-V2-NEXT-PACKET-PLAN-2026-04-13.md",
+    "PM-SCHEMA-V2-IMPLEMENTATION-PLAN-2026-04-13.md",
+    "DATABASE-OWNERSHIP-SPLIT-2026-04-12.md",
+    "2026-04-13-pm-schema-011-cross-domain-dependency-activation-planning-handoff.md",
+    "2026-04-14-pm-schema-011a-org-domain-schema-design-handoff.md",
+    "2026-04-14-pm-schema-011b-org-schema-ddl-authoring-local-validation-handoff.md",
+    "Read-only access to V1 Supabase public.clients, public.sites, and public.projects",
+    "Staging database with validated org schema bundle already applied"
+  ],
+  "constrained_outputs": [
+    "A population handoff note under c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/",
+    "Row-count and coverage evidence for org.clients, org.sites, org.business_units, and org.contracts",
+    "Coverage verification results proving whether PM/work org references are fully seeded",
+    "No PM/work FK activation DDL, no PM/work SQL changes, no runtime implementation"
+  ],
+  "write_scope": [
+    "c:/APEX Platform/Platform-Authority",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "validation_steps": [
+    "Confirm population preserves V1 client_id and site_id UUIDs where they already exist in V1 sources and only creates the minimum org rows required by packet 011a",
+    "Confirm distinct V1 business_unit text values are mapped into org.business_units rows with explicit coverage results, while org.contracts remains empty unless real source-backed data exists",
+    "Confirm the four coverage verification queries from packet 011a are executed and their results are recorded without activating PM/work foreign keys or modifying PM/work SQL",
+    "Confirm packet 011c does not implement runtime code and leaves the system ready for later FK-activation planning if seed coverage is complete"
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "output_artifacts": [
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-14-pm-schema-011c-org-seed-data-population-handoff.md"
+  ],
+  "handoff_note": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-14-pm-schema-011c-org-seed-data-population-handoff.md",
+  "implementation_ready_candidate": true,
+  "sql_permission": true,
+  "sql_permission_note": "Packet 011c authorizes bounded staging DML into org.clients, org.sites, org.business_units, and org.contracts using read-only V1 source inputs. It does not authorize PM/work FK activation, PM/work SQL changes, or runtime implementation.",
+  "landing_lane": "staging_population_only",
+  "migration_strategy": "read_only_v1_seed_population",
+  "created_at": "2026-04-14",
+  "updated_at": "2026-04-14",
+  "delegation_status": "complete"
+}
