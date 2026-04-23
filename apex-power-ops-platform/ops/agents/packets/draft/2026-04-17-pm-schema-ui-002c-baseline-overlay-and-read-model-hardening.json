@@ -1,0 +1,78 @@
+{
+  "packet_id": "2026-04-17-pm-schema-ui-002c",
+  "title": "PM Schema V2 UI Baseline Overlay And Read-Model Hardening",
+  "objective": "Implement the smallest bounded follow-on to UI-002b by exposing one explicit persisted baseline-display source through a read-only schedule-consumption path and rendering baseline-versus-current comparison in the PM Gantt surface without enabling schedule writes, synthetic baseline fabrication, drag-to-reschedule, Class D behavior, billing finalization, or direct client writes for controlled operational state.",
+  "domain": "pm-ui-domain",
+  "active_role": "PM UI Baseline Overlay And Read-Model Hardening Architect",
+  "repo_paths": [
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-UI-NEXT-PACKET-PLAN-2026-04-15.md",
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-UI-NEEDS-AND-CONSTRAINTS-MATRIX-2026-04-15.md",
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-UI-SOURCE-OF-TRUTH-AND-MUTATION-AUTHORITY-2026-04-15.md",
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-UI-DESIGN-GOVERNANCE-BASELINE-2026-04-15.md",
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-UI-LAYER-BY-LAYER-TOOL-EVALUATION-MATRIX-2026-04-15.md",
+    "c:/APEX Platform/Platform-Authority/APEX-UI-FRAMEWORK-SPEC-REVIEWED-INPUT-MAPPING-2026-04-15.md",
+    "c:/APEX Platform/APEX_Schema_V2",
+    "c:/APEX Platform/apex-power-ops-platform",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "dependencies": [
+    "2026-04-15-pm-schema-ui-002",
+    "2026-04-15-pm-schema-ui-002a",
+    "2026-04-15-pm-schema-ui-002b",
+    "2026-04-15-pm-schema-ui-005",
+    "2026-04-15-pm-schema-ui-006",
+    "2026-04-15-pm-schema-ui-001e"
+  ],
+  "required_inputs": [
+    "PM-SCHEMA-V2-UI-NEXT-PACKET-PLAN-2026-04-15.md",
+    "PM-SCHEMA-V2-UI-NEEDS-AND-CONSTRAINTS-MATRIX-2026-04-15.md",
+    "PM-SCHEMA-V2-UI-SOURCE-OF-TRUTH-AND-MUTATION-AUTHORITY-2026-04-15.md",
+    "PM-SCHEMA-V2-UI-DESIGN-GOVERNANCE-BASELINE-2026-04-15.md",
+    "PM-SCHEMA-V2-UI-LAYER-BY-LAYER-TOOL-EVALUATION-MATRIX-2026-04-15.md",
+    "APEX-UI-FRAMEWORK-SPEC-REVIEWED-INPUT-MAPPING-2026-04-15.md",
+    "PM-DOMAIN-LIFECYCLE-AND-STATE-MODEL-2026-04-12.md",
+    "PM-DOMAIN-P6-INTEGRATION-BOUNDARY-SPEC-2026-04-12.md",
+    "2026-04-15-pm-schema-ui-002-gantt-layer-comparison-decision-handoff.md",
+    "2026-04-15-pm-schema-ui-002a-p6-schedule-context-import-and-read-bridge-implementation-handoff.md",
+    "2026-04-15-pm-schema-ui-002b-read-only-gantt-prototype-implementation-handoff.md",
+    "2026-04-15-pm-schema-ui-005-cross-surface-integration-spec-handoff.md",
+    "2026-04-15-pm-schema-ui-006-mutation-seam-api-spec-and-implementation-scaffold-handoff.md",
+    "2026-04-15-pm-schema-ui-001e-supabase-read-model-and-mutation-store-migration-handoff.md",
+    "APEX_UI_Framework_Spec.docx"
+  ],
+  "constrained_outputs": [
+    "One bounded read-only baseline-display source selection tied to already persisted truth, with no synthetic baseline fabrication",
+    "One minimal GET-only read-model or bridge hardening slice exposing baseline dates or baseline-ready variance metadata to the PM schedule surface",
+    "One bounded PM Gantt follow-on rendering baseline-versus-current comparison, slip visibility, and legend updates without enabling schedule writes",
+    "One execution handoff documenting baseline source, bridge changes, rendered comparison behavior, validation results, and remaining deferred items"
+  ],
+  "write_scope": [
+    "c:/APEX Platform/apex-power-ops-platform/apps/pm-surface",
+    "c:/APEX Platform/apex-power-ops-platform/apps/mutation-seam",
+    "c:/APEX Platform/Platform-Authority",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "validation_steps": [
+    "Confirm packet UI-002c preserves the read-only posture of the PM schedule surface and does not introduce drag-to-reschedule, inline dependency editing, or schedule-write behavior",
+    "Confirm the baseline comparison surface binds only to an explicit persisted source already authorized by the platform and does not fabricate baseline truth in the client",
+    "Confirm any mutation-seam or schedule-bridge changes remain GET-only and read-only by construction",
+    "Confirm no Class D behavior, billing finalization flow, direct client writes, or broad production-hardening-by-convenience are introduced"
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "output_artifacts": [
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-17-pm-schema-ui-002c-baseline-overlay-and-read-model-hardening-handoff.md"
+  ],
+  "handoff_note": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-17-pm-schema-ui-002c-baseline-overlay-and-read-model-hardening-handoff.md",
+  "completion_disposition": "blocker-stop-no-authorized-persisted-baseline-source",
+  "implementation_ready_candidate": true,
+  "sql_permission": false,
+  "sql_permission_note": "Packet UI-002c authorizes only read-only inspection and bounded GET-only bridge hardening. It does not authorize direct SQL writes, schedule-write behavior, synthetic baseline fabrication, Class D finance behavior, or billing finalization.",
+  "landing_lane": "ui_schedule_baseline_overlay",
+  "migration_strategy": "bounded_read_only_bridge_and_overlay_slice",
+  "created_at": "2026-04-17",
+  "updated_at": "2026-04-17",
+  "delegation_status": "complete",
+  "delegation_prompt": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-17-desktop-claude-pm-schema-ui-packet-002c-prompt.md"
+}
