@@ -1,0 +1,62 @@
+{
+  "packet_id": "2026-04-13-pm-schema-009",
+  "title": "PM Domain Legacy V1-To-V2 Migration Planning",
+  "objective": "Define the bounded plan for mapping legacy PM-related source data into the validated canonical PM/work schema without performing migration DML, changing the packet-007 SQL bundle, or changing runtime code.",
+  "domain": "pm-domain",
+  "active_role": "PM Migration Planner",
+  "repo_paths": [
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-NEXT-PACKET-PLAN-2026-04-13.md",
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-IMPLEMENTATION-PLAN-2026-04-13.md",
+    "c:/APEX Platform/Platform-Authority/DATABASE-OWNERSHIP-SPLIT-2026-04-12.md",
+    "c:/APEX Platform/Platform-Authority/CURRENT-STATE-REPO-INVENTORY-2026-04-12.md",
+    "c:/APEX Platform/apex-power-ops-platform/infra/database/migrations/work/",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-13-pm-schema-008-local-validation-handoff.md",
+    "c:/APEX Platform/source-domains/tcc_v5_backend"
+  ],
+  "dependencies": [
+    "2026-04-13-pm-schema-008",
+    "PM-SCHEMA-V2-NEXT-PACKET-PLAN-2026-04-13.md"
+  ],
+  "required_inputs": [
+    "PM-SCHEMA-V2-NEXT-PACKET-PLAN-2026-04-13.md",
+    "PM-SCHEMA-V2-IMPLEMENTATION-PLAN-2026-04-13.md",
+    "PM-DOMAIN-IMPLEMENTATION-READY-SCHEMA-SPEC-2026-04-12.md",
+    "DATABASE-OWNERSHIP-SPLIT-2026-04-12.md",
+    "2026-04-13-pm-schema-008-local-validation-handoff.md",
+    "Validated packet-007 SQL bundle",
+    "Legacy PM-related lineage surfaces in the current platform and source repositories"
+  ],
+  "constrained_outputs": [
+    "A planning handoff note under c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/",
+    "A source-to-target migration strategy with explicit non-goals",
+    "A legacy-source inventory and mapping summary",
+    "No migration DML, no cutover execution, no runtime code changes"
+  ],
+  "write_scope": [
+    "c:/APEX Platform/Platform-Authority",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "validation_steps": [
+    "Confirm packet 008 is treated as complete and authoritative input",
+    "Confirm the migration plan maps legacy sources into the validated canonical work schema without reopening schema design",
+    "Confirm explicit non-goals exclude DML, SQL bundle rewrites, and runtime implementation",
+    "Confirm cutover risks, data-quality risks, and unresolved lineage gaps are named explicitly"
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "output_artifacts": [
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-13-pm-schema-009-legacy-migration-planning-handoff.md"
+  ],
+  "handoff_note": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-13-pm-schema-009-legacy-migration-planning-handoff.md",
+  "implementation_ready_candidate": false,
+  "sql_permission": false,
+  "sql_permission_note": "Planning only. No migration DML, DDL changes, or runtime code changes are authorized in packet 009.",
+  "landing_lane": "planning-only",
+  "migration_strategy": "legacy_to_validated_work_schema_planning",
+  "created_at": "2026-04-13",
+  "updated_at": "2026-04-13",
+  "completed_at": "2026-04-13",
+  "delegation_status": "completed",
+  "planning_disposition": "planning-complete"
+}

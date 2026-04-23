@@ -1,0 +1,59 @@
+{
+  "packet_id": "2026-04-13-pm-schema-009a",
+  "title": "PM Domain Migration Mapping Infrastructure",
+  "objective": "Create the staging-only migration infrastructure required for a later dry-run V1-to-V2 PM migration, including mapping tables, enum conversion functions, migration audit logging, and dry-run readiness checks, without moving production data.",
+  "domain": "pm-domain",
+  "active_role": "PM Migration Infrastructure Author",
+  "repo_paths": [
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-NEXT-PACKET-PLAN-2026-04-13.md",
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-IMPLEMENTATION-PLAN-2026-04-13.md",
+    "c:/APEX Platform/Platform-Authority/DATABASE-OWNERSHIP-SPLIT-2026-04-12.md",
+    "c:/APEX Platform/apex-power-ops-platform/infra/database/migrations/work/",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-13-pm-schema-008-local-validation-handoff.md",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-13-pm-schema-009-legacy-migration-planning-handoff.md",
+    "c:/APEX Platform/source-domains/tcc_v5_backend"
+  ],
+  "dependencies": [
+    "2026-04-13-pm-schema-008",
+    "2026-04-13-pm-schema-009"
+  ],
+  "required_inputs": [
+    "2026-04-13-pm-schema-008-local-validation-handoff.md",
+    "2026-04-13-pm-schema-009-legacy-migration-planning-handoff.md",
+    "Validated packet-007 SQL bundle",
+    "Legacy V1 source-table inventory and mapping rules",
+    "Decision on timezone conversion rule or an explicit temporary default"
+  ],
+  "constrained_outputs": [
+    "Migration infrastructure SQL or setup artifacts in the staging lane only",
+    "A handoff note documenting created mapping tables, enum functions, audit logging, and readiness results",
+    "No production data movement and no runtime code changes",
+    "No live production cutover work"
+  ],
+  "write_scope": [
+    "c:/APEX Platform/apex-power-ops-platform/infra/database/migrations/work",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs",
+    "c:/APEX Platform/Platform-Authority"
+  ],
+  "validation_steps": [
+    "Confirm all work is limited to the staging database and migration support structures",
+    "Confirm mapping artifacts cover scope-to-work-package lookup, enum conversion, and audit traceability",
+    "Confirm dry-run readiness blockers are named explicitly if V1 source access is incomplete",
+    "Confirm no production data movement or runtime adoption work occurs in this packet"
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "output_artifacts": [
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-13-pm-schema-009a-mapping-infrastructure-handoff.md"
+  ],
+  "handoff_note": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-13-pm-schema-009a-mapping-infrastructure-handoff.md",
+  "implementation_ready_candidate": false,
+  "sql_permission": true,
+  "sql_permission_note": "Packet 009a authorizes staging-only migration support structures such as migration schema tables and conversion functions. It does not authorize production data movement.",
+  "landing_lane": "c:/APEX Platform/apex-power-ops-platform/infra/database/migrations/work/",
+  "migration_strategy": "staging_mapping_infrastructure",
+  "created_at": "2026-04-13",
+  "updated_at": "2026-04-13",
+  "delegation_status": "completed"
+}
