@@ -14,13 +14,13 @@ This document provides that bounded plan.
 
 ## Verified Inventory Baseline
 
-Measured from the parent git root at `C:/APEX Platform` on 2026-04-22 after the `pm-schema-ui-004` draft publication:
+Measured from the parent git root at `C:/APEX Platform` on 2026-04-22 after the `pm-schema-ui-005` draft publication:
 
-- total untracked paths under `apex-power-ops-platform/`: 3925
+- total untracked paths under `apex-power-ops-platform/`: 3924
 - `apps`: 2
 - `archive`: 2516
 - `knowledge`: 974
-- `ops`: 433
+- `ops`: 432
 
 Interpretation:
 
@@ -112,11 +112,11 @@ Current concrete artifact for the completed scaffold step:
 
 Current next-step interpretation:
 
-- the scaffold, package-source, active app-lane runtime/support/test steps, shared package-source steps, the residual scaffold/doc step, the `infra` database step, the `docs` step, the `ops/knowledge-control-plane/registry` step, the `ops/agents/legacy-governance` step, the `ops/knowledge-resource-operations` step, the forms-import draft pair, the closed `001af` draft, the `apex-unification-001` draft pair, the `knowledge-import-001` draft pair, the `pm-schema-009` draft family, the `pm-schema-010` draft trio, the `pm-schema-011` dependency-activation family, the `pm-schema-012` identity and joined-read family, the `pm-schema-013` work-package write family, the `pm-schema-014` task-write pair, the `pm-schema-015` assignment-write pair, the `pm-schema-016` dependency-write singleton, the `pm-schema-017` execution-issue-write singleton, the `pm-schema-018` progress-snapshot-write singleton, the `pm-schema-019` write-surface consolidation singleton, the `pm-schema-019f` durable DB-backed idempotency store singleton, the `pm-schema-019g` idempotency sweep and ops metrics singleton, the `pm-schema-019h` sweep schedule wiring singleton, the `pm-schema-019i` idempotency by-route ops breakdown singleton, the `pm-schema-019j` ops metrics export schedule scrape singleton, the `pm-schema-019k` ops metrics threshold evaluation singleton, the `pm-schema-ui-002g` comparative schedule analytics read surface and host validation singleton, the `pm-schema-ui-002g` host-variance shell wiring and browser validation singleton, the `pm-schema-ui-002e-host` drivers shell wiring and browser validation singleton, the `pm-schema-ui-002f-host` tracer shell wiring and browser validation singleton, the `pm-schema-ui-001` field apparatus workflow prototype design singleton, the `pm-schema-ui-002` gantt layer comparison decision singleton, the `pm-schema-ui-003` PM approval queue prototype design singleton, and the `pm-schema-ui-004` lead operations surface prototype design singleton are complete; the next bounded follow-on is the preauthored `pm-schema-ui-005` cross-surface integration spec singleton, because its packet dependencies are now satisfied while the remaining implementation tranches still reference unpublished `pm-schema-ui-006`, `pm-schema-ui-001e`, or both
+- the scaffold, package-source, active app-lane runtime/support/test steps, shared package-source steps, the residual scaffold/doc step, the `infra` database step, the `docs` step, the `ops/knowledge-control-plane/registry` step, the `ops/agents/legacy-governance` step, the `ops/knowledge-resource-operations` step, the forms-import draft pair, the closed `001af` draft, the `apex-unification-001` draft pair, the `knowledge-import-001` draft pair, the `pm-schema-009` draft family, the `pm-schema-010` draft trio, the `pm-schema-011` dependency-activation family, the `pm-schema-012` identity and joined-read family, the `pm-schema-013` work-package write family, the `pm-schema-014` task-write pair, the `pm-schema-015` assignment-write pair, the `pm-schema-016` dependency-write singleton, the `pm-schema-017` execution-issue-write singleton, the `pm-schema-018` progress-snapshot-write singleton, the `pm-schema-019` write-surface consolidation singleton, the `pm-schema-019f` durable DB-backed idempotency store singleton, the `pm-schema-019g` idempotency sweep and ops metrics singleton, the `pm-schema-019h` sweep schedule wiring singleton, the `pm-schema-019i` idempotency by-route ops breakdown singleton, the `pm-schema-019j` ops metrics export schedule scrape singleton, the `pm-schema-019k` ops metrics threshold evaluation singleton, the `pm-schema-ui-002g` comparative schedule analytics read surface and host validation singleton, the `pm-schema-ui-002g` host-variance shell wiring and browser validation singleton, the `pm-schema-ui-002e-host` drivers shell wiring and browser validation singleton, the `pm-schema-ui-002f-host` tracer shell wiring and browser validation singleton, the `pm-schema-ui-001` field apparatus workflow prototype design singleton, the `pm-schema-ui-002` gantt layer comparison decision singleton, the `pm-schema-ui-003` PM approval queue prototype design singleton, the `pm-schema-ui-004` lead operations surface prototype design singleton, and the `pm-schema-ui-005` cross-surface integration spec singleton are complete; the next bounded follow-on is the preauthored `pm-schema-ui-006` mutation seam API spec and implementation scaffold singleton, because its packet dependencies are now satisfied while the later implementation tranches still depend on unpublished runtime-facing predecessors such as `pm-schema-ui-001e`
 
 Current concrete artifact for that next step:
 
-- `ops/agents/handoffs/2026-04-22-parent-root-pm-schema-ui-005-draft-publication-handoff.md`
+- `ops/agents/handoffs/2026-04-22-parent-root-pm-schema-ui-006-draft-publication-handoff.md`
 
 ## Guardrails
 
