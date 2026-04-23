@@ -1,0 +1,72 @@
+{
+  "packet_id": "2026-04-15-pm-schema-ui-005",
+  "title": "PM Schema V2 UI Cross-Surface Integration Spec",
+  "objective": "Reconcile the completed bounded prototype surfaces from UI-001 through UI-004 into one governed cross-surface integration specification before runtime implementation begins, without implementing code, reopening PM schema design, bypassing the governed mutation seam, or broadening into billing or executive workflow design.",
+  "domain": "pm-ui-domain",
+  "active_role": "PM UI Cross-Surface Integration Architect",
+  "repo_paths": [
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-UI-NEXT-PACKET-PLAN-2026-04-15.md",
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-UI-NEEDS-AND-CONSTRAINTS-MATRIX-2026-04-15.md",
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-UI-SOURCE-OF-TRUTH-AND-MUTATION-AUTHORITY-2026-04-15.md",
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-UI-DESIGN-GOVERNANCE-BASELINE-2026-04-15.md",
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-UI-LAYER-BY-LAYER-TOOL-EVALUATION-MATRIX-2026-04-15.md",
+    "c:/APEX Platform/Platform-Authority/APEX-UI-FRAMEWORK-SPEC-REVIEWED-INPUT-MAPPING-2026-04-15.md",
+    "c:/APEX Platform/APEX_Schema_V2",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "dependencies": [
+    "PM-SCHEMA-V2-UI-NEEDS-AND-CONSTRAINTS-MATRIX-2026-04-15.md",
+    "PM-SCHEMA-V2-UI-SOURCE-OF-TRUTH-AND-MUTATION-AUTHORITY-2026-04-15.md",
+    "PM-SCHEMA-V2-UI-DESIGN-GOVERNANCE-BASELINE-2026-04-15.md",
+    "PM-SCHEMA-V2-UI-LAYER-BY-LAYER-TOOL-EVALUATION-MATRIX-2026-04-15.md",
+    "2026-04-15-pm-schema-ui-001",
+    "2026-04-15-pm-schema-ui-002",
+    "2026-04-15-pm-schema-ui-003",
+    "2026-04-15-pm-schema-ui-004"
+  ],
+  "required_inputs": [
+    "PM-SCHEMA-V2-UI-NEXT-PACKET-PLAN-2026-04-15.md",
+    "PM-SCHEMA-V2-UI-NEEDS-AND-CONSTRAINTS-MATRIX-2026-04-15.md",
+    "PM-SCHEMA-V2-UI-SOURCE-OF-TRUTH-AND-MUTATION-AUTHORITY-2026-04-15.md",
+    "PM-SCHEMA-V2-UI-DESIGN-GOVERNANCE-BASELINE-2026-04-15.md",
+    "PM-SCHEMA-V2-UI-LAYER-BY-LAYER-TOOL-EVALUATION-MATRIX-2026-04-15.md",
+    "APEX-UI-FRAMEWORK-SPEC-REVIEWED-INPUT-MAPPING-2026-04-15.md",
+    "2026-04-15-pm-schema-ui-001-field-apparatus-workflow-prototype-design-handoff.md",
+    "2026-04-15-pm-schema-ui-002-gantt-layer-comparison-decision-handoff.md",
+    "2026-04-15-pm-schema-ui-003-pm-approval-queue-prototype-design-handoff.md",
+    "2026-04-15-pm-schema-ui-004-lead-operations-surface-prototype-design-handoff.md",
+    "APEX_UI_Framework_Spec.docx"
+  ],
+  "constrained_outputs": [
+    "One planning handoff note that reconciles UI-001 through UI-004 into a single cross-surface integration spec",
+    "One route and state handoff map covering field, lead, PM approval, and adjacent planning context",
+    "One mutation-seam and offline/online integration contract across the completed prototypes",
+    "Implementation-readiness criteria and explicit integration non-goals with no runtime code"
+  ],
+  "write_scope": [
+    "c:/APEX Platform/Platform-Authority",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "validation_steps": [
+    "Confirm packet UI-005 remains bounded to cross-surface integration specification and does not implement runtime code, routes, or components",
+    "Confirm the packet preserves the governed mutation seam and resolves cross-surface handoffs without inventing direct client write shortcuts",
+    "Confirm the packet preserves offline Class A/B handling and online-only Class C/D handling across surfaces",
+    "Confirm the packet does not broaden into billing, finance finalization, or executive-ops workflow design"
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "authored",
+  "output_artifacts": [
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-15-pm-schema-ui-005-cross-surface-integration-spec-handoff.md"
+  ],
+  "handoff_note": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-15-pm-schema-ui-005-cross-surface-integration-spec-handoff.md",
+  "implementation_ready_candidate": true,
+  "sql_permission": false,
+  "sql_permission_note": "Planning only. Packet UI-005 does not authorize PM schema changes, runtime implementation, direct client mutation paths, PM approval decisions beyond already-governed prototypes, or finance-affecting workflow design.",
+  "landing_lane": "ui_integration_spec_only",
+  "migration_strategy": "no_runtime_changes",
+  "created_at": "2026-04-16",
+  "updated_at": "2026-04-16",
+  "delegation_status": "ready",
+  "delegation_prompt": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-15-desktop-claude-pm-schema-ui-packet-005-prompt.md"
+}
