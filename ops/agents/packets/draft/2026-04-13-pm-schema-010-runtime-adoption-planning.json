@@ -1,0 +1,72 @@
+{
+  "packet_id": "2026-04-13-pm-schema-010",
+  "title": "PM Domain Runtime Adoption Planning",
+  "objective": "Define the phased runtime-adoption plan for bringing platform services and future PM-facing application surfaces onto the validated PM/work schema without making runtime code changes or API changes in this packet.",
+  "domain": "pm-domain",
+  "active_role": "PM Runtime Adoption Planner",
+  "repo_paths": [
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-NEXT-PACKET-PLAN-2026-04-13.md",
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-IMPLEMENTATION-PLAN-2026-04-13.md",
+    "c:/APEX Platform/Platform-Authority/DATABASE-OWNERSHIP-SPLIT-2026-04-12.md",
+    "c:/APEX Platform/apex-power-ops-platform/apps/control-plane-api",
+    "c:/APEX Platform/apex-power-ops-platform/packages/calc-engine",
+    "c:/APEX Platform/apex-power-ops-platform/infra/database/migrations/work/",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-13-pm-schema-008-local-validation-handoff.md",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-13-pm-schema-009-legacy-migration-planning-handoff.md",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-13-pm-schema-009a-mapping-infrastructure-handoff.md",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-13-pm-schema-009b-source-data-population-handoff.md",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-13-pm-schema-009c-staging-dry-run-migration-handoff.md"
+  ],
+  "dependencies": [
+    "2026-04-13-pm-schema-008",
+    "2026-04-13-pm-schema-009",
+    "2026-04-13-pm-schema-009a",
+    "2026-04-13-pm-schema-009b",
+    "2026-04-13-pm-schema-009c",
+    "PM-SCHEMA-V2-NEXT-PACKET-PLAN-2026-04-13.md"
+  ],
+  "required_inputs": [
+    "PM-SCHEMA-V2-NEXT-PACKET-PLAN-2026-04-13.md",
+    "PM-SCHEMA-V2-IMPLEMENTATION-PLAN-2026-04-13.md",
+    "DATABASE-OWNERSHIP-SPLIT-2026-04-12.md",
+    "2026-04-13-pm-schema-008-local-validation-handoff.md",
+    "2026-04-13-pm-schema-009-legacy-migration-planning-handoff.md",
+    "2026-04-13-pm-schema-009a-mapping-infrastructure-handoff.md",
+    "2026-04-13-pm-schema-009b-source-data-population-handoff.md",
+    "2026-04-13-pm-schema-009c-staging-dry-run-migration-handoff.md",
+    "Validated packet-007 SQL bundle",
+    "Current runtime surfaces under apps/control-plane-api and adjacent platform packages",
+    "Completed PM migration packet outputs through 009c"
+  ],
+  "constrained_outputs": [
+    "A runtime-adoption planning handoff note under c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/",
+    "A runtime touchpoint inventory and phased rollout plan",
+    "Explicit contract impacts and rollback expectations",
+    "No runtime code changes, no new API implementation, no SQL activation work"
+  ],
+  "write_scope": [
+    "c:/APEX Platform/Platform-Authority",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "validation_steps": [
+    "Confirm packet 008 remains the validated schema baseline",
+    "Confirm runtime planning names concrete touchpoints rather than generic future application ideas",
+    "Confirm packet 010 excludes runtime code changes and focuses on sequencing, contracts, and validation",
+    "Confirm dependency on completed migration packet posture through 009c is explicit where transitional compatibility matters"
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "output_artifacts": [
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-13-pm-schema-010-runtime-adoption-planning-handoff.md"
+  ],
+  "handoff_note": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-13-pm-schema-010-runtime-adoption-planning-handoff.md",
+  "implementation_ready_candidate": false,
+  "sql_permission": false,
+  "sql_permission_note": "Planning only. Packet 010 does not authorize runtime code changes, API implementation, or database changes.",
+  "landing_lane": "planning-only",
+  "migration_strategy": "runtime_adoption_planning",
+  "created_at": "2026-04-13",
+  "updated_at": "2026-04-13",
+  "delegation_status": "complete"
+}
