@@ -1,0 +1,50 @@
+{
+  "packet_id": "2026-04-18-pm-schema-020e",
+  "title": "RESA Internal Baseline Capture Planning",
+  "objective": "Plan the smallest bounded follow-on after packets 020a through 020c for a RESA-internal, actor-attested baseline capture path that writes baseline truth through an authorized application path when P6-exported baseline data is unavailable, without implementing the write path yet and without broadening into UI stack redesign, work-package physical-home decisions, or multi-baseline history.",
+  "domain": "pm-domain",
+  "active_role": "PM Internal Baseline Capture Planner",
+  "repo_paths": [
+    "c:/APEX Platform/Platform-Authority/PM-DOMAIN-BASELINE-FIELD-AUTHORITY-PROMOTION-2026-04-17.md",
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-UI-SOURCE-OF-TRUTH-AND-MUTATION-AUTHORITY-2026-04-15.md",
+    "c:/APEX Platform/apex-power-ops-platform/apps/mutation-seam",
+    "c:/APEX Platform/apex-power-ops-platform/apps/pm-surface",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-17-pm-schema-020c-persisted-schedule-baseline-ddl-and-loader-lane-handoff.md"
+  ],
+  "dependencies": [
+    "2026-04-17-pm-schema-020a",
+    "2026-04-17-pm-schema-020c"
+  ],
+  "required_inputs": [
+    "PM-DOMAIN-BASELINE-FIELD-AUTHORITY-PROMOTION-2026-04-17.md",
+    "PM-SCHEMA-V2-UI-SOURCE-OF-TRUTH-AND-MUTATION-AUTHORITY-2026-04-15.md",
+    "2026-04-17-pm-schema-020c-persisted-schedule-baseline-ddl-and-loader-lane-handoff.md"
+  ],
+  "constrained_outputs": [
+    "One bounded planning memo defining the mutation class, actor attestation rules, and validation gates for an internal baseline-capture path",
+    "One minimal follow-on implementation recommendation covering API seam shape, provenance requirements, and non-overload rules",
+    "No code, no SQL, no UI implementation, and no multi-baseline history decision"
+  ],
+  "write_scope": [
+    "c:/APEX Platform/Platform-Authority",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "validation_steps": [
+    "Confirm packet 020e is planning-only and does not implement a write path, SQL, or UI changes",
+    "Confirm the proposed path remains actor-attested, non-synthetic, and bounded by the governed operational write rules",
+    "Confirm multi-baseline history and WorkPackage physical-home decisions remain explicitly deferred"
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "ready",
+  "handoff_note": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-18-pm-schema-020e-resa-internal-baseline-capture-planning-handoff.md",
+  "implementation_ready_candidate": false,
+  "sql_permission": false,
+  "sql_permission_note": "Packet 020e is planning-only. No SQL, no mutation implementation, and no UI or bridge changes are authorized.",
+  "landing_lane": "planning_only",
+  "migration_strategy": "no_runtime_changes",
+  "created_at": "2026-04-18",
+  "updated_at": "2026-04-18",
+  "delegation_status": "ready",
+  "delegation_prompt": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-18-desktop-claude-pm-schema-packet-020e-prompt.md"
+}
