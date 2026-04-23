@@ -1,0 +1,57 @@
+{
+  "packet_id": "2026-04-18-pm-schema-020e.1",
+  "title": "Loader Working-Copy Restoration And Integrity Gate",
+  "objective": "Implement the smallest bounded follow-on after packet 020f by restoring apps/mutation-seam/app/schedule/loader.py to a source-controlled ast.parse-clean state, re-establishing the truthful packet-020d loader baseline under observation, and adding a minimal integrity gate so future packet claims cannot rely on stale bytecode or truncated source, without broadening bridge routes, PM UI behavior, or operational write paths.",
+  "domain": "pm-domain",
+  "active_role": "PM Loader Integrity Restoration Author",
+  "repo_paths": [
+    "c:/APEX Platform/Platform-Authority/PM-DOMAIN-XER-TOOLS-LONG-TERM-VALUE-PLAN-2026-04-18.md",
+    "c:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/schedule/loader.py",
+    "c:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-18-pm-schema-020d-p6-baseline-xer-parser-and-loader-wiring-handoff.md",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-18-pm-schema-020f-real-xer-host-parser-verification-and-golden-fixture-admission-handoff.md"
+  ],
+  "dependencies": [
+    "2026-04-18-pm-schema-020d",
+    "2026-04-18-pm-schema-020f"
+  ],
+  "required_inputs": [
+    "PM-DOMAIN-XER-TOOLS-LONG-TERM-VALUE-PLAN-2026-04-18.md",
+    "2026-04-18-pm-schema-020d-p6-baseline-xer-parser-and-loader-wiring-handoff.md",
+    "2026-04-18-pm-schema-020f-real-xer-host-parser-verification-and-golden-fixture-admission-handoff.md",
+    "apps/mutation-seam/app/schedule/loader.py"
+  ],
+  "constrained_outputs": [
+    "One bounded restoration of apps/mutation-seam/app/schedule/loader.py to an ast.parse-clean, source-controlled state",
+    "One focused integrity gate proving the loader working copy is parseable before packet validation claims are accepted",
+    "Focused validation evidence re-establishing the truthful current packet-020d baseline against the restored loader source"
+  ],
+  "write_scope": [
+    "c:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/schedule",
+    "c:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "validation_steps": [
+    "Confirm loader.py passes ast.parse from source, not just import from stale bytecode",
+    "Confirm the restored loader re-establishes or truthfully revises the packet-020d baseline test claim under observation",
+    "Confirm no bridge route, PM UI, SQL, or operational write-path changes are introduced",
+    "Confirm the integrity gate is documented so future packet closeouts cannot silently rely on a broken working copy"
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "output_artifacts": [
+    "c:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests/test_loader_integrity_020e1.py",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-18-pm-schema-020e.1-loader-working-copy-restoration-and-integrity-gate-handoff.md"
+  ],
+  "handoff_note": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-18-pm-schema-020e.1-loader-working-copy-restoration-and-integrity-gate-handoff.md",
+  "implementation_ready_candidate": false,
+  "sql_permission": false,
+  "sql_permission_note": "Packet 020e.1 is source restoration and integrity gating only. No SQL, no bridge changes, no PM UI changes, and no write-surface expansion are authorized.",
+  "landing_lane": "loader_integrity_restoration",
+  "migration_strategy": "restore_and_gate_existing_loader_only",
+  "created_at": "2026-04-18",
+  "updated_at": "2026-04-18",
+  "delegation_status": "complete",
+  "delegation_prompt": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-18-desktop-claude-pm-schema-packet-020e.1-prompt.md"
+}
