@@ -210,6 +210,7 @@ Exit condition:
 - [x] define the post-forms-import `001af` draft follow-on packet in `ops/agents/handoffs/2026-04-22-parent-root-001af-draft-publication-handoff.md`
 - [x] define the post-`001af` apex-unification `001` draft follow-on packet in `ops/agents/handoffs/2026-04-22-parent-root-apex-unification-001-draft-publication-handoff.md`
 - [x] define the post-apex-unification `001` knowledge-import `001` draft follow-on packet in `ops/agents/handoffs/2026-04-22-parent-root-knowledge-import-001-draft-publication-handoff.md`
+- [x] define the post-knowledge-import `001` pm-schema `009` draft follow-on packet in `ops/agents/handoffs/2026-04-22-parent-root-pm-schema-009-draft-publication-handoff.md`
 - [ ] default future publication work to explicit platform file paths or bounded packet pathspecs rather than whole-subtree staging
 - [ ] reserve `git add -- apex-power-ops-platform/` for explicit cutover or intentionally broad publication work only
 - [ ] treat unrelated tracked changes elsewhere under `C:/APEX Platform` as separate lanes unless a cross-lane operation is explicitly intended
