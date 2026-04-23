@@ -1,13 +1,19 @@
 # Parent-Root PM-Schema-003 Draft Publication Handoff
 ## Date: 2026-04-22
 ## Updated by: GitHub Copilot (GPT-5.4)
-## Scope: Active next-step packet for the bounded `pm-schema-003` P6 integration boundary spec singleton under `C:/APEX Platform/apex-power-ops-platform`
+## Scope: Historical record for the bounded `pm-schema-003` P6 integration boundary spec singleton under `C:/APEX Platform/apex-power-ops-platform`
 
 ## 1. Summary
 
-The residual foundational PM family remains active after the `pm-schema-002` lifecycle/state publication.
+The residual foundational PM family remained active after the `pm-schema-002` lifecycle/state publication.
 
-The next smallest remaining substantive packet is `pm-schema-003`, which stages cleanly at 1 file. The real packet path is `2026-04-12-pm-schema-003-p6-integration-boundary-spec.json`, and it remains the adjacent foundational PM governance slice rather than a wider cross-family movement tranche.
+The next smallest remaining substantive packet was `pm-schema-003`, which staged cleanly at 1 file. It advanced the residual foundational PM family through the P6 integration boundary slice and moved the queue to the adjacent apparatus execution bridge spec packet in `pm-schema-004`.
+
+Publication outcome:
+
+1. committed on parent-root `clean-main` as `d99b7ec`
+2. pushed to `origin/clean-main` on 2026-04-22
+3. closed as the published pm-schema `003` P6 integration boundary tranche
 
 ## 2. Why This Packet Is Next
 
@@ -22,7 +28,7 @@ Measured from the parent git root at `C:/APEX Platform` on 2026-04-22 after the 
 
 ## 3. Packet Intent
 
-Use this packet to introduce the bounded `pm-schema-003` P6 integration boundary spec singleton:
+This packet introduced the bounded `pm-schema-003` P6 integration boundary spec singleton:
 
 1. `2026-04-12-pm-schema-003-p6-integration-boundary-spec.json`
 
@@ -32,7 +38,7 @@ From the parent git root at `C:/APEX Platform`, the bounded packet path is:
 
 1. `apex-power-ops-platform/ops/agents/packets/draft/2026-04-12-pm-schema-003-p6-integration-boundary-spec.json`
 
-Current measured contents: 1 file.
+Published contents: 1 file.
 
 ## 5. Why This Packet Is Bounded Correctly
 
@@ -43,9 +49,9 @@ This packet is intentionally narrow:
 3. it avoids cross-family widening into the currently untracked `apex-unification-001a` or `knowledge-import-001a` physical movement lanes
 4. it does not widen into `archive/` or `knowledge/`
 
-## 6. Operator Execution Path
+## 6. Historical Execution Path
 
-Preferred task path from `C:/APEX Platform/apex-power-ops-platform`:
+Preferred task path from `C:/APEX Platform/apex-power-ops-platform` when this packet was executed:
 
 1. run `Preview parent-root pm-schema-003 draft packet`
 2. run `Stage parent-root pm-schema-003 draft packet` only when the preview is correct
@@ -76,4 +82,4 @@ This lane is packet-definition JSON, so diff discipline matters more than execut
 
 ## 9. Follow-On After This Packet
 
-If this packet lands cleanly, re-evaluate whether `pm-schema-004` is the next truthful adjacent foundational follow-on.
+If this packet lands cleanly, queue `pm-schema-004` as the next truthful adjacent foundational follow-on.
