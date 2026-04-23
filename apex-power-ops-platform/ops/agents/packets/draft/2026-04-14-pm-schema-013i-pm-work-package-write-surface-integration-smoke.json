@@ -1,0 +1,66 @@
+{
+  "packet_id": "2026-04-14-pm-schema-013i",
+  "title": "PM Work-Package Write Surface Integration Smoke",
+  "objective": "Prove the new work-package POST and PATCH runtime path behaves correctly against a real PostgreSQL-backed environment by seeding the minimum supporting org, work, and identity rows, exercising create and partial update end to end, and confirming bounded validation and cleanup behavior without adding endpoints, changing schemas, or authoring new SQL.",
+  "domain": "pm-domain",
+  "active_role": "PM Work-Package Write Surface Integration Smoke Author",
+  "repo_paths": [
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-NEXT-PACKET-PLAN-2026-04-13.md",
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-IMPLEMENTATION-PLAN-2026-04-13.md",
+    "c:/APEX Platform/apex-power-ops-platform/apps/control-plane-api",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-14-pm-schema-013-pm-work-package-write-surface-minimal-handoff.md"
+  ],
+  "dependencies": [
+    "2026-04-13-pm-schema-010a",
+    "2026-04-13-pm-schema-010b",
+    "2026-04-14-pm-schema-011f",
+    "2026-04-14-pm-schema-012f",
+    "2026-04-14-pm-schema-012h",
+    "2026-04-14-pm-schema-012i",
+    "2026-04-14-pm-schema-013"
+  ],
+  "required_inputs": [
+    "PM-SCHEMA-V2-NEXT-PACKET-PLAN-2026-04-13.md",
+    "PM-SCHEMA-V2-IMPLEMENTATION-PLAN-2026-04-13.md",
+    "2026-04-13-pm-schema-010a-work-schema-orm-model-authoring-handoff.md",
+    "2026-04-13-pm-schema-010b-work-read-api-surface-handoff.md",
+    "2026-04-14-pm-schema-011f-pm-work-write-api-surface-projects-handoff.md",
+    "2026-04-14-pm-schema-012f-pm-work-identity-joined-read-surface-handoff.md",
+    "2026-04-14-pm-schema-012h-pm-work-org-joined-read-surface-handoff.md",
+    "2026-04-14-pm-schema-012i-pm-work-org-joined-read-surface-integration-smoke-handoff.md",
+    "2026-04-14-pm-schema-013-pm-work-package-write-surface-minimal-handoff.md"
+  ],
+  "constrained_outputs": [
+    "Real PostgreSQL-backed integration smoke coverage for the existing POST and PATCH work-package handlers",
+    "End-to-end evidence that the work-package write surface can create a row, patch a bounded subset of fields, reject a known-bad FK with a 422 merged-error response, and preserve 404 behavior for a missing work package",
+    "Focused regression coverage proving packet-010a, packet-010b, packet-011f, packet-012f, packet-012h, packet-012i, and packet-013 surfaces remain stable after the integration smoke addition",
+    "No database-schema changes, no new endpoints, and no broader write-side runtime implementation"
+  ],
+  "write_scope": [
+    "c:/APEX Platform/Platform-Authority",
+    "c:/APEX Platform/apex-power-ops-platform/apps/control-plane-api",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "validation_steps": [
+    "Confirm packet 013i touches only integration-smoke coverage for the existing work-package POST and PATCH handlers and does not add new endpoints or broaden mutation scope",
+    "Confirm the live runtime path can create a work package, patch a bounded subset of fields, return a merged-field 422 for a known-bad FK, and preserve 404 behavior for a missing work package",
+    "Confirm the integration module mirrors the skip-when-unreachable posture used by packets 012g and 012i",
+    "Confirm packet-010a model tests, packet-010b API tests, packet-011f project-write tests, packet-012f identity joined-read tests, packet-012h org joined-read tests, packet-012i org integration smoke, and packet-013 work-package write tests still pass or skip as expected after the smoke coverage addition"
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "output_artifacts": [
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-14-pm-schema-013i-pm-work-package-write-surface-integration-smoke-handoff.md"
+  ],
+  "handoff_note": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-14-pm-schema-013i-pm-work-package-write-surface-integration-smoke-handoff.md",
+  "implementation_ready_candidate": true,
+  "sql_permission": false,
+  "sql_permission_note": "Packet 013i is integration-smoke runtime coverage only. No new SQL, schema changes, migration edits, or broader write-surface expansion are authorized.",
+  "landing_lane": "runtime_write_surface_work_packages_integration_smoke_only",
+  "migration_strategy": "application_integration_smoke_only",
+  "created_at": "2026-04-14",
+  "updated_at": "2026-04-14",
+  "delegation_status": "complete",
+  "delegation_prompt": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-14-desktop-claude-pm-schema-packet-013i-prompt.md"
+}
