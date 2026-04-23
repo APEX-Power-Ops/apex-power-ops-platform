@@ -1,13 +1,19 @@
 # Parent-Root PM-Schema 012 Draft Publication Handoff
 ## Date: 2026-04-22
 ## Updated by: GitHub Copilot (GPT-5.4)
-## Scope: Active next-step packet for the bounded `pm-schema-012` identity and joined-read family under `C:/APEX Platform/apex-power-ops-platform`
+## Scope: Historical record for the bounded `pm-schema-012` identity and joined-read family under `C:/APEX Platform/apex-power-ops-platform`
 
 ## 1. Summary
 
 The active shared packages, active app lanes, residual scaffold/doc surfaces, infra-database lane, docs lane, ops knowledge-control-plane registry lane, ops legacy-governance lane, ops knowledge-resource-operations lane, the forms-import draft pair, the `001af` draft, the `apex-unification-001` draft pair, the `knowledge-import-001` draft pair, the `pm-schema-009` draft family, the `pm-schema-010` draft trio, and the `pm-schema-011` dependency-activation family are now published on parent-root `clean-main`.
 
-The next smallest remaining substantive packet is the `pm-schema-012` identity and joined-read family, which currently stages cleanly at 9 files. This packet introduces the next coherent PM identity-domain and joined-read sequence after the org dependency-activation family.
+The next smallest remaining substantive packet was the `pm-schema-012` identity and joined-read family, which staged cleanly at 9 files. This packet introduced the next coherent PM identity-domain and joined-read sequence after the org dependency-activation family.
+
+Publication outcome:
+
+1. committed on parent-root `clean-main` as `b977400`
+2. pushed to `origin/clean-main` on 2026-04-22
+3. closed as the published pm-schema `012` draft follow-on to the `pm-schema-011` draft tranche
 
 ## 2. Why This Packet Is Next
 
@@ -29,7 +35,7 @@ Measured from the parent git root at `C:/APEX Platform` on 2026-04-22 after the 
 
 ## 3. Packet Intent
 
-Use this packet to introduce the bounded `pm-schema-012` identity and joined-read family:
+This packet introduced the bounded `pm-schema-012` identity and joined-read family:
 
 1. `2026-04-14-pm-schema-012a-identity-domain-schema-design.json`
 2. `2026-04-14-pm-schema-012b-identity-schema-ddl-authoring-local-validation.json`
@@ -55,7 +61,7 @@ From the parent git root at `C:/APEX Platform`, the bounded packet paths are:
 8. `apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-012h-pm-work-org-joined-read-surface.json`
 9. `apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-012i-pm-work-org-joined-read-surface-integration-smoke.json`
 
-Current measured contents: 9 files.
+Published contents: 9 files.
 
 ## 5. Why This Packet Is Bounded Correctly
 
@@ -66,9 +72,9 @@ This packet is intentionally narrow:
 3. it avoids the 333-file handoff backlog and the remaining 123-file draft backlog beyond this family
 4. it does not widen into `knowledge/` or `archive/`
 
-## 6. Operator Execution Path
+## 6. Historical Execution Path
 
-Preferred task path from `C:/APEX Platform/apex-power-ops-platform`:
+Preferred task path from `C:/APEX Platform/apex-power-ops-platform` when this packet was executed:
 
 1. run `Preview parent-root pm-schema 012 draft packet`
 2. run `Stage parent-root pm-schema 012 draft packet` only when the preview is correct
@@ -103,7 +109,8 @@ This lane is packet-definition JSON, so diff discipline matters more than execut
 
 If this packet lands cleanly, the next logical lanes are:
 
-1. the next smallest coherent `ops/agents/packets/draft` family after `pm-schema-012`
-2. broader `ops/agents` packet strategy decisions
-3. `knowledge/` packet(s)
-4. `archive/` strategy decisions rather than automatic publication
+1. the `pm-schema-013` work-package write family
+2. the next smallest coherent `ops/agents/packets/draft` family after `pm-schema-013`
+3. broader `ops/agents` packet strategy decisions
+4. `knowledge/` packet(s)
+5. `archive/` strategy decisions rather than automatic publication
