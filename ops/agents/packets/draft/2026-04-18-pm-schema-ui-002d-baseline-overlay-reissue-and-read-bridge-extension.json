@@ -1,0 +1,68 @@
+{
+  "packet_id": "2026-04-18-pm-schema-ui-002d",
+  "title": "PM Schema V2 UI Baseline Overlay Re-Issue And Read-Bridge Extension",
+  "objective": "Implement the smallest bounded follow-on after packet 020c by extending the existing GET-only schedule bridge to expose persisted task baseline fields and re-issuing the PM Gantt baseline overlay slice so the UI renders baseline-versus-current comparison, variance visibility, and legend updates without enabling schedule writes, synthetic baseline fabrication, drag-to-reschedule, Class D behavior, billing finalization, or direct client writes.",
+  "domain": "pm-ui-domain",
+  "active_role": "PM UI Baseline Overlay Re-Issue Architect",
+  "repo_paths": [
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-UI-NEXT-PACKET-PLAN-2026-04-15.md",
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-UI-NEEDS-AND-CONSTRAINTS-MATRIX-2026-04-15.md",
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-UI-SOURCE-OF-TRUTH-AND-MUTATION-AUTHORITY-2026-04-15.md",
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-UI-DESIGN-GOVERNANCE-BASELINE-2026-04-15.md",
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-UI-LAYER-BY-LAYER-TOOL-EVALUATION-MATRIX-2026-04-15.md",
+    "c:/APEX Platform/apex-power-ops-platform/apps/mutation-seam",
+    "c:/APEX Platform/apex-power-ops-platform/apps/pm-surface",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "dependencies": [
+    "2026-04-15-pm-schema-ui-002b",
+    "2026-04-17-pm-schema-ui-002c",
+    "2026-04-17-pm-schema-020a",
+    "2026-04-17-pm-schema-020b",
+    "2026-04-17-pm-schema-020c"
+  ],
+  "required_inputs": [
+    "PM-SCHEMA-V2-UI-NEXT-PACKET-PLAN-2026-04-15.md",
+    "PM-SCHEMA-V2-UI-NEEDS-AND-CONSTRAINTS-MATRIX-2026-04-15.md",
+    "PM-SCHEMA-V2-UI-SOURCE-OF-TRUTH-AND-MUTATION-AUTHORITY-2026-04-15.md",
+    "PM-SCHEMA-V2-UI-DESIGN-GOVERNANCE-BASELINE-2026-04-15.md",
+    "PM-SCHEMA-V2-UI-LAYER-BY-LAYER-TOOL-EVALUATION-MATRIX-2026-04-15.md",
+    "2026-04-15-pm-schema-ui-002-gantt-layer-comparison-decision-handoff.md",
+    "2026-04-15-pm-schema-ui-002b-read-only-gantt-prototype-implementation-handoff.md",
+    "2026-04-17-pm-schema-ui-002c-baseline-overlay-and-read-model-hardening-handoff.md",
+    "2026-04-17-pm-schema-020c-persisted-schedule-baseline-ddl-and-loader-lane-handoff.md",
+    "apps/mutation-seam/logs/schedule-bootstrap-20260418-143524.log"
+  ],
+  "constrained_outputs": [
+    "One bounded GET-only schedule bridge extension exposing persisted baseline fields for task consumption",
+    "One minimal PM Gantt overlay re-issue that renders baseline bars, baseline-current comparison, and legend updates from the persisted source",
+    "One execution handoff documenting bridge fields, UI rendering behavior, host-browser validation, and remaining deferred items"
+  ],
+  "write_scope": [
+    "c:/APEX Platform/apex-power-ops-platform/apps/mutation-seam",
+    "c:/APEX Platform/apex-power-ops-platform/apps/pm-surface",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "validation_steps": [
+    "Confirm packet UI-002d keeps the schedule bridge GET-only and read-only by construction",
+    "Confirm the PM Gantt overlay binds only to persisted baseline fields landed by 020c and does not fabricate baseline truth in the client",
+    "Confirm no drag-to-reschedule, inline dependency editing, schedule-write behavior, Class D behavior, or billing finalization is introduced",
+    "Confirm host-side browser validation succeeds against the persisted stage database and the local mutation seam"
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "output_artifacts": [
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-18-pm-schema-ui-002d-baseline-overlay-reissue-and-read-bridge-extension-handoff.md"
+  ],
+  "handoff_note": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-18-pm-schema-ui-002d-baseline-overlay-reissue-and-read-bridge-extension-handoff.md",
+  "implementation_ready_candidate": true,
+  "sql_permission": false,
+  "sql_permission_note": "Packet UI-002d authorizes only bounded GET-only bridge extension and read-only UI overlay work over the persisted baseline lane already landed by 020c. No new SQL, no schedule-write behavior, and no client-side fabrication are authorized.",
+  "landing_lane": "ui_baseline_overlay_reissue",
+  "migration_strategy": "bounded_get_only_bridge_and_overlay_slice",
+  "created_at": "2026-04-18",
+  "updated_at": "2026-04-18",
+  "delegation_status": "complete",
+  "delegation_prompt": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-18-desktop-claude-pm-schema-ui-packet-002d-prompt.md"
+}
