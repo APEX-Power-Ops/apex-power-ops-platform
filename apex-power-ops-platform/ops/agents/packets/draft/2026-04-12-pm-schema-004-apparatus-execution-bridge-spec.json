@@ -1,0 +1,41 @@
+{
+  "packet_id": "2026-04-12-pm-schema-004",
+  "title": "PM Domain Apparatus Execution Bridge Spec",
+  "objective": "Clarify how apparatus-linked execution remains a critical asset-side execution bridge without becoming the top-level PM operating object, including progress rollup, issue handling, and delivery-to-commissioning linkage.",
+  "domain": "pm-domain",
+  "active_role": "Platform Architect",
+  "repo_paths": [
+    "c:/APEX Platform/Platform-Authority/PM-WORK-DOMAIN-SPEC-2026-04-12.md",
+    "c:/APEX Platform/APEX_Schema_V2/SCHEMA_MAP.md",
+    "c:/APEX Platform/APEX_Schema_V2/P6_Schema_Assessment.docx",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft"
+  ],
+  "dependencies": [
+    "PM-WORK-DOMAIN-SPEC-2026-04-12.md",
+    "APEX-SCHEMA-V2-CANONICAL-MAPPING-2026-04-12.md"
+  ],
+  "required_inputs": [
+    "PM-WORK-DOMAIN-SPEC-2026-04-12.md",
+    "APEX-SCHEMA-V2-REVIEW-2026-04-12.md",
+    "APEX-SCHEMA-V2-CANONICAL-MAPPING-2026-04-12.md",
+    "APEX_Schema_V2/SCHEMA_MAP.md",
+    "APEX_Schema_V2/P6_Schema_Assessment.docx"
+  ],
+  "constrained_outputs": [
+    "One apparatus execution bridge document under c:/APEX Platform/Platform-Authority",
+    "Explicit description of rollups from apparatus to Task and WorkPackage",
+    "No schema implementation"
+  ],
+  "write_scope": [
+    "c:/APEX Platform/Platform-Authority"
+  ],
+  "validation_steps": [
+    "Confirm apparatus is not the PM domain's primary business object",
+    "Confirm asset-side execution context is preserved",
+    "Confirm issues, approvals, and progress rollups remain auditable"
+  ],
+  "handoff_target": "Reviewer And Release Gate",
+  "status": "review",
+  "created_at": "2026-04-12",
+  "updated_at": "2026-04-12"
+}
