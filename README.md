@@ -19,9 +19,13 @@ The Olares One workstation is now the intended primary host for the active APEX 
 Current repo authority for that transition lives in:
 
 1. `C:/APEX Platform/Infrastructure/Olares_Workspace_Authority_Framework.md`
-2. `C:/APEX Platform/Infrastructure/Olares_Build_Guide.md`
-3. `C:/APEX Platform/Infrastructure/Olares_Checklist.md`
-4. `C:/APEX Platform/Infrastructure/VSCode_Build_Prompt.md`
+2. `C:/APEX Platform/Infrastructure/Olares_MVP_Execution_Roadmap.md`
+3. `C:/APEX Platform/Infrastructure/Olares_Build_Guide.md`
+4. `C:/APEX Platform/Infrastructure/Olares_Checklist.md`
+
+Execution bootstrap for fresh implementation sessions:
+
+1. `C:/APEX Platform/Infrastructure/VSCode_Build_Prompt.md`
 
 Interpretation rules:
 
