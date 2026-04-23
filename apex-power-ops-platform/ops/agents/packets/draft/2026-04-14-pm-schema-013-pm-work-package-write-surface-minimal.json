@@ -1,0 +1,72 @@
+{
+  "packet_id": "2026-04-14-pm-schema-013",
+  "title": "PM Work-Package Write Surface (Minimal)",
+  "objective": "Implement the first bounded work-package write runtime slice by adding create and update contracts, minimal mutation services, and POST/PATCH endpoints for work.work_packages only, reusing the existing FK-validation pattern from packet 011f and preserving all non-project, non-work-package PM entities as read-only.",
+  "domain": "pm-domain",
+  "active_role": "PM Work-Package Write API Author",
+  "repo_paths": [
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-NEXT-PACKET-PLAN-2026-04-13.md",
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-IMPLEMENTATION-PLAN-2026-04-13.md",
+    "c:/APEX Platform/apex-power-ops-platform/apps/control-plane-api",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-14-pm-schema-011f-pm-work-write-api-surface-projects-handoff.md",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-14-pm-schema-012i-pm-work-org-joined-read-surface-integration-smoke-handoff.md"
+  ],
+  "dependencies": [
+    "2026-04-13-pm-schema-010a",
+    "2026-04-13-pm-schema-010b",
+    "2026-04-14-pm-schema-011d",
+    "2026-04-14-pm-schema-011e",
+    "2026-04-14-pm-schema-011f",
+    "2026-04-14-pm-schema-012d",
+    "2026-04-14-pm-schema-012e",
+    "2026-04-14-pm-schema-012f",
+    "2026-04-14-pm-schema-012h",
+    "2026-04-14-pm-schema-012i"
+  ],
+  "required_inputs": [
+    "PM-SCHEMA-V2-NEXT-PACKET-PLAN-2026-04-13.md",
+    "PM-SCHEMA-V2-IMPLEMENTATION-PLAN-2026-04-13.md",
+    "2026-04-13-pm-schema-010a-work-schema-orm-model-authoring-handoff.md",
+    "2026-04-13-pm-schema-010b-work-read-api-surface-handoff.md",
+    "2026-04-14-pm-schema-011d-pm-work-org-fk-activation-handoff.md",
+    "2026-04-14-pm-schema-011e-pm-work-org-orm-alignment-handoff.md",
+    "2026-04-14-pm-schema-011f-pm-work-write-api-surface-projects-handoff.md",
+    "2026-04-14-pm-schema-012d-pm-work-identity-fk-activation-handoff.md",
+    "2026-04-14-pm-schema-012e-pm-work-identity-orm-alignment-handoff.md",
+    "2026-04-14-pm-schema-012h-pm-work-org-joined-read-surface-handoff.md",
+    "2026-04-14-pm-schema-012i-pm-work-org-joined-read-surface-integration-smoke-handoff.md"
+  ],
+  "constrained_outputs": [
+    "Create and update schemas for work.work_packages only",
+    "Minimal mutation services and router wiring for POST and PATCH work-package endpoints",
+    "Validation behavior for the active org and identity FK references consumed by work packages",
+    "Focused regression evidence proving packet-010a, packet-010b, packet-011f, packet-012f, packet-012h, and packet-012i surfaces remain intact after the minimal work-package write addition"
+  ],
+  "write_scope": [
+    "c:/APEX Platform/Platform-Authority",
+    "c:/APEX Platform/apex-power-ops-platform/apps/control-plane-api",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "validation_steps": [
+    "Confirm packet 013 adds write runtime support for work.work_packages only and does not broaden mutation scope to tasks, assignments, dependencies, execution issues, or progress snapshots",
+    "Confirm the minimal work-package write surface reuses the existing FK-validation posture for active org and identity references without authoring new SQL or schema changes",
+    "Confirm no new read-schema expansion is introduced beyond the existing work-package contracts",
+    "Confirm packet-010a model tests, packet-010b API tests, packet-011f project-write tests, packet-012f identity joined-read tests, packet-012h org joined-read tests, packet-012i org integration smoke, and any new work-package write tests pass after the write-surface addition"
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "output_artifacts": [
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-14-pm-schema-013-pm-work-package-write-surface-minimal-handoff.md"
+  ],
+  "handoff_note": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-14-pm-schema-013-pm-work-package-write-surface-minimal-handoff.md",
+  "implementation_ready_candidate": true,
+  "sql_permission": false,
+  "sql_permission_note": "Packet 013 is runtime write-surface work only. No new SQL, schema changes, migration edits, or broader mutation-scope expansion are authorized.",
+  "landing_lane": "runtime_write_surface_work_packages_only",
+  "migration_strategy": "application_runtime_write_surface_only",
+  "created_at": "2026-04-14",
+  "updated_at": "2026-04-14",
+  "delegation_status": "complete",
+  "delegation_prompt": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-14-desktop-claude-pm-schema-packet-013-prompt.md"
+}
