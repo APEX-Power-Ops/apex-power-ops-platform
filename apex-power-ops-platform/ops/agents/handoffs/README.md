@@ -11,19 +11,20 @@ Packet `2026-04-21-apex-unification-001af` is now the completed execution record
 Use these files first:
 
 1. `../../../../apps/control-plane-api/PUBLIC-APPARATUS-ROUTE-PROMOTION-CHECKLIST-2026-04-21.md`
-2. `2026-04-22-parent-root-infrastructure-olares-doc-trio-publication-handoff.md` for the current bounded parent-root publication tranche covering the active Olares infrastructure document trio
-3. `2026-04-22-parent-root-platform-subtree-zero-frontier-handoff.md` for the current fully closed `apex-power-ops-platform` subtree publication checkpoint
-4. `2026-04-22-parent-root-residual-archive-formula-pair-publication-handoff.md` when historical context on the final residual archive tranche is needed
-5. `2026-04-22-parent-root-post-apex-unification-001i-remaining-draft-reevaluation-handoff.md` when historical context on the post-`001i` reevaluation step is needed
-6. `2026-04-22-parent-root-apex-unification-001i-draft-publication-handoff.md` when historical context on the published apex-unification `001i` draft tranche is needed
-7. `2026-04-22-parent-root-apex-unification-001h-draft-publication-handoff.md` when historical context on the published apex-unification `001h` draft tranche is needed
-8. `2026-04-22-parent-root-apex-unification-001g-draft-publication-handoff.md` when historical context on the published apex-unification `001g` draft tranche is needed
-9. `2026-04-22-parent-root-apex-unification-001f-draft-publication-handoff.md` when historical context on the published apex-unification `001f` draft tranche is needed
-10. `2026-04-22-parent-root-apex-unification-001e-draft-publication-handoff.md` when historical context on the published apex-unification `001e` draft tranche is needed
-11. `2026-04-22-parent-root-apex-unification-001d-draft-publication-handoff.md` when historical context on the published apex-unification `001d` draft tranche is needed
-12. `2026-04-22-parent-root-apex-unification-001c-draft-publication-handoff.md` when historical context on the published apex-unification `001c` draft tranche is needed
-13. `2026-04-22-parent-root-apex-unification-001b-draft-publication-handoff.md` when historical context on the published apex-unification `001b` draft tranche is needed
-14. `2026-04-22-parent-root-apex-unification-001a-draft-publication-handoff.md` when historical context on the published apex-unification `001a` draft tranche is needed
+2. `2026-04-22-parent-root-clean-main-zero-frontier-handoff.md` for the current fully closed parent-root zero-frontier publication checkpoint
+3. `2026-04-22-parent-root-infrastructure-olares-doc-trio-publication-handoff.md` when historical context on the published Olares infrastructure doc trio is needed
+4. `2026-04-22-parent-root-platform-subtree-zero-frontier-handoff.md` for the fully closed `apex-power-ops-platform` subtree publication checkpoint inside the broader parent-root zero-frontier state
+5. `2026-04-22-parent-root-residual-archive-formula-pair-publication-handoff.md` when historical context on the final residual archive tranche is needed
+6. `2026-04-22-parent-root-post-apex-unification-001i-remaining-draft-reevaluation-handoff.md` when historical context on the post-`001i` reevaluation step is needed
+7. `2026-04-22-parent-root-apex-unification-001i-draft-publication-handoff.md` when historical context on the published apex-unification `001i` draft tranche is needed
+8. `2026-04-22-parent-root-apex-unification-001h-draft-publication-handoff.md` when historical context on the published apex-unification `001h` draft tranche is needed
+9. `2026-04-22-parent-root-apex-unification-001g-draft-publication-handoff.md` when historical context on the published apex-unification `001g` draft tranche is needed
+10. `2026-04-22-parent-root-apex-unification-001f-draft-publication-handoff.md` when historical context on the published apex-unification `001f` draft tranche is needed
+11. `2026-04-22-parent-root-apex-unification-001e-draft-publication-handoff.md` when historical context on the published apex-unification `001e` draft tranche is needed
+12. `2026-04-22-parent-root-apex-unification-001d-draft-publication-handoff.md` when historical context on the published apex-unification `001d` draft tranche is needed
+13. `2026-04-22-parent-root-apex-unification-001c-draft-publication-handoff.md` when historical context on the published apex-unification `001c` draft tranche is needed
+14. `2026-04-22-parent-root-apex-unification-001b-draft-publication-handoff.md` when historical context on the published apex-unification `001b` draft tranche is needed
+15. `2026-04-22-parent-root-apex-unification-001a-draft-publication-handoff.md` when historical context on the published apex-unification `001a` draft tranche is needed
 12. `2026-04-22-parent-root-pm-schema-008-draft-publication-handoff.md` when historical context on the published pm-schema `008` draft tranche is needed
 13. `2026-04-22-parent-root-pm-schema-007-draft-publication-handoff.md` when historical context on the published pm-schema `007` draft tranche is needed
 14. `2026-04-22-parent-root-pm-schema-006-draft-publication-handoff.md` when historical context on the published pm-schema `006` draft tranche is needed
