@@ -1,15 +1,29 @@
 # APEX on Olares One — Workspace Authority Framework
 
-_Companion authority for `Olares_Build_Guide.md`, `Olares_Checklist.md`, and `VSCode_Build_Prompt.md`._
+_Companion authority for `Olares_MVP_Execution_Roadmap.md`, `Olares_Build_Guide.md`, and `Olares_Checklist.md`._
 _Authored 2026-04-23 after audit of the live `C:/APEX Platform/apex-power-ops-platform` workspace._
 
 ## 1. Purpose
 
 This document turns the Olares planning work into repo authority.
 
-The build guide explains the target operating model. The checklist sequences provisioning. This framework closes the missing middle layer: how the current live repository should be interpreted, reshaped, and governed while the APEX Platform transitions onto the Olares One as its primary development and staging host.
+The roadmap defines the MVP delivery shape. The build guide explains the target operating model. The checklist sequences provisioning. This framework closes the missing middle layer: how the current live repository should be interpreted, reshaped, and governed while the APEX Platform transitions onto the Olares One as its primary development and staging host.
 
 Use this file as the highest-authority Olares workspace reference inside this repo. If this file conflicts with the older bootstrap-era language elsewhere, this file wins until the conflicting text is revised.
+
+The VS Code build prompt is not governance. It is a reusable implementation bootstrap derived from this framework and the roadmap.
+
+## 1A. Authority Hierarchy
+
+The Olares authority order is:
+
+1. this framework
+2. `Olares_MVP_Execution_Roadmap.md`
+3. `Olares_Build_Guide.md`
+4. `Olares_Checklist.md`
+5. `VSCode_Build_Prompt.md`
+
+This order is mandatory.
 
 ## 2. Audit Summary
 
@@ -158,8 +172,9 @@ Goal: make the repo describe the Olares transition truthfully.
 Required outputs:
 
 1. this framework
-2. aligned Olares build prompt
-3. aligned root README guidance for Olares hosting
+2. the MVP roadmap
+3. aligned Olares build prompt as a non-authoritative session bootstrap
+4. aligned root README guidance for Olares hosting
 
 Exit condition:
 
