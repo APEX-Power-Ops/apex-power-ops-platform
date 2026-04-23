@@ -1,13 +1,19 @@
 # Parent-Root PM-Schema-002 Draft Publication Handoff
 ## Date: 2026-04-22
 ## Updated by: GitHub Copilot (GPT-5.4)
-## Scope: Active next-step packet for the bounded `pm-schema-002` lifecycle and state model singleton under `C:/APEX Platform/apex-power-ops-platform`
+## Scope: Historical record for the bounded `pm-schema-002` lifecycle and state model singleton under `C:/APEX Platform/apex-power-ops-platform`
 
 ## 1. Summary
 
-The residual foundational PM family is now active again after the `pm-schema-001` field matrix publication.
+The residual foundational PM family remained active after the `pm-schema-001` field matrix publication.
 
-The next smallest remaining substantive packet is `pm-schema-002`, which stages cleanly at 1 file. It is the adjacent governing lifecycle/state packet in the same foundational PM family and remains narrower than the cross-family physical movement alternatives.
+The next smallest remaining substantive packet was `pm-schema-002`, which staged cleanly at 1 file. It extended the residual foundational PM family through the lifecycle/state model slice and advanced the queue to the adjacent `pm-schema-003` governance packet.
+
+Publication outcome:
+
+1. committed on parent-root `clean-main` as `beacd9b`
+2. pushed to `origin/clean-main` on 2026-04-22
+3. closed as the published pm-schema `002` lifecycle/state tranche
 
 ## 2. Why This Packet Is Next
 
@@ -22,7 +28,7 @@ Measured from the parent git root at `C:/APEX Platform` on 2026-04-22 after the 
 
 ## 3. Packet Intent
 
-Use this packet to introduce the bounded `pm-schema-002` lifecycle and state model singleton:
+This packet introduced the bounded `pm-schema-002` lifecycle and state model singleton:
 
 1. `2026-04-12-pm-schema-002-lifecycle-and-state-model.json`
 
@@ -32,7 +38,7 @@ From the parent git root at `C:/APEX Platform`, the bounded packet path is:
 
 1. `apex-power-ops-platform/ops/agents/packets/draft/2026-04-12-pm-schema-002-lifecycle-and-state-model.json`
 
-Current measured contents: 1 file.
+Published contents: 1 file.
 
 ## 5. Why This Packet Is Bounded Correctly
 
@@ -43,9 +49,9 @@ This packet is intentionally narrow:
 3. it avoids cross-family widening into the currently untracked `apex-unification-001a` or `knowledge-import-001a` physical movement lanes
 4. it does not widen into `archive/` or `knowledge/`
 
-## 6. Operator Execution Path
+## 6. Historical Execution Path
 
-Preferred task path from `C:/APEX Platform/apex-power-ops-platform`:
+Preferred task path from `C:/APEX Platform/apex-power-ops-platform` when this packet was executed:
 
 1. run `Preview parent-root pm-schema-002 draft packet`
 2. run `Stage parent-root pm-schema-002 draft packet` only when the preview is correct
@@ -76,4 +82,4 @@ This lane is packet-definition JSON, so diff discipline matters more than execut
 
 ## 9. Follow-On After This Packet
 
-If this packet lands cleanly, re-evaluate whether `pm-schema-003` is the next truthful adjacent foundational follow-on.
+If this packet lands cleanly, queue `pm-schema-003` as the next truthful adjacent foundational follow-on.

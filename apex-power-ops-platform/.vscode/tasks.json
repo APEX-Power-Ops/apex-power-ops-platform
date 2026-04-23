@@ -2307,6 +2307,39 @@
         "problemMatcher": []
       },
       {
+        "label": "Preview parent-root pm-schema-003 draft packet",
+        "type": "shell",
+        "command": "pwsh",
+        "args": [
+          "-NoProfile",
+          "-Command",
+          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-12-pm-schema-003-p6-integration-boundary-spec.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+        ],
+        "problemMatcher": []
+      },
+      {
+        "label": "Stage parent-root pm-schema-003 draft packet",
+        "type": "shell",
+        "command": "pwsh",
+        "args": [
+          "-NoProfile",
+          "-Command",
+          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-12-pm-schema-003-p6-integration-boundary-spec.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+        ],
+        "problemMatcher": []
+      },
+      {
+        "label": "Parent-root pm-schema-003 draft packet staged diff",
+        "type": "shell",
+        "command": "pwsh",
+        "args": [
+          "-NoProfile",
+          "-Command",
+          "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-12-pm-schema-003-p6-integration-boundary-spec.json"
+        ],
+        "problemMatcher": []
+      },
+      {
         "label": "Preview parent-root pm-schema-002 draft packet",
         "type": "shell",
         "command": "pwsh",
