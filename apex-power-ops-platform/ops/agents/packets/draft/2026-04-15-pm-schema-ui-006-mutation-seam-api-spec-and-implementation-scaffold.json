@@ -1,0 +1,73 @@
+{
+  "packet_id": "2026-04-15-pm-schema-ui-006",
+  "title": "PM Schema V2 UI Mutation Seam API Specification and Implementation Scaffold",
+  "objective": "Define the implementation-ready FastAPI mutation seam contract and the smallest bounded scaffold blueprint required to unblock downstream UI implementation, using UI-005's integration gaps as the governing input, without implementing field, lead, PM approval, or Gantt surfaces, reopening PM schema design, bypassing the governed mutation seam, or broadening into billing or executive workflow design.",
+  "domain": "pm-ui-domain",
+  "active_role": "PM UI Mutation Seam Architect",
+  "repo_paths": [
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-UI-NEXT-PACKET-PLAN-2026-04-15.md",
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-UI-NEEDS-AND-CONSTRAINTS-MATRIX-2026-04-15.md",
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-UI-SOURCE-OF-TRUTH-AND-MUTATION-AUTHORITY-2026-04-15.md",
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-UI-DESIGN-GOVERNANCE-BASELINE-2026-04-15.md",
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-UI-LAYER-BY-LAYER-TOOL-EVALUATION-MATRIX-2026-04-15.md",
+    "c:/APEX Platform/Platform-Authority/APEX-UI-FRAMEWORK-SPEC-REVIEWED-INPUT-MAPPING-2026-04-15.md",
+    "c:/APEX Platform/APEX_Schema_V2",
+    "c:/APEX Platform/apex-power-ops-platform",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "dependencies": [
+    "PM-SCHEMA-V2-UI-NEEDS-AND-CONSTRAINTS-MATRIX-2026-04-15.md",
+    "PM-SCHEMA-V2-UI-SOURCE-OF-TRUTH-AND-MUTATION-AUTHORITY-2026-04-15.md",
+    "PM-SCHEMA-V2-UI-DESIGN-GOVERNANCE-BASELINE-2026-04-15.md",
+    "PM-SCHEMA-V2-UI-LAYER-BY-LAYER-TOOL-EVALUATION-MATRIX-2026-04-15.md",
+    "2026-04-15-pm-schema-ui-001",
+    "2026-04-15-pm-schema-ui-003",
+    "2026-04-15-pm-schema-ui-004",
+    "2026-04-15-pm-schema-ui-005"
+  ],
+  "required_inputs": [
+    "PM-SCHEMA-V2-UI-NEXT-PACKET-PLAN-2026-04-15.md",
+    "PM-SCHEMA-V2-UI-NEEDS-AND-CONSTRAINTS-MATRIX-2026-04-15.md",
+    "PM-SCHEMA-V2-UI-SOURCE-OF-TRUTH-AND-MUTATION-AUTHORITY-2026-04-15.md",
+    "PM-SCHEMA-V2-UI-DESIGN-GOVERNANCE-BASELINE-2026-04-15.md",
+    "PM-SCHEMA-V2-UI-LAYER-BY-LAYER-TOOL-EVALUATION-MATRIX-2026-04-15.md",
+    "APEX-UI-FRAMEWORK-SPEC-REVIEWED-INPUT-MAPPING-2026-04-15.md",
+    "2026-04-15-pm-schema-ui-001-field-apparatus-workflow-prototype-design-handoff.md",
+    "2026-04-15-pm-schema-ui-003-pm-approval-queue-prototype-design-handoff.md",
+    "2026-04-15-pm-schema-ui-004-lead-operations-surface-prototype-design-handoff.md",
+    "2026-04-15-pm-schema-ui-005-cross-surface-integration-spec-handoff.md",
+    "APEX_UI_Framework_Spec.docx"
+  ],
+  "constrained_outputs": [
+    "One planning handoff note defining the mutation seam endpoint set, action taxonomy, request and response schemas, and error contract",
+    "One implementation scaffold blueprint covering router boundaries, schema modules, validation layers, audit hooks, realtime publication hooks, and test seams",
+    "One cache-invalidation and realtime publication contract aligned to UI-005 handoffs",
+    "One explicit mapping from the 33 governed mutation types to seam actions, authorization checks, and conflict rules"
+  ],
+  "write_scope": [
+    "c:/APEX Platform/Platform-Authority",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "validation_steps": [
+    "Confirm packet UI-006 stays bounded to mutation seam API specification and scaffold planning and does not implement field, lead, PM approval, or Gantt surfaces",
+    "Confirm the packet preserves the governed mutation seam as the only write boundary and does not invent direct client write shortcuts",
+    "Confirm the packet defines implementation-ready request, response, error, idempotency, and conflict semantics for Class A, B, and C mutations",
+    "Confirm the packet resolves UI-005 Gap 1 and materially advances Gap 2 without broadening into billing, finance finalization, or executive workflow design"
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "authored",
+  "output_artifacts": [
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-15-pm-schema-ui-006-mutation-seam-api-spec-and-implementation-scaffold-handoff.md"
+  ],
+  "handoff_note": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-15-pm-schema-ui-006-mutation-seam-api-spec-and-implementation-scaffold-handoff.md",
+  "implementation_ready_candidate": true,
+  "sql_permission": false,
+  "sql_permission_note": "Planning only. Packet UI-006 does not authorize PM schema changes, direct client mutation paths, field or PM surface implementation, or finance-affecting workflow design.",
+  "landing_lane": "ui_mutation_seam_spec_only",
+  "migration_strategy": "no_runtime_changes",
+  "created_at": "2026-04-16",
+  "updated_at": "2026-04-16",
+  "delegation_status": "ready",
+  "delegation_prompt": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-15-desktop-claude-pm-schema-ui-packet-006-prompt.md"
+}
