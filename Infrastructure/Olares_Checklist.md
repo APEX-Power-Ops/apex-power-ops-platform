@@ -1,6 +1,7 @@
 # APEX on Olares One — Provisioning Checklist
 
 _Companion to `Olares_Build_Guide.md`. Work top to bottom; don't skip phases._
+_Authority anchor: `Olares_Workspace_Authority_Framework.md`._
 _Olares OS v1.12.5 baseline · LarePass-first · Hybrid packaging._
 
 ---

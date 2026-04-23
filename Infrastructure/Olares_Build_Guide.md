@@ -1,6 +1,7 @@
 # APEX Platform on Olares One — Blue-Sky Workspace Build Guide
 
 _Reference: `Olares_Architecture.svg` (pin near workstation). Checklist: `Olares_Checklist.md`._
+_Repo authority: `Olares_Workspace_Authority_Framework.md`._
 _Authored 2026-04-22. Olares OS v1.12.5 baseline._
 
 ---
