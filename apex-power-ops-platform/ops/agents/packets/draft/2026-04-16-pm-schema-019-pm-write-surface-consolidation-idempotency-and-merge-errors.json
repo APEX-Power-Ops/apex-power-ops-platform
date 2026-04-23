@@ -1,0 +1,78 @@
+{
+  "packet_id": "2026-04-16-pm-schema-019",
+  "title": "PM Write-Surface Consolidation (Idempotency + Merge Errors)",
+  "objective": "Implement the next bounded PM runtime lane by consolidating the now-functionally-complete PM write surface around one zero-DDL idempotency-key seam for the existing seven POST handlers, one shared `_merge_errors` helper for repeated merged-validation dict logic across the seven mutation services, and one shared PATCH target-exists regression harness, without adding new entity write surfaces, changing database schema, changing endpoint inventory, or broadening mutation scope into `work.wbs_nodes`.",
+  "domain": "pm-domain",
+  "active_role": "PM Write-Surface Consolidation Author",
+  "repo_paths": [
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-NEXT-PACKET-PLAN-2026-04-13.md",
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-IMPLEMENTATION-PLAN-2026-04-13.md",
+    "c:/APEX Platform/apex-power-ops-platform/apps/control-plane-api",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-15-pm-schema-018-pm-progress-snapshot-write-surface-minimal-handoff.md"
+  ],
+  "dependencies": [
+    "2026-04-13-pm-schema-010a",
+    "2026-04-13-pm-schema-010b",
+    "2026-04-14-pm-schema-011f",
+    "2026-04-14-pm-schema-013",
+    "2026-04-14-pm-schema-013i",
+    "2026-04-14-pm-schema-013j",
+    "2026-04-14-pm-schema-014",
+    "2026-04-14-pm-schema-014i",
+    "2026-04-15-pm-schema-015",
+    "2026-04-15-pm-schema-015i",
+    "2026-04-15-pm-schema-016",
+    "2026-04-15-pm-schema-017",
+    "2026-04-15-pm-schema-018"
+  ],
+  "required_inputs": [
+    "PM-SCHEMA-V2-NEXT-PACKET-PLAN-2026-04-13.md",
+    "PM-SCHEMA-V2-IMPLEMENTATION-PLAN-2026-04-13.md",
+    "2026-04-13-pm-schema-010a-work-schema-orm-model-authoring-handoff.md",
+    "2026-04-13-pm-schema-010b-work-read-api-surface-handoff.md",
+    "2026-04-14-pm-schema-011f-pm-work-write-api-surface-projects-handoff.md",
+    "2026-04-14-pm-schema-013-pm-work-package-write-surface-minimal-handoff.md",
+    "2026-04-14-pm-schema-013i-pm-work-package-write-surface-integration-smoke-handoff.md",
+    "2026-04-14-pm-schema-013j-pm-work-package-write-response-crew-join-handoff.md",
+    "2026-04-14-pm-schema-014-pm-task-write-surface-minimal-handoff.md",
+    "2026-04-14-pm-schema-014i-pm-task-write-surface-integration-smoke-handoff.md",
+    "2026-04-15-pm-schema-015-pm-assignment-write-surface-minimal-handoff.md",
+    "2026-04-15-pm-schema-015i-pm-assignment-write-surface-integration-smoke-handoff.md",
+    "2026-04-15-pm-schema-016-pm-dependency-write-surface-minimal-handoff.md",
+    "2026-04-15-pm-schema-017-pm-execution-issue-write-surface-minimal-handoff.md",
+    "2026-04-15-pm-schema-018-pm-progress-snapshot-write-surface-minimal-handoff.md"
+  ],
+  "constrained_outputs": [
+    "One bounded zero-DDL idempotency-key contract or helper seam applied uniformly across the existing POST handlers for `work.projects`, `work.work_packages`, `work.tasks`, `work.assignments`, `work.dependencies`, `work.execution_issues`, and `work.progress_snapshots`",
+    "A shared `_merge_errors` helper or equivalent bounded refactor used across the seven existing mutation services where merged validation dicts are currently hand-assembled",
+    "A shared PATCH target-exists regression harness covering the seven existing PATCH handlers with standardized `200` / `404` / `422` assertions",
+    "Focused regression evidence proving the PM write and read surfaces remain stable while work schema registry size stays at 22 and `/api/v1/work/*` path count stays at 15"
+  ],
+  "write_scope": [
+    "c:/APEX Platform/Platform-Authority",
+    "c:/APEX Platform/apex-power-ops-platform/apps/control-plane-api",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "validation_steps": [
+    "Confirm packet 019 touches only the bounded PM write-surface consolidation seam and does not add WBS-node writes, new SQL, or new endpoints",
+    "Confirm the seven existing POST handlers share one uniform idempotency-key request contract or helper seam without increasing work schema registry size beyond 22 or `/api/v1/work/*` path count beyond 15",
+    "Confirm the repeated merged-validation dict logic is consolidated through a shared `_merge_errors` helper or equivalent bounded refactor across the seven existing mutation services",
+    "Confirm a shared PATCH target-exists regression harness covers the seven existing PATCH handlers with standardized `200` / `404` / `422` assertions and leaves packet-010a, packet-010b, packet-011f, packet-013, packet-013i, packet-013j, packet-014, packet-014i, packet-015, packet-015i, packet-016, packet-017, and packet-018 surfaces passing or skipping as expected"
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "output_artifacts": [
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-16-pm-schema-019-pm-write-surface-consolidation-handoff.md"
+  ],
+  "handoff_note": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-16-pm-schema-019-pm-write-surface-consolidation-handoff.md",
+  "implementation_ready_candidate": true,
+  "sql_permission": false,
+  "sql_permission_note": "Packet 019 is runtime consolidation only. No new SQL, schema changes, migration edits, or broader write-surface expansion are authorized.",
+  "landing_lane": "runtime_write_surface_consolidation_only",
+  "migration_strategy": "application_runtime_only",
+  "created_at": "2026-04-16",
+  "updated_at": "2026-04-16",
+  "delegation_status": "complete",
+  "delegation_prompt": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-16-desktop-claude-pm-schema-packet-019-prompt.md"
+}
