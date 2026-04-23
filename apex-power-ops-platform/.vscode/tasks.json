@@ -987,6 +987,39 @@
       "problemMatcher": []
     },
     {
+      "label": "Preview parent-root pm-schema 011 draft packet",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-Command",
+        "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-pm-schema-011-cross-domain-dependency-activation-planning.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-011a-org-domain-schema-design.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-011b-org-schema-ddl-authoring-local-validation.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-011c-org-seed-data-population.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-011d-pm-work-org-fk-activation.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-011e-pm-work-org-orm-alignment.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-011f-pm-work-write-api-surface-projects.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Stage parent-root pm-schema 011 draft packet",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-Command",
+        "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-pm-schema-011-cross-domain-dependency-activation-planning.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-011a-org-domain-schema-design.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-011b-org-schema-ddl-authoring-local-validation.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-011c-org-seed-data-population.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-011d-pm-work-org-fk-activation.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-011e-pm-work-org-orm-alignment.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-011f-pm-work-write-api-surface-projects.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Parent-root pm-schema 011 draft packet staged diff",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-Command",
+        "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-pm-schema-011-cross-domain-dependency-activation-planning.json apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-011a-org-domain-schema-design.json apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-011b-org-schema-ddl-authoring-local-validation.json apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-011c-org-seed-data-population.json apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-011d-pm-work-org-fk-activation.json apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-011e-pm-work-org-orm-alignment.json apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-011f-pm-work-write-api-surface-projects.json"
+      ],
+      "problemMatcher": []
+    },
+    {
       "label": "Platform subtree staged diff",
       "type": "shell",
       "command": "pwsh",
