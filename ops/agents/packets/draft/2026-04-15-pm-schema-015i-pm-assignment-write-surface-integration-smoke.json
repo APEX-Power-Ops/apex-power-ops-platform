@@ -1,0 +1,74 @@
+{
+  "packet_id": "2026-04-15-pm-schema-015i",
+  "title": "PM Assignment Write Surface Integration Smoke",
+  "objective": "Prove the new assignment POST and PATCH runtime path behaves correctly against a real PostgreSQL-backed environment by seeding the minimum supporting org, work, and identity rows, exercising create and partial update end to end, and confirming bounded validation, merged-error 422 handling, and 404 missing-row behavior without adding endpoints, changing schemas, or authoring new SQL.",
+  "domain": "pm-domain",
+  "active_role": "PM Assignment Write Surface Integration Smoke Author",
+  "repo_paths": [
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-NEXT-PACKET-PLAN-2026-04-13.md",
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-IMPLEMENTATION-PLAN-2026-04-13.md",
+    "c:/APEX Platform/apex-power-ops-platform/apps/control-plane-api",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-15-pm-schema-015-pm-assignment-write-surface-minimal-handoff.md"
+  ],
+  "dependencies": [
+    "2026-04-13-pm-schema-010a",
+    "2026-04-13-pm-schema-010b",
+    "2026-04-14-pm-schema-011f",
+    "2026-04-14-pm-schema-012e",
+    "2026-04-14-pm-schema-012f",
+    "2026-04-14-pm-schema-013",
+    "2026-04-14-pm-schema-013i",
+    "2026-04-14-pm-schema-013j",
+    "2026-04-14-pm-schema-014",
+    "2026-04-14-pm-schema-014i",
+    "2026-04-15-pm-schema-015"
+  ],
+  "required_inputs": [
+    "PM-SCHEMA-V2-NEXT-PACKET-PLAN-2026-04-13.md",
+    "PM-SCHEMA-V2-IMPLEMENTATION-PLAN-2026-04-13.md",
+    "2026-04-13-pm-schema-010a-work-schema-orm-model-authoring-handoff.md",
+    "2026-04-13-pm-schema-010b-work-read-api-surface-handoff.md",
+    "2026-04-14-pm-schema-011f-pm-work-write-api-surface-projects-handoff.md",
+    "2026-04-14-pm-schema-012e-pm-work-identity-orm-alignment-handoff.md",
+    "2026-04-14-pm-schema-012f-pm-work-identity-joined-read-surface-handoff.md",
+    "2026-04-14-pm-schema-013-pm-work-package-write-surface-minimal-handoff.md",
+    "2026-04-14-pm-schema-013i-pm-work-package-write-surface-integration-smoke-handoff.md",
+    "2026-04-14-pm-schema-013j-pm-work-package-write-response-crew-join-handoff.md",
+    "2026-04-14-pm-schema-014-pm-task-write-surface-minimal-handoff.md",
+    "2026-04-14-pm-schema-014i-pm-task-write-surface-integration-smoke-handoff.md",
+    "2026-04-15-pm-schema-015-pm-assignment-write-surface-minimal-handoff.md"
+  ],
+  "constrained_outputs": [
+    "Real PostgreSQL-backed integration smoke coverage for the existing POST and PATCH assignment handlers",
+    "End-to-end evidence that the assignment write surface can create a row, patch a bounded subset of fields, reject known-bad work_package_id, task_id, employee_id, and crew_id references with the expected merged-error 422 response shape, and preserve 404 behavior for a missing assignment",
+    "Focused regression coverage proving packet-010a, packet-010b, packet-011f, packet-012e, packet-012f, packet-013, packet-013i, packet-013j, packet-014, packet-014i, and packet-015 surfaces remain stable after the integration smoke addition",
+    "No database-schema changes, no new endpoints, and no broader write-side runtime implementation"
+  ],
+  "write_scope": [
+    "c:/APEX Platform/Platform-Authority",
+    "c:/APEX Platform/apex-power-ops-platform/apps/control-plane-api",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "validation_steps": [
+    "Confirm packet 015i touches only integration-smoke coverage for the existing assignment POST and PATCH handlers and does not add new endpoints or broaden mutation scope",
+    "Confirm the live runtime path can create an assignment, patch a bounded subset of fields, return a merged-field 422 for known-bad work_package_id, task_id, employee_id, and crew_id references, and preserve 404 behavior for a missing assignment",
+    "Confirm the integration module mirrors the skip-when-unreachable posture used by packets 012g, 012i, 013i, and 014i, including the bounded sentinel-UUID and code-prefix strategy",
+    "Confirm packet-010a model tests, packet-010b API tests, packet-011f project-write tests, packet-012e identity ORM alignment tests, packet-012f identity joined-read tests, packet-013 work-package write tests, packet-013i work-package integration smoke, packet-013j response enrichment tests, packet-014 task-write tests, packet-014i task integration smoke, and packet-015 assignment-write tests still pass or skip as expected after the smoke coverage addition"
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "output_artifacts": [
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-15-pm-schema-015i-pm-assignment-write-surface-integration-smoke-handoff.md"
+  ],
+  "handoff_note": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-15-pm-schema-015i-pm-assignment-write-surface-integration-smoke-handoff.md",
+  "implementation_ready_candidate": true,
+  "sql_permission": false,
+  "sql_permission_note": "Packet 015i is integration-smoke runtime coverage only. No new SQL, schema changes, migration edits, or broader write-surface expansion are authorized.",
+  "landing_lane": "runtime_write_surface_assignments_integration_smoke_only",
+  "migration_strategy": "application_integration_smoke_only",
+  "created_at": "2026-04-15",
+  "updated_at": "2026-04-15",
+  "delegation_status": "complete",
+  "delegation_prompt": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-15-desktop-claude-pm-schema-packet-015i-prompt.md"
+}
