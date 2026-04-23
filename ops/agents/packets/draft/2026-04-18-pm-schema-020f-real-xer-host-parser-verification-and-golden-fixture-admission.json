@@ -1,0 +1,67 @@
+{
+  "packet_id": "2026-04-18-pm-schema-020f",
+  "title": "Real XER Host Parser Verification And Golden Fixture Admission",
+  "objective": "Validate the real host-side XER parser/runtime against one or more baseline-bearing Primavera XER files, confirm how the parser surfaces baseline linkage entities such as PROJBASELINE or BASELINEPROJECT, and land a governed fixture-contract document as the default golden-fixture admission output for continued end-to-end schedule-tool validation without adding bridge routes, PM UI behavior, or schedule-write surfaces.",
+  "domain": "pm-domain",
+  "active_role": "PM Real XER Verification Author",
+  "repo_paths": [
+    "c:/APEX Platform/Platform-Authority/PM-DOMAIN-XER-BASELINE-MAPPING-AUTHORIZATION-2026-04-17.md",
+    "c:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/schedule/loader.py",
+    "c:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/schedule/fixtures",
+    "c:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-18-pm-schema-020d-p6-baseline-xer-parser-and-loader-wiring-handoff.md"
+  ],
+  "dependencies": [
+    "2026-04-17-pm-schema-020b",
+    "2026-04-17-pm-schema-020c",
+    "2026-04-18-pm-schema-020d"
+  ],
+  "required_inputs": [
+    "PM-DOMAIN-XER-BASELINE-MAPPING-AUTHORIZATION-2026-04-17.md",
+    "apps/mutation-seam/app/schedule/loader.py",
+    "2026-04-18-pm-schema-020d-p6-baseline-xer-parser-and-loader-wiring-handoff.md",
+    "C:/Users/jjswe/NETA ETT Study Material/PM-Pro-Guide-xer-Templates/PM Pro Guide xer Templates/Baseline Zone 2 Rev.01.xer"
+  ],
+  "constrained_outputs": [
+    "One bounded host-verification result showing exactly how the installed XER parser surfaces baseline-bearing collections and which attribute names are real on the host runtime, or a sandbox attribute probe plus explicit host runbook when the executing environment is not the actual Apex host",
+    "One governed fixture-contract document as the default golden-fixture admission output for continued end-to-end schedule validation; a concrete fixture is optional only if an approved sanitized XER can be admitted in the same pass",
+    "Focused validation evidence proving real XER baseline ingestion works on the host runtime without changing bridge routes, PM UI files, or controlled operational write paths"
+  ],
+  "write_scope": [
+    "c:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/schedule/fixtures",
+    "c:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "validation_steps": [
+    "Confirm the real installed parser attribute names on the host runtime rather than relying only on compatibility-layer assumptions",
+    "Prefer the real baseline-bearing sample `C:/Users/jjswe/NETA ETT Study Material/PM-Pro-Guide-xer-Templates/PM Pro Guide xer Templates/Baseline Zone 2 Rev.01.xer`; if a separate Stack Data Center .xer exists on the actual host, record its exact path and prefer it only when it is genuinely available as a .xer rather than as the existing JSON fixture",
+    "If the executor is not running on the actual Apex host, do not overclaim host validation; perform a sandbox attribute probe and produce an explicit host runbook for the final host-side command sequence and expected evidence",
+    "Confirm at least one real baseline-bearing XER file can be parsed end to end through the schedule loader and baseline upsert lane when host access exists",
+    "Confirm no synthetic baseline fabrication occurs when a real XER lacks explicit baseline linkage",
+    "Confirm no bridge route, PM UI, or operational write-path changes are introduced"
+  ],
+  "disposition_values": [
+    "host-validated",
+    "sandbox-probed-host-runbook-authored",
+    "blocked-no-real-baseline-bearing-xer"
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "output_artifacts": [
+    "c:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/schedule/fixtures/BASELINE_XER_FIXTURE_CONTRACT.md",
+    "c:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/schedule/fixtures/HOST_XER_VERIFICATION_RUNBOOK.md",
+    "c:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests/test_fixture_contract_020f.py",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-18-pm-schema-020f-real-xer-host-parser-verification-and-golden-fixture-admission-handoff.md"
+  ],
+  "handoff_note": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-18-pm-schema-020f-real-xer-host-parser-verification-and-golden-fixture-admission-handoff.md",
+  "implementation_ready_candidate": false,
+  "sql_permission": false,
+  "sql_permission_note": "Packet 020f is validation and fixture-admission only over the already-landed baseline ingestion lane. No new SQL, no bridge changes, and no PM UI changes are authorized.",
+  "landing_lane": "real_xer_host_validation",
+  "migration_strategy": "host_runtime_verification_only",
+  "created_at": "2026-04-18",
+  "updated_at": "2026-04-18",
+  "delegation_status": "complete",
+  "delegation_prompt": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-18-desktop-claude-pm-schema-packet-020f-prompt.md"
+}
