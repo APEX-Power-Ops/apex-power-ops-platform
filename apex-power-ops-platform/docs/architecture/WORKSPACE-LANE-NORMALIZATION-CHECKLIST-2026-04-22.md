@@ -258,6 +258,7 @@ Exit condition:
 - [x] define the post-pm-schema `020h` pm-schema-ui `002e` draft follow-on packet in `ops/agents/handoffs/2026-04-22-parent-root-pm-schema-ui-002e-draft-publication-handoff.md`
 - [x] define the post-pm-schema-ui `002e` pm-schema-ui `002f` draft follow-on packet in `ops/agents/handoffs/2026-04-22-parent-root-pm-schema-ui-002f-draft-publication-handoff.md`
 - [x] define the post-pm-schema-ui `002f` remaining-draft reevaluation handoff in `ops/agents/handoffs/2026-04-22-parent-root-remaining-draft-reevaluation-handoff.md`
+- [x] define the post-reevaluation pm-schema `020e` draft follow-on packet in `ops/agents/handoffs/2026-04-22-parent-root-pm-schema-020e-draft-publication-handoff.md`
 - [ ] default future publication work to explicit platform file paths or bounded packet pathspecs rather than whole-subtree staging
 - [ ] reserve `git add -- apex-power-ops-platform/` for explicit cutover or intentionally broad publication work only
 - [ ] treat unrelated tracked changes elsewhere under `C:/APEX Platform` as separate lanes unless a cross-lane operation is explicitly intended
