@@ -1,0 +1,55 @@
+{
+  "packet_id": "2026-04-19-pm-schema-ui-002f-host",
+  "title": "Tracer Shell Wiring And Host Browser Validation",
+  "objective": "Promote the sandbox-complete UI-002f tracer surface toward a truthful host disposition by wiring TracerReviewView into the existing PM shell with the smallest coherent index.html change, running the tracer route and UI end to end against a populated apex_pm_stage host session, capturing real browser evidence for representative ancestor-chain cases, and fixing only the smallest runtime defects required to achieve that host proof without broadening into schedule writes, shell redesign, drivers integration, or unrelated variance work.",
+  "domain": "pm-ui-domain",
+  "active_role": "PM UI Tracer Host Validation Architect",
+  "repo_paths": [
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-UI-SOURCE-OF-TRUTH-AND-MUTATION-AUTHORITY-2026-04-15.md",
+    "c:/APEX Platform/apex-power-ops-platform/apps/mutation-seam",
+    "c:/APEX Platform/apex-power-ops-platform/apps/pm-surface",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-18-pm-schema-ui-002f-schedule-tracer-read-surface-and-host-validation-handoff.md",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-19-pm-schema-ui-002g-host-variance-shell-wiring-and-browser-validation-handoff.md"
+  ],
+  "dependencies": [
+    "2026-04-18-pm-schema-ui-002f",
+    "2026-04-18-pm-schema-020h",
+    "2026-04-19-pm-schema-ui-002e-host"
+  ],
+  "dependency_note": "UI-002f already landed the read-only /schedule/tracer route, TracerReviewView export, and focused sandbox tests. UI-002e-host proved the smallest coherent PM shell-mount pattern for a drivers host-validation follow-on in this same XER lane. The remaining UI-002f gap is host execution: minimal shell wiring in index.html plus real browser evidence against a populated apex_pm_stage DSN. No broader UI disposition should be promoted without explicit evidence in scope.",
+  "required_inputs": [
+    "PM-SCHEMA-V2-UI-SOURCE-OF-TRUTH-AND-MUTATION-AUTHORITY-2026-04-15.md",
+    "2026-04-18-pm-schema-ui-002f-schedule-tracer-read-surface-and-host-validation-handoff.md",
+    "2026-04-19-pm-schema-ui-002g-host-variance-shell-wiring-and-browser-validation-handoff.md",
+    "2026-04-22-parent-root-pm-schema-ui-002e-host-draft-publication-handoff.md"
+  ],
+  "constrained_outputs": [
+    "One minimal PM shell wiring change in apps/pm-surface/public/index.html that mounts TracerReviewView against the existing host shell without broad redesign",
+    "One real host-browser validation pass covering representative traced ancestor-chain cases plus the core empty-state, depth-display, and read-only rendering behaviors",
+    "One execution handoff with screenshot or concise browser evidence and a truthful host disposition, plus only the smallest runtime fixes required if the existing host path fails"
+  ],
+  "write_scope": [
+    "c:/APEX Platform/apex-power-ops-platform/apps/mutation-seam",
+    "c:/APEX Platform/apex-power-ops-platform/apps/pm-surface",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "validation_steps": [
+    "Confirm TracerReviewView is mounted into apps/pm-surface/public/index.html with the smallest coherent shell change needed for host execution",
+    "Confirm host-side browser validation exercises at least one representative traced ancestor chain against a populated apex_pm_stage session and proves the core empty-state, depth-display, and read-only rendering paths",
+    "Confirm no non-GET tracer traffic, schedule-write behavior, transform-builder mutation, or broader shell redesign is introduced",
+    "Capture screenshot or equivalent browser evidence and close truthfully as host-validated or blocked with the exact host blocker named"
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "ready",
+  "handoff_note": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-19-pm-schema-ui-002f-host-tracer-shell-wiring-and-browser-validation-handoff.md",
+  "implementation_ready_candidate": false,
+  "sql_permission": false,
+  "sql_permission_note": "Packet UI-002f-host authorizes only bounded host wiring, read-only browser validation, and the smallest runtime fixes required to validate the existing tracer surface. No new SQL, no schedule-write behavior, no transform-builder mutation, and no broad PM shell redesign are authorized.",
+  "landing_lane": "ui_schedule_tracer_host_validation",
+  "migration_strategy": "bounded_host_validation_and_minimal_shell_wiring",
+  "created_at": "2026-04-19",
+  "updated_at": "2026-04-22",
+  "delegation_status": "ready",
+  "delegation_prompt": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-19-desktop-claude-pm-schema-ui-packet-002f-host-prompt.md"
+}
