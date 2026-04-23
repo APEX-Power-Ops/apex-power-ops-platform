@@ -279,6 +279,7 @@ Exit condition:
 - [x] define the post-apex-unification `001f` apex-unification `001g` draft follow-on packet in `ops/agents/handoffs/2026-04-22-parent-root-apex-unification-001g-draft-publication-handoff.md`
 - [x] define the post-apex-unification `001g` apex-unification `001h` draft follow-on packet in `ops/agents/handoffs/2026-04-22-parent-root-apex-unification-001h-draft-publication-handoff.md`
 - [x] define the post-apex-unification `001h` apex-unification `001i` draft follow-on packet in `ops/agents/handoffs/2026-04-22-parent-root-apex-unification-001i-draft-publication-handoff.md`
+- [x] define the post-apex-unification `001i` remaining-draft reevaluation handoff in `ops/agents/handoffs/2026-04-22-parent-root-post-apex-unification-001i-remaining-draft-reevaluation-handoff.md`
 - [ ] default future publication work to explicit platform file paths or bounded packet pathspecs rather than whole-subtree staging
 - [ ] reserve `git add -- apex-power-ops-platform/` for explicit cutover or intentionally broad publication work only
 - [ ] treat unrelated tracked changes elsewhere under `C:/APEX Platform` as separate lanes unless a cross-lane operation is explicitly intended
