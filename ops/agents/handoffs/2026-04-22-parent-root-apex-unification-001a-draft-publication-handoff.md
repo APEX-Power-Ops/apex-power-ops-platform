@@ -1,13 +1,19 @@
 # Parent-Root Apex-Unification-001A Draft Publication Handoff
 ## Date: 2026-04-22
 ## Updated by: GitHub Copilot (GPT-5.4)
-## Scope: Active next-step packet for the bounded `apex-unification-001a` root narrative and workspace governance extraction singleton under `C:/APEX Platform/apex-power-ops-platform`
+## Scope: Historical record for the bounded `apex-unification-001a` root narrative and workspace governance extraction singleton under `C:/APEX Platform/apex-power-ops-platform`
 
 ## 1. Summary
 
-The residual foundational PM family is now fully advanced through `pm-schema-008`.
+The residual foundational PM family was fully advanced through `pm-schema-008` before this packet landed.
 
-The next smallest remaining substantive packet is `apex-unification-001a`, which stages cleanly at 1 file. It is the smaller governance-first cross-family movement slice relative to `knowledge-import-001a` and keeps the queue on a bounded tranche-1 extraction rather than a broader knowledge landing.
+The next smallest remaining substantive packet was `apex-unification-001a`, which staged cleanly at 1 file. It established the governance-first cross-family movement slice and unblocked the adjacent lineage tranche in `apex-unification-001b`.
+
+Publication outcome:
+
+1. committed on parent-root `clean-main` as `2a70131`
+2. pushed to `origin/clean-main` on 2026-04-22
+3. closed as the published apex-unification `001a` root narrative and workspace governance extraction tranche
 
 ## 2. Why This Packet Is Next
 
@@ -22,7 +28,7 @@ Measured from the parent git root at `C:/APEX Platform` on 2026-04-22 after the 
 
 ## 3. Packet Intent
 
-Use this packet to introduce the bounded `apex-unification-001a` root narrative and workspace governance extraction singleton:
+This packet introduced the bounded `apex-unification-001a` root narrative and workspace governance extraction singleton:
 
 1. `2026-04-13-apex-unification-001a-root-narrative-and-workspace-governance-extraction.json`
 
@@ -32,7 +38,7 @@ From the parent git root at `C:/APEX Platform`, the bounded packet path is:
 
 1. `apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-apex-unification-001a-root-narrative-and-workspace-governance-extraction.json`
 
-Current measured contents: 1 file.
+Published contents: 1 file.
 
 ## 5. Why This Packet Is Bounded Correctly
 
@@ -42,9 +48,9 @@ This packet is intentionally narrow:
 2. it is narrower than `knowledge-import-001a`, which immediately opens physical low-weight knowledge landing work
 3. it avoids broad mixed-family staging and keeps the next step authority-first
 
-## 6. Operator Execution Path
+## 6. Historical Execution Path
 
-Preferred task path from `C:/APEX Platform/apex-power-ops-platform`:
+Preferred task path from `C:/APEX Platform/apex-power-ops-platform` when this packet was executed:
 
 1. run `Preview parent-root apex-unification-001a draft packet`
 2. run `Stage parent-root apex-unification-001a draft packet` only when the preview is correct
@@ -75,4 +81,4 @@ This lane is packet-definition JSON, so diff discipline matters more than execut
 
 ## 9. Follow-On After This Packet
 
-If this packet lands cleanly, re-evaluate whether `knowledge-import-001a` or the next unification slice is the truthful next bounded follow-on.
+If this packet lands cleanly, queue `apex-unification-001b` as the newly unblocked adjacent follow-on tranche.

@@ -2307,6 +2307,39 @@
         "problemMatcher": []
       },
       {
+        "label": "Preview parent-root apex-unification-001b draft packet",
+        "type": "shell",
+        "command": "pwsh",
+        "args": [
+          "-NoProfile",
+          "-Command",
+          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-apex-unification-001b-supabase-pm-project-pss-lineage-tranche-movement.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+        ],
+        "problemMatcher": []
+      },
+      {
+        "label": "Stage parent-root apex-unification-001b draft packet",
+        "type": "shell",
+        "command": "pwsh",
+        "args": [
+          "-NoProfile",
+          "-Command",
+          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-apex-unification-001b-supabase-pm-project-pss-lineage-tranche-movement.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+        ],
+        "problemMatcher": []
+      },
+      {
+        "label": "Parent-root apex-unification-001b draft packet staged diff",
+        "type": "shell",
+        "command": "pwsh",
+        "args": [
+          "-NoProfile",
+          "-Command",
+          "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-apex-unification-001b-supabase-pm-project-pss-lineage-tranche-movement.json"
+        ],
+        "problemMatcher": []
+      },
+      {
         "label": "Preview parent-root apex-unification-001a draft packet",
         "type": "shell",
         "command": "pwsh",
