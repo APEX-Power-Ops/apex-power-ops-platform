@@ -1,13 +1,19 @@
 # Parent-Root Apex-Unification 001 Draft Publication Handoff
 ## Date: 2026-04-22
 ## Updated by: GitHub Copilot (GPT-5.4)
-## Scope: Active next-step packet for the bounded `apex-unification-001` draft pair under `C:/APEX Platform/apex-power-ops-platform`
+## Scope: Historical record for the bounded `apex-unification-001` draft pair under `C:/APEX Platform/apex-power-ops-platform`
 
 ## 1. Summary
 
 The active shared packages, active app lanes, residual scaffold/doc surfaces, infra-database lane, docs lane, ops knowledge-control-plane registry lane, ops legacy-governance lane, ops knowledge-resource-operations lane, the forms-import draft pair, and the closed `001af` draft are now published on parent-root `clean-main`.
 
-The next smallest remaining substantive packet is the `apex-unification-001` draft pair, which currently stages cleanly at 2 files. This packet introduces the smallest coherent remaining draft family tied to workspace decomposition planning before the larger `ops/agents/handoffs`, remaining `ops/agents/packets/draft`, `knowledge`, and `archive` backlogs.
+The next smallest remaining substantive packet was the `apex-unification-001` draft pair, which staged cleanly at 2 files. This packet introduced the smallest coherent remaining draft family tied to workspace decomposition planning before the larger `ops/agents/handoffs`, remaining `ops/agents/packets/draft`, `knowledge`, and `archive` backlogs.
+
+Publication outcome:
+
+1. committed on parent-root `clean-main` as `9739648`
+2. pushed to `origin/clean-main` on 2026-04-22
+3. closed as the published apex-unification `001` draft follow-on to the `001af` draft tranche
 
 ## 2. Why This Packet Is Next
 
@@ -22,7 +28,7 @@ Measured from the parent git root at `C:/APEX Platform` on 2026-04-22 after the 
 
 ## 3. Packet Intent
 
-Use this packet to introduce the bounded `apex-unification-001` draft pair:
+This packet introduced the bounded `apex-unification-001` draft pair:
 
 1. `2026-04-13-apex-unification-001-active-docs-infra-bounded-decomposition-plan.json`
 2. `2026-04-13-apex-unification-001-bounded-decomposition-plan.json`
@@ -34,7 +40,7 @@ From the parent git root at `C:/APEX Platform`, the bounded packet paths are:
 1. `apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-apex-unification-001-active-docs-infra-bounded-decomposition-plan.json`
 2. `apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-apex-unification-001-bounded-decomposition-plan.json`
 
-Current measured contents: 2 files.
+Published contents: 2 files.
 
 ## 5. Why This Packet Is Bounded Correctly
 
@@ -45,9 +51,9 @@ This packet is intentionally narrow:
 3. it avoids the 333-file handoff backlog and the remaining 148-file draft backlog beyond this pair
 4. it does not widen into `knowledge/` or `archive/`
 
-## 6. Operator Execution Path
+## 6. Historical Execution Path
 
-Preferred task path from `C:/APEX Platform/apex-power-ops-platform`:
+Preferred task path from `C:/APEX Platform/apex-power-ops-platform` when this packet was executed:
 
 1. run `Preview parent-root apex-unification 001 draft packet`
 2. run `Stage parent-root apex-unification 001 draft packet` only when the preview is correct
@@ -82,7 +88,8 @@ This lane is packet-definition JSON, so diff discipline matters more than execut
 
 If this packet lands cleanly, the next logical lanes are:
 
-1. the next smallest coherent `ops/agents/packets/draft` family
-2. broader `ops/agents` packet strategy decisions
-3. `knowledge/` packet(s)
-4. `archive/` strategy decisions rather than automatic publication
+1. the `knowledge-import-001` draft pair
+2. the next smallest coherent `ops/agents/packets/draft` family
+3. broader `ops/agents` packet strategy decisions
+4. `knowledge/` packet(s)
+5. `archive/` strategy decisions rather than automatic publication
