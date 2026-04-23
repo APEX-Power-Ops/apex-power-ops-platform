@@ -1,0 +1,65 @@
+{
+  "packet_id": "2026-04-14-pm-schema-013j",
+  "title": "PM Work-Package Write Response Crew Join Enrichment",
+  "objective": "Enrich the existing work-package POST and PATCH response path so write responses can surface the already-active identity-backed crew display name for assigned_crew_id without adding endpoints, changing database schema, or broadening PM mutation scope beyond the packet-013 write surface.",
+  "domain": "pm-domain",
+  "active_role": "PM Work-Package Write Response Enrichment Author",
+  "repo_paths": [
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-NEXT-PACKET-PLAN-2026-04-13.md",
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-IMPLEMENTATION-PLAN-2026-04-13.md",
+    "c:/APEX Platform/apex-power-ops-platform/apps/control-plane-api",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-14-pm-schema-013-pm-work-package-write-surface-minimal-handoff.md",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-14-pm-schema-013i-pm-work-package-write-surface-integration-smoke-handoff.md"
+  ],
+  "dependencies": [
+    "2026-04-13-pm-schema-010a",
+    "2026-04-13-pm-schema-010b",
+    "2026-04-14-pm-schema-012e",
+    "2026-04-14-pm-schema-012f",
+    "2026-04-14-pm-schema-013",
+    "2026-04-14-pm-schema-013i"
+  ],
+  "required_inputs": [
+    "PM-SCHEMA-V2-NEXT-PACKET-PLAN-2026-04-13.md",
+    "PM-SCHEMA-V2-IMPLEMENTATION-PLAN-2026-04-13.md",
+    "2026-04-13-pm-schema-010a-work-schema-orm-model-authoring-handoff.md",
+    "2026-04-13-pm-schema-010b-work-read-api-surface-handoff.md",
+    "2026-04-14-pm-schema-012e-pm-work-identity-orm-alignment-handoff.md",
+    "2026-04-14-pm-schema-012f-pm-work-identity-joined-read-surface-handoff.md",
+    "2026-04-14-pm-schema-013-pm-work-package-write-surface-minimal-handoff.md",
+    "2026-04-14-pm-schema-013i-pm-work-package-write-surface-integration-smoke-handoff.md"
+  ],
+  "constrained_outputs": [
+    "Bounded write-response enrichment so existing work-package POST and PATCH responses can surface crew display-name context when assigned_crew_id is present",
+    "Minimal schema, mutation-service, or router response-shaping changes needed to reuse the active identity relationship",
+    "Focused regression evidence proving packet-010a, packet-010b, packet-011f, packet-012f, packet-013, and packet-013i surfaces remain stable after the enrichment",
+    "No database-schema changes, no new endpoints, and no broader write-side runtime implementation"
+  ],
+  "write_scope": [
+    "c:/APEX Platform/Platform-Authority",
+    "c:/APEX Platform/apex-power-ops-platform/apps/control-plane-api",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "validation_steps": [
+    "Confirm packet 013j touches only the existing work-package POST/PATCH response path and does not add new endpoints or broaden mutation scope",
+    "Confirm crew-name enrichment is sourced from the already-active identity relationship and no new SQL or schema changes are introduced",
+    "Confirm write responses still behave correctly when assigned_crew_id is null or when no crew-name enrichment is available",
+    "Confirm packet-010a model tests, packet-010b API tests, packet-011f project-write tests, packet-012f identity joined-read tests, packet-013 work-package write tests, and packet-013i work-package integration smoke remain intact after the enrichment"
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "output_artifacts": [
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-14-pm-schema-013j-pm-work-package-write-response-crew-join-handoff.md"
+  ],
+  "handoff_note": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-14-pm-schema-013j-pm-work-package-write-response-crew-join-handoff.md",
+  "implementation_ready_candidate": true,
+  "sql_permission": false,
+  "sql_permission_note": "Packet 013j is bounded runtime response enrichment only. No new SQL, schema changes, migration edits, or broader write-surface expansion are authorized.",
+  "landing_lane": "runtime_write_surface_work_packages_response_enrichment_only",
+  "migration_strategy": "application_runtime_response_enrichment_only",
+  "created_at": "2026-04-14",
+  "updated_at": "2026-04-14",
+  "delegation_status": "complete",
+  "delegation_prompt": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-14-desktop-claude-pm-schema-packet-013j-prompt.md"
+}
