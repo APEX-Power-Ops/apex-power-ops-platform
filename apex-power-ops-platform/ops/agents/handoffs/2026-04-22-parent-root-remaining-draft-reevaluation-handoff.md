@@ -1,13 +1,13 @@
 # Parent-Root Remaining Draft Reevaluation Handoff
 ## Date: 2026-04-22
 ## Updated by: GitHub Copilot (GPT-5.4)
-## Scope: Active next-step selection state after the bounded `pm-schema-ui-002f` publication under `C:/APEX Platform/apex-power-ops-platform`
+## Scope: Historical selection record after the bounded `pm-schema-ui-002f` publication under `C:/APEX Platform/apex-power-ops-platform`
 
 ## 1. Summary
 
-The adjacent bounded `pm-schema-ui` publication lane has now been advanced through `pm-schema-ui-002e` and `pm-schema-ui-002f`, and a cheap tracked-vs-untracked check shows there is no further untracked `pm-schema-ui*` draft packet remaining under `ops/agents/packets/draft`.
+The adjacent bounded `pm-schema-ui` publication lane was advanced through `pm-schema-ui-002e` and `pm-schema-ui-002f`, and a cheap tracked-vs-untracked check showed there was no further untracked `pm-schema-ui*` draft packet remaining under `ops/agents/packets/draft`.
 
-The current next-step state is therefore not another already-identified singleton packet in the adjacent UI chain. The truthful next bounded publication must be chosen by re-evaluating the remaining non-UI untracked draft backlog against current dependencies, tracked-vs-untracked state, and packet notes.
+This selection pass therefore did not point at another already-identified singleton packet in the adjacent UI chain. It re-evaluated the remaining non-UI untracked draft backlog against current dependencies, tracked-vs-untracked state, and packet notes, and selected `pm-schema-020e` as the next truthful bounded publication candidate.
 
 ## 2. Current Verified State
 
@@ -31,13 +31,15 @@ That pattern no longer yields a direct next candidate in the adjacent UI lane be
 3. `pm-schema-ui-002g` is already tracked at `HEAD`, so it is not a remaining singleton publication candidate
 4. no other `pm-schema-ui*` draft file remains untracked
 
-## 4. Required Next Action
+## 4. Selection Outcome
 
-The next truthful publication decision should be made by a bounded re-evaluation of the remaining non-UI draft backlog:
+The bounded reevaluation resolved the next queue as follows:
 
-1. inspect remaining untracked packet draft files under `ops/agents/packets/draft`
-2. choose candidates using actual dependencies and packet notes, not filename order alone
-3. prefer the smallest dependency-safe packet that is still untracked and not already represented by tracked `HEAD`
+1. `pm-schema-020e` remains untracked and stages cleanly as a one-file bounded packet
+2. `pm-schema-020e` is `ready` and depends only on landed `020a` and `020c`
+3. `pm-schema-020g-b` also stages cleanly, but its packet rules position it as an alternative to already-landed `020g-a`, not as an automatically required successor
+4. the older untracked `pm-schema-001` through `pm-schema-008` backlog remains foundational or reviewer-gated and does not outrank the adjacent ready baseline-lane follow-on
+5. the next active handoff should therefore be `2026-04-22-parent-root-pm-schema-020e-draft-publication-handoff.md`
 
 ## 5. Do Not Do
 
