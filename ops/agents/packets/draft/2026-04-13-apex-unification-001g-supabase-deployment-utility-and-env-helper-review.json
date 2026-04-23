@@ -1,0 +1,62 @@
+{
+  "packet_id": "2026-04-13-apex-unification-001g",
+  "title": "APEX Supabase Deployment Utility And Env Helper Review",
+  "objective": "Review the remaining Supabase deployment-utility and environment-helper slice from the completed APEX-root decomposition plan and classify each artifact as app-owned candidate, ops-owned candidate, lineage-only retention, archive-only residue, or defer-pending-boundary-definition without physically moving any files or promoting any executable helper into an active deployment lane.",
+  "domain": "repo-unification",
+  "active_role": "APEX Deployment Utility Boundary Reviewer",
+  "repo_paths": [
+    "c:/APEX Platform/Supabase",
+    "c:/APEX Platform/Platform-Authority",
+    "c:/APEX Platform/apex-power-ops-platform/ops/",
+    "c:/APEX Platform/apex-power-ops-platform/docs/architecture/",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "dependencies": [
+    "2026-04-13-apex-unification-001f"
+  ],
+  "dependency_note": "Packet 001f closed the archive and residue routing tranche. Packet 001g exists because the remaining Supabase deployment helpers are mixed executable artifacts without an approved target boundary or ownership home.",
+  "required_inputs": [
+    "UNIFIED-REPO-NEXT-PACKET-PLAN-2026-04-13.md",
+    "APEX-OPS-STAKEHOLDER-DECISION-PATH-2026-04-15.md",
+    "2026-04-13-apex-unification-001-bounded-decomposition-plan-handoff.md",
+    "APEX-ACTIVE-DOCS-AND-INFRA-CLASSIFICATION-2026-04-12.md",
+    "PLATFORM-UNIFICATION-MASTER-AUTHORITY-2026-04-12.md",
+    "UNIFICATION-TRACKER-AND-INVENTORY-2026-04-12.md",
+    "c:/APEX Platform/Supabase/.env.example",
+    "c:/APEX Platform/Supabase/deploy.ps1",
+    "c:/APEX Platform/Supabase/DEPLOY_ALL.sql",
+    "c:/APEX Platform/Supabase/DEPLOY_ORCHESTRATION.sql",
+    "c:/APEX Platform/Supabase/DEPLOY_SCHEMA.sql",
+    "c:/APEX Platform/Supabase/lib/supabase.ts"
+  ],
+  "constrained_outputs": [
+    "A planning-only review handoff for the remaining Supabase deployment-utility and environment-helper slice",
+    "A per-file disposition for .env.example, deploy.ps1, DEPLOY_*.sql, and lib/supabase.ts",
+    "A bounded recommendation for the smallest next packet or an explicit defer decision if no safe movement lane is ready"
+  ],
+  "write_scope": [
+    "c:/APEX Platform/Platform-Authority",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "validation_steps": [
+    "Confirm packet 001g remains planning-only and does not move executable helpers into active homes",
+    "Confirm packet 001g assigns an explicit disposition for each remaining helper artifact",
+    "Confirm packet 001g distinguishes app-owned, ops-owned, lineage-only, archive-only, and defer outcomes instead of treating the slice as one block",
+    "Confirm packet 001g recommends the smallest next packet without forcing movement by momentum"
+  ],
+  "output_artifacts": [
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-13-apex-unification-001g-supabase-deployment-utility-and-env-helper-review-handoff.md"
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "handoff_note": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-13-apex-unification-001g-supabase-deployment-utility-and-env-helper-review-handoff.md",
+  "implementation_ready_candidate": false,
+  "sql_permission": false,
+  "sql_permission_note": "Packet 001g is a planning-only boundary review. It does not authorize movement, SQL execution, runtime edits, environment activation, or deployment changes.",
+  "created_at": "2026-04-21",
+  "updated_at": "2026-04-21",
+  "delegation_status": "complete",
+  "delegation_prompt": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-13-desktop-claude-apex-unification-001g-prompt.md"
+}
