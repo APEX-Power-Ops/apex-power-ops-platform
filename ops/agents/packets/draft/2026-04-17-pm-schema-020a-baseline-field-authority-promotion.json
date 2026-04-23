@@ -1,0 +1,61 @@
+{
+  "packet_id": "2026-04-17-pm-schema-020a",
+  "title": "PM Baseline Field Authority Promotion",
+  "objective": "Author the smallest bounded authority update needed to promote `baseline_start_at` and `baseline_end_at` for Task and WorkPackage from deferred to implementation-ready, define what baseline truth means in the PM domain, and explicitly preserve the prohibition on synthetic client-side baseline fabrication until a persisted baseline lane exists.",
+  "domain": "pm-domain",
+  "active_role": "Platform Architect",
+  "repo_paths": [
+    "c:/APEX Platform/Platform-Authority/PM-DOMAIN-ENTITY-FIELD-CANDIDATE-MATRIX-2026-04-12.md",
+    "c:/APEX Platform/Platform-Authority/PM-DOMAIN-IMPLEMENTATION-READY-SCHEMA-SPEC-2026-04-12.md",
+    "c:/APEX Platform/Platform-Authority/PM-DOMAIN-P6-INTEGRATION-BOUNDARY-SPEC-2026-04-12.md",
+    "c:/APEX Platform/Platform-Authority/PM-DOMAIN-LIFECYCLE-AND-STATE-MODEL-2026-04-12.md",
+    "c:/APEX Platform/Platform-Authority/PM-DOMAIN-UNRESOLVED-DECISION-DISPOSITION-2026-04-12.md",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-17-pm-schema-ui-002c-baseline-overlay-and-read-model-hardening-handoff.md",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft"
+  ],
+  "dependencies": [
+    "2026-04-12-pm-schema-001",
+    "2026-04-12-pm-schema-003",
+    "2026-04-12-pm-schema-006",
+    "2026-04-17-pm-schema-ui-002c"
+  ],
+  "required_inputs": [
+    "PM-DOMAIN-ENTITY-FIELD-CANDIDATE-MATRIX-2026-04-12.md",
+    "PM-DOMAIN-IMPLEMENTATION-READY-SCHEMA-SPEC-2026-04-12.md",
+    "PM-DOMAIN-P6-INTEGRATION-BOUNDARY-SPEC-2026-04-12.md",
+    "PM-DOMAIN-LIFECYCLE-AND-STATE-MODEL-2026-04-12.md",
+    "PM-DOMAIN-UNRESOLVED-DECISION-DISPOSITION-2026-04-12.md",
+    "2026-04-17-pm-schema-ui-002c-baseline-overlay-and-read-model-hardening-handoff.md"
+  ],
+  "constrained_outputs": [
+    "One bounded authority memo under c:/APEX Platform/Platform-Authority defining baseline truth semantics for Task and WorkPackage",
+    "Explicit promotion of `baseline_start_at` and `baseline_end_at` from deferred to implementation-ready with clear proceed-without language for runtime consumers until persistence lands",
+    "No SQL, no loader changes, no bridge changes, and no UI changes"
+  ],
+  "write_scope": [
+    "c:/APEX Platform/Platform-Authority",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "validation_steps": [
+    "Confirm packet 020a is authority-only and does not author SQL, loader logic, bridge routes, or UI code",
+    "Confirm the baseline fields are promoted only with explicit PM-domain semantics and without inventing synthetic baseline truth",
+    "Confirm the packet leaves persisted baseline landing and import mapping to later bounded packets"
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "output_artifacts": [
+    "c:/APEX Platform/Platform-Authority/PM-DOMAIN-BASELINE-FIELD-AUTHORITY-PROMOTION-2026-04-17.md",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-17-pm-schema-020a-baseline-field-authority-promotion-handoff.md"
+  ],
+  "handoff_note": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-17-pm-schema-020a-baseline-field-authority-promotion-handoff.md",
+  "implementation_ready_candidate": false,
+  "sql_permission": false,
+  "sql_permission_note": "Packet 020a is authority-only. No SQL, migration edits, bridge changes, loader changes, or UI implementation are authorized.",
+  "landing_lane": "authority_only",
+  "migration_strategy": "no_runtime_changes",
+  "created_at": "2026-04-17",
+  "updated_at": "2026-04-17",
+  "delegation_status": "complete",
+  "delegation_prompt": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-17-desktop-claude-pm-schema-packet-020a-prompt.md"
+}
