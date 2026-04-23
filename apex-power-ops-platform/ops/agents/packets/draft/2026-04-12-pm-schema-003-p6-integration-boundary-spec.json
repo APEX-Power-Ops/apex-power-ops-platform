@@ -1,0 +1,40 @@
+{
+  "packet_id": "2026-04-12-pm-schema-003",
+  "title": "PM Domain P6 Integration Boundary Spec",
+  "objective": "Define the exact boundary between PM/work entities and P6 integration semantics, including imported IDs, sync ledgers, XER flows, hierarchy support, and which concepts belong in work versus integration.",
+  "domain": "pm-domain",
+  "active_role": "Platform Architect",
+  "repo_paths": [
+    "c:/APEX Platform/Platform-Authority/APEX-SCHEMA-V2-CANONICAL-MAPPING-2026-04-12.md",
+    "c:/APEX Platform/APEX_Schema_V2/XER_Import_Export_Spec.md",
+    "c:/APEX Platform/APEX_Schema_V2/P6_Schema_Assessment.docx",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft"
+  ],
+  "dependencies": [
+    "APEX-SCHEMA-V2-CANONICAL-MAPPING-2026-04-12.md",
+    "PM-WORK-DOMAIN-SPEC-2026-04-12.md"
+  ],
+  "required_inputs": [
+    "PM-WORK-DOMAIN-SPEC-2026-04-12.md",
+    "APEX-SCHEMA-V2-CANONICAL-MAPPING-2026-04-12.md",
+    "APEX_Schema_V2/XER_Import_Export_Spec.md",
+    "APEX_Schema_V2/P6_Schema_Assessment.docx"
+  ],
+  "constrained_outputs": [
+    "One P6 integration boundary document under c:/APEX Platform/Platform-Authority",
+    "Explicit statement of work-domain versus integration-domain ownership",
+    "No implementation scripts or SQL"
+  ],
+  "write_scope": [
+    "c:/APEX Platform/Platform-Authority"
+  ],
+  "validation_steps": [
+    "Confirm P6 IDs are external bindings rather than primary business identity",
+    "Confirm WBS assists planning but does not outrank WorkPackage",
+    "Confirm sync logging is treated as integration ledger behavior"
+  ],
+  "handoff_target": "Reviewer And Release Gate",
+  "status": "review",
+  "created_at": "2026-04-12",
+  "updated_at": "2026-04-12"
+}
