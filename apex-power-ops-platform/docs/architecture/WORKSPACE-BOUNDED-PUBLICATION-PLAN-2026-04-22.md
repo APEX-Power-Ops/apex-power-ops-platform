@@ -14,13 +14,13 @@ This document provides that bounded plan.
 
 ## Verified Inventory Baseline
 
-Measured from the parent git root at `C:/APEX Platform` on 2026-04-22 after the `pm-schema-017` draft publication:
+Measured from the parent git root at `C:/APEX Platform` on 2026-04-22 after the `pm-schema-018` draft publication:
 
-- total untracked paths under `apex-power-ops-platform/`: 3939
+- total untracked paths under `apex-power-ops-platform/`: 3938
 - `apps`: 2
 - `archive`: 2516
 - `knowledge`: 974
-- `ops`: 447
+- `ops`: 446
 
 Interpretation:
 
@@ -112,11 +112,11 @@ Current concrete artifact for the completed scaffold step:
 
 Current next-step interpretation:
 
-- the scaffold, package-source, active app-lane runtime/support/test steps, shared package-source steps, the residual scaffold/doc step, the `infra` database step, the `docs` step, the `ops/knowledge-control-plane/registry` step, the `ops/agents/legacy-governance` step, the `ops/knowledge-resource-operations` step, the forms-import draft pair, the closed `001af` draft, the `apex-unification-001` draft pair, the `knowledge-import-001` draft pair, the `pm-schema-009` draft family, the `pm-schema-010` draft trio, the `pm-schema-011` dependency-activation family, the `pm-schema-012` identity and joined-read family, the `pm-schema-013` work-package write family, the `pm-schema-014` task-write pair, the `pm-schema-015` assignment-write pair, the `pm-schema-016` dependency-write singleton, and the `pm-schema-017` execution-issue-write singleton are complete; the next bounded follow-on is the `pm-schema-018` progress-snapshot-write singleton before the larger `pm-schema-019` family, remaining `ops/agents/handoffs`, `knowledge`, and `archive` backlogs
+- the scaffold, package-source, active app-lane runtime/support/test steps, shared package-source steps, the residual scaffold/doc step, the `infra` database step, the `docs` step, the `ops/knowledge-control-plane/registry` step, the `ops/agents/legacy-governance` step, the `ops/knowledge-resource-operations` step, the forms-import draft pair, the closed `001af` draft, the `apex-unification-001` draft pair, the `knowledge-import-001` draft pair, the `pm-schema-009` draft family, the `pm-schema-010` draft trio, the `pm-schema-011` dependency-activation family, the `pm-schema-012` identity and joined-read family, the `pm-schema-013` work-package write family, the `pm-schema-014` task-write pair, the `pm-schema-015` assignment-write pair, the `pm-schema-016` dependency-write singleton, the `pm-schema-017` execution-issue-write singleton, and the `pm-schema-018` progress-snapshot-write singleton are complete; the next bounded follow-on is the `pm-schema-019` write-surface consolidation singleton before the broader `pm-schema-019f` through `pm-schema-019k` follow-ons, remaining `ops/agents/handoffs`, `knowledge`, and `archive` backlogs
 
 Current concrete artifact for that next step:
 
-- `ops/agents/handoffs/2026-04-22-parent-root-pm-schema-018-draft-publication-handoff.md`
+- `ops/agents/handoffs/2026-04-22-parent-root-pm-schema-019-draft-publication-handoff.md`
 
 ## Guardrails
 
