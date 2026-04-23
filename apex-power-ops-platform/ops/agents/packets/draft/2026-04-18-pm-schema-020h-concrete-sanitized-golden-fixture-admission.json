@@ -1,0 +1,56 @@
+{
+  "packet_id": "2026-04-18-pm-schema-020h",
+  "title": "Concrete Sanitized Golden Fixture Admission",
+  "objective": "Implement the smallest bounded follow-on after exactly one of packet 020g-a or 020g-b by admitting one concrete sanitized baseline-bearing golden fixture, its companion README, and fixture-specific tests under the packet-020f fixture contract, without broadening bridge routes, PM UI behavior, or schedule-write surfaces.",
+  "domain": "pm-domain",
+  "active_role": "PM Golden Fixture Admission Author",
+  "repo_paths": [
+    "c:/APEX Platform/Platform-Authority/PM-DOMAIN-XER-TOOLS-LONG-TERM-VALUE-PLAN-2026-04-18.md",
+    "c:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/schedule/fixtures",
+    "c:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests",
+    "c:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/schedule/fixtures/BASELINE_XER_FIXTURE_CONTRACT.md"
+  ],
+  "dependencies": [
+    "2026-04-18-pm-schema-020e.1"
+  ],
+  "dependency_note": "Packet 020h must execute after packet 020g-a. The admitted fixture and its tests must prove truthful deterministic baseline emission on the landed parser-reconciliation substrate and must not assume the abandoned 020g-b companion-JSON path.",
+  "required_inputs": [
+    "PM-DOMAIN-XER-TOOLS-LONG-TERM-VALUE-PLAN-2026-04-18.md",
+    "apps/mutation-seam/app/schedule/fixtures/BASELINE_XER_FIXTURE_CONTRACT.md",
+    "2026-04-18-pm-schema-020f-real-xer-host-parser-verification-and-golden-fixture-admission-handoff.md"
+  ],
+  "constrained_outputs": [
+    "One concrete sanitized baseline-bearing fixture admitted under apps/mutation-seam/app/schedule/fixtures with clear provenance and no client PII",
+    "One fixture README declaring live project id, baseline project id, matched task_code set, and declared negative cases",
+    "One focused fixture-specific test proving deterministic baseline emission and at least one declared negative case"
+  ],
+  "write_scope": [
+    "c:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/schedule/fixtures",
+    "c:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "validation_steps": [
+    "Confirm the admitted fixture satisfies the packet-020f fixture contract, including required sections, declared negative cases, and non-overload invariants",
+    "Confirm the fixture-specific test proves deterministic baseline emission on the landed 020g-a substrate path",
+    "Confirm no bridge route, PM UI, SQL, or schedule-write changes are introduced",
+    "Confirm host disposition can move to host-validated only when the admitted fixture has been executed through the host runbook and baseline_events evidence is observable"
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "output_artifacts": [
+    "c:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/schedule/fixtures/stack_data_center_baseline_sanitized.xer",
+    "c:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/schedule/fixtures/stack_data_center_baseline_sanitized.README.md",
+    "c:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests/test_golden_fixture_020h.py",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-18-pm-schema-020h-concrete-sanitized-golden-fixture-admission-handoff.md"
+  ],
+  "handoff_note": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-18-pm-schema-020h-concrete-sanitized-golden-fixture-admission-handoff.md",
+  "implementation_ready_candidate": false,
+  "sql_permission": false,
+  "sql_permission_note": "Packet 020h is fixture admission only. No SQL, no bridge changes, no PM UI changes, and no write-surface expansion are authorized.",
+  "landing_lane": "golden_fixture_admission",
+  "migration_strategy": "fixture_contract_admission_only",
+  "created_at": "2026-04-18",
+  "updated_at": "2026-04-18",
+  "delegation_status": "complete",
+  "delegation_prompt": "c:/APEX Platform/apex-power-ops-platform/op
