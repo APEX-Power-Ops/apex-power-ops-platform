@@ -1,0 +1,66 @@
+{
+  "packet_id": "2026-04-13-pm-schema-009c",
+  "title": "PM Domain Staging Dry-Run Migration",
+  "objective": "Execute a staging-only dry-run V1-to-V2 PM migration using the validated work schema, the packet-009 mapping rules, the packet-009a mapping infrastructure, and the populated source mappings from packet 009b, then produce reconciliation and quality results without changing production systems.",
+  "domain": "pm-domain",
+  "active_role": "PM Migration Dry-Run Operator",
+  "repo_paths": [
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-NEXT-PACKET-PLAN-2026-04-13.md",
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-IMPLEMENTATION-PLAN-2026-04-13.md",
+    "c:/APEX Platform/Platform-Authority/DATABASE-OWNERSHIP-SPLIT-2026-04-12.md",
+    "c:/APEX Platform/apex-power-ops-platform/infra/database/migrations/work/",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-13-pm-schema-008-local-validation-handoff.md",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-13-pm-schema-009-legacy-migration-planning-handoff.md",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-13-pm-schema-009a-mapping-infrastructure-handoff.md",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-13-pm-schema-009b-source-data-population-handoff.md",
+    "c:/APEX Platform/source-domains/tcc_v5_backend"
+  ],
+  "dependencies": [
+    "2026-04-13-pm-schema-008",
+    "2026-04-13-pm-schema-009",
+    "2026-04-13-pm-schema-009a",
+    "2026-04-13-pm-schema-009b"
+  ],
+  "required_inputs": [
+    "2026-04-13-pm-schema-008-local-validation-handoff.md",
+    "2026-04-13-pm-schema-009-legacy-migration-planning-handoff.md",
+    "2026-04-13-pm-schema-009a-mapping-infrastructure-handoff.md",
+    "2026-04-13-pm-schema-009b-source-data-population-handoff.md",
+    "Validated packet-007 SQL bundle",
+    "Populated migration scope-to-work-package lookup support",
+    "V1 source export or read-only source connection sufficient for staging migration"
+  ],
+  "constrained_outputs": [
+    "Staging-only migration DML or migration execution artifacts",
+    "A dry-run migration handoff note with row-count reconciliation and quality findings",
+    "Explicit list of unmappable or deferred records",
+    "No production cutover work and no runtime code changes"
+  ],
+  "write_scope": [
+    "c:/APEX Platform/apex-power-ops-platform/infra/database/migrations/work",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs",
+    "c:/APEX Platform/Platform-Authority"
+  ],
+  "validation_steps": [
+    "Confirm dry-run execution occurs only in the staging database",
+    "Confirm migrated entities cover projects, work packages, tasks, and assignments per packet-009 scope",
+    "Confirm referential integrity, row-count reconciliation, and enum distribution comparison are explicitly reported",
+    "Confirm unmappable records and unresolved lineage gaps are surfaced rather than silently dropped",
+    "Confirm no production data movement, cutover work, or runtime adoption changes occur in this packet"
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "output_artifacts": [
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-13-pm-schema-009c-staging-dry-run-migration-handoff.md"
+  ],
+  "handoff_note": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-13-pm-schema-009c-staging-dry-run-migration-handoff.md",
+  "implementation_ready_candidate": false,
+  "sql_permission": true,
+  "sql_permission_note": "Packet 009c authorizes staging-only migration DML and validation using the mapping rules and infrastructure from packets 009, 009a, and 009b. It does not authorize production migration or runtime changes.",
+  "landing_lane": "c:/APEX Platform/apex-power-ops-platform/infra/database/migrations/work/",
+  "migration_strategy": "staging_dry_run_migration",
+  "created_at": "2026-04-13",
+  "updated_at": "2026-04-13",
+  "delegation_status": "completed"
+}
