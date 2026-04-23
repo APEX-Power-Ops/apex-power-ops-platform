@@ -1,0 +1,54 @@
+{
+  "packet_id": "2026-04-21-apex-unification-001af",
+  "title": "APEX Public Control-Plane Route Promotion Execution",
+  "objective": "Package the external hosted-route frontier into one delegation-ready execution packet so the deploy owner can either promote the public control-plane host to a build that exposes /api/v1/neta/apparatus/{apparatus_id}/resources or run the credentialed repository_dispatch path that triggers the same promotion gate, then return with truthful hosted evidence.",
+  "domain": "repo-unification",
+  "active_role": "APEX Public Control-Plane Promotion Operator",
+  "repo_paths": [
+    "c:/APEX Platform/apex-power-ops-platform/.github/workflows",
+    "c:/APEX Platform/apex-power-ops-platform/apps/control-plane-api",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "dependencies": [
+    "2026-04-13-apex-unification-001ad",
+    "2026-04-21-apex-unification-001ae"
+  ],
+  "dependency_note": "Packet 001ad aligned the smoke workflow, dispatch helper, and runbook. Packet 001ae captured the pre-closure hosted blocker evidence that justified packet 001af before the 2026-04-22 hosted cutover closed the route-promotion lane.",
+  "required_inputs": [
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-21-apex-unification-001ae-public-control-plane-route-deployment-blocker-refresh-handoff.md",
+    "c:/APEX Platform/apex-power-ops-platform/apps/control-plane-api/PUBLIC-APPARATUS-ROUTE-PROMOTION-CHECKLIST-2026-04-21.md",
+    "c:/APEX Platform/apex-power-ops-platform/apps/control-plane-api/scripts/smoke_deployed_control_plane.py",
+    "c:/APEX Platform/apex-power-ops-platform/apps/control-plane-api/scripts/dispatch_deployed_control_plane_smoke.py",
+    "c:/APEX Platform/apex-power-ops-platform/.github/workflows/deployed-control-plane-smoke.yml"
+  ],
+  "constrained_outputs": [
+    "One truthful external execution of either direct hosted deployment or credentialed repository_dispatch so the public host exposes /api/v1/neta/apparatus/{apparatus_id}/resources",
+    "One rerun of the public apparatus-route smoke gate against https://control.apexpowerops.com with a pass or the exact remaining hosted failure named",
+    "One evidence-bearing execution handoff that records whether the route is now present in deployed OpenAPI, whether the probe still returns framework 404, and whether promoted-host browser proof can now proceed"
+  ],
+  "write_scope": [
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "validation_steps": [
+    "Confirm the public host exposes /api/v1/neta/apparatus/{apparatus_id}/resources and advertises it in deployed OpenAPI, or record the exact hosted failure without substitution",
+    "Confirm the repo-owned public gate passes against https://control.apexpowerops.com after deployment or dispatch execution",
+    "Confirm no local-runtime blocker is reintroduced and no repo code is changed unless the hosted execution uncovers a new repo-owned defect",
+    "Capture a concise execution handoff with the exact deploy path used, the credential posture, and the final hosted disposition"
+  ],
+  "output_artifacts": [
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-21-apex-unification-001af-public-control-plane-route-promotion-execution-handoff.md"
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "handoff_note": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-21-apex-unification-001af-public-control-plane-route-promotion-execution-handoff.md",
+  "status_note": "Closed 2026-04-22 after bounded promotion to jasonlswenson-sys/apex-power-ops clean-main commit baf2a73, live Render deploy dep-d7kcqgn7f7vs73enlnag, public OpenAPI route proof, hosted workflow run 24781243756, and repo-owned smoke RESULT PASS.",
+  "implementation_ready_candidate": false,
+  "sql_permission": false,
+  "sql_permission_note": "Packet 001af authorizes only external promotion execution, credentialed dispatch execution, rerunning the public gate, and writing back the truthful hosted result. It does not authorize unrelated repo changes, schema work, secret creation inside this workspace, or claims of success without a passing hosted gate.",
+  "created_at": "2026-04-21",
+  "updated_at": "2026-04-22",
+  "delegation_status": "closed",
+  "delegation_prompt": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-21-desktop-claude-apex-unification-001af-prompt.md"
+}
