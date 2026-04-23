@@ -1,0 +1,59 @@
+{
+  "packet_id": "2026-04-13-knowledge-import-001",
+  "title": "ETT First Bounded Knowledge Import Plan",
+  "objective": "Define the first bounded active import tranche from NETA ETT Study Material into the unified platform root using the approved knowledge classification and retention rules without performing a physical repo import.",
+  "domain": "knowledge-domain",
+  "active_role": "Knowledge Import Planner",
+  "repo_paths": [
+    "c:/APEX Platform/Platform-Authority/UNIFIED-REPO-NEXT-PACKET-PLAN-2026-04-13.md",
+    "c:/APEX Platform/Platform-Authority/ETT-GOVERNED-KNOWLEDGE-SLICE-CLASSIFICATION-2026-04-12.md",
+    "c:/APEX Platform/Platform-Authority/ETT-ARCHIVE-AND-SOURCE-LIBRARY-RETENTION-POLICY-2026-04-13.md",
+    "C:/Users/jjswe/NETA ETT Study Material",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "dependencies": [
+    "ETT-GOVERNED-KNOWLEDGE-SLICE-CLASSIFICATION-2026-04-12.md",
+    "ETT-ARCHIVE-AND-SOURCE-LIBRARY-RETENTION-POLICY-2026-04-13.md",
+    "UNIFIED-REPO-NEXT-PACKET-PLAN-2026-04-13.md"
+  ],
+  "required_inputs": [
+    "UNIFIED-REPO-NEXT-PACKET-PLAN-2026-04-13.md",
+    "ETT-GOVERNED-KNOWLEDGE-SLICE-CLASSIFICATION-2026-04-12.md",
+    "ETT-ARCHIVE-AND-SOURCE-LIBRARY-RETENTION-POLICY-2026-04-13.md",
+    "PLATFORM-UNIFICATION-MASTER-AUTHORITY-2026-04-12.md",
+    "UNIFICATION-TRACKER-AND-INVENTORY-2026-04-12.md"
+  ],
+  "constrained_outputs": [
+    "A first-tranche import manifest for active knowledge governance, manifests, extractions, templates, and related low-weight assets",
+    "Explicit exclusions for heavy source-library and archive material",
+    "Target homes under docs/knowledge, knowledge, and ops/knowledge-*",
+    "Smallest follow-on execution packet recommendation for the first physical knowledge import"
+  ],
+  "write_scope": [
+    "c:/APEX Platform/Platform-Authority",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "validation_steps": [
+    "Confirm the first tranche stays bounded to active low-weight knowledge assets and excludes wholesale repo import",
+    "Confirm heavy source-library and archive material are handled through the retention policy rather than silent carryforward",
+    "Confirm target homes under docs/knowledge, knowledge, and ops/knowledge-* are explicit by slice",
+    "Confirm no physical movement of the full source-PDF library or Development tree occurs in this packet"
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "output_artifacts": [
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-13-knowledge-import-001-first-bounded-plan-handoff.md"
+  ],
+  "handoff_note": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-13-knowledge-import-001-first-bounded-plan-handoff.md",
+  "implementation_ready_candidate": true,
+  "sql_permission": false,
+  "sql_permission_note": "This packet is knowledge-import planning only. It does not authorize wholesale repo import, archive migration, or storage-heavy payload movement.",
+  "created_at": "2026-04-14",
+  "updated_at": "2026-04-14",
+  "completed_at": "2026-04-14",
+  "delegation_status": "complete",
+  "validation_disposition": "planning-complete-first-knowledge-tranche-defined",
+  "delegation_prompt": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-13-desktop-claude-knowledge-import-001-prompt.md"
+}
