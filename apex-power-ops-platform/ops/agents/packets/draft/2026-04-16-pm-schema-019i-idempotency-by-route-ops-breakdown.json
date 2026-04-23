@@ -1,0 +1,77 @@
+{
+  "packet_id": "2026-04-16-pm-schema-019i",
+  "title": "PM Idempotency Per-Route Ops Breakdown",
+  "objective": "Implement the smallest bounded follow-on to packet 019h by adding one additional read-only PM ops surface at `GET /api/v1/ops/pm-idempotency/by-route` that reports per-route idempotency inventory and expiry pressure for the existing seven PM POST handlers, while preserving the packet-019 through packet-019h request contract, keeping the work schema registry at 22, keeping `/api/v1/work/*` path count at 15, limiting `/api/v1/ops/*` growth to one new GET endpoint, and avoiding any DDL, any PM write-surface expansion, or any `work.wbs_nodes` writes.",
+  "domain": "pm-domain",
+  "active_role": "PM Idempotency Per-Route Ops Breakdown Author",
+  "repo_paths": [
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-NEXT-PACKET-PLAN-2026-04-13.md",
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-IMPLEMENTATION-PLAN-2026-04-13.md",
+    "c:/APEX Platform/apex-power-ops-platform/apps/control-plane-api/services/work/idempotency.py",
+    "c:/APEX Platform/apex-power-ops-platform/apps/control-plane-api/services/ops/router.py",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-16-pm-schema-019g-idempotency-sweep-and-ops-metrics-handoff.md",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-16-pm-schema-019h-sweep-schedule-wiring-handoff.md"
+  ],
+  "dependencies": [
+    "2026-04-13-pm-schema-010a",
+    "2026-04-13-pm-schema-010b",
+    "2026-04-14-pm-schema-011f",
+    "2026-04-14-pm-schema-013",
+    "2026-04-14-pm-schema-013i",
+    "2026-04-14-pm-schema-013j",
+    "2026-04-14-pm-schema-014",
+    "2026-04-14-pm-schema-014i",
+    "2026-04-15-pm-schema-015",
+    "2026-04-15-pm-schema-015i",
+    "2026-04-15-pm-schema-016",
+    "2026-04-15-pm-schema-017",
+    "2026-04-15-pm-schema-018",
+    "2026-04-16-pm-schema-019",
+    "2026-04-16-pm-schema-019f",
+    "2026-04-16-pm-schema-019g",
+    "2026-04-16-pm-schema-019h"
+  ],
+  "required_inputs": [
+    "PM-SCHEMA-V2-NEXT-PACKET-PLAN-2026-04-13.md",
+    "PM-SCHEMA-V2-IMPLEMENTATION-PLAN-2026-04-13.md",
+    "2026-04-16-pm-schema-019-pm-write-surface-consolidation-handoff.md",
+    "2026-04-16-pm-schema-019f-durable-db-backed-idempotency-store-handoff.md",
+    "2026-04-16-pm-schema-019g-idempotency-sweep-and-ops-metrics-handoff.md",
+    "2026-04-16-pm-schema-019h-sweep-schedule-wiring-handoff.md",
+    "services/work/idempotency.py",
+    "services/ops/router.py"
+  ],
+  "constrained_outputs": [
+    "One bounded read-only PM ops endpoint at `GET /api/v1/ops/pm-idempotency/by-route` returning `{by_route: [{route, count, expired_count, oldest_expires_at}, ...], backend_kind}` for the existing seven PM POST handlers only",
+    "One minimal backend extension on the existing idempotency seam that computes per-route counts and expiry pressure without changing the durable-store schema or introducing a second observability path",
+    "Focused regression evidence proving work schema registry size stays at 22, `/api/v1/work/*` path count stays at 15, `/api/v1/ops/*` path count grows only from 1 to 2, and all ops routes remain GET-only",
+    "A bounded handoff naming the next smallest follow-on after per-route observability, including the alternative of migrating the scheduled sweep to Kubernetes only when a legitimate deployment-manifests lane exists"
+  ],
+  "write_scope": [
+    "c:/APEX Platform/Platform-Authority",
+    "c:/APEX Platform/apex-power-ops-platform/apps/control-plane-api",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "validation_steps": [
+    "Confirm packet 019i stays bounded to per-route read-only PM idempotency observability and does not add any PM write endpoint, any broader entity write surface, or any `work.wbs_nodes` write",
+    "Confirm the new payload is derived from the existing packet-019g stats seam and keeps the durable and in-memory backend contract aligned without authoring DDL or changing `pm.idempotency_keys` shape",
+    "Confirm the per-route breakdown remains pinned to the seven existing PM POST routes and does not widen `/api/v1/work/*` or alter the packet-019 through packet-019h idempotency request contract, replay behavior, or mismatch 422 shape",
+    "Confirm packet-010a, packet-010b, packet-011f, packet-013, packet-013i, packet-013j, packet-014, packet-014i, packet-015, packet-015i, packet-016, packet-017, packet-018, packet-019, packet-019f, packet-019g, and packet-019h surfaces still pass or remain unchanged as expected after the per-route observability work"
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "output_artifacts": [
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-16-pm-schema-019i-idempotency-by-route-ops-breakdown-handoff.md"
+  ],
+  "handoff_note": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-16-pm-schema-019i-idempotency-by-route-ops-breakdown-handoff.md",
+  "implementation_ready_candidate": true,
+  "sql_permission": false,
+  "sql_permission_note": "Packet 019i is runtime observability only. No new SQL, schema changes, migration edits, PM write-surface expansion, or `work.wbs_nodes` writes are authorized.",
+  "landing_lane": "runtime_ops_observability_only",
+  "migration_strategy": "application_runtime_only",
+  "created_at": "2026-04-16",
+  "updated_at": "2026-04-16",
+  "delegation_status": "complete",
+  "delegation_prompt": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-16-desktop-claude-pm-schema-packet-019i-prompt.md"
+}
