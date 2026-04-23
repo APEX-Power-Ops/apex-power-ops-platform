@@ -1,0 +1,53 @@
+{
+  "packet_id": "2026-04-18-pm-schema-020d",
+  "title": "P6 Baseline XER Parser And Loader Wiring",
+  "objective": "Implement the smallest bounded follow-on after packet 020c by extending the XER loader path to recognize baseline-bearing P6 entities such as PROJBASELINE or BASELINEPROJECT, map baseline-project TASK rows onto live schedule tasks per the 020b matching rules, and ingest real XER baseline truth without changing bridge routes, PM UI files, or governed operational write paths.",
+  "domain": "pm-domain",
+  "active_role": "PM Baseline XER Parser Author",
+  "repo_paths": [
+    "c:/APEX Platform/Platform-Authority/PM-DOMAIN-XER-BASELINE-MAPPING-AUTHORIZATION-2026-04-17.md",
+    "c:/APEX Platform/APEX_Schema_V2/XER_Import_Export_Spec.md",
+    "c:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/schedule/loader.py",
+    "c:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/schedule/fixtures",
+    "c:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-17-pm-schema-020c-persisted-schedule-baseline-ddl-and-loader-lane-handoff.md"
+  ],
+  "dependencies": [
+    "2026-04-17-pm-schema-020b",
+    "2026-04-17-pm-schema-020c"
+  ],
+  "required_inputs": [
+    "PM-DOMAIN-XER-BASELINE-MAPPING-AUTHORIZATION-2026-04-17.md",
+    "APEX_Schema_V2/XER_Import_Export_Spec.md",
+    "apps/mutation-seam/app/schedule/loader.py",
+    "2026-04-17-pm-schema-020c-persisted-schedule-baseline-ddl-and-loader-lane-handoff.md"
+  ],
+  "constrained_outputs": [
+    "One bounded XER parser extension or compatibility layer that surfaces baseline-project linkage for the schedule loader",
+    "One loader wiring slice that emits authorized baseline entries from real XER content using the matching rules authorized by 020b",
+    "Focused validation evidence showing real XER baseline ingestion works without touching bridge routes, PM UI files, or operational write paths"
+  ],
+  "write_scope": [
+    "c:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/schedule",
+    "c:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "validation_steps": [
+    "Confirm packet 020d only extends the XER ingestion path and does not modify bridge routes, PM UI files, or controlled operational write paths",
+    "Confirm baseline-project TASK rows are matched into live schedule tasks exactly per the 020b task_code matching rule",
+    "Confirm no synthetic baseline fabrication occurs when a real XER lacks PROJBASELINE or equivalent linkage"
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "ready",
+  "handoff_note": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-18-pm-schema-020d-p6-baseline-xer-parser-and-loader-wiring-handoff.md",
+  "implementation_ready_candidate": true,
+  "sql_permission": false,
+  "sql_permission_note": "Packet 020d authorizes only XER parser and loader wiring over the already-landed schedule baseline schema. No new SQL, bridge route, or UI work is authorized.",
+  "landing_lane": "schedule_xer_baseline_ingestion",
+  "migration_strategy": "bounded_loader_extension_only",
+  "created_at": "2026-04-18",
+  "updated_at": "2026-04-18",
+  "delegation_status": "ready",
+  "delegation_prompt": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-18-desktop-claude-pm-schema-packet-020d-prompt.md"
+}
