@@ -1,0 +1,70 @@
+{
+  "packet_id": "2026-04-13-pm-schema-010a",
+  "title": "PM Work Schema ORM Model Authoring",
+  "objective": "Author the first bounded runtime implementation slice for the PM/work domain by creating SQLAlchemy model classes, Python enum types, Pydantic schemas, and unit tests for the validated work.* schema without adding API routes, runtime wiring, or database changes.",
+  "domain": "pm-domain",
+  "active_role": "PM Work ORM Foundation Implementer",
+  "repo_paths": [
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-NEXT-PACKET-PLAN-2026-04-13.md",
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-IMPLEMENTATION-PLAN-2026-04-13.md",
+    "c:/APEX Platform/Platform-Authority/DATABASE-OWNERSHIP-SPLIT-2026-04-12.md",
+    "c:/APEX Platform/apex-power-ops-platform/infra/database/migrations/work/",
+    "c:/APEX Platform/apex-power-ops-platform/apps/control-plane-api/models",
+    "c:/APEX Platform/apex-power-ops-platform/apps/control-plane-api/services",
+    "c:/APEX Platform/apex-power-ops-platform/apps/control-plane-api/tests",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-13-pm-schema-008-local-validation-handoff.md",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-13-pm-schema-009c-staging-dry-run-migration-handoff.md",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-13-pm-schema-010-runtime-adoption-planning-handoff.md"
+  ],
+  "dependencies": [
+    "2026-04-13-pm-schema-008",
+    "2026-04-13-pm-schema-009c",
+    "2026-04-13-pm-schema-010",
+    "PM-SCHEMA-V2-NEXT-PACKET-PLAN-2026-04-13.md"
+  ],
+  "required_inputs": [
+    "PM-SCHEMA-V2-NEXT-PACKET-PLAN-2026-04-13.md",
+    "PM-SCHEMA-V2-IMPLEMENTATION-PLAN-2026-04-13.md",
+    "DATABASE-OWNERSHIP-SPLIT-2026-04-12.md",
+    "2026-04-13-pm-schema-008-local-validation-handoff.md",
+    "2026-04-13-pm-schema-009c-staging-dry-run-migration-handoff.md",
+    "2026-04-13-pm-schema-010-runtime-adoption-planning-handoff.md",
+    "Validated packet-007 SQL bundle",
+    "Current control-plane-api model patterns and test conventions"
+  ],
+  "constrained_outputs": [
+    "SQLAlchemy model classes for the validated work.* tables",
+    "Python enum definitions that mirror the validated work.* enum values",
+    "Pydantic schema models for read-focused entity serialization",
+    "Unit tests covering model imports and schema-contract alignment",
+    "A bounded implementation handoff note under c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/"
+  ],
+  "write_scope": [
+    "c:/APEX Platform/apex-power-ops-platform/apps/control-plane-api/models",
+    "c:/APEX Platform/apex-power-ops-platform/apps/control-plane-api/services",
+    "c:/APEX Platform/apex-power-ops-platform/apps/control-plane-api/tests",
+    "c:/APEX Platform/Platform-Authority",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "validation_steps": [
+    "Confirm packet 008 remains the validated schema baseline and packet 010 remains the authoritative runtime-adoption plan",
+    "Confirm the authored models match the validated work.* DDL exactly for table names, column names, enum values, and relationships within current write scope",
+    "Confirm packet 010a does not add API routes, router mounts, background jobs, or schema deployment work",
+    "Confirm tests cover importability and schema-contract alignment without requiring production database changes"
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "output_artifacts": [
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-13-pm-schema-010a-work-schema-orm-model-authoring-handoff.md"
+  ],
+  "handoff_note": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-13-pm-schema-010a-work-schema-orm-model-authoring-handoff.md",
+  "implementation_ready_candidate": true,
+  "sql_permission": false,
+  "sql_permission_note": "Packet 010a authorizes bounded runtime model/schema code and tests only. It does not authorize SQL changes, API route creation, or dependency activation.",
+  "landing_lane": "bounded-runtime-foundation",
+  "migration_strategy": "runtime_foundation_model_authoring",
+  "created_at": "2026-04-13",
+  "updated_at": "2026-04-13",
+  "delegation_status": "complete"
+}
