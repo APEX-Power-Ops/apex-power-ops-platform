@@ -1,0 +1,82 @@
+{
+  "packet_id": "2026-04-16-pm-schema-019k",
+  "title": "PM Ops Metrics Threshold Evaluation",
+  "objective": "Implement the smallest bounded follow-on to packet 019j by adding one deployment-side threshold-evaluation path over the existing PM idempotency metrics export payload so scheduled runs can produce an explicit pass/fail operator signal without changing application-runtime code, adding DDL, adding PM write endpoints, or reopening `work.wbs_nodes` writes.",
+  "domain": "pm-domain",
+  "active_role": "PM Ops Metrics Threshold Evaluation Author",
+  "repo_paths": [
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-NEXT-PACKET-PLAN-2026-04-13.md",
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-IMPLEMENTATION-PLAN-2026-04-13.md",
+    "c:/APEX Platform/apex-power-ops-platform/.github/workflows",
+    "c:/APEX Platform/apex-power-ops-platform/docs",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-16-pm-schema-019g-idempotency-sweep-and-ops-metrics-handoff.md",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-16-pm-schema-019h-sweep-schedule-wiring-handoff.md",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-16-pm-schema-019i-idempotency-by-route-ops-breakdown-handoff.md",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-16-pm-schema-019j-ops-metrics-export-schedule-scrape-handoff.md"
+  ],
+  "dependencies": [
+    "2026-04-13-pm-schema-010a",
+    "2026-04-13-pm-schema-010b",
+    "2026-04-14-pm-schema-011f",
+    "2026-04-14-pm-schema-013",
+    "2026-04-14-pm-schema-013i",
+    "2026-04-14-pm-schema-013j",
+    "2026-04-14-pm-schema-014",
+    "2026-04-14-pm-schema-014i",
+    "2026-04-15-pm-schema-015",
+    "2026-04-15-pm-schema-015i",
+    "2026-04-15-pm-schema-016",
+    "2026-04-15-pm-schema-017",
+    "2026-04-15-pm-schema-018",
+    "2026-04-16-pm-schema-019",
+    "2026-04-16-pm-schema-019f",
+    "2026-04-16-pm-schema-019g",
+    "2026-04-16-pm-schema-019h",
+    "2026-04-16-pm-schema-019i",
+    "2026-04-16-pm-schema-019j"
+  ],
+  "required_inputs": [
+    "PM-SCHEMA-V2-NEXT-PACKET-PLAN-2026-04-13.md",
+    "PM-SCHEMA-V2-IMPLEMENTATION-PLAN-2026-04-13.md",
+    "2026-04-16-pm-schema-019g-idempotency-sweep-and-ops-metrics-handoff.md",
+    "2026-04-16-pm-schema-019h-sweep-schedule-wiring-handoff.md",
+    "2026-04-16-pm-schema-019i-idempotency-by-route-ops-breakdown-handoff.md",
+    "2026-04-16-pm-schema-019j-ops-metrics-export-schedule-scrape-handoff.md",
+    ".github/workflows/pm-idempotency-metrics-export.yml",
+    "docs/PM-IDEMPOTENCY-METRICS-EXPORT-RUNBOOK.md"
+  ],
+  "constrained_outputs": [
+    "One bounded deployment-side threshold-evaluation artifact that consumes the existing PM idempotency export payload and emits an explicit pass/fail operator signal without adding any application-runtime endpoint, background worker, or database write path",
+    "One pinned threshold contract covering only existing exported fields such as total count, expired count, oldest expiry, and the seven per-route rows, without inventing new runtime metrics",
+    "One operator runbook documenting the threshold semantics, failure behavior, and how to tune the bounded thresholds without changing the application runtime",
+    "Focused validation evidence proving no application-runtime files changed, `/api/v1/work/*` path count remains 15, `/api/v1/ops/*` path count remains 2, and the existing packet-019j export path remains the only data source"
+  ],
+  "write_scope": [
+    "c:/APEX Platform/Platform-Authority",
+    "c:/APEX Platform/apex-power-ops-platform/.github/workflows",
+    "c:/APEX Platform/apex-power-ops-platform/docs",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "validation_steps": [
+    "Confirm packet 019k stays bounded to deployment-side threshold evaluation over the existing packet-019j export payload and does not modify application-runtime code, add new endpoints, or reopen `work.wbs_nodes` writes",
+    "Confirm the threshold path reuses only the existing packet-019j export artifact or payload and does not introduce a second scrape path or a third PM ops endpoint",
+    "Confirm no DDL, migration edits, or changes to the `pm.idempotency_keys` schema are introduced",
+    "Confirm packet-019g, packet-019h, packet-019i, and packet-019j runtime and observability surfaces remain unchanged and that `/api/v1/work/*` stays at 15 while `/api/v1/ops/*` stays at 2 after threshold evaluation lands"
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "output_artifacts": [
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-16-pm-schema-019k-ops-metrics-threshold-evaluation-handoff.md"
+  ],
+  "handoff_note": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-16-pm-schema-019k-ops-metrics-threshold-evaluation-handoff.md",
+  "implementation_ready_candidate": false,
+  "sql_permission": false,
+  "sql_permission_note": "Packet 019k is deployment-side only. No new SQL, schema changes, migration edits, runtime route changes, or broader PM write-surface expansion are authorized.",
+  "landing_lane": "deployment_threshold_evaluation_only",
+  "migration_strategy": "deployment_infra_only",
+  "created_at": "2026-04-16",
+  "updated_at": "2026-04-16",
+  "delegation_status": "complete",
+  "delegation_prompt": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-16-desktop-claude-pm-schema-packet-019k-prompt.md"
+}
