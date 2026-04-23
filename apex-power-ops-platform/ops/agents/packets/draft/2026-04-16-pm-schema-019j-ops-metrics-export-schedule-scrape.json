@@ -1,0 +1,79 @@
+{
+  "packet_id": "2026-04-16-pm-schema-019j",
+  "title": "PM Ops Metrics Export Schedule Scrape",
+  "objective": "Implement the smallest bounded follow-on to packet 019i by adding one deployment-side scheduled metrics-export path that scrapes the two existing read-only PM ops endpoints, `GET /api/v1/ops/pm-idempotency/stats` and `GET /api/v1/ops/pm-idempotency/by-route`, on a fixed cadence without changing application-runtime code, adding DDL, adding PM write endpoints, or reopening `work.wbs_nodes` writes.",
+  "domain": "pm-domain",
+  "active_role": "PM Ops Metrics Export Schedule Scrape Author",
+  "repo_paths": [
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-NEXT-PACKET-PLAN-2026-04-13.md",
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-IMPLEMENTATION-PLAN-2026-04-13.md",
+    "c:/APEX Platform/apex-power-ops-platform/.github/workflows",
+    "c:/APEX Platform/apex-power-ops-platform/docs",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-16-pm-schema-019g-idempotency-sweep-and-ops-metrics-handoff.md",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-16-pm-schema-019h-sweep-schedule-wiring-handoff.md",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-16-pm-schema-019i-idempotency-by-route-ops-breakdown-handoff.md"
+  ],
+  "dependencies": [
+    "2026-04-13-pm-schema-010a",
+    "2026-04-13-pm-schema-010b",
+    "2026-04-14-pm-schema-011f",
+    "2026-04-14-pm-schema-013",
+    "2026-04-14-pm-schema-013i",
+    "2026-04-14-pm-schema-013j",
+    "2026-04-14-pm-schema-014",
+    "2026-04-14-pm-schema-014i",
+    "2026-04-15-pm-schema-015",
+    "2026-04-15-pm-schema-015i",
+    "2026-04-15-pm-schema-016",
+    "2026-04-15-pm-schema-017",
+    "2026-04-15-pm-schema-018",
+    "2026-04-16-pm-schema-019",
+    "2026-04-16-pm-schema-019f",
+    "2026-04-16-pm-schema-019g",
+    "2026-04-16-pm-schema-019h",
+    "2026-04-16-pm-schema-019i"
+  ],
+  "required_inputs": [
+    "PM-SCHEMA-V2-NEXT-PACKET-PLAN-2026-04-13.md",
+    "PM-SCHEMA-V2-IMPLEMENTATION-PLAN-2026-04-13.md",
+    "2026-04-16-pm-schema-019g-idempotency-sweep-and-ops-metrics-handoff.md",
+    "2026-04-16-pm-schema-019h-sweep-schedule-wiring-handoff.md",
+    "2026-04-16-pm-schema-019i-idempotency-by-route-ops-breakdown-handoff.md",
+    ".github/workflows/pm-idempotency-sweep.yml",
+    "docs/PM-IDEMPOTENCY-SWEEP-SCHEDULE-RUNBOOK.md"
+  ],
+  "constrained_outputs": [
+    "One bounded deployment-side schedule artifact that scrapes the two existing read-only PM ops endpoints on a fixed cadence and on demand without adding any application-runtime endpoint, background worker, or database write path",
+    "One minimal environment contract for the scheduled exporter path, using a repo-level base URL variable and no auth header because the existing ops endpoints are already read-only unauthenticated surfaces",
+    "One operator runbook documenting how the scheduled exporter works, what it records or emits, and how to invoke it on demand without changing the application runtime",
+    "Focused validation evidence proving no application-runtime files changed, `/api/v1/work/*` path count remains 15, `/api/v1/ops/*` path count remains 2, and both existing ops endpoints remain GET-only and unchanged"
+  ],
+  "write_scope": [
+    "c:/APEX Platform/Platform-Authority",
+    "c:/APEX Platform/apex-power-ops-platform/.github/workflows",
+    "c:/APEX Platform/apex-power-ops-platform/docs",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "validation_steps": [
+    "Confirm packet 019j stays bounded to deployment-side schedule scraping of the two existing PM ops endpoints and does not modify application-runtime code, add new endpoints, or reopen `work.wbs_nodes` writes",
+    "Confirm the scheduled artifact reuses only the existing `GET /api/v1/ops/pm-idempotency/stats` and `GET /api/v1/ops/pm-idempotency/by-route` surfaces rather than introducing a second metrics implementation path",
+    "Confirm no DDL, migration edits, or changes to the `pm.idempotency_keys` schema are introduced",
+    "Confirm packet-019g, packet-019h, and packet-019i runtime and observability surfaces remain unchanged and that `/api/v1/work/*` path count stays at 15 while `/api/v1/ops/*` stays at 2 after the exporter schedule lands"
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "output_artifacts": [
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-16-pm-schema-019j-ops-metrics-export-schedule-scrape-handoff.md"
+  ],
+  "handoff_note": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-16-pm-schema-019j-ops-metrics-export-schedule-scrape-handoff.md",
+  "implementation_ready_candidate": true,
+  "sql_permission": false,
+  "sql_permission_note": "Packet 019j is deployment-side only. No new SQL, schema changes, migration edits, runtime route changes, or broader PM write-surface expansion are authorized.",
+  "landing_lane": "deployment_metrics_export_only",
+  "migration_strategy": "deployment_infra_only",
+  "created_at": "2026-04-16",
+  "updated_at": "2026-04-16",
+  "delegation_status": "complete",
+  "delegation_prompt": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-16-desktop-claude-pm-schema-packet-019j-prompt.md"
+}
