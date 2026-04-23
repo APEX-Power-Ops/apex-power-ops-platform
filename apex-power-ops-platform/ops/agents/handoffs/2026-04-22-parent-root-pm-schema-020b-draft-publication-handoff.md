@@ -1,13 +1,19 @@
 # Parent-Root PM-Schema-020B Draft Publication Handoff
 ## Date: 2026-04-22
 ## Updated by: GitHub Copilot (GPT-5.4)
-## Scope: Active next-step packet for the bounded `pm-schema-020b` XER baseline mapping authorization singleton under `C:/APEX Platform/apex-power-ops-platform`
+## Scope: Historical record for the bounded `pm-schema-020b` XER baseline mapping authorization singleton under `C:/APEX Platform/apex-power-ops-platform`
 
 ## 1. Summary
 
-The active shared packages, active app lanes, residual scaffold/doc surfaces, infra-database lane, docs lane, ops knowledge-control-plane registry lane, ops legacy-governance lane, ops knowledge-resource-operations lane, the forms-import draft pair, the `001af` draft, the `apex-unification-001` draft pair, the `knowledge-import-001` draft pair, the `pm-schema-009` draft family, the `pm-schema-010` draft trio, the `pm-schema-011` dependency-activation family, the `pm-schema-012` identity and joined-read family, the `pm-schema-013` work-package write family, the `pm-schema-014` task-write pair, the `pm-schema-015` assignment-write pair, the `pm-schema-016` dependency-write singleton, the `pm-schema-017` execution-issue-write singleton, the `pm-schema-018` progress-snapshot-write singleton, the top-level `pm-schema-019` write-surface consolidation singleton, the full `pm-schema-019f` through `pm-schema-019k` follow-on chain, the `pm-schema-ui-002g` comparative schedule analytics read surface and host validation singleton, the `pm-schema-ui-002g` host-variance shell wiring and browser validation singleton, the `pm-schema-ui-002e-host` drivers shell wiring and browser validation singleton, the `pm-schema-ui-002f-host` tracer shell wiring and browser validation singleton, the `pm-schema-ui-001` field apparatus workflow prototype design singleton, the `pm-schema-ui-002` gantt layer comparison decision singleton, the `pm-schema-ui-003` PM approval queue prototype design singleton, the `pm-schema-ui-004` lead operations surface prototype design singleton, the `pm-schema-ui-005` cross-surface integration spec singleton, the `pm-schema-ui-006` mutation seam API spec and implementation scaffold singleton, the full `pm-schema-ui-001a` through `pm-schema-ui-001e` implementation chain, the `pm-schema-ui-002a` P6 schedule context import and read bridge implementation singleton, the `pm-schema-ui-002b` read-only Gantt prototype implementation singleton, the `pm-schema-ui-002c` baseline overlay and read-model hardening singleton, and the `pm-schema-020a` baseline field authority promotion singleton are now published on parent-root `clean-main`.
+The active shared packages, active app lanes, residual scaffold/doc surfaces, infra-database lane, docs lane, ops knowledge-control-plane registry lane, ops legacy-governance lane, ops knowledge-resource-operations lane, the forms-import draft pair, the `001af` draft, the `apex-unification-001` draft pair, the `knowledge-import-001` draft pair, the `pm-schema-009` draft family, the `pm-schema-010` draft trio, the `pm-schema-011` dependency-activation family, the `pm-schema-012` identity and joined-read family, the `pm-schema-013` work-package write family, the `pm-schema-014` task-write pair, the `pm-schema-015` assignment-write pair, the `pm-schema-016` dependency-write singleton, the `pm-schema-017` execution-issue-write singleton, the `pm-schema-018` progress-snapshot-write singleton, the top-level `pm-schema-019` write-surface consolidation singleton, the full `pm-schema-019f` through `pm-schema-019k` follow-on chain, the `pm-schema-ui-002g` comparative schedule analytics read surface and host validation singleton, the `pm-schema-ui-002g` host-variance shell wiring and browser validation singleton, the `pm-schema-ui-002e-host` drivers shell wiring and browser validation singleton, the `pm-schema-ui-002f-host` tracer shell wiring and browser validation singleton, the `pm-schema-ui-001` field apparatus workflow prototype design singleton, the `pm-schema-ui-002` gantt layer comparison decision singleton, the `pm-schema-ui-003` PM approval queue prototype design singleton, the `pm-schema-ui-004` lead operations surface prototype design singleton, the `pm-schema-ui-005` cross-surface integration spec singleton, the `pm-schema-ui-006` mutation seam API spec and implementation scaffold singleton, the full `pm-schema-ui-001a` through `pm-schema-ui-001e` implementation chain, the `pm-schema-ui-002a` P6 schedule context import and read bridge implementation singleton, the `pm-schema-ui-002b` read-only Gantt prototype implementation singleton, the `pm-schema-ui-002c` baseline overlay and read-model hardening singleton, and the `pm-schema-020a` baseline field authority promotion singleton were already published on parent-root `clean-main`.
 
-The next smallest remaining substantive packet is the authority-only `pm-schema-020b` XER baseline mapping authorization singleton, which stages cleanly at 1 file. It is now dependency-safe after `020a` and is the next baseline-authority substrate step before the persisted baseline lane in `020c`.
+The next smallest remaining substantive packet was the authority-only `pm-schema-020b` XER baseline mapping authorization singleton, which staged cleanly at 1 file. It clarified baseline-bearing XER semantics and moved the active backlog into the persisted baseline lane in `020c`.
+
+Publication outcome:
+
+1. committed on parent-root `clean-main` as `f042637`
+2. pushed to `origin/clean-main` on 2026-04-22
+3. closed as the published pm-schema `020b` XER baseline mapping authorization tranche
 
 ## 2. Why This Packet Is Next
 
@@ -21,7 +27,7 @@ Measured from the parent git root at `C:/APEX Platform` on 2026-04-22 after the 
 
 ## 3. Packet Intent
 
-Use this packet to introduce the bounded `pm-schema-020b` XER baseline mapping authorization singleton:
+This packet introduced the bounded `pm-schema-020b` XER baseline mapping authorization singleton:
 
 1. `2026-04-17-pm-schema-020b-xer-baseline-mapping-authorization.json`
 
@@ -31,20 +37,20 @@ From the parent git root at `C:/APEX Platform`, the bounded packet path is:
 
 1. `apex-power-ops-platform/ops/agents/packets/draft/2026-04-17-pm-schema-020b-xer-baseline-mapping-authorization.json`
 
-Current measured contents: 1 file.
+Published contents: 1 file.
 
 ## 5. Why This Packet Is Bounded Correctly
 
 This packet is intentionally narrow:
 
-1. it introduces only the XER baseline mapping authorization step and does not widen into `020c`, `020d`, or later runtime/UI follow-ons
+1. it introduced only the XER baseline mapping authorization step and did not widen into `020c`, `020d`, or later runtime/UI follow-ons
 2. it preserves dependency order by clarifying baseline-bearing XER semantics before the persisted loader lane lands
 3. it avoids the 333-file handoff backlog and the remaining 88-file draft backlog beyond this singleton
 4. it does not widen into `knowledge/` or `archive`
 
-## 6. Operator Execution Path
+## 6. Historical Execution Path
 
-Preferred task path from `C:/APEX Platform/apex-power-ops-platform`:
+Preferred task path from `C:/APEX Platform/apex-power-ops-platform` when this packet was executed:
 
 1. run `Preview parent-root pm-schema-020b draft packet`
 2. run `Stage parent-root pm-schema-020b draft packet` only when the preview is correct
