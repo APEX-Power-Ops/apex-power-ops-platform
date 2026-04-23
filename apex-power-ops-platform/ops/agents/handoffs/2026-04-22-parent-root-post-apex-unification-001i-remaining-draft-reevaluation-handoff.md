@@ -1,13 +1,13 @@
 # Parent-Root Post-Apex-Unification-001I Remaining Draft Reevaluation Handoff
 ## Date: 2026-04-22
 ## Updated by: GitHub Copilot (GPT-5.4)
-## Scope: Active queue-truth refresh after the bounded `apex-unification-001i` publication under `C:/APEX Platform/apex-power-ops-platform`
+## Scope: Historical queue-truth refresh after the bounded `apex-unification-001i` publication under `C:/APEX Platform/apex-power-ops-platform`
 
 ## 1. Summary
 
 The adjacent `apex-unification` publication family is now fully advanced through `apex-unification-001i` in the live `apex-power-ops-platform` working tree.
 
-This reevaluation pass does not point at another already-authored bounded successor packet because no later untracked `apex-unification*` draft packet exists in the live subtree, and the measured untracked residue under `apex-power-ops-platform` is now reduced to two archive-only paths rather than another active packet lane.
+This reevaluation pass did not point at another already-authored bounded successor packet because no later untracked `apex-unification*` draft packet existed in the live subtree, and the measured untracked residue under `apex-power-ops-platform` was reduced to two archive-only paths rather than another active packet lane.
 
 ## 2. Current Verified State
 
@@ -31,12 +31,12 @@ The recently active publication chain has exhausted the live unification packet 
 
 ## 4. Reevaluation Outcome
 
-The bounded reevaluation resolves the live queue as follows:
+The bounded reevaluation resolved the live queue as follows:
 
-1. the active queue should point to this reevaluation handoff, not back to the already-published `apex-unification-001i` packet
-2. there is no current next bounded publication tranche already authored under the live `apex-power-ops-platform` subtree
-3. any future continuation from this subtree requires either a newly-authored bounded packet or an explicit archive-publication decision
-4. until such a packet exists, the truthful state is a closed frontier rather than an inferred next singleton
+1. the queue first returned to this reevaluation handoff instead of pointing back to the already-published `apex-unification-001i` packet
+2. the only remaining bounded follow-on under the live `apex-power-ops-platform` subtree was an explicit archive publication decision for the residual formula pair
+3. that residual archive pair staged cleanly only when `git` was invoked with `core.longpaths=true`
+4. the next active handoff is therefore `2026-04-22-parent-root-residual-archive-formula-pair-publication-handoff.md`
 
 ## 5. Do Not Do
 
