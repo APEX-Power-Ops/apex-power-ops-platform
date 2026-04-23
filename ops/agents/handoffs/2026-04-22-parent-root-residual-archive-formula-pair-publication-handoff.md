@@ -1,13 +1,19 @@
 # Parent-Root Residual Archive Formula Pair Publication Handoff
 ## Date: 2026-04-22
 ## Updated by: GitHub Copilot (GPT-5.4)
-## Scope: Active next-step tranche for the final residual archive-only formula pair under `C:/APEX Platform/apex-power-ops-platform`
+## Scope: Historical record for the final residual archive-only formula pair under `C:/APEX Platform/apex-power-ops-platform`
 
 ## 1. Summary
 
 The live `apex-unification` packet family is now fully advanced through `apex-unification-001i`.
 
-The only remaining untracked residue under `apex-power-ops-platform` is a two-file archived Dataverse formula pair inside the legacy `v1.5.0.3` export. This tranche is the truthful next bounded follow-on because it is the last untracked content in the platform subtree and it can be staged cleanly as an explicit pair when `git` is invoked with `core.longpaths=true`.
+The only remaining untracked residue under `apex-power-ops-platform` was a two-file archived Dataverse formula pair inside the legacy `v1.5.0.3` export. This tranche was the truthful next bounded follow-on because it was the last untracked content in the platform subtree and it staged cleanly as an explicit pair when `git` was invoked with `core.longpaths=true`.
+
+Publication outcome:
+
+1. committed on parent-root `clean-main` as `b5b231c`
+2. pushed to `origin/clean-main` on 2026-04-22
+3. closed as the published residual archive formula pair tranche
 
 ## 2. Why This Tranche Is Next
 
@@ -35,7 +41,7 @@ From the parent git root at `C:/APEX Platform`, the bounded paths are:
 1. `apex-power-ops-platform/archive/legacy-repos/apex-platform/root-archive/_archive/Dec2025_Dataverse/Solution_Exports/Archive/v1.5.0.3/Entities/cr950_projectfinancialsummary/Formulas/cr950_projectfinancialsummary-cr950_apparatusrevenuecount.xaml`
 2. `apex-power-ops-platform/archive/legacy-repos/apex-platform/root-archive/_archive/Dec2025_Dataverse/Solution_Exports/Archive/v1.5.0.3/Entities/cr950_projectfinancialsummary/Formulas/cr950_projectfinancialsummary-cr950_totalrevenuerecognized.xaml`
 
-Current measured contents: 2 files.
+Published contents: 2 files.
 
 ## 5. Why This Tranche Is Bounded Correctly
 
@@ -46,7 +52,7 @@ This tranche is intentionally narrow:
 3. it closes the last measured untracked residue under `apex-power-ops-platform`
 4. it uses explicit path staging and an explicit long-path override rather than broad subtree staging
 
-## 6. Operator Execution Path
+## 6. Historical Execution Path
 
 Preferred task path from `C:/APEX Platform/apex-power-ops-platform`:
 
@@ -80,4 +86,4 @@ This tranche is archival formula XML, so bounded diff discipline matters more th
 
 ## 9. Follow-On After This Tranche
 
-If this tranche lands cleanly, refresh the queue to a zero-frontier platform-subtree checkpoint because no untracked paths should remain under `apex-power-ops-platform`.
+If this tranche lands cleanly, refresh the queue to a zero-frontier platform-subtree checkpoint because no untracked paths remain under `apex-power-ops-platform`.
