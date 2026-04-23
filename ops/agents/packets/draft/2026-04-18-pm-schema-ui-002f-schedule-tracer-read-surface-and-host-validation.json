@@ -1,0 +1,59 @@
+{
+  "packet_id": "2026-04-18-pm-schema-ui-002f",
+  "title": "Schedule Tracer Read Surface And Host Validation",
+  "objective": "Implement the smallest bounded follow-on after the sandbox-complete schedule-drivers surface by adding a read-only schedule-tracer surface that explains predecessor or ancestor chains for a selected task through the existing GET-only bridge and PM review UI, without adding schedule writes, recursive mutation behavior, or client-side fabrication of dependency semantics.",
+  "domain": "pm-ui-domain",
+  "active_role": "PM UI Schedule Tracer Architect",
+  "repo_paths": [
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-UI-SOURCE-OF-TRUTH-AND-MUTATION-AUTHORITY-2026-04-15.md",
+    "c:/APEX Platform/apex-power-ops-platform/apps/mutation-seam",
+    "c:/APEX Platform/apex-power-ops-platform/apps/pm-surface",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-18-pm-schema-ui-002e-schedule-drivers-read-surface-and-host-validation-handoff.md"
+  ],
+  "dependencies": [
+    "2026-04-18-pm-schema-020f",
+    "2026-04-18-pm-schema-ui-002e"
+  ],
+  "dependency_note": "UI-002f is no longer blocked by the 020f-era substrate findings. Packets 020e.1, 020g-a, 020e.2, and 020h have landed the truthful sandbox substrate, and UI-002e is now sandbox-complete on top of it. Delegate UI-002f against that landed sandbox substrate. If a true host-browser session is not available in this execution context, host validation should be deferred truthfully rather than fabricated.",
+  "required_inputs": [
+    "PM-SCHEMA-V2-UI-SOURCE-OF-TRUTH-AND-MUTATION-AUTHORITY-2026-04-15.md",
+    "2026-04-18-pm-schema-ui-002e-schedule-drivers-read-surface-and-host-validation-handoff.md"
+  ],
+  "constrained_outputs": [
+    "One bounded GET-only tracer query or bridge extension returning root task, depth, parent-child chain records, and task labels for a selected schedule task",
+    "One minimal PM review surface for tracing why a task is constrained by its upstream chain",
+    "Focused test evidence proving the tracer surface works end to end from persisted schedule relationships without adding schedule-write behavior, plus host-browser validation evidence when a real host session is available or an explicit sandbox-complete host-deferred disposition when it is not"
+  ],
+  "write_scope": [
+    "c:/APEX Platform/apex-power-ops-platform/apps/mutation-seam",
+    "c:/APEX Platform/apex-power-ops-platform/apps/pm-surface",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "validation_steps": [
+    "Confirm the tracer surface remains GET-only and read-only by construction",
+    "Confirm dependency traversal uses persisted schedule relationships rather than client-side invented graph data",
+    "Confirm no drag-to-reschedule, schedule writes, or dependency-mutation behavior is introduced",
+    "Confirm host-side browser validation succeeds for at least one representative traced task chain when a real host session is available; otherwise close truthfully as sandbox-complete with host validation deferred"
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "output_artifacts": [
+    "c:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/schedule/queries.py",
+    "c:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/routers/schedule.py",
+    "c:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests/test_tracer_ui_002f.py",
+    "c:/APEX Platform/apex-power-ops-platform/apps/pm-surface/public/tracer.js",
+    "c:/APEX Platform/apex-power-ops-platform/apps/pm-surface/public/tracer.test.mjs",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-18-pm-schema-ui-002f-schedule-tracer-read-surface-and-host-validation-handoff.md"
+  ],
+  "handoff_note": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-18-pm-schema-ui-002f-schedule-tracer-read-surface-and-host-validation-handoff.md",
+  "implementation_ready_candidate": false,
+  "sql_permission": false,
+  "sql_permission_note": "Packet UI-002f authorizes only bounded GET-only bridge/query and read-only PM UI tracer work over existing persisted schedule data. No new SQL, no schedule-write behavior, and no client-side fabrication are authorized.",
+  "landing_lane": "ui_schedule_tracer_read_surface",
+  "migration_strategy": "bounded_get_only_bridge_and_read_surface_slice",
+  "created_at": "2026-04-18",
+  "updated_at": "2026-04-18",
+  "delegation_status": "complete",
+  "delegation_prompt": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-18-desktop-claude-pm-schema-ui-packet-002f-prompt.md"
+}
