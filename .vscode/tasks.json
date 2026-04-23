@@ -1020,6 +1020,39 @@
       "problemMatcher": []
     },
     {
+      "label": "Preview parent-root pm-schema 012 draft packet",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-Command",
+        "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-012a-identity-domain-schema-design.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-012b-identity-schema-ddl-authoring-local-validation.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-012c-identity-seed-data-population.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-012d-pm-work-identity-fk-activation.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-012e-pm-work-identity-orm-alignment.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-012f-pm-work-identity-joined-read-surface.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-012g-pm-work-identity-joined-read-surface-integration-smoke.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-012h-pm-work-org-joined-read-surface.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-012i-pm-work-org-joined-read-surface-integration-smoke.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Stage parent-root pm-schema 012 draft packet",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-Command",
+        "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-012a-identity-domain-schema-design.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-012b-identity-schema-ddl-authoring-local-validation.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-012c-identity-seed-data-population.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-012d-pm-work-identity-fk-activation.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-012e-pm-work-identity-orm-alignment.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-012f-pm-work-identity-joined-read-surface.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-012g-pm-work-identity-joined-read-surface-integration-smoke.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-012h-pm-work-org-joined-read-surface.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-012i-pm-work-org-joined-read-surface-integration-smoke.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Parent-root pm-schema 012 draft packet staged diff",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-Command",
+        "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-012a-identity-domain-schema-design.json apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-012b-identity-schema-ddl-authoring-local-validation.json apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-012c-identity-seed-data-population.json apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-012d-pm-work-identity-fk-activation.json apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-012e-pm-work-identity-orm-alignment.json apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-012f-pm-work-identity-joined-read-surface.json apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-012g-pm-work-identity-joined-read-surface-integration-smoke.json apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-012h-pm-work-org-joined-read-surface.json apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-012i-pm-work-org-joined-read-surface-integration-smoke.json"
+      ],
+      "problemMatcher": []
+    },
+    {
       "label": "Platform subtree staged diff",
       "type": "shell",
       "command": "pwsh",
