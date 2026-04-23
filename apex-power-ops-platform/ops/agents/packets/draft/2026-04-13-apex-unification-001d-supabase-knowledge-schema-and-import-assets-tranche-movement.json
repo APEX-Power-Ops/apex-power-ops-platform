@@ -1,0 +1,60 @@
+{
+  "packet_id": "2026-04-13-apex-unification-001d",
+  "title": "APEX Supabase Knowledge Schema And Import Assets Tranche Movement",
+  "objective": "Execute the bounded Supabase knowledge-schema and import-assets tranche from the completed APEX-root decomposition plan by moving only the approved study-content schema, NETA import seeds, and supporting knowledge-domain import references into explicit knowledge-domain homes while preserving domain-specific non-authority treatment and avoiding PM/project, automation, deployment-utility, runtime, or generic schema promotion.",
+  "domain": "repo-unification",
+  "active_role": "APEX Knowledge Schema And Import Assets Movement Operator",
+  "repo_paths": [
+    "c:/APEX Platform/Supabase",
+    "c:/APEX Platform/Platform-Authority",
+    "c:/APEX Platform/apex-power-ops-platform/infra/database/knowledge/",
+    "c:/APEX Platform/apex-power-ops-platform/docs/architecture/knowledge-domain/",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "dependencies": [
+    "2026-04-13-apex-unification-001",
+    "2026-04-13-apex-unification-001c"
+  ],
+  "dependency_note": "Packet 001 defined the tranche boundaries and packet 001c closed the automation/orchestration slice. Packet 001d is the next bounded Supabase decomposition lane and is limited to knowledge-schema and import-assets only.",
+  "required_inputs": [
+    "UNIFIED-REPO-NEXT-PACKET-PLAN-2026-04-13.md",
+    "APEX-OPS-STAKEHOLDER-DECISION-PATH-2026-04-15.md",
+    "2026-04-13-apex-unification-001-bounded-decomposition-plan-handoff.md",
+    "APEX-ACTIVE-DOCS-AND-INFRA-CLASSIFICATION-2026-04-12.md",
+    "ETT-GOVERNED-KNOWLEDGE-SLICE-CLASSIFICATION-2026-04-12.md",
+    "PLATFORM-UNIFICATION-MASTER-AUTHORITY-2026-04-12.md",
+    "UNIFICATION-TRACKER-AND-INVENTORY-2026-04-12.md"
+  ],
+  "constrained_outputs": [
+    "A bounded movement pass for the approved Supabase knowledge-schema and import-assets tranche",
+    "Imported schema, seed, and script lineage under infra/database/knowledge/source-lineage/apex-resa and supporting knowledge-domain docs under docs/architecture/knowledge-domain",
+    "An execution handoff documenting exact moved slices, preserved exclusions, and explicit domain-specific non-authority treatment"
+  ],
+  "write_scope": [
+    "c:/APEX Platform/Supabase",
+    "c:/APEX Platform/apex-power-ops-platform/infra/database",
+    "c:/APEX Platform/apex-power-ops-platform/docs/architecture",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "validation_steps": [
+    "Confirm packet 001d moves only the approved knowledge-schema and import-assets slice and does not collapse all remaining Supabase documentation into the same lane",
+    "Confirm the imported assets are labeled and placed as knowledge-domain source lineage or supporting reference only, not active schema authority",
+    "Confirm PM/project/PSS lineage, automation/orchestration, deployment-utility, and archive tranches remain untouched",
+    "Confirm no runtime code, active migrations, or knowledge publication surfaces are changed"
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "output_artifacts": [
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-13-apex-unification-001d-supabase-knowledge-schema-and-import-assets-tranche-movement-handoff.md"
+  ],
+  "handoff_note": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-13-apex-unification-001d-supabase-knowledge-schema-and-import-assets-tranche-movement-handoff.md",
+  "implementation_ready_candidate": false,
+  "sql_permission": false,
+  "sql_permission_note": "Packet 001d authorizes only bounded physical movement of approved Supabase knowledge-schema and import assets into knowledge-domain lineage homes. It does not authorize schema promotion, runtime changes, SQL execution, publication rewrites, or deploy-utility movement.",
+  "created_at": "2026-04-21",
+  "updated_at": "2026-04-21",
+  "delegation_status": "complete",
+  "delegation_prompt": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-13-desktop-claude-apex-unification-001d-prompt.md"
+}
