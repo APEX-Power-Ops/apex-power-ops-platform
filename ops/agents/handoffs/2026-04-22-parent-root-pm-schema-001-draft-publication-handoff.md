@@ -1,13 +1,19 @@
 # Parent-Root PM-Schema-001 Draft Publication Handoff
 ## Date: 2026-04-22
 ## Updated by: GitHub Copilot (GPT-5.4)
-## Scope: Active next-step packet for the bounded `pm-schema-001` entity field candidate matrix singleton under `C:/APEX Platform/apex-power-ops-platform`
+## Scope: Historical record for the bounded `pm-schema-001` entity field candidate matrix singleton under `C:/APEX Platform/apex-power-ops-platform`
 
 ## 1. Summary
 
 The adjacent `pm-schema-020*` and adjacent `pm-schema-ui*` publication families are already fully advanced on parent-root `clean-main`, so the current lane has moved back to a cross-family selection frontier.
 
-The next smallest remaining substantive packet is `pm-schema-001`, which stages cleanly at 1 file. It is the narrowest remaining governing slice because it defines the PM-domain field candidate matrix without widening into physical root extraction, knowledge import, SQL, runtime implementation, or broader archive routing.
+The next smallest remaining substantive packet was `pm-schema-001`, which staged cleanly at 1 file. It re-opened the residual foundational PM family and advanced the queue to the adjacent lifecycle/state packet in `pm-schema-002`.
+
+Publication outcome:
+
+1. committed on parent-root `clean-main` as `b708568`
+2. pushed to `origin/clean-main` on 2026-04-22
+3. closed as the published pm-schema `001` entity field matrix tranche
 
 ## 2. Why This Packet Is Next
 
@@ -23,7 +29,7 @@ Measured from the parent git root at `C:/APEX Platform` on 2026-04-22 after the 
 
 ## 3. Packet Intent
 
-Use this packet to introduce the bounded `pm-schema-001` PM-domain entity field candidate matrix singleton:
+This packet introduced the bounded `pm-schema-001` PM-domain entity field candidate matrix singleton:
 
 1. `2026-04-12-pm-schema-001-entity-field-candidate-matrix.json`
 
@@ -33,7 +39,7 @@ From the parent git root at `C:/APEX Platform`, the bounded packet path is:
 
 1. `apex-power-ops-platform/ops/agents/packets/draft/2026-04-12-pm-schema-001-entity-field-candidate-matrix.json`
 
-Current measured contents: 1 file.
+Published contents: 1 file.
 
 ## 5. Why This Packet Is Bounded Correctly
 
@@ -44,9 +50,9 @@ This packet is intentionally narrow:
 3. it avoids cross-family widening into the currently untracked `apex-unification-001a` or `knowledge-import-001a` physical movement lanes
 4. it does not widen into `archive/` or `knowledge/`
 
-## 6. Operator Execution Path
+## 6. Historical Execution Path
 
-Preferred task path from `C:/APEX Platform/apex-power-ops-platform`:
+Preferred task path from `C:/APEX Platform/apex-power-ops-platform` when this packet was executed:
 
 1. run `Preview parent-root pm-schema-001 draft packet`
 2. run `Stage parent-root pm-schema-001 draft packet` only when the preview is correct
@@ -78,4 +84,4 @@ This lane is packet-definition JSON, so diff discipline matters more than execut
 
 ## 9. Follow-On After This Packet
 
-If this packet lands cleanly, re-evaluate whether `pm-schema-002` is the next truthful adjacent foundational follow-on or whether another cross-family packet has become a stronger bounded choice.
+If this packet lands cleanly, queue `pm-schema-002` as the next adjacent foundational follow-on packet.
