@@ -1,0 +1,59 @@
+{
+  "packet_id": "2026-04-14-pm-schema-012b",
+  "title": "Identity Schema DDL Authoring And Local Validation",
+  "objective": "Author the bounded shared-infra identity migration bundle defined by packet 012a and validate it in clean local PostgreSQL staging without activating PM/work foreign keys, modifying PM/work or org SQL, or implementing runtime code.",
+  "domain": "pm-domain",
+  "active_role": "PM Identity Schema Implementer",
+  "repo_paths": [
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-NEXT-PACKET-PLAN-2026-04-13.md",
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-IMPLEMENTATION-PLAN-2026-04-13.md",
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-LOCAL-POSTGRES-STAGING-DESIGN-2026-04-13.md",
+    "c:/APEX Platform/apex-power-ops-platform/infra/database/migrations/identity/",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-14-pm-schema-012a-identity-domain-schema-design-handoff.md"
+  ],
+  "dependencies": [
+    "2026-04-13-pm-schema-011",
+    "2026-04-14-pm-schema-012a"
+  ],
+  "required_inputs": [
+    "PM-SCHEMA-V2-NEXT-PACKET-PLAN-2026-04-13.md",
+    "PM-SCHEMA-V2-IMPLEMENTATION-PLAN-2026-04-13.md",
+    "PM-SCHEMA-V2-LOCAL-POSTGRES-STAGING-DESIGN-2026-04-13.md",
+    "DATABASE-OWNERSHIP-SPLIT-2026-04-12.md",
+    "2026-04-13-pm-schema-011-cross-domain-dependency-activation-planning-handoff.md",
+    "2026-04-14-pm-schema-012a-identity-domain-schema-design-handoff.md"
+  ],
+  "constrained_outputs": [
+    "Identity migration bundle under infra/database/migrations/identity/",
+    "CREATE SCHEMA identity plus bounded users, employees, and crews table DDL",
+    "Identity-domain updated_at trigger behavior validated in clean local staging",
+    "Execution-backed validation handoff with file inventory and any residual issues"
+  ],
+  "write_scope": [
+    "c:/APEX Platform/Platform-Authority",
+    "c:/APEX Platform/apex-power-ops-platform/infra/database/migrations/identity",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "validation_steps": [
+    "Confirm CREATE SCHEMA identity and the three bounded tables execute cleanly in local staging",
+    "Confirm the internal employees.user_id to users.user_id foreign key enforces correctly",
+    "Confirm unique constraints on email, employee_code, and crew_code enforce correctly with updated_at behavior validated",
+    "Confirm no PM/work foreign keys are activated and no runtime code is modified in this packet"
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "output_artifacts": [
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-14-pm-schema-012b-identity-schema-ddl-authoring-local-validation-handoff.md"
+  ],
+  "handoff_note": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-14-pm-schema-012b-identity-schema-ddl-authoring-local-validation-handoff.md",
+  "implementation_ready_candidate": true,
+  "sql_permission": true,
+  "sql_permission_note": "Packet 012b authorizes bounded shared-infra identity SQL authoring and clean local staging validation only. It does not authorize PM/work FK activation, seed-data population, or runtime code changes.",
+  "landing_lane": "infra_database_migrations_identity",
+  "migration_strategy": "clean_local_staging_validation_before_activation",
+  "created_at": "2026-04-14",
+  "updated_at": "2026-04-14",
+  "delegation_status": "complete",
+  "delegation_prompt": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-14-desktop-claude-pm-schema-packet-012b-prompt.md"
+}

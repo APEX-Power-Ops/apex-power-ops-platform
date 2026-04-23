@@ -1,0 +1,67 @@
+{
+  "packet_id": "2026-04-14-pm-schema-012d",
+  "title": "PM Work Identity FK Activation",
+  "objective": "Activate the six deferred PM/work foreign-key constraints from work.work_packages, work.assignments, work.execution_issues, and work.progress_snapshots into the validated and populated identity schema, verify enforcement and regression safety, and produce constraint-activation evidence without modifying table structures beyond those six constraints or implementing runtime code.",
+  "domain": "pm-domain",
+  "active_role": "PM Identity FK Activation Operator",
+  "repo_paths": [
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-NEXT-PACKET-PLAN-2026-04-13.md",
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-IMPLEMENTATION-PLAN-2026-04-13.md",
+    "c:/APEX Platform/apex-power-ops-platform/infra/database/migrations/work/",
+    "c:/APEX Platform/apex-power-ops-platform/infra/database/migrations/identity/",
+    "c:/APEX Platform/apex-power-ops-platform/apps/control-plane-api",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-14-pm-schema-012a-identity-domain-schema-design-handoff.md",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-14-pm-schema-012b-identity-schema-ddl-authoring-local-validation-handoff.md",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-14-pm-schema-012c-identity-seed-data-population-handoff.md"
+  ],
+  "dependencies": [
+    "2026-04-13-pm-schema-011",
+    "2026-04-14-pm-schema-012a",
+    "2026-04-14-pm-schema-012b",
+    "2026-04-14-pm-schema-012c",
+    "PM-SCHEMA-V2-NEXT-PACKET-PLAN-2026-04-13.md"
+  ],
+  "required_inputs": [
+    "PM-SCHEMA-V2-NEXT-PACKET-PLAN-2026-04-13.md",
+    "PM-SCHEMA-V2-IMPLEMENTATION-PLAN-2026-04-13.md",
+    "2026-04-13-pm-schema-011-cross-domain-dependency-activation-planning-handoff.md",
+    "2026-04-14-pm-schema-012a-identity-domain-schema-design-handoff.md",
+    "2026-04-14-pm-schema-012b-identity-schema-ddl-authoring-local-validation-handoff.md",
+    "2026-04-14-pm-schema-012c-identity-seed-data-population-handoff.md",
+    "Validated work migration bundle",
+    "Existing packet-010a model tests, packet-010b API tests, and packet-011f write-surface tests"
+  ],
+  "constrained_outputs": [
+    "A bounded FK-activation handoff note under c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/",
+    "Only the six identity foreign-key constraints added to work.work_packages, work.assignments, work.execution_issues, and work.progress_snapshots",
+    "Constraint-enforcement and regression evidence after activation",
+    "No runtime-code implementation and no unrelated PM/work schema changes"
+  ],
+  "write_scope": [
+    "c:/APEX Platform/Platform-Authority",
+    "c:/APEX Platform/apex-power-ops-platform/infra/database/migrations/work",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "validation_steps": [
+    "Confirm only the six deferred identity foreign-key constraints on work.work_packages.assigned_crew_id, work.assignments.employee_id, work.assignments.crew_id, work.execution_issues.reported_by, work.execution_issues.assigned_to, and work.progress_snapshots.approved_by are activated",
+    "Confirm activation succeeds against the currently populated staging data with no orphan failures and with invalid inserts rejected afterward",
+    "Confirm packet 012d does not modify PM/work table structures beyond the six FK constraints and does not implement runtime code",
+    "Confirm regression evidence is recorded for packet-010a model tests, packet-010b API tests, and packet-011f project write-path tests after activation"
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "output_artifacts": [
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-14-pm-schema-012d-pm-work-identity-fk-activation-handoff.md"
+  ],
+  "handoff_note": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-14-pm-schema-012d-pm-work-identity-fk-activation-handoff.md",
+  "implementation_ready_candidate": true,
+  "sql_permission": true,
+  "sql_permission_note": "Packet 012d authorizes only bounded ALTER TABLE statements to add the six identity foreign-key constraints on work.work_packages, work.assignments, work.execution_issues, and work.progress_snapshots plus validation queries/tests. It does not authorize unrelated schema changes or runtime implementation.",
+  "landing_lane": "work_identity_constraint_activation",
+  "migration_strategy": "bounded_identity_fk_activation",
+  "created_at": "2026-04-14",
+  "updated_at": "2026-04-14",
+  "delegation_status": "complete",
+  "delegation_prompt": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-14-desktop-claude-pm-schema-packet-012d-prompt.md"
+}

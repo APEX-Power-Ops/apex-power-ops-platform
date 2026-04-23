@@ -1,0 +1,56 @@
+{
+  "packet_id": "2026-04-14-pm-schema-012a",
+  "title": "Identity Domain Schema Design",
+  "objective": "Design the minimum upstream identity-domain schema needed to support the remaining deferred PM/work foreign keys by defining bounded users, employees, and crews structures, ownership boundaries, and FK-target contracts without authoring SQL or expanding into runtime implementation.",
+  "domain": "pm-domain",
+  "active_role": "PM Identity Domain Schema Designer",
+  "repo_paths": [
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-NEXT-PACKET-PLAN-2026-04-13.md",
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-IMPLEMENTATION-PLAN-2026-04-13.md",
+    "c:/APEX Platform/apex-power-ops-platform/infra/database/migrations/work/",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-13-pm-schema-011-cross-domain-dependency-activation-planning-handoff.md",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-14-pm-schema-011f-pm-work-write-api-surface-projects-handoff.md"
+  ],
+  "dependencies": [
+    "2026-04-13-pm-schema-011",
+    "2026-04-14-pm-schema-011a",
+    "2026-04-14-pm-schema-011f"
+  ],
+  "required_inputs": [
+    "PM-SCHEMA-V2-NEXT-PACKET-PLAN-2026-04-13.md",
+    "PM-SCHEMA-V2-IMPLEMENTATION-PLAN-2026-04-13.md",
+    "2026-04-13-pm-schema-011-cross-domain-dependency-activation-planning-handoff.md",
+    "2026-04-14-pm-schema-011f-pm-work-write-api-surface-projects-handoff.md"
+  ],
+  "constrained_outputs": [
+    "Minimum identity-domain table design for users, employees, and crews needed by deferred PM/work foreign keys",
+    "Column, primary-key, and foreign-key target contract for each required identity entity",
+    "Ownership and landing-lane recommendation for future shared-infra identity migrations",
+    "Smallest next execution packet recommendation for identity DDL authoring and validation"
+  ],
+  "write_scope": [
+    "c:/APEX Platform/Platform-Authority",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "validation_steps": [
+    "Confirm the design covers the remaining deferred PM/work identity foreign-key targets without reopening the completed org-domain chain",
+    "Confirm the packet remains planning-only with no SQL authoring, runtime implementation, or FK activation work",
+    "Confirm shared-infra ownership and future landing lane are explicit for the identity domain",
+    "Confirm the resulting design is bounded enough to hand off directly into a later identity DDL packet"
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "output_artifacts": [
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-14-pm-schema-012a-identity-domain-schema-design-handoff.md"
+  ],
+  "handoff_note": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-14-pm-schema-012a-identity-domain-schema-design-handoff.md",
+  "implementation_ready_candidate": true,
+  "sql_permission": false,
+  "sql_permission_note": "Packet 012a is planning-only. No identity SQL, schema changes, or runtime code changes are authorized.",
+  "landing_lane": "planning_only_identity_domain_design",
+  "migration_strategy": "dependency_domain_design_only",
+  "created_at": "2026-04-14",
+  "updated_at": "2026-04-14",
+  "delegation_status": "complete"
+}

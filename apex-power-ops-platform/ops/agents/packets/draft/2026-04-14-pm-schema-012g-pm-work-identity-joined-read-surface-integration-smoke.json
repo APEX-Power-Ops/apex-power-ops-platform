@@ -1,0 +1,67 @@
+{
+  "packet_id": "2026-04-14-pm-schema-012g",
+  "title": "PM Work Identity-Joined Read Surface Integration Smoke",
+  "objective": "Prove the six active identity-backed read-name fields materialize correctly against a real PostgreSQL-backed runtime path by exercising the existing GET handlers end to end with seeded identity and work rows, without adding endpoints, changing schemas, or authoring new SQL.",
+  "domain": "pm-domain",
+  "active_role": "PM Identity-Joined Read Surface Integration Smoke Author",
+  "repo_paths": [
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-NEXT-PACKET-PLAN-2026-04-13.md",
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-IMPLEMENTATION-PLAN-2026-04-13.md",
+    "c:/APEX Platform/apex-power-ops-platform/apps/control-plane-api",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-14-pm-schema-012f-pm-work-identity-joined-read-surface-handoff.md"
+  ],
+  "dependencies": [
+    "2026-04-13-pm-schema-010a",
+    "2026-04-13-pm-schema-010b",
+    "2026-04-14-pm-schema-011f",
+    "2026-04-14-pm-schema-012a",
+    "2026-04-14-pm-schema-012b",
+    "2026-04-14-pm-schema-012c",
+    "2026-04-14-pm-schema-012d",
+    "2026-04-14-pm-schema-012e",
+    "2026-04-14-pm-schema-012f"
+  ],
+  "required_inputs": [
+    "PM-SCHEMA-V2-NEXT-PACKET-PLAN-2026-04-13.md",
+    "PM-SCHEMA-V2-IMPLEMENTATION-PLAN-2026-04-13.md",
+    "2026-04-13-pm-schema-010a-work-schema-orm-model-authoring-handoff.md",
+    "2026-04-13-pm-schema-010b-work-read-api-surface-handoff.md",
+    "2026-04-14-pm-schema-011f-pm-work-write-api-surface-projects-handoff.md",
+    "2026-04-14-pm-schema-012d-pm-work-identity-fk-activation-handoff.md",
+    "2026-04-14-pm-schema-012e-pm-work-identity-orm-alignment-handoff.md",
+    "2026-04-14-pm-schema-012f-pm-work-identity-joined-read-surface-handoff.md"
+  ],
+  "constrained_outputs": [
+    "Real PostgreSQL-backed integration smoke coverage for the existing GET handlers covering work packages, assignments, execution issues, and progress snapshots",
+    "End-to-end evidence that the existing identity-backed *_name fields populate correctly from the six active relationships and remain None when the foreign key is null",
+    "Focused regression coverage proving packet-010a, packet-010b, packet-011f, and packet-012f surfaces remain stable after the integration smoke addition",
+    "No database-schema changes, no new endpoints, and no broader write-side runtime implementation"
+  ],
+  "write_scope": [
+    "c:/APEX Platform/Platform-Authority",
+    "c:/APEX Platform/apex-power-ops-platform/apps/control-plane-api",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "validation_steps": [
+    "Confirm packet 012g touches only integration-smoke coverage for the existing GET handlers and does not add new endpoints or broaden mutation scope",
+    "Confirm the six existing identity-backed *_name fields materialize correctly against a real PostgreSQL-backed runtime path and remain None when the foreign key is null",
+    "Confirm no new SQL, request schemas, or schema changes are introduced and packet 012g remains integration-smoke only",
+    "Confirm packet-010a model tests, packet-010b API tests, packet-011f project-write tests, and packet-012f joined-read tests still pass after the smoke coverage addition"
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "output_artifacts": [
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-14-pm-schema-012g-pm-work-identity-joined-read-surface-integration-smoke-handoff.md"
+  ],
+  "handoff_note": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-14-pm-schema-012g-pm-work-identity-joined-read-surface-integration-smoke-handoff.md",
+  "implementation_ready_candidate": true,
+  "sql_permission": false,
+  "sql_permission_note": "Packet 012g is integration-smoke runtime coverage only. No new SQL, schema changes, migration edits, or write-surface expansion are authorized.",
+  "landing_lane": "runtime_read_surface_integration_smoke_only",
+  "migration_strategy": "application_integration_smoke_only",
+  "created_at": "2026-04-14",
+  "updated_at": "2026-04-14",
+  "delegation_status": "complete",
+  "delegation_prompt": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-14-desktop-claude-pm-schema-packet-012g-prompt.md"
+}
