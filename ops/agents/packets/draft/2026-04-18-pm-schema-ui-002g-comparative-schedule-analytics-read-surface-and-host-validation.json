@@ -1,0 +1,54 @@
+{
+  "packet_id": "2026-04-18-pm-schema-ui-002g",
+  "title": "Comparative Schedule Analytics Read Surface And Host Validation",
+  "objective": "Implement the smallest bounded follow-on after the sandbox-complete driver and tracer surfaces by adding a read-only comparative schedule analytics surface that exposes current-versus-baseline and snapshot-style variance metrics for imported schedule tasks through the existing GET-only bridge and PM review UI, without adding schedule writes, synthetic baseline fabrication, or a coarse delta model derived from degraded third-party exports.",
+  "domain": "pm-ui-domain",
+  "active_role": "PM UI Comparative Schedule Analytics Architect",
+  "repo_paths": [
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-UI-SOURCE-OF-TRUTH-AND-MUTATION-AUTHORITY-2026-04-15.md",
+    "c:/APEX Platform/apex-power-ops-platform/apps/mutation-seam",
+    "c:/APEX Platform/apex-power-ops-platform/apps/pm-surface",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-18-pm-schema-ui-002e-schedule-drivers-read-surface-and-host-validation-handoff.md",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-18-pm-schema-ui-002f-schedule-tracer-read-surface-and-host-validation-handoff.md"
+  ],
+  "dependencies": [
+    "2026-04-18-pm-schema-020f",
+    "2026-04-18-pm-schema-ui-002e",
+    "2026-04-18-pm-schema-ui-002f"
+  ],
+  "dependency_note": "UI-002g is no longer blocked by the 020f-era substrate findings. Packets 020e.1, 020g-a, 020e.2, and 020h have landed the truthful sandbox substrate, and UI-002e plus UI-002f are now sandbox-complete on top of it. Delegate UI-002g against that landed sandbox substrate. If a true host-browser session is not available in this execution context, host validation should be deferred truthfully rather than fabricated.",
+  "required_inputs": [
+    "PM-SCHEMA-V2-UI-SOURCE-OF-TRUTH-AND-MUTATION-AUTHORITY-2026-04-15.md",
+    "2026-04-18-pm-schema-ui-002e-schedule-drivers-read-surface-and-host-validation-handoff.md",
+    "2026-04-18-pm-schema-ui-002f-schedule-tracer-read-surface-and-host-validation-handoff.md"
+  ],
+  "constrained_outputs": [
+    "One bounded GET-only analytics read surface exposing comparative task metrics such as baseline variance, completion state, and selected float/history fields already grounded in imported schedule data",
+    "One minimal PM review surface for sorting or filtering tasks by comparative schedule variance without introducing schedule-write behavior",
+    "Focused test evidence proving the analytics surface works end to end without depending on the degraded third-party delta-export shape, plus host-browser validation evidence when a real host session is available or an explicit sandbox-complete host-deferred disposition when it is not"
+  ],
+  "write_scope": [
+    "c:/APEX Platform/apex-power-ops-platform/apps/mutation-seam",
+    "c:/APEX Platform/apex-power-ops-platform/apps/pm-surface",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "validation_steps": [
+    "Confirm the analytics surface remains GET-only and read-only by construction",
+    "Confirm all comparative metrics are derived from persisted schedule fields rather than client-side fabrication or degraded third-party delta exports",
+    "Confirm no schedule-write behavior, transform-builder mutation, or billing/class-D behavior is introduced",
+    "Confirm host-side browser validation succeeds for representative schedule variance cases when a real host session is available; otherwise close truthfully as sandbox-complete with host validation deferred"
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "ready",
+  "handoff_note": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-18-pm-schema-ui-002g-comparative-schedule-analytics-read-surface-and-host-validation-handoff.md",
+  "implementation_ready_candidate": false,
+  "sql_permission": false,
+  "sql_permission_note": "Packet UI-002g authorizes only bounded GET-only bridge/query and read-only PM UI analytics work over existing persisted schedule data. No new SQL, no schedule-write behavior, and no client-side fabrication are authorized.",
+  "landing_lane": "ui_schedule_analytics_read_surface",
+  "migration_strategy": "bounded_get_only_bridge_and_read_surface_slice",
+  "created_at": "2026-04-18",
+  "updated_at": "2026-04-18",
+  "delegation_status": "ready",
+  "delegation_prompt": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-18-desktop-claude-pm-schema-ui-packet-002g-prompt.md"
+}
