@@ -14,13 +14,13 @@ This document provides that bounded plan.
 
 ## Verified Inventory Baseline
 
-Measured from the parent git root at `C:/APEX Platform` on 2026-04-22 after the `knowledge-import-001` draft publication:
+Measured from the parent git root at `C:/APEX Platform` on 2026-04-22 after the `pm-schema-009` draft publication:
 
-- total untracked paths under `apex-power-ops-platform/`: 3971
+- total untracked paths under `apex-power-ops-platform/`: 3967
 - `apps`: 2
 - `archive`: 2516
 - `knowledge`: 974
-- `ops`: 479
+- `ops`: 475
 
 Interpretation:
 
@@ -112,11 +112,11 @@ Current concrete artifact for the completed scaffold step:
 
 Current next-step interpretation:
 
-- the scaffold, package-source, active app-lane runtime/support/test steps, shared package-source steps, the residual scaffold/doc step, the `infra` database step, the `docs` step, the `ops/knowledge-control-plane/registry` step, the `ops/agents/legacy-governance` step, the `ops/knowledge-resource-operations` step, the forms-import draft pair, the closed `001af` draft, the `apex-unification-001` draft pair, and the `knowledge-import-001` draft pair are complete; the next bounded follow-on is the `pm-schema-009` draft family before the larger `ops/agents/handoffs`, remaining `ops/agents/packets/draft`, `knowledge`, and `archive` backlogs
+- the scaffold, package-source, active app-lane runtime/support/test steps, shared package-source steps, the residual scaffold/doc step, the `infra` database step, the `docs` step, the `ops/knowledge-control-plane/registry` step, the `ops/agents/legacy-governance` step, the `ops/knowledge-resource-operations` step, the forms-import draft pair, the closed `001af` draft, the `apex-unification-001` draft pair, the `knowledge-import-001` draft pair, and the `pm-schema-009` draft family are complete; the next bounded follow-on is the `pm-schema-010` draft trio before the larger `ops/agents/handoffs`, remaining `ops/agents/packets/draft`, `knowledge`, and `archive` backlogs
 
 Current concrete artifact for that next step:
 
-- `ops/agents/handoffs/2026-04-22-parent-root-pm-schema-009-draft-publication-handoff.md`
+- `ops/agents/handoffs/2026-04-22-parent-root-pm-schema-010-draft-publication-handoff.md`
 
 ## Guardrails
 
