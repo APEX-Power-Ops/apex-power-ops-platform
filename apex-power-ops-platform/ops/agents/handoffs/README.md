@@ -11,17 +11,18 @@ Packet `2026-04-21-apex-unification-001af` is now the completed execution record
 Use these files first:
 
 1. `../../../../apps/control-plane-api/PUBLIC-APPARATUS-ROUTE-PROMOTION-CHECKLIST-2026-04-21.md`
-2. `2026-04-22-parent-root-pm-schema-ui-001c-draft-publication-handoff.md` for the current next bounded parent-root publication tranche
-3. `2026-04-22-parent-root-pm-schema-ui-001b-draft-publication-handoff.md` when historical context on the published pm-schema-ui `001b` draft tranche is needed
-4. `2026-04-22-parent-root-pm-schema-ui-001a-draft-publication-handoff.md` when historical context on the published pm-schema-ui `001a` draft tranche is needed
-5. `2026-04-22-parent-root-pm-schema-ui-006-draft-publication-handoff.md` when historical context on the published pm-schema-ui `006` draft tranche is needed
-6. `2026-04-22-parent-root-pm-schema-ui-005-draft-publication-handoff.md` when historical context on the published pm-schema-ui `005` draft tranche is needed
-7. `2026-04-22-parent-root-pm-schema-ui-004-draft-publication-handoff.md` when historical context on the published pm-schema-ui `004` draft tranche is needed
-8. `2026-04-22-parent-root-pm-schema-ui-003-draft-publication-handoff.md` when historical context on the published pm-schema-ui `003` draft tranche is needed
-9. `2026-04-22-parent-root-pm-schema-ui-002-draft-publication-handoff.md` when historical context on the published pm-schema-ui `002` draft tranche is needed
-10. `2026-04-22-parent-root-pm-schema-ui-001-draft-publication-handoff.md` when historical context on the published pm-schema-ui `001` draft tranche is needed
-11. `2026-04-22-parent-root-pm-schema-ui-002f-host-draft-publication-handoff.md` when historical context on the published pm-schema-ui `002f` host draft tranche is needed
-12. `2026-04-22-parent-root-pm-schema-ui-002e-host-draft-publication-handoff.md` when historical context on the published pm-schema-ui `002e` host draft tranche is needed
+2. `2026-04-22-parent-root-pm-schema-ui-001d-draft-publication-handoff.md` for the current next bounded parent-root publication tranche
+3. `2026-04-22-parent-root-pm-schema-ui-001c-draft-publication-handoff.md` when historical context on the published pm-schema-ui `001c` draft tranche is needed
+4. `2026-04-22-parent-root-pm-schema-ui-001b-draft-publication-handoff.md` when historical context on the published pm-schema-ui `001b` draft tranche is needed
+5. `2026-04-22-parent-root-pm-schema-ui-001a-draft-publication-handoff.md` when historical context on the published pm-schema-ui `001a` draft tranche is needed
+6. `2026-04-22-parent-root-pm-schema-ui-006-draft-publication-handoff.md` when historical context on the published pm-schema-ui `006` draft tranche is needed
+7. `2026-04-22-parent-root-pm-schema-ui-005-draft-publication-handoff.md` when historical context on the published pm-schema-ui `005` draft tranche is needed
+8. `2026-04-22-parent-root-pm-schema-ui-004-draft-publication-handoff.md` when historical context on the published pm-schema-ui `004` draft tranche is needed
+9. `2026-04-22-parent-root-pm-schema-ui-003-draft-publication-handoff.md` when historical context on the published pm-schema-ui `003` draft tranche is needed
+10. `2026-04-22-parent-root-pm-schema-ui-002-draft-publication-handoff.md` when historical context on the published pm-schema-ui `002` draft tranche is needed
+11. `2026-04-22-parent-root-pm-schema-ui-001-draft-publication-handoff.md` when historical context on the published pm-schema-ui `001` draft tranche is needed
+12. `2026-04-22-parent-root-pm-schema-ui-002f-host-draft-publication-handoff.md` when historical context on the published pm-schema-ui `002f` host draft tranche is needed
+13. `2026-04-22-parent-root-pm-schema-ui-002e-host-draft-publication-handoff.md` when historical context on the published pm-schema-ui `002e` host draft tranche is needed
 11. `2026-04-22-parent-root-pm-schema-ui-002g-host-variance-draft-publication-handoff.md` when historical context on the published pm-schema-ui `002g` host-variance draft tranche is needed
 12. `2026-04-22-parent-root-pm-schema-ui-002g-draft-publication-handoff.md` when historical context on the published pm-schema-ui `002g` draft tranche is needed
 13. `2026-04-22-parent-root-pm-schema-019k-draft-publication-handoff.md` when historical context on the published pm-schema `019k` draft tranche is needed
