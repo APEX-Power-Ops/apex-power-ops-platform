@@ -1,13 +1,19 @@
 # Parent-Root PM-Schema-008 Draft Publication Handoff
 ## Date: 2026-04-22
 ## Updated by: GitHub Copilot (GPT-5.4)
-## Scope: Active next-step packet for the bounded `pm-schema-008` local staging validation singleton under `C:/APEX Platform/apex-power-ops-platform`
+## Scope: Historical record for the bounded `pm-schema-008` local staging validation singleton under `C:/APEX Platform/apex-power-ops-platform`
 
 ## 1. Summary
 
-The residual foundational PM family remains active after the `pm-schema-007` first SQL DDL migration publication.
+The residual foundational PM family remained active after the `pm-schema-007` first SQL DDL migration publication.
 
-The next smallest remaining substantive packet is `pm-schema-008`, which stages cleanly at 1 file. The real packet path is `2026-04-13-pm-schema-008-local-staging-validation.json`, and it closes the residual foundational PM family before the next truthful step returns to cross-family reevaluation.
+The next smallest remaining substantive packet was `pm-schema-008`, which staged cleanly at 1 file. It closed the residual foundational PM family and returned the queue to cross-family reevaluation between the remaining `apex-unification-001a` and `knowledge-import-001a` frontiers.
+
+Publication outcome:
+
+1. committed on parent-root `clean-main` as `2277169`
+2. pushed to `origin/clean-main` on 2026-04-22
+3. closed as the published pm-schema `008` local staging validation tranche
 
 ## 2. Why This Packet Is Next
 
@@ -22,7 +28,7 @@ Measured from the parent git root at `C:/APEX Platform` on 2026-04-22 after the 
 
 ## 3. Packet Intent
 
-Use this packet to introduce the bounded `pm-schema-008` local staging validation singleton:
+This packet introduced the bounded `pm-schema-008` local staging validation singleton:
 
 1. `2026-04-13-pm-schema-008-local-staging-validation.json`
 
@@ -32,7 +38,7 @@ From the parent git root at `C:/APEX Platform`, the bounded packet path is:
 
 1. `apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-pm-schema-008-local-staging-validation.json`
 
-Current measured contents: 1 file.
+Published contents: 1 file.
 
 ## 5. Why This Packet Is Bounded Correctly
 
@@ -43,9 +49,9 @@ This packet is intentionally narrow:
 3. it cleanly closes the remaining adjacent `pm-schema-00*` frontier before cross-family reevaluation resumes
 4. it does not widen into `archive/` or `knowledge/`
 
-## 6. Operator Execution Path
+## 6. Historical Execution Path
 
-Preferred task path from `C:/APEX Platform/apex-power-ops-platform`:
+Preferred task path from `C:/APEX Platform/apex-power-ops-platform` when this packet was executed:
 
 1. run `Preview parent-root pm-schema-008 draft packet`
 2. run `Stage parent-root pm-schema-008 draft packet` only when the preview is correct
