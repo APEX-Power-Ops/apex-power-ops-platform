@@ -1,13 +1,13 @@
 # Parent-Root Post-020G-B Remaining Draft Reevaluation Handoff
 ## Date: 2026-04-22
 ## Updated by: GitHub Copilot (GPT-5.4)
-## Scope: Active next-step selection state after the bounded `pm-schema-020g-b` publication under `C:/APEX Platform/apex-power-ops-platform`
+## Scope: Historical selection record after the bounded `pm-schema-020g-b` publication under `C:/APEX Platform/apex-power-ops-platform`
 
 ## 1. Summary
 
-The adjacent `pm-schema-020*` publication family is now fully advanced through `pm-schema-020g-b`, and the earlier adjacent `pm-schema-ui*` publication family is already advanced through `pm-schema-ui-002f` with no remaining untracked UI packet.
+The adjacent `pm-schema-020*` publication family was fully advanced through `pm-schema-020g-b`, and the earlier adjacent `pm-schema-ui*` publication family was already advanced through `pm-schema-ui-002f` with no remaining untracked UI packet.
 
-The current next-step state is therefore not another already-identified adjacent singleton. The truthful next bounded publication must be chosen by re-evaluating the remaining cross-family draft backlog across the residual `pm-schema-001` through `pm-schema-008`, `apex-unification`, and `knowledge-import` lanes.
+This selection pass therefore did not point at another already-identified adjacent singleton. It re-evaluated the remaining cross-family draft backlog across the residual `pm-schema-001` through `pm-schema-008`, `apex-unification`, and `knowledge-import` lanes, and selected `pm-schema-001` as the next truthful bounded publication candidate.
 
 ## 2. Current Verified State
 
@@ -28,13 +28,16 @@ The recently active publication chain has now exhausted its adjacent packet fami
 2. `pm-schema-020e`, `pm-schema-020g-b`, and the earlier `pm-schema-020a` through `pm-schema-020h` companion chain are published
 3. the remaining backlog is no longer a single local family; it spans foundational PM schema packets, unification planning packets, and knowledge-import planning packets
 
-## 4. Required Next Action
+## 4. Selection Outcome
 
-The next truthful publication decision should now be made by a bounded cross-family reevaluation:
+The bounded reevaluation resolved the next queue as follows:
 
-1. inspect the remaining untracked `pm-schema-001` through `pm-schema-008` backlog in light of current ops-lane priorities
-2. compare that backlog against the remaining untracked `apex-unification` and `knowledge-import` planning packets
-3. prefer the smallest dependency-safe packet that advances the live platform lane without widening into archive or knowledge bulk by default
+1. `pm-schema-001` remains untracked and stages cleanly as a one-file bounded packet
+2. `pm-schema-001` is the governing packet for the residual foundational PM family and is narrower than the later `pm-schema-002` through `pm-schema-008` backlog
+3. the actual remaining cross-family alternatives are `apex-unification-001a` and `knowledge-import-001a`, and both stage cleanly as single-file bounded packets
+4. `apex-unification-001a` is a physical root/governance movement tranche that widens into docs, ops, and archive-routing surfaces
+5. `knowledge-import-001a` is a physical low-weight knowledge landing tranche that widens directly into knowledge-lane import work
+6. the next active handoff should therefore be `2026-04-22-parent-root-pm-schema-001-draft-publication-handoff.md`
 
 ## 5. Do Not Do
 
