@@ -12,6 +12,23 @@ Authority:
 - strategic authority currently remains in `C:/APEX Platform/Platform-Authority/`
 - this bootstrap should be treated as the implementation target derived from that authority layer
 
+## Olares One Transition
+
+The Olares One workstation is now the intended primary host for the active APEX Platform development, services, and staging workflow.
+
+Current repo authority for that transition lives in:
+
+1. `C:/APEX Platform/Infrastructure/Olares_Workspace_Authority_Framework.md`
+2. `C:/APEX Platform/Infrastructure/Olares_Build_Guide.md`
+3. `C:/APEX Platform/Infrastructure/Olares_Checklist.md`
+4. `C:/APEX Platform/Infrastructure/VSCode_Build_Prompt.md`
+
+Interpretation rules:
+
+1. `apex-power-ops-platform/` remains the live implementation workspace that will be hosted on the Olares One
+2. the parent git root at `C:/APEX Platform` remains the publication boundary until a later explicit cutover decision
+3. newly-authored Olares work should add the dev/services/staging infrastructure layer to this existing workspace rather than replacing the current app/package/infra structure
+
 ## Operator Quick Start
 
 This bootstrap root should now be treated as the primary local operator surface for platform work.
