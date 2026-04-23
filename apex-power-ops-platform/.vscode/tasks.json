@@ -2207,6 +2207,39 @@
         ],
         "problemMatcher": []
       },
+      {
+        "label": "Preview parent-root pm-schema-020d draft packet",
+        "type": "shell",
+        "command": "pwsh",
+        "args": [
+          "-NoProfile",
+          "-Command",
+          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-18-pm-schema-020d-p6-baseline-xer-parser-and-loader-wiring.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+        ],
+        "problemMatcher": []
+      },
+      {
+        "label": "Stage parent-root pm-schema-020d draft packet",
+        "type": "shell",
+        "command": "pwsh",
+        "args": [
+          "-NoProfile",
+          "-Command",
+          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-18-pm-schema-020d-p6-baseline-xer-parser-and-loader-wiring.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+        ],
+        "problemMatcher": []
+      },
+      {
+        "label": "Parent-root pm-schema-020d draft packet staged diff",
+        "type": "shell",
+        "command": "pwsh",
+        "args": [
+          "-NoProfile",
+          "-Command",
+          "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-18-pm-schema-020d-p6-baseline-xer-parser-and-loader-wiring.json"
+        ],
+        "problemMatcher": []
+      },
     {
       "label": "Platform subtree staged diff",
       "type": "shell",

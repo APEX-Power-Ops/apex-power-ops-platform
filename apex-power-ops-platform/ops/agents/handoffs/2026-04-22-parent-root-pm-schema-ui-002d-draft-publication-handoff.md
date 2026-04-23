@@ -1,13 +1,19 @@
 # Parent-Root PM-Schema-UI 002D Draft Publication Handoff
 ## Date: 2026-04-22
 ## Updated by: GitHub Copilot (GPT-5.4)
-## Scope: Active next-step packet for the bounded `pm-schema-ui-002d` baseline overlay re-issue and read-bridge extension singleton under `C:/APEX Platform/apex-power-ops-platform`
+## Scope: Historical record for the bounded `pm-schema-ui-002d` baseline overlay re-issue and read-bridge extension singleton under `C:/APEX Platform/apex-power-ops-platform`
 
 ## 1. Summary
 
-The active shared packages, active app lanes, residual scaffold/doc surfaces, infra-database lane, docs lane, ops knowledge-control-plane registry lane, ops legacy-governance lane, ops knowledge-resource-operations lane, the forms-import draft pair, the `001af` draft, the `apex-unification-001` draft pair, the `knowledge-import-001` draft pair, the `pm-schema-009` draft family, the `pm-schema-010` draft trio, the `pm-schema-011` dependency-activation family, the `pm-schema-012` identity and joined-read family, the `pm-schema-013` work-package write family, the `pm-schema-014` task-write pair, the `pm-schema-015` assignment-write pair, the `pm-schema-016` dependency-write singleton, the `pm-schema-017` execution-issue-write singleton, the `pm-schema-018` progress-snapshot-write singleton, the top-level `pm-schema-019` write-surface consolidation singleton, the full `pm-schema-019f` through `pm-schema-019k` follow-on chain, the `pm-schema-ui-002g` comparative schedule analytics read surface and host validation singleton, the `pm-schema-ui-002g` host-variance shell wiring and browser validation singleton, the `pm-schema-ui-002e-host` drivers shell wiring and browser validation singleton, the `pm-schema-ui-002f-host` tracer shell wiring and browser validation singleton, the `pm-schema-ui-001` field apparatus workflow prototype design singleton, the `pm-schema-ui-002` gantt layer comparison decision singleton, the `pm-schema-ui-003` PM approval queue prototype design singleton, the `pm-schema-ui-004` lead operations surface prototype design singleton, the `pm-schema-ui-005` cross-surface integration spec singleton, the `pm-schema-ui-006` mutation seam API spec and implementation scaffold singleton, the full `pm-schema-ui-001a` through `pm-schema-ui-001e` implementation chain, the `pm-schema-ui-002a` P6 schedule context import and read bridge implementation singleton, the `pm-schema-ui-002b` read-only Gantt prototype implementation singleton, the `pm-schema-ui-002c` baseline overlay and read-model hardening singleton, and the full `pm-schema-020a` through `pm-schema-020c` baseline substrate chain are now published on parent-root `clean-main`.
+The active shared packages, active app lanes, residual scaffold/doc surfaces, infra-database lane, docs lane, ops knowledge-control-plane registry lane, ops legacy-governance lane, ops knowledge-resource-operations lane, the forms-import draft pair, the `001af` draft, the `apex-unification-001` draft pair, the `knowledge-import-001` draft pair, the `pm-schema-009` draft family, the `pm-schema-010` draft trio, the `pm-schema-011` dependency-activation family, the `pm-schema-012` identity and joined-read family, the `pm-schema-013` work-package write family, the `pm-schema-014` task-write pair, the `pm-schema-015` assignment-write pair, the `pm-schema-016` dependency-write singleton, the `pm-schema-017` execution-issue-write singleton, the `pm-schema-018` progress-snapshot-write singleton, the top-level `pm-schema-019` write-surface consolidation singleton, the full `pm-schema-019f` through `pm-schema-019k` follow-on chain, the `pm-schema-ui-002g` comparative schedule analytics read surface and host validation singleton, the `pm-schema-ui-002g` host-variance shell wiring and browser validation singleton, the `pm-schema-ui-002e-host` drivers shell wiring and browser validation singleton, the `pm-schema-ui-002f-host` tracer shell wiring and browser validation singleton, the `pm-schema-ui-001` field apparatus workflow prototype design singleton, the `pm-schema-ui-002` gantt layer comparison decision singleton, the `pm-schema-ui-003` PM approval queue prototype design singleton, the `pm-schema-ui-004` lead operations surface prototype design singleton, the `pm-schema-ui-005` cross-surface integration spec singleton, the `pm-schema-ui-006` mutation seam API spec and implementation scaffold singleton, the full `pm-schema-ui-001a` through `pm-schema-ui-001e` implementation chain, the `pm-schema-ui-002a` P6 schedule context import and read bridge implementation singleton, the `pm-schema-ui-002b` read-only Gantt prototype implementation singleton, the `pm-schema-ui-002c` baseline overlay and read-model hardening singleton, and the full `pm-schema-020a` through `pm-schema-020c` baseline substrate chain were already published on parent-root `clean-main`.
 
-The next smallest remaining substantive packet is the re-issued `pm-schema-ui-002d` baseline overlay and read-bridge extension singleton, which stages cleanly at 1 file. The baseline blocker chain it depended on is now fully published, and no live authority surface currently requires `pm-schema-020d` to be published before this UI follow-on is queued.
+The next smallest remaining substantive packet was the re-issued `pm-schema-ui-002d` baseline overlay and read-bridge extension singleton, which staged cleanly at 1 file. It reopened the UI baseline comparison lane and moved the active backlog to the remaining `pm-schema-020d` baseline ingestion slice.
+
+Publication outcome:
+
+1. committed on parent-root `clean-main` as `c832c60`
+2. pushed to `origin/clean-main` on 2026-04-22
+3. closed as the published pm-schema-ui `002d` baseline overlay re-issue tranche
 
 ## 2. Why This Packet Is Next
 
@@ -21,7 +27,7 @@ Measured from the parent git root at `C:/APEX Platform` on 2026-04-22 after the 
 
 ## 3. Packet Intent
 
-Use this packet to introduce the bounded `pm-schema-ui-002d` baseline overlay and read-bridge extension singleton:
+This packet introduced the bounded `pm-schema-ui-002d` baseline overlay and read-bridge extension singleton:
 
 1. `2026-04-18-pm-schema-ui-002d-baseline-overlay-reissue-and-read-bridge-extension.json`
 
@@ -31,20 +37,20 @@ From the parent git root at `C:/APEX Platform`, the bounded packet path is:
 
 1. `apex-power-ops-platform/ops/agents/packets/draft/2026-04-18-pm-schema-ui-002d-baseline-overlay-reissue-and-read-bridge-extension.json`
 
-Current measured contents: 1 file.
+Published contents: 1 file.
 
 ## 5. Why This Packet Is Bounded Correctly
 
 This packet is intentionally narrow:
 
-1. it introduces only the GET-only bridge extension and UI baseline overlay re-issue and does not widen into `pm-schema-020d` or later host/UI follow-ons
+1. it introduced only the GET-only bridge extension and UI baseline overlay re-issue and did not widen into `pm-schema-020d` or later host/UI follow-ons
 2. it preserves dependency order by re-entering the blocked UI lane exactly where the published baseline substrate chain now permits
 3. it avoids the 333-file handoff backlog and the remaining 86-file draft backlog beyond this singleton
 4. it does not widen into `knowledge/` or `archive`
 
-## 6. Operator Execution Path
+## 6. Historical Execution Path
 
-Preferred task path from `C:/APEX Platform/apex-power-ops-platform`:
+Preferred task path from `C:/APEX Platform/apex-power-ops-platform` when this packet was executed:
 
 1. run `Preview parent-root pm-schema-ui 002d draft packet`
 2. run `Stage parent-root pm-schema-ui 002d draft packet` only when the preview is correct
