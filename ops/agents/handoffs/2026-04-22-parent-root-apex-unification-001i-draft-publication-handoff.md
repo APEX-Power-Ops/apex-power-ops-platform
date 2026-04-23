@@ -1,13 +1,19 @@
 # Parent-Root Apex-Unification-001I Draft Publication Handoff
 ## Date: 2026-04-22
 ## Updated by: GitHub Copilot (GPT-5.4)
-## Scope: Active next-step packet for the bounded `apex-unification-001i` Supabase frontend-client target-boundary review singleton under `C:/APEX Platform/apex-power-ops-platform`
+## Scope: Historical record for the bounded `apex-unification-001i` Supabase frontend-client target-boundary review singleton under `C:/APEX Platform/apex-power-ops-platform`
 
 ## 1. Summary
 
-The unification lineage family is now advanced through `apex-unification-001h`.
+The unification lineage family was advanced through `apex-unification-001h` before this packet landed.
 
-The next smallest remaining substantive packet is `apex-unification-001i`, which stages cleanly at 1 file. It is the remaining planning-only frontend-client target-boundary review for the last deferred Supabase helper artifact and remains narrower than switching sideways into the broader cross-family `knowledge-import-001a` low-weight knowledge landing packet.
+The next smallest remaining substantive packet was `apex-unification-001i`, which staged cleanly at 1 file. It introduced the remaining planning-only frontend-client target-boundary review for the last deferred Supabase helper artifact and closed the live unification packet frontier currently present under `apex-power-ops-platform`.
+
+Publication outcome:
+
+1. committed on parent-root `clean-main` as `fa6f761`
+2. pushed to `origin/clean-main` on 2026-04-22
+3. closed as the published apex-unification `001i` frontend-client target-boundary review tranche
 
 ## 2. Why This Packet Is Next
 
@@ -43,7 +49,7 @@ This packet is intentionally narrow:
 3. it stays inside the same unification family already extended through `apex-unification-001h`
 4. it remains narrower than switching to the broader cross-family `knowledge-import-001a` landing work
 
-## 6. Operator Execution Path
+## 6. Historical Execution Path
 
 Preferred task path from `C:/APEX Platform/apex-power-ops-platform`:
 
@@ -76,4 +82,4 @@ This lane is packet-definition JSON, so diff discipline matters more than execut
 
 ## 9. Follow-On After This Packet
 
-If this packet lands cleanly, re-evaluate whether `knowledge-import-001a` or any later unification follow-on packet is the truthful next bounded step.
+If this packet lands cleanly, return the live queue to a post-`apex-unification-001i` remaining-draft reevaluation state rather than fabricating a nonexistent `001j` successor packet under the current live working tree.
