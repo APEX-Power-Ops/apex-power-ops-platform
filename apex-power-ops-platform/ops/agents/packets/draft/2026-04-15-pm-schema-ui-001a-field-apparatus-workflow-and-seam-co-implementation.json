@@ -1,0 +1,68 @@
+{
+  "packet_id": "2026-04-15-pm-schema-ui-001a",
+  "title": "PM Schema V2 UI Field Apparatus Workflow And Seam Co-Implementation",
+  "objective": "Implement the first working end-to-end PM Schema V2 UI prototype by building the bounded field apparatus workflow together with the mutation seam scaffold defined by UI-006, proving governed Class A and B field mutations, offline queueing, sync replay, idempotency, and conflict surfacing without implementing lead, PM approval, or Gantt surfaces, reopening PM schema design, or enabling direct client writes for controlled operational state.",
+  "domain": "pm-ui-domain",
+  "active_role": "PM UI Field And Seam Implementation Architect",
+  "repo_paths": [
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-UI-NEXT-PACKET-PLAN-2026-04-15.md",
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-UI-NEEDS-AND-CONSTRAINTS-MATRIX-2026-04-15.md",
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-UI-SOURCE-OF-TRUTH-AND-MUTATION-AUTHORITY-2026-04-15.md",
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-UI-DESIGN-GOVERNANCE-BASELINE-2026-04-15.md",
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-UI-LAYER-BY-LAYER-TOOL-EVALUATION-MATRIX-2026-04-15.md",
+    "c:/APEX Platform/Platform-Authority/APEX-UI-FRAMEWORK-SPEC-REVIEWED-INPUT-MAPPING-2026-04-15.md",
+    "c:/APEX Platform/APEX_Schema_V2",
+    "c:/APEX Platform/apex-power-ops-platform",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "dependencies": [
+    "2026-04-15-pm-schema-ui-001",
+    "2026-04-15-pm-schema-ui-005",
+    "2026-04-15-pm-schema-ui-006"
+  ],
+  "required_inputs": [
+    "PM-SCHEMA-V2-UI-NEXT-PACKET-PLAN-2026-04-15.md",
+    "PM-SCHEMA-V2-UI-NEEDS-AND-CONSTRAINTS-MATRIX-2026-04-15.md",
+    "PM-SCHEMA-V2-UI-SOURCE-OF-TRUTH-AND-MUTATION-AUTHORITY-2026-04-15.md",
+    "PM-SCHEMA-V2-UI-DESIGN-GOVERNANCE-BASELINE-2026-04-15.md",
+    "PM-SCHEMA-V2-UI-LAYER-BY-LAYER-TOOL-EVALUATION-MATRIX-2026-04-15.md",
+    "APEX-UI-FRAMEWORK-SPEC-REVIEWED-INPUT-MAPPING-2026-04-15.md",
+    "2026-04-15-pm-schema-ui-001-field-apparatus-workflow-prototype-design-handoff.md",
+    "2026-04-15-pm-schema-ui-005-cross-surface-integration-spec-handoff.md",
+    "2026-04-15-pm-schema-ui-006-mutation-seam-api-spec-and-implementation-scaffold-handoff.md",
+    "APEX_UI_Framework_Spec.docx"
+  ],
+  "constrained_outputs": [
+    "One working field surface slice covering assignment queue, apparatus detail, checklist, issue entry, hours entry, and sync status",
+    "One working mutation seam scaffold sufficient for the bounded field Class A and B actions",
+    "One execution handoff documenting end-to-end working paths, mocked or deferred areas, and validation results",
+    "No implementation beyond the bounded field surface and the seam modules it directly requires"
+  ],
+  "write_scope": [
+    "c:/APEX Platform/apex-power-ops-platform",
+    "c:/APEX Platform/Platform-Authority",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "validation_steps": [
+    "Confirm packet UI-001a implements only the bounded field apparatus workflow and the seam scaffold it depends on",
+    "Confirm all controlled field writes route through the mutation seam rather than direct client writes",
+    "Confirm offline queueing, replay, idempotency, and conflict surfacing work for the bounded Class A and B prototype actions",
+    "Confirm no lead, PM approval, Gantt, Class C client, or Class D behavior is implemented by convenience"
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "output_artifacts": [
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-15-pm-schema-ui-001a-field-apparatus-workflow-and-seam-co-implementation-handoff.md"
+  ],
+  "handoff_note": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-15-pm-schema-ui-001a-field-apparatus-workflow-and-seam-co-implementation-handoff.md",
+  "implementation_ready_candidate": true,
+  "sql_permission": false,
+  "sql_permission_note": "Packet UI-001a authorizes only the bounded field surface and seam implementation slice. It does not authorize PM schema redesign, direct client writes, lead or PM surface implementation, or finance-affecting workflow design.",
+  "landing_lane": "ui_field_plus_seam_implementation",
+  "migration_strategy": "bounded_first_runtime_slice",
+  "created_at": "2026-04-16",
+  "updated_at": "2026-04-16",
+  "delegation_status": "executed",
+  "delegation_prompt": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-15-desktop-claude-pm-schema-ui-packet-001a-prompt.md"
+}
