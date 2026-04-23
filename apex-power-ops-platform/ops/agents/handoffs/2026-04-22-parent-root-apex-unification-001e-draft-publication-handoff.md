@@ -1,13 +1,19 @@
 # Parent-Root Apex-Unification-001E Draft Publication Handoff
 ## Date: 2026-04-22
 ## Updated by: GitHub Copilot (GPT-5.4)
-## Scope: Active next-step packet for the bounded `apex-unification-001e` spec-lineage tranche movement singleton under `C:/APEX Platform/apex-power-ops-platform`
+## Scope: Historical record for the bounded `apex-unification-001e` spec-lineage tranche movement singleton under `C:/APEX Platform/apex-power-ops-platform`
 
 ## 1. Summary
 
-The unification lineage family is now advanced through `apex-unification-001d`.
+The unification lineage family was advanced through `apex-unification-001d` before this packet landed.
 
-The next smallest remaining substantive packet is `apex-unification-001e`, which stages cleanly at 1 file. It is the bounded standalone spec-lineage tranche in the same unification family and remains narrower than switching sideways into the broader `knowledge-import-001a` low-weight knowledge landing packet.
+The next smallest remaining substantive packet was `apex-unification-001e`, which staged cleanly at 1 file. It advanced the unification family through the standalone spec-lineage tranche and left the bounded archive-and-residue routing tranche in `apex-unification-001f` as the next follow-on.
+
+Publication outcome:
+
+1. committed on parent-root `clean-main` as `b02ab71`
+2. pushed to `origin/clean-main` on 2026-04-22
+3. closed as the published apex-unification `001e` spec-lineage tranche
 
 ## 2. Why This Packet Is Next
 
@@ -22,7 +28,7 @@ Measured from the parent git root at `C:/APEX Platform` on 2026-04-22 after the 
 
 ## 3. Packet Intent
 
-Use this packet to introduce the bounded `apex-unification-001e` spec-lineage tranche movement singleton:
+This packet introduced the bounded `apex-unification-001e` spec-lineage tranche movement singleton:
 
 1. `2026-04-13-apex-unification-001e-spec-lineage-tranche-movement.json`
 
@@ -32,7 +38,7 @@ From the parent git root at `C:/APEX Platform`, the bounded packet path is:
 
 1. `apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-apex-unification-001e-spec-lineage-tranche-movement.json`
 
-Current measured contents: 1 file.
+Published contents: 1 file.
 
 ## 5. Why This Packet Is Bounded Correctly
 
@@ -43,9 +49,9 @@ This packet is intentionally narrow:
 3. it stays inside the same unification family already extended through `apex-unification-001d`
 4. it remains narrower than switching to the broader `knowledge-import-001a` landing work
 
-## 6. Operator Execution Path
+## 6. Historical Execution Path
 
-Preferred task path from `C:/APEX Platform/apex-power-ops-platform`:
+Preferred task path from `C:/APEX Platform/apex-power-ops-platform` when this packet was executed:
 
 1. run `Preview parent-root apex-unification-001e draft packet`
 2. run `Stage parent-root apex-unification-001e draft packet` only when the preview is correct
@@ -76,4 +82,4 @@ This lane is packet-definition JSON, so diff discipline matters more than execut
 
 ## 9. Follow-On After This Packet
 
-If this packet lands cleanly, re-evaluate whether `knowledge-import-001a` or the next unification slice is the truthful next bounded follow-on.
+If this packet lands cleanly, queue `apex-unification-001f` as the remaining bounded archive-and-residue follow-on.
