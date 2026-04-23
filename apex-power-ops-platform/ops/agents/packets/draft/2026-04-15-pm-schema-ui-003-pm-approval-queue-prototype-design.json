@@ -1,0 +1,72 @@
+{
+  "packet_id": "2026-04-15-pm-schema-ui-003",
+  "title": "PM Schema V2 UI PM Approval Queue Prototype Design",
+  "objective": "Define the bounded PM approval-queue prototype surface for Class C review and approval decisions using the governed mutation-authority model without implementing runtime code, reopening PM schema design, broadening into billing finalization, or bypassing the governed mutation seam.",
+  "domain": "pm-ui-domain",
+  "active_role": "PM UI Approval Queue Prototype Designer",
+  "repo_paths": [
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-UI-NEXT-PACKET-PLAN-2026-04-15.md",
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-UI-NEEDS-AND-CONSTRAINTS-MATRIX-2026-04-15.md",
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-UI-SOURCE-OF-TRUTH-AND-MUTATION-AUTHORITY-2026-04-15.md",
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-UI-DESIGN-GOVERNANCE-BASELINE-2026-04-15.md",
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-UI-LAYER-BY-LAYER-TOOL-EVALUATION-MATRIX-2026-04-15.md",
+    "c:/APEX Platform/Platform-Authority/APEX-UI-FRAMEWORK-SPEC-REVIEWED-INPUT-MAPPING-2026-04-15.md",
+    "c:/APEX Platform/APEX_Schema_V2",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "dependencies": [
+    "PM-SCHEMA-V2-UI-NEEDS-AND-CONSTRAINTS-MATRIX-2026-04-15.md",
+    "PM-SCHEMA-V2-UI-SOURCE-OF-TRUTH-AND-MUTATION-AUTHORITY-2026-04-15.md",
+    "PM-SCHEMA-V2-UI-DESIGN-GOVERNANCE-BASELINE-2026-04-15.md",
+    "PM-SCHEMA-V2-UI-LAYER-BY-LAYER-TOOL-EVALUATION-MATRIX-2026-04-15.md",
+    "PM-DOMAIN-LIFECYCLE-AND-STATE-MODEL-2026-04-12.md",
+    "PM-DOMAIN-P6-INTEGRATION-BOUNDARY-SPEC-2026-04-12.md",
+    "2026-04-15-pm-schema-ui-001",
+    "2026-04-15-pm-schema-ui-002"
+  ],
+  "required_inputs": [
+    "PM-SCHEMA-V2-UI-NEXT-PACKET-PLAN-2026-04-15.md",
+    "PM-SCHEMA-V2-UI-NEEDS-AND-CONSTRAINTS-MATRIX-2026-04-15.md",
+    "PM-SCHEMA-V2-UI-SOURCE-OF-TRUTH-AND-MUTATION-AUTHORITY-2026-04-15.md",
+    "PM-SCHEMA-V2-UI-DESIGN-GOVERNANCE-BASELINE-2026-04-15.md",
+    "PM-SCHEMA-V2-UI-LAYER-BY-LAYER-TOOL-EVALUATION-MATRIX-2026-04-15.md",
+    "APEX-UI-FRAMEWORK-SPEC-REVIEWED-INPUT-MAPPING-2026-04-15.md",
+    "2026-04-15-pm-schema-ui-001-field-apparatus-workflow-prototype-design-handoff.md",
+    "2026-04-15-pm-schema-ui-002-gantt-layer-comparison-decision-handoff.md",
+    "APEX_UI_Framework_Spec.docx",
+    "PM-DOMAIN-LIFECYCLE-AND-STATE-MODEL-2026-04-12.md",
+    "PM-DOMAIN-P6-INTEGRATION-BOUNDARY-SPEC-2026-04-12.md"
+  ],
+  "constrained_outputs": [
+    "One planning handoff note for the bounded PM approval queue prototype",
+    "One route and screen contract covering queue, review detail, decision history, and escalation visibility",
+    "One mutation-class summary for Class C review actions showing what remains server-authoritative and never finalizes offline",
+    "Prototype acceptance criteria and explicit non-goals with no runtime implementation"
+  ],
+  "write_scope": [
+    "c:/APEX Platform/Platform-Authority",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "validation_steps": [
+    "Confirm packet UI-003 remains bounded to PM approval-queue prototype design and does not implement runtime code, routes, or component code",
+    "Confirm the packet preserves Class C server-authoritative handling and does not allow offline-finalized approval actions",
+    "Confirm the packet does not broaden into billing or revenue finalization workflow design beyond visibility and dependency boundaries",
+    "Confirm the packet does not ratify the final UI stack beyond the currently approved-for-prototype directional tools"
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "output_artifacts": [
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-15-pm-schema-ui-003-pm-approval-queue-prototype-design-handoff.md"
+  ],
+  "handoff_note": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-15-pm-schema-ui-003-pm-approval-queue-prototype-design-handoff.md",
+  "implementation_ready_candidate": false,
+  "sql_permission": false,
+  "sql_permission_note": "Planning only. Packet UI-003 does not authorize PM schema changes, runtime implementation, direct client mutation paths, offline-finalized approval actions, or billing finalization design beyond bounded queue visibility rules.",
+  "landing_lane": "ui_prototype_design_only",
+  "migration_strategy": "no_runtime_changes",
+  "created_at": "2026-04-16",
+  "updated_at": "2026-04-16",
+  "delegation_status": "complete",
+  "delegation_prompt": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-15-desktop-claude-pm-schema-ui-packet-003-prompt.md"
+}
