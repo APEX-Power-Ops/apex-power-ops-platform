@@ -116,7 +116,7 @@ Current next-step interpretation:
 
 Current concrete artifact for that next step:
 
-- `ops/agents/handoffs/2026-04-22-parent-root-pm-schema-ui-002f-draft-publication-handoff.md`
+- `ops/agents/handoffs/2026-04-22-parent-root-remaining-draft-reevaluation-handoff.md`
 
 ## Guardrails
 

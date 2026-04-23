@@ -18,7 +18,7 @@ Verified from the parent git root at `C:/APEX Platform`:
 
 1. current branch is `clean-main`
 2. current `HEAD` matches `origin/clean-main`
-3. current `HEAD` is `28e8602`
+3. current `HEAD` is `0eb28dc`
 4. the first bounded platform bootstrap slice is tracked on parent-root `clean-main`
 5. the next bounded Class A scaffold tranche is also now published on parent-root `clean-main`
 6. the bounded package source tranche for `packages/forms-engine` and `packages/calc-engine` is also now published on parent-root `clean-main`
@@ -83,9 +83,11 @@ Verified from the parent git root at `C:/APEX Platform`:
 65. the bounded `pm-schema-020e.2` draft tranche is also now published on parent-root `clean-main`
 66. the bounded `pm-schema-020h` draft tranche is also now published on parent-root `clean-main`
 67. the bounded `pm-schema-ui-002e` draft tranche is also now published on parent-root `clean-main`
-68. normal `git status`, `git diff`, and bounded `git add -- <paths>` now work against tracked `HEAD` for those already-introduced `apex-power-ops-platform/` paths
-69. much of the broader subtree still remains untracked and therefore still requires deliberate introduction rather than assuming routine diff coverage
-70. the parent root remains the actual git boundary even though day-to-day implementation work is platform-first inside the subtree
+68. the bounded `pm-schema-ui-002f` draft tranche is also now published on parent-root `clean-main`
+69. no further untracked `pm-schema-ui*` draft packet remains under `ops/agents/packets/draft`
+70. normal `git status`, `git diff`, and bounded `git add -- <paths>` now work against tracked `HEAD` for those already-introduced `apex-power-ops-platform/` paths
+71. much of the broader subtree still remains untracked and therefore still requires deliberate introduction rather than assuming routine diff coverage
+72. the parent root remains the actual git boundary even though day-to-day implementation work is platform-first inside the subtree
 
 ## Drift That Was Present
 
