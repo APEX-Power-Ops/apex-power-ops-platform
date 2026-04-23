@@ -1,0 +1,72 @@
+{
+  "packet_id": "2026-04-15-pm-schema-ui-002b",
+  "title": "PM Schema V2 UI Read-Only Gantt Prototype Implementation",
+  "objective": "Implement the smallest bounded read-only Gantt prototype needed to visualize persisted PM schedule context from the closed UI-002a bridge, proving dependency rendering, lag visibility, WBS hierarchy, critical-path display, and baseline-ready timeline posture without enabling schedule-write behavior, drag-to-reschedule, Class D behavior, billing finalization, or direct client writes for controlled operational state.",
+  "domain": "pm-ui-domain",
+  "active_role": "PM UI Read-Only Gantt Prototype Architect",
+  "repo_paths": [
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-UI-NEXT-PACKET-PLAN-2026-04-15.md",
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-UI-NEEDS-AND-CONSTRAINTS-MATRIX-2026-04-15.md",
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-UI-SOURCE-OF-TRUTH-AND-MUTATION-AUTHORITY-2026-04-15.md",
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-UI-DESIGN-GOVERNANCE-BASELINE-2026-04-15.md",
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-UI-LAYER-BY-LAYER-TOOL-EVALUATION-MATRIX-2026-04-15.md",
+    "c:/APEX Platform/Platform-Authority/APEX-UI-FRAMEWORK-SPEC-REVIEWED-INPUT-MAPPING-2026-04-15.md",
+    "c:/APEX Platform/APEX_Schema_V2",
+    "c:/APEX Platform/apex-power-ops-platform",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "dependencies": [
+    "2026-04-15-pm-schema-ui-002",
+    "2026-04-15-pm-schema-ui-002a",
+    "2026-04-15-pm-schema-ui-005",
+    "2026-04-15-pm-schema-ui-006",
+    "2026-04-15-pm-schema-ui-001c",
+    "2026-04-15-pm-schema-ui-001e"
+  ],
+  "required_inputs": [
+    "PM-SCHEMA-V2-UI-NEXT-PACKET-PLAN-2026-04-15.md",
+    "PM-SCHEMA-V2-UI-NEEDS-AND-CONSTRAINTS-MATRIX-2026-04-15.md",
+    "PM-SCHEMA-V2-UI-SOURCE-OF-TRUTH-AND-MUTATION-AUTHORITY-2026-04-15.md",
+    "PM-SCHEMA-V2-UI-DESIGN-GOVERNANCE-BASELINE-2026-04-15.md",
+    "PM-SCHEMA-V2-UI-LAYER-BY-LAYER-TOOL-EVALUATION-MATRIX-2026-04-15.md",
+    "APEX-UI-FRAMEWORK-SPEC-REVIEWED-INPUT-MAPPING-2026-04-15.md",
+    "2026-04-15-pm-schema-ui-002-gantt-layer-comparison-decision-handoff.md",
+    "2026-04-15-pm-schema-ui-002a-p6-schedule-context-import-and-read-bridge-implementation-handoff.md",
+    "2026-04-15-pm-schema-ui-005-cross-surface-integration-spec-handoff.md",
+    "2026-04-15-pm-schema-ui-006-mutation-seam-api-spec-and-implementation-scaffold-handoff.md",
+    "2026-04-15-pm-schema-ui-001e-supabase-read-model-and-mutation-store-migration-handoff.md",
+    "APEX_UI_Framework_Spec.docx"
+  ],
+  "constrained_outputs": [
+    "One bounded read-only Gantt prototype that consumes the persisted schedule bridge and renders PM schedule context without enabling schedule writes",
+    "One execution handoff documenting rendered schedule fields, dependency posture, read-only enforcement, and validation results",
+    "No implementation beyond the bounded Gantt prototype modules and wiring it directly requires"
+  ],
+  "write_scope": [
+    "c:/APEX Platform/apex-power-ops-platform",
+    "c:/APEX Platform/Platform-Authority",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "validation_steps": [
+    "Confirm packet UI-002b renders imported schedule context only through a read-only Gantt prototype path",
+    "Confirm dependency rendering, lag visibility, and WBS grouping are surfaced without introducing inline schedule edits",
+    "Confirm the Gantt surface consumes the existing schedule bridge and does not bypass the governed mutation seam for controlled state",
+    "Confirm no Gantt write behavior, Class D behavior, billing finalization workflow, or broad production-hardening is implemented by convenience"
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "output_artifacts": [
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-15-pm-schema-ui-002b-read-only-gantt-prototype-implementation-handoff.md"
+  ],
+  "handoff_note": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-15-pm-schema-ui-002b-read-only-gantt-prototype-implementation-handoff.md",
+  "implementation_ready_candidate": true,
+  "sql_permission": false,
+  "sql_permission_note": "Packet UI-002b authorizes only a bounded read-only Gantt prototype over the existing schedule bridge. It does not authorize direct SQL writes, schedule-write behavior, direct client-write bypass, Class D finance behavior, or billing finalization design.",
+  "landing_lane": "ui_read_only_gantt_prototype",
+  "migration_strategy": "bounded_read_only_gantt_slice",
+  "created_at": "2026-04-17",
+  "updated_at": "2026-04-17",
+  "delegation_status": "complete",
+  "delegation_prompt": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-15-desktop-claude-pm-schema-ui-packet-002b-prompt.md"
+}
