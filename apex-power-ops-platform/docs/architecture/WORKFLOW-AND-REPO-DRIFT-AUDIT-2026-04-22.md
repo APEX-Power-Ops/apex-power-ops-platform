@@ -18,7 +18,7 @@ Verified from the parent git root at `C:/APEX Platform`:
 
 1. current branch is `clean-main`
 2. current `HEAD` matches `origin/clean-main`
-3. current `HEAD` is `66a2937`
+3. current `HEAD` is `d91f8ad`
 4. the first bounded platform bootstrap slice is tracked on parent-root `clean-main`
 5. the next bounded Class A scaffold tranche is also now published on parent-root `clean-main`
 6. the bounded package source tranche for `packages/forms-engine` and `packages/calc-engine` is also now published on parent-root `clean-main`
@@ -53,9 +53,10 @@ Verified from the parent git root at `C:/APEX Platform`:
 35. the bounded `pm-schema-019h` draft tranche is also now published on parent-root `clean-main`
 36. the bounded `pm-schema-019i` draft tranche is also now published on parent-root `clean-main`
 37. the bounded `pm-schema-019j` draft tranche is also now published on parent-root `clean-main`
-38. normal `git status`, `git diff`, and bounded `git add -- <paths>` now work against tracked `HEAD` for those already-introduced `apex-power-ops-platform/` paths
-39. much of the broader subtree still remains untracked and therefore still requires deliberate introduction rather than assuming routine diff coverage
-40. the parent root remains the actual git boundary even though day-to-day implementation work is platform-first inside the subtree
+38. the bounded `pm-schema-019k` draft tranche is also now published on parent-root `clean-main`
+39. normal `git status`, `git diff`, and bounded `git add -- <paths>` now work against tracked `HEAD` for those already-introduced `apex-power-ops-platform/` paths
+40. much of the broader subtree still remains untracked and therefore still requires deliberate introduction rather than assuming routine diff coverage
+41. the parent root remains the actual git boundary even though day-to-day implementation work is platform-first inside the subtree
 
 ## Drift That Was Present
 
@@ -87,7 +88,7 @@ Use this posture going forward:
 1. work from `C:/APEX Platform/apex-power-ops-platform` for implementation, but treat `C:/APEX Platform` as the authoritative git root
 2. use routine `git diff` and bounded `git add -- <paths>` against tracked `HEAD` for already-introduced paths
 3. keep whole-subtree staging reserved for explicit broad publication or cutover work
-4. treat the 2026-04-22 bootstrap, Class A scaffold, package source, operations-web runtime, mutation-seam runtime, control-plane core, control-plane support, control-plane tests, residual scaffold, infra database, docs, ops knowledge-control-plane registry, ops legacy-governance, ops knowledge-resource-operations, forms-import draft, `001af` draft, `apex-unification-001` draft, `knowledge-import-001` draft, `pm-schema-009` draft, `pm-schema-010` draft, `pm-schema-011` draft, `pm-schema-012` draft, `pm-schema-013` draft, `pm-schema-014` draft, `pm-schema-015` draft, `pm-schema-016` draft, `pm-schema-017` draft, `pm-schema-018` draft, `pm-schema-019` draft, `pm-schema-019f` draft, `pm-schema-019g` draft, `pm-schema-019h` draft, `pm-schema-019i` draft, `pm-schema-019j` draft, and reconciliation handoffs as historical records, not as active blockers or active workflow instructions
+4. treat the 2026-04-22 bootstrap, Class A scaffold, package source, operations-web runtime, mutation-seam runtime, control-plane core, control-plane support, control-plane tests, residual scaffold, infra database, docs, ops knowledge-control-plane registry, ops legacy-governance, ops knowledge-resource-operations, forms-import draft, `001af` draft, `apex-unification-001` draft, `knowledge-import-001` draft, `pm-schema-009` draft, `pm-schema-010` draft, `pm-schema-011` draft, `pm-schema-012` draft, `pm-schema-013` draft, `pm-schema-014` draft, `pm-schema-015` draft, `pm-schema-016` draft, `pm-schema-017` draft, `pm-schema-018` draft, `pm-schema-019` draft, `pm-schema-019f` draft, `pm-schema-019g` draft, `pm-schema-019h` draft, `pm-schema-019i` draft, `pm-schema-019j` draft, `pm-schema-019k` draft, and reconciliation handoffs as historical records, not as active blockers or active workflow instructions
 5. keep `C:/APEX Platform/apex-power-ops-platform-deploy-worktree` as a separate optional publication lane
 6. keep `C:/APEX Platform/apex-power-ops-platform-clean-main-reconcile` as the historical clean review-fix worktree, not as the live authority surface
 7. treat broader subtree publication beyond the already-tracked slice as explicit incremental introduction work
@@ -130,9 +131,10 @@ These remain useful, but only as historical context:
 32. `ops/agents/handoffs/2026-04-22-parent-root-pm-schema-019h-draft-publication-handoff.md`
 33. `ops/agents/handoffs/2026-04-22-parent-root-pm-schema-019i-draft-publication-handoff.md`
 34. `ops/agents/handoffs/2026-04-22-parent-root-pm-schema-019j-draft-publication-handoff.md`
-35. `ops/agents/handoffs/2026-04-22-parent-root-clean-main-reconciliation-handoff.md`
-36. `C:/APEX-safety-snapshots/live-root-pre-merge-divergence-2026-04-22/RECOVERY-NOTES.md`
-37. `C:/APEX-safety-snapshots/live-root-pre-merge-divergence-2026-04-22/INTEGRITY-REPORT.md`
+35. `ops/agents/handoffs/2026-04-22-parent-root-pm-schema-019k-draft-publication-handoff.md`
+36. `ops/agents/handoffs/2026-04-22-parent-root-clean-main-reconciliation-handoff.md`
+37. `C:/APEX-safety-snapshots/live-root-pre-merge-divergence-2026-04-22/RECOVERY-NOTES.md`
+38. `C:/APEX-safety-snapshots/live-root-pre-merge-divergence-2026-04-22/INTEGRITY-REPORT.md`
 
 ## Residual Constraints
 
@@ -147,4 +149,4 @@ The repo is cleaner, but these constraints still matter:
 
 The workflow drift is closed.
 
-The platform subtree is no longer in a wholly untracked first-introduction bootstrap state. Its first bounded publication slice, its Class A scaffold tranche, its package source tranche, its `operations-web` runtime tranche, its `mutation-seam` runtime tranche, the full bounded `control-plane-api` lane (runtime core, support, and tests), the residual scaffold/doc tranche, the `infra/database` tranche, the `docs/` tranche, the `ops/knowledge-control-plane/registry` tranche, the `ops/agents/legacy-governance` tranche, the `ops/knowledge-resource-operations` tranche, the bounded forms-import draft tranche, the bounded `001af` draft tranche, the bounded `apex-unification-001` draft tranche, the bounded `knowledge-import-001` draft tranche, the bounded `pm-schema-009` draft tranche, the bounded `pm-schema-010` draft tranche, the bounded `pm-schema-011` draft tranche, the bounded `pm-schema-012` draft tranche, the bounded `pm-schema-013` draft tranche, the bounded `pm-schema-014` draft tranche, the bounded `pm-schema-015` draft tranche, the bounded `pm-schema-016` draft tranche, the bounded `pm-schema-017` draft tranche, the bounded `pm-schema-018` draft tranche, the bounded `pm-schema-019` draft tranche, the bounded `pm-schema-019f` draft tranche, the bounded `pm-schema-019g` draft tranche, the bounded `pm-schema-019h` draft tranche, the bounded `pm-schema-019i` draft tranche, and the bounded `pm-schema-019j` draft tranche are now published on `clean-main`, and future parent-root publication should distinguish between routine bounded staging for already-introduced paths and deliberate incremental introduction for the still-untracked majority of the subtree.
+The platform subtree is no longer in a wholly untracked first-introduction bootstrap state. Its first bounded publication slice, its Class A scaffold tranche, its package source tranche, its `operations-web` runtime tranche, its `mutation-seam` runtime tranche, the full bounded `control-plane-api` lane (runtime core, support, and tests), the residual scaffold/doc tranche, the `infra/database` tranche, the `docs/` tranche, the `ops/knowledge-control-plane/registry` tranche, the `ops/agents/legacy-governance` tranche, the `ops/knowledge-resource-operations` tranche, the bounded forms-import draft tranche, the bounded `001af` draft tranche, the bounded `apex-unification-001` draft tranche, the bounded `knowledge-import-001` draft tranche, the bounded `pm-schema-009` draft tranche, the bounded `pm-schema-010` draft tranche, the bounded `pm-schema-011` draft tranche, the bounded `pm-schema-012` draft tranche, the bounded `pm-schema-013` draft tranche, the bounded `pm-schema-014` draft tranche, the bounded `pm-schema-015` draft tranche, the bounded `pm-schema-016` draft tranche, the bounded `pm-schema-017` draft tranche, the bounded `pm-schema-018` draft tranche, the bounded `pm-schema-019` draft tranche, the bounded `pm-schema-019f` draft tranche, the bounded `pm-schema-019g` draft tranche, the bounded `pm-schema-019h` draft tranche, the bounded `pm-schema-019i` draft tranche, the bounded `pm-schema-019j` draft tranche, and the bounded `pm-schema-019k` draft tranche are now published on `clean-main`, and future parent-root publication should distinguish between routine bounded staging for already-introduced paths and deliberate incremental introduction for the still-untracked majority of the subtree.
