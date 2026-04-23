@@ -1,0 +1,72 @@
+{
+  "packet_id": "2026-04-15-pm-schema-ui-001d",
+  "title": "PM Schema V2 UI Cross-Surface Integration Test Surface And Validation Harness",
+  "objective": "Implement the smallest bounded cross-surface integration test surface and validation harness that exercises the full governed field-to-lead-to-PM seam path in one place, proving end-to-end chained behavior, shared read models, authority boundaries, and regression stability across the three validated role surfaces without implementing Gantt visualization, Supabase migration, Class D behavior, billing finalization, or direct client writes for controlled operational state.",
+  "domain": "pm-ui-domain",
+  "active_role": "PM UI Cross-Surface Validation Architect",
+  "repo_paths": [
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-UI-NEXT-PACKET-PLAN-2026-04-15.md",
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-UI-NEEDS-AND-CONSTRAINTS-MATRIX-2026-04-15.md",
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-UI-SOURCE-OF-TRUTH-AND-MUTATION-AUTHORITY-2026-04-15.md",
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-UI-DESIGN-GOVERNANCE-BASELINE-2026-04-15.md",
+    "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-UI-LAYER-BY-LAYER-TOOL-EVALUATION-MATRIX-2026-04-15.md",
+    "c:/APEX Platform/Platform-Authority/APEX-UI-FRAMEWORK-SPEC-REVIEWED-INPUT-MAPPING-2026-04-15.md",
+    "c:/APEX Platform/APEX_Schema_V2",
+    "c:/APEX Platform/apex-power-ops-platform",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "dependencies": [
+    "2026-04-15-pm-schema-ui-005",
+    "2026-04-15-pm-schema-ui-006",
+    "2026-04-15-pm-schema-ui-001a",
+    "2026-04-15-pm-schema-ui-001b",
+    "2026-04-15-pm-schema-ui-001c"
+  ],
+  "required_inputs": [
+    "PM-SCHEMA-V2-UI-NEXT-PACKET-PLAN-2026-04-15.md",
+    "PM-SCHEMA-V2-UI-NEEDS-AND-CONSTRAINTS-MATRIX-2026-04-15.md",
+    "PM-SCHEMA-V2-UI-SOURCE-OF-TRUTH-AND-MUTATION-AUTHORITY-2026-04-15.md",
+    "PM-SCHEMA-V2-UI-DESIGN-GOVERNANCE-BASELINE-2026-04-15.md",
+    "PM-SCHEMA-V2-UI-LAYER-BY-LAYER-TOOL-EVALUATION-MATRIX-2026-04-15.md",
+    "APEX-UI-FRAMEWORK-SPEC-REVIEWED-INPUT-MAPPING-2026-04-15.md",
+    "2026-04-15-pm-schema-ui-005-cross-surface-integration-spec-handoff.md",
+    "2026-04-15-pm-schema-ui-006-mutation-seam-api-spec-and-implementation-scaffold-handoff.md",
+    "2026-04-15-pm-schema-ui-001a-field-apparatus-workflow-and-seam-co-implementation-handoff.md",
+    "2026-04-15-pm-schema-ui-001b-lead-operations-surface-and-extended-seam-wiring-handoff.md",
+    "2026-04-15-pm-schema-ui-001c-pm-approval-queue-and-cross-surface-review-flow-implementation-handoff.md",
+    "APEX_UI_Framework_Spec.docx"
+  ],
+  "constrained_outputs": [
+    "One working cross-surface integration test surface or dashboard that can drive and observe the bounded field-to-lead-to-PM chain against the mutation seam",
+    "One working validation harness or scripted path proving shared regression checks across the three role surfaces",
+    "One execution handoff documenting chained scenarios exercised, authority and precondition gates preserved, and validation results",
+    "No implementation beyond the bounded integration test surface and the seam/frontend modules it directly requires"
+  ],
+  "write_scope": [
+    "c:/APEX Platform/apex-power-ops-platform",
+    "c:/APEX Platform/Platform-Authority",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "validation_steps": [
+    "Confirm packet UI-001d implements only the bounded cross-surface integration test surface and validation harness it directly requires",
+    "Confirm all controlled writes continue to route through the mutation seam rather than direct client writes",
+    "Confirm the harness proves chained field-to-lead-to-PM scenarios and preserves authority, offline, idempotency, and blocking-issue rules",
+    "Confirm no Gantt implementation, Supabase migration, Class D behavior, billing finalization, or broad production-hardening is implemented by convenience"
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "output_artifacts": [
+    "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-15-pm-schema-ui-001d-cross-surface-integration-test-surface-and-validation-harness-handoff.md"
+  ],
+  "handoff_note": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-15-pm-schema-ui-001d-cross-surface-integration-test-surface-and-validation-harness-handoff.md",
+  "implementation_ready_candidate": true,
+  "sql_permission": false,
+  "sql_permission_note": "Packet UI-001d authorizes only the bounded cross-surface integration test surface and validation harness. It does not authorize Gantt implementation, Supabase migration, direct client writes, Class D finance behavior, or billing finalization design.",
+  "landing_lane": "ui_cross_surface_validation_implementation",
+  "migration_strategy": "bounded_stabilization_slice",
+  "created_at": "2026-04-16",
+  "updated_at": "2026-04-16",
+  "delegation_status": "complete",
+  "delegation_prompt": "c:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-15-desktop-claude-pm-schema-ui-packet-001d-prompt.md"
+}
