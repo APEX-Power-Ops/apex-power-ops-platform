@@ -1,0 +1,74 @@
+{
+  "packet_id": "2026-04-25-olares-workstation-002",
+  "title": "Governed Workstation Surface Publication Follow-Through",
+  "objective": "Publish only the bounded governed workstation surfaces that were locally synced to clear the first Olares workstation host blocker, using the normal repo publication path and without sweeping in unrelated dirty worktree state or reopening generic Olares bring-up.",
+  "domain": "infrastructure-domain",
+  "active_role": "Olares Publication Operator",
+  "repo_paths": [
+    "C:/APEX Platform/apex-power-ops-platform/infra/compose.dev.yml",
+    "C:/APEX Platform/apex-power-ops-platform/infra/olares",
+    "C:/APEX Platform/apex-power-ops-platform/packages/forms-engine",
+    "C:/APEX Platform/apex-power-ops-platform/packages/p6-ingest",
+    "C:/APEX Platform/apex-power-ops-platform/services/mcp",
+    "C:/APEX Platform/apex-power-ops-platform/tests/canary",
+    "C:/APEX Platform/apex-power-ops-platform/tools/canary",
+    "C:/APEX Platform/apex-power-ops-platform/tools/run-canary.sh",
+    "C:/APEX Platform/apex-power-ops-platform/tools/run-canary.ps1",
+    "C:/APEX Platform/apex-power-ops-platform/tools/shell",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-25-olares-workstation-001-dev-stack-and-mcp-validation-closure-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-25-olares-workstation-001-publication-follow-through-scope-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/architecture/OLARES-POST-CLOSURE-EXECUTION-CHECKLIST-2026-04-25.md"
+  ],
+  "dependencies": [
+    "ops/agents/handoffs/2026-04-25-olares-workstation-001-dev-stack-and-mcp-validation-closure-handoff.md",
+    "ops/agents/handoffs/2026-04-25-olares-workstation-001-publication-follow-through-scope-handoff.md",
+    "ops/agents/handoffs/2026-04-25-parent-root-olares-tcc-authority-surface-publication-handoff.md",
+    "docs/architecture/OLARES-POST-CLOSURE-EXECUTION-CHECKLIST-2026-04-25.md"
+  ],
+  "dependency_note": "The workstation closure already proved host validation and explicitly left authoritative branch publication open. The publication-scope handoff then bounded the exact unpublished workstation surface set on clean-main, while the parent-root Olares/TCC authority publication handoff separately bounded the 11-file publication-control tranche. This packet is authorized only for the broader workstation code-surface set and only through the normal repo publication path.",
+  "required_inputs": [
+    "The bounded publication scope named in ops/agents/handoffs/2026-04-25-olares-workstation-001-publication-follow-through-scope-handoff.md",
+    "The separate 11-file publication-control tranche documented in ops/agents/handoffs/2026-04-25-parent-root-olares-tcc-authority-surface-publication-handoff.md so it is not conflated with this packet",
+    "A clean review of any path-local diffs within the bounded publication set",
+    "The current authoritative branch state on clean-main",
+    "Normal repo publication permissions for staging, commit, and push if publication is to complete"
+  ],
+  "constrained_outputs": [
+    "A normal repo publication step limited to the bounded workstation surface set",
+    "A dated closure or blocker handoff under ops/agents/handoffs recording exactly what was published or what blocked publication",
+    "No unrelated worktree changes included outside the bounded publication set"
+  ],
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/infra",
+    "C:/APEX Platform/apex-power-ops-platform/packages/forms-engine",
+    "C:/APEX Platform/apex-power-ops-platform/packages/p6-ingest",
+    "C:/APEX Platform/apex-power-ops-platform/services/mcp",
+    "C:/APEX Platform/apex-power-ops-platform/tests/canary",
+    "C:/APEX Platform/apex-power-ops-platform/tools",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft"
+  ],
+  "validation_steps": [
+    "Inspect and review only the bounded workstation publication surface set named in the publication-scope handoff.",
+    "Do not fold the separate 11-file publication-control tranche into this packet unless a later explicit publication handoff intentionally combines them.",
+    "Do not stage or commit unrelated dirty worktree paths outside that bounded set.",
+    "Use the normal repo publication path on clean-main; do not treat workstation proof as a substitute for branch publication.",
+    "Record the exact staged paths, commit identity if one is created, and the final publication disposition in a dated closure or blocker handoff.",
+    "Do not reopen generic Olares bring-up or install new Olares scope while executing this packet."
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "authored",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-25-olares-workstation-002-publication-follow-through-closure-handoff.md"
+  ],
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-25-olares-workstation-001-publication-follow-through-scope-handoff.md",
+  "implementation_ready_candidate": true,
+  "sql_permission": false,
+  "sql_permission_note": "This packet authorizes normal repo publication work only. It does not authorize database writes, new Olares host scope, or unrelated refactors.",
+  "landing_lane": "olares_workstation_publication_follow_through",
+  "migration_strategy": "bounded_publication_after_host_validation",
+  "created_at": "2026-04-25",
+  "updated_at": "2026-04-25",
+  "delegation_status": "ready",
+  "validation_disposition": "awaiting-execution"
+}

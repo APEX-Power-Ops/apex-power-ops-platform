@@ -1,0 +1,64 @@
+{
+  "packet_id": "2026-04-25-tcc-runtime-012",
+  "title": "TMT Discovery Route Recovery And Browse-Surface Performance",
+  "objective": "Recover live TMT browse usability by eliminating the remaining timeout on `/api/v1/neta/tmt/facets` and `/api/v1/neta/tmt/frames`, using the already-landed read-only Supabase Data API browse helpers or smaller equivalent route-layer logic so TMT discovery becomes responsive enough to support downstream selector and browser parity work.",
+  "domain": "tcc-runtime-lane",
+  "active_role": "TCC Runtime TMT Browse Recovery Operator",
+  "repo_paths": [
+    "C:/APEX Platform/source-domains/tcc_v5_backend/services/neta/router.py",
+    "C:/APEX Platform/source-domains/tcc_v5_backend/demo/neta_tcc.html",
+    "C:/APEX Platform/source-domains/tcc_v5_backend/models/tmt.py",
+    "C:/APEX Platform/source-domains/tcc_v5_backend/models/breakers.py",
+    "C:/APEX Platform/source-domains/tcc_v5_backend/DLL_END_TO_END_MAPPING.md",
+    "C:/APEX Platform/source-domains/tcc_v5_backend/tests",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-25-tcc-runtime-012-014-claude-code-sequenced-execution-handoff.md"
+  ],
+  "dependencies": [
+    "2026-04-24-tcc-runtime-010",
+    "2026-04-24-tcc-runtime-011"
+  ],
+  "dependency_note": "Treat packets 010 and 011 as closed ETU-scope work. Packet 012 starts from the current local TMT/EMT REST browse checkpoint and must stay bounded to the TMT discovery timeout on facets and frames rather than reopening ETU control-path or delay-routing work.",
+  "required_inputs": [
+    "Current local router checkpoint where TMT and EMT REST browse helpers are already landed in services/neta/router.py",
+    "Verified live probe split: `/api/v1/neta/tmt/context/1` and `/api/v1/neta/tmt/settings/1` return 200, while `/api/v1/neta/tmt/facets` and `/api/v1/neta/tmt/frames?limit=2` time out",
+    "DLL_END_TO_END_MAPPING.md sections covering `ReadTmgnFrameIdsMatchingFrameAndTrip(...)` and `FindMatchingBreakerStyles(...)`",
+    "The current demo-facing TMT route contract in demo/neta_tcc.html"
+  ],
+  "constrained_outputs": [
+    "Responsive `/api/v1/neta/tmt/facets` and `/api/v1/neta/tmt/frames` route behavior under the local live probe path",
+    "Focused route-side or helper-side changes only where they are required to remove the timeout",
+    "Focused validation proving TMT discovery is now usable for downstream selector work",
+    "A dated closure handoff under ops/agents/handoffs",
+    "No broad UI redesign and no unrelated ETU or EMT expansion"
+  ],
+  "write_scope": [
+    "C:/APEX Platform/source-domains/tcc_v5_backend/services/neta",
+    "C:/APEX Platform/source-domains/tcc_v5_backend/tests",
+    "C:/APEX Platform/source-domains/tcc_v5_backend/demo",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft"
+  ],
+  "validation_steps": [
+    "Start from the current local REST browse checkpoint rather than replacing it wholesale.",
+    "Make `/api/v1/neta/tmt/facets` and `/api/v1/neta/tmt/frames` return successfully under bounded live probes without widening into demo redesign.",
+    "Keep TMT context and settings behavior intact while repairing discovery performance.",
+    "Add or adjust focused validation for the repaired TMT discovery slice and record the exact probe or test evidence in the closure handoff.",
+    "Do not claim closure while the TMT discovery endpoints still hang or require broad manual workaround."
+  ],
+  "handoff_target": "TCC Runtime Follow-On Operator",
+  "status": "closed",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-25-tcc-runtime-012-tmt-discovery-route-recovery-closure-handoff.md"
+  ],
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-25-tcc-runtime-012-014-claude-code-sequenced-execution-handoff.md",
+  "implementation_ready_candidate": true,
+  "sql_permission": false,
+  "sql_permission_note": "This packet authorizes read-side route, helper, demo-harness, and test changes only. It does not authorize database writes or schema migrations.",
+  "landing_lane": "tcc_runtime_tmt_discovery_route_recovery",
+  "migration_strategy": "bounded_rest_browse_recovery_before_selector_parity",
+  "created_at": "2026-04-25",
+  "updated_at": "2026-04-25",
+  "delegation_status": "closed",
+  "validation_disposition": "closed-fix-applied",
+  "closure_note": "Closure handoff recorded the bounded TMT browse recovery on 2026-04-25: `services/neta/router.py` now uses `_fetch_tmt_browse_rows_sql` to populate TMT browse rows through a single-CTE SQL path instead of the prior paginated REST cold-start; live probes show `/api/v1/neta/tmt/facets` and `/api/v1/neta/tmt/frames` healthy, with cold end-to-end 2.354 s and warm 214 ms, and the focused TMT route test slice passed."
+}

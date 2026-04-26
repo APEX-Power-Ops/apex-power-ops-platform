@@ -1,0 +1,62 @@
+{
+  "packet_id": "2026-04-25-tcc-runtime-014",
+  "title": "Cross-Family Browser Proof And Consistency Closure",
+  "objective": "After selector parity lands, execute a bounded browser-led proof across ETU, TMT, and EMT using the local TCC demo and the EasyPower reference UI so the platform can record which selector and context flows now match, which bounded EMT deviations remain intentional, and whether this TCC family frontier is ready for closure.",
+  "domain": "tcc-runtime-lane",
+  "active_role": "TCC Runtime Browser Validation Operator",
+  "repo_paths": [
+    "C:/APEX Platform/source-domains/tcc_v5_backend/demo/neta_tcc.html",
+    "C:/APEX Platform/source-domains/tcc_v5_backend/services/neta/router.py",
+    "C:/APEX Platform/source-domains/tcc_v5_backend/tests/test_demo_browser.py",
+    "C:/APEX Platform/source-domains/tcc_v5_backend/tests",
+    "C:/APEX Platform/source-domains/tcc_v5_backend/NETA_EMT_CONTRACT_SPEC.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-25-tcc-runtime-012-014-claude-code-sequenced-execution-handoff.md"
+  ],
+  "dependencies": [
+    "2026-04-25-tcc-runtime-013"
+  ],
+  "dependency_note": "Do not execute packet 014 until packet 013 lands. Packet 014 is a proof and closure lane, not another open-ended implementation pass; if it finds a local defect, repair only the bounded slice required for the proof and then rerun the same focused validation.",
+  "required_inputs": [
+    "Packet 013 closure evidence for the landed selector-parity slice",
+    "Browser access to the local TCC demo and the already-open EasyPower reference page",
+    "Live route access for ETU, TMT, and EMT browse and context endpoints",
+    "The current demo-browser or focused demo regression surfaces under tests"
+  ],
+  "constrained_outputs": [
+    "A browser-led proof covering ETU, TMT, and EMT selector and context flows",
+    "Focused regression coverage or focused probes for any repaired slice needed to complete that proof",
+    "An explicit closure or residual-blocker handoff under ops/agents/handoffs",
+    "A concise list of any intentionally accepted bounded EMT deviations from EasyPower behavior",
+    "No new family expansion beyond proof, local repair, and closure documentation"
+  ],
+  "write_scope": [
+    "C:/APEX Platform/source-domains/tcc_v5_backend/demo",
+    "C:/APEX Platform/source-domains/tcc_v5_backend/services/neta",
+    "C:/APEX Platform/source-domains/tcc_v5_backend/tests",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft"
+  ],
+  "validation_steps": [
+    "Traverse ETU, TMT, and EMT in the browser rather than relying only on route-level assumptions.",
+    "Prove that TMT browse is responsive and that its paired selectors constrain one another correctly.",
+    "Prove that EMT resolves manufacturer names, uses bounded frame and section selection correctly, and does not expose raw ids in the intended browse path.",
+    "Compare the resulting family flows to the EasyPower reference UI and record where the local demo intentionally remains narrower.",
+    "Author closure only if the repaired and validated frontier is coherent across all three families."
+  ],
+  "handoff_target": "TCC Runtime Follow-On Operator",
+  "status": "closed",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-25-tcc-runtime-014-cross-family-browser-proof-closure-handoff.md"
+  ],
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-25-tcc-runtime-012-014-claude-code-sequenced-execution-handoff.md",
+  "implementation_ready_candidate": true,
+  "sql_permission": false,
+  "sql_permission_note": "This packet authorizes browser proof, bounded repair, and closure work only. It does not authorize schema or data migration work.",
+  "landing_lane": "tcc_runtime_cross_family_browser_proof",
+  "migration_strategy": "selector_parity_then_browser_led_closure",
+  "created_at": "2026-04-25",
+  "updated_at": "2026-04-25",
+  "delegation_status": "closed",
+  "validation_disposition": "closed-proof-complete",
+  "closure_note": "Closure handoff recorded browser-led family proof completion on 2026-04-25: real Chromium exercised ETU, TMT, and EMT against the live route stack; 5 focused pytest checks and 18 standalone assertions passed; three screenshots were saved under `ops/agents/handoffs/_packet_014_screenshots/`; and one bounded local defect was repaired in `populateFacetSelect` by replacing an O(n^2) `innerHTML +=` loop with a single assignment after building the option markup once."
+}
