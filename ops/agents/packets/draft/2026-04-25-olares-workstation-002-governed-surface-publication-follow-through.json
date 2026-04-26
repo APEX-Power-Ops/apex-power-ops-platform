@@ -59,7 +59,7 @@
   "handoff_target": "Platform Architect",
   "status": "authored",
   "output_artifacts": [
-    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-25-olares-workstation-002-publication-follow-through-closure-handoff.md"
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-25-olares-workstation-002-publication-follow-through-blocker-handoff.md"
   ],
   "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-25-olares-workstation-001-publication-follow-through-scope-handoff.md",
   "implementation_ready_candidate": true,
@@ -69,6 +69,8 @@
   "migration_strategy": "bounded_publication_after_host_validation",
   "created_at": "2026-04-25",
   "updated_at": "2026-04-25",
-  "delegation_status": "ready",
-  "validation_disposition": "awaiting-execution"
+  "delegation_status": "blocked",
+  "validation_disposition": "blocked-scope-not-stageable",
+  "closure_note": "After the 11-file Olares/TCC publication-control tranche was published to clean-main in commit 9db2efd, the broader packet-002 path set was rechecked and no longer existed as one coherent stageable lane: infra/compose.dev.yml and the tools paths were absent, infra/olares plus the packages and services paths were already clean, and only tests/canary remained as local untracked residue.",
+  "next_action": "Re-scope or retire packet 002 based on the actual remaining workstation code-surface residue rather than forcing publication against the original broader path set."
 }

@@ -52,14 +52,14 @@ Do not use this checklist to claim:
 
 - [x] confirm which workstation-synced governed surfaces remain unpublished from the normal authoritative branch state using `ops/agents/handoffs/2026-04-25-olares-workstation-001-publication-follow-through-scope-handoff.md`
 - [x] bound the local-only Olares and TCC authority-sync tranche for parent-root publication using `ops/agents/handoffs/2026-04-25-parent-root-olares-tcc-authority-surface-publication-handoff.md`
-- [ ] publish or explicitly block only the bounded 11-file publication-control tranche described in `ops/agents/handoffs/2026-04-25-parent-root-olares-tcc-authority-surface-publication-handoff.md`
-- [ ] publish only the bounded governed workstation surfaces that were explicitly synced to clear the host blocker, using `ops/agents/packets/draft/2026-04-25-olares-workstation-002-governed-surface-publication-follow-through.json`
-- [ ] record the publication result in a dated handoff or existing closure note update
+- [x] publish or explicitly block only the bounded 11-file publication-control tranche described in `ops/agents/handoffs/2026-04-25-parent-root-olares-tcc-authority-surface-publication-handoff.md`
+- [x] record the publication-control result in `ops/agents/handoffs/2026-04-25-parent-root-olares-tcc-authority-surface-publication-handoff.md`
+- [x] explicitly block the broader packet-002 workstation code-surface publication using `ops/agents/handoffs/2026-04-25-olares-workstation-002-publication-follow-through-blocker-handoff.md`
 - [ ] do not treat workstation proof alone as equivalent to authoritative branch publication
 
 Exit condition:
 
-- the authority-sync tranche and the broader workstation-synced governed surfaces are each either published through the normal repo path or covered by an explicit blocker handoff
+- the authority-sync tranche is published through the normal repo path, and the broader workstation-synced governed surfaces are either later repacketized for publication or covered by an explicit blocker handoff
 
 ### 2. Workstation Regression Rerun Readiness
 
