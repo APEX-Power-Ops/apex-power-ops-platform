@@ -1,0 +1,64 @@
+{
+  "packet_id": "2026-04-25-tcc-runtime-013",
+  "title": "Family Selector Parity And Dual-Filter Demo Alignment",
+  "objective": "After TMT discovery is responsive, bring the TMT and EMT demo selector surfaces into source-faithful browse parity by replacing raw or id-driven controls with named dropdowns and paired filter flows that cross-filter trip-unit and breaker or frame selections where the bounded route contracts actually support them.",
+  "domain": "tcc-runtime-lane",
+  "active_role": "TCC Runtime Selector Parity Operator",
+  "repo_paths": [
+    "C:/APEX Platform/source-domains/tcc_v5_backend/demo/neta_tcc.html",
+    "C:/APEX Platform/source-domains/tcc_v5_backend/services/neta/router.py",
+    "C:/APEX Platform/source-domains/tcc_v5_backend/services/neta/schemas.py",
+    "C:/APEX Platform/source-domains/tcc_v5_backend/DLL_END_TO_END_MAPPING.md",
+    "C:/APEX Platform/source-domains/tcc_v5_backend/NETA_EMT_CONTRACT_SPEC.md",
+    "C:/APEX Platform/source-domains/tcc_v5_backend/tests",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-25-tcc-runtime-012-014-claude-code-sequenced-execution-handoff.md"
+  ],
+  "dependencies": [
+    "2026-04-25-tcc-runtime-012"
+  ],
+  "dependency_note": "Do not begin selector parity work until packet 012 proves TMT facets and frames are responsive. Packet 013 must also remain bounded by NETA_EMT_CONTRACT_SPEC.md: it may use the EMT frame search and section flow as the breaker-side selector path, but it must not invent unsupported EMT hardware semantics beyond that contract.",
+  "required_inputs": [
+    "Packet 012 closure evidence proving `/api/v1/neta/tmt/facets` and `/api/v1/neta/tmt/frames` are usable",
+    "The current local demo checkpoint in demo/neta_tcc.html where EMT still shows raw manufacturer or trip inputs and TMT is the only family with partial breaker selection",
+    "DLL_END_TO_END_MAPPING.md sections for TMT browse and breaker-style matching",
+    "NETA_EMT_CONTRACT_SPEC.md describing the bounded EMT frame, context, section-settings, and plot scope",
+    "The already-open EasyPower reference UI used for browse-model comparison"
+  ],
+  "constrained_outputs": [
+    "Named dropdown or paired selector surfaces for TMT and EMT in the local demo",
+    "Cross-filter behavior that keeps TMT trip-unit and breaker choices mutually constraining where the route data supports it",
+    "An EMT browse flow that resolves manufacturer names and uses bounded frame-plus-section selection without pretending EMT has a broader contract than it actually does",
+    "Focused regression coverage or demo-level validation for the selector flows",
+    "A dated closure handoff under ops/agents/handoffs"
+  ],
+  "write_scope": [
+    "C:/APEX Platform/source-domains/tcc_v5_backend/demo",
+    "C:/APEX Platform/source-domains/tcc_v5_backend/services/neta",
+    "C:/APEX Platform/source-domains/tcc_v5_backend/tests",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft"
+  ],
+  "validation_steps": [
+    "Replace raw ids or free-text-only browse inputs with named selectors where the route contract already provides stable option lists.",
+    "Ensure TMT supports paired trip-unit and breaker-style filtering rather than one-sided discovery only.",
+    "Ensure EMT resolves manufacturer names and exposes a bounded paired browse flow using the authorized frame and section surfaces instead of raw ids.",
+    "Use focused demo tests, route probes, or browser checks to prove the selector flows work after the changes.",
+    "Record any remaining EMT differences from EasyPower explicitly as intentional bounded-contract deviations rather than leaving them implicit."
+  ],
+  "handoff_target": "TCC Runtime Follow-On Operator",
+  "status": "closed",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-25-tcc-runtime-013-family-selector-parity-closure-handoff.md"
+  ],
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-25-tcc-runtime-012-014-claude-code-sequenced-execution-handoff.md",
+  "implementation_ready_candidate": true,
+  "sql_permission": false,
+  "sql_permission_note": "This packet authorizes route, schema-surface, demo, and test updates only. It does not authorize database writes or contract expansion beyond the current TMT and EMT browse surfaces.",
+  "landing_lane": "tcc_runtime_family_selector_parity",
+  "migration_strategy": "responsive_browse_then_named_dual_filter_ui",
+  "created_at": "2026-04-25",
+  "updated_at": "2026-04-25",
+  "delegation_status": "closed",
+  "validation_disposition": "closed-fix-applied",
+  "closure_note": "Closure handoff recorded selector-parity completion on 2026-04-25: the TMT panel replaced five free-text browse inputs with facet-backed selectors, the EMT panel replaced raw manufacturer-id, trip-char, trip-plug, and `q` inputs with six facet-backed named selectors, every selector change now re-fetches `/tmt/facets` or `/emt/facets` with current filters for mutual narrowing, 10 focused tests passed, and live narrowing was verified against the route stack."
+}
