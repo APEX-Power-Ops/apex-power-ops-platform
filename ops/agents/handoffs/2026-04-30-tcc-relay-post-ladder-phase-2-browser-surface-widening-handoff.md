@@ -1,7 +1,7 @@
 # TCC Relay Post-Ladder Phase 2 Browser Surface Widening Handoff
 
 Date: 2026-04-30
-Status: Gate open and first bounded compare slice closed PASS in repo; promoted-host browser-smoke rerun remains blocked on a pre-existing hosted-bundle redeploy gap
+Status: Phase 2 closed PASS in repo and on promoted host; next truthful relay move is Phase 3 write-workflow design authoring
 Authority: `Platform-Authority/TCC-RELAY-POST-LADDER-PHASE-2-BROWSER-SURFACE-WIDENING-SCOPING-PACKET-2026-04-30.md`
 Upstream authority: `Platform-Authority/TCC-RELAY-POST-LADDER-FOLLOW-ON-PLANNING-PACKET-2026-04-30.md`
 
@@ -12,7 +12,7 @@ Repo closure for the first bounded compare slice: `ops/agents/handoffs/2026-05-0
 
 ## Objective
 
-Keep the read-only browser-value phase open for governed widening work, but record that the first bounded compare slice has already landed in repo without reopening writes or browser-side relay math.
+Record the truthful closure state for the read-only browser-value phase after the first bounded compare slice landed in repo and later cleared promoted-host proof on production.
 
 ---
 
@@ -37,13 +37,11 @@ Keep the read-only browser-value phase open for governed widening work, but reco
 
 The prior gate is now satisfied by the public-host closure captured in the Phase 1 handoff and the promoted-host proof recorded in `apps/operations-web/DEPLOYMENT_VALIDATION.md`.
 
-This phase remains the active relay lane.
+This phase is now closed PASS.
 
-Its first bounded compare slice is now closed PASS in repo and captured in the completion handoff linked above.
+Its first bounded compare slice is closed PASS in repo and on promoted host, captured in the completion handoff linked above and in the resolved hosted-recovery record `ops/agents/handoffs/2026-05-03-tcc-relay-phase-2-operations-web-promoted-host-redeploy-blocker-handoff.md`.
 
-The remaining near-term blocker is external to the approved source file surface: the promoted operations-web host still serves a pre-compare-slice bundle and must be redeployed before the promoted-host browser-smoke rerun can pass.
-
-Implementation remains bounded by the existing execution packet:
+Phase 2 closure remains bounded by the existing execution packet:
 
 1. keep changes inside the approved `apps/operations-web` file surface,
 2. do not widen backend routes, schema, or relay evaluator placement,
@@ -68,14 +66,12 @@ It narrows the first adoption slice to:
 
 ## Immediate execution checklist
 
-Use the Phase 2 execution packet as the exact implementation boundary.
+Phase 2 no longer needs an execution checklist.
 
-Do this next:
+Use this closure state instead:
 
-1. treat the first compare-oriented implementation slice as already completed in repo per `ops/agents/handoffs/2026-05-03-tcc-relay-phase-2-first-compare-slice-implementation-completion-handoff.md`,
-2. open `ops/agents/handoffs/2026-05-03-tcc-relay-phase-2-operations-web-promoted-host-redeploy-blocker-handoff.md` for the current promoted-host redeploy blocker state,
-3. clear the current deployment blocker named there before attempting another forced production redeploy,
-4. only after that blocker is cleared and a new deployment succeeds, rerun `node apps/operations-web/scripts/smoke-promoted-host.mjs --operations-web-base-url https://operations.apexpowerops.com --control-plane-base-url https://control.apexpowerops.com --skip-authenticated-checks`,
-5. confirm the hosted browser-smoke step now sees `Search Relay Sections` and the labeled compare views,
-6. keep any further widening bounded to `apps/operations-web/app/relay-resource-explorer.tsx`, `apps/operations-web/app/page.tsx`, `apps/operations-web/app/globals.css`, `apps/operations-web/lib/relay-resources.ts`, and `apps/operations-web/tests/browser-shell.smoke.spec.ts` unless a later packet widens scope,
-7. continue to forbid writes, recommendations, optimizer behavior, browser-side relay math, and browser-direct database access.
+1. treat the first compare-oriented implementation slice as fully completed and publicly validated per `ops/agents/handoffs/2026-05-03-tcc-relay-phase-2-first-compare-slice-implementation-completion-handoff.md`,
+2. treat `ops/agents/handoffs/2026-05-03-tcc-relay-phase-2-operations-web-promoted-host-redeploy-blocker-handoff.md` as a closed recovery record, not as an active blocker route,
+3. keep any later browser widening bounded to the approved `apps/operations-web` file surface unless a later packet widens scope,
+4. continue to forbid writes, recommendations, optimizer behavior, browser-side relay math, and browser-direct database access inside any later browser lane,
+5. open the next truthful relay move in Phase 3 design space only.

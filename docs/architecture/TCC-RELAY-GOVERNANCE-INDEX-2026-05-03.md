@@ -108,20 +108,24 @@ The current relay lane state is:
 
 1. the five-tranche implementation ladder is closed PASS,
 2. Phase 1 hosted proof is closed PASS,
-3. the first bounded Phase 2 compare slice is closed PASS in repo,
-4. the remaining open operational blocker for that slice is promoted-host redeploy plus rerun because the current hosted bundle predates `Search Relay Sections`,
-5. write workflow design and deferred enrichment remain later separately governed phases.
+3. the first bounded Phase 2 compare slice is closed PASS in repo and on promoted host,
+4. the next truthful relay move is Phase 3 write-workflow design authoring in design space only,
+5. deferred enrichment remains a later separately governed phase.
 
 Current post-ladder authority and execution surfaces:
 
 1. `Platform-Authority/TCC-RELAY-POST-LADDER-PHASE-1-HOSTED-PROOF-AND-PROMOTION-PACKET-2026-04-30.md`
 2. `Platform-Authority/TCC-RELAY-POST-LADDER-PHASE-2-BROWSER-SURFACE-WIDENING-SCOPING-PACKET-2026-04-30.md`
 3. `Platform-Authority/TCC-RELAY-POST-LADDER-PHASE-2-BROWSER-SURFACE-WIDENING-EXECUTION-PACKET-2026-05-01.md`
-4. `ops/agents/handoffs/2026-04-30-tcc-relay-post-ladder-phase-1-hosted-proof-and-promotion-preflight-handoff.md`
-5. `ops/agents/handoffs/2026-04-30-tcc-relay-post-ladder-phase-2-browser-surface-widening-handoff.md`
-6. `docs/architecture/TCC-RELAY-EXPLORATORY-COMPARE-CONCEPT-ADOPTION-MEMO-2026-05-03.md`
-7. `ops/agents/handoffs/2026-05-03-tcc-relay-phase-2-first-compare-slice-implementation-handoff.md`
-8. `ops/agents/handoffs/2026-05-03-tcc-relay-phase-2-first-compare-slice-implementation-completion-handoff.md`
+4. `Platform-Authority/TCC-RELAY-POST-LADDER-PHASE-3-WRITE-WORKFLOW-DESIGN-SCOPING-PACKET-2026-04-30.md`
+5. `Platform-Authority/TCC-RELAY-POST-LADDER-PHASE-3-WRITE-WORKFLOW-DESIGN-EXECUTION-PACKET-2026-05-03.md`
+6. `ops/agents/handoffs/2026-04-30-tcc-relay-post-ladder-phase-1-hosted-proof-and-promotion-preflight-handoff.md`
+7. `ops/agents/handoffs/2026-04-30-tcc-relay-post-ladder-phase-2-browser-surface-widening-handoff.md`
+8. `docs/architecture/TCC-RELAY-EXPLORATORY-COMPARE-CONCEPT-ADOPTION-MEMO-2026-05-03.md`
+9. `ops/agents/handoffs/2026-05-03-tcc-relay-phase-2-first-compare-slice-implementation-handoff.md`
+10. `ops/agents/handoffs/2026-05-03-tcc-relay-phase-2-first-compare-slice-implementation-completion-handoff.md`
+11. `ops/agents/handoffs/2026-05-03-tcc-relay-phase-2-operations-web-promoted-host-redeploy-blocker-handoff.md`
+12. `ops/agents/handoffs/2026-05-03-tcc-relay-phase-3-write-workflow-design-authoring-handoff.md`
 
 Current feature-intake surface for relay compare expansion:
 
@@ -154,15 +158,15 @@ If you need to answer a relay governance question, use this order:
 If you need to execute current relay work, use this order:
 
 1. open `Platform-Authority/TCC-RELAY-POST-LADDER-PHASE-2-BROWSER-SURFACE-WIDENING-EXECUTION-PACKET-2026-05-01.md`,
-2. open `ops/agents/handoffs/2026-04-30-tcc-relay-post-ladder-phase-2-browser-surface-widening-handoff.md`,
-3. open `ops/agents/handoffs/2026-05-03-tcc-relay-phase-2-first-compare-slice-implementation-completion-handoff.md` to see what already closed PASS in repo and what remains externally blocked,
-4. open `ops/agents/handoffs/2026-05-03-tcc-relay-phase-2-operations-web-promoted-host-redeploy-blocker-handoff.md` to see the current production redeploy blocker and the verified failed Vercel commands,
-5. clear the current deployment blocker recorded there before attempting another production redeploy,
-6. only after the redeploy succeeds, rerun `node apps/operations-web/scripts/smoke-promoted-host.mjs --operations-web-base-url https://operations.apexpowerops.com --control-plane-base-url https://control.apexpowerops.com --skip-authenticated-checks`,
-7. keep any further implementation edits bounded to the approved `apps/operations-web` surface unless a later packet widens scope.
+2. open `ops/agents/handoffs/2026-05-03-tcc-relay-phase-2-first-compare-slice-implementation-completion-handoff.md` to see the final Phase 2 proof floor,
+3. open `ops/agents/handoffs/2026-05-03-tcc-relay-phase-2-operations-web-promoted-host-redeploy-blocker-handoff.md` only as the closed hosted-recovery record,
+4. open `Platform-Authority/TCC-RELAY-POST-LADDER-PHASE-3-WRITE-WORKFLOW-DESIGN-SCOPING-PACKET-2026-04-30.md`,
+5. open `Platform-Authority/TCC-RELAY-POST-LADDER-PHASE-3-WRITE-WORKFLOW-DESIGN-EXECUTION-PACKET-2026-05-03.md`,
+6. open `ops/agents/handoffs/2026-05-03-tcc-relay-phase-3-write-workflow-design-authoring-handoff.md`,
+7. keep work in authority and handoff design surfaces only unless a later packet explicitly opens implementation.
 
 ## Bottom Line
 
 The TCC relay lane has governance and guidelines, but they are packetized.
 
-The current master governance surface is the root `Platform-Authority` relay packet stack, with `Packet 007` acting as the top-level post-ladder authority and the Phase 2 execution packet acting as the current active execution guide.
+The current master governance surface is the root `Platform-Authority` relay packet stack, with `Packet 007` acting as the top-level post-ladder authority, Phase 2 acting as the closed read-only browser proof floor, and the Phase 3 design execution packet acting as the current active guide.

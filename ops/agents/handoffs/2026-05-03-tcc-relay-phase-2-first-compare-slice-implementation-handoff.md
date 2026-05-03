@@ -1,7 +1,7 @@
 # TCC Relay Phase 2 First Compare Slice Implementation Handoff
 
 Date: 2026-05-03
-Status: Closed PASS in repo; promoted-host browser-smoke rerun remains externally blocked on redeploy of the hosted operations-web bundle
+Status: Closed PASS in repo and on promoted host; compare slice now validated end to end after 2026-05-03 hosted recovery
 Execution instance: Claude Code
 Scope: implement the first bounded Phase 2 compare-oriented browser slice in `apps/operations-web` using the exploratory compare memo as product guidance without widening the existing relay authority boundary
 
@@ -29,9 +29,11 @@ It does not reopen writes, browser-side relay math, optimizer behavior, or schem
 
 ## Execution Order
 
-This execution order is now completed in repo. The resulting closure is recorded in the completion handoff above.
+This execution order is now completed and publicly validated. The resulting closure is recorded in the completion handoff above, with hosted recovery proof now green.
 
-The remaining next action is external to this implementation handoff: redeploy the promoted operations-web host and rerun the promoted-host smoke script.
+No further Phase 2 implementation action is open by default from this handoff.
+
+The next truthful relay move is the separately governed Phase 3 write-workflow design authoring lane.
 
 The completed implementation order was:
 
@@ -80,7 +82,7 @@ The following remain out of scope for this slice:
 
 ## Validation Requirements
 
-These validations were completed for the repo closure; see the completion handoff for exact results. The promoted-host browser-smoke rerun remains blocked until the host is redeployed from current source.
+These validations are now all complete; see the completion handoff for exact results, including the final promoted-host green proof after the hosted deployment recovery.
 
 The required validation set for this handoff was:
 
@@ -91,7 +93,7 @@ The required validation set for this handoff was:
 
 ## Required Output
 
-Implementation and validation are complete in repo. The dated closure handoff written for this execution is:
+Implementation and validation are complete. The dated closure handoff written for this execution is:
 
 `ops/agents/handoffs/2026-05-03-tcc-relay-phase-2-first-compare-slice-implementation-completion-handoff.md`
 

@@ -1,7 +1,7 @@
 # TCC Relay Phase 2 First Compare Slice Implementation — Completion Handoff
 
 Date: 2026-05-03
-Status: Slice closed PASS in repo; promoted-host browser-smoke step BLOCKED on a pre-existing deploy gap that is independent of this slice
+Status: Slice closed PASS in repo and on promoted host after 2026-05-03 hosted deployment recovery
 Authority: governed by the Phase 2 packet stack listed below
 
 ## Authority
@@ -19,7 +19,7 @@ If any summary here conflicts with the root `Platform-Authority` packet stack, t
 
 ## Scope Of This Closure
 
-This closure records the first bounded Phase 2 compare-oriented browser slice landing inside the approved `apps/operations-web` file surface, validated locally end-to-end, with the hosted browser-smoke step still blocked by a pre-existing deploy gap that this slice cannot resolve.
+This closure records the first bounded Phase 2 compare-oriented browser slice landing inside the approved `apps/operations-web` file surface, validated locally end-to-end, and then validated again on the promoted host after the hosted deployment recovery completed on 2026-05-03.
 
 This slice does not:
 
@@ -116,21 +116,18 @@ Result: PASS.
 
 ### 4. `node apps/operations-web/scripts/smoke-promoted-host.mjs --operations-web-base-url https://operations.apexpowerops.com --control-plane-base-url https://control.apexpowerops.com --skip-authenticated-checks`
 
-Three sub-steps:
+Final production rerun after the 2026-05-03 hosted deployment recovery:
 
-1. `backend-seam` against `https://control.apexpowerops.com`: `RESULT PASS` (OPENAPI 200, governed apparatus 404 handler-owned, unauthenticated relay-task-packets 401 with governed `Bearer resource_metadata` header).
-2. `hosted-routes` against `https://operations.apexpowerops.com`: `SMOKE_SUMMARY failed=0 passed=8` covering `/`, `/integration-dashboard/index.html`, `/lead-ops/index.html`, `/pm-review/index.html`, `/pm-review/approval-surface.html`, `/pm-review/schedule.html`, `/pm-review/tracer.html`, and `/pm-review/variance.html`.
-3. `browser-smoke` against `https://operations.apexpowerops.com`: 1 of 3 tests passed (`re-homed browser surfaces render their expected headings`); the two relay tests timed out at 30s waiting for `getByRole('button', { name: 'Search Relay Sections' })`.
+1. `backend-seam` against `https://control.apexpowerops.com`: `RESULT PASS`.
+2. `hosted-routes` against `https://operations.apexpowerops.com`: `SMOKE_SUMMARY failed=0 passed=8`.
+3. `browser-smoke` against `https://operations.apexpowerops.com`: all 3 tests passed, including the relay compare assertions that look for `Search Relay Sections` and the labeled `Context`, `Settings`, and `Preview` views.
+4. final wrapper summary: `PROMOTED_HOST_SUMMARY failed=0`.
 
-Diagnosis: The deployed hosted bundle on `https://operations.apexpowerops.com` is a pre-compare-slice build whose `RelayResourceExplorer` only exposes `Load Resources` and `Load Relay Preview` buttons — not `Search Relay Sections`. This pre-dates the relay landing in commit `a99d207`'s current shape and pre-dates this slice. The `hosted-routes` step still passes because its marker is the static "Validation Surface" string, not the relay button text. Curl of the hosted root confirms the hosted HTML contains the older copy "Search the governed relay catalog to load one " rather than the current "Search the governed relay catalog to choose one TD-section, then optionally add one compare section..." copy.
+Hosted recovery dependency that cleared the earlier browser-smoke gap:
 
-The hosted browser-smoke step therefore cannot pass against the current host until that host is redeployed from current `main`. The repo-side closure of this slice is not contingent on that redeploy because:
-
-1. the slice's local typecheck, build, and focused browser smoke all PASS,
-2. the slice does not widen the authority boundary,
-3. the hosted gap pre-exists this slice's edits and would block the same step regardless of whether this slice landed.
-
-A dedicated promoted-host redeploy step is the correct next operational action; it is outside the bounded `apps/operations-web` source-file surface this handoff governs.
+1. the Vercel project `rootDirectory` was restored to `apex-power-ops-platform/apps/operations-web` relative to the true git root `C:/APEX Platform`,
+2. commit `2b572b3` (`fix(operations-web): align Vercel trace root`) moved `outputFileTracingRoot` and `turbopack.root` to the true repo root so Next runtime packaging succeeded on Vercel,
+3. the resulting ready deployment was promoted to production as `dpl_2emJi8u3ZuMMKb42hDrWjo9Kxg5R`.
 
 ## Disposition
 
@@ -138,16 +135,13 @@ A dedicated promoted-host redeploy step is the correct next operational action; 
 2. `typecheck`: PASS.
 3. `build`: PASS.
 4. Focused browser smoke (local): PASS, 3/3.
-5. Promoted-host script:
-   - backend seam: PASS,
-   - hosted routes: PASS (8/8),
-   - hosted browser-smoke: BLOCKED on a pre-existing hosted-bundle deploy gap; not a regression caused by this slice.
+5. Promoted-host script: PASS end to end against the production alias after the hosted deployment recovery.
 6. Cross-reference from the active Phase 2 handoff to the exploratory compare memo: preserved (already present in the uncommitted edits to `2026-04-30-tcc-relay-post-ladder-phase-2-browser-surface-widening-handoff.md` and unchanged by this slice).
 
-Overall: this slice closes PASS in repo. The hosted browser-smoke step remains BLOCKED until `https://operations.apexpowerops.com` is redeployed from the current `apps/operations-web` source so that the deployed bundle exposes the explicit two-sided TD-section selection surface.
+Overall: this slice closes PASS in repo and on promoted host. The earlier hosted gap is resolved and no longer blocks Phase 2 closure.
 
 ## Recommended Next Actions
 
-1. Trigger a redeploy of the operations-web app on the promoted host so the hosted bundle picks up both the prior `a99d207` relay landing and this slice's compare-view labeling.
-2. Re-run `node apps/operations-web/scripts/smoke-promoted-host.mjs ...` after the redeploy to convert the hosted browser-smoke step from BLOCKED to PASS.
+1. Treat the first bounded Phase 2 compare slice as fully closed and promoted-host validated.
+2. Open the Phase 3 write-workflow design lane in design space only if relay users now need persisted comparisons, saved studies, or authored relay workflow state.
 3. Continue to treat the exploratory compare memo's `Defer Later` and `Reject For Current Lane` items as out of scope until a later authority packet explicitly opens them.
