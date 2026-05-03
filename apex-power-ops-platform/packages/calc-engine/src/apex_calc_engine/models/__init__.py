@@ -54,6 +54,25 @@ from .user import (
     TestResult,
 )
 
+from .relay import (
+    RelayTDSection,
+    RelayCurveIEC,
+    RelayCurveSWZ,
+    RelayCurveBSL,
+    RelayCurveMEQ,
+    RelayCurvePCD,
+    RelayCurveLRM,
+    RelayCurveRXD,
+    RelayCurveEGC,
+    RelayCurveTCP,
+    RelayCurveRowIEC,
+    RelayCurveRowSWZ,
+    RelayCurveRowBSL,
+    RelayCurveRowMEQ,
+    RelayCurveRowPCD,
+    RelayCurvePointTCP,
+)
+
 __all__ = [
     'Base',
     'Manufacturer',
@@ -83,4 +102,20 @@ __all__ = [
     'ETUSensorMaint',
     'TestPlan',
     'TestResult',
+    'RelayTDSection',
+    'RelayCurveIEC',
+    'RelayCurveSWZ',
+    'RelayCurveBSL',
+    'RelayCurveMEQ',
+    'RelayCurvePCD',
+    'RelayCurveLRM',
+    'RelayCurveRXD',
+    'RelayCurveEGC',
+    'RelayCurveTCP',
+    'RelayCurveRowIEC',
+    'RelayCurveRowSWZ',
+    'RelayCurveRowBSL',
+    'RelayCurveRowMEQ',
+    'RelayCurveRowPCD',
+    'RelayCurvePointTCP',
 ]

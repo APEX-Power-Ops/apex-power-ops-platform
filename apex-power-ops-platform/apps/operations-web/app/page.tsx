@@ -1,5 +1,6 @@
 import { browserEnv, hasSupabaseBrowserConfig } from '../lib/browser-env'
 import { ApparatusResourceExplorer } from './apparatus-resource-explorer'
+import { RelayResourceExplorer } from './relay-resource-explorer'
 
 const shellChecks = [
   {
@@ -19,11 +20,17 @@ const shellChecks = [
     status: 'backend-routed',
     detail: 'The first live read now flows through a governed control-plane route rather than direct browser database admission.',
   },
+  {
+    label: 'Relay browser slice',
+    status: 'backend-routed',
+    detail: 'Relay browse and preview now stay inside the browser shell by consuming the mounted read-only relay API.',
+  },
 ]
 
 const nextMoves = [
   'Use bounded backend seams for additional live reads instead of widening direct browser database authority.',
   'Exercise the new apparatus study-resource route against a migrated host surface when runtime proof is needed.',
+  'Keep relay preview source-faithful by surfacing storage-kind identity and unsupported warnings rather than simplifying them away.',
   'Keep the legacy Supabase browser client deferred until a separate client-shape admission decision lands.',
 ]
 
@@ -57,7 +64,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="status-grid">
+      <section className="status-grid status-grid-wide">
         {shellChecks.map((item) => (
           <article key={item.label} className="status-card">
             <div className="status-row">
@@ -76,6 +83,7 @@ export default function HomePage() {
             <li>Creates a governed frontend package and source tree.</li>
             <li>Establishes the first browser-side environment contract.</li>
             <li>Consumes the first live study-resource read through the governed control-plane API.</li>
+            <li>Consumes the bounded relay discovery, context, settings, and preview seam through the same governed API boundary.</li>
             <li>Hosts the preserved cross-surface validation dashboard at /integration-dashboard/index.html.</li>
             <li>Hosts the re-homed lead operations prototype at /lead-ops/index.html.</li>
             <li>Hosts the first re-homed PM read-only review slice at /pm-review/index.html.</li>
@@ -122,6 +130,7 @@ export default function HomePage() {
       </section>
 
       <ApparatusResourceExplorer />
+      <RelayResourceExplorer />
     </main>
   )
 }

@@ -1,0 +1,108 @@
+{
+  "fixtures": [
+    {
+      "family": "IEC",
+      "curve_name": "IEC Very Inverse",
+      "source_row_id": 20201,
+      "parent_source_id": 10101,
+      "time_dial": 1.0,
+      "coefficients": {
+        "v_k": 13.5,
+        "v_e": 1.0
+      },
+      "current_multiples": [2.0, 3.0, 10.0],
+      "expected_seconds": [13.5, 6.75, 1.5]
+    },
+    {
+      "family": "IEC",
+      "curve_name": "IEC Definite Tail",
+      "source_row_id": 20202,
+      "parent_source_id": 10102,
+      "time_dial": 1.0,
+      "coefficients": {
+        "v_k": 1.0,
+        "v_e": 1.0,
+        "dt_after": 10.0,
+        "dt_min_time": 0.2
+      },
+      "current_multiples": [2.0, 20.0, 40.0],
+      "expected_seconds": [1.0, 0.2, 0.2]
+    },
+    {
+      "family": "SWZ",
+      "curve_name": "SWZ EI",
+      "source_row_id": 20501,
+      "parent_source_id": 10501,
+      "time_dial": 1.0,
+      "coefficients": {
+        "v_a": 0.12,
+        "v_b": 28.2,
+        "v_e": 2.0
+      },
+      "current_multiples": [2.0, 3.0, 10.0],
+      "expected_seconds": [9.52, 3.645, 0.4048484848]
+    },
+    {
+      "family": "BSL",
+      "curve_name": "ANSI Ext Inv",
+      "source_row_id": 20401,
+      "parent_source_id": 10401,
+      "time_dial": 1.0,
+      "coefficients": {
+        "v_a": 28.2,
+        "v_b": 0.12,
+        "v_c": 1.0,
+        "v_n": 2.0,
+        "v_k": 0.0
+      },
+      "current_multiples": [2.0, 3.0, 10.0],
+      "expected_seconds": [9.52, 3.645, 0.4048484848]
+    },
+    {
+      "family": "MEQ",
+      "curve_name": "MEQ EI",
+      "source_row_id": 20301,
+      "parent_source_id": 10301,
+      "time_dial": 1.0,
+      "coefficients": {
+        "v_a": 0.03,
+        "v_b": 0.22,
+        "v_c": 0.5,
+        "v_d": 3.0,
+        "v_e": 0.72
+      },
+      "current_multiples": [2.0, 3.0, 10.0],
+      "expected_seconds": [1.7233333333, 0.64408, 0.0872386645]
+    },
+    {
+      "family": "PCD",
+      "curve_name": "PCD Ext Inverse",
+      "source_row_id": 20601,
+      "parent_source_id": 10601,
+      "time_dial": 1.0,
+      "coefficients": {
+        "v_a": 6.47,
+        "v_b": 0.02,
+        "v_c": 1.0
+      },
+      "current_multiples": [2.0, 3.0, 10.0],
+      "expected_seconds": [6.49, 3.255, 0.7388888889]
+    },
+    {
+      "family": "TCP",
+      "curve_name": "TCP Log Interpolation",
+      "source_row_id": 20101,
+      "parent_source_id": 10701,
+      "time_dial": 1.0,
+      "source_ordinal": 1,
+      "label": "A",
+      "points": [
+        {"current_multiple": 10.0, "trip_time_seconds": 1.0},
+        {"current_multiple": 100.0, "trip_time_seconds": 0.1},
+        {"current_multiple": 1000.0, "trip_time_seconds": 0.01}
+      ],
+      "current_multiples": [10.0, 31.6227766017, 100.0, 316.2277660168, 1000.0],
+      "expected_seconds": [1.0, 0.316227766, 0.1, 0.0316227766, 0.01]
+    }
+  ]
+}

@@ -15,7 +15,7 @@ the SQLAlchemy model layer.
 
 import json
 import logging
-from collections import Counter
+from collections import Counter, defaultdict
 from decimal import Decimal
 from typing import Optional
 from uuid import UUID
@@ -24,7 +24,15 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func, text
 from sqlalchemy.exc import NoResultFound
 
-from apex_calc_engine.services.calc_engine import TMTCurveGenerator
+from apex_calc_engine.services.calc_engine import (
+    RelayCurveDefinition,
+    RelayCurvePoint,
+    RelayEvaluationStatus,
+    RelayFormulaCode,
+    TMTCurveGenerator,
+    evaluate_curve_definition,
+    family_from_model_code,
+)
 from config import get_db
 from models.breakers import BrkICCBStyle, BrkMCCBStyle, BrkPCBStyle
 from models.tmt import TMTFrame
@@ -64,6 +72,20 @@ from .schemas import (
     EMTPlotMeta,
     EMTPlotRequest,
     EMTPlotResponse,
+    RelayContext,
+    RelayCurveParentOption,
+    RelayLineSectionSummary,
+    RelayPlotCurve,
+    RelayPlotCurvePoint,
+    RelayPlotMeta,
+    RelayPlotRequest,
+    RelayPlotResponse,
+    RelayPreviewOption,
+    RelayRangeDiscreteValue,
+    RelayRangeOption,
+    RelaySectionSearchResponse,
+    RelaySectionSearchResult,
+    RelaySettingsResponse,
     EMTFrameSearchResponse,
     EMTFrameSearchResult,
     EMTPickupOption,
@@ -92,6 +114,65 @@ _PICKUP_TABLES = {
     "stpu": "tcc_etu_stpu_pickups",
     "inst": "tcc_etu_inst_pickups",
     "gfpu": "tcc_etu_gfpu_pickups",
+}
+
+_RELAY_SUPPORTED_MODEL_CODES = {1, 2, 3, 4, 5, 6}
+_RELAY_UNSUPPORTED_MODEL_CODES = {7, 8, 9}
+_RELAY_FAMILY_NAMES = {
+    0: "unknown",
+    1: "tcp",
+    2: "iec",
+    3: "meq",
+    4: "bsl",
+    5: "swz",
+    6: "pcd",
+    7: "rxd",
+    8: "lrm",
+    9: "egc",
+}
+_RELAY_STORAGE_KINDS = {
+    0: "unknown",
+    1: "points",
+    2: "constants",
+    3: "constants",
+    4: "constants",
+    5: "constants",
+    6: "constants",
+    7: "unsupported",
+    8: "unsupported",
+    9: "unsupported",
+}
+_RELAY_ANALYTICAL_FAMILY_CONFIG = {
+    2: {
+        "parent_table": "work.tcc_relay_curves_iec",
+        "row_table": "work.tcc_relay_curve_rows_iec",
+        "parent_pk": "relay_curve_iec_id",
+        "coefficients": ("v_k", "v_e", "dt_after", "dt_min_time"),
+    },
+    3: {
+        "parent_table": "work.tcc_relay_curves_meq",
+        "row_table": "work.tcc_relay_curve_rows_meq",
+        "parent_pk": "relay_curve_meq_id",
+        "coefficients": ("v_a", "v_b", "v_c", "v_d", "v_e"),
+    },
+    4: {
+        "parent_table": "work.tcc_relay_curves_bsl",
+        "row_table": "work.tcc_relay_curve_rows_bsl",
+        "parent_pk": "relay_curve_bsl_id",
+        "coefficients": ("v_a", "v_b", "v_c", "v_d", "v_n", "v_k", "v_r"),
+    },
+    5: {
+        "parent_table": "work.tcc_relay_curves_swz",
+        "row_table": "work.tcc_relay_curve_rows_swz",
+        "parent_pk": "relay_curve_swz_id",
+        "coefficients": ("v_a", "v_b", "v_e"),
+    },
+    6: {
+        "parent_table": "work.tcc_relay_curves_pcd",
+        "row_table": "work.tcc_relay_curve_rows_pcd",
+        "parent_pk": "relay_curve_pcd_id",
+        "coefficients": ("v_a", "v_b", "v_c"),
+    },
 }
 
 
@@ -212,6 +293,592 @@ def _build_emt_resolved_equipment_summary(bundle: dict[str, object]) -> Resolved
             section_name=bundle.get("section_name"),
         ),
     )
+
+
+def _relay_family_name(model_code: int) -> str:
+    return _RELAY_FAMILY_NAMES.get(int(model_code), f"model_{model_code}")
+
+
+def _relay_storage_kind(model_code: int) -> str:
+    return _RELAY_STORAGE_KINDS.get(int(model_code), "unknown")
+
+
+def _relay_is_supported(model_code: int) -> bool:
+    return int(model_code) in _RELAY_SUPPORTED_MODEL_CODES
+
+
+def _relay_unsupported_reason(model_code: int) -> Optional[str]:
+    family_name = _relay_family_name(model_code)
+    if int(model_code) in _RELAY_UNSUPPORTED_MODEL_CODES:
+        return f"{family_name} relay family remains explicitly unsupported in Tranche 4."
+    if int(model_code) == 0:
+        return "Relay TD-section model code 0 does not identify a previewable curve family."
+    return None
+
+
+def _build_relay_resolved_equipment_summary(bundle: dict[str, object]) -> ResolvedEquipmentSummary:
+    primary_label = _join_summary_label(bundle.get("relay_type"), bundle.get("device_function"))
+    secondary_label = _join_summary_label(bundle.get("td_section_name"), _relay_family_name(int(bundle["family_code"])).upper())
+    rating_label = _join_summary_label("Section", bundle.get("td_section_name"))
+    return ResolvedEquipmentSummary(
+        family="relay",
+        family_label="Relay",
+        resolved_id=f"relay_td_section:{bundle['td_section_source_id']}",
+        primary_label=primary_label or rating_label,
+        secondary_label=secondary_label or rating_label,
+        breaker_context=ResolvedBreakerContext(
+            label=primary_label,
+            source="relay_catalog",
+            type_name=bundle.get("relay_type"),
+        ),
+        rating_context=ResolvedRatingContext(
+            label=rating_label,
+            section_name=bundle.get("td_section_name"),
+        ),
+    )
+
+
+def _load_relay_base_bundle(db: Session, td_section_source_id: int) -> dict[str, object]:
+    row = db.execute(
+        text(
+            """
+            SELECT
+                r.manufacturer_source_id,
+                r.relay_type,
+                d.relay_device_id,
+                d.source_row_id AS relay_device_source_id,
+                d.device_function,
+                d.ordinal AS device_ordinal,
+                d.standard_code,
+                d.dftype_code,
+                d.voltage_restraint_kind::text AS voltage_restraint_kind,
+                t.source_row_id AS td_section_source_id,
+                t.section_name AS td_section_name,
+                t.model_code AS family_code
+            FROM work.tcc_relay_td_sections t
+            JOIN work.tcc_relay_devices d ON d.relay_device_id = t.relay_device_id
+            JOIN work.tcc_relays r ON r.relay_id = d.relay_id
+            WHERE t.source_row_id = :td_section_source_id
+            """
+        ),
+        {"td_section_source_id": td_section_source_id},
+    ).one_or_none()
+
+    if row is None:
+        raise HTTPException(status_code=404, detail=f"Relay TD-section {td_section_source_id} not found")
+
+    bundle = _normalize_mapping(_row_mapping(row))
+    bundle["family_name"] = _relay_family_name(int(bundle["family_code"]))
+    bundle["storage_kind"] = _relay_storage_kind(int(bundle["family_code"]))
+    bundle["supported"] = _relay_is_supported(int(bundle["family_code"]))
+    bundle["unsupported_reason"] = _relay_unsupported_reason(int(bundle["family_code"]))
+    bundle["resolved_equipment"] = _build_relay_resolved_equipment_summary(bundle)
+    return bundle
+
+
+def _load_relay_line_sections(db: Session, relay_device_id: str) -> list[dict[str, object]]:
+    rows = db.execute(
+        text(
+            """
+            SELECT
+                source_row_id AS line_section_source_id,
+                section_number,
+                section_name,
+                pickup,
+                secondary_i_code,
+                amps_calc_mode,
+                use_toc_multiplier
+            FROM work.tcc_relay_line_sections
+            WHERE relay_device_id = :relay_device_id
+            ORDER BY section_number, source_row_id
+            """
+        ),
+        {"relay_device_id": relay_device_id},
+    ).fetchall()
+    return [_normalize_mapping(_row_mapping(row)) for row in rows]
+
+
+def _load_relay_ranges(db: Session, relay_device_id: str, td_section_source_id: int) -> list[dict[str, object]]:
+    rows = db.execute(
+        text(
+            """
+            SELECT
+                r.source_row_id AS range_source_id,
+                r.source_parent_id,
+                r.parent_kind::text AS parent_kind,
+                COALESCE(ls.section_name, ts.section_name) AS parent_label,
+                r.aux_key,
+                r.ordinal,
+                r.min_value,
+                r.max_value,
+                r.step_value,
+                r.relative_unit_code,
+                r.use_range,
+                r.scales_with_time_multiplier
+            FROM work.tcc_relay_ranges r
+            LEFT JOIN work.tcc_relay_line_sections ls ON ls.source_row_id = r.line_section_source_id
+            LEFT JOIN work.tcc_relay_td_sections ts ON ts.source_row_id = r.td_section_source_id
+            WHERE r.td_section_source_id = :td_section_source_id
+               OR r.line_section_source_id IN (
+                    SELECT source_row_id
+                    FROM work.tcc_relay_line_sections
+                    WHERE relay_device_id = :relay_device_id
+               )
+            ORDER BY r.parent_kind, r.source_parent_id, r.aux_key, r.ordinal
+            """
+        ),
+        {
+            "relay_device_id": relay_device_id,
+            "td_section_source_id": td_section_source_id,
+        },
+    ).fetchall()
+    range_rows = [_normalize_mapping(_row_mapping(row)) for row in rows]
+    discrete_rows = db.execute(
+        text(
+            """
+            SELECT
+                r.source_row_id AS range_source_id,
+                d.discrete_value,
+                d.discrete_description
+            FROM work.tcc_relay_ranges r
+            JOIN work.tcc_relay_discrete_values d ON d.relay_range_id = r.relay_range_id
+            WHERE r.td_section_source_id = :td_section_source_id
+               OR r.line_section_source_id IN (
+                    SELECT source_row_id
+                    FROM work.tcc_relay_line_sections
+                    WHERE relay_device_id = :relay_device_id
+               )
+            ORDER BY r.source_row_id, d.discrete_value NULLS LAST, d.discrete_description
+            """
+        ),
+        {
+            "relay_device_id": relay_device_id,
+            "td_section_source_id": td_section_source_id,
+        },
+    ).fetchall()
+    discrete_by_range: dict[int, list[dict[str, object]]] = defaultdict(list)
+    for row in discrete_rows:
+        payload = _normalize_mapping(_row_mapping(row))
+        discrete_by_range[int(payload["range_source_id"])] .append(
+            {
+                "value": payload.get("discrete_value"),
+                "description": payload.get("discrete_description"),
+            }
+        )
+
+    for range_row in range_rows:
+        range_row["discrete_values"] = discrete_by_range.get(int(range_row["range_source_id"]), [])
+    return range_rows
+
+
+def _load_relay_analytical_preview_surface(db: Session, td_section_source_id: int, family_code: int) -> tuple[list[dict[str, object]], list[dict[str, object]]]:
+    config = _RELAY_ANALYTICAL_FAMILY_CONFIG[int(family_code)]
+    coefficient_columns = ",\n                ".join(f"rows.{column}" for column in config["coefficients"])
+    rows = db.execute(
+        text(
+            f"""
+            SELECT
+                parents.source_row_id AS curve_parent_source_id,
+                parents.min_pickup,
+                parents.max_pickup,
+                rows.curve_name,
+                rows.ordinal AS curve_ordinal,
+                {coefficient_columns}
+            FROM {config['parent_table']} parents
+            JOIN {config['row_table']} rows ON rows.{config['parent_pk']} = parents.{config['parent_pk']}
+            WHERE parents.relay_td_section_source_id = :td_section_source_id
+            ORDER BY parents.source_row_id, rows.ordinal
+            """
+        ),
+        {"td_section_source_id": td_section_source_id},
+    ).fetchall()
+
+    preview_rows = [_normalize_mapping(_row_mapping(row)) for row in rows]
+    parent_rows: dict[int, dict[str, object]] = {}
+    parent_counts: Counter[int] = Counter()
+    for preview_row in preview_rows:
+        parent_source_id = int(preview_row["curve_parent_source_id"])
+        parent_counts[parent_source_id] += 1
+        parent_rows.setdefault(
+            parent_source_id,
+            {
+                "curve_parent_source_id": parent_source_id,
+                "storage_kind": "constants",
+                "curve_name": None,
+                "curve_parent_ordinal": None,
+                "min_pickup": preview_row.get("min_pickup"),
+                "max_pickup": preview_row.get("max_pickup"),
+                "is_discrete": None,
+                "step_size": None,
+                "horizontal_amps_code": None,
+                "preview_option_count": 0,
+            },
+        )
+        preview_row["storage_kind"] = "constants"
+        preview_row["source_ordinal"] = None
+        preview_row["time_dial"] = None
+        preview_row["td_desc"] = None
+        preview_row["point_count"] = None
+        preview_row["current_min"] = preview_row.get("min_pickup")
+        preview_row["current_max"] = preview_row.get("max_pickup")
+        preview_row["coefficients"] = {
+            column: preview_row.get(column)
+            for column in config["coefficients"]
+        }
+    for parent_source_id, count in parent_counts.items():
+        parent_rows[parent_source_id]["preview_option_count"] = count
+    return list(parent_rows.values()), preview_rows
+
+
+def _load_relay_tcp_preview_surface(db: Session, td_section_source_id: int) -> tuple[list[dict[str, object]], list[dict[str, object]]]:
+    rows = db.execute(
+        text(
+            """
+            WITH grouped AS (
+                SELECT
+                    relay_curve_tcp_id,
+                    source_ordinal,
+                    time_dial,
+                    td_desc,
+                    COUNT(*) AS point_count,
+                    MIN(current_value) AS current_min,
+                    MAX(current_value) AS current_max
+                FROM work.tcc_relay_curve_points_tcp
+                GROUP BY relay_curve_tcp_id, source_ordinal, time_dial, td_desc
+            )
+            SELECT
+                parents.source_row_id AS curve_parent_source_id,
+                parents.curve_name,
+                parents.ordinal AS curve_parent_ordinal,
+                parents.is_discrete,
+                parents.step_size,
+                parents.horizontal_amps_code,
+                grouped.source_ordinal,
+                grouped.time_dial,
+                grouped.td_desc,
+                grouped.point_count,
+                grouped.current_min,
+                grouped.current_max
+            FROM work.tcc_relay_curves_tcp parents
+            JOIN grouped ON grouped.relay_curve_tcp_id = parents.relay_curve_tcp_id
+            WHERE parents.relay_td_section_source_id = :td_section_source_id
+            ORDER BY parents.ordinal, grouped.source_ordinal
+            """
+        ),
+        {"td_section_source_id": td_section_source_id},
+    ).fetchall()
+
+    preview_rows = [_normalize_mapping(_row_mapping(row)) for row in rows]
+    parent_rows: dict[int, dict[str, object]] = {}
+    parent_counts: Counter[int] = Counter()
+    for preview_row in preview_rows:
+        parent_source_id = int(preview_row["curve_parent_source_id"])
+        parent_counts[parent_source_id] += 1
+        parent_rows.setdefault(
+            parent_source_id,
+            {
+                "curve_parent_source_id": parent_source_id,
+                "storage_kind": "points",
+                "curve_name": preview_row.get("curve_name"),
+                "curve_parent_ordinal": preview_row.get("curve_parent_ordinal"),
+                "min_pickup": None,
+                "max_pickup": None,
+                "is_discrete": preview_row.get("is_discrete"),
+                "step_size": preview_row.get("step_size"),
+                "horizontal_amps_code": preview_row.get("horizontal_amps_code"),
+                "preview_option_count": 0,
+            },
+        )
+        preview_row["storage_kind"] = "points"
+        preview_row["curve_ordinal"] = None
+        preview_row["coefficients"] = {}
+    for parent_source_id, count in parent_counts.items():
+        parent_rows[parent_source_id]["preview_option_count"] = count
+    return list(parent_rows.values()), preview_rows
+
+
+def _load_relay_settings_bundle(db: Session, td_section_source_id: int) -> dict[str, object]:
+    bundle = _load_relay_base_bundle(db, td_section_source_id)
+    line_sections = _load_relay_line_sections(db, str(bundle["relay_device_id"]))
+    ranges = _load_relay_ranges(db, str(bundle["relay_device_id"]), td_section_source_id)
+
+    family_code = int(bundle["family_code"])
+    if family_code == 1:
+        curve_parents, preview_options = _load_relay_tcp_preview_surface(db, td_section_source_id)
+    elif family_code in _RELAY_ANALYTICAL_FAMILY_CONFIG:
+        curve_parents, preview_options = _load_relay_analytical_preview_surface(db, td_section_source_id, family_code)
+    else:
+        curve_parents, preview_options = [], []
+
+    return {
+        **bundle,
+        "line_sections": line_sections,
+        "ranges": ranges,
+        "curve_parents": curve_parents,
+        "preview_options": preview_options,
+    }
+
+
+def _load_relay_context_bundle(db: Session, td_section_source_id: int) -> dict[str, object]:
+    settings_bundle = _load_relay_settings_bundle(db, td_section_source_id)
+    return {
+        **settings_bundle,
+        "line_section_count": len(settings_bundle["line_sections"]),
+        "range_count": len(settings_bundle["ranges"]),
+        "curve_parent_count": len(settings_bundle["curve_parents"]),
+        "preview_option_count": len(settings_bundle["preview_options"]),
+    }
+
+
+def _search_relay_sections(
+    db: Session,
+    *,
+    relay_type: Optional[str],
+    device_function: Optional[str],
+    family_code: Optional[int],
+    q: Optional[str],
+    supported_only: bool,
+    limit: int,
+) -> list[dict[str, object]]:
+    rows = db.execute(
+        text(
+            """
+            SELECT
+                r.manufacturer_source_id,
+                r.relay_type,
+                d.source_row_id AS relay_device_source_id,
+                d.device_function,
+                d.ordinal AS device_ordinal,
+                d.standard_code,
+                d.dftype_code,
+                d.voltage_restraint_kind::text AS voltage_restraint_kind,
+                t.source_row_id AS td_section_source_id,
+                t.section_name AS td_section_name,
+                t.model_code AS family_code
+            FROM work.tcc_relay_td_sections t
+            JOIN work.tcc_relay_devices d ON d.relay_device_id = t.relay_device_id
+            JOIN work.tcc_relays r ON r.relay_id = d.relay_id
+            WHERE (:relay_type IS NULL OR r.relay_type ILIKE '%' || :relay_type || '%')
+              AND (:device_function IS NULL OR d.device_function ILIKE '%' || :device_function || '%')
+              AND (:family_code IS NULL OR t.model_code = :family_code)
+              AND (
+                    :q IS NULL OR r.relay_type ILIKE '%' || :q || '%'
+                    OR d.device_function ILIKE '%' || :q || '%'
+                    OR COALESCE(t.section_name, '') ILIKE '%' || :q || '%'
+                  )
+              AND (:supported_only = FALSE OR t.model_code IN (1, 2, 3, 4, 5, 6))
+            ORDER BY d.source_row_id, t.source_row_id
+            LIMIT :limit
+            """
+        ),
+        {
+            "relay_type": relay_type,
+            "device_function": device_function,
+            "family_code": family_code,
+            "q": q,
+            "supported_only": supported_only,
+            "limit": limit,
+        },
+    ).fetchall()
+
+    sections = []
+    for row in rows:
+        payload = _normalize_mapping(_row_mapping(row))
+        family_code_value = int(payload["family_code"])
+        payload["family_name"] = _relay_family_name(family_code_value)
+        payload["storage_kind"] = _relay_storage_kind(family_code_value)
+        payload["supported"] = _relay_is_supported(family_code_value)
+        sections.append(payload)
+    return sections
+
+
+def _select_relay_preview_option(
+    *,
+    settings_bundle: dict[str, object],
+    curve_parent_source_id: Optional[int],
+    curve_ordinal: Optional[int],
+    source_ordinal: Optional[int],
+    time_dial: Optional[float],
+) -> tuple[Optional[dict[str, object]], list[str]]:
+    warnings: list[str] = []
+    preview_options = list(settings_bundle["preview_options"])
+    if curve_parent_source_id is not None:
+        preview_options = [
+            option for option in preview_options
+            if int(option["curve_parent_source_id"]) == curve_parent_source_id
+        ]
+        if not preview_options:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    f"Curve parent {curve_parent_source_id} is not available for relay TD-section "
+                    f"{settings_bundle['td_section_source_id']}"
+                ),
+            )
+
+    family_code = int(settings_bundle["family_code"])
+    if family_code == 1:
+        if source_ordinal is not None:
+            selected = next(
+                (option for option in preview_options if int(option["source_ordinal"]) == source_ordinal),
+                None,
+            )
+            if selected is None:
+                raise HTTPException(status_code=400, detail=f"TCP source_ordinal {source_ordinal} is not available")
+            return selected, warnings
+
+        if time_dial is not None:
+            selected = next(
+                (option for option in preview_options if _float_matches(option.get("time_dial"), time_dial)),
+                None,
+            )
+            if selected is None:
+                raise HTTPException(status_code=400, detail=f"TCP time_dial {time_dial} is not available")
+            return selected, warnings
+
+        if preview_options:
+            warnings.append("No TCP time-dial row was selected; the first stored relay preview row was used.")
+            return preview_options[0], warnings
+        return None, warnings
+
+    if curve_ordinal is not None:
+        selected = next(
+            (option for option in preview_options if int(option["curve_ordinal"]) == curve_ordinal),
+            None,
+        )
+        if selected is None:
+            raise HTTPException(status_code=400, detail=f"Curve ordinal {curve_ordinal} is not available")
+        return selected, warnings
+
+    if preview_options:
+        warnings.append("No analytical relay curve ordinal was selected; the first stored curve row was used.")
+        return preview_options[0], warnings
+    return None, warnings
+
+
+def _load_tcp_stored_points(db: Session, curve_parent_source_id: int, source_ordinal: int) -> list[dict[str, object]]:
+    rows = db.execute(
+        text(
+            """
+            SELECT
+                p.source_ordinal,
+                p.time_dial,
+                p.td_desc,
+                p.current_index,
+                p.current_value,
+                p.trip_time_seconds
+            FROM work.tcc_relay_curve_points_tcp p
+            JOIN work.tcc_relay_curves_tcp c ON c.relay_curve_tcp_id = p.relay_curve_tcp_id
+            WHERE c.source_row_id = :curve_parent_source_id
+              AND p.source_ordinal = :source_ordinal
+            ORDER BY p.current_index
+            """
+        ),
+        {
+            "curve_parent_source_id": curve_parent_source_id,
+            "source_ordinal": source_ordinal,
+        },
+    ).fetchall()
+    return [_normalize_mapping(_row_mapping(row)) for row in rows]
+
+
+def _load_relay_preview_bundle(
+    db: Session,
+    *,
+    td_section_source_id: int,
+    curve_parent_source_id: Optional[int],
+    curve_ordinal: Optional[int],
+    source_ordinal: Optional[int],
+    time_dial: Optional[float],
+    current_multiples: list[float],
+) -> dict[str, object]:
+    settings_bundle = _load_relay_settings_bundle(db, td_section_source_id)
+    bundle = {
+        **settings_bundle,
+        "warnings": [],
+    }
+    family_code = int(bundle["family_code"])
+    unsupported_reason = bundle.get("unsupported_reason")
+    family = family_from_model_code(family_code)
+
+    if not bundle["supported"]:
+        bundle["status"] = RelayEvaluationStatus.UNSUPPORTED.value
+        bundle["warnings"] = [unsupported_reason] if unsupported_reason else []
+        bundle["result"] = None
+        bundle["selected_option"] = None
+        return bundle
+
+    selected_option, warnings = _select_relay_preview_option(
+        settings_bundle=settings_bundle,
+        curve_parent_source_id=curve_parent_source_id,
+        curve_ordinal=curve_ordinal,
+        source_ordinal=source_ordinal,
+        time_dial=time_dial,
+    )
+    bundle["warnings"] = warnings
+    if selected_option is None:
+        message = "No stored relay preview option is available for the selected TD-section."
+        bundle["status"] = RelayEvaluationStatus.UNSUPPORTED.value
+        bundle["warnings"].append(message)
+        bundle["result"] = None
+        bundle["selected_option"] = None
+        bundle["unsupported_reason"] = message
+        return bundle
+
+    try:
+        if family == RelayFormulaCode.TCP:
+            stored_points = _load_tcp_stored_points(
+                db,
+                int(selected_option["curve_parent_source_id"]),
+                int(selected_option["source_ordinal"]),
+            )
+            definition = RelayCurveDefinition(
+                family=family,
+                curve_name=selected_option.get("curve_name") or f"tcp_{selected_option['curve_parent_source_id']}",
+                source_row_id=int(selected_option["curve_parent_source_id"]),
+                parent_source_id=int(td_section_source_id),
+                ordinal=int(selected_option["source_ordinal"]),
+                points=tuple(
+                    RelayCurvePoint(
+                        current_multiple=float(point["current_value"]),
+                        trip_time_seconds=float(point["trip_time_seconds"]),
+                        source_ordinal=int(point["source_ordinal"]),
+                        time_dial=float(point["time_dial"]),
+                        label=point.get("td_desc"),
+                    )
+                    for point in stored_points
+                ),
+                metadata={
+                    "time_dial": float(selected_option["time_dial"]),
+                    "source_ordinal": int(selected_option["source_ordinal"]),
+                    "td_desc": selected_option.get("td_desc"),
+                },
+            )
+            evaluated = evaluate_curve_definition(
+                definition,
+                current_multiples,
+                time_dial=float(selected_option["time_dial"]),
+            )
+        else:
+            analytical_time_dial = float(time_dial) if time_dial is not None else 1.0
+            definition = RelayCurveDefinition(
+                family=family,
+                curve_name=selected_option.get("curve_name") or f"curve_{selected_option['curve_ordinal']}",
+                source_row_id=int(selected_option["curve_parent_source_id"]),
+                parent_source_id=int(td_section_source_id),
+                ordinal=int(selected_option["curve_ordinal"]),
+                coefficients={
+                    key: value
+                    for key, value in selected_option.get("coefficients", {}).items()
+                },
+            )
+            evaluated = evaluate_curve_definition(definition, current_multiples, time_dial=analytical_time_dial)
+        bundle["status"] = evaluated.status.value
+        bundle["result"] = evaluated
+        bundle["selected_option"] = selected_option
+        return bundle
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 def _decimal_to_number(value: Decimal):
@@ -2073,6 +2740,192 @@ def plot_emt_tcc(req: EMTPlotRequest, db: Session = Depends(get_db)):
         ),
         warnings=warnings,
         curves=curves,
+    )
+
+
+# ──────────────────────────────────────────────
+# GET /relay/sections — Relay Section Search
+# ──────────────────────────────────────────────
+
+@router.get("/relay/sections", response_model=RelaySectionSearchResponse)
+def search_relay_sections(
+    relay_type: Optional[str] = Query(None, description="Filter by relay type"),
+    device_function: Optional[str] = Query(None, description="Filter by source device function"),
+    family_code: Optional[int] = Query(None, description="Filter by relay family / model code"),
+    q: Optional[str] = Query(None, description="Free-text match against relay type, device function, or TD-section name"),
+    supported_only: bool = Query(False, description="Limit results to supported preview families only"),
+    limit: int = Query(50, ge=1, le=200, description="Maximum number of matching relay sections"),
+    db: Session = Depends(get_db),
+):
+    sections = _search_relay_sections(
+        db,
+        relay_type=relay_type,
+        device_function=device_function,
+        family_code=family_code,
+        q=q,
+        supported_only=supported_only,
+        limit=limit,
+    )
+    return RelaySectionSearchResponse(
+        count=len(sections),
+        sections=[RelaySectionSearchResult(**section) for section in sections],
+    )
+
+
+# ──────────────────────────────────────────────
+# GET /relay/context/{td_section_source_id} — Relay Section Context
+# ──────────────────────────────────────────────
+
+@router.get("/relay/context/{td_section_source_id}", response_model=RelayContext)
+def get_relay_context(td_section_source_id: int, db: Session = Depends(get_db)):
+    bundle = _load_relay_context_bundle(db, td_section_source_id)
+    return RelayContext(
+        manufacturer_source_id=int(bundle["manufacturer_source_id"]),
+        relay_type=bundle.get("relay_type"),
+        relay_device_source_id=int(bundle["relay_device_source_id"]),
+        device_function=bundle.get("device_function"),
+        device_ordinal=int(bundle["device_ordinal"]),
+        standard_code=bundle.get("standard_code"),
+        dftype_code=bundle.get("dftype_code"),
+        voltage_restraint_kind=bundle.get("voltage_restraint_kind"),
+        td_section_source_id=int(bundle["td_section_source_id"]),
+        td_section_name=bundle.get("td_section_name"),
+        family_code=int(bundle["family_code"]),
+        family_name=str(bundle["family_name"]),
+        storage_kind=str(bundle["storage_kind"]),
+        supported=bool(bundle["supported"]),
+        unsupported_reason=bundle.get("unsupported_reason"),
+        line_section_count=int(bundle["line_section_count"]),
+        range_count=int(bundle["range_count"]),
+        curve_parent_count=int(bundle["curve_parent_count"]),
+        preview_option_count=int(bundle["preview_option_count"]),
+        line_sections=[RelayLineSectionSummary(**section) for section in bundle["line_sections"]],
+        resolved_equipment=bundle.get("resolved_equipment"),
+    )
+
+
+# ──────────────────────────────────────────────
+# GET /relay/settings/{td_section_source_id} — Relay Settings Surface
+# ──────────────────────────────────────────────
+
+@router.get("/relay/settings/{td_section_source_id}", response_model=RelaySettingsResponse)
+def get_relay_settings(td_section_source_id: int, db: Session = Depends(get_db)):
+    bundle = _load_relay_settings_bundle(db, td_section_source_id)
+    return RelaySettingsResponse(
+        td_section_source_id=int(bundle["td_section_source_id"]),
+        family_code=int(bundle["family_code"]),
+        family_name=str(bundle["family_name"]),
+        storage_kind=str(bundle["storage_kind"]),
+        supported=bool(bundle["supported"]),
+        unsupported_reason=bundle.get("unsupported_reason"),
+        line_sections=[RelayLineSectionSummary(**section) for section in bundle["line_sections"]],
+        ranges=[
+            RelayRangeOption(
+                **{
+                    **range_row,
+                    "discrete_values": [RelayRangeDiscreteValue(**item) for item in range_row["discrete_values"]],
+                }
+            )
+            for range_row in bundle["ranges"]
+        ],
+        curve_parents=[RelayCurveParentOption(**parent) for parent in bundle["curve_parents"]],
+        preview_options=[RelayPreviewOption(**option) for option in bundle["preview_options"]],
+    )
+
+
+# ──────────────────────────────────────────────
+# POST /relay/plot-tcc — Relay Preview Contract
+# ──────────────────────────────────────────────
+
+@router.post("/relay/plot-tcc", response_model=RelayPlotResponse)
+def plot_relay_tcc(req: RelayPlotRequest, db: Session = Depends(get_db)):
+    preview_bundle = _load_relay_preview_bundle(
+        db,
+        td_section_source_id=req.td_section_source_id,
+        curve_parent_source_id=req.curve_parent_source_id,
+        curve_ordinal=req.curve_ordinal,
+        source_ordinal=req.source_ordinal,
+        time_dial=req.time_dial,
+        current_multiples=req.current_multiples,
+    )
+
+    meta = RelayPlotMeta(
+        td_section_source_id=int(preview_bundle["td_section_source_id"]),
+        relay_device_source_id=int(preview_bundle["relay_device_source_id"]),
+        manufacturer_source_id=int(preview_bundle["manufacturer_source_id"]),
+        relay_type=preview_bundle.get("relay_type"),
+        device_function=preview_bundle.get("device_function"),
+        td_section_name=preview_bundle.get("td_section_name"),
+        family_code=int(preview_bundle["family_code"]),
+        family_name=str(preview_bundle["family_name"]),
+        storage_kind=str(preview_bundle["storage_kind"]),
+        supported=bool(preview_bundle["supported"]),
+        status=str(preview_bundle["status"]),
+        unsupported_reason=preview_bundle.get("unsupported_reason"),
+        selected_curve_parent_source_id=(
+            int(preview_bundle["selected_option"]["curve_parent_source_id"])
+            if preview_bundle.get("selected_option") is not None
+            else None
+        ),
+        selected_curve_name=(preview_bundle["selected_option"].get("curve_name") if preview_bundle.get("selected_option") else None),
+        selected_curve_ordinal=(
+            int(preview_bundle["selected_option"]["curve_ordinal"])
+            if preview_bundle.get("selected_option") and preview_bundle["selected_option"].get("curve_ordinal") is not None
+            else None
+        ),
+        selected_source_ordinal=(
+            int(preview_bundle["selected_option"]["source_ordinal"])
+            if preview_bundle.get("selected_option") and preview_bundle["selected_option"].get("source_ordinal") is not None
+            else None
+        ),
+        selected_time_dial=(preview_bundle["selected_option"].get("time_dial") if preview_bundle.get("selected_option") else None),
+        selected_td_desc=(preview_bundle["selected_option"].get("td_desc") if preview_bundle.get("selected_option") else None),
+        plot_disclaimer=(
+            "Read-only relay preview. Stored analytical constants or normalized TCP points are evaluated through the shared calc package; no write path or browser surface is opened."
+        ),
+        resolved_equipment=preview_bundle.get("resolved_equipment"),
+    )
+
+    result = preview_bundle.get("result")
+    if result is None:
+        return RelayPlotResponse(
+            meta=meta,
+            warnings=list(preview_bundle["warnings"]),
+            curves=[],
+        )
+
+    selected_option = preview_bundle["selected_option"]
+    curve = RelayPlotCurve(
+        id=(
+            f"relay_{preview_bundle['family_name']}_{selected_option['curve_parent_source_id']}_"
+            f"{selected_option.get('curve_ordinal') or selected_option.get('source_ordinal') or 'default'}"
+        ),
+        family_name=str(preview_bundle["family_name"]),
+        storage_kind=str(preview_bundle["storage_kind"]),
+        curve_name=result.curve_name,
+        curve_parent_source_id=int(selected_option["curve_parent_source_id"]),
+        curve_ordinal=(
+            int(selected_option["curve_ordinal"])
+            if selected_option.get("curve_ordinal") is not None
+            else None
+        ),
+        source_ordinal=(
+            int(selected_option["source_ordinal"])
+            if selected_option.get("source_ordinal") is not None
+            else None
+        ),
+        time_dial=selected_option.get("time_dial") if selected_option.get("time_dial") is not None else result.time_dial,
+        td_desc=selected_option.get("td_desc"),
+        points=[
+            RelayPlotCurvePoint(current_multiple=point.current_multiple, seconds=point.trip_time_seconds)
+            for point in result.points
+        ],
+    )
+
+    return RelayPlotResponse(
+        meta=meta,
+        warnings=list(preview_bundle["warnings"]),
+        curves=[curve],
     )
 
 

@@ -16,6 +16,23 @@ from .etu_curves import IEEEInverseTimeSolver, Coefficients, CurvePoint
 from .etu_ltd import ETULTDCalculator, LTDCurvePoint
 from .tmt_curves import TMTCurveGenerator, TMTCurvePoint, fillet
 from .etu_merge import merge_sst_curves, log_log_intersect
+from .relay_dispatch import (
+    family_from_model_code,
+    evaluate_curve_definition,
+    definition_from_iec_row,
+    definition_from_swz_row,
+    definition_from_bsl_row,
+    definition_from_meq_row,
+    definition_from_pcd_row,
+    definition_from_tcp_points,
+)
+from .relay_types import (
+    RelayCurveDefinition,
+    RelayCurvePoint,
+    RelayEvaluatedCurve,
+    RelayEvaluationStatus,
+    RelayFormulaCode,
+)
 
 __all__ = [
     'ETUCalcMethod',
@@ -32,4 +49,17 @@ __all__ = [
     'fillet',
     'merge_sst_curves',
     'log_log_intersect',
+    'family_from_model_code',
+    'evaluate_curve_definition',
+    'definition_from_iec_row',
+    'definition_from_swz_row',
+    'definition_from_bsl_row',
+    'definition_from_meq_row',
+    'definition_from_pcd_row',
+    'definition_from_tcp_points',
+    'RelayCurveDefinition',
+    'RelayCurvePoint',
+    'RelayEvaluatedCurve',
+    'RelayEvaluationStatus',
+    'RelayFormulaCode',
 ]
