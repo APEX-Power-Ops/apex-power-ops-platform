@@ -1,0 +1,71 @@
+---
+# Source: forms-engine/templates/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: forms-engine-config
+data:
+  APEX_RUN_ENV: "host"
+  PORT: "8080"
+  FORMS_ENGINE_TEMPLATES_PATH: "/var/lib/forms-engine/templates"
+  OIDC_ISSUER_URL: "https://auth.olares.local"
+  OIDC_CLIENT_ID: "forms-engine-placeholder"
+---
+# Source: forms-engine/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: forms-engine
+  labels:
+    app.kubernetes.io/name: forms-engine
+    apex.env: host
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: forms-engine
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+---
+# Source: forms-engine/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: forms-engine
+  labels:
+    app.kubernetes.io/name: forms-engine
+    apex.env: host
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: forms-engine
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: forms-engine
+        apex.env: host
+    spec:
+      containers:
+        - name: forms-engine
+          image: "ghcr.io/jasonlswenson-sys/forms-engine:sandbox"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              name: http
+          envFrom:
+            - configMapRef:
+                name: forms-engine-config
+          env:
+            - name: OIDC_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: forms-engine-oidc-secret
+                  key: clientSecret
+          volumeMounts:
+            - name: form-templates
+              mountPath: /var/lib/forms-engine/templates
+      volumes:
+        - name: form-templates
+          emptyDir: {}

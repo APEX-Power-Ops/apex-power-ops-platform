@@ -1,0 +1,43 @@
+{
+  "apex-fs": {
+    "endpoint": "http://127.0.0.1:8710/mcp",
+    "tools": [
+      "list_roots",
+      "list_directory",
+      "read_text_file"
+    ]
+  },
+  "apex-db": {
+    "endpoint": "http://127.0.0.1:8711/mcp",
+    "tools": [
+      "list_tables",
+      "describe_table",
+      "query"
+    ]
+  },
+  "apex-jobs": {
+    "endpoint": "http://127.0.0.1:8712/mcp",
+    "tools": [
+      "start_run",
+      "end_run",
+      "list_runs",
+      "promote_packet"
+    ]
+  },
+  "apex-forms": {
+    "endpoint": "http://127.0.0.1:8714/mcp",
+    "tools": [
+      "get_runtime_status",
+      "get_template_runtime_contract",
+      "list_expected_artifacts"
+    ]
+  },
+  "apex-p6": {
+    "endpoint": "http://127.0.0.1:8713/mcp",
+    "tools": [
+      "get_runtime_status",
+      "get_stack_fixture_summary",
+      "list_stack_fixture_task_codes"
+    ]
+  }
+}

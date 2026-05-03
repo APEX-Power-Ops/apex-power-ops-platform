@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: p6-ingest
+  labels:
+    app.kubernetes.io/name: p6-ingest
+    apex.env: host
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: p6-ingest
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http

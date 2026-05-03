@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: p6-ingest
+  labels:
+    app.kubernetes.io/name: p6-ingest
+    apex.env: host
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: p6-ingest
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: p6-ingest
+        apex.env: host
+    spec:
+      containers:
+        - name: p6-ingest
+          image: "ghcr.io/jasonlswenson-sys/p6-ingest:sandbox"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              name: http
+          envFrom:
+            - configMapRef:
+                name: p6-ingest-config
+          env:
+            - name: OIDC_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: p6-ingest-oidc-secret
+                  key: clientSecret
+          volumeMounts:
+            - name: p6-ingest-artifacts
+              mountPath: /var/lib/p6-ingest/artifacts
+      volumes:
+        - name: p6-ingest-artifacts
+          emptyDir: {}

@@ -21,6 +21,7 @@ test = [
 
 [project.scripts]
 apex-forms-smoke = "apex_forms_engine.smoke:main"
+apex-forms-runtime = "apex_forms_engine.runtime:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}

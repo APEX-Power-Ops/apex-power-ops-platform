@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: forms-engine-config
+data:
+  APEX_RUN_ENV: "host"
+  PORT: "8080"
+  FORMS_ENGINE_TEMPLATES_PATH: "/var/lib/forms-engine/templates"
+  OIDC_ISSUER_URL: "https://auth.olares.local"
+  OIDC_CLIENT_ID: "forms-engine-placeholder"

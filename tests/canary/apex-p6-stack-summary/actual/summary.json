@@ -1,0 +1,65 @@
+{
+  "fixture": "stack_data_center_baseline_sanitized.xer",
+  "source_file": "stack_data_center_baseline_sanitized.xer",
+  "sections": [
+    "PROJBASELINE",
+    "PROJECT",
+    "PROJWBS",
+    "TASK",
+    "TASKPRED"
+  ],
+  "live_lane": {
+    "project_ids": [
+      "1001"
+    ],
+    "wbs_count": 1,
+    "task_codes": [
+      "A10",
+      "A20",
+      "A30",
+      "A99"
+    ],
+    "relationship_count": 1
+  },
+  "baseline_row": {
+    "count": 1,
+    "proj_id": "1001",
+    "base_proj_id": "9998",
+    "base_type_name": "Stack DC \u2014 Original Baseline R01",
+    "last_update_date": "2026-02-01 00:00"
+  },
+  "baseline_entry": {
+    "baseline_source": "p6_import",
+    "schedule_project_id": "sched-proj-1001",
+    "p6_baseline_proj_id": "9998",
+    "baseline_name": "Stack DC \u2014 Original Baseline R01",
+    "matched_schedule_task_ids": [
+      "sched-task-7001",
+      "sched-task-7002",
+      "sched-task-7003"
+    ],
+    "matched_task_codes": [
+      "A10",
+      "A20",
+      "A30"
+    ],
+    "matched_task_dates": {
+      "A10": {
+        "baseline_start": "2026-04-27 07:00",
+        "baseline_finish": "2026-04-28 17:00"
+      },
+      "A20": {
+        "baseline_start": "2026-04-29 07:00",
+        "baseline_finish": "2026-05-01 17:00"
+      },
+      "A30": {
+        "baseline_start": "2026-05-04 07:00",
+        "baseline_finish": "2026-05-08 17:00"
+      }
+    }
+  },
+  "negative_cases": {
+    "live_only_a99_present": true,
+    "baseline_only_a90_absent_from_live_lane": true
+  }
+}

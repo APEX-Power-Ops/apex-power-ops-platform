@@ -1,0 +1,6 @@
+apiVersion: v2
+name: forms-engine
+description: Bounded Olares chart for forms-engine proof and rerun readiness
+type: application
+version: 0.1.0
+appVersion: 0.1.0

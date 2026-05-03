@@ -1,0 +1,73 @@
+---
+# Source: p6-ingest/templates/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: p6-ingest-config
+data:
+  APEX_RUN_ENV: "host"
+  PORT: "8080"
+  P6_INGEST_XER_BUCKET: "p6-ingest-xer"
+  P6_INGEST_XER_PREFIX: "incoming"
+  P6_INGEST_ARTIFACTS_PATH: "/var/lib/p6-ingest/artifacts"
+  OIDC_ISSUER_URL: "https://auth.olares.local"
+  OIDC_CLIENT_ID: "p6-ingest-placeholder"
+---
+# Source: p6-ingest/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: p6-ingest
+  labels:
+    app.kubernetes.io/name: p6-ingest
+    apex.env: host
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: p6-ingest
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+---
+# Source: p6-ingest/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: p6-ingest
+  labels:
+    app.kubernetes.io/name: p6-ingest
+    apex.env: host
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: p6-ingest
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: p6-ingest
+        apex.env: host
+    spec:
+      containers:
+        - name: p6-ingest
+          image: "ghcr.io/jasonlswenson-sys/p6-ingest:sandbox"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              name: http
+          envFrom:
+            - configMapRef:
+                name: p6-ingest-config
+          env:
+            - name: OIDC_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: p6-ingest-oidc-secret
+                  key: clientSecret
+          volumeMounts:
+            - name: p6-ingest-artifacts
+              mountPath: /var/lib/p6-ingest/artifacts
+      volumes:
+        - name: p6-ingest-artifacts
+          emptyDir: {}

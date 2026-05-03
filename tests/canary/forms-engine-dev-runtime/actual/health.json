@@ -1,0 +1,14 @@
+{
+  "service": "forms-engine",
+  "status": "ok",
+  "env": "sandbox",
+  "port": 8080,
+  "templatesPath": "/var/lib/forms-engine/templates",
+  "templatesPathExists": true,
+  "artifactsPath": "/usr/local/lib/python3.11/site-packages/apex_forms_engine/artifacts",
+  "expectedArtifacts": [],
+  "oidc": {
+    "issuerUrl": "https://auth.olares.local",
+    "clientId": "forms-engine-placeholder"
+  }
+}

@@ -1,0 +1,33 @@
+apiVersion: app.olares.io/v1alpha1
+kind: OlaresManifest
+metadata:
+  name: p6-ingest
+spec:
+  app:
+    name: p6-ingest
+    version: 0.1.0
+    entrance:
+      name: p6-ingest
+      host: p6-ingest.olares.local
+      port: 8080
+      scheme: http
+    auth:
+      oidc:
+        enabled: true
+        provider: olares-shared-auth
+        clientId: p6-ingest-placeholder
+        clientSecretRef: p6-ingest-oidc-secret
+        redirectUri: https://p6-ingest.olares.local/oauth/callback
+  middleware:
+    postgres:
+      database: p6_ingest
+      user: p6_ingest
+    minio:
+      bucket: p6-ingest-xer
+      prefix: incoming
+    ollama:
+      optional: true
+  runtime:
+    labels:
+      apex.env: host
+      apex.service: p6-ingest
