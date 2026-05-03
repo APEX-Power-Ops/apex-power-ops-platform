@@ -148,16 +148,17 @@ Workspace task note:
 Vercel deployment note:
 
 1. `apex-operations-web` is rooted from the parent workspace path `C:/APEX Platform`, so CLI deploys must run from that parent root when the Vercel project `rootDirectory` is `apex-power-ops-platform/apps/operations-web`
-2. when the target deployment is still serving an older shell on the same git commit, rerun the deploy with `npx vercel deploy --yes --force --archive=tgz --scope jasonlswenson-sys-projects` for preview or add `--prod` for production
-3. preview hosts can still return `401` to unauthenticated route smoke when Vercel preview protection is enabled, so the governed public proof gate remains the production alias unless preview protection is deliberately disabled
-4. as of 2026-05-03, forced redeploy attempts are no longer blocked by implementation readiness; the active blocker handoff must be consulted for the current deployment blocker state before another production redeploy is attempted; see `ops/agents/handoffs/2026-05-03-tcc-relay-phase-2-operations-web-promoted-host-redeploy-blocker-handoff.md`
+2. if the project setting is reduced to `apps/operations-web`, Git-linked deployments fail before build because the actual git root is the parent workspace root, not `apex-power-ops-platform`
+3. the Vercel project `rootDirectory` must remain `apex-power-ops-platform/apps/operations-web` for this workspace layout
+4. preview hosts can still return `401` to unauthenticated route smoke when Vercel preview protection is enabled, so the governed public proof gate remains the production alias unless preview protection is deliberately disabled
+5. the 2026-05-03 hosted recovery also required commit `2b572b3` (`fix(operations-web): align Vercel trace root`), which moved `outputFileTracingRoot` and `turbopack.root` to the true repo root `C:/APEX Platform` so Vercel could package Next runtime files correctly after the rootDirectory fix
 
 Current public-host status:
 
 1. the repo-owned promoted-host path is operational
 2. the latest public seam rerun against `https://control.apexpowerops.com` passes health, readiness, discovery, MCP, OpenAPI, and the governed apparatus route requirement, with readiness reporting `database: connected` and the overall script ending in `RESULT PASS`
-3. a forced Vercel rebuild on 2026-05-01 resolved the stale root-shell issue for `https://operations.apexpowerops.com`; the live shell now serves the relay browser slice and the promoted-host wrapper ends with `PROMOTED_HOST_SUMMARY failed=0`
-4. a new redeploy is still required after the first compare slice landed, but the current blocker is deployment-side rather than repo-side
+3. the 2026-05-03 production promotion now points `https://operations.apexpowerops.com` at deployment `dpl_2emJi8u3ZuMMKb42hDrWjo9Kxg5R`, sourced from clean-main commit `2b572b3`
+4. the promoted-host wrapper now ends with `PROMOTED_HOST_SUMMARY failed=0` after the compare-slice deployment recovery, including hosted-route smoke `failed=0` and browser smoke `3 passed`
 
 Pass conditions:
 
