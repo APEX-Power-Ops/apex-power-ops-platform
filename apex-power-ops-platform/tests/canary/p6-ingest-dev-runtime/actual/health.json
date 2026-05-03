@@ -1,0 +1,18 @@
+{
+  "service": "p6-ingest",
+  "status": "ok",
+  "env": "sandbox",
+  "port": 8080,
+  "fixturePath": "/app/apps/mutation-seam/app/schedule/fixtures/stack_data_center_baseline_sanitized.xer",
+  "fixtureExists": true,
+  "artifactsPath": "/var/lib/p6-ingest/artifacts",
+  "artifactsPathExists": true,
+  "storage": {
+    "xerBucket": "p6-ingest-xer",
+    "xerPrefix": "incoming"
+  },
+  "oidc": {
+    "issuerUrl": "https://auth.olares.local",
+    "clientId": "p6-ingest-placeholder"
+  }
+}

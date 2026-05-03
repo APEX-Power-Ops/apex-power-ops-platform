@@ -1,0 +1,7 @@
+appEnv: host
+image:
+  repository: ghcr.io/jasonlswenson-sys/forms-engine
+  tag: sandbox
+oidc:
+  issuerUrl: https://auth.olares.local
+  clientId: forms-engine-placeholder

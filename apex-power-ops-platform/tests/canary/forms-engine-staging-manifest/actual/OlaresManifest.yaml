@@ -1,0 +1,32 @@
+apiVersion: app.olares.io/v1alpha1
+kind: OlaresManifest
+metadata:
+  name: forms-engine
+spec:
+  app:
+    name: forms-engine
+    version: 0.1.0
+    entrance:
+      name: forms-engine
+      host: forms-engine.olares.local
+      port: 8080
+      scheme: http
+    auth:
+      oidc:
+        enabled: true
+        provider: olares-shared-auth
+        clientId: forms-engine-placeholder
+        clientSecretRef: forms-engine-oidc-secret
+        redirectUri: https://forms-engine.olares.local/oauth/callback
+  middleware:
+    postgres:
+      database: forms_engine
+      user: forms_engine
+    juicefs:
+      mountPath: /var/lib/forms-engine/templates
+    ollama:
+      optional: true
+  runtime:
+    labels:
+      apex.env: host
+      apex.service: forms-engine

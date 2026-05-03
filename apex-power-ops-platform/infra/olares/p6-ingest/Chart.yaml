@@ -1,0 +1,6 @@
+apiVersion: v2
+name: p6-ingest
+description: Bounded Olares chart for p6-ingest proof and rerun readiness
+type: application
+version: 0.1.0
+appVersion: 0.1.0

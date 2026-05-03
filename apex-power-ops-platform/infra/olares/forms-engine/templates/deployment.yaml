@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: forms-engine
+  labels:
+    app.kubernetes.io/name: forms-engine
+    apex.env: host
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: forms-engine
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: forms-engine
+        apex.env: host
+    spec:
+      containers:
+        - name: forms-engine
+          image: "ghcr.io/jasonlswenson-sys/forms-engine:sandbox"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              name: http
+          envFrom:
+            - configMapRef:
+                name: forms-engine-config
+          env:
+            - name: OIDC_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: forms-engine-oidc-secret
+                  key: clientSecret
+          volumeMounts:
+            - name: form-templates
+              mountPath: /var/lib/forms-engine/templates
+      volumes:
+        - name: form-templates
+          emptyDir: {}

@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: p6-ingest-config
+data:
+  APEX_RUN_ENV: "host"
+  PORT: "8080"
+  P6_INGEST_XER_BUCKET: "p6-ingest-xer"
+  P6_INGEST_XER_PREFIX: "incoming"
+  P6_INGEST_ARTIFACTS_PATH: "/var/lib/p6-ingest/artifacts"
+  OIDC_ISSUER_URL: "https://auth.olares.local"
+  OIDC_CLIENT_ID: "p6-ingest-placeholder"

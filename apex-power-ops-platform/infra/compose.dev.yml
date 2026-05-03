@@ -1,0 +1,166 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${APEX_DEV_POSTGRES_DB}
+      POSTGRES_USER: ${APEX_DEV_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${APEX_DEV_POSTGRES_PASSWORD}
+    ports:
+      - 127.0.0.1:${APEX_DEV_POSTGRES_PORT}:5432
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  qdrant:
+    image: qdrant/qdrant:v1.13.2
+    restart: unless-stopped
+    ports:
+      - 127.0.0.1:${APEX_DEV_QDRANT_PORT}:6333
+      - 127.0.0.1:${APEX_DEV_QDRANT_GRPC_PORT}:6334
+    volumes:
+      - qdrant-data:/qdrant/storage
+
+  minio:
+    image: minio/minio:RELEASE.2025-02-18T16-25-55Z
+    restart: unless-stopped
+    command: server /data --console-address :9001
+    environment:
+      MINIO_ROOT_USER: ${APEX_DEV_MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${APEX_DEV_MINIO_ROOT_PASSWORD}
+    ports:
+      - 127.0.0.1:${APEX_DEV_MINIO_API_PORT}:9000
+      - 127.0.0.1:${APEX_DEV_MINIO_CONSOLE_PORT}:9001
+    volumes:
+      - minio-data:/data
+
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    restart: unless-stopped
+    ports:
+      - 127.0.0.1:${APEX_DEV_MAILHOG_SMTP_PORT}:1025
+      - 127.0.0.1:${APEX_DEV_MAILHOG_UI_PORT}:8025
+
+  forms-engine:
+    image: python:3.11-slim
+    restart: unless-stopped
+    working_dir: /app
+    command: >-
+      /bin/sh -lc
+      "python -m pip install --no-cache-dir -e packages/forms-engine && apex-forms-runtime"
+    environment:
+      APEX_RUN_ENV: sandbox
+      PORT: 8080
+      OIDC_ISSUER_URL: ${APEX_DEV_OIDC_ISSUER_URL}
+      OIDC_CLIENT_ID: ${APEX_DEV_FORMS_ENGINE_OIDC_CLIENT_ID}
+      FORMS_ENGINE_TEMPLATES_PATH: /var/lib/forms-engine/templates
+    ports:
+      - 127.0.0.1:${APEX_DEV_FORMS_ENGINE_PORT}:8080
+    volumes:
+      - ..:/app
+      - forms-templates:/var/lib/forms-engine/templates
+    depends_on:
+      - postgres
+
+  p6-ingest:
+    image: python:3.11-slim
+    restart: unless-stopped
+    working_dir: /app
+    command: >-
+      /bin/sh -lc
+      "python -m pip install --no-cache-dir -e packages/p6-ingest && apex-p6-runtime"
+    environment:
+      APEX_RUN_ENV: sandbox
+      PORT: 8081
+      OIDC_ISSUER_URL: ${APEX_DEV_OIDC_ISSUER_URL}
+      OIDC_CLIENT_ID: ${APEX_DEV_P6_INGEST_OIDC_CLIENT_ID}
+      APEX_P6_FIXTURE_PATH: /app/apps/mutation-seam/app/schedule/fixtures/stack_data_center_baseline_sanitized.xer
+      P6_INGEST_ARTIFACTS_PATH: /var/lib/p6-ingest/artifacts
+      P6_INGEST_XER_BUCKET: p6-ingest-xer
+      P6_INGEST_XER_PREFIX: incoming
+    ports:
+      - 127.0.0.1:${APEX_DEV_P6_INGEST_PORT}:8081
+    volumes:
+      - ..:/app
+      - p6-artifacts:/var/lib/p6-ingest/artifacts
+    depends_on:
+      - postgres
+      - minio
+
+  apex-mcp-fs:
+    image: node:22-slim
+    restart: unless-stopped
+    working_dir: /app
+    command: node services/mcp/apex-fs/build/http.js
+    environment:
+      APEX_MCP_HTTP_PORT: 8710
+      APEX_MCP_WORKSPACE_ROOT: /app
+      APEX_MCP_DATA_ROOT: /app/.apex-data
+    ports:
+      - 127.0.0.1:${APEX_DEV_MCP_FS_PORT}:8710
+    volumes:
+      - ..:/app
+
+  apex-mcp-db:
+    image: node:22-slim
+    restart: unless-stopped
+    working_dir: /app
+    command: node services/mcp/apex-db/build/http.js
+    environment:
+      APEX_MCP_HTTP_PORT: 8711
+      APEX_DB_CONNECTION_STRING: postgresql://${APEX_DEV_POSTGRES_USER}:${APEX_DEV_POSTGRES_PASSWORD}@postgres:5432/${APEX_DEV_POSTGRES_DB}
+    ports:
+      - 127.0.0.1:${APEX_DEV_MCP_DB_PORT}:8711
+    volumes:
+      - ..:/app
+    depends_on:
+      - postgres
+
+  apex-mcp-jobs:
+    image: node:22-slim
+    restart: unless-stopped
+    working_dir: /app
+    command: node services/mcp/apex-jobs/build/http.js
+    environment:
+      APEX_MCP_HTTP_PORT: 8712
+      APEX_JOBS_LEDGER_PATH: /app/.apex-data/apex-jobs-ledger.json
+    ports:
+      - 127.0.0.1:${APEX_DEV_MCP_JOBS_PORT}:8712
+    volumes:
+      - ..:/app
+
+  apex-mcp-p6:
+    image: node:22-slim
+    restart: unless-stopped
+    working_dir: /app
+    command: node services/mcp/apex-p6/build/http.js
+    environment:
+      APEX_MCP_HTTP_PORT: 8713
+      APEX_P6_RUNTIME_URL: http://p6-ingest:8081
+    ports:
+      - 127.0.0.1:${APEX_DEV_MCP_P6_PORT}:8713
+    volumes:
+      - ..:/app
+    depends_on:
+      - p6-ingest
+
+  apex-mcp-forms:
+    image: node:22-slim
+    restart: unless-stopped
+    working_dir: /app
+    command: node services/mcp/apex-forms/build/http.js
+    environment:
+      APEX_MCP_HTTP_PORT: 8714
+      APEX_FORMS_RUNTIME_URL: http://forms-engine:8080
+    ports:
+      - 127.0.0.1:${APEX_DEV_MCP_FORMS_PORT}:8714
+    volumes:
+      - ..:/app
+    depends_on:
+      - forms-engine
+
+volumes:
+  postgres-data:
+  qdrant-data:
+  minio-data:
+  forms-templates:
+  p6-artifacts:

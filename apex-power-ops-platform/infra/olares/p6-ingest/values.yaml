@@ -1,0 +1,7 @@
+appEnv: host
+image:
+  repository: ghcr.io/jasonlswenson-sys/p6-ingest
+  tag: sandbox
+oidc:
+  issuerUrl: https://auth.olares.local
+  clientId: p6-ingest-placeholder
