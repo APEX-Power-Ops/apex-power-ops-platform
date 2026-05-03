@@ -57,6 +57,7 @@ Use these documents together:
 - `apps/operations-web`
 - `packages/calc-engine`
 - `packages/forms-engine`
+- `packages/p6-ingest`
 - `infra/database`
 - `docs/authority`
 - `knowledge/`
@@ -162,6 +163,10 @@ Exit condition:
 #### `packages/calc-engine`
 
 - [ ] continue bounded calc extraction here instead of creating sidecar package sprawl
+
+#### `packages/p6-ingest`
+
+- [ ] keep P6/Primavera baseline ingest work bounded inside this package and treat the canary fixture path under `apps/mutation-seam/app/schedule/fixtures/` as governed cross-lane reuse rather than an invitation to fork the fixture or move it without a separate packet
 
 Exit condition:
 

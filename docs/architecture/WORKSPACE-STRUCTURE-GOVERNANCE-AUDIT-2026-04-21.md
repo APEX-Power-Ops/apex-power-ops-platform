@@ -75,6 +75,7 @@ These roots are workstation or generated residue, not governed topology. They mu
 - `apps/operations-web`
 - `packages/calc-engine`
 - `packages/forms-engine`
+- `packages/p6-ingest`
 - `docs/authority`
 - `docs/architecture`
 - `infra/database`

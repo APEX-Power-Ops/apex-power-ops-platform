@@ -5,7 +5,10 @@
 ### 1. Install Dependencies
 ```bash
 cd apps/mutation-seam
+python -m venv .venv
+.venv\Scripts\activate
 pip install -r requirements.txt
+pip install -e ".[dev]"
 ```
 
 ### 2. Run the Server
@@ -313,16 +316,19 @@ token = base64.b64encode(json.dumps(payload).encode()).decode()
 ### VS Code
 ```json
 {
-  "python.defaultInterpreterPath": "${workspaceFolder}/venv/bin/python",
-  "python.linting.enabled": true,
-  "python.linting.pylintEnabled": true,
-  "python.formatting.provider": "black"
+  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/Scripts/python.exe",
+  "editor.defaultFormatter": "charliermarsh.ruff",
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.ruff": "explicit",
+    "source.organizeImports.ruff": "explicit"
+  }
 }
 ```
 
 ### PyCharm
 - Mark `app/` as Sources Root
-- Set Python Interpreter to venv
+- Set Python Interpreter to `.venv`
 - Enable pytest in Settings
 
 ---
