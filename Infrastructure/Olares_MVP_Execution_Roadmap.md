@@ -1,33 +1,60 @@
 # APEX on Olares One — MVP Execution Roadmap
 
 _Execution authority companion to `Olares_Workspace_Authority_Framework.md`._
-_Authored 2026-04-23 for stakeholder-directed Olares transition and maintained as the active MVP delivery plan._
+_Authored 2026-04-23 for stakeholder-directed Olares transition._
+_Retained as first-run MVP sequencing context after the 2026-04-25 Olares closure transition; it is no longer the live execution frontier._
 
 ## 1. Purpose
 
-This document is the active design-and-delivery roadmap for moving APEX Platform onto the Olares One.
+This document preserves the original first-run MVP design-and-delivery roadmap for moving APEX Platform onto the Olares One.
 
-It is not a brainstorming note and it is not a session bootstrap prompt. It is the repo-native statement of what the MVP is, what gets built first, what is deferred, and what technical standards define acceptable implementation.
+It is not a brainstorming note and it is not a session bootstrap prompt. It remains the parent-root statement of what the MVP was, what was built first, what was deferred, and what technical standards defined acceptable first-run implementation.
 
-Use this roadmap when deciding what to build next. Use the build prompt only to bootstrap an implementation session against this roadmap.
+Do not use this file by itself to decide current Olares execution priority.
+
+Use these repo-local files first for current Olares next steps:
+
+1. `apex-power-ops-platform/plan/infrastructure-olares-full-implementation-roadmap-1.md` — live post-closure Olares roadmap
+2. `apex-power-ops-platform/docs/architecture/OLARES-POST-CLOSURE-EXECUTION-CHECKLIST-2026-04-25.md` — bounded follow-through and rerun checklist
+3. `apex-power-ops-platform/docs/architecture/WORKSPACE-CURRENT-STATUS-2026-04-21.md` — broader platform execution priority
+
+Use this file to understand the original MVP intent, sequencing rationale, and trust-model design that the later repo-local roadmap now inherits.
 
 ## 2. Authority Position
 
 The Olares authority stack is:
 
 1. `Olares_Workspace_Authority_Framework.md` — highest authority for workspace interpretation, decision boundaries, and transition rules
-2. this file — active MVP design, sequencing, and delivery authority
-3. `Olares_Build_Guide.md` — architectural rationale and target operating model
-4. `Olares_Checklist.md` — provisioning and operational checklist
-5. `VSCode_Build_Prompt.md` — execution bootstrap for fresh implementation sessions
+2. `apex-power-ops-platform/plan/infrastructure-olares-full-implementation-roadmap-1.md` — live post-closure Olares roadmap
+3. `apex-power-ops-platform/docs/architecture/OLARES-POST-CLOSURE-EXECUTION-CHECKLIST-2026-04-25.md` — active bounded follow-through and rerun surface
+4. this file — first-run MVP sequencing context and design baseline
+5. `Olares_Build_Guide.md` — architectural rationale and target operating model
+6. `Olares_Checklist.md` — original provisioning checklist and first-run reference
+7. `VSCode_Build_Prompt.md` — execution bootstrap for fresh implementation sessions
 
 Implication:
 
 1. the prompt does not define governance
-2. the prompt does not override design or sequencing decisions
-3. if implementation learns something new, update the framework or this roadmap first, then update the prompt
+2. this file no longer overrides the repo-local post-closure roadmap or checklist
+3. if implementation learns something new about current Olares scope, update the framework or the repo-local roadmap first, then realign this file only if the original MVP baseline also needs correction
 
-## 3. Product Decision
+## 3. Current Status Note
+
+As of the 2026-04-25 Olares transition closeout captured in the repo-local roadmap:
+
+1. the first governed workstation lane is closed
+2. the first installed-proof lanes for `forms-engine` and `p6-ingest` are closed
+3. friendly alias cleanup is closed
+4. Olares is not the repo's primary delivery frontier
+
+Current Olares work is now bounded to:
+
+1. publication follow-through for governed workstation-synced surfaces
+2. workstation, installed-service, and backup rerun readiness
+3. preservation of the known Helm-managed Settings API limitation
+4. explicit gating before any future Olares scope expansion
+
+## 4. Product Decision
 
 The Olares One is the new center of gravity for APEX development.
 
@@ -38,7 +65,7 @@ The MVP is not "run the existing repo somewhere else." The MVP is:
 3. a first host-truth staging path that proves the APEX completion model on Olares
 4. a trust model that preserves the distinction between sandbox progress and host-complete progress
 
-## 4. MVP Outcome
+## 5. MVP Outcome
 
 The MVP is successful when all of the following are true:
 
@@ -49,7 +76,7 @@ The MVP is successful when all of the following are true:
 5. `forms-engine` has an installable Olares chart shell in the staging zone
 6. at least one Stack Data Center canary lane exists and can be executed reproducibly
 
-## 5. What Is In MVP
+## 6. What Is In MVP
 
 ### Included
 
@@ -70,7 +97,7 @@ The MVP is successful when all of the following are true:
 5. repo cutover away from parent git root
 6. migrating every application surface to Olares-native charts in the first pass
 
-## 6. Workstreams
+## 7. Workstreams
 
 ### Workstream A — Workspace foundation
 
@@ -146,7 +173,9 @@ Done means:
 1. the canary harness has a stable interface
 2. the path from dev proof to host proof is explicit
 
-## 7. Sequencing Authority
+## 8. Original Sequencing Baseline
+
+The sequence below is the original first-run MVP order. It remains useful as design rationale, but it is no longer the current live Olares frontier.
 
 The default sequence is:
 
@@ -163,7 +192,7 @@ Reasoning:
 3. the first chart shell should be written after the dev and operator model exist
 4. canary execution is most useful once the chart shell and run-ledger model are present
 
-## 8. Workflow Model
+## 9. Workflow Model
 
 The authoritative workflow is:
 
@@ -180,7 +209,7 @@ Required proof per implementation packet:
 3. what was deferred
 4. which trust constraints were preserved
 
-## 9. Technical Authority Rules
+## 10. Technical Authority Rules
 
 The repo technical authority may decide without pausing for approval on:
 
@@ -196,21 +225,30 @@ Escalate only for:
 3. destructive data operations against real project data
 4. repo-cutover decisions away from the parent git root
 
-## 10. Immediate Next Packet
+## 11. Current Next-Step Routing
 
-The next truthful implementation packet after this roadmap is:
+The original immediate next packet below has been overtaken by later execution and closure.
 
-1. `infra/compose.dev.yml`
-2. `.env.dev.template`
-3. `.gitignore` updates needed for the dev stack
+The current truthful Olares next steps are:
 
-That packet should establish the repeatable dev foundation before any MCP service is authored.
+1. finish or explicitly retire the remaining governed workstation publication follow-through from the repo-local Olares roadmap
+2. keep workstation rerun readiness current rather than reopening first-run bring-up work
+3. keep installed-service rerun readiness current for `forms-engine` and `p6-ingest`
+4. keep backup and restore readiness evidence-backed after meaningful drift
+5. require a new explicit packet before any future Olares scope expansion
 
-## 11. Success Standard
+Use these files to execute those steps:
+
+1. `apex-power-ops-platform/plan/infrastructure-olares-full-implementation-roadmap-1.md`
+2. `apex-power-ops-platform/docs/architecture/OLARES-POST-CLOSURE-EXECUTION-CHECKLIST-2026-04-25.md`
+3. `apex-power-ops-platform/ops/agents/handoffs/2026-04-25-olares-workstation-001-publication-follow-through-scope-handoff.md`
+4. `apex-power-ops-platform/ops/agents/handoffs/2026-04-25-olares-workstation-002-publication-follow-through-blocker-handoff.md`
+
+## 12. Success Standard
 
 This roadmap is successful when it prevents two failure modes:
 
 1. the Olares transition degenerating into ad hoc tool setup with no product-oriented sequencing
-2. the build prompt being mistaken for the authority model rather than a bootstrap aid
+2. this first-run MVP baseline being mistaken for the current live Olares execution frontier
 
-If a future document or session treats the prompt as governance, correct the roadmap or framework and then realign the prompt.
+If a future document or session treats this file as the live frontier again, correct the repo-local roadmap or framework first, then realign this context file so it continues to describe the historical MVP baseline truthfully.

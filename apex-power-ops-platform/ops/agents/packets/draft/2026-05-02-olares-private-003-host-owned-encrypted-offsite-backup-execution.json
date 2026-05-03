@@ -1,0 +1,81 @@
+{
+  "packet_id": "2026-05-02-olares-private-003",
+  "title": "Host-Owned Encrypted Offsite Backup And Restore-Drill Hardening",
+  "objective": "Implement the bounded helper, template, operator, and handoff surfaces required to move the host-only `personal-notes` private lane from workstation-mediated offsite mirroring toward host-owned encrypted offsite backup over the already-validated host-local archive set, while keeping runtime, ingress, auth, and installed-app posture unchanged.",
+  "domain": "infrastructure-domain",
+  "active_role": "Olares Private Lane Backup Operator",
+  "repo_paths": [
+    "C:/APEX Platform/apex-power-ops-platform/infra/private",
+    "C:/APEX Platform/apex-power-ops-platform/docs/architecture/OLARES-PRIVATE-STACK-BLUEPRINT-2026-05-01.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/architecture/OLARES-PRIVATE-STACK-FIRST-RUN-CHECKLIST-2026-05-01.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/architecture/OLARES-FIRST-STORAGE-BRING-UP-RUNBOOK-2026-04-23.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/architecture/OLARES-POST-CLOSURE-EXECUTION-CHECKLIST-2026-04-25.md",
+    "C:/APEX Platform/apex-power-ops-platform/plan/infrastructure-olares-full-implementation-roadmap-1.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "C:/APEX Platform/PROJECT_STATUS.md"
+  ],
+  "dependencies": [
+    "ops/agents/packets/draft/2026-05-02-olares-private-002-backup-governance-hardening-planning.json",
+    "ops/agents/handoffs/2026-05-02-olares-private-002-backup-governance-hardening-planning-handoff.md",
+    "ops/agents/handoffs/2026-05-01-olares-private-stack-browser-terminal-bring-up-handoff.md",
+    "infra/private/run-personal-stack-remote.ps1",
+    "infra/private/README.md",
+    "infra/private/PERSONAL-ZONE-QUICKSTART.md",
+    "docs/architecture/OLARES-PRIVATE-STACK-BLUEPRINT-2026-05-01.md",
+    "docs/architecture/OLARES-PRIVATE-STACK-FIRST-RUN-CHECKLIST-2026-05-01.md",
+    "docs/architecture/OLARES-FIRST-STORAGE-BRING-UP-RUNBOOK-2026-04-23.md",
+    "docs/architecture/OLARES-POST-CLOSURE-EXECUTION-CHECKLIST-2026-04-25.md",
+    "PROJECT_STATUS.md"
+  ],
+  "dependency_note": "Packet 002 selected stronger backup governance as the next approved private-lane follow-on and explicitly named host-owned encrypted offsite backup plus restore-drill hardening as the bounded direction of travel. The existing runtime lane already produces validated host-local timestamped archives for `personal-notes`, so this implementation packet is limited to governing and operationalizing encrypted offsite handling over that archive set rather than widening runtime scope.",
+  "required_inputs": [
+    "The planning decision in ops/agents/packets/draft/2026-05-02-olares-private-002-backup-governance-hardening-planning.json",
+    "The current runtime and recovery evidence in ops/agents/handoffs/2026-05-01-olares-private-stack-browser-terminal-bring-up-handoff.md",
+    "The current local archive workflow in infra/private/run-personal-stack-remote.ps1",
+    "The current storage rerun authority in docs/architecture/OLARES-FIRST-STORAGE-BRING-UP-RUNBOOK-2026-04-23.md",
+    "A bounded machine-local secret completion path outside repo publication scope for the encrypted offsite repository and credentials"
+  ],
+  "constrained_outputs": [
+    "A dedicated helper surface for host-owned encrypted offsite backup and restore-drill operations over the existing host-local archive root",
+    "A machine-local env template for encrypted offsite configuration that remains outside repo publication scope once filled",
+    "Updated operator and architecture docs that distinguish host-owned encrypted offsite backup from the existing workstation-mediated mirror",
+    "A dated handoff recording what was implemented and what remains intentionally machine-local",
+    "No public ingress, shared-auth, Olares app registration, or installed-app promotion"
+  ],
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/infra/private",
+    "C:/APEX Platform/apex-power-ops-platform/docs/architecture",
+    "C:/APEX Platform/apex-power-ops-platform/plan",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "C:/APEX Platform/PROJECT_STATUS.md"
+  ],
+  "validation_steps": [
+    "Keep the live `personal-notes` runtime host-only or mesh-tunneled and do not change ingress or auth posture.",
+    "Use the existing host-local archive root as the governed source for encrypted offsite copy, rather than introducing a second live-database backup path.",
+    "Keep the workstation-held export and workstation-mediated OneDrive mirror explicit as an interim or fallback copy path unless later evidence retires them.",
+    "Keep encrypted offsite credentials machine-local and out of repo publication scope.",
+    "Provide a restore-drill path that restores into an isolated host path and validates archive integrity without touching the live notes runtime by default.",
+    "Record any blocked live-repository initialization honestly if secrets or provider details are still placeholder-only."
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "authored",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/infra/private/run-personal-notes-offsite-backup-remote.ps1",
+    "C:/APEX Platform/apex-power-ops-platform/infra/private/.env.personal-offsite-backup.template",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-02-olares-private-003-host-owned-encrypted-offsite-backup-execution-handoff.md"
+  ],
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-02-olares-private-003-host-owned-encrypted-offsite-backup-execution-handoff.md",
+  "implementation_ready_candidate": true,
+  "sql_permission": false,
+  "sql_permission_note": "This packet authorizes helper, operator, and bounded remote backup-governance work only. It does not authorize database writes, public ingress, shared auth, or Olares app registration.",
+  "landing_lane": "olares_private_lane_host_owned_offsite_backup",
+  "migration_strategy": "bounded_offsite_hardening_over_existing_host_local_archives",
+  "created_at": "2026-05-02",
+  "updated_at": "2026-05-02",
+  "delegation_status": "completed",
+  "validation_disposition": "live-proof-passed-existing-restic-repository-reused",
+  "closure_note": "This implementation packet now includes live encrypted offsite proof on the real Olares host. The host-local env file was completed with the existing Backblaze bucket endpoint, the existing Olares storage access key id, the matching secret access key, and the existing Restic repository password from the authorized vault surfaces. `status` confirmed the repository is configured and reachable, `init` confirmed the repository was already initialized, `backup` created a fresh host-local `personal-notes` archive and saved a new tagged Restic snapshot, and `restore-drill` restored and validated that archive in the isolated drill root. The live private lane remains unchanged, and the workstation-mediated mirror is preserved as a secondary off-host copy path rather than the only one.",
+  "next_action": "Maintain the host-owned encrypted offsite lane through bounded reruns of `backup`, `snapshots`, `forget-prune`, and `restore-drill`, and only open a later packet if automation cadence or wider promotion beyond the current private boundary is desired."
+}

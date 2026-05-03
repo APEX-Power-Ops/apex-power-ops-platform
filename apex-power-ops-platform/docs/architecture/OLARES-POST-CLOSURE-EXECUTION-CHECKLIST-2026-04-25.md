@@ -16,19 +16,28 @@ It exists to keep the remaining post-closure work bounded, executable, and separ
 
 Use these files first:
 
-1. `ops/agents/handoffs/2026-04-25-olares-lane-authority-approval-and-transition-decision.md`
-2. `plan/infrastructure-olares-full-implementation-roadmap-1.md`
-3. `ops/agents/handoffs/2026-04-25-olares-workstation-001-dev-stack-and-mcp-validation-closure-handoff.md`
-4. `ops/agents/handoffs/2026-04-25-olares-one-friendly-alias-and-ingress-follow-up-handoff.md`
-5. `docs/architecture/OLARES-WORKSTATION-BRING-UP-CHECKLIST-2026-04-23.md`
-6. `docs/architecture/SERVICE-HOST-INSTALLED-PROOF-CHECKLIST-2026-04-23.md`
+1. `ops/agents/handoffs/2026-05-01-olares-runtime-surface-restoration-handoff.md`
+2. `ops/agents/handoffs/2026-05-01-olares-private-stack-browser-terminal-bring-up-handoff.md`
+3. `plan/infrastructure-olares-full-implementation-roadmap-1.md`
+4. `ops/agents/handoffs/2026-04-25-olares-workstation-001-publication-follow-through-scope-handoff.md`
+5. `ops/agents/handoffs/2026-04-25-olares-workstation-002-publication-follow-through-blocker-handoff.md`
+6. `docs/architecture/OLARES-WORKSTATION-BRING-UP-CHECKLIST-2026-04-23.md`
+7. `docs/architecture/SERVICE-HOST-INSTALLED-PROOF-CHECKLIST-2026-04-23.md`
+8. `docs/architecture/OLARES-PRIVATE-STACK-BLUEPRINT-2026-05-01.md`
+9. `docs/architecture/OLARES-PRIVATE-STACK-FIRST-RUN-CHECKLIST-2026-05-01.md`
+
+In this workspace snapshot, use the 2026-05-01 restoration handoff as the
+current local evidence floor for the restored workstation, runtime, and rerun
+surfaces, and use the 2026-05-01 private-stack bring-up handoff as the current
+evidence floor for the bounded host-only personal lane.
 
 Approved status baseline:
 
 1. the first governed Olares workstation lane is closed
 2. the first installed-proof lanes for `forms-engine` and `p6-ingest` are closed
 3. the friendly alias cleanup lane is closed
-4. Olares is not the current primary execution frontier for the repo
+4. the bounded private personal lane is operationally closed in host-only scope and remains outside the governed installed-app set
+5. Olares is not the current primary execution frontier for the repo
 
 ## Allowed Uses
 
@@ -39,12 +48,14 @@ Use this checklist when one of the following is true:
 3. an installed-service regression rerun is needed
 4. backup or restore drift needs a bounded rerun
 5. the Settings API limitation for Helm-managed apps needs to be preserved explicitly in nearby docs or packets
+6. the bounded private personal lane needs to be preserved, revalidated after drift, or kept explicit in nearby docs without promoting it
 
 Do not use this checklist to claim:
 
 1. that generic Olares bring-up is still open
 2. that future services may be installed on Olares without a new packet
-3. that GitHub canonical hosting has changed
+3. that the private personal lane is a governed Olares-installed app or public route
+4. that GitHub canonical hosting has changed
 
 ## Checklist
 
@@ -74,7 +85,7 @@ Exit condition:
 ### 3. Installed-Service Regression Rerun Readiness
 
 - [ ] keep `docs/architecture/SERVICE-HOST-INSTALLED-PROOF-CHECKLIST-2026-04-23.md` current as the rerun surface for `forms-engine` and `p6-ingest`
-- [ ] use the 2026-04-25 installed-proof closure handoffs as the current evidence floor for both services
+- [ ] use `ops/agents/handoffs/2026-05-01-olares-runtime-surface-restoration-handoff.md` as the current local evidence floor for both services in this workspace snapshot
 - [ ] rerun installed proof only when route health, installed behavior, chart drift, ingress drift, or host drift justifies it
 
 Exit condition:
@@ -95,11 +106,23 @@ Exit condition:
 
 - [ ] preserve the known limitation that `forms-engine` and `p6-ingest` friendly aliases are live even though the supported Settings API lacks matching `ApplicationManager` resources for those Helm-managed apps
 - [ ] do not route future alias work through ad hoc Settings API retries unless a new explicit packet is opened for that platform behavior
-- [ ] cite `ops/agents/handoffs/2026-04-25-olares-one-friendly-alias-and-ingress-follow-up-handoff.md` when documenting this limitation elsewhere
+- [ ] cite `ops/agents/handoffs/2026-05-01-olares-runtime-surface-restoration-handoff.md` when documenting this limitation elsewhere in the current workspace snapshot
 
 Exit condition:
 
 - operator docs and future packets do not misclassify the Settings API limitation as a reopened service failure
+
+### 6. Private Personal Lane Boundary Preservation
+
+- [x] treat `ops/agents/handoffs/2026-05-01-olares-private-stack-browser-terminal-bring-up-handoff.md` as the current evidence floor for the bounded `personal-notes` lane
+- [x] keep `docs/architecture/OLARES-PRIVATE-STACK-BLUEPRINT-2026-05-01.md`, `docs/architecture/OLARES-PRIVATE-STACK-FIRST-RUN-CHECKLIST-2026-05-01.md`, and `infra/private/run-personal-stack-remote.ps1` aligned as the governing design, operator, and proof surfaces
+- [x] preserve the current access and recovery boundary: host-only or mesh-tunneled access, local snapshot backup and restore, and no implicit public-ingress or installed-app promotion
+- [x] require a new explicit packet before promoting the private lane into shared auth, a public route, or the governed Olares-installed app set
+- [x] use `ops/agents/packets/draft/2026-05-01-olares-private-001-private-lane-promotion-gate-planning.json` as the first planning packet if future work proposes private-lane promotion beyond the current host-only or mesh-tunneled posture
+
+Exit condition:
+
+- the private personal lane stays explicit as a bounded host-only or mesh-tunneled posture and is not misread as a reopened generic Olares expansion lane
 
 ## Reopen Gate
 
@@ -108,10 +131,12 @@ Do not reopen generic Olares execution without a new explicit packet unless one 
 1. private workstation access regresses
 2. storage, backup, or restore proof regresses
 3. installed `forms-engine` or `p6-ingest` routes regress on the real host
-4. a new Olares host, install method, or Olares-scoped capability is intentionally approved
+4. the bounded private personal lane regresses in access, runtime, or tested recovery posture
+5. a new Olares host, install method, or Olares-scoped capability is intentionally approved
 
 ## Current Recommendation
 
 1. treat this checklist as the bounded follow-through surface for the remaining Olares items
 2. keep broader execution priority on the main platform roadmap
-3. author a new explicit packet before any future Olares expansion beyond the closed baseline captured on 2026-04-25
+3. preserve the private personal lane as a separate bounded posture rather than treating it as a silent extension of the installed-app set
+4. author a new explicit packet before any future Olares expansion beyond the closed baseline captured on 2026-04-25 and the bounded private-lane closure captured on 2026-05-01

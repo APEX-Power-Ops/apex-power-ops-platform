@@ -20,8 +20,12 @@ Current repo authority for that transition lives in:
 
 1. `C:/APEX Platform/Infrastructure/Olares_Workspace_Authority_Framework.md`
 2. `C:/APEX Platform/Infrastructure/Olares_MVP_Execution_Roadmap.md`
-3. `C:/APEX Platform/Infrastructure/Olares_Build_Guide.md`
-4. `C:/APEX Platform/Infrastructure/Olares_Checklist.md`
+3. `C:/APEX Platform/apex-power-ops-platform/plan/infrastructure-olares-full-implementation-roadmap-1.md`
+4. `C:/APEX Platform/apex-power-ops-platform/docs/architecture/OLARES-POST-CLOSURE-EXECUTION-CHECKLIST-2026-04-25.md`
+5. `C:/APEX Platform/apex-power-ops-platform/docs/architecture/OLARES-PRIVATE-STACK-BLUEPRINT-2026-05-01.md`
+6. `C:/APEX Platform/apex-power-ops-platform/docs/architecture/OLARES-PRIVATE-STACK-FIRST-RUN-CHECKLIST-2026-05-01.md`
+7. `C:/APEX Platform/Infrastructure/Olares_Build_Guide.md`
+8. `C:/APEX Platform/Infrastructure/Olares_Checklist.md`
 
 Execution bootstrap for fresh implementation sessions:
 
@@ -31,7 +35,10 @@ Interpretation rules:
 
 1. `apex-power-ops-platform/` remains the live implementation workspace that will be hosted on the Olares One
 2. the parent git root at `C:/APEX Platform` remains the publication boundary until a later explicit cutover decision
-3. newly-authored Olares work should add the dev/services/staging infrastructure layer to this existing workspace rather than replacing the current app/package/infra structure
+3. the first governed Olares workstation lane and the first installed-app proof lane for `forms-engine` and `p6-ingest` are already closed
+4. the bounded `personal-notes` private lane is operationally closed in host-only scope and remains outside the governed installed-app set
+5. newly-authored Olares work should add the dev/services/staging infrastructure layer to this existing workspace rather than replacing the current app/package/infra structure
+6. do not treat future Olares work as open-ended bring-up; changes beyond the current closed baseline require a new explicit packet, especially for public routing, shared auth, or new installed apps
 
 ## Operator Quick Start
 

@@ -1,0 +1,73 @@
+{
+  "packet_id": "2026-05-02-olares-private-005",
+  "title": "Restore-Drill Cadence And Timer Hardening Execution",
+  "objective": "Add a bounded recurring restore-drill cadence for the already-live `personal-notes` encrypted offsite lane and harden the deployed backup timer with explicit jitter, start limits, and rotated file logs, while keeping runtime, ingress, auth, and installed-app posture unchanged.",
+  "domain": "infrastructure-domain",
+  "active_role": "Olares Private Lane Backup Operator",
+  "repo_paths": [
+    "C:/APEX Platform/apex-power-ops-platform/infra/private",
+    "C:/APEX Platform/apex-power-ops-platform/docs/architecture/OLARES-PRIVATE-STACK-BLUEPRINT-2026-05-01.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/architecture/OLARES-PRIVATE-STACK-FIRST-RUN-CHECKLIST-2026-05-01.md",
+    "C:/APEX Platform/apex-power-ops-platform/plan/infrastructure-olares-full-implementation-roadmap-1.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "C:/APEX Platform/PROJECT_STATUS.md"
+  ],
+  "dependencies": [
+    "ops/agents/packets/draft/2026-05-02-olares-private-004-host-owned-offsite-backup-automation-execution.json",
+    "ops/agents/handoffs/2026-05-02-olares-private-004-host-owned-offsite-backup-automation-execution-handoff.md",
+    "infra/private/run-personal-notes-offsite-backup-host.sh",
+    "infra/private/personal-notes-offsite-backup-schedule.ps1",
+    "infra/private/run-personal-notes-offsite-backup-remote.ps1",
+    "PROJECT_STATUS.md"
+  ],
+  "dependency_note": "Packet 004 closed the basic host-native offsite backup cadence. This execution packet is bounded to the next two maintenance-hardening steps: recurring restore-drill cadence and hardened timer behavior on the deployed backup surface.",
+  "required_inputs": [
+    "The existing live Backblaze-backed Restic repository configured on the Olares host",
+    "The existing machine-local env file at /home/olares/code/personal/.env.personal-offsite-backup",
+    "The installed host-native backup runner and systemd timer from packet 004",
+    "The validated restore-drill logic already present in infra/private/run-personal-notes-offsite-backup-remote.ps1"
+  ],
+  "constrained_outputs": [
+    "A host-native runner for recurring restore drills against the existing encrypted repository",
+    "An updated operator helper that can manage both backup and restore-drill timer profiles",
+    "Deployed backup timer hardening with explicit jitter, start limits, and rotated append-only file logs",
+    "Updated operator and architecture docs that distinguish backup cadence from restore-drill cadence",
+    "A dated handoff recording live install, status, and run-now proof for the weekly restore-drill lane",
+    "No public ingress, shared auth, Olares app registration, or installed-app promotion"
+  ],
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/infra/private",
+    "C:/APEX Platform/apex-power-ops-platform/docs/architecture",
+    "C:/APEX Platform/apex-power-ops-platform/plan",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "C:/APEX Platform/PROJECT_STATUS.md"
+  ],
+  "validation_steps": [
+    "Keep the live personal-notes runtime host-only or mesh-tunneled and do not change ingress or auth posture.",
+    "Confirm the deployed backup timer now includes RandomizedDelaySec, StartLimitIntervalSec, StartLimitBurst, and append-only file logs with logrotate retention.",
+    "Install a second system-level timer for restore drills rather than overloading the backup cadence.",
+    "Confirm the restore-drill timer is enabled and active with a real next-run timestamp.",
+    "Confirm a manual restore-drill run completes successfully in the isolated drill root and validates recovered archive integrity without touching the live Notes runtime."
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "authored",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/infra/private/run-personal-notes-offsite-restore-drill-host.sh",
+    "C:/APEX Platform/apex-power-ops-platform/infra/private/personal-notes-offsite-backup-schedule.ps1",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-02-olares-private-005-restore-drill-cadence-and-timer-hardening-execution-handoff.md"
+  ],
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-02-olares-private-005-restore-drill-cadence-and-timer-hardening-execution-handoff.md",
+  "implementation_ready_candidate": true,
+  "sql_permission": false,
+  "sql_permission_note": "This packet authorizes helper, operator, and bounded host automation hardening work only. It does not authorize database writes, public ingress, shared auth, or Olares app registration.",
+  "landing_lane": "olares_private_lane_restore_drill_cadence_and_timer_hardening",
+  "migration_strategy": "bounded_second_systemd_cadence_plus_deployed_unit_hardening",
+  "created_at": "2026-05-02",
+  "updated_at": "2026-05-02",
+  "delegation_status": "completed",
+  "validation_disposition": "live-proof-passed-restore-drill-timer-installed-and-backup-unit-hardened",
+  "closure_note": "This execution packet now includes live proof on the real Olares host. The shared schedule helper now supports `backup` and `restore-drill` profiles, the deployed backup timer includes `RandomizedDelaySec=20m`, `StartLimitIntervalSec=6h`, `StartLimitBurst=2`, and append-only file logs with weekly logrotate retention, and the new weekly restore-drill timer completed a successful `run-now` that restored snapshot `76b8155c` into `/home/olares/apex-restore-drills/personal/memos/20260502T182526Z` while validating recovered archive integrity. The live runtime boundary remains unchanged.",
+  "next_action": "Maintain the encrypted offsite lane through the installed backup and restore-drill timers plus bounded reruns of status and restore-drill, and only open a later packet if wider promotion beyond the current private boundary is desired."
+}
