@@ -69,6 +69,7 @@ Additional approval requirements:
 | `apps/pm-surface/` | runtime-apps | runtime-apps, platform-governance if keep-or-merge status changes |
 | `packages/calc-engine/` | shared-packages | shared-packages, runtime-apps when behavior changes impact active apps |
 | `packages/forms-engine/` | shared-packages | shared-packages, runtime-apps when behavior changes impact active apps |
+| `packages/p6-ingest/` | shared-packages | shared-packages, runtime-apps when behavior changes impact active apps or runtime consumers |
 | `packages/api-contracts/` | shared-packages | shared-packages, runtime-apps when shared schemas affect app contracts |
 | `infra/` | infra-data | infra-data, platform-governance when topology or import policy changes |
 | `ops/agents/` | ops-automation | ops-automation |

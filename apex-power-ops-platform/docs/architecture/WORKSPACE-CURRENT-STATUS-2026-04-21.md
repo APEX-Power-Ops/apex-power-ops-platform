@@ -38,6 +38,7 @@ What is not yet true:
 | `apps/mutation-seam` | active | valid bounded runtime lane; malformed residue cleanup is complete |
 | `packages/calc-engine` | active | shared calculation core |
 | `packages/forms-engine` | active | bounded forms-engine import is live in the platform repo and now has workspace-local smoke, focused pytest, and package CI validation paths over the promoted MOP, PSS, and AHA artifact set |
+| `packages/p6-ingest` | active | shared P6/Primavera baseline ingest package; first host-installed proof closed 2026-04-25 under the Olares roadmap and live MCP `apex-p6` endpoint plus committed canary runtime evidence resolve through the governed cross-lane fixture in `apps/mutation-seam/app/schedule/fixtures/` |
 | `infra/database` | active | active infrastructure lane |
 | `ops/agents` | active | packet and handoff workflow lane |
 | `ops/knowledge-control-plane` | active | active registry lane; known registry encoding corruption has been normalized |

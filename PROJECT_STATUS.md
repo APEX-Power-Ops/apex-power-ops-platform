@@ -1,12 +1,51 @@
 # Apex Power Ops - Project Status
 
-> **Last Updated**: December 11, 2025 (Session 7 - VS Code Claude)  
-> **Phase**: Operations Visibility Schema Ready, NETA Import Complete  
+> **Last Updated**: May 2, 2026 (Olares private-lane host-offsite automation closure addendum)
+> **Phase**: Operations Visibility Schema Ready, NETA Import Complete, Olares bounded private lane operational with daily backup automation and host-owned encrypted offsite cadence
 > **See Also**: `PROJECT_OVERVIEW.md` for full system architecture
 
 ---
 
 ## 🎯 Executive Summary
+
+## 2026 Addendum: Olares Runtime And Private Lane
+
+This document's main body still reflects the December 2025 application and
+schema program state. The addendum below records the current bounded Olares
+runtime truth so the active operator posture is not left buried only in
+handoffs.
+
+### Current Olares Boundary
+
+| Surface | Status | Notes |
+|---------|--------|-------|
+| Olares workstation rerun surfaces | ✅ Restored | `forms-engine`, `p6-ingest`, canary wrappers, and bounded rerun docs are back in the workspace and validated |
+| Governed installed-app set | ✅ Bounded | `forms-engine` and `p6-ingest` remain the only governed installed Olares apps |
+| Private personal stack | ✅ Operational | `personal-notes` runs host-only on `127.0.0.1:5230` on the real Olares host |
+| Workstation mesh SSH path | ✅ Restored | trusted operator path is `olares@100.64.0.1`, not the public FRP hostname |
+| Workstation browser access | ✅ Proven | bounded SSH tunnel from local `127.0.0.1:5231` to host `127.0.0.1:5230` validated the live Memos UI |
+| Local backup path | ✅ Tested | backup archive created under `/home/olares/apex-backups/personal/memos/` |
+| Local restore path | ✅ Tested | forced restore completed successfully with pre-restore snapshot and post-restore HTTP 200 |
+| Workstation backup copy | ✅ Tested | `backup-fetch` now creates the host archive and downloads a separate workstation copy under `$HOME\OlaresPersonalBackups\memos` |
+| Workstation restore path | ✅ Tested | `restore-local` now uploads a workstation-held archive back to the host and completes the same forced restore flow successfully |
+| Offsite backup mirror | ✅ Tested | `backup-fetch-sync` now mirrors the workstation backup set into `$HOME\OneDrive\OlaresPersonalBackups\memos` |
+| Daily backup automation | ✅ Installed | workstation helper now installs the required daily Task Scheduler path for `backup-fetch-sync`; optional logon trigger is machine-policy-blocked and reported honestly |
+| One-command operator proof | ✅ Available | `infra/private/run-personal-stack-remote.ps1 -Action status` reports compose state, HTTP health, SQLite summary, latest host backups, workstation backup copies, and the offsite mirror |
+| Host-owned encrypted offsite backup | ✅ Tested | helper env was completed on the host, `status` confirmed the Backblaze repository is reachable, `init` confirmed it was already initialized, `backup` saved snapshot `542e7b9f`, and `restore-drill` validated recovery in the isolated drill path |
+| Host-owned encrypted offsite automation | ✅ Installed | host helper deployed `/home/olares/code/personal/run-personal-notes-offsite-backup-host.sh`, installed `apex-personal-notes-offsite-backup.timer` for the daily `03:30 UTC` window with `20m` jitter, start-limit controls, and rotated file logs, and `run-now` saved snapshot `76b8155c` with retention prune |
+| Host-owned encrypted restore-drill automation | ✅ Installed | host helper deployed `/home/olares/code/personal/run-personal-notes-offsite-restore-drill-host.sh`, installed `apex-personal-notes-offsite-restore-drill.timer` for the weekly Sunday `05:00 UTC` window with `20m` jitter, and `run-now` restored snapshot `76b8155c` into isolated drill root `/home/olares/apex-restore-drills/personal/memos/20260502T182526Z` |
+| Next bounded private-lane action | 📝 Optional | keep rerunning the private-lane restore drill and timer status on operator cadence; open a new packet only for wider promotion, auth change, or ingress change |
+| Public ingress for the private lane | 🚫 Deferred | the service remains intentionally host-only and outside the governed Olares-installed app surface |
+
+### Current Olares Notes
+
+1. The trusted access route is the restored private mesh path to `100.64.0.1`.
+2. The public hostname `jlswen2121.olares.com` is treated as an FRP relay path, not the controlling host SSH surface.
+3. The private personal lane is intentionally separate from the governed installed-app surface and does not imply public publication or formal APEX backup posture.
+4. The private lane is now operationally complete in bounded scope: runtime, mesh SSH, browser tunnel, host backup, workstation-held backup copy, workstation-mediated offsite mirror, restore, daily backup automation, and status proof are all codified and validated.
+5. The host-owned encrypted offsite backup lane is now live and validated in bounded scope: the Backblaze repository is reachable from the Olares host, a fresh `personal-notes` snapshot was written, and the restore drill recovered and validated that snapshot without touching the live runtime.
+6. The workstation-mediated OneDrive mirror remains preserved as a secondary off-host copy path, not the only one.
+7. The current bounded backup-governance follow-on is now closed through host-owned encrypted offsite automation, recurring restore-drill cadence, and hardened timer controls; the next approved moves remain limited to maintenance reruns unless a later packet intentionally widens scope.
 
 ```mermaid
 pie title Project Completion Status
@@ -306,7 +345,8 @@ UI:          shadcn/ui + Radix + Tailwind CSS
 | 2025-12-10 | 1.1.0 | Resource Linking schema deployed |
 | 2025-12-11 | 1.2.0 | UI Specification complete |
 | 2025-12-11 | **1.3.0** | NETA import started (33 procedures, 77 test items) |
+| 2026-05-01 | **1.4.0** | Olares bounded private lane closed operationally: host runtime, mesh SSH, tunnel access, tested backup/restore, and operator proof surface |
 
 ---
 
-*Document Version: 1.3.0 | Last Updated: December 11, 2025*
+*Document Version: 1.4.0 | Last Updated: May 1, 2026*

@@ -11,3 +11,8 @@ Until cutover, use the source authority documents at:
 - `C:/APEX Platform/Platform-Authority/MIGRATION-ROADMAP-2026-04-12.md`
 
 This directory exists now so the eventual cutover can move authority into the future root without changing the target topology.
+
+Active local authority documents added in the bootstrap root:
+
+- `C:/APEX Platform/apex-power-ops-platform/docs/authority/ENVIRONMENT-CONTRACT-MAP-2026-04-12.md`
+- `C:/APEX Platform/apex-power-ops-platform/docs/authority/PYTHON-FRAMEWORK-GUIDELINES-2026-04-27.md`
