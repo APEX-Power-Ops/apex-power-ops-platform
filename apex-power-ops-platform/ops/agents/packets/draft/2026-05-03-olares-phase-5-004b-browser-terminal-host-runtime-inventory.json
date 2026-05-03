@@ -1,0 +1,71 @@
+{
+  "packet_id": "2026-05-03-olares-phase-5-004B",
+  "title": "Browser Terminal Host Runtime Inventory",
+  "objective": "Use authenticated Olares browser terminal access, if available, to capture the missing read-only host runtime inventory while workstation Remote-SSH remains blocked, and record that mesh-access recovery still remains a separate problem.",
+  "domain": "infrastructure-domain",
+  "active_role": "Olares Browser Terminal Inventory Operator",
+  "repo_paths": [
+    "C:/APEX Platform/apex-power-ops-platform/plan/infrastructure-olares-full-implementation-roadmap-1.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-003-termpass-needslogin-blocker-audit-and-recovery-path-research-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-001-access-and-runtime-revalidation-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-002-access-recovery-and-runtime-inventory-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-step-3-expansion-decision-surface-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-01-olares-private-stack-browser-terminal-bring-up-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/architecture/SERVICE-HOST-INSTALLED-PROOF-CHECKLIST-2026-04-23.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/architecture/OLARES-FIRST-STORAGE-BRING-UP-RUNBOOK-2026-04-23.md"
+  ],
+  "dependencies": [
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-003-termpass-needslogin-blocker-audit-and-recovery-path-research-handoff.md",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-001-access-and-runtime-revalidation-handoff.md",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-002-access-recovery-and-runtime-inventory-handoff.md",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-step-3-expansion-decision-surface-handoff.md",
+    "ops/agents/handoffs/2026-05-01-olares-private-stack-browser-terminal-bring-up-handoff.md",
+    "docs/architecture/SERVICE-HOST-INSTALLED-PROOF-CHECKLIST-2026-04-23.md",
+    "docs/architecture/OLARES-FIRST-STORAGE-BRING-UP-RUNBOOK-2026-04-23.md",
+    "plan/infrastructure-olares-full-implementation-roadmap-1.md"
+  ],
+  "dependency_note": "Packet 003 concluded that browser-terminal-assisted host inventory is the explicit fallback when operator interaction for local LarePass profile recovery is unavailable. This packet exists to recover host runtime truth without pretending that Remote-SSH or private-mesh access has been fixed.",
+  "required_inputs": [
+    "The Packet 003 ruling that browser-terminal-assisted host inventory is the bounded fallback when operator interaction is unavailable, recorded in ops/agents/handoffs/2026-05-03-olares-phase-5-003-termpass-needslogin-blocker-audit-and-recovery-path-research-handoff.md",
+    "The Packet 001 partial result showing that runtime inventory is still unsatisfied because SSH was unavailable",
+    "Authenticated browser access to the Olares terminal surface",
+    "A pre-bounded command list for read-only host inventory only"
+  ],
+  "constrained_outputs": [
+    "A dated handoff recording whether authenticated browser-terminal access was available and sufficient for read-only host inventory",
+    "Read-only host runtime inventory for Docker, K3s or Helm, installed apps, ports, volumes, networks, and private-lane timers if terminal access succeeds",
+    "A statement that Remote-SSH and private-mesh recovery remain separate open blockers if browser-terminal inventory succeeds without fixing workstation mesh access",
+    "No installs, no promotions, no ingress changes, no auth changes, no service restarts, no AI-toolchain rollout, and no hosting changes"
+  ],
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "C:/APEX Platform/apex-power-ops-platform/plan",
+    "C:/APEX Platform/PROJECT_STATUS.md"
+  ],
+  "validation_steps": [
+    "Open the authenticated Olares browser terminal only if it is already available through the current UI path; do not widen into auth-repair work inside this packet.",
+    "Run only pre-approved read-only host inventory commands covering Docker, K3s or Helm, installed apps, ports, volumes, networks, and private-lane timers.",
+    "Capture whether installed `forms-engine` and `p6-ingest` surfaces appear healthy or inspectable from the host side.",
+    "Capture whether private-lane timer surfaces and backup or restore-drill units are visible from the host side.",
+    "Record explicitly that mesh-access recovery and VS Code Remote-SSH viability remain separate unresolved questions unless independently revalidated during the packet.",
+    "Stop immediately if authenticated browser-terminal access is unavailable rather than widening into interactive auth repair, service mutation, or public-host SSH trust changes."
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "authored",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-004b-browser-terminal-host-runtime-inventory-handoff.md"
+  ],
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-004b-browser-terminal-host-runtime-inventory-handoff.md",
+  "implementation_ready_candidate": true,
+  "sql_permission": false,
+  "sql_permission_note": "This packet authorizes authenticated browser-terminal read-only host inventory only. It does not authorize database writes, service mutation, auth repair, or any hosting or ingress changes.",
+  "landing_lane": "olares_phase_5_browser_terminal_host_runtime_inventory",
+  "migration_strategy": "recover_host_runtime_truth_without_claiming_mesh_access_recovery",
+  "created_at": "2026-05-03",
+  "updated_at": "2026-05-03",
+  "delegation_status": "authored",
+  "validation_disposition": "pending-execution",
+  "closure_note": "Not yet executed. This packet exists as the explicit fallback named by Packet 003 when operator-interactive local LarePass profile recovery is unavailable.",
+  "next_action": "Execute this packet only when authenticated browser-terminal access is available and the priority is host runtime truth rather than workstation mesh recovery."
+}
