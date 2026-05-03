@@ -1,0 +1,31 @@
+services:
+  personal-notes:
+    image: ghcr.io/usememos/memos:0.24.3
+    restart: unless-stopped
+    env_file:
+      - .env.personal.template
+    environment:
+      MEMOS_PORT: 5230
+      MEMOS_MODE: prod
+      MEMOS_DRIVER: sqlite
+      MEMOS_DSN: /var/opt/memos/memos_prod.db
+    ports:
+      - 127.0.0.1:${PERSONAL_NOTES_PORT}:5230
+    volumes:
+      - ${PERSONAL_DATA_ROOT}/memos:/var/opt/memos
+
+  personal-postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    profiles:
+      - db
+    env_file:
+      - .env.personal.template
+    environment:
+      POSTGRES_DB: ${PERSONAL_POSTGRES_DB}
+      POSTGRES_USER: ${PERSONAL_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${PERSONAL_POSTGRES_PASSWORD}
+    ports:
+      - 127.0.0.1:${PERSONAL_POSTGRES_PORT}:5432
+    volumes:
+      - ${PERSONAL_DATA_ROOT}/postgres:/var/lib/postgresql/data

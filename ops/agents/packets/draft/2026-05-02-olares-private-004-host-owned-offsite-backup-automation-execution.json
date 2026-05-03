@@ -1,0 +1,73 @@
+{
+  "packet_id": "2026-05-02-olares-private-004",
+  "title": "Host-Owned Encrypted Offsite Backup Automation Execution",
+  "objective": "Install a bounded host-native recurring cadence for the already-live `personal-notes` encrypted offsite backup lane by deploying a host-side runner plus system-level systemd timer, while keeping runtime, ingress, auth, and installed-app posture unchanged.",
+  "domain": "infrastructure-domain",
+  "active_role": "Olares Private Lane Backup Operator",
+  "repo_paths": [
+    "C:/APEX Platform/apex-power-ops-platform/infra/private",
+    "C:/APEX Platform/apex-power-ops-platform/docs/architecture/OLARES-PRIVATE-STACK-BLUEPRINT-2026-05-01.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/architecture/OLARES-PRIVATE-STACK-FIRST-RUN-CHECKLIST-2026-05-01.md",
+    "C:/APEX Platform/apex-power-ops-platform/plan/infrastructure-olares-full-implementation-roadmap-1.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "C:/APEX Platform/PROJECT_STATUS.md"
+  ],
+  "dependencies": [
+    "ops/agents/packets/draft/2026-05-02-olares-private-003-host-owned-encrypted-offsite-backup-execution.json",
+    "ops/agents/handoffs/2026-05-02-olares-private-003-host-owned-encrypted-offsite-backup-execution-handoff.md",
+    "infra/private/run-personal-notes-offsite-backup-remote.ps1",
+    "infra/private/run-personal-stack-remote.ps1",
+    "infra/private/README.md",
+    "infra/private/PERSONAL-ZONE-QUICKSTART.md",
+    "PROJECT_STATUS.md"
+  ],
+  "dependency_note": "Packet 003 closed the host-owned encrypted offsite lane with live proof but left recurring cadence as an optional follow-on. This execution packet is bounded to automation over that existing lane and does not reopen runtime or promotion scope.",
+  "required_inputs": [
+    "The existing live Backblaze-backed Restic repository configured on the Olares host",
+    "The existing machine-local env file at /home/olares/code/personal/.env.personal-offsite-backup",
+    "The existing validated host-local notes archive flow under /home/olares/apex-backups/personal/memos",
+    "Host evidence that systemctl is present, systemctl --user is unavailable over the current SSH path, and sudo -n is available"
+  ],
+  "constrained_outputs": [
+    "A host-native runner for creating a fresh notes archive and executing encrypted offsite backup plus retention",
+    "A bounded operator helper for installing, checking, and manually invoking a system-level timer on the Olares host",
+    "Updated operator and architecture docs that distinguish operator-invoked backup from host-native recurring cadence",
+    "A dated handoff recording live install, status, and run-now proof",
+    "No public ingress, shared auth, Olares app registration, or installed-app promotion"
+  ],
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/infra/private",
+    "C:/APEX Platform/apex-power-ops-platform/docs/architecture",
+    "C:/APEX Platform/apex-power-ops-platform/plan",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "C:/APEX Platform/PROJECT_STATUS.md"
+  ],
+  "validation_steps": [
+    "Deploy a host-native runner instead of reusing the SSH-based workstation helper as the timer target.",
+    "Use a system-level timer because systemctl --user is unavailable over the current SSH path and crontab is absent.",
+    "Keep the live personal-notes runtime host-only or mesh-tunneled and do not change ingress or auth posture.",
+    "Confirm the timer is enabled and active with a real next-run timestamp.",
+    "Confirm a manual run creates or updates a Restic snapshot successfully and does not touch the live Notes runtime beyond the existing host-local archive flow."
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "authored",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/infra/private/run-personal-notes-offsite-backup-host.sh",
+    "C:/APEX Platform/apex-power-ops-platform/infra/private/personal-notes-offsite-backup-schedule.ps1",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-02-olares-private-004-host-owned-offsite-backup-automation-execution-handoff.md"
+  ],
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-02-olares-private-004-host-owned-offsite-backup-automation-execution-handoff.md",
+  "implementation_ready_candidate": true,
+  "sql_permission": false,
+  "sql_permission_note": "This packet authorizes helper, operator, and bounded host automation work only. It does not authorize database writes, public ingress, shared auth, or Olares app registration.",
+  "landing_lane": "olares_private_lane_host_owned_offsite_backup_automation",
+  "migration_strategy": "bounded_systemd_cadence_over_existing_live_encrypted_offsite_lane",
+  "created_at": "2026-05-02",
+  "updated_at": "2026-05-02",
+  "delegation_status": "completed",
+  "validation_disposition": "live-proof-passed-systemd-timer-installed-and-run-now-succeeded",
+  "closure_note": "This execution packet now includes live host-side automation proof on the real Olares host. The helper deployed host runner /home/olares/code/personal/run-personal-notes-offsite-backup-host.sh, installed system units apex-personal-notes-offsite-backup.service and apex-personal-notes-offsite-backup.timer, and registered a daily 03:30 UTC cadence. Status confirmed the timer is enabled and active, and run-now completed successfully with Restic snapshot 76b8155c while pruning the prior host-scheduled snapshot. The live runtime boundary remains unchanged.",
+  "next_action": "Maintain the host-owned encrypted offsite lane through the installed timer plus bounded reruns of status and restore-drill, and only open a later packet if wider promotion beyond the current private boundary is desired."
+}
