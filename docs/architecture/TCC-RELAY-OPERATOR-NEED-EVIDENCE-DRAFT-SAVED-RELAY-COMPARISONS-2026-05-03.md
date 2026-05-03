@@ -1,7 +1,7 @@
 # TCC Relay Operator-Need Evidence Draft - Saved Relay Comparisons
 
 Date: 2026-05-03
-Status: Draft candidate-specific evidence artifact
+Status: Draft candidate-specific evidence artifact with authored operator request captured
 Scope: Draft operator-need evidence for Candidate A only; does not reopen implementation or authorize a packet by itself
 
 ## Purpose
@@ -13,6 +13,22 @@ It is intentionally narrow.
 It exists to show the shape of acceptable evidence for the smallest plausible Phase 3 survivor: saved relay comparisons.
 
 This draft is not yet treated as sufficient reopening proof by itself.
+
+## Authored Operator Request Artifact
+
+The currently captured authored operator rationale is:
+
+1. "The operator need is to be able to allow for technicians this ability as they will not have access to stdlib."
+
+For governed use, this draft interprets that request narrowly as:
+
+1. technicians without stdlib access need the governed browser compare surface to carry enough continuity that they can return to the same comparison later,
+2. the smallest plausible deferred candidate matching that request is saved relay comparisons,
+3. this request does not by itself justify workspaces, approval surfaces, authored notes, or generalized relay writes.
+
+This now counts as an authored operator request artifact for Candidate A.
+
+It does not yet count as a documented repeated field-use case.
 
 ## Candidate Requested
 
@@ -26,7 +42,7 @@ Requested behavior in bounded form:
 
 ## Operator Context
 
-Current stated operator rationale:
+Current stated operator rationale, now captured as an authored request artifact:
 
 1. technicians will need this browser-based relay ability,
 2. those technicians will not have direct stdlib access,
@@ -106,10 +122,10 @@ This draft does not request:
 This draft is intentionally not treated as final reopening proof because it still lacks:
 
 1. a measurable operator-use window for the live Phase 2 compare surface,
-2. a dated operator request artifact from a real technician workflow,
-3. a documented site or project case showing the exact compare pair that had to be reconstructed,
-4. a confirmed real-world workaround and its concrete cost,
-5. confirmation that the need is repeated enough to justify opening a scoped write discussion.
+2. a documented site or project case showing the exact compare pair that had to be reconstructed,
+3. a confirmed real-world workaround and its concrete cost,
+4. confirmation that the need is repeated enough to justify opening a scoped write discussion,
+5. proof that the saved-comparison need arises from live governed compare usage rather than only anticipated future use.
 
 ## Recommended Next Collection Step
 
@@ -126,9 +142,9 @@ To convert this draft into stronger evidence, capture one real operator-use case
 
 Current recommendation:
 
-1. treat this document as a draft evidence note only,
-2. use it to guide collection of a real operator request artifact,
-3. if real field use later confirms the same gap, use that evidence to support a separately authored Phase 3 implementation scoping packet for Candidate A only.
+1. treat this document as an initial authored-request-plus-draft-evidence note,
+2. use it to guide collection of one real technician or site case from live Phase 2 usage,
+3. if real field use later confirms the same saved-comparison gap, use that evidence to support a separately authored Phase 3 implementation scoping packet for Candidate A only.
 
 ## Bottom Line
 
