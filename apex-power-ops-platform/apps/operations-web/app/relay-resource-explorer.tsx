@@ -190,149 +190,179 @@ function renderSelectionPanel(selection: RelaySelectionData) {
         </div>
       ) : null}
 
-      <div className="resource-grid relay-grid">
-        <article className="resource-item relay-nested-card">
-          <div className="resource-item-row">
-            <span className="resource-chip">identity</span>
-            <span className="resource-chip resource-chip-muted">source-faithful</span>
-          </div>
-          <h4>Source identity</h4>
-          <dl>
-            <div>
-              <dt>Family</dt>
-              <dd>{selection.context.family_name}</dd>
-            </div>
-            <div>
-              <dt>Storage kind</dt>
-              <dd>{selection.context.storage_kind}</dd>
-            </div>
-            <div>
-              <dt>Manufacturer source</dt>
-              <dd>{selection.context.manufacturer_source_id}</dd>
-            </div>
-            <div>
-              <dt>Standard code</dt>
-              <dd>{selection.context.standard_code ?? 'n/a'}</dd>
-            </div>
-          </dl>
-        </article>
-
-        <article className="resource-item relay-nested-card">
-          <div className="resource-item-row">
-            <span className="resource-chip">settings</span>
-            <span className="resource-chip resource-chip-muted">read-only</span>
-          </div>
-          <h4>Bounded settings surface</h4>
-          <dl>
-            <div>
-              <dt>Line sections</dt>
-              <dd>{selection.context.line_section_count}</dd>
-            </div>
-            <div>
-              <dt>Ranges</dt>
-              <dd>{selection.context.range_count}</dd>
-            </div>
-            <div>
-              <dt>Curve parents</dt>
-              <dd>{selection.context.curve_parent_count}</dd>
-            </div>
-            <div>
-              <dt>Voltage restraint</dt>
-              <dd>{selection.context.voltage_restraint_kind ?? 'n/a'}</dd>
-            </div>
-          </dl>
-        </article>
-      </div>
-
-      <div className="resource-grid relay-grid">
-        <article className="resource-item relay-nested-card">
-          <div className="resource-item-row">
-            <span className="resource-chip">line sections</span>
-            <span className="resource-chip resource-chip-muted">governed</span>
-          </div>
-          <h4>Resolved line sections</h4>
-          <ul className="relay-list">
-            {selection.context.line_sections.slice(0, 4).map((section) => (
-              <li key={section.line_section_source_id}>
-                <strong>{section.section_name ?? 'Unnamed section'}</strong>
-                <span>
-                  #{section.section_number} · pickup {formatNumber(section.pickup)}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </article>
-
-        <article className="resource-item relay-nested-card">
-          <div className="resource-item-row">
-            <span className="resource-chip">preview options</span>
-            <span className="resource-chip resource-chip-muted">published</span>
-          </div>
-          <h4>Stored preview surface</h4>
-          <ul className="relay-list">
-            {selection.settings.preview_options.slice(0, 4).map((option, index) => (
-              <li key={`${option.curve_parent_source_id}-${option.curve_ordinal ?? option.source_ordinal ?? index}`}>
-                <strong>{option.curve_name ?? option.td_desc ?? 'Stored option'}</strong>
-                <span>
-                  parent {option.curve_parent_source_id}
-                  {option.curve_ordinal !== null ? ` · curve ${option.curve_ordinal}` : ''}
-                  {option.source_ordinal !== null ? ` · source ${option.source_ordinal}` : ''}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </article>
-      </div>
-
-      {curve ? (
+      <section className="relay-compare-section" data-relay-compare-view="context">
+        <header className="relay-compare-section-header">
+          <span className="relay-compare-section-eyebrow">Compare view</span>
+          <h4 className="relay-compare-section-title">Context</h4>
+        </header>
         <div className="resource-grid relay-grid">
           <article className="resource-item relay-nested-card">
             <div className="resource-item-row">
-              <span className="resource-chip">preview</span>
-              <span className="resource-chip resource-chip-muted">{selection.plot?.meta.status ?? 'unknown'}</span>
+              <span className="resource-chip">identity</span>
+              <span className="resource-chip resource-chip-muted">source-faithful</span>
             </div>
-            <h4>Selected curve</h4>
+            <h5>Source identity</h5>
             <dl>
               <div>
-                <dt>Curve name</dt>
-                <dd>{curve.curve_name}</dd>
+                <dt>Family</dt>
+                <dd>{selection.context.family_name}</dd>
               </div>
               <div>
-                <dt>Curve parent</dt>
-                <dd>{curve.curve_parent_source_id}</dd>
+                <dt>Storage kind</dt>
+                <dd>{selection.context.storage_kind}</dd>
               </div>
               <div>
-                <dt>Time dial</dt>
-                <dd>{curve.time_dial ?? 'n/a'}</dd>
+                <dt>Manufacturer source</dt>
+                <dd>{selection.context.manufacturer_source_id}</dd>
               </div>
               <div>
-                <dt>Source ordinal</dt>
-                <dd>{curve.source_ordinal ?? 'n/a'}</dd>
+                <dt>Standard code</dt>
+                <dd>{selection.context.standard_code ?? 'n/a'}</dd>
               </div>
             </dl>
           </article>
 
           <article className="resource-item relay-nested-card">
             <div className="resource-item-row">
-              <span className="resource-chip">curve points</span>
-              <span className="resource-chip resource-chip-muted">preview</span>
+              <span className="resource-chip">context</span>
+              <span className="resource-chip resource-chip-muted">read-only</span>
             </div>
-            <h4>Preview points</h4>
-            <ul className="relay-list">
-              {curve.points.slice(0, 6).map((point) => (
-                <li key={`${point.current_multiple}-${point.seconds}`}>
-                  <strong>{formatNumber(point.current_multiple, 2)}x</strong>
-                  <span>{formatNumber(point.seconds, 4)} s</span>
-                </li>
-              ))}
-            </ul>
+            <h5>Context summary</h5>
+            <dl>
+              <div>
+                <dt>Line sections</dt>
+                <dd>{selection.context.line_section_count}</dd>
+              </div>
+              <div>
+                <dt>Ranges</dt>
+                <dd>{selection.context.range_count}</dd>
+              </div>
+              <div>
+                <dt>Curve parents</dt>
+                <dd>{selection.context.curve_parent_count}</dd>
+              </div>
+              <div>
+                <dt>Voltage restraint</dt>
+                <dd>{selection.context.voltage_restraint_kind ?? 'n/a'}</dd>
+              </div>
+            </dl>
           </article>
         </div>
-      ) : (
-        <p className="resource-banner resource-banner-neutral relay-inline-banner">
-          No preview curve was returned for this TD-section.
-        </p>
-      )}
+      </section>
+
+      <section className="relay-compare-section" data-relay-compare-view="settings">
+        <header className="relay-compare-section-header">
+          <span className="relay-compare-section-eyebrow">Compare view</span>
+          <h4 className="relay-compare-section-title">Settings</h4>
+        </header>
+        <div className="resource-grid relay-grid">
+          <article className="resource-item relay-nested-card">
+            <div className="resource-item-row">
+              <span className="resource-chip">line sections</span>
+              <span className="resource-chip resource-chip-muted">governed</span>
+            </div>
+            <h5>Resolved line sections</h5>
+            {selection.context.line_sections.length > 0 ? (
+              <ul className="relay-list">
+                {selection.context.line_sections.slice(0, 4).map((section) => (
+                  <li key={section.line_section_source_id}>
+                    <strong>{section.section_name ?? 'Unnamed section'}</strong>
+                    <span>
+                      #{section.section_number} · pickup {formatNumber(section.pickup)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="resource-banner resource-banner-neutral relay-inline-banner">
+                No resolved line sections are published for this TD-section.
+              </p>
+            )}
+          </article>
+
+          <article className="resource-item relay-nested-card">
+            <div className="resource-item-row">
+              <span className="resource-chip">preview options</span>
+              <span className="resource-chip resource-chip-muted">published</span>
+            </div>
+            <h5>Stored preview surface</h5>
+            {selection.settings.preview_options.length > 0 ? (
+              <ul className="relay-list">
+                {selection.settings.preview_options.slice(0, 4).map((option, index) => (
+                  <li key={`${option.curve_parent_source_id}-${option.curve_ordinal ?? option.source_ordinal ?? index}`}>
+                    <strong>{option.curve_name ?? option.td_desc ?? 'Stored option'}</strong>
+                    <span>
+                      parent {option.curve_parent_source_id}
+                      {option.curve_ordinal !== null ? ` · curve ${option.curve_ordinal}` : ''}
+                      {option.source_ordinal !== null ? ` · source ${option.source_ordinal}` : ''}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="resource-banner resource-banner-neutral relay-inline-banner">
+                No stored preview options are published for this TD-section.
+              </p>
+            )}
+          </article>
+        </div>
+      </section>
+
+      <section className="relay-compare-section" data-relay-compare-view="preview">
+        <header className="relay-compare-section-header">
+          <span className="relay-compare-section-eyebrow">Compare view</span>
+          <h4 className="relay-compare-section-title">Preview</h4>
+        </header>
+        {curve ? (
+          <div className="resource-grid relay-grid">
+            <article className="resource-item relay-nested-card">
+              <div className="resource-item-row">
+                <span className="resource-chip">preview</span>
+                <span className="resource-chip resource-chip-muted">{selection.plot?.meta.status ?? 'unknown'}</span>
+              </div>
+              <h5>Selected curve</h5>
+              <dl>
+                <div>
+                  <dt>Curve name</dt>
+                  <dd>{curve.curve_name}</dd>
+                </div>
+                <div>
+                  <dt>Curve parent</dt>
+                  <dd>{curve.curve_parent_source_id}</dd>
+                </div>
+                <div>
+                  <dt>Time dial</dt>
+                  <dd>{curve.time_dial ?? 'n/a'}</dd>
+                </div>
+                <div>
+                  <dt>Source ordinal</dt>
+                  <dd>{curve.source_ordinal ?? 'n/a'}</dd>
+                </div>
+              </dl>
+            </article>
+
+            <article className="resource-item relay-nested-card">
+              <div className="resource-item-row">
+                <span className="resource-chip">curve points</span>
+                <span className="resource-chip resource-chip-muted">preview</span>
+              </div>
+              <h5>Preview points</h5>
+              <ul className="relay-list">
+                {curve.points.slice(0, 6).map((point) => (
+                  <li key={`${point.current_multiple}-${point.seconds}`}>
+                    <strong>{formatNumber(point.current_multiple, 2)}x</strong>
+                    <span>{formatNumber(point.seconds, 4)} s</span>
+                  </li>
+                ))}
+              </ul>
+            </article>
+          </div>
+        ) : (
+          <p className="resource-banner resource-banner-neutral relay-inline-banner">
+            No preview curve was returned for this TD-section.
+          </p>
+        )}
+      </section>
     </article>
   )
 }

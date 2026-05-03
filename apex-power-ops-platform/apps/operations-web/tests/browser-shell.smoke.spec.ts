@@ -365,6 +365,35 @@ test('relay browser requires explicit selection before loading bounded compare d
   ).toHaveCount(2)
   await expect(page.getByText('Unsupported family remains explicit in the governed API.')).toBeVisible()
 
+  const panels = page.locator('.relay-selection-panel')
+  await expect(panels).toHaveCount(2)
+
+  for (const view of ['context', 'settings', 'preview'] as const) {
+    await expect(
+      page.locator('.relay-selection-panel [data-relay-compare-view="' + view + '"]'),
+    ).toHaveCount(2)
+  }
+
+  const primaryPanel = panels.nth(0)
+  const comparePanel = panels.nth(1)
+
+  await expect(primaryPanel.locator('[data-relay-compare-view="context"] dd', { hasText: 'iec' })).toBeVisible()
+  await expect(primaryPanel.locator('[data-relay-compare-view="context"] dd', { hasText: 'constants' })).toBeVisible()
+  await expect(primaryPanel.getByText('101', { exact: true }).first()).toBeVisible()
+  await expect(primaryPanel.locator('[data-relay-compare-view="settings"] strong', { hasText: 'Phase OC section' })).toBeVisible()
+  await expect(primaryPanel.locator('[data-relay-compare-view="preview"] dd', { hasText: 'IEC Very Inverse' })).toBeVisible()
+
+  await expect(comparePanel.locator('[data-relay-compare-view="context"] dd', { hasText: 'lrm' })).toBeVisible()
+  await expect(comparePanel.getByText('202', { exact: true }).first()).toBeVisible()
+  await expect(
+    comparePanel.locator('[data-relay-compare-view="settings"] strong', { hasText: 'Ground OC section' }),
+  ).toBeVisible()
+  await expect(
+    comparePanel.locator('[data-relay-compare-view="preview"]').getByText(
+      'No preview curve was returned for this TD-section.',
+    ),
+  ).toBeVisible()
+
   expect(relayContextRequests).toBe(2)
   expect(relaySettingsRequests).toBe(2)
   expect(relayPlotRequests).toBe(1)
