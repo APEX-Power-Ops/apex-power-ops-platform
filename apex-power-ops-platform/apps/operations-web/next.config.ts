@@ -5,12 +5,13 @@ import type { NextConfig } from 'next'
 
 const projectRoot = path.dirname(fileURLToPath(import.meta.url))
 const workspaceRoot = path.resolve(projectRoot, '..', '..')
+const repoRoot = path.resolve(workspaceRoot, '..')
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
-  outputFileTracingRoot: workspaceRoot,
+  outputFileTracingRoot: repoRoot,
   turbopack: {
-    root: workspaceRoot,
+    root: repoRoot,
   },
 }
 
