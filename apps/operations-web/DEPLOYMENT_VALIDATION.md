@@ -60,7 +60,7 @@ Minimum runtime checks:
 
 ## Backend Seam Proof
 
-`apps/operations-web` currently depends on the governed control-plane route consumed by the apparatus study-resource explorer.
+`apps/operations-web` currently depends on the governed control-plane routes consumed by the apparatus study-resource explorer and the relay read-only browser slice.
 
 Before claiming browser-surface readiness against any target host, verify the backing seam first.
 
@@ -138,16 +138,24 @@ pnpm --dir C:/APEX Platform/apex-power-ops-platform --filter @apex/operations-we
 
 The wrapper can also read `OPERATIONS_WEB_BASE_URL` and `OPERATIONS_WEB_CONTROL_PLANE_BASE_URL` from the environment.
 
+When validating a workstation-local stack through the same wrapper, add `--local-control-plane-runtime` so the backend seam is checked in local-runtime mode instead of public-host mode.
+
 Workspace task note:
 
 1. the root workspace task `Operations web promoted-host smoke` now defaults `OPERATIONS_WEB_CONTROL_PLANE_BASE_URL` to `https://control.apexpowerops.com`
 2. you only need to provide `OPERATIONS_WEB_BASE_URL` when using that task against a deployed operations-web host
 
+Vercel deployment note:
+
+1. `apex-operations-web` is rooted from the parent workspace path `C:/APEX Platform`, so CLI deploys must run from that parent root when the Vercel project `rootDirectory` is `apex-power-ops-platform/apps/operations-web`
+2. when the target deployment is still serving an older shell on the same git commit, rerun the deploy with `npx vercel deploy --yes --force --archive=tgz --scope jasonlswenson-sys-projects` for preview or add `--prod` for production
+3. preview hosts can still return `401` to unauthenticated route smoke when Vercel preview protection is enabled, so the governed public proof gate remains the production alias unless preview protection is deliberately disabled
+
 Current public-host status:
 
 1. the repo-owned promoted-host path is operational
-2. the latest public seam rerun against `https://control.apexpowerops.com` passes the governed apparatus-route gate, with deployed OpenAPI advertising `/api/v1/neta/apparatus/{apparatus_id}/resources` and the host returning handler-owned responses instead of framework `404 Not Found`
-3. promoted-host proof against the public environment should now treat a route-level failure as a fresh regression, not as the previously known blocked state
+2. the latest public seam rerun against `https://control.apexpowerops.com` passes health, readiness, discovery, MCP, OpenAPI, and the governed apparatus route requirement, with readiness reporting `database: connected` and the overall script ending in `RESULT PASS`
+3. a forced Vercel rebuild on 2026-05-01 resolved the stale root-shell issue for `https://operations.apexpowerops.com`; the live shell now serves the relay browser slice and the promoted-host wrapper ends with `PROMOTED_HOST_SUMMARY failed=0`
 
 Pass conditions:
 
@@ -167,8 +175,9 @@ Fail conditions:
 Use these outcomes consistently:
 
 1. `browser-shell-validated` when the app typechecks, builds, and points at a host with the required governed backend seam
-2. `backend-seam-missing` when the app is locally valid but the required control-plane route is not present on the target host
-3. `browser-env-blocked` when the browser shell cannot be validated because the public env contract is unset or invalid
+2. `promoted-host-validated` when the backend seam, hosted route smoke, and real-browser promoted-host smoke all pass against the same deployed host
+3. `backend-seam-missing` when the app is locally valid but the required control-plane route is not present on the target host
+4. `browser-env-blocked` when the browser shell cannot be validated because the public env contract is unset or invalid
 
 ## Current Limitation
 

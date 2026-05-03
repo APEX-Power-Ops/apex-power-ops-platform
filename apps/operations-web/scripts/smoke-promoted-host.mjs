@@ -23,6 +23,11 @@ function parseArgs(argv) {
       continue;
     }
 
+    if (argument === '--local-control-plane-runtime') {
+      parsed.localControlPlaneRuntime = true;
+      continue;
+    }
+
     if (!argument.startsWith('--')) {
       throw new Error(`Unknown argument: ${argument}`);
     }
@@ -43,7 +48,7 @@ function parseArgs(argv) {
 
 function printUsage() {
   console.log(
-    'Usage: node scripts/smoke-promoted-host.mjs --operations-web-base-url <url> --control-plane-base-url <url> [--timeout-ms <ms>] [--skip-authenticated-checks]'
+    'Usage: node scripts/smoke-promoted-host.mjs --operations-web-base-url <url> --control-plane-base-url <url> [--timeout-ms <ms>] [--skip-authenticated-checks] [--local-control-plane-runtime]'
   );
 }
 
@@ -62,7 +67,26 @@ function resolvePythonCommand() {
   return posixVenvPython;
 }
 
-function runCommand(command, args, extraEnv = {}) {
+function resolvePackageManagerCommand() {
+  const explicit = process.env.APEX_PLATFORM_PNPM?.trim();
+  if (explicit) {
+    return { command: explicit, args: [] };
+  }
+
+  if (process.platform === 'win32') {
+    return {
+      command: 'corepack.cmd',
+      args: ['pnpm'],
+    };
+  }
+
+  return {
+    command: 'pnpm',
+    args: [],
+  };
+}
+
+function runCommand(command, args, extraEnv = {}, useShell = false) {
   return new Promise((resolve, reject) => {
     const child = spawn(command, args, {
       cwd: REPO_ROOT,
@@ -71,7 +95,7 @@ function runCommand(command, args, extraEnv = {}) {
         ...extraEnv,
       },
       stdio: 'inherit',
-      shell: false,
+      shell: useShell,
     });
 
     child.on('error', reject);
@@ -116,6 +140,7 @@ async function main() {
   }
 
   const pythonCommand = resolvePythonCommand();
+  const packageManager = resolvePackageManagerCommand();
   const seamArgs = [
     path.join('apps', 'control-plane-api', 'scripts', 'smoke_deployed_control_plane.py'),
     '--base-url',
@@ -125,6 +150,10 @@ async function main() {
 
   if (parsed.skipAuthenticatedChecks) {
     seamArgs.push('--skip-authenticated-checks');
+  }
+
+  if (parsed.localControlPlaneRuntime) {
+    seamArgs.push('--local-runtime');
   }
 
   console.log(`PROMOTED_HOST_STEP backend-seam ${controlPlaneBaseUrl}`);
@@ -140,9 +169,14 @@ async function main() {
   ]);
 
   console.log(`PROMOTED_HOST_STEP browser-smoke ${operationsWebBaseUrl}`);
-  await runCommand('pnpm', ['--filter', '@apex/operations-web', 'exec', 'playwright', 'test'], {
-    OPERATIONS_WEB_BROWSER_SMOKE_BASE_URL: operationsWebBaseUrl,
-  });
+  await runCommand(
+    packageManager.command,
+    [...packageManager.args, '--filter', '@apex/operations-web', 'exec', 'playwright', 'test'],
+    {
+      OPERATIONS_WEB_BROWSER_SMOKE_BASE_URL: operationsWebBaseUrl,
+    },
+    process.platform === 'win32',
+  );
 
   console.log(
     `PROMOTED_HOST_SUMMARY failed=0 operations_web_base_url=${operationsWebBaseUrl} control_plane_base_url=${controlPlaneBaseUrl}`

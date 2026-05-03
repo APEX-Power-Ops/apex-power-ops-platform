@@ -509,6 +509,200 @@ class EMTPlotResponse(BaseModel):
 
 
 # ──────────────────────────────────────────────
+# Relay Contract Lift
+# ──────────────────────────────────────────────
+
+class RelayLineSectionSummary(BaseModel):
+    line_section_source_id: int
+    section_number: int
+    section_name: Optional[str] = None
+    pickup: Optional[float] = None
+    secondary_i_code: Optional[int] = None
+    amps_calc_mode: Optional[int] = None
+    use_toc_multiplier: bool = False
+
+
+class RelayRangeDiscreteValue(BaseModel):
+    value: Optional[float] = None
+    description: Optional[str] = None
+
+
+class RelayRangeOption(BaseModel):
+    range_source_id: int
+    source_parent_id: int
+    parent_kind: str
+    parent_label: Optional[str] = None
+    aux_key: int
+    ordinal: int
+    min_value: Optional[float] = None
+    max_value: Optional[float] = None
+    step_value: Optional[float] = None
+    relative_unit_code: int
+    use_range: bool = False
+    scales_with_time_multiplier: bool = False
+    discrete_values: list[RelayRangeDiscreteValue] = Field(default_factory=list)
+
+
+class RelayCurveParentOption(BaseModel):
+    curve_parent_source_id: int
+    storage_kind: str
+    curve_name: Optional[str] = None
+    curve_parent_ordinal: Optional[int] = None
+    min_pickup: Optional[float] = None
+    max_pickup: Optional[float] = None
+    is_discrete: Optional[bool] = None
+    step_size: Optional[float] = None
+    horizontal_amps_code: Optional[int] = None
+    preview_option_count: int = 0
+
+
+class RelayPreviewOption(BaseModel):
+    curve_parent_source_id: int
+    storage_kind: str
+    curve_name: Optional[str] = None
+    curve_ordinal: Optional[int] = None
+    source_ordinal: Optional[int] = None
+    time_dial: Optional[float] = None
+    td_desc: Optional[str] = None
+    point_count: Optional[int] = None
+    current_min: Optional[float] = None
+    current_max: Optional[float] = None
+    coefficients: dict[str, Optional[float]] = Field(default_factory=dict)
+
+
+class RelaySectionSearchResult(BaseModel):
+    manufacturer_source_id: int
+    relay_type: Optional[str] = None
+    relay_device_source_id: int
+    device_function: Optional[str] = None
+    device_ordinal: int
+    standard_code: Optional[int] = None
+    dftype_code: Optional[int] = None
+    voltage_restraint_kind: Optional[str] = None
+    td_section_source_id: int
+    td_section_name: Optional[str] = None
+    family_code: int
+    family_name: str
+    storage_kind: str
+    supported: bool = False
+
+
+class RelaySectionSearchResponse(BaseModel):
+    count: int
+    sections: list[RelaySectionSearchResult] = Field(default_factory=list)
+
+
+class RelayContext(BaseModel):
+    manufacturer_source_id: int
+    relay_type: Optional[str] = None
+    relay_device_source_id: int
+    device_function: Optional[str] = None
+    device_ordinal: int
+    standard_code: Optional[int] = None
+    dftype_code: Optional[int] = None
+    voltage_restraint_kind: Optional[str] = None
+    td_section_source_id: int
+    td_section_name: Optional[str] = None
+    family_code: int
+    family_name: str
+    storage_kind: str
+    supported: bool = False
+    unsupported_reason: Optional[str] = None
+    line_section_count: int = 0
+    range_count: int = 0
+    curve_parent_count: int = 0
+    preview_option_count: int = 0
+    line_sections: list[RelayLineSectionSummary] = Field(default_factory=list)
+    resolved_equipment: Optional[ResolvedEquipmentSummary] = None
+
+
+class RelaySettingsResponse(BaseModel):
+    td_section_source_id: int
+    family_code: int
+    family_name: str
+    storage_kind: str
+    supported: bool = False
+    unsupported_reason: Optional[str] = None
+    line_sections: list[RelayLineSectionSummary] = Field(default_factory=list)
+    ranges: list[RelayRangeOption] = Field(default_factory=list)
+    curve_parents: list[RelayCurveParentOption] = Field(default_factory=list)
+    preview_options: list[RelayPreviewOption] = Field(default_factory=list)
+
+
+class RelayPlotRequest(BaseModel):
+    td_section_source_id: int = Field(..., description="Relay TD-section source ID")
+    curve_parent_source_id: Optional[int] = Field(
+        None,
+        description="Optional family parent source ID when multiple stored curve parents exist",
+    )
+    curve_ordinal: Optional[int] = Field(
+        None,
+        description="Optional analytical curve ordinal from the settings surface",
+    )
+    source_ordinal: Optional[int] = Field(
+        None,
+        description="Optional TCP source ordinal from the settings surface",
+    )
+    time_dial: Optional[float] = Field(
+        None,
+        description="Analytical time-dial multiplier or exact TCP stored time-dial selector",
+    )
+    current_multiples: list[float] = Field(
+        default_factory=lambda: [2.0, 3.0, 5.0, 10.0, 20.0],
+        description="Current multiples of pickup to evaluate or interpolate",
+    )
+
+
+class RelayPlotCurvePoint(BaseModel):
+    current_multiple: float
+    seconds: float
+
+
+class RelayPlotCurve(BaseModel):
+    id: str
+    curve_family: str = Field("RELAY", description="Curve family identifier")
+    family_name: str
+    storage_kind: str
+    curve_name: Optional[str] = None
+    curve_parent_source_id: Optional[int] = None
+    curve_ordinal: Optional[int] = None
+    source_ordinal: Optional[int] = None
+    time_dial: Optional[float] = None
+    td_desc: Optional[str] = None
+    line_style: str = Field("solid", description="Rendering hint")
+    points: list[RelayPlotCurvePoint] = Field(default_factory=list)
+
+
+class RelayPlotMeta(BaseModel):
+    td_section_source_id: int
+    relay_device_source_id: int
+    manufacturer_source_id: int
+    relay_type: Optional[str] = None
+    device_function: Optional[str] = None
+    td_section_name: Optional[str] = None
+    family_code: int
+    family_name: str
+    storage_kind: str
+    supported: bool = False
+    status: str
+    unsupported_reason: Optional[str] = None
+    selected_curve_parent_source_id: Optional[int] = None
+    selected_curve_name: Optional[str] = None
+    selected_curve_ordinal: Optional[int] = None
+    selected_source_ordinal: Optional[int] = None
+    selected_time_dial: Optional[float] = None
+    selected_td_desc: Optional[str] = None
+    plot_disclaimer: Optional[str] = None
+    resolved_equipment: Optional[ResolvedEquipmentSummary] = None
+
+
+class RelayPlotResponse(BaseModel):
+    meta: RelayPlotMeta
+    warnings: list[str] = Field(default_factory=list)
+    curves: list[RelayPlotCurve] = Field(default_factory=list)
+
+
+# ──────────────────────────────────────────────
 # Test Current Calculation
 # ──────────────────────────────────────────────
 
