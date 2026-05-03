@@ -1,0 +1,77 @@
+{
+  "packet_id": "2026-05-03-olares-phase-5-003",
+  "title": "TermiPass NeedsLogin Blocker Audit And Recovery Path Research",
+  "objective": "Audit, inspect, and research viable methods to resolve the workstation-side TermiPass or LarePass blocker after Packet 002 closed blocked with `BackendState: NeedsLogin`, zero node key, no auth URL, no mesh IP, and no usable `100.64.*` route, without performing installs, auth changes, or host-runtime mutation.",
+  "domain": "infrastructure-domain",
+  "active_role": "Olares Access Blocker Research Operator",
+  "repo_paths": [
+    "C:/APEX Platform/apex-power-ops-platform/plan/infrastructure-olares-full-implementation-roadmap-1.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-002-access-recovery-and-runtime-inventory-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-03-olares-phase-5-002-access-recovery-and-runtime-inventory.json",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-step-3-expansion-decision-surface-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-01-olares-private-stack-browser-terminal-bring-up-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/architecture/OLARES-SSH-HOSTKEY-RECONCILIATION-2026-05-01.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/architecture/OLARES-PRIVATE-STACK-FIRST-RUN-CHECKLIST-2026-05-01.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/architecture/OLARES-WORKSTATION-BRING-UP-CHECKLIST-2026-04-23.md"
+  ],
+  "dependencies": [
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-002-access-recovery-and-runtime-inventory-handoff.md",
+    "ops/agents/packets/draft/2026-05-03-olares-phase-5-002-access-recovery-and-runtime-inventory.json",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-step-3-expansion-decision-surface-handoff.md",
+    "ops/agents/handoffs/2026-05-01-olares-private-stack-browser-terminal-bring-up-handoff.md",
+    "docs/architecture/OLARES-SSH-HOSTKEY-RECONCILIATION-2026-05-01.md",
+    "docs/architecture/OLARES-PRIVATE-STACK-FIRST-RUN-CHECKLIST-2026-05-01.md",
+    "docs/architecture/OLARES-WORKSTATION-BRING-UP-CHECKLIST-2026-04-23.md",
+    "plan/infrastructure-olares-full-implementation-roadmap-1.md"
+  ],
+  "dependency_note": "Packet 002 proved that the previously documented TermiPass named-pipe and Headscale registration recipe no longer produces a pending node key, auth URL, mesh IP, or usable `100.64.*` route from the current workstation. The next truthful move is a research-only audit packet that identifies viable recovery paths and explicit blockers before any further recovery execution packet is authored.",
+  "required_inputs": [
+    "The Packet 002 blocked result in ops/agents/handoffs/2026-05-03-olares-phase-5-002-access-recovery-and-runtime-inventory-handoff.md",
+    "The previously successful 2026-05-01 recovery record in ops/agents/handoffs/2026-05-01-olares-private-stack-browser-terminal-bring-up-handoff.md and docs/architecture/OLARES-SSH-HOSTKEY-RECONCILIATION-2026-05-01.md",
+    "Current workstation read-only access to TermiPass named-pipe local API, Windows service state, network adapter state, route table, installed client artifacts, and any readable logs or config surfaces",
+    "Official Olares source context from the upstream beclab/Olares repository and LarePass documentation so the research can distinguish the intended private VPN path from public FRP access",
+    "The Step 3 and roadmap authority that keep expansion closed until access and runtime evidence are current"
+  ],
+  "constrained_outputs": [
+    "A dated handoff that classifies the blocking items into confirmed blockers, likely root-cause candidates, and viable bounded recovery methods",
+    "A comparison between the 2026-05-01 successful recovery posture and the current blocked posture",
+    "A source-context cross-check showing whether official Olares docs reinforce LarePass VPN over Tailscale/Headscale as the controlling private path",
+    "A shortlist of viable next recovery methods with prerequisites, required privilege level, expected evidence, and risk",
+    "A tightened list of config evidence that the next execution packet must capture, including local LarePass profile and VPN status, local TermiPass status/prefs/profiles, Headscale device list or pending-node visibility, SSH-over-VPN setting status, and private route plus SSH reachability to 100.64.0.1",
+    "A recommendation for whether a new execution packet is justified and, if so, what exact bounded method it should test next",
+    "No installs, no promotions, no ingress changes, no auth changes, no host-runtime mutation, no AI-toolchain rollout, no hosting changes"
+  ],
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "C:/APEX Platform/apex-power-ops-platform/plan",
+    "C:/APEX Platform/PROJECT_STATUS.md"
+  ],
+  "validation_steps": [
+    "Inspect read-only TermiPass named-pipe status, prefs, profiles, and any locally readable state surfaces to determine why status remains NeedsLogin with zero node key.",
+    "Inspect Windows service state, startup mode, dependent processes, adapter state, route table, and readable client logs or config artifacts without restarting services unless a later packet explicitly authorizes that.",
+    "Compare the current blocked workstation state against the documented 2026-05-01 recovered state and identify what evidence is now missing.",
+    "Cross-check official Olares repo and LarePass documentation to confirm whether the intended private path is LarePass VPN over Tailscale/Headscale rather than public FRP SSH, and use that only as source context rather than execution authority.",
+    "Determine whether the viable next methods fall into workstation-local auth recovery, elevated Windows service control, alternative local client state reset, browser-mediated auth bootstrap, or host-side registration preconditions.",
+    "Name the exact config evidence the next packet must capture: local LarePass profile and VPN status, TermiPass local API status/prefs/profiles, Headscale device list or pending node visibility, SSH-over-VPN setting state, and private route plus SSH reachability to 100.64.0.1.",
+    "Record which candidate methods are admissible as bounded next packets and which would violate current no-go items.",
+    "Do not install or remove clients, do not change ingress or auth posture, do not mutate host runtime, and do not widen into generic Olares implementation while executing this packet."
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "completed",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-003-termpass-needslogin-blocker-audit-and-recovery-path-research-handoff.md"
+  ],
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-002-access-recovery-and-runtime-inventory-handoff.md",
+  "implementation_ready_candidate": true,
+  "sql_permission": false,
+  "sql_permission_note": "This packet authorizes read-only workstation blocker audit and recovery-path research only. It does not authorize database writes, runtime mutation, new Olares installs, ingress changes, or hosting changes.",
+  "landing_lane": "olares_phase_5_termpass_blocker_audit_and_recovery_path_research",
+  "migration_strategy": "research_viable_recovery_methods_before_another_execution_packet",
+  "created_at": "2026-05-03",
+  "updated_at": "2026-05-03",
+  "delegation_status": "completed",
+  "validation_disposition": "complete-research-local-profile-state-primary-blocker-next-packet-should-capture-tightened-config-evidence",
+  "closure_note": "Executed on 2026-05-03 and closed as complete research only. The research confirmed that the likely blocker is workstation-local LarePass or TermiPass profile state, not basic reachability to the Headscale key endpoint. An official Olares source cross-check reinforced that the intended private path is LarePass VPN over Tailscale/Headscale rather than public FRP SSH. The next execution packet should therefore test interactive local profile rehydration or a separately authorized local service-control path and must capture local LarePass profile and VPN state, local TermiPass status/prefs/profiles, Headscale device list or pending-node visibility, SSH-over-VPN setting status, and private route plus SSH reachability to 100.64.0.1.",
+  "next_action": "Treat Packet 003 as complete, stop routing Prompt 5 as the next live task, and author the next bounded execution packet around interactive local LarePass profile rehydration or the browser-terminal host-inventory fallback using the tightened config-evidence checklist from the Packet 003 handoff."
+}

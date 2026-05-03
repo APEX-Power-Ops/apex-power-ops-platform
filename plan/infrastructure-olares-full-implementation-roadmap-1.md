@@ -41,11 +41,13 @@ Items requiring attention:
 3. preserve the known Settings API limitation for Helm-managed Olares apps
 4. preserve the current private-lane boundary: host-only or mesh-tunneled access, local snapshot recovery, and no silent promotion into the governed installed-app or public-ingress surface
 5. keep GitHub canonical unless an explicit Gitea transition packet is approved
+6. create a bounded assessment lane for whether a future Olares One dev workspace expansion should become the center of gravity for APEX development, including Codex, Claude Code, and AI orchestration integration surfaces
 
 Approved next-step rule:
 
 1. do not reopen generic Olares bring-up work
 2. execute only the bounded post-closure items in Phase 2 or a later explicitly authorized Olares packet
+3. treat any future Olares One dev workspace migration exploration as an assessment-first lane until a later packet explicitly opens implementation
 
 ## 1. Requirements & Constraints
 
@@ -58,8 +60,10 @@ Approved next-step rule:
 - **ATT-002**: Preserve the known Settings API limitation for Helm-managed apps: friendly aliases are live, but the supported Settings API still lacks matching `ApplicationManager` resources for `forms-engine` and `p6-ingest`.
 - **ATT-003**: Keep regression evidence current for private access, workstation-hosted stack health, local/offsite backup restore, and installed-route health.
 - **ATT-004**: Keep GitHub canonical during MVP-era hosting; any Gitea use remains mirror-only until a separate transition packet is approved.
+- **ATT-005**: Assess, but do not yet execute, whether the Olares One should become the primary daily APEX dev workspace for AI-assisted work across Claude Code, Codex, and orchestration services.
 - **SEC-001**: Do not widen public exposure, identity behavior, or destructive data operations through roadmap execution alone.
 - **SEC-002**: Keep Olares-hosted dev and service validation bound to the approved private-mesh or host-installed paths already documented.
+- **SEC-003**: Do not treat assessment of Codex, Claude Code, Dify, n8n, Gitea, or other AI-assist surfaces as approval to install, promote, or make them canonical without a later packet.
 - **CON-001**: The older `C:/APEX Platform/Infrastructure/Olares_MVP_Execution_Roadmap.md` remains sequencing context, not standalone governance.
 - **CON-002**: Do not reopen Olares implementation as the repo’s primary frontier unless the reopen criteria in the 2026-04-25 authority transition handoff are met.
 - **GUD-001**: Prefer updating repo-visible handoffs, rerun checklists, and validation surfaces over inventing new planning artifacts for already-closed first-run slices.
@@ -122,11 +126,27 @@ Approved next-step rule:
 | TASK-017 | Use Olares reruns only when those broader platform lanes depend on host validation, installed service regression checks, or future approved host-scope additions. |  |  |
 | TASK-018 | Update this roadmap only when a new Olares packet is opened or when a dated closure, regression, or hosting decision materially changes the live Olares boundary. |  |  |
 
+### Implementation Phase 5
+
+- GOAL-005: Create a bounded assessment lane for a possible future Olares One dev-workspace expansion without reopening generic Olares implementation.
+
+| Task | Description | Completed | Date |
+|------|-------------|-----------|------|
+| TASK-019 | Assess the current Olares platform state against the intended three-zone design in `C:/APEX Platform/Infrastructure/Olares_Workspace_Authority_Framework.md` and `C:/APEX Platform/Infrastructure/Olares_Build_Guide.md`, including dev-zone, services-zone, and staging-zone reality versus design intent. Recorded in `ops/agents/handoffs/2026-05-03-olares-phase-5-step-1-dev-workspace-state-and-access-assessment-handoff.md`. | ✅ | 2026-05-03 |
+| TASK-020 | Assess the current trusted access model for daily development on the Olares One, including private-mesh SSH, VS Code Remote-SSH, browser-terminal fallback, and whether the present path is credible as the primary editing posture for APEX work. Recorded in `ops/agents/handoffs/2026-05-03-olares-phase-5-step-1-dev-workspace-state-and-access-assessment-handoff.md`. | ✅ | 2026-05-03 |
+| TASK-021 | Assess whether the current repo authority and publication model can support an Olares-first daily development posture without changing the parent git root, and document the remaining friction between `C:/APEX Platform` as publication boundary and the Olares-hosted repo clone as implementation surface. Step 3 advanced this task but left it open; missing evidence named in `ops/agents/handoffs/2026-05-03-olares-phase-5-step-3-expansion-decision-surface-handoff.md`: working trusted SSH path, restated or retired packet-002 publication scope, and host clone reconciliation against canonical branch state. |  |  |
+| TASK-022 | Assess the intended AI toolchain shape on Olares against current repo truth, including Claude Code, Codex, local models, MCP fabric, `apex-jobs` ledger expectations, and the existing AI orchestration protocol under `Supabase/docs/AI_ORCHESTRATION_PROTOCOL.md`. Recorded in `ops/agents/handoffs/2026-05-03-olares-phase-5-step-2-ai-toolchain-and-codex-role-assessment-handoff.md`. | ✅ | 2026-05-03 |
+| TASK-023 | Assess the intended services-zone stack for AI orchestration and supporting tools on Olares, including Ollama, Open WebUI, Dify, n8n, Qdrant, Syncthing, Restic, and optional Gitea, and classify each as current-state, design-intent, deferred, or not yet governed. Step 3 published the classification matrix but left this task open; missing evidence named in `ops/agents/handoffs/2026-05-03-olares-phase-5-step-3-expansion-decision-surface-handoff.md`: live host inventory blocked by access regression; the named gating file `docs/architecture/GIT-HOSTING-AND-GITEA-TRANSITION-CHECKLIST-2026-04-23.md` does not exist on disk in this workspace snapshot; bare-systemd Restic posture must be reconciled with the intended Market-app Restic posture in writing. |  |  |
+| TASK-024 | Assess the correct role of Codex in the Olares-hosted workflow using the unresolved orchestration questions already present in `.claude/DECISION_LOG.md`, and produce a bounded recommendation for when Codex should be local executor, remote batch worker, or left out of the first expansion slice. Recorded in `ops/agents/handoffs/2026-05-03-olares-phase-5-step-2-ai-toolchain-and-codex-role-assessment-handoff.md`. | ✅ | 2026-05-03 |
+| TASK-025 | Assess whether a future Olares One dev-workspace expansion should be treated as: (a) workstation-only migration, (b) AI-services-zone expansion, (c) Gitea or code-hosting mirror enhancement, or (d) a broader canonical-hosting transition, and explicitly keep those decisions split instead of collapsing them into one “move to Olares” bucket. Step 3 preserved the four-way split and classified per-path readiness; none of (a), (b), (c), or (d) is currently READY. Per-path missing evidence named in `ops/agents/handoffs/2026-05-03-olares-phase-5-step-3-expansion-decision-surface-handoff.md`. |  |  |
+| TASK-026 | Produce a packet-ready decision surface for future Olares expansion containing: current-state findings, intended-design findings, gap classification, recommended smallest next packet, explicit no-go items, and a statement of what remains GitHub-canonical versus Olares-hosted only. Closed by `ops/agents/handoffs/2026-05-03-olares-phase-5-step-3-expansion-decision-surface-handoff.md`; later refined by Packet 003 research in `ops/agents/handoffs/2026-05-03-olares-phase-5-003-termpass-needslogin-blocker-audit-and-recovery-path-research-handoff.md`, which recommends an interactive local LarePass profile-rehydration and mesh-validation packet first, with browser-terminal host inventory as the explicit fallback. | ✅ | 2026-05-03 |
+
 ## 3. Alternatives
 
 - **ALT-001**: Update `C:/APEX Platform/Infrastructure/Olares_MVP_Execution_Roadmap.md` as the only roadmap surface. Rejected because that file is retained as sequencing context and is not the best repo-local execution surface for post-closure status tracking.
 - **ALT-002**: Treat the Olares lane as still actively open and continue running generic bring-up tasks. Rejected because the 2026-04-25 transition decision explicitly closes the first governed Olares lane.
 - **ALT-003**: Collapse all Olares follow-on work into the general workspace roadmap with no dedicated Olares plan. Rejected because the repo still needs one bounded planning surface for regression, scope gating, and future packet triggers.
+- **ALT-004**: Reopen generic Olares implementation immediately to start migrating daily development, AI tooling, and hosting onto the One. Rejected because the current need is assessment and packet-ready scoping, not unconstrained execution.
 
 ## 4. Dependencies
 
@@ -141,6 +161,10 @@ Approved next-step rule:
 - **DEP-008**: `C:/APEX Platform/apex-power-ops-platform/docs/architecture/SERVICE-HOST-INSTALLED-PROOF-CHECKLIST-2026-04-23.md`
 - **DEP-009**: `C:/APEX Platform/apex-power-ops-platform/docs/architecture/OLARES-WORKSTATION-BRING-UP-CHECKLIST-2026-04-23.md`
 - **DEP-010**: `C:/APEX Platform/apex-power-ops-platform/docs/architecture/SERVICE-HOST-INSTALLED-PROOF-CHECKLIST-2026-04-23.md`
+- **DEP-011**: `C:/APEX Platform/Infrastructure/Olares_Build_Guide.md`
+- **DEP-012**: `C:/APEX Platform/.claude/DECISION_LOG.md`
+- **DEP-013**: `C:/APEX Platform/Supabase/docs/AI_ORCHESTRATION_PROTOCOL.md`
+- **DEP-014**: `C:/APEX Platform/apex-power-ops-platform/docs/architecture/TCC-RELAY-GOVERNANCE-INDEX-2026-05-03.md`
 
 ## 5. Files
 
@@ -152,7 +176,7 @@ Approved next-step rule:
 - **FILE-005**: `docs/architecture/OLARES-WORKSTATION-BRING-UP-CHECKLIST-2026-04-23.md` - rerun and regression checklist for workstation scope.
 - **FILE-006**: `docs/architecture/SERVICE-HOST-INSTALLED-PROOF-CHECKLIST-2026-04-23.md` - rerun and regression checklist for installed-service scope.
 - **FILE-007**: `docs/architecture/OLARES-FIRST-STORAGE-BRING-UP-RUNBOOK-2026-04-23.md` - rerun and recovery runbook for storage and backup scope.
-- **FILE-008**: `docs/architecture/GIT-HOSTING-AND-GITEA-TRANSITION-CHECKLIST-2026-04-23.md` - hosting transition gate for any future mirror or canonical cutover proposal.
+- **FILE-008**: `docs/architecture/GIT-HOSTING-AND-GITEA-TRANSITION-CHECKLIST-2026-04-23.md` - hosting transition gate for any future mirror or canonical cutover proposal. NOTE 2026-05-03: file does not exist on disk in this workspace snapshot per the Step 3 expansion-decision-surface handoff; any TASK-013 or TASK-025 (c) work must first author or restate this gating authority before proceeding.
 - **FILE-009**: `ops/agents/packets/draft/2026-05-01-olares-private-001-private-lane-promotion-gate-planning.json` - first explicit planning packet for any future private-lane promotion into public routing, shared auth, or installed-app posture.
 - **FILE-010**: `ops/agents/handoffs/2026-05-01-olares-private-001-promotion-gate-planning-handoff.md` - executed planning decision record reaffirming that the private lane remains host-only or mesh-tunneled unless a later implementation packet opens a specific promotion path.
 - **FILE-011**: `ops/agents/packets/draft/2026-05-02-olares-private-002-backup-governance-hardening-planning.json` - explicit planning packet for the next private-lane follow-on: stronger backup governance without widening auth, ingress, or installed-app posture.
@@ -166,6 +190,16 @@ Approved next-step rule:
 - **FILE-019**: `ops/agents/packets/draft/2026-05-02-olares-private-005-restore-drill-cadence-and-timer-hardening-execution.json` - bounded implementation packet for weekly restore-drill cadence and deployed timer hardening over the live encrypted offsite lane.
 - **FILE-020**: `ops/agents/handoffs/2026-05-02-olares-private-005-restore-drill-cadence-and-timer-hardening-execution-handoff.md` - implementation handoff recording the restore-drill timer, live drill proof, and deployed backup timer hardening fields.
 - **FILE-021**: `infra/private/run-personal-notes-offsite-restore-drill-host.sh` plus the updated `infra/private/personal-notes-offsite-backup-schedule.ps1` - governed host-native restore-drill runner and multi-profile operator helper for recurring encrypted offsite backup and recovery proof cadence through systemd on the Olares host.
+- **FILE-022**: `.claude/DECISION_LOG.md` - unresolved orchestration and Codex-role questions that must be reconciled before AI-toolchain expansion on Olares is packetized.
+- **FILE-023**: `Supabase/docs/AI_ORCHESTRATION_PROTOCOL.md` - existing orchestration-role and handoff model that future Olares-hosted agent tooling must either reuse or explicitly supersede.
+- **FILE-024**: `Infrastructure/Olares_Build_Guide.md` - intended blue-sky design for services-zone, AI, MCP, and remote-workspace posture.
+- **FILE-025**: `ops/agents/packets/draft/2026-05-03-olares-phase-5-001-access-and-runtime-revalidation.json` - the authored access-and-runtime revalidation packet. Its shape remains valid for runtime inventory, but it closed partial because access remained blocked and host runtime could not be directly inspected.
+- **FILE-026**: `ops/agents/handoffs/2026-05-03-olares-phase-5-step-2-ai-toolchain-and-codex-role-assessment-handoff.md` - bounded assessment record for the intended Olares AI toolchain shape and Codex role, concluding that Claude Code is the only first-slice-ready AI surface and Codex remains excluded pending trust-boundary and authority closure.
+- **FILE-027**: `ops/agents/handoffs/2026-05-03-olares-phase-5-next-task-and-prompt-routing-handoff.md` - copy-paste routing surface now updated through Packet 003 completion; Prompt 5 is closed, and the next live move is authoring the next bounded execution packet from the Packet 003 result.
+- **FILE-028**: `ops/agents/handoffs/2026-05-03-olares-phase-5-001-access-and-runtime-revalidation-handoff.md` - Packet 001 closure handoff (status `partial`); private-mesh access still blocked from current workstation; host runtime not directly inspected; public FRP path TCP-reachable but publickey-denied; Olares web surface reachable but authenticated browser-terminal fallback not fully revalidated; VS Code Remote-SSH not currently viable.
+- **FILE-029**: `ops/agents/handoffs/2026-05-03-olares-phase-5-step-3-expansion-decision-surface-handoff.md` - Step 3 packet-ready decision surface synthesizing Step 1, Step 2, and Packet 001; closes TASK-026; preserves the four-way TASK-025 split with per-path readiness; documents GitHub-canonical versus Olares-hosted-only boundary; recommends a bounded access-recovery packet as the smallest next move.
+- **FILE-030**: `ops/agents/packets/draft/2026-05-03-olares-phase-5-002-access-recovery-and-runtime-inventory.json` - the authored access-recovery packet. It closed blocked after the local TermiPass path remained `NeedsLogin` with zero node key, no mesh IP, and no usable `100.64.*` route, so no host runtime inventory was captured.
+- **FILE-031**: `ops/agents/packets/draft/2026-05-03-olares-phase-5-003-termpass-needslogin-blocker-audit-and-recovery-path-research.json` - completed research packet. It closed on 2026-05-03 with the ruling that the likely blocker is local LarePass or TermiPass profile state rather than basic Headscale reachability, reinforced by an official Olares source cross-check; it also tightened the config evidence the next packet must capture.
 
 ## 6. Testing
 
@@ -175,6 +209,8 @@ Approved next-step rule:
 - **TEST-004**: Verify that the roadmap preserves the Settings API limitation boundary captured in the 2026-05-01 restoration handoff.
 - **TEST-005**: Verify that the roadmap preserves the private-lane boundary as host-only or mesh-tunneled and does not imply governed installed-app or public-ingress promotion.
 - **TEST-006**: Verify that no roadmap task reopens Olares bring-up without satisfying the reopen criteria listed in the post-closure checklist.
+- **TEST-007**: Verify that Phase 5 tasks remain assessment-only and do not silently authorize new host installs, public exposure, code-hosting changes, or canonical-hosting transition.
+- **TEST-008**: Verify that Phase 5 keeps workstation migration, AI-services expansion, orchestration design, and code-hosting questions split into separate decision surfaces rather than one blended “move to Olares” task.
 
 ## 7. Risks & Assumptions
 
@@ -183,9 +219,12 @@ Approved next-step rule:
 - **RISK-003**: The supported Settings API gap for Helm-managed apps may be misread as a service failure even though the friendly aliases are already live.
 - **RISK-004**: Gitea installation on the workstation could be misinterpreted as canonical hosting transition before the required governance packet exists.
 - **RISK-005**: The bounded private personal lane could be misread as an approved new Olares-installed app or public service if its host-only and mesh-tunneled boundary is not kept explicit in roadmap updates.
+- **RISK-006**: The desired Olares One dev-workspace expansion could be misread as already approved implementation if assessment tasks are not clearly marked as packet-preparatory only.
+- **RISK-007**: AI toolchain exploration could collapse distinct questions about Claude Code, Codex, local models, Dify, n8n, MCP, and Gitea into one vague lane, producing architecture drift instead of a packet-ready decision surface.
 - **ASSUMPTION-001**: The restored 2026-05-01 handoff plus the surviving 2026-04-25 scope/blocker handoffs remain the correct evidence floor unless later regression evidence supersedes them.
 - **ASSUMPTION-002**: The 2026-05-01 private-lane runtime, tunnel access, backup, restore, and status proof remain valid unless later host or access regression evidence supersedes them.
 - **ASSUMPTION-003**: Broader platform execution remains the primary repo frontier, so Olares follow-on work stays subordinate unless new host scope is explicitly approved.
+- **ASSUMPTION-004**: The right immediate next move for Olares expansion is assessment and packetization, not direct migration of the daily APEX development center of gravity.
 
 ## 8. Related Specifications / Further Reading
 
@@ -198,3 +237,5 @@ Approved next-step rule:
 - `docs/architecture/OLARES-PRIVATE-STACK-BLUEPRINT-2026-05-01.md`
 - `docs/architecture/OLARES-PRIVATE-STACK-FIRST-RUN-CHECKLIST-2026-05-01.md`
 - `docs/architecture/GIT-HOSTING-AND-GITEA-TRANSITION-CHECKLIST-2026-04-23.md`
+- `.claude/DECISION_LOG.md`
+- `Supabase/docs/AI_ORCHESTRATION_PROTOCOL.md`
