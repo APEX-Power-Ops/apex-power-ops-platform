@@ -512,6 +512,45 @@ body {
   margin-bottom: 0;
 }
 
+.relay-compare-section {
+  margin-top: 1rem;
+  padding: 1.1rem;
+  border-radius: 22px;
+  background: rgba(18, 62, 87, 0.04);
+  border: 1px solid rgba(18, 62, 87, 0.1);
+}
+
+.relay-compare-section + .relay-compare-section {
+  margin-top: 1rem;
+}
+
+.relay-compare-section-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  margin-bottom: 0.85rem;
+}
+
+.relay-compare-section-eyebrow {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.relay-compare-section-title {
+  margin: 0;
+  font-size: 1rem;
+  letter-spacing: 0.04em;
+  color: var(--brand);
+}
+
+.relay-nested-card h5 {
+  margin: 0.6rem 0 0.6rem;
+  font-size: 0.95rem;
+}
+
 @media (max-width: 900px) {
   .hero-grid,
   .status-grid,

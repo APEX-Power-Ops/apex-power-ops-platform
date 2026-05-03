@@ -150,12 +150,14 @@ Vercel deployment note:
 1. `apex-operations-web` is rooted from the parent workspace path `C:/APEX Platform`, so CLI deploys must run from that parent root when the Vercel project `rootDirectory` is `apex-power-ops-platform/apps/operations-web`
 2. when the target deployment is still serving an older shell on the same git commit, rerun the deploy with `npx vercel deploy --yes --force --archive=tgz --scope jasonlswenson-sys-projects` for preview or add `--prod` for production
 3. preview hosts can still return `401` to unauthenticated route smoke when Vercel preview protection is enabled, so the governed public proof gate remains the production alias unless preview protection is deliberately disabled
+4. as of 2026-05-03, forced redeploy attempts are no longer blocked by implementation readiness; the active blocker handoff must be consulted for the current deployment blocker state before another production redeploy is attempted; see `ops/agents/handoffs/2026-05-03-tcc-relay-phase-2-operations-web-promoted-host-redeploy-blocker-handoff.md`
 
 Current public-host status:
 
 1. the repo-owned promoted-host path is operational
 2. the latest public seam rerun against `https://control.apexpowerops.com` passes health, readiness, discovery, MCP, OpenAPI, and the governed apparatus route requirement, with readiness reporting `database: connected` and the overall script ending in `RESULT PASS`
 3. a forced Vercel rebuild on 2026-05-01 resolved the stale root-shell issue for `https://operations.apexpowerops.com`; the live shell now serves the relay browser slice and the promoted-host wrapper ends with `PROMOTED_HOST_SUMMARY failed=0`
+4. a new redeploy is still required after the first compare slice landed, but the current blocker is deployment-side rather than repo-side
 
 Pass conditions:
 

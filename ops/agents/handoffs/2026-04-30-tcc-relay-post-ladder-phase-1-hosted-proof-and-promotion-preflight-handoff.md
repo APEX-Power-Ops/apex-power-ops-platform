@@ -1,7 +1,7 @@
 # TCC Relay Post-Ladder Phase 1 Hosted Proof And Promotion — Preflight Handoff
 
 Date: 2026-04-30
-Status: Public seam green; promoted-host still pending deployed browser host
+Status: Closed PASS on 2026-05-01 public hosts; promoted-host proof green and Phase 2 gate cleared
 Authority: `Platform-Authority/TCC-RELAY-POST-LADDER-PHASE-1-HOSTED-PROOF-AND-PROMOTION-PACKET-2026-04-30.md`
 Upstream authority: `Platform-Authority/TCC-RELAY-POST-LADDER-FOLLOW-ON-PLANNING-PACKET-2026-04-30.md`
 Prior ladder closure: `apex-power-ops-platform/ops/agents/handoffs/2026-04-30-tcc-relay-tranche-5-browser-and-coordination-adoption-execution-completion-handoff.md`
@@ -10,7 +10,7 @@ Prior ladder closure: `apex-power-ops-platform/ops/agents/handoffs/2026-04-30-tc
 
 ## Objective
 
-Run the first truthful hosted-proof step for the landed relay stack and capture blockers explicitly instead of assuming promoted-host readiness.
+Record the truthful Phase 1 closure state for the landed relay stack after public seam proof and promoted-host browser proof both turned green.
 
 ---
 
@@ -47,15 +47,26 @@ Hosted rerun later on 2026-05-01 cleared the blocker:
 4. `APPARATUS_ROUTE_STATUS` returned handler-owned `404` for the governed not-found UUID instead of a framework miss,
 5. the overall script result became `RESULT PASS`.
 
+Promoted-host rerun later on 2026-05-01 closed the remaining browser-host gate:
+
+1. the deployed `operations-web` base URL was established as `https://operations.apexpowerops.com`,
+2. a forced Vercel rebuild removed the stale root-shell behavior on that host,
+3. the live shell served the landed relay browser slice,
+4. the promoted-host wrapper completed with `PROMOTED_HOST_SUMMARY failed=0` against `https://operations.apexpowerops.com` plus `https://control.apexpowerops.com`,
+5. Phase 1 closure conditions from the governing packet were fully satisfied.
+
 ---
 
-## Current blocker state
+## Current closure state
 
-The public control-plane readiness blocker is closed.
+Phase 1 is closed PASS.
 
-The remaining Phase 1 blocker is:
+Closed proof now includes:
 
-1. no deployed `operations-web` base URL is present on disk or in the current workspace environment, so promoted-host browser proof cannot be executed yet.
+1. public control-plane readiness green,
+2. relay-dependent seam green with handler-owned responses,
+3. real promoted-host `operations-web` base URL present at `https://operations.apexpowerops.com`,
+4. hosted route smoke and real-browser promoted-host smoke both green for the same deployed target.
 
 Repo-side proof machinery is no longer the blocker:
 
@@ -65,27 +76,29 @@ Repo-side proof machinery is no longer the blocker:
 
 ---
 
-## Delegation required
+## Delegation outcome
 
-The next truthful delegated actions are:
+The earlier external deploy dependency is now resolved:
 
-1. external deploy owner provides the intended promoted `operations-web` base URL, using `apex-power-ops-platform/ops/agents/handoffs/2026-04-30-tcc-relay-phase-1-operations-web-promoted-host-delegation-handoff.md`,
-2. run the promoted-host browser-plus-seam smoke against the provided host.
+1. the promoted `operations-web` base URL is known and proven,
+2. the delegated blocker handoff is now a closure record rather than an active dependency.
 
 ---
 
-## Explicit no-go during blockage
+## Explicit no-go after closure
 
-Do not claim full promoted-host relay proof is green.
+Do not reopen Phase 1 merely because future hosted regression reruns may be needed.
 
-Do not widen browser or workflow phases as a substitute for hosted-proof closure.
+Do not treat later browser widening, write design, or deferred enrichment as part of Phase 1 closure.
 
 ---
 
 ## Expected next move from this handoff
 
-Now that the public seam gate is green, the next truthful rerun is:
+The next truthful relay move is Phase 2 browser surface widening under its already-approved execution packet:
 
-1. `apps/operations-web/scripts/smoke-promoted-host.mjs --operations-web-base-url <real-host> --control-plane-base-url https://control.apexpowerops.com --skip-authenticated-checks`
+1. keep implementation inside the bounded `apps/operations-web` file surface,
+2. keep scope limited to explicit section selection, bounded read-only compare, and stronger provenance and warning disclosure,
+3. reuse the public promoted-host proof path as post-edit validation.
 
-Until then, Phase 1 remains partially complete with the control-plane seam proven green and the promoted browser host still pending.
+Phase 1 no longer blocks Phase 2.
