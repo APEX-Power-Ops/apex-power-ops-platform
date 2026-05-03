@@ -29,9 +29,9 @@ Prompt 4 still should not be run from the Packet 002 result.
 
 The next live authoring move is:
 
-1. author the next bounded execution packet from the completed Packet 003 result,
-2. prefer the interactive local LarePass profile rehydration path,
-3. keep the browser-terminal host-inventory path as the explicit fallback when operator interaction is unavailable.
+1. use the newly authored preferred Packet `2026-05-03-olares-phase-5-004` when operator interaction is available,
+2. use the newly authored fallback Packet `2026-05-03-olares-phase-5-004B` when browser-terminal host inventory is the only viable next move,
+3. stop treating next-packet authoring as still pending.
 
 Reason:
 
@@ -406,6 +406,11 @@ The next packet must explicitly capture:
 4. SSH-over-VPN setting status,
 5. private route and SSH reachability to `100.64.0.1`.
 
+Authored packet paths:
+
+1. `ops/agents/packets/draft/2026-05-03-olares-phase-5-004-interactive-larepass-profile-rehydration-and-mesh-validation.json`
+2. `ops/agents/packets/draft/2026-05-03-olares-phase-5-004b-browser-terminal-host-runtime-inventory.json`
+
 ## Sequence Rule
 
 Prompt 1, Prompt 2, and Prompt 3 are complete.
@@ -414,4 +419,4 @@ Prompt 4 should not run from the current Packet 002 result.
 
 Prompt 5 is complete.
 
-The next live task is authoring the next bounded execution packet from the Packet 003 result.
+The next live task is executing Packet `2026-05-03-olares-phase-5-004` when operator interaction is available, or Packet `2026-05-03-olares-phase-5-004B` when the browser-terminal fallback is the only viable bounded move.
