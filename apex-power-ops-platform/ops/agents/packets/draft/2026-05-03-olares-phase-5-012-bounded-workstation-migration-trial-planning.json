@@ -1,0 +1,67 @@
+{
+  "packet_id": "2026-05-03-olares-phase-5-012",
+  "title": "Bounded Workstation-Migration Trial Planning",
+  "objective": "Define the smallest reversible Olares host trial posture that may follow Packet 011 by specifying scope, guardrails, entry criteria, success criteria, failure and rollback triggers, evidence capture, and whether a small authority-publication step is required first so the post-010 and post-011 closure artifacts are also present on `/home/olares/code/apex` before any host-side trial execution is considered.",
+  "domain": "infrastructure-domain",
+  "active_role": "Olares Workstation Migration Trial Planner",
+  "repo_paths": [
+    "C:/APEX Platform/apex-power-ops-platform/plan/infrastructure-olares-full-implementation-roadmap-1.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-next-task-and-prompt-routing-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-011-post-sync-workstation-migration-readiness-reassessment-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-010-parent-root-publication-and-host-mirror-sync-gate-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-009-post-smoke-repo-parity-housekeeping-and-migration-gate-planning-handoff.md",
+    "C:/APEX Platform/Infrastructure/Olares_Workspace_Authority_Framework.md",
+    "C:/APEX Platform/Infrastructure/Olares_Build_Guide.md"
+  ],
+  "dependencies": [
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-011-post-sync-workstation-migration-readiness-reassessment-handoff.md",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-010-parent-root-publication-and-host-mirror-sync-gate-handoff.md",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-009-post-smoke-repo-parity-housekeeping-and-migration-gate-planning-handoff.md",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-008-canonical-host-dev-loop-smoke-handoff.md",
+    "plan/infrastructure-olares-full-implementation-roadmap-1.md"
+  ],
+  "dependency_note": "Packet 011 concludes that workstation migration is conditionally ready only for a later bounded trial posture. This packet exists to plan that trial precisely and reversibly before any host-side trial execution packet is considered.",
+  "required_inputs": [
+    "The Packet 011 ruling that workstation migration is conditionally ready only for later bounded trial planning",
+    "The Packet 010 governing published commit `2e87937c2cd03a92ac8f1ccd4246d0eab0292348` and synchronized `/home/olares/code/apex` host mirror evidence",
+    "The Packet 008 host dev-loop smoke evidence for workspace-open and implementation-lane ergonomics",
+    "The current workstation-only post-010 and post-011 closure artifacts and routing or roadmap updates",
+    "The preserved historical-evidence boundary for `/home/olares/src/apex-power-ops-platform`"
+  ],
+  "constrained_outputs": [
+    "A dated planning handoff defining the exact allowed and disallowed actions for a later bounded workstation-migration trial",
+    "A recorded decision on whether a small authority publication and host-mirror sync step should occur first so the Packet 010 closure and Packet 011 reassessment artifacts are also present on `/home/olares/code/apex`",
+    "No migration approval, no host runtime mutation, no old-clone mutation, and no widening into AI-services, Gitea/code-hosting, or canonical-hosting work"
+  ],
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "C:/APEX Platform/apex-power-ops-platform/plan",
+    "C:/APEX Platform/PROJECT_STATUS.md"
+  ],
+  "validation_steps": [
+    "Confirm that Packet 011 completed and that its conditional-readiness conclusion is the controlling lane state.",
+    "Define the exact trial posture against `/home/olares/code/apex/apex-power-ops-platform`, including allowed actions, prohibited actions, expected operator posture, and trial duration or stop rules.",
+    "Define entry criteria, success criteria, failure triggers, rollback triggers, and required evidence capture for any later host-side trial execution lane.",
+    "Decide whether a small authority publication and host-mirror sync step should occur first so the Packet 010 closure and Packet 011 reassessment artifacts are also present on `/home/olares/code/apex` before trial execution.",
+    "Preserve the split decision surfaces: no AI-services expansion, no Gitea/code-hosting transition, no canonical-hosting transition, and no host-runtime mutation.",
+    "Stop if execution would require migration approval, service changes, auth or ingress changes, installation work, or any mutation of `/home/olares/src/apex-power-ops-platform`."
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-012-bounded-workstation-migration-trial-planning-handoff.md"
+  ],
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-012-bounded-workstation-migration-trial-planning-handoff.md",
+  "implementation_ready_candidate": false,
+  "sql_permission": false,
+  "sql_permission_note": "This packet authorizes trial planning only. It does not authorize database writes, host-runtime mutation, old-clone mutation, AI-services rollout, Gitea work, canonical-hosting changes, or migration approval.",
+  "landing_lane": "olares_phase_5_bounded_workstation_migration_trial_planning",
+  "migration_strategy": "plan_reversible_trial_after_packet_011_without_approving_migration_by_default",
+  "created_at": "2026-05-03",
+  "updated_at": "2026-05-03",
+  "delegation_status": "complete",
+  "validation_disposition": "complete-planning",
+  "closure_note": "Executed as a bounded planning lane. Packet 012 defines the smallest reversible host-editing trial posture and concludes that a small authority publication plus `/home/olares/code/apex` host-mirror resync step should occur before any host-side trial execution.",
+  "next_action": "Open only a small post-012 authority publication and host-mirror resync gate next. Do not open host-side trial execution, migration approval, host runtime mutation, old-clone mutation, AI-services expansion, Gitea/code-hosting transition, or canonical-hosting work from Packet 012 alone."
+}

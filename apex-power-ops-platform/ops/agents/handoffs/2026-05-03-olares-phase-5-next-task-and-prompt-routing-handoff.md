@@ -1,8 +1,8 @@
 # Olares Phase 5 Next Task And Prompt Routing Handoff
 
 Date: 2026-05-03
-Status: Active - Prompt 12 is complete; Prompt 13 is the bounded parent-root publication and host-mirror synchronization next move
-Scope: update the next task prompts after Phase 5 Step 1, Step 2, Step 3, Packet 001, Packet 002, Packet 003, Packet 004, Packet 005, Prompt 7, Prompt 8, Packet 007, Prompt 10, Packet 008, and Packet 009 completion, and state the current post-smoke repo-parity execution move
+Status: Active - Prompt 15 / Packet 012 is complete; Prompt 16 / Packet 013 is the next bounded pre-trial authority-publication move
+Scope: update the next task prompts after Phase 5 Step 1, Step 2, Step 3, Packet 001, Packet 002, Packet 003, Packet 004, Packet 005, Prompt 7, Prompt 8, Packet 007, Prompt 10, Packet 008, Packet 009, Packet 010, Packet 011, and Packet 012 completion, and state the current publication-aware trial follow-on
 
 ## Authority
 
@@ -33,35 +33,52 @@ This routing handoff depends on:
 23. `ops/agents/packets/draft/2026-05-03-olares-phase-5-009-post-smoke-repo-parity-housekeeping-and-migration-gate-planning.json`
 24. `ops/agents/handoffs/2026-05-03-olares-phase-5-009-post-smoke-repo-parity-housekeeping-and-migration-gate-planning-handoff.md`
 25. `ops/agents/packets/draft/2026-05-03-olares-phase-5-010-parent-root-publication-and-host-mirror-sync-gate.json`
-26. `plan/infrastructure-olares-full-implementation-roadmap-1.md`
+26. `ops/agents/packets/draft/2026-05-03-olares-phase-5-011-post-sync-workstation-migration-readiness-reassessment.json`
+27. `ops/agents/handoffs/2026-05-03-olares-phase-5-010-parent-root-publication-and-host-mirror-sync-gate-handoff.md`
+28. `ops/agents/handoffs/2026-05-03-olares-phase-5-011-post-sync-workstation-migration-readiness-reassessment-handoff.md`
+29. `ops/agents/packets/draft/2026-05-03-olares-phase-5-012-bounded-workstation-migration-trial-planning.json`
+30. `ops/agents/handoffs/2026-05-03-olares-phase-5-012-bounded-workstation-migration-trial-planning-handoff.md`
+31. `ops/agents/packets/draft/2026-05-03-olares-phase-5-013-pre-trial-authority-publication-and-host-mirror-sync.json`
+32. `plan/infrastructure-olares-full-implementation-roadmap-1.md`
 
 This handoff does not reopen generic Olares implementation.
 
 ## Current Routing Decision
 
-Prompt 1, Prompt 2, Prompt 3, Prompt 5, Prompt 6, Prompt 7, Prompt 8, Prompt 9, Prompt 10, Prompt 11, and Prompt 12 are complete.
+Prompt 1, Prompt 2, Prompt 3, Prompt 5, Prompt 6, Prompt 7, Prompt 8, Prompt 9, Prompt 10, Prompt 11, Prompt 12, Prompt 13, Prompt 14, and Prompt 15 are complete.
 
-Packet 004, Packet 005, Packet 006, Packet 007, Packet 008, and Packet 009 execution are complete.
+Packet 004, Packet 005, Packet 006, Packet 007, Packet 008, Packet 009, Packet 010, Packet 011, and Packet 012 execution are complete.
 
 Packet 009 is closed as a planning pass.
+Packet 010 is closed as a publication and host-mirror synchronization pass.
+Packet 011 is closed as a post-sync workstation-migration readiness reassessment pass.
+Packet 012 is closed as a bounded workstation-migration trial-planning pass.
 
 Prompt 4 still should not be run from the Packet 002 result.
 
 The next live authority move is:
 
-1. execute only the bounded parent-root publication and `/home/olares/code/apex` host-mirror synchronization gate packet,
-2. use Packet 010 as the controlling execution packet for that move,
-3. treat the Packet 009 handoff as the controlling repo-parity gate,
-4. keep migration, AI-services expansion, Gitea/code-hosting move, and canonical-hosting transition closed pending publication, host sync, and a separate later workstation-migration readiness reassessment.
+1. execute only a small post-012 authority publication and host-mirror resync gate,
+2. use Packet 012's publication decision as controlling input,
+3. publish and synchronize the Packet 010, Packet 011, and Packet 012 closure artifacts before any host-side trial execution unless a later packet explicitly records why it can proceed without them,
+4. keep the decision limited to authority publication, fast-forward-only `/home/olares/code/apex` synchronization, artifact presence evidence, and old-clone preservation,
+5. keep host-side trial execution, full migration, AI-services expansion, Gitea/code-hosting move, and canonical-hosting transition closed.
+
+The former trial-planning move is now complete:
+
+1. Packet 012 defines the bounded host-editing trial posture after Packet 011,
+2. it classifies the first trial as documentation-first, reversible, and limited to `/home/olares/code/apex`,
+3. it requires a small authority publication and host-mirror resync step before trial execution,
+4. it does not approve full migration or host-side trial execution.
 
 Reason:
 
-1. Prompt 12 is now complete,
-2. Packet 009 makes the repo-parity gate explicit,
-3. the remaining blocker is now bounded parent-root publication and host-mirror synchronization rather than host-path viability or gate definition,
-4. Packet 010 now captures that next bounded execution scope explicitly,
-5. the next truthful move is publication plus `/home/olares/code/apex` synchronization before any later workstation-migration readiness reassessment,
-6. migration, AI-services expansion, Gitea/code-hosting, and canonical-hosting paths remain not ready.
+1. Prompt 15 is now complete,
+2. Packet 012 preserves Packet 011's conditional readiness decision,
+3. Packet 012 defines the trial guardrails, entry criteria, success criteria, failure and rollback triggers, and evidence capture rules,
+4. Packet 012 rules that post-010, post-011, and post-012 closure artifacts should be published and synchronized before any host-side trial execution,
+5. full migration remains not approved,
+6. AI-services expansion, Gitea/code-hosting, and canonical-hosting paths remain not ready.
 
 ## Current Execution State
 
@@ -78,6 +95,9 @@ Packet `2026-05-03-olares-phase-5-006` is now complete as a successful host repo
 Packet `2026-05-03-olares-phase-5-007` is now complete as a successful canonical host dev path preparation pass.
 Packet `2026-05-03-olares-phase-5-008` is now complete as a successful canonical host dev-loop smoke validation pass.
 Packet `2026-05-03-olares-phase-5-009` is now complete as a successful repo-parity housekeeping and migration-gate planning pass.
+Packet `2026-05-03-olares-phase-5-010` is now complete as a successful parent-root publication and host-mirror synchronization pass.
+Packet `2026-05-03-olares-phase-5-011` is now complete as a successful post-sync workstation-migration readiness reassessment pass.
+Packet `2026-05-03-olares-phase-5-012` is now complete as a successful bounded workstation-migration trial-planning pass.
 
 Current controlling outcome:
 
@@ -103,7 +123,132 @@ Current controlling outcome:
 20. the controlling blocker is now repo-parity and publication-state governance because current Phase 5 authority artifacts remain workstation-only until committed or synchronized,
 21. no migration, AI-services, Gitea/code-hosting, or canonical-hosting path became ready,
 22. Packet 009 explicitly classifies the current Phase 5 publication set into commit/publish, defer, and comparison-only buckets,
-23. the next truthful move is bounded parent-root publication and `/home/olares/code/apex` host-mirror synchronization, not migration or old-clone repair.
+23. Packet 010 published the bounded Phase 5 authority set at `2e87937c2cd03a92ac8f1ccd4246d0eab0292348` and synchronized `/home/olares/code/apex` to that commit with a fast-forward-only update,
+24. Packet 011 reassessed the post-sync lane and classifies workstation migration as conditionally ready for a later bounded trial posture, not full migration approval,
+25. Packet 010 closure, Packet 011 closure, Packet 012 planning output, and the latest routing or roadmap state are workstation-local post-publication files until a later bounded authority publication includes them,
+26. Packet 012 defines the first bounded trial as documentation-first, reversible, and limited to `/home/olares/code/apex` after publication-state handling,
+27. the next truthful move is a small post-012 authority publication and `/home/olares/code/apex` host-mirror resync gate, not host-side trial execution, migration approval, or old-clone repair.
+
+## Prompt 15 - Executed With Claude Code
+
+Instance: `Claude Code`
+
+This prompt has been executed and is retained as the completed predecessor step.
+
+```text
+Act as repo technical authority for the bounded Olares Phase 5 workstation-migration trial-planning lane.
+
+You are not reopening generic Olares implementation. You are not approving Olares-first daily development migration. Keep workstation migration, AI-services expansion, Gitea/code-hosting mirror work, and canonical-hosting transition as separate decision surfaces.
+
+Primary objective:
+Define the smallest reversible host trial posture that may follow Packet 011 by specifying exact scope, guardrails, entry criteria, success criteria, failure and rollback triggers, evidence capture, and whether a small authority publication step should occur first so the Packet 010 closure and Packet 011 reassessment artifacts are also present on `/home/olares/code/apex` before any host-side trial execution lane is opened.
+
+Treat these Packet 011 results as controlling input:
+1. the repo-parity gate is satisfied for governing published commit `2e87937c2cd03a92ac8f1ccd4246d0eab0292348`,
+2. `/home/olares/code/apex` is synchronized cleanly to that commit,
+3. workstation migration is only conditionally ready for later bounded trial posture,
+4. migration itself remains unapproved,
+5. AI-services expansion, Gitea/code-hosting, and canonical-hosting remain out of scope.
+
+Read these first:
+- C:/APEX Platform/apex-power-ops-platform/plan/infrastructure-olares-full-implementation-roadmap-1.md
+- C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-next-task-and-prompt-routing-handoff.md
+- C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-011-post-sync-workstation-migration-readiness-reassessment-handoff.md
+- C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-010-parent-root-publication-and-host-mirror-sync-gate-handoff.md
+- C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-009-post-smoke-repo-parity-housekeeping-and-migration-gate-planning-handoff.md
+- C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-008-canonical-host-dev-loop-smoke-handoff.md
+- C:/APEX Platform/Infrastructure/Olares_Workspace_Authority_Framework.md
+- C:/APEX Platform/Infrastructure/Olares_Build_Guide.md
+
+Required outputs:
+1. Write a dated planning handoff at:
+   C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-012-bounded-workstation-migration-trial-planning-handoff.md
+2. Update only if warranted:
+   C:/APEX Platform/apex-power-ops-platform/plan/infrastructure-olares-full-implementation-roadmap-1.md
+
+The planning pass must explicitly address:
+1. the exact allowed and disallowed actions for any later bounded trial posture,
+2. entry criteria, success criteria, failure triggers, rollback triggers, and evidence capture requirements,
+3. whether a small authority publication and host-mirror sync step should occur first so the Packet 010 closure and Packet 011 reassessment artifacts are also present on `/home/olares/code/apex`,
+4. whether `TASK-021`, `TASK-023`, or `TASK-025` require any further restatement,
+5. what the smallest truthful later execution packet is after planning.
+
+Hard constraints:
+1. No migration approval.
+2. No host runtime mutation.
+3. No mutation of `/home/olares/src/apex-power-ops-platform`.
+4. No installs.
+5. No ingress changes.
+6. No auth changes.
+7. No AI-services expansion.
+8. No Gitea or canonical-hosting changes.
+9. Do not let trial planning collapse into a general Olares reopen.
+
+Decision standard:
+1. Preserve conditional trial readiness as narrower than migration approval.
+2. Keep the trial reversible, evidence-driven, and publication-aware.
+3. Preserve the split decision surfaces for AI-services, Gitea/code-hosting, and canonical-hosting.
+
+After edits, run a narrow validation check and summarize:
+1. whether the trial posture is now explicitly bounded,
+2. whether an additional small authority publication step is needed before any host-side trial execution,
+3. the single next packet you recommend.
+```
+
+## Prompt 16 - Recommended With Codex
+
+Instance: `Codex`
+
+```text
+Act as the operator for a bounded Olares Phase 5 pre-trial authority publication and host-mirror synchronization packet.
+
+Execute this packet exactly as a bounded authority-publication follow-through lane:
+
+- Packet: C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-03-olares-phase-5-013-pre-trial-authority-publication-and-host-mirror-sync.json
+- Roadmap: C:/APEX Platform/apex-power-ops-platform/plan/infrastructure-olares-full-implementation-roadmap-1.md
+- Prior evidence:
+   - C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-012-bounded-workstation-migration-trial-planning-handoff.md
+   - C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-011-post-sync-workstation-migration-readiness-reassessment-handoff.md
+   - C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-010-parent-root-publication-and-host-mirror-sync-gate-handoff.md
+   - C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-next-task-and-prompt-routing-handoff.md
+   - C:/APEX Platform/Infrastructure/Olares_Workspace_Authority_Framework.md
+   - C:/APEX Platform/Infrastructure/Olares_Build_Guide.md
+
+Primary objective:
+Publish the newer Packet 010, Packet 011, and Packet 012 closure and planning authority set through `C:/APEX Platform`, then synchronize `/home/olares/code/apex` to the resulting governing commit so any later host-side trial execution starts from the current closure and planning authority, not from the older Packet 010-only host snapshot.
+
+Required actions:
+1. Review parent-root git status at `C:/APEX Platform` and confirm the proposed publication scope is limited to the newer Packet 010 or Packet 011 or Packet 012 closure and planning authority set plus routing and roadmap updates.
+2. Exclude unrelated parent-root changes, secrets, runtime artifacts, host-only state, service configuration changes, and implementation work outside this authority-publication lane.
+3. Create and publish the bounded parent-root commit to the GitHub-canonical repository, recording branch, remote, included paths, and resulting commit hash.
+4. Capture pre-sync `/home/olares/code/apex` branch, remote, commit, and cleanliness evidence without mutating `/home/olares/src/apex-power-ops-platform`.
+5. Synchronize `/home/olares/code/apex` to the published commit using a non-destructive fast-forward-only method.
+6. Capture post-sync evidence that the host mirror now contains the Packet 010 closure handoff, Packet 011 reassessment handoff, Packet 012 planning handoff, and updated routing and roadmap state.
+7. State whether the host mirror is now current enough for a later bounded host-side trial execution packet to open.
+
+Hard constraints:
+1. No migration approval.
+2. No host runtime mutation.
+3. No mutation of `/home/olares/src/apex-power-ops-platform`.
+4. No installs.
+5. No ingress changes.
+6. No auth changes.
+7. No AI-services expansion.
+8. No Gitea or canonical-hosting changes.
+9. Do not mix unrelated parent-root changes into the publication commit.
+
+Write the results into this dated handoff:
+- C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-013-pre-trial-authority-publication-and-host-mirror-sync-handoff.md
+
+Update the roadmap only if the execution result materially sharpens the current live Olares boundary by recording the newer governing commit and successful host-mirror synchronization.
+
+Your final summary must state clearly:
+1. what exact bounded newer authority set was committed and published,
+2. what commit hash now governs the lane,
+3. whether `/home/olares/code/apex` synchronized cleanly to that commit,
+4. whether the host mirror now contains the Packet 010 closure, Packet 011 reassessment, Packet 012 planning, and updated routing and roadmap state,
+5. whether any migration, AI-services, Gitea, or canonical-hosting path became ready.
+```
 
 ## Why This Split
 
@@ -900,28 +1045,107 @@ Your final summary must state clearly:
 5. whether any migration, AI-services, Gitea, or canonical-hosting path became ready.
 ```
 
+## Prompt 14 - Executed With Claude Code After Packet 010
+
+Instance: `Claude Code`
+
+This prompt has been executed after Packet 010 closed with a bounded published parent-root commit and synchronized `/home/olares/code/apex` evidence.
+
+```text
+Act as repo technical authority for the bounded Olares Phase 5 post-sync workstation-migration readiness reassessment lane.
+
+You are not reopening generic Olares implementation. You are not approving Olares-first daily development migration by default. Keep workstation migration, AI-services expansion, Gitea/code-hosting mirror work, and canonical-hosting transition as separate decision surfaces.
+
+Primary objective:
+Reassess the workstation-migration lane only after Packet 010, using the published parent-root authority commit and synchronized `/home/olares/code/apex` evidence to decide whether the lane remains not ready or becomes conditionally ready for a later bounded trial posture.
+
+Treat these Packet 010 results as controlling input:
+1. the bounded parent-root publication set was committed and published through `C:/APEX Platform`,
+2. the published commit hash is recorded as the new authority boundary,
+3. `/home/olares/code/apex` synchronized cleanly to that published commit,
+4. the synchronized host mirror contains the controlling Phase 5 authority artifacts,
+5. migration itself was not approved by Packet 010,
+6. AI-services expansion, Gitea/code-hosting, and canonical-hosting remained out of scope.
+
+Read these first:
+- C:/APEX Platform/apex-power-ops-platform/plan/infrastructure-olares-full-implementation-roadmap-1.md
+- C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-next-task-and-prompt-routing-handoff.md
+- C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-010-parent-root-publication-and-host-mirror-sync-gate-handoff.md
+- C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-009-post-smoke-repo-parity-housekeeping-and-migration-gate-planning-handoff.md
+- C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-post-008-migration-readiness-reassessment-handoff.md
+- C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-008-canonical-host-dev-loop-smoke-handoff.md
+- C:/APEX Platform/Infrastructure/Olares_Workspace_Authority_Framework.md
+- C:/APEX Platform/Infrastructure/Olares_Build_Guide.md
+
+Required outputs:
+1. Write a dated reassessment handoff at:
+   C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-011-post-sync-workstation-migration-readiness-reassessment-handoff.md
+2. Update only if warranted:
+   C:/APEX Platform/apex-power-ops-platform/plan/infrastructure-olares-full-implementation-roadmap-1.md
+
+The reassessment must explicitly address:
+1. whether the repo-parity gate is now satisfied,
+2. whether the workstation-migration lane remains not ready or becomes conditionally ready for a later bounded trial posture,
+3. whether `TASK-021`, `TASK-023`, or `TASK-025` need any status change,
+4. whether any migration, AI-services, Gitea/code-hosting, or canonical-hosting path became ready,
+5. what the smallest truthful next packet is after the reassessment.
+
+Hard constraints:
+1. No migration approval by default.
+2. No host runtime mutation.
+3. No mutation of `/home/olares/src/apex-power-ops-platform`.
+4. No installs.
+5. No ingress changes.
+6. No auth changes.
+7. No AI-services expansion.
+8. No Gitea or canonical-hosting changes.
+9. Do not treat publication plus sync alone as approval for broader Olares reopening.
+
+Decision standard:
+1. If repo parity remains ambiguous, keep the lane not ready and say exactly why.
+2. If repo parity is satisfied, you may classify the workstation-migration lane as conditionally ready for a later bounded trial posture, but not as full migration approval.
+3. Preserve the split decision surfaces for AI-services, Gitea/code-hosting, and canonical-hosting.
+
+After edits, run a narrow validation check and summarize:
+1. whether the repo-parity gate is now satisfied,
+2. whether the workstation-migration lane changed status,
+3. the single next packet you recommend.
+```
+
 ## Next Execution Direction
 
-The next truthful move is no longer additional host dev-loop validation or repo-parity gate definition.
+The next truthful move is no longer additional host dev-loop validation, repo-parity gate definition, readiness reassessment, trial planning, or host-side trial execution.
 
-Use the completed Packet 009 handoff plus Packet 010 as the controlling input for the next bounded publication and host-mirror synchronization pass.
+Use the completed Packet 012 handoff as the controlling input for the next small authority publication and host-mirror resync gate.
 
 Preferred next move:
 
-1. `Olares Phase 5 010 - Parent-Root Publication And Host Mirror Sync Gate`
+1. `Olares Phase 5 013 - Post-012 Authority Publication And Host Mirror Resync Gate`
 
-The next planning pass must explicitly preserve:
+Current decision result:
 
-1. parent-root publication from `C:/APEX Platform`,
-2. a bounded commit scope limited to Phase 5 handoffs, packet JSON, roadmap/routing updates, and authority-doc restatements,
-3. synchronization of `/home/olares/code/apex` only after the governing publication step,
-4. no reopening of migration, AI-services, Gitea/code-hosting, or canonical-hosting lanes from publication alone,
+1. workstation-migration lane is conditionally ready only for a later bounded trial posture
+2. the first trial posture is explicitly bounded, documentation-first, and reversible
+3. host-side trial execution should wait until post-010, post-011, and post-012 closure artifacts are published and synchronized to `/home/olares/code/apex`
+4. full migration remains not approved
+
+The next publication/resync pass must explicitly preserve:
+
+1. the governing published commit `2e87937c2cd03a92ac8f1ccd4246d0eab0292348` as the current pre-publication authority boundary,
+2. the synchronized host mirror at `/home/olares/code/apex`,
+3. the Packet 012 decision that publication-state handling should precede trial execution,
+4. exclusion of unrelated parent-root drift such as `.vercelignore`,
 5. no old-clone mutation and no reclassification of the historical evidence path.
 
 Controlling artifacts:
 
 1. `ops/agents/handoffs/2026-05-03-olares-phase-5-009-post-smoke-repo-parity-housekeeping-and-migration-gate-planning-handoff.md`
 2. `ops/agents/packets/draft/2026-05-03-olares-phase-5-010-parent-root-publication-and-host-mirror-sync-gate.json`
+3. `ops/agents/handoffs/2026-05-03-olares-phase-5-010-parent-root-publication-and-host-mirror-sync-gate-handoff.md`
+4. `ops/agents/packets/draft/2026-05-03-olares-phase-5-011-post-sync-workstation-migration-readiness-reassessment.json`
+5. `ops/agents/handoffs/2026-05-03-olares-phase-5-011-post-sync-workstation-migration-readiness-reassessment-handoff.md`
+6. `ops/agents/packets/draft/2026-05-03-olares-phase-5-012-bounded-workstation-migration-trial-planning.json`
+7. `ops/agents/handoffs/2026-05-03-olares-phase-5-012-bounded-workstation-migration-trial-planning-handoff.md`
 
 ## Sequence Rule
 
@@ -945,7 +1169,11 @@ Prompt 11 is complete.
 
 Prompt 12 is complete.
 
-Prompt 13 is now the next live prompt.
+Prompt 13 is complete.
+
+Prompt 14 is complete.
+
+Prompt 15 is complete.
 
 Packet 004 and Packet 005 are complete.
 
@@ -957,6 +1185,10 @@ Packet 008 is complete.
 
 Packet 009 is complete.
 
-Packet 010 is now the next live packet.
+Packet 010 is complete.
 
-The next live task is Prompt 13 / Packet 010: a bounded parent-root publication and `/home/olares/code/apex` host-mirror synchronization gate pass. Do not open a migration or old-clone mutation lane beyond the current bounded publication and synchronization evidence.
+Packet 011 is complete.
+
+Packet 012 is complete.
+
+The next live task is Prompt 16 / Packet 013: post-012 authority publication and `/home/olares/code/apex` host-mirror resync gate. Do not open host-side trial execution, full migration, service/runtime mutation, AI-services expansion, Gitea/code-hosting transition, canonical-hosting transition, or old-clone mutation beyond that publication-aware surface.
