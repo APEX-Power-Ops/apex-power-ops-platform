@@ -1,8 +1,8 @@
 # Olares Phase 5 Next Task And Prompt Routing Handoff
 
 Date: 2026-05-03
-Status: Active - Prompt 7 is complete; next truthful move is Packet 006 host repo-clone reconciliation planning
-Scope: update the next task prompts after Phase 5 Step 1, Step 2, Step 3, Packet 001, Packet 002, Packet 003, Packet 004, Packet 005, and Prompt 7 completion, and state the current post-reconciliation next move
+Status: Active - Prompt 8 is complete; next truthful move is Packet 007 canonical host dev path preparation
+Scope: update the next task prompts after Phase 5 Step 1, Step 2, Step 3, Packet 001, Packet 002, Packet 003, Packet 004, Packet 005, Prompt 7, and Prompt 8 completion, and state the current post-clone-planning next move
 
 ## Authority
 
@@ -23,32 +23,34 @@ This routing handoff depends on:
 13. `ops/agents/handoffs/2026-05-03-olares-phase-5-005-ssh-host-runtime-inventory-handoff.md`
 14. `ops/agents/handoffs/2026-05-03-olares-phase-5-post-005-reconciliation-handoff.md`
 15. `ops/agents/packets/draft/2026-05-03-olares-phase-5-006-host-repo-clone-reconciliation-planning.json`
-16. `plan/infrastructure-olares-full-implementation-roadmap-1.md`
+16. `ops/agents/handoffs/2026-05-03-olares-phase-5-006-host-repo-clone-reconciliation-planning-handoff.md`
+17. `ops/agents/packets/draft/2026-05-03-olares-phase-5-007-canonical-host-dev-path-preparation.json`
+18. `plan/infrastructure-olares-full-implementation-roadmap-1.md`
 
 This handoff does not reopen generic Olares implementation.
 
 ## Current Routing Decision
 
-Prompt 1, Prompt 2, Prompt 3, Prompt 5, Prompt 6, and Prompt 7 are complete.
+Prompt 1, Prompt 2, Prompt 3, Prompt 5, Prompt 6, Prompt 7, and Prompt 8 are complete.
 
 Packet 004 and Packet 005 execution are complete.
 
 Prompt 4 still should not be run from the Packet 002 result.
 
-The next live planning move is:
+The next live preparation move is:
 
-1. execute the newly authored Packet `2026-05-03-olares-phase-5-006` as a bounded host repo-clone reconciliation planning pass,
-2. stop treating Prompt 7 as still pending,
-3. keep migration, AI-services expansion, Gitea/code-hosting move, and canonical-hosting transition closed pending the Packet 006 planning result.
+1. execute the newly authored Packet `2026-05-03-olares-phase-5-007` as a bounded canonical host dev path preparation pass,
+2. stop treating Prompt 8 as still pending,
+3. keep migration, AI-services expansion, Gitea/code-hosting move, and canonical-hosting transition closed pending the Packet 007 preparation result.
 
 Reason:
 
-1. Prompt 7 is now complete,
-2. it closed `TASK-021` as an assessment with a negative readiness verdict,
-3. it closed `TASK-023` as an assessment with residual risks documented,
-4. it closed `TASK-025` as a split-path assessment with all four paths still not ready,
-5. it classified the `forms-engine` and `p6-ingest` AppImage CR mismatch as governance/documentation mismatch rather than runtime failure,
-6. it concluded that a later bounded host repo-clone reconciliation planning packet is warranted.
+1. Prompt 8 is now complete,
+2. it decided the old host clone should be preserved as historical runtime evidence and not refreshed in place,
+3. it retired the old 2026-04-25 packet-002 publication scope as an execution lane,
+4. it concluded that a later bounded implementation packet is warranted only as canonical host dev path preparation,
+5. it kept migration, AI-services expansion, Gitea/code-hosting, and canonical-hosting paths not ready,
+6. it narrowed the next truthful move to preparing a separate canonical host dev path rather than mutating the old clone.
 
 ## Current Execution State
 
@@ -61,6 +63,7 @@ Packet `2026-05-03-olares-phase-5-003` is now complete as research only.
 Packet `2026-05-03-olares-phase-5-004` is now complete as a successful access-recovery packet.
 Packet `2026-05-03-olares-phase-5-005` is now complete as a successful read-only host-runtime inventory packet.
 Prompt 7 is now complete as a successful post-005 reconciliation pass.
+Packet `2026-05-03-olares-phase-5-006` is now complete as a successful host repo-clone reconciliation planning pass.
 
 Current controlling outcome:
 
@@ -79,7 +82,9 @@ Current controlling outcome:
 13. the controlling blocker is now repo-authority divergence: the host clone is older, dirty, path-divergent, and points at `jasonlswenson-sys/apex-power-ops.git` rather than the workstation publication boundary at `jasonlswenson-sys/RESA-Power-Project-Management.git`,
 14. `TASK-021`, `TASK-023`, and `TASK-025` are now closed as assessments only, not as implementation-ready approvals,
 15. no migration, AI-services, Gitea/code-hosting, or canonical-hosting path became ready,
-16. the next truthful move is a bounded repo-clone reconciliation planning packet, not implementation.
+16. the old host clone should be preserved as historical runtime evidence and not refreshed in place,
+17. the old 2026-04-25 packet-002 publication scope is retired as an execution lane and retained only as comparison evidence,
+18. the next truthful move is a bounded canonical host dev path preparation packet, not migration or old-clone repair.
 
 ## Why This Split
 
@@ -526,7 +531,7 @@ After edits, run a narrow validation check and summarize:
 4. whether any migration, AI-services, Gitea, or canonical-hosting path became ready.
 ```
 
-## Prompt 8 - Execute Next With Claude Code
+## Prompt 8 - Executed With Claude Code
 
 Instance: `Claude Code`
 
@@ -579,27 +584,80 @@ Your final summary must state clearly:
 5. whether any migration, AI-services, Gitea, or canonical-hosting path became ready.
 ```
 
-## Next Planning Direction
+## Prompt 9 - Execute Next With Codex
 
-The next truthful move is no longer another reconciliation pass.
+Instance: `Codex`
 
-Use the completed post-005 reconciliation handoff as the controlling input for the next planning pass.
+```text
+Act as the operator for a bounded Olares Phase 5 canonical host dev path preparation packet.
+
+Execute this packet exactly as a bounded host-path preparation lane:
+
+- Packet: C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-03-olares-phase-5-007-canonical-host-dev-path-preparation.json
+- Roadmap: C:/APEX Platform/apex-power-ops-platform/plan/infrastructure-olares-full-implementation-roadmap-1.md
+- Prior evidence:
+   - C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-006-host-repo-clone-reconciliation-planning-handoff.md
+   - C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-post-005-reconciliation-handoff.md
+   - C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-005-ssh-host-runtime-inventory-handoff.md
+   - C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-25-olares-workstation-001-publication-follow-through-scope-handoff.md
+   - C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-25-olares-workstation-002-publication-follow-through-blocker-handoff.md
+   - C:/APEX Platform/Infrastructure/Olares_Workspace_Authority_Framework.md
+   - C:/APEX Platform/Infrastructure/Olares_Build_Guide.md
+
+Primary objective:
+Prepare a separate canonical host development path that preserves the parent-root publication boundary and leaves `/home/olares/src/apex-power-ops-platform` intact as historical runtime evidence.
+
+Required actions:
+1. Capture a read-only evidence snapshot of the old host clone path, branch, commit, remote, dirty state, and untracked paths before any new path is created.
+2. Prepare a separate canonical host source path instead of editing the old clone in place.
+3. Populate the new path from the GitHub-canonical repository or another explicitly approved parent-root-preserving method.
+4. Leave the old host clone intact and unmodified except for read-only inspection.
+5. Validate that the new path is reachable over `olares-mesh` and record whether it supports bounded Remote-SSH use.
+6. State whether the prepared path preserves the parent-root publication boundary directly or whether that boundary now needs explicit restatement.
+
+Hard constraints:
+1. No deletion of `/home/olares/src/apex-power-ops-platform`.
+2. No remote rewrite, branch switch, `git reset`, or `git clean` on the old clone.
+3. No migration of daily development center of gravity.
+4. No Gitea work.
+5. No canonical-hosting change.
+6. No public ingress or auth changes.
+7. No Kubernetes, Helm, or runtime mutation outside the bounded host-path preparation scope.
+
+Write the results into this dated handoff:
+- C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-007-canonical-host-dev-path-preparation-handoff.md
+
+Update the roadmap only if the packet result materially sharpens the current live Olares boundary or records the prepared host path as a bounded new evidence surface.
+
+Your final summary must state clearly:
+1. whether the old host clone was preserved intact,
+2. what new canonical host path was prepared,
+3. whether the parent-root publication boundary was preserved or had to be restated,
+4. whether Remote-SSH works against the prepared path,
+5. whether any migration, AI-services, Gitea, or canonical-hosting path became ready.
+```
+
+## Next Preparation Direction
+
+The next truthful move is no longer additional host-clone planning.
+
+Use the completed Packet 006 planning handoff as the controlling input for the next bounded implementation pass.
 
 Preferred next move:
 
-1. `Olares Phase 5 006 - Host Repo Clone Reconciliation Planning`
+1. `Olares Phase 5 007 - Canonical Host Dev Path Preparation`
 
-The next planning pass must explicitly decide:
+The next preparation pass must explicitly produce:
 
-1. whether the host clone should be retired, refreshed, replaced, or preserved,
-2. whether the 2026-04-25 packet-002 publication scope should be restated or retired,
-3. whether `/home/olares/src/apex-power-ops-platform` should remain a candidate host dev path,
-4. whether a later implementation packet is warranted and what mutation scope it would need,
-5. whether any path becomes ready after that planning result.
+1. an evidence snapshot of the old host clone before replacement,
+2. a separate canonical host development path,
+3. a statement about whether the parent-root publication boundary is preserved directly or restated,
+4. a bounded Remote-SSH validation against the new path,
+5. no old-clone mutation, no Gitea work, and no migration approval.
 
 Controlling handoff path:
 
-1. `ops/agents/handoffs/2026-05-03-olares-phase-5-post-005-reconciliation-handoff.md`
+1. `ops/agents/handoffs/2026-05-03-olares-phase-5-006-host-repo-clone-reconciliation-planning-handoff.md`
 
 ## Sequence Rule
 
@@ -613,6 +671,10 @@ Prompt 6 is complete.
 
 Prompt 7 is complete.
 
+Prompt 8 is complete.
+
 Packet 004 and Packet 005 are complete.
 
-The next live task is executing Prompt 8 as a Claude Code host repo-clone reconciliation planning pass. Do not open a host clone mutation or migration packet until that planning handoff decides the required implementation scope.
+Packet 006 is complete.
+
+The next live task is executing Prompt 9 as a Codex canonical host dev path preparation pass. Do not open a migration or old-clone mutation lane beyond Packet 007's bounded scope.

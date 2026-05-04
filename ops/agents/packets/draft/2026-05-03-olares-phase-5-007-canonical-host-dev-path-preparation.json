@@ -1,0 +1,71 @@
+{
+  "packet_id": "2026-05-03-olares-phase-5-007",
+  "title": "Canonical Host Dev Path Preparation",
+  "objective": "Prepare a separate canonical Olares host development path that preserves the parent-root publication boundary, captures evidence from the old host clone before any replacement action, and validates bounded host-path readiness without mutating or deleting the existing `/home/olares/src/apex-power-ops-platform` clone.",
+  "domain": "infrastructure-domain",
+  "active_role": "Olares Canonical Host Path Preparation Operator",
+  "repo_paths": [
+    "C:/APEX Platform/apex-power-ops-platform/plan/infrastructure-olares-full-implementation-roadmap-1.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-006-host-repo-clone-reconciliation-planning-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-post-005-reconciliation-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-005-ssh-host-runtime-inventory-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-25-olares-workstation-001-publication-follow-through-scope-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-25-olares-workstation-002-publication-follow-through-blocker-handoff.md",
+    "C:/APEX Platform/Infrastructure/Olares_Workspace_Authority_Framework.md",
+    "C:/APEX Platform/Infrastructure/Olares_Build_Guide.md"
+  ],
+  "dependencies": [
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-006-host-repo-clone-reconciliation-planning-handoff.md",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-post-005-reconciliation-handoff.md",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-005-ssh-host-runtime-inventory-handoff.md",
+    "ops/agents/handoffs/2026-04-25-olares-workstation-001-publication-follow-through-scope-handoff.md",
+    "ops/agents/handoffs/2026-04-25-olares-workstation-002-publication-follow-through-blocker-handoff.md",
+    "plan/infrastructure-olares-full-implementation-roadmap-1.md"
+  ],
+  "dependency_note": "Packet 006 concluded that the existing host clone should be preserved as historical runtime evidence and replaced later for development, not refreshed in place. This packet exists to perform that bounded host-path preparation without deleting, rewriting, or mutating the old clone.",
+  "required_inputs": [
+    "The Packet 006 ruling that `/home/olares/src/apex-power-ops-platform` must be preserved as evidence and not refreshed in place",
+    "The current workstation publication boundary at `C:/APEX Platform` with canonical remote `https://github.com/jasonlswenson-sys/RESA-Power-Project-Management.git`",
+    "The authority-model expectation that host source should live in `~/code/apex` or another explicitly restated parent-root-preserving path",
+    "The old packet-002 scope and blocker handoffs as comparison-only evidence, not as an execution lane",
+    "A working `olares-mesh` SSH path for bounded host-side preparation and validation"
+  ],
+  "constrained_outputs": [
+    "A dated implementation handoff recording the evidence snapshot of the old host clone before any replacement action",
+    "A separate prepared canonical host development path that does not mutate or delete `/home/olares/src/apex-power-ops-platform`",
+    "A recorded decision on whether the prepared path preserves the parent-root publication boundary directly or restates it explicitly",
+    "A validation result showing whether VS Code Remote-SSH can reach the prepared path over `olares-mesh`",
+    "No deletion, no remote rewrite, no branch switch, no `git reset`, no `git clean`, no Gitea work, no canonical-hosting change"
+  ],
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "C:/APEX Platform/apex-power-ops-platform/plan",
+    "C:/APEX Platform/PROJECT_STATUS.md"
+  ],
+  "validation_steps": [
+    "Capture a read-only evidence snapshot of the old host clone path, branch, commit, remote, dirty state, and untracked paths before any new path is created.",
+    "Prepare a separate canonical host source path instead of editing `/home/olares/src/apex-power-ops-platform` in place.",
+    "Populate the new path from the GitHub-canonical repository or another explicitly approved parent-root-preserving method.",
+    "Leave the old host clone intact and unmodified except for read-only inspection.",
+    "Validate that the new path is reachable over `olares-mesh` and record whether it supports bounded Remote-SSH use.",
+    "Stop if execution would require deleting the old clone, rewriting its remote, switching its branch, changing publication authority, or opening migration, Gitea, or canonical-hosting scope."
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "authored",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-007-canonical-host-dev-path-preparation-handoff.md"
+  ],
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-007-canonical-host-dev-path-preparation-handoff.md",
+  "implementation_ready_candidate": true,
+  "sql_permission": false,
+  "sql_permission_note": "This packet authorizes bounded host-path preparation only. It does not authorize database writes, old-clone mutation, Gitea work, canonical-hosting changes, or daily-development migration.",
+  "landing_lane": "olares_phase_5_canonical_host_dev_path_preparation",
+  "migration_strategy": "prepare_new_host_dev_path_without_refreshing_old_clone_in_place",
+  "created_at": "2026-05-03",
+  "updated_at": "2026-05-03",
+  "delegation_status": "authored",
+  "validation_disposition": "pending-execution",
+  "closure_note": "Not yet executed. This packet exists because Packet 006 concluded that the old host clone should be preserved as evidence and replaced later through a separate canonical host path preparation lane.",
+  "next_action": "Execute this packet only if Olares-first daily development remains under consideration and only within the bounded host-path preparation scope defined here."
+}
