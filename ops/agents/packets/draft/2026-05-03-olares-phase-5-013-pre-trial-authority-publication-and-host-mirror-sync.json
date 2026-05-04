@@ -1,0 +1,68 @@
+{
+  "packet_id": "2026-05-03-olares-phase-5-013",
+  "title": "Pre-Trial Authority Publication And Host-Mirror Sync",
+  "objective": "Publish the post-010, post-011, and post-012 closure and planning authority set through `C:/APEX Platform`, then synchronize `/home/olares/code/apex` to the resulting governing commit so any later host-side trial execution runs against the current closure and planning authority rather than an older host-mirror snapshot.",
+  "domain": "infrastructure-domain",
+  "active_role": "Olares Pre-Trial Authority Publication Operator",
+  "repo_paths": [
+    "C:/APEX Platform/apex-power-ops-platform/plan/infrastructure-olares-full-implementation-roadmap-1.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-next-task-and-prompt-routing-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-010-parent-root-publication-and-host-mirror-sync-gate-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-011-post-sync-workstation-migration-readiness-reassessment-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-012-bounded-workstation-migration-trial-planning-handoff.md",
+    "C:/APEX Platform/Infrastructure/Olares_Workspace_Authority_Framework.md",
+    "C:/APEX Platform/Infrastructure/Olares_Build_Guide.md"
+  ],
+  "dependencies": [
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-012-bounded-workstation-migration-trial-planning-handoff.md",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-011-post-sync-workstation-migration-readiness-reassessment-handoff.md",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-010-parent-root-publication-and-host-mirror-sync-gate-handoff.md",
+    "ops/agents/packets/draft/2026-05-03-olares-phase-5-012-bounded-workstation-migration-trial-planning.json",
+    "plan/infrastructure-olares-full-implementation-roadmap-1.md"
+  ],
+  "dependency_note": "Packet 012 concludes that host-side trial execution should not start until the newer Packet 010, Packet 011, and Packet 012 closure and planning authority set is also published and synchronized to `/home/olares/code/apex`.",
+  "required_inputs": [
+    "The Packet 012 ruling that a small authority publication and host-mirror sync step should occur before any host-side trial execution",
+    "The current workstation-local Packet 010 closure, Packet 011 reassessment, Packet 012 planning handoff, and associated routing and roadmap updates",
+    "The governing parent-root publication boundary at `C:/APEX Platform`",
+    "The prepared host parent-root mirror at `/home/olares/code/apex`",
+    "The preserved historical-evidence boundary for `/home/olares/src/apex-power-ops-platform`"
+  ],
+  "constrained_outputs": [
+    "A dated execution handoff recording the bounded publication scope, resulting governing commit, and post-sync host-mirror evidence for the newer closure and planning authority set",
+    "A recorded statement of whether the host mirror now contains the Packet 010 closure handoff, Packet 011 reassessment handoff, Packet 012 planning handoff, and updated routing and roadmap state",
+    "No migration approval, no host runtime mutation, no old-clone mutation, and no widening into AI-services, Gitea/code-hosting, or canonical-hosting work"
+  ],
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "C:/APEX Platform/apex-power-ops-platform/plan",
+    "C:/APEX Platform/PROJECT_STATUS.md"
+  ],
+  "validation_steps": [
+    "Review parent-root git status at `C:/APEX Platform` and confirm the proposed publication scope is limited to the newer Packet 010, Packet 011, and Packet 012 closure and planning authority set plus routing and roadmap updates.",
+    "Exclude unrelated parent-root changes, secrets, runtime artifacts, host-only state, service configuration changes, and implementation work outside this authority-publication lane.",
+    "Create and publish the bounded parent-root commit to the GitHub-canonical repository, recording branch, remote, included paths, and resulting commit hash.",
+    "Capture pre-sync `/home/olares/code/apex` branch, remote, commit, and cleanliness evidence without mutating `/home/olares/src/apex-power-ops-platform`.",
+    "Synchronize `/home/olares/code/apex` to the published commit using a non-destructive fast-forward-only method.",
+    "Capture post-sync evidence that the host mirror now contains the Packet 010 closure handoff, Packet 011 reassessment handoff, Packet 012 planning handoff, and updated routing and roadmap state.",
+    "Stop if execution would require migration approval, host runtime mutation, old-clone mutation, service changes, auth or ingress changes, AI-services rollout, Gitea work, or canonical-hosting change."
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "authored",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-013-pre-trial-authority-publication-and-host-mirror-sync-handoff.md"
+  ],
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-013-pre-trial-authority-publication-and-host-mirror-sync-handoff.md",
+  "implementation_ready_candidate": true,
+  "sql_permission": false,
+  "sql_permission_note": "This packet authorizes bounded authority publication and host-mirror synchronization only. It does not authorize database writes, host-runtime mutation, old-clone mutation, AI-services rollout, Gitea work, canonical-hosting changes, or migration approval.",
+  "landing_lane": "olares_phase_5_pre_trial_authority_publication_and_host_mirror_sync",
+  "migration_strategy": "publish_newer_closure_and_trial_planning_authority_before_any_host_side_trial_execution",
+  "created_at": "2026-05-03",
+  "updated_at": "2026-05-03",
+  "delegation_status": "authored",
+  "validation_disposition": "pending-execution",
+  "closure_note": "Not yet executed. This packet exists because Packet 012 concluded that a host-side trial should not start until the newer closure and planning authority set is also published and synchronized to `/home/olares/code/apex`.",
+  "next_action": "Execute this packet only as a bounded authority-publication and host-mirror synchronization lane. Do not treat it as migration approval or as authorization for host runtime mutation."
+}
