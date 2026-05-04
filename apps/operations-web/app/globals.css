@@ -468,6 +468,39 @@ body {
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(244, 222, 203, 0.32));
 }
 
+.relay-detail-surface {
+  display: grid;
+  gap: 1rem;
+  padding: 1.2rem;
+  border-radius: 24px;
+  border: 1px solid rgba(18, 62, 87, 0.12);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(216, 229, 234, 0.3));
+}
+
+.relay-detail-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: end;
+}
+
+.relay-detail-title {
+  margin: 0.2rem 0 0;
+  font-size: 1.1rem;
+  color: var(--brand);
+}
+
+.relay-detail-copy {
+  margin: 0;
+  max-width: 42ch;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.relay-detail-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .relay-panel-summary {
   margin-bottom: 1rem;
 }
@@ -562,6 +595,7 @@ body {
   .relay-search-summary-grid,
   .relay-summary-grid,
   .relay-grid,
+  .relay-detail-grid,
   .relay-selection-controls,
   .relay-search-results,
   .relay-compare-grid-double,
@@ -570,6 +604,7 @@ body {
   }
 
   .resource-lane-header,
+  .relay-detail-header,
   .resource-form-row,
   .resource-summary,
   .resource-grid {
