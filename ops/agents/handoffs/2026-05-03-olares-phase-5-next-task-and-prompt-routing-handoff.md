@@ -1,8 +1,8 @@
 # Olares Phase 5 Next Task And Prompt Routing Handoff
 
 Date: 2026-05-03
-Status: Active - Packet 003 research is complete; next truthful move is to author the next bounded execution packet from that result
-Scope: update the next task prompts after Phase 5 Step 1, Step 2, Step 3, Packet 001, Packet 002, and Packet 003 completion, and state the current post-research next move
+Status: Active - Packet 004 is complete; next truthful move is execution of Packet 005 over restored mesh SSH
+Scope: update the next task prompts after Phase 5 Step 1, Step 2, Step 3, Packet 001, Packet 002, Packet 003, and Packet 004 completion, and state the current post-recovery next move
 
 ## Authority
 
@@ -17,7 +17,9 @@ This routing handoff depends on:
 7. `ops/agents/handoffs/2026-05-03-olares-phase-5-002-access-recovery-and-runtime-inventory-handoff.md`
 8. `ops/agents/packets/draft/2026-05-03-olares-phase-5-003-termpass-needslogin-blocker-audit-and-recovery-path-research.json`
 9. `ops/agents/handoffs/2026-05-03-olares-phase-5-003-termpass-needslogin-blocker-audit-and-recovery-path-research-handoff.md`
-10. `plan/infrastructure-olares-full-implementation-roadmap-1.md`
+10. `ops/agents/packets/draft/2026-05-03-olares-phase-5-004-interactive-larepass-profile-rehydration-and-mesh-validation.json`
+11. `ops/agents/handoffs/2026-05-03-olares-phase-5-004-interactive-larepass-profile-rehydration-and-mesh-validation-handoff.md`
+12. `plan/infrastructure-olares-full-implementation-roadmap-1.md`
 
 This handoff does not reopen generic Olares implementation.
 
@@ -25,21 +27,23 @@ This handoff does not reopen generic Olares implementation.
 
 Prompt 1, Prompt 2, Prompt 3, and Prompt 5 are complete.
 
+Packet 004 execution is complete.
+
 Prompt 4 still should not be run from the Packet 002 result.
 
-The next live authoring move is:
+The next live execution move is:
 
-1. use the newly authored preferred Packet `2026-05-03-olares-phase-5-004` when operator interaction is available,
-2. use the newly authored fallback Packet `2026-05-03-olares-phase-5-004B` when browser-terminal host inventory is the only viable next move,
-3. stop treating next-packet authoring as still pending.
+1. execute the newly authored Packet `2026-05-03-olares-phase-5-005` while the restored mesh SSH path remains healthy,
+2. retain Packet `2026-05-03-olares-phase-5-004B` only as a fallback if mesh SSH regresses and authenticated browser-terminal access remains the only viable bounded path,
+3. stop treating Packet 004 or Packet 004B as the active next move.
 
 Reason:
 
-1. Packet `2026-05-03-olares-phase-5-003` is now complete,
-2. it confirmed the likely blocker is local LarePass or TermiPass profile state rather than basic Headscale reachability,
-3. it cross-checked official Olares sources and reinforced that the correct private path is LarePass VPN over Tailscale or Headscale rather than public FRP SSH,
-4. it tightened the exact config evidence the next packet must capture,
-5. the remaining truthful move is packet authoring, not another stale replay of Prompt 5.
+1. Packet `2026-05-03-olares-phase-5-004` is now complete,
+2. it restored local profile state, TermiPass `BackendState: Running`, workstation mesh IP `100.64.0.2`, and peer visibility for `olares` at `100.64.0.1`,
+3. it proved `Test-NetConnection 100.64.0.1 -Port 22` and non-interactive SSH succeed over the TermiPass path,
+4. it established that VS Code Remote-SSH is now technically viable through the explicit mesh alias,
+5. the still-missing evidence is host runtime truth, not access recovery.
 
 ## Current Execution State
 
@@ -49,25 +53,21 @@ Step 3 is complete and closed `TASK-026`.
 
 Packet `2026-05-03-olares-phase-5-002` is now complete and blocked.
 Packet `2026-05-03-olares-phase-5-003` is now complete as research only.
+Packet `2026-05-03-olares-phase-5-004` is now complete as a successful access-recovery packet.
 
 Current controlling outcome:
 
-1. private-mesh access is still blocked from this workstation,
-2. `LarePassService` is running but `TermiPass` only shows link-local `169.254.149.107`,
-3. no usable `100.64.*` route is present,
-4. `100.64.0.1:22` times out,
-5. host runtime was not directly inspected,
-6. `VS Code Remote-SSH` is not currently viable,
-7. the result confirms the Step 1 boundary rather than changing it,
-8. Step 3 recommended Packet `2026-05-03-olares-phase-5-002` as the smallest next move,
-9. Packet `2026-05-03-olares-phase-5-002` attempted the documented TermiPass recovery path but local status remained `NeedsLogin` with zero node key, no auth URL, no mesh IP, and no `100.64.*` route,
-10. host runtime was still not directly inspected,
-11. the inventory portion of Packet 001 remains unsatisfied,
-12. no Claude Code follow-on reconciliation is recommended from this result,
-13. Packet 003 completed that blocker audit and identified viable bounded recovery methods,
-14. the preferred next packet is an interactive local LarePass profile rehydration and mesh-validation packet,
-15. the alternate next packet is browser-terminal-assisted host runtime inventory when operator interaction is unavailable,
-16. the next packet must explicitly capture local LarePass profile and VPN status, local TermiPass status/prefs/profiles, Headscale device-list or pending-node visibility, SSH-over-VPN setting status, and private route plus SSH reachability to `100.64.0.1`.
+1. private-mesh access is restored from this workstation,
+2. TermiPass is now `BackendState: Running`,
+3. workstation mesh IP is `100.64.0.2`,
+4. peer `olares` is online at `100.64.0.1`,
+5. `100.64.0.1:22` succeeds over interface `TermiPass`,
+6. non-interactive SSH succeeds for `olares@100.64.0.1`, `olares-mesh`, and the configured `olares` alias while VPN DNS resolves the mesh path,
+7. host runtime was still not directly inventoried during Packet 004,
+8. the inventory portion of Packet 001 remains unsatisfied,
+9. VS Code Remote-SSH is now technically viable through the explicit mesh alias,
+10. no installs, restarts, ingress changes, auth changes, or host-runtime mutations were performed during Packet 004,
+11. the next packet should capture the missing read-only host runtime inventory over SSH rather than reusing browser-terminal fallback by default.
 
 ## Why This Split
 
@@ -384,31 +384,88 @@ Your final summary must state clearly:
 5. whether a new execution packet should be opened next and what exact method it should test.
 ```
 
+## Prompt 6 - Execute Next With Codex
+
+Instance: `Codex`
+
+```text
+Act as the operator for a bounded Olares Phase 5 SSH runtime-inventory packet.
+
+Execute this packet exactly as a read-only host-inventory lane over the restored private mesh:
+
+- Packet: C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-03-olares-phase-5-005-ssh-host-runtime-inventory.json
+- Roadmap: C:/APEX Platform/apex-power-ops-platform/plan/infrastructure-olares-full-implementation-roadmap-1.md
+- Prior evidence:
+   - C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-004-interactive-larepass-profile-rehydration-and-mesh-validation-handoff.md
+   - C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-step-3-expansion-decision-surface-handoff.md
+   - C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-001-access-and-runtime-revalidation-handoff.md
+   - C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-01-olares-runtime-surface-restoration-handoff.md
+   - C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-01-olares-private-stack-browser-terminal-bring-up-handoff.md
+   - C:/APEX Platform/apex-power-ops-platform/docs/architecture/OLARES-SSH-HOSTKEY-RECONCILIATION-2026-05-01.md
+
+Primary objective:
+Use the restored `olares-mesh` or direct `olares@100.64.0.1` path to capture the still-missing read-only host runtime inventory and host repo-clone evidence.
+
+Required actions:
+1. Revalidate the trusted mesh SSH path and confirm the host fingerprint matches the already recorded trusted fingerprint.
+2. Capture read-only host identity and environment evidence: hostname, user, date, kernel, and key tool presence.
+3. Capture read-only host runtime inventory for Docker, K3s or Helm, installed apps, ports, volumes, networks, namespaces, pods, and services if present.
+4. Capture read-only evidence for installed `forms-engine` and `p6-ingest` host state if inspectable.
+5. Capture read-only evidence for the private-lane backup and restore-drill timer surfaces if inspectable.
+6. Capture host repo-clone path, branch, commit, and cleanliness if visible without performing any git mutation.
+7. State whether the host-runtime-inventory gap from Packet 001 is now satisfied.
+8. State whether VS Code Remote-SSH is technically viable through the explicit mesh alias based on actual SSH evidence.
+
+Hard constraints:
+1. No installs.
+2. No promotions.
+3. No ingress changes.
+4. No auth changes.
+5. No service restarts.
+6. No Helm or Kubernetes mutation.
+7. No git mutation on the host.
+8. No hosting changes.
+9. No claim that Olares-first daily development is now ready unless the written evidence actually supports that conclusion.
+
+Write the results into this dated handoff:
+- C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-005-ssh-host-runtime-inventory-handoff.md
+
+Update the roadmap only if the packet result materially changes the current live Olares boundary or closes named missing evidence for TASK-021, TASK-023, or TASK-025.
+
+Your final summary must state clearly:
+1. whether the mesh SSH path remained healthy,
+2. whether host runtime was directly inventoried,
+3. whether Packet 001's inventory gap is now satisfied,
+4. whether VS Code Remote-SSH is technically viable,
+5. whether Packet 005 closes as pass, partial, or blocked,
+6. whether a Claude Code reconciliation prompt is now warranted.
+```
+
 ## Next Packet Authoring Direction
 
-The next truthful packet is not Packet 003 again.
+The next truthful packet is no longer Packet 004 or Packet 004B.
 
-Use the completed Packet 003 handoff as the controlling input for the next packet authoring pass.
+Use the completed Packet 004 handoff as the controlling input for the next packet execution pass.
 
 Preferred next packet:
 
-1. `Olares Phase 5 004 - Interactive LarePass Profile Rehydration And Mesh Validation`
+1. `Olares Phase 5 005 - SSH Host Runtime Inventory`
 
 Fallback next packet:
 
-1. `Olares Phase 5 004B - Browser Terminal Host Runtime Inventory`
+1. `Olares Phase 5 004B - Browser Terminal Host Runtime Inventory` only if the restored mesh SSH path regresses and authenticated browser-terminal access remains available.
 
 The next packet must explicitly capture:
 
-1. local LarePass profile and VPN status,
-2. local TermiPass named-pipe `status`, `prefs`, and `profiles`,
-3. Headscale device list or pending-node visibility for this workstation,
-4. SSH-over-VPN setting status,
-5. private route and SSH reachability to `100.64.0.1`.
+1. read-only host runtime inventory for Docker, K3s or Helm, installed apps, ports, volumes, and networks,
+2. read-only host state for `forms-engine` and `p6-ingest` if inspectable,
+3. read-only private-lane timer and backup-unit visibility if inspectable,
+4. host repo-clone path, branch, commit, and cleanliness if inspectable without mutation,
+5. refreshed statement of whether Packet 001's inventory gap is now satisfied.
 
 Authored packet paths:
 
-1. `ops/agents/packets/draft/2026-05-03-olares-phase-5-004-interactive-larepass-profile-rehydration-and-mesh-validation.json`
+1. `ops/agents/packets/draft/2026-05-03-olares-phase-5-005-ssh-host-runtime-inventory.json`
 2. `ops/agents/packets/draft/2026-05-03-olares-phase-5-004b-browser-terminal-host-runtime-inventory.json`
 
 ## Sequence Rule
@@ -419,4 +476,6 @@ Prompt 4 should not run from the current Packet 002 result.
 
 Prompt 5 is complete.
 
-The next live task is executing Packet `2026-05-03-olares-phase-5-004` when operator interaction is available, or Packet `2026-05-03-olares-phase-5-004B` when the browser-terminal fallback is the only viable bounded move.
+Packet 004 is complete.
+
+The next live task is executing Packet `2026-05-03-olares-phase-5-005` over the restored mesh SSH path. Packet `2026-05-03-olares-phase-5-004B` remains fallback-only if the mesh path regresses.
