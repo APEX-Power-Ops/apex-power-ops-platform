@@ -405,6 +405,17 @@ test('relay browser requires explicit selection before loading bounded compare d
   expect(relayContextRequests).toBe(2)
   expect(relaySettingsRequests).toBe(2)
   expect(relayPlotRequests).toBe(1)
+
+  await page.getByRole('button', { name: 'Clear Relay Selection' }).click()
+  await expect(page.locator('.relay-selection-panel')).toHaveCount(0)
+  await expect(primaryDetail).toBeHidden()
+  await expect(
+    page.getByText('Select a primary TD-section before the browser treats any relay preview as current.'),
+  ).toBeVisible()
+
+  expect(relayContextRequests).toBe(2)
+  expect(relaySettingsRequests).toBe(2)
+  expect(relayPlotRequests).toBe(1)
 })
 
 test('re-homed browser surfaces render their expected headings in a real browser', async ({ page }) => {

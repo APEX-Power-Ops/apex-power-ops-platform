@@ -220,6 +220,16 @@ export function RelayResourceExplorer() {
     }
   }
 
+  function handleClearSelection() {
+    setErrorMessage(null)
+    setPrimarySectionId('')
+    setCompareSectionId('')
+    setPrimarySelection(null)
+    setCompareSelection(null)
+  }
+
+  const hasSelectionState = Boolean(primarySectionId || compareSectionId || primarySelection || compareSelection)
+
   return (
     <section className="resource-lane-card">
       <div className="resource-lane-header">
@@ -354,6 +364,11 @@ export function RelayResourceExplorer() {
               <button type="button" onClick={handleLoadSelection} disabled={isLoadingSelection}>
                 {isLoadingSelection ? 'Loading selections…' : 'Load Selected Sections'}
               </button>
+              {hasSelectionState ? (
+                <button type="button" onClick={handleClearSelection} disabled={isLoadingSelection}>
+                  Clear Relay Selection
+                </button>
+              ) : null}
             </div>
           </div>
 
