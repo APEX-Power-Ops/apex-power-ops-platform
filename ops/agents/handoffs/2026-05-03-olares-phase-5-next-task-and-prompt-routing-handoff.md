@@ -1,8 +1,8 @@
 # Olares Phase 5 Next Task And Prompt Routing Handoff
 
 Date: 2026-05-03
-Status: Active - Prompt 15 / Packet 012 is complete; Prompt 16 / Packet 013 is the next bounded pre-trial authority-publication move
-Scope: update the next task prompts after Phase 5 Step 1, Step 2, Step 3, Packet 001, Packet 002, Packet 003, Packet 004, Packet 005, Prompt 7, Prompt 8, Packet 007, Prompt 10, Packet 008, Packet 009, Packet 010, Packet 011, and Packet 012 completion, and state the current publication-aware trial follow-on
+Status: Active - Prompt 16 / Packet 013 is complete; Prompt 17 / Packet 014 is the next bounded host-editing trial move
+Scope: update the next task prompts after Phase 5 Step 1, Step 2, Step 3, Packet 001, Packet 002, Packet 003, Packet 004, Packet 005, Prompt 7, Prompt 8, Packet 007, Prompt 10, Packet 008, Packet 009, Packet 010, Packet 011, Packet 012, and Packet 013 completion, and state the current post-publication host-trial follow-on
 
 ## Authority
 
@@ -39,7 +39,9 @@ This routing handoff depends on:
 29. `ops/agents/packets/draft/2026-05-03-olares-phase-5-012-bounded-workstation-migration-trial-planning.json`
 30. `ops/agents/handoffs/2026-05-03-olares-phase-5-012-bounded-workstation-migration-trial-planning-handoff.md`
 31. `ops/agents/packets/draft/2026-05-03-olares-phase-5-013-pre-trial-authority-publication-and-host-mirror-sync.json`
-32. `plan/infrastructure-olares-full-implementation-roadmap-1.md`
+32. `ops/agents/handoffs/2026-05-03-olares-phase-5-013-pre-trial-authority-publication-and-host-mirror-sync-handoff.md`
+33. `ops/agents/packets/draft/2026-05-03-olares-phase-5-014-bounded-host-editing-trial-execution.json`
+34. `plan/infrastructure-olares-full-implementation-roadmap-1.md`
 
 This handoff does not reopen generic Olares implementation.
 
@@ -58,25 +60,25 @@ Prompt 4 still should not be run from the Packet 002 result.
 
 The next live authority move is:
 
-1. execute only a small post-012 authority publication and host-mirror resync gate,
-2. use Packet 012's publication decision as controlling input,
-3. publish and synchronize the Packet 010, Packet 011, and Packet 012 closure artifacts before any host-side trial execution unless a later packet explicitly records why it can proceed without them,
-4. keep the decision limited to authority publication, fast-forward-only `/home/olares/code/apex` synchronization, artifact presence evidence, and old-clone preservation,
-5. keep host-side trial execution, full migration, AI-services expansion, Gitea/code-hosting move, and canonical-hosting transition closed.
+1. execute only one bounded host-editing trial against `/home/olares/code/apex/apex-power-ops-platform`,
+2. use Packet 013's synchronized authority boundary as controlling input,
+3. keep the first trial documentation-first or planning-first, reversible, and limited to one narrow slice,
+4. keep the decision limited to host-side editing evidence, narrow validation, diff scope, and rollback posture,
+5. keep full migration, AI-services expansion, Gitea/code-hosting move, and canonical-hosting transition closed.
 
-The former trial-planning move is now complete:
+The former authority-publication move is now complete:
 
-1. Packet 012 defines the bounded host-editing trial posture after Packet 011,
-2. it classifies the first trial as documentation-first, reversible, and limited to `/home/olares/code/apex`,
-3. it requires a small authority publication and host-mirror resync step before trial execution,
-4. it does not approve full migration or host-side trial execution.
+1. Packet 013 published the newer Packet 010, Packet 011, and Packet 012 closure and planning authority set,
+2. it synchronized `/home/olares/code/apex` cleanly to `4856cee293e04b2c419f8761042d4c53e6964ff6`,
+3. it verified the required Packet 010, Packet 011, and Packet 012 artifacts are now present on the host mirror,
+4. it does not approve full migration.
 
 Reason:
 
-1. Prompt 15 is now complete,
-2. Packet 012 preserves Packet 011's conditional readiness decision,
-3. Packet 012 defines the trial guardrails, entry criteria, success criteria, failure and rollback triggers, and evidence capture rules,
-4. Packet 012 rules that post-010, post-011, and post-012 closure artifacts should be published and synchronized before any host-side trial execution,
+1. Prompt 16 is now complete,
+2. Packet 013 satisfied the post-012 publication and host-mirror synchronization requirement,
+3. Packet 013 moved `/home/olares/code/apex` from `2e87937c2cd03a92ac8f1ccd4246d0eab0292348` to `4856cee293e04b2c419f8761042d4c53e6964ff6`,
+4. Packet 013 verified the host mirror now contains the Packet 010 closure, Packet 011 reassessment, Packet 012 planning, and updated routing and roadmap state,
 5. full migration remains not approved,
 6. AI-services expansion, Gitea/code-hosting, and canonical-hosting paths remain not ready.
 
@@ -127,7 +129,9 @@ Current controlling outcome:
 24. Packet 011 reassessed the post-sync lane and classifies workstation migration as conditionally ready for a later bounded trial posture, not full migration approval,
 25. Packet 010 closure, Packet 011 closure, Packet 012 planning output, and the latest routing or roadmap state are workstation-local post-publication files until a later bounded authority publication includes them,
 26. Packet 012 defines the first bounded trial as documentation-first, reversible, and limited to `/home/olares/code/apex` after publication-state handling,
-27. the next truthful move is a small post-012 authority publication and `/home/olares/code/apex` host-mirror resync gate, not host-side trial execution, migration approval, or old-clone repair.
+27. Packet 013 published the bounded authority-closure set in commit `4856cee293e04b2c419f8761042d4c53e6964ff6` and synchronized `/home/olares/code/apex` cleanly to that commit,
+28. the host mirror now contains the Packet 010 closure, Packet 011 reassessment, Packet 012 planning, and updated routing and roadmap state,
+29. the next truthful move is one bounded host-editing trial execution packet, not migration approval, AI-services expansion, or old-clone repair.
 
 ## Prompt 15 - Executed With Claude Code
 
@@ -247,6 +251,66 @@ Your final summary must state clearly:
 2. what commit hash now governs the lane,
 3. whether `/home/olares/code/apex` synchronized cleanly to that commit,
 4. whether the host mirror now contains the Packet 010 closure, Packet 011 reassessment, Packet 012 planning, and updated routing and roadmap state,
+5. whether any migration, AI-services, Gitea, or canonical-hosting path became ready.
+```
+
+## Prompt 17 - Recommended With Codex
+
+Instance: `Codex`
+
+Technical-authority note:
+
+1. primary responsibility in this lane remains authoring, scope control, and outcome management,
+2. executor responsibility for Packet 014 is primarily `Codex`, with `Claude Code` acceptable as a bounded alternate executor under the same packet contract,
+3. this is a narrow non-AI infrastructure-trial exception and does not reopen the Step 2 AI-toolchain admission question.
+
+```text
+Act as the operator for the first bounded Olares Phase 5 host-editing trial execution packet.
+
+Execute this packet exactly as one bounded host-side trial lane:
+
+- Packet: C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-03-olares-phase-5-014-bounded-host-editing-trial-execution.json
+- Roadmap: C:/APEX Platform/apex-power-ops-platform/plan/infrastructure-olares-full-implementation-roadmap-1.md
+- Prior evidence:
+   - C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-013-pre-trial-authority-publication-and-host-mirror-sync-handoff.md
+   - C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-012-bounded-workstation-migration-trial-planning-handoff.md
+   - C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-011-post-sync-workstation-migration-readiness-reassessment-handoff.md
+   - C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-next-task-and-prompt-routing-handoff.md
+   - C:/APEX Platform/Infrastructure/Olares_Workspace_Authority_Framework.md
+   - C:/APEX Platform/Infrastructure/Olares_Build_Guide.md
+
+Primary objective:
+Perform one documentation-first or planning-first host-side editing trial from `/home/olares/code/apex/apex-power-ops-platform`, capture branch or commit or remote or cleanliness evidence before and after the edit, run narrow non-runtime validation, and record whether the trial remained reversible and publication-safe.
+
+Required actions:
+1. Open `/home/olares/code/apex` over `olares-mesh` and confirm branch, commit, remote, cleanliness, git top-level, and implementation-lane path before any edits begin.
+2. Confirm `/home/olares/src/apex-power-ops-platform` remains untouched historical evidence and is not used as the trial workspace.
+3. Perform exactly one bounded documentation-only or planning-only edit inside `/home/olares/code/apex/apex-power-ops-platform`.
+4. Run narrow non-runtime validation limited to the touched slice, such as `git diff --check`, markdown checks, packet text checks, and git status checks.
+5. Capture workstation and host git status plus diff evidence after the trial edit and record whether rollback remains cleanly available.
+6. State whether the trial succeeded cleanly enough to justify a later second bounded trial or a later readiness reassessment.
+
+Hard constraints:
+1. No migration approval.
+2. No host runtime mutation.
+3. No mutation of `/home/olares/src/apex-power-ops-platform`.
+4. No installs.
+5. No ingress changes.
+6. No auth changes.
+7. No AI-services expansion.
+8. No Gitea or canonical-hosting changes.
+9. Do not widen beyond one narrow documentation-first or planning-first slice.
+
+Write the results into this dated handoff:
+- C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-014-bounded-host-editing-trial-execution-handoff.md
+
+Update the roadmap only if the trial result materially sharpens the current live Olares boundary.
+
+Your final summary must state clearly:
+1. what exact trial slice was executed,
+2. whether `/home/olares/code/apex` remained on the governing authority commit before the trial,
+3. whether validation passed,
+4. whether rollback remained cleanly available,
 5. whether any migration, AI-services, Gitea, or canonical-hosting path became ready.
 ```
 
@@ -1114,27 +1178,27 @@ After edits, run a narrow validation check and summarize:
 
 ## Next Execution Direction
 
-The next truthful move is no longer additional host dev-loop validation, repo-parity gate definition, readiness reassessment, trial planning, or host-side trial execution.
+The next truthful move is no longer additional host dev-loop validation, repo-parity gate definition, readiness reassessment, trial planning, or pre-trial authority publication.
 
-Use the completed Packet 012 handoff as the controlling input for the next small authority publication and host-mirror resync gate.
+Use the completed Packet 013 handoff as the controlling input for the next bounded host-editing trial execution pass.
 
 Preferred next move:
 
-1. `Olares Phase 5 013 - Post-012 Authority Publication And Host Mirror Resync Gate`
+1. `Olares Phase 5 014 - Bounded Host Editing Trial Execution`
 
 Current decision result:
 
-1. workstation-migration lane is conditionally ready only for a later bounded trial posture
-2. the first trial posture is explicitly bounded, documentation-first, and reversible
-3. host-side trial execution should wait until post-010, post-011, and post-012 closure artifacts are published and synchronized to `/home/olares/code/apex`
+1. workstation-migration lane remains conditionally ready only for bounded trial execution, not migration approval
+2. `/home/olares/code/apex` is now synchronized to `4856cee293e04b2c419f8761042d4c53e6964ff6`
+3. the host mirror now contains the Packet 010 closure, Packet 011 reassessment, Packet 012 planning, and updated routing and roadmap state
 4. full migration remains not approved
 
-The next publication/resync pass must explicitly preserve:
+The next trial pass must explicitly preserve:
 
-1. the governing published commit `2e87937c2cd03a92ac8f1ccd4246d0eab0292348` as the current pre-publication authority boundary,
+1. the governing published commit `4856cee293e04b2c419f8761042d4c53e6964ff6` as the current authority boundary,
 2. the synchronized host mirror at `/home/olares/code/apex`,
-3. the Packet 012 decision that publication-state handling should precede trial execution,
-4. exclusion of unrelated parent-root drift such as `.vercelignore`,
+3. the Packet 012 decision that the first trial remains documentation-first, reversible, and bounded,
+4. exclusion of unrelated workstation drift such as `.vercelignore`,
 5. no old-clone mutation and no reclassification of the historical evidence path.
 
 Controlling artifacts:
@@ -1146,6 +1210,9 @@ Controlling artifacts:
 5. `ops/agents/handoffs/2026-05-03-olares-phase-5-011-post-sync-workstation-migration-readiness-reassessment-handoff.md`
 6. `ops/agents/packets/draft/2026-05-03-olares-phase-5-012-bounded-workstation-migration-trial-planning.json`
 7. `ops/agents/handoffs/2026-05-03-olares-phase-5-012-bounded-workstation-migration-trial-planning-handoff.md`
+8. `ops/agents/packets/draft/2026-05-03-olares-phase-5-013-pre-trial-authority-publication-and-host-mirror-sync.json`
+9. `ops/agents/handoffs/2026-05-03-olares-phase-5-013-pre-trial-authority-publication-and-host-mirror-sync-handoff.md`
+10. `ops/agents/packets/draft/2026-05-03-olares-phase-5-014-bounded-host-editing-trial-execution.json`
 
 ## Sequence Rule
 
@@ -1175,6 +1242,8 @@ Prompt 14 is complete.
 
 Prompt 15 is complete.
 
+Prompt 16 is complete.
+
 Packet 004 and Packet 005 are complete.
 
 Packet 006 is complete.
@@ -1191,4 +1260,6 @@ Packet 011 is complete.
 
 Packet 012 is complete.
 
-The next live task is Prompt 16 / Packet 013: post-012 authority publication and `/home/olares/code/apex` host-mirror resync gate. Do not open host-side trial execution, full migration, service/runtime mutation, AI-services expansion, Gitea/code-hosting transition, canonical-hosting transition, or old-clone mutation beyond that publication-aware surface.
+Packet 013 is complete.
+
+The next live task is Prompt 17 / Packet 014: one bounded host-editing trial execution pass. Do not open full migration, service/runtime mutation, AI-services expansion, Gitea/code-hosting transition, canonical-hosting transition, or old-clone mutation beyond that bounded host-trial surface.
