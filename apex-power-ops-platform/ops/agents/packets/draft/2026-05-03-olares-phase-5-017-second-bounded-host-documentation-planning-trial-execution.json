@@ -1,0 +1,67 @@
+{
+  "packet_id": "2026-05-03-olares-phase-5-017",
+  "title": "Second Bounded Host Documentation Planning Trial Execution",
+  "objective": "Execute one second bounded documentation-first or planning-first host-side trial from `/home/olares/code/apex/apex-power-ops-platform` after Packet 016 restored publication hygiene, using a distinct narrow edit slice to test repeatability from a clean synchronized host mirror without approving migration or mutating runtime surfaces.",
+  "domain": "infrastructure-domain",
+  "active_role": "Olares Second Bounded Host Trial Operator",
+  "repo_paths": [
+    "C:/APEX Platform/apex-power-ops-platform/plan/infrastructure-olares-full-implementation-roadmap-1.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-next-task-and-prompt-routing-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-016-packet-014-artifact-publication-and-host-mirror-resync-gate-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-014-bounded-host-editing-trial-execution-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-012-bounded-workstation-migration-trial-planning-handoff.md",
+    "C:/APEX Platform/Infrastructure/Olares_Workspace_Authority_Framework.md",
+    "C:/APEX Platform/Infrastructure/Olares_Build_Guide.md"
+  ],
+  "dependencies": [
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-016-packet-014-artifact-publication-and-host-mirror-resync-gate-handoff.md",
+    "ops/agents/packets/draft/2026-05-03-olares-phase-5-016-packet-014-artifact-publication-and-host-mirror-resync-gate.json",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-014-bounded-host-editing-trial-execution-handoff.md",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-012-bounded-workstation-migration-trial-planning-handoff.md",
+    "plan/infrastructure-olares-full-implementation-roadmap-1.md"
+  ],
+  "dependency_note": "Packet 016 restored publication hygiene for the Packet 014 host-created artifact and synchronized `/home/olares/code/apex` to governing commit `8be69f166a0ac738304d178e9443166852e4ee7f`. This packet exists to test one second bounded documentation/planning-only host-side trial from that clean synchronized mirror without widening into migration or runtime mutation.",
+  "required_inputs": [
+    "The Packet 016 ruling that `/home/olares/code/apex` is clean again at commit `8be69f166a0ac738304d178e9443166852e4ee7f` and that a later second bounded host-side documentation/planning trial may now be considered separately",
+    "The Packet 014 evidence that one documentation-only host-side edit succeeded from `/home/olares/code/apex/apex-power-ops-platform` without runtime mutation",
+    "The Packet 012 bounded-trial rules for allowed actions, disallowed actions, entry criteria, success criteria, failure triggers, rollback triggers, and evidence capture",
+    "The governing parent-root publication boundary at `C:/APEX Platform`",
+    "The preserved historical-evidence boundary for `/home/olares/src/apex-power-ops-platform`"
+  ],
+  "constrained_outputs": [
+    "A dated execution handoff recording the exact second bounded host-side documentation/planning edit slice, validation results, git evidence, and rollback posture",
+    "A recorded statement of whether the second bounded host-side trial succeeded cleanly enough to justify a later readiness reassessment or a later bounded publication/decision packet",
+    "No migration approval, no host runtime mutation, no old-clone mutation, and no widening into AI-services, Gitea/code-hosting, or canonical-hosting work"
+  ],
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "C:/APEX Platform/apex-power-ops-platform/plan",
+    "C:/APEX Platform/PROJECT_STATUS.md"
+  ],
+  "validation_steps": [
+    "Open `/home/olares/code/apex` over `olares-mesh` and confirm branch, commit, remote, cleanliness, git top-level, and implementation-lane path before any edits begin.",
+    "Confirm `/home/olares/src/apex-power-ops-platform` remains untouched historical evidence and is not used as the trial workspace.",
+    "Perform exactly one bounded documentation-only or planning-only edit inside `/home/olares/code/apex/apex-power-ops-platform`, using a slice distinct from the Packet 014 handoff artifact.",
+    "Run narrow non-runtime validation limited to the touched slice, such as `git diff --check`, markdown checks, packet text checks, path checks, and git status checks.",
+    "Capture workstation and host git status plus diff evidence after the trial edit and record whether rollback remains cleanly available.",
+    "Stop if execution would require migration approval, host runtime mutation, service changes, auth or ingress changes, installation work, AI-services rollout, Gitea work, canonical-hosting changes, remote rewrite, or any mutation of `/home/olares/src/apex-power-ops-platform`."
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-017-second-bounded-host-documentation-planning-trial-execution-handoff.md"
+  ],
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-017-second-bounded-host-documentation-planning-trial-execution-handoff.md",
+  "implementation_ready_candidate": true,
+  "sql_permission": false,
+  "sql_permission_note": "This packet authorizes one second bounded host-side documentation/planning trial only. It does not authorize database writes, host-runtime mutation, old-clone mutation, AI-services rollout, Gitea work, canonical-hosting changes, remote rewrite, or migration approval.",
+  "landing_lane": "olares_phase_5_second_bounded_host_documentation_planning_trial_execution",
+  "migration_strategy": "execute_one_more_reversible_documentation_or_planning_host_side_trial_from_clean_synchronized_host_mirror_before_any_broader_migration_decision",
+  "created_at": "2026-05-03",
+  "updated_at": "2026-05-03",
+  "delegation_status": "complete",
+  "validation_disposition": "complete-pass",
+  "closure_note": "Executed as one second bounded host-side documentation/planning trial. The prepared host mirror `/home/olares/code/apex` was reachable over `olares-mesh`, clean on `clean-main`, at governing commit `8be69f166a0ac738304d178e9443166852e4ee7f`, and correctly rooted before edits. The only host-side edit was the new Packet 017 handoff under `ops/agents/handoffs/`; validation passed with `git diff --check`, required no-migration/no-runtime language checks, and host status showing exactly one untracked Packet 017 handoff. `/home/olares/src/apex-power-ops-platform` remained untouched historical evidence at commit `2836a2622309b4e146ca24f23b5bf87312c0c857` with dirty/untracked count `30`. No migration, runtime mutation, AI-services work, Gitea/code-hosting work, canonical-hosting change, remote rewrite, commit, push, pull, force, reset, clean, or old-clone mutation occurred.",
+  "next_action": "Treat Packet 017 as closed. The smallest truthful next move is a separate Packet 018 decision surface: decide whether the two successful bounded host documentation/planning trials support a later readiness reassessment, or whether the Packet 017 host-created artifact should first be published through a bounded parent-root publication and host-mirror resync gate. Do not approve migration, runtime mutation, AI-services work, Gitea/code-hosting work, canonical-hosting changes, remote rewrite, or old-clone mutation."
+}
