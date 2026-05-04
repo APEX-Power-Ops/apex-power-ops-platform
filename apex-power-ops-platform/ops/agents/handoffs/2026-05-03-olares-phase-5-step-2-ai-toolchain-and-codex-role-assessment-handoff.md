@@ -264,8 +264,9 @@ Concretely:
 
 1. not local executor on Olares yet,
 2. not remote batch worker yet,
-3. explicitly excluded from the first slice,
-4. may only re-enter under a later packet after the trust-boundary and authority contradictions are closed in writing.
+3. explicitly excluded from the first Olares AI-toolchain slice,
+4. may only re-enter under a later packet after the trust-boundary and authority contradictions are closed in writing,
+5. a later non-AI infrastructure packet may still designate Codex or Claude Code as a tightly bounded executor if that packet is separately opened, explicitly narrowed, and managed by technical authority.
 
 ### Re-Entry Gate
 
@@ -285,6 +286,22 @@ Codex may be reconsidered only after all of the following are true:
 ### Credible Later Benefit
 
 Codex remains a plausible later fit for bulk-generation or unattended remote-batch work, but only after the re-entry gate above is satisfied.
+
+## Packet 014 Exception Boundary
+
+Later same-day Phase 5 authority work materially narrowed the immediate question.
+
+Packet 013 closed the authority-publication and host-mirror synchronization precondition for a single bounded host-editing trial, and Packet 014 was authored as that trial.
+
+That does not overturn the Step 2 AI-toolchain verdict.
+
+Interpretation:
+
+1. Step 2 still excludes Codex from the first Olares AI-toolchain slice,
+2. Step 2 still does not admit Codex as a general Olares local executor or remote batch worker,
+3. Packet 014 is a separate non-AI infrastructure trial packet, not an AI-toolchain expansion packet,
+4. for Packet 014 only, Codex or Claude Code may act as the bounded executor under technical-authority-managed instructions,
+5. this exception is valid only because the packet is documentation-first or planning-first, reversible, publication-aware, and explicitly narrower than migration approval.
 
 ## Current Contradictions And Unresolved Decisions
 
@@ -332,4 +349,6 @@ Recommendation: conditionally ready after bounded decisions.
 
 The lane becomes ready for a narrow AI-toolchain packet only after the trust-boundary, orchestration-authority, and Codex-role contradictions above are closed in writing.
 
-Codex specifically remains out of the first slice until the re-entry gate is satisfied.
+Codex specifically remains out of the first AI-toolchain slice until the re-entry gate is satisfied.
+
+Packet 014 does not change that conclusion; it is a separate technical-authority-managed host-editing trial exception, not Codex admission into the AI-toolchain lane.
