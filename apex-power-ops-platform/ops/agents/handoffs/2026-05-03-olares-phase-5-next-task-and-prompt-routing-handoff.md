@@ -1,8 +1,8 @@
 # Olares Phase 5 Next Task And Prompt Routing Handoff
 
 Date: 2026-05-03
-Status: Active - Prompt 28 / Packet 025 is complete; Packet 023 test artifact publication and host-mirror resync is the next separate surface
-Scope: update the next task prompts after Phase 5 Step 1, Step 2, Step 3, Packet 001, Packet 002, Packet 003, Packet 004, Packet 005, Prompt 7, Prompt 8, Packet 007, Prompt 10, Packet 008, Packet 009, Packet 010, Packet 011, Packet 012, Packet 013, Packet 014, Packet 015, Packet 016, Packet 017, Packet 018, Packet 019, Packet 020, Packet 021, Packet 022, Packet 023, Packet 024, and Packet 025 completion, and state the live post-025 publication-and-resync surface
+Status: Active - Prompt 30 / Packet 027 is complete; Packet 028 authority publication and host-mirror resync is the next separate surface
+Scope: update the next task prompts after Phase 5 Step 1, Step 2, Step 3, Packet 001, Packet 002, Packet 003, Packet 004, Packet 005, Prompt 7, Prompt 8, Packet 007, Prompt 10, Packet 008, Packet 009, Packet 010, Packet 011, Packet 012, Packet 013, Packet 014, Packet 015, Packet 016, Packet 017, Packet 018, Packet 019, Packet 020, Packet 021, Packet 022, Packet 023, Packet 024, Packet 025, Packet 026, and Packet 027 completion, and state the live post-027 publication-and-resync surface
 
 ## Authority
 
@@ -66,23 +66,29 @@ This routing handoff depends on:
 56. `ops/agents/packets/draft/2026-05-03-olares-phase-5-025-bounded-workstation-validation-of-packet-023-test-artifact.json`
 57. `ops/agents/handoffs/2026-05-03-olares-phase-5-025-bounded-workstation-validation-of-packet-023-test-artifact-handoff.md`
 58. `ops/agents/packets/draft/2026-05-03-olares-phase-5-026-packet-023-test-artifact-publication-and-host-mirror-resync-gate.json`
+59. `ops/agents/handoffs/2026-05-03-olares-phase-5-026-packet-023-test-artifact-publication-and-host-mirror-resync-gate-handoff.md`
+60. `ops/agents/packets/draft/2026-05-03-olares-phase-5-027-post-026-workstation-migration-readiness-reassessment.json`
+61. `ops/agents/handoffs/2026-05-03-olares-phase-5-027-post-026-workstation-migration-readiness-reassessment-handoff.md`
+62. `ops/agents/packets/draft/2026-05-03-olares-phase-5-028-packet-026-and-packet-027-authority-publication-and-host-mirror-resync-gate.json`
 
 This handoff does not reopen generic Olares implementation.
 
 ## Current Routing Decision
 
-Prompt 1, Prompt 2, Prompt 3, Prompt 5, Prompt 6, Prompt 7, Prompt 8, Prompt 9, Prompt 10, Prompt 11, Prompt 12, Prompt 13, Prompt 14, Prompt 15, Prompt 16, Prompt 17, Prompt 18, Prompt 19, Prompt 20, Prompt 21, Prompt 22, Prompt 23, Prompt 24, Prompt 25, Prompt 26, Prompt 27, and Prompt 28 are complete.
+Prompt 1, Prompt 2, Prompt 3, Prompt 5, Prompt 6, Prompt 7, Prompt 8, Prompt 9, Prompt 10, Prompt 11, Prompt 12, Prompt 13, Prompt 14, Prompt 15, Prompt 16, Prompt 17, Prompt 18, Prompt 19, Prompt 20, Prompt 21, Prompt 22, Prompt 23, Prompt 24, Prompt 25, Prompt 26, Prompt 27, Prompt 28, Prompt 29, and Prompt 30 are complete.
 
-Prompt 29 is the only live prompt and should execute Packet 026 only.
+Prompt 31 is the only live prompt and should execute Packet 028 only.
 
-Packet 004, Packet 005, Packet 006, Packet 007, Packet 008, Packet 009, Packet 010, Packet 011, Packet 012, Packet 013, Packet 014, Packet 015, Packet 016, Packet 017, Packet 018, Packet 019, Packet 020, Packet 021, Packet 022, Packet 023, Packet 024, and Packet 025 execution are complete.
+Packet 004, Packet 005, Packet 006, Packet 007, Packet 008, Packet 009, Packet 010, Packet 011, Packet 012, Packet 013, Packet 014, Packet 015, Packet 016, Packet 017, Packet 018, Packet 019, Packet 020, Packet 021, Packet 022, Packet 023, Packet 024, Packet 025, Packet 026, and Packet 027 execution are complete.
 
 Packet 021 is closed as the bounded non-runtime application-source host trial planning pass.
 Packet 022 is closed as the Packet 019 through Packet 021 authority publication and host-mirror resync gate.
 Packet 023 is closed as the bounded host-side operations-web test-only trial execution packet.
 Packet 024 is closed as the post-023 test artifact publication-or-rollback decision packet.
 Packet 025 is closed as the bounded workstation validation packet for the Packet 023 test artifact.
-Packet 026 is authored as the Packet 023 test artifact publication and host-mirror resync gate and is not executed.
+Packet 026 is closed as the Packet 023 test artifact publication and host-mirror resync gate.
+Packet 027 is closed as the post-026 workstation-migration readiness reassessment packet.
+Packet 028 is authored as the Packet 026 and Packet 027 authority publication and host-mirror resync gate and is not executed.
 
 Packet 009 is closed as a planning pass.
 Packet 010 is closed as a publication and host-mirror synchronization pass.
@@ -114,15 +120,14 @@ The completed Packet 017 second-trial move is:
 3. preserved the same no-runtime, no-migration, no-old-clone-mutation, no-AI-services, no-Gitea, and no-canonical-hosting boundary,
 4. captured that the second trial passed and supports a later readiness reassessment or bounded publication/decision packet as a separate move.
 
-The next live authority move is the separate Packet 026 publication and host-mirror resync lane.
+The next live authority move is the separate Packet 028 authority publication and host-mirror resync lane.
 
 Next bounded packet:
 
-1. `Olares Phase 5 026 - Packet 023 Test Artifact Publication And Host Mirror Resync Gate`,
-2. publish the validated one-file operations-web test artifact plus the minimal Packet 024 and Packet 025 authority surfaces through `C:/APEX Platform`,
-3. prove the matching dirty tracked host file is byte-identical to the published blob before clearing the dirty state,
-4. restore clean host parity on `/home/olares/code/apex` without force, reset, clean, remote rewrite, runtime mutation, or old-clone mutation,
-5. keep migration, service/runtime mutation, AI-services expansion, Gitea/code-hosting transition, canonical-hosting transition, installs, package changes outside the bounded publication set, and production-source changes outside the validated test file closed.
+1. `Olares Phase 5 028 - Packet 026 And Packet 027 Authority Publication And Host Mirror Resync Gate`,
+2. publish Packet 026 and Packet 027 closure authority through `C:/APEX Platform`,
+3. fast-forward-only synchronize `/home/olares/code/apex` so future host-side trials do not depend on workstation-only governance records,
+4. keep migration approval, runtime mutation, service mutation, installs, package changes, production-source edits, AI-services expansion, Gitea/code-hosting transition, canonical-hosting transition, remote rewrite, force, reset, clean, and old-clone mutation closed.
 
 The completed Packet 018 decision move is:
 
@@ -189,6 +194,24 @@ The completed Packet 025 workstation-validation move is:
 5. preserved the validated workstation mirror to support a later bounded publication gate,
 6. kept `/home/olares/code/apex` and `/home/olares/src/apex-power-ops-platform` untouched.
 
+The completed Packet 026 publication move is:
+
+1. published the validated Packet 023 one-file operations-web test artifact and bounded authority surfaces through the parent-root path in commit `79eeefee42246857fa455222931de0d068c1e9e8`,
+2. pushed `clean-main` to the moved GitHub URL without rewriting local or host remotes,
+3. proved the host dirty tracked file blob `3e4234bfc248d11cd3b849304a355c983a3c1108` matched the published blob before clearing dirty state,
+4. used a file-scoped restore plus fast-forward-only merge to synchronize `/home/olares/code/apex` to `79eeefee42246857fa455222931de0d068c1e9e8`,
+5. left `/home/olares/code/apex` clean and preserved `/home/olares/src/apex-power-ops-platform` untouched,
+6. kept migration, runtime mutation, service mutation, install work, AI-services expansion, Gitea/code-hosting transition, canonical-hosting transition, remote rewrite, force, reset, and clean closed.
+
+The completed Packet 027 reassessment move is:
+
+1. verified `/home/olares/code/apex` is clean on `clean-main` at `79eeefee42246857fa455222931de0d068c1e9e8`,
+2. verified the published Packet 023 test artifact plus Packet 023 through Packet 025 interpretation authority are present on the host mirror,
+3. recorded that Packet 026 closure authority is still expected workstation-local post-publication drift,
+4. advanced the workstation-migration lane to narrow application-source-trial-ready, not migration-ready,
+5. named Packet 028 as the required authority-publication and host-mirror resync gate before any later host-side source/test execution depends on Packet 026 or Packet 027 closure authority,
+6. kept runtime mutation, service mutation, install work, production-source edits, AI-services expansion, Gitea/code-hosting transition, canonical-hosting transition, remote rewrite, force, reset, clean, and old-clone mutation closed.
+
 The former publication-versus-second-trial decision move is now complete:
 
 1. Packet 015 decided that publication should happen now before any second bounded host-side trial,
@@ -209,9 +232,11 @@ Reason:
 9. Packet 023 proved the one-file host-side test artifact but left host executable validation skipped under the no-install boundary,
 10. Packet 024 deferred publication or rollback because the workstation can supply a cheaper no-install validation lane,
 11. Packet 025 then validated the exact one-file artifact on the workstation with successful typecheck and browser smoke evidence,
-12. the next truthful move is bounded publication plus non-destructive host dirty-tracked-file reconciliation,
-13. full migration remains not approved,
-14. AI-services expansion, Gitea/code-hosting, and canonical-hosting paths remain not ready.
+12. Packet 026 published the validated artifact and restored clean host parity at `79eeefee42246857fa455222931de0d068c1e9e8`,
+13. Packet 027 reassessed that evidence and advanced the lane to narrow application-source-trial-ready while keeping migration closed,
+14. the next truthful move is bounded Packet 026 and Packet 027 authority publication plus host-mirror resync,
+15. full migration remains not approved,
+16. AI-services expansion, Gitea/code-hosting, and canonical-hosting paths remain not ready.
 
 ## Current Execution State
 
@@ -240,6 +265,11 @@ Packet `2026-05-03-olares-phase-5-019` is now complete as a successful Packet 01
 Packet `2026-05-03-olares-phase-5-020` is now complete as a successful post-019 workstation-migration readiness reassessment pass.
 Packet `2026-05-03-olares-phase-5-021` is now complete as a successful bounded non-runtime application-source host trial planning pass.
 Packet `2026-05-03-olares-phase-5-022` is now complete as a successful Packet 019 through Packet 021 authority publication and host-mirror resync pass.
+Packet `2026-05-03-olares-phase-5-023` is now complete as a successful bounded host-side operations-web test-only trial execution pass.
+Packet `2026-05-03-olares-phase-5-024` is now complete as a successful post-023 publication-or-rollback decision pass.
+Packet `2026-05-03-olares-phase-5-025` is now complete as a successful bounded workstation validation pass for the Packet 023 test artifact.
+Packet `2026-05-03-olares-phase-5-026` is now complete as a successful Packet 023 test artifact publication and host-mirror resync pass.
+Packet `2026-05-03-olares-phase-5-027` is now complete as a successful post-026 workstation-migration readiness reassessment pass.
 
 Current controlling outcome:
 
@@ -515,7 +545,7 @@ Your final summary must state clearly:
 5. whether any publication, migration, runtime, AI-services, Gitea, or canonical-hosting path became ready.
 ```
 
-## Prompt 29 - Ready With Codex
+## Prompt 29 - Executed With Codex
 
 Instance: `Codex`
 
@@ -566,6 +596,111 @@ Your final summary must state clearly:
 3. whether `/home/olares/code/apex` returned to clean parity,
 4. what byte-equality evidence justified clearing the dirty tracked host file,
 5. whether any publication, migration, runtime, AI-services, Gitea, or canonical-hosting path became ready.
+```
+
+## Prompt 30 - Executed With Codex
+
+Instance: `Codex`
+
+```text
+Act as the operator for the bounded Olares Phase 5 post-026 workstation-migration readiness reassessment.
+
+Execute this packet exactly as a reassessment-only lane:
+
+- Packet: C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-03-olares-phase-5-027-post-026-workstation-migration-readiness-reassessment.json
+- Roadmap: C:/APEX Platform/apex-power-ops-platform/plan/infrastructure-olares-full-implementation-roadmap-1.md
+- Prior evidence:
+   - C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-026-packet-023-test-artifact-publication-and-host-mirror-resync-gate-handoff.md
+   - C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-025-bounded-workstation-validation-of-packet-023-test-artifact-handoff.md
+   - C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-024-post-023-test-artifact-publication-or-rollback-decision-handoff.md
+   - C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-023-bounded-host-side-operations-web-test-only-trial-execution-handoff.md
+   - C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-020-post-019-workstation-migration-readiness-reassessment-handoff.md
+   - C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-next-task-and-prompt-routing-handoff.md
+
+Primary objective:
+Reassess the workstation-migration lane after Packet 026 published the validated Packet 023 one-file application-surface test artifact and returned `/home/olares/code/apex` to clean parity at `79eeefee42246857fa455222931de0d068c1e9e8`.
+
+Required actions:
+1. Verify Packet 026 completed successfully and did not approve migration.
+2. Verify `/home/olares/code/apex` is clean on `clean-main` at `79eeefee42246857fa455222931de0d068c1e9e8`.
+3. Verify the host mirror contains the Packet 023, Packet 024, Packet 025, and Packet 026 authority artifacts needed to interpret the trial.
+4. Verify `/home/olares/src/apex-power-ops-platform` remains untouched historical evidence.
+5. Reassess whether the lane remains bounded-trial-ready, advances only to a narrower application-source-trial-ready posture, or still has blockers.
+6. Name exactly one next packet after the reassessment.
+7. Write the reassessment handoff at `C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-027-post-026-workstation-migration-readiness-reassessment-handoff.md`.
+
+Hard constraints:
+1. No migration approval by default.
+2. No runtime mutation.
+3. No service start, stop, restart, or reconfiguration.
+4. No installs.
+5. No package or lockfile changes.
+6. No production-source edits.
+7. No ingress or auth changes.
+8. No AI-services expansion.
+9. No Gitea or canonical-hosting changes.
+10. No remote rewrite.
+11. No force, reset, or clean.
+12. No mutation of `/home/olares/src/apex-power-ops-platform`.
+
+Your final summary must state clearly:
+1. whether Packet 026 publication and host parity evidence are sufficient for reassessment,
+2. whether the workstation-migration lane remains bounded-trial-ready or advances to a narrower classification,
+3. what blockers remain before any wider migration lane could open,
+4. the single next packet,
+5. whether any migration, runtime, AI-services, Gitea, or canonical-hosting path became ready.
+```
+
+## Prompt 31 - Ready With Codex
+
+Instance: `Codex`
+
+```text
+Act as the operator for the bounded Olares Phase 5 authority publication and host-mirror resync gate after Packet 027.
+
+Execute this packet exactly as a bounded authority-publication/resync lane:
+
+- Packet: C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-03-olares-phase-5-028-packet-026-and-packet-027-authority-publication-and-host-mirror-resync-gate.json
+- Roadmap: C:/APEX Platform/apex-power-ops-platform/plan/infrastructure-olares-full-implementation-roadmap-1.md
+- Prior evidence:
+   - C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-027-post-026-workstation-migration-readiness-reassessment-handoff.md
+   - C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-026-packet-023-test-artifact-publication-and-host-mirror-resync-gate-handoff.md
+   - C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-next-task-and-prompt-routing-handoff.md
+
+Primary objective:
+Publish Packet 026 and Packet 027 closure authority through `C:/APEX Platform`, then fast-forward-only synchronize `/home/olares/code/apex` so later host-side trials do not depend on workstation-only governance records.
+
+Required actions:
+1. Verify Packet 027 completed and did not approve migration.
+2. Verify `/home/olares/code/apex` is clean at the Packet 026 governing commit before publication.
+3. Limit the publication set to Packet 026 and Packet 027 closure authority, minimal routing or roadmap updates, and the authored Packet 028 JSON.
+4. Exclude `.vercelignore`, runtime artifacts, generated artifacts, secrets, package files, lockfiles, production source, and unrelated workspace changes.
+5. Publish the bounded parent-root commit to `clean-main` and record the commit hash.
+6. Fast-forward-only synchronize `/home/olares/code/apex` to the published commit.
+7. Verify the host mirror is clean and contains Packet 026 and Packet 027 closure authority.
+8. Verify `/home/olares/src/apex-power-ops-platform` remains untouched historical evidence.
+9. Write the execution handoff at `C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-028-packet-026-and-packet-027-authority-publication-and-host-mirror-resync-gate-handoff.md`.
+
+Hard constraints:
+1. No migration approval.
+2. No runtime mutation.
+3. No service start, stop, restart, or reconfiguration.
+4. No installs.
+5. No package or lockfile changes.
+6. No production-source edits.
+7. No ingress or auth changes.
+8. No AI-services expansion.
+9. No Gitea or canonical-hosting changes.
+10. No remote rewrite.
+11. No force, reset, or clean.
+12. No mutation of `/home/olares/src/apex-power-ops-platform`.
+
+Your final summary must state clearly:
+1. what exact bounded authority set was published,
+2. what commit hash now governs the lane,
+3. whether `/home/olares/code/apex` returned to clean parity,
+4. whether Packet 026 and Packet 027 closure authority is present on the host mirror,
+5. whether any migration, runtime, AI-services, Gitea, or canonical-hosting path became ready.
 ```
 
 ## Prompt 24 - Executed With Codex
@@ -2151,6 +2286,10 @@ Prompt 27 is complete.
 
 Prompt 28 is complete.
 
+Prompt 29 is complete.
+
+Prompt 30 is complete.
+
 Packet 004 and Packet 005 are complete.
 
 Packet 006 is complete.
@@ -2193,4 +2332,8 @@ Packet 024 is complete.
 
 Packet 025 is complete.
 
-The next live task is Packet 026: publish the validated Packet 023 one-file operations-web test artifact plus the minimal Packet 024 and Packet 025 authority surfaces through `C:/APEX Platform`, then restore clean parity on `/home/olares/code/apex` by reconciling the matching dirty tracked host file non-destructively. Do not mutate runtime or service state, expand AI-services, change Gitea/code-hosting, change canonical-hosting, rewrite remotes, force, reset, clean, install dependencies, widen beyond the bounded publication set, or mutate the old clone from Packet 026.
+Packet 026 is complete.
+
+Packet 027 is complete.
+
+The next live task is Packet 028: publish Packet 026 and Packet 027 closure authority through `C:/APEX Platform`, then fast-forward-only synchronize `/home/olares/code/apex` so later host-side trials do not depend on workstation-only governance records. Do not treat Packet 028 as migration approval, and do not mutate runtime or service state, expand AI-services, change Gitea/code-hosting, change canonical-hosting, rewrite remotes, force, reset, clean, install dependencies, edit production source, or mutate the old clone from Packet 028.
