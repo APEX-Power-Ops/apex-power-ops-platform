@@ -376,6 +376,14 @@ test('relay browser requires explicit selection before loading bounded compare d
 
   const primaryPanel = panels.nth(0)
   const comparePanel = panels.nth(1)
+  const primaryDetail = page.locator('[data-relay-detail-surface="primary"]')
+
+  await expect(primaryDetail).toBeVisible()
+  await expect(primaryDetail.getByRole('heading', { name: 'Primary TD-section detail' })).toBeVisible()
+  await expect(
+    primaryDetail.locator('[data-relay-detail-view="curve-parents"] strong', { hasText: 'IEC Very Inverse' }),
+  ).toBeVisible()
+  await expect(primaryDetail.locator('[data-relay-detail-view="preview-options"]')).toContainText('curve 1')
 
   await expect(primaryPanel.locator('[data-relay-compare-view="context"] dd', { hasText: 'iec' })).toBeVisible()
   await expect(primaryPanel.locator('[data-relay-compare-view="context"] dd', { hasText: 'constants' })).toBeVisible()
