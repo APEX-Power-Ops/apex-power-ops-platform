@@ -1,0 +1,67 @@
+{
+  "packet_id": "2026-05-03-olares-phase-5-025",
+  "title": "Bounded Workstation Validation Of Packet 023 Test Artifact",
+  "objective": "Mirror the exact Packet 023 one-file operations-web test artifact into the workstation copy only long enough to run no-install local typecheck and browser-smoke validation, without mutating `/home/olares/code/apex`, publishing changes, installing dependencies, or widening beyond the mirrored test file.",
+  "domain": "infrastructure-domain",
+  "active_role": "Olares Workstation Test Artifact Validation Operator",
+  "repo_paths": [
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/tests/browser-shell.smoke.spec.ts",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/package.json",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/playwright.config.ts",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-024-post-023-test-artifact-publication-or-rollback-decision-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-023-bounded-host-side-operations-web-test-only-trial-execution-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/plan/infrastructure-olares-full-implementation-roadmap-1.md"
+  ],
+  "dependencies": [
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-024-post-023-test-artifact-publication-or-rollback-decision-handoff.md",
+    "ops/agents/packets/draft/2026-05-03-olares-phase-5-024-post-023-test-artifact-publication-or-rollback-decision.json",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-023-bounded-host-side-operations-web-test-only-trial-execution-handoff.md",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-next-task-and-prompt-routing-handoff.md",
+    "plan/infrastructure-olares-full-implementation-roadmap-1.md"
+  ],
+  "dependency_note": "Packet 024 deferred publication or rollback because host-side typecheck and browser-smoke were unavailable under the no-install boundary while the workstation already has the cheaper no-install validation prerequisites. This packet may open only as a workstation-local validation lane and must not mutate the host artifact or publish it.",
+  "required_inputs": [
+    "Packet 023 execution handoff showing the exact one-file host artifact scope",
+    "Packet 024 decision handoff naming workstation validation as the next packet",
+    "Current workstation `apps/operations-web` dependency state under `C:/APEX Platform/apex-power-ops-platform/apps/operations-web`",
+    "Current local Playwright browser cache availability"
+  ],
+  "constrained_outputs": [
+    "At most one workstation-local mirrored test-file edit under `apps/operations-web/tests/browser-shell.smoke.spec.ts`",
+    "A dated execution handoff recording the mirrored diff scope, local validation results, and whether the workstation-local mirror was preserved or reverted after validation",
+    "No host mutation, publication commit, install work, package or lockfile mutation, production-source change outside the mirrored test file, runtime mutation, service change, or old-clone mutation"
+  ],
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/tests/browser-shell.smoke.spec.ts",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "C:/APEX Platform/apex-power-ops-platform/plan"
+  ],
+  "validation_steps": [
+    "Reconfirm the Packet 023 host artifact is limited to `apps/operations-web/tests/browser-shell.smoke.spec.ts`.",
+    "Reconfirm the workstation already has `apps/operations-web/node_modules` and a local Playwright browser cache without install.",
+    "Mirror only the exact Packet 023 route-title assertions into the workstation copy of `apps/operations-web/tests/browser-shell.smoke.spec.ts`.",
+    "Run `pnpm --dir apps/operations-web typecheck` from `C:/APEX Platform/apex-power-ops-platform`.",
+    "Run `pnpm --dir apps/operations-web smoke:browser` from `C:/APEX Platform/apex-power-ops-platform`.",
+    "Record `git diff --check -- apex-power-ops-platform/apps/operations-web/tests/browser-shell.smoke.spec.ts` after the mirrored edit.",
+    "Record workstation `git status --short` and stop if files outside the mirrored test file and authority surfaces change.",
+    "Do not mutate `/home/olares/code/apex` or `/home/olares/src/apex-power-ops-platform`."
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-025-bounded-workstation-validation-of-packet-023-test-artifact-handoff.md"
+  ],
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-025-bounded-workstation-validation-of-packet-023-test-artifact-handoff.md",
+  "implementation_ready_candidate": true,
+  "sql_permission": false,
+  "sql_permission_note": "This packet authorizes only a bounded workstation-local mirror and validation of the Packet 023 test artifact. It does not authorize database writes, host mutation, publication commits, install work, package changes, production-source changes outside the mirrored test file, AI-services rollout, Gitea work, canonical-hosting changes, migration approval, remote rewrite, force/reset/clean, or old-clone mutation.",
+  "landing_lane": "olares_phase_5_bounded_workstation_validation_of_packet_023_test_artifact",
+  "migration_strategy": "validate_one_host_created_test_artifact_on_the_workstation_without_host_mutation_or_daily_development_migration_approval",
+  "created_at": "2026-05-04",
+  "updated_at": "2026-05-04",
+  "delegation_status": "complete",
+  "validation_disposition": "complete-pass-with-local-tooling-equivalent",
+  "closure_note": "Complete. Packet 025 mirrored only the exact Packet 023 route-title assertions into the workstation copy of `apps/operations-web/tests/browser-shell.smoke.spec.ts`; `git diff --check` passed; local `npm exec tsc -- --noEmit` passed; the targeted re-homed browser-surfaces Playwright test passed; and the full `tests/browser-shell.smoke.spec.ts` Playwright file passed 3 of 3 tests. Because `pnpm` was unavailable on the shell `PATH`, equivalent no-install local `npm` and direct Playwright binary launchers were used instead. The workstation-local mirrored test diff was preserved after validation to support a later bounded publication packet, while `/home/olares/code/apex` remained untouched.",
+  "next_action": "Open only the separate Packet 026 publication and host-mirror resync gate to publish the validated Packet 023 one-file test artifact plus the minimal Packet 024 and Packet 025 authority surfaces, then reconcile the matching dirty tracked host file non-destructively. Do not mutate runtime, change services, install dependencies, rewrite remotes, force, reset, clean, or mutate the old clone from Packet 025 alone."
+}

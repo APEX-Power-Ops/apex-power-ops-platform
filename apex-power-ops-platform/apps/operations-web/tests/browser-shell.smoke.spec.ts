@@ -423,4 +423,16 @@ test('re-homed browser surfaces render their expected headings in a real browser
   const pmApprovalResponse = await page.goto('/pm-review/approval-surface.html')
   expect(pmApprovalResponse?.ok()).toBeTruthy()
   await expect(page).toHaveTitle(/APEX PM Approval Surface/)
+
+  const pmScheduleResponse = await page.goto('/pm-review/schedule.html')
+  expect(pmScheduleResponse?.ok()).toBeTruthy()
+  await expect(page).toHaveTitle(/APEX PM Schedule Review/)
+
+  const pmTracerResponse = await page.goto('/pm-review/tracer.html')
+  expect(pmTracerResponse?.ok()).toBeTruthy()
+  await expect(page).toHaveTitle(/APEX PM Upstream Tracer Review/)
+
+  const pmVarianceResponse = await page.goto('/pm-review/variance.html')
+  expect(pmVarianceResponse?.ok()).toBeTruthy()
+  await expect(page).toHaveTitle(/APEX PM Variance Review/)
 })
