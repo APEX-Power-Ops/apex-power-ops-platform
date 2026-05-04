@@ -1,0 +1,61 @@
+{
+  "packet_id": "2026-05-03-olares-phase-5-042",
+  "title": "Bounded Workstation Mirror Validation Of Packet 040 Source Artifact",
+  "objective": "Mirror exactly the Packet 040 two-file host-side apparatus clear-state source/test artifact into the workstation repo and validate it with existing workstation dependencies only, without publishing the artifact or reopening migration.",
+  "domain": "infrastructure-domain",
+  "active_role": "Olares Bounded Workstation Source Artifact Validator",
+  "dependencies": [
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-041-post-040-validation-publication-or-rollback-decision-handoff.md",
+    "ops/agents/packets/draft/2026-05-03-olares-phase-5-041-post-040-validation-publication-or-rollback-decision.json",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-040-bounded-host-side-apparatus-clear-state-source-trial-execution-handoff.md",
+    "ops/agents/packets/draft/2026-05-03-olares-phase-5-040-bounded-host-side-apparatus-clear-state-source-trial-execution.json",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-next-task-and-prompt-routing-handoff.md",
+    "plan/infrastructure-olares-full-implementation-roadmap-1.md"
+  ],
+  "dependency_note": "Packet 041 selected bounded workstation mirror validation as the smallest truthful next move because the Packet 040 host artifact still matches the expected two-file scope and SHA-256 `081317eafc0649ec63f1deae479b892a39fcd2e8329f79b2416e76d959dc04d5`, while host executable validation remains blocked under the no-install boundary.",
+  "required_inputs": [
+    "Current Packet 040 host artifact at `/home/olares/code/apex/apex-power-ops-platform`",
+    "Expected host diff SHA-256 `081317eafc0649ec63f1deae479b892a39fcd2e8329f79b2416e76d959dc04d5`",
+    "Clean workstation baseline for `apex-power-ops-platform/apps/operations-web/app/apparatus-resource-explorer.tsx` and `apex-power-ops-platform/apps/operations-web/tests/browser-shell.smoke.spec.ts` before mirroring",
+    "Existing workstation dependency and validation-tool availability, without installs or package-manager activation/download",
+    "Current old-clone branch, commit, and status count at `/home/olares/src/apex-power-ops-platform`"
+  ],
+  "constrained_outputs": [
+    "A workstation validation handoff recording host pre-state, exact mirror scope, workstation diff hash, validation commands and results, skipped validation rationale if any validation remains blocked, old-clone preservation, and the next publication/rollback/defer decision candidate",
+    "No commit, no push, no source publication, no package or lockfile mutation, no dependency install, no package-manager activation/download, no runtime mutation, no service mutation, no remote rewrite, no force/reset/clean, no AI-services expansion, no Gitea/code-hosting transition, no canonical-hosting transition, no migration approval, no host rollback, and no old-clone mutation"
+  ],
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/app/apparatus-resource-explorer.tsx",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/tests/browser-shell.smoke.spec.ts",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "validation_steps": [
+    "Reconfirm `/home/olares/code/apex` is on `clean-main` at `f39f8ddb3593c79333280d3aceabc9d0ceadc1c2` and that the Packet 040 host artifact remains limited to exactly two files.",
+    "Reconfirm host `git diff --check` for the two scoped files and host diff SHA-256 `081317eafc0649ec63f1deae479b892a39fcd2e8329f79b2416e76d959dc04d5` before mirroring.",
+    "Confirm `/home/olares/src/apex-power-ops-platform` branch, commit, and status count without mutation.",
+    "Confirm the workstation copy of the two scoped files is clean before mirroring.",
+    "Mirror only the two scoped Packet 040 host-file changes into `C:/APEX Platform/apex-power-ops-platform`.",
+    "Confirm the workstation diff is limited to the two scoped files and its SHA-256 matches `081317eafc0649ec63f1deae479b892a39fcd2e8329f79b2416e76d959dc04d5`.",
+    "Run workstation path-scoped `git diff --check` for the two mirrored files.",
+    "Run existing-dependency validation only: app-local TypeScript validation and, if it can run without installs or package-manager activation/download, the existing browser smoke path for `apps/operations-web`.",
+    "Do not commit, push, publish, roll back the host artifact, or mutate the old clone."
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-042-bounded-workstation-mirror-validation-of-packet-040-source-artifact-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-03-olares-phase-5-043-packet-040-validated-artifact-publication-reconciliation-or-defer-decision.json"
+  ],
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-042-bounded-workstation-mirror-validation-of-packet-040-source-artifact-handoff.md",
+  "implementation_ready_candidate": false,
+  "sql_permission": false,
+  "sql_permission_note": "This packet authorizes no database writes and no runtime, service, package, lockfile, install, remote rewrite, AI-services, Gitea, canonical-hosting, migration, force/reset/clean, commit, push, publication, host rollback, or old-clone mutation. It authorizes only a bounded two-file workstation mirror and existing-dependency validation.",
+  "landing_lane": "olares_phase_5_bounded_workstation_validation_of_packet_040_artifact",
+  "migration_strategy": "validate_exact_host_artifact_on_workstation_before_any_source_publication_or_migration_reassessment",
+  "created_at": "2026-05-04",
+  "updated_at": "2026-05-04",
+  "delegation_status": "complete",
+  "validation_disposition": "complete-workstation-mirror-and-existing-dependency-validation-pass",
+  "closure_note": "Executed 2026-05-04. Packet 042 revalidated the Packet 040 host artifact on `/home/olares/code/apex` at `f39f8ddb3593c79333280d3aceabc9d0ceadc1c2`, mirrored exactly the two scoped files into `C:/APEX Platform/apex-power-ops-platform`, confirmed the workstation diff SHA-256 matches the host artifact SHA-256 `081317eafc0649ec63f1deae479b892a39fcd2e8329f79b2416e76d959dc04d5`, passed workstation path-scoped `git diff --check`, passed app-local `tsc.cmd --noEmit`, passed existing no-install browser smoke with `3 passed`, and kept tracked package and lockfile paths clean. The artifact remains uncommitted and unpublished on both workstation and host, and `/home/olares/src/apex-power-ops-platform` remained untouched.",
+  "next_action": "Open only Packet 043 as the publication/reconciliation or defer decision packet for the now workstation-validated Packet 040 artifact. Do not publish directly from Packet 042 and do not reopen migration."
+}

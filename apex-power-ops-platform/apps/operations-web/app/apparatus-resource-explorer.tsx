@@ -46,6 +46,12 @@ export function ApparatusResourceExplorer() {
     }
   }
 
+  function handleClear() {
+    setApparatusId('')
+    setErrorMessage(null)
+    setResult(emptyResult)
+  }
+
   return (
     <section className="resource-lane-card">
       <div className="resource-lane-header">
@@ -75,6 +81,9 @@ export function ApparatusResourceExplorer() {
           />
           <button type="submit" disabled={isLoading}>
             {isLoading ? 'Loading…' : 'Load Resources'}
+          </button>
+          <button type="button" onClick={handleClear} disabled={isLoading}>
+            Clear
           </button>
         </div>
       </form>
