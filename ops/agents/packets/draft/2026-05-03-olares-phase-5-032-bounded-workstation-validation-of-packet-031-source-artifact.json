@@ -1,0 +1,61 @@
+{
+  "packet_id": "2026-05-03-olares-phase-5-032",
+  "title": "Bounded Workstation Validation Of Packet 031 Source Artifact",
+  "objective": "Mirror only the exact Packet 031 two-file host source artifact into `C:/APEX Platform/apex-power-ops-platform`, validate it with the existing workstation toolchain, compare it back to the host artifact, and stop without publication.",
+  "domain": "infrastructure-domain",
+  "active_role": "Olares Packet 031 Workstation Validation Operator",
+  "dependencies": [
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-031-bounded-host-side-relay-browser-selection-reset-source-trial-execution-handoff.md",
+    "ops/agents/packets/draft/2026-05-03-olares-phase-5-031-bounded-host-side-relay-browser-selection-reset-source-trial-execution.json",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-030-packet-028-and-packet-029-authority-publication-and-host-mirror-resync-gate-handoff.md",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-next-task-and-prompt-routing-handoff.md",
+    "plan/infrastructure-olares-full-implementation-roadmap-1.md"
+  ],
+  "dependency_note": "Packet 031 left an uncommitted, unpublished two-file host artifact with host diff SHA-256 `65882514ad1b609dcf5498ef23fbe18953e8f6e925e0170cb57c044809688f91`. Host executable validation was unavailable because `node_modules`, `pnpm`, and Playwright browser cache were missing under the no-install boundary.",
+  "required_inputs": [
+    "Packet 031 execution handoff",
+    "Current host diff evidence from `/home/olares/code/apex/apex-power-ops-platform`",
+    "Current workstation status and existing operations-web toolchain availability",
+    "Exact host diff for `apps/operations-web/app/relay-resource-explorer.tsx` and `apps/operations-web/tests/browser-shell.smoke.spec.ts`"
+  ],
+  "constrained_outputs": [
+    "The exact Packet 031 two-file source artifact mirrored into `C:/APEX Platform/apex-power-ops-platform` if local pre-state allows",
+    "Workstation validation evidence for `git diff --check`, operations-web typecheck, and operations-web browser smoke",
+    "A dated validation handoff recording exact diff comparison, validation results, and whether publication can be considered by a later packet",
+    "No publication, host mutation beyond read-only comparison, runtime mutation, service change, install work, package or lockfile change, remote rewrite, force/reset/clean, AI-services rollout, Gitea/code-hosting transition, canonical-hosting transition, or old-clone mutation"
+  ],
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/app/relay-resource-explorer.tsx",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/tests/browser-shell.smoke.spec.ts",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "C:/APEX Platform/apex-power-ops-platform/plan"
+  ],
+  "validation_steps": [
+    "Verify the host Packet 031 artifact remains limited to the two authorized files and record its current diff SHA-256.",
+    "Verify workstation pre-state and stop if either target file has unrelated local edits that would prevent an exact mirror.",
+    "Mirror only the exact host diff into the workstation copy of the two authorized files.",
+    "Run workstation `git diff --check` for the two mirrored files.",
+    "Run `pnpm --dir \"C:/APEX Platform/apex-power-ops-platform\" --filter @apex/operations-web typecheck` using existing workstation dependencies only.",
+    "Run `pnpm --dir \"C:/APEX Platform/apex-power-ops-platform\" --filter @apex/operations-web smoke:browser` using existing workstation dependencies only.",
+    "Compare the workstation two-file diff hash to the host Packet 031 diff hash.",
+    "Leave publication, rollback, host cleanup, source commit, and host resync to a later separately authorized packet."
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-032-bounded-workstation-validation-of-packet-031-source-artifact-handoff.md"
+  ],
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-032-bounded-workstation-validation-of-packet-031-source-artifact-handoff.md",
+  "implementation_ready_candidate": true,
+  "sql_permission": false,
+  "sql_permission_note": "This packet authorizes no database writes. It authorizes only exact workstation mirroring and validation of the Packet 031 source artifact and does not authorize runtime mutation, service changes, install work, package changes, lockfile changes, publication, host cleanup, AI-services rollout, Gitea work, canonical-hosting changes, migration approval, remote rewrite, force/reset/clean, or old-clone mutation.",
+  "landing_lane": "olares_phase_5_bounded_workstation_validation_of_packet_031_source_artifact",
+  "migration_strategy": "validate_one_host_created_source_artifact_on_workstation_without_opening_publication_or_migration",
+  "created_at": "2026-05-04",
+  "updated_at": "2026-05-04",
+  "delegation_status": "complete",
+  "validation_disposition": "complete-partial-pass-pnpm-blocked",
+  "closure_note": "Executed 2026-05-04. The Packet 031 two-file host source artifact was revalidated on `/home/olares/code/apex`, mirrored exactly into the workstation, and the host/workstation diff hash matched `65882514ad1b609dcf5498ef23fbe18953e8f6e925e0170cb57c044809688f91`. Workstation `git diff --check` passed and app-local `tsc.cmd --noEmit` passed, but canonical `pnpm --dir ... typecheck` and `pnpm --dir ... smoke:browser` were blocked because `pnpm` is not on PATH; direct app-local Playwright also could not start the configured web server because it invokes `pnpm exec next start`. Publication remains not ready.",
+  "next_action": "Open only Packet 033 for a bounded post-032 toolchain blocker and publication-readiness decision. Do not publish, install, mutate runtime or services, change packages or lockfiles, clean the host artifact, rewrite remotes, force, reset, clean, mutate the old clone, or approve migration from Packet 032."
+}

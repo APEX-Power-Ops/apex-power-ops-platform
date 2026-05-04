@@ -1,0 +1,59 @@
+{
+  "packet_id": "2026-05-03-olares-phase-5-034",
+  "title": "Bounded No-Install Workstation Pnpm Path Revalidation",
+  "objective": "Use only existing workstation pnpm capability to rerun the canonical operations-web typecheck and browser smoke commands for the mirrored Packet 031 source artifact, then decide whether publication can open next or whether rollback/defer handling is more truthful.",
+  "domain": "infrastructure-domain",
+  "active_role": "Olares Packet 031 Workstation Pnpm Revalidation Operator",
+  "dependencies": [
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-033-post-032-toolchain-blocker-and-publication-readiness-decision-handoff.md",
+    "ops/agents/packets/draft/2026-05-03-olares-phase-5-033-post-032-toolchain-blocker-and-publication-readiness-decision.json",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-032-bounded-workstation-validation-of-packet-031-source-artifact-handoff.md",
+    "ops/agents/packets/draft/2026-05-03-olares-phase-5-032-bounded-workstation-validation-of-packet-031-source-artifact.json",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-next-task-and-prompt-routing-handoff.md",
+    "plan/infrastructure-olares-full-implementation-roadmap-1.md"
+  ],
+  "dependency_note": "Packet 033 confirmed the Packet 031 two-file source artifact remains exact between host and workstation with diff SHA-256 `65882514ad1b609dcf5498ef23fbe18953e8f6e925e0170cb57c044809688f91`. `pnpm` is absent from the active PATH, but an existing user-level shim at `C:/Users/jjswe/AppData/Roaming/npm/pnpm.cmd` runs `pnpm@10.33.2`; the repo declares `packageManager: pnpm@10.0.0` and Corepack last-known-good also names `pnpm@10.0.0`.",
+  "required_inputs": [
+    "Packet 033 decision handoff",
+    "Current host and workstation diff hash for the mirrored two-file Packet 031 source artifact",
+    "Existing user-level pnpm shim evidence from `C:/Users/jjswe/AppData/Roaming/npm`",
+    "Existing workstation operations-web dependencies and Playwright cache only"
+  ],
+  "constrained_outputs": [
+    "Revalidation evidence for `pnpm --dir \"C:/APEX Platform/apex-power-ops-platform\" --filter @apex/operations-web typecheck` using existing workstation capability only",
+    "Revalidation evidence for `pnpm --dir \"C:/APEX Platform/apex-power-ops-platform\" --filter @apex/operations-web smoke:browser` using existing workstation capability only",
+    "A dated handoff stating whether publication can open next or whether rollback/defer handling is the next truthful packet",
+    "No publication, host cleanup, source commit, host resync, dependency install, package-manager activation or download, package or lockfile mutation, runtime mutation, service mutation, remote rewrite, force/reset/clean, AI-services rollout, Gitea/code-hosting transition, canonical-hosting transition, migration approval, or old-clone mutation"
+  ],
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "C:/APEX Platform/apex-power-ops-platform/plan"
+  ],
+  "validation_steps": [
+    "Reconfirm the workstation and host Packet 031 source artifact diff hash remains `65882514ad1b609dcf5498ef23fbe18953e8f6e925e0170cb57c044809688f91` before running commands.",
+    "Confirm `pnpm` remains absent from the active PATH and the existing user-level shim remains present; do not install, activate Corepack, download package managers, or mutate package-manager state.",
+    "Use a process-local PATH prepend for `C:/Users/jjswe/AppData/Roaming/npm`, or an equivalent explicit invocation that preserves the canonical repo command semantics, so the authored `pnpm --dir ...` commands can execute without persistent environment changes.",
+    "Run `pnpm --dir \"C:/APEX Platform/apex-power-ops-platform\" --filter @apex/operations-web typecheck`.",
+    "Run `pnpm --dir \"C:/APEX Platform/apex-power-ops-platform\" --filter @apex/operations-web smoke:browser`.",
+    "Record pnpm version, command outputs, any generated ignored artifacts, and whether the source artifact remains unchanged after validation.",
+    "Decide the single next packet: publication gate only if canonical validation passes, otherwise rollback/defer or blocker handling."
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-034-bounded-no-install-workstation-pnpm-path-revalidation-handoff.md"
+  ],
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-034-bounded-no-install-workstation-pnpm-path-revalidation-handoff.md",
+  "implementation_ready_candidate": true,
+  "sql_permission": false,
+  "sql_permission_note": "This packet authorizes no database writes and no runtime, service, package, lockfile, install, publication, host-cleanup, remote, AI-services, Gitea, canonical-hosting, migration, force/reset/clean, or old-clone mutation. It authorizes only no-install workstation command revalidation using existing pnpm capability.",
+  "landing_lane": "olares_phase_5_no_install_workstation_pnpm_path_revalidation",
+  "migration_strategy": "validate_existing_workstation_pnpm_command_path_without_opening_publication_or_migration",
+  "created_at": "2026-05-04",
+  "updated_at": "2026-05-04",
+  "delegation_status": "complete",
+  "validation_disposition": "complete-canonical-validation-passed-publication-eligible",
+  "closure_note": "Executed 2026-05-04. Packet 034 reconfirmed host/workstation source parity at diff SHA-256 `65882514ad1b609dcf5498ef23fbe18953e8f6e925e0170cb57c044809688f91`, used only an existing user-level `pnpm@10.33.2` shim through a process-local PATH prepend, passed canonical `pnpm --dir ... typecheck`, and passed canonical `pnpm --dir ... smoke:browser` with 3 Playwright tests passing. No tracked package or lockfile changes were observed. Publication is now eligible only through a separate bounded gate.",
+  "next_action": "Open only Packet 035 for bounded Packet 031 source artifact publication and host-mirror resync. Do not include unrelated `.vercelignore`, install, activate or download package managers, mutate runtime or services, change packages or lockfiles, clean the host artifact outside byte-equivalence handling, rewrite remotes, force, reset, clean, mutate the old clone, or approve migration from Packet 034."
+}

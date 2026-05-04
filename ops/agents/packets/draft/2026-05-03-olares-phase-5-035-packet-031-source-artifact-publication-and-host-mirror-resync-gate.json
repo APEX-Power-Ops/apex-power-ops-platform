@@ -1,0 +1,62 @@
+{
+  "packet_id": "2026-05-03-olares-phase-5-035",
+  "title": "Packet 031 Source Artifact Publication And Host Mirror Resync Gate",
+  "objective": "Publish the validated Packet 031 two-file source artifact and required Packet 030 through Packet 034 authority surfaces through the parent-root boundary, then reconcile and resynchronize `/home/olares/code/apex` non-destructively to the published commit.",
+  "domain": "infrastructure-domain",
+  "active_role": "Olares Packet 031 Source Artifact Publication Gate Operator",
+  "dependencies": [
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-034-bounded-no-install-workstation-pnpm-path-revalidation-handoff.md",
+    "ops/agents/packets/draft/2026-05-03-olares-phase-5-034-bounded-no-install-workstation-pnpm-path-revalidation.json",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-033-post-032-toolchain-blocker-and-publication-readiness-decision-handoff.md",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-032-bounded-workstation-validation-of-packet-031-source-artifact-handoff.md",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-next-task-and-prompt-routing-handoff.md",
+    "plan/infrastructure-olares-full-implementation-roadmap-1.md"
+  ],
+  "dependency_note": "Packet 034 confirmed the Packet 031 source artifact remains exact between host and workstation with diff SHA-256 `65882514ad1b609dcf5498ef23fbe18953e8f6e925e0170cb57c044809688f91`, passed canonical `pnpm --dir ... typecheck`, and passed canonical `pnpm --dir ... smoke:browser` through existing no-install workstation pnpm capability. The host still has the same two dirty source files and must be reconciled non-destructively after publication proves byte-equivalence.",
+  "required_inputs": [
+    "Packet 034 validation handoff",
+    "Current parent-root git status at `C:/APEX Platform`",
+    "Current host status and diff hash for `/home/olares/code/apex`",
+    "Exact publication scope for the Packet 031 two-file source artifact and required Packet 030 through Packet 034 authority surfaces"
+  ],
+  "constrained_outputs": [
+    "A bounded parent-root publication commit containing only the validated source artifact and required authority surfaces",
+    "A dated publication and host-mirror resync handoff recording included paths, excluded paths, commit hash, host pre/post state, and byte-equivalence handling for the dirty host files",
+    "A clean synchronized `/home/olares/code/apex` only if it can be achieved by non-destructive byte-equivalence handling plus fast-forward-only sync",
+    "No unrelated `.vercelignore`, no install, no package or lockfile mutation beyond already validated source scope, no runtime mutation, no service mutation, no remote rewrite, no force/reset/clean, no AI-services rollout, no Gitea/code-hosting transition, no canonical-hosting transition, no migration approval, and no old-clone mutation"
+  ],
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/app/relay-resource-explorer.tsx",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/tests/browser-shell.smoke.spec.ts",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "C:/APEX Platform/apex-power-ops-platform/plan"
+  ],
+  "validation_steps": [
+    "Review parent-root git status and define the minimum publication set; exclude unrelated `.vercelignore` and unrelated drift.",
+    "Reconfirm the workstation source diff hash and canonical validation evidence from Packet 034.",
+    "Reconfirm the host dirty source files still match diff SHA-256 `65882514ad1b609dcf5498ef23fbe18953e8f6e925e0170cb57c044809688f91` before publication.",
+    "Create a bounded parent-root commit for only the validated source artifact and required authority surfaces.",
+    "Publish the bounded commit through the existing canonical publication path without remote rewrite.",
+    "On `/home/olares/code/apex`, prove dirty source files are byte-equivalent to the published commit before any non-destructive reconciliation step.",
+    "Synchronize `/home/olares/code/apex` to the published commit using a fast-forward-only method and stop if force, reset, clean, remote rewrite, package mutation, runtime mutation, service mutation, or old-clone mutation would be required.",
+    "Record post-sync host cleanliness, commit, and authority artifact presence."
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "authored",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-035-packet-031-source-artifact-publication-and-host-mirror-resync-gate-handoff.md"
+  ],
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-035-packet-031-source-artifact-publication-and-host-mirror-resync-gate-handoff.md",
+  "implementation_ready_candidate": true,
+  "sql_permission": false,
+  "sql_permission_note": "This packet authorizes no database writes and no runtime, service, package-manager, install, remote-rewrite, AI-services, Gitea, canonical-hosting, migration, force/reset/clean, or old-clone mutation. It authorizes only bounded publication of the validated source artifact and authority surfaces plus non-destructive host mirror resync.",
+  "landing_lane": "olares_phase_5_packet_031_source_artifact_publication_and_host_mirror_resync_gate",
+  "migration_strategy": "publish_validated_source_artifact_and_restore_host_mirror_parity_without_approving_migration",
+  "created_at": "2026-05-04",
+  "updated_at": "2026-05-04",
+  "delegation_status": "authored",
+  "validation_disposition": "pending-execution",
+  "closure_note": "Not yet executed. Packet 035 is prepared because Packet 034 passed canonical typecheck and browser smoke for the mirrored Packet 031 source artifact.",
+  "next_action": "Execute only after Packet 034 closure is accepted. Do not include unrelated `.vercelignore`, install dependencies, mutate runtime or services, rewrite remotes, force, reset, clean, mutate the old clone, change Gitea/canonical-hosting, expand AI-services, or approve migration from Packet 035."
+}
