@@ -1,0 +1,75 @@
+{
+  "packet_id": "2026-05-03-olares-phase-5-005",
+  "title": "SSH Host Runtime Inventory",
+  "objective": "Use the restored private-mesh SSH path over `olares-mesh` or direct `olares@100.64.0.1` to capture the still-missing read-only Olares host runtime inventory, installed-app status, private-lane timer posture, and host repo-clone evidence without reopening generic Olares implementation or mutating host runtime.",
+  "domain": "infrastructure-domain",
+  "active_role": "Olares SSH Runtime Inventory Operator",
+  "repo_paths": [
+    "C:/APEX Platform/apex-power-ops-platform/plan/infrastructure-olares-full-implementation-roadmap-1.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-004-interactive-larepass-profile-rehydration-and-mesh-validation-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-step-3-expansion-decision-surface-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-001-access-and-runtime-revalidation-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-01-olares-runtime-surface-restoration-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-01-olares-private-stack-browser-terminal-bring-up-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/architecture/SERVICE-HOST-INSTALLED-PROOF-CHECKLIST-2026-04-23.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/architecture/OLARES-FIRST-STORAGE-BRING-UP-RUNBOOK-2026-04-23.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/architecture/OLARES-SSH-HOSTKEY-RECONCILIATION-2026-05-01.md"
+  ],
+  "dependencies": [
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-004-interactive-larepass-profile-rehydration-and-mesh-validation-handoff.md",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-step-3-expansion-decision-surface-handoff.md",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-001-access-and-runtime-revalidation-handoff.md",
+    "ops/agents/handoffs/2026-05-01-olares-runtime-surface-restoration-handoff.md",
+    "ops/agents/handoffs/2026-05-01-olares-private-stack-browser-terminal-bring-up-handoff.md",
+    "docs/architecture/SERVICE-HOST-INSTALLED-PROOF-CHECKLIST-2026-04-23.md",
+    "docs/architecture/OLARES-FIRST-STORAGE-BRING-UP-RUNBOOK-2026-04-23.md",
+    "docs/architecture/OLARES-SSH-HOSTKEY-RECONCILIATION-2026-05-01.md",
+    "plan/infrastructure-olares-full-implementation-roadmap-1.md"
+  ],
+  "dependency_note": "Packet 004 restored the trusted private-mesh path and proved non-interactive SSH to `olares@100.64.0.1` and the explicit `olares-mesh` alias. The next truthful move is no longer browser-terminal fallback. It is the still-missing host runtime inventory over the restored SSH path.",
+  "required_inputs": [
+    "The Packet 004 closure proving `BackendState: Running`, workstation mesh IP `100.64.0.2`, peer `olares` online at `100.64.0.1`, and successful non-interactive SSH over the TermiPass interface",
+    "The Step 3 decision-surface verdict that TASK-021, TASK-023, and TASK-025 remain open largely because host runtime and host clone truth were not directly inspected",
+    "The existing trusted host fingerprint in docs/architecture/OLARES-SSH-HOSTKEY-RECONCILIATION-2026-05-01.md",
+    "Current workstation SSH configuration containing the explicit `olares-mesh` alias or a direct `olares@100.64.0.1` path"
+  ],
+  "constrained_outputs": [
+    "A dated handoff recording read-only host runtime inventory for Docker, K3s or Helm, installed apps, ports, volumes, networks, and relevant private-lane timers or units",
+    "A read-only statement of current host repo-clone path, branch, commit, cleanliness, and any obvious drift against the canonical workstation boundary if that evidence is inspectable without mutation",
+    "A refreshed statement of whether Packet 001's missing host-runtime inventory is now satisfied",
+    "A refreshed statement of whether VS Code Remote-SSH is technically viable through the explicit mesh alias based on actual SSH evidence rather than only local probes",
+    "No installs, no promotions, no ingress changes, no auth changes, no service restarts, no Helm changes, no Kubernetes mutation, no runtime mutation, and no canonical-hosting changes"
+  ],
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "C:/APEX Platform/apex-power-ops-platform/plan",
+    "C:/APEX Platform/PROJECT_STATUS.md"
+  ],
+  "validation_steps": [
+    "Use the explicit mesh SSH path (`olares-mesh` preferred, direct `olares@100.64.0.1` acceptable) and confirm the host fingerprint matches the trusted fingerprint already recorded.",
+    "Capture read-only identity and environment evidence first: hostname, user, date, kernel, tool presence, and repo-clone paths.",
+    "Capture read-only runtime inventory for Docker, K3s or Helm, installed routes or apps, ports, volumes, networks, and relevant namespaces or pods if those surfaces are present.",
+    "Capture read-only evidence for installed `forms-engine` and `p6-ingest` host state if inspectable.",
+    "Capture read-only evidence for the private-lane backup and restore-drill timer surfaces if inspectable.",
+    "Capture host repo-clone path, branch, commit, and cleanliness if that evidence is visible without performing any git mutation.",
+    "Stop without widening scope if SSH degrades, host trust mismatches, or the session begins requiring mutation, elevation beyond the bounded read-only commands, or auth-repair work."
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "authored",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-005-ssh-host-runtime-inventory-handoff.md"
+  ],
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-005-ssh-host-runtime-inventory-handoff.md",
+  "implementation_ready_candidate": true,
+  "sql_permission": false,
+  "sql_permission_note": "This packet authorizes read-only SSH-based host inspection only. It does not authorize database writes, host mutation, service changes, ingress changes, auth changes, or code-hosting changes.",
+  "landing_lane": "olares_phase_5_ssh_host_runtime_inventory",
+  "migration_strategy": "capture_host_runtime_truth_over_restored_mesh_ssh_before_any_further_expansion_decision",
+  "created_at": "2026-05-03",
+  "updated_at": "2026-05-03",
+  "delegation_status": "authored",
+  "validation_disposition": "pending-execution",
+  "closure_note": "Not yet executed. This packet exists because Packet 004 restored the trusted mesh SSH path and made the missing host runtime inventory the smallest truthful next move.",
+  "next_action": "Execute this packet through the explicit mesh SSH path while the restored TermiPass and Headscale state remains healthy. Retain Packet 004B only as a fallback if the mesh SSH path regresses and authenticated browser-terminal access remains available."
+}
