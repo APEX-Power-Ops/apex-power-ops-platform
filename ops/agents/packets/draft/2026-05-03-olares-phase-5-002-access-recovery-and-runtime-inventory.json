@@ -1,0 +1,77 @@
+{
+  "packet_id": "2026-05-03-olares-phase-5-002",
+  "title": "Access Recovery And Runtime Inventory",
+  "objective": "Recover the documented workstation-to-Olares private-mesh path using the proven TermiPass named-pipe and Headscale registration recipe, and on success immediately capture the read-only host runtime inventory that Packet 001 was authorized but unable to collect.",
+  "domain": "infrastructure-domain",
+  "active_role": "Olares Access Recovery Operator",
+  "repo_paths": [
+    "C:/APEX Platform/apex-power-ops-platform/plan/infrastructure-olares-full-implementation-roadmap-1.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-step-3-expansion-decision-surface-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-03-olares-phase-5-001-access-and-runtime-revalidation.json",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-001-access-and-runtime-revalidation-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-01-olares-private-stack-browser-terminal-bring-up-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-01-olares-runtime-surface-restoration-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/architecture/OLARES-WORKSTATION-BRING-UP-CHECKLIST-2026-04-23.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/architecture/SERVICE-HOST-INSTALLED-PROOF-CHECKLIST-2026-04-23.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/architecture/OLARES-FIRST-STORAGE-BRING-UP-RUNBOOK-2026-04-23.md"
+  ],
+  "dependencies": [
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-step-3-expansion-decision-surface-handoff.md",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-001-access-and-runtime-revalidation-handoff.md",
+    "ops/agents/handoffs/2026-05-01-olares-private-stack-browser-terminal-bring-up-handoff.md",
+    "ops/agents/handoffs/2026-05-01-olares-runtime-surface-restoration-handoff.md",
+    "docs/architecture/OLARES-WORKSTATION-BRING-UP-CHECKLIST-2026-04-23.md",
+    "docs/architecture/SERVICE-HOST-INSTALLED-PROOF-CHECKLIST-2026-04-23.md",
+    "docs/architecture/OLARES-FIRST-STORAGE-BRING-UP-RUNBOOK-2026-04-23.md",
+    "plan/infrastructure-olares-full-implementation-roadmap-1.md"
+  ],
+  "dependency_note": "Step 3 concluded that Packet 001 was the correct shape but could not complete because the workstation access path regressed. This packet is a bounded precursor that restores the proven mesh-access path using the documented 2026-05-01 recovery recipe and, on success, immediately captures the runtime inventory that Packet 001 could not obtain.",
+  "required_inputs": [
+    "The access-recovery recipe documented under Verified Workstation Recovery in ops/agents/handoffs/2026-05-01-olares-private-stack-browser-terminal-bring-up-handoff.md",
+    "The Packet 001 partial result recorded in ops/agents/handoffs/2026-05-03-olares-phase-5-001-access-and-runtime-revalidation-handoff.md",
+    "The Step 3 decision that recommends this packet as the smallest next move in ops/agents/handoffs/2026-05-03-olares-phase-5-step-3-expansion-decision-surface-handoff.md",
+    "Current workstation access to the local TermiPass named-pipe API and the Olares Headscale registration path",
+    "Read-only SSH access to the Olares host if access recovery succeeds"
+  ],
+  "constrained_outputs": [
+    "A dated handoff recording whether the private-mesh access path was restored or remained blocked",
+    "If access is restored, a read-only host runtime inventory for Docker, K3s or Helm, installed apps, ports, volumes, networks, and private-lane timers",
+    "A statement of whether the runtime-inventory portion of Packet 001 is now satisfied within this packet",
+    "A statement of whether VS Code Remote-SSH is newly viable or remains blocked",
+    "No installs, no promotions, no ingress changes, no auth changes, no migration, no AI-toolchain rollout, no hosting changes"
+  ],
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "C:/APEX Platform/apex-power-ops-platform/plan",
+    "C:/APEX Platform/PROJECT_STATUS.md"
+  ],
+  "validation_steps": [
+    "Use the local TermiPass named-pipe API to recover LarePass with ControlURL=https://headscale.jlswen2121.olares.com and WantRunning=true.",
+    "Confirm pending node-key registration in the Olares Headscale pod for user default if recovery requires it.",
+    "Validate BackendState Running and workstation mesh IP allocation in the 100.64.* range.",
+    "Validate peer olares online at 100.64.0.1.",
+    "Validate Test-NetConnection 100.64.0.1 -Port 22 succeeds.",
+    "Validate non-interactive SSH to olares@100.64.0.1 succeeds.",
+    "On success, immediately capture read-only host runtime inventory for Docker, K3s or Helm, installed apps, ports, volumes, networks, and private-lane timers.",
+    "If access recovery fails, record the exact blocker and stop without widening scope.",
+    "Do not install or modify services, do not change ingress or auth posture, and do not alter public-host SSH trust while executing this packet."
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "authored",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-002-access-recovery-and-runtime-inventory-handoff.md"
+  ],
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-002-access-recovery-and-runtime-inventory-handoff.md",
+  "implementation_ready_candidate": true,
+  "sql_permission": false,
+  "sql_permission_note": "This packet authorizes workstation-side access recovery and read-only host inventory only. It does not authorize database writes, runtime mutation, new Olares installs, AI-toolchain scaffolding, ingress changes, or hosting changes.",
+  "landing_lane": "olares_phase_5_access_recovery_and_runtime_inventory",
+  "migration_strategy": "recover_proven_mesh_path_then_capture_blocked_runtime_inventory",
+  "created_at": "2026-05-03",
+  "updated_at": "2026-05-03",
+  "delegation_status": "completed",
+  "validation_disposition": "blocked-termpass-needslogin-no-nodekey-no-mesh-route-no-runtime-inventory",
+  "closure_note": "Executed on 2026-05-03 and closed blocked. The TermiPass named-pipe local API was reachable, but local status remained `BackendState: NeedsLogin` with zero node key, no auth URL, no mesh IP, and no usable `100.64.*` route even after bounded preference, start, and login-interactive recovery attempts. Because private-mesh access was not restored, Headscale registration was not possible from this path, host runtime was not directly inspected, and the runtime-inventory portion of Packet 001 remains unsatisfied. The result did not materially change the live Olares boundary.",
+  "next_action": "Do not run a Claude Code runtime-reconciliation pass from this packet result. Keep the current Step 3 decision surface in force unless a later bounded packet produces materially new access or host-runtime evidence."
+}

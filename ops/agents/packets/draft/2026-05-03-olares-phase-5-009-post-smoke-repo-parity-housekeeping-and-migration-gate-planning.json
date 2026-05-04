@@ -1,0 +1,63 @@
+{
+  "packet_id": "2026-05-03-olares-phase-5-009",
+  "title": "Post-Smoke Repo-Parity Housekeeping And Migration Gate Planning",
+  "objective": "Perform a bounded repo-technical-authority planning pass after Packet 008 to define how current workstation-only Phase 5 artifacts should be committed, published, and synchronized into the canonical parent-root history before any later workstation-migration readiness reassessment is considered.",
+  "domain": "infrastructure-domain",
+  "active_role": "Olares Repo Parity Gate Planner",
+  "repo_paths": [
+    "C:/APEX Platform/apex-power-ops-platform/plan/infrastructure-olares-full-implementation-roadmap-1.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-post-008-migration-readiness-reassessment-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-008-canonical-host-dev-loop-smoke-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-post-007-readiness-reassessment-handoff.md",
+    "C:/APEX Platform/Infrastructure/Olares_Workspace_Authority_Framework.md",
+    "C:/APEX Platform/Infrastructure/Olares_Build_Guide.md"
+  ],
+  "dependencies": [
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-post-008-migration-readiness-reassessment-handoff.md",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-008-canonical-host-dev-loop-smoke-handoff.md",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-post-007-readiness-reassessment-handoff.md",
+    "plan/infrastructure-olares-full-implementation-roadmap-1.md"
+  ],
+  "dependency_note": "Packet 008 proves the prepared host parent-root mirror is viable at the committed parent-root HEAD. This packet exists because the remaining blocker is no longer host reachability or workspace ergonomics; it is the repo-parity and publication-state gate for current workstation-only Phase 5 artifacts.",
+  "required_inputs": [
+    "The Packet 008 evidence that `/home/olares/code/apex` is reachable, clean, correctly rooted, and usable as a bounded workspace-open candidate",
+    "The current workstation-only Phase 5 handoffs, packet JSON files, routing updates, roadmap changes, and authority-doc edits",
+    "The GitHub-canonical parent-root publication boundary at `C:/APEX Platform`",
+    "The requirement that `/home/olares/code/apex` remain the host parent-root mirror and `/home/olares/src/apex-power-ops-platform` remain preserved historical evidence"
+  ],
+  "constrained_outputs": [
+    "A dated planning handoff that classifies which current Phase 5 artifacts should be committed/published, deferred, or kept as comparison-only evidence",
+    "A recorded decision on what publication-state conditions must be satisfied before any later workstation-migration readiness reassessment packet opens",
+    "No migration approval, no host runtime mutation, no old-clone mutation, and no widening into AI-services, Gitea, or canonical-hosting work"
+  ],
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "C:/APEX Platform/apex-power-ops-platform/plan",
+    "C:/APEX Platform/PROJECT_STATUS.md"
+  ],
+  "validation_steps": [
+    "Review the current workstation-only Phase 5 files and classify them into commit/publish, defer, or comparison-only buckets.",
+    "State what must reach committed parent-root history before `/home/olares/code/apex` can be treated as current authority rather than last-published authority.",
+    "Define how the prepared host mirror should be synchronized after that publication step without mutating `/home/olares/src/apex-power-ops-platform`.",
+    "State whether a later migration-readiness reassessment packet becomes warranted only after this repo-parity gate is satisfied.",
+    "Stop if execution would require migration approval, host runtime mutation, AI-services rollout, Gitea work, canonical-hosting changes, or mutation of the preserved old clone."
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "authored",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-009-post-smoke-repo-parity-housekeeping-and-migration-gate-planning-handoff.md"
+  ],
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-009-post-smoke-repo-parity-housekeeping-and-migration-gate-planning-handoff.md",
+  "implementation_ready_candidate": false,
+  "sql_permission": false,
+  "sql_permission_note": "This packet authorizes repo-authority planning only. It does not authorize database writes, migration, host-runtime mutation, old-clone mutation, AI-services rollout, Gitea work, or canonical-hosting changes.",
+  "landing_lane": "olares_phase_5_repo_parity_housekeeping_and_migration_gate_planning",
+  "migration_strategy": "define_publication_state_gate_before_any_later_workstation_migration_reassessment",
+  "created_at": "2026-05-03",
+  "updated_at": "2026-05-03",
+  "delegation_status": "authored",
+  "validation_disposition": "pending-execution",
+  "closure_note": "Not yet executed. This packet exists because the post-008 reassessment concludes that the remaining blocker is repo-parity and publication-state governance, not host-path viability.",
+  "next_action": "Execute this packet only within the bounded planning scope defined here and only if workstation-migration readiness remains under consideration as a later reassessment candidate."
+}
