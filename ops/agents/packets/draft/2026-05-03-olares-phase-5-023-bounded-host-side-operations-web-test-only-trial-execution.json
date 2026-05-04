@@ -1,0 +1,68 @@
+{
+  "packet_id": "2026-05-03-olares-phase-5-023",
+  "title": "Bounded Host-Side Operations-Web Test-Only Trial Execution",
+  "objective": "Execute the Packet 021-selected one-file test-only host-side trial from `/home/olares/code/apex/apex-power-ops-platform` by editing only `apps/operations-web/tests/browser-shell.smoke.spec.ts` to add smoke coverage for the advertised PM schedule, upstream tracer, and variance static surfaces, after verifying Packet 022 authority publication and host-mirror synchronization remain clean.",
+  "domain": "infrastructure-domain",
+  "active_role": "Olares Bounded Host-Side Test Trial Operator",
+  "repo_paths": [
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/tests/browser-shell.smoke.spec.ts",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/package.json",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/playwright.config.ts",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-022-packet-019-through-packet-021-authority-publication-and-host-mirror-resync-gate-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-021-bounded-non-runtime-application-source-host-trial-planning-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/plan/infrastructure-olares-full-implementation-roadmap-1.md"
+  ],
+  "dependencies": [
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-022-packet-019-through-packet-021-authority-publication-and-host-mirror-resync-gate-handoff.md",
+    "ops/agents/packets/draft/2026-05-03-olares-phase-5-022-packet-019-through-packet-021-authority-publication-and-host-mirror-resync-gate.json",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-021-bounded-non-runtime-application-source-host-trial-planning-handoff.md",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-next-task-and-prompt-routing-handoff.md",
+    "plan/infrastructure-olares-full-implementation-roadmap-1.md"
+  ],
+  "dependency_note": "Packet 022 published Packet 019 through Packet 021 authority and synchronized `/home/olares/code/apex` to commit `8f17292d8ebd678717d8a12f2e870828feed055d`. This packet may open only if that host mirror remains clean at the governing commit and the target PM static surfaces exist without production-source, runtime, service, package, or install changes.",
+  "required_inputs": [
+    "A clean `/home/olares/code/apex` host mirror on `clean-main` at Packet 022 commit `8f17292d8ebd678717d8a12f2e870828feed055d` or a later explicitly published governing commit",
+    "Packet 019, Packet 020, Packet 021, and Packet 022 authority artifacts present on the host mirror",
+    "The existing test file `apps/operations-web/tests/browser-shell.smoke.spec.ts`",
+    "Evidence that the advertised PM schedule, upstream tracer, and variance static surfaces exist under `apps/operations-web/public/pm-review/`"
+  ],
+  "constrained_outputs": [
+    "At most one tracked test-file edit under `apps/operations-web/tests/browser-shell.smoke.spec.ts`",
+    "A dated execution handoff recording pre-edit host evidence, exact diff scope, validation results, and rollback posture",
+    "No production source change, package or lockfile mutation, generated artifact, runtime mutation, service change, install work, old-clone mutation, or migration approval"
+  ],
+  "write_scope": [
+    "/home/olares/code/apex/apex-power-ops-platform/apps/operations-web/tests/browser-shell.smoke.spec.ts",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "C:/APEX Platform/apex-power-ops-platform/plan"
+  ],
+  "validation_steps": [
+    "Verify `/home/olares/code/apex` is on `clean-main`, clean, and synchronized to the Packet 022 governing commit before editing.",
+    "Verify `git rev-parse --show-toplevel` from `/home/olares/code/apex/apex-power-ops-platform` returns `/home/olares/code/apex` and `git rev-parse --show-prefix` returns `apex-power-ops-platform/`.",
+    "Verify `/home/olares/src/apex-power-ops-platform` remains untouched historical evidence.",
+    "Verify the target static PM schedule, tracer, and variance files exist before editing.",
+    "Edit only `apps/operations-web/tests/browser-shell.smoke.spec.ts`.",
+    "Run `git diff --check -- apps/operations-web/tests/browser-shell.smoke.spec.ts`.",
+    "Run `pnpm --dir apps/operations-web typecheck` if dependencies already exist without install; otherwise record the no-install skip.",
+    "Run `pnpm --dir apps/operations-web smoke:browser` only if dependencies and Playwright browsers already exist without install; otherwise record the optional validation skip.",
+    "Record `git status --short` and stop if any file outside the planned test file changes."
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-023-bounded-host-side-operations-web-test-only-trial-execution-handoff.md"
+  ],
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-023-bounded-host-side-operations-web-test-only-trial-execution-handoff.md",
+  "implementation_ready_candidate": true,
+  "sql_permission": false,
+  "sql_permission_note": "This packet authorizes only one bounded host-side test-file edit and related evidence capture. It does not authorize database writes, runtime mutation, service changes, install work, package changes, production-source changes, AI-services rollout, Gitea work, canonical-hosting changes, migration approval, or old-clone mutation.",
+  "landing_lane": "olares_phase_5_bounded_host_side_operations_web_test_only_trial_execution",
+  "migration_strategy": "prove_one_non_runtime_test_only_host_side_application_surface_trial_without_daily_development_migration_approval",
+  "created_at": "2026-05-03",
+  "updated_at": "2026-05-04",
+  "delegation_status": "complete",
+  "validation_disposition": "complete-pass-with-no-install-skips",
+  "closure_note": "Executed on 2026-05-04 from `/home/olares/code/apex/apex-power-ops-platform`. Entry criteria passed at Packet 022 commit `8f17292d8ebd678717d8a12f2e870828feed055d`; exactly one host-side tracked test file changed, `apps/operations-web/tests/browser-shell.smoke.spec.ts`; `git diff --check` passed; typecheck and browser smoke were skipped because dependencies, Playwright, and browser cache were absent and no install was authorized; old clone remained untouched.",
+  "next_action": "Open the separate Packet 024 decision lane to choose publication-first, rollback-first, or defer-with-specific-blockers for the Packet 023 host-side test artifact. Do not approve migration, mutate runtime, change services, install dependencies, edit production source, edit package or lock files, rewrite remotes, force, reset, clean, or mutate the old clone from Packet 023 alone."
+}
