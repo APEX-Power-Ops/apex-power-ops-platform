@@ -1,0 +1,58 @@
+{
+  "packet_id": "2026-05-03-olares-phase-5-041",
+  "title": "Post-040 Validation/Publication Or Rollback Decision",
+  "objective": "Decide the smallest truthful next move for the exact Packet 040 host-side two-file source/test artifact: bounded workstation validation, defer-with-blockers, or rollback, without directly publishing the artifact or reopening migration.",
+  "domain": "infrastructure-domain",
+  "active_role": "Olares Post-040 Validation Publication Decision Operator",
+  "dependencies": [
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-040-bounded-host-side-apparatus-clear-state-source-trial-execution-handoff.md",
+    "ops/agents/packets/draft/2026-05-03-olares-phase-5-040-bounded-host-side-apparatus-clear-state-source-trial-execution.json",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-039-packet-037-and-packet-038-authority-publication-and-host-mirror-resync-gate-handoff.md",
+    "ops/agents/packets/draft/2026-05-03-olares-phase-5-039-packet-037-and-packet-038-authority-publication-and-host-mirror-resync-gate.json",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-next-task-and-prompt-routing-handoff.md",
+    "plan/infrastructure-olares-full-implementation-roadmap-1.md"
+  ],
+  "dependency_note": "Packet 040 created an uncommitted two-file host artifact on `/home/olares/code/apex/apex-power-ops-platform` with diff SHA-256 `081317eafc0649ec63f1deae479b892a39fcd2e8329f79b2416e76d959dc04d5`, while host executable validation remained blocked by missing `node_modules`, `pnpm`, and Playwright cache under the no-install boundary.",
+  "required_inputs": [
+    "Current parent-root git status at `C:/APEX Platform`",
+    "Current `/home/olares/code/apex` branch, commit, cleanliness, diff scope, and Packet 040 host diff SHA-256",
+    "Current workstation status for `apex-power-ops-platform/apps/operations-web/app/apparatus-resource-explorer.tsx` and `apex-power-ops-platform/apps/operations-web/tests/browser-shell.smoke.spec.ts`",
+    "Current old-clone branch, commit, and status count at `/home/olares/src/apex-power-ops-platform`",
+    "Packet 040 host validation blocker evidence"
+  ],
+  "constrained_outputs": [
+    "A decision handoff naming exactly one next packet: bounded workstation validation, rollback, or defer-with-blockers",
+    "A clear statement that direct source publication remains closed unless separate validation/publication evidence is established",
+    "No source edits, no host rollback, no publication, no package or lockfile mutation, no dependency install, no package-manager activation/download, no runtime mutation, no service mutation, no remote rewrite, no force/reset/clean, no AI-services expansion, no Gitea/code-hosting transition, no canonical-hosting transition, no migration approval, and no old-clone mutation"
+  ],
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "C:/APEX Platform/apex-power-ops-platform/plan"
+  ],
+  "validation_steps": [
+    "Reconfirm `/home/olares/code/apex` is still on `clean-main` at `f39f8ddb3593c79333280d3aceabc9d0ceadc1c2` and that the Packet 040 host artifact remains limited to exactly two files.",
+    "Reconfirm the Packet 040 host diff SHA-256 `081317eafc0649ec63f1deae479b892a39fcd2e8329f79b2416e76d959dc04d5` or record any deviation without mutation.",
+    "Reconfirm the workstation copy of the two scoped `apps/operations-web` files remains unchanged before any later mirror decision.",
+    "Assess whether bounded workstation validation with existing dependencies is the smallest truthful next move, or whether defer/rollback is required instead.",
+    "Name exactly one next packet and keep direct publication closed from this decision pass."
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-041-post-040-validation-publication-or-rollback-decision-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-03-olares-phase-5-042-bounded-workstation-mirror-validation-of-packet-040-source-artifact.json"
+  ],
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-041-post-040-validation-publication-or-rollback-decision-handoff.md",
+  "implementation_ready_candidate": false,
+  "sql_permission": false,
+  "sql_permission_note": "This packet authorizes no database writes and no source, runtime, service, package, lockfile, install, remote, AI-services, Gitea, canonical-hosting, migration, force/reset/clean, publication, or old-clone mutation. It authorizes only decision-making and bounded authority updates.",
+  "landing_lane": "olares_phase_5_post_040_validation_publication_decision",
+  "migration_strategy": "decide_validation_or_rollback_before_any_source_publication_or_migration_reassessment",
+  "created_at": "2026-05-04",
+  "updated_at": "2026-05-04",
+  "delegation_status": "complete",
+  "validation_disposition": "complete-decision-only-pass",
+  "closure_note": "Executed 2026-05-04. Packet 041 reconfirmed the Packet 040 host artifact remains exactly two files with host diff SHA-256 `081317eafc0649ec63f1deae479b892a39fcd2e8329f79b2416e76d959dc04d5`, host diff hygiene still passing, workstation scoped source files still clean, and old clone untouched. It selected bounded workstation mirror validation as the single next packet because host executable validation remains blocked by missing no-install host dependencies while the workstation has existing dependency and app-local validation capability. Direct publication, rollback, and migration remain closed.",
+  "next_action": "Open only Packet 042 bounded workstation mirror validation of the exact Packet 040 two-file source/test artifact. Do not publish directly and do not reopen migration from Packet 041."
+}
