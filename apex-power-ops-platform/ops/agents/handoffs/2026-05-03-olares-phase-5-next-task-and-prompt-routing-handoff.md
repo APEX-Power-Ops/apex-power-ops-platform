@@ -1,8 +1,8 @@
 # Olares Phase 5 Next Task And Prompt Routing Handoff
 
 Date: 2026-05-03
-Status: Active - Packet 004 is complete; next truthful move is execution of Packet 005 over restored mesh SSH
-Scope: update the next task prompts after Phase 5 Step 1, Step 2, Step 3, Packet 001, Packet 002, Packet 003, and Packet 004 completion, and state the current post-recovery next move
+Status: Active - Packet 005 is complete; next truthful move is post-005 Claude Code reconciliation rather than another execution packet
+Scope: update the next task prompts after Phase 5 Step 1, Step 2, Step 3, Packet 001, Packet 002, Packet 003, Packet 004, and Packet 005 completion, and state the current post-inventory next move
 
 ## Authority
 
@@ -19,31 +19,33 @@ This routing handoff depends on:
 9. `ops/agents/handoffs/2026-05-03-olares-phase-5-003-termpass-needslogin-blocker-audit-and-recovery-path-research-handoff.md`
 10. `ops/agents/packets/draft/2026-05-03-olares-phase-5-004-interactive-larepass-profile-rehydration-and-mesh-validation.json`
 11. `ops/agents/handoffs/2026-05-03-olares-phase-5-004-interactive-larepass-profile-rehydration-and-mesh-validation-handoff.md`
-12. `plan/infrastructure-olares-full-implementation-roadmap-1.md`
+12. `ops/agents/packets/draft/2026-05-03-olares-phase-5-005-ssh-host-runtime-inventory.json`
+13. `ops/agents/handoffs/2026-05-03-olares-phase-5-005-ssh-host-runtime-inventory-handoff.md`
+14. `plan/infrastructure-olares-full-implementation-roadmap-1.md`
 
 This handoff does not reopen generic Olares implementation.
 
 ## Current Routing Decision
 
-Prompt 1, Prompt 2, Prompt 3, and Prompt 5 are complete.
+Prompt 1, Prompt 2, Prompt 3, Prompt 5, and Prompt 6 are complete.
 
-Packet 004 execution is complete.
+Packet 004 and Packet 005 execution are complete.
 
 Prompt 4 still should not be run from the Packet 002 result.
 
-The next live execution move is:
+The next live reconciliation move is:
 
-1. execute the newly authored Packet `2026-05-03-olares-phase-5-005` while the restored mesh SSH path remains healthy,
-2. retain Packet `2026-05-03-olares-phase-5-004B` only as a fallback if mesh SSH regresses and authenticated browser-terminal access remains the only viable bounded path,
-3. stop treating Packet 004 or Packet 004B as the active next move.
+1. run a Claude Code post-005 reconciliation pass that folds Packet 005 into `TASK-021`, `TASK-023`, and `TASK-025`,
+2. stop treating Packet `2026-05-03-olares-phase-5-005` as still pending,
+3. retain Packet `2026-05-03-olares-phase-5-004B` only as stale fallback history, not as the current next move while mesh SSH remains healthy.
 
 Reason:
 
-1. Packet `2026-05-03-olares-phase-5-004` is now complete,
-2. it restored local profile state, TermiPass `BackendState: Running`, workstation mesh IP `100.64.0.2`, and peer visibility for `olares` at `100.64.0.1`,
-3. it proved `Test-NetConnection 100.64.0.1 -Port 22` and non-interactive SSH succeed over the TermiPass path,
-4. it established that VS Code Remote-SSH is now technically viable through the explicit mesh alias,
-5. the still-missing evidence is host runtime truth, not access recovery.
+1. Packet `2026-05-03-olares-phase-5-005` is now complete,
+2. it proved mesh SSH remained healthy over `TermiPass` from `100.64.0.2` to `100.64.0.1`,
+3. it directly inventoried host Docker, K3s, Helm, installed-app, port, volume, network, timer, and host clone evidence,
+4. it satisfied Packet 001's missing host-runtime inventory gap,
+5. it also proved the remaining blocker is repo-authority and host-clone reconciliation rather than access recovery or missing runtime truth.
 
 ## Current Execution State
 
@@ -54,6 +56,7 @@ Step 3 is complete and closed `TASK-026`.
 Packet `2026-05-03-olares-phase-5-002` is now complete and blocked.
 Packet `2026-05-03-olares-phase-5-003` is now complete as research only.
 Packet `2026-05-03-olares-phase-5-004` is now complete as a successful access-recovery packet.
+Packet `2026-05-03-olares-phase-5-005` is now complete as a successful read-only host-runtime inventory packet.
 
 Current controlling outcome:
 
@@ -63,11 +66,14 @@ Current controlling outcome:
 4. peer `olares` is online at `100.64.0.1`,
 5. `100.64.0.1:22` succeeds over interface `TermiPass`,
 6. non-interactive SSH succeeds for `olares@100.64.0.1`, `olares-mesh`, and the configured `olares` alias while VPN DNS resolves the mesh path,
-7. host runtime was still not directly inventoried during Packet 004,
-8. the inventory portion of Packet 001 remains unsatisfied,
-9. VS Code Remote-SSH is now technically viable through the explicit mesh alias,
-10. no installs, restarts, ingress changes, auth changes, or host-runtime mutations were performed during Packet 004,
-11. the next packet should capture the missing read-only host runtime inventory over SSH rather than reusing browser-terminal fallback by default.
+7. host runtime has now been directly inventoried during Packet 005,
+8. the inventory portion of Packet 001 is now satisfied,
+9. VS Code Remote-SSH is technically viable through the explicit mesh alias,
+10. no installs, restarts, ingress changes, auth changes, git mutations, or host-runtime mutations were performed during Packet 005,
+11. host Docker `apex-dev`, `private`, and `windows-lab` projects are real on the Olares host,
+12. K3s/Olares is live and `forms-engine` plus `p6-ingest` are running as Applications, Deployments, Pods, Services, and Helm releases,
+13. the controlling blocker is now repo-authority divergence: the host clone is older, dirty, path-divergent, and points at `jasonlswenson-sys/apex-power-ops.git` rather than the workstation publication boundary at `jasonlswenson-sys/RESA-Power-Project-Management.git`,
+14. the next truthful move is post-005 authority reconciliation, not implementation.
 
 ## Why This Split
 
@@ -384,7 +390,7 @@ Your final summary must state clearly:
 5. whether a new execution packet should be opened next and what exact method it should test.
 ```
 
-## Prompt 6 - Execute Next With Codex
+## Prompt 6 - Executed With Codex
 
 Instance: `Codex`
 
@@ -441,32 +447,104 @@ Your final summary must state clearly:
 6. whether a Claude Code reconciliation prompt is now warranted.
 ```
 
-## Next Packet Authoring Direction
+## Prompt 7 - Execute Next With Claude Code
 
-The next truthful packet is no longer Packet 004 or Packet 004B.
+Instance: `Claude Code`
 
-Use the completed Packet 004 handoff as the controlling input for the next packet execution pass.
+```text
+Act as repo technical authority for the bounded Olares Phase 5 post-005 reconciliation lane.
 
-Preferred next packet:
+You are not reopening generic Olares implementation. You are not approving an Olares-first daily development migration unless the written evidence now supports it. Keep workstation migration, AI-services expansion, Gitea/code-hosting mirror work, and canonical-hosting transition as separate decision surfaces.
 
-1. `Olares Phase 5 005 - SSH Host Runtime Inventory`
+Primary objective:
+Reconcile Packet 005 results into the active Olares Phase 5 decision surfaces and decide exactly which assessment tasks can now close, which stay open as implementation blockers, and whether a later repo-clone reconciliation packet is warranted.
 
-Fallback next packet:
+Treat these Packet 005 results as controlling input:
+1. mesh SSH remained healthy over `TermiPass` from `100.64.0.2` to `100.64.0.1`,
+2. host ED25519 fingerprint matched the trusted record,
+3. Packet 001's host-runtime inventory gap is now satisfied,
+4. VS Code Remote-SSH is technically viable through `olares-mesh`,
+5. host Docker `apex-dev`, `private`, and `windows-lab` projects are real on the Olares host,
+6. K3s/Olares is live and `forms-engine` plus `p6-ingest` are running as Applications, Deployments, Pods, Services, and Helm releases,
+7. `forms-engine` and `p6-ingest` AppImage CRs report `failed` while the live runtime surfaces are healthy,
+8. the host repo clone is older, dirty, path-divergent, and remote-divergent from the workstation publication boundary,
+9. this does not make Olares-first daily development ready,
+10. no-go remains for AI-services expansion, Gitea/code-hosting move, and canonical-hosting transition from Packet 005 alone.
 
-1. `Olares Phase 5 004B - Browser Terminal Host Runtime Inventory` only if the restored mesh SSH path regresses and authenticated browser-terminal access remains available.
+Read these first:
+- C:/APEX Platform/apex-power-ops-platform/plan/infrastructure-olares-full-implementation-roadmap-1.md
+- C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-step-3-expansion-decision-surface-handoff.md
+- C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-004-interactive-larepass-profile-rehydration-and-mesh-validation-handoff.md
+- C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-005-ssh-host-runtime-inventory-handoff.md
+- C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-step-1-dev-workspace-state-and-access-assessment-handoff.md
+- C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-step-2-ai-toolchain-and-codex-role-assessment-handoff.md
+- C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-25-olares-workstation-001-publication-follow-through-scope-handoff.md
+- C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-25-olares-workstation-002-publication-follow-through-blocker-handoff.md
+- C:/APEX Platform/Infrastructure/Olares_Workspace_Authority_Framework.md
+- C:/APEX Platform/Infrastructure/Olares_Build_Guide.md
+- C:/APEX Platform/.claude/DECISION_LOG.md
+- C:/APEX Platform/Supabase/docs/AI_ORCHESTRATION_PROTOCOL.md
 
-The next packet must explicitly capture:
+Required outputs:
+1. Write a dated reconciliation handoff at:
+   C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-post-005-reconciliation-handoff.md
+2. Update only if warranted:
+   C:/APEX Platform/apex-power-ops-platform/plan/infrastructure-olares-full-implementation-roadmap-1.md
 
-1. read-only host runtime inventory for Docker, K3s or Helm, installed apps, ports, volumes, and networks,
-2. read-only host state for `forms-engine` and `p6-ingest` if inspectable,
-3. read-only private-lane timer and backup-unit visibility if inspectable,
-4. host repo-clone path, branch, commit, and cleanliness if inspectable without mutation,
-5. refreshed statement of whether Packet 001's inventory gap is now satisfied.
+The reconciliation must explicitly address:
+1. whether `TASK-021` can now close as an assessment with a negative verdict or must remain open,
+2. whether `TASK-023` can now close as an assessment with explicit residual risks,
+3. whether `TASK-025` can now close as a split-path assessment with all four paths still not ready,
+4. whether a later bounded repo-clone reconciliation packet is warranted,
+5. how to classify the `forms-engine` and `p6-ingest` AppImage CR mismatch without mutating the host.
 
-Authored packet paths:
+Hard constraints:
+1. No host runtime mutation.
+2. No installs.
+3. No ingress changes.
+4. No auth changes.
+5. No code-hosting cutover.
+6. No collapsing the four `TASK-025` paths into one vague move-to-Olares lane.
+7. No claim that technical SSH viability equals repo-authority readiness.
 
-1. `ops/agents/packets/draft/2026-05-03-olares-phase-5-005-ssh-host-runtime-inventory.json`
-2. `ops/agents/packets/draft/2026-05-03-olares-phase-5-004b-browser-terminal-host-runtime-inventory.json`
+Decision standard:
+1. Close a task only if the written evidence now satisfies its named missing evidence.
+2. If a task remains open, state the missing evidence or blocker precisely.
+3. Preserve the no-go boundary unless Packet 005 actually changes it.
+4. Distinguish assessment closure from implementation readiness.
+
+After edits, run a narrow validation check and summarize:
+1. which Phase 5 tasks are now closed,
+2. which remain open,
+3. whether a repo-clone reconciliation packet should be authored next,
+4. whether any migration, AI-services, Gitea, or canonical-hosting path became ready.
+```
+
+## Next Reconciliation Direction
+
+The next truthful move is no longer another access or inventory packet.
+
+Use the completed Packet 005 handoff as the controlling input for the next reconciliation pass.
+
+Preferred next move:
+
+1. `Olares Phase 5 post-005 reconciliation` in Claude Code.
+
+Deferred packet candidate after reconciliation:
+
+1. a bounded repo-clone reconciliation packet only if the reconciliation handoff concludes that host clone divergence needs its own governed follow-through.
+
+The next reconciliation must explicitly decide:
+
+1. whether `TASK-021` closes as an assessment with a negative readiness verdict,
+2. whether `TASK-023` closes as an assessment now that the live inventory exists,
+3. whether `TASK-025` closes as a split-path readiness assessment with all four paths still not ready,
+4. whether the `forms-engine` and `p6-ingest` AppImage CR mismatch is only a governance/documentation mismatch or needs a later bounded validation packet,
+5. whether a repo-clone reconciliation packet is warranted.
+
+Controlling handoff path:
+
+1. `ops/agents/handoffs/2026-05-03-olares-phase-5-005-ssh-host-runtime-inventory-handoff.md`
 
 ## Sequence Rule
 
@@ -476,6 +554,8 @@ Prompt 4 should not run from the current Packet 002 result.
 
 Prompt 5 is complete.
 
-Packet 004 is complete.
+Prompt 6 is complete.
 
-The next live task is executing Packet `2026-05-03-olares-phase-5-005` over the restored mesh SSH path. Packet `2026-05-03-olares-phase-5-004B` remains fallback-only if the mesh path regresses.
+Packet 004 and Packet 005 are complete.
+
+The next live task is executing Prompt 7 as a Claude Code post-005 reconciliation pass. Do not open a new implementation packet until that reconciliation decides whether any later repo-clone packet is warranted.
