@@ -89,7 +89,7 @@ Recall the earlier frame: **Claude Code on Max subscription is the gateway for a
 
 **The MCP fabric.** Build these as a set of small services in the APEX monorepo at `services/mcp/`:
 
-- `apex-fs` — filesystem server scoped to `~/code/apex` and `~/apex-data`
+- `apex-fs` — filesystem server scoped to the host parent-root mirror `~/code/apex`, its active implementation lane `~/code/apex/apex-power-ops-platform`, and `~/apex-data`
 - `apex-db` — Postgres reader (read-only by default; `apex-db-write` gated behind an env flag)
 - `apex-p6` — wraps PyP6Xer for XER reads plus queries against the mirrored P6 schema
 - `apex-forms` — NETA-Forms lookup + forms-engine render API
@@ -180,7 +180,7 @@ apex/ (monorepo root)
     settings.json      # Peacock colors per workspace
 ```
 
-On the Olares One filesystem: clone to `~/code/apex`. Job files and estimate data live at `~/apex-data/` — mount this into services (both compose and OlaresManifest) as a shared read/write volume. Keep them separate: `apex/` is source; `apex-data/` is state.
+On the Olares One filesystem: clone the parent-root mirror to `~/code/apex`, with active implementation work under `~/code/apex/apex-power-ops-platform`. Job files and estimate data live at `~/apex-data/` — mount this into services (both compose and OlaresManifest) as a shared read/write volume. Keep them separate: `apex/` is source mirror; `apex-power-ops-platform/` is the implementation lane; `apex-data/` is state. This path shape preserves publication semantics but does not by itself approve migration of daily development onto Olares.
 
 ---
 

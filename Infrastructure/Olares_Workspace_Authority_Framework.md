@@ -81,8 +81,9 @@ This framework provides those answers.
 
 Effective immediately, the intended Olares-hosted workspace authority is:
 
-1. `C:/APEX Platform/apex-power-ops-platform` is the canonical implementation workspace to be hosted on the Olares One
-2. the Olares One becomes the primary dev, services, and staging host for this workspace
+1. `C:/APEX Platform` remains the canonical publication boundary, and `C:/APEX Platform/apex-power-ops-platform` is the active implementation surface inside that parent git root
+2. when mirrored on the Olares One, the intended host parent-root path is `~/code/apex/`, with the active implementation surface at `~/code/apex/apex-power-ops-platform/`
+3. this authority defines the intended host path shape and governance boundary; it does not by itself approve migration of the daily development center of gravity onto Olares
 3. `Platform-Authority/` remains strategic authority until its surviving decisions are absorbed into repo-native authority surfaces under this workspace
 4. the parent git root at `C:/APEX Platform` remains the publication boundary until a deliberate repo cutover is executed later
 5. no future documentation should describe `apex-power-ops-platform` as merely speculative bootstrap scaffolding unless it is explicitly discussing pre-2026-04-23 history
@@ -91,10 +92,11 @@ Effective immediately, the intended Olares-hosted workspace authority is:
 
 ### Source-of-truth directories on the Olares One
 
-Recommended filesystem layout on the workstation:
+Recommended filesystem layout on the Olares host:
 
 ```text
-~/code/apex/              -> clone of C:/APEX Platform/apex-power-ops-platform
+~/code/apex/              -> parent-root mirror of C:/APEX Platform
+~/code/apex/apex-power-ops-platform/ -> active implementation surface inside that mirror
 ~/apex-data/              -> mutable project/job/state data
 ~/apex-secrets/           -> local bootstrap secrets not committed to git
 ~/apex-backups/           -> optional local landing zone before offsite backup
@@ -102,7 +104,7 @@ Recommended filesystem layout on the workstation:
 
 Design rules:
 
-1. source code lives in `~/code/apex/` only
+1. source code lives under the parent-root mirror `~/code/apex/`, and active implementation work stays under `~/code/apex/apex-power-ops-platform/`
 2. mutable runtime and canary data live in `~/apex-data/`
 3. secrets never live inside the git workspace
 4. staging and service mounts should reference these stable host paths rather than ad hoc directories under home

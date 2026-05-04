@@ -1,8 +1,8 @@
 # Olares Phase 5 Next Task And Prompt Routing Handoff
 
 Date: 2026-05-03
-Status: Active - Prompt 8 is complete; next truthful move is Packet 007 canonical host dev path preparation
-Scope: update the next task prompts after Phase 5 Step 1, Step 2, Step 3, Packet 001, Packet 002, Packet 003, Packet 004, Packet 005, Prompt 7, and Prompt 8 completion, and state the current post-clone-planning next move
+Status: Active - Prompt 12 is complete; Prompt 13 is the bounded parent-root publication and host-mirror synchronization next move
+Scope: update the next task prompts after Phase 5 Step 1, Step 2, Step 3, Packet 001, Packet 002, Packet 003, Packet 004, Packet 005, Prompt 7, Prompt 8, Packet 007, Prompt 10, Packet 008, and Packet 009 completion, and state the current post-smoke repo-parity execution move
 
 ## Authority
 
@@ -25,32 +25,43 @@ This routing handoff depends on:
 15. `ops/agents/packets/draft/2026-05-03-olares-phase-5-006-host-repo-clone-reconciliation-planning.json`
 16. `ops/agents/handoffs/2026-05-03-olares-phase-5-006-host-repo-clone-reconciliation-planning-handoff.md`
 17. `ops/agents/packets/draft/2026-05-03-olares-phase-5-007-canonical-host-dev-path-preparation.json`
-18. `plan/infrastructure-olares-full-implementation-roadmap-1.md`
+18. `ops/agents/handoffs/2026-05-03-olares-phase-5-007-canonical-host-dev-path-preparation-handoff.md`
+19. `ops/agents/handoffs/2026-05-03-olares-phase-5-post-007-readiness-reassessment-handoff.md`
+20. `ops/agents/packets/draft/2026-05-03-olares-phase-5-008-canonical-host-dev-loop-smoke-validation.json`
+21. `ops/agents/handoffs/2026-05-03-olares-phase-5-008-canonical-host-dev-loop-smoke-handoff.md`
+22. `ops/agents/handoffs/2026-05-03-olares-phase-5-post-008-migration-readiness-reassessment-handoff.md`
+23. `ops/agents/packets/draft/2026-05-03-olares-phase-5-009-post-smoke-repo-parity-housekeeping-and-migration-gate-planning.json`
+24. `ops/agents/handoffs/2026-05-03-olares-phase-5-009-post-smoke-repo-parity-housekeeping-and-migration-gate-planning-handoff.md`
+25. `ops/agents/packets/draft/2026-05-03-olares-phase-5-010-parent-root-publication-and-host-mirror-sync-gate.json`
+26. `plan/infrastructure-olares-full-implementation-roadmap-1.md`
 
 This handoff does not reopen generic Olares implementation.
 
 ## Current Routing Decision
 
-Prompt 1, Prompt 2, Prompt 3, Prompt 5, Prompt 6, Prompt 7, and Prompt 8 are complete.
+Prompt 1, Prompt 2, Prompt 3, Prompt 5, Prompt 6, Prompt 7, Prompt 8, Prompt 9, Prompt 10, Prompt 11, and Prompt 12 are complete.
 
-Packet 004 and Packet 005 execution are complete.
+Packet 004, Packet 005, Packet 006, Packet 007, Packet 008, and Packet 009 execution are complete.
+
+Packet 009 is closed as a planning pass.
 
 Prompt 4 still should not be run from the Packet 002 result.
 
-The next live preparation move is:
+The next live authority move is:
 
-1. execute the newly authored Packet `2026-05-03-olares-phase-5-007` as a bounded canonical host dev path preparation pass,
-2. stop treating Prompt 8 as still pending,
-3. keep migration, AI-services expansion, Gitea/code-hosting move, and canonical-hosting transition closed pending the Packet 007 preparation result.
+1. execute only the bounded parent-root publication and `/home/olares/code/apex` host-mirror synchronization gate packet,
+2. use Packet 010 as the controlling execution packet for that move,
+3. treat the Packet 009 handoff as the controlling repo-parity gate,
+4. keep migration, AI-services expansion, Gitea/code-hosting move, and canonical-hosting transition closed pending publication, host sync, and a separate later workstation-migration readiness reassessment.
 
 Reason:
 
-1. Prompt 8 is now complete,
-2. it decided the old host clone should be preserved as historical runtime evidence and not refreshed in place,
-3. it retired the old 2026-04-25 packet-002 publication scope as an execution lane,
-4. it concluded that a later bounded implementation packet is warranted only as canonical host dev path preparation,
-5. it kept migration, AI-services expansion, Gitea/code-hosting, and canonical-hosting paths not ready,
-6. it narrowed the next truthful move to preparing a separate canonical host dev path rather than mutating the old clone.
+1. Prompt 12 is now complete,
+2. Packet 009 makes the repo-parity gate explicit,
+3. the remaining blocker is now bounded parent-root publication and host-mirror synchronization rather than host-path viability or gate definition,
+4. Packet 010 now captures that next bounded execution scope explicitly,
+5. the next truthful move is publication plus `/home/olares/code/apex` synchronization before any later workstation-migration readiness reassessment,
+6. migration, AI-services expansion, Gitea/code-hosting, and canonical-hosting paths remain not ready.
 
 ## Current Execution State
 
@@ -64,6 +75,9 @@ Packet `2026-05-03-olares-phase-5-004` is now complete as a successful access-re
 Packet `2026-05-03-olares-phase-5-005` is now complete as a successful read-only host-runtime inventory packet.
 Prompt 7 is now complete as a successful post-005 reconciliation pass.
 Packet `2026-05-03-olares-phase-5-006` is now complete as a successful host repo-clone reconciliation planning pass.
+Packet `2026-05-03-olares-phase-5-007` is now complete as a successful canonical host dev path preparation pass.
+Packet `2026-05-03-olares-phase-5-008` is now complete as a successful canonical host dev-loop smoke validation pass.
+Packet `2026-05-03-olares-phase-5-009` is now complete as a successful repo-parity housekeeping and migration-gate planning pass.
 
 Current controlling outcome:
 
@@ -79,12 +93,17 @@ Current controlling outcome:
 10. no installs, restarts, ingress changes, auth changes, git mutations, or host-runtime mutations were performed during Packet 005,
 11. host Docker `apex-dev`, `private`, and `windows-lab` projects are real on the Olares host,
 12. K3s/Olares is live and `forms-engine` plus `p6-ingest` are running as Applications, Deployments, Pods, Services, and Helm releases,
-13. the controlling blocker is now repo-authority divergence: the host clone is older, dirty, path-divergent, and points at `jasonlswenson-sys/apex-power-ops.git` rather than the workstation publication boundary at `jasonlswenson-sys/RESA-Power-Project-Management.git`,
-14. `TASK-021`, `TASK-023`, and `TASK-025` are now closed as assessments only, not as implementation-ready approvals,
-15. no migration, AI-services, Gitea/code-hosting, or canonical-hosting path became ready,
-16. the old host clone should be preserved as historical runtime evidence and not refreshed in place,
-17. the old 2026-04-25 packet-002 publication scope is retired as an execution lane and retained only as comparison evidence,
-18. the next truthful move is a bounded canonical host dev path preparation packet, not migration or old-clone repair.
+13. the old host clone remains older, dirty, path-divergent, and remote-divergent, so it stays preserved as historical runtime evidence rather than the intended dev path,
+14. a separate canonical host parent-root mirror now exists at `/home/olares/code/apex` as a clean `clean-main` clone of `jasonlswenson-sys/RESA-Power-Project-Management.git`,
+15. the intended implementation surface is now `/home/olares/code/apex/apex-power-ops-platform`, preserving the workstation parent-root publication model directly,
+16. `olares-mesh` reaches the new path and the git top-level resolves correctly over SSH, so bounded Remote-SSH use is technically viable against the prepared parent-root path,
+17. `TASK-021`, `TASK-023`, and `TASK-025` remain closed as assessments only, not as implementation-ready approvals,
+18. authority restatement has now landed in `Infrastructure/Olares_Workspace_Authority_Framework.md` and `Infrastructure/Olares_Build_Guide.md`, making the parent-root mirror semantics explicit,
+19. Packet 008 proves the prepared host mirror remains clean, reachable, and usable through equivalent workspace-open behavior at the committed parent-root HEAD,
+20. the controlling blocker is now repo-parity and publication-state governance because current Phase 5 authority artifacts remain workstation-only until committed or synchronized,
+21. no migration, AI-services, Gitea/code-hosting, or canonical-hosting path became ready,
+22. Packet 009 explicitly classifies the current Phase 5 publication set into commit/publish, defer, and comparison-only buckets,
+23. the next truthful move is bounded parent-root publication and `/home/olares/code/apex` host-mirror synchronization, not migration or old-clone repair.
 
 ## Why This Split
 
@@ -584,9 +603,11 @@ Your final summary must state clearly:
 5. whether any migration, AI-services, Gitea, or canonical-hosting path became ready.
 ```
 
-## Prompt 9 - Execute Next With Codex
+## Prompt 9 - Executed With Codex
 
 Instance: `Codex`
+
+This prompt has already been executed and is retained as the completed predecessor step.
 
 ```text
 Act as the operator for a bounded Olares Phase 5 canonical host dev path preparation packet.
@@ -637,27 +658,270 @@ Your final summary must state clearly:
 5. whether any migration, AI-services, Gitea, or canonical-hosting path became ready.
 ```
 
-## Next Preparation Direction
+## Prompt 10 - Executed With Claude Code
 
-The next truthful move is no longer additional host-clone planning.
+Instance: `Claude Code`
 
-Use the completed Packet 006 planning handoff as the controlling input for the next bounded implementation pass.
+This prompt has already been executed and is retained as the completed predecessor step.
+
+```text
+Act as repo technical authority for the bounded Olares Phase 5 post-007 readiness reassessment and authority-restatement lane.
+
+You are not reopening generic Olares implementation. You are not approving an Olares-first daily development migration. Keep workstation migration, AI-services expansion, Gitea/code-hosting mirror work, and canonical-hosting transition as separate decision surfaces.
+
+Primary objective:
+Reconcile Packet 007 into the active Olares Phase 5 decision surfaces, restate the canonical host parent-root authority unambiguously, and decide whether a later bounded host dev-loop smoke packet is warranted.
+
+Treat these Packet 007 results as controlling input:
+1. `/home/olares/code/apex` now exists as a clean `clean-main` clone of `https://github.com/jasonlswenson-sys/RESA-Power-Project-Management.git`,
+2. the implementation surface is `/home/olares/code/apex/apex-power-ops-platform`,
+3. the old host clone `/home/olares/src/apex-power-ops-platform` was preserved intact as historical runtime evidence,
+4. `olares-mesh` reaches the new path and the repo top-level resolves correctly over SSH,
+5. the prepared path is sufficient for a narrow readiness reassessment,
+6. migration, AI-services expansion, Gitea/code-hosting, and canonical-hosting all remain not ready,
+7. additional authority restatement is still required before any migration lane opens.
+
+Read these first:
+- C:/APEX Platform/apex-power-ops-platform/plan/infrastructure-olares-full-implementation-roadmap-1.md
+- C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-next-task-and-prompt-routing-handoff.md
+- C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-007-canonical-host-dev-path-preparation-handoff.md
+- C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-006-host-repo-clone-reconciliation-planning-handoff.md
+- C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-post-005-reconciliation-handoff.md
+- C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-25-olares-workstation-001-publication-follow-through-scope-handoff.md
+- C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-25-olares-workstation-002-publication-follow-through-blocker-handoff.md
+- C:/APEX Platform/Infrastructure/Olares_Workspace_Authority_Framework.md
+- C:/APEX Platform/Infrastructure/Olares_Build_Guide.md
+
+Required outputs:
+1. Write a dated handoff at:
+   C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-post-007-readiness-reassessment-handoff.md
+2. Update only if warranted:
+   C:/APEX Platform/apex-power-ops-platform/plan/infrastructure-olares-full-implementation-roadmap-1.md
+3. If the wording is still ambiguous, restate the host parent-root mirror semantics in the authoritative infrastructure docs without opening a migration lane:
+   - C:/APEX Platform/Infrastructure/Olares_Workspace_Authority_Framework.md
+   - C:/APEX Platform/Infrastructure/Olares_Build_Guide.md
+
+The reassessment must explicitly address:
+1. whether `/home/olares/code/apex` is now the correct canonical host parent-root mirror,
+2. whether the authority docs still need clarification and exactly what wording is controlling,
+3. whether a later bounded host dev-loop smoke packet is warranted,
+4. whether `TASK-021`, `TASK-023`, and `TASK-025` need any status change,
+5. whether any migration, AI-services, Gitea, or canonical-hosting path became ready.
+
+Hard constraints:
+1. No host runtime mutation.
+2. No git mutation on the old host clone.
+3. No migration approval.
+4. No installs.
+5. No ingress changes.
+6. No auth changes.
+7. No code-hosting cutover.
+8. Do not treat prepared path reachability as daily-development readiness by itself.
+
+Decision standard:
+1. Preserve Packet 007 as a bounded preparation result, not a migration approval.
+2. Restate authority only as needed to remove ambiguity about parent-root mirror semantics.
+3. Only recommend a later host dev-loop smoke packet if the written authority is now precise enough to support it.
+
+After edits, run a narrow validation check and summarize:
+1. whether authority restatement landed,
+2. whether a bounded host dev-loop smoke packet is now the next truthful move,
+3. whether any migration, AI-services, Gitea, or canonical-hosting path became ready.
+```
+
+## Prompt 11 - Executed With Codex
+
+Instance: `Codex`
+
+This prompt has already been executed and is retained as the completed predecessor step.
+
+```text
+Act as the operator for a bounded Olares Phase 5 canonical host dev-loop smoke packet.
+
+Execute this packet exactly as a bounded validation lane against the prepared parent-root mirror:
+
+- Packet: C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-03-olares-phase-5-008-canonical-host-dev-loop-smoke-validation.json
+- Roadmap: C:/APEX Platform/apex-power-ops-platform/plan/infrastructure-olares-full-implementation-roadmap-1.md
+- Prior evidence:
+   - C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-post-007-readiness-reassessment-handoff.md
+   - C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-007-canonical-host-dev-path-preparation-handoff.md
+   - C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-006-host-repo-clone-reconciliation-planning-handoff.md
+   - C:/APEX Platform/Infrastructure/Olares_Workspace_Authority_Framework.md
+   - C:/APEX Platform/Infrastructure/Olares_Build_Guide.md
+
+Primary objective:
+Validate the prepared Olares host parent-root mirror at `/home/olares/code/apex` as a bounded development-loop candidate without reopening migration, changing services, or mutating the preserved old host clone.
+
+Required actions:
+1. Revalidate that `olares-mesh` reaches `/home/olares/code/apex` and that the git top-level resolves correctly.
+2. Compare workstation and prepared host mirror branch, commit, remote, and cleanliness and record any drift precisely.
+3. Validate that VS Code Remote-SSH or an equivalent bounded workspace-open flow can open `/home/olares/code/apex` and reach `apex-power-ops-platform/` as the implementation lane.
+4. Capture bounded dev-loop ergonomics evidence inside `/home/olares/code/apex/apex-power-ops-platform`, including file navigation and terminal context, without mutating tracked files or changing services.
+5. State whether the prepared host mirror is strong enough for a later migration reassessment while preserving the current no-go boundary.
+
+Hard constraints:
+1. No migration approval.
+2. No host runtime mutation.
+3. No git mutation on `/home/olares/src/apex-power-ops-platform`.
+4. No installs.
+5. No ingress changes.
+6. No auth changes.
+7. No AI-services expansion.
+8. No Gitea or canonical-hosting changes.
+
+Write the results into this dated handoff:
+- C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-008-canonical-host-dev-loop-smoke-handoff.md
+
+Update the roadmap only if the validation result materially sharpens the current live Olares boundary.
+
+Your final summary must state clearly:
+1. whether the prepared parent-root mirror remained reachable and clean,
+2. whether bounded workspace-open validation succeeded,
+3. whether the prepared path is strong enough for a later migration reassessment,
+4. whether any migration, AI-services, Gitea, or canonical-hosting path became ready.
+```
+
+## Prompt 12 - Executed With Claude Code
+
+Instance: `Claude Code`
+
+```text
+Act as repo technical authority for the bounded Olares Phase 5 post-smoke repo-parity housekeeping and migration-gate planning lane.
+
+You are not reopening generic Olares implementation. You are not approving an Olares-first daily development migration. Keep workstation migration, AI-services expansion, Gitea/code-hosting mirror work, and canonical-hosting transition as separate decision surfaces.
+
+Primary objective:
+Reconcile Packet 008 into the active Olares Phase 5 decision surfaces, classify the remaining repo-parity gate, and define what publication-state conditions must be satisfied before any later workstation-migration readiness reassessment can open.
+
+Treat these Packet 008 results as controlling input:
+1. `/home/olares/code/apex` remained reachable, clean, and correctly rooted as the host parent-root mirror,
+2. equivalent workspace-open and terminal/file-navigation proof succeeded inside `/home/olares/code/apex/apex-power-ops-platform`,
+3. the host mirror matches the committed parent-root HEAD and canonical remote,
+4. current Phase 5 authority artifacts remain workstation-only until committed or synchronized,
+5. migration remains not ready,
+6. AI-services expansion, Gitea/code-hosting, and canonical-hosting remain not ready.
+
+Read these first:
+- C:/APEX Platform/apex-power-ops-platform/plan/infrastructure-olares-full-implementation-roadmap-1.md
+- C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-next-task-and-prompt-routing-handoff.md
+- C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-008-canonical-host-dev-loop-smoke-handoff.md
+- C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-post-007-readiness-reassessment-handoff.md
+- C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-007-canonical-host-dev-path-preparation-handoff.md
+- C:/APEX Platform/Infrastructure/Olares_Workspace_Authority_Framework.md
+- C:/APEX Platform/Infrastructure/Olares_Build_Guide.md
+
+Required outputs:
+1. Write a dated handoff at:
+   C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-009-post-smoke-repo-parity-housekeeping-and-migration-gate-planning-handoff.md
+2. Update only if warranted:
+   C:/APEX Platform/apex-power-ops-platform/plan/infrastructure-olares-full-implementation-roadmap-1.md
+
+The planning pass must explicitly address:
+1. which current Phase 5 artifacts should be committed/published, deferred, or kept as comparison-only evidence,
+2. what publication-state conditions must be satisfied before any later workstation-migration readiness reassessment opens,
+3. how `/home/olares/code/apex` should be synchronized after the governing publication step,
+4. whether `TASK-021`, `TASK-023`, or `TASK-025` need any status change,
+5. whether any migration, AI-services, Gitea, or canonical-hosting path became ready.
+
+Hard constraints:
+1. No migration approval.
+2. No host runtime mutation.
+3. No git mutation on `/home/olares/src/apex-power-ops-platform`.
+4. No installs.
+5. No ingress changes.
+6. No auth changes.
+7. No AI-services expansion.
+8. No Gitea or canonical-hosting changes.
+9. Do not treat workstation-only artifacts as already synchronized authority.
+
+Decision standard:
+1. Keep the lane limited to workstation-migration readiness and repo parity.
+2. Preserve the split decision surfaces for AI-services, Gitea/code-hosting, and canonical-hosting.
+3. Only recommend a later workstation-migration readiness reassessment packet after the repo-parity gate is written explicitly.
+
+After edits, run a narrow validation check and summarize:
+1. whether the repo-parity gate is now explicit,
+2. whether a later workstation-migration readiness reassessment packet is now the next truthful move,
+3. whether any migration, AI-services, Gitea, or canonical-hosting path became ready.
+```
+
+## Prompt 13 - Recommended With Codex
+
+Instance: `Codex`
+
+```text
+Act as the operator for a bounded Olares Phase 5 parent-root publication and host-mirror synchronization packet.
+
+Execute this packet exactly as a bounded repo-parity follow-through lane:
+
+- Packet: C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-03-olares-phase-5-010-parent-root-publication-and-host-mirror-sync-gate.json
+- Roadmap: C:/APEX Platform/apex-power-ops-platform/plan/infrastructure-olares-full-implementation-roadmap-1.md
+- Prior evidence:
+   - C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-009-post-smoke-repo-parity-housekeeping-and-migration-gate-planning-handoff.md
+   - C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-post-008-migration-readiness-reassessment-handoff.md
+   - C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-008-canonical-host-dev-loop-smoke-handoff.md
+   - C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-next-task-and-prompt-routing-handoff.md
+   - C:/APEX Platform/Infrastructure/Olares_Workspace_Authority_Framework.md
+   - C:/APEX Platform/Infrastructure/Olares_Build_Guide.md
+
+Primary objective:
+Publish the bounded current Phase 5 authority set through the parent git root at `C:/APEX Platform`, then synchronize only the prepared host parent-root mirror at `/home/olares/code/apex` to the resulting GitHub-canonical commit, without opening migration or mutating the preserved old host clone.
+
+Required actions:
+1. Review parent-root git status at `C:/APEX Platform` and confirm the proposed commit scope matches the Packet 009 minimum publication set.
+2. Exclude unrelated parent-root changes, secrets, runtime artifacts, host-only state, service configuration changes, and implementation scaffolding deferred by Packet 009.
+3. Create and publish the bounded parent-root commit to the GitHub-canonical repository, recording branch, remote, included paths, and resulting commit hash.
+4. Capture pre-sync `/home/olares/code/apex` branch, remote, commit, and cleanliness evidence without mutating `/home/olares/src/apex-power-ops-platform`.
+5. Synchronize `/home/olares/code/apex` to the published commit using a non-destructive fast-forward-only method, and stop if the sync would require force, reset, clean, remote rewrite, or old-clone mutation.
+6. Capture post-sync `/home/olares/code/apex` branch, remote, commit, cleanliness, and authority-artifact presence evidence, including the Packet 009 handoff and current routing and roadmap state.
+7. State whether the repo-parity gate is now satisfied strongly enough to justify a later separate workstation-migration readiness reassessment, while keeping migration itself not approved.
+
+Hard constraints:
+1. No migration approval.
+2. No host runtime mutation.
+3. No mutation of `/home/olares/src/apex-power-ops-platform`.
+4. No installs.
+5. No ingress changes.
+6. No auth changes.
+7. No AI-services expansion.
+8. No Gitea or canonical-hosting changes.
+9. Do not mix unrelated parent-root changes into the publication commit.
+
+Write the results into this dated handoff:
+- C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-010-parent-root-publication-and-host-mirror-sync-gate-handoff.md
+
+Update the roadmap only if the execution result materially sharpens the current live Olares boundary by recording the published commit and successful host-mirror synchronization.
+
+Your final summary must state clearly:
+1. what exact bounded publication set was committed and published,
+2. what commit hash now governs the lane,
+3. whether `/home/olares/code/apex` synchronized cleanly to that commit,
+4. whether the repo-parity gate is now satisfied strongly enough for a later workstation-migration readiness reassessment,
+5. whether any migration, AI-services, Gitea, or canonical-hosting path became ready.
+```
+
+## Next Execution Direction
+
+The next truthful move is no longer additional host dev-loop validation or repo-parity gate definition.
+
+Use the completed Packet 009 handoff plus Packet 010 as the controlling input for the next bounded publication and host-mirror synchronization pass.
 
 Preferred next move:
 
-1. `Olares Phase 5 007 - Canonical Host Dev Path Preparation`
+1. `Olares Phase 5 010 - Parent-Root Publication And Host Mirror Sync Gate`
 
-The next preparation pass must explicitly produce:
+The next planning pass must explicitly preserve:
 
-1. an evidence snapshot of the old host clone before replacement,
-2. a separate canonical host development path,
-3. a statement about whether the parent-root publication boundary is preserved directly or restated,
-4. a bounded Remote-SSH validation against the new path,
-5. no old-clone mutation, no Gitea work, and no migration approval.
+1. parent-root publication from `C:/APEX Platform`,
+2. a bounded commit scope limited to Phase 5 handoffs, packet JSON, roadmap/routing updates, and authority-doc restatements,
+3. synchronization of `/home/olares/code/apex` only after the governing publication step,
+4. no reopening of migration, AI-services, Gitea/code-hosting, or canonical-hosting lanes from publication alone,
+5. no old-clone mutation and no reclassification of the historical evidence path.
 
-Controlling handoff path:
+Controlling artifacts:
 
-1. `ops/agents/handoffs/2026-05-03-olares-phase-5-006-host-repo-clone-reconciliation-planning-handoff.md`
+1. `ops/agents/handoffs/2026-05-03-olares-phase-5-009-post-smoke-repo-parity-housekeeping-and-migration-gate-planning-handoff.md`
+2. `ops/agents/packets/draft/2026-05-03-olares-phase-5-010-parent-root-publication-and-host-mirror-sync-gate.json`
 
 ## Sequence Rule
 
@@ -673,8 +937,26 @@ Prompt 7 is complete.
 
 Prompt 8 is complete.
 
+Prompt 9 is complete.
+
+Prompt 10 is complete.
+
+Prompt 11 is complete.
+
+Prompt 12 is complete.
+
+Prompt 13 is now the next live prompt.
+
 Packet 004 and Packet 005 are complete.
 
 Packet 006 is complete.
 
-The next live task is executing Prompt 9 as a Codex canonical host dev path preparation pass. Do not open a migration or old-clone mutation lane beyond Packet 007's bounded scope.
+Packet 007 is complete.
+
+Packet 008 is complete.
+
+Packet 009 is complete.
+
+Packet 010 is now the next live packet.
+
+The next live task is Prompt 13 / Packet 010: a bounded parent-root publication and `/home/olares/code/apex` host-mirror synchronization gate pass. Do not open a migration or old-clone mutation lane beyond the current bounded publication and synchronization evidence.

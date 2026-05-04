@@ -1,0 +1,65 @@
+{
+  "packet_id": "2026-05-03-olares-phase-5-008",
+  "title": "Canonical Host Dev-Loop Smoke Validation",
+  "objective": "Perform a bounded host development-loop smoke validation against `/home/olares/code/apex` as the canonical Olares host parent-root mirror, confirming path reachability, workspace-open viability, repo parity, and basic editing ergonomics without mutating services, changing the daily development center of gravity, or reopening migration scope.",
+  "domain": "infrastructure-domain",
+  "active_role": "Olares Canonical Host Dev Loop Smoke Operator",
+  "repo_paths": [
+    "C:/APEX Platform/apex-power-ops-platform/plan/infrastructure-olares-full-implementation-roadmap-1.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-post-007-readiness-reassessment-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-007-canonical-host-dev-path-preparation-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-006-host-repo-clone-reconciliation-planning-handoff.md",
+    "C:/APEX Platform/Infrastructure/Olares_Workspace_Authority_Framework.md",
+    "C:/APEX Platform/Infrastructure/Olares_Build_Guide.md"
+  ],
+  "dependencies": [
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-post-007-readiness-reassessment-handoff.md",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-007-canonical-host-dev-path-preparation-handoff.md",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-006-host-repo-clone-reconciliation-planning-handoff.md",
+    "plan/infrastructure-olares-full-implementation-roadmap-1.md"
+  ],
+  "dependency_note": "The post-007 reassessment confirms that `/home/olares/code/apex` is the correct Olares host parent-root mirror and that the controlling infrastructure docs now restate that meaning explicitly. This packet exists to validate the bounded host dev loop against that prepared path without reopening migration or mutating the preserved old clone.",
+  "required_inputs": [
+    "The Packet 007 prepared host mirror at `/home/olares/code/apex`",
+    "The post-007 ruling that `/home/olares/code/apex/apex-power-ops-platform` is the active implementation surface on the host",
+    "The preserved old host clone at `/home/olares/src/apex-power-ops-platform` as historical runtime evidence only",
+    "The controlling publication boundary at `C:/APEX Platform` with canonical remote `https://github.com/jasonlswenson-sys/RESA-Power-Project-Management.git`",
+    "A working `olares-mesh` SSH path for bounded host-side validation"
+  ],
+  "constrained_outputs": [
+    "A dated validation handoff recording path reachability, workspace-open evidence, repo-parity evidence, and bounded ergonomics findings for `/home/olares/code/apex`",
+    "A decision on whether the prepared parent-root mirror is strong enough for a later migration reassessment",
+    "No host runtime mutation, no old-clone mutation, no AI-services expansion, no Gitea work, and no migration approval"
+  ],
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "C:/APEX Platform/apex-power-ops-platform/plan",
+    "C:/APEX Platform/PROJECT_STATUS.md"
+  ],
+  "validation_steps": [
+    "Revalidate that `olares-mesh` reaches `/home/olares/code/apex` and that `git rev-parse --show-toplevel` resolves to `/home/olares/code/apex`.",
+    "Compare workstation and prepared host mirror branch, commit, remote, and cleanliness, and record any drift precisely.",
+    "Validate that VS Code Remote-SSH or an equivalent bounded workspace-open flow can open `/home/olares/code/apex` and reach `apex-power-ops-platform/` as the implementation lane.",
+    "Capture bounded development ergonomics evidence for the prepared path, including file navigation and terminal context inside `apex-power-ops-platform`, without changing services or mutating tracked files.",
+    "State whether the prepared parent-root mirror is usable for a later migration reassessment while keeping current no-go boundaries intact.",
+    "Stop if execution would require host runtime mutation, old-clone mutation, package installation, code-hosting change, or migration approval."
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "authored",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-008-canonical-host-dev-loop-smoke-handoff.md"
+  ],
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-008-canonical-host-dev-loop-smoke-handoff.md",
+  "implementation_ready_candidate": true,
+  "sql_permission": false,
+  "sql_permission_note": "This packet authorizes bounded host dev-loop validation only. It does not authorize database writes, host-runtime mutation, old-clone mutation, AI-services rollout, Gitea work, canonical-hosting changes, or migration.",
+  "landing_lane": "olares_phase_5_canonical_host_dev_loop_smoke_validation",
+  "migration_strategy": "validate_prepared_parent_root_mirror_before_any_later_migration_reassessment",
+  "created_at": "2026-05-03",
+  "updated_at": "2026-05-03",
+  "delegation_status": "authored",
+  "validation_disposition": "pending-execution",
+  "closure_note": "Not yet executed. This packet exists because the post-007 reassessment concluded that authority restatement has landed and that the next truthful move is bounded host dev-loop validation against `/home/olares/code/apex`.",
+  "next_action": "Execute this packet only within the bounded validation scope defined here and only if Olares-hosted development remains under consideration as a later reassessment candidate."
+}
