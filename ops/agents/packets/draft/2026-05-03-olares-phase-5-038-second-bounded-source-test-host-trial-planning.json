@@ -1,0 +1,59 @@
+{
+  "packet_id": "2026-05-03-olares-phase-5-038",
+  "title": "Second Bounded Source/Test Host Trial Planning",
+  "objective": "Plan the smallest truthful next bounded host-side source or test trial after Packet 037 restored authority parity, without executing the trial, approving migration, changing runtime/services, changing package state, or expanding adjacent Olares lanes.",
+  "domain": "infrastructure-domain",
+  "active_role": "Olares Post-037 Source/Test Trial Planning Operator",
+  "dependencies": [
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-037-packet-035-and-packet-036-authority-publication-and-host-mirror-resync-gate-handoff.md",
+    "ops/agents/packets/draft/2026-05-03-olares-phase-5-037-packet-035-and-packet-036-authority-publication-and-host-mirror-resync-gate.json",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-036-post-035-workstation-migration-readiness-reassessment-handoff.md",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-034-bounded-no-install-workstation-pnpm-path-revalidation-handoff.md",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-031-bounded-host-side-relay-browser-selection-reset-source-trial-execution-handoff.md",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-next-task-and-prompt-routing-handoff.md",
+    "plan/infrastructure-olares-full-implementation-roadmap-1.md"
+  ],
+  "dependency_note": "Packet 037 published Packet 035 and Packet 036 closure authority and fast-forwarded `/home/olares/code/apex` cleanly to commit `5297c732d55dcf9d6f8e3c3c75c6096ff210e401`. Packet 036 allowed only another bounded source/test trial posture after authority cleanup, not migration or immediate execution.",
+  "required_inputs": [
+    "Current parent-root git status at `C:/APEX Platform`",
+    "Current `/home/olares/code/apex` branch, commit, and cleanliness",
+    "Packet 031 source-trial execution evidence",
+    "Packet 034 no-install workstation validation evidence",
+    "Packet 036 readiness classification",
+    "Packet 037 publication and host-mirror resync evidence"
+  ],
+  "constrained_outputs": [
+    "A dated planning handoff naming exactly one proposed next bounded source/test trial slice or recommending pause if no slice is safe",
+    "A clear statement of whether the next packet should be execution, validation-only, publication, reassessment, or pause",
+    "No source/test execution, no source edits, no package or lockfile mutation, no dependency install, no package-manager activation/download, no runtime mutation, no service mutation, no remote rewrite, no force/reset/clean, no AI-services expansion, no Gitea/code-hosting transition, no canonical-hosting transition, no migration approval, and no old-clone mutation"
+  ],
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "C:/APEX Platform/apex-power-ops-platform/plan"
+  ],
+  "validation_steps": [
+    "Revalidate that Packet 037 restored clean host authority parity at commit `5297c732d55dcf9d6f8e3c3c75c6096ff210e401`.",
+    "Review prior bounded source/test trial evidence and identify the smallest next slice that can add evidence without package, runtime, service, or migration expansion.",
+    "Separate host-side editing suitability from host-side executable validation capability, because prior host package/toolchain blockers remain under the no-install boundary.",
+    "Name exactly one next packet and keep execution closed from this planning pass."
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-038-second-bounded-source-test-host-trial-planning-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-03-olares-phase-5-039-packet-037-and-packet-038-authority-publication-and-host-mirror-resync-gate.json"
+  ],
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-038-second-bounded-source-test-host-trial-planning-handoff.md",
+  "implementation_ready_candidate": false,
+  "sql_permission": false,
+  "sql_permission_note": "This packet authorizes no database writes and no runtime, service, package, lockfile, install, source/test execution, remote, AI-services, Gitea, canonical-hosting, migration, force/reset/clean, or old-clone mutation. It authorizes only planning and bounded authority updates.",
+  "landing_lane": "olares_phase_5_second_bounded_source_test_host_trial_planning",
+  "migration_strategy": "plan_next_bounded_trial_after_authority_parity_without_approving_migration",
+  "created_at": "2026-05-04",
+  "updated_at": "2026-05-04",
+  "delegation_status": "complete",
+  "validation_disposition": "complete-planning-only-pass",
+  "closure_note": "Executed as a planning-only pass. Packet 038 confirmed `/home/olares/code/apex` clean at `5297c732d55dcf9d6f8e3c3c75c6096ff210e401`, found the Packet 037 closure handoff and Packet 038 draft authority still absent from the host mirror, selected the operations-web apparatus resource explorer clear-state source/test slice as the proposed second bounded trial, and kept execution closed.",
+  "next_action": "Execute Packet 039 authority publication and host-mirror resync before any selected apparatus source/test host trial execution opens."
+}
