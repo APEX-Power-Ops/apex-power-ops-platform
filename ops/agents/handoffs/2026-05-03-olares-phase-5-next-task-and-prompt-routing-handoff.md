@@ -1,8 +1,8 @@
 # Olares Phase 5 Next Task And Prompt Routing Handoff
 
 Date: 2026-05-03
-Status: Active - Packet 005 is complete; next truthful move is post-005 Claude Code reconciliation rather than another execution packet
-Scope: update the next task prompts after Phase 5 Step 1, Step 2, Step 3, Packet 001, Packet 002, Packet 003, Packet 004, and Packet 005 completion, and state the current post-inventory next move
+Status: Active - Prompt 7 is complete; next truthful move is Packet 006 host repo-clone reconciliation planning
+Scope: update the next task prompts after Phase 5 Step 1, Step 2, Step 3, Packet 001, Packet 002, Packet 003, Packet 004, Packet 005, and Prompt 7 completion, and state the current post-reconciliation next move
 
 ## Authority
 
@@ -21,31 +21,34 @@ This routing handoff depends on:
 11. `ops/agents/handoffs/2026-05-03-olares-phase-5-004-interactive-larepass-profile-rehydration-and-mesh-validation-handoff.md`
 12. `ops/agents/packets/draft/2026-05-03-olares-phase-5-005-ssh-host-runtime-inventory.json`
 13. `ops/agents/handoffs/2026-05-03-olares-phase-5-005-ssh-host-runtime-inventory-handoff.md`
-14. `plan/infrastructure-olares-full-implementation-roadmap-1.md`
+14. `ops/agents/handoffs/2026-05-03-olares-phase-5-post-005-reconciliation-handoff.md`
+15. `ops/agents/packets/draft/2026-05-03-olares-phase-5-006-host-repo-clone-reconciliation-planning.json`
+16. `plan/infrastructure-olares-full-implementation-roadmap-1.md`
 
 This handoff does not reopen generic Olares implementation.
 
 ## Current Routing Decision
 
-Prompt 1, Prompt 2, Prompt 3, Prompt 5, and Prompt 6 are complete.
+Prompt 1, Prompt 2, Prompt 3, Prompt 5, Prompt 6, and Prompt 7 are complete.
 
 Packet 004 and Packet 005 execution are complete.
 
 Prompt 4 still should not be run from the Packet 002 result.
 
-The next live reconciliation move is:
+The next live planning move is:
 
-1. run a Claude Code post-005 reconciliation pass that folds Packet 005 into `TASK-021`, `TASK-023`, and `TASK-025`,
-2. stop treating Packet `2026-05-03-olares-phase-5-005` as still pending,
-3. retain Packet `2026-05-03-olares-phase-5-004B` only as stale fallback history, not as the current next move while mesh SSH remains healthy.
+1. execute the newly authored Packet `2026-05-03-olares-phase-5-006` as a bounded host repo-clone reconciliation planning pass,
+2. stop treating Prompt 7 as still pending,
+3. keep migration, AI-services expansion, Gitea/code-hosting move, and canonical-hosting transition closed pending the Packet 006 planning result.
 
 Reason:
 
-1. Packet `2026-05-03-olares-phase-5-005` is now complete,
-2. it proved mesh SSH remained healthy over `TermiPass` from `100.64.0.2` to `100.64.0.1`,
-3. it directly inventoried host Docker, K3s, Helm, installed-app, port, volume, network, timer, and host clone evidence,
-4. it satisfied Packet 001's missing host-runtime inventory gap,
-5. it also proved the remaining blocker is repo-authority and host-clone reconciliation rather than access recovery or missing runtime truth.
+1. Prompt 7 is now complete,
+2. it closed `TASK-021` as an assessment with a negative readiness verdict,
+3. it closed `TASK-023` as an assessment with residual risks documented,
+4. it closed `TASK-025` as a split-path assessment with all four paths still not ready,
+5. it classified the `forms-engine` and `p6-ingest` AppImage CR mismatch as governance/documentation mismatch rather than runtime failure,
+6. it concluded that a later bounded host repo-clone reconciliation planning packet is warranted.
 
 ## Current Execution State
 
@@ -57,6 +60,7 @@ Packet `2026-05-03-olares-phase-5-002` is now complete and blocked.
 Packet `2026-05-03-olares-phase-5-003` is now complete as research only.
 Packet `2026-05-03-olares-phase-5-004` is now complete as a successful access-recovery packet.
 Packet `2026-05-03-olares-phase-5-005` is now complete as a successful read-only host-runtime inventory packet.
+Prompt 7 is now complete as a successful post-005 reconciliation pass.
 
 Current controlling outcome:
 
@@ -73,7 +77,9 @@ Current controlling outcome:
 11. host Docker `apex-dev`, `private`, and `windows-lab` projects are real on the Olares host,
 12. K3s/Olares is live and `forms-engine` plus `p6-ingest` are running as Applications, Deployments, Pods, Services, and Helm releases,
 13. the controlling blocker is now repo-authority divergence: the host clone is older, dirty, path-divergent, and points at `jasonlswenson-sys/apex-power-ops.git` rather than the workstation publication boundary at `jasonlswenson-sys/RESA-Power-Project-Management.git`,
-14. the next truthful move is post-005 authority reconciliation, not implementation.
+14. `TASK-021`, `TASK-023`, and `TASK-025` are now closed as assessments only, not as implementation-ready approvals,
+15. no migration, AI-services, Gitea/code-hosting, or canonical-hosting path became ready,
+16. the next truthful move is a bounded repo-clone reconciliation planning packet, not implementation.
 
 ## Why This Split
 
@@ -447,7 +453,7 @@ Your final summary must state clearly:
 6. whether a Claude Code reconciliation prompt is now warranted.
 ```
 
-## Prompt 7 - Execute Next With Claude Code
+## Prompt 7 - Executed With Claude Code
 
 Instance: `Claude Code`
 
@@ -520,31 +526,80 @@ After edits, run a narrow validation check and summarize:
 4. whether any migration, AI-services, Gitea, or canonical-hosting path became ready.
 ```
 
-## Next Reconciliation Direction
+## Prompt 8 - Execute Next With Claude Code
 
-The next truthful move is no longer another access or inventory packet.
+Instance: `Claude Code`
 
-Use the completed Packet 005 handoff as the controlling input for the next reconciliation pass.
+```text
+Act as repo technical authority for the bounded Olares Phase 5 host repo-clone reconciliation planning lane.
+
+You are not reopening generic Olares implementation. You are not approving an Olares-first daily development migration. Keep workstation migration, AI-services expansion, Gitea/code-hosting mirror work, and canonical-hosting transition as separate decision surfaces.
+
+Execute this packet exactly as a read-only planning pass:
+
+- Packet: C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-03-olares-phase-5-006-host-repo-clone-reconciliation-planning.json
+- Roadmap: C:/APEX Platform/apex-power-ops-platform/plan/infrastructure-olares-full-implementation-roadmap-1.md
+- Prior evidence:
+   - C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-post-005-reconciliation-handoff.md
+   - C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-005-ssh-host-runtime-inventory-handoff.md
+   - C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-step-3-expansion-decision-surface-handoff.md
+   - C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-25-olares-workstation-001-publication-follow-through-scope-handoff.md
+   - C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-25-olares-workstation-002-publication-follow-through-blocker-handoff.md
+   - C:/APEX Platform/Infrastructure/Olares_Workspace_Authority_Framework.md
+
+Primary objective:
+Decide whether the host clone should be retired, refreshed, replaced, or preserved as historical runtime evidence, and state what later mutation scope would be required before any Olares-first daily development migration packet could be considered.
+
+Required actions:
+1. Compare the host clone path, branch, commit, cleanliness, and remote against the workstation publication boundary and parent-root authority.
+2. Reconcile the 2026-04-25 packet-002 publication scope against current branch reality and decide whether it should be restated or retired.
+3. State whether `/home/olares/src/apex-power-ops-platform` should ever become the intended host dev path or whether a later canonical host path should be prepared.
+4. Decide whether the host clone is a stale runtime artifact, a future migration target, or a surface that should be replaced.
+5. Recommend whether a later implementation packet is warranted and what exact mutation scope it would need.
+
+Hard constraints:
+1. No git pull, git reset, git clean, branch switch, remote rewrite, or clone deletion.
+2. No host runtime mutation.
+3. No installs.
+4. No ingress changes.
+5. No auth changes.
+6. No code-hosting cutover.
+7. No claim that technical SSH viability equals repo-authority readiness.
+
+Write the results into this dated handoff:
+- C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-006-host-repo-clone-reconciliation-planning-handoff.md
+
+Update the roadmap only if the planning result materially sharpens the current live Olares boundary or authorizes a later bounded implementation packet shape.
+
+Your final summary must state clearly:
+1. whether the host clone should be retired, refreshed, replaced, or preserved,
+2. whether the old packet-002 publication scope should be restated or retired,
+3. whether a later implementation packet is warranted,
+4. what mutation scope that later packet would need,
+5. whether any migration, AI-services, Gitea, or canonical-hosting path became ready.
+```
+
+## Next Planning Direction
+
+The next truthful move is no longer another reconciliation pass.
+
+Use the completed post-005 reconciliation handoff as the controlling input for the next planning pass.
 
 Preferred next move:
 
-1. `Olares Phase 5 post-005 reconciliation` in Claude Code.
+1. `Olares Phase 5 006 - Host Repo Clone Reconciliation Planning`
 
-Deferred packet candidate after reconciliation:
+The next planning pass must explicitly decide:
 
-1. a bounded repo-clone reconciliation packet only if the reconciliation handoff concludes that host clone divergence needs its own governed follow-through.
-
-The next reconciliation must explicitly decide:
-
-1. whether `TASK-021` closes as an assessment with a negative readiness verdict,
-2. whether `TASK-023` closes as an assessment now that the live inventory exists,
-3. whether `TASK-025` closes as a split-path readiness assessment with all four paths still not ready,
-4. whether the `forms-engine` and `p6-ingest` AppImage CR mismatch is only a governance/documentation mismatch or needs a later bounded validation packet,
-5. whether a repo-clone reconciliation packet is warranted.
+1. whether the host clone should be retired, refreshed, replaced, or preserved,
+2. whether the 2026-04-25 packet-002 publication scope should be restated or retired,
+3. whether `/home/olares/src/apex-power-ops-platform` should remain a candidate host dev path,
+4. whether a later implementation packet is warranted and what mutation scope it would need,
+5. whether any path becomes ready after that planning result.
 
 Controlling handoff path:
 
-1. `ops/agents/handoffs/2026-05-03-olares-phase-5-005-ssh-host-runtime-inventory-handoff.md`
+1. `ops/agents/handoffs/2026-05-03-olares-phase-5-post-005-reconciliation-handoff.md`
 
 ## Sequence Rule
 
@@ -556,6 +611,8 @@ Prompt 5 is complete.
 
 Prompt 6 is complete.
 
+Prompt 7 is complete.
+
 Packet 004 and Packet 005 are complete.
 
-The next live task is executing Prompt 7 as a Claude Code post-005 reconciliation pass. Do not open a new implementation packet until that reconciliation decides whether any later repo-clone packet is warranted.
+The next live task is executing Prompt 8 as a Claude Code host repo-clone reconciliation planning pass. Do not open a host clone mutation or migration packet until that planning handoff decides the required implementation scope.

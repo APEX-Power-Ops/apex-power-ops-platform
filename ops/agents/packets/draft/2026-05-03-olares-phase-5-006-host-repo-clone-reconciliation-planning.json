@@ -1,0 +1,72 @@
+{
+  "packet_id": "2026-05-03-olares-phase-5-006",
+  "title": "Host Repo Clone Reconciliation Planning",
+  "objective": "Run a bounded read-only planning pass that reconciles the Olares host clone against the workstation publication boundary and decides whether the host clone should be retired, refreshed, replaced, or preserved as historical runtime evidence before any Olares-first daily development migration packet is considered.",
+  "domain": "infrastructure-domain",
+  "active_role": "Olares Repo Authority Reconciliation Planner",
+  "repo_paths": [
+    "C:/APEX Platform/apex-power-ops-platform/plan/infrastructure-olares-full-implementation-roadmap-1.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-post-005-reconciliation-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-005-ssh-host-runtime-inventory-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-step-3-expansion-decision-surface-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-25-olares-workstation-001-publication-follow-through-scope-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-25-olares-workstation-002-publication-follow-through-blocker-handoff.md",
+    "C:/APEX Platform/Infrastructure/Olares_Workspace_Authority_Framework.md",
+    "C:/APEX Platform/Infrastructure/Olares_Build_Guide.md"
+  ],
+  "dependencies": [
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-post-005-reconciliation-handoff.md",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-005-ssh-host-runtime-inventory-handoff.md",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-step-3-expansion-decision-surface-handoff.md",
+    "ops/agents/handoffs/2026-04-25-olares-workstation-001-publication-follow-through-scope-handoff.md",
+    "ops/agents/handoffs/2026-04-25-olares-workstation-002-publication-follow-through-blocker-handoff.md",
+    "plan/infrastructure-olares-full-implementation-roadmap-1.md"
+  ],
+  "dependency_note": "Prompt 7 closed TASK-021, TASK-023, and TASK-025 as assessments only and identified host-clone divergence as the remaining blocker for any future Olares-first daily development consideration. This packet exists to plan that reconciliation without mutating the host clone or changing publication authority.",
+  "required_inputs": [
+    "The post-005 reconciliation verdict that Olares-first daily development is technically reachable but not repo-authority ready",
+    "The Packet 005 host clone evidence showing `/home/olares/src/apex-power-ops-platform` on `clean-main` at commit `2836a2622309b4e146ca24f23b5bf87312c0c857`, dirty, and pointing at `https://github.com/jasonlswenson-sys/apex-power-ops.git`",
+    "The workstation publication boundary at `C:/APEX Platform` on `clean-main` pointing at `https://github.com/jasonlswenson-sys/RESA-Power-Project-Management.git`",
+    "The 2026-04-25 publication scope and blocker handoffs that define the old packet-002 publication lane",
+    "The parent-root and Olares host path expectations in `Infrastructure/Olares_Workspace_Authority_Framework.md`"
+  ],
+  "constrained_outputs": [
+    "A dated planning handoff that compares the host clone, workstation publication boundary, and GitHub remotes without mutating any clone",
+    "A decision on whether the host clone should be retired, refreshed, replaced, or preserved as historical runtime evidence",
+    "A decision on whether `/home/olares/src/apex-power-ops-platform` should ever become the intended host dev path or whether a later canonical host path should be prepared",
+    "A restated or retired view of the old packet-002 publication scope against current branch reality",
+    "A recommendation on whether a later implementation packet is warranted and what exact mutation scope it would need",
+    "No git pull, git reset, git clean, branch switch, remote rewrite, clone deletion, host mutation, or publication-boundary change"
+  ],
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "C:/APEX Platform/apex-power-ops-platform/plan",
+    "C:/APEX Platform/PROJECT_STATUS.md"
+  ],
+  "validation_steps": [
+    "Read the post-005 reconciliation handoff and confirm it explicitly warrants a later bounded repo-clone reconciliation planning packet.",
+    "Compare the host clone path, branch, commit, status, and remote against the workstation publication boundary and parent-root authority without mutating either side.",
+    "Reconcile the 2026-04-25 packet-002 publication scope against current branch reality and decide whether it should be restated or retired.",
+    "State whether the current host clone is a candidate canonical implementation surface, a stale runtime artifact, or a later migration target.",
+    "Keep GitHub canonical and parent-root publication authority intact unless a later separate implementation packet is explicitly approved.",
+    "Stop if execution would require host git mutation, deletion, branch changes, remote rewrites, or any other implementation action outside this planning scope."
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "authored",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-006-host-repo-clone-reconciliation-planning-handoff.md"
+  ],
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-006-host-repo-clone-reconciliation-planning-handoff.md",
+  "implementation_ready_candidate": true,
+  "sql_permission": false,
+  "sql_permission_note": "This packet authorizes planning and read-only comparison only. It does not authorize database writes, git mutation, host mutation, publication-boundary changes, or code-hosting cutover.",
+  "landing_lane": "olares_phase_5_host_repo_clone_reconciliation_planning",
+  "migration_strategy": "plan_repo_authority_reconciliation_before_any_host_clone_mutation_or_daily_dev_migration",
+  "created_at": "2026-05-03",
+  "updated_at": "2026-05-03",
+  "delegation_status": "authored",
+  "validation_disposition": "pending-execution",
+  "closure_note": "Not yet executed. This packet exists because the post-005 reconciliation closed the assessment tasks while identifying host-clone divergence as the remaining blocker for any future Olares-first daily development consideration.",
+  "next_action": "Execute this packet as a read-only planning pass before any host clone mutation, repo refresh, remote rewrite, or daily-development migration packet is considered."
+}
