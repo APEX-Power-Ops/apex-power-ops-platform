@@ -359,6 +359,10 @@ Approved next-step rule:
 - **FILE-188**: `ops/agents/packets/draft/2026-05-03-olares-phase-5-081-post-080-disjoint-scope-simultaneous-worker-planning-branch-decision.json` - Packet 081 branch decision; selects Branch P as planning-only disjoint-scope simultaneous-worker planning.
 - **FILE-189**: `ops/agents/packets/draft/2026-05-03-olares-phase-5-082-bounded-disjoint-scope-simultaneous-worker-planning.json` - Packet 082 planning authority; defines apparatus-worker, relay-worker, and coordinator-owned surfaces plus non-overlap, validation, conflict, and abort rules for any later explicit simultaneous-worker packet.
 - **FILE-190**: `ops/agents/packets/draft/2026-05-03-olares-phase-5-083-packet-080-through-packet-082-authority-publication-and-host-mirror-resync-gate.json` - authored Packet 083 authority-publication and host-mirror resync gate for Packet 080 through Packet 082 planning authority.
+- **FILE-191**: `ops/agents/handoffs/2026-05-03-olares-phase-5-083-packet-080-through-packet-082-authority-publication-and-host-mirror-resync-gate-handoff.md` - Packet 083 closeout handoff; records published planning authority commit `adf4994df0b1504d995776dcb5be64220cc16d6b` and clean host parity.
+- **FILE-192**: `ops/agents/packets/draft/2026-05-03-olares-phase-5-084-post-083-disjoint-scope-simultaneous-worker-readiness-verdict.json` - Packet 084 readiness verdict; records that a later explicit simultaneous-worker execution packet is conditionally authorable in planning terms only.
+- **FILE-193**: `ops/agents/handoffs/2026-05-03-olares-phase-5-084-post-083-disjoint-scope-simultaneous-worker-readiness-verdict-handoff.md` - Packet 084 handoff; records required later shape, exact ownership, and continued execution closure.
+- **FILE-194**: `ops/agents/packets/draft/2026-05-03-olares-phase-5-085-packet-083-and-packet-084-authority-publication-and-host-mirror-resync-gate.json` - authored Packet 085 authority-publication and host-mirror resync gate for Packet 083 closeout authority and Packet 084 readiness verdict authority.
 
 ## 6. Testing
 
@@ -457,6 +461,9 @@ Approved next-step rule:
 - **RISK-082**: Packet 080 publishes authority only; treating clean host parity at `06729d6443c1e2907f3c417841897d82aa3206b5` as simultaneous-worker execution approval would bypass the required post-080 branch decision and planning packet.
 - **RISK-083**: Packet 081 selecting Branch P is planning-only; treating the branch choice as execution authority would skip exact ownership, conflict, validation, and publication rules.
 - **RISK-084**: Packet 082 conditionally makes a later simultaneous-worker execution packet authorable only after planning authority publication; any later worker needing shared app root, static-surfaces validation, package, lockfile, runtime, service, install, or old-clone mutation must abort rather than widen in place.
+- **RISK-085**: Packet 083 publishes planning authority only; treating host parity after Packet 083 as execution approval would bypass the required post-publication readiness verdict.
+- **RISK-086**: Packet 084 makes a later simultaneous-worker execution packet authorable only if exact ownership and abort rules are preserved; it must not be read as permission to start workers in the current tranche.
+- **RISK-087**: Packet 085 is an authority-publication gate only; treating publication of Packet 084 readiness authority as execution approval would bypass the required post-085 execution-opening or defer/no-go decision packet.
 - **ASSUMPTION-001**: The restored 2026-05-01 handoff plus the surviving 2026-04-25 scope/blocker handoffs remain the correct evidence floor unless later regression evidence supersedes them.
 - **ASSUMPTION-002**: The 2026-05-01 private-lane runtime, tunnel access, backup, restore, and status proof remain valid unless later host or access regression evidence supersedes them.
 - **ASSUMPTION-003**: Broader platform execution remains the primary repo frontier, so Olares follow-on work stays subordinate unless new host scope is explicitly approved.
@@ -548,6 +555,9 @@ Approved next-step rule:
 - **ASSUMPTION-089**: Packet 080 closes by publishing Packet 078 and Packet 079 closeout authority in commit `06729d6443c1e2907f3c417841897d82aa3206b5` and restoring `/home/olares/code/apex` clean parity; the smallest truthful next packet is Packet 081 post-080 branch decision, not execution.
 - **ASSUMPTION-090**: Packet 081 closes by selecting Branch P as planning-only disjoint-scope simultaneous-worker planning; the smallest truthful next packet is Packet 082 bounded planning, not source/test execution.
 - **ASSUMPTION-091**: Packet 082 closes by defining exact apparatus, relay, and coordinator ownership plus non-overlap and abort rules; Packet 083 authority publication and host-mirror resync is required before any later readiness verdict can depend on that planning authority.
+- **ASSUMPTION-092**: Packet 083 closes by publishing Packet 080 through Packet 082 planning authority in commit `adf4994df0b1504d995776dcb5be64220cc16d6b` and restoring `/home/olares/code/apex` clean parity; the smallest truthful next packet is Packet 084 post-publication readiness verdict, not execution.
+- **ASSUMPTION-093**: Packet 084 closes with verdict `conditional_ready_to_author_later_explicit_simultaneous_worker_execution_packet`; actual simultaneous-worker execution remains closed until a later explicit execution packet is authored and opened.
+- **ASSUMPTION-094**: Packet 085 should publish Packet 083 closeout authority and Packet 084 readiness verdict authority, restore `/home/olares/code/apex` clean parity, and then require a separate post-085 execution-opening or defer/no-go decision before any simultaneous-worker pilot can open.
 
 ## 8. Related Specifications / Further Reading
 
