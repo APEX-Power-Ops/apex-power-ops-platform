@@ -1,0 +1,67 @@
+{
+  "packet_id": "2026-05-03-olares-phase-5-062",
+  "title": "Packet 060 And Packet 061 Authority Publication And Host Mirror Resync Gate",
+  "objective": "Publish Packet 060 closeout authority and Packet 061 decision authority through the parent-root boundary, then resynchronize `/home/olares/code/apex` to the resulting commit without opening source/test execution or approving migration.",
+  "domain": "infrastructure-domain",
+  "active_role": "Olares Authority Publication And Host Mirror Resync Operator",
+  "dependencies": [
+    "ops/agents/packets/draft/2026-05-03-olares-phase-5-060-packet-058-and-packet-059-authority-publication-and-host-mirror-resync-gate.json",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-060-packet-058-and-packet-059-authority-publication-and-host-mirror-resync-gate-handoff.md",
+    "ops/agents/packets/draft/2026-05-03-olares-phase-5-061-post-060-one-mutation-worker-pilot-decision.json",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-061-post-060-one-mutation-worker-pilot-decision-handoff.md",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-next-task-and-prompt-routing-handoff.md",
+    "plan/infrastructure-olares-full-implementation-roadmap-1.md"
+  ],
+  "dependency_note": "Packet 060 published Packet 058 and Packet 059 authority in commit `500f2d21bcb2be542e37e66121fdd0d04e4b7639`. Packet 061 selected a later one-mutation-worker pilot under Packet 059 guardrails, but did not open source/test execution.",
+  "required_inputs": [
+    "Current parent-root status at `C:/APEX Platform`",
+    "Packet 060 JSON closure state and publication handoff",
+    "Packet 061 decision JSON and handoff",
+    "Current routing handoff and roadmap state",
+    "Current `/home/olares/code/apex` branch, commit, remote, and cleanliness at `500f2d21bcb2be542e37e66121fdd0d04e4b7639`",
+    "Current `/home/olares/src/apex-power-ops-platform` branch, commit, and status count"
+  ],
+  "constrained_outputs": [
+    "A bounded parent-root publication commit and push containing only Packet 060 closeout authority, Packet 061 decision authority, Packet 062 draft authority, routing, and roadmap updates needed for this gate",
+    "A host mirror resync record proving `/home/olares/code/apex` reached clean parity with the published commit by non-destructive fast-forward only",
+    "A publication and host-mirror resync handoff recording staged scope, commit hash, push result, host pre/post state, excluded drift, and the single next packet candidate"
+  ],
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "C:/APEX Platform/apex-power-ops-platform/plan",
+    "/home/olares/code/apex"
+  ],
+  "validation_steps": [
+    "Reconfirm parent-root status and distinguish Packet 060/061 closure authority from unrelated `.vercelignore`, older Packet 039 drift, Packet 057 post-publication closure drift, and any unrelated local authority drift.",
+    "Reconfirm source files, package files, and lockfiles remain clean and outside publication scope.",
+    "Reconfirm `/home/olares/code/apex` is clean at `500f2d21bcb2be542e37e66121fdd0d04e4b7639` before publication.",
+    "Reconfirm `/home/olares/src/apex-power-ops-platform` branch, commit, and status count without mutation.",
+    "Stage only Packet 060 closeout authority, Packet 061 decision authority, Packet 062 draft authority, routing, and roadmap updates required by this gate.",
+    "Run `git diff --cached --check` and inspect staged path scope before committing.",
+    "Commit and push the bounded authority publication only if staged scope is exact.",
+    "Fast-forward `/home/olares/code/apex` to the published commit only if it can be done non-destructively.",
+    "Do not author or execute any pilot execution packet inside Packet 062."
+  ],
+  "preserved_boundaries": [
+    "Packet 061 selected only a later pilot and did not open an execution lane.",
+    "No source/test execution opens in Packet 062.",
+    "No pilot execution packet is authored or executed inside Packet 062.",
+    "The only safe pilot shape remains one coordinator-owned governance/publication lane plus at most one mutation worker.",
+    "`apps/operations-web/tests/browser-shell.smoke.spec.ts` remains shared-risk and single-owner, blocking simultaneous multi-worker mutation.",
+    "No migration, runtime/service mutation, package/lockfile mutation, AI-services expansion, Gitea/code-hosting transition, canonical-hosting transition, remote rewrite, rollback, force/reset/clean, or old-clone mutation is authorized."
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "draft",
+  "output_artifacts": [],
+  "implementation_ready_candidate": false,
+  "sql_permission": false,
+  "sql_permission_note": "This packet authorizes no database writes and no source edits, source/test execution, migration, runtime/service mutation, package mutation, lockfile mutation, install, package-manager activation/download, remote rewrite, AI-services expansion, Gitea/code-hosting transition, canonical-hosting transition, rollback, force/reset/clean, or old-clone mutation. It authorizes only bounded authority publication and non-destructive `/home/olares/code/apex` mirror resync.",
+  "landing_lane": "olares_phase_5_packet_060_and_packet_061_authority_publication_and_host_mirror_resync_gate",
+  "migration_strategy": "publish_packet_060_and_packet_061_authority_and_restore_host_mirror_parity_before_any_later_execution_packet",
+  "created_at": "2026-05-04",
+  "updated_at": "2026-05-04",
+  "delegation_status": "draft",
+  "validation_disposition": "pending-publication-and-host-mirror-resync",
+  "next_action": "Execute this publication and host-mirror resync gate only; any later one-mutation-worker source/test pilot must be separately authored and explicitly opened after this packet closes cleanly."
+}

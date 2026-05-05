@@ -1,0 +1,62 @@
+{
+  "packet_id": "2026-05-03-olares-phase-5-061",
+  "title": "Post-060 One Mutation Worker Pilot Decision",
+  "objective": "Decide whether Olares Phase 5 may open a later one-mutation-worker pilot under Packet 059 guardrails after Packet 060 published the planning authority, without executing source/test work or approving migration.",
+  "domain": "infrastructure-domain",
+  "active_role": "Olares Parallel Pilot Decision Operator",
+  "dependencies": [
+    "ops/agents/packets/draft/2026-05-03-olares-phase-5-060-packet-058-and-packet-059-authority-publication-and-host-mirror-resync-gate.json",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-060-packet-058-and-packet-059-authority-publication-and-host-mirror-resync-gate-handoff.md",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-059-bounded-parallel-work-governance-and-disjoint-scope-planning-handoff.md",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-next-task-and-prompt-routing-handoff.md",
+    "plan/infrastructure-olares-full-implementation-roadmap-1.md"
+  ],
+  "dependency_note": "Packet 060 published Packet 058 and Packet 059 authority in commit `500f2d21bcb2be542e37e66121fdd0d04e4b7639` and restored `/home/olares/code/apex` to clean parity, but did not authorize parallel source/test execution.",
+  "required_inputs": [
+    "Packet 060 JSON closure state",
+    "Packet 060 publication and host-mirror resync handoff",
+    "Packet 059 governance and disjoint-scope planning handoff",
+    "Current routing body and roadmap closeout state"
+  ],
+  "decision_options": [
+    "open_later_one_mutation_worker_pilot_under_packet_059_guardrails",
+    "defer_parallel_execution",
+    "restate_authority_before_execution"
+  ],
+  "selected_decision": "open_later_one_mutation_worker_pilot_under_packet_059_guardrails",
+  "decision_summary": "Packet 061 selects opening a later one-mutation-worker pilot under Packet 059 guardrails, but does not itself open source/test execution. The next packet must publish Packet 060 closeout and Packet 061 decision authority, then restore `/home/olares/code/apex` to clean parity before any execution packet depends on this decision.",
+  "constrained_outputs": [
+    "A decision-only packet and handoff selecting a later one-mutation-worker pilot under Packet 059 guardrails",
+    "Routing and roadmap updates that preserve Packet 060 publication as planning authority only",
+    "A single next packet candidate for authority publication and host-mirror resync before any later execution packet"
+  ],
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "C:/APEX Platform/apex-power-ops-platform/plan"
+  ],
+  "validation_steps": [
+    "Confirm Packet 060 is complete and publication commit `500f2d21bcb2be542e37e66121fdd0d04e4b7639` is the current authority boundary.",
+    "Confirm Packet 059 permits at most one mutation worker plus one coordinator-owned governance/publication lane.",
+    "Confirm `apps/operations-web/tests/browser-shell.smoke.spec.ts` remains a shared-risk surface blocking simultaneous multi-worker source/test mutation.",
+    "Confirm Packet 061 does not authorize source/test execution, migration, runtime/service mutation, package or lockfile mutation, AI-services expansion, Gitea/code-hosting transition, canonical-hosting transition, remote rewrite, rollback, force/reset/clean, or old-clone mutation.",
+    "Run JSON parse and diff-hygiene validation on the touched authority files."
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-061-post-060-one-mutation-worker-pilot-decision-handoff.md"
+  ],
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-061-post-060-one-mutation-worker-pilot-decision-handoff.md",
+  "implementation_ready_candidate": false,
+  "sql_permission": false,
+  "sql_permission_note": "This packet authorizes no database writes and no source edits, host mutation, publication, migration, runtime/service mutation, package mutation, lockfile mutation, install, package-manager activation/download, remote rewrite, AI-services expansion, Gitea/code-hosting transition, canonical-hosting transition, rollback, force/reset/clean, or old-clone mutation.",
+  "landing_lane": "olares_phase_5_post_060_one_mutation_worker_pilot_decision",
+  "migration_strategy": "decision_only_select_later_one_mutation_worker_pilot_after_authority_publication",
+  "created_at": "2026-05-04",
+  "updated_at": "2026-05-04",
+  "delegation_status": "complete",
+  "validation_disposition": "complete-decision-only",
+  "closure_note": "Executed 2026-05-04. Packet 061 selected opening a later one-mutation-worker pilot under Packet 059 guardrails, while keeping actual source/test execution closed. Packet 061 preserves Packet 060 as planning-authority publication only, keeps `apps/operations-web/tests/browser-shell.smoke.spec.ts` single-owner/shared-risk, excludes `.vercelignore`, older Packet 039 drift, Packet 057 post-publication closure drift, and Packet 060 closeout drift from execution scope unless later packetized, and keeps migration, runtime/service, package/lockfile, AI-services, Gitea/code-hosting, canonical-hosting, remote rewrite, rollback, force/reset/clean, and old-clone mutation closed.",
+  "next_action": "Open only Packet 062 as a bounded Packet 060 and Packet 061 authority publication and host-mirror resync gate before any later one-mutation-worker execution packet is authored or executed."
+}
