@@ -1,0 +1,60 @@
+{
+  "packet_id": "2026-05-03-olares-phase-5-053",
+  "title": "Bounded Host-Side Relay Search Criteria Reset Source/Test Trial Execution",
+  "objective": "Execute only the Packet 047-selected operations-web relay search criteria reset source/test slice from `/home/olares/code/apex/apex-power-ops-platform`, leaving the resulting host artifact uncommitted and unpublished for a later validation or publication decision.",
+  "domain": "infrastructure-domain",
+  "active_role": "Olares Bounded Host Source Trial Operator",
+  "dependencies": [
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-052-packet-050-and-packet-051-authority-plus-execution-packet-publication-gate-handoff.md",
+    "ops/agents/packets/draft/2026-05-03-olares-phase-5-052-packet-050-and-packet-051-authority-plus-execution-packet-publication-gate.json",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-051-post-050-relay-search-reset-execution-readiness-decision-handoff.md",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-047-post-046-bounded-source-test-trial-planning-handoff.md",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-next-task-and-prompt-routing-handoff.md",
+    "plan/infrastructure-olares-full-implementation-roadmap-1.md"
+  ],
+  "dependency_note": "Packet 052 must publish and synchronize this Packet 053 execution authority to `/home/olares/code/apex` before Packet 053 executes.",
+  "required_inputs": [
+    "Clean `/home/olares/code/apex` at the Packet 052 published commit",
+    "Authority presence for Packet 050 through Packet 053 on `/home/olares/code/apex`",
+    "Current old-clone branch, commit, and status count at `/home/olares/src/apex-power-ops-platform`",
+    "Current source files `apps/operations-web/app/relay-resource-explorer.tsx` and `apps/operations-web/tests/browser-shell.smoke.spec.ts`"
+  ],
+  "constrained_outputs": [
+    "A host-side execution handoff recording pre-state, exact file diff scope, validation attempts, host diff hygiene, diff hash, skipped validation rationale if host dependencies remain unavailable, old-clone preservation, and next validation/publication decision candidate",
+    "No commit, no push, no parent-root publication, no package or lockfile mutation, no dependency install, no package-manager activation/download, no runtime mutation, no service mutation, no remote rewrite, no force/reset/clean, no AI-services expansion, no Gitea/code-hosting transition, no canonical-hosting transition, no migration approval, and no old-clone mutation"
+  ],
+  "write_scope": [
+    "/home/olares/code/apex/apex-power-ops-platform/apps/operations-web/app/relay-resource-explorer.tsx",
+    "/home/olares/code/apex/apex-power-ops-platform/apps/operations-web/tests/browser-shell.smoke.spec.ts",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "validation_steps": [
+    "Confirm `/home/olares/code/apex` is on `clean-main`, clean, and at the Packet 052 published commit before editing.",
+    "Confirm Packet 050 through Packet 053 authority artifacts are present on the host mirror.",
+    "Confirm `/home/olares/src/apex-power-ops-platform` branch, commit, and status count without mutation.",
+    "Edit only `apps/operations-web/app/relay-resource-explorer.tsx` and `apps/operations-web/tests/browser-shell.smoke.spec.ts` on the prepared host mirror.",
+    "Add a bounded relay search reset control near the relay search criteria.",
+    "Reset the relay query to `SEL`, reset current multiples to `2, 5, 10`, clear relay error state, clear stale section search results, and clear loaded primary and compare relay selections.",
+    "Add a focused browser-smoke assertion proving the reset restores search defaults, hides stale validation/error text, removes stale relay selection panels, and does not issue extra governed backend calls merely by resetting.",
+    "Run path-scoped `git diff --check` on the host for the two edited files.",
+    "Attempt no-install host validation only if existing host dependencies and package-manager commands are already available; otherwise record the exact blocker and stop.",
+    "Do not commit or publish the host source artifact."
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "authored",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-053-bounded-host-side-relay-search-criteria-reset-source-test-trial-execution-handoff.md"
+  ],
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-053-bounded-host-side-relay-search-criteria-reset-source-test-trial-execution-handoff.md",
+  "implementation_ready_candidate": false,
+  "sql_permission": false,
+  "sql_permission_note": "This packet authorizes no database writes and no runtime, service, package, lockfile, install, remote rewrite, AI-services, Gitea, canonical-hosting, migration, force/reset/clean, commit, push, publication, or old-clone mutation. It authorizes only the bounded two-file host-side source/test trial artifact.",
+  "landing_lane": "olares_phase_5_bounded_relay_search_criteria_reset_source_trial",
+  "migration_strategy": "execute_one_bounded_host_source_test_trial_without_publication_or_migration_approval",
+  "created_at": "2026-05-04",
+  "updated_at": "2026-05-04",
+  "delegation_status": "authored",
+  "validation_disposition": "pending-execution",
+  "closure_note": "Not yet executed. Packet 053 may execute only after Packet 052 publishes and synchronizes this execution authority to the prepared host mirror.",
+  "next_action": "Execute only as a bounded host-side two-file source/test trial after Packet 052 publication/resync. Do not commit, push, publish, approve migration, mutate runtime or services, mutate packages or lockfiles, install dependencies, rewrite remotes, force/reset/clean, expand AI-services, change Gitea/code-hosting, change canonical-hosting, or mutate `/home/olares/src/apex-power-ops-platform`."
+}
