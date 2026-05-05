@@ -1,0 +1,66 @@
+{
+  "packet_id": "2026-05-03-olares-phase-5-092",
+  "title": "Simultaneous Worker Trigger Framework And Dormancy Planning",
+  "objective": "Define the planning-only trigger framework and dormancy posture for reopening later paired apparatus/relay objective selection after Packet 090 found no current real paired objective set.",
+  "domain": "infrastructure-domain",
+  "active_role": "Olares Governance Planning Operator",
+  "dependencies": [
+    "ops/agents/packets/draft/2026-05-03-olares-phase-5-090-read-only-paired-apparatus-relay-objective-discovery-and-selection-decision.json",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-090-read-only-paired-apparatus-relay-objective-discovery-and-selection-decision-handoff.md",
+    "ops/agents/packets/draft/2026-05-03-olares-phase-5-091-packet-089-and-packet-090-authority-publication-and-host-mirror-resync-gate.json",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-091-packet-089-and-packet-090-authority-publication-and-host-mirror-resync-gate-handoff.md",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-next-task-and-prompt-routing-handoff.md",
+    "plan/infrastructure-olares-full-implementation-roadmap-1.md"
+  ],
+  "branch_selected": "branch_g_trigger_framework_and_dormancy_planning_lane",
+  "decision": "define_trigger_framework_and_publish_before_post_publication_dormancy_verdict",
+  "planning_mode": "planning_only",
+  "admissible_future_trigger_sources": [
+    "A newly reported bounded defect in apparatus-owned and relay-owned surfaces, with concrete evidence for both sides and no coordinator-owned file requirement.",
+    "A newly failing owned apparatus or relay smoke test that independently identifies bounded work inside the published worker-owned files.",
+    "A later packetized one-worker outcome that creates a real paired follow-on objective on both apparatus-owned and relay-owned surfaces without shared-file overlap.",
+    "A newly authored bounded requirement that independently lands inside apparatus-owned and relay-owned files and does not require static-surfaces validation, app-wide layout/style/config, package files, lockfiles, runtime, service, install, or old-clone mutation.",
+    "A documented call-site mismatch inside the published worker-owned source/helper surfaces that can be cited by path and does not require mutating shared fixtures or coordinator-owned files."
+  ],
+  "inadmissible_future_trigger_sources": [
+    "Re-running the Packet 090 read-only discovery over the same owned surfaces with no new repo evidence.",
+    "Selecting work whose purpose is only to exercise simultaneous-worker machinery.",
+    "Cosmetic churn, naming churn, or test assertion rearrangement without a repository-evidenced defect or bounded requirement.",
+    "Any objective requiring mutation of shared `browser-env`, static-surfaces validation, app-wide layout, global style, Playwright config, Next config, package files, lockfiles, installs, runtime, services, remotes, rollback/force/reset/clean, or old clone.",
+    "Any objective requiring a change to Packet 082 ownership or Packet 084 abort rules without a separate planning packet.",
+    "Any objective where both workers need the same file or where one worker needs another worker-owned file."
+  ],
+  "reopen_criteria_for_later_paired_objective_selection": [
+    "The future packet must cite new evidence created or discovered after Packet 090.",
+    "The evidence must identify one bounded apparatus objective and one bounded relay objective.",
+    "Each objective must map entirely to the published Packet 082 worker-owned files.",
+    "The future packet must prove no coordinator-owned file, package/lockfile, runtime/service, install, remote, rollback, force/reset/clean, old-clone, or shared-fixture mutation is needed.",
+    "The future packet must restate the exact changed-file ownership and abort conditions before any execution-opening decision.",
+    "The future packet must select paired objectives before any explicit simultaneous-worker execution packet can open."
+  ],
+  "evidence_floor": [
+    "Exact file paths and line-level or test-level evidence for the apparatus side.",
+    "Exact file paths and line-level or test-level evidence for the relay side.",
+    "A statement explaining why the pair is real work rather than synthetic machinery exercise.",
+    "A non-overlap proof against Packet 082 ownership and Packet 084 abort rules.",
+    "A validation plan that includes coordinator-owned static-surfaces validation without assigning it to either worker."
+  ],
+  "lane_state_after_planning": "dormant_until_trigger_authorable_only_with_new_evidence",
+  "publication_required_before_verdict": true,
+  "next_packet_candidate": "Olares Phase 5 093 - Packet 091 And Packet 092 Authority Publication And Host Mirror Resync Gate",
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-092-simultaneous-worker-trigger-framework-and-dormancy-planning-handoff.md"
+  ],
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-092-simultaneous-worker-trigger-framework-and-dormancy-planning-handoff.md",
+  "implementation_ready_candidate": false,
+  "sql_permission": false,
+  "sql_permission_note": "This planning packet authorizes no database writes and no source/test execution, simultaneous multi-worker mutation, paired-objective selection, migration approval, runtime mutation, service mutation, package mutation, lockfile mutation, install, package-manager activation/download, remote rewrite, AI-services expansion, Gitea/code-hosting transition, canonical-hosting transition, rollback, force/reset/clean, or old-clone mutation.",
+  "landing_lane": "olares_phase_5_simultaneous_worker_trigger_framework",
+  "migration_strategy": "define_reopen_triggers_without_approving_migration_or_execution",
+  "created_at": "2026-05-05",
+  "updated_at": "2026-05-05",
+  "delegation_status": "complete",
+  "validation_disposition": "complete-planning-only"
+}
