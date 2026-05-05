@@ -1,0 +1,57 @@
+{
+  "packet_id": "2026-05-03-olares-phase-5-047",
+  "title": "Post-046 Bounded Source/Test Trial Planning",
+  "objective": "Plan exactly one next bounded source/test trial candidate after Packet 046 restored published authority parity, without executing source edits or treating authority publication as migration approval.",
+  "domain": "infrastructure-domain",
+  "active_role": "Olares Bounded Source/Test Trial Planning Operator",
+  "dependencies": [
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-046-packet-044-and-packet-045-authority-publication-and-host-mirror-resync-gate-handoff.md",
+    "ops/agents/packets/draft/2026-05-03-olares-phase-5-046-packet-044-and-packet-045-authority-publication-and-host-mirror-resync-gate.json",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-045-post-044-workstation-migration-readiness-reassessment-handoff.md",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-next-task-and-prompt-routing-handoff.md",
+    "plan/infrastructure-olares-full-implementation-roadmap-1.md"
+  ],
+  "dependency_note": "Packet 046 published Packet 044 and Packet 045 authority in commit `35d808ae3ef359e4e75544ddbd81ee2f8e3cef9e` and fast-forwarded `/home/olares/code/apex` to clean parity at that commit, but did not approve migration or immediate execution.",
+  "required_inputs": [
+    "Current parent-root status at `C:/APEX Platform`",
+    "Current `/home/olares/code/apex` branch, commit, remote, and cleanliness",
+    "Packet 045 readiness conclusion",
+    "Packet 046 publication and host-mirror resync evidence",
+    "Current old-clone branch, commit, and status count at `/home/olares/src/apex-power-ops-platform`"
+  ],
+  "constrained_outputs": [
+    "A planning handoff selecting exactly one bounded source/test trial candidate or explicitly deferring trial selection",
+    "A clear statement that Packet 047 does not authorize source edits, host-side execution, publication, host reconciliation, package mutation, runtime/service mutation, migration, AI-services expansion, Gitea/code-hosting transition, canonical-hosting transition, remote rewrite, force/reset/clean, rollback, or old-clone mutation",
+    "If a candidate is selected, a separately authored next execution packet may be prepared but must remain unexecuted"
+  ],
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "C:/APEX Platform/apex-power-ops-platform/plan"
+  ],
+  "validation_steps": [
+    "Reconfirm parent-root status and distinguish Packet 046 closure drift from unrelated `.vercelignore` and older Packet 039 drift.",
+    "Reconfirm `/home/olares/code/apex` remains clean at `35d808ae3ef359e4e75544ddbd81ee2f8e3cef9e`.",
+    "Reconfirm `/home/olares/src/apex-power-ops-platform` branch, commit, and status count without mutation.",
+    "Review the last two production-source trial slices and choose at most one next bounded source/test candidate with explicit file scope and validation expectations.",
+    "Keep migration approval and immediate execution closed."
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-047-post-046-bounded-source-test-trial-planning-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-03-olares-phase-5-048-packet-046-and-packet-047-authority-publication-and-host-mirror-resync-gate.json"
+  ],
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-047-post-046-bounded-source-test-trial-planning-handoff.md",
+  "implementation_ready_candidate": false,
+  "sql_permission": false,
+  "sql_permission_note": "This packet authorizes no database writes and no source edits, host-side execution, publication, host reconciliation, runtime mutation, service mutation, package mutation, lockfile mutation, install, package-manager activation/download, remote rewrite, AI-services expansion, Gitea/code-hosting transition, canonical-hosting transition, migration approval, force/reset/clean, rollback, or old-clone mutation. It authorizes only bounded planning and authority updates.",
+  "landing_lane": "olares_phase_5_post_046_bounded_source_test_trial_planning",
+  "migration_strategy": "plan_one_later_bounded_trial_after_authority_parity_without_approving_migration",
+  "created_at": "2026-05-04",
+  "updated_at": "2026-05-04",
+  "delegation_status": "complete",
+  "validation_disposition": "complete-planning-only-pass",
+  "closure_note": "Executed 2026-05-04. Packet 047 reconfirmed `/home/olares/code/apex` clean at `35d808ae3ef359e4e75544ddbd81ee2f8e3cef9e`, observed `/home/olares/src/apex-power-ops-platform` unchanged at `2836a2622309b4e146ca24f23b5bf87312c0c857` with `status_count=30`, reviewed the Packet 031 relay selection reset and Packet 040 apparatus clear-state source/test trials, and selected exactly one later bounded candidate: relay search criteria reset in `apps/operations-web/app/relay-resource-explorer.tsx` plus `apps/operations-web/tests/browser-shell.smoke.spec.ts`. Packet 047 did not execute source edits, host-side changes, publication, host reconciliation, migration, runtime/service mutation, package or lockfile mutation, AI-services expansion, Gitea/code-hosting transition, canonical-hosting transition, remote rewrite, force/reset/clean, rollback, or old-clone mutation.",
+  "next_action": "Open only Packet 048 authority publication and host-mirror resync for Packet 046 and Packet 047 closure authority before any later relay search reset execution packet. Do not approve migration or execute source edits."
+}
