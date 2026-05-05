@@ -1,0 +1,91 @@
+{
+  "packet_id": "2026-05-03-olares-phase-5-063",
+  "title": "Bounded One-Mutation-Worker Pilot Source/Test Execution",
+  "objective": "Open and execute exactly one bounded one-mutation-worker source/test pilot under Packet 059 guardrails, leaving publication and host reconciliation to later separate packets.",
+  "domain": "infrastructure-domain",
+  "active_role": "Olares One Mutation Worker Pilot Operator",
+  "dependencies": [
+    "ops/agents/packets/draft/2026-05-03-olares-phase-5-059-bounded-parallel-work-governance-and-disjoint-scope-planning.json",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-059-bounded-parallel-work-governance-and-disjoint-scope-planning-handoff.md",
+    "ops/agents/packets/draft/2026-05-03-olares-phase-5-061-post-060-one-mutation-worker-pilot-decision.json",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-061-post-060-one-mutation-worker-pilot-decision-handoff.md",
+    "ops/agents/packets/draft/2026-05-03-olares-phase-5-062-packet-060-and-packet-061-authority-publication-and-host-mirror-resync-gate.json",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-062-packet-060-and-packet-061-authority-publication-and-host-mirror-resync-gate-handoff.md",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-next-task-and-prompt-routing-handoff.md",
+    "plan/infrastructure-olares-full-implementation-roadmap-1.md"
+  ],
+  "dependency_note": "Packet 062 published the Packet 061 one-mutation-worker pilot decision in commit `356dcfc32783765af27f2d70fbdd91b65d3129bb` and restored `/home/olares/code/apex` to clean parity, but did not open execution.",
+  "selected_mutation_worker": "one_host_side_mutation_worker",
+  "coordinator_lane": {
+    "owner": "coordinator",
+    "owned_surfaces": [
+      "ops/agents/handoffs/**",
+      "ops/agents/packets/draft/**",
+      "plan/infrastructure-olares-full-implementation-roadmap-1.md",
+      "publication and host reconciliation decisions after this packet"
+    ],
+    "mutation_permission": "authority_files_only"
+  },
+  "mutation_slice": {
+    "owner": "one_host_side_mutation_worker",
+    "name": "relay_search_blank_input_guard_source_test_slice",
+    "host_root": "/home/olares/code/apex/apex-power-ops-platform",
+    "files": [
+      "apps/operations-web/app/relay-resource-explorer.tsx",
+      "apps/operations-web/tests/browser-shell.smoke.spec.ts"
+    ],
+    "shared_risk_note": "`apps/operations-web/tests/browser-shell.smoke.spec.ts` is sole-owned by the one mutation worker for Packet 063. No second worker or overlapping slice may touch it during this packet."
+  },
+  "constrained_outputs": [
+    "One host-side source/test artifact limited to the selected two-file relay search blank-input guard slice",
+    "A Packet 063 handoff recording exact file scope, validation, blockers if any, unpublished artifact status, and the single next packet",
+    "Routing and roadmap updates only to record Packet 063 closeout and name the next separate packet"
+  ],
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "C:/APEX Platform/apex-power-ops-platform/plan",
+    "/home/olares/code/apex/apex-power-ops-platform/apps/operations-web/app/relay-resource-explorer.tsx",
+    "/home/olares/code/apex/apex-power-ops-platform/apps/operations-web/tests/browser-shell.smoke.spec.ts"
+  ],
+  "validation_steps": [
+    "Confirm `/home/olares/code/apex` starts clean at `356dcfc32783765af27f2d70fbdd91b65d3129bb`.",
+    "Confirm `/home/olares/src/apex-power-ops-platform` branch, commit, and status count without mutation.",
+    "Apply only the two-file relay search blank-input guard source/test slice.",
+    "Run `git diff --check` on the exact owned source/test slice.",
+    "Confirm no package or lockfile drift.",
+    "Run existing no-install validation available on the host for the owned slice.",
+    "Record any executable validation blocker exactly and stop at unpublished trial-artifact state.",
+    "Do not publish, push, reconcile `/home/olares/code/apex`, author a second worker lane, mutate runtime/services, mutate packages/lockfiles, install, rewrite remotes, roll back, force/reset/clean, or mutate `/home/olares/src/apex-power-ops-platform`."
+  ],
+  "preserved_boundaries": [
+    "Packet 062 publication is authority publication only, not publication of an execution artifact.",
+    "The pilot is bounded to one mutation worker under Packet 059 guardrails.",
+    "No second worker lane is opened.",
+    "Migration remains closed.",
+    "Runtime/service mutation remains closed.",
+    "Package/lockfile mutation remains closed.",
+    "AI-services expansion remains closed.",
+    "Gitea/code-hosting transition remains closed.",
+    "Canonical-hosting transition remains closed.",
+    "Remote rewrite, rollback, force/reset/clean remain closed.",
+    "`/home/olares/src/apex-power-ops-platform` remains observe-only and unchanged."
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-063-bounded-one-mutation-worker-pilot-source-test-execution-handoff.md"
+  ],
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-063-bounded-one-mutation-worker-pilot-source-test-execution-handoff.md",
+  "implementation_ready_candidate": false,
+  "sql_permission": false,
+  "sql_permission_note": "This packet authorizes no database writes and no migration, runtime/service mutation, package mutation, lockfile mutation, install, package-manager activation/download, publication, host reconciliation, remote rewrite, AI-services expansion, Gitea/code-hosting transition, canonical-hosting transition, rollback, force/reset/clean, or old-clone mutation.",
+  "landing_lane": "olares_phase_5_one_mutation_worker_pilot_source_test_execution",
+  "migration_strategy": "execute_one_unpublished_source_test_slice_under_packet_059_guardrails",
+  "created_at": "2026-05-05",
+  "updated_at": "2026-05-05",
+  "delegation_status": "complete",
+  "validation_disposition": "complete-bounded-artifact-with-executable-validation-blocked",
+  "closure_note": "Executed 2026-05-05. Packet 063 opened exactly one mutation worker and executed exactly one host-side source/test slice on `/home/olares/code/apex/apex-power-ops-platform`: `apps/operations-web/app/relay-resource-explorer.tsx` and `apps/operations-web/tests/browser-shell.smoke.spec.ts`. The slice adds a blank relay-search guard that trims the query before backend fetch and proves no relay section request fires for whitespace-only input. The shared smoke file was sole-owned by the one mutation worker for this packet. Host diff scope was exactly two files, package and lockfile paths stayed clean, `git diff --check` passed, and diff SHA-256 was `36aa41ad9a0997c7c8fd909080113ca8169b26758fe17537475d5cc461ca2844`. Executable validation did not fully run because the host has no `pnpm`, no `node_modules`, no local/global `tsc`, and no local/global Playwright executable; `npx --no-install` canceled rather than downloading. The artifact remains uncommitted and unpublished on `/home/olares/code/apex` with status count 2. `/home/olares/src/apex-power-ops-platform` was observed only and remained at `2836a2622309b4e146ca24f23b5bf87312c0c857` with status count 30.",
+  "next_action": "Open only Packet 064 as a post-063 validation path decision packet. Packet 063 does not authorize publication, host reconciliation, migration, package/toolchain repair, runtime/service mutation, AI-services expansion, Gitea/code-hosting transition, canonical-hosting transition, remote rewrite, rollback, force/reset/clean, old-clone mutation, a second mutation worker, or any wider execution lane."
+}

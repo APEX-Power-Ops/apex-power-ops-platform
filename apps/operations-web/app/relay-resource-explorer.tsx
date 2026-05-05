@@ -138,15 +138,24 @@ export function RelayResourceExplorer() {
   async function handleSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
-    setIsSearching(true)
+    const normalizedQuery = query.trim()
+
     setErrorMessage(null)
     setPrimarySectionId('')
     setCompareSectionId('')
     setPrimarySelection(null)
     setCompareSelection(null)
 
+    if (!normalizedQuery) {
+      setSections(null)
+      setErrorMessage('Enter a relay search term before searching governed relay sections.')
+      return
+    }
+
+    setIsSearching(true)
+
     try {
-      const searchResponse = await fetchRelaySections(query)
+      const searchResponse = await fetchRelaySections(normalizedQuery)
       setSections(searchResponse)
     } catch (error) {
       setSections(null)
