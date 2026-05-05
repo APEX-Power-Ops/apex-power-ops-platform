@@ -433,6 +433,28 @@ test('relay browser requires explicit selection before loading bounded compare d
   expect(relayContextRequests).toBe(2)
   expect(relaySettingsRequests).toBe(2)
   expect(relayPlotRequests).toBe(1)
+
+  await page.getByLabel('Primary TD-section').selectOption('101')
+  await page.getByLabel('Compare TD-section').selectOption('202')
+  await page.getByLabel('Relay search').fill('GE')
+  await page.getByLabel('Preview multiples').fill('bad')
+  await page.getByRole('button', { name: 'Load Selected Sections' }).click()
+  await expect(page.getByText('Enter relay current multiples greater than 1, separated by commas.')).toBeVisible()
+
+  await page.getByRole('button', { name: 'Reset Relay Search' }).click()
+  await expect(page.getByLabel('Relay search')).toHaveValue('SEL')
+  await expect(page.getByLabel('Preview multiples')).toHaveValue('2, 5, 10')
+  await expect(page.getByText('Enter relay current multiples greater than 1, separated by commas.')).toHaveCount(0)
+  await expect(page.locator('.relay-selection-panel')).toHaveCount(0)
+  await expect(primaryDetail).toBeHidden()
+  await expect(
+    page.getByText('Search the governed relay catalog to choose one TD-section, then optionally add one compare section before loading any read-only relay context, settings, or preview data.'),
+  ).toBeVisible()
+  await expect(page.getByLabel('Primary TD-section')).toHaveCount(0)
+
+  expect(relayContextRequests).toBe(2)
+  expect(relaySettingsRequests).toBe(2)
+  expect(relayPlotRequests).toBe(1)
 })
 
 test('re-homed browser surfaces render their expected headings in a real browser', async ({ page }) => {

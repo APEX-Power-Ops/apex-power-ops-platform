@@ -228,6 +228,17 @@ export function RelayResourceExplorer() {
     setCompareSelection(null)
   }
 
+  function handleResetSearchCriteria() {
+    setQuery('SEL')
+    setCurrentMultiplesInput(defaultCurrentMultiples)
+    setErrorMessage(null)
+    setSections(null)
+    setPrimarySectionId('')
+    setCompareSectionId('')
+    setPrimarySelection(null)
+    setCompareSelection(null)
+  }
+
   const hasSelectionState = Boolean(primarySectionId || compareSectionId || primarySelection || compareSelection)
 
   return (
@@ -274,6 +285,9 @@ export function RelayResourceExplorer() {
           />
           <button type="submit" disabled={isSearching}>
             {isSearching ? 'Searching…' : 'Search Relay Sections'}
+          </button>
+          <button type="button" onClick={handleResetSearchCriteria} disabled={isSearching || isLoadingSelection}>
+            Reset Relay Search
           </button>
         </div>
       </form>
