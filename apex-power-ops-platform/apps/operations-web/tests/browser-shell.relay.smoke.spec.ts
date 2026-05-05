@@ -1,88 +1,5 @@
 import { expect, test } from '@playwright/test'
 
-test('root shell renders and blocks invalid apparatus IDs before backend fetch', async ({
-  page,
-}) => {
-  let apparatusResourceRequests = 0
-  let relayContextRequests = 0
-
-  await page.route('**/api/v1/neta/apparatus/*/resources', async (route) => {
-    apparatusResourceRequests += 1
-    await route.abort()
-  })
-
-  await page.route('**/api/v1/neta/relay/sections?*', async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({
-        count: 1,
-        sections: [
-          {
-            manufacturer_source_id: 10,
-            relay_type: 'SEL-351',
-            relay_device_source_id: 1001,
-            device_function: 'Phase OC',
-            device_ordinal: 1,
-            standard_code: 1,
-            dftype_code: 1,
-            voltage_restraint_kind: null,
-            td_section_source_id: 101,
-            td_section_name: 'SEL-51A phase overcurrent',
-            family_code: 2,
-            family_name: 'iec',
-            storage_kind: 'constants',
-            supported: true,
-          },
-        ],
-      }),
-    })
-  })
-
-  await page.route('**/api/v1/neta/relay/context/*', async (route) => {
-    relayContextRequests += 1
-    await route.abort()
-  })
-
-  await page.goto('/')
-
-  await expect(
-    page.getByRole('heading', { name: 'Operations Web now has a real frontend boundary.' }),
-  ).toBeVisible()
-  await expect(page.getByRole('heading', { name: 'Validation Surface' })).toBeVisible()
-  await expect(
-    page.getByRole('heading', { name: 'Browse relay TD-sections through the governed control-plane routes.' }),
-  ).toBeVisible()
-
-  await page.getByLabel('Apparatus UUID').fill('invalid-id')
-  await page.getByRole('button', { name: 'Load Resources' }).click()
-
-  await expect(
-    page.getByText('Enter a valid apparatus UUID to read the governed backend study-resource seam.'),
-  ).toBeVisible()
-  expect(apparatusResourceRequests).toBe(0)
-
-  await page.getByRole('button', { name: 'Clear' }).click()
-  await expect(page.getByLabel('Apparatus UUID')).toHaveValue('')
-  await expect(
-    page.getByText('Enter a valid apparatus UUID to read the governed backend study-resource seam.'),
-  ).toBeHidden()
-  await expect(
-    page.getByText('Enter an apparatus UUID to exercise the new governed backend route from the browser shell.'),
-  ).toBeVisible()
-  expect(apparatusResourceRequests).toBe(0)
-
-  await page.getByRole('button', { name: 'Search Relay Sections' }).click()
-  await page.getByLabel('Primary TD-section').selectOption('101')
-  await page.getByLabel('Preview multiples').fill('bad-input')
-  await page.getByRole('button', { name: 'Load Selected Sections' }).click()
-
-  await expect(
-    page.getByText('Enter relay current multiples greater than 1, separated by commas.'),
-  ).toBeVisible()
-  expect(relayContextRequests).toBe(0)
-})
-
 test('relay browser requires explicit selection before loading bounded compare details', async ({ page }) => {
   let relayContextRequests = 0
   let relaySectionRequests = 0
@@ -358,6 +275,10 @@ test('relay browser requires explicit selection before loading bounded compare d
 
   await page.goto('/')
 
+  await expect(
+    page.getByRole('heading', { name: 'Browse relay TD-sections through the governed control-plane routes.' }),
+  ).toBeVisible()
+
   await page.getByLabel('Relay search').fill('   ')
   await page.getByRole('button', { name: 'Search Relay Sections' }).click()
   await expect(
@@ -466,34 +387,4 @@ test('relay browser requires explicit selection before loading bounded compare d
   expect(relayContextRequests).toBe(2)
   expect(relaySettingsRequests).toBe(2)
   expect(relayPlotRequests).toBe(1)
-})
-
-test('re-homed browser surfaces render their expected headings in a real browser', async ({ page }) => {
-  const integrationResponse = await page.goto('/integration-dashboard/index.html')
-  expect(integrationResponse?.ok()).toBeTruthy()
-  await expect(page).toHaveTitle(/APEX Cross-Surface Integration Test Dashboard/)
-
-  const leadResponse = await page.goto('/lead-ops/index.html')
-  expect(leadResponse?.ok()).toBeTruthy()
-  await expect(page).toHaveTitle(/APEX Lead Surface/)
-
-  const pmDriversResponse = await page.goto('/pm-review/index.html')
-  expect(pmDriversResponse?.ok()).toBeTruthy()
-  await expect(page).toHaveTitle(/APEX PM Drivers Review/)
-
-  const pmApprovalResponse = await page.goto('/pm-review/approval-surface.html')
-  expect(pmApprovalResponse?.ok()).toBeTruthy()
-  await expect(page).toHaveTitle(/APEX PM Approval Surface/)
-
-  const pmScheduleResponse = await page.goto('/pm-review/schedule.html')
-  expect(pmScheduleResponse?.ok()).toBeTruthy()
-  await expect(page).toHaveTitle(/APEX PM Schedule Review/)
-
-  const pmTracerResponse = await page.goto('/pm-review/tracer.html')
-  expect(pmTracerResponse?.ok()).toBeTruthy()
-  await expect(page).toHaveTitle(/APEX PM Upstream Tracer Review/)
-
-  const pmVarianceResponse = await page.goto('/pm-review/variance.html')
-  expect(pmVarianceResponse?.ok()).toBeTruthy()
-  await expect(page).toHaveTitle(/APEX PM Variance Review/)
 })

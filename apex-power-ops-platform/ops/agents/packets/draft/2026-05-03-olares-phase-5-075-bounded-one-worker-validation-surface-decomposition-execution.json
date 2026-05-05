@@ -1,0 +1,83 @@
+{
+  "packet_id": "2026-05-03-olares-phase-5-075",
+  "title": "Bounded One-Worker Validation-Surface Decomposition Execution",
+  "objective": "Execute exactly one one-worker, test-only validation-surface decomposition slice on `/home/olares/code/apex` by retiring the shared operations-web browser smoke spec and splitting coverage into separate tracked apparatus, relay, and static-surfaces smoke specs.",
+  "domain": "infrastructure-domain",
+  "active_role": "Olares One-Worker Test Surface Mutation Operator",
+  "dependencies": [
+    "ops/agents/packets/draft/2026-05-03-olares-phase-5-073-bounded-validation-surface-decomposition-planning.json",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-073-bounded-validation-surface-decomposition-planning-handoff.md",
+    "ops/agents/packets/draft/2026-05-03-olares-phase-5-074-packet-071-through-packet-073-authority-publication-and-host-mirror-resync-gate.json",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-074-packet-071-through-packet-073-authority-publication-and-host-mirror-resync-gate-handoff.md",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-next-task-and-prompt-routing-handoff.md",
+    "plan/infrastructure-olares-full-implementation-roadmap-1.md"
+  ],
+  "execution_authority": "Packet 074 published Packet 073 planning authority at `819692014d2ca7acf9775e5509b2caa701815566` before Packet 075 execution.",
+  "mutation_worker_count": 1,
+  "mutation_slice": "operations_web_browser_smoke_validation_surface_decomposition_test_only_slice",
+  "changed_files": [
+    "apps/operations-web/tests/browser-shell.smoke.spec.ts",
+    "apps/operations-web/tests/browser-shell.apparatus.smoke.spec.ts",
+    "apps/operations-web/tests/browser-shell.relay.smoke.spec.ts",
+    "apps/operations-web/tests/browser-shell.static-surfaces.smoke.spec.ts"
+  ],
+  "artifact_shape": [
+    "`apps/operations-web/tests/browser-shell.smoke.spec.ts` is deleted from the host artifact.",
+    "`apps/operations-web/tests/browser-shell.apparatus.smoke.spec.ts` contains apparatus-only browser shell coverage.",
+    "`apps/operations-web/tests/browser-shell.relay.smoke.spec.ts` contains relay-only browser shell coverage.",
+    "`apps/operations-web/tests/browser-shell.static-surfaces.smoke.spec.ts` contains re-homed static browser-surface heading coverage."
+  ],
+  "host_artifact_sha256": "aa258683ae8451a61322894b8c8995a2710c8a68f05a6cf5701c05401450b84a",
+  "host_status_count": 4,
+  "host_validation": {
+    "diff_hygiene": "pass for tracked deletion plus no-index whitespace checks on the three new files",
+    "package_lockfile_status": "clean",
+    "executable_validation": "blocked_under_no_install_rules",
+    "blockers": [
+      "pnpm is not present on the host",
+      "root node_modules is not present",
+      "apps/operations-web/node_modules is not present",
+      "local/global tsc is not present",
+      "local/global Playwright is not present"
+    ]
+  },
+  "old_clone_observation": {
+    "path": "/home/olares/src/apex-power-ops-platform",
+    "commit": "2836a2622309b4e146ca24f23b5bf87312c0c857",
+    "status_count": 30,
+    "mutation": "none"
+  },
+  "publication_status": "uncommitted_unpublished_host_artifact",
+  "next_packet_candidate": "Olares Phase 5 076 - Bounded Workstation Mirror Validation Of Packet 075 Test-Surface Artifact",
+  "closed_boundaries": [
+    "simultaneous multi-worker source/test execution",
+    "second mutation worker execution",
+    "application source edits",
+    "migration approval",
+    "runtime/service mutation",
+    "package/lockfile mutation",
+    "installs or package-manager activation/download",
+    "AI-services expansion",
+    "Gitea/code-hosting transition",
+    "canonical-hosting transition",
+    "remote rewrite",
+    "rollback or force/reset/clean",
+    "old-clone mutation"
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-075-bounded-one-worker-validation-surface-decomposition-execution-handoff.md"
+  ],
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-075-bounded-one-worker-validation-surface-decomposition-execution-handoff.md",
+  "implementation_ready_candidate": false,
+  "sql_permission": false,
+  "sql_permission_note": "This packet authorizes no database writes and no application source edits, simultaneous multi-worker mutation, second-worker execution, migration approval, runtime mutation, service mutation, package mutation, lockfile mutation, install, package-manager activation/download, remote rewrite, AI-services expansion, Gitea/code-hosting transition, canonical-hosting transition, slice widening beyond the named test-only paths, rollback, force/reset/clean, or old-clone mutation.",
+  "landing_lane": "olares_phase_5_validation_surface_decomposition_execution",
+  "migration_strategy": "execute_one_worker_test_surface_decomposition_without_publication_or_migration_approval",
+  "created_at": "2026-05-05",
+  "updated_at": "2026-05-05",
+  "delegation_status": "complete",
+  "validation_disposition": "host-artifact-created-executable-validation-blocked",
+  "closure_note": "Executed 2026-05-05. Packet 075 created one unpublished, uncommitted host artifact with exactly one deleted shared smoke spec and three new decomposed smoke specs. Host artifact SHA is `aa258683ae8451a61322894b8c8995a2710c8a68f05a6cf5701c05401450b84a` after byte-normalizing the host files to match the workstation mirror; host status count is 4; package and lockfile paths stayed clean; executable host validation remained blocked by missing no-install tools/dependencies rather than artifact-scope failure."
+}
