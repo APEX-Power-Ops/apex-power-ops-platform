@@ -1,0 +1,72 @@
+{
+  "packet_id": "2026-05-03-olares-phase-5-091",
+  "title": "Packet 089 And Packet 090 Authority Publication And Host Mirror Resync Gate",
+  "objective": "Publish Packet 089 closeout authority and Packet 090 read-only discovery/no-go decision authority through the parent-root boundary, then restore `/home/olares/code/apex` to clean parity without opening simultaneous-worker execution.",
+  "domain": "infrastructure-domain",
+  "active_role": "Olares Authority Publication Operator",
+  "dependencies": [
+    "ops/agents/packets/draft/2026-05-03-olares-phase-5-089-packet-087-and-packet-088-authority-publication-and-host-mirror-resync-gate.json",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-089-packet-087-and-packet-088-authority-publication-and-host-mirror-resync-gate-handoff.md",
+    "ops/agents/packets/draft/2026-05-03-olares-phase-5-090-read-only-paired-apparatus-relay-objective-discovery-and-selection-decision.json",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-090-read-only-paired-apparatus-relay-objective-discovery-and-selection-decision-handoff.md",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-next-task-and-prompt-routing-handoff.md",
+    "plan/infrastructure-olares-full-implementation-roadmap-1.md"
+  ],
+  "publication_scope": [
+    "apex-power-ops-platform/ops/agents/packets/draft/2026-05-03-olares-phase-5-089-packet-087-and-packet-088-authority-publication-and-host-mirror-resync-gate.json",
+    "apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-089-packet-087-and-packet-088-authority-publication-and-host-mirror-resync-gate-handoff.md",
+    "apex-power-ops-platform/ops/agents/packets/draft/2026-05-03-olares-phase-5-090-read-only-paired-apparatus-relay-objective-discovery-and-selection-decision.json",
+    "apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-090-read-only-paired-apparatus-relay-objective-discovery-and-selection-decision-handoff.md",
+    "apex-power-ops-platform/ops/agents/packets/draft/2026-05-03-olares-phase-5-091-packet-089-and-packet-090-authority-publication-and-host-mirror-resync-gate.json",
+    "apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-next-task-and-prompt-routing-handoff.md",
+    "apex-power-ops-platform/plan/infrastructure-olares-full-implementation-roadmap-1.md"
+  ],
+  "excluded_drift": [
+    ".vercelignore",
+    "older Packet 039 drift",
+    "Packet 057 post-publication closure drift",
+    "Packet 062 closeout local authority drift",
+    "Packet 091 local closeout authority drift after publication",
+    "any unrelated authority drift outside Packet 089 and Packet 090 closeout surfaces"
+  ],
+  "validation_steps": [
+    "Confirm parent-root `clean-main` and `origin/clean-main` are at Packet 089 published commit before publication.",
+    "Confirm `/home/olares/code/apex` is clean at Packet 089 published commit before publication.",
+    "Confirm `/home/olares/src/apex-power-ops-platform` remains observe-only and unchanged.",
+    "Confirm no source, package, lockfile, runtime, service, or configuration paths are staged.",
+    "Run Packet 089 through Packet 091 JSON parse checks.",
+    "Run `git diff --cached --check` before committing.",
+    "Inspect staged path scope before committing.",
+    "Commit and push the bounded authority publication.",
+    "Fast-forward `/home/olares/code/apex` to the published commit without reset, clean, force, rollback, runtime mutation, service mutation, package mutation, or old-clone mutation.",
+    "Confirm `/home/olares/code/apex` ends clean at the published commit.",
+    "Confirm `/home/olares/src/apex-power-ops-platform` remains observe-only and unchanged."
+  ],
+  "preserved_boundaries": [
+    "Packet 091 is authority publication only.",
+    "Packet 090 no-current-objective defer decision does not open simultaneous-worker execution.",
+    "No paired-objective selection opens in Packet 091.",
+    "No source/test execution opens in Packet 091.",
+    "No migration approval opens.",
+    "No runtime/service mutation opens.",
+    "No package or lockfile mutation opens.",
+    "No installs or package-manager activation/download open.",
+    "No AI-services expansion opens.",
+    "No Gitea/code-hosting transition opens.",
+    "No canonical-hosting transition opens.",
+    "No remote rewrite opens.",
+    "No rollback, force, reset, or clean opens.",
+    "`/home/olares/src/apex-power-ops-platform` remains observe-only and unchanged."
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "ready",
+  "implementation_ready_candidate": false,
+  "sql_permission": false,
+  "sql_permission_note": "This packet authorizes no database writes and no source/test execution, simultaneous multi-worker mutation, paired-objective selection, migration approval, runtime mutation, service mutation, package mutation, lockfile mutation, install, package-manager activation/download, remote rewrite, AI-services expansion, Gitea/code-hosting transition, canonical-hosting transition, rollback, force/reset/clean, or old-clone mutation.",
+  "landing_lane": "olares_phase_5_packet_089_and_packet_090_authority_publication",
+  "migration_strategy": "publish_no_current_paired_objective_defer_authority_without_approving_migration_or_execution",
+  "created_at": "2026-05-05",
+  "updated_at": "2026-05-05",
+  "delegation_status": "ready",
+  "validation_disposition": "pending"
+}
