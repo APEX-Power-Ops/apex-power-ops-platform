@@ -1,0 +1,139 @@
+{
+  "packet_id": "2026-05-03-olares-phase-5-082",
+  "title": "Bounded Disjoint-Scope Simultaneous-Worker Planning",
+  "objective": "Define the exact ownership, non-overlap, validation, conflict, coordinator, and publication rules needed to decide whether a later simultaneous multi-worker pilot packet can be authored.",
+  "domain": "infrastructure-domain",
+  "active_role": "Olares Disjoint-Scope Planning Operator",
+  "dependencies": [
+    "ops/agents/packets/draft/2026-05-03-olares-phase-5-079-post-078-validation-surface-decomposition-readiness-verdict.json",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-079-post-078-validation-surface-decomposition-readiness-verdict-handoff.md",
+    "ops/agents/packets/draft/2026-05-03-olares-phase-5-081-post-080-disjoint-scope-simultaneous-worker-planning-branch-decision.json",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-081-post-080-disjoint-scope-simultaneous-worker-planning-branch-decision-handoff.md",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-next-task-and-prompt-routing-handoff.md",
+    "plan/infrastructure-olares-full-implementation-roadmap-1.md"
+  ],
+  "planning_verdict": "conditional_authorable_after_publication_for_later_explicit_simultaneous_worker_execution_packet",
+  "planning_summary": "A later simultaneous-worker execution packet is conditionally authorable after this planning authority is published, but only if it preserves exact apparatus/relay ownership, keeps static surfaces coordinator-owned, runs coordinator merge validation, and aborts on any shared-file or package/toolchain need.",
+  "worker_ownership": {
+    "apparatus_worker": {
+      "source_files": [
+        "apps/operations-web/app/apparatus-resource-explorer.tsx",
+        "apps/operations-web/lib/apparatus-resources.ts"
+      ],
+      "validation_files": [
+        "apps/operations-web/tests/browser-shell.apparatus.smoke.spec.ts"
+      ],
+      "forbidden_files": [
+        "apps/operations-web/app/relay-resource-explorer.tsx",
+        "apps/operations-web/app/relay-selection-panels.tsx",
+        "apps/operations-web/lib/relay-resources.ts",
+        "apps/operations-web/tests/browser-shell.relay.smoke.spec.ts",
+        "apps/operations-web/tests/browser-shell.static-surfaces.smoke.spec.ts",
+        "apps/operations-web/app/page.tsx",
+        "apps/operations-web/app/globals.css",
+        "package.json",
+        "pnpm-lock.yaml"
+      ]
+    },
+    "relay_worker": {
+      "source_files": [
+        "apps/operations-web/app/relay-resource-explorer.tsx",
+        "apps/operations-web/app/relay-selection-panels.tsx",
+        "apps/operations-web/lib/relay-resources.ts"
+      ],
+      "validation_files": [
+        "apps/operations-web/tests/browser-shell.relay.smoke.spec.ts"
+      ],
+      "forbidden_files": [
+        "apps/operations-web/app/apparatus-resource-explorer.tsx",
+        "apps/operations-web/lib/apparatus-resources.ts",
+        "apps/operations-web/tests/browser-shell.apparatus.smoke.spec.ts",
+        "apps/operations-web/tests/browser-shell.static-surfaces.smoke.spec.ts",
+        "apps/operations-web/app/page.tsx",
+        "apps/operations-web/app/globals.css",
+        "package.json",
+        "pnpm-lock.yaml"
+      ]
+    },
+    "coordinator_owned": {
+      "governance_publication_files": [
+        "ops/agents/packets/draft/**",
+        "ops/agents/handoffs/**",
+        "plan/infrastructure-olares-full-implementation-roadmap-1.md"
+      ],
+      "validation_files": [
+        "apps/operations-web/tests/browser-shell.static-surfaces.smoke.spec.ts"
+      ],
+      "shared_runtime_or_layout_files": [
+        "apps/operations-web/app/page.tsx",
+        "apps/operations-web/app/globals.css",
+        "apps/operations-web/playwright.config.ts",
+        "apps/operations-web/next.config.*",
+        "package.json",
+        "pnpm-lock.yaml"
+      ]
+    }
+  },
+  "non_overlap_rules": [
+    "No worker may edit a file listed in another worker's owned source or validation set.",
+    "No worker may edit coordinator-owned static-surfaces validation, routing, roadmap, packet, handoff, package, lockfile, app layout, global style, Playwright config, or Next config files.",
+    "Any need to touch a shared helper, fixture, API route, app layout, global style, package, lockfile, or static-surfaces validation file aborts the simultaneous-worker pilot and requires a new planning packet.",
+    "Both workers must produce independently reviewable diffs whose changed-file sets remain disjoint before coordinator integration.",
+    "Coordinator publication and host reconciliation remain single-owner and happen only after all worker artifacts are validated and a later packet explicitly selects publication."
+  ],
+  "validation_sequence": [
+    "Each worker runs `git diff --check` over only its owned slice before handoff.",
+    "Each worker may run only existing no-install validation commands.",
+    "Coordinator integration must run `git diff --check` over both worker slices plus coordinator-owned authority files.",
+    "Coordinator integration must run `apps/operations-web/node_modules/.bin/tsc.cmd --noEmit` on the workstation when no-install tools are present.",
+    "Coordinator integration must run `apps/operations-web/node_modules/.bin/next.cmd build` on the workstation when no-install tools are present.",
+    "Coordinator integration must run focused Playwright over `tests/browser-shell.apparatus.smoke.spec.ts`, `tests/browser-shell.relay.smoke.spec.ts`, and `tests/browser-shell.static-surfaces.smoke.spec.ts` before any publication decision.",
+    "If any executable validation is unavailable under no-install rules, the pilot must stop at validated-scope or blocker-recorded state and may not publish on diff hygiene alone."
+  ],
+  "conflict_and_abort_criteria": [
+    "Abort if both workers need the same file.",
+    "Abort if either worker needs package, lockfile, install, package-manager activation/download, runtime, service, migration, or old-clone mutation.",
+    "Abort if either worker needs `apps/operations-web/tests/browser-shell.static-surfaces.smoke.spec.ts` or another shared validation file.",
+    "Abort if either worker needs app-wide layout, CSS, test config, Next config, or shared fixtures not explicitly owned in this packet.",
+    "Abort if coordinator cannot prove changed-file disjointness before integration.",
+    "Abort if workstation mirror validation cannot run or cannot prove the exact integrated artifact before any publication decision."
+  ],
+  "residual_overlap": [
+    "The workers still share the same Next application runtime during validation.",
+    "The focused Playwright run still uses one web server process.",
+    "Static-surfaces validation remains a cross-lane smoke surface and is therefore coordinator-owned.",
+    "App root, global styles, package files, lockfiles, Playwright config, and Next config remain shared and outside worker ownership."
+  ],
+  "next_packet": "Olares Phase 5 083 - Packet 080 Through Packet 082 Authority Publication And Host Mirror Resync Gate",
+  "preserved_boundaries": [
+    "Packet 082 is planning only.",
+    "No simultaneous multi-worker source/test execution opens in Packet 082.",
+    "No second mutation worker execution opens in Packet 082.",
+    "No source/test execution opens in Packet 082.",
+    "No migration approval opens.",
+    "No runtime/service mutation opens.",
+    "No package or lockfile mutation opens.",
+    "No installs or package-manager activation/download open.",
+    "No AI-services expansion opens.",
+    "No Gitea/code-hosting transition opens.",
+    "No canonical-hosting transition opens.",
+    "No remote rewrite opens.",
+    "No rollback, force, reset, or clean opens.",
+    "`/home/olares/src/apex-power-ops-platform` remains observe-only and unchanged."
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-082-bounded-disjoint-scope-simultaneous-worker-planning-handoff.md"
+  ],
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-082-bounded-disjoint-scope-simultaneous-worker-planning-handoff.md",
+  "implementation_ready_candidate": false,
+  "sql_permission": false,
+  "sql_permission_note": "This planning packet authorizes no database writes and no source/test execution, simultaneous multi-worker mutation, second-worker execution, migration approval, runtime mutation, service mutation, package mutation, lockfile mutation, install, package-manager activation/download, remote rewrite, AI-services expansion, Gitea/code-hosting transition, canonical-hosting transition, rollback, force/reset/clean, or old-clone mutation.",
+  "landing_lane": "olares_phase_5_disjoint_scope_simultaneous_worker_planning",
+  "migration_strategy": "plan_disjoint_scope_without_approving_migration_or_execution",
+  "created_at": "2026-05-05",
+  "updated_at": "2026-05-05",
+  "delegation_status": "complete",
+  "validation_disposition": "complete-planning"
+}

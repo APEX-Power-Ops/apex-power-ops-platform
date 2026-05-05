@@ -1,0 +1,55 @@
+{
+  "packet_id": "2026-05-03-olares-phase-5-081",
+  "title": "Post-080 Disjoint-Scope Simultaneous-Worker Planning Branch Decision",
+  "objective": "Decide whether the post-080 lane should advance into planning-only disjoint-scope simultaneous-worker pilot design or defer and remain one-worker-only.",
+  "domain": "infrastructure-domain",
+  "active_role": "Olares Branch Decision Operator",
+  "dependencies": [
+    "ops/agents/packets/draft/2026-05-03-olares-phase-5-079-post-078-validation-surface-decomposition-readiness-verdict.json",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-079-post-078-validation-surface-decomposition-readiness-verdict-handoff.md",
+    "ops/agents/packets/draft/2026-05-03-olares-phase-5-080-packet-078-and-packet-079-authority-publication-and-host-mirror-resync-gate.json",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-080-packet-078-and-packet-079-authority-publication-and-host-mirror-resync-gate-handoff.md",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-next-task-and-prompt-routing-handoff.md",
+    "plan/infrastructure-olares-full-implementation-roadmap-1.md"
+  ],
+  "decision": "branch_p_disjoint_scope_simultaneous_worker_planning_lane",
+  "decision_summary": "Advance into planning-only disjoint-scope simultaneous-worker pilot design because Packet 078 published the decomposed apparatus, relay, and static-surfaces browser validation files and Packet 079 recorded conditional readiness for later disjoint-scope execution planning. This decision does not open simultaneous multi-worker execution.",
+  "rejected_options": [
+    {
+      "option": "branch_q_one_worker_only_continuity_or_defer",
+      "reason": "Deferral is not the smallest truthful next move because the specific Packet 070 validation-surface blocker has been resolved and planning can now define exact ownership and no-go rules without running execution."
+    }
+  ],
+  "preserved_boundaries": [
+    "Branch P is planning-and-readiness only.",
+    "No simultaneous multi-worker source/test execution opens in Packet 081.",
+    "No second mutation worker execution opens in Packet 081.",
+    "No source/test execution opens in Packet 081.",
+    "No migration approval opens.",
+    "No runtime/service mutation opens.",
+    "No package or lockfile mutation opens.",
+    "No installs or package-manager activation/download open.",
+    "No AI-services expansion opens.",
+    "No Gitea/code-hosting transition opens.",
+    "No canonical-hosting transition opens.",
+    "No remote rewrite opens.",
+    "No rollback, force, reset, or clean opens.",
+    "`/home/olares/src/apex-power-ops-platform` remains observe-only and unchanged."
+  ],
+  "next_packet": "Olares Phase 5 082 - Bounded Disjoint-Scope Simultaneous-Worker Planning",
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-081-post-080-disjoint-scope-simultaneous-worker-planning-branch-decision-handoff.md"
+  ],
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-081-post-080-disjoint-scope-simultaneous-worker-planning-branch-decision-handoff.md",
+  "implementation_ready_candidate": false,
+  "sql_permission": false,
+  "sql_permission_note": "This decision packet authorizes no database writes and no source/test execution, simultaneous multi-worker mutation, second-worker execution, migration approval, runtime mutation, service mutation, package mutation, lockfile mutation, install, package-manager activation/download, remote rewrite, AI-services expansion, Gitea/code-hosting transition, canonical-hosting transition, rollback, force/reset/clean, or old-clone mutation.",
+  "landing_lane": "olares_phase_5_post_080_branch_decision",
+  "migration_strategy": "choose_planning_without_approving_migration_or_simultaneous_workers",
+  "created_at": "2026-05-05",
+  "updated_at": "2026-05-05",
+  "delegation_status": "complete",
+  "validation_disposition": "complete-decision"
+}
