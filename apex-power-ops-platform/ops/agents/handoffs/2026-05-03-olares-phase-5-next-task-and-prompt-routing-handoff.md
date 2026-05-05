@@ -1,7 +1,7 @@
 # Olares Phase 5 Next Task And Prompt Routing Handoff
 
 Date: 2026-05-03
-Status: Active - Prompt 95 / Packet 093 is authored as the Packet 091 and Packet 092 authority publication gate
+Status: Active - Prompt 97 / Packet 095 is authored as the authority-publication and host-mirror resync gate for Packet 093 and Packet 094 authority
 Scope: update the next task prompts after Phase 5 Step 1, Step 2, Step 3, Packet 001, Packet 002, Packet 003, Packet 004, Packet 005, Prompt 7, Prompt 8, Packet 007, Prompt 10, Packet 008, Packet 009, Packet 010, Packet 011, Packet 012, Packet 013, Packet 014, Packet 015, Packet 016, Packet 017, Packet 018, Packet 019, Packet 020, Packet 021, Packet 022, Packet 023, Packet 024, Packet 025, Packet 026, Packet 027, Packet 028, Packet 029, Packet 030, Packet 031, Packet 032, Packet 033, Packet 034, Packet 035, Packet 036, Packet 037, Packet 038, Packet 039, Packet 040, Packet 041, Packet 042, Packet 043, Packet 044, Packet 045, Packet 046, Packet 047, Packet 048, Packet 049, Packet 050, Packet 051, and Packet 052 completion, and state the live Packet 053 execution packet
 
 ## Authority
@@ -4582,3 +4582,19 @@ Packet 092 selected Branch G, `branch_g_trigger_framework_and_dormancy_planning_
 Prompt 95 / Packet 093 authored state:
 
 Packet 093 is authored as the bounded authority-publication and host-mirror resync gate for Packet 091 closeout authority and Packet 092 trigger-framework/dormancy planning authority. Packet 093 must not open simultaneous-worker source/test execution, paired-objective selection, migration, package/toolchain mutation, runtime/service mutation, remote rewrite, rollback, force/reset/clean, old-clone mutation, AI-services expansion, Gitea/code-hosting transition, or canonical-hosting transition. After Packet 093 closes, the single truthful next move is a post-publication dormancy/readiness verdict that consumes the published trigger-framework authority without reopening execution.
+
+Prompt 95 / Packet 093 blocked state:
+
+Packet 093 published Packet 091 closeout authority, Packet 092 trigger-framework/dormancy planning authority, Packet 093 draft authority, routing, and roadmap in commit `1fb5304e8e8c811c494160b19a6940874ea45d73`, pushed `origin/clean-main`, but did not complete host-mirror resync because two SSH attempts to `olares-mesh` timed out before any host command ran. `/home/olares/code/apex` parity at `1fb5304e8e8c811c494160b19a6940874ea45d73` is not confirmed. The tranche stops here; Packet 094 must not open until Packet 093 host parity is confirmed.
+
+Prompt 95 / Packet 093 resumed execution result:
+
+After transient network recovery, Packet 093 completed host-mirror resync. `/home/olares/code/apex` fast-forwarded from clean `d0b2e8f76c074beda6ed8f944506330520887d48` to clean parity at `1fb5304e8e8c811c494160b19a6940874ea45d73`. `/home/olares/src/apex-power-ops-platform` remained observe-only at `2836a2622309b4e146ca24f23b5bf87312c0c857` with status count 30. Packet 093 did not open source/test execution, simultaneous-worker mutation, paired-objective selection, migration, package/toolchain mutation, runtime/service mutation, AI-services expansion, Gitea/code-hosting transition, canonical-hosting transition, remote rewrite, rollback, force/reset/clean, or old-clone mutation.
+
+Prompt 96 / Packet 094 execution result:
+
+Packet 094 recorded verdict `trigger_framework_published_lane_dormant_authorable_only_with_new_evidence`. It consumes the published Packet 092 trigger-framework authority and Packet 093 clean host parity, records exact reopen criteria and insufficient evidence classes, and leaves simultaneous-worker execution, paired-objective selection, source/test execution, migration, runtime/service mutation, package/lockfile mutation, installs, AI-services expansion, Gitea/code-hosting transition, canonical-hosting transition, remote rewrite, rollback, force/reset/clean, and old-clone mutation closed. The tranche terminal milestone is reached and stops here.
+
+Prompt 97 / Packet 095 authored state:
+
+Packet 095 is authored as the bounded authority-publication and host-mirror resync gate for Packet 093 closeout authority and Packet 094 dormancy/readiness verdict authority. Packet 095 must not open simultaneous-worker execution, paired-objective selection, source/test execution, migration, runtime/service mutation, package/lockfile mutation, installs or package-manager activation/download, AI-services expansion, Gitea/code-hosting transition, canonical-hosting transition, remote rewrite, rollback, force/reset/clean, or old-clone mutation. After Packet 095 closes, the lane remains dormant and authorable only with new evidence satisfying the Packet 092 trigger framework; Packet 095 publication alone is not execution approval.
