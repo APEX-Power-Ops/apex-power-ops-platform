@@ -56,8 +56,13 @@
     "`/home/olares/src/apex-power-ops-platform` remains observe-only and unchanged."
   ],
   "handoff_target": "Platform Architect",
-  "status": "draft",
-  "output_artifacts": [],
+  "status": "complete",
+  "published_commit": "d149c4e953b9b1be8214d88dd4713630ed63694e",
+  "commit_message": "Publish Olares simultaneous worker defer authority",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-087-packet-085-and-packet-086-authority-publication-and-host-mirror-resync-gate-handoff.md"
+  ],
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-087-packet-085-and-packet-086-authority-publication-and-host-mirror-resync-gate-handoff.md",
   "implementation_ready_candidate": false,
   "sql_permission": false,
   "sql_permission_note": "This packet authorizes no database writes and no source/test execution, simultaneous multi-worker mutation, migration approval, runtime mutation, service mutation, package mutation, lockfile mutation, install, package-manager activation/download, remote rewrite, AI-services expansion, Gitea/code-hosting transition, canonical-hosting transition, rollback, force/reset/clean, or old-clone mutation.",
@@ -65,6 +70,8 @@
   "migration_strategy": "publish_defer_decision_authority_without_approving_migration_or_execution",
   "created_at": "2026-05-05",
   "updated_at": "2026-05-05",
-  "delegation_status": "pending",
-  "validation_disposition": "pending"
+  "delegation_status": "complete",
+  "validation_disposition": "pass",
+  "closure_note": "Executed 2026-05-05. Packet 087 published Packet 085 closeout authority, Packet 086 defer-decision authority, Packet 087 draft authority, routing, and roadmap in commit `d149c4e953b9b1be8214d88dd4713630ed63694e`, pushed `origin/clean-main`, and fast-forwarded `/home/olares/code/apex` from clean `32cbebd95481d0db11f92cfe6ad085eea31765f3` to clean parity at `d149c4e953b9b1be8214d88dd4713630ed63694e`. The old clone remained observe-only and unchanged.",
+  "next_action": "Proceed only through a separate concrete paired-objective selection or no-go/defer decision packet. Packet 087 does not open simultaneous-worker execution."
 }

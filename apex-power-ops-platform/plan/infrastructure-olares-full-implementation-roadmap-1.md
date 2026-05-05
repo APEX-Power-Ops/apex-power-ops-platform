@@ -367,6 +367,10 @@ Approved next-step rule:
 - **FILE-196**: `ops/agents/packets/draft/2026-05-03-olares-phase-5-086-post-085-simultaneous-worker-execution-opening-or-defer-decision.json` - Packet 086 decision; selects Branch Y defer because no concrete paired apparatus and relay mutation objective has been separately selected.
 - **FILE-197**: `ops/agents/handoffs/2026-05-03-olares-phase-5-086-post-085-simultaneous-worker-execution-opening-or-defer-decision-handoff.md` - Packet 086 handoff; records authorable-but-not-open state and closed execution boundaries.
 - **FILE-198**: `ops/agents/packets/draft/2026-05-03-olares-phase-5-087-packet-085-and-packet-086-authority-publication-and-host-mirror-resync-gate.json` - authored Packet 087 authority-publication and host-mirror resync gate for Packet 085 closeout authority and Packet 086 defer-decision authority.
+- **FILE-199**: `ops/agents/handoffs/2026-05-03-olares-phase-5-087-packet-085-and-packet-086-authority-publication-and-host-mirror-resync-gate-handoff.md` - Packet 087 closeout handoff; records published defer authority commit `d149c4e953b9b1be8214d88dd4713630ed63694e` and clean host parity.
+- **FILE-200**: `ops/agents/packets/draft/2026-05-03-olares-phase-5-088-concrete-paired-apparatus-relay-objective-selection-or-no-go-decision.json` - Packet 088 decision; selects Branch N objective-unselected defer after read-only owned-surface scan.
+- **FILE-201**: `ops/agents/handoffs/2026-05-03-olares-phase-5-088-concrete-paired-apparatus-relay-objective-selection-or-no-go-decision-handoff.md` - Packet 088 handoff; records no concrete paired objective set, no execution opening, and continued authorable-later state.
+- **FILE-202**: `ops/agents/packets/draft/2026-05-03-olares-phase-5-089-packet-087-and-packet-088-authority-publication-and-host-mirror-resync-gate.json` - authored Packet 089 authority-publication and host-mirror resync gate for Packet 087 closeout authority and Packet 088 objective-unselected defer authority.
 
 ## 6. Testing
 
@@ -470,6 +474,8 @@ Approved next-step rule:
 - **RISK-087**: Packet 085 is an authority-publication gate only; treating publication of Packet 084 readiness authority as execution approval would bypass the required post-085 execution-opening or defer/no-go decision packet.
 - **RISK-088**: Packet 086 preserves authorability but defers execution; treating authorability as a reason to invent paired worker changes would create artificial source churn and bypass bounded objective selection.
 - **RISK-089**: Packet 087 is an authority-publication gate only; treating publication of Packet 086 defer authority as permission to start a later simultaneous-worker pilot would skip concrete paired-objective selection.
+- **RISK-090**: Packet 088 leaves the lane authorable-later but objective-unselected; treating the read-only scan itself as an execution objective would manufacture work and violate the no-invented-churn boundary.
+- **RISK-091**: Packet 089 is an authority-publication gate only; treating publication of Packet 088 no-go/defer authority as paired-objective discovery or execution approval would bypass the required separate read-only discovery decision lane.
 - **ASSUMPTION-001**: The restored 2026-05-01 handoff plus the surviving 2026-04-25 scope/blocker handoffs remain the correct evidence floor unless later regression evidence supersedes them.
 - **ASSUMPTION-002**: The 2026-05-01 private-lane runtime, tunnel access, backup, restore, and status proof remain valid unless later host or access regression evidence supersedes them.
 - **ASSUMPTION-003**: Broader platform execution remains the primary repo frontier, so Olares follow-on work stays subordinate unless new host scope is explicitly approved.
@@ -567,6 +573,9 @@ Approved next-step rule:
 - **ASSUMPTION-095**: Packet 085 closes by publishing Packet 083 and Packet 084 authority in commit `32cbebd95481d0db11f92cfe6ad085eea31765f3` and restoring `/home/olares/code/apex` clean parity; the smallest truthful next packet is Packet 086 post-085 execution-opening or defer decision.
 - **ASSUMPTION-096**: Packet 086 closes by selecting Branch Y defer; a later simultaneous-worker execution packet remains authorable only after a separate packet selects concrete paired apparatus and relay mutation objectives that preserve Packet 082 ownership and Packet 084 abort rules.
 - **ASSUMPTION-097**: Packet 087 should publish Packet 085 closeout authority and Packet 086 defer-decision authority, restore `/home/olares/code/apex` clean parity, and then require a separate concrete paired-objective selection or no-go/defer decision before any simultaneous-worker execution packet can open.
+- **ASSUMPTION-098**: Packet 087 closes by publishing Packet 085 and Packet 086 authority in commit `d149c4e953b9b1be8214d88dd4713630ed63694e` and restoring `/home/olares/code/apex` clean parity; the smallest truthful next packet is Packet 088 concrete paired-objective selection or no-go decision.
+- **ASSUMPTION-099**: Packet 088 closes by selecting Branch N `authorable_later_but_objective_unselected_defer`; a later simultaneous-worker execution packet remains authorable only if a separate packet names real paired apparatus and relay objectives that preserve Packet 082 ownership and Packet 084 abort rules.
+- **ASSUMPTION-100**: Packet 089 should publish Packet 087 closeout authority and Packet 088 objective-unselected defer authority, restore `/home/olares/code/apex` clean parity, and then require a separate bounded read-only objective-discovery decision lane before any simultaneous-worker execution packet can open.
 
 ## 8. Related Specifications / Further Reading
 
