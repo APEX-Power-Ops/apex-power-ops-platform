@@ -1,0 +1,64 @@
+{
+  "packet_id": "2026-05-03-olares-phase-5-095",
+  "title": "Packet 093 And Packet 094 Authority Publication And Host Mirror Resync Gate",
+  "objective": "Publish Packet 093 closeout authority and Packet 094 dormancy/readiness verdict authority through the parent-root boundary, then restore `/home/olares/code/apex` to clean parity without opening execution or paired-objective selection.",
+  "domain": "infrastructure-domain",
+  "active_role": "Olares Authority Publication Operator",
+  "dependencies": [
+    "ops/agents/packets/draft/2026-05-03-olares-phase-5-093-packet-091-and-packet-092-authority-publication-and-host-mirror-resync-gate.json",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-093-packet-091-and-packet-092-authority-publication-and-host-mirror-resync-gate-handoff.md",
+    "ops/agents/packets/draft/2026-05-03-olares-phase-5-094-post-093-trigger-framework-dormancy-readiness-verdict.json",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-094-post-093-trigger-framework-dormancy-readiness-verdict-handoff.md",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-next-task-and-prompt-routing-handoff.md",
+    "plan/infrastructure-olares-full-implementation-roadmap-1.md"
+  ],
+  "publication_scope": [
+    "apex-power-ops-platform/ops/agents/packets/draft/2026-05-03-olares-phase-5-093-packet-091-and-packet-092-authority-publication-and-host-mirror-resync-gate.json",
+    "apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-093-packet-091-and-packet-092-authority-publication-and-host-mirror-resync-gate-handoff.md",
+    "apex-power-ops-platform/ops/agents/packets/draft/2026-05-03-olares-phase-5-094-post-093-trigger-framework-dormancy-readiness-verdict.json",
+    "apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-094-post-093-trigger-framework-dormancy-readiness-verdict-handoff.md",
+    "apex-power-ops-platform/ops/agents/packets/draft/2026-05-03-olares-phase-5-095-packet-093-and-packet-094-authority-publication-and-host-mirror-resync-gate.json",
+    "apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-095-packet-093-and-packet-094-authority-publication-and-host-mirror-resync-gate-handoff.md",
+    "apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-next-task-and-prompt-routing-handoff.md",
+    "apex-power-ops-platform/plan/infrastructure-olares-full-implementation-roadmap-1.md"
+  ],
+  "excluded_drift": [
+    ".vercelignore",
+    "older Packet 039 drift",
+    "Packet 057 post-publication closure drift",
+    "Packet 062 closeout local authority drift",
+    "unrelated authority drift outside the Packet 093 through Packet 095 authority lane"
+  ],
+  "preserved_boundaries": [
+    "Packet 095 is authority publication only.",
+    "Packet 094 dormancy/readiness authority does not open simultaneous-worker execution.",
+    "No paired-objective selection opens in Packet 095.",
+    "No source/test execution opens in Packet 095.",
+    "No migration approval opens.",
+    "No runtime or service mutation opens.",
+    "No package or lockfile mutation opens.",
+    "No installs or package-manager activation/download open.",
+    "No AI-services expansion opens.",
+    "No Gitea/code-hosting transition opens.",
+    "No canonical-hosting transition opens.",
+    "No remote rewrite opens.",
+    "No rollback, force, reset, or clean opens.",
+    "`/home/olares/src/apex-power-ops-platform` remains observe-only and unchanged."
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "authored",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-095-packet-093-and-packet-094-authority-publication-and-host-mirror-resync-gate-handoff.md"
+  ],
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-095-packet-093-and-packet-094-authority-publication-and-host-mirror-resync-gate-handoff.md",
+  "implementation_ready_candidate": false,
+  "sql_permission": false,
+  "sql_permission_note": "This packet authorizes no database writes and no source/test execution, simultaneous multi-worker mutation, paired-objective selection, migration approval, runtime mutation, service mutation, package mutation, lockfile mutation, install, package-manager activation/download, remote rewrite, AI-services expansion, Gitea/code-hosting transition, canonical-hosting transition, rollback, force/reset/clean, or old-clone mutation.",
+  "landing_lane": "olares_phase_5_packet_093_and_packet_094_authority_publication",
+  "migration_strategy": "publish_dormancy_verdict_authority_without_approving_migration_or_execution",
+  "created_at": "2026-05-05",
+  "updated_at": "2026-05-05",
+  "delegation_status": "not-delegated",
+  "validation_disposition": "pending-publication",
+  "next_action": "Execute Packet 095 as a bounded authority-publication and host-mirror resync gate only."
+}
