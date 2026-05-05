@@ -1,0 +1,79 @@
+{
+  "packet_id": "2026-05-03-olares-phase-5-073",
+  "title": "Bounded Validation-Surface Decomposition Planning",
+  "objective": "Define the exact one-worker validation/test-surface decomposition slice needed to split the shared operations-web browser-smoke file into disjoint tracked validation files, without executing source/test work or approving simultaneous multi-worker execution.",
+  "domain": "infrastructure-domain",
+  "active_role": "Olares Validation Surface Planning Operator",
+  "dependencies": [
+    "ops/agents/packets/draft/2026-05-03-olares-phase-5-070-post-069-branch-decision-and-disjoint-scope-planning-verdict.json",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-070-post-069-branch-decision-and-disjoint-scope-planning-verdict-handoff.md",
+    "ops/agents/packets/draft/2026-05-03-olares-phase-5-072-post-071-branch-decision-for-validation-surface-decomposition.json",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-072-post-071-branch-decision-for-validation-surface-decomposition-handoff.md",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-next-task-and-prompt-routing-handoff.md",
+    "plan/infrastructure-olares-full-implementation-roadmap-1.md"
+  ],
+  "planning_decision": "authorize_later_one_worker_test_surface_decomposition_execution_after_authority_publication",
+  "planned_execution_packet": "Olares Phase 5 075 - Bounded One-Worker Validation-Surface Decomposition Execution",
+  "required_pre_execution_packet": "Olares Phase 5 074 - Packet 071 Through Packet 073 Authority Publication And Host Mirror Resync Gate",
+  "owned_slice": {
+    "owner": "one_mutation_worker_only",
+    "surface_type": "test-only validation-surface decomposition",
+    "current_shared_file": "apps/operations-web/tests/browser-shell.smoke.spec.ts",
+    "allowed_mutation_paths": [
+      "apps/operations-web/tests/browser-shell.smoke.spec.ts",
+      "apps/operations-web/tests/browser-shell.apparatus.smoke.spec.ts",
+      "apps/operations-web/tests/browser-shell.relay.smoke.spec.ts",
+      "apps/operations-web/tests/browser-shell.static-surfaces.smoke.spec.ts"
+    ],
+    "required_shape": [
+      "Delete or retire the shared `apps/operations-web/tests/browser-shell.smoke.spec.ts` file so apparatus and relay coverage no longer converge on a single tracked file.",
+      "Move apparatus-only browser coverage into `apps/operations-web/tests/browser-shell.apparatus.smoke.spec.ts`.",
+      "Move relay-only browser coverage into `apps/operations-web/tests/browser-shell.relay.smoke.spec.ts`.",
+      "Move unrelated re-homed static browser-surface heading coverage into `apps/operations-web/tests/browser-shell.static-surfaces.smoke.spec.ts`.",
+      "Do not change application source, package files, lockfiles, runtime configuration, service configuration, or Playwright configuration."
+    ]
+  },
+  "future_ownership_model": [
+    "A future apparatus worker may own only apparatus application source plus `apps/operations-web/tests/browser-shell.apparatus.smoke.spec.ts`.",
+    "A future relay worker may own only relay application source plus `apps/operations-web/tests/browser-shell.relay.smoke.spec.ts`.",
+    "`apps/operations-web/tests/browser-shell.static-surfaces.smoke.spec.ts` remains coordinator-owned or separately packetized.",
+    "No simultaneous workers may open until a later post-publication readiness verdict confirms the decomposed files are tracked, validated, published, and reconciled cleanly."
+  ],
+  "validation_requirements": [
+    "Host execution may run only no-install checks available on `/home/olares/code/apex`; if host executable validation is blocked by missing dependencies, record the blocker and preserve the artifact.",
+    "Workstation mirror validation must confirm the exact decomposition diff and run `git diff --check`.",
+    "Workstation executable validation should run the existing no-install app-local checks available for the operations-web app, including `tsc --noEmit`, `next build`, and focused Playwright tests for the three decomposed spec files if available without installs.",
+    "Any validation blocker must be recorded without widening scope."
+  ],
+  "closed_boundaries": [
+    "source/application edits",
+    "simultaneous multi-worker source/test execution",
+    "second mutation worker execution",
+    "migration approval",
+    "runtime/service mutation",
+    "package/lockfile mutation",
+    "installs or package-manager activation/download",
+    "AI-services expansion",
+    "Gitea/code-hosting transition",
+    "canonical-hosting transition",
+    "remote rewrite",
+    "rollback or force/reset/clean",
+    "old-clone mutation"
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-073-bounded-validation-surface-decomposition-planning-handoff.md"
+  ],
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-073-bounded-validation-surface-decomposition-planning-handoff.md",
+  "implementation_ready_candidate": false,
+  "sql_permission": false,
+  "sql_permission_note": "This planning packet authorizes no database writes and no source edits, source/test execution, validation-surface decomposition execution, simultaneous multi-worker mutation, migration approval, runtime mutation, service mutation, package mutation, lockfile mutation, install, package-manager activation/download, remote rewrite, AI-services expansion, Gitea/code-hosting transition, canonical-hosting transition, second-worker execution, slice widening beyond the named test-only paths, rollback, force/reset/clean, or old-clone mutation.",
+  "landing_lane": "olares_phase_5_validation_surface_decomposition_planning",
+  "migration_strategy": "plan_test_surface_decomposition_without_execution_or_migration_approval",
+  "created_at": "2026-05-05",
+  "updated_at": "2026-05-05",
+  "delegation_status": "complete",
+  "validation_disposition": "complete-planning-only",
+  "closure_note": "Executed 2026-05-05. Packet 073 defines a future one-worker, test-only decomposition slice that may replace the shared `apps/operations-web/tests/browser-shell.smoke.spec.ts` with apparatus, relay, and static-surfaces browser-smoke spec files after Packet 074 publishes Packet 071 through Packet 073 authority. No source/test execution, simultaneous multi-worker mutation, migration, package/lockfile mutation, install, runtime/service mutation, remote rewrite, rollback, force/reset/clean, or old-clone mutation opens."
+}
