@@ -375,6 +375,10 @@ Approved next-step rule:
 - **FILE-204**: `ops/agents/packets/draft/2026-05-03-olares-phase-5-090-read-only-paired-apparatus-relay-objective-discovery-and-selection-decision.json` - Packet 090 read-only discovery decision; selects Branch U discovery and closes with no current real paired objective set.
 - **FILE-205**: `ops/agents/handoffs/2026-05-03-olares-phase-5-090-read-only-paired-apparatus-relay-objective-discovery-and-selection-decision-handoff.md` - Packet 090 handoff; records discovery evidence, no objective selection, no execution opening, and continued closure boundaries.
 - **FILE-206**: `ops/agents/packets/draft/2026-05-03-olares-phase-5-091-packet-089-and-packet-090-authority-publication-and-host-mirror-resync-gate.json` - authored Packet 091 authority-publication and host-mirror resync gate for Packet 089 closeout authority and Packet 090 discovery/no-go decision authority.
+- **FILE-207**: `ops/agents/handoffs/2026-05-03-olares-phase-5-091-packet-089-and-packet-090-authority-publication-and-host-mirror-resync-gate-handoff.md` - Packet 091 closeout handoff; records published no-objective discovery authority commit `d0b2e8f76c074beda6ed8f944506330520887d48` and clean host parity.
+- **FILE-208**: `ops/agents/packets/draft/2026-05-03-olares-phase-5-092-simultaneous-worker-trigger-framework-and-dormancy-planning.json` - Packet 092 planning authority; defines admissible and inadmissible future triggers, reopen criteria, evidence floor, and dormant authorable-only-with-new-evidence lane state.
+- **FILE-209**: `ops/agents/handoffs/2026-05-03-olares-phase-5-092-simultaneous-worker-trigger-framework-and-dormancy-planning-handoff.md` - Packet 092 handoff; records Branch G trigger-framework/dormancy planning and names Packet 093 authority publication as the next packet.
+- **FILE-210**: `ops/agents/packets/draft/2026-05-03-olares-phase-5-093-packet-091-and-packet-092-authority-publication-and-host-mirror-resync-gate.json` - authored Packet 093 authority-publication and host-mirror resync gate for Packet 091 closeout authority and Packet 092 trigger-framework planning authority.
 
 ## 6. Testing
 
@@ -482,6 +486,8 @@ Approved next-step rule:
 - **RISK-091**: Packet 089 is an authority-publication gate only; treating publication of Packet 088 no-go/defer authority as paired-objective discovery or execution approval would bypass the required separate read-only discovery decision lane.
 - **RISK-092**: Packet 090 confirms no current real paired objective set; using the now-published worker apparatus merely to manufacture simultaneous-worker work would violate the no-synthetic-churn rule and should remain no-go until repo truth presents a real paired objective.
 - **RISK-093**: Packet 091 is an authority-publication gate only; treating publication of Packet 090 no-current-objective authority as trigger-framework planning, paired-objective selection, or execution approval would skip the required separate planning/defer decision.
+- **RISK-094**: Packet 092 trigger-framework planning defines reopen criteria only; treating admissible trigger classes as already-satisfied objectives would reopen paired-objective selection without new evidence.
+- **RISK-095**: Packet 093 is an authority-publication gate only; treating publication of Packet 092 trigger-framework authority as simultaneous-worker execution approval would violate the dormancy boundary.
 - **ASSUMPTION-001**: The restored 2026-05-01 handoff plus the surviving 2026-04-25 scope/blocker handoffs remain the correct evidence floor unless later regression evidence supersedes them.
 - **ASSUMPTION-002**: The 2026-05-01 private-lane runtime, tunnel access, backup, restore, and status proof remain valid unless later host or access regression evidence supersedes them.
 - **ASSUMPTION-003**: Broader platform execution remains the primary repo frontier, so Olares follow-on work stays subordinate unless new host scope is explicitly approved.
@@ -585,6 +591,8 @@ Approved next-step rule:
 - **ASSUMPTION-101**: Packet 089 closes by publishing Packet 087 and Packet 088 authority in commit `e9f2646a34d2144465ab6d975f1cf96db422a4a9` and restoring `/home/olares/code/apex` clean parity; the smallest truthful next packet is Packet 090 read-only paired-objective discovery and selection decision.
 - **ASSUMPTION-102**: Packet 090 closes by selecting Branch U discovery but finding no current real paired apparatus/relay objective set; simultaneous-worker execution remains deferred and no-go until a separate packet names a real paired objective that preserves Packet 082 ownership and Packet 084 abort rules.
 - **ASSUMPTION-103**: Packet 091 should publish Packet 089 closeout authority and Packet 090 discovery/no-go decision authority, restore `/home/olares/code/apex` clean parity, and then require a separate trigger-framework/dormancy planning or no-further-action defer packet before any future objective-selection lane can reopen.
+- **ASSUMPTION-104**: Packet 091 closes by publishing Packet 089 and Packet 090 authority in commit `d0b2e8f76c074beda6ed8f944506330520887d48` and restoring `/home/olares/code/apex` clean parity; the smallest truthful next packet is Packet 092 trigger-framework/dormancy planning, not execution.
+- **ASSUMPTION-105**: Packet 092 closes by defining a planning-only trigger framework and lane state `dormant_until_trigger_authorable_only_with_new_evidence`; Packet 093 authority publication is required before a post-publication dormancy/readiness verdict consumes that framework.
 
 ## 8. Related Specifications / Further Reading
 
