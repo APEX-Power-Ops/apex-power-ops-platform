@@ -1,0 +1,98 @@
+{
+  "packet_id": "2026-05-03-olares-phase-5-065",
+  "title": "Bounded Workstation Mirror Validation Of Packet 063 Source/Test Artifact",
+  "objective": "Mirror and validate the exact unpublished Packet 063 two-file host artifact on the workstation without widening the slice, opening a second mutation worker, publishing, or reconciling the host mirror.",
+  "domain": "infrastructure-domain",
+  "active_role": "Olares Workstation Mirror Validation Operator",
+  "dependencies": [
+    "ops/agents/packets/draft/2026-05-03-olares-phase-5-063-bounded-one-mutation-worker-pilot-source-test-execution.json",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-063-bounded-one-mutation-worker-pilot-source-test-execution-handoff.md",
+    "ops/agents/packets/draft/2026-05-03-olares-phase-5-064-post-063-validation-path-decision.json",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-064-post-063-validation-path-decision-handoff.md",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-next-task-and-prompt-routing-handoff.md",
+    "plan/infrastructure-olares-full-implementation-roadmap-1.md"
+  ],
+  "dependency_note": "Packet 064 selected bounded workstation mirror validation for the exact unpublished Packet 063 host artifact because host diff hygiene is not publication authority and host executable validation was blocked by missing no-install tools/dependencies.",
+  "artifact_under_validation": {
+    "host_root": "/home/olares/code/apex/apex-power-ops-platform",
+    "workstation_root": "C:/APEX Platform/apex-power-ops-platform",
+    "files": [
+      "apps/operations-web/app/relay-resource-explorer.tsx",
+      "apps/operations-web/tests/browser-shell.smoke.spec.ts"
+    ],
+    "expected_diff_sha256": "36aa41ad9a0997c7c8fd909080113ca8169b26758fe17537475d5cc461ca2844",
+    "workstation_diff_sha256": "36aa41ad9a0997c7c8fd909080113ca8169b26758fe17537475d5cc461ca2844",
+    "host_status": "uncommitted_unpublished",
+    "host_status_count": 2
+  },
+  "validation_results": [
+    {
+      "command": "git diff --check -- apps/operations-web/app/relay-resource-explorer.tsx apps/operations-web/tests/browser-shell.smoke.spec.ts",
+      "cwd": "C:/APEX Platform/apex-power-ops-platform",
+      "result": "passed"
+    },
+    {
+      "command": "node crypto SHA-256 over `git diff -- apps/operations-web/app/relay-resource-explorer.tsx apps/operations-web/tests/browser-shell.smoke.spec.ts`",
+      "cwd": "C:/APEX Platform",
+      "result": "passed: 36aa41ad9a0997c7c8fd909080113ca8169b26758fe17537475d5cc461ca2844"
+    },
+    {
+      "command": "apps/operations-web/node_modules/.bin/tsc.cmd --noEmit",
+      "cwd": "C:/APEX Platform/apex-power-ops-platform/apps/operations-web",
+      "result": "passed"
+    },
+    {
+      "command": "apps/operations-web/node_modules/.bin/next.cmd build",
+      "cwd": "C:/APEX Platform/apex-power-ops-platform/apps/operations-web",
+      "result": "passed"
+    },
+    {
+      "command": "apps/operations-web/node_modules/.bin/playwright.cmd test tests/browser-shell.smoke.spec.ts with OPERATIONS_WEB_BROWSER_SMOKE_BASE_URL pointed at a temporary local `next start -p 3030` process",
+      "cwd": "C:/APEX Platform/apex-power-ops-platform/apps/operations-web",
+      "result": "passed: 3 tests passed"
+    },
+    {
+      "command": "git diff --name-only -- package and lockfile paths",
+      "cwd": "C:/APEX Platform/apex-power-ops-platform",
+      "result": "passed: no package or lockfile paths changed"
+    }
+  ],
+  "constrained_outputs": [
+    "A workstation mirror of the exact Packet 063 two-file host artifact",
+    "Validation evidence proving workstation diff scope and SHA match the host artifact",
+    "A Packet 065 handoff recording commands and results",
+    "Routing and roadmap updates that record Packet 065 closeout and name Packet 066 as the single next packet"
+  ],
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/app/relay-resource-explorer.tsx",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/tests/browser-shell.smoke.spec.ts",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "C:/APEX Platform/apex-power-ops-platform/plan"
+  ],
+  "preserved_boundaries": [
+    "Packet 064 selected workstation mirror validation, not publication authority.",
+    "Host diff hygiene remains insufficient for publication authority by itself.",
+    "The Packet 063 host artifact remains unpublished and uncommitted.",
+    "Packet 059 one-worker guardrails remain active.",
+    "`apps/operations-web/tests/browser-shell.smoke.spec.ts` remains shared-risk and unavailable to any second worker.",
+    "No publication/reconciliation, migration, runtime/service mutation, package/lockfile mutation, installs, AI-services expansion, Gitea/code-hosting transition, canonical-hosting transition, remote rewrite, rollback, force/reset/clean, or old-clone mutation is authorized."
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-065-bounded-workstation-mirror-validation-of-packet-063-source-test-artifact-handoff.md"
+  ],
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-065-bounded-workstation-mirror-validation-of-packet-063-source-test-artifact-handoff.md",
+  "implementation_ready_candidate": false,
+  "sql_permission": false,
+  "sql_permission_note": "This packet authorizes no database writes and no publication, host reconciliation, migration, runtime/service mutation, package mutation, lockfile mutation, install, package-manager activation/download, remote rewrite, AI-services expansion, Gitea/code-hosting transition, canonical-hosting transition, rollback, force/reset/clean, old-clone mutation, second-worker execution, or slice widening.",
+  "landing_lane": "olares_phase_5_workstation_mirror_validation_of_packet_063_artifact",
+  "migration_strategy": "validate_exact_host_artifact_on_workstation_before_any_publication_decision",
+  "created_at": "2026-05-05",
+  "updated_at": "2026-05-05",
+  "delegation_status": "complete",
+  "validation_disposition": "complete-validation-passed",
+  "closure_note": "Executed 2026-05-05. Packet 065 mirrored only the exact Packet 063 two-file host artifact into the workstation copy, confirmed workstation changed-file scope was exactly `apps/operations-web/app/relay-resource-explorer.tsx` and `apps/operations-web/tests/browser-shell.smoke.spec.ts`, confirmed workstation diff SHA-256 matched host SHA `36aa41ad9a0997c7c8fd909080113ca8169b26758fe17537475d5cc461ca2844`, passed diff hygiene, passed app-local `tsc --noEmit`, passed `next build`, and passed focused Playwright smoke `tests/browser-shell.smoke.spec.ts` with 3 tests passing. The host artifact remains uncommitted and unpublished on `/home/olares/code/apex`; no publication, host reconciliation, migration, package/lockfile mutation, install, runtime/service mutation, remote rewrite, rollback, force/reset/clean, second worker, or old-clone mutation occurred.",
+  "next_action": "Open only Packet 066 as a post-065 validated artifact publication/reconciliation or defer decision. Packet 065 validation is not itself publication authority."
+}

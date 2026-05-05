@@ -85,10 +85,12 @@ test('root shell renders and blocks invalid apparatus IDs before backend fetch',
 
 test('relay browser requires explicit selection before loading bounded compare details', async ({ page }) => {
   let relayContextRequests = 0
+  let relaySectionRequests = 0
   let relaySettingsRequests = 0
   let relayPlotRequests = 0
 
   await page.route('**/api/v1/neta/relay/sections?*', async (route) => {
+    relaySectionRequests += 1
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -356,10 +358,19 @@ test('relay browser requires explicit selection before loading bounded compare d
 
   await page.goto('/')
 
+  await page.getByLabel('Relay search').fill('   ')
+  await page.getByRole('button', { name: 'Search Relay Sections' }).click()
+  await expect(
+    page.getByText('Enter a relay search term before searching governed relay sections.'),
+  ).toBeVisible()
+  expect(relaySectionRequests).toBe(0)
+
+  await page.getByLabel('Relay search').fill('SEL')
   await page.getByRole('button', { name: 'Search Relay Sections' }).click()
   await expect(
     page.getByText('Select a primary TD-section before the browser treats any relay preview as current.'),
   ).toBeVisible()
+  expect(relaySectionRequests).toBe(1)
   expect(relayContextRequests).toBe(0)
   expect(relaySettingsRequests).toBe(0)
   expect(relayPlotRequests).toBe(0)
