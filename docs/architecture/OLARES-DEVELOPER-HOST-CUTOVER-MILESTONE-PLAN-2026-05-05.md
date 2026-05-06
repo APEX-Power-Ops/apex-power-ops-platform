@@ -8,6 +8,8 @@ Scope: program-level milestone plan for making the Olares One the authoritative 
 
 This plan converts the current infrastructure constraint into a delivery sequence.
 
+It now also sets the governing frame for whole-project Apex Ops migration to Olares so methods, governance, and execution posture do not diverge back toward the field laptop.
+
 The field laptop can no longer be treated as the durable development center of gravity.
 
 The Olares One must become the authoritative development workstation before broader product execution resumes at normal pace.
@@ -31,6 +33,8 @@ The next active program phase is:
 `Olares Developer Residency / Developer-Host Cutover`
 
 This phase precedes resumed feature delivery.
+
+It is not a side lane. It is the current whole-project operating discipline until split-residency practices are retired.
 
 The Operations Visibility MVP remains the strongest business lane after the cutover baseline is proven.
 
@@ -101,6 +105,8 @@ Acceptance criteria:
 1. one bounded real implementation or validation slice is executed from the Olares-hosted development posture
 2. the slice does not depend on the laptop as the durable runtime anchor
 3. the next business lane is then reopened explicitly, with Operations Visibility as the default follow-on
+
+No later lane should reintroduce laptop-first durable state or conflicting operator method without an explicit exception packet.
 
 ## No-Go Items During Cutover
 
