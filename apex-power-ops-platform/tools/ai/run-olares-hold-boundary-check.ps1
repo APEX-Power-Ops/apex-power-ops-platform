@@ -33,6 +33,10 @@ $holdArgs = @(
   '--output', $holdOutput
 )
 
+if ($DsnEnv) {
+  $holdArgs += @('--db-connection-string-env', 'SEAM_DATABASE_URL')
+}
+
 & 'c:/APEX Platform/.venv/Scripts/python.exe' @holdArgs | Out-Null
 
 $minimal = Get-Content $minimalOutput -Raw | ConvertFrom-Json

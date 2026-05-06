@@ -86,9 +86,39 @@ The hold-boundary wrapper combines two bounded checks:
 1. minimal MCP trio verification,
 2. deferred Operations Visibility live-row recheck for `v_resource_allocation` and `v_equipment_needs`.
 
-The deferred-view helper prefers `SEAM_DATABASE_URL` first because the local `.env.dev` contract is a developer database and is not authoritative for the live `09` tranche hold decision.
+The deferred-view helper prefers an explicit live DSN when one is intentionally supplied because the local `.env.dev` contract is a developer database and is not authoritative for the live `09` tranche hold decision.
+
+The PowerShell wrapper now uses that explicit live DSN through the repo venv's direct Python database path.
+
+The Bash wrapper first tries the same direct path when host Python can import `sqlalchemy`; if not, it only attempts a temporary live `apex-db` sidecar when the current mirror actually contains a runnable `services/mcp/apex-db` source tree.
 
 If no live DSN is present, the helper returns `UNAVAILABLE` rather than a false hold decision. That is an honest operator result, not a silent pass.
+
+If a live DSN is present but the current host posture lacks every usable live-query engine, the Bash wrapper also degrades back to `UNAVAILABLE` instead of failing. That is the current truthful host posture on `/home/olares/code/apex/apex-power-ops-platform`.
+
+Packet 058 established the current authoritative verdict from the workstation posture against a governed live Supabase DSN: both deferred views still have `0` rows, so the hold decision remains `HOLD` rather than `REOPEN`.
+
+### Live-DSN Examples
+
+```powershell
+$env:APEX_OLARES_LIVE_DSN = '<live dsn>'
+pwsh tools/ai/run-olares-hold-boundary-check.ps1 -PacketId 2026-05-06-olares-dev-residency-058 -DsnEnv APEX_OLARES_LIVE_DSN
+```
+
+```bash
+export APEX_OLARES_LIVE_DSN='<live dsn>'
+bash tools/ai/run-olares-hold-boundary-check.sh 2026-05-06-olares-dev-residency-058 APEX_OLARES_LIVE_DSN
+```
+
+The current workstation result with a governed live DSN is `minimal_mcp=PASS` and `deferred_ops=HOLD`.
+
+The current authoritative host-mirror result with the same live DSN remains `minimal_mcp=PASS` and `deferred_ops=UNAVAILABLE` until a separately bounded host-query engine is admitted.
+
+## Current Hold-Boundary Verdict
+
+1. `public.v_resource_allocation` currently has `0` live rows.
+2. `public.v_equipment_needs` currently has `0` live rows.
+3. The truthful current verdict is `HOLD`, not `REOPEN`.
 
 ## Expected Verification Shape
 

@@ -11,8 +11,13 @@ dsn_env="${2:-}"
 state_dir="${repo_root}/.tmp/ai-workflow"
 minimal_output="${state_dir}/verify-minimal-mcp-trio.json"
 hold_output="${state_dir}/deferred-ops-view-counts.json"
+live_db_port="${APEX_HOLD_BOUNDARY_DB_PORT:-8721}"
+live_db_url="http://127.0.0.1:${live_db_port}/mcp"
+live_db_pid=""
+live_db_root="${repo_root}/services/mcp/apex-db"
 
 mkdir -p "${state_dir}"
+mkdir -p "${state_dir}/logs"
 
 if [[ -n "${dsn_env}" ]]; then
   dsn_value="${!dsn_env:-}"
@@ -30,6 +35,36 @@ hold_args=(
   --packet-id "${packet_id}"
   --output "${hold_output}"
 )
+
+if [[ -n "${dsn_env}" ]]; then
+  if python3 -c 'import sqlalchemy' >/dev/null 2>&1; then
+    hold_args+=(--db-connection-string-env "SEAM_DATABASE_URL")
+  elif [[ -f "${live_db_root}/build/http.js" ]]; then
+    live_db_pid="$({
+      cd "${live_db_root}"
+      nohup env APEX_MCP_HTTP_PORT="${live_db_port}" APEX_DB_CONNECTION_STRING="${SEAM_DATABASE_URL}" node build/http.js >"${state_dir}/logs/live-hold-boundary-db.log" 2>&1 &
+      printf '%s' "$!"
+    })"
+
+    deadline=$((SECONDS + 15))
+    until curl -fsS "http://127.0.0.1:${live_db_port}/health" >/dev/null 2>&1; do
+      if (( SECONDS >= deadline )); then
+        printf '%s\n' "Timed out waiting for live hold-boundary apex-db on port ${live_db_port}." >&2
+        exit 1
+      fi
+    done
+
+    hold_args+=(--db-url "${live_db_url}")
+  fi
+fi
+
+cleanup() {
+  if [[ -n "${live_db_pid}" ]]; then
+    kill "${live_db_pid}" >/dev/null 2>&1 || true
+  fi
+}
+
+trap cleanup EXIT
 
 python3 "${hold_args[@]}" >/dev/null
 

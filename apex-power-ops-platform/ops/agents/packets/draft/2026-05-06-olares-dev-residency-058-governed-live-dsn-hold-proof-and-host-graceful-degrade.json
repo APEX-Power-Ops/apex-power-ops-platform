@@ -1,0 +1,65 @@
+{
+  "packet_id": "2026-05-06-olares-dev-residency-058",
+  "title": "Governed Live-DSN Hold Proof And Host Graceful Degrade",
+  "objective": "Recover a governed live DSN for the hold-boundary cadence surface, produce a real deferred-view hold or reopen verdict where the current posture allows it, and keep the host mirror truthful when it lacks a live-query engine.",
+  "domain": "delivery-domain",
+  "active_role": "Platform Architect",
+  "dependencies": [
+    "ops/agents/packets/draft/2026-05-06-olares-dev-residency-057-hold-boundary-cadence-surface-host-portability-repair-and-validation.json",
+    "tools/ai/check_deferred_ops_view_counts.py",
+    "tools/ai/run-olares-hold-boundary-check.ps1",
+    "tools/ai/run-olares-hold-boundary-check.sh",
+    ".secrets/SUPABASE_CREDENTIALS.md"
+  ],
+  "dependency_note": "Packet 057 closed host portability for the default cadence surface, but a real hold-or-reopen verdict still required recovering a governed live DSN and then handling the asymmetric workstation-vs-host query capabilities truthfully.",
+  "execution_mode": "bounded_live_dsn_recovery_and_hold_proof",
+  "execution_steps": [
+    "Read the governed Supabase credentials source and recover a bounded live DSN without publishing secrets into repo-visible files.",
+    "Add an explicit direct-connection path to the deferred-view helper so a supplied live DSN can produce an authoritative verdict where the current posture supports it.",
+    "Rerun the hold-boundary cadence wrapper locally against the live Supabase session-pooler DSN and capture the resulting hold or reopen decision.",
+    "Probe the authoritative host mirror with the same live DSN, then harden the Bash wrapper so host postures without a live-query engine degrade truthfully instead of failing."
+  ],
+  "constraints": [
+    "Do not reveal secrets in packet text, terminal summaries, or tracked files.",
+    "Do not widen AI-services admission or install new host packages.",
+    "Do not treat a successful live-DSN rerun as authority to reopen the deferred Operations Visibility seams unless the counts are actually non-zero."
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "execution_outcome": "live_dsn_hold_boundary_proven_locally_host_degrades_truthfully",
+  "execution_evidence": {
+    "local_live_dsn_wrapper_result": {
+      "minimal_mcp": "PASS",
+      "deferred_ops": "HOLD",
+      "decision": "Deferred Operations Visibility seams remain empty and should stay on hold."
+    },
+    "authoritative_live_counts": {
+      "v_resource_allocation": 0,
+      "v_equipment_needs": 0
+    },
+    "host_live_dsn_wrapper_result": {
+      "minimal_mcp": "PASS",
+      "deferred_ops": "UNAVAILABLE",
+      "decision": "Authoritative deferred view counts require apex-db to run against a live DSN such as SEAM_DATABASE_URL; the current database surface is not sufficient for this hold check."
+    },
+    "host_live_query_engine_gaps": [
+      "sqlalchemy missing from host python3",
+      "psql missing on host",
+      "pg package not resolvable from the host repo mirror",
+      "services/mcp/apex-db source tree absent from /home/olares/code/apex/apex-power-ops-platform"
+    ]
+  },
+  "execution_rationale": [
+    "The cadence surface was still incomplete as a decision surface while it could only return generic UNAVAILABLE and not a real hold-or-reopen verdict from a governed live DSN.",
+    "Adding an explicit direct-connection path keeps the live verdict inside the current bounded operator surface without reopening broader product or AI scope.",
+    "The host mirror should stay truthful under live-DSN requests even when it cannot execute them locally; graceful degradation is preferable to a startup failure."
+  ],
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-06-olares-dev-residency-058-governed-live-dsn-hold-proof-and-host-graceful-degrade-handoff.md"
+  ],
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-06-olares-dev-residency-058-governed-live-dsn-hold-proof-and-host-graceful-degrade-handoff.md",
+  "next_packet_candidate": "Keep the deferred Operations Visibility seams on hold until live data changes, or open a separate bounded host-query-engine packet only if live DSN rechecks must also execute authoritatively from /home/olares/code/apex.",
+  "validation_disposition": "implemented_and_validated_with_truthful_host_boundary",
+  "closure_note": "Executed 2026-05-06 as the bounded follow-on to Packet 057. Packet 058 recovered a governed live Supabase DSN, added a direct-connection path to the deferred-view helper, reran the workstation wrapper to a real HOLD verdict with both deferred view counts at zero, and hardened the host Bash wrapper so live-DSN requests degrade truthfully back to UNAVAILABLE instead of failing when the host mirror lacks a runnable live-query engine.",
+  "next_action": "Do not reopen `v_resource_allocation` or `v_equipment_needs` consumers until a later live-data rerun returns non-zero counts, or open a separate bounded host-query-engine lane if authoritative host-side live-DSN reruns become necessary."
+}
