@@ -39,7 +39,7 @@ Olares host responsibilities:
 Laptop responsibilities:
 
 1. private-mesh client
-2. VS Code Remote-SSH or browser-terminal client
+2. VS Code Remote-SSH, browser-delivered Olares desktop UI, or browser-terminal client
 3. review and approval surface
 4. emergency fallback terminal
 
@@ -131,6 +131,7 @@ Proof required:
 1. the laptop can attach to Olares over approved access paths
 2. the laptop is not needed to keep runtimes alive
 3. the laptop is not the only holder of active repo, secret, or validation state
+4. if Olares exposes its own browser-delivered desktop UI, that UI is treated as an admitted host-supported client surface rather than as a contradictory laptop-first runtime anchor
 
 ## Explicit Exclusions
 
