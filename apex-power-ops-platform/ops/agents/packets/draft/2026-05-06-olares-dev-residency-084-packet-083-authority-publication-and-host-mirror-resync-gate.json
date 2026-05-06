@@ -20,8 +20,15 @@
     "rollback or force/reset/clean",
     "old-clone mutation"
   ],
-  "artifact_published": false,
-  "host_mirror_resynced": false,
+  "artifact_published": true,
+  "host_mirror_resynced": true,
+  "publication_commit": "52e2de103ed51c6a944681bf47ddc4f95a1c8ed2",
+  "host_mirror_state": {
+    "head": "52e2de103ed51c6a944681bf47ddc4f95a1c8ed2",
+    "status_count": 0,
+    "old_clone_head": "2836a2622309b4e146ca24f23b5bf87312c0c857",
+    "old_clone_status_count": 30
+  },
   "status": "complete",
   "output_artifacts": [
     "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-06-olares-dev-residency-084-packet-083-authority-publication-and-host-mirror-resync-gate-handoff.md"
@@ -29,8 +36,8 @@
   "handoff_target": "Platform Architect",
   "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-06-olares-dev-residency-084-packet-083-authority-publication-and-host-mirror-resync-gate-handoff.md",
   "implementation_ready_candidate": false,
-  "next_packet_candidate": "Execute Packet 084 as bounded publication and host-mirror resync only.",
+  "next_packet_candidate": "No automatic successor; open the next Olares packet only for a concrete migration dependency, publication-boundary retirement step, or other real split-residency friction.",
   "sql_permission": false,
   "sql_permission_note": "This publication gate authorizes no database writes, no source/test runtime mutation, no package or lockfile mutation, no installs, no runtime or service mutation, no AI-services expansion, no remote rewrite, no rollback or force/reset/clean, and no old-clone mutation.",
-  "validation_disposition": "pending-publication-and-host-resync"
+  "validation_disposition": "published-and-host-resynced"
 }

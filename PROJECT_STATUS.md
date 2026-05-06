@@ -135,6 +135,8 @@ handoffs.
 94. Packet 082 published the durable-wording tranche in commit `d716afca77f8159986eaf5aa80d6a1c2803a6534` (`Harden APEX PM cockpit wording`), pushed `origin/clean-main`, restored `/home/olares/code/apex` to clean parity at the same commit, and preserved `/home/olares/src/apex-power-ops-platform` observe-only at `2836a2622309b4e146ca24f23b5bf87312c0c857` with status count `30`.
 95. Packet 083 is now complete as the governing migration-alignment slice for the Olares program. The controlling directive is now explicit across the active authority chain: all Apex Ops work top to bottom should migrate to Olares so governance, protocol, and execution method do not fragment back toward the field laptop.
 96. Packet 083 updates the active Olares authority, cutover technical and milestone baselines, PM cockpit, roadmap, and routing surfaces so Olares is no longer framed as merely a bounded support lane. GitHub remains canonical and the current `C:/APEX Platform` publication boundary remains transitional rather than silently becoming the long-term operating model.
+97. Packet 084 is now complete as the publication and host-mirror resync closeout for that governing migration alignment.
+98. Packet 084 published the alignment tranche in commit `52e2de103ed51c6a944681bf47ddc4f95a1c8ed2` (`Align Olares migration governance`), pushed `origin/clean-main`, restored `/home/olares/code/apex` to clean parity at the same commit, and preserved `/home/olares/src/apex-power-ops-platform` observe-only at `2836a2622309b4e146ca24f23b5bf87312c0c857` with status count `30`.
 
 ```mermaid
 pie title Project Completion Status
