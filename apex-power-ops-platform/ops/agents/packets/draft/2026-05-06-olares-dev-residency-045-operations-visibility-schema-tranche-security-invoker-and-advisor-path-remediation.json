@@ -1,0 +1,56 @@
+{
+  "packet_id": "2026-05-06-olares-dev-residency-045",
+  "title": "Operations Visibility Schema Tranche Security Invoker And Advisor-Path Remediation",
+  "objective": "Remediate the repo-side security posture of the `09` Operations Visibility schema tranche and determine whether the remaining advisor-path blocker can be cleared from the current session before any schema mutation is attempted.",
+  "domain": "delivery-domain",
+  "active_role": "Platform Architect",
+  "dependencies": [
+    "ops/agents/packets/draft/2026-05-06-olares-dev-residency-044-bounded-operations-visibility-schema-deployment-preflight-execution.json",
+    "ops/agents/handoffs/2026-05-06-olares-dev-residency-044-bounded-operations-visibility-schema-deployment-preflight-execution-handoff.md",
+    "C:/APEX Platform/.secrets/SUPABASE_CREDENTIALS.md",
+    "C:/APEX Platform/Supabase/schema/09_schema_additions.sql",
+    "C:/APEX Platform/Supabase/schema/09b_enum_updates.sql",
+    "plan/infrastructure-olares-full-implementation-roadmap-1.md"
+  ],
+  "dependency_note": "Packet 044 found the `09` tranche not execution-ready because its public views lacked explicit `security_invoker` treatment and the normal advisor path was unavailable from this session. Packet 045 exists to clear as much of that blocker as can be resolved truthfully without applying schema changes.",
+  "execution_mode": "bounded_remediation",
+  "remediation_steps": [
+    "Patch every public view in `Supabase/schema/09_schema_additions.sql` to use `WITH (security_invoker = true)`.",
+    "Validate the file locally after the patch.",
+    "Probe the Supabase management API using the stored token to determine whether the advisor-path blocker is a bad endpoint guess or a broader authorization/access failure.",
+    "Return a bounded outcome stating whether the schema tranche is now execution-ready or still blocked."
+  ],
+  "constraints": [
+    "Do not apply the `09` schema tranche in this packet.",
+    "Do not mutate live database schema, runtime services, package manifests, lockfiles, or old-clone state.",
+    "Do not overclaim advisor coverage if access remains unavailable from this session."
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "remediation_outcome": "partially_resolved_still_blocked",
+  "execution_evidence": {
+    "view_definitions_patched": 11,
+    "view_definitions_with_security_invoker_after_patch": 11,
+    "local_schema_file_validation_passed": true,
+    "supabase_mcp_advisors_available": false,
+    "direct_supabase_management_api_status": 401,
+    "direct_supabase_management_api_message": "Unauthorized"
+  },
+  "execution_rationale": [
+    "The repo-side security blocker is now remediated: all 11 public views in `Supabase/schema/09_schema_additions.sql` were updated to use explicit `WITH (security_invoker = true)` treatment.",
+    "Local validation passed after the patch and the file now matches the expected safe posture for public views on PostgreSQL 17 in an exposed Supabase `public` schema.",
+    "The advisor-path blocker could not be cleared from this session. The Supabase MCP advisor calls still fail internally, and a direct management API probe using the stored token returned `401 Unauthorized` even on the generic `/v1/projects` endpoint.",
+    "The schema tranche is therefore safer than before but still not execution-ready, because truthful advisor/security review access is still unresolved."
+  ],
+  "blocked_by": [
+    "Supabase advisor access remains unavailable from this session: MCP advisor calls fail internally and the stored token does not authorize direct management API access."
+  ],
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-06-olares-dev-residency-045-operations-visibility-schema-tranche-security-invoker-and-advisor-path-remediation-handoff.md"
+  ],
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-06-olares-dev-residency-045-operations-visibility-schema-tranche-security-invoker-and-advisor-path-remediation-handoff.md",
+  "next_packet_candidate": "Olares Dev Residency 046 - Supabase Advisor Access Recovery Or Alternate Execution-Gate Decision",
+  "validation_disposition": "complete-remediation-blocked",
+  "closure_note": "Executed 2026-05-06 as the direct follow-on to Packet 044. Packet 045 remediated the repo-side public-view security posture for the `09` Operations Visibility schema tranche by adding explicit `security_invoker` treatment to every view in `Supabase/schema/09_schema_additions.sql`, but it could not restore the advisor path from this session: Supabase MCP advisor calls still fail internally and the stored management token returns `401 Unauthorized` against the Supabase management API. The tranche is safer than before but still blocked from truthful execution readiness.",
+  "next_action": "Execute `Olares Dev Residency 046 - Supabase Advisor Access Recovery Or Alternate Execution-Gate Decision` before attempting to apply the `09` schema tranche."
+}

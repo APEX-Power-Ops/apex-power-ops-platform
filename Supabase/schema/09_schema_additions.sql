@@ -119,7 +119,7 @@ CREATE INDEX IF NOT EXISTS idx_scopes_status ON scopes(status) WHERE is_active =
 -- =============================================================================
 -- This provides the "what can we work on today" view
 
-CREATE OR REPLACE VIEW v_apparatus_operational AS
+CREATE OR REPLACE VIEW v_apparatus_operational WITH (security_invoker = true) AS
 SELECT 
     a.id,
     a.apparatus_designation,
@@ -168,7 +168,7 @@ COMMENT ON VIEW v_apparatus_operational IS 'Daily operational view - what can be
 -- ROLLUP DATE VIEW - Task Level
 -- =============================================================================
 
-CREATE OR REPLACE VIEW v_task_rollup_dates AS
+CREATE OR REPLACE VIEW v_task_rollup_dates WITH (security_invoker = true) AS
 SELECT 
     t.id AS task_id,
     t.task_name,
@@ -199,7 +199,7 @@ COMMENT ON VIEW v_task_rollup_dates IS 'Task-level date rollups from apparatus';
 -- ROLLUP DATE VIEW - Scope Level
 -- =============================================================================
 
-CREATE OR REPLACE VIEW v_scope_rollup_dates AS
+CREATE OR REPLACE VIEW v_scope_rollup_dates WITH (security_invoker = true) AS
 SELECT 
     s.id AS scope_id,
     s.scope_name,
@@ -236,7 +236,7 @@ COMMENT ON VIEW v_scope_rollup_dates IS 'Scope-level date rollups from tasks and
 -- ROLLUP DATE VIEW - Project Level
 -- =============================================================================
 
-CREATE OR REPLACE VIEW v_project_rollup_dates AS
+CREATE OR REPLACE VIEW v_project_rollup_dates WITH (security_invoker = true) AS
 SELECT 
     p.id AS project_id,
     p.project_name,
@@ -286,7 +286,7 @@ COMMENT ON VIEW v_project_rollup_dates IS 'Project-level dashboard view with all
 -- =============================================================================
 -- Identifies projects/scopes at risk based on due dates vs progress
 
-CREATE OR REPLACE VIEW v_schedule_health AS
+CREATE OR REPLACE VIEW v_schedule_health WITH (security_invoker = true) AS
 SELECT 
     p.project_number,
     p.project_name,
@@ -321,7 +321,7 @@ COMMENT ON VIEW v_schedule_health IS 'Dashboard view showing project/scope healt
 -- =============================================================================
 -- Recreates your Excel KPI header + category breakdown per project/scope
 
-CREATE OR REPLACE VIEW v_project_apparatus_summary AS
+CREATE OR REPLACE VIEW v_project_apparatus_summary WITH (security_invoker = true) AS
 SELECT 
     p.id AS project_id,
     p.project_number,
@@ -358,7 +358,7 @@ COMMENT ON VIEW v_project_apparatus_summary IS 'Project/scope KPI dashboard - re
 -- APPARATUS BY CATEGORY (Your Category Breakdown Table)
 -- =============================================================================
 
-CREATE OR REPLACE VIEW v_apparatus_by_category AS
+CREATE OR REPLACE VIEW v_apparatus_by_category WITH (security_invoker = true) AS
 SELECT 
     p.id AS project_id,
     p.project_number,
@@ -390,7 +390,7 @@ COMMENT ON VIEW v_apparatus_by_category IS 'Apparatus breakdown by type - matche
 -- THE VIEW THAT CHANGES EVERYTHING: See ALL projects at once
 -- This is what enables resource allocation across 10-15 active projects
 
-CREATE OR REPLACE VIEW v_master_operations AS
+CREATE OR REPLACE VIEW v_master_operations WITH (security_invoker = true) AS
 SELECT 
     p.id AS project_id,
     p.project_number,
@@ -450,7 +450,7 @@ COMMENT ON VIEW v_master_operations IS 'Multi-project operations dashboard - res
 -- =============================================================================
 -- Answers: "Where should I send people tomorrow?"
 
-CREATE OR REPLACE VIEW v_resource_allocation AS
+CREATE OR REPLACE VIEW v_resource_allocation WITH (security_invoker = true) AS
 SELECT 
     l.location_name AS resa_location,
     p.project_number,
@@ -486,7 +486,7 @@ COMMENT ON VIEW v_resource_allocation IS 'Where to send resources - ready work b
 -- =============================================================================
 -- Answers: "What test equipment do I need where?"
 
-CREATE OR REPLACE VIEW v_equipment_needs AS
+CREATE OR REPLACE VIEW v_equipment_needs WITH (security_invoker = true) AS
 SELECT 
     p.project_number,
     p.project_name,
@@ -513,7 +513,7 @@ COMMENT ON VIEW v_equipment_needs IS 'Test equipment needs by project and appara
 -- =============================================================================
 -- Answers: "What's stopping us from working?"
 
-CREATE OR REPLACE VIEW v_blockers_summary AS
+CREATE OR REPLACE VIEW v_blockers_summary WITH (security_invoker = true) AS
 SELECT 
     p.project_number,
     p.project_name,
