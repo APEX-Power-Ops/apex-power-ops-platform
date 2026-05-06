@@ -1,7 +1,7 @@
 # Apex Power Ops - Project Status
 
-> **Last Updated**: May 6, 2026 (Olares host-side AI workflow proof addendum)
-> **Phase**: Operations Visibility Schema Ready, NETA Import Complete, Olares bounded private lane operational with daily backup automation and host-owned encrypted offsite cadence
+> **Last Updated**: May 6, 2026 (Operations Visibility runtime-consumption first-consumer addendum)
+> **Phase**: Operations Visibility schema live with first governed runtime consumer, NETA Import Complete, Olares bounded private lane operational with daily backup automation and host-owned encrypted offsite cadence
 > **See Also**: `PROJECT_OVERVIEW.md` for full system architecture
 
 ---
@@ -64,7 +64,9 @@ handoffs.
 23. Packet 047 is now complete and applied the bounded `09` Operations Visibility schema tranche live. The first apply attempt exposed two source-local enum dependency defects, so the tranche source was hardened in-place before retry: `apparatus_availability` creation is now rerun-safe, assessment comparisons that reference future enum labels are text-based, and `v_master_operations` no longer assumes the `project_status` enum already contains `In Progress`.
 24. Live post-apply verification is complete: the `apparatus_availability` type is present, all 28 target columns landed across `apparatus`, `tasks`, `scopes`, and `projects`, all 11 Operations Visibility views are live, all 11 carry `security_invoker = true`, the three `apparatus_assessment` enum additions are present, and representative views (`v_master_operations`, `v_apparatus_operational`) return live rows.
 25. A refreshed Supabase security-advisor pass does not report any of the 11 new `09` views; remaining advisor debt is preexisting legacy surface outside this bounded tranche.
-26. The next truthful follow-on is therefore `Olares Dev Residency 048 - Operations Visibility Runtime Consumption Planning`, not more advisor-path recovery and not generic Olares-first infrastructure expansion.
+26. Packet 048 is now complete as the first runtime-consumption slice on top of the live `09` schema tranche: `apps/control-plane-api` now exposes a read-only `GET /api/v1/ops/master-operations` seam against `public.v_master_operations`, the focused pytest file passes `6/6`, and `apps/operations-web` now mounts the first governed browser consumer for that seam instead of reopening direct browser-side Supabase admission.
+27. Frontend validation for Packet 048 passed through the app-local TypeScript compiler at `apps/operations-web/node_modules/.bin/tsc.cmd` after `pnpm` proved unavailable on the workstation path; editor diagnostics for the touched route, test, and browser-shell files are clean.
+28. The next truthful follow-on is therefore the next adjacent Operations Visibility consumer or source-reconciliation slice on top of the now-landed first browser consumer, not more advisor-path recovery and not generic Olares-first infrastructure expansion.
 
 ```mermaid
 pie title Project Completion Status
@@ -102,12 +104,14 @@ Key questions answered this session - see `.claude/SESSION_2025-12-11_SCHEMA_OPE
 4. **Success Criteria**: Centralized real-time visibility of everything
 5. **MVP**: Operations dashboard answering resource allocation questions
 
-### Schema Additions Ready (Not Yet Deployed)
+### Schema Additions Deployed And First Runtime Consumer Landed
 
 | File | Contents | Status |
 |------|----------|--------|
-| `09_schema_additions.sql` | Operational fields + 11 views | 📝 Deploy next |
-| `09b_enum_updates.sql` | Assessment enum alignment | 📝 Deploy next |
+| `09_schema_additions.sql` | Operational fields + 11 views | ✅ Live on Supabase |
+| `09b_enum_updates.sql` | Assessment enum alignment | ✅ Applied live |
+| `apps/control-plane-api/services/ops/router.py` | Governed `v_master_operations` read seam | ✅ First consumer API landed |
+| `apps/operations-web/app/master-operations-explorer.tsx` | First browser consumer of the governed seam | ✅ Mounted in browser shell |
 | `EXCEL_TO_DATABASE_MAPPING.md` | Field transformation guide | ✅ Complete |
 
 ### New Operational Views Designed

@@ -1,8 +1,8 @@
 # Olares Phase 5 Next Task And Prompt Routing Handoff
 
 Date: 2026-05-03
-Status: Active - Packet 047 is complete and the next bounded follow-on is Operations Visibility runtime consumption planning
-Scope: preserve the completed Olares-first AI workflow routing state after Packet 035 through Packet 041 while naming the current bounded business-lane follow-on from the Olares-resident posture
+Status: Active - Packet 048 is complete and the next bounded follow-on is the next adjacent Operations Visibility runtime-consumption or source-reconciliation slice
+Scope: preserve the completed Olares-first AI workflow routing state after Packet 035 through Packet 041 while naming the current bounded Operations Visibility follow-on from the Olares-resident posture
 
 Update 2026-05-06:
 
@@ -33,8 +33,11 @@ Update 2026-05-06:
 25. Packet 046 is now complete and recovered a truthful Supabase management/advisor path from this session: the project lookup succeeded, security and performance advisor retrieval both worked, and the blocker narrowed from access failure to a normal bounded execution decision.
 26. Packet 047 is now complete and applied the bounded `09` Operations Visibility schema tranche live after closing three hidden source-local defects exposed by the first migration attempt: rerun-safe `apparatus_availability` type creation, text-based assessment comparisons for future enum labels, and a text-based `project_status` filter in `v_master_operations`.
 27. Live verification is complete: all 28 target columns landed, all 11 Operations Visibility views are live, all 11 carry `security_invoker = true`, all 3 target `apparatus_assessment` enum additions are present, and refreshed security-advisor output does not report any of the new `09` views.
-28. The next packet should therefore be `Olares Dev Residency 048 - Operations Visibility Runtime Consumption Planning`.
-29. The current minimal MCP trio plus `apex-jobs` operating model remains intact in the background; reopen Olares-first infrastructure work only if it shows a concrete insufficiency.
+28. Packet 048 is now complete and landed the first governed runtime-consumption seam on top of the live `09` tranche: `apps/control-plane-api/services/ops/router.py` now exposes `GET /api/v1/ops/master-operations` against `public.v_master_operations`, and `tests/test_ops_master_operations.py` passes `6/6`.
+29. The browser shell now consumes that seam through `apps/operations-web/lib/master-operations.ts` and the mounted `MasterOperationsExplorer` component on `apps/operations-web/app/page.tsx`, preserving the rule that live browser reads must flow through governed backend routes rather than direct Supabase admission.
+30. Frontend validation also passed through the app-local compiler at `apps/operations-web/node_modules/.bin/tsc.cmd`; `pnpm` remained unavailable on the workstation path, but the touched-file diagnostics are clean and the runtime-consumption slice itself is validated.
+31. The next packet should therefore select the next adjacent Operations Visibility consumer or source-reconciliation slice rather than reopening schema deployment or advisor-path recovery.
+32. The current minimal MCP trio plus `apex-jobs` operating model remains intact in the background; reopen Olares-first infrastructure work only if it shows a concrete insufficiency.
 
 ## Authority
 
