@@ -1,0 +1,45 @@
+{
+  "packet_id": "2026-05-05-olares-dev-residency-032",
+  "title": "Bounded Operations-Web Vercel Prestage And Preview Redeploy Under Render Block",
+  "objective": "Advance the hosted lane as far as possible without Render credentials by targeting the real `apex-operations-web` Vercel project, staging `MUTATION_SEAM_BASE_URL` there, and validating a server-side preview redeploy while preserving truthful blockage on the missing public mutation-seam host.",
+  "domain": "delivery-domain",
+  "active_role": "Hosted Runtime Operator",
+  "dependencies": [
+    "ops/agents/packets/draft/2026-05-05-olares-dev-residency-031-bounded-public-mutation-seam-hosted-deployment-and-public-pm-live-data-proof.json",
+    "apps/operations-web/DEPLOYMENT_VALIDATION.md",
+    "apps/operations-web/next.config.ts",
+    "apps/mutation-seam/DEPLOYMENT_VALIDATION.md",
+    "plan/infrastructure-olares-full-implementation-roadmap-1.md"
+  ],
+  "decision_selected": "prestage_real_operations_web_vercel_project_and_validate_preview_redeploy_while_render_remains_blocked",
+  "decision_rationale": [
+    "Packet 031 proved the remaining public blocker is the missing Render-authenticated path to create or configure `https://mutation-seam.apexpowerops.com`, but the operations-web Vercel side was still executable from this environment and should be advanced instead of left idle.",
+    "The first Vercel env write landed on the wrong project (`apex-power-ops-platform`), so the next truthful slice was to identify the actual production alias owner for `https://operations.apexpowerops.com` and move the seam URL staging onto that real project.",
+    "A server-side Vercel redeploy can exercise the new environment variables without depending on the local parent-root packaging path, which is useful because local CLI deploys from `C:/APEX Platform` currently fail before build with a rootDirectory error.",
+    "Preview protection keeps preview URLs from serving as the public proof gate, so successful preview redeploy can only count as Vercel-side pre-stage, not as public PM live-data proof."
+  ],
+  "execution_summary": [
+    "Confirmed `https://operations.apexpowerops.com` is served by the Vercel project `apex-operations-web`, not by the separate `apex-power-ops-platform` project.",
+    "Created an isolated Vercel link outside the repo at `C:/APEX Platform/tmp/vercel-apex-operations-web-link`, targeted it to `apex-operations-web`, and staged `MUTATION_SEAM_BASE_URL=https://mutation-seam.apexpowerops.com` across production, preview, and development on that real project.",
+    "Cleaned the mistakenly added `MUTATION_SEAM_BASE_URL` entries back out of the unrelated `apex-power-ops-platform` Vercel project so only the real browser host retains the new seam env.",
+    "Triggered a server-side redeploy of the newest ready preview deployment and validated the new preview URL `https://apex-operations-697hr5p9p-jasonlswenson-sys-projects.vercel.app`, while separately proving that local CLI deploys from `C:/APEX Platform` still fail because Vercel uploads only `.vercelignore` and then reports the configured rootDirectory as missing."
+  ],
+  "validation": {
+    "production_alias_owner": "npx -y vercel inspect operations.apexpowerops.com --scope jasonlswenson-sys-projects -> PASS (`apex-operations-web`, deployment `dpl_3rR9YukiwRwnMcdbKN87Hh87rpVr`)",
+    "correct_project_envs": "npx -y vercel env ls --cwd C:/APEX Platform/tmp/vercel-apex-operations-web-link --scope jasonlswenson-sys-projects -> PASS (`MUTATION_SEAM_BASE_URL` present on Production, Preview, Development)",
+    "wrong_project_cleanup": "npx -y vercel env ls from C:/APEX Platform/apex-power-ops-platform -> PASS (`No Environment Variables found`)",
+    "server_side_preview_redeploy": "npx -y vercel redeploy https://apex-operations-fej01pnsg-jasonlswenson-sys-projects.vercel.app --target preview --scope jasonlswenson-sys-projects -> PASS (`https://apex-operations-697hr5p9p-jasonlswenson-sys-projects.vercel.app`)",
+    "preview_probe": "preview PM shell and same-origin API routes -> `401` under preview protection (`/pm-review/index.html`, `/api/v1/reads/approval-queue`, `/api/v1/schedule/projects`)",
+    "local_cli_deploy_probe": "npx -y vercel deploy --yes --scope jasonlswenson-sys-projects --debug from C:/APEX Platform -> FAIL (uploads only `.vercelignore`, then build reports rootDirectory `apex-power-ops-platform/apps/operations-web` does not exist)"
+  },
+  "status": "complete",
+  "handoff_target": "Platform Architect",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-05-olares-dev-residency-032-bounded-operations-web-vercel-prestage-and-preview-redeploy-under-render-block-handoff.md"
+  ],
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-05-olares-dev-residency-032-bounded-operations-web-vercel-prestage-and-preview-redeploy-under-render-block-handoff.md",
+  "validation_disposition": "operations_web_vercel_prestaged_and_preview_redeployed_render_block_still_active",
+  "next_packet_candidate": "Olares Dev Residency 033 - Credentialed Public Mutation-Seam Deployment And Public PM Live-Data Proof",
+  "closure_note": "Executed 2026-05-06 as a bounded Vercel-side preparation slice after Packet 031. Packet 032 truthfully advances the browser-host side of the lane, but it does not claim that the public mutation-seam host exists, that the production alias was re-promoted with the new seam env, or that public PM live-data proof has passed.",
+  "next_action": "Use Render-authenticated access to create or configure `https://mutation-seam.apexpowerops.com`, validate it with the deployed seam smoke, then use the already staged `apex-operations-web` Vercel environment to redeploy and, if valid, promote the browser host before rerunning public PM live-data proof."
+}

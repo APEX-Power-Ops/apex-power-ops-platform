@@ -6,11 +6,12 @@ Scope: update the next task prompts after Phase 5 Step 1, Step 2, Step 3, Packet
 
 Update 2026-05-06:
 
-1. Packets 027 through 030 plus the Packet 030 mutation-seam scaffold are now published on `origin/clean-main` in commit `fe0cb168e0a751b8364cfe72ad74283088cc824e` (`Publish Olares mutation-seam ingress scaffold`).
-2. Olares Dev Residency Packet 031 is now complete as the bounded hosted follow-through attempt and proves that `https://mutation-seam.apexpowerops.com` is still absent and not just misrouted.
-3. The remaining blocker is Render-side authentication and service access: the browser lands on Render login, GitHub OAuth lands on GitHub login, and no local Render CLI or config footprint is available in this environment.
-4. Vercel CLI access remains live, so the `operations-web` rebuild and promote step is now pending only on successful public mutation-seam deployment.
-5. The repo-owned next packet candidate is now `Olares Dev Residency 032 - Credentialed Public Mutation-Seam Deployment And Public PM Live-Data Proof`.
+1. Packets 027 through 030 plus the Packet 030 mutation-seam scaffold remain published on `origin/clean-main` in commit `fe0cb168e0a751b8364cfe72ad74283088cc824e` (`Publish Olares mutation-seam ingress scaffold`).
+2. Packet 031 closed the publish-and-probe slice and proved that `https://mutation-seam.apexpowerops.com` is still absent and blocked on missing Render access.
+3. Packet 032 is now complete as the bounded Vercel-side pre-stage slice: the real browser-host project is `apex-operations-web`, `MUTATION_SEAM_BASE_URL` is staged there across production, preview, and development, and a server-side preview redeploy succeeded.
+4. Preview remains `401` protected and local CLI deploys from `C:/APEX Platform` still fail because Vercel uploads only `.vercelignore` before reporting the configured rootDirectory as missing, so neither path displaces the public proof gate.
+5. The remaining blocker is still the missing Render-authenticated path to create or configure the public mutation-seam host.
+6. The repo-owned next packet candidate is now `Olares Dev Residency 033 - Credentialed Public Mutation-Seam Deployment And Public PM Live-Data Proof`.
 
 ## Authority
 
