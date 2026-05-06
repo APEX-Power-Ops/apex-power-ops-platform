@@ -1,0 +1,183 @@
+{
+  "packet_id": "2026-05-05-olares-dev-residency-002",
+  "title": "Canonical Host Residency And Toolchain Revalidation",
+  "objective": "Perform the first bounded execution pass of the Olares developer-residency cutover by revalidating canonical host-path authority, proving the Milestone 1 host residency baseline, and capturing minimum host-side toolchain and validation evidence for one active application lane and one shared package lane without reopening feature delivery or changing GitHub-canonical hosting.",
+  "domain": "infrastructure-domain",
+  "active_role": "Olares Developer Residency Validation Operator",
+  "repo_paths": [
+    "C:/APEX Platform/Infrastructure",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web",
+    "C:/APEX Platform/apex-power-ops-platform/packages/calc-engine",
+    "C:/APEX Platform/apex-power-ops-platform/docs/architecture",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "C:/APEX Platform/apex-power-ops-platform/plan"
+  ],
+  "dependencies": [
+    "docs/architecture/OLARES-DEVELOPER-HOST-CUTOVER-MILESTONE-PLAN-2026-05-05.md",
+    "docs/architecture/OLARES-DEVELOPER-HOST-CUTOVER-TECHNICAL-PLAN-2026-05-05.md",
+    "docs/architecture/OLARES-DEVELOPER-HOST-CUTOVER-MILESTONE-1-ACCEPTANCE-CHECKLIST-2026-05-05.md",
+    "ops/agents/packets/draft/2026-05-05-olares-dev-residency-001-developer-host-cutover-preflight-and-execution-planning.json",
+    "ops/agents/handoffs/2026-05-05-olares-dev-residency-001-developer-host-cutover-preflight-and-execution-planning-handoff.md",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-095-packet-093-and-packet-094-authority-publication-and-host-mirror-resync-gate-handoff.md",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-step-1-dev-workspace-state-and-access-assessment-handoff.md",
+    "docs/architecture/OLARES-WORKSTATION-BRING-UP-CHECKLIST-2026-04-23.md",
+    "plan/infrastructure-olares-full-implementation-roadmap-1.md"
+  ],
+  "dependency_note": "Packet 001 is the planning gate for this execution lane. Packet 002 may be authored in advance, but it must not execute until Packet 001 closes affirmatively and preserves the bounded cutover scope defined in the milestone plan, technical plan, and Milestone 1 checklist.",
+  "required_inputs": [
+    "An approved private access path to Olares such as `olares-mesh` SSH, VS Code Remote-SSH, or another already-approved private access method",
+    "The authoritative host parent-root mirror at `/home/olares/code/apex`",
+    "The active host implementation surface at `/home/olares/code/apex/apex-power-ops-platform`",
+    "The preserved old clone at `/home/olares/src/apex-power-ops-platform` as historical evidence only",
+    "The Milestone 1 acceptance checklist as the controlling audit surface for host residency baseline",
+    "Bounded validation commands already accepted for one active application lane and one shared package lane",
+    "Repo-visible evidence capture for path authority, toolchain proof, and laptop-not-anchor proof"
+  ],
+  "default_validation_targets": {
+    "application_lane": "apps/operations-web",
+    "shared_package_lane": "packages/calc-engine",
+    "alternate_shared_package_lanes": [
+      "packages/forms-engine",
+      "packages/p6-ingest"
+    ]
+  },
+  "constrained_outputs": [
+    "A dated execution handoff recording Milestone 1 checklist results, host-path authority evidence, reconnect evidence, and bounded toolchain and validation proof from the canonical host path",
+    "A clear verdict on whether Milestone 1 host residency baseline is satisfied, still partial, or blocked",
+    "A clear verdict on whether the laptop has ceased to be the controlling runtime anchor for the validated slices",
+    "No feature delivery, no public ingress change, no code-hosting transition, no old-clone promotion, and no unrelated runtime or package churn"
+  ],
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "C:/APEX Platform/apex-power-ops-platform/docs/architecture",
+    "C:/APEX Platform/apex-power-ops-platform/plan"
+  ],
+  "validation_steps": [
+    "Revalidate host access and path authority by confirming that `/home/olares/code/apex` is reachable, that `git rev-parse --show-toplevel` resolves to that path, and that `/home/olares/code/apex/apex-power-ops-platform` is the active implementation surface.",
+    "Confirm that `/home/olares/src/apex-power-ops-platform` remains observe-only and that no active validation or mutation step for this packet is run from that old clone.",
+    "Capture boundary evidence that required secrets, mutable runtime state, and bounded recovery material live outside the git workspace under documented host-local paths rather than only on the laptop.",
+    "Capture restart or reconnect evidence showing the host workspace can be re-entered through an approved private access path without relying on undocumented laptop-local state.",
+    "Run bounded host-side toolchain and validation proof for `apps/operations-web` or a justified alternate active application lane from the canonical host implementation path.",
+    "Run bounded host-side toolchain and validation proof for `packages/calc-engine` or a justified alternate shared package lane from the canonical host implementation path.",
+    "Audit the result against every item in `docs/architecture/OLARES-DEVELOPER-HOST-CUTOVER-MILESTONE-1-ACCEPTANCE-CHECKLIST-2026-05-05.md` and state each item as pass, fail, or not assessed.",
+    "Stop immediately if completion would require feature delivery, public ingress widening, package installation unrelated to proof, runtime mutation unrelated to proof, Gitea transition, canonical-hosting transition, or promotion of the old clone back to active status."
+  ],
+  "no_go_items": [
+    "feature delivery",
+    "public ingress widening",
+    "AI-services expansion by default",
+    "Gitea or canonical-hosting transition",
+    "promotion of `/home/olares/src/apex-power-ops-platform` back to active status",
+    "laptop-first runtime dependence",
+    "runtime or package churn not required for bounded proof"
+  ],
+  "branch_selected": "branch_a_canonical_host_residency_and_toolchain_revalidation_lane",
+  "decision": "execute_bounded_host_residency_and_toolchain_revalidation_only_if_packet_001_affirms",
+  "execution_mode": "bounded_validation_execution",
+  "packet_001_gate_result": "affirmative",
+  "execution_verdict": "milestone_1_host_residency_passed_toolchain_validation_blocked_under_no_install_rules",
+  "host_path_authority_evidence": {
+    "access_method": "private_mesh_ssh_olares_mesh",
+    "host": "olares",
+    "user": "olares",
+    "host_parent_root": "/home/olares/code/apex",
+    "active_implementation_surface": "/home/olares/code/apex/apex-power-ops-platform",
+    "git_top_level_from_parent": "/home/olares/code/apex",
+    "git_top_level_from_implementation_surface": "/home/olares/code/apex",
+    "host_commit": "38b90166da7d48f4ef17334b0ea92916f6e183ee",
+    "host_status_count": 0
+  },
+  "old_clone_observation": {
+    "path": "/home/olares/src/apex-power-ops-platform",
+    "commit": "2836a2622309b4e146ca24f23b5bf87312c0c857",
+    "status_count": 30,
+    "mutation": false,
+    "use": "observe_only_historical_evidence"
+  },
+  "host_local_boundary_evidence": [
+    {
+      "path": "/home/olares/apex-secrets",
+      "exists": true,
+      "type": "directory",
+      "outside_git_workspace": true,
+      "top_level_entry_count": 2
+    },
+    {
+      "path": "/home/olares/apex-data",
+      "exists": true,
+      "type": "directory",
+      "outside_git_workspace": true,
+      "top_level_entry_count": 1
+    },
+    {
+      "path": "/home/olares/apex-backups",
+      "exists": true,
+      "type": "directory",
+      "outside_git_workspace": true,
+      "top_level_entry_count": 1
+    }
+  ],
+  "reconnect_evidence": {
+    "method": "private_mesh_ssh_olares_mesh_second_session",
+    "reentered_path": "/home/olares/code/apex/apex-power-ops-platform",
+    "git_top_level": "/home/olares/code/apex",
+    "restart_tested": false,
+    "disconnect_reentry_tested": true
+  },
+  "toolchain_observation": {
+    "node": "v18.19.1",
+    "pnpm": "missing_from_path",
+    "python3": "Python 3.12.3",
+    "pytest": "missing_from_path",
+    "root_node_modules": false,
+    "operations_web_node_modules": false
+  },
+  "validation_attempts": [
+    {
+      "lane": "application",
+      "target": "apps/operations-web",
+      "command": "pnpm typecheck",
+      "exit_code": 127,
+      "outcome": "blocked",
+      "blocker": "pnpm: command not found"
+    },
+    {
+      "lane": "application",
+      "target": "apps/operations-web",
+      "command": "npx --no-install tsc --noEmit",
+      "exit_code": 1,
+      "outcome": "blocked",
+      "blocker": "npx --no-install canceled rather than downloading"
+    },
+    {
+      "lane": "shared_package",
+      "target": "packages/calc-engine",
+      "command": "PYTHONPATH=src python3 -m pytest -q tests",
+      "exit_code": 1,
+      "outcome": "blocked",
+      "blocker": "No module named pytest"
+    }
+  ],
+  "milestone_1_checklist_verdict": "pass",
+  "host_toolchain_validation_verdict": "blocked_missing_no_install_tooling",
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-05-olares-dev-residency-002-canonical-host-residency-and-toolchain-revalidation-handoff.md"
+  ],
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-05-olares-dev-residency-002-canonical-host-residency-and-toolchain-revalidation-handoff.md",
+  "implementation_ready_candidate": true,
+  "sql_permission": false,
+  "sql_permission_note": "This packet authorizes bounded host-residency and toolchain revalidation only. It does not authorize database writes, feature delivery, public ingress change, code-hosting transition, old-clone mutation, or unrelated runtime or package mutation.",
+  "landing_lane": "olares_developer_residency_canonical_host_revalidation",
+  "migration_strategy": "prove_host_residency_and_toolchain_viability_before_any_laptop-independent_feature_delivery",
+  "created_at": "2026-05-05",
+  "updated_at": "2026-05-05",
+  "delegation_status": "not-delegated",
+  "validation_disposition": "complete-milestone-1-pass-toolchain-blocked",
+  "closure_note": "Executed 2026-05-05 after Packet 001 closed affirmatively. Host path authority, old-clone demotion, host-local boundary paths, and private-mesh reconnect evidence satisfy the Milestone 1 host residency checklist. Minimum host-side validation for `apps/operations-web` and `packages/calc-engine` did not pass because required no-install tooling is missing on the host: `pnpm` is absent, root and operations-web `node_modules` are absent, `pytest` is absent, and `npx --no-install` canceled rather than downloading. The host mirror and old clone remained clean or observe-only as applicable.",
+  "next_packet_candidate": "Olares Dev Residency 003 - Bounded Host Toolchain Availability Decision",
+  "next_action": "Open a separate bounded decision packet for host toolchain availability before claiming host-side application or shared-package validation readiness. Do not install or mutate packages without explicit packet authority."
+}

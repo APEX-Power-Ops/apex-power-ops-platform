@@ -1,0 +1,101 @@
+{
+  "packet_id": "2026-05-05-olares-dev-residency-001",
+  "title": "Developer Host Cutover Preflight And Execution Planning",
+  "objective": "Define the bounded preflight and execution-planning surface required to make the Olares One the authoritative always-on development workstation while reducing the field laptop to a client-only operator surface.",
+  "domain": "infrastructure-domain",
+  "active_role": "Olares Developer Residency Architect",
+  "repo_paths": [
+    "C:/APEX Platform/Infrastructure",
+    "C:/APEX Platform/apex-power-ops-platform/docs/architecture",
+    "C:/APEX Platform/apex-power-ops-platform/plan",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft"
+  ],
+  "dependencies": [
+    "Infrastructure/Olares_Workspace_Authority_Framework.md",
+    "Infrastructure/Olares_MVP_Execution_Roadmap.md",
+    "Infrastructure/Olares_Build_Guide.md",
+    "docs/architecture/OLARES-POST-CLOSURE-EXECUTION-CHECKLIST-2026-04-25.md",
+    "docs/architecture/OLARES-DEVELOPER-HOST-CUTOVER-MILESTONE-PLAN-2026-05-05.md",
+    "docs/architecture/OLARES-DEVELOPER-HOST-CUTOVER-TECHNICAL-PLAN-2026-05-05.md",
+    "plan/infrastructure-olares-full-implementation-roadmap-1.md",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-095-packet-093-and-packet-094-authority-publication-and-host-mirror-resync-gate-handoff.md",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-step-1-dev-workspace-state-and-access-assessment-handoff.md"
+  ],
+  "dependency_note": "Packet 095 closed the prior Olares expansion lane as dormant and authorable only with new evidence. The newly stated hard constraint is different: the field laptop cannot remain the always-on workstation, so Olares developer residency becomes a prerequisite for further delivery. This packet is planning-only and does not reopen generic Olares execution or feature delivery.",
+  "required_inputs": [
+    "The published Packet 095 dormancy posture for the prior Olares expansion lane",
+    "The hard operational constraint that the field laptop cannot remain the durable development host",
+    "The authoritative host path shape under /home/olares/code/apex established during Phase 5",
+    "The current Olares post-closure roadmap and checklist surfaces",
+    "The new milestone and technical cutover plans authored on 2026-05-05"
+  ],
+  "constrained_outputs": [
+    "A bounded planning decision that re-sequences Olares work around developer residency rather than generic expansion",
+    "An ordered list of the minimum cutover proof slices required before resumed product delivery",
+    "A first execution packet recommendation for canonical host residency and toolchain revalidation",
+    "Explicit no-go items preserving the current closure around public ingress, AI-services expansion, code-hosting transition, and laptop-first feature delivery"
+  ],
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/docs/architecture",
+    "C:/APEX Platform/apex-power-ops-platform/plan",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft"
+  ],
+  "validation_steps": [
+    "Confirm the packet does not reopen the dormant simultaneous-worker or Phase 5 source/test execution lane.",
+    "Confirm the packet treats Olares developer residency as a prerequisite and planning problem, not as implicit implementation approval.",
+    "Confirm no public ingress, AI-services expansion, Gitea transition, canonical-hosting transition, source mutation, runtime mutation, or package mutation is authorized by this packet.",
+    "Confirm the packet names a separate later execution packet for host residency and toolchain proof rather than collapsing planning and execution into one uncontrolled lane.",
+    "Confirm the packet preserves GitHub-canonical publication while moving durable development state to the Olares host."
+  ],
+  "branch_selected": "branch_a_developer_host_cutover_preflight_and_execution_planning_lane",
+  "decision": "open_developer_host_cutover_planning_before_resumed_feature_delivery",
+  "planning_mode": "planning_only",
+  "ordered_cutover_slices": [
+    "Authoritative host residency and path authority proof",
+    "Canonical host toolchain and runtime parity proof",
+    "Host-side validation residency proof for active application and shared package lanes",
+    "Publication continuity proof without changing GitHub-canonical hosting",
+    "Laptop client-only posture confirmation"
+  ],
+  "explicit_no_go_items": [
+    "generic Olares reopening",
+    "public ingress widening",
+    "AI-services expansion by default",
+    "Gitea or canonical-hosting transition",
+    "feature delivery from the laptop-first posture",
+    "source, package, or runtime mutation not required for cutover proof"
+  ],
+  "next_packet_candidate": "Olares Dev Residency 002 - Canonical Host Residency And Toolchain Revalidation",
+  "planning_verdict": "affirmative",
+  "verdict_summary": "Olares developer-host cutover is now the controlling prerequisite for resumed product delivery because the field laptop cannot remain the durable always-on development workstation. Packet 002 remains the correct next bounded execution packet and must use the Milestone 1 acceptance checklist as its audit surface.",
+  "packet_002_next_execution_packet": true,
+  "packet_002_execution_gate": "open_after_packet_001_affirmative_close",
+  "preserved_closures": [
+    "dormant Phase 5 simultaneous-worker lane",
+    "feature delivery from laptop-first posture",
+    "public ingress widening",
+    "AI-services expansion by default",
+    "Gitea or canonical-hosting transition",
+    "old-clone promotion",
+    "source/package/runtime mutation not required for cutover proof"
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-05-olares-dev-residency-001-developer-host-cutover-preflight-and-execution-planning-handoff.md"
+  ],
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-05-olares-dev-residency-001-developer-host-cutover-preflight-and-execution-planning-handoff.md",
+  "implementation_ready_candidate": true,
+  "sql_permission": false,
+  "sql_permission_note": "Planning only. This packet authorizes no database writes, source execution, runtime mutation, package mutation, public ingress change, code-hosting transition, or old-clone mutation.",
+  "landing_lane": "olares_developer_residency_cutover",
+  "migration_strategy": "developer_host_cutover_before_resumed_feature_delivery",
+  "created_at": "2026-05-05",
+  "updated_at": "2026-05-05",
+  "delegation_status": "not-delegated",
+  "validation_disposition": "complete-planning-only",
+  "closure_note": "Executed 2026-05-05 as a planning-only packet. The verdict is affirmative: developer-host cutover is the controlling prerequisite before resumed product delivery, and Packet 002 remains the correct bounded execution lane for canonical host residency and toolchain revalidation against the Milestone 1 checklist.",
+  "next_action": "Execute Olares Dev Residency 002 against the Milestone 1 acceptance checklist without reopening feature delivery, public ingress, code-hosting transition, the dormant simultaneous-worker lane, or old-clone mutation."
+}

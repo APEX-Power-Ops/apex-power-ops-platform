@@ -1,0 +1,132 @@
+{
+  "packet_id": "2026-05-05-olares-dev-residency-005",
+  "title": "Minimum Host Toolchain Materialization Execution",
+  "objective": "If explicitly executed later, materialize only the minimum host-local toolchain surfaces required to attempt Milestone 2 validation for `apps/operations-web` and `packages/calc-engine`, while preserving GitHub-canonical publication, the `/home/olares/code/apex` host mirror, and all non-admitted closures.",
+  "domain": "infrastructure-domain",
+  "active_role": "Olares Developer Residency Toolchain Materialization Operator",
+  "dependencies": [
+    "ops/agents/packets/draft/2026-05-05-olares-dev-residency-001-developer-host-cutover-preflight-and-execution-planning.json",
+    "ops/agents/handoffs/2026-05-05-olares-dev-residency-001-developer-host-cutover-preflight-and-execution-planning-handoff.md",
+    "ops/agents/packets/draft/2026-05-05-olares-dev-residency-002-canonical-host-residency-and-toolchain-revalidation.json",
+    "ops/agents/handoffs/2026-05-05-olares-dev-residency-002-canonical-host-residency-and-toolchain-revalidation-handoff.md",
+    "ops/agents/packets/draft/2026-05-05-olares-dev-residency-003-bounded-host-toolchain-availability-decision.json",
+    "ops/agents/handoffs/2026-05-05-olares-dev-residency-003-bounded-host-toolchain-availability-decision-handoff.md",
+    "ops/agents/packets/draft/2026-05-05-olares-dev-residency-004-bounded-host-toolchain-materialization-authority-decision.json",
+    "ops/agents/handoffs/2026-05-05-olares-dev-residency-004-bounded-host-toolchain-materialization-authority-decision-handoff.md",
+    "docs/architecture/OLARES-DEVELOPER-HOST-CUTOVER-MILESTONE-PLAN-2026-05-05.md",
+    "docs/architecture/OLARES-DEVELOPER-HOST-CUTOVER-TECHNICAL-PLAN-2026-05-05.md",
+    "plan/infrastructure-olares-full-implementation-roadmap-1.md"
+  ],
+  "dependency_note": "Packet 004 completed as a decision-only authority gate and authorized one later bounded execution packet for minimum host toolchain materialization. Packet 005 is that execution candidate. It is authored only and does not execute by being authored.",
+  "execution_mode": "bounded_execution_if_later_explicitly_run",
+  "required_inputs": [
+    "Host mirror remains authoritative at `/home/olares/code/apex` with clean git status.",
+    "Old clone remains observe-only at `/home/olares/src/apex-power-ops-platform`.",
+    "Packet 002 blocker evidence for missing `pnpm`, missing root and operations-web dependency trees, and missing `pytest`.",
+    "Packet 004 authority limiting execution to the smallest host-local toolchain surfaces required for Milestone 2.",
+    "Any operator policy or credentials required to perform bounded host-local tool installation or dependency materialization if that execution is later approved."
+  ],
+  "execution_scope": [
+    "Host-local toolchain discovery and, if needed, bounded installation or activation of `pnpm` on the Olares host.",
+    "Host-local dependency materialization strictly for the already-admitted `apps/operations-web` validation surface.",
+    "Host-local Python test tooling materialization strictly for the already-admitted `packages/calc-engine` validation surface.",
+    "Post-materialization revalidation only for the Milestone 2 admitted commands if execution reaches that point."
+  ],
+  "bounded_success_criteria": [
+    "`pnpm` is callable on the Olares host for the admitted application validation slice.",
+    "The dependency tree required for `apps/operations-web` admitted validation exists on the host.",
+    "Python test tooling required for the admitted `packages/calc-engine` validation exists on the host.",
+    "Any package or lockfile mutation is either absent or explicitly recorded as required and bounded.",
+    "No feature delivery, hosting transition, old-clone mutation, or broader runtime/service change occurs."
+  ],
+  "explicit_no_go_items": [
+    "feature delivery beyond admitted validation slices",
+    "public ingress widening",
+    "AI-services expansion by default",
+    "Gitea or canonical-hosting transition",
+    "old-clone mutation or promotion",
+    "remote rewrite",
+    "rollback, force, reset, or clean",
+    "unbounded workspace-wide dependency refresh",
+    "runtime or service mutation outside the minimum admitted validation path"
+  ],
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "C:/APEX Platform/apex-power-ops-platform/plan"
+  ],
+  "validation_steps": [
+    "Before execution, re-confirm `/home/olares/code/apex` is still clean and authoritative and `/home/olares/src/apex-power-ops-platform` remains observe-only.",
+    "During execution, keep every install, activation, or dependency materialization step tied to an admitted Milestone 2 blocker surface.",
+    "If package or lockfile mutation becomes necessary, record it explicitly rather than treating it as implicit or free.",
+    "After execution, validate only the minimum admitted `apps/operations-web` and `packages/calc-engine` commands needed for Milestone 2 evidence.",
+    "If any step expands into broader runtime, service, hosting, or feature-delivery work, stop and close the packet as blocked rather than widening scope silently."
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-05-olares-dev-residency-005-minimum-host-toolchain-materialization-execution-handoff.md"
+  ],
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-05-olares-dev-residency-005-minimum-host-toolchain-materialization-execution-handoff.md",
+  "implementation_ready_candidate": true,
+  "sql_permission": false,
+  "sql_permission_note": "No database writes were performed. Packet 005 executed only bounded host-local toolchain materialization for the admitted Milestone 2 validation surfaces.",
+  "landing_lane": "olares_developer_residency_minimum_host_toolchain_materialization_execution",
+  "migration_strategy": "materialize_only_the_minimum_host_toolchain_needed_to_attempt_milestone_2_validation",
+  "created_at": "2026-05-05",
+  "updated_at": "2026-05-05",
+  "delegation_status": "not-delegated",
+  "validation_disposition": "complete-materialized-and-validated",
+  "materialization_evidence": {
+    "host_path": "/home/olares/code/apex/apex-power-ops-platform",
+    "host_commit": "38b90166da7d48f4ef17334b0ea92916f6e183ee",
+    "host_status_before": 0,
+    "host_status_after": 0,
+    "old_clone_path": "/home/olares/src/apex-power-ops-platform",
+    "old_clone_commit": "2836a2622309b4e146ca24f23b5bf87312c0c857",
+    "old_clone_status_count": 30,
+    "old_clone_mutation": "none_observed_only",
+    "toolchain_root": "/home/olares/apex-data/toolchains",
+    "pnpm_materialization": {
+      "method": "npm install --prefix /home/olares/apex-data/toolchains/pnpm-10.0.0 pnpm@10.0.0",
+      "binary": "/home/olares/apex-data/toolchains/pnpm-10.0.0/node_modules/.bin/pnpm",
+      "version": "10.0.0"
+    },
+    "operations_web_dependency_materialization": {
+      "command": "/home/olares/apex-data/toolchains/pnpm-10.0.0/node_modules/.bin/pnpm install --frozen-lockfile --filter @apex/operations-web... --store-dir /home/olares/apex-data/toolchains/pnpm-store",
+      "operations_node_modules": "present",
+      "package_or_lockfile_status_count": 0
+    },
+    "calc_engine_python_materialization": {
+      "venv": "/home/olares/apex-data/toolchains/calc-engine-venv",
+      "pip_bootstrap": "/home/olares/apex-data/toolchains/get-pip.py",
+      "pip_version": "pip 26.1.1",
+      "pytest_version": "pytest 9.0.3",
+      "install_command": "/home/olares/apex-data/toolchains/calc-engine-venv/bin/python -m pip install -e .[test]"
+    }
+  },
+  "validation_results": [
+    {
+      "surface": "apps/operations-web",
+      "command": "/home/olares/apex-data/toolchains/pnpm-10.0.0/node_modules/.bin/pnpm typecheck",
+      "working_directory": "/home/olares/code/apex/apex-power-ops-platform/apps/operations-web",
+      "result": "passed"
+    },
+    {
+      "surface": "packages/calc-engine",
+      "command": "PYTHONPATH=src /home/olares/apex-data/toolchains/calc-engine-venv/bin/python -m pytest -q tests",
+      "working_directory": "/home/olares/code/apex/apex-power-ops-platform/packages/calc-engine",
+      "result": "passed_28_passed_1_skipped"
+    }
+  ],
+  "tracked_mutation_result": {
+    "source_package_lockfile_status_count": 0,
+    "host_git_status_count": 0,
+    "package_or_lockfile_mutation": false,
+    "runtime_or_service_mutation": false,
+    "old_clone_mutation": false
+  },
+  "closure_note": "Executed 2026-05-05 as the bounded materialization successor authorized by Packet 004. Packet 005 materialized `pnpm@10.0.0` and operations-web dependencies under `/home/olares/apex-data/toolchains`, materialized calc-engine Python test tooling in a host-local venv under the same boundary, retried the admitted Milestone 2 validation commands, and left `/home/olares/code/apex` clean at `38b90166da7d48f4ef17334b0ea92916f6e183ee` with package and lockfile paths clean. It did not open feature delivery, public ingress, AI-services expansion, Gitea or canonical-hosting transition, old-clone mutation, remote rewrite, rollback, force, reset, clean, or runtime/service mutation.",
+  "next_packet_candidate": "Olares Dev Residency 006 - Packet 001 Through Packet 005 Authority Publication And Host Mirror Resync Gate",
+  "next_action": "Publish the Packet 001 through Packet 005 developer-residency authority set through the parent-root boundary and fast-forward `/home/olares/code/apex` only after staged scope is exact."
+}

@@ -1,0 +1,129 @@
+{
+  "packet_id": "2026-05-05-olares-dev-residency-003",
+  "title": "Bounded Host Toolchain Availability Decision",
+  "objective": "Consume the Packet 002 closeout evidence, classify the no-install host toolchain blockers precisely, and choose the single next bounded packet needed before Milestone 2 toolchain and validation readiness can be claimed from the Olares host.",
+  "domain": "infrastructure-domain",
+  "active_role": "Olares Developer Residency Toolchain Decision Operator",
+  "repo_paths": [
+    "C:/APEX Platform/Infrastructure",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web",
+    "C:/APEX Platform/apex-power-ops-platform/packages/calc-engine",
+    "C:/APEX Platform/apex-power-ops-platform/docs/architecture",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "C:/APEX Platform/apex-power-ops-platform/plan"
+  ],
+  "dependencies": [
+    "ops/agents/packets/draft/2026-05-05-olares-dev-residency-001-developer-host-cutover-preflight-and-execution-planning.json",
+    "ops/agents/handoffs/2026-05-05-olares-dev-residency-001-developer-host-cutover-preflight-and-execution-planning-handoff.md",
+    "ops/agents/packets/draft/2026-05-05-olares-dev-residency-002-canonical-host-residency-and-toolchain-revalidation.json",
+    "ops/agents/handoffs/2026-05-05-olares-dev-residency-002-canonical-host-residency-and-toolchain-revalidation-handoff.md",
+    "docs/architecture/OLARES-DEVELOPER-HOST-CUTOVER-MILESTONE-PLAN-2026-05-05.md",
+    "docs/architecture/OLARES-DEVELOPER-HOST-CUTOVER-TECHNICAL-PLAN-2026-05-05.md",
+    "docs/architecture/OLARES-DEVELOPER-HOST-CUTOVER-MILESTONE-1-ACCEPTANCE-CHECKLIST-2026-05-05.md",
+    "plan/infrastructure-olares-full-implementation-roadmap-1.md"
+  ],
+  "dependency_note": "Packet 001 closed affirmative and established developer-host cutover as the controlling prerequisite before resumed product delivery. Packet 002 then closed with a split verdict: Milestone 1 host residency baseline passed from `/home/olares/code/apex`, but minimum host-side validation for `apps/operations-web` and `packages/calc-engine` is blocked under no-install rules because `pnpm`, root and operations-web `node_modules`, and `pytest` are missing on the host. Packet 003 is the bounded decision surface that must choose the next truthful toolchain path without authorizing installs or delivery work by default.",
+  "required_inputs": [
+    "Packet 002 host path authority evidence from `/home/olares/code/apex` and `/home/olares/code/apex/apex-power-ops-platform`",
+    "Packet 002 old-clone observation proving `/home/olares/src/apex-power-ops-platform` remained observe-only",
+    "Packet 002 host-local boundary evidence for `~/apex-secrets`, `~/apex-data`, and `~/apex-backups`",
+    "Packet 002 toolchain observations showing Node and Python present while `pnpm`, `pytest`, and host `node_modules` are absent under no-install rules",
+    "The still-closed no-go boundary around installs, package or lockfile mutation, runtime or service mutation, feature delivery, public ingress change, AI-services expansion, Gitea transition, canonical-hosting transition, old-clone mutation, and remote rewrite"
+  ],
+  "constrained_outputs": [
+    "A dated decision handoff stating the exact blocker classes preventing Milestone 2 host-side validation readiness",
+    "A single next bounded packet recommendation for the toolchain path forward",
+    "An explicit statement of what remains closed while the toolchain decision is pending",
+    "No installs, no package or lockfile mutation, no runtime or service mutation, no feature delivery, no old-clone mutation, and no host publication claim beyond the Packet 002 evidence"
+  ],
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft",
+    "C:/APEX Platform/apex-power-ops-platform/plan"
+  ],
+  "validation_steps": [
+    "Re-read Packet 002 evidence and confirm the host residency baseline result remains `pass` while the blocked commands and missing no-install tooling are exactly stated.",
+    "Classify the blocker surface precisely: command-path absence, missing dependency trees, missing Python test tooling, or another no-install constraint materially evidenced by Packet 002.",
+    "Decide the single next bounded packet: existing host toolchain path revalidation if hidden tooling is plausibly present, explicit install-authority decision if new tooling would be required, admissible alternate validation target decision if Milestone 2 can close without those exact surfaces, or defer if none is truthful under current closures.",
+    "Keep the result decision-only. Do not install, download, activate, mutate packages, mutate lockfiles, mutate runtimes, mutate services, mutate the old clone, publish feature claims, or reopen product delivery.",
+    "Update the roadmap or routing only as needed so the next live packet is unambiguous."
+  ],
+  "decision_branches": [
+    {
+      "branch": "branch_a_existing_host_toolchain_path_revalidation",
+      "meaning": "Choose this only if existing host-local toolchain surfaces appear present but undiscovered or not on PATH under the no-install boundary."
+    },
+    {
+      "branch": "branch_b_explicit_host_toolchain_provisioning_authority_decision",
+      "meaning": "Choose this if Milestone 2 cannot proceed truthfully without a later separately packetized install or materialization decision."
+    },
+    {
+      "branch": "branch_c_admissible_alternate_validation_target_decision",
+      "meaning": "Choose this only if a narrower already-admitted host validation slice can satisfy the milestone intent without pnpm or pytest installation."
+    },
+    {
+      "branch": "branch_d_defer_until_new_toolchain_authority_exists",
+      "meaning": "Choose this if no truthful near-term validation move exists under the current no-install and no-mutation boundary."
+    }
+  ],
+  "explicit_no_go_items": [
+    "feature delivery",
+    "dormant simultaneous-worker lane reopening",
+    "public ingress widening",
+    "AI-services expansion by default",
+    "Gitea or canonical-hosting transition",
+    "package or lockfile mutation",
+    "dependency installation or download",
+    "runtime or service mutation",
+    "old-clone mutation or promotion",
+    "remote rewrite",
+    "rollback, force, reset, or clean"
+  ],
+  "branch_selected": "branch_b_explicit_host_toolchain_provisioning_authority_decision",
+  "decision": "author_later_bounded_host_toolchain_materialization_authority_decision_before_any_install_or_validation_claim",
+  "decision_rationale": [
+    "Packet 002 did not merely find undiscovered PATH ambiguity; it proved `pnpm` is missing from PATH, root `node_modules` is absent, `apps/operations-web/node_modules` is absent, and Python test tooling is missing.",
+    "The default application validation target `apps/operations-web` cannot truthfully validate under no-install rules without a usable pnpm/dependency tree or equivalent pre-existing TypeScript toolchain.",
+    "The default shared package target `packages/calc-engine` cannot truthfully validate under no-install rules without pytest or an explicitly accepted alternate validation command.",
+    "Choosing an alternate target would not satisfy the Packet 002 blocker truth because the active lane still needs a real host toolchain materialization decision before Milestone 2 readiness can be claimed.",
+    "Therefore the smallest truthful next packet is a decision-only toolchain materialization authority gate, not an install, retry, feature-delivery packet, or validation-readiness claim."
+  ],
+  "blocker_classification": [
+    {
+      "class": "command_path_absence",
+      "evidence": "`pnpm` missing from PATH during Packet 002 host validation"
+    },
+    {
+      "class": "missing_dependency_tree",
+      "evidence": "root `node_modules` and `apps/operations-web/node_modules` absent on the host"
+    },
+    {
+      "class": "missing_python_test_tooling",
+      "evidence": "`python3 -m pytest` failed with `No module named pytest`"
+    },
+    {
+      "class": "no_install_download_blocker",
+      "evidence": "`npx --no-install tsc --noEmit` canceled rather than downloading"
+    }
+  ],
+  "next_packet_candidate": "Olares Dev Residency 004 - Bounded Host Toolchain Materialization Authority Decision",
+  "next_packet_scope": "decision_only_install_or_materialization_authority_review",
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-05-olares-dev-residency-003-bounded-host-toolchain-availability-decision-handoff.md"
+  ],
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-05-olares-dev-residency-003-bounded-host-toolchain-availability-decision-handoff.md",
+  "implementation_ready_candidate": true,
+  "sql_permission": false,
+  "sql_permission_note": "Decision only. This packet authorizes no database writes, installs, package mutation, lockfile mutation, runtime mutation, service mutation, public ingress change, feature delivery, old-clone mutation, or remote rewrite.",
+  "landing_lane": "olares_developer_residency_host_toolchain_availability_decision",
+  "migration_strategy": "decide_toolchain_path_before_claiming_milestone_2_or_resumed_delivery",
+  "created_at": "2026-05-05",
+  "updated_at": "2026-05-05",
+  "delegation_status": "not-delegated",
+  "validation_disposition": "complete-decision-only",
+  "closure_note": "Executed 2026-05-05 as a decision-only packet. Packet 003 selects Branch B: a later explicit host toolchain materialization authority decision is required before any install, dependency materialization, host-side validation readiness claim, or resumed product delivery. Packet 003 itself authorizes no installs, package or lockfile mutation, runtime/service mutation, feature delivery, public ingress, code-hosting transition, old-clone mutation, remote rewrite, rollback, force, reset, or clean.",
+  "next_action": "Execute `Olares Dev Residency 004 - Bounded Host Toolchain Materialization Authority Decision` as a separate decision-only packet before any toolchain materialization or Milestone 2 validation readiness claim."
+}
