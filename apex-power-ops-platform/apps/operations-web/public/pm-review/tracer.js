@@ -15,7 +15,10 @@
 (function () {
   const { useState, useEffect, useCallback, useMemo } = React;
 
-  const SCHEDULE_BASE = 'http://localhost:8000/api/v1/schedule';
+  const API_BASE = window.location.hostname === 'localhost'
+    ? 'http://localhost:8000/api/v1'
+    : `${window.location.origin}/api/v1`;
+  const SCHEDULE_BASE = API_BASE + '/schedule';
   const PM_ACTOR = { actor_id: 'pm-001', actor_role: 'pm', project_scope: ['proj-001'] };
   const DEFAULT_MAX_DEPTH = 10;
 

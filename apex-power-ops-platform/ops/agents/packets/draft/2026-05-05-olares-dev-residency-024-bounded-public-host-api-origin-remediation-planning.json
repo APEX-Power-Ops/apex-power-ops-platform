@@ -1,0 +1,57 @@
+{
+  "packet_id": "2026-05-05-olares-dev-residency-024",
+  "title": "Bounded Public-Host API Origin Remediation Planning",
+  "objective": "Define the smallest truthful source-local remediation slice for the Operations Visibility public static surfaces so they stop hardcoding localhost API bases on non-local hosts while preserving the explicit boundary that public-host backend availability is still unresolved.",
+  "domain": "delivery-domain",
+  "active_role": "Operations Visibility Remediation Planner",
+  "dependencies": [
+    "ops/agents/packets/draft/2026-05-05-olares-dev-residency-023-post-022-operations-visibility-live-data-boundary-decision.json",
+    "ops/agents/handoffs/2026-05-05-olares-dev-residency-023-post-022-operations-visibility-live-data-boundary-decision-handoff.md",
+    "apps/operations-web/public/pm-review/drivers.js",
+    "apps/operations-web/public/pm-review/schedule.js",
+    "apps/operations-web/public/pm-review/tracer.js",
+    "apps/operations-web/public/pm-review/variance.js",
+    "apps/operations-web/public/pm-review/approval-surface.html",
+    "apps/operations-web/public/lead-ops/index.html",
+    "apps/operations-web/public/integration-dashboard/index.html",
+    "plan/infrastructure-olares-full-implementation-roadmap-1.md"
+  ],
+  "decision_selected": "execute_bounded_source_local_api_origin_remediation_without_claiming_live_data_success",
+  "decision_rationale": [
+    "The current browser failure is still controlled by the public static asset code because those pages hardcode `http://localhost:8000` on every host except the integration dashboard.",
+    "A direct same-origin probe against `https://operations.apexpowerops.com/api/v1/schedule/projects` and `/api/v1/reads/approval-queue` returned `404`, so origin-aware remediation will fix the wrong-origin dependency but will not by itself prove live-data readiness.",
+    "The smallest truthful implementation slice is therefore source-local and narrow: replace the hardcoded localhost bases in the public PM review and lead surfaces with the existing local-vs-public origin-aware pattern already used by `integration-dashboard/index.html`.",
+    "This admits a clean validation outcome: the pages should stop requesting localhost from a public browser surface, while any remaining failures should accurately reflect public-host API absence rather than a false browser origin assumption."
+  ],
+  "implementation_scope": [
+    "Patch `apps/operations-web/public/pm-review/drivers.js`, `schedule.js`, `tracer.js`, and `variance.js` to resolve their schedule API base using a local-vs-public origin-aware branch.",
+    "Patch `apps/operations-web/public/pm-review/approval-surface.html` and `apps/operations-web/public/lead-ops/index.html` to resolve reads and mutations bases with the same local-vs-public origin-aware branch.",
+    "Use `apps/operations-web/public/integration-dashboard/index.html` as the nearest implementation reference.",
+    "Do not claim live-data success unless post-change validation shows the public-host API routes actually respond successfully."
+  ],
+  "explicit_no_go_items": [
+    "host browser-runtime reopening",
+    "backend deployment or routing changes",
+    "package or lockfile mutation",
+    "runtime or service mutation",
+    "Next app env-layer rewiring",
+    "remote rewrite",
+    "rollback, force, reset, or clean",
+    "old-clone mutation or promotion"
+  ],
+  "success_criteria": [
+    "The planning record names the exact source files that own the wrong-origin behavior.",
+    "The selected implementation slice remains source-local and bounded.",
+    "The planning record preserves the truthful boundary that public-host API availability is still unproven and currently 404 on direct probe."
+  ],
+  "status": "complete",
+  "handoff_target": "Platform Architect",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-05-olares-dev-residency-024-bounded-public-host-api-origin-remediation-planning-handoff.md"
+  ],
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-05-olares-dev-residency-024-bounded-public-host-api-origin-remediation-planning-handoff.md",
+  "validation_disposition": "complete-planning-only",
+  "next_packet_candidate": "Olares Dev Residency 025 - Bounded Public Static Surface API Origin Remediation Execution",
+  "closure_note": "Executed 2026-05-05 as a bounded planning packet. Packet 024 selected a source-local remediation slice that removes hardcoded localhost API bases from the public static Operations Visibility surfaces while explicitly preserving that the public-host API routes currently return 404 on direct probe and therefore live-data success remains out of scope until separately proven.",
+  "next_action": "Execute Packet 025 as the bounded source-local API-origin remediation slice and validate that public browser requests no longer target localhost."
+}

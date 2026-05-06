@@ -1,0 +1,64 @@
+{
+  "packet_id": "2026-05-05-olares-dev-residency-025",
+  "title": "Bounded Public Static Surface API Origin Remediation Execution",
+  "objective": "Execute the bounded source-local remediation slice that removes hardcoded localhost API bases from the public static Operations Visibility surfaces while preserving the explicit boundary that public-host API availability is still unresolved.",
+  "domain": "delivery-domain",
+  "active_role": "Operations Visibility Remediation Operator",
+  "dependencies": [
+    "ops/agents/packets/draft/2026-05-05-olares-dev-residency-024-bounded-public-host-api-origin-remediation-planning.json",
+    "ops/agents/handoffs/2026-05-05-olares-dev-residency-024-bounded-public-host-api-origin-remediation-planning-handoff.md",
+    "apps/operations-web/public/pm-review/drivers.js",
+    "apps/operations-web/public/pm-review/schedule.js",
+    "apps/operations-web/public/pm-review/tracer.js",
+    "apps/operations-web/public/pm-review/variance.js",
+    "apps/operations-web/public/pm-review/approval-surface.html",
+    "apps/operations-web/public/lead-ops/index.html",
+    "apps/operations-web/public/integration-dashboard/index.html",
+    "plan/infrastructure-olares-full-implementation-roadmap-1.md"
+  ],
+  "execution_scope": [
+    "Patch the four PM review JavaScript assets to derive their schedule API base from a local-vs-public origin-aware branch.",
+    "Patch the PM approval surface and lead surface HTML assets to derive reads and mutations API bases from the same local-vs-public origin-aware branch.",
+    "Leave backend deployment, routing, and Next env wiring unchanged.",
+    "Validate with the existing PM pure-logic tests plus a targeted source-pattern check."
+  ],
+  "execution_evidence": {
+    "edited_files": [
+      "apps/operations-web/public/pm-review/drivers.js",
+      "apps/operations-web/public/pm-review/schedule.js",
+      "apps/operations-web/public/pm-review/tracer.js",
+      "apps/operations-web/public/pm-review/variance.js",
+      "apps/operations-web/public/pm-review/approval-surface.html",
+      "apps/operations-web/public/lead-ops/index.html"
+    ],
+    "validation": [
+      "node apps/operations-web/public/pm-review/drivers.test.mjs -> 8/8 pure-logic tests passed",
+      "node apps/operations-web/public/pm-review/schedule.test.mjs -> 14/14 pure-logic tests passed",
+      "node apps/operations-web/public/pm-review/tracer.test.mjs -> 8/8 pure-logic tests passed",
+      "node apps/operations-web/public/pm-review/variance.test.mjs -> 13/13 pure-logic tests passed",
+      "Targeted source-pattern check confirmed the origin-aware branch is present in all six remediated files"
+    ],
+    "diagnostic_boundary": "lead-ops/index.html still reports pre-existing meta-in-body HTML diagnostics unrelated to this change",
+    "live_data_boundary": "direct public-host /api/v1 probes still return 404, so this packet removes wrong-origin behavior but does not claim live-data success"
+  },
+  "explicit_no_go_items": [
+    "host browser-runtime reopening",
+    "backend deployment or routing changes",
+    "package or lockfile mutation",
+    "runtime or service mutation",
+    "Next app env-layer rewiring",
+    "remote rewrite",
+    "rollback, force, reset, or clean",
+    "old-clone mutation or promotion"
+  ],
+  "status": "complete",
+  "handoff_target": "Platform Architect",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-05-olares-dev-residency-025-bounded-public-static-surface-api-origin-remediation-execution-handoff.md"
+  ],
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-05-olares-dev-residency-025-bounded-public-static-surface-api-origin-remediation-execution-handoff.md",
+  "validation_disposition": "complete-local-source-validation-pass",
+  "next_packet_candidate": "Olares Dev Residency 026 - Packet 022 Closeout Through Packet 025 API-Origin Remediation Authority Publication And Host Mirror Resync Gate",
+  "closure_note": "Executed 2026-05-05 as a bounded source-local remediation packet. Packet 025 removed hardcoded localhost API bases from the public PM review and lead static surfaces by switching them to a local-vs-public origin-aware branch, passed the admitted PM pure-logic tests, and preserved the truthful boundary that public-host API routes still 404 on direct probe.",
+  "next_action": "Execute Packet 026 to publish the local Packet 022 closeout through Packet 025 remediation authority set and source changes before any post-remediation public-host check depends on them."
+}

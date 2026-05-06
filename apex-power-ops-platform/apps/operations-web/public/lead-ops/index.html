@@ -63,8 +63,11 @@
     const { useState, useEffect, useCallback, useMemo } = React;
 
     // ===== CONFIGURATION =====
-    const SEAM_BASE = 'http://localhost:8000/api/v1/mutations';
-    const READS_BASE = 'http://localhost:8000/api/v1/reads';
+    const API_BASE = window.location.hostname === 'localhost'
+      ? 'http://localhost:8000/api/v1'
+      : `${window.location.origin}/api/v1`;
+    const SEAM_BASE = API_BASE + '/mutations';
+    const READS_BASE = API_BASE + '/reads';
     const LEAD_ACTOR = {
       actor_id: 'lead-001',
       actor_role: 'lead',
