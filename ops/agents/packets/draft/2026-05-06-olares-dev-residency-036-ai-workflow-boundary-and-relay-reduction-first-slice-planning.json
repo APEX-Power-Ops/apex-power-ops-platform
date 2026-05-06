@@ -1,0 +1,56 @@
+{
+  "packet_id": "2026-05-06-olares-dev-residency-036",
+  "title": "AI Workflow Boundary And Relay-Reduction First-Slice Planning",
+  "objective": "Select the first bounded Olares-first AI workflow slice that can reduce stakeholder relay burden using already-present repo surfaces, while preserving the current no-go boundaries around Codex admission, broad AI-services expansion, and hosting transition.",
+  "domain": "infrastructure-domain",
+  "active_role": "Platform Architect",
+  "dependencies": [
+    "ops/agents/packets/draft/2026-05-06-olares-dev-residency-035-olares-first-priority-reset-and-ai-workflow-hardening-decision.json",
+    "ops/agents/handoffs/2026-05-06-olares-dev-residency-035-olares-first-priority-reset-and-ai-workflow-hardening-decision-handoff.md",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-step-2-ai-toolchain-and-codex-role-assessment-handoff.md",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-step-3-expansion-decision-surface-handoff.md",
+    "services/mcp/apex-fs/build/http.js",
+    "services/mcp/apex-db/build/http.js",
+    "services/mcp/apex-jobs/build/http.js",
+    "tools/run-canary.ps1",
+    "tools/run-canary.sh",
+    "tests/canary/mcp-contract/actual/mcp-tool-lists.json",
+    "Supabase/docs/AI_ORCHESTRATION_PROTOCOL.md",
+    "C:/APEX Platform/.claude/DECISION_LOG.md"
+  ],
+  "dependency_note": "Packet 035 made Olares-first workflow leverage the near-term priority. The smallest truthful next move is not a large AI-services rollout, because the repo already contains a canary-proven minimal MCP trio and an `apex-jobs` run ledger with the env and promotion controls Step 2 needed to see in writing.",
+  "decision_mode": "decision_only",
+  "allowed_decision_shapes": [
+    "select_minimal_mcp_trio_and_apex_jobs_operator_surface_execution",
+    "defer_until_existing_repo_surfaces_fail_revalidation",
+    "no_go_if_relay_reduction_requires_new_ai_services_or_codex_admission_first"
+  ],
+  "decision_requirements": [
+    "Prefer already-present repo surfaces over new service installs.",
+    "Keep the first slice bounded to Claude-compatible workflow hardening plus the minimum MCP and ledger boundary needed to reduce relay burden.",
+    "Preserve `apex-jobs` as the explicit env and promotion trust boundary for the current slice.",
+    "Do not admit Codex, Ollama, Dify, n8n, or Gitea into the first slice by implication.",
+    "Name exactly one execution packet after the planning decision."
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "decision_selected": "select_minimal_mcp_trio_and_apex_jobs_operator_surface_execution",
+  "decision_rationale": [
+    "The repo already contains the admitted minimal MCP trio shape in executable form: `apex-fs`, `apex-db`, and `apex-jobs` are wired in `infra/compose.dev.yml`, `tools/run-canary.ps1`, `tools/run-canary.sh`, and the canary contract snapshot.",
+    "`apex-jobs` already implements the `env=sandbox|host` run ledger plus `promote_packet` refusal logic, making it the best current trust boundary for the first slice even though the older Supabase orchestration protocol still assumes a Supabase-first task queue.",
+    "Claude Code remains the only first-slice-ready AI execution surface under the Step 2 assessment, so the first slice should optimize Claude-compatible operator flow instead of reopening the unresolved Codex decision.",
+    "A bounded operator kit that starts, verifies, and records the minimal trio can reduce human relay burden immediately because it gives the AI workflow a concrete, repeatable control surface rather than relying on ad hoc packet prose or user-mediated restatement."
+  ],
+  "decision_evidence": {
+    "minimal_mcp_trio_present": true,
+    "minimal_mcp_trio_canary_proven": true,
+    "apex_jobs_env_boundary_present": true,
+    "apex_jobs_promote_packet_present": true,
+    "claude_code_first_slice_ready": true,
+    "codex_first_slice_ready": false
+  },
+  "next_packet_candidate": "Olares Dev Residency 037 - Minimal MCP Trio Operator Surface And AI Boundary Restatement Execution",
+  "validation_disposition": "complete-decision-only",
+  "closure_note": "Executed 2026-05-06 as the first planning surface after the Packet 035 priority reset. Packet 036 selects a minimal MCP trio plus `apex-jobs` operator-surface execution slice as the next truthful Olares-first move for reducing relay burden without reopening unresolved AI-services or hosting-expansion decisions.",
+  "next_action": "Execute `Olares Dev Residency 037 - Minimal MCP Trio Operator Surface And AI Boundary Restatement Execution` as the next bounded slice."
+}

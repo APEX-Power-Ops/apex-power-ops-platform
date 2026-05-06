@@ -1,0 +1,103 @@
+{
+  "packet_id": "2026-05-06-olares-dev-residency-038",
+  "title": "Host-Side Minimal MCP Trio Operator Adoption And Relay-Reduction Execution",
+  "objective": "Execute the Packet 037 first-slice operator surface from the Olares host posture by staging only the admitted minimal MCP trio workflow files onto the host mirror, running the bounded host-side verification there, and capturing exact cleanliness and runtime evidence without widening AI scope.",
+  "domain": "infrastructure-domain",
+  "active_role": "Platform Architect",
+  "dependencies": [
+    "ops/agents/packets/draft/2026-05-06-olares-dev-residency-037-minimal-mcp-trio-operator-surface-and-ai-boundary-restatement-execution.json",
+    "ops/agents/handoffs/2026-05-06-olares-dev-residency-037-minimal-mcp-trio-operator-surface-and-ai-boundary-restatement-execution-handoff.md",
+    "docs/architecture/OLARES-AI-WORKFLOW-FIRST-SLICE-RUNBOOK-2026-05-06.md",
+    "tools/ai/run-minimal-mcp-trio.sh",
+    "tools/ai/verify_minimal_mcp_trio.py",
+    "tools/shell/common.sh",
+    "services/mcp/apex-fs/build/http.js",
+    "services/mcp/apex-db/build/http.js",
+    "services/mcp/apex-jobs/build/http.js"
+  ],
+  "dependency_note": "Packet 037 proved the first slice locally. Packet 038 is the next truthful follow-on only if the same bounded operator surface can be adopted and verified from `/home/olares/code/apex/apex-power-ops-platform` on the Olares host.",
+  "execution_mode": "bounded_host_side_operator_adoption_execution",
+  "required_inputs": [
+    "Live mesh SSH access to `olares@100.64.0.1`",
+    "Clean `/home/olares/code/apex` mirror on `clean-main` before staging",
+    "Already-running admitted trio on host ports `8710`, `8711`, and `8712` or the ability to start them without widening scope",
+    "Only the Packet 037 first-slice files staged to the host mirror"
+  ],
+  "execution_scope": [
+    "Revalidate host mirror cleanliness before mutation.",
+    "Stage only the admitted first-slice files needed for host execution onto `/home/olares/code/apex/apex-power-ops-platform`.",
+    "Run `bash tools/ai/run-minimal-mcp-trio.sh up/status/verify/down` with explicit Packet 038 identity from the host mirror.",
+    "Capture host runtime and cleanliness evidence before and after execution.",
+    "Preserve `/home/olares/src/apex-power-ops-platform` as observe-only."
+  ],
+  "explicit_no_go_items": [
+    "Codex admission",
+    "broad AI-services installation or rollout",
+    "package or lockfile mutation",
+    "runtime or service widening beyond the admitted trio",
+    "force, reset, clean, or remote rewrite on the host mirror",
+    "old-clone mutation or promotion",
+    "public-ingress or auth changes"
+  ],
+  "success_criteria": [
+    "The host mirror starts from a clean state on `/home/olares/code/apex`.",
+    "The host-side operator sequence exits successfully from the host mirror.",
+    "Any resulting host dirtiness is limited to the staged first-slice files and is recorded exactly.",
+    "`/home/olares/src/apex-power-ops-platform` remains observe-only."
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "artifacts_updated": [
+    "tools/ai/run-minimal-mcp-trio.sh",
+    "tools/shell/common.sh"
+  ],
+  "artifacts_staged_to_host": [
+    "/home/olares/code/apex/apex-power-ops-platform/tools/ai/run-minimal-mcp-trio.ps1",
+    "/home/olares/code/apex/apex-power-ops-platform/tools/ai/run-minimal-mcp-trio.sh",
+    "/home/olares/code/apex/apex-power-ops-platform/tools/ai/verify_minimal_mcp_trio.py",
+    "/home/olares/code/apex/apex-power-ops-platform/tools/shell/common.sh"
+  ],
+  "execution_result": {
+    "host_access": "pass",
+    "host_operator_adoption": "pass",
+    "host_validation": "pass",
+    "host_old_clone_preserved": true
+  },
+  "execution_evidence": {
+    "host_repo_head": "ff3076c749434cf68c0b8c80d7e74727b7f08ddd",
+    "executed_from": "/home/olares/code/apex/apex-power-ops-platform",
+    "host_mirror_status_before": "clean",
+    "host_mirror_status_after": [
+      "M tools/shell/common.sh",
+      "?? tools/ai/run-minimal-mcp-trio.ps1",
+      "?? tools/ai/run-minimal-mcp-trio.sh",
+      "?? tools/ai/verify_minimal_mcp_trio.py"
+    ],
+    "old_clone_path": "/home/olares/src/apex-power-ops-platform",
+    "old_clone_status_count": 30,
+    "executed_commands": [
+      "bash tools/ai/run-minimal-mcp-trio.sh up 2026-05-06-olares-dev-residency-038",
+      "bash tools/ai/run-minimal-mcp-trio.sh status",
+      "bash tools/ai/run-minimal-mcp-trio.sh verify 2026-05-06-olares-dev-residency-038",
+      "bash tools/ai/run-minimal-mcp-trio.sh down"
+    ]
+  },
+  "validation_summary": {
+    "mode": "adopted",
+    "fs_endpoint": "http://127.0.0.1:8710/mcp",
+    "db_endpoint": "http://127.0.0.1:8711/mcp",
+    "jobs_endpoint": "http://127.0.0.1:8712/mcp",
+    "verify_result": "PASS",
+    "db_query": "select 1 as ok -> rowCount 1",
+    "jobs_run_id": "1778073914623-g2t2zb9j",
+    "jobs_ledger_path_active": "/apex-data/apex-jobs-ledger.json"
+  },
+  "output_artifacts": [
+    "ops/agents/handoffs/2026-05-06-olares-dev-residency-038-host-side-minimal-mcp-trio-operator-adoption-and-relay-reduction-execution-handoff.md"
+  ],
+  "handoff_note": "ops/agents/handoffs/2026-05-06-olares-dev-residency-038-host-side-minimal-mcp-trio-operator-adoption-and-relay-reduction-execution-handoff.md",
+  "next_packet_candidate": "Olares Dev Residency 039 - Packet 035 Through Packet 038 Authority Publication And Host Mirror Reconciliation Gate",
+  "validation_disposition": "complete-pass",
+  "closure_note": "Executed 2026-05-06 from the Olares host posture. Packet 038 proved that the first admitted MCP trio workflow can be adopted from `/home/olares/code/apex/apex-power-ops-platform` over live mesh SSH, verified successfully against the already-running trio on ports `8710-8712`, preserved the old clone as observe-only, and left the host mirror with only the bounded staged first-slice files pending later publication and reconciliation.",
+  "next_action": "Open `Olares Dev Residency 039 - Packet 035 Through Packet 038 Authority Publication And Host Mirror Reconciliation Gate` as the next bounded follow-on so the local Packet 035 through Packet 038 authority set can be published and the host mirror can return to clean parity without destructive reconciliation."
+}

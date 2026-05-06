@@ -1,0 +1,67 @@
+{
+  "packet_id": "2026-05-06-olares-dev-residency-035",
+  "title": "Olares-First Priority Reset And AI Workflow Hardening Decision",
+  "objective": "Consume Packet 034 closure plus the new stakeholder direction to prioritize Olares-first developer-capability hardening and AI-workflow improvement during the current field-heavy window, then select the smallest truthful next packet that reduces relay burden without reopening unrelated expansion lanes.",
+  "domain": "infrastructure-domain",
+  "active_role": "Platform Architect",
+  "dependencies": [
+    "ops/agents/packets/draft/2026-05-06-olares-dev-residency-034-mutation-seam-custom-domain-dns-closure-and-operations-web-env-realignment.json",
+    "ops/agents/handoffs/2026-05-06-olares-dev-residency-034-mutation-seam-custom-domain-dns-closure-and-operations-web-env-realignment-handoff.md",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-step-2-ai-toolchain-and-codex-role-assessment-handoff.md",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-step-3-expansion-decision-surface-handoff.md",
+    "docs/architecture/OLARES-DEVELOPER-HOST-CUTOVER-MILESTONE-PLAN-2026-05-05.md",
+    "docs/architecture/OLARES-DEVELOPER-HOST-CUTOVER-TECHNICAL-PLAN-2026-05-05.md",
+    "plan/infrastructure-olares-full-implementation-roadmap-1.md",
+    "Supabase/docs/AI_ORCHESTRATION_PROTOCOL.md"
+  ],
+  "dependency_note": "Packet 034 closes the hosted mutation-seam custom-domain lane with no immediate infrastructure residue. The new governing question is no longer whether hosted PM proof can close, but whether the next program slice should favor direct business delivery or Olares-first leverage work that reduces relay-heavy operator load during a field-constrained period.",
+  "decision_mode": "decision_only",
+  "allowed_decision_shapes": [
+    "open_olares_first_dev_capability_and_ai_workflow_hardening_lane",
+    "defer_until_stakeholder_priority_conflict_is_resolved",
+    "no_go_if_packet_034_or_cutover_authority_is_not_trustworthy"
+  ],
+  "decision_requirements": [
+    "Honor the explicit stakeholder priority shift toward Olares-first leverage work during the current field-heavy period.",
+    "Keep workstation migration hardening, AI workflow hardening, and later AI-services expansion as distinct boundaries even if they share one priority tranche.",
+    "Do not treat this decision as approval for Gitea transition, canonical-hosting transition, public-ingress widening, or broad multi-service AI expansion.",
+    "Name exactly one next packet that can reduce user relay burden and improve host-first execution without assuming unresolved trust-boundary questions are already closed.",
+    "Preserve GitHub as canonical origin and `/home/olares/code/apex` as the authoritative host mirror for active Olares-side work."
+  ],
+  "explicit_no_go_items": [
+    "reopening generic Operations Visibility delivery as the primary near-term lane by implication",
+    "Gitea or canonical-hosting transition",
+    "public-ingress widening",
+    "broad AI-services-zone expansion by assumption",
+    "Codex admission before its trust-boundary role is explicitly closed",
+    "package or lockfile churn unrelated to the chosen Olares-first slice",
+    "runtime or service mutation outside a later explicit packet",
+    "remote rewrite",
+    "rollback, force, reset, or clean",
+    "old-clone mutation or promotion"
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "decision_selected": "open_olares_first_dev_capability_and_ai_workflow_hardening_lane",
+  "decision_rationale": [
+    "Packet 034 closes the just-finished hosted infrastructure lane, so there is no truthful requirement to spend the next slice on more mutation-seam or public browser-host remediation work.",
+    "The developer-residency chain already proved the durable host anchor, client-only laptop posture, publication continuity, and one bounded host-executed delivery slice, which means additional leverage now comes more from workflow hardening than from repeating proof-of-viability steps.",
+    "The Step 2 AI assessment shows that the immediate bottleneck is not a missing large AI stack on Olares, but unresolved trust-boundary and orchestration decisions around Claude Code, Codex, MCP scope, and the `ai_tasks` versus `apex-jobs` contract.",
+    "The stakeholder has explicitly identified limited field bandwidth and a desire to reduce prompt-relay and handoff overhead, making Olares-first workflow hardening the highest-value current investment even though Operations Visibility remains a valid later business lane.",
+    "The smallest truthful next move is therefore a planning packet that defines the first bounded relay-reduction slice for Olares, rather than reopening generic feature delivery or installing multiple AI services speculatively."
+  ],
+  "decision_evidence": {
+    "hosted_mutation_seam_lane_closed": true,
+    "packet_034_validation_disposition": "custom_domain_mutation_seam_live_operations_web_realigned_and_public_proof_green",
+    "developer_host_cutover_proven": true,
+    "operations_visibility_lane_valid_but_deprioritized": true,
+    "claude_code_first_slice_candidate": true,
+    "codex_first_slice_candidate": false,
+    "field_heavy_window_declared": true,
+    "relay_reduction_requested": true
+  },
+  "next_packet_candidate": "Olares Dev Residency 036 - AI Workflow Boundary And Relay-Reduction First-Slice Planning",
+  "validation_disposition": "complete-decision-only",
+  "closure_note": "Executed 2026-05-06 as the stakeholder-priority reset after Packet 034 closure. Packet 035 keeps the hosted PM closure intact, supersedes the default near-term follow-on priority, and reorients the next bounded tranche toward Olares-first developer-capability hardening plus AI-workflow improvement intended to reduce user relay burden during the current field window.",
+  "next_action": "Execute `Olares Dev Residency 036 - AI Workflow Boundary And Relay-Reduction First-Slice Planning` as the next bounded planning surface. That packet should define the first concrete Olares-first slice across host-side Claude operating posture, MCP or ledger boundary narrowing, and handoff reduction without admitting Codex or broad AI-services expansion by assumption."
+}
