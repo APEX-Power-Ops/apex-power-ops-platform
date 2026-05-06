@@ -16,7 +16,14 @@ Use this document when the question is:
 2. what is constrained or forbidden,
 3. which tools and processes are approved,
 4. what remains to be implemented or improved,
-5. how execution should continue without reopening already-closed lanes.
+5. how execution should continue without reopening already-closed lanes,
+6. where the compact current lane register lives.
+
+Companion surface:
+
+`docs/architecture/APEX-PM-LANE-OPERATING-COCKPIT-2026-05-06.md`
+
+Use that cockpit for rapid lane selection and validation routing. It does not override the authority order below.
 
 ## Current Program Decision
 
@@ -84,6 +91,11 @@ Use this order when documents conflict:
 1. If the minimal MCP trio is not running, status surfaces must report that truth instead of implying readiness.
 2. If deferred Operations Visibility views remain empty, the correct result is hold or dormancy, not synthetic consumer work.
 3. If a host capability is absent and not required by current business truth, keep the lane closed instead of solving speculative gaps.
+
+### PM cockpit companion
+
+1. Use `docs/architecture/APEX-PM-LANE-OPERATING-COCKPIT-2026-05-06.md` as the compact whole-project lane register and session-start routing surface.
+2. If the cockpit conflicts with a governing document, the authority order above wins.
 
 ## Optimal Workspace Environment
 
@@ -204,7 +216,8 @@ Allowed next-slice classes:
 1. docs-and-task discoverability improvements,
 2. bounded host validation ergonomics,
 3. truthful status or readiness surfaces,
-4. publication/parity hygiene improvements.
+4. publication/parity hygiene improvements,
+5. compact lane-frontier surfaces that reduce repeated session-start reconstruction without widening scope.
 
 Disallowed by default:
 
