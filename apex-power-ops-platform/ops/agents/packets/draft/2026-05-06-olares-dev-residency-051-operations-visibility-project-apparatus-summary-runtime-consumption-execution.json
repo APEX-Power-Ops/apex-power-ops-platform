@@ -1,0 +1,58 @@
+{
+  "packet_id": "2026-05-06-olares-dev-residency-051",
+  "title": "Operations Visibility Project Apparatus Summary Runtime Consumption Execution",
+  "objective": "Land the next adjacent populated Operations Visibility runtime-consumption slice by exposing a read-only `v_project_apparatus_summary` seam and mounting the third governed browser consumer in `apps/operations-web`.",
+  "domain": "delivery-domain",
+  "active_role": "Platform Architect",
+  "dependencies": [
+    "ops/agents/packets/draft/2026-05-06-olares-dev-residency-050-operations-visibility-schedule-health-runtime-consumption-execution.json",
+    "apps/control-plane-api/services/ops/router.py",
+    "apps/control-plane-api/tests/test_ops_project_apparatus_summary.py",
+    "apps/operations-web/app/page.tsx",
+    "C:/APEX Platform/Supabase/schema/09_schema_additions.sql"
+  ],
+  "dependency_note": "Packet 050 closed the second live consumer and left `v_project_apparatus_summary`, `v_apparatus_by_category`, and `v_blockers_summary` as the remaining populated adjacent views. The next truthful move was the smallest populated KPI-shaped one.",
+  "execution_mode": "bounded_runtime_consumption_execution",
+  "execution_steps": [
+    "Confirm `public.v_project_apparatus_summary` returns live rows in the current dataset.",
+    "Add a read-only `GET /api/v1/ops/project-apparatus-summary` seam against `public.v_project_apparatus_summary` in `apps/control-plane-api`.",
+    "Validate that seam with a focused pytest file before widening the browser shell.",
+    "Mount the third governed browser consumer in `apps/operations-web` and validate it with the app-local TypeScript compiler."
+  ],
+  "constraints": [
+    "Do not reopen direct browser-side Supabase admission.",
+    "Prefer the smallest populated adjacent view over a more complex grouped view when both are available.",
+    "Keep the slice bounded to the project-apparatus-summary consumer path and its direct authority surfaces."
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "execution_outcome": "third_runtime_consumer_landed_and_validated",
+  "execution_evidence": {
+    "adjacent_view_selection": {
+      "v_project_apparatus_summary_rows": 4,
+      "selection_reason": "Project apparatus summary had live rows and a smaller scope-KPI shape than the remaining grouped category and blocker views."
+    },
+    "route_added": "GET /api/v1/ops/project-apparatus-summary",
+    "route_source": "apps/control-plane-api/services/ops/router.py",
+    "focused_backend_test_file": "apps/control-plane-api/tests/test_ops_project_apparatus_summary.py",
+    "focused_backend_test_result": "6/6 passed",
+    "browser_helper": "apps/operations-web/lib/project-apparatus-summary.ts",
+    "browser_component": "apps/operations-web/app/project-apparatus-summary-explorer.tsx",
+    "browser_mount": "apps/operations-web/app/page.tsx",
+    "frontend_validation": "app-local TypeScript compile passed via apps/operations-web/node_modules/.bin/tsc.cmd",
+    "diagnostics_status": "No editor errors on touched backend and frontend files"
+  },
+  "execution_rationale": [
+    "The next bounded move after Packet 050 was another adjacent populated consumer, not a planning-only pause.",
+    "`v_project_apparatus_summary` answers a distinct scope-KPI question with a smaller payload than the remaining grouped category and blocker views, so it was the next truthful implementation surface.",
+    "The implementation extends the same governed read-only browser pattern established in Packets 048 and 050 without widening authority."
+  ],
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-06-olares-dev-residency-051-operations-visibility-project-apparatus-summary-runtime-consumption-execution-handoff.md"
+  ],
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-06-olares-dev-residency-051-operations-visibility-project-apparatus-summary-runtime-consumption-execution-handoff.md",
+  "next_packet_candidate": "Olares Dev Residency 052 - Operations Visibility Next Populated Consumer Planning Or Execution",
+  "validation_disposition": "implemented_and_validated",
+  "closure_note": "Executed 2026-05-06 as the direct adjacent-consumer follow-on after Packet 050. Packet 051 selected `v_project_apparatus_summary` as the next populated scope-KPI seam, landed the read-only backend route plus focused tests, mounted the third governed browser consumer, and validated the slice with pytest plus the app-local TypeScript compiler.",
+  "next_action": "Select the next adjacent populated Operations Visibility consumer slice after project apparatus summary."
+}

@@ -1,7 +1,7 @@
 # Olares Phase 5 Next Task And Prompt Routing Handoff
 
 Date: 2026-05-03
-Status: Active - Packet 050 is complete and the next bounded follow-on is the next adjacent Operations Visibility runtime-consumption slice
+Status: Active - Packet 051 is complete and the next bounded follow-on is the next adjacent populated Operations Visibility runtime-consumption slice
 Scope: preserve the completed Olares-first AI workflow routing state after Packet 035 through Packet 041 while naming the current bounded Operations Visibility follow-on from the Olares-resident posture
 
 Update 2026-05-06:
@@ -40,8 +40,10 @@ Update 2026-05-06:
 32. `infra/database/source-lineage/apex-resa/pm-project-pss/LINEAGE-NOTE.md` and the top of the tracked lineage `schema/09_schema_additions.sql` now warn that the authoritative executable source remains `C:/APEX Platform/Supabase/schema/09_schema_additions.sql` and that Packets 045 through 047 introduced known post-import drift.
 33. Packet 050 is now complete and lands the next adjacent Operations Visibility consumer slice: `apps/control-plane-api/services/ops/router.py` now exposes `GET /api/v1/ops/schedule-health`, `tests/test_ops_schedule_health.py` passes `6/6`, and `apps/operations-web` now mounts `ScheduleHealthExplorer` as the second governed operations panel.
 34. Packet 050 also recorded a truthful live-shape decision point before implementation: `public.v_schedule_health` currently returns real rows in Supabase, while `public.v_resource_allocation` is currently empty, so schedule health was the correct next consumer to prove runtime value.
-35. The next packet should therefore select the next adjacent Operations Visibility consumer slice after schedule health rather than reopening schema deployment, advisor-path recovery, or a blind lineage-copy overwrite.
-36. The current minimal MCP trio plus `apex-jobs` operating model remains intact in the background; reopen Olares-first infrastructure work only if it shows a concrete insufficiency.
+35. Packet 051 is now complete and lands the next adjacent populated Operations Visibility consumer slice: `apps/control-plane-api/services/ops/router.py` now exposes `GET /api/v1/ops/project-apparatus-summary`, `tests/test_ops_project_apparatus_summary.py` passes `6/6`, and `apps/operations-web` now mounts `ProjectApparatusSummaryExplorer` as the third governed operations panel.
+36. Packet 051 also recorded a truthful live-shape decision point before implementation: `public.v_project_apparatus_summary` currently returns real scope-level KPI rows, so it was selected ahead of the remaining grouped category and blocker views.
+37. The next packet should therefore select the next adjacent populated Operations Visibility consumer slice after project apparatus summary rather than reopening schema deployment, advisor-path recovery, or a blind lineage-copy overwrite.
+38. The current minimal MCP trio plus `apex-jobs` operating model remains intact in the background; reopen Olares-first infrastructure work only if it shows a concrete insufficiency.
 
 ## Authority
 

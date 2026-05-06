@@ -238,6 +238,28 @@ class ScheduleHealthSummary(BaseModel):
     health_status: str = Field(..., description="Derived schedule health classification from the view.")
 
 
+class ProjectApparatusSummaryRow(BaseModel):
+    """Read-only summary row from ``public.v_project_apparatus_summary``."""
+
+    project_id: str = Field(..., description="Project UUID from the Operations Visibility summary view.")
+    project_number: Optional[str] = Field(None, description="Human-readable project number.")
+    project_name: Optional[str] = Field(None, description="Human-readable project name.")
+    scope_id: Optional[str] = Field(None, description="Scope UUID represented in the row.")
+    scope_name: Optional[str] = Field(None, description="Scope name represented in the row.")
+    total_apparatus: int = Field(..., description="Total apparatus count in the scope.")
+    total_completed: int = Field(..., description="Completed apparatus count in the scope.")
+    total_remaining: int = Field(..., description="Remaining apparatus count in the scope.")
+    completion_percent: float = Field(..., description="Calculated completion percent for the scope.")
+    ready_to_work: int = Field(..., description="Ready-to-work apparatus count in the scope.")
+    blocked: int = Field(..., description="Blocked apparatus count in the scope.")
+    issues_failed: int = Field(..., description="Apparatus count with failing or non-serviceable assessments.")
+    past_due: int = Field(..., description="Past-due apparatus count in the scope.")
+    due_this_week: int = Field(..., description="Apparatus due this week in the scope.")
+    total_quoted_hours: float = Field(..., description="Total quoted hours for the scope.")
+    total_actual_hours: float = Field(..., description="Total actual hours recorded for the scope.")
+    remaining_hours: float = Field(..., description="Quoted hours still remaining for the scope.")
+
+
 @router.get(
     "/pm-idempotency/by-route",
     response_model=PMIdempotencyByRoute,
@@ -356,3 +378,54 @@ def schedule_health_summary(
         .all()
     )
     return [ScheduleHealthSummary(**row) for row in rows]
+
+
+@router.get(
+    "/project-apparatus-summary",
+    response_model=list[ProjectApparatusSummaryRow],
+    summary="Operations Visibility project apparatus summary rollup (read-only).",
+)
+def project_apparatus_summary(
+    limit: int = Query(25, ge=1, le=100),
+    db: Session = Depends(get_db),
+) -> list[ProjectApparatusSummaryRow]:
+    """Return bounded rows from ``public.v_project_apparatus_summary``.
+
+    This keeps scope-level KPI consumption behind the governed
+    control-plane API rather than reopening direct browser-side
+    Supabase reads.
+    """
+
+    rows = (
+        db.execute(
+            text(
+                """
+                SELECT
+                    project_id,
+                    project_number,
+                    project_name,
+                    scope_id,
+                    scope_name,
+                    total_apparatus,
+                    total_completed,
+                    total_remaining,
+                    completion_percent,
+                    ready_to_work,
+                    blocked,
+                    issues_failed,
+                    past_due,
+                    due_this_week,
+                    total_quoted_hours,
+                    total_actual_hours,
+                    remaining_hours
+                FROM public.v_project_apparatus_summary
+                ORDER BY project_number, scope_name
+                LIMIT :limit
+                """
+            ),
+            {"limit": limit},
+        )
+        .mappings()
+        .all()
+    )
+    return [ProjectApparatusSummaryRow(**row) for row in rows]
