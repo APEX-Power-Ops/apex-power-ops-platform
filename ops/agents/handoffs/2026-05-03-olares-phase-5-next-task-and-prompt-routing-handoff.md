@@ -1,7 +1,7 @@
 # Olares Phase 5 Next Task And Prompt Routing Handoff
 
 Date: 2026-05-03
-Status: Active - Packet 049 is complete and the next bounded follow-on is the next adjacent Operations Visibility runtime-consumption slice
+Status: Active - Packet 050 is complete and the next bounded follow-on is the next adjacent Operations Visibility runtime-consumption slice
 Scope: preserve the completed Olares-first AI workflow routing state after Packet 035 through Packet 041 while naming the current bounded Operations Visibility follow-on from the Olares-resident posture
 
 Update 2026-05-06:
@@ -38,8 +38,10 @@ Update 2026-05-06:
 30. Frontend validation also passed through the app-local compiler at `apps/operations-web/node_modules/.bin/tsc.cmd`; `pnpm` remained unavailable on the workstation path, but the touched-file diagnostics are clean and the runtime-consumption slice itself is validated.
 31. Packet 049 is now complete and resolves the source-reconciliation branch for the tracked PM lineage copy of `09_schema_additions.sql`: the lineage tranche is explicitly copy-preserved reference input, not active migration authority, so the correct move was drift annotation rather than overwriting the imported snapshot.
 32. `infra/database/source-lineage/apex-resa/pm-project-pss/LINEAGE-NOTE.md` and the top of the tracked lineage `schema/09_schema_additions.sql` now warn that the authoritative executable source remains `C:/APEX Platform/Supabase/schema/09_schema_additions.sql` and that Packets 045 through 047 introduced known post-import drift.
-33. The next packet should therefore select the next adjacent Operations Visibility consumer slice rather than reopening schema deployment, advisor-path recovery, or a blind lineage-copy overwrite.
-34. The current minimal MCP trio plus `apex-jobs` operating model remains intact in the background; reopen Olares-first infrastructure work only if it shows a concrete insufficiency.
+33. Packet 050 is now complete and lands the next adjacent Operations Visibility consumer slice: `apps/control-plane-api/services/ops/router.py` now exposes `GET /api/v1/ops/schedule-health`, `tests/test_ops_schedule_health.py` passes `6/6`, and `apps/operations-web` now mounts `ScheduleHealthExplorer` as the second governed operations panel.
+34. Packet 050 also recorded a truthful live-shape decision point before implementation: `public.v_schedule_health` currently returns real rows in Supabase, while `public.v_resource_allocation` is currently empty, so schedule health was the correct next consumer to prove runtime value.
+35. The next packet should therefore select the next adjacent Operations Visibility consumer slice after schedule health rather than reopening schema deployment, advisor-path recovery, or a blind lineage-copy overwrite.
+36. The current minimal MCP trio plus `apex-jobs` operating model remains intact in the background; reopen Olares-first infrastructure work only if it shows a concrete insufficiency.
 
 ## Authority
 

@@ -2,6 +2,7 @@ import { browserEnv, hasSupabaseBrowserConfig } from '../lib/browser-env'
 import { ApparatusResourceExplorer } from './apparatus-resource-explorer'
 import { MasterOperationsExplorer } from './master-operations-explorer'
 import { RelayResourceExplorer } from './relay-resource-explorer'
+import { ScheduleHealthExplorer } from './schedule-health-explorer'
 
 const shellChecks = [
   {
@@ -31,11 +32,17 @@ const shellChecks = [
     status: 'backend-routed',
     detail: 'The first Operations Visibility rollup now flows through /api/v1/ops/master-operations instead of direct browser database admission.',
   },
+  {
+    label: 'Schedule health seam',
+    status: 'backend-routed',
+    detail: 'The second governed Operations Visibility seam now reads /api/v1/ops/schedule-health for scope-level risk visibility.',
+  },
 ]
 
 const nextMoves = [
   'Use bounded backend seams for additional live reads instead of widening direct browser database authority.',
   'Treat /api/v1/ops/master-operations as the first governed dashboard rollup seam for the newly live 09 schema tranche.',
+  'Treat /api/v1/ops/schedule-health as the adjacent scope-level risk seam for the same governed operations lane.',
   'Exercise the new apparatus study-resource route against a migrated host surface when runtime proof is needed.',
   'Keep relay preview source-faithful by surfacing storage-kind identity and unsupported warnings rather than simplifying them away.',
   'Keep the legacy Supabase browser client deferred until a separate client-shape admission decision lands.',
@@ -91,6 +98,7 @@ export default function HomePage() {
             <li>Establishes the first browser-side environment contract.</li>
             <li>Consumes the first live study-resource read through the governed control-plane API.</li>
             <li>Consumes the first Operations Visibility dashboard rollup through the governed ops API.</li>
+            <li>Consumes the adjacent Operations Visibility schedule-health rollup through the same governed ops API boundary.</li>
             <li>Consumes the bounded relay discovery, context, settings, and preview seam through the same governed API boundary.</li>
             <li>Hosts the preserved cross-surface validation dashboard at /integration-dashboard/index.html.</li>
             <li>Hosts the re-homed lead operations prototype at /lead-ops/index.html.</li>
@@ -138,6 +146,7 @@ export default function HomePage() {
       </section>
 
       <MasterOperationsExplorer />
+      <ScheduleHealthExplorer />
       <ApparatusResourceExplorer />
       <RelayResourceExplorer />
     </main>
