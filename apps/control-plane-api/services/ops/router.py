@@ -276,6 +276,18 @@ class ApparatusByCategorySummaryRow(BaseModel):
     blocked: int = Field(..., description="Blocked apparatus count in this category row.")
 
 
+class BlockersSummaryRow(BaseModel):
+    """Read-only summary row from ``public.v_blockers_summary``."""
+
+    project_number: Optional[str] = Field(None, description="Human-readable project number.")
+    project_name: Optional[str] = Field(None, description="Human-readable project name.")
+    apparatus_type: Optional[str] = Field(None, description="Apparatus type grouped in the blocker row.")
+    availability: Optional[str] = Field(None, description="Blocking availability state represented in the row.")
+    blocked_count: int = Field(..., description="Blocked apparatus count in the row.")
+    blocked_hours: float = Field(..., description="Blocked quoted hours in the row.")
+    sample_notes: Optional[str] = Field(None, description="Optional aggregated sample notes from blocked items.")
+
+
 @router.get(
     "/pm-idempotency/by-route",
     response_model=PMIdempotencyByRoute,
@@ -490,3 +502,44 @@ def apparatus_by_category_summary(
         .all()
     )
     return [ApparatusByCategorySummaryRow(**row) for row in rows]
+
+
+@router.get(
+    "/blockers-summary",
+    response_model=list[BlockersSummaryRow],
+    summary="Operations Visibility blockers summary rollup (read-only).",
+)
+def blockers_summary(
+    limit: int = Query(25, ge=1, le=100),
+    db: Session = Depends(get_db),
+) -> list[BlockersSummaryRow]:
+    """Return bounded rows from ``public.v_blockers_summary``.
+
+    This keeps blocker aggregation consumption behind the governed
+    control-plane API rather than reopening direct browser-side
+    Supabase reads.
+    """
+
+    rows = (
+        db.execute(
+            text(
+                """
+                SELECT
+                    project_number,
+                    project_name,
+                    apparatus_type,
+                    availability,
+                    blocked_count,
+                    blocked_hours,
+                    sample_notes
+                FROM public.v_blockers_summary
+                ORDER BY blocked_hours DESC, project_number, apparatus_type
+                LIMIT :limit
+                """
+            ),
+            {"limit": limit},
+        )
+        .mappings()
+        .all()
+    )
+    return [BlockersSummaryRow(**row) for row in rows]
