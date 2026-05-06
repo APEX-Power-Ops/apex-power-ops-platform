@@ -1,0 +1,64 @@
+{
+  "packet_id": "2026-05-06-olares-dev-residency-043",
+  "title": "Operations Visibility Post-041 First Bounded Slice Planning",
+  "objective": "Select exactly one first bounded Operations Visibility implementation or preflight slice after Packet 042 reopened the default business lane, while preserving the current Olares-resident operating model and Supabase change discipline.",
+  "domain": "delivery-domain",
+  "active_role": "Platform Architect",
+  "dependencies": [
+    "ops/agents/packets/draft/2026-05-06-olares-dev-residency-042-post-041-operations-visibility-reentry-decision.json",
+    "ops/agents/handoffs/2026-05-06-olares-dev-residency-042-post-041-operations-visibility-reentry-decision-handoff.md",
+    "C:/APEX Platform/PROJECT_STATUS.md",
+    "C:/APEX Platform/Supabase/SCHEMA_REFERENCE.md",
+    "C:/APEX Platform/Supabase/schema/09_schema_additions.sql",
+    "C:/APEX Platform/Supabase/schema/09b_enum_updates.sql",
+    "plan/infrastructure-olares-full-implementation-roadmap-1.md"
+  ],
+  "dependency_note": "Packet 042 reopened only the default Operations Visibility business lane as the next bounded follow-on from the Olares-resident posture. The project status and schema reference still identify `09_schema_additions.sql` and `09b_enum_updates.sql` as the ready, bounded Operations Visibility schema tranche, so the next truthful planning question is whether to begin with that database slice or reopen a broader UI/runtime surface.",
+  "execution_mode": "planning_only",
+  "planning_requirements": [
+    "Select exactly one first Operations Visibility implementation or preflight slice.",
+    "Prefer the smallest repo-owned slice already identified as ready over a broader UI or browser-runtime reopening.",
+    "Preserve GitHub as canonical, `/home/olares/code/apex` as the authoritative host mirror, and `/home/olares/src/apex-power-ops-platform` as observe-only historical evidence.",
+    "Preserve Supabase change discipline: do not treat this planning packet as authority to mutate schema directly; prefer a later preflight/execution packet that can validate current database state, advisor expectations, and exposed-surface safeguards first.",
+    "Keep AI-services expansion, `ai_tasks` bridge work, hosting transition, auth widening, remote rewrite, rollback, force, reset, clean, and old-clone mutation closed unless a later packet explicitly requires and reauthorizes them.",
+    "Name one later execution packet and one bounded validation expectation for the selected slice."
+  ],
+  "explicit_no_go_items": [
+    "generic multi-slice Operations Visibility reopening",
+    "broad UI implementation by default",
+    "host browser-runtime reopening by implication",
+    "direct schema mutation in the planning packet",
+    "AI-services expansion",
+    "hosting transition",
+    "remote rewrite",
+    "rollback, force, reset, or clean",
+    "old-clone mutation or promotion"
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-06-olares-dev-residency-043-operations-visibility-post-041-first-bounded-slice-planning-handoff.md"
+  ],
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-06-olares-dev-residency-043-operations-visibility-post-041-first-bounded-slice-planning-handoff.md",
+  "decision_selected": "select_operations_visibility_schema_deployment_preflight_slice",
+  "decision_rationale": [
+    "`PROJECT_STATUS.md` already marks the Operations schema tranche as ready to deploy and names `09_schema_additions.sql` plus `09b_enum_updates.sql` as the explicit next bounded surfaces.",
+    "Those schema files are repo-owned, finite, and directly tied to the Operations Visibility objective, making them a smaller first move than reopening broader UI work or browser runtime comparison.",
+    "A preflight slice is more truthful than immediate DDL because Supabase change discipline still requires current-state validation, advisor/security review, and a bounded execution plan before schema mutation.",
+    "This keeps the current Olares operating boundary intact while moving the active frontier back to business delivery work."
+  ],
+  "decision_evidence": {
+    "selected_surfaces": [
+      "Supabase/schema/09_schema_additions.sql",
+      "Supabase/schema/09b_enum_updates.sql"
+    ],
+    "selected_slice_type": "schema_deployment_preflight",
+    "requires_browser_runtime": false,
+    "requires_host_toolchain_expansion": false,
+    "requires_direct_schema_mutation_in_this_packet": false
+  },
+  "next_packet_candidate": "Olares Dev Residency 044 - Bounded Operations Visibility Schema Deployment Preflight Execution",
+  "validation_disposition": "complete-planning-only",
+  "closure_note": "Executed 2026-05-06 as the first post-041 Operations Visibility planning surface. Packet 043 selected the Operations Visibility schema deployment preflight around `09_schema_additions.sql` and `09b_enum_updates.sql` as the smallest truthful next slice, while keeping direct schema mutation, broader UI reopening, and Olares infrastructure expansion closed by default.",
+  "next_action": "Execute `Olares Dev Residency 044 - Bounded Operations Visibility Schema Deployment Preflight Execution` as the selected first post-041 Operations Visibility slice."
+}
