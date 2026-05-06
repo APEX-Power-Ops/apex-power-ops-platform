@@ -1,7 +1,7 @@
 # Olares Phase 5 Next Task And Prompt Routing Handoff
 
 Date: 2026-05-03
-Status: Active - Packet 057 is complete, the populated adjacent Operations Visibility runtime-consumption set is closed, the admitted AI operator boundary is revalidated, and the deferred empty seams remain on explicit hold behind a repo-owned cadence surface that now runs on the authoritative host mirror too
+Status: Active - Packet 058 is complete, the populated adjacent Operations Visibility runtime-consumption set is closed, the admitted AI operator boundary is revalidated, and the deferred empty seams remain on explicit hold behind a repo-owned cadence surface with a governed live-DSN workstation proof and a truthful host graceful-degrade path
 Scope: preserve the completed Olares-first AI workflow routing state after Packet 035 through Packet 041 while naming the current bounded Operations Visibility follow-on from the Olares-resident posture
 
 Update 2026-05-06:
@@ -58,6 +58,9 @@ Update 2026-05-06:
 50. Packet 057 is now complete as the bounded host-portability closeout for that same cadence surface: the first host rerun failed on a missing `sqlalchemy` import, proving the initial helper was not portable to `/home/olares/code/apex`.
 51. Packet 057 repaired that defect without widening scope by moving the deferred-view query onto the admitted `apex-db` MCP surface and teaching both minimal-trio wrappers to prefer `SEAM_DATABASE_URL` when a live DSN is intentionally supplied.
 52. The repaired host rerun then closed truthfully from `/home/olares/code/apex/apex-power-ops-platform` with `minimal_mcp=PASS` and `deferred_ops=UNAVAILABLE`; the current hold boundary remains intact, but the repo-owned cadence surface now runs on both workstation and authoritative host postures.
+53. Packet 058 is now complete as the governed live-DSN follow-on to that cadence surface: the bounded secret source in `.secrets/SUPABASE_CREDENTIALS.md` was sufficient to supply a real Supabase session-pooler DSN, the deferred-view helper gained an explicit direct-connection path, and the PowerShell wrapper reran locally with `minimal_mcp=PASS` and `deferred_ops=HOLD` against the live `09` views.
+54. Packet 058 converts the deferred-view boundary from generic `UNAVAILABLE` into an actual data-truth verdict where the current posture allows it: authoritative live counts remain `0` for both `public.v_resource_allocation` and `public.v_equipment_needs`, so the empty Operations Visibility seams stay on hold because they are still empty, not because the cadence surface is missing.
+55. Packet 058 also hardened the Bash wrapper to degrade truthfully on the current host mirror instead of failing when a live DSN is supplied but no local live-query engine exists; `/home/olares/code/apex/apex-power-ops-platform` still lacks `sqlalchemy`, `psql`, resolvable `pg`, and a repo-local `services/mcp/apex-db` tree, so the authoritative host live-DSN posture remains `minimal_mcp=PASS`, `deferred_ops=UNAVAILABLE` until a separately bounded host-query path is opened.
 
 ## Authority
 

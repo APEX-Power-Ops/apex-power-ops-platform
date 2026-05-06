@@ -45,6 +45,21 @@ def resolve_db_url(args: argparse.Namespace) -> tuple[str, str]:
     return "http://127.0.0.1:8711/mcp", "default:apex-db-mcp"
 
 
+def resolve_connection_string(args: argparse.Namespace) -> tuple[str, str] | None:
+    import_env_file()
+
+    if args.db_connection_string:
+        return args.db_connection_string, "argument:db-connection-string"
+
+    if args.db_connection_string_env:
+        value = str(os.getenv(args.db_connection_string_env) or "").strip()
+        if value:
+            return value, f"env:{args.db_connection_string_env}"
+        raise RuntimeError(f"{args.db_connection_string_env} is not set; cannot run deferred ops view checks.")
+
+    return None
+
+
 def fetch_json(url: str, payload: dict[str, Any]) -> Any:
     request = urllib.request.Request(
         url,
@@ -89,6 +104,18 @@ def initialize_and_query(db_url: str, sql: str) -> Any:
     return json.loads(content[0]["text"]) if content else None
 
 
+def query_direct_connection(connection_string: str, sql: str) -> Any:
+    try:
+        from sqlalchemy import create_engine, text
+    except ImportError as error:  # pragma: no cover - exercised only when SQLAlchemy is absent
+        raise RuntimeError("SQLAlchemy is required for direct deferred ops view checks.") from error
+
+    engine = create_engine(connection_string)
+    with engine.connect() as connection:
+        rows = connection.execute(text(sql))
+        return [dict(row._mapping) for row in rows]
+
+
 def write_output(path: Path | None, payload: dict[str, Any]) -> None:
     if path is None:
         return
@@ -101,6 +128,8 @@ def main() -> int:
     parser.add_argument("--packet-id", default="2026-05-06-olares-dev-residency-056")
     parser.add_argument("--db-url")
     parser.add_argument("--db-url-env")
+    parser.add_argument("--db-connection-string")
+    parser.add_argument("--db-connection-string-env")
     parser.add_argument("--output")
     args = parser.parse_args()
 
@@ -111,41 +140,51 @@ def main() -> int:
         "checks": {},
     }
 
-    try:
-        db_url, db_url_source = resolve_db_url(args)
-        summary["checks"]["db_connection"] = {
-            "status": "pass",
-            "source": db_url_source,
-            "endpoint": db_url,
-        }
+    sql = """
+        select 'v_resource_allocation' as view_name, count(*) as row_count
+        from public.v_resource_allocation
+        union all
+        select 'v_equipment_needs' as view_name, count(*) as row_count
+        from public.v_equipment_needs
+        order by view_name
+    """
 
-        try:
-            rows = initialize_and_query(
-                db_url,
-                """
-                select 'v_resource_allocation' as view_name, count(*) as row_count
-                from public.v_resource_allocation
-                union all
-                select 'v_equipment_needs' as view_name, count(*) as row_count
-                from public.v_equipment_needs
-                order by view_name
-                """,
-            )
-        except RuntimeError as error:
-            if "relation \"public.v_resource_allocation\" does not exist" not in str(error):
-                raise
-            summary["checks"]["deferred_view_counts"] = {
-                "status": "unavailable",
-                "reason": "The current apex-db surface does not expose the authoritative deferred operations views.",
+    try:
+        connection_string = resolve_connection_string(args)
+        if connection_string is not None:
+            value, source = connection_string
+            summary["checks"]["db_connection"] = {
+                "status": "pass",
+                "source": source,
+                "mode": "direct",
             }
-            summary["result"] = "UNAVAILABLE"
-            summary["decision"] = (
-                "Authoritative deferred view counts require apex-db to run against a live DSN such as SEAM_DATABASE_URL; "
-                "the current database surface is not sufficient for this hold check."
-            )
-            write_output(output_path, summary)
-            print(json.dumps(summary, indent=2))
-            return 0
+            rows = query_direct_connection(value, sql)
+        else:
+            db_url, db_url_source = resolve_db_url(args)
+            summary["checks"]["db_connection"] = {
+                "status": "pass",
+                "source": db_url_source,
+                "mode": "mcp",
+                "endpoint": db_url,
+            }
+
+            try:
+                rows = initialize_and_query(db_url, sql)
+            except RuntimeError as error:
+                if "relation \"public.v_resource_allocation\" does not exist" not in str(error):
+                    raise
+                summary["checks"]["deferred_view_counts"] = {
+                    "status": "unavailable",
+                    "reason": "The current apex-db surface does not expose the authoritative deferred operations views.",
+                }
+                summary["result"] = "UNAVAILABLE"
+                summary["decision"] = (
+                    "Authoritative deferred view counts require apex-db to run against a live DSN such as SEAM_DATABASE_URL; "
+                    "the current database surface is not sufficient for this hold check."
+                )
+                write_output(output_path, summary)
+                print(json.dumps(summary, indent=2))
+                return 0
 
         counts = {row["view_name"]: int(row["row_count"]) for row in rows}
         reopen = [name for name, row_count in counts.items() if row_count > 0]
