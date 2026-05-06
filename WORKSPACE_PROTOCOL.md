@@ -4,6 +4,23 @@
 **Created:** December 5, 2025  
 **Purpose:** Establish consistent, efficient workspace conventions for Apex Power Ops collaboration
 
+## Historical Note
+
+This protocol captures an earlier clean-root convention and is no longer the controlling Olares workspace protocol by itself.
+
+Use these files first for the current operating model:
+
+1. `Infrastructure/Olares_Workspace_Authority_Framework.md`
+2. `apex-power-ops-platform/docs/architecture/OLARES-ONE-WORKSPACE-DESIGN-GOVERNANCE-AND-IMPLEMENTATION-PLAN-2026-05-06.md`
+3. `apex-power-ops-platform/docs/OPERATOR-BOOTSTRAP-RUNBOOK.md`
+
+Current controlling path reality:
+
+1. `C:/APEX Platform` is the git publication boundary,
+2. `C:/APEX Platform/apex-power-ops-platform` is the active implementation surface,
+3. `/home/olares/code/apex` is the authoritative host mirror,
+4. the laptop is client-only and not the durable development anchor.
+
 ---
 
 ## 1. Directory Structure (Clean & Predictable)

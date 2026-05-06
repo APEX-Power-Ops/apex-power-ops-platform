@@ -5,6 +5,23 @@
 **Created:** December 5, 2025
 **Status:** Design reference for the unified repo lane; folder examples below are conceptual targets rather than the exact live tree.
 
+## Historical Note
+
+This document is historical design context, not the current Olares operating authority.
+
+For the active Olares workspace model, use these files first:
+
+1. `Infrastructure/Olares_Workspace_Authority_Framework.md`
+2. `apex-power-ops-platform/docs/architecture/OLARES-ONE-WORKSPACE-DESIGN-GOVERNANCE-AND-IMPLEMENTATION-PLAN-2026-05-06.md`
+3. `apex-power-ops-platform/plan/infrastructure-olares-full-implementation-roadmap-1.md`
+
+The folder examples below describe an earlier conceptual clean-root target and do not override the current authoritative model:
+
+1. `C:/APEX Platform` remains the publication boundary,
+2. `C:/APEX Platform/apex-power-ops-platform` remains the active implementation surface,
+3. `/home/olares/code/apex` remains the authoritative Olares host mirror,
+4. `/home/olares/src/apex-power-ops-platform` remains historical and observe-only.
+
 ---
 
 ## Design Principles
