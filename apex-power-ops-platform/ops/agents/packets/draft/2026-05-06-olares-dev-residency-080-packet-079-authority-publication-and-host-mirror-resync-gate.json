@@ -1,0 +1,37 @@
+{
+  "packet_id": "2026-05-06-olares-dev-residency-080",
+  "title": "Packet 079 Authority Publication And Host Mirror Resync Gate",
+  "objective": "Publish the Packet 079 cockpit state-sync authority through the parent-root boundary and restore `/home/olares/code/apex` to clean parity so the compact lane register is durable on the authoritative host mirror.",
+  "domain": "infrastructure-domain",
+  "active_role": "Platform Architect",
+  "dependencies": [
+    "ops/agents/packets/draft/2026-05-06-olares-dev-residency-079-pm-cockpit-frontier-state-sync-execution.json",
+    "ops/agents/handoffs/2026-05-06-olares-dev-residency-079-pm-cockpit-frontier-state-sync-execution-handoff.md"
+  ],
+  "dependency_note": "Packet 079 corrected the compact PM cockpit locally. This gate records publication to the GitHub-canonical parent-root boundary and restoration of the authoritative host mirror to clean parity.",
+  "decision_mode": "publication_gate",
+  "forbidden_scope": [
+    "package or lockfile mutation",
+    "installs",
+    "runtime or service mutation",
+    "AI-services expansion",
+    "Git hosting transition",
+    "remote rewrite",
+    "rollback or force/reset/clean",
+    "old-clone mutation",
+    "dormant-lane reopening"
+  ],
+  "artifact_published": false,
+  "host_mirror_resynced": false,
+  "status": "complete",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-06-olares-dev-residency-080-packet-079-authority-publication-and-host-mirror-resync-gate-handoff.md"
+  ],
+  "handoff_target": "Platform Architect",
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-06-olares-dev-residency-080-packet-079-authority-publication-and-host-mirror-resync-gate-handoff.md",
+  "implementation_ready_candidate": false,
+  "next_packet_candidate": "Execute Packet 080 as bounded publication and host-mirror resync only.",
+  "sql_permission": false,
+  "sql_permission_note": "This publication gate authorizes no source/test runtime mutation, no package or lockfile mutation, no installs, no runtime or service mutation, no AI-services expansion, no remote rewrite, no rollback or force/reset/clean, and no old-clone mutation.",
+  "validation_disposition": "pending-publication-and-host-resync"
+}
