@@ -44,6 +44,7 @@ Items requiring attention:
 5. keep GitHub canonical unless an explicit Gitea transition packet is approved
 6. open future Olares work only on concrete new operator, runtime, publication, or business friction rather than generic infrastructure aspiration
 7. keep developer-residency baseline truth and the client-only laptop posture explicit without treating Olares as an always-open infrastructure epic
+8. keep the compact PM cockpit surface aligned with current lane truth so later sessions do not have to reconstruct the active frontier from packet history alone
 
 Approved next-step rule:
 
@@ -228,6 +229,9 @@ Approved next-step rule:
 | TASK-037AK | Decide whether any immediate post-072 Olares governance slice is justified now that the host-workflow-hardening lane is dormant. Packet 073 completed as a decision-only surface and selected a bounded roadmap-trigger realignment because the older Phase 2 through Phase 4 roadmap rows still displayed generic blank open work even though the active authority now treats those items as maintained rerun surfaces or trigger-based guardrails rather than an always-open Olares backlog. Recorded in `ops/agents/packets/draft/2026-05-06-olares-dev-residency-073-post-072-roadmap-trigger-realignment-decision.json` and `ops/agents/handoffs/2026-05-06-olares-dev-residency-073-post-072-roadmap-trigger-realignment-decision-handoff.md`. | ✅ | 2026-05-06 |
 | TASK-037AL | Execute the bounded roadmap-trigger realignment selected by Packet 073. Packet 074 completed by updating the roadmap executive summary plus the remaining generic Phase 2 through Phase 4 task rows so they now read as maintained rerun surfaces, preserved limitation boundaries, or trigger-based governance rules instead of implying an always-open execution queue. Recorded in `ops/agents/packets/draft/2026-05-06-olares-dev-residency-074-roadmap-trigger-realignment-execution.json` and `ops/agents/handoffs/2026-05-06-olares-dev-residency-074-roadmap-trigger-realignment-execution-handoff.md`. | ✅ | 2026-05-06 |
 | TASK-037AM | Publish the Packet 073 and Packet 074 authority tranche through the parent-root boundary and restore `/home/olares/code/apex` to clean parity so the refreshed roadmap truth is durable on the authoritative host mirror. Packet 075 completed in commit `aebe4f95a9502dc30772f06bd6b977cd6d70071f` (`Realign Olares roadmap triggers`), pushed `origin/clean-main`, restored `/home/olares/code/apex` to clean parity at that commit, and preserved `/home/olares/src/apex-power-ops-platform` observe-only at `2836a2622309b4e146ca24f23b5bf87312c0c857` with status count `30`. Recorded in `ops/agents/packets/draft/2026-05-06-olares-dev-residency-075-packet-073-and-packet-074-authority-publication-and-host-mirror-resync-gate.json` and `ops/agents/handoffs/2026-05-06-olares-dev-residency-075-packet-073-and-packet-074-authority-publication-and-host-mirror-resync-gate-handoff.md`. | ✅ | 2026-05-06 |
+| TASK-037AN | Decide whether any immediate post-075 governance slice is justified now that the Olares lane is explicitly trigger-based and dormant. Packet 076 completed as a decision-only surface and selected a bounded PM operating cockpit plus authority-reference realignment because later sessions still had to reconstruct current lane truth across multiple surfaces and the roadmap still cited a non-existent top-authority file in active dependency and further-reading sections. Recorded in `ops/agents/packets/draft/2026-05-06-olares-dev-residency-076-post-075-pm-operating-cockpit-and-authority-reference-realignment-decision.json` and `ops/agents/handoffs/2026-05-06-olares-dev-residency-076-post-075-pm-operating-cockpit-and-authority-reference-realignment-decision-handoff.md`. | ✅ | 2026-05-06 |
+| TASK-037AO | Execute the bounded PM operating cockpit and authority-reference realignment selected by Packet 076. Packet 077 completed by adding `docs/architecture/APEX-PM-LANE-OPERATING-COCKPIT-2026-05-06.md`, wiring it into the active Olares authority surface, correcting the roadmap references that still pointed at the missing top-authority file, and recording the slice in status plus routing surfaces without reopening any dormant Olares execution lane. Recorded in `ops/agents/packets/draft/2026-05-06-olares-dev-residency-077-pm-operating-cockpit-and-authority-reference-realignment-execution.json` and `ops/agents/handoffs/2026-05-06-olares-dev-residency-077-pm-operating-cockpit-and-authority-reference-realignment-execution-handoff.md`. | ✅ | 2026-05-06 |
+| TASK-037AP | Publish the Packet 076 and Packet 077 authority tranche through the parent-root boundary and restore `/home/olares/code/apex` to clean parity so the PM operating cockpit and authority-reference realignment are durable on the authoritative host mirror. |  |  |
 
 ## 3. Alternatives
 
@@ -239,9 +243,10 @@ Approved next-step rule:
 
 ## 4. Dependencies
 
-- **DEP-001**: `C:/APEX Platform/Infrastructure/APEX_Platform_Operating_Model_and_Governance.md`
-- **DEP-002**: `C:/APEX Platform/Infrastructure/Olares_Workspace_Authority_Framework.md`
+- **DEP-001**: `C:/APEX Platform/Infrastructure/Olares_Workspace_Authority_Framework.md`
+- **DEP-002**: `C:/APEX Platform/apex-power-ops-platform/docs/architecture/OLARES-ONE-WORKSPACE-DESIGN-GOVERNANCE-AND-IMPLEMENTATION-PLAN-2026-05-06.md`
 - **DEP-003**: `C:/APEX Platform/Infrastructure/Olares_MVP_Execution_Roadmap.md`
+- **DEP-003A**: `C:/APEX Platform/apex-power-ops-platform/docs/architecture/APEX-PM-LANE-OPERATING-COCKPIT-2026-05-06.md`
 - **DEP-004**: `C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-01-olares-runtime-surface-restoration-handoff.md`
 - **DEP-004A**: `C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-01-olares-private-stack-browser-terminal-bring-up-handoff.md`
 - **DEP-005**: `C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-25-olares-workstation-001-publication-follow-through-scope-handoff.md`
@@ -741,8 +746,9 @@ Approved next-step rule:
 
 ## 8. Related Specifications / Further Reading
 
-- `C:/APEX Platform/Infrastructure/APEX_Platform_Operating_Model_and_Governance.md`
 - `C:/APEX Platform/Infrastructure/Olares_Workspace_Authority_Framework.md`
+- `C:/APEX Platform/apex-power-ops-platform/docs/architecture/OLARES-ONE-WORKSPACE-DESIGN-GOVERNANCE-AND-IMPLEMENTATION-PLAN-2026-05-06.md`
+- `C:/APEX Platform/apex-power-ops-platform/docs/architecture/APEX-PM-LANE-OPERATING-COCKPIT-2026-05-06.md`
 - `C:/APEX Platform/Infrastructure/Olares_MVP_Execution_Roadmap.md`
 - `docs/architecture/WORKSPACE-CURRENT-STATUS-2026-04-21.md`
 - `docs/architecture/OLARES-WORKSTATION-BRING-UP-CHECKLIST-2026-04-23.md`

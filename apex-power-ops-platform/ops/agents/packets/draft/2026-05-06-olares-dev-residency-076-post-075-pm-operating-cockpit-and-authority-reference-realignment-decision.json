@@ -1,0 +1,43 @@
+{
+  "packet_id": "2026-05-06-olares-dev-residency-076",
+  "title": "Post-075 PM Operating Cockpit And Authority Reference Realignment Decision",
+  "objective": "Decide whether any immediate post-075 Olares governance slice is justified now that the lane is trigger-based and dormant, or whether the current authority stack can be left as-is.",
+  "domain": "infrastructure-domain",
+  "active_role": "Platform Architect",
+  "dependencies": [
+    "ops/agents/packets/draft/2026-05-06-olares-dev-residency-075-packet-073-and-packet-074-authority-publication-and-host-mirror-resync-gate.json",
+    "ops/agents/handoffs/2026-05-06-olares-dev-residency-075-packet-073-and-packet-074-authority-publication-and-host-mirror-resync-gate-handoff.md",
+    "docs/architecture/OLARES-ONE-WORKSPACE-DESIGN-GOVERNANCE-AND-IMPLEMENTATION-PLAN-2026-05-06.md",
+    "plan/infrastructure-olares-full-implementation-roadmap-1.md",
+    "../../../../PROJECT_STATUS.md"
+  ],
+  "dependency_note": "Packet 075 closed the roadmap-trigger realignment and returned Olares to explicit trigger-based dormancy. The remaining question is whether the current authority surfaces let later sessions choose the right project lane quickly, or whether lane truth still has to be reconstructed across too many files while the roadmap still cites a missing top-authority file.",
+  "decision_mode": "decision_only",
+  "decision_selected": "execute_bounded_pm_operating_cockpit_and_authority_reference_realignment",
+  "verdict_summary": "A bounded governance and discoverability slice is justified. The current Olares lane is correctly dormant, but whole-project lane truth still requires reconstructing status across several surfaces, and the Olares roadmap still cites a non-existent top-authority file in active dependency and further-reading sections. A compact PM operating cockpit plus reference realignment will reduce session-start friction without reopening any dormant runtime lane.",
+  "evidence_basis": {
+    "olares_lane_state": "trigger_based_and_dormant_after_packet_075",
+    "compact_lane_register_on_disk": false,
+    "roadmap_dependency_reference_missing": true,
+    "authority_doc_allows_discoverability_follow_on": true,
+    "controlling_friction": "later sessions still reconstruct current lane truth manually across status, authority, roadmap, and packet surfaces"
+  },
+  "rejected_as_next_active_lane": [
+    "Reopening the dormant Olares host-workflow lane without new operator friction.",
+    "Widening the AI boundary or runtime surface by assumption.",
+    "Leaving lane-frontier discoverability fragmented even though a smaller governance repair is available."
+  ],
+  "execution_lane_opened": false,
+  "artifact_published": false,
+  "status": "complete",
+  "handoff_target": "Platform Architect",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-06-olares-dev-residency-076-post-075-pm-operating-cockpit-and-authority-reference-realignment-decision-handoff.md"
+  ],
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-06-olares-dev-residency-076-post-075-pm-operating-cockpit-and-authority-reference-realignment-decision-handoff.md",
+  "implementation_ready_candidate": false,
+  "next_packet_candidate": "Olares Dev Residency 077 - PM Operating Cockpit And Authority Reference Realignment Execution",
+  "sql_permission": false,
+  "sql_permission_note": "This decision packet authorizes no source/test runtime mutation, no package or lockfile mutation, no installs, no runtime or service mutation, no AI-services expansion, no remote rewrite, no rollback or force/reset/clean, and no old-clone mutation.",
+  "validation_disposition": "local-decision-recorded"
+}
