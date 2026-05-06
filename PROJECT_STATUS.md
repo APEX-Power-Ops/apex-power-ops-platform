@@ -54,8 +54,8 @@ handoffs.
 13. The host proof exposed and closed two real Bash-surface gaps in the first-slice operator kit: envless host mirrors are now tolerated, and the Bash wrapper now supports adopted-mode operation against an already-running trio instead of assuming it must always start new listeners.
 14. That publication and reconciliation gate is now also closed: commit `192f0ae1ef59d4d3f66479189a1dc06d627096be` (`Publish Olares AI workflow first-slice authority`) now governs the first-slice authority set on `origin/clean-main`, and `/home/olares/code/apex` has been restored to clean parity at the same commit.
 15. The next post-publication decision is also closed: no `ai_tasks` bridge or wider executor-admission lane is opened yet. The minimal MCP trio plus `apex-jobs` and packet-handoff governance remains the current operational model until a concrete insufficiency is observed.
-16. Those Packet 039 closeout and Packet 040 decision surfaces are now present locally and need their own bounded authority-publication and host-mirror reconciliation gate before any later cadence-planning packet opens.
-17. The next truthful Olares follow-on is therefore `Olares Dev Residency 041 - Packet 039 And Packet 040 Authority Publication And Host Mirror Reconciliation Gate`, not immediate queue-bridge expansion or broader AI-service rollout.
+16. That follow-on publication and reconciliation gate is now also closed: commit `b037df57a823eb4898b32897ae3e1534a9108ee5` (`Publish Olares AI workflow packet 039 and 040 authority`) now governs the Packet 039 closeout and Packet 040 decision surfaces on `origin/clean-main`, and `/home/olares/code/apex` has been restored to clean parity at the same commit.
+17. The Olares-first lane is now parked at a stable published boundary. No additional packet is required until the current minimal MCP trio plus `apex-jobs` model shows a concrete insufficiency or a new bounded authority objective is selected.
 
 ```mermaid
 pie title Project Completion Status
