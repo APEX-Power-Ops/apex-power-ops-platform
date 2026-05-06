@@ -1,0 +1,37 @@
+{
+  "packet_id": "2026-05-05-olares-dev-residency-018",
+  "title": "Post-017 Host Browser Runtime Readiness Decision",
+  "objective": "Decide whether the published Operations Visibility PM review authority chain plus current Olares host capability is sufficient to open a bounded host-side browser-runtime static-surface smoke packet.",
+  "domain": "delivery-domain",
+  "active_role": "Operations Visibility Decision Operator",
+  "dependencies": [
+    "ops/agents/packets/draft/2026-05-05-olares-dev-residency-017-packet-012-through-packet-016-authority-publication-and-host-mirror-resync-gate.json",
+    "ops/agents/handoffs/2026-05-05-olares-dev-residency-017-packet-012-through-packet-016-authority-publication-and-host-mirror-resync-gate-handoff.md",
+    "apps/operations-web/tests/browser-shell.static-surfaces.smoke.spec.ts",
+    "plan/infrastructure-olares-full-implementation-roadmap-1.md"
+  ],
+  "execution_mode": "decision_only",
+  "decision_selected": "keep_host_browser_runtime_slice_closed_and_route_to_separate_toolchain_reopening_decision",
+  "decision_evidence": {
+    "host_playwright_browser_cache": "absent",
+    "host_playwright_package_resolution": "missing",
+    "browser_smoke_surface": "apps/operations-web/tests/browser-shell.static-surfaces.smoke.spec.ts",
+    "published_authority_head": "28db1524a6fbf1b4de2c7da5e32898f9a85b15e3"
+  },
+  "decision_rationale": [
+    "After Packet 017 publication and resync, `/home/olares/.cache/ms-playwright` remains absent on Olares.",
+    "`@playwright/test` resolves as `missing` on the Olares host after the Packet 017 resync, so the host cannot truthfully open the browser static-surface smoke without separate package or toolchain reopening.",
+    "Opening `apps/operations-web/tests/browser-shell.static-surfaces.smoke.spec.ts` from the host would therefore violate the current no-install boundary rather than extend the proven Olares-hosted validation lane.",
+    "The correct next move is a separate decision on whether to reopen a bounded browser-runtime toolchain lane at all, not silent broadening into browser provisioning."
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-05-olares-dev-residency-018-post-017-host-browser-runtime-readiness-decision-handoff.md"
+  ],
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-05-olares-dev-residency-018-post-017-host-browser-runtime-readiness-decision-handoff.md",
+  "validation_disposition": "complete-decision-only",
+  "next_packet_candidate": "Olares Dev Residency 019 - Host Browser Runtime Toolchain Reopening Decision",
+  "closure_note": "Executed 2026-05-05 as a post-publication decision-only packet. Host-side browser-runtime execution remains closed because the Olares host lacks both Playwright browser cache and `@playwright/test` package resolution after Packet 017 resync.",
+  "next_action": "Use Packet 019 to decide explicitly whether to reopen a separate host browser-runtime toolchain lane or keep host browser-runtime work closed."
+}

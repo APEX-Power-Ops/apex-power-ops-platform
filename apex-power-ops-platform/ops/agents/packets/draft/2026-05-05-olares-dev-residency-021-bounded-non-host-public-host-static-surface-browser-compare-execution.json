@@ -1,0 +1,91 @@
+{
+  "packet_id": "2026-05-05-olares-dev-residency-021",
+  "title": "Bounded Non-Host Public-Host Static Surface Browser Compare Execution",
+  "objective": "Execute a bounded non-host browser compare slice against the public Operations host by checking the re-homed static surfaces for expected render-level titles and headings only.",
+  "domain": "delivery-domain",
+  "active_role": "Operations Visibility Browser Validation Operator",
+  "dependencies": [
+    "ops/agents/packets/draft/2026-05-05-olares-dev-residency-020-non-host-browser-compare-decision-surface.json",
+    "ops/agents/handoffs/2026-05-05-olares-dev-residency-020-non-host-browser-compare-decision-surface-handoff.md",
+    "apps/operations-web/tests/browser-shell.static-surfaces.smoke.spec.ts",
+    "plan/infrastructure-olares-full-implementation-roadmap-1.md"
+  ],
+  "execution_mode": "bounded_non_host_browser_execution",
+  "required_inputs": [
+    "A non-host browser surface",
+    "Public Operations host `https://operations.apexpowerops.com`",
+    "Expected title or heading set from `apps/operations-web/tests/browser-shell.static-surfaces.smoke.spec.ts`"
+  ],
+  "execution_scope": [
+    "Check the public-host render for `/integration-dashboard/index.html`, `/lead-ops/index.html`, `/pm-review/index.html`, `/pm-review/approval-surface.html`, `/pm-review/schedule.html`, `/pm-review/tracer.html`, and `/pm-review/variance.html`.",
+    "Record page title and primary heading evidence only.",
+    "Explicitly exclude live-data success assertions when routes still attempt localhost schedule APIs."
+  ],
+  "explicit_no_go_items": [
+    "host browser-runtime use",
+    "live-data browser assertions",
+    "source edits",
+    "package or lockfile mutation",
+    "runtime or service mutation",
+    "remote rewrite",
+    "rollback, force, reset, or clean",
+    "old-clone mutation or promotion"
+  ],
+  "success_criteria": [
+    "The public-host surfaces load in a real non-host browser and render the expected titles or headings.",
+    "The execution record stays explicit that this is a render-level static-surface compare, not a live-data proof.",
+    "The Olares host remains the durable development anchor and no host browser-runtime lane is reopened."
+  ],
+  "handoff_target": "Platform Architect",
+  "execution_evidence": {
+    "browser_surface": "non-host integrated browser",
+    "public_host": "https://operations.apexpowerops.com",
+    "verified_routes": [
+      {
+        "path": "/integration-dashboard/index.html",
+        "title": "APEX Cross-Surface Integration Test Dashboard",
+        "heading": "APEX Cross-Surface Integration Test Dashboard"
+      },
+      {
+        "path": "/lead-ops/index.html",
+        "title": "APEX Lead Surface — Prototype",
+        "heading": null
+      },
+      {
+        "path": "/pm-review/index.html",
+        "title": "APEX PM Drivers Review",
+        "heading": "Critical-path drivers"
+      },
+      {
+        "path": "/pm-review/approval-surface.html",
+        "title": "APEX PM Approval Surface — Prototype",
+        "heading": "Approval Queue"
+      },
+      {
+        "path": "/pm-review/schedule.html",
+        "title": "APEX PM Schedule Review",
+        "heading": "Project schedule"
+      },
+      {
+        "path": "/pm-review/tracer.html",
+        "title": "APEX PM Upstream Tracer Review",
+        "heading": "Upstream constraint tracer"
+      },
+      {
+        "path": "/pm-review/variance.html",
+        "title": "APEX PM Variance Review",
+        "heading": "Schedule variance — current vs baseline"
+      }
+    ],
+    "live_data_boundary": "PM routes still report localhost API failures, so this remains a render-level compare only"
+  },
+  "status": "complete",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-05-olares-dev-residency-021-bounded-non-host-public-host-static-surface-browser-compare-execution-handoff.md"
+  ],
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-05-olares-dev-residency-021-bounded-non-host-public-host-static-surface-browser-compare-execution-handoff.md",
+  "validation_disposition": "complete-pass-render-level-only",
+  "next_packet_candidate": "Olares Dev Residency 022 - Packet 018 Through Packet 021 Authority Publication And Host Mirror Resync Gate",
+  "closure_note": "Executed 2026-05-05 as a bounded non-host public-host static-surface browser compare. All seven target routes rendered their expected titles, the PM routes rendered the expected primary headings, and the execution record remained explicit that localhost API failures keep this slice at render-level only rather than live-data browser proof.",
+  "next_action": "Execute Packet 022 to publish the local Packet 018 through Packet 021 authority set and restore `/home/olares/code/apex` parity before any later browser-compare decision depends on it."
+}

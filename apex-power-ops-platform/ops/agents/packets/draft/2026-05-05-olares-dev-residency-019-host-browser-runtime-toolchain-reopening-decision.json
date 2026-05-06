@@ -1,0 +1,55 @@
+{
+  "packet_id": "2026-05-05-olares-dev-residency-019",
+  "title": "Host Browser Runtime Toolchain Reopening Decision",
+  "objective": "Decide whether to reopen a separate toolchain or materialization lane for host browser-runtime capability, or to keep host browser-runtime work closed and route any later browser compare to a different decision surface.",
+  "domain": "delivery-domain",
+  "active_role": "Operations Visibility Decision Operator",
+  "dependencies": [
+    "ops/agents/packets/draft/2026-05-05-olares-dev-residency-018-post-017-host-browser-runtime-readiness-decision.json",
+    "ops/agents/handoffs/2026-05-05-olares-dev-residency-018-post-017-host-browser-runtime-readiness-decision-handoff.md",
+    "apps/operations-web/tests/browser-shell.static-surfaces.smoke.spec.ts",
+    "plan/infrastructure-olares-full-implementation-roadmap-1.md"
+  ],
+  "execution_mode": "decision_only",
+  "required_inputs": [
+    "Packet 018 closure authority",
+    "Current Olares host fact that `/home/olares/.cache/ms-playwright` is absent",
+    "Current Olares host fact that `@playwright/test` resolves as missing",
+    "The browser static-surface smoke target in `apps/operations-web/tests/browser-shell.static-surfaces.smoke.spec.ts`"
+  ],
+  "decision_scope": [
+    "Decide whether to reopen a bounded separate toolchain or materialization lane for Playwright package resolution and browser-cache availability on Olares.",
+    "Alternatively decide to keep host browser-runtime work closed and route any later browser comparison to a separate workstation or optional-client decision surface.",
+    "Do not install packages, materialize browsers, or run browser-runtime smoke inside this packet."
+  ],
+  "explicit_no_go_items": [
+    "source edits",
+    "package or lockfile mutation",
+    "runtime or service mutation",
+    "browser-runtime installation or provisioning",
+    "remote rewrite",
+    "rollback, force, reset, or clean",
+    "old-clone mutation or promotion"
+  ],
+  "handoff_target": "Platform Architect",
+  "decision_selected": "do_not_reopen_host_browser_runtime_toolchain_lane_route_to_non_host_browser_compare_decision",
+  "decision_rationale": [
+    "Packet 018 already established that the Olares host currently lacks both Playwright browser cache and `@playwright/test` package resolution.",
+    "Reopening a host browser-runtime toolchain or materialization lane would be a larger move than the validated Operations Visibility PM review tranche requires and would silently expand the no-install boundary.",
+    "The smallest truthful next step is to keep host browser-runtime work closed and decide separately whether any later browser comparison should occur from a non-host or optional-client surface instead."
+  ],
+  "decision_evidence": {
+    "host_playwright_browser_cache": "absent",
+    "host_playwright_package_resolution": "missing",
+    "host_authority_head": "28db1524a6fbf1b4de2c7da5e32898f9a85b15e3"
+  },
+  "status": "complete",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-05-olares-dev-residency-019-host-browser-runtime-toolchain-reopening-decision-handoff.md"
+  ],
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-05-olares-dev-residency-019-host-browser-runtime-toolchain-reopening-decision-handoff.md",
+  "validation_disposition": "complete-decision-only",
+  "next_packet_candidate": "Olares Dev Residency 020 - Non-Host Browser Compare Decision Surface",
+  "closure_note": "Executed 2026-05-05 as a decision-only packet. Host browser-runtime toolchain reopening remains closed because it would widen the current no-install Olares lane beyond the smallest truthful next move.",
+  "next_action": "Use Packet 020 to decide whether any later browser comparison should run from a non-host or optional-client surface rather than from the Olares host."
+}
