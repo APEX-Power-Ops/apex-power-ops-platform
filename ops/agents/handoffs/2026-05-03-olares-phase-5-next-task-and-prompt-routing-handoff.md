@@ -7,11 +7,11 @@ Scope: update the next task prompts after Phase 5 Step 1, Step 2, Step 3, Packet
 Update 2026-05-06:
 
 1. Packets 027 through 030 plus the Packet 030 mutation-seam scaffold remain published on `origin/clean-main` in commit `fe0cb168e0a751b8364cfe72ad74283088cc824e` (`Publish Olares mutation-seam ingress scaffold`).
-2. Packet 031 closed the publish-and-probe slice and proved that `https://mutation-seam.apexpowerops.com` is still absent and blocked on missing Render access.
-3. Packet 032 is now complete as the bounded Vercel-side pre-stage slice: the real browser-host project is `apex-operations-web`, `MUTATION_SEAM_BASE_URL` is staged there across production, preview, and development, and a server-side preview redeploy succeeded.
-4. Preview remains `401` protected and local CLI deploys from `C:/APEX Platform` still fail because Vercel uploads only `.vercelignore` before reporting the configured rootDirectory as missing, so neither path displaces the public proof gate.
-5. The remaining blocker is still the missing Render-authenticated path to create or configure the public mutation-seam host.
-6. The repo-owned next packet candidate is now `Olares Dev Residency 033 - Credentialed Public Mutation-Seam Deployment And Public PM Live-Data Proof`.
+2. Packet 031 remains the truthful record that the original public seam host was absent before browser-authenticated Render access was available.
+3. Packet 032 remains complete as the bounded Vercel-side pre-stage slice: the real browser-host project is `apex-operations-web`, `MUTATION_SEAM_BASE_URL` is staged there, and the preview redeploy path was proven independently of local packaging.
+4. Packet 033 is now complete as the credentialed hosted follow-through: the Render mutation-seam service is healthy at `https://apex-platform-mutation-seam.onrender.com`, the hosted Supabase runtime was repaired so the `schedule` and `seam` relations required by the live service exist, `operations.apexpowerops.com` is aliased to production deployment `dpl_CdxiFmzZ9q9ASirexMg5GeqTZ3Qn`, and the public same-origin PM routes plus the governed promoted-host proof now pass.
+5. The remaining residue is narrower than the functional lane: `mutation-seam.apexpowerops.com` is attached in Render but still waiting on the external GoDaddy CNAME `mutation-seam -> apex-platform-mutation-seam.onrender.com`, so production is temporarily pointed at the live onrender host instead of the intended custom domain.
+6. The repo-owned next packet candidate is now `Olares Dev Residency 034 - Mutation-Seam Custom-Domain DNS Closure And Operations-Web Env Realignment`.
 
 ## Authority
 
