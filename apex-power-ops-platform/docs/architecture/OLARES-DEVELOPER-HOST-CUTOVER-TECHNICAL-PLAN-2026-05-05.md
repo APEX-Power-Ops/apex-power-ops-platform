@@ -10,6 +10,8 @@ This document translates the program decision into a technical cutover shape.
 
 The problem is no longer generic Olares expansion.
 
+The governing direction is now explicit: all Apex Ops related work top to bottom should migrate to Olares-first governance and execution so workspace governance, protocol, and operator method do not fragment across host and field laptop surfaces.
+
 The problem is split development residency:
 
 1. the laptop currently carries too much durable development responsibility
@@ -21,10 +23,12 @@ The problem is split development residency:
 ### Authoritative Surfaces
 
 1. GitHub remains canonical origin
-2. `C:/APEX Platform` remains the authoritative publication boundary
+2. `C:/APEX Platform` remains the current transitional authoritative publication boundary
 3. `/home/olares/code/apex` is the authoritative host mirror of that parent-root boundary
 4. `/home/olares/code/apex/apex-power-ops-platform` is the authoritative host implementation surface
 5. `/home/olares/src/apex-power-ops-platform` remains historical evidence only and is never promoted back to canonical status
+
+During the transition, GitHub and the current parent-root boundary stay canonical, but the operating target is for all durable Apex Ops work patterns to originate from Olares rather than the laptop.
 
 ### Role Split
 
@@ -44,6 +48,8 @@ Laptop responsibilities:
 4. emergency fallback terminal
 
 The laptop is not the durable runtime anchor.
+
+No new lane should adopt a laptop-first durable workflow when an Olares-resident equivalent can be packetized and proven instead.
 
 ## Host Filesystem Model
 

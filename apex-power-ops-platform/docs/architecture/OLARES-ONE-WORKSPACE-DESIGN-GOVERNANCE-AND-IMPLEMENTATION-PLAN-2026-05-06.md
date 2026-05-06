@@ -29,12 +29,16 @@ Use that cockpit for rapid lane selection and validation routing. It does not ov
 
 The Olares One is the durable development anchor for APEX.
 
+That anchor is now also the governing migration direction for the whole program.
+
+All Apex Ops work top to bottom should converge on Olares-resident governance, execution, validation, toolchains, and operator context so the field laptop no longer carries durable project risk or accumulates divergent workspace practice.
+
 That does not mean Olares is the canonical source of truth.
 
-The current authoritative split is:
+The current transitional authoritative split is:
 
 1. GitHub remains the canonical origin.
-2. `C:/APEX Platform` remains the authoritative publication boundary.
+2. `C:/APEX Platform` remains the current authoritative publication boundary during migration.
 3. `/home/olares/code/apex` is the authoritative Olares host mirror of that boundary.
 4. `/home/olares/code/apex/apex-power-ops-platform` is the authoritative host implementation surface.
 5. `/home/olares/src/apex-power-ops-platform` is historical only and must remain observe-only.
@@ -91,6 +95,8 @@ Use this order when documents conflict:
 1. If the minimal MCP trio is not running, status surfaces must report that truth instead of implying readiness.
 2. If deferred Operations Visibility views remain empty, the correct result is hold or dormancy, not synthetic consumer work.
 3. If a host capability is absent and not required by current business truth, keep the lane closed instead of solving speculative gaps.
+4. Do not normalize laptop-only or split-residency exceptions into the default Apex Ops operating model; every active lane should converge toward Olares-resident execution.
+5. Treat the current Windows parent-root publication boundary as transitional, not as the desired permanent home for durable project practice.
 
 ### PM cockpit companion
 
@@ -102,6 +108,8 @@ Use this order when documents conflict:
 ### Host environment
 
 The optimal current workspace environment is an Olares-hosted, GitHub-canonical, parent-root-mirrored development model.
+
+The governing target is a whole-project Olares-first operating model with GitHub still canonical while the remaining split-residency boundaries are retired one by one.
 
 Authoritative host paths:
 
@@ -126,7 +134,7 @@ The laptop should provide:
 1. private-mesh SSH access,
 2. VS Code Remote-SSH,
 3. browser-delivered Olares desktop or browser-terminal fallback,
-4. review, approval, and emergency intervention only.
+4. client access, review, approval, and emergency intervention only.
 
 The laptop should not be the sole holder of:
 
