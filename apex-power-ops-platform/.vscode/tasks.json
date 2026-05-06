@@ -294,6 +294,18 @@
       "group": "test"
     },
     {
+      "label": "Olares hold-boundary cadence check",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-Command",
+        "$repoRoot = (Resolve-Path (Join-Path '${workspaceFolder}' '..')).Path; $script = Join-Path $repoRoot 'tools/ai/run-olares-hold-boundary-check.ps1'; if (-not (Test-Path $script)) { throw 'tools/ai/run-olares-hold-boundary-check.ps1 is not present under the parent repo root.' }; Set-Location $repoRoot; & $script"
+      ],
+      "problemMatcher": [],
+      "group": "test"
+    },
+    {
       "label": "Platform subtree git status",
       "type": "shell",
       "command": "pwsh",
