@@ -21,8 +21,15 @@
     "old-clone mutation",
     "dormant-lane reopening"
   ],
-  "artifact_published": false,
-  "host_mirror_resynced": false,
+  "artifact_published": true,
+  "host_mirror_resynced": true,
+  "publication_commit": "ac7b62176e8a7dcec23f8c37c88ff49034732655",
+  "host_mirror_state": {
+    "head": "ac7b62176e8a7dcec23f8c37c88ff49034732655",
+    "status_count": 0,
+    "old_clone_head": "2836a2622309b4e146ca24f23b5bf87312c0c857",
+    "old_clone_status_count": 30
+  },
   "status": "complete",
   "output_artifacts": [
     "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-06-olares-dev-residency-080-packet-079-authority-publication-and-host-mirror-resync-gate-handoff.md"
@@ -30,8 +37,8 @@
   "handoff_target": "Platform Architect",
   "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-06-olares-dev-residency-080-packet-079-authority-publication-and-host-mirror-resync-gate-handoff.md",
   "implementation_ready_candidate": false,
-  "next_packet_candidate": "Execute Packet 080 as bounded publication and host-mirror resync only.",
+  "next_packet_candidate": "No automatic successor; open a new Olares packet only when a concrete new Olares need or friction appears.",
   "sql_permission": false,
   "sql_permission_note": "This publication gate authorizes no source/test runtime mutation, no package or lockfile mutation, no installs, no runtime or service mutation, no AI-services expansion, no remote rewrite, no rollback or force/reset/clean, and no old-clone mutation.",
-  "validation_disposition": "pending-publication-and-host-resync"
+  "validation_disposition": "published-and-host-resynced"
 }

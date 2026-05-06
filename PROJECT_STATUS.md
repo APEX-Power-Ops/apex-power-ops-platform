@@ -128,6 +128,8 @@ handoffs.
 87. Packet 078 is now complete as the publication and host-mirror resync closeout for the PM operating cockpit tranche.
 88. Packet 078 published the cockpit tranche in commit `0168bb955daa5010e9e222fbccbab3fa4f5e9aad` (`Add APEX PM lane cockpit`), pushed `origin/clean-main`, restored `/home/olares/code/apex` to clean parity at the same commit, and preserved `/home/olares/src/apex-power-ops-platform` observe-only at `2836a2622309b4e146ca24f23b5bf87312c0c857` with status count `30`.
 89. Packet 079 is now complete as the smallest truthful post-078 correction slice. It records that the new compact PM cockpit briefly lagged the latest published Olares frontier by one tranche, so the Olares developer-residency row was synchronized to the Packet 078 closeout state instead of remaining implicitly parked at the earlier Packet 075 wording.
+90. Packet 080 is now complete as the publication and host-mirror resync closeout for that cockpit state-sync correction.
+91. Packet 080 published the correction tranche in commit `ac7b62176e8a7dcec23f8c37c88ff49034732655` (`Sync APEX PM cockpit frontier`), pushed `origin/clean-main`, restored `/home/olares/code/apex` to clean parity at the same commit, and preserved `/home/olares/src/apex-power-ops-platform` observe-only at `2836a2622309b4e146ca24f23b5bf87312c0c857` with status count `30`.
 
 ```mermaid
 pie title Project Completion Status
