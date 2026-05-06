@@ -1,0 +1,59 @@
+{
+  "packet_id": "2026-05-06-olares-dev-residency-052",
+  "title": "Operations Visibility Apparatus By Category Runtime Consumption Execution",
+  "objective": "Land the next adjacent grouped Operations Visibility runtime-consumption slice by exposing a read-only `v_apparatus_by_category` seam and mounting the fourth governed browser consumer in `apps/operations-web`.",
+  "domain": "delivery-domain",
+  "active_role": "Platform Architect",
+  "dependencies": [
+    "ops/agents/packets/draft/2026-05-06-olares-dev-residency-051-operations-visibility-project-apparatus-summary-runtime-consumption-execution.json",
+    "apps/control-plane-api/services/ops/router.py",
+    "apps/control-plane-api/tests/test_ops_apparatus_by_category.py",
+    "apps/operations-web/app/page.tsx",
+    "C:/APEX Platform/Supabase/schema/09_schema_additions.sql"
+  ],
+  "dependency_note": "Packet 051 closed the third live consumer and left `v_apparatus_by_category` plus `v_blockers_summary` as the remaining populated adjacent views. The next truthful move was the smaller grouped numeric breakdown before blocker-note aggregation.",
+  "execution_mode": "bounded_runtime_consumption_execution",
+  "execution_steps": [
+    "Confirm `public.v_apparatus_by_category` returns live rows in the current dataset.",
+    "Correct the live sample query to match the actual view shape if a local column-name mismatch is exposed during inspection.",
+    "Add a read-only `GET /api/v1/ops/apparatus-by-category` seam against `public.v_apparatus_by_category` in `apps/control-plane-api`.",
+    "Mount the fourth governed browser consumer in `apps/operations-web` and validate it with focused pytest plus the app-local TypeScript compiler."
+  ],
+  "constraints": [
+    "Do not reopen direct browser-side Supabase admission.",
+    "Prefer the grouped numeric category breakdown before the blocker-note aggregate view.",
+    "Keep the slice bounded to the apparatus-by-category consumer path and its direct authority surfaces."
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "execution_outcome": "fourth_runtime_consumer_landed_and_validated",
+  "execution_evidence": {
+    "adjacent_view_selection": {
+      "v_apparatus_by_category_rows": 12,
+      "selection_reason": "Apparatus-by-category had live rows and a smaller grouped numeric shape than the remaining blocker-note aggregate view."
+    },
+    "shape_correction": "The view exposes `percent_complete`; the first sample query used `completion_percent` and was corrected before implementation.",
+    "route_added": "GET /api/v1/ops/apparatus-by-category",
+    "route_source": "apps/control-plane-api/services/ops/router.py",
+    "focused_backend_test_file": "apps/control-plane-api/tests/test_ops_apparatus_by_category.py",
+    "focused_backend_test_result": "6/6 passed",
+    "browser_helper": "apps/operations-web/lib/apparatus-by-category.ts",
+    "browser_component": "apps/operations-web/app/apparatus-by-category-explorer.tsx",
+    "browser_mount": "apps/operations-web/app/page.tsx",
+    "frontend_validation": "app-local TypeScript compile passed via apps/operations-web/node_modules/.bin/tsc.cmd",
+    "diagnostics_status": "No editor errors on touched backend and frontend files"
+  },
+  "execution_rationale": [
+    "The next bounded move after Packet 051 was the smaller grouped category seam, not an immediate jump to blocker-note aggregation.",
+    "The first live query exposed a local shape mismatch, and correcting that query before implementation kept the consumer slice grounded in the actual database contract.",
+    "The implementation extends the same governed read-only browser pattern established in Packets 048, 050, and 051 without widening authority."
+  ],
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-06-olares-dev-residency-052-operations-visibility-apparatus-by-category-runtime-consumption-execution-handoff.md"
+  ],
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-06-olares-dev-residency-052-operations-visibility-apparatus-by-category-runtime-consumption-execution-handoff.md",
+  "next_packet_candidate": "Olares Dev Residency 053 - Operations Visibility Blockers Summary Runtime Consumption Execution",
+  "validation_disposition": "implemented_and_validated",
+  "closure_note": "Executed 2026-05-06 as the direct adjacent-consumer follow-on after Packet 051. Packet 052 selected `v_apparatus_by_category` as the next truthful grouped numeric seam, corrected an initial local query-shape mismatch, landed the read-only backend route plus focused tests, mounted the fourth governed browser consumer, and validated the slice with pytest plus the app-local TypeScript compiler.",
+  "next_action": "Select the remaining adjacent populated Operations Visibility consumer slice after apparatus-by-category."
+}
