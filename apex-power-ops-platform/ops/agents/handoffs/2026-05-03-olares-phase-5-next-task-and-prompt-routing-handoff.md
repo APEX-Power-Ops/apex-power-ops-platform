@@ -120,7 +120,9 @@ Update 2026-05-06:
 112. Packet 083 is governance-only. It does not change GitHub canonical status, retire the current publication boundary by implication, widen runtime or AI-service scope, or authorize generic product execution by assertion.
 113. Packet 084 is now complete as the publication/resync gate for Packet 083.
 114. Packet 084 published the alignment tranche in commit `52e2de103ed51c6a944681bf47ddc4f95a1c8ed2` (`Align Olares migration governance`), pushed `origin/clean-main`, restored `/home/olares/code/apex` to clean parity at the same commit, and preserved `/home/olares/src/apex-power-ops-platform` observe-only at `2836a2622309b4e146ca24f23b5bf87312c0c857` with status count `30`.
-115. No automatic successor is open from this slice. The next Olares packet must name a concrete migration dependency, publication-boundary retirement step, or other real split-residency friction.
+115. Packet 085 is now complete as that next concrete migration-dependency slice. It inventories the remaining dependencies that still keep `C:/APEX Platform` active as the transitional publication boundary.
+116. The inventory records four current dependency classes: Windows-root publication control, Windows-first operator publication flow, parent-root authority surfaces outside the platform subtree, and active lane README command examples that still normalize Windows-local execution.
+117. The next truthful move is publication and host-mirror resync for Packet 085, then selection of the first retirement target from that inventory, starting with the host-native operator publication workflow.
 
 
 
