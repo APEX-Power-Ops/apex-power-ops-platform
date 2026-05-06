@@ -87,7 +87,7 @@ Acceptance criteria:
 
 1. daily development can continue while the laptop is offline or away from the desk
 2. the laptop is not the only holder of active repo state, secrets, or long-running processes
-3. access from the laptop works through approved client paths such as private-mesh SSH, VS Code Remote-SSH, or browser-terminal fallback
+3. access from the laptop works through approved client paths such as private-mesh SSH, VS Code Remote-SSH, the browser-delivered Olares desktop UI, or browser-terminal fallback
 4. the cutover does not require public ingress or a canonical-hosting transition
 
 ### Milestone 5 - Resume Product Delivery From Olares
