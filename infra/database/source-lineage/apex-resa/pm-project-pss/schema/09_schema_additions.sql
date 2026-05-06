@@ -1,6 +1,12 @@
 -- =============================================================================
 -- RESA Power Platform - Schema Additions
 -- =============================================================================
+-- SOURCE-LINEAGE SNAPSHOT ONLY
+-- This tracked copy intentionally preserves the imported lineage tranche and is
+-- not the active migration authority. For current executable truth, use:
+-- C:\APEX Platform\Supabase\schema\09_schema_additions.sql
+-- Packet 049 documents the known post-2026-05-06 drift between this lineage
+-- snapshot and the authoritative source.
 -- File: 09_schema_additions.sql
 -- Generated: 2025-12-11
 -- Purpose: Add missing fields identified from Excel tracker analysis

@@ -1,0 +1,59 @@
+{
+  "packet_id": "2026-05-06-olares-dev-residency-049",
+  "title": "Operations Visibility Source Lineage Drift Boundary Decision And Annotation",
+  "objective": "Resolve whether the tracked PM source-lineage copy of `09_schema_additions.sql` should be overwritten to match the now-live authoritative source, or preserved as a provenance snapshot with explicit drift annotation.",
+  "domain": "delivery-domain",
+  "active_role": "Platform Architect",
+  "dependencies": [
+    "ops/agents/packets/draft/2026-05-06-olares-dev-residency-047-operations-visibility-schema-tranche-live-execution-and-validation.json",
+    "ops/agents/packets/draft/2026-05-06-olares-dev-residency-048-operations-visibility-runtime-consumption-first-browser-consumer-execution.json",
+    "infra/database/source-lineage/apex-resa/pm-project-pss/LINEAGE-NOTE.md",
+    "infra/database/source-lineage/apex-resa/pm-project-pss/schema/09_schema_additions.sql",
+    "C:/APEX Platform/Supabase/schema/09_schema_additions.sql",
+    "plan/infrastructure-olares-full-implementation-roadmap-1.md"
+  ],
+  "dependency_note": "Packet 048 closed the first governed runtime-consumption seam, leaving one identified residual risk: the tracked PM source-lineage copy of `09_schema_additions.sql` no longer matches the authoritative source hardened and executed in Packets 045 through 047.",
+  "execution_mode": "bounded_source_lineage_decision_and_annotation",
+  "execution_steps": [
+    "Determine whether the tracked lineage copy is actually under git and whether it is still declared as active migration authority or source-lineage-only input.",
+    "Compare the tracked lineage copy against the authoritative `Supabase/schema/09_schema_additions.sql` to classify the drift.",
+    "If the lineage tranche is provenance-only, annotate the drift boundary rather than overwriting the imported snapshot.",
+    "Update the minimum authority surfaces so future work routes to the next adjacent consumer slice instead of attempting a blind lineage rewrite."
+  ],
+  "constraints": [
+    "Do not overwrite the imported lineage body if the lineage tranche is explicitly preserved for provenance.",
+    "Do not reopen schema deployment, browser admission, or generic cleanup beyond the lineage drift boundary itself.",
+    "Keep the output to explicit drift annotation and routing clarity only."
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "execution_outcome": "lineage_snapshot_preserved_and_drift_annotated",
+  "execution_evidence": {
+    "lineage_file_tracked": true,
+    "lineage_status": "Source-lineage only; reference input for future comparison and decomposition work; not active migration authority",
+    "authoritative_source": "C:/APEX Platform/Supabase/schema/09_schema_additions.sql",
+    "drift_classification": [
+      "The lineage copy still uses raw `CREATE TYPE apparatus_availability` instead of the rerun-safe DO-block form.",
+      "The lineage copy still lacks `WITH (security_invoker = true)` on the 11 Operations Visibility views.",
+      "The lineage copy still uses pre-hardening enum comparisons that were repaired in the authoritative source before live execution."
+    ],
+    "annotation_surfaces": [
+      "infra/database/source-lineage/apex-resa/pm-project-pss/LINEAGE-NOTE.md",
+      "infra/database/source-lineage/apex-resa/pm-project-pss/schema/09_schema_additions.sql"
+    ],
+    "validation": "Targeted git diff check passed for the Packet 049 files"
+  },
+  "execution_rationale": [
+    "The tracked lineage copy looked like a simple stale duplicate at first, but the controlling lineage note disconfirmed a blind overwrite: this tranche is imported by copy only and explicitly not the active PM schema baseline.",
+    "Because future comparison work still reads this tracked lineage area, the root fix is not to replace provenance with current source, but to annotate the drift boundary so operators are routed back to the authoritative executable file.",
+    "This closes the residual drift risk without reopening the already-complete schema deployment or runtime-consumption slices."
+  ],
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-06-olares-dev-residency-049-operations-visibility-source-lineage-drift-boundary-decision-and-annotation-handoff.md"
+  ],
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-06-olares-dev-residency-049-operations-visibility-source-lineage-drift-boundary-decision-and-annotation-handoff.md",
+  "next_packet_candidate": "Olares Dev Residency 050 - Operations Visibility Adjacent Runtime Consumer Planning Or Execution",
+  "validation_disposition": "decision_recorded_and_annotation_applied",
+  "closure_note": "Executed 2026-05-06 as the direct follow-on to Packet 048. Packet 049 confirmed the tracked PM lineage copy of `09_schema_additions.sql` is provenance-preserving reference input rather than active migration authority, recorded the exact post-Packet-047 drift, and annotated the lineage boundary instead of overwriting the imported snapshot.",
+  "next_action": "Select the next adjacent Operations Visibility runtime-consumption slice on top of the landed `v_master_operations` consumer."
+}
