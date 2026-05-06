@@ -86,7 +86,13 @@ Update 2026-05-06:
 78. No trust boundary was widened by Packet 066: GitHub remains canonical, `C:/APEX Platform` remains the publication boundary, `/home/olares/code/apex` remains the authoritative host mirror, the old clone remains observe-only, the laptop remains client-only, and the admitted AI boundary remains the minimal MCP trio plus `apex-jobs`.
 79. Packet 067 is now complete as that publication/resync closeout for Packet 065 and Packet 066.
 80. Packet 067 published the authority-consolidation tranche in commit `ecfe18015c9c15cef16f3fb668fdfc56db7c909f` (`Consolidate Olares workspace authority`), pushed `origin/clean-main`, restored `/home/olares/code/apex` to clean parity at the same commit, and preserved `/home/olares/src/apex-power-ops-platform` observe-only at `2836a2622309b4e146ca24f23b5bf87312c0c857` with status count `30`.
-81. The next truthful Olares follow-on after Packet 067 is a new evidence-based decision on whether any additional host-resident workflow-hardening slice is still justified now that both the operator entry surface and the current workspace authority surface are real, published, and mirrored.
+81. Packet 068 is now complete as that evidence-based decision and selected one additional bounded workflow-hardening slice at the root entrypoint layer.
+82. Packet 068 records the remaining friction precisely: the live Olares authority surface and host bootstrap/status surface are published, but the root `README.md` still routed readers first to the historical workspace protocol and design notes, and `PROJECT_OVERVIEW.md` still presented a December 2025 platform snapshot without any current Olares operating note.
+83. Packet 069 is now complete as the execution of that bounded routing-refresh slice.
+84. Packet 069 updates the root `README.md` so readers entering at the parent-root now see the live Olares authority surface and the current operator runbook before the historical workspace notes, and it adds a concise current Olares operating note to `PROJECT_OVERVIEW.md` so the older platform snapshot is not misread as the active Olares workspace model.
+85. No trust boundary is widened by Packet 069: GitHub remains canonical, `C:/APEX Platform` remains the publication boundary, `/home/olares/code/apex` remains the authoritative host mirror, the laptop remains client-only, and the admitted AI boundary remains the minimal MCP trio plus `apex-jobs`.
+86. The next truthful Olares follow-on after Packet 069 is a separate publication/resync closeout for this root-routing slice, followed by a new decision on whether any additional workflow-hardening remains at all.
+
 
 
 ## Authority
