@@ -1,0 +1,43 @@
+{
+  "packet_id": "2026-05-05-olares-dev-residency-012",
+  "title": "Operations Visibility First Bounded Slice Planning",
+  "objective": "Select exactly one first bounded Operations Visibility implementation or validation slice after the lane reopening decision while preserving the post-cutover operating constraints.",
+  "domain": "delivery-domain",
+  "active_role": "Operations Visibility Slice Planning Operator",
+  "dependencies": [
+    "ops/agents/packets/draft/2026-05-05-olares-dev-residency-011-post-010-operations-visibility-lane-reopening-decision.json",
+    "ops/agents/handoffs/2026-05-05-olares-dev-residency-011-post-010-operations-visibility-lane-reopening-decision-handoff.md",
+    "apps/operations-web/README.md",
+    "apps/operations-web/DEPLOYMENT_VALIDATION.md",
+    "plan/infrastructure-olares-full-implementation-roadmap-1.md"
+  ],
+  "dependency_note": "Packet 011 reopened the default Operations Visibility lane and selected this planning packet as the next bounded surface.",
+  "execution_mode": "planning_only",
+  "planning_requirements": [
+    "Select exactly one first Operations Visibility implementation or validation slice.",
+    "Preserve Remote-SSH as the baseline-safe client path.",
+    "Treat the browser-delivered Olares desktop UI only as an optional host-supported comparison surface.",
+    "Keep package or lockfile mutation, runtime/service mutation, AI-services expansion, hosting transition, remote rewrite, rollback, force, reset, clean, and old-clone mutation closed unless the selected slice explicitly requires and reauthorizes them.",
+    "Name one later execution packet and one bounded validation expectation for that slice."
+  ],
+  "explicit_no_go_items": [
+    "generic multi-slice reopening",
+    "host-local VS Code desktop installation by implication",
+    "package or lockfile mutation by default",
+    "runtime or service mutation by default",
+    "AI-services expansion",
+    "hosting transition",
+    "remote rewrite",
+    "rollback, force, reset, or clean",
+    "old-clone mutation or promotion"
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "authored",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-05-olares-dev-residency-012-operations-visibility-first-bounded-slice-planning-handoff.md"
+  ],
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-05-olares-dev-residency-012-operations-visibility-first-bounded-slice-planning-handoff.md",
+  "validation_disposition": "authored-pending-execution",
+  "closure_note": "Not yet executed. Packet 012 is authored as the first bounded Operations Visibility planning surface after the post-cutover lane reopening decision.",
+  "next_action": "Execute this packet to select the first bounded Operations Visibility implementation or validation slice."
+}

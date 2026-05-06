@@ -1,0 +1,79 @@
+{
+  "packet_id": "2026-05-05-olares-dev-residency-010",
+  "title": "Bounded Operations-Web Backend Seam And Hosted Route Validation Execution",
+  "objective": "Execute the Packet 009-selected bounded host-side validation slice by proving the public control-plane seam and the hosted operations-web routes from the Olares host using only already admitted host-local toolchains and public hosted targets.",
+  "domain": "infrastructure-domain",
+  "active_role": "Olares Operations-Web Validation Operator",
+  "dependencies": [
+    "ops/agents/packets/draft/2026-05-05-olares-dev-residency-009-post-008-resumed-feature-delivery-readiness-gate.json",
+    "ops/agents/handoffs/2026-05-05-olares-dev-residency-009-post-008-resumed-feature-delivery-readiness-gate-handoff.md",
+    "apps/operations-web/package.json",
+    "apps/operations-web/README.md",
+    "apps/operations-web/DEPLOYMENT_VALIDATION.md",
+    "apps/operations-web/scripts/smoke-hosted-routes.mjs",
+    "apps/control-plane-api/scripts/smoke_deployed_control_plane.py",
+    "plan/infrastructure-olares-full-implementation-roadmap-1.md"
+  ],
+  "dependency_note": "Packet 009 selected this slice as the smallest truthful host-executable follow-on after Packet 008. Packet 010 is bounded to public control-plane seam proof and hosted-route smoke only and does not widen into browser-runtime provisioning or broader product delivery.",
+  "execution_mode": "bounded_host_side_validation_execution",
+  "required_inputs": [
+    "Published parent-root commit `08839ae08506a55cc0b1d64f19a3e2a984377f28` or later clean parity on `/home/olares/code/apex`",
+    "Host-local calc-engine venv Python at `/home/olares/apex-data/toolchains/calc-engine-venv/bin/python`",
+    "Host-local explicit pnpm path at `/home/olares/apex-data/toolchains/pnpm-10.0.0/node_modules/.bin/pnpm`",
+    "Public operations-web base URL `https://operations.apexpowerops.com`",
+    "Public control-plane base URL `https://control.apexpowerops.com`"
+  ],
+  "execution_scope": [
+    "Run `apps/control-plane-api/scripts/smoke_deployed_control_plane.py` against `https://control.apexpowerops.com` with `--skip-authenticated-checks` and `--require-apparatus-study-route` from the Olares host.",
+    "Run `apps/operations-web/scripts/smoke-hosted-routes.mjs` against `https://operations.apexpowerops.com` from the Olares host using the already admitted Node runtime directly so the command shape matches the script argument parser.",
+    "Record the exact command lines, summarized pass/fail output, and host cleanliness before and after execution.",
+    "Keep the host mirror clean and preserve `/home/olares/src/apex-power-ops-platform` as observe-only evidence."
+  ],
+  "explicit_no_go_items": [
+    "Playwright browser runtime provisioning",
+    "host-local VS Code desktop installation",
+    "broader product delivery reopening by implication",
+    "package or lockfile mutation",
+    "runtime or service mutation",
+    "public ingress widening",
+    "AI-services expansion",
+    "Gitea or canonical-hosting transition",
+    "remote rewrite",
+    "rollback, force, reset, or clean",
+    "old-clone mutation or promotion"
+  ],
+  "success_criteria": [
+    "The public control-plane seam smoke ends in `RESULT PASS` against `https://control.apexpowerops.com` with the governed apparatus route required.",
+    "The operations-web hosted-route smoke ends in `SMOKE_SUMMARY failed=0` against `https://operations.apexpowerops.com`.",
+    "`/home/olares/code/apex` remains clean before and after the slice.",
+    "No package, lockfile, runtime, service, or old-clone mutation occurs."
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-05-olares-dev-residency-010-bounded-operations-web-backend-seam-and-hosted-route-validation-execution-handoff.md"
+  ],
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-05-olares-dev-residency-010-bounded-operations-web-backend-seam-and-hosted-route-validation-execution-handoff.md",
+  "implementation_ready_candidate": true,
+  "sql_permission": false,
+  "sql_permission_note": "This packet authorizes only bounded host-side validation commands and no database writes, source edits, package mutation, lockfile mutation, runtime mutation, service mutation, remote rewrite, rollback, force, reset, or clean.",
+  "landing_lane": "olares_operations_web_hosted_validation_execution",
+  "migration_strategy": "execute_public_control_plane_seam_and_operations_web_hosted_route_validation_from_olares_before_broader_delivery_reopen",
+  "created_at": "2026-05-05",
+  "updated_at": "2026-05-05",
+  "delegation_status": "not-delegated",
+  "validation_result": "bounded_host_side_validation_passed",
+  "execution_evidence": {
+    "host_execution_commit": "08839ae08506a55cc0b1d64f19a3e2a984377f28",
+    "control_plane_base_url": "https://control.apexpowerops.com",
+    "operations_web_base_url": "https://operations.apexpowerops.com",
+    "control_plane_smoke_result": "RESULT PASS",
+    "hosted_route_smoke_result": "SMOKE_SUMMARY failed=0 passed=8 base_url=https://operations.apexpowerops.com/",
+    "host_pre_status_count": 0,
+    "host_post_status_count": 0,
+    "old_clone_status_count": 30
+  },
+  "validation_disposition": "complete-bounded-host-side-validation-passed",
+  "closure_note": "Executed 2026-05-05 from `/home/olares/code/apex/apex-power-ops-platform` as the bounded host-side validation slice selected by Packet 009. The public control-plane seam smoke against `https://control.apexpowerops.com` ended in `RESULT PASS`, the `operations-web` hosted-route smoke against `https://operations.apexpowerops.com` ended in `SMOKE_SUMMARY failed=0 passed=8`, `/home/olares/code/apex` remained clean before and after execution, and `/home/olares/src/apex-power-ops-platform` remained observe-only with status count 30. Packet 010 did not open Playwright browser runtime provisioning, host-local VS Code desktop installation, broader product delivery reopening by implication, package or lockfile mutation, runtime or service mutation, public ingress widening, AI-services expansion, Gitea or canonical-hosting transition, remote rewrite, rollback, force, reset, clean, or old-clone mutation.",
+  "next_action": "Execute `Olares Dev Residency 011 - Post-010 Operations Visibility Lane Reopening Decision` as the next bounded decision surface before the first new Operations Visibility planning packet is opened."
+}
