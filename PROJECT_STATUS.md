@@ -66,7 +66,9 @@ handoffs.
 25. A refreshed Supabase security-advisor pass does not report any of the 11 new `09` views; remaining advisor debt is preexisting legacy surface outside this bounded tranche.
 26. Packet 048 is now complete as the first runtime-consumption slice on top of the live `09` schema tranche: `apps/control-plane-api` now exposes a read-only `GET /api/v1/ops/master-operations` seam against `public.v_master_operations`, the focused pytest file passes `6/6`, and `apps/operations-web` now mounts the first governed browser consumer for that seam instead of reopening direct browser-side Supabase admission.
 27. Frontend validation for Packet 048 passed through the app-local TypeScript compiler at `apps/operations-web/node_modules/.bin/tsc.cmd` after `pnpm` proved unavailable on the workstation path; editor diagnostics for the touched route, test, and browser-shell files are clean.
-28. The next truthful follow-on is therefore the next adjacent Operations Visibility consumer or source-reconciliation slice on top of the now-landed first browser consumer, not more advisor-path recovery and not generic Olares-first infrastructure expansion.
+28. Packet 049 is now complete as a source-lineage boundary decision: the tracked lineage copy at `apex-power-ops-platform/infra/database/source-lineage/apex-resa/pm-project-pss/schema/09_schema_additions.sql` is intentionally stale reference input, not active migration authority, so the correct fix was explicit drift annotation rather than overwriting the imported snapshot.
+29. The lineage note and tracked lineage SQL header now point future operators back to `Supabase/schema/09_schema_additions.sql` as the authoritative executable source and explicitly preserve the imported lineage body for provenance.
+30. The next truthful follow-on is therefore the next adjacent Operations Visibility consumer slice on top of the now-landed first browser consumer, not more advisor-path recovery, not a blind lineage-copy overwrite, and not generic Olares-first infrastructure expansion.
 
 ```mermaid
 pie title Project Completion Status

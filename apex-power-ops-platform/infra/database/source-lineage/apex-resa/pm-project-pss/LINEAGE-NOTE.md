@@ -29,3 +29,9 @@ Explicit exclusions from this tranche:
 Provenance:
 - Source root: `C:\APEX Platform\Supabase`
 - Imported by copy only; original source files remain in place
+
+Known divergence after 2026-05-06 Operations Visibility execution:
+- `schema/09_schema_additions.sql` in this lineage directory is now intentionally stale relative to the authoritative `C:\APEX Platform\Supabase\schema\09_schema_additions.sql`.
+- Packets 045 through 047 hardened the authoritative source with rerun-safe `apparatus_availability` creation, `security_invoker` view options, and enum-compatible text comparisons before the live Supabase apply.
+- This lineage copy is preserved as the imported source-lineage snapshot and must not be treated as active migration authority or blindly copied back over the authoritative source.
+- Packet 049 records the current rule: preserve the lineage body for provenance, but annotate the drift explicitly so future comparison and decomposition work does not misclassify this file as current truth.
