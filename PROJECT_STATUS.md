@@ -58,7 +58,8 @@ handoffs.
 17. The Olares-first AI workflow tranche is parked at a stable published boundary and its operating model remains the minimal MCP trio plus `apex-jobs` and packet-handoff governance.
 18. A new bounded authority objective has now been selected on top of that stable base: Packet 042 reopens only the default Operations Visibility business lane as the next bounded follow-on from the Olares-resident posture.
 19. Packet 043 now selects the first truthful post-041 Operations Visibility slice: a bounded schema-deployment preflight around `Supabase/schema/09_schema_additions.sql` and `Supabase/schema/09b_enum_updates.sql`.
-20. The next truthful follow-on is therefore `Olares Dev Residency 044 - Bounded Operations Visibility Schema Deployment Preflight Execution`, not more generic Olares-first infrastructure expansion.
+20. Packet 044 completed that live preflight and found the `09` schema tranche not execution-ready yet: none of the target columns, operations views, or enum additions are live; the public views in `09_schema_additions.sql` are not yet authored with explicit `security_invoker` treatment; and the normal Supabase advisor path was unavailable from this session.
+21. The next truthful follow-on is therefore `Olares Dev Residency 045 - Operations Visibility Schema Tranche Security Invoker And Advisor-Path Remediation`, not direct schema mutation and not more generic Olares-first infrastructure expansion.
 
 ```mermaid
 pie title Project Completion Status
