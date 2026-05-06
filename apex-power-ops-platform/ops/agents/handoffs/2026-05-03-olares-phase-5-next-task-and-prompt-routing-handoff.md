@@ -99,6 +99,10 @@ Update 2026-05-06:
 91. Packet 072 is now complete as the publication/resync closeout for Packet 071.
 92. Packet 072 published the dormancy-decision tranche in commit `5006b2348d8170ecb97e9d1e1aa5c44f7cab6f22` (`Park Olares host workflow lane`), pushed `origin/clean-main`, restored `/home/olares/code/apex` to clean parity at the same commit, and preserved `/home/olares/src/apex-power-ops-platform` observe-only at `2836a2622309b4e146ca24f23b5bf87312c0c857` with status count `30`.
 93. The current host-workflow-hardening lane is therefore closed and dormant on present evidence. The next truthful Olares packet must be triggered by a new concrete Olares need rather than by residual housekeeping in this lane.
+94. Packet 073 is now complete as that next governance check. It records that the active Olares authority has already moved to trigger-based dormancy, but the older roadmap still displayed several generic Phase 2 through Phase 4 items as if they were open queue work.
+95. Packet 074 is now complete as the bounded roadmap-trigger realignment selected by Packet 073. The roadmap executive summary and remaining generic Phase 2 through Phase 4 rows now classify those items as maintained rerun surfaces, limitation boundaries, or trigger-gated rules instead of an always-open Olares backlog.
+96. Packet 075 is now the bounded publication/resync gate for Packet 073 and Packet 074 so the refreshed roadmap truth becomes durable on `/home/olares/code/apex` before any later session depends on it.
+
 
 
 
