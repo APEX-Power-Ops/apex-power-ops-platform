@@ -96,6 +96,9 @@ Update 2026-05-06:
 88. Packet 071 is now complete as that final evidence-based decision surface.
 89. Packet 071 consumes the currently published host bootstrap/status surface, the published Olares workspace authority surface, and the refreshed root entrypoint routing chain and finds no remaining host-workflow-hardening gap that is justified by current evidence.
 90. The current lane therefore returns to explicit dormancy until new friction appears. Reopen only for a concrete operator-routing, authority-discoverability, durable-host validation, or publication-parity problem that is not already closed by the current runbook, status surface, and root entrypoint chain.
+91. Packet 072 is now complete as the publication/resync closeout for Packet 071.
+92. Packet 072 published the dormancy-decision tranche in commit `5006b2348d8170ecb97e9d1e1aa5c44f7cab6f22` (`Park Olares host workflow lane`), pushed `origin/clean-main`, restored `/home/olares/code/apex` to clean parity at the same commit, and preserved `/home/olares/src/apex-power-ops-platform` observe-only at `2836a2622309b4e146ca24f23b5bf87312c0c857` with status count `30`.
+93. The current host-workflow-hardening lane is therefore closed and dormant on present evidence. The next truthful Olares packet must be triggered by a new concrete Olares need rather than by residual housekeeping in this lane.
 
 
 
