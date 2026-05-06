@@ -46,12 +46,15 @@ keeps POST count unchanged across the platform.
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime
 from typing import List, Optional
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel, Field
+from sqlalchemy import text
+from sqlalchemy.orm import Session
 
+from config import get_db
 from services.work.idempotency import idempotency_cache
 
 
@@ -192,6 +195,34 @@ class PMIdempotencyByRoute(BaseModel):
     )
 
 
+class MasterOperationsSummary(BaseModel):
+    """Read-only summary row from ``public.v_master_operations``."""
+
+    project_id: str = Field(..., description="Project UUID from the Operations Visibility dashboard view.")
+    project_number: Optional[str] = Field(None, description="Human-readable project number.")
+    project_name: Optional[str] = Field(None, description="Human-readable project name.")
+    project_status: Optional[str] = Field(None, description="Current project status.")
+    client_name: Optional[str] = Field(None, description="Client company name.")
+    resa_location: Optional[str] = Field(None, description="RESA location serving the project.")
+    site_city: Optional[str] = Field(None, description="Job site city.")
+    project_due: Optional[date] = Field(None, description="Contractual project due date.")
+    scope_count: int = Field(..., description="Total active scope count represented in the rollup.")
+    total_apparatus: int = Field(..., description="Total apparatus count represented in the rollup.")
+    completed: int = Field(..., description="Completed apparatus count.")
+    remaining: int = Field(..., description="Remaining apparatus count.")
+    completion_percent: float = Field(..., description="Calculated apparatus completion percent.")
+    ready_to_work: int = Field(..., description="Ready-to-work apparatus count.")
+    on_hold: int = Field(..., description="On-hold apparatus count.")
+    not_available: int = Field(..., description="Not-available apparatus count.")
+    issues: int = Field(..., description="Apparatus count with failing or non-serviceable assessment.")
+    overdue: int = Field(..., description="Overdue apparatus count.")
+    due_today: int = Field(..., description="Apparatus due today.")
+    due_this_week: int = Field(..., description="Apparatus due within the next week.")
+    ready_hours: float = Field(..., description="Quoted hours currently ready to execute.")
+    remaining_hours: float = Field(..., description="Quoted hours still remaining on the project.")
+    health_status: str = Field(..., description="Derived health classification from the view.")
+
+
 @router.get(
     "/pm-idempotency/by-route",
     response_model=PMIdempotencyByRoute,
@@ -211,3 +242,58 @@ def pm_idempotency_by_route() -> PMIdempotencyByRoute:
     """
     payload = idempotency_cache.stats_by_route()
     return PMIdempotencyByRoute(**payload)
+
+
+@router.get(
+    "/master-operations",
+    response_model=list[MasterOperationsSummary],
+    summary="Operations Visibility master dashboard rollup (read-only).",
+)
+def master_operations_summary(
+    limit: int = Query(25, ge=1, le=100),
+    db: Session = Depends(get_db),
+) -> list[MasterOperationsSummary]:
+    """Return bounded rows from ``public.v_master_operations``.
+
+    This keeps browser consumption behind the governed control-plane API
+    instead of reopening direct browser-side Supabase reads.
+    """
+
+    rows = (
+        db.execute(
+            text(
+                """
+                SELECT
+                    project_id,
+                    project_number,
+                    project_name,
+                    project_status,
+                    client_name,
+                    resa_location,
+                    site_city,
+                    project_due,
+                    scope_count,
+                    total_apparatus,
+                    completed,
+                    remaining,
+                    completion_percent,
+                    ready_to_work,
+                    on_hold,
+                    not_available,
+                    issues,
+                    overdue,
+                    due_today,
+                    due_this_week,
+                    ready_hours,
+                    remaining_hours,
+                    health_status
+                FROM public.v_master_operations
+                LIMIT :limit
+                """
+            ),
+            {"limit": limit},
+        )
+        .mappings()
+        .all()
+    )
+    return [MasterOperationsSummary(**row) for row in rows]
