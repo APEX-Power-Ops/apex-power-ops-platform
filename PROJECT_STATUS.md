@@ -131,6 +131,8 @@ handoffs.
 90. Packet 080 is now complete as the publication and host-mirror resync closeout for that cockpit state-sync correction.
 91. Packet 080 published the correction tranche in commit `ac7b62176e8a7dcec23f8c37c88ff49034732655` (`Sync APEX PM cockpit frontier`), pushed `origin/clean-main`, restored `/home/olares/code/apex` to clean parity at the same commit, and preserved `/home/olares/src/apex-power-ops-platform` observe-only at `2836a2622309b4e146ca24f23b5bf87312c0c857` with status count `30`.
 92. Packet 081 is now complete as the root-cause wording hardening for the compact PM cockpit. Rather than continuing to sync packet numbers after each bounded closeout, the Olares developer-residency row now uses durable frontier wording so it stays truthful as later Olares publication-only slices close.
+93. Packet 082 is now complete as the publication and host-mirror resync closeout for that durable-wording hardening.
+94. Packet 082 published the durable-wording tranche in commit `d716afca77f8159986eaf5aa80d6a1c2803a6534` (`Harden APEX PM cockpit wording`), pushed `origin/clean-main`, restored `/home/olares/code/apex` to clean parity at the same commit, and preserved `/home/olares/src/apex-power-ops-platform` observe-only at `2836a2622309b4e146ca24f23b5bf87312c0c857` with status count `30`.
 
 ```mermaid
 pie title Project Completion Status
