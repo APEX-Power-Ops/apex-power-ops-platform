@@ -33,3 +33,13 @@ Packet 064 must not open:
 ## Next Candidate
 
 `Olares Dev Residency 065 - Post-064 Host Workflow Hardening Follow-On Decision`
+
+## Execution Result
+
+Packet 064 published the bounded Packet 062 and Packet 063 authority plus the host bootstrap/status surface in commit `75daba86197dc44e966484ede0c08433ea788dc6`, pushed `origin/clean-main`, and restored `/home/olares/code/apex` to clean parity at that same commit.
+
+Observed host state after resync:
+
+1. host head `75daba86197dc44e966484ede0c08433ea788dc6`,
+2. host status count `0`,
+3. old clone preserved at `2836a2622309b4e146ca24f23b5bf87312c0c857` with status count `30`.

@@ -35,5 +35,14 @@
   "next_packet_candidate": "Olares Dev Residency 064 - Packet 062 And Packet 063 Authority Publication And Host Mirror Resync Gate",
   "sql_permission": false,
   "sql_permission_note": "This execution packet authorizes no package or lockfile mutation, no installs, no runtime or service mutation, no AI-services expansion, no remote rewrite, no rollback or force/reset/clean, and no old-clone mutation.",
-  "validation_disposition": "pending-post-edit-validation"
+  "validation_disposition": "validated-on-authoritative-host-post-publication",
+  "post_publication_host_validation": {
+    "host_head": "75daba86197dc44e966484ede0c08433ea788dc6",
+    "host_status_count": 0,
+    "old_clone_head": "2836a2622309b4e146ca24f23b5bf87312c0c857",
+    "old_clone_status_count": 30,
+    "minimal_mcp_status": "not-running",
+    "hold_boundary_result": "UNAVAILABLE",
+    "hold_boundary_decision": "minimal_mcp_not_running"
+  }
 }

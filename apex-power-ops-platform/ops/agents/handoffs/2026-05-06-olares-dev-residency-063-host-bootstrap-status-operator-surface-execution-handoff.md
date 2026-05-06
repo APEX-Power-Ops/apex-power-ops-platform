@@ -40,6 +40,17 @@ Packet 063 did not:
 5. reopen either dormant Olares branch,
 6. mutate `/home/olares/src/apex-power-ops-platform`.
 
+## Post-Publication Host Proof
+
+After publication and host-mirror resync, the new status surface was executed from `/home/olares/code/apex` and returned:
+
+1. host head `75daba86197dc44e966484ede0c08433ea788dc6`,
+2. host status count `0`,
+3. old clone preserved at `2836a2622309b4e146ca24f23b5bf87312c0c857` with status count `30`,
+4. materialized host `pnpm` and calc-engine Python toolchains present,
+5. truthful current runtime posture `minimal_mcp.status = not-running`,
+6. truthful current hold-boundary posture `deferred_ops = UNAVAILABLE` with decision `minimal_mcp_not_running`.
+
 ## Next Packet Candidate
 
 `Olares Dev Residency 064 - Packet 062 And Packet 063 Authority Publication And Host Mirror Resync Gate`
