@@ -1,7 +1,7 @@
 # Olares Phase 5 Next Task And Prompt Routing Handoff
 
 Date: 2026-05-03
-Status: Active - Packet 056 is complete, the populated adjacent Operations Visibility runtime-consumption set is closed, the admitted AI operator boundary is revalidated, and the deferred empty seams remain on explicit hold behind a repo-owned cadence surface
+Status: Active - Packet 057 is complete, the populated adjacent Operations Visibility runtime-consumption set is closed, the admitted AI operator boundary is revalidated, and the deferred empty seams remain on explicit hold behind a repo-owned cadence surface that now runs on the authoritative host mirror too
 Scope: preserve the completed Olares-first AI workflow routing state after Packet 035 through Packet 041 while naming the current bounded Operations Visibility follow-on from the Olares-resident posture
 
 Update 2026-05-06:
@@ -55,6 +55,9 @@ Update 2026-05-06:
 47. Packet 056 is now complete as the bounded operator-cadence follow-on to that hold: the repo now owns `tools/ai/check_deferred_ops_view_counts.py` plus PowerShell/Bash wrappers that combine minimal MCP verify and the deferred-view reopen check into one governed surface.
 48. Packet 056 also wired that cadence surface into `.vscode/tasks.json` and the Olares AI workflow runbook so workstation operators no longer need to reconstruct the current hold checks manually.
 49. Local wrapper validation for Packet 056 returned `minimal_mcp=PASS` and `deferred_ops=UNAVAILABLE`, which is the truthful outcome when only the local development database is available; authoritative deferred-view rechecks still require a live DSN such as `SEAM_DATABASE_URL` and do not reopen the currently empty seams by assumption.
+50. Packet 057 is now complete as the bounded host-portability closeout for that same cadence surface: the first host rerun failed on a missing `sqlalchemy` import, proving the initial helper was not portable to `/home/olares/code/apex`.
+51. Packet 057 repaired that defect without widening scope by moving the deferred-view query onto the admitted `apex-db` MCP surface and teaching both minimal-trio wrappers to prefer `SEAM_DATABASE_URL` when a live DSN is intentionally supplied.
+52. The repaired host rerun then closed truthfully from `/home/olares/code/apex/apex-power-ops-platform` with `minimal_mcp=PASS` and `deferred_ops=UNAVAILABLE`; the current hold boundary remains intact, but the repo-owned cadence surface now runs on both workstation and authoritative host postures.
 
 ## Authority
 
