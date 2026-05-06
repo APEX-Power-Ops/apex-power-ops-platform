@@ -1,0 +1,88 @@
+{
+  "packet_id": "2026-05-05-olares-dev-residency-004",
+  "title": "Bounded Host Toolchain Materialization Authority Decision",
+  "objective": "Decide whether and how a later bounded packet may materialize the minimum host toolchain required for Milestone 2 application and shared-package validation, without performing installs, package mutation, lockfile mutation, runtime mutation, service mutation, feature delivery, hosting transition, or old-clone mutation inside this decision packet.",
+  "domain": "infrastructure-domain",
+  "active_role": "Olares Developer Residency Toolchain Authority Operator",
+  "dependencies": [
+    "ops/agents/packets/draft/2026-05-05-olares-dev-residency-001-developer-host-cutover-preflight-and-execution-planning.json",
+    "ops/agents/handoffs/2026-05-05-olares-dev-residency-001-developer-host-cutover-preflight-and-execution-planning-handoff.md",
+    "ops/agents/packets/draft/2026-05-05-olares-dev-residency-002-canonical-host-residency-and-toolchain-revalidation.json",
+    "ops/agents/handoffs/2026-05-05-olares-dev-residency-002-canonical-host-residency-and-toolchain-revalidation-handoff.md",
+    "ops/agents/packets/draft/2026-05-05-olares-dev-residency-003-bounded-host-toolchain-availability-decision.json",
+    "ops/agents/handoffs/2026-05-05-olares-dev-residency-003-bounded-host-toolchain-availability-decision-handoff.md",
+    "docs/architecture/OLARES-DEVELOPER-HOST-CUTOVER-MILESTONE-PLAN-2026-05-05.md",
+    "docs/architecture/OLARES-DEVELOPER-HOST-CUTOVER-TECHNICAL-PLAN-2026-05-05.md",
+    "docs/architecture/OLARES-DEVELOPER-HOST-CUTOVER-MILESTONE-1-ACCEPTANCE-CHECKLIST-2026-05-05.md",
+    "plan/infrastructure-olares-full-implementation-roadmap-1.md"
+  ],
+  "dependency_note": "Packet 003 selected Branch B because Packet 002 showed missing host no-install toolchain surfaces: `pnpm` absent, root and operations-web `node_modules` absent, `pytest` absent, and `npx --no-install` canceled rather than downloading. Packet 004 may decide the authority shape for a later bounded materialization or defer path, but must not perform materialization itself.",
+  "decision_mode": "decision_only",
+  "required_inputs": [
+    "Packet 002 host path and old-clone evidence",
+    "Packet 002 blocked validation attempts for `apps/operations-web` and `packages/calc-engine`",
+    "Packet 003 Branch B decision",
+    "The Milestone 2 requirement for one active application lane and one shared package lane to validate from the Olares host",
+    "The still-closed no-go boundary around feature delivery, runtime/service mutation, public ingress, hosting transition, old-clone mutation, remote rewrite, rollback, force, reset, and clean"
+  ],
+  "allowed_decision_shapes": [
+    "authorize_a_later_bounded_toolchain_materialization_execution_packet",
+    "defer_toolchain_materialization_until_operator_policy_choice",
+    "select_a_strictly_no_install_alternate_only_if_it_truthfully_satisfies_milestone_2",
+    "no_go_if_materialization_requires_unbounded_package_runtime_or_service_change"
+  ],
+  "decision_requirements": [
+    "Name the exact minimum host toolchain surfaces required before Milestone 2 validation can run.",
+    "Separate toolchain materialization authority from actual install or download execution.",
+    "Preserve GitHub as canonical and `/home/olares/code/apex` as the host mirror.",
+    "Preserve `/home/olares/src/apex-power-ops-platform` as observe-only historical evidence.",
+    "Keep package files and lockfiles unchanged unless a later packet explicitly scopes and validates any change.",
+    "Keep feature delivery closed until host-side validation readiness is proven by a later execution packet."
+  ],
+  "explicit_no_go_items": [
+    "performing installs or downloads inside Packet 004",
+    "package or lockfile mutation inside Packet 004",
+    "runtime or service mutation",
+    "feature delivery",
+    "public ingress widening",
+    "AI-services expansion by default",
+    "Gitea or canonical-hosting transition",
+    "old-clone mutation or promotion",
+    "remote rewrite",
+    "rollback, force, reset, or clean"
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "authored",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-05-olares-dev-residency-004-bounded-host-toolchain-materialization-authority-decision-handoff.md"
+  ],
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-05-olares-dev-residency-004-bounded-host-toolchain-materialization-authority-decision-handoff.md",
+  "implementation_ready_candidate": true,
+  "sql_permission": false,
+  "sql_permission_note": "Decision only. This packet authorizes no database writes, installs, package mutation, lockfile mutation, runtime mutation, service mutation, public ingress change, feature delivery, old-clone mutation, remote rewrite, rollback, force, reset, or clean.",
+  "branch_selected": "authorize_a_later_bounded_toolchain_materialization_execution_packet",
+  "decision": "permit_a_later_minimum_scope_host_toolchain_materialization_execution_packet_without_authorizing_execution_inside_packet_004",
+  "decision_rationale": [
+    "Packet 003 already proved the blocker surface is real rather than a PATH-discovery issue: `pnpm`, dependency trees, and `pytest` are absent under the current no-install boundary.",
+    "A truthful Milestone 2 path still exists, but only if toolchain materialization is separately packetized and bounded to the minimum host-local surfaces required for `apps/operations-web` and `packages/calc-engine` validation.",
+    "Deferring again would add no new evidence and would leave the project blocked on a known authority gap rather than a technical unknown.",
+    "Packet 004 can therefore authorize a later execution packet while still keeping installs, downloads, package mutation, lockfile mutation, runtime or service mutation, feature delivery, hosting transition, and old-clone mutation closed inside this decision packet."
+  ],
+  "minimum_toolchain_surfaces": [
+    "A usable host-local `pnpm` path for `apps/operations-web` validation commands.",
+    "A materialized dependency tree sufficient for `apps/operations-web` TypeScript or build validation on the host.",
+    "Python test tooling sufficient to run the admitted `packages/calc-engine` validation command on the host.",
+    "No package.json or lockfile mutation unless a later execution packet proves it is required and explicitly scopes that change."
+  ],
+  "next_packet_candidate": "Olares Dev Residency 005 - Minimum Host Toolchain Materialization Execution",
+  "next_packet_scope": "bounded_execution_of_minimum_host_local_toolchain_surfaces_only",
+  "landing_lane": "olares_developer_residency_host_toolchain_materialization_authority",
+  "migration_strategy": "decide_materialization_authority_before_any_toolchain_install_or_milestone_2_validation_claim",
+  "created_at": "2026-05-05",
+  "updated_at": "2026-05-05",
+  "delegation_status": "not-delegated",
+  "status": "complete",
+  "validation_disposition": "complete-decision-only",
+  "closure_note": "Executed 2026-05-05 as a decision-only authority gate. Packet 004 authorizes a later bounded minimum-scope host toolchain materialization execution packet, but performs no installs, downloads, dependency materialization, package or lockfile mutation, runtime or service mutation, feature delivery, hosting transition, old-clone mutation, remote rewrite, rollback, force, reset, or clean.",
+  "next_action": "Execute `Olares Dev Residency 005 - Minimum Host Toolchain Materialization Execution` only as a later bounded packet and only on the minimum host-local toolchain surfaces required for Milestone 2 validation."
+}
