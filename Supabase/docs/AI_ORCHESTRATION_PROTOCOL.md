@@ -1,12 +1,23 @@
 # RESA AI Orchestration Protocol
 ## Agent Coordination and Task Management
-### Version 1.0 | December 24, 2025
+### Version 1.1 | May 6, 2026
 
 ---
 
 ## 🎯 OVERVIEW
 
-This document defines how AI agents coordinate work through the Supabase task queue. The system enables parallel development with clear handoffs, quality gates, and state tracking.
+This document defines how AI agents coordinate work.
+
+The original December 2025 shape assumed a Supabase-first task queue.
+
+The current bounded Olares-first authority is narrower:
+
+1. `apex-jobs` is the current operational run ledger and promotion gate,
+2. packet and handoff governance remains the controlling work-queue shape,
+3. `ai_tasks` remains a later integration surface rather than the first-slice controller,
+4. the first admitted MCP slice is the trio `apex-fs`, `apex-db`, and `apex-jobs`,
+5. Claude Code remains the admitted first-slice AI surface,
+6. Codex and broader AI-services expansion remain deferred until a later explicit decision packet reopens them.
 
 ---
 
@@ -15,10 +26,27 @@ This document defines how AI agents coordinate work through the Supabase task qu
 | Agent | Primary Role | Capabilities | Best For |
 |-------|--------------|--------------|----------|
 | **desktop-claude** | Orchestrator | Complex reasoning, QC, strategy, decisions | Architecture, reviews, coordination |
-| **codex-max** | Executor | Bulk creation, pattern replication, assembly | Batch work, templates, staging |
 | **vs-code-claude** | Surgeon | Precision edits, analysis, debugging | Code fixes, file surgery, analysis |
-| **local-ai** | Processor | Embeddings, preprocessing, summarization | Background batch jobs, RAG |
+| **codex-max** | Deferred Executor | Bulk creation, pattern replication, assembly | Later explicit admission only |
+| **local-ai** | Deferred Processor | Embeddings, preprocessing, summarization | Later explicit admission only |
 | **human** | Director | Approvals, direction, funding decisions | Strategy, priorities, sign-off |
+
+---
+
+## CURRENT BOUNDED AUTHORITY
+
+Use this protocol in two layers.
+
+### Layer 1: Current Olares-first operating model
+
+1. Work is still packetized and handoff-driven.
+2. `apex-jobs` records run context and enforces promotion refusal when no successful `env=host` run exists.
+3. The minimal admitted MCP trio is `apex-fs`, `apex-db`, and `apex-jobs`.
+4. The primary goal of this layer is reducing human relay burden without implying autonomous service sprawl.
+
+### Layer 2: Future Supabase integration model
+
+The `ai_tasks` and handoff tables described below remain useful as a future bridge or richer orchestration layer, but they are not the controlling first-slice authority today.
 
 ---
 

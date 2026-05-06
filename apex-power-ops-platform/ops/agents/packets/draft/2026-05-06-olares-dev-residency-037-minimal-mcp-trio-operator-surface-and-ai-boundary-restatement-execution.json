@@ -1,0 +1,91 @@
+{
+  "packet_id": "2026-05-06-olares-dev-residency-037",
+  "title": "Minimal MCP Trio Operator Surface And AI Boundary Restatement Execution",
+  "objective": "Execute the Packet 036-selected first slice by landing a repo-visible operator surface for the admitted minimal MCP trio, restating the active AI authority boundary around `apex-jobs`, and validating the slice with live MCP and ledger-backed behavior.",
+  "domain": "infrastructure-domain",
+  "active_role": "Platform Architect",
+  "dependencies": [
+    "ops/agents/packets/draft/2026-05-06-olares-dev-residency-036-ai-workflow-boundary-and-relay-reduction-first-slice-planning.json",
+    "ops/agents/handoffs/2026-05-06-olares-dev-residency-036-ai-workflow-boundary-and-relay-reduction-first-slice-planning-handoff.md",
+    "docs/architecture/OLARES-AI-WORKFLOW-FIRST-SLICE-RUNBOOK-2026-05-06.md",
+    "tools/ai/run-minimal-mcp-trio.ps1",
+    "tools/ai/run-minimal-mcp-trio.sh",
+    "tools/ai/verify_minimal_mcp_trio.py",
+    "C:/APEX Platform/.claude/DECISION_LOG.md",
+    "C:/APEX Platform/Supabase/docs/AI_ORCHESTRATION_PROTOCOL.md"
+  ],
+  "dependency_note": "Packet 036 selected the smallest truthful first slice. Packet 037 executes that decision by landing the bounded operator surface and validating it against the already-running admitted trio rather than reopening broader AI-services work.",
+  "execution_scope": [
+    "Land PowerShell and Bash operator wrappers for `apex-fs`, `apex-db`, and `apex-jobs`.",
+    "Land a Python verification script that proves MCP initialize, tools/list, filesystem read, database query, and jobs start/end behavior.",
+    "Publish a runbook for the current first-slice AI workflow boundary.",
+    "Restate the active AI authority in `.claude/DECISION_LOG.md` and `Supabase/docs/AI_ORCHESTRATION_PROTOCOL.md`."
+  ],
+  "status": "complete",
+  "artifacts_created": [
+    "docs/architecture/OLARES-AI-WORKFLOW-FIRST-SLICE-RUNBOOK-2026-05-06.md",
+    "tools/ai/run-minimal-mcp-trio.ps1",
+    "tools/ai/run-minimal-mcp-trio.sh",
+    "tools/ai/verify_minimal_mcp_trio.py",
+    "ops/agents/handoffs/2026-05-06-olares-dev-residency-037-minimal-mcp-trio-operator-surface-and-ai-boundary-restatement-execution-handoff.md"
+  ],
+  "artifacts_updated": [
+    "C:/APEX Platform/.claude/DECISION_LOG.md",
+    "C:/APEX Platform/Supabase/docs/AI_ORCHESTRATION_PROTOCOL.md"
+  ],
+  "execution_result": {
+    "operator_surface": "landed",
+    "authority_restatement": "landed",
+    "validation": "pass",
+    "validation_mode": "adopted-existing-trio"
+  },
+  "validation_summary": {
+    "commands": [
+      "pwsh -NoProfile -File tools/ai/run-minimal-mcp-trio.ps1 -Action up",
+      "pwsh -NoProfile -File tools/ai/run-minimal-mcp-trio.ps1 -Action status",
+      "pwsh -NoProfile -File tools/ai/run-minimal-mcp-trio.ps1 -Action verify -PacketId 2026-05-06-olares-dev-residency-037",
+      "pwsh -NoProfile -File tools/ai/run-minimal-mcp-trio.ps1 -Action down",
+      "Invoke-RestMethod -Uri http://127.0.0.1:8712/health | ConvertTo-Json -Depth 5"
+    ],
+    "results": {
+      "up": {
+        "status": "adopted",
+        "fs_endpoint": "http://127.0.0.1:8710/mcp",
+        "db_endpoint": "http://127.0.0.1:8711/mcp",
+        "jobs_endpoint": "http://127.0.0.1:8712/mcp"
+      },
+      "status": {
+        "mode": "adopted",
+        "ledger_path_requested": "C:/APEX Platform/apex-power-ops-platform/.apex-data/apex-jobs-ledger.json"
+      },
+      "verify": {
+        "result": "PASS",
+        "fs_tools": [
+          "list_roots",
+          "list_directory",
+          "read_text_file"
+        ],
+        "db_tools": [
+          "list_tables",
+          "describe_table",
+          "query"
+        ],
+        "db_query": "select 1 as ok -> rowCount 1",
+        "jobs_tools": [
+          "start_run",
+          "end_run",
+          "list_runs",
+          "promote_packet"
+        ],
+        "jobs_run_id": "1778073356984-cvgk75b3"
+      },
+      "jobs_health": {
+        "status": "ok",
+        "ledger_path_active": "/apex-data/apex-jobs-ledger.json"
+      }
+    }
+  },
+  "next_packet_candidate": "Olares Dev Residency 038 - Host-Side Minimal MCP Trio Operator Adoption And Relay-Reduction Execution",
+  "closure_note": "Packet 037 closes the first bounded Olares-first AI workflow slice in repo-visible form. The current admitted trio is operatorized, the `apex-jobs` boundary is restated in the controlling authority docs, and live validation passed without widening into Codex admission or broader AI-services rollout.",
+  "next_action": "Use a later host-side packet to prove the same admitted trio from the Olares host posture and decide whether a future `ai_tasks` bridge is justified."
+}

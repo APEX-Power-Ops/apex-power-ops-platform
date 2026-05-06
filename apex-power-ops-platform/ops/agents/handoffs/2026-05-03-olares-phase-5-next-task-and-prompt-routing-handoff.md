@@ -1,8 +1,8 @@
 # Olares Phase 5 Next Task And Prompt Routing Handoff
 
 Date: 2026-05-03
-Status: Active - Olares Dev Residency Packet 007 is complete; Packet 008 is authored as the next client-only laptop posture confirmation gate
-Scope: update the next task prompts after Phase 5 Step 1, Step 2, Step 3, Packet 001, Packet 002, Packet 003, Packet 004, Packet 005, Prompt 7, Prompt 8, Packet 007, Prompt 10, Packet 008, Packet 009, Packet 010, Packet 011, Packet 012, Packet 013, Packet 014, Packet 015, Packet 016, Packet 017, Packet 018, Packet 019, Packet 020, Packet 021, Packet 022, Packet 023, Packet 024, Packet 025, Packet 026, Packet 027, Packet 028, Packet 029, Packet 030, Packet 031, Packet 032, Packet 033, Packet 034, Packet 035, Packet 036, Packet 037, Packet 038, Packet 039, Packet 040, Packet 041, Packet 042, Packet 043, Packet 044, Packet 045, Packet 046, Packet 047, Packet 048, Packet 049, Packet 050, Packet 051, and Packet 052 completion, and state the live Packet 053 execution packet
+Status: Active - Packet 038 is complete; the current next bounded follow-on is publication plus host-mirror reconciliation for the Packet 035 through Packet 038 authority set
+Scope: update the next task prompts after Phase 5 Step 1, Step 2, Step 3, Packet 001, Packet 002, Packet 003, Packet 004, Packet 005, Prompt 7, Prompt 8, Packet 007, Prompt 10, Packet 008, Packet 009, Packet 010, Packet 011, Packet 012, Packet 013, Packet 014, Packet 015, Packet 016, Packet 017, Packet 018, Packet 019, Packet 020, Packet 021, Packet 022, Packet 023, Packet 024, Packet 025, Packet 026, Packet 027, Packet 028, Packet 029, Packet 030, Packet 031, Packet 032, Packet 033, Packet 034, Packet 035, Packet 036, Packet 037, and Packet 038 completion, and state the next live Olares-first AI workflow packet
 
 Update 2026-05-06:
 
@@ -14,6 +14,17 @@ Update 2026-05-06:
 6. The final public proof rerun is green on the intended target: the governed same-origin PM routes return `200 application/json` and the promoted-host wrapper closes at `PROMOTED_HOST_SUMMARY failed=0` after the custom-domain cutover.
 7. The Render settings page lagged briefly with stale waiting labels during DNS propagation, but the live HTTPS endpoint and repo-owned seam smoke established the controlling runtime truth before the final promotion.
 8. No immediate Olares follow-on packet is required for this hosted custom-domain lane; reopen only for a new bounded infrastructure objective or a production regression.
+9. Packet 035 is now complete as a stakeholder-priority reset after Packet 034 closure: the next near-term Olares tranche is no longer defaulted to Operations Visibility execution.
+10. Operations Visibility remains a valid later business lane, but it is deprioritized for the current field-heavy window in favor of Olares-first developer-capability hardening and AI-workflow improvement that can reduce prompt relay and handoff burden.
+11. The Step 2 AI-toolchain assessment remains controlling on boundaries: Claude Code stays the only first-slice-ready AI surface, Codex remains out of the first slice, and broad AI-services expansion is still closed pending explicit trust-boundary decisions.
+12. Packet 036 is now complete and selected the minimal admitted MCP trio plus `apex-jobs` operator-surface execution as the first truthful relay-reduction slice.
+13. Packet 037 is now complete and landed the minimal MCP trio operator kit, the bounded runbook, and the authority restatement in `.claude/DECISION_LOG.md` and `Supabase/docs/AI_ORCHESTRATION_PROTOCOL.md`.
+14. Packet 037 validation passed locally through the new PowerShell surface: the wrapper adopted the already-running trio on ports `8710`, `8711`, and `8712`; `verify` returned `PASS`; `select 1 as ok` succeeded through `apex-db`; and `apex-jobs` recorded then closed run `1778073356984-cvgk75b3`.
+15. Packet 038 is now complete and proved the same admitted first-slice operator surface from `/home/olares/code/apex/apex-power-ops-platform` on the Olares host over live mesh SSH.
+16. The first host attempt exposed two real Bash-surface gaps, both now repaired in the repo-visible operator kit: envless host mirrors are tolerated, and the Bash wrapper can now adopt an already-running trio on the admitted ports instead of assuming it must start new listeners.
+17. Packet 038 host validation passed with the explicit Packet 038 id: adopted mode reported `fs`, `db`, and `jobs` healthy on `127.0.0.1:8710-8712`, `verify` returned `PASS`, `select 1 as ok` passed, and `apex-jobs` recorded then closed run `1778073914623-g2t2zb9j` while health reported ledger path `/apex-data/apex-jobs-ledger.json`.
+18. The host mirror is now dirty only in the bounded first-slice staging surface: `M tools/shell/common.sh` plus the untracked `tools/ai/` operator files.
+19. The next packet should therefore be `Olares Dev Residency 039 - Packet 035 Through Packet 038 Authority Publication And Host Mirror Reconciliation Gate`, not a default Operations Visibility implementation packet.
 
 ## Authority
 

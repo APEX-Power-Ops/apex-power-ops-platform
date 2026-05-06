@@ -334,27 +334,27 @@ PENDING_REVIEW
 
 | # | Question | Status | Decision | Rationale |
 |---|----------|--------|----------|-----------|
-| 8.1.1 | Is the `ai_tasks` table the primary work queue? | ⬜ | | Or use simpler HANDOFFS system? |
-| 8.1.2 | What task types are valid? | ⬜ | | create, enhance, review, assemble, etc. |
-| 8.1.3 | What are the task priorities and their meanings? | ⬜ | | critical, high, normal, low, background |
-| 8.1.4 | How long should a task take before it's "stuck"? | ⬜ | | Alert threshold |
+| 8.1.1 | Is the `ai_tasks` table the primary work queue? | ✅ | **No for the current Olares-first slice. `apex-jobs` is the operational run/promotion ledger and packet-handoff governance remains the controlling queue shape. `ai_tasks` stays a later integration surface, not the first-slice controller.** | Current repo truth already contains `apex-jobs` env-boundary and promotion-refusal logic, while `ai_tasks` does not yet control the admitted Olares-first execution path. |
+| 8.1.2 | What task types are valid? | ✅ | **decision, document, create, enhance, validate, review, publish, deploy, maintain** | This is the smallest useful set that matches current packetized work without overspecifying future autonomous queue behavior. |
+| 8.1.3 | What are the task priorities and their meanings? | ✅ | **critical, high, normal, low, background** | Preserve the existing five-level shape from the orchestration protocol so priority language stays consistent across docs and future bridges. |
+| 8.1.4 | How long should a task take before it's "stuck"? | ✅ | **Execution work is stuck when it has no new validation, ledger update, or handoff by the next working session; `critical` work is stuck after 30 minutes without progress evidence.** | This preserves urgency without pretending the current packetized workflow has a continuous unattended scheduler. |
 
 ### 8.2 Agent Responsibilities
 
 | # | Question | Status | Decision | Rationale |
 |---|----------|--------|----------|-----------|
-| 8.2.1 | What is Desktop Claude's primary responsibility? | ⬜ | | Orchestration, QC, complex reasoning |
-| 8.2.2 | What is VS Code Claude's primary responsibility? | ⬜ | | UI development, implementation |
-| 8.2.3 | When should Codex be used? | ⬜ | | Bulk generation? Or not at all? |
-| 8.2.4 | What requires human (Jason) decision? | ⬜ | | Business logic, priorities, approvals |
+| 8.2.1 | What is Desktop Claude's primary responsibility? | ✅ | **Orchestration, packet selection, boundary decisions, QC, and cross-surface reasoning** | The desktop or coordinator role should manage system shape and review, not absorb every implementation edit. |
+| 8.2.2 | What is VS Code Claude's primary responsibility? | ✅ | **Precision implementation, validation, file surgery, and bounded execution from the active workspace or host mirror** | This is the strongest current executor surface for repo-local work. |
+| 8.2.3 | When should Codex be used? | ✅ | **Not in the current first slice. Codex is deferred until a later explicit decision packet admits it for bounded bulk execution with a written trust boundary.** | Step 2 kept Codex unresolved and current Olares-first leverage does not require reopening that decision yet. |
+| 8.2.4 | What requires human (Jason) decision? | ✅ | **priority shifts, business logic changes, auth or public-boundary changes, new third-party account commitments, and any intentional scope widening beyond the currently authorized packet lane** | These remain stakeholder decisions even when technical execution is delegated. |
 
 ### 8.3 Quality Gates
 
 | # | Question | Status | Decision | Rationale |
 |---|----------|--------|----------|-----------|
-| 8.3.1 | What defines "done" for a task? | ⬜ | | Code works? Tests pass? Documented? |
-| 8.3.2 | What requires Desktop Claude review? | ⬜ | | All VS Code work? Only complex? |
-| 8.3.3 | What requires Jason review? | ⬜ | | Business logic? User-facing? |
+| 8.3.1 | What defines "done" for a task? | ✅ | **A task is done only when its scoped artifact exists, the narrowest available validation has run, and the result is captured in repo-visible evidence or an equivalent ledger or handoff surface.** | This matches the packetized workflow and avoids undocumented terminal-only completion claims. |
+| 8.3.2 | What requires Desktop Claude review? | ✅ | **architecture or protocol changes, multi-file risky edits, boundary changes, and any work prepared for publication by another executor** | Coordinator review is reserved for work that changes system shape or needs QC, not every trivial edit. |
+| 8.3.3 | What requires Jason review? | ✅ | **business workflow decisions, user-facing behavior changes that alter operating policy, new external services or spending, and any auth or public-ingress change** | These are the decisions with real stakeholder and operational impact. |
 
 ---
 

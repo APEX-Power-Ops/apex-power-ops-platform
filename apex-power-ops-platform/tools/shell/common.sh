@@ -16,6 +16,10 @@ import_apex_env_file() {
     env_file="${repo_root}/.env.dev.template"
   fi
 
+  if [[ ! -f "${env_file}" ]]; then
+    return 0
+  fi
+
   set -a
   # shellcheck disable=SC1090
   source "${env_file}"
