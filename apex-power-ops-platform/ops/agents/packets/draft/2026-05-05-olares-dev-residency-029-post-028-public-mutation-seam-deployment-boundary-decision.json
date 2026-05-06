@@ -1,0 +1,42 @@
+{
+  "packet_id": "2026-05-05-olares-dev-residency-029",
+  "title": "Post-028 Public Mutation-Seam Deployment Boundary Decision",
+  "objective": "Decide the smallest truthful next slice after Packet 028 now that the promoted public host serves the remediated static assets but the PM mutation-seam routes are still absent from all public hosts.",
+  "domain": "delivery-domain",
+  "active_role": "Hosted Runtime Boundary Decision Operator",
+  "dependencies": [
+    "ops/agents/packets/draft/2026-05-05-olares-dev-residency-028-bounded-operations-web-preview-promote-and-promoted-host-smoke-execution.json",
+    "ops/agents/handoffs/2026-05-05-olares-dev-residency-028-bounded-operations-web-preview-promote-and-promoted-host-smoke-execution-handoff.md",
+    "apps/operations-web/DEPLOYMENT_VALIDATION.md",
+    "apps/operations-web/next.config.ts",
+    "apps/mutation-seam/DEPLOYMENT.md",
+    "plan/infrastructure-olares-full-implementation-roadmap-1.md"
+  ],
+  "decision_selected": "open_bounded_public_mutation_seam_deployment_or_ingress_planning_slice",
+  "decision_rationale": [
+    "Packet 028 succeeded in promoting the new operations-web build to production and proved that the affected PM and approval surfaces now request same-origin `/api/v1` instead of `localhost`.",
+    "Those same-origin requests still return `404` on `https://operations.apexpowerops.com`, so the remaining blocker is no longer the public static bundle.",
+    "A control check against `https://control.apexpowerops.com/api/v1/reads/approval-queue` and `/api/v1/schedule/projects` also returns `Not Found`, so a simple rewrite to the existing public control-plane host would not satisfy the PM mutation-seam contract.",
+    "`apps/operations-web` currently has no rewrite or proxy contract for `/api/v1/{reads,schedule,mutations}`, and the repo surfaces reviewed in this slice do not define any existing public mutation-seam host, ingress, or deployment workflow.",
+    "The smallest truthful next slice is therefore planning, not further runtime poking: define the exact public deployment or ingress contract for the mutation-seam routes that the remediated public PM and lead surfaces now correctly call."
+  ],
+  "decision_evidence": {
+    "production_alias_deployment": "dpl_3rR9YukiwRwnMcdbKN87Hh87rpVr",
+    "public_host_route_smoke": "SMOKE_SUMMARY failed=0 passed=8",
+    "public_host_same_origin_reads_result": "https://operations.apexpowerops.com/api/v1/reads/approval-queue returns 404",
+    "public_host_same_origin_schedule_result": "https://operations.apexpowerops.com/api/v1/schedule/projects returns 404",
+    "control_host_reads_result": "https://control.apexpowerops.com/api/v1/reads/approval-queue returns Not Found",
+    "control_host_schedule_result": "https://control.apexpowerops.com/api/v1/schedule/projects returns Not Found",
+    "operations_web_proxy_contract": "no rewrite or proxy contract found in apps/operations-web next.config or adjacent deploy config"
+  },
+  "status": "complete",
+  "handoff_target": "Platform Architect",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-05-olares-dev-residency-029-post-028-public-mutation-seam-deployment-boundary-decision-handoff.md"
+  ],
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-05-olares-dev-residency-029-post-028-public-mutation-seam-deployment-boundary-decision-handoff.md",
+  "validation_disposition": "complete-decision-only",
+  "next_packet_candidate": "Olares Dev Residency 030 - Bounded Public Mutation-Seam Deployment Or Ingress Planning",
+  "closure_note": "Executed 2026-05-05 as a decision-only packet. Packet 029 closes the post-028 boundary by naming the real remaining blocker: no public mutation-seam deployment or ingress contract exists for the PM `reads`, `schedule`, and `mutations` routes that the promoted public surfaces now correctly target.",
+  "next_action": "Execute Packet 030 as bounded public mutation-seam deployment or ingress planning only."
+}

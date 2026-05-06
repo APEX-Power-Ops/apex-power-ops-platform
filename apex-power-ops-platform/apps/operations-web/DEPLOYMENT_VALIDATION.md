@@ -62,6 +62,8 @@ Minimum runtime checks:
 
 `apps/operations-web` currently depends on the governed control-plane routes consumed by the apparatus study-resource explorer and the relay read-only browser slice.
 
+The re-homed PM surfaces additionally depend on the hosted mutation seam being reachable through the same-origin Next rewrite contract.
+
 Before claiming browser-surface readiness against any target host, verify the backing seam first.
 
 Local seam validation path:
@@ -81,6 +83,34 @@ Fail conditions:
 
 1. the browser app is buildable but the required backend seam is absent
 2. the target host exposes stale frontend code against an older backend without the required route
+
+## PM Seam Ingress Proof
+
+`apps/operations-web` now owns the public ingress layer for PM-facing `/api/v1/{reads,schedule,mutations}` routes.
+
+Required server-side environment variable:
+
+```text
+MUTATION_SEAM_BASE_URL=https://mutation-seam.apexpowerops.com
+```
+
+From `C:/APEX Platform/apex-power-ops-platform` run:
+
+```powershell
+python apps/mutation-seam/scripts/smoke_deployed_mutation_seam.py --base-url https://mutation-seam.apexpowerops.com
+pnpm --dir C:/APEX Platform/apex-power-ops-platform --filter @apex/operations-web build
+```
+
+Pass conditions:
+
+1. the mutation seam public host passes the deployed seam smoke
+2. the operations-web build succeeds with the rewrite contract present
+3. hosted PM pages can keep calling same-origin `/api/v1/*` without public-host framework `404`
+
+Fail conditions:
+
+1. the PM pages are deployed but `/api/v1/reads/*` and `/api/v1/schedule/*` still 404 on the public host
+2. the seam host exists, but `MUTATION_SEAM_BASE_URL` is unset or points at the wrong target
 
 ## Hosted Route Smoke
 

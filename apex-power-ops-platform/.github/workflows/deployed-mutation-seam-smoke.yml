@@ -1,0 +1,72 @@
+name: Deployed Mutation Seam Smoke
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: Public mutation-seam base URL to validate
+        required: false
+        default: https://mutation-seam.apexpowerops.com
+        type: string
+      initial_wait_seconds:
+        description: Optional wait before the first validation attempt
+        required: false
+        default: '0'
+        type: string
+      environment:
+        description: Logical environment label for the validation run
+        required: false
+        default: production
+        type: string
+  workflow_call:
+    inputs:
+      base_url:
+        required: false
+        type: string
+        default: https://mutation-seam.apexpowerops.com
+      initial_wait_seconds:
+        required: false
+        type: string
+        default: '0'
+      environment:
+        required: false
+        type: string
+        default: production
+  repository_dispatch:
+    types:
+      - mutation-seam-deploy-complete
+  schedule:
+    - cron: '31 9 * * *'
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      BASE_URL: ${{ inputs.base_url || github.event.client_payload.base_url || 'https://mutation-seam.apexpowerops.com' }}
+      INITIAL_WAIT_SECONDS: ${{ inputs.initial_wait_seconds || github.event.client_payload.initial_wait_seconds || '0' }}
+      ENVIRONMENT_LABEL: ${{ inputs.environment || github.event.client_payload.environment || 'production' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Wait for deployment propagation if requested
+        shell: bash
+        run: |
+          wait_seconds="${INITIAL_WAIT_SECONDS:-0}"
+          if [[ "$wait_seconds" =~ ^[0-9]+$ ]] && [[ "$wait_seconds" != "0" ]]; then
+            echo "Sleeping ${wait_seconds}s before smoke validation"
+            sleep "$wait_seconds"
+          fi
+      - name: Run deployed mutation-seam smoke validation
+        shell: bash
+        run: |
+          set -o pipefail
+          python apps/mutation-seam/scripts/smoke_deployed_mutation_seam.py --base-url "$BASE_URL" | tee deployed-mutation-seam-smoke-output.txt
+      - name: Upload smoke output artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployed-mutation-seam-smoke-output
+          path: deployed-mutation-seam-smoke-output.txt

@@ -1,0 +1,38 @@
+{
+  "packet_id": "2026-05-05-olares-dev-residency-027",
+  "title": "Post-026 Public-Host Remediation Outcome Decision",
+  "objective": "Decide the smallest truthful next step after Packet 026 now that the API-origin remediation burst is published and mirrored to Olares but the promoted host still serves older browser assets.",
+  "domain": "delivery-domain",
+  "active_role": "Hosted Runtime Boundary Decision Operator",
+  "dependencies": [
+    "ops/agents/packets/draft/2026-05-05-olares-dev-residency-026-packet-022-closeout-through-packet-025-api-origin-remediation-authority-publication-and-host-mirror-resync-gate.json",
+    "ops/agents/handoffs/2026-05-05-olares-dev-residency-026-packet-022-closeout-through-packet-025-api-origin-remediation-authority-publication-and-host-mirror-resync-gate-handoff.md",
+    "apps/operations-web/DEPLOYMENT_VALIDATION.md",
+    ".github/workflows/operations-web-hosted-smoke.yml",
+    "ops/agents/handoffs/2026-05-03-tcc-relay-phase-2-operations-web-promoted-host-redeploy-blocker-handoff.md",
+    "plan/infrastructure-olares-full-implementation-roadmap-1.md"
+  ],
+  "decision_selected": "execute_bounded_operations_web_preview_promote_and_promoted_host_smoke",
+  "decision_rationale": [
+    "Post-publication browser checks against `https://operations.apexpowerops.com` still show requests targeting `http://localhost:8000`, so the promoted host is still serving older assets rather than the Packet 025 remediation burst.",
+    "Vercel inspection shows the production alias remains pinned to deployment `dpl_2emJi8u3ZuMMKb42hDrWjo9Kxg5R` from 2026-05-03, while a newer ready preview deployment now exists for `apex-operations-web`.",
+    "The ready preview cannot be used as the governed public proof gate because preview protection redirects browser access to Vercel login, which matches the repo's deployment note that preview hosts can return `401` under protection.",
+    "The smallest truthful next slice is therefore a bounded hosted-runtime action: promote the newest ready preview to production and rerun the existing promoted-host smoke against `https://operations.apexpowerops.com`."
+  ],
+  "decision_evidence": {
+    "production_alias_deployment": "dpl_2emJi8u3ZuMMKb42hDrWjo9Kxg5R",
+    "ready_preview_deployment": "dpl_DjgmqiUJXt5C7z2tz7BJ7iB6yseZ",
+    "preview_protection_observation": "preview routes redirect to Vercel login and are not suitable for public proof",
+    "public_host_observation": "promoted host still requests localhost API bases after Packet 026 publication"
+  },
+  "status": "complete",
+  "handoff_target": "Platform Architect",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-05-olares-dev-residency-027-post-026-public-host-remediation-outcome-decision-handoff.md"
+  ],
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-05-olares-dev-residency-027-post-026-public-host-remediation-outcome-decision-handoff.md",
+  "validation_disposition": "complete-decision-only",
+  "next_packet_candidate": "Olares Dev Residency 028 - Bounded Operations-Web Preview Promote And Promoted-Host Smoke Execution",
+  "closure_note": "Executed 2026-05-05 as a decision-only packet. Packet 027 closes the post-026 boundary by selecting a bounded operations-web hosted-runtime slice: promote the newest ready preview to production and rerun the promoted-host smoke, rather than pretending the published repo state is already live on the promoted host.",
+  "next_action": "Execute Packet 028 as preview promote plus promoted-host smoke only."
+}
