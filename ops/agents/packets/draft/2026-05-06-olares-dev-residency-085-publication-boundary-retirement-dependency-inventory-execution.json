@@ -14,7 +14,7 @@
   "execution_summary": "Packet 085 records the concrete operator, authority-surface, and README dependencies that still keep the Windows parent-root boundary active and routes the next Olares slice to the host-native publication workflow rather than to generic migration rhetoric.",
   "selected_scope_note": "This execution is dependency inventory and routing only. It does not retire the publication boundary, change GitHub canonical status, or mutate runtime, package, hosting, or auth surfaces.",
   "execution_lane_opened": true,
-  "artifact_published": false,
+  "artifact_published": true,
   "status": "complete",
   "output_artifacts": [
     "C:/APEX Platform/apex-power-ops-platform/docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md",
@@ -23,8 +23,15 @@
   "handoff_target": "Platform Architect",
   "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-06-olares-dev-residency-085-publication-boundary-retirement-dependency-inventory-execution-handoff.md",
   "implementation_ready_candidate": false,
-  "next_packet_candidate": "Olares Dev Residency 086 - Packet 085 Authority Publication And Host Mirror Resync Gate",
+  "next_packet_candidate": "Olares Dev Residency 087 - Host-Native Operator Publication Workflow Execution",
   "sql_permission": false,
   "sql_permission_note": "This execution packet authorizes no database writes, no source/test runtime mutation, no package or lockfile mutation, no installs, no runtime or service mutation, no AI-services expansion, no remote rewrite, no rollback or force/reset/clean, and no old-clone mutation.",
-  "validation_disposition": "local-doc-validation-pending-publication"
+  "validation_disposition": "published-and-host-resynced",
+  "post_publication_host_validation": {
+    "publication_commit": "20f8940e98b08a79fe7e77a7e7f6e31b21e422d9",
+    "host_head": "20f8940e98b08a79fe7e77a7e7f6e31b21e422d9",
+    "host_status_count": 0,
+    "old_clone_head": "2836a2622309b4e146ca24f23b5bf87312c0c857",
+    "old_clone_status_count": 30
+  }
 }

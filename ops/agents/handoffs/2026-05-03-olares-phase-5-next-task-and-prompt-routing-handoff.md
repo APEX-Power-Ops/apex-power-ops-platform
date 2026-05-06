@@ -122,7 +122,9 @@ Update 2026-05-06:
 114. Packet 084 published the alignment tranche in commit `52e2de103ed51c6a944681bf47ddc4f95a1c8ed2` (`Align Olares migration governance`), pushed `origin/clean-main`, restored `/home/olares/code/apex` to clean parity at the same commit, and preserved `/home/olares/src/apex-power-ops-platform` observe-only at `2836a2622309b4e146ca24f23b5bf87312c0c857` with status count `30`.
 115. Packet 085 is now complete as that next concrete migration-dependency slice. It inventories the remaining dependencies that still keep `C:/APEX Platform` active as the transitional publication boundary.
 116. The inventory records four current dependency classes: Windows-root publication control, Windows-first operator publication flow, parent-root authority surfaces outside the platform subtree, and active lane README command examples that still normalize Windows-local execution.
-117. The next truthful move is publication and host-mirror resync for Packet 085, then selection of the first retirement target from that inventory, starting with the host-native operator publication workflow.
+117. Packet 086 is now complete as the publication/resync gate for Packet 085.
+118. Packet 086 published the dependency-inventory tranche in commit `20f8940e98b08a79fe7e77a7e7f6e31b21e422d9` (`Inventory Olares publication boundary dependencies`), pushed `origin/clean-main`, restored `/home/olares/code/apex` to clean parity at the same commit, and preserved `/home/olares/src/apex-power-ops-platform` observe-only at `2836a2622309b4e146ca24f23b5bf87312c0c857` with status count `30`.
+119. The next truthful move is to author and execute the host-native operator publication workflow packet as the first retirement target selected from the published dependency inventory.
 
 
 

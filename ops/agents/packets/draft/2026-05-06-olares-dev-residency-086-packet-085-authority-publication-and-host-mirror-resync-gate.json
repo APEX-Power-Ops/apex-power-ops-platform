@@ -20,8 +20,16 @@
     "rollback or force/reset/clean",
     "old-clone mutation"
   ],
-  "artifact_published": false,
-  "host_mirror_resynced": false,
+  "artifact_published": true,
+  "host_mirror_resynced": true,
+  "publication_commit": "20f8940e98b08a79fe7e77a7e7f6e31b21e422d9",
+  "commit_message": "Inventory Olares publication boundary dependencies",
+  "host_mirror_state": {
+    "head": "20f8940e98b08a79fe7e77a7e7f6e31b21e422d9",
+    "status_count": 0,
+    "old_clone_head": "2836a2622309b4e146ca24f23b5bf87312c0c857",
+    "old_clone_status_count": 30
+  },
   "status": "complete",
   "output_artifacts": [
     "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-06-olares-dev-residency-086-packet-085-authority-publication-and-host-mirror-resync-gate-handoff.md"
@@ -29,8 +37,9 @@
   "handoff_target": "Platform Architect",
   "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-06-olares-dev-residency-086-packet-085-authority-publication-and-host-mirror-resync-gate-handoff.md",
   "implementation_ready_candidate": false,
-  "next_packet_candidate": "Execute Packet 086 as bounded publication and host-mirror resync only.",
+  "next_packet_candidate": "Olares Dev Residency 087 - Host-Native Operator Publication Workflow Execution",
   "sql_permission": false,
   "sql_permission_note": "This publication gate authorizes no database writes, no source/test runtime mutation, no package or lockfile mutation, no installs, no runtime or service mutation, no AI-services expansion, no remote rewrite, no rollback or force/reset/clean, and no old-clone mutation.",
-  "validation_disposition": "pending-publication-and-host-resync"
+  "validation_disposition": "pass",
+  "closure_note": "Executed 2026-05-06. Packet 086 published Packet 085 execution authority, the dependency inventory, status, roadmap, cockpit, and routing updates in commit `20f8940e98b08a79fe7e77a7e7f6e31b21e422d9` with message `Inventory Olares publication boundary dependencies`, pushed `origin/clean-main`, and fast-forwarded `/home/olares/code/apex` from clean `0085af08ccfee1e077a354824fce59c0250e675d` to clean parity at `20f8940e98b08a79fe7e77a7e7f6e31b21e422d9`. `/home/olares/src/apex-power-ops-platform` remained observe-only at `2836a2622309b4e146ca24f23b5bf87312c0c857` with status count `30`."
 }
