@@ -1,0 +1,63 @@
+{
+  "packet_id": "2026-05-05-olares-dev-residency-020",
+  "title": "Non-Host Browser Compare Decision Surface",
+  "objective": "Decide whether any later browser comparison should run from a non-host or optional-client surface while preserving the Olares host as the durable development anchor and keeping host browser-runtime expansion closed by default.",
+  "domain": "delivery-domain",
+  "active_role": "Operations Visibility Decision Operator",
+  "dependencies": [
+    "ops/agents/packets/draft/2026-05-05-olares-dev-residency-019-host-browser-runtime-toolchain-reopening-decision.json",
+    "ops/agents/handoffs/2026-05-05-olares-dev-residency-019-host-browser-runtime-toolchain-reopening-decision-handoff.md",
+    "apps/operations-web/tests/browser-shell.static-surfaces.smoke.spec.ts",
+    "plan/infrastructure-olares-full-implementation-roadmap-1.md"
+  ],
+  "execution_mode": "decision_only",
+  "required_inputs": [
+    "Packet 019 closure authority",
+    "Current rule that host browser-runtime expansion remains closed",
+    "The browser static-surface smoke target in `apps/operations-web/tests/browser-shell.static-surfaces.smoke.spec.ts`"
+  ],
+  "decision_scope": [
+    "Decide whether any later browser comparison should be routed to a workstation or optional-client surface.",
+    "Preserve the Olares host as the durable development anchor.",
+    "Keep host browser-runtime expansion closed unless a separate later authority packet changes that rule."
+  ],
+  "explicit_no_go_items": [
+    "host browser-runtime reopening",
+    "source edits",
+    "package or lockfile mutation",
+    "runtime or service mutation",
+    "remote rewrite",
+    "rollback, force, reset, or clean",
+    "old-clone mutation or promotion"
+  ],
+  "handoff_target": "Platform Architect",
+  "decision_selected": "open_bounded_non_host_public_host_static_surface_compare_execution",
+  "decision_rationale": [
+    "The public Operations host can be reached from the current non-host browser surface without reopening host browser-runtime tooling.",
+    "Live checks against `https://operations.apexpowerops.com/pm-review/index.html` and `/pm-review/schedule.html` showed the expected page titles and headings rendered in a real browser while preserving the Olares host as the durable development anchor.",
+    "Those same pages still attempt to reach `http://localhost:8000/...` for live schedule data and fail with `ERR_CONNECTION_REFUSED`, so the truthful bounded slice is a render-level static-surface compare only, not a live-data browser proof.",
+    "This keeps host browser-runtime expansion closed while still allowing a narrow optional-client or workstation browser validation lane."
+  ],
+  "decision_evidence": {
+    "non_host_surface": "integrated browser or workstation browser",
+    "public_host": "https://operations.apexpowerops.com",
+    "verified_routes": [
+      "/pm-review/index.html",
+      "/pm-review/schedule.html"
+    ],
+    "verified_titles": [
+      "APEX PM Drivers Review",
+      "APEX PM Schedule Review"
+    ],
+    "live_data_boundary": "routes still call localhost schedule APIs and fail with ERR_CONNECTION_REFUSED"
+  },
+  "status": "complete",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-05-olares-dev-residency-020-non-host-browser-compare-decision-surface-handoff.md"
+  ],
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-05-olares-dev-residency-020-non-host-browser-compare-decision-surface-handoff.md",
+  "validation_disposition": "complete-decision-only",
+  "next_packet_candidate": "Olares Dev Residency 021 - Bounded Non-Host Public-Host Static Surface Browser Compare Execution",
+  "closure_note": "Executed 2026-05-05 as a decision-only packet. Packet 020 opens a bounded non-host browser compare lane limited to public-host static-surface render checks and explicitly keeps live-data browser proof closed because the current routes still depend on localhost schedule APIs.",
+  "next_action": "Execute Packet 021 as a bounded non-host public-host static-surface browser compare slice."
+}

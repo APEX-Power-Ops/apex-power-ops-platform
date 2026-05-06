@@ -50,12 +50,24 @@
     "`/home/olares/src/apex-power-ops-platform` remains observe-only and unchanged."
   ],
   "handoff_target": "Platform Architect",
-  "status": "authored",
+  "status": "complete",
   "output_artifacts": [
     "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-05-olares-dev-residency-017-packet-012-through-packet-016-authority-publication-and-host-mirror-resync-gate-handoff.md"
   ],
   "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-05-olares-dev-residency-017-packet-012-through-packet-016-authority-publication-and-host-mirror-resync-gate-handoff.md",
-  "validation_disposition": "authored-pending-execution",
-  "closure_note": "Not yet executed. Packet 017 is authored as the bounded publication and host-mirror resync gate for the local Packet 012 through Packet 016 Operations Visibility authority burst.",
-  "next_action": "Execute this packet as publication and host-resync only. Do not widen into browser-runtime work, source edits, or unrelated authority drift."
+  "published_commit": "28db1524a6fbf1b4de2c7da5e32898f9a85b15e3",
+  "commit_message": "Publish Olares PM review authority burst",
+  "execution_evidence": {
+    "local_post_commit_head": "28db1524a6fbf1b4de2c7da5e32898f9a85b15e3",
+    "push_target": "origin/clean-main",
+    "host_pre_head": "56a33d452397feb0e75b94aa5af81ba93ade9031",
+    "host_post_head": "28db1524a6fbf1b4de2c7da5e32898f9a85b15e3",
+    "host_post_status": "clean",
+    "old_clone_head": "2836a2622309b4e146ca24f23b5bf87312c0c857",
+    "old_clone_status_count": 17
+  },
+  "validation_disposition": "complete-publication-and-host-resync-pass",
+  "closure_note": "Executed 2026-05-05. Packet 017 published the bounded Packet 012 through Packet 016 Operations Visibility authority burst plus the authored Packet 017 gate in commit `28db1524a6fbf1b4de2c7da5e32898f9a85b15e3` with message `Publish Olares PM review authority burst`, pushed `origin/clean-main`, fast-forwarded `/home/olares/code/apex` from `56a33d452397feb0e75b94aa5af81ba93ade9031` to clean parity at `28db1524a6fbf1b4de2c7da5e32898f9a85b15e3`, and preserved `/home/olares/src/apex-power-ops-platform` as observe-only at `2836a2622309b4e146ca24f23b5bf87312c0c857` with status count `17`.",
+  "next_packet_candidate": "Olares Dev Residency 018 - Post-017 Host Browser Runtime Readiness Decision",
+  "next_action": "Keep host browser-runtime execution closed until the post-publication browser-runtime readiness decision is recorded."
 }
