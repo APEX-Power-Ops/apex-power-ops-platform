@@ -1,0 +1,47 @@
+{
+  "packet_id": "2026-05-06-olares-dev-residency-034",
+  "title": "Mutation-Seam Custom-Domain DNS Closure And Operations-Web Env Realignment",
+  "objective": "Close the residual hosted custom-domain lane by saving the authoritative GoDaddy CNAME, proving `https://mutation-seam.apexpowerops.com` live over HTTPS, realigning `apex-operations-web` back to that custom-domain seam target across environments, and rerunning governed public proof after the final production cutover.",
+  "domain": "delivery-domain",
+  "active_role": "Hosted Runtime Operator",
+  "dependencies": [
+    "ops/agents/packets/draft/2026-05-06-olares-dev-residency-033-credentialed-mutation-seam-hosted-repair-and-public-pm-live-data-proof-with-custom-domain-dns-pending.json",
+    "ops/agents/handoffs/2026-05-06-olares-dev-residency-033-credentialed-mutation-seam-hosted-repair-and-public-pm-live-data-proof-with-custom-domain-dns-pending-handoff.md",
+    "apps/mutation-seam/DEPLOYMENT_VALIDATION.md",
+    "apps/operations-web/DEPLOYMENT_VALIDATION.md",
+    "plan/infrastructure-olares-full-implementation-roadmap-1.md"
+  ],
+  "decision_selected": "close_residual_custom_domain_lane_via_authoritative_dns_commit_final_env_realignment_and_public_proof_rerun",
+  "decision_rationale": [
+    "Packet 033 left one narrow residue rather than a functional blocker: the hosted PM lane was already green through the Render hostname, so the smallest truthful next slice was to finish the intended custom-domain path instead of reopening source work or generic platform exploration.",
+    "The decisive cutover checks were public DNS resolution and live HTTPS behavior at `mutation-seam.apexpowerops.com`; the Render settings page briefly lagged with stale waiting labels during propagation, so runtime truth had to be established from the live endpoint and repo-owned smoke rather than from dashboard text alone.",
+    "Because `MUTATION_SEAM_BASE_URL` is deployment-scoped on Vercel, the environment realignment required a fresh preview-derived deployment and then a new production promotion before the public browser host could truthfully be said to target the intended custom-domain seam host."
+  ],
+  "execution_summary": [
+    "Completed the GoDaddy DNS write for `mutation-seam.apexpowerops.com` by saving the CNAME `mutation-seam -> apex-platform-mutation-seam.onrender.com` through the account OTP flow, then confirmed public resolution through both `8.8.8.8` and `1.1.1.1` before the local resolver caught up.",
+    "Proved that `https://mutation-seam.apexpowerops.com` was the real live seam endpoint by loading `/health` successfully in the browser and rerunning `apps/mutation-seam/scripts/smoke_deployed_mutation_seam.py` against the custom domain to `RESULT PASS`.",
+    "Realigned `MUTATION_SEAM_BASE_URL` on the real Vercel project `apex-operations-web` back to `https://mutation-seam.apexpowerops.com` across Production, Preview, and Development using the isolated link at `C:/APEX Platform/tmp/vercel-apex-operations-web-link`, then verified the effective values with `vercel env pull`.",
+    "Created a fresh preview-derived deployment `https://apex-operations-4f2acc4np-jasonlswenson-sys-projects.vercel.app` and promoted it to new production deployment `dpl_8kQsnU68Jjej285HbWpEEdRVHDZv` at `https://apex-operations-pp62b0s3o-jasonlswenson-sys-projects.vercel.app`, now aliased to `https://operations.apexpowerops.com`.",
+    "Revalidated the public same-origin PM routes and reran the governed promoted-host proof after the final cutover, closing again at `PROMOTED_HOST_SUMMARY failed=0` with the intended custom-domain seam target in place."
+  ],
+  "validation": {
+    "godaddy_dns_commit": "GoDaddy DNS UI -> PASS (success alert `Your DNS record has been updated successfully` after saving CNAME `mutation-seam -> apex-platform-mutation-seam.onrender.com`)",
+    "public_dns_resolution": "`Resolve-DnsName mutation-seam.apexpowerops.com -Server 8.8.8.8` and `-Server 1.1.1.1` -> PASS (CNAME chain resolves through `apex-platform-mutation-seam.onrender.com` to the Render origin); later the default resolver also resolved the same chain",
+    "custom_domain_health": "browser probe of `https://mutation-seam.apexpowerops.com/health` -> PASS (`{\"status\":\"healthy\",\"version\":\"0.1.0\",\"seam\":\"mutation-seam\"}`)",
+    "custom_domain_seam_smoke": "`python apps/mutation-seam/scripts/smoke_deployed_mutation_seam.py --base-url https://mutation-seam.apexpowerops.com` -> PASS (`RESULT PASS`)",
+    "vercel_env_realignment": "`vercel env pull` for Production, Preview, and Development from `C:/APEX Platform/tmp/vercel-apex-operations-web-link` -> PASS (`MUTATION_SEAM_BASE_URL=\"https://mutation-seam.apexpowerops.com\"` in all three environments)",
+    "production_cutover": "`npx -y vercel redeploy https://apex-operations-71q36o7vp-jasonlswenson-sys-projects.vercel.app --target preview --scope jasonlswenson-sys-projects` -> PASS (`https://apex-operations-4f2acc4np-jasonlswenson-sys-projects.vercel.app`); `npx -y vercel promote https://apex-operations-4f2acc4np-jasonlswenson-sys-projects.vercel.app --yes --scope jasonlswenson-sys-projects` -> PASS (created production deployment `dpl_8kQsnU68Jjej285HbWpEEdRVHDZv`, aliased to `https://operations.apexpowerops.com`)",
+    "public_same_origin_routes": "direct probes against production alias -> PASS (`/api/v1/reads/approval-queue`, `/api/v1/schedule/projects`, `/api/v1/schedule/drivers`, `/api/v1/schedule/tracer?task_id=probe-task`, `/api/v1/schedule/variance` all returned `200 application/json`)",
+    "promoted_host_proof": "`npx pnpm --dir C:/APEX Platform/apex-power-ops-platform --filter @apex/operations-web smoke:promoted-host --operations-web-base-url https://operations.apexpowerops.com --control-plane-base-url https://control.apexpowerops.com --skip-authenticated-checks` -> PASS (`PROMOTED_HOST_SUMMARY failed=0`)"
+  },
+  "status": "complete",
+  "handoff_target": "Platform Architect",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-06-olares-dev-residency-034-mutation-seam-custom-domain-dns-closure-and-operations-web-env-realignment-handoff.md"
+  ],
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-06-olares-dev-residency-034-mutation-seam-custom-domain-dns-closure-and-operations-web-env-realignment-handoff.md",
+  "validation_disposition": "custom_domain_mutation_seam_live_operations_web_realigned_and_public_proof_green",
+  "next_packet_candidate": "None - hosted mutation-seam custom-domain lane closed",
+  "closure_note": "Executed 2026-05-06 as the residual custom-domain closure packet. Packet 034 truthfully closes the hosted mutation-seam lane end-to-end: authoritative DNS is present, the intended custom-domain seam host is healthy, `operations-web` production is back on a deployment built with `MUTATION_SEAM_BASE_URL=https://mutation-seam.apexpowerops.com`, and the governed public proof suite closes green. Render settings text lagged during propagation but no longer defined runtime truth.",
+  "next_action": "No immediate follow-on packet is required for this hosted custom-domain lane. Reopen only for a new bounded infrastructure objective or a production regression."
+}

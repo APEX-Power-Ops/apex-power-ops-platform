@@ -1,6 +1,6 @@
 # Apex Power Ops - Project Status
 
-> **Last Updated**: May 2, 2026 (Olares private-lane host-offsite automation closure addendum)
+> **Last Updated**: May 6, 2026 (Olares hosted mutation-seam custom-domain closure addendum)
 > **Phase**: Operations Visibility Schema Ready, NETA Import Complete, Olares bounded private lane operational with daily backup automation and host-owned encrypted offsite cadence
 > **See Also**: `PROJECT_OVERVIEW.md` for full system architecture
 
@@ -46,6 +46,7 @@ handoffs.
 5. The host-owned encrypted offsite backup lane is now live and validated in bounded scope: the Backblaze repository is reachable from the Olares host, a fresh `personal-notes` snapshot was written, and the restore drill recovered and validated that snapshot without touching the live runtime.
 6. The workstation-mediated OneDrive mirror remains preserved as a secondary off-host copy path, not the only one.
 7. The current bounded backup-governance follow-on is now closed through host-owned encrypted offsite automation, recurring restore-drill cadence, and hardened timer controls; the next approved moves remain limited to maintenance reruns unless a later packet intentionally widens scope.
+8. The bounded hosted public PM lane is now also closed end-to-end: `https://mutation-seam.apexpowerops.com` serves the live hosted seam over HTTPS, `https://operations.apexpowerops.com` is cut to production deployment `dpl_8kQsnU68Jjej285HbWpEEdRVHDZv`, and the public same-origin PM plus governed promoted-host proof rerun green against the intended custom-domain target.
 
 ```mermaid
 pie title Project Completion Status
