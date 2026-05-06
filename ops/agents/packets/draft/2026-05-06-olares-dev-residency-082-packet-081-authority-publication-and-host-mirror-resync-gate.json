@@ -1,0 +1,37 @@
+{
+  "packet_id": "2026-05-06-olares-dev-residency-082",
+  "title": "Packet 081 Authority Publication And Host Mirror Resync Gate",
+  "objective": "Publish the Packet 081 cockpit wording hardening through the parent-root boundary and restore `/home/olares/code/apex` to clean parity so the compact lane register is durably non-brittle on the authoritative host mirror.",
+  "domain": "infrastructure-domain",
+  "active_role": "Platform Architect",
+  "dependencies": [
+    "ops/agents/packets/draft/2026-05-06-olares-dev-residency-081-pm-cockpit-durable-frontier-wording-execution.json",
+    "ops/agents/handoffs/2026-05-06-olares-dev-residency-081-pm-cockpit-durable-frontier-wording-execution-handoff.md"
+  ],
+  "dependency_note": "Packet 081 hardened the cockpit wording locally. This gate records publication to the GitHub-canonical parent-root boundary and restoration of the authoritative host mirror to clean parity.",
+  "decision_mode": "publication_gate",
+  "forbidden_scope": [
+    "package or lockfile mutation",
+    "installs",
+    "runtime or service mutation",
+    "AI-services expansion",
+    "Git hosting transition",
+    "remote rewrite",
+    "rollback or force/reset/clean",
+    "old-clone mutation",
+    "dormant-lane reopening"
+  ],
+  "artifact_published": false,
+  "host_mirror_resynced": false,
+  "status": "complete",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-06-olares-dev-residency-082-packet-081-authority-publication-and-host-mirror-resync-gate-handoff.md"
+  ],
+  "handoff_target": "Platform Architect",
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-06-olares-dev-residency-082-packet-081-authority-publication-and-host-mirror-resync-gate-handoff.md",
+  "implementation_ready_candidate": false,
+  "next_packet_candidate": "Execute Packet 082 as bounded publication and host-mirror resync only.",
+  "sql_permission": false,
+  "sql_permission_note": "This publication gate authorizes no source/test runtime mutation, no package or lockfile mutation, no installs, no runtime or service mutation, no AI-services expansion, no remote rewrite, no rollback or force/reset/clean, and no old-clone mutation.",
+  "validation_disposition": "pending-publication-and-host-resync"
+}
