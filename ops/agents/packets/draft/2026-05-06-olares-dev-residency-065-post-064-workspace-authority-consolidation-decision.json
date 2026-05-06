@@ -1,0 +1,58 @@
+{
+  "packet_id": "2026-05-06-olares-dev-residency-065",
+  "title": "Post-064 Workspace Authority Consolidation Decision",
+  "objective": "Decide the smallest truthful follow-on after the published host bootstrap/status surface so the Olares workspace design and governance are readable from one current authority surface rather than reconstructed from historical conceptual docs plus packet history.",
+  "domain": "infrastructure-domain",
+  "active_role": "Platform Architect",
+  "dependencies": [
+    "ops/agents/packets/draft/2026-05-06-olares-dev-residency-064-packet-062-and-packet-063-authority-publication-and-host-mirror-resync-gate.json",
+    "ops/agents/handoffs/2026-05-06-olares-dev-residency-064-packet-062-and-packet-063-authority-publication-and-host-mirror-resync-gate-handoff.md",
+    "docs/OPERATOR-BOOTSTRAP-RUNBOOK.md",
+    "docs/architecture/OLARES-DEVELOPER-HOST-CUTOVER-TECHNICAL-PLAN-2026-05-05.md",
+    "docs/architecture/OLARES-DEVELOPER-HOST-CUTOVER-MILESTONE-PLAN-2026-05-05.md",
+    "plan/infrastructure-olares-full-implementation-roadmap-1.md",
+    "../../../../WORKSPACE_DESIGN.md",
+    "../../../../WORKSPACE_PROTOCOL.md"
+  ],
+  "dependency_note": "Packet 064 made the durable-host workflow operationally real and published. The next question is whether another host-resident workflow-hardening slice is needed immediately, or whether the highest-truth next move is to consolidate stakeholder-facing workspace authority now that the runtime posture is already proven.",
+  "decision_mode": "decision_only",
+  "decision_selected": "execute_current_olares_workspace_authority_consolidation_slice",
+  "verdict_summary": "The smallest truthful post-064 follow-on is a bounded authority-consolidation slice. Runtime and operator hardening are already proven through the new host bootstrap/status surface, but the current Olares workspace model is still scattered across the framework, roadmap, cutover plans, and packet chain while the older root workspace docs still read as live guidance. The next slice should therefore publish one current stakeholder-facing Olares workspace authority surface and explicitly demote the old conceptual root docs to historical reference status.",
+  "current_truth_basis": {
+    "durable_host_mirror": "/home/olares/code/apex",
+    "implementation_root": "/home/olares/code/apex/apex-power-ops-platform",
+    "host_bootstrap_status_surface": "published",
+    "laptop_posture": "client_only",
+    "ai_boundary": [
+      "apex-fs",
+      "apex-db",
+      "apex-jobs"
+    ],
+    "github_canonical": true,
+    "root_workspace_docs_state": "historical_conceptual_but_not_explicitly_demoted"
+  },
+  "selected_next_packet_candidate": "Olares Dev Residency 066 - Current Olares Workspace Authority Surface Execution",
+  "selected_next_packet_scope": [
+    "Author one current stakeholder-facing Olares workspace authority document for design constraints, governance rules, approved environment and tooling, operator process, and remaining implementation plan.",
+    "Mark the older root workspace design and protocol docs as historical conceptual references rather than current Olares governance.",
+    "Update the current status and roadmap surfaces so operators can route from the new authority document without reconstructing the current model from packet history alone."
+  ],
+  "rejected_as_next_active_lane": [
+    "Open another runtime or toolchain hardening slice without first closing the current authority-discoverability gap.",
+    "Reopen dormant Operations Visibility or simultaneous-worker branches without their listed triggers.",
+    "Widen the AI boundary, hosting posture, or public exposure by assumption.",
+    "Rewrite historical root docs into the current live model without preserving them as historical context."
+  ],
+  "execution_lane_opened": false,
+  "artifact_published": false,
+  "status": "complete",
+  "handoff_target": "Platform Architect",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-06-olares-dev-residency-065-post-064-workspace-authority-consolidation-decision-handoff.md"
+  ],
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-06-olares-dev-residency-065-post-064-workspace-authority-consolidation-decision-handoff.md",
+  "implementation_ready_candidate": true,
+  "sql_permission": false,
+  "sql_permission_note": "This decision packet authorizes no source/test runtime mutation, no package or lockfile mutation, no installs, no AI-services expansion, no remote rewrite, no rollback or force/reset/clean, and no old-clone mutation.",
+  "validation_disposition": "complete-decision-only"
+}
