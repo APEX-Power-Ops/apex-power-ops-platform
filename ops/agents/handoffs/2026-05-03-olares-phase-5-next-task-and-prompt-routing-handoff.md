@@ -91,7 +91,12 @@ Update 2026-05-06:
 83. Packet 069 is now complete as the execution of that bounded routing-refresh slice.
 84. Packet 069 updates the root `README.md` so readers entering at the parent-root now see the live Olares authority surface and the current operator runbook before the historical workspace notes, and it adds a concise current Olares operating note to `PROJECT_OVERVIEW.md` so the older platform snapshot is not misread as the active Olares workspace model.
 85. No trust boundary is widened by Packet 069: GitHub remains canonical, `C:/APEX Platform` remains the publication boundary, `/home/olares/code/apex` remains the authoritative host mirror, the laptop remains client-only, and the admitted AI boundary remains the minimal MCP trio plus `apex-jobs`.
-86. The next truthful Olares follow-on after Packet 069 is a separate publication/resync closeout for this root-routing slice, followed by a new decision on whether any additional workflow-hardening remains at all.
+86. Packet 070 is now complete as that publication/resync closeout for Packet 068 and Packet 069.
+87. Packet 070 published the root-entrypoint routing tranche in commit `75cecbb6f2ce72399c290257fe8e36d3f03cf322` (`Refresh Olares root entry routing`), pushed `origin/clean-main`, restored `/home/olares/code/apex` to clean parity at the same commit, and preserved `/home/olares/src/apex-power-ops-platform` observe-only at `2836a2622309b4e146ca24f23b5bf87312c0c857` with status count `30`.
+88. Packet 071 is now complete as that final evidence-based decision surface.
+89. Packet 071 consumes the currently published host bootstrap/status surface, the published Olares workspace authority surface, and the refreshed root entrypoint routing chain and finds no remaining host-workflow-hardening gap that is justified by current evidence.
+90. The current lane therefore returns to explicit dormancy until new friction appears. Reopen only for a concrete operator-routing, authority-discoverability, durable-host validation, or publication-parity problem that is not already closed by the current runbook, status surface, and root entrypoint chain.
+
 
 
 
