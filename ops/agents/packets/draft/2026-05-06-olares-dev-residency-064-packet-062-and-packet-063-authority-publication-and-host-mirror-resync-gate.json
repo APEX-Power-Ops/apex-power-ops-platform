@@ -1,0 +1,47 @@
+{
+  "packet_id": "2026-05-06-olares-dev-residency-064",
+  "title": "Packet 062 And Packet 063 Authority Publication And Host Mirror Resync Gate",
+  "objective": "Publish the Packet 062 planning authority and Packet 063 host-bootstrap-status execution authority plus the bounded operator-surface changes, then restore the authoritative host mirror to clean parity.",
+  "domain": "infrastructure-domain",
+  "active_role": "Platform Architect",
+  "dependencies": [
+    "ops/agents/packets/draft/2026-05-06-olares-dev-residency-062-host-resident-developer-workflow-hardening-planning.json",
+    "ops/agents/handoffs/2026-05-06-olares-dev-residency-062-host-resident-developer-workflow-hardening-planning-handoff.md",
+    "ops/agents/packets/draft/2026-05-06-olares-dev-residency-063-host-bootstrap-status-operator-surface-execution.json",
+    "ops/agents/handoffs/2026-05-06-olares-dev-residency-063-host-bootstrap-status-operator-surface-execution-handoff.md",
+    "tools/ai/run-olares-host-bootstrap-status.sh",
+    ".vscode/tasks.json",
+    "docs/OPERATOR-BOOTSTRAP-RUNBOOK.md",
+    "docs/architecture/OLARES-AI-WORKFLOW-FIRST-SLICE-RUNBOOK-2026-05-06.md"
+  ],
+  "publication_scope": [
+    "Packet 062 planning authority",
+    "Packet 063 execution authority",
+    "host bootstrap/status operator surface",
+    "matching task and runbook updates",
+    "routing, roadmap, and project-status authority refresh"
+  ],
+  "forbidden_scope": [
+    "package or lockfile mutation",
+    "installs",
+    "runtime or service mutation",
+    "AI-services expansion",
+    "Git hosting transition",
+    "remote rewrite",
+    "rollback or force/reset/clean",
+    "old-clone mutation",
+    "dormant-branch reopening"
+  ],
+  "artifact_published": false,
+  "host_mirror_resynced": false,
+  "status": "complete",
+  "handoff_target": "Platform Architect",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-06-olares-dev-residency-064-packet-062-and-packet-063-authority-publication-and-host-mirror-resync-gate-handoff.md"
+  ],
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-06-olares-dev-residency-064-packet-062-and-packet-063-authority-publication-and-host-mirror-resync-gate-handoff.md",
+  "implementation_ready_candidate": false,
+  "next_packet_candidate": "Olares Dev Residency 065 - Post-064 Host Workflow Hardening Follow-On Decision",
+  "sql_permission": false,
+  "sql_permission_note": "This publication gate authorizes no source/test execution, no package or lockfile mutation, no installs, no runtime or service mutation, no AI-services expansion, no remote rewrite, no rollback or force/reset/clean, and no old-clone mutation."
+}

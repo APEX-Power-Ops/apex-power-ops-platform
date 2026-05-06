@@ -106,6 +106,7 @@ Get-ChildItem 'C:/APEX Platform/apex-power-ops-platform' -Recurse -File |
 
 VS Code tasks:
 - the bootstrap-packet helper tasks remain available for historical packet review and narrow bounded staging, but routine publication work can now use normal parent-root `git diff` and `git add -- <paths>` against tracked `HEAD`
+- `Olares host bootstrap status`
 - `Run platform API local`
 - `Restart platform API local`
 - `Platform subtree git status`
@@ -132,6 +133,28 @@ Direct script entry points:
 - `../apps/control-plane-api/scripts/bootstrap_local_env.py`
 - `../apps/control-plane-api/scripts/smoke_deployed_control_plane.py`
 - `../apps/control-plane-api/scripts/check_schema_drift.py`
+
+## Olares Durable-Host Entry Surface
+
+Use the bounded host bootstrap surface when the operator needs one current-status view of the durable Olares development posture instead of separate MCP, hold-boundary, and git checks.
+
+Primary task:
+
+- `Olares host bootstrap status`
+
+Direct host command:
+
+```powershell
+ssh olares-mesh 'cd /home/olares/code/apex && bash apex-power-ops-platform/tools/ai/run-olares-host-bootstrap-status.sh'
+```
+
+That surface reports:
+
+1. current parent-root host commit and status count,
+2. old-clone observe-only state,
+3. materialized host toolchain presence,
+4. minimal MCP trio readiness,
+5. current hold-boundary result from the host posture.
 
 ## Local Contract Sources
 
