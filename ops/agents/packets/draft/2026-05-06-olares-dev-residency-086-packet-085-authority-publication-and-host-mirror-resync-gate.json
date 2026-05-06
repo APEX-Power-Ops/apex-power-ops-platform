@@ -1,0 +1,36 @@
+{
+  "packet_id": "2026-05-06-olares-dev-residency-086",
+  "title": "Packet 085 Authority Publication And Host Mirror Resync Gate",
+  "objective": "Publish the Packet 085 publication-boundary retirement dependency inventory through the parent-root boundary and restore `/home/olares/code/apex` to clean parity so the next migration dependency is durable on the authoritative host mirror.",
+  "domain": "infrastructure-domain",
+  "active_role": "Platform Architect",
+  "dependencies": [
+    "ops/agents/packets/draft/2026-05-06-olares-dev-residency-085-publication-boundary-retirement-dependency-inventory-execution.json",
+    "ops/agents/handoffs/2026-05-06-olares-dev-residency-085-publication-boundary-retirement-dependency-inventory-execution-handoff.md"
+  ],
+  "dependency_note": "Packet 085 captured the remaining publication-boundary retirement dependencies locally. This gate records publication to the GitHub-canonical parent-root boundary and restoration of the authoritative host mirror to clean parity.",
+  "decision_mode": "publication_gate",
+  "forbidden_scope": [
+    "package or lockfile mutation",
+    "installs",
+    "runtime or service mutation",
+    "AI-services expansion",
+    "Git hosting transition",
+    "remote rewrite",
+    "rollback or force/reset/clean",
+    "old-clone mutation"
+  ],
+  "artifact_published": false,
+  "host_mirror_resynced": false,
+  "status": "complete",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-06-olares-dev-residency-086-packet-085-authority-publication-and-host-mirror-resync-gate-handoff.md"
+  ],
+  "handoff_target": "Platform Architect",
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-06-olares-dev-residency-086-packet-085-authority-publication-and-host-mirror-resync-gate-handoff.md",
+  "implementation_ready_candidate": false,
+  "next_packet_candidate": "Execute Packet 086 as bounded publication and host-mirror resync only.",
+  "sql_permission": false,
+  "sql_permission_note": "This publication gate authorizes no database writes, no source/test runtime mutation, no package or lockfile mutation, no installs, no runtime or service mutation, no AI-services expansion, no remote rewrite, no rollback or force/reset/clean, and no old-clone mutation.",
+  "validation_disposition": "pending-publication-and-host-resync"
+}

@@ -1,0 +1,30 @@
+{
+  "packet_id": "2026-05-06-olares-dev-residency-085",
+  "title": "Publication Boundary Retirement Dependency Inventory Execution",
+  "objective": "Identify and record the concrete remaining dependencies that keep `C:/APEX Platform` as the transitional publication boundary so the next Olares packet can retire the highest-leverage split-residency practice deliberately.",
+  "domain": "infrastructure-domain",
+  "active_role": "Platform Architect",
+  "dependencies": [
+    "ops/agents/packets/draft/2026-05-06-olares-dev-residency-084-packet-083-authority-publication-and-host-mirror-resync-gate.json",
+    "ops/agents/handoffs/2026-05-06-olares-dev-residency-084-packet-083-authority-publication-and-host-mirror-resync-gate-handoff.md",
+    "docs/architecture/OLARES-ONE-WORKSPACE-DESIGN-GOVERNANCE-AND-IMPLEMENTATION-PLAN-2026-05-06.md",
+    "docs/architecture/OLARES-DEVELOPER-HOST-CUTOVER-TECHNICAL-PLAN-2026-05-05.md",
+    "docs/OPERATOR-BOOTSTRAP-RUNBOOK.md"
+  ],
+  "execution_summary": "Packet 085 records the concrete operator, authority-surface, and README dependencies that still keep the Windows parent-root boundary active and routes the next Olares slice to the host-native publication workflow rather than to generic migration rhetoric.",
+  "selected_scope_note": "This execution is dependency inventory and routing only. It does not retire the publication boundary, change GitHub canonical status, or mutate runtime, package, hosting, or auth surfaces.",
+  "execution_lane_opened": true,
+  "artifact_published": false,
+  "status": "complete",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-06-olares-dev-residency-085-publication-boundary-retirement-dependency-inventory-execution-handoff.md"
+  ],
+  "handoff_target": "Platform Architect",
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-06-olares-dev-residency-085-publication-boundary-retirement-dependency-inventory-execution-handoff.md",
+  "implementation_ready_candidate": false,
+  "next_packet_candidate": "Olares Dev Residency 086 - Packet 085 Authority Publication And Host Mirror Resync Gate",
+  "sql_permission": false,
+  "sql_permission_note": "This execution packet authorizes no database writes, no source/test runtime mutation, no package or lockfile mutation, no installs, no runtime or service mutation, no AI-services expansion, no remote rewrite, no rollback or force/reset/clean, and no old-clone mutation.",
+  "validation_disposition": "local-doc-validation-pending-publication"
+}

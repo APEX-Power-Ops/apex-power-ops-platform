@@ -139,6 +139,19 @@ Proof required:
 3. the laptop is not the only holder of active repo, secret, or validation state
 4. if Olares exposes its own browser-delivered desktop UI, that UI is treated as an admitted host-supported client surface rather than as a contradictory laptop-first runtime anchor
 
+### Slice F - Publication Boundary Retirement Readiness
+
+Objective:
+
+Identify and retire the remaining split-residency dependencies that still keep `C:/APEX Platform` active as the transitional publication boundary.
+
+Proof required:
+
+1. remaining Windows-bound publication and operator surfaces are inventoried,
+2. the next highest-leverage retirement target is selected explicitly,
+3. the retirement sequence preserves GitHub canonical status unless a later separate hosting packet changes it,
+4. retirement is driven by concrete dependency closure rather than by assertion.
+
 ## Explicit Exclusions
 
 This cutover plan excludes:
