@@ -20,6 +20,9 @@ It uses the already-present minimal MCP trio and the `apex-jobs` ledger as the w
 4. `tools/ai/run-minimal-mcp-trio.ps1`
 5. `tools/ai/run-minimal-mcp-trio.sh`
 6. `tools/ai/verify_minimal_mcp_trio.py`
+7. `tools/ai/check_deferred_ops_view_counts.py`
+8. `tools/ai/run-olares-hold-boundary-check.ps1`
+9. `tools/ai/run-olares-hold-boundary-check.sh`
 
 ## Boundary
 
@@ -63,6 +66,7 @@ pwsh tools/ai/run-minimal-mcp-trio.ps1 -Action up
 pwsh tools/ai/run-minimal-mcp-trio.ps1 -Action status
 pwsh tools/ai/run-minimal-mcp-trio.ps1 -Action verify -PacketId 2026-05-06-olares-dev-residency-037
 pwsh tools/ai/run-minimal-mcp-trio.ps1 -Action down
+pwsh tools/ai/run-olares-hold-boundary-check.ps1 -PacketId 2026-05-06-olares-dev-residency-056
 ```
 
 ### Bash
@@ -72,7 +76,19 @@ bash tools/ai/run-minimal-mcp-trio.sh up
 bash tools/ai/run-minimal-mcp-trio.sh status
 bash tools/ai/run-minimal-mcp-trio.sh verify 2026-05-06-olares-dev-residency-037
 bash tools/ai/run-minimal-mcp-trio.sh down
+bash tools/ai/run-olares-hold-boundary-check.sh 2026-05-06-olares-dev-residency-056
 ```
+
+## Hold-Boundary Cadence
+
+The hold-boundary wrapper combines two bounded checks:
+
+1. minimal MCP trio verification,
+2. deferred Operations Visibility live-row recheck for `v_resource_allocation` and `v_equipment_needs`.
+
+The deferred-view helper prefers `SEAM_DATABASE_URL` first because the local `.env.dev` contract is a developer database and is not authoritative for the live `09` tranche hold decision.
+
+If no live DSN is present, the helper returns `UNAVAILABLE` rather than a false hold decision. That is an honest operator result, not a silent pass.
 
 ## Expected Verification Shape
 
