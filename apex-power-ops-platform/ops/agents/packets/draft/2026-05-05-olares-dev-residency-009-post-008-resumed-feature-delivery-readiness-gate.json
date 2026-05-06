@@ -1,0 +1,83 @@
+{
+  "packet_id": "2026-05-05-olares-dev-residency-009",
+  "title": "Post-008 Resumed Feature-Delivery Readiness Gate",
+  "objective": "Consume the published Dev Residency Packet 001 through Packet 008 authority chain and select the smallest truthful bounded Olares-hosted implementation or validation slice that can run next before broader product delivery is reopened.",
+  "domain": "infrastructure-domain",
+  "active_role": "Olares Developer Residency Readiness Gate Operator",
+  "dependencies": [
+    "ops/agents/packets/draft/2026-05-05-olares-dev-residency-005-minimum-host-toolchain-materialization-execution.json",
+    "ops/agents/handoffs/2026-05-05-olares-dev-residency-005-minimum-host-toolchain-materialization-execution-handoff.md",
+    "ops/agents/packets/draft/2026-05-05-olares-dev-residency-008-client-only-laptop-posture-confirmation.json",
+    "ops/agents/handoffs/2026-05-05-olares-dev-residency-008-client-only-laptop-posture-confirmation-handoff.md",
+    "docs/architecture/OLARES-DEVELOPER-HOST-CUTOVER-MILESTONE-PLAN-2026-05-05.md",
+    "docs/architecture/OLARES-DEVELOPER-HOST-CUTOVER-TECHNICAL-PLAN-2026-05-05.md",
+    "apps/operations-web/package.json",
+    "apps/operations-web/README.md",
+    "apps/operations-web/DEPLOYMENT_VALIDATION.md",
+    "apps/operations-web/scripts/smoke-hosted-routes.mjs",
+    "apps/operations-web/scripts/smoke-promoted-host.mjs",
+    "apps/control-plane-api/scripts/smoke_deployed_control_plane.py",
+    "plan/infrastructure-olares-full-implementation-roadmap-1.md"
+  ],
+  "dependency_note": "Packet 008 confirmed the client-only laptop posture at published parent-root commit `08839ae08506a55cc0b1d64f19a3e2a984377f28`, while post-packet evidence also confirmed that Olares exposes a browser-delivered desktop UI without yet evidencing a VS Code desktop app. The next truthful move is a readiness gate selecting one bounded host-executable follow-on slice rather than reopening broader product delivery by assertion.",
+  "decision_mode": "decision_only",
+  "required_inputs": [
+    "Published Dev Residency Packet 001 through Packet 008 authority chain",
+    "Host-local toolchain proof from Packet 005",
+    "Client-only laptop confirmation from Packet 008",
+    "Current operations-web scripts and deployment validation runbook",
+    "Current host evidence that Node, explicit pnpm, the control-plane smoke script, and Playwright tooling are invocable on Olares without new installation work"
+  ],
+  "allowed_decision_shapes": [
+    "select_bounded_operations_web_backend_seam_and_hosted_route_validation_execution",
+    "select_bounded_operations_web_promoted_host_browser_plus_seam_validation_execution",
+    "defer_until_missing_browser_runtime_or_editor_surface_evidence_is_captured",
+    "no_go_if_no_truthful_host_executable_slice_is_evidenced"
+  ],
+  "decision_requirements": [
+    "Treat Remote-SSH as the baseline-safe client path for the next slice.",
+    "Admit the browser-delivered Olares desktop UI only as an optional host-supported client surface, not as the controlling runtime anchor.",
+    "Prefer the smallest host-executable slice that uses already admitted tooling and avoids new install or browser-runtime provisioning work.",
+    "Keep broader product delivery closed until the selected slice executes and its result is recorded.",
+    "Do not authorize host-local VS Code desktop installation as a prerequisite for the selected slice."
+  ],
+  "explicit_no_go_items": [
+    "broader product delivery reopening by assertion",
+    "new host installs or package-manager bootstrap",
+    "Playwright browser runtime provisioning",
+    "host-local VS Code desktop installation",
+    "package or lockfile mutation",
+    "runtime or service mutation",
+    "public ingress widening",
+    "AI-services expansion",
+    "Gitea or canonical-hosting transition",
+    "remote rewrite",
+    "rollback, force, reset, or clean",
+    "old-clone mutation or promotion"
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "decision_selected": "select_bounded_operations_web_backend_seam_and_hosted_route_validation_execution",
+  "feature_delivery_decision": "remain_closed_until_selected_slice_executes",
+  "decision_rationale": [
+    "`apps/operations-web` is the default business follow-on named by the cutover milestone and technical plans.",
+    "The Olares host can already invoke the public control-plane smoke script, explicit pnpm, and Playwright tooling without new install work.",
+    "No Playwright browser cache is currently evidenced on the host, so the full promoted-host browser-plus-seam wrapper is not the smallest truthful next slice under the no-new-install boundary.",
+    "The smallest executable follow-on is therefore the public control-plane backend seam plus hosted-route smoke against the already promoted `operations-web` and control-plane hosts.",
+    "Remote-SSH remains the baseline-safe client path while the browser-delivered Olares desktop UI stays admitted only as an optional host-supported surface for later comparison work."
+  ],
+  "decision_evidence": {
+    "published_parent_root_commit": "08839ae08506a55cc0b1d64f19a3e2a984377f28",
+    "operations_web_base_url": "https://operations.apexpowerops.com",
+    "control_plane_base_url": "https://control.apexpowerops.com",
+    "host_control_plane_smoke_invocation": "ok",
+    "host_playwright_package_invocation": "ok",
+    "host_playwright_browser_cache_present": false,
+    "browser_desktop_ui_admitted": true,
+    "browser_desktop_ui_vs_code_app_evidenced": false
+  },
+  "next_packet_candidate": "Olares Dev Residency 010 - Bounded Operations-Web Backend Seam And Hosted Route Validation Execution",
+  "validation_disposition": "complete-decision-only",
+  "closure_note": "Executed 2026-05-05 as the post-008 resumed feature-delivery readiness gate. Packet 009 selected the smallest truthful next slice as bounded `operations-web` backend-seam plus hosted-route validation from the Olares host against the already promoted public targets, while keeping broader product delivery closed until that slice executes. Packet 009 did not open browser-runtime provisioning, host-local VS Code desktop installation, package or lockfile mutation, runtime or service mutation, public ingress widening, AI-services expansion, Gitea or canonical-hosting transition, remote rewrite, rollback, force, reset, clean, or old-clone mutation.",
+  "next_action": "Execute `Olares Dev Residency 010 - Bounded Operations-Web Backend Seam And Hosted Route Validation Execution` as the selected host-executable follow-on slice before broader product delivery is reopened."
+}
