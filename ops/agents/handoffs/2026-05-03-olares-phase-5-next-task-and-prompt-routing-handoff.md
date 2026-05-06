@@ -9,9 +9,11 @@ Update 2026-05-06:
 1. Packets 027 through 030 plus the Packet 030 mutation-seam scaffold remain published on `origin/clean-main` in commit `fe0cb168e0a751b8364cfe72ad74283088cc824e` (`Publish Olares mutation-seam ingress scaffold`).
 2. Packet 031 remains the truthful record that the original public seam host was absent before browser-authenticated Render access was available.
 3. Packet 032 remains complete as the bounded Vercel-side pre-stage slice: the real browser-host project is `apex-operations-web`, `MUTATION_SEAM_BASE_URL` is staged there, and the preview redeploy path was proven independently of local packaging.
-4. Packet 033 is now complete as the credentialed hosted follow-through: the Render mutation-seam service is healthy at `https://apex-platform-mutation-seam.onrender.com`, the hosted Supabase runtime was repaired so the `schedule` and `seam` relations required by the live service exist, `operations.apexpowerops.com` is aliased to production deployment `dpl_CdxiFmzZ9q9ASirexMg5GeqTZ3Qn`, and the public same-origin PM routes plus the governed promoted-host proof now pass.
-5. The remaining residue is narrower than the functional lane: `mutation-seam.apexpowerops.com` is attached in Render but still waiting on the external GoDaddy CNAME `mutation-seam -> apex-platform-mutation-seam.onrender.com`, so production is temporarily pointed at the live onrender host instead of the intended custom domain.
-6. The repo-owned next packet candidate is now `Olares Dev Residency 034 - Mutation-Seam Custom-Domain DNS Closure And Operations-Web Env Realignment`.
+4. Packet 033 remains the truthful hosted-closure record for the interim onrender-host path before the final custom-domain cutover.
+5. Packet 034 is now complete as the residual custom-domain closure: the GoDaddy CNAME `mutation-seam -> apex-platform-mutation-seam.onrender.com` is committed, `https://mutation-seam.apexpowerops.com` is live and passes the repo-owned deployed seam smoke, `MUTATION_SEAM_BASE_URL` is realigned back to that custom domain on Production, Preview, and Development for `apex-operations-web`, and `operations.apexpowerops.com` is now aliased to production deployment `dpl_8kQsnU68Jjej285HbWpEEdRVHDZv`.
+6. The final public proof rerun is green on the intended target: the governed same-origin PM routes return `200 application/json` and the promoted-host wrapper closes at `PROMOTED_HOST_SUMMARY failed=0` after the custom-domain cutover.
+7. The Render settings page lagged briefly with stale waiting labels during DNS propagation, but the live HTTPS endpoint and repo-owned seam smoke established the controlling runtime truth before the final promotion.
+8. No immediate Olares follow-on packet is required for this hosted custom-domain lane; reopen only for a new bounded infrastructure objective or a production regression.
 
 ## Authority
 
