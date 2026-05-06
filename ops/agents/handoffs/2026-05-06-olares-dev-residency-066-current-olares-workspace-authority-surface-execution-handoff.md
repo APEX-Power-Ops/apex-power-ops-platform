@@ -47,3 +47,13 @@ Packet 066 did not:
 ## Next Packet Candidate
 
 `Olares Dev Residency 067 - Packet 065 And Packet 066 Authority Publication And Host Mirror Resync Gate`
+
+## Post-Publication Result
+
+The Packet 066 authority tranche is now published in commit `ecfe18015c9c15cef16f3fb668fdfc56db7c909f` (`Consolidate Olares workspace authority`) and mirrored cleanly onto `/home/olares/code/apex` at that same commit.
+
+Observed closeout state:
+
+1. host head `ecfe18015c9c15cef16f3fb668fdfc56db7c909f`,
+2. host status count `0`,
+3. old clone preserved at `2836a2622309b4e146ca24f23b5bf87312c0c857` with status count `30`.

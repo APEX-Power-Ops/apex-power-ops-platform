@@ -1,7 +1,7 @@
 # Olares Phase 5 Next Task And Prompt Routing Handoff
 
 Date: 2026-05-03
-Status: Active - Packet 066 is complete locally, Packet 064 is published, the deferred Operations Visibility hold branch remains dormant until trigger, the simultaneous-worker branch remains dormant until new evidence under Packet 092, and the durable host posture now includes both a published host bootstrap/status surface and a current consolidated workspace-authority document
+Status: Active - Packet 067 is complete, Packet 064 remains published, the deferred Operations Visibility hold branch remains dormant until trigger, the simultaneous-worker branch remains dormant until new evidence under Packet 092, and the durable host posture now includes both a published host bootstrap/status surface and a published consolidated workspace-authority document
 Scope: preserve the completed Olares-first AI workflow routing state after Packet 035 through Packet 041 while naming the current bounded Operations Visibility follow-on from the Olares-resident posture
 
 Update 2026-05-06:
@@ -84,7 +84,9 @@ Update 2026-05-06:
 76. Packet 066 is now complete as the execution of that bounded authority-consolidation slice. The repo now includes `docs/architecture/OLARES-ONE-WORKSPACE-DESIGN-GOVERNANCE-AND-IMPLEMENTATION-PLAN-2026-05-06.md` as the current stakeholder-facing design, governance, environment, tooling, and process authority for the Olares workspace.
 77. Packet 066 also explicitly marks the root `WORKSPACE_DESIGN.md` and `WORKSPACE_PROTOCOL.md` files as historical conceptual references and updates the current status and roadmap surfaces so operators do not need to reconstruct the active Olares model from packet history alone.
 78. No trust boundary was widened by Packet 066: GitHub remains canonical, `C:/APEX Platform` remains the publication boundary, `/home/olares/code/apex` remains the authoritative host mirror, the old clone remains observe-only, the laptop remains client-only, and the admitted AI boundary remains the minimal MCP trio plus `apex-jobs`.
-79. The next truthful Olares follow-on after Packet 066 is a separate publication/resync closeout for this authority-consolidation slice, followed by a new evidence-based decision on whether any additional host-resident workflow-hardening packet is needed at all.
+79. Packet 067 is now complete as that publication/resync closeout for Packet 065 and Packet 066.
+80. Packet 067 published the authority-consolidation tranche in commit `ecfe18015c9c15cef16f3fb668fdfc56db7c909f` (`Consolidate Olares workspace authority`), pushed `origin/clean-main`, restored `/home/olares/code/apex` to clean parity at the same commit, and preserved `/home/olares/src/apex-power-ops-platform` observe-only at `2836a2622309b4e146ca24f23b5bf87312c0c857` with status count `30`.
+81. The next truthful Olares follow-on after Packet 067 is a new evidence-based decision on whether any additional host-resident workflow-hardening slice is still justified now that both the operator entry surface and the current workspace authority surface are real, published, and mirrored.
 
 
 ## Authority
