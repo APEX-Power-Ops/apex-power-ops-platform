@@ -17,6 +17,14 @@ New-Item -ItemType Directory -Force -Path $stateDir | Out-Null
 $minimalOutput = Join-Path $stateDir 'verify-minimal-mcp-trio.json'
 $holdOutput = Join-Path $stateDir 'deferred-ops-view-counts.json'
 
+if ($DsnEnv) {
+  $dsnValue = [Environment]::GetEnvironmentVariable($DsnEnv, 'Process')
+  if (-not $dsnValue) {
+    throw "$DsnEnv is not set; cannot run the hold-boundary cadence check against a live DSN."
+  }
+  $env:SEAM_DATABASE_URL = $dsnValue
+}
+
 & (Join-Path $PSScriptRoot 'run-minimal-mcp-trio.ps1') -Action verify -PacketId $PacketId | Out-Null
 
 $holdArgs = @(
@@ -24,9 +32,6 @@ $holdArgs = @(
   '--packet-id', $PacketId,
   '--output', $holdOutput
 )
-if ($DsnEnv) {
-  $holdArgs += @('--dsn-env', $DsnEnv)
-}
 
 & 'c:/APEX Platform/.venv/Scripts/python.exe' @holdArgs | Out-Null
 
