@@ -36,3 +36,13 @@ Reopen this lane only if one of the following appears:
 ## Next Packet Candidate
 
 `Olares Dev Residency 072 - Packet 071 Authority Publication And Host Mirror Resync Gate`
+
+## Post-Publication Result
+
+The Packet 071 dormancy decision is now published in commit `5006b2348d8170ecb97e9d1e1aa5c44f7cab6f22` (`Park Olares host workflow lane`) and mirrored cleanly onto `/home/olares/code/apex` at that same commit.
+
+Observed closeout state:
+
+1. host head `5006b2348d8170ecb97e9d1e1aa5c44f7cab6f22`,
+2. host status count `0`,
+3. old clone preserved at `2836a2622309b4e146ca24f23b5bf87312c0c857` with status count `30`.

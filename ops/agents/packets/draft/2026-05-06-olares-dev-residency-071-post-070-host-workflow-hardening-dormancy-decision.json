@@ -41,7 +41,7 @@
     "Broad documentation churn without a specific operator gap."
   ],
   "execution_lane_opened": false,
-  "artifact_published": false,
+  "artifact_published": true,
   "status": "complete",
   "handoff_target": "Platform Architect",
   "output_artifacts": [
@@ -52,5 +52,12 @@
   "next_packet_candidate": "Olares Dev Residency 072 - Packet 071 Authority Publication And Host Mirror Resync Gate",
   "sql_permission": false,
   "sql_permission_note": "This decision packet authorizes no source/test runtime mutation, no package or lockfile mutation, no installs, no runtime or service mutation, no AI-services expansion, no remote rewrite, no rollback or force/reset/clean, and no old-clone mutation.",
-  "validation_disposition": "complete-decision-only"
+  "validation_disposition": "published-and-host-resynced",
+  "post_publication_host_validation": {
+    "publication_commit": "5006b2348d8170ecb97e9d1e1aa5c44f7cab6f22",
+    "host_head": "5006b2348d8170ecb97e9d1e1aa5c44f7cab6f22",
+    "host_status_count": 0,
+    "old_clone_head": "2836a2622309b4e146ca24f23b5bf87312c0c857",
+    "old_clone_status_count": 30
+  }
 }
