@@ -26,9 +26,11 @@ Apex Power Ops is the operating system for electrical testing workflows, apparat
 ## Start Here
 
 - `PROJECT_STATUS.md` for current execution posture and delivery state.
+- `apex-power-ops-platform/docs/architecture/OLARES-ONE-WORKSPACE-DESIGN-GOVERNANCE-AND-IMPLEMENTATION-PLAN-2026-05-06.md` for the current Olares workspace design constraints, governance rules, approved environment, tooling posture, and implementation plan.
+- `apex-power-ops-platform/docs/OPERATOR-BOOTSTRAP-RUNBOOK.md` for the current operator entrypoints, including the durable-host bootstrap/status surface.
 - `PROJECT_OVERVIEW.md` for system architecture, scope, and platform intent.
-- `WORKSPACE_PROTOCOL.md` for repo operating rules and decision discipline.
-- `WORKSPACE_DESIGN.md` for workspace structure and repository organization.
+- `WORKSPACE_PROTOCOL.md` for historical workspace protocol context; current Olares governance is routed through the authority and runbook surfaces above.
+- `WORKSPACE_DESIGN.md` for historical workspace design context; it is not the current Olares operating authority.
 - `ARCHIVE_NOTICE.md` for the boundary between active and retained historical material.
 
 ## Current Delivery Posture
@@ -36,6 +38,13 @@ Apex Power Ops is the operating system for electrical testing workflows, apparat
 - Active source-of-truth material lives in the root docs and non-archive directories.
 - Legacy RESA naming is expected only inside archived materials and intentionally retained historical references where changing it would reduce traceability.
 - GitHub Actions remains intentionally unconfigured until a single active build or test entrypoint is extracted from the live repo surface.
+
+## Current Olares Posture
+
+- GitHub remains canonical and `C:/APEX Platform` remains the publication boundary.
+- `/home/olares/code/apex` is the authoritative Olares host mirror and `/home/olares/code/apex/apex-power-ops-platform` is the active host implementation surface.
+- The laptop is governed as a client-only surface; the historical host clone at `/home/olares/src/apex-power-ops-platform` remains observe-only.
+- The current Olares-first operator boundary remains the minimal MCP trio: `apex-fs`, `apex-db`, and `apex-jobs`.
 
 ## Platform Snapshot
 

@@ -1,0 +1,52 @@
+{
+  "packet_id": "2026-05-06-olares-dev-residency-068",
+  "title": "Post-067 Root Entrypoint Routing Follow-On Decision",
+  "objective": "Decide whether any additional host-resident workflow-hardening slice is still justified after the workspace-authority consolidation tranche, using the current root-facing operator entrypoints as the next evidence surface.",
+  "domain": "infrastructure-domain",
+  "active_role": "Platform Architect",
+  "dependencies": [
+    "ops/agents/packets/draft/2026-05-06-olares-dev-residency-067-packet-065-and-packet-066-authority-publication-and-host-mirror-resync-gate.json",
+    "ops/agents/handoffs/2026-05-06-olares-dev-residency-067-packet-065-and-packet-066-authority-publication-and-host-mirror-resync-gate-handoff.md",
+    "../../../../README.md",
+    "../../../../PROJECT_OVERVIEW.md",
+    "../../../../PROJECT_STATUS.md",
+    "docs/architecture/OLARES-ONE-WORKSPACE-DESIGN-GOVERNANCE-AND-IMPLEMENTATION-PLAN-2026-05-06.md",
+    "docs/OPERATOR-BOOTSTRAP-RUNBOOK.md"
+  ],
+  "dependency_note": "Packet 067 closed publication and host parity for the consolidated Olares workspace authority surface. The next truthful question is whether any residual workflow-hardening still exists in the operator entry chain, especially at the root workspace entrypoints used before operators ever reach the new authority document.",
+  "decision_mode": "decision_only",
+  "decision_selected": "execute_bounded_root_entrypoint_routing_refresh",
+  "verdict_summary": "One additional bounded host-workflow-hardening slice is still justified. The current Olares authority surface and host bootstrap/status surface are published, but the root `README.md` still routes operators to `WORKSPACE_PROTOCOL.md` and `WORKSPACE_DESIGN.md` as if they were current guidance, and `PROJECT_OVERVIEW.md` still reads as a December 2025 platform snapshot with no current Olares routing note. The smallest truthful next slice is therefore a root-entrypoint routing refresh that points operators to the current Olares authority and host bootstrap surfaces without reopening broader architecture or product documentation work.",
+  "current_truth_basis": {
+    "published_workspace_authority": "docs/architecture/OLARES-ONE-WORKSPACE-DESIGN-GOVERNANCE-AND-IMPLEMENTATION-PLAN-2026-05-06.md",
+    "published_host_status_surface": "tools/ai/run-olares-host-bootstrap-status.sh",
+    "root_readme_routes_to_historical_docs": true,
+    "project_overview_current_olares_note_present": false,
+    "github_canonical": true,
+    "laptop_posture": "client_only"
+  },
+  "selected_next_packet_candidate": "Olares Dev Residency 069 - Root Entrypoint Routing Refresh Execution",
+  "selected_next_packet_scope": [
+    "Refresh the root README start-here routing so the current Olares authority and host bootstrap surfaces are discoverable before historical workspace notes.",
+    "Add a concise current-state note to PROJECT_OVERVIEW.md that points readers to the live Olares authority and status surfaces instead of leaving the 2025 snapshot unqualified.",
+    "Keep the slice bounded to root entrypoint routing and explanatory notes only."
+  ],
+  "rejected_as_next_active_lane": [
+    "Another runtime or toolchain hardening slice without evidence of remaining host capability friction.",
+    "Broad rewrite of PROJECT_OVERVIEW.md into a full current-state document.",
+    "Dormant-branch reopening without trigger evidence.",
+    "AI boundary widening, hosting transition, or public exposure change."
+  ],
+  "execution_lane_opened": false,
+  "artifact_published": false,
+  "status": "complete",
+  "handoff_target": "Platform Architect",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-06-olares-dev-residency-068-post-067-root-entrypoint-routing-follow-on-decision-handoff.md"
+  ],
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-06-olares-dev-residency-068-post-067-root-entrypoint-routing-follow-on-decision-handoff.md",
+  "implementation_ready_candidate": true,
+  "sql_permission": false,
+  "sql_permission_note": "This decision packet authorizes no source/test runtime mutation, no package or lockfile mutation, no installs, no runtime or service mutation, no AI-services expansion, no remote rewrite, no rollback or force/reset/clean, and no old-clone mutation.",
+  "validation_disposition": "complete-decision-only"
+}

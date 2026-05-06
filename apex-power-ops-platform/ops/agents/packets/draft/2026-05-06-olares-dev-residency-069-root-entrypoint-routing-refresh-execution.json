@@ -1,0 +1,39 @@
+{
+  "packet_id": "2026-05-06-olares-dev-residency-069",
+  "title": "Root Entrypoint Routing Refresh Execution",
+  "objective": "Execute the bounded root-entrypoint routing refresh selected by Packet 068 so readers entering through the parent-root are directed to the current Olares authority and operator surfaces instead of stale or unqualified workspace notes.",
+  "domain": "infrastructure-domain",
+  "active_role": "Platform Architect",
+  "dependencies": [
+    "ops/agents/packets/draft/2026-05-06-olares-dev-residency-068-post-067-root-entrypoint-routing-follow-on-decision.json",
+    "ops/agents/handoffs/2026-05-06-olares-dev-residency-068-post-067-root-entrypoint-routing-follow-on-decision-handoff.md",
+    "../../../../README.md",
+    "../../../../PROJECT_OVERVIEW.md",
+    "../../../../PROJECT_STATUS.md",
+    "docs/architecture/OLARES-ONE-WORKSPACE-DESIGN-GOVERNANCE-AND-IMPLEMENTATION-PLAN-2026-05-06.md",
+    "docs/OPERATOR-BOOTSTRAP-RUNBOOK.md",
+    "plan/infrastructure-olares-full-implementation-roadmap-1.md"
+  ],
+  "dependency_note": "Packet 068 selected a root-entrypoint routing refresh as the smallest truthful post-067 hardening slice. This execution packet lands the minimal root-facing doc changes needed to route operators to the current Olares authority and runbook surfaces.",
+  "decision_mode": "execution_only",
+  "execution_summary": "Packet 069 updates `README.md` so the root start-here flow points first to the live Olares workspace authority and operator runbook, adds a concise current Olares operating note to `PROJECT_OVERVIEW.md`, and records the slice in the live status, roadmap, and routing surfaces without widening into a broad architecture rewrite.",
+  "selected_scope_note": "This execution is root-entrypoint documentation routing only. It does not alter runtime, toolchain, trust, hosting, or dormant-branch state.",
+  "execution_lane_opened": true,
+  "artifact_published": false,
+  "status": "complete",
+  "output_artifacts": [
+    "C:/APEX Platform/README.md",
+    "C:/APEX Platform/PROJECT_OVERVIEW.md",
+    "C:/APEX Platform/PROJECT_STATUS.md",
+    "C:/APEX Platform/apex-power-ops-platform/plan/infrastructure-olares-full-implementation-roadmap-1.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-next-task-and-prompt-routing-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-06-olares-dev-residency-069-root-entrypoint-routing-refresh-execution-handoff.md"
+  ],
+  "handoff_target": "Platform Architect",
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-06-olares-dev-residency-069-root-entrypoint-routing-refresh-execution-handoff.md",
+  "implementation_ready_candidate": false,
+  "next_packet_candidate": "Olares Dev Residency 070 - Packet 068 And Packet 069 Authority Publication And Host Mirror Resync Gate",
+  "sql_permission": false,
+  "sql_permission_note": "This execution packet authorizes no source/test runtime mutation, no package or lockfile mutation, no installs, no runtime or service mutation, no AI-services expansion, no remote rewrite, no rollback or force/reset/clean, and no old-clone mutation.",
+  "validation_disposition": "local-doc-validation-pending-publication"
+}

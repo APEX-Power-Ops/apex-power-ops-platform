@@ -5,6 +5,24 @@
 **Project Lead:** Jason Swenson  
 **Repository:** [github.com/jasonlswenson-sys/apex-power-ops](https://github.com/jasonlswenson-sys/apex-power-ops)
 
+## Current Olares Operating Note
+
+This document remains a platform architecture snapshot, but it is not the current Olares workspace operating authority.
+
+For the active Olares One workspace model, use these files first:
+
+1. `PROJECT_STATUS.md`
+2. `apex-power-ops-platform/docs/architecture/OLARES-ONE-WORKSPACE-DESIGN-GOVERNANCE-AND-IMPLEMENTATION-PLAN-2026-05-06.md`
+3. `apex-power-ops-platform/docs/OPERATOR-BOOTSTRAP-RUNBOOK.md`
+
+Current Olares operating truth:
+
+1. GitHub remains canonical.
+2. `C:/APEX Platform` remains the publication boundary.
+3. `/home/olares/code/apex` is the authoritative host mirror.
+4. `/home/olares/code/apex/apex-power-ops-platform` is the active host implementation surface.
+5. The laptop is client-only and `/home/olares/src/apex-power-ops-platform` remains historical and observe-only.
+
 ---
 
 ## 🎯 Executive Summary
