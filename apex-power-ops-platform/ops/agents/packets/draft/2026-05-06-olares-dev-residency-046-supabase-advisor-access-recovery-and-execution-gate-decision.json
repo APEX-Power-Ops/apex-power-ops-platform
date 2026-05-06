@@ -1,0 +1,51 @@
+{
+  "packet_id": "2026-05-06-olares-dev-residency-046",
+  "title": "Supabase Advisor Access Recovery And Execution-Gate Decision",
+  "objective": "Recover a truthful Supabase management and advisor path for the `09` Operations Visibility schema tranche from the current session and decide whether the tranche can proceed to bounded live execution under that restored gate.",
+  "domain": "delivery-domain",
+  "active_role": "Platform Architect",
+  "dependencies": [
+    "ops/agents/packets/draft/2026-05-06-olares-dev-residency-045-operations-visibility-schema-tranche-security-invoker-and-advisor-path-remediation.json",
+    "ops/agents/handoffs/2026-05-06-olares-dev-residency-045-operations-visibility-schema-tranche-security-invoker-and-advisor-path-remediation-handoff.md",
+    "C:/APEX Platform/Supabase/schema/09_schema_additions.sql",
+    "C:/APEX Platform/Supabase/schema/09b_enum_updates.sql",
+    "plan/infrastructure-olares-full-implementation-roadmap-1.md"
+  ],
+  "dependency_note": "Packet 045 closed the repo-side public-view security issue but still treated the `09` tranche as blocked because advisor access appeared unavailable from this session.",
+  "execution_mode": "bounded_recovery_and_decision",
+  "recovery_steps": [
+    "Activate the correct Supabase project, branch, and organization management surfaces for this session.",
+    "Verify the target project can be reached through the Supabase MCP management path.",
+    "Retrieve security and performance advisor results for the project.",
+    "Decide whether the recovered official advisor path is sufficient to open a bounded live execution packet for the `09` tranche."
+  ],
+  "constraints": [
+    "Do not apply the `09` schema tranche in this packet.",
+    "Do not mutate runtime services, package manifests, lockfiles, or old-clone state.",
+    "Do not overclaim that unrelated legacy advisor debt has been resolved."
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "recovery_outcome": "advisor_access_recovered_execute_next",
+  "execution_evidence": {
+    "supabase_get_project_available": true,
+    "supabase_project_status": "ACTIVE_HEALTHY",
+    "supabase_security_advisors_available": true,
+    "supabase_performance_advisors_available": true,
+    "supabase_project_name": "resa-power-db",
+    "supabase_project_id": "fxoyniqnrlkxfligbxmg"
+  },
+  "execution_rationale": [
+    "The earlier advisor-access blocker was recoverable from this session once the correct Supabase management tools were activated: project lookup plus security and performance advisor retrieval both succeeded.",
+    "The restored official advisor path means the `09` tranche no longer needs an alternate execution gate or speculative management-API recovery before proceeding.",
+    "Existing advisor debt still exists elsewhere in the project, but that debt is preexisting legacy surface and no longer prevents a bounded live execution packet for the `09` tranche itself."
+  ],
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-06-olares-dev-residency-046-supabase-advisor-access-recovery-and-execution-gate-decision-handoff.md"
+  ],
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-06-olares-dev-residency-046-supabase-advisor-access-recovery-and-execution-gate-decision-handoff.md",
+  "next_packet_candidate": "Olares Dev Residency 047 - Operations Visibility Schema Tranche Live Execution And Validation",
+  "validation_disposition": "recovered",
+  "closure_note": "Executed 2026-05-06 as the direct follow-on to Packet 045. Packet 046 recovered a truthful Supabase management/advisor path from the current session by activating the correct management surfaces and verifying project lookup plus security/performance advisor retrieval against `resa-power-db`. The `09` tranche is no longer blocked on advisor access and can proceed to a bounded live execution packet.",
+  "next_action": "Execute `Olares Dev Residency 047 - Operations Visibility Schema Tranche Live Execution And Validation`."
+}

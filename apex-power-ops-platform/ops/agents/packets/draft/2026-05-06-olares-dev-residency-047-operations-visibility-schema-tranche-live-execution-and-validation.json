@@ -1,0 +1,64 @@
+{
+  "packet_id": "2026-05-06-olares-dev-residency-047",
+  "title": "Operations Visibility Schema Tranche Live Execution And Validation",
+  "objective": "Apply the bounded `09` Operations Visibility schema tranche live in Supabase and validate that the exact type, columns, enum entries, and views land with the intended security posture.",
+  "domain": "delivery-domain",
+  "active_role": "Platform Architect",
+  "dependencies": [
+    "ops/agents/packets/draft/2026-05-06-olares-dev-residency-046-supabase-advisor-access-recovery-and-execution-gate-decision.json",
+    "ops/agents/handoffs/2026-05-06-olares-dev-residency-046-supabase-advisor-access-recovery-and-execution-gate-decision-handoff.md",
+    "C:/APEX Platform/Supabase/schema/09_schema_additions.sql",
+    "C:/APEX Platform/Supabase/schema/09b_enum_updates.sql",
+    "plan/infrastructure-olares-full-implementation-roadmap-1.md"
+  ],
+  "dependency_note": "Packet 046 restored a truthful advisor path and reopened live execution of the `09` tranche as the next bounded move.",
+  "execution_mode": "bounded_live_schema_execution",
+  "execution_steps": [
+    "Apply the `09` Operations Visibility schema tranche through Supabase.",
+    "If live compilation exposes a local tranche defect, harden the tranche source rather than bypassing the failure ad hoc.",
+    "Retry the bounded apply after the local tranche defect is repaired.",
+    "Validate the exact live artifacts landed: enum type, target columns, target views, `security_invoker` posture, and target enum entries."
+  ],
+  "constraints": [
+    "Mutate only the bounded `09` Operations Visibility tranche and its direct source-of-truth files.",
+    "Do not widen scope into unrelated legacy advisor debt, runtime services, package manifests, lockfiles, or old-clone state.",
+    "Do not treat a partially successful first migration attempt as closure; rerun only after the tranche source itself is corrected."
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "execution_outcome": "live_tranche_applied_and_validated",
+  "execution_evidence": {
+    "first_apply_failure_1": "invalid input value for enum apparatus_assessment: \"Non-Serviceable\"",
+    "first_apply_failure_2": "invalid input value for enum project_status: \"In Progress\"",
+    "source_hardening_applied": [
+      "`apparatus_availability` creation is now rerun-safe in `Supabase/schema/09_schema_additions.sql`.",
+      "`v_project_apparatus_summary` and `v_master_operations` now compare `assessment` as text when referencing future enum labels.",
+      "`v_master_operations` now compares `project_status` as text when referencing `In Progress`."
+    ],
+    "live_apply_retry_success": true,
+    "apparatus_availability_type_present": true,
+    "apparatus_columns_present": 7,
+    "task_columns_present": 7,
+    "scope_columns_present": 7,
+    "project_columns_present": 7,
+    "target_views_present": 11,
+    "target_views_with_security_invoker": 11,
+    "target_enum_entries_present": 3,
+    "v_master_operations_rows": 1,
+    "v_apparatus_operational_rows": 47,
+    "security_advisor_findings_on_new_09_views": 0
+  },
+  "execution_rationale": [
+    "The first live apply attempt exposed real tranche-local defects instead of generic platform blockers, so the correct repair was to harden the tranche source itself and rerun the bounded migration.",
+    "After those local fixes, the live apply succeeded and the exact intended artifacts landed in Supabase.",
+    "Post-apply verification confirmed the bounded outcome directly in the database, and a refreshed security-advisor search did not report any of the 11 new `09` views."
+  ],
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-06-olares-dev-residency-047-operations-visibility-schema-tranche-live-execution-and-validation-handoff.md"
+  ],
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-06-olares-dev-residency-047-operations-visibility-schema-tranche-live-execution-and-validation-handoff.md",
+  "next_packet_candidate": "Olares Dev Residency 048 - Operations Visibility Runtime Consumption Planning",
+  "validation_disposition": "applied_and_validated",
+  "closure_note": "Executed 2026-05-06 as the direct follow-on to Packet 046. Packet 047 applied the bounded `09` Operations Visibility schema tranche live in Supabase, repaired three tranche-local idempotency/enum-compatibility defects exposed by the first attempt, reran successfully, and verified the full intended live artifact set plus the security posture of the new views.",
+  "next_action": "Execute `Olares Dev Residency 048 - Operations Visibility Runtime Consumption Planning`."
+}

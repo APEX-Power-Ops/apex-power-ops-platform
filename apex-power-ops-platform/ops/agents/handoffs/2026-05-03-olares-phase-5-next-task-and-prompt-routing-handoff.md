@@ -1,7 +1,7 @@
 # Olares Phase 5 Next Task And Prompt Routing Handoff
 
 Date: 2026-05-03
-Status: Active - Packet 045 is complete and the next bounded follow-on is advisor-access recovery or alternate execution-gate decision
+Status: Active - Packet 047 is complete and the next bounded follow-on is Operations Visibility runtime consumption planning
 Scope: preserve the completed Olares-first AI workflow routing state after Packet 035 through Packet 041 while naming the current bounded business-lane follow-on from the Olares-resident posture
 
 Update 2026-05-06:
@@ -28,11 +28,13 @@ Update 2026-05-06:
 20. The Olares-first AI workflow tranche remains parked at a stable published boundary, but a new bounded authority objective has now been selected.
 21. Packet 042 is now complete and reopens only the default Operations Visibility business lane as the next bounded follow-on from the Olares-resident posture.
 22. Packet 043 is now complete and selects a bounded schema-deployment preflight around `Supabase/schema/09_schema_additions.sql` and `Supabase/schema/09b_enum_updates.sql` as the first truthful post-041 Operations Visibility slice.
-23. Packet 044 is now complete and returned a not-execution-ready verdict for the `09` schema tranche: none of the target columns/views/enum additions are live yet, the tranche's public views lack explicit `security_invoker` treatment, and the normal Supabase advisor path was unavailable from this session.
+23. Packet 044 is now complete and returned a not-execution-ready verdict for the `09` schema tranche: none of the target columns/views/enum additions were live yet, the tranche's public views lacked explicit `security_invoker` treatment, and the Supabase advisor path appeared unavailable from this session.
 24. Packet 045 is now complete and remediated the repo-side public-view security issue by adding explicit `security_invoker` treatment to all 11 views in `Supabase/schema/09_schema_additions.sql`.
-25. The `09` tranche remains blocked only on advisor access from this session: Supabase MCP advisor calls still fail internally and a direct management API probe with the stored token returned `401 Unauthorized`.
-26. The next packet should therefore be `Olares Dev Residency 046 - Supabase Advisor Access Recovery Or Alternate Execution-Gate Decision`.
-27. The current minimal MCP trio plus `apex-jobs` operating model remains intact in the background; reopen Olares-first infrastructure work only if it shows a concrete insufficiency.
+25. Packet 046 is now complete and recovered a truthful Supabase management/advisor path from this session: the project lookup succeeded, security and performance advisor retrieval both worked, and the blocker narrowed from access failure to a normal bounded execution decision.
+26. Packet 047 is now complete and applied the bounded `09` Operations Visibility schema tranche live after closing three hidden source-local defects exposed by the first migration attempt: rerun-safe `apparatus_availability` type creation, text-based assessment comparisons for future enum labels, and a text-based `project_status` filter in `v_master_operations`.
+27. Live verification is complete: all 28 target columns landed, all 11 Operations Visibility views are live, all 11 carry `security_invoker = true`, all 3 target `apparatus_assessment` enum additions are present, and refreshed security-advisor output does not report any of the new `09` views.
+28. The next packet should therefore be `Olares Dev Residency 048 - Operations Visibility Runtime Consumption Planning`.
+29. The current minimal MCP trio plus `apex-jobs` operating model remains intact in the background; reopen Olares-first infrastructure work only if it shows a concrete insufficiency.
 
 ## Authority
 

@@ -12,11 +12,17 @@
 -- =============================================================================
 -- This drives daily operational visibility - "what can we work on today?"
 
-CREATE TYPE apparatus_availability AS ENUM (
-    'Ready',           -- Equipment accessible, ready to test
-    'On Hold',         -- Blocked by external factor (customer, parts, etc.)
-    'Not Available'    -- Not yet accessible (construction, scheduling)
-);
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'apparatus_availability') THEN
+        CREATE TYPE apparatus_availability AS ENUM (
+            'Ready',           -- Equipment accessible, ready to test
+            'On Hold',         -- Blocked by external factor (customer, parts, etc.)
+            'Not Available'    -- Not yet accessible (construction, scheduling)
+        );
+    END IF;
+END $$;
+
 COMMENT ON TYPE apparatus_availability IS 'Operational availability for daily scheduling';
 
 -- =============================================================================
@@ -339,7 +345,7 @@ SELECT
     ) AS completion_percent,
     COUNT(a.id) FILTER (WHERE a.availability = 'Ready' AND a.status != 'Complete') AS ready_to_work,
     COUNT(a.id) FILTER (WHERE a.availability IN ('On Hold', 'Not Available') AND a.status != 'Complete') AS blocked,
-    COUNT(a.id) FILTER (WHERE a.assessment IN ('Non-Serviceable', 'Fail', 'Needs Repair')) AS issues_failed,
+    COUNT(a.id) FILTER (WHERE a.assessment::text IN ('Non-Serviceable', 'Fail', 'Needs Repair')) AS issues_failed,
     COUNT(a.id) FILTER (WHERE a.date_due <= CURRENT_DATE AND a.status != 'Complete') AS past_due,
     COUNT(a.id) FILTER (WHERE a.date_due BETWEEN CURRENT_DATE AND CURRENT_DATE + 7 AND a.status != 'Complete') AS due_this_week,
     -- Hours
@@ -414,7 +420,7 @@ SELECT
     COUNT(a.id) FILTER (WHERE a.availability = 'Ready' AND a.status != 'Complete') AS ready_to_work,
     COUNT(a.id) FILTER (WHERE a.availability = 'On Hold' AND a.status != 'Complete') AS on_hold,
     COUNT(a.id) FILTER (WHERE a.availability = 'Not Available' AND a.status != 'Complete') AS not_available,
-    COUNT(a.id) FILTER (WHERE a.assessment IN ('Non-Serviceable', 'Fail', 'Needs Repair')) AS issues,
+    COUNT(a.id) FILTER (WHERE a.assessment::text IN ('Non-Serviceable', 'Fail', 'Needs Repair')) AS issues,
     COUNT(a.id) FILTER (WHERE a.date_due < CURRENT_DATE AND a.status != 'Complete') AS overdue,
     COUNT(a.id) FILTER (WHERE a.date_due = CURRENT_DATE AND a.status != 'Complete') AS due_today,
     COUNT(a.id) FILTER (WHERE a.date_due BETWEEN CURRENT_DATE + 1 AND CURRENT_DATE + 7 AND a.status != 'Complete') AS due_this_week,
@@ -436,7 +442,7 @@ LEFT JOIN clients c ON p.client_id = c.id
 LEFT JOIN sites si ON p.site_id = si.id
 LEFT JOIN locations l ON p.location_id = l.id
 WHERE p.is_active = true
-  AND p.status IN ('Active', 'Won', 'In Progress')
+    AND p.status::text IN ('Active', 'Won', 'In Progress')
 GROUP BY p.id, p.project_number, p.project_name, p.status, p.date_due,
          c.client_name, l.location_name, si.city
 ORDER BY 

@@ -58,9 +58,13 @@ handoffs.
 17. The Olares-first AI workflow tranche is parked at a stable published boundary and its operating model remains the minimal MCP trio plus `apex-jobs` and packet-handoff governance.
 18. A new bounded authority objective has now been selected on top of that stable base: Packet 042 reopens only the default Operations Visibility business lane as the next bounded follow-on from the Olares-resident posture.
 19. Packet 043 now selects the first truthful post-041 Operations Visibility slice: a bounded schema-deployment preflight around `Supabase/schema/09_schema_additions.sql` and `Supabase/schema/09b_enum_updates.sql`.
-20. Packet 044 completed that live preflight and found the `09` schema tranche not execution-ready yet: none of the target columns, operations views, or enum additions are live; the public views in `09_schema_additions.sql` are not yet authored with explicit `security_invoker` treatment; and the normal Supabase advisor path was unavailable from this session.
-21. Packet 045 completed that remediation in part: all 11 public views in `Supabase/schema/09_schema_additions.sql` now use explicit `security_invoker` treatment, but the tranche remains blocked because Supabase advisor access is still unavailable from this session.
-22. The next truthful follow-on is therefore `Olares Dev Residency 046 - Supabase Advisor Access Recovery Or Alternate Execution-Gate Decision`, not direct schema mutation and not more generic Olares-first infrastructure expansion.
+20. Packet 044 completed that live preflight and found the `09` schema tranche not execution-ready yet: none of the target columns, operations views, or enum additions were live; the public views in `09_schema_additions.sql` lacked explicit `security_invoker` treatment; and the Supabase advisor path appeared unavailable from this session.
+21. Packet 045 remediated the repo-side public-view security posture: all 11 views in `Supabase/schema/09_schema_additions.sql` now use explicit `security_invoker` treatment.
+22. Packet 046 then recovered a truthful Supabase management/advisor path from this session by activating the correct Supabase MCP management surfaces: project lookup plus security and performance advisor retrieval now work again against `resa-power-db`.
+23. Packet 047 is now complete and applied the bounded `09` Operations Visibility schema tranche live. The first apply attempt exposed two source-local enum dependency defects, so the tranche source was hardened in-place before retry: `apparatus_availability` creation is now rerun-safe, assessment comparisons that reference future enum labels are text-based, and `v_master_operations` no longer assumes the `project_status` enum already contains `In Progress`.
+24. Live post-apply verification is complete: the `apparatus_availability` type is present, all 28 target columns landed across `apparatus`, `tasks`, `scopes`, and `projects`, all 11 Operations Visibility views are live, all 11 carry `security_invoker = true`, the three `apparatus_assessment` enum additions are present, and representative views (`v_master_operations`, `v_apparatus_operational`) return live rows.
+25. A refreshed Supabase security-advisor pass does not report any of the 11 new `09` views; remaining advisor debt is preexisting legacy surface outside this bounded tranche.
+26. The next truthful follow-on is therefore `Olares Dev Residency 048 - Operations Visibility Runtime Consumption Planning`, not more advisor-path recovery and not generic Olares-first infrastructure expansion.
 
 ```mermaid
 pie title Project Completion Status
@@ -79,7 +83,7 @@ pie title Project Completion Status
 | Role-Based Demo | ✅ Ready | 5-role interactive prototype |
 | **NETA Procedures Import** | ✅ Complete | 66 procedures (ATS + MTS) |
 | **NETA Test Items** | ✅ Complete | 956 test items across standards |
-| **Operations Schema** | 📝 Ready to Deploy | 09_schema_additions.sql |
+| **Operations Schema** | ✅ Deployed | `09` tranche live and verified on Supabase |
 | Revenue Recognition Flow | ⏳ Ready | Triggers deployed, needs UI testing |
 | PSS Portal | 📋 Schema Ready | 6 tables deployed, UI not started |
 | Production Deployment | 🔜 Planned | Dev environment only |
