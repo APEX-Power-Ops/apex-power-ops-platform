@@ -260,6 +260,22 @@ class ProjectApparatusSummaryRow(BaseModel):
     remaining_hours: float = Field(..., description="Quoted hours still remaining for the scope.")
 
 
+class ApparatusByCategorySummaryRow(BaseModel):
+    """Read-only summary row from ``public.v_apparatus_by_category``."""
+
+    project_id: str = Field(..., description="Project UUID from the Operations Visibility category view.")
+    project_number: Optional[str] = Field(None, description="Human-readable project number.")
+    scope_id: Optional[str] = Field(None, description="Scope UUID represented in the row.")
+    scope_name: Optional[str] = Field(None, description="Scope name represented in the row.")
+    apparatus_category: Optional[str] = Field(None, description="Grouped apparatus type category.")
+    total_count: int = Field(..., description="Total apparatus count in this category row.")
+    completed: int = Field(..., description="Completed apparatus count in this category row.")
+    remaining: int = Field(..., description="Remaining apparatus count in this category row.")
+    percent_complete: float = Field(..., description="Calculated percent complete for this category row.")
+    ready_to_work: int = Field(..., description="Ready-to-work apparatus count in this category row.")
+    blocked: int = Field(..., description="Blocked apparatus count in this category row.")
+
+
 @router.get(
     "/pm-idempotency/by-route",
     response_model=PMIdempotencyByRoute,
@@ -429,3 +445,48 @@ def project_apparatus_summary(
         .all()
     )
     return [ProjectApparatusSummaryRow(**row) for row in rows]
+
+
+@router.get(
+    "/apparatus-by-category",
+    response_model=list[ApparatusByCategorySummaryRow],
+    summary="Operations Visibility apparatus-by-category rollup (read-only).",
+)
+def apparatus_by_category_summary(
+    limit: int = Query(25, ge=1, le=100),
+    db: Session = Depends(get_db),
+) -> list[ApparatusByCategorySummaryRow]:
+    """Return bounded rows from ``public.v_apparatus_by_category``.
+
+    This keeps grouped category breakdown consumption behind the
+    governed control-plane API rather than reopening direct browser-side
+    Supabase reads.
+    """
+
+    rows = (
+        db.execute(
+            text(
+                """
+                SELECT
+                    project_id,
+                    project_number,
+                    scope_id,
+                    scope_name,
+                    apparatus_category,
+                    total_count,
+                    completed,
+                    remaining,
+                    percent_complete,
+                    ready_to_work,
+                    blocked
+                FROM public.v_apparatus_by_category
+                ORDER BY project_number, scope_name, apparatus_category
+                LIMIT :limit
+                """
+            ),
+            {"limit": limit},
+        )
+        .mappings()
+        .all()
+    )
+    return [ApparatusByCategorySummaryRow(**row) for row in rows]

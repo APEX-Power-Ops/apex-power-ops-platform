@@ -1,5 +1,6 @@
 import { browserEnv, hasSupabaseBrowserConfig } from '../lib/browser-env'
 import { ApparatusResourceExplorer } from './apparatus-resource-explorer'
+import { ApparatusByCategoryExplorer } from './apparatus-by-category-explorer'
 import { MasterOperationsExplorer } from './master-operations-explorer'
 import { ProjectApparatusSummaryExplorer } from './project-apparatus-summary-explorer'
 import { RelayResourceExplorer } from './relay-resource-explorer'
@@ -43,6 +44,11 @@ const shellChecks = [
     status: 'backend-routed',
     detail: 'The third governed Operations Visibility seam now reads /api/v1/ops/project-apparatus-summary for scope-level KPI rollups.',
   },
+  {
+    label: 'Category seam',
+    status: 'backend-routed',
+    detail: 'The fourth governed Operations Visibility seam now reads /api/v1/ops/apparatus-by-category for grouped apparatus rollups.',
+  },
 ]
 
 const nextMoves = [
@@ -50,6 +56,7 @@ const nextMoves = [
   'Treat /api/v1/ops/master-operations as the first governed dashboard rollup seam for the newly live 09 schema tranche.',
   'Treat /api/v1/ops/schedule-health as the adjacent scope-level risk seam for the same governed operations lane.',
   'Treat /api/v1/ops/project-apparatus-summary as the adjacent scope KPI seam before widening into grouped category or blocker views.',
+  'Treat /api/v1/ops/apparatus-by-category as the grouped category seam before widening into blocker-note aggregation.',
   'Exercise the new apparatus study-resource route against a migrated host surface when runtime proof is needed.',
   'Keep relay preview source-faithful by surfacing storage-kind identity and unsupported warnings rather than simplifying them away.',
   'Keep the legacy Supabase browser client deferred until a separate client-shape admission decision lands.',
@@ -107,6 +114,7 @@ export default function HomePage() {
             <li>Consumes the first Operations Visibility dashboard rollup through the governed ops API.</li>
             <li>Consumes the adjacent Operations Visibility schedule-health rollup through the same governed ops API boundary.</li>
             <li>Consumes the adjacent Operations Visibility scope KPI rollup through the same governed ops API boundary.</li>
+            <li>Consumes the adjacent Operations Visibility category rollup through the same governed ops API boundary.</li>
             <li>Consumes the bounded relay discovery, context, settings, and preview seam through the same governed API boundary.</li>
             <li>Hosts the preserved cross-surface validation dashboard at /integration-dashboard/index.html.</li>
             <li>Hosts the re-homed lead operations prototype at /lead-ops/index.html.</li>
@@ -156,6 +164,7 @@ export default function HomePage() {
       <MasterOperationsExplorer />
       <ScheduleHealthExplorer />
       <ProjectApparatusSummaryExplorer />
+      <ApparatusByCategoryExplorer />
       <ApparatusResourceExplorer />
       <RelayResourceExplorer />
     </main>
