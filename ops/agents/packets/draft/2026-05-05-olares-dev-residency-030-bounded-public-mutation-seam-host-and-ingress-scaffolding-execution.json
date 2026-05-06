@@ -1,0 +1,43 @@
+{
+  "packet_id": "2026-05-05-olares-dev-residency-030",
+  "title": "Bounded Public Mutation-Seam Host And Ingress Scaffolding Execution",
+  "objective": "Land the smallest repo-owned public mutation-seam host scaffold plus the same-origin operations-web ingress contract needed for the re-homed PM surfaces to resolve `/api/v1/{reads,schedule,mutations}` without reopening source-local API-origin remediation.",
+  "domain": "delivery-domain",
+  "active_role": "Hosted Runtime Scaffolding Operator",
+  "dependencies": [
+    "ops/agents/packets/draft/2026-05-05-olares-dev-residency-029-post-028-public-mutation-seam-deployment-boundary-decision.json",
+    "apps/operations-web/next.config.ts",
+    "apps/operations-web/DEPLOYMENT_VALIDATION.md",
+    "apps/mutation-seam/DEPLOYMENT.md",
+    "apps/mutation-seam/README.md",
+    "plan/infrastructure-olares-full-implementation-roadmap-1.md"
+  ],
+  "decision_selected": "land_repo_owned_public_mutation_seam_host_and_same_origin_ingress_scaffolding",
+  "decision_rationale": [
+    "Packet 029 established that the remaining blocker is no longer stale frontend source; it is the absence of a public mutation-seam host and ingress contract for the PM `reads`, `schedule`, and `mutations` routes.",
+    "The re-homed PM pages already correctly call same-origin `/api/v1/*`, so the smallest root fix is not another page edit; it is an ingress layer in `apps/operations-web` plus a concrete public-host deployment contract for `apps/mutation-seam`.",
+    "The adjacent `apps/control-plane-api` surface already provides a proven Render-host plus deployed-smoke pattern that can be mirrored without widening into unrelated platform or browser-shell work.",
+    "`apps/mutation-seam` imports cleanly and already exposes `/health`, `/api/v1/reads/*`, `/api/v1/schedule/*`, and `/api/v1/mutations/*`, so the missing boundary is deploy-and-ingress scaffolding rather than immediate application repair."
+  ],
+  "execution_summary": [
+    "Added same-origin rewrite rules in `apps/operations-web/next.config.ts` for `/api/v1/reads/:path*`, `/api/v1/schedule/:path*`, and `/api/v1/mutations/:path*`, keyed by the server-side environment variable `MUTATION_SEAM_BASE_URL`.",
+    "Added `apps/mutation-seam/render.yaml` as the first repo-owned public-host blueprint targeting `https://mutation-seam.apexpowerops.com`.",
+    "Added `apps/mutation-seam/scripts/smoke_deployed_mutation_seam.py` and `.github/workflows/deployed-mutation-seam-smoke.yml` as the deployed-host validation path for the public seam routes used by the PM surfaces.",
+    "Added `apps/mutation-seam/DEPLOYMENT_VALIDATION.md` and updated adjacent deployment docs so the new host plus ingress contract is explicit and repeatable."
+  ],
+  "validation": {
+    "operations_web_build": "corepack pnpm --filter @apex/operations-web build -> PASS",
+    "mutation_seam_smoke_script_syntax": "python -m py_compile apps/mutation-seam/scripts/smoke_deployed_mutation_seam.py -> PASS",
+    "editor_error_sweep": "next.config.ts, render.yaml, smoke_deployed_mutation_seam.py, deployed-mutation-seam-smoke.yml -> No errors found"
+  },
+  "status": "complete",
+  "handoff_target": "Platform Architect",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-05-olares-dev-residency-030-bounded-public-mutation-seam-host-and-ingress-scaffolding-execution-handoff.md"
+  ],
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-05-olares-dev-residency-030-bounded-public-mutation-seam-host-and-ingress-scaffolding-execution-handoff.md",
+  "validation_disposition": "repo-scaffold-landed-not-yet-host-deployed",
+  "next_packet_candidate": "Olares Dev Residency 031 - Bounded Public Mutation-Seam Hosted Deployment And Public PM Live-Data Proof",
+  "closure_note": "Executed 2026-05-06 as a bounded scaffolding packet. Packet 030 lands the missing repo-owned host and ingress contract but does not claim that `https://mutation-seam.apexpowerops.com` is already deployed or that public PM live-data proof has already passed.",
+  "next_action": "Execute Packet 031 as the smallest hosted deployment and post-deploy PM live-data proof slice once the Render and Vercel environment changes can be applied."
+}

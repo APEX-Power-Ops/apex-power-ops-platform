@@ -1,0 +1,49 @@
+{
+  "packet_id": "2026-05-05-olares-dev-residency-028",
+  "title": "Bounded Operations-Web Preview Promote And Promoted-Host Smoke Execution",
+  "objective": "Promote the newest ready `apex-operations-web` preview deployment to production and rerun the governed promoted-host smoke against `https://operations.apexpowerops.com` so the Packet 025 remediation can be validated on the actual public host.",
+  "domain": "delivery-domain",
+  "active_role": "Hosted Runtime Validation Operator",
+  "dependencies": [
+    "ops/agents/packets/draft/2026-05-05-olares-dev-residency-027-post-026-public-host-remediation-outcome-decision.json",
+    "ops/agents/handoffs/2026-05-05-olares-dev-residency-027-post-026-public-host-remediation-outcome-decision-handoff.md",
+    "apps/operations-web/DEPLOYMENT_VALIDATION.md",
+    ".github/workflows/operations-web-hosted-smoke.yml",
+    "ops/agents/handoffs/2026-05-03-tcc-relay-phase-2-operations-web-promoted-host-redeploy-blocker-handoff.md",
+    "plan/infrastructure-olares-full-implementation-roadmap-1.md"
+  ],
+  "execution_scope": [
+    "Inspect the newest ready preview deployment for `apex-operations-web` and promote it to production using the already-validated Vercel path.",
+    "Reinspect `https://operations.apexpowerops.com` after promotion to confirm the production alias moved.",
+    "Run `node apps/operations-web/scripts/smoke-promoted-host.mjs --operations-web-base-url https://operations.apexpowerops.com --control-plane-base-url https://control.apexpowerops.com --skip-authenticated-checks` from `apex-power-ops-platform`.",
+    "Capture whether the promoted host still targets localhost, now targets same-origin `/api/v1`, or fully passes the governed smoke."
+  ],
+  "explicit_no_go_items": [
+    "source edits",
+    "package or lockfile mutation",
+    "runtime or service mutation outside the hosted deploy promote",
+    "host browser-runtime reopening",
+    "remote rewrite",
+    "rollback, force, reset, or clean",
+    "old-clone mutation or promotion"
+  ],
+  "execution_evidence": {
+    "promoted_preview_source": "https://apex-operations-t362sc9pa-jasonlswenson-sys-projects.vercel.app",
+    "production_alias_deployment_after_propagation": "dpl_3rR9YukiwRwnMcdbKN87Hh87rpVr",
+    "production_alias_url_after_propagation": "https://apex-operations-cnbrtuqdj-jasonlswenson-sys-projects.vercel.app",
+    "hosted_route_smoke": "SMOKE_SUMMARY failed=0 passed=8 base_url=https://operations.apexpowerops.com/",
+    "pm_public_host_request_proof": "drivers page now requests https://operations.apexpowerops.com/api/v1/schedule/drivers?project_id=stack-dc instead of localhost",
+    "approval_public_host_request_proof": "approval surface now requests https://operations.apexpowerops.com/api/v1/reads/* instead of localhost, but those requests return 404 on the promoted host",
+    "browser_smoke_follow_up": "promoted-host browser smoke still fails in browser-shell.apparatus.smoke.spec.ts and browser-shell.relay.smoke.spec.ts outside the Packet 025 static-surface slice"
+  },
+  "status": "complete",
+  "handoff_target": "Platform Architect",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-05-olares-dev-residency-028-bounded-operations-web-preview-promote-and-promoted-host-smoke-execution-handoff.md"
+  ],
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-05-olares-dev-residency-028-bounded-operations-web-preview-promote-and-promoted-host-smoke-execution-handoff.md",
+  "validation_disposition": "execution-complete-follow-up-decision-required",
+  "next_packet_candidate": "Olares Dev Residency 029 - Post-028 Public Mutation-Seam Deployment Boundary Decision",
+  "closure_note": "Executed 2026-05-05. Packet 028 promoted the newest ready operations-web preview to production, production alias propagation completed to deployment `dpl_3rR9YukiwRwnMcdbKN87Hh87rpVr`, hosted route smoke still passed 8/8, and the remediated PM/approval surfaces now call same-origin `/api/v1` instead of `localhost`. Live-data readiness remains unproven because the promoted host and the public control-plane host both return `404` for the PM `reads` and `schedule` routes, and the broader promoted-host browser smoke still reports two non-PM failures in the apparatus and relay shell specs.",
+  "next_action": "Execute Packet 029 as the smallest truthful post-028 decision on the missing public mutation-seam deployment or ingress contract."
+}

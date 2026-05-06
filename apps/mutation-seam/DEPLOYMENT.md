@@ -16,6 +16,12 @@ python -m uvicorn app.main:app --reload --port 8000
 
 Visit `http://localhost:8000/health` to verify.
 
+Public-host note:
+
+1. the repository now carries a bounded Render blueprint at `render.yaml`
+2. the intended public host contract is `https://mutation-seam.apexpowerops.com`
+3. `apps/operations-web` now proxies PM-facing same-origin `/api/v1/{reads,schedule,mutations}` traffic to that hosted seam through `MUTATION_SEAM_BASE_URL`
+
 ---
 
 ## Running Tests
@@ -180,6 +186,14 @@ export LOG_LEVEL=INFO
 export JWT_SECRET=$(openssl rand -base64 32)
 ```
 
+Hosted ingress setup:
+
+```bash
+export CORS_ORIGINS=https://operations.apexpowerops.com,https://mutation-seam.apexpowerops.com
+export SEAM_STORE_BACKEND=postgres
+export SEAM_DATABASE_URL=<hosted database dsn>
+```
+
 ---
 
 ## Monitoring & Logging
@@ -188,6 +202,12 @@ export JWT_SECRET=$(openssl rand -base64 32)
 - **Endpoint:** `GET /health`
 - **Interval:** 30 seconds
 - **Timeout:** 10 seconds
+
+Hosted route validation:
+
+```bash
+python scripts/smoke_deployed_mutation_seam.py --base-url https://mutation-seam.apexpowerops.com
+```
 
 ### Metrics (Future)
 Will expose Prometheus metrics at `/metrics`:

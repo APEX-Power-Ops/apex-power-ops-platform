@@ -4,6 +4,12 @@ Date: 2026-05-03
 Status: Active - Olares Dev Residency Packet 007 is complete; Packet 008 is authored as the next client-only laptop posture confirmation gate
 Scope: update the next task prompts after Phase 5 Step 1, Step 2, Step 3, Packet 001, Packet 002, Packet 003, Packet 004, Packet 005, Prompt 7, Prompt 8, Packet 007, Prompt 10, Packet 008, Packet 009, Packet 010, Packet 011, Packet 012, Packet 013, Packet 014, Packet 015, Packet 016, Packet 017, Packet 018, Packet 019, Packet 020, Packet 021, Packet 022, Packet 023, Packet 024, Packet 025, Packet 026, Packet 027, Packet 028, Packet 029, Packet 030, Packet 031, Packet 032, Packet 033, Packet 034, Packet 035, Packet 036, Packet 037, Packet 038, Packet 039, Packet 040, Packet 041, Packet 042, Packet 043, Packet 044, Packet 045, Packet 046, Packet 047, Packet 048, Packet 049, Packet 050, Packet 051, and Packet 052 completion, and state the live Packet 053 execution packet
 
+Update 2026-05-06:
+
+1. Olares Dev Residency Packet 030 is now complete locally as the bounded public mutation-seam host-and-ingress scaffolding packet.
+2. The repo-owned next packet candidate is now `Olares Dev Residency 031 - Bounded Public Mutation-Seam Hosted Deployment And Public PM Live-Data Proof`.
+3. Packet 030 lands the Render blueprint, deployed seam smoke path, and `operations-web` same-origin rewrite contract, but it does not claim that the public seam host is already deployed.
+
 ## Authority
 
 This routing handoff depends on:
@@ -4742,3 +4748,23 @@ Packet 025 completed as a bounded source-local remediation slice. The public PM 
 Olares Dev Residency Packet 026 authored state:
 
 Packet 026 is authored as `Olares Dev Residency 026 - Packet 022 Closeout Through Packet 025 API-Origin Remediation Authority Publication And Host Mirror Resync Gate`. It is bounded to publishing the still-local Packet 022 closeout plus the Packet 023 through Packet 025 authority set, six remediated public static asset files, routing, and roadmap updates while excluding unrelated `.vercelignore`, older Packet 039/057/062/095 drift, the Packet 006 operator prompt, and unrelated source, package, runtime, or old-clone changes.
+
+Olares Dev Residency Packet 026 execution result:
+
+Packet 026 completed with bounded publication and host resync in commit `ff3076c749434cf68c0b8c80d7e74727b7f08ddd` (`Publish Olares API origin remediation burst`). `/home/olares/code/apex` fast-forwarded cleanly from `a3a5b05271c3db35d7b339eb6b48ab74cca3101f` to the published commit, and `/home/olares/src/apex-power-ops-platform` remained observe-only at the same HEAD with status count `30`.
+
+Olares Dev Residency Packet 027 decision result:
+
+Packet 027 completed as a decision-only packet and established that the smallest truthful next slice is a bounded hosted-runtime promote step. The promoted host still serves older localhost-bound assets, production alias `operations.apexpowerops.com` remains pinned to the 2026-05-03 deployment, a newer ready preview exists, and preview protection keeps preview from serving as the governed public proof gate.
+
+Olares Dev Residency Packet 028 authored state:
+
+Packet 028 is authored as `Olares Dev Residency 028 - Bounded Operations-Web Preview Promote And Promoted-Host Smoke Execution`. It is bounded to promoting the newest ready `apex-operations-web` preview deployment to production and rerunning the governed promoted-host smoke against `https://operations.apexpowerops.com`.
+
+Olares Dev Residency Packet 028 execution result:
+
+Packet 028 completed with a real promote and post-propagation proof. Production alias `operations.apexpowerops.com` moved to deployment `dpl_3rR9YukiwRwnMcdbKN87Hh87rpVr`, hosted route smoke still passed `8/8`, and the public PM and approval surfaces now request same-origin `/api/v1` rather than `localhost`. The remaining blocker is narrower and different: those PM mutation-seam routes still return `404` publicly, and the broader promoted-host browser smoke still reports two non-PM failures in the apparatus and relay shell specs.
+
+Olares Dev Residency Packet 029 decision result:
+
+Packet 029 completed as a decision-only packet and established that the next truthful slice is a bounded public mutation-seam deployment or ingress planning packet. Both `operations.apexpowerops.com` and `control.apexpowerops.com` return `Not Found` for the PM `reads` and `schedule` routes, and no existing public mutation-seam host or proxy contract was evidenced in the reviewed deployment surfaces.

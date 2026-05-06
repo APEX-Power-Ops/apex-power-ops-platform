@@ -50,6 +50,15 @@ By default the service uses the Postgres-backed seam store. If local Postgres is
 
 Health check: `curl http://localhost:8000/health`
 
+## Public Host Contract
+
+The bounded hosted deployment contract for this service is now:
+
+1. public seam host: `https://mutation-seam.apexpowerops.com`
+2. Render blueprint: `apps/mutation-seam/render.yaml`
+3. deployed-host smoke: `python apps/mutation-seam/scripts/smoke_deployed_mutation_seam.py --base-url https://mutation-seam.apexpowerops.com`
+4. `apps/operations-web` must set the server-side env `MUTATION_SEAM_BASE_URL=https://mutation-seam.apexpowerops.com` so the re-homed PM pages keep using same-origin `/api/v1/*` without returning public-host `404`
+
 ### Test
 
 ```bash
@@ -168,7 +177,7 @@ closed → (terminal)
 ## Integration Roadmap
 
 1. **Current:** Postgres-backed seam store with memory fallback for offline validation
-2. **Next:** Land additional persisted planning context and read models on the governed seam
+2. **Next:** Land the hosted public seam and wire `operations-web` through the same-origin rewrite contract
 3. **Then:** Add realtime notification (WebSocket/Server-Sent Events)
 4. **Later:** Multi-zone replication, offline sync, conflict resolution
 
