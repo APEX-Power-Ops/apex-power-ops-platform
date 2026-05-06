@@ -1,7 +1,7 @@
 # Olares Phase 5 Next Task And Prompt Routing Handoff
 
 Date: 2026-05-03
-Status: Active - Packet 061 is complete, the deferred Operations Visibility hold branch remains dormant until trigger, the simultaneous-worker branch remains dormant until new evidence under Packet 092, and the next active Olares-first lane is a planning-only host-resident developer-workflow hardening follow-on
+Status: Active - Packet 064 is complete, the deferred Operations Visibility hold branch remains dormant until trigger, the simultaneous-worker branch remains dormant until new evidence under Packet 092, and the durable host posture now includes a published bounded host bootstrap/status operator surface
 Scope: preserve the completed Olares-first AI workflow routing state after Packet 035 through Packet 041 while naming the current bounded Operations Visibility follow-on from the Olares-resident posture
 
 Update 2026-05-06:
@@ -70,6 +70,15 @@ Update 2026-05-06:
 62. Packet 061 is now complete as the post-060 continuation decision for the broader Olares-first program surface.
 63. Packet 061 consumes two now-published dormancy boundaries instead of reopening either one by assumption: the deferred Operations Visibility hold branch remains trigger-bound after Packet 060, and the simultaneous-worker branch remains authorable only with new evidence after Packet 095.
 64. Packet 061 selects one new active lane only: a later planning-only host-resident developer-workflow hardening packet that must inventory concrete development friction on the durable host posture and select one smallest hardening slice without widening AI-services, reopening dormant branches, or changing GitHub-canonical publication.
+65. Packet 062 is now complete as that planning-only host-resident developer-workflow hardening surface.
+66. Packet 062 records the controlling friction precisely: there is no single repo-owned host bootstrap/status entry surface for the durable Olares development posture even though the cutover plan, bootstrap runbook, minimal MCP runbook, and current tasks all exist separately.
+67. Packet 062 therefore selects one smallest later execution slice only: add a bounded host bootstrap/status operator surface that reports canonical mirror parity, host toolchain presence, minimal MCP readiness, and hold-boundary status from `/home/olares/code/apex`, plus the minimum matching runbook and task updates.
+68. Packet 063 is now complete as the execution of that selected slice.
+69. Packet 063 adds `tools/ai/run-olares-host-bootstrap-status.sh` as the new repo-owned durable-host status surface. It composes the already-admitted checks for parent-root host parity, old-clone observe-only state, materialized host toolchain presence, minimal MCP readiness, and host-posture hold-boundary status.
+70. Packet 063 also corrects the existing VS Code hold-boundary task to the real platform-root script path and adds the new `Olares host bootstrap status` task so operators have one bounded entry surface for current host readiness.
+71. Packet 064 is now complete as the bounded publication and host-mirror resync gate for Packet 062 and Packet 063.
+72. Packet 064 publishes the host bootstrap/status surface, its task and runbook updates, the Packet 062 planning authority, and the Packet 063 execution authority through the parent-root boundary, then restores `/home/olares/code/apex` to clean parity.
+73. No dormant branch is reopened by Packet 064. The next truthful Olares follow-on must be a separate decision on whether another host-resident workflow hardening slice is needed after operators use the new status surface.
 
 ## Authority
 

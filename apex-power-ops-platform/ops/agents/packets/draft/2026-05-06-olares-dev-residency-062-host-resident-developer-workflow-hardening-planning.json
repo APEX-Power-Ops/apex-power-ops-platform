@@ -1,0 +1,69 @@
+{
+  "packet_id": "2026-05-06-olares-dev-residency-062",
+  "title": "Host-Resident Developer Workflow Hardening Planning",
+  "objective": "Inventory the concrete remaining friction in the durable Olares host development posture and select exactly one smallest workflow-hardening slice for later execution.",
+  "domain": "infrastructure-domain",
+  "active_role": "Platform Architect",
+  "dependencies": [
+    "ops/agents/packets/draft/2026-05-06-olares-dev-residency-061-post-060-next-active-olares-lane-selection-decision.json",
+    "ops/agents/handoffs/2026-05-06-olares-dev-residency-061-post-060-next-active-olares-lane-selection-decision-handoff.md",
+    "docs/architecture/OLARES-DEVELOPER-HOST-CUTOVER-TECHNICAL-PLAN-2026-05-05.md",
+    "docs/architecture/OLARES-AI-WORKFLOW-FIRST-SLICE-RUNBOOK-2026-05-06.md",
+    "docs/OPERATOR-BOOTSTRAP-RUNBOOK.md",
+    ".vscode/tasks.json"
+  ],
+  "dependency_note": "Packet 061 selected host-resident workflow hardening as the next active Olares-first lane. The planning question is now which concrete remaining friction is smallest and highest truth to address next.",
+  "decision_mode": "planning_only",
+  "friction_inventory": [
+    {
+      "id": "host_bootstrap_fragmentation",
+      "description": "The durable host workflow is split across the cutover technical plan, the general bootstrap runbook, the minimal MCP runbook, and separate tasks, but there is no single repo-owned host bootstrap/status entry surface.",
+      "evidence": [
+        "`docs/architecture/OLARES-DEVELOPER-HOST-CUTOVER-TECHNICAL-PLAN-2026-05-05.md` defines the durable host operating model but not an operator entry command.",
+        "`docs/architecture/OLARES-AI-WORKFLOW-FIRST-SLICE-RUNBOOK-2026-05-06.md` defines minimal-MCP and hold-boundary commands separately.",
+        "`docs/OPERATOR-BOOTSTRAP-RUNBOOK.md` is workstation/bootstrap oriented and does not define a host-resident status surface.",
+        "`.vscode/tasks.json` currently exposes the hold-boundary cadence task but no unified host bootstrap/status task."
+      ],
+      "classification": "operator_surface"
+    },
+    {
+      "id": "host_task_discoverability",
+      "description": "Current durable-host checks are discoverable only by knowing which specific wrapper or runbook section applies.",
+      "classification": "docs_and_task_surface"
+    },
+    {
+      "id": "host_toolchain_visibility",
+      "description": "The host-local toolchain proof exists in prior packets, but there is no single current-status command that reports whether the canonical host path still sees the admitted toolchains and validation helpers.",
+      "classification": "status_surface"
+    }
+  ],
+  "decision_selected": "execute_bounded_host_bootstrap_status_operator_surface",
+  "selected_slice_summary": "The smallest truthful next hardening slice is to add one repo-owned host-resident bootstrap/status operator surface. That surface should report canonical mirror path/parity, host toolchain presence, minimal MCP readiness, and current hold-boundary status from `/home/olares/code/apex` without performing installs, runtime mutation, or broader workflow widening.",
+  "selected_later_execution_shape": [
+    "Add one host-resident bootstrap/status script or wrapper under repo-owned operator surfaces.",
+    "Add one matching task entry for operators using the existing workspace/task contract.",
+    "Update the relevant Olares runbook(s) so the durable host workflow has one entry surface instead of scattered steps.",
+    "Validate that the new surface reports truthfully from the current host posture without widening beyond status/verification behavior."
+  ],
+  "rejected_as_next_slice": [
+    "Generic documentation refresh with no operator surface change.",
+    "Package or lockfile mutation.",
+    "Host installs or toolchain expansion.",
+    "Runtime or service mutation.",
+    "AI-services expansion or ai_tasks admission.",
+    "Reopening either dormant Olares branch without its listed trigger."
+  ],
+  "execution_lane_opened": false,
+  "artifact_published": false,
+  "status": "complete",
+  "handoff_target": "Platform Architect",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-06-olares-dev-residency-062-host-resident-developer-workflow-hardening-planning-handoff.md"
+  ],
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-06-olares-dev-residency-062-host-resident-developer-workflow-hardening-planning-handoff.md",
+  "implementation_ready_candidate": true,
+  "next_packet_candidate": "Olares Dev Residency 063 - Host Bootstrap Status Operator Surface Execution",
+  "sql_permission": false,
+  "sql_permission_note": "This planning packet authorizes no source/test mutation, no package or lockfile mutation, no installs, no runtime or service mutation, no AI-services expansion, no remote rewrite, no rollback or force/reset/clean, and no old-clone mutation.",
+  "validation_disposition": "complete-planning-only"
+}

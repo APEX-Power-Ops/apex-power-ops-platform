@@ -23,6 +23,7 @@ It uses the already-present minimal MCP trio and the `apex-jobs` ledger as the w
 7. `tools/ai/check_deferred_ops_view_counts.py`
 8. `tools/ai/run-olares-hold-boundary-check.ps1`
 9. `tools/ai/run-olares-hold-boundary-check.sh`
+10. `tools/ai/run-olares-host-bootstrap-status.sh`
 
 ## Boundary
 
@@ -77,7 +78,24 @@ bash tools/ai/run-minimal-mcp-trio.sh status
 bash tools/ai/run-minimal-mcp-trio.sh verify 2026-05-06-olares-dev-residency-037
 bash tools/ai/run-minimal-mcp-trio.sh down
 bash tools/ai/run-olares-hold-boundary-check.sh 2026-05-06-olares-dev-residency-056
+bash tools/ai/run-olares-host-bootstrap-status.sh 2026-05-06-olares-dev-residency-063
 ```
+
+## Host Bootstrap Status
+
+`tools/ai/run-olares-host-bootstrap-status.sh` is the bounded durable-host entry surface for the current Olares development posture.
+
+It is status-only.
+
+It does not install packages, mutate services, or widen the current trust boundary.
+
+It reports:
+
+1. current host parent-root parity and status,
+2. old-clone observe-only state,
+3. materialized host toolchain presence,
+4. minimal MCP trio readiness,
+5. current hold-boundary result from the host posture.
 
 ## Hold-Boundary Cadence
 
