@@ -25,6 +25,16 @@ def _get_dsn() -> str:
     return os.getenv("SEAM_DATABASE_URL", _DEFAULT_DSN)
 
 
+def _should_seed_demo_data() -> bool:
+    """Only seed demo fixtures when explicitly requested."""
+    return os.getenv("SEAM_AUTO_SEED_DEMO", "").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+
+
 def _get_conn():
     """Create a new psycopg2 connection with autocommit."""
     conn = psycopg2.connect(_get_dsn())
@@ -549,4 +559,5 @@ class SupabaseStore:
 # Singleton (matches MemoryStore pattern)
 # ---------------------------------------------------------------------------
 store = SupabaseStore()
-store.seed_demo_data()
+if _should_seed_demo_data():
+    store.seed_demo_data()
