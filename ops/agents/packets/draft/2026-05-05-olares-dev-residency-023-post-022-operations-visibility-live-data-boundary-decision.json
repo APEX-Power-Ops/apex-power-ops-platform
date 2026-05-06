@@ -1,0 +1,48 @@
+{
+  "packet_id": "2026-05-05-olares-dev-residency-023",
+  "title": "Post-022 Operations Visibility Live-Data Boundary Decision",
+  "objective": "Decide the smallest truthful next Operations Visibility slice after Packet 022 now that render-level browser comparison has passed and the live-data boundary has been traced to the controlling source files.",
+  "domain": "delivery-domain",
+  "active_role": "Operations Visibility Boundary Decision Operator",
+  "dependencies": [
+    "ops/agents/packets/draft/2026-05-05-olares-dev-residency-022-packet-018-through-packet-021-authority-publication-and-host-mirror-resync-gate.json",
+    "ops/agents/handoffs/2026-05-05-olares-dev-residency-022-packet-018-through-packet-021-authority-publication-and-host-mirror-resync-gate-handoff.md",
+    "apps/operations-web/public/pm-review/drivers.js",
+    "apps/operations-web/public/pm-review/schedule.js",
+    "apps/operations-web/public/pm-review/tracer.js",
+    "apps/operations-web/public/pm-review/variance.js",
+    "apps/operations-web/public/pm-review/approval-surface.html",
+    "apps/operations-web/public/lead-ops/index.html",
+    "apps/operations-web/public/integration-dashboard/index.html",
+    "plan/infrastructure-olares-full-implementation-roadmap-1.md"
+  ],
+  "decision_selected": "open_bounded_public_host_api_origin_remediation_planning_slice",
+  "decision_rationale": [
+    "Packet 021 proved that the public-host static surfaces render correctly in a real non-host browser, so the next unresolved boundary is live-data reachability rather than shell render viability.",
+    "The controlling code path is direct and local to the public page assets: `drivers.js`, `schedule.js`, `tracer.js`, `variance.js`, `approval-surface.html`, and `lead-ops/index.html` hardcode `http://localhost:8000/...` rather than resolving a deploy-aware public API base.",
+    "This means the next truthful move is not more browser comparison. It is a bounded source-local planning slice for public-host API-origin remediation on those static surfaces.",
+    "`integration-dashboard/index.html` already uses an origin-aware branch (`window.location.hostname === 'localhost' ? 'http://localhost:8000/api/v1' : window.location.origin + '/api/v1'`), which provides a nearby implementation reference without requiring a broad architecture search."
+  ],
+  "decision_evidence": {
+    "hardcoded_public_surface_bases": [
+      "apps/operations-web/public/pm-review/drivers.js",
+      "apps/operations-web/public/pm-review/schedule.js",
+      "apps/operations-web/public/pm-review/tracer.js",
+      "apps/operations-web/public/pm-review/variance.js",
+      "apps/operations-web/public/pm-review/approval-surface.html",
+      "apps/operations-web/public/lead-ops/index.html"
+    ],
+    "nearby_origin_aware_reference": "apps/operations-web/public/integration-dashboard/index.html",
+    "non_goal": "This packet does not yet implement the remediation or claim live-data success."
+  },
+  "status": "complete",
+  "handoff_target": "Platform Architect",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-05-olares-dev-residency-023-post-022-operations-visibility-live-data-boundary-decision-handoff.md"
+  ],
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-05-olares-dev-residency-023-post-022-operations-visibility-live-data-boundary-decision-handoff.md",
+  "validation_disposition": "complete-decision-only",
+  "next_packet_candidate": "Olares Dev Residency 024 - Bounded Public-Host API Origin Remediation Planning",
+  "closure_note": "Executed 2026-05-05 as a decision-only packet. Packet 023 closes the post-022 boundary question by determining that the next truthful slice is a bounded planning or remediation lane for hardcoded public-host API bases inside the static Operations Visibility surfaces rather than more render-only browser comparison.",
+  "next_action": "Author Packet 024 as the bounded public-host API-origin remediation planning slice using the direct public-page asset files as the controlling implementation surface."
+}

@@ -4722,3 +4722,23 @@ Packet 021 completed as a bounded non-host public-host static-surface browser co
 Olares Dev Residency Packet 022 authored state:
 
 Packet 022 is authored as `Olares Dev Residency 022 - Packet 017 Completion Evidence Plus Packet 018 Through Packet 021 Authority Publication And Host Mirror Resync Gate`. During gate inspection, Packet 017 completion evidence was confirmed to still be local in the parent-root worktree, so Packet 022 is bounded to publishing those two Packet 017 closeout files together with the local Packet 018 through Packet 021 authority set, routing, and roadmap updates while excluding unrelated `.vercelignore`, older Packet 039/057/062/095 drift, the Packet 006 operator prompt, and unrelated source, package, runtime, or old-clone changes.
+
+Olares Dev Residency Packet 022 execution result:
+
+Packet 022 completed with bounded publication and host resync in commit `a3a5b05271c3db35d7b339eb6b48ab74cca3101f` (`Publish Olares browser compare authority burst`). `/home/olares/code/apex` fast-forwarded cleanly from `28db1524a6fbf1b4de2c7da5e32898f9a85b15e3` to the published commit, and `/home/olares/src/apex-power-ops-platform` remained observe-only at the same HEAD while now reading tracked-status count `30`.
+
+Olares Dev Residency Packet 023 decision result:
+
+Packet 023 completed as a decision-only packet and established that the next truthful Operations Visibility slice is a bounded public-host API-origin remediation planning lane. The controlling failures are not in a shared runtime layer; they are hardcoded `localhost:8000` bases inside the public static page assets for PM review and lead-ops, while `integration-dashboard/index.html` already provides a nearby origin-aware reference pattern.
+
+Olares Dev Residency Packet 024 planning result:
+
+Packet 024 completed as a bounded planning packet and selected a source-local implementation slice that removes hardcoded localhost API bases from the public static PM review and lead surfaces using the nearby origin-aware pattern already present in `integration-dashboard/index.html`. Packet 024 also records that direct public-host probes to same-origin `/api/v1` routes currently return `404`, so the implementation may fix wrong-origin behavior without yet making live data succeed.
+
+Olares Dev Residency Packet 025 execution result:
+
+Packet 025 completed as a bounded source-local remediation slice. The public PM review and lead assets now use a local-vs-public origin-aware API base pattern instead of hardcoded localhost-only bases, the admitted PM pure-logic tests still pass, and the boundary remains explicit that direct public-host `/api/v1` probes still return `404`.
+
+Olares Dev Residency Packet 026 authored state:
+
+Packet 026 is authored as `Olares Dev Residency 026 - Packet 022 Closeout Through Packet 025 API-Origin Remediation Authority Publication And Host Mirror Resync Gate`. It is bounded to publishing the still-local Packet 022 closeout plus the Packet 023 through Packet 025 authority set, six remediated public static asset files, routing, and roadmap updates while excluding unrelated `.vercelignore`, older Packet 039/057/062/095 drift, the Packet 006 operator prompt, and unrelated source, package, runtime, or old-clone changes.
