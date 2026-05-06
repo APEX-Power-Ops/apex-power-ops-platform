@@ -14,6 +14,15 @@ hold_output="${state_dir}/deferred-ops-view-counts.json"
 
 mkdir -p "${state_dir}"
 
+if [[ -n "${dsn_env}" ]]; then
+  dsn_value="${!dsn_env:-}"
+  if [[ -z "${dsn_value}" ]]; then
+    printf '%s\n' "${dsn_env} is not set; cannot run the hold-boundary cadence check against a live DSN." >&2
+    exit 1
+  fi
+  export SEAM_DATABASE_URL="${dsn_value}"
+fi
+
 bash "${repo_root}/tools/ai/run-minimal-mcp-trio.sh" verify "${packet_id}" >/dev/null
 
 hold_args=(
@@ -21,10 +30,6 @@ hold_args=(
   --packet-id "${packet_id}"
   --output "${hold_output}"
 )
-
-if [[ -n "${dsn_env}" ]]; then
-  hold_args+=(--dsn-env "${dsn_env}")
-fi
 
 python3 "${hold_args[@]}" >/dev/null
 

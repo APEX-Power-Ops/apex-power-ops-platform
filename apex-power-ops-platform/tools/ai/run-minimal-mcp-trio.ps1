@@ -20,6 +20,10 @@ $ledgerPath = Join-Path $repoRoot '.apex-data/apex-jobs-ledger.json'
 New-Item -ItemType Directory -Force -Path $stateDir, $logDir | Out-Null
 
 function Get-DbConnectionString {
+  if ($env:SEAM_DATABASE_URL) {
+    return $env:SEAM_DATABASE_URL
+  }
+
   if ($env:APEX_DB_CONNECTION_STRING) {
     return $env:APEX_DB_CONNECTION_STRING
   }

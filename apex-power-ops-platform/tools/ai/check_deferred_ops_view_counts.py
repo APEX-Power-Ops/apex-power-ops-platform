@@ -3,12 +3,9 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import urllib.request
 from pathlib import Path
 from typing import Any
-
-from sqlalchemy import create_engine, text
-from sqlalchemy.exc import ProgrammingError
-
 
 def repo_root() -> Path:
     return Path(__file__).resolve().parents[2]
@@ -30,55 +27,66 @@ def import_env_file() -> None:
         os.environ.setdefault(name.strip(), value.strip())
 
 
-def get_db_connection_string() -> str:
+def resolve_db_url(args: argparse.Namespace) -> tuple[str, str]:
     import_env_file()
 
-    if os.getenv("SEAM_DATABASE_URL"):
-        return os.environ["SEAM_DATABASE_URL"]
+    if args.db_url:
+        return args.db_url, "argument:db-url"
 
-    if os.getenv("APEX_DB_CONNECTION_STRING"):
-        return os.environ["APEX_DB_CONNECTION_STRING"]
-
-    if os.getenv("DATABASE_URL"):
-        return os.environ["DATABASE_URL"]
-
-    user = os.getenv("APEX_DEV_POSTGRES_USER")
-    password = os.getenv("APEX_DEV_POSTGRES_PASSWORD")
-    database = os.getenv("APEX_DEV_POSTGRES_DB")
-    port = os.getenv("APEX_DEV_POSTGRES_PORT")
-    if user and password and database and port:
-        return f"postgresql://{user}:{password}@127.0.0.1:{port}/{database}"
-
-    raise RuntimeError("No database connection string is available for deferred ops view checks.")
-
-
-def looks_local_connection(dsn: str) -> bool:
-    lowered = dsn.lower()
-    return "127.0.0.1" in lowered or "localhost" in lowered or "apex_dev" in lowered
-
-
-def resolve_db_connection_string(args: argparse.Namespace) -> tuple[str, str]:
-    import_env_file()
-
-    if args.dsn:
-        return args.dsn, "argument:dsn"
-
-    if args.dsn_env:
-        value = str(os.getenv(args.dsn_env) or "").strip()
+    if args.db_url_env:
+        value = str(os.getenv(args.db_url_env) or "").strip()
         if value:
-            return value, f"env:{args.dsn_env}"
-        raise RuntimeError(f"{args.dsn_env} is not set; cannot run deferred ops view checks.")
+            return value, f"env:{args.db_url_env}"
+        raise RuntimeError(f"{args.db_url_env} is not set; cannot run deferred ops view checks.")
 
-    if os.getenv("SEAM_DATABASE_URL"):
-        return os.environ["SEAM_DATABASE_URL"], "env:SEAM_DATABASE_URL"
+    if os.getenv("APEX_DB_MCP_URL"):
+        return os.environ["APEX_DB_MCP_URL"], "env:APEX_DB_MCP_URL"
 
-    if os.getenv("DATABASE_URL"):
-        return os.environ["DATABASE_URL"], "env:DATABASE_URL"
+    return "http://127.0.0.1:8711/mcp", "default:apex-db-mcp"
 
-    if os.getenv("APEX_DB_CONNECTION_STRING"):
-        return os.environ["APEX_DB_CONNECTION_STRING"], "env:APEX_DB_CONNECTION_STRING"
 
-    return get_db_connection_string(), "env-file:apex-dev-fallback"
+def fetch_json(url: str, payload: dict[str, Any]) -> Any:
+    request = urllib.request.Request(
+        url,
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+    )
+    with urllib.request.urlopen(request) as response:
+        return json.loads(response.read().decode("utf-8"))
+
+
+def initialize_and_query(db_url: str, sql: str) -> Any:
+    fetch_json(
+        db_url,
+        {
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": "initialize",
+            "params": {
+                "protocolVersion": "2025-03-26",
+                "capabilities": {},
+                "clientInfo": {"name": "apex-deferred-ops-check", "version": "0.1.0"},
+            },
+        },
+    )
+    response = fetch_json(
+        db_url,
+        {
+            "jsonrpc": "2.0",
+            "id": 2,
+            "method": "tools/call",
+            "params": {"name": "query", "arguments": {"sql": sql}},
+        },
+    )
+    result = response.get("result", {})
+    if result.get("isError"):
+        content = result.get("content", [])
+        detail = content[0].get("text") if content else "Unknown MCP error"
+        raise RuntimeError(detail)
+    if "structuredContent" in result:
+        return result["structuredContent"]
+    content = result.get("content", [])
+    return json.loads(content[0]["text"]) if content else None
 
 
 def write_output(path: Path | None, payload: dict[str, Any]) -> None:
@@ -91,8 +99,8 @@ def write_output(path: Path | None, payload: dict[str, Any]) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser(description="Check whether deferred Operations Visibility views have live rows.")
     parser.add_argument("--packet-id", default="2026-05-06-olares-dev-residency-056")
-    parser.add_argument("--dsn")
-    parser.add_argument("--dsn-env")
+    parser.add_argument("--db-url")
+    parser.add_argument("--db-url-env")
     parser.add_argument("--output")
     args = parser.parse_args()
 
@@ -104,41 +112,36 @@ def main() -> int:
     }
 
     try:
-        dsn, dsn_source = resolve_db_connection_string(args)
+        db_url, db_url_source = resolve_db_url(args)
         summary["checks"]["db_connection"] = {
             "status": "pass",
-            "source": dsn_source,
-            "looks_local": looks_local_connection(dsn),
+            "source": db_url_source,
+            "endpoint": db_url,
         }
 
-        engine = create_engine(dsn)
         try:
-            with engine.connect() as connection:
-                rows = connection.execute(
-                    text(
-                        """
-                        select 'v_resource_allocation' as view_name, count(*) as row_count
-                        from public.v_resource_allocation
-                        union all
-                        select 'v_equipment_needs' as view_name, count(*) as row_count
-                        from public.v_equipment_needs
-                        order by view_name
-                        """
-                    )
-                ).mappings().all()
-        except ProgrammingError as error:
+            rows = initialize_and_query(
+                db_url,
+                """
+                select 'v_resource_allocation' as view_name, count(*) as row_count
+                from public.v_resource_allocation
+                union all
+                select 'v_equipment_needs' as view_name, count(*) as row_count
+                from public.v_equipment_needs
+                order by view_name
+                """,
+            )
+        except RuntimeError as error:
             if "relation \"public.v_resource_allocation\" does not exist" not in str(error):
-                raise
-            if not looks_local_connection(dsn):
                 raise
             summary["checks"]["deferred_view_counts"] = {
                 "status": "unavailable",
-                "reason": "Local development database does not expose the authoritative deferred operations views.",
+                "reason": "The current apex-db surface does not expose the authoritative deferred operations views.",
             }
             summary["result"] = "UNAVAILABLE"
             summary["decision"] = (
-                "Authoritative deferred view counts require a live DSN such as SEAM_DATABASE_URL; "
-                "the local development database is not sufficient for this hold check."
+                "Authoritative deferred view counts require apex-db to run against a live DSN such as SEAM_DATABASE_URL; "
+                "the current database surface is not sufficient for this hold check."
             )
             write_output(output_path, summary)
             print(json.dumps(summary, indent=2))

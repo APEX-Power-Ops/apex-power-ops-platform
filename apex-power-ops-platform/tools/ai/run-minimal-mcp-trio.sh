@@ -20,6 +20,11 @@ ledger_path="${repo_root}/.apex-data/apex-jobs-ledger.json"
 mkdir -p "${log_dir}"
 
 get_db_connection_string() {
+  if [[ -n "${SEAM_DATABASE_URL:-}" ]]; then
+    printf '%s' "${SEAM_DATABASE_URL}"
+    return
+  fi
+
   if [[ -n "${APEX_DB_CONNECTION_STRING:-}" ]]; then
     printf '%s' "${APEX_DB_CONNECTION_STRING}"
     return
