@@ -68,7 +68,9 @@ handoffs.
 27. Frontend validation for Packet 048 passed through the app-local TypeScript compiler at `apps/operations-web/node_modules/.bin/tsc.cmd` after `pnpm` proved unavailable on the workstation path; editor diagnostics for the touched route, test, and browser-shell files are clean.
 28. Packet 049 is now complete as a source-lineage boundary decision: the tracked lineage copy at `apex-power-ops-platform/infra/database/source-lineage/apex-resa/pm-project-pss/schema/09_schema_additions.sql` is intentionally stale reference input, not active migration authority, so the correct fix was explicit drift annotation rather than overwriting the imported snapshot.
 29. The lineage note and tracked lineage SQL header now point future operators back to `Supabase/schema/09_schema_additions.sql` as the authoritative executable source and explicitly preserve the imported lineage body for provenance.
-30. The next truthful follow-on is therefore the next adjacent Operations Visibility consumer slice on top of the now-landed first browser consumer, not more advisor-path recovery, not a blind lineage-copy overwrite, and not generic Olares-first infrastructure expansion.
+30. Packet 050 is now complete as the next adjacent Operations Visibility consumer slice: `apps/control-plane-api` now exposes `GET /api/v1/ops/schedule-health` against `public.v_schedule_health`, the focused pytest file passes `6/6`, and `apps/operations-web` now mounts a governed schedule-health panel alongside the existing master-operations consumer.
+31. A live Supabase shape check confirmed `public.v_schedule_health` returns real rows in the current dataset, while `v_resource_allocation` is currently empty; that is why Packet 050 selected schedule health as the truthful next consumer instead of a speculative resource-allocation panel.
+32. The next truthful follow-on is therefore the next adjacent Operations Visibility consumer slice after schedule health, not more advisor-path recovery, not a blind lineage-copy overwrite, and not generic Olares-first infrastructure expansion.
 
 ```mermaid
 pie title Project Completion Status
@@ -114,6 +116,8 @@ Key questions answered this session - see `.claude/SESSION_2025-12-11_SCHEMA_OPE
 | `09b_enum_updates.sql` | Assessment enum alignment | ✅ Applied live |
 | `apps/control-plane-api/services/ops/router.py` | Governed `v_master_operations` read seam | ✅ First consumer API landed |
 | `apps/operations-web/app/master-operations-explorer.tsx` | First browser consumer of the governed seam | ✅ Mounted in browser shell |
+| `apps/control-plane-api/services/ops/router.py` | Governed `v_schedule_health` read seam | ✅ Adjacent consumer API landed |
+| `apps/operations-web/app/schedule-health-explorer.tsx` | Second browser consumer of the governed seam set | ✅ Mounted in browser shell |
 | `EXCEL_TO_DATABASE_MAPPING.md` | Field transformation guide | ✅ Complete |
 
 ### New Operational Views Designed

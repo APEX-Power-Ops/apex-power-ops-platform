@@ -223,6 +223,21 @@ class MasterOperationsSummary(BaseModel):
     health_status: str = Field(..., description="Derived health classification from the view.")
 
 
+class ScheduleHealthSummary(BaseModel):
+    """Read-only summary row from ``public.v_schedule_health``."""
+
+    project_number: Optional[str] = Field(None, description="Human-readable project number.")
+    project_name: Optional[str] = Field(None, description="Human-readable project name.")
+    project_due: Optional[date] = Field(None, description="Contractual project due date.")
+    scope_name: Optional[str] = Field(None, description="Scope name represented in the schedule row.")
+    scope_due: Optional[date] = Field(None, description="Scope due date.")
+    percent_complete: float = Field(..., description="Percent complete for the scope row.")
+    overdue_items: int = Field(..., description="Count of overdue apparatus items in the scope.")
+    on_hold_items: int = Field(..., description="Count of on-hold apparatus items in the scope.")
+    not_available_items: int = Field(..., description="Count of not-available apparatus items in the scope.")
+    health_status: str = Field(..., description="Derived schedule health classification from the view.")
+
+
 @router.get(
     "/pm-idempotency/by-route",
     response_model=PMIdempotencyByRoute,
@@ -297,3 +312,47 @@ def master_operations_summary(
         .all()
     )
     return [MasterOperationsSummary(**row) for row in rows]
+
+
+@router.get(
+    "/schedule-health",
+    response_model=list[ScheduleHealthSummary],
+    summary="Operations Visibility schedule health rollup (read-only).",
+)
+def schedule_health_summary(
+    limit: int = Query(25, ge=1, le=100),
+    db: Session = Depends(get_db),
+) -> list[ScheduleHealthSummary]:
+    """Return bounded rows from ``public.v_schedule_health``.
+
+    This keeps scope-level schedule health consumption behind the
+    governed control-plane API rather than reopening direct browser-side
+    Supabase reads.
+    """
+
+    rows = (
+        db.execute(
+            text(
+                """
+                SELECT
+                    project_number,
+                    project_name,
+                    project_due,
+                    scope_name,
+                    scope_due,
+                    percent_complete,
+                    overdue_items,
+                    on_hold_items,
+                    not_available_items,
+                    health_status
+                FROM public.v_schedule_health
+                ORDER BY project_number, scope_name
+                LIMIT :limit
+                """
+            ),
+            {"limit": limit},
+        )
+        .mappings()
+        .all()
+    )
+    return [ScheduleHealthSummary(**row) for row in rows]
