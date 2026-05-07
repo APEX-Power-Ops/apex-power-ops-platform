@@ -134,8 +134,9 @@ Update 2026-05-06:
 126. Packet 090 published the README-normalization tranche in commit `3c065a1e2757eaab94f0902b06a6d6240ae0fffb` (`Normalize Olares lane README commands`), pushed `origin/clean-main`, restored `/home/olares/code/apex` to clean parity at the same commit, and preserved `/home/olares/src/apex-power-ops-platform` observe-only at `2836a2622309b4e146ca24f23b5bf87312c0c857` with status count `30`.
 127. Packet 091 is now complete as the adjacent authority-surface normalization slice. It refreshes the original build-guide stack and its visual architecture reference so Olares-first execution, GitHub-canonical publication, client-only laptop posture, premium-plan-first AI use, optional Ollama, and the admitted MCP trio are all stated consistently across the infrastructure guidance.
 128. Packet 091 is documentation-only. It does not install services, widen the admitted AI boundary, change GitHub canonical status, or perform publication by implication.
-129. Packet 092 is now authored as the required publication/resync gate for Packet 091.
-130. Packet 092 remains the next truthful move because the refreshed guidance is only locally validated until the parent-root publication boundary is advanced and `/home/olares/code/apex` is restored to clean parity.
+129. Packet 092 is now complete as the required publication/resync gate for Packet 091.
+130. Packet 092 published the refreshed build-guidance and visual-alignment tranche in commit `60e71c32e1196bfbec40980df7c5a71ed25610de`, advanced `origin/clean-main` through the prepared Olares host when the workstation could not reach GitHub directly, restored `/home/olares/code/apex` to clean parity at the published commit, and preserved `/home/olares/src/apex-power-ops-platform` observe-only.
+131. The next truthful move is to reopen adjacent authority, operator, or visual drift only if a concrete mismatch remains after this build-guidance closeout.
 
 
 

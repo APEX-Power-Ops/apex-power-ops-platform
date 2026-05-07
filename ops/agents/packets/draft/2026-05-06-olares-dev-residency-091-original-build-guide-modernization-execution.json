@@ -28,7 +28,7 @@
   "next_packet_candidate": "Packet 092 authority publication and host-mirror resync gate for the build-guide modernization tranche.",
   "sql_permission": false,
   "sql_permission_note": "This execution packet authorizes no database writes, no runtime or service mutation, no package or lockfile mutation, no installs, no AI-services expansion beyond the admitted trio, no remote rewrite, no rollback or force/reset/clean, and no old-clone mutation.",
-  "validation_disposition": "locally-validated-awaiting-publication",
+  "validation_disposition": "published-and-host-resynced",
   "local_validation": {
     "diagnostics_checked_files": [
       "C:/APEX Platform/Infrastructure/Olares_Build_Guide.md",
@@ -37,5 +37,12 @@
       "C:/APEX Platform/Infrastructure/Olares_Architecture.svg"
     ],
     "diagnostics_result": "No errors found"
+  },
+  "post_publication_host_validation": {
+    "publication_commit": "60e71c32e1196bfbec40980df7c5a71ed25610de",
+    "host_head_at_publication": "60e71c32e1196bfbec40980df7c5a71ed25610de",
+    "host_status_count_at_publication": 0,
+    "old_clone_head": "2836a2622309b4e146ca24f23b5bf87312c0c857",
+    "old_clone_status_count": 30
   }
 }
