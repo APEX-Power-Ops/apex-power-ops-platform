@@ -48,7 +48,13 @@ apps/control-plane-api/
 
 ## Setup
 
-1. Preferred: activate the platform-root virtual environment from `C:/APEX Platform/apex-power-ops-platform`:
+1. Preferred: activate the platform-root virtual environment from the Olares-hosted platform root:
+   ```
+   cd /home/olares/code/apex/apex-power-ops-platform
+   source .venv/bin/activate
+   ```
+
+   Windows client fallback:
    ```
    .venv\Scripts\activate  # Windows
    source .venv/bin/activate  # Linux/Mac
@@ -56,7 +62,18 @@ apps/control-plane-api/
 
    Legacy fallback: activate another compatible environment and ensure it has this app's requirements plus the editable calc package installed.
 
-2. If the root `.venv` does not exist yet, bootstrap it from the platform root:
+2. If the root `.venv` does not exist yet, bootstrap it from the platform root.
+
+   Olares-hosted example:
+   ```
+   cd /home/olares/code/apex/apex-power-ops-platform
+   python -m venv .venv
+   .venv/bin/python -m pip install --upgrade pip setuptools wheel
+   cd apps/control-plane-api
+   ../../.venv/bin/python -m pip install -r requirements-dev.txt
+   ```
+
+   Windows client fallback:
    ```
    python -m venv .venv
    .venv\Scripts\python.exe -m pip install --upgrade pip setuptools wheel
@@ -197,7 +214,17 @@ apps/control-plane-api/
 
 ## Platform-First Operation
 
-When working inside the bootstrap root, prefer these commands from `C:/APEX Platform/apex-power-ops-platform`:
+When working inside the bootstrap root, prefer these commands from `/home/olares/code/apex/apex-power-ops-platform`:
+
+```
+./apps/control-plane-api/scripts/run_platform_api_local.ps1
+./apps/control-plane-api/scripts/run_platform_api_local.ps1 -Restart
+.venv/bin/python -m uvicorn main:app --app-dir apps/control-plane-api --host 0.0.0.0 --port 8010
+.venv/bin/python -m pytest apps/control-plane-api/tests/test_control_plane.py -q
+.venv/bin/python apps/control-plane-api/scripts/smoke_remote_control_plane_authoring_queue.py --task-id <task> --target-path <path> --content <text> --dry-run
+```
+
+Windows client fallback:
 
 ```
 .\apps\control-plane-api\scripts\run_platform_api_local.ps1
@@ -208,6 +235,8 @@ When working inside the bootstrap root, prefer these commands from `C:/APEX Plat
 ```
 
 The VS Code workspace tasks are now aligned to that same root-first workflow and prefer the root `.venv` automatically.
+
+When attached through VS Code Remote-SSH or `ssh olares-mesh`, prefer originating this workflow from the Olares-hosted parent-root mirror rather than the Windows client surface.
 
 ## Schema Drift Check
 

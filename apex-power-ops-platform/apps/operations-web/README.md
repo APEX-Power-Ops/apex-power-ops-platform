@@ -22,7 +22,18 @@ Current non-goals:
 3. no direct mutation wiring to backend services in the current packet lane
 4. no direct browser-side Supabase reads for the legacy RESA query surface
 
-Recommended local commands:
+Preferred Olares-hosted commands:
+
+```bash
+cd /home/olares/code/apex/apex-power-ops-platform
+pnpm install
+pnpm --filter @apex/operations-web dev
+pnpm --filter @apex/operations-web smoke:hosted -- --base-url https://your-host.example
+pnpm --filter @apex/operations-web smoke:browser
+pnpm --filter @apex/operations-web smoke:promoted-host -- --operations-web-base-url https://your-operations-web-host.example --control-plane-base-url https://your-control-plane-host.example --skip-authenticated-checks
+```
+
+Windows client fallback commands:
 
 ```bash
 pnpm --dir C:/APEX Platform/apex-power-ops-platform install
@@ -36,3 +47,4 @@ Workspace task shortcuts:
 
 1. use the root workspace task `Operations web browser smoke` for the local Playwright proof
 2. use the root workspace task `Operations web promoted-host smoke` when `OPERATIONS_WEB_BASE_URL` is set for a deployed browser host; that task already defaults the control-plane host to `https://control.apexpowerops.com`
+3. when attached to the Olares host, prefer running the same commands from `/home/olares/code/apex/apex-power-ops-platform` rather than originating the workflow from the Windows field laptop

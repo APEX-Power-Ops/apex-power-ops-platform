@@ -145,6 +145,8 @@ handoffs.
 104. Packet 087 keeps GitHub canonical, keeps `C:/APEX Platform` as the explicit transitional publication boundary, and routes the next Olares slice to the highest-traffic lane README command surfaces that still normalize Windows-local execution.
 105. Packet 088 is now complete as the publication and host-mirror resync closeout for that host-native operator workflow tranche.
 106. Packet 088 published the host-native operator workflow tranche in commit `14f31e67e7eed582ee328bcd913d5d9244a2c126` (`Author Olares host-native publication workflow`), pushed `origin/clean-main`, restored `/home/olares/code/apex` to clean parity at the same commit, and preserved `/home/olares/src/apex-power-ops-platform` observe-only at `2836a2622309b4e146ca24f23b5bf87312c0c857` with status count `30`.
+107. Packet 089 is now complete as the next routed retirement slice. It normalizes the highest-traffic lane README command surfaces so `apps/operations-web`, `apps/control-plane-api`, and `packages/forms-engine` now present Olares-hosted execution from `/home/olares/code/apex/apex-power-ops-platform` as the default operator posture while preserving Windows client fallback.
+108. Packet 089 keeps GitHub canonical, keeps `C:/APEX Platform` as the explicit transitional publication boundary, and limits this slice to documentation-only command normalization rather than runtime or package mutation.
 
 ```mermaid
 pie title Project Completion Status
