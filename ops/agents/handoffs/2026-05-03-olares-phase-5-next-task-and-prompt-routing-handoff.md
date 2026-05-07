@@ -132,7 +132,10 @@ Update 2026-05-06:
 124. Packet 089 is documentation-only. It does not retire the publication boundary, change GitHub canonical status, or authorize runtime, package, or old-clone mutation.
 125. Packet 090 is now complete as the publication/resync gate for Packet 089.
 126. Packet 090 published the README-normalization tranche in commit `3c065a1e2757eaab94f0902b06a6d6240ae0fffb` (`Normalize Olares lane README commands`), pushed `origin/clean-main`, restored `/home/olares/code/apex` to clean parity at the same commit, and preserved `/home/olares/src/apex-power-ops-platform` observe-only at `2836a2622309b4e146ca24f23b5bf87312c0c857` with status count `30`.
-127. The next truthful move is to reassess adjacent README or authority surfaces only if they still create concrete Windows-default command friction.
+127. Packet 091 is now complete as the adjacent authority-surface normalization slice. It refreshes the original build-guide stack and its visual architecture reference so Olares-first execution, GitHub-canonical publication, client-only laptop posture, premium-plan-first AI use, optional Ollama, and the admitted MCP trio are all stated consistently across the infrastructure guidance.
+128. Packet 091 is documentation-only. It does not install services, widen the admitted AI boundary, change GitHub canonical status, or perform publication by implication.
+129. Packet 092 is now authored as the required publication/resync gate for Packet 091.
+130. Packet 092 remains the next truthful move because the refreshed guidance is only locally validated until the parent-root publication boundary is advanced and `/home/olares/code/apex` is restored to clean parity.
 
 
 
