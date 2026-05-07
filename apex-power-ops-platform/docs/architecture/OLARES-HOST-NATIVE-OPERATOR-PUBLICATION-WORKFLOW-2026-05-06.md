@@ -79,4 +79,6 @@ This workflow does not authorize:
 
 ## Next Remaining Dependency
 
-After this workflow is published, the next remaining publication-boundary retirement target should be the highest-traffic lane README command surfaces that still normalize Windows-local execution.
+This first retirement target is now published on the authoritative host mirror.
+
+The next remaining publication-boundary retirement target should be the highest-traffic lane README command surfaces that still normalize Windows-local execution.
