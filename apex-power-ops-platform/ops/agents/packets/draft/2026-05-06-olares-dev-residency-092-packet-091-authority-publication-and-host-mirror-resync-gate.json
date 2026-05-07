@@ -1,0 +1,34 @@
+{
+  "packet_id": "2026-05-06-olares-dev-residency-092",
+  "title": "Packet 091 Authority Publication And Host Mirror Resync Gate",
+  "objective": "Publish the Packet 091 build-guide modernization and visual-alignment tranche through the parent-root boundary and restore `/home/olares/code/apex` to clean parity so the refreshed Olares guidance becomes durable on the authoritative host mirror.",
+  "domain": "infrastructure-domain",
+  "active_role": "Platform Architect",
+  "dependencies": [
+    "ops/agents/packets/draft/2026-05-06-olares-dev-residency-091-original-build-guide-modernization-execution.json",
+    "ops/agents/handoffs/2026-05-06-olares-dev-residency-091-original-build-guide-modernization-execution-handoff.md"
+  ],
+  "dependency_note": "Packet 091 refreshed the original Olares build-guide stack and its visual architecture reference locally and validated the directly edited surfaces. This gate is the required publication and host-resync closeout before the guidance can be treated as durably complete.",
+  "decision_mode": "publication_gate",
+  "forbidden_scope": [
+    "package or lockfile mutation",
+    "installs",
+    "runtime or service mutation",
+    "AI-services expansion beyond the admitted trio",
+    "Git hosting transition",
+    "remote rewrite",
+    "rollback or force/reset/clean",
+    "old-clone mutation"
+  ],
+  "artifact_published": false,
+  "host_mirror_resynced": false,
+  "status": "draft",
+  "output_artifacts": [],
+  "handoff_target": "Platform Architect",
+  "implementation_ready_candidate": false,
+  "next_packet_candidate": "Execute Packet 092 when commit/push and host-mirror resync are authorized for the build-guide modernization and visual-alignment tranche.",
+  "sql_permission": false,
+  "sql_permission_note": "This publication gate authorizes no database writes, no source/test runtime mutation, no package or lockfile mutation, no installs, no runtime or service mutation, no AI-services expansion beyond the admitted trio, no remote rewrite, no rollback or force/reset/clean, and no old-clone mutation.",
+  "validation_disposition": "pending-publication",
+  "closure_note": "Not executed in this workspace turn. Publication commit, push, and `/home/olares/code/apex` resync remain outstanding."
+}

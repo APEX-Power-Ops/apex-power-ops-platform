@@ -9,6 +9,7 @@ _Olares OS v1.12.5 baseline · LarePass-first · Hybrid packaging._
 ## Phase 0 — Before the box arrives
 
 - [ ] Anthropic account confirmed on Max plan; Claude Desktop + Claude Code installed on laptop
+- [ ] OpenAI account with Codex access confirmed; prefer plan-authenticated use over API billing
 - [ ] GitHub access to the APEX monorepo verified from the laptop
 - [ ] LarePass account created (the same Olares ID will register the One)
 - [ ] External Thunderbolt drive for the primary backup target on hand
@@ -37,26 +38,27 @@ _Olares OS v1.12.5 baseline · LarePass-first · Hybrid packaging._
 - [ ] Install Parsec on the One (for fallback GUI streaming) and verify from the laptop
 - [ ] Document in the monorepo: which URLs resolve, which require LarePass, which require public tunnel (none yet)
 
-## Phase 3 — Market apps, baseline install (day 1 evening)
+## Phase 3 — Baseline services install (day 1 evening)
 
-- [ ] Install **Ollama**; set Authentication level → Internal; copy endpoint URL
-- [ ] Install **Open WebUI**; point it at the Ollama endpoint; smoke chat with any model
-- [ ] Install **Dify**; defer workflow configuration to Phase 7
-- [ ] Install **Qdrant** (if in Market) or note to run via compose
-- [ ] Install **n8n**
 - [ ] Install **Syncthing**
 - [ ] Install **Restic**; configure both targets (Thunderbolt drive + S3); run first test backup
-- [ ] Install **Gitea** (optional, for offline mirror)
-- [ ] Confirm GPU visibility: `nvidia-smi` from the Ollama pod shows the RTX 5090M
+- [ ] Install **Gitea** only if you want an offline mirror on the One
+- [ ] Install **code-server** only if VS Code Remote-SSH alone proves insufficient
+- [ ] Install **n8n** only if an immediate scheduled workflow exists
+- [ ] Install **Dify** only if a concrete orchestrated workflow exists
+- [ ] Install **Qdrant** only if a real retrieval workload is already identified
+- [ ] Install **Open WebUI** only if a browser-native shared chat surface is actually useful
+- [ ] Defer **Ollama** unless offline, local-GPU, or cost-buffered batch work is a concrete near-term need
+- [ ] Confirm host GPU visibility with `nvidia-smi`; do not treat unused GPU capacity as a reason to add services early
 
-## Phase 4 — Model pull (day 1 evening, runs in background)
+## Phase 4 — Premium AI surface verification (day 1 evening)
 
-- [ ] `ollama pull qwen3:30b-a3b`
-- [ ] `ollama pull qwen2.5-coder:14b`
-- [ ] `ollama pull bge-m3`
-- [ ] Optional: `ollama pull qwen3:70b` if disk space allows
-- [ ] Benchmark: single-request tok/s matches published (~157 tok/s for Qwen3-30B-A3B); 8-concurrent test runs
-- [ ] Remove any models you won't use (disk is finite)
+- [ ] Install Claude Code on the One; authenticate with Anthropic Max plan
+- [ ] Verify Claude Desktop on the laptop can reach the Olares host over LarePass
+- [ ] Verify Codex access on the laptop and, if useful, on the One
+- [ ] Confirm the normal daily workflow does not require Anthropic or OpenAI API keys
+- [ ] Write down the trigger conditions that would justify adding Ollama later
+- [ ] Optional later lane only if justified: install **Ollama**, set Authentication level → Internal, then add only the specific local models the proven workflow needs
 
 ## Phase 5 — Dev tooling on the One (day 2 morning)
 
@@ -89,6 +91,7 @@ _Olares OS v1.12.5 baseline · LarePass-first · Hybrid packaging._
 
 - [ ] Install Claude Code on the One; authenticate with Anthropic account (Max, not API)
 - [ ] Install Claude Code on the laptop; authenticate with Anthropic account
+- [ ] Verify Codex can reach the same Olares-hosted repo and MCP context from approved devices
 - [ ] Edit Claude Desktop's `claude_desktop_config.json` on the laptop — add the three MCP servers via their LarePass-reachable URLs
 - [ ] Restart Claude Desktop; verify each MCP server shows as connected
 - [ ] **Smoke test**: ask Claude Desktop to (a) list files in `~/apex-data/`, (b) query a row from the APEX dev DB, (c) register a new run in `apex-jobs`. All three must succeed.
@@ -130,13 +133,13 @@ _Olares OS v1.12.5 baseline · LarePass-first · Hybrid packaging._
 
 - [ ] Create LLDAP user + assign to `estimator` or `field-lead`
 - [ ] Send them the LarePass invite link
-- [ ] They approve device; SSO test against Open WebUI and the first APEX UI
+- [ ] They approve device; SSO test against the first APEX UI and any optional shared AI surface you actually installed
 - [ ] Document anything that broke; that's the real acceptance test for the identity wiring
 
 ## Phase 14 — Public access (deferred; when field need is real)
 
 - [ ] Decide Cloudflare Tunnel vs Olares Tunnel
-- [ ] Expose only the public-facing APEX UI(s) — never MCP, never DB, never Ollama
+- [ ] Expose only the public-facing APEX UI(s) — never MCP, never DB, never any optional internal model endpoint
 - [ ] Authelia + MFA in front of every public route
 - [ ] Re-run canary over public route to confirm no regressions
 
@@ -156,5 +159,6 @@ _Olares OS v1.12.5 baseline · LarePass-first · Hybrid packaging._
 - Canary regresses unexpectedly → do not ship; investigate model drift or data change
 - `apex-jobs` shows packets promoted without `env=host` → the promote guard has failed; audit immediately
 - Any APEX service reachable from the public internet without a tunnel + Authelia in front → pull the route now
-- Ollama accessible from outside the LarePass mesh → re-check Authentication level setting
+- Any optional internal model endpoint accessible from outside the LarePass mesh → pull the route and re-check its auth settings
+- Normal daily work starts depending on metered Anthropic or OpenAI API calls without an explicit budget decision → stop and re-evaluate the tooling path
 - Restic hasn't successfully completed a backup in 48 hours → investigate before any risky operation

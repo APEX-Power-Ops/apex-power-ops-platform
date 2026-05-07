@@ -61,7 +61,7 @@ Remote access options (in priority order): **LarePass VPN** (WireGuard/Headscale
 | Zone | Purpose | Implementation | Run tag |
 |------|---------|----------------|---------|
 | **Dev** | Fast iteration, ephemeral | `docker-compose` in the monorepo | `env=sandbox` |
-| **Services** | Shared long-running AI + ops | Olares Market apps | n/a |
+| **Services** | Shared long-running ops + optional AI | Olares Market apps or host services | n/a |
 | **Staging** | Host-bootstrap, APEX-complete | OlaresManifest Helm charts | `env=host` |
 
 The **staging zone is the only path to "complete."** `packet-promote` operations refuse without an `env=host` run ID on record. This is enforcement of Jason's "sandbox-complete ≠ end-to-end" rule — do not weaken it.
@@ -76,15 +76,15 @@ The **staging zone is the only path to "complete."** `packet-promote` operations
 ## AI wiring
 
 - **Claude Code** authenticated with Jason's Anthropic **Max** subscription (never an API key — API + Max would double-bill).
-- **Ollama** serves local models. Expected model slate: `qwen3:30b-a3b` (general), `qwen2.5-coder:14b` (code), `bge-m3` (embeddings). Endpoint authentication set to "Internal" — reachable only over LarePass mesh.
-- **Do NOT** route Claude through LiteLLM or any OpenAI-compatible proxy to Anthropic. LiteLLM may front local models and optionally OpenAI, nothing else.
-- **MCP fabric** — the APEX domain exposed as localhost/LarePass-only MCP servers, consumed identically by Claude Desktop, Claude Code, and (via bridge) custom GPT:
+- **Codex** used from a subscription-authenticated OpenAI surface rather than routine API metering.
+- **Ollama** is optional and deferred by default. Only introduce it if a concrete offline, local-GPU, or cost-buffered workflow justifies it. If introduced later, keep authentication level set to `Internal` and expose it only over the LarePass mesh.
+- **Do NOT** route Claude or Codex through LiteLLM or any other API broker just to normalize providers. That defeats the monthly-plan-first operating model.
+- **MCP fabric** — the admitted APEX domain exposed as localhost/LarePass-only MCP servers and consumed by approved operator surfaces:
   - `apex-fs` — filesystem scoped to `~/code/apex` + `~/apex-data`
   - `apex-db` — Postgres, read-only (separate `apex-db-write` behind env flag — out of scope this session)
-  - `apex-p6` — PyP6Xer wrapper + queries against mirrored P6 schema
-  - `apex-forms` — NETA-Forms lookup + forms-engine render API
   - `apex-jobs` — job context + run ledger (THIS is where `env=sandbox|host` tags live)
-  - `apex-memory` — queryable memory surface (reads from `.auto-memory/` style structure)
+
+Future MCP surfaces such as `apex-p6`, `apex-forms`, and `apex-memory` are deferred until a separate authority update admits them.
 
 ## Identity
 
@@ -166,6 +166,7 @@ Scaffold the infrastructure layer of the monorepo. Specifically, produce:
 # HARD CONSTRAINTS
 
 - **Do not** register an Anthropic backend in any proxy/gateway config (LiteLLM, OpenRouter, etc.). Claude routes through Claude Code with Max auth, period.
+- **Do not** assume Ollama or any other local model runtime is required to complete the Olares-hosted workspace.
 - **Do not** expose any APEX service or MCP endpoint beyond localhost or the LarePass mesh in anything you write this session. No public ports, no `0.0.0.0` binds without a LarePass-only justification.
 - Every service that touches `apex-jobs` writes an `env` tag. No optional arg — required.
 - Every `OlaresManifest.yaml` declares an OIDC client. No anonymous access.
