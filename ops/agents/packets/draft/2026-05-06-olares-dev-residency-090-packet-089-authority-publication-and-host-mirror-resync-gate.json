@@ -20,8 +20,16 @@
     "rollback or force/reset/clean",
     "old-clone mutation"
   ],
-  "artifact_published": false,
-  "host_mirror_resynced": false,
+  "artifact_published": true,
+  "host_mirror_resynced": true,
+  "publication_commit": "3c065a1e2757eaab94f0902b06a6d6240ae0fffb",
+  "commit_message": "Normalize Olares lane README commands",
+  "host_mirror_state": {
+    "head": "3c065a1e2757eaab94f0902b06a6d6240ae0fffb",
+    "status_count": 0,
+    "old_clone_head": "2836a2622309b4e146ca24f23b5bf87312c0c857",
+    "old_clone_status_count": 30
+  },
   "status": "complete",
   "output_artifacts": [
     "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-06-olares-dev-residency-090-packet-089-authority-publication-and-host-mirror-resync-gate-handoff.md"
@@ -29,8 +37,9 @@
   "handoff_target": "Platform Architect",
   "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-06-olares-dev-residency-090-packet-089-authority-publication-and-host-mirror-resync-gate-handoff.md",
   "implementation_ready_candidate": false,
-  "next_packet_candidate": "Execute Packet 090 as bounded publication and host-mirror resync only.",
+  "next_packet_candidate": "Reassess adjacent README or authority-surface normalization only if concrete Windows-default command friction remains.",
   "sql_permission": false,
   "sql_permission_note": "This publication gate authorizes no database writes, no source/test runtime mutation, no package or lockfile mutation, no installs, no runtime or service mutation, no AI-services expansion, no remote rewrite, no rollback or force/reset/clean, and no old-clone mutation.",
-  "validation_disposition": "pending-publication-and-host-resync"
+  "validation_disposition": "pass",
+  "closure_note": "Executed 2026-05-06. Packet 090 published Packet 089 execution authority, the README normalization updates, status, roadmap, and routing updates in commit `3c065a1e2757eaab94f0902b06a6d6240ae0fffb` with message `Normalize Olares lane README commands`, pushed `origin/clean-main`, and fast-forwarded `/home/olares/code/apex` from clean `8d34780a21a02030cc6c6232a95e2fc379f9ae23` to clean parity at `3c065a1e2757eaab94f0902b06a6d6240ae0fffb`. `/home/olares/src/apex-power-ops-platform` remained observe-only at `2836a2622309b4e146ca24f23b5bf87312c0c857` with status count `30`."
 }

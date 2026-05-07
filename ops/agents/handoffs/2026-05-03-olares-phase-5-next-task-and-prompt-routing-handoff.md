@@ -130,7 +130,9 @@ Update 2026-05-06:
 122. Packet 088 published the host-native operator workflow tranche in commit `14f31e67e7eed582ee328bcd913d5d9244a2c126` (`Author Olares host-native publication workflow`), pushed `origin/clean-main`, restored `/home/olares/code/apex` to clean parity at the same commit, and preserved `/home/olares/src/apex-power-ops-platform` observe-only at `2836a2622309b4e146ca24f23b5bf87312c0c857` with status count `30`.
 123. Packet 089 is now complete as that next README-normalization slice. It updates the highest-traffic lane README command surfaces so Olares-hosted execution is the default operator posture while Windows client commands remain explicit fallback guidance.
 124. Packet 089 is documentation-only. It does not retire the publication boundary, change GitHub canonical status, or authorize runtime, package, or old-clone mutation.
-125. The next truthful move is publication and host-mirror resync for Packet 089, then reassess whether adjacent README or authority surfaces still normalize Windows-local execution in a way that creates real split-residency friction.
+125. Packet 090 is now complete as the publication/resync gate for Packet 089.
+126. Packet 090 published the README-normalization tranche in commit `3c065a1e2757eaab94f0902b06a6d6240ae0fffb` (`Normalize Olares lane README commands`), pushed `origin/clean-main`, restored `/home/olares/code/apex` to clean parity at the same commit, and preserved `/home/olares/src/apex-power-ops-platform` observe-only at `2836a2622309b4e146ca24f23b5bf87312c0c857` with status count `30`.
+127. The next truthful move is to reassess adjacent README or authority surfaces only if they still create concrete Windows-default command friction.
 
 
 
