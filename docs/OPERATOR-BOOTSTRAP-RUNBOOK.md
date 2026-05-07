@@ -4,21 +4,40 @@ This runbook defines the intended local operator workflow for the Apex Power Ops
 
 ## Operating Assumption
 
-Use `C:/APEX Platform/apex-power-ops-platform` as the primary working root for current platform consolidation work.
+Use `/home/olares/code/apex/apex-power-ops-platform` as the preferred operator working root when attached to the Olares host.
+
+Use `C:/APEX Platform/apex-power-ops-platform` as the client-side working view when the operator is attached from the Windows field laptop or another Windows client.
 
 Do not assume sibling legacy repositories are the default execution surface.
 
 ## Git Scope
 
-Use the platform root as the primary implementation surface, but remember that the current git root still sits one level higher at `C:/APEX Platform`.
+Use the platform root as the primary implementation surface, but remember that the current git boundary remains transitional and spans the parent-root mirror.
 
 Required operator behavior:
 - do not assume `C:/APEX Platform/apex-power-ops-platform` is already an independent git repo
 - when checking git status or diffs, interpret results in the context of the parent repo boundary
 - when staging work for future commits, explicitly scope paths to `apex-power-ops-platform/` or narrower so unrelated parent-repo changes are not mixed in
 - treat tracked changes elsewhere under `C:/APEX Platform` as separate lanes unless a cross-lane operation is explicitly intended
+- prefer originating bounded staging and staged-diff review from `/home/olares/code/apex` unless a client-only fallback is required
 
-Preferred parent-root git flow:
+Preferred Olares-hosted parent-root git flow:
+
+```bash
+cd /home/olares/code/apex
+git status --short -- apex-power-ops-platform/
+git add -- apex-power-ops-platform/.vscode/tasks.json apex-power-ops-platform/README.md apex-power-ops-platform/docs/OPERATOR-BOOTSTRAP-RUNBOOK.md
+git diff --cached -- apex-power-ops-platform/
+```
+
+Client-triggered host fallback:
+
+```powershell
+ssh olares-mesh 'cd /home/olares/code/apex && git status --short -- apex-power-ops-platform/'
+ssh olares-mesh 'cd /home/olares/code/apex && git diff --cached -- apex-power-ops-platform/'
+```
+
+Windows client fallback parent-root git flow:
 
 ```powershell
 Set-Location 'C:/APEX Platform'
@@ -28,6 +47,8 @@ git diff --cached -- apex-power-ops-platform/
 ```
 
 Whole-subtree staging is not the default operator move even though `apex-power-ops-platform/` is now a tracked subtree inside the parent repo. Reserve `git add -- apex-power-ops-platform/` for explicit cutover or intentionally broad publication work only.
+
+The current publication boundary is still transitional. Use the host-native flow for bounded staging, staged-diff review, and focused validation preparation, then close the slice through the normal publication and host-parity gate.
 
 Bounded packet staging example for the `Stage named platform paths` task:
 
@@ -107,6 +128,8 @@ Get-ChildItem 'C:/APEX Platform/apex-power-ops-platform' -Recurse -File |
 VS Code tasks:
 - the bootstrap-packet helper tasks remain available for historical packet review and narrow bounded staging, but routine publication work can now use normal parent-root `git diff` and `git add -- <paths>` against tracked `HEAD`
 - `Olares host bootstrap status`
+- `Olares host platform git status`
+- `Olares host platform staged diff`
 - `Run platform API local`
 - `Restart platform API local`
 - `Platform subtree git status`
@@ -137,6 +160,8 @@ Direct script entry points:
 ## Olares Durable-Host Entry Surface
 
 Use the bounded host bootstrap surface when the operator needs one current-status view of the durable Olares development posture instead of separate MCP, hold-boundary, and git checks.
+
+Use `docs/architecture/OLARES-HOST-NATIVE-OPERATOR-PUBLICATION-WORKFLOW-2026-05-06.md` when the operator needs the preferred Olares-hosted git-preparation flow rather than the older Windows-default packet guidance.
 
 Primary task:
 
