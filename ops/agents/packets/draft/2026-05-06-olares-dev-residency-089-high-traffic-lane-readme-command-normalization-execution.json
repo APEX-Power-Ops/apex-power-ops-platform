@@ -1,0 +1,29 @@
+{
+  "packet_id": "2026-05-06-olares-dev-residency-089",
+  "title": "High-Traffic Lane README Command Normalization Execution",
+  "objective": "Normalize the highest-traffic lane README command surfaces so Olares-hosted execution is presented as the default operator posture while Windows client commands remain explicit fallback guidance.",
+  "domain": "infrastructure-domain",
+  "active_role": "Platform Architect",
+  "dependencies": [
+    "ops/agents/packets/draft/2026-05-06-olares-dev-residency-088-packet-087-authority-publication-and-host-mirror-resync-gate.json",
+    "ops/agents/handoffs/2026-05-06-olares-dev-residency-088-packet-087-authority-publication-and-host-mirror-resync-gate-handoff.md",
+    "apps/operations-web/README.md",
+    "apps/control-plane-api/README.md",
+    "packages/forms-engine/README.md"
+  ],
+  "execution_summary": "Packet 089 updates the highest-traffic lane READMEs so command guidance now prefers Olares-hosted execution from `/home/olares/code/apex/apex-power-ops-platform`, while keeping Windows client commands as explicit fallback and preserving GitHub canonical status plus the current transitional publication boundary.",
+  "selected_scope_note": "This execution updates lane README command guidance only. It does not retire the publication boundary, change GitHub canonical status, mutate runtime or services, mutate packages or lockfiles, or mutate the old host clone.",
+  "execution_lane_opened": true,
+  "artifact_published": false,
+  "status": "complete",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-06-olares-dev-residency-089-high-traffic-lane-readme-command-normalization-execution-handoff.md"
+  ],
+  "handoff_target": "Platform Architect",
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-06-olares-dev-residency-089-high-traffic-lane-readme-command-normalization-execution-handoff.md",
+  "implementation_ready_candidate": false,
+  "next_packet_candidate": "Olares Dev Residency 090 - Packet 089 Authority Publication And Host Mirror Resync Gate",
+  "sql_permission": false,
+  "sql_permission_note": "This execution packet authorizes no database writes, no source/test runtime mutation, no package or lockfile mutation, no installs, no runtime or service mutation, no AI-services expansion, no remote rewrite, no rollback or force/reset/clean, and no old-clone mutation.",
+  "validation_disposition": "local-readme-validation-pending-publication"
+}

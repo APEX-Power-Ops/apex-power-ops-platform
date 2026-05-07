@@ -128,7 +128,9 @@ Update 2026-05-06:
 120. Packet 087 preserves GitHub canonical status and the current transitional publication boundary while reducing dependence on the Windows client for bounded git preparation.
 121. Packet 088 is now complete as the publication/resync gate for Packet 087.
 122. Packet 088 published the host-native operator workflow tranche in commit `14f31e67e7eed582ee328bcd913d5d9244a2c126` (`Author Olares host-native publication workflow`), pushed `origin/clean-main`, restored `/home/olares/code/apex` to clean parity at the same commit, and preserved `/home/olares/src/apex-power-ops-platform` observe-only at `2836a2622309b4e146ca24f23b5bf87312c0c857` with status count `30`.
-123. The next truthful move is the highest-traffic lane README command normalization tranche.
+123. Packet 089 is now complete as that next README-normalization slice. It updates the highest-traffic lane README command surfaces so Olares-hosted execution is the default operator posture while Windows client commands remain explicit fallback guidance.
+124. Packet 089 is documentation-only. It does not retire the publication boundary, change GitHub canonical status, or authorize runtime, package, or old-clone mutation.
+125. The next truthful move is publication and host-mirror resync for Packet 089, then reassess whether adjacent README or authority surfaces still normalize Windows-local execution in a way that creates real split-residency friction.
 
 
 

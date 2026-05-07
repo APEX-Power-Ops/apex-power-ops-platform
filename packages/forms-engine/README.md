@@ -28,7 +28,8 @@ Deferred for later planning:
 Local runtime use:
 - install the package in editable mode from `packages/forms-engine` with `python -m pip install -e .`
 - run the package smoke validation with `apex-forms-smoke`
-- from the platform root, run the same bounded smoke path with `C:/APEX Platform/apex-power-ops-platform/.venv/Scripts/python.exe -m apex_forms_engine.smoke` and `PYTHONPATH=packages/forms-engine/src`
+- from the Olares-hosted platform root, run the same bounded smoke path with `.venv/bin/python -m apex_forms_engine.smoke` and `PYTHONPATH=packages/forms-engine/src`
+- Windows client fallback: run the same bounded smoke path with `C:/APEX Platform/apex-power-ops-platform/.venv/Scripts/python.exe -m apex_forms_engine.smoke` and `PYTHONPATH=packages/forms-engine/src`
 - run the root workspace task `Forms engine tests` for an executable regression check around the smoke harness
 - run the root workspace task `Forms engine CI check` to mirror the package CI contract locally through `compileall` plus focused pytest
 - repo-level CI now runs the same package regression slice through `.github/workflows/forms-engine-ci.yml`
