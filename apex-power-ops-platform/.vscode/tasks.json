@@ -318,6 +318,28 @@
       "group": "test"
     },
     {
+      "label": "Olares host platform git status",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-Command",
+        "ssh olares-mesh 'cd /home/olares/code/apex && git status --short -- apex-power-ops-platform/'"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Olares host platform staged diff",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-Command",
+        "ssh olares-mesh 'cd /home/olares/code/apex && git diff --cached -- apex-power-ops-platform/'"
+      ],
+      "problemMatcher": []
+    },
+    {
       "label": "Platform subtree git status",
       "type": "shell",
       "command": "pwsh",

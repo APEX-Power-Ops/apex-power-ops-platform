@@ -34,7 +34,7 @@ Execution bootstrap for fresh implementation sessions:
 Interpretation rules:
 
 1. `apex-power-ops-platform/` remains the live implementation workspace that will be hosted on the Olares One
-2. the parent git root at `C:/APEX Platform` remains the publication boundary until a later explicit cutover decision
+2. the parent git root at `C:/APEX Platform` remains the current transitional publication boundary until a later explicit cutover decision, but bounded staging and staged-diff review should now prefer `/home/olares/code/apex`
 3. the first governed Olares workstation lane and the first installed-app proof lane for `forms-engine` and `p6-ingest` are already closed
 4. the bounded `personal-notes` private lane is operationally closed in host-only scope and remains outside the governed installed-app set
 5. newly-authored Olares work should add the dev/services/staging infrastructure layer to this existing workspace rather than replacing the current app/package/infra structure
@@ -43,6 +43,17 @@ Interpretation rules:
 ## Operator Quick Start
 
 This bootstrap root should now be treated as the primary local operator surface for platform work.
+
+Preferred Olares-hosted startup path:
+1. attach through VS Code Remote-SSH or `ssh olares-mesh`
+2. open `/home/olares/code/apex/apex-power-ops-platform`
+3. run bounded git preparation and focused validation from the Olares-hosted parent-root mirror before falling back to the Windows client surface
+
+Host terminal example:
+
+```bash
+cd /home/olares/code/apex/apex-power-ops-platform
+```
 
 Recommended local startup path:
 1. Create or refresh the root virtual environment at `.venv/`
@@ -68,7 +79,16 @@ Current git posture:
 3. when git work is necessary, explicitly scope staging to `apex-power-ops-platform/` or narrower file paths so unrelated parent-repo changes are not pulled in accidentally
 4. treat parent-repo changes outside `apex-power-ops-platform/` as separate lanes unless an explicit cross-lane operation is intended
 
-Recommended parent-root git flow:
+Preferred Olares-hosted parent-root git flow:
+
+```bash
+cd /home/olares/code/apex
+git status --short -- apex-power-ops-platform/
+git add -- apex-power-ops-platform/.vscode/tasks.json apex-power-ops-platform/README.md apex-power-ops-platform/docs/OPERATOR-BOOTSTRAP-RUNBOOK.md
+git diff --cached -- apex-power-ops-platform/
+```
+
+Windows client fallback parent-root git flow:
 
 ```powershell
 Set-Location 'C:/APEX Platform'
@@ -104,6 +124,8 @@ Git safety rules:
 
 Current operator entrypoints:
 - the bootstrap-packet helper tasks remain available for historical packet review and narrow bounded staging, but routine publication work can now use normal parent-root `git diff` and `git add -- <paths>` against tracked `HEAD`
+- `Olares host platform git status` in `.vscode/tasks.json`
+- `Olares host platform staged diff` in `.vscode/tasks.json`
 - `Run platform API local` in `.vscode/tasks.json`
 - `Restart platform API local` in `.vscode/tasks.json`
 - `Platform subtree git status` in `.vscode/tasks.json`
@@ -124,6 +146,7 @@ Current operator entrypoints:
 - `Operations web browser smoke` in `.vscode/tasks.json`
 - `Operations web promoted-host smoke` in `.vscode/tasks.json`
 - `../apps/control-plane-api/scripts/smoke_remote_control_plane_authoring_queue.py`
+- `docs/architecture/OLARES-HOST-NATIVE-OPERATOR-PUBLICATION-WORKFLOW-2026-05-06.md`
 
 Primary local contract and authority surfaces:
 - `C:/APEX Platform/Platform-Authority/`

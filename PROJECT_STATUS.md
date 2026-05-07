@@ -141,6 +141,8 @@ handoffs.
 100. Packet 085 records four active dependency classes: Windows-root publication control, Windows-first operator publication flow in the bootstrap runbook, parent-root strategic/status authority that still spans outside the platform subtree, and active lane READMEs that still normalize Windows-local execution examples.
 101. Packet 086 is now complete as the publication and host-mirror resync closeout for that dependency-inventory slice.
 102. Packet 086 published the dependency-inventory tranche in commit `20f8940e98b08a79fe7e77a7e7f6e31b21e422d9` (`Inventory Olares publication boundary dependencies`), pushed `origin/clean-main`, restored `/home/olares/code/apex` to clean parity at the same commit, and preserved `/home/olares/src/apex-power-ops-platform` observe-only at `2836a2622309b4e146ca24f23b5bf87312c0c857` with status count `30`.
+103. Packet 087 is now complete as the first retirement-target execution slice. It adds a dedicated host-native operator publication workflow authority surface, updates the operator runbook and platform README to prefer Olares-hosted staging and staged-diff review, and adds admitted Olares-host git helper tasks without silently retiring the current transitional publication boundary.
+104. Packet 087 keeps GitHub canonical, keeps `C:/APEX Platform` as the explicit transitional publication boundary, and routes the next Olares slice to the highest-traffic lane README command surfaces that still normalize Windows-local execution.
 
 ```mermaid
 pie title Project Completion Status
