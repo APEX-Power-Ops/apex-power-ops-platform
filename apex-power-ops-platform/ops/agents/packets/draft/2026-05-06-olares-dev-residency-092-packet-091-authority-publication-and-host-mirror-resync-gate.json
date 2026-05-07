@@ -20,15 +20,26 @@
     "rollback or force/reset/clean",
     "old-clone mutation"
   ],
-  "artifact_published": false,
-  "host_mirror_resynced": false,
-  "status": "draft",
-  "output_artifacts": [],
+  "artifact_published": true,
+  "host_mirror_resynced": true,
+  "publication_commit": "60e71c32e1196bfbec40980df7c5a71ed25610de",
+  "commit_message": "Modernize Olares build guidance",
+  "post_publication_host_state": {
+    "head": "60e71c32e1196bfbec40980df7c5a71ed25610de",
+    "status_count": 0,
+    "old_clone_head": "2836a2622309b4e146ca24f23b5bf87312c0c857",
+    "old_clone_status_count": 30
+  },
+  "status": "complete",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-06-olares-dev-residency-092-packet-091-authority-publication-and-host-mirror-resync-gate-handoff.md"
+  ],
   "handoff_target": "Platform Architect",
+  "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-06-olares-dev-residency-092-packet-091-authority-publication-and-host-mirror-resync-gate-handoff.md",
   "implementation_ready_candidate": false,
-  "next_packet_candidate": "Execute Packet 092 when commit/push and host-mirror resync are authorized for the build-guide modernization and visual-alignment tranche.",
+  "next_packet_candidate": "Reassess adjacent authority, operator, or visual drift only if a concrete mismatch remains after the build-guidance closeout.",
   "sql_permission": false,
   "sql_permission_note": "This publication gate authorizes no database writes, no source/test runtime mutation, no package or lockfile mutation, no installs, no runtime or service mutation, no AI-services expansion beyond the admitted trio, no remote rewrite, no rollback or force/reset/clean, and no old-clone mutation.",
-  "validation_disposition": "pending-publication",
-  "closure_note": "Not executed in this workspace turn. Publication commit, push, and `/home/olares/code/apex` resync remain outstanding."
+  "validation_disposition": "pass",
+  "closure_note": "Executed 2026-05-06. Packet 092 published the Packet 091 build-guide modernization and visual-alignment tranche in commit `60e71c32e1196bfbec40980df7c5a71ed25610de` with message `Modernize Olares build guidance`, advanced `origin/clean-main` through a host-side credential bridge after the workstation could not reach GitHub directly, restored `/home/olares/code/apex` to clean parity at the published commit, and preserved `/home/olares/src/apex-power-ops-platform` as observe-only at `2836a2622309b4e146ca24f23b5bf87312c0c857` with status count `30`."
 }

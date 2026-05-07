@@ -151,8 +151,8 @@ handoffs.
 110. Packet 090 published the README-normalization tranche in commit `3c065a1e2757eaab94f0902b06a6d6240ae0fffb` (`Normalize Olares lane README commands`), pushed `origin/clean-main`, restored `/home/olares/code/apex` to clean parity at the same commit, and preserved `/home/olares/src/apex-power-ops-platform` observe-only at `2836a2622309b4e146ca24f23b5bf87312c0c857` with status count `30`.
 111. Packet 091 is now complete as the original build-guide modernization execution slice. It refreshes `Infrastructure/Olares_Build_Guide.md`, `Infrastructure/Olares_Checklist.md`, `Infrastructure/VSCode_Build_Prompt.md`, and `Infrastructure/Olares_Architecture.svg` so they align with whole-project Olares governance, keep GitHub canonical, keep the laptop client-only, prefer Claude Code plus Codex monthly-plan use, and treat Ollama/local models as optional rather than mandatory.
 112. Packet 091 also realigns the build-guide stack back to the admitted minimal MCP trio `apex-fs`, `apex-db`, and `apex-jobs` instead of silently reopening broader AI-service scope.
-113. Packet 092 is now authored as the required publication and host-mirror resync gate for that build-guide modernization tranche.
-114. Packet 092 remains outstanding in this workspace turn: no commit, push, or `/home/olares/code/apex` resync has been performed yet, so the refreshed guidance is locally validated but not yet durably published.
+113. Packet 092 is now complete as the required publication and host-mirror resync gate for that build-guide modernization tranche.
+114. Packet 092 published the build-guide modernization and visual-alignment tranche in commit `60e71c32e1196bfbec40980df7c5a71ed25610de` (`Modernize Olares build guidance`), advanced `origin/clean-main` through the prepared Olares host after the workstation could not reach GitHub directly, restored `/home/olares/code/apex` to clean parity at the published commit, and preserved `/home/olares/src/apex-power-ops-platform` observe-only at `2836a2622309b4e146ca24f23b5bf87312c0c857` with status count `30`.
 
 ```mermaid
 pie title Project Completion Status
