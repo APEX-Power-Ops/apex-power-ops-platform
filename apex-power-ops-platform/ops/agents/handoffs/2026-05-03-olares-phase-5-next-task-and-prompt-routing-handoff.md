@@ -135,8 +135,12 @@ Update 2026-05-06:
 127. Packet 091 is now complete as the adjacent authority-surface normalization slice. It refreshes the original build-guide stack and its visual architecture reference so Olares-first execution, GitHub-canonical publication, client-only laptop posture, premium-plan-first AI use, optional Ollama, and the admitted MCP trio are all stated consistently across the infrastructure guidance.
 128. Packet 091 is documentation-only. It does not install services, widen the admitted AI boundary, change GitHub canonical status, or perform publication by implication.
 129. Packet 092 is now complete as the required publication/resync gate for Packet 091.
-130. Packet 092 published the refreshed build-guidance and visual-alignment tranche in commit `60e71c32e1196bfbec40980df7c5a71ed25610de`, advanced `origin/clean-main` through the prepared Olares host when the workstation could not reach GitHub directly, restored `/home/olares/code/apex` to clean parity at the published commit, and preserved `/home/olares/src/apex-power-ops-platform` observe-only.
-131. The next truthful move is to reopen adjacent authority, operator, or visual drift only if a concrete mismatch remains after this build-guidance closeout.
+130. Packet 092 published the refreshed build-guidance and visual-alignment tranche in commit `60e71c32e1196bfbec40980df7c5a71ed25610de`, closed the publication record in commit `3644c6d7ed218396c43d63d01a9f97693be08883`, left both `origin/clean-main` and `/home/olares/code/apex` clean at that durable head, and preserved `/home/olares/src/apex-power-ops-platform` observe-only.
+131. Packet 093 is now complete as the bounded adjacent authority/operator drift normalization slice that followed the build-guide closeout.
+132. Packet 093 tightened the remaining nearby authority surfaces so the services-zone baseline versus deferred services is explicit, the workstation rerun checklist proves only the admitted minimal MCP trio, and the AI first-slice runbook treats Codex as an approved interactive surface without claiming wrapper-level admission.
+133. Packet 094 is now complete as the publication/resync gate for Packet 093.
+134. Packet 094 published the adjacent authority/operator drift tranche in commit `9d6a583e15fda4e72066addb0f1744c121d2ccd7`, restored both `origin/clean-main` and `/home/olares/code/apex` to clean parity at that head, and preserved `/home/olares/src/apex-power-ops-platform` observe-only.
+135. The Olares lane now returns to hold unless a new adjacent authority, operator, or visual mismatch appears.
 
 
 

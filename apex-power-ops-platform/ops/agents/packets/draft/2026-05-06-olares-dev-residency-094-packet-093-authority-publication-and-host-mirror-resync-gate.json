@@ -20,9 +20,17 @@
     "rollback or force/reset/clean",
     "old-clone mutation"
   ],
-  "artifact_published": false,
-  "host_mirror_resynced": false,
-  "status": "authored",
+  "artifact_published": true,
+  "host_mirror_resynced": true,
+  "publication_commit": "9d6a583e15fda4e72066addb0f1744c121d2ccd7",
+  "commit_message": "Normalize Olares adjacent authority drift",
+  "post_publication_host_state": {
+    "head": "9d6a583e15fda4e72066addb0f1744c121d2ccd7",
+    "status_count": 0,
+    "old_clone_head": "2836a2622309b4e146ca24f23b5bf87312c0c857",
+    "old_clone_status_count": 30
+  },
+  "status": "complete",
   "output_artifacts": [
     "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-06-olares-dev-residency-094-packet-093-authority-publication-and-host-mirror-resync-gate-handoff.md"
   ],
@@ -32,6 +40,7 @@
   "next_packet_candidate": "Return the Olares lane to hold unless a new adjacent drift or concrete operator insufficiency appears.",
   "sql_permission": false,
   "sql_permission_note": "This publication gate authorizes no database writes, no source/test runtime mutation, no package or lockfile mutation, no installs, no runtime or service mutation, no AI-services expansion beyond the admitted trio, no remote rewrite, no rollback or force/reset/clean, and no old-clone mutation.",
-  "validation_disposition": "pending-publication-and-host-resync",
-  "closure_note": "Not yet executed. Packet 094 is authored as the publication and host-mirror resync gate for the Packet 093 adjacent authority/operator drift normalization tranche."
+  "validation_disposition": "pass",
+  "closure_note": "Executed 2026-05-06. Packet 094 published the Packet 093 adjacent authority/operator drift normalization tranche in commit `9d6a583e15fda4e72066addb0f1744c121d2ccd7` with message `Normalize Olares adjacent authority drift`, pushed `origin/clean-main`, restored `/home/olares/code/apex` to clean parity at the published commit, and preserved `/home/olares/src/apex-power-ops-platform` as observe-only at `2836a2622309b4e146ca24f23b5bf87312c0c857` with status count `30`.",
+  "next_action": "Return the Olares lane to hold unless a new adjacent authority, operator, or visual mismatch appears; do not reopen broader AI-service or MCP admission by implication."
 }
