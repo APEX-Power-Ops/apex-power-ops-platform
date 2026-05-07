@@ -36,7 +36,7 @@ It uses the already-present minimal MCP trio and the `apex-jobs` ledger as the w
 
 ### Out Of Scope
 
-1. Codex admission,
+1. Codex integration into the minimal-trio wrapper or promotion path,
 2. Ollama or local-model rollout,
 3. Dify or n8n rollout,
 4. public ingress,
@@ -48,8 +48,8 @@ It uses the already-present minimal MCP trio and the `apex-jobs` ledger as the w
 1. `apex-jobs` is the current operational run ledger.
 2. `apex-jobs` is also the current promotion gate because `promote_packet` refuses promotion unless a successful `env=host` run exists.
 3. `ai_tasks` remains a future orchestration or integration surface, not the controlling queue for this first slice.
-4. Claude Code is the only admitted first-slice AI execution surface.
-5. Codex remains deferred until a later explicit decision packet reopens it.
+4. Claude Code is the current packetized first-slice AI execution surface for the minimal MCP trio.
+5. Codex is an approved premium-plan interactive surface, but it is not yet bound to this wrapper or its promotion path until a later explicit packet admits that integration.
 
 ## Operator Commands
 
