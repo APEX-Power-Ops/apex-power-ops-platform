@@ -2,7 +2,7 @@
 
 Date: 2026-04-23
 Status: Active rerun surface
-Scope: bounded workstation rerun for local Olares-aligned dev runtime, MCP proof, and canary evidence refresh
+Scope: bounded workstation rerun for local Olares-aligned dev runtime, minimal-MCP proof, and canary evidence refresh
 
 ## Purpose
 
@@ -38,7 +38,7 @@ snapshot:
 ## Rerun Steps
 
 1. verify that `infra/compose.dev.yml`, `tools/run-canary.ps1`, `tools/run-canary.sh`, and `tools/canary/run_canary.py` are present and readable
-2. verify that the MCP HTTP bridges remain present under `services/mcp/apex-fs/build/http.js`, `services/mcp/apex-db/build/http.js`, `services/mcp/apex-jobs/build/http.js`, `services/mcp/apex-forms/build/http.js`, and `services/mcp/apex-p6/build/http.js`
+2. verify that the admitted minimal MCP trio remains present under `services/mcp/apex-fs/build/http.js`, `services/mcp/apex-db/build/http.js`, and `services/mcp/apex-jobs/build/http.js`
 3. verify that the forms runtime shell remains present under `packages/forms-engine/src/apex_forms_engine/runtime.py`
 4. verify that the p6 runtime shell remains present under `packages/p6-ingest/src/apex_p6_ingest/runtime.py`
 5. run `pwsh -NoProfile -File tools/run-canary.ps1` on Windows or `bash tools/run-canary.sh` on POSIX hosts
@@ -57,4 +57,6 @@ snapshot:
 
 The workstation rerun remains valid when the canary wrapper completes without
 error and the runtime-proof plus staging outputs refresh under `tests/canary/`
-without widening outside the bounded Olares surface.
+without widening outside the bounded Olares surface. The forms-engine and
+p6-ingest runtime and staging proofs remain application evidence, not
+re-admission of `apex-forms` or `apex-p6` into the minimal MCP trio.

@@ -132,7 +132,7 @@ Rules:
 
 #### Services zone
 
-Purpose: long-running shared AI and ops dependencies on the Olares One.
+Purpose: long-running shared ops dependencies and optional AI services on the Olares One.
 
 Repo lanes that govern it:
 
@@ -142,8 +142,8 @@ Repo lanes that govern it:
 
 Rules:
 
-1. Ollama, Open WebUI, Dify, Qdrant, n8n, Syncthing, and Restic are services-zone concerns
-2. these support the dev and staging zones but are not themselves proof that APEX is complete
+1. Syncthing and Restic are the current baseline services-zone concerns; Ollama, Open WebUI, Dify, Qdrant, and n8n remain optional deferred candidates until a later packet admits them
+2. services-zone components support the dev and staging zones but are not themselves proof that APEX is complete
 3. any repo automation for them must preserve the LarePass-only access model
 
 #### Staging zone
