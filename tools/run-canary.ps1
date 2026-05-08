@@ -5,6 +5,7 @@ $ErrorActionPreference = 'Stop'
 
 $repoRoot = Get-ApexRepoRoot
 Import-ApexEnvFile
+$repoPython = Get-ApexRepoPython
 
 $processes = @()
 
@@ -35,7 +36,7 @@ try {
   $p6Artifacts = Join-Path $repoRoot '.tmp/p6-ingest/artifacts'
   New-Item -ItemType Directory -Force -Path $formsTemplates, $formsArtifacts, $p6Artifacts | Out-Null
 
-  Start-ApexBackgroundProcess -FilePath 'c:/APEX Platform/.venv/Scripts/python.exe' -ArgumentList @('-m', 'apex_forms_engine.runtime') -Environment @{
+  Start-ApexBackgroundProcess -FilePath $repoPython -ArgumentList @('-m', 'apex_forms_engine.runtime') -Environment @{
     'PYTHONPATH' = 'packages/forms-engine/src'
     'FORMS_ENGINE_TEMPLATES_PATH' = $formsTemplates
     'FORMS_ENGINE_ARTIFACTS_PATH' = $formsArtifacts
@@ -43,7 +44,7 @@ try {
     'OIDC_CLIENT_ID' = $env:APEX_DEV_FORMS_ENGINE_OIDC_CLIENT_ID
   }
 
-  Start-ApexBackgroundProcess -FilePath 'c:/APEX Platform/.venv/Scripts/python.exe' -ArgumentList @('-m', 'apex_p6_ingest.runtime') -Environment @{
+  Start-ApexBackgroundProcess -FilePath $repoPython -ArgumentList @('-m', 'apex_p6_ingest.runtime') -Environment @{
     'PYTHONPATH' = 'packages/p6-ingest/src'
     'P6_INGEST_ARTIFACTS_PATH' = $p6Artifacts
     'APEX_P6_FIXTURE_PATH' = (Join-Path $repoRoot 'apps/mutation-seam/app/schedule/fixtures/stack_data_center_baseline_sanitized.xer')
@@ -78,7 +79,7 @@ try {
 
   Start-Sleep -Seconds 3
 
-  & 'c:/APEX Platform/.venv/Scripts/python.exe' 'tools/canary/run_canary.py'
+  & $repoPython 'tools/canary/run_canary.py'
 }
 finally {
   foreach ($process in $processes) {

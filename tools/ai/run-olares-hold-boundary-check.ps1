@@ -10,6 +10,7 @@ $ErrorActionPreference = 'Stop'
 
 $repoRoot = Get-ApexRepoRoot
 Import-ApexEnvFile
+$repoPython = Get-ApexRepoPython
 
 $stateDir = Join-Path $repoRoot '.tmp/ai-workflow'
 New-Item -ItemType Directory -Force -Path $stateDir | Out-Null
@@ -37,7 +38,7 @@ if ($DsnEnv) {
   $holdArgs += @('--db-connection-string-env', 'SEAM_DATABASE_URL')
 }
 
-& 'c:/APEX Platform/.venv/Scripts/python.exe' @holdArgs | Out-Null
+& $repoPython @holdArgs | Out-Null
 
 $minimal = Get-Content $minimalOutput -Raw | ConvertFrom-Json
 $hold = Get-Content $holdOutput -Raw | ConvertFrom-Json

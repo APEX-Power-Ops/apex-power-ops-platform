@@ -11,6 +11,7 @@ $ErrorActionPreference = 'Stop'
 
 $repoRoot = Get-ApexRepoRoot
 Import-ApexEnvFile
+$repoPython = Get-ApexRepoPython
 
 $stateDir = Join-Path $repoRoot '.tmp/ai-workflow'
 $logDir = Join-Path $stateDir 'logs'
@@ -87,7 +88,7 @@ function Invoke-Verify {
     '--packet-id', $PacketId,
     '--output', (Join-Path $stateDir 'verify-minimal-mcp-trio.json')
   )
-  & 'c:/APEX Platform/.venv/Scripts/python.exe' @verifyArgs
+  & $repoPython @verifyArgs
 }
 
 function Test-HealthyEndpoint([string]$Url) {

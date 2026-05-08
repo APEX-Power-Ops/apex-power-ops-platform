@@ -8,7 +8,7 @@ import_apex_env_file
 
 packet_id="${1:-2026-05-06-olares-dev-residency-063}"
 dsn_env="${2:-}"
-host_root="$(cd "${repo_root}/.." && pwd)"
+host_container_root="$(cd "${repo_root}/.." && pwd)"
 old_clone="/home/olares/src/apex-power-ops-platform"
 pnpm_bin="/home/olares/apex-data/toolchains/pnpm-10.0.0/node_modules/.bin/pnpm"
 calc_python="/home/olares/apex-data/toolchains/calc-engine-venv/bin/python"
@@ -56,14 +56,14 @@ else
 EOF
 fi
 
-python3 - <<'PY' "${packet_id}" "${host_root}" "${repo_root}" "${old_clone}" "${pnpm_bin}" "${calc_python}" "${minimal_status_file}" "${hold_status_file}"
+python3 - <<'PY' "${packet_id}" "${host_container_root}" "${repo_root}" "${old_clone}" "${pnpm_bin}" "${calc_python}" "${minimal_status_file}" "${hold_status_file}"
 import json
 import shutil
 import subprocess
 import sys
 from pathlib import Path
 
-packet_id, host_root, repo_root, old_clone, pnpm_bin, calc_python, minimal_path, hold_path = sys.argv[1:]
+packet_id, host_container_root, repo_root, old_clone, pnpm_bin, calc_python, minimal_path, hold_path = sys.argv[1:]
 
 
 def run_text(*args: str) -> str:
@@ -99,11 +99,11 @@ hold = json.loads(Path(hold_path).read_text(encoding="utf-8"))
 
 payload = {
     "packet_id": packet_id,
-    "host_root": host_root,
+    "host_container_root": host_container_root,
     "implementation_root": repo_root,
     "git": {
-        "head": run_text("git", "-C", host_root, "rev-parse", "HEAD"),
-        "status_count": git_status_count(host_root),
+        "head": run_text("git", "-C", repo_root, "rev-parse", "HEAD"),
+        "status_count": git_status_count(repo_root),
         "old_clone": {
             "path": old_clone,
             "head": run_text("git", "-C", old_clone, "rev-parse", "HEAD"),

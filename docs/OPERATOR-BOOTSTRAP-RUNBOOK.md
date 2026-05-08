@@ -2,74 +2,83 @@
 
 This runbook defines the intended local operator workflow for the Apex Power Ops platform bootstrap.
 
+Current high-level status board:
+
+- `PROJECT_STATUS.md` for the current post-cutover platform summary, Olares workspace posture, remaining implementation items, and laptop-to-Olares migration status
+
 ## Operating Assumption
 
 Use `/home/olares/code/apex/apex-power-ops-platform` as the preferred operator working root when attached to the Olares host.
 
 Use `C:/APEX Platform/apex-power-ops-platform` as the client-side working view when the operator is attached from the Windows field laptop or another Windows client.
 
+Use `APEX Power Ops Platform.code-workspace` at the repo root as the default VS Code entry artifact.
+
 Do not assume sibling legacy repositories are the default execution surface.
 
 ## Git Scope
 
-Use the platform root as the primary implementation surface, but remember that the current git boundary remains transitional and spans the parent-root mirror.
+Use the platform root as the primary implementation, staging, and publication surface.
 
 Required operator behavior:
-- do not assume `C:/APEX Platform/apex-power-ops-platform` is already an independent git repo
-- when checking git status or diffs, interpret results in the context of the parent repo boundary
-- when staging work for future commits, explicitly scope paths to `apex-power-ops-platform/` or narrower so unrelated parent-repo changes are not mixed in
-- treat tracked changes elsewhere under `C:/APEX Platform` as separate lanes unless a cross-lane operation is explicitly intended
-- prefer originating bounded staging and staged-diff review from `/home/olares/code/apex` unless a client-only fallback is required
+- treat `C:/APEX Platform/apex-power-ops-platform` and `/home/olares/code/apex/apex-power-ops-platform` as matching standalone repo roots
+- run `git status`, `git diff`, `git add`, branching, and publication from those repo roots, not from the parent umbrella root
+- when staging work for future commits, explicitly scope repo-relative paths when the slice is narrower than the whole repo
+- treat tracked changes elsewhere under `C:/APEX Platform` as separate lanes unless a deliberate cross-repo maintenance step is intended
+- prefer originating bounded staging and staged-diff review from `/home/olares/code/apex/apex-power-ops-platform` when attached to the host
 
-Preferred Olares-hosted parent-root git flow:
+Preferred Olares-hosted git flow:
 
 ```bash
-cd /home/olares/code/apex
-git status --short -- apex-power-ops-platform/
-git add -- apex-power-ops-platform/.vscode/tasks.json apex-power-ops-platform/README.md apex-power-ops-platform/docs/OPERATOR-BOOTSTRAP-RUNBOOK.md
-git diff --cached -- apex-power-ops-platform/
+cd /home/olares/code/apex/apex-power-ops-platform
+git status --short
+git add -- .vscode/tasks.json README.md docs/OPERATOR-BOOTSTRAP-RUNBOOK.md
+git diff --cached -- .
 ```
 
 Client-triggered host fallback:
 
 ```powershell
-ssh olares-mesh 'cd /home/olares/code/apex && git status --short -- apex-power-ops-platform/'
-ssh olares-mesh 'cd /home/olares/code/apex && git diff --cached -- apex-power-ops-platform/'
+ssh olares-mesh 'cd /home/olares/code/apex/apex-power-ops-platform && git status --short'
+ssh olares-mesh 'cd /home/olares/code/apex/apex-power-ops-platform && git diff --cached -- .'
 ```
 
-Windows client fallback parent-root git flow:
+Windows client repo-root git flow:
 
 ```powershell
-Set-Location 'C:/APEX Platform'
-git status --short -- apex-power-ops-platform/
-git add -- apex-power-ops-platform/.vscode/tasks.json apex-power-ops-platform/README.md apex-power-ops-platform/docs/OPERATOR-BOOTSTRAP-RUNBOOK.md
-git diff --cached -- apex-power-ops-platform/
+$repoRoot = 'C:/APEX Platform/apex-power-ops-platform'
+Set-Location $repoRoot
+git status --short
+git add -- .vscode/tasks.json README.md docs/OPERATOR-BOOTSTRAP-RUNBOOK.md
+git diff --cached -- .
 ```
 
-Whole-subtree staging is not the default operator move even though `apex-power-ops-platform/` is now a tracked subtree inside the parent repo. Reserve `git add -- apex-power-ops-platform/` for explicit cutover or intentionally broad publication work only.
+Whole-repo staging is not the default operator move. Reserve `git add -- .` or the `Stage entire platform repo (broad change)` task for explicit broad publication work only.
 
-The current publication boundary is still transitional. Use the host-native flow for bounded staging, staged-diff review, and focused validation preparation, then close the slice through the normal publication and host-parity gate.
+The current publication boundary is the standalone repo. Use the host-native flow or the matching local repo-root flow for bounded staging, staged-diff review, and focused validation preparation.
 
 Bounded packet staging example for the `Stage named platform paths` task:
 
 ```powershell
-$env:APEX_PLATFORM_GIT_PATHSPEC='apex-power-ops-platform/.vscode/tasks.json;apex-power-ops-platform/README.md;apex-power-ops-platform/docs/OPERATOR-BOOTSTRAP-RUNBOOK.md'
+$env:APEX_PLATFORM_GIT_PATHSPEC='.vscode/tasks.json;README.md;docs/OPERATOR-BOOTSTRAP-RUNBOOK.md'
 ```
 
-After setting the pathspec, run `Stage named platform paths` and then `Platform subtree staged diff` before any commit.
+After setting the pathspec, run `Stage named platform paths` and then `Platform repo staged diff` before any commit.
 
-The parent-root `.gitignore` now carries a scoped exception for `apex-power-ops-platform/.vscode/tasks.json`, so the workspace task surface can be included in bounded parent-root staging without `git add -f`.
+Those task helpers now resolve the repo root directly from the workspace location.
+
+`apex-power-ops-platform/.gitignore` is now the active ignore contract for canonical repo operations. The parent-root `.gitignore` remains umbrella residue only.
 
 For historical context on the completed first parent-root introduction packet, use `ops/agents/handoffs/2026-04-22-parent-root-bootstrap-publication-handoff.md`.
 
 Current packet constraint:
-- this bootstrap subtree does not yet contain every active platform lane under `apex-power-ops-platform/`; parent-root active lanes that already exist today are referenced below with `../...` paths from the subtree root
+- this bootstrap subtree does not yet contain every active platform lane under the broader umbrella workspace; parent-root-only lanes remain separate provenance or reconciliation residue and are not part of the default repo contract
 
 Git safety rules:
-- do not use `git add .` from `C:/APEX Platform` unless an explicit cross-lane operation is intended
-- a bounded slice of the platform subtree is now tracked on parent-root `clean-main`, so normal `git diff` against `HEAD` is available for already-introduced paths; still keep staging bounded when unrelated parent-root changes are present and treat broader subtree publication as deliberate introduction work
-- default to staging explicit platform file paths or a bounded packet pathspec rather than the whole subtree
-- review the staged diff before any commit so unrelated parent-repo changes remain outside the publication set
+- do not use `git add .` from `C:/APEX Platform/apex-power-ops-platform` unless an explicit broad repo change is intended
+- default to staging explicit repo-relative file paths or a bounded packet pathspec rather than the whole repo
+- review the staged diff before any commit so unrelated changes remain outside the publication set
+- treat parent-root residue, old worktrees, and sibling lanes as separate concerns unless a deliberate cross-lane maintenance step is intended
 
 ## Local Environment
 
@@ -86,11 +95,10 @@ Bootstrap commands on Windows:
 
 ```powershell
 $platformRoot = 'C:/APEX Platform/apex-power-ops-platform'
-$repoRoot = 'C:/APEX Platform'
 Set-Location $platformRoot
 python -m venv .venv
 & "$platformRoot/.venv/Scripts/python.exe" -m pip install --upgrade pip setuptools wheel
-Set-Location "$repoRoot/apps/control-plane-api"
+Set-Location "$platformRoot/apps/control-plane-api"
 & "$platformRoot/.venv/Scripts/python.exe" -m pip install -r requirements-dev.txt
 ```
 
@@ -115,30 +123,38 @@ Required operator behavior:
 Windows fallback examples:
 
 ```powershell
-Get-ChildItem 'C:/APEX Platform/apex-power-ops-platform' -Recurse -File | Select-Object -ExpandProperty FullName
+$platformRoot = 'C:/APEX Platform/apex-power-ops-platform'
+Get-ChildItem $platformRoot -Recurse -File | Select-Object -ExpandProperty FullName
 ```
 
 ```powershell
-Get-ChildItem 'C:/APEX Platform/apex-power-ops-platform' -Recurse -File |
+$platformRoot = 'C:/APEX Platform/apex-power-ops-platform'
+Get-ChildItem $platformRoot -Recurse -File |
 	Select-String -Pattern 'pattern1|pattern2'
 ```
 
 ## Primary Operator Entry Points
 
+Default VS Code entry artifact:
+- `APEX Power Ops Platform.code-workspace`
+
+Current status surface:
+- `PROJECT_STATUS.md`
+
 VS Code tasks:
-- the bootstrap-packet helper tasks remain available for historical packet review and narrow bounded staging, but routine publication work can now use normal parent-root `git diff` and `git add -- <paths>` against tracked `HEAD`
+- the bootstrap-packet helper tasks remain available for historical packet review and narrow bounded staging, but routine publication work now uses normal repo-root `git diff` and `git add -- <paths>` against tracked `HEAD`
 - `Olares host bootstrap status`
 - `Olares host platform git status`
 - `Olares host platform staged diff`
 - `Run platform API local`
 - `Restart platform API local`
-- `Platform subtree git status`
+- `Platform repo git status`
 - `Stage named platform paths`
-- `Stage entire platform subtree (cutover only)`
+- `Stage entire platform repo (broad change)`
 - `Preview parent-root bootstrap packet`
 - `Stage parent-root bootstrap packet`
 - `Parent-root bootstrap packet staged diff`
-- `Platform subtree staged diff`
+- `Platform repo staged diff`
 - `Platform API focused tests`
 - `Control-plane local host readiness`
 - `Control-plane local apparatus-route smoke`
@@ -151,11 +167,11 @@ VS Code tasks:
 - `Operations web promoted-host smoke`
 
 Direct script entry points:
-- `../apps/control-plane-api/scripts/smoke_remote_control_plane_authoring_queue.py`
-- `../apps/control-plane-api/scripts/check_local_host_readiness.py`
-- `../apps/control-plane-api/scripts/bootstrap_local_env.py`
-- `../apps/control-plane-api/scripts/smoke_deployed_control_plane.py`
-- `../apps/control-plane-api/scripts/check_schema_drift.py`
+- `apps/control-plane-api/scripts/smoke_remote_control_plane_authoring_queue.py`
+- `apps/control-plane-api/scripts/check_local_host_readiness.py`
+- `apps/control-plane-api/scripts/bootstrap_local_env.py`
+- `apps/control-plane-api/scripts/smoke_deployed_control_plane.py`
+- `apps/control-plane-api/scripts/check_schema_drift.py`
 
 ## Olares Durable-Host Entry Surface
 
@@ -170,12 +186,12 @@ Primary task:
 Direct host command:
 
 ```powershell
-ssh olares-mesh 'cd /home/olares/code/apex && bash apex-power-ops-platform/tools/ai/run-olares-host-bootstrap-status.sh'
+ssh olares-mesh 'cd /home/olares/code/apex/apex-power-ops-platform && bash tools/ai/run-olares-host-bootstrap-status.sh'
 ```
 
 That surface reports:
 
-1. current parent-root host commit and status count,
+1. current standalone host repo commit and status count,
 2. old-clone observe-only state,
 3. materialized host toolchain presence,
 4. minimal MCP trio readiness,
@@ -184,31 +200,32 @@ That surface reports:
 ## Local Contract Sources
 
 Use these local files first:
-- `C:/APEX Platform/Platform-Authority/`
-- `../apps/control-plane-api/docs/contracts/CHATGPT-REMOTE-CONTROL-PLANE-TOOL-SCHEMAS-2026-03-28.json`
-- `../apps/control-plane-api/README.md`
-- `../apps/control-plane-api/PUBLIC-APPARATUS-ROUTE-PROMOTION-CHECKLIST-2026-04-21.md` when a future hosted regression needs a compact rerun checklist rather than repo-local runtime repair
+- `docs/authority/README.md`
+- `docs/authority/OLARES-WORKSPACE-AUTHORITY-FRAMEWORK.md`
+- `apps/control-plane-api/docs/contracts/CHATGPT-REMOTE-CONTROL-PLANE-TOOL-SCHEMAS-2026-03-28.json`
+- `apps/control-plane-api/README.md`
+- `apps/control-plane-api/PUBLIC-APPARATUS-ROUTE-PROMOTION-CHECKLIST-2026-04-21.md` when a future hosted regression needs a compact rerun checklist rather than repo-local runtime repair
 
-Use `C:/APEX Platform/Platform-Authority/` for strategic authority above the bootstrap root.
+Use `C:/APEX Platform/Platform-Authority/` only as historical strategic provenance when a surviving decision has not yet been fully re-homed into the repo-owned authority chain.
 
 ## Validation Baseline
 
 Current expected local validation slices:
 
 ```powershell
-Set-Location 'C:/APEX Platform/apps/control-plane-api'
+Set-Location 'C:/APEX Platform/apex-power-ops-platform/apps/control-plane-api'
 $env:DATABASE_URL='postgresql://placeholder:placeholder@localhost:5432/placeholder'
 & 'C:/APEX Platform/apex-power-ops-platform/.venv/Scripts/python.exe' -m pytest tests/test_control_plane.py tests/test_control_plane_worker.py tests/test_control_plane_sync.py tests/test_dispatch_dedicated_mcp_surface_check.py tests/test_dispatch_deployed_control_plane_smoke.py tests/test_github_mcp_transport.py -q
 ```
 
 ```powershell
 Set-Location 'C:/APEX Platform/apex-power-ops-platform'
-.venv/Scripts/python.exe ../apps/control-plane-api/scripts/smoke_remote_control_plane_authoring_queue.py --task-id demo-task --target-path Development/staging/example-guide/SG-CT-EXAMPLE-GUIDE.md --content 'draft content' --dry-run
+.venv/Scripts/python.exe apps/control-plane-api/scripts/smoke_remote_control_plane_authoring_queue.py --task-id demo-task --target-path Development/staging/example-guide/SG-CT-EXAMPLE-GUIDE.md --content 'draft content' --dry-run
 ```
 
 ## Governance Intent
 
-The bootstrap root should operate as the current platform control surface even before final repository cutover.
+The bootstrap root now operates as the canonical platform control surface after repository cutover.
 
 Current external frontier:
 

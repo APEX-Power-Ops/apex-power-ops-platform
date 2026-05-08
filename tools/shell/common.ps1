@@ -25,3 +25,23 @@ function Import-ApexEnvFile {
     }
   }
 }
+
+function Get-ApexRepoPython {
+  if ($env:APEX_PLATFORM_PYTHON) {
+    return $env:APEX_PLATFORM_PYTHON
+  }
+
+  $repoRoot = Get-ApexRepoRoot
+  $candidates = @(
+    (Join-Path $repoRoot '.venv\Scripts\python.exe'),
+    (Join-Path $repoRoot '.venv/bin/python')
+  )
+
+  foreach ($candidate in $candidates) {
+    if (Test-Path $candidate) {
+      return $candidate
+    }
+  }
+
+  throw "No repo-local Python interpreter found under $repoRoot/.venv."
+}

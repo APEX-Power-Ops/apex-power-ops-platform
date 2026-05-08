@@ -5,6 +5,7 @@ source "$(dirname "$0")/shell/common.sh"
 
 repo_root="$(get_apex_repo_root)"
 import_apex_env_file
+repo_python="$(get_apex_repo_python)"
 
 cleanup() {
   for pid in "${pids[@]:-}"; do
@@ -26,7 +27,7 @@ mkdir -p "${repo_root}/.tmp/forms-engine/templates" "${repo_root}/.tmp/forms-eng
   export FORMS_ENGINE_ARTIFACTS_PATH="${repo_root}/.tmp/forms-engine/artifacts"
   export OIDC_ISSUER_URL="${APEX_DEV_OIDC_ISSUER_URL}"
   export OIDC_CLIENT_ID="${APEX_DEV_FORMS_ENGINE_OIDC_CLIENT_ID}"
-  "c:/APEX Platform/.venv/Scripts/python.exe" -m apex_forms_engine.runtime
+  "${repo_python}" -m apex_forms_engine.runtime
 ) &
 pids+=("$!")
 
@@ -37,7 +38,7 @@ pids+=("$!")
   export APEX_P6_FIXTURE_PATH="${repo_root}/apps/mutation-seam/app/schedule/fixtures/stack_data_center_baseline_sanitized.xer"
   export OIDC_ISSUER_URL="${APEX_DEV_OIDC_ISSUER_URL}"
   export OIDC_CLIENT_ID="${APEX_DEV_P6_INGEST_OIDC_CLIENT_ID}"
-  "c:/APEX Platform/.venv/Scripts/python.exe" -m apex_p6_ingest.runtime
+  "${repo_python}" -m apex_p6_ingest.runtime
 ) &
 pids+=("$!")
 
@@ -84,4 +85,4 @@ pids+=("$!")
 sleep 3
 
 cd "${repo_root}"
-"c:/APEX Platform/.venv/Scripts/python.exe" tools/canary/run_canary.py
+"${repo_python}" tools/canary/run_canary.py
