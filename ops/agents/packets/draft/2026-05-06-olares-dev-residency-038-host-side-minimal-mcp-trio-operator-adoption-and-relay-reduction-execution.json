@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-05-06-olares-dev-residency-038",
-  "title": "Host-Side Minimal MCP Trio Operator Adoption And Relay-Reduction Execution",
+  "title": "Historical Host-Side Minimal MCP Trio Operator Adoption And Relay-Reduction Execution",
+  "historical_note": "This record preserves one earlier Dev Residency transition slice from before the canonical repo boundary moved to C:/APEX Platform/apex-power-ops-platform on 2026-05-07. It is historical provenance, not a live mutation-seam or AI-boundary transition surface for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this record only when historical provenance is needed for the earlier Dev Residency 038 transition slice preserved here"
+  ],
   "objective": "Execute the Packet 037 first-slice operator surface from the Olares host posture by staging only the admitted minimal MCP trio workflow files onto the host mirror, running the bounded host-side verification there, and capturing exact cleanliness and runtime evidence without widening AI scope.",
   "domain": "infrastructure-domain",
   "active_role": "Platform Architect",

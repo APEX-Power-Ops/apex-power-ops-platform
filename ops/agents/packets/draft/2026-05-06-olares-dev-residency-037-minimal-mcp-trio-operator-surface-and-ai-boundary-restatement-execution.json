@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-05-06-olares-dev-residency-037",
-  "title": "Minimal MCP Trio Operator Surface And AI Boundary Restatement Execution",
+  "title": "Historical Minimal MCP Trio Operator Surface And AI Boundary Restatement Execution",
+  "historical_note": "This record preserves one earlier Dev Residency transition slice from before the canonical repo boundary moved to C:/APEX Platform/apex-power-ops-platform on 2026-05-07. It is historical provenance, not a live mutation-seam or AI-boundary transition surface for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this record only when historical provenance is needed for the earlier Dev Residency 037 transition slice preserved here"
+  ],
   "objective": "Execute the Packet 036-selected first slice by landing a repo-visible operator surface for the admitted minimal MCP trio, restating the active AI authority boundary around `apex-jobs`, and validating the slice with live MCP and ledger-backed behavior.",
   "domain": "infrastructure-domain",
   "active_role": "Platform Architect",
