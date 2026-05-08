@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-05-03-olares-phase-5-021",
-  "title": "Bounded Non-Runtime Application-Source Host Trial Planning",
+  "title": "Historical Bounded Non-Runtime Application-Source Host Trial Planning",
+  "historical_note": "This packet records one bounded Olares Phase 5 non-runtime application-source host-trial planning slice from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live execution instruction for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this packet JSON only when historical provenance is needed for the earlier `olares-phase-5-021` bounded non-runtime application-source host-trial planning slice"
+  ],
   "objective": "Define the smallest reversible application-source or test-only host-side trial that may follow Packet 020 by specifying the allowed source surfaces, prohibited runtime or service mutations, entry criteria, validation expectations, rollback triggers, evidence capture, and whether Packet 019 or Packet 020 local closure authority must first be published and resynchronized before any host-side execution depends on it.",
   "domain": "infrastructure-domain",
   "active_role": "Olares Non-Runtime Application-Source Host Trial Planner",
