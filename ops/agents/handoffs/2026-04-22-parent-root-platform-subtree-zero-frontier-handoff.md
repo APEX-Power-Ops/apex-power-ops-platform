@@ -1,15 +1,21 @@
-# Parent-Root Platform-Subtree Zero-Frontier Handoff
+# Historical Parent-Root Platform-Subtree Zero-Frontier Handoff
 ## Date: 2026-04-22
 ## Updated by: GitHub Copilot (GPT-5.4)
-## Scope: Active zero-frontier checkpoint after full bounded publication of the live `C:/APEX Platform/apex-power-ops-platform` subtree
+## Scope: Historical zero-frontier checkpoint after full bounded publication of the then-live `C:/APEX Platform/apex-power-ops-platform` subtree under the retired parent-root publication boundary
 
 ## 1. Summary
 
-The live `apex-power-ops-platform` subtree is now fully published at the parent git root through the last residual archive-only formula pair.
+Historical note: this handoff records the parent-root subtree publication state before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains evidence of the earlier subtree cleanup frontier, not a live instruction surface for current repo operations.
 
-There are no remaining untracked paths under `apex-power-ops-platform`, so this handoff is the truthful active checkpoint for the subtree: no further cleanup publication is queued, and any future continuation from this subtree must be newly-authored work rather than residual adoption.
+The `apex-power-ops-platform` subtree was fully published at the parent git root through the last residual archive-only formula pair.
 
-## 2. Current Verified State
+There were no remaining untracked paths under `apex-power-ops-platform`, so this handoff closed the earlier subtree cleanup frontier: no further cleanup publication was queued at that point, and any future continuation from this subtree had to be newly-authored work rather than residual adoption.
+
+Current operator note:
+
+Treat `C:/APEX Platform` as umbrella residue for this repo. Current git-root work now belongs under `C:/APEX Platform/apex-power-ops-platform` or `/home/olares/code/apex/apex-power-ops-platform`.
+
+## 2. Historical Verified State
 
 Measured from the parent git root at `C:/APEX Platform` on 2026-04-22 after the residual archive formula pair publication:
 
@@ -17,7 +23,7 @@ Measured from the parent git root at `C:/APEX Platform` on 2026-04-22 after the 
 2. `HEAD` matches `origin/clean-main`
 3. remaining untracked top-level distribution under `apex-power-ops-platform` is `apps` 0, `archive` 0, `knowledge` 0, `ops` 0
 4. total untracked paths under `apex-power-ops-platform` is 0
-5. the subtree is therefore fully closed as a bounded publication frontier under the current parent-root working tree
+5. the subtree was therefore fully closed as a bounded publication frontier under the then-current parent-root working tree
 
 ## 3. Operational Meaning
 

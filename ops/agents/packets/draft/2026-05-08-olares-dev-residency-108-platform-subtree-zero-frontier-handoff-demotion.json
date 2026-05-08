@@ -1,0 +1,44 @@
+{
+  "packet_id": "2026-05-08-olares-dev-residency-108",
+  "title": "Platform Subtree Zero-Frontier Handoff Demotion",
+  "objective": "Normalize the parent-root platform-subtree zero-frontier handoff so it no longer presents itself as an active subtree checkpoint after standalone repo cutover and instead acts as historical provenance with explicit current operator routing.",
+  "domain": "infrastructure-domain",
+  "active_role": "Platform Architect",
+  "dependencies": [
+    "PROJECT_STATUS.md",
+    "ops/agents/handoffs/2026-04-22-parent-root-platform-subtree-zero-frontier-handoff.md",
+    "docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md",
+    "ops/agents/handoffs/2026-05-08-olares-dev-residency-107-handoff-register-demotion-handoff.md"
+  ],
+  "dependency_note": "After Packet 107 demoted the handoff register README, the strongest adjacent current-looking individual handoff was the parent-root platform-subtree zero-frontier handoff. Its scope and verification section still identified it as an active checkpoint even though the standalone repo boundary now owns live routing.",
+  "execution_mode": "bounded_individual_handoff_demotion",
+  "execution_scope": [
+    "Retitle the platform-subtree zero-frontier handoff as historical provenance.",
+    "Add a historical note and explicit current operator routing.",
+    "Relabel the current-state section as historical verified state without rewriting the rest of the handoff body."
+  ],
+  "forbidden_scope": [
+    "runtime or service mutation",
+    "package or lockfile mutation",
+    "repo-boundary reversal",
+    "broad handoff-archive rewriting beyond top-of-file demotion and heading normalization",
+    "remote rewrite",
+    "rollback, force, reset, or clean",
+    "old-clone mutation or promotion"
+  ],
+  "success_criteria": [
+    "The platform-subtree zero-frontier handoff now reads as historical provenance instead of an active subtree checkpoint.",
+    "The file explicitly routes current readers to the standalone repo roots.",
+    "Repo-owned status routing records the closure and keeps the next lane on remaining individual handoff records and packet-history index surfaces."
+  ],
+  "validation_commands": [
+    "Select-String -Path ops/agents/handoffs/2026-04-22-parent-root-platform-subtree-zero-frontier-handoff.md -Pattern '^# Historical Parent-Root Platform-Subtree Zero-Frontier Handoff$','^## Scope: Historical zero-frontier checkpoint','^Historical note: this handoff records the parent-root subtree publication state before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07\\..*','^Current operator note:$','^## 2\\. Historical Verified State$'",
+    "Select-String -Path ops/agents/handoffs/2026-04-22-parent-root-platform-subtree-zero-frontier-handoff.md -Pattern '^## 2\\. Current Verified State$','^## Scope: Active zero-frontier checkpoint'"
+  ],
+  "validation_results": {
+    "platform_subtree_handoff_demotion": "pass",
+    "current_active_markers": "cleared"
+  },
+  "status": "complete",
+  "next_action": "Return repo-foundation routing to the remaining individual historical handoff files and packet-history index surfaces that still look current at the top of the file."
+}
