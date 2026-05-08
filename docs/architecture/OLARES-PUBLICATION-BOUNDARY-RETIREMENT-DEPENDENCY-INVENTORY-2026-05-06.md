@@ -1,14 +1,18 @@
 # Olares Publication Boundary Retirement Dependency Inventory
 
 Date: 2026-05-06
-Status: Active migration dependency inventory
-Scope: concrete remaining dependencies that keep `C:/APEX Platform` as the transitional publication boundary while the program converges toward Olares-first execution
+Status: Updated closeout inventory after canonical cutover and residue normalization
+Scope: concrete record of which former publication-boundary dependencies are now closed and which residual hygiene items still remain after the canonical repo moved to `apex-power-ops-platform/`
+
+Closeout interpretation note:
+
+This inventory remains the active closeout queue for post-cutover boundary residue. It should be read together with the recent packet trail in `PROJECT_STATUS.md`, not as a pre-cutover dependency-discovery note.
 
 ## Purpose
 
-This document records the remaining split-residency dependencies that still tie publication and some operator workflows to `C:/APEX Platform`.
+This document records the publication-boundary dependencies that were formerly tied to `C:/APEX Platform` and the current closeout state after canonical branch promotion.
 
-It exists so the next Olares packets can retire those dependencies deliberately instead of treating the current Windows parent-root boundary as a vague background fact.
+It exists so residual cleanup does not silently revive the old Windows parent-root publication contract.
 
 ## Current Boundary
 
@@ -16,72 +20,94 @@ The governing direction is now explicit: all Apex Ops work should converge on Ol
 
 GitHub remains canonical.
 
-`C:/APEX Platform` remains the current transitional publication boundary.
+`C:/APEX Platform/apex-power-ops-platform` is now the canonical publication boundary for active Apex Ops repo operations.
 
-`/home/olares/code/apex` remains the authoritative host mirror and `/home/olares/code/apex/apex-power-ops-platform` remains the authoritative host implementation surface.
+`C:/APEX Platform` is now workstation-umbrella and historical-lineage residue, not the default publication boundary.
+
+`/home/olares/code/apex/apex-power-ops-platform` remains the authoritative host implementation surface.
+
+`/home/olares/code/apex` remains the containing host umbrella, not the default git root for this repo.
 
 ## Dependency Classes
 
-### 1. Root publication control still lives on Windows
+### 1. Root publication control no longer lives on the parent Windows boundary
 
-Active publication and closeout work is still initiated from the Windows parent-root git boundary.
-
-Evidence:
-
-1. the active authority still names `C:/APEX Platform` as the current publication boundary,
-2. the PM cockpit still lists transitional parent-root git publication from `C:/APEX Platform`,
-3. publication closeout proof still centers `git push origin clean-main` followed by host `git pull --ff-only`.
-
-### 2. Operator publication workflow is still documented from Windows paths
-
-The current operator bootstrap runbook still teaches parent-root git flow and staging from `C:/APEX Platform`.
+Active publication and closeout work now run from the standalone repo root on both workstation and Olares host surfaces.
 
 Evidence:
 
-1. `docs/OPERATOR-BOOTSTRAP-RUNBOOK.md` still says the current git root sits at `C:/APEX Platform`,
-2. the preferred publication flow begins with `Set-Location 'C:/APEX Platform'`,
-3. bounded staging guidance is still expressed from the Windows parent-root posture.
+1. `C:/APEX Platform/apex-power-ops-platform/.git` now materializes the standalone repo boundary,
+2. canonical `clean-main` now points at subtree-root commit `dd781695006f159f204ab20eaa20adf5e296772c`,
+3. default operator git examples now start from the repo root rather than the parent-root umbrella.
 
-### 3. Strategic and status authority still spans parent-root surfaces outside the platform subtree
+### 2. Operator publication workflow is now documented from repo-root paths
 
-Even with Olares as the active implementation surface, high-authority project surfaces still live at the parent root.
+The primary README, runbook, and active task helpers now describe the standalone repo-root contract directly.
+
+Evidence:
+
+1. `README.md` now states that `C:/APEX Platform/apex-power-ops-platform` is the standalone git root,
+2. `docs/OPERATOR-BOOTSTRAP-RUNBOOK.md` now stages and diffs repo-relative paths from repo root,
+3. `.vscode/tasks.json` now resolves the workspace folder as repo root and uses repo-relative staging helpers.
+
+### 2A. GitHub Actions publication no longer depends on the parent-root workflow lane
+
+The canonical repo boundary now owns the publishable GitHub Actions lane directly. The parent-root workflow file survives only as historical mirror residue in the older umbrella repo.
+
+Evidence:
+
+1. `apex-power-ops-platform/.github/workflows/` now contains the active lane workflow set for calc-engine, control-plane, operations-web, mutation-seam, and PM idempotency automation,
+2. canonical repo publication now targets `jasonlswenson-sys/apex-power-ops` rather than the parent-root umbrella repo,
+3. the duplicated `deployed-control-plane-smoke.yml` files are aligned, which means the remaining parent-root file is mirror residue rather than an active dependency.
+
+### 3. Strategic and status authority still has parent-root mirrors, but they are no longer publication dependencies
+
+Even with Olares as the active implementation surface, some high-authority project surfaces still have aligned copies at the parent root.
 
 Examples:
 
 1. `PROJECT_STATUS.md`,
 2. root `README.md`,
-3. `Infrastructure/Olares_Workspace_Authority_Framework.md`,
+3. `docs/authority/OLARES-WORKSPACE-AUTHORITY-FRAMEWORK.md`,
 4. `Platform-Authority/` strategic authority surfaces.
 
-This is not automatically wrong, but it means publication-boundary retirement is not only a git-flow issue; it is also an authority-surface placement issue.
+This is now a mirror-governance issue rather than a publication-boundary blocker.
 
-### 4. Lane READMEs and command examples still normalize Windows-local execution
+### 4. Adjacent lane READMEs are mostly normalized; remaining drift is in older packet and planning surfaces
 
-Several active READMEs still present Windows-root command examples and path assumptions.
+The highest-traffic README and runbook surfaces are now materially aligned to the standalone repo boundary and the Olares host implementation root.
 
-Examples captured during this inventory:
+The remaining documentation risk is narrower: older plan, packet, and historical workflow surfaces can still read like current instructions if their pre-cutover parent-root context is not stated explicitly.
 
-1. `apex-power-ops-platform/README.md`,
-2. `apps/operations-web/README.md`,
-3. `apps/control-plane-api/README.md`,
-4. package READMEs that still reference `C:/APEX Platform/apex-power-ops-platform`.
+Examples that require explicit historical interpretation rather than README command normalization:
 
-These surfaces can reintroduce split practice even when the host path is already proven.
+1. roadmap and packet logs that preserve pre-cutover publication wording,
+2. older workspace-boundary plans measured from the former parent-root topology,
+3. mirror-governance notes that still mention parent-root publication steps as historical evidence.
 
-## Highest-Leverage Retirement Targets
+These surfaces are now secondary documentation closeout, not blockers for the canonical repo boundary.
 
-The next highest-leverage retirement targets are:
+## Highest-Leverage Remaining Targets
 
-1. host-native operator publication workflow and staging guidance,
-2. root authority and start-here routing surfaces that still normalize `C:/APEX Platform` as the live publication center,
-3. active lane README command examples that still default to Windows-local execution.
+The already-closed residue slices now include:
+
+1. repo-owned current-truth authority normalization,
+2. parent-root mirror routing normalization,
+3. parent-root `.claude` entrypoint hardening,
+4. early workspace planning demotion.
+
+The next highest-leverage closeout targets are now:
+
+1. older packet-history and legacy planning surfaces that still preserve pre-cutover operator wording without equivalent current-routing context,
+2. any remaining mirror or inventory surfaces whose top-of-file status still presents cutover work as an active launch plan instead of closeout state,
+3. continued host-parity validation against `/home/olares/code/apex/apex-power-ops-platform`, especially when Control-Hub must substitute for direct mesh SSH.
 
 ## Recommended Order
 
-1. author a bounded host-native publication workflow packet,
-2. update the operator runbook and start-here surfaces so the default operational flow starts from Olares-hosted execution,
-3. reconcile the highest-traffic lane READMEs to remove Windows-first command guidance,
-4. only after those are stable, reassess whether the current parent-root publication boundary can be narrowed or retired without governance loss.
+1. keep the operator contract repo-root first,
+2. treat parent-root workflow and ignore files as historical or umbrella-only surfaces,
+3. verify focused runtime and git-helper checks from the standalone repo root,
+4. continue lane-by-lane doc hygiene without reopening the publication boundary question.
 
 ## Explicit Non-Goals
 
@@ -97,6 +123,6 @@ This inventory does not authorize:
 
 ## Current Recommendation
 
-The next truthful Olares packet should target the host-native operator publication workflow.
+The publication-boundary cutover itself is now materially complete.
 
-That is the smallest concrete migration dependency with both governance value and day-to-day operator leverage.
+The remaining truthful work is closeout: preserve the historical packet record, keep marking pre-cutover operator wording as historical when needed, prevent stale docs from reviving parent-root assumptions, and keep Olares-hosted validation aligned to the standalone canonical repo root.
