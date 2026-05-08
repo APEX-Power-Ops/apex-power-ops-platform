@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-05-06-olares-dev-residency-081",
-  "title": "PM Cockpit Durable Frontier Wording Execution",
+  "title": "Historical PM Cockpit Durable Frontier Wording Execution",
+  "historical_note": "This record preserves one earlier Dev Residency execution slice from before the canonical repo boundary moved to C:/APEX Platform/apex-power-ops-platform on 2026-05-07. It is historical provenance, not a live PM-cockpit wording-hardening surface for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this record only when historical provenance is needed for the earlier Dev Residency 081 PM-cockpit wording-hardening slice preserved here"
+  ],
   "objective": "Eliminate repeat cockpit drift by replacing packet-number brittle wording in the compact Olares lane register with durable frontier language.",
   "domain": "infrastructure-domain",
   "active_role": "Platform Architect",
