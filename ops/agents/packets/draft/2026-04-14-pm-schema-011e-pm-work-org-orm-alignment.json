@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-04-14-pm-schema-011e",
-  "title": "PM Work Org ORM Alignment",
+  "title": "Historical PM Work Org ORM Alignment",
+  "historical_note": "This packet records one bounded PM org ORM-alignment slice from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live execution instruction for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this packet JSON only when historical provenance is needed for the earlier `pm-schema-011e` PM org ORM-alignment slice"
+  ],
   "objective": "Align the PM/work SQLAlchemy and read-schema layer to the six now-active org foreign keys by adding minimal org models, relationship declarations, and bounded regression coverage without changing database schema or opening write-side runtime implementation.",
   "domain": "pm-domain",
   "active_role": "PM Org ORM Alignment Author",

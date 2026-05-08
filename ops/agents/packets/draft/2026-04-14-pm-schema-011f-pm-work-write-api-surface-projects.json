@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-04-14-pm-schema-011f",
-  "title": "PM Work Write API Surface Projects",
+  "title": "Historical PM Work Write API Surface Projects",
+  "historical_note": "This packet records one bounded PM project write-API slice from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live execution instruction for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this packet JSON only when historical provenance is needed for the earlier `pm-schema-011f` PM project write-API slice"
+  ],
   "objective": "Implement the first bounded PM/work write-side runtime surface for work.projects by authoring project create/update schemas, POST and PATCH endpoints, org-backed validation, and focused regression coverage without changing database schema or opening work-package write APIs.",
   "domain": "pm-domain",
   "active_role": "PM Project Write API Author",
