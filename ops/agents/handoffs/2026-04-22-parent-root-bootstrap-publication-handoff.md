@@ -1,9 +1,17 @@
-# Parent-Root Bootstrap Publication Handoff
+# Historical Parent-Root Bootstrap Publication Handoff
 ## Date: 2026-04-22
 ## Updated by: GitHub Copilot (GPT-5.4)
 ## Scope: Historical record of the completed first parent-root publication tranche for `C:/APEX Platform/apex-power-ops-platform`
 
 ## 1. Summary
+
+Historical note: this handoff records one bounded parent-root publication record from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live operator instruction surface for current repo operations.
+
+Current routing:
+
+1. use `PROJECT_STATUS.md` for the current residue-retirement lane and latest completed packets,
+2. use `docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md` for the remaining post-cutover boundary closeout queue,
+3. use this handoff only when historical provenance is needed for the earlier parent-root publication or checkpoint record preserved here.
 
 The first parent-root publication tranche for `C:/APEX Platform/apex-power-ops-platform` is complete.
 
@@ -33,14 +41,18 @@ Historical packet contents:
 9. `C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/README.md`
 10. `C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-22-parent-root-bootstrap-publication-handoff.md`
 
-## 3. Current Publication Posture
+## 3. Historical Publication Posture Before Canonical Cutover
 
-Use this posture from the parent root at `C:/APEX Platform`:
+Before the canonical repo-root cutover on 2026-05-07, this was the working posture from the parent root at `C:/APEX Platform`:
 
 1. work from the platform subtree, but treat the parent root as the authoritative git boundary
 2. use routine `git status`, `git diff`, and bounded `git add -- <paths>` against tracked `HEAD` for already-introduced paths
 3. keep whole-subtree staging reserved for explicit broad publication events or cutover work, and treat wider subtree introduction as deliberate bounded follow-on publication
 4. use the bootstrap-packet helper tasks only for historical packet review or when that exact bounded tranche is intentionally being retraced
+
+Current operator note:
+
+Use `C:/APEX Platform/apex-power-ops-platform` and `/home/olares/code/apex/apex-power-ops-platform` as the live repo roots for current git status, staging, diff, validation, and publication work. This section is retained only so the first parent-root bootstrap event can be reconstructed historically.
 
 ## 4. Historical Staging Sequence
 
@@ -74,7 +86,7 @@ Before the historical first-publication commit, the smallest relevant validation
 
 This packet did not require runtime deploy proof, browser smoke, or hosted route reruns because it was a publication-boundary bootstrap packet, not a runtime behavior packet.
 
-## 6. Ongoing Do Not Do
+## 6. Historical Do Not Do For The Bootstrap Event
 
 1. do not use `git add .` or repo-root-wide staging from `C:/APEX Platform`
 2. do not use `git add -- apex-power-ops-platform/` unless the decision has shifted from bounded publication to explicit broad cutover
@@ -97,7 +109,7 @@ Closure basis:
 When this historical tranche needs to be retraced, use authority in this order:
 
 1. `README.md` and `docs/OPERATOR-BOOTSTRAP-RUNBOOK.md` for the current operator git-boundary instructions
-2. `docs/architecture/WORKSPACE-CURRENT-STATUS-2026-04-21.md` and `docs/architecture/WORKSPACE-LANE-NORMALIZATION-CHECKLIST-2026-04-22.md` for the current publication-boundary framing
+2. the current repo-root cutover and operator-boundary docs for current publication framing
 3. this handoff only as the historical record of the completed first-introduction packet
 
 This handoff no longer authorizes or blocks current publication work. It is retained so future operators can distinguish the completed first-introduction tranche from routine bounded staging on already-tracked `clean-main` paths and from any later wider subtree introduction work.

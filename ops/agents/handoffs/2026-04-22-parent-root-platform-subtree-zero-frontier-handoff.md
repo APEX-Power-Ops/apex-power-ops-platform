@@ -7,6 +7,12 @@
 
 Historical note: this handoff records the parent-root subtree publication state before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains evidence of the earlier subtree cleanup frontier, not a live instruction surface for current repo operations.
 
+Current routing:
+
+1. use `PROJECT_STATUS.md` for the current residue-retirement lane and latest completed packets,
+2. use `docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md` for the remaining post-cutover boundary closeout queue,
+3. use this handoff only when historical provenance is needed for the earlier parent-root publication or checkpoint record preserved here.
+
 The `apex-power-ops-platform` subtree was fully published at the parent git root through the last residual archive-only formula pair.
 
 There were no remaining untracked paths under `apex-power-ops-platform`, so this handoff closed the earlier subtree cleanup frontier: no further cleanup publication was queued at that point, and any future continuation from this subtree had to be newly-authored work rather than residual adoption.

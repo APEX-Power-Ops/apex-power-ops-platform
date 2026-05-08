@@ -1,9 +1,17 @@
-# Parent-Root Ops Legacy-Governance Publication Handoff
+# Historical Parent-Root Ops Legacy-Governance Publication Handoff
 ## Date: 2026-04-22
 ## Updated by: GitHub Copilot (GPT-5.4)
 ## Scope: Historical record for the bounded `ops/agents/legacy-governance` lane under `C:/APEX Platform/apex-power-ops-platform`
 
 ## 1. Summary
+
+Historical note: this handoff records one bounded parent-root publication record from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live operator instruction surface for current repo operations.
+
+Current routing:
+
+1. use `PROJECT_STATUS.md` for the current residue-retirement lane and latest completed packets,
+2. use `docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md` for the remaining post-cutover boundary closeout queue,
+3. use this handoff only when historical provenance is needed for the earlier parent-root publication or checkpoint record preserved here.
 
 The active shared packages, active app lanes, residual scaffold/doc surfaces, infra-database lane, docs lane, and ops knowledge-control-plane registry lane are now published on parent-root `clean-main`.
 
