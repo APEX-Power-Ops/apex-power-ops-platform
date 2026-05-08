@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-05-03-olares-phase-5-002",
-  "title": "Access Recovery And Runtime Inventory",
+  "title": "Historical Access Recovery And Runtime Inventory",
+  "historical_note": "This packet records one bounded Olares Phase 5 access-recovery and runtime-inventory slice from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live execution instruction for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this packet JSON only when historical provenance is needed for the earlier `olares-phase-5-002` access-recovery and runtime-inventory slice"
+  ],
   "objective": "Recover the documented workstation-to-Olares private-mesh path using the proven TermiPass named-pipe and Headscale registration recipe, and on success immediately capture the read-only host runtime inventory that Packet 001 was authorized but unable to collect.",
   "domain": "infrastructure-domain",
   "active_role": "Olares Access Recovery Operator",
