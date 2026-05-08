@@ -278,7 +278,9 @@ Packet `2026-05-08-olares-dev-residency-204` now closes the adjacent 2026-04-15 
 
 Packet `2026-05-08-olares-dev-residency-205` now closes the adjacent 2026-04-15 PM UI cross-surface validation packet JSON singleton by hard-demoting `pm-schema-ui-001d` into explicit historical provenance with current-routing context, so that file no longer reads like a live cross-surface validation execution packet after standalone cutover.
 
-The next truthful repo-structure work is therefore a fresh reassessment of any smaller adjacent packet-history surfaces that still read as current after the `pm-schema-ui-001d` singleton closure.
+Packet `2026-05-08-olares-dev-residency-206` now closes the adjacent 2026-04-15 PM UI Supabase persistence packet JSON singleton by hard-demoting `pm-schema-ui-001e` into explicit historical provenance with current-routing context, so that file no longer reads like a live persistence-migration execution packet after standalone cutover.
+
+The next truthful repo-structure work is therefore a fresh reassessment of any smaller adjacent packet-history surfaces that still read as current after the `pm-schema-ui-001e` singleton closure.
 
 ## 2026 Addendum: Olares Runtime And Private Lane
 
