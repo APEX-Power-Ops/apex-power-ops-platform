@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-04-15-pm-schema-ui-001b",
-  "title": "PM Schema V2 UI Lead Operations Surface And Extended Seam Wiring",
+  "title": "Historical PM Schema V2 UI Lead Operations Surface And Extended Seam Wiring",
+  "historical_note": "This packet records one bounded PM UI lead-operations implementation slice from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live execution instruction for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this packet JSON only when historical provenance is needed for the earlier `pm-schema-ui-001b` lead-operations implementation slice"
+  ],
   "objective": "Implement the bounded lead operations surface against the already working mutation seam and field prototype, proving lead-scope Class B and Class C actions, field-to-lead state visibility, lead-over-tech authority, and review-submission flow preparation without implementing the PM approval queue, Gantt surface, PM schema redesign, or direct client writes for controlled operational state.",
   "domain": "pm-ui-domain",
   "active_role": "PM UI Lead Surface Implementation Architect",
