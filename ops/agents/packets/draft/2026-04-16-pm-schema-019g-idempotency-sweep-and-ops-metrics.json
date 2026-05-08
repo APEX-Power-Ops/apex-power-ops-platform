@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-04-16-pm-schema-019g",
-  "title": "PM Idempotency Sweep and Ops Metrics",
+  "title": "Historical PM Idempotency Sweep and Ops Metrics",
+  "historical_note": "This packet records one bounded PM idempotency sweep and ops-metrics slice from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live execution instruction for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this packet JSON only when historical provenance is needed for the earlier `pm-schema-019g` PM idempotency sweep and ops-metrics slice"
+  ],
   "objective": "Implement the smallest bounded follow-on to packet 019f by adding one scheduled or on-demand sweep runner for expired rows in `pm.idempotency_keys` plus one minimal operator-facing PM idempotency stats surface returning `{count, oldest_expires_at, backend_kind}`, while preserving the packet-019 and packet-019f request contract for the existing seven PM POST handlers, keeping the work schema registry at 22, keeping `/api/v1/work/*` path count at 15, and avoiding any broader PM mutation expansion or `work.wbs_nodes` writes.",
   "domain": "pm-domain",
   "active_role": "PM Idempotency Sweep and Ops Metrics Author",

@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-04-16-pm-schema-019f",
-  "title": "PM Durable DB-Backed Idempotency Store",
+  "title": "Historical PM Durable DB-Backed Idempotency Store",
+  "historical_note": "This packet records one bounded PM durable idempotency-store slice from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live execution instruction for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this packet JSON only when historical provenance is needed for the earlier `pm-schema-019f` PM durable idempotency-store slice"
+  ],
   "objective": "Implement the smallest bounded follow-on to packet 019 by replacing the process-local PM POST idempotency cache with a durable database-backed store for the existing seven PM POST handlers so replay and mismatch semantics survive process restarts and coordinate across multi-instance deployments, while preserving the current `Idempotency-Key` header contract, keeping the work schema registry at 22, keeping `/api/v1/work/*` path count at 15, and avoiding any broader PM mutation expansion or `work.wbs_nodes` writes.",
   "domain": "pm-domain",
   "active_role": "PM Durable Idempotency Store Author",

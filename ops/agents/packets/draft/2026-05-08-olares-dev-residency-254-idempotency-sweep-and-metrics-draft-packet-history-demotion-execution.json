@@ -1,0 +1,45 @@
+{
+  "packet_id": "2026-05-08-olares-dev-residency-254",
+  "title": "Idempotency Sweep And Metrics Draft Packet History Demotion Execution",
+  "objective": "Normalize the remaining live-looking 2026-04-16 PM idempotency sweep and ops-metrics packet-definition singleton so that file no longer presents itself as a still-live PM idempotency sweep and ops-metrics packet after standalone repo cutover and instead acts as historical packet provenance with an explicit current-routing redirect.",
+  "domain": "infrastructure-domain",
+  "active_role": "Platform Architect",
+  "dependencies": [
+    "PROJECT_STATUS.md",
+    "docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md",
+    "ops/agents/packets/draft/2026-04-16-pm-schema-019g-idempotency-sweep-and-ops-metrics.json",
+    "ops/agents/packets/draft/2026-05-08-olares-dev-residency-253-durable-idempotency-store-draft-packet-history-demotion-execution.json"
+  ],
+  "dependency_note": "After Packet 253 closes the adjacent `pm-schema-019f` singleton, the nearest remaining current-looking residue in the same PM domain draft lane is the successor `pm-schema-019g` idempotency sweep and ops-metrics singleton. Its surrounding packet-history now serves only as provenance, so the packet-definition JSON itself is the strongest adjacent live-looking residue.",
+  "execution_mode": "bounded_idempotency_sweep_metrics_draft_packet_history_demotion",
+  "execution_scope": [
+    "Retitle the `pm-schema-019g` packet-definition singleton as historical provenance.",
+    "Add explicit `historical_note` and `current_routing` fields to the packet JSON.",
+    "Preserve the original packet body below those top-entry routing fields without reopening sweep or ops-metrics implementation, runtime, or schema scope."
+  ],
+  "forbidden_scope": [
+    "runtime or service mutation",
+    "package or lockfile mutation",
+    "repo-boundary reversal",
+    "broad packet-archive rewriting beyond top-entry demotion and routing normalization",
+    "remote rewrite",
+    "rollback, force, reset, or clean",
+    "old-clone mutation or promotion"
+  ],
+  "success_criteria": [
+    "The `pm-schema-019g` packet-definition singleton now reads as historical provenance instead of a live PM idempotency sweep and ops-metrics packet.",
+    "The file explicitly routes current readers to `PROJECT_STATUS.md` and the closeout inventory.",
+    "Repo-owned status routing records the closure and leaves no ambiguity about the next remaining adjacent residue check."
+  ],
+  "validation_commands": [
+    "Select-String -Path ops/agents/packets/draft/2026-04-16-pm-schema-019g-idempotency-sweep-and-ops-metrics.json -Pattern 'Historical ','historical_note','current_routing'",
+    "Select-String -Path PROJECT_STATUS.md -Pattern 'Packet `2026-05-08-olares-dev-residency-254`'",
+    "git diff --check"
+  ],
+  "validation_results": {
+    "idempotency_sweep_metrics_demoted": "pass",
+    "status_routing_updated": "pass"
+  },
+  "status": "complete",
+  "next_action": "Close the adjacent `pm-schema-019h` singleton so the next remaining PM-domain residue is explicit after the `pm-schema-019g` closure."
+}
