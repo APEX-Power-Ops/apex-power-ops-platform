@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-05-06-olares-dev-residency-075",
-  "title": "Packet 073 And Packet 074 Authority Publication And Host Mirror Resync Gate",
+  "title": "Historical Packet 073 And Packet 074 Authority Publication And Host Mirror Resync Gate",
+  "historical_note": "This record preserves one bounded 2026-05-06 Olares Dev Residency roadmap and PM-cockpit publication gate from before the canonical repo boundary moved to C:/APEX Platform/apex-power-ops-platform on 2026-05-07. It is historical provenance, not a live publication instruction surface for current repo operations.",
+  "current_routing": [
+    "Use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets.",
+    "Use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue.",
+    "Use this record only when historical provenance is needed for the Packet 073 and Packet 074 roadmap-trigger publication gate."
+  ],
   "objective": "Publish the Packet 073 and Packet 074 roadmap-trigger realignment authority through the parent-root boundary and restore `/home/olares/code/apex` to clean parity so the refreshed roadmap truth is durable on the authoritative host mirror.",
   "domain": "infrastructure-domain",
   "active_role": "Platform Architect",

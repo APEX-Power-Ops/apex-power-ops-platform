@@ -230,7 +230,9 @@ Packet `2026-05-08-olares-dev-residency-180` now converts the next remaining ear
 
 Packet `2026-05-08-olares-dev-residency-181` now closes the remaining earlier 2026-05-06 Olares Dev Residency host-workflow and workspace-authority publication-gate family by hard-demoting those records into explicit historical provenance with current-routing context, so they no longer read like live parent-root publication guidance for the standalone repo boundary.
 
-The next truthful repo-structure work is therefore Packet `182`, continuing the earlier 2026-05-06 publication-gate and packet-history lane in the remaining roadmap and PM-cockpit gate family that still lacks equivalent current-routing context.
+Packet `2026-05-08-olares-dev-residency-182` now closes the remaining earlier 2026-05-06 Olares Dev Residency roadmap and PM-cockpit publication-gate family by hard-demoting those records into explicit historical provenance with current-routing context, so they no longer read like live parent-root publication guidance for the standalone repo boundary.
+
+The next truthful repo-structure work is therefore a fresh reassessment of any remaining earlier 2026-05-06 or adjacent packet-history surfaces for smaller current-looking historical records that still lack equivalent current-routing context, because the boundary-doc, host-workflow, workspace-authority, roadmap, and PM-cockpit gate families are now all closed as separate residue slices.
 
 ## 2026 Addendum: Olares Runtime And Private Lane
 
