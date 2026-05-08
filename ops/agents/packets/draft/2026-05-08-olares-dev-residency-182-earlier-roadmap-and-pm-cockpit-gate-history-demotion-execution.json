@@ -1,0 +1,51 @@
+{
+  "packet_id": "2026-05-08-olares-dev-residency-182",
+  "title": "Earlier Roadmap And PM-Cockpit Gate History Demotion Execution",
+  "objective": "Hard-demote the remaining earlier 2026-05-06 Olares Dev Residency roadmap and PM-cockpit publication gates so those records no longer read like live parent-root publication guidance for the standalone repo boundary.",
+  "domain": "infrastructure-domain",
+  "active_role": "Platform Architect",
+  "dependencies": [
+    "PROJECT_STATUS.md",
+    "docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md",
+    "ops/agents/handoffs/README.md",
+    "ops/agents/handoffs/2026-05-08-olares-dev-residency-180-earlier-2026-05-06-publication-gate-residue-follow-on-task-split-authoring-handoff.md",
+    "ops/agents/packets/draft/2026-05-06-olares-dev-residency-075-packet-073-and-packet-074-authority-publication-and-host-mirror-resync-gate.json",
+    "ops/agents/handoffs/2026-05-06-olares-dev-residency-075-packet-073-and-packet-074-authority-publication-and-host-mirror-resync-gate-handoff.md",
+    "ops/agents/packets/draft/2026-05-06-olares-dev-residency-078-packet-076-and-packet-077-authority-publication-and-host-mirror-resync-gate.json",
+    "ops/agents/handoffs/2026-05-06-olares-dev-residency-078-packet-076-and-packet-077-authority-publication-and-host-mirror-resync-gate-handoff.md",
+    "ops/agents/packets/draft/2026-05-06-olares-dev-residency-080-packet-079-authority-publication-and-host-mirror-resync-gate.json",
+    "ops/agents/handoffs/2026-05-06-olares-dev-residency-080-packet-079-authority-publication-and-host-mirror-resync-gate-handoff.md",
+    "ops/agents/packets/draft/2026-05-06-olares-dev-residency-082-packet-081-authority-publication-and-host-mirror-resync-gate.json",
+    "ops/agents/handoffs/2026-05-06-olares-dev-residency-082-packet-081-authority-publication-and-host-mirror-resync-gate-handoff.md"
+  ],
+  "dependency_note": "After Packet 180, the other remaining earlier 2026-05-06 gate branch is the roadmap and PM-cockpit family: the roadmap-trigger realignment gate, the PM-cockpit publication gate, and the later cockpit state-sync and wording-hardening gates. Those records preserve already-closed branch evidence, but their titles and top sections still read like live parent-root publication and host-resync guidance instead of historical provenance.",
+  "execution_mode": "bounded_earlier_roadmap_and_pm_cockpit_gate_history_demotion",
+  "execution_scope": [
+    "Retitle the four targeted Olares Dev Residency gate handoffs as historical roadmap/PM-cockpit publication records and add explicit current-routing blocks.",
+    "Retitle the four targeted Olares Dev Residency gate packet JSON titles as historical records and add explicit historical-note and current-routing fields.",
+    "Preserve the detailed publication, host-resync, and old-clone observation evidence as provenance rather than rewriting the historical bridge records wholesale."
+  ],
+  "forbidden_scope": [
+    "runtime or service mutation",
+    "package or lockfile mutation",
+    "repo-boundary reversal",
+    "broad 2026-05-06 archive rewriting beyond top-entry demotion and routing context",
+    "remote rewrite",
+    "rollback, force, reset, or clean",
+    "old-clone mutation or promotion",
+    "host-workflow or workspace-authority gate normalization in the same packet"
+  ],
+  "success_criteria": [
+    "Each targeted roadmap/PM-cockpit handoff now leads as a historical gate record instead of live parent-root publication guidance.",
+    "Each targeted packet JSON now carries explicit historical-note and current-routing context instead of reading like a still-live gate definition.",
+    "Repo-owned status routing records the family closure and leaves any remaining non-cockpit residue for fresh reassessment afterward."
+  ],
+  "validation_commands": [
+    "Select-String -Path ops/agents/handoffs/2026-05-06-olares-dev-residency-075-packet-073-and-packet-074-authority-publication-and-host-mirror-resync-gate-handoff.md,ops/agents/handoffs/2026-05-06-olares-dev-residency-078-packet-076-and-packet-077-authority-publication-and-host-mirror-resync-gate-handoff.md,ops/agents/handoffs/2026-05-06-olares-dev-residency-080-packet-079-authority-publication-and-host-mirror-resync-gate-handoff.md,ops/agents/handoffs/2026-05-06-olares-dev-residency-082-packet-081-authority-publication-and-host-mirror-resync-gate-handoff.md -Pattern '^# Historical Olares Dev Residency','^Current routing:'",
+    "Select-String -Path ops/agents/packets/draft/2026-05-06-olares-dev-residency-075-packet-073-and-packet-074-authority-publication-and-host-mirror-resync-gate.json,ops/agents/packets/draft/2026-05-06-olares-dev-residency-078-packet-076-and-packet-077-authority-publication-and-host-mirror-resync-gate.json,ops/agents/packets/draft/2026-05-06-olares-dev-residency-080-packet-079-authority-publication-and-host-mirror-resync-gate.json,ops/agents/packets/draft/2026-05-06-olares-dev-residency-082-packet-081-authority-publication-and-host-mirror-resync-gate.json -Pattern '\"title\": \"Historical ','\"historical_note\":','\"current_routing\":'",
+    "Select-String -Path PROJECT_STATUS.md -Pattern 'Packet `2026-05-08-olares-dev-residency-182`'",
+    "git diff --check"
+  ],
+  "status": "ready",
+  "next_action": "Execute this packet as the earlier roadmap/PM-cockpit gate demotion slice after Packet 181 or when it becomes the next truthful adjacent lane."
+}
