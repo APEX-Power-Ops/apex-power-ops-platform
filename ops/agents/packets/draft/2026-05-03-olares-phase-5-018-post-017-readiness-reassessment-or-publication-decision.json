@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-05-03-olares-phase-5-018",
-  "title": "Post-017 Readiness Reassessment Or Publication Decision",
+  "title": "Historical Post-017 Readiness Reassessment Or Publication Decision",
+  "historical_note": "This packet records one bounded Olares Phase 5 post-017 readiness-reassessment or publication-decision slice from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live execution instruction for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this packet JSON only when historical provenance is needed for the earlier `olares-phase-5-018` post-017 readiness-reassessment or publication-decision slice"
+  ],
   "objective": "Determine whether the two successful bounded host-side documentation/planning trials now support a later readiness reassessment packet, or whether the Packet 017 host-created handoff should first be published through a bounded parent-root publication and host-mirror resync gate, without approving migration or mutating runtime surfaces.",
   "domain": "infrastructure-domain",
   "active_role": "Olares Post-017 Decision Author",
