@@ -1,0 +1,52 @@
+{
+  "packet_id": "2026-05-08-olares-dev-residency-171",
+  "title": "Codex AI Backbone First-Pass Scaffold Execution",
+  "objective": "Execute the bounded first-pass design and scaffold lane for the admitted Olares AI backbone under the Packet 169 framework pack, producing shell structure and contract surfaces without widening runtime, queue, or hosting boundaries.",
+  "domain": "infrastructure-domain",
+  "active_role": "Platform Architect",
+  "dependencies": [
+    "docs/architecture/OLARES-AI-ORCHESTRATION-DECISION-SURFACE-2026-05-07.md",
+    "docs/authority/OLARES-AI-BACKBONE-FRAMEWORK-2026-05-08.md",
+    "docs/architecture/OLARES-AI-BACKBONE-SCAFFOLD-SPEC-2026-05-08.md",
+    "docs/operations/CODEX-AI-BACKBONE-FIRST-PASS-EXECUTION-BRIEF-2026-05-08.md",
+    "services/mcp/apex-fs/",
+    "services/mcp/apex-db/",
+    "services/mcp/apex-jobs/",
+    "infra/compose.dev.yml",
+    ".env.dev.template",
+    ".claude/CLAUDE.md",
+    ".claude/mcp.json",
+    "infra/olares/charts/forms-engine/",
+    "tests/canary/"
+  ],
+  "dependency_note": "Packet 169 defined the scaffold boundary and Packet 170 converted it into a ready execution lane. The next truthful move for this packet is to shape the admitted backbone shell without pretending that runtime-hardening or broader AI-service rollout is part of the same slice.",
+  "execution_mode": "bounded_codex_first_pass_scaffold_execution",
+  "execution_scope": [
+    "Align or scaffold shell structure for `services/mcp/apex-fs/`, `services/mcp/apex-db/`, and `services/mcp/apex-jobs/` within the admitted trio boundary.",
+    "Normalize or scaffold `infra/compose.dev.yml` and `.env.dev.template` where needed for the admitted backbone shell.",
+    "Align `.claude/CLAUDE.md`, `.claude/mcp.json`, and bounded session-brief surfaces to the same scaffold boundary.",
+    "Scaffold the forms-engine staging-shell chart under `infra/olares/charts/forms-engine/`.",
+    "Add bounded canary or contract-test shell surfaces needed to support later implementation."
+  ],
+  "forbidden_scope": [
+    "new MCP services beyond `apex-fs`, `apex-db`, and `apex-jobs`",
+    "`ai_tasks` promotion to queue owner",
+    "Ollama, Dify, n8n, Open WebUI, or Qdrant admission",
+    "public-ingress or auth-model widening",
+    "Supabase schema mutation",
+    "business-logic rewrites in `apps/`",
+    "host-readiness claims without `env=host` evidence"
+  ],
+  "success_criteria": [
+    "The admitted backbone surfaces have coherent scaffold structure and contract visibility.",
+    "Every new or changed shell surface states ownership, dependencies, deferred work, and expected validation honestly.",
+    "The runtime boundary remains the admitted MCP trio plus `apex-jobs` control plane, with no wider service implication."
+  ],
+  "validation_commands": [
+    "git diff --check",
+    "Select-String -Path docs/authority/OLARES-AI-BACKBONE-FRAMEWORK-2026-05-08.md -Pattern '^## Codex-Allowed First-Pass Surfaces$','^## Explicitly Forbidden In The First Pass$'",
+    "Run the smallest truthful contract or canary checks added by the scaffold slice before widening the edit surface again."
+  ],
+  "status": "ready",
+  "next_action": "Execute the scaffold slice in small edits with immediate focused validation after the first substantive change."
+}

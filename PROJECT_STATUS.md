@@ -206,6 +206,8 @@ Packet `2026-05-08-olares-dev-residency-168` now closes the next adjacent draft-
 
 Parallel to the remaining repo-structure residue-retirement lane, Packet `2026-05-08-olares-dev-residency-169` now authors the bounded Olares AI backbone framework pack that admits Codex only for first-pass design and scaffold authoring, adds an exact scaffold specification, and defines the safe adjacent hardening slice around `apex-jobs`, provenance, MCP boundary rules, and canary evidence.
 
+Packet `2026-05-08-olares-dev-residency-170` now converts that split into two separately executable follow-on packets: Packet `171` for bounded Codex first-pass scaffold execution and Packet `172` for adjacent backbone hardening execution, preserving the rule that scaffold expansion and trust hardening must not be collapsed into one wider runtime change set.
+
 The next truthful repo-structure work is therefore the remaining deeper provenance-routing and residue-retirement work in older individual handoff records and packet-history index surfaces that still preserve pre-cutover operator wording without equivalent current-routing context.
 
 ## 2026 Addendum: Olares Runtime And Private Lane

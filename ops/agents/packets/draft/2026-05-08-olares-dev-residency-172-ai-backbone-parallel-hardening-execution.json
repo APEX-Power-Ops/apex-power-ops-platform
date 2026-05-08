@@ -1,0 +1,44 @@
+{
+  "packet_id": "2026-05-08-olares-dev-residency-172",
+  "title": "AI Backbone Parallel Hardening Execution",
+  "objective": "Execute the adjacent hardening lane around `apex-jobs`, provenance, MCP boundary rules, and canary evidence so the admitted AI backbone becomes more explicit and testable without being merged into the scaffold-execution slice.",
+  "domain": "infrastructure-domain",
+  "active_role": "Platform Architect",
+  "dependencies": [
+    "docs/architecture/OLARES-AI-ORCHESTRATION-DECISION-SURFACE-2026-05-07.md",
+    "docs/authority/OLARES-AI-BACKBONE-FRAMEWORK-2026-05-08.md",
+    "docs/operations/AI-BACKBONE-PARALLEL-HARDENING-BRIEF-2026-05-08.md",
+    "services/mcp/apex-jobs/",
+    "tests/canary/",
+    "tools/ai/",
+    "ops/agents/"
+  ],
+  "dependency_note": "Packet 169 named a safe hardening lane and Packet 170 turned it into a ready execution packet. The next truthful move for this packet is to harden trust and evidence contracts around the admitted backbone, not to refactor scaffold structure or reopen broader orchestration-service decisions.",
+  "execution_mode": "bounded_backbone_hardening_execution",
+  "execution_scope": [
+    "Define the exact `env=sandbox|host` contract and expected semantics around `apex-jobs`.",
+    "Tighten or document the evidence required before promotion or host-readiness claims may succeed.",
+    "Specify provenance metadata rules for AI-generated backbone outputs.",
+    "Clarify MCP boundary rules for roots, mounts, and read-write posture.",
+    "Define or add the canary evidence bundle expected for the backbone lane."
+  ],
+  "forbidden_scope": [
+    "new orchestration services",
+    "queue-owner replacement",
+    "public-ingress or auth-model widening",
+    "business-logic changes outside the trust boundary",
+    "uncoordinated refactors to the same shell-structure files used by Packet 171"
+  ],
+  "success_criteria": [
+    "The hardening rules around `apex-jobs`, provenance, MCP boundaries, and canary evidence are clearer and more testable.",
+    "Any new tests, docs, or scripts stay within the admitted backbone boundary.",
+    "The hardening lane does not silently expand into a scaffold or runtime rollout packet."
+  ],
+  "validation_commands": [
+    "git diff --check",
+    "Select-String -Path docs/operations/AI-BACKBONE-PARALLEL-HARDENING-BRIEF-2026-05-08.md -Pattern '^## Parallel Hardening Objectives$','^## Coordination Rules$'",
+    "Run the smallest truthful trust-boundary or canary checks added by the hardening slice before widening the edit surface again."
+  ],
+  "status": "ready",
+  "next_action": "Execute the hardening slice independently, preferring docs, tests, and bounded validation surfaces before shared implementation edits."
+}

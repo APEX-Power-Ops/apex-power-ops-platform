@@ -1,0 +1,49 @@
+{
+  "packet_id": "2026-05-08-olares-dev-residency-170",
+  "title": "AI Backbone Follow-On Task Split Authoring",
+  "objective": "Convert the Packet 169 backbone framework decision into two separately executable follow-on packets so bounded Codex scaffold execution and adjacent backbone hardening can proceed in parallel without collapsing into one wider runtime change set.",
+  "domain": "infrastructure-domain",
+  "active_role": "Platform Architect",
+  "dependencies": [
+    "docs/authority/OLARES-AI-BACKBONE-FRAMEWORK-2026-05-08.md",
+    "docs/architecture/OLARES-AI-BACKBONE-SCAFFOLD-SPEC-2026-05-08.md",
+    "docs/operations/CODEX-AI-BACKBONE-FIRST-PASS-EXECUTION-BRIEF-2026-05-08.md",
+    "docs/operations/AI-BACKBONE-PARALLEL-HARDENING-BRIEF-2026-05-08.md",
+    "ops/agents/packets/draft/2026-05-08-olares-dev-residency-169-ai-backbone-framework-and-parallel-hardening-authoring.json",
+    "ops/agents/handoffs/2026-05-08-olares-dev-residency-169-ai-backbone-framework-and-parallel-hardening-authoring-handoff.md",
+    "PROJECT_STATUS.md"
+  ],
+  "dependency_note": "Packet 169 closed the framework gap and named two valid follow-ons, but future execution would still be brittle unless the split is turned into concrete, separately runnable packet specs. The smallest truthful next move is to author those packet specs without executing either lane yet.",
+  "execution_mode": "bounded_follow_on_task_authoring",
+  "execution_scope": [
+    "Author a ready packet spec for bounded Codex first-pass scaffold execution.",
+    "Author a ready packet spec for adjacent backbone hardening execution.",
+    "Update repo-owned status routing so the split is explicit and future sessions do not recombine the lanes by accident."
+  ],
+  "forbidden_scope": [
+    "runtime or service mutation",
+    "execution of the Codex scaffold packet itself",
+    "execution of the hardening packet itself",
+    "broader AI-services admission",
+    "queue-controller replacement",
+    "public-ingress or auth-model change"
+  ],
+  "success_criteria": [
+    "The repo has one ready packet spec for bounded Codex scaffold execution.",
+    "The repo has one ready packet spec for adjacent backbone hardening execution.",
+    "Project status routing makes the split explicit and preserves the rule that the lanes stay separate."
+  ],
+  "validation_commands": [
+    "Select-String -Path ops/agents/packets/draft/2026-05-08-olares-dev-residency-171-codex-ai-backbone-first-pass-scaffold-execution.json -Pattern '^  \"packet_id\": \"2026-05-08-olares-dev-residency-171\"$','^  \"status\": \"ready\"$'",
+    "Select-String -Path ops/agents/packets/draft/2026-05-08-olares-dev-residency-172-ai-backbone-parallel-hardening-execution.json -Pattern '^  \"packet_id\": \"2026-05-08-olares-dev-residency-172\"$','^  \"status\": \"ready\"$'",
+    "Select-String -Path PROJECT_STATUS.md -Pattern 'Packet `2026-05-08-olares-dev-residency-170` now converts that split into two separately executable follow-on packets'",
+    "git diff --check -- PROJECT_STATUS.md ops/agents/packets/draft/2026-05-08-olares-dev-residency-170-ai-backbone-follow-on-task-split-authoring.json ops/agents/handoffs/2026-05-08-olares-dev-residency-170-ai-backbone-follow-on-task-split-authoring-handoff.md ops/agents/packets/draft/2026-05-08-olares-dev-residency-171-codex-ai-backbone-first-pass-scaffold-execution.json ops/agents/packets/draft/2026-05-08-olares-dev-residency-172-ai-backbone-parallel-hardening-execution.json"
+  ],
+  "validation_results": {
+    "follow_on_packets_present": "pass",
+    "status_routing_updated": "pass",
+    "diff_hygiene": "pass"
+  },
+  "status": "complete",
+  "next_action": "Execute Packet 171 for bounded Codex scaffold work or Packet 172 for adjacent hardening work as separate slices; if both run, keep them in separate commits and validation loops."
+}
