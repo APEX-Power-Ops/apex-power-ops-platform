@@ -43,10 +43,41 @@
     "The runtime boundary remains the admitted MCP trio plus `apex-jobs` control plane, with no wider service implication."
   ],
   "validation_commands": [
-    "git diff --check",
-    "Select-String -Path docs/authority/OLARES-AI-BACKBONE-FRAMEWORK-2026-05-08.md -Pattern '^## Codex-Allowed First-Pass Surfaces$','^## Explicitly Forbidden In The First Pass$'",
-    "Run the smallest truthful contract or canary checks added by the scaffold slice before widening the edit surface again."
+    "corepack pnpm --filter apex-jobs build",
+    "corepack pnpm --filter apex-fs build",
+    "corepack pnpm --filter apex-db build",
+    "git diff --check"
   ],
-  "status": "ready",
-  "next_action": "Execute the scaffold slice in small edits with immediate focused validation after the first substantive change."
+  "artifacts_created": [
+    "services/mcp/apex-fs/package.json",
+    "services/mcp/apex-fs/tsconfig.json",
+    "services/mcp/apex-fs/README.md",
+    "services/mcp/apex-fs/src/index.ts",
+    "services/mcp/apex-fs/src/http.ts",
+    "services/mcp/apex-db/package.json",
+    "services/mcp/apex-db/tsconfig.json",
+    "services/mcp/apex-db/README.md",
+    "services/mcp/apex-db/src/index.ts",
+    "services/mcp/apex-db/src/http.ts",
+    "services/mcp/apex-jobs/package.json",
+    "services/mcp/apex-jobs/tsconfig.json",
+    "services/mcp/apex-jobs/README.md",
+    "services/mcp/apex-jobs/src/index.ts",
+    "services/mcp/apex-jobs/src/http.ts"
+  ],
+  "artifacts_reused": [
+    "infra/olares/forms-engine/Chart.yaml",
+    "infra/olares/forms-engine/OlaresManifest.yaml",
+    ".claude/CLAUDE.md",
+    ".claude/mcp.json",
+    "infra/compose.dev.yml",
+    ".env.dev.template"
+  ],
+  "execution_result": {
+    "mcp_trio_source_owned_scaffold": "pass",
+    "workspace_build_wiring": "pass",
+    "existing_forms_engine_shell_reused": "pass"
+  },
+  "status": "complete",
+  "next_action": "Open a later bounded follow-on only if compose, env-template, .claude alignment, or staging-shell path normalization needs additional scaffold work beyond the now source-owned admitted trio."
 }

@@ -208,6 +208,8 @@ Parallel to the remaining repo-structure residue-retirement lane, Packet `2026-0
 
 Packet `2026-05-08-olares-dev-residency-170` now converts that split into two separately executable follow-on packets: Packet `171` for bounded Codex first-pass scaffold execution and Packet `172` for adjacent backbone hardening execution, preserving the rule that scaffold expansion and trust hardening must not be collapsed into one wider runtime change set.
 
+Packet `2026-05-08-olares-dev-residency-171` now closes the bounded Codex first-pass scaffold lane by backfilling source-owned scaffold shells for the admitted MCP trio (`apex-fs`, `apex-db`, `apex-jobs`), wiring those services into workspace package metadata and builds, and explicitly reusing the already-present `infra/olares/forms-engine` staging shell instead of inventing a duplicate chart lane.
+
 Packet `2026-05-08-olares-dev-residency-172` now closes the adjacent backbone hardening lane by publishing the explicit `apex-jobs` trust and promotion contract, the minimum backbone canary evidence bundle, and an executable verification upgrade that proves `promote_packet` refuses without successful `env=host` evidence.
 
 The next truthful repo-structure work is therefore the remaining deeper provenance-routing and residue-retirement work in older individual handoff records and packet-history index surfaces that still preserve pre-cutover operator wording without equivalent current-routing context.
