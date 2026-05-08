@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-04-17-pm-schema-020b",
-  "title": "P6 XER Baseline Mapping Authorization",
+  "title": "Historical P6 XER Baseline Mapping Authorization",
+  "historical_note": "This packet records one bounded PM baseline-onramp execution slice from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live execution instruction for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this packet JSON only when historical provenance is needed for the earlier `pm-schema-020b` baseline-onramp execution slice"
+  ],
   "objective": "Author the smallest bounded integration-authority update needed to explicitly map baseline-bearing XER sources such as `BASELINEPROJECT` and `BL_PLAN`, distinguish current-plan versus baseline-plan semantics, and authorize how baseline schedule truth may enter the PM schedule lane without landing any SQL, loader, bridge, or UI changes.",
   "domain": "pm-domain",
   "active_role": "P6 Integration Boundary Architect",

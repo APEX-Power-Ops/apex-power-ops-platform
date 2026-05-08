@@ -1,0 +1,47 @@
+{
+  "packet_id": "2026-05-08-olares-dev-residency-196",
+  "title": "PM Baseline-Onramp Draft Packet History Demotion Execution",
+  "objective": "Normalize the remaining live-looking 2026-04-17 PM baseline-onramp packet-definition JSON trio so those files no longer present themselves as still-live execution packets after standalone repo cutover and instead act as historical packet provenance with explicit current-routing redirects.",
+  "domain": "infrastructure-domain",
+  "active_role": "Platform Architect",
+  "dependencies": [
+    "PROJECT_STATUS.md",
+    "docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md",
+    "ops/agents/packets/draft/2026-04-17-pm-schema-020a-baseline-field-authority-promotion.json",
+    "ops/agents/packets/draft/2026-04-17-pm-schema-020b-xer-baseline-mapping-authorization.json",
+    "ops/agents/packets/draft/2026-04-17-pm-schema-020c-persisted-schedule-baseline-ddl-and-loader-lane.json",
+    "ops/agents/packets/draft/2026-05-08-olares-dev-residency-195-pm-ui-host-browser-validation-draft-packet-history-demotion-execution.json"
+  ],
+  "dependency_note": "After Packet 195 closed the 2026-04-19 PM UI host-browser-validation trio, the remaining adjacent residue in this PM branch is isolated to the 2026-04-17 baseline-onramp packet-definition trio from `pm-schema-020a` through `pm-schema-020c`. The corresponding parent-root handoff lane has already been demoted, so these packet JSONs are now the strongest current-looking residue adjacent to the closed baseline and UI chain.",
+  "execution_mode": "bounded_pm_baseline_onramp_draft_packet_history_demotion",
+  "execution_scope": [
+    "Retitle the PM baseline-onramp packet-definition trio as historical provenance.",
+    "Add explicit `historical_note` and `current_routing` fields to each packet JSON.",
+    "Preserve the original packet bodies below those top-entry routing fields without reopening runtime or implementation scope."
+  ],
+  "forbidden_scope": [
+    "runtime or service mutation",
+    "package or lockfile mutation",
+    "repo-boundary reversal",
+    "broad packet-archive rewriting beyond top-entry demotion and routing normalization",
+    "remote rewrite",
+    "rollback, force, reset, or clean",
+    "old-clone mutation or promotion"
+  ],
+  "success_criteria": [
+    "The PM baseline-onramp packet-definition trio now reads as historical provenance instead of live execution packets.",
+    "Each file explicitly routes current readers to `PROJECT_STATUS.md` and the closeout inventory.",
+    "Repo-owned status routing records the closure and leaves no ambiguity about the next remaining adjacent residue check."
+  ],
+  "validation_commands": [
+    "Select-String -Path ops/agents/packets/draft/2026-04-17-pm-schema-020a-baseline-field-authority-promotion.json,ops/agents/packets/draft/2026-04-17-pm-schema-020b-xer-baseline-mapping-authorization.json,ops/agents/packets/draft/2026-04-17-pm-schema-020c-persisted-schedule-baseline-ddl-and-loader-lane.json -Pattern 'Historical ','historical_note','current_routing'",
+    "Select-String -Path PROJECT_STATUS.md -Pattern 'Packet `2026-05-08-olares-dev-residency-196`'",
+    "git diff --check"
+  ],
+  "validation_results": {
+    "pm_baseline_onramp_family_demoted": "pass",
+    "status_routing_updated": "pass"
+  },
+  "status": "complete",
+  "next_action": "Reassess any smaller adjacent packet-history surfaces that still read as current after the 2026-04-17 PM baseline-onramp trio closure."
+}

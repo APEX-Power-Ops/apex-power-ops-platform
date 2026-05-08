@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-04-17-pm-schema-020c",
-  "title": "Persisted Schedule Baseline DDL And Loader Lane",
+  "title": "Historical Persisted Schedule Baseline DDL And Loader Lane",
+  "historical_note": "This packet records one bounded PM baseline-onramp execution slice from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live execution instruction for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this packet JSON only when historical provenance is needed for the earlier `pm-schema-020c` baseline-onramp execution slice"
+  ],
   "objective": "Implement the smallest bounded persistence follow-on after packets 020a and 020b by landing a persisted `schedule` baseline lane and loader upsert path for authorized baseline truth, without adding bridge routes, Gantt/UI changes, schedule-write behavior, or synthetic baseline fabrication.",
   "domain": "pm-domain",
   "active_role": "PM Schedule Baseline SQL And Loader Author",

@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-04-17-pm-schema-020a",
-  "title": "PM Baseline Field Authority Promotion",
+  "title": "Historical PM Baseline Field Authority Promotion",
+  "historical_note": "This packet records one bounded PM baseline-onramp execution slice from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live execution instruction for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this packet JSON only when historical provenance is needed for the earlier `pm-schema-020a` baseline-onramp execution slice"
+  ],
   "objective": "Author the smallest bounded authority update needed to promote `baseline_start_at` and `baseline_end_at` for Task and WorkPackage from deferred to implementation-ready, define what baseline truth means in the PM domain, and explicitly preserve the prohibition on synthetic client-side baseline fabrication until a persisted baseline lane exists.",
   "domain": "pm-domain",
   "active_role": "Platform Architect",
