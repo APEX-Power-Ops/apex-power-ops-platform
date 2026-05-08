@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-04-15-pm-schema-ui-001c",
-  "title": "PM Schema V2 UI PM Approval Queue And Cross-Surface Review Flow Implementation",
+  "title": "Historical PM Schema V2 UI PM Approval Queue And Cross-Surface Review Flow Implementation",
+  "historical_note": "This packet records one bounded PM UI approval-surface implementation slice from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live execution instruction for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this packet JSON only when historical provenance is needed for the earlier `pm-schema-ui-001c` approval-surface implementation slice"
+  ],
   "objective": "Implement the bounded PM approval surface against the already working mutation seam plus the validated field and lead prototype slices, proving PM-scope Class C review, approval, rejection, and escalation actions together with cross-surface review-result visibility from lead submission through PM disposition, without implementing Gantt surfaces, Class D behavior, billing finalization workflows, PM schema redesign, or direct client writes for controlled operational state.",
   "domain": "pm-ui-domain",
   "active_role": "PM UI Approval Surface Implementation Architect",
