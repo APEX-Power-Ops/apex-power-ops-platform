@@ -80,7 +80,9 @@ Packet `2026-05-08-olares-dev-residency-105` now closes the next adjacent develo
 
 Packet `2026-05-08-olares-dev-residency-106` now closes the next adjacent packet-history routing-ledger demotion slice by reclassifying the old Phase 5 next-task routing handoff as a historical ledger with explicit current-routing redirects instead of a live operator queue.
 
-The next truthful repo-structure work is therefore the remaining deeper provenance-routing and residue-retirement work in older packet-history registers and legacy routing surfaces that still preserve pre-cutover operator wording without equivalent current-routing context.
+Packet `2026-05-08-olares-dev-residency-107` now closes the next adjacent handoff-register demotion slice by reclassifying `ops/agents/handoffs/README.md` as a historical register with explicit current-routing redirects instead of a current operator entrypoint.
+
+The next truthful repo-structure work is therefore the remaining deeper provenance-routing and residue-retirement work in older individual handoff records and packet-history index surfaces that still preserve pre-cutover operator wording without equivalent current-routing context.
 
 ## 2026 Addendum: Olares Runtime And Private Lane
 

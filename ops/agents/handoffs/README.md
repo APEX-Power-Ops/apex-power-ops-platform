@@ -1,14 +1,25 @@
-# Handoff Register
+# Historical Handoff Register
 
-This directory is the operator-facing packet archive for bounded execution, blocker packets, and delegable next-step records.
+Status: Historical operator-facing handoff register with post-cutover interpretation
+Scope: preserve parent-root and early repo-era handoff publication records as provenance, not as the current operator routing surface for the standalone repo boundary
 
-## Current Hosted Route Promotion Status
+Post-cutover interpretation note:
 
-As of 2026-04-22, the hosted control-plane route-promotion blocker on `https://control.apexpowerops.com` is closed for the packet `001af` scope.
+This register preserves historical handoff publication state assembled before the canonical repo boundary moved on 2026-05-07. References below to current hosted-route status, current closure, parent-root checkpoints, or `C:/APEX Platform` as a publication boundary are historical records, not the current operator contract. For current git-root and publication behavior, use `C:/APEX Platform/apex-power-ops-platform` and `/home/olares/code/apex/apex-power-ops-platform`.
 
-Packet `2026-04-21-apex-unification-001af` is now the completed execution record for that hosted frontier.
+Current routing:
 
-Use these files first:
+1. use `PROJECT_STATUS.md` for the current residue-retirement lane and latest completed packets,
+2. use `docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md` for the remaining post-cutover boundary closeout queue,
+3. use this register only when historical handoff lookup or provenance context is specifically needed.
+
+## Historical Hosted Route Promotion Status
+
+As of 2026-04-22, the hosted control-plane route-promotion blocker on `https://control.apexpowerops.com` was closed for the packet `001af` scope.
+
+Packet `2026-04-21-apex-unification-001af` is the completed execution record for that hosted frontier.
+
+Use these files for historical lookup:
 
 1. `../../../../apps/control-plane-api/PUBLIC-APPARATUS-ROUTE-PROMOTION-CHECKLIST-2026-04-21.md`
 1. `2026-04-22-parent-root-clean-main-zero-frontier-handoff.md` for the current fully closed parent-root zero-frontier publication checkpoint
@@ -104,7 +115,7 @@ Hosted proof captured for closure:
 3. GitHub Actions run `24781243756` succeeded for the deployed control-plane smoke workflow
 4. the repo-owned smoke script returned `RESULT PASS` against `https://control.apexpowerops.com`
 
-## Operator Use
+## Historical Operator Use
 
 Use the promotion checklist when you need the smallest repo-owned rerun path after a future regression or deploy change:
 
@@ -112,12 +123,12 @@ Use the promotion checklist when you need the smallest repo-owned rerun path aft
 2. rerun the hosted smoke workflow if a later deploy changes the serving slice
 3. use the repository-dispatch path only if future deploy automation requires it again
 
-Current workspace constraint:
+Historical workspace constraint:
 
 1. the dispatch dry-run path is available from this repo workspace
 2. the live dispatch token is still not required for the now-closed packet `001af` outcome because hosted cutover was completed directly
 
-## Current Closure Result
+## Historical Closure Result
 
 The packet `001af` closure conditions are now satisfied for hosted route promotion:
 
@@ -126,7 +137,7 @@ The packet `001af` closure conditions are now satisfied for hosted route promoti
 
 Any later promoted-host browser proof is now a separate follow-on activity, not an open blocker for this route-promotion execution packet.
 
-## Optional Follow-Through
+## Historical Follow-Through
 
 These are maintenance items only. They do not reopen packet `001af`:
 
