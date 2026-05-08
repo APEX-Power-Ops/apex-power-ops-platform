@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-04-14-pm-schema-012i",
-  "title": "PM Work Org-Joined Read Surface Integration Smoke",
+  "title": "Historical PM Work Org-Joined Read Surface Integration Smoke",
+  "historical_note": "This packet records one bounded PM org-joined read-surface integration-smoke slice from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live execution instruction for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this packet JSON only when historical provenance is needed for the earlier `pm-schema-012i` PM org-joined read-surface integration-smoke slice"
+  ],
   "objective": "Prove the six org-backed read-name and read-title fields materialize correctly against a real PostgreSQL-backed runtime path by exercising the existing project and work-package GET handlers end to end with seeded org and work rows, without adding endpoints, changing schemas, or authoring new SQL.",
   "domain": "pm-domain",
   "active_role": "PM Org-Joined Read Surface Integration Smoke Author",
