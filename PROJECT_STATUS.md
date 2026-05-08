@@ -266,7 +266,9 @@ Packet `2026-05-08-olares-dev-residency-198` now closes the adjacent 2026-04-15 
 
 Packet `2026-05-08-olares-dev-residency-199` now closes the adjacent 2026-04-15 PM UI schedule-context bridge packet JSON singleton by hard-demoting `pm-schema-ui-002a` into explicit historical provenance with current-routing context, so that file no longer reads like a live import-bridge execution packet after standalone cutover.
 
-The next truthful repo-structure work is therefore a fresh reassessment of any smaller adjacent packet-history surfaces that still read as current after the `pm-schema-ui-002a` singleton closure.
+Packet `2026-05-08-olares-dev-residency-200` now closes the adjacent 2026-04-15 PM UI Gantt-layer comparison packet JSON singleton by hard-demoting `pm-schema-ui-002` into explicit historical provenance with current-routing context, so that file no longer reads like a live planning-decision execution packet after standalone cutover.
+
+The next truthful repo-structure work is therefore a fresh reassessment of any smaller adjacent packet-history surfaces that still read as current after the `pm-schema-ui-002` singleton closure.
 
 ## 2026 Addendum: Olares Runtime And Private Lane
 

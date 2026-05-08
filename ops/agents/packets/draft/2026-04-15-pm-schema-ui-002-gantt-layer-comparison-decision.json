@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-04-15-pm-schema-ui-002",
-  "title": "PM Schema V2 UI Gantt Layer Comparison Decision",
+  "title": "Historical PM Schema V2 UI Gantt Layer Comparison Decision",
+  "historical_note": "This packet records one bounded PM UI Gantt-layer comparison decision slice from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live execution instruction for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this packet JSON only when historical provenance is needed for the earlier `pm-schema-ui-002` Gantt-layer comparison decision slice"
+  ],
   "objective": "Compare the deferred Gantt candidates against real PM dependency requirements and recommend the smallest viable PM schedule visualization direction without implementing runtime code, ratifying the full frontend stack, reopening PM schema design, or bypassing the governed mutation and P6 boundary rules.",
   "domain": "pm-ui-domain",
   "active_role": "PM UI Gantt Layer Evaluation Architect",
