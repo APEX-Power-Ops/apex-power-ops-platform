@@ -78,7 +78,9 @@ Packet `2026-05-08-olares-dev-residency-104` now closes the next adjacent cutove
 
 Packet `2026-05-08-olares-dev-residency-105` now closes the next adjacent developer-host cutover planning-stack normalization slice by updating the milestone plan, technical plan, and Milestone 1 acceptance checklist so they read as executed cutover baselines rather than active launch surfaces and no longer preserve the retired parent-root publication boundary as current technical truth.
 
-The next truthful repo-structure work is therefore the remaining deeper provenance-routing and residue-retirement work in older packet-history and legacy routing surfaces that still preserve pre-cutover operator wording without equivalent current-routing context.
+Packet `2026-05-08-olares-dev-residency-106` now closes the next adjacent packet-history routing-ledger demotion slice by reclassifying the old Phase 5 next-task routing handoff as a historical ledger with explicit current-routing redirects instead of a live operator queue.
+
+The next truthful repo-structure work is therefore the remaining deeper provenance-routing and residue-retirement work in older packet-history registers and legacy routing surfaces that still preserve pre-cutover operator wording without equivalent current-routing context.
 
 ## 2026 Addendum: Olares Runtime And Private Lane
 

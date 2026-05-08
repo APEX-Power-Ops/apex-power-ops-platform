@@ -1,8 +1,18 @@
-# Olares Phase 5 Next Task And Prompt Routing Handoff
+# Historical Olares Phase 5 Next Task And Prompt Routing Handoff
 
 Date: 2026-05-03
-Status: Active - Packet 067 is complete, Packet 064 remains published, the deferred Operations Visibility hold branch remains dormant until trigger, the simultaneous-worker branch remains dormant until new evidence under Packet 092, and the durable host posture now includes both a published host bootstrap/status surface and a published consolidated workspace-authority document
-Scope: preserve the completed Olares-first AI workflow routing state after Packet 035 through Packet 041 while naming the current bounded Operations Visibility follow-on from the Olares-resident posture
+Status: Historical packet-routing ledger with post-cutover interpretation
+Scope: preserve pre-cutover and early post-cutover packet-by-packet routing state as provenance, not as the current operator queue for the standalone repo boundary
+
+Post-cutover interpretation note:
+
+This routing handoff preserves packet-by-packet state accumulated before the canonical repo boundary moved on 2026-05-07. References inside this document to publication through the parent-root boundary or to `C:/APEX Platform` as the publication boundary are historical state records, not the current operator contract. For current git-root and publication behavior, use `C:/APEX Platform/apex-power-ops-platform` and `/home/olares/code/apex/apex-power-ops-platform`.
+
+Current routing:
+
+1. use `PROJECT_STATUS.md` for the current residue-retirement lane and latest completed packets,
+2. use `docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md` for the remaining post-cutover boundary closeout queue,
+3. use this handoff only when packet-by-packet historical routing context from the pre-cutover Phase 5 lane is specifically needed.
 
 Update 2026-05-06:
 
@@ -283,7 +293,9 @@ This routing handoff depends on:
 
 This handoff does not reopen generic Olares implementation.
 
-## Current Routing Decision
+## Historical Routing Ledger
+
+The entries below preserve the packet-routing ledger as it stood during the pre-cutover and early cutover-transition period. They are retained as provenance and historical execution context, not as the current standalone-repo operator queue.
 
 Prompt 1, Prompt 2, Prompt 3, Prompt 5, Prompt 6, Prompt 7, Prompt 8, Prompt 9, Prompt 10, Prompt 11, Prompt 12, Prompt 13, Prompt 14, Prompt 15, Prompt 16, Prompt 17, Prompt 18, Prompt 19, Prompt 20, Prompt 21, Prompt 22, Prompt 23, Prompt 24, Prompt 25, Prompt 26, Prompt 27, Prompt 28, Prompt 29, Prompt 30, Prompt 31, Prompt 32, Prompt 33, Prompt 34, Prompt 35, Prompt 36, Prompt 37, Prompt 38, Prompt 39, Prompt 40, Prompt 41, Prompt 42, Prompt 43, Prompt 44, Prompt 45, Prompt 46, Prompt 47, Prompt 48, Prompt 49, Prompt 50, Prompt 51, Prompt 52, Prompt 53, Prompt 54, Prompt 55, Prompt 58, Prompt 59, Prompt 60, and Prompt 61 are complete.
 
