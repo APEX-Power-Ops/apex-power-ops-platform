@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-04-12-pm-schema-004",
-  "title": "PM Domain Apparatus Execution Bridge Spec",
+  "title": "Historical PM Domain Apparatus Execution Bridge Spec",
+  "historical_note": "This packet records one bounded PM domain foundational planning slice from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live execution instruction for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this packet JSON only when historical provenance is needed for the earlier `pm-schema-004` PM-domain apparatus-bridge planning slice"
+  ],
   "objective": "Clarify how apparatus-linked execution remains a critical asset-side execution bridge without becoming the top-level PM operating object, including progress rollup, issue handling, and delivery-to-commissioning linkage.",
   "domain": "pm-domain",
   "active_role": "Platform Architect",
