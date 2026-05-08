@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-05-03-olares-phase-5-095",
-  "title": "Packet 093 And Packet 094 Authority Publication And Host Mirror Resync Gate",
+  "title": "Historical Packet 093 And Packet 094 Authority Publication And Host Mirror Resync Gate",
+  "historical_note": "This record preserves one bounded Olares Phase 5 summary publication and host-mirror gate from before the canonical repo boundary moved to C:/APEX Platform/apex-power-ops-platform on 2026-05-07. It is historical provenance, not a live publication instruction surface for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this record only when historical provenance is needed for the earlier Phase 5 Packet 095 publication and host-mirror gate record preserved here"
+  ],
   "objective": "Publish Packet 093 closeout authority and Packet 094 dormancy/readiness verdict authority through the parent-root boundary, then restore `/home/olares/code/apex` to clean parity without opening execution or paired-objective selection.",
   "domain": "infrastructure-domain",
   "active_role": "Olares Authority Publication Operator",
@@ -46,7 +52,9 @@
     "`/home/olares/src/apex-power-ops-platform` remains observe-only and unchanged."
   ],
   "handoff_target": "Platform Architect",
-  "status": "authored",
+  "status": "complete",
+  "published_commit": "38b90166da7d48f4ef17334b0ea92916f6e183ee",
+  "commit_message": "Publish Olares dormancy verdict authority",
   "output_artifacts": [
     "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-olares-phase-5-095-packet-093-and-packet-094-authority-publication-and-host-mirror-resync-gate-handoff.md"
   ],
@@ -58,7 +66,8 @@
   "migration_strategy": "publish_dormancy_verdict_authority_without_approving_migration_or_execution",
   "created_at": "2026-05-05",
   "updated_at": "2026-05-05",
-  "delegation_status": "not-delegated",
-  "validation_disposition": "pending-publication",
-  "next_action": "Execute Packet 095 as a bounded authority-publication and host-mirror resync gate only."
+  "delegation_status": "complete",
+  "validation_disposition": "pass",
+  "closure_note": "Executed 2026-05-05. Packet 095 published Packet 093 closeout authority, Packet 094 dormancy/readiness verdict authority, Packet 095 authored authority, routing, and roadmap in commit `38b90166da7d48f4ef17334b0ea92916f6e183ee`, pushed `origin/clean-main`, and fast-forwarded `/home/olares/code/apex` from clean `1fb5304e8e8c811c494160b19a6940874ea45d73` to clean parity at `38b90166da7d48f4ef17334b0ea92916f6e183ee`. The old clone remained observe-only and unchanged.",
+  "next_action": "The simultaneous-worker lane remains dormant and authorable only with new evidence satisfying the Packet 092 trigger framework; no execution packet is opened by Packet 095."
 }
