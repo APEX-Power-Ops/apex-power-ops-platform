@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-05-03-olares-phase-5-003",
-  "title": "TermiPass NeedsLogin Blocker Audit And Recovery Path Research",
+  "title": "Historical TermiPass NeedsLogin Blocker Audit And Recovery Path Research",
+  "historical_note": "This packet records one bounded Olares Phase 5 TermiPass blocker-research slice from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live execution instruction for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this packet JSON only when historical provenance is needed for the earlier `olares-phase-5-003` TermiPass blocker-research slice"
+  ],
   "objective": "Audit, inspect, and research viable methods to resolve the workstation-side TermiPass or LarePass blocker after Packet 002 closed blocked with `BackendState: NeedsLogin`, zero node key, no auth URL, no mesh IP, and no usable `100.64.*` route, without performing installs, auth changes, or host-runtime mutation.",
   "domain": "infrastructure-domain",
   "active_role": "Olares Access Blocker Research Operator",

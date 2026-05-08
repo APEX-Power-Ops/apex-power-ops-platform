@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-05-03-olares-phase-5-004",
-  "title": "Interactive LarePass Profile Rehydration And Mesh Validation",
+  "title": "Historical Interactive LarePass Profile Rehydration And Mesh Validation",
+  "historical_note": "This packet records one bounded Olares Phase 5 interactive profile-rehydration slice from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live execution instruction for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this packet JSON only when historical provenance is needed for the earlier `olares-phase-5-004` interactive profile-rehydration slice"
+  ],
   "objective": "Use an operator-mediated LarePass or Olares UI login or start path to recreate the missing local profile state, then validate whether the workstation receives a real node key, a `100.64.*` mesh IP, peer `olares`, and working SSH to `100.64.0.1`, while capturing the tightened config evidence required by Packet 003.",
   "domain": "infrastructure-domain",
   "active_role": "Olares Interactive Access Recovery Operator",

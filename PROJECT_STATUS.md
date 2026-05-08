@@ -388,7 +388,11 @@ Packet `2026-05-08-olares-dev-residency-259` now closes the adjacent 2026-05-03 
 
 Packet `2026-05-08-olares-dev-residency-260` now closes the adjacent 2026-05-03 Olares Phase 5 access-recovery and runtime-inventory packet JSON singleton by hard-demoting `olares-phase-5-002` into explicit historical provenance with current-routing context, so that file no longer reads like a live Olares access-recovery packet after standalone cutover.
 
-The next truthful repo-structure work is therefore the adjacent `olares-phase-5-003` singleton closure so the next remaining Olares Phase 5 residue is explicit after the `olares-phase-5-002` singleton closure.
+Packet `2026-05-08-olares-dev-residency-261` now closes the adjacent 2026-05-03 Olares Phase 5 TermiPass NeedsLogin blocker-audit packet JSON singleton by hard-demoting `olares-phase-5-003` into explicit historical provenance with current-routing context, so that file no longer reads like a live Olares blocker-research packet after standalone cutover.
+
+Packet `2026-05-08-olares-dev-residency-262` now closes the adjacent 2026-05-03 Olares Phase 5 interactive LarePass profile-rehydration packet JSON singleton by hard-demoting `olares-phase-5-004` into explicit historical provenance with current-routing context, so that file no longer reads like a live Olares interactive profile-rehydration packet after standalone cutover.
+
+The next truthful repo-structure work is therefore the adjacent `olares-phase-5-004b` singleton closure so the next remaining Olares Phase 5 residue is explicit after the `olares-phase-5-004` singleton closure.
 
 ## 2026 Addendum: Olares Runtime And Private Lane
 
