@@ -1,0 +1,43 @@
+{
+  "title": "Complete Parent-Root Task Surface Historical Relabel Execution",
+  "objective": "Finish the parent-root task-surface demotion lane by relabeling every remaining current-looking `parent-root` task entry in `.vscode/tasks.json` as explicitly historical and tightening the operator runbook plus compact status surfaces so the provenance-routing lane can truthfully return to hold.",
+  "domain": "infrastructure-domain",
+  "active_role": "Platform Architect",
+  "dependencies": [
+    "ops/agents/packets/draft/2026-05-07-olares-dev-residency-097-repo-root-task-surface-historical-relabel-and-demotion-execution.json",
+    "ops/agents/handoffs/2026-05-07-olares-dev-residency-097-repo-root-task-surface-historical-relabel-and-demotion-execution-handoff.md",
+    ".vscode/tasks.json",
+    "docs/OPERATOR-BOOTSTRAP-RUNBOOK.md",
+    "PROJECT_STATUS.md",
+    "docs/architecture/APEX-PM-LANE-OPERATING-COCKPIT-2026-05-06.md"
+  ],
+  "dependency_note": "Packet 097 relabeled the first exposed parent-root task subset, but a follow-up full task-surface audit proved the same current-looking label pattern still existed across package-source, runtime, control-plane, docs, ops, and draft-packet helper trios. Packet 098 closes that residual family directly instead of leaving the provenance-routing lane half-demoted.",
+  "execution_mode": "bounded_task_surface_relabel_completion_execution",
+  "execution_scope": [
+    "Relabel every remaining current-looking `parent-root` task label in `.vscode/tasks.json` to carry the explicit `historical parent-root` marker.",
+    "Tighten `docs/OPERATOR-BOOTSTRAP-RUNBOOK.md` so it refers to all parent-root helper tasks generically as historical provenance helpers rather than enumerating only an earlier subset.",
+    "Update `PROJECT_STATUS.md` and the PM cockpit so the provenance-routing lane returns to hold only after the full task family is actually normalized."
+  ],
+  "constraints": [
+    "Do not mutate runtime, host services, packages, or lockfiles.",
+    "Do not delete historical task definitions or packet evidence by implication.",
+    "Do not reopen parent-root publication flow as a current operator default."
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "execution_outcome": "all_remaining_parent_root_task_labels_explicitly_marked_historical",
+  "execution_evidence": {
+    "remaining_parent_root_task_family_relabelled": true,
+    "runbook_now_refers_to_all_parent_root_helpers_generically": true,
+    "compact_status_surfaces_returned_to_hold": true
+  },
+  "execution_rationale": [
+    "The same misrouting pattern still existed across the wider task family after Packet 097, so the truthful repair was to finish the relabeling on the whole active repo task surface rather than leaving a second batch of current-looking parent-root helpers behind.",
+    "The fix stays tightly bounded to discoverability and operator routing: labels, runbook wording, and status surfaces only.",
+    "Completing the full family relabel lets the provenance-routing lane return to hold on evidence rather than aspiration."
+  ],
+  "next_packet_candidate": "Return the provenance-routing lane to hold unless a different current-looking parent-root residue surface still misdirects active repo-root execution.",
+  "validation_disposition": "implemented_and_validated",
+  "closure_note": "Executed 2026-05-07 as the bounded completion pass after Packet 097 exposed that the same parent-root label pattern persisted more broadly in `.vscode/tasks.json`. Packet 098 marks the remaining task family as historical and returns the provenance-routing lane to hold unless a new current-looking residue surface appears.",
+  "next_action": "Publish the bounded Packet 098 completion slice, restore host parity, and keep provenance-routing closed unless a new active-surface misrouting hazard appears."
+}

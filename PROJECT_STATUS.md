@@ -56,13 +56,13 @@ This addendum is the current stakeholder-facing status surface for the active Ol
 2. Continue treating `/home/olares/src/apex-power-ops-platform` as observe-only historical evidence until a later cleanup packet explicitly retires or archives it.
 3. Keep the current authoritative host mirror clean at `/home/olares/code/apex/apex-power-ops-platform` and use the repo-owned bootstrap/status surface as the controlling proof surface for future Olares operator work.
 4. Reopen minimal-trio runtime admission only if a concrete unattended workflow, repeated operator insufficiency, or new validation obligation proves that operator-on-demand is no longer enough.
-5. Reopen provenance-routing normalization only if another current-looking parent-root residue surface still risks misdirecting active repo-root execution.
+5. Reopen provenance-routing normalization only if a different current-looking parent-root residue surface, outside the now-relabelled task family, still risks misdirecting active repo-root execution.
 
 ### Current Recommended Next Lane
 
 The bounded runtime-governance decision on the admitted minimal MCP trio is now closed.
 
-Packets `2026-05-07-olares-dev-residency-096` and `2026-05-07-olares-dev-residency-097` now close the strongest current-looking parent-root task-surface residue by selecting and executing the repo-root task relabel slice.
+Packets `2026-05-07-olares-dev-residency-096` through `2026-05-07-olares-dev-residency-098` now close the current-looking parent-root task-surface residue by selecting, executing, and then completing the repo-root task relabel slice across the full surviving task family.
 
 The provenance-routing lane can now return to hold unless a different current-looking parent-root residue surface still misdirects active repo-root execution.
 

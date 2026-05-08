@@ -144,7 +144,7 @@ Current status surface:
 - `PROJECT_STATUS.md`
 
 VS Code tasks:
-- the parent-root bootstrap and scaffold helper tasks remain available only as explicitly historical packet-review surfaces, and routine publication work now uses normal repo-root `git diff` and `git add -- <paths>` against tracked `HEAD`
+- all parent-root packet helper tasks remain available only as explicitly historical packet-review surfaces, and routine publication work now uses normal repo-root `git diff` and `git add -- <paths>` against tracked `HEAD`
 - `Olares host bootstrap status`
 - `Olares host platform git status`
 - `Olares host platform staged diff`
@@ -153,12 +153,7 @@ VS Code tasks:
 - `Platform repo git status`
 - `Stage named platform paths`
 - `Stage entire platform repo (broad change)`
-- `Preview historical parent-root bootstrap packet`
-- `Stage historical parent-root bootstrap packet`
-- `Historical parent-root bootstrap packet staged diff`
-- `Preview historical parent-root Class A scaffold packet`
-- `Stage historical parent-root Class A scaffold packet`
-- `Historical parent-root Class A scaffold packet staged diff`
+- historical parent-root packet helper task trios remain available for provenance review, but they are no longer routine staging surfaces for current repo-root work
 - `Platform repo staged diff`
 - `Platform API focused tests`
 - `Control-plane local host readiness`

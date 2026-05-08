@@ -464,7 +464,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Preview parent-root package source packet",
+      "label": "Preview historical parent-root package source packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -475,7 +475,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Stage parent-root package source packet",
+      "label": "Stage historical parent-root package source packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -486,7 +486,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Parent-root package source packet staged diff",
+      "label": "Historical parent-root package source packet staged diff",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -497,7 +497,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Preview parent-root operations-web runtime packet",
+      "label": "Preview historical parent-root operations-web runtime packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -508,7 +508,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Stage parent-root operations-web runtime packet",
+      "label": "Stage historical parent-root operations-web runtime packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -519,7 +519,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Parent-root operations-web runtime packet staged diff",
+      "label": "Historical parent-root operations-web runtime packet staged diff",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -530,7 +530,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Preview parent-root mutation-seam runtime packet",
+      "label": "Preview historical parent-root mutation-seam runtime packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -541,7 +541,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Stage parent-root mutation-seam runtime packet",
+      "label": "Stage historical parent-root mutation-seam runtime packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -552,7 +552,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Parent-root mutation-seam runtime packet staged diff",
+      "label": "Historical parent-root mutation-seam runtime packet staged diff",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -563,7 +563,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Preview parent-root control-plane core packet",
+      "label": "Preview historical parent-root control-plane core packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -574,7 +574,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Stage parent-root control-plane core packet",
+      "label": "Stage historical parent-root control-plane core packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -585,7 +585,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Parent-root control-plane core packet staged diff",
+      "label": "Historical parent-root control-plane core packet staged diff",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -596,7 +596,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Preview parent-root control-plane support packet",
+      "label": "Preview historical parent-root control-plane support packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -607,7 +607,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Stage parent-root control-plane support packet",
+      "label": "Stage historical parent-root control-plane support packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -618,7 +618,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Parent-root control-plane support packet staged diff",
+      "label": "Historical parent-root control-plane support packet staged diff",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -629,7 +629,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Preview parent-root control-plane tests packet",
+      "label": "Preview historical parent-root control-plane tests packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -640,7 +640,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Stage parent-root control-plane tests packet",
+      "label": "Stage historical parent-root control-plane tests packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -651,7 +651,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Parent-root control-plane tests packet staged diff",
+      "label": "Historical parent-root control-plane tests packet staged diff",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -662,7 +662,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Preview parent-root residual scaffold packet",
+      "label": "Preview historical parent-root residual scaffold packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -673,7 +673,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Stage parent-root residual scaffold packet",
+      "label": "Stage historical parent-root residual scaffold packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -684,7 +684,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Parent-root residual scaffold packet staged diff",
+      "label": "Historical parent-root residual scaffold packet staged diff",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -695,7 +695,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Preview parent-root infra database packet",
+      "label": "Preview historical parent-root infra database packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -706,7 +706,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Stage parent-root infra database packet",
+      "label": "Stage historical parent-root infra database packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -717,7 +717,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Parent-root infra database packet staged diff",
+      "label": "Historical parent-root infra database packet staged diff",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -728,7 +728,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Preview parent-root docs packet",
+      "label": "Preview historical parent-root docs packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -739,7 +739,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Stage parent-root docs packet",
+      "label": "Stage historical parent-root docs packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -750,7 +750,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Parent-root docs packet staged diff",
+      "label": "Historical parent-root docs packet staged diff",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -761,7 +761,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Preview parent-root ops knowledge-control-plane registry packet",
+      "label": "Preview historical parent-root ops knowledge-control-plane registry packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -772,7 +772,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Stage parent-root ops knowledge-control-plane registry packet",
+      "label": "Stage historical parent-root ops knowledge-control-plane registry packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -783,7 +783,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Parent-root ops knowledge-control-plane registry packet staged diff",
+      "label": "Historical parent-root ops knowledge-control-plane registry packet staged diff",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -794,7 +794,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Preview parent-root ops legacy-governance packet",
+      "label": "Preview historical parent-root ops legacy-governance packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -805,7 +805,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Stage parent-root ops legacy-governance packet",
+      "label": "Stage historical parent-root ops legacy-governance packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -816,7 +816,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Parent-root ops legacy-governance packet staged diff",
+      "label": "Historical parent-root ops legacy-governance packet staged diff",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -827,7 +827,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Preview parent-root ops knowledge-resource-operations packet",
+      "label": "Preview historical parent-root ops knowledge-resource-operations packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -838,7 +838,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Stage parent-root ops knowledge-resource-operations packet",
+      "label": "Stage historical parent-root ops knowledge-resource-operations packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -849,7 +849,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Parent-root ops knowledge-resource-operations packet staged diff",
+      "label": "Historical parent-root ops knowledge-resource-operations packet staged diff",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -860,7 +860,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Preview parent-root forms-import draft packet",
+      "label": "Preview historical parent-root forms-import draft packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -871,7 +871,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Stage parent-root forms-import draft packet",
+      "label": "Stage historical parent-root forms-import draft packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -882,7 +882,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Parent-root forms-import draft packet staged diff",
+      "label": "Historical parent-root forms-import draft packet staged diff",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -893,7 +893,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Preview parent-root 001af draft packet",
+      "label": "Preview historical parent-root 001af draft packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -904,7 +904,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Stage parent-root 001af draft packet",
+      "label": "Stage historical parent-root 001af draft packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -915,7 +915,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Parent-root 001af draft packet staged diff",
+      "label": "Historical parent-root 001af draft packet staged diff",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -926,7 +926,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Preview parent-root apex-unification 001 draft packet",
+      "label": "Preview historical parent-root apex-unification 001 draft packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -937,7 +937,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Stage parent-root apex-unification 001 draft packet",
+      "label": "Stage historical parent-root apex-unification 001 draft packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -948,7 +948,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Parent-root apex-unification 001 draft packet staged diff",
+      "label": "Historical parent-root apex-unification 001 draft packet staged diff",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -959,7 +959,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Preview parent-root knowledge-import 001 draft packet",
+      "label": "Preview historical parent-root knowledge-import 001 draft packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -970,7 +970,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Stage parent-root knowledge-import 001 draft packet",
+      "label": "Stage historical parent-root knowledge-import 001 draft packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -981,7 +981,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Parent-root knowledge-import 001 draft packet staged diff",
+      "label": "Historical parent-root knowledge-import 001 draft packet staged diff",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -992,7 +992,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Preview parent-root pm-schema 009 draft packet",
+      "label": "Preview historical parent-root pm-schema 009 draft packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -1003,7 +1003,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Stage parent-root pm-schema 009 draft packet",
+      "label": "Stage historical parent-root pm-schema 009 draft packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -1014,7 +1014,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Parent-root pm-schema 009 draft packet staged diff",
+      "label": "Historical parent-root pm-schema 009 draft packet staged diff",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -1025,7 +1025,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Preview parent-root pm-schema 010 draft packet",
+      "label": "Preview historical parent-root pm-schema 010 draft packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -1036,7 +1036,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Stage parent-root pm-schema 010 draft packet",
+      "label": "Stage historical parent-root pm-schema 010 draft packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -1047,7 +1047,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Parent-root pm-schema 010 draft packet staged diff",
+      "label": "Historical parent-root pm-schema 010 draft packet staged diff",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -1058,7 +1058,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Preview parent-root pm-schema 011 draft packet",
+      "label": "Preview historical parent-root pm-schema 011 draft packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -1069,7 +1069,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Stage parent-root pm-schema 011 draft packet",
+      "label": "Stage historical parent-root pm-schema 011 draft packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -1080,7 +1080,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Parent-root pm-schema 011 draft packet staged diff",
+      "label": "Historical parent-root pm-schema 011 draft packet staged diff",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -1091,7 +1091,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Preview parent-root pm-schema 012 draft packet",
+      "label": "Preview historical parent-root pm-schema 012 draft packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -1102,7 +1102,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Stage parent-root pm-schema 012 draft packet",
+      "label": "Stage historical parent-root pm-schema 012 draft packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -1113,7 +1113,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Parent-root pm-schema 012 draft packet staged diff",
+      "label": "Historical parent-root pm-schema 012 draft packet staged diff",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -1124,7 +1124,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Preview parent-root pm-schema 013 draft packet",
+      "label": "Preview historical parent-root pm-schema 013 draft packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -1135,7 +1135,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Stage parent-root pm-schema 013 draft packet",
+      "label": "Stage historical parent-root pm-schema 013 draft packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -1146,7 +1146,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Parent-root pm-schema 013 draft packet staged diff",
+      "label": "Historical parent-root pm-schema 013 draft packet staged diff",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -1157,7 +1157,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Preview parent-root pm-schema 014 draft packet",
+      "label": "Preview historical parent-root pm-schema 014 draft packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -1168,7 +1168,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Stage parent-root pm-schema 014 draft packet",
+      "label": "Stage historical parent-root pm-schema 014 draft packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -1179,7 +1179,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Parent-root pm-schema 014 draft packet staged diff",
+      "label": "Historical parent-root pm-schema 014 draft packet staged diff",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -1190,7 +1190,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Preview parent-root pm-schema 015 draft packet",
+      "label": "Preview historical parent-root pm-schema 015 draft packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -1201,7 +1201,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Stage parent-root pm-schema 015 draft packet",
+      "label": "Stage historical parent-root pm-schema 015 draft packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -1212,7 +1212,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Parent-root pm-schema 015 draft packet staged diff",
+      "label": "Historical parent-root pm-schema 015 draft packet staged diff",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -1223,7 +1223,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Preview parent-root pm-schema 016 draft packet",
+      "label": "Preview historical parent-root pm-schema 016 draft packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -1234,7 +1234,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Stage parent-root pm-schema 016 draft packet",
+      "label": "Stage historical parent-root pm-schema 016 draft packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -1245,7 +1245,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Parent-root pm-schema 016 draft packet staged diff",
+      "label": "Historical parent-root pm-schema 016 draft packet staged diff",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -1256,7 +1256,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Preview parent-root pm-schema 017 draft packet",
+      "label": "Preview historical parent-root pm-schema 017 draft packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -1267,7 +1267,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Stage parent-root pm-schema 017 draft packet",
+      "label": "Stage historical parent-root pm-schema 017 draft packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -1278,7 +1278,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Parent-root pm-schema 017 draft packet staged diff",
+      "label": "Historical parent-root pm-schema 017 draft packet staged diff",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -1289,7 +1289,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Preview parent-root pm-schema 018 draft packet",
+      "label": "Preview historical parent-root pm-schema 018 draft packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -1300,7 +1300,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Stage parent-root pm-schema 018 draft packet",
+      "label": "Stage historical parent-root pm-schema 018 draft packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -1311,7 +1311,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Parent-root pm-schema 018 draft packet staged diff",
+      "label": "Historical parent-root pm-schema 018 draft packet staged diff",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -1322,7 +1322,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Preview parent-root pm-schema 019 draft packet",
+      "label": "Preview historical parent-root pm-schema 019 draft packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -1333,7 +1333,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Stage parent-root pm-schema 019 draft packet",
+      "label": "Stage historical parent-root pm-schema 019 draft packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -1344,7 +1344,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Parent-root pm-schema 019 draft packet staged diff",
+      "label": "Historical parent-root pm-schema 019 draft packet staged diff",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -1355,7 +1355,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Preview parent-root pm-schema 019f draft packet",
+      "label": "Preview historical parent-root pm-schema 019f draft packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -1366,7 +1366,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Stage parent-root pm-schema 019f draft packet",
+      "label": "Stage historical parent-root pm-schema 019f draft packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -1377,7 +1377,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Parent-root pm-schema 019f draft packet staged diff",
+      "label": "Historical parent-root pm-schema 019f draft packet staged diff",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -1388,7 +1388,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Preview parent-root pm-schema 019g draft packet",
+      "label": "Preview historical parent-root pm-schema 019g draft packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -1399,7 +1399,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Stage parent-root pm-schema 019g draft packet",
+      "label": "Stage historical parent-root pm-schema 019g draft packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -1410,7 +1410,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Parent-root pm-schema 019g draft packet staged diff",
+      "label": "Historical parent-root pm-schema 019g draft packet staged diff",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -1421,7 +1421,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Preview parent-root pm-schema 019h draft packet",
+      "label": "Preview historical parent-root pm-schema 019h draft packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -1432,7 +1432,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Stage parent-root pm-schema 019h draft packet",
+      "label": "Stage historical parent-root pm-schema 019h draft packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -1443,7 +1443,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Parent-root pm-schema 019h draft packet staged diff",
+      "label": "Historical parent-root pm-schema 019h draft packet staged diff",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -1454,7 +1454,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Preview parent-root pm-schema 019i draft packet",
+      "label": "Preview historical parent-root pm-schema 019i draft packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -1465,7 +1465,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Stage parent-root pm-schema 019i draft packet",
+      "label": "Stage historical parent-root pm-schema 019i draft packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -1476,7 +1476,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Parent-root pm-schema 019i draft packet staged diff",
+      "label": "Historical parent-root pm-schema 019i draft packet staged diff",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -1487,7 +1487,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Preview parent-root pm-schema 019j draft packet",
+      "label": "Preview historical parent-root pm-schema 019j draft packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -1498,7 +1498,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Stage parent-root pm-schema 019j draft packet",
+      "label": "Stage historical parent-root pm-schema 019j draft packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -1509,7 +1509,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Parent-root pm-schema 019j draft packet staged diff",
+      "label": "Historical parent-root pm-schema 019j draft packet staged diff",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -1520,7 +1520,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Preview parent-root pm-schema 019k draft packet",
+      "label": "Preview historical parent-root pm-schema 019k draft packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -1531,7 +1531,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Stage parent-root pm-schema 019k draft packet",
+      "label": "Stage historical parent-root pm-schema 019k draft packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -1542,7 +1542,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Parent-root pm-schema 019k draft packet staged diff",
+      "label": "Historical parent-root pm-schema 019k draft packet staged diff",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -1553,7 +1553,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Preview parent-root pm-schema-ui 002g draft packet",
+      "label": "Preview historical parent-root pm-schema-ui 002g draft packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -1564,7 +1564,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Stage parent-root pm-schema-ui 002g draft packet",
+      "label": "Stage historical parent-root pm-schema-ui 002g draft packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -1575,7 +1575,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Parent-root pm-schema-ui 002g draft packet staged diff",
+      "label": "Historical parent-root pm-schema-ui 002g draft packet staged diff",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -1586,7 +1586,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Preview parent-root pm-schema-ui 002g host-variance draft packet",
+      "label": "Preview historical parent-root pm-schema-ui 002g host-variance draft packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -1597,7 +1597,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Stage parent-root pm-schema-ui 002g host-variance draft packet",
+      "label": "Stage historical parent-root pm-schema-ui 002g host-variance draft packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -1608,7 +1608,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Parent-root pm-schema-ui 002g host-variance draft packet staged diff",
+      "label": "Historical parent-root pm-schema-ui 002g host-variance draft packet staged diff",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -1619,7 +1619,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Preview parent-root pm-schema-ui 002e host draft packet",
+      "label": "Preview historical parent-root pm-schema-ui 002e host draft packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -1630,7 +1630,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Stage parent-root pm-schema-ui 002e host draft packet",
+      "label": "Stage historical parent-root pm-schema-ui 002e host draft packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -1641,7 +1641,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Parent-root pm-schema-ui 002e host draft packet staged diff",
+      "label": "Historical parent-root pm-schema-ui 002e host draft packet staged diff",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -1652,7 +1652,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Preview parent-root pm-schema-ui 002f host draft packet",
+      "label": "Preview historical parent-root pm-schema-ui 002f host draft packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -1663,7 +1663,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Stage parent-root pm-schema-ui 002f host draft packet",
+      "label": "Stage historical parent-root pm-schema-ui 002f host draft packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -1674,7 +1674,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Parent-root pm-schema-ui 002f host draft packet staged diff",
+      "label": "Historical parent-root pm-schema-ui 002f host draft packet staged diff",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -1685,7 +1685,7 @@
       "problemMatcher": []
     },
       {
-        "label": "Preview parent-root pm-schema-ui 001 draft packet",
+        "label": "Preview historical parent-root pm-schema-ui 001 draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -1696,7 +1696,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Stage parent-root pm-schema-ui 001 draft packet",
+        "label": "Stage historical parent-root pm-schema-ui 001 draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -1707,7 +1707,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Parent-root pm-schema-ui 001 draft packet staged diff",
+        "label": "Historical parent-root pm-schema-ui 001 draft packet staged diff",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -1718,7 +1718,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Preview parent-root pm-schema-ui 002 draft packet",
+        "label": "Preview historical parent-root pm-schema-ui 002 draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -1729,7 +1729,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Stage parent-root pm-schema-ui 002 draft packet",
+        "label": "Stage historical parent-root pm-schema-ui 002 draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -1740,7 +1740,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Parent-root pm-schema-ui 002 draft packet staged diff",
+        "label": "Historical parent-root pm-schema-ui 002 draft packet staged diff",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -1751,7 +1751,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Preview parent-root pm-schema-ui 003 draft packet",
+        "label": "Preview historical parent-root pm-schema-ui 003 draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -1762,7 +1762,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Stage parent-root pm-schema-ui 003 draft packet",
+        "label": "Stage historical parent-root pm-schema-ui 003 draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -1773,7 +1773,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Parent-root pm-schema-ui 003 draft packet staged diff",
+        "label": "Historical parent-root pm-schema-ui 003 draft packet staged diff",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -1784,7 +1784,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Preview parent-root pm-schema-ui 004 draft packet",
+        "label": "Preview historical parent-root pm-schema-ui 004 draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -1795,7 +1795,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Stage parent-root pm-schema-ui 004 draft packet",
+        "label": "Stage historical parent-root pm-schema-ui 004 draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -1806,7 +1806,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Parent-root pm-schema-ui 004 draft packet staged diff",
+        "label": "Historical parent-root pm-schema-ui 004 draft packet staged diff",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -1817,7 +1817,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Preview parent-root pm-schema-ui 005 draft packet",
+        "label": "Preview historical parent-root pm-schema-ui 005 draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -1828,7 +1828,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Stage parent-root pm-schema-ui 005 draft packet",
+        "label": "Stage historical parent-root pm-schema-ui 005 draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -1839,7 +1839,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Parent-root pm-schema-ui 005 draft packet staged diff",
+        "label": "Historical parent-root pm-schema-ui 005 draft packet staged diff",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -1850,7 +1850,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Preview parent-root pm-schema-ui 006 draft packet",
+        "label": "Preview historical parent-root pm-schema-ui 006 draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -1861,7 +1861,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Stage parent-root pm-schema-ui 006 draft packet",
+        "label": "Stage historical parent-root pm-schema-ui 006 draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -1872,7 +1872,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Parent-root pm-schema-ui 006 draft packet staged diff",
+        "label": "Historical parent-root pm-schema-ui 006 draft packet staged diff",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -1883,7 +1883,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Preview parent-root pm-schema-ui 001a draft packet",
+        "label": "Preview historical parent-root pm-schema-ui 001a draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -1894,7 +1894,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Stage parent-root pm-schema-ui 001a draft packet",
+        "label": "Stage historical parent-root pm-schema-ui 001a draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -1905,7 +1905,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Parent-root pm-schema-ui 001a draft packet staged diff",
+        "label": "Historical parent-root pm-schema-ui 001a draft packet staged diff",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -1916,7 +1916,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Preview parent-root pm-schema-ui 001b draft packet",
+        "label": "Preview historical parent-root pm-schema-ui 001b draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -1927,7 +1927,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Stage parent-root pm-schema-ui 001b draft packet",
+        "label": "Stage historical parent-root pm-schema-ui 001b draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -1938,7 +1938,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Parent-root pm-schema-ui 001b draft packet staged diff",
+        "label": "Historical parent-root pm-schema-ui 001b draft packet staged diff",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -1949,7 +1949,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Preview parent-root pm-schema-ui 001c draft packet",
+        "label": "Preview historical parent-root pm-schema-ui 001c draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -1960,7 +1960,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Stage parent-root pm-schema-ui 001c draft packet",
+        "label": "Stage historical parent-root pm-schema-ui 001c draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -1971,7 +1971,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Parent-root pm-schema-ui 001c draft packet staged diff",
+        "label": "Historical parent-root pm-schema-ui 001c draft packet staged diff",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -1982,7 +1982,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Preview parent-root pm-schema-ui 001d draft packet",
+        "label": "Preview historical parent-root pm-schema-ui 001d draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -1993,7 +1993,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Stage parent-root pm-schema-ui 001d draft packet",
+        "label": "Stage historical parent-root pm-schema-ui 001d draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2004,7 +2004,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Parent-root pm-schema-ui 001d draft packet staged diff",
+        "label": "Historical parent-root pm-schema-ui 001d draft packet staged diff",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2015,7 +2015,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Preview parent-root pm-schema-ui 001e draft packet",
+        "label": "Preview historical parent-root pm-schema-ui 001e draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2026,7 +2026,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Stage parent-root pm-schema-ui 001e draft packet",
+        "label": "Stage historical parent-root pm-schema-ui 001e draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2037,7 +2037,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Parent-root pm-schema-ui 001e draft packet staged diff",
+        "label": "Historical parent-root pm-schema-ui 001e draft packet staged diff",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2048,7 +2048,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Preview parent-root pm-schema-ui 002a draft packet",
+        "label": "Preview historical parent-root pm-schema-ui 002a draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2059,7 +2059,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Stage parent-root pm-schema-ui 002a draft packet",
+        "label": "Stage historical parent-root pm-schema-ui 002a draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2070,7 +2070,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Parent-root pm-schema-ui 002a draft packet staged diff",
+        "label": "Historical parent-root pm-schema-ui 002a draft packet staged diff",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2081,7 +2081,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Preview parent-root pm-schema-ui 002b draft packet",
+        "label": "Preview historical parent-root pm-schema-ui 002b draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2092,7 +2092,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Stage parent-root pm-schema-ui 002b draft packet",
+        "label": "Stage historical parent-root pm-schema-ui 002b draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2103,7 +2103,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Parent-root pm-schema-ui 002b draft packet staged diff",
+        "label": "Historical parent-root pm-schema-ui 002b draft packet staged diff",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2114,7 +2114,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Preview parent-root pm-schema-ui 002c draft packet",
+        "label": "Preview historical parent-root pm-schema-ui 002c draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2125,7 +2125,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Stage parent-root pm-schema-ui 002c draft packet",
+        "label": "Stage historical parent-root pm-schema-ui 002c draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2136,7 +2136,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Parent-root pm-schema-ui 002c draft packet staged diff",
+        "label": "Historical parent-root pm-schema-ui 002c draft packet staged diff",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2147,7 +2147,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Preview parent-root pm-schema-020a draft packet",
+        "label": "Preview historical parent-root pm-schema-020a draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2158,7 +2158,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Stage parent-root pm-schema-020a draft packet",
+        "label": "Stage historical parent-root pm-schema-020a draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2169,7 +2169,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Parent-root pm-schema-020a draft packet staged diff",
+        "label": "Historical parent-root pm-schema-020a draft packet staged diff",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2180,7 +2180,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Preview parent-root pm-schema-020b draft packet",
+        "label": "Preview historical parent-root pm-schema-020b draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2191,7 +2191,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Stage parent-root pm-schema-020b draft packet",
+        "label": "Stage historical parent-root pm-schema-020b draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2202,7 +2202,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Parent-root pm-schema-020b draft packet staged diff",
+        "label": "Historical parent-root pm-schema-020b draft packet staged diff",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2213,7 +2213,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Preview parent-root pm-schema-020c draft packet",
+        "label": "Preview historical parent-root pm-schema-020c draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2224,7 +2224,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Stage parent-root pm-schema-020c draft packet",
+        "label": "Stage historical parent-root pm-schema-020c draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2235,7 +2235,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Parent-root pm-schema-020c draft packet staged diff",
+        "label": "Historical parent-root pm-schema-020c draft packet staged diff",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2246,7 +2246,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Preview parent-root pm-schema-ui 002d draft packet",
+        "label": "Preview historical parent-root pm-schema-ui 002d draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2257,7 +2257,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Stage parent-root pm-schema-ui 002d draft packet",
+        "label": "Stage historical parent-root pm-schema-ui 002d draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2268,7 +2268,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Parent-root pm-schema-ui 002d draft packet staged diff",
+        "label": "Historical parent-root pm-schema-ui 002d draft packet staged diff",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2279,7 +2279,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Preview parent-root pm-schema-020d draft packet",
+        "label": "Preview historical parent-root pm-schema-020d draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2290,7 +2290,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Stage parent-root pm-schema-020d draft packet",
+        "label": "Stage historical parent-root pm-schema-020d draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2301,7 +2301,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Parent-root pm-schema-020d draft packet staged diff",
+        "label": "Historical parent-root pm-schema-020d draft packet staged diff",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2312,7 +2312,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Preview parent-root pm-schema-020f draft packet",
+        "label": "Preview historical parent-root pm-schema-020f draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2323,7 +2323,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Stage parent-root pm-schema-020f draft packet",
+        "label": "Stage historical parent-root pm-schema-020f draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2334,7 +2334,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Parent-root pm-schema-020f draft packet staged diff",
+        "label": "Historical parent-root pm-schema-020f draft packet staged diff",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2345,7 +2345,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Preview parent-root pm-schema-001 draft packet",
+        "label": "Preview historical parent-root pm-schema-001 draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2356,7 +2356,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Stage parent-root pm-schema-001 draft packet",
+        "label": "Stage historical parent-root pm-schema-001 draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2367,7 +2367,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Parent-root pm-schema-001 draft packet staged diff",
+        "label": "Historical parent-root pm-schema-001 draft packet staged diff",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2378,7 +2378,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Preview parent-root apex-unification-001i draft packet",
+        "label": "Preview historical parent-root apex-unification-001i draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2389,7 +2389,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Stage parent-root apex-unification-001i draft packet",
+        "label": "Stage historical parent-root apex-unification-001i draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2400,7 +2400,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Parent-root apex-unification-001i draft packet staged diff",
+        "label": "Historical parent-root apex-unification-001i draft packet staged diff",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2411,7 +2411,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Preview parent-root residual archive formula pair",
+        "label": "Preview historical parent-root residual archive formula pair",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2422,7 +2422,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Stage parent-root residual archive formula pair",
+        "label": "Stage historical parent-root residual archive formula pair",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2433,7 +2433,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Parent-root residual archive formula pair staged diff",
+        "label": "Historical parent-root residual archive formula pair staged diff",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2444,7 +2444,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Preview parent-root apex-unification-001h draft packet",
+        "label": "Preview historical parent-root apex-unification-001h draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2455,7 +2455,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Stage parent-root apex-unification-001h draft packet",
+        "label": "Stage historical parent-root apex-unification-001h draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2466,7 +2466,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Parent-root apex-unification-001h draft packet staged diff",
+        "label": "Historical parent-root apex-unification-001h draft packet staged diff",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2477,7 +2477,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Preview parent-root apex-unification-001g draft packet",
+        "label": "Preview historical parent-root apex-unification-001g draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2488,7 +2488,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Stage parent-root apex-unification-001g draft packet",
+        "label": "Stage historical parent-root apex-unification-001g draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2499,7 +2499,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Parent-root apex-unification-001g draft packet staged diff",
+        "label": "Historical parent-root apex-unification-001g draft packet staged diff",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2510,7 +2510,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Preview parent-root apex-unification-001f draft packet",
+        "label": "Preview historical parent-root apex-unification-001f draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2521,7 +2521,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Stage parent-root apex-unification-001f draft packet",
+        "label": "Stage historical parent-root apex-unification-001f draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2532,7 +2532,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Parent-root apex-unification-001f draft packet staged diff",
+        "label": "Historical parent-root apex-unification-001f draft packet staged diff",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2543,7 +2543,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Preview parent-root apex-unification-001e draft packet",
+        "label": "Preview historical parent-root apex-unification-001e draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2554,7 +2554,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Stage parent-root apex-unification-001e draft packet",
+        "label": "Stage historical parent-root apex-unification-001e draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2565,7 +2565,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Parent-root apex-unification-001e draft packet staged diff",
+        "label": "Historical parent-root apex-unification-001e draft packet staged diff",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2576,7 +2576,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Preview parent-root apex-unification-001d draft packet",
+        "label": "Preview historical parent-root apex-unification-001d draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2587,7 +2587,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Stage parent-root apex-unification-001d draft packet",
+        "label": "Stage historical parent-root apex-unification-001d draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2598,7 +2598,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Parent-root apex-unification-001d draft packet staged diff",
+        "label": "Historical parent-root apex-unification-001d draft packet staged diff",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2609,7 +2609,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Preview parent-root apex-unification-001c draft packet",
+        "label": "Preview historical parent-root apex-unification-001c draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2620,7 +2620,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Stage parent-root apex-unification-001c draft packet",
+        "label": "Stage historical parent-root apex-unification-001c draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2631,7 +2631,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Parent-root apex-unification-001c draft packet staged diff",
+        "label": "Historical parent-root apex-unification-001c draft packet staged diff",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2642,7 +2642,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Preview parent-root apex-unification-001b draft packet",
+        "label": "Preview historical parent-root apex-unification-001b draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2653,7 +2653,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Stage parent-root apex-unification-001b draft packet",
+        "label": "Stage historical parent-root apex-unification-001b draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2664,7 +2664,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Parent-root apex-unification-001b draft packet staged diff",
+        "label": "Historical parent-root apex-unification-001b draft packet staged diff",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2675,7 +2675,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Preview parent-root apex-unification-001a draft packet",
+        "label": "Preview historical parent-root apex-unification-001a draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2686,7 +2686,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Stage parent-root apex-unification-001a draft packet",
+        "label": "Stage historical parent-root apex-unification-001a draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2697,7 +2697,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Parent-root apex-unification-001a draft packet staged diff",
+        "label": "Historical parent-root apex-unification-001a draft packet staged diff",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2708,7 +2708,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Preview parent-root pm-schema-008 draft packet",
+        "label": "Preview historical parent-root pm-schema-008 draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2719,7 +2719,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Stage parent-root pm-schema-008 draft packet",
+        "label": "Stage historical parent-root pm-schema-008 draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2730,7 +2730,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Parent-root pm-schema-008 draft packet staged diff",
+        "label": "Historical parent-root pm-schema-008 draft packet staged diff",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2741,7 +2741,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Preview parent-root pm-schema-007 draft packet",
+        "label": "Preview historical parent-root pm-schema-007 draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2752,7 +2752,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Stage parent-root pm-schema-007 draft packet",
+        "label": "Stage historical parent-root pm-schema-007 draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2763,7 +2763,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Parent-root pm-schema-007 draft packet staged diff",
+        "label": "Historical parent-root pm-schema-007 draft packet staged diff",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2774,7 +2774,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Preview parent-root pm-schema-006 draft packet",
+        "label": "Preview historical parent-root pm-schema-006 draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2785,7 +2785,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Stage parent-root pm-schema-006 draft packet",
+        "label": "Stage historical parent-root pm-schema-006 draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2796,7 +2796,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Parent-root pm-schema-006 draft packet staged diff",
+        "label": "Historical parent-root pm-schema-006 draft packet staged diff",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2807,7 +2807,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Preview parent-root pm-schema-005 draft packet",
+        "label": "Preview historical parent-root pm-schema-005 draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2818,7 +2818,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Stage parent-root pm-schema-005 draft packet",
+        "label": "Stage historical parent-root pm-schema-005 draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2829,7 +2829,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Parent-root pm-schema-005 draft packet staged diff",
+        "label": "Historical parent-root pm-schema-005 draft packet staged diff",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2840,7 +2840,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Preview parent-root pm-schema-004 draft packet",
+        "label": "Preview historical parent-root pm-schema-004 draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2851,7 +2851,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Stage parent-root pm-schema-004 draft packet",
+        "label": "Stage historical parent-root pm-schema-004 draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2862,7 +2862,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Parent-root pm-schema-004 draft packet staged diff",
+        "label": "Historical parent-root pm-schema-004 draft packet staged diff",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2873,7 +2873,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Preview parent-root pm-schema-003 draft packet",
+        "label": "Preview historical parent-root pm-schema-003 draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2884,7 +2884,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Stage parent-root pm-schema-003 draft packet",
+        "label": "Stage historical parent-root pm-schema-003 draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2895,7 +2895,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Parent-root pm-schema-003 draft packet staged diff",
+        "label": "Historical parent-root pm-schema-003 draft packet staged diff",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2906,7 +2906,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Preview parent-root pm-schema-002 draft packet",
+        "label": "Preview historical parent-root pm-schema-002 draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2917,7 +2917,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Stage parent-root pm-schema-002 draft packet",
+        "label": "Stage historical parent-root pm-schema-002 draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2928,7 +2928,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Parent-root pm-schema-002 draft packet staged diff",
+        "label": "Historical parent-root pm-schema-002 draft packet staged diff",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2939,7 +2939,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Preview parent-root pm-schema-020e draft packet",
+        "label": "Preview historical parent-root pm-schema-020e draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2950,7 +2950,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Stage parent-root pm-schema-020e draft packet",
+        "label": "Stage historical parent-root pm-schema-020e draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2961,7 +2961,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Parent-root pm-schema-020e draft packet staged diff",
+        "label": "Historical parent-root pm-schema-020e draft packet staged diff",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2972,7 +2972,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Preview parent-root pm-schema-020g-b draft packet",
+        "label": "Preview historical parent-root pm-schema-020g-b draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2983,7 +2983,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Stage parent-root pm-schema-020g-b draft packet",
+        "label": "Stage historical parent-root pm-schema-020g-b draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -2994,7 +2994,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Parent-root pm-schema-020g-b draft packet staged diff",
+        "label": "Historical parent-root pm-schema-020g-b draft packet staged diff",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -3005,7 +3005,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Preview parent-root pm-schema-020e.1 draft packet",
+        "label": "Preview historical parent-root pm-schema-020e.1 draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -3016,7 +3016,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Stage parent-root pm-schema-020e.1 draft packet",
+        "label": "Stage historical parent-root pm-schema-020e.1 draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -3027,7 +3027,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Parent-root pm-schema-020e.1 draft packet staged diff",
+        "label": "Historical parent-root pm-schema-020e.1 draft packet staged diff",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -3038,7 +3038,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Preview parent-root pm-schema-020g-a draft packet",
+        "label": "Preview historical parent-root pm-schema-020g-a draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -3049,7 +3049,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Stage parent-root pm-schema-020g-a draft packet",
+        "label": "Stage historical parent-root pm-schema-020g-a draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -3060,7 +3060,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Parent-root pm-schema-020g-a draft packet staged diff",
+        "label": "Historical parent-root pm-schema-020g-a draft packet staged diff",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -3071,7 +3071,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Preview parent-root pm-schema-020e.2 draft packet",
+        "label": "Preview historical parent-root pm-schema-020e.2 draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -3082,7 +3082,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Stage parent-root pm-schema-020e.2 draft packet",
+        "label": "Stage historical parent-root pm-schema-020e.2 draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -3093,7 +3093,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Parent-root pm-schema-020e.2 draft packet staged diff",
+        "label": "Historical parent-root pm-schema-020e.2 draft packet staged diff",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -3104,7 +3104,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Preview parent-root pm-schema-020h draft packet",
+        "label": "Preview historical parent-root pm-schema-020h draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -3115,7 +3115,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Stage parent-root pm-schema-020h draft packet",
+        "label": "Stage historical parent-root pm-schema-020h draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -3126,7 +3126,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Parent-root pm-schema-020h draft packet staged diff",
+        "label": "Historical parent-root pm-schema-020h draft packet staged diff",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -3137,7 +3137,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Preview parent-root pm-schema-ui-002e draft packet",
+        "label": "Preview historical parent-root pm-schema-ui-002e draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -3148,7 +3148,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Stage parent-root pm-schema-ui-002e draft packet",
+        "label": "Stage historical parent-root pm-schema-ui-002e draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -3159,7 +3159,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Parent-root pm-schema-ui-002e draft packet staged diff",
+        "label": "Historical parent-root pm-schema-ui-002e draft packet staged diff",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -3170,7 +3170,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Preview parent-root pm-schema-ui-002f draft packet",
+        "label": "Preview historical parent-root pm-schema-ui-002f draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -3181,7 +3181,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Stage parent-root pm-schema-ui-002f draft packet",
+        "label": "Stage historical parent-root pm-schema-ui-002f draft packet",
         "type": "shell",
         "command": "pwsh",
         "args": [
@@ -3192,7 +3192,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Parent-root pm-schema-ui-002f draft packet staged diff",
+        "label": "Historical parent-root pm-schema-ui-002f draft packet staged diff",
         "type": "shell",
         "command": "pwsh",
         "args": [
