@@ -1,12 +1,22 @@
 # Olares Developer Host Cutover Milestone Plan
 
 Date: 2026-05-05
-Status: Active planning baseline
+Status: Executed cutover milestone baseline with closeout-routing context
 Scope: program-level milestone plan for making the Olares One the authoritative always-on development workstation while reducing the field laptop to a client-only operator surface
+
+Closeout interpretation note:
+
+The developer-host cutover this plan launched is now materially complete. This document remains the governing milestone baseline for understanding what had to be proven, but it is no longer a live launch plan for an open cutover phase.
+
+Current routing:
+
+1. use `PROJECT_STATUS.md` for the current residue-retirement lane and latest completed packets,
+2. use `docs/architecture/OLARES-DEVELOPER-HOST-CUTOVER-TECHNICAL-PLAN-2026-05-05.md` as the recorded technical cutover baseline, not as a current preflight surface,
+3. use `docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md` for the remaining post-cutover boundary closeout queue.
 
 ## Purpose
 
-This plan converts the current infrastructure constraint into a delivery sequence.
+This plan records the milestone sequence that converted the infrastructure constraint into a governed cutover program.
 
 It now also sets the governing frame for whole-project Apex Ops migration to Olares so methods, governance, and execution posture do not diverge back toward the field laptop.
 
@@ -16,7 +26,7 @@ The Olares One must become the authoritative development workstation before broa
 
 This plan does not itself reopen generic Olares implementation.
 
-It defines the milestone order, acceptance criteria, and exit gates for the cutover phase that now precedes renewed feature delivery.
+It defines the milestone order, acceptance criteria, and exit gates that governed the cutover phase before renewed feature delivery resumed.
 
 ## Constraint Statement
 
@@ -28,11 +38,11 @@ The controlling operational constraint is:
 
 ## Program Decision
 
-The next active program phase is:
+The cutover program phase defined here was:
 
 `Olares Developer Residency / Developer-Host Cutover`
 
-This phase precedes resumed feature delivery.
+This phase preceded resumed feature delivery.
 
 It is not a side lane. It is the current whole-project operating discipline until split-residency practices are retired.
 
@@ -131,9 +141,9 @@ Use this order:
 
 Do not reverse that order.
 
-## Immediate Next Step
+## Historical Immediate Next Step
 
-The smallest truthful next move is a bounded cutover preflight and execution-planning packet.
+At the time this plan was written, the smallest truthful next move was a bounded cutover preflight and execution-planning packet.
 
 That packet should:
 

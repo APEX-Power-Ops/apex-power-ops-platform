@@ -1,13 +1,23 @@
 # Olares Developer Host Cutover Milestone 1 Acceptance Checklist
 
 Date: 2026-05-05
-Status: Active audit surface
+Status: Executed Milestone 1 audit baseline with closeout-routing context
 Scope: auditable acceptance checklist for Milestone 1 host residency baseline
+
+Closeout interpretation note:
+
+Milestone 1 host residency is already closed. This checklist remains the audit baseline for what had to be proven, but it is no longer a live gate for opening the cutover lane.
+
+Current routing:
+
+1. use `PROJECT_STATUS.md` for the current residue-retirement lane and latest completed packets,
+2. use `docs\architecture\OLARES-DEVELOPER-HOST-CUTOVER-MILESTONE-PLAN-2026-05-05.md` for the recorded milestone baseline,
+3. use `ops/agents/handoffs/2026-05-05-olares-dev-residency-002-canonical-host-residency-and-toolchain-revalidation-handoff.md` for the actual Milestone 1 evidence record.
 
 ## Purpose
 
-Use this checklist to decide whether Milestone 1 of the Olares developer-host
-cutover is actually satisfied.
+This checklist records how Milestone 1 of the Olares developer-host cutover was
+to be assessed.
 
 Milestone 1 is the host residency baseline.
 
@@ -33,7 +43,7 @@ For each item below, record one of:
 2. `fail`
 3. `not assessed`
 
-Milestone 1 closes only if every required item passes and no failure trigger is
+Milestone 1 closed only if every required item passed and no failure trigger was
 hit.
 
 ## Required Acceptance Items

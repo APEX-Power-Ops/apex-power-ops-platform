@@ -1,12 +1,22 @@
 # Olares Developer Host Cutover Technical Plan
 
 Date: 2026-05-05
-Status: Active planning baseline
+Status: Executed technical cutover baseline with closeout-routing context
 Scope: technical operating model and cutover architecture for making the Olares One the authoritative development host
+
+Closeout interpretation note:
+
+The developer-host cutover this plan describes is now materially complete. This document remains the technical baseline for the host-residency transition, but it is no longer a live pre-cutover planning surface.
+
+Current routing:
+
+1. use `PROJECT_STATUS.md` for the current residue-retirement lane and latest completed packets,
+2. use `docs/authority/OLARES-WORKSPACE-AUTHORITY-FRAMEWORK.md` for the current active authority chain,
+3. use `docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md` for the remaining post-cutover boundary closeout queue.
 
 ## Purpose
 
-This document translates the program decision into a technical cutover shape.
+This document records the technical cutover shape that translated the program decision into an executable host-residency model.
 
 The problem is no longer generic Olares expansion.
 
@@ -23,12 +33,12 @@ The problem is split development residency:
 ### Authoritative Surfaces
 
 1. GitHub remains canonical origin
-2. `C:/APEX Platform` remains the current transitional authoritative publication boundary
-3. `/home/olares/code/apex` is the authoritative host mirror of that parent-root boundary
+2. `C:/APEX Platform/apex-power-ops-platform` is now the canonical local repo boundary
+3. `/home/olares/code/apex/apex-power-ops-platform` is now the authoritative host mirror and implementation surface for the standalone repo boundary
 4. `/home/olares/code/apex/apex-power-ops-platform` is the authoritative host implementation surface
 5. `/home/olares/src/apex-power-ops-platform` remains historical evidence only and is never promoted back to canonical status
 
-During the transition, GitHub and the current parent-root boundary stay canonical, but the operating target is for all durable Apex Ops work patterns to originate from Olares rather than the laptop.
+During the transition captured here, GitHub and the current parent-root boundary stayed canonical. After cutover, GitHub remains canonical while the standalone repo boundary and Olares host implementation root are the controlling operator contract.
 
 ### Role Split
 
@@ -55,7 +65,7 @@ No new lane should adopt a laptop-first durable workflow when an Olares-resident
 
 Use the following host paths as the operating baseline:
 
-1. `~/code/apex` for the parent-root mirror
+1. `~/code/apex` for the host umbrella containing the canonical repo mirror
 2. `~/code/apex/apex-power-ops-platform` for active implementation
 3. `~/apex-data` for mutable development and application data
 4. `~/apex-secrets` for local secret-bearing material not stored in git
@@ -67,7 +77,7 @@ Rules:
 2. no required mutable runtime state should exist only in the git workspace
 3. no new active development should target `/home/olares/src/apex-power-ops-platform`
 
-## Technical Cutover Slices
+## Recorded Technical Cutover Slices
 
 ### Slice A - Host Residency And Path Authority
 
