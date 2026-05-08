@@ -288,7 +288,11 @@ Packet `2026-05-08-olares-dev-residency-209` now closes the adjacent 2026-04-15 
 
 Packet `2026-05-08-olares-dev-residency-210` now closes the adjacent 2026-04-15 PM UI mutation-seam specification packet JSON singleton by hard-demoting `pm-schema-ui-006` into explicit historical provenance with current-routing context, so that file no longer reads like a live mutation-seam API-specification packet after standalone cutover.
 
-The next truthful repo-structure work is therefore a fresh reassessment of any smaller adjacent packet-history surfaces that still read as current after the `pm-schema-ui-006` singleton closure.
+Packet `2026-05-08-olares-dev-residency-211` now closes the adjacent 2026-04-12 PM domain field-matrix packet JSON singleton by hard-demoting `pm-schema-001` into explicit historical provenance with current-routing context, so that file no longer reads like a live PM-domain field-candidate authoring packet after standalone cutover.
+
+Packet `2026-05-08-olares-dev-residency-212` now closes the adjacent 2026-04-12 PM domain lifecycle packet JSON singleton by hard-demoting `pm-schema-002` into explicit historical provenance with current-routing context, so that file no longer reads like a live PM-domain lifecycle-model authoring packet after standalone cutover.
+
+The next truthful repo-structure work is therefore a fresh reassessment of any smaller adjacent packet-history surfaces that still read as current after the `pm-schema-002` singleton closure.
 
 ## 2026 Addendum: Olares Runtime And Private Lane
 

@@ -1,0 +1,45 @@
+{
+  "packet_id": "2026-05-08-olares-dev-residency-211",
+  "title": "PM Domain Field Matrix Draft Packet History Demotion Execution",
+  "objective": "Normalize the remaining live-looking 2026-04-12 PM domain field-matrix packet-definition singleton so that file no longer presents itself as a still-live PM-domain field-candidate authoring packet after standalone repo cutover and instead acts as historical packet provenance with an explicit current-routing redirect.",
+  "domain": "infrastructure-domain",
+  "active_role": "Platform Architect",
+  "dependencies": [
+    "PROJECT_STATUS.md",
+    "docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md",
+    "ops/agents/packets/draft/2026-04-12-pm-schema-001-entity-field-candidate-matrix.json",
+    "ops/agents/packets/draft/2026-05-08-olares-dev-residency-210-pm-ui-mutation-seam-spec-draft-packet-history-demotion-execution.json"
+  ],
+  "dependency_note": "After Packet 210 closed the remaining 2026-04-15 PM UI packet-definition family, the nearest remaining current-looking residue in the older PM draft lane is the foundational `pm-schema-001` field-matrix singleton. Its surrounding packet-history now serves only as provenance, so the packet-definition JSON itself is the strongest adjacent live-looking residue.",
+  "execution_mode": "bounded_pm_domain_field_matrix_draft_packet_history_demotion",
+  "execution_scope": [
+    "Retitle the `pm-schema-001` packet-definition singleton as historical provenance.",
+    "Add explicit `historical_note` and `current_routing` fields to the packet JSON.",
+    "Preserve the original packet body below those top-entry routing fields without reopening runtime, planning, or implementation scope."
+  ],
+  "forbidden_scope": [
+    "runtime or service mutation",
+    "package or lockfile mutation",
+    "repo-boundary reversal",
+    "broad packet-archive rewriting beyond top-entry demotion and routing normalization",
+    "remote rewrite",
+    "rollback, force, reset, or clean",
+    "old-clone mutation or promotion"
+  ],
+  "success_criteria": [
+    "The `pm-schema-001` packet-definition singleton now reads as historical provenance instead of a live PM-domain field-candidate authoring packet.",
+    "The file explicitly routes current readers to `PROJECT_STATUS.md` and the closeout inventory.",
+    "Repo-owned status routing records the closure and leaves no ambiguity about the next remaining adjacent residue check."
+  ],
+  "validation_commands": [
+    "Select-String -Path ops/agents/packets/draft/2026-04-12-pm-schema-001-entity-field-candidate-matrix.json -Pattern 'Historical ','historical_note','current_routing'",
+    "Select-String -Path PROJECT_STATUS.md -Pattern 'Packet `2026-05-08-olares-dev-residency-211`'",
+    "git diff --check"
+  ],
+  "validation_results": {
+    "pm_domain_field_matrix_demoted": "pass",
+    "status_routing_updated": "pass"
+  },
+  "status": "complete",
+  "next_action": "Close the adjacent `pm-schema-002` singleton so the next remaining PM-domain foundational residue is explicit after the `pm-schema-001` closure."
+}
