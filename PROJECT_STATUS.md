@@ -248,7 +248,9 @@ Packet `2026-05-08-olares-dev-residency-189` now closes the remaining earlier 20
 
 Packet `2026-05-08-olares-dev-residency-190` now closes the adjacent parent-root `forms-import` draft-publication handoff residue by hard-demoting that queue-style handoff into explicit historical provenance with current-routing context, so it no longer reads like a live next-packet instruction after standalone cutover.
 
-The next truthful repo-structure work is therefore the next adjacent parent-root draft-publication handoff family, beginning with `apex-unification-001a`, which still reads like a live queue step.
+Packet `2026-05-08-olares-dev-residency-191` now closes the adjacent parent-root `apex-unification-001a` through `001i` draft-publication handoff family by hard-demoting that queue-style unification chain into explicit historical provenance with current-routing context, so those files no longer read like live next-packet instructions after standalone cutover.
+
+The next truthful repo-structure work is therefore the remaining live-looking 2026-04-18 draft packet JSON family, beginning with `pm-schema-020d`, which still reads like an active execution packet after its parent-root handoff chain has already been demoted.
 
 ## 2026 Addendum: Olares Runtime And Private Lane
 

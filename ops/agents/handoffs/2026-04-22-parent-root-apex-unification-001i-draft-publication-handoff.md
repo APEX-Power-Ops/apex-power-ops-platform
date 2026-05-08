@@ -1,9 +1,17 @@
-# Parent-Root Apex-Unification-001I Draft Publication Handoff
+# Historical Parent-Root Apex-Unification-001I Draft Publication Handoff
 ## Date: 2026-04-22
 ## Updated by: GitHub Copilot (GPT-5.4)
 ## Scope: Historical record for the bounded `apex-unification-001i` Supabase frontend-client target-boundary review singleton under `C:/APEX Platform/apex-power-ops-platform`
 
 ## 1. Summary
+
+Historical note: this handoff records one bounded parent-root draft-publication decision from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live queue instruction for current repo operations.
+
+Current routing:
+
+1. use `PROJECT_STATUS.md` for the current residue-retirement lane and latest completed packets,
+2. use `docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md` for the remaining post-cutover boundary closeout queue,
+3. use this handoff only when historical provenance is needed for the earlier parent-root `apex-unification-001i` draft-publication decision.
 
 The unification lineage family was advanced through `apex-unification-001h` before this packet landed.
 
@@ -15,7 +23,7 @@ Publication outcome:
 2. pushed to `origin/clean-main` on 2026-04-22
 3. closed as the published apex-unification `001i` frontend-client target-boundary review tranche
 
-## 2. Why This Packet Is Next
+## 2. Historical Why This Packet Was Next
 
 Measured from the parent git root at `C:/APEX Platform` on 2026-04-22 after the `apex-unification-001h` draft publication:
 
@@ -80,6 +88,6 @@ This lane is packet-definition JSON, so diff discipline matters more than execut
 1. do not widen this packet into frontend movement, app bootstrap changes, or knowledge-import landing work
 2. do not mix this packet with `ops/agents/handoffs`
 
-## 9. Follow-On After This Packet
+## 9. Historical Follow-On After This Packet
 
 If this packet lands cleanly, return the live queue to a post-`apex-unification-001i` remaining-draft reevaluation state rather than fabricating a nonexistent `001j` successor packet under the current live working tree.

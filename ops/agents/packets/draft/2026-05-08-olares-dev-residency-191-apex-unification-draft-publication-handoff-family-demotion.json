@@ -1,0 +1,50 @@
+{
+  "packet_id": "2026-05-08-olares-dev-residency-191",
+  "title": "Apex-Unification Draft Publication Handoff Family Demotion",
+  "objective": "Normalize the parent-root `apex-unification-001a` through `001i` draft-publication handoff family so those files no longer present themselves as still-live queue steps after standalone repo cutover and instead act as historical packet provenance with explicit current-routing redirects.",
+  "domain": "infrastructure-domain",
+  "active_role": "Platform Architect",
+  "dependencies": [
+    "PROJECT_STATUS.md",
+    "ops/agents/handoffs/2026-04-22-parent-root-apex-unification-001a-draft-publication-handoff.md",
+    "ops/agents/handoffs/2026-04-22-parent-root-apex-unification-001b-draft-publication-handoff.md",
+    "ops/agents/handoffs/2026-04-22-parent-root-apex-unification-001c-draft-publication-handoff.md",
+    "ops/agents/handoffs/2026-04-22-parent-root-apex-unification-001d-draft-publication-handoff.md",
+    "ops/agents/handoffs/2026-04-22-parent-root-apex-unification-001e-draft-publication-handoff.md",
+    "ops/agents/handoffs/2026-04-22-parent-root-apex-unification-001f-draft-publication-handoff.md",
+    "ops/agents/handoffs/2026-04-22-parent-root-apex-unification-001g-draft-publication-handoff.md",
+    "ops/agents/handoffs/2026-04-22-parent-root-apex-unification-001h-draft-publication-handoff.md",
+    "ops/agents/handoffs/2026-04-22-parent-root-apex-unification-001i-draft-publication-handoff.md",
+    "docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md",
+    "ops/agents/handoffs/2026-05-08-olares-dev-residency-190-forms-import-draft-publication-handoff-demotion-handoff.md"
+  ],
+  "dependency_note": "After Packet 190 closed the adjacent parent-root forms-import draft-publication handoff residue, the remaining live-looking parent-root draft-publication handoffs collapsed into one coherent unification chain from `apex-unification-001a` through `001i`. Each file already carried historical scope wording, but the titles, summary framing, `Why This Packet Is Next`, and follow-on sections still read like active queue instructions.",
+  "execution_mode": "bounded_draft_publication_handoff_family_demotion",
+  "execution_scope": [
+    "Retitle the apex-unification handoff family as historical provenance.",
+    "Add an explicit historical note and current-routing block to each handoff.",
+    "Relabel the live queue headings and present-tense queue wording without rewriting the full historical bodies."
+  ],
+  "forbidden_scope": [
+    "runtime or service mutation",
+    "package or lockfile mutation",
+    "repo-boundary reversal",
+    "broad handoff-archive rewriting beyond top-of-file demotion and heading normalization",
+    "remote rewrite",
+    "rollback, force, reset, or clean",
+    "old-clone mutation or promotion"
+  ],
+  "success_criteria": [
+    "The apex-unification draft-publication handoff family now reads as historical provenance instead of live queue steps.",
+    "Each file explicitly routes current readers to `PROJECT_STATUS.md` and the closeout inventory.",
+    "Repo-owned status routing records the closure and makes the next remaining live-looking residue explicit as the 2026-04-18 draft packet JSON family beginning with `pm-schema-020d`."
+  ],
+  "validation_commands": [
+    "Select-String -Path ops/agents/handoffs/2026-04-22-parent-root-apex-unification-001*-draft-publication-handoff.md -Pattern '^# Historical Parent-Root Apex-Unification-001[A-I] Draft Publication Handoff$','^Historical note: this handoff records one bounded parent-root draft-publication decision from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07\\..*','^Current routing:$','^## 2\\. Historical Why This Packet Was Next$','^## 9\\. Historical Follow-On After This Packet$'",
+    "Select-String -Path ops/agents/handoffs/2026-04-22-parent-root-apex-unification-001*-draft-publication-handoff.md -Pattern '^# Parent-Root Apex-Unification-001[A-I] Draft Publication Handoff$','^## 2\\. Why This Packet Is Next$','^## 9\\. Follow-On After This Packet$'",
+    "Select-String -Path PROJECT_STATUS.md -Pattern 'Packet `2026-05-08-olares-dev-residency-191`'",
+    "git diff --check"
+  ],
+  "status": "complete",
+  "next_action": "Continue residue reassessment on the remaining live-looking 2026-04-18 draft packet JSON family, starting with `ops/agents/packets/draft/2026-04-18-pm-schema-020d-p6-baseline-xer-parser-and-loader-wiring.json`."
+}
