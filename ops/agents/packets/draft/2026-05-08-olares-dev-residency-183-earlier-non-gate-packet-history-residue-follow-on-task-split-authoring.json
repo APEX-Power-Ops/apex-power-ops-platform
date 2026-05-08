@@ -1,0 +1,46 @@
+{
+  "packet_id": "2026-05-08-olares-dev-residency-183",
+  "title": "Earlier Non-Gate Packet-History Residue Follow-On Task Split Authoring",
+  "objective": "Convert the next remaining earlier 2026-05-06 Olares Dev Residency non-gate packet-history residue into separately executable follow-on packets instead of reopening those earlier decision and execution records as one broad archive-demotion lane.",
+  "domain": "infrastructure-domain",
+  "active_role": "Platform Architect",
+  "dependencies": [
+    "PROJECT_STATUS.md",
+    "docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md",
+    "ops/agents/handoffs/README.md",
+    "ops/agents/handoffs/2026-05-06-olares-dev-residency-062-host-resident-developer-workflow-hardening-planning-handoff.md",
+    "ops/agents/handoffs/2026-05-06-olares-dev-residency-065-post-064-workspace-authority-consolidation-decision-handoff.md",
+    "ops/agents/handoffs/2026-05-06-olares-dev-residency-068-post-067-root-entrypoint-routing-follow-on-decision-handoff.md",
+    "ops/agents/handoffs/2026-05-06-olares-dev-residency-071-post-070-host-workflow-hardening-dormancy-decision-handoff.md",
+    "ops/agents/handoffs/2026-05-06-olares-dev-residency-076-post-075-pm-operating-cockpit-and-authority-reference-realignment-decision-handoff.md",
+    "ops/agents/handoffs/2026-05-06-olares-dev-residency-079-pm-cockpit-frontier-state-sync-execution-handoff.md"
+  ],
+  "dependency_note": "After Packet 182, the remaining earlier 2026-05-06 residue no longer centers on publication gates. The next current-looking surfaces are the non-gate decision and execution records inside the same two branches already used for Packet 180: the host-workflow/workspace-authority branch around Packets 062, 063, 065, 066, 068, and 071, and the roadmap/PM-cockpit branch around Packets 073, 074, 076, 077, 079, and 081. This packet authors those follow-ons separately so the remaining residue stays bounded by branch rather than being reopened as one broad 2026-05-06 archive rewrite.",
+  "authoring_scope": [
+    "Create a ready execution packet for the earlier host-workflow and workspace-authority decision/execution family.",
+    "Create a ready execution packet for the earlier roadmap and PM-cockpit decision/execution family.",
+    "Update repo-owned status routing so the split is explicit and the next work can proceed as separate residue slices."
+  ],
+  "forbidden_scope": [
+    "editing the historical target non-gate files themselves in this authoring packet",
+    "runtime or service mutation",
+    "package or lockfile mutation",
+    "repo-boundary reversal",
+    "broad 2026-05-06 archive rewriting",
+    "remote rewrite",
+    "rollback, force, reset, or clean",
+    "old-clone mutation or promotion"
+  ],
+  "success_criteria": [
+    "A ready packet spec exists for the earlier host-workflow and workspace-authority decision/execution family.",
+    "A ready packet spec exists for the earlier roadmap and PM-cockpit decision/execution family.",
+    "PROJECT_STATUS.md records the split so the next lane is explicit and bounded."
+  ],
+  "validation_commands": [
+    "Select-String -Path ops/agents/packets/draft/2026-05-08-olares-dev-residency-184-earlier-host-workflow-and-workspace-authority-history-demotion-execution.json,ops/agents/packets/draft/2026-05-08-olares-dev-residency-185-earlier-roadmap-and-pm-cockpit-history-demotion-execution.json -Pattern '\"packet_id\": \"2026-05-08-olares-dev-residency-184\"','\"packet_id\": \"2026-05-08-olares-dev-residency-185\"','\"status\": \"ready\"'",
+    "Select-String -Path PROJECT_STATUS.md -Pattern 'Packet `2026-05-08-olares-dev-residency-183`'",
+    "git diff --check"
+  ],
+  "status": "complete",
+  "next_action": "Execute Packet 184 or Packet 185 next. If both are needed, keep them as separate residue slices."
+}

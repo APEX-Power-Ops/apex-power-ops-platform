@@ -1,0 +1,55 @@
+{
+  "packet_id": "2026-05-08-olares-dev-residency-184",
+  "title": "Earlier Host-Workflow And Workspace-Authority History Demotion Execution",
+  "objective": "Hard-demote the remaining earlier 2026-05-06 Olares Dev Residency host-workflow and workspace-authority decision/execution records so those records no longer read like live next-slice or operator guidance for the standalone repo boundary.",
+  "domain": "infrastructure-domain",
+  "active_role": "Platform Architect",
+  "dependencies": [
+    "PROJECT_STATUS.md",
+    "docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md",
+    "ops/agents/handoffs/README.md",
+    "ops/agents/handoffs/2026-05-08-olares-dev-residency-183-earlier-non-gate-packet-history-residue-follow-on-task-split-authoring-handoff.md",
+    "ops/agents/packets/draft/2026-05-06-olares-dev-residency-062-host-resident-developer-workflow-hardening-planning.json",
+    "ops/agents/handoffs/2026-05-06-olares-dev-residency-062-host-resident-developer-workflow-hardening-planning-handoff.md",
+    "ops/agents/packets/draft/2026-05-06-olares-dev-residency-063-host-bootstrap-status-operator-surface-execution.json",
+    "ops/agents/handoffs/2026-05-06-olares-dev-residency-063-host-bootstrap-status-operator-surface-execution-handoff.md",
+    "ops/agents/packets/draft/2026-05-06-olares-dev-residency-065-post-064-workspace-authority-consolidation-decision.json",
+    "ops/agents/handoffs/2026-05-06-olares-dev-residency-065-post-064-workspace-authority-consolidation-decision-handoff.md",
+    "ops/agents/packets/draft/2026-05-06-olares-dev-residency-066-current-olares-workspace-authority-surface-execution.json",
+    "ops/agents/handoffs/2026-05-06-olares-dev-residency-066-current-olares-workspace-authority-surface-execution-handoff.md",
+    "ops/agents/packets/draft/2026-05-06-olares-dev-residency-068-post-067-root-entrypoint-routing-follow-on-decision.json",
+    "ops/agents/handoffs/2026-05-06-olares-dev-residency-068-post-067-root-entrypoint-routing-follow-on-decision-handoff.md",
+    "ops/agents/packets/draft/2026-05-06-olares-dev-residency-071-post-070-host-workflow-hardening-dormancy-decision.json",
+    "ops/agents/handoffs/2026-05-06-olares-dev-residency-071-post-070-host-workflow-hardening-dormancy-decision-handoff.md"
+  ],
+  "dependency_note": "After Packet 183, the smallest remaining earlier 2026-05-06 non-gate branch is the host-workflow and workspace-authority decision/execution family: the host workflow planning and execution records, the workspace-authority decision and execution records, the root-entrypoint follow-on decision, and the lane dormancy decision. Those records preserve already-closed branch evidence, but their titles and top sections still read like live next-slice or operator guidance instead of historical provenance.",
+  "execution_mode": "bounded_earlier_host_workflow_and_workspace_authority_history_demotion",
+  "execution_scope": [
+    "Retitle the six targeted Olares Dev Residency handoffs as historical host-workflow/workspace-authority records and add explicit current-routing blocks.",
+    "Retitle the six targeted Olares Dev Residency packet JSON titles as historical records and add explicit historical-note and current-routing fields.",
+    "Preserve the decision, execution, and observed-state evidence as provenance rather than rewriting the historical records wholesale."
+  ],
+  "forbidden_scope": [
+    "runtime or service mutation",
+    "package or lockfile mutation",
+    "repo-boundary reversal",
+    "broad 2026-05-06 archive rewriting beyond top-entry demotion and routing context",
+    "remote rewrite",
+    "rollback, force, reset, or clean",
+    "old-clone mutation or promotion",
+    "roadmap or PM-cockpit history normalization in the same packet"
+  ],
+  "success_criteria": [
+    "Each targeted host-workflow/workspace-authority handoff now leads as a historical record instead of live next-slice guidance.",
+    "Each targeted packet JSON now carries explicit historical-note and current-routing context instead of reading like a still-live decision or execution definition.",
+    "Repo-owned status routing records the family closure and leaves the roadmap/PM-cockpit family separate if still untouched."
+  ],
+  "validation_commands": [
+    "Select-String -Path ops/agents/handoffs/2026-05-06-olares-dev-residency-062-host-resident-developer-workflow-hardening-planning-handoff.md,ops/agents/handoffs/2026-05-06-olares-dev-residency-063-host-bootstrap-status-operator-surface-execution-handoff.md,ops/agents/handoffs/2026-05-06-olares-dev-residency-065-post-064-workspace-authority-consolidation-decision-handoff.md,ops/agents/handoffs/2026-05-06-olares-dev-residency-066-current-olares-workspace-authority-surface-execution-handoff.md,ops/agents/handoffs/2026-05-06-olares-dev-residency-068-post-067-root-entrypoint-routing-follow-on-decision-handoff.md,ops/agents/handoffs/2026-05-06-olares-dev-residency-071-post-070-host-workflow-hardening-dormancy-decision-handoff.md -Pattern '^# Historical Olares Dev Residency','^Current routing:'",
+    "Select-String -Path ops/agents/packets/draft/2026-05-06-olares-dev-residency-062-host-resident-developer-workflow-hardening-planning.json,ops/agents/packets/draft/2026-05-06-olares-dev-residency-063-host-bootstrap-status-operator-surface-execution.json,ops/agents/packets/draft/2026-05-06-olares-dev-residency-065-post-064-workspace-authority-consolidation-decision.json,ops/agents/packets/draft/2026-05-06-olares-dev-residency-066-current-olares-workspace-authority-surface-execution.json,ops/agents/packets/draft/2026-05-06-olares-dev-residency-068-post-067-root-entrypoint-routing-follow-on-decision.json,ops/agents/packets/draft/2026-05-06-olares-dev-residency-071-post-070-host-workflow-hardening-dormancy-decision.json -Pattern '\"title\": \"Historical ','\"historical_note\":','\"current_routing\":'",
+    "Select-String -Path PROJECT_STATUS.md -Pattern 'Packet `2026-05-08-olares-dev-residency-184`'",
+    "git diff --check"
+  ],
+  "status": "ready",
+  "next_action": "Execute this packet as the earlier host-workflow/workspace-authority non-gate history slice, then reassess whether Packet 185 remains the next truthful adjacent lane."
+}
