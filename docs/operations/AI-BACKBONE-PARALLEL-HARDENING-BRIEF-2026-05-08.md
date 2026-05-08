@@ -10,6 +10,12 @@ This brief defines the safest adjacent hardening slice that can run in parallel 
 
 It exists to keep the backbone trustworthy without forcing the scaffold pass to also solve runtime-hardening semantics in the same edit slice.
 
+Use this brief with:
+
+1. `APEX-JOBS-TRUST-AND-PROMOTION-CONTRACT-2026-05-08.md`
+2. `AI-BACKBONE-CANARY-EVIDENCE-BUNDLE-2026-05-08.md`
+3. `../authority/OLARES-AI-BACKBONE-FRAMEWORK-2026-05-08.md`
+
 ## Parallel Hardening Objectives
 
 The parallel hardening lane may author or tighten only these contract areas:

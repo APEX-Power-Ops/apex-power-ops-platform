@@ -35,10 +35,16 @@
     "The hardening lane does not silently expand into a scaffold or runtime rollout packet."
   ],
   "validation_commands": [
-    "git diff --check",
-    "Select-String -Path docs/operations/AI-BACKBONE-PARALLEL-HARDENING-BRIEF-2026-05-08.md -Pattern '^## Parallel Hardening Objectives$','^## Coordination Rules$'",
-    "Run the smallest truthful trust-boundary or canary checks added by the hardening slice before widening the edit surface again."
+    "Select-String -Path docs/operations/APEX-JOBS-TRUST-AND-PROMOTION-CONTRACT-2026-05-08.md -Pattern '^# Apex Jobs Trust And Promotion Contract$','^## Env Contract$','^## Promotion Gate Contract$'",
+    "Select-String -Path docs/operations/AI-BACKBONE-CANARY-EVIDENCE-BUNDLE-2026-05-08.md -Pattern '^# AI Backbone Canary Evidence Bundle$','^## Minimum Backbone Evidence Bundle$','^## MCP Boundary Rules$'",
+    "python tools/ai/verify_minimal_mcp_trio.py --packet-id 2026-05-08-olares-dev-residency-172",
+    "git diff --check"
   ],
-  "status": "ready",
-  "next_action": "Execute the hardening slice independently, preferring docs, tests, and bounded validation surfaces before shared implementation edits."
+  "execution_result": {
+    "trust_contract_published": "pass",
+    "canary_evidence_bundle_published": "pass",
+    "promotion_guard_verification": "pass"
+  },
+  "status": "complete",
+  "next_action": "Keep the hardening contract and evidence bundle in force while Packet 171 proceeds independently; any later runtime or service widening still requires a separate decision packet."
 }

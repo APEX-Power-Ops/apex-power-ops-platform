@@ -5,6 +5,7 @@ import json
 import os
 import sys
 import urllib.request
+import uuid
 from pathlib import Path
 from typing import Any
 
@@ -105,6 +106,21 @@ def main() -> int:
 
         jobs_tools = initialize_and_list(args.jobs_url)
         summary["checks"]["jobs_tools"] = {"status": "pass", "tools": jobs_tools}
+        promote_probe_packet_id = f"{args.packet_id}-promote-guard-{uuid.uuid4().hex[:8]}"
+        try:
+            call_tool(args.jobs_url, "promote_packet", {"packet_id": promote_probe_packet_id})
+            raise RuntimeError(
+                "promote_packet unexpectedly succeeded without any successful env=host run on record"
+            )
+        except RuntimeError as error:
+            detail = str(error)
+            if "no successful env=host run is on record" not in detail:
+                raise
+            summary["checks"]["jobs_promote_guard"] = {
+                "status": "pass",
+                "packet_id": promote_probe_packet_id,
+                "detail": detail,
+            }
         started = call_tool(
             args.jobs_url,
             "start_run",
