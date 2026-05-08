@@ -198,6 +198,8 @@ Packet `2026-05-08-olares-dev-residency-164` now closes the next adjacent draft-
 
 Packet `2026-05-08-olares-dev-residency-165` now closes the next adjacent draft-publication handoff demotion slice by reclassifying the parent-root `pm-schema-020g-b` draft-publication handoff as historical provenance instead of a still-live queue step.
 
+Packet `2026-05-08-olares-dev-residency-166` now closes the next adjacent draft-publication handoff demotion slice by reclassifying the parent-root `001af` draft-publication handoff as historical provenance instead of a still-live queue step.
+
 The next truthful repo-structure work is therefore the remaining deeper provenance-routing and residue-retirement work in older individual handoff records and packet-history index surfaces that still preserve pre-cutover operator wording without equivalent current-routing context.
 
 ## 2026 Addendum: Olares Runtime And Private Lane
