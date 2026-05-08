@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-04-15-pm-schema-ui-001",
-  "title": "PM Schema V2 UI Field Apparatus Workflow Prototype Design",
+  "title": "Historical PM Schema V2 UI Field Apparatus Workflow Prototype Design",
+  "historical_note": "This packet records one bounded PM UI field-apparatus workflow prototype-design slice from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live execution instruction for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this packet JSON only when historical provenance is needed for the earlier `pm-schema-ui-001` field-apparatus workflow prototype-design slice"
+  ],
   "objective": "Define the first bounded field apparatus workflow prototype for PM Schema V2 using the governed apparatus-centric, offline-aware, controlled-mutation model without implementing runtime code, reopening PM schema design, or ratifying the final UI stack.",
   "domain": "pm-ui-domain",
   "active_role": "PM UI Field Apparatus Workflow Prototype Designer",
