@@ -1,0 +1,44 @@
+{
+  "packet_id": "2026-05-08-olares-dev-residency-165",
+  "title": "PM-Schema-020G-B Handoff Demotion",
+  "objective": "Normalize the parent-root `pm-schema-020g-b` draft-publication handoff so it no longer presents itself as a still-live queue step after standalone repo cutover and instead acts as historical packet provenance with explicit current-routing redirects.",
+  "domain": "infrastructure-domain",
+  "active_role": "Platform Architect",
+  "dependencies": [
+    "PROJECT_STATUS.md",
+    "ops/agents/handoffs/2026-04-22-parent-root-pm-schema-020g-b-draft-publication-handoff.md",
+    "docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md",
+    "ops/agents/handoffs/2026-05-08-olares-dev-residency-164-pm-schema-020e-handoff-demotion-handoff.md"
+  ],
+  "dependency_note": "After Packet 164 demoted the parent-root `pm-schema-020e` draft-publication handoff, the adjacent `pm-schema-020g-b` handoff remained the last same-family `020*` survivor identified by the reevaluation step. Its scope line was already historical, but the title, summary wording, `Why This Packet Is Next`, and follow-on section still read like a live queue step.",
+  "execution_mode": "bounded_draft_publication_handoff_demotion",
+  "execution_scope": [
+    "Retitle the pm-schema-020g-b draft-publication handoff as historical provenance.",
+    "Add an explicit historical note and current-routing block.",
+    "Relabel the live queue headings and present-tense queue wording without rewriting the full historical body."
+  ],
+  "forbidden_scope": [
+    "runtime or service mutation",
+    "package or lockfile mutation",
+    "repo-boundary reversal",
+    "broad handoff-archive rewriting beyond top-of-file demotion and heading normalization",
+    "remote rewrite",
+    "rollback, force, reset, or clean",
+    "old-clone mutation or promotion"
+  ],
+  "success_criteria": [
+    "The pm-schema-020g-b draft-publication handoff now reads as historical provenance instead of a live queue step.",
+    "The file explicitly routes current readers to `PROJECT_STATUS.md` and the closeout inventory.",
+    "Repo-owned status routing records the closure and truthfully captures that the next move is a broader cross-family backlog re-evaluation rather than another automatic `020*` slice."
+  ],
+  "validation_commands": [
+    "Select-String -Path ops/agents/handoffs/2026-04-22-parent-root-pm-schema-020g-b-draft-publication-handoff.md -Pattern '^# Historical Parent-Root PM-Schema-020G-B Draft Publication Handoff$','^Historical note: this handoff records one bounded parent-root draft-publication decision from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07\\..*','^Current routing:$','^## 2\\. Historical Why This Packet Was Next$','^## 9\\. Historical Follow-On After This Packet$'",
+    "Select-String -Path ops/agents/handoffs/2026-04-22-parent-root-pm-schema-020g-b-draft-publication-handoff.md -Pattern '^# Parent-Root PM-Schema-020G-B Draft Publication Handoff$','^## 2\\. Why This Packet Is Next$','^## 9\\. Follow-On After This Packet$'"
+  ],
+  "validation_results": {
+    "pm_schema_020gb_handoff_demotion": "pass",
+    "live_queue_markers": "cleared"
+  },
+  "status": "complete",
+  "next_action": "Re-evaluate the remaining cross-family draft-publication backlog and identify the next truthful adjacent current-looking residue surface before continuing the demotion lane."
+}
