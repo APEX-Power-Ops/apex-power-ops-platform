@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-04-14-pm-schema-012f",
-  "title": "PM Work Identity-Joined Read Surface",
+  "title": "Historical PM Work Identity-Joined Read Surface",
+  "historical_note": "This packet records one bounded PM identity-joined read-surface slice from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live execution instruction for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this packet JSON only when historical provenance is needed for the earlier `pm-schema-012f` PM identity-joined read-surface slice"
+  ],
   "objective": "Populate the existing PM/work read contracts with identity-backed display names by wiring bounded eager-load and query or serialization updates into the four existing GET handlers for the six active identity relationships without adding endpoints, changing schemas, or broadening write-side runtime scope.",
   "domain": "pm-domain",
   "active_role": "PM Identity-Joined Read Surface Author",
