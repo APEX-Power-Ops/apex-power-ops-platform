@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-05-03-olares-phase-5-010",
-  "title": "Parent-Root Publication And Host Mirror Sync Gate",
+  "title": "Historical Parent-Root Publication And Host Mirror Sync Gate",
+  "historical_note": "This packet records one bounded Olares Phase 5 parent-root publication and host-mirror synchronization slice from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live execution instruction for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this packet JSON only when historical provenance is needed for the earlier `olares-phase-5-010` parent-root publication and host-mirror synchronization slice"
+  ],
   "objective": "Execute the bounded repo-parity follow-through authorized by Packet 009 by publishing the approved Phase 5 authority set through the parent git root at `C:/APEX Platform` and synchronizing `/home/olares/code/apex` to the resulting GitHub-canonical commit without opening migration, mutating the preserved old clone, or widening scope into services, hosting, or AI-expansion work.",
   "domain": "infrastructure-domain",
   "active_role": "Olares Parent-Root Publication And Host Mirror Sync Operator",
