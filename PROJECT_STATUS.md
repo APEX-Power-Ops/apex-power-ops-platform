@@ -356,7 +356,11 @@ Packet `2026-05-08-olares-dev-residency-243` now closes the adjacent 2026-04-14 
 
 Packet `2026-05-08-olares-dev-residency-244` now closes the adjacent 2026-04-14 PM work-package write-response enrichment packet JSON singleton by hard-demoting `pm-schema-013j` into explicit historical provenance with current-routing context, so that file no longer reads like a live PM work-package response-enrichment packet after standalone cutover.
 
-The next truthful repo-structure work is therefore a fresh reassessment of any smaller adjacent packet-history surfaces that still read as current after the `pm-schema-013j` singleton closure.
+Packet `2026-05-08-olares-dev-residency-245` now closes the adjacent 2026-04-14 PM task write-surface packet JSON singleton by hard-demoting `pm-schema-014` into explicit historical provenance with current-routing context, so that file no longer reads like a live PM task write packet after standalone cutover.
+
+Packet `2026-05-08-olares-dev-residency-246` now closes the adjacent 2026-04-14 PM task write-surface integration-smoke packet JSON singleton by hard-demoting `pm-schema-014i` into explicit historical provenance with current-routing context, so that file no longer reads like a live PM task integration-smoke packet after standalone cutover.
+
+The next truthful repo-structure work is therefore a fresh reassessment of any smaller adjacent packet-history surfaces that still read as current after the `pm-schema-014i` singleton closure.
 
 ## 2026 Addendum: Olares Runtime And Private Lane
 

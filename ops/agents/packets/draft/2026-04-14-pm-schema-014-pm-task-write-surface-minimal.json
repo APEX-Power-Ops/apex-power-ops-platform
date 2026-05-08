@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-04-14-pm-schema-014",
-  "title": "PM Task Write Surface (Minimal)",
+  "title": "Historical PM Task Write Surface (Minimal)",
+  "historical_note": "This packet records one bounded PM task write-surface slice from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live execution instruction for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this packet JSON only when historical provenance is needed for the earlier `pm-schema-014` PM task write-surface slice"
+  ],
   "objective": "Implement the next bounded task write runtime slice by adding create and update contracts, minimal mutation services, and POST/PATCH endpoints for work.tasks only, reusing the proven packet-013 validation posture for intra-work references while preserving all non-task PM entities as read-only.",
   "domain": "pm-domain",
   "active_role": "PM Task Write API Author",
