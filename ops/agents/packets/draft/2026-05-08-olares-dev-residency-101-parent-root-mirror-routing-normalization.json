@@ -1,0 +1,48 @@
+{
+  "packet_id": "2026-05-08-olares-dev-residency-101",
+  "title": "Parent-Root Mirror Routing Normalization",
+  "objective": "Normalize the still-current-looking parent-root umbrella entry surfaces after standalone repo cutover so the surrounding `C:/APEX Platform` shell is explicitly historical or umbrella-only rather than a competing current operator boundary.",
+  "domain": "infrastructure-domain",
+  "active_role": "Platform Architect",
+  "dependencies": [
+    "PROJECT_STATUS.md",
+    "README.md",
+    "PROJECT_OVERVIEW.md",
+    ".claude/TASK_GIT_COMMIT_2026-01-07.md",
+    "ops/agents/handoffs/2026-05-08-olares-dev-residency-100-post-cutover-current-truth-authority-normalization-handoff.md"
+  ],
+  "dependency_note": "Packet 100 corrected the repo-owned current-truth authority chain inside the standalone repo boundary. The next adjacent defect sat outside that chain in the parent-root umbrella shell: the top-level README and aligned mirror docs still presented the retired parent root too close to current operator truth, and one surviving `.claude` task note still lacked explicit historical framing.",
+  "execution_mode": "bounded_parent_root_mirror_normalization",
+  "execution_scope": [
+    "Update only the parent-root umbrella README and aligned overview/status mirrors that still need explicit historical or umbrella framing after cutover.",
+    "Add historical framing to the surviving parent-root `.claude` git-task note.",
+    "Leave deeper packet chronology and older parent-root archives intact except for explicit disclaimers that preserve them as history rather than current routing."
+  ],
+  "forbidden_scope": [
+    "runtime or service mutation",
+    "package or lockfile mutation",
+    "repo-boundary reversal",
+    "historical packet chronology rewriting",
+    "remote rewrite",
+    "rollback, force, reset, or clean",
+    "old-clone mutation or promotion"
+  ],
+  "success_criteria": [
+    "The parent-root README, overview, and status entry sections no longer present `C:/APEX Platform` as the live publication boundary for active Apex Ops repo work.",
+    "The parent-root status mirror explicitly marks the preserved packet chronology as historical state rather than current boundary guidance.",
+    "The surviving `.claude` task note carries an explicit historical demotion note.",
+    "Repo-owned status routing records the mirror-normalization closure and points the next lane at deeper historical-demotion residue rather than umbrella entry-surface drift."
+  ],
+  "validation_commands": [
+    "Get-Content README.md,PROJECT_OVERVIEW.md,PROJECT_STATUS.md -TotalCount 40 | Select-String -Pattern 'remains the publication boundary','current git publication boundary','remains the canonical publication boundary'",
+    "Select-String -Path PROJECT_STATUS.md -Pattern '^Historical chronology note:'",
+    "Select-String -Path .claude/TASK_GIT_COMMIT_2026-01-07.md -Pattern '^Historical note:'"
+  ],
+  "validation_results": {
+    "parent_root_live_routing_check": "pass in the top live-routing sections of README.md, PROJECT_OVERVIEW.md, and PROJECT_STATUS.md",
+    "parent_root_history_disclaimer": "pass",
+    "claude_task_note": "pass"
+  },
+  "status": "complete",
+  "next_action": "Return repo-foundation routing to the remaining deeper historical-demotion and provenance-routing residue beyond the now-normalized parent-root entry surfaces."
+}

@@ -68,7 +68,9 @@ Packet `2026-05-07-olares-dev-residency-099` now closes the next adjacent repo-f
 
 Packet `2026-05-08-olares-dev-residency-100` now closes the next adjacent current-truth authority-normalization slice by updating the repo overview plus the active Olares authority framework and build guide so they no longer describe the retired parent-root boundary as live repo truth.
 
-The next truthful repo-structure work is therefore the remaining parent-root mirror alignment, historical-demotion, and residue-retirement work that still sits outside the now-normalized repo-owned authority chain.
+Packet `2026-05-08-olares-dev-residency-101` now closes the next adjacent parent-root mirror-alignment slice by updating the top-level workspace README, parent-root overview and status mirrors, and the surviving `.claude` git-task note so the umbrella shell is explicitly historical and no longer presents the retired boundary as current operator truth.
+
+The next truthful repo-structure work is therefore the deeper historical-demotion, provenance-routing, and residue-retirement work that still survives beyond those normalized entry surfaces.
 
 ## 2026 Addendum: Olares Runtime And Private Lane
 
