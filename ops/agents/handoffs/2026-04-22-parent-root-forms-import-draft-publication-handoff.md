@@ -1,9 +1,17 @@
-# Parent-Root Forms-Import Draft Publication Handoff
+# Historical Parent-Root Forms-Import Draft Publication Handoff
 ## Date: 2026-04-22
 ## Updated by: GitHub Copilot (GPT-5.4)
 ## Scope: Historical record for the bounded forms-import draft pair under `C:/APEX Platform/apex-power-ops-platform`
 
 ## 1. Summary
+
+Historical note: this handoff records one bounded parent-root draft-publication decision from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live queue instruction for current repo operations.
+
+Current routing:
+
+1. use `PROJECT_STATUS.md` for the current residue-retirement lane and latest completed packets,
+2. use `docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md` for the remaining post-cutover boundary closeout queue,
+3. use this handoff only when historical provenance is needed for the earlier parent-root forms-import draft-publication decision.
 
 The active shared packages, active app lanes, residual scaffold/doc surfaces, infra-database lane, docs lane, ops knowledge-control-plane registry lane, ops legacy-governance lane, and ops knowledge-resource-operations lane are now published on parent-root `clean-main`.
 
@@ -15,7 +23,7 @@ Publication outcome:
 2. pushed to `origin/clean-main` on 2026-04-22
 3. closed as the published forms-import draft follow-on to the ops knowledge-resource-operations tranche
 
-## 2. Why This Packet Is Next
+## 2. Historical Why This Packet Was Next
 
 Measured from the parent git root at `C:/APEX Platform` on 2026-04-22 after the `ops/knowledge-resource-operations` publication:
 
@@ -85,7 +93,7 @@ This lane is packet-definition JSON, so diff discipline matters more than execut
 3. do not mix this packet with `knowledge/` or `archive/`
 4. do not reopen already-published application, package, scaffold, infra, docs, or earlier `ops/` packets
 
-## 9. Follow-On After This Packet
+## 9. Historical Follow-On After This Packet
 
 If this packet lands cleanly, the next logical lanes are:
 

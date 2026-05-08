@@ -246,7 +246,9 @@ Packet `2026-05-08-olares-dev-residency-188` now closes the remaining earlier 20
 
 Packet `2026-05-08-olares-dev-residency-189` now closes the remaining earlier 2026-05-06 Operations Visibility family by hard-demoting those re-entry, planning, schema-tranche, advisor-boundary, runtime-consumer, and lineage-boundary records into explicit historical provenance with current-routing context, so they no longer read like live next-slice or operator guidance after standalone cutover.
 
-The next truthful repo-structure work is therefore a fresh reassessment of any remaining earlier 2026-05-06 or adjacent packet-history surfaces that still read as current after the `033` through `053` block closure.
+Packet `2026-05-08-olares-dev-residency-190` now closes the adjacent parent-root `forms-import` draft-publication handoff residue by hard-demoting that queue-style handoff into explicit historical provenance with current-routing context, so it no longer reads like a live next-packet instruction after standalone cutover.
+
+The next truthful repo-structure work is therefore the next adjacent parent-root draft-publication handoff family, beginning with `apex-unification-001a`, which still reads like a live queue step.
 
 ## 2026 Addendum: Olares Runtime And Private Lane
 
