@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-04-14-pm-schema-012c",
-  "title": "Identity Seed-Data Population",
+  "title": "Historical Identity Seed-Data Population",
+  "historical_note": "This packet records one bounded identity seed-population slice from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live execution instruction for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this packet JSON only when historical provenance is needed for the earlier `pm-schema-012c` identity seed-population slice"
+  ],
   "objective": "Populate the bounded shared-infra identity tables in staging with the minimum records needed to satisfy existing non-null PM/work identity references, verify zero orphaned references, and prepare for later PM/work identity foreign-key activation without modifying runtime code.",
   "domain": "pm-domain",
   "active_role": "PM Identity Seed-Data Populator",

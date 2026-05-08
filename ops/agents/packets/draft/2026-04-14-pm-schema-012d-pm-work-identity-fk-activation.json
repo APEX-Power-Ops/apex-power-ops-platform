@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-04-14-pm-schema-012d",
-  "title": "PM Work Identity FK Activation",
+  "title": "Historical PM Work Identity FK Activation",
+  "historical_note": "This packet records one bounded PM identity foreign-key-activation slice from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live execution instruction for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this packet JSON only when historical provenance is needed for the earlier `pm-schema-012d` PM identity FK-activation slice"
+  ],
   "objective": "Activate the six deferred PM/work foreign-key constraints from work.work_packages, work.assignments, work.execution_issues, and work.progress_snapshots into the validated and populated identity schema, verify enforcement and regression safety, and produce constraint-activation evidence without modifying table structures beyond those six constraints or implementing runtime code.",
   "domain": "pm-domain",
   "active_role": "PM Identity FK Activation Operator",

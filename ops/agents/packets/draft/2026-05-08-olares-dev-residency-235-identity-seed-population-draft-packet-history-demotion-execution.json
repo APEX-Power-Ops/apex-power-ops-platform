@@ -1,0 +1,45 @@
+{
+  "packet_id": "2026-05-08-olares-dev-residency-235",
+  "title": "Identity Seed Population Draft Packet History Demotion Execution",
+  "objective": "Normalize the remaining live-looking 2026-04-14 identity seed-population packet-definition singleton so that file no longer presents itself as a still-live identity seed-population packet after standalone repo cutover and instead acts as historical packet provenance with an explicit current-routing redirect.",
+  "domain": "infrastructure-domain",
+  "active_role": "Platform Architect",
+  "dependencies": [
+    "PROJECT_STATUS.md",
+    "docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md",
+    "ops/agents/packets/draft/2026-04-14-pm-schema-012c-identity-seed-data-population.json",
+    "ops/agents/packets/draft/2026-05-08-olares-dev-residency-234-identity-ddl-draft-packet-history-demotion-execution.json"
+  ],
+  "dependency_note": "After Packet 234 closed the adjacent `pm-schema-012b` singleton, the nearest remaining current-looking residue in the PM domain draft lane is the successor `pm-schema-012c` identity seed-population singleton. Its surrounding packet-history now serves only as provenance, so the packet-definition JSON itself is the strongest adjacent live-looking residue.",
+  "execution_mode": "bounded_identity_seed_population_draft_packet_history_demotion",
+  "execution_scope": [
+    "Retitle the `pm-schema-012c` packet-definition singleton as historical provenance.",
+    "Add explicit `historical_note` and `current_routing` fields to the packet JSON.",
+    "Preserve the original packet body below those top-entry routing fields without reopening seed population, staging DML, or implementation scope."
+  ],
+  "forbidden_scope": [
+    "runtime or service mutation",
+    "package or lockfile mutation",
+    "repo-boundary reversal",
+    "broad packet-archive rewriting beyond top-entry demotion and routing normalization",
+    "remote rewrite",
+    "rollback, force, reset, or clean",
+    "old-clone mutation or promotion"
+  ],
+  "success_criteria": [
+    "The `pm-schema-012c` packet-definition singleton now reads as historical provenance instead of a live identity seed-population packet.",
+    "The file explicitly routes current readers to `PROJECT_STATUS.md` and the closeout inventory.",
+    "Repo-owned status routing records the closure and leaves no ambiguity about the next remaining adjacent residue check."
+  ],
+  "validation_commands": [
+    "Select-String -Path ops/agents/packets/draft/2026-04-14-pm-schema-012c-identity-seed-data-population.json -Pattern 'Historical ','historical_note','current_routing'",
+    "Select-String -Path PROJECT_STATUS.md -Pattern 'Packet `2026-05-08-olares-dev-residency-235`'",
+    "git diff --check"
+  ],
+  "validation_results": {
+    "identity_seed_population_demoted": "pass",
+    "status_routing_updated": "pass"
+  },
+  "status": "complete",
+  "next_action": "Close the adjacent `pm-schema-012d` singleton so the next remaining PM-domain residue is explicit after the `pm-schema-012c` closure."
+}
