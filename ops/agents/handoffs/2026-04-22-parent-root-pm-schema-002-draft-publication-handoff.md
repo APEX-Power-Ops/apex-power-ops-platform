@@ -1,11 +1,19 @@
-# Parent-Root PM-Schema-002 Draft Publication Handoff
+# Historical Parent-Root PM-Schema-002 Draft Publication Handoff
 ## Date: 2026-04-22
 ## Updated by: GitHub Copilot (GPT-5.4)
 ## Scope: Historical record for the bounded `pm-schema-002` lifecycle and state model singleton under `C:/APEX Platform/apex-power-ops-platform`
 
 ## 1. Summary
 
-The residual foundational PM family remained active after the `pm-schema-001` field matrix publication.
+Historical note: this handoff records one bounded parent-root draft-publication decision from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live queue instruction for current repo operations.
+
+Current routing:
+
+1. use `PROJECT_STATUS.md` for the current residue-retirement lane and latest completed packets,
+2. use `docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md` for the remaining post-cutover boundary closeout queue,
+3. use this handoff only when historical provenance is needed for the earlier parent-root `pm-schema-002` draft-publication decision.
+
+At the time this handoff was recorded, the residual foundational PM family remained active after the `pm-schema-001` field matrix publication.
 
 The next smallest remaining substantive packet was `pm-schema-002`, which staged cleanly at 1 file. It extended the residual foundational PM family through the lifecycle/state model slice and advanced the queue to the adjacent `pm-schema-003` governance packet.
 
@@ -15,7 +23,7 @@ Publication outcome:
 2. pushed to `origin/clean-main` on 2026-04-22
 3. closed as the published pm-schema `002` lifecycle/state tranche
 
-## 2. Why This Packet Is Next
+## 2. Historical Why This Packet Was Next
 
 Measured from the parent git root at `C:/APEX Platform` on 2026-04-22 after the `pm-schema-001` draft publication:
 
@@ -80,6 +88,6 @@ This lane is packet-definition JSON, so diff discipline matters more than execut
 1. do not widen this packet into `pm-schema-003` through `pm-schema-008`, SQL work, or cross-family movement/import packets
 2. do not mix this packet with `ops/agents/handoffs`
 
-## 9. Follow-On After This Packet
+## 9. Historical Follow-On After This Packet
 
-If this packet lands cleanly, queue `pm-schema-003` as the next truthful adjacent foundational follow-on.
+When this packet landed cleanly, the next truthful adjacent foundational follow-on was `pm-schema-003`.
