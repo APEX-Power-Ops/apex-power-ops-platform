@@ -1,8 +1,16 @@
-# Olares Dev Residency 068 - Post-067 Root Entrypoint Routing Follow-On Decision Handoff
+# Historical Olares Dev Residency 068 - Post-067 Root Entrypoint Routing Follow-On Decision Handoff
 
 Date: 2026-05-06
 Status: Complete
 Packet: `2026-05-06-olares-dev-residency-068`
+
+Historical note: this handoff records one earlier Dev Residency decision record from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live root-entry follow-on selector for current repo operations.
+
+Current routing:
+
+1. use `PROJECT_STATUS.md` for the current residue-retirement lane and latest completed packets,
+2. use `docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md` for the remaining post-cutover boundary closeout queue,
+3. use this handoff only when historical provenance is needed for the earlier Dev Residency 068 root-entry follow-on decision record preserved here.
 
 ## Verdict
 

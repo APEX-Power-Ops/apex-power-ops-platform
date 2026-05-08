@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-05-06-olares-dev-residency-066",
-  "title": "Current Olares Workspace Authority Surface Execution",
+  "title": "Historical Current Olares Workspace Authority Surface Execution",
+  "historical_note": "This record preserves one earlier Dev Residency execution slice from before the canonical repo boundary moved to C:/APEX Platform/apex-power-ops-platform on 2026-05-07. It is historical provenance, not a live workspace-authority execution surface for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this record only when historical provenance is needed for the earlier Dev Residency 066 workspace-authority execution slice preserved here"
+  ],
   "objective": "Execute the bounded workspace-authority consolidation slice selected by Packet 065 by adding one current stakeholder-facing Olares workspace authority document and explicitly demoting the older conceptual root workspace docs to historical-reference status.",
   "domain": "infrastructure-domain",
   "active_role": "Platform Architect",
