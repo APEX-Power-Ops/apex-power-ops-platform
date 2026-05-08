@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-04-14-pm-schema-013j",
-  "title": "PM Work-Package Write Response Crew Join Enrichment",
+  "title": "Historical PM Work-Package Write Response Crew Join Enrichment",
+  "historical_note": "This packet records one bounded PM work-package write-response enrichment slice from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live execution instruction for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this packet JSON only when historical provenance is needed for the earlier `pm-schema-013j` PM work-package write-response enrichment slice"
+  ],
   "objective": "Enrich the existing work-package POST and PATCH response path so write responses can surface the already-active identity-backed crew display name for assigned_crew_id without adding endpoints, changing database schema, or broadening PM mutation scope beyond the packet-013 write surface.",
   "domain": "pm-domain",
   "active_role": "PM Work-Package Write Response Enrichment Author",
