@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-04-16-pm-schema-019i",
-  "title": "PM Idempotency Per-Route Ops Breakdown",
+  "title": "Historical PM Idempotency Per-Route Ops Breakdown",
+  "historical_note": "This packet records one bounded PM per-route ops-breakdown slice from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live execution instruction for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this packet JSON only when historical provenance is needed for the earlier `pm-schema-019i` PM idempotency per-route ops-breakdown slice"
+  ],
   "objective": "Implement the smallest bounded follow-on to packet 019h by adding one additional read-only PM ops surface at `GET /api/v1/ops/pm-idempotency/by-route` that reports per-route idempotency inventory and expiry pressure for the existing seven PM POST handlers, while preserving the packet-019 through packet-019h request contract, keeping the work schema registry at 22, keeping `/api/v1/work/*` path count at 15, limiting `/api/v1/ops/*` growth to one new GET endpoint, and avoiding any DDL, any PM write-surface expansion, or any `work.wbs_nodes` writes.",
   "domain": "pm-domain",
   "active_role": "PM Idempotency Per-Route Ops Breakdown Author",
