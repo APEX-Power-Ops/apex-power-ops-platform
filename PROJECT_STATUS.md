@@ -240,7 +240,9 @@ Packet `2026-05-08-olares-dev-residency-185` now closes the remaining earlier 20
 
 Packet `2026-05-08-olares-dev-residency-186` now closes the remaining earlier 2026-05-06 hold-boundary and next-active-lane non-gate family by hard-demoting those regression, hold-decision, operator-surface, portability, live-DSN proof, dormancy, and next-lane records into explicit historical provenance with current-routing context, so they no longer read like live next-slice or operator guidance after standalone cutover.
 
-The next truthful repo-structure work is therefore a fresh reassessment of the remaining earlier 2026-05-06 packet-history block around `033` through `053`, where mutation-seam, AI-boundary, and Operations Visibility records still appear to remain as separate unresolved branches rather than one direct execution family.
+Packet `2026-05-08-olares-dev-residency-187` now converts the remaining earlier 2026-05-06 packet-history residue into two separately executable follow-on packets: Packet `188` for the mutation-seam and AI-boundary transition family across `033` through `041`, and Packet `189` for the Operations Visibility decision/execution family across `042` through `053`, preserving the rule that those earlier records should be normalized by coherent branch rather than reopened as one broad 2026-05-06 rewrite.
+
+The next truthful repo-structure work is therefore to execute Packet `188` or Packet `189` next. If both are needed, keep them as separate residue slices.
 
 ## 2026 Addendum: Olares Runtime And Private Lane
 

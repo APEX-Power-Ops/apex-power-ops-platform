@@ -1,0 +1,67 @@
+{
+  "packet_id": "2026-05-08-olares-dev-residency-189",
+  "title": "Earlier Operations-Visibility History Demotion Execution",
+  "objective": "Hard-demote the remaining earlier 2026-05-06 Olares Dev Residency Operations Visibility decision and execution records so those records no longer read like live next-slice or operator guidance for the standalone repo boundary.",
+  "domain": "infrastructure-domain",
+  "active_role": "Platform Architect",
+  "dependencies": [
+    "PROJECT_STATUS.md",
+    "docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md",
+    "ops/agents/handoffs/README.md",
+    "ops/agents/handoffs/2026-05-08-olares-dev-residency-187-earlier-transition-and-operations-visibility-packet-history-residue-split-authoring-handoff.md",
+    "ops/agents/packets/draft/2026-05-06-olares-dev-residency-042-post-041-operations-visibility-reentry-decision.json",
+    "ops/agents/handoffs/2026-05-06-olares-dev-residency-042-post-041-operations-visibility-reentry-decision-handoff.md",
+    "ops/agents/packets/draft/2026-05-06-olares-dev-residency-043-operations-visibility-post-041-first-bounded-slice-planning.json",
+    "ops/agents/handoffs/2026-05-06-olares-dev-residency-043-operations-visibility-post-041-first-bounded-slice-planning-handoff.md",
+    "ops/agents/packets/draft/2026-05-06-olares-dev-residency-044-bounded-operations-visibility-schema-deployment-preflight-execution.json",
+    "ops/agents/handoffs/2026-05-06-olares-dev-residency-044-bounded-operations-visibility-schema-deployment-preflight-execution-handoff.md",
+    "ops/agents/packets/draft/2026-05-06-olares-dev-residency-045-operations-visibility-schema-tranche-security-invoker-and-advisor-path-remediation.json",
+    "ops/agents/handoffs/2026-05-06-olares-dev-residency-045-operations-visibility-schema-tranche-security-invoker-and-advisor-path-remediation-handoff.md",
+    "ops/agents/packets/draft/2026-05-06-olares-dev-residency-046-supabase-advisor-access-recovery-and-execution-gate-decision.json",
+    "ops/agents/handoffs/2026-05-06-olares-dev-residency-046-supabase-advisor-access-recovery-and-execution-gate-decision-handoff.md",
+    "ops/agents/packets/draft/2026-05-06-olares-dev-residency-047-operations-visibility-schema-tranche-live-execution-and-validation.json",
+    "ops/agents/handoffs/2026-05-06-olares-dev-residency-047-operations-visibility-schema-tranche-live-execution-and-validation-handoff.md",
+    "ops/agents/packets/draft/2026-05-06-olares-dev-residency-048-operations-visibility-runtime-consumption-first-browser-consumer-execution.json",
+    "ops/agents/handoffs/2026-05-06-olares-dev-residency-048-operations-visibility-runtime-consumption-first-browser-consumer-execution-handoff.md",
+    "ops/agents/packets/draft/2026-05-06-olares-dev-residency-049-operations-visibility-source-lineage-drift-boundary-decision-and-annotation.json",
+    "ops/agents/handoffs/2026-05-06-olares-dev-residency-049-operations-visibility-source-lineage-drift-boundary-decision-and-annotation-handoff.md",
+    "ops/agents/packets/draft/2026-05-06-olares-dev-residency-050-operations-visibility-schedule-health-runtime-consumption-execution.json",
+    "ops/agents/handoffs/2026-05-06-olares-dev-residency-050-operations-visibility-schedule-health-runtime-consumption-execution-handoff.md",
+    "ops/agents/packets/draft/2026-05-06-olares-dev-residency-051-operations-visibility-project-apparatus-summary-runtime-consumption-execution.json",
+    "ops/agents/handoffs/2026-05-06-olares-dev-residency-051-operations-visibility-project-apparatus-summary-runtime-consumption-execution-handoff.md",
+    "ops/agents/packets/draft/2026-05-06-olares-dev-residency-052-operations-visibility-apparatus-by-category-runtime-consumption-execution.json",
+    "ops/agents/handoffs/2026-05-06-olares-dev-residency-052-operations-visibility-apparatus-by-category-runtime-consumption-execution-handoff.md",
+    "ops/agents/packets/draft/2026-05-06-olares-dev-residency-053-operations-visibility-blockers-summary-runtime-consumption-execution.json",
+    "ops/agents/handoffs/2026-05-06-olares-dev-residency-053-operations-visibility-blockers-summary-runtime-consumption-execution-handoff.md"
+  ],
+  "dependency_note": "After Packet 187, the other remaining earlier 2026-05-06 branch is the Operations Visibility decision and execution family. Packet 042 reopens the lane, Packet 043 selects the first bounded slice, Packets 044 through 047 carry the schema-tranche and advisor-boundary decisions and executions, Packet 048 lands the first browser consumer, Packet 049 records the lineage-drift boundary, and Packets 050 through 053 land the adjacent runtime consumers. Those records preserve already-closed business-lane evidence, but their titles and top sections still read like live next-slice or operator guidance instead of historical provenance.",
+  "execution_mode": "bounded_earlier_operations_visibility_history_demotion",
+  "execution_scope": [
+    "Retitle the twelve targeted Olares Dev Residency handoffs as historical Operations Visibility records and add explicit current-routing blocks.",
+    "Retitle the twelve targeted Olares Dev Residency packet JSON titles as historical records and add explicit historical-note and current-routing fields.",
+    "Preserve the decision, execution, and observed-state evidence as provenance rather than rewriting the historical records wholesale."
+  ],
+  "forbidden_scope": [
+    "runtime or service mutation",
+    "package or lockfile mutation",
+    "repo-boundary reversal",
+    "broad 2026-05-06 archive rewriting beyond top-entry demotion and routing context",
+    "remote rewrite",
+    "rollback, force, reset, or clean",
+    "old-clone mutation or promotion",
+    "mutation-seam or AI-boundary transition normalization in the same packet"
+  ],
+  "success_criteria": [
+    "Each targeted Operations Visibility handoff now leads as a historical record instead of live next-slice guidance.",
+    "Each targeted packet JSON now carries explicit historical-note and current-routing context instead of reading like a still-live decision or execution definition.",
+    "Repo-owned status routing records the family closure and leaves any remaining adjacent residue for fresh reassessment afterward."
+  ],
+  "validation_commands": [
+    "Select-String -Path ops/agents/handoffs/2026-05-06-olares-dev-residency-042-post-041-operations-visibility-reentry-decision-handoff.md,ops/agents/handoffs/2026-05-06-olares-dev-residency-043-operations-visibility-post-041-first-bounded-slice-planning-handoff.md,ops/agents/handoffs/2026-05-06-olares-dev-residency-044-bounded-operations-visibility-schema-deployment-preflight-execution-handoff.md,ops/agents/handoffs/2026-05-06-olares-dev-residency-045-operations-visibility-schema-tranche-security-invoker-and-advisor-path-remediation-handoff.md,ops/agents/handoffs/2026-05-06-olares-dev-residency-046-supabase-advisor-access-recovery-and-execution-gate-decision-handoff.md,ops/agents/handoffs/2026-05-06-olares-dev-residency-047-operations-visibility-schema-tranche-live-execution-and-validation-handoff.md,ops/agents/handoffs/2026-05-06-olares-dev-residency-048-operations-visibility-runtime-consumption-first-browser-consumer-execution-handoff.md,ops/agents/handoffs/2026-05-06-olares-dev-residency-049-operations-visibility-source-lineage-drift-boundary-decision-and-annotation-handoff.md,ops/agents/handoffs/2026-05-06-olares-dev-residency-050-operations-visibility-schedule-health-runtime-consumption-execution-handoff.md,ops/agents/handoffs/2026-05-06-olares-dev-residency-051-operations-visibility-project-apparatus-summary-runtime-consumption-execution-handoff.md,ops/agents/handoffs/2026-05-06-olares-dev-residency-052-operations-visibility-apparatus-by-category-runtime-consumption-execution-handoff.md,ops/agents/handoffs/2026-05-06-olares-dev-residency-053-operations-visibility-blockers-summary-runtime-consumption-execution-handoff.md -Pattern '^# Historical Olares Dev Residency','^Current routing:'",
+    "Select-String -Path ops/agents/packets/draft/2026-05-06-olares-dev-residency-042-post-041-operations-visibility-reentry-decision.json,ops/agents/packets/draft/2026-05-06-olares-dev-residency-043-operations-visibility-post-041-first-bounded-slice-planning.json,ops/agents/packets/draft/2026-05-06-olares-dev-residency-044-bounded-operations-visibility-schema-deployment-preflight-execution.json,ops/agents/packets/draft/2026-05-06-olares-dev-residency-045-operations-visibility-schema-tranche-security-invoker-and-advisor-path-remediation.json,ops/agents/packets/draft/2026-05-06-olares-dev-residency-046-supabase-advisor-access-recovery-and-execution-gate-decision.json,ops/agents/packets/draft/2026-05-06-olares-dev-residency-047-operations-visibility-schema-tranche-live-execution-and-validation.json,ops/agents/packets/draft/2026-05-06-olares-dev-residency-048-operations-visibility-runtime-consumption-first-browser-consumer-execution.json,ops/agents/packets/draft/2026-05-06-olares-dev-residency-049-operations-visibility-source-lineage-drift-boundary-decision-and-annotation.json,ops/agents/packets/draft/2026-05-06-olares-dev-residency-050-operations-visibility-schedule-health-runtime-consumption-execution.json,ops/agents/packets/draft/2026-05-06-olares-dev-residency-051-operations-visibility-project-apparatus-summary-runtime-consumption-execution.json,ops/agents/packets/draft/2026-05-06-olares-dev-residency-052-operations-visibility-apparatus-by-category-runtime-consumption-execution.json,ops/agents/packets/draft/2026-05-06-olares-dev-residency-053-operations-visibility-blockers-summary-runtime-consumption-execution.json -Pattern '\"title\": \"Historical ','\"historical_note\":','\"current_routing\":'",
+    "Select-String -Path PROJECT_STATUS.md -Pattern 'Packet `2026-05-08-olares-dev-residency-189`'",
+    "git diff --check"
+  ],
+  "status": "ready",
+  "next_action": "Execute this packet as the remaining earlier Operations Visibility residue slice, and keep the mutation-seam and AI-boundary transition family separate."
+}
