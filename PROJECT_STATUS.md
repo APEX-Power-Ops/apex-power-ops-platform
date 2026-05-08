@@ -216,7 +216,9 @@ Packet `2026-05-08-olares-dev-residency-173` now converts the next remaining pro
 
 Packet `2026-05-08-olares-dev-residency-174` now closes the remaining 2026-04-22 parent-root publication and checkpoint handoff family by hard-demoting those records into explicit historical provenance with current-routing blocks, so they no longer read like live operator publication checkpoints for the standalone repo boundary.
 
-The next truthful repo-structure work is therefore Packet `175`, continuing the deeper provenance-routing and residue-retirement lane in the remaining 2026-04-22 reevaluation handoff family that still preserves pre-cutover queue-selection wording without equivalent current-routing context.
+Packet `2026-05-08-olares-dev-residency-175` now closes the remaining 2026-04-22 parent-root reevaluation handoff family by hard-demoting those queue-selection records into explicit historical provenance with current-routing blocks, so they no longer read like a live next-packet selector for the standalone repo boundary.
+
+The next truthful repo-structure work is therefore to reassess the remaining packet-history and provenance-routing surfaces for any individually current-looking historical records that still lack equivalent current-routing context, because the explicit 2026-04-22 parent-root publication/checkpoint family and reevaluation family are now both closed as separate residue slices.
 
 ## 2026 Addendum: Olares Runtime And Private Lane
 
