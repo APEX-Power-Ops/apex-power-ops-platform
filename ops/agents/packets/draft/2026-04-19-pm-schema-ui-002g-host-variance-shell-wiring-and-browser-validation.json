@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-04-19-pm-schema-ui-002g-host",
-  "title": "Variance Shell Wiring And Host Browser Validation",
+  "title": "Historical Variance Shell Wiring And Host Browser Validation",
+  "historical_note": "This packet records one bounded PM UI host-browser-validation execution slice from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live execution instruction for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this packet JSON only when historical provenance is needed for the earlier `pm-schema-ui-002g-host` host-browser-validation execution slice"
+  ],
   "objective": "Promote the sandbox-complete UI-002g variance surface toward a truthful host disposition by wiring VarianceReviewView into the existing PM shell with the smallest coherent index.html change, running the variance route and UI end to end against a populated apex_pm_stage host session, capturing real browser evidence for representative slipping and no-baseline cases, and fixing only the smallest runtime defects required to achieve that host proof without broadening into schedule writes, shell redesign, or unrelated driver and tracer integration work.",
   "domain": "pm-ui-domain",
   "active_role": "PM UI Variance Host Validation Architect",

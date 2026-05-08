@@ -1,0 +1,47 @@
+{
+  "packet_id": "2026-05-08-olares-dev-residency-195",
+  "title": "PM UI Host-Browser-Validation Draft Packet History Demotion Execution",
+  "objective": "Normalize the remaining live-looking 2026-04-19 PM UI host-browser-validation packet-definition JSON trio so those files no longer present themselves as still-live execution packets after standalone repo cutover and instead act as historical packet provenance with explicit current-routing redirects.",
+  "domain": "infrastructure-domain",
+  "active_role": "Platform Architect",
+  "dependencies": [
+    "PROJECT_STATUS.md",
+    "docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md",
+    "ops/agents/packets/draft/2026-04-19-pm-schema-ui-002e-host-drivers-shell-wiring-and-browser-validation.json",
+    "ops/agents/packets/draft/2026-04-19-pm-schema-ui-002f-host-tracer-shell-wiring-and-browser-validation.json",
+    "ops/agents/packets/draft/2026-04-19-pm-schema-ui-002g-host-variance-shell-wiring-and-browser-validation.json",
+    "ops/agents/packets/draft/2026-05-08-olares-dev-residency-194-pm-ui-read-surface-draft-packet-history-demotion-execution.json"
+  ],
+  "dependency_note": "After Packet 194 closed the 2026-04-18 PM UI/read-surface packet-definition lane, the remaining adjacent residue in this branch is isolated to the 2026-04-19 host-browser-validation packet-definition trio from `pm-schema-ui-002e-host` through `pm-schema-ui-002g-host`. The corresponding parent-root handoff lane has already been demoted, so these packet JSONs are now the strongest current-looking residue inside that branch.",
+  "execution_mode": "bounded_pm_ui_host_browser_validation_draft_packet_history_demotion",
+  "execution_scope": [
+    "Retitle the PM UI host-browser-validation packet-definition trio as historical provenance.",
+    "Add explicit `historical_note` and `current_routing` fields to each packet JSON.",
+    "Preserve the original packet bodies below those top-entry routing fields without reopening runtime or implementation scope."
+  ],
+  "forbidden_scope": [
+    "runtime or service mutation",
+    "package or lockfile mutation",
+    "repo-boundary reversal",
+    "broad packet-archive rewriting beyond top-entry demotion and routing normalization",
+    "remote rewrite",
+    "rollback, force, reset, or clean",
+    "old-clone mutation or promotion"
+  ],
+  "success_criteria": [
+    "The PM UI host-browser-validation packet-definition trio now reads as historical provenance instead of live execution packets.",
+    "Each file explicitly routes current readers to `PROJECT_STATUS.md` and the closeout inventory.",
+    "Repo-owned status routing records the closure and leaves no ambiguity about the next remaining adjacent residue check."
+  ],
+  "validation_commands": [
+    "Select-String -Path ops/agents/packets/draft/2026-04-19-pm-schema-ui-002e-host-drivers-shell-wiring-and-browser-validation.json,ops/agents/packets/draft/2026-04-19-pm-schema-ui-002f-host-tracer-shell-wiring-and-browser-validation.json,ops/agents/packets/draft/2026-04-19-pm-schema-ui-002g-host-variance-shell-wiring-and-browser-validation.json -Pattern 'Historical ','historical_note','current_routing'",
+    "Select-String -Path PROJECT_STATUS.md -Pattern 'Packet `2026-05-08-olares-dev-residency-195`'",
+    "git diff --check"
+  ],
+  "validation_results": {
+    "pm_ui_host_browser_validation_family_demoted": "pass",
+    "status_routing_updated": "pass"
+  },
+  "status": "complete",
+  "next_action": "Reassess any smaller adjacent packet-history surfaces that still read as current after the 2026-04-19 PM host-browser-validation trio closure."
+}

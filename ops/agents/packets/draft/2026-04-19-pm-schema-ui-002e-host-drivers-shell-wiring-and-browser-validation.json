@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-04-19-pm-schema-ui-002e-host",
-  "title": "Drivers Shell Wiring And Host Browser Validation",
+  "title": "Historical Drivers Shell Wiring And Host Browser Validation",
+  "historical_note": "This packet records one bounded PM UI host-browser-validation execution slice from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live execution instruction for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this packet JSON only when historical provenance is needed for the earlier `pm-schema-ui-002e-host` host-browser-validation execution slice"
+  ],
   "objective": "Promote the sandbox-complete UI-002e drivers surface toward a truthful host disposition by wiring DriversReviewView into the existing PM shell with the smallest coherent index.html change, running the drivers route and UI end to end against a populated apex_pm_stage host session, capturing real browser evidence for representative critical-pair and multi-hop driver-chain cases, and fixing only the smallest runtime defects required to achieve that host proof without broadening into schedule writes, shell redesign, tracer integration, or unrelated variance work.",
   "domain": "pm-ui-domain",
   "active_role": "PM UI Drivers Host Validation Architect",
