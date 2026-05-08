@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-04-15-pm-schema-ui-001a",
-  "title": "PM Schema V2 UI Field Apparatus Workflow And Seam Co-Implementation",
+  "title": "Historical PM Schema V2 UI Field Apparatus Workflow And Seam Co-Implementation",
+  "historical_note": "This packet records one bounded PM UI field-and-seam implementation slice from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live execution instruction for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this packet JSON only when historical provenance is needed for the earlier `pm-schema-ui-001a` field-and-seam implementation slice"
+  ],
   "objective": "Implement the first working end-to-end PM Schema V2 UI prototype by building the bounded field apparatus workflow together with the mutation seam scaffold defined by UI-006, proving governed Class A and B field mutations, offline queueing, sync replay, idempotency, and conflict surfacing without implementing lead, PM approval, or Gantt surfaces, reopening PM schema design, or enabling direct client writes for controlled operational state.",
   "domain": "pm-ui-domain",
   "active_role": "PM UI Field And Seam Implementation Architect",
