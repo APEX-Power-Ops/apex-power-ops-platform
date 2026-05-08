@@ -408,7 +408,11 @@ Packet `2026-05-08-olares-dev-residency-269` now closes the adjacent 2026-05-03 
 
 Packet `2026-05-08-olares-dev-residency-270` now closes the adjacent 2026-05-03 Olares Phase 5 post-sync workstation-migration readiness reassessment packet JSON singleton by hard-demoting `olares-phase-5-011` into explicit historical provenance with current-routing context, so that file no longer reads like a live Olares post-sync workstation-migration readiness reassessment packet after standalone cutover.
 
-The next truthful repo-structure work is therefore the adjacent `olares-phase-5-012` singleton closure so the next remaining Olares Phase 5 residue is explicit after the `olares-phase-5-011` singleton closure.
+Packet `2026-05-08-olares-dev-residency-271` now closes the adjacent 2026-05-03 Olares Phase 5 bounded workstation-migration trial-planning packet JSON singleton by hard-demoting `olares-phase-5-012` into explicit historical provenance with current-routing context, so that file no longer reads like a live Olares workstation-migration trial-planning packet after standalone cutover.
+
+Packet `2026-05-08-olares-dev-residency-272` now closes the adjacent 2026-05-03 Olares Phase 5 pre-trial authority publication and host-mirror sync packet JSON singleton by hard-demoting `olares-phase-5-013` into explicit historical provenance with current-routing context, so that file no longer reads like a live Olares pre-trial authority-publication and host-mirror sync packet after standalone cutover.
+
+The next truthful repo-structure work is therefore the adjacent `olares-phase-5-014` singleton closure so the next remaining Olares Phase 5 residue is explicit after the `olares-phase-5-013` singleton closure.
 
 ## 2026 Addendum: Olares Runtime And Private Lane
 
