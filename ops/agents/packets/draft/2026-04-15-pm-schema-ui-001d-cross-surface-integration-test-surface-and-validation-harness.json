@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-04-15-pm-schema-ui-001d",
-  "title": "PM Schema V2 UI Cross-Surface Integration Test Surface And Validation Harness",
+  "title": "Historical PM Schema V2 UI Cross-Surface Integration Test Surface And Validation Harness",
+  "historical_note": "This packet records one bounded PM UI cross-surface validation slice from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live execution instruction for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this packet JSON only when historical provenance is needed for the earlier `pm-schema-ui-001d` cross-surface validation slice"
+  ],
   "objective": "Implement the smallest bounded cross-surface integration test surface and validation harness that exercises the full governed field-to-lead-to-PM seam path in one place, proving end-to-end chained behavior, shared read models, authority boundaries, and regression stability across the three validated role surfaces without implementing Gantt visualization, Supabase migration, Class D behavior, billing finalization, or direct client writes for controlled operational state.",
   "domain": "pm-ui-domain",
   "active_role": "PM UI Cross-Surface Validation Architect",
