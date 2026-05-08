@@ -1,0 +1,45 @@
+{
+  "packet_id": "2026-05-08-olares-dev-residency-222",
+  "title": "PM Domain Dry-Run Migration Draft Packet History Demotion Execution",
+  "objective": "Normalize the remaining live-looking 2026-04-13 PM domain staging dry-run migration packet-definition singleton so that file no longer presents itself as a still-live PM-domain dry-run-migration packet after standalone repo cutover and instead acts as historical packet provenance with an explicit current-routing redirect.",
+  "domain": "infrastructure-domain",
+  "active_role": "Platform Architect",
+  "dependencies": [
+    "PROJECT_STATUS.md",
+    "docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md",
+    "ops/agents/packets/draft/2026-04-13-pm-schema-009c-staging-dry-run-migration.json",
+    "ops/agents/packets/draft/2026-05-08-olares-dev-residency-221-pm-domain-source-data-population-draft-packet-history-demotion-execution.json"
+  ],
+  "dependency_note": "After Packet 221 closes the adjacent `pm-schema-009b` singleton, the nearest remaining current-looking residue in the same PM domain draft lane is the successor `pm-schema-009c` dry-run-migration singleton. Its surrounding packet-history now serves only as provenance, so the packet-definition JSON itself is the strongest adjacent live-looking residue.",
+  "execution_mode": "bounded_pm_domain_dry_run_migration_draft_packet_history_demotion",
+  "execution_scope": [
+    "Retitle the `pm-schema-009c` packet-definition singleton as historical provenance.",
+    "Add explicit `historical_note` and `current_routing` fields to the packet JSON.",
+    "Preserve the original packet body below those top-entry routing fields without reopening runtime, migration, or implementation scope."
+  ],
+  "forbidden_scope": [
+    "runtime or service mutation",
+    "package or lockfile mutation",
+    "repo-boundary reversal",
+    "broad packet-archive rewriting beyond top-entry demotion and routing normalization",
+    "remote rewrite",
+    "rollback, force, reset, or clean",
+    "old-clone mutation or promotion"
+  ],
+  "success_criteria": [
+    "The `pm-schema-009c` packet-definition singleton now reads as historical provenance instead of a live PM-domain dry-run-migration packet.",
+    "The file explicitly routes current readers to `PROJECT_STATUS.md` and the closeout inventory.",
+    "Repo-owned status routing records the closure and leaves no ambiguity about the next remaining adjacent residue check."
+  ],
+  "validation_commands": [
+    "Select-String -Path ops/agents/packets/draft/2026-04-13-pm-schema-009c-staging-dry-run-migration.json -Pattern 'Historical ','historical_note','current_routing'",
+    "Select-String -Path PROJECT_STATUS.md -Pattern 'Packet `2026-05-08-olares-dev-residency-222`'",
+    "git diff --check"
+  ],
+  "validation_results": {
+    "pm_domain_dry_run_migration_demoted": "pass",
+    "status_routing_updated": "pass"
+  },
+  "status": "complete",
+  "next_action": "Reassess any smaller adjacent packet-history surfaces that still read as current after the `pm-schema-009c` singleton closure."
+}

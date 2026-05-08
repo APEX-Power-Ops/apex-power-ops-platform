@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-04-13-pm-schema-009c",
-  "title": "PM Domain Staging Dry-Run Migration",
+  "title": "Historical PM Domain Staging Dry-Run Migration",
+  "historical_note": "This packet records one bounded PM domain dry-run-migration slice from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live execution instruction for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this packet JSON only when historical provenance is needed for the earlier `pm-schema-009c` PM-domain dry-run-migration slice"
+  ],
   "objective": "Execute a staging-only dry-run V1-to-V2 PM migration using the validated work schema, the packet-009 mapping rules, the packet-009a mapping infrastructure, and the populated source mappings from packet 009b, then produce reconciliation and quality results without changing production systems.",
   "domain": "pm-domain",
   "active_role": "PM Migration Dry-Run Operator",

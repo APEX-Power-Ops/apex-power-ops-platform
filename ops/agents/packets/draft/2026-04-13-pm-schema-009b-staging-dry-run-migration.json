@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-04-13-pm-schema-009b",
-  "title": "PM Domain V1 Source Data Population",
+  "title": "Historical PM Domain V1 Source Data Population",
+  "historical_note": "This packet records one bounded PM domain source-data-population slice from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live execution instruction for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this packet JSON only when historical provenance is needed for the earlier `pm-schema-009b` PM-domain source-data-population slice"
+  ],
   "objective": "Obtain V1 PM source data through a read-only source connection or controlled export, populate the staging-only migration mapping tables created in packet 009a, and produce readiness evidence for a later dry-run migration without changing production systems.",
   "domain": "pm-domain",
   "active_role": "PM Migration Source Data Operator",
