@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-05-06-olares-dev-residency-067",
-  "title": "Packet 065 And Packet 066 Authority Publication And Host Mirror Resync Gate",
+  "title": "Historical Packet 065 And Packet 066 Authority Publication And Host Mirror Resync Gate",
+  "historical_note": "This record preserves one bounded 2026-05-06 Olares Dev Residency host-workflow and workspace-authority publication gate from before the canonical repo boundary moved to C:/APEX Platform/apex-power-ops-platform on 2026-05-07. It is historical provenance, not a live publication instruction surface for current repo operations.",
+  "current_routing": [
+    "Use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets.",
+    "Use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue.",
+    "Use this record only when historical provenance is needed for the Packet 065 and Packet 066 workspace-authority publication gate."
+  ],
   "objective": "Publish the Packet 065 and Packet 066 authority tranche through the parent-root boundary and restore `/home/olares/code/apex` to clean parity so the consolidated Olares workspace authority surface is durable on the host mirror rather than workstation-local only.",
   "domain": "infrastructure-domain",
   "active_role": "Platform Architect",
