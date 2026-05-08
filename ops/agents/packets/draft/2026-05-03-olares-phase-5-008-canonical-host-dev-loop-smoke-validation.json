@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-05-03-olares-phase-5-008",
-  "title": "Canonical Host Dev-Loop Smoke Validation",
+  "title": "Historical Canonical Host Dev-Loop Smoke Validation",
+  "historical_note": "This packet records one bounded Olares Phase 5 canonical host dev-loop smoke-validation slice from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live execution instruction for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this packet JSON only when historical provenance is needed for the earlier `olares-phase-5-008` canonical host dev-loop smoke-validation slice"
+  ],
   "objective": "Perform a bounded host development-loop smoke validation against `/home/olares/code/apex` as the canonical Olares host parent-root mirror, confirming path reachability, workspace-open viability, repo parity, and basic editing ergonomics without mutating services, changing the daily development center of gravity, or reopening migration scope.",
   "domain": "infrastructure-domain",
   "active_role": "Olares Canonical Host Dev Loop Smoke Operator",

@@ -400,7 +400,11 @@ Packet `2026-05-08-olares-dev-residency-265` now closes the adjacent 2026-05-03 
 
 Packet `2026-05-08-olares-dev-residency-266` now closes the adjacent 2026-05-03 Olares Phase 5 canonical host dev-path preparation packet JSON singleton by hard-demoting `olares-phase-5-007` into explicit historical provenance with current-routing context, so that file no longer reads like a live Olares canonical host dev-path preparation packet after standalone cutover.
 
-The next truthful repo-structure work is therefore the adjacent `olares-phase-5-008` singleton closure so the next remaining Olares Phase 5 residue is explicit after the `olares-phase-5-007` singleton closure.
+Packet `2026-05-08-olares-dev-residency-267` now closes the adjacent 2026-05-03 Olares Phase 5 canonical host dev-loop smoke-validation packet JSON singleton by hard-demoting `olares-phase-5-008` into explicit historical provenance with current-routing context, so that file no longer reads like a live Olares canonical host dev-loop smoke-validation packet after standalone cutover.
+
+Packet `2026-05-08-olares-dev-residency-268` now closes the adjacent 2026-05-03 Olares Phase 5 post-smoke repo-parity housekeeping and migration-gate planning packet JSON singleton by hard-demoting `olares-phase-5-009` into explicit historical provenance with current-routing context, so that file no longer reads like a live Olares repo-parity housekeeping and migration-gate planning packet after standalone cutover.
+
+The next truthful repo-structure work is therefore the adjacent `olares-phase-5-010` singleton closure so the next remaining Olares Phase 5 residue is explicit after the `olares-phase-5-009` singleton closure.
 
 ## 2026 Addendum: Olares Runtime And Private Lane
 
