@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-04-16-pm-schema-019",
-  "title": "PM Write-Surface Consolidation (Idempotency + Merge Errors)",
+  "title": "Historical PM Write-Surface Consolidation (Idempotency + Merge Errors)",
+  "historical_note": "This packet records one bounded PM write-surface consolidation slice from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live execution instruction for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this packet JSON only when historical provenance is needed for the earlier `pm-schema-019` PM write-surface consolidation slice"
+  ],
   "objective": "Implement the next bounded PM runtime lane by consolidating the now-functionally-complete PM write surface around one zero-DDL idempotency-key seam for the existing seven POST handlers, one shared `_merge_errors` helper for repeated merged-validation dict logic across the seven mutation services, and one shared PATCH target-exists regression harness, without adding new entity write surfaces, changing database schema, changing endpoint inventory, or broadening mutation scope into `work.wbs_nodes`.",
   "domain": "pm-domain",
   "active_role": "PM Write-Surface Consolidation Author",
