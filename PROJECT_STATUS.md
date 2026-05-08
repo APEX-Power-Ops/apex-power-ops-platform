@@ -66,7 +66,9 @@ Packets `2026-05-07-olares-dev-residency-096` through `2026-05-07-olares-dev-res
 
 Packet `2026-05-07-olares-dev-residency-099` now closes the next adjacent repo-foundation proof slice by recording fresh canonical repo-root validation and old-clone observation evidence after cutover.
 
-The next truthful repo-structure work is therefore no longer post-cutover proof collection. It is the remaining authority-relocation, historical-demotion, and residue-retirement work that still sits above the now-proven standalone repo boundary.
+Packet `2026-05-08-olares-dev-residency-100` now closes the next adjacent current-truth authority-normalization slice by updating the repo overview plus the active Olares authority framework and build guide so they no longer describe the retired parent-root boundary as live repo truth.
+
+The next truthful repo-structure work is therefore the remaining parent-root mirror alignment, historical-demotion, and residue-retirement work that still sits outside the now-normalized repo-owned authority chain.
 
 ## 2026 Addendum: Olares Runtime And Private Lane
 

@@ -1,0 +1,48 @@
+{
+  "packet_id": "2026-05-08-olares-dev-residency-100",
+  "title": "Post-Cutover Current-Truth Authority Normalization",
+  "objective": "Correct the remaining repo-owned current-truth authority surfaces that still described the retired parent-root publication boundary as live after standalone cutover, without reopening historical packet archives or reactivating parent-root publication flow.",
+  "domain": "infrastructure-domain",
+  "active_role": "Platform Architect",
+  "dependencies": [
+    "PROJECT_OVERVIEW.md",
+    "PROJECT_STATUS.md",
+    "docs/authority/OLARES-WORKSPACE-AUTHORITY-FRAMEWORK.md",
+    "docs/authority/OLARES-BUILD-GUIDE.md",
+    "ops/agents/handoffs/2026-05-07-olares-dev-residency-099-post-cutover-canonical-repo-validation-and-old-clone-observation-handoff.md"
+  ],
+  "dependency_note": "Packet 099 closed the post-cutover proof gap. The next adjacent defect was no longer validation. It was repo-owned current-truth authority drift: the overview and active Olares authority surfaces still carried parent-root publication-boundary language that was false after cutover.",
+  "execution_mode": "bounded_current_truth_doc_normalization",
+  "execution_scope": [
+    "Update only repo-owned current-truth overview and authority docs that still present `C:/APEX Platform` as the live publication boundary.",
+    "Refresh status routing so this normalization slice is recorded in the repo-visible packet trail.",
+    "Leave historical packet, handoff, and pre-cutover evidence surfaces untouched unless a later packet explicitly reclassifies them."
+  ],
+  "forbidden_scope": [
+    "runtime or service mutation",
+    "package or lockfile mutation",
+    "parent-root publication reactivation",
+    "historical packet or handoff rewriting",
+    "remote rewrite",
+    "rollback, force, reset, or clean",
+    "old-clone mutation or promotion"
+  ],
+  "success_criteria": [
+    "The repo overview and active Olares authority docs state the standalone repo root as the live publication boundary for active Apex Ops repo work.",
+    "The touched current-truth files no longer claim that `C:/APEX Platform` remains the live repo publication boundary.",
+    "Status routing records the slice and points the next lane at remaining parent-root mirror or historical-demotion residue rather than repeating the same authority correction."
+  ],
+  "validation_commands": [
+    "Select-String -Path PROJECT_OVERVIEW.md,docs/authority/OLARES-WORKSPACE-AUTHORITY-FRAMEWORK.md,docs/authority/OLARES-BUILD-GUIDE.md -Pattern 'C:/APEX Platform remains the publication boundary','current transitional publication boundary','remains the canonical publication boundary'",
+    "git diff --check -- PROJECT_OVERVIEW.md docs/authority/OLARES-WORKSPACE-AUTHORITY-FRAMEWORK.md docs/authority/OLARES-BUILD-GUIDE.md PROJECT_STATUS.md"
+  ],
+  "validation_results": {
+    "repo_overview": "normalized to the live standalone repo boundary and refreshed with a current operating-note timestamp",
+    "olares_workspace_authority_framework": "normalized to treat the standalone repo root as canonical and the parent root as umbrella residue",
+    "olares_build_guide": "normalized to treat the standalone repo root and host mirror as the current operator context",
+    "retired_boundary_claim_check": "no remaining matches in the touched current-truth files for the retired live-boundary wording",
+    "diff_hygiene": "pass"
+  },
+  "status": "complete",
+  "next_action": "Return repo-foundation routing to the remaining parent-root mirror alignment and historical-demotion residue now that the repo-owned current-truth authority chain no longer normalizes the retired parent-root publication boundary."
+}
