@@ -1,11 +1,19 @@
-# Parent-Root PM-Schema-008 Draft Publication Handoff
+# Historical Parent-Root PM-Schema-008 Draft Publication Handoff
 ## Date: 2026-04-22
 ## Updated by: GitHub Copilot (GPT-5.4)
 ## Scope: Historical record for the bounded `pm-schema-008` local staging validation singleton under `C:/APEX Platform/apex-power-ops-platform`
 
 ## 1. Summary
 
-The residual foundational PM family remained active after the `pm-schema-007` first SQL DDL migration publication.
+Historical note: this handoff records one bounded parent-root draft-publication decision from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live queue instruction for current repo operations.
+
+Current routing:
+
+1. use `PROJECT_STATUS.md` for the current residue-retirement lane and latest completed packets,
+2. use `docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md` for the remaining post-cutover boundary closeout queue,
+3. use this handoff only when historical provenance is needed for the earlier parent-root `pm-schema-008` draft-publication decision.
+
+At the time this handoff was recorded, the residual foundational PM family remained active after the `pm-schema-007` first SQL DDL migration publication.
 
 The next smallest remaining substantive packet was `pm-schema-008`, which staged cleanly at 1 file. It closed the residual foundational PM family and returned the queue to cross-family reevaluation between the remaining `apex-unification-001a` and `knowledge-import-001a` frontiers.
 
@@ -15,7 +23,7 @@ Publication outcome:
 2. pushed to `origin/clean-main` on 2026-04-22
 3. closed as the published pm-schema `008` local staging validation tranche
 
-## 2. Why This Packet Is Next
+## 2. Historical Why This Packet Was Next
 
 Measured from the parent git root at `C:/APEX Platform` on 2026-04-22 after the `pm-schema-007` draft publication:
 
@@ -80,6 +88,6 @@ This lane is packet-definition JSON, so diff discipline matters more than execut
 1. do not widen this packet into cross-family movement/import packets or mixed multi-packet staging
 2. do not mix this packet with `ops/agents/handoffs`
 
-## 9. Follow-On After This Packet
+## 9. Historical Follow-On After This Packet
 
-If this packet lands cleanly, return the live queue to a remaining-draft reevaluation state and select the next truthful cross-family packet.
+When this packet landed cleanly, it returned the then-live queue to a remaining-draft reevaluation state before the next truthful cross-family packet was selected.
