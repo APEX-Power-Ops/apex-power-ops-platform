@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-04-15-pm-schema-ui-005",
-  "title": "PM Schema V2 UI Cross-Surface Integration Spec",
+  "title": "Historical PM Schema V2 UI Cross-Surface Integration Spec",
+  "historical_note": "This packet records one bounded PM UI cross-surface integration-spec planning slice from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live execution instruction for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this packet JSON only when historical provenance is needed for the earlier `pm-schema-ui-005` cross-surface integration-spec planning slice"
+  ],
   "objective": "Reconcile the completed bounded prototype surfaces from UI-001 through UI-004 into one governed cross-surface integration specification before runtime implementation begins, without implementing code, reopening PM schema design, bypassing the governed mutation seam, or broadening into billing or executive workflow design.",
   "domain": "pm-ui-domain",
   "active_role": "PM UI Cross-Surface Integration Architect",

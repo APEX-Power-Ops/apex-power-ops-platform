@@ -284,7 +284,11 @@ Packet `2026-05-08-olares-dev-residency-207` now closes the adjacent 2026-04-15 
 
 Packet `2026-05-08-olares-dev-residency-208` now closes the adjacent 2026-04-15 PM UI lead-operations planning packet JSON singleton by hard-demoting `pm-schema-ui-004` into explicit historical provenance with current-routing context, so that file no longer reads like a live lead-operations prototype-design packet after standalone cutover.
 
-The next truthful repo-structure work is therefore a fresh reassessment of any smaller adjacent packet-history surfaces that still read as current after the `pm-schema-ui-004` singleton closure.
+Packet `2026-05-08-olares-dev-residency-209` now closes the adjacent 2026-04-15 PM UI cross-surface integration specification packet JSON singleton by hard-demoting `pm-schema-ui-005` into explicit historical provenance with current-routing context, so that file no longer reads like a live cross-surface integration-spec packet after standalone cutover.
+
+Packet `2026-05-08-olares-dev-residency-210` now closes the adjacent 2026-04-15 PM UI mutation-seam specification packet JSON singleton by hard-demoting `pm-schema-ui-006` into explicit historical provenance with current-routing context, so that file no longer reads like a live mutation-seam API-specification packet after standalone cutover.
+
+The next truthful repo-structure work is therefore a fresh reassessment of any smaller adjacent packet-history surfaces that still read as current after the `pm-schema-ui-006` singleton closure.
 
 ## 2026 Addendum: Olares Runtime And Private Lane
 
