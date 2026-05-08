@@ -1,13 +1,21 @@
-# Parent-Root PM-Schema-001 Draft Publication Handoff
+# Historical Parent-Root PM-Schema-001 Draft Publication Handoff
 ## Date: 2026-04-22
 ## Updated by: GitHub Copilot (GPT-5.4)
 ## Scope: Historical record for the bounded `pm-schema-001` entity field candidate matrix singleton under `C:/APEX Platform/apex-power-ops-platform`
 
 ## 1. Summary
 
-The adjacent `pm-schema-020*` and adjacent `pm-schema-ui*` publication families are already fully advanced on parent-root `clean-main`, so the current lane has moved back to a cross-family selection frontier.
+Historical note: this handoff records one bounded parent-root draft-publication decision from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live queue instruction for current repo operations.
 
-The next smallest remaining substantive packet was `pm-schema-001`, which staged cleanly at 1 file. It re-opened the residual foundational PM family and advanced the queue to the adjacent lifecycle/state packet in `pm-schema-002`.
+Current routing:
+
+1. use `PROJECT_STATUS.md` for the current residue-retirement lane and latest completed packets,
+2. use `docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md` for the remaining post-cutover boundary closeout queue,
+3. use this handoff only when historical provenance is needed for the earlier parent-root `pm-schema-001` draft-publication decision.
+
+At the time this handoff was recorded, the adjacent `pm-schema-020*` and adjacent `pm-schema-ui*` publication families were already fully advanced on parent-root `clean-main`, so the lane had moved back to a cross-family selection frontier.
+
+The next smallest remaining substantive packet was `pm-schema-001`, which staged cleanly at 1 file. It reopened the residual foundational PM family and advanced the queue to the adjacent lifecycle/state packet in `pm-schema-002`.
 
 Publication outcome:
 
@@ -15,7 +23,7 @@ Publication outcome:
 2. pushed to `origin/clean-main` on 2026-04-22
 3. closed as the published pm-schema `001` entity field matrix tranche
 
-## 2. Why This Packet Is Next
+## 2. Historical Why This Packet Was Next
 
 Measured from the parent git root at `C:/APEX Platform` on 2026-04-22 after the post-`020g-b` reevaluation refresh:
 
@@ -25,7 +33,7 @@ Measured from the parent git root at `C:/APEX Platform` on 2026-04-22 after the 
    - `2026-04-12-pm-schema-001-entity-field-candidate-matrix.json`
 4. `pm-schema-001` is the governing packet for the residual foundational PM family and precedes the remaining `pm-schema-002` through `pm-schema-008` backlog
 5. the currently untracked cross-family alternatives `apex-unification-001a` and `knowledge-import-001a` also stage cleanly, but each immediately widens into physical movement or import work across docs, ops, archive, or knowledge surfaces
-6. `pm-schema-001` therefore remains the smallest dependency-safe packet that advances the live platform lane without widening into archive or knowledge bulk by default
+6. `pm-schema-001` therefore remained the smallest dependency-safe packet that advanced the then-live platform lane without widening into archive or knowledge bulk by default
 
 ## 3. Packet Intent
 
@@ -82,6 +90,6 @@ This lane is packet-definition JSON, so diff discipline matters more than execut
 2. do not jump into `apex-unification-001a` or `knowledge-import-001a` physical movement/import work in the same slice
 3. do not mix this packet with `ops/agents/handoffs`
 
-## 9. Follow-On After This Packet
+## 9. Historical Follow-On After This Packet
 
-If this packet lands cleanly, queue `pm-schema-002` as the next adjacent foundational follow-on packet.
+When this packet landed cleanly, the next adjacent foundational follow-on packet was `pm-schema-002`.
