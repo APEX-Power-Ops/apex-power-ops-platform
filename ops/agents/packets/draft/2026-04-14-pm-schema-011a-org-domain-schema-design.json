@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-04-14-pm-schema-011a",
-  "title": "PM Org Domain Schema Design",
+  "title": "Historical PM Org Domain Schema Design",
+  "historical_note": "This packet records one bounded PM org-domain schema-design slice from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live execution instruction for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this packet JSON only when historical provenance is needed for the earlier `pm-schema-011a` PM org-domain schema-design slice"
+  ],
   "objective": "Design the minimum org-domain schema required to unblock PM/work write-side adoption by defining the canonical org tables and keys needed for the six deferred org foreign keys without activating those foreign keys, altering PM/work SQL, or implementing runtime code.",
   "domain": "pm-domain",
   "active_role": "PM Org Domain Schema Designer",
