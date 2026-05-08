@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-05-03-olares-phase-5-014",
-  "title": "Bounded Host Editing Trial Execution",
+  "title": "Historical Bounded Host Editing Trial Execution",
+  "historical_note": "This packet records one bounded Olares Phase 5 host-editing trial-execution slice from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live execution instruction for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this packet JSON only when historical provenance is needed for the earlier `olares-phase-5-014` bounded host-editing trial-execution slice"
+  ],
   "objective": "Execute the first bounded host-editing trial from `/home/olares/code/apex/apex-power-ops-platform` after Packet 013, using a documentation-first or planning-first slice to prove real host-side editing, narrow validation, evidence capture, and rollback posture without approving migration or mutating runtime surfaces.",
   "domain": "infrastructure-domain",
   "active_role": "Olares Bounded Host Trial Operator",

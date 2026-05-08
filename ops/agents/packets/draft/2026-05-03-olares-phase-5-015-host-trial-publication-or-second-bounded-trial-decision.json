@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-05-03-olares-phase-5-015",
-  "title": "Host Trial Publication Or Second Bounded Trial Decision",
+  "title": "Historical Host Trial Publication Or Second Bounded Trial Decision",
+  "historical_note": "This packet records one bounded Olares Phase 5 host-trial publication-or-second-bounded-trial decision slice from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live execution instruction for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this packet JSON only when historical provenance is needed for the earlier `olares-phase-5-015` host-trial publication-or-second-bounded-trial decision slice"
+  ],
   "objective": "Determine whether the Packet 014 host-created handoff should now be published through `C:/APEX Platform` or whether one additional bounded documentation-first or planning-first host-side trial should run before publication, using Packet 014 evidence to select the smallest truthful next packet without approving migration or mutating runtime surfaces.",
   "domain": "infrastructure-domain",
   "active_role": "Olares Post-Trial Decision Author",
