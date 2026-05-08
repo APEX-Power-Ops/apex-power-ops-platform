@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-04-13-pm-schema-008",
-  "title": "PM Domain Local Staging Execution And Validation",
+  "title": "Historical PM Domain Local Staging Execution And Validation",
+  "historical_note": "This packet records one bounded PM domain staging-validation slice from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live execution instruction for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this packet JSON only when historical provenance is needed for the earlier `pm-schema-008` PM-domain staging-validation slice"
+  ],
   "objective": "Execute the completed packet-007 PM/work SQL bundle against the local PostgreSQL staging database, validate the result against the approved runbook and validation plan, and produce the first execution-backed PM validation handoff.",
   "domain": "pm-domain",
   "active_role": "PM Validation Operator",

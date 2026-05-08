@@ -300,7 +300,11 @@ Packet `2026-05-08-olares-dev-residency-215` now closes the adjacent 2026-04-12 
 
 Packet `2026-05-08-olares-dev-residency-216` now closes the adjacent 2026-04-12 PM domain implementation-ready packet JSON singleton by hard-demoting `pm-schema-006` into explicit historical provenance with current-routing context, so that file no longer reads like a live PM-domain implementation-ready authoring packet after standalone cutover.
 
-The next truthful repo-structure work is therefore a fresh reassessment of any smaller adjacent packet-history surfaces that still read as current after the `pm-schema-006` singleton closure.
+Packet `2026-05-08-olares-dev-residency-217` now closes the adjacent 2026-04-13 PM domain first-SQL packet JSON singleton by hard-demoting `pm-schema-007` into explicit historical provenance with current-routing context, so that file no longer reads like a live PM-domain SQL-authoring packet after standalone cutover.
+
+Packet `2026-05-08-olares-dev-residency-218` now closes the adjacent 2026-04-13 PM domain local-staging validation packet JSON singleton by hard-demoting `pm-schema-008` into explicit historical provenance with current-routing context, so that file no longer reads like a live PM-domain staging-validation packet after standalone cutover.
+
+The next truthful repo-structure work is therefore a fresh reassessment of any smaller adjacent packet-history surfaces that still read as current after the `pm-schema-008` singleton closure.
 
 ## 2026 Addendum: Olares Runtime And Private Lane
 
