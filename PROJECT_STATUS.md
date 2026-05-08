@@ -52,23 +52,19 @@ This addendum is the current stakeholder-facing status surface for the active Ol
 
 ### Remaining Highest-Value Items
 
-1. Demote or relabel the current-looking parent-root bootstrap and scaffold tasks in the repo-root VS Code task surface so delegated execution is less likely to follow historical packet helpers by mistake.
-2. Keep the remaining migration-governance surfaces aligned until the lane can be closed as fully migrated rather than structurally migrated but still in provenance normalization.
-3. Continue treating `/home/olares/src/apex-power-ops-platform` as observe-only historical evidence until a later cleanup packet explicitly retires or archives it.
-4. Keep the current authoritative host mirror clean at `/home/olares/code/apex/apex-power-ops-platform` and use the repo-owned bootstrap/status surface as the controlling proof surface for future Olares operator work.
-5. Reopen minimal-trio runtime admission only if a concrete unattended workflow, repeated operator insufficiency, or new validation obligation proves that operator-on-demand is no longer enough.
+1. Keep the remaining migration-governance surfaces aligned until the lane can be closed as fully migrated rather than structurally migrated but still in provenance normalization.
+2. Continue treating `/home/olares/src/apex-power-ops-platform` as observe-only historical evidence until a later cleanup packet explicitly retires or archives it.
+3. Keep the current authoritative host mirror clean at `/home/olares/code/apex/apex-power-ops-platform` and use the repo-owned bootstrap/status surface as the controlling proof surface for future Olares operator work.
+4. Reopen minimal-trio runtime admission only if a concrete unattended workflow, repeated operator insufficiency, or new validation obligation proves that operator-on-demand is no longer enough.
+5. Reopen provenance-routing normalization only if another current-looking parent-root residue surface still risks misdirecting active repo-root execution.
 
 ### Current Recommended Next Lane
 
 The bounded runtime-governance decision on the admitted minimal MCP trio is now closed.
 
-Packet `2026-05-07-olares-dev-residency-096` now selects the current highest-leverage next lane.
+Packets `2026-05-07-olares-dev-residency-096` and `2026-05-07-olares-dev-residency-097` now close the strongest current-looking parent-root task-surface residue by selecting and executing the repo-root task relabel slice.
 
-The next bounded execution slice is the repo-root task-surface historical relabel and demotion lane:
-
-1. relabel or demote the current-looking parent-root bootstrap and Class A scaffold tasks in `.vscode/tasks.json`,
-2. update the runbook task inventory only as needed to match that demotion,
-3. keep the authoritative host mirror and repo-root operator surfaces otherwise stable.
+The provenance-routing lane can now return to hold unless a different current-looking parent-root residue surface still misdirects active repo-root execution.
 
 ## 2026 Addendum: Olares Runtime And Private Lane
 

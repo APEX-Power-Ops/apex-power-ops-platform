@@ -1,0 +1,49 @@
+{
+  "title": "Repo-Root Task Surface Historical Relabel And Demotion Execution",
+  "objective": "Execute the Packet 096-selected slice by relabeling the current-looking parent-root bootstrap and Class A scaffold tasks in the active repo-root VS Code task surface and aligning the operator runbook so delegated execution stops treating those historical packet helpers as current defaults.",
+  "domain": "infrastructure-domain",
+  "active_role": "Platform Architect",
+  "dependencies": [
+    "ops/agents/packets/draft/2026-05-07-olares-dev-residency-096-historical-parent-root-helper-and-task-demotion-planning.json",
+    "ops/agents/handoffs/2026-05-07-olares-dev-residency-096-historical-parent-root-helper-and-task-demotion-planning-handoff.md",
+    ".vscode/tasks.json",
+    "docs/OPERATOR-BOOTSTRAP-RUNBOOK.md",
+    "ops/agents/handoffs/2026-04-22-parent-root-bootstrap-publication-handoff.md"
+  ],
+  "dependency_note": "Packet 096 identified the repo-root VS Code task surface as the strongest remaining parent-root misrouting risk because it still exposed historical bootstrap and scaffold packets with current-looking labels. Packet 097 executes the smallest truthful repair by relabeling those tasks and matching the runbook wording.",
+  "execution_mode": "bounded_task_surface_relabel_execution",
+  "execution_scope": [
+    "Relabel the parent-root bootstrap and Class A scaffold task entries in `.vscode/tasks.json` so they read as historical surfaces inside the active repo workspace.",
+    "Update `docs/OPERATOR-BOOTSTRAP-RUNBOOK.md` so the task inventory and explanatory note match the new labels and routing posture.",
+    "Preserve the underlying historical packet artifacts rather than deleting them by assumption."
+  ],
+  "constraints": [
+    "Do not mutate runtime, host services, packages, or lockfiles.",
+    "Do not delete historical packet evidence by implication.",
+    "Do not reopen parent-root publication flow as a current operator default."
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "execution_outcome": "historical_parent_root_tasks_relabelled_in_active_repo_surface",
+  "execution_evidence": {
+    "tasks_updated": [
+      "Preview historical parent-root bootstrap packet",
+      "Stage historical parent-root bootstrap packet",
+      "Historical parent-root bootstrap packet staged diff",
+      "Preview historical parent-root Class A scaffold packet",
+      "Stage historical parent-root Class A scaffold packet",
+      "Historical parent-root Class A scaffold packet staged diff"
+    ],
+    "runbook_task_inventory_aligned": true,
+    "historical_handoff_preserved": true
+  },
+  "execution_rationale": [
+    "The task list is a stronger delegated-execution surface than closed historical handoff prose, so relabeling the task entries directly reduces operator misrouting faster than deeper archival work.",
+    "Adding explicit `historical` markers preserves provenance value while making the current repo-root routing unambiguous.",
+    "This slice closes the selected discoverability defect without reopening runtime, hosting, or publication-boundary mechanics."
+  ],
+  "next_packet_candidate": "Return the provenance-routing lane to hold unless another current-looking parent-root residue surface still misdirects active execution.",
+  "validation_disposition": "implemented_and_validated",
+  "closure_note": "Executed 2026-05-07 as the direct follow-on to Packet 096. Packet 097 relabels the strongest current-looking parent-root task residue in `.vscode/tasks.json` and aligns the operator runbook so historical packet helpers remain available for provenance review without reading like routine current staging actions.",
+  "next_action": "Publish the bounded Packet 097 task-surface relabel slice, restore host parity, and then reassess whether the provenance-routing lane can return to hold."
+}

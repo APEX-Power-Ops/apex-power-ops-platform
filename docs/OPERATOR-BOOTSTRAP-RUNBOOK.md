@@ -71,6 +71,8 @@ Those task helpers now resolve the repo root directly from the workspace locatio
 
 For historical context on the completed first parent-root introduction packet, use `ops/agents/handoffs/2026-04-22-parent-root-bootstrap-publication-handoff.md`.
 
+Treat the historical parent-root task trios as provenance helpers only. They are not routine staging surfaces for current repo-root work.
+
 Current packet constraint:
 - this bootstrap subtree does not yet contain every active platform lane under the broader umbrella workspace; parent-root-only lanes remain separate provenance or reconciliation residue and are not part of the default repo contract
 
@@ -142,7 +144,7 @@ Current status surface:
 - `PROJECT_STATUS.md`
 
 VS Code tasks:
-- the bootstrap-packet helper tasks remain available for historical packet review and narrow bounded staging, but routine publication work now uses normal repo-root `git diff` and `git add -- <paths>` against tracked `HEAD`
+- the parent-root bootstrap and scaffold helper tasks remain available only as explicitly historical packet-review surfaces, and routine publication work now uses normal repo-root `git diff` and `git add -- <paths>` against tracked `HEAD`
 - `Olares host bootstrap status`
 - `Olares host platform git status`
 - `Olares host platform staged diff`
@@ -151,9 +153,12 @@ VS Code tasks:
 - `Platform repo git status`
 - `Stage named platform paths`
 - `Stage entire platform repo (broad change)`
-- `Preview parent-root bootstrap packet`
-- `Stage parent-root bootstrap packet`
-- `Parent-root bootstrap packet staged diff`
+- `Preview historical parent-root bootstrap packet`
+- `Stage historical parent-root bootstrap packet`
+- `Historical parent-root bootstrap packet staged diff`
+- `Preview historical parent-root Class A scaffold packet`
+- `Stage historical parent-root Class A scaffold packet`
+- `Historical parent-root Class A scaffold packet staged diff`
 - `Platform repo staged diff`
 - `Platform API focused tests`
 - `Control-plane local host readiness`

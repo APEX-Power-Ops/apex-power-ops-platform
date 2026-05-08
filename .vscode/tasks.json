@@ -8,10 +8,10 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$repoRoot = (Resolve-Path (Join-Path '${workspaceFolder}' '..')).Path; $script = Join-Path $repoRoot 'apps/control-plane-api/scripts/run_platform_api_local.ps1'; if (-not (Test-Path $script)) { throw 'apps/control-plane-api is not present under the parent repo root for this bootstrap packet.' }; Set-Location $repoRoot; & $script"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; $script = Join-Path $repoRoot 'apps/control-plane-api/scripts/run_platform_api_local.ps1'; if (-not (Test-Path $script)) { throw 'apps/control-plane-api is not present under the repo root for this bootstrap packet.' }; Set-Location $repoRoot; & $script"
       ],
       "options": {
-        "cwd": "${workspaceFolder}\\..",
+        "cwd": "${workspaceFolder}",
         "env": {
           "APEX_PLATFORM_PYTHON": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
           "PYTHONPATH": "packages/calc-engine/src"
@@ -28,10 +28,10 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$repoRoot = (Resolve-Path (Join-Path '${workspaceFolder}' '..')).Path; $script = Join-Path $repoRoot 'apps/control-plane-api/scripts/run_platform_api_local.ps1'; if (-not (Test-Path $script)) { throw 'apps/control-plane-api is not present under the parent repo root for this bootstrap packet.' }; Set-Location $repoRoot; & $script -Restart"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; $script = Join-Path $repoRoot 'apps/control-plane-api/scripts/run_platform_api_local.ps1'; if (-not (Test-Path $script)) { throw 'apps/control-plane-api is not present under the repo root for this bootstrap packet.' }; Set-Location $repoRoot; & $script -Restart"
       ],
       "options": {
-        "cwd": "${workspaceFolder}\\..",
+        "cwd": "${workspaceFolder}",
         "env": {
           "APEX_PLATFORM_PYTHON": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
           "PYTHONPATH": "packages/calc-engine/src"
@@ -56,7 +56,7 @@
         "-q"
       ],
       "options": {
-        "cwd": "${workspaceFolder}\\..\\apps\\control-plane-api",
+        "cwd": "${workspaceFolder}\\apps\\control-plane-api",
         "env": {
           "DATABASE_URL": "postgresql://postgres:postgres@localhost:5432/postgres"
         }
@@ -76,7 +76,7 @@
         "--require-apparatus-study-route"
       ],
       "options": {
-        "cwd": "${workspaceFolder}\\.."
+        "cwd": "${workspaceFolder}"
       },
       "problemMatcher": [],
       "group": "test"
@@ -93,7 +93,7 @@
         "--dry-run"
       ],
       "options": {
-        "cwd": "${workspaceFolder}\\.."
+        "cwd": "${workspaceFolder}"
       },
       "problemMatcher": [],
       "group": "test"
@@ -109,7 +109,7 @@
         "--require-apparatus-study-route"
       ],
       "options": {
-        "cwd": "${workspaceFolder}\\.."
+        "cwd": "${workspaceFolder}"
       },
       "problemMatcher": [],
       "group": "test"
@@ -122,7 +122,7 @@
         "apps/control-plane-api/scripts/check_local_host_readiness.py"
       ],
       "options": {
-        "cwd": "${workspaceFolder}\\.."
+        "cwd": "${workspaceFolder}"
       },
       "problemMatcher": [],
       "group": "test"
@@ -140,7 +140,7 @@
         "--require-apparatus-study-route"
       ],
       "options": {
-        "cwd": "${workspaceFolder}\\.."
+        "cwd": "${workspaceFolder}"
       },
       "problemMatcher": [],
       "group": "test"
@@ -153,7 +153,7 @@
         "apps/control-plane-api/scripts/bootstrap_local_env.py"
       ],
       "options": {
-        "cwd": "${workspaceFolder}\\.."
+        "cwd": "${workspaceFolder}"
       },
       "problemMatcher": [],
       "group": "test"
@@ -181,10 +181,10 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$repoRoot = (Resolve-Path (Join-Path '${workspaceFolder}' '..')).Path; $lane = Join-Path $repoRoot 'packages/forms-engine/src'; if (-not (Test-Path $lane)) { throw 'packages/forms-engine is not present under the parent repo root for this bootstrap packet.' }; $env:PYTHONPATH='packages/forms-engine/src'; & '${workspaceFolder}\\.venv\\Scripts\\python.exe' -m apex_forms_engine.smoke"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; $lane = Join-Path $repoRoot 'packages/forms-engine/src'; if (-not (Test-Path $lane)) { throw 'packages/forms-engine is not present under the repo root for this bootstrap packet.' }; $env:PYTHONPATH='packages/forms-engine/src'; & '${workspaceFolder}\\.venv\\Scripts\\python.exe' -m apex_forms_engine.smoke"
       ],
       "options": {
-        "cwd": "${workspaceFolder}\\.."
+        "cwd": "${workspaceFolder}"
       },
       "problemMatcher": [],
       "group": "test"
@@ -196,10 +196,10 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$repoRoot = (Resolve-Path (Join-Path '${workspaceFolder}' '..')).Path; $lane = Join-Path $repoRoot 'packages/forms-engine/tests'; if (-not (Test-Path $lane)) { throw 'packages/forms-engine is not present under the parent repo root for this bootstrap packet.' }; $env:PYTHONPATH='packages/forms-engine/src'; & '${workspaceFolder}\\.venv\\Scripts\\python.exe' -m pytest packages/forms-engine/tests -q"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; $lane = Join-Path $repoRoot 'packages/forms-engine/tests'; if (-not (Test-Path $lane)) { throw 'packages/forms-engine is not present under the repo root for this bootstrap packet.' }; $env:PYTHONPATH='packages/forms-engine/src'; & '${workspaceFolder}\\.venv\\Scripts\\python.exe' -m pytest packages/forms-engine/tests -q"
       ],
       "options": {
-        "cwd": "${workspaceFolder}\\.."
+        "cwd": "${workspaceFolder}"
       },
       "problemMatcher": [],
       "group": "test"
@@ -211,10 +211,10 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$repoRoot = (Resolve-Path (Join-Path '${workspaceFolder}' '..')).Path; $artifacts = Join-Path $repoRoot 'packages/forms-engine/src/apex_forms_engine/artifacts'; if (-not (Test-Path $artifacts)) { throw 'packages/forms-engine artifacts are not present under the parent repo root for this bootstrap packet.' }; Get-ChildItem -Path (Join-Path $artifacts '*') -Exclude '.gitignore' | Remove-Item -Force"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; $artifacts = Join-Path $repoRoot 'packages/forms-engine/src/apex_forms_engine/artifacts'; if (-not (Test-Path $artifacts)) { throw 'packages/forms-engine artifacts are not present under the repo root for this bootstrap packet.' }; Get-ChildItem -Path (Join-Path $artifacts '*') -Exclude '.gitignore' | Remove-Item -Force"
       ],
       "options": {
-        "cwd": "${workspaceFolder}\\.."
+        "cwd": "${workspaceFolder}"
       },
       "problemMatcher": [],
       "group": "test"
@@ -226,10 +226,10 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$repoRoot = (Resolve-Path (Join-Path '${workspaceFolder}' '..')).Path; $src = Join-Path $repoRoot 'packages/forms-engine/src'; if (-not (Test-Path $src)) { throw 'packages/forms-engine is not present under the parent repo root for this bootstrap packet.' }; & '${workspaceFolder}\\.venv\\Scripts\\python.exe' -m compileall packages/forms-engine/src packages/forms-engine/tests"
+          "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; $src = Join-Path $repoRoot 'packages/forms-engine/src'; if (-not (Test-Path $src)) { throw 'packages/forms-engine is not present under the repo root for this bootstrap packet.' }; & '${workspaceFolder}\\.venv\\Scripts\\python.exe' -m compileall packages/forms-engine/src packages/forms-engine/tests"
         ],
         "options": {
-          "cwd": "${workspaceFolder}\\.."
+          "cwd": "${workspaceFolder}"
         },
         "problemMatcher": [],
         "group": "test"
@@ -245,13 +245,26 @@
         "group": "test"
       },
     {
+      "label": "Run mutation seam local",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-Command",
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; $lane = Join-Path $repoRoot 'apps/mutation-seam'; if (-not (Test-Path $lane)) { throw 'apps/mutation-seam is not present under the repo root for this bootstrap packet.' }; Set-Location $lane; & '${workspaceFolder}\\.venv\\Scripts\\python.exe' -m uvicorn app.main:app --host 127.0.0.1 --port 8000"
+      ],
+      "isBackground": true,
+      "problemMatcher": [],
+      "group": "build"
+    },
+    {
       "label": "Run operations web local",
       "type": "shell",
       "command": "pwsh",
       "args": [
         "-NoProfile",
         "-Command",
-        "$repoRoot = (Resolve-Path (Join-Path '${workspaceFolder}' '..')).Path; $lane = Join-Path $repoRoot 'apps/operations-web'; if (-not (Test-Path $lane)) { throw 'apps/operations-web is not present under the parent repo root for this bootstrap packet.' }; pnpm --dir $repoRoot --filter '@apex/operations-web' dev"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; $lane = Join-Path $repoRoot 'apps/operations-web'; if (-not (Test-Path $lane)) { throw 'apps/operations-web is not present under the repo root for this bootstrap packet.' }; corepack pnpm --dir $repoRoot --filter '@apex/operations-web' dev"
       ],
       "isBackground": true,
       "problemMatcher": [],
@@ -264,7 +277,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$repoRoot = (Resolve-Path (Join-Path '${workspaceFolder}' '..')).Path; $lane = Join-Path $repoRoot 'apps/operations-web'; if (-not (Test-Path $lane)) { throw 'apps/operations-web is not present under the parent repo root for this bootstrap packet.' }; pnpm --dir $repoRoot --filter '@apex/operations-web' typecheck"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; $lane = Join-Path $repoRoot 'apps/operations-web'; if (-not (Test-Path $lane)) { throw 'apps/operations-web is not present under the repo root for this bootstrap packet.' }; corepack pnpm --dir $repoRoot --filter '@apex/operations-web' typecheck"
       ],
       "problemMatcher": [],
       "group": "test"
@@ -276,7 +289,19 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$repoRoot = (Resolve-Path (Join-Path '${workspaceFolder}' '..')).Path; $lane = Join-Path $repoRoot 'apps/operations-web'; if (-not (Test-Path $lane)) { throw 'apps/operations-web is not present under the parent repo root for this bootstrap packet.' }; pnpm --dir $repoRoot --filter '@apex/operations-web' smoke:browser"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; $lane = Join-Path $repoRoot 'apps/operations-web'; if (-not (Test-Path $lane)) { throw 'apps/operations-web is not present under the repo root for this bootstrap packet.' }; corepack pnpm --dir $repoRoot --filter '@apex/operations-web' smoke:browser"
+      ],
+      "problemMatcher": [],
+      "group": "test"
+    },
+    {
+      "label": "Operations web PM live-data smoke",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-Command",
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; $lane = Join-Path $repoRoot 'apps/operations-web'; if (-not (Test-Path $lane)) { throw 'apps/operations-web is not present under the repo root for this bootstrap packet.' }; corepack pnpm --dir $repoRoot --filter '@apex/operations-web' smoke:pm-live-data -- --operations-web-base-url http://127.0.0.1:3000 --mutation-seam-base-url http://127.0.0.1:8000"
       ],
       "problemMatcher": [],
       "group": "test"
@@ -288,7 +313,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$repoRoot = (Resolve-Path (Join-Path '${workspaceFolder}' '..')).Path; $lane = Join-Path $repoRoot 'apps/operations-web'; if (-not (Test-Path $lane)) { throw 'apps/operations-web is not present under the parent repo root for this bootstrap packet.' }; $env:OPERATIONS_WEB_CONTROL_PLANE_BASE_URL='https://control.apexpowerops.com'; pnpm --dir $repoRoot --filter '@apex/operations-web' smoke:promoted-host"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; $lane = Join-Path $repoRoot 'apps/operations-web'; if (-not (Test-Path $lane)) { throw 'apps/operations-web is not present under the repo root for this bootstrap packet.' }; $env:OPERATIONS_WEB_CONTROL_PLANE_BASE_URL='https://control.apexpowerops.com'; corepack pnpm --dir $repoRoot --filter '@apex/operations-web' smoke:promoted-host"
       ],
       "problemMatcher": [],
       "group": "test"
@@ -312,7 +337,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "ssh olares-mesh 'cd /home/olares/code/apex && bash apex-power-ops-platform/tools/ai/run-olares-host-bootstrap-status.sh'"
+        "ssh olares-mesh 'cd /home/olares/code/apex/apex-power-ops-platform && bash tools/ai/run-olares-host-bootstrap-status.sh'"
       ],
       "problemMatcher": [],
       "group": "test"
@@ -324,7 +349,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "ssh olares-mesh 'cd /home/olares/code/apex && git status --short -- apex-power-ops-platform/'"
+        "ssh olares-mesh 'cd /home/olares/code/apex/apex-power-ops-platform && git status --short'"
       ],
       "problemMatcher": []
     },
@@ -335,18 +360,18 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "ssh olares-mesh 'cd /home/olares/code/apex && git diff --cached -- apex-power-ops-platform/'"
+        "ssh olares-mesh 'cd /home/olares/code/apex/apex-power-ops-platform && git diff --cached -- .'"
       ],
       "problemMatcher": []
     },
     {
-      "label": "Platform subtree git status",
+      "label": "Platform repo git status",
       "type": "shell",
       "command": "pwsh",
       "args": [
         "-NoProfile",
         "-Command",
-        "Set-Location 'C:/APEX Platform'; git status --short -- apex-power-ops-platform/"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git status --short"
       ],
       "problemMatcher": []
     },
@@ -357,84 +382,84 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$raw = $env:APEX_PLATFORM_GIT_PATHSPEC; if (-not $raw) { throw 'Set APEX_PLATFORM_GIT_PATHSPEC to one or more semicolon-delimited paths under apex-power-ops-platform/ before running this task.' }; $paths = $raw -split ';' | ForEach-Object { $_.Trim() } | Where-Object { $_ }; if (-not $paths) { throw 'APEX_PLATFORM_GIT_PATHSPEC did not contain any usable paths.' }; $invalid = $paths | Where-Object { $_ -notlike 'apex-power-ops-platform/*' }; if ($invalid) { throw ('All staged paths must stay under apex-power-ops-platform/. Invalid: ' + ($invalid -join ', ')) }; Set-Location 'C:/APEX Platform'; git add -- @paths"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; $raw = $env:APEX_PLATFORM_GIT_PATHSPEC; if (-not $raw) { throw 'Set APEX_PLATFORM_GIT_PATHSPEC to one or more semicolon-delimited repo-relative paths before running this task.' }; $paths = $raw -split ';' | ForEach-Object { $_.Trim() } | Where-Object { $_ }; if (-not $paths) { throw 'APEX_PLATFORM_GIT_PATHSPEC did not contain any usable paths.' }; $invalid = $paths | Where-Object { $_ -match '^(?:[A-Za-z]:|/|\\)' -or $_ -like '..*' }; if ($invalid) { throw ('All staged paths must be repo-relative. Invalid: ' + ($invalid -join ', ')) }; Set-Location $repoRoot; git add -- @paths"
       ],
       "problemMatcher": []
     },
     {
-      "label": "Stage entire platform subtree (cutover only)",
+      "label": "Stage entire platform repo (broad change)",
       "type": "shell",
       "command": "pwsh",
       "args": [
         "-NoProfile",
         "-Command",
-        "Set-Location 'C:/APEX Platform'; git add -- apex-power-ops-platform/"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -- ."
       ],
       "problemMatcher": []
     },
     {
-      "label": "Preview parent-root bootstrap packet",
+      "label": "Preview historical parent-root bootstrap packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('.gitignore', 'apex-power-ops-platform/.vscode/tasks.json', 'apex-power-ops-platform/README.md', 'apex-power-ops-platform/docs/OPERATOR-BOOTSTRAP-RUNBOOK.md', 'apex-power-ops-platform/docs/architecture/WORKSPACE-CURRENT-STATUS-2026-04-21.md', 'apex-power-ops-platform/docs/architecture/WORKSPACE-STRUCTURE-GOVERNANCE-AUDIT-2026-04-21.md', 'apex-power-ops-platform/docs/architecture/WORKSPACE-LANE-NORMALIZATION-CHECKLIST-2026-04-22.md', 'apex-power-ops-platform/docs/architecture/WORKSPACE-IMPLEMENTATION-ROADMAP-2026-04-21.md', 'apex-power-ops-platform/ops/agents/handoffs/README.md', 'apex-power-ops-platform/ops/agents/handoffs/2026-04-22-parent-root-bootstrap-publication-handoff.md'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; $paths = @('.gitignore', '.vscode/tasks.json', 'README.md', 'docs/OPERATOR-BOOTSTRAP-RUNBOOK.md', 'docs/architecture/WORKSPACE-CURRENT-STATUS-2026-04-21.md', 'docs/architecture/WORKSPACE-STRUCTURE-GOVERNANCE-AUDIT-2026-04-21.md', 'docs/architecture/WORKSPACE-LANE-NORMALIZATION-CHECKLIST-2026-04-22.md', 'docs/architecture/WORKSPACE-IMPLEMENTATION-ROADMAP-2026-04-21.md', 'ops/agents/handoffs/README.md', 'ops/agents/handoffs/2026-04-22-parent-root-bootstrap-publication-handoff.md'); Set-Location $repoRoot; git add -n -- @paths"
       ],
       "problemMatcher": []
     },
     {
-      "label": "Stage parent-root bootstrap packet",
+      "label": "Stage historical parent-root bootstrap packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('.gitignore', 'apex-power-ops-platform/.vscode/tasks.json', 'apex-power-ops-platform/README.md', 'apex-power-ops-platform/docs/OPERATOR-BOOTSTRAP-RUNBOOK.md', 'apex-power-ops-platform/docs/architecture/WORKSPACE-CURRENT-STATUS-2026-04-21.md', 'apex-power-ops-platform/docs/architecture/WORKSPACE-STRUCTURE-GOVERNANCE-AUDIT-2026-04-21.md', 'apex-power-ops-platform/docs/architecture/WORKSPACE-LANE-NORMALIZATION-CHECKLIST-2026-04-22.md', 'apex-power-ops-platform/docs/architecture/WORKSPACE-IMPLEMENTATION-ROADMAP-2026-04-21.md', 'apex-power-ops-platform/ops/agents/handoffs/README.md', 'apex-power-ops-platform/ops/agents/handoffs/2026-04-22-parent-root-bootstrap-publication-handoff.md'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; $paths = @('.gitignore', '.vscode/tasks.json', 'README.md', 'docs/OPERATOR-BOOTSTRAP-RUNBOOK.md', 'docs/architecture/WORKSPACE-CURRENT-STATUS-2026-04-21.md', 'docs/architecture/WORKSPACE-STRUCTURE-GOVERNANCE-AUDIT-2026-04-21.md', 'docs/architecture/WORKSPACE-LANE-NORMALIZATION-CHECKLIST-2026-04-22.md', 'docs/architecture/WORKSPACE-IMPLEMENTATION-ROADMAP-2026-04-21.md', 'ops/agents/handoffs/README.md', 'ops/agents/handoffs/2026-04-22-parent-root-bootstrap-publication-handoff.md'); Set-Location $repoRoot; git add -- @paths"
       ],
       "problemMatcher": []
     },
     {
-      "label": "Parent-root bootstrap packet staged diff",
+      "label": "Historical parent-root bootstrap packet staged diff",
       "type": "shell",
       "command": "pwsh",
       "args": [
         "-NoProfile",
         "-Command",
-        "Set-Location 'C:/APEX Platform'; git diff --cached -- .gitignore apex-power-ops-platform/"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- .gitignore "
       ],
       "problemMatcher": []
     },
     {
-      "label": "Preview parent-root Class A scaffold packet",
+      "label": "Preview historical parent-root Class A scaffold packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/.github/CODEOWNERS', 'apex-power-ops-platform/.github/WORKSPACE-OWNERSHIP-APPROVAL-MAP.md', 'apex-power-ops-platform/.github/workflows/calc-engine-ci.yml', 'apex-power-ops-platform/.github/workflows/control-plane-api-ci.yml', 'apex-power-ops-platform/.github/workflows/deployed-control-plane-smoke.yml', 'apex-power-ops-platform/.github/workflows/forms-engine-ci.yml', 'apex-power-ops-platform/.github/workflows/operations-web-browser-smoke.yml', 'apex-power-ops-platform/.github/workflows/operations-web-hosted-smoke.yml', 'apex-power-ops-platform/.github/workflows/pm-idempotency-metrics-export.yml', 'apex-power-ops-platform/.github/workflows/pm-idempotency-sweep.yml', 'apex-power-ops-platform/.gitignore', 'apex-power-ops-platform/AGENTS.md', 'apex-power-ops-platform/package.json', 'apex-power-ops-platform/pnpm-lock.yaml', 'apex-power-ops-platform/pnpm-workspace.yaml', 'apex-power-ops-platform/pyproject.toml', 'apex-power-ops-platform/apps/control-plane-api/.gitignore', 'apex-power-ops-platform/apps/control-plane-api/README.md', 'apex-power-ops-platform/apps/control-plane-api/pyproject.toml', 'apex-power-ops-platform/apps/control-plane-api/pytest.ini', 'apex-power-ops-platform/apps/control-plane-api/render.yaml', 'apex-power-ops-platform/apps/control-plane-api/requirements-dev.txt', 'apex-power-ops-platform/apps/control-plane-api/requirements.txt', 'apex-power-ops-platform/apps/operations-web/.gitignore', 'apex-power-ops-platform/apps/operations-web/README.md', 'apex-power-ops-platform/apps/operations-web/next.config.ts', 'apex-power-ops-platform/apps/operations-web/package.json', 'apex-power-ops-platform/apps/operations-web/playwright.config.ts', 'apex-power-ops-platform/apps/operations-web/tsconfig.json', 'apex-power-ops-platform/apps/mutation-seam/.gitignore', 'apex-power-ops-platform/apps/mutation-seam/ARCHITECTURE.md', 'apex-power-ops-platform/apps/mutation-seam/DEPLOYMENT.md', 'apex-power-ops-platform/apps/mutation-seam/FILES_MANIFEST.md', 'apex-power-ops-platform/apps/mutation-seam/Makefile', 'apex-power-ops-platform/apps/mutation-seam/pyproject.toml', 'apex-power-ops-platform/apps/mutation-seam/QUICKSTART.md', 'apex-power-ops-platform/apps/mutation-seam/README.md', 'apex-power-ops-platform/apps/mutation-seam/requirements.txt', 'apex-power-ops-platform/packages/forms-engine/README.md', 'apex-power-ops-platform/packages/forms-engine/pyproject.toml', 'apex-power-ops-platform/packages/calc-engine/README.md', 'apex-power-ops-platform/packages/calc-engine/pyproject.toml', 'apex-power-ops-platform/tests/test_fixture_contract_020f.py'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; $paths = @('.github/CODEOWNERS', '.github/WORKSPACE-OWNERSHIP-APPROVAL-MAP.md', '.github/workflows/calc-engine-ci.yml', '.github/workflows/control-plane-api-ci.yml', '.github/workflows/deployed-control-plane-smoke.yml', '.github/workflows/forms-engine-ci.yml', '.github/workflows/operations-web-browser-smoke.yml', '.github/workflows/operations-web-hosted-smoke.yml', '.github/workflows/pm-idempotency-metrics-export.yml', '.github/workflows/pm-idempotency-sweep.yml', '.gitignore', 'AGENTS.md', 'package.json', 'pnpm-lock.yaml', 'pnpm-workspace.yaml', 'pyproject.toml', 'apps/control-plane-api/.gitignore', 'apps/control-plane-api/README.md', 'apps/control-plane-api/pyproject.toml', 'apps/control-plane-api/pytest.ini', 'apps/control-plane-api/render.yaml', 'apps/control-plane-api/requirements-dev.txt', 'apps/control-plane-api/requirements.txt', 'apps/operations-web/.gitignore', 'apps/operations-web/README.md', 'apps/operations-web/next.config.ts', 'apps/operations-web/package.json', 'apps/operations-web/playwright.config.ts', 'apps/operations-web/tsconfig.json', 'apps/mutation-seam/.gitignore', 'apps/mutation-seam/ARCHITECTURE.md', 'apps/mutation-seam/DEPLOYMENT.md', 'apps/mutation-seam/FILES_MANIFEST.md', 'apps/mutation-seam/Makefile', 'apps/mutation-seam/pyproject.toml', 'apps/mutation-seam/QUICKSTART.md', 'apps/mutation-seam/README.md', 'apps/mutation-seam/requirements.txt', 'packages/forms-engine/README.md', 'packages/forms-engine/pyproject.toml', 'packages/calc-engine/README.md', 'packages/calc-engine/pyproject.toml', 'tests/test_fixture_contract_020f.py'); Set-Location $repoRoot; git add -n -- @paths"
       ],
       "problemMatcher": []
     },
     {
-      "label": "Stage parent-root Class A scaffold packet",
+      "label": "Stage historical parent-root Class A scaffold packet",
       "type": "shell",
       "command": "pwsh",
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/.github/CODEOWNERS', 'apex-power-ops-platform/.github/WORKSPACE-OWNERSHIP-APPROVAL-MAP.md', 'apex-power-ops-platform/.github/workflows/calc-engine-ci.yml', 'apex-power-ops-platform/.github/workflows/control-plane-api-ci.yml', 'apex-power-ops-platform/.github/workflows/deployed-control-plane-smoke.yml', 'apex-power-ops-platform/.github/workflows/forms-engine-ci.yml', 'apex-power-ops-platform/.github/workflows/operations-web-browser-smoke.yml', 'apex-power-ops-platform/.github/workflows/operations-web-hosted-smoke.yml', 'apex-power-ops-platform/.github/workflows/pm-idempotency-metrics-export.yml', 'apex-power-ops-platform/.github/workflows/pm-idempotency-sweep.yml', 'apex-power-ops-platform/.gitignore', 'apex-power-ops-platform/AGENTS.md', 'apex-power-ops-platform/package.json', 'apex-power-ops-platform/pnpm-lock.yaml', 'apex-power-ops-platform/pnpm-workspace.yaml', 'apex-power-ops-platform/pyproject.toml', 'apex-power-ops-platform/apps/control-plane-api/.gitignore', 'apex-power-ops-platform/apps/control-plane-api/README.md', 'apex-power-ops-platform/apps/control-plane-api/pyproject.toml', 'apex-power-ops-platform/apps/control-plane-api/pytest.ini', 'apex-power-ops-platform/apps/control-plane-api/render.yaml', 'apex-power-ops-platform/apps/control-plane-api/requirements-dev.txt', 'apex-power-ops-platform/apps/control-plane-api/requirements.txt', 'apex-power-ops-platform/apps/operations-web/.gitignore', 'apex-power-ops-platform/apps/operations-web/README.md', 'apex-power-ops-platform/apps/operations-web/next.config.ts', 'apex-power-ops-platform/apps/operations-web/package.json', 'apex-power-ops-platform/apps/operations-web/playwright.config.ts', 'apex-power-ops-platform/apps/operations-web/tsconfig.json', 'apex-power-ops-platform/apps/mutation-seam/.gitignore', 'apex-power-ops-platform/apps/mutation-seam/ARCHITECTURE.md', 'apex-power-ops-platform/apps/mutation-seam/DEPLOYMENT.md', 'apex-power-ops-platform/apps/mutation-seam/FILES_MANIFEST.md', 'apex-power-ops-platform/apps/mutation-seam/Makefile', 'apex-power-ops-platform/apps/mutation-seam/pyproject.toml', 'apex-power-ops-platform/apps/mutation-seam/QUICKSTART.md', 'apex-power-ops-platform/apps/mutation-seam/README.md', 'apex-power-ops-platform/apps/mutation-seam/requirements.txt', 'apex-power-ops-platform/packages/forms-engine/README.md', 'apex-power-ops-platform/packages/forms-engine/pyproject.toml', 'apex-power-ops-platform/packages/calc-engine/README.md', 'apex-power-ops-platform/packages/calc-engine/pyproject.toml', 'apex-power-ops-platform/tests/test_fixture_contract_020f.py'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; $paths = @('.github/CODEOWNERS', '.github/WORKSPACE-OWNERSHIP-APPROVAL-MAP.md', '.github/workflows/calc-engine-ci.yml', '.github/workflows/control-plane-api-ci.yml', '.github/workflows/deployed-control-plane-smoke.yml', '.github/workflows/forms-engine-ci.yml', '.github/workflows/operations-web-browser-smoke.yml', '.github/workflows/operations-web-hosted-smoke.yml', '.github/workflows/pm-idempotency-metrics-export.yml', '.github/workflows/pm-idempotency-sweep.yml', '.gitignore', 'AGENTS.md', 'package.json', 'pnpm-lock.yaml', 'pnpm-workspace.yaml', 'pyproject.toml', 'apps/control-plane-api/.gitignore', 'apps/control-plane-api/README.md', 'apps/control-plane-api/pyproject.toml', 'apps/control-plane-api/pytest.ini', 'apps/control-plane-api/render.yaml', 'apps/control-plane-api/requirements-dev.txt', 'apps/control-plane-api/requirements.txt', 'apps/operations-web/.gitignore', 'apps/operations-web/README.md', 'apps/operations-web/next.config.ts', 'apps/operations-web/package.json', 'apps/operations-web/playwright.config.ts', 'apps/operations-web/tsconfig.json', 'apps/mutation-seam/.gitignore', 'apps/mutation-seam/ARCHITECTURE.md', 'apps/mutation-seam/DEPLOYMENT.md', 'apps/mutation-seam/FILES_MANIFEST.md', 'apps/mutation-seam/Makefile', 'apps/mutation-seam/pyproject.toml', 'apps/mutation-seam/QUICKSTART.md', 'apps/mutation-seam/README.md', 'apps/mutation-seam/requirements.txt', 'packages/forms-engine/README.md', 'packages/forms-engine/pyproject.toml', 'packages/calc-engine/README.md', 'packages/calc-engine/pyproject.toml', 'tests/test_fixture_contract_020f.py'); Set-Location $repoRoot; git add -- @paths"
       ],
       "problemMatcher": []
     },
     {
-      "label": "Parent-root Class A scaffold packet staged diff",
+      "label": "Historical parent-root Class A scaffold packet staged diff",
       "type": "shell",
       "command": "pwsh",
       "args": [
         "-NoProfile",
         "-Command",
-        "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/.github apex-power-ops-platform/.gitignore apex-power-ops-platform/AGENTS.md apex-power-ops-platform/package.json apex-power-ops-platform/pnpm-lock.yaml apex-power-ops-platform/pnpm-workspace.yaml apex-power-ops-platform/pyproject.toml apex-power-ops-platform/apps/control-plane-api apex-power-ops-platform/apps/operations-web apex-power-ops-platform/apps/mutation-seam apex-power-ops-platform/packages/forms-engine apex-power-ops-platform/packages/calc-engine apex-power-ops-platform/tests/test_fixture_contract_020f.py"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- .github .gitignore AGENTS.md package.json pnpm-lock.yaml pnpm-workspace.yaml pyproject.toml apps/control-plane-api apps/operations-web apps/mutation-seam packages/forms-engine packages/calc-engine tests/test_fixture_contract_020f.py"
       ],
       "problemMatcher": []
     },
@@ -445,7 +470,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/packages/forms-engine/src', 'apex-power-ops-platform/packages/forms-engine/tests', 'apex-power-ops-platform/packages/calc-engine/src', 'apex-power-ops-platform/packages/calc-engine/tests'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; $paths = @('packages/forms-engine/src', 'packages/forms-engine/tests', 'packages/calc-engine/src', 'packages/calc-engine/tests'); Set-Location $repoRoot; git add -n -- @paths"
       ],
       "problemMatcher": []
     },
@@ -456,7 +481,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/packages/forms-engine/src', 'apex-power-ops-platform/packages/forms-engine/tests', 'apex-power-ops-platform/packages/calc-engine/src', 'apex-power-ops-platform/packages/calc-engine/tests'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; $paths = @('packages/forms-engine/src', 'packages/forms-engine/tests', 'packages/calc-engine/src', 'packages/calc-engine/tests'); Set-Location $repoRoot; git add -- @paths"
       ],
       "problemMatcher": []
     },
@@ -467,7 +492,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/packages/forms-engine/src apex-power-ops-platform/packages/forms-engine/tests apex-power-ops-platform/packages/calc-engine/src apex-power-ops-platform/packages/calc-engine/tests"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- packages/forms-engine/src packages/forms-engine/tests packages/calc-engine/src packages/calc-engine/tests"
       ],
       "problemMatcher": []
     },
@@ -478,7 +503,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/apps/operations-web/DEPLOYMENT_VALIDATION.md', 'apex-power-ops-platform/apps/operations-web/app', 'apex-power-ops-platform/apps/operations-web/lib', 'apex-power-ops-platform/apps/operations-web/next-env.d.ts', 'apex-power-ops-platform/apps/operations-web/public', 'apex-power-ops-platform/apps/operations-web/scripts', 'apex-power-ops-platform/apps/operations-web/tests'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; $paths = @('apps/operations-web/DEPLOYMENT_VALIDATION.md', 'apps/operations-web/app', 'apps/operations-web/lib', 'apps/operations-web/next-env.d.ts', 'apps/operations-web/public', 'apps/operations-web/scripts', 'apps/operations-web/tests'); Set-Location $repoRoot; git add -n -- @paths"
       ],
       "problemMatcher": []
     },
@@ -489,7 +514,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/apps/operations-web/DEPLOYMENT_VALIDATION.md', 'apex-power-ops-platform/apps/operations-web/app', 'apex-power-ops-platform/apps/operations-web/lib', 'apex-power-ops-platform/apps/operations-web/next-env.d.ts', 'apex-power-ops-platform/apps/operations-web/public', 'apex-power-ops-platform/apps/operations-web/scripts', 'apex-power-ops-platform/apps/operations-web/tests'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; $paths = @('apps/operations-web/DEPLOYMENT_VALIDATION.md', 'apps/operations-web/app', 'apps/operations-web/lib', 'apps/operations-web/next-env.d.ts', 'apps/operations-web/public', 'apps/operations-web/scripts', 'apps/operations-web/tests'); Set-Location $repoRoot; git add -- @paths"
       ],
       "problemMatcher": []
     },
@@ -500,7 +525,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/apps/operations-web/DEPLOYMENT_VALIDATION.md apex-power-ops-platform/apps/operations-web/app apex-power-ops-platform/apps/operations-web/lib apex-power-ops-platform/apps/operations-web/next-env.d.ts apex-power-ops-platform/apps/operations-web/public apex-power-ops-platform/apps/operations-web/scripts apex-power-ops-platform/apps/operations-web/tests"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- apps/operations-web/DEPLOYMENT_VALIDATION.md apps/operations-web/app apps/operations-web/lib apps/operations-web/next-env.d.ts apps/operations-web/public apps/operations-web/scripts apps/operations-web/tests"
       ],
       "problemMatcher": []
     },
@@ -511,7 +536,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/apps/mutation-seam/app', 'apex-power-ops-platform/apps/mutation-seam/migrations', 'apex-power-ops-platform/apps/mutation-seam/run_persisted_validation.py', 'apex-power-ops-platform/apps/mutation-seam/run_schedule_bootstrap.py', 'apex-power-ops-platform/apps/mutation-seam/test_store.py', 'apex-power-ops-platform/apps/mutation-seam/tests', 'apex-power-ops-platform/apps/mutation-seam/validate.py'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; $paths = @('apps/mutation-seam/app', 'apps/mutation-seam/migrations', 'apps/mutation-seam/run_persisted_validation.py', 'apps/mutation-seam/run_schedule_bootstrap.py', 'apps/mutation-seam/test_store.py', 'apps/mutation-seam/tests', 'apps/mutation-seam/validate.py'); Set-Location $repoRoot; git add -n -- @paths"
       ],
       "problemMatcher": []
     },
@@ -522,7 +547,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/apps/mutation-seam/app', 'apex-power-ops-platform/apps/mutation-seam/migrations', 'apex-power-ops-platform/apps/mutation-seam/run_persisted_validation.py', 'apex-power-ops-platform/apps/mutation-seam/run_schedule_bootstrap.py', 'apex-power-ops-platform/apps/mutation-seam/test_store.py', 'apex-power-ops-platform/apps/mutation-seam/tests', 'apex-power-ops-platform/apps/mutation-seam/validate.py'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; $paths = @('apps/mutation-seam/app', 'apps/mutation-seam/migrations', 'apps/mutation-seam/run_persisted_validation.py', 'apps/mutation-seam/run_schedule_bootstrap.py', 'apps/mutation-seam/test_store.py', 'apps/mutation-seam/tests', 'apps/mutation-seam/validate.py'); Set-Location $repoRoot; git add -- @paths"
       ],
       "problemMatcher": []
     },
@@ -533,7 +558,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/apps/mutation-seam/app apex-power-ops-platform/apps/mutation-seam/migrations apex-power-ops-platform/apps/mutation-seam/run_persisted_validation.py apex-power-ops-platform/apps/mutation-seam/run_schedule_bootstrap.py apex-power-ops-platform/apps/mutation-seam/test_store.py apex-power-ops-platform/apps/mutation-seam/tests apex-power-ops-platform/apps/mutation-seam/validate.py"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- apps/mutation-seam/app apps/mutation-seam/migrations apps/mutation-seam/run_persisted_validation.py apps/mutation-seam/run_schedule_bootstrap.py apps/mutation-seam/test_store.py apps/mutation-seam/tests apps/mutation-seam/validate.py"
       ],
       "problemMatcher": []
     },
@@ -544,7 +569,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/apps/control-plane-api/config.py', 'apex-power-ops-platform/apps/control-plane-api/main.py', 'apex-power-ops-platform/apps/control-plane-api/demo', 'apex-power-ops-platform/apps/control-plane-api/docs/contracts/CHATGPT-REMOTE-CONTROL-PLANE-TOOL-SCHEMAS-2026-03-28.json', 'apex-power-ops-platform/apps/control-plane-api/models', 'apex-power-ops-platform/apps/control-plane-api/services', 'apex-power-ops-platform/apps/control-plane-api/scripts/smoke_deployed_control_plane.py', 'apex-power-ops-platform/apps/control-plane-api/tests/__init__.py', 'apex-power-ops-platform/apps/control-plane-api/tests/test_control_plane.py', 'apex-power-ops-platform/apps/control-plane-api/tests/test_github_mcp_transport.py', 'apex-power-ops-platform/apps/control-plane-api/tests/test_health.py', 'apex-power-ops-platform/apps/control-plane-api/tests/test_mcp_transport.py', 'apex-power-ops-platform/apps/control-plane-api/tests/test_oauth_consent_route.py', 'apex-power-ops-platform/apps/control-plane-api/tests/test_smoke_deployed_control_plane.py', 'apex-power-ops-platform/apps/control-plane-api/tests/test_supabase_mcp_transport.py'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; $paths = @('apps/control-plane-api/config.py', 'apps/control-plane-api/main.py', 'apps/control-plane-api/demo', 'apps/control-plane-api/docs/contracts/CHATGPT-REMOTE-CONTROL-PLANE-TOOL-SCHEMAS-2026-03-28.json', 'apps/control-plane-api/models', 'apps/control-plane-api/services', 'apps/control-plane-api/scripts/smoke_deployed_control_plane.py', 'apps/control-plane-api/tests/__init__.py', 'apps/control-plane-api/tests/test_control_plane.py', 'apps/control-plane-api/tests/test_github_mcp_transport.py', 'apps/control-plane-api/tests/test_health.py', 'apps/control-plane-api/tests/test_mcp_transport.py', 'apps/control-plane-api/tests/test_oauth_consent_route.py', 'apps/control-plane-api/tests/test_smoke_deployed_control_plane.py', 'apps/control-plane-api/tests/test_supabase_mcp_transport.py'); Set-Location $repoRoot; git add -n -- @paths"
       ],
       "problemMatcher": []
     },
@@ -555,7 +580,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/apps/control-plane-api/config.py', 'apex-power-ops-platform/apps/control-plane-api/main.py', 'apex-power-ops-platform/apps/control-plane-api/demo', 'apex-power-ops-platform/apps/control-plane-api/docs/contracts/CHATGPT-REMOTE-CONTROL-PLANE-TOOL-SCHEMAS-2026-03-28.json', 'apex-power-ops-platform/apps/control-plane-api/models', 'apex-power-ops-platform/apps/control-plane-api/services', 'apex-power-ops-platform/apps/control-plane-api/scripts/smoke_deployed_control_plane.py', 'apex-power-ops-platform/apps/control-plane-api/tests/__init__.py', 'apex-power-ops-platform/apps/control-plane-api/tests/test_control_plane.py', 'apex-power-ops-platform/apps/control-plane-api/tests/test_github_mcp_transport.py', 'apex-power-ops-platform/apps/control-plane-api/tests/test_health.py', 'apex-power-ops-platform/apps/control-plane-api/tests/test_mcp_transport.py', 'apex-power-ops-platform/apps/control-plane-api/tests/test_oauth_consent_route.py', 'apex-power-ops-platform/apps/control-plane-api/tests/test_smoke_deployed_control_plane.py', 'apex-power-ops-platform/apps/control-plane-api/tests/test_supabase_mcp_transport.py'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; $paths = @('apps/control-plane-api/config.py', 'apps/control-plane-api/main.py', 'apps/control-plane-api/demo', 'apps/control-plane-api/docs/contracts/CHATGPT-REMOTE-CONTROL-PLANE-TOOL-SCHEMAS-2026-03-28.json', 'apps/control-plane-api/models', 'apps/control-plane-api/services', 'apps/control-plane-api/scripts/smoke_deployed_control_plane.py', 'apps/control-plane-api/tests/__init__.py', 'apps/control-plane-api/tests/test_control_plane.py', 'apps/control-plane-api/tests/test_github_mcp_transport.py', 'apps/control-plane-api/tests/test_health.py', 'apps/control-plane-api/tests/test_mcp_transport.py', 'apps/control-plane-api/tests/test_oauth_consent_route.py', 'apps/control-plane-api/tests/test_smoke_deployed_control_plane.py', 'apps/control-plane-api/tests/test_supabase_mcp_transport.py'); Set-Location $repoRoot; git add -- @paths"
       ],
       "problemMatcher": []
     },
@@ -566,7 +591,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/apps/control-plane-api/config.py apex-power-ops-platform/apps/control-plane-api/main.py apex-power-ops-platform/apps/control-plane-api/demo apex-power-ops-platform/apps/control-plane-api/docs/contracts/CHATGPT-REMOTE-CONTROL-PLANE-TOOL-SCHEMAS-2026-03-28.json apex-power-ops-platform/apps/control-plane-api/models apex-power-ops-platform/apps/control-plane-api/services apex-power-ops-platform/apps/control-plane-api/scripts/smoke_deployed_control_plane.py apex-power-ops-platform/apps/control-plane-api/tests/__init__.py apex-power-ops-platform/apps/control-plane-api/tests/test_control_plane.py apex-power-ops-platform/apps/control-plane-api/tests/test_github_mcp_transport.py apex-power-ops-platform/apps/control-plane-api/tests/test_health.py apex-power-ops-platform/apps/control-plane-api/tests/test_mcp_transport.py apex-power-ops-platform/apps/control-plane-api/tests/test_oauth_consent_route.py apex-power-ops-platform/apps/control-plane-api/tests/test_smoke_deployed_control_plane.py apex-power-ops-platform/apps/control-plane-api/tests/test_supabase_mcp_transport.py"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- apps/control-plane-api/config.py apps/control-plane-api/main.py apps/control-plane-api/demo apps/control-plane-api/docs/contracts/CHATGPT-REMOTE-CONTROL-PLANE-TOOL-SCHEMAS-2026-03-28.json apps/control-plane-api/models apps/control-plane-api/services apps/control-plane-api/scripts/smoke_deployed_control_plane.py apps/control-plane-api/tests/__init__.py apps/control-plane-api/tests/test_control_plane.py apps/control-plane-api/tests/test_github_mcp_transport.py apps/control-plane-api/tests/test_health.py apps/control-plane-api/tests/test_mcp_transport.py apps/control-plane-api/tests/test_oauth_consent_route.py apps/control-plane-api/tests/test_smoke_deployed_control_plane.py apps/control-plane-api/tests/test_supabase_mcp_transport.py"
       ],
       "problemMatcher": []
     },
@@ -577,7 +602,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/apps/control-plane-api/_invariant_probe_019g.py', 'apex-power-ops-platform/apps/control-plane-api/api', 'apex-power-ops-platform/apps/control-plane-api/DEPLOYMENT_VALIDATION.md', 'apex-power-ops-platform/apps/control-plane-api/migrations', 'apex-power-ops-platform/apps/control-plane-api/PUBLIC-APPARATUS-ROUTE-PROMOTION-CHECKLIST-2026-04-21.md', 'apex-power-ops-platform/apps/control-plane-api/scripts', 'apex-power-ops-platform/apps/control-plane-api/supabase', 'apex-power-ops-platform/apps/control-plane-api/utils'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; $paths = @('apps/control-plane-api/_invariant_probe_019g.py', 'apps/control-plane-api/api', 'apps/control-plane-api/DEPLOYMENT_VALIDATION.md', 'apps/control-plane-api/migrations', 'apps/control-plane-api/PUBLIC-APPARATUS-ROUTE-PROMOTION-CHECKLIST-2026-04-21.md', 'apps/control-plane-api/scripts', 'apps/control-plane-api/supabase', 'apps/control-plane-api/utils'); Set-Location $repoRoot; git add -n -- @paths"
       ],
       "problemMatcher": []
     },
@@ -588,7 +613,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/apps/control-plane-api/_invariant_probe_019g.py', 'apex-power-ops-platform/apps/control-plane-api/api', 'apex-power-ops-platform/apps/control-plane-api/DEPLOYMENT_VALIDATION.md', 'apex-power-ops-platform/apps/control-plane-api/migrations', 'apex-power-ops-platform/apps/control-plane-api/PUBLIC-APPARATUS-ROUTE-PROMOTION-CHECKLIST-2026-04-21.md', 'apex-power-ops-platform/apps/control-plane-api/scripts', 'apex-power-ops-platform/apps/control-plane-api/supabase', 'apex-power-ops-platform/apps/control-plane-api/utils'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; $paths = @('apps/control-plane-api/_invariant_probe_019g.py', 'apps/control-plane-api/api', 'apps/control-plane-api/DEPLOYMENT_VALIDATION.md', 'apps/control-plane-api/migrations', 'apps/control-plane-api/PUBLIC-APPARATUS-ROUTE-PROMOTION-CHECKLIST-2026-04-21.md', 'apps/control-plane-api/scripts', 'apps/control-plane-api/supabase', 'apps/control-plane-api/utils'); Set-Location $repoRoot; git add -- @paths"
       ],
       "problemMatcher": []
     },
@@ -599,7 +624,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/apps/control-plane-api/_invariant_probe_019g.py apex-power-ops-platform/apps/control-plane-api/api apex-power-ops-platform/apps/control-plane-api/DEPLOYMENT_VALIDATION.md apex-power-ops-platform/apps/control-plane-api/migrations apex-power-ops-platform/apps/control-plane-api/PUBLIC-APPARATUS-ROUTE-PROMOTION-CHECKLIST-2026-04-21.md apex-power-ops-platform/apps/control-plane-api/scripts apex-power-ops-platform/apps/control-plane-api/supabase apex-power-ops-platform/apps/control-plane-api/utils"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- apps/control-plane-api/_invariant_probe_019g.py apps/control-plane-api/api apps/control-plane-api/DEPLOYMENT_VALIDATION.md apps/control-plane-api/migrations apps/control-plane-api/PUBLIC-APPARATUS-ROUTE-PROMOTION-CHECKLIST-2026-04-21.md apps/control-plane-api/scripts apps/control-plane-api/supabase apps/control-plane-api/utils"
       ],
       "problemMatcher": []
     },
@@ -610,7 +635,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/apps/control-plane-api/tests'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; $paths = @('apps/control-plane-api/tests'); Set-Location $repoRoot; git add -n -- @paths"
       ],
       "problemMatcher": []
     },
@@ -621,7 +646,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/apps/control-plane-api/tests'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; $paths = @('apps/control-plane-api/tests'); Set-Location $repoRoot; git add -- @paths"
       ],
       "problemMatcher": []
     },
@@ -632,7 +657,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/apps/control-plane-api/tests"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- apps/control-plane-api/tests"
       ],
       "problemMatcher": []
     },
@@ -643,7 +668,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/apps/field-surface/README.md', 'apex-power-ops-platform/apps/field-surface/package.json', 'apex-power-ops-platform/apps/field-surface/public', 'apex-power-ops-platform/apps/forms-studio/README.md', 'apex-power-ops-platform/apps/integration-surface/README.md', 'apex-power-ops-platform/apps/lead-surface/README.md', 'apex-power-ops-platform/apps/pm-surface/README.md', 'apex-power-ops-platform/packages/api-contracts/README.md'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; $paths = @('apps/field-surface/README.md', 'apps/field-surface/package.json', 'apps/field-surface/public', 'apps/forms-studio/README.md', 'apps/integration-surface/README.md', 'apps/lead-surface/README.md', 'apps/pm-surface/README.md', 'packages/api-contracts/README.md'); Set-Location $repoRoot; git add -n -- @paths"
       ],
       "problemMatcher": []
     },
@@ -654,7 +679,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/apps/field-surface/README.md', 'apex-power-ops-platform/apps/field-surface/package.json', 'apex-power-ops-platform/apps/field-surface/public', 'apex-power-ops-platform/apps/forms-studio/README.md', 'apex-power-ops-platform/apps/integration-surface/README.md', 'apex-power-ops-platform/apps/lead-surface/README.md', 'apex-power-ops-platform/apps/pm-surface/README.md', 'apex-power-ops-platform/packages/api-contracts/README.md'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; $paths = @('apps/field-surface/README.md', 'apps/field-surface/package.json', 'apps/field-surface/public', 'apps/forms-studio/README.md', 'apps/integration-surface/README.md', 'apps/lead-surface/README.md', 'apps/pm-surface/README.md', 'packages/api-contracts/README.md'); Set-Location $repoRoot; git add -- @paths"
       ],
       "problemMatcher": []
     },
@@ -665,7 +690,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/apps/field-surface/README.md apex-power-ops-platform/apps/field-surface/package.json apex-power-ops-platform/apps/field-surface/public apex-power-ops-platform/apps/forms-studio/README.md apex-power-ops-platform/apps/integration-surface/README.md apex-power-ops-platform/apps/lead-surface/README.md apex-power-ops-platform/apps/pm-surface/README.md apex-power-ops-platform/packages/api-contracts/README.md"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- apps/field-surface/README.md apps/field-surface/package.json apps/field-surface/public apps/forms-studio/README.md apps/integration-surface/README.md apps/lead-surface/README.md apps/pm-surface/README.md packages/api-contracts/README.md"
       ],
       "problemMatcher": []
     },
@@ -676,7 +701,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/infra'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; $paths = @('infra'); Set-Location $repoRoot; git add -n -- @paths"
       ],
       "problemMatcher": []
     },
@@ -687,7 +712,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/infra'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; $paths = @('infra'); Set-Location $repoRoot; git add -- @paths"
       ],
       "problemMatcher": []
     },
@@ -698,7 +723,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/infra"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- infra"
       ],
       "problemMatcher": []
     },
@@ -709,7 +734,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/docs'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; $paths = @('docs'); Set-Location $repoRoot; git add -n -- @paths"
       ],
       "problemMatcher": []
     },
@@ -720,7 +745,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/docs'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; $paths = @('docs'); Set-Location $repoRoot; git add -- @paths"
       ],
       "problemMatcher": []
     },
@@ -731,7 +756,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/docs"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- docs"
       ],
       "problemMatcher": []
     },
@@ -742,7 +767,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/ops/knowledge-control-plane/registry'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; $paths = @('ops/knowledge-control-plane/registry'); Set-Location $repoRoot; git add -n -- @paths"
       ],
       "problemMatcher": []
     },
@@ -753,7 +778,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/ops/knowledge-control-plane/registry'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; $paths = @('ops/knowledge-control-plane/registry'); Set-Location $repoRoot; git add -- @paths"
       ],
       "problemMatcher": []
     },
@@ -764,7 +789,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/knowledge-control-plane/registry"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/knowledge-control-plane/registry"
       ],
       "problemMatcher": []
     },
@@ -775,7 +800,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/ops/agents/legacy-governance'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; $paths = @('ops/agents/legacy-governance'); Set-Location $repoRoot; git add -n -- @paths"
       ],
       "problemMatcher": []
     },
@@ -786,7 +811,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/ops/agents/legacy-governance'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; $paths = @('ops/agents/legacy-governance'); Set-Location $repoRoot; git add -- @paths"
       ],
       "problemMatcher": []
     },
@@ -797,7 +822,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/legacy-governance"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/agents/legacy-governance"
       ],
       "problemMatcher": []
     },
@@ -808,7 +833,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/ops/knowledge-resource-operations'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; $paths = @('ops/knowledge-resource-operations'); Set-Location $repoRoot; git add -n -- @paths"
       ],
       "problemMatcher": []
     },
@@ -819,7 +844,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/ops/knowledge-resource-operations'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; $paths = @('ops/knowledge-resource-operations'); Set-Location $repoRoot; git add -- @paths"
       ],
       "problemMatcher": []
     },
@@ -830,7 +855,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/knowledge-resource-operations"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/knowledge-resource-operations"
       ],
       "problemMatcher": []
     },
@@ -841,7 +866,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-forms-import-008-engine-core-pilot.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-forms-import-009-dependency-hardening.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+        "$paths = @('ops/agents/packets/draft/2026-04-13-forms-import-008-engine-core-pilot.json', 'ops/agents/packets/draft/2026-04-13-forms-import-009-dependency-hardening.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -n -- @paths"
       ],
       "problemMatcher": []
     },
@@ -852,7 +877,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-forms-import-008-engine-core-pilot.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-forms-import-009-dependency-hardening.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+        "$paths = @('ops/agents/packets/draft/2026-04-13-forms-import-008-engine-core-pilot.json', 'ops/agents/packets/draft/2026-04-13-forms-import-009-dependency-hardening.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -- @paths"
       ],
       "problemMatcher": []
     },
@@ -863,7 +888,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-forms-import-008-engine-core-pilot.json apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-forms-import-009-dependency-hardening.json"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/agents/packets/draft/2026-04-13-forms-import-008-engine-core-pilot.json ops/agents/packets/draft/2026-04-13-forms-import-009-dependency-hardening.json"
       ],
       "problemMatcher": []
     },
@@ -874,7 +899,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-21-apex-unification-001af-public-control-plane-route-promotion-execution.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+        "$paths = @('ops/agents/packets/draft/2026-04-21-apex-unification-001af-public-control-plane-route-promotion-execution.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -n -- @paths"
       ],
       "problemMatcher": []
     },
@@ -885,7 +910,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-21-apex-unification-001af-public-control-plane-route-promotion-execution.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+        "$paths = @('ops/agents/packets/draft/2026-04-21-apex-unification-001af-public-control-plane-route-promotion-execution.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -- @paths"
       ],
       "problemMatcher": []
     },
@@ -896,7 +921,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-21-apex-unification-001af-public-control-plane-route-promotion-execution.json"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/agents/packets/draft/2026-04-21-apex-unification-001af-public-control-plane-route-promotion-execution.json"
       ],
       "problemMatcher": []
     },
@@ -907,7 +932,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-apex-unification-001-active-docs-infra-bounded-decomposition-plan.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-apex-unification-001-bounded-decomposition-plan.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+        "$paths = @('ops/agents/packets/draft/2026-04-13-apex-unification-001-active-docs-infra-bounded-decomposition-plan.json', 'ops/agents/packets/draft/2026-04-13-apex-unification-001-bounded-decomposition-plan.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -n -- @paths"
       ],
       "problemMatcher": []
     },
@@ -918,7 +943,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-apex-unification-001-active-docs-infra-bounded-decomposition-plan.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-apex-unification-001-bounded-decomposition-plan.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+        "$paths = @('ops/agents/packets/draft/2026-04-13-apex-unification-001-active-docs-infra-bounded-decomposition-plan.json', 'ops/agents/packets/draft/2026-04-13-apex-unification-001-bounded-decomposition-plan.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -- @paths"
       ],
       "problemMatcher": []
     },
@@ -929,7 +954,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-apex-unification-001-active-docs-infra-bounded-decomposition-plan.json apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-apex-unification-001-bounded-decomposition-plan.json"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/agents/packets/draft/2026-04-13-apex-unification-001-active-docs-infra-bounded-decomposition-plan.json ops/agents/packets/draft/2026-04-13-apex-unification-001-bounded-decomposition-plan.json"
       ],
       "problemMatcher": []
     },
@@ -940,7 +965,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-knowledge-import-001-first-bounded-import-plan.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-knowledge-import-001-first-bounded-plan.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+        "$paths = @('ops/agents/packets/draft/2026-04-13-knowledge-import-001-first-bounded-import-plan.json', 'ops/agents/packets/draft/2026-04-13-knowledge-import-001-first-bounded-plan.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -n -- @paths"
       ],
       "problemMatcher": []
     },
@@ -951,7 +976,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-knowledge-import-001-first-bounded-import-plan.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-knowledge-import-001-first-bounded-plan.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+        "$paths = @('ops/agents/packets/draft/2026-04-13-knowledge-import-001-first-bounded-import-plan.json', 'ops/agents/packets/draft/2026-04-13-knowledge-import-001-first-bounded-plan.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -- @paths"
       ],
       "problemMatcher": []
     },
@@ -962,7 +987,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-knowledge-import-001-first-bounded-import-plan.json apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-knowledge-import-001-first-bounded-plan.json"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/agents/packets/draft/2026-04-13-knowledge-import-001-first-bounded-import-plan.json ops/agents/packets/draft/2026-04-13-knowledge-import-001-first-bounded-plan.json"
       ],
       "problemMatcher": []
     },
@@ -973,7 +998,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-pm-schema-009-legacy-migration-planning.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-pm-schema-009a-migration-mapping-infrastructure.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-pm-schema-009b-staging-dry-run-migration.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-pm-schema-009c-staging-dry-run-migration.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+        "$paths = @('ops/agents/packets/draft/2026-04-13-pm-schema-009-legacy-migration-planning.json', 'ops/agents/packets/draft/2026-04-13-pm-schema-009a-migration-mapping-infrastructure.json', 'ops/agents/packets/draft/2026-04-13-pm-schema-009b-staging-dry-run-migration.json', 'ops/agents/packets/draft/2026-04-13-pm-schema-009c-staging-dry-run-migration.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -n -- @paths"
       ],
       "problemMatcher": []
     },
@@ -984,7 +1009,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-pm-schema-009-legacy-migration-planning.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-pm-schema-009a-migration-mapping-infrastructure.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-pm-schema-009b-staging-dry-run-migration.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-pm-schema-009c-staging-dry-run-migration.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+        "$paths = @('ops/agents/packets/draft/2026-04-13-pm-schema-009-legacy-migration-planning.json', 'ops/agents/packets/draft/2026-04-13-pm-schema-009a-migration-mapping-infrastructure.json', 'ops/agents/packets/draft/2026-04-13-pm-schema-009b-staging-dry-run-migration.json', 'ops/agents/packets/draft/2026-04-13-pm-schema-009c-staging-dry-run-migration.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -- @paths"
       ],
       "problemMatcher": []
     },
@@ -995,7 +1020,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-pm-schema-009-legacy-migration-planning.json apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-pm-schema-009a-migration-mapping-infrastructure.json apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-pm-schema-009b-staging-dry-run-migration.json apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-pm-schema-009c-staging-dry-run-migration.json"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/agents/packets/draft/2026-04-13-pm-schema-009-legacy-migration-planning.json ops/agents/packets/draft/2026-04-13-pm-schema-009a-migration-mapping-infrastructure.json ops/agents/packets/draft/2026-04-13-pm-schema-009b-staging-dry-run-migration.json ops/agents/packets/draft/2026-04-13-pm-schema-009c-staging-dry-run-migration.json"
       ],
       "problemMatcher": []
     },
@@ -1006,7 +1031,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-pm-schema-010-runtime-adoption-planning.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-pm-schema-010a-work-schema-orm-model-authoring.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-pm-schema-010b-work-read-api-surface.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+        "$paths = @('ops/agents/packets/draft/2026-04-13-pm-schema-010-runtime-adoption-planning.json', 'ops/agents/packets/draft/2026-04-13-pm-schema-010a-work-schema-orm-model-authoring.json', 'ops/agents/packets/draft/2026-04-13-pm-schema-010b-work-read-api-surface.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -n -- @paths"
       ],
       "problemMatcher": []
     },
@@ -1017,7 +1042,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-pm-schema-010-runtime-adoption-planning.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-pm-schema-010a-work-schema-orm-model-authoring.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-pm-schema-010b-work-read-api-surface.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+        "$paths = @('ops/agents/packets/draft/2026-04-13-pm-schema-010-runtime-adoption-planning.json', 'ops/agents/packets/draft/2026-04-13-pm-schema-010a-work-schema-orm-model-authoring.json', 'ops/agents/packets/draft/2026-04-13-pm-schema-010b-work-read-api-surface.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -- @paths"
       ],
       "problemMatcher": []
     },
@@ -1028,7 +1053,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-pm-schema-010-runtime-adoption-planning.json apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-pm-schema-010a-work-schema-orm-model-authoring.json apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-pm-schema-010b-work-read-api-surface.json"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/agents/packets/draft/2026-04-13-pm-schema-010-runtime-adoption-planning.json ops/agents/packets/draft/2026-04-13-pm-schema-010a-work-schema-orm-model-authoring.json ops/agents/packets/draft/2026-04-13-pm-schema-010b-work-read-api-surface.json"
       ],
       "problemMatcher": []
     },
@@ -1039,7 +1064,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-pm-schema-011-cross-domain-dependency-activation-planning.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-011a-org-domain-schema-design.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-011b-org-schema-ddl-authoring-local-validation.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-011c-org-seed-data-population.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-011d-pm-work-org-fk-activation.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-011e-pm-work-org-orm-alignment.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-011f-pm-work-write-api-surface-projects.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+        "$paths = @('ops/agents/packets/draft/2026-04-13-pm-schema-011-cross-domain-dependency-activation-planning.json', 'ops/agents/packets/draft/2026-04-14-pm-schema-011a-org-domain-schema-design.json', 'ops/agents/packets/draft/2026-04-14-pm-schema-011b-org-schema-ddl-authoring-local-validation.json', 'ops/agents/packets/draft/2026-04-14-pm-schema-011c-org-seed-data-population.json', 'ops/agents/packets/draft/2026-04-14-pm-schema-011d-pm-work-org-fk-activation.json', 'ops/agents/packets/draft/2026-04-14-pm-schema-011e-pm-work-org-orm-alignment.json', 'ops/agents/packets/draft/2026-04-14-pm-schema-011f-pm-work-write-api-surface-projects.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -n -- @paths"
       ],
       "problemMatcher": []
     },
@@ -1050,7 +1075,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-pm-schema-011-cross-domain-dependency-activation-planning.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-011a-org-domain-schema-design.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-011b-org-schema-ddl-authoring-local-validation.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-011c-org-seed-data-population.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-011d-pm-work-org-fk-activation.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-011e-pm-work-org-orm-alignment.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-011f-pm-work-write-api-surface-projects.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+        "$paths = @('ops/agents/packets/draft/2026-04-13-pm-schema-011-cross-domain-dependency-activation-planning.json', 'ops/agents/packets/draft/2026-04-14-pm-schema-011a-org-domain-schema-design.json', 'ops/agents/packets/draft/2026-04-14-pm-schema-011b-org-schema-ddl-authoring-local-validation.json', 'ops/agents/packets/draft/2026-04-14-pm-schema-011c-org-seed-data-population.json', 'ops/agents/packets/draft/2026-04-14-pm-schema-011d-pm-work-org-fk-activation.json', 'ops/agents/packets/draft/2026-04-14-pm-schema-011e-pm-work-org-orm-alignment.json', 'ops/agents/packets/draft/2026-04-14-pm-schema-011f-pm-work-write-api-surface-projects.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -- @paths"
       ],
       "problemMatcher": []
     },
@@ -1061,7 +1086,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-pm-schema-011-cross-domain-dependency-activation-planning.json apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-011a-org-domain-schema-design.json apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-011b-org-schema-ddl-authoring-local-validation.json apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-011c-org-seed-data-population.json apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-011d-pm-work-org-fk-activation.json apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-011e-pm-work-org-orm-alignment.json apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-011f-pm-work-write-api-surface-projects.json"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/agents/packets/draft/2026-04-13-pm-schema-011-cross-domain-dependency-activation-planning.json ops/agents/packets/draft/2026-04-14-pm-schema-011a-org-domain-schema-design.json ops/agents/packets/draft/2026-04-14-pm-schema-011b-org-schema-ddl-authoring-local-validation.json ops/agents/packets/draft/2026-04-14-pm-schema-011c-org-seed-data-population.json ops/agents/packets/draft/2026-04-14-pm-schema-011d-pm-work-org-fk-activation.json ops/agents/packets/draft/2026-04-14-pm-schema-011e-pm-work-org-orm-alignment.json ops/agents/packets/draft/2026-04-14-pm-schema-011f-pm-work-write-api-surface-projects.json"
       ],
       "problemMatcher": []
     },
@@ -1072,7 +1097,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-012a-identity-domain-schema-design.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-012b-identity-schema-ddl-authoring-local-validation.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-012c-identity-seed-data-population.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-012d-pm-work-identity-fk-activation.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-012e-pm-work-identity-orm-alignment.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-012f-pm-work-identity-joined-read-surface.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-012g-pm-work-identity-joined-read-surface-integration-smoke.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-012h-pm-work-org-joined-read-surface.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-012i-pm-work-org-joined-read-surface-integration-smoke.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+        "$paths = @('ops/agents/packets/draft/2026-04-14-pm-schema-012a-identity-domain-schema-design.json', 'ops/agents/packets/draft/2026-04-14-pm-schema-012b-identity-schema-ddl-authoring-local-validation.json', 'ops/agents/packets/draft/2026-04-14-pm-schema-012c-identity-seed-data-population.json', 'ops/agents/packets/draft/2026-04-14-pm-schema-012d-pm-work-identity-fk-activation.json', 'ops/agents/packets/draft/2026-04-14-pm-schema-012e-pm-work-identity-orm-alignment.json', 'ops/agents/packets/draft/2026-04-14-pm-schema-012f-pm-work-identity-joined-read-surface.json', 'ops/agents/packets/draft/2026-04-14-pm-schema-012g-pm-work-identity-joined-read-surface-integration-smoke.json', 'ops/agents/packets/draft/2026-04-14-pm-schema-012h-pm-work-org-joined-read-surface.json', 'ops/agents/packets/draft/2026-04-14-pm-schema-012i-pm-work-org-joined-read-surface-integration-smoke.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -n -- @paths"
       ],
       "problemMatcher": []
     },
@@ -1083,7 +1108,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-012a-identity-domain-schema-design.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-012b-identity-schema-ddl-authoring-local-validation.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-012c-identity-seed-data-population.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-012d-pm-work-identity-fk-activation.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-012e-pm-work-identity-orm-alignment.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-012f-pm-work-identity-joined-read-surface.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-012g-pm-work-identity-joined-read-surface-integration-smoke.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-012h-pm-work-org-joined-read-surface.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-012i-pm-work-org-joined-read-surface-integration-smoke.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+        "$paths = @('ops/agents/packets/draft/2026-04-14-pm-schema-012a-identity-domain-schema-design.json', 'ops/agents/packets/draft/2026-04-14-pm-schema-012b-identity-schema-ddl-authoring-local-validation.json', 'ops/agents/packets/draft/2026-04-14-pm-schema-012c-identity-seed-data-population.json', 'ops/agents/packets/draft/2026-04-14-pm-schema-012d-pm-work-identity-fk-activation.json', 'ops/agents/packets/draft/2026-04-14-pm-schema-012e-pm-work-identity-orm-alignment.json', 'ops/agents/packets/draft/2026-04-14-pm-schema-012f-pm-work-identity-joined-read-surface.json', 'ops/agents/packets/draft/2026-04-14-pm-schema-012g-pm-work-identity-joined-read-surface-integration-smoke.json', 'ops/agents/packets/draft/2026-04-14-pm-schema-012h-pm-work-org-joined-read-surface.json', 'ops/agents/packets/draft/2026-04-14-pm-schema-012i-pm-work-org-joined-read-surface-integration-smoke.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -- @paths"
       ],
       "problemMatcher": []
     },
@@ -1094,7 +1119,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-012a-identity-domain-schema-design.json apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-012b-identity-schema-ddl-authoring-local-validation.json apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-012c-identity-seed-data-population.json apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-012d-pm-work-identity-fk-activation.json apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-012e-pm-work-identity-orm-alignment.json apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-012f-pm-work-identity-joined-read-surface.json apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-012g-pm-work-identity-joined-read-surface-integration-smoke.json apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-012h-pm-work-org-joined-read-surface.json apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-012i-pm-work-org-joined-read-surface-integration-smoke.json"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/agents/packets/draft/2026-04-14-pm-schema-012a-identity-domain-schema-design.json ops/agents/packets/draft/2026-04-14-pm-schema-012b-identity-schema-ddl-authoring-local-validation.json ops/agents/packets/draft/2026-04-14-pm-schema-012c-identity-seed-data-population.json ops/agents/packets/draft/2026-04-14-pm-schema-012d-pm-work-identity-fk-activation.json ops/agents/packets/draft/2026-04-14-pm-schema-012e-pm-work-identity-orm-alignment.json ops/agents/packets/draft/2026-04-14-pm-schema-012f-pm-work-identity-joined-read-surface.json ops/agents/packets/draft/2026-04-14-pm-schema-012g-pm-work-identity-joined-read-surface-integration-smoke.json ops/agents/packets/draft/2026-04-14-pm-schema-012h-pm-work-org-joined-read-surface.json ops/agents/packets/draft/2026-04-14-pm-schema-012i-pm-work-org-joined-read-surface-integration-smoke.json"
       ],
       "problemMatcher": []
     },
@@ -1105,7 +1130,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-013-pm-work-package-write-surface-minimal.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-013i-pm-work-package-write-surface-integration-smoke.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-013j-pm-work-package-write-response-crew-join.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+        "$paths = @('ops/agents/packets/draft/2026-04-14-pm-schema-013-pm-work-package-write-surface-minimal.json', 'ops/agents/packets/draft/2026-04-14-pm-schema-013i-pm-work-package-write-surface-integration-smoke.json', 'ops/agents/packets/draft/2026-04-14-pm-schema-013j-pm-work-package-write-response-crew-join.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -n -- @paths"
       ],
       "problemMatcher": []
     },
@@ -1116,7 +1141,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-013-pm-work-package-write-surface-minimal.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-013i-pm-work-package-write-surface-integration-smoke.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-013j-pm-work-package-write-response-crew-join.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+        "$paths = @('ops/agents/packets/draft/2026-04-14-pm-schema-013-pm-work-package-write-surface-minimal.json', 'ops/agents/packets/draft/2026-04-14-pm-schema-013i-pm-work-package-write-surface-integration-smoke.json', 'ops/agents/packets/draft/2026-04-14-pm-schema-013j-pm-work-package-write-response-crew-join.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -- @paths"
       ],
       "problemMatcher": []
     },
@@ -1127,7 +1152,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-013-pm-work-package-write-surface-minimal.json apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-013i-pm-work-package-write-surface-integration-smoke.json apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-013j-pm-work-package-write-response-crew-join.json"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/agents/packets/draft/2026-04-14-pm-schema-013-pm-work-package-write-surface-minimal.json ops/agents/packets/draft/2026-04-14-pm-schema-013i-pm-work-package-write-surface-integration-smoke.json ops/agents/packets/draft/2026-04-14-pm-schema-013j-pm-work-package-write-response-crew-join.json"
       ],
       "problemMatcher": []
     },
@@ -1138,7 +1163,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-014-pm-task-write-surface-minimal.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-014i-pm-task-write-surface-integration-smoke.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+        "$paths = @('ops/agents/packets/draft/2026-04-14-pm-schema-014-pm-task-write-surface-minimal.json', 'ops/agents/packets/draft/2026-04-14-pm-schema-014i-pm-task-write-surface-integration-smoke.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -n -- @paths"
       ],
       "problemMatcher": []
     },
@@ -1149,7 +1174,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-014-pm-task-write-surface-minimal.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-014i-pm-task-write-surface-integration-smoke.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+        "$paths = @('ops/agents/packets/draft/2026-04-14-pm-schema-014-pm-task-write-surface-minimal.json', 'ops/agents/packets/draft/2026-04-14-pm-schema-014i-pm-task-write-surface-integration-smoke.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -- @paths"
       ],
       "problemMatcher": []
     },
@@ -1160,7 +1185,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-014-pm-task-write-surface-minimal.json apex-power-ops-platform/ops/agents/packets/draft/2026-04-14-pm-schema-014i-pm-task-write-surface-integration-smoke.json"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/agents/packets/draft/2026-04-14-pm-schema-014-pm-task-write-surface-minimal.json ops/agents/packets/draft/2026-04-14-pm-schema-014i-pm-task-write-surface-integration-smoke.json"
       ],
       "problemMatcher": []
     },
@@ -1171,7 +1196,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-15-pm-schema-015-pm-assignment-write-surface-minimal.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-15-pm-schema-015i-pm-assignment-write-surface-integration-smoke.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+        "$paths = @('ops/agents/packets/draft/2026-04-15-pm-schema-015-pm-assignment-write-surface-minimal.json', 'ops/agents/packets/draft/2026-04-15-pm-schema-015i-pm-assignment-write-surface-integration-smoke.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -n -- @paths"
       ],
       "problemMatcher": []
     },
@@ -1182,7 +1207,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-15-pm-schema-015-pm-assignment-write-surface-minimal.json', 'apex-power-ops-platform/ops/agents/packets/draft/2026-04-15-pm-schema-015i-pm-assignment-write-surface-integration-smoke.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+        "$paths = @('ops/agents/packets/draft/2026-04-15-pm-schema-015-pm-assignment-write-surface-minimal.json', 'ops/agents/packets/draft/2026-04-15-pm-schema-015i-pm-assignment-write-surface-integration-smoke.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -- @paths"
       ],
       "problemMatcher": []
     },
@@ -1193,7 +1218,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-15-pm-schema-015-pm-assignment-write-surface-minimal.json apex-power-ops-platform/ops/agents/packets/draft/2026-04-15-pm-schema-015i-pm-assignment-write-surface-integration-smoke.json"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/agents/packets/draft/2026-04-15-pm-schema-015-pm-assignment-write-surface-minimal.json ops/agents/packets/draft/2026-04-15-pm-schema-015i-pm-assignment-write-surface-integration-smoke.json"
       ],
       "problemMatcher": []
     },
@@ -1204,7 +1229,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-15-pm-schema-016-pm-dependency-write-surface-minimal.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+        "$paths = @('ops/agents/packets/draft/2026-04-15-pm-schema-016-pm-dependency-write-surface-minimal.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -n -- @paths"
       ],
       "problemMatcher": []
     },
@@ -1215,7 +1240,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-15-pm-schema-016-pm-dependency-write-surface-minimal.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+        "$paths = @('ops/agents/packets/draft/2026-04-15-pm-schema-016-pm-dependency-write-surface-minimal.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -- @paths"
       ],
       "problemMatcher": []
     },
@@ -1226,7 +1251,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-15-pm-schema-016-pm-dependency-write-surface-minimal.json"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/agents/packets/draft/2026-04-15-pm-schema-016-pm-dependency-write-surface-minimal.json"
       ],
       "problemMatcher": []
     },
@@ -1237,7 +1262,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-15-pm-schema-017-pm-execution-issue-write-surface-minimal.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+        "$paths = @('ops/agents/packets/draft/2026-04-15-pm-schema-017-pm-execution-issue-write-surface-minimal.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -n -- @paths"
       ],
       "problemMatcher": []
     },
@@ -1248,7 +1273,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-15-pm-schema-017-pm-execution-issue-write-surface-minimal.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+        "$paths = @('ops/agents/packets/draft/2026-04-15-pm-schema-017-pm-execution-issue-write-surface-minimal.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -- @paths"
       ],
       "problemMatcher": []
     },
@@ -1259,7 +1284,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-15-pm-schema-017-pm-execution-issue-write-surface-minimal.json"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/agents/packets/draft/2026-04-15-pm-schema-017-pm-execution-issue-write-surface-minimal.json"
       ],
       "problemMatcher": []
     },
@@ -1270,7 +1295,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-15-pm-schema-018-pm-progress-snapshot-write-surface-minimal.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+        "$paths = @('ops/agents/packets/draft/2026-04-15-pm-schema-018-pm-progress-snapshot-write-surface-minimal.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -n -- @paths"
       ],
       "problemMatcher": []
     },
@@ -1281,7 +1306,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-15-pm-schema-018-pm-progress-snapshot-write-surface-minimal.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+        "$paths = @('ops/agents/packets/draft/2026-04-15-pm-schema-018-pm-progress-snapshot-write-surface-minimal.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -- @paths"
       ],
       "problemMatcher": []
     },
@@ -1292,7 +1317,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-15-pm-schema-018-pm-progress-snapshot-write-surface-minimal.json"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/agents/packets/draft/2026-04-15-pm-schema-018-pm-progress-snapshot-write-surface-minimal.json"
       ],
       "problemMatcher": []
     },
@@ -1303,7 +1328,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-16-pm-schema-019-pm-write-surface-consolidation-idempotency-and-merge-errors.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+        "$paths = @('ops/agents/packets/draft/2026-04-16-pm-schema-019-pm-write-surface-consolidation-idempotency-and-merge-errors.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -n -- @paths"
       ],
       "problemMatcher": []
     },
@@ -1314,7 +1339,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-16-pm-schema-019-pm-write-surface-consolidation-idempotency-and-merge-errors.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+        "$paths = @('ops/agents/packets/draft/2026-04-16-pm-schema-019-pm-write-surface-consolidation-idempotency-and-merge-errors.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -- @paths"
       ],
       "problemMatcher": []
     },
@@ -1325,7 +1350,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-16-pm-schema-019-pm-write-surface-consolidation-idempotency-and-merge-errors.json"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/agents/packets/draft/2026-04-16-pm-schema-019-pm-write-surface-consolidation-idempotency-and-merge-errors.json"
       ],
       "problemMatcher": []
     },
@@ -1336,7 +1361,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-16-pm-schema-019f-durable-db-backed-idempotency-store.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+        "$paths = @('ops/agents/packets/draft/2026-04-16-pm-schema-019f-durable-db-backed-idempotency-store.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -n -- @paths"
       ],
       "problemMatcher": []
     },
@@ -1347,7 +1372,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-16-pm-schema-019f-durable-db-backed-idempotency-store.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+        "$paths = @('ops/agents/packets/draft/2026-04-16-pm-schema-019f-durable-db-backed-idempotency-store.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -- @paths"
       ],
       "problemMatcher": []
     },
@@ -1358,7 +1383,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-16-pm-schema-019f-durable-db-backed-idempotency-store.json"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/agents/packets/draft/2026-04-16-pm-schema-019f-durable-db-backed-idempotency-store.json"
       ],
       "problemMatcher": []
     },
@@ -1369,7 +1394,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-16-pm-schema-019g-idempotency-sweep-and-ops-metrics.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+        "$paths = @('ops/agents/packets/draft/2026-04-16-pm-schema-019g-idempotency-sweep-and-ops-metrics.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -n -- @paths"
       ],
       "problemMatcher": []
     },
@@ -1380,7 +1405,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-16-pm-schema-019g-idempotency-sweep-and-ops-metrics.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+        "$paths = @('ops/agents/packets/draft/2026-04-16-pm-schema-019g-idempotency-sweep-and-ops-metrics.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -- @paths"
       ],
       "problemMatcher": []
     },
@@ -1391,7 +1416,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-16-pm-schema-019g-idempotency-sweep-and-ops-metrics.json"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/agents/packets/draft/2026-04-16-pm-schema-019g-idempotency-sweep-and-ops-metrics.json"
       ],
       "problemMatcher": []
     },
@@ -1402,7 +1427,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-16-pm-schema-019h-sweep-schedule-wiring.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+        "$paths = @('ops/agents/packets/draft/2026-04-16-pm-schema-019h-sweep-schedule-wiring.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -n -- @paths"
       ],
       "problemMatcher": []
     },
@@ -1413,7 +1438,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-16-pm-schema-019h-sweep-schedule-wiring.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+        "$paths = @('ops/agents/packets/draft/2026-04-16-pm-schema-019h-sweep-schedule-wiring.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -- @paths"
       ],
       "problemMatcher": []
     },
@@ -1424,7 +1449,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-16-pm-schema-019h-sweep-schedule-wiring.json"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/agents/packets/draft/2026-04-16-pm-schema-019h-sweep-schedule-wiring.json"
       ],
       "problemMatcher": []
     },
@@ -1435,7 +1460,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-16-pm-schema-019i-idempotency-by-route-ops-breakdown.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+        "$paths = @('ops/agents/packets/draft/2026-04-16-pm-schema-019i-idempotency-by-route-ops-breakdown.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -n -- @paths"
       ],
       "problemMatcher": []
     },
@@ -1446,7 +1471,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-16-pm-schema-019i-idempotency-by-route-ops-breakdown.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+        "$paths = @('ops/agents/packets/draft/2026-04-16-pm-schema-019i-idempotency-by-route-ops-breakdown.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -- @paths"
       ],
       "problemMatcher": []
     },
@@ -1457,7 +1482,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-16-pm-schema-019i-idempotency-by-route-ops-breakdown.json"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/agents/packets/draft/2026-04-16-pm-schema-019i-idempotency-by-route-ops-breakdown.json"
       ],
       "problemMatcher": []
     },
@@ -1468,7 +1493,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-16-pm-schema-019j-ops-metrics-export-schedule-scrape.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+        "$paths = @('ops/agents/packets/draft/2026-04-16-pm-schema-019j-ops-metrics-export-schedule-scrape.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -n -- @paths"
       ],
       "problemMatcher": []
     },
@@ -1479,7 +1504,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-16-pm-schema-019j-ops-metrics-export-schedule-scrape.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+        "$paths = @('ops/agents/packets/draft/2026-04-16-pm-schema-019j-ops-metrics-export-schedule-scrape.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -- @paths"
       ],
       "problemMatcher": []
     },
@@ -1490,7 +1515,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-16-pm-schema-019j-ops-metrics-export-schedule-scrape.json"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/agents/packets/draft/2026-04-16-pm-schema-019j-ops-metrics-export-schedule-scrape.json"
       ],
       "problemMatcher": []
     },
@@ -1501,7 +1526,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-16-pm-schema-019k-ops-metrics-threshold-evaluation.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+        "$paths = @('ops/agents/packets/draft/2026-04-16-pm-schema-019k-ops-metrics-threshold-evaluation.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -n -- @paths"
       ],
       "problemMatcher": []
     },
@@ -1512,7 +1537,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-16-pm-schema-019k-ops-metrics-threshold-evaluation.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+        "$paths = @('ops/agents/packets/draft/2026-04-16-pm-schema-019k-ops-metrics-threshold-evaluation.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -- @paths"
       ],
       "problemMatcher": []
     },
@@ -1523,7 +1548,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-16-pm-schema-019k-ops-metrics-threshold-evaluation.json"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/agents/packets/draft/2026-04-16-pm-schema-019k-ops-metrics-threshold-evaluation.json"
       ],
       "problemMatcher": []
     },
@@ -1534,7 +1559,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-18-pm-schema-ui-002g-comparative-schedule-analytics-read-surface-and-host-validation.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+        "$paths = @('ops/agents/packets/draft/2026-04-18-pm-schema-ui-002g-comparative-schedule-analytics-read-surface-and-host-validation.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -n -- @paths"
       ],
       "problemMatcher": []
     },
@@ -1545,7 +1570,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-18-pm-schema-ui-002g-comparative-schedule-analytics-read-surface-and-host-validation.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+        "$paths = @('ops/agents/packets/draft/2026-04-18-pm-schema-ui-002g-comparative-schedule-analytics-read-surface-and-host-validation.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -- @paths"
       ],
       "problemMatcher": []
     },
@@ -1556,7 +1581,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-18-pm-schema-ui-002g-comparative-schedule-analytics-read-surface-and-host-validation.json"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/agents/packets/draft/2026-04-18-pm-schema-ui-002g-comparative-schedule-analytics-read-surface-and-host-validation.json"
       ],
       "problemMatcher": []
     },
@@ -1567,7 +1592,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-19-pm-schema-ui-002g-host-variance-shell-wiring-and-browser-validation.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+        "$paths = @('ops/agents/packets/draft/2026-04-19-pm-schema-ui-002g-host-variance-shell-wiring-and-browser-validation.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -n -- @paths"
       ],
       "problemMatcher": []
     },
@@ -1578,7 +1603,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-19-pm-schema-ui-002g-host-variance-shell-wiring-and-browser-validation.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+        "$paths = @('ops/agents/packets/draft/2026-04-19-pm-schema-ui-002g-host-variance-shell-wiring-and-browser-validation.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -- @paths"
       ],
       "problemMatcher": []
     },
@@ -1589,7 +1614,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-19-pm-schema-ui-002g-host-variance-shell-wiring-and-browser-validation.json"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/agents/packets/draft/2026-04-19-pm-schema-ui-002g-host-variance-shell-wiring-and-browser-validation.json"
       ],
       "problemMatcher": []
     },
@@ -1600,7 +1625,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-19-pm-schema-ui-002e-host-drivers-shell-wiring-and-browser-validation.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+        "$paths = @('ops/agents/packets/draft/2026-04-19-pm-schema-ui-002e-host-drivers-shell-wiring-and-browser-validation.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -n -- @paths"
       ],
       "problemMatcher": []
     },
@@ -1611,7 +1636,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-19-pm-schema-ui-002e-host-drivers-shell-wiring-and-browser-validation.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+        "$paths = @('ops/agents/packets/draft/2026-04-19-pm-schema-ui-002e-host-drivers-shell-wiring-and-browser-validation.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -- @paths"
       ],
       "problemMatcher": []
     },
@@ -1622,7 +1647,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-19-pm-schema-ui-002e-host-drivers-shell-wiring-and-browser-validation.json"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/agents/packets/draft/2026-04-19-pm-schema-ui-002e-host-drivers-shell-wiring-and-browser-validation.json"
       ],
       "problemMatcher": []
     },
@@ -1633,7 +1658,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-19-pm-schema-ui-002f-host-tracer-shell-wiring-and-browser-validation.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+        "$paths = @('ops/agents/packets/draft/2026-04-19-pm-schema-ui-002f-host-tracer-shell-wiring-and-browser-validation.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -n -- @paths"
       ],
       "problemMatcher": []
     },
@@ -1644,7 +1669,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-19-pm-schema-ui-002f-host-tracer-shell-wiring-and-browser-validation.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+        "$paths = @('ops/agents/packets/draft/2026-04-19-pm-schema-ui-002f-host-tracer-shell-wiring-and-browser-validation.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -- @paths"
       ],
       "problemMatcher": []
     },
@@ -1655,7 +1680,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-19-pm-schema-ui-002f-host-tracer-shell-wiring-and-browser-validation.json"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/agents/packets/draft/2026-04-19-pm-schema-ui-002f-host-tracer-shell-wiring-and-browser-validation.json"
       ],
       "problemMatcher": []
     },
@@ -1666,7 +1691,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-15-pm-schema-ui-001-field-apparatus-workflow-prototype-design.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-15-pm-schema-ui-001-field-apparatus-workflow-prototype-design.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -n -- @paths"
         ],
         "problemMatcher": []
       },
@@ -1677,7 +1702,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-15-pm-schema-ui-001-field-apparatus-workflow-prototype-design.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-15-pm-schema-ui-001-field-apparatus-workflow-prototype-design.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -- @paths"
         ],
         "problemMatcher": []
       },
@@ -1688,7 +1713,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-15-pm-schema-ui-001-field-apparatus-workflow-prototype-design.json"
+          "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/agents/packets/draft/2026-04-15-pm-schema-ui-001-field-apparatus-workflow-prototype-design.json"
         ],
         "problemMatcher": []
       },
@@ -1699,7 +1724,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-15-pm-schema-ui-002-gantt-layer-comparison-decision.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-15-pm-schema-ui-002-gantt-layer-comparison-decision.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -n -- @paths"
         ],
         "problemMatcher": []
       },
@@ -1710,7 +1735,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-15-pm-schema-ui-002-gantt-layer-comparison-decision.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-15-pm-schema-ui-002-gantt-layer-comparison-decision.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -- @paths"
         ],
         "problemMatcher": []
       },
@@ -1721,7 +1746,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-15-pm-schema-ui-002-gantt-layer-comparison-decision.json"
+          "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/agents/packets/draft/2026-04-15-pm-schema-ui-002-gantt-layer-comparison-decision.json"
         ],
         "problemMatcher": []
       },
@@ -1732,7 +1757,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-15-pm-schema-ui-003-pm-approval-queue-prototype-design.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-15-pm-schema-ui-003-pm-approval-queue-prototype-design.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -n -- @paths"
         ],
         "problemMatcher": []
       },
@@ -1743,7 +1768,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-15-pm-schema-ui-003-pm-approval-queue-prototype-design.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-15-pm-schema-ui-003-pm-approval-queue-prototype-design.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -- @paths"
         ],
         "problemMatcher": []
       },
@@ -1754,7 +1779,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-15-pm-schema-ui-003-pm-approval-queue-prototype-design.json"
+          "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/agents/packets/draft/2026-04-15-pm-schema-ui-003-pm-approval-queue-prototype-design.json"
         ],
         "problemMatcher": []
       },
@@ -1765,7 +1790,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-15-pm-schema-ui-004-lead-operations-surface-prototype-design.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-15-pm-schema-ui-004-lead-operations-surface-prototype-design.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -n -- @paths"
         ],
         "problemMatcher": []
       },
@@ -1776,7 +1801,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-15-pm-schema-ui-004-lead-operations-surface-prototype-design.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-15-pm-schema-ui-004-lead-operations-surface-prototype-design.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -- @paths"
         ],
         "problemMatcher": []
       },
@@ -1787,7 +1812,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-15-pm-schema-ui-004-lead-operations-surface-prototype-design.json"
+          "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/agents/packets/draft/2026-04-15-pm-schema-ui-004-lead-operations-surface-prototype-design.json"
         ],
         "problemMatcher": []
       },
@@ -1798,7 +1823,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-15-pm-schema-ui-005-cross-surface-integration-spec.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-15-pm-schema-ui-005-cross-surface-integration-spec.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -n -- @paths"
         ],
         "problemMatcher": []
       },
@@ -1809,7 +1834,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-15-pm-schema-ui-005-cross-surface-integration-spec.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-15-pm-schema-ui-005-cross-surface-integration-spec.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -- @paths"
         ],
         "problemMatcher": []
       },
@@ -1820,7 +1845,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-15-pm-schema-ui-005-cross-surface-integration-spec.json"
+          "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/agents/packets/draft/2026-04-15-pm-schema-ui-005-cross-surface-integration-spec.json"
         ],
         "problemMatcher": []
       },
@@ -1831,7 +1856,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-15-pm-schema-ui-006-mutation-seam-api-spec-and-implementation-scaffold.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-15-pm-schema-ui-006-mutation-seam-api-spec-and-implementation-scaffold.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -n -- @paths"
         ],
         "problemMatcher": []
       },
@@ -1842,7 +1867,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-15-pm-schema-ui-006-mutation-seam-api-spec-and-implementation-scaffold.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-15-pm-schema-ui-006-mutation-seam-api-spec-and-implementation-scaffold.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -- @paths"
         ],
         "problemMatcher": []
       },
@@ -1853,7 +1878,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-15-pm-schema-ui-006-mutation-seam-api-spec-and-implementation-scaffold.json"
+          "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/agents/packets/draft/2026-04-15-pm-schema-ui-006-mutation-seam-api-spec-and-implementation-scaffold.json"
         ],
         "problemMatcher": []
       },
@@ -1864,7 +1889,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-15-pm-schema-ui-001a-field-apparatus-workflow-and-seam-co-implementation.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-15-pm-schema-ui-001a-field-apparatus-workflow-and-seam-co-implementation.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -n -- @paths"
         ],
         "problemMatcher": []
       },
@@ -1875,7 +1900,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-15-pm-schema-ui-001a-field-apparatus-workflow-and-seam-co-implementation.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-15-pm-schema-ui-001a-field-apparatus-workflow-and-seam-co-implementation.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -- @paths"
         ],
         "problemMatcher": []
       },
@@ -1886,7 +1911,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-15-pm-schema-ui-001a-field-apparatus-workflow-and-seam-co-implementation.json"
+          "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/agents/packets/draft/2026-04-15-pm-schema-ui-001a-field-apparatus-workflow-and-seam-co-implementation.json"
         ],
         "problemMatcher": []
       },
@@ -1897,7 +1922,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-15-pm-schema-ui-001b-lead-operations-surface-and-extended-seam-wiring.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-15-pm-schema-ui-001b-lead-operations-surface-and-extended-seam-wiring.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -n -- @paths"
         ],
         "problemMatcher": []
       },
@@ -1908,7 +1933,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-15-pm-schema-ui-001b-lead-operations-surface-and-extended-seam-wiring.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-15-pm-schema-ui-001b-lead-operations-surface-and-extended-seam-wiring.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -- @paths"
         ],
         "problemMatcher": []
       },
@@ -1919,7 +1944,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-15-pm-schema-ui-001b-lead-operations-surface-and-extended-seam-wiring.json"
+          "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/agents/packets/draft/2026-04-15-pm-schema-ui-001b-lead-operations-surface-and-extended-seam-wiring.json"
         ],
         "problemMatcher": []
       },
@@ -1930,7 +1955,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-15-pm-schema-ui-001c-pm-approval-queue-and-cross-surface-review-flow-implementation.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-15-pm-schema-ui-001c-pm-approval-queue-and-cross-surface-review-flow-implementation.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -n -- @paths"
         ],
         "problemMatcher": []
       },
@@ -1941,7 +1966,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-15-pm-schema-ui-001c-pm-approval-queue-and-cross-surface-review-flow-implementation.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-15-pm-schema-ui-001c-pm-approval-queue-and-cross-surface-review-flow-implementation.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -- @paths"
         ],
         "problemMatcher": []
       },
@@ -1952,7 +1977,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-15-pm-schema-ui-001c-pm-approval-queue-and-cross-surface-review-flow-implementation.json"
+          "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/agents/packets/draft/2026-04-15-pm-schema-ui-001c-pm-approval-queue-and-cross-surface-review-flow-implementation.json"
         ],
         "problemMatcher": []
       },
@@ -1963,7 +1988,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-15-pm-schema-ui-001d-cross-surface-integration-test-surface-and-validation-harness.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-15-pm-schema-ui-001d-cross-surface-integration-test-surface-and-validation-harness.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -n -- @paths"
         ],
         "problemMatcher": []
       },
@@ -1974,7 +1999,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-15-pm-schema-ui-001d-cross-surface-integration-test-surface-and-validation-harness.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-15-pm-schema-ui-001d-cross-surface-integration-test-surface-and-validation-harness.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -- @paths"
         ],
         "problemMatcher": []
       },
@@ -1985,7 +2010,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-15-pm-schema-ui-001d-cross-surface-integration-test-surface-and-validation-harness.json"
+          "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/agents/packets/draft/2026-04-15-pm-schema-ui-001d-cross-surface-integration-test-surface-and-validation-harness.json"
         ],
         "problemMatcher": []
       },
@@ -1996,7 +2021,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-15-pm-schema-ui-001e-supabase-read-model-and-mutation-store-migration.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-15-pm-schema-ui-001e-supabase-read-model-and-mutation-store-migration.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -n -- @paths"
         ],
         "problemMatcher": []
       },
@@ -2007,7 +2032,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-15-pm-schema-ui-001e-supabase-read-model-and-mutation-store-migration.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-15-pm-schema-ui-001e-supabase-read-model-and-mutation-store-migration.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -- @paths"
         ],
         "problemMatcher": []
       },
@@ -2018,7 +2043,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-15-pm-schema-ui-001e-supabase-read-model-and-mutation-store-migration.json"
+          "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/agents/packets/draft/2026-04-15-pm-schema-ui-001e-supabase-read-model-and-mutation-store-migration.json"
         ],
         "problemMatcher": []
       },
@@ -2029,7 +2054,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-15-pm-schema-ui-002a-p6-schedule-context-import-and-read-bridge-implementation.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-15-pm-schema-ui-002a-p6-schedule-context-import-and-read-bridge-implementation.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -n -- @paths"
         ],
         "problemMatcher": []
       },
@@ -2040,7 +2065,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-15-pm-schema-ui-002a-p6-schedule-context-import-and-read-bridge-implementation.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-15-pm-schema-ui-002a-p6-schedule-context-import-and-read-bridge-implementation.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -- @paths"
         ],
         "problemMatcher": []
       },
@@ -2051,7 +2076,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-15-pm-schema-ui-002a-p6-schedule-context-import-and-read-bridge-implementation.json"
+          "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/agents/packets/draft/2026-04-15-pm-schema-ui-002a-p6-schedule-context-import-and-read-bridge-implementation.json"
         ],
         "problemMatcher": []
       },
@@ -2062,7 +2087,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-15-pm-schema-ui-002b-read-only-gantt-prototype-implementation.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-15-pm-schema-ui-002b-read-only-gantt-prototype-implementation.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -n -- @paths"
         ],
         "problemMatcher": []
       },
@@ -2073,7 +2098,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-15-pm-schema-ui-002b-read-only-gantt-prototype-implementation.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-15-pm-schema-ui-002b-read-only-gantt-prototype-implementation.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -- @paths"
         ],
         "problemMatcher": []
       },
@@ -2084,7 +2109,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-15-pm-schema-ui-002b-read-only-gantt-prototype-implementation.json"
+          "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/agents/packets/draft/2026-04-15-pm-schema-ui-002b-read-only-gantt-prototype-implementation.json"
         ],
         "problemMatcher": []
       },
@@ -2095,7 +2120,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-17-pm-schema-ui-002c-baseline-overlay-and-read-model-hardening.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-17-pm-schema-ui-002c-baseline-overlay-and-read-model-hardening.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -n -- @paths"
         ],
         "problemMatcher": []
       },
@@ -2106,7 +2131,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-17-pm-schema-ui-002c-baseline-overlay-and-read-model-hardening.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-17-pm-schema-ui-002c-baseline-overlay-and-read-model-hardening.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -- @paths"
         ],
         "problemMatcher": []
       },
@@ -2117,7 +2142,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-17-pm-schema-ui-002c-baseline-overlay-and-read-model-hardening.json"
+          "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/agents/packets/draft/2026-04-17-pm-schema-ui-002c-baseline-overlay-and-read-model-hardening.json"
         ],
         "problemMatcher": []
       },
@@ -2128,7 +2153,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-17-pm-schema-020a-baseline-field-authority-promotion.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-17-pm-schema-020a-baseline-field-authority-promotion.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -n -- @paths"
         ],
         "problemMatcher": []
       },
@@ -2139,7 +2164,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-17-pm-schema-020a-baseline-field-authority-promotion.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-17-pm-schema-020a-baseline-field-authority-promotion.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -- @paths"
         ],
         "problemMatcher": []
       },
@@ -2150,7 +2175,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-17-pm-schema-020a-baseline-field-authority-promotion.json"
+          "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/agents/packets/draft/2026-04-17-pm-schema-020a-baseline-field-authority-promotion.json"
         ],
         "problemMatcher": []
       },
@@ -2161,7 +2186,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-17-pm-schema-020b-xer-baseline-mapping-authorization.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-17-pm-schema-020b-xer-baseline-mapping-authorization.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -n -- @paths"
         ],
         "problemMatcher": []
       },
@@ -2172,7 +2197,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-17-pm-schema-020b-xer-baseline-mapping-authorization.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-17-pm-schema-020b-xer-baseline-mapping-authorization.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -- @paths"
         ],
         "problemMatcher": []
       },
@@ -2183,7 +2208,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-17-pm-schema-020b-xer-baseline-mapping-authorization.json"
+          "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/agents/packets/draft/2026-04-17-pm-schema-020b-xer-baseline-mapping-authorization.json"
         ],
         "problemMatcher": []
       },
@@ -2194,7 +2219,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-17-pm-schema-020c-persisted-schedule-baseline-ddl-and-loader-lane.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-17-pm-schema-020c-persisted-schedule-baseline-ddl-and-loader-lane.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -n -- @paths"
         ],
         "problemMatcher": []
       },
@@ -2205,7 +2230,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-17-pm-schema-020c-persisted-schedule-baseline-ddl-and-loader-lane.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-17-pm-schema-020c-persisted-schedule-baseline-ddl-and-loader-lane.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -- @paths"
         ],
         "problemMatcher": []
       },
@@ -2216,7 +2241,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-17-pm-schema-020c-persisted-schedule-baseline-ddl-and-loader-lane.json"
+          "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/agents/packets/draft/2026-04-17-pm-schema-020c-persisted-schedule-baseline-ddl-and-loader-lane.json"
         ],
         "problemMatcher": []
       },
@@ -2227,7 +2252,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-18-pm-schema-ui-002d-baseline-overlay-reissue-and-read-bridge-extension.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-18-pm-schema-ui-002d-baseline-overlay-reissue-and-read-bridge-extension.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -n -- @paths"
         ],
         "problemMatcher": []
       },
@@ -2238,7 +2263,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-18-pm-schema-ui-002d-baseline-overlay-reissue-and-read-bridge-extension.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-18-pm-schema-ui-002d-baseline-overlay-reissue-and-read-bridge-extension.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -- @paths"
         ],
         "problemMatcher": []
       },
@@ -2249,7 +2274,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-18-pm-schema-ui-002d-baseline-overlay-reissue-and-read-bridge-extension.json"
+          "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/agents/packets/draft/2026-04-18-pm-schema-ui-002d-baseline-overlay-reissue-and-read-bridge-extension.json"
         ],
         "problemMatcher": []
       },
@@ -2260,7 +2285,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-18-pm-schema-020d-p6-baseline-xer-parser-and-loader-wiring.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-18-pm-schema-020d-p6-baseline-xer-parser-and-loader-wiring.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -n -- @paths"
         ],
         "problemMatcher": []
       },
@@ -2271,7 +2296,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-18-pm-schema-020d-p6-baseline-xer-parser-and-loader-wiring.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-18-pm-schema-020d-p6-baseline-xer-parser-and-loader-wiring.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -- @paths"
         ],
         "problemMatcher": []
       },
@@ -2282,7 +2307,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-18-pm-schema-020d-p6-baseline-xer-parser-and-loader-wiring.json"
+          "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/agents/packets/draft/2026-04-18-pm-schema-020d-p6-baseline-xer-parser-and-loader-wiring.json"
         ],
         "problemMatcher": []
       },
@@ -2293,7 +2318,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-18-pm-schema-020f-real-xer-host-parser-verification-and-golden-fixture-admission.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-18-pm-schema-020f-real-xer-host-parser-verification-and-golden-fixture-admission.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -n -- @paths"
         ],
         "problemMatcher": []
       },
@@ -2304,7 +2329,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-18-pm-schema-020f-real-xer-host-parser-verification-and-golden-fixture-admission.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-18-pm-schema-020f-real-xer-host-parser-verification-and-golden-fixture-admission.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -- @paths"
         ],
         "problemMatcher": []
       },
@@ -2315,7 +2340,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-18-pm-schema-020f-real-xer-host-parser-verification-and-golden-fixture-admission.json"
+          "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/agents/packets/draft/2026-04-18-pm-schema-020f-real-xer-host-parser-verification-and-golden-fixture-admission.json"
         ],
         "problemMatcher": []
       },
@@ -2326,7 +2351,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-12-pm-schema-001-entity-field-candidate-matrix.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-12-pm-schema-001-entity-field-candidate-matrix.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -n -- @paths"
         ],
         "problemMatcher": []
       },
@@ -2337,7 +2362,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-12-pm-schema-001-entity-field-candidate-matrix.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-12-pm-schema-001-entity-field-candidate-matrix.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -- @paths"
         ],
         "problemMatcher": []
       },
@@ -2348,7 +2373,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-12-pm-schema-001-entity-field-candidate-matrix.json"
+          "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/agents/packets/draft/2026-04-12-pm-schema-001-entity-field-candidate-matrix.json"
         ],
         "problemMatcher": []
       },
@@ -2359,7 +2384,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-apex-unification-001i-supabase-frontend-client-target-boundary-review.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-13-apex-unification-001i-supabase-frontend-client-target-boundary-review.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -n -- @paths"
         ],
         "problemMatcher": []
       },
@@ -2370,7 +2395,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-apex-unification-001i-supabase-frontend-client-target-boundary-review.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-13-apex-unification-001i-supabase-frontend-client-target-boundary-review.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -- @paths"
         ],
         "problemMatcher": []
       },
@@ -2381,7 +2406,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-apex-unification-001i-supabase-frontend-client-target-boundary-review.json"
+          "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/agents/packets/draft/2026-04-13-apex-unification-001i-supabase-frontend-client-target-boundary-review.json"
         ],
         "problemMatcher": []
       },
@@ -2392,7 +2417,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/archive/legacy-repos/apex-platform/root-archive/_archive/Dec2025_Dataverse/Solution_Exports/Archive/v1.5.0.3/Entities/cr950_projectfinancialsummary/Formulas/cr950_projectfinancialsummary-cr950_apparatusrevenuecount.xaml','apex-power-ops-platform/archive/legacy-repos/apex-platform/root-archive/_archive/Dec2025_Dataverse/Solution_Exports/Archive/v1.5.0.3/Entities/cr950_projectfinancialsummary/Formulas/cr950_projectfinancialsummary-cr950_totalrevenuerecognized.xaml'); Set-Location 'C:/APEX Platform'; git -c core.longpaths=true add -n -- @paths"
+          "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; $paths = @('archive/legacy-repos/apex-platform/root-archive/_archive/Dec2025_Dataverse/Solution_Exports/Archive/v1.5.0.3/Entities/cr950_projectfinancialsummary/Formulas/cr950_projectfinancialsummary-cr950_apparatusrevenuecount.xaml','archive/legacy-repos/apex-platform/root-archive/_archive/Dec2025_Dataverse/Solution_Exports/Archive/v1.5.0.3/Entities/cr950_projectfinancialsummary/Formulas/cr950_projectfinancialsummary-cr950_totalrevenuerecognized.xaml'); Set-Location $repoRoot; git -c core.longpaths=true add -n -- @paths"
         ],
         "problemMatcher": []
       },
@@ -2403,7 +2428,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/archive/legacy-repos/apex-platform/root-archive/_archive/Dec2025_Dataverse/Solution_Exports/Archive/v1.5.0.3/Entities/cr950_projectfinancialsummary/Formulas/cr950_projectfinancialsummary-cr950_apparatusrevenuecount.xaml','apex-power-ops-platform/archive/legacy-repos/apex-platform/root-archive/_archive/Dec2025_Dataverse/Solution_Exports/Archive/v1.5.0.3/Entities/cr950_projectfinancialsummary/Formulas/cr950_projectfinancialsummary-cr950_totalrevenuerecognized.xaml'); Set-Location 'C:/APEX Platform'; git -c core.longpaths=true add -- @paths"
+          "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; $paths = @('archive/legacy-repos/apex-platform/root-archive/_archive/Dec2025_Dataverse/Solution_Exports/Archive/v1.5.0.3/Entities/cr950_projectfinancialsummary/Formulas/cr950_projectfinancialsummary-cr950_apparatusrevenuecount.xaml','archive/legacy-repos/apex-platform/root-archive/_archive/Dec2025_Dataverse/Solution_Exports/Archive/v1.5.0.3/Entities/cr950_projectfinancialsummary/Formulas/cr950_projectfinancialsummary-cr950_totalrevenuerecognized.xaml'); Set-Location $repoRoot; git -c core.longpaths=true add -- @paths"
         ],
         "problemMatcher": []
       },
@@ -2414,7 +2439,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/archive/legacy-repos/apex-platform/root-archive/_archive/Dec2025_Dataverse/Solution_Exports/Archive/v1.5.0.3/Entities/cr950_projectfinancialsummary/Formulas/cr950_projectfinancialsummary-cr950_apparatusrevenuecount.xaml apex-power-ops-platform/archive/legacy-repos/apex-platform/root-archive/_archive/Dec2025_Dataverse/Solution_Exports/Archive/v1.5.0.3/Entities/cr950_projectfinancialsummary/Formulas/cr950_projectfinancialsummary-cr950_totalrevenuerecognized.xaml"
+          "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- .archive/legacy-repos/apex-platform/root-archive/_archive/Dec2025_Dataverse/Solution_Exports/Archive/v1.5.0.3/Entities/cr950_projectfinancialsummary/Formulas/cr950_projectfinancialsummary-cr950_apparatusrevenuecount.xaml archive/legacy-repos/apex-platform/root-archive/_archive/Dec2025_Dataverse/Solution_Exports/Archive/v1.5.0.3/Entities/cr950_projectfinancialsummary/Formulas/cr950_projectfinancialsummary-cr950_totalrevenuerecognized.xaml"
         ],
         "problemMatcher": []
       },
@@ -2425,7 +2450,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-apex-unification-001h-supabase-helper-residue-and-orchestration-wrapper-routing.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-13-apex-unification-001h-supabase-helper-residue-and-orchestration-wrapper-routing.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -n -- @paths"
         ],
         "problemMatcher": []
       },
@@ -2436,7 +2461,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-apex-unification-001h-supabase-helper-residue-and-orchestration-wrapper-routing.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-13-apex-unification-001h-supabase-helper-residue-and-orchestration-wrapper-routing.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -- @paths"
         ],
         "problemMatcher": []
       },
@@ -2447,7 +2472,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-apex-unification-001h-supabase-helper-residue-and-orchestration-wrapper-routing.json"
+          "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/agents/packets/draft/2026-04-13-apex-unification-001h-supabase-helper-residue-and-orchestration-wrapper-routing.json"
         ],
         "problemMatcher": []
       },
@@ -2458,7 +2483,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-apex-unification-001g-supabase-deployment-utility-and-env-helper-review.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-13-apex-unification-001g-supabase-deployment-utility-and-env-helper-review.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -n -- @paths"
         ],
         "problemMatcher": []
       },
@@ -2469,7 +2494,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-apex-unification-001g-supabase-deployment-utility-and-env-helper-review.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-13-apex-unification-001g-supabase-deployment-utility-and-env-helper-review.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -- @paths"
         ],
         "problemMatcher": []
       },
@@ -2480,7 +2505,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-apex-unification-001g-supabase-deployment-utility-and-env-helper-review.json"
+          "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/agents/packets/draft/2026-04-13-apex-unification-001g-supabase-deployment-utility-and-env-helper-review.json"
         ],
         "problemMatcher": []
       },
@@ -2491,7 +2516,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-apex-unification-001f-archive-and-residue-routing-tranche.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-13-apex-unification-001f-archive-and-residue-routing-tranche.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -n -- @paths"
         ],
         "problemMatcher": []
       },
@@ -2502,7 +2527,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-apex-unification-001f-archive-and-residue-routing-tranche.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-13-apex-unification-001f-archive-and-residue-routing-tranche.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -- @paths"
         ],
         "problemMatcher": []
       },
@@ -2513,7 +2538,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-apex-unification-001f-archive-and-residue-routing-tranche.json"
+          "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/agents/packets/draft/2026-04-13-apex-unification-001f-archive-and-residue-routing-tranche.json"
         ],
         "problemMatcher": []
       },
@@ -2524,7 +2549,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-apex-unification-001e-spec-lineage-tranche-movement.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-13-apex-unification-001e-spec-lineage-tranche-movement.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -n -- @paths"
         ],
         "problemMatcher": []
       },
@@ -2535,7 +2560,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-apex-unification-001e-spec-lineage-tranche-movement.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-13-apex-unification-001e-spec-lineage-tranche-movement.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -- @paths"
         ],
         "problemMatcher": []
       },
@@ -2546,7 +2571,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-apex-unification-001e-spec-lineage-tranche-movement.json"
+          "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/agents/packets/draft/2026-04-13-apex-unification-001e-spec-lineage-tranche-movement.json"
         ],
         "problemMatcher": []
       },
@@ -2557,7 +2582,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-apex-unification-001d-supabase-knowledge-schema-and-import-assets-tranche-movement.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-13-apex-unification-001d-supabase-knowledge-schema-and-import-assets-tranche-movement.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -n -- @paths"
         ],
         "problemMatcher": []
       },
@@ -2568,7 +2593,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-apex-unification-001d-supabase-knowledge-schema-and-import-assets-tranche-movement.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-13-apex-unification-001d-supabase-knowledge-schema-and-import-assets-tranche-movement.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -- @paths"
         ],
         "problemMatcher": []
       },
@@ -2579,7 +2604,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-apex-unification-001d-supabase-knowledge-schema-and-import-assets-tranche-movement.json"
+          "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/agents/packets/draft/2026-04-13-apex-unification-001d-supabase-knowledge-schema-and-import-assets-tranche-movement.json"
         ],
         "problemMatcher": []
       },
@@ -2590,7 +2615,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-apex-unification-001c-supabase-automation-and-orchestration-lineage-tranche-movement.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-13-apex-unification-001c-supabase-automation-and-orchestration-lineage-tranche-movement.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -n -- @paths"
         ],
         "problemMatcher": []
       },
@@ -2601,7 +2626,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-apex-unification-001c-supabase-automation-and-orchestration-lineage-tranche-movement.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-13-apex-unification-001c-supabase-automation-and-orchestration-lineage-tranche-movement.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -- @paths"
         ],
         "problemMatcher": []
       },
@@ -2612,7 +2637,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-apex-unification-001c-supabase-automation-and-orchestration-lineage-tranche-movement.json"
+          "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/agents/packets/draft/2026-04-13-apex-unification-001c-supabase-automation-and-orchestration-lineage-tranche-movement.json"
         ],
         "problemMatcher": []
       },
@@ -2623,7 +2648,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-apex-unification-001b-supabase-pm-project-pss-lineage-tranche-movement.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-13-apex-unification-001b-supabase-pm-project-pss-lineage-tranche-movement.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -n -- @paths"
         ],
         "problemMatcher": []
       },
@@ -2634,7 +2659,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-apex-unification-001b-supabase-pm-project-pss-lineage-tranche-movement.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-13-apex-unification-001b-supabase-pm-project-pss-lineage-tranche-movement.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -- @paths"
         ],
         "problemMatcher": []
       },
@@ -2645,7 +2670,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-apex-unification-001b-supabase-pm-project-pss-lineage-tranche-movement.json"
+          "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/agents/packets/draft/2026-04-13-apex-unification-001b-supabase-pm-project-pss-lineage-tranche-movement.json"
         ],
         "problemMatcher": []
       },
@@ -2656,7 +2681,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-apex-unification-001a-root-narrative-and-workspace-governance-extraction.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-13-apex-unification-001a-root-narrative-and-workspace-governance-extraction.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -n -- @paths"
         ],
         "problemMatcher": []
       },
@@ -2667,7 +2692,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-apex-unification-001a-root-narrative-and-workspace-governance-extraction.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-13-apex-unification-001a-root-narrative-and-workspace-governance-extraction.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -- @paths"
         ],
         "problemMatcher": []
       },
@@ -2678,7 +2703,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-apex-unification-001a-root-narrative-and-workspace-governance-extraction.json"
+          "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/agents/packets/draft/2026-04-13-apex-unification-001a-root-narrative-and-workspace-governance-extraction.json"
         ],
         "problemMatcher": []
       },
@@ -2689,7 +2714,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-pm-schema-008-local-staging-validation.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-13-pm-schema-008-local-staging-validation.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -n -- @paths"
         ],
         "problemMatcher": []
       },
@@ -2700,7 +2725,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-pm-schema-008-local-staging-validation.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-13-pm-schema-008-local-staging-validation.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -- @paths"
         ],
         "problemMatcher": []
       },
@@ -2711,7 +2736,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-pm-schema-008-local-staging-validation.json"
+          "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/agents/packets/draft/2026-04-13-pm-schema-008-local-staging-validation.json"
         ],
         "problemMatcher": []
       },
@@ -2722,7 +2747,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-pm-schema-007-first-sql-ddl-migration.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-13-pm-schema-007-first-sql-ddl-migration.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -n -- @paths"
         ],
         "problemMatcher": []
       },
@@ -2733,7 +2758,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-pm-schema-007-first-sql-ddl-migration.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-13-pm-schema-007-first-sql-ddl-migration.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -- @paths"
         ],
         "problemMatcher": []
       },
@@ -2744,7 +2769,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-13-pm-schema-007-first-sql-ddl-migration.json"
+          "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/agents/packets/draft/2026-04-13-pm-schema-007-first-sql-ddl-migration.json"
         ],
         "problemMatcher": []
       },
@@ -2755,7 +2780,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-12-pm-schema-006-implementation-ready-schema-spec.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-12-pm-schema-006-implementation-ready-schema-spec.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -n -- @paths"
         ],
         "problemMatcher": []
       },
@@ -2766,7 +2791,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-12-pm-schema-006-implementation-ready-schema-spec.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-12-pm-schema-006-implementation-ready-schema-spec.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -- @paths"
         ],
         "problemMatcher": []
       },
@@ -2777,7 +2802,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-12-pm-schema-006-implementation-ready-schema-spec.json"
+          "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/agents/packets/draft/2026-04-12-pm-schema-006-implementation-ready-schema-spec.json"
         ],
         "problemMatcher": []
       },
@@ -2788,7 +2813,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-12-pm-schema-005-review-gate-and-sql-readiness-checklist.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-12-pm-schema-005-review-gate-and-sql-readiness-checklist.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -n -- @paths"
         ],
         "problemMatcher": []
       },
@@ -2799,7 +2824,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-12-pm-schema-005-review-gate-and-sql-readiness-checklist.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-12-pm-schema-005-review-gate-and-sql-readiness-checklist.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -- @paths"
         ],
         "problemMatcher": []
       },
@@ -2810,7 +2835,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-12-pm-schema-005-review-gate-and-sql-readiness-checklist.json"
+          "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/agents/packets/draft/2026-04-12-pm-schema-005-review-gate-and-sql-readiness-checklist.json"
         ],
         "problemMatcher": []
       },
@@ -2821,7 +2846,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-12-pm-schema-004-apparatus-execution-bridge-spec.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-12-pm-schema-004-apparatus-execution-bridge-spec.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -n -- @paths"
         ],
         "problemMatcher": []
       },
@@ -2832,7 +2857,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-12-pm-schema-004-apparatus-execution-bridge-spec.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-12-pm-schema-004-apparatus-execution-bridge-spec.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -- @paths"
         ],
         "problemMatcher": []
       },
@@ -2843,7 +2868,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-12-pm-schema-004-apparatus-execution-bridge-spec.json"
+          "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/agents/packets/draft/2026-04-12-pm-schema-004-apparatus-execution-bridge-spec.json"
         ],
         "problemMatcher": []
       },
@@ -2854,7 +2879,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-12-pm-schema-003-p6-integration-boundary-spec.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-12-pm-schema-003-p6-integration-boundary-spec.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -n -- @paths"
         ],
         "problemMatcher": []
       },
@@ -2865,7 +2890,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-12-pm-schema-003-p6-integration-boundary-spec.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-12-pm-schema-003-p6-integration-boundary-spec.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -- @paths"
         ],
         "problemMatcher": []
       },
@@ -2876,7 +2901,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-12-pm-schema-003-p6-integration-boundary-spec.json"
+          "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/agents/packets/draft/2026-04-12-pm-schema-003-p6-integration-boundary-spec.json"
         ],
         "problemMatcher": []
       },
@@ -2887,7 +2912,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-12-pm-schema-002-lifecycle-and-state-model.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-12-pm-schema-002-lifecycle-and-state-model.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -n -- @paths"
         ],
         "problemMatcher": []
       },
@@ -2898,7 +2923,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-12-pm-schema-002-lifecycle-and-state-model.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-12-pm-schema-002-lifecycle-and-state-model.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -- @paths"
         ],
         "problemMatcher": []
       },
@@ -2909,7 +2934,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-12-pm-schema-002-lifecycle-and-state-model.json"
+          "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/agents/packets/draft/2026-04-12-pm-schema-002-lifecycle-and-state-model.json"
         ],
         "problemMatcher": []
       },
@@ -2920,7 +2945,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-18-pm-schema-020e-resa-internal-baseline-capture-planning.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-18-pm-schema-020e-resa-internal-baseline-capture-planning.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -n -- @paths"
         ],
         "problemMatcher": []
       },
@@ -2931,7 +2956,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-18-pm-schema-020e-resa-internal-baseline-capture-planning.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-18-pm-schema-020e-resa-internal-baseline-capture-planning.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -- @paths"
         ],
         "problemMatcher": []
       },
@@ -2942,7 +2967,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-18-pm-schema-020e-resa-internal-baseline-capture-planning.json"
+          "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/agents/packets/draft/2026-04-18-pm-schema-020e-resa-internal-baseline-capture-planning.json"
         ],
         "problemMatcher": []
       },
@@ -2953,7 +2978,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-18-pm-schema-020g-b-governed-baseline-companion-json-path.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-18-pm-schema-020g-b-governed-baseline-companion-json-path.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -n -- @paths"
         ],
         "problemMatcher": []
       },
@@ -2964,7 +2989,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-18-pm-schema-020g-b-governed-baseline-companion-json-path.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-18-pm-schema-020g-b-governed-baseline-companion-json-path.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -- @paths"
         ],
         "problemMatcher": []
       },
@@ -2975,7 +3000,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-18-pm-schema-020g-b-governed-baseline-companion-json-path.json"
+          "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/agents/packets/draft/2026-04-18-pm-schema-020g-b-governed-baseline-companion-json-path.json"
         ],
         "problemMatcher": []
       },
@@ -2986,7 +3011,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-18-pm-schema-020e.1-loader-working-copy-restoration-and-integrity-gate.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-18-pm-schema-020e.1-loader-working-copy-restoration-and-integrity-gate.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -n -- @paths"
         ],
         "problemMatcher": []
       },
@@ -2997,7 +3022,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-18-pm-schema-020e.1-loader-working-copy-restoration-and-integrity-gate.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-18-pm-schema-020e.1-loader-working-copy-restoration-and-integrity-gate.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -- @paths"
         ],
         "problemMatcher": []
       },
@@ -3008,7 +3033,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-18-pm-schema-020e.1-loader-working-copy-restoration-and-integrity-gate.json"
+          "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/agents/packets/draft/2026-04-18-pm-schema-020e.1-loader-working-copy-restoration-and-integrity-gate.json"
         ],
         "problemMatcher": []
       },
@@ -3019,7 +3044,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-18-pm-schema-020g-a-parser-surface-reconciliation-and-baseline-shim.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-18-pm-schema-020g-a-parser-surface-reconciliation-and-baseline-shim.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -n -- @paths"
         ],
         "problemMatcher": []
       },
@@ -3030,7 +3055,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-18-pm-schema-020g-a-parser-surface-reconciliation-and-baseline-shim.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-18-pm-schema-020g-a-parser-surface-reconciliation-and-baseline-shim.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -- @paths"
         ],
         "problemMatcher": []
       },
@@ -3041,7 +3066,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-18-pm-schema-020g-a-parser-surface-reconciliation-and-baseline-shim.json"
+          "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/agents/packets/draft/2026-04-18-pm-schema-020g-a-parser-surface-reconciliation-and-baseline-shim.json"
         ],
         "problemMatcher": []
       },
@@ -3052,7 +3077,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-18-pm-schema-020e.2-parser-test-reauthoring-after-loader-restoration.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-18-pm-schema-020e.2-parser-test-reauthoring-after-loader-restoration.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -n -- @paths"
         ],
         "problemMatcher": []
       },
@@ -3063,7 +3088,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-18-pm-schema-020e.2-parser-test-reauthoring-after-loader-restoration.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-18-pm-schema-020e.2-parser-test-reauthoring-after-loader-restoration.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -- @paths"
         ],
         "problemMatcher": []
       },
@@ -3074,7 +3099,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-18-pm-schema-020e.2-parser-test-reauthoring-after-loader-restoration.json"
+          "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/agents/packets/draft/2026-04-18-pm-schema-020e.2-parser-test-reauthoring-after-loader-restoration.json"
         ],
         "problemMatcher": []
       },
@@ -3085,7 +3110,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-18-pm-schema-020h-concrete-sanitized-golden-fixture-admission.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-18-pm-schema-020h-concrete-sanitized-golden-fixture-admission.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -n -- @paths"
         ],
         "problemMatcher": []
       },
@@ -3096,7 +3121,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-18-pm-schema-020h-concrete-sanitized-golden-fixture-admission.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-18-pm-schema-020h-concrete-sanitized-golden-fixture-admission.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -- @paths"
         ],
         "problemMatcher": []
       },
@@ -3107,7 +3132,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-18-pm-schema-020h-concrete-sanitized-golden-fixture-admission.json"
+          "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/agents/packets/draft/2026-04-18-pm-schema-020h-concrete-sanitized-golden-fixture-admission.json"
         ],
         "problemMatcher": []
       },
@@ -3118,7 +3143,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-18-pm-schema-ui-002e-schedule-drivers-read-surface-and-host-validation.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-18-pm-schema-ui-002e-schedule-drivers-read-surface-and-host-validation.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -n -- @paths"
         ],
         "problemMatcher": []
       },
@@ -3129,7 +3154,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-18-pm-schema-ui-002e-schedule-drivers-read-surface-and-host-validation.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-18-pm-schema-ui-002e-schedule-drivers-read-surface-and-host-validation.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -- @paths"
         ],
         "problemMatcher": []
       },
@@ -3140,7 +3165,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-18-pm-schema-ui-002e-schedule-drivers-read-surface-and-host-validation.json"
+          "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/agents/packets/draft/2026-04-18-pm-schema-ui-002e-schedule-drivers-read-surface-and-host-validation.json"
         ],
         "problemMatcher": []
       },
@@ -3151,7 +3176,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-18-pm-schema-ui-002f-schedule-tracer-read-surface-and-host-validation.json'); Set-Location 'C:/APEX Platform'; git add -n -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-18-pm-schema-ui-002f-schedule-tracer-read-surface-and-host-validation.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -n -- @paths"
         ],
         "problemMatcher": []
       },
@@ -3162,7 +3187,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "$paths = @('apex-power-ops-platform/ops/agents/packets/draft/2026-04-18-pm-schema-ui-002f-schedule-tracer-read-surface-and-host-validation.json'); Set-Location 'C:/APEX Platform'; git add -- @paths"
+          "$paths = @('ops/agents/packets/draft/2026-04-18-pm-schema-ui-002f-schedule-tracer-read-surface-and-host-validation.json'); $repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git add -- @paths"
         ],
         "problemMatcher": []
       },
@@ -3173,18 +3198,18 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/ops/agents/packets/draft/2026-04-18-pm-schema-ui-002f-schedule-tracer-read-surface-and-host-validation.json"
+          "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ops/agents/packets/draft/2026-04-18-pm-schema-ui-002f-schedule-tracer-read-surface-and-host-validation.json"
         ],
         "problemMatcher": []
       },
     {
-      "label": "Platform subtree staged diff",
+      "label": "Platform repo staged diff",
       "type": "shell",
       "command": "pwsh",
       "args": [
         "-NoProfile",
         "-Command",
-        "Set-Location 'C:/APEX Platform'; git diff --cached -- apex-power-ops-platform/"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; Set-Location $repoRoot; git diff --cached -- ."
       ],
       "problemMatcher": []
     },
@@ -3195,10 +3220,10 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$repoRoot = (Resolve-Path (Join-Path '${workspaceFolder}' '..')).Path; $lane = Join-Path $repoRoot 'apps/mutation-seam'; if (-not (Test-Path $lane)) { throw 'apps/mutation-seam is not present under the parent repo root for this bootstrap packet.' }; Set-Location $lane; & '${workspaceFolder}\\.venv\\Scripts\\python.exe' -m uvicorn app.main:app --reload --port 8000"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; $lane = Join-Path $repoRoot 'apps/mutation-seam'; if (-not (Test-Path $lane)) { throw 'apps/mutation-seam is not present under the repo root for this bootstrap packet.' }; Set-Location $lane; & '${workspaceFolder}\\.venv\\Scripts\\python.exe' -m uvicorn app.main:app --reload --port 8000"
       ],
       "options": {
-        "cwd": "${workspaceFolder}\\.."
+        "cwd": "${workspaceFolder}"
       },
       "isBackground": true,
       "problemMatcher": [],
@@ -3211,10 +3236,10 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$repoRoot = (Resolve-Path (Join-Path '${workspaceFolder}' '..')).Path; $lane = Join-Path $repoRoot 'apps/mutation-seam'; if (-not (Test-Path $lane)) { throw 'apps/mutation-seam is not present under the parent repo root for this bootstrap packet.' }; Set-Location $lane; $env:SEAM_STORE_BACKEND='memory'; & '${workspaceFolder}\\.venv\\Scripts\\python.exe' -m pytest tests/ -v"
+        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; $lane = Join-Path $repoRoot 'apps/mutation-seam'; if (-not (Test-Path $lane)) { throw 'apps/mutation-seam is not present under the repo root for this bootstrap packet.' }; Set-Location $lane; $env:SEAM_STORE_BACKEND='memory'; & '${workspaceFolder}\\.venv\\Scripts\\python.exe' -m pytest tests/ -v"
       ],
       "options": {
-        "cwd": "${workspaceFolder}\\.."
+        "cwd": "${workspaceFolder}"
       },
       "problemMatcher": [],
       "group": "test"
