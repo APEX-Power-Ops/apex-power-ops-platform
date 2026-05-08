@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-04-18-pm-schema-ui-002d",
-  "title": "PM Schema V2 UI Baseline Overlay Re-Issue And Read-Bridge Extension",
+  "title": "Historical PM Schema V2 UI Baseline Overlay Re-Issue And Read-Bridge Extension",
+  "historical_note": "This packet records one bounded PM UI/read-surface execution slice from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live execution instruction for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this packet JSON only when historical provenance is needed for the earlier `pm-schema-ui-002d` UI/read-surface execution slice"
+  ],
   "objective": "Implement the smallest bounded follow-on after packet 020c by extending the existing GET-only schedule bridge to expose persisted task baseline fields and re-issuing the PM Gantt baseline overlay slice so the UI renders baseline-versus-current comparison, variance visibility, and legend updates without enabling schedule writes, synthetic baseline fabrication, drag-to-reschedule, Class D behavior, billing finalization, or direct client writes.",
   "domain": "pm-ui-domain",
   "active_role": "PM UI Baseline Overlay Re-Issue Architect",

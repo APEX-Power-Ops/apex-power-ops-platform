@@ -254,7 +254,9 @@ Packet `2026-05-08-olares-dev-residency-192` now converts the remaining live-loo
 
 Packet `2026-05-08-olares-dev-residency-193` now closes the remaining PM baseline/parser draft packet JSON family by hard-demoting the `pm-schema-020d` through `pm-schema-020h` packet-definition chain into explicit historical provenance with current-routing context, so those files no longer read like live execution packets after standalone cutover.
 
-The next truthful repo-structure work is therefore Packet `194` as the remaining PM UI/read-surface draft packet history-demotion slice.
+Packet `2026-05-08-olares-dev-residency-194` now closes the remaining PM UI/read-surface draft packet JSON family by hard-demoting the `pm-schema-ui-002d` through `pm-schema-ui-002g` packet-definition chain into explicit historical provenance with current-routing context, so those files no longer read like live execution packets after standalone cutover.
+
+The next truthful repo-structure work is therefore a fresh reassessment of any smaller adjacent packet-history surfaces that still read as current after the 2026-04-18 PM packet-definition lane closure.
 
 ## 2026 Addendum: Olares Runtime And Private Lane
 

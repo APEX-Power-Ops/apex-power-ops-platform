@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-04-18-pm-schema-ui-002f",
-  "title": "Schedule Tracer Read Surface And Host Validation",
+  "title": "Historical Schedule Tracer Read Surface And Host Validation",
+  "historical_note": "This packet records one bounded PM UI/read-surface execution slice from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live execution instruction for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this packet JSON only when historical provenance is needed for the earlier `pm-schema-ui-002f` UI/read-surface execution slice"
+  ],
   "objective": "Implement the smallest bounded follow-on after the sandbox-complete schedule-drivers surface by adding a read-only schedule-tracer surface that explains predecessor or ancestor chains for a selected task through the existing GET-only bridge and PM review UI, without adding schedule writes, recursive mutation behavior, or client-side fabrication of dependency semantics.",
   "domain": "pm-ui-domain",
   "active_role": "PM UI Schedule Tracer Architect",

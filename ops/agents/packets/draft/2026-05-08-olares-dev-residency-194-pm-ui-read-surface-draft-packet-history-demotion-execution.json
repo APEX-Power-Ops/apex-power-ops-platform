@@ -39,6 +39,10 @@
     "Select-String -Path PROJECT_STATUS.md -Pattern 'Packet `2026-05-08-olares-dev-residency-194`'",
     "git diff --check"
   ],
-  "status": "ready",
-  "next_action": "Execute this packet as a bounded PM UI/read-surface residue-demotion slice, then reassess whether any adjacent 2026-04-18 packet-definition residue still reads as current."
+  "validation_results": {
+    "pm_ui_read_surface_family_demoted": "pass",
+    "status_routing_updated": "pass"
+  },
+  "status": "complete",
+  "next_action": "Reassess any smaller adjacent packet-history surfaces that still read as current after the 2026-04-18 PM packet-definition lane closure."
 }

@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-04-18-pm-schema-ui-002e",
-  "title": "Schedule Drivers Read Surface And Host Validation",
+  "title": "Historical Schedule Drivers Read Surface And Host Validation",
+  "historical_note": "This packet records one bounded PM UI/read-surface execution slice from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live execution instruction for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this packet JSON only when historical provenance is needed for the earlier `pm-schema-ui-002e` UI/read-surface execution slice"
+  ],
   "objective": "Implement the smallest bounded follow-on after the landed 020g-a, 020e.2, and 020h substrate by adding a read-only schedule-drivers surface that exposes critical-path driving edges derived from imported schedule data through the existing GET-only bridge and renders a bounded PM review view for driver chains, without adding schedule writes, drag behavior, client-side fabrication, or transform-builder mutation paths.",
   "domain": "pm-ui-domain",
   "active_role": "PM UI Schedule Drivers Architect",
