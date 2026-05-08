@@ -1,0 +1,50 @@
+{
+  "packet_id": "2026-05-08-olares-dev-residency-103",
+  "title": "Historical Workspace Planning Demotion",
+  "objective": "Demote the remaining repo-owned early workspace planning documents that still presented themselves as active live governance or status surfaces even after standalone repo cutover and later authority normalization.",
+  "domain": "infrastructure-domain",
+  "active_role": "Platform Architect",
+  "dependencies": [
+    "PROJECT_STATUS.md",
+    "docs/architecture/WORKSPACE-MASTER-PLAN-2026-04-21.md",
+    "docs/architecture/WORKSPACE-STRUCTURE-GOVERNANCE-AUDIT-2026-04-21.md",
+    "docs/architecture/WORKSPACE-CURRENT-STATUS-2026-04-21.md",
+    "ops/agents/handoffs/2026-05-08-olares-dev-residency-102-parent-root-claude-entrypoint-hardening-handoff.md"
+  ],
+  "dependency_note": "After Packet 102 closed the parent-root `.claude` entrypoint layer, the next remaining current-looking residue sat inside the canonical repo itself: older workspace planning documents still described themselves as active live baselines and one still preserved the parent-root git boundary as if it were current truth. Those docs needed explicit historical demotion rather than continued silent coexistence with the current authority chain.",
+  "execution_mode": "bounded_repo_owned_historical_planning_demotion",
+  "execution_scope": [
+    "Retitle the early workspace master-plan, structure-audit, and workspace-current-status docs as historical pre-cutover snapshots.",
+    "Add explicit historical notes and current-routing blocks at the top of those docs.",
+    "Preserve the deeper body content as provenance instead of rewriting the earlier planning record wholesale."
+  ],
+  "forbidden_scope": [
+    "runtime or service mutation",
+    "package or lockfile mutation",
+    "repo-boundary reversal",
+    "broad historical-content rewrite beyond top demotion and routing context",
+    "remote rewrite",
+    "rollback, force, reset, or clean",
+    "old-clone mutation or promotion"
+  ],
+  "success_criteria": [
+    "The three touched workspace planning docs now lead as historical pre-cutover snapshots rather than active live governance surfaces.",
+    "Each touched document now includes an explicit historical note and current-routing block.",
+    "The preserved parent-root git-boundary wording in the old workspace-current-status doc is explicitly marked as historical provenance rather than current guidance.",
+    "Repo-owned status routing records the closure and moves the next lane deeper into older packet-history and legacy planning residue."
+  ],
+  "validation_commands": [
+    "Select-String -Path docs/architecture/WORKSPACE-MASTER-PLAN-2026-04-21.md -Pattern '^# Historical Workspace Master Plan','^Status: Historical pre-cutover planning snapshot','^Historical planning note:','^Current routing:'",
+    "Select-String -Path docs/architecture/WORKSPACE-STRUCTURE-GOVERNANCE-AUDIT-2026-04-21.md -Pattern '^# Historical Workspace Structure And Governance Audit','^Status: Historical pre-cutover cleanup and organization audit snapshot','^Historical audit note:','^Current routing:'",
+    "Select-String -Path docs/architecture/WORKSPACE-CURRENT-STATUS-2026-04-21.md -Pattern '^# Historical Workspace Current Status','^Status: Historical pre-cutover status snapshot','^Historical status note:','^Current routing:'",
+    "Select-String -Path docs/architecture/WORKSPACE-CURRENT-STATUS-2026-04-21.md -Pattern 'parent-root git authority still sat at `C:/APEX Platform` in this historical snapshot'"
+  ],
+  "validation_results": {
+    "workspace_master_plan": "pass",
+    "workspace_structure_audit": "pass",
+    "workspace_current_status": "pass",
+    "historical_parent_root_boundary_note": "pass"
+  },
+  "status": "complete",
+  "next_action": "Return repo-foundation routing to older packet-history and legacy planning surfaces that still preserve pre-cutover operator wording without equivalent current-routing context."
+}

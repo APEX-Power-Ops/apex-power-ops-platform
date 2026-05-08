@@ -1,12 +1,22 @@
-# Workspace Structure And Governance Audit
+# Historical Workspace Structure And Governance Audit
 
 Date: 2026-04-21
-Status: Refreshed cleanup and organization audit on 2026-04-22
+Status: Historical pre-cutover cleanup and organization audit snapshot
 Scope: Active platform repo only (`C:/APEX Platform/apex-power-ops-platform`)
+
+Historical audit note:
+
+This document preserves an early workspace cleanup baseline from before standalone repo cutover and later authority re-home work. It is not the current authority order for repo-shape or publication-boundary decisions.
+
+Current routing:
+
+1. use `docs/authority/README.md` for the current authority chain,
+2. use `docs/architecture/APEX-REPO-FOUNDATION-AND-CUTOVER-PLAN-2026-05-07.md` for current repo-shape and cutover authority,
+3. use `PROJECT_STATUS.md` and `plan/infrastructure-olares-full-implementation-roadmap-1.md` for current execution posture and sequencing.
 
 ## Purpose
 
-This document is the current cleanup and organization baseline for the platform repo.
+This document preserves the earlier cleanup and organization baseline for the platform repo.
 
 It does three things:
 
@@ -14,10 +24,10 @@ It does three things:
 2. separates already-closed governance and hygiene gaps from still-open normalization work
 3. defines the remaining folder-structure cleanup rules so new work lands in the right lane without reopening broad workspace discovery
 
-This document is intentionally platform-first:
+This document is intentionally platform-first in its original planning context:
 
 1. implementation work belongs in this repo when a target lane already exists here
-2. `C:/APEX Platform/Platform-Authority` remains the strategic authority layer above this repo
+2. `C:/APEX Platform/Platform-Authority` remains historical strategic lineage for this older audit context
 3. sibling source-domain repos remain lineage and extraction inputs, not equal primary workspaces
 
 ## Live Planning Stack
@@ -28,7 +38,7 @@ Use these documents together:
 2. `docs/architecture/WORKSPACE-CURRENT-STATUS-2026-04-21.md` -> current operational status snapshot
 3. `docs/architecture/WORKSPACE-IMPLEMENTATION-ROADMAP-2026-04-21.md` -> sequencing surface
 
-Use this audit as the authority for workspace-shape and cleanup classification. Use the status and roadmap documents for execution sequencing.
+Use this audit as historical design input and provenance. Use the current repo-owned authority, status, and roadmap surfaces for active execution sequencing.
 
 ## Authority Order
 

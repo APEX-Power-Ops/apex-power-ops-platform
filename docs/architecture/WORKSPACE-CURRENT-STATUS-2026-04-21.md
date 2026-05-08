@@ -1,12 +1,22 @@
-# Workspace Current Status
+# Historical Workspace Current Status
 
 Date: 2026-04-21
-Status: Active status snapshot
+Status: Historical pre-cutover status snapshot
 Scope: `C:/APEX Platform/apex-power-ops-platform`
+
+Historical status note:
+
+This document preserves an early workspace-status snapshot from before standalone repo cutover and later repo-foundation normalization. It is not the current status authority.
+
+Current routing:
+
+1. use `PROJECT_STATUS.md` for the current status surface,
+2. use `docs/authority/README.md` for the current authority chain,
+3. use `plan/infrastructure-olares-full-implementation-roadmap-1.md` and `ops/agents/handoffs/` for current sequencing and packet history.
 
 ## Executive Status
 
-The workspace has moved beyond a bare bootstrap scaffold, but it is not yet a fully normalized platform root.
+This snapshot records the workspace state before the later standalone repo cutover and authority relocation work closed several of the gaps described below.
 
 What is already true:
 
@@ -16,8 +26,8 @@ What is already true:
 4. the repo now has a documented workspace audit and local status markers for silent lanes
 5. the workspace cleanup and organization baseline has been refreshed so the authority audit now tracks current facts instead of stale governance gaps
 6. the workspace now has an execution checklist for lane normalization so merge-target and deferred-lane follow-through no longer depends on implied next steps
-7. operator-facing docs now explicitly state that platform work is platform-first while git authority still remains at the parent `C:/APEX Platform` repo boundary
-8. the task surface now supports bounded parent-root git inspection and guarded explicit-path staging for future publication work
+7. operator-facing docs at that time still reflected an earlier platform-first but parent-root-boundary model
+8. the task surface at that time still relied on bounded parent-root git inspection and explicit-path staging
 
 What is not yet true:
 
@@ -25,7 +35,7 @@ What is not yet true:
 2. placeholder lanes are documented and explicitly deferred rather than implemented
 3. the repo does not yet expose a final deployment and validation map for deferred, seed, or future lanes beyond the currently active runtimes
 4. source-domain re-home is still only partially materialized in platform-local lanes
-5. parent-root git authority still sits at `C:/APEX Platform`, so bounded path staging remains necessary whenever unrelated parent-repo changes are present; the first platform bootstrap tranche is now tracked and diff-based publication against `HEAD` is available for those introduced paths, but much of the broader subtree still remains untracked and requires deliberate introduction
+5. parent-root git authority still sat at `C:/APEX Platform` in this historical snapshot; that statement is now preserved only as pre-cutover provenance and not as current repo-boundary guidance
 
 ## Lane Status
 

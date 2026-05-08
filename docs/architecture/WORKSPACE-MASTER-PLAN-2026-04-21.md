@@ -1,21 +1,31 @@
-# Workspace Master Plan
+# Historical Workspace Master Plan
 
 Date: 2026-04-21
-Status: Active live planning document
+Status: Historical pre-cutover planning snapshot
 Scope: `C:/APEX Platform/apex-power-ops-platform`
+
+Historical planning note:
+
+This document preserves an early workspace-shape planning baseline from before standalone repo cutover and later authority relocation closed. It is no longer the current workspace-governance authority.
+
+Current routing:
+
+1. use `docs/authority/README.md` for the current authority chain,
+2. use `docs/architecture/APEX-REPO-FOUNDATION-AND-CUTOVER-PLAN-2026-05-07.md` and `docs/architecture/APEX-CANONICAL-REPO-CUTOVER-CHECKLIST-2026-05-07.md` for current repo-boundary truth,
+3. use `PROJECT_STATUS.md` and `plan/infrastructure-olares-full-implementation-roadmap-1.md` for current execution posture and sequencing.
 
 ## Purpose
 
-This document defines the intended steady-state workspace shape for the active platform repo.
+This document defines the intended steady-state workspace shape for the early active platform repo planning pass.
 
-It is the live design document for:
+It preserves the earlier design baseline for:
 
 1. workspace topology
 2. lane purpose and promotion rules
 3. governance boundaries
 4. consolidation targets for sibling source-domain repos
 
-This plan is platform-first and implementation-oriented. Strategic authority still remains above it in `C:/APEX Platform/Platform-Authority/`, but this document defines how that authority is realized inside the active repo.
+This plan is platform-first and implementation-oriented, but its parent-root strategic-authority references are now historical provenance rather than the current routing contract.
 
 ## Authority Order
 

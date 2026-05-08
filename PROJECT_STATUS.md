@@ -72,7 +72,9 @@ Packet `2026-05-08-olares-dev-residency-101` now closes the next adjacent parent
 
 Packet `2026-05-08-olares-dev-residency-102` now closes the next adjacent parent-root `.claude` entrypoint-hardening slice by retitling the surviving master/state/decision-log entrypoints as historical parent-root records and adding explicit current-routing blocks so they no longer read like live coordination constitutions for the standalone repo boundary.
 
-The next truthful repo-structure work is therefore the remaining deeper historical-demotion, provenance-routing, and residue-retirement work in older planning, audit, and packet-history surfaces beyond the now-normalized umbrella and `.claude` entrypoints.
+Packet `2026-05-08-olares-dev-residency-103` now closes the next adjacent historical-planning demotion slice by hard-marking the early workspace master plan, structure audit, and workspace current-status documents as pre-cutover snapshots instead of active live authority surfaces.
+
+The next truthful repo-structure work is therefore the remaining deeper provenance-routing and residue-retirement work in older packet-history and legacy planning surfaces that still preserve pre-cutover operator wording without equivalent current-routing context.
 
 ## 2026 Addendum: Olares Runtime And Private Lane
 
