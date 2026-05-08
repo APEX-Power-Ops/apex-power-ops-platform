@@ -1,0 +1,51 @@
+{
+  "packet_id": "2026-05-08-olares-dev-residency-177",
+  "title": "Phase 5 Summary Gate History Demotion Execution",
+  "objective": "Hard-demote the remaining higher-leverage Olares Phase 5 summary authority-publication and host-mirror gate records so those bridge records no longer read like live publication authority for the standalone repo boundary.",
+  "domain": "infrastructure-domain",
+  "active_role": "Platform Architect",
+  "dependencies": [
+    "PROJECT_STATUS.md",
+    "docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md",
+    "ops/agents/handoffs/README.md",
+    "ops/agents/handoffs/2026-05-08-olares-dev-residency-176-gate-history-residue-follow-on-task-split-authoring-handoff.md",
+    "ops/agents/packets/draft/2026-05-03-olares-phase-5-039-packet-037-and-packet-038-authority-publication-and-host-mirror-resync-gate.json",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-039-packet-037-and-packet-038-authority-publication-and-host-mirror-resync-gate-handoff.md",
+    "ops/agents/packets/draft/2026-05-03-olares-phase-5-057-packet-053-validated-artifact-publication-and-host-reconciliation-gate.json",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-057-packet-053-validated-artifact-publication-and-host-reconciliation-gate-handoff.md",
+    "ops/agents/packets/draft/2026-05-03-olares-phase-5-062-packet-060-and-packet-061-authority-publication-and-host-mirror-resync-gate.json",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-062-packet-060-and-packet-061-authority-publication-and-host-mirror-resync-gate-handoff.md",
+    "ops/agents/packets/draft/2026-05-03-olares-phase-5-095-packet-093-and-packet-094-authority-publication-and-host-mirror-resync-gate.json",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-095-packet-093-and-packet-094-authority-publication-and-host-mirror-resync-gate-handoff.md"
+  ],
+  "dependency_note": "After Packet 175, the strongest remaining current-looking packet-history residue is not the full Phase 5 gate archive; it is the smaller summary-gate bridge layer that later prompts and authority packets still reuse as reference or exclusion context. Those records already describe closed publication evidence, but their titles and top sections still read like live authority-publication gates rather than historical provenance.",
+  "execution_mode": "bounded_phase_5_summary_gate_history_demotion",
+  "execution_scope": [
+    "Retitle the four targeted Olares Phase 5 summary gate handoffs as historical Phase 5 gate records and add explicit current-routing blocks.",
+    "Retitle the four targeted Olares Phase 5 gate packet JSON titles as historical records and add explicit historical-note and current-routing fields.",
+    "Preserve the detailed publication and host-parity evidence as provenance rather than rewriting the historical bridge records wholesale."
+  ],
+  "forbidden_scope": [
+    "runtime or service mutation",
+    "package or lockfile mutation",
+    "repo-boundary reversal",
+    "broad Phase 5 gate archive rewriting beyond top-entry demotion and routing context",
+    "remote rewrite",
+    "rollback, force, reset, or clean",
+    "old-clone mutation or promotion",
+    "Dev Residency gate or execution-record normalization in the same packet"
+  ],
+  "success_criteria": [
+    "Each targeted Phase 5 handoff now leads as a historical gate record instead of a live authority-publication bridge.",
+    "Each targeted Phase 5 packet JSON now carries explicit historical-note and current-routing context instead of reading like a still-live gate definition.",
+    "Repo-owned status routing records the family closure and leaves the Dev Residency summary gate/execution family separate if still untouched."
+  ],
+  "validation_commands": [
+    "Select-String -Path ops/agents/handoffs/2026-05-03-olares-phase-5-039-packet-037-and-packet-038-authority-publication-and-host-mirror-resync-gate-handoff.md,ops/agents/handoffs/2026-05-03-olares-phase-5-057-packet-053-validated-artifact-publication-and-host-reconciliation-gate-handoff.md,ops/agents/handoffs/2026-05-03-olares-phase-5-062-packet-060-and-packet-061-authority-publication-and-host-mirror-resync-gate-handoff.md,ops/agents/handoffs/2026-05-03-olares-phase-5-095-packet-093-and-packet-094-authority-publication-and-host-mirror-resync-gate-handoff.md -Pattern '^# Historical Olares Phase 5 Packet','^Current routing:'",
+    "Select-String -Path ops/agents/packets/draft/2026-05-03-olares-phase-5-039-packet-037-and-packet-038-authority-publication-and-host-mirror-resync-gate.json,ops/agents/packets/draft/2026-05-03-olares-phase-5-057-packet-053-validated-artifact-publication-and-host-reconciliation-gate.json,ops/agents/packets/draft/2026-05-03-olares-phase-5-062-packet-060-and-packet-061-authority-publication-and-host-mirror-resync-gate.json,ops/agents/packets/draft/2026-05-03-olares-phase-5-095-packet-093-and-packet-094-authority-publication-and-host-mirror-resync-gate.json -Pattern '\"title\": \"Historical ','\"historical_note\":','\"current_routing\":'",
+    "Select-String -Path PROJECT_STATUS.md -Pattern 'Packet `2026-05-08-olares-dev-residency-177`'",
+    "git diff --check"
+  ],
+  "status": "ready",
+  "next_action": "Execute this packet as a separate summary-gate slice, then reassess whether Packet 178 remains the next truthful adjacent packet-history demotion lane."
+}

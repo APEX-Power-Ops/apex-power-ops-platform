@@ -218,7 +218,9 @@ Packet `2026-05-08-olares-dev-residency-174` now closes the remaining 2026-04-22
 
 Packet `2026-05-08-olares-dev-residency-175` now closes the remaining 2026-04-22 parent-root reevaluation handoff family by hard-demoting those queue-selection records into explicit historical provenance with current-routing blocks, so they no longer read like a live next-packet selector for the standalone repo boundary.
 
-The next truthful repo-structure work is therefore to reassess the remaining packet-history and provenance-routing surfaces for any individually current-looking historical records that still lack equivalent current-routing context, because the explicit 2026-04-22 parent-root publication/checkpoint family and reevaluation family are now both closed as separate residue slices.
+Packet `2026-05-08-olares-dev-residency-176` now converts the next remaining higher-leverage packet-history residue into two separately executable follow-on packets: Packet `177` for the remaining Olares Phase 5 summary authority-publication and host-mirror gate records, and Packet `178` for the remaining Dev Residency summary gate and execution-record family, preserving the rule that these May 2026 bridge records stay separate demotion slices instead of being reopened as one broad packet-history rewrite.
+
+The next truthful repo-structure work is therefore to execute Packet `177` or Packet `178` as separate slices, continuing the packet-history and provenance-routing lane in the remaining May 2026 bridge records that still read like live publication or execution guidance without equivalent current-routing context.
 
 ## 2026 Addendum: Olares Runtime And Private Lane
 

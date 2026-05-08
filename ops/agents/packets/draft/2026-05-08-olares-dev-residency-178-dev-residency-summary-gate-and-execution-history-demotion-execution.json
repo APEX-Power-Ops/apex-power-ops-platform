@@ -1,0 +1,49 @@
+{
+  "packet_id": "2026-05-08-olares-dev-residency-178",
+  "title": "Dev Residency Summary Gate And Execution History Demotion Execution",
+  "objective": "Hard-demote the remaining higher-leverage Dev Residency summary gate and execution records so those May 2026 bridge records no longer read like live remediation or root-entry execution guidance for the standalone repo boundary.",
+  "domain": "infrastructure-domain",
+  "active_role": "Platform Architect",
+  "dependencies": [
+    "PROJECT_STATUS.md",
+    "docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md",
+    "ops/agents/handoffs/README.md",
+    "ops/agents/handoffs/2026-05-08-olares-dev-residency-176-gate-history-residue-follow-on-task-split-authoring-handoff.md",
+    "ops/agents/packets/draft/2026-05-05-olares-dev-residency-026-packet-022-closeout-through-packet-025-api-origin-remediation-authority-publication-and-host-mirror-resync-gate.json",
+    "ops/agents/handoffs/2026-05-05-olares-dev-residency-026-packet-022-closeout-through-packet-025-api-origin-remediation-authority-publication-and-host-mirror-resync-gate-handoff.md",
+    "ops/agents/packets/draft/2026-05-06-olares-dev-residency-069-root-entrypoint-routing-refresh-execution.json",
+    "ops/agents/handoffs/2026-05-06-olares-dev-residency-069-root-entrypoint-routing-refresh-execution-handoff.md",
+    "ops/agents/packets/draft/2026-05-06-olares-dev-residency-070-packet-068-and-packet-069-authority-publication-and-host-mirror-resync-gate.json",
+    "ops/agents/handoffs/2026-05-06-olares-dev-residency-070-packet-068-and-packet-069-authority-publication-and-host-mirror-resync-gate-handoff.md"
+  ],
+  "dependency_note": "After Packet 175, the next adjacent non-Phase-5 residue is a small Dev Residency bridge family: the API-origin remediation publication gate, the root-entrypoint routing execution record, and the gate that published that execution to the authoritative host mirror. Those records describe already-closed work, but their titles and top sections still present themselves like live remediation or execution guidance instead of historical provenance with current routing.",
+  "execution_mode": "bounded_dev_residency_summary_gate_and_execution_history_demotion",
+  "execution_scope": [
+    "Retitle the targeted Dev Residency handoffs as historical gate or execution records and add explicit current-routing blocks.",
+    "Retitle the targeted Dev Residency packet JSON titles as historical records and add explicit historical-note and current-routing fields.",
+    "Preserve the detailed publication, execution, and host-parity evidence as provenance rather than rewriting the historical bridge records wholesale."
+  ],
+  "forbidden_scope": [
+    "runtime or service mutation",
+    "package or lockfile mutation",
+    "repo-boundary reversal",
+    "broad Dev Residency archive rewriting beyond top-entry demotion and routing context",
+    "remote rewrite",
+    "rollback, force, reset, or clean",
+    "old-clone mutation or promotion",
+    "Phase 5 summary gate normalization in the same packet"
+  ],
+  "success_criteria": [
+    "Each targeted Dev Residency handoff now leads as a historical record instead of a live remediation or root-entry execution bridge.",
+    "Each targeted Dev Residency packet JSON now carries explicit historical-note and current-routing context instead of reading like a still-live gate or execution definition.",
+    "Repo-owned status routing records the family closure and leaves any remaining narrower packet-history surfaces for fresh reassessment afterward."
+  ],
+  "validation_commands": [
+    "Select-String -Path ops/agents/handoffs/2026-05-05-olares-dev-residency-026-packet-022-closeout-through-packet-025-api-origin-remediation-authority-publication-and-host-mirror-resync-gate-handoff.md,ops/agents/handoffs/2026-05-06-olares-dev-residency-069-root-entrypoint-routing-refresh-execution-handoff.md,ops/agents/handoffs/2026-05-06-olares-dev-residency-070-packet-068-and-packet-069-authority-publication-and-host-mirror-resync-gate-handoff.md -Pattern '^# Historical Olares Dev Residency','^Current routing:'",
+    "Select-String -Path ops/agents/packets/draft/2026-05-05-olares-dev-residency-026-packet-022-closeout-through-packet-025-api-origin-remediation-authority-publication-and-host-mirror-resync-gate.json,ops/agents/packets/draft/2026-05-06-olares-dev-residency-069-root-entrypoint-routing-refresh-execution.json,ops/agents/packets/draft/2026-05-06-olares-dev-residency-070-packet-068-and-packet-069-authority-publication-and-host-mirror-resync-gate.json -Pattern '"title": "Historical ','"historical_note":','"current_routing":'",
+    "Select-String -Path PROJECT_STATUS.md -Pattern 'Packet `2026-05-08-olares-dev-residency-178`'",
+    "git diff --check"
+  ],
+  "status": "ready",
+  "next_action": "Execute this packet as a separate Dev Residency bridge-record slice, then reassess the remaining packet-history and provenance-routing surfaces for the next smallest current-looking family."
+}

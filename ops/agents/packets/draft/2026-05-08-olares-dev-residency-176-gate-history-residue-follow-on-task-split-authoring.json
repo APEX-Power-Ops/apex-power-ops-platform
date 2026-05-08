@@ -1,0 +1,44 @@
+{
+  "packet_id": "2026-05-08-olares-dev-residency-176",
+  "title": "Gate History Residue Follow-On Task Split Authoring",
+  "objective": "Convert the next remaining higher-leverage packet-history residue after Packets 174 and 175 into separately executable follow-on packets so the still-current-looking May 2026 summary gate and execution records can be normalized without collapsing into one broad packet-history rewrite.",
+  "domain": "infrastructure-domain",
+  "active_role": "Platform Architect",
+  "dependencies": [
+    "PROJECT_STATUS.md",
+    "docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md",
+    "ops/agents/handoffs/README.md",
+    "ops/agents/handoffs/2026-05-03-olares-phase-5-095-packet-093-and-packet-094-authority-publication-and-host-mirror-resync-gate-handoff.md",
+    "ops/agents/handoffs/2026-05-05-olares-dev-residency-026-packet-022-closeout-through-packet-025-api-origin-remediation-authority-publication-and-host-mirror-resync-gate-handoff.md",
+    "ops/agents/handoffs/2026-05-06-olares-dev-residency-069-root-entrypoint-routing-refresh-execution-handoff.md",
+    "ops/agents/packets/draft/2026-05-08-olares-dev-residency-175-parent-root-reevaluation-handoff-demotion-execution.json"
+  ],
+  "dependency_note": "Packets 174 and 175 closed the remaining explicit 2026-04-22 parent-root handoff families. The next adjacent residue is no longer that April handoff stack; it is the surviving May 2026 packet-history bridge layer where several summary publication gates and one execution record still lead like live authority or execution guidance. The smallest truthful move is to split the remaining residue into a Phase 5 summary-gate family and a Dev Residency summary gate/execution family rather than reopen all packet-history surfaces at once.",
+  "execution_mode": "bounded_follow_on_task_authoring",
+  "execution_scope": [
+    "Author a ready packet spec for the remaining Olares Phase 5 summary authority-publication and host-mirror gate record family.",
+    "Author a ready packet spec for the remaining Dev Residency summary gate and execution-record family.",
+    "Update repo-owned status routing so the split is explicit and later execution does not recombine the families by accident."
+  ],
+  "forbidden_scope": [
+    "execution of the Phase 5 summary gate packet itself",
+    "execution of the Dev Residency summary gate/execution packet itself",
+    "broad packet-history rewrite",
+    "runtime or service mutation",
+    "package or lockfile mutation",
+    "repo-boundary reversal"
+  ],
+  "success_criteria": [
+    "The repo has one ready packet spec for the remaining Olares Phase 5 summary gate-history family.",
+    "The repo has one ready packet spec for the remaining Dev Residency summary gate and execution-history family.",
+    "Project status routing makes the split explicit and preserves the rule that the two families stay separate execution slices."
+  ],
+  "validation_commands": [
+    "Select-String -Path ops/agents/packets/draft/2026-05-08-olares-dev-residency-177-phase-5-summary-gate-history-demotion-execution.json -Pattern '^  \"packet_id\": \"2026-05-08-olares-dev-residency-177\"$','^  \"status\": \"ready\"$'",
+    "Select-String -Path ops/agents/packets/draft/2026-05-08-olares-dev-residency-178-dev-residency-summary-gate-and-execution-history-demotion-execution.json -Pattern '^  \"packet_id\": \"2026-05-08-olares-dev-residency-178\"$','^  \"status\": \"ready\"$'",
+    "Select-String -Path PROJECT_STATUS.md -Pattern 'Packet `2026-05-08-olares-dev-residency-176` now converts the next remaining higher-leverage packet-history residue into two separately executable follow-on packets'",
+    "git diff --check -- PROJECT_STATUS.md ops/agents/packets/draft/2026-05-08-olares-dev-residency-176-gate-history-residue-follow-on-task-split-authoring.json ops/agents/handoffs/2026-05-08-olares-dev-residency-176-gate-history-residue-follow-on-task-split-authoring-handoff.md ops/agents/packets/draft/2026-05-08-olares-dev-residency-177-phase-5-summary-gate-history-demotion-execution.json ops/agents/packets/draft/2026-05-08-olares-dev-residency-178-dev-residency-summary-gate-and-execution-history-demotion-execution.json"
+  ],
+  "status": "complete",
+  "next_action": "Execute Packet 177 for the remaining Olares Phase 5 summary gate-history family or Packet 178 for the remaining Dev Residency summary gate and execution-history family as separate slices; if both run, keep them in separate validation loops and commits."
+}
