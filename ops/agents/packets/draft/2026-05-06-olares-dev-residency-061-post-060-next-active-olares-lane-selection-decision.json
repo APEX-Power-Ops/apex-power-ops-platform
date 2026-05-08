@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-05-06-olares-dev-residency-061",
-  "title": "Post-060 Next Active Olares Lane Selection Decision",
+  "title": "Historical Post-060 Next Active Olares Lane Selection Decision",
+  "historical_note": "This record preserves one earlier Dev Residency decision slice from before the canonical repo boundary moved to C:/APEX Platform/apex-power-ops-platform on 2026-05-07. It is historical provenance, not a live next-lane selector for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this record only when historical provenance is needed for the earlier Dev Residency 061 next-lane decision slice preserved here"
+  ],
   "objective": "Select the next truthful active Olares-first lane after the deferred Operations Visibility hold branch and the separate simultaneous-worker branch are both parked on published dormancy rules.",
   "domain": "infrastructure-domain",
   "active_role": "Platform Architect",

@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-05-06-olares-dev-residency-054",
-  "title": "Minimal MCP Trio Regression Rerun Execution",
+  "title": "Historical Minimal MCP Trio Regression Rerun Execution",
+  "historical_note": "This record preserves one earlier Dev Residency execution slice from before the canonical repo boundary moved to C:/APEX Platform/apex-power-ops-platform on 2026-05-07. It is historical provenance, not a live minimal-MCP regression execution surface for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this record only when historical provenance is needed for the earlier Dev Residency 054 minimal-MCP regression slice preserved here"
+  ],
   "objective": "Revalidate the admitted minimal MCP trio operator surface on workstation and durable host after the Operations Visibility delivery burst without widening AI-service or runtime admission.",
   "domain": "delivery-domain",
   "active_role": "Platform Architect",

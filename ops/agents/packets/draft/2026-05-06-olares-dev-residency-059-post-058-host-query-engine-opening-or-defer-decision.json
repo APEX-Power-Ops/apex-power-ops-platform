@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-05-06-olares-dev-residency-059",
-  "title": "Post-058 Host Query Engine Opening Or Defer Decision",
+  "title": "Historical Post-058 Host Query Engine Opening Or Defer Decision",
+  "historical_note": "This record preserves one earlier Dev Residency decision slice from before the canonical repo boundary moved to C:/APEX Platform/apex-power-ops-platform on 2026-05-07. It is historical provenance, not a live host-query-engine selector for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this record only when historical provenance is needed for the earlier Dev Residency 059 host-query-engine decision slice preserved here"
+  ],
   "objective": "Decide whether the asymmetric post-058 live-DSN posture justifies opening a separate bounded host-query-engine lane now, or whether the deferred Operations Visibility seams should remain on explicit hold without widening host query capability.",
   "domain": "infrastructure-domain",
   "active_role": "Platform Architect",
