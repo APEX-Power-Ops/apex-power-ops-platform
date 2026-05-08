@@ -1,13 +1,19 @@
 {
   "packet_id": "2026-04-12-pm-schema-005",
-  "title": "PM Domain Review Gate And SQL Readiness Checklist",
+  "title": "Historical PM Domain Review Gate And SQL Readiness Checklist",
+  "historical_note": "This packet records one bounded PM domain foundational planning slice from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live execution instruction for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this packet JSON only when historical provenance is needed for the earlier `pm-schema-005` PM-domain review-gate planning slice"
+  ],
   "objective": "Create the final PM-domain review gate and readiness checklist that determines when the schema work can move from bounded authority design into implementation-ready SQL planning.",
   "domain": "pm-domain",
   "active_role": "Reviewer And Release Gate",
   "repo_paths": [
     "c:/APEX Platform/Platform-Authority/PM-SCHEMA-V2-REVIEW-AND-FINALIZATION-PROTOCOL-2026-04-12.md",
     "c:/APEX Platform/Platform-Authority/PM-WORK-DOMAIN-SPEC-2026-04-12.md",
-    "c:/APEX Platform/Platform-Authority/PLATFORM-DATA-AND-SCHEMA-STRATEGY-2026-04-12.md",
+    "c:/APEX Platform/apex-power-ops-platform/docs/authority/PLATFORM-DATA-AND-SCHEMA-STRATEGY-2026-04-12.md",
     "c:/APEX Platform/Platform-Authority/CANONICAL-ENTITY-MAP-2026-04-12.md",
     "c:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft"
   ],
@@ -38,6 +44,7 @@
     "Confirm all prerequisite packet outputs exist",
     "Confirm unresolved platform-boundary questions remain explicit",
     "Confirm SQL remains gated until checklist conditions are satisfied",
+    "Confirm the review gate explicitly requires technical authority review and approval before schema design can be treated as implementation-ready",
     "Confirm the next implementation-ready packet must still carry unresolved-decision, validation-plan, and write-scope artifacts required by the finalization protocol"
   ],
   "handoff_target": "Platform Architect",
