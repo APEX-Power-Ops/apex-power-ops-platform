@@ -1,0 +1,48 @@
+{
+  "packet_id": "2026-05-08-olares-dev-residency-173",
+  "title": "Parent-Root Handoff Residue Follow-On Task Split Authoring",
+  "objective": "Convert the next remaining provenance-routing residue after Packets 169 through 172 into separately executable follow-on packets so the still-current-looking 2026-04-22 parent-root publication/checkpoint handoff family and reevaluation handoff family can be normalized in parallel without collapsing into a broad archive rewrite.",
+  "domain": "infrastructure-domain",
+  "active_role": "Platform Architect",
+  "dependencies": [
+    "PROJECT_STATUS.md",
+    "docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md",
+    "ops/agents/handoffs/README.md",
+    "ops/agents/handoffs/2026-04-22-parent-root-bootstrap-publication-handoff.md",
+    "ops/agents/handoffs/2026-04-22-parent-root-remaining-draft-reevaluation-handoff.md",
+    "ops/agents/packets/draft/2026-05-08-olares-dev-residency-172-ai-backbone-parallel-hardening-execution.json"
+  ],
+  "dependency_note": "Packets 106 through 168 demoted the strongest current-looking parent-root routing and draft-publication residue one explicit family at a time, and Packets 169 through 172 then closed the bounded AI backbone lane separately. The next adjacent residue is the older 2026-04-22 parent-root handoff family outside the already-demoted draft-publication tranche, so the smallest truthful move is to author concrete follow-on packets for the two remaining handoff families rather than reopen the archive as one undifferentiated cleanup lane.",
+  "execution_mode": "bounded_follow_on_task_authoring",
+  "execution_scope": [
+    "Author a ready packet spec for the remaining 2026-04-22 parent-root publication and checkpoint handoff family.",
+    "Author a ready packet spec for the remaining 2026-04-22 parent-root reevaluation handoff family.",
+    "Update repo-owned status routing so the split is explicit and later execution does not recombine the families by accident."
+  ],
+  "forbidden_scope": [
+    "execution of the publication/checkpoint handoff packet itself",
+    "execution of the reevaluation handoff packet itself",
+    "broad historical archive rewrite",
+    "runtime or service mutation",
+    "package or lockfile mutation",
+    "repo-boundary reversal"
+  ],
+  "success_criteria": [
+    "The repo has one ready packet spec for the remaining parent-root publication/checkpoint handoff family.",
+    "The repo has one ready packet spec for the remaining parent-root reevaluation handoff family.",
+    "Project status routing makes the split explicit and preserves the rule that the two families stay separate execution slices."
+  ],
+  "validation_commands": [
+    "Select-String -Path ops/agents/packets/draft/2026-05-08-olares-dev-residency-174-parent-root-publication-and-checkpoint-handoff-demotion-execution.json -Pattern '^  \"packet_id\": \"2026-05-08-olares-dev-residency-174\"$','^  \"status\": \"ready\"$'",
+    "Select-String -Path ops/agents/packets/draft/2026-05-08-olares-dev-residency-175-parent-root-reevaluation-handoff-demotion-execution.json -Pattern '^  \"packet_id\": \"2026-05-08-olares-dev-residency-175\"$','^  \"status\": \"ready\"$'",
+    "Select-String -Path PROJECT_STATUS.md -Pattern 'Packet `2026-05-08-olares-dev-residency-173` now converts the next remaining provenance-routing residue into two separately executable follow-on packets'",
+    "git diff --check -- PROJECT_STATUS.md ops/agents/packets/draft/2026-05-08-olares-dev-residency-173-parent-root-handoff-residue-follow-on-task-split-authoring.json ops/agents/handoffs/2026-05-08-olares-dev-residency-173-parent-root-handoff-residue-follow-on-task-split-authoring-handoff.md ops/agents/packets/draft/2026-05-08-olares-dev-residency-174-parent-root-publication-and-checkpoint-handoff-demotion-execution.json ops/agents/packets/draft/2026-05-08-olares-dev-residency-175-parent-root-reevaluation-handoff-demotion-execution.json"
+  ],
+  "validation_results": {
+    "follow_on_packets_present": "pass",
+    "status_routing_updated": "pass",
+    "diff_hygiene": "pass"
+  },
+  "status": "complete",
+  "next_action": "Execute Packet 174 for the remaining parent-root publication/checkpoint handoff family or Packet 175 for the remaining parent-root reevaluation handoff family as separate slices; if both run, keep them in separate validation loops and commits."
+}

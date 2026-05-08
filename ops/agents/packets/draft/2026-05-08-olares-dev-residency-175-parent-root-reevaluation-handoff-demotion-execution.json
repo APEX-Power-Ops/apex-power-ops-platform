@@ -1,0 +1,46 @@
+{
+  "packet_id": "2026-05-08-olares-dev-residency-175",
+  "title": "Parent-Root Reevaluation Handoff Demotion Execution",
+  "objective": "Hard-demote the remaining 2026-04-22 parent-root reevaluation handoff family so those selection records no longer read like a live packet queue for the standalone repo boundary.",
+  "domain": "infrastructure-domain",
+  "active_role": "Platform Architect",
+  "dependencies": [
+    "PROJECT_STATUS.md",
+    "docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md",
+    "ops/agents/handoffs/README.md",
+    "ops/agents/handoffs/2026-05-08-olares-dev-residency-173-parent-root-handoff-residue-follow-on-task-split-authoring-handoff.md",
+    "ops/agents/handoffs/2026-04-22-parent-root-post-008-remaining-draft-reevaluation-handoff.md",
+    "ops/agents/handoffs/2026-04-22-parent-root-remaining-draft-reevaluation-handoff.md",
+    "ops/agents/handoffs/2026-04-22-parent-root-post-020g-b-remaining-draft-reevaluation-handoff.md",
+    "ops/agents/handoffs/2026-04-22-parent-root-post-apex-unification-001i-remaining-draft-reevaluation-handoff.md"
+  ],
+  "dependency_note": "Packets 109 through 168 demoted the individual draft-publication handoff records, but the four 2026-04-22 parent-root reevaluation handoffs still preserve queue-selection language without the equivalent current-routing treatment used elsewhere in the residue-retirement lane. The truthful next move is to normalize those four top sections directly while keeping the broader publication/checkpoint handoff family separate in Packet 174.",
+  "execution_mode": "bounded_parent_root_reevaluation_handoff_demotion",
+  "execution_scope": [
+    "Retitle the four targeted 2026-04-22 parent-root reevaluation handoffs as historical parent-root selection records.",
+    "Add explicit do-not-use and current-routing blocks at the top of those handoffs.",
+    "Preserve the detailed queue-evaluation evidence as provenance rather than rewriting the historical selection record wholesale."
+  ],
+  "forbidden_scope": [
+    "runtime or service mutation",
+    "package or lockfile mutation",
+    "repo-boundary reversal",
+    "broad archive rewrite beyond top-entry demotion and routing context",
+    "remote rewrite",
+    "rollback, force, reset, or clean",
+    "old-clone mutation or promotion",
+    "publication or checkpoint handoff normalization in the same packet"
+  ],
+  "success_criteria": [
+    "Each targeted reevaluation handoff now leads as a historical parent-root selection record instead of a live queue-selection step.",
+    "Each targeted handoff now includes explicit current-routing text for the standalone repo boundary.",
+    "Repo-owned status routing records the family closure and leaves publication/checkpoint handoff normalization separate if still untouched."
+  ],
+  "validation_commands": [
+    "Select-String -Path ops/agents/handoffs/2026-04-22-parent-root-post-008-remaining-draft-reevaluation-handoff.md,ops/agents/handoffs/2026-04-22-parent-root-remaining-draft-reevaluation-handoff.md,ops/agents/handoffs/2026-04-22-parent-root-post-020g-b-remaining-draft-reevaluation-handoff.md,ops/agents/handoffs/2026-04-22-parent-root-post-apex-unification-001i-remaining-draft-reevaluation-handoff.md -Pattern '^# Historical Parent-Root','^Current routing:'",
+    "Select-String -Path PROJECT_STATUS.md -Pattern 'Packet `2026-05-08-olares-dev-residency-175`'",
+    "git diff --check"
+  ],
+  "status": "ready",
+  "next_action": "Execute this packet as a separate residue-family slice, then reassess whether Packet 174 remains the next truthful adjacent handoff-demotion lane."
+}

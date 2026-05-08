@@ -1,0 +1,60 @@
+{
+  "packet_id": "2026-05-08-olares-dev-residency-174",
+  "title": "Parent-Root Publication And Checkpoint Handoff Demotion Execution",
+  "objective": "Hard-demote the remaining 2026-04-22 parent-root publication and checkpoint handoff family so their titles and top sections no longer read like current operator publication guidance after standalone cutover.",
+  "domain": "infrastructure-domain",
+  "active_role": "Platform Architect",
+  "dependencies": [
+    "PROJECT_STATUS.md",
+    "docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md",
+    "ops/agents/handoffs/README.md",
+    "ops/agents/handoffs/2026-05-08-olares-dev-residency-173-parent-root-handoff-residue-follow-on-task-split-authoring-handoff.md",
+    "ops/agents/handoffs/2026-04-22-parent-root-bootstrap-publication-handoff.md",
+    "ops/agents/handoffs/2026-04-22-parent-root-class-a-scaffold-publication-handoff.md",
+    "ops/agents/handoffs/2026-04-22-parent-root-package-source-publication-handoff.md",
+    "ops/agents/handoffs/2026-04-22-parent-root-operations-web-runtime-publication-handoff.md",
+    "ops/agents/handoffs/2026-04-22-parent-root-mutation-seam-runtime-publication-handoff.md",
+    "ops/agents/handoffs/2026-04-22-parent-root-control-plane-core-publication-handoff.md",
+    "ops/agents/handoffs/2026-04-22-parent-root-control-plane-support-publication-handoff.md",
+    "ops/agents/handoffs/2026-04-22-parent-root-control-plane-tests-publication-handoff.md",
+    "ops/agents/handoffs/2026-04-22-parent-root-docs-publication-handoff.md",
+    "ops/agents/handoffs/2026-04-22-parent-root-infra-database-publication-handoff.md",
+    "ops/agents/handoffs/2026-04-22-parent-root-infrastructure-olares-doc-trio-publication-handoff.md",
+    "ops/agents/handoffs/2026-04-22-parent-root-ops-knowledge-control-plane-registry-publication-handoff.md",
+    "ops/agents/handoffs/2026-04-22-parent-root-ops-knowledge-resource-operations-publication-handoff.md",
+    "ops/agents/handoffs/2026-04-22-parent-root-ops-legacy-governance-publication-handoff.md",
+    "ops/agents/handoffs/2026-04-22-parent-root-residual-scaffold-publication-handoff.md",
+    "ops/agents/handoffs/2026-04-22-parent-root-residual-archive-formula-pair-publication-handoff.md",
+    "ops/agents/handoffs/2026-04-22-parent-root-clean-main-zero-frontier-handoff.md",
+    "ops/agents/handoffs/2026-04-22-parent-root-platform-subtree-zero-frontier-handoff.md"
+  ],
+  "dependency_note": "Packets 109 through 168 demoted the parent-root draft-publication handoff family, but the older 2026-04-22 publication and checkpoint handoffs still lack the same explicit historical entry treatment. The next truthful move for this family is to normalize those top sections directly without collapsing the separate reevaluation handoff family into the same execution slice.",
+  "execution_mode": "bounded_parent_root_publication_checkpoint_handoff_demotion",
+  "execution_scope": [
+    "Retitle the targeted 2026-04-22 parent-root publication and checkpoint handoffs as historical parent-root records.",
+    "Add explicit do-not-use and current-routing blocks at the top of those handoffs.",
+    "Preserve the detailed body evidence as provenance instead of rewriting the historical execution record wholesale."
+  ],
+  "forbidden_scope": [
+    "runtime or service mutation",
+    "package or lockfile mutation",
+    "repo-boundary reversal",
+    "broad archive rewrite beyond top-entry demotion and routing context",
+    "remote rewrite",
+    "rollback, force, reset, or clean",
+    "old-clone mutation or promotion",
+    "reevaluation handoff normalization in the same packet"
+  ],
+  "success_criteria": [
+    "Each targeted publication or checkpoint handoff now leads as a historical parent-root record instead of a current operator publication checkpoint.",
+    "Each targeted handoff now includes explicit current-routing text for the standalone repo boundary.",
+    "Repo-owned status routing records the family closure and leaves the reevaluation handoff family as a separate lane if still untouched."
+  ],
+  "validation_commands": [
+    "Select-String -Path ops/agents/handoffs/2026-04-22-parent-root-bootstrap-publication-handoff.md,ops/agents/handoffs/2026-04-22-parent-root-class-a-scaffold-publication-handoff.md,ops/agents/handoffs/2026-04-22-parent-root-package-source-publication-handoff.md,ops/agents/handoffs/2026-04-22-parent-root-operations-web-runtime-publication-handoff.md,ops/agents/handoffs/2026-04-22-parent-root-mutation-seam-runtime-publication-handoff.md,ops/agents/handoffs/2026-04-22-parent-root-control-plane-core-publication-handoff.md,ops/agents/handoffs/2026-04-22-parent-root-control-plane-support-publication-handoff.md,ops/agents/handoffs/2026-04-22-parent-root-control-plane-tests-publication-handoff.md,ops/agents/handoffs/2026-04-22-parent-root-docs-publication-handoff.md,ops/agents/handoffs/2026-04-22-parent-root-infra-database-publication-handoff.md,ops/agents/handoffs/2026-04-22-parent-root-infrastructure-olares-doc-trio-publication-handoff.md,ops/agents/handoffs/2026-04-22-parent-root-ops-knowledge-control-plane-registry-publication-handoff.md,ops/agents/handoffs/2026-04-22-parent-root-ops-knowledge-resource-operations-publication-handoff.md,ops/agents/handoffs/2026-04-22-parent-root-ops-legacy-governance-publication-handoff.md,ops/agents/handoffs/2026-04-22-parent-root-residual-scaffold-publication-handoff.md,ops/agents/handoffs/2026-04-22-parent-root-residual-archive-formula-pair-publication-handoff.md,ops/agents/handoffs/2026-04-22-parent-root-clean-main-zero-frontier-handoff.md,ops/agents/handoffs/2026-04-22-parent-root-platform-subtree-zero-frontier-handoff.md -Pattern '^# Historical Parent-Root','^Current routing:'",
+    "Select-String -Path PROJECT_STATUS.md -Pattern 'Packet `2026-05-08-olares-dev-residency-174`'",
+    "git diff --check"
+  ],
+  "status": "ready",
+  "next_action": "Execute this packet as a separate residue-family slice, then reassess whether Packet 175 remains the next truthful adjacent handoff-demotion lane."
+}
