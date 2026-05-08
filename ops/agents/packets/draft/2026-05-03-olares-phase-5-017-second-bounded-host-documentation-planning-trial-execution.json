@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-05-03-olares-phase-5-017",
-  "title": "Second Bounded Host Documentation Planning Trial Execution",
+  "title": "Historical Second Bounded Host Documentation Planning Trial Execution",
+  "historical_note": "This packet records one bounded Olares Phase 5 second host documentation-planning trial-execution slice from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live execution instruction for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this packet JSON only when historical provenance is needed for the earlier `olares-phase-5-017` second bounded host documentation-planning trial-execution slice"
+  ],
   "objective": "Execute one second bounded documentation-first or planning-first host-side trial from `/home/olares/code/apex/apex-power-ops-platform` after Packet 016 restored publication hygiene, using a distinct narrow edit slice to test repeatability from a clean synchronized host mirror without approving migration or mutating runtime surfaces.",
   "domain": "infrastructure-domain",
   "active_role": "Olares Second Bounded Host Trial Operator",
