@@ -380,7 +380,11 @@ Packet `2026-05-08-olares-dev-residency-255` now closes the adjacent 2026-04-16 
 
 Packet `2026-05-08-olares-dev-residency-256` now closes the adjacent 2026-04-16 PM idempotency per-route ops-breakdown packet JSON singleton by hard-demoting `pm-schema-019i` into explicit historical provenance with current-routing context, so that file no longer reads like a live PM idempotency per-route ops-breakdown packet after standalone cutover.
 
-The next truthful repo-structure work is therefore the adjacent `pm-schema-019j` singleton closure so the next remaining PM-domain residue is explicit after the `pm-schema-019i` singleton closure.
+Packet `2026-05-08-olares-dev-residency-257` now closes the adjacent 2026-04-16 PM ops-metrics export schedule-scrape packet JSON singleton by hard-demoting `pm-schema-019j` into explicit historical provenance with current-routing context, so that file no longer reads like a live PM ops-metrics export schedule-scrape packet after standalone cutover.
+
+Packet `2026-05-08-olares-dev-residency-258` now closes the adjacent 2026-04-16 PM ops-metrics threshold-evaluation packet JSON singleton by hard-demoting `pm-schema-019k` into explicit historical provenance with current-routing context, so that file no longer reads like a live PM ops-metrics threshold-evaluation packet after standalone cutover.
+
+The next truthful repo-structure work is therefore a fresh reassessment of any smaller adjacent packet-history surfaces that still read as current after the `pm-schema-019k` singleton closure.
 
 ## 2026 Addendum: Olares Runtime And Private Lane
 

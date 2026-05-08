@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-04-16-pm-schema-019k",
-  "title": "PM Ops Metrics Threshold Evaluation",
+  "title": "Historical PM Ops Metrics Threshold Evaluation",
+  "historical_note": "This packet records one bounded PM ops-metrics threshold-evaluation slice from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live execution instruction for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this packet JSON only when historical provenance is needed for the earlier `pm-schema-019k` PM ops-metrics threshold-evaluation slice"
+  ],
   "objective": "Implement the smallest bounded follow-on to packet 019j by adding one deployment-side threshold-evaluation path over the existing PM idempotency metrics export payload so scheduled runs can produce an explicit pass/fail operator signal without changing application-runtime code, adding DDL, adding PM write endpoints, or reopening `work.wbs_nodes` writes.",
   "domain": "pm-domain",
   "active_role": "PM Ops Metrics Threshold Evaluation Author",
