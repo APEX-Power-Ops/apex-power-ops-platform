@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-04-18-pm-schema-020h",
-  "title": "Concrete Sanitized Golden Fixture Admission",
+  "title": "Historical Concrete Sanitized Golden Fixture Admission",
+  "historical_note": "This packet records one bounded PM baseline/parser execution slice from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live execution instruction for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this packet JSON only when historical provenance is needed for the earlier `pm-schema-020h` baseline/parser execution slice"
+  ],
   "objective": "Implement the smallest bounded follow-on after exactly one of packet 020g-a or 020g-b by admitting one concrete sanitized baseline-bearing golden fixture, its companion README, and fixture-specific tests under the packet-020f fixture contract, without broadening bridge routes, PM UI behavior, or schedule-write surfaces.",
   "domain": "pm-domain",
   "active_role": "PM Golden Fixture Admission Author",

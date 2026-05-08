@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-04-18-pm-schema-020e",
-  "title": "RESA Internal Baseline Capture Planning",
+  "title": "Historical RESA Internal Baseline Capture Planning",
+  "historical_note": "This packet records one bounded PM baseline/parser execution slice from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live execution instruction for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this packet JSON only when historical provenance is needed for the earlier `pm-schema-020e` baseline/parser execution slice"
+  ],
   "objective": "Plan the smallest bounded follow-on after packets 020a through 020c for a RESA-internal, actor-attested baseline capture path that writes baseline truth through an authorized application path when P6-exported baseline data is unavailable, without implementing the write path yet and without broadening into UI stack redesign, work-package physical-home decisions, or multi-baseline history.",
   "domain": "pm-domain",
   "active_role": "PM Internal Baseline Capture Planner",

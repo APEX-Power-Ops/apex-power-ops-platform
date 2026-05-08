@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-04-18-pm-schema-020d",
-  "title": "P6 Baseline XER Parser And Loader Wiring",
+  "title": "Historical P6 Baseline XER Parser And Loader Wiring",
+  "historical_note": "This packet records one bounded PM baseline/parser execution slice from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live execution instruction for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this packet JSON only when historical provenance is needed for the earlier `pm-schema-020d` baseline/parser execution slice"
+  ],
   "objective": "Implement the smallest bounded follow-on after packet 020c by extending the XER loader path to recognize baseline-bearing P6 entities such as PROJBASELINE or BASELINEPROJECT, map baseline-project TASK rows onto live schedule tasks per the 020b matching rules, and ingest real XER baseline truth without changing bridge routes, PM UI files, or governed operational write paths.",
   "domain": "pm-domain",
   "active_role": "PM Baseline XER Parser Author",

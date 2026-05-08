@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-04-18-pm-schema-020g-a",
-  "title": "Parser-Surface Reconciliation And Baseline Shim",
+  "title": "Historical Parser-Surface Reconciliation And Baseline Shim",
+  "historical_note": "This packet records one bounded PM baseline/parser execution slice from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live execution instruction for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this packet JSON only when historical provenance is needed for the earlier `pm-schema-020g-a` baseline/parser execution slice"
+  ],
   "objective": "Implement the smallest bounded follow-on after packet 020e.1 by reconciling the real PyP6Xer Reader surface with Apex loader expectations and adding a narrow baseline raw-section shim for PROJBASELINE or BASELINEPROJECT rows when the parser does not expose them directly, without adding bridge routes, PM UI behavior, schedule-write surfaces, or broad parser rewrites.",
   "domain": "pm-domain",
   "active_role": "PM Parser Surface Reconciliation Author",

@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-04-18-pm-schema-020e.1",
-  "title": "Loader Working-Copy Restoration And Integrity Gate",
+  "title": "Historical Loader Working-Copy Restoration And Integrity Gate",
+  "historical_note": "This packet records one bounded PM baseline/parser execution slice from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live execution instruction for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this packet JSON only when historical provenance is needed for the earlier `pm-schema-020e.1` baseline/parser execution slice"
+  ],
   "objective": "Implement the smallest bounded follow-on after packet 020f by restoring apps/mutation-seam/app/schedule/loader.py to a source-controlled ast.parse-clean state, re-establishing the truthful packet-020d loader baseline under observation, and adding a minimal integrity gate so future packet claims cannot rely on stale bytecode or truncated source, without broadening bridge routes, PM UI behavior, or operational write paths.",
   "domain": "pm-domain",
   "active_role": "PM Loader Integrity Restoration Author",

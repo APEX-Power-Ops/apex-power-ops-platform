@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-04-18-pm-schema-020f",
-  "title": "Real XER Host Parser Verification And Golden Fixture Admission",
+  "title": "Historical Real XER Host Parser Verification And Golden Fixture Admission",
+  "historical_note": "This packet records one bounded PM baseline/parser execution slice from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live execution instruction for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this packet JSON only when historical provenance is needed for the earlier `pm-schema-020f` baseline/parser execution slice"
+  ],
   "objective": "Validate the real host-side XER parser/runtime against one or more baseline-bearing Primavera XER files, confirm how the parser surfaces baseline linkage entities such as PROJBASELINE or BASELINEPROJECT, and land a governed fixture-contract document as the default golden-fixture admission output for continued end-to-end schedule-tool validation without adding bridge routes, PM UI behavior, or schedule-write surfaces.",
   "domain": "pm-domain",
   "active_role": "PM Real XER Verification Author",

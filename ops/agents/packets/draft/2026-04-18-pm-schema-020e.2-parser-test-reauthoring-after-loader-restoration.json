@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-04-18-pm-schema-020e.2",
-  "title": "Parser Test Reauthoring After Loader Restoration",
+  "title": "Historical Parser Test Reauthoring After Loader Restoration",
+  "historical_note": "This packet records one bounded PM baseline/parser execution slice from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live execution instruction for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this packet JSON only when historical provenance is needed for the earlier `pm-schema-020e.2` baseline/parser execution slice"
+  ],
   "objective": "Implement the smallest bounded follow-on after packet 020e.1 by re-authoring the three parser-side packet-020d tests that were lost with the loader truncation event, using the restored source and the chosen parser-substrate strategy as truth, without adding bridge routes, PM UI behavior, SQL, or schedule-write surfaces.",
   "domain": "pm-domain",
   "active_role": "PM Parser Test Reauthoring Author",

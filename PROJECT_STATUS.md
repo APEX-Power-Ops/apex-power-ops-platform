@@ -252,7 +252,9 @@ Packet `2026-05-08-olares-dev-residency-191` now closes the adjacent parent-root
 
 Packet `2026-05-08-olares-dev-residency-192` now converts the remaining live-looking 2026-04-18 draft packet JSON residue into two separately executable follow-on packets: Packet `193` for the PM baseline/parser chain across `pm-schema-020d` through `pm-schema-020h`, and Packet `194` for the PM UI/read-surface chain across `pm-schema-ui-002d` through `pm-schema-ui-002g`, preserving the rule that the remaining packet-definition residue should stay bounded by implementation branch rather than reopened as one broad JSON rewrite.
 
-The next truthful repo-structure work is therefore Packet `193` or Packet `194`. If both are needed, they should remain separate execution slices.
+Packet `2026-05-08-olares-dev-residency-193` now closes the remaining PM baseline/parser draft packet JSON family by hard-demoting the `pm-schema-020d` through `pm-schema-020h` packet-definition chain into explicit historical provenance with current-routing context, so those files no longer read like live execution packets after standalone cutover.
+
+The next truthful repo-structure work is therefore Packet `194` as the remaining PM UI/read-surface draft packet history-demotion slice.
 
 ## 2026 Addendum: Olares Runtime And Private Lane
 
