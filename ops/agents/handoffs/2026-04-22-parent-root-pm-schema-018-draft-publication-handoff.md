@@ -1,11 +1,19 @@
-# Parent-Root PM-Schema 018 Draft Publication Handoff
+# Historical Parent-Root PM-Schema-018 Draft Publication Handoff
 ## Date: 2026-04-22
 ## Updated by: GitHub Copilot (GPT-5.4)
 ## Scope: Historical record for the bounded `pm-schema-018` progress-snapshot-write singleton under `C:/APEX Platform/apex-power-ops-platform`
 
 ## 1. Summary
 
-The active shared packages, active app lanes, residual scaffold/doc surfaces, infra-database lane, docs lane, ops knowledge-control-plane registry lane, ops legacy-governance lane, ops knowledge-resource-operations lane, the forms-import draft pair, the `001af` draft, the `apex-unification-001` draft pair, the `knowledge-import-001` draft pair, the `pm-schema-009` draft family, the `pm-schema-010` draft trio, the `pm-schema-011` dependency-activation family, the `pm-schema-012` identity and joined-read family, the `pm-schema-013` work-package write family, the `pm-schema-014` task-write pair, the `pm-schema-015` assignment-write pair, the `pm-schema-016` dependency-write singleton, and the `pm-schema-017` execution-issue-write singleton are now published on parent-root `clean-main`.
+Historical note: this handoff records one bounded parent-root draft-publication decision from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live queue instruction for current repo operations.
+
+Current routing:
+
+1. use `PROJECT_STATUS.md` for the current residue-retirement lane and latest completed packets,
+2. use `docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md` for the remaining post-cutover boundary closeout queue,
+3. use this handoff only when historical provenance is needed for the earlier parent-root `pm-schema-018` draft-publication decision.
+
+At the time this handoff was recorded, the active shared packages, active app lanes, residual scaffold/doc surfaces, infra-database lane, docs lane, ops knowledge-control-plane registry lane, ops legacy-governance lane, ops knowledge-resource-operations lane, the forms-import draft pair, the `001af` draft, the `apex-unification-001` draft pair, the `knowledge-import-001` draft pair, the `pm-schema-009` draft family, the `pm-schema-010` draft trio, the `pm-schema-011` dependency-activation family, the `pm-schema-012` identity and joined-read family, the `pm-schema-013` work-package write family, the `pm-schema-014` task-write pair, the `pm-schema-015` assignment-write pair, the `pm-schema-016` dependency-write singleton, and the `pm-schema-017` execution-issue-write singleton were already published on parent-root `clean-main`.
 
 The next smallest remaining substantive packet was the `pm-schema-018` progress-snapshot-write singleton, which staged cleanly at 1 file. This packet introduced the next coherent PM progress-snapshot write lane before the broader `pm-schema-019` family.
 
@@ -15,7 +23,7 @@ Publication outcome:
 2. pushed to `origin/clean-main` on 2026-04-22
 3. closed as the published pm-schema `018` draft follow-on to the `pm-schema-017` draft tranche
 
-## 2. Why This Packet Is Next
+## 2. Historical Why This Packet Was Next
 
 Measured from the parent git root at `C:/APEX Platform` on 2026-04-22 after the `pm-schema-017` draft publication:
 
@@ -81,9 +89,9 @@ This lane is packet-definition JSON, so diff discipline matters more than execut
 3. do not mix this packet with `knowledge/` or `archive/`
 4. do not reopen already-published application, package, scaffold, infra, docs, or earlier `ops/` packets
 
-## 9. Follow-On After This Packet
+## 9. Historical Follow-On After This Packet
 
-If this packet lands cleanly, the next logical lanes are:
+When this packet landed cleanly, the next logical lanes were:
 
 1. the top-level `pm-schema-019` write-surface consolidation singleton
 2. the bounded `pm-schema-019f` through `pm-schema-019k` follow-on chain after `pm-schema-019`
