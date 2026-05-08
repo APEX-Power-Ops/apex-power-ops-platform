@@ -1,8 +1,16 @@
-# Olares Dev Residency 053 - Operations Visibility Blockers Summary Runtime Consumption Execution Handoff
+# Historical Olares Dev Residency 053 - Operations Visibility Blockers Summary Runtime Consumption Execution Handoff
 
 Date: 2026-05-06
 Status: Complete
 Packet: `2026-05-06-olares-dev-residency-053`
+
+Historical note: this handoff records one earlier Dev Residency Operations Visibility record from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not live Operations Visibility guidance for current repo operations.
+
+Current routing:
+
+1. use `PROJECT_STATUS.md` for the current residue-retirement lane and latest completed packets,
+2. use `docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md` for the remaining post-cutover boundary closeout queue,
+3. use this handoff only when historical provenance is needed for the earlier Dev Residency 053 Operations Visibility record preserved here.
 
 ## Outcome
 

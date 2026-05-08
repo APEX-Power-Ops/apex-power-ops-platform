@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-05-06-olares-dev-residency-049",
-  "title": "Operations Visibility Source Lineage Drift Boundary Decision And Annotation",
+  "title": "Historical Operations Visibility Source Lineage Drift Boundary Decision And Annotation",
+  "historical_note": "This record preserves one earlier Dev Residency Operations Visibility slice from before the canonical repo boundary moved to C:/APEX Platform/apex-power-ops-platform on 2026-05-07. It is historical provenance, not a live Operations Visibility surface for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this record only when historical provenance is needed for the earlier Dev Residency 049 Operations Visibility slice preserved here"
+  ],
   "objective": "Resolve whether the tracked PM source-lineage copy of `09_schema_additions.sql` should be overwritten to match the now-live authoritative source, or preserved as a provenance snapshot with explicit drift annotation.",
   "domain": "delivery-domain",
   "active_role": "Platform Architect",
