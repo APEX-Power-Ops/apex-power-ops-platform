@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-05-03-olares-phase-5-006",
-  "title": "Host Repo Clone Reconciliation Planning",
+  "title": "Historical Host Repo Clone Reconciliation Planning",
+  "historical_note": "This packet records one bounded Olares Phase 5 host repo-clone reconciliation planning slice from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live execution instruction for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this packet JSON only when historical provenance is needed for the earlier `olares-phase-5-006` host repo-clone reconciliation planning slice"
+  ],
   "objective": "Run a bounded read-only planning pass that reconciles the Olares host clone against the workstation publication boundary and decides whether the host clone should be retired, refreshed, replaced, or preserved as historical runtime evidence before any Olares-first daily development migration packet is considered.",
   "domain": "infrastructure-domain",
   "active_role": "Olares Repo Authority Reconciliation Planner",

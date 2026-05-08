@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-05-03-olares-phase-5-007",
-  "title": "Canonical Host Dev Path Preparation",
+  "title": "Historical Canonical Host Dev Path Preparation",
+  "historical_note": "This packet records one bounded Olares Phase 5 canonical host-dev-path preparation slice from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live execution instruction for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this packet JSON only when historical provenance is needed for the earlier `olares-phase-5-007` canonical host-dev-path preparation slice"
+  ],
   "objective": "Prepare a separate canonical Olares host development path that preserves the parent-root publication boundary, captures evidence from the old host clone before any replacement action, and validates bounded host-path readiness without mutating or deleting the existing `/home/olares/src/apex-power-ops-platform` clone.",
   "domain": "infrastructure-domain",
   "active_role": "Olares Canonical Host Path Preparation Operator",
