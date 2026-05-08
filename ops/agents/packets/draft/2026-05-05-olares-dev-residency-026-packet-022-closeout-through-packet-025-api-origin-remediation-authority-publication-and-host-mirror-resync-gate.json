@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-05-05-olares-dev-residency-026",
-  "title": "Packet 022 Closeout Through Packet 025 API-Origin Remediation Authority Publication And Host Mirror Resync Gate",
+  "title": "Historical Packet 022 Closeout Through Packet 025 API-Origin Remediation Authority Publication And Host Mirror Resync Gate",
+  "historical_note": "This record preserves one bounded Dev Residency publication and host-mirror resync gate from before the canonical repo boundary moved to C:/APEX Platform/apex-power-ops-platform on 2026-05-07. It is historical provenance, not a live remediation or publication instruction surface for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this record only when historical provenance is needed for the earlier Dev Residency 026 publication and host-mirror resync record preserved here"
+  ],
   "objective": "Publish the still-local Packet 022 closeout plus the local Packet 023 through Packet 025 remediation authority set and source changes through the parent-root boundary and restore `/home/olares/code/apex` host-mirror parity before any post-remediation public-host check depends on them.",
   "domain": "delivery-domain",
   "active_role": "Authority Publication Operator",
@@ -40,13 +46,27 @@
     "rollback, force, reset, or clean",
     "old-clone mutation or promotion"
   ],
-  "status": "authored",
+  "status": "complete",
   "handoff_target": "Platform Architect",
   "output_artifacts": [
     "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-05-olares-dev-residency-026-packet-022-closeout-through-packet-025-api-origin-remediation-authority-publication-and-host-mirror-resync-gate-handoff.md"
   ],
   "handoff_note": "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-05-olares-dev-residency-026-packet-022-closeout-through-packet-025-api-origin-remediation-authority-publication-and-host-mirror-resync-gate-handoff.md",
-  "validation_disposition": "authored-pending-execution",
-  "closure_note": "Not yet executed. Packet 026 is authored as the bounded publication and host-mirror resync gate for the still-local Packet 022 closeout through Packet 025 remediation authority set and source changes.",
-  "next_action": "Execute Packet 026 as publication and host-resync only. Do not widen into backend deployment, live-data proof, host browser-runtime, or unrelated authority drift."
+  "published_commit": "ff3076c749434cf68c0b8c80d7e74727b7f08ddd",
+  "commit_message": "Publish Olares API origin remediation burst",
+  "execution_evidence": {
+    "local_post_commit_head": "ff3076c749434cf68c0b8c80d7e74727b7f08ddd",
+    "push_target": "origin/clean-main",
+    "host_pre_head": "a3a5b05271c3db35d7b339eb6b48ab74cca3101f",
+    "host_pre_status_count": 0,
+    "host_post_head": "ff3076c749434cf68c0b8c80d7e74727b7f08ddd",
+    "host_post_status_count": 0,
+    "old_clone_head": "2836a2622309b4e146ca24f23b5bf87312c0c857",
+    "old_clone_status_count": 30,
+    "old_clone_mutation": "none"
+  },
+  "validation_disposition": "complete-publication-and-host-resync-pass",
+  "next_packet_candidate": "Olares Dev Residency 027 - Post-026 Public-Host Remediation Outcome Decision",
+  "closure_note": "Executed 2026-05-05. Packet 026 published the still-local Packet 022 closeout plus the Packet 023 through Packet 025 remediation authority set, six remediated public static asset files, and the authored Packet 026 gate in commit `ff3076c749434cf68c0b8c80d7e74727b7f08ddd` with message `Publish Olares API origin remediation burst`, pushed `origin/clean-main`, fast-forwarded `/home/olares/code/apex` from `a3a5b05271c3db35d7b339eb6b48ab74cca3101f` to clean parity at `ff3076c749434cf68c0b8c80d7e74727b7f08ddd`, and preserved `/home/olares/src/apex-power-ops-platform` as observe-only at `2836a2622309b4e146ca24f23b5bf87312c0c857` with status count `30`.",
+  "next_action": "Record the post-026 public-host remediation outcome as a separate bounded packet before claiming that the published source change has changed live browser behavior."
 }
