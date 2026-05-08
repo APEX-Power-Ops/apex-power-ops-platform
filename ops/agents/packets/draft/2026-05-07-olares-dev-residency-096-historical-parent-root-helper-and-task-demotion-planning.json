@@ -1,0 +1,52 @@
+{
+  "title": "Historical Parent-Root Helper And Task Demotion Planning",
+  "objective": "Inventory the highest-risk historical parent-root helper, task, and routing residue that can still misdirect delegated execution after the standalone repo cutover, then select one smallest demotion or relabeling slice without reopening runtime, hosting, or broader migration scope.",
+  "domain": "infrastructure-domain",
+  "active_role": "Platform Architect",
+  "dependencies": [
+    "PROJECT_STATUS.md",
+    "docs/architecture/APEX-PM-LANE-OPERATING-COCKPIT-2026-05-06.md",
+    "docs/OPERATOR-BOOTSTRAP-RUNBOOK.md",
+    ".vscode/tasks.json",
+    "ops/agents/handoffs/2026-04-22-parent-root-bootstrap-publication-handoff.md",
+    "docs/architecture/APEX-PARENT-ROOT-WORKFLOW-AND-IGNORE-RETIREMENT-PACKET-2026-05-07.md"
+  ],
+  "dependency_note": "Packet 095 closed the minimal MCP trio runtime-governance question and returned the authoritative host mirror to clean parity. The next truthful Olares lane is therefore the provenance-routing normalization named in the current status board: identify which remaining parent-root residue is still risky enough to misdirect real execution rather than merely preserving history.",
+  "decision_mode": "decision_only",
+  "allowed_decision_shapes": [
+    "open_repo_root_task_surface_historical_relabel_and_demotion_execution",
+    "open_parent_root_helper_doc_relabel_execution",
+    "no_go_if_selected_slice_requires_runtime_or_hosting_mutation"
+  ],
+  "decision_requirements": [
+    "Prefer the smallest current-looking residue surface over broad historical cleanup.",
+    "Preserve historical evidence and packet provenance instead of deleting it by assumption.",
+    "Do not widen into runtime, hosting, package, lockfile, or trust-boundary mutation.",
+    "Keep GitHub canonical, `/home/olares/code/apex/apex-power-ops-platform` authoritative, and `/home/olares/src/apex-power-ops-platform` observe-only.",
+    "Name exactly one next execution packet."
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "decision_selected": "open_repo_root_task_surface_historical_relabel_and_demotion_execution",
+  "decision_rationale": [
+    "The strongest remaining misrouting risk is the repo-root VS Code task surface, not the archived handoff prose. `.vscode/tasks.json` still exposes current-looking labels such as `Preview parent-root bootstrap packet`, `Stage parent-root bootstrap packet`, `Preview parent-root Class A scaffold packet`, and their staged-diff companions directly alongside active repo-root and Olares-host tasks.",
+    "`docs/OPERATOR-BOOTSTRAP-RUNBOOK.md` already explains that those tasks are historical, but the task labels themselves still look actionable and therefore remain a stronger delegated-execution hazard than the clearly historical handoff documents.",
+    "The 2026-04-22 parent-root bootstrap handoff is already explicitly marked historical and closed, so the next smallest truthful slice is to demote or relabel the task surface that still presents those older packets as normal runnable options inside the active repo workspace.",
+    "This choice keeps the lane bounded to discoverability and operator routing rather than reopening publication-boundary mechanics, runtime posture, or host workflow scope."
+  ],
+  "decision_evidence": {
+    "repo_root_task_surface_current_looking_parent_root_labels": true,
+    "operator_runbook_already_marks_them_historical": true,
+    "historical_handoff_already_closed_and_labeled": true,
+    "runtime_or_hosting_mutation_required": false
+  },
+  "selected_next_packet_candidate": "Olares Dev Residency 097 - Repo-Root Task Surface Historical Relabel And Demotion Execution",
+  "selected_next_packet_scope": [
+    "Relabel or demote the parent-root bootstrap and Class A scaffold tasks in `.vscode/tasks.json` so they read as historical or archived surfaces rather than current operator defaults.",
+    "Update the operator runbook task inventory only as needed to match the new task labels and routing posture.",
+    "Preserve the underlying historical task definitions only if they still have bounded provenance value after relabeling."
+  ],
+  "validation_disposition": "complete-decision-only",
+  "closure_note": "Executed 2026-05-07 after Packet 095 closed the minimal-trio runtime decision. Packet 096 selects the repo-root task surface as the highest-risk remaining parent-root residue because it still presents historical parent-root packet helpers with current-looking labels inside the active standalone repo workspace.",
+  "next_action": "Publish the Packet 096 decision and update the compact status surfaces so the next bounded execution lane is the repo-root task-surface historical relabel and demotion slice."
+}

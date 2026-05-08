@@ -52,7 +52,7 @@ This addendum is the current stakeholder-facing status surface for the active Ol
 
 ### Remaining Highest-Value Items
 
-1. Continue separating current repo-root operator tasks from historical parent-root packet helpers so future delegated execution is less likely to follow provenance surfaces by mistake.
+1. Demote or relabel the current-looking parent-root bootstrap and scaffold tasks in the repo-root VS Code task surface so delegated execution is less likely to follow historical packet helpers by mistake.
 2. Keep the remaining migration-governance surfaces aligned until the lane can be closed as fully migrated rather than structurally migrated but still in provenance normalization.
 3. Continue treating `/home/olares/src/apex-power-ops-platform` as observe-only historical evidence until a later cleanup packet explicitly retires or archives it.
 4. Keep the current authoritative host mirror clean at `/home/olares/code/apex/apex-power-ops-platform` and use the repo-owned bootstrap/status surface as the controlling proof surface for future Olares operator work.
@@ -62,10 +62,12 @@ This addendum is the current stakeholder-facing status surface for the active Ol
 
 The bounded runtime-governance decision on the admitted minimal MCP trio is now closed.
 
-The current highest-leverage next lane is the bounded provenance-routing and historical-helper demotion lane:
+Packet `2026-05-07-olares-dev-residency-096` now selects the current highest-leverage next lane.
 
-1. inventory the highest-risk parent-root helper, task, and routing surfaces that can still misdirect delegated execution,
-2. relabel or demote those surfaces without reopening runtime or hosting scope,
+The next bounded execution slice is the repo-root task-surface historical relabel and demotion lane:
+
+1. relabel or demote the current-looking parent-root bootstrap and Class A scaffold tasks in `.vscode/tasks.json`,
+2. update the runbook task inventory only as needed to match that demotion,
 3. keep the authoritative host mirror and repo-root operator surfaces otherwise stable.
 
 ## 2026 Addendum: Olares Runtime And Private Lane
