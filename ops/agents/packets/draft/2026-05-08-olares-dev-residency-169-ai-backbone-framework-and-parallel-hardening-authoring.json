@@ -1,0 +1,53 @@
+{
+  "packet_id": "2026-05-08-olares-dev-residency-169",
+  "title": "AI Backbone Framework And Parallel Hardening Authoring",
+  "objective": "Author the bounded framework docs that admit Codex for first-pass design and scaffold authoring of the current Olares AI backbone while defining a separate safe parallel hardening slice around `apex-jobs`, provenance, MCP boundary rules, and canary evidence.",
+  "domain": "infrastructure-domain",
+  "active_role": "Platform Architect",
+  "dependencies": [
+    "docs/architecture/OLARES-AI-ORCHESTRATION-DECISION-SURFACE-2026-05-07.md",
+    "docs/architecture/OLARES-AI-WORKFLOW-FIRST-SLICE-RUNBOOK-2026-05-06.md",
+    "docs/authority/OLARES-WORKSPACE-AUTHORITY-FRAMEWORK.md",
+    "docs/authority/OLARES-BUILD-GUIDE.md",
+    "plan/infrastructure-olares-full-implementation-roadmap-1.md",
+    "ops/agents/packets/draft/2026-05-06-olares-dev-residency-036-ai-workflow-boundary-and-relay-reduction-first-slice-planning.json",
+    "ops/agents/handoffs/2026-05-06-olares-dev-residency-036-ai-workflow-boundary-and-relay-reduction-first-slice-planning-handoff.md"
+  ],
+  "dependency_note": "The current repo already has an admitted minimal MCP trio and a repo-owned AI orchestration decision surface, but it lacks a current backbone-framework pack that turns those decisions into a bounded Codex-ready scaffold lane. The repo also lacks a named adjacent hardening slice that can run in parallel without reopening broader orchestration-service admission.",
+  "execution_mode": "bounded_framework_and_parallel_task_authoring",
+  "execution_scope": [
+    "Author a repo-owned AI backbone framework document that fixes the bounded Codex first-pass role.",
+    "Author a scaffold specification that defines the exact first-pass surfaces and non-goals.",
+    "Author a Codex execution brief and a parallel hardening brief.",
+    "Update the current orchestration decision surface, authority index, and project status so the new pack is routed explicitly."
+  ],
+  "forbidden_scope": [
+    "runtime or service mutation",
+    "broader AI-services admission",
+    "ai_tasks promotion to queue controller",
+    "public-ingress or auth-model change",
+    "business-logic mutation in apps",
+    "schema mutation",
+    "old-clone mutation or promotion"
+  ],
+  "success_criteria": [
+    "The repo has a written authority surface that admits Codex only for bounded first-pass design and scaffold authoring.",
+    "The repo has a written scaffold specification for the admitted AI backbone surfaces.",
+    "The repo has a written adjacent hardening brief that can run in parallel without widening the admitted runtime boundary.",
+    "Current authority and status surfaces route readers to the new framework pack explicitly."
+  ],
+  "validation_commands": [
+    "Select-String -Path docs/authority/OLARES-AI-BACKBONE-FRAMEWORK-2026-05-08.md -Pattern '^# Olares AI Backbone Framework$','^## First-Pass Codex Admission$','^## Parallel Hardening Split$'",
+    "Select-String -Path docs/architecture/OLARES-AI-BACKBONE-SCAFFOLD-SPEC-2026-05-08.md -Pattern '^# Olares AI Backbone Scaffold Specification$','^## Allowed Output Classes$','^## Explicit Non-Goals For This Spec$'",
+    "Select-String -Path docs/operations/CODEX-AI-BACKBONE-FIRST-PASS-EXECUTION-BRIEF-2026-05-08.md -Pattern '^# Codex AI Backbone First-Pass Execution Brief$','^## Hard Constraints$','^## Done Definition$'",
+    "Select-String -Path docs/operations/AI-BACKBONE-PARALLEL-HARDENING-BRIEF-2026-05-08.md -Pattern '^# AI Backbone Parallel Hardening Brief$','^## Parallel Hardening Objectives$','^## Coordination Rules$'",
+    "git diff --check -- docs/architecture/OLARES-AI-ORCHESTRATION-DECISION-SURFACE-2026-05-07.md docs/authority/OLARES-AI-BACKBONE-FRAMEWORK-2026-05-08.md docs/architecture/OLARES-AI-BACKBONE-SCAFFOLD-SPEC-2026-05-08.md docs/operations/CODEX-AI-BACKBONE-FIRST-PASS-EXECUTION-BRIEF-2026-05-08.md docs/operations/AI-BACKBONE-PARALLEL-HARDENING-BRIEF-2026-05-08.md docs/authority/README.md PROJECT_STATUS.md"
+  ],
+  "validation_results": {
+    "framework_docs_present": "pass",
+    "routing_surfaces_updated": "pass",
+    "diff_hygiene": "pass"
+  },
+  "status": "complete",
+  "next_action": "Open one bounded execution packet for the Codex first-pass scaffold lane or one bounded packet for the adjacent backbone hardening lane, but do not collapse both into a single runtime-widening change set."
+}

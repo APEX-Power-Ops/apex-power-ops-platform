@@ -204,6 +204,8 @@ Packet `2026-05-08-olares-dev-residency-167` now closes the next adjacent draft-
 
 Packet `2026-05-08-olares-dev-residency-168` now closes the next adjacent draft-publication handoff demotion slice by reclassifying the parent-root `knowledge-import-001` draft-publication handoff as historical provenance instead of a still-live queue step.
 
+Parallel to the remaining repo-structure residue-retirement lane, Packet `2026-05-08-olares-dev-residency-169` now authors the bounded Olares AI backbone framework pack that admits Codex only for first-pass design and scaffold authoring, adds an exact scaffold specification, and defines the safe adjacent hardening slice around `apex-jobs`, provenance, MCP boundary rules, and canary evidence.
+
 The next truthful repo-structure work is therefore the remaining deeper provenance-routing and residue-retirement work in older individual handoff records and packet-history index surfaces that still preserve pre-cutover operator wording without equivalent current-routing context.
 
 ## 2026 Addendum: Olares Runtime And Private Lane
