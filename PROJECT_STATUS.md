@@ -2,8 +2,8 @@
 
 > Repo-owned copy established 2026-05-07 as the canonical in-repo status surface for the future standalone `apex-power-ops-platform/` boundary. Keep the parent-root copy aligned until cutover retirement is complete.
 
-> **Last Updated**: May 7, 2026 (standalone repo cutover complete; operator-surface hardening in progress)
-> **Phase**: Standalone repo boundary live, Olares durable-host workflow active, Operations Visibility schema live with governed consumers, laptop-to-Olares migration in final hardening-and-proof phase
+> **Last Updated**: May 7, 2026 (standalone repo cutover complete; operator-surface hardening published and mirrored cleanly)
+> **Phase**: Standalone repo boundary live, Olares durable-host workflow active, Operations Visibility schema live with governed consumers, laptop-to-Olares migration in final governance-and-runtime normalization phase
 > **See Also**: `PROJECT_OVERVIEW.md` for full system architecture
 
 ---
@@ -23,10 +23,11 @@ This addendum is the current stakeholder-facing status surface for the active Ol
 | Olares implementation repo root | ✅ Complete | current host execution root is `/home/olares/code/apex/apex-power-ops-platform` |
 | Old host clone disposition | ✅ Preserved | `/home/olares/src/apex-power-ops-platform` remains observe-only historical evidence |
 | Repo-owned operator docs | ✅ Normalized | README, operator runbook, and cutover packet surfaces now treat the standalone repo root as canonical |
-| Host bootstrap git-root logic | ✅ Fixed locally | `tools/ai/run-olares-host-bootstrap-status.sh` now reports git state from the implementation repo root rather than the umbrella host path |
-| Bash env portability | ✅ Fixed locally | repo-owned Bash wrappers now tolerate CRLF `.env.dev` files from the Windows workspace copy |
-| Repo-local Python resolution | ✅ Fixed locally | operator wrappers and canary entrypoints now resolve Python from repo-local `.venv` or `APEX_PLATFORM_PYTHON` instead of the retired parent-root interpreter path |
-| Olares host/operator task surface | ✅ Improved | current host-status and repo-root task flow now point at the standalone repo root rather than the old parent-root publication contract |
+| Host bootstrap git-root logic | ✅ Published | `tools/ai/run-olares-host-bootstrap-status.sh` now reports git state from the implementation repo root rather than the umbrella host path |
+| Bash env portability | ✅ Published | repo-owned Bash wrappers now tolerate CRLF `.env.dev` files from the Windows workspace copy |
+| Repo-local Python resolution | ✅ Published | operator wrappers and canary entrypoints now resolve Python from repo-local `.venv` or `APEX_PLATFORM_PYTHON` instead of the retired parent-root interpreter path |
+| Runtime scratch normalization | ✅ Published | top-level `.tmp/` is now ignored so host and local git status no longer surface wrapper scratch residue |
+| Olares host/operator task surface | ✅ Published and mirrored | the authoritative host mirror now carries the repaired repo-root task and bootstrap surfaces cleanly at commit `2122a92ef46d5b44a4f6ff2b9df5fce79ac9d21b` |
 
 ### Current Technical-Authority Readout
 
@@ -34,7 +35,7 @@ This addendum is the current stakeholder-facing status surface for the active Ol
 |------|--------|------------------------|
 | Standalone repo cutover | ✅ Complete | the repo boundary is no longer a planning target; it is the live operating contract |
 | Olares durable-host workspace | ✅ Active | Olares is now the intended durable development anchor for Apex Ops work |
-| Active operator infrastructure | 🟡 Hardening | the main current operator surfaces are aligned, but the newest local script fixes still need publication or host sync to become the live mirrored copy |
+| Active operator infrastructure | ✅ Published and mirrored | the repaired operator surfaces are live on `clean-main` and the authoritative host mirror is back to clean parity |
 | Minimal MCP trio boundary | 🟡 Available, not running | the admitted operator surface exists and validates cleanly, but the trio is not currently running by default |
 | Historical parent-root guidance | 🟡 Residual | major active docs are normalized, but historical packet/task residue still exists and must remain clearly marked as provenance, not current workflow |
 | Olares roadmap and authority chain | ✅ Controlled | Olares is no longer an open-ended bring-up epic; it is a governed durable-host and migration program with bounded reopen triggers |
@@ -45,27 +46,27 @@ This addendum is the current stakeholder-facing status surface for the active Ol
 |---------|--------|-------|
 | Durable host residency | ✅ Complete | Olares host path and repo boundary are established and govern current work |
 | Laptop client-only posture | ✅ Substantially complete | the laptop is no longer the intended durable workstation; it is governed as client/access/fallback surface |
-| Daily-development center of gravity | 🟡 In final hardening | governance and pathing now point to Olares first, but the latest operator-surface repairs still need live mirrored proof |
+| Daily-development center of gravity | ✅ Olares-first and mirrored | governance, pathing, and the repaired operator surfaces now point to Olares first with live mirrored proof on the authoritative host copy |
 | Publication-boundary retirement | 🟡 In progress | the standalone repo is canonical, but parent-root historical helper/task residue still exists and must continue to be demoted or clearly marked |
-| Full migration closeout | 🟡 Not yet signed off | the lane is beyond topology design and now depends on live sync, rerun proof, and final governance cleanup rather than foundational architecture work |
+| Full migration closeout | 🟡 Not yet signed off | the lane is beyond topology design and live mirror proof; remaining work is now governance cleanup and explicit runtime-operation decisions rather than host cutover repair |
 
 ### Remaining Highest-Value Items
 
-1. Publish or otherwise synchronize the latest local operator-script fixes so the authoritative host mirror carries the repaired bootstrap and wrapper surfaces.
-2. Rerun the repo-owned host bootstrap/status surface from the synced host copy and capture the live post-fix result from `/home/olares/code/apex/apex-power-ops-platform`.
-3. Decide whether the minimal MCP trio should remain operator-on-demand or whether a separate bounded runtime packet should make it part of the default durable-host readiness proof.
-4. Continue separating current repo-root operator tasks from historical parent-root packet helpers so future delegated execution is less likely to follow provenance surfaces by mistake.
-5. Keep the remaining migration-governance surfaces aligned until the lane can be closed as fully migrated rather than structurally migrated but still in hardening.
+1. Decide whether the minimal MCP trio should remain operator-on-demand or whether a separate bounded runtime packet should make it part of the default durable-host readiness proof.
+2. Continue separating current repo-root operator tasks from historical parent-root packet helpers so future delegated execution is less likely to follow provenance surfaces by mistake.
+3. Keep the remaining migration-governance surfaces aligned until the lane can be closed as fully migrated rather than structurally migrated but still in normalization.
+4. Continue treating `/home/olares/src/apex-power-ops-platform` as observe-only historical evidence until a later cleanup packet explicitly retires or archives it.
+5. Keep the current authoritative host mirror clean at `/home/olares/code/apex/apex-power-ops-platform` and use the repo-owned bootstrap/status surface as the controlling proof surface for future Olares operator work.
 
 ### Current Recommended Next Lane
 
-The current highest-leverage next lane is the bounded operator-surface publication and live-proof lane:
+The bounded operator-surface publication and live-proof lane is now closed.
 
-1. publish the local wrapper and bootstrap repairs,
-2. resynchronize `/home/olares/code/apex/apex-power-ops-platform`,
-3. rerun the live host bootstrap surface,
-4. record that proof in the governing authority chain,
-5. then continue historical task/helper demotion only if that live proof is clean.
+The current highest-leverage next lane is the bounded runtime-governance decision on the admitted minimal MCP trio:
+
+1. decide whether `apex-fs`, `apex-db`, and `apex-jobs` should remain operator-on-demand,
+2. or explicitly admit a separate durable-host runtime packet that makes their startup/status proof part of normal Olares readiness,
+3. while keeping the authoritative host mirror and repo-root operator surfaces otherwise stable.
 
 ## 2026 Addendum: Olares Runtime And Private Lane
 
