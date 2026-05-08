@@ -1,0 +1,51 @@
+{
+  "packet_id": "2026-05-08-olares-dev-residency-192",
+  "title": "PM Draft Packet-History Residue Split Authoring",
+  "objective": "Convert the remaining live-looking 2026-04-18 draft packet JSON residue into separately executable follow-on packets instead of reopening the PM baseline/parser lane and the PM UI/read-surface lane as one broad packet-history rewrite.",
+  "domain": "infrastructure-domain",
+  "active_role": "Platform Architect",
+  "dependencies": [
+    "PROJECT_STATUS.md",
+    "docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md",
+    "ops/agents/packets/draft/2026-04-18-pm-schema-020d-p6-baseline-xer-parser-and-loader-wiring.json",
+    "ops/agents/packets/draft/2026-04-18-pm-schema-020e-resa-internal-baseline-capture-planning.json",
+    "ops/agents/packets/draft/2026-04-18-pm-schema-020e.1-loader-working-copy-restoration-and-integrity-gate.json",
+    "ops/agents/packets/draft/2026-04-18-pm-schema-020e.2-parser-test-reauthoring-after-loader-restoration.json",
+    "ops/agents/packets/draft/2026-04-18-pm-schema-020f-real-xer-host-parser-verification-and-golden-fixture-admission.json",
+    "ops/agents/packets/draft/2026-04-18-pm-schema-020g-a-parser-surface-reconciliation-and-baseline-shim.json",
+    "ops/agents/packets/draft/2026-04-18-pm-schema-020g-b-governed-baseline-companion-json-path.json",
+    "ops/agents/packets/draft/2026-04-18-pm-schema-020h-concrete-sanitized-golden-fixture-admission.json",
+    "ops/agents/packets/draft/2026-04-18-pm-schema-ui-002d-baseline-overlay-reissue-and-read-bridge-extension.json",
+    "ops/agents/packets/draft/2026-04-18-pm-schema-ui-002e-schedule-drivers-read-surface-and-host-validation.json",
+    "ops/agents/packets/draft/2026-04-18-pm-schema-ui-002f-schedule-tracer-read-surface-and-host-validation.json",
+    "ops/agents/packets/draft/2026-04-18-pm-schema-ui-002g-comparative-schedule-analytics-read-surface-and-host-validation.json"
+  ],
+  "dependency_note": "After Packet 191 closed the remaining live-looking parent-root draft-publication handoff chain, the adjacent residue moved into the underlying 2026-04-18 packet-definition JSONs. Those files now split cleanly into two branches: a PM baseline/parser chain across `pm-schema-020d` through `pm-schema-020h`, and a PM UI/read-surface chain across `pm-schema-ui-002d` through `pm-schema-ui-002g`. This packet authors those follow-ons separately so the remaining residue stays bounded by implementation branch rather than reopened as one broad JSON rewrite.",
+  "authoring_scope": [
+    "Create a ready execution packet for the PM baseline/parser draft packet JSON family across `pm-schema-020d` through `pm-schema-020h`.",
+    "Create a ready execution packet for the PM UI/read-surface draft packet JSON family across `pm-schema-ui-002d` through `pm-schema-ui-002g`.",
+    "Update repo-owned status routing so the split is explicit and the next work can proceed as separate residue slices."
+  ],
+  "forbidden_scope": [
+    "editing the historical target PM baseline/parser or PM UI/read-surface packet JSON files themselves in this authoring packet",
+    "runtime or service mutation",
+    "package or lockfile mutation",
+    "repo-boundary reversal",
+    "broad packet-archive rewriting",
+    "remote rewrite",
+    "rollback, force, reset, or clean",
+    "old-clone mutation or promotion"
+  ],
+  "success_criteria": [
+    "A ready packet spec exists for the PM baseline/parser draft packet JSON family.",
+    "A ready packet spec exists for the PM UI/read-surface draft packet JSON family.",
+    "PROJECT_STATUS.md records the split so the next lane is explicit and bounded."
+  ],
+  "validation_commands": [
+    "Select-String -Path ops/agents/packets/draft/2026-05-08-olares-dev-residency-193-pm-baseline-and-parser-draft-packet-history-demotion-execution.json,ops/agents/packets/draft/2026-05-08-olares-dev-residency-194-pm-ui-read-surface-draft-packet-history-demotion-execution.json -Pattern '2026-05-08-olares-dev-residency-193','2026-05-08-olares-dev-residency-194','ready'",
+    "Select-String -Path PROJECT_STATUS.md -Pattern 'Packet `2026-05-08-olares-dev-residency-192`'",
+    "git diff --check"
+  ],
+  "status": "complete",
+  "next_action": "Execute Packet 193 or Packet 194 next. If both are needed, keep them as separate residue slices."
+}

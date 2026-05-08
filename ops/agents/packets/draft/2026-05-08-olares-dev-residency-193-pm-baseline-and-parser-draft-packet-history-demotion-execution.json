@@ -1,0 +1,48 @@
+{
+  "packet_id": "2026-05-08-olares-dev-residency-193",
+  "title": "PM Baseline And Parser Draft Packet History Demotion Execution",
+  "objective": "Normalize the remaining live-looking 2026-04-18 PM baseline/parser packet-definition JSON chain so those files no longer present themselves as still-live execution packets after standalone repo cutover and instead act as historical packet provenance with explicit current-routing redirects.",
+  "domain": "infrastructure-domain",
+  "active_role": "Platform Architect",
+  "dependencies": [
+    "PROJECT_STATUS.md",
+    "docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md",
+    "ops/agents/packets/draft/2026-04-18-pm-schema-020d-p6-baseline-xer-parser-and-loader-wiring.json",
+    "ops/agents/packets/draft/2026-04-18-pm-schema-020e-resa-internal-baseline-capture-planning.json",
+    "ops/agents/packets/draft/2026-04-18-pm-schema-020e.1-loader-working-copy-restoration-and-integrity-gate.json",
+    "ops/agents/packets/draft/2026-04-18-pm-schema-020e.2-parser-test-reauthoring-after-loader-restoration.json",
+    "ops/agents/packets/draft/2026-04-18-pm-schema-020f-real-xer-host-parser-verification-and-golden-fixture-admission.json",
+    "ops/agents/packets/draft/2026-04-18-pm-schema-020g-a-parser-surface-reconciliation-and-baseline-shim.json",
+    "ops/agents/packets/draft/2026-04-18-pm-schema-020g-b-governed-baseline-companion-json-path.json",
+    "ops/agents/packets/draft/2026-04-18-pm-schema-020h-concrete-sanitized-golden-fixture-admission.json",
+    "ops/agents/packets/draft/2026-05-08-olares-dev-residency-192-pm-draft-packet-history-residue-split-authoring.json"
+  ],
+  "dependency_note": "After Packet 192, the remaining PM baseline/parser residue is isolated to the historical 2026-04-18 packet-definition JSON chain from `pm-schema-020d` through `pm-schema-020h`. The corresponding parent-root handoff lane has already been demoted, so these packet JSONs are now the strongest current-looking residue inside that branch.",
+  "execution_mode": "bounded_pm_baseline_and_parser_draft_packet_history_demotion",
+  "execution_scope": [
+    "Retitle the PM baseline/parser packet-definition JSON family as historical provenance.",
+    "Add explicit `historical_note` and `current_routing` fields to each packet JSON.",
+    "Preserve the original packet bodies below those top-entry routing fields without reopening runtime or implementation scope."
+  ],
+  "forbidden_scope": [
+    "runtime or service mutation",
+    "package or lockfile mutation",
+    "repo-boundary reversal",
+    "broad packet-archive rewriting beyond top-entry demotion and routing normalization",
+    "remote rewrite",
+    "rollback, force, reset, or clean",
+    "old-clone mutation or promotion"
+  ],
+  "success_criteria": [
+    "The PM baseline/parser packet-definition JSON family now reads as historical provenance instead of live execution packets.",
+    "Each file explicitly routes current readers to `PROJECT_STATUS.md` and the closeout inventory.",
+    "Repo-owned status routing records the closure and leaves the PM UI/read-surface family as the remaining adjacent execution slice if still needed."
+  ],
+  "validation_commands": [
+    "Select-String -Path ops/agents/packets/draft/2026-04-18-pm-schema-020d-p6-baseline-xer-parser-and-loader-wiring.json,ops/agents/packets/draft/2026-04-18-pm-schema-020e-resa-internal-baseline-capture-planning.json,ops/agents/packets/draft/2026-04-18-pm-schema-020e.1-loader-working-copy-restoration-and-integrity-gate.json,ops/agents/packets/draft/2026-04-18-pm-schema-020e.2-parser-test-reauthoring-after-loader-restoration.json,ops/agents/packets/draft/2026-04-18-pm-schema-020f-real-xer-host-parser-verification-and-golden-fixture-admission.json,ops/agents/packets/draft/2026-04-18-pm-schema-020g-a-parser-surface-reconciliation-and-baseline-shim.json,ops/agents/packets/draft/2026-04-18-pm-schema-020g-b-governed-baseline-companion-json-path.json,ops/agents/packets/draft/2026-04-18-pm-schema-020h-concrete-sanitized-golden-fixture-admission.json -Pattern 'Historical ','historical_note','current_routing'",
+    "Select-String -Path PROJECT_STATUS.md -Pattern 'Packet `2026-05-08-olares-dev-residency-193`'",
+    "git diff --check"
+  ],
+  "status": "ready",
+  "next_action": "Execute this packet as a bounded PM baseline/parser residue-demotion slice, then resume with Packet 194 if the PM UI/read-surface family still remains."
+}
