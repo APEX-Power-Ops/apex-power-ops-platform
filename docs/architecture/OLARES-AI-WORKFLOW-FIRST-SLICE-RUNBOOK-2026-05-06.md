@@ -1,8 +1,10 @@
 # Olares AI Workflow First Slice Runbook
 
 Date: 2026-05-06
-Status: Active bounded operator surface
+Status: Active bounded operator surface with operator-on-demand default runtime posture
 Scope: current admitted Olares-first AI workflow boundary for reducing relay burden without reopening broad AI-services expansion
+
+Companion decision surface: `OLARES-AI-ORCHESTRATION-DECISION-SURFACE-2026-05-07.md`
 
 ## Purpose
 
@@ -50,6 +52,19 @@ It uses the already-present minimal MCP trio and the `apex-jobs` ledger as the w
 3. `ai_tasks` remains a future orchestration or integration surface, not the controlling queue for this first slice.
 4. Claude Code is the current packetized first-slice AI execution surface for the minimal MCP trio.
 5. Codex is an approved premium-plan interactive surface, but it is not yet bound to this wrapper or its promotion path until a later explicit packet admits that integration.
+
+## Default Runtime Posture
+
+Packet 095 closes the current runtime-governance question for this first slice.
+
+The admitted trio remains operator-on-demand by default.
+
+That means:
+
+1. `minimal_mcp.status = not-running` on the authoritative host bootstrap surface is a valid steady-state result,
+2. normal durable-host readiness does not require the trio to remain running between bounded operator sessions,
+3. operators should start the trio only for bounded verification, cadence, or AI-assisted execution that actually needs the MCP endpoints online,
+4. a separate later packet is required before always-on trio runtime becomes part of default host readiness.
 
 ## Operator Commands
 
@@ -151,6 +166,14 @@ Verification should prove at minimum:
 
 Packet 038 proved the same first slice from `/home/olares/code/apex/apex-power-ops-platform` on the Olares host in adopted mode against the already-running trio on `127.0.0.1:8710-8712`.
 
-## Next Follow-On
+## Current Follow-On
 
-After this first slice is in use, the next truthful follow-on is a publication and host-mirror reconciliation gate for the Packet 035 through Packet 038 authority set, followed only later by any decision on an `ai_tasks` bridge or additional MCP admission.
+The runtime-governance lane for this first slice is now closed in favor of the lower-variance operator-on-demand posture.
+
+The next truthful follow-on is not default-runtime widening.
+
+Reopen this runbook's runtime posture only if:
+
+1. repeated operator evidence shows startup overhead is now a controlling problem,
+2. a bounded unattended workflow requires the trio to be online by default,
+3. or a later packet explicitly admits a durable-runtime readiness proof.

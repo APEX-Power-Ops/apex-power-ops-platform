@@ -2,8 +2,8 @@
 
 > Repo-owned copy established 2026-05-07 as the canonical in-repo status surface for the future standalone `apex-power-ops-platform/` boundary. Keep the parent-root copy aligned until cutover retirement is complete.
 
-> **Last Updated**: May 7, 2026 (standalone repo cutover complete; operator-surface hardening published and mirrored cleanly)
-> **Phase**: Standalone repo boundary live, Olares durable-host workflow active, Operations Visibility schema live with governed consumers, laptop-to-Olares migration in final governance-and-runtime normalization phase
+> **Last Updated**: May 7, 2026 (standalone repo cutover complete; operator-surface hardening and minimal-trio runtime governance closed)
+> **Phase**: Standalone repo boundary live, Olares durable-host workflow active, Operations Visibility schema live with governed consumers, laptop-to-Olares migration in final governance-and-provenance normalization phase
 > **See Also**: `PROJECT_OVERVIEW.md` for full system architecture
 
 ---
@@ -36,7 +36,7 @@ This addendum is the current stakeholder-facing status surface for the active Ol
 | Standalone repo cutover | ✅ Complete | the repo boundary is no longer a planning target; it is the live operating contract |
 | Olares durable-host workspace | ✅ Active | Olares is now the intended durable development anchor for Apex Ops work |
 | Active operator infrastructure | ✅ Published and mirrored | the repaired operator surfaces are live on `clean-main` and the authoritative host mirror is back to clean parity |
-| Minimal MCP trio boundary | 🟡 Available, not running | the admitted operator surface exists and validates cleanly, but the trio is not currently running by default |
+| Minimal MCP trio boundary | ✅ Operator-on-demand baseline | the admitted operator surface exists and validates cleanly, and `not-running` is now the explicit default steady-state posture unless a later packet admits durable runtime |
 | Historical parent-root guidance | 🟡 Residual | major active docs are normalized, but historical packet/task residue still exists and must remain clearly marked as provenance, not current workflow |
 | Olares roadmap and authority chain | ✅ Controlled | Olares is no longer an open-ended bring-up epic; it is a governed durable-host and migration program with bounded reopen triggers |
 
@@ -48,25 +48,25 @@ This addendum is the current stakeholder-facing status surface for the active Ol
 | Laptop client-only posture | ✅ Substantially complete | the laptop is no longer the intended durable workstation; it is governed as client/access/fallback surface |
 | Daily-development center of gravity | ✅ Olares-first and mirrored | governance, pathing, and the repaired operator surfaces now point to Olares first with live mirrored proof on the authoritative host copy |
 | Publication-boundary retirement | 🟡 In progress | the standalone repo is canonical, but parent-root historical helper/task residue still exists and must continue to be demoted or clearly marked |
-| Full migration closeout | 🟡 Not yet signed off | the lane is beyond topology design and live mirror proof; remaining work is now governance cleanup and explicit runtime-operation decisions rather than host cutover repair |
+| Full migration closeout | 🟡 Not yet signed off | the lane is beyond topology design, live mirror proof, and the minimal-trio runtime decision; remaining work is now governance cleanup and provenance routing normalization rather than host cutover repair |
 
 ### Remaining Highest-Value Items
 
-1. Decide whether the minimal MCP trio should remain operator-on-demand or whether a separate bounded runtime packet should make it part of the default durable-host readiness proof.
-2. Continue separating current repo-root operator tasks from historical parent-root packet helpers so future delegated execution is less likely to follow provenance surfaces by mistake.
-3. Keep the remaining migration-governance surfaces aligned until the lane can be closed as fully migrated rather than structurally migrated but still in normalization.
-4. Continue treating `/home/olares/src/apex-power-ops-platform` as observe-only historical evidence until a later cleanup packet explicitly retires or archives it.
-5. Keep the current authoritative host mirror clean at `/home/olares/code/apex/apex-power-ops-platform` and use the repo-owned bootstrap/status surface as the controlling proof surface for future Olares operator work.
+1. Continue separating current repo-root operator tasks from historical parent-root packet helpers so future delegated execution is less likely to follow provenance surfaces by mistake.
+2. Keep the remaining migration-governance surfaces aligned until the lane can be closed as fully migrated rather than structurally migrated but still in provenance normalization.
+3. Continue treating `/home/olares/src/apex-power-ops-platform` as observe-only historical evidence until a later cleanup packet explicitly retires or archives it.
+4. Keep the current authoritative host mirror clean at `/home/olares/code/apex/apex-power-ops-platform` and use the repo-owned bootstrap/status surface as the controlling proof surface for future Olares operator work.
+5. Reopen minimal-trio runtime admission only if a concrete unattended workflow, repeated operator insufficiency, or new validation obligation proves that operator-on-demand is no longer enough.
 
 ### Current Recommended Next Lane
 
-The bounded operator-surface publication and live-proof lane is now closed.
+The bounded runtime-governance decision on the admitted minimal MCP trio is now closed.
 
-The current highest-leverage next lane is the bounded runtime-governance decision on the admitted minimal MCP trio:
+The current highest-leverage next lane is the bounded provenance-routing and historical-helper demotion lane:
 
-1. decide whether `apex-fs`, `apex-db`, and `apex-jobs` should remain operator-on-demand,
-2. or explicitly admit a separate durable-host runtime packet that makes their startup/status proof part of normal Olares readiness,
-3. while keeping the authoritative host mirror and repo-root operator surfaces otherwise stable.
+1. inventory the highest-risk parent-root helper, task, and routing surfaces that can still misdirect delegated execution,
+2. relabel or demote those surfaces without reopening runtime or hosting scope,
+3. keep the authoritative host mirror and repo-root operator surfaces otherwise stable.
 
 ## 2026 Addendum: Olares Runtime And Private Lane
 

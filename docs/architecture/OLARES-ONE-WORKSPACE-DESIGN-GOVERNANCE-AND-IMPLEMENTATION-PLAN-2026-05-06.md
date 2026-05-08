@@ -19,6 +19,12 @@ Use this document when the question is:
 5. how execution should continue without reopening already-closed lanes,
 6. where the compact current lane register lives.
 
+Repo-structure authority companion:
+
+`docs/architecture/APEX-REPO-FOUNDATION-AND-CUTOVER-PLAN-2026-05-07.md`
+
+Use that document when the decision is about the permanent repo shell, git boundary, authority relocation, or parent-root cutover.
+
 Companion surface:
 
 `docs/architecture/APEX-PM-LANE-OPERATING-COCKPIT-2026-05-06.md`
@@ -31,6 +37,10 @@ The Olares One is the durable development anchor for APEX.
 
 That anchor is now also the governing migration direction for the whole program.
 
+Repo structure now has explicit first priority inside that migration direction.
+
+The current parent-root publication boundary is treated as temporary migration residue to retire, not as an acceptable steady-state repository model.
+
 All Apex Ops work top to bottom should converge on Olares-resident governance, execution, validation, toolchains, and operator context so the field laptop no longer carries durable project risk or accumulates divergent workspace practice.
 
 That does not mean Olares is the canonical source of truth.
@@ -38,9 +48,9 @@ That does not mean Olares is the canonical source of truth.
 The current transitional authoritative split is:
 
 1. GitHub remains the canonical origin.
-2. `C:/APEX Platform` remains the current authoritative publication boundary during migration.
-3. `/home/olares/code/apex` is the authoritative Olares host mirror of that boundary.
-4. `/home/olares/code/apex/apex-power-ops-platform` is the authoritative host implementation surface.
+2. `C:/APEX Platform/apex-power-ops-platform` is the canonical publication boundary for active Apex Ops repo work.
+3. `/home/olares/code/apex/apex-power-ops-platform` is the authoritative host implementation surface.
+4. `C:/APEX Platform` and `/home/olares/code/apex` are umbrella containers around that repo boundary rather than the default git roots.
 5. `/home/olares/src/apex-power-ops-platform` is historical only and must remain observe-only.
 6. The laptop is a client surface, not the durable runtime anchor.
 
@@ -48,8 +58,8 @@ The current transitional authoritative split is:
 
 ### Workspace boundary constraints
 
-1. Do not treat `apex-power-ops-platform` as an independent git root unless a later explicit cutover authorizes it.
-2. Scope staging and publication to bounded paths under `apex-power-ops-platform/` unless a deliberate cross-lane publication is intended.
+1. Treat `apex-power-ops-platform` as the independent git root for active repo operations.
+2. Scope staging and publication to bounded repo-relative paths unless a deliberate broad repo publication is intended.
 3. Do not mutate the historical host clone at `/home/olares/src/apex-power-ops-platform`.
 4. Keep secrets, mutable runtime data, and recovery artifacts outside the git workspace.
 
@@ -74,19 +84,20 @@ The current transitional authoritative split is:
 
 Use this order when documents conflict:
 
-1. `Infrastructure/Olares_Workspace_Authority_Framework.md`
-2. `apex-power-ops-platform/docs/architecture/OLARES-ONE-WORKSPACE-DESIGN-GOVERNANCE-AND-IMPLEMENTATION-PLAN-2026-05-06.md`
-3. `apex-power-ops-platform/plan/infrastructure-olares-full-implementation-roadmap-1.md`
-4. `apex-power-ops-platform/docs/architecture/OLARES-DEVELOPER-HOST-CUTOVER-TECHNICAL-PLAN-2026-05-05.md`
-5. `apex-power-ops-platform/docs/architecture/OLARES-DEVELOPER-HOST-CUTOVER-MILESTONE-PLAN-2026-05-05.md`
-6. `apex-power-ops-platform/docs/OPERATOR-BOOTSTRAP-RUNBOOK.md`
-7. packet and handoff artifacts under `apex-power-ops-platform/ops/agents/`
+1. `docs/authority/OLARES-WORKSPACE-AUTHORITY-FRAMEWORK.md`
+2. `apex-power-ops-platform/docs/architecture/APEX-REPO-FOUNDATION-AND-CUTOVER-PLAN-2026-05-07.md`
+3. `apex-power-ops-platform/docs/architecture/OLARES-ONE-WORKSPACE-DESIGN-GOVERNANCE-AND-IMPLEMENTATION-PLAN-2026-05-06.md`
+4. `apex-power-ops-platform/plan/infrastructure-olares-full-implementation-roadmap-1.md`
+5. `apex-power-ops-platform/docs/architecture/OLARES-DEVELOPER-HOST-CUTOVER-TECHNICAL-PLAN-2026-05-05.md`
+6. `apex-power-ops-platform/docs/architecture/OLARES-DEVELOPER-HOST-CUTOVER-MILESTONE-PLAN-2026-05-05.md`
+7. `apex-power-ops-platform/docs/OPERATOR-BOOTSTRAP-RUNBOOK.md`
+8. packet and handoff artifacts under `apex-power-ops-platform/ops/agents/`
 
 ### Execution rules
 
 1. All new Olares scope must be packetized when it changes tooling, runtime, install surfaces, hosting posture, or trust boundaries.
 2. Each packet must define what changed, what was validated, what stayed deferred, and what boundaries were preserved.
-3. Publication is not complete until `origin/clean-main` is updated and `/home/olares/code/apex` is restored to clean parity.
+3. Publication is not complete until `origin/clean-main` is updated from the standalone repo root and `/home/olares/code/apex/apex-power-ops-platform` is restored to clean parity.
 4. Host proof is preferred for Olares-first claims whenever a bounded host validation exists.
 5. Old evidence remains reference only after newer packet authority supersedes it.
 
@@ -96,7 +107,7 @@ Use this order when documents conflict:
 2. If deferred Operations Visibility views remain empty, the correct result is hold or dormancy, not synthetic consumer work.
 3. If a host capability is absent and not required by current business truth, keep the lane closed instead of solving speculative gaps.
 4. Do not normalize laptop-only or split-residency exceptions into the default Apex Ops operating model; every active lane should converge toward Olares-resident execution.
-5. Treat the current Windows parent-root publication boundary as transitional, not as the desired permanent home for durable project practice.
+5. Treat any remaining parent-root publication language as historical residue, not as the desired permanent home for durable project practice.
 
 ### PM cockpit companion
 
@@ -107,17 +118,16 @@ Use this order when documents conflict:
 
 ### Host environment
 
-The optimal current workspace environment is an Olares-hosted, GitHub-canonical, parent-root-mirrored development model.
+The optimal current workspace environment is an Olares-hosted, GitHub-canonical, standalone-repo-rooted development model.
 
-The governing target is a whole-project Olares-first operating model with GitHub still canonical while the remaining split-residency boundaries are retired one by one.
+The governing target is a whole-project Olares-first operating model with GitHub still canonical while the remaining umbrella-residue and documentation debt are retired one by one.
 
 Authoritative host paths:
 
-1. `/home/olares/code/apex`
-2. `/home/olares/code/apex/apex-power-ops-platform`
-3. `/home/olares/apex-data`
-4. `/home/olares/apex-secrets`
-5. `/home/olares/apex-backups`
+1. `/home/olares/code/apex/apex-power-ops-platform`
+2. `/home/olares/apex-data`
+3. `/home/olares/apex-secrets`
+4. `/home/olares/apex-backups`
 
 Required host characteristics:
 
@@ -168,6 +178,13 @@ The laptop should not be the sole holder of:
 2. `apex-db`
 3. `apex-jobs`
 
+### Default admitted AI runtime posture
+
+1. The admitted minimal MCP trio remains operator-on-demand by default.
+2. Normal Olares durable-host readiness does not require `apex-fs`, `apex-db`, and `apex-jobs` to remain running at rest between bounded operator sessions.
+3. `tools/ai/run-olares-host-bootstrap-status.sh` is the controlling readiness surface for this posture: a clean authoritative mirror plus truthful `minimal_mcp.status = not-running` is a valid ready state, not a defect.
+4. Open a separate durable-runtime admission packet only if a concrete operator insufficiency, unattended workflow requirement, or new validation obligation proves that operator-on-demand is no longer sufficient.
+
 Not approved by this plan:
 
 1. broader AI-services expansion,
@@ -184,16 +201,24 @@ Not approved by this plan:
 3. Implement only what that slice needs.
 4. Validate the slice with the narrowest truthful executable check.
 5. Publish bounded commits to `origin/clean-main`.
-6. Restore `/home/olares/code/apex` to clean parity.
+6. Restore `/home/olares/code/apex/apex-power-ops-platform` to clean parity.
 7. Record the outcome in packet, handoff, roadmap, and status surfaces.
 
 ### Standard host-readiness flow
 
 1. Run `Olares host bootstrap status` or `bash apex-power-ops-platform/tools/ai/run-olares-host-bootstrap-status.sh` from `/home/olares/code/apex`.
+1. Run `Olares host bootstrap status` or `bash tools/ai/run-olares-host-bootstrap-status.sh` from `/home/olares/code/apex/apex-power-ops-platform`.
 2. Confirm canonical mirror head and clean status.
 3. Confirm the old clone remains preserved and non-canonical.
 4. Confirm materialized toolchains are present.
 5. Confirm minimal MCP and hold-boundary posture before deciding whether a new packet is necessary.
+
+### Standard AI-runtime decision rule
+
+1. Treat `not-running` as the default steady-state posture for the admitted trio unless a later packet explicitly widens runtime expectations.
+2. Use `run-minimal-mcp-trio` only for bounded operator sessions, verification, or cadence checks that actually need the trio online.
+3. Do not promote the trio to always-on host baseline merely because the wrappers and host proof exist.
+4. Reopen runtime admission only from concrete evidence, not convenience or drift anxiety.
 
 ## Current Implemented State
 
@@ -205,7 +230,8 @@ The following are already implemented and validated:
 4. minimal MCP trio operator surface and host proof,
 5. hold-boundary cadence surface with truthful workstation live-DSN proof and host graceful-degrade behavior,
 6. host bootstrap/status operator surface with published host proof,
-7. packetized publication and host parity discipline.
+7. packetized publication and host parity discipline,
+8. default runtime governance that keeps the admitted minimal MCP trio operator-on-demand until a separate durable-runtime packet is justified.
 
 ## Remaining Implementation Plan
 

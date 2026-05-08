@@ -1,0 +1,56 @@
+{
+  "title": "Minimal MCP Trio Runtime Governance Decision",
+  "objective": "Decide whether the admitted minimal MCP trio should become part of default durable-host readiness or remain operator-on-demand now that the standalone repo cutover, operator-surface hardening, host parity repair, and clean host bootstrap proof are complete.",
+  "domain": "infrastructure-domain",
+  "active_role": "Platform Architect",
+  "dependencies": [
+    "PROJECT_STATUS.md",
+    "docs/architecture/OLARES-ONE-WORKSPACE-DESIGN-GOVERNANCE-AND-IMPLEMENTATION-PLAN-2026-05-06.md",
+    "docs/architecture/OLARES-AI-WORKFLOW-FIRST-SLICE-RUNBOOK-2026-05-06.md",
+    "docs/architecture/APEX-PM-LANE-OPERATING-COCKPIT-2026-05-06.md",
+    "tools/ai/run-minimal-mcp-trio.ps1",
+    "tools/ai/run-minimal-mcp-trio.sh",
+    "tools/ai/run-olares-host-bootstrap-status.sh"
+  ],
+  "dependency_note": "The operator-surface hardening lane is now published and mirrored cleanly on the authoritative host, and the current status board names the runtime-governance question as the next bounded Olares lane. The smallest truthful follow-on is a decision-only packet rather than a runtime mutation packet because the host is clean, the wrappers are published, and no concrete insufficiency currently requires always-on trio service.",
+  "decision_mode": "decision_only",
+  "allowed_decision_shapes": [
+    "keep_minimal_mcp_trio_operator_on_demand_as_default_runtime_posture",
+    "open_separate_durable_runtime_admission_packet",
+    "no_go_if_decision_requires_runtime_mutation_by_implication"
+  ],
+  "decision_requirements": [
+    "Prefer the lower-variance operator-on-demand boundary unless a concrete insufficiency is proven.",
+    "Do not treat published wrappers, host proof, or clean host parity as evidence that the trio must run continuously.",
+    "Do not admit broader AI services, ai_tasks, wrapper-level Codex integration, or unattended orchestration rollout by implication.",
+    "Keep GitHub canonical, `/home/olares/code/apex/apex-power-ops-platform` authoritative, and `/home/olares/src/apex-power-ops-platform` observe-only.",
+    "Name exactly one later packet candidate."
+  ],
+  "handoff_target": "Platform Architect",
+  "status": "complete",
+  "decision_selected": "keep_minimal_mcp_trio_operator_on_demand_as_default_runtime_posture",
+  "decision_rationale": [
+    "The authoritative host bootstrap packet `2026-05-07-pre-runtime-decision` reported clean mirror head `7f64c651a6b17f1aef2867d643d755b39ea2425b` with `minimal_mcp.status = not-running`, and that posture is operationally coherent rather than degraded.",
+    "The admitted operator surface already supports bounded managed and adopted modes, so operators can start the trio when needed without widening the default host baseline.",
+    "No current packet, validation surface, or business lane requires the trio to remain continuously online between bounded sessions; current friction is governance and discoverability residue, not trio startup absence.",
+    "Keeping the trio operator-on-demand preserves the published lower-variance boundary while leaving room for a later durable-runtime packet if unattended workflow or repeated operator evidence makes that necessary."
+  ],
+  "decision_evidence": {
+    "authoritative_host_head": "7f64c651a6b17f1aef2867d643d755b39ea2425b",
+    "authoritative_host_status_count": 0,
+    "authoritative_minimal_mcp_status": "not-running",
+    "authoritative_hold_boundary_decision": "minimal_mcp_not_running",
+    "operator_wrappers_published": true,
+    "clean_host_mirror": true,
+    "concrete_always_on_requirement_present": false
+  },
+  "selected_next_packet_candidate": "Olares Dev Residency 096 - Historical Parent-Root Helper And Task Demotion Planning",
+  "selected_next_packet_scope": [
+    "Inventory the highest-risk historical parent-root helper, task, and routing surfaces that can still misdirect delegated execution after the standalone repo cutover.",
+    "Classify each surface as preserve-as-provenance, relabel-as-historical, or replace-with-repo-root routing.",
+    "Select one smallest demotion or discoverability slice without reopening runtime or hosting scope."
+  ],
+  "validation_disposition": "complete-decision-only",
+  "closure_note": "Executed 2026-05-07 after the operator-surface hardening lane was published, the `.tmp` residue was normalized, the status board was updated, and the authoritative host mirror returned to clean parity. Packet 095 keeps the admitted minimal MCP trio operator-on-demand by default and rejects default-runtime widening absent concrete insufficiency.",
+  "next_action": "Update the current authority, runbook, cockpit, and status surfaces to reflect the operator-on-demand runtime verdict, publish the bounded doc packet, and then route the next lane to historical parent-root helper and task demotion planning."
+}
