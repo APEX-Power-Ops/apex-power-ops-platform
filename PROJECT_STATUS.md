@@ -70,7 +70,9 @@ Packet `2026-05-08-olares-dev-residency-100` now closes the next adjacent curren
 
 Packet `2026-05-08-olares-dev-residency-101` now closes the next adjacent parent-root mirror-alignment slice by updating the top-level workspace README, parent-root overview and status mirrors, and the surviving `.claude` git-task note so the umbrella shell is explicitly historical and no longer presents the retired boundary as current operator truth.
 
-The next truthful repo-structure work is therefore the deeper historical-demotion, provenance-routing, and residue-retirement work that still survives beyond those normalized entry surfaces.
+Packet `2026-05-08-olares-dev-residency-102` now closes the next adjacent parent-root `.claude` entrypoint-hardening slice by retitling the surviving master/state/decision-log entrypoints as historical parent-root records and adding explicit current-routing blocks so they no longer read like live coordination constitutions for the standalone repo boundary.
+
+The next truthful repo-structure work is therefore the remaining deeper historical-demotion, provenance-routing, and residue-retirement work in older planning, audit, and packet-history surfaces beyond the now-normalized umbrella and `.claude` entrypoints.
 
 ## 2026 Addendum: Olares Runtime And Private Lane
 
