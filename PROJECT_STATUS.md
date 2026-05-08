@@ -224,7 +224,9 @@ Packet `2026-05-08-olares-dev-residency-178` now closes the remaining Dev Reside
 
 Packet `2026-05-08-olares-dev-residency-177` now closes the remaining Olares Phase 5 summary authority-publication and host-mirror gate family by hard-demoting those May 2026 bridge records into explicit historical provenance with current-routing context, so they no longer read like live publication guidance for the standalone repo boundary.
 
-The next truthful repo-structure work is therefore a fresh reassessment of the remaining packet-history and provenance-routing surfaces for any narrower current-looking historical records that still lack equivalent current-routing context, because the Dev Residency bridge-record family and the Olares Phase 5 summary gate family are now both closed as separate residue slices.
+Packet `2026-05-08-olares-dev-residency-179` now closes the remaining 2026-05-06 Olares Dev Residency boundary-doc publication and host-mirror gate family by hard-demoting those records into explicit historical provenance with current-routing context, so they no longer read like live parent-root publication guidance for the standalone repo boundary.
+
+The next truthful repo-structure work is therefore a fresh reassessment of the remaining earlier 2026-05-06 Olares Dev Residency publication-gate and adjacent packet-history surfaces for any narrower current-looking historical family that still lacks equivalent current-routing context, because the summary-gate bridge families and the boundary-doc publication-gate family are now closed as separate residue slices.
 
 ## 2026 Addendum: Olares Runtime And Private Lane
 
