@@ -1,0 +1,57 @@
+{
+  "packet_id": "2026-05-07-olares-dev-residency-099",
+  "title": "Post-Cutover Canonical Repo Validation And Old-Clone Observation",
+  "objective": "Close the next remaining repo-foundation proof gap after standalone cutover by validating focused canonical repo-root workflows from `apex-power-ops-platform/` and recording a fresh observe-only check for `/home/olares/src/apex-power-ops-platform` without reopening parent-root publication or topology scope.",
+  "domain": "infrastructure-domain",
+  "active_role": "Platform Architect",
+  "dependencies": [
+    "docs/architecture/APEX-REPO-FOUNDATION-AND-CUTOVER-PLAN-2026-05-07.md",
+    "docs/architecture/APEX-CANONICAL-REPO-CUTOVER-CHECKLIST-2026-05-07.md",
+    "docs/architecture/APEX-GIT-BOUNDARY-CUTOVER-EXECUTION-PACKET-2026-05-07.md",
+    "docs/architecture/APEX-GIT-BOUNDARY-CUTOVER-PREFLIGHT-EVIDENCE-2026-05-07.md",
+    "ops/agents/handoffs/2026-05-07-olares-dev-residency-098-complete-parent-root-task-surface-historical-relabel-execution-handoff.md"
+  ],
+  "dependency_note": "The git-boundary cutover and parent-root task-surface demotion are already complete. The remaining adjacent repo-foundation gap is proof, not topology: the checklist still needs fresh evidence that focused validation can run from the standalone repo root without parent-root helpers and that the old clone remains observe-only.",
+  "execution_mode": "bounded_post_cutover_validation_and_observation",
+  "execution_scope": [
+    "Run focused validation from `C:/APEX Platform/apex-power-ops-platform` using canonical repo-root paths only.",
+    "Verify at least one Python validation slice and one operations-web validation slice from the canonical repo boundary.",
+    "Observe `/home/olares/src/apex-power-ops-platform` and record its current head and status count without mutation.",
+    "Update only the repo-foundation packet and checklist/status surfaces needed to record that proof truthfully."
+  ],
+  "forbidden_scope": [
+    "runtime or service mutation",
+    "package or lockfile mutation",
+    "new topology design work",
+    "parent-root publication reactivation",
+    "remote rewrite",
+    "rollback, force, reset, or clean",
+    "old-clone mutation or promotion"
+  ],
+  "success_criteria": [
+    "Focused validation runs successfully from the standalone repo root without falling back to parent-root git helpers.",
+    "The cutover checklist can mark the canonical repo-root validation and old-clone observation items complete from current evidence.",
+    "The authoritative Olares mirror and the old observe-only clone remain non-destructively verified."
+  ],
+  "handoff_target": "Platform Architect",
+  "validation_commands": [
+    "corepack pnpm check",
+    "c:/APEX Platform/apex-power-ops-platform/.venv/Scripts/python.exe -m pytest packages/calc-engine/tests/test_golden_fixtures.py",
+    "corepack pnpm --filter @apex/operations-web build"
+  ],
+  "validation_results": {
+    "repo_root": "C:/APEX Platform/apex-power-ops-platform",
+    "repo_root_check": "pass after repairing the root check script to use corepack-backed pnpm invocation",
+    "calc_engine_pytest": "9 passed, 1 skipped",
+    "operations_web_build": "pass",
+    "parent_root_hidden_dependency_verdict": "no hidden dependency surfaced in the focused repo-root validation slice"
+  },
+  "old_clone_state": {
+    "path": "/home/olares/src/apex-power-ops-platform",
+    "head": "2836a2622309b4e146ca24f23b5bf87312c0c857",
+    "status_count": 30,
+    "mutation": "none"
+  },
+  "status": "complete",
+  "next_action": "Return repo-foundation routing to the remaining authority-relocation and historical-retirement surfaces now that the first post-cutover validation proof is recorded."
+}

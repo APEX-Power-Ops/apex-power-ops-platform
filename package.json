@@ -6,6 +6,6 @@
   "scripts": {
     "lint": "echo bootstrap-lint",
     "test": "echo bootstrap-test",
-    "check": "pnpm lint && pnpm test"
+    "check": "corepack pnpm lint && corepack pnpm test"
   }
 }

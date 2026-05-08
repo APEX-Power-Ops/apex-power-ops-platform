@@ -2,7 +2,7 @@
 
 > Repo-owned copy established 2026-05-07 as the canonical in-repo status surface for the future standalone `apex-power-ops-platform/` boundary. Keep the parent-root copy aligned until cutover retirement is complete.
 
-> **Last Updated**: May 7, 2026 (standalone repo cutover complete; operator-surface hardening and minimal-trio runtime governance closed)
+> **Last Updated**: May 8, 2026 (standalone repo cutover complete; Packet 099 post-cutover proof recorded; operator-surface hardening and minimal-trio runtime governance closed)
 > **Phase**: Standalone repo boundary live, Olares durable-host workflow active, Operations Visibility schema live with governed consumers, laptop-to-Olares migration in final governance-and-provenance normalization phase
 > **See Also**: `PROJECT_OVERVIEW.md` for full system architecture
 
@@ -52,9 +52,9 @@ This addendum is the current stakeholder-facing status surface for the active Ol
 
 ### Remaining Highest-Value Items
 
-1. Keep the remaining migration-governance surfaces aligned until the lane can be closed as fully migrated rather than structurally migrated but still in provenance normalization.
+1. Keep the remaining migration-governance and authority-relocation surfaces aligned until the lane can be closed as fully migrated rather than structurally migrated with historical residue still pending retirement.
 2. Continue treating `/home/olares/src/apex-power-ops-platform` as observe-only historical evidence until a later cleanup packet explicitly retires or archives it.
-3. Keep the current authoritative host mirror clean at `/home/olares/code/apex/apex-power-ops-platform` and use the repo-owned bootstrap/status surface as the controlling proof surface for future Olares operator work.
+3. Keep the current authoritative host mirror clean at `/home/olares/code/apex/apex-power-ops-platform` and use the repo-owned bootstrap/status surface plus Packet 099 proof as the controlling validation baseline for future Olares operator work.
 4. Reopen minimal-trio runtime admission only if a concrete unattended workflow, repeated operator insufficiency, or new validation obligation proves that operator-on-demand is no longer enough.
 5. Reopen provenance-routing normalization only if a different current-looking parent-root residue surface, outside the now-relabelled task family, still risks misdirecting active repo-root execution.
 
@@ -64,7 +64,9 @@ The bounded runtime-governance decision on the admitted minimal MCP trio is now 
 
 Packets `2026-05-07-olares-dev-residency-096` through `2026-05-07-olares-dev-residency-098` now close the current-looking parent-root task-surface residue by selecting, executing, and then completing the repo-root task relabel slice across the full surviving task family.
 
-The provenance-routing lane can now return to hold unless a different current-looking parent-root residue surface still misdirects active repo-root execution.
+Packet `2026-05-07-olares-dev-residency-099` now closes the next adjacent repo-foundation proof slice by recording fresh canonical repo-root validation and old-clone observation evidence after cutover.
+
+The next truthful repo-structure work is therefore no longer post-cutover proof collection. It is the remaining authority-relocation, historical-demotion, and residue-retirement work that still sits above the now-proven standalone repo boundary.
 
 ## 2026 Addendum: Olares Runtime And Private Lane
 
