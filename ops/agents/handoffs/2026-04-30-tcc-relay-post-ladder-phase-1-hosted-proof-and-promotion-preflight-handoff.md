@@ -6,6 +6,9 @@ Authority: `Platform-Authority/TCC-RELAY-POST-LADDER-PHASE-1-HOSTED-PROOF-AND-PR
 Upstream authority: `Platform-Authority/TCC-RELAY-POST-LADDER-FOLLOW-ON-PLANNING-PACKET-2026-04-30.md`
 Prior ladder closure: `apex-power-ops-platform/ops/agents/handoffs/2026-04-30-tcc-relay-tranche-5-browser-and-coordination-adoption-execution-completion-handoff.md`
 
+Current routing: `docs/architecture/TCC-RELAY-GOVERNANCE-INDEX-2026-05-03.md`
+Historical source-label note: the `Platform-Authority/TCC-RELAY-*` packet names in this closure record are preserved lineage labels from the original relay packet chain and are not current repo-local paths. Use the current routing line plus the repo-local post-ladder handoffs and relay memos for live relay governance lookup.
+
 ---
 
 ## Objective

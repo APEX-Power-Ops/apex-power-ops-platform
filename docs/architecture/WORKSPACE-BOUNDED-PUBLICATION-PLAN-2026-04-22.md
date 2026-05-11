@@ -1,12 +1,14 @@
-# Workspace Bounded Publication Plan
+# Historical Workspace Bounded Publication Plan
 
 Date: 2026-04-22
-Status: Active follow-on plan
-Scope: deliberate introduction of the still-untracked portion of `C:/APEX Platform/apex-power-ops-platform`
+Status: Historical zero-frontier record
+Scope: pre-cutover bounded publication plan for the then-untracked portion of `C:/APEX Platform/apex-power-ops-platform`
 
 ## Purpose
 
 The workflow and repo drift audit closed the stale bootstrap assumptions.
+
+Historical note: this document records the pre-2026-05-07 publication topology when `C:/APEX Platform` was still the controlling git root for the broader workspace. It remains useful as evidence of the earlier bounded publication sequence, but it is not the current operator contract for canonical repo work.
 
 The broad untracked-mass problem inside `apex-power-ops-platform/` is now materially closed: the active platform, package, docs, and operator packet lanes are published through `apex-unification-001i`, and only a tiny archive-only residue remains untracked under the platform subtree.
 
@@ -110,7 +112,7 @@ Current concrete artifact for the completed scaffold step:
 
 - `ops/agents/handoffs/2026-04-22-parent-root-class-a-scaffold-publication-handoff.md`
 
-Current next-step interpretation:
+Historical end-state interpretation:
 
 - the scaffold, package-source, active app-lane runtime/support/test steps, shared package-source steps, the residual scaffold/doc step, the `infra` database step, the `docs` step, the `ops/knowledge-control-plane/registry` step, the `ops/agents/legacy-governance` step, the `ops/knowledge-resource-operations` step, the forms-import draft pair, the closed `001af` draft, the `apex-unification-001` draft pair, the `apex-unification-001a` root narrative and workspace-governance extraction singleton, the `apex-unification-001b` Supabase PM/project/PSS lineage tranche movement singleton, the `apex-unification-001c` Supabase automation and orchestration lineage tranche movement singleton, the `apex-unification-001d` Supabase knowledge-schema and import-assets tranche movement singleton, the `apex-unification-001e` spec-lineage tranche movement singleton, the `apex-unification-001f` archive-and-residue routing tranche singleton, the `apex-unification-001g` Supabase deployment-utility and environment-helper review singleton, the `apex-unification-001h` Supabase helper-residue and orchestration-wrapper routing singleton, the `apex-unification-001i` Supabase frontend-client target-boundary review singleton, the residual archive formula pair, the `knowledge-import-001` draft pair, the `pm-schema-001` through `pm-schema-008` foundational family, the `pm-schema-009` draft family, the `pm-schema-010` draft trio, the `pm-schema-011` dependency-activation family, the `pm-schema-012` identity and joined-read family, the `pm-schema-013` work-package write family, the `pm-schema-014` task-write pair, the `pm-schema-015` assignment-write pair, the `pm-schema-016` dependency-write singleton, the `pm-schema-017` execution-issue-write singleton, the `pm-schema-018` progress-snapshot-write singleton, the `pm-schema-019` write-surface consolidation singleton, the `pm-schema-019f` durable DB-backed idempotency store singleton, the `pm-schema-019g` idempotency sweep and ops metrics singleton, the `pm-schema-019h` sweep schedule wiring singleton, the `pm-schema-019i` idempotency by-route ops breakdown singleton, the `pm-schema-019j` ops metrics export schedule scrape singleton, the `pm-schema-019k` ops metrics threshold evaluation singleton, the `pm-schema-ui-002g` comparative schedule analytics read surface and host validation singleton, the `pm-schema-ui-002g` host-variance shell wiring and browser validation singleton, the `pm-schema-ui-002e-host` drivers shell wiring and browser validation singleton, the `pm-schema-ui-002f-host` tracer shell wiring and browser validation singleton, the `pm-schema-ui-001` field apparatus workflow prototype design singleton, the `pm-schema-ui-002` gantt layer comparison decision singleton, the `pm-schema-ui-003` PM approval queue prototype design singleton, the `pm-schema-ui-004` lead operations surface prototype design singleton, the `pm-schema-ui-005` cross-surface integration spec singleton, the `pm-schema-ui-006` mutation seam API spec and implementation scaffold singleton, the `pm-schema-ui-001a` field apparatus workflow and seam co-implementation singleton, the `pm-schema-ui-001b` lead operations surface and extended seam wiring singleton, the `pm-schema-ui-001c` PM approval queue and cross-surface review flow implementation singleton, the `pm-schema-ui-001d` cross-surface integration test surface and validation harness singleton, the `pm-schema-ui-001e` Supabase read model and mutation store migration singleton, the `pm-schema-ui-002a` P6 schedule context import and read bridge implementation singleton, the `pm-schema-ui-002b` read-only Gantt prototype implementation singleton, the `pm-schema-ui-002c` baseline overlay and read-model hardening singleton, the `pm-schema-ui-002d` baseline overlay re-issue and read-bridge extension singleton, the `pm-schema-ui-002e` schedule drivers read surface and host validation singleton, the `pm-schema-ui-002f` schedule tracer read surface and host validation singleton, the `pm-schema-020a` baseline field authority promotion singleton, the `pm-schema-020b` XER baseline mapping authorization singleton, the `pm-schema-020c` persisted schedule baseline DDL and loader lane singleton, the `pm-schema-020d` P6 baseline XER parser and loader wiring singleton, the `pm-schema-020e` internal baseline capture planning singleton, the `pm-schema-020f` real XER host parser verification and golden fixture admission singleton, the `pm-schema-020e.1` loader working-copy restoration and integrity gate singleton, the `pm-schema-020g-a` parser-surface reconciliation and baseline shim singleton, the `pm-schema-020g-b` governed baseline companion JSON path singleton, the `pm-schema-020e.2` parser-test reauthoring singleton, and the `pm-schema-020h` concrete sanitized golden fixture admission singleton are complete; no untracked paths remain under `apex-power-ops-platform`, so the subtree is now a truthful zero-frontier publication checkpoint rather than an active next-tranche queue
 
@@ -120,6 +122,10 @@ Current concrete artifact for that zero-frontier state:
 
 ## Guardrails
 
+Historical publication note:
+
+The guardrails below record the pre-cutover publication discipline for this plan family. They do not override the current standalone repo boundary or current operator workflow.
+
 1. do not use `git add -- apex-power-ops-platform/` for the next tranche
 2. keep staging explicit to the intended packet paths
 3. review each staged diff before commit from `C:/APEX Platform`
@@ -128,6 +134,10 @@ Current concrete artifact for that zero-frontier state:
 6. prefer the smallest coherent `ops/` sublane rather than broad `ops/` publication when a cleaner packet exists
 
 ## Completion Standard
+
+Historical completion note:
+
+This completion standard records when the earlier bounded-publication plan was satisfied. It is preserved as publication-history evidence, not as the current repo publication checklist.
 
 This plan is satisfied for the next cycle when:
 

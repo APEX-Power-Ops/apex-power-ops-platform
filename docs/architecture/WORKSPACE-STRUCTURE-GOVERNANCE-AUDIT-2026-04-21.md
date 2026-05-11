@@ -30,25 +30,27 @@ This document is intentionally platform-first in its original planning context:
 2. `C:/APEX Platform/Platform-Authority` remains historical strategic lineage for this older audit context
 3. sibling source-domain repos remain lineage and extraction inputs, not equal primary workspaces
 
-## Live Planning Stack
+## Historical Planning Stack
 
 Use these documents together:
 
-1. `docs/architecture/WORKSPACE-STRUCTURE-GOVERNANCE-AUDIT-2026-04-21.md` -> current cleanup and structure baseline
-2. `docs/architecture/WORKSPACE-CURRENT-STATUS-2026-04-21.md` -> current operational status snapshot
-3. `docs/architecture/WORKSPACE-IMPLEMENTATION-ROADMAP-2026-04-21.md` -> sequencing surface
+1. this document -> historical cleanup and structure baseline
+2. `docs/architecture/WORKSPACE-CURRENT-STATUS-2026-04-21.md` -> historical operational status snapshot
+3. `docs/architecture/WORKSPACE-IMPLEMENTATION-ROADMAP-2026-04-21.md` -> historical sequencing surface
 
 Use this audit as historical design input and provenance. Use the current repo-owned authority, status, and roadmap surfaces for active execution sequencing.
 
-## Authority Order
+## Historical Authority Order
 
-Use this order when structure, migration boundaries, or repo-shape decisions are involved:
+For the original audit context, structure, migration boundaries, or repo-shape decisions were interpreted through this order:
 
 1. `C:/APEX Platform/Platform-Authority/`
 2. `C:/APEX Platform/Platform-Authority/` documents that have not yet been re-homed into this bootstrap subtree
 3. `README.md`
 4. `docs/OPERATOR-BOOTSTRAP-RUNBOOK.md`
 5. source-domain docs only when a slice has not yet been re-homed
+
+Use the current routing block at the top of this file instead of this historical order for active repo-boundary work.
 
 ## Current Top-Level Classification
 
@@ -135,11 +137,13 @@ Cleanup rule:
 
 This lane must stay explicitly separated from active implementation work.
 
-## Confirmed Current Findings
+## Confirmed Historical Findings At Audit Time
 
-### 1. In-repo authority is still a bridge, not the final strategic authority
+The findings below record what this audit treated as current at that time. Preserve them as audit-time provenance rather than as the current repo-foundation diagnosis.
 
-The strategic authority layer still sits above this bootstrap subtree in `C:/APEX Platform/Platform-Authority`.
+### 1. At audit time, in-repo authority was still a bridge, not the final strategic authority
+
+The strategic authority layer still sat above this older audit surface in `C:/APEX Platform/Platform-Authority`.
 
 Implication:
 
@@ -191,7 +195,7 @@ Implication:
 - these folders should be treated as intentional topology, not accidental emptiness
 - future cleanup work should preserve marker clarity while avoiding new implementation drift into deferred or retirement lanes
 
-Additional current fact:
+Additional audit-time fact:
 
 - the lane markers now carry explicit local retirement, activation, or graduation gates so operators do not need to infer those thresholds from the architecture docs alone
 
@@ -208,9 +212,9 @@ Implication:
 - the structural cleanup question is no longer where their substantive code lives
 - the remaining decision is whether and when to keep or retire those markers after the broader lane model is stable enough
 
-### 6. The repo now has the governance surfaces this audit previously said were missing
+### 6. By that audit stage, the repo already had the governance surfaces this audit previously said were missing
 
-Current status surfaces already establish:
+The status surfaces available at that time already established:
 
 - explicit ownership governance
 - explicit knowledge-boundary guidance

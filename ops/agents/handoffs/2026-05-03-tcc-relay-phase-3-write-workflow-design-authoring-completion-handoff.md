@@ -4,22 +4,22 @@ Date: 2026-05-03
 Status: Closed PASS in repo; doc-only; no implementation opened
 Authority: governed by the Phase 3 packet stack listed below
 
+Current routing: `docs/architecture/TCC-RELAY-GOVERNANCE-INDEX-2026-05-03.md`
+Historical source-label note: the `Platform-Authority/TCC-RELAY-*` packet names preserved below are lineage labels from the original relay packet chain and are not current repo-local paths.
+
 ## Authority
 
 This closure is governed by:
 
-1. `Platform-Authority/TCC-RELAY-POST-LADDER-FOLLOW-ON-PLANNING-PACKET-2026-04-30.md`
-2. `Platform-Authority/TCC-RELAY-POST-LADDER-PHASE-3-WRITE-WORKFLOW-DESIGN-SCOPING-PACKET-2026-04-30.md`
-3. `Platform-Authority/TCC-RELAY-POST-LADDER-PHASE-3-WRITE-WORKFLOW-DESIGN-EXECUTION-PACKET-2026-05-03.md`
-4. `Platform-Authority/TCC-RELAY-POST-LADDER-PHASE-2-BROWSER-SURFACE-WIDENING-EXECUTION-PACKET-2026-05-01.md`
-5. `ops/agents/handoffs/2026-04-30-tcc-relay-post-ladder-phase-2-browser-surface-widening-handoff.md`
-6. `ops/agents/handoffs/2026-05-03-tcc-relay-phase-2-first-compare-slice-implementation-completion-handoff.md`
-7. `ops/agents/handoffs/2026-05-03-tcc-relay-phase-2-operations-web-promoted-host-redeploy-blocker-handoff.md`
-8. `ops/agents/handoffs/2026-05-03-tcc-relay-phase-3-write-workflow-design-authoring-handoff.md`
-9. `docs/architecture/TCC-RELAY-EXPLORATORY-COMPARE-CONCEPT-ADOPTION-MEMO-2026-05-03.md`
-10. `docs/architecture/TCC-RELAY-GOVERNANCE-INDEX-2026-05-03.md`
+1. `docs/architecture/TCC-RELAY-GOVERNANCE-INDEX-2026-05-03.md`
+2. `ops/agents/handoffs/2026-04-30-tcc-relay-post-ladder-phase-2-browser-surface-widening-handoff.md`
+3. `ops/agents/handoffs/2026-05-03-tcc-relay-phase-2-first-compare-slice-implementation-completion-handoff.md`
+4. `ops/agents/handoffs/2026-05-03-tcc-relay-phase-2-operations-web-promoted-host-redeploy-blocker-handoff.md`
+5. `ops/agents/handoffs/2026-05-03-tcc-relay-phase-3-write-workflow-design-authoring-handoff.md`
+6. `docs/architecture/TCC-RELAY-EXPLORATORY-COMPARE-CONCEPT-ADOPTION-MEMO-2026-05-03.md`
+7. `docs/architecture/TCC-RELAY-PHASE-3-WRITE-WORKFLOW-DESIGN-DECISION-MEMO-2026-05-03.md`
 
-If any summary here conflicts with the root `Platform-Authority` packet stack, the root stack wins.
+If any summary here conflicts with the relay governance index, the adjacent Phase 2 and Phase 3 handoff trail, or a later repo-local closure record, the more specific repo-local surface wins.
 
 ## Scope Of This Closure
 

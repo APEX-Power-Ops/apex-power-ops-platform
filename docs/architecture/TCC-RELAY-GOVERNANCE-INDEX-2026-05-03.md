@@ -12,34 +12,38 @@ This file exists to make the controlling surfaces easy to find from inside the r
 
 This file is an index and routing surface only.
 
-If any summary here conflicts with a root `Platform-Authority` packet, the root `Platform-Authority` packet wins.
+Closeout interpretation note:
+
+The earlier `Platform-Authority/TCC-RELAY-*` packet names quoted in older relay records are preserved source labels from the pre-cutover governance chain, not current repo-local paths.
+
+If any summary here conflicts with a more specific repo-local relay handoff or relay memo named below, the more specific repo-local surface wins.
 
 ## Authority Boundary
 
 The relay governance boundary is:
 
-1. root `Platform-Authority/` packets are the governing authority,
-2. repo-local handoffs under `ops/agents/handoffs/` are the execution-routing and closure surfaces,
+1. repo-local relay handoffs under `ops/agents/handoffs/` are the governing continuity, execution-routing, and closure surfaces preserved in the canonical repo,
+2. repo-local relay memos under `docs/architecture/` are the current planning, decision, and non-reopen surfaces for the relay lane,
 3. repo-local runtime and validation files under `apps/`, `packages/`, and `infra/` are implementation evidence,
-4. reviewed D: worktree relay-family notes are evidence input only and are not implementation authority until restated in governed C: artifacts.
+4. reviewed D: worktree relay-family notes are evidence input only and are not implementation authority until restated in governed repo artifacts.
 
-The key source-authority rule is fixed by:
+The surviving repo-local source-authority split is fixed by:
 
-1. `Platform-Authority/TCC-RELAY-SOURCE-INVENTORY-AND-AUTHORITY-CLASSIFICATION-PACKET-2026-04-30.md`
+1. `ops/agents/handoffs/2026-04-30-tcc-relay-governed-repo-lane-continuity-handoff.md`
 
-That packet establishes:
+That handoff preserves the controlling rule that:
 
-1. the C: repo plus `Platform-Authority` files remain the governing surfaces,
+1. the relay lane must be governed from repo-owned artifacts,
 2. the D: relay-family packet is reviewed evidence input,
-3. reusable conclusions from D: must be restated in governed C: artifacts before they influence platform implementation.
+3. reusable conclusions from D: must be restated in governed repo artifacts before they influence platform implementation.
 
-## Master Governing Packets
+## Master Governing Records
 
-Use these as the master relay governance stack.
+Use these as the accessible relay governance stack inside the canonical repo.
 
 ### 1. Source and authority split
 
-`Platform-Authority/TCC-RELAY-SOURCE-INVENTORY-AND-AUTHORITY-CLASSIFICATION-PACKET-2026-04-30.md`
+`ops/agents/handoffs/2026-04-30-tcc-relay-governed-repo-lane-continuity-handoff.md`
 
 Use this first when you need to know:
 
@@ -49,7 +53,7 @@ Use this first when you need to know:
 
 ### 2. Runtime-order governance
 
-`Platform-Authority/TCC-RELAY-RUNTIME-ADOPTION-SCOPING-PACKET-2026-04-30.md`
+`ops/agents/handoffs/2026-04-30-tcc-relay-runtime-adoption-scoping-handoff.md`
 
 Use this when you need the approved runtime-consumer order.
 
@@ -61,7 +65,7 @@ The fixed order is:
 
 ### 3. Execution-ladder governance
 
-`Platform-Authority/TCC-RELAY-EXECUTION-TRANCHE-PLANNING-PACKET-2026-04-30.md`
+`ops/agents/handoffs/2026-04-30-tcc-relay-execution-tranche-planning-handoff.md`
 
 Use this when you need the governing implementation ladder.
 
@@ -75,32 +79,29 @@ This packet fixes:
 
 ### 4. Post-ladder governance
 
-`Platform-Authority/TCC-RELAY-POST-LADDER-FOLLOW-ON-PLANNING-PACKET-2026-04-30.md`
+`TCC-RELAY-PHASE-3-WRITE-WORKFLOW-DESIGN-DECISION-MEMO-2026-05-03.md`
 
-Use this as the current top-level relay governance surface after the five-tranche ladder closed PASS.
+Use this as the current top-level relay governance surface after the five-tranche ladder closed PASS and the Phase 3 write-design lane closed as design-only.
 
-This packet fixes:
+Use it with:
 
-1. the four-phase post-ladder order,
-2. the post-ladder gates,
-3. the non-reopen rules,
-4. the rule that there is no default Tranche 6.
+1. `ops/agents/handoffs/2026-04-30-tcc-relay-post-ladder-phase-1-hosted-proof-and-promotion-preflight-handoff.md`,
+2. `ops/agents/handoffs/2026-04-30-tcc-relay-post-ladder-phase-2-browser-surface-widening-handoff.md`,
+3. `ops/agents/handoffs/2026-05-03-tcc-relay-phase-3-write-workflow-design-authoring-completion-handoff.md`
+
+when you need the post-ladder order, gates, non-reopen rules, and the rule that there is no default Tranche 6.
 
 ## Governing Execution History
 
 The relay ladder closed through five tranches.
 
-Use these packet families for the landed implementation history:
+Use these repo-local completion records for the landed implementation history:
 
-1. `Platform-Authority/TCC-RELAY-TRANCHE-1-SHARED-INFRA-SCHEMA-EXECUTION-PACKET-2026-04-30.md`
-2. `Platform-Authority/TCC-RELAY-TRANCHE-2-STAGED-POPULATION-AND-PROVENANCE-REPLAY-EXECUTION-PACKET-2026-04-30.md`
-3. `Platform-Authority/TCC-RELAY-TRANCHE-3-SHARED-CALC-SUBSTRATE-ENABLEMENT-EXECUTION-PACKET-2026-04-30.md`
-4. `Platform-Authority/TCC-RELAY-TRANCHE-4-READ-ONLY-CONTROL-PLANE-API-ADOPTION-EXECUTION-PACKET-2026-04-30.md`
-5. `Platform-Authority/TCC-RELAY-TRANCHE-5-BROWSER-AND-COORDINATION-ADOPTION-EXECUTION-PACKET-2026-04-30.md`
-
-The repo-local closure record for the ladder is:
-
-1. `ops/agents/handoffs/2026-04-30-tcc-relay-tranche-5-browser-and-coordination-adoption-execution-completion-handoff.md`
+1. `ops/agents/handoffs/2026-04-30-tcc-relay-tranche-1-shared-infra-schema-execution-completion-handoff.md`
+2. `ops/agents/handoffs/2026-04-30-tcc-relay-tranche-2-staged-population-and-provenance-replay-execution-completion-handoff.md`
+3. `ops/agents/handoffs/2026-04-30-tcc-relay-tranche-3-shared-calc-substrate-enablement-execution-completion-handoff.md`
+4. `ops/agents/handoffs/2026-04-30-tcc-relay-tranche-4-read-only-control-plane-api-adoption-execution-completion-handoff.md`
+5. `ops/agents/handoffs/2026-04-30-tcc-relay-tranche-5-browser-and-coordination-adoption-execution-completion-handoff.md`
 
 ## Current Lane State
 
@@ -115,20 +116,13 @@ The current relay lane state is:
 
 Current post-ladder authority and execution surfaces:
 
-1. `Platform-Authority/TCC-RELAY-POST-LADDER-PHASE-1-HOSTED-PROOF-AND-PROMOTION-PACKET-2026-04-30.md`
-2. `Platform-Authority/TCC-RELAY-POST-LADDER-PHASE-2-BROWSER-SURFACE-WIDENING-SCOPING-PACKET-2026-04-30.md`
-3. `Platform-Authority/TCC-RELAY-POST-LADDER-PHASE-2-BROWSER-SURFACE-WIDENING-EXECUTION-PACKET-2026-05-01.md`
-4. `Platform-Authority/TCC-RELAY-POST-LADDER-PHASE-3-WRITE-WORKFLOW-DESIGN-SCOPING-PACKET-2026-04-30.md`
-5. `Platform-Authority/TCC-RELAY-POST-LADDER-PHASE-3-WRITE-WORKFLOW-DESIGN-EXECUTION-PACKET-2026-05-03.md`
-6. `ops/agents/handoffs/2026-04-30-tcc-relay-post-ladder-phase-1-hosted-proof-and-promotion-preflight-handoff.md`
-7. `ops/agents/handoffs/2026-04-30-tcc-relay-post-ladder-phase-2-browser-surface-widening-handoff.md`
-8. `docs/architecture/TCC-RELAY-EXPLORATORY-COMPARE-CONCEPT-ADOPTION-MEMO-2026-05-03.md`
-9. `ops/agents/handoffs/2026-05-03-tcc-relay-phase-2-first-compare-slice-implementation-handoff.md`
-10. `ops/agents/handoffs/2026-05-03-tcc-relay-phase-2-first-compare-slice-implementation-completion-handoff.md`
-11. `ops/agents/handoffs/2026-05-03-tcc-relay-phase-2-operations-web-promoted-host-redeploy-blocker-handoff.md`
-12. `ops/agents/handoffs/2026-05-03-tcc-relay-phase-3-write-workflow-design-authoring-handoff.md`
-13. `docs/architecture/TCC-RELAY-PHASE-3-WRITE-WORKFLOW-DESIGN-DECISION-MEMO-2026-05-03.md`
-14. `ops/agents/handoffs/2026-05-03-tcc-relay-phase-3-write-workflow-design-authoring-completion-handoff.md`
+1. `ops/agents/handoffs/2026-04-30-tcc-relay-post-ladder-phase-1-hosted-proof-and-promotion-preflight-handoff.md`
+2. `ops/agents/handoffs/2026-04-30-tcc-relay-post-ladder-phase-2-browser-surface-widening-handoff.md`
+3. `TCC-RELAY-EXPLORATORY-COMPARE-CONCEPT-ADOPTION-MEMO-2026-05-03.md`
+4. `ops/agents/handoffs/2026-05-03-tcc-relay-phase-2-first-compare-slice-implementation-completion-handoff.md`
+5. `ops/agents/handoffs/2026-05-03-tcc-relay-phase-2-operations-web-promoted-host-redeploy-blocker-handoff.md`
+6. `TCC-RELAY-PHASE-3-WRITE-WORKFLOW-DESIGN-DECISION-MEMO-2026-05-03.md`
+7. `ops/agents/handoffs/2026-05-03-tcc-relay-phase-3-write-workflow-design-authoring-completion-handoff.md`
 
 Current feature-intake surface for relay compare expansion:
 
@@ -147,30 +141,28 @@ The following protections remain active across the landed ladder and post-ladder
 7. curve identity remains source-faithful as storage family plus constants-or-points,
 8. unsupported-family posture must remain explicit rather than hidden.
 
-Use `Platform-Authority/TCC-RELAY-POST-LADDER-FOLLOW-ON-PLANNING-PACKET-2026-04-30.md` as the controlling source for those rules.
+Use `TCC-RELAY-PHASE-3-WRITE-WORKFLOW-DESIGN-DECISION-MEMO-2026-05-03.md` plus the adjacent Phase 2 and Phase 3 completion handoffs as the controlling repo-local source for those rules.
 
 ## How To Use This Index
 
 If you need to answer a relay governance question, use this order:
 
 1. start with this index,
-2. open the root `Platform-Authority` packet named in the relevant section,
-3. open the matching repo-local handoff for the live execution or closure state,
+2. open the repo-local handoff or relay memo named in the relevant section,
+3. open the matching repo-local completion handoff for the live execution or closure state,
 4. only then inspect code, runtime proof, or evidence surfaces.
 
 If you need to execute current relay work, use this order:
 
-1. open `Platform-Authority/TCC-RELAY-POST-LADDER-PHASE-2-BROWSER-SURFACE-WIDENING-EXECUTION-PACKET-2026-05-01.md`,
-2. open `ops/agents/handoffs/2026-05-03-tcc-relay-phase-2-first-compare-slice-implementation-completion-handoff.md` to see the final Phase 2 proof floor,
-3. open `ops/agents/handoffs/2026-05-03-tcc-relay-phase-2-operations-web-promoted-host-redeploy-blocker-handoff.md` only as the closed hosted-recovery record,
-4. open `Platform-Authority/TCC-RELAY-POST-LADDER-PHASE-3-WRITE-WORKFLOW-DESIGN-SCOPING-PACKET-2026-04-30.md`,
-5. open `Platform-Authority/TCC-RELAY-POST-LADDER-PHASE-3-WRITE-WORKFLOW-DESIGN-EXECUTION-PACKET-2026-05-03.md`,
-6. open `docs/architecture/TCC-RELAY-PHASE-3-WRITE-WORKFLOW-DESIGN-DECISION-MEMO-2026-05-03.md`,
-7. open `ops/agents/handoffs/2026-05-03-tcc-relay-phase-3-write-workflow-design-authoring-completion-handoff.md`,
-8. do not author or execute any new relay implementation packet unless candidate-specific operator-need evidence exists and a separate Phase 3 implementation scoping packet is opened under `Platform-Authority/`.
+1. open `ops/agents/handoffs/2026-05-03-tcc-relay-phase-2-first-compare-slice-implementation-completion-handoff.md` to see the final Phase 2 proof floor,
+2. open `ops/agents/handoffs/2026-05-03-tcc-relay-phase-2-operations-web-promoted-host-redeploy-blocker-handoff.md` only as the closed hosted-recovery record,
+3. open `TCC-RELAY-EXPLORATORY-COMPARE-CONCEPT-ADOPTION-MEMO-2026-05-03.md` when evaluating bounded compare expansion ideas,
+4. open `TCC-RELAY-PHASE-3-WRITE-WORKFLOW-DESIGN-DECISION-MEMO-2026-05-03.md`,
+5. open `ops/agents/handoffs/2026-05-03-tcc-relay-phase-3-write-workflow-design-authoring-completion-handoff.md`,
+6. do not author or execute any new relay implementation packet unless candidate-specific operator-need evidence exists and a separate repo-owned scoping surface explicitly reopens the lane.
 
 ## Bottom Line
 
 The TCC relay lane has governance and guidelines, but they are packetized.
 
-The current master governance surface is the root `Platform-Authority` relay packet stack, with `Packet 007` acting as the top-level post-ladder authority, Phase 2 acting as the closed read-only browser proof floor, and the closed Phase 3 decision memo plus completion handoff acting as the current repo-local relay closure record.
+The current master governance surface is the repo-local relay memo and handoff stack, with the continuity and tranche-completion handoffs preserving the governing relay path, Phase 2 acting as the closed read-only browser proof floor, and the closed Phase 3 decision memo plus completion handoff acting as the current repo-local relay closure record.

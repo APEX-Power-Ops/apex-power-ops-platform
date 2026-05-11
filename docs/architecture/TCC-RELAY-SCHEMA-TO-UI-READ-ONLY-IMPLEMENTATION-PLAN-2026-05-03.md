@@ -28,16 +28,16 @@ This document does not:
 
 This plan is grounded in:
 
-1. `Platform-Authority/TCC-RELAY-POST-LADDER-PHASE-2-BROWSER-SURFACE-WIDENING-EXECUTION-PACKET-2026-05-01.md`
-2. `apex-power-ops-platform/ops/agents/handoffs/2026-05-03-tcc-relay-phase-2-first-compare-slice-implementation-completion-handoff.md`
-3. `apex-power-ops-platform/docs/architecture/TCC-RELAY-EXPLORATORY-COMPARE-CONCEPT-ADOPTION-MEMO-2026-05-03.md`
-4. `apex-power-ops-platform/docs/architecture/TCC-RELAY-PHASE-3-WRITE-WORKFLOW-DESIGN-DECISION-MEMO-2026-05-03.md`
-5. `apex-power-ops-platform/infra/database/migrations/work/010_tcc_relay_tables.sql`
-6. `apex-power-ops-platform/apps/operations-web/lib/relay-resources.ts`
-7. `apex-power-ops-platform/apps/operations-web/app/relay-resource-explorer.tsx`
-8. `apex-power-ops-platform/apps/control-plane-api/tests/test_neta_relay_routes.py`
+1. `TCC-RELAY-GOVERNANCE-INDEX-2026-05-03.md`
+2. `ops/agents/handoffs/2026-05-03-tcc-relay-phase-2-first-compare-slice-implementation-completion-handoff.md`
+3. `TCC-RELAY-EXPLORATORY-COMPARE-CONCEPT-ADOPTION-MEMO-2026-05-03.md`
+4. `TCC-RELAY-PHASE-3-WRITE-WORKFLOW-DESIGN-DECISION-MEMO-2026-05-03.md`
+5. `infra/database/migrations/work/010_tcc_relay_tables.sql`
+6. `apps/operations-web/lib/relay-resources.ts`
+7. `apps/operations-web/app/relay-resource-explorer.tsx`
+8. `apps/control-plane-api/tests/test_neta_relay_routes.py`
 
-If any recommendation here conflicts with the root `Platform-Authority` packet stack or the closed Phase 3 decision memo, those governing surfaces win.
+If any recommendation here conflicts with the relay governance index, the Phase 2 completion handoff, or the closed Phase 3 decision memo, those repo-local governing surfaces win.
 
 ## Current Floor
 

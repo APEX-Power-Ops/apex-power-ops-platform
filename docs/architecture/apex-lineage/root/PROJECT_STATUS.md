@@ -194,7 +194,7 @@ Environment: Development
 | Purpose | Path |
 |---------|------|
 | Schema Migrations | `Supabase/migrations/` |
-| UI Specifications | `Documentation/07_Application_Specs/` |
+| UI Specifications (historical parent-root context) | `README.md` |
 | Session Logs | `.claude/` |
 | Safety Schema | Migration 001_sop_aha_schema, 002_nfpa_70e_lookup_data |
 

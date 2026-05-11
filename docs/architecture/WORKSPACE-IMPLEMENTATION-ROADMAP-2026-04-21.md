@@ -1,16 +1,27 @@
-# Workspace Implementation Roadmap
+# Historical Workspace Implementation Roadmap
 
 Date: 2026-04-21
-Status: Active roadmap
+Status: Historical pre-cutover roadmap snapshot
 Scope: `C:/APEX Platform/apex-power-ops-platform`
+
+Historical roadmap note:
+
+This document preserves an earlier workspace-normalization roadmap from before standalone repo cutover and later repo-foundation realignment. It is not the current execution roadmap for repo-structure or Olares-first work.
+
+Current routing:
+
+1. use `../../PROJECT_STATUS.md` for the current execution frontier and residue-retirement ledger,
+2. use `APEX-REPO-FOUNDATION-AND-CUTOVER-PLAN-2026-05-07.md` plus `APEX-PM-LANE-OPERATING-COCKPIT-2026-05-06.md` for the current repo-structure and lane-routing contract,
+3. use `../../plan/infrastructure-olares-full-implementation-roadmap-1.md` and `../authority/README.md` for the current maintained execution and authority stack,
+4. use this document only when the earlier workspace-normalization sequencing needs to be reconstructed historically.
 
 ## Purpose
 
-This roadmap defines the implementation sequence required to turn the current bootstrap repo into a fully realized platform workspace using the audit, status, and checklist surfaces bundled in this packet today.
+This roadmap defined the implementation sequence required to turn the then-current bootstrap repo into a more fully realized platform workspace using the audit, status, and checklist surfaces bundled in that packet family.
 
-It is intentionally execution-focused. The goal is not to keep auditing the workspace; the goal is to finish normalizing it.
+It was intentionally execution-focused. The goal was not to keep auditing the workspace; the goal was to finish normalizing it.
 
-The active execution companion for this roadmap is `docs/architecture/WORKSPACE-LANE-NORMALIZATION-CHECKLIST-2026-04-22.md`.
+Its original execution companion was `docs/architecture/WORKSPACE-LANE-NORMALIZATION-CHECKLIST-2026-04-22.md`.
 
 ## Implementation Priorities
 

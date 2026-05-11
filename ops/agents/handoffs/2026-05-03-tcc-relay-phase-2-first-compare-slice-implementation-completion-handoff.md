@@ -4,18 +4,20 @@ Date: 2026-05-03
 Status: Slice closed PASS in repo and on promoted host after 2026-05-03 hosted deployment recovery
 Authority: governed by the Phase 2 packet stack listed below
 
+Current routing: `docs/architecture/TCC-RELAY-GOVERNANCE-INDEX-2026-05-03.md`
+Historical source-label note: the `Platform-Authority/TCC-RELAY-*` packet names preserved below are lineage labels from the original relay packet chain and are not current repo-local paths.
+
 ## Authority
 
 This closure is governed by:
 
-1. `Platform-Authority/TCC-RELAY-POST-LADDER-PHASE-2-BROWSER-SURFACE-WIDENING-SCOPING-PACKET-2026-04-30.md`
-2. `Platform-Authority/TCC-RELAY-POST-LADDER-PHASE-2-BROWSER-SURFACE-WIDENING-EXECUTION-PACKET-2026-05-01.md`
-3. `ops/agents/handoffs/2026-04-30-tcc-relay-post-ladder-phase-2-browser-surface-widening-handoff.md`
-4. `docs/architecture/TCC-RELAY-EXPLORATORY-COMPARE-CONCEPT-ADOPTION-MEMO-2026-05-03.md`
-5. `docs/architecture/TCC-RELAY-GOVERNANCE-INDEX-2026-05-03.md`
-6. `ops/agents/handoffs/2026-05-03-tcc-relay-phase-2-first-compare-slice-implementation-handoff.md`
+1. `docs/architecture/TCC-RELAY-GOVERNANCE-INDEX-2026-05-03.md`
+2. `ops/agents/handoffs/2026-04-30-tcc-relay-post-ladder-phase-2-browser-surface-widening-handoff.md`
+3. `docs/architecture/TCC-RELAY-EXPLORATORY-COMPARE-CONCEPT-ADOPTION-MEMO-2026-05-03.md`
+4. `docs/architecture/TCC-RELAY-SCHEMA-TO-UI-READ-ONLY-IMPLEMENTATION-PLAN-2026-05-03.md`
+5. `ops/agents/handoffs/2026-05-03-tcc-relay-phase-2-first-compare-slice-implementation-handoff.md`
 
-If any summary here conflicts with the root `Platform-Authority` packet stack, the root stack wins.
+If any summary here conflicts with the relay governance index, the Phase 2 widening handoff, or a later repo-local closure record, the more specific repo-local surface wins.
 
 ## Scope Of This Closure
 

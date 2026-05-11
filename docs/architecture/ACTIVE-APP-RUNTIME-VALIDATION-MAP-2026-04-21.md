@@ -4,6 +4,16 @@ Date: 2026-04-21
 Status: Active operator map
 Scope: `C:/APEX Platform/apex-power-ops-platform`
 
+Closeout interpretation note:
+
+This map remains the current operator-facing runtime and validation baseline for the active app lanes after standalone cutover. It no longer depends on an open packet-era normalization queue to be useful.
+
+Current routing:
+
+1. use `APEX-PM-LANE-OPERATING-COCKPIT-2026-05-06.md` and `../../PROJECT_STATUS.md` for current whole-program frontier and lane selection,
+2. use `../OPERATOR-BOOTSTRAP-RUNBOOK.md` for repo-root and host-root operator workflow rules,
+3. use this map for the active app-lane run paths, focused validation defaults, and deployment-proof entrypoints.
+
 ## Purpose
 
 This document defines the current operator entrypoints for the active app lanes.
@@ -154,12 +164,12 @@ Deployment proof:
 
 ## Current Gaps
 
-1. the current browser deployment proof now includes promoted-host route smoke, local Playwright browser smoke, and a promoted-host browser-plus-seam smoke wrapper for deployed targets; the hosted route gate is now closed through packet `001af`, so the remaining gap is authenticated browser proof breadth rather than public control-plane route exposure
+1. the current browser deployment proof now includes promoted-host route smoke, local Playwright browser smoke, and a promoted-host browser-plus-seam smoke wrapper for deployed targets; the remaining adjacent gap is authenticated browser proof breadth rather than public control-plane route exposure
 
 ## Immediate Next Use
 
-Use this map as the operator-facing runtime baseline while the next normalization work closes the remaining gaps:
+Use this map as the current operator-facing runtime baseline:
 
 1. extend the current promoted-host browser-plus-seam smoke path for `apps/operations-web` once the governed shell gains a legitimate authenticated browser proof surface
-2. use the existing promoted-host smoke path plus packet `001af` closure proof as the runtime baseline for any future hosted regression rerun, rather than treating public control-plane route exposure as an open blocker
+2. use the existing promoted-host smoke path as the runtime baseline for any future hosted regression rerun, rather than treating public control-plane route exposure as an open blocker
 3. keep seed, merge-target, and deferred placeholder lanes out of this map until they become real deployables

@@ -8,8 +8,8 @@ Status:
 - Not the source of truth for current platform-boundary, schema, or runtime decisions
 
 Current authority:
-- Use `Platform-Authority/` for active platform-topology and repo-boundary decisions
-- Use `docs/authority/` inside this repo for landed authority artifacts
+- Use `../../authority/README.md` for the current repo-owned authority entrypoint
+- Use `../APEX-REPO-FOUNDATION-AND-CUTOVER-PLAN-2026-05-07.md` for active repo-boundary and topology decisions
 
 Imported slices:
 - `root/`: legacy root narrative and status documents

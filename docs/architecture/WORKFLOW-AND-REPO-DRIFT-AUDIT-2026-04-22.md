@@ -1,20 +1,31 @@
-# Workflow And Repo Drift Audit
+# Historical Workflow And Repo Drift Audit
 
 Date: 2026-04-22
 Status: Closed drift audit
 Scope: `C:/APEX Platform/apex-power-ops-platform` publication-boundary and operator-workflow truth
 
+Closeout interpretation note:
+
+This audit remains useful as provenance for the earlier parent-root workflow correction, but it no longer states the live operator or git-boundary contract after standalone repo cutover.
+
+Current routing:
+
+1. use `APEX-REPO-FOUNDATION-AND-CUTOVER-PLAN-2026-05-07.md` for the governing repo-boundary and residue-retirement rules,
+2. use `../OLARES-ONE-WORKSPACE-DESIGN-GOVERNANCE-AND-IMPLEMENTATION-PLAN-2026-05-06.md` plus `../OPERATOR-BOOTSTRAP-RUNBOOK.md` for the current Olares operator workflow,
+3. use `../../PROJECT_STATUS.md` and `APEX-PM-LANE-OPERATING-COCKPIT-2026-05-06.md` for the current frontier and rapid lane routing,
+4. use this audit only when the earlier parent-root workflow drift and correction sequence need to be reconstructed historically.
+
 ## Purpose
 
-This audit closes the stale workflow and repo-drift assumptions that accumulated while the platform subtree moved from an untracked bootstrap packet to a tracked lane on parent-root `clean-main`.
+This audit recorded the stale workflow and repo-drift assumptions that had accumulated while the platform subtree moved from an untracked bootstrap packet to a tracked lane on parent-root `clean-main`.
 
-It exists to answer one operational question clearly:
+It answered one operational question clearly at the time:
 
-- what is the current git publication posture for `C:/APEX Platform/apex-power-ops-platform`?
+- what was the git publication posture for `C:/APEX Platform/apex-power-ops-platform` before the standalone repo boundary became canonical?
 
-## Current Verified State
+## Verified State At Audit Time
 
-Verified from the parent git root at `C:/APEX Platform`:
+Verified from the parent git root at `C:/APEX Platform` during the 2026-04-22 audit cycle:
 
 1. current branch is `clean-main`
 2. current `HEAD` matches `origin/clean-main`
@@ -91,16 +102,16 @@ Verified from the parent git root at `C:/APEX Platform`:
 
 ## Drift That Was Present
 
-The live docs had drifted into two stale assumptions:
+At audit time, the live docs had drifted into two stale assumptions:
 
 1. the platform subtree still appeared as `?? apex-power-ops-platform/` from the parent root
 2. the first parent-root publication was still pending and future publication therefore needed bootstrap-only staging rules
 
 Those assumptions were no longer true after the merged review-fix lane landed on `clean-main`.
 
-## Surfaces Corrected In This Audit Cycle
+## Surfaces Corrected In That Audit Cycle
 
-The following live authority surfaces were updated so they now reflect the tracked clean-main reality:
+The following live authority surfaces were updated in that audit cycle so they reflected the then-tracked parent-root clean-main reality:
 
 1. `README.md`
 2. `docs/OPERATOR-BOOTSTRAP-RUNBOOK.md`
@@ -112,9 +123,9 @@ The following live authority surfaces were updated so they now reflect the track
 8. `ops/agents/handoffs/2026-04-22-parent-root-bootstrap-publication-handoff.md`
 9. `ops/agents/handoffs/2026-04-22-parent-root-clean-main-reconciliation-handoff.md`
 
-## Current Operator Rules
+## Historical Operator Rules At Audit Time
 
-Use this posture going forward:
+At audit time, the recorded operator posture was:
 
 1. work from `C:/APEX Platform/apex-power-ops-platform` for implementation, but treat `C:/APEX Platform` as the authoritative git root
 2. use routine `git diff` and bounded `git add -- <paths>` against tracked `HEAD` for already-introduced paths

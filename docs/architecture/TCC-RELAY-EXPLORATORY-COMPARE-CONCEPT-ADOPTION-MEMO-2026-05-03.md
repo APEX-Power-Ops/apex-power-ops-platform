@@ -20,11 +20,11 @@ The goal is to preserve useful product direction without importing rushed constr
 
 This memo is grounded in:
 
-1. `Platform-Authority/TCC-RELAY-POST-LADDER-FOLLOW-ON-PLANNING-PACKET-2026-04-30.md`
-2. `Platform-Authority/TCC-RELAY-POST-LADDER-PHASE-2-BROWSER-SURFACE-WIDENING-SCOPING-PACKET-2026-04-30.md`
-3. `Platform-Authority/TCC-RELAY-POST-LADDER-PHASE-2-BROWSER-SURFACE-WIDENING-EXECUTION-PACKET-2026-05-01.md`
-4. `apex-power-ops-platform/ops/agents/handoffs/2026-04-30-tcc-relay-post-ladder-phase-2-browser-surface-widening-handoff.md`
-5. `apex-power-ops-platform/docs/architecture/TCC-RELAY-GOVERNANCE-INDEX-2026-05-03.md`
+1. `TCC-RELAY-GOVERNANCE-INDEX-2026-05-03.md`
+2. `ops/agents/handoffs/2026-04-30-tcc-relay-post-ladder-phase-2-browser-surface-widening-handoff.md`
+3. `ops/agents/handoffs/2026-05-03-tcc-relay-phase-2-first-compare-slice-implementation-completion-handoff.md`
+4. `ops/agents/handoffs/2026-05-03-tcc-relay-phase-2-operations-web-promoted-host-redeploy-blocker-handoff.md`
+5. `TCC-RELAY-SCHEMA-TO-UI-READ-ONLY-IMPLEMENTATION-PLAN-2026-05-03.md`
 6. the externally-authored exploratory file `C:\Users\jjswe\Box\BANNER_Settings Print_Y1202A_Y1202C\protection_explorer.html`
 
 ## Framing Decision

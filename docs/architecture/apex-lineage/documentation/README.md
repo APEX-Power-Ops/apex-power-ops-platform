@@ -1,6 +1,8 @@
 # Documentation
 
 > **Note**: This project migrated from Microsoft Dataverse to Supabase PostgreSQL in December 2025. Legacy Dataverse documentation is archived in `99_Archive/`.
+>
+> Historical routing note: this directory preserves documentation lineage only. For current repo execution and authority, use `../../../../README.md`, `../../../../PROJECT_OVERVIEW.md`, `../../../../PROJECT_STATUS.md`, and `../../../../docs/authority/README.md` first.
 
 ---
 
@@ -8,21 +10,23 @@
 
 | Document | Location | Description |
 |----------|----------|-------------|
-| **README** | `/README.md` | Project overview and quick start |
-| **Project Overview** | `/PROJECT_OVERVIEW.md` | Architecture, components, diagrams |
-| **Project Status** | `/PROJECT_STATUS.md` | Current phase, progress tracking |
-| **Database Docs** | `/Supabase/docs/` | Schema reference, SQL files |
-| **Specifications** | `/spec/` | Data dictionary, entity relationships |
+| **README** | `../../../../README.md` | Canonical repo overview and quick start |
+| **Project Overview** | `../../../../PROJECT_OVERVIEW.md` | Canonical repo architecture, components, diagrams |
+| **Project Status** | `../../../../PROJECT_STATUS.md` | Canonical repo execution status and packet trail |
+| **Database Docs** | `../knowledge-domain/apex-resa/SCHEMA_REFERENCE.md` | Repo-owned schema reference for the preserved lineage import set |
+| **Specifications** | historical parent-root `spec/` residue (not imported wholesale) | Preserved input/provenance only |
 
 ---
 
 ## Session Management
 
+The old `/.claude/` session files referenced by the original branch-era documentation are not preserved in this lineage directory. Use the repo-owned status, handoff, and operator surfaces below for current work.
+
 | Document | Location | Description |
 |----------|----------|-------------|
-| Session State | `/.claude/STATE.md` | Current status, next actions |
-| Coordination | `/.claude/COORDINATION.md` | Task split between Claude instances |
-| Session Protocol | `/.claude/SESSION_PROTOCOL.md` | How sessions work |
+| Session State | `../../../../PROJECT_STATUS.md` | Canonical current status and next actions |
+| Coordination | `../../../../ops/agents/handoffs/` | Repo-owned packet and handoff trail |
+| Session Protocol | `../../../../docs/OPERATOR-BOOTSTRAP-RUNBOOK.md` | Current operator workflow and execution protocol |
 
 ---
 

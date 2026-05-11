@@ -7,17 +7,20 @@ Scope: implement the first bounded Phase 2 compare-oriented browser slice in `ap
 
 Completion handoff: `ops/agents/handoffs/2026-05-03-tcc-relay-phase-2-first-compare-slice-implementation-completion-handoff.md`
 
+Current routing: `docs/architecture/TCC-RELAY-GOVERNANCE-INDEX-2026-05-03.md`
+Historical source-label note: the `Platform-Authority/TCC-RELAY-*` packet names preserved below are lineage labels from the original relay packet chain and are not current repo-local paths.
+
 ## Authority
 
 This handoff is governed by:
 
-1. `Platform-Authority/TCC-RELAY-POST-LADDER-PHASE-2-BROWSER-SURFACE-WIDENING-SCOPING-PACKET-2026-04-30.md`
-2. `Platform-Authority/TCC-RELAY-POST-LADDER-PHASE-2-BROWSER-SURFACE-WIDENING-EXECUTION-PACKET-2026-05-01.md`
-3. `ops/agents/handoffs/2026-04-30-tcc-relay-post-ladder-phase-2-browser-surface-widening-handoff.md`
-4. `docs/architecture/TCC-RELAY-EXPLORATORY-COMPARE-CONCEPT-ADOPTION-MEMO-2026-05-03.md`
-5. `docs/architecture/TCC-RELAY-GOVERNANCE-INDEX-2026-05-03.md`
+1. `docs/architecture/TCC-RELAY-GOVERNANCE-INDEX-2026-05-03.md`
+2. `ops/agents/handoffs/2026-04-30-tcc-relay-post-ladder-phase-2-browser-surface-widening-handoff.md`
+3. `docs/architecture/TCC-RELAY-EXPLORATORY-COMPARE-CONCEPT-ADOPTION-MEMO-2026-05-03.md`
+4. `docs/architecture/TCC-RELAY-SCHEMA-TO-UI-READ-ONLY-IMPLEMENTATION-PLAN-2026-05-03.md`
+5. `ops/agents/handoffs/2026-05-03-tcc-relay-phase-2-first-compare-slice-implementation-completion-handoff.md`
 
-If any summary in this handoff conflicts with the root `Platform-Authority` packet stack, the root packet stack wins.
+If any summary in this handoff conflicts with the relay governance index, the Phase 2 widening handoff, or a later repo-local closure record, the more specific repo-local surface wins.
 
 ## Objective
 

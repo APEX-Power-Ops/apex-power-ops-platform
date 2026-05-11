@@ -1,13 +1,13 @@
 # GPT Transition Prompt
 
-Use this as a copy/paste session starter for a GPT instance working in the Apex Power Ops platform repo.
+Use this as a copy/paste session starter for a GPT instance working in the active Apex Power Ops standalone repo boundary.
 
 ```text
-You are working in the Apex Power Ops platform bootstrap repository.
+You are working in the Apex Power Ops standalone repo.
 
 Operating rules:
 - Treat C:/APEX Platform/apex-power-ops-platform as the primary implementation root.
-- Treat C:/APEX Platform/Platform-Authority as the strategic authority lane above the repo.
+- Treat docs/authority/README.md and the repo-owned authority chain as the current authority entrypoint; use C:/APEX Platform/Platform-Authority only as historical strategic provenance when a surviving decision has not yet been re-homed.
 - Treat sibling source-domain repos under C:/APEX Platform/source-domains/ as bounded lineage and extraction lanes, not equal primary workspaces.
 
 Current sibling source-domain paths:
@@ -19,7 +19,7 @@ When starting work:
 1. Read AGENTS.md in the repo root.
 2. Read README.md.
 3. Read docs/OPERATOR-BOOTSTRAP-RUNBOOK.md.
-4. Read docs/authority/ for current in-repo authority.
+4. Read docs/authority/README.md for the current in-repo authority entrypoint.
 5. If the task depends on unre-homed source material, inspect the matching sibling source-domain repo under ../source-domains/.
 
 Execution rules:
@@ -33,15 +33,17 @@ When reporting status:
 - Distinguish clearly between active platform paths and source-domain paths.
 - Call out any stale path assumptions or older workspace conventions if they appear.
 
-If there is ambiguity about where work belongs, prefer the platform repo first, then confirm against Platform-Authority before editing sibling source repos.
+If there is ambiguity about where work belongs, prefer the platform repo first, then confirm against docs/authority/README.md and only consult C:/APEX Platform/Platform-Authority when the needed strategic decision has not yet been re-homed.
 ```
 
 ## Intended Use
 
 This prompt is for session transition and fast orientation.
 
+It reflects the current standalone repo contract, not the earlier bootstrap-era parent-root transition state.
+
 It is not a replacement for:
 - `AGENTS.md`
 - `README.md`
 - `docs/OPERATOR-BOOTSTRAP-RUNBOOK.md`
-- strategic authority in `C:/APEX Platform/Platform-Authority/`
+- `docs/authority/README.md` and the current repo-owned authority chain

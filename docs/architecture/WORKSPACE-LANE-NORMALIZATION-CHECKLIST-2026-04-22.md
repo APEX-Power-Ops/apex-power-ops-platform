@@ -1,29 +1,42 @@
-# Workspace Lane Normalization Checklist
+# Historical Workspace Lane Normalization Checklist
 
 Date: 2026-04-22
-Status: Active execution checklist
+Status: Historical pre-cutover execution checklist snapshot
 Scope: `C:/APEX Platform/apex-power-ops-platform`
+
+Historical checklist note:
+
+This document preserves an earlier lane-normalization execution checklist from before standalone repo cutover and later repo-foundation realignment. It is not the current execution checklist for repo-boundary, lane-routing, or publication decisions.
+
+Current routing:
+
+1. use `../../PROJECT_STATUS.md` for the current execution frontier and residue-retirement ledger,
+2. use `APEX-REPO-FOUNDATION-AND-CUTOVER-PLAN-2026-05-07.md` plus `APEX-PM-LANE-OPERATING-COCKPIT-2026-05-06.md` for the current repo-structure and lane-routing contract,
+3. use `../authority/README.md` and `../../plan/infrastructure-olares-full-implementation-roadmap-1.md` for the current authority and maintained execution stack,
+4. use this checklist only when the earlier workspace-lane normalization packet family needs to be reconstructed historically.
 
 ## Purpose
 
-This checklist converts the current workspace audit into bounded execution work.
+This checklist converted the then-current workspace audit into bounded execution work.
 
-Use it to:
+It was used to:
 
 1. normalize merge-target and deferred lanes without reopening broad workspace discovery
 2. keep source-domain re-home aligned to the current platform lane model
 3. preserve operator clarity while the repo is still in bootstrap-to-canonical transition
 
-This document is intentionally narrower than the audit and more concrete than the roadmap.
+This document was intentionally narrower than the audit and more concrete than the roadmap.
 
 ## Authority Position
 
 Use these documents together:
 
-1. `docs/architecture/WORKSPACE-STRUCTURE-GOVERNANCE-AUDIT-2026-04-21.md` -> structure and cleanup baseline
-2. `docs/architecture/WORKSPACE-CURRENT-STATUS-2026-04-21.md` -> active status snapshot
-3. `docs/architecture/WORKSPACE-LANE-NORMALIZATION-CHECKLIST-2026-04-22.md` -> execution checklist for lane cleanup and re-home follow-through
-4. `docs/architecture/WORKSPACE-IMPLEMENTATION-ROADMAP-2026-04-21.md` -> sequencing surface
+1. `docs/architecture/WORKSPACE-STRUCTURE-GOVERNANCE-AUDIT-2026-04-21.md` -> historical structure and cleanup baseline
+2. `docs/architecture/WORKSPACE-CURRENT-STATUS-2026-04-21.md` -> historical status snapshot
+3. this document -> historical execution checklist for lane cleanup and re-home follow-through
+4. `docs/architecture/WORKSPACE-IMPLEMENTATION-ROADMAP-2026-04-21.md` -> historical sequencing surface
+
+Use the current routing block above rather than this historical packet-family stack for active repo work.
 
 ## Execution Rules
 
@@ -194,6 +207,10 @@ Exit condition:
 - workstation residue remains bounded and non-authoritative
 
 ### 7. Git publication boundary
+
+Historical packet-family note:
+
+The checked items below record the pre-cutover publication-boundary closure state for this checklist family. They do not override the current standalone repo boundary.
 
 - [x] keep git status, diff, stage, and commit decisions aligned to the current parent repo root at `C:/APEX Platform`
 - [x] do not assume `apex-power-ops-platform/` is already an independent git repository

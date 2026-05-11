@@ -1,7 +1,7 @@
 # RESA Power - Project Management Platform
 
-> Strategic redesign note: future-state platform authority now starts in `Platform-Authority/`.
-> Use `Platform-Authority/README.md` and the linked blueprint documents when making repo-topology, schema, multi-agent, or platform-boundary decisions.
+> Strategic redesign note: future-state platform authority entry now starts in `apex-power-ops-platform/docs/authority/README.md`.
+> Use that repo-owned index first, then consult the linked inherited blueprint documents when making repo-topology, schema, multi-agent, or platform-boundary decisions.
 
 > **Modern PostgreSQL-based project tracking for electrical testing operations**  
 > Migrated from Microsoft Dataverse to Supabase in December 2025
@@ -276,7 +276,7 @@ mindmap
 
 ### UI Specification Documents
 
-Located in `Documentation/07_Application_Specs/`:
+Historical parent-root location: preserved from `Documentation/07_Application_Specs/` and summarized here.
 
 | Document | Lines | Purpose |
 |----------|-------|---------|
@@ -377,17 +377,17 @@ gantt
 | Document | Description |
 |----------|-------------|
 | [PROJECT_OVERVIEW.md](./PROJECT_OVERVIEW.md) | Architecture diagrams and data model |
-| [PROJECT_STATUS.md](./PROJECT_STATUS.md) | Current status with Mermaid charts |
-| [Supabase/SCHEMA_REFERENCE.md](./Supabase/SCHEMA_REFERENCE.md) | Quick database reference |
-| [.claude/STATE.md](./.claude/STATE.md) | Session state for Claude AI |
+| [PROJECT_STATUS.md](./PROJECT_STATUS.md) | Historical status snapshot with Mermaid charts |
+| [../knowledge-domain/apex-resa/SCHEMA_REFERENCE.md](../knowledge-domain/apex-resa/SCHEMA_REFERENCE.md) | Repo-owned schema reference for the preserved lineage import set |
+| [../../../../PROJECT_STATUS.md](../../../../PROJECT_STATUS.md) | Canonical current execution status superseding the old session-state surface |
 
 ### Technical Specifications
 
 | Document | Location |
 |----------|----------|
-| UI Design System | `Documentation/07_Application_Specs/UI_SPECIFICATION_GUIDE.md` |
-| Role Demo Prompt | `Documentation/07_Application_Specs/ROLE_DEMO_PROMPT.md` |
-| Report Workflow | `SUPABASE_REPORT_WORKFLOW.md` |
+| UI Design System | Historical parent-root `Documentation/07_Application_Specs/` design system |
+| Role Demo Prompt | Historical parent-root `Documentation/07_Application_Specs/` role-demo prompt |
+| Report Workflow | [../automation-reporting/SUPABASE_REPORT_WORKFLOW.md](../automation-reporting/SUPABASE_REPORT_WORKFLOW.md) |
 
 ---
 

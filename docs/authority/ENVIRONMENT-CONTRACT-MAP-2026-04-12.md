@@ -2,6 +2,17 @@
 
 This document records the first environment-contract scaffold for the imported control-plane runtime.
 
+Closeout interpretation note:
+
+This document remains the repo-owned environment-contract interpretation surface for the imported control-plane runtime, but it now operates as a retained post-cutover baseline rather than a platform-bootstrap interpretation layer.
+
+Current routing:
+
+1. use `OLARES-WORKSPACE-AUTHORITY-FRAMEWORK.md` and `../architecture/OLARES-ONE-WORKSPACE-DESIGN-GOVERNANCE-AND-IMPLEMENTATION-PLAN-2026-05-06.md` for current workspace and operator-boundary decisions,
+2. use `../architecture/ACTIVE-APP-RUNTIME-VALIDATION-MAP-2026-04-21.md` for current app-lane runtime and validation entrypoints,
+3. use `../architecture/OLARES-AI-ORCHESTRATION-DECISION-SURFACE-2026-05-07.md` and `../architecture/control-plane-lineage/apex-resa/AI_ORCHESTRATION_PROTOCOL.md` for the current AI and MCP orchestration boundary,
+4. use this document when the control-plane environment contract groups, ownership split, or historical imported-runtime boundaries need to be interpreted.
+
 Scope in this phase:
 - define the env surface carried forward from the legacy TCC backend
 - separate runtime-critical values from admin, connector, and local-test values
@@ -10,7 +21,7 @@ Scope in this phase:
 ## Ownership
 
 - `apps/control-plane-api/.env.example` is the tracked app-level contract source for the imported runtime surface
-- this document is the platform bootstrap interpretation layer for that contract
+- this document is the repo-owned interpretation layer for that contract
 - future platform-wide normalization should happen only after schema and work-package alignment planning
 
 ## Control Plane API Environment Groups

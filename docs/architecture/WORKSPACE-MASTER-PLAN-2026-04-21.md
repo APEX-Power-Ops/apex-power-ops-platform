@@ -27,9 +27,9 @@ It preserves the earlier design baseline for:
 
 This plan is platform-first and implementation-oriented, but its parent-root strategic-authority references are now historical provenance rather than the current routing contract.
 
-## Authority Order
+## Historical Authority Order
 
-Use this order when making structural, migration-boundary, or workspace-governance decisions:
+For the original planning context, structural, migration-boundary, or workspace-governance decisions were interpreted through this order:
 
 1. `C:/APEX Platform/Platform-Authority/`
 2. `docs/authority/`
@@ -38,6 +38,8 @@ Use this order when making structural, migration-boundary, or workspace-governan
 5. `docs/architecture/WORKSPACE-IMPLEMENTATION-ROADMAP-2026-04-21.md`
 6. `README.md`
 7. source-domain documentation only for bounded extraction work
+
+Use the current routing block at the top of this file rather than this historical order for active repo-boundary work.
 
 ## Design Principles
 

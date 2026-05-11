@@ -45,14 +45,16 @@ The Documentation folder contained extensive Dataverse/Power Platform documentat
 
 ## Current Documentation Locations
 
+Historical routing note: this audit records the archive decision, but current repo execution and authority now live in the repo-owned overview, status, authority, schema, handoff, and runbook surfaces outside this lineage directory.
+
 | Content | Location |
 |---------|----------|
-| Project Overview | `/PROJECT_OVERVIEW.md` |
-| Project Status | `/PROJECT_STATUS.md` |
-| Getting Started | `/README.md` |
-| Database Schema | `/Supabase/docs/` |
-| Session State | `/.claude/STATE.md` |
-| Specifications | `/spec/` |
+| Project Overview | `../../../../PROJECT_OVERVIEW.md` |
+| Project Status | `../../../../PROJECT_STATUS.md` |
+| Getting Started | `../../../../README.md` |
+| Database Schema | `../knowledge-domain/apex-resa/SCHEMA_REFERENCE.md` |
+| Session State | `../../../../PROJECT_STATUS.md` |
+| Specifications | historical parent-root `spec/` residue (not imported wholesale) |
 
 ---
 

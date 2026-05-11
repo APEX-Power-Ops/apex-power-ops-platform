@@ -2,20 +2,30 @@
 
 Date: 2026-05-06
 Status: Active operator workflow
-Scope: preferred Olares-hosted staging, staged-diff review, and focused validation flow while the current publication boundary remains transitional
+Scope: preferred Olares-hosted staging, staged-diff review, and focused validation flow from the canonical standalone repo root
+
+Closeout interpretation note:
+
+This workflow remains the current preferred bounded git-preparation path for the Olares-first repo posture. It is a standing operator baseline, not a packet-era queue opener.
+
+Current routing:
+
+1. use `../OPERATOR-BOOTSTRAP-RUNBOOK.md` for the broader repo-root and host-root operator workflow contract,
+2. use `APEX-PM-LANE-OPERATING-COCKPIT-2026-05-06.md` and `../../PROJECT_STATUS.md` for current lane selection and residue-retirement frontier,
+3. use this document when the question is specifically how to originate bounded staging, staged-diff review, and focused validation preparation from the authoritative Olares host mirror.
 
 ## Purpose
 
-This workflow makes the authoritative Olares host mirror the default operator surface for bounded git preparation work.
+This workflow makes the authoritative Olares host implementation repo the default operator surface for bounded git preparation work.
 
-It reduces dependence on the field laptop for staging and staged-diff review without silently changing GitHub canonical status or asserting that the Windows parent-root publication boundary is already retired.
+It reduces dependence on the field laptop for staging and staged-diff review while keeping GitHub canonical and the standalone repo boundary explicit.
 
 ## Boundary Conditions
 
 1. GitHub on `clean-main` remains canonical.
-2. `/home/olares/code/apex` remains the authoritative host mirror.
-3. `/home/olares/code/apex/apex-power-ops-platform` remains the authoritative host implementation surface.
-4. `C:/APEX Platform` remains the current transitional publication boundary until a later explicit cutover packet changes that rule.
+2. `/home/olares/code/apex/apex-power-ops-platform` remains the authoritative host implementation surface.
+3. `C:/APEX Platform/apex-power-ops-platform` is the matching workstation repo root.
+4. `C:/APEX Platform` is workstation-umbrella residue, not the publication boundary for this repo.
 5. `/home/olares/src/apex-power-ops-platform` remains observe-only.
 
 ## Preferred Operator Surfaces
@@ -30,27 +40,27 @@ Use the Windows workspace as a client surface or fallback, not as the default pl
 
 ## Default Host-Native Flow
 
-Run bounded git preparation from `/home/olares/code/apex`.
+Run bounded git preparation from `/home/olares/code/apex/apex-power-ops-platform`.
 
 Host-terminal example:
 
 ```bash
-cd /home/olares/code/apex
-git status --short -- apex-power-ops-platform/
-git add -- apex-power-ops-platform/path/to/file1 apex-power-ops-platform/path/to/file2
-git diff --cached -- apex-power-ops-platform/
+cd /home/olares/code/apex/apex-power-ops-platform
+git status --short
+git add -- path/to/file1 path/to/file2
+git diff --cached -- .
 ```
 
 Client-triggered one-shot example:
 
 ```powershell
-ssh olares-mesh 'cd /home/olares/code/apex && git status --short -- apex-power-ops-platform/'
-ssh olares-mesh 'cd /home/olares/code/apex && git diff --cached -- apex-power-ops-platform/'
+ssh olares-mesh 'cd /home/olares/code/apex/apex-power-ops-platform && git status --short'
+ssh olares-mesh 'cd /home/olares/code/apex/apex-power-ops-platform && git diff --cached -- .'
 ```
 
 Required behavior:
 
-1. keep staging bounded to explicit `apex-power-ops-platform/` paths unless a broader cutover packet explicitly authorizes more,
+1. keep staging bounded to explicit repo-relative paths unless a broader change explicitly authorizes more,
 2. review the staged diff from the host mirror before any commit,
 3. run focused validation from the host posture when the touched slice has an admitted host validation path,
 4. finish with the normal publication and host-parity gate; this workflow does not skip that closeout.
@@ -72,13 +82,13 @@ This workflow does not authorize:
 1. GitHub replacement,
 2. Gitea canonical transition,
 3. remote rewrite,
-4. silent retirement of the parent-root publication boundary,
+4. silent publication-boundary changes outside the canonical standalone repo,
 5. runtime or service mutation,
 6. package or lockfile mutation,
 7. old-clone mutation.
 
-## Next Remaining Dependency
+## Current Follow-On Boundary
 
-This first retirement target is now published on the authoritative host mirror.
+This host-native workflow now assumes the standalone repo root is already canonical.
 
-The next remaining publication-boundary retirement target should be the highest-traffic lane README command surfaces that still normalize Windows-local execution.
+Use a separate bounded packet only if a different high-traffic lane README, packet surface, or operator entrypoint still normalizes parent-root or Windows-first publication practice unnecessarily.

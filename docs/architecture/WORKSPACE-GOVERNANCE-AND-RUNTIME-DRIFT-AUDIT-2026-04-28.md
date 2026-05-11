@@ -4,19 +4,29 @@ version: 1.0
 date_created: 2026-04-28
 last_updated: 2026-04-28
 owner: Platform Governance / Workspace Architecture
-status: Proposed next-step packet
+status: Historical audit packet
 tags: [workspace, governance, audit, re-home, runtime, canary]
 ---
 
-# Workspace Governance And Runtime Drift Audit
+# Historical Workspace Governance And Runtime Drift Audit
+
+Historical audit note:
+
+This packet preserves one bounded post-rehome audit proposal from before the later standalone repo cutover and authority normalization work. It is not the current packet frontier for repo-structure or Olares operator decisions.
+
+Current routing:
+
+1. use `../../PROJECT_STATUS.md` for the current residue-retirement frontier and packet ledger,
+2. use `APEX-REPO-FOUNDATION-AND-CUTOVER-PLAN-2026-05-07.md` plus `APEX-PM-LANE-OPERATING-COCKPIT-2026-05-06.md` for the current repo-structure and lane-routing contract,
+3. use this audit only when the earlier workspace-governance drift hypothesis or its original evidence set need to be reconstructed historically.
 
 ## Executive Summary
 
-This packet defines the next bounded authority lane after the closed TCC Phase 5
-Tier B consumer-need ruling and the newly visible platform-root drift signals.
+This packet defined one bounded authority lane after the closed TCC Phase 5
+Tier B consumer-need ruling and the then-newly visible platform-root drift signals.
 
-The next governed move is not a default TCC Slice 3 measurement packet.
-The stronger current problem is workspace-governance and runtime-proof drift
+At that time, the next governed move was not a default TCC Slice 3 measurement packet.
+The stronger current problem was workspace-governance and runtime-proof drift
 inside `C:/APEX Platform/apex-power-ops-platform`.
 
 What is already true:
@@ -31,7 +41,7 @@ What is already true:
    whether the lane map, ownership map, package map, and runtime-proof map are
    still aligned
 
-What this packet is for:
+What this packet was for:
 
 1. inspect governance surfaces that define the active platform lane map
 2. inspect moved-subfolder or re-home lineage where runtime evidence now points
@@ -41,7 +51,7 @@ What this packet is for:
 4. return one exact ruling saying whether the drift is only documentation drift,
    or whether a narrower follow-on implementation or governance packet is needed
 
-This packet does not authorize TCC runtime work, TCC Slice 3 implementation,
+This packet did not authorize TCC runtime work, TCC Slice 3 implementation,
 package activation by narrative, or repo-wide restructuring.
 
 ## Scope Lock

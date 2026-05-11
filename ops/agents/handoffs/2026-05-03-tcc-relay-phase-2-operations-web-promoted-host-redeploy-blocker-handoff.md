@@ -4,11 +4,14 @@ Date: 2026-05-03
 Status: Resolved recovery record
 Scope: record the concrete hosted deployment blocker, the recovery actions that cleared it, and the final promoted-host validation outcome
 
+Current routing: `docs/architecture/TCC-RELAY-GOVERNANCE-INDEX-2026-05-03.md`
+Historical source-label note: the `Platform-Authority/TCC-RELAY-*` packet names preserved below are lineage labels from the original relay packet chain and are not current repo-local paths.
+
 ## Authority
 
 This blocker handoff is governed by:
 
-1. `Platform-Authority/TCC-RELAY-POST-LADDER-PHASE-2-BROWSER-SURFACE-WIDENING-EXECUTION-PACKET-2026-05-01.md`
+1. `docs/architecture/TCC-RELAY-GOVERNANCE-INDEX-2026-05-03.md`
 2. `ops/agents/handoffs/2026-04-30-tcc-relay-post-ladder-phase-2-browser-surface-widening-handoff.md`
 3. `ops/agents/handoffs/2026-05-03-tcc-relay-phase-2-first-compare-slice-implementation-completion-handoff.md`
 4. `apps/operations-web/DEPLOYMENT_VALIDATION.md`

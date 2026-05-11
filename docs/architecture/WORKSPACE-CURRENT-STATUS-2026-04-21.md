@@ -14,11 +14,11 @@ Current routing:
 2. use `docs/authority/README.md` for the current authority chain,
 3. use `plan/infrastructure-olares-full-implementation-roadmap-1.md` and `ops/agents/handoffs/` for current sequencing and packet history.
 
-## Executive Status
+## Historical Executive Status
 
 This snapshot records the workspace state before the later standalone repo cutover and authority relocation work closed several of the gaps described below.
 
-What is already true:
+What was already true in that snapshot:
 
 1. the repo is the active implementation surface for platform consolidation work
 2. the top-level lane model is present and mostly aligned to target topology
@@ -29,7 +29,7 @@ What is already true:
 7. operator-facing docs at that time still reflected an earlier platform-first but parent-root-boundary model
 8. the task surface at that time still relied on bounded parent-root git inspection and explicit-path staging
 
-What is not yet true:
+What was not yet true in that snapshot:
 
 1. transitional app-lane decisions are now ratified, but their bounded merge execution is not yet complete
 2. placeholder lanes are documented and explicitly deferred rather than implemented
@@ -125,24 +125,24 @@ Confirmed still open:
 
 ## Current Implementation Posture
 
-The workspace should be treated as:
+In this historical snapshot, the workspace was treated as:
 
 - operationally active
 - structurally credible
 - governance-defined
 - not yet fully normalized
 
-That means new work should continue here, but all major lane-shape, ownership, and merge-or-archive decisions should now follow the live workspace plan instead of accumulating ad hoc.
+That meant new work should continue there, but major lane-shape, ownership, and merge-or-archive decisions should follow the then-live workspace plan instead of accumulating ad hoc.
 
 ## Immediate Status Conclusion
 
-The workspace is ready for deliberate normalization, not another broad discovery pass.
+At the time of this snapshot, the workspace was ready for deliberate normalization, not another broad discovery pass.
 
-Use `docs/architecture/WORKSPACE-STRUCTURE-GOVERNANCE-AUDIT-2026-04-21.md` as the current cleanup and folder-structure authority baseline.
+Do not use `docs/architecture/WORKSPACE-STRUCTURE-GOVERNANCE-AUDIT-2026-04-21.md` as the current cleanup and folder-structure authority baseline for active repo work.
 
-Use `docs/architecture/WORKSPACE-LANE-NORMALIZATION-CHECKLIST-2026-04-22.md` as the active execution surface for marker-only lanes, deferred placeholders, and bounded re-home follow-through.
+Treat `docs/architecture/WORKSPACE-LANE-NORMALIZATION-CHECKLIST-2026-04-22.md` as historical packet-family follow-through context rather than the active execution surface.
 
-The next implementation work should focus on:
+The next implementation work identified in this historical snapshot focused on:
 
 1. continuing bounded source-domain re-home into the active platform lanes
 2. source-domain re-home completion by lane

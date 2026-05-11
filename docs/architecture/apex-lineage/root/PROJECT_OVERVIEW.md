@@ -326,7 +326,7 @@ mindmap
 | `REPORT_GENERATOR_DEMO_PROMPT.md` | ~300 | Report generation flow |
 | `FIELD_TECH_APPLICATION_SPEC.md` | ~400 | Mobile app requirements |
 
-**Location:** `Documentation/07_Application_Specs/`
+**Historical parent-root location:** see `README.md` for the preserved `Documentation/07_Application_Specs/` references.
 
 ---
 

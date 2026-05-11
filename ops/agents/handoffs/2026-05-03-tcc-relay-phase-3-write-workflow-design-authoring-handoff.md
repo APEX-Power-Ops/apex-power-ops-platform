@@ -4,21 +4,21 @@ Date: 2026-05-03
 Status: Authored next-step handoff; execution not yet run
 Scope: execute the bounded Phase 3 design-authoring lane that decides whether relay write workflows should exist after the read-only compare slice proved value on the promoted host
 
+Current routing: `docs/architecture/TCC-RELAY-GOVERNANCE-INDEX-2026-05-03.md`
+Historical source-label note: the `Platform-Authority/TCC-RELAY-*` packet names preserved below are lineage labels from the original relay packet chain and are not current repo-local paths.
+
 ## Authority
 
 This handoff is governed by:
 
-1. `Platform-Authority/TCC-RELAY-POST-LADDER-FOLLOW-ON-PLANNING-PACKET-2026-04-30.md`
-2. `Platform-Authority/TCC-RELAY-POST-LADDER-PHASE-3-WRITE-WORKFLOW-DESIGN-SCOPING-PACKET-2026-04-30.md`
-3. `Platform-Authority/TCC-RELAY-POST-LADDER-PHASE-3-WRITE-WORKFLOW-DESIGN-EXECUTION-PACKET-2026-05-03.md`
-4. `Platform-Authority/TCC-RELAY-POST-LADDER-PHASE-2-BROWSER-SURFACE-WIDENING-EXECUTION-PACKET-2026-05-01.md`
-5. `ops/agents/handoffs/2026-04-30-tcc-relay-post-ladder-phase-2-browser-surface-widening-handoff.md`
-6. `ops/agents/handoffs/2026-05-03-tcc-relay-phase-2-first-compare-slice-implementation-completion-handoff.md`
-7. `ops/agents/handoffs/2026-05-03-tcc-relay-phase-2-operations-web-promoted-host-redeploy-blocker-handoff.md`
-8. `docs/architecture/TCC-RELAY-EXPLORATORY-COMPARE-CONCEPT-ADOPTION-MEMO-2026-05-03.md`
-9. `docs/architecture/TCC-RELAY-GOVERNANCE-INDEX-2026-05-03.md`
+1. `docs/architecture/TCC-RELAY-GOVERNANCE-INDEX-2026-05-03.md`
+2. `ops/agents/handoffs/2026-04-30-tcc-relay-post-ladder-phase-3-write-workflow-design-handoff.md`
+3. `ops/agents/handoffs/2026-04-30-tcc-relay-post-ladder-phase-2-browser-surface-widening-handoff.md`
+4. `ops/agents/handoffs/2026-05-03-tcc-relay-phase-2-first-compare-slice-implementation-completion-handoff.md`
+5. `ops/agents/handoffs/2026-05-03-tcc-relay-phase-2-operations-web-promoted-host-redeploy-blocker-handoff.md`
+6. `docs/architecture/TCC-RELAY-EXPLORATORY-COMPARE-CONCEPT-ADOPTION-MEMO-2026-05-03.md`
 
-If any summary in this handoff conflicts with the root `Platform-Authority` packet stack, the root packet stack wins.
+If any summary in this handoff conflicts with the relay governance index, the adjacent Phase 2 and Phase 3 handoff trail, or a later repo-local closure record, the more specific repo-local surface wins.
 
 ## Objective
 
@@ -43,9 +43,8 @@ The required execution order is:
 
 Keep edits bounded to:
 
-1. `Platform-Authority/`
-2. `apex-power-ops-platform/ops/agents/handoffs/`
-3. `apex-power-ops-platform/docs/architecture/` only if a supporting decision memo or matrix is required
+1. `apex-power-ops-platform/ops/agents/handoffs/`
+2. `apex-power-ops-platform/docs/architecture/` only if a supporting decision memo or matrix is required
 
 Do not widen beyond that file set unless the governing Phase 3 execution packet is explicitly amended.
 
@@ -103,17 +102,17 @@ That closure must record:
 Act as the design owner for the active TCC relay Phase 3 write-workflow lane.
 
 Read these first:
-- C:/APEX Platform/Platform-Authority/TCC-RELAY-POST-LADDER-PHASE-3-WRITE-WORKFLOW-DESIGN-SCOPING-PACKET-2026-04-30.md
-- C:/APEX Platform/Platform-Authority/TCC-RELAY-POST-LADDER-PHASE-3-WRITE-WORKFLOW-DESIGN-EXECUTION-PACKET-2026-05-03.md
-- C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-tcc-relay-phase-2-first-compare-slice-implementation-completion-handoff.md
-- C:/APEX Platform/apex-power-ops-platform/docs/architecture/TCC-RELAY-EXPLORATORY-COMPARE-CONCEPT-ADOPTION-MEMO-2026-05-03.md
 - C:/APEX Platform/apex-power-ops-platform/docs/architecture/TCC-RELAY-GOVERNANCE-INDEX-2026-05-03.md
+- C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-30-tcc-relay-post-ladder-phase-3-write-workflow-design-handoff.md
+- C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-04-30-tcc-relay-post-ladder-phase-2-browser-surface-widening-handoff.md
+- C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-tcc-relay-phase-2-first-compare-slice-implementation-completion-handoff.md
+- C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-03-tcc-relay-phase-2-operations-web-promoted-host-redeploy-blocker-handoff.md
+- C:/APEX Platform/apex-power-ops-platform/docs/architecture/TCC-RELAY-EXPLORATORY-COMPARE-CONCEPT-ADOPTION-MEMO-2026-05-03.md
 
 Execute the bounded Phase 3 design-authoring slice now.
 
 Constraints:
 1. Keep edits inside:
-   - C:/APEX Platform/Platform-Authority/
    - C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/
    - C:/APEX Platform/apex-power-ops-platform/docs/architecture/ only if needed for a supporting memo or matrix
 2. Evaluate only concrete candidate write workflows implied by the now-proven compare slice.
