@@ -92,11 +92,11 @@ services:
     working_dir: /app
     command: node services/mcp/apex-fs/build/http.js
     environment:
-      APEX_MCP_HTTP_PORT: 8710
+      APEX_MCP_HTTP_PORT: 8810
       APEX_MCP_WORKSPACE_ROOT: /app
       APEX_MCP_DATA_ROOT: /app/.apex-data
     ports:
-      - 127.0.0.1:${APEX_DEV_MCP_FS_PORT}:8710
+      - 127.0.0.1:${APEX_DEV_MCP_FS_PORT}:8810
     volumes:
       - ..:/app
 
@@ -106,10 +106,10 @@ services:
     working_dir: /app
     command: node services/mcp/apex-db/build/http.js
     environment:
-      APEX_MCP_HTTP_PORT: 8711
+      APEX_MCP_HTTP_PORT: 8811
       APEX_DB_CONNECTION_STRING: postgresql://${APEX_DEV_POSTGRES_USER}:${APEX_DEV_POSTGRES_PASSWORD}@postgres:5432/${APEX_DEV_POSTGRES_DB}
     ports:
-      - 127.0.0.1:${APEX_DEV_MCP_DB_PORT}:8711
+      - 127.0.0.1:${APEX_DEV_MCP_DB_PORT}:8811
     volumes:
       - ..:/app
     depends_on:
@@ -121,10 +121,10 @@ services:
     working_dir: /app
     command: node services/mcp/apex-jobs/build/http.js
     environment:
-      APEX_MCP_HTTP_PORT: 8712
+      APEX_MCP_HTTP_PORT: 8812
       APEX_JOBS_LEDGER_PATH: /app/.apex-data/apex-jobs-ledger.json
     ports:
-      - 127.0.0.1:${APEX_DEV_MCP_JOBS_PORT}:8712
+      - 127.0.0.1:${APEX_DEV_MCP_JOBS_PORT}:8812
     volumes:
       - ..:/app
 
