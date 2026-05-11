@@ -77,6 +77,7 @@ try {
   $formsMcpPort = if ($env:APEX_DEV_MCP_FORMS_PORT) { $env:APEX_DEV_MCP_FORMS_PORT } else { '8714' }
 
   Start-ApexBackgroundProcess -FilePath $repoPython -ArgumentList @('-m', 'apex_forms_engine.runtime') -Environment @{
+    'PORT' = $formsRuntimePort
     'PYTHONPATH' = 'packages/forms-engine/src'
     'FORMS_ENGINE_TEMPLATES_PATH' = $formsTemplates
     'FORMS_ENGINE_ARTIFACTS_PATH' = $formsArtifacts
@@ -85,6 +86,7 @@ try {
   }
 
   Start-ApexBackgroundProcess -FilePath $repoPython -ArgumentList @('-m', 'apex_p6_ingest.runtime') -Environment @{
+    'PORT' = $p6RuntimePort
     'PYTHONPATH' = 'packages/p6-ingest/src'
     'P6_INGEST_ARTIFACTS_PATH' = $p6Artifacts
     'APEX_P6_FIXTURE_PATH' = (Join-Path $repoRoot 'apps/mutation-seam/app/schedule/fixtures/stack_data_center_baseline_sanitized.xer')
@@ -93,28 +95,28 @@ try {
   }
 
   Start-ApexBackgroundProcess -FilePath 'node' -ArgumentList @('services/mcp/apex-fs/build/http.js') -Environment @{
-    'APEX_MCP_HTTP_PORT' = $env:APEX_DEV_MCP_FS_PORT
+    'APEX_MCP_HTTP_PORT' = $fsMcpPort
     'APEX_MCP_WORKSPACE_ROOT' = $repoRoot
     'APEX_MCP_DATA_ROOT' = (Join-Path $repoRoot '.apex-data')
   }
 
   Start-ApexBackgroundProcess -FilePath 'node' -ArgumentList @('services/mcp/apex-db/build/http.js') -Environment @{
-    'APEX_MCP_HTTP_PORT' = $env:APEX_DEV_MCP_DB_PORT
+    'APEX_MCP_HTTP_PORT' = $dbMcpPort
   }
 
   Start-ApexBackgroundProcess -FilePath 'node' -ArgumentList @('services/mcp/apex-jobs/build/http.js') -Environment @{
-    'APEX_MCP_HTTP_PORT' = $env:APEX_DEV_MCP_JOBS_PORT
+    'APEX_MCP_HTTP_PORT' = $jobsMcpPort
     'APEX_JOBS_LEDGER_PATH' = (Join-Path $repoRoot '.apex-data/apex-jobs-ledger.json')
   }
 
   Start-ApexBackgroundProcess -FilePath 'node' -ArgumentList @('services/mcp/apex-forms/build/http.js') -Environment @{
-    'APEX_MCP_HTTP_PORT' = $env:APEX_DEV_MCP_FORMS_PORT
-    'APEX_FORMS_RUNTIME_URL' = "http://127.0.0.1:$($env:APEX_DEV_FORMS_ENGINE_PORT)"
+    'APEX_MCP_HTTP_PORT' = $formsMcpPort
+    'APEX_FORMS_RUNTIME_URL' = "http://127.0.0.1:$formsRuntimePort"
   }
 
   Start-ApexBackgroundProcess -FilePath 'node' -ArgumentList @('services/mcp/apex-p6/build/http.js') -Environment @{
-    'APEX_MCP_HTTP_PORT' = $env:APEX_DEV_MCP_P6_PORT
-    'APEX_P6_RUNTIME_URL' = "http://127.0.0.1:$($env:APEX_DEV_P6_INGEST_PORT)"
+    'APEX_MCP_HTTP_PORT' = $p6McpPort
+    'APEX_P6_RUNTIME_URL' = "http://127.0.0.1:$p6RuntimePort"
   }
 
   Wait-ApexEndpoint -Name 'forms runtime' -Url "http://127.0.0.1:$formsRuntimePort/health"
