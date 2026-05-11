@@ -1,12 +1,14 @@
 # Olares Publication Boundary Retirement Dependency Inventory
 
 Date: 2026-05-06
-Status: Updated closeout inventory after canonical cutover and residue normalization
+Status: Updated closeout inventory after canonical cutover, residue normalization, and completed Phase 5 packet-history retirement
 Scope: concrete record of which former publication-boundary dependencies are now closed and which residual hygiene items still remain after the canonical repo moved to `apex-power-ops-platform/`
 
 Closeout interpretation note:
 
 This inventory remains the active closeout queue for post-cutover boundary residue. It should be read together with the recent packet trail in `PROJECT_STATUS.md`, not as a pre-cutover dependency-discovery note.
+
+The Phase 5 draft-packet residue lane is now closed through Packet `2026-05-08-olares-dev-residency-354`, so the remaining queue begins with legacy planning and mirror/inventory surfaces rather than another packet-history singleton under `ops/agents/packets/draft`.
 
 ## Purpose
 
@@ -94,13 +96,17 @@ The already-closed residue slices now include:
 1. repo-owned current-truth authority normalization,
 2. parent-root mirror routing normalization,
 3. parent-root `.claude` entrypoint hardening,
-4. early workspace planning demotion.
+4. early workspace planning demotion,
+5. the full Olares Phase 5 draft-packet history retirement through the terminal ledger closeout for `olares-phase-5-095`,
+6. legacy prompt, workflow-audit, and operator-baseline normalization,
+7. the older workspace-history family demotion and internal historicalization through the current-status, checklist, bounded-publication-plan, master-plan, and structure-audit findings slices,
+8. cutover-family internal queue and follow-through closeout through the authority-relocation plan, classification matrix, workspace-entrypoint decision, and services decision.
 
 The next highest-leverage closeout targets are now:
 
-1. older packet-history and legacy planning surfaces that still preserve pre-cutover operator wording without equivalent current-routing context,
-2. any remaining mirror or inventory surfaces whose top-of-file status still presents cutover work as an active launch plan instead of closeout state,
-3. continued host-parity validation against `/home/olares/code/apex/apex-power-ops-platform`, especially when Control-Hub must substitute for direct mesh SSH.
+1. any intentionally active baseline surface whose current queue or recommendation block has gone stale relative to the later packet trail in `PROJECT_STATUS.md`,
+2. continued host-parity validation against `/home/olares/code/apex/apex-power-ops-platform`, especially when Control-Hub must substitute for direct mesh SSH,
+3. a new adjacent publication, prompt, mirror, authority, or operator slice only if a later focused scan finds a genuinely current-looking surface that still implies a bootstrap, parent-root, or queue-opening contract rather than preserved historical provenance.
 
 ## Recommended Order
 
@@ -125,4 +131,6 @@ This inventory does not authorize:
 
 The publication-boundary cutover itself is now materially complete.
 
-The remaining truthful work is closeout: preserve the historical packet record, keep marking pre-cutover operator wording as historical when needed, prevent stale docs from reviving parent-root assumptions, and keep Olares-hosted validation aligned to the standalone canonical repo root.
+The current publication-boundary documentation lane is also at a clean stop point for the adjacent active-surface truth refresh family: the remaining same-pattern hits are preserved historical backlog or legitimate future-facing evidence notes, not current guidance defects.
+
+The remaining truthful work is therefore closeout: keep active queue and recommendation blocks aligned to the later packet trail, preserve the already-retired packet record as provenance only, keep marking pre-cutover operator wording as historical when needed, prevent stale planning or inventory docs from reviving parent-root assumptions, and keep Olares-hosted validation aligned to the standalone canonical repo root.

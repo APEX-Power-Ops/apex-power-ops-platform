@@ -1,16 +1,26 @@
 # Olares Post-Closure Execution Checklist
 
 Date: 2026-04-25
-Status: Active bounded follow-through checklist
-Scope: remaining Olares attention items after the first governed workstation and installed-service lanes closed
+Status: Maintained rerun and closeout checklist
+Scope: retained Olares rerun, drift, and boundary-preservation surfaces after the first governed workstation and installed-service lanes closed
 
 ## Purpose
 
-Use this checklist for the Olares work that remained intentionally open after the 2026-04-25 closure decision.
+Use this checklist for the Olares rerun, drift, and boundary-preservation work that remained intentionally available after the 2026-04-25 closure decision.
 
 This checklist is not a first-run bring-up surface.
 
-It exists to keep the remaining post-closure work bounded, executable, and separate from the broader platform roadmap.
+It exists to keep retained post-closure Olares work bounded, executable, and separate from the broader platform roadmap without implying a still-open generic launch queue.
+
+Closeout interpretation note:
+
+This checklist is now a maintained rerun and closeout surface, not a default active execution backlog.
+
+Current routing:
+
+1. use `PROJECT_STATUS.md` for the current closeout ledger and latest completed residue slice,
+2. use `docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md` for remaining post-cutover documentation cleanup,
+3. use this checklist only for reruns, drift-triggered evidence refresh, or bounded boundary-preservation work that does not reopen generic Olares implementation.
 
 ## Authority And Status Baseline
 
@@ -37,7 +47,7 @@ Approved status baseline:
 2. the first installed-proof lanes for `forms-engine` and `p6-ingest` are closed
 3. the friendly alias cleanup lane is closed
 4. the bounded private personal lane is operationally closed in host-only scope and remains outside the governed installed-app set
-5. Olares is not the current primary execution frontier for the repo
+5. generic Olares bring-up is no longer the primary frontier; the current Olares-first priority is bounded developer-capability hardening and AI-workflow improvement
 
 ## Allowed Uses
 
@@ -136,7 +146,8 @@ Do not reopen generic Olares execution without a new explicit packet unless one 
 
 ## Current Recommendation
 
-1. treat this checklist as the bounded follow-through surface for the remaining Olares items
-2. keep broader execution priority on the main platform roadmap
-3. preserve the private personal lane as a separate bounded posture rather than treating it as a silent extension of the installed-app set
-4. author a new explicit packet before any future Olares expansion beyond the closed baseline captured on 2026-04-25 and the bounded private-lane closure captured on 2026-05-01
+1. treat this checklist as the maintained rerun and drift-trigger surface for bounded post-closure Olares evidence work
+2. route documentation closeout through the dependency inventory rather than treating this checklist as the default remaining execution queue
+3. keep broader execution priority on the main platform roadmap
+4. preserve the private personal lane as a separate bounded posture rather than treating it as a silent extension of the installed-app set
+5. author a new explicit packet before any future Olares expansion beyond the closed baseline captured on 2026-04-25 and the bounded private-lane closure captured on 2026-05-01

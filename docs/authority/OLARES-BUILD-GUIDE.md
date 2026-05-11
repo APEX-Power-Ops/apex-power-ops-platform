@@ -7,11 +7,22 @@ _Reference: `Olares_Architecture.svg` (pin near workstation). Checklist: `../ope
 _Repo authority: `OLARES-WORKSPACE-AUTHORITY-FRAMEWORK.md`._
 _Authored 2026-04-22. Reviewed and revised 2026-05-06. Olares OS v1.12.5 baseline._
 
+Closeout interpretation note:
+
+This guide is now a retained architecture and first-run design reference for the Olares lane, not the default active operator entrypoint for current repo work.
+
+Current routing:
+
+1. use `OLARES-WORKSPACE-AUTHORITY-FRAMEWORK.md` for the governing authority order and boundary rules,
+2. use `../architecture/OLARES-ONE-WORKSPACE-DESIGN-GOVERNANCE-AND-IMPLEMENTATION-PLAN-2026-05-06.md` for the current Olares operating model,
+3. use `../../plan/infrastructure-olares-full-implementation-roadmap-1.md` and `../architecture/OLARES-POST-CLOSURE-EXECUTION-CHECKLIST-2026-04-25.md` for maintained closeout, rerun, and trigger guidance,
+4. use this guide when the original Olares architecture rationale, three-zone model, or first-run design standards need to be referenced or audited.
+
 ---
 
 ## 1. What this guide is
 
-A concrete plan for turning a new Olares One into the center of gravity for APEX Platform development, staging, and field-accessible operation while keeping the laptop as a client surface rather than the durable workstation. The design deliberately lets you work from anywhere without forking your environment, but the governing direction is now Olares-first execution with GitHub still canonical.
+This guide preserves the concrete design rationale for turning an Olares One into the center of gravity for APEX Platform development, staging, and field-accessible operation while keeping the laptop as a client surface rather than the durable workstation. The design deliberately lets you work from anywhere without forking your environment, but current execution priority and routing now live in the maintained post-cutover authority, roadmap, and checklist surfaces listed above.
 
 Four load-bearing choices shape everything below:
 
@@ -96,7 +107,7 @@ That means:
 
 ### Default AI stack
 
-- **Claude Code** - installed on both the laptop and the One; authenticated with your Anthropic account under the monthly plan, not an API key. `CLAUDE.md` at the monorepo root. Subagent configs per service boundary (`.claude/agents/forms-engine.md`, `.claude/agents/p6-ingest.md`, `.claude/agents/ui.md`).
+- **Claude Code** - installed on both the laptop and the One; authenticated with your Anthropic account under the monthly plan, not an API key. Current repo-owned guidance for this lane lives in `docs/operations/OLARES-VSCODE-BUILD-SESSION-PROMPT.md`, `docs/architecture/OLARES-AI-BACKBONE-SCAFFOLD-SPEC-2026-05-08.md`, and `docs/operations/CODEX-AI-BACKBONE-FIRST-PASS-EXECUTION-BRIEF-2026-05-08.md`.
 - **Codex** - available as the second premium reasoning and coding surface under the monthly OpenAI plan rather than API metering.
 - **Claude Desktop** - optional laptop-side review and MCP client surface.
 - **ChatGPT** - optional second-opinion or UX-review surface when useful.
@@ -180,11 +191,10 @@ apex/ (monorepo root)
     k3s-local/
   tools/
   docs/
+    authority/
+    architecture/
+    operations/
   spec/
-  .claude/
-    CLAUDE.md
-    agents/
-    mcp.json
   .vscode/
     settings.json
 ```

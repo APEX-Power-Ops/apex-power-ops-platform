@@ -24,15 +24,15 @@ The final durable repo must be `apex-power-ops-platform` itself, not the mixed p
 
 Use this document when the question is:
 
-1. what the canonical repo boundary should be,
+1. what the canonical repo boundary is,
 2. which folders belong inside the active repo versus outside it,
-3. what MVP repo structure is required now,
-4. what the optimal structure should become,
-5. how to cut over from the current parent-root git boundary without dragging legacy clutter into the permanent shell.
+3. what MVP repo structure is now in force,
+4. what the optimal structure should continue converging toward,
+5. how the cutover from the former parent-root git boundary was executed without dragging legacy clutter into the permanent shell.
 
 ## Governing Decision
 
-Repo structure is now the highest-leverage active platform priority.
+Repo structure remains the governing platform concern for residue-retirement questions.
 
 The current parent-root publication model solved short-term consolidation, but it is not acceptable as the permanent operating model because it mixes:
 
@@ -221,6 +221,8 @@ The first required cutover is not a broad content migration. It is a boundary cu
 
 ## Execution Sequence
 
+The sequence below now serves as recorded cutover and hardening baseline context for the completed repo-boundary transition.
+
 ### Phase 1: Freeze the authority boundary
 
 1. stop adding new live authority to parent-root-only folders,
@@ -258,17 +260,17 @@ The first required cutover is not a broad content migration. It is a boundary cu
 3. enforce path-scoped CI from the canonical repo root,
 4. continue lane-by-lane source-domain re-home without reopening topology debates.
 
-## Immediate Program Priority
+## Recorded Initial Program Priority
 
-The initial setup outputs below are now in place. The next active repo-structure work should focus on the remaining cutover-only blockers:
+When this plan first moved from design into execution, the next active repo-structure work focused on the remaining cutover-only blockers:
 
-1. standalone git-boundary execution readiness so `apex-power-ops-platform/` can become the real git root,
+1. standalone git-boundary execution readiness so `apex-power-ops-platform/` could become the real git root,
 2. root tasks, validation commands, and operator runbooks that still assume parent-root git,
 3. retirement or deliberate mirroring of the remaining parent-root publishable surfaces such as `.github/workflows/` and `.gitignore`,
 4. Olares host reattachment and parity proof against the standalone canonical repo root,
 5. governed lineage preservation so cutover does not sever required parent-root history.
 
-The foundational outputs already established are:
+The foundational outputs already established at that stage were:
 
 1. a full folder classification matrix for `C:/APEX Platform`, now started in `docs/architecture/APEX-PARENT-ROOT-CLASSIFICATION-MATRIX-2026-05-07.md`,
 2. a canonical repo-boundary cutover checklist, now started in `docs/architecture/APEX-CANONICAL-REPO-CUTOVER-CHECKLIST-2026-05-07.md`,
@@ -276,9 +278,9 @@ The foundational outputs already established are:
 4. a `services/` and root-residue reconciliation decision so the target root contract is unambiguous, now started in `docs/architecture/APEX-SERVICES-AND-ROOT-RESIDUE-DECISION-2026-05-07.md`,
 5. a repo-first workspace entrypoint decision, now started in `docs/architecture/APEX-WORKSPACE-ENTRYPOINT-DECISION-2026-05-07.md`.
 
-## Success Standard
+## Structural Success Standard
 
-This repo-structure priority is complete only when:
+The repo-structure priority reached its baseline success condition when:
 
 1. `apex-power-ops-platform/` is the canonical git root,
 2. Olares mirrors that root directly,

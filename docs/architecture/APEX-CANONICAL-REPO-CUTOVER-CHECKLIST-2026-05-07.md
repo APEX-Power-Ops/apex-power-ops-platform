@@ -1,12 +1,23 @@
 # APEX Canonical Repo Cutover Checklist
 
 Date: 2026-05-07
-Status: Active closeout checklist after canonical cutover promotion
-Scope: auditable checklist for converting `apex-power-ops-platform/` from target root into the canonical git root and retiring `C:/APEX Platform` as the durable publication boundary
+Status: Recorded cutover baseline with residual closeout tracking
+Scope: auditable record of cutover completion criteria and the remaining residue-tracking checklist after converting `apex-power-ops-platform/` into the canonical git root and retiring `C:/APEX Platform` as the durable publication boundary
+
+Closeout interpretation note:
+
+The standalone repo-boundary cutover is already complete. This checklist now records the executed cutover baseline plus the residual structure-governance items that remain after promotion; it is no longer the live execution gate for a future cutover event.
+
+Current routing:
+
+1. use `PROJECT_STATUS.md` for the latest completed residue slice and current sequencing,
+2. use `docs/architecture/APEX-REPO-FOUNDATION-AND-CUTOVER-PLAN-2026-05-07.md` for governing repo-foundation decisions,
+3. use `docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md` for the remaining post-cutover closeout queue,
+4. use this checklist when the recorded cutover completion criteria or residual checklist state itself needs to be audited.
 
 ## Purpose
 
-This checklist is the execution gate for repo-boundary cutover.
+This checklist is the recorded completion and residual-tracking surface for repo-boundary cutover.
 
 It exists to prevent two failure modes:
 
@@ -33,7 +44,7 @@ Cutover is complete only when all of the following are true:
 
 ## Entry Criteria
 
-Do not execute the actual cutover until these are satisfied:
+Before the actual cutover executed, these were the required entry criteria:
 
 1. The repo-foundation authority exists in `docs/architecture/APEX-REPO-FOUNDATION-AND-CUTOVER-PLAN-2026-05-07.md`.
 2. The parent-root classification matrix exists in `docs/architecture/APEX-PARENT-ROOT-CLASSIFICATION-MATRIX-2026-05-07.md`.
@@ -56,21 +67,24 @@ Current closeout state:
 3. default operator tasks, runbooks, and git examples now point at the standalone repo root,
 4. parent-root workflow and ignore surfaces are now demoted to mirror or umbrella residue rather than active publication dependencies,
 5. Packet 099 now records focused post-cutover proof from the canonical repo boundary: `corepack pnpm check`, repo-local calc-engine pytest, `@apex/operations-web` production build, and fresh old-clone observation all ran without reopening parent-root helpers or mutating the historical clone,
-6. the remaining work is residual lane-by-lane authority relocation, demotion, and retirement rather than git-boundary proof.
+6. the remaining work is residual lane-by-lane authority relocation, demotion, and retirement rather than git-boundary proof,
+7. subsequent packets through Packet 421 have since normalized the active status surface, repo-owned authority chain, re-homed Olares governance/operator docs, and surviving `.claude` guidance so the remaining unchecked items are limited to residue families that still need explicit verification.
+
+The unchecked checklist items below now represent residual structure-governance closeout tracking, not prerequisites for re-running the git-boundary cutover itself.
 
 ## Phase 1: Freeze The Parent Root
 
 - [ ] Stop creating new live authority only at `C:/APEX Platform`.
 - [ ] Treat parent-root staging as temporary migration debt, not normal steady-state workflow.
 - [ ] Confirm all new repo-structure decisions are authored under `apex-power-ops-platform/docs/architecture/`.
-- [ ] Confirm the active status surface records repo cutover as a live top-priority lane.
+- [x] Confirm the active status surface records repo cutover as a live top-priority lane.
 
 ## Phase 2: Re-home Live Authority
 
-- [ ] Reconcile `Platform-Authority/` and promote surviving active documents into repo-owned `docs/authority/` or `docs/architecture/`.
-- [ ] Reconcile `Infrastructure/` and promote surviving active Olares governance and operator docs into repo-owned docs or infra lanes.
+- [x] Reconcile `Platform-Authority/` and promote surviving active documents into repo-owned `docs/authority/` or `docs/architecture/`.
+- [x] Reconcile `Infrastructure/` and promote surviving active Olares governance and operator docs into repo-owned docs or infra lanes.
 - [x] Decide whether active parent-root `PROJECT_STATUS.md` and `PROJECT_OVERVIEW.md` become repo-root files or repo-doc mirrors.
-- [ ] Split current versus historical `.claude/` guidance so only the surviving active continuity surfaces remain in the canonical repo.
+- [x] Split current versus historical `.claude/` guidance so only the surviving active continuity surfaces remain in the canonical repo.
 - [ ] Mark superseded parent-root authority documents as historical or retire them after verification.
 
 ## Phase 3: Reconcile Ambiguous Root Residue
@@ -83,7 +97,7 @@ Current closeout state:
 
 ## Phase 4: Prepare The Canonical Repo Root
 
-- [ ] Ensure the canonical repo root contains the full active authority chain.
+- [x] Ensure the canonical repo root contains the full active authority chain.
 - [x] Ensure the canonical repo root contains the default workspace entrypoint.
 - [x] Ensure repo-root README and operator guidance no longer describe the repo as transitional bootstrap.
 - [x] Ensure root tasks, validation commands, and runbooks no longer require parent-root git assumptions.
@@ -115,7 +129,7 @@ Phase 6 evidence recorded in Packet 099:
 
 ## Required Evidence To Record
 
-When the actual cutover executes, the closing packet must record:
+When the actual cutover executed, the closing packet was required to record:
 
 1. pre-cutover and post-cutover git roots,
 2. canonical remote target and branch evidence,
@@ -125,9 +139,9 @@ When the actual cutover executes, the closing packet must record:
 6. validation commands run from the new canonical repo boundary,
 7. explicit confirmation that excluded parent-root lanes were not silently absorbed.
 
-## No-Go Conditions
+## Historical No-Go Conditions
 
-Do not execute cutover if any of the following remain true:
+Before the cutover executed, the event could not proceed if any of the following remained true:
 
 1. active authority still depends on parent-root-only files with no relocation plan,
 2. `services/` or other ambiguous top-level residues still lack disposition,
@@ -137,9 +151,9 @@ Do not execute cutover if any of the following remain true:
 6. the preflight evidence still shows a remote-target mismatch and the cutover is not following the mapping defined in `docs/architecture/APEX-REMOTE-TARGET-RECONCILIATION-DECISION-2026-05-07.md`,
 7. the cutover plan still assumes a direct attach to the current parent-root-shaped `clean-main` tree instead of a subtree-rooted history step.
 
-## Immediate Next Outputs
+## Initial Next Outputs After Cutover
 
-This checklist assumes the next adjacent repo-structure artifacts are:
+Immediately after cutover, the next adjacent repo-structure artifacts were:
 
 1. a live authority relocation plan for parent-root docs that still matter,
 2. a `services/` reconciliation decision, now started in `docs/architecture/APEX-SERVICES-AND-ROOT-RESIDUE-DECISION-2026-05-07.md`,

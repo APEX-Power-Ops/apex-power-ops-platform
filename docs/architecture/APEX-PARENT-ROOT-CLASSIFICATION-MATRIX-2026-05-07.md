@@ -16,11 +16,11 @@ Current routing:
 
 ## Purpose
 
-This matrix turns the repo-foundation plan into an actionable cutover surface.
+This matrix turns the repo-foundation plan into a recorded cutover-classification surface.
 
 It answers one concrete question for every current top-level parent-root item:
 
-Does it belong inside the future canonical repo, outside it, or nowhere at all?
+Did it belong inside the canonical repo, outside it, or nowhere at all at cutover time?
 
 ## Classification Keys
 
@@ -37,8 +37,8 @@ Does it belong inside the future canonical repo, outside it, or nowhere at all?
 | Parent-root item | Class | Target disposition |
 | --- | --- | --- |
 | `apex-power-ops-platform/` | `PROMOTE-INTO-REPO` | This is now the canonical repo root |
-| `Platform-Authority/` | `PROMOTE-INTO-REPO` | Surviving live authority should move into `docs/authority/` or `docs/architecture/` |
-| `Infrastructure/` | `PROMOTE-INTO-REPO` | Live Olares governance and operator docs should move into repo-owned docs and infra lanes |
+| `Platform-Authority/` | `PROMOTE-INTO-REPO` | Surviving active authority is now re-homed into repo-owned `docs/authority/` or `docs/architecture/`; the parent-root tree remains aligned historical mirror or provenance residue by rule |
+| `Infrastructure/` | `PROMOTE-INTO-REPO` | Surviving active Olares governance and operator docs are now re-homed into repo-owned docs and infra lanes; the parent-root copies remain historical or aligned reference residue by rule |
 | `apps/` | `KEEP-OUTSIDE-SOURCE` | Treat as parent-root residue until each active slice is re-homed or archived deliberately |
 | `packages/` | `KEEP-OUTSIDE-SOURCE` | Reconcile only the slices not already re-homed into repo `packages/` |
 | `services/` | `KEEP-OUTSIDE-SOURCE` | Reconcile lane-by-lane; do not treat as a permanent parallel app namespace |
@@ -77,18 +77,20 @@ Does it belong inside the future canonical repo, outside it, or nowhere at all?
 | `untracked_files_root.txt` | `RETIRE-AFTER-VERIFY` | Verified transient audit residue with explicit non-authority marker; retire with the parent-root git boundary |
 | `_offline-escrow/` | `KEEP-OUTSIDE-LOCAL` | Sensitive local holding, never part of canonical repo structure |
 
-## Immediate Decisions This Matrix Implies
+## Recorded Decisions This Matrix Implies
 
 1. No new live authority should be authored only at the parent root.
-2. `Platform-Authority/` and `Infrastructure/` are the highest-value authority lanes to re-home into the canonical repo.
+2. `Platform-Authority/` and `Infrastructure/` were the highest-value authority lanes to re-home into the canonical repo, and that relocation baseline is now materially complete.
 3. `Documentation/`, `Supabase/`, `spec/`, and `Reference_Files/` must not be imported wholesale.
 4. `apps/`, `packages/`, and `services/` at the parent root require reconciliation by active slice, not bulk merge.
 5. The parent-root git boundary and workspace entrypoint are migration debt to retire, not design assets to preserve.
 
-## First Cutover Work Queue
+## Recorded Initial Cutover Work Queue
 
 1. Re-home surviving active authority from `Platform-Authority/`.
 2. Re-home surviving active governance and operator docs from `Infrastructure/`.
 3. Decide the final disposition of parent-root `services/`.
 4. Move canonical status and overview authority into the repo root or repo docs.
 5. Replace the parent-root workspace entrypoint with a canonical repo-first entrypoint.
+
+This queue records the cutover-time follow-on set that the later cutover-family packets closed or routed. Preserve it as historical execution provenance rather than as an open current checklist.

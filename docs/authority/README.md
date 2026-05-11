@@ -4,6 +4,17 @@ This directory is now the repo-owned authority index for the active `apex-power-
 
 It no longer exists only as a bridge.
 
+Closeout interpretation note:
+
+This index remains the repo-owned authority entrypoint, but current Olares execution and closeout routing now flow through the maintained post-cutover authority stack rather than the older bootstrap-era guide and checklist pair.
+
+Current routing:
+
+1. use `OLARES-WORKSPACE-AUTHORITY-FRAMEWORK.md` for the governing Olares workspace authority order and boundary rules,
+2. use `../architecture/APEX-REPO-FOUNDATION-AND-CUTOVER-PLAN-2026-05-07.md` and `../architecture/OLARES-ONE-WORKSPACE-DESIGN-GOVERNANCE-AND-IMPLEMENTATION-PLAN-2026-05-06.md` for repo-shell and current Olares operating-model decisions,
+3. use `../../plan/infrastructure-olares-full-implementation-roadmap-1.md`, `../architecture/OLARES-POST-CLOSURE-EXECUTION-CHECKLIST-2026-04-25.md`, and `../architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md` for maintained closeout, rerun, and residue-routing work,
+4. treat `OLARES-BUILD-GUIDE.md`, `../operations/OLARES-CHECKLIST.md`, and `../operations/OLARES-VSCODE-BUILD-SESSION-PROMPT.md` as retained first-run references unless a deliberate replay or audit needs them.
+
 ## Role Of This Index
 
 Use this file as the repo-owned authority entrypoint inside the canonical repo boundary.
@@ -40,25 +51,25 @@ Apply these strategic interpretation rules when historical parent-root strategic
 
 Use these repo-owned authority documents first when the question is local implementation contract, environment posture, control-plane boundaries, or Python framework policy:
 
-- `C:/APEX Platform/apex-power-ops-platform/docs/authority/PLATFORM-UNIFICATION-MASTER-AUTHORITY-2026-04-12.md`
-- `C:/APEX Platform/apex-power-ops-platform/docs/authority/UNIFIED-PLATFORM-BLUEPRINT-2026-04-12.md`
-- `C:/APEX Platform/apex-power-ops-platform/docs/authority/CONTROL-PLANE-CALC-BOUNDARY-MAP-2026-04-12.md`
-- `C:/APEX Platform/apex-power-ops-platform/docs/authority/CONTROL-PLANE-CALC-SCHEMA-MAPPING-2026-04-12.md`
-- `C:/APEX Platform/apex-power-ops-platform/docs/authority/ENVIRONMENT-CONTRACT-MAP-2026-04-12.md`
-- `C:/APEX Platform/apex-power-ops-platform/docs/authority/PLATFORM-DATA-AND-SCHEMA-STRATEGY-2026-04-12.md`
-- `C:/APEX Platform/apex-power-ops-platform/docs/authority/MULTI-AGENT-OPERATING-MODEL-2026-04-12.md`
-- `C:/APEX Platform/apex-power-ops-platform/docs/authority/OLARES-AI-BACKBONE-FRAMEWORK-2026-05-08.md`
-- `C:/APEX Platform/apex-power-ops-platform/docs/authority/OLARES-BUILD-GUIDE.md`
-- `C:/APEX Platform/apex-power-ops-platform/docs/authority/OLARES-WORKSPACE-AUTHORITY-FRAMEWORK.md`
-- `C:/APEX Platform/apex-power-ops-platform/docs/authority/PYTHON-FRAMEWORK-GUIDELINES-2026-04-27.md`
+- `OLARES-WORKSPACE-AUTHORITY-FRAMEWORK.md`
+- `OLARES-BUILD-GUIDE.md` (retained first-run design reference)
+- `PLATFORM-UNIFICATION-MASTER-AUTHORITY-2026-04-12.md`
+- `UNIFIED-PLATFORM-BLUEPRINT-2026-04-12.md`
+- `CONTROL-PLANE-CALC-BOUNDARY-MAP-2026-04-12.md`
+- `CONTROL-PLANE-CALC-SCHEMA-MAPPING-2026-04-12.md`
+- `ENVIRONMENT-CONTRACT-MAP-2026-04-12.md`
+- `PLATFORM-DATA-AND-SCHEMA-STRATEGY-2026-04-12.md`
+- `MULTI-AGENT-OPERATING-MODEL-2026-04-12.md`
+- `OLARES-AI-BACKBONE-FRAMEWORK-2026-05-08.md`
+- `PYTHON-FRAMEWORK-GUIDELINES-2026-04-27.md`
 
 ## Historical Strategic Inputs
 
 The active strategic authority stack is now repo-owned or repo-owned-by-supersession.
 
-Use the remaining parent-root strategic documents only as historical planning input or provenance when earlier rationale needs to be reconstructed:
+No parent-root strategic document remains a standing dependency for current authority routing.
 
-- `C:/APEX Platform/Platform-Authority/MIGRATION-ROADMAP-2026-04-12.md`
+Use the older parent-root migration roadmap only as optional historical planning provenance when earlier rationale cannot be reconstructed from the repo-owned cutover plan or roadmap surfaces.
 
 ## Current Working Rule
 

@@ -3,14 +3,25 @@
 _Repo-owned authority copy established 2026-05-07 so the active Olares workspace framework lives inside the canonical repo boundary._
 _Keep the historical parent-root Infrastructure copy aligned until the broader authority relocation lane is complete._
 
-_Companion authority for `../../plan/Olares_MVP_Execution_Roadmap.md`, `OLARES-BUILD-GUIDE.md`, and `../operations/OLARES-CHECKLIST.md`._
+_Companion authority for `../architecture/APEX-REPO-FOUNDATION-AND-CUTOVER-PLAN-2026-05-07.md`, `../architecture/OLARES-ONE-WORKSPACE-DESIGN-GOVERNANCE-AND-IMPLEMENTATION-PLAN-2026-05-06.md`, and `../../plan/infrastructure-olares-full-implementation-roadmap-1.md`._
 _Authored 2026-04-23 after audit of the live `C:/APEX Platform/apex-power-ops-platform` workspace._
+
+Closeout interpretation note:
+
+This framework remains the highest-authority Olares workspace reference inside the repo, but it now governs a post-cutover closeout baseline rather than an open first-run launch lane.
+
+Current routing:
+
+1. use `../architecture/APEX-REPO-FOUNDATION-AND-CUTOVER-PLAN-2026-05-07.md` for repo-shell and git-boundary decisions,
+2. use `../architecture/OLARES-ONE-WORKSPACE-DESIGN-GOVERNANCE-AND-IMPLEMENTATION-PLAN-2026-05-06.md` for the current Olares operating model,
+3. use `../../plan/infrastructure-olares-full-implementation-roadmap-1.md` and `../architecture/OLARES-POST-CLOSURE-EXECUTION-CHECKLIST-2026-04-25.md` for maintained closeout, rerun, and trigger guidance,
+4. treat the original MVP roadmap, build guide, checklist, and build-session prompt as retained first-run references unless a deliberate replay or audit requires them.
 
 ## 1. Purpose
 
 This document turns the Olares planning work into repo authority.
 
-The roadmap defines the MVP delivery shape. The build guide explains the target operating model. The checklist sequences provisioning. This framework closes the missing middle layer: how the current live repository should be interpreted, reshaped, and governed while the APEX Platform transitions onto the Olares One as its primary development and staging host.
+The roadmap defines the MVP delivery shape. The build guide explains the target operating model. The checklist sequences provisioning. This framework is the repo-owned middle layer for how the current live repository should be interpreted, governed, and continued through the post-cutover Olares convergence baseline.
 
 Use this file as the highest-authority Olares workspace reference inside this repo. If this file conflicts with older bootstrap-era language elsewhere, this file wins until the conflicting text is revised.
 
@@ -21,10 +32,14 @@ The VS Code build prompt is not governance. It is a reusable implementation boot
 The Olares authority order is:
 
 1. this framework
-2. `../../plan/Olares_MVP_Execution_Roadmap.md`
-3. `OLARES-BUILD-GUIDE.md`
-4. `../operations/OLARES-CHECKLIST.md`
-5. `../operations/OLARES-VSCODE-BUILD-SESSION-PROMPT.md`
+2. `../architecture/APEX-REPO-FOUNDATION-AND-CUTOVER-PLAN-2026-05-07.md`
+3. `../architecture/OLARES-ONE-WORKSPACE-DESIGN-GOVERNANCE-AND-IMPLEMENTATION-PLAN-2026-05-06.md`
+4. `../../plan/infrastructure-olares-full-implementation-roadmap-1.md`
+5. `../architecture/OLARES-POST-CLOSURE-EXECUTION-CHECKLIST-2026-04-25.md`
+6. `../../plan/Olares_MVP_Execution_Roadmap.md`
+7. `OLARES-BUILD-GUIDE.md`
+8. `../operations/OLARES-CHECKLIST.md`
+9. `../operations/OLARES-VSCODE-BUILD-SESSION-PROMPT.md`
 
 This order is mandatory.
 
@@ -38,11 +53,14 @@ Verified active top-level implementation lanes:
 
 1. `apps/`
 2. `packages/`
-3. `infra/database/`
+3. `infra/`
 4. `docs/`
 5. `ops/`
 6. `knowledge/`
 7. `archive/`
+8. `services/`
+9. `tests/`
+10. `tools/`
 
 Verified active app surfaces already present:
 
@@ -60,6 +78,7 @@ Verified shared package lanes already present:
 1. `packages/api-contracts/`
 2. `packages/calc-engine/`
 3. `packages/forms-engine/`
+4. `packages/p6-ingest/`
 
 Verified operating reality:
 
@@ -68,9 +87,9 @@ Verified operating reality:
 3. `/home/olares/code/apex/apex-power-ops-platform` is the authoritative host mirror for the standalone repo boundary
 4. the current Olares documents are strategically sound, but some earlier pre-cutover statements now require explicit historical framing rather than reuse as current repo authority
 
-### Gap that must be closed
+### Historical Gap Closed By This Framework
 
-The repo has the beginnings of the future monorepo shape, but it does not yet have a single authoritative transition framework that answers all of the following in one place:
+At authoring time, the repo had the beginnings of the future monorepo shape, but it did not yet have a single authoritative transition framework that answered all of the following in one place:
 
 1. what the Olares One becomes in relation to the current repo
 2. which existing lanes are authoritative inputs versus target outputs
@@ -78,7 +97,7 @@ The repo has the beginnings of the future monorepo shape, but it does not yet ha
 4. what must be authored first inside the repo before the workstation can become the real development center of gravity
 5. what changes remain explicitly deferred until later cutover phases
 
-This framework provides those answers.
+This framework now provides those answers inside the canonical repo boundary.
 
 ## 3. Authority Decision
 
@@ -124,8 +143,8 @@ Repo lanes that feed it first:
 2. `apps/forms-studio/`
 3. `apps/operations-web/`
 4. `packages/*`
-5. future `services/mcp/`
-6. future `infra/compose.dev.yml`
+5. `services/mcp/`
+6. `infra/compose.dev.yml`
 
 Rules:
 
@@ -139,8 +158,8 @@ Purpose: long-running shared ops dependencies and optional AI services on the Ol
 
 Repo lanes that govern it:
 
-1. future `infra/olares/`
-2. future `docs/authority/` or `docs/olares/` operating notes
+1. `infra/olares/`
+2. `docs/authority/` operating notes
 3. future MCP deployment notes
 
 Rules:
@@ -155,7 +174,7 @@ Purpose: host-bootstrap truth for end-to-end completion.
 
 Repo lanes that must be authored for it:
 
-1. `infra/olares/charts/`
+1. `infra/olares/`
 2. `infra/olares/scripts/`
 3. run-ledger enforcement in `apex-jobs`
 4. canary harness and promotion tooling
@@ -193,10 +212,9 @@ Required outputs:
 
 1. `infra/compose.dev.yml`
 2. `.env.dev.template`
-3. `.claude/CLAUDE.md`
-4. `.claude/mcp.json`
-5. minimum viable MCP trio under `services/mcp/`
-6. shell aliases and VS Code ergonomics surfaces
+3. repo-owned AI backbone authority, scaffold, and execution surfaces under `docs/authority/OLARES-AI-BACKBONE-FRAMEWORK-2026-05-08.md`, `docs/architecture/OLARES-AI-BACKBONE-SCAFFOLD-SPEC-2026-05-08.md`, and `docs/operations/CODEX-AI-BACKBONE-FIRST-PASS-EXECUTION-BRIEF-2026-05-08.md`
+4. minimum viable MCP trio under `services/mcp/`
+5. shell aliases and VS Code ergonomics surfaces
 
 Exit condition:
 
@@ -223,7 +241,7 @@ Goal: author the first real Olares-native app shell.
 
 Required outputs:
 
-1. `infra/olares/charts/forms-engine/`
+1. `infra/olares/forms-engine/`
 2. OlaresManifest with OIDC + middleware declaration
 3. installable chart skeleton
 
@@ -254,15 +272,17 @@ The following repo additions are explicitly authorized and expected:
 3. `infra/olares/`
 4. `tools/shell/`
 5. `tests/canary/`
-6. `.claude/`
+6. `tools/ai/`
 
 The following current directories remain authoritative and should be integrated rather than replaced:
 
 1. `apps/`
 2. `packages/`
-3. `infra/database/`
+3. `infra/`
 4. `docs/`
 5. `ops/`
+6. `knowledge/`
+7. `archive/`
 
 ### Tooling directives
 
@@ -295,16 +315,22 @@ This means:
 2. code that bypasses `apex-jobs` provenance and env tagging is not complete
 3. code that reaches the public internet without later explicit authorization is non-compliant
 
-## 8. Immediate Authoring Backlog
+## 8. Recorded First-Pass Authoring Backlog
 
-The next implementation session should start here:
+This backlog records the first-pass authoring tranche from the framework stage.
+
+It is no longer the default next-session queue.
+
+Current bounded execution should instead start from the repo-owned AI backbone authority, scaffold, execution-brief, and Olares session-prompt surfaces.
+
+Original first-pass backlog at authoring time:
 
 1. author `infra/compose.dev.yml`
 2. author `.env.dev.template` and update `.gitignore`
 3. scaffold `services/mcp/apex-fs/`
 4. scaffold `services/mcp/apex-db/`
 5. scaffold `services/mcp/apex-jobs/`
-6. author `.claude/CLAUDE.md`, `.claude/mcp.json`, and subagent briefs
+6. author the admitted backbone session-wiring guidance surfaces, later superseded by the repo-owned prompt, scaffold, and execution-brief docs
 7. author `infra/olares/charts/forms-engine/`
 8. author `tools/run-canary.sh` and the `tests/canary/stack-data-center/` scaffold
 9. update root `README.md` and `CODEOWNERS` as needed for the Olares-hosted workflow

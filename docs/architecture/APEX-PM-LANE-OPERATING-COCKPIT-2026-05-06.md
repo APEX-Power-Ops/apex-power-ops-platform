@@ -24,9 +24,9 @@ This document is an execution cockpit, not the top governance source.
 
 If this document conflicts with a governing surface, resolve conflicts in this order:
 
-1. `C:/APEX Platform/apex-power-ops-platform/docs/authority/OLARES-WORKSPACE-AUTHORITY-FRAMEWORK.md`
-2. `C:/APEX Platform/apex-power-ops-platform/docs/architecture/OLARES-ONE-WORKSPACE-DESIGN-GOVERNANCE-AND-IMPLEMENTATION-PLAN-2026-05-06.md`
-3. `C:/APEX Platform/apex-power-ops-platform/PROJECT_STATUS.md`
+1. `docs/authority/OLARES-WORKSPACE-AUTHORITY-FRAMEWORK.md`
+2. `docs/architecture/OLARES-ONE-WORKSPACE-DESIGN-GOVERNANCE-AND-IMPLEMENTATION-PLAN-2026-05-06.md`
+3. `PROJECT_STATUS.md`
 4. lane-specific roadmap, implementation plan, or packet frontier
 5. this cockpit
 

@@ -16,9 +16,9 @@ Current routing:
 
 ## Purpose
 
-This plan defines which parent-root authority documents still matter, where they belong inside the canonical repo, and what should happen to each one during cutover.
+This plan records which parent-root authority documents still matter, where they belong inside the canonical repo, and what disposition governed each one during cutover and closeout.
 
-It is the missing bridge between:
+It is the recorded bridge between:
 
 1. the repo-foundation decision,
 2. the parent-root classification matrix,
@@ -124,14 +124,16 @@ Candidates:
 3. stale coordination files,
 4. old root readme authority once the repo owns onboarding.
 
-## Residual Repo-Owned Refactor Targets
+## Recorded Repo-Owned Refactor Targets At Cutover Time
 
-The following repo-owned files should eventually stop pointing outside the canonical repo for active authority:
+The following repo-owned files were the remaining repo-owned refactor targets at cutover time because they still pointed outside the canonical repo for active authority:
 
 1. `docs/authority/README.md`,
 2. `docs/OPERATOR-BOOTSTRAP-RUNBOOK.md`,
 3. `docs/architecture/APEX-PM-LANE-OPERATING-COCKPIT-2026-05-06.md`,
 4. `docs/architecture/OLARES-ONE-WORKSPACE-DESIGN-GOVERNANCE-AND-IMPLEMENTATION-PLAN-2026-05-06.md`.
+
+That repo-owned refactor queue is now materially closed by the later routing-normalization packets recorded in `PROJECT_STATUS.md`; preserve this list as historical cutover provenance rather than as an open current checklist.
 
 ## Recorded Execution Order
 
@@ -143,9 +145,9 @@ The following repo-owned files should eventually stop pointing outside the canon
 
 ## Exit Condition
 
-This relocation lane is complete only when:
+Full relocation closeout is reached only when:
 
 1. the canonical repo contains the full active authority chain,
 2. parent-root copies are historical, mirrored, or retired by rule,
 3. repo-owned docs no longer treat parent-root authority as a normal dependency,
-4. cutover can proceed without hidden documentation dependencies outside the canonical repo.
+4. no hidden documentation dependencies remain outside the canonical repo for active repo-root operation.
