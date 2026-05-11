@@ -18,6 +18,7 @@ pnpm_bin="/home/olares/apex-data/toolchains/pnpm-10.0.0/node_modules/.bin/pnpm"
 calc_python="/home/olares/apex-data/toolchains/calc-engine-venv/bin/python"
 state_dir="${repo_root}/.tmp/ai-workflow"
 minimal_status_file="${state_dir}/host-bootstrap-minimal-status.json"
+minimal_ownership_file="${state_dir}/host-bootstrap-minimal-ownership.json"
 hold_status_file="${state_dir}/host-bootstrap-hold-status.json"
 host_bootstrap_actual_dir="${repo_root}/tests/canary/host-bootstrap-status/actual"
 host_bootstrap_output="${host_bootstrap_actual_dir}/host-bootstrap-status-${packet_id}.json"
@@ -37,6 +38,55 @@ command_path_or_empty() {
 
 bash "${repo_root}/tools/ai/run-minimal-mcp-trio.sh" status >"${minimal_status_file}"
 
+minimal_mode="$({
+    "${repo_python}" - <<'PY' "${minimal_status_file}"
+import json
+import sys
+from pathlib import Path
+
+payload = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+print(payload.get("status") or "not-running")
+PY
+})"
+
+rm -f "${minimal_ownership_file}"
+
+if [[ "${minimal_mode}" == "unmanaged-running" ]]; then
+    fs_endpoint="$({
+        "${repo_python}" - <<'PY' "${minimal_status_file}"
+import json
+import sys
+from pathlib import Path
+
+payload = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+print(payload.get("fs_endpoint") or "")
+PY
+    })"
+
+    if [[ -n "${fs_endpoint}" ]]; then
+        "${repo_python}" tools/ai/check_apex_fs_ownership.py \
+            --fs-url "${fs_endpoint}" \
+            --expected-workspace-root "${repo_root}" \
+            --expected-readme-path "${repo_root}/README.md" >"${minimal_ownership_file}" || true
+
+        "${repo_python}" - <<'PY' "${minimal_status_file}" "${minimal_ownership_file}"
+import json
+import sys
+from pathlib import Path
+
+minimal_path = Path(sys.argv[1])
+ownership_path = Path(sys.argv[2])
+
+minimal = json.loads(minimal_path.read_text(encoding="utf-8"))
+
+if ownership_path.exists() and ownership_path.read_text(encoding="utf-8").strip():
+    minimal["ownership_probe"] = json.loads(ownership_path.read_text(encoding="utf-8"))
+
+minimal_path.write_text(json.dumps(minimal, indent=2) + "\n", encoding="utf-8")
+PY
+    fi
+fi
+
 minimal_ready="$({
     "${repo_python}" - <<'PY' "${minimal_status_file}"
 import json
@@ -55,17 +105,6 @@ PY
 if [[ "${minimal_ready}" == "true" ]]; then
   bash "${repo_root}/tools/ai/run-olares-hold-boundary-check.sh" "${packet_id}" "${dsn_env}" >"${hold_status_file}"
 else
-    minimal_mode="$({
-        "${repo_python}" - <<'PY' "${minimal_status_file}"
-import json
-import sys
-from pathlib import Path
-
-payload = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
-print(payload.get("status") or "not-running")
-PY
-    })"
-
     hold_minimal_mcp="NOT_RUNNING"
     hold_decision="minimal_mcp_not_running"
 
