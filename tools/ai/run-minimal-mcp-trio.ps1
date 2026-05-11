@@ -148,7 +148,7 @@ switch ($Action) {
     if ($null -ne $existing) {
       $running = @($existing.processes | Where-Object { Get-ProcessStatus $_.pid })
       if ($running.Count -eq $existing.processes.Count) {
-        $existing | ConvertTo-Json -Depth 6
+        Write-Output '{"status":"already-running"}'
         break
       }
     }
