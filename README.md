@@ -45,9 +45,9 @@ Interpretation rules:
 
 ## Operator Quick Start
 
-This bootstrap root should now be treated as the primary local operator surface for platform work.
+This standalone repo root should now be treated as the primary local operator surface for platform work.
 
-Read `PROJECT_STATUS.md` first when you need the current post-cutover platform summary, Olares workspace posture, remaining implementation items, or laptop-to-Olares migration status without reconstructing it from packet history.
+Read `PROJECT_STATUS.md` first when you need the current post-cutover platform summary, Olares workspace posture, the signed-off laptop-to-Olares migration baseline, or any drift-triggered follow-on without reconstructing it from packet history.
 
 Preferred Olares-hosted startup path:
 1. attach through VS Code Remote-SSH or `ssh olares-mesh`

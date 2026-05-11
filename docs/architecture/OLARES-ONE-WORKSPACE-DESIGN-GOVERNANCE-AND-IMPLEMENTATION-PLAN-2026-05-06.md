@@ -1,8 +1,8 @@
-# Olares One Workspace Design, Governance, And Implementation Plan
+# Olares One Workspace Design, Governance, And Operating Model
 
 Date: 2026-05-06
 Status: Active authority surface
-Scope: current Olares One workspace constraints, governance rules, target environment, operator process, and bounded implementation plan
+Scope: current Olares One workspace constraints, governance rules, target environment, operator process, and bounded closeout routing
 
 ## Purpose
 
@@ -15,7 +15,7 @@ Use this document when the question is:
 1. what the Olares One workspace is supposed to be now,
 2. what is constrained or forbidden,
 3. which tools and processes are approved,
-4. what remains to be implemented or improved,
+4. what remains to be aligned or improved,
 5. how execution should continue without reopening already-closed lanes,
 6. where the compact current lane register lives.
 
@@ -39,7 +39,9 @@ That anchor is now also the governing migration direction for the whole program.
 
 Repo structure now has explicit first priority inside that migration direction.
 
-The current parent-root publication boundary is treated as temporary migration residue to retire, not as an acceptable steady-state repository model.
+The remaining parent-root publication residue is now signed-off closeout provenance to preserve, demote further when needed, or later archive by explicit packet; it is not an acceptable steady-state repository model.
+
+At the current repo-owned evidence floor, that residue no longer blocks the laptop-to-Olares migration signoff.
 
 All Apex Ops work top to bottom should converge on Olares-resident governance, execution, validation, toolchains, and operator context so the field laptop no longer carries durable project risk or accumulates divergent workspace practice.
 
@@ -85,13 +87,13 @@ The current transitional authoritative split is:
 Use this order when documents conflict:
 
 1. `docs/authority/OLARES-WORKSPACE-AUTHORITY-FRAMEWORK.md`
-2. `apex-power-ops-platform/docs/architecture/APEX-REPO-FOUNDATION-AND-CUTOVER-PLAN-2026-05-07.md`
-3. `apex-power-ops-platform/docs/architecture/OLARES-ONE-WORKSPACE-DESIGN-GOVERNANCE-AND-IMPLEMENTATION-PLAN-2026-05-06.md`
-4. `apex-power-ops-platform/plan/infrastructure-olares-full-implementation-roadmap-1.md`
-5. `apex-power-ops-platform/docs/architecture/OLARES-DEVELOPER-HOST-CUTOVER-TECHNICAL-PLAN-2026-05-05.md`
-6. `apex-power-ops-platform/docs/architecture/OLARES-DEVELOPER-HOST-CUTOVER-MILESTONE-PLAN-2026-05-05.md`
-7. `apex-power-ops-platform/docs/OPERATOR-BOOTSTRAP-RUNBOOK.md`
-8. packet and handoff artifacts under `apex-power-ops-platform/ops/agents/`
+2. `docs/architecture/APEX-REPO-FOUNDATION-AND-CUTOVER-PLAN-2026-05-07.md`
+3. `docs/architecture/OLARES-ONE-WORKSPACE-DESIGN-GOVERNANCE-AND-IMPLEMENTATION-PLAN-2026-05-06.md`
+4. `plan/infrastructure-olares-full-implementation-roadmap-1.md`
+5. `docs/architecture/OLARES-DEVELOPER-HOST-CUTOVER-TECHNICAL-PLAN-2026-05-05.md`
+6. `docs/architecture/OLARES-DEVELOPER-HOST-CUTOVER-MILESTONE-PLAN-2026-05-05.md`
+7. `docs/OPERATOR-BOOTSTRAP-RUNBOOK.md`
+8. packet and handoff artifacts under `ops/agents/`
 
 ### Execution rules
 
@@ -207,11 +209,11 @@ Not approved by this plan:
 ### Standard host-readiness flow
 
 1. Run `Olares host bootstrap status` or `bash apex-power-ops-platform/tools/ai/run-olares-host-bootstrap-status.sh` from `/home/olares/code/apex`.
-1. Run `Olares host bootstrap status` or `bash tools/ai/run-olares-host-bootstrap-status.sh` from `/home/olares/code/apex/apex-power-ops-platform`.
-2. Confirm canonical mirror head and clean status.
-3. Confirm the old clone remains preserved and non-canonical.
-4. Confirm materialized toolchains are present.
-5. Confirm minimal MCP and hold-boundary posture before deciding whether a new packet is necessary.
+2. Or run `Olares host bootstrap status` or `bash tools/ai/run-olares-host-bootstrap-status.sh` from `/home/olares/code/apex/apex-power-ops-platform`.
+3. Confirm canonical mirror head and clean status.
+4. Confirm the old clone remains preserved and non-canonical.
+5. Confirm materialized toolchains are present.
+6. Confirm minimal MCP and hold-boundary posture before deciding whether a new packet is necessary.
 
 ### Standard AI-runtime decision rule
 
@@ -233,7 +235,7 @@ The following are already implemented and validated:
 7. packetized publication and host parity discipline,
 8. default runtime governance that keeps the admitted minimal MCP trio operator-on-demand until a separate durable-runtime packet is justified.
 
-## Remaining Implementation Plan
+## Post-Signoff Routing
 
 ### Phase 1: Keep the durable host baseline explicit
 
@@ -241,7 +243,7 @@ The following are already implemented and validated:
 2. keep packet, roadmap, and status authority aligned after each bounded slice,
 3. prevent historical conceptual docs from being mistaken for current Olares governance.
 
-### Phase 2: Harden host-resident workflow only where real friction remains
+### Phase 2: Open follow-on hardening only where real friction remains
 
 Candidate follow-ons must be chosen by evidence, not by aspiration.
 

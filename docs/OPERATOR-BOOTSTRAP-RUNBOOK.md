@@ -1,10 +1,10 @@
-# Operator Bootstrap Runbook
+# Operator Runbook
 
-This runbook defines the intended local operator workflow for the Apex Power Ops platform bootstrap.
+This runbook defines the intended local operator workflow for the standalone Apex Power Ops repo and its Olares-first post-cutover operating model.
 
 Current high-level status board:
 
-- `PROJECT_STATUS.md` for the current post-cutover platform summary, Olares workspace posture, remaining implementation items, and laptop-to-Olares migration status
+- `PROJECT_STATUS.md` for the current post-cutover platform summary, Olares workspace posture, the signed-off laptop-to-Olares migration baseline, and any drift-triggered follow-on
 
 ## Operating Assumption
 
@@ -73,8 +73,8 @@ For historical context on the completed first parent-root introduction packet, u
 
 Treat the historical parent-root task trios as provenance helpers only. They are not routine staging surfaces for current repo-root work.
 
-Current packet constraint:
-- this bootstrap subtree does not yet contain every active platform lane under the broader umbrella workspace; parent-root-only lanes remain separate provenance or reconciliation residue and are not part of the default repo contract
+Current repo-boundary constraint:
+- this standalone repo does not yet contain every active platform lane under the broader umbrella workspace; parent-root-only lanes remain separate provenance or reconciliation residue and are not part of the default repo contract
 
 Git safety rules:
 - do not use `git add .` from `C:/APEX Platform/apex-power-ops-platform` unless an explicit broad repo change is intended
@@ -93,7 +93,7 @@ Preferred local tooling for analysis and inventory work:
 - `rg` if available on `PATH`
 - direct file reads from the workspace
 
-Bootstrap commands on Windows:
+Environment setup commands on Windows:
 
 ```powershell
 $platformRoot = 'C:/APEX Platform/apex-power-ops-platform'
@@ -109,6 +109,8 @@ If a different interpreter must be used for workspace tasks, set:
 ```powershell
 $env:APEX_PLATFORM_PYTHON='C:/Path/To/python.exe'
 ```
+
+The shared PowerShell helper now also accepts a command name already present on `PATH`, materializes it to the underlying executable path, and rejects missing explicit paths or missing commands instead of passing them through as opaque strings.
 
 ## Tooling Constraints And Fallbacks
 
@@ -225,14 +227,14 @@ Set-Location 'C:/APEX Platform/apex-power-ops-platform'
 
 ## Governance Intent
 
-The bootstrap root now operates as the canonical platform control surface after repository cutover.
+The standalone repo root now operates as the canonical platform control surface after repository cutover.
 
 Current external frontier:
 
 1. the workstation-local control-plane lane is green
 2. the hosted apparatus-route deployment lane on `https://control.apexpowerops.com` is now closed for packet `001af`
 3. use `../apps/control-plane-api/PUBLIC-APPARATUS-ROUTE-PROMOTION-CHECKLIST-2026-04-21.md` as the compact rerun checklist if a future deploy regresses the hosted seam
-4. treat `C:/APEX Platform/apex-power-ops-platform-deploy-worktree` as a separate optional reconciliation or publication lane, not as evidence that hosted packet `001af` has reopened; a deploy-worktree handoff is not bundled inside this bootstrap packet yet
+4. treat `C:/APEX Platform/apex-power-ops-platform-deploy-worktree` as a separate optional reconciliation or publication lane, not as evidence that hosted packet `001af` has reopened; a deploy-worktree handoff is not bundled inside this runbook context yet
 
 That means:
 - live operator docs should prefer platform-root paths
