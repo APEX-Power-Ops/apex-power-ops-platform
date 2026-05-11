@@ -96,6 +96,13 @@ case "${action}" in
     fi
 
     if is_healthy "${fs_port}" && is_healthy "${db_port}" && is_healthy "${jobs_port}"; then
+      if ownership_probe="$(${repo_python} tools/ai/check_apex_fs_ownership.py --fs-url "${fs_endpoint}" --expected-workspace-root "${repo_root}" --expected-readme-path "${repo_root}/README.md")"; then
+        :
+      else
+        printf '%s\n' "${ownership_probe}"
+        exit 1
+      fi
+
       write_state <<EOF
 STARTED_AT='$(date -u +%Y-%m-%dT%H:%M:%SZ)'
 PACKET_ID='${packet_id}'

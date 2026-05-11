@@ -71,7 +71,9 @@ That means:
 The wrappers support two bounded operating modes:
 
 1. managed mode, where the wrapper starts the trio itself,
-2. adopted mode, where the wrapper detects an already-running trio on the admitted ports and binds verification to that runtime instead of attempting duplicate listeners.
+2. adopted mode, where the wrapper detects an already-running trio on the admitted ports, proves through `apex-fs` that the served `workspace` root is the current repo root, and only then binds verification to that runtime instead of attempting duplicate listeners.
+
+If the admitted ports are healthy but `apex-fs` reports a different `workspace` root, `up` now refuses adoption and returns `status = adoption-refused` rather than silently binding to foreign or stale listeners.
 
 If neither `.env.dev` nor `.env.dev.template` is present, the wrappers fall back to the admitted default trio ports `8710`, `8711`, and `8712`.
 

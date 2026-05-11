@@ -139,6 +139,18 @@ switch ($Action) {
     if ((Test-HealthyEndpoint "http://127.0.0.1:$($env:APEX_DEV_MCP_FS_PORT)/health") -and
         (Test-HealthyEndpoint "http://127.0.0.1:$($env:APEX_DEV_MCP_DB_PORT)/health") -and
         (Test-HealthyEndpoint "http://127.0.0.1:$($env:APEX_DEV_MCP_JOBS_PORT)/health")) {
+      $ownershipArgs = @(
+        'tools/ai/check_apex_fs_ownership.py',
+        '--fs-url', $fsEndpoint,
+        '--expected-workspace-root', $repoRoot,
+        '--expected-readme-path', (Join-Path $repoRoot 'README.md')
+      )
+      $ownershipProbe = (& $repoPython @ownershipArgs) | Out-String
+      if ($LASTEXITCODE -ne 0) {
+        $ownershipProbe.Trim()
+        exit 1
+      }
+
       $adoptedState = [pscustomobject]@{
         started_at = (Get-Date).ToString('o')
         packet_id = $PacketId
