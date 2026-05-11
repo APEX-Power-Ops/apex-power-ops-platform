@@ -140,25 +140,43 @@ Example validation summary shape:
 		},
 		"db_query": {
 			"status": "pass",
-			"result": [{"ok": 1}]
+			"result": {
+				"rowCount": 1,
+				"rows": [{"ok": 1}]
+			}
 		},
 		"jobs_tools": {
 			"status": "pass",
-			"tools": ["start_run", "end_run", "promote_packet"]
+			"tools": ["start_run", "end_run", "list_runs", "promote_packet"]
 		},
 		"jobs_promote_guard": {
 			"status": "pass",
-			"detail": "no successful env=host run is on record"
+			"packet_id": "<packet-id>-promote-guard-ab12cd34",
+			"detail": "Packet <packet-id>-promote-guard-ab12cd34 cannot be promoted: no successful env=host run is on record."
 		},
 		"jobs_start_run": {
 			"status": "pass",
-			"run_id": "run_sandbox_123",
-			"env": "sandbox"
+			"run": {
+				"run_id": "run_sandbox_123",
+				"env": "sandbox",
+				"service": "ai-workflow",
+				"packet_id": "<packet-id>",
+				"status": "running",
+				"created_at": "2026-05-10T19:00:00Z"
+			}
 		},
 		"jobs_end_run": {
 			"status": "pass",
-			"run_id": "run_sandbox_123",
-			"final_status": "success"
+			"run": {
+				"run_id": "run_sandbox_123",
+				"env": "sandbox",
+				"service": "ai-workflow",
+				"packet_id": "<packet-id>",
+				"status": "success",
+				"created_at": "2026-05-10T19:00:00Z",
+				"notes": "minimal-mcp-trio verification",
+				"completed_at": "2026-05-10T19:00:10Z"
+			}
 		}
 	},
 	"result": "PASS"
