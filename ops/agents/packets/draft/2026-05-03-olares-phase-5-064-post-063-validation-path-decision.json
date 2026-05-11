@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-05-03-olares-phase-5-064",
-  "title": "Post-063 Validation Path Decision",
+  "title": "Historical Post-063 Validation Path Decision",
+  "historical_note": "This packet records one bounded Olares Phase 5 post-063 validation-path decision slice from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live execution instruction for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this packet JSON only when historical provenance is needed for the earlier `olares-phase-5-064` post-063 validation-path decision slice"
+  ],
   "objective": "Decide the validation path for the unpublished Packet 063 host artifact without executing new source edits, widening the mutation slice, opening a second mutation worker, publishing, or reconciling the host mirror.",
   "domain": "infrastructure-domain",
   "active_role": "Olares Post-Artifact Validation Path Decision Operator",

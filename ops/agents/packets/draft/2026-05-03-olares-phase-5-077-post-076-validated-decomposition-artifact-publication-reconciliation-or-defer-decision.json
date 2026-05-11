@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-05-03-olares-phase-5-077",
-  "title": "Post-076 Validated Decomposition Artifact Publication Reconciliation Or Defer Decision",
+  "title": "Historical Post-076 Validated Decomposition Artifact Publication Reconciliation Or Defer Decision",
+  "historical_note": "This packet records one bounded Olares Phase 5 post-validation publication-decision slice for the validated decomposition artifact from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live execution instruction for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this packet JSON only when historical provenance is needed for the earlier `olares-phase-5-077` validated-decomposition publication decision"
+  ],
   "objective": "Decide whether the validated Packet 075 test-surface decomposition artifact should proceed to bounded publication and host reconciliation or be deferred, without publishing or reconciling inside this decision packet.",
   "domain": "infrastructure-domain",
   "active_role": "Olares Publication Decision Operator",
