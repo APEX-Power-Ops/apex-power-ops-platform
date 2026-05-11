@@ -76,9 +76,10 @@ is_running() {
   kill -0 "${pid}" >/dev/null 2>&1
 }
 
-is_healthy() {
-  local port="$1"
-  curl -fsS "http://127.0.0.1:${port}/health" >/dev/null 2>&1
+is_mcp_ready() {
+  local endpoint="$1"
+  local payload='{"jsonrpc":"2.0","id":0,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"minimal-mcp-trio","version":"0.1.0"}}}'
+  curl -fsS -X POST -H 'Content-Type: application/json' --data "${payload}" "${endpoint}" >/dev/null 2>&1
 }
 
 start_process() {
@@ -95,7 +96,7 @@ case "${action}" in
       exit 0
     fi
 
-    if is_healthy "${fs_port}" && is_healthy "${db_port}" && is_healthy "${jobs_port}"; then
+    if is_mcp_ready "${fs_endpoint}" && is_mcp_ready "${db_endpoint}" && is_mcp_ready "${jobs_endpoint}"; then
       if ownership_probe="$(${repo_python} tools/ai/check_apex_fs_ownership.py --fs-url "${fs_endpoint}" --expected-workspace-root "${repo_root}" --expected-readme-path "${repo_root}/README.md")"; then
         :
       else
@@ -155,7 +156,7 @@ EOF
     ;;
   status)
     if ! load_state; then
-      if is_healthy "${fs_port}" && is_healthy "${db_port}" && is_healthy "${jobs_port}"; then
+      if is_mcp_ready "${fs_endpoint}" && is_mcp_ready "${db_endpoint}" && is_mcp_ready "${jobs_endpoint}"; then
         cat <<EOF
 {"status":"unmanaged-running","mode":"unmanaged","fs_running":true,"db_running":true,"jobs_running":true,"ledger_path":"${ledger_path}","fs_endpoint":"${fs_endpoint}","db_endpoint":"${db_endpoint}","jobs_endpoint":"${jobs_endpoint}"}
 EOF
@@ -172,7 +173,7 @@ EOF
     fi
 
     cat <<EOF
-{"status":"${status_value}","started_at":"${STARTED_AT}","packet_id":"${PACKET_ID}","mode":"${MODE:-managed}","fs_running":$(if [[ "${MODE:-managed}" == "adopted" ]]; then is_healthy "${fs_port}" && printf true || printf false; else is_running "${FS_PID:-}" && printf true || printf false; fi),"db_running":$(if [[ "${MODE:-managed}" == "adopted" ]]; then is_healthy "${db_port}" && printf true || printf false; else is_running "${DB_PID:-}" && printf true || printf false; fi),"jobs_running":$(if [[ "${MODE:-managed}" == "adopted" ]]; then is_healthy "${jobs_port}" && printf true || printf false; else is_running "${JOBS_PID:-}" && printf true || printf false; fi),"ledger_path":"${LEDGER_PATH}","fs_endpoint":"${FS_ENDPOINT:-${fs_endpoint}}","db_endpoint":"${DB_ENDPOINT:-${db_endpoint}}","jobs_endpoint":"${JOBS_ENDPOINT:-${jobs_endpoint}}"}
+{"status":"${status_value}","started_at":"${STARTED_AT}","packet_id":"${PACKET_ID}","mode":"${MODE:-managed}","fs_running":$(if [[ "${MODE:-managed}" == "adopted" ]]; then is_mcp_ready "${FS_ENDPOINT:-${fs_endpoint}}" && printf true || printf false; else is_running "${FS_PID:-}" && printf true || printf false; fi),"db_running":$(if [[ "${MODE:-managed}" == "adopted" ]]; then is_mcp_ready "${DB_ENDPOINT:-${db_endpoint}}" && printf true || printf false; else is_running "${DB_PID:-}" && printf true || printf false; fi),"jobs_running":$(if [[ "${MODE:-managed}" == "adopted" ]]; then is_mcp_ready "${JOBS_ENDPOINT:-${jobs_endpoint}}" && printf true || printf false; else is_running "${JOBS_PID:-}" && printf true || printf false; fi),"ledger_path":"${LEDGER_PATH}","fs_endpoint":"${FS_ENDPOINT:-${fs_endpoint}}","db_endpoint":"${DB_ENDPOINT:-${db_endpoint}}","jobs_endpoint":"${JOBS_ENDPOINT:-${jobs_endpoint}}"}
 EOF
     ;;
   verify)

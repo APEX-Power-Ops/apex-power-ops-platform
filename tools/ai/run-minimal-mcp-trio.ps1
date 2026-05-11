@@ -112,9 +112,23 @@ function Invoke-Verify {
   & $repoPython @verifyArgs
 }
 
-function Test-HealthyEndpoint([string]$Url) {
+function Test-McpEndpoint([string]$Url) {
   try {
-    Invoke-WebRequest -Uri $Url -UseBasicParsing | Out-Null
+    $payload = @{
+      jsonrpc = '2.0'
+      id = 0
+      method = 'initialize'
+      params = @{
+        protocolVersion = '2025-03-26'
+        capabilities = @{}
+        clientInfo = @{
+          name = 'minimal-mcp-trio'
+          version = '0.1.0'
+        }
+      }
+    } | ConvertTo-Json -Depth 5 -Compress
+
+    Invoke-WebRequest -Uri $Url -Method Post -ContentType 'application/json' -Body $payload -UseBasicParsing | Out-Null
     return $true
   }
   catch {
@@ -139,9 +153,9 @@ switch ($Action) {
       }
     }
 
-    if ((Test-HealthyEndpoint "http://127.0.0.1:$fsPort/health") -and
-      (Test-HealthyEndpoint "http://127.0.0.1:$dbPort/health") -and
-      (Test-HealthyEndpoint "http://127.0.0.1:$jobsPort/health")) {
+    if ((Test-McpEndpoint $fsEndpoint) -and
+      (Test-McpEndpoint $dbEndpoint) -and
+      (Test-McpEndpoint $jobsEndpoint)) {
       $ownershipArgs = @(
         'tools/ai/check_apex_fs_ownership.py',
         '--fs-url', $fsEndpoint,
@@ -215,9 +229,9 @@ switch ($Action) {
   'status' {
     $existing = Read-State
     if ($null -eq $existing) {
-        if ((Test-HealthyEndpoint "http://127.0.0.1:$fsPort/health") -and
-          (Test-HealthyEndpoint "http://127.0.0.1:$dbPort/health") -and
-          (Test-HealthyEndpoint "http://127.0.0.1:$jobsPort/health")) {
+        if ((Test-McpEndpoint $fsEndpoint) -and
+          (Test-McpEndpoint $dbEndpoint) -and
+          (Test-McpEndpoint $jobsEndpoint)) {
         $unmanaged = [ordered]@{
           status = 'unmanaged-running'
           mode = 'unmanaged'
