@@ -13,8 +13,9 @@ Use this brief with:
 1. `../../PROJECT_STATUS.md` for the latest completed packet frontier,
 2. `../../plan/infrastructure-olares-full-implementation-roadmap-1.md` for the maintained closeout baseline,
 3. `../architecture/OLARES-AI-ORCHESTRATION-DECISION-SURFACE-2026-05-07.md` for the current admitted AI workflow decisions,
-4. `../authority/OLARES-AI-BACKBONE-FRAMEWORK-2026-05-08.md` for the scaffold-versus-hardening boundary,
-5. `../../plan/Olares_MVP_Execution_Roadmap.md` for the original five-part MVP sequencing context.
+4. `../../plan/OLARES-AI-ORCHESTRATION-EXECUTION-PLAN-2026-05-10.md` for the active phase order, exit gates, and stop conditions,
+5. `../authority/OLARES-AI-BACKBONE-FRAMEWORK-2026-05-08.md` for the scaffold-versus-hardening boundary,
+6. `../../plan/Olares_MVP_Execution_Roadmap.md` for the original five-part MVP sequencing context.
 
 ## Interpretation Rule
 
@@ -103,7 +104,8 @@ It is not yet approved for:
 3. Treat scaffold authoring as the owner of shell structure and the parallel hardening lane as the owner of trust and evidence contracts.
 4. Prefer docs, tests, contract notes, checklist surfaces, and non-destructive skeleton wiring over shared implementation edits when work is split across lanes.
 5. Keep `env=host` evidence as the promotion gate so bounded parallel work remains truthful instead of speculative.
-6. Open any wider lane only from concrete operator insufficiency or a separately authorized packet that explicitly names the new boundary.
+6. Use `../../plan/OLARES-AI-ORCHESTRATION-EXECUTION-PLAN-2026-05-10.md` as the default next-step sequence for new bounded slices.
+7. Open any wider lane only from concrete operator insufficiency or a separately authorized packet that explicitly names the new boundary.
 
 ## Current Recommendation
 

@@ -15,9 +15,10 @@ Use this file with:
 1. `OLARES-AI-WORKFLOW-FIRST-SLICE-RUNBOOK-2026-05-06.md` for operator commands and trust-boundary execution,
 2. `../authority/OLARES-AI-BACKBONE-FRAMEWORK-2026-05-08.md` for the bounded backbone-design and scaffold-authoring rules,
 3. `../operations/OLARES-MVP-AI-ORCHESTRATION-STATUS-BRIEF-2026-05-10.md` for the compact five-part MVP and current AI-lane status readout,
-4. `../operations/OLARES-AI-PARALLEL-TASK-READINESS-CHECKLIST-2026-05-10.md` for the bounded next-step checklist toward controlled parallel task ability,
-5. `control-plane-lineage/apex-resa/AI_ORCHESTRATION_PROTOCOL.md` as the broader protocol and future-bridge reference,
-6. packet and handoff evidence under `ops/agents/` for bounded execution history.
+4. `../../plan/OLARES-AI-ORCHESTRATION-EXECUTION-PLAN-2026-05-10.md` for the active phase order, execution sequence, and widening gate,
+5. `../operations/OLARES-AI-PARALLEL-TASK-READINESS-CHECKLIST-2026-05-10.md` for the bounded next-step checklist toward controlled parallel task ability,
+6. `control-plane-lineage/apex-resa/AI_ORCHESTRATION_PROTOCOL.md` as the broader protocol and future-bridge reference,
+7. packet and handoff evidence under `ops/agents/` for bounded execution history.
 
 Do not use parent-root `.claude/DECISION_LOG.md` as the preferred current authority surface once this file answers the question.
 
