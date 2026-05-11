@@ -107,6 +107,16 @@ if [[ "${minimal_ready}" == "true" ]]; then
 else
     hold_minimal_mcp="NOT_RUNNING"
     hold_decision="minimal_mcp_not_running"
+    hold_minimal_mcp_detail="$({
+        "${repo_python}" - <<'PY' "${minimal_status_file}"
+import json
+import sys
+from pathlib import Path
+
+payload = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+print(json.dumps(payload, separators=(",", ":")))
+PY
+    })"
 
     if [[ "${minimal_mode}" == "unmanaged-running" ]]; then
         hold_minimal_mcp="UNMANAGED_RUNNING"
@@ -117,6 +127,7 @@ else
 {
   "packet_id": "status-only",
     "minimal_mcp": "${hold_minimal_mcp}",
+    "minimal_mcp_detail": ${hold_minimal_mcp_detail},
   "deferred_ops": "UNAVAILABLE",
     "deferred_ops_decision": "${hold_decision}",
   "outputs": {}
