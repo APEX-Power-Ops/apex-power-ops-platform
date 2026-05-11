@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-05-03-olares-phase-5-042",
-  "title": "Bounded Workstation Mirror Validation Of Packet 040 Source Artifact",
+  "title": "Historical Bounded Workstation Mirror Validation Of Packet 040 Source Artifact",
+  "historical_note": "This packet records one bounded Olares Phase 5 workstation mirror-validation slice for the Packet 040 source artifact from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live execution instruction for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this packet JSON only when historical provenance is needed for the earlier `olares-phase-5-042` workstation mirror-validation slice for the Packet 040 source artifact"
+  ],
   "objective": "Mirror exactly the Packet 040 two-file host-side apparatus clear-state source/test artifact into the workstation repo and validate it with existing workstation dependencies only, without publishing the artifact or reopening migration.",
   "domain": "infrastructure-domain",
   "active_role": "Olares Bounded Workstation Source Artifact Validator",
