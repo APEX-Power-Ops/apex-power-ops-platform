@@ -1,6 +1,6 @@
 {
   "apex-fs": {
-    "endpoint": "http://127.0.0.1:8710/mcp",
+    "endpoint": "http://127.0.0.1:8810/mcp",
     "tools": [
       "list_roots",
       "list_directory",
@@ -8,7 +8,7 @@
     ]
   },
   "apex-db": {
-    "endpoint": "http://127.0.0.1:8711/mcp",
+    "endpoint": "http://127.0.0.1:8811/mcp",
     "tools": [
       "list_tables",
       "describe_table",
@@ -16,7 +16,7 @@
     ]
   },
   "apex-jobs": {
-    "endpoint": "http://127.0.0.1:8712/mcp",
+    "endpoint": "http://127.0.0.1:8812/mcp",
     "tools": [
       "start_run",
       "end_run",
