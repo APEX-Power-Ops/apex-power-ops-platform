@@ -129,7 +129,7 @@ The hold-boundary wrapper combines two bounded checks:
 
 The deferred-view helper prefers an explicit live DSN when one is intentionally supplied because the local `.env.dev` contract is a developer database and is not authoritative for the live `09` tranche hold decision.
 
-The PowerShell wrapper now uses that explicit live DSN through the repo venv's direct Python database path.
+The PowerShell wrapper first uses that explicit live DSN through the repo venv's direct Python database path when `sqlalchemy` is available; if not, it now mirrors the Bash wrapper by attempting a temporary local `apex-db` MCP bridge on the dedicated hold-boundary port when the current mirror contains a runnable `services/mcp/apex-db` build.
 
 The Bash wrapper first tries the same direct path when host Python can import `sqlalchemy`; if not, it only attempts a temporary live `apex-db` sidecar when the current mirror actually contains a runnable `services/mcp/apex-db` source tree.
 
@@ -137,7 +137,7 @@ If no live DSN is present, the helper returns `UNAVAILABLE` rather than a false 
 
 When emitted, the minimal-trio verifier artifact stays in `tests/canary/mcp-contract/actual/verify-minimal-mcp-trio-<packet-id>.json` and the deferred-view helper now writes repo-visible JSON output to `tests/canary/deferred-ops-view-counts/actual/deferred-ops-view-counts-<packet-id>.json` instead of leaving that evidence only under `.tmp/ai-workflow/`.
 
-If a live DSN is present but the current host posture lacks every usable live-query engine, the Bash wrapper also degrades back to `UNAVAILABLE` instead of failing. That is the current truthful host posture on `/home/olares/code/apex/apex-power-ops-platform`.
+If a live DSN is present but the current host posture lacks every usable live-query engine, the wrapper degrades back to `UNAVAILABLE` instead of failing. That is the current truthful host posture on `/home/olares/code/apex/apex-power-ops-platform`.
 
 Packet 058 established the current authoritative verdict from the workstation posture against a governed live Supabase DSN: both deferred views still have `0` rows, so the hold decision remains `HOLD` rather than `REOPEN`.
 
