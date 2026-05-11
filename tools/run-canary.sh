@@ -7,6 +7,31 @@ repo_root="$(get_apex_repo_root)"
 import_apex_env_file
 repo_python="$(get_apex_preferred_python)"
 
+forms_runtime_port="${APEX_DEV_FORMS_ENGINE_PORT:-8080}"
+p6_runtime_port="${APEX_DEV_P6_INGEST_PORT:-8081}"
+fs_mcp_port="${APEX_DEV_MCP_FS_PORT:-8810}"
+db_mcp_port="${APEX_DEV_MCP_DB_PORT:-8811}"
+jobs_mcp_port="${APEX_DEV_MCP_JOBS_PORT:-8812}"
+p6_mcp_port="${APEX_DEV_MCP_P6_PORT:-8713}"
+forms_mcp_port="${APEX_DEV_MCP_FORMS_PORT:-8714}"
+
+wait_apex_endpoint() {
+  local name="$1"
+  local url="$2"
+  local attempt
+
+  for attempt in $(seq 1 30); do
+    if curl -fsS "${url}" >/dev/null 2>&1; then
+      return 0
+    fi
+
+    sleep 0.5
+  done
+
+  printf '%s\n' "Timed out waiting for ${name} at ${url}" >&2
+  return 1
+}
+
 cleanup() {
   for pid in "${pids[@]:-}"; do
     if kill -0 "$pid" >/dev/null 2>&1; then
@@ -82,7 +107,13 @@ pids+=("$!")
 ) &
 pids+=("$!")
 
-sleep 3
+wait_apex_endpoint "forms runtime" "http://127.0.0.1:${forms_runtime_port}/health"
+wait_apex_endpoint "p6 runtime" "http://127.0.0.1:${p6_runtime_port}/health"
+wait_apex_endpoint "apex-fs MCP transport" "http://127.0.0.1:${fs_mcp_port}/mcp"
+wait_apex_endpoint "apex-db MCP transport" "http://127.0.0.1:${db_mcp_port}/mcp"
+wait_apex_endpoint "apex-jobs MCP transport" "http://127.0.0.1:${jobs_mcp_port}/mcp"
+wait_apex_endpoint "apex-p6 MCP transport" "http://127.0.0.1:${p6_mcp_port}/mcp"
+wait_apex_endpoint "apex-forms MCP transport" "http://127.0.0.1:${forms_mcp_port}/mcp"
 
 cd "${repo_root}"
 "${repo_python}" tools/canary/run_canary.py

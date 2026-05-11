@@ -9,6 +9,38 @@ $repoPython = Get-ApexRepoPython
 
 $processes = @()
 
+function Test-HealthyEndpoint {
+  param(
+    [string]$Url
+  )
+
+  try {
+    Invoke-WebRequest -Uri $Url -UseBasicParsing | Out-Null
+    return $true
+  }
+  catch {
+    return $false
+  }
+}
+
+function Wait-ApexEndpoint {
+  param(
+    [string]$Name,
+    [string]$Url,
+    [int]$MaxAttempts = 30
+  )
+
+  for ($attempt = 1; $attempt -le $MaxAttempts; $attempt++) {
+    if (Test-HealthyEndpoint $Url) {
+      return
+    }
+
+    Start-Sleep -Milliseconds 500
+  }
+
+  throw "Timed out waiting for $Name at $Url"
+}
+
 function Start-ApexBackgroundProcess {
   param(
     [string]$FilePath,
@@ -35,6 +67,14 @@ try {
   $formsArtifacts = Join-Path $repoRoot '.tmp/forms-engine/artifacts'
   $p6Artifacts = Join-Path $repoRoot '.tmp/p6-ingest/artifacts'
   New-Item -ItemType Directory -Force -Path $formsTemplates, $formsArtifacts, $p6Artifacts | Out-Null
+
+  $formsRuntimePort = if ($env:APEX_DEV_FORMS_ENGINE_PORT) { $env:APEX_DEV_FORMS_ENGINE_PORT } else { '8080' }
+  $p6RuntimePort = if ($env:APEX_DEV_P6_INGEST_PORT) { $env:APEX_DEV_P6_INGEST_PORT } else { '8081' }
+  $fsMcpPort = if ($env:APEX_DEV_MCP_FS_PORT) { $env:APEX_DEV_MCP_FS_PORT } else { '8810' }
+  $dbMcpPort = if ($env:APEX_DEV_MCP_DB_PORT) { $env:APEX_DEV_MCP_DB_PORT } else { '8811' }
+  $jobsMcpPort = if ($env:APEX_DEV_MCP_JOBS_PORT) { $env:APEX_DEV_MCP_JOBS_PORT } else { '8812' }
+  $p6McpPort = if ($env:APEX_DEV_MCP_P6_PORT) { $env:APEX_DEV_MCP_P6_PORT } else { '8713' }
+  $formsMcpPort = if ($env:APEX_DEV_MCP_FORMS_PORT) { $env:APEX_DEV_MCP_FORMS_PORT } else { '8714' }
 
   Start-ApexBackgroundProcess -FilePath $repoPython -ArgumentList @('-m', 'apex_forms_engine.runtime') -Environment @{
     'PYTHONPATH' = 'packages/forms-engine/src'
@@ -77,7 +117,13 @@ try {
     'APEX_P6_RUNTIME_URL' = "http://127.0.0.1:$($env:APEX_DEV_P6_INGEST_PORT)"
   }
 
-  Start-Sleep -Seconds 3
+  Wait-ApexEndpoint -Name 'forms runtime' -Url "http://127.0.0.1:$formsRuntimePort/health"
+  Wait-ApexEndpoint -Name 'p6 runtime' -Url "http://127.0.0.1:$p6RuntimePort/health"
+  Wait-ApexEndpoint -Name 'apex-fs MCP transport' -Url "http://127.0.0.1:$fsMcpPort/mcp"
+  Wait-ApexEndpoint -Name 'apex-db MCP transport' -Url "http://127.0.0.1:$dbMcpPort/mcp"
+  Wait-ApexEndpoint -Name 'apex-jobs MCP transport' -Url "http://127.0.0.1:$jobsMcpPort/mcp"
+  Wait-ApexEndpoint -Name 'apex-p6 MCP transport' -Url "http://127.0.0.1:$p6McpPort/mcp"
+  Wait-ApexEndpoint -Name 'apex-forms MCP transport' -Url "http://127.0.0.1:$formsMcpPort/mcp"
 
   & $repoPython 'tools/canary/run_canary.py'
 }
