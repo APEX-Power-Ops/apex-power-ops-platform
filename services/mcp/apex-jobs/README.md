@@ -13,9 +13,9 @@ Generated `build/` output is local runtime material, not the authoritative sourc
 
 ## Current Tool Surface
 
-- `start_run`: records a new run with `env`, `service`, and optional `packet_id`.
-- `end_run`: closes a run with final status and optional notes.
-- `list_runs`: filters the run ledger by env, service, packet, status, or time.
+- `start_run`: records a new run with required `env` and `service`, and optional `packet_id`; env must be `sandbox` or `host`.
+- `end_run`: closes a run with final status and optional notes; status must be `success`, `failure`, or `canceled`.
+- `list_runs`: filters the run ledger by env, service, packet, status, or time; invalid env, status, or `since` filters are refused.
 - `promote_packet`: refuses unless at least one successful `env=host` run exists for the packet.
 
 ## Build

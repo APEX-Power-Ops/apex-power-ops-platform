@@ -10,8 +10,20 @@ import {
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 
-type RunEnv = "sandbox" | "host";
-type RunStatus = "running" | "success" | "failure" | "canceled";
+import {
+  optionalPacketId,
+  optionalRunEnv,
+  optionalRunStatus,
+  optionalService,
+  optionalSince,
+  requireClosedRunStatus,
+  requirePacketId,
+  requireRunEnv,
+  requireRunId,
+  requireService,
+  type RunEnv,
+  type RunStatus,
+} from "./validation.js";
 
 type LedgerRun = {
   run_id: string;
@@ -178,13 +190,13 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
   try {
     const args = (request.params.arguments ?? {}) as {
-      env?: RunEnv;
-      service?: string;
-      packet_id?: string;
-      run_id?: string;
-      status?: Exclude<RunStatus, "running">;
+      env?: unknown;
+      service?: unknown;
+      packet_id?: unknown;
+      run_id?: unknown;
+      status?: unknown;
       notes?: string;
-      since?: string;
+      since?: unknown;
     };
 
     switch (request.params.name) {
@@ -192,9 +204,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const ledger = await ensureLedger();
         const run: LedgerRun = {
           run_id: createRunId(),
-          env: args.env ?? "sandbox",
-          service: args.service ?? "unknown",
-          packet_id: args.packet_id,
+          env: requireRunEnv(args.env),
+          service: requireService(args.service),
+          packet_id: optionalPacketId(args.packet_id),
           status: "running",
           created_at: new Date().toISOString(),
         };
@@ -207,13 +219,14 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
       case "end_run": {
         const ledger = await ensureLedger();
-        const run = ledger.runs.find((entry) => entry.run_id === args.run_id);
+        const runId = requireRunId(args.run_id);
+        const run = ledger.runs.find((entry) => entry.run_id === runId);
 
         if (!run) {
-          throw new Error(`Run not found: ${String(args.run_id)}`);
+          throw new Error(`Run not found: ${runId}`);
         }
 
-        run.status = args.status ?? "failure";
+        run.status = requireClosedRunStatus(args.status);
         run.notes = args.notes;
         run.completed_at = new Date().toISOString();
         await writeLedger(ledger);
@@ -224,12 +237,16 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
       case "list_runs": {
         const ledger = await ensureLedger();
-        const since = args.since ? new Date(String(args.since)).toISOString() : null;
+        const env = optionalRunEnv(args.env);
+        const service = optionalService(args.service);
+        const packetId = optionalPacketId(args.packet_id);
+        const status = optionalRunStatus(args.status);
+        const since = optionalSince(args.since);
         const runs = ledger.runs.filter((run) => {
-          if (args.env && run.env !== args.env) return false;
-          if (args.service && run.service !== args.service) return false;
-          if (args.packet_id && run.packet_id !== args.packet_id) return false;
-          if (args.status && run.status !== args.status) return false;
+          if (env && run.env !== env) return false;
+          if (service && run.service !== service) return false;
+          if (packetId && run.packet_id !== packetId) return false;
+          if (status && run.status !== status) return false;
           if (since && run.created_at < since) return false;
           return true;
         });
@@ -240,11 +257,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
 
       case "promote_packet": {
-        const packetId = args.packet_id;
-
-        if (!packetId) {
-          throw new Error("packet_id is required");
-        }
+        const packetId = requirePacketId(args.packet_id);
 
         const ledger = await ensureLedger();
         const supportingRuns = ledger.runs.filter(

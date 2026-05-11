@@ -4,8 +4,21 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
-type RunEnv = "sandbox" | "host";
-type RunStatus = "running" | "success" | "failure" | "canceled";
+import {
+  optionalPacketId,
+  optionalRunEnv,
+  optionalRunStatus,
+  optionalService,
+  optionalSince,
+  requireClosedRunStatus,
+  requirePacketId,
+  requireRunEnv,
+  requireRunId,
+  requireService,
+  type RunEnv,
+  type RunStatus,
+  type ToolArgs,
+} from "./validation.js";
 
 type LedgerRun = {
   run_id: string;
@@ -27,16 +40,6 @@ type LedgerPromotion = {
 type Ledger = {
   runs: LedgerRun[];
   promotions: LedgerPromotion[];
-};
-
-type ToolArgs = {
-  env?: RunEnv;
-  service?: string;
-  packet_id?: string;
-  run_id?: string;
-  status?: Exclude<RunStatus, "running">;
-  notes?: string;
-  since?: string;
 };
 
 function expandHome(value: string): string {
@@ -139,9 +142,9 @@ async function callTool(name: string, args: ToolArgs): Promise<LedgerRun | Ledge
       const ledger = await ensureLedger();
       const run: LedgerRun = {
         run_id: createRunId(),
-        env: args.env ?? "sandbox",
-        service: args.service ?? "unknown",
-        packet_id: args.packet_id,
+        env: requireRunEnv(args.env),
+        service: requireService(args.service),
+        packet_id: optionalPacketId(args.packet_id),
         status: "running",
         created_at: new Date().toISOString(),
       };
@@ -152,13 +155,14 @@ async function callTool(name: string, args: ToolArgs): Promise<LedgerRun | Ledge
 
     case "end_run": {
       const ledger = await ensureLedger();
-      const run = ledger.runs.find((entry) => entry.run_id === args.run_id);
+      const runId = requireRunId(args.run_id);
+      const run = ledger.runs.find((entry) => entry.run_id === runId);
 
       if (!run) {
-        throw new Error(`Run not found: ${String(args.run_id)}`);
+        throw new Error(`Run not found: ${runId}`);
       }
 
-      run.status = args.status ?? "failure";
+      run.status = requireClosedRunStatus(args.status);
       run.notes = args.notes;
       run.completed_at = new Date().toISOString();
       await writeLedger(ledger);
@@ -167,12 +171,16 @@ async function callTool(name: string, args: ToolArgs): Promise<LedgerRun | Ledge
 
     case "list_runs": {
       const ledger = await ensureLedger();
-      const since = args.since ? new Date(String(args.since)).toISOString() : null;
+      const env = optionalRunEnv(args.env);
+      const service = optionalService(args.service);
+      const packetId = optionalPacketId(args.packet_id);
+      const status = optionalRunStatus(args.status);
+      const since = optionalSince(args.since);
       const runs = ledger.runs.filter((run) => {
-        if (args.env && run.env !== args.env) return false;
-        if (args.service && run.service !== args.service) return false;
-        if (args.packet_id && run.packet_id !== args.packet_id) return false;
-        if (args.status && run.status !== args.status) return false;
+        if (env && run.env !== env) return false;
+        if (service && run.service !== service) return false;
+        if (packetId && run.packet_id !== packetId) return false;
+        if (status && run.status !== status) return false;
         if (since && run.created_at < since) return false;
         return true;
       });
@@ -180,11 +188,7 @@ async function callTool(name: string, args: ToolArgs): Promise<LedgerRun | Ledge
     }
 
     case "promote_packet": {
-      const packetId = args.packet_id;
-
-      if (!packetId) {
-        throw new Error("packet_id is required");
-      }
+      const packetId = requirePacketId(args.packet_id);
 
       const ledger = await ensureLedger();
       const supportingRuns = ledger.runs.filter(
