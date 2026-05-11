@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-05-03-olares-phase-5-024",
-  "title": "Post-023 Test Artifact Publication Or Rollback Decision",
+  "title": "Historical Post-023 Test Artifact Publication Or Rollback Decision",
+  "historical_note": "This packet records one bounded Olares Phase 5 post-trial publication-or-rollback decision slice from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live execution instruction for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this packet JSON only when historical provenance is needed for the earlier `olares-phase-5-024` post-trial publication-or-rollback decision slice"
+  ],
   "objective": "Decide whether the Packet 023 host-side operations-web test-only artifact should be published through the parent-root authority path or reverted/deferred, without treating the trial as migration approval or mutating runtime, services, packages, production source, remotes, or the preserved old clone.",
   "domain": "infrastructure-domain",
   "active_role": "Olares Host Test Artifact Decision Operator",

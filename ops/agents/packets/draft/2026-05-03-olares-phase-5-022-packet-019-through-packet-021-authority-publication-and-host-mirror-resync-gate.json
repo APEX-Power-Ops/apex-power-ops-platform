@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-05-03-olares-phase-5-022",
-  "title": "Packet 019 Through Packet 021 Authority Publication And Host Mirror Resync Gate",
+  "title": "Historical Packet 019 Through Packet 021 Authority Publication And Host Mirror Resync Gate",
+  "historical_note": "This packet records one bounded Olares Phase 5 authority-publication and host-mirror resync-gate slice from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live execution instruction for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this packet JSON only when historical provenance is needed for the earlier `olares-phase-5-022` authority-publication and host-mirror resync-gate slice"
+  ],
   "objective": "Publish the bounded local Packet 019, Packet 020, and Packet 021 closure authority set through `C:/APEX Platform`, excluding unrelated `.vercelignore` and any non-authority work, then fast-forward-only synchronize `/home/olares/code/apex` to the resulting governing commit so the clean host mirror carries the Packet 021 planning record before any later host-side test-only execution packet depends on it.",
   "domain": "infrastructure-domain",
   "active_role": "Olares Post-021 Authority Publication Operator",

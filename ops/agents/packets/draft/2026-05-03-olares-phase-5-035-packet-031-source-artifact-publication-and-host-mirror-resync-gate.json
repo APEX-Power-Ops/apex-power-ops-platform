@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-05-03-olares-phase-5-035",
-  "title": "Packet 031 Source Artifact Publication And Host Mirror Resync Gate",
+  "title": "Historical Packet 031 Source Artifact Publication And Host Mirror Resync Gate",
+  "historical_note": "This packet records one bounded Olares Phase 5 source-artifact publication and host-mirror resync-gate slice from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live execution instruction for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this packet JSON only when historical provenance is needed for the earlier `olares-phase-5-035` source-artifact publication and host-mirror resync-gate slice"
+  ],
   "objective": "Publish the validated Packet 031 two-file source artifact and required Packet 030 through Packet 034 authority surfaces through the parent-root boundary, then reconcile and resynchronize `/home/olares/code/apex` non-destructively to the published commit.",
   "domain": "infrastructure-domain",
   "active_role": "Olares Packet 031 Source Artifact Publication Gate Operator",

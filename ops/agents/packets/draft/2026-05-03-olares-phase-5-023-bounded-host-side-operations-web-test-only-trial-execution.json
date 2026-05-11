@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-05-03-olares-phase-5-023",
-  "title": "Bounded Host-Side Operations-Web Test-Only Trial Execution",
+  "title": "Historical Bounded Host-Side Operations-Web Test-Only Trial Execution",
+  "historical_note": "This packet records one bounded Olares Phase 5 host-side operations-web test-only trial slice from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live execution instruction for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this packet JSON only when historical provenance is needed for the earlier `olares-phase-5-023` host-side operations-web test-only trial slice"
+  ],
   "objective": "Execute the Packet 021-selected one-file test-only host-side trial from `/home/olares/code/apex/apex-power-ops-platform` by editing only `apps/operations-web/tests/browser-shell.smoke.spec.ts` to add smoke coverage for the advertised PM schedule, upstream tracer, and variance static surfaces, after verifying Packet 022 authority publication and host-mirror synchronization remain clean.",
   "domain": "infrastructure-domain",
   "active_role": "Olares Bounded Host-Side Test Trial Operator",
