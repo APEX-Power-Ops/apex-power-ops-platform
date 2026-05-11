@@ -17,9 +17,16 @@ Import-ApexEnvFile
 $repoPython = Get-ApexRepoPython
 
 $stateDir = Join-Path $repoRoot '.tmp/ai-workflow'
+$logDir = Join-Path $stateDir 'logs'
 $mcpContractActualDir = Join-Path $repoRoot 'tests/canary/mcp-contract/actual'
 $deferredOpsActualDir = Join-Path $repoRoot 'tests/canary/deferred-ops-view-counts/actual'
+$liveDbPort = if ($env:APEX_HOLD_BOUNDARY_DB_PORT) { $env:APEX_HOLD_BOUNDARY_DB_PORT } else { '8721' }
+$liveDbUrl = "http://127.0.0.1:$liveDbPort/mcp"
+$liveDbRoot = Join-Path $repoRoot 'services/mcp/apex-db'
+$liveDbLog = Join-Path $logDir 'live-hold-boundary-db.log'
+$liveDbProcess = $null
 New-Item -ItemType Directory -Force -Path $stateDir | Out-Null
+New-Item -ItemType Directory -Force -Path $logDir | Out-Null
 New-Item -ItemType Directory -Force -Path $mcpContractActualDir | Out-Null
 New-Item -ItemType Directory -Force -Path $deferredOpsActualDir | Out-Null
 
@@ -34,6 +41,32 @@ if ($DsnEnv) {
   $env:SEAM_DATABASE_URL = $dsnValue
 }
 
+function Test-HealthyEndpoint([string]$Url) {
+  try {
+    Invoke-WebRequest -Uri $Url -UseBasicParsing | Out-Null
+    return $true
+  }
+  catch {
+    return $false
+  }
+}
+
+function Test-RepoPythonModule([string]$ModuleName) {
+  & $repoPython '-c' "import $ModuleName" | Out-Null
+  return $LASTEXITCODE -eq 0
+}
+
+function Start-LiveHoldBoundaryDb {
+  $command = @(
+    "`$env:APEX_MCP_HTTP_PORT = '$liveDbPort'",
+    "`$env:APEX_DB_CONNECTION_STRING = '$($env:SEAM_DATABASE_URL)'",
+    "Set-Location '$liveDbRoot'",
+    "& 'node' 'build/http.js' *>> '$liveDbLog'"
+  )
+
+  return Start-Process pwsh -ArgumentList '-NoProfile', '-Command', ($command -join '; ') -PassThru
+}
+
 & (Join-Path $PSScriptRoot 'run-minimal-mcp-trio.ps1') -Action verify -PacketId $PacketId | Out-Null
 
 $holdArgs = @(
@@ -43,10 +76,36 @@ $holdArgs = @(
 )
 
 if ($DsnEnv) {
-  $holdArgs += @('--db-connection-string-env', 'SEAM_DATABASE_URL')
+  if (Test-RepoPythonModule 'sqlalchemy') {
+    $holdArgs += @('--db-connection-string-env', 'SEAM_DATABASE_URL')
+  }
+  elseif (Test-Path (Join-Path $liveDbRoot 'build/http.js')) {
+    $liveDbProcess = Start-LiveHoldBoundaryDb
+
+    for ($attempt = 1; $attempt -le 30; $attempt++) {
+      if (Test-HealthyEndpoint "http://127.0.0.1:$liveDbPort/health") {
+        break
+      }
+
+      if ($attempt -eq 30) {
+        throw "Timed out waiting for live hold-boundary apex-db on port $liveDbPort."
+      }
+
+      Start-Sleep -Milliseconds 500
+    }
+
+    $holdArgs += @('--db-url', $liveDbUrl)
+  }
 }
 
-& $repoPython @holdArgs | Out-Null
+try {
+  & $repoPython @holdArgs | Out-Null
+}
+finally {
+  if ($null -ne $liveDbProcess -and -not $liveDbProcess.HasExited) {
+    Stop-Process -Id $liveDbProcess.Id -Force
+  }
+}
 
 $minimal = Get-Content $minimalOutput -Raw | ConvertFrom-Json
 $hold = Get-Content $holdOutput -Raw | ConvertFrom-Json
