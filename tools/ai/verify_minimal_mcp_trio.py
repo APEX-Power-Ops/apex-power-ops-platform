@@ -3,6 +3,8 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import shlex
+import subprocess
 import sys
 import urllib.request
 import uuid
@@ -80,6 +82,15 @@ def resolve_packet_id(packet_id: str | None) -> str:
     return f"adhoc-verify-minimal-mcp-trio-{timestamp}"
 
 
+def format_command() -> str:
+    argv = [sys.executable, *sys.argv]
+
+    if os.name == "nt":
+        return subprocess.list2cmdline(argv)
+
+    return shlex.join(argv)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Verify the minimal MCP trio operator surface.")
     parser.add_argument("--fs-url", default=os.getenv("APEX_FS_MCP_URL", "http://127.0.0.1:8710/mcp"))
@@ -94,6 +105,7 @@ def main() -> int:
     output_path = Path(args.output) if args.output else None
     summary: dict[str, Any] = {
         "packet_id": packet_id,
+        "command": format_command(),
         "endpoints": {"fs": args.fs_url, "db": args.db_url, "jobs": args.jobs_url},
         "checks": {},
     }

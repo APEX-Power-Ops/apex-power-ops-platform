@@ -1,0 +1,81 @@
+{
+  "packet_id": "2026-05-10-olares-dev-residency-493",
+  "command": "\"C:\\APEX Platform\\apex-power-ops-platform\\.venv\\Scripts\\python.exe\" tools/ai/verify_minimal_mcp_trio.py --packet-id 2026-05-10-olares-dev-residency-493 --output tests/canary/mcp-contract/actual/verify-minimal-mcp-trio-2026-05-10-olares-dev-residency-493.json",
+  "endpoints": {
+    "fs": "http://127.0.0.1:8710/mcp",
+    "db": "http://127.0.0.1:8711/mcp",
+    "jobs": "http://127.0.0.1:8712/mcp"
+  },
+  "checks": {
+    "fs_tools": {
+      "status": "pass",
+      "tools": [
+        "list_roots",
+        "list_directory",
+        "read_text_file"
+      ]
+    },
+    "fs_read": {
+      "status": "pass",
+      "preview": "# Apex Power Ops Platform\r\n\r\nThis directory is the active platform monorepo root and the canonical Apex Ops git boundary"
+    },
+    "db_tools": {
+      "status": "pass",
+      "tools": [
+        "list_tables",
+        "describe_table",
+        "query"
+      ]
+    },
+    "db_query": {
+      "status": "pass",
+      "result": {
+        "rowCount": 1,
+        "rows": [
+          {
+            "ok": 1
+          }
+        ]
+      }
+    },
+    "jobs_tools": {
+      "status": "pass",
+      "tools": [
+        "start_run",
+        "end_run",
+        "list_runs",
+        "promote_packet"
+      ]
+    },
+    "jobs_promote_guard": {
+      "status": "pass",
+      "packet_id": "2026-05-10-olares-dev-residency-493-promote-guard-9012fc96",
+      "detail": "Packet 2026-05-10-olares-dev-residency-493-promote-guard-9012fc96 cannot be promoted: no successful env=host run is on record."
+    },
+    "jobs_start_run": {
+      "status": "pass",
+      "run": {
+        "run_id": "1778473774134-6jn4xi1j",
+        "env": "sandbox",
+        "service": "ai-workflow",
+        "packet_id": "2026-05-10-olares-dev-residency-493",
+        "status": "running",
+        "created_at": "2026-05-11T04:29:34.134Z"
+      }
+    },
+    "jobs_end_run": {
+      "status": "pass",
+      "run": {
+        "run_id": "1778473774134-6jn4xi1j",
+        "env": "sandbox",
+        "service": "ai-workflow",
+        "packet_id": "2026-05-10-olares-dev-residency-493",
+        "status": "success",
+        "created_at": "2026-05-11T04:29:34.134Z",
+        "notes": "minimal-mcp-trio verification",
+        "completed_at": "2026-05-11T04:29:34.137Z"
+      }
+    }
+  },
+  "result": "PASS"
+}
