@@ -121,7 +121,7 @@ def main() -> int:
 
         jobs_tools = initialize_and_list(args.jobs_url)
         summary["checks"]["jobs_tools"] = {"status": "pass", "tools": jobs_tools}
-        promote_probe_packet_id = f"{args.packet_id}-promote-guard-{uuid.uuid4().hex[:8]}"
+        promote_probe_packet_id = f"{packet_id}-promote-guard-{uuid.uuid4().hex[:8]}"
         try:
             call_tool(args.jobs_url, "promote_packet", {"packet_id": promote_probe_packet_id})
             raise RuntimeError(
