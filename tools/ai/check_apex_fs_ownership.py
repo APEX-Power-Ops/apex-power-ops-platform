@@ -3,7 +3,6 @@ from __future__ import annotations
 import argparse
 import json
 import os
-import sys
 import urllib.request
 from pathlib import Path
 from typing import Any
@@ -28,9 +27,9 @@ def call_tool(endpoint: str, name: str, arguments: dict[str, Any] | None = None)
     )
     result = response.get("result", {})
     if result.get("isError"):
-      content = result.get("content", [])
-      detail = content[0].get("text") if content else "Unknown MCP error"
-      raise RuntimeError(detail)
+                content = result.get("content", [])
+                detail = content[0].get("text") if content else "Unknown MCP error"
+                raise RuntimeError(detail)
     if "structuredContent" in result:
         return result["structuredContent"]
     content = result.get("content", [])
@@ -90,6 +89,12 @@ def main() -> int:
         if normalized_workspace_root != expected_workspace_root:
             payload["status"] = "adoption-refused"
             payload["reason"] = "workspace-root-mismatch"
+            print(json.dumps(payload))
+            return 1
+
+        if expected_readme_preview is not None and payload.get("readme_preview") != expected_readme_preview:
+            payload["status"] = "adoption-refused"
+            payload["reason"] = "readme-preview-mismatch"
             print(json.dumps(payload))
             return 1
 
