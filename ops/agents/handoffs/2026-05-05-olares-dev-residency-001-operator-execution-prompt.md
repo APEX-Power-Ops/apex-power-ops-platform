@@ -1,9 +1,13 @@
 # Olares Dev Residency 001 Operator Execution Prompt
 
 Date: 2026-05-05
-Status: Active copy-paste prompt surface
+Status: Historical copy-paste prompt surface
 Packet: `ops/agents/packets/draft/2026-05-05-olares-dev-residency-001-developer-host-cutover-preflight-and-execution-planning.json`
 Scope: execute the planning-only Packet 001 cutover decision cleanly and leave the next packet routing unambiguous
+
+Historical note:
+
+Packet 001 is already closed. This prompt is retained as the original planning prompt for that decision surface, not as a live operator prompt for current repo-root work.
 
 ## Use
 

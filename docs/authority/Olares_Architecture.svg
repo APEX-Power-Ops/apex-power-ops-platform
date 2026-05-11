@@ -1,0 +1,214 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 920" font-family="Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#1f2d3d"/>
+    </marker>
+    <style>
+      .title { font-size: 22px; font-weight: 700; fill: #0f172a; }
+      .subtitle { font-size: 12px; fill: #475569; }
+      .band-label { font-size: 13px; font-weight: 700; letter-spacing: 0.08em; fill: #334155; }
+      .zone-label { font-size: 14px; font-weight: 700; fill: #0f172a; }
+      .zone-sub { font-size: 10.5px; fill: #475569; }
+      .item { font-size: 11px; fill: #0f172a; }
+      .note { font-size: 10.5px; fill: #475569; font-style: italic; }
+      .pipe { fill: none; stroke: #1f2d3d; stroke-width: 1.4; }
+    </style>
+  </defs>
+
+  <rect x="0" y="0" width="1200" height="920" fill="#ffffff"/>
+
+  <!-- Title -->
+  <text x="40" y="44" class="title">APEX Platform on Olares One — Workspace Architecture</text>
+  <text x="40" y="64" class="subtitle">Blue-sky layout · Olares-first dev loop · Remote-from-anywhere via LarePass · APEX packaged native on Olares for staging</text>
+
+  <!-- ACCESS BAND -->
+  <rect x="40" y="86" width="1120" height="96" fill="#f8fafc" stroke="#cbd5e1"/>
+  <text x="54" y="106" class="band-label">ACCESS</text>
+  <g>
+    <rect x="70" y="118" width="210" height="50" fill="#ffffff" stroke="#94a3b8"/>
+    <text x="80" y="137" class="item">Laptop (macOS / Windows)</text>
+    <text x="80" y="153" class="zone-sub">VS Code · Claude Desktop · Browser</text>
+
+    <rect x="300" y="118" width="180" height="50" fill="#ffffff" stroke="#94a3b8"/>
+    <text x="310" y="137" class="item">Parsec (GUI stream)</text>
+    <text x="310" y="153" class="zone-sub">Low-latency desktop mirror</text>
+
+    <rect x="500" y="118" width="180" height="50" fill="#ffffff" stroke="#94a3b8"/>
+    <text x="510" y="137" class="item">iPad / Field Tablet</text>
+    <text x="510" y="153" class="zone-sub">APEX field console (PWA)</text>
+
+    <rect x="700" y="118" width="210" height="50" fill="#ffffff" stroke="#94a3b8"/>
+    <text x="710" y="137" class="item">Teammate laptop (as needed)</text>
+    <text x="710" y="153" class="zone-sub">LarePass user account · SSO</text>
+
+    <rect x="930" y="118" width="210" height="50" fill="#ffffff" stroke="#94a3b8"/>
+    <text x="940" y="137" class="item">Public browser (future)</text>
+    <text x="940" y="153" class="zone-sub">Cloudflare Tunnel + Authelia</text>
+  </g>
+
+  <!-- Gateway band -->
+  <rect x="40" y="198" width="1120" height="68" fill="#eef2f6" stroke="#cbd5e1"/>
+  <text x="54" y="218" class="band-label">GATEWAY</text>
+  <g>
+    <rect x="70" y="228" width="260" height="30" fill="#ffffff" stroke="#94a3b8"/>
+    <text x="82" y="247" class="item">LarePass VPN (WireGuard/Headscale)</text>
+
+    <rect x="340" y="228" width="220" height="30" fill="#ffffff" stroke="#94a3b8"/>
+    <text x="352" y="247" class="item">Cloudflare / Olares Tunnel</text>
+
+    <rect x="570" y="228" width="180" height="30" fill="#ffffff" stroke="#94a3b8"/>
+    <text x="582" y="247" class="item">Envoy (ingress)</text>
+
+    <rect x="760" y="228" width="180" height="30" fill="#ffffff" stroke="#94a3b8"/>
+    <text x="772" y="247" class="item">Authelia (SSO / MFA)</text>
+
+    <rect x="950" y="228" width="190" height="30" fill="#ffffff" stroke="#94a3b8"/>
+    <text x="962" y="247" class="item">LLDAP (identity)</text>
+  </g>
+
+  <!-- Arrow from Access to Gateway -->
+  <path d="M 600 172 L 600 196" class="pipe" marker-end="url(#arr)"/>
+
+  <!-- THREE ZONES -->
+  <text x="54" y="290" class="band-label">WORKSPACE · THREE ZONES ON ONE BOX</text>
+
+  <!-- Dev zone -->
+  <rect x="40" y="300" width="370" height="318" fill="#f1f5f9" stroke="#64748b" stroke-width="1.6"/>
+  <text x="56" y="322" class="zone-label">DEV ZONE</text>
+  <text x="56" y="338" class="zone-sub">Fast iteration · docker-compose · Olares-hosted</text>
+
+  <rect x="54" y="350" width="342" height="54" fill="#ffffff" stroke="#94a3b8"/>
+  <text x="64" y="368" class="item">VS Code Remote-SSH · code-server</text>
+  <text x="64" y="384" class="zone-sub">Peacock per app · devcontainer at repo root</text>
+  <text x="64" y="398" class="zone-sub">tmux/Zellij layouts · shell hosts per service</text>
+
+  <rect x="54" y="410" width="342" height="50" fill="#ffffff" stroke="#94a3b8"/>
+  <text x="64" y="428" class="item">Claude Code (Max-auth) · Codex (plan-auth)</text>
+  <text x="64" y="444" class="zone-sub">Primary premium reasoning stack · CLAUDE.md at repo root</text>
+  <text x="64" y="458" class="zone-sub">Subagents per service boundary</text>
+
+  <rect x="54" y="468" width="342" height="70" fill="#ffffff" stroke="#94a3b8"/>
+  <text x="64" y="486" class="item">MCP Fabric (localhost / LarePass only)</text>
+  <text x="64" y="502" class="zone-sub">apex-fs · apex-db · apex-jobs</text>
+  <text x="64" y="516" class="zone-sub">Future MCP surfaces are separately admitted</text>
+  <text x="64" y="530" class="zone-sub">Consumed by Claude Desktop + Claude Code + Codex</text>
+
+  <rect x="54" y="546" width="342" height="64" fill="#ffffff" stroke="#94a3b8"/>
+  <text x="64" y="564" class="item">compose.dev.yml</text>
+  <text x="64" y="580" class="zone-sub">dev Postgres · Mailhog · MinIO · bounded support services</text>
+  <text x="64" y="594" class="zone-sub">hot-reload services · ephemeral</text>
+  <text x="64" y="608" class="zone-sub">No SSO · localhost-bound</text>
+
+  <!-- Services zone -->
+  <rect x="420" y="300" width="370" height="318" fill="#eef2ff" stroke="#6366f1" stroke-width="1.6"/>
+  <text x="436" y="322" class="zone-label">SERVICES ZONE</text>
+  <text x="436" y="338" class="zone-sub">Shared ops first · optional AI later</text>
+
+  <rect x="434" y="350" width="342" height="58" fill="#ffffff" stroke="#94a3b8"/>
+  <text x="444" y="368" class="item">Optional local AI: Ollama · Open WebUI</text>
+  <text x="444" y="384" class="zone-sub">Add only for offline, GPU-local, or cost-buffered work</text>
+  <text x="444" y="400" class="zone-sub">LarePass-only if installed</text>
+
+  <rect x="434" y="414" width="342" height="50" fill="#ffffff" stroke="#94a3b8"/>
+  <text x="444" y="432" class="item">Optional retrieval: Qdrant / Weaviate</text>
+  <text x="444" y="448" class="zone-sub">Add only when a real corpus workflow exists</text>
+  <text x="444" y="462" class="zone-sub">Not a day-one requirement</text>
+
+  <rect x="434" y="470" width="342" height="50" fill="#ffffff" stroke="#94a3b8"/>
+  <text x="444" y="488" class="item">Optional automation: n8n · Dify Workflows</text>
+  <text x="444" y="504" class="zone-sub">Add only when a real unattended workflow exists</text>
+  <text x="444" y="518" class="zone-sub">Use approved MCP + premium-plan tooling</text>
+
+  <rect x="434" y="526" width="342" height="44" fill="#ffffff" stroke="#94a3b8"/>
+  <text x="444" y="544" class="item">Syncthing · Restic</text>
+  <text x="444" y="560" class="zone-sub">Field-tablet sync · offsite backup</text>
+
+  <rect x="434" y="576" width="342" height="34" fill="#ffffff" stroke="#94a3b8"/>
+  <text x="444" y="594" class="item">Files · Vault · Syncthing · Gitea (optional)</text>
+  <text x="444" y="608" class="zone-sub">Olares built-ins · sync/backup · GitHub stays canonical</text>
+
+  <!-- Staging zone -->
+  <rect x="800" y="300" width="360" height="318" fill="#ecfeff" stroke="#0891b2" stroke-width="1.6"/>
+  <text x="816" y="322" class="zone-label">STAGING ZONE (APEX Native)</text>
+  <text x="816" y="338" class="zone-sub">Host-bootstrap · OlaresManifest · SSO-wired</text>
+
+  <rect x="814" y="350" width="334" height="62" fill="#ffffff" stroke="#94a3b8"/>
+  <text x="824" y="368" class="item">APEX services (Helm / OlaresManifest)</text>
+  <text x="824" y="384" class="zone-sub">forms-engine · p6-ingest · sync-service</text>
+  <text x="824" y="400" class="zone-sub">packet-promote guard: env=host</text>
+
+  <rect x="814" y="418" width="334" height="66" fill="#ffffff" stroke="#94a3b8"/>
+  <text x="824" y="436" class="item">Three UI surfaces</text>
+  <text x="824" y="452" class="zone-sub">apex-field · apex-office · apex-admin</text>
+  <text x="824" y="466" class="zone-sub">PWA · OIDC against Authelia</text>
+  <text x="824" y="480" class="zone-sub">Entrances registered in Olares Desktop</text>
+
+  <rect x="814" y="490" width="334" height="54" fill="#ffffff" stroke="#94a3b8"/>
+  <text x="824" y="508" class="item">Staging Postgres schema</text>
+  <text x="824" y="524" class="zone-sub">Isolated from dev DB · per-app account</text>
+  <text x="824" y="540" class="zone-sub">P6 mirror tables populated by p6-ingest</text>
+
+  <rect x="814" y="550" width="334" height="60" fill="#ffffff" stroke="#94a3b8"/>
+  <text x="824" y="568" class="item">Canary regression suite</text>
+  <text x="824" y="584" class="zone-sub">Stack Data Center packet · known-good diffs</text>
+  <text x="824" y="600" class="zone-sub">Gates model trust for automated runs</text>
+
+  <!-- PLATFORM LAYER -->
+  <rect x="40" y="640" width="1120" height="140" fill="#f8fafc" stroke="#cbd5e1"/>
+  <text x="54" y="660" class="band-label">OLARES PLATFORM (K3s)</text>
+
+  <g>
+    <rect x="70" y="670" width="155" height="36" fill="#ffffff" stroke="#94a3b8"/>
+    <text x="80" y="692" class="item">K3s · Calico · CoreDNS</text>
+
+    <rect x="234" y="670" width="130" height="36" fill="#ffffff" stroke="#94a3b8"/>
+    <text x="244" y="692" class="item">Envoy · ingress</text>
+
+    <rect x="372" y="670" width="160" height="36" fill="#ffffff" stroke="#94a3b8"/>
+    <text x="382" y="692" class="item">system-server · app-service</text>
+
+    <rect x="540" y="670" width="160" height="36" fill="#ffffff" stroke="#94a3b8"/>
+    <text x="550" y="692" class="item">JuiceFS · MinIO (S3)</text>
+
+    <rect x="708" y="670" width="160" height="36" fill="#ffffff" stroke="#94a3b8"/>
+    <text x="718" y="692" class="item">Postgres 16 · KVRocks</text>
+
+    <rect x="876" y="670" width="130" height="36" fill="#ffffff" stroke="#94a3b8"/>
+    <text x="886" y="692" class="item">NATS (bus)</text>
+
+    <rect x="1014" y="670" width="125" height="36" fill="#ffffff" stroke="#94a3b8"/>
+    <text x="1024" y="692" class="item">nvshare (GPU)</text>
+
+    <rect x="70" y="718" width="325" height="44" fill="#ffffff" stroke="#94a3b8"/>
+    <text x="80" y="736" class="item">Vault · Infisical (secrets)</text>
+    <text x="80" y="752" class="zone-sub">Olares-native · scoped per app namespace</text>
+
+    <rect x="408" y="718" width="360" height="44" fill="#ffffff" stroke="#94a3b8"/>
+    <text x="418" y="736" class="item">Prometheus · OpenTelemetry (observability)</text>
+    <text x="418" y="752" class="zone-sub">Per-app metrics · LLM call logs · token spend dashboard</text>
+
+    <rect x="780" y="718" width="360" height="44" fill="#ffffff" stroke="#94a3b8"/>
+    <text x="790" y="736" class="item">Roles · LLDAP groups</text>
+    <text x="790" y="752" class="zone-sub">jason-admin · estimator · field-lead · reviewer</text>
+  </g>
+
+  <!-- HARDWARE BAND -->
+  <rect x="40" y="798" width="1120" height="80" fill="#0f172a"/>
+  <text x="54" y="822" class="band-label" fill="#e2e8f0">HARDWARE · OLARES ONE</text>
+  <text x="54" y="846" class="item" fill="#f1f5f9">Intel Ultra 9 275HX  ·  RTX 5090 Mobile (24 GB GDDR7)  ·  96 GB DDR5 (upgradeable to 128)  ·  2 TB PCIe 4.0 NVMe  ·  Thunderbolt 5  ·  2.5 GbE</text>
+  <text x="54" y="866" class="zone-sub" fill="#94a3b8">Olares OS on Ubuntu 24.04 LTS · K3s-based · GPU time-slicing via nvshare · 19 dB idle / sub-39 dB max</text>
+
+  <!-- Flow arrows from gateway to zones -->
+  <path d="M 225 266 L 225 300" class="pipe" marker-end="url(#arr)"/>
+  <path d="M 600 266 L 600 300" class="pipe" marker-end="url(#arr)"/>
+  <path d="M 980 266 L 980 300" class="pipe" marker-end="url(#arr)"/>
+
+  <!-- Flow from zones down to platform -->
+  <path d="M 225 618 L 225 640" class="pipe" marker-end="url(#arr)"/>
+  <path d="M 600 618 L 600 640" class="pipe" marker-end="url(#arr)"/>
+  <path d="M 980 618 L 980 640" class="pipe" marker-end="url(#arr)"/>
+  <path d="M 600 780 L 600 798" class="pipe" marker-end="url(#arr)"/>
+
+  <!-- Footer -->
+  <text x="40" y="903" class="note">Rule: dev zone is ephemeral (sandbox) · staging zone is the only path to "complete." packet-promote rejects env=sandbox runs.</text>
+</svg>
