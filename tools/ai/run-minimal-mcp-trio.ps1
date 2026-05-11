@@ -253,13 +253,22 @@ switch ($Action) {
     }
 
     $statusValue = if ($existing.mode -eq 'adopted') { 'adopted-running' } else { 'managed-running' }
+    $fsRunning = if ($existing.mode -eq 'adopted') { Test-McpEndpoint $existing.endpoints.fs } else { ($existing.processes | Where-Object { $_.name -eq 'apex-fs' } | Select-Object -First 1 | ForEach-Object { Get-ProcessStatus $_.pid }) }
+    $dbRunning = if ($existing.mode -eq 'adopted') { Test-McpEndpoint $existing.endpoints.db } else { ($existing.processes | Where-Object { $_.name -eq 'apex-db' } | Select-Object -First 1 | ForEach-Object { Get-ProcessStatus $_.pid }) }
+    $jobsRunning = if ($existing.mode -eq 'adopted') { Test-McpEndpoint $existing.endpoints.jobs } else { ($existing.processes | Where-Object { $_.name -eq 'apex-jobs' } | Select-Object -First 1 | ForEach-Object { Get-ProcessStatus $_.pid }) }
 
     $status = [pscustomobject]@{
       status = $statusValue
       started_at = $existing.started_at
       packet_id = $existing.packet_id
       mode = $existing.mode
+      fs_running = [bool]$fsRunning
+      db_running = [bool]$dbRunning
+      jobs_running = [bool]$jobsRunning
       ledger_path = $existing.ledger_path
+      fs_endpoint = $existing.endpoints.fs
+      db_endpoint = $existing.endpoints.db
+      jobs_endpoint = $existing.endpoints.jobs
       endpoints = $existing.endpoints
       processes = @(
         foreach ($process in $existing.processes) {
