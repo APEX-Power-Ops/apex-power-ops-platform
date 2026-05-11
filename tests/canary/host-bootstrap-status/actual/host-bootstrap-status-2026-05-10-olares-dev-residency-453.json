@@ -1,0 +1,44 @@
+{
+  "packet_id": "2026-05-10-olares-dev-residency-453",
+  "host_container_root": "/mnt/c/APEX Platform",
+  "implementation_root": "/mnt/c/APEX Platform/apex-power-ops-platform",
+  "git": {
+    "head": "a6531ae8e30e7d9ccc818c3ba8a1a64fbef30b66",
+    "status_count": 1594,
+    "old_clone": {
+      "path": "/home/olares/src/apex-power-ops-platform",
+      "exists": false,
+      "head": null,
+      "status_count": 0
+    }
+  },
+  "toolchains": {
+    "python3": {
+      "path": "/usr/bin/python3",
+      "version": "Python 3.12.3"
+    },
+    "node": {
+      "path": null,
+      "version": null
+    },
+    "pnpm_materialized": {
+      "path": null,
+      "version": null
+    },
+    "calc_engine_python": {
+      "path": null,
+      "version": null
+    }
+  },
+  "minimal_mcp": {
+    "status": "not-running"
+  },
+  "hold_boundary": {
+    "packet_id": "status-only",
+    "minimal_mcp": "NOT_RUNNING",
+    "deferred_ops": "UNAVAILABLE",
+    "deferred_ops_decision": "minimal_mcp_not_running",
+    "outputs": {}
+  },
+  "output_artifact": "/mnt/c/APEX Platform/apex-power-ops-platform/tests/canary/host-bootstrap-status/actual/host-bootstrap-status-2026-05-10-olares-dev-residency-453.json"
+}

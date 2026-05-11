@@ -27,9 +27,9 @@ Produce the first-pass scaffold for the admitted backbone around:
 3. `services/mcp/apex-jobs/`
 4. `infra/compose.dev.yml`
 5. `.env.dev.template`
-6. `.claude/CLAUDE.md`
-7. `.claude/mcp.json`
-8. `infra/olares/charts/forms-engine/`
+6. `docs/operations/OLARES-VSCODE-BUILD-SESSION-PROMPT.md`
+7. `docs/architecture/OLARES-AI-BACKBONE-SCAFFOLD-SPEC-2026-05-08.md`
+8. `infra/olares/forms-engine/`
 9. `tests/canary/`
 10. bounded supporting docs under `docs/`
 

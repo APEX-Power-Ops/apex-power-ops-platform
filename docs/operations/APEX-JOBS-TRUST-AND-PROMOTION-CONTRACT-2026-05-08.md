@@ -49,6 +49,42 @@ Implications:
 2. `host` proof must still be successful and packet-attributed before it can support promotion.
 3. No third env class is currently admitted.
 
+## Env And Promotion Examples
+
+Example sandbox run record:
+
+```json
+{
+	"run_id": "run_sandbox_123",
+	"env": "sandbox",
+	"service": "ai-workflow",
+	"packet_id": "<packet-id>",
+	"status": "success",
+	"created_at": "2026-05-10T18:00:00Z",
+	"completed_at": "2026-05-10T18:00:12Z",
+	"notes": "minimal-mcp-trio verification"
+}
+```
+
+Interpretation: this run may prove bounded verification or shell correctness, but it still cannot satisfy `promote_packet`.
+
+Example host-qualified promotion evidence:
+
+```json
+{
+	"run_id": "run_host_456",
+	"env": "host",
+	"service": "ai-workflow",
+	"packet_id": "<packet-id>",
+	"status": "success",
+	"created_at": "2026-05-10T19:00:00Z",
+	"completed_at": "2026-05-10T19:00:18Z",
+	"notes": "host validation proof"
+}
+```
+
+Interpretation: this record is promotion-eligible only because the packet id matches, the env class is `host`, and the recorded outcome is `success`.
+
 ## Run Record Minimums
 
 Every `apex-jobs` run record that matters to completion should carry at least:
@@ -78,6 +114,14 @@ Current refusal contract:
 2. refusal is not treated as a runtime failure,
 3. sandbox-only success must still refuse.
 
+Example refusal detail from the current verifier path:
+
+```text
+no successful env=host run is on record
+```
+
+That refusal text is the expected hardening proof for the negative case. It shows the gate is behaving truthfully, not that the packet is ready to promote.
+
 ## Provenance Metadata Contract
 
 The current backbone does not require `apex-jobs` to store every provenance field itself.
@@ -94,6 +138,13 @@ Minimum provenance fields for AI-assisted backbone work:
 6. final outcome: `PASS`, `FAIL`, `HOLD`, `UNAVAILABLE`, or equivalent truthful verdict
 
 These fields may live in packet JSON, handoff notes, validation summaries, or other repo-visible evidence surfaces.
+
+Minimum placement rules:
+
+1. `packet_id` and final outcome must appear in the packet summary or handoff closeout text,
+2. execution surface or tool identity must appear anywhere AI-assisted output is being justified,
+3. env class and resulting `run_id` must appear in the validation summary or handoff whenever `apex-jobs` participates,
+4. validation command or evidence source must appear in the packet validation note, handoff validation block, or attached evidence bundle.
 
 ## Packet 172 Verification Note
 

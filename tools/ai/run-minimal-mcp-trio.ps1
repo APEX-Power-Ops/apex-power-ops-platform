@@ -1,13 +1,19 @@
 param(
   [ValidateSet('up', 'down', 'status', 'verify')]
   [string]$Action = 'status',
-  [string]$PacketId = '2026-05-06-olares-dev-residency-037'
+  [string]$PacketId
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 . (Join-Path $PSScriptRoot '..\shell\common.ps1')
+
+$packetIdWasProvided = $PSBoundParameters.ContainsKey('PacketId') -and -not [string]::IsNullOrWhiteSpace($PacketId)
+
+if (-not $packetIdWasProvided) {
+  $PacketId = Get-ApexDefaultPacketId 'minimal-mcp-trio'
+}
 
 $repoRoot = Get-ApexRepoRoot
 Import-ApexEnvFile
@@ -17,8 +23,9 @@ $stateDir = Join-Path $repoRoot '.tmp/ai-workflow'
 $logDir = Join-Path $stateDir 'logs'
 $stateFile = Join-Path $stateDir 'minimal-mcp-trio.json'
 $ledgerPath = Join-Path $repoRoot '.apex-data/apex-jobs-ledger.json'
+$mcpContractActualDir = Join-Path $repoRoot 'tests/canary/mcp-contract/actual'
 
-New-Item -ItemType Directory -Force -Path $stateDir, $logDir | Out-Null
+New-Item -ItemType Directory -Force -Path $stateDir, $logDir, $mcpContractActualDir | Out-Null
 
 function Get-DbConnectionString {
   if ($env:SEAM_DATABASE_URL) {
@@ -83,10 +90,18 @@ function Start-ManagedProcess {
 }
 
 function Invoke-Verify {
+  if (-not $packetIdWasProvided) {
+    $existing = Read-State
+    if ($null -ne $existing -and -not [string]::IsNullOrWhiteSpace($existing.packet_id)) {
+      $PacketId = $existing.packet_id
+    }
+  }
+
+  $verifyOutput = Join-Path $mcpContractActualDir "verify-minimal-mcp-trio-$PacketId.json"
   $verifyArgs = @(
     'tools/ai/verify_minimal_mcp_trio.py',
     '--packet-id', $PacketId,
-    '--output', (Join-Path $stateDir 'verify-minimal-mcp-trio.json')
+    '--output', $verifyOutput
   )
   & $repoPython @verifyArgs
 }

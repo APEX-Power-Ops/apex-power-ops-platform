@@ -5,7 +5,7 @@ source "$(dirname "$0")/shell/common.sh"
 
 repo_root="$(get_apex_repo_root)"
 import_apex_env_file
-repo_python="$(get_apex_repo_python)"
+repo_python="$(get_apex_preferred_python)"
 
 cleanup() {
   for pid in "${pids[@]:-}"; do

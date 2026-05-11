@@ -14,8 +14,10 @@ Use this file with:
 
 1. `OLARES-AI-WORKFLOW-FIRST-SLICE-RUNBOOK-2026-05-06.md` for operator commands and trust-boundary execution,
 2. `../authority/OLARES-AI-BACKBONE-FRAMEWORK-2026-05-08.md` for the bounded backbone-design and scaffold-authoring rules,
-3. `../../Supabase/docs/AI_ORCHESTRATION_PROTOCOL.md` as the broader protocol and future-bridge reference,
-4. packet and handoff evidence under `ops/agents/` for bounded execution history.
+3. `../operations/OLARES-MVP-AI-ORCHESTRATION-STATUS-BRIEF-2026-05-10.md` for the compact five-part MVP and current AI-lane status readout,
+4. `../operations/OLARES-AI-PARALLEL-TASK-READINESS-CHECKLIST-2026-05-10.md` for the bounded next-step checklist toward controlled parallel task ability,
+5. `control-plane-lineage/apex-resa/AI_ORCHESTRATION_PROTOCOL.md` as the broader protocol and future-bridge reference,
+6. packet and handoff evidence under `ops/agents/` for bounded execution history.
 
 Do not use parent-root `.claude/DECISION_LOG.md` as the preferred current authority surface once this file answers the question.
 
@@ -24,7 +26,7 @@ Do not use parent-root `.claude/DECISION_LOG.md` as the preferred current author
 1. this file for current Olares-first AI orchestration decisions,
 2. `../authority/OLARES-AI-BACKBONE-FRAMEWORK-2026-05-08.md` for the bounded Codex first-pass scaffold boundary and parallel hardening split,
 3. `OLARES-AI-WORKFLOW-FIRST-SLICE-RUNBOOK-2026-05-06.md` for admitted-surface commands, trust boundaries, and verification posture,
-4. `../../Supabase/docs/AI_ORCHESTRATION_PROTOCOL.md` for protocol structure and future integration model,
+4. `control-plane-lineage/apex-resa/AI_ORCHESTRATION_PROTOCOL.md` for protocol structure and future integration model,
 5. historical packets and handoffs only for provenance.
 
 ## Workflow Definition
@@ -34,6 +36,13 @@ Do not use parent-root `.claude/DECISION_LOG.md` as the preferred current author
 1. `apex-jobs` is the operational run and promotion ledger for the current Olares-first slice.
 2. packet and handoff governance remain the controlling work-queue shape.
 3. `ai_tasks` remains a later integration surface rather than the admitted first-slice controller.
+
+### Executor shape
+
+1. one bounded executor is the default execution model for packet-scoped work,
+2. a second executor may be admitted only for explicitly disjoint lanes with written ownership,
+3. `ai_tasks` does not currently assign or arbitrate executor ownership,
+4. publication and promotion remain governed outcomes rather than automatic executor powers.
 
 ### Valid task types
 
@@ -86,6 +95,11 @@ Primary role:
 - file surgery
 - bounded execution from the active workspace or host mirror
 
+Current executor admission:
+
+- primary mutation and validation executor for the admitted lane
+- may run alone or as the implementation owner in a two-executor packet
+
 ### Codex
 
 Current decision:
@@ -93,6 +107,11 @@ Current decision:
 - Codex is not part of the current runtime, promotion, or queue-control boundary for the first admitted AI slice.
 - Codex is admitted only for bounded design and scaffold authoring under `docs/authority/OLARES-AI-BACKBONE-FRAMEWORK-2026-05-08.md` and its companion execution brief.
 - That admission does not authorize Codex to widen the admitted MCP trio, take over `apex-jobs` promotion control, or imply `ai_tasks`, Ollama, Dify, n8n, or public-ingress rollout.
+
+Current executor admission:
+
+- may act as a secondary bounded executor only for scaffold, shell, or document-authoring lanes
+- may not become the shared owner of mixed scaffold-plus-runtime mutation in the same packet without an explicit boundary change
 
 ### Human authority
 
@@ -103,6 +122,32 @@ Jason review or decision remains required for:
 - auth or public-boundary changes
 - new third-party account commitments
 - any intentional scope widening beyond the currently authorized packet lane
+
+## Parallel Task And Executor Rules
+
+The current lane allows controlled parallel task paths, but only in a narrow executor-governed form.
+
+### Allowed now
+
+1. one executor completing a bounded packet end to end,
+2. two executors running in parallel when ownership is explicitly split before execution,
+3. scaffold-versus-hardening splits that preserve file ownership and validation order,
+4. review or publication-prep handoff after one executor completes the mutation slice.
+
+### Not allowed now
+
+1. open-ended multi-executor source mutation across the same files,
+2. `ai_tasks` as the live queue owner or arbitration surface,
+3. more than two active executors in the same mutation lane by default,
+4. executor-driven widening of auth, ingress, hosting, or business-logic scope.
+
+### Required conditions for two-executor work
+
+1. the packet or handoff names each executor and its owned surface,
+2. one executor owns the final write for each touched file,
+3. the narrow validation order is explicit before the first edit,
+4. abort rules are written if the lanes begin to overlap,
+5. repo-visible evidence still captures one coherent completion record.
 
 ## Quality Gates
 

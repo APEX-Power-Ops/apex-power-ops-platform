@@ -29,7 +29,7 @@ that any new Olares-installed service requires a new explicit packet.
 
 Use these files first:
 
-1. `C:/APEX Platform/Infrastructure/Olares_Workspace_Authority_Framework.md`
+1. `C:/APEX Platform/apex-power-ops-platform/docs/authority/OLARES-WORKSPACE-AUTHORITY-FRAMEWORK.md`
 2. `plan/infrastructure-olares-full-implementation-roadmap-1.md`
 3. `docs/architecture/OLARES-POST-CLOSURE-EXECUTION-CHECKLIST-2026-04-25.md`
 
@@ -281,7 +281,7 @@ boundary.
 
 ## Related Files
 
-1. `C:/APEX Platform/Infrastructure/Olares_Workspace_Authority_Framework.md`
+1. `C:/APEX Platform/apex-power-ops-platform/docs/authority/OLARES-WORKSPACE-AUTHORITY-FRAMEWORK.md`
 2. `plan/infrastructure-olares-full-implementation-roadmap-1.md`
 3. `docs/architecture/OLARES-POST-CLOSURE-EXECUTION-CHECKLIST-2026-04-25.md`
 4. `docs/architecture/OLARES-WORKSTATION-BRING-UP-CHECKLIST-2026-04-23.md`

@@ -1,0 +1,100 @@
+# Olares AI Parallel Task Readiness Checklist
+
+Date: 2026-05-10
+Status: Active bounded execution checklist
+Scope: concrete next-step checklist for moving from the current admitted Olares AI backbone toward controlled executor-governed parallel-task ability without widening orchestration scope
+
+## Purpose
+
+This checklist turns the current AI backbone and hardening rules into a practical next-step execution surface.
+
+Use it when a session needs to progress the admitted backbone toward safer parallel task capability without reopening broader orchestration, queue, runtime, or hosting work.
+
+Use this checklist with:
+
+1. `OLARES-MVP-AI-ORCHESTRATION-STATUS-BRIEF-2026-05-10.md`,
+2. `AI-BACKBONE-PARALLEL-HARDENING-BRIEF-2026-05-08.md`,
+3. `APEX-JOBS-TRUST-AND-PROMOTION-CONTRACT-2026-05-08.md`,
+4. `../architecture/OLARES-AI-ORCHESTRATION-DECISION-SURFACE-2026-05-07.md`,
+5. `../authority/OLARES-AI-BACKBONE-FRAMEWORK-2026-05-08.md`.
+
+## Readiness Goal
+
+The immediate goal is not open-ended autonomous parallelism.
+
+The immediate goal is a controlled two-lane model in which:
+
+1. scaffold authoring owns shell structure for the admitted backbone,
+2. hardening work owns trust, provenance, promotion, MCP-boundary, and canary contracts,
+3. promotion and publication remain governed by `apex-jobs` and repo-visible evidence.
+
+Single-executor execution remains the default.
+
+Open a second executor only when the packet or handoff explicitly proves non-overlapping ownership.
+
+## Checklist A - Preserve The Current Baseline
+
+- confirm `apex-jobs` remains the active run and promotion ledger
+- confirm packet and handoff governance remain the active work-queue shape
+- confirm the admitted MCP family is still only `apex-fs`, `apex-db`, and `apex-jobs`
+- confirm `ai_tasks` is still deferred unless a separate packet explicitly opens it
+- confirm current authority docs still point at repo-owned AI backbone and orchestration surfaces
+
+## Checklist B - Executor Assignment
+
+- decide whether the slice is a one-executor or two-executor packet before implementation starts
+- name the executor that owns each touched file class or directory lane
+- name the executor that owns validation capture and the executor that owns publication prep when those differ
+- keep one final write owner per shared file even when review or prep is split across executors
+- abort the split if ownership cannot be stated in one short packet or handoff block
+
+## Checklist C - Parallel Hardening Work
+
+- tighten the exact `env=sandbox|host` contract and examples for `apex-jobs`
+- keep `promote_packet` refusal requirements explicit and testable
+- define or tighten provenance metadata fields required for AI-generated output
+- keep the documented MCP filesystem and database boundary rules current, including roots, mounts, and read/write posture
+- keep the canary admission and evidence bundle current for the admitted backbone
+- route verifier commands, results, and attached evidence through packet JSON validation fields and handoff validation blocks when those surfaces are in scope
+- keep optional verifier JSON artifacts inside `tests/canary/mcp-contract/actual/` and reference them from packet JSON or handoff evidence when emitted
+
+## Checklist D - Scaffold Maintenance Work
+
+- keep `services/mcp/apex-fs/`, `services/mcp/apex-db/`, and `services/mcp/apex-jobs/` scaffold shells coherent
+- keep `infra/compose.dev.yml` and `.env.dev.template` aligned with the admitted backbone contract
+- keep the forms-engine staging shell as the only admitted staging-chart path
+- keep canary stubs and shell-level validation surfaces honest about what is deferred
+- avoid implying runtime completeness where only scaffold readiness exists
+
+## Checklist E - Coordination Rules
+
+- let scaffold work own shell structure
+- let hardening work own trust and evidence contracts
+- let a one-executor packet stay one-executor unless a second lane produces real leverage
+- prefer docs, tests, checklists, and contract notes over shared implementation edits
+- if both lanes must touch one file, record that coordination explicitly in packet or handoff evidence
+- abort any split that would blur runtime widening with contract tightening in the same slice
+
+## Checklist F - Stop Conditions
+
+- stop if a change would admit a new orchestration service beyond the current trio
+- stop if a change would promote `ai_tasks` into queue ownership without a separate packet
+- stop if a change would widen auth, public ingress, or canonical hosting posture
+- stop if a change would mutate business logic in `apps/` under cover of backbone work
+- stop if a change would claim host-complete proof without real `env=host` evidence
+
+## Checklist G - Gate For Any Wider Parallel Lane
+
+A wider parallel-task lane should open only if all of the following are true:
+
+1. a concrete insufficiency or operator friction is documented,
+2. the non-overlap and ownership model is explicit,
+3. validation and abort rules are written before execution starts,
+4. publication and host-proof cadence remain governed,
+5. a separate packet explicitly authorizes the widened boundary.
+
+## Current Recommendation
+
+Use the current AI backbone as a controlled executor model: one executor by default, or two executors only when scaffold maintenance and trust hardening can stay disjoint.
+
+Do not treat the existence of those two lanes as approval for autonomous orchestration, multi-worker mutation, or generic parallel source execution.

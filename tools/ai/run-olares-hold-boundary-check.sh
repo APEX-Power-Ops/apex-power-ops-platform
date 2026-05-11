@@ -5,12 +5,18 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../shell/common.sh"
 
 repo_root="$(get_apex_repo_root)"
 import_apex_env_file
+repo_python="$(get_apex_preferred_python)"
 
-packet_id="${1:-2026-05-06-olares-dev-residency-056}"
+packet_id="${1:-}"
+if [[ -z "${packet_id}" ]]; then
+  packet_id="$(get_apex_default_packet_id hold-boundary)"
+fi
 dsn_env="${2:-}"
 state_dir="${repo_root}/.tmp/ai-workflow"
-minimal_output="${state_dir}/verify-minimal-mcp-trio.json"
-hold_output="${state_dir}/deferred-ops-view-counts.json"
+mcp_contract_actual_dir="${repo_root}/tests/canary/mcp-contract/actual"
+deferred_ops_actual_dir="${repo_root}/tests/canary/deferred-ops-view-counts/actual"
+minimal_output="${mcp_contract_actual_dir}/verify-minimal-mcp-trio-${packet_id}.json"
+hold_output="${deferred_ops_actual_dir}/deferred-ops-view-counts-${packet_id}.json"
 live_db_port="${APEX_HOLD_BOUNDARY_DB_PORT:-8721}"
 live_db_url="http://127.0.0.1:${live_db_port}/mcp"
 live_db_pid=""
@@ -18,6 +24,8 @@ live_db_root="${repo_root}/services/mcp/apex-db"
 
 mkdir -p "${state_dir}"
 mkdir -p "${state_dir}/logs"
+mkdir -p "${mcp_contract_actual_dir}"
+mkdir -p "${deferred_ops_actual_dir}"
 
 if [[ -n "${dsn_env}" ]]; then
   dsn_value="${!dsn_env:-}"
@@ -37,7 +45,7 @@ hold_args=(
 )
 
 if [[ -n "${dsn_env}" ]]; then
-  if python3 -c 'import sqlalchemy' >/dev/null 2>&1; then
+  if "${repo_python}" -c 'import sqlalchemy' >/dev/null 2>&1; then
     hold_args+=(--db-connection-string-env "SEAM_DATABASE_URL")
   elif [[ -f "${live_db_root}/build/http.js" ]]; then
     live_db_pid="$({
@@ -66,9 +74,9 @@ cleanup() {
 
 trap cleanup EXIT
 
-python3 "${hold_args[@]}" >/dev/null
+"${repo_python}" "${hold_args[@]}" >/dev/null
 
-python3 - <<'PY' "${packet_id}" "${minimal_output}" "${hold_output}"
+"${repo_python}" - <<'PY' "${packet_id}" "${minimal_output}" "${hold_output}"
 import json
 import sys
 from pathlib import Path

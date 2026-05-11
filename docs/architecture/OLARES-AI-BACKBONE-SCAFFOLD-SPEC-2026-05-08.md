@@ -46,17 +46,17 @@ Allowed outputs:
 
 Allowed outputs:
 
-1. `.claude/CLAUDE.md`,
-2. `.claude/mcp.json`,
-3. bounded subagent briefs,
-4. a Codex execution brief aligned to the same authority.
+1. `docs/operations/OLARES-VSCODE-BUILD-SESSION-PROMPT.md`,
+2. `docs/operations/CODEX-AI-BACKBONE-FIRST-PASS-EXECUTION-BRIEF-2026-05-08.md`,
+3. bounded repo-owned backbone briefing notes under `docs/operations/`,
+4. current authority references that keep the admitted backbone wiring explicit.
 
 ### D. Staging-shell scaffold
 
 Allowed outputs:
 
-1. `infra/olares/charts/forms-engine/Chart.yaml`,
-2. `infra/olares/charts/forms-engine/OlaresManifest.yaml`,
+1. `infra/olares/forms-engine/Chart.yaml`,
+2. `infra/olares/forms-engine/OlaresManifest.yaml`,
 3. chart README or values skeleton,
 4. OIDC, middleware, and `env=host` expectations written as shell-level contract, not claimed runtime proof.
 

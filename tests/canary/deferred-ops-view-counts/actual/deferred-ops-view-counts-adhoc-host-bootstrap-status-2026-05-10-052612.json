@@ -1,0 +1,18 @@
+{
+  "packet_id": "adhoc-host-bootstrap-status-2026-05-10-052612",
+  "repo_root": "/mnt/c/APEX Platform/apex-power-ops-platform",
+  "checks": {
+    "db_connection": {
+      "status": "pass",
+      "source": "default:apex-db-mcp",
+      "mode": "mcp",
+      "endpoint": "http://127.0.0.1:8711/mcp"
+    },
+    "deferred_view_counts": {
+      "status": "unavailable",
+      "reason": "The current apex-db surface does not expose the authoritative deferred operations views."
+    }
+  },
+  "result": "UNAVAILABLE",
+  "decision": "Authoritative deferred view counts require apex-db to run against a live DSN such as SEAM_DATABASE_URL; the current database surface is not sufficient for this hold check."
+}

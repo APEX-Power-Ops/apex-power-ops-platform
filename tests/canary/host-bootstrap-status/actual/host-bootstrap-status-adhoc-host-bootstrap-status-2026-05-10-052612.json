@@ -1,0 +1,56 @@
+{
+  "packet_id": "adhoc-host-bootstrap-status-2026-05-10-052612",
+  "host_container_root": "/mnt/c/APEX Platform",
+  "implementation_root": "/mnt/c/APEX Platform/apex-power-ops-platform",
+  "git": {
+    "head": "a6531ae8e30e7d9ccc818c3ba8a1a64fbef30b66",
+    "status_count": 1608,
+    "old_clone": {
+      "path": "/home/olares/src/apex-power-ops-platform",
+      "exists": false,
+      "head": null,
+      "status_count": 0
+    }
+  },
+  "toolchains": {
+    "python3": {
+      "path": "/usr/bin/python3",
+      "version": "Python 3.12.3"
+    },
+    "node": {
+      "path": null,
+      "version": null
+    },
+    "pnpm_materialized": {
+      "path": null,
+      "version": null
+    },
+    "calc_engine_python": {
+      "path": null,
+      "version": null
+    }
+  },
+  "minimal_mcp": {
+    "started_at": "2026-05-10T05:26:11Z",
+    "packet_id": "adhoc-minimal-mcp-trio-2026-05-10-052611",
+    "mode": "adopted",
+    "fs_running": true,
+    "db_running": true,
+    "jobs_running": true,
+    "ledger_path": "/mnt/c/APEX Platform/apex-power-ops-platform/.apex-data/apex-jobs-ledger.json",
+    "fs_endpoint": "http://127.0.0.1:8710/mcp",
+    "db_endpoint": "http://127.0.0.1:8711/mcp",
+    "jobs_endpoint": "http://127.0.0.1:8712/mcp"
+  },
+  "hold_boundary": {
+    "packet_id": "adhoc-host-bootstrap-status-2026-05-10-052612",
+    "minimal_mcp": "PASS",
+    "deferred_ops": "UNAVAILABLE",
+    "deferred_ops_decision": "Authoritative deferred view counts require apex-db to run against a live DSN such as SEAM_DATABASE_URL; the current database surface is not sufficient for this hold check.",
+    "outputs": {
+      "minimal_mcp": "/mnt/c/APEX Platform/apex-power-ops-platform/tests/canary/mcp-contract/actual/verify-minimal-mcp-trio-adhoc-host-bootstrap-status-2026-05-10-052612.json",
+      "deferred_ops": "/mnt/c/APEX Platform/apex-power-ops-platform/tests/canary/deferred-ops-view-counts/actual/deferred-ops-view-counts-adhoc-host-bootstrap-status-2026-05-10-052612.json"
+    }
+  },
+  "output_artifact": "/mnt/c/APEX Platform/apex-power-ops-platform/tests/canary/host-bootstrap-status/actual/host-bootstrap-status-adhoc-host-bootstrap-status-2026-05-10-052612.json"
+}

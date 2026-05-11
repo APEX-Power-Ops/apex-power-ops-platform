@@ -20,7 +20,7 @@ function Import-ApexEnvFile {
     }
 
     $name, $value = $_ -split '=', 2
-    if ($name -and $value -ne $null) {
+    if ($name -and $null -ne $value) {
       [Environment]::SetEnvironmentVariable($name.Trim(), $value.Trim(), 'Process')
     }
   }
@@ -28,7 +28,21 @@ function Import-ApexEnvFile {
 
 function Get-ApexRepoPython {
   if ($env:APEX_PLATFORM_PYTHON) {
-    return $env:APEX_PLATFORM_PYTHON
+    $configuredPython = $env:APEX_PLATFORM_PYTHON
+    if ($configuredPython -match '[\\/]') {
+      if (Test-Path $configuredPython) {
+        return (Resolve-Path $configuredPython).Path
+      }
+
+      throw "Configured APEX_PLATFORM_PYTHON path not found: $configuredPython"
+    }
+
+    $command = Get-Command $configuredPython -ErrorAction SilentlyContinue
+    if ($null -ne $command -and $command.Path) {
+      return $command.Path
+    }
+
+    throw "Configured APEX_PLATFORM_PYTHON command not found: $configuredPython"
   }
 
   $repoRoot = Get-ApexRepoRoot
@@ -44,4 +58,17 @@ function Get-ApexRepoPython {
   }
 
   throw "No repo-local Python interpreter found under $repoRoot/.venv."
+}
+
+function Get-ApexDefaultPacketId {
+  param(
+    [string]$Label = 'operator'
+  )
+
+  if ($env:APEX_PACKET_ID) {
+    return $env:APEX_PACKET_ID
+  }
+
+  $timestamp = [DateTime]::UtcNow.ToString('yyyy-MM-dd-HHmmss')
+  return "adhoc-$Label-$timestamp"
 }

@@ -5,9 +5,15 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../shell/common.sh"
 
 repo_root="$(get_apex_repo_root)"
 import_apex_env_file
+repo_python="$(get_apex_preferred_python)"
 
 action="${1:-status}"
-packet_id="${2:-2026-05-06-olares-dev-residency-037}"
+packet_id="${2:-}"
+packet_id_was_provided=true
+if [[ -z "${packet_id}" ]]; then
+  packet_id_was_provided=false
+  packet_id="$(get_apex_default_packet_id minimal-mcp-trio)"
+fi
 fs_port="${APEX_DEV_MCP_FS_PORT:-8710}"
 db_port="${APEX_DEV_MCP_DB_PORT:-8711}"
 jobs_port="${APEX_DEV_MCP_JOBS_PORT:-8712}"
@@ -16,8 +22,10 @@ state_dir="${repo_root}/.tmp/ai-workflow"
 log_dir="${state_dir}/logs"
 state_file="${state_dir}/minimal-mcp-trio.env"
 ledger_path="${repo_root}/.apex-data/apex-jobs-ledger.json"
+mcp_contract_actual_dir="${repo_root}/tests/canary/mcp-contract/actual"
+verify_output="${mcp_contract_actual_dir}/verify-minimal-mcp-trio-${packet_id}.json"
 
-mkdir -p "${log_dir}"
+mkdir -p "${log_dir}" "${mcp_contract_actual_dir}"
 
 get_db_connection_string() {
   if [[ -n "${SEAM_DATABASE_URL:-}" ]]; then
@@ -144,7 +152,11 @@ EOF
 EOF
     ;;
   verify)
-    python tools/ai/verify_minimal_mcp_trio.py --packet-id "${packet_id}" --output "${state_dir}/verify-minimal-mcp-trio.json"
+    if [[ "${packet_id_was_provided}" == "false" ]] && load_state && [[ -n "${PACKET_ID:-}" ]]; then
+      packet_id="${PACKET_ID}"
+      verify_output="${mcp_contract_actual_dir}/verify-minimal-mcp-trio-${packet_id}.json"
+    fi
+    "${repo_python}" tools/ai/verify_minimal_mcp_trio.py --packet-id "${packet_id}" --output "${verify_output}"
     ;;
   *)
     printf 'Unknown action: %s\n' "${action}" >&2

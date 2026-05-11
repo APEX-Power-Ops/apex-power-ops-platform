@@ -5,8 +5,12 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../shell/common.sh"
 
 repo_root="$(get_apex_repo_root)"
 import_apex_env_file
+repo_python="$(get_apex_preferred_python)"
 
-packet_id="${1:-2026-05-06-olares-dev-residency-063}"
+packet_id="${1:-}"
+if [[ -z "${packet_id}" ]]; then
+    packet_id="$(get_apex_default_packet_id host-bootstrap-status)"
+fi
 dsn_env="${2:-}"
 host_container_root="$(cd "${repo_root}/.." && pwd)"
 old_clone="/home/olares/src/apex-power-ops-platform"
@@ -15,8 +19,11 @@ calc_python="/home/olares/apex-data/toolchains/calc-engine-venv/bin/python"
 state_dir="${repo_root}/.tmp/ai-workflow"
 minimal_status_file="${state_dir}/host-bootstrap-minimal-status.json"
 hold_status_file="${state_dir}/host-bootstrap-hold-status.json"
+host_bootstrap_actual_dir="${repo_root}/tests/canary/host-bootstrap-status/actual"
+host_bootstrap_output="${host_bootstrap_actual_dir}/host-bootstrap-status-${packet_id}.json"
 
 mkdir -p "${state_dir}"
+mkdir -p "${host_bootstrap_actual_dir}"
 
 git_status_count() {
   local target="$1"
@@ -31,7 +38,7 @@ command_path_or_empty() {
 bash "${repo_root}/tools/ai/run-minimal-mcp-trio.sh" status >"${minimal_status_file}"
 
 minimal_ready="$({
-  python3 - <<'PY' "${minimal_status_file}"
+    "${repo_python}" - <<'PY' "${minimal_status_file}"
 import json
 import sys
 from pathlib import Path
@@ -56,14 +63,14 @@ else
 EOF
 fi
 
-python3 - <<'PY' "${packet_id}" "${host_container_root}" "${repo_root}" "${old_clone}" "${pnpm_bin}" "${calc_python}" "${minimal_status_file}" "${hold_status_file}"
+"${repo_python}" - <<'PY' "${packet_id}" "${host_container_root}" "${repo_root}" "${old_clone}" "${pnpm_bin}" "${calc_python}" "${repo_python}" "${minimal_status_file}" "${hold_status_file}" "${host_bootstrap_output}"
 import json
 import shutil
 import subprocess
 import sys
 from pathlib import Path
 
-packet_id, host_container_root, repo_root, old_clone, pnpm_bin, calc_python, minimal_path, hold_path = sys.argv[1:]
+packet_id, host_container_root, repo_root, old_clone, pnpm_bin, calc_python, preferred_python, minimal_path, hold_path, output_path = sys.argv[1:]
 
 
 def run_text(*args: str) -> str:
@@ -71,8 +78,19 @@ def run_text(*args: str) -> str:
 
 
 def git_status_count(target: str) -> int:
+    if not Path(target).exists():
+        return 0
     output = subprocess.check_output(["git", "-C", target, "status", "--porcelain"], text=True)
     return 0 if not output else len(output.rstrip("\n").splitlines())
+
+
+def git_head_or_none(target: str) -> str | None:
+    if not Path(target).exists():
+        return None
+    try:
+        return run_text("git", "-C", target, "rev-parse", "HEAD")
+    except Exception:
+        return None
 
 
 def maybe_version(command: str) -> str | None:
@@ -106,11 +124,16 @@ payload = {
         "status_count": git_status_count(repo_root),
         "old_clone": {
             "path": old_clone,
-            "head": run_text("git", "-C", old_clone, "rev-parse", "HEAD"),
+            "exists": Path(old_clone).exists(),
+            "head": git_head_or_none(old_clone),
             "status_count": git_status_count(old_clone),
         },
     },
     "toolchains": {
+        "preferred_python": {
+            "path": preferred_python if Path(preferred_python).exists() else None,
+            "version": file_version(preferred_python, ["--version"]),
+        },
         "python3": {
             "path": shutil.which("python3"),
             "version": maybe_version("python3"),
@@ -130,7 +153,11 @@ payload = {
     },
     "minimal_mcp": minimal,
     "hold_boundary": hold,
+    "output_artifact": output_path,
 }
 
+output = Path(output_path)
+output.parent.mkdir(parents=True, exist_ok=True)
+output.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
 print(json.dumps(payload, indent=2))
 PY

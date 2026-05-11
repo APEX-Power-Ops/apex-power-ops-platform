@@ -1,5 +1,5 @@
 param(
-  [string]$PacketId = '2026-05-06-olares-dev-residency-056',
+  [string]$PacketId,
   [string]$DsnEnv
 )
 
@@ -8,15 +8,23 @@ $ErrorActionPreference = 'Stop'
 
 . (Join-Path $PSScriptRoot '..\shell\common.ps1')
 
+if (-not $PSBoundParameters.ContainsKey('PacketId') -or [string]::IsNullOrWhiteSpace($PacketId)) {
+  $PacketId = Get-ApexDefaultPacketId 'hold-boundary'
+}
+
 $repoRoot = Get-ApexRepoRoot
 Import-ApexEnvFile
 $repoPython = Get-ApexRepoPython
 
 $stateDir = Join-Path $repoRoot '.tmp/ai-workflow'
+$mcpContractActualDir = Join-Path $repoRoot 'tests/canary/mcp-contract/actual'
+$deferredOpsActualDir = Join-Path $repoRoot 'tests/canary/deferred-ops-view-counts/actual'
 New-Item -ItemType Directory -Force -Path $stateDir | Out-Null
+New-Item -ItemType Directory -Force -Path $mcpContractActualDir | Out-Null
+New-Item -ItemType Directory -Force -Path $deferredOpsActualDir | Out-Null
 
-$minimalOutput = Join-Path $stateDir 'verify-minimal-mcp-trio.json'
-$holdOutput = Join-Path $stateDir 'deferred-ops-view-counts.json'
+$minimalOutput = Join-Path $mcpContractActualDir "verify-minimal-mcp-trio-$PacketId.json"
+$holdOutput = Join-Path $deferredOpsActualDir "deferred-ops-view-counts-$PacketId.json"
 
 if ($DsnEnv) {
   $dsnValue = [Environment]::GetEnvironmentVariable($DsnEnv, 'Process')

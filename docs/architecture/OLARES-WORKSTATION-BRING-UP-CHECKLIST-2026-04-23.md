@@ -32,7 +32,7 @@ snapshot:
 
 1. `.env.dev` exists for machine-local overrides, or `.env.dev.template` remains usable as the bounded default env source
 2. Node.js is available for the MCP HTTP bridges under `services/mcp/*/build/`
-3. `C:/APEX Platform/.venv/Scripts/python.exe` is available for the bounded Python runtime shells
+3. Windows reruns use the repo-local `C:/APEX Platform/apex-power-ops-platform/.venv/Scripts/python.exe`, while POSIX reruns resolve Python through the shared preferred helper from repo-local `.venv/bin/python`, `APEX_PLATFORM_PYTHON`, or native `python3` or `python`
 4. the admitted schedule fixture remains present at `apps/mutation-seam/app/schedule/fixtures/stack_data_center_baseline_sanitized.xer`
 
 ## Rerun Steps

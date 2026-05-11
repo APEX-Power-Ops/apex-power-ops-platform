@@ -80,9 +80,9 @@ If neither `.env.dev` nor `.env.dev.template` is present, the wrappers fall back
 ```powershell
 pwsh tools/ai/run-minimal-mcp-trio.ps1 -Action up
 pwsh tools/ai/run-minimal-mcp-trio.ps1 -Action status
-pwsh tools/ai/run-minimal-mcp-trio.ps1 -Action verify -PacketId 2026-05-06-olares-dev-residency-037
+pwsh tools/ai/run-minimal-mcp-trio.ps1 -Action verify -PacketId <packet-id>
 pwsh tools/ai/run-minimal-mcp-trio.ps1 -Action down
-pwsh tools/ai/run-olares-hold-boundary-check.ps1 -PacketId 2026-05-06-olares-dev-residency-056
+pwsh tools/ai/run-olares-hold-boundary-check.ps1 -PacketId <packet-id>
 ```
 
 ### Bash
@@ -90,10 +90,10 @@ pwsh tools/ai/run-olares-hold-boundary-check.ps1 -PacketId 2026-05-06-olares-dev
 ```bash
 bash tools/ai/run-minimal-mcp-trio.sh up
 bash tools/ai/run-minimal-mcp-trio.sh status
-bash tools/ai/run-minimal-mcp-trio.sh verify 2026-05-06-olares-dev-residency-037
+bash tools/ai/run-minimal-mcp-trio.sh verify <packet-id>
 bash tools/ai/run-minimal-mcp-trio.sh down
-bash tools/ai/run-olares-hold-boundary-check.sh 2026-05-06-olares-dev-residency-056
-bash tools/ai/run-olares-host-bootstrap-status.sh 2026-05-06-olares-dev-residency-063
+bash tools/ai/run-olares-hold-boundary-check.sh <packet-id>
+bash tools/ai/run-olares-host-bootstrap-status.sh <packet-id>
 ```
 
 ## Host Bootstrap Status
@@ -104,13 +104,19 @@ It is status-only.
 
 It does not install packages, mutate services, or widen the current trust boundary.
 
+If a packet id is omitted on the admitted minimal-trio, hold-boundary, or host-bootstrap wrappers, or on the direct `verify_minimal_mcp_trio.py` and `check_deferred_ops_view_counts.py` helper commands, they now prefer `APEX_PACKET_ID` and otherwise generate a fresh ad-hoc timestamped id, so current operator evidence is not written under preserved historical packet names.
+
+On Bash surfaces, the shared Python resolver now prefers the repo-local interpreter when it is usable and otherwise falls back to native `python3` or `python`; if `APEX_PLATFORM_PYTHON` supplies a bare command name such as `python3`, the resolver materializes it to the actual command path, explicit path-style overrides must point to a real interpreter, and on Linux-style shells it rejects Windows `python.exe` overrides that cannot execute the wrappers' POSIX script paths.
+
 It reports:
 
 1. current host parent-root parity and status,
 2. old-clone observe-only state,
-3. materialized host toolchain presence,
+3. materialized host toolchain presence, including the preferred Python path and version actually used by Bash AI surfaces,
 4. minimal MCP trio readiness,
 5. current hold-boundary result from the host posture.
+
+When emitted, the composed host-bootstrap summary now also writes repo-visible JSON output to `tests/canary/host-bootstrap-status/actual/host-bootstrap-status-<packet-id>.json`; if the historical old-clone path is absent in the current environment, that field now degrades truthfully instead of crashing the whole status surface.
 
 ## Hold-Boundary Cadence
 
@@ -126,6 +132,8 @@ The PowerShell wrapper now uses that explicit live DSN through the repo venv's d
 The Bash wrapper first tries the same direct path when host Python can import `sqlalchemy`; if not, it only attempts a temporary live `apex-db` sidecar when the current mirror actually contains a runnable `services/mcp/apex-db` source tree.
 
 If no live DSN is present, the helper returns `UNAVAILABLE` rather than a false hold decision. That is an honest operator result, not a silent pass.
+
+When emitted, the minimal-trio verifier artifact stays in `tests/canary/mcp-contract/actual/verify-minimal-mcp-trio-<packet-id>.json` and the deferred-view helper now writes repo-visible JSON output to `tests/canary/deferred-ops-view-counts/actual/deferred-ops-view-counts-<packet-id>.json` instead of leaving that evidence only under `.tmp/ai-workflow/`.
 
 If a live DSN is present but the current host posture lacks every usable live-query engine, the Bash wrapper also degrades back to `UNAVAILABLE` instead of failing. That is the current truthful host posture on `/home/olares/code/apex/apex-power-ops-platform`.
 

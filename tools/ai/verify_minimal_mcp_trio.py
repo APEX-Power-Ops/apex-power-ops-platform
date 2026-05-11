@@ -6,6 +6,7 @@ import os
 import sys
 import urllib.request
 import uuid
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -66,19 +67,33 @@ def write_output(path: Path | None, payload: dict[str, Any]) -> None:
     path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
 
 
+def resolve_packet_id(packet_id: str | None) -> str:
+    explicit = str(packet_id or "").strip()
+    if explicit:
+        return explicit
+
+    env_packet_id = str(os.getenv("APEX_PACKET_ID") or "").strip()
+    if env_packet_id:
+        return env_packet_id
+
+    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d-%H%M%S")
+    return f"adhoc-verify-minimal-mcp-trio-{timestamp}"
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Verify the minimal MCP trio operator surface.")
     parser.add_argument("--fs-url", default=os.getenv("APEX_FS_MCP_URL", "http://127.0.0.1:8710/mcp"))
     parser.add_argument("--db-url", default=os.getenv("APEX_DB_MCP_URL", "http://127.0.0.1:8711/mcp"))
     parser.add_argument("--jobs-url", default=os.getenv("APEX_JOBS_MCP_URL", "http://127.0.0.1:8712/mcp"))
-    parser.add_argument("--packet-id", default="2026-05-06-olares-dev-residency-037")
+    parser.add_argument("--packet-id")
     parser.add_argument("--output")
     parser.add_argument("--require-db-query", action="store_true")
     args = parser.parse_args()
 
+    packet_id = resolve_packet_id(args.packet_id)
     output_path = Path(args.output) if args.output else None
     summary: dict[str, Any] = {
-        "packet_id": args.packet_id,
+        "packet_id": packet_id,
         "endpoints": {"fs": args.fs_url, "db": args.db_url, "jobs": args.jobs_url},
         "checks": {},
     }
@@ -124,7 +139,7 @@ def main() -> int:
         started = call_tool(
             args.jobs_url,
             "start_run",
-            {"env": "sandbox", "service": "ai-workflow", "packet_id": args.packet_id},
+            {"env": "sandbox", "service": "ai-workflow", "packet_id": packet_id},
         )
         summary["checks"]["jobs_start_run"] = {"status": "pass", "run": started}
         ended = call_tool(

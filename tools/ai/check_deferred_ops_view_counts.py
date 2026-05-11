@@ -4,6 +4,7 @@ import argparse
 import json
 import os
 import urllib.request
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -123,9 +124,22 @@ def write_output(path: Path | None, payload: dict[str, Any]) -> None:
     path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
 
 
+def resolve_packet_id(packet_id: str | None) -> str:
+    explicit = str(packet_id or "").strip()
+    if explicit:
+        return explicit
+
+    env_packet_id = str(os.getenv("APEX_PACKET_ID") or "").strip()
+    if env_packet_id:
+        return env_packet_id
+
+    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d-%H%M%S")
+    return f"adhoc-deferred-ops-view-counts-{timestamp}"
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Check whether deferred Operations Visibility views have live rows.")
-    parser.add_argument("--packet-id", default="2026-05-06-olares-dev-residency-056")
+    parser.add_argument("--packet-id")
     parser.add_argument("--db-url")
     parser.add_argument("--db-url-env")
     parser.add_argument("--db-connection-string")
@@ -133,9 +147,10 @@ def main() -> int:
     parser.add_argument("--output")
     args = parser.parse_args()
 
+    packet_id = resolve_packet_id(args.packet_id)
     output_path = Path(args.output) if args.output else None
     summary: dict[str, Any] = {
-        "packet_id": args.packet_id,
+        "packet_id": packet_id,
         "repo_root": str(repo_root()),
         "checks": {},
     }

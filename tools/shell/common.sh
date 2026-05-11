@@ -27,12 +27,42 @@ import_apex_env_file() {
 }
 
 get_apex_repo_python() {
-  local repo_root
+  local repo_root is_linux_shell configured_python
   repo_root="$(get_apex_repo_root)"
 
-  if [[ -n "${APEX_PLATFORM_PYTHON:-}" ]]; then
-    printf '%s' "${APEX_PLATFORM_PYTHON}"
-    return 0
+  is_linux_shell=false
+  case "$(uname -s)" in
+    Linux*)
+      is_linux_shell=true
+      ;;
+  esac
+
+  configured_python="${APEX_PLATFORM_PYTHON:-}"
+  if [[ -n "${configured_python}" ]]; then
+    if [[ "${is_linux_shell}" != "true" || "${configured_python}" != *.exe ]]; then
+      if [[ "${configured_python}" == *[\\/]* ]]; then
+        if [[ -f "${configured_python}" || -x "${configured_python}" ]]; then
+          printf '%s' "${configured_python}"
+          return 0
+        fi
+
+        printf '%s\n' "Configured APEX_PLATFORM_PYTHON path not found: ${configured_python}" >&2
+        return 1
+      fi
+
+      if command -v "${configured_python}" >/dev/null 2>&1; then
+        command -v "${configured_python}"
+        return 0
+      fi
+
+      printf '%s\n' "Configured APEX_PLATFORM_PYTHON command not found: ${configured_python}" >&2
+      return 1
+    fi
+
+    if [[ "${is_linux_shell}" == "true" ]]; then
+      printf '%s\n' "Configured APEX_PLATFORM_PYTHON points at a Windows interpreter not usable from this shell: ${configured_python}" >&2
+      return 1
+    fi
   fi
 
   if [[ -x "${repo_root}/.venv/bin/python" ]]; then
@@ -40,11 +70,47 @@ get_apex_repo_python() {
     return 0
   fi
 
-  if [[ -f "${repo_root}/.venv/Scripts/python.exe" ]]; then
+  if [[ "${is_linux_shell}" != "true" && -f "${repo_root}/.venv/Scripts/python.exe" ]]; then
     printf '%s' "${repo_root}/.venv/Scripts/python.exe"
     return 0
   fi
 
   printf '%s\n' "No repo-local Python interpreter found under ${repo_root}/.venv." >&2
   return 1
+}
+
+get_apex_preferred_python() {
+  local repo_python repo_root
+
+  repo_root="$(get_apex_repo_root)"
+
+  repo_python="$(get_apex_repo_python 2>/dev/null || true)"
+  if [[ -n "${repo_python}" ]]; then
+    printf '%s' "${repo_python}"
+    return 0
+  fi
+
+  if command -v python3 >/dev/null 2>&1; then
+    command -v python3
+    return 0
+  fi
+
+  if command -v python >/dev/null 2>&1; then
+    command -v python
+    return 0
+  fi
+
+  printf '%s\n' "No usable Python interpreter found for ${repo_root}." >&2
+  return 1
+}
+
+get_apex_default_packet_id() {
+  local label="${1:-operator}"
+
+  if [[ -n "${APEX_PACKET_ID:-}" ]]; then
+    printf '%s' "${APEX_PACKET_ID}"
+    return 0
+  fi
+
+  printf 'adhoc-%s-%s' "${label}" "$(date -u +%Y-%m-%d-%H%M%S)"
 }

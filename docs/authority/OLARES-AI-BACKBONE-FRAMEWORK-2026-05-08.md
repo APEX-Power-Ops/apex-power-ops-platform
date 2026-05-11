@@ -79,9 +79,9 @@ That does not mean Codex may:
 The first 20-30% scaffold pass may touch only these surface classes unless a later packet widens scope:
 
 1. `services/mcp/apex-fs/`, `services/mcp/apex-db/`, and `services/mcp/apex-jobs/` structure, README, env-contract, package metadata, and non-destructive skeleton wiring,
-2. `.claude/CLAUDE.md`, `.claude/mcp.json`, and bounded subagent briefs,
+2. repo-owned backbone scaffold and execution-brief surfaces under `docs/architecture/OLARES-AI-BACKBONE-SCAFFOLD-SPEC-2026-05-08.md` and `docs/operations/CODEX-AI-BACKBONE-FIRST-PASS-EXECUTION-BRIEF-2026-05-08.md`,
 3. `infra/compose.dev.yml` and `.env.dev.template` as scaffold and contract surfaces,
-4. `infra/olares/charts/forms-engine/` as a shell-only staging chart boundary,
+4. `infra/olares/forms-engine/` as a shell-only staging chart boundary,
 5. `tests/canary/` and `tools/` where the work is limited to admitted backbone contract checks,
 6. repo-owned docs that describe the backbone, trust boundary, scaffold plan, and hardening split.
 
