@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-05-03-olares-phase-5-094",
-  "title": "Post-093 Trigger Framework Dormancy Readiness Verdict",
+  "title": "Historical Post-093 Trigger Framework Dormancy Readiness Verdict",
+  "historical_note": "This packet records one bounded Olares Phase 5 dormancy-readiness verdict slice from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live execution instruction for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this packet JSON only when historical provenance is needed for the earlier `olares-phase-5-094` dormancy-readiness verdict"
+  ],
   "objective": "Consume the published Packet 092 trigger-framework authority and Packet 093 clean host parity to record the final dormancy/readiness verdict for the simultaneous-worker lane without reopening execution.",
   "domain": "infrastructure-domain",
   "active_role": "Olares Dormancy Verdict Operator",

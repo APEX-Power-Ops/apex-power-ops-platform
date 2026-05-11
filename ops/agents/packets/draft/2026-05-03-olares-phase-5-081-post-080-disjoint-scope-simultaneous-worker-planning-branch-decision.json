@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-05-03-olares-phase-5-081",
-  "title": "Post-080 Disjoint-Scope Simultaneous-Worker Planning Branch Decision",
+  "title": "Historical Post-080 Disjoint-Scope Simultaneous-Worker Planning Branch Decision",
+  "historical_note": "This packet records one bounded Olares Phase 5 post-publication branch-decision slice for disjoint-scope simultaneous-worker planning from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live execution instruction for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this packet JSON only when historical provenance is needed for the earlier `olares-phase-5-081` disjoint-scope simultaneous-worker planning branch decision"
+  ],
   "objective": "Decide whether the post-080 lane should advance into planning-only disjoint-scope simultaneous-worker pilot design or defer and remain one-worker-only.",
   "domain": "infrastructure-domain",
   "active_role": "Olares Branch Decision Operator",

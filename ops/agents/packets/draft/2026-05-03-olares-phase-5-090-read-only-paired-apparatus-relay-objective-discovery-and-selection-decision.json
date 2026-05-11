@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-05-03-olares-phase-5-090",
-  "title": "Read-Only Paired Apparatus Relay Objective Discovery And Selection Decision",
+  "title": "Historical Read-Only Paired Apparatus Relay Objective Discovery And Selection Decision",
+  "historical_note": "This packet records one bounded Olares Phase 5 read-only paired-objective discovery decision slice from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live execution instruction for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this packet JSON only when historical provenance is needed for the earlier `olares-phase-5-090` read-only paired-objective discovery and selection decision"
+  ],
   "objective": "Perform bounded read-only discovery for real paired apparatus/relay objectives and decide whether any objective set survives Packet 082 ownership and Packet 084 abort rules.",
   "domain": "infrastructure-domain",
   "active_role": "Olares Paired Objective Discovery Operator",

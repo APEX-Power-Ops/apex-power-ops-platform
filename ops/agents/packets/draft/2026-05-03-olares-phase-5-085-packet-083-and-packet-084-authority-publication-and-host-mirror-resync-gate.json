@@ -1,6 +1,12 @@
 {
   "packet_id": "2026-05-03-olares-phase-5-085",
-  "title": "Packet 083 And Packet 084 Authority Publication And Host Mirror Resync Gate",
+  "title": "Historical Packet 083 And Packet 084 Authority Publication And Host Mirror Resync Gate",
+  "historical_note": "This packet records one bounded Olares Phase 5 authority-publication and host-mirror resync gate for simultaneous-worker readiness authority from before the canonical repo boundary moved to `C:/APEX Platform/apex-power-ops-platform` on 2026-05-07. It remains packet-history provenance, not a live execution instruction for current repo operations.",
+  "current_routing": [
+    "use PROJECT_STATUS.md for the current residue-retirement lane and latest completed packets",
+    "use docs/architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md for the remaining post-cutover boundary closeout queue",
+    "use this packet JSON only when historical provenance is needed for the earlier `olares-phase-5-085` authority-publication and host-mirror resync gate"
+  ],
   "objective": "Publish Packet 083 closeout authority and Packet 084 readiness verdict authority through the parent-root boundary, then restore `/home/olares/code/apex` to clean parity without opening simultaneous-worker execution.",
   "domain": "infrastructure-domain",
   "active_role": "Olares Authority Publication Operator",
