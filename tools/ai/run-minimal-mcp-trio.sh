@@ -25,6 +25,10 @@ ledger_path="${repo_root}/.apex-data/apex-jobs-ledger.json"
 mcp_contract_actual_dir="${repo_root}/tests/canary/mcp-contract/actual"
 verify_output="${mcp_contract_actual_dir}/verify-minimal-mcp-trio-${packet_id}.json"
 
+fs_endpoint="http://127.0.0.1:${fs_port}/mcp"
+db_endpoint="http://127.0.0.1:${db_port}/mcp"
+jobs_endpoint="http://127.0.0.1:${jobs_port}/mcp"
+
 mkdir -p "${log_dir}" "${mcp_contract_actual_dir}"
 
 get_db_connection_string() {
@@ -100,9 +104,9 @@ FS_PID=''
 DB_PID=''
 JOBS_PID=''
 LEDGER_PATH='${ledger_path}'
-FS_ENDPOINT='http://127.0.0.1:${fs_port}/mcp'
-DB_ENDPOINT='http://127.0.0.1:${db_port}/mcp'
-JOBS_ENDPOINT='http://127.0.0.1:${jobs_port}/mcp'
+FS_ENDPOINT='${fs_endpoint}'
+DB_ENDPOINT='${db_endpoint}'
+JOBS_ENDPOINT='${jobs_endpoint}'
 EOF
       printf '{"status":"adopted"}\n'
       exit 0
@@ -121,9 +125,9 @@ FS_PID='${fs_pid}'
 DB_PID='${db_pid}'
 JOBS_PID='${jobs_pid}'
 LEDGER_PATH='${ledger_path}'
-FS_ENDPOINT='http://127.0.0.1:${fs_port}/mcp'
-DB_ENDPOINT='http://127.0.0.1:${db_port}/mcp'
-JOBS_ENDPOINT='http://127.0.0.1:${jobs_port}/mcp'
+FS_ENDPOINT='${fs_endpoint}'
+DB_ENDPOINT='${db_endpoint}'
+JOBS_ENDPOINT='${jobs_endpoint}'
 EOF
     printf '{"status":"started"}\n'
     ;;
@@ -144,11 +148,24 @@ EOF
     ;;
   status)
     if ! load_state; then
+      if is_healthy "${fs_port}" && is_healthy "${db_port}" && is_healthy "${jobs_port}"; then
+        cat <<EOF
+{"status":"unmanaged-running","mode":"unmanaged","fs_running":true,"db_running":true,"jobs_running":true,"ledger_path":"${ledger_path}","fs_endpoint":"${fs_endpoint}","db_endpoint":"${db_endpoint}","jobs_endpoint":"${jobs_endpoint}"}
+EOF
+        exit 0
+      fi
+
       printf '{"status":"not-running"}\n'
       exit 0
     fi
+
+    status_value="managed-running"
+    if [[ "${MODE:-managed}" == "adopted" ]]; then
+      status_value="adopted-running"
+    fi
+
     cat <<EOF
-{"started_at":"${STARTED_AT}","packet_id":"${PACKET_ID}","mode":"${MODE:-managed}","fs_running":$(if [[ "${MODE:-managed}" == "adopted" ]]; then is_healthy "${fs_port}" && printf true || printf false; else is_running "${FS_PID:-}" && printf true || printf false; fi),"db_running":$(if [[ "${MODE:-managed}" == "adopted" ]]; then is_healthy "${db_port}" && printf true || printf false; else is_running "${DB_PID:-}" && printf true || printf false; fi),"jobs_running":$(if [[ "${MODE:-managed}" == "adopted" ]]; then is_healthy "${jobs_port}" && printf true || printf false; else is_running "${JOBS_PID:-}" && printf true || printf false; fi),"ledger_path":"${LEDGER_PATH}","fs_endpoint":"${FS_ENDPOINT:-http://127.0.0.1:${fs_port}/mcp}","db_endpoint":"${DB_ENDPOINT:-http://127.0.0.1:${db_port}/mcp}","jobs_endpoint":"${JOBS_ENDPOINT:-http://127.0.0.1:${jobs_port}/mcp}"}
+{"status":"${status_value}","started_at":"${STARTED_AT}","packet_id":"${PACKET_ID}","mode":"${MODE:-managed}","fs_running":$(if [[ "${MODE:-managed}" == "adopted" ]]; then is_healthy "${fs_port}" && printf true || printf false; else is_running "${FS_PID:-}" && printf true || printf false; fi),"db_running":$(if [[ "${MODE:-managed}" == "adopted" ]]; then is_healthy "${db_port}" && printf true || printf false; else is_running "${DB_PID:-}" && printf true || printf false; fi),"jobs_running":$(if [[ "${MODE:-managed}" == "adopted" ]]; then is_healthy "${jobs_port}" && printf true || printf false; else is_running "${JOBS_PID:-}" && printf true || printf false; fi),"ledger_path":"${LEDGER_PATH}","fs_endpoint":"${FS_ENDPOINT:-${fs_endpoint}}","db_endpoint":"${DB_ENDPOINT:-${db_endpoint}}","jobs_endpoint":"${JOBS_ENDPOINT:-${jobs_endpoint}}"}
 EOF
     ;;
   verify)

@@ -45,19 +45,41 @@ from pathlib import Path
 
 payload = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
 status = payload.get("status")
-print("true" if status != "not-running" else "false")
+mode = payload.get("mode")
+
+ready_statuses = {"managed-running", "adopted-running"}
+print("true" if status in ready_statuses or (status is None and mode in {"managed", "adopted"}) else "false")
 PY
 })"
 
 if [[ "${minimal_ready}" == "true" ]]; then
   bash "${repo_root}/tools/ai/run-olares-hold-boundary-check.sh" "${packet_id}" "${dsn_env}" >"${hold_status_file}"
 else
-  cat >"${hold_status_file}" <<'EOF'
+    minimal_mode="$({
+        "${repo_python}" - <<'PY' "${minimal_status_file}"
+import json
+import sys
+from pathlib import Path
+
+payload = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+print(payload.get("status") or "not-running")
+PY
+    })"
+
+    hold_minimal_mcp="NOT_RUNNING"
+    hold_decision="minimal_mcp_not_running"
+
+    if [[ "${minimal_mode}" == "unmanaged-running" ]]; then
+        hold_minimal_mcp="UNMANAGED_RUNNING"
+        hold_decision="minimal_mcp_unmanaged"
+    fi
+
+    cat >"${hold_status_file}" <<EOF
 {
   "packet_id": "status-only",
-  "minimal_mcp": "NOT_RUNNING",
+    "minimal_mcp": "${hold_minimal_mcp}",
   "deferred_ops": "UNAVAILABLE",
-  "deferred_ops_decision": "minimal_mcp_not_running",
+    "deferred_ops_decision": "${hold_decision}",
   "outputs": {}
 }
 EOF

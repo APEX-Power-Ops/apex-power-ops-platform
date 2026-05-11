@@ -24,6 +24,9 @@ $logDir = Join-Path $stateDir 'logs'
 $stateFile = Join-Path $stateDir 'minimal-mcp-trio.json'
 $ledgerPath = Join-Path $repoRoot '.apex-data/apex-jobs-ledger.json'
 $mcpContractActualDir = Join-Path $repoRoot 'tests/canary/mcp-contract/actual'
+$fsEndpoint = "http://127.0.0.1:$($env:APEX_DEV_MCP_FS_PORT)/mcp"
+$dbEndpoint = "http://127.0.0.1:$($env:APEX_DEV_MCP_DB_PORT)/mcp"
+$jobsEndpoint = "http://127.0.0.1:$($env:APEX_DEV_MCP_JOBS_PORT)/mcp"
 
 New-Item -ItemType Directory -Force -Path $stateDir, $logDir, $mcpContractActualDir | Out-Null
 
@@ -119,9 +122,9 @@ function Test-HealthyEndpoint([string]$Url) {
 switch ($Action) {
   'up' {
     $endpoints = [pscustomobject]@{
-      fs = "http://127.0.0.1:$($env:APEX_DEV_MCP_FS_PORT)/mcp"
-      db = "http://127.0.0.1:$($env:APEX_DEV_MCP_DB_PORT)/mcp"
-      jobs = "http://127.0.0.1:$($env:APEX_DEV_MCP_JOBS_PORT)/mcp"
+      fs = $fsEndpoint
+      db = $dbEndpoint
+      jobs = $jobsEndpoint
     }
 
     $existing = Read-State
@@ -197,11 +200,33 @@ switch ($Action) {
   'status' {
     $existing = Read-State
     if ($null -eq $existing) {
+      if ((Test-HealthyEndpoint "http://127.0.0.1:$($env:APEX_DEV_MCP_FS_PORT)/health") -and
+          (Test-HealthyEndpoint "http://127.0.0.1:$($env:APEX_DEV_MCP_DB_PORT)/health") -and
+          (Test-HealthyEndpoint "http://127.0.0.1:$($env:APEX_DEV_MCP_JOBS_PORT)/health")) {
+        $unmanaged = [ordered]@{
+          status = 'unmanaged-running'
+          mode = 'unmanaged'
+          fs_running = $true
+          db_running = $true
+          jobs_running = $true
+          ledger_path = $ledgerPath
+          fs_endpoint = $fsEndpoint
+          db_endpoint = $dbEndpoint
+          jobs_endpoint = $jobsEndpoint
+        }
+
+        $unmanaged | ConvertTo-Json -Depth 6
+        break
+      }
+
       Write-Output '{"status":"not-running"}'
       break
     }
 
+    $statusValue = if ($existing.mode -eq 'adopted') { 'adopted-running' } else { 'managed-running' }
+
     $status = [pscustomobject]@{
+      status = $statusValue
       started_at = $existing.started_at
       packet_id = $existing.packet_id
       mode = $existing.mode
