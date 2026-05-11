@@ -91,11 +91,20 @@ def format_command() -> str:
     return shlex.join(argv)
 
 
+def default_mcp_url(url_env: str, port_env: str, fallback_port: int) -> str:
+    explicit_url = os.getenv(url_env)
+    if explicit_url:
+        return explicit_url
+
+    port = os.getenv(port_env, str(fallback_port))
+    return f"http://127.0.0.1:{port}/mcp"
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Verify the minimal MCP trio operator surface.")
-    parser.add_argument("--fs-url", default=os.getenv("APEX_FS_MCP_URL", "http://127.0.0.1:8710/mcp"))
-    parser.add_argument("--db-url", default=os.getenv("APEX_DB_MCP_URL", "http://127.0.0.1:8711/mcp"))
-    parser.add_argument("--jobs-url", default=os.getenv("APEX_JOBS_MCP_URL", "http://127.0.0.1:8712/mcp"))
+    parser.add_argument("--fs-url", default=default_mcp_url("APEX_FS_MCP_URL", "APEX_DEV_MCP_FS_PORT", 8810))
+    parser.add_argument("--db-url", default=default_mcp_url("APEX_DB_MCP_URL", "APEX_DEV_MCP_DB_PORT", 8811))
+    parser.add_argument("--jobs-url", default=default_mcp_url("APEX_JOBS_MCP_URL", "APEX_DEV_MCP_JOBS_PORT", 8812))
     parser.add_argument("--packet-id")
     parser.add_argument("--output")
     parser.add_argument("--require-db-query", action="store_true")

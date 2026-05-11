@@ -14,9 +14,9 @@ if [[ -z "${packet_id}" ]]; then
   packet_id_was_provided=false
   packet_id="$(get_apex_default_packet_id minimal-mcp-trio)"
 fi
-fs_port="${APEX_DEV_MCP_FS_PORT:-8710}"
-db_port="${APEX_DEV_MCP_DB_PORT:-8711}"
-jobs_port="${APEX_DEV_MCP_JOBS_PORT:-8712}"
+fs_port="${APEX_DEV_MCP_FS_PORT:-8810}"
+db_port="${APEX_DEV_MCP_DB_PORT:-8811}"
+jobs_port="${APEX_DEV_MCP_JOBS_PORT:-8812}"
 
 state_dir="${repo_root}/.tmp/ai-workflow"
 log_dir="${state_dir}/logs"

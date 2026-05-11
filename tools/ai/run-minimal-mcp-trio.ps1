@@ -18,15 +18,18 @@ if (-not $packetIdWasProvided) {
 $repoRoot = Get-ApexRepoRoot
 Import-ApexEnvFile
 $repoPython = Get-ApexRepoPython
+$fsPort = if ($env:APEX_DEV_MCP_FS_PORT) { $env:APEX_DEV_MCP_FS_PORT } else { '8810' }
+$dbPort = if ($env:APEX_DEV_MCP_DB_PORT) { $env:APEX_DEV_MCP_DB_PORT } else { '8811' }
+$jobsPort = if ($env:APEX_DEV_MCP_JOBS_PORT) { $env:APEX_DEV_MCP_JOBS_PORT } else { '8812' }
 
 $stateDir = Join-Path $repoRoot '.tmp/ai-workflow'
 $logDir = Join-Path $stateDir 'logs'
 $stateFile = Join-Path $stateDir 'minimal-mcp-trio.json'
 $ledgerPath = Join-Path $repoRoot '.apex-data/apex-jobs-ledger.json'
 $mcpContractActualDir = Join-Path $repoRoot 'tests/canary/mcp-contract/actual'
-$fsEndpoint = "http://127.0.0.1:$($env:APEX_DEV_MCP_FS_PORT)/mcp"
-$dbEndpoint = "http://127.0.0.1:$($env:APEX_DEV_MCP_DB_PORT)/mcp"
-$jobsEndpoint = "http://127.0.0.1:$($env:APEX_DEV_MCP_JOBS_PORT)/mcp"
+$fsEndpoint = "http://127.0.0.1:$fsPort/mcp"
+$dbEndpoint = "http://127.0.0.1:$dbPort/mcp"
+$jobsEndpoint = "http://127.0.0.1:$jobsPort/mcp"
 
 New-Item -ItemType Directory -Force -Path $stateDir, $logDir, $mcpContractActualDir | Out-Null
 
@@ -136,9 +139,9 @@ switch ($Action) {
       }
     }
 
-    if ((Test-HealthyEndpoint "http://127.0.0.1:$($env:APEX_DEV_MCP_FS_PORT)/health") -and
-        (Test-HealthyEndpoint "http://127.0.0.1:$($env:APEX_DEV_MCP_DB_PORT)/health") -and
-        (Test-HealthyEndpoint "http://127.0.0.1:$($env:APEX_DEV_MCP_JOBS_PORT)/health")) {
+    if ((Test-HealthyEndpoint "http://127.0.0.1:$fsPort/health") -and
+      (Test-HealthyEndpoint "http://127.0.0.1:$dbPort/health") -and
+      (Test-HealthyEndpoint "http://127.0.0.1:$jobsPort/health")) {
       $ownershipArgs = @(
         'tools/ai/check_apex_fs_ownership.py',
         '--fs-url', $fsEndpoint,
@@ -167,16 +170,16 @@ switch ($Action) {
     $dbConnectionString = Get-DbConnectionString
     $processes = @(
       Start-ManagedProcess -Name 'apex-fs' -ArgumentList @('services/mcp/apex-fs/build/http.js') -Environment @{
-        'APEX_MCP_HTTP_PORT' = $env:APEX_DEV_MCP_FS_PORT
+        'APEX_MCP_HTTP_PORT' = $fsPort
         'APEX_MCP_WORKSPACE_ROOT' = $repoRoot
         'APEX_MCP_DATA_ROOT' = (Join-Path $repoRoot '.apex-data')
       }
       Start-ManagedProcess -Name 'apex-db' -ArgumentList @('services/mcp/apex-db/build/http.js') -Environment @{
-        'APEX_MCP_HTTP_PORT' = $env:APEX_DEV_MCP_DB_PORT
+        'APEX_MCP_HTTP_PORT' = $dbPort
         'APEX_DB_CONNECTION_STRING' = $dbConnectionString
       }
       Start-ManagedProcess -Name 'apex-jobs' -ArgumentList @('services/mcp/apex-jobs/build/http.js') -Environment @{
-        'APEX_MCP_HTTP_PORT' = $env:APEX_DEV_MCP_JOBS_PORT
+        'APEX_MCP_HTTP_PORT' = $jobsPort
         'APEX_JOBS_LEDGER_PATH' = $ledgerPath
       }
     )
@@ -212,9 +215,9 @@ switch ($Action) {
   'status' {
     $existing = Read-State
     if ($null -eq $existing) {
-      if ((Test-HealthyEndpoint "http://127.0.0.1:$($env:APEX_DEV_MCP_FS_PORT)/health") -and
-          (Test-HealthyEndpoint "http://127.0.0.1:$($env:APEX_DEV_MCP_DB_PORT)/health") -and
-          (Test-HealthyEndpoint "http://127.0.0.1:$($env:APEX_DEV_MCP_JOBS_PORT)/health")) {
+        if ((Test-HealthyEndpoint "http://127.0.0.1:$fsPort/health") -and
+          (Test-HealthyEndpoint "http://127.0.0.1:$dbPort/health") -and
+          (Test-HealthyEndpoint "http://127.0.0.1:$jobsPort/health")) {
         $unmanaged = [ordered]@{
           status = 'unmanaged-running'
           mode = 'unmanaged'

@@ -33,6 +33,15 @@ def _write_text(path: Path, content: str) -> None:
     path.write_text(content, encoding="utf-8")
 
 
+def _default_mcp_url(url_env: str, port_env: str, fallback_port: int) -> str:
+    explicit_url = os.getenv(url_env)
+    if explicit_url:
+        return explicit_url
+
+    port = os.getenv(port_env, str(fallback_port))
+    return f"http://127.0.0.1:{port}/mcp"
+
+
 def _mcp_tools(endpoint: str) -> list[str]:
     _fetch_json(
         endpoint,
@@ -63,9 +72,9 @@ def main() -> int:
     parser.add_argument("--output-root", default=str(_repo_root() / "tests" / "canary"))
     parser.add_argument("--forms-runtime-url", default=os.getenv("APEX_FORMS_RUNTIME_URL", "http://127.0.0.1:8080"))
     parser.add_argument("--p6-runtime-url", default=os.getenv("APEX_P6_RUNTIME_URL", "http://127.0.0.1:8081"))
-    parser.add_argument("--fs-mcp-url", default=os.getenv("APEX_FS_MCP_URL", "http://127.0.0.1:8710/mcp"))
-    parser.add_argument("--db-mcp-url", default=os.getenv("APEX_DB_MCP_URL", "http://127.0.0.1:8711/mcp"))
-    parser.add_argument("--jobs-mcp-url", default=os.getenv("APEX_JOBS_MCP_URL", "http://127.0.0.1:8712/mcp"))
+    parser.add_argument("--fs-mcp-url", default=_default_mcp_url("APEX_FS_MCP_URL", "APEX_DEV_MCP_FS_PORT", 8810))
+    parser.add_argument("--db-mcp-url", default=_default_mcp_url("APEX_DB_MCP_URL", "APEX_DEV_MCP_DB_PORT", 8811))
+    parser.add_argument("--jobs-mcp-url", default=_default_mcp_url("APEX_JOBS_MCP_URL", "APEX_DEV_MCP_JOBS_PORT", 8812))
     parser.add_argument("--p6-mcp-url", default=os.getenv("APEX_P6_MCP_URL", "http://127.0.0.1:8713/mcp"))
     parser.add_argument("--forms-mcp-url", default=os.getenv("APEX_FORMS_MCP_URL", "http://127.0.0.1:8714/mcp"))
     args = parser.parse_args()

@@ -43,7 +43,8 @@ def resolve_db_url(args: argparse.Namespace) -> tuple[str, str]:
     if os.getenv("APEX_DB_MCP_URL"):
         return os.environ["APEX_DB_MCP_URL"], "env:APEX_DB_MCP_URL"
 
-    return "http://127.0.0.1:8711/mcp", "default:apex-db-mcp"
+    db_port = os.getenv("APEX_DEV_MCP_DB_PORT", "8811")
+    return f"http://127.0.0.1:{db_port}/mcp", "default:apex-db-mcp"
 
 
 def resolve_connection_string(args: argparse.Namespace) -> tuple[str, str] | None:

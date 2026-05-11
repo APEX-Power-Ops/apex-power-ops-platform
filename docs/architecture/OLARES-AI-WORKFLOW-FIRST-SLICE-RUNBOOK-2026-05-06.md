@@ -75,7 +75,7 @@ The wrappers support two bounded operating modes:
 
 If the admitted ports are healthy but `apex-fs` reports a different `workspace` root, `up` now refuses adoption and returns `status = adoption-refused` rather than silently binding to foreign or stale listeners.
 
-If neither `.env.dev` nor `.env.dev.template` is present, the wrappers fall back to the admitted default trio ports `8710`, `8711`, and `8712`.
+If neither `.env.dev` nor `.env.dev.template` is present, the wrappers fall back to the admitted default trio ports `8810`, `8811`, and `8812`.
 
 ### PowerShell
 
