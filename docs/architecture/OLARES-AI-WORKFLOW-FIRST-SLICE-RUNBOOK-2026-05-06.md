@@ -174,7 +174,7 @@ Verification should prove at minimum:
 
 `apex-db` live query success depends on an available PostgreSQL connection string and running database target. That backend dependency is environment-specific and should be reported honestly rather than hidden.
 
-Packet 038 proved the same first slice from `/home/olares/code/apex/apex-power-ops-platform` on the Olares host in adopted mode against the already-running trio on `127.0.0.1:8710-8712`.
+Packet 038 provided historical pre-rebind proof of the same first slice from `/home/olares/code/apex/apex-power-ops-platform` on the Olares host in adopted mode against the then-running trio on `127.0.0.1:8710-8712`; the current admitted default trio is `8810`, `8811`, and `8812`.
 
 ## Current Follow-On
 
