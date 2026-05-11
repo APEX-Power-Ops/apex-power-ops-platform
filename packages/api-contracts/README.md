@@ -22,8 +22,8 @@ Activation trigger:
 3. until then, keep contracts in the owning active surface rather than scaffolding this package speculatively
 
 Authority order:
-1. `C:/APEX Platform/Platform-Authority/`
-2. `docs/authority/`
-3. root `README.md`
+1. `C:/APEX Platform/apex-power-ops-platform/docs/authority/README.md`
+2. `C:/APEX Platform/apex-power-ops-platform/docs/architecture/APEX-REPO-FOUNDATION-AND-CUTOVER-PLAN-2026-05-07.md`
+3. `C:/APEX Platform/apex-power-ops-platform/README.md`
 
 This folder existed as an approved target lane at audit time but was empty. This README marks it as intentional rather than accidental.

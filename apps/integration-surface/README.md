@@ -26,6 +26,6 @@ Current rules:
 3. prefer bounded re-home into `apps/mutation-seam`, `apps/operations-web`, or other active validation tooling rather than growing this folder in place
 
 Authority order:
-1. `C:/APEX Platform/Platform-Authority/`
-2. `docs/authority/`
-3. root `README.md`
+1. `C:/APEX Platform/apex-power-ops-platform/docs/authority/README.md`
+2. `C:/APEX Platform/apex-power-ops-platform/docs/architecture/APEX-REPO-FOUNDATION-AND-CUTOVER-PLAN-2026-05-07.md`
+3. `C:/APEX Platform/apex-power-ops-platform/README.md`

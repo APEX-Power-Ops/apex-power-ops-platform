@@ -11,9 +11,10 @@ const mutationSeamBaseUrl =
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
-  outputFileTracingRoot: repoRoot,
+  allowedDevOrigins: ['127.0.0.1', '::1'],
+  outputFileTracingRoot: workspaceRoot,
   turbopack: {
-    root: repoRoot,
+    root: workspaceRoot,
   },
   async rewrites() {
     return [

@@ -26,6 +26,6 @@ Retirement gate:
 3. any retirement decision for this lane should be explicit in the workspace architecture docs rather than silent deletion
 
 Authority order:
-1. `C:/APEX Platform/Platform-Authority/`
-2. `docs/authority/`
-3. root `README.md`
+1. `C:/APEX Platform/apex-power-ops-platform/docs/authority/README.md`
+2. `C:/APEX Platform/apex-power-ops-platform/docs/architecture/APEX-REPO-FOUNDATION-AND-CUTOVER-PLAN-2026-05-07.md`
+3. `C:/APEX Platform/apex-power-ops-platform/README.md`

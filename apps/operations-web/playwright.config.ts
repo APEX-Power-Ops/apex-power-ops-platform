@@ -2,6 +2,7 @@ import { defineConfig } from '@playwright/test'
 
 const hostedBaseUrl = process.env.OPERATIONS_WEB_BROWSER_SMOKE_BASE_URL?.trim()
 const port = Number(process.env.OPERATIONS_WEB_BROWSER_SMOKE_PORT ?? '3030')
+const nextBin = './node_modules/next/dist/bin/next'
 
 export default defineConfig({
   testDir: './tests',
@@ -15,7 +16,7 @@ export default defineConfig({
   webServer: hostedBaseUrl
     ? undefined
     : {
-        command: `pnpm exec next start -p ${port}`,
+        command: `"${process.execPath}" ${nextBin} start -p ${port}`,
         cwd: __dirname,
         env: {
           ...process.env,

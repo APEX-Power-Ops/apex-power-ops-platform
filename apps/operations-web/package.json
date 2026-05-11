@@ -9,11 +9,12 @@
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "smoke:hosted": "node scripts/smoke-hosted-routes.mjs",
-    "smoke:browser": "pnpm build && playwright test",
+    "smoke:browser": "next build && playwright test",
+    "smoke:pm-live-data": "node scripts/smoke-pm-live-data.mjs",
     "smoke:promoted-host": "node scripts/smoke-promoted-host.mjs"
   },
   "dependencies": {
-    "next": "16.0.10",
+    "next": "16.2.5",
     "react": "19.2.0",
     "react-dom": "19.2.0"
   },

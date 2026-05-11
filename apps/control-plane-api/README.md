@@ -19,7 +19,7 @@ This repository owns runtime implementation, not final TCC architecture authorit
 
 For any work that touches platform data ownership, TCC schema meaning, family selection, routing semantics, or backend contract validity, start with the platform authority stack and then the older TCC authority documents when needed:
 
-1. `C:/APEX Platform/Platform-Authority/`
+1. `C:/APEX Platform/apex-power-ops-platform/docs/authority/README.md`
 2. `docs/authority/CONTROL-PLANE-CALC-BOUNDARY-MAP-2026-04-12.md`
 3. `docs/authority/CONTROL-PLANE-CALC-SCHEMA-MAPPING-2026-04-12.md`
 4. `Development/Architecture/TCC-MASTER-SCHEMA-AUTHORITY.md`

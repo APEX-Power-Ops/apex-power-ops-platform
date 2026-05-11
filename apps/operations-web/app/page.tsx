@@ -58,6 +58,7 @@ const shellChecks = [
 ]
 
 const nextMoves = [
+  'Now that promoted PM routes preserve return-path context and tracer can infer seeds from governed origins, stand up the bounded seam services and validate that those handoffs carry real schedule and approval data instead of shell-derived fallbacks.',
   'Use bounded backend seams for additional live reads instead of widening direct browser database authority.',
   'Treat /api/v1/ops/master-operations as the first governed dashboard rollup seam for the newly live 09 schema tranche.',
   'Treat /api/v1/ops/schedule-health as the adjacent scope-level risk seam for the same governed operations lane.',
@@ -126,6 +127,11 @@ export default function HomePage() {
             <li>Consumes the bounded relay discovery, context, settings, and preview seam through the same governed API boundary.</li>
             <li>Hosts the preserved cross-surface validation dashboard at /integration-dashboard/index.html.</li>
             <li>Hosts the re-homed lead operations prototype at /lead-ops/index.html.</li>
+            <li>Hosts the promoted PM drivers app route at /pm-review.</li>
+            <li>Hosts the promoted PM approval app route at /pm-review/approval.</li>
+            <li>Hosts the promoted PM schedule app route at /pm-review/schedule.</li>
+            <li>Hosts the promoted PM tracer app route at /pm-review/tracer.</li>
+            <li>Hosts the promoted PM variance app route at /pm-review/variance.</li>
             <li>Hosts the first re-homed PM read-only review slice at /pm-review/index.html.</li>
             <li>Hosts the re-homed PM approval prototype shell at /pm-review/approval-surface.html.</li>
             <li>Hosts the re-homed PM schedule slice at /pm-review/schedule.html.</li>
@@ -151,6 +157,21 @@ export default function HomePage() {
         </p>
         <p>
           The lead operations prototype is available in the active lane at <a href="/lead-ops/index.html">/lead-ops/index.html</a>.
+        </p>
+        <p>
+          The promoted PM drivers route is available in the governed shell at <a href="/pm-review">/pm-review</a>.
+        </p>
+        <p>
+          The promoted PM approval route is available in the governed shell at <a href="/pm-review/approval">/pm-review/approval</a>.
+        </p>
+        <p>
+          The promoted PM schedule route is available in the governed shell at <a href="/pm-review/schedule">/pm-review/schedule</a>.
+        </p>
+        <p>
+          The promoted PM tracer route is available in the governed shell at <a href="/pm-review/tracer">/pm-review/tracer</a>.
+        </p>
+        <p>
+          The promoted PM variance route is available in the governed shell at <a href="/pm-review/variance">/pm-review/variance</a>.
         </p>
         <p>
           The first PM drivers review slice is also available in the active lane at <a href="/pm-review/index.html">/pm-review/index.html</a>.
