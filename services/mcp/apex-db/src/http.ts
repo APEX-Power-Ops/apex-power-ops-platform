@@ -4,7 +4,7 @@ import pg from "pg";
 
 const { Pool } = pg;
 
-const port = Number(process.env.APEX_MCP_HTTP_PORT ?? 8711);
+const port = Number(process.env.APEX_MCP_HTTP_PORT ?? 8811);
 const basePath = process.env.APEX_MCP_BASE_PATH ?? "/mcp";
 const connectionString = process.env.APEX_DB_CONNECTION_STRING ?? process.env.DATABASE_URL;
 const pool = connectionString ? new Pool({ connectionString }) : null;

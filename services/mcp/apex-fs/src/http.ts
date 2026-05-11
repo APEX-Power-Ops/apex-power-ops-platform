@@ -22,7 +22,7 @@ const workspaceRoot = path.resolve(
 const dataRoot = path.resolve(
   expandHome(process.env.APEX_MCP_DATA_ROOT ?? path.join(os.homedir(), "apex-data")),
 );
-const port = Number(process.env.APEX_MCP_HTTP_PORT ?? 8710);
+const port = Number(process.env.APEX_MCP_HTTP_PORT ?? 8810);
 const basePath = process.env.APEX_MCP_BASE_PATH ?? "/mcp";
 
 const roots = {

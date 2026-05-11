@@ -7,7 +7,7 @@ Generated `build/` output is local runtime material, not the authoritative sourc
 
 ## Runtime Contract
 
-- `APEX_MCP_HTTP_PORT`: HTTP port for the MCP bridge. Defaults to `8710`.
+- `APEX_MCP_HTTP_PORT`: HTTP port for the MCP bridge. Defaults to `8810`.
 - `APEX_MCP_BASE_PATH`: MCP HTTP path. Defaults to `/mcp`.
 - `APEX_MCP_WORKSPACE_ROOT`: workspace root exposed as the `workspace` filesystem root.
 - `APEX_MCP_DATA_ROOT`: data root exposed as the `data` filesystem root.

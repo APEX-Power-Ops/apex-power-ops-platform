@@ -7,7 +7,7 @@ Generated `build/` output is local runtime material, not the authoritative sourc
 
 ## Runtime Contract
 
-- `APEX_MCP_HTTP_PORT`: HTTP port for the MCP bridge. Defaults to `8712`.
+- `APEX_MCP_HTTP_PORT`: HTTP port for the MCP bridge. Defaults to `8812`.
 - `APEX_MCP_BASE_PATH`: MCP HTTP path. Defaults to `/mcp`.
 - `APEX_JOBS_LEDGER_PATH`: absolute or home-relative ledger path. Defaults to `~/apex-data/apex-jobs-ledger.json`.
 

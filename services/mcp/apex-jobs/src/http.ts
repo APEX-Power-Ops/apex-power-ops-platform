@@ -56,7 +56,7 @@ const ledgerPath = path.resolve(
       path.join(os.homedir(), "apex-data", "apex-jobs-ledger.json"),
   ),
 );
-const port = Number(process.env.APEX_MCP_HTTP_PORT ?? 8712);
+const port = Number(process.env.APEX_MCP_HTTP_PORT ?? 8812);
 const basePath = process.env.APEX_MCP_BASE_PATH ?? "/mcp";
 
 const tools = [
