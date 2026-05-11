@@ -145,7 +145,7 @@ switch ($Action) {
     }
 
     $existing = Read-State
-    if ($null -ne $existing) {
+    if ($null -ne $existing -and $existing.mode -ne 'adopted') {
       $running = @($existing.processes | Where-Object { Get-ProcessStatus $_.pid })
       if ($running.Count -eq $existing.processes.Count) {
         Write-Output '{"status":"already-running"}'
@@ -177,7 +177,7 @@ switch ($Action) {
         ledger_path = $ledgerPath
       }
       Write-State $adoptedState
-      $adoptedState | ConvertTo-Json -Depth 6
+      Write-Output '{"status":"adopted"}'
       break
     }
 
@@ -208,7 +208,7 @@ switch ($Action) {
     }
 
     Write-State $state
-    $state | ConvertTo-Json -Depth 6
+    Write-Output '{"status":"started"}'
   }
   'down' {
     $existing = Read-State
