@@ -15,12 +15,16 @@ if (-not $packetIdWasProvided) {
   $PacketId = Get-ApexDefaultPacketId 'minimal-mcp-trio'
 }
 
+Assert-ApexPacketId $PacketId
+
 $repoRoot = Get-ApexRepoRoot
 Import-ApexEnvFile
 $repoPython = Get-ApexRepoPython
 $fsPort = if ($env:APEX_DEV_MCP_FS_PORT) { $env:APEX_DEV_MCP_FS_PORT } else { '8810' }
 $dbPort = if ($env:APEX_DEV_MCP_DB_PORT) { $env:APEX_DEV_MCP_DB_PORT } else { '8811' }
 $jobsPort = if ($env:APEX_DEV_MCP_JOBS_PORT) { $env:APEX_DEV_MCP_JOBS_PORT } else { '8812' }
+$managedReadyAttempts = if ($env:APEX_MINIMAL_MCP_READY_ATTEMPTS) { [int]$env:APEX_MINIMAL_MCP_READY_ATTEMPTS } else { 50 }
+$managedReadyIntervalSeconds = if ($env:APEX_MINIMAL_MCP_READY_INTERVAL_SECONDS) { [double]$env:APEX_MINIMAL_MCP_READY_INTERVAL_SECONDS } else { 0.2 }
 
 $stateDir = Join-Path $repoRoot '.tmp/ai-workflow'
 $logDir = Join-Path $stateDir 'logs'
@@ -32,6 +36,12 @@ $dbEndpoint = "http://127.0.0.1:$dbPort/mcp"
 $jobsEndpoint = "http://127.0.0.1:$jobsPort/mcp"
 
 New-Item -ItemType Directory -Force -Path $stateDir, $logDir, $mcpContractActualDir | Out-Null
+
+$managedEntrypoints = @(
+  'services/mcp/apex-fs/build/http.js',
+  'services/mcp/apex-db/build/http.js',
+  'services/mcp/apex-jobs/build/http.js'
+)
 
 function Get-DbConnectionString {
   if ($env:SEAM_DATABASE_URL) {
@@ -96,8 +106,16 @@ function Start-ManagedProcess {
 }
 
 function Invoke-Verify {
+  $existing = Read-State
+  $stateEndpoints = $null
+  if ($null -ne $existing) {
+    $endpointsProperty = $existing.PSObject.Properties['endpoints']
+    if ($null -ne $endpointsProperty) {
+      $stateEndpoints = $endpointsProperty.Value
+    }
+  }
+
   if (-not $packetIdWasProvided) {
-    $existing = Read-State
     if ($null -ne $existing -and -not [string]::IsNullOrWhiteSpace($existing.packet_id)) {
       $PacketId = $existing.packet_id
     }
@@ -109,6 +127,20 @@ function Invoke-Verify {
     '--packet-id', $PacketId,
     '--output', $verifyOutput
   )
+
+  if (
+    $null -ne $stateEndpoints -and
+    -not [string]::IsNullOrWhiteSpace($stateEndpoints.fs) -and
+    -not [string]::IsNullOrWhiteSpace($stateEndpoints.db) -and
+    -not [string]::IsNullOrWhiteSpace($stateEndpoints.jobs)
+  ) {
+    $verifyArgs += @(
+      '--fs-url', [string]$stateEndpoints.fs,
+      '--db-url', [string]$stateEndpoints.db,
+      '--jobs-url', [string]$stateEndpoints.jobs
+    )
+  }
+
   & $repoPython @verifyArgs
 }
 
@@ -133,6 +165,70 @@ function Test-McpEndpoint([string]$Url) {
   }
   catch {
     return $false
+  }
+}
+
+function Get-MissingManagedEntrypoints {
+  return @(
+    foreach ($entrypoint in $managedEntrypoints) {
+      $fullPath = Join-Path $repoRoot $entrypoint
+      if (-not (Test-Path $fullPath -PathType Leaf)) {
+        $entrypoint
+      }
+    }
+  )
+}
+
+function Get-ManagedReadinessState($processes, $endpoints) {
+  $fsProcess = $processes | Where-Object { $_.name -eq 'apex-fs' } | Select-Object -First 1
+  $dbProcess = $processes | Where-Object { $_.name -eq 'apex-db' } | Select-Object -First 1
+  $jobsProcess = $processes | Where-Object { $_.name -eq 'apex-jobs' } | Select-Object -First 1
+
+  $fsProcessRunning = $null -ne $fsProcess -and (Get-ProcessStatus $fsProcess.pid)
+  $dbProcessRunning = $null -ne $dbProcess -and (Get-ProcessStatus $dbProcess.pid)
+  $jobsProcessRunning = $null -ne $jobsProcess -and (Get-ProcessStatus $jobsProcess.pid)
+
+  $fsReady = $fsProcessRunning -and (Test-McpEndpoint $endpoints.fs)
+  $dbReady = $dbProcessRunning -and (Test-McpEndpoint $endpoints.db)
+  $jobsReady = $jobsProcessRunning -and (Test-McpEndpoint $endpoints.jobs)
+
+  return [pscustomobject]@{
+    fs_process_running = [bool]$fsProcessRunning
+    db_process_running = [bool]$dbProcessRunning
+    jobs_process_running = [bool]$jobsProcessRunning
+    fs_ready = [bool]$fsReady
+    db_ready = [bool]$dbReady
+    jobs_ready = [bool]$jobsReady
+    all_ready = [bool]$fsReady -and [bool]$dbReady -and [bool]$jobsReady
+  }
+}
+
+function Wait-ManagedEndpointsReady($processes, $endpoints) {
+  $lastState = $null
+
+  for ($attempt = 1; $attempt -le $managedReadyAttempts; $attempt++) {
+    $lastState = Get-ManagedReadinessState -processes $processes -endpoints $endpoints
+    if ($lastState.all_ready) {
+      return $lastState
+    }
+
+    if (-not $lastState.fs_process_running -or -not $lastState.db_process_running -or -not $lastState.jobs_process_running) {
+      return $lastState
+    }
+
+    if ($attempt -lt $managedReadyAttempts) {
+      Start-Sleep -Seconds $managedReadyIntervalSeconds
+    }
+  }
+
+  return $lastState
+}
+
+function Stop-ManagedProcesses($processes) {
+  foreach ($process in $processes) {
+    if (Get-ProcessStatus $process.pid) {
+      Stop-Process -Id $process.pid -Force -ErrorAction SilentlyContinue
+    }
   }
 }
 
@@ -181,6 +277,16 @@ switch ($Action) {
       break
     }
 
+    $missingEntrypoints = @(Get-MissingManagedEntrypoints)
+    if ($missingEntrypoints.Count -gt 0) {
+      [pscustomobject]@{
+        status = 'start-refused'
+        reason = 'missing-service-entrypoints'
+        missing_entrypoints = $missingEntrypoints
+      } | ConvertTo-Json -Depth 6 -Compress
+      exit 1
+    }
+
     $dbConnectionString = Get-DbConnectionString
     $processes = @(
       Start-ManagedProcess -Name 'apex-fs' -ArgumentList @('services/mcp/apex-fs/build/http.js') -Environment @{
@@ -197,6 +303,22 @@ switch ($Action) {
         'APEX_JOBS_LEDGER_PATH' = $ledgerPath
       }
     )
+
+    $readyState = Wait-ManagedEndpointsReady -processes $processes -endpoints $endpoints
+    if (-not $readyState.all_ready) {
+      Stop-ManagedProcesses -processes $processes
+      [pscustomobject]@{
+        status = 'start-refused'
+        reason = 'services-not-ready'
+        fs_running = $readyState.fs_process_running
+        db_running = $readyState.db_process_running
+        jobs_running = $readyState.jobs_process_running
+        fs_ready = $readyState.fs_ready
+        db_ready = $readyState.db_ready
+        jobs_ready = $readyState.jobs_ready
+      } | ConvertTo-Json -Depth 6 -Compress
+      exit 1
+    }
 
     $state = [pscustomobject]@{
       started_at = (Get-Date).ToString('o')
@@ -252,10 +374,24 @@ switch ($Action) {
       break
     }
 
-    $statusValue = if ($existing.mode -eq 'adopted') { 'adopted-running' } else { 'managed-running' }
-    $fsRunning = if ($existing.mode -eq 'adopted') { Test-McpEndpoint $existing.endpoints.fs } else { ($existing.processes | Where-Object { $_.name -eq 'apex-fs' } | Select-Object -First 1 | ForEach-Object { Get-ProcessStatus $_.pid }) }
-    $dbRunning = if ($existing.mode -eq 'adopted') { Test-McpEndpoint $existing.endpoints.db } else { ($existing.processes | Where-Object { $_.name -eq 'apex-db' } | Select-Object -First 1 | ForEach-Object { Get-ProcessStatus $_.pid }) }
-    $jobsRunning = if ($existing.mode -eq 'adopted') { Test-McpEndpoint $existing.endpoints.jobs } else { ($existing.processes | Where-Object { $_.name -eq 'apex-jobs' } | Select-Object -First 1 | ForEach-Object { Get-ProcessStatus $_.pid }) }
+    if ($existing.mode -eq 'adopted') {
+      $fsRunning = Test-McpEndpoint $existing.endpoints.fs
+      $dbRunning = Test-McpEndpoint $existing.endpoints.db
+      $jobsRunning = Test-McpEndpoint $existing.endpoints.jobs
+    }
+    else {
+      $managedStatus = Get-ManagedReadinessState -processes $existing.processes -endpoints $existing.endpoints
+      $fsRunning = $managedStatus.fs_ready
+      $dbRunning = $managedStatus.db_ready
+      $jobsRunning = $managedStatus.jobs_ready
+    }
+    $allRunning = [bool]$fsRunning -and [bool]$dbRunning -and [bool]$jobsRunning
+    $statusValue = if ($allRunning) {
+      if ($existing.mode -eq 'adopted') { 'adopted-running' } else { 'managed-running' }
+    }
+    else {
+      'not-running'
+    }
 
     $status = [pscustomobject]@{
       status = $statusValue
@@ -286,5 +422,8 @@ switch ($Action) {
   }
   'verify' {
     Invoke-Verify
+    if ($LASTEXITCODE -ne 0) {
+      exit $LASTEXITCODE
+    }
   }
 }

@@ -108,9 +108,30 @@ get_apex_default_packet_id() {
   local label="${1:-operator}"
 
   if [[ -n "${APEX_PACKET_ID:-}" ]]; then
+    if ! is_apex_packet_id_valid "${APEX_PACKET_ID}"; then
+      printf '%s\n' "Invalid packet id '${APEX_PACKET_ID}'. Packet ids must match ^[A-Za-z0-9][A-Za-z0-9._-]*$." >&2
+      return 1
+    fi
+
     printf '%s' "${APEX_PACKET_ID}"
     return 0
   fi
 
   printf 'adhoc-%s-%s' "${label}" "$(date -u +%Y-%m-%d-%H%M%S)"
+}
+
+is_apex_packet_id_valid() {
+  local packet_id="$1"
+  [[ "${packet_id}" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ]]
+}
+
+require_apex_packet_id() {
+  local packet_id="$1"
+
+  if is_apex_packet_id_valid "${packet_id}"; then
+    return 0
+  fi
+
+  printf '%s\n' "Invalid packet id '${packet_id}'. Packet ids must match ^[A-Za-z0-9][A-Za-z0-9._-]*$." >&2
+  return 1
 }

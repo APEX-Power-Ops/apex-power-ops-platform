@@ -12,6 +12,8 @@ if (-not $PSBoundParameters.ContainsKey('PacketId') -or [string]::IsNullOrWhiteS
   $PacketId = Get-ApexDefaultPacketId 'hold-boundary'
 }
 
+Assert-ApexPacketId $PacketId
+
 $repoRoot = Get-ApexRepoRoot
 Import-ApexEnvFile
 $repoPython = Get-ApexRepoPython
@@ -20,6 +22,7 @@ $stateDir = Join-Path $repoRoot '.tmp/ai-workflow'
 $logDir = Join-Path $stateDir 'logs'
 $mcpContractActualDir = Join-Path $repoRoot 'tests/canary/mcp-contract/actual'
 $deferredOpsActualDir = Join-Path $repoRoot 'tests/canary/deferred-ops-view-counts/actual'
+$minimalStateFile = Join-Path $stateDir 'minimal-mcp-trio.json'
 $liveDbPort = if ($env:APEX_HOLD_BOUNDARY_DB_PORT) { $env:APEX_HOLD_BOUNDARY_DB_PORT } else { '8721' }
 $liveDbUrl = "http://127.0.0.1:$liveDbPort/mcp"
 $liveDbRoot = Join-Path $repoRoot 'services/mcp/apex-db'
@@ -75,6 +78,17 @@ $holdArgs = @(
   '--output', $holdOutput
 )
 
+if (-not $DsnEnv -and (Test-Path $minimalStateFile)) {
+  $minimalState = Get-Content $minimalStateFile -Raw | ConvertFrom-Json
+  $endpointsProperty = $minimalState.PSObject.Properties['endpoints']
+  if ($null -ne $endpointsProperty) {
+    $dbEndpoint = [string]$endpointsProperty.Value.db
+    if (-not [string]::IsNullOrWhiteSpace($dbEndpoint)) {
+      $holdArgs += @('--db-url', $dbEndpoint)
+    }
+  }
+}
+
 if ($DsnEnv) {
   if (Test-RepoPythonModule 'sqlalchemy') {
     $holdArgs += @('--db-connection-string-env', 'SEAM_DATABASE_URL')
@@ -99,7 +113,17 @@ if ($DsnEnv) {
 }
 
 try {
-  & $repoPython @holdArgs | Out-Null
+  $holdHelperLines = & $repoPython @holdArgs
+  $holdExitCode = $LASTEXITCODE
+  if ($null -eq $holdHelperLines) {
+    $holdHelperOutput = ''
+  }
+  elseif ($holdHelperLines -is [System.Array]) {
+    $holdHelperOutput = ($holdHelperLines -join [Environment]::NewLine)
+  }
+  else {
+    $holdHelperOutput = [string]$holdHelperLines
+  }
 }
 finally {
   if ($null -ne $liveDbProcess -and -not $liveDbProcess.HasExited) {
@@ -107,14 +131,50 @@ finally {
   }
 }
 
+if ($holdExitCode -ne 0 -and (Test-Path $holdOutput -PathType Leaf)) {
+  exit $holdExitCode
+}
+
+if ($holdExitCode -ne 0 -and [string]::IsNullOrWhiteSpace($holdHelperOutput)) {
+  exit $holdExitCode
+}
+
 $minimal = Get-Content $minimalOutput -Raw | ConvertFrom-Json
-$hold = Get-Content $holdOutput -Raw | ConvertFrom-Json
+if (Test-Path $holdOutput -PathType Leaf) {
+  $hold = Get-Content $holdOutput -Raw | ConvertFrom-Json
+}
+else {
+  $hold = $holdHelperOutput | ConvertFrom-Json
+}
+
+$holdDecision = if ($hold.result -eq 'FAIL') {
+  if ($hold.error) {
+    $hold.error
+  }
+  elseif ($hold.output_error) {
+    $hold.output_error
+  }
+  else {
+    $hold.decision
+  }
+}
+else {
+  if ($hold.decision) {
+    $hold.decision
+  }
+  elseif ($hold.error) {
+    $hold.error
+  }
+  else {
+    $hold.output_error
+  }
+}
 
 $summary = [ordered]@{
   packet_id = $PacketId
   minimal_mcp = $minimal.result
   deferred_ops = $hold.result
-  deferred_ops_decision = $hold.decision
+  deferred_ops_decision = $holdDecision
   outputs = [ordered]@{
     minimal_mcp = $minimalOutput
     deferred_ops = $holdOutput
@@ -122,3 +182,7 @@ $summary = [ordered]@{
 }
 
 $summary | ConvertTo-Json -Depth 6
+
+if ($holdExitCode -ne 0) {
+  exit $holdExitCode
+}

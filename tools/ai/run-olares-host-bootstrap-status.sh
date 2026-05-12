@@ -11,6 +11,7 @@ packet_id="${1:-}"
 if [[ -z "${packet_id}" ]]; then
     packet_id="$(get_apex_default_packet_id host-bootstrap-status)"
 fi
+require_apex_packet_id "${packet_id}"
 dsn_env="${2:-}"
 host_container_root="$(cd "${repo_root}/.." && pwd)"
 old_clone="/home/olares/src/apex-power-ops-platform"
@@ -95,10 +96,12 @@ from pathlib import Path
 
 payload = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
 status = payload.get("status")
-mode = payload.get("mode")
+fs_running = payload.get("fs_running") is True
+db_running = payload.get("db_running") is True
+jobs_running = payload.get("jobs_running") is True
 
 ready_statuses = {"managed-running", "adopted-running"}
-print("true" if status in ready_statuses or (status is None and mode in {"managed", "adopted"}) else "false")
+print("true" if status in ready_statuses and fs_running and db_running and jobs_running else "false")
 PY
 })"
 

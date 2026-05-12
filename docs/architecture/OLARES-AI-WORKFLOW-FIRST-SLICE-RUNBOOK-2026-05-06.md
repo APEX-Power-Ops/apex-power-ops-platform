@@ -73,7 +73,17 @@ The wrappers support two bounded operating modes:
 1. managed mode, where the wrapper starts the trio itself,
 2. adopted mode, where the wrapper detects an already-running trio by confirming that each admitted `/mcp` endpoint answers a lightweight `initialize` probe, proves through `apex-fs` that the served `workspace` root is the current repo root and that the served `README.md` preview still matches the current repo identity, and only then binds verification to that runtime instead of attempting duplicate listeners.
 
+`status = managed-running` or `status = adopted-running` now means all three live backing checks are true in the current moment, not merely that a persisted state file still says `mode = managed` or `mode = adopted`.
+
+If the saved managed process ids are dead or the saved adopted `/mcp` endpoints no longer answer transport initialization, the wrappers now degrade that stale state to `status = not-running` while preserving the diagnostic `mode`, endpoint, and readiness fields.
+
 If the admitted `/mcp` endpoints answer transport initialization but `apex-fs` reports a different `workspace` root or a mismatched `README.md` preview, `up` now refuses adoption and returns `status = adoption-refused` rather than silently binding to foreign or stale listeners.
+
+If managed startup is selected but one or more admitted service entrypoints such as `services/mcp/apex-fs/build/http.js` are missing, `up` now refuses with `status = start-refused` and `reason = missing-service-entrypoints` instead of reporting a false managed start that cannot actually stay up.
+
+If managed startup spawns the admitted processes but they do not all answer transport `initialize` before the readiness barrier expires, `up` now refuses with `status = start-refused` and `reason = services-not-ready` instead of persisting managed state early and racing an immediate `verify` call.
+
+Packet ids are now validated before wrapper state or artifact paths are written. Use path-safe ids that match `^[A-Za-z0-9][A-Za-z0-9._-]*$` and reject whitespace, slashes, or other shell-shaped values that would create malformed evidence filenames.
 
 If neither `.env.dev` nor `.env.dev.template` is present, the wrappers fall back to the admitted default trio ports `8810`, `8811`, and `8812`.
 
@@ -102,6 +112,8 @@ bash tools/ai/run-olares-host-bootstrap-status.sh <packet-id>
 
 `tools/ai/run-olares-host-bootstrap-status.sh` is the bounded durable-host entry surface for the current Olares development posture.
 
+Use `../operations/OLARES-AI-HOST-MANAGED-COLD-START-DRILL-RUNBOOK-2026-05-12.md` when the operator needs the full host managed cold-start drill instead of this status-only surface plus separate wrapper commands.
+
 It is status-only.
 
 It does not install packages, mutate services, or widen the current trust boundary.
@@ -117,6 +129,10 @@ It reports:
 3. materialized host toolchain presence, including the preferred Python path and version actually used by Bash AI surfaces,
 4. minimal MCP trio readiness,
 5. current hold-boundary result from the host posture.
+
+For the host-bootstrap surface, minimal MCP readiness now requires both a managed or adopted running label and all three live readiness booleans `fs_running`, `db_running`, and `jobs_running`.
+
+That means stale persisted trio state now routes truthfully to `minimal_mcp = NOT_RUNNING` instead of being treated as ready enough to enter the hold-boundary path.
 
 When emitted, the composed host-bootstrap summary now also writes repo-visible JSON output to `tests/canary/host-bootstrap-status/actual/host-bootstrap-status-<packet-id>.json`; if the historical old-clone path is absent in the current environment, that field now degrades truthfully instead of crashing the whole status surface.
 

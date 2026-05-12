@@ -14,6 +14,10 @@ function Import-ApexEnvFile {
     $EnvFile = Join-Path (Get-ApexRepoRoot) '.env.dev.template'
   }
 
+  if (-not (Test-Path $EnvFile)) {
+    return
+  }
+
   Get-Content $EnvFile | ForEach-Object {
     if ($_ -match '^(#|\s*$)') {
       return
@@ -66,9 +70,30 @@ function Get-ApexDefaultPacketId {
   )
 
   if ($env:APEX_PACKET_ID) {
+    Assert-ApexPacketId $env:APEX_PACKET_ID
     return $env:APEX_PACKET_ID
   }
 
   $timestamp = [DateTime]::UtcNow.ToString('yyyy-MM-dd-HHmmss')
   return "adhoc-$Label-$timestamp"
+}
+
+function Test-ApexPacketId {
+  param(
+    [Parameter(Mandatory)]
+    [string]$PacketId
+  )
+
+  return $PacketId -match '^[A-Za-z0-9][A-Za-z0-9._-]*$'
+}
+
+function Assert-ApexPacketId {
+  param(
+    [Parameter(Mandatory)]
+    [string]$PacketId
+  )
+
+  if (-not (Test-ApexPacketId $PacketId)) {
+    throw "Invalid packet id '$PacketId'. Packet ids must match ^[A-Za-z0-9][A-Za-z0-9._-]*$."
+  }
 }

@@ -11,10 +11,12 @@ packet_id="${1:-}"
 if [[ -z "${packet_id}" ]]; then
   packet_id="$(get_apex_default_packet_id hold-boundary)"
 fi
+require_apex_packet_id "${packet_id}"
 dsn_env="${2:-}"
 state_dir="${repo_root}/.tmp/ai-workflow"
 mcp_contract_actual_dir="${repo_root}/tests/canary/mcp-contract/actual"
 deferred_ops_actual_dir="${repo_root}/tests/canary/deferred-ops-view-counts/actual"
+minimal_state_file="${state_dir}/minimal-mcp-trio.env"
 minimal_output="${mcp_contract_actual_dir}/verify-minimal-mcp-trio-${packet_id}.json"
 hold_output="${deferred_ops_actual_dir}/deferred-ops-view-counts-${packet_id}.json"
 live_db_port="${APEX_HOLD_BOUNDARY_DB_PORT:-8721}"
@@ -43,6 +45,15 @@ hold_args=(
   --packet-id "${packet_id}"
   --output "${hold_output}"
 )
+hold_helper_output="${state_dir}/hold-boundary-helper-output.json"
+
+if [[ -z "${dsn_env}" && -f "${minimal_state_file}" ]]; then
+  # shellcheck disable=SC1090
+  source "${minimal_state_file}"
+  if [[ -n "${DB_ENDPOINT:-}" ]]; then
+    hold_args+=(--db-url "${DB_ENDPOINT}")
+  fi
+fi
 
 if [[ -n "${dsn_env}" ]]; then
   if "${repo_python}" -c 'import sqlalchemy' >/dev/null 2>&1; then
@@ -70,29 +81,48 @@ cleanup() {
   if [[ -n "${live_db_pid}" ]]; then
     kill "${live_db_pid}" >/dev/null 2>&1 || true
   fi
+  rm -f "${hold_helper_output}"
 }
 
 trap cleanup EXIT
 
-"${repo_python}" "${hold_args[@]}" >/dev/null
+hold_source="${hold_output}"
+if "${repo_python}" "${hold_args[@]}" >"${hold_helper_output}"; then
+  hold_exit_code=0
+else
+  hold_exit_code=$?
+  if [[ ! -f "${hold_output}" ]]; then
+    if [[ -s "${hold_helper_output}" ]]; then
+      hold_source="${hold_helper_output}"
+    else
+      exit "${hold_exit_code}"
+    fi
+  fi
+fi
 
-"${repo_python}" - <<'PY' "${packet_id}" "${minimal_output}" "${hold_output}"
+"${repo_python}" - <<'PY' "${packet_id}" "${minimal_output}" "${hold_output}" "${hold_source}"
 import json
 import sys
 from pathlib import Path
 
 packet_id = sys.argv[1]
 minimal = json.loads(Path(sys.argv[2]).read_text(encoding="utf-8"))
-hold = json.loads(Path(sys.argv[3]).read_text(encoding="utf-8"))
+hold = json.loads(Path(sys.argv[4]).read_text(encoding="utf-8"))
+if hold.get("result") == "FAIL":
+  decision = hold.get("error") or hold.get("output_error") or hold.get("decision")
+else:
+  decision = hold.get("decision") or hold.get("error") or hold.get("output_error")
 
 print(json.dumps({
     "packet_id": packet_id,
     "minimal_mcp": minimal.get("result"),
     "deferred_ops": hold.get("result"),
-    "deferred_ops_decision": hold.get("decision"),
+    "deferred_ops_decision": decision,
     "outputs": {
         "minimal_mcp": sys.argv[2],
         "deferred_ops": sys.argv[3],
     },
 }, indent=2))
 PY
+
+exit "${hold_exit_code}"
