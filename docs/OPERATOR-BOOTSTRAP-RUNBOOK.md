@@ -181,6 +181,8 @@ Use the bounded host bootstrap surface when the operator needs one current-statu
 
 Use `docs/architecture/OLARES-HOST-NATIVE-OPERATOR-PUBLICATION-WORKFLOW-2026-05-06.md` when the operator needs the preferred Olares-hosted git-preparation flow rather than the older Windows-default packet guidance.
 
+Use `docs/operations/OLARES-AI-HOST-MANAGED-COLD-START-DRILL-RUNBOOK-2026-05-12.md` when the operator needs one copy-paste host-side managed cold-start drill with packet-id, command order, evidence expectations, and closeout guidance.
+
 Primary task:
 
 - `Olares host bootstrap status`

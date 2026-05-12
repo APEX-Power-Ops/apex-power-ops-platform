@@ -17,7 +17,8 @@ Use this checklist with:
 3. `AI-BACKBONE-PARALLEL-HARDENING-BRIEF-2026-05-08.md`,
 4. `APEX-JOBS-TRUST-AND-PROMOTION-CONTRACT-2026-05-08.md`,
 5. `../architecture/OLARES-AI-ORCHESTRATION-DECISION-SURFACE-2026-05-07.md`,
-6. `../authority/OLARES-AI-BACKBONE-FRAMEWORK-2026-05-08.md`.
+6. `../authority/OLARES-AI-BACKBONE-FRAMEWORK-2026-05-08.md`,
+7. `OLARES-AI-OPERATOR-REAL-WORLD-VALIDATION-MATRIX-2026-05-12.md`.
 
 ## Readiness Goal
 
@@ -93,6 +94,15 @@ A wider parallel-task lane should open only if all of the following are true:
 3. validation and abort rules are written before execution starts,
 4. publication and host-proof cadence remain governed,
 5. a separate packet explicitly authorizes the widened boundary.
+
+## Checklist H - Real-World Validation Cadence
+
+- rerun the workstation live-DSN baseline before interpreting host-side changes
+- run one host managed cold-start drill before treating the operator path as stable
+- run one host adopted-runtime drill before treating adoption behavior as trustworthy
+- keep one packet id threaded across bootstrap, verifier, deferred-ops, and packet or handoff evidence for the same scenario
+- rehearse sandbox-only promotion refusal separately from host-qualified promotion success
+- do not open a two-executor rehearsal until the single-lane host path is already coherent
 
 ## Current Recommendation
 

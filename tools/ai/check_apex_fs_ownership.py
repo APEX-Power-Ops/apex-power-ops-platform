@@ -48,12 +48,13 @@ def main() -> int:
     args = parser.parse_args()
 
     expected_workspace_root = normalize_path(args.expected_workspace_root)
-    expected_readme_preview = None
-    if args.expected_readme_path:
-        expected_readme_preview = Path(args.expected_readme_path).read_text(encoding="utf-8")[:120]
 
     try:
-        fetch_json(
+        expected_readme_preview = None
+        if args.expected_readme_path:
+            expected_readme_preview = Path(args.expected_readme_path).read_bytes()[:120].decode("utf-8")
+
+        initialize_response = fetch_json(
             args.fs_url,
             {
                 "jsonrpc": "2.0",
@@ -66,6 +67,11 @@ def main() -> int:
                 },
             },
         )
+        initialize_result = initialize_response.get("result", {})
+        if initialize_result.get("isError"):
+            content = initialize_result.get("content", [])
+            detail = content[0].get("text") if content else "Unknown MCP error"
+            raise RuntimeError(detail)
         roots = call_tool(args.fs_url, "list_roots")
         workspace_root = str(roots.get("workspace") or "")
         normalized_workspace_root = normalize_path(workspace_root) if workspace_root else ""

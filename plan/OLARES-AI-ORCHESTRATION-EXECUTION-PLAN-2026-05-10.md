@@ -23,7 +23,8 @@ Use this plan with:
 2. `../docs/operations/OLARES-MVP-AI-ORCHESTRATION-STATUS-BRIEF-2026-05-10.md`,
 3. `../docs/operations/OLARES-AI-PARALLEL-TASK-READINESS-CHECKLIST-2026-05-10.md`,
 4. `../docs/authority/OLARES-AI-BACKBONE-FRAMEWORK-2026-05-08.md`,
-5. `../docs/operations/APEX-JOBS-TRUST-AND-PROMOTION-CONTRACT-2026-05-08.md`.
+5. `../docs/operations/APEX-JOBS-TRUST-AND-PROMOTION-CONTRACT-2026-05-08.md`,
+6. `../docs/operations/OLARES-AI-OPERATOR-REAL-WORLD-VALIDATION-MATRIX-2026-05-12.md`.
 
 ## Current Target
 
@@ -212,10 +213,11 @@ When a new AI orchestration slice opens, answer these in order:
 The truthful next steps are:
 
 1. keep this plan, the status brief, and the readiness checklist aligned,
-2. open new work as one bounded slice at a time,
-3. prefer trust-hardening and evidence-routing improvements before any new shell widening,
-4. use two executors only when the split is obviously disjoint and written down first,
-5. keep host-evidence and promotion control central rather than executor-local.
+2. use the real-world validation matrix to prove the host operator path before opening any new widening discussion,
+3. open new work as one bounded slice at a time,
+4. prefer trust-hardening and evidence-routing improvements before any new shell widening,
+5. use two executors only when the split is obviously disjoint and written down first,
+6. keep host-evidence and promotion control central rather than executor-local.
 
 ## Stop Conditions
 

@@ -24,7 +24,7 @@ def fetch_json(url: str, payload: dict[str, Any] | None = None) -> Any:
 
 
 def initialize_and_list(endpoint: str) -> list[str]:
-    fetch_json(
+    initialize_response = fetch_json(
         endpoint,
         {
             "jsonrpc": "2.0",
@@ -37,8 +37,18 @@ def initialize_and_list(endpoint: str) -> list[str]:
             },
         },
     )
+    initialize_result = initialize_response.get("result", {})
+    if initialize_result.get("isError"):
+        content = initialize_result.get("content", [])
+        detail = content[0].get("text") if content else "Unknown MCP error"
+        raise RuntimeError(detail)
     response = fetch_json(endpoint, {"jsonrpc": "2.0", "id": 2, "method": "tools/list"})
-    return [tool["name"] for tool in response.get("result", {}).get("tools", [])]
+    result = response.get("result", {})
+    if result.get("isError"):
+        content = result.get("content", [])
+        detail = content[0].get("text") if content else "Unknown MCP error"
+        raise RuntimeError(detail)
+    return [tool["name"] for tool in result.get("tools", [])]
 
 
 def call_tool(endpoint: str, name: str, arguments: dict[str, Any]) -> Any:
@@ -67,6 +77,21 @@ def write_output(path: Path | None, payload: dict[str, Any]) -> None:
         return
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+
+
+def emit_summary(path: Path | None, payload: dict[str, Any], exit_code: int) -> int:
+    try:
+        write_output(path, payload)
+    except Exception as error:  # noqa: BLE001
+        if payload.get("result") != "FAIL":
+            payload["result"] = "FAIL"
+            payload["error"] = str(error)
+            exit_code = 1
+        else:
+            payload["output_error"] = str(error)
+
+    print(json.dumps(payload, indent=2))
+    return exit_code
 
 
 def resolve_packet_id(packet_id: str | None) -> str:
@@ -171,15 +196,11 @@ def main() -> int:
         summary["checks"]["jobs_end_run"] = {"status": "pass", "run": ended}
 
         summary["result"] = "PASS"
-        write_output(output_path, summary)
-        print(json.dumps(summary, indent=2))
-        return 0
+        return emit_summary(output_path, summary, 0)
     except Exception as error:  # noqa: BLE001
         summary["result"] = "FAIL"
         summary["error"] = str(error)
-        write_output(output_path, summary)
-        print(json.dumps(summary, indent=2))
-        return 1
+        return emit_summary(output_path, summary, 1)
 
 
 if __name__ == "__main__":

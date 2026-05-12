@@ -43,7 +43,7 @@ def _default_mcp_url(url_env: str, port_env: str, fallback_port: int) -> str:
 
 
 def _mcp_tools(endpoint: str) -> list[str]:
-    _fetch_json(
+    initialize_response = _fetch_json(
         endpoint,
         {
             "jsonrpc": "2.0",
@@ -52,8 +52,18 @@ def _mcp_tools(endpoint: str) -> list[str]:
             "params": {"protocolVersion": "2025-03-26", "capabilities": {}, "clientInfo": {"name": "apex-canary", "version": "0.1.0"}},
         },
     )
+    initialize_result = initialize_response.get("result", {})
+    if initialize_result.get("isError"):
+        content = initialize_result.get("content", [])
+        detail = content[0].get("text") if content else "Unknown MCP error"
+        raise RuntimeError(detail)
     response = _fetch_json(endpoint, {"jsonrpc": "2.0", "id": 2, "method": "tools/list"})
-    tools = response.get("result", {}).get("tools", [])
+    result = response.get("result", {})
+    if result.get("isError"):
+        content = result.get("content", [])
+        detail = content[0].get("text") if content else "Unknown MCP error"
+        raise RuntimeError(detail)
+    tools = result.get("tools", [])
     return [tool["name"] for tool in tools]
 
 
