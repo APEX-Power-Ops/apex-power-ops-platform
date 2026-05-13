@@ -18,6 +18,7 @@ PROMOTION_TOOL_PATH = "tools/ai/capture_apex_jobs_promotion.py"
 COORDINATOR_SUMMARY_TOOL_PATH = "tools/ai/build_ai_packet_evidence_summary.py"
 DEFAULT_HOST = "olares-mesh"
 DEFAULT_HOST_ROOT = "/home/olares/code/apex/apex-power-ops-platform"
+DEFAULT_HOST_PNPM_MATERIALIZED_PATH = "/home/olares/apex-data/toolchains/pnpm-10.0.0/node_modules/.bin/pnpm"
 DEFAULT_PROFILE = "strict-db-query"
 DEFAULT_DSN_LOADER = "/home/olares/apex-secrets/olares/ai-live-dsn.env"
 PACKET_ID_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
@@ -311,6 +312,21 @@ def _validate_host_bootstrap_artifact(
     if host_head != expected_head:
         raise ValueError(
             f"host bootstrap artifact head mismatch: expected {expected_head}, got {host_head}"
+        )
+
+    toolchains = payload.get("toolchains")
+    if not isinstance(toolchains, dict):
+        raise ValueError("host bootstrap artifact missing toolchains payload")
+
+    pnpm_materialized = toolchains.get("pnpm_materialized")
+    if not isinstance(pnpm_materialized, dict):
+        raise ValueError("host bootstrap artifact missing toolchains.pnpm_materialized payload")
+
+    pnpm_materialized_path = pnpm_materialized.get("path")
+    if pnpm_materialized_path != DEFAULT_HOST_PNPM_MATERIALIZED_PATH:
+        raise ValueError(
+            "host bootstrap artifact toolchains.pnpm_materialized path mismatch: "
+            f"expected {DEFAULT_HOST_PNPM_MATERIALIZED_PATH}, got {pnpm_materialized_path}"
         )
 
     minimal_mcp = payload.get("minimal_mcp")

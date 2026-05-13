@@ -69,6 +69,18 @@ def _materialize_remote_artifact(remote_path: str, payload: object) -> object:
         normalized.setdefault("output_artifact", remote_path)
         normalized.setdefault("host_container_root", str(PurePosixPath(remote_path).parents[5]))
         normalized.setdefault("implementation_root", str(PurePosixPath(remote_path).parents[4]))
+        normalized_toolchains = normalized.get("toolchains")
+        if not isinstance(normalized_toolchains, dict):
+            normalized_toolchains = {}
+        normalized_pnpm_materialized = normalized_toolchains.get("pnpm_materialized")
+        if not isinstance(normalized_pnpm_materialized, dict):
+            normalized_pnpm_materialized = {}
+        normalized_pnpm_materialized.setdefault(
+            "path",
+            "/home/olares/apex-data/toolchains/pnpm-10.0.0/node_modules/.bin/pnpm",
+        )
+        normalized_toolchains["pnpm_materialized"] = normalized_pnpm_materialized
+        normalized["toolchains"] = normalized_toolchains
         normalized_hold_boundary = normalized.get("hold_boundary")
         if not isinstance(normalized_hold_boundary, dict):
             normalized_hold_boundary = {}
@@ -1191,6 +1203,128 @@ def test_orchestrate_packet_rejects_host_bootstrap_old_clone_exists_drift(tmp_pa
         return
 
     raise AssertionError("expected orchestrate_packet to reject host bootstrap artifact old_clone exists drift")
+
+
+def test_orchestrate_packet_rejects_host_bootstrap_pnpm_materialized_path_drift(
+    tmp_path: Path,
+) -> None:
+    helper = _load_helper_module()
+    expected_head = helper._git_head(helper._repo_root())
+    planned = helper.plan_artifact_paths(
+        packet_id="packet-826-lane-a",
+        host_root="/home/olares/code/apex/apex-power-ops-platform",
+        local_root=tmp_path,
+    )
+
+    remote_contents = {
+        planned["host_bootstrap"]["remote"]: {
+            "packet_id": "packet-826-lane-a",
+            "tool": "tools/ai/run-olares-host-bootstrap-status.sh",
+            "command": _host_bootstrap_command("packet-826-lane-a", planned["host_bootstrap"]["remote"]),
+            "output_artifact": planned["host_bootstrap"]["remote"],
+            "host_container_root": "/home/olares/code/apex",
+            "implementation_root": "/home/olares/code/apex/apex-power-ops-platform",
+            "git": {
+                "head": expected_head,
+                "status_count": 0,
+                "old_clone": {
+                    "path": "/home/olares/src/apex-power-ops-platform",
+                    "exists": True,
+                },
+            },
+            "toolchains": {
+                "pnpm_materialized": {
+                    "path": "/home/olares/apex-data/toolchains/pnpm-9.0.0/node_modules/.bin/pnpm",
+                }
+            },
+            "minimal_mcp": {"status": "not-running"},
+        },
+        planned["verify"]["remote"]: {
+            "packet_id": "packet-826-lane-a",
+            "profile": "strict-db-query",
+            "result": "PASS",
+            "command": _verify_command("packet-826-lane-a", planned["verify"]["remote"]),
+        },
+        planned["promotion"]["remote"]: {
+            "packet_id": "packet-826-lane-a",
+            "result": "PASS",
+            "tool": "tools/ai/capture_apex_jobs_promotion.py",
+            "command": _promotion_command("packet-826-lane-a", planned["promotion"]["remote"]),
+            "artifact_path": planned["promotion"]["remote"],
+            "env": "host",
+            "service": "ai-workflow",
+            "host_run": {
+                "run_id": "host-run-826",
+                "env": "host",
+                "service": "ai-workflow",
+                "packet_id": "packet-826-lane-a",
+                "status": "success",
+            },
+            "host_success_runs": [
+                {"run_id": "host-run-826", "env": "host", "service": "ai-workflow", "packet_id": "packet-826-lane-a", "status": "success"}
+            ],
+            "promotion": {"packet_id": "packet-826-lane-a", "promoted_at": "2026-05-13T00:26:01Z", "supporting_run_ids": ["host-run-826"]},
+        },
+        planned["coordinator_summary"]["remote"]: {
+            "packet_id": "packet-826-lane-a",
+            "result": "PASS",
+            "tool": "tools/ai/build_ai_packet_evidence_summary.py",
+            "command": _coordinator_summary_command(
+                "packet-826-lane-a",
+                planned["verify"]["remote"],
+                planned["promotion"]["remote"],
+                planned["coordinator_summary"]["remote"],
+            ),
+            "artifact_path": planned["coordinator_summary"]["remote"],
+            "verify_artifact_path": planned["verify"]["remote"],
+            "verification": {"result": "PASS", "profile": "strict-db-query"},
+            "promotion_artifact_path": planned["promotion"]["remote"],
+            "promotion": {
+                "result": "PASS",
+                "env": "host",
+                "service": "ai-workflow",
+                "host_run": {"packet_id": "packet-826-lane-a", "run_id": "host-run-826", "env": "host", "service": "ai-workflow"},
+                "host_success_runs": [
+                    {"run_id": "host-run-826", "env": "host", "service": "ai-workflow", "packet_id": "packet-826-lane-a", "status": "success"}
+                ],
+                "promotion_record": {"packet_id": "packet-826-lane-a", "promoted_at": "2026-05-13T00:26:01Z", "supporting_run_ids": ["host-run-826"]},
+            },
+        },
+    }
+
+    def fake_runner(command: list[str], input_text: str | None = None) -> None:
+        if command[0] == "ssh":
+            return
+
+        remote_path = command[1].split(":", 1)[1]
+        local_path = Path(command[2])
+        local_path.parent.mkdir(parents=True, exist_ok=True)
+        local_path.write_text(
+            json.dumps(_materialize_remote_artifact(remote_path, remote_contents[remote_path])) + "\n",
+            encoding="utf-8",
+        )
+
+    try:
+        helper.orchestrate_packet(
+            packet_id="packet-826-lane-a",
+            host="olares-mesh",
+            host_root="/home/olares/code/apex/apex-power-ops-platform",
+            profile="strict-db-query",
+            dsn_loader="/home/olares/apex-secrets/olares/ai-live-dsn.env",
+            local_root=tmp_path,
+            runner=fake_runner,
+        )
+    except ValueError as error:
+        assert str(error) == (
+            "host bootstrap artifact toolchains.pnpm_materialized path mismatch: "
+            "expected /home/olares/apex-data/toolchains/pnpm-10.0.0/node_modules/.bin/pnpm, "
+            "got /home/olares/apex-data/toolchains/pnpm-9.0.0/node_modules/.bin/pnpm"
+        )
+        return
+
+    raise AssertionError(
+        "expected orchestrate_packet to reject host bootstrap artifact pnpm_materialized path drift"
+    )
 
 
 def test_orchestrate_packet_rejects_host_bootstrap_hold_boundary_status_drift(tmp_path: Path) -> None:
