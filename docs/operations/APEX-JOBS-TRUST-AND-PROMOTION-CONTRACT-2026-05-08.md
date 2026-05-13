@@ -162,6 +162,18 @@ Packet 172 adds one executable proof to the current boundary.
 
 That check is a trust-boundary assertion, not a request to perform promotion.
 
+## Packet 791 Promotion-Proof Note
+
+Packet `2026-05-13-olares-dev-residency-791` adds the current reusable positive-gate proof surface.
+
+`tools/ai/capture_apex_jobs_promotion.py` now records one successful packet-scoped run on the requested env and service, verifies that `list_runs` returns that same completed run, and then captures the resulting `promote_packet` success as repo-visible JSON.
+
+That helper is the bounded positive companion to the verifier's negative guard proof:
+
+1. `tools/ai/verify_minimal_mcp_trio.py` still proves promotion refuses when no successful `env=host` run exists,
+2. `tools/ai/capture_apex_jobs_promotion.py` proves promotion succeeds only after a successful matching `env=host` run is on record,
+3. both surfaces preserve packet-scoped provenance through emitted command, packet id, env class, service, run id, and final outcome data.
+
 ## Non-Goals
 
 This contract does not:
