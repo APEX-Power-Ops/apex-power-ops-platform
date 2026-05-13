@@ -45,6 +45,8 @@ Before running the drill, confirm all of the following:
 5. the admitted managed service entrypoints exist under `services/mcp/apex-fs/build/http.js`, `services/mcp/apex-db/build/http.js`, and `services/mcp/apex-jobs/build/http.js`,
 6. a governed live DSN variable is available only if the drill is meant to exercise the deferred-ops query path.
 
+If the drill is being driven through one bounded noninteractive SSH command and is meant to exercise the live-query path, prove that the same remote command shape reports `has_live_dsn=true` before treating a host-side deferred verdict as available.
+
 If the authoritative host root is behind the current published `clean-main` commit or carries unpublished changes on those controlling files, stop and restore host parity first instead of treating the resulting bootstrap or cold-start output as canonical proof.
 
 If the host mirror is missing those build entrypoints because the workspace dependencies were never materialized there, install and build the bounded MCP services before retrying the drill instead of treating the failure as verifier drift.
@@ -90,6 +92,18 @@ export APEX_OLARES_LIVE_DSN='<live dsn>'
 Use `OLARES-AI-GOVERNED-LIVE-DSN-SOURCING-RUNBOOK-2026-05-12.md` when the host credential has not yet been loaded from the non-git secret boundary.
 
 If the packet is being driven through one bounded noninteractive SSH command, source the non-git loader file or export `APEX_OLARES_LIVE_DSN` inside that same command chain. Do not assume another host shell already exported it for you.
+
+Use this presence check inside that same one-shot SSH command shape when the packet is expected to hit the live-query path:
+
+```bash
+if [[ -n "${APEX_OLARES_LIVE_DSN:-}" ]]; then
+  printf '{"has_live_dsn":true}\n'
+else
+  printf '{"has_live_dsn":false}\n'
+fi
+```
+
+If the same bounded shell reports `has_live_dsn=false`, stop and classify the host live-DSN path as unavailable instead of treating an interactive host shell as controlling proof.
 
 If no governed live DSN is present, do not fabricate one and do not expect a host-side deferred hold verdict.
 
@@ -155,6 +169,8 @@ Interpret the drill narrowly:
 4. `deferred_ops=UNAVAILABLE` on the host remains a truthful pass when no admitted host live-query path exists,
 5. `HOLD` or `REOPEN` should be claimed only when a governed live DSN is present and the helper actually returns that result.
 
+When the drill is executed through one-shot SSH, a live-query result is only truthful if that same bounded shell first proved `has_live_dsn=true`.
+
 Stop rather than over-interpret the run if:
 
 1. the host root is wrong,
@@ -162,7 +178,8 @@ Stop rather than over-interpret the run if:
 3. the trio verifies against foreign ownership,
 4. the run would require a new orchestration service, auth widening, or business-logic mutation,
 5. the packet id diverges across emitted artifacts,
-6. the authoritative host mirror is behind the current published repo state or dirty on the controlling wrapper, shell-helper, status-ledger, or runbook files.
+6. the authoritative host mirror is behind the current published repo state or dirty on the controlling wrapper, shell-helper, status-ledger, or runbook files,
+7. the drill expects a host live-query path but the same bounded one-shot SSH shell still reports `has_live_dsn=false`.
 
 ## Required Evidence
 
