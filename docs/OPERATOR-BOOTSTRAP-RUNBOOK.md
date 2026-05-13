@@ -183,6 +183,8 @@ Use `docs/architecture/OLARES-HOST-NATIVE-OPERATOR-PUBLICATION-WORKFLOW-2026-05-
 
 Use `docs/operations/OLARES-AI-WORKSTATION-LIVE-DSN-BASELINE-RUNBOOK-2026-05-12.md` when the operator needs the authoritative workstation live-DSN comparison point before interpreting host-side validation results.
 
+Use `docs/operations/OLARES-AI-GOVERNED-LIVE-DSN-SOURCING-RUNBOOK-2026-05-12.md` when the validation packet needs a governed live DSN loaded from a non-git secret boundary.
+
 Use `docs/operations/OLARES-AI-HOST-MANAGED-COLD-START-DRILL-RUNBOOK-2026-05-12.md` when the operator needs one copy-paste host-side managed cold-start drill with packet-id, command order, evidence expectations, and closeout guidance.
 
 Primary task:

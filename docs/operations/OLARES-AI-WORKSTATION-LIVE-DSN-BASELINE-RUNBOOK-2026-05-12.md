@@ -22,8 +22,9 @@ Use this file with:
 1. `OLARES-AI-OPERATOR-REAL-WORLD-VALIDATION-MATRIX-2026-05-12.md`,
 2. `../architecture/OLARES-AI-WORKFLOW-FIRST-SLICE-RUNBOOK-2026-05-06.md`,
 3. `APEX-JOBS-TRUST-AND-PROMOTION-CONTRACT-2026-05-08.md`,
-4. `../../plan/OLARES-AI-ORCHESTRATION-EXECUTION-PLAN-2026-05-10.md`,
-5. `../../PROJECT_STATUS.md`.
+4. `OLARES-AI-GOVERNED-LIVE-DSN-SOURCING-RUNBOOK-2026-05-12.md`,
+5. `../../plan/OLARES-AI-ORCHESTRATION-EXECUTION-PLAN-2026-05-10.md`,
+6. `../../PROJECT_STATUS.md`.
 
 ## Scenario Goal
 
@@ -43,6 +44,8 @@ Before running the drill, confirm all of the following:
 4. one explicit packet id has been chosen,
 5. a governed live DSN is available under the approved variable name,
 6. no scenario widens auth, public ingress, queue ownership, or business logic scope.
+
+Use `OLARES-AI-GOVERNED-LIVE-DSN-SOURCING-RUNBOOK-2026-05-12.md` when the credential is not already loaded and the operator needs the approved non-git materialization path.
 
 Recommended packet-id shape:
 

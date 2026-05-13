@@ -22,8 +22,9 @@ Use this file with:
 1. `OLARES-AI-OPERATOR-REAL-WORLD-VALIDATION-MATRIX-2026-05-12.md`,
 2. `../architecture/OLARES-AI-WORKFLOW-FIRST-SLICE-RUNBOOK-2026-05-06.md`,
 3. `../OPERATOR-BOOTSTRAP-RUNBOOK.md`,
-4. `../../plan/OLARES-AI-ORCHESTRATION-EXECUTION-PLAN-2026-05-10.md`,
-5. `../../PROJECT_STATUS.md`.
+4. `OLARES-AI-GOVERNED-LIVE-DSN-SOURCING-RUNBOOK-2026-05-12.md`,
+5. `../../plan/OLARES-AI-ORCHESTRATION-EXECUTION-PLAN-2026-05-10.md`,
+6. `../../PROJECT_STATUS.md`.
 
 ## Scenario Goal
 
@@ -83,6 +84,8 @@ If this drill is intentionally using a governed live DSN, export it now under th
 ```bash
 export APEX_OLARES_LIVE_DSN='<live dsn>'
 ```
+
+Use `OLARES-AI-GOVERNED-LIVE-DSN-SOURCING-RUNBOOK-2026-05-12.md` when the host credential has not yet been loaded from the non-git secret boundary.
 
 If no governed live DSN is present, do not fabricate one and do not expect a host-side deferred hold verdict.
 
