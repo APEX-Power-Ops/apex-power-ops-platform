@@ -2,8 +2,8 @@
 
 > Repo-owned copy established 2026-05-07 as the canonical in-repo status surface for the live standalone `apex-power-ops-platform/` boundary. Keep the parent-root copy aligned until cutover retirement is complete.
 
-> **Last Updated**: May 13, 2026 (Olares One and Apex Platform status refresh, platform-wide milestone synthesis, and bounded parallel-execution next-step sequencing)
-> **Supplement**: Packet 782 recorded on May 13, 2026 for the Olares One and Apex Platform status refresh plus bounded parallel-task execution sequencing. Prior packet history through Packet 781 remains authoritative in the lane register and handoff trail below.
+> **Last Updated**: May 13, 2026 (Olares One and Apex Platform status refresh, bounded parallel-execution sequencing, and direct `apex-jobs` ledger-contract hardening)
+> **Supplement**: Packet 783 recorded on May 13, 2026 for direct `apex-jobs` ledger-contract hardening, including closed-run immutability plus focused package-level promotion and filter validation. Packet 782 remains authoritative for the combined Olares One and Apex Platform status refresh plus bounded parallel-task execution sequencing.
 > **Phase**: Standalone repo boundary live, Olares durable-host workflow active, AI orchestration bounded on the admitted MCP trio with executor-governed parallel lanes, Operations Visibility schema live with governed consumers, laptop-to-Olares migration signed off at the current repo and authoritative-host evidence floor
 > **See Also**: `PROJECT_OVERVIEW.md` for full system architecture
 
@@ -17,7 +17,7 @@
 |------|--------|--------------------------|-------------------|
 | Repo cutover and migration closeout | ✅ Complete | `2026-05-09-olares-dev-residency-405` through `2026-05-10-olares-dev-residency-485` | The standalone repo boundary is canonical, migration closeout is signed off, and future work is baseline preservation rather than cutover repair. |
 | Durable-host workspace and operator hardening | ✅ Active baseline | `2026-05-09-olares-dev-residency-405` through `2026-05-10-olares-dev-residency-485` | Olares is the intended development anchor, with reopen work limited to drift or new contrary evidence. |
-| AI/operator boundary and executor governance | 🟡 Active bounded lane with external live-DSN blocker | `2026-05-10-olares-dev-residency-444` and `2026-05-10-olares-dev-residency-489` through `2026-05-13-olares-dev-residency-781` | The admitted boundary remains `apex-fs`, `apex-db`, and `apex-jobs`, with operator-on-demand runtime, the execution plan, readiness checklist, validation matrix, governed workstation and host runbooks, and the combined Packet 780 blocker proof that both workstation and authoritative-host governed live-DSN sources are currently absent. The next repo-side value is deeper task-execution and evidence validation inside that admitted boundary rather than wider orchestration. |
+| AI/operator boundary and executor governance | 🟡 Active bounded lane with external live-DSN blocker | `2026-05-10-olares-dev-residency-444` and `2026-05-10-olares-dev-residency-489` through `2026-05-13-olares-dev-residency-783` | The admitted boundary remains `apex-fs`, `apex-db`, and `apex-jobs`, with operator-on-demand runtime, the execution plan, readiness checklist, validation matrix, governed workstation and host runbooks, the combined Packet 780 blocker proof that both workstation and authoritative-host governed live-DSN sources are currently absent, and the new Packet 783 direct `apex-jobs` ledger hardening plus focused package tests for closeout immutability, promotion refusal or success, and run filtering. The next truthful value is now governed credential materialization and host-qualified evidence reruns rather than wider orchestration. |
 | Operations Visibility hold-boundary cadence | 🟡 Hold | `2026-05-06-olares-dev-residency-058` plus landed `09`-tranche baseline | The truthful live verdict remains `HOLD` on two gates: the governed live-DSN source is still absent on both workstation and authoritative host, and even after materialization the authoritative live seams must still contain non-zero business rows. |
 | Publication and authoritative host parity | ✅ Required completion gate | `2026-05-10-olares-dev-residency-483` through `2026-05-10-olares-dev-residency-485` | Repo publication and `/home/olares/code/apex/apex-power-ops-platform` parity remain the mandatory completion proof for Olares claims. |
 | Historical parent-root residue handling | 🟡 Residual only | `2026-05-09-olares-dev-residency-405` through `2026-05-10-olares-dev-residency-482` | Historical residue is evidence-only and should reopen only if a current-looking surface starts misrouting work. |
@@ -30,7 +30,7 @@
 | Durable development residency | ✅ Olares-first baseline | Olares remains the durable development anchor, the laptop remains client-only, and host parity plus publication hygiene are the governing completion gate for platform claims. |
 | Product implementation surfaces | ✅ Active bounded delivery baseline | The monorepo app, package, infra, docs, and ops surfaces are active and govern current platform delivery, with no new repo-boundary blocker currently open. |
 | Operations Visibility and public runtime consumers | ✅ Active bounded baseline | The Operations Visibility schema and the first governed consumers are landed, and the public mutation-seam plus operations-web route path is in bounded proof state rather than open platform bring-up. |
-| AI/operator orchestration | 🟡 Active bounded baseline with external credential blocker | The admitted operator family remains `apex-fs`, `apex-db`, and `apex-jobs`; deeper task-execution validation is the current opportunity, while governed live-DSN materialization remains the external blocker for host-qualified proof. |
+| AI/operator orchestration | 🟡 Active bounded baseline with external credential blocker | The admitted operator family remains `apex-fs`, `apex-db`, and `apex-jobs`; the direct `apex-jobs` ledger-contract tranche is now landed with focused package tests, while governed live-DSN materialization remains the external blocker for host-qualified proof. |
 | Parallel task execution | 🟡 Planned next proving lane | Controlled two-lane execution is still the desired next demonstration, but it should open as a packetized proof after one more single-executor task-execution validation slice and governed credential materialization for the host path. |
 
 ## 2026-05-07 Addendum: Repo Cutover, Olares Workspace, And Migration Status
@@ -83,7 +83,7 @@ This addendum is the current stakeholder-facing status surface for the active Ol
 | Real-world host-qualified validation | 🟡 Blocked outside repo by governed live-DSN materialization | the workstation source and `~/apex-secrets/olares/ai-live-dsn.env` are both absent today, so live host verdicts cannot reopen until the same-shell presence proof turns true |
 | Single-executor packet path | ✅ Enabled and preferred | one bounded executor remains the default shape for validation and hardening slices inside the admitted boundary under packet/handoff governance and `apex-jobs` promotion rules |
 | Two-executor parallel path | 🟡 Enabled for disjoint lanes only | current safe split is explicit non-overlapping ownership such as scaffold maintenance versus trust hardening, and it should not reopen until the single-lane host path is coherent again |
-| Task-execution validation expansion | 🟡 Prioritized next repo-side slice | the next repo-controlled value is to extend `apex-jobs` task execution, promotion-refusal, provenance, and evidence-contract tests without widening the admitted trio |
+| Task-execution validation expansion | 🟡 Active hardening tranche | direct `apex-jobs` closeout-immutability enforcement, shared promotion and filter logic, and focused package tests are now landed; the remaining repo-controlled value is provenance and end-to-end evidence validation without widening the admitted trio |
 | Wider multi-executor queue ownership | ⛔ Deferred | `ai_tasks` is not the current controller, and open-ended autonomous or shared-mutation orchestration remains out of scope pending a separate packet |
 
 ### Olares One Milestone Progress
@@ -92,9 +92,9 @@ This addendum is the current stakeholder-facing status surface for the active Ol
 |-----------|--------------------|---------------|-----------|
 | Repo cutover and migration closeout | 100% | Signed off; the standalone repo and Olares-first routing are the canonical operating contract | Reopen only if a current-looking surface drifts or host parity produces contrary evidence |
 | Durable-host workspace and operator hardening | 100% baseline | The authoritative host mirror, operator entry surfaces, and repo-owned authority chain are aligned | Keep host parity and drift checks available, but do not reopen generic workspace bring-up |
-| AI/operator boundary and executor governance | 85% bounded | The admitted trio, packet/handoff governance, validation matrix, execution plan, checklist, and truthful blocker documentation are all published | Extend validation depth inside the admitted trio; keep `ai_tasks` and wider orchestration deferred |
+| AI/operator boundary and executor governance | 89% bounded | The admitted trio, packet/handoff governance, validation matrix, execution plan, checklist, truthful blocker documentation, and direct `apex-jobs` ledger-contract hardening are all published | Materialize governed workstation and host live-DSN sources, then use the hardened ledger path for host-qualified reruns |
 | Real-world live-DSN validation path | 40% bounded and externally blocked | Workstation and host proof surfaces are authored and truthful, but neither side currently carries the governed live-DSN source | Materialize governed workstation and host DSN sources, then rerun the workstation baseline and same-shell host drills |
-| Single-executor task execution validation | 70% active | The default packet path is documented and partially validated through verifier, canary, and helper truthfulness coverage | Add the next focused `apex-jobs` task execution and evidence-contract test tranche |
+| Single-executor task execution validation | 82% active | The default packet path is documented and partially validated through verifier, canary, helper truthfulness coverage, and direct `apex-jobs` package tests that now cover post-close mutation refusal, promotion refusal or success, and run filtering | Extend provenance and end-to-end evidence validation once credential gates are ready |
 | Controlled two-lane parallel readiness | 60% bounded | The disjoint scaffold-versus-hardening split is documented, but it has not yet earned a fresh host-qualified rehearsal | Open only after the single-lane host path is coherent and file ownership is written down first |
 | Operations Visibility hold-boundary cadence | 25% gated | The live verdict remains `HOLD` because credential materialization is absent and the authoritative seams still read as empty-state business surfaces | After DSN materialization, rerun hold-boundary validation against authoritative live data before any cadence claim changes |
 
@@ -106,15 +106,15 @@ This addendum is the current stakeholder-facing status surface for the active Ol
 | Olares durable development residency | 100% baseline | Olares-hosted development, client-only laptop posture, and publication hygiene are signed off at the current evidence floor | Preserve parity and drift reruns, but do not reopen generic residency work |
 | Product delivery baseline | 80% active | Current apps, packages, infra, docs, and ops surfaces are live inside the monorepo and support bounded product delivery | Keep feature work subordinate to the current Olares-first AI validation priority unless a separate product lane is explicitly reopened |
 | Operations Visibility runtime and hosted consumer baseline | 75% active | Schema, runtime seams, and hosted route proof are landed as bounded platform capability rather than an open migration or ingress epic | Expand only through bounded consumer or validation slices tied to authoritative data truth |
-| AI/operator orchestration baseline | 85% bounded | The execution plan, readiness checklist, validation matrix, and operator tooling are all published and working inside the admitted trio | Extend task-execution and evidence-contract validation without widening the controller |
+| AI/operator orchestration baseline | 89% bounded | The execution plan, readiness checklist, validation matrix, operator tooling, and direct `apex-jobs` ledger-contract hardening are all published and working inside the admitted trio | Use the hardened ledger path in the next host-qualified validation tranche without widening the controller |
 | Controlled parallel execution readiness | 60% bounded | The platform has the governance model for disjoint parallel lanes, but not yet the fresh host-qualified rehearsal the workflow needs | Run a coordinator-owned two-lane proof only after the single-lane validation and host credential gates are green |
 
 ### Recommended Next Steps By Lane
 
 | Lane | Recommended next steps |
 |------|------------------------|
-| Olares One | 1. Materialize the governed workstation and host live-DSN sources. 2. Rerun the workstation live-DSN baseline, host managed cold-start drill, and host adopted-runtime drill with one packet id threaded across artifacts. 3. Use those results to reopen the host-qualified evidence chain truthfully. |
-| Apex Platform | 1. Land one bounded `apex-jobs` task-execution and evidence-contract validation tranche. 2. Keep packet, handoff, and `apex-jobs` governance as the central control path. 3. Use the resulting proof to open the first controlled parallel-task rehearsal rather than widening into open-ended orchestration. |
+| Olares One | 1. Materialize the governed workstation and host live-DSN sources. 2. Rerun the workstation live-DSN baseline, host managed cold-start drill, and host adopted-runtime drill with one packet id threaded across artifacts. 3. Use those results against the now-hardened `apex-jobs` ledger path to reopen the host-qualified evidence chain truthfully. |
+| Apex Platform | 1. Keep packet, handoff, and `apex-jobs` governance as the central control path. 2. Use the landed closeout-immutability tranche as the direct ledger baseline for the next host-qualified validation slice. 3. Open the first controlled parallel-task rehearsal only after the credential gates and host-qualified evidence chain are green. |
 | Parallel execution priority | 1. Keep me as the coordinator and final verifier. 2. Use one explicit packet with disjoint file ownership, validation order, and abort rules written before work starts. 3. Split the rehearsal into a trust-hardening lane and a scaffold or evidence-alignment lane only after the single-lane host path is coherent. |
 
 ### Current Olares Lane Control And Evidence Register
@@ -132,7 +132,7 @@ This addendum is the current stakeholder-facing status surface for the active Ol
 
 1. Preserve the signed-off migration and host-parity baseline; reopen that lane only on drift or new contrary evidence rather than as standing follow-on work.
 2. Keep the combined Packet 780 blocker explicit: do not claim workstation or host live-query readiness until a governed live-DSN source exists on both surfaces and the same-shell host proof turns `has_live_dsn=true`.
-3. Prioritize one bounded repo-side AI slice next: extend `apex-jobs` task-execution, promotion-refusal, provenance, and evidence-contract validation without widening the admitted trio.
+3. Treat Packet 783 as the current repo-side hardening floor: `apex-jobs` now refuses post-close ledger mutation and carries focused package coverage for filtering plus promotion refusal or success along the same ledger path.
 4. Once the workstation governed DSN source exists, rerun the workstation live-DSN baseline and thread one packet id through bootstrap, verifier, deferred-ops, and handoff evidence.
 5. Once the authoritative host secret boundary exists, rerun the one-shot presence proof, managed cold-start drill, and adopted-runtime drill before reopening any host live-query or hold-boundary claim.
 6. Only after the single-lane host path is coherent should a disjoint two-executor rehearsal reopen, with explicit file ownership, validation order, and abort rules written before edits start.
@@ -142,10 +142,10 @@ This addendum is the current stakeholder-facing status surface for the active Ol
 
 The current next move is still not broader queue admission.
 
-It is to sequence the next AI tranche as validation-first work inside the admitted boundary:
+It is to sequence the next AI tranche from the now-hardened admitted boundary:
 
-1. keep one bounded executor as the default owner for the next task-execution and evidence-contract validation slice,
-2. use `apex-jobs` plus packet and handoff governance as the controlling run, evidence, and publication path,
+1. keep one bounded executor as the default owner for the next host-qualified validation slice,
+2. use the hardened `apex-jobs` ledger plus packet and handoff governance as the controlling run, evidence, and publication path,
 3. treat workstation and host live-DSN reruns as blocked until governed credential materialization exists on those surfaces,
 4. require real `env=host` evidence before any promotion, cadence, or widened parallel-readiness claim is treated as complete,
 5. defer any second executor until the single-lane host path is coherent and the ownership split is written down first.
@@ -156,10 +156,14 @@ The current frontier is a bounded AI orchestration validation tranche, not a new
 
 Prioritize the next work in this order:
 
-1. extend repo-side `apex-jobs` task-execution and evidence-contract validation that does not depend on live credentials,
-2. reopen workstation and host live-DSN drills only after governed credential materialization exists on both sides,
+1. reopen workstation and host live-DSN drills only after governed credential materialization exists on both sides,
+2. extend remaining repo-side `apex-jobs` promotion-refusal and provenance validation as those host-qualified artifacts become available,
 3. open a coordinator-managed two-lane rehearsal after the host-qualified single-lane evidence chain is green,
 4. treat any later controller widening beyond that rehearsal as a separate decision rather than as implied follow-on work.
+
+Packet `2026-05-13-olares-dev-residency-783` now closes the next bounded direct AI hardening tranche by extracting shared `apex-jobs` ledger logic for closeout, filtering, and promotion, refusing any attempt to mutate a run after it has been closed, adding focused package-level contract tests for immutability plus promotion refusal or success and run filtering, and updating the source-owned and repo-owned trust docs to describe the stricter ledger evidence contract explicitly.
+
+That keeps the admitted run ledger trustworthy for later host-qualified promotion and validation evidence without widening the admitted trio, changing the promotion gate requirement itself, or claiming host proof before the governed live-DSN blocker is resolved.
 
 Historical packet context for the earlier frontier remains below.
 

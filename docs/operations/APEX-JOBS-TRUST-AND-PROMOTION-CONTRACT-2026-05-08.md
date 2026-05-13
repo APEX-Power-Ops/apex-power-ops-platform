@@ -100,6 +100,14 @@ Every `apex-jobs` run record that matters to completion should carry at least:
 
 These are the current minimums for trustworthy run-ledger interpretation.
 
+## Closed Run Immutability
+
+`end_run` may transition a run from `running` to one final closed status exactly once.
+
+After a run carries a closed status or `completed_at`, later attempts to rewrite its outcome, notes, or completion timestamp must refuse.
+
+That immutability preserves the run ledger as evidence instead of allowing post-close mutation.
+
 ## Promotion Gate Contract
 
 `promote_packet` must refuse promotion unless at least one run exists with all of the following:

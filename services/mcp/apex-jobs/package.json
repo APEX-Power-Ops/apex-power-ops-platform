@@ -4,7 +4,8 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "build": "tsc -p tsconfig.json"
+    "build": "tsc -p tsconfig.json",
+    "test": "corepack pnpm run build && node --test tests/ledger.test.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.22.0"
