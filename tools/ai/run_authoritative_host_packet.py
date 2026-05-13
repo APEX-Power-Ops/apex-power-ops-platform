@@ -250,6 +250,14 @@ def _validate_promotion_artifact(*, packet_id: str, artifact_path: Path) -> dict
     if host_run.get("status") != "success":
         raise ValueError(f"promotion artifact host_run status must be success, got {host_run.get('status')}")
 
+    host_run_env = host_run.get("env")
+    if host_run_env != "host":
+        raise ValueError(f"promotion artifact host_run env must be host, got {host_run_env}")
+
+    host_service = host_run.get("service")
+    if not isinstance(host_service, str) or not host_service:
+        raise ValueError("promotion artifact host_run missing service")
+
     promotion = payload.get("promotion")
     if not isinstance(promotion, dict):
         raise ValueError("promotion artifact missing promotion payload")
@@ -263,11 +271,29 @@ def _validate_promotion_artifact(*, packet_id: str, artifact_path: Path) -> dict
     if not isinstance(host_success_runs, list) or not host_success_runs:
         raise ValueError("promotion artifact missing host_success_runs payload")
 
+    incompatible_host_success_run_ids = [
+        run.get("run_id")
+        for run in host_success_runs
+        if isinstance(run, dict)
+        and run.get("packet_id") == packet_id
+        and run.get("status") == "success"
+        and (run.get("env") != host_run_env or run.get("service") != host_service)
+    ]
+    if incompatible_host_success_run_ids:
+        raise ValueError(
+            "promotion artifact host_success_runs contain runs outside accepted host env/service: "
+            f"{incompatible_host_success_run_ids}"
+        )
+
     host_run_id = host_run.get("run_id")
     host_success_run_ids = [
         run.get("run_id")
         for run in host_success_runs
-        if isinstance(run, dict) and run.get("packet_id") == packet_id and run.get("status") == "success"
+        if isinstance(run, dict)
+        and run.get("packet_id") == packet_id
+        and run.get("status") == "success"
+        and run.get("env") == host_run_env
+        and run.get("service") == host_service
     ]
     if host_run_id not in host_success_run_ids:
         raise ValueError(
@@ -290,6 +316,8 @@ def _validate_promotion_artifact(*, packet_id: str, artifact_path: Path) -> dict
     return {
         "promotion_result": payload.get("result"),
         "host_run_id": host_run_id,
+        "host_run_env": host_run_env,
+        "host_service": host_service,
         "promotion_artifact_name": artifact_path.name,
         "host_success_run_ids": host_success_run_ids,
         "promotion_supporting_run_ids": supporting_run_ids,
@@ -304,6 +332,8 @@ def _validate_coordinator_summary_artifact(
     verify_profile: str,
     promotion_artifact_name: str,
     host_run_id: str | None,
+    host_run_env: str | None,
+    host_service: str | None,
     host_success_run_ids: list[str] | None,
     supporting_run_ids: list[str] | None,
 ) -> dict[str, object]:
@@ -370,14 +400,42 @@ def _validate_coordinator_summary_artifact(
             f"coordinator summary host_run id mismatch: expected {host_run_id}, got {host_run.get('run_id')}"
         )
 
+    if host_run_env is not None and host_run.get("env") != host_run_env:
+        raise ValueError(
+            f"coordinator summary host_run env mismatch: expected {host_run_env}, got {host_run.get('env')}"
+        )
+
+    if host_service is not None and host_run.get("service") != host_service:
+        raise ValueError(
+            f"coordinator summary host_run service mismatch: expected {host_service}, got {host_run.get('service')}"
+        )
+
     host_success_runs = promotion.get("host_success_runs")
     if not isinstance(host_success_runs, list) or not host_success_runs:
         raise ValueError("coordinator summary promotion payload missing host_success_runs")
 
+    incompatible_host_success_run_ids = [
+        run.get("run_id")
+        for run in host_success_runs
+        if isinstance(run, dict)
+        and run.get("packet_id") == packet_id
+        and run.get("status") == "success"
+        and ((host_run_env is not None and run.get("env") != host_run_env) or (host_service is not None and run.get("service") != host_service))
+    ]
+    if incompatible_host_success_run_ids:
+        raise ValueError(
+            "coordinator summary host_success_runs contain runs outside accepted host env/service: "
+            f"{incompatible_host_success_run_ids}"
+        )
+
     coordinator_host_success_run_ids = [
         run.get("run_id")
         for run in host_success_runs
-        if isinstance(run, dict) and run.get("packet_id") == packet_id and run.get("status") == "success"
+        if isinstance(run, dict)
+        and run.get("packet_id") == packet_id
+        and run.get("status") == "success"
+        and (host_run_env is None or run.get("env") == host_run_env)
+        and (host_service is None or run.get("service") == host_service)
     ]
     if host_run_id is not None and host_run_id not in coordinator_host_success_run_ids:
         raise ValueError(
@@ -473,6 +531,8 @@ def orchestrate_packet(
         verify_profile=str(verify_validation["verify_profile"]),
         promotion_artifact_name=str(promotion_validation["promotion_artifact_name"]),
         host_run_id=promotion_validation["host_run_id"] if isinstance(promotion_validation["host_run_id"], str) else None,
+        host_run_env=promotion_validation["host_run_env"] if isinstance(promotion_validation["host_run_env"], str) else None,
+        host_service=promotion_validation["host_service"] if isinstance(promotion_validation["host_service"], str) else None,
         host_success_run_ids=promotion_validation["host_success_run_ids"] if isinstance(promotion_validation["host_success_run_ids"], list) else None,
         supporting_run_ids=promotion_validation["promotion_supporting_run_ids"] if isinstance(promotion_validation["promotion_supporting_run_ids"], list) else None,
     )

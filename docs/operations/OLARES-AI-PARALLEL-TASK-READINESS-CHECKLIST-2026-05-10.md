@@ -123,7 +123,7 @@ Write the block before edits start and keep it short:
 - record one evidence tuple per lane: touched files, validation command, validation result, and whether the lane finished `PASS` or `ABORTED`
 - record one coordinator completion tuple for the packet: ownership remained disjoint, both lane validations ran, no abort rule fired, and the combined evidence is repo-visible
 - when a later rehearsal needs one packet-scoped artifact instead of hand-copied tuples, compose the verifier and promotion evidence through `tools/ai/build_ai_packet_evidence_summary.py`
-- when a later rehearsal uses `tools/ai/run_authoritative_host_packet.py`, treat the helper artifact as valid only if the imported bootstrap, verifier, promotion, and coordinator-summary artifacts all match the same packet id, remain `PASS`, preserve the same accepted host run id through `host_success_runs` and `supporting_run_ids`, preserve the same host-success run-id set between the imported promotion artifact and the coordinator summary, and keep every promoted supporting run id backed by the recorded successful host runs
+- when a later rehearsal uses `tools/ai/run_authoritative_host_packet.py`, treat the helper artifact as valid only if the imported bootstrap, verifier, promotion, and coordinator-summary artifacts all match the same packet id, remain `PASS`, preserve the same accepted host run id through `host_success_runs` and `supporting_run_ids`, preserve the same host-success run-id set between the imported promotion artifact and the coordinator summary, keep every promoted supporting run id backed by the recorded successful host runs, and keep the accepted host-success support on `env=host` and the same service as the accepted host run
 
 For the first rehearsal, prefer a coordinator block that reads like this in packet or closeout evidence:
 
@@ -142,6 +142,7 @@ Current baseline note:
 - Packet 803 now proves the same helper surface also rejects promotion-support drift when the accepted host run id is no longer preserved through `host_success_runs` and `supporting_run_ids`
 - Packet 804 now proves the same helper surface also rejects coordinator-summary host-success-run drift when the imported promotion artifact and the coordinator summary preserve different `host_success_runs` sets even though the accepted host run id is still present
 - Packet 805 now proves the same helper surface also rejects promotion artifacts whose `supporting_run_ids` claim a promoted supporting run that is not backed by the recorded successful host runs
+- Packet 806 now proves the same helper surface also rejects supporting runs that drift off `env=host` or off the accepted host service even when the packet id, run id, and success status still look coherent
 - later packets should preserve and reuse this pattern rather than describing the first rehearsal as still pending
 
 ## Current Recommendation
