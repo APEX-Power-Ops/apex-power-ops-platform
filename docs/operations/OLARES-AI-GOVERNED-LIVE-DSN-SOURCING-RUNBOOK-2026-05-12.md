@@ -102,6 +102,10 @@ source ~/apex-secrets/olares/ai-live-dsn.env
 export APEX_OLARES_LIVE_DSN
 ```
 
+When the packet is executed through a bounded noninteractive shell such as a one-shot `ssh ... '...'` command, source or export the credential inside that same command chain.
+
+Do not assume an interactive host login profile, previous shell session, or another terminal has already populated `APEX_OLARES_LIVE_DSN` for the packet.
+
 Example content for the non-git host loader file:
 
 ```bash

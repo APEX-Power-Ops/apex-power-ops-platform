@@ -89,6 +89,8 @@ export APEX_OLARES_LIVE_DSN='<live dsn>'
 
 Use `OLARES-AI-GOVERNED-LIVE-DSN-SOURCING-RUNBOOK-2026-05-12.md` when the host credential has not yet been loaded from the non-git secret boundary.
 
+If the packet is being driven through one bounded noninteractive SSH command, source the non-git loader file or export `APEX_OLARES_LIVE_DSN` inside that same command chain. Do not assume another host shell already exported it for you.
+
 If no governed live DSN is present, do not fabricate one and do not expect a host-side deferred hold verdict.
 
 ### Drill Commands
