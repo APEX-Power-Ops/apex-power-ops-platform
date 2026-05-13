@@ -143,6 +143,7 @@ Current baseline note:
 - Packet 804 now proves the same helper surface also rejects coordinator-summary host-success-run drift when the imported promotion artifact and the coordinator summary preserve different `host_success_runs` sets even though the accepted host run id is still present
 - Packet 805 now proves the same helper surface also rejects promotion artifacts whose `supporting_run_ids` claim a promoted supporting run that is not backed by the recorded successful host runs
 - Packet 806 now proves the same helper surface also rejects supporting runs that drift off `env=host` or off the accepted host service even when the packet id, run id, and success status still look coherent
+- Packet 807 now proves the same helper surface also rejects promotion tuples whose top-level `env` or `service` drift away from the accepted host run across the imported promotion artifact or coordinator summary even when the nested run metadata still looks coherent
 - later packets should preserve and reuse this pattern rather than describing the first rehearsal as still pending
 
 ## Current Recommendation

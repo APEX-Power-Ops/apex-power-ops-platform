@@ -258,6 +258,16 @@ def _validate_promotion_artifact(*, packet_id: str, artifact_path: Path) -> dict
     if not isinstance(host_service, str) or not host_service:
         raise ValueError("promotion artifact host_run missing service")
 
+    if payload.get("env") != host_run_env:
+        raise ValueError(
+            f"promotion artifact env mismatch: expected {host_run_env}, got {payload.get('env')}"
+        )
+
+    if payload.get("service") != host_service:
+        raise ValueError(
+            f"promotion artifact service mismatch: expected {host_service}, got {payload.get('service')}"
+        )
+
     promotion = payload.get("promotion")
     if not isinstance(promotion, dict):
         raise ValueError("promotion artifact missing promotion payload")
@@ -377,6 +387,16 @@ def _validate_coordinator_summary_artifact(
     if promotion.get("result") != "PASS":
         raise ValueError(
             f"coordinator summary promotion result must be PASS, got {promotion.get('result')}"
+        )
+
+    if host_run_env is not None and promotion.get("env") != host_run_env:
+        raise ValueError(
+            f"coordinator summary promotion env mismatch: expected {host_run_env}, got {promotion.get('env')}"
+        )
+
+    if host_service is not None and promotion.get("service") != host_service:
+        raise ValueError(
+            f"coordinator summary promotion service mismatch: expected {host_service}, got {promotion.get('service')}"
         )
 
     promotion_artifact_path = payload.get("promotion_artifact_path")

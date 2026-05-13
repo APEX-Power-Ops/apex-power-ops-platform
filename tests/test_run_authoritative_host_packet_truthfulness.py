@@ -104,6 +104,8 @@ def test_orchestrate_packet_uses_stdin_fed_ssh_and_four_scp_imports(tmp_path: Pa
         planned["promotion"]["remote"]: {
             "packet_id": "packet-799-lane-a",
             "result": "PASS",
+            "env": "host",
+            "service": "ai-workflow",
             "host_run": {
                 "run_id": "host-run-123",
                 "env": "host",
@@ -124,6 +126,8 @@ def test_orchestrate_packet_uses_stdin_fed_ssh_and_four_scp_imports(tmp_path: Pa
             "promotion_artifact_path": planned["promotion"]["remote"],
             "promotion": {
                 "result": "PASS",
+                "env": "host",
+                "service": "ai-workflow",
                 "host_run": {"packet_id": "packet-799-lane-a", "run_id": "host-run-123", "env": "host", "service": "ai-workflow"},
                 "host_success_runs": [
                     {"run_id": "host-run-123", "env": "host", "service": "ai-workflow", "packet_id": "packet-799-lane-a", "status": "success"}
@@ -287,6 +291,8 @@ def test_orchestrate_packet_rejects_verify_packet_mismatch(tmp_path: Path) -> No
         planned["promotion"]["remote"]: {
             "packet_id": "packet-801-lane-a",
             "result": "PASS",
+            "env": "host",
+            "service": "ai-workflow",
             "host_run": {"run_id": "host-run-123", "env": "host", "service": "ai-workflow", "packet_id": "packet-801-lane-a", "status": "success"},
             "host_success_runs": [
                 {"run_id": "host-run-123", "env": "host", "service": "ai-workflow", "packet_id": "packet-801-lane-a", "status": "success"}
@@ -301,6 +307,8 @@ def test_orchestrate_packet_rejects_verify_packet_mismatch(tmp_path: Path) -> No
             "promotion_artifact_path": planned["promotion"]["remote"],
             "promotion": {
                 "result": "PASS",
+                "env": "host",
+                "service": "ai-workflow",
                 "host_run": {"packet_id": "packet-801-lane-a", "run_id": "host-run-123", "env": "host", "service": "ai-workflow"},
                 "host_success_runs": [
                     {"run_id": "host-run-123", "env": "host", "service": "ai-workflow", "packet_id": "packet-801-lane-a", "status": "success"}
@@ -359,6 +367,8 @@ def test_orchestrate_packet_rejects_summary_verify_artifact_path_mismatch(tmp_pa
         planned["promotion"]["remote"]: {
             "packet_id": "packet-802-lane-a",
             "result": "PASS",
+            "env": "host",
+            "service": "ai-workflow",
             "host_run": {"run_id": "host-run-802", "env": "host", "service": "ai-workflow", "packet_id": "packet-802-lane-a", "status": "success"},
             "host_success_runs": [
                 {"run_id": "host-run-802", "env": "host", "service": "ai-workflow", "packet_id": "packet-802-lane-a", "status": "success"}
@@ -373,6 +383,8 @@ def test_orchestrate_packet_rejects_summary_verify_artifact_path_mismatch(tmp_pa
             "promotion_artifact_path": planned["promotion"]["remote"],
             "promotion": {
                 "result": "PASS",
+                "env": "host",
+                "service": "ai-workflow",
                 "host_run": {"packet_id": "packet-802-lane-a", "run_id": "host-run-802", "env": "host", "service": "ai-workflow"},
                 "host_success_runs": [
                     {"run_id": "host-run-802", "env": "host", "service": "ai-workflow", "packet_id": "packet-802-lane-a", "status": "success"}
@@ -434,6 +446,8 @@ def test_orchestrate_packet_rejects_promotion_supporting_run_drift(tmp_path: Pat
         planned["promotion"]["remote"]: {
             "packet_id": "packet-803-lane-a",
             "result": "PASS",
+            "env": "host",
+            "service": "ai-workflow",
             "host_run": {"run_id": "host-run-803", "env": "host", "service": "ai-workflow", "packet_id": "packet-803-lane-a", "status": "success"},
             "host_success_runs": [
                 {"run_id": "host-run-803", "env": "host", "service": "ai-workflow", "packet_id": "packet-803-lane-a", "status": "success"}
@@ -448,6 +462,8 @@ def test_orchestrate_packet_rejects_promotion_supporting_run_drift(tmp_path: Pat
             "promotion_artifact_path": planned["promotion"]["remote"],
             "promotion": {
                 "result": "PASS",
+                "env": "host",
+                "service": "ai-workflow",
                 "host_run": {"packet_id": "packet-803-lane-a", "run_id": "host-run-803", "env": "host", "service": "ai-workflow"},
                 "host_success_runs": [
                     {"run_id": "host-run-803", "env": "host", "service": "ai-workflow", "packet_id": "packet-803-lane-a", "status": "success"}
@@ -506,6 +522,8 @@ def test_orchestrate_packet_rejects_summary_host_success_run_drift(tmp_path: Pat
         planned["promotion"]["remote"]: {
             "packet_id": "packet-804-lane-a",
             "result": "PASS",
+            "env": "host",
+            "service": "ai-workflow",
             "host_run": {"run_id": "host-run-804", "env": "host", "service": "ai-workflow", "packet_id": "packet-804-lane-a", "status": "success"},
             "host_success_runs": [
                 {"run_id": "host-run-804", "env": "host", "service": "ai-workflow", "packet_id": "packet-804-lane-a", "status": "success"}
@@ -520,6 +538,8 @@ def test_orchestrate_packet_rejects_summary_host_success_run_drift(tmp_path: Pat
             "promotion_artifact_path": planned["promotion"]["remote"],
             "promotion": {
                 "result": "PASS",
+                "env": "host",
+                "service": "ai-workflow",
                 "host_run": {"packet_id": "packet-804-lane-a", "run_id": "host-run-804", "env": "host", "service": "ai-workflow"},
                 "host_success_runs": [
                     {"run_id": "host-run-804", "env": "host", "service": "ai-workflow", "packet_id": "packet-804-lane-a", "status": "success"},
@@ -582,6 +602,8 @@ def test_orchestrate_packet_rejects_unbacked_promotion_supporting_run(tmp_path: 
         planned["promotion"]["remote"]: {
             "packet_id": "packet-805-lane-a",
             "result": "PASS",
+            "env": "host",
+            "service": "ai-workflow",
             "host_run": {"run_id": "host-run-805", "env": "host", "service": "ai-workflow", "packet_id": "packet-805-lane-a", "status": "success"},
             "host_success_runs": [
                 {"run_id": "host-run-805", "env": "host", "service": "ai-workflow", "packet_id": "packet-805-lane-a", "status": "success"}
@@ -596,6 +618,8 @@ def test_orchestrate_packet_rejects_unbacked_promotion_supporting_run(tmp_path: 
             "promotion_artifact_path": planned["promotion"]["remote"],
             "promotion": {
                 "result": "PASS",
+                "env": "host",
+                "service": "ai-workflow",
                 "host_run": {"packet_id": "packet-805-lane-a", "run_id": "host-run-805", "env": "host", "service": "ai-workflow"},
                 "host_success_runs": [
                     {"run_id": "host-run-805", "env": "host", "service": "ai-workflow", "packet_id": "packet-805-lane-a", "status": "success"}
@@ -654,6 +678,8 @@ def test_orchestrate_packet_rejects_non_host_supporting_run_metadata(tmp_path: P
         planned["promotion"]["remote"]: {
             "packet_id": "packet-806-lane-a",
             "result": "PASS",
+            "env": "host",
+            "service": "ai-workflow",
             "host_run": {
                 "run_id": "host-run-806",
                 "env": "host",
@@ -674,6 +700,8 @@ def test_orchestrate_packet_rejects_non_host_supporting_run_metadata(tmp_path: P
             "promotion_artifact_path": planned["promotion"]["remote"],
             "promotion": {
                 "result": "PASS",
+                "env": "host",
+                "service": "ai-workflow",
                 "host_run": {"packet_id": "packet-806-lane-a", "run_id": "host-run-806", "env": "host", "service": "ai-workflow"},
                 "host_success_runs": [
                     {"run_id": "host-run-806", "env": "sandbox", "service": "ai-workflow", "packet_id": "packet-806-lane-a", "status": "success"}
@@ -709,3 +737,85 @@ def test_orchestrate_packet_rejects_non_host_supporting_run_metadata(tmp_path: P
         return
 
     raise AssertionError("expected orchestrate_packet to reject non-host supporting run metadata")
+
+
+def test_orchestrate_packet_rejects_summary_promotion_env_drift(tmp_path: Path) -> None:
+    helper = _load_helper_module()
+    expected_head = helper._git_head(helper._repo_root())
+    planned = helper.plan_artifact_paths(
+        packet_id="packet-807-lane-a",
+        host_root="/home/olares/code/apex/apex-power-ops-platform",
+        local_root=tmp_path,
+    )
+
+    remote_contents = {
+        planned["host_bootstrap"]["remote"]: {
+            "packet_id": "packet-807-lane-a",
+            "git": {"head": expected_head, "status_count": 0},
+            "minimal_mcp": {"status": "not-running"},
+        },
+        planned["verify"]["remote"]: {
+            "packet_id": "packet-807-lane-a",
+            "profile": "strict-db-query",
+            "result": "PASS",
+        },
+        planned["promotion"]["remote"]: {
+            "packet_id": "packet-807-lane-a",
+            "result": "PASS",
+            "env": "host",
+            "service": "ai-workflow",
+            "host_run": {
+                "run_id": "host-run-807",
+                "env": "host",
+                "service": "ai-workflow",
+                "packet_id": "packet-807-lane-a",
+                "status": "success",
+            },
+            "host_success_runs": [
+                {"run_id": "host-run-807", "env": "host", "service": "ai-workflow", "packet_id": "packet-807-lane-a", "status": "success"}
+            ],
+            "promotion": {"packet_id": "packet-807-lane-a", "supporting_run_ids": ["host-run-807"]},
+        },
+        planned["coordinator_summary"]["remote"]: {
+            "packet_id": "packet-807-lane-a",
+            "result": "PASS",
+            "verify_artifact_path": planned["verify"]["remote"],
+            "verification": {"result": "PASS", "profile": "strict-db-query"},
+            "promotion_artifact_path": planned["promotion"]["remote"],
+            "promotion": {
+                "result": "PASS",
+                "env": "sandbox",
+                "service": "ai-workflow",
+                "host_run": {"packet_id": "packet-807-lane-a", "run_id": "host-run-807", "env": "host", "service": "ai-workflow"},
+                "host_success_runs": [
+                    {"run_id": "host-run-807", "env": "host", "service": "ai-workflow", "packet_id": "packet-807-lane-a", "status": "success"}
+                ],
+                "promotion_record": {"packet_id": "packet-807-lane-a", "supporting_run_ids": ["host-run-807"]},
+            },
+        },
+    }
+
+    def fake_runner(command: list[str], input_text: str | None = None) -> None:
+        if command[0] == "ssh":
+            return
+
+        remote_path = command[1].split(":", 1)[1]
+        local_path = Path(command[2])
+        local_path.parent.mkdir(parents=True, exist_ok=True)
+        local_path.write_text(json.dumps(remote_contents[remote_path]) + "\n", encoding="utf-8")
+
+    try:
+        helper.orchestrate_packet(
+            packet_id="packet-807-lane-a",
+            host="olares-mesh",
+            host_root="/home/olares/code/apex/apex-power-ops-platform",
+            profile="strict-db-query",
+            dsn_loader="/home/olares/apex-secrets/olares/ai-live-dsn.env",
+            local_root=tmp_path,
+            runner=fake_runner,
+        )
+    except ValueError as error:
+        assert str(error) == "coordinator summary promotion env mismatch: expected host, got sandbox"
+        return
+
+    raise AssertionError("expected orchestrate_packet to reject coordinator summary promotion env drift")
