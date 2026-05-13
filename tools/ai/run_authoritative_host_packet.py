@@ -19,6 +19,7 @@ COORDINATOR_SUMMARY_TOOL_PATH = "tools/ai/build_ai_packet_evidence_summary.py"
 DEFAULT_HOST = "olares-mesh"
 DEFAULT_HOST_ROOT = "/home/olares/code/apex/apex-power-ops-platform"
 DEFAULT_HOST_PNPM_MATERIALIZED_PATH = "/home/olares/apex-data/toolchains/pnpm-10.0.0/node_modules/.bin/pnpm"
+DEFAULT_HOST_CALC_ENGINE_PYTHON_PATH = "/home/olares/apex-data/toolchains/calc-engine-venv/bin/python"
 DEFAULT_PROFILE = "strict-db-query"
 DEFAULT_DSN_LOADER = "/home/olares/apex-secrets/olares/ai-live-dsn.env"
 PACKET_ID_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
@@ -327,6 +328,17 @@ def _validate_host_bootstrap_artifact(
         raise ValueError(
             "host bootstrap artifact toolchains.pnpm_materialized path mismatch: "
             f"expected {DEFAULT_HOST_PNPM_MATERIALIZED_PATH}, got {pnpm_materialized_path}"
+        )
+
+    calc_engine_python = toolchains.get("calc_engine_python")
+    if not isinstance(calc_engine_python, dict):
+        raise ValueError("host bootstrap artifact missing toolchains.calc_engine_python payload")
+
+    calc_engine_python_path = calc_engine_python.get("path")
+    if calc_engine_python_path != DEFAULT_HOST_CALC_ENGINE_PYTHON_PATH:
+        raise ValueError(
+            "host bootstrap artifact toolchains.calc_engine_python path mismatch: "
+            f"expected {DEFAULT_HOST_CALC_ENGINE_PYTHON_PATH}, got {calc_engine_python_path}"
         )
 
     minimal_mcp = payload.get("minimal_mcp")
