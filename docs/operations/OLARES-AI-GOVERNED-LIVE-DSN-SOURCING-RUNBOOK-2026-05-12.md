@@ -143,12 +143,15 @@ Stop rather than improvising if any of the following are true:
 1. the only available DSN source is a repo-tracked file,
 2. the operator cannot tell whether `DATABASE_URL` or `APEX_DB_CONNECTION_STRING` points to the governed live target,
 3. the credential would need to be copied into a packet, handoff, or repo-owned evidence file,
-4. the session would need a broader secret-management change outside this bounded validation lane.
+4. the governed host boundary `~/apex-secrets/olares/` or the expected loader file `~/apex-secrets/olares/ai-live-dsn.env` is absent when a bounded host packet is meant to exercise the live-query path,
+5. the session would need a broader secret-management change outside this bounded validation lane.
 
 ## Current Recommendation
 
 For workstation validation, prefer a session-only `APEX_OLARES_LIVE_DSN` assignment or one non-git loader file sourced explicitly before the packet starts.
 
 For host validation, prefer an explicit loader under `~/apex-secrets/`.
+
+If `~/apex-secrets/olares/` is missing on the authoritative host, classify that as the blocker and stop instead of inventing a substitute path inside the repo or another undocumented boundary.
 
 Do not reopen the validation lane by inventing new variable names or by treating repo-local `.env.dev` as authoritative live proof.
