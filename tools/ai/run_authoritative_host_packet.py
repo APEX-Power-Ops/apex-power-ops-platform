@@ -238,6 +238,7 @@ def _validate_host_bootstrap_artifact(
     *,
     packet_id: str,
     artifact_path: Path,
+    expected_host_root: str,
     expected_head: str,
 ) -> dict[str, object]:
     payload = _read_json(artifact_path)
@@ -265,6 +266,12 @@ def _validate_host_bootstrap_artifact(
     if payload.get("packet_id") != packet_id:
         raise ValueError(
             f"host bootstrap artifact packet_id mismatch: expected {packet_id}, got {payload.get('packet_id')}"
+        )
+
+    implementation_root = payload.get("implementation_root")
+    if implementation_root != expected_host_root:
+        raise ValueError(
+            f"host bootstrap artifact implementation_root mismatch: expected {expected_host_root}, got {implementation_root}"
         )
 
     git_payload = payload.get("git")
@@ -698,6 +705,7 @@ def orchestrate_packet(
     bootstrap_validation = _validate_host_bootstrap_artifact(
         packet_id=normalized_packet_id,
         artifact_path=Path(artifacts["host_bootstrap"]["local"]),
+        expected_host_root=host_root,
         expected_head=expected_head,
     )
     verify_validation = _validate_verify_artifact(
