@@ -280,6 +280,13 @@ def _validate_promotion_artifact(*, packet_id: str, artifact_path: Path) -> dict
             f"promotion artifact supporting_run_ids missing accepted host_run id {host_run_id}"
         )
 
+    unsupported_supporting_run_ids = [run_id for run_id in supporting_run_ids if run_id not in host_success_run_ids]
+    if unsupported_supporting_run_ids:
+        raise ValueError(
+            "promotion artifact supporting_run_ids are not backed by host_success_runs: "
+            f"{unsupported_supporting_run_ids}"
+        )
+
     return {
         "promotion_result": payload.get("result"),
         "host_run_id": host_run_id,

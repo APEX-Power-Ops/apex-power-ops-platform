@@ -213,7 +213,7 @@ Minimum capture rules for that bundle:
 7. include one `list_runs` visibility proof showing the closed run is queryable from the ledger,
 8. when the packet claims promotion-eligible host evidence, include the host success run id plus the `promote_packet` result artifact,
 9. include the truthful final result and attach it to the packet or handoff record.
-10. when `tools/ai/run_authoritative_host_packet.py` is the execution surface, accept the helper summary only if the imported bootstrap, verifier, promotion, and coordinator-summary artifacts all match the same packet id, remain `PASS` locally, preserve the same accepted host run id through `host_success_runs` and `supporting_run_ids`, and preserve the same host-success run-id set between the imported promotion artifact and the coordinator summary.
+10. when `tools/ai/run_authoritative_host_packet.py` is the execution surface, accept the helper summary only if the imported bootstrap, verifier, promotion, and coordinator-summary artifacts all match the same packet id, remain `PASS` locally, preserve the same accepted host run id through `host_success_runs` and `supporting_run_ids`, preserve the same host-success run-id set between the imported promotion artifact and the coordinator summary, and keep every promoted supporting run id backed by the recorded successful host runs.
 
 ## Evidence Routing Contract
 
@@ -271,7 +271,7 @@ Optional emitted authoritative-host helper summary artifact:
 1. `tools/ai/run_authoritative_host_packet.py --output <path>` may write a repo-visible packet helper artifact when the current-head authoritative-host chain is being driven through the helper surface,
 2. the preferred repo-owned lane for that artifact is also `tests/canary/mcp-contract/actual/`,
 3. a concrete example path is `tests/canary/mcp-contract/actual/run-authoritative-host-packet-<packet-id>.json`,
-4. the helper must reject imported bootstrap, verifier, promotion, or coordinator-summary artifacts when they diverge from the requested packet id, lose `PASS` state, drift away from the accepted host run id carried through `host_success_runs` and `supporting_run_ids`, or preserve a different host-success run-id set between the promotion artifact and the coordinator summary instead of reporting helper-level success,
+4. the helper must reject imported bootstrap, verifier, promotion, or coordinator-summary artifacts when they diverge from the requested packet id, lose `PASS` state, drift away from the accepted host run id carried through `host_success_runs` and `supporting_run_ids`, preserve a different host-success run-id set between the promotion artifact and the coordinator summary, or claim promoted supporting run ids that are not backed by the recorded successful host runs instead of reporting helper-level success,
 5. a truthful helper `PASS` should preserve enough top-level parity fields to show the local acceptance decision directly, including the host git head, host status count, preflight status, verifier result and profile, host promotion run id, host-success run ids, promotion supporting-run ids, coordinator host-success run ids, and coordinator-summary result,
 6. when packet JSON is in scope, that artifact should be referenced from `output_artifacts`,
 7. the emitted JSON does not replace the handoff validation summary; it supports it.
