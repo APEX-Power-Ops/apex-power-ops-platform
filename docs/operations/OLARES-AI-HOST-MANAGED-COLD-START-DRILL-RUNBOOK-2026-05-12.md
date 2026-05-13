@@ -40,10 +40,12 @@ Before running the drill, confirm all of the following:
 
 1. the working host root is `/home/olares/code/apex/apex-power-ops-platform`,
 2. the admitted MCP family is still only `apex-fs`, `apex-db`, and `apex-jobs`,
-3. the host mirror is clean enough for bounded validation work,
+3. the host mirror is clean enough for bounded validation work and not carrying unpublished drift on the controlling wrapper, shell-helper, status-ledger, or runbook surfaces,
 4. one explicit packet id has been chosen,
 5. the admitted managed service entrypoints exist under `services/mcp/apex-fs/build/http.js`, `services/mcp/apex-db/build/http.js`, and `services/mcp/apex-jobs/build/http.js`,
 6. a governed live DSN variable is available only if the drill is meant to exercise the deferred-ops query path.
+
+If the authoritative host root is behind the current published `clean-main` commit or carries unpublished changes on those controlling files, stop and restore host parity first instead of treating the resulting bootstrap or cold-start output as canonical proof.
 
 If the host mirror is missing those build entrypoints because the workspace dependencies were never materialized there, install and build the bounded MCP services before retrying the drill instead of treating the failure as verifier drift.
 
@@ -157,7 +159,8 @@ Stop rather than over-interpret the run if:
 2. the bootstrap artifact cannot be written,
 3. the trio verifies against foreign ownership,
 4. the run would require a new orchestration service, auth widening, or business-logic mutation,
-5. the packet id diverges across emitted artifacts.
+5. the packet id diverges across emitted artifacts,
+6. the authoritative host mirror is behind the current published repo state or dirty on the controlling wrapper, shell-helper, status-ledger, or runbook files.
 
 ## Required Evidence
 
