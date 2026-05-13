@@ -242,6 +242,13 @@ def _validate_host_bootstrap_artifact(
 ) -> dict[str, object]:
     payload = _read_json(artifact_path)
 
+    payload_output_artifact = payload.get("output_artifact")
+    if _path_name(payload_output_artifact) != artifact_path.name:
+        raise ValueError(
+            "host bootstrap artifact output path mismatch: "
+            f"expected {artifact_path.name}, got {_path_name(payload_output_artifact)}"
+        )
+
     if payload.get("tool") != HOST_BOOTSTRAP_TOOL_PATH:
         raise ValueError(
             f"host bootstrap artifact tool mismatch: expected {HOST_BOOTSTRAP_TOOL_PATH}, got {payload.get('tool')}"
