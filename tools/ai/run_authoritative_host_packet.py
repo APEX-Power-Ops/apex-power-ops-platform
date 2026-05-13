@@ -238,6 +238,7 @@ def _validate_host_bootstrap_artifact(
     *,
     packet_id: str,
     artifact_path: Path,
+    expected_old_clone_path: str,
     expected_host_container_root: str,
     expected_host_root: str,
     expected_head: str,
@@ -285,6 +286,16 @@ def _validate_host_bootstrap_artifact(
     git_payload = payload.get("git")
     if not isinstance(git_payload, dict):
         raise ValueError("host bootstrap artifact missing git payload")
+
+    old_clone_payload = git_payload.get("old_clone")
+    if not isinstance(old_clone_payload, dict):
+        raise ValueError("host bootstrap artifact missing git.old_clone payload")
+
+    old_clone_path = old_clone_payload.get("path")
+    if old_clone_path != expected_old_clone_path:
+        raise ValueError(
+            f"host bootstrap artifact old_clone path mismatch: expected {expected_old_clone_path}, got {old_clone_path}"
+        )
 
     status_count = git_payload.get("status_count")
     if status_count != 0:
@@ -713,6 +724,7 @@ def orchestrate_packet(
     bootstrap_validation = _validate_host_bootstrap_artifact(
         packet_id=normalized_packet_id,
         artifact_path=Path(artifacts["host_bootstrap"]["local"]),
+        expected_old_clone_path=str(PurePosixPath("/home/olares/src") / PurePosixPath(host_root).name),
         expected_host_container_root=str(PurePosixPath(host_root).parent),
         expected_host_root=host_root,
         expected_head=expected_head,
