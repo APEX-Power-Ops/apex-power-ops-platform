@@ -161,6 +161,10 @@ Packet 058 established the current authoritative verdict from the workstation po
 
 ### Live-DSN Examples
 
+Treat the examples below as workstation examples.
+
+For host-side live-DSN packets, use `../operations/OLARES-AI-GOVERNED-LIVE-DSN-SOURCING-RUNBOOK-2026-05-12.md` and `../operations/OLARES-AI-HOST-MANAGED-COLD-START-DRILL-RUNBOOK-2026-05-12.md` instead of treating an interactive host shell export as sufficient proof.
+
 ```powershell
 $env:APEX_OLARES_LIVE_DSN = '<live dsn>'
 pwsh tools/ai/run-olares-hold-boundary-check.ps1 -PacketId 2026-05-06-olares-dev-residency-058 -DsnEnv APEX_OLARES_LIVE_DSN
@@ -173,7 +177,7 @@ bash tools/ai/run-olares-hold-boundary-check.sh 2026-05-06-olares-dev-residency-
 
 The current workstation result with a governed live DSN is `minimal_mcp=PASS` and `deferred_ops=HOLD`.
 
-The current authoritative host-mirror result with the same live DSN remains `minimal_mcp=PASS` and `deferred_ops=UNAVAILABLE` until a separately bounded host-query engine is admitted.
+For one-shot SSH execution on the authoritative host, a host live-query verdict is only canonical if that same bounded shell first proves `has_live_dsn=true`. If it reports `has_live_dsn=false`, the truthful current host posture remains `deferred_ops=UNAVAILABLE` for that packet.
 
 ## Current Hold-Boundary Verdict
 
