@@ -238,6 +238,7 @@ def _validate_host_bootstrap_artifact(
     *,
     packet_id: str,
     artifact_path: Path,
+    expected_host_container_root: str,
     expected_host_root: str,
     expected_head: str,
 ) -> dict[str, object]:
@@ -266,6 +267,13 @@ def _validate_host_bootstrap_artifact(
     if payload.get("packet_id") != packet_id:
         raise ValueError(
             f"host bootstrap artifact packet_id mismatch: expected {packet_id}, got {payload.get('packet_id')}"
+        )
+
+    host_container_root = payload.get("host_container_root")
+    if host_container_root != expected_host_container_root:
+        raise ValueError(
+            "host bootstrap artifact host_container_root mismatch: "
+            f"expected {expected_host_container_root}, got {host_container_root}"
         )
 
     implementation_root = payload.get("implementation_root")
@@ -705,6 +713,7 @@ def orchestrate_packet(
     bootstrap_validation = _validate_host_bootstrap_artifact(
         packet_id=normalized_packet_id,
         artifact_path=Path(artifacts["host_bootstrap"]["local"]),
+        expected_host_container_root=str(PurePosixPath(host_root).parent),
         expected_host_root=host_root,
         expected_head=expected_head,
     )
