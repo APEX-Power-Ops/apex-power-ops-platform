@@ -229,11 +229,16 @@ Required outputs:
 1. `apex-jobs` run ledger
 2. enforced `env=sandbox|host` tagging
 3. canary harness
-4. promotion refusal without `env=host`
+4. promotion refusal without `env=host` plus helper-backed positive-gate proof once matching host evidence exists
 
 Exit condition:
 
 1. the repo can prove which runs are dev-only and which are eligible for completion or promotion
+
+Current proof floor:
+
+1. Packet `2026-05-13-olares-dev-residency-786` remains the first completed coordinator-owned two-lane rehearsal floor for this bounded authority stack.
+2. Packet `2026-05-13-olares-dev-residency-791` remains the current helper-backed positive-gate promotion proof floor.
 
 ### Phase D - First service graduation
 

@@ -53,6 +53,12 @@ The bounded AI backbone tranche is already landed:
 4. Packet `172` completed the adjacent trust and hardening lane,
 5. later routing packets normalized those AI surfaces onto repo-owned docs and away from parent-root or `.claude` residue.
 
+The current proof floor is later than that first backbone tranche:
+
+1. Packet `2026-05-13-olares-dev-residency-786` is the first completed coordinator-owned two-lane rehearsal floor,
+2. Packet `2026-05-13-olares-dev-residency-791` is the current helper-backed host promotion proof floor,
+3. later status, matrix, checklist, runbook, and scaffold guidance should preserve those floors rather than restating them as unresolved next work.
+
 ## Current Executor Readout
 
 The executor posture is now clearer than the older generic "parallel capable" label.
@@ -103,7 +109,7 @@ It is not yet approved for:
 2. Choose the executor shape first: one executor by default, two executors only when ownership is disjoint and written down up front.
 3. Treat scaffold authoring as the owner of shell structure and the parallel hardening lane as the owner of trust and evidence contracts.
 4. Prefer docs, tests, contract notes, checklist surfaces, and non-destructive skeleton wiring over shared implementation edits when work is split across lanes.
-5. Keep `env=host` evidence as the promotion gate so bounded parallel work remains truthful instead of speculative.
+5. Keep both the sandbox-only refusal proof and the helper-backed `env=host` positive-gate proof as the promotion truth model so bounded parallel work remains truthful instead of speculative.
 6. Use `../../plan/OLARES-AI-ORCHESTRATION-EXECUTION-PLAN-2026-05-10.md` as the default next-step sequence for new bounded slices.
 7. Open any wider lane only from concrete operator insufficiency or a separately authorized packet that explicitly names the new boundary.
 
@@ -112,3 +118,5 @@ It is not yet approved for:
 For near-term execution, treat the Olares MVP as structurally complete enough to support bounded AI workflow hardening, but not as permission to reopen generic Olares infrastructure work.
 
 For AI orchestration, treat the current target as controlled executor-governed parallel readiness inside the admitted backbone, not autonomous orchestration expansion.
+
+Treat Packet `2026-05-13-olares-dev-residency-786` and Packet `2026-05-13-olares-dev-residency-791` as the current rehearsal and promotion-proof floor for that target.
