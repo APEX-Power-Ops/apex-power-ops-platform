@@ -1,0 +1,28 @@
+{
+  "packet_id": "2026-05-13-olares-dev-residency-802",
+  "tool": "tools/ai/run_authoritative_host_packet.py",
+  "command": "\"C:\\APEX Platform\\apex-power-ops-platform\\.venv\\Scripts\\python.exe\" tools/ai/run_authoritative_host_packet.py --packet-id 2026-05-13-olares-dev-residency-802 --output tests/canary/mcp-contract/actual/run-authoritative-host-packet-2026-05-13-olares-dev-residency-802.json",
+  "host": "olares-mesh",
+  "host_root": "/home/olares/code/apex/apex-power-ops-platform",
+  "profile": "strict-db-query",
+  "artifact_paths": {
+    "host_bootstrap": "C:/APEX Platform/apex-power-ops-platform/tests/canary/host-bootstrap-status/actual/host-bootstrap-status-2026-05-13-olares-dev-residency-802.json",
+    "verify": "C:/APEX Platform/apex-power-ops-platform/tests/canary/mcp-contract/actual/verify-minimal-mcp-trio-2026-05-13-olares-dev-residency-802.json",
+    "promotion": "C:/APEX Platform/apex-power-ops-platform/tests/canary/mcp-contract/actual/apex-jobs-promotion-2026-05-13-olares-dev-residency-802.json",
+    "coordinator_summary": "C:/APEX Platform/apex-power-ops-platform/tests/canary/mcp-contract/actual/ai-packet-evidence-summary-2026-05-13-olares-dev-residency-802.json"
+  },
+  "host_git_head": "65a09a3ad039b4a2a28a09f246d71d1253ccfc65",
+  "host_status_count": 0,
+  "preflight_status": "not-running",
+  "verify_result": "PASS",
+  "verify_profile": "strict-db-query",
+  "verify_artifact_name": "verify-minimal-mcp-trio-2026-05-13-olares-dev-residency-802.json",
+  "promotion_result": "PASS",
+  "host_run_id": "1778690980570-4tp3oftl",
+  "promotion_artifact_name": "apex-jobs-promotion-2026-05-13-olares-dev-residency-802.json",
+  "coordinator_summary_result": "PASS",
+  "coordinator_verify_artifact_name": "verify-minimal-mcp-trio-2026-05-13-olares-dev-residency-802.json",
+  "coordinator_promotion_artifact_name": "apex-jobs-promotion-2026-05-13-olares-dev-residency-802.json",
+  "result": "PASS",
+  "output_path": "tests/canary/mcp-contract/actual/run-authoritative-host-packet-2026-05-13-olares-dev-residency-802.json"
+}

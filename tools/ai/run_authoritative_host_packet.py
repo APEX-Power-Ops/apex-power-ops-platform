@@ -155,6 +155,12 @@ def _read_json(path: Path) -> dict[str, object]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def _path_name(value: object) -> str | None:
+    if not isinstance(value, str) or not value.strip():
+        return None
+    return PurePosixPath(value).name
+
+
 def _validate_host_bootstrap_artifact(
     *,
     packet_id: str,
@@ -217,6 +223,7 @@ def _validate_verify_artifact(*, packet_id: str, artifact_path: Path, expected_p
     return {
         "verify_result": payload.get("result"),
         "verify_profile": profile,
+        "verify_artifact_name": artifact_path.name,
     }
 
 
@@ -255,10 +262,19 @@ def _validate_promotion_artifact(*, packet_id: str, artifact_path: Path) -> dict
     return {
         "promotion_result": payload.get("result"),
         "host_run_id": host_run.get("run_id"),
+        "promotion_artifact_name": artifact_path.name,
     }
 
 
-def _validate_coordinator_summary_artifact(*, packet_id: str, artifact_path: Path) -> dict[str, object]:
+def _validate_coordinator_summary_artifact(
+    *,
+    packet_id: str,
+    artifact_path: Path,
+    verify_artifact_name: str,
+    verify_profile: str,
+    promotion_artifact_name: str,
+    host_run_id: str | None,
+) -> dict[str, object]:
     payload = _read_json(artifact_path)
 
     if payload.get("packet_id") != packet_id:
@@ -280,6 +296,18 @@ def _validate_coordinator_summary_artifact(*, packet_id: str, artifact_path: Pat
             f"coordinator summary verification result must be PASS, got {verification.get('result')}"
         )
 
+    if verification.get("profile") != verify_profile:
+        raise ValueError(
+            f"coordinator summary verification profile mismatch: expected {verify_profile}, got {verification.get('profile')}"
+        )
+
+    verify_artifact_path = payload.get("verify_artifact_path")
+    if _path_name(verify_artifact_path) != verify_artifact_name:
+        raise ValueError(
+            "coordinator summary verify artifact path mismatch: "
+            f"expected {verify_artifact_name}, got {_path_name(verify_artifact_path)}"
+        )
+
     promotion = payload.get("promotion")
     if not isinstance(promotion, dict):
         raise ValueError("coordinator summary artifact missing promotion payload")
@@ -287,6 +315,13 @@ def _validate_coordinator_summary_artifact(*, packet_id: str, artifact_path: Pat
     if promotion.get("result") != "PASS":
         raise ValueError(
             f"coordinator summary promotion result must be PASS, got {promotion.get('result')}"
+        )
+
+    promotion_artifact_path = payload.get("promotion_artifact_path")
+    if _path_name(promotion_artifact_path) != promotion_artifact_name:
+        raise ValueError(
+            "coordinator summary promotion artifact path mismatch: "
+            f"expected {promotion_artifact_name}, got {_path_name(promotion_artifact_path)}"
         )
 
     host_run = promotion.get("host_run")
@@ -298,8 +333,15 @@ def _validate_coordinator_summary_artifact(*, packet_id: str, artifact_path: Pat
             f"coordinator summary host_run packet_id mismatch: expected {packet_id}, got {host_run.get('packet_id')}"
         )
 
+    if host_run_id is not None and host_run.get("run_id") != host_run_id:
+        raise ValueError(
+            f"coordinator summary host_run id mismatch: expected {host_run_id}, got {host_run.get('run_id')}"
+        )
+
     return {
         "coordinator_summary_result": payload.get("result"),
+        "coordinator_verify_artifact_name": verify_artifact_name,
+        "coordinator_promotion_artifact_name": promotion_artifact_name,
     }
 
 
@@ -350,6 +392,10 @@ def orchestrate_packet(
     coordinator_summary_validation = _validate_coordinator_summary_artifact(
         packet_id=normalized_packet_id,
         artifact_path=Path(artifacts["coordinator_summary"]["local"]),
+        verify_artifact_name=str(verify_validation["verify_artifact_name"]),
+        verify_profile=str(verify_validation["verify_profile"]),
+        promotion_artifact_name=str(promotion_validation["promotion_artifact_name"]),
+        host_run_id=promotion_validation["host_run_id"] if isinstance(promotion_validation["host_run_id"], str) else None,
     )
 
     return {

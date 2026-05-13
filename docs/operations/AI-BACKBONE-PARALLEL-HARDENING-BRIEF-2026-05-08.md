@@ -69,9 +69,9 @@ Packet `2026-05-13-olares-dev-residency-797` is the current coordinator-summary 
 
 Packet `2026-05-13-olares-dev-residency-798` is the current-head authoritative-host floor for later dual-lane packets on the admitted host path.
 
-Packet `2026-05-13-olares-dev-residency-800` is the current helper-parity validation floor: `tools/ai/run_authoritative_host_packet.py` now fails closed unless the imported host bootstrap artifact proves the expected packet id, a clean host worktree, the same repo head, and a truthful preflight `not-running` status.
+Packet `2026-05-13-olares-dev-residency-802` is the current helper-cross-artifact validation floor: `tools/ai/run_authoritative_host_packet.py` now fails closed unless the imported host bootstrap artifact proves the expected packet id, a clean host worktree, the same repo head, and a truthful preflight `not-running` status, and unless the imported coordinator summary also points at the matching verifier and promotion artifacts while preserving the same accepted host run id.
 
-For current-head host-chain packets, prefer one bounded helper-driven execution lane over ad hoc command reconstruction. `tools/ai/run_authoritative_host_packet.py` is the preferred repo-owned execution surface for that chain when later packets must both run the host path and verify imported parity evidence locally.
+For current-head host-chain packets, prefer one bounded helper-driven execution lane over ad hoc command reconstruction. `tools/ai/run_authoritative_host_packet.py` is the preferred repo-owned execution surface for that chain when later packets must both run the host path and verify imported parity evidence plus cross-artifact coherence locally.
 
 Use this brief for later disjoint parallel packets only when those floors remain preserved rather than reopened as open questions, and keep the helper lane bounded to runtime/evidence capture on the already admitted trio.
 
