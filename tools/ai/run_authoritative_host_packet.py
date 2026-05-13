@@ -297,6 +297,12 @@ def _validate_host_bootstrap_artifact(
             f"host bootstrap artifact old_clone path mismatch: expected {expected_old_clone_path}, got {old_clone_path}"
         )
 
+    old_clone_exists = old_clone_payload.get("exists")
+    if old_clone_exists is not True:
+        raise ValueError(
+            f"host bootstrap artifact old_clone exists mismatch: expected True, got {old_clone_exists}"
+        )
+
     status_count = git_payload.get("status_count")
     if status_count != 0:
         raise ValueError(f"host bootstrap artifact shows dirty host worktree: status_count={status_count}")
