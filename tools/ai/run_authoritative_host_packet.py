@@ -327,6 +327,13 @@ def _validate_host_bootstrap_artifact(
     if not isinstance(hold_boundary, dict):
         raise ValueError("host bootstrap artifact missing hold_boundary payload")
 
+    hold_boundary_packet_id = hold_boundary.get("packet_id")
+    if hold_boundary_packet_id != "status-only":
+        raise ValueError(
+            "host bootstrap artifact hold_boundary packet_id mismatch: "
+            f"expected status-only, got {hold_boundary_packet_id}"
+        )
+
     hold_boundary_minimal_mcp = hold_boundary.get("minimal_mcp")
     if hold_boundary_minimal_mcp != "NOT_RUNNING":
         raise ValueError(
