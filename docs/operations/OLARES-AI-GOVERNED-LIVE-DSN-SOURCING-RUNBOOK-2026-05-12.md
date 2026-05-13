@@ -136,6 +136,8 @@ else
 fi
 ```
 
+For a bounded host packet driven through one-shot SSH, run that same check inside the exact remote command shape that will execute the packet. A value present in an interactive host shell does not count unless the fresh noninteractive SSH shell also reports `has_live_dsn=true`.
+
 ## Stop Conditions
 
 Stop rather than improvising if any of the following are true:
@@ -144,7 +146,8 @@ Stop rather than improvising if any of the following are true:
 2. the operator cannot tell whether `DATABASE_URL` or `APEX_DB_CONNECTION_STRING` points to the governed live target,
 3. the credential would need to be copied into a packet, handoff, or repo-owned evidence file,
 4. the governed host boundary `~/apex-secrets/olares/` or the expected loader file `~/apex-secrets/olares/ai-live-dsn.env` is absent when a bounded host packet is meant to exercise the live-query path,
-5. the session would need a broader secret-management change outside this bounded validation lane.
+5. a fresh bounded noninteractive SSH shell still reports `has_live_dsn=false` for `APEX_OLARES_LIVE_DSN`,
+6. the session would need a broader secret-management change outside this bounded validation lane.
 
 ## Current Recommendation
 
@@ -153,5 +156,7 @@ For workstation validation, prefer a session-only `APEX_OLARES_LIVE_DSN` assignm
 For host validation, prefer an explicit loader under `~/apex-secrets/`.
 
 If `~/apex-secrets/olares/` is missing on the authoritative host, classify that as the blocker and stop instead of inventing a substitute path inside the repo or another undocumented boundary.
+
+If a fresh one-shot SSH shell still reports `has_live_dsn=false`, classify that as the blocker even if a different interactive host shell appears to have the variable set.
 
 Do not reopen the validation lane by inventing new variable names or by treating repo-local `.env.dev` as authoritative live proof.
