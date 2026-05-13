@@ -163,6 +163,69 @@ def _path_name(value: object) -> str | None:
     return PurePosixPath(value).name
 
 
+def _parse_command(command: object, artifact_label: str) -> list[str]:
+    if not isinstance(command, str) or not command.strip():
+        raise ValueError(f"{artifact_label} missing command")
+
+    try:
+        argv = shlex.split(command)
+    except ValueError as error:
+        raise ValueError(f"{artifact_label} command is not parseable: {error}") from error
+
+    if len(argv) < 2:
+        raise ValueError(f"{artifact_label} command missing tool invocation")
+
+    return argv
+
+
+def _command_flag_value(argv: list[str], flag: str, artifact_label: str) -> str:
+    try:
+        index = argv.index(flag)
+    except ValueError as error:
+        raise ValueError(f"{artifact_label} command missing {flag}") from error
+
+    if index + 1 >= len(argv):
+        raise ValueError(f"{artifact_label} command missing value for {flag}")
+
+    return argv[index + 1]
+
+
+def _validate_command_surface(
+    *,
+    artifact_label: str,
+    command: object,
+    expected_tool_path: str,
+    expected_packet_id: str,
+    expected_output_name: str,
+    expected_input_names: dict[str, str] | None = None,
+) -> None:
+    argv = _parse_command(command, artifact_label)
+    actual_tool_path = argv[1]
+    if actual_tool_path != expected_tool_path:
+        raise ValueError(
+            f"{artifact_label} command tool mismatch: expected {expected_tool_path}, got {actual_tool_path}"
+        )
+
+    actual_packet_id = _command_flag_value(argv, "--packet-id", artifact_label)
+    if actual_packet_id != expected_packet_id:
+        raise ValueError(
+            f"{artifact_label} command packet_id mismatch: expected {expected_packet_id}, got {actual_packet_id}"
+        )
+
+    actual_output_name = _path_name(_command_flag_value(argv, "--output", artifact_label))
+    if actual_output_name != expected_output_name:
+        raise ValueError(
+            f"{artifact_label} command output mismatch: expected {expected_output_name}, got {actual_output_name}"
+        )
+
+    for flag, expected_name in (expected_input_names or {}).items():
+        actual_name = _path_name(_command_flag_value(argv, flag, artifact_label))
+        if actual_name != expected_name:
+            raise ValueError(
+                f"{artifact_label} command {flag} mismatch: expected {expected_name}, got {actual_name}"
+            )
+
+
 def _validate_host_bootstrap_artifact(
     *,
     packet_id: str,
@@ -248,6 +311,14 @@ def _validate_promotion_artifact(*, packet_id: str, artifact_path: Path) -> dict
         raise ValueError(
             f"promotion artifact tool mismatch: expected {PROMOTION_TOOL_PATH}, got {payload.get('tool')}"
         )
+
+    _validate_command_surface(
+        artifact_label="promotion artifact",
+        command=payload.get("command"),
+        expected_tool_path=PROMOTION_TOOL_PATH,
+        expected_packet_id=packet_id,
+        expected_output_name=artifact_path.name,
+    )
 
     if payload.get("result") != "PASS":
         raise ValueError(f"promotion artifact result must be PASS, got {payload.get('result')}")
@@ -386,6 +457,18 @@ def _validate_coordinator_summary_artifact(
             "coordinator summary artifact tool mismatch: "
             f"expected {COORDINATOR_SUMMARY_TOOL_PATH}, got {payload.get('tool')}"
         )
+
+    _validate_command_surface(
+        artifact_label="coordinator summary artifact",
+        command=payload.get("command"),
+        expected_tool_path=COORDINATOR_SUMMARY_TOOL_PATH,
+        expected_packet_id=packet_id,
+        expected_output_name=artifact_path.name,
+        expected_input_names={
+            "--verify-artifact": verify_artifact_name,
+            "--promotion-artifact": promotion_artifact_name,
+        },
+    )
 
     if payload.get("result") != "PASS":
         raise ValueError(
