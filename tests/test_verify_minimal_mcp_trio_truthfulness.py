@@ -180,6 +180,7 @@ def _run_helper(
     jobs_url: str | None,
     *,
     packet_id: str | None = "verify-trio-test",
+    profile: str | None = None,
     require_db_query: bool = False,
     env: dict[str, str] | None = None,
     output_path: Path | None = None,
@@ -196,6 +197,8 @@ def _run_helper(
         command.extend(["--jobs-url", jobs_url])
     if packet_id is not None:
         command[2:2] = ["--packet-id", packet_id]
+    if profile is not None:
+        command.extend(["--profile", profile])
     if require_db_query:
         command.append("--require-db-query")
     if output_path is not None:
@@ -263,6 +266,8 @@ def _expected_verify_pass_payload(
     jobs_url: str,
     *,
     packet_id: str = "verify-trio-test",
+    profile: str = "baseline",
+    profile_arg: str | None = None,
     packet_id_arg: object | str | None = _UNSET,
     fs_url_arg: str | None = None,
     db_url_arg: str | None = None,
@@ -291,10 +296,13 @@ def _expected_verify_pass_payload(
             command.extend(["--db-url", db_url_arg])
         if jobs_url_arg is not None:
             command.extend(["--jobs-url", jobs_url_arg])
+    if profile_arg is not None:
+        command.extend(["--profile", profile_arg])
     if output_path is not None:
         command.extend(["--output", str(output_path)])
     return {
         "packet_id": packet_id,
+        "profile": profile,
         "command": _expected_verify_command(command),
         "endpoints": {"fs": fs_url, "db": db_url, "jobs": jobs_url},
         "checks": {
@@ -318,9 +326,16 @@ def _expected_verify_degraded_db_query_payload(
     jobs_url: str,
     *,
     packet_id: str = "verify-trio-test",
+    profile: str = "baseline",
     error: str = "temporary db query failure",
 ) -> dict[str, object]:
-    expected = json.loads(json.dumps(_expected_verify_pass_payload(fs_url, db_url, jobs_url, packet_id=packet_id)))
+    expected = json.loads(json.dumps(_expected_verify_pass_payload(
+        fs_url,
+        db_url,
+        jobs_url,
+        packet_id=packet_id,
+        profile=profile,
+    )))
     expected["checks"]["db_query"] = {"status": "degraded", "error": error}
     return expected
 
@@ -331,6 +346,8 @@ def _expected_verify_failure_payload(
     jobs_url: str,
     *,
     packet_id: str = "verify-trio-test",
+    profile: str = "baseline",
+    profile_arg: str | None = None,
     error: str,
     checks: dict[str, object] | None = None,
     require_db_query: bool = False,
@@ -348,12 +365,15 @@ def _expected_verify_failure_payload(
         "--jobs-url",
         jobs_url,
     ]
+    if profile_arg is not None:
+        command.extend(["--profile", profile_arg])
     if require_db_query:
         command.append("--require-db-query")
     if output_path is not None:
         command.extend(["--output", str(output_path)])
     return {
         "packet_id": packet_id,
+        "profile": profile,
         "command": _expected_verify_command(command),
         "endpoints": {"fs": fs_url, "db": db_url, "jobs": jobs_url},
         "checks": checks or {},
@@ -587,6 +607,7 @@ def test_verify_minimal_mcp_trio_fails_db_query_when_required(fake_trio) -> None
         fs_url,
         db_url,
         jobs_url,
+        profile="strict-db-query",
         error="temporary db query failure",
         checks={
             "fs_tools": {"status": "pass", "tools": ["read_text_file"]},
@@ -618,6 +639,7 @@ def test_verify_minimal_mcp_trio_writes_failure_output_when_required_db_query_fa
         fs_url,
         db_url,
         jobs_url,
+        profile="strict-db-query",
         error="temporary db query failure",
         checks={
             "fs_tools": {"status": "pass", "tools": ["read_text_file"]},
@@ -655,6 +677,7 @@ def test_verify_minimal_mcp_trio_preserves_fail_json_when_output_path_is_invalid
         fs_url,
         db_url,
         jobs_url,
+        profile="strict-db-query",
         error="temporary db query failure",
         checks={
             "fs_tools": {"status": "pass", "tools": ["read_text_file"]},
@@ -805,4 +828,43 @@ def test_verify_minimal_mcp_trio_prefers_explicit_cli_urls_over_env_defaults(fak
         fs_url_arg=fs_url,
         db_url_arg=db_url,
         jobs_url_arg=jobs_url,
+    )
+
+
+def test_verify_minimal_mcp_trio_reports_strict_db_query_profile(fake_trio) -> None:
+    fs_url, db_url, jobs_url = fake_trio()
+
+    result = _run_helper(fs_url, db_url, jobs_url, profile="strict-db-query")
+
+    assert result.returncode == 0
+    payload = json.loads(result.stdout)
+    assert _normalized_promote_guard_payload(payload, "verify-trio-test") == _expected_verify_pass_payload(
+        fs_url,
+        db_url,
+        jobs_url,
+        profile="strict-db-query",
+        profile_arg="strict-db-query",
+    )
+
+
+def test_verify_minimal_mcp_trio_fails_db_query_for_strict_profile(fake_trio) -> None:
+    fs_url, db_url, jobs_url = fake_trio(db_query_error="temporary db query failure")
+
+    result = _run_helper(fs_url, db_url, jobs_url, profile="strict-db-query")
+
+    assert result.returncode == 1
+    payload = json.loads(result.stdout)
+    assert payload == _expected_verify_failure_payload(
+        fs_url,
+        db_url,
+        jobs_url,
+        profile="strict-db-query",
+        profile_arg="strict-db-query",
+        error="temporary db query failure",
+        checks={
+            "fs_tools": {"status": "pass", "tools": ["read_text_file"]},
+            "fs_read": {"status": "pass", "preview": README_PREVIEW},
+            "db_tools": {"status": "pass", "tools": ["query"]},
+            "db_query": {"status": "fail", "error": "temporary db query failure"},
+        },
     )

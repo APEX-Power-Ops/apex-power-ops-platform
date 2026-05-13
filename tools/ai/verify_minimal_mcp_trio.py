@@ -13,6 +13,9 @@ from pathlib import Path
 from typing import Any
 
 
+VALIDATION_PROFILES = ("baseline", "strict-db-query")
+
+
 def fetch_json(url: str, payload: dict[str, Any] | None = None) -> Any:
     data = None
     headers = {"Content-Type": "application/json"}
@@ -125,6 +128,16 @@ def default_mcp_url(url_env: str, port_env: str, fallback_port: int) -> str:
     return f"http://127.0.0.1:{port}/mcp"
 
 
+def resolve_validation_profile(profile: str | None, require_db_query: bool) -> str:
+    if profile:
+        return profile
+
+    if require_db_query:
+        return "strict-db-query"
+
+    return "baseline"
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Verify the minimal MCP trio operator surface.")
     parser.add_argument("--fs-url", default=default_mcp_url("APEX_FS_MCP_URL", "APEX_DEV_MCP_FS_PORT", 8810))
@@ -132,13 +145,17 @@ def main() -> int:
     parser.add_argument("--jobs-url", default=default_mcp_url("APEX_JOBS_MCP_URL", "APEX_DEV_MCP_JOBS_PORT", 8812))
     parser.add_argument("--packet-id")
     parser.add_argument("--output")
+    parser.add_argument("--profile", choices=VALIDATION_PROFILES)
     parser.add_argument("--require-db-query", action="store_true")
     args = parser.parse_args()
 
     packet_id = resolve_packet_id(args.packet_id)
     output_path = Path(args.output) if args.output else None
+    validation_profile = resolve_validation_profile(args.profile, args.require_db_query)
+    require_db_query = validation_profile == "strict-db-query"
     summary: dict[str, Any] = {
         "packet_id": packet_id,
+        "profile": validation_profile,
         "command": format_command(),
         "endpoints": {"fs": args.fs_url, "db": args.db_url, "jobs": args.jobs_url},
         "checks": {},
@@ -160,9 +177,9 @@ def main() -> int:
             db_query = call_tool(args.db_url, "query", {"sql": "select 1 as ok"})
             summary["checks"]["db_query"] = {"status": "pass", "result": db_query}
         except Exception as error:  # noqa: BLE001
-            status = "fail" if args.require_db_query else "degraded"
+            status = "fail" if require_db_query else "degraded"
             summary["checks"]["db_query"] = {"status": status, "error": str(error)}
-            if args.require_db_query:
+            if require_db_query:
                 raise
 
         jobs_tools = initialize_and_list(args.jobs_url)

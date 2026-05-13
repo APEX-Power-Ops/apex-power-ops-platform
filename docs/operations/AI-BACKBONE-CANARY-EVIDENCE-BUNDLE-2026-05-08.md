@@ -111,7 +111,7 @@ If these conflict, executable verification and packet evidence win over descript
 
 The current minimum executable proof for this lane is:
 
-1. `python tools/ai/verify_minimal_mcp_trio.py --packet-id <packet-id>` or the repo-local interpreter equivalent,
+1. `python tools/ai/verify_minimal_mcp_trio.py --packet-id <packet-id>` or the repo-local interpreter equivalent, with `--profile strict-db-query` when the packet intentionally raises the bounded database-proof floor,
 2. any narrower trust-boundary check added by the active packet,
 3. `git diff --check` on touched files.
 
@@ -124,6 +124,7 @@ Example validation summary shape:
 ```json
 {
 	"packet_id": "<packet-id>",
+	"profile": "baseline",
 	"command": "python tools/ai/verify_minimal_mcp_trio.py --packet-id <packet-id>",
 	"checks": {
 		"fs_tools": {
@@ -203,12 +204,13 @@ Example validation summary shape:
 Minimum capture rules for that bundle:
 
 1. include the exact verifier command or equivalent execution surface,
-2. include the filesystem tool-resolution and bounded read proof,
-3. include the database tool-resolution and bounded read-only query proof,
-4. include the refusal proof for missing `env=host` evidence,
-5. include the run id and env class for the recorded `apex-jobs` run,
-6. include one `list_runs` visibility proof showing the closed run is queryable from the ledger,
-7. include the truthful final result and attach it to the packet or handoff record.
+2. include the emitted verifier `profile` so later closeout prose does not have to infer which strictness floor ran,
+3. include the filesystem tool-resolution and bounded read proof,
+4. include the database tool-resolution and bounded read-only query proof,
+5. include the refusal proof for missing `env=host` evidence,
+6. include the run id and env class for the recorded `apex-jobs` run,
+7. include one `list_runs` visibility proof showing the closed run is queryable from the ledger,
+8. include the truthful final result and attach it to the packet or handoff record.
 
 ## Evidence Routing Contract
 
@@ -254,6 +256,12 @@ Packet 787 proves the next evidence-attachment alignment lane with:
 1. an updated canary evidence bundle example that reflects the current verifier output,
 2. explicit routing guidance that `jobs_list_runs` ledger-visibility proof belongs in the packet or handoff evidence path when emitted,
 3. no widening of the admitted MCP trio, queue ownership, or runtime scope.
+
+Packet 788 proves the next named validation-profile lane with:
+
+1. a repo-owned profile contract for `baseline` and `strict-db-query`,
+2. a verifier payload that now emits the selected `profile`,
+3. evidence-routing guidance that captures verifier strictness without widening the admitted boundary.
 
 ## Non-Goals
 

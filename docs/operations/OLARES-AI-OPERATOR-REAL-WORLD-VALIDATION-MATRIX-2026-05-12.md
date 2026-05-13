@@ -112,8 +112,8 @@ Stop and reopen the boundary deliberately if any scenario would require:
 
 ## Current Recommendation
 
-The next truthful work is host-side real-world validation, not new orchestration features.
+The next truthful work is still bounded validation hardening, not new orchestration features.
 
-If operator friction remains after the matrix above is green, the best follow-on is one bounded trust-hardening slice such as richer `apex-jobs` evidence attachment or a named validation-profile surface.
+If operator friction remains after the matrix above is green, the best follow-on is one bounded trust-hardening slice such as wrapper-level routing for the named verifier validation-profile surface or richer `apex-jobs` evidence attachment.
 
 Do not treat that possible follow-on as permission to widen the controller, runtime posture, or admitted service family.
