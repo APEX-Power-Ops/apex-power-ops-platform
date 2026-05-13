@@ -255,6 +255,16 @@ Optional emitted promotion artifact:
 7. when packet JSON is in scope, that artifact should be referenced from `output_artifacts`,
 8. the emitted JSON does not replace the handoff validation summary; it supports it.
 
+Optional emitted coordinator summary artifact:
+
+1. `tools/ai/build_ai_packet_evidence_summary.py --verify-artifact <path> [--promotion-artifact <path>] --output <path>` may write a repo-visible packet summary artifact for later coordinator-owned closeouts,
+2. the preferred repo-owned lane for that artifact is also `tests/canary/mcp-contract/actual/`,
+3. a concrete example path is `tests/canary/mcp-contract/actual/ai-packet-evidence-summary-<packet-id>.json`,
+4. the helper must reject mismatched packet ids or non-`PASS` source artifacts instead of silently composing an incoherent summary,
+5. when a promotion artifact is supplied, the emitted JSON should preserve the verifier tuple and the promotion tuple together under one packet-scoped summary,
+6. when packet JSON is in scope, that artifact should be referenced from `output_artifacts`,
+7. the emitted JSON does not replace the handoff validation summary; it supports it.
+
 If the packet JSON lane is not being updated for the active slice, the handoff becomes the minimum required routing surface for the same evidence.
 
 ## Packet 172 Outcome
@@ -300,6 +310,12 @@ Packet 796 proves the next positive-gate provenance-attachment lane with:
 1. the helper artifact now exposes the top-level host run record, matching host-success runs, and promotion record directly instead of leaving later closeouts to pull those facts only from nested check payloads,
 2. the helper artifact now preserves the helper tool identity and the repo-visible artifact path when `--output` is used,
 3. the admitted boundary, host gate, and queue ownership remain unchanged.
+
+Packet 797 proves the next coordinator-summary and second two-lane rehearsal lane with:
+
+1. the new helper `tools/ai/build_ai_packet_evidence_summary.py` can compose one packet-scoped summary from the verifier artifact and the positive-gate promotion artifact,
+2. the helper works against both the legacy nested promotion artifact shape and the richer Packet 796 top-level promotion provenance shape,
+3. a repo-visible coordinator summary artifact is now captured at `tests/canary/mcp-contract/actual/ai-packet-evidence-summary-2026-05-13-olares-dev-residency-791.json` without widening the admitted boundary.
 
 ## Non-Goals
 

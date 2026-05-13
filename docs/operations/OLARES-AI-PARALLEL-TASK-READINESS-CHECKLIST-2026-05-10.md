@@ -122,6 +122,7 @@ Write the block before edits start and keep it short:
 - record one abort owner and one abort rule: if either lane needs a file outside its declared set or cannot complete its validation, both lanes stop and the packet records `ABORTED` rather than silently reassigning work
 - record one evidence tuple per lane: touched files, validation command, validation result, and whether the lane finished `PASS` or `ABORTED`
 - record one coordinator completion tuple for the packet: ownership remained disjoint, both lane validations ran, no abort rule fired, and the combined evidence is repo-visible
+- when a later rehearsal needs one packet-scoped artifact instead of hand-copied tuples, compose the verifier and promotion evidence through `tools/ai/build_ai_packet_evidence_summary.py`
 
 For the first rehearsal, prefer a coordinator block that reads like this in packet or closeout evidence:
 
@@ -135,6 +136,7 @@ For the first rehearsal, prefer a coordinator block that reads like this in pack
 Current baseline note:
 
 - Packet 786 already proved the first completed coordinator-owned two-lane rehearsal using this pattern
+- Packet 797 now proves the next coordinator-owned follow-on can keep a trust-hardening code lane and a scaffold-alignment doc lane disjoint while emitting one packet-scoped summary artifact for the preserved Packet 791 proof surfaces
 - later packets should preserve and reuse this pattern rather than describing the first rehearsal as still pending
 
 ## Current Recommendation
