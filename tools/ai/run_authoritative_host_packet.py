@@ -277,6 +277,10 @@ def _validate_promotion_artifact(*, packet_id: str, artifact_path: Path) -> dict
             f"promotion record packet_id mismatch: expected {packet_id}, got {promotion.get('packet_id')}"
         )
 
+    promotion_promoted_at = promotion.get("promoted_at")
+    if not isinstance(promotion_promoted_at, str) or not promotion_promoted_at:
+        raise ValueError("promotion record missing promoted_at")
+
     host_success_runs = payload.get("host_success_runs")
     if not isinstance(host_success_runs, list) or not host_success_runs:
         raise ValueError("promotion artifact missing host_success_runs payload")
@@ -328,6 +332,7 @@ def _validate_promotion_artifact(*, packet_id: str, artifact_path: Path) -> dict
         "host_run_id": host_run_id,
         "host_run_env": host_run_env,
         "host_service": host_service,
+        "promotion_promoted_at": promotion_promoted_at,
         "promotion_artifact_name": artifact_path.name,
         "host_success_run_ids": host_success_run_ids,
         "promotion_supporting_run_ids": supporting_run_ids,
@@ -344,6 +349,7 @@ def _validate_coordinator_summary_artifact(
     host_run_id: str | None,
     host_run_env: str | None,
     host_service: str | None,
+    promotion_promoted_at: str | None,
     host_success_run_ids: list[str] | None,
     supporting_run_ids: list[str] | None,
 ) -> dict[str, object]:
@@ -477,6 +483,12 @@ def _validate_coordinator_summary_artifact(
             f"coordinator summary promotion_record packet_id mismatch: expected {packet_id}, got {promotion_record.get('packet_id')}"
         )
 
+    if promotion_promoted_at is not None and promotion_record.get("promoted_at") != promotion_promoted_at:
+        raise ValueError(
+            "coordinator summary promotion_record promoted_at mismatch: "
+            f"expected {promotion_promoted_at}, got {promotion_record.get('promoted_at')}"
+        )
+
     summary_supporting_run_ids = promotion_record.get("supporting_run_ids")
     if not isinstance(summary_supporting_run_ids, list) or (
         host_run_id is not None and host_run_id not in summary_supporting_run_ids
@@ -495,6 +507,7 @@ def _validate_coordinator_summary_artifact(
         "coordinator_summary_result": payload.get("result"),
         "coordinator_verify_artifact_name": verify_artifact_name,
         "coordinator_promotion_artifact_name": promotion_artifact_name,
+        "coordinator_promotion_promoted_at": promotion_record.get("promoted_at"),
         "coordinator_host_success_run_ids": coordinator_host_success_run_ids,
         "coordinator_supporting_run_ids": summary_supporting_run_ids,
     }
@@ -553,6 +566,7 @@ def orchestrate_packet(
         host_run_id=promotion_validation["host_run_id"] if isinstance(promotion_validation["host_run_id"], str) else None,
         host_run_env=promotion_validation["host_run_env"] if isinstance(promotion_validation["host_run_env"], str) else None,
         host_service=promotion_validation["host_service"] if isinstance(promotion_validation["host_service"], str) else None,
+        promotion_promoted_at=promotion_validation["promotion_promoted_at"] if isinstance(promotion_validation["promotion_promoted_at"], str) else None,
         host_success_run_ids=promotion_validation["host_success_run_ids"] if isinstance(promotion_validation["host_success_run_ids"], list) else None,
         supporting_run_ids=promotion_validation["promotion_supporting_run_ids"] if isinstance(promotion_validation["promotion_supporting_run_ids"], list) else None,
     )

@@ -116,7 +116,7 @@ def test_orchestrate_packet_uses_stdin_fed_ssh_and_four_scp_imports(tmp_path: Pa
             "host_success_runs": [
                 {"run_id": "host-run-123", "env": "host", "service": "ai-workflow", "packet_id": "packet-799-lane-a", "status": "success"}
             ],
-            "promotion": {"packet_id": "packet-799-lane-a", "supporting_run_ids": ["host-run-123"]},
+            "promotion": {"packet_id": "packet-799-lane-a", "promoted_at": "2026-05-13T00:00:01Z", "supporting_run_ids": ["host-run-123"]},
         },
         planned["coordinator_summary"]["remote"]: {
             "packet_id": "packet-799-lane-a",
@@ -132,7 +132,7 @@ def test_orchestrate_packet_uses_stdin_fed_ssh_and_four_scp_imports(tmp_path: Pa
                 "host_success_runs": [
                     {"run_id": "host-run-123", "env": "host", "service": "ai-workflow", "packet_id": "packet-799-lane-a", "status": "success"}
                 ],
-                "promotion_record": {"packet_id": "packet-799-lane-a", "supporting_run_ids": ["host-run-123"]},
+                "promotion_record": {"packet_id": "packet-799-lane-a", "promoted_at": "2026-05-13T00:00:01Z", "supporting_run_ids": ["host-run-123"]},
             },
         },
     }
@@ -189,11 +189,13 @@ def test_orchestrate_packet_uses_stdin_fed_ssh_and_four_scp_imports(tmp_path: Pa
     assert summary["host_run_id"] == "host-run-123"
     assert summary["host_run_env"] == "host"
     assert summary["host_service"] == "ai-workflow"
+    assert summary["promotion_promoted_at"] == "2026-05-13T00:00:01Z"
     assert summary["host_success_run_ids"] == ["host-run-123"]
     assert summary["promotion_supporting_run_ids"] == ["host-run-123"]
     assert summary["coordinator_summary_result"] == "PASS"
     assert summary["coordinator_verify_artifact_name"] == planned["verify"]["local"].name
     assert summary["coordinator_promotion_artifact_name"] == planned["promotion"]["local"].name
+    assert summary["coordinator_promotion_promoted_at"] == "2026-05-13T00:00:01Z"
     assert summary["coordinator_host_success_run_ids"] == ["host-run-123"]
     assert summary["coordinator_supporting_run_ids"] == ["host-run-123"]
     assert summary["result"] == "PASS"
@@ -297,7 +299,7 @@ def test_orchestrate_packet_rejects_verify_packet_mismatch(tmp_path: Path) -> No
             "host_success_runs": [
                 {"run_id": "host-run-123", "env": "host", "service": "ai-workflow", "packet_id": "packet-801-lane-a", "status": "success"}
             ],
-            "promotion": {"packet_id": "packet-801-lane-a", "supporting_run_ids": ["host-run-123"]},
+            "promotion": {"packet_id": "packet-801-lane-a", "promoted_at": "2026-05-13T00:01:01Z", "supporting_run_ids": ["host-run-123"]},
         },
         planned["coordinator_summary"]["remote"]: {
             "packet_id": "packet-801-lane-a",
@@ -313,7 +315,7 @@ def test_orchestrate_packet_rejects_verify_packet_mismatch(tmp_path: Path) -> No
                 "host_success_runs": [
                     {"run_id": "host-run-123", "env": "host", "service": "ai-workflow", "packet_id": "packet-801-lane-a", "status": "success"}
                 ],
-                "promotion_record": {"packet_id": "packet-801-lane-a", "supporting_run_ids": ["host-run-123"]},
+                "promotion_record": {"packet_id": "packet-801-lane-a", "promoted_at": "2026-05-13T00:01:01Z", "supporting_run_ids": ["host-run-123"]},
             },
         },
     }
@@ -373,7 +375,7 @@ def test_orchestrate_packet_rejects_summary_verify_artifact_path_mismatch(tmp_pa
             "host_success_runs": [
                 {"run_id": "host-run-802", "env": "host", "service": "ai-workflow", "packet_id": "packet-802-lane-a", "status": "success"}
             ],
-            "promotion": {"packet_id": "packet-802-lane-a", "supporting_run_ids": ["host-run-802"]},
+            "promotion": {"packet_id": "packet-802-lane-a", "promoted_at": "2026-05-13T00:02:01Z", "supporting_run_ids": ["host-run-802"]},
         },
         planned["coordinator_summary"]["remote"]: {
             "packet_id": "packet-802-lane-a",
@@ -389,7 +391,7 @@ def test_orchestrate_packet_rejects_summary_verify_artifact_path_mismatch(tmp_pa
                 "host_success_runs": [
                     {"run_id": "host-run-802", "env": "host", "service": "ai-workflow", "packet_id": "packet-802-lane-a", "status": "success"}
                 ],
-                "promotion_record": {"packet_id": "packet-802-lane-a", "supporting_run_ids": ["host-run-802"]},
+                "promotion_record": {"packet_id": "packet-802-lane-a", "promoted_at": "2026-05-13T00:02:01Z", "supporting_run_ids": ["host-run-802"]},
             },
         },
     }
@@ -452,7 +454,7 @@ def test_orchestrate_packet_rejects_promotion_supporting_run_drift(tmp_path: Pat
             "host_success_runs": [
                 {"run_id": "host-run-803", "env": "host", "service": "ai-workflow", "packet_id": "packet-803-lane-a", "status": "success"}
             ],
-            "promotion": {"packet_id": "packet-803-lane-a", "supporting_run_ids": ["other-run"]},
+            "promotion": {"packet_id": "packet-803-lane-a", "promoted_at": "2026-05-13T00:03:01Z", "supporting_run_ids": ["other-run"]},
         },
         planned["coordinator_summary"]["remote"]: {
             "packet_id": "packet-803-lane-a",
@@ -468,7 +470,7 @@ def test_orchestrate_packet_rejects_promotion_supporting_run_drift(tmp_path: Pat
                 "host_success_runs": [
                     {"run_id": "host-run-803", "env": "host", "service": "ai-workflow", "packet_id": "packet-803-lane-a", "status": "success"}
                 ],
-                "promotion_record": {"packet_id": "packet-803-lane-a", "supporting_run_ids": ["other-run"]},
+                "promotion_record": {"packet_id": "packet-803-lane-a", "promoted_at": "2026-05-13T00:03:01Z", "supporting_run_ids": ["other-run"]},
             },
         },
     }
@@ -528,7 +530,7 @@ def test_orchestrate_packet_rejects_summary_host_success_run_drift(tmp_path: Pat
             "host_success_runs": [
                 {"run_id": "host-run-804", "env": "host", "service": "ai-workflow", "packet_id": "packet-804-lane-a", "status": "success"}
             ],
-            "promotion": {"packet_id": "packet-804-lane-a", "supporting_run_ids": ["host-run-804"]},
+            "promotion": {"packet_id": "packet-804-lane-a", "promoted_at": "2026-05-13T00:04:01Z", "supporting_run_ids": ["host-run-804"]},
         },
         planned["coordinator_summary"]["remote"]: {
             "packet_id": "packet-804-lane-a",
@@ -545,7 +547,7 @@ def test_orchestrate_packet_rejects_summary_host_success_run_drift(tmp_path: Pat
                     {"run_id": "host-run-804", "env": "host", "service": "ai-workflow", "packet_id": "packet-804-lane-a", "status": "success"},
                     {"run_id": "extra-run", "env": "host", "service": "ai-workflow", "packet_id": "packet-804-lane-a", "status": "success"}
                 ],
-                "promotion_record": {"packet_id": "packet-804-lane-a", "supporting_run_ids": ["host-run-804"]},
+                "promotion_record": {"packet_id": "packet-804-lane-a", "promoted_at": "2026-05-13T00:04:01Z", "supporting_run_ids": ["host-run-804"]},
             },
         },
     }
@@ -608,7 +610,7 @@ def test_orchestrate_packet_rejects_unbacked_promotion_supporting_run(tmp_path: 
             "host_success_runs": [
                 {"run_id": "host-run-805", "env": "host", "service": "ai-workflow", "packet_id": "packet-805-lane-a", "status": "success"}
             ],
-            "promotion": {"packet_id": "packet-805-lane-a", "supporting_run_ids": ["host-run-805", "ghost-run"]},
+            "promotion": {"packet_id": "packet-805-lane-a", "promoted_at": "2026-05-13T00:05:01Z", "supporting_run_ids": ["host-run-805", "ghost-run"]},
         },
         planned["coordinator_summary"]["remote"]: {
             "packet_id": "packet-805-lane-a",
@@ -624,7 +626,7 @@ def test_orchestrate_packet_rejects_unbacked_promotion_supporting_run(tmp_path: 
                 "host_success_runs": [
                     {"run_id": "host-run-805", "env": "host", "service": "ai-workflow", "packet_id": "packet-805-lane-a", "status": "success"}
                 ],
-                "promotion_record": {"packet_id": "packet-805-lane-a", "supporting_run_ids": ["host-run-805", "ghost-run"]},
+                "promotion_record": {"packet_id": "packet-805-lane-a", "promoted_at": "2026-05-13T00:05:01Z", "supporting_run_ids": ["host-run-805", "ghost-run"]},
             },
         },
     }
@@ -690,7 +692,7 @@ def test_orchestrate_packet_rejects_non_host_supporting_run_metadata(tmp_path: P
             "host_success_runs": [
                 {"run_id": "host-run-806", "env": "sandbox", "service": "ai-workflow", "packet_id": "packet-806-lane-a", "status": "success"}
             ],
-            "promotion": {"packet_id": "packet-806-lane-a", "supporting_run_ids": ["host-run-806"]},
+                "promotion": {"packet_id": "packet-806-lane-a", "promoted_at": "2026-05-13T00:06:01Z", "supporting_run_ids": ["host-run-806"]},
         },
         planned["coordinator_summary"]["remote"]: {
             "packet_id": "packet-806-lane-a",
@@ -706,7 +708,7 @@ def test_orchestrate_packet_rejects_non_host_supporting_run_metadata(tmp_path: P
                 "host_success_runs": [
                     {"run_id": "host-run-806", "env": "sandbox", "service": "ai-workflow", "packet_id": "packet-806-lane-a", "status": "success"}
                 ],
-                "promotion_record": {"packet_id": "packet-806-lane-a", "supporting_run_ids": ["host-run-806"]},
+                "promotion_record": {"packet_id": "packet-806-lane-a", "promoted_at": "2026-05-13T00:06:01Z", "supporting_run_ids": ["host-run-806"]},
             },
         },
     }
@@ -774,7 +776,7 @@ def test_orchestrate_packet_rejects_summary_promotion_env_drift(tmp_path: Path) 
             "host_success_runs": [
                 {"run_id": "host-run-807", "env": "host", "service": "ai-workflow", "packet_id": "packet-807-lane-a", "status": "success"}
             ],
-            "promotion": {"packet_id": "packet-807-lane-a", "supporting_run_ids": ["host-run-807"]},
+                "promotion": {"packet_id": "packet-807-lane-a", "promoted_at": "2026-05-13T00:07:01Z", "supporting_run_ids": ["host-run-807"]},
         },
         planned["coordinator_summary"]["remote"]: {
             "packet_id": "packet-807-lane-a",
@@ -790,7 +792,7 @@ def test_orchestrate_packet_rejects_summary_promotion_env_drift(tmp_path: Path) 
                 "host_success_runs": [
                     {"run_id": "host-run-807", "env": "host", "service": "ai-workflow", "packet_id": "packet-807-lane-a", "status": "success"}
                 ],
-                "promotion_record": {"packet_id": "packet-807-lane-a", "supporting_run_ids": ["host-run-807"]},
+                "promotion_record": {"packet_id": "packet-807-lane-a", "promoted_at": "2026-05-13T00:07:01Z", "supporting_run_ids": ["host-run-807"]},
             },
         },
     }
@@ -819,3 +821,87 @@ def test_orchestrate_packet_rejects_summary_promotion_env_drift(tmp_path: Path) 
         return
 
     raise AssertionError("expected orchestrate_packet to reject coordinator summary promotion env drift")
+
+
+def test_orchestrate_packet_rejects_summary_promotion_record_timestamp_drift(tmp_path: Path) -> None:
+    helper = _load_helper_module()
+    expected_head = helper._git_head(helper._repo_root())
+    planned = helper.plan_artifact_paths(
+        packet_id="packet-808-lane-a",
+        host_root="/home/olares/code/apex/apex-power-ops-platform",
+        local_root=tmp_path,
+    )
+
+    remote_contents = {
+        planned["host_bootstrap"]["remote"]: {
+            "packet_id": "packet-808-lane-a",
+            "git": {"head": expected_head, "status_count": 0},
+            "minimal_mcp": {"status": "not-running"},
+        },
+        planned["verify"]["remote"]: {
+            "packet_id": "packet-808-lane-a",
+            "profile": "strict-db-query",
+            "result": "PASS",
+        },
+        planned["promotion"]["remote"]: {
+            "packet_id": "packet-808-lane-a",
+            "result": "PASS",
+            "env": "host",
+            "service": "ai-workflow",
+            "host_run": {
+                "run_id": "host-run-808",
+                "env": "host",
+                "service": "ai-workflow",
+                "packet_id": "packet-808-lane-a",
+                "status": "success",
+            },
+            "host_success_runs": [
+                {"run_id": "host-run-808", "env": "host", "service": "ai-workflow", "packet_id": "packet-808-lane-a", "status": "success"}
+            ],
+            "promotion": {"packet_id": "packet-808-lane-a", "promoted_at": "2026-05-13T00:08:01Z", "supporting_run_ids": ["host-run-808"]},
+        },
+        planned["coordinator_summary"]["remote"]: {
+            "packet_id": "packet-808-lane-a",
+            "result": "PASS",
+            "verify_artifact_path": planned["verify"]["remote"],
+            "verification": {"result": "PASS", "profile": "strict-db-query"},
+            "promotion_artifact_path": planned["promotion"]["remote"],
+            "promotion": {
+                "result": "PASS",
+                "env": "host",
+                "service": "ai-workflow",
+                "host_run": {"packet_id": "packet-808-lane-a", "run_id": "host-run-808", "env": "host", "service": "ai-workflow"},
+                "host_success_runs": [
+                    {"run_id": "host-run-808", "env": "host", "service": "ai-workflow", "packet_id": "packet-808-lane-a", "status": "success"}
+                ],
+                "promotion_record": {"packet_id": "packet-808-lane-a", "promoted_at": "2026-05-13T00:08:59Z", "supporting_run_ids": ["host-run-808"]},
+            },
+        },
+    }
+
+    def fake_runner(command: list[str], input_text: str | None = None) -> None:
+        if command[0] == "ssh":
+            return
+
+        remote_path = command[1].split(":", 1)[1]
+        local_path = Path(command[2])
+        local_path.parent.mkdir(parents=True, exist_ok=True)
+        local_path.write_text(json.dumps(remote_contents[remote_path]) + "\n", encoding="utf-8")
+
+    try:
+        helper.orchestrate_packet(
+            packet_id="packet-808-lane-a",
+            host="olares-mesh",
+            host_root="/home/olares/code/apex/apex-power-ops-platform",
+            profile="strict-db-query",
+            dsn_loader="/home/olares/apex-secrets/olares/ai-live-dsn.env",
+            local_root=tmp_path,
+            runner=fake_runner,
+        )
+    except ValueError as error:
+        assert str(error) == (
+            "coordinator summary promotion_record promoted_at mismatch: expected 2026-05-13T00:08:01Z, got 2026-05-13T00:08:59Z"
+        )
+        return
+
+    raise AssertionError("expected orchestrate_packet to reject coordinator summary promotion_record timestamp drift")
