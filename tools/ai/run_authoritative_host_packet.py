@@ -102,6 +102,7 @@ def build_remote_script(packet_id: str, host_root: str, profile: str, dsn_loader
     quoted_packet_id = shlex.quote(normalized_packet_id)
     quoted_profile = shlex.quote(profile)
     quoted_dsn_loader = shlex.quote(dsn_loader)
+    quoted_bootstrap = shlex.quote(remote_paths["host_bootstrap"])
     quoted_verify = shlex.quote(remote_paths["verify"])
     quoted_promotion = shlex.quote(remote_paths["promotion"])
     quoted_summary = shlex.quote(remote_paths["coordinator_summary"])
@@ -116,7 +117,10 @@ def build_remote_script(packet_id: str, host_root: str, profile: str, dsn_loader
             'repo_python="$(get_apex_preferred_python)"',
             'cd "${repo_root}"',
             f"bash tools/ai/run-minimal-mcp-trio.sh down {quoted_packet_id} >/dev/null || true",
-            f"bash tools/ai/run-olares-host-bootstrap-status.sh {quoted_packet_id}",
+            (
+                f"bash tools/ai/run-olares-host-bootstrap-status.sh "
+                f"--packet-id {quoted_packet_id} --output {quoted_bootstrap}"
+            ),
             "set -a",
             f"source {quoted_dsn_loader}",
             "set +a",
@@ -242,6 +246,14 @@ def _validate_host_bootstrap_artifact(
         raise ValueError(
             f"host bootstrap artifact tool mismatch: expected {HOST_BOOTSTRAP_TOOL_PATH}, got {payload.get('tool')}"
         )
+
+    _validate_command_surface(
+        artifact_label="host bootstrap artifact",
+        command=payload.get("command"),
+        expected_tool_path=HOST_BOOTSTRAP_TOOL_PATH,
+        expected_packet_id=packet_id,
+        expected_output_name=artifact_path.name,
+    )
 
     if payload.get("packet_id") != packet_id:
         raise ValueError(

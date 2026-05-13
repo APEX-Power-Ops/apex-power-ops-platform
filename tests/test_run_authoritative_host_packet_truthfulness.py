@@ -28,6 +28,13 @@ def _promotion_command(packet_id: str, output_path: str) -> str:
     )
 
 
+def _host_bootstrap_command(packet_id: str, output_path: str) -> str:
+    return (
+        "bash tools/ai/run-olares-host-bootstrap-status.sh "
+        f"--packet-id {packet_id} --output {output_path}"
+    )
+
+
 def _verify_command(packet_id: str, output_path: str, profile: str = "strict-db-query") -> str:
     return (
         "/usr/bin/python3 tools/ai/verify_minimal_mcp_trio.py "
@@ -50,6 +57,20 @@ def _coordinator_summary_command(
     )
 
 
+def _materialize_remote_artifact(remote_path: str, payload: object) -> object:
+    if not isinstance(payload, dict):
+        return payload
+
+    if Path(remote_path).name.startswith("host-bootstrap-status-"):
+        normalized = dict(payload)
+        packet_id = normalized.get("packet_id")
+        if isinstance(packet_id, str):
+            normalized.setdefault("command", _host_bootstrap_command(packet_id, remote_path))
+        return normalized
+
+    return payload
+
+
 def test_build_remote_script_runs_host_chain_in_order() -> None:
     helper = _load_helper_module()
 
@@ -62,7 +83,7 @@ def test_build_remote_script_runs_host_chain_in_order() -> None:
 
     expected_steps = [
         "bash tools/ai/run-minimal-mcp-trio.sh down packet-799-lane-a >/dev/null || true",
-        "bash tools/ai/run-olares-host-bootstrap-status.sh packet-799-lane-a",
+        "bash tools/ai/run-olares-host-bootstrap-status.sh --packet-id packet-799-lane-a --output /home/olares/code/apex/apex-power-ops-platform/tests/canary/host-bootstrap-status/actual/host-bootstrap-status-packet-799-lane-a.json",
         "source /home/olares/apex-secrets/olares/ai-live-dsn.env",
         "bash tools/ai/run-minimal-mcp-trio.sh up packet-799-lane-a",
         "bash tools/ai/run-minimal-mcp-trio.sh verify packet-799-lane-a strict-db-query",
@@ -184,7 +205,8 @@ def test_orchestrate_packet_uses_stdin_fed_ssh_and_four_scp_imports(tmp_path: Pa
         calls.append((command, input_text))
         if command == ["ssh", "olares-mesh", "bash", "-s"]:
             assert input_text is not None
-            assert "run-olares-host-bootstrap-status.sh packet-799-lane-a" in input_text
+            assert "run-olares-host-bootstrap-status.sh --packet-id packet-799-lane-a" in input_text
+            assert "--output /home/olares/code/apex/apex-power-ops-platform/tests/canary/host-bootstrap-status/actual/host-bootstrap-status-packet-799-lane-a.json" in input_text
             return
 
         assert command[0] == "scp"
@@ -194,7 +216,10 @@ def test_orchestrate_packet_uses_stdin_fed_ssh_and_four_scp_imports(tmp_path: Pa
         assert remote_spec.startswith("olares-mesh:")
         remote_path = remote_spec.split(":", 1)[1]
         local_path.parent.mkdir(parents=True, exist_ok=True)
-        local_path.write_text(json.dumps(remote_contents[remote_path]) + "\n", encoding="utf-8")
+        local_path.write_text(
+            json.dumps(_materialize_remote_artifact(remote_path, remote_contents[remote_path])) + "\n",
+            encoding="utf-8",
+        )
 
     summary = helper.orchestrate_packet(
         packet_id="packet-799-lane-a",
@@ -249,7 +274,10 @@ def test_orchestrate_packet_uses_stdin_fed_ssh_and_four_scp_imports(tmp_path: Pa
     for name in helper.ARTIFACT_ORDER:
         local_path = Path(planned[name]["local"])
         assert local_path.exists()
-        assert json.loads(local_path.read_text(encoding="utf-8")) == remote_contents[planned[name]["remote"]]
+        assert json.loads(local_path.read_text(encoding="utf-8")) == _materialize_remote_artifact(
+            planned[name]["remote"],
+            remote_contents[planned[name]["remote"]],
+        )
 
 
 def test_run_subprocess_sends_remote_script_as_bytes(monkeypatch) -> None:
@@ -294,7 +322,10 @@ def test_orchestrate_packet_rejects_dirty_host_bootstrap(tmp_path: Path) -> None
                 "git": {"head": helper._git_head(helper._repo_root()), "status_count": 2},
                 "minimal_mcp": {"status": "not-running"},
             }
-        local_path.write_text(json.dumps(payload) + "\n", encoding="utf-8")
+        local_path.write_text(
+            json.dumps(_materialize_remote_artifact(remote_path, payload)) + "\n",
+            encoding="utf-8",
+        )
 
     try:
         helper.orchestrate_packet(
@@ -383,7 +414,10 @@ def test_orchestrate_packet_rejects_verify_packet_mismatch(tmp_path: Path) -> No
         remote_path = command[1].split(":", 1)[1]
         local_path = Path(command[2])
         local_path.parent.mkdir(parents=True, exist_ok=True)
-        local_path.write_text(json.dumps(remote_contents[remote_path]) + "\n", encoding="utf-8")
+        local_path.write_text(
+            json.dumps(_materialize_remote_artifact(remote_path, remote_contents[remote_path])) + "\n",
+            encoding="utf-8",
+        )
 
     try:
         helper.orchestrate_packet(
@@ -478,7 +512,10 @@ def test_orchestrate_packet_rejects_host_bootstrap_tool_drift(tmp_path: Path) ->
         remote_path = command[1].split(":", 1)[1]
         local_path = Path(command[2])
         local_path.parent.mkdir(parents=True, exist_ok=True)
-        local_path.write_text(json.dumps(remote_contents[remote_path]) + "\n", encoding="utf-8")
+        local_path.write_text(
+            json.dumps(_materialize_remote_artifact(remote_path, remote_contents[remote_path])) + "\n",
+            encoding="utf-8",
+        )
 
     try:
         helper.orchestrate_packet(
@@ -497,6 +534,107 @@ def test_orchestrate_packet_rejects_host_bootstrap_tool_drift(tmp_path: Path) ->
         return
 
     raise AssertionError("expected orchestrate_packet to reject host bootstrap artifact tool drift")
+
+
+def test_orchestrate_packet_rejects_host_bootstrap_command_drift(tmp_path: Path) -> None:
+    helper = _load_helper_module()
+    expected_head = helper._git_head(helper._repo_root())
+    planned = helper.plan_artifact_paths(
+        packet_id="packet-814-lane-a",
+        host_root="/home/olares/code/apex/apex-power-ops-platform",
+        local_root=tmp_path,
+    )
+
+    remote_contents = {
+        planned["host_bootstrap"]["remote"]: {
+            "packet_id": "packet-814-lane-a",
+            "tool": "tools/ai/run-olares-host-bootstrap-status.sh",
+            "command": _host_bootstrap_command("wrong-packet", planned["host_bootstrap"]["remote"]),
+            "git": {"head": expected_head, "status_count": 0},
+            "minimal_mcp": {"status": "not-running"},
+        },
+        planned["verify"]["remote"]: {
+            "packet_id": "packet-814-lane-a",
+            "profile": "strict-db-query",
+            "result": "PASS",
+            "command": _verify_command("packet-814-lane-a", planned["verify"]["remote"]),
+        },
+        planned["promotion"]["remote"]: {
+            "packet_id": "packet-814-lane-a",
+            "result": "PASS",
+            "tool": "tools/ai/capture_apex_jobs_promotion.py",
+            "command": _promotion_command("packet-814-lane-a", planned["promotion"]["remote"]),
+            "artifact_path": planned["promotion"]["remote"],
+            "env": "host",
+            "service": "ai-workflow",
+            "host_run": {
+                "run_id": "host-run-814",
+                "env": "host",
+                "service": "ai-workflow",
+                "packet_id": "packet-814-lane-a",
+                "status": "success",
+            },
+            "host_success_runs": [
+                {"run_id": "host-run-814", "env": "host", "service": "ai-workflow", "packet_id": "packet-814-lane-a", "status": "success"}
+            ],
+            "promotion": {"packet_id": "packet-814-lane-a", "promoted_at": "2026-05-13T00:14:01Z", "supporting_run_ids": ["host-run-814"]},
+        },
+        planned["coordinator_summary"]["remote"]: {
+            "packet_id": "packet-814-lane-a",
+            "result": "PASS",
+            "tool": "tools/ai/build_ai_packet_evidence_summary.py",
+            "command": _coordinator_summary_command(
+                "packet-814-lane-a",
+                planned["verify"]["remote"],
+                planned["promotion"]["remote"],
+                planned["coordinator_summary"]["remote"],
+            ),
+            "artifact_path": planned["coordinator_summary"]["remote"],
+            "verify_artifact_path": planned["verify"]["remote"],
+            "verification": {"result": "PASS", "profile": "strict-db-query"},
+            "promotion_artifact_path": planned["promotion"]["remote"],
+            "promotion": {
+                "result": "PASS",
+                "env": "host",
+                "service": "ai-workflow",
+                "host_run": {"packet_id": "packet-814-lane-a", "run_id": "host-run-814", "env": "host", "service": "ai-workflow"},
+                "host_success_runs": [
+                    {"run_id": "host-run-814", "env": "host", "service": "ai-workflow", "packet_id": "packet-814-lane-a", "status": "success"}
+                ],
+                "promotion_record": {"packet_id": "packet-814-lane-a", "promoted_at": "2026-05-13T00:14:01Z", "supporting_run_ids": ["host-run-814"]},
+            },
+        },
+    }
+
+    def fake_runner(command: list[str], input_text: str | None = None) -> None:
+        if command[0] == "ssh":
+            return
+
+        remote_path = command[1].split(":", 1)[1]
+        local_path = Path(command[2])
+        local_path.parent.mkdir(parents=True, exist_ok=True)
+        local_path.write_text(
+            json.dumps(_materialize_remote_artifact(remote_path, remote_contents[remote_path])) + "\n",
+            encoding="utf-8",
+        )
+
+    try:
+        helper.orchestrate_packet(
+            packet_id="packet-814-lane-a",
+            host="olares-mesh",
+            host_root="/home/olares/code/apex/apex-power-ops-platform",
+            profile="strict-db-query",
+            dsn_loader="/home/olares/apex-secrets/olares/ai-live-dsn.env",
+            local_root=tmp_path,
+            runner=fake_runner,
+        )
+    except ValueError as error:
+        assert str(error) == (
+            "host bootstrap artifact command packet_id mismatch: expected packet-814-lane-a, got wrong-packet"
+        )
+        return
+
+    raise AssertionError("expected orchestrate_packet to reject host bootstrap artifact command drift")
 
 
 def test_orchestrate_packet_rejects_verify_command_drift(tmp_path: Path) -> None:
@@ -575,7 +713,10 @@ def test_orchestrate_packet_rejects_verify_command_drift(tmp_path: Path) -> None
         remote_path = command[1].split(":", 1)[1]
         local_path = Path(command[2])
         local_path.parent.mkdir(parents=True, exist_ok=True)
-        local_path.write_text(json.dumps(remote_contents[remote_path]) + "\n", encoding="utf-8")
+        local_path.write_text(
+            json.dumps(_materialize_remote_artifact(remote_path, remote_contents[remote_path])) + "\n",
+            encoding="utf-8",
+        )
 
     try:
         helper.orchestrate_packet(
@@ -666,7 +807,10 @@ def test_orchestrate_packet_rejects_summary_verify_artifact_path_mismatch(tmp_pa
         remote_path = command[1].split(":", 1)[1]
         local_path = Path(command[2])
         local_path.parent.mkdir(parents=True, exist_ok=True)
-        local_path.write_text(json.dumps(remote_contents[remote_path]) + "\n", encoding="utf-8")
+        local_path.write_text(
+            json.dumps(_materialize_remote_artifact(remote_path, remote_contents[remote_path])) + "\n",
+            encoding="utf-8",
+        )
 
     try:
         helper.orchestrate_packet(
@@ -758,7 +902,10 @@ def test_orchestrate_packet_rejects_promotion_supporting_run_drift(tmp_path: Pat
         remote_path = command[1].split(":", 1)[1]
         local_path = Path(command[2])
         local_path.parent.mkdir(parents=True, exist_ok=True)
-        local_path.write_text(json.dumps(remote_contents[remote_path]) + "\n", encoding="utf-8")
+        local_path.write_text(
+            json.dumps(_materialize_remote_artifact(remote_path, remote_contents[remote_path])) + "\n",
+            encoding="utf-8",
+        )
 
     try:
         helper.orchestrate_packet(
@@ -848,7 +995,10 @@ def test_orchestrate_packet_rejects_summary_host_success_run_drift(tmp_path: Pat
         remote_path = command[1].split(":", 1)[1]
         local_path = Path(command[2])
         local_path.parent.mkdir(parents=True, exist_ok=True)
-        local_path.write_text(json.dumps(remote_contents[remote_path]) + "\n", encoding="utf-8")
+        local_path.write_text(
+            json.dumps(_materialize_remote_artifact(remote_path, remote_contents[remote_path])) + "\n",
+            encoding="utf-8",
+        )
 
     try:
         helper.orchestrate_packet(
@@ -940,7 +1090,10 @@ def test_orchestrate_packet_rejects_unbacked_promotion_supporting_run(tmp_path: 
         remote_path = command[1].split(":", 1)[1]
         local_path = Path(command[2])
         local_path.parent.mkdir(parents=True, exist_ok=True)
-        local_path.write_text(json.dumps(remote_contents[remote_path]) + "\n", encoding="utf-8")
+        local_path.write_text(
+            json.dumps(_materialize_remote_artifact(remote_path, remote_contents[remote_path])) + "\n",
+            encoding="utf-8",
+        )
 
     try:
         helper.orchestrate_packet(
@@ -1035,7 +1188,10 @@ def test_orchestrate_packet_rejects_non_host_supporting_run_metadata(tmp_path: P
         remote_path = command[1].split(":", 1)[1]
         local_path = Path(command[2])
         local_path.parent.mkdir(parents=True, exist_ok=True)
-        local_path.write_text(json.dumps(remote_contents[remote_path]) + "\n", encoding="utf-8")
+        local_path.write_text(
+            json.dumps(_materialize_remote_artifact(remote_path, remote_contents[remote_path])) + "\n",
+            encoding="utf-8",
+        )
 
     try:
         helper.orchestrate_packet(
@@ -1132,7 +1288,10 @@ def test_orchestrate_packet_rejects_summary_promotion_env_drift(tmp_path: Path) 
         remote_path = command[1].split(":", 1)[1]
         local_path = Path(command[2])
         local_path.parent.mkdir(parents=True, exist_ok=True)
-        local_path.write_text(json.dumps(remote_contents[remote_path]) + "\n", encoding="utf-8")
+        local_path.write_text(
+            json.dumps(_materialize_remote_artifact(remote_path, remote_contents[remote_path])) + "\n",
+            encoding="utf-8",
+        )
 
     try:
         helper.orchestrate_packet(
@@ -1227,7 +1386,10 @@ def test_orchestrate_packet_rejects_summary_promotion_record_timestamp_drift(tmp
         remote_path = command[1].split(":", 1)[1]
         local_path = Path(command[2])
         local_path.parent.mkdir(parents=True, exist_ok=True)
-        local_path.write_text(json.dumps(remote_contents[remote_path]) + "\n", encoding="utf-8")
+        local_path.write_text(
+            json.dumps(_materialize_remote_artifact(remote_path, remote_contents[remote_path])) + "\n",
+            encoding="utf-8",
+        )
 
     try:
         helper.orchestrate_packet(
@@ -1324,7 +1486,10 @@ def test_orchestrate_packet_rejects_promotion_artifact_self_path_drift(tmp_path:
         remote_path = command[1].split(":", 1)[1]
         local_path = Path(command[2])
         local_path.parent.mkdir(parents=True, exist_ok=True)
-        local_path.write_text(json.dumps(remote_contents[remote_path]) + "\n", encoding="utf-8")
+        local_path.write_text(
+            json.dumps(_materialize_remote_artifact(remote_path, remote_contents[remote_path])) + "\n",
+            encoding="utf-8",
+        )
 
     try:
         helper.orchestrate_packet(
@@ -1414,7 +1579,10 @@ def test_orchestrate_packet_rejects_promotion_artifact_tool_drift(tmp_path: Path
         remote_path = command[1].split(":", 1)[1]
         local_path = Path(command[2])
         local_path.parent.mkdir(parents=True, exist_ok=True)
-        local_path.write_text(json.dumps(remote_contents[remote_path]) + "\n", encoding="utf-8")
+        local_path.write_text(
+            json.dumps(_materialize_remote_artifact(remote_path, remote_contents[remote_path])) + "\n",
+            encoding="utf-8",
+        )
 
     try:
         helper.orchestrate_packet(
@@ -1511,7 +1679,10 @@ def test_orchestrate_packet_rejects_promotion_artifact_command_drift(tmp_path: P
         remote_path = command[1].split(":", 1)[1]
         local_path = Path(command[2])
         local_path.parent.mkdir(parents=True, exist_ok=True)
-        local_path.write_text(json.dumps(remote_contents[remote_path]) + "\n", encoding="utf-8")
+        local_path.write_text(
+            json.dumps(_materialize_remote_artifact(remote_path, remote_contents[remote_path])) + "\n",
+            encoding="utf-8",
+        )
 
     try:
         helper.orchestrate_packet(
@@ -1608,7 +1779,10 @@ def test_orchestrate_packet_rejects_coordinator_summary_self_path_drift(tmp_path
         remote_path = command[1].split(":", 1)[1]
         local_path = Path(command[2])
         local_path.parent.mkdir(parents=True, exist_ok=True)
-        local_path.write_text(json.dumps(remote_contents[remote_path]) + "\n", encoding="utf-8")
+        local_path.write_text(
+            json.dumps(_materialize_remote_artifact(remote_path, remote_contents[remote_path])) + "\n",
+            encoding="utf-8",
+        )
 
     try:
         helper.orchestrate_packet(
@@ -1699,7 +1873,10 @@ def test_orchestrate_packet_rejects_coordinator_summary_tool_drift(tmp_path: Pat
         remote_path = command[1].split(":", 1)[1]
         local_path = Path(command[2])
         local_path.parent.mkdir(parents=True, exist_ok=True)
-        local_path.write_text(json.dumps(remote_contents[remote_path]) + "\n", encoding="utf-8")
+        local_path.write_text(
+            json.dumps(_materialize_remote_artifact(remote_path, remote_contents[remote_path])) + "\n",
+            encoding="utf-8",
+        )
 
     try:
         helper.orchestrate_packet(
@@ -1796,7 +1973,10 @@ def test_orchestrate_packet_rejects_coordinator_summary_command_drift(tmp_path: 
         remote_path = command[1].split(":", 1)[1]
         local_path = Path(command[2])
         local_path.parent.mkdir(parents=True, exist_ok=True)
-        local_path.write_text(json.dumps(remote_contents[remote_path]) + "\n", encoding="utf-8")
+        local_path.write_text(
+            json.dumps(_materialize_remote_artifact(remote_path, remote_contents[remote_path])) + "\n",
+            encoding="utf-8",
+        )
 
     try:
         helper.orchestrate_packet(

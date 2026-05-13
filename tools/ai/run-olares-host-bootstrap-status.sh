@@ -7,12 +7,66 @@ repo_root="$(get_apex_repo_root)"
 import_apex_env_file
 repo_python="$(get_apex_preferred_python)"
 
-packet_id="${1:-}"
+packet_id=""
+output_override=""
+dsn_env=""
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --packet-id)
+            if [[ $# -lt 2 ]]; then
+                echo "missing value for --packet-id" >&2
+                exit 2
+            fi
+            packet_id="$2"
+            shift 2
+            ;;
+        --output)
+            if [[ $# -lt 2 ]]; then
+                echo "missing value for --output" >&2
+                exit 2
+            fi
+            output_override="$2"
+            shift 2
+            ;;
+        --dsn-env)
+            if [[ $# -lt 2 ]]; then
+                echo "missing value for --dsn-env" >&2
+                exit 2
+            fi
+            dsn_env="$2"
+            shift 2
+            ;;
+        --help)
+            echo "Usage: bash tools/ai/run-olares-host-bootstrap-status.sh [--packet-id <packet-id>] [--output <artifact-path>] [--dsn-env <path>]"
+            exit 0
+            ;;
+        --)
+            shift
+            break
+            ;;
+        -*)
+            echo "unknown option: $1" >&2
+            exit 2
+            ;;
+        *)
+            if [[ -z "${packet_id}" ]]; then
+                packet_id="$1"
+            elif [[ -z "${dsn_env}" ]]; then
+                dsn_env="$1"
+            else
+                echo "unexpected argument: $1" >&2
+                exit 2
+            fi
+            shift
+            ;;
+    esac
+done
+
 if [[ -z "${packet_id}" ]]; then
     packet_id="$(get_apex_default_packet_id host-bootstrap-status)"
 fi
 require_apex_packet_id "${packet_id}"
-dsn_env="${2:-}"
 host_container_root="$(cd "${repo_root}/.." && pwd)"
 old_clone="/home/olares/src/apex-power-ops-platform"
 pnpm_bin="/home/olares/apex-data/toolchains/pnpm-10.0.0/node_modules/.bin/pnpm"
@@ -22,7 +76,7 @@ minimal_status_file="${state_dir}/host-bootstrap-minimal-status.json"
 minimal_ownership_file="${state_dir}/host-bootstrap-minimal-ownership.json"
 hold_status_file="${state_dir}/host-bootstrap-hold-status.json"
 host_bootstrap_actual_dir="${repo_root}/tests/canary/host-bootstrap-status/actual"
-host_bootstrap_output="${host_bootstrap_actual_dir}/host-bootstrap-status-${packet_id}.json"
+host_bootstrap_output="${output_override:-${host_bootstrap_actual_dir}/host-bootstrap-status-${packet_id}.json}"
 
 mkdir -p "${state_dir}"
 mkdir -p "${host_bootstrap_actual_dir}"
@@ -140,6 +194,7 @@ fi
 
 "${repo_python}" - <<'PY' "${packet_id}" "${host_container_root}" "${repo_root}" "${old_clone}" "${pnpm_bin}" "${calc_python}" "${repo_python}" "${minimal_status_file}" "${hold_status_file}" "${host_bootstrap_output}"
 import json
+import shlex
 import shutil
 import subprocess
 import sys
@@ -193,6 +248,14 @@ hold = json.loads(Path(hold_path).read_text(encoding="utf-8"))
 payload = {
     "packet_id": packet_id,
     "tool": "tools/ai/run-olares-host-bootstrap-status.sh",
+    "command": shlex.join([
+        "bash",
+        "tools/ai/run-olares-host-bootstrap-status.sh",
+        "--packet-id",
+        packet_id,
+        "--output",
+        output_path,
+    ]),
     "host_container_root": host_container_root,
     "implementation_root": repo_root,
     "git": {
