@@ -269,6 +269,12 @@ Packet 789 proves the next wrapper-routing and strict-artifact lane with:
 2. the first repo-visible `strict-db-query` verifier artifact is captured at `tests/canary/mcp-contract/actual/verify-minimal-mcp-trio-2026-05-13-olares-dev-residency-789.json`,
 3. the admitted boundary, runtime scope, and queue ownership remain unchanged.
 
+Packet 790 proves the next authoritative-host strict-profile lane with:
+
+1. the governed host wrapper path can start the admitted trio from a truthful `not-running` baseline,
+2. the authoritative host can emit a `strict-db-query` verifier artifact at `tests/canary/mcp-contract/actual/verify-minimal-mcp-trio-2026-05-13-olares-dev-residency-790.json`,
+3. the host wrapper can return to a truthful `not-running` rest state after the packet completes.
+
 ## Non-Goals
 
 This evidence bundle does not prove:

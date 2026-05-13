@@ -1,8 +1,8 @@
 # Olares AI Validation Profiles
 
 Date: 2026-05-13
-Status: Active bounded verifier and wrapper hardening
-Scope: named validation-profile surface for the admitted minimal MCP trio verifier and its operator wrappers
+Status: Active bounded verifier, wrapper, and authoritative-host evidence hardening
+Scope: named validation-profile surface for the admitted minimal MCP trio verifier, its operator wrappers, and authoritative-host evidence capture
 
 ## Purpose
 
@@ -37,6 +37,12 @@ pwsh -NoProfile -File tools/ai/run-minimal-mcp-trio.ps1 -Action verify -PacketId
 bash tools/ai/run-minimal-mcp-trio.sh verify <packet-id>
 ```
 
+Authoritative-host example:
+
+```text
+ssh olares-mesh "cd /home/olares/code/apex/apex-power-ops-platform && bash tools/ai/run-minimal-mcp-trio.sh verify <packet-id>"
+```
+
 ### `strict-db-query`
 
 `strict-db-query` keeps the same admitted MCP surface but raises the verifier floor for the bounded database proof.
@@ -60,6 +66,12 @@ pwsh -NoProfile -File tools/ai/run-minimal-mcp-trio.ps1 -Action verify -PacketId
 bash tools/ai/run-minimal-mcp-trio.sh verify <packet-id> strict-db-query
 ```
 
+Authoritative-host example:
+
+```text
+ssh olares-mesh "cd /home/olares/code/apex/apex-power-ops-platform && set -a && . /home/olares/apex-secrets/olares/ai-live-dsn.env && set +a && bash tools/ai/run-minimal-mcp-trio.sh verify <packet-id> strict-db-query"
+```
+
 ## Backward Compatibility
 
 The legacy `--require-db-query` flag remains supported.
@@ -77,7 +89,8 @@ When a packet claims verifier proof through this helper:
 1. the emitted JSON should keep the `profile` field alongside `packet_id`, `command`, and `checks`,
 2. packet or handoff closeout should name `strict-db-query` explicitly when it is the validation floor,
 3. `baseline` should remain the truthful default unless the stricter profile was intentionally selected,
-4. Packet `2026-05-13-olares-dev-residency-789` is the first repo-visible strict-profile artifact captured through a wrapper surface at `tests/canary/mcp-contract/actual/verify-minimal-mcp-trio-2026-05-13-olares-dev-residency-789.json`.
+4. Packet `2026-05-13-olares-dev-residency-789` is the first repo-visible strict-profile artifact captured through a wrapper surface at `tests/canary/mcp-contract/actual/verify-minimal-mcp-trio-2026-05-13-olares-dev-residency-789.json`,
+5. Packet `2026-05-13-olares-dev-residency-790` is the first authoritative-host strict-profile artifact captured through the governed host wrapper path at `tests/canary/mcp-contract/actual/verify-minimal-mcp-trio-2026-05-13-olares-dev-residency-790.json`.
 
 ## Boundaries Preserved
 
