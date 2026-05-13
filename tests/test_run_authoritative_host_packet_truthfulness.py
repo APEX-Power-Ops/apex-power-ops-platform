@@ -84,13 +84,18 @@ def test_plan_artifact_paths_matches_packet_conventions(tmp_path: Path) -> None:
 
 def test_orchestrate_packet_uses_stdin_fed_ssh_and_four_scp_imports(tmp_path: Path) -> None:
     helper = _load_helper_module()
+    expected_head = helper._git_head(helper._repo_root())
     planned = helper.plan_artifact_paths(
         packet_id="packet-799-lane-a",
         host_root="/home/olares/code/apex/apex-power-ops-platform",
         local_root=tmp_path,
     )
     remote_contents = {
-        planned["host_bootstrap"]["remote"]: {"artifact": "host_bootstrap", "packet_id": "packet-799-lane-a"},
+        planned["host_bootstrap"]["remote"]: {
+            "packet_id": "packet-799-lane-a",
+            "git": {"head": expected_head, "status_count": 0},
+            "minimal_mcp": {"status": "not-running"},
+        },
         planned["verify"]["remote"]: {"artifact": "verify", "packet_id": "packet-799-lane-a"},
         planned["promotion"]["remote"]: {"artifact": "promotion", "packet_id": "packet-799-lane-a"},
         planned["coordinator_summary"]["remote"]: {"artifact": "coordinator_summary", "packet_id": "packet-799-lane-a"},
@@ -139,6 +144,9 @@ def test_orchestrate_packet_uses_stdin_fed_ssh_and_four_scp_imports(tmp_path: Pa
     assert summary["tool"] == "tools/ai/run_authoritative_host_packet.py"
     assert summary["host"] == "olares-mesh"
     assert summary["profile"] == "strict-db-query"
+    assert summary["host_git_head"] == expected_head
+    assert summary["host_status_count"] == 0
+    assert summary["preflight_status"] == "not-running"
     assert summary["result"] == "PASS"
     assert summary["artifact_paths"] == {
         name: str(planned[name]["local"]).replace("\\", "/")
@@ -168,3 +176,44 @@ def test_run_subprocess_sends_remote_script_as_bytes(monkeypatch) -> None:
     assert captured["kwargs"]["check"] is True
     assert captured["kwargs"]["input"] == b"set -euo pipefail\n"
     assert "text" not in captured["kwargs"]
+
+
+def test_orchestrate_packet_rejects_dirty_host_bootstrap(tmp_path: Path) -> None:
+    helper = _load_helper_module()
+    planned = helper.plan_artifact_paths(
+        packet_id="packet-800-lane-a",
+        host_root="/home/olares/code/apex/apex-power-ops-platform",
+        local_root=tmp_path,
+    )
+
+    def fake_runner(command: list[str], input_text: str | None = None) -> None:
+        if command[0] == "ssh":
+            return
+
+        remote_path = command[1].split(":", 1)[1]
+        local_path = Path(command[2])
+        local_path.parent.mkdir(parents=True, exist_ok=True)
+        payload = {"artifact": remote_path, "packet_id": "packet-800-lane-a"}
+        if remote_path == planned["host_bootstrap"]["remote"]:
+            payload = {
+                "packet_id": "packet-800-lane-a",
+                "git": {"head": helper._git_head(helper._repo_root()), "status_count": 2},
+                "minimal_mcp": {"status": "not-running"},
+            }
+        local_path.write_text(json.dumps(payload) + "\n", encoding="utf-8")
+
+    try:
+        helper.orchestrate_packet(
+            packet_id="packet-800-lane-a",
+            host="olares-mesh",
+            host_root="/home/olares/code/apex/apex-power-ops-platform",
+            profile="strict-db-query",
+            dsn_loader="/home/olares/apex-secrets/olares/ai-live-dsn.env",
+            local_root=tmp_path,
+            runner=fake_runner,
+        )
+    except ValueError as error:
+        assert str(error) == "host bootstrap artifact shows dirty host worktree: status_count=2"
+        return
+
+    raise AssertionError("expected orchestrate_packet to reject a dirty host bootstrap artifact")

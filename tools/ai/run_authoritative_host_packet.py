@@ -41,6 +41,13 @@ def _format_command(argv: list[str]) -> str:
     return shlex.join(argv)
 
 
+def _git_head(repo_root: Path) -> str:
+    return subprocess.check_output(
+        ["git", "-C", str(repo_root), "rev-parse", "HEAD"],
+        text=True,
+    ).strip()
+
+
 def _validate_packet_id(packet_id: str) -> str:
     normalized = packet_id.strip()
     if not PACKET_ID_PATTERN.fullmatch(normalized):
@@ -144,6 +151,54 @@ def build_scp_command(host: str, remote_path: str, local_path: Path) -> list[str
     return ["scp", f"{host}:{remote_path}", str(local_path)]
 
 
+def _read_json(path: Path) -> dict[str, object]:
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _validate_host_bootstrap_artifact(
+    *,
+    packet_id: str,
+    artifact_path: Path,
+    expected_head: str,
+) -> dict[str, object]:
+    payload = _read_json(artifact_path)
+
+    if payload.get("packet_id") != packet_id:
+        raise ValueError(
+            f"host bootstrap artifact packet_id mismatch: expected {packet_id}, got {payload.get('packet_id')}"
+        )
+
+    git_payload = payload.get("git")
+    if not isinstance(git_payload, dict):
+        raise ValueError("host bootstrap artifact missing git payload")
+
+    status_count = git_payload.get("status_count")
+    if status_count != 0:
+        raise ValueError(f"host bootstrap artifact shows dirty host worktree: status_count={status_count}")
+
+    host_head = git_payload.get("head")
+    if host_head != expected_head:
+        raise ValueError(
+            f"host bootstrap artifact head mismatch: expected {expected_head}, got {host_head}"
+        )
+
+    minimal_mcp = payload.get("minimal_mcp")
+    if not isinstance(minimal_mcp, dict):
+        raise ValueError("host bootstrap artifact missing minimal_mcp payload")
+
+    preflight_status = minimal_mcp.get("status")
+    if preflight_status != "not-running":
+        raise ValueError(
+            f"host bootstrap artifact preflight status must be not-running, got {preflight_status}"
+        )
+
+    return {
+        "host_git_head": host_head,
+        "host_status_count": status_count,
+        "preflight_status": preflight_status,
+    }
+
+
 def _run_subprocess(command: list[str], input_text: str | None = None) -> None:
     if input_text is None:
         subprocess.run(command, check=True, text=True)
@@ -165,6 +220,7 @@ def orchestrate_packet(
     normalized_packet_id = _validate_packet_id(packet_id)
     artifacts = plan_artifact_paths(normalized_packet_id, host_root, local_root)
     remote_script = build_remote_script(normalized_packet_id, host_root, profile, dsn_loader)
+    expected_head = _git_head(_repo_root())
 
     runner(build_ssh_command(host), remote_script)
 
@@ -172,6 +228,12 @@ def orchestrate_packet(
         local_path = Path(artifacts[name]["local"])
         local_path.parent.mkdir(parents=True, exist_ok=True)
         runner(build_scp_command(host, str(artifacts[name]["remote"]), local_path), None)
+
+    bootstrap_validation = _validate_host_bootstrap_artifact(
+        packet_id=normalized_packet_id,
+        artifact_path=Path(artifacts["host_bootstrap"]["local"]),
+        expected_head=expected_head,
+    )
 
     return {
         "packet_id": normalized_packet_id,
@@ -184,6 +246,7 @@ def orchestrate_packet(
             name: _normalize_path(Path(artifacts[name]["local"]))
             for name in ARTIFACT_ORDER
         },
+        **bootstrap_validation,
         "result": "PASS",
     }
 

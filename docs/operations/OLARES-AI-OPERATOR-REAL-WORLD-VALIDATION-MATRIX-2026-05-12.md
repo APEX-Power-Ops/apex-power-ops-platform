@@ -117,16 +117,17 @@ Stop and reopen the boundary deliberately if any scenario would require:
 
 ## Current Recommendation
 
-The next truthful work is the active coordinator-owned dual-lane Packet `2026-05-13-olares-dev-residency-799`, not a new generic hardening slice and not new orchestration features.
+The current frontier is no longer whether the helper works. Packet `2026-05-13-olares-dev-residency-800` is now the current helper-parity validation floor after running the current-head host chain through `tools/ai/run_authoritative_host_packet.py` and proving the helper rejects stale or dirty host-bootstrap evidence instead of merely copying artifacts.
 
-That packet should stay bounded in two ways:
+Keep the next work bounded in three ways:
 
-1. reuse Packet `2026-05-13-olares-dev-residency-798` as the current-head authoritative-host floor for bootstrap, strict verification, positive-gate promotion capture, coordinator summary composition, and truthful teardown,
-2. reuse Packet `2026-05-13-olares-dev-residency-797` summary-helper conventions so the packet emits one repo-visible coordinator summary artifact instead of hand-copying verifier and promotion tuples into closeout text.
+1. reuse Packet `2026-05-13-olares-dev-residency-800` as the helper-parity floor and Packet `2026-05-13-olares-dev-residency-798` as the underlying current-head authoritative-host runtime floor,
+2. reuse Packet `2026-05-13-olares-dev-residency-797` summary-helper conventions so later packets still emit one repo-visible coordinator summary artifact instead of hand-copying verifier and promotion tuples into closeout text,
+3. prefer another disjoint coordinator-owned dual-lane packet rather than broadening controller scope.
 
-For the current-head host chain, prefer one repo-owned helper-driven execution surface rather than reconstructing the bounded host sequence by hand. Once it is available, `tools/ai/run_authoritative_host_packet.py` is the preferred execution surface for that chain.
+For the current-head host chain, prefer one repo-owned helper-driven execution surface rather than reconstructing the bounded host sequence by hand. `tools/ai/run_authoritative_host_packet.py` is the preferred execution surface for that chain, and its local `PASS` now requires imported host bootstrap evidence showing matching repo head, `status_count = 0`, and truthful preflight `not-running` state.
 
-Do not treat Packet 799, the current-head host floor, or the planned helper as permission to widen the controller, runtime posture, admitted service family, queue ownership, or business-logic scope.
+Do not treat Packet 800, the helper-parity floor, or the helper-driven host chain as permission to widen the controller, runtime posture, admitted service family, queue ownership, or business-logic scope.
 
 ## Packet 791 Alignment Note
 
