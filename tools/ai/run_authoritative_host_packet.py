@@ -341,6 +341,13 @@ def _validate_host_bootstrap_artifact(
             f"expected minimal_mcp_not_running, got {hold_boundary_deferred_ops_decision}"
         )
 
+    hold_boundary_deferred_ops = hold_boundary.get("deferred_ops")
+    if hold_boundary_deferred_ops != "UNAVAILABLE":
+        raise ValueError(
+            "host bootstrap artifact hold_boundary deferred_ops mismatch: "
+            f"expected UNAVAILABLE, got {hold_boundary_deferred_ops}"
+        )
+
     hold_boundary_minimal_mcp_detail = hold_boundary.get("minimal_mcp_detail")
     if not isinstance(hold_boundary_minimal_mcp_detail, dict):
         raise ValueError("host bootstrap artifact missing hold_boundary minimal_mcp_detail payload")
