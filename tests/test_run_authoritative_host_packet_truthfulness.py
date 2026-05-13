@@ -104,6 +104,7 @@ def test_orchestrate_packet_uses_stdin_fed_ssh_and_four_scp_imports(tmp_path: Pa
         planned["promotion"]["remote"]: {
             "packet_id": "packet-799-lane-a",
             "result": "PASS",
+            "tool": "tools/ai/capture_apex_jobs_promotion.py",
             "artifact_path": planned["promotion"]["remote"],
             "env": "host",
             "service": "ai-workflow",
@@ -122,6 +123,7 @@ def test_orchestrate_packet_uses_stdin_fed_ssh_and_four_scp_imports(tmp_path: Pa
         planned["coordinator_summary"]["remote"]: {
             "packet_id": "packet-799-lane-a",
             "result": "PASS",
+            "tool": "tools/ai/build_ai_packet_evidence_summary.py",
             "artifact_path": planned["coordinator_summary"]["remote"],
             "verify_artifact_path": planned["verify"]["remote"],
             "verification": {"result": "PASS", "profile": "strict-db-query"},
@@ -295,6 +297,7 @@ def test_orchestrate_packet_rejects_verify_packet_mismatch(tmp_path: Path) -> No
         planned["promotion"]["remote"]: {
             "packet_id": "packet-801-lane-a",
             "result": "PASS",
+            "tool": "tools/ai/capture_apex_jobs_promotion.py",
             "artifact_path": planned["promotion"]["remote"],
             "env": "host",
             "service": "ai-workflow",
@@ -307,6 +310,7 @@ def test_orchestrate_packet_rejects_verify_packet_mismatch(tmp_path: Path) -> No
         planned["coordinator_summary"]["remote"]: {
             "packet_id": "packet-801-lane-a",
             "result": "PASS",
+            "tool": "tools/ai/build_ai_packet_evidence_summary.py",
             "artifact_path": planned["coordinator_summary"]["remote"],
             "verify_artifact_path": planned["verify"]["remote"],
             "verification": {"result": "PASS", "profile": "strict-db-query"},
@@ -373,6 +377,7 @@ def test_orchestrate_packet_rejects_summary_verify_artifact_path_mismatch(tmp_pa
         planned["promotion"]["remote"]: {
             "packet_id": "packet-802-lane-a",
             "result": "PASS",
+            "tool": "tools/ai/capture_apex_jobs_promotion.py",
             "artifact_path": planned["promotion"]["remote"],
             "env": "host",
             "service": "ai-workflow",
@@ -385,6 +390,7 @@ def test_orchestrate_packet_rejects_summary_verify_artifact_path_mismatch(tmp_pa
         planned["coordinator_summary"]["remote"]: {
             "packet_id": "packet-802-lane-a",
             "result": "PASS",
+            "tool": "tools/ai/build_ai_packet_evidence_summary.py",
             "artifact_path": planned["coordinator_summary"]["remote"],
             "verify_artifact_path": "/remote/wrong-verify.json",
             "verification": {"result": "PASS", "profile": "strict-db-query"},
@@ -454,6 +460,7 @@ def test_orchestrate_packet_rejects_promotion_supporting_run_drift(tmp_path: Pat
         planned["promotion"]["remote"]: {
             "packet_id": "packet-803-lane-a",
             "result": "PASS",
+            "tool": "tools/ai/capture_apex_jobs_promotion.py",
             "artifact_path": planned["promotion"]["remote"],
             "env": "host",
             "service": "ai-workflow",
@@ -466,6 +473,7 @@ def test_orchestrate_packet_rejects_promotion_supporting_run_drift(tmp_path: Pat
         planned["coordinator_summary"]["remote"]: {
             "packet_id": "packet-803-lane-a",
             "result": "PASS",
+            "tool": "tools/ai/build_ai_packet_evidence_summary.py",
             "artifact_path": planned["coordinator_summary"]["remote"],
             "verify_artifact_path": planned["verify"]["remote"],
             "verification": {"result": "PASS", "profile": "strict-db-query"},
@@ -532,6 +540,7 @@ def test_orchestrate_packet_rejects_summary_host_success_run_drift(tmp_path: Pat
         planned["promotion"]["remote"]: {
             "packet_id": "packet-804-lane-a",
             "result": "PASS",
+            "tool": "tools/ai/capture_apex_jobs_promotion.py",
             "artifact_path": planned["promotion"]["remote"],
             "env": "host",
             "service": "ai-workflow",
@@ -544,6 +553,7 @@ def test_orchestrate_packet_rejects_summary_host_success_run_drift(tmp_path: Pat
         planned["coordinator_summary"]["remote"]: {
             "packet_id": "packet-804-lane-a",
             "result": "PASS",
+            "tool": "tools/ai/build_ai_packet_evidence_summary.py",
             "artifact_path": planned["coordinator_summary"]["remote"],
             "verify_artifact_path": planned["verify"]["remote"],
             "verification": {"result": "PASS", "profile": "strict-db-query"},
@@ -614,6 +624,7 @@ def test_orchestrate_packet_rejects_unbacked_promotion_supporting_run(tmp_path: 
         planned["promotion"]["remote"]: {
             "packet_id": "packet-805-lane-a",
             "result": "PASS",
+            "tool": "tools/ai/capture_apex_jobs_promotion.py",
             "artifact_path": planned["promotion"]["remote"],
             "env": "host",
             "service": "ai-workflow",
@@ -626,6 +637,7 @@ def test_orchestrate_packet_rejects_unbacked_promotion_supporting_run(tmp_path: 
         planned["coordinator_summary"]["remote"]: {
             "packet_id": "packet-805-lane-a",
             "result": "PASS",
+            "tool": "tools/ai/build_ai_packet_evidence_summary.py",
             "artifact_path": planned["coordinator_summary"]["remote"],
             "verify_artifact_path": planned["verify"]["remote"],
             "verification": {"result": "PASS", "profile": "strict-db-query"},
@@ -692,6 +704,7 @@ def test_orchestrate_packet_rejects_non_host_supporting_run_metadata(tmp_path: P
         planned["promotion"]["remote"]: {
             "packet_id": "packet-806-lane-a",
             "result": "PASS",
+            "tool": "tools/ai/capture_apex_jobs_promotion.py",
             "artifact_path": planned["promotion"]["remote"],
             "env": "host",
             "service": "ai-workflow",
@@ -710,6 +723,7 @@ def test_orchestrate_packet_rejects_non_host_supporting_run_metadata(tmp_path: P
         planned["coordinator_summary"]["remote"]: {
             "packet_id": "packet-806-lane-a",
             "result": "PASS",
+            "tool": "tools/ai/build_ai_packet_evidence_summary.py",
             "artifact_path": planned["coordinator_summary"]["remote"],
             "verify_artifact_path": planned["verify"]["remote"],
             "verification": {"result": "PASS", "profile": "strict-db-query"},
@@ -778,6 +792,7 @@ def test_orchestrate_packet_rejects_summary_promotion_env_drift(tmp_path: Path) 
         planned["promotion"]["remote"]: {
             "packet_id": "packet-807-lane-a",
             "result": "PASS",
+            "tool": "tools/ai/capture_apex_jobs_promotion.py",
             "artifact_path": planned["promotion"]["remote"],
             "env": "host",
             "service": "ai-workflow",
@@ -796,6 +811,7 @@ def test_orchestrate_packet_rejects_summary_promotion_env_drift(tmp_path: Path) 
         planned["coordinator_summary"]["remote"]: {
             "packet_id": "packet-807-lane-a",
             "result": "PASS",
+            "tool": "tools/ai/build_ai_packet_evidence_summary.py",
             "artifact_path": planned["coordinator_summary"]["remote"],
             "verify_artifact_path": planned["verify"]["remote"],
             "verification": {"result": "PASS", "profile": "strict-db-query"},
@@ -862,6 +878,7 @@ def test_orchestrate_packet_rejects_summary_promotion_record_timestamp_drift(tmp
         planned["promotion"]["remote"]: {
             "packet_id": "packet-808-lane-a",
             "result": "PASS",
+            "tool": "tools/ai/capture_apex_jobs_promotion.py",
             "artifact_path": planned["promotion"]["remote"],
             "env": "host",
             "service": "ai-workflow",
@@ -880,6 +897,7 @@ def test_orchestrate_packet_rejects_summary_promotion_record_timestamp_drift(tmp
         planned["coordinator_summary"]["remote"]: {
             "packet_id": "packet-808-lane-a",
             "result": "PASS",
+            "tool": "tools/ai/build_ai_packet_evidence_summary.py",
             "artifact_path": planned["coordinator_summary"]["remote"],
             "verify_artifact_path": planned["verify"]["remote"],
             "verification": {"result": "PASS", "profile": "strict-db-query"},
@@ -948,6 +966,7 @@ def test_orchestrate_packet_rejects_promotion_artifact_self_path_drift(tmp_path:
         planned["promotion"]["remote"]: {
             "packet_id": "packet-809-lane-a",
             "result": "PASS",
+            "tool": "tools/ai/capture_apex_jobs_promotion.py",
             "artifact_path": "/remote/wrong-promotion.json",
             "env": "host",
             "service": "ai-workflow",
@@ -966,6 +985,7 @@ def test_orchestrate_packet_rejects_promotion_artifact_self_path_drift(tmp_path:
         planned["coordinator_summary"]["remote"]: {
             "packet_id": "packet-809-lane-a",
             "result": "PASS",
+            "tool": "tools/ai/build_ai_packet_evidence_summary.py",
             "artifact_path": planned["coordinator_summary"]["remote"],
             "verify_artifact_path": planned["verify"]["remote"],
             "verification": {"result": "PASS", "profile": "strict-db-query"},
@@ -1011,6 +1031,94 @@ def test_orchestrate_packet_rejects_promotion_artifact_self_path_drift(tmp_path:
     raise AssertionError("expected orchestrate_packet to reject promotion artifact self path drift")
 
 
+def test_orchestrate_packet_rejects_promotion_artifact_tool_drift(tmp_path: Path) -> None:
+    helper = _load_helper_module()
+    expected_head = helper._git_head(helper._repo_root())
+    planned = helper.plan_artifact_paths(
+        packet_id="packet-811-lane-a",
+        host_root="/home/olares/code/apex/apex-power-ops-platform",
+        local_root=tmp_path,
+    )
+
+    remote_contents = {
+        planned["host_bootstrap"]["remote"]: {
+            "packet_id": "packet-811-lane-a",
+            "git": {"head": expected_head, "status_count": 0},
+            "minimal_mcp": {"status": "not-running"},
+        },
+        planned["verify"]["remote"]: {
+            "packet_id": "packet-811-lane-a",
+            "profile": "strict-db-query",
+            "result": "PASS",
+        },
+        planned["promotion"]["remote"]: {
+            "packet_id": "packet-811-lane-a",
+            "result": "PASS",
+            "tool": "tools/ai/not-the-promotion-tool.py",
+            "artifact_path": planned["promotion"]["remote"],
+            "env": "host",
+            "service": "ai-workflow",
+            "host_run": {
+                "run_id": "host-run-811",
+                "env": "host",
+                "service": "ai-workflow",
+                "packet_id": "packet-811-lane-a",
+                "status": "success",
+            },
+            "host_success_runs": [
+                {"run_id": "host-run-811", "env": "host", "service": "ai-workflow", "packet_id": "packet-811-lane-a", "status": "success"}
+            ],
+            "promotion": {"packet_id": "packet-811-lane-a", "promoted_at": "2026-05-13T00:11:01Z", "supporting_run_ids": ["host-run-811"]},
+        },
+        planned["coordinator_summary"]["remote"]: {
+            "packet_id": "packet-811-lane-a",
+            "result": "PASS",
+            "tool": "tools/ai/build_ai_packet_evidence_summary.py",
+            "artifact_path": planned["coordinator_summary"]["remote"],
+            "verify_artifact_path": planned["verify"]["remote"],
+            "verification": {"result": "PASS", "profile": "strict-db-query"},
+            "promotion_artifact_path": planned["promotion"]["remote"],
+            "promotion": {
+                "result": "PASS",
+                "env": "host",
+                "service": "ai-workflow",
+                "host_run": {"packet_id": "packet-811-lane-a", "run_id": "host-run-811", "env": "host", "service": "ai-workflow"},
+                "host_success_runs": [
+                    {"run_id": "host-run-811", "env": "host", "service": "ai-workflow", "packet_id": "packet-811-lane-a", "status": "success"}
+                ],
+                "promotion_record": {"packet_id": "packet-811-lane-a", "promoted_at": "2026-05-13T00:11:01Z", "supporting_run_ids": ["host-run-811"]},
+            },
+        },
+    }
+
+    def fake_runner(command: list[str], input_text: str | None = None) -> None:
+        if command[0] == "ssh":
+            return
+
+        remote_path = command[1].split(":", 1)[1]
+        local_path = Path(command[2])
+        local_path.parent.mkdir(parents=True, exist_ok=True)
+        local_path.write_text(json.dumps(remote_contents[remote_path]) + "\n", encoding="utf-8")
+
+    try:
+        helper.orchestrate_packet(
+            packet_id="packet-811-lane-a",
+            host="olares-mesh",
+            host_root="/home/olares/code/apex/apex-power-ops-platform",
+            profile="strict-db-query",
+            dsn_loader="/home/olares/apex-secrets/olares/ai-live-dsn.env",
+            local_root=tmp_path,
+            runner=fake_runner,
+        )
+    except ValueError as error:
+        assert str(error) == (
+            "promotion artifact tool mismatch: expected tools/ai/capture_apex_jobs_promotion.py, got tools/ai/not-the-promotion-tool.py"
+        )
+        return
+
+    raise AssertionError("expected orchestrate_packet to reject promotion artifact tool drift")
+
+
 def test_orchestrate_packet_rejects_coordinator_summary_self_path_drift(tmp_path: Path) -> None:
     helper = _load_helper_module()
     expected_head = helper._git_head(helper._repo_root())
@@ -1034,6 +1142,7 @@ def test_orchestrate_packet_rejects_coordinator_summary_self_path_drift(tmp_path
         planned["promotion"]["remote"]: {
             "packet_id": "packet-810-lane-a",
             "result": "PASS",
+            "tool": "tools/ai/capture_apex_jobs_promotion.py",
             "artifact_path": planned["promotion"]["remote"],
             "env": "host",
             "service": "ai-workflow",
@@ -1052,6 +1161,7 @@ def test_orchestrate_packet_rejects_coordinator_summary_self_path_drift(tmp_path
         planned["coordinator_summary"]["remote"]: {
             "packet_id": "packet-810-lane-a",
             "result": "PASS",
+            "tool": "tools/ai/build_ai_packet_evidence_summary.py",
             "artifact_path": "/remote/wrong-summary.json",
             "verify_artifact_path": planned["verify"]["remote"],
             "verification": {"result": "PASS", "profile": "strict-db-query"},
@@ -1095,3 +1205,91 @@ def test_orchestrate_packet_rejects_coordinator_summary_self_path_drift(tmp_path
         return
 
     raise AssertionError("expected orchestrate_packet to reject coordinator summary self path drift")
+
+
+def test_orchestrate_packet_rejects_coordinator_summary_tool_drift(tmp_path: Path) -> None:
+    helper = _load_helper_module()
+    expected_head = helper._git_head(helper._repo_root())
+    planned = helper.plan_artifact_paths(
+        packet_id="packet-812-lane-a",
+        host_root="/home/olares/code/apex/apex-power-ops-platform",
+        local_root=tmp_path,
+    )
+
+    remote_contents = {
+        planned["host_bootstrap"]["remote"]: {
+            "packet_id": "packet-812-lane-a",
+            "git": {"head": expected_head, "status_count": 0},
+            "minimal_mcp": {"status": "not-running"},
+        },
+        planned["verify"]["remote"]: {
+            "packet_id": "packet-812-lane-a",
+            "profile": "strict-db-query",
+            "result": "PASS",
+        },
+        planned["promotion"]["remote"]: {
+            "packet_id": "packet-812-lane-a",
+            "result": "PASS",
+            "tool": "tools/ai/capture_apex_jobs_promotion.py",
+            "artifact_path": planned["promotion"]["remote"],
+            "env": "host",
+            "service": "ai-workflow",
+            "host_run": {
+                "run_id": "host-run-812",
+                "env": "host",
+                "service": "ai-workflow",
+                "packet_id": "packet-812-lane-a",
+                "status": "success",
+            },
+            "host_success_runs": [
+                {"run_id": "host-run-812", "env": "host", "service": "ai-workflow", "packet_id": "packet-812-lane-a", "status": "success"}
+            ],
+            "promotion": {"packet_id": "packet-812-lane-a", "promoted_at": "2026-05-13T00:12:01Z", "supporting_run_ids": ["host-run-812"]},
+        },
+        planned["coordinator_summary"]["remote"]: {
+            "packet_id": "packet-812-lane-a",
+            "result": "PASS",
+            "tool": "tools/ai/not-the-summary-tool.py",
+            "artifact_path": planned["coordinator_summary"]["remote"],
+            "verify_artifact_path": planned["verify"]["remote"],
+            "verification": {"result": "PASS", "profile": "strict-db-query"},
+            "promotion_artifact_path": planned["promotion"]["remote"],
+            "promotion": {
+                "result": "PASS",
+                "env": "host",
+                "service": "ai-workflow",
+                "host_run": {"packet_id": "packet-812-lane-a", "run_id": "host-run-812", "env": "host", "service": "ai-workflow"},
+                "host_success_runs": [
+                    {"run_id": "host-run-812", "env": "host", "service": "ai-workflow", "packet_id": "packet-812-lane-a", "status": "success"}
+                ],
+                "promotion_record": {"packet_id": "packet-812-lane-a", "promoted_at": "2026-05-13T00:12:01Z", "supporting_run_ids": ["host-run-812"]},
+            },
+        },
+    }
+
+    def fake_runner(command: list[str], input_text: str | None = None) -> None:
+        if command[0] == "ssh":
+            return
+
+        remote_path = command[1].split(":", 1)[1]
+        local_path = Path(command[2])
+        local_path.parent.mkdir(parents=True, exist_ok=True)
+        local_path.write_text(json.dumps(remote_contents[remote_path]) + "\n", encoding="utf-8")
+
+    try:
+        helper.orchestrate_packet(
+            packet_id="packet-812-lane-a",
+            host="olares-mesh",
+            host_root="/home/olares/code/apex/apex-power-ops-platform",
+            profile="strict-db-query",
+            dsn_loader="/home/olares/apex-secrets/olares/ai-live-dsn.env",
+            local_root=tmp_path,
+            runner=fake_runner,
+        )
+    except ValueError as error:
+        assert str(error) == (
+            "coordinator summary artifact tool mismatch: expected tools/ai/build_ai_packet_evidence_summary.py, got tools/ai/not-the-summary-tool.py"
+        )
+        return
+
+    raise AssertionError("expected orchestrate_packet to reject coordinator summary tool drift")

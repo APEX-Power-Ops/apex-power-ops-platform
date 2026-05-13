@@ -12,6 +12,8 @@ from typing import Callable
 
 
 TOOL_PATH = "tools/ai/run_authoritative_host_packet.py"
+PROMOTION_TOOL_PATH = "tools/ai/capture_apex_jobs_promotion.py"
+COORDINATOR_SUMMARY_TOOL_PATH = "tools/ai/build_ai_packet_evidence_summary.py"
 DEFAULT_HOST = "olares-mesh"
 DEFAULT_HOST_ROOT = "/home/olares/code/apex/apex-power-ops-platform"
 DEFAULT_PROFILE = "strict-db-query"
@@ -242,6 +244,11 @@ def _validate_promotion_artifact(*, packet_id: str, artifact_path: Path) -> dict
             f"promotion artifact packet_id mismatch: expected {packet_id}, got {payload.get('packet_id')}"
         )
 
+    if payload.get("tool") != PROMOTION_TOOL_PATH:
+        raise ValueError(
+            f"promotion artifact tool mismatch: expected {PROMOTION_TOOL_PATH}, got {payload.get('tool')}"
+        )
+
     if payload.get("result") != "PASS":
         raise ValueError(f"promotion artifact result must be PASS, got {payload.get('result')}")
 
@@ -372,6 +379,12 @@ def _validate_coordinator_summary_artifact(
     if payload.get("packet_id") != packet_id:
         raise ValueError(
             f"coordinator summary artifact packet_id mismatch: expected {packet_id}, got {payload.get('packet_id')}"
+        )
+
+    if payload.get("tool") != COORDINATOR_SUMMARY_TOOL_PATH:
+        raise ValueError(
+            "coordinator summary artifact tool mismatch: "
+            f"expected {COORDINATOR_SUMMARY_TOOL_PATH}, got {payload.get('tool')}"
         )
 
     if payload.get("result") != "PASS":
