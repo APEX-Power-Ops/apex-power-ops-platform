@@ -104,6 +104,28 @@ A wider parallel-task lane should open only if all of the following are true:
 - rehearse sandbox-only promotion refusal separately from host-qualified promotion success
 - do not open a two-executor rehearsal until the single-lane host path is already coherent
 
+## Checklist I - First Two-Lane Rehearsal Evidence Pattern
+
+Use this exact coordinator-owned pattern for the first two-lane rehearsal packet after Packet 785.
+
+Write the block before edits start and keep it short:
+
+- name one packet id for the whole rehearsal and thread it through every lane note, validation result, and closeout record
+- name lane A and lane B with the exact files each lane may edit, plus one final write owner per file
+- name one lane-level validation step per lane and one coordinator-owned final validation step that checks the combined result
+- record one abort owner and one abort rule: if either lane needs a file outside its declared set or cannot complete its validation, both lanes stop and the packet records `ABORTED` rather than silently reassigning work
+- record one evidence tuple per lane: touched files, validation command, validation result, and whether the lane finished `PASS` or `ABORTED`
+- record one coordinator completion tuple for the packet: ownership remained disjoint, both lane validations ran, no abort rule fired, and the combined evidence is repo-visible
+
+For the first rehearsal, prefer a coordinator block that reads like this in packet or closeout evidence:
+
+- lane A ownership: declared files only, with final write ownership explicit
+- lane B ownership: declared files only, with final write ownership explicit
+- lane A validation: one narrow command or diagnostic scoped to lane A files
+- lane B validation: one narrow command or diagnostic scoped to lane B files
+- abort rule: stop both lanes on ownership drift, shared-file drift, or failed lane validation
+- coordinator closeout: publish one packet-level completion note only after both lane tuples are present
+
 ## Current Recommendation
 
 Use the current AI backbone as a controlled executor model: one executor by default, or two executors only when scaffold maintenance and trust hardening can stay disjoint.

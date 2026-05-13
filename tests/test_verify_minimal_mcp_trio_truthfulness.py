@@ -82,6 +82,8 @@ def fake_trio():
         promote_packet_error: str | None = None,
         start_run_error: str | None = None,
         end_run_error: str | None = None,
+        list_runs_error: str | None = None,
+        listed_runs: list[dict[str, object]] | None = None,
     ) -> tuple[str, str, str]:
         def fs_handler(params: dict[str, object]) -> dict[str, object]:
             tool_name = params.get("name")
@@ -129,12 +131,28 @@ def fake_trio():
                         "content": [{"text": end_run_error}],
                     }
                 return {"structuredContent": {"run_id": arguments.get("run_id"), "status": arguments.get("status")}}
+            if tool_name == "list_runs":
+                if list_runs_error is not None:
+                    return {
+                        "isError": True,
+                        "content": [{"text": list_runs_error}],
+                    }
+                runs = listed_runs
+                if runs is None:
+                    runs = [{
+                        "run_id": "run-123",
+                        "env": arguments.get("env"),
+                        "service": arguments.get("service"),
+                        "packet_id": arguments.get("packet_id"),
+                        "status": arguments.get("status"),
+                    }]
+                return {"structuredContent": {"runs": runs}}
             return {"isError": True, "content": [{"text": f"unexpected jobs tool {tool_name}"}]}
 
         for service_name, tool_names, handler in (
             ("fs", ["read_text_file"], fs_handler),
             ("db", ["query"], db_handler),
-            ("jobs", ["promote_packet", "start_run", "end_run"], jobs_handler),
+            ("jobs", ["promote_packet", "start_run", "end_run", "list_runs"], jobs_handler),
         ):
             server = ThreadingHTTPServer(("127.0.0.1", 0), _FakeMcpHandler)
             server.service_name = service_name
@@ -212,6 +230,7 @@ def _normalized_adhoc_packet_id_payload(payload: dict[str, object]) -> dict[str,
     normalized["packet_id"] = normalized_packet_id
     normalized["checks"]["jobs_promote_guard"]["packet_id"] = f"{normalized_packet_id}-promote-guard-<generated>"
     normalized["checks"]["jobs_start_run"]["run"]["packet_id"] = normalized_packet_id
+    normalized["checks"]["jobs_list_runs"]["result"]["runs"][0]["packet_id"] = normalized_packet_id
     return normalized
 
 
@@ -220,6 +239,21 @@ def _expected_jobs_promote_guard_check(packet_id: str = "verify-trio-test") -> d
         "status": "pass",
         "packet_id": f"{packet_id}-promote-guard-<generated>",
         "detail": "no successful env=host run is on record for that packet_id",
+    }
+
+
+def _expected_jobs_list_runs_check(packet_id: str = "verify-trio-test") -> dict[str, object]:
+    return {
+        "status": "pass",
+        "result": {
+            "runs": [{
+                "run_id": "run-123",
+                "env": "sandbox",
+                "service": "ai-workflow",
+                "packet_id": packet_id,
+                "status": "success",
+            }],
+        },
     }
 
 
@@ -268,10 +302,11 @@ def _expected_verify_pass_payload(
             "fs_read": {"status": "pass", "preview": README_PREVIEW},
             "db_tools": {"status": "pass", "tools": ["query"]},
             "db_query": {"status": "pass", "result": {"rowCount": 1, "rows": [{"ok": 1}]}},
-            "jobs_tools": {"status": "pass", "tools": ["promote_packet", "start_run", "end_run"]},
+            "jobs_tools": {"status": "pass", "tools": ["promote_packet", "start_run", "end_run", "list_runs"]},
             "jobs_promote_guard": _expected_jobs_promote_guard_check(packet_id),
             "jobs_start_run": {"status": "pass", "run": {"run_id": "run-123", "packet_id": packet_id}},
             "jobs_end_run": {"status": "pass", "run": {"run_id": "run-123", "status": "success"}},
+            "jobs_list_runs": _expected_jobs_list_runs_check(packet_id),
         },
         "result": "PASS",
     }
@@ -418,7 +453,7 @@ def test_verify_minimal_mcp_trio_fails_when_promote_packet_errors_unexpectedly(f
             "fs_read": {"status": "pass", "preview": README_PREVIEW},
             "db_tools": {"status": "pass", "tools": ["query"]},
             "db_query": {"status": "pass", "result": {"rowCount": 1, "rows": [{"ok": 1}]}},
-            "jobs_tools": {"status": "pass", "tools": ["promote_packet", "start_run", "end_run"]},
+            "jobs_tools": {"status": "pass", "tools": ["promote_packet", "start_run", "end_run", "list_runs"]},
         },
     )
 
@@ -440,7 +475,7 @@ def test_verify_minimal_mcp_trio_fails_when_start_run_errors_unexpectedly(fake_t
             "fs_read": {"status": "pass", "preview": README_PREVIEW},
             "db_tools": {"status": "pass", "tools": ["query"]},
             "db_query": {"status": "pass", "result": {"rowCount": 1, "rows": [{"ok": 1}]}},
-            "jobs_tools": {"status": "pass", "tools": ["promote_packet", "start_run", "end_run"]},
+            "jobs_tools": {"status": "pass", "tools": ["promote_packet", "start_run", "end_run", "list_runs"]},
             "jobs_promote_guard": _expected_jobs_promote_guard_check(),
         },
     )
@@ -463,9 +498,80 @@ def test_verify_minimal_mcp_trio_fails_when_end_run_errors_unexpectedly(fake_tri
             "fs_read": {"status": "pass", "preview": README_PREVIEW},
             "db_tools": {"status": "pass", "tools": ["query"]},
             "db_query": {"status": "pass", "result": {"rowCount": 1, "rows": [{"ok": 1}]}},
-            "jobs_tools": {"status": "pass", "tools": ["promote_packet", "start_run", "end_run"]},
+            "jobs_tools": {"status": "pass", "tools": ["promote_packet", "start_run", "end_run", "list_runs"]},
             "jobs_promote_guard": _expected_jobs_promote_guard_check(),
             "jobs_start_run": {"status": "pass", "run": {"run_id": "run-123", "packet_id": "verify-trio-test"}},
+        },
+    )
+
+
+def test_verify_minimal_mcp_trio_fails_when_list_runs_errors_unexpectedly(fake_trio) -> None:
+    fs_url, db_url, jobs_url = fake_trio(list_runs_error="temporary list_runs failure")
+
+    result = _run_helper(fs_url, db_url, jobs_url)
+
+    assert result.returncode == 1
+    payload = json.loads(result.stdout)
+    assert _normalized_promote_guard_payload(payload, "verify-trio-test") == _expected_verify_failure_payload(
+        fs_url,
+        db_url,
+        jobs_url,
+        error="temporary list_runs failure",
+        checks={
+            "fs_tools": {"status": "pass", "tools": ["read_text_file"]},
+            "fs_read": {"status": "pass", "preview": README_PREVIEW},
+            "db_tools": {"status": "pass", "tools": ["query"]},
+            "db_query": {"status": "pass", "result": {"rowCount": 1, "rows": [{"ok": 1}]}},
+            "jobs_tools": {"status": "pass", "tools": ["promote_packet", "start_run", "end_run", "list_runs"]},
+            "jobs_promote_guard": _expected_jobs_promote_guard_check(),
+            "jobs_start_run": {"status": "pass", "run": {"run_id": "run-123", "packet_id": "verify-trio-test"}},
+            "jobs_end_run": {"status": "pass", "run": {"run_id": "run-123", "status": "success"}},
+        },
+    )
+
+
+def test_verify_minimal_mcp_trio_fails_when_list_runs_omits_closed_run(fake_trio) -> None:
+    fs_url, db_url, jobs_url = fake_trio(
+        listed_runs=[{
+            "run_id": "different-run",
+            "env": "sandbox",
+            "service": "ai-workflow",
+            "packet_id": "verify-trio-test",
+            "status": "success",
+        }],
+    )
+
+    result = _run_helper(fs_url, db_url, jobs_url)
+
+    assert result.returncode == 1
+    payload = json.loads(result.stdout)
+    assert _normalized_promote_guard_payload(payload, "verify-trio-test") == _expected_verify_failure_payload(
+        fs_url,
+        db_url,
+        jobs_url,
+        error="list_runs did not return the just-completed sandbox run",
+        checks={
+            "fs_tools": {"status": "pass", "tools": ["read_text_file"]},
+            "fs_read": {"status": "pass", "preview": README_PREVIEW},
+            "db_tools": {"status": "pass", "tools": ["query"]},
+            "db_query": {"status": "pass", "result": {"rowCount": 1, "rows": [{"ok": 1}]}},
+            "jobs_tools": {"status": "pass", "tools": ["promote_packet", "start_run", "end_run", "list_runs"]},
+            "jobs_promote_guard": _expected_jobs_promote_guard_check(),
+            "jobs_start_run": {"status": "pass", "run": {"run_id": "run-123", "packet_id": "verify-trio-test"}},
+            "jobs_end_run": {"status": "pass", "run": {"run_id": "run-123", "status": "success"}},
+            "jobs_list_runs": {
+                "status": "fail",
+                "result": {
+                    "runs": [{
+                        "run_id": "different-run",
+                        "env": "sandbox",
+                        "service": "ai-workflow",
+                        "packet_id": "verify-trio-test",
+                        "status": "success",
+                    }],
+                },
+                "error": "list_runs did not return the just-completed sandbox run",
+            },
         },
     )
 

@@ -1,0 +1,22 @@
+{
+  "packet_id": "2026-05-13-olares-dev-residency-784c",
+  "repo_root": "/home/olares/code/apex/apex-power-ops-platform",
+  "checks": {
+    "db_connection": {
+      "status": "pass",
+      "source": "argument:db-url",
+      "mode": "mcp",
+      "endpoint": "http://127.0.0.1:8721/mcp"
+    },
+    "deferred_view_counts": {
+      "status": "pass",
+      "counts": {
+        "v_equipment_needs": 0,
+        "v_resource_allocation": 0
+      }
+    }
+  },
+  "result": "HOLD",
+  "reopen_candidates": [],
+  "decision": "Deferred Operations Visibility seams remain empty and should stay on hold."
+}

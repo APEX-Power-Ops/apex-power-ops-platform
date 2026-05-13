@@ -58,7 +58,7 @@ Before running any scenario below, confirm all of the following:
 | Host managed cold-start drill | proves the Olares mirror can start from rest and produce a coherent operator evidence bundle | 1. use the dedicated host managed cold-start drill runbook 2. run host bootstrap status 3. run host `run-minimal-mcp-trio.sh up` 4. run `verify` 5. run host hold-boundary against a governed live DSN when present 6. run `down` | bootstrap should be truthful before startup, then the managed trio should verify cleanly; `deferred_ops=UNAVAILABLE` remains truthful unless a bounded host query path has been admitted and works | host-bootstrap artifact, minimal-trio verifier artifact, deferred-ops artifact, packet/handoff evidence block |
 | Host adopted-runtime drill | proves the wrappers bind only to the correct already-running trio and reject foreign ownership or stale state | 1. start the trio once 2. rerun host bootstrap status 3. rerun host `status` and `verify` without a second startup 4. run hold-boundary if the readiness gate is satisfied | status should report `adopted-running` only when live readiness and ownership checks are both true; stale or foreign listeners must degrade or refuse adoption | host-bootstrap artifact, minimal status artifact, verifier artifact, captured refusal or degradation evidence when adoption is denied |
 | Promotion-gate rehearsal | proves the trust boundary is real rather than implied | 1. confirm sandbox-only validation exists 2. verify sandbox-only `promote_packet` refusal 3. capture one successful `env=host` run 4. rerun promotion on the same packet id | sandbox-only promotion must refuse; host-qualified success may promote only after matching successful host evidence exists | refusal detail, host run id, promotion record, packet closeout note tying packet id to evidence |
-| Two-executor rehearsal | proves coordination rules work without widening orchestration | 1. define one scaffold lane and one trust-hardening lane 2. declare final write ownership before edits 3. validate each lane independently 4. publish one coherent completion record | the slice should complete without file-ownership confusion, queue ambiguity, or widened runtime scope | packet or handoff ownership block, per-lane validation results, one combined completion record |
+| Two-executor rehearsal | proves coordination rules work without widening orchestration | 1. define one scaffold lane and one trust-hardening lane 2. declare final write ownership before edits 3. validate each lane independently 4. run one coordinator-owned final check across the declared files 5. publish one coherent completion record | the slice should complete without file-ownership confusion, queue ambiguity, or widened runtime scope; any ownership drift or failed lane validation should end as `ABORTED`, not partial success | packet or handoff ownership block, per-lane validation results, one combined coordinator validation result, one explicit abort record when the rehearsal stops |
 
 ## Recommended Execution Order
 
@@ -91,6 +91,14 @@ Treat the current boundary as real-world validated only when all of the followin
 3. promotion refusal and host-qualified promotion both behave exactly as documented,
 4. all emitted evidence is repo-visible and suitable for packet or handoff closeout,
 5. no scenario silently widened runtime or queue authority.
+
+For the first two-executor rehearsal after Packet 785, require one additional coordinator-owned evidence pattern:
+
+1. the packet names lane A and lane B ownership before edits start,
+2. each lane records its own touched files, validation command, and validation result under the same packet id,
+3. the coordinator records one final combined validation result scoped to the declared rehearsal files,
+4. any ownership drift, shared-file drift, or failed lane validation is recorded as `ABORTED` for the packet,
+5. only a packet with both lane tuples and the coordinator tuple may be treated as a completed rehearsal.
 
 ## Stop Conditions
 

@@ -123,6 +123,18 @@ def query_direct_connection(connection_string: str, sql: str) -> Any:
         return [dict(row._mapping) for row in rows]
 
 
+def normalize_query_rows(result: Any) -> list[dict[str, Any]]:
+    if isinstance(result, list):
+        return [dict(row) for row in result]
+
+    if isinstance(result, dict):
+        rows = result.get("rows")
+        if isinstance(rows, list):
+            return [dict(row) for row in rows]
+
+    raise RuntimeError("Deferred ops view check received an unexpected query result shape.")
+
+
 def write_output(path: Path | None, payload: dict[str, Any]) -> None:
     if path is None:
         return
@@ -220,7 +232,8 @@ def main() -> int:
                 )
                 return emit_summary(output_path, summary, 0)
 
-        counts = {row["view_name"]: int(row["row_count"]) for row in rows}
+        normalized_rows = normalize_query_rows(rows)
+        counts = {row["view_name"]: int(row["row_count"]) for row in normalized_rows}
         reopen = [name for name, row_count in counts.items() if row_count > 0]
 
         summary["checks"]["deferred_view_counts"] = {

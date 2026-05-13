@@ -194,6 +194,41 @@ def main() -> int:
             {"run_id": started["run_id"], "status": "success", "notes": "minimal-mcp-trio verification"},
         )
         summary["checks"]["jobs_end_run"] = {"status": "pass", "run": ended}
+        listed_runs = call_tool(
+            args.jobs_url,
+            "list_runs",
+            {
+                "env": "sandbox",
+                "service": "ai-workflow",
+                "packet_id": packet_id,
+                "status": "success",
+            },
+        )
+        if not isinstance(listed_runs, dict) or not isinstance(listed_runs.get("runs"), list):
+            summary["checks"]["jobs_list_runs"] = {
+                "status": "fail",
+                "error": "list_runs returned an unexpected result shape",
+            }
+            raise RuntimeError("list_runs returned an unexpected result shape")
+
+        matching_run = next(
+            (
+                run for run in listed_runs["runs"]
+                if run.get("run_id") == ended["run_id"]
+                and run.get("status") == "success"
+                and run.get("packet_id") == packet_id
+            ),
+            None,
+        )
+        if matching_run is None:
+            summary["checks"]["jobs_list_runs"] = {
+                "status": "fail",
+                "result": listed_runs,
+                "error": "list_runs did not return the just-completed sandbox run",
+            }
+            raise RuntimeError("list_runs did not return the just-completed sandbox run")
+
+        summary["checks"]["jobs_list_runs"] = {"status": "pass", "result": listed_runs}
 
         summary["result"] = "PASS"
         return emit_summary(output_path, summary, 0)

@@ -1,0 +1,14 @@
+{
+  "packet_id": "2026-05-13-olares-dev-residency-784",
+  "repo_root": "/home/olares/code/apex/apex-power-ops-platform",
+  "checks": {
+    "db_connection": {
+      "status": "pass",
+      "source": "argument:db-url",
+      "mode": "mcp",
+      "endpoint": "http://127.0.0.1:8721/mcp"
+    }
+  },
+  "result": "FAIL",
+  "error": "string indices must be integers, not 'str'"
+}
