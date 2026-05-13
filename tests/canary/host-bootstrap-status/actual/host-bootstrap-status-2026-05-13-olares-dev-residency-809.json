@@ -1,0 +1,51 @@
+{
+  "packet_id": "2026-05-13-olares-dev-residency-809",
+  "host_container_root": "/home/olares/code/apex",
+  "implementation_root": "/home/olares/code/apex/apex-power-ops-platform",
+  "git": {
+    "head": "8712401626de24120a0bdef5b3404232eb3d66c8",
+    "status_count": 0,
+    "old_clone": {
+      "path": "/home/olares/src/apex-power-ops-platform",
+      "exists": true,
+      "head": "2836a2622309b4e146ca24f23b5bf87312c0c857",
+      "status_count": 30
+    }
+  },
+  "toolchains": {
+    "preferred_python": {
+      "path": "/usr/bin/python3",
+      "version": "Python 3.12.3"
+    },
+    "python3": {
+      "path": "/usr/bin/python3",
+      "version": "Python 3.12.3"
+    },
+    "node": {
+      "path": "/usr/bin/node",
+      "version": "v18.19.1"
+    },
+    "pnpm_materialized": {
+      "path": "/home/olares/apex-data/toolchains/pnpm-10.0.0/node_modules/.bin/pnpm",
+      "version": "10.0.0"
+    },
+    "calc_engine_python": {
+      "path": "/home/olares/apex-data/toolchains/calc-engine-venv/bin/python",
+      "version": "Python 3.12.3"
+    }
+  },
+  "minimal_mcp": {
+    "status": "not-running"
+  },
+  "hold_boundary": {
+    "packet_id": "status-only",
+    "minimal_mcp": "NOT_RUNNING",
+    "minimal_mcp_detail": {
+      "status": "not-running"
+    },
+    "deferred_ops": "UNAVAILABLE",
+    "deferred_ops_decision": "minimal_mcp_not_running",
+    "outputs": {}
+  },
+  "output_artifact": "/home/olares/code/apex/apex-power-ops-platform/tests/canary/host-bootstrap-status/actual/host-bootstrap-status-2026-05-13-olares-dev-residency-809.json"
+}

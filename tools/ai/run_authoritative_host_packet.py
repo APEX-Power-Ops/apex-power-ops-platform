@@ -230,6 +230,13 @@ def _validate_verify_artifact(*, packet_id: str, artifact_path: Path, expected_p
 def _validate_promotion_artifact(*, packet_id: str, artifact_path: Path) -> dict[str, object]:
     payload = _read_json(artifact_path)
 
+    payload_artifact_path = payload.get("artifact_path")
+    if _path_name(payload_artifact_path) != artifact_path.name:
+        raise ValueError(
+            "promotion artifact self path mismatch: "
+            f"expected {artifact_path.name}, got {_path_name(payload_artifact_path)}"
+        )
+
     if payload.get("packet_id") != packet_id:
         raise ValueError(
             f"promotion artifact packet_id mismatch: expected {packet_id}, got {payload.get('packet_id')}"
@@ -354,6 +361,13 @@ def _validate_coordinator_summary_artifact(
     supporting_run_ids: list[str] | None,
 ) -> dict[str, object]:
     payload = _read_json(artifact_path)
+
+    payload_artifact_path = payload.get("artifact_path")
+    if _path_name(payload_artifact_path) != artifact_path.name:
+        raise ValueError(
+            "coordinator summary artifact self path mismatch: "
+            f"expected {artifact_path.name}, got {_path_name(payload_artifact_path)}"
+        )
 
     if payload.get("packet_id") != packet_id:
         raise ValueError(
