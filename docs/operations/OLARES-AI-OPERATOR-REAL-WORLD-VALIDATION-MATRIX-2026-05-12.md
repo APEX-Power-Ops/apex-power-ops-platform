@@ -117,17 +117,17 @@ Stop and reopen the boundary deliberately if any scenario would require:
 
 ## Current Recommendation
 
-The current frontier is no longer whether the helper works. Packet `2026-05-13-olares-dev-residency-802` is now the current helper-cross-artifact validation floor after running the current-head host chain through `tools/ai/run_authoritative_host_packet.py` and proving the helper rejects stale or incoherent coordinator-summary references instead of accepting individually valid copied artifacts as sufficient proof.
+The current frontier is no longer whether the helper works. Packet `2026-05-13-olares-dev-residency-803` is now the current helper-supporting-run validation floor after running the current-head host chain through `tools/ai/run_authoritative_host_packet.py` and proving the helper rejects promotion-support drift instead of accepting a copied host run id that is no longer preserved through `host_success_runs` and `supporting_run_ids`.
 
 Keep the next work bounded in three ways:
 
-1. reuse Packet `2026-05-13-olares-dev-residency-802` as the helper-cross-artifact floor, Packet `2026-05-13-olares-dev-residency-800` as the helper-parity floor, and Packet `2026-05-13-olares-dev-residency-798` as the underlying current-head authoritative-host runtime floor,
+1. reuse Packet `2026-05-13-olares-dev-residency-803` as the helper-supporting-run floor, Packet `2026-05-13-olares-dev-residency-802` as the helper-cross-artifact floor, Packet `2026-05-13-olares-dev-residency-800` as the helper-parity floor, and Packet `2026-05-13-olares-dev-residency-798` as the underlying current-head authoritative-host runtime floor,
 2. reuse Packet `2026-05-13-olares-dev-residency-797` summary-helper conventions so later packets still emit one repo-visible coordinator summary artifact instead of hand-copying verifier and promotion tuples into closeout text,
 3. prefer another disjoint coordinator-owned dual-lane packet rather than broadening controller scope.
 
-For the current-head host chain, prefer one repo-owned helper-driven execution surface rather than reconstructing the bounded host sequence by hand. `tools/ai/run_authoritative_host_packet.py` is the preferred execution surface for that chain, and its local `PASS` now requires imported host bootstrap evidence showing matching repo head, `status_count = 0`, and truthful preflight `not-running` state, plus a coordinator summary that still names the matching verifier and promotion artifacts and the same accepted host run id.
+For the current-head host chain, prefer one repo-owned helper-driven execution surface rather than reconstructing the bounded host sequence by hand. `tools/ai/run_authoritative_host_packet.py` is the preferred execution surface for that chain, and its local `PASS` now requires imported host bootstrap evidence showing matching repo head, `status_count = 0`, and truthful preflight `not-running` state, plus a coordinator summary that still names the matching verifier and promotion artifacts, the same accepted host run id, and the same supporting run ids that appear in the imported promotion artifact.
 
-Do not treat Packet 802, the helper-cross-artifact floor, the earlier helper-parity floor, or the helper-driven host chain as permission to widen the controller, runtime posture, admitted service family, queue ownership, or business-logic scope.
+Do not treat Packet 803, the helper-supporting-run floor, the earlier helper-cross-artifact and helper-parity floors, or the helper-driven host chain as permission to widen the controller, runtime posture, admitted service family, queue ownership, or business-logic scope.
 
 ## Packet 791 Alignment Note
 
