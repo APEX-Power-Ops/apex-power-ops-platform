@@ -32,7 +32,8 @@ The parallel hardening lane may author or tighten only these contract areas:
 2. checklist docs,
 3. validation notes,
 4. non-destructive tests or stubs around admitted behavior,
-5. packet and handoff evidence describing the hardening lane.
+5. packet and handoff evidence describing the hardening lane,
+6. bounded repo-owned helper surfaces that only drive the already admitted host chain and capture repo-visible evidence for the same packet id.
 
 ## Forbidden Output Types
 
@@ -48,13 +49,14 @@ The parallel hardening lane may author or tighten only these contract areas:
 2. specify the minimum evidence required before `promote_packet` may succeed and the helper or artifact path that records it,
 3. define the required provenance metadata fields and where they must surface,
 4. document MCP boundary rules for allowed roots, mounts, and read/write posture,
-5. define the canary proof bundle for the backbone lane.
+5. define the canary proof bundle for the backbone lane,
+6. author or tighten one helper-driven runtime/evidence capture lane that reuses the admitted host chain without adding a new controller, service, or queue owner.
 
 ## Coordination Rules
 
 1. treat the Codex scaffold pass as the owner of shell structure,
 2. treat the parallel hardening lane as the owner of trust and evidence contracts,
-3. prefer docs, tests, and checklist surfaces over shared implementation edits,
+3. prefer docs, tests, checklist surfaces, and bounded repo-owned helper wrappers over shared implementation edits,
 4. if a hardening change must touch a scaffolded file, record that coordination explicitly in packet or handoff evidence.
 
 ## Current Alignment Note
@@ -63,7 +65,13 @@ Packet `2026-05-13-olares-dev-residency-786` is the current completed rehearsal 
 
 Packet `2026-05-13-olares-dev-residency-791` is the current promotion-proof floor for the positive gate on the same hardened `apex-jobs` path.
 
-Use this brief for later disjoint parallel packets only when both of those floors remain preserved rather than reopened as open questions.
+Packet `2026-05-13-olares-dev-residency-797` is the current coordinator-summary helper convention for later dual-lane packets through `tools/ai/build_ai_packet_evidence_summary.py`.
+
+Packet `2026-05-13-olares-dev-residency-798` is the current-head authoritative-host floor for later dual-lane packets on the admitted host path.
+
+For current-head host-chain packets, prefer one bounded helper-driven execution lane over ad hoc command reconstruction. Once it is available, `tools/ai/run_authoritative_host_packet.py` is the preferred repo-owned execution surface for that chain.
+
+Use this brief for later disjoint parallel packets only when those floors remain preserved rather than reopened as open questions, and keep the helper lane bounded to runtime/evidence capture on the already admitted trio.
 
 ## Success Condition
 

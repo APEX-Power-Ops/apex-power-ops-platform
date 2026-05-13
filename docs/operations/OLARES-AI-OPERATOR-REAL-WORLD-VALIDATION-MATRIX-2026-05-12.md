@@ -117,11 +117,16 @@ Stop and reopen the boundary deliberately if any scenario would require:
 
 ## Current Recommendation
 
-The next truthful work is still bounded validation hardening, not new orchestration features.
+The next truthful work is the active coordinator-owned dual-lane Packet `2026-05-13-olares-dev-residency-799`, not a new generic hardening slice and not new orchestration features.
 
-If operator friction remains after the matrix above is green, the best follow-on is one bounded trust-hardening slice such as richer positive-gate provenance attachment around the same helper-backed host path or another coordinator-owned rehearsal-alignment improvement.
+That packet should stay bounded in two ways:
 
-Do not treat that possible follow-on as permission to widen the controller, runtime posture, or admitted service family.
+1. reuse Packet `2026-05-13-olares-dev-residency-798` as the current-head authoritative-host floor for bootstrap, strict verification, positive-gate promotion capture, coordinator summary composition, and truthful teardown,
+2. reuse Packet `2026-05-13-olares-dev-residency-797` summary-helper conventions so the packet emits one repo-visible coordinator summary artifact instead of hand-copying verifier and promotion tuples into closeout text.
+
+For the current-head host chain, prefer one repo-owned helper-driven execution surface rather than reconstructing the bounded host sequence by hand. Once it is available, `tools/ai/run_authoritative_host_packet.py` is the preferred execution surface for that chain.
+
+Do not treat Packet 799, the current-head host floor, or the planned helper as permission to widen the controller, runtime posture, admitted service family, queue ownership, or business-logic scope.
 
 ## Packet 791 Alignment Note
 

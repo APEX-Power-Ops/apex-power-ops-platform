@@ -1,0 +1,170 @@
+from __future__ import annotations
+
+import importlib.util
+import json
+import subprocess
+import sys
+from pathlib import Path
+
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+
+
+def _load_helper_module():
+    helper_path = REPO_ROOT / "tools" / "ai" / "run_authoritative_host_packet.py"
+    spec = importlib.util.spec_from_file_location("run_authoritative_host_packet", helper_path)
+    assert spec is not None
+    assert spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_build_remote_script_runs_host_chain_in_order() -> None:
+    helper = _load_helper_module()
+
+    script = helper.build_remote_script(
+        packet_id="packet-799-lane-a",
+        host_root="/home/olares/code/apex/apex-power-ops-platform",
+        profile="strict-db-query",
+        dsn_loader="/home/olares/apex-secrets/olares/ai-live-dsn.env",
+    )
+
+    expected_steps = [
+        "bash tools/ai/run-minimal-mcp-trio.sh down packet-799-lane-a >/dev/null || true",
+        "bash tools/ai/run-olares-host-bootstrap-status.sh packet-799-lane-a",
+        "source /home/olares/apex-secrets/olares/ai-live-dsn.env",
+        "bash tools/ai/run-minimal-mcp-trio.sh up packet-799-lane-a",
+        "bash tools/ai/run-minimal-mcp-trio.sh verify packet-799-lane-a strict-db-query",
+        '"${repo_python}" tools/ai/capture_apex_jobs_promotion.py --packet-id packet-799-lane-a --output /home/olares/code/apex/apex-power-ops-platform/tests/canary/mcp-contract/actual/apex-jobs-promotion-packet-799-lane-a.json',
+        '"${repo_python}" tools/ai/build_ai_packet_evidence_summary.py --packet-id packet-799-lane-a --verify-artifact /home/olares/code/apex/apex-power-ops-platform/tests/canary/mcp-contract/actual/verify-minimal-mcp-trio-packet-799-lane-a.json --promotion-artifact /home/olares/code/apex/apex-power-ops-platform/tests/canary/mcp-contract/actual/apex-jobs-promotion-packet-799-lane-a.json --output /home/olares/code/apex/apex-power-ops-platform/tests/canary/mcp-contract/actual/ai-packet-evidence-summary-packet-799-lane-a.json',
+        "bash tools/ai/run-minimal-mcp-trio.sh down packet-799-lane-a",
+        'final_status="$(bash tools/ai/run-minimal-mcp-trio.sh status packet-799-lane-a)"',
+    ]
+
+    positions: list[int] = []
+    search_from = 0
+    for step in expected_steps:
+        position = script.index(step, search_from)
+        positions.append(position)
+        search_from = position + 1
+
+    assert positions == sorted(positions)
+    assert 'FINAL_STATUS_JSON="${final_status}" "${repo_python}" - <<\'"PY"' not in script
+    assert 'FINAL_STATUS_JSON="${final_status}" "${repo_python}" - <<\'PY\'' in script
+
+
+def test_plan_artifact_paths_matches_packet_conventions(tmp_path: Path) -> None:
+    helper = _load_helper_module()
+
+    paths = helper.plan_artifact_paths(
+        packet_id="packet-799-lane-a",
+        host_root="/home/olares/code/apex/apex-power-ops-platform",
+        local_root=tmp_path,
+    )
+
+    assert paths["host_bootstrap"] == {
+        "remote": "/home/olares/code/apex/apex-power-ops-platform/tests/canary/host-bootstrap-status/actual/host-bootstrap-status-packet-799-lane-a.json",
+        "local": tmp_path / "tests" / "canary" / "host-bootstrap-status" / "actual" / "host-bootstrap-status-packet-799-lane-a.json",
+    }
+    assert paths["verify"] == {
+        "remote": "/home/olares/code/apex/apex-power-ops-platform/tests/canary/mcp-contract/actual/verify-minimal-mcp-trio-packet-799-lane-a.json",
+        "local": tmp_path / "tests" / "canary" / "mcp-contract" / "actual" / "verify-minimal-mcp-trio-packet-799-lane-a.json",
+    }
+    assert paths["promotion"] == {
+        "remote": "/home/olares/code/apex/apex-power-ops-platform/tests/canary/mcp-contract/actual/apex-jobs-promotion-packet-799-lane-a.json",
+        "local": tmp_path / "tests" / "canary" / "mcp-contract" / "actual" / "apex-jobs-promotion-packet-799-lane-a.json",
+    }
+    assert paths["coordinator_summary"] == {
+        "remote": "/home/olares/code/apex/apex-power-ops-platform/tests/canary/mcp-contract/actual/ai-packet-evidence-summary-packet-799-lane-a.json",
+        "local": tmp_path / "tests" / "canary" / "mcp-contract" / "actual" / "ai-packet-evidence-summary-packet-799-lane-a.json",
+    }
+
+
+def test_orchestrate_packet_uses_stdin_fed_ssh_and_four_scp_imports(tmp_path: Path) -> None:
+    helper = _load_helper_module()
+    planned = helper.plan_artifact_paths(
+        packet_id="packet-799-lane-a",
+        host_root="/home/olares/code/apex/apex-power-ops-platform",
+        local_root=tmp_path,
+    )
+    remote_contents = {
+        planned["host_bootstrap"]["remote"]: {"artifact": "host_bootstrap", "packet_id": "packet-799-lane-a"},
+        planned["verify"]["remote"]: {"artifact": "verify", "packet_id": "packet-799-lane-a"},
+        planned["promotion"]["remote"]: {"artifact": "promotion", "packet_id": "packet-799-lane-a"},
+        planned["coordinator_summary"]["remote"]: {"artifact": "coordinator_summary", "packet_id": "packet-799-lane-a"},
+    }
+    calls: list[tuple[list[str], str | None]] = []
+
+    def fake_runner(command: list[str], input_text: str | None = None) -> None:
+        calls.append((command, input_text))
+        if command == ["ssh", "olares-mesh", "bash", "-s"]:
+            assert input_text is not None
+            assert "run-olares-host-bootstrap-status.sh packet-799-lane-a" in input_text
+            return
+
+        assert command[0] == "scp"
+        assert input_text is None
+        remote_spec = command[1]
+        local_path = Path(command[2])
+        assert remote_spec.startswith("olares-mesh:")
+        remote_path = remote_spec.split(":", 1)[1]
+        local_path.parent.mkdir(parents=True, exist_ok=True)
+        local_path.write_text(json.dumps(remote_contents[remote_path]) + "\n", encoding="utf-8")
+
+    summary = helper.orchestrate_packet(
+        packet_id="packet-799-lane-a",
+        host="olares-mesh",
+        host_root="/home/olares/code/apex/apex-power-ops-platform",
+        profile="strict-db-query",
+        dsn_loader="/home/olares/apex-secrets/olares/ai-live-dsn.env",
+        local_root=tmp_path,
+        runner=fake_runner,
+    )
+
+    ssh_calls = [call for call in calls if call[0][0] == "ssh"]
+    scp_calls = [call for call in calls if call[0][0] == "scp"]
+
+    assert len(ssh_calls) == 1
+    assert ssh_calls[0][0] == ["ssh", "olares-mesh", "bash", "-s"]
+    assert ssh_calls[0][1] is not None
+
+    assert len(scp_calls) == 4
+    assert [call[0][1].split(":", 1)[1] for call in scp_calls] == [
+        planned[name]["remote"] for name in helper.ARTIFACT_ORDER
+    ]
+
+    assert summary["packet_id"] == "packet-799-lane-a"
+    assert summary["tool"] == "tools/ai/run_authoritative_host_packet.py"
+    assert summary["host"] == "olares-mesh"
+    assert summary["profile"] == "strict-db-query"
+    assert summary["result"] == "PASS"
+    assert summary["artifact_paths"] == {
+        name: str(planned[name]["local"]).replace("\\", "/")
+        for name in helper.ARTIFACT_ORDER
+    }
+
+    for name in helper.ARTIFACT_ORDER:
+        local_path = Path(planned[name]["local"])
+        assert local_path.exists()
+        assert json.loads(local_path.read_text(encoding="utf-8")) == remote_contents[planned[name]["remote"]]
+
+
+def test_run_subprocess_sends_remote_script_as_bytes(monkeypatch) -> None:
+    helper = _load_helper_module()
+    captured: dict[str, object] = {}
+
+    def fake_run(*args, **kwargs):
+        captured["args"] = args
+        captured["kwargs"] = kwargs
+        return subprocess.CompletedProcess(args[0], 0)
+
+    monkeypatch.setattr(helper.subprocess, "run", fake_run)
+
+    helper._run_subprocess(["ssh", "olares-mesh", "bash", "-s"], "set -euo pipefail\n")
+
+    assert captured["args"] == (["ssh", "olares-mesh", "bash", "-s"],)
+    assert captured["kwargs"]["check"] is True
+    assert captured["kwargs"]["input"] == b"set -euo pipefail\n"
+    assert "text" not in captured["kwargs"]
