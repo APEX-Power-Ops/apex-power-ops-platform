@@ -1,8 +1,8 @@
 # Olares AI Validation Profiles
 
 Date: 2026-05-13
-Status: Active bounded verifier hardening
-Scope: named validation-profile surface for the admitted minimal MCP trio verifier
+Status: Active bounded verifier and wrapper hardening
+Scope: named validation-profile surface for the admitted minimal MCP trio verifier and its operator wrappers
 
 ## Purpose
 
@@ -30,6 +30,13 @@ Example command:
 python tools/ai/verify_minimal_mcp_trio.py --packet-id <packet-id>
 ```
 
+Wrapper examples:
+
+```text
+pwsh -NoProfile -File tools/ai/run-minimal-mcp-trio.ps1 -Action verify -PacketId <packet-id>
+bash tools/ai/run-minimal-mcp-trio.sh verify <packet-id>
+```
+
 ### `strict-db-query`
 
 `strict-db-query` keeps the same admitted MCP surface but raises the verifier floor for the bounded database proof.
@@ -46,6 +53,13 @@ Example command:
 python tools/ai/verify_minimal_mcp_trio.py --packet-id <packet-id> --profile strict-db-query
 ```
 
+Wrapper examples:
+
+```text
+pwsh -NoProfile -File tools/ai/run-minimal-mcp-trio.ps1 -Action verify -PacketId <packet-id> -ValidationProfile strict-db-query
+bash tools/ai/run-minimal-mcp-trio.sh verify <packet-id> strict-db-query
+```
+
 ## Backward Compatibility
 
 The legacy `--require-db-query` flag remains supported.
@@ -53,7 +67,7 @@ The legacy `--require-db-query` flag remains supported.
 Current compatibility rule:
 
 1. `--require-db-query` maps to the `strict-db-query` behavior,
-2. explicit `--profile` naming is preferred in new packet, handoff, and evidence examples,
+2. explicit `--profile`, `-ValidationProfile`, or the Bash profile positional argument is preferred in new packet, handoff, and evidence examples,
 3. the emitted verifier payload is the canonical source of which profile actually ran.
 
 ## Evidence Expectations
@@ -62,7 +76,8 @@ When a packet claims verifier proof through this helper:
 
 1. the emitted JSON should keep the `profile` field alongside `packet_id`, `command`, and `checks`,
 2. packet or handoff closeout should name `strict-db-query` explicitly when it is the validation floor,
-3. `baseline` should remain the truthful default unless the stricter profile was intentionally selected.
+3. `baseline` should remain the truthful default unless the stricter profile was intentionally selected,
+4. Packet `2026-05-13-olares-dev-residency-789` is the first repo-visible strict-profile artifact captured through a wrapper surface at `tests/canary/mcp-contract/actual/verify-minimal-mcp-trio-2026-05-13-olares-dev-residency-789.json`.
 
 ## Boundaries Preserved
 

@@ -263,6 +263,12 @@ Packet 788 proves the next named validation-profile lane with:
 2. a verifier payload that now emits the selected `profile`,
 3. evidence-routing guidance that captures verifier strictness without widening the admitted boundary.
 
+Packet 789 proves the next wrapper-routing and strict-artifact lane with:
+
+1. named validation profiles are now routable through the PowerShell and Bash minimal-trio verify wrappers,
+2. the first repo-visible `strict-db-query` verifier artifact is captured at `tests/canary/mcp-contract/actual/verify-minimal-mcp-trio-2026-05-13-olares-dev-residency-789.json`,
+3. the admitted boundary, runtime scope, and queue ownership remain unchanged.
+
 ## Non-Goals
 
 This evidence bundle does not prove:

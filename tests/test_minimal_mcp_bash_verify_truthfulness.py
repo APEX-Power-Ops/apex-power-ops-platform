@@ -16,7 +16,7 @@ STATE_DIR = REPO_ROOT / ".tmp" / "ai-workflow"
 STATE_FILE = STATE_DIR / "minimal-mcp-trio.env"
 MCP_CONTRACT_ACTUAL_DIR = REPO_ROOT / "tests" / "canary" / "mcp-contract" / "actual"
 README_PREVIEW = (REPO_ROOT / "README.md").read_bytes()[:120].decode("utf-8")
-_BASH_FAKE_TOOLS = ["read_text_file", "query", "promote_packet", "start_run", "end_run"]
+_BASH_FAKE_TOOLS = ["read_text_file", "query", "promote_packet", "start_run", "end_run", "list_runs"]
 
 
 def _run_json(command: list[str]) -> dict[str, object]:
@@ -99,6 +99,8 @@ def _expected_verify_pass_payload(
     *,
     packet_id: str,
     output_path: Path,
+    profile: str = "baseline",
+    command_profile: str | None = None,
     command_endpoints: tuple[str, str, str] | None = None,
 ) -> dict[str, object]:
     bash_output_path = f"{_bash_repo_root()}/tests/canary/mcp-contract/actual/{output_path.name}"
@@ -121,8 +123,11 @@ def _expected_verify_pass_payload(
                 command_endpoints[2],
             ]
         )
+    if command_profile is not None:
+        command.extend(["--profile", command_profile])
     return {
         "packet_id": packet_id,
+        "profile": profile,
         "command": _expected_verify_command(command),
         "endpoints": {"fs": fs_url, "db": db_url, "jobs": jobs_url},
         "checks": {
@@ -134,6 +139,18 @@ def _expected_verify_pass_payload(
             "jobs_promote_guard": _expected_jobs_promote_guard_check(packet_id),
             "jobs_start_run": {"status": "pass", "run": {"run_id": "run-123", "packet_id": packet_id}},
             "jobs_end_run": {"status": "pass", "run": {"run_id": "run-123", "status": "success"}},
+            "jobs_list_runs": {
+                "status": "pass",
+                "result": {
+                    "runs": [{
+                        "run_id": "run-123",
+                        "env": "sandbox",
+                        "service": "ai-workflow",
+                        "packet_id": packet_id,
+                        "status": "success",
+                    }],
+                },
+            },
         },
         "result": "PASS",
     }
@@ -237,6 +254,7 @@ class Handler(BaseHTTPRequestHandler):
                     {{'name': 'promote_packet'}},
                     {{'name': 'start_run'}},
                     {{'name': 'end_run'}},
+                    {{'name': 'list_runs'}},
                 ]
             }}
         elif method == 'tools/call':
@@ -256,6 +274,14 @@ class Handler(BaseHTTPRequestHandler):
                 result = {{'structuredContent': {{'run_id': 'run-123', 'packet_id': arguments.get('packet_id')}}}}
             elif tool_name == 'end_run':
                 result = {{'structuredContent': {{'run_id': arguments.get('run_id'), 'status': arguments.get('status')}}}}
+            elif tool_name == 'list_runs':
+                result = {{'structuredContent': {{'runs': [{{
+                    'run_id': 'run-123',
+                    'env': 'sandbox',
+                    'service': 'ai-workflow',
+                    'packet_id': arguments.get('packet_id'),
+                    'status': 'success',
+                }}]}}}}
             else:
                 result = {{'isError': True, 'content': [{{'text': f'unexpected tool {{tool_name}}'}}]}}
         else:
@@ -438,6 +464,31 @@ def test_bash_verify_prefers_state_endpoints_over_inherited_env_urls(fake_trio) 
         packet_id=packet_id,
         output_path=output_path,
         command_endpoints=(fs_url, db_url, jobs_url),
+    )
+    assert output_path.exists()
+    assert json.loads(output_path.read_text(encoding="utf-8")) == payload
+
+    output_path.unlink()
+
+
+@pytest.mark.skipif(shutil.which("bash") is None, reason="bash is required for Bash wrapper tests")
+def test_bash_verify_routes_named_validation_profile(fake_trio) -> None:
+    packet_id = "bash-minimal-mcp-verify-strict-db-query"
+    fake_trio()
+    fs_url, db_url, jobs_url = _read_env_urls()
+    _write_state(packet_id)
+    output_path = _artifact_path(packet_id)
+
+    payload = _run_json(["bash", "tools/ai/run-minimal-mcp-trio.sh", "verify", packet_id, "strict-db-query"])
+
+    assert _normalized_promote_guard_payload(payload, packet_id) == _expected_verify_pass_payload(
+        fs_url,
+        db_url,
+        jobs_url,
+        packet_id=packet_id,
+        output_path=output_path,
+        profile="strict-db-query",
+        command_profile="strict-db-query",
     )
     assert output_path.exists()
     assert json.loads(output_path.read_text(encoding="utf-8")) == payload

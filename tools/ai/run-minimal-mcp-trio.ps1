@@ -1,7 +1,9 @@
 param(
   [ValidateSet('up', 'down', 'status', 'verify')]
   [string]$Action = 'status',
-  [string]$PacketId
+  [string]$PacketId,
+  [ValidateSet('baseline', 'strict-db-query')]
+  [string]$ValidationProfile
 )
 
 Set-StrictMode -Version Latest
@@ -143,6 +145,10 @@ function Invoke-Verify {
       '--db-url', [string]$stateEndpoints.db,
       '--jobs-url', [string]$stateEndpoints.jobs
     )
+  }
+
+  if (-not [string]::IsNullOrWhiteSpace($ValidationProfile)) {
+    $verifyArgs += @('--profile', $ValidationProfile)
   }
 
   & $repoPython @verifyArgs

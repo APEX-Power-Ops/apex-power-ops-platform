@@ -9,12 +9,23 @@ repo_python="$(get_apex_preferred_python)"
 
 action="${1:-status}"
 packet_id="${2:-}"
+validation_profile="${3:-}"
 packet_id_was_provided=true
 if [[ -z "${packet_id}" ]]; then
   packet_id_was_provided=false
   packet_id="$(get_apex_default_packet_id minimal-mcp-trio)"
 fi
 require_apex_packet_id "${packet_id}"
+if [[ -n "${validation_profile}" ]]; then
+  case "${validation_profile}" in
+    baseline|strict-db-query)
+      ;;
+    *)
+      printf 'Unknown validation profile: %s\n' "${validation_profile}" >&2
+      exit 1
+      ;;
+  esac
+fi
 fs_port="${APEX_DEV_MCP_FS_PORT:-8810}"
 db_port="${APEX_DEV_MCP_DB_PORT:-8811}"
 jobs_port="${APEX_DEV_MCP_JOBS_PORT:-8812}"
@@ -335,6 +346,10 @@ EOF
         --db-url "${DB_ENDPOINT}"
         --jobs-url "${JOBS_ENDPOINT}"
       )
+    fi
+
+    if [[ -n "${validation_profile}" ]]; then
+      verify_args+=(--profile "${validation_profile}")
     fi
 
     "${repo_python}" "${verify_args[@]}"
