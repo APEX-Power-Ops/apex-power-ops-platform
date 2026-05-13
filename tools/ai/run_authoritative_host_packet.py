@@ -12,6 +12,7 @@ from typing import Callable
 
 
 TOOL_PATH = "tools/ai/run_authoritative_host_packet.py"
+VERIFY_TOOL_PATH = "tools/ai/verify_minimal_mcp_trio.py"
 PROMOTION_TOOL_PATH = "tools/ai/capture_apex_jobs_promotion.py"
 COORDINATOR_SUMMARY_TOOL_PATH = "tools/ai/build_ai_packet_evidence_summary.py"
 DEFAULT_HOST = "olares-mesh"
@@ -198,7 +199,7 @@ def _validate_command_surface(
     expected_packet_id: str,
     expected_output_name: str,
     expected_input_names: dict[str, str] | None = None,
-) -> None:
+) -> list[str]:
     argv = _parse_command(command, artifact_label)
     actual_tool_path = argv[1]
     if actual_tool_path != expected_tool_path:
@@ -224,6 +225,8 @@ def _validate_command_surface(
             raise ValueError(
                 f"{artifact_label} command {flag} mismatch: expected {expected_name}, got {actual_name}"
             )
+
+    return argv
 
 
 def _validate_host_bootstrap_artifact(
@@ -284,6 +287,20 @@ def _validate_verify_artifact(*, packet_id: str, artifact_path: Path, expected_p
     profile = payload.get("profile")
     if profile != expected_profile:
         raise ValueError(f"verify artifact profile mismatch: expected {expected_profile}, got {profile}")
+
+    argv = _validate_command_surface(
+        artifact_label="verify artifact",
+        command=payload.get("command"),
+        expected_tool_path=VERIFY_TOOL_PATH,
+        expected_packet_id=packet_id,
+        expected_output_name=artifact_path.name,
+    )
+
+    command_profile = _command_flag_value(argv, "--profile", "verify artifact")
+    if command_profile != expected_profile:
+        raise ValueError(
+            f"verify artifact command profile mismatch: expected {expected_profile}, got {command_profile}"
+        )
 
     return {
         "verify_result": payload.get("result"),

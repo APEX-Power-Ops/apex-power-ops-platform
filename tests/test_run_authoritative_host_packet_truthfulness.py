@@ -28,6 +28,15 @@ def _promotion_command(packet_id: str, output_path: str) -> str:
     )
 
 
+def _verify_command(packet_id: str, output_path: str, profile: str = "strict-db-query") -> str:
+    return (
+        "/usr/bin/python3 tools/ai/verify_minimal_mcp_trio.py "
+        f"--packet-id {packet_id} --output {output_path} "
+        "--fs-url http://127.0.0.1:8810/mcp --db-url http://127.0.0.1:8811/mcp "
+        f"--jobs-url http://127.0.0.1:8812/mcp --profile {profile}"
+    )
+
+
 def _coordinator_summary_command(
     packet_id: str,
     verify_artifact_path: str,
@@ -120,6 +129,7 @@ def test_orchestrate_packet_uses_stdin_fed_ssh_and_four_scp_imports(tmp_path: Pa
             "packet_id": "packet-799-lane-a",
             "profile": "strict-db-query",
             "result": "PASS",
+            "command": _verify_command("packet-799-lane-a", planned["verify"]["remote"]),
         },
         planned["promotion"]["remote"]: {
             "packet_id": "packet-799-lane-a",
@@ -320,6 +330,7 @@ def test_orchestrate_packet_rejects_verify_packet_mismatch(tmp_path: Path) -> No
             "packet_id": "packet-801-other",
             "profile": "strict-db-query",
             "result": "PASS",
+            "command": _verify_command("packet-801-other", planned["verify"]["remote"]),
         },
         planned["promotion"]["remote"]: {
             "packet_id": "packet-801-lane-a",
@@ -388,6 +399,102 @@ def test_orchestrate_packet_rejects_verify_packet_mismatch(tmp_path: Path) -> No
     raise AssertionError("expected orchestrate_packet to reject a mismatched verify artifact")
 
 
+def test_orchestrate_packet_rejects_verify_command_drift(tmp_path: Path) -> None:
+    helper = _load_helper_module()
+    expected_head = helper._git_head(helper._repo_root())
+    planned = helper.plan_artifact_paths(
+        packet_id="packet-815-lane-a",
+        host_root="/home/olares/code/apex/apex-power-ops-platform",
+        local_root=tmp_path,
+    )
+
+    remote_contents = {
+        planned["host_bootstrap"]["remote"]: {
+            "packet_id": "packet-815-lane-a",
+            "git": {"head": expected_head, "status_count": 0},
+            "minimal_mcp": {"status": "not-running"},
+        },
+        planned["verify"]["remote"]: {
+            "packet_id": "packet-815-lane-a",
+            "profile": "strict-db-query",
+            "result": "PASS",
+            "command": _verify_command("wrong-packet", planned["verify"]["remote"]),
+        },
+        planned["promotion"]["remote"]: {
+            "packet_id": "packet-815-lane-a",
+            "result": "PASS",
+            "tool": "tools/ai/capture_apex_jobs_promotion.py",
+            "command": _promotion_command("packet-815-lane-a", planned["promotion"]["remote"]),
+            "artifact_path": planned["promotion"]["remote"],
+            "env": "host",
+            "service": "ai-workflow",
+            "host_run": {
+                "run_id": "host-run-815",
+                "env": "host",
+                "service": "ai-workflow",
+                "packet_id": "packet-815-lane-a",
+                "status": "success",
+            },
+            "host_success_runs": [
+                {"run_id": "host-run-815", "env": "host", "service": "ai-workflow", "packet_id": "packet-815-lane-a", "status": "success"}
+            ],
+            "promotion": {"packet_id": "packet-815-lane-a", "promoted_at": "2026-05-13T00:15:01Z", "supporting_run_ids": ["host-run-815"]},
+        },
+        planned["coordinator_summary"]["remote"]: {
+            "packet_id": "packet-815-lane-a",
+            "result": "PASS",
+            "tool": "tools/ai/build_ai_packet_evidence_summary.py",
+            "command": _coordinator_summary_command(
+                "packet-815-lane-a",
+                planned["verify"]["remote"],
+                planned["promotion"]["remote"],
+                planned["coordinator_summary"]["remote"],
+            ),
+            "artifact_path": planned["coordinator_summary"]["remote"],
+            "verify_artifact_path": planned["verify"]["remote"],
+            "verification": {"result": "PASS", "profile": "strict-db-query"},
+            "promotion_artifact_path": planned["promotion"]["remote"],
+            "promotion": {
+                "result": "PASS",
+                "env": "host",
+                "service": "ai-workflow",
+                "host_run": {"packet_id": "packet-815-lane-a", "run_id": "host-run-815", "env": "host", "service": "ai-workflow"},
+                "host_success_runs": [
+                    {"run_id": "host-run-815", "env": "host", "service": "ai-workflow", "packet_id": "packet-815-lane-a", "status": "success"}
+                ],
+                "promotion_record": {"packet_id": "packet-815-lane-a", "promoted_at": "2026-05-13T00:15:01Z", "supporting_run_ids": ["host-run-815"]},
+            },
+        },
+    }
+
+    def fake_runner(command: list[str], input_text: str | None = None) -> None:
+        if command[0] == "ssh":
+            return
+
+        remote_path = command[1].split(":", 1)[1]
+        local_path = Path(command[2])
+        local_path.parent.mkdir(parents=True, exist_ok=True)
+        local_path.write_text(json.dumps(remote_contents[remote_path]) + "\n", encoding="utf-8")
+
+    try:
+        helper.orchestrate_packet(
+            packet_id="packet-815-lane-a",
+            host="olares-mesh",
+            host_root="/home/olares/code/apex/apex-power-ops-platform",
+            profile="strict-db-query",
+            dsn_loader="/home/olares/apex-secrets/olares/ai-live-dsn.env",
+            local_root=tmp_path,
+            runner=fake_runner,
+        )
+    except ValueError as error:
+        assert str(error) == (
+            "verify artifact command packet_id mismatch: expected packet-815-lane-a, got wrong-packet"
+        )
+        return
+
+    raise AssertionError("expected orchestrate_packet to reject verify artifact command drift")
+
+
 def test_orchestrate_packet_rejects_summary_verify_artifact_path_mismatch(tmp_path: Path) -> None:
     helper = _load_helper_module()
     expected_head = helper._git_head(helper._repo_root())
@@ -407,6 +514,7 @@ def test_orchestrate_packet_rejects_summary_verify_artifact_path_mismatch(tmp_pa
             "packet_id": "packet-802-lane-a",
             "profile": "strict-db-query",
             "result": "PASS",
+            "command": _verify_command("packet-802-lane-a", planned["verify"]["remote"]),
         },
         planned["promotion"]["remote"]: {
             "packet_id": "packet-802-lane-a",
@@ -497,6 +605,7 @@ def test_orchestrate_packet_rejects_promotion_supporting_run_drift(tmp_path: Pat
             "packet_id": "packet-803-lane-a",
             "profile": "strict-db-query",
             "result": "PASS",
+            "command": _verify_command("packet-803-lane-a", planned["verify"]["remote"]),
         },
         planned["promotion"]["remote"]: {
             "packet_id": "packet-803-lane-a",
@@ -584,6 +693,7 @@ def test_orchestrate_packet_rejects_summary_host_success_run_drift(tmp_path: Pat
             "packet_id": "packet-804-lane-a",
             "profile": "strict-db-query",
             "result": "PASS",
+            "command": _verify_command("packet-804-lane-a", planned["verify"]["remote"]),
         },
         planned["promotion"]["remote"]: {
             "packet_id": "packet-804-lane-a",
@@ -675,6 +785,7 @@ def test_orchestrate_packet_rejects_unbacked_promotion_supporting_run(tmp_path: 
             "packet_id": "packet-805-lane-a",
             "profile": "strict-db-query",
             "result": "PASS",
+            "command": _verify_command("packet-805-lane-a", planned["verify"]["remote"]),
         },
         planned["promotion"]["remote"]: {
             "packet_id": "packet-805-lane-a",
@@ -762,6 +873,7 @@ def test_orchestrate_packet_rejects_non_host_supporting_run_metadata(tmp_path: P
             "packet_id": "packet-806-lane-a",
             "profile": "strict-db-query",
             "result": "PASS",
+            "command": _verify_command("packet-806-lane-a", planned["verify"]["remote"]),
         },
         planned["promotion"]["remote"]: {
             "packet_id": "packet-806-lane-a",
@@ -857,6 +969,7 @@ def test_orchestrate_packet_rejects_summary_promotion_env_drift(tmp_path: Path) 
             "packet_id": "packet-807-lane-a",
             "profile": "strict-db-query",
             "result": "PASS",
+            "command": _verify_command("packet-807-lane-a", planned["verify"]["remote"]),
         },
         planned["promotion"]["remote"]: {
             "packet_id": "packet-807-lane-a",
@@ -950,6 +1063,7 @@ def test_orchestrate_packet_rejects_summary_promotion_record_timestamp_drift(tmp
             "packet_id": "packet-808-lane-a",
             "profile": "strict-db-query",
             "result": "PASS",
+            "command": _verify_command("packet-808-lane-a", planned["verify"]["remote"]),
         },
         planned["promotion"]["remote"]: {
             "packet_id": "packet-808-lane-a",
@@ -1045,6 +1159,7 @@ def test_orchestrate_packet_rejects_promotion_artifact_self_path_drift(tmp_path:
             "packet_id": "packet-809-lane-a",
             "profile": "strict-db-query",
             "result": "PASS",
+            "command": _verify_command("packet-809-lane-a", planned["verify"]["remote"]),
         },
         planned["promotion"]["remote"]: {
             "packet_id": "packet-809-lane-a",
@@ -1140,6 +1255,7 @@ def test_orchestrate_packet_rejects_promotion_artifact_tool_drift(tmp_path: Path
             "packet_id": "packet-811-lane-a",
             "profile": "strict-db-query",
             "result": "PASS",
+            "command": _verify_command("packet-811-lane-a", planned["verify"]["remote"]),
         },
         planned["promotion"]["remote"]: {
             "packet_id": "packet-811-lane-a",
@@ -1228,6 +1344,7 @@ def test_orchestrate_packet_rejects_promotion_artifact_command_drift(tmp_path: P
             "packet_id": "packet-813-lane-a",
             "profile": "strict-db-query",
             "result": "PASS",
+            "command": _verify_command("packet-813-lane-a", planned["verify"]["remote"]),
         },
         planned["promotion"]["remote"]: {
             "packet_id": "packet-813-lane-a",
@@ -1323,6 +1440,7 @@ def test_orchestrate_packet_rejects_coordinator_summary_self_path_drift(tmp_path
             "packet_id": "packet-810-lane-a",
             "profile": "strict-db-query",
             "result": "PASS",
+            "command": _verify_command("packet-810-lane-a", planned["verify"]["remote"]),
         },
         planned["promotion"]["remote"]: {
             "packet_id": "packet-810-lane-a",
@@ -1418,6 +1536,7 @@ def test_orchestrate_packet_rejects_coordinator_summary_tool_drift(tmp_path: Pat
             "packet_id": "packet-812-lane-a",
             "profile": "strict-db-query",
             "result": "PASS",
+            "command": _verify_command("packet-812-lane-a", planned["verify"]["remote"]),
         },
         planned["promotion"]["remote"]: {
             "packet_id": "packet-812-lane-a",
@@ -1507,6 +1626,7 @@ def test_orchestrate_packet_rejects_coordinator_summary_command_drift(tmp_path: 
             "packet_id": "packet-814-lane-a",
             "profile": "strict-db-query",
             "result": "PASS",
+            "command": _verify_command("packet-814-lane-a", planned["verify"]["remote"]),
         },
         planned["promotion"]["remote"]: {
             "packet_id": "packet-814-lane-a",
