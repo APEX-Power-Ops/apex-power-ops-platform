@@ -143,6 +143,8 @@ The hold-boundary wrapper combines two bounded checks:
 1. minimal MCP trio verification,
 2. deferred Operations Visibility live-row recheck for `v_resource_allocation` and `v_equipment_needs`.
 
+Use `../operations/OLARES-AI-WORKSTATION-LIVE-DSN-BASELINE-RUNBOOK-2026-05-12.md` when the operator needs the full workstation-side live-DSN comparison drill instead of reconstructing the command order from this runbook plus the validation matrix.
+
 The deferred-view helper prefers an explicit live DSN when one is intentionally supplied because the local `.env.dev` contract is a developer database and is not authoritative for the live `09` tranche hold decision.
 
 The PowerShell wrapper first uses that explicit live DSN through the repo venv's direct Python database path when `sqlalchemy` is available; if not, it now mirrors the Bash wrapper by attempting a temporary local `apex-db` MCP bridge on the dedicated hold-boundary port when the current mirror contains a runnable `services/mcp/apex-db` build.
