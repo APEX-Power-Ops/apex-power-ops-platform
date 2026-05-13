@@ -69,12 +69,20 @@ Every scaffolded surface should make these points obvious:
 Assume a parallel hardening lane may be authoring docs or tests around:
 
 1. `apex-jobs` env tagging,
-2. promotion refusal,
+2. promotion refusal and positive-gate helper-backed proof,
 3. provenance metadata,
 4. MCP boundary rules,
 5. canary evidence requirements.
 
 Do not take ownership of those hardening semantics beyond the minimum documentation needed for your scaffold outputs.
+
+## Current Alignment Note
+
+Packet `2026-05-13-olares-dev-residency-786` is the current completed first coordinator-owned two-lane rehearsal floor.
+
+Packet `2026-05-13-olares-dev-residency-791` is the current helper-backed positive-gate promotion proof floor.
+
+Treat both as preserved hardening inputs when authoring scaffold outputs; do not restate them as unresolved or future-first proof work.
 
 ## Done Definition
 

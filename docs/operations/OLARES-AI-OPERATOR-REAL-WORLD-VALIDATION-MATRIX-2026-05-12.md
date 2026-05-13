@@ -92,13 +92,18 @@ Treat the current boundary as real-world validated only when all of the followin
 4. all emitted evidence is repo-visible and suitable for packet or handoff closeout,
 5. no scenario silently widened runtime or queue authority.
 
-For the first two-executor rehearsal after Packet 785, require one additional coordinator-owned evidence pattern:
+For any later two-executor rehearsal after Packet 786, require one additional coordinator-owned evidence pattern:
 
 1. the packet names lane A and lane B ownership before edits start,
 2. each lane records its own touched files, validation command, and validation result under the same packet id,
 3. the coordinator records one final combined validation result scoped to the declared rehearsal files,
 4. any ownership drift, shared-file drift, or failed lane validation is recorded as `ABORTED` for the packet,
 5. only a packet with both lane tuples and the coordinator tuple may be treated as a completed rehearsal.
+
+Current baseline note:
+
+1. Packet `2026-05-13-olares-dev-residency-786` already proved the first completed coordinator-owned two-executor rehearsal.
+2. Later rehearsal packets should preserve this coordinator-owned evidence pattern rather than describing that first rehearsal as still pending.
 
 ## Stop Conditions
 
