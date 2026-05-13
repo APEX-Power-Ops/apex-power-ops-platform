@@ -213,6 +213,7 @@ Minimum capture rules for that bundle:
 7. include one `list_runs` visibility proof showing the closed run is queryable from the ledger,
 8. when the packet claims promotion-eligible host evidence, include the host success run id plus the `promote_packet` result artifact,
 9. include the truthful final result and attach it to the packet or handoff record.
+10. when `tools/ai/run_authoritative_host_packet.py` is the execution surface, accept the helper summary only if the imported bootstrap, verifier, promotion, and coordinator-summary artifacts all match the same packet id and remain `PASS` locally.
 
 ## Evidence Routing Contract
 
@@ -262,6 +263,16 @@ Optional emitted coordinator summary artifact:
 3. a concrete example path is `tests/canary/mcp-contract/actual/ai-packet-evidence-summary-<packet-id>.json`,
 4. the helper must reject mismatched packet ids or non-`PASS` source artifacts instead of silently composing an incoherent summary,
 5. when a promotion artifact is supplied, the emitted JSON should preserve the verifier tuple and the promotion tuple together under one packet-scoped summary,
+6. when packet JSON is in scope, that artifact should be referenced from `output_artifacts`,
+7. the emitted JSON does not replace the handoff validation summary; it supports it.
+
+Optional emitted authoritative-host helper summary artifact:
+
+1. `tools/ai/run_authoritative_host_packet.py --output <path>` may write a repo-visible packet helper artifact when the current-head authoritative-host chain is being driven through the helper surface,
+2. the preferred repo-owned lane for that artifact is also `tests/canary/mcp-contract/actual/`,
+3. a concrete example path is `tests/canary/mcp-contract/actual/run-authoritative-host-packet-<packet-id>.json`,
+4. the helper must reject imported bootstrap, verifier, promotion, or coordinator-summary artifacts when they diverge from the requested packet id or lose `PASS` state instead of reporting helper-level success,
+5. a truthful helper `PASS` should preserve enough top-level parity fields to show the local acceptance decision directly, including the host git head, host status count, preflight status, verifier result and profile, host promotion run id, and coordinator-summary result,
 6. when packet JSON is in scope, that artifact should be referenced from `output_artifacts`,
 7. the emitted JSON does not replace the handoff validation summary; it supports it.
 

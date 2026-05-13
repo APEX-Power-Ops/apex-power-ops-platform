@@ -199,6 +199,110 @@ def _validate_host_bootstrap_artifact(
     }
 
 
+def _validate_verify_artifact(*, packet_id: str, artifact_path: Path, expected_profile: str) -> dict[str, object]:
+    payload = _read_json(artifact_path)
+
+    if payload.get("packet_id") != packet_id:
+        raise ValueError(
+            f"verify artifact packet_id mismatch: expected {packet_id}, got {payload.get('packet_id')}"
+        )
+
+    if payload.get("result") != "PASS":
+        raise ValueError(f"verify artifact result must be PASS, got {payload.get('result')}")
+
+    profile = payload.get("profile")
+    if profile != expected_profile:
+        raise ValueError(f"verify artifact profile mismatch: expected {expected_profile}, got {profile}")
+
+    return {
+        "verify_result": payload.get("result"),
+        "verify_profile": profile,
+    }
+
+
+def _validate_promotion_artifact(*, packet_id: str, artifact_path: Path) -> dict[str, object]:
+    payload = _read_json(artifact_path)
+
+    if payload.get("packet_id") != packet_id:
+        raise ValueError(
+            f"promotion artifact packet_id mismatch: expected {packet_id}, got {payload.get('packet_id')}"
+        )
+
+    if payload.get("result") != "PASS":
+        raise ValueError(f"promotion artifact result must be PASS, got {payload.get('result')}")
+
+    host_run = payload.get("host_run")
+    if not isinstance(host_run, dict):
+        raise ValueError("promotion artifact missing host_run payload")
+
+    if host_run.get("packet_id") != packet_id:
+        raise ValueError(
+            f"promotion artifact host_run packet_id mismatch: expected {packet_id}, got {host_run.get('packet_id')}"
+        )
+
+    if host_run.get("status") != "success":
+        raise ValueError(f"promotion artifact host_run status must be success, got {host_run.get('status')}")
+
+    promotion = payload.get("promotion")
+    if not isinstance(promotion, dict):
+        raise ValueError("promotion artifact missing promotion payload")
+
+    if promotion.get("packet_id") != packet_id:
+        raise ValueError(
+            f"promotion record packet_id mismatch: expected {packet_id}, got {promotion.get('packet_id')}"
+        )
+
+    return {
+        "promotion_result": payload.get("result"),
+        "host_run_id": host_run.get("run_id"),
+    }
+
+
+def _validate_coordinator_summary_artifact(*, packet_id: str, artifact_path: Path) -> dict[str, object]:
+    payload = _read_json(artifact_path)
+
+    if payload.get("packet_id") != packet_id:
+        raise ValueError(
+            f"coordinator summary artifact packet_id mismatch: expected {packet_id}, got {payload.get('packet_id')}"
+        )
+
+    if payload.get("result") != "PASS":
+        raise ValueError(
+            f"coordinator summary artifact result must be PASS, got {payload.get('result')}"
+        )
+
+    verification = payload.get("verification")
+    if not isinstance(verification, dict):
+        raise ValueError("coordinator summary artifact missing verification payload")
+
+    if verification.get("result") != "PASS":
+        raise ValueError(
+            f"coordinator summary verification result must be PASS, got {verification.get('result')}"
+        )
+
+    promotion = payload.get("promotion")
+    if not isinstance(promotion, dict):
+        raise ValueError("coordinator summary artifact missing promotion payload")
+
+    if promotion.get("result") != "PASS":
+        raise ValueError(
+            f"coordinator summary promotion result must be PASS, got {promotion.get('result')}"
+        )
+
+    host_run = promotion.get("host_run")
+    if not isinstance(host_run, dict):
+        raise ValueError("coordinator summary promotion payload missing host_run")
+
+    if host_run.get("packet_id") != packet_id:
+        raise ValueError(
+            f"coordinator summary host_run packet_id mismatch: expected {packet_id}, got {host_run.get('packet_id')}"
+        )
+
+    return {
+        "coordinator_summary_result": payload.get("result"),
+    }
+
+
 def _run_subprocess(command: list[str], input_text: str | None = None) -> None:
     if input_text is None:
         subprocess.run(command, check=True, text=True)
@@ -234,6 +338,19 @@ def orchestrate_packet(
         artifact_path=Path(artifacts["host_bootstrap"]["local"]),
         expected_head=expected_head,
     )
+    verify_validation = _validate_verify_artifact(
+        packet_id=normalized_packet_id,
+        artifact_path=Path(artifacts["verify"]["local"]),
+        expected_profile=profile,
+    )
+    promotion_validation = _validate_promotion_artifact(
+        packet_id=normalized_packet_id,
+        artifact_path=Path(artifacts["promotion"]["local"]),
+    )
+    coordinator_summary_validation = _validate_coordinator_summary_artifact(
+        packet_id=normalized_packet_id,
+        artifact_path=Path(artifacts["coordinator_summary"]["local"]),
+    )
 
     return {
         "packet_id": normalized_packet_id,
@@ -247,6 +364,9 @@ def orchestrate_packet(
             for name in ARTIFACT_ORDER
         },
         **bootstrap_validation,
+        **verify_validation,
+        **promotion_validation,
+        **coordinator_summary_validation,
         "result": "PASS",
     }
 

@@ -96,9 +96,30 @@ def test_orchestrate_packet_uses_stdin_fed_ssh_and_four_scp_imports(tmp_path: Pa
             "git": {"head": expected_head, "status_count": 0},
             "minimal_mcp": {"status": "not-running"},
         },
-        planned["verify"]["remote"]: {"artifact": "verify", "packet_id": "packet-799-lane-a"},
-        planned["promotion"]["remote"]: {"artifact": "promotion", "packet_id": "packet-799-lane-a"},
-        planned["coordinator_summary"]["remote"]: {"artifact": "coordinator_summary", "packet_id": "packet-799-lane-a"},
+        planned["verify"]["remote"]: {
+            "packet_id": "packet-799-lane-a",
+            "profile": "strict-db-query",
+            "result": "PASS",
+        },
+        planned["promotion"]["remote"]: {
+            "packet_id": "packet-799-lane-a",
+            "result": "PASS",
+            "host_run": {
+                "run_id": "host-run-123",
+                "packet_id": "packet-799-lane-a",
+                "status": "success",
+            },
+            "promotion": {"packet_id": "packet-799-lane-a"},
+        },
+        planned["coordinator_summary"]["remote"]: {
+            "packet_id": "packet-799-lane-a",
+            "result": "PASS",
+            "verification": {"result": "PASS"},
+            "promotion": {
+                "result": "PASS",
+                "host_run": {"packet_id": "packet-799-lane-a"},
+            },
+        },
     }
     calls: list[tuple[list[str], str | None]] = []
 
@@ -147,6 +168,11 @@ def test_orchestrate_packet_uses_stdin_fed_ssh_and_four_scp_imports(tmp_path: Pa
     assert summary["host_git_head"] == expected_head
     assert summary["host_status_count"] == 0
     assert summary["preflight_status"] == "not-running"
+    assert summary["verify_result"] == "PASS"
+    assert summary["verify_profile"] == "strict-db-query"
+    assert summary["promotion_result"] == "PASS"
+    assert summary["host_run_id"] == "host-run-123"
+    assert summary["coordinator_summary_result"] == "PASS"
     assert summary["result"] == "PASS"
     assert summary["artifact_paths"] == {
         name: str(planned[name]["local"]).replace("\\", "/")
@@ -217,3 +243,63 @@ def test_orchestrate_packet_rejects_dirty_host_bootstrap(tmp_path: Path) -> None
         return
 
     raise AssertionError("expected orchestrate_packet to reject a dirty host bootstrap artifact")
+
+
+def test_orchestrate_packet_rejects_verify_packet_mismatch(tmp_path: Path) -> None:
+    helper = _load_helper_module()
+    expected_head = helper._git_head(helper._repo_root())
+    planned = helper.plan_artifact_paths(
+        packet_id="packet-801-lane-a",
+        host_root="/home/olares/code/apex/apex-power-ops-platform",
+        local_root=tmp_path,
+    )
+
+    remote_contents = {
+        planned["host_bootstrap"]["remote"]: {
+            "packet_id": "packet-801-lane-a",
+            "git": {"head": expected_head, "status_count": 0},
+            "minimal_mcp": {"status": "not-running"},
+        },
+        planned["verify"]["remote"]: {
+            "packet_id": "packet-801-other",
+            "profile": "strict-db-query",
+            "result": "PASS",
+        },
+        planned["promotion"]["remote"]: {
+            "packet_id": "packet-801-lane-a",
+            "result": "PASS",
+            "host_run": {"run_id": "host-run-123", "packet_id": "packet-801-lane-a", "status": "success"},
+            "promotion": {"packet_id": "packet-801-lane-a"},
+        },
+        planned["coordinator_summary"]["remote"]: {
+            "packet_id": "packet-801-lane-a",
+            "result": "PASS",
+            "verification": {"result": "PASS"},
+            "promotion": {"result": "PASS", "host_run": {"packet_id": "packet-801-lane-a"}},
+        },
+    }
+
+    def fake_runner(command: list[str], input_text: str | None = None) -> None:
+        if command[0] == "ssh":
+            return
+
+        remote_path = command[1].split(":", 1)[1]
+        local_path = Path(command[2])
+        local_path.parent.mkdir(parents=True, exist_ok=True)
+        local_path.write_text(json.dumps(remote_contents[remote_path]) + "\n", encoding="utf-8")
+
+    try:
+        helper.orchestrate_packet(
+            packet_id="packet-801-lane-a",
+            host="olares-mesh",
+            host_root="/home/olares/code/apex/apex-power-ops-platform",
+            profile="strict-db-query",
+            dsn_loader="/home/olares/apex-secrets/olares/ai-live-dsn.env",
+            local_root=tmp_path,
+            runner=fake_runner,
+        )
+    except ValueError as error:
+        assert str(error) == "verify artifact packet_id mismatch: expected packet-801-lane-a, got packet-801-other"
+        return
+
+    raise AssertionError("expected orchestrate_packet to reject a mismatched verify artifact")
