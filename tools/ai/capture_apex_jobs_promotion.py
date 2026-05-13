@@ -137,6 +137,7 @@ def main() -> int:
     output_path = Path(args.output) if args.output else None
     summary: dict[str, Any] = {
         "packet_id": packet_id,
+        "tool": "tools/ai/capture_apex_jobs_promotion.py",
         "command": format_command(),
         "endpoint": args.jobs_url,
         "env": args.env,
@@ -144,6 +145,8 @@ def main() -> int:
         "notes": args.notes,
         "checks": {},
     }
+    if output_path is not None:
+        summary["artifact_path"] = str(output_path).replace("\\", "/")
 
     try:
         jobs_tools = initialize_and_list(args.jobs_url)
@@ -176,6 +179,7 @@ def main() -> int:
             }
             raise RuntimeError("end_run returned an unexpected result shape")
         summary["checks"]["jobs_end_run"] = {"status": "pass", "run": ended}
+        summary["host_run"] = ended
 
         listed_runs = call_tool(
             args.jobs_url,
@@ -213,6 +217,7 @@ def main() -> int:
             }
             raise RuntimeError("list_runs did not return the just-completed promotion-eligible run")
         summary["checks"]["jobs_list_runs"] = {"status": "pass", "result": listed_runs}
+        summary["host_success_runs"] = listed_runs["runs"]
 
         try:
             promoted = call_tool(args.jobs_url, "promote_packet", {"packet_id": packet_id})
@@ -231,6 +236,7 @@ def main() -> int:
             }
             raise RuntimeError("promote_packet returned an unexpected result shape")
         summary["checks"]["jobs_promote_packet"] = {"status": "pass", "result": promoted}
+        summary["promotion"] = promoted
 
         summary["result"] = "PASS"
         return emit_summary(output_path, summary, 0)

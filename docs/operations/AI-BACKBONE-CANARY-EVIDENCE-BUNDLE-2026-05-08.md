@@ -250,8 +250,10 @@ Optional emitted promotion artifact:
 2. the preferred repo-owned lane for that artifact is also `tests/canary/mcp-contract/actual/`,
 3. a concrete example path is `tests/canary/mcp-contract/actual/apex-jobs-promotion-<packet-id>.json`,
 4. that helper artifact should be used only when the packet is claiming a successful matching `env=host` run and promotion result,
-5. when packet JSON is in scope, that artifact should be referenced from `output_artifacts`,
-6. the emitted JSON does not replace the handoff validation summary; it supports it.
+5. the emitted JSON should preserve top-level provenance fields for the helper surface, including the tool identity, packet id, env class, service, command, final result, and the primary host run plus promotion records,
+6. when `--output` is used, the emitted JSON should also preserve the repo-visible artifact path so later closeout surfaces can reference the exact file without inference,
+7. when packet JSON is in scope, that artifact should be referenced from `output_artifacts`,
+8. the emitted JSON does not replace the handoff validation summary; it supports it.
 
 If the packet JSON lane is not being updated for the active slice, the handoff becomes the minimum required routing surface for the same evidence.
 
@@ -292,6 +294,12 @@ Packet 791 proves the next promotion-eligible authoritative-host strict-profile 
 1. the authoritative host can pair a same-packet `strict-db-query` verifier artifact with a successful `env=host` run,
 2. the reusable helper `tools/ai/capture_apex_jobs_promotion.py` can capture the positive gate artifact at `tests/canary/mcp-contract/actual/apex-jobs-promotion-2026-05-13-olares-dev-residency-791.json`,
 3. the promotion gate remains bounded and truthful because the positive artifact exists only after matching host evidence is recorded.
+
+Packet 796 proves the next positive-gate provenance-attachment lane with:
+
+1. the helper artifact now exposes the top-level host run record, matching host-success runs, and promotion record directly instead of leaving later closeouts to pull those facts only from nested check payloads,
+2. the helper artifact now preserves the helper tool identity and the repo-visible artifact path when `--output` is used,
+3. the admitted boundary, host gate, and queue ownership remain unchanged.
 
 ## Non-Goals
 

@@ -186,13 +186,35 @@ def _expected_success_payload(
     command.extend(["--jobs-url", jobs_url])
     if output_path is not None:
         command.extend(["--output", str(output_path)])
-    return {
+    payload: dict[str, object] = {
         "packet_id": packet_id,
+        "tool": "tools/ai/capture_apex_jobs_promotion.py",
         "command": _expected_command(command),
         "endpoint": jobs_url,
         "env": "host",
         "service": "ai-workflow",
         "notes": "host promotion validation proof",
+        "host_run": {
+            "run_id": "host-run-123",
+            "env": "host",
+            "service": "ai-workflow",
+            "packet_id": "promotion-test",
+            "status": "success",
+            "notes": "host promotion validation proof",
+        },
+        "host_success_runs": [{
+            "run_id": "host-run-123",
+            "env": "host",
+            "service": "ai-workflow",
+            "packet_id": packet_id,
+            "status": "success",
+            "notes": "host promotion validation proof",
+        }],
+        "promotion": {
+            "packet_id": packet_id,
+            "promoted_at": "2026-05-13T16:00:00.000Z",
+            "supporting_run_ids": ["host-run-123"],
+        },
         "checks": {
             "jobs_tools": {"status": "pass", "tools": ["promote_packet", "start_run", "end_run", "list_runs"]},
             "jobs_start_run": {"status": "pass", "run": {"run_id": "host-run-123", "env": "host", "service": "ai-workflow", "packet_id": packet_id, "status": "running"}},
@@ -202,6 +224,9 @@ def _expected_success_payload(
         },
         "result": "PASS",
     }
+    if output_path is not None:
+        payload["artifact_path"] = str(output_path).replace("\\", "/")
+    return payload
 
 
 def test_capture_apex_jobs_promotion_reports_success(fake_jobs, tmp_path: Path) -> None:
