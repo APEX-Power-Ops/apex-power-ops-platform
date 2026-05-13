@@ -177,6 +177,7 @@ def _write_ready_windows_node(shim_dir: Path) -> Path:
         "from http.server import BaseHTTPRequestHandler, HTTPServer\n"
         "import json\n"
         "import os\n"
+        "from pathlib import Path\n"
         "\n"
         "class ReusableHTTPServer(HTTPServer):\n"
         "    allow_reuse_address = True\n"
@@ -192,6 +193,18 @@ def _write_ready_windows_node(shim_dir: Path) -> Path:
         "        self.wfile.write(body)\n"
         "    def log_message(self, format, *args):\n"
         "        return\n"
+        "\n"
+        "capture_dir = os.environ.get('APEX_ENV_CAPTURE_DIR')\n"
+        "if capture_dir:\n"
+        "    capture_path = Path(capture_dir)\n"
+        "    capture_path.mkdir(parents=True, exist_ok=True)\n"
+        "    (capture_path / f\"{os.environ['APEX_MCP_HTTP_PORT']}.json\").write_text(\n"
+        "        json.dumps({\n"
+        "            'APEX_DB_CONNECTION_STRING': os.environ.get('APEX_DB_CONNECTION_STRING', ''),\n"
+        "            'APEX_MCP_HTTP_PORT': os.environ['APEX_MCP_HTTP_PORT'],\n"
+        "        }),\n"
+        "        encoding='utf-8',\n"
+        "    )\n"
         "\n"
         "port = int(os.environ['APEX_MCP_HTTP_PORT'])\n"
         "ReusableHTTPServer(('127.0.0.1', port), Handler).serve_forever()\n",
@@ -216,6 +229,7 @@ def _write_ready_bash_node(shim_dir: Path) -> Path:
         "from http.server import BaseHTTPRequestHandler, HTTPServer\n"
         "import json\n"
         "import os\n"
+        "from pathlib import Path\n"
         "\n"
         "class ReusableHTTPServer(HTTPServer):\n"
         "    allow_reuse_address = True\n"
@@ -232,6 +246,18 @@ def _write_ready_bash_node(shim_dir: Path) -> Path:
         "    def log_message(self, format, *args):\n"
         "        return\n"
         "\n"
+        "capture_dir = os.environ.get('APEX_ENV_CAPTURE_DIR')\n"
+        "if capture_dir:\n"
+        "    capture_path = Path(capture_dir)\n"
+        "    capture_path.mkdir(parents=True, exist_ok=True)\n"
+        "    (capture_path / f\"{os.environ['APEX_MCP_HTTP_PORT']}.json\").write_text(\n"
+        "        json.dumps({\n"
+        "            'APEX_DB_CONNECTION_STRING': os.environ.get('APEX_DB_CONNECTION_STRING', ''),\n"
+        "            'APEX_MCP_HTTP_PORT': os.environ['APEX_MCP_HTTP_PORT'],\n"
+        "        }),\n"
+        "        encoding='utf-8',\n"
+        "    )\n"
+        "\n"
         "port = int(os.environ['APEX_MCP_HTTP_PORT'])\n"
         "ReusableHTTPServer(('127.0.0.1', port), Handler).serve_forever()\n"
         "PY\n",
@@ -240,6 +266,10 @@ def _write_ready_bash_node(shim_dir: Path) -> Path:
     )
     node_path.chmod(node_path.stat().st_mode | stat.S_IEXEC)
     return node_path
+
+
+def _read_captured_env(capture_dir: Path, port: str) -> dict[str, str]:
+    return json.loads((capture_dir / f"{port}.json").read_text(encoding="utf-8"))
 
 
 @contextmanager
@@ -346,6 +376,48 @@ def test_powershell_up_reports_started_and_persists_managed_state(tmp_path: Path
 
 
 @pytest.mark.skipif(shutil.which("pwsh") is None, reason="pwsh is required for PowerShell wrapper tests")
+def test_powershell_up_maps_operator_live_dsn_to_db_process_env(tmp_path: Path) -> None:
+    shim_dir = tmp_path / "pwsh-live-dsn-shim"
+    shim_dir.mkdir()
+    _write_ready_windows_node(shim_dir)
+    capture_dir = tmp_path / "pwsh-env-capture"
+
+    fs_port, db_port, jobs_port = _allocate_ports(3)
+
+    env = os.environ.copy()
+    env["PATH"] = f"{shim_dir}{os.pathsep}{env['PATH']}"
+    env["APEX_DEV_MCP_FS_PORT"] = fs_port
+    env["APEX_DEV_MCP_DB_PORT"] = db_port
+    env["APEX_DEV_MCP_JOBS_PORT"] = jobs_port
+    env["APEX_ENV_CAPTURE_DIR"] = str(capture_dir)
+    env["APEX_OLARES_LIVE_DSN"] = "postgresql://operator-live-dsn.example/postgres"
+
+    with _temporarily_hide_env_files():
+        result = _run_json(
+            ["pwsh", "-NoProfile", "-File", "tools/ai/run-minimal-mcp-trio.ps1", "-Action", "up", "-PacketId", "powershell-live-dsn-up-test"],
+            env=env,
+        )
+
+    db_env = _read_captured_env(capture_dir, db_port)
+    fs_env = _read_captured_env(capture_dir, fs_port)
+    jobs_env = _read_captured_env(capture_dir, jobs_port)
+
+    assert result == _expected_started_result()
+    assert db_env == {
+        "APEX_DB_CONNECTION_STRING": "postgresql://operator-live-dsn.example/postgres",
+        "APEX_MCP_HTTP_PORT": db_port,
+    }
+    assert fs_env == {
+        "APEX_DB_CONNECTION_STRING": "",
+        "APEX_MCP_HTTP_PORT": fs_port,
+    }
+    assert jobs_env == {
+        "APEX_DB_CONNECTION_STRING": "",
+        "APEX_MCP_HTTP_PORT": jobs_port,
+    }
+
+
+@pytest.mark.skipif(shutil.which("pwsh") is None, reason="pwsh is required for PowerShell wrapper tests")
 def test_powershell_up_refuses_managed_start_when_services_do_not_become_ready(tmp_path: Path) -> None:
     shim_dir = tmp_path / "pwsh-timeout-shim"
     shim_dir.mkdir()
@@ -448,6 +520,16 @@ def test_bash_up_reports_started_and_persists_managed_state(tmp_path: Path) -> N
     state = _read_bash_state_values()
     assert result == _expected_started_result()
     assert _normalized_bash_managed_state(state) == _expected_bash_managed_state("bash-started-up-test")
+
+
+def test_bash_wrapper_prefers_operator_live_dsn_before_legacy_db_envs() -> None:
+    script = (REPO_ROOT / "tools" / "ai" / "run-minimal-mcp-trio.sh").read_text(encoding="utf-8")
+
+    operator_index = script.index('if [[ -n "${APEX_OLARES_LIVE_DSN:-}" ]]; then')
+    seam_index = script.index('if [[ -n "${SEAM_DATABASE_URL:-}" ]]; then')
+    apex_db_index = script.index('if [[ -n "${APEX_DB_CONNECTION_STRING:-}" ]]; then')
+
+    assert operator_index < seam_index < apex_db_index
 
 
 @pytest.mark.skipif(shutil.which("bash") is None, reason="bash is required for Bash wrapper tests")

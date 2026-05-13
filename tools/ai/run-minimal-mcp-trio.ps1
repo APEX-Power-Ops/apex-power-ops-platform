@@ -44,6 +44,10 @@ $managedEntrypoints = @(
 )
 
 function Get-DbConnectionString {
+  if ($env:APEX_OLARES_LIVE_DSN) {
+    return $env:APEX_OLARES_LIVE_DSN
+  }
+
   if ($env:SEAM_DATABASE_URL) {
     return $env:SEAM_DATABASE_URL
   }

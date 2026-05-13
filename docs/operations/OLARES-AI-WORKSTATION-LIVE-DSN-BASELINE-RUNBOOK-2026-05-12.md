@@ -65,6 +65,14 @@ $env:APEX_PACKET_ID = '<packet-id>'
 $env:APEX_OLARES_LIVE_DSN = '<live dsn>'
 ```
 
+If the default local MCP ports are already occupied by an adopted trio, do not treat that as the managed workstation baseline. Either clear that local runtime first or assign three fresh local ports for this packet before step 1:
+
+```powershell
+$env:APEX_DEV_MCP_FS_PORT = '<unused-fs-port>'
+$env:APEX_DEV_MCP_DB_PORT = '<unused-db-port>'
+$env:APEX_DEV_MCP_JOBS_PORT = '<unused-jobs-port>'
+```
+
 Run the scenario in this order:
 
 1. Start the admitted trio in managed mode:
@@ -126,10 +134,11 @@ If the Bash posture would require a Windows `python.exe` override that cannot ex
 Interpret the drill narrowly:
 
 1. `up` should produce a managed-running trio only after all three admitted endpoints answer transport `initialize`, or a truthful refusal such as `start-refused` when the services cannot become ready,
-2. `verify` should return `PASS` only if the admitted trio and the `apex-jobs` ledger path actually work,
-3. the hold-boundary result should return `HOLD` when both governed deferred views still have `0` live rows,
-4. `REOPEN` should be claimed only when the governed live query path actually reports reopened business rows,
-5. the workstation result is the authoritative comparison point for later host-side interpretation, but it is not host-qualified promotion proof.
+2. if `up` or `status` reports `adopted` or `adopted-running`, stop and treat that as local listener residue rather than the managed baseline unless the packet is explicitly testing adoption behavior,
+3. `verify` should return `PASS` only if the admitted trio and the `apex-jobs` ledger path actually work,
+4. the hold-boundary result should return `HOLD` when both governed deferred views still have `0` live rows,
+5. `REOPEN` should be claimed only when the governed live query path actually reports reopened business rows,
+6. the workstation result is the authoritative comparison point for later host-side interpretation, but it is not host-qualified promotion proof.
 
 Stop rather than over-interpret the run if:
 

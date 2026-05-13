@@ -41,6 +41,11 @@ managed_entrypoints=(
 )
 
 get_db_connection_string() {
+  if [[ -n "${APEX_OLARES_LIVE_DSN:-}" ]]; then
+    printf '%s' "${APEX_OLARES_LIVE_DSN}"
+    return
+  fi
+
   if [[ -n "${SEAM_DATABASE_URL:-}" ]]; then
     printf '%s' "${SEAM_DATABASE_URL}"
     return

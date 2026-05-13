@@ -53,13 +53,14 @@ Use these names in this order:
 Current wrapper behavior:
 
 1. `run-olares-hold-boundary-check.ps1` and `.sh` accept a named DSN env variable and route its value into `SEAM_DATABASE_URL`,
-2. `run-minimal-mcp-trio.ps1` and `.sh` will prefer `SEAM_DATABASE_URL`, then `APEX_DB_CONNECTION_STRING`, then `DATABASE_URL` when resolving the database connection string.
+2. `run-minimal-mcp-trio.ps1` and `.sh` will prefer `APEX_OLARES_LIVE_DSN`, then `SEAM_DATABASE_URL`, then `APEX_DB_CONNECTION_STRING`, then `DATABASE_URL` when resolving the database connection string.
 
 That means the cleanest operator pattern is:
 
 1. set `APEX_OLARES_LIVE_DSN` for the packet,
-2. call the hold-boundary wrapper with `-DsnEnv APEX_OLARES_LIVE_DSN` or the Bash equivalent,
-3. let the wrapper map the governed value into the lower-level variable it needs.
+2. let the minimal-trio wrappers consume that operator-facing variable directly for managed workstation runs,
+3. call the hold-boundary wrapper with `-DsnEnv APEX_OLARES_LIVE_DSN` or the Bash equivalent,
+4. let the hold-boundary wrapper map the governed value into the lower-level variable it needs.
 
 ## Workstation Materialization
 
