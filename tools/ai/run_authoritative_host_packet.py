@@ -19,6 +19,7 @@ COORDINATOR_SUMMARY_TOOL_PATH = "tools/ai/build_ai_packet_evidence_summary.py"
 DEFAULT_HOST = "olares-mesh"
 DEFAULT_HOST_ROOT = "/home/olares/code/apex/apex-power-ops-platform"
 DEFAULT_HOST_PREFERRED_PYTHON_PATH = "/usr/bin/python3"
+DEFAULT_HOST_PYTHON3_PATH = "/usr/bin/python3"
 DEFAULT_HOST_NODE_PATH = "/usr/bin/node"
 DEFAULT_HOST_PNPM_MATERIALIZED_PATH = "/home/olares/apex-data/toolchains/pnpm-10.0.0/node_modules/.bin/pnpm"
 DEFAULT_HOST_CALC_ENGINE_PYTHON_PATH = "/home/olares/apex-data/toolchains/calc-engine-venv/bin/python"
@@ -330,6 +331,17 @@ def _validate_host_bootstrap_artifact(
         raise ValueError(
             "host bootstrap artifact toolchains.preferred_python path mismatch: "
             f"expected {DEFAULT_HOST_PREFERRED_PYTHON_PATH}, got {preferred_python_path}"
+        )
+
+    python3 = toolchains.get("python3")
+    if not isinstance(python3, dict):
+        raise ValueError("host bootstrap artifact missing toolchains.python3 payload")
+
+    python3_path = python3.get("path")
+    if python3_path != DEFAULT_HOST_PYTHON3_PATH:
+        raise ValueError(
+            "host bootstrap artifact toolchains.python3 path mismatch: "
+            f"expected {DEFAULT_HOST_PYTHON3_PATH}, got {python3_path}"
         )
 
     node = toolchains.get("node")

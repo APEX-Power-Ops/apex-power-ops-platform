@@ -80,6 +80,14 @@ def _materialize_remote_artifact(remote_path: str, payload: object) -> object:
             "/usr/bin/python3",
         )
         normalized_toolchains["preferred_python"] = normalized_preferred_python
+        normalized_python3 = normalized_toolchains.get("python3")
+        if not isinstance(normalized_python3, dict):
+            normalized_python3 = {}
+        normalized_python3.setdefault(
+            "path",
+            "/usr/bin/python3",
+        )
+        normalized_toolchains["python3"] = normalized_python3
         normalized_node = normalized_toolchains.get("node")
         if not isinstance(normalized_node, dict):
             normalized_node = {}
@@ -1590,6 +1598,127 @@ def test_orchestrate_packet_rejects_host_bootstrap_preferred_python_path_drift(
 
     raise AssertionError(
         "expected orchestrate_packet to reject host bootstrap artifact preferred_python path drift"
+    )
+
+
+def test_orchestrate_packet_rejects_host_bootstrap_python3_path_drift(
+    tmp_path: Path,
+) -> None:
+    helper = _load_helper_module()
+    expected_head = helper._git_head(helper._repo_root())
+    planned = helper.plan_artifact_paths(
+        packet_id="packet-830-lane-a",
+        host_root="/home/olares/code/apex/apex-power-ops-platform",
+        local_root=tmp_path,
+    )
+
+    remote_contents = {
+        planned["host_bootstrap"]["remote"]: {
+            "packet_id": "packet-830-lane-a",
+            "tool": "tools/ai/run-olares-host-bootstrap-status.sh",
+            "command": _host_bootstrap_command("packet-830-lane-a", planned["host_bootstrap"]["remote"]),
+            "output_artifact": planned["host_bootstrap"]["remote"],
+            "host_container_root": "/home/olares/code/apex",
+            "implementation_root": "/home/olares/code/apex/apex-power-ops-platform",
+            "git": {
+                "head": expected_head,
+                "status_count": 0,
+                "old_clone": {
+                    "path": "/home/olares/src/apex-power-ops-platform",
+                    "exists": True,
+                },
+            },
+            "toolchains": {
+                "python3": {
+                    "path": "/usr/local/bin/python3",
+                }
+            },
+            "minimal_mcp": {"status": "not-running"},
+        },
+        planned["verify"]["remote"]: {
+            "packet_id": "packet-830-lane-a",
+            "profile": "strict-db-query",
+            "result": "PASS",
+            "command": _verify_command("packet-830-lane-a", planned["verify"]["remote"]),
+        },
+        planned["promotion"]["remote"]: {
+            "packet_id": "packet-830-lane-a",
+            "result": "PASS",
+            "tool": "tools/ai/capture_apex_jobs_promotion.py",
+            "command": _promotion_command("packet-830-lane-a", planned["promotion"]["remote"]),
+            "artifact_path": planned["promotion"]["remote"],
+            "env": "host",
+            "service": "ai-workflow",
+            "host_run": {
+                "run_id": "host-run-830",
+                "env": "host",
+                "service": "ai-workflow",
+                "packet_id": "packet-830-lane-a",
+                "status": "success",
+            },
+            "host_success_runs": [
+                {"run_id": "host-run-830", "env": "host", "service": "ai-workflow", "packet_id": "packet-830-lane-a", "status": "success"}
+            ],
+            "promotion": {"packet_id": "packet-830-lane-a", "promoted_at": "2026-05-13T00:30:01Z", "supporting_run_ids": ["host-run-830"]},
+        },
+        planned["coordinator_summary"]["remote"]: {
+            "packet_id": "packet-830-lane-a",
+            "result": "PASS",
+            "tool": "tools/ai/build_ai_packet_evidence_summary.py",
+            "command": _coordinator_summary_command(
+                "packet-830-lane-a",
+                planned["verify"]["remote"],
+                planned["promotion"]["remote"],
+                planned["coordinator_summary"]["remote"],
+            ),
+            "artifact_path": planned["coordinator_summary"]["remote"],
+            "verify_artifact_path": planned["verify"]["remote"],
+            "verification": {"result": "PASS", "profile": "strict-db-query"},
+            "promotion_artifact_path": planned["promotion"]["remote"],
+            "promotion": {
+                "result": "PASS",
+                "env": "host",
+                "service": "ai-workflow",
+                "host_run": {"packet_id": "packet-830-lane-a", "run_id": "host-run-830", "env": "host", "service": "ai-workflow"},
+                "host_success_runs": [
+                    {"run_id": "host-run-830", "env": "host", "service": "ai-workflow", "packet_id": "packet-830-lane-a", "status": "success"}
+                ],
+                "promotion_record": {"packet_id": "packet-830-lane-a", "promoted_at": "2026-05-13T00:30:01Z", "supporting_run_ids": ["host-run-830"]},
+            },
+        },
+    }
+
+    def fake_runner(command: list[str], input_text: str | None = None) -> None:
+        if command[0] == "ssh":
+            return
+
+        remote_path = command[1].split(":", 1)[1]
+        local_path = Path(command[2])
+        local_path.parent.mkdir(parents=True, exist_ok=True)
+        local_path.write_text(
+            json.dumps(_materialize_remote_artifact(remote_path, remote_contents[remote_path])) + "\n",
+            encoding="utf-8",
+        )
+
+    try:
+        helper.orchestrate_packet(
+            packet_id="packet-830-lane-a",
+            host="olares-mesh",
+            host_root="/home/olares/code/apex/apex-power-ops-platform",
+            profile="strict-db-query",
+            dsn_loader="/home/olares/apex-secrets/olares/ai-live-dsn.env",
+            local_root=tmp_path,
+            runner=fake_runner,
+        )
+    except ValueError as error:
+        assert str(error) == (
+            "host bootstrap artifact toolchains.python3 path mismatch: "
+            "expected /usr/bin/python3, got /usr/local/bin/python3"
+        )
+        return
+
+    raise AssertionError(
+        "expected orchestrate_packet to reject host bootstrap artifact python3 path drift"
     )
 
 
