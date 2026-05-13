@@ -2,13 +2,13 @@
 
 Date: 2026-05-08
 Status: Active bounded parallel-work brief
-Scope: adjacent hardening lane that may run in parallel with first-pass backbone scaffold authoring
+Scope: adjacent hardening lane pattern for later coordinator-owned parallel packets inside the admitted backbone
 
 ## Purpose
 
-This brief defines the safest adjacent hardening slice that can run in parallel while a bounded Codex scaffold pass is underway.
+This brief defines the safest adjacent hardening slice that can run in parallel with a bounded scaffold or maintenance lane inside the admitted backbone.
 
-It exists to keep the backbone trustworthy without forcing the scaffold pass to also solve runtime-hardening semantics in the same edit slice.
+It exists to keep the backbone trustworthy without forcing the paired lane to also solve runtime-hardening semantics in the same edit slice.
 
 Use this brief with:
 
@@ -21,7 +21,7 @@ Use this brief with:
 The parallel hardening lane may author or tighten only these contract areas:
 
 1. `apex-jobs` env-tag contract,
-2. promotion refusal and required `env=host` evidence,
+2. promotion refusal, positive-gate proof, and required `env=host` evidence,
 3. provenance metadata rules for AI-generated output,
 4. MCP filesystem and database boundary rules,
 5. canary admission and evidence requirements for the backbone.
@@ -45,7 +45,7 @@ The parallel hardening lane may author or tighten only these contract areas:
 ## Recommended Parallel Tasks
 
 1. write the exact `env=sandbox|host` contract and examples for `apex-jobs`,
-2. specify the minimum evidence required before `promote_packet` may succeed,
+2. specify the minimum evidence required before `promote_packet` may succeed and the helper or artifact path that records it,
 3. define the required provenance metadata fields and where they must surface,
 4. document MCP boundary rules for allowed roots, mounts, and read/write posture,
 5. define the canary proof bundle for the backbone lane.
@@ -56,6 +56,14 @@ The parallel hardening lane may author or tighten only these contract areas:
 2. treat the parallel hardening lane as the owner of trust and evidence contracts,
 3. prefer docs, tests, and checklist surfaces over shared implementation edits,
 4. if a hardening change must touch a scaffolded file, record that coordination explicitly in packet or handoff evidence.
+
+## Current Alignment Note
+
+Packet `2026-05-13-olares-dev-residency-786` is the current completed rehearsal floor for the first coordinator-owned two-lane packet.
+
+Packet `2026-05-13-olares-dev-residency-791` is the current promotion-proof floor for the positive gate on the same hardened `apex-jobs` path.
+
+Use this brief for later disjoint parallel packets only when both of those floors remain preserved rather than reopened as open questions.
 
 ## Success Condition
 

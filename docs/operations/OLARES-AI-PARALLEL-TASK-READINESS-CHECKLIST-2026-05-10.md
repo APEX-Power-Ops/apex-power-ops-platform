@@ -53,12 +53,13 @@ Open a second executor only when the packet or handoff explicitly proves non-ove
 ## Checklist C - Parallel Hardening Work
 
 - tighten the exact `env=sandbox|host` contract and examples for `apex-jobs`
-- keep `promote_packet` refusal requirements explicit and testable
+- keep both `promote_packet` refusal requirements and positive-gate helper-backed success proof explicit and testable
 - define or tighten provenance metadata fields required for AI-generated output
 - keep the documented MCP filesystem and database boundary rules current, including roots, mounts, and read/write posture
 - keep the canary admission and evidence bundle current for the admitted backbone
 - route verifier commands, results, and attached evidence through packet JSON validation fields and handoff validation blocks when those surfaces are in scope
 - keep optional verifier JSON artifacts inside `tests/canary/mcp-contract/actual/` and reference them from packet JSON or handoff evidence when emitted
+- keep optional promotion JSON artifacts inside `tests/canary/mcp-contract/actual/` and reference them from packet JSON or handoff evidence when emitted
 
 ## Checklist D - Scaffold Maintenance Work
 
@@ -104,9 +105,14 @@ A wider parallel-task lane should open only if all of the following are true:
 - rehearse sandbox-only promotion refusal separately from host-qualified promotion success
 - do not open a two-executor rehearsal until the single-lane host path is already coherent
 
+Current proof floor for this cadence:
+
+- Packet 791 is the current helper-backed host promotion proof floor for the single-lane path
+- Packet 786 is the current completed first two-lane rehearsal floor for the coordinator-owned split pattern
+
 ## Checklist I - First Two-Lane Rehearsal Evidence Pattern
 
-Use this exact coordinator-owned pattern for the first two-lane rehearsal packet after Packet 785.
+Use this exact coordinator-owned pattern for any later two-lane rehearsal packet after Packet 786.
 
 Write the block before edits start and keep it short:
 
@@ -125,6 +131,11 @@ For the first rehearsal, prefer a coordinator block that reads like this in pack
 - lane B validation: one narrow command or diagnostic scoped to lane B files
 - abort rule: stop both lanes on ownership drift, shared-file drift, or failed lane validation
 - coordinator closeout: publish one packet-level completion note only after both lane tuples are present
+
+Current baseline note:
+
+- Packet 786 already proved the first completed coordinator-owned two-lane rehearsal using this pattern
+- later packets should preserve and reuse this pattern rather than describing the first rehearsal as still pending
 
 ## Current Recommendation
 

@@ -49,9 +49,11 @@ It uses the already-present minimal MCP trio and the `apex-jobs` ledger as the w
 
 1. `apex-jobs` is the current operational run ledger.
 2. `apex-jobs` is also the current promotion gate because `promote_packet` refuses promotion unless a successful `env=host` run exists.
-3. `ai_tasks` remains a future orchestration or integration surface, not the controlling queue for this first slice.
-4. Claude Code is the current packetized first-slice AI execution surface for the minimal MCP trio.
-5. Codex is an approved premium-plan interactive surface, but it is not yet bound to this wrapper or its promotion path until a later explicit packet admits that integration.
+3. `tools/ai/verify_minimal_mcp_trio.py` is the current negative-gate proof surface because it captures the expected refusal when no successful `env=host` run exists.
+4. `tools/ai/capture_apex_jobs_promotion.py` is the current positive-gate proof surface because it records one matching successful `env=host` run, verifies `list_runs` visibility, and captures the resulting `promote_packet` success as repo-visible JSON.
+5. `ai_tasks` remains a future orchestration or integration surface, not the controlling queue for this first slice.
+6. Claude Code is the current packetized first-slice AI execution surface for the minimal MCP trio.
+7. Codex is an approved premium-plan interactive surface, but it is not yet bound to this wrapper or its promotion path until a later explicit packet admits that integration.
 
 ## Default Runtime Posture
 
