@@ -327,6 +327,13 @@ def _validate_host_bootstrap_artifact(
     if not isinstance(hold_boundary, dict):
         raise ValueError("host bootstrap artifact missing hold_boundary payload")
 
+    hold_boundary_minimal_mcp = hold_boundary.get("minimal_mcp")
+    if hold_boundary_minimal_mcp != "NOT_RUNNING":
+        raise ValueError(
+            "host bootstrap artifact hold_boundary minimal_mcp mismatch: "
+            f"expected NOT_RUNNING, got {hold_boundary_minimal_mcp}"
+        )
+
     hold_boundary_minimal_mcp_detail = hold_boundary.get("minimal_mcp_detail")
     if not isinstance(hold_boundary_minimal_mcp_detail, dict):
         raise ValueError("host bootstrap artifact missing hold_boundary minimal_mcp_detail payload")
