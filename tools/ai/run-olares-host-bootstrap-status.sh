@@ -192,6 +192,7 @@ hold = json.loads(Path(hold_path).read_text(encoding="utf-8"))
 
 payload = {
     "packet_id": packet_id,
+    "tool": "tools/ai/run-olares-host-bootstrap-status.sh",
     "host_container_root": host_container_root,
     "implementation_root": repo_root,
     "git": {

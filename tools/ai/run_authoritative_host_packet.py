@@ -12,6 +12,7 @@ from typing import Callable
 
 
 TOOL_PATH = "tools/ai/run_authoritative_host_packet.py"
+HOST_BOOTSTRAP_TOOL_PATH = "tools/ai/run-olares-host-bootstrap-status.sh"
 VERIFY_TOOL_PATH = "tools/ai/verify_minimal_mcp_trio.py"
 PROMOTION_TOOL_PATH = "tools/ai/capture_apex_jobs_promotion.py"
 COORDINATOR_SUMMARY_TOOL_PATH = "tools/ai/build_ai_packet_evidence_summary.py"
@@ -236,6 +237,11 @@ def _validate_host_bootstrap_artifact(
     expected_head: str,
 ) -> dict[str, object]:
     payload = _read_json(artifact_path)
+
+    if payload.get("tool") != HOST_BOOTSTRAP_TOOL_PATH:
+        raise ValueError(
+            f"host bootstrap artifact tool mismatch: expected {HOST_BOOTSTRAP_TOOL_PATH}, got {payload.get('tool')}"
+        )
 
     if payload.get("packet_id") != packet_id:
         raise ValueError(
