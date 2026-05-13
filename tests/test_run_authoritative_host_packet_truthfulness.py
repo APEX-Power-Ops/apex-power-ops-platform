@@ -186,6 +186,7 @@ def test_orchestrate_packet_uses_stdin_fed_ssh_and_four_scp_imports(tmp_path: Pa
     assert summary["coordinator_summary_result"] == "PASS"
     assert summary["coordinator_verify_artifact_name"] == planned["verify"]["local"].name
     assert summary["coordinator_promotion_artifact_name"] == planned["promotion"]["local"].name
+    assert summary["coordinator_host_success_run_ids"] == ["host-run-123"]
     assert summary["coordinator_supporting_run_ids"] == ["host-run-123"]
     assert summary["result"] == "PASS"
     assert summary["artifact_paths"] == {
@@ -476,3 +477,79 @@ def test_orchestrate_packet_rejects_promotion_supporting_run_drift(tmp_path: Pat
         return
 
     raise AssertionError("expected orchestrate_packet to reject promotion supporting_run_ids drift")
+
+
+def test_orchestrate_packet_rejects_summary_host_success_run_drift(tmp_path: Path) -> None:
+    helper = _load_helper_module()
+    expected_head = helper._git_head(helper._repo_root())
+    planned = helper.plan_artifact_paths(
+        packet_id="packet-804-lane-a",
+        host_root="/home/olares/code/apex/apex-power-ops-platform",
+        local_root=tmp_path,
+    )
+
+    remote_contents = {
+        planned["host_bootstrap"]["remote"]: {
+            "packet_id": "packet-804-lane-a",
+            "git": {"head": expected_head, "status_count": 0},
+            "minimal_mcp": {"status": "not-running"},
+        },
+        planned["verify"]["remote"]: {
+            "packet_id": "packet-804-lane-a",
+            "profile": "strict-db-query",
+            "result": "PASS",
+        },
+        planned["promotion"]["remote"]: {
+            "packet_id": "packet-804-lane-a",
+            "result": "PASS",
+            "host_run": {"run_id": "host-run-804", "packet_id": "packet-804-lane-a", "status": "success"},
+            "host_success_runs": [
+                {"run_id": "host-run-804", "packet_id": "packet-804-lane-a", "status": "success"}
+            ],
+            "promotion": {"packet_id": "packet-804-lane-a", "supporting_run_ids": ["host-run-804"]},
+        },
+        planned["coordinator_summary"]["remote"]: {
+            "packet_id": "packet-804-lane-a",
+            "result": "PASS",
+            "verify_artifact_path": planned["verify"]["remote"],
+            "verification": {"result": "PASS", "profile": "strict-db-query"},
+            "promotion_artifact_path": planned["promotion"]["remote"],
+            "promotion": {
+                "result": "PASS",
+                "host_run": {"packet_id": "packet-804-lane-a", "run_id": "host-run-804"},
+                "host_success_runs": [
+                    {"run_id": "host-run-804", "packet_id": "packet-804-lane-a", "status": "success"},
+                    {"run_id": "extra-run", "packet_id": "packet-804-lane-a", "status": "success"}
+                ],
+                "promotion_record": {"packet_id": "packet-804-lane-a", "supporting_run_ids": ["host-run-804"]},
+            },
+        },
+    }
+
+    def fake_runner(command: list[str], input_text: str | None = None) -> None:
+        if command[0] == "ssh":
+            return
+
+        remote_path = command[1].split(":", 1)[1]
+        local_path = Path(command[2])
+        local_path.parent.mkdir(parents=True, exist_ok=True)
+        local_path.write_text(json.dumps(remote_contents[remote_path]) + "\n", encoding="utf-8")
+
+    try:
+        helper.orchestrate_packet(
+            packet_id="packet-804-lane-a",
+            host="olares-mesh",
+            host_root="/home/olares/code/apex/apex-power-ops-platform",
+            profile="strict-db-query",
+            dsn_loader="/home/olares/apex-secrets/olares/ai-live-dsn.env",
+            local_root=tmp_path,
+            runner=fake_runner,
+        )
+    except ValueError as error:
+        assert str(error) == (
+            "coordinator summary host_success_runs mismatch: "
+            "expected ['host-run-804'], got ['host-run-804', 'extra-run']"
+        )
+        return
+
+    raise AssertionError("expected orchestrate_packet to reject coordinator summary host_success_runs drift")

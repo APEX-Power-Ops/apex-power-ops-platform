@@ -297,6 +297,7 @@ def _validate_coordinator_summary_artifact(
     verify_profile: str,
     promotion_artifact_name: str,
     host_run_id: str | None,
+    host_success_run_ids: list[str] | None,
     supporting_run_ids: list[str] | None,
 ) -> dict[str, object]:
     payload = _read_json(artifact_path)
@@ -366,14 +367,20 @@ def _validate_coordinator_summary_artifact(
     if not isinstance(host_success_runs, list) or not host_success_runs:
         raise ValueError("coordinator summary promotion payload missing host_success_runs")
 
-    host_success_run_ids = [
+    coordinator_host_success_run_ids = [
         run.get("run_id")
         for run in host_success_runs
         if isinstance(run, dict) and run.get("packet_id") == packet_id and run.get("status") == "success"
     ]
-    if host_run_id is not None and host_run_id not in host_success_run_ids:
+    if host_run_id is not None and host_run_id not in coordinator_host_success_run_ids:
         raise ValueError(
             f"coordinator summary host_success_runs missing accepted host_run id {host_run_id}"
+        )
+
+    if host_success_run_ids is not None and coordinator_host_success_run_ids != host_success_run_ids:
+        raise ValueError(
+            "coordinator summary host_success_runs mismatch: "
+            f"expected {host_success_run_ids}, got {coordinator_host_success_run_ids}"
         )
 
     promotion_record = promotion.get("promotion_record")
@@ -403,6 +410,7 @@ def _validate_coordinator_summary_artifact(
         "coordinator_summary_result": payload.get("result"),
         "coordinator_verify_artifact_name": verify_artifact_name,
         "coordinator_promotion_artifact_name": promotion_artifact_name,
+        "coordinator_host_success_run_ids": coordinator_host_success_run_ids,
         "coordinator_supporting_run_ids": summary_supporting_run_ids,
     }
 
@@ -458,6 +466,7 @@ def orchestrate_packet(
         verify_profile=str(verify_validation["verify_profile"]),
         promotion_artifact_name=str(promotion_validation["promotion_artifact_name"]),
         host_run_id=promotion_validation["host_run_id"] if isinstance(promotion_validation["host_run_id"], str) else None,
+        host_success_run_ids=promotion_validation["host_success_run_ids"] if isinstance(promotion_validation["host_success_run_ids"], list) else None,
         supporting_run_ids=promotion_validation["promotion_supporting_run_ids"] if isinstance(promotion_validation["promotion_supporting_run_ids"], list) else None,
     )
 
