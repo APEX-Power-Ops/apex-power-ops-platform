@@ -323,6 +323,21 @@ def _validate_host_bootstrap_artifact(
             f"host bootstrap artifact preflight status must be not-running, got {preflight_status}"
         )
 
+    hold_boundary = payload.get("hold_boundary")
+    if not isinstance(hold_boundary, dict):
+        raise ValueError("host bootstrap artifact missing hold_boundary payload")
+
+    hold_boundary_minimal_mcp_detail = hold_boundary.get("minimal_mcp_detail")
+    if not isinstance(hold_boundary_minimal_mcp_detail, dict):
+        raise ValueError("host bootstrap artifact missing hold_boundary minimal_mcp_detail payload")
+
+    hold_boundary_status = hold_boundary_minimal_mcp_detail.get("status")
+    if hold_boundary_status != "not-running":
+        raise ValueError(
+            "host bootstrap artifact hold_boundary minimal_mcp_detail status mismatch: "
+            f"expected not-running, got {hold_boundary_status}"
+        )
+
     return {
         "host_git_head": host_head,
         "host_status_count": status_count,
