@@ -57,7 +57,7 @@ Before running any scenario below, confirm all of the following:
 | Workstation live-DSN baseline | preserves the authoritative comparison point before host changes are interpreted | 1. export or set a governed live DSN 2. run `run-minimal-mcp-trio` `up` 3. run `verify` 4. run hold-boundary against the live DSN 5. run `down` | `minimal_mcp=PASS` and `deferred_ops=HOLD` unless live business rows have genuinely changed | minimal-trio verifier artifact, deferred-ops artifact, packet validation note, resulting `apex-jobs` run id when captured |
 | Host managed cold-start drill | proves the Olares mirror can start from rest and produce a coherent operator evidence bundle | 1. use the dedicated host managed cold-start drill runbook 2. run host bootstrap status 3. run host `run-minimal-mcp-trio.sh up` 4. run `verify` 5. run host hold-boundary against a governed live DSN when present 6. run `down` | bootstrap should be truthful before startup, then the managed trio should verify cleanly; `deferred_ops=UNAVAILABLE` remains truthful unless a bounded host query path has been admitted and works | host-bootstrap artifact, minimal-trio verifier artifact, deferred-ops artifact, packet/handoff evidence block |
 | Host adopted-runtime drill | proves the wrappers bind only to the correct already-running trio and reject foreign ownership or stale state | 1. start the trio once 2. rerun host bootstrap status 3. rerun host `status` and `verify` without a second startup 4. run hold-boundary if the readiness gate is satisfied | status should report `adopted-running` only when live readiness and ownership checks are both true; stale or foreign listeners must degrade or refuse adoption | host-bootstrap artifact, minimal status artifact, verifier artifact, captured refusal or degradation evidence when adoption is denied |
-| Promotion-gate rehearsal | proves the trust boundary is real rather than implied | 1. confirm sandbox-only validation exists 2. verify sandbox-only `promote_packet` refusal 3. capture one successful `env=host` run 4. rerun promotion on the same packet id | sandbox-only promotion must refuse; host-qualified success may promote only after matching successful host evidence exists | refusal detail, host run id, promotion record, packet closeout note tying packet id to evidence |
+| Promotion-gate rehearsal | proves the trust boundary is real rather than implied | 1. confirm sandbox-only validation exists 2. verify sandbox-only `promote_packet` refusal 3. capture one successful `env=host` run 4. rerun promotion on the same packet id through `tools/ai/capture_apex_jobs_promotion.py` when positive-gate evidence is the packet goal | sandbox-only promotion must refuse; host-qualified success may promote only after matching successful host evidence exists | refusal detail, host run id, promotion record, helper artifact path, packet closeout note tying packet id to evidence |
 | Two-executor rehearsal | proves coordination rules work without widening orchestration | 1. define one scaffold lane and one trust-hardening lane 2. declare final write ownership before edits 3. validate each lane independently 4. run one coordinator-owned final check across the declared files 5. publish one coherent completion record | the slice should complete without file-ownership confusion, queue ambiguity, or widened runtime scope; any ownership drift or failed lane validation should end as `ABORTED`, not partial success | packet or handoff ownership block, per-lane validation results, one combined coordinator validation result, one explicit abort record when the rehearsal stops |
 
 ## Recommended Execution Order
@@ -114,6 +114,16 @@ Stop and reopen the boundary deliberately if any scenario would require:
 
 The next truthful work is still bounded validation hardening, not new orchestration features.
 
-If operator friction remains after the matrix above is green, the best follow-on is one bounded trust-hardening slice such as wrapper-level routing for the named verifier validation-profile surface or richer `apex-jobs` evidence attachment.
+If operator friction remains after the matrix above is green, the best follow-on is one bounded trust-hardening slice such as richer positive-gate provenance attachment around the same helper-backed host path or another coordinator-owned rehearsal-alignment improvement.
 
 Do not treat that possible follow-on as permission to widen the controller, runtime posture, or admitted service family.
+
+## Packet 791 Alignment Note
+
+Packet `2026-05-13-olares-dev-residency-791` is the current concrete model for the promotion-gate rehearsal row above.
+
+It proves the matrix row now has two complementary repo-owned proof surfaces:
+
+1. `tools/ai/verify_minimal_mcp_trio.py` covers the negative guard by proving sandbox-only promotion refusal,
+2. `tools/ai/capture_apex_jobs_promotion.py` covers the positive gate by recording the successful matching `env=host` run, `list_runs` visibility, and `promote_packet` success on the same packet id,
+3. the authoritative host can return to truthful `not-running` state after both proofs complete.

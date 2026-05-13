@@ -19,7 +19,8 @@ The current backbone evidence bundle should include all of the following when a 
 3. a bounded database query proof through `apex-db`
 4. `apex-jobs` run start and end proof
 5. explicit proof that `promote_packet` refuses without successful `env=host` evidence
-6. packet-attributed outcome notes in repo-visible packet or handoff artifacts
+6. explicit positive-gate promotion proof when the packet claims promotion-eligible host evidence
+7. packet-attributed outcome notes in repo-visible packet or handoff artifacts
 
 ## MCP Boundary Rules
 
@@ -210,7 +211,8 @@ Minimum capture rules for that bundle:
 5. include the refusal proof for missing `env=host` evidence,
 6. include the run id and env class for the recorded `apex-jobs` run,
 7. include one `list_runs` visibility proof showing the closed run is queryable from the ledger,
-8. include the truthful final result and attach it to the packet or handoff record.
+8. when the packet claims promotion-eligible host evidence, include the host success run id plus the `promote_packet` result artifact,
+9. include the truthful final result and attach it to the packet or handoff record.
 
 ## Evidence Routing Contract
 
@@ -230,7 +232,8 @@ Handoff minimum routing:
 3. include the refusal proof for missing `env=host` evidence,
 4. include the run id and env class whenever `apex-jobs` participated,
 5. include the `list_runs` proof or equivalent ledger-visibility evidence when the verifier emitted it,
-6. reference any attached packet-local evidence artifact when one exists.
+6. include the successful host run id and promotion result when the packet claims promotion-eligible host evidence,
+7. reference any attached packet-local evidence artifact when one exists.
 
 Optional emitted verifier artifact:
 
@@ -238,6 +241,15 @@ Optional emitted verifier artifact:
 2. the preferred repo-owned lane for that artifact is `tests/canary/mcp-contract/actual/`, which already holds MCP contract proof,
 3. a concrete example path is `tests/canary/mcp-contract/actual/verify-minimal-mcp-trio-<packet-id>.json`,
 4. do not overwrite `tests/canary/mcp-contract/actual/mcp-tool-lists.json`, because that remains the separate canary runner output,
+5. when packet JSON is in scope, that artifact should be referenced from `output_artifacts`,
+6. the emitted JSON does not replace the handoff validation summary; it supports it.
+
+Optional emitted promotion artifact:
+
+1. `tools/ai/capture_apex_jobs_promotion.py --output <path>` may write a repo-visible JSON artifact for the positive promotion-gate path,
+2. the preferred repo-owned lane for that artifact is also `tests/canary/mcp-contract/actual/`,
+3. a concrete example path is `tests/canary/mcp-contract/actual/apex-jobs-promotion-<packet-id>.json`,
+4. that helper artifact should be used only when the packet is claiming a successful matching `env=host` run and promotion result,
 5. when packet JSON is in scope, that artifact should be referenced from `output_artifacts`,
 6. the emitted JSON does not replace the handoff validation summary; it supports it.
 
@@ -275,11 +287,17 @@ Packet 790 proves the next authoritative-host strict-profile lane with:
 2. the authoritative host can emit a `strict-db-query` verifier artifact at `tests/canary/mcp-contract/actual/verify-minimal-mcp-trio-2026-05-13-olares-dev-residency-790.json`,
 3. the host wrapper can return to a truthful `not-running` rest state after the packet completes.
 
+Packet 791 proves the next promotion-eligible authoritative-host strict-profile lane with:
+
+1. the authoritative host can pair a same-packet `strict-db-query` verifier artifact with a successful `env=host` run,
+2. the reusable helper `tools/ai/capture_apex_jobs_promotion.py` can capture the positive gate artifact at `tests/canary/mcp-contract/actual/apex-jobs-promotion-2026-05-13-olares-dev-residency-791.json`,
+3. the promotion gate remains bounded and truthful because the positive artifact exists only after matching host evidence is recorded.
+
 ## Non-Goals
 
 This evidence bundle does not prove:
 
 1. broader AI-service readiness,
-2. host promotion readiness by itself,
+2. host promotion readiness by itself without the matching positive-gate artifact,
 3. public ingress readiness,
 4. business-logic completion.
