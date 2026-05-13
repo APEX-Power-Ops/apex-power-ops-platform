@@ -18,6 +18,7 @@ PROMOTION_TOOL_PATH = "tools/ai/capture_apex_jobs_promotion.py"
 COORDINATOR_SUMMARY_TOOL_PATH = "tools/ai/build_ai_packet_evidence_summary.py"
 DEFAULT_HOST = "olares-mesh"
 DEFAULT_HOST_ROOT = "/home/olares/code/apex/apex-power-ops-platform"
+DEFAULT_HOST_PREFERRED_PYTHON_PATH = "/usr/bin/python3"
 DEFAULT_HOST_NODE_PATH = "/usr/bin/node"
 DEFAULT_HOST_PNPM_MATERIALIZED_PATH = "/home/olares/apex-data/toolchains/pnpm-10.0.0/node_modules/.bin/pnpm"
 DEFAULT_HOST_CALC_ENGINE_PYTHON_PATH = "/home/olares/apex-data/toolchains/calc-engine-venv/bin/python"
@@ -319,6 +320,17 @@ def _validate_host_bootstrap_artifact(
     toolchains = payload.get("toolchains")
     if not isinstance(toolchains, dict):
         raise ValueError("host bootstrap artifact missing toolchains payload")
+
+    preferred_python = toolchains.get("preferred_python")
+    if not isinstance(preferred_python, dict):
+        raise ValueError("host bootstrap artifact missing toolchains.preferred_python payload")
+
+    preferred_python_path = preferred_python.get("path")
+    if preferred_python_path != DEFAULT_HOST_PREFERRED_PYTHON_PATH:
+        raise ValueError(
+            "host bootstrap artifact toolchains.preferred_python path mismatch: "
+            f"expected {DEFAULT_HOST_PREFERRED_PYTHON_PATH}, got {preferred_python_path}"
+        )
 
     node = toolchains.get("node")
     if not isinstance(node, dict):
