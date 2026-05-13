@@ -177,6 +177,23 @@ Example validation summary shape:
 				"notes": "minimal-mcp-trio verification",
 				"completed_at": "2026-05-10T19:00:10Z"
 			}
+		},
+		"jobs_list_runs": {
+			"status": "pass",
+			"result": {
+				"runs": [
+					{
+						"run_id": "run_sandbox_123",
+						"env": "sandbox",
+						"service": "ai-workflow",
+						"packet_id": "<packet-id>",
+						"status": "success",
+						"created_at": "2026-05-10T19:00:00Z",
+						"notes": "minimal-mcp-trio verification",
+						"completed_at": "2026-05-10T19:00:10Z"
+					}
+				]
+			}
 		}
 	},
 	"result": "PASS"
@@ -190,7 +207,8 @@ Minimum capture rules for that bundle:
 3. include the database tool-resolution and bounded read-only query proof,
 4. include the refusal proof for missing `env=host` evidence,
 5. include the run id and env class for the recorded `apex-jobs` run,
-6. include the truthful final result and attach it to the packet or handoff record.
+6. include one `list_runs` visibility proof showing the closed run is queryable from the ledger,
+7. include the truthful final result and attach it to the packet or handoff record.
 
 ## Evidence Routing Contract
 
@@ -209,7 +227,8 @@ Handoff minimum routing:
 2. include the exact verifier command or equivalent execution surface,
 3. include the refusal proof for missing `env=host` evidence,
 4. include the run id and env class whenever `apex-jobs` participated,
-5. reference any attached packet-local evidence artifact when one exists.
+5. include the `list_runs` proof or equivalent ledger-visibility evidence when the verifier emitted it,
+6. reference any attached packet-local evidence artifact when one exists.
 
 Optional emitted verifier artifact:
 
@@ -229,6 +248,12 @@ Packet 172 proves the current hardening lane with:
 1. the existing minimal MCP trio verification,
 2. a new executable promotion-refusal assertion in `verify_minimal_mcp_trio.py`,
 3. explicit trust, provenance, and evidence contracts published in repo-owned docs.
+
+Packet 787 proves the next evidence-attachment alignment lane with:
+
+1. an updated canary evidence bundle example that reflects the current verifier output,
+2. explicit routing guidance that `jobs_list_runs` ledger-visibility proof belongs in the packet or handoff evidence path when emitted,
+3. no widening of the admitted MCP trio, queue ownership, or runtime scope.
 
 ## Non-Goals
 
