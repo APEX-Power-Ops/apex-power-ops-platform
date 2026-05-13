@@ -18,6 +18,7 @@ PROMOTION_TOOL_PATH = "tools/ai/capture_apex_jobs_promotion.py"
 COORDINATOR_SUMMARY_TOOL_PATH = "tools/ai/build_ai_packet_evidence_summary.py"
 DEFAULT_HOST = "olares-mesh"
 DEFAULT_HOST_ROOT = "/home/olares/code/apex/apex-power-ops-platform"
+DEFAULT_HOST_NODE_PATH = "/usr/bin/node"
 DEFAULT_HOST_PNPM_MATERIALIZED_PATH = "/home/olares/apex-data/toolchains/pnpm-10.0.0/node_modules/.bin/pnpm"
 DEFAULT_HOST_CALC_ENGINE_PYTHON_PATH = "/home/olares/apex-data/toolchains/calc-engine-venv/bin/python"
 DEFAULT_PROFILE = "strict-db-query"
@@ -318,6 +319,17 @@ def _validate_host_bootstrap_artifact(
     toolchains = payload.get("toolchains")
     if not isinstance(toolchains, dict):
         raise ValueError("host bootstrap artifact missing toolchains payload")
+
+    node = toolchains.get("node")
+    if not isinstance(node, dict):
+        raise ValueError("host bootstrap artifact missing toolchains.node payload")
+
+    node_path = node.get("path")
+    if node_path != DEFAULT_HOST_NODE_PATH:
+        raise ValueError(
+            "host bootstrap artifact toolchains.node path mismatch: "
+            f"expected {DEFAULT_HOST_NODE_PATH}, got {node_path}"
+        )
 
     pnpm_materialized = toolchains.get("pnpm_materialized")
     if not isinstance(pnpm_materialized, dict):
