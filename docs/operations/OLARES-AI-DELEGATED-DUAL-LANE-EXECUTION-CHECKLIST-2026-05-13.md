@@ -57,10 +57,12 @@ Record `ABORTED` instead of partial success if any of these conditions occur:
 
 The coordinator closeout must include:
 
-1. Lane A tuple: focused helper command and result, live helper command and result, exact emitted artifact names, final host rest-state result.
+1. Lane A tuple: focused helper command and result, live helper command and result, exact emitted artifact names, final host rest-state result, and one compact helper proof summary line using the delegated proof-summary rule.
 2. Lane B tuple: touched file, validation method, validation result, and exact scaffold scope.
 3. Coordinator tuple: shared publication files, combined validation result, authoritative-host parity result, and final verdict of `PASS` or `ABORTED`.
 4. Boundary confirmation that no helper mutation, controller widening, service admission widening, auth change, ingress change, runtime mutation, or business-logic mutation was opened.
+
+When the packet reuses the delegated closeout template stack, treat the coordinator closeout wording as the published Packet 833 template as extended by Packet 853 rather than an older pre-proof-summary closeout shape.
 
 ## Packet 831 Application
 
@@ -72,3 +74,7 @@ For Packet 831:
 2. Lane B owns this checklist only.
 3. The coordinator owns `PROJECT_STATUS.md` and the Packet 831 closeout handoff only after both lanes validate.
 4. The next step remains another bounded delegated packet or a closeout-routing decision, not controller widening.
+
+## Packet 854 Extension
+
+Packet `2026-05-14-olares-dev-residency-854` extends this reusable execution checklist so later delegated packets must carry the compact accepted helper proof summary inside the Lane A closeout tuple and must treat coordinator closeout wording as the Packet 833 template extended by Packet 853.
