@@ -115,6 +115,8 @@ Current proof floor for this cadence:
 - Packet 834 is the current delegated packet-definition template floor
 - Packet 835 is the current higher-level orchestration entry-surface alignment floor
 - Packet 836 is the current active plan and authority control-surface alignment floor
+- Packet 837 is the current live guidance-refresh floor
+- Packet 838 is the current post-guidance control-surface refresh floor
 
 ## Current Delegated Template Stack
 
@@ -124,7 +126,7 @@ Use the published delegated stack for any later bounded AI/operator packet that 
 - route packet-specific operator prompts through Packet 832 and `docs/operations/OLARES-AI-DELEGATED-DUAL-LANE-OPERATOR-PROMPT-TEMPLATE-2026-05-13.md`
 - route coordinator closeout wording through Packet 833 and `docs/operations/OLARES-AI-DELEGATED-DUAL-LANE-COORDINATOR-CLOSEOUT-TEMPLATE-2026-05-13.md`
 - route delegated packet JSON authoring through Packet 834 and `docs/operations/OLARES-AI-DELEGATED-DUAL-LANE-PACKET-TEMPLATE-2026-05-13.md`
-- preserve the higher-level orchestration entry surfaces in the Packet 835-aligned posture and the execution plan plus authority surfaces in the Packet 836-aligned posture
+- preserve the higher-level orchestration entry surfaces in the Packet 835-aligned posture, the live guidance surfaces in the Packet 837-aligned posture, and the execution plan plus authority surfaces in the Packet 838-aligned post-guidance control-surface posture
 - do not reopen helper hardening, controller widening, or service-admission questions inside those later delegated packets unless a separate packet explicitly changes the boundary
 
 ## Checklist I - First Two-Lane Rehearsal Evidence Pattern
@@ -191,4 +193,4 @@ Current baseline note:
 
 Use the current AI backbone as a controlled executor model: one executor by default, or two executors only when scaffold maintenance and trust hardening can stay disjoint.
 
-Do not treat the existence of those two lanes as approval for autonomous orchestration, multi-worker mutation, or generic parallel source execution. For the current delegated packet family, prefer the published Packet 831 through Packet 834 stack as the default coordination surface while preserving the Packet 835 and Packet 836 aligned control surfaces on the next delegated follow-on.
+Do not treat the existence of those two lanes as approval for autonomous orchestration, multi-worker mutation, or generic parallel source execution. For the current delegated packet family, prefer the published Packet 831 through Packet 834 stack as the default coordination surface while preserving the Packet 835-aligned orchestration entry surfaces, the Packet 837-aligned live guidance surfaces, and the Packet 838-aligned post-guidance control surfaces on the next delegated follow-on.

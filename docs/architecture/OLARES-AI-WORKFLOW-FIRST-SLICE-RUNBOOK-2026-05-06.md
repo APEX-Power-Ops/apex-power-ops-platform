@@ -61,7 +61,7 @@ It uses the already-present minimal MCP trio and the `apex-jobs` ledger as the w
 
 The current delegated execution posture is narrower than generic multi-agent control.
 
-It is currently bounded by the published Packet 830 through Packet 836 stack:
+It is currently bounded by the published Packet 830 through Packet 838 stack:
 
 1. Packet `2026-05-13-olares-dev-residency-830` is the current authoritative-host helper validation floor,
 2. Packet `2026-05-13-olares-dev-residency-831` is the current delegated dual-lane rehearsal floor,
@@ -69,9 +69,11 @@ It is currently bounded by the published Packet 830 through Packet 836 stack:
 4. Packet `2026-05-13-olares-dev-residency-833` is the current delegated coordinator closeout template floor,
 5. Packet `2026-05-13-olares-dev-residency-834` is the current delegated packet-definition template floor,
 6. Packet `2026-05-13-olares-dev-residency-835` is the current higher-level orchestration entry-surface alignment floor,
-7. Packet `2026-05-13-olares-dev-residency-836` is the current active plan and authority control-surface alignment floor.
+7. Packet `2026-05-13-olares-dev-residency-836` is the current active plan and authority control-surface alignment floor,
+8. Packet `2026-05-13-olares-dev-residency-837` is the current live guidance-refresh floor,
+9. Packet `2026-05-13-olares-dev-residency-838` is the current post-guidance control-surface refresh floor.
 
-Later delegated packets should reuse that published checklist-and-template stack rather than hand-authoring split rules, operator prompts, closeout wording, or packet JSON structure again, while preserving the Packet 835-aligned orchestration entry surfaces and the Packet 836-aligned execution plan plus authority posture.
+Later delegated packets should reuse that published checklist-and-template stack rather than hand-authoring split rules, operator prompts, closeout wording, or packet JSON structure again, while preserving the Packet 835-aligned orchestration entry surfaces, the Packet 837-aligned live guidance surfaces, and the Packet 838-aligned post-guidance control surfaces.
 
 ## Default Runtime Posture
 
@@ -224,7 +226,7 @@ The runtime-governance lane for this first slice is now closed in favor of the l
 
 The next truthful follow-on is not default-runtime widening.
 
-The next truthful follow-on for this runbook is another delegated packet that reuses the published Packet 831 split checklist, Packet 832 operator prompt template, Packet 833 coordinator closeout template, and Packet 834 packet-definition template with a new disjoint lane objective while preserving the Packet 835-aligned orchestration entry surfaces and the Packet 836-aligned execution plan plus authority posture.
+The next truthful follow-on for this runbook is another delegated packet that reuses the published Packet 831 split checklist, Packet 832 operator prompt template, Packet 833 coordinator closeout template, and Packet 834 packet-definition template with a new disjoint lane objective while preserving the Packet 835-aligned orchestration entry surfaces, the Packet 837-aligned live guidance surfaces, and the Packet 838-aligned post-guidance control surfaces.
 
 Reopen this runbook's runtime posture only if:
 
