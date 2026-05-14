@@ -2,13 +2,13 @@
 
 Date: 2026-05-13
 Status: Active delegated packet-definition template
-Scope: reusable packet JSON skeleton for delegated dual-lane packets after Packet 833
+Scope: reusable packet JSON skeleton for delegated dual-lane packets after Packet 854
 
 ## Purpose
 
-Use this template when a later Olares AI/operator packet needs a new packet JSON that reuses the delegated split checklist, operator prompt template, and coordinator closeout template without hand-authoring the full packet structure from scratch.
+Use this template when a later Olares AI/operator packet needs a new packet JSON that reuses the delegated split checklist as extended by Packet 854, the operator prompt template, and the coordinator closeout template as extended by Packet 853 without hand-authoring the full packet structure from scratch.
 
-The template complements `docs/operations/OLARES-AI-DELEGATED-DUAL-LANE-EXECUTION-CHECKLIST-2026-05-13.md`, `docs/operations/OLARES-AI-DELEGATED-DUAL-LANE-OPERATOR-PROMPT-TEMPLATE-2026-05-13.md`, and `docs/operations/OLARES-AI-DELEGATED-DUAL-LANE-COORDINATOR-CLOSEOUT-TEMPLATE-2026-05-13.md` by making the packet-definition fields explicit: metadata, dependencies, constrained outputs, lane ownership, coordinator shared surfaces, and execution gate wording.
+The template complements `docs/operations/OLARES-AI-DELEGATED-DUAL-LANE-EXECUTION-CHECKLIST-2026-05-13.md`, `docs/operations/OLARES-AI-DELEGATED-DUAL-LANE-OPERATOR-PROMPT-TEMPLATE-2026-05-13.md`, and `docs/operations/OLARES-AI-DELEGATED-DUAL-LANE-COORDINATOR-CLOSEOUT-TEMPLATE-2026-05-13.md` by making the packet-definition fields explicit: metadata, dependencies, constrained outputs, lane ownership, coordinator shared surfaces, execution gate wording, and the compact helper-proof-summary plus closeout/checklist contract that later packets must preserve.
 
 ## Required Replacements
 
@@ -21,16 +21,17 @@ Replace every placeholder before execution:
 5. `{{LANE_B_SCOPE}}`: one-sentence summary of Lane B scope
 6. `{{HANDOFF_FILE}}`: absolute path to the coordinator-owned handoff file
 7. `{{PROMPT_FILE}}`: absolute path to the packet-specific operator prompt file
+8. `{{HELPER_PROOF_SUMMARY}}`: compact accepted helper proof line using the delegated proof-summary rule
 
 ## Packet Fields
 
 Every delegated packet JSON should preserve all of the following fields:
 
 1. Packet metadata: `packet_id`, `title`, `objective`, `domain`, `active_role`
-2. Dependencies: repo status surfaces, orchestration decision/readiness surfaces, current delegated templates, helper surface, helper test surface, and the immediate prior delegated packet
+2. Dependencies: repo status surfaces, orchestration decision/readiness surfaces, current delegated templates, delegated note stack, helper surface, helper test surface, and the immediate prior delegated packet
 3. Inputs and outputs: `required_inputs`, `constrained_outputs`
 4. Lane ownership: one helper-driven live evidence lane and one single-file disjoint scaffold lane
-5. Coordinator fields: shared surfaces, required combined checks, status, execution gate, timestamps
+5. Coordinator fields: shared surfaces, required combined checks, required closeout contract, status, execution gate, timestamps
 
 ## JSON Skeleton
 
@@ -50,14 +51,21 @@ Every delegated packet JSON should preserve all of the following fields:
     "docs/operations/OLARES-AI-DELEGATED-DUAL-LANE-EXECUTION-CHECKLIST-2026-05-13.md",
     "docs/operations/OLARES-AI-DELEGATED-DUAL-LANE-OPERATOR-PROMPT-TEMPLATE-2026-05-13.md",
     "docs/operations/OLARES-AI-DELEGATED-DUAL-LANE-COORDINATOR-CLOSEOUT-TEMPLATE-2026-05-13.md",
+    "docs/operations/OLARES-AI-DELEGATED-DUAL-LANE-OBJECTIVE-SELECTION-RUBRIC-2026-05-14.md",
+    "docs/operations/OLARES-AI-DELEGATED-DUAL-LANE-LANE-SELECTION-NOTE-2026-05-14.md",
+    "docs/operations/OLARES-AI-DELEGATED-DUAL-LANE-ARTIFACT-READING-NOTE-2026-05-14.md",
+    "docs/operations/OLARES-AI-DELEGATED-DUAL-LANE-STATUS-ALIGNMENT-NOTE-2026-05-14.md",
+    "docs/operations/OLARES-AI-DELEGATED-DUAL-LANE-PARITY-REMEDIATION-NOTE-2026-05-14.md",
+    "docs/operations/OLARES-AI-DELEGATED-DUAL-LANE-PROOF-SUMMARY-NOTE-2026-05-14.md",
     "tools/ai/run_authoritative_host_packet.py",
     "tests/test_run_authoritative_host_packet_truthfulness.py"
   ],
   "required_inputs": [
     "Current delegated baseline guidance from PROJECT_STATUS.md",
-    "Current delegated execution checklist",
+    "Current delegated execution checklist as extended by Packet 854",
     "Current delegated operator prompt template",
-    "Current delegated coordinator closeout template",
+    "Current delegated coordinator closeout template as extended by Packet 853",
+    "Current delegated objective-selection, lane-selection, artifact-reading, status-alignment, parity-remediation, and proof-summary notes",
     "The unchanged helper execution surface and focused truthfulness suite"
   ],
   "constrained_outputs": [
@@ -105,6 +113,11 @@ Every delegated packet JSON should preserve all of the following fields:
       "the live helper result is PASS for {{PACKET_ID}}",
       "the host returns to truthful not-running rest state",
       "authoritative-host parity is restored without widening scope"
+    ],
+    "required_closeout_contract": [
+      "Lane A must preserve the compact helper proof summary line: {{HELPER_PROOF_SUMMARY}}",
+      "Coordinator closeout wording must route through the Packet 833 template as extended by Packet 853",
+      "Delegated split ownership and validation wording must route through the Packet 831 checklist as extended by Packet 854"
     ]
   },
   "delegation_prompt": "{{PROMPT_FILE}}",
@@ -118,3 +131,7 @@ Every delegated packet JSON should preserve all of the following fields:
 ## Packet 834 Application
 
 Packet `2026-05-13-olares-dev-residency-834` is the first packet to publish this reusable delegated packet-definition template on top of the Packet 831 delegated split-governance floor, the Packet 832 operator prompt template floor, and the Packet 833 coordinator closeout template floor.
+
+## Packet 855 Extension
+
+Packet `2026-05-14-olares-dev-residency-855` extends this reusable delegated packet-definition template so later packets must preserve the Packet 853 closeout-template extension contract, the Packet 854 checklist extension contract, and the compact accepted helper proof-summary line directly inside the packet-definition scaffold instead of treating those requirements as coordinator-only folklore outside the JSON definition surface.
