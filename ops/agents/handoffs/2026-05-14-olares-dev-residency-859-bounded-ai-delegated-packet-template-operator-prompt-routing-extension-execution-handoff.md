@@ -3,7 +3,7 @@
 - Date: 2026-05-14
 - Scope: publish the next delegated dual-lane packet after Packet 858 by reusing the unchanged authoritative-host helper surface for a fresh admitted-trio live evidence tuple while extending the reusable delegated packet template so later packets explicitly preserve the Packet 858 operator-prompt-template packet-definition-routing contract inside the reusable packet-definition scaffold
 - Lane: bounded AI/operator delegated dual-lane execution
-- Change type: next delegated dual-lane packet after Packet 858, closing the reusable delegated packet-template operator-prompt-routing extension surface with publication and authoritative-host parity pending
+- Change type: next delegated dual-lane packet after Packet 858, closing the reusable delegated packet-template operator-prompt-routing extension surface with publication and authoritative-host parity restored
 - Shared publication files: `PROJECT_STATUS.md`, `docs/operations/AI-BACKBONE-PARALLEL-HARDENING-BRIEF-2026-05-08.md`, `docs/operations/OLARES-AI-OPERATOR-REAL-WORLD-VALIDATION-MATRIX-2026-05-12.md`, `docs/operations/OLARES-MVP-AI-ORCHESTRATION-STATUS-BRIEF-2026-05-10.md`, `docs/operations/OLARES-AI-PARALLEL-TASK-READINESS-CHECKLIST-2026-05-10.md`, `docs/architecture/OLARES-AI-WORKFLOW-FIRST-SLICE-RUNBOOK-2026-05-06.md`, this handoff
 
 ## Lane A Tuple
@@ -32,9 +32,9 @@
 
 - Shared publication files updated locally only after both lane tuples were green and the host returned to truthful `not-running` rest state: `PROJECT_STATUS.md`, `docs/operations/AI-BACKBONE-PARALLEL-HARDENING-BRIEF-2026-05-08.md`, `docs/operations/OLARES-AI-OPERATOR-REAL-WORLD-VALIDATION-MATRIX-2026-05-12.md`, `docs/operations/OLARES-MVP-AI-ORCHESTRATION-STATUS-BRIEF-2026-05-10.md`, `docs/operations/OLARES-AI-PARALLEL-TASK-READINESS-CHECKLIST-2026-05-10.md`, `docs/architecture/OLARES-AI-WORKFLOW-FIRST-SLICE-RUNBOOK-2026-05-06.md`, this handoff
 - Combined validation result: focused helper truthfulness suite passed, live helper execution for Packet 859 passed, the host returned to truthful `not-running`, Lane B packet-template validation passed, ownership remained disjoint, and no abort rule fired
-- Publication result: `PENDING`
-- Authoritative-host parity result: `PENDING`
-- Packet verdict: `PENDING PUBLICATION`
+- Publication result: published to `origin/clean-main` in commit `c2db690` (`Packet 859 packet template routing extension`)
+- Authoritative-host parity result: restored after publishing the Packet 859 closeout set, temporarily moving aside only the exact host-created Packet 859 untracked artifact blockers, fast-forwarding `/home/olares/code/apex/apex-power-ops-platform` to the published clean head `c2db690`, confirming the restored tracked files matched the temporary copies byte-for-byte, and removing the temporary copies
+- Packet verdict: `PASS`
 
 ## Boundary Confirmation
 
