@@ -252,6 +252,8 @@ Current proof floor:
 9. Packet `2026-05-13-olares-dev-residency-837` remains the live guidance-refresh floor.
 10. Packet `2026-05-13-olares-dev-residency-838` remains the post-guidance control-surface refresh floor.
 11. Packet `2026-05-13-olares-dev-residency-839` remains the higher-level guidance refresh floor.
+12. Packet `2026-05-13-olares-dev-residency-840` remains the post-guidance control refresh floor.
+13. Packet `2026-05-13-olares-dev-residency-841` remains the higher-level guidance realignment floor.
 
 ### Phase D - First service graduation
 
