@@ -169,7 +169,7 @@ Required preconditions:
 Implementation note:
 
 1. when a new delegated two-lane packet opens, reuse the published Packet 831 checklist, Packet 832 operator prompt template, Packet 833 coordinator closeout template, and Packet 834 packet-definition template instead of hand-authoring those control blocks again.
-2. preserve the Packet 835-aligned status, readiness, and runbook posture when classifying the next bounded slice.
+2. preserve the Packet 837-aligned live guidance posture, the Packet 835-aligned orchestration entry surfaces, and the Packet 836-aligned execution plan plus authority posture when classifying the next bounded slice.
 
 Validation:
 
@@ -233,7 +233,7 @@ The truthful next steps are:
 1. keep this plan, the status brief, and the readiness checklist aligned,
 2. use the real-world validation matrix to prove the host operator path before opening any new widening discussion,
 3. open new work as one bounded delegated packet at a time and reuse the published Packet 831 through Packet 834 execution surfaces rather than hand-authoring control scaffolding,
-4. preserve the Packet 835-aligned entry-surface posture while choosing the next disjoint lane objective,
+4. preserve the Packet 837-aligned live guidance posture, the Packet 835-aligned entry-surface posture, and the Packet 836-aligned execution plan plus authority posture while choosing the next disjoint lane objective,
 5. prefer trust-hardening and evidence-routing improvements before any new shell widening,
 6. use two executors only when the split is obviously disjoint and written down first,
 7. keep host-evidence and promotion control central rather than executor-local.

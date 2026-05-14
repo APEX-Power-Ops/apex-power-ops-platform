@@ -88,6 +88,10 @@ Packets `2026-05-13-olares-dev-residency-831` through `2026-05-13-olares-dev-res
 
 Packet `2026-05-13-olares-dev-residency-835` is the current higher-level orchestration entry-surface alignment floor.
 
+Packet `2026-05-13-olares-dev-residency-836` is the current active plan and authority control-surface alignment floor.
+
+Packet `2026-05-13-olares-dev-residency-837` is the current live guidance-refresh floor.
+
 Treat all of those as preserved inputs when authoring scaffold outputs; do not restate them as unresolved or future-first proof work.
 
 ## Done Definition
@@ -98,4 +102,4 @@ Your first pass is done when:
 2. the repo has a usable shell for later implementation,
 3. the boundary remains narrow and truthful,
 4. no file implies a wider orchestration rollout than the authority stack admits,
-5. no scaffold output contradicts the published delegated packet templates or the Packet 835-aligned orchestration entry surfaces.
+5. no scaffold output contradicts the published delegated packet templates, the Packet 837-aligned live guidance surfaces, the Packet 835-aligned orchestration entry surfaces, or the Packet 836-aligned execution plan and authority posture.
