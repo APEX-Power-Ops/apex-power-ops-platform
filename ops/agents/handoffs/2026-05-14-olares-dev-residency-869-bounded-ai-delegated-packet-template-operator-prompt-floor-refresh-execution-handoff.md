@@ -30,11 +30,11 @@
 
 ## Coordinator Tuple
 
-- Shared publication files are updated locally only after both lane tuples went green and the host returned to truthful `not-running` rest state: `PROJECT_STATUS.md`, `docs/operations/AI-BACKBONE-PARALLEL-HARDENING-BRIEF-2026-05-08.md`, `docs/operations/OLARES-AI-OPERATOR-REAL-WORLD-VALIDATION-MATRIX-2026-05-12.md`, `docs/operations/OLARES-MVP-AI-ORCHESTRATION-STATUS-BRIEF-2026-05-10.md`, `docs/operations/OLARES-AI-PARALLEL-TASK-READINESS-CHECKLIST-2026-05-10.md`, `docs/architecture/OLARES-AI-WORKFLOW-FIRST-SLICE-RUNBOOK-2026-05-06.md`, `docs/operations/OLARES-AI-DELEGATED-DUAL-LANE-PACKET-TEMPLATE-2026-05-13.md`, `ops/agents/handoffs/2026-05-14-olares-dev-residency-869-operator-execution-prompt.md`, this handoff
+- Shared publication files were updated, committed, and published only after both lane tuples went green and the host returned to truthful `not-running` rest state: `PROJECT_STATUS.md`, `docs/operations/AI-BACKBONE-PARALLEL-HARDENING-BRIEF-2026-05-08.md`, `docs/operations/OLARES-AI-OPERATOR-REAL-WORLD-VALIDATION-MATRIX-2026-05-12.md`, `docs/operations/OLARES-MVP-AI-ORCHESTRATION-STATUS-BRIEF-2026-05-10.md`, `docs/operations/OLARES-AI-PARALLEL-TASK-READINESS-CHECKLIST-2026-05-10.md`, `docs/architecture/OLARES-AI-WORKFLOW-FIRST-SLICE-RUNBOOK-2026-05-06.md`, `docs/operations/OLARES-AI-DELEGATED-DUAL-LANE-PACKET-TEMPLATE-2026-05-13.md`, `ops/agents/handoffs/2026-05-14-olares-dev-residency-869-operator-execution-prompt.md`, this handoff
 - Combined validation result: focused helper truthfulness suite passed, the live helper passed on the first attempt, the host returned to truthful `not-running`, Lane B packet-template validation passed, shared status-family diagnostics are pending, ownership remained disjoint, and no abort rule fired
-- Publication result: `PENDING`
-- Authoritative-host parity result: `PENDING`
-- Packet verdict: `PROVISIONAL PASS PENDING PUBLICATION AND PARITY`
+- Publication result: `PASS (Packet 869 publication commit 2ec3c2699524b11e39b312a67a0e2636dad77c53 pushed to origin/clean-main)`
+- Authoritative-host parity result: `PASS (/home/olares/code/apex/apex-power-ops-platform fast-forwarded to 2ec3c2699524b11e39b312a67a0e2636dad77c53 after moving aside and cmp-verifying the four expected untracked Packet 869 host artifacts)`
+- Packet verdict: `PASS`
 
 ## Boundary Confirmation
 
