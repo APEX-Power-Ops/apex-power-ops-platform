@@ -53,11 +53,16 @@ The bounded AI backbone tranche is already landed:
 4. Packet `172` completed the adjacent trust and hardening lane,
 5. later routing packets normalized those AI surfaces onto repo-owned docs and away from parent-root or `.claude` residue.
 
+## Current Delegated Proof Floor
+
 The current proof floor is later than that first backbone tranche:
 
-1. Packet `2026-05-13-olares-dev-residency-786` is the first completed coordinator-owned two-lane rehearsal floor,
-2. Packet `2026-05-13-olares-dev-residency-791` is the current helper-backed host promotion proof floor,
-3. later status, matrix, checklist, runbook, and scaffold guidance should preserve those floors rather than restating them as unresolved next work.
+1. Packet `2026-05-13-olares-dev-residency-830` is the current helper-bootstrap-toolchains-python3-path floor for the authoritative-host delegated helper path,
+2. Packet `2026-05-13-olares-dev-residency-831` is the current delegated dual-lane rehearsal floor,
+3. Packet `2026-05-13-olares-dev-residency-832` is the current delegated operator prompt template floor,
+4. Packet `2026-05-13-olares-dev-residency-833` is the current delegated coordinator closeout template floor,
+5. Packet `2026-05-13-olares-dev-residency-834` is the current delegated packet-definition template floor,
+6. later status, matrix, checklist, runbook, and scaffold guidance should preserve that delegated Packet 830 through Packet 834 stack rather than restating it as unresolved next work.
 
 ## Current Executor Readout
 
@@ -66,7 +71,7 @@ The executor posture is now clearer than the older generic "parallel capable" la
 | Executor shape | Status | Current interpretation |
 | --- | --- | --- |
 | One bounded executor | ✅ Default and enabled | the normal packet shape remains one executor working inside the admitted trio with packet, handoff, validation, and `apex-jobs` evidence rules intact |
-| Two disjoint executors | 🟡 Enabled with explicit ownership only | the current safe split is one lane for scaffold or shell maintenance and one lane for trust, provenance, validation, or canary hardening, with non-overlap declared before execution |
+| Two disjoint executors | 🟡 Enabled with explicit ownership only | the current safe split is one helper-driven live evidence lane plus one disjoint scaffold, shell, or documentation lane, with non-overlap and coordinator-owned shared surfaces declared before execution |
 | More than two executors or shared queue control | ⛔ Deferred | the repo still does not admit `ai_tasks` ownership, shared uncontrolled mutation, or broader autonomous orchestration |
 
 The current executor-capable set is therefore bounded rather than broad:
@@ -81,10 +86,11 @@ The repo does not currently authorize open-ended multi-agent execution.
 
 The currently admitted parallel shape is narrower:
 
-1. a scaffold-authoring lane may evolve shell structure for the admitted backbone,
-2. a parallel hardening lane may tighten trust, provenance, promotion, MCP-boundary, and canary contracts,
-3. both lanes must remain inside the already-admitted MCP trio and staging-shell boundary,
-4. neither lane may silently widen runtime, queue ownership, auth, hosting, or business logic scope.
+1. a helper-driven live evidence lane may reuse the admitted authoritative-host helper path for the current trio,
+2. a disjoint parallel lane may evolve scaffold, status, checklist, prompt, closeout, packet-definition, or similar repo-owned coordination surfaces,
+3. later delegated packets should route split rules through the published Packet 831 checklist plus the published Packet 832, Packet 833, and Packet 834 templates instead of reconstructing those control blocks ad hoc,
+4. both lanes must remain inside the already-admitted MCP trio and staging-shell boundary,
+5. neither lane may silently widen runtime, queue ownership, auth, hosting, or business logic scope.
 
 This means the current parallel-task ability is real but limited.
 
@@ -110,8 +116,9 @@ It is not yet approved for:
 3. Treat scaffold authoring as the owner of shell structure and the parallel hardening lane as the owner of trust and evidence contracts.
 4. Prefer docs, tests, contract notes, checklist surfaces, and non-destructive skeleton wiring over shared implementation edits when work is split across lanes.
 5. Keep both the sandbox-only refusal proof and the helper-backed `env=host` positive-gate proof as the promotion truth model so bounded parallel work remains truthful instead of speculative.
-6. Use `../../plan/OLARES-AI-ORCHESTRATION-EXECUTION-PLAN-2026-05-10.md` as the default next-step sequence for new bounded slices.
-7. Open any wider lane only from concrete operator insufficiency or a separately authorized packet that explicitly names the new boundary.
+6. Route any fresh delegated packet through the published Packet 831 split checklist plus the Packet 832 operator prompt template, Packet 833 coordinator closeout template, and Packet 834 packet-definition template.
+7. Use `../../plan/OLARES-AI-ORCHESTRATION-EXECUTION-PLAN-2026-05-10.md` as the default higher-level phase reference, but treat the delegated Packet 831 through Packet 834 stack as the current packet-authoring surface.
+8. Open any wider lane only from concrete operator insufficiency or a separately authorized packet that explicitly names the new boundary.
 
 ## Current Recommendation
 
@@ -119,4 +126,4 @@ For near-term execution, treat the Olares MVP as structurally complete enough to
 
 For AI orchestration, treat the current target as controlled executor-governed parallel readiness inside the admitted backbone, not autonomous orchestration expansion.
 
-Treat Packet `2026-05-13-olares-dev-residency-786` and Packet `2026-05-13-olares-dev-residency-791` as the current rehearsal and promotion-proof floor for that target.
+Treat Packet `2026-05-13-olares-dev-residency-830` through Packet `2026-05-13-olares-dev-residency-834` as the current delegated helper, rehearsal, and template stack for that target.

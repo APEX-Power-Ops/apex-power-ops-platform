@@ -107,12 +107,26 @@ A wider parallel-task lane should open only if all of the following are true:
 
 Current proof floor for this cadence:
 
-- Packet 791 is the current helper-backed host promotion proof floor for the single-lane path
-- Packet 786 is the current completed first two-lane rehearsal floor for the coordinator-owned split pattern
+- Packet 791 remains the current helper-backed host promotion proof floor for the single-lane path
+- Packet 830 is the current helper-bootstrap-toolchains-python3-path floor for the delegated authoritative-host helper path
+- Packet 831 is the current completed delegated dual-lane rehearsal floor for the coordinator-owned split pattern
+- Packet 832 is the current delegated operator prompt template floor
+- Packet 833 is the current delegated coordinator closeout template floor
+- Packet 834 is the current delegated packet-definition template floor
+
+## Current Delegated Template Stack
+
+Use the published delegated stack for any later bounded AI/operator packet that keeps the helper lane unchanged:
+
+- route delegated split ownership, validation order, and abort rules through Packet 831 and `docs/operations/OLARES-AI-DELEGATED-DUAL-LANE-EXECUTION-CHECKLIST-2026-05-13.md`
+- route packet-specific operator prompts through Packet 832 and `docs/operations/OLARES-AI-DELEGATED-DUAL-LANE-OPERATOR-PROMPT-TEMPLATE-2026-05-13.md`
+- route coordinator closeout wording through Packet 833 and `docs/operations/OLARES-AI-DELEGATED-DUAL-LANE-COORDINATOR-CLOSEOUT-TEMPLATE-2026-05-13.md`
+- route delegated packet JSON authoring through Packet 834 and `docs/operations/OLARES-AI-DELEGATED-DUAL-LANE-PACKET-TEMPLATE-2026-05-13.md`
+- do not reopen helper hardening, controller widening, or service-admission questions inside those later delegated packets unless a separate packet explicitly changes the boundary
 
 ## Checklist I - First Two-Lane Rehearsal Evidence Pattern
 
-Use this exact coordinator-owned pattern for any later two-lane rehearsal packet after Packet 786.
+Use this exact coordinator-owned pattern for any later two-lane rehearsal or delegated packet after Packet 786 and on top of the published Packet 831 through Packet 834 stack.
 
 Write the block before edits start and keep it short:
 
@@ -123,6 +137,7 @@ Write the block before edits start and keep it short:
 - record one evidence tuple per lane: touched files, validation command, validation result, and whether the lane finished `PASS` or `ABORTED`
 - record one coordinator completion tuple for the packet: ownership remained disjoint, both lane validations ran, no abort rule fired, and the combined evidence is repo-visible
 - when a later rehearsal needs one packet-scoped artifact instead of hand-copied tuples, compose the verifier and promotion evidence through `tools/ai/build_ai_packet_evidence_summary.py`
+- when a later delegated packet keeps the helper lane unchanged, reuse the published Packet 831 checklist plus the Packet 832 operator prompt template, Packet 833 coordinator closeout template, and Packet 834 packet-definition template rather than hand-authoring those packet-control surfaces again
 - when a later rehearsal uses `tools/ai/run_authoritative_host_packet.py`, treat the helper artifact as valid only if the imported bootstrap, verifier, promotion, and coordinator-summary artifacts all match the same packet id, remain `PASS`, preserve the imported bootstrap `tool` value truthfully for the expected repo-owned bootstrap surface, preserve the imported bootstrap `command` value truthfully for the expected packet-scoped bootstrap invocation plus output path, preserve the imported bootstrap `output_artifact` value truthfully for the expected bootstrap artifact path, preserve the imported bootstrap `host_container_root` value truthfully for the expected host container root, preserve the imported bootstrap `implementation_root` value truthfully for the expected host repo root, preserve the imported bootstrap `git.old_clone.path` value truthfully for the expected historical host clone path, preserve the imported bootstrap `git.old_clone.exists` value truthfully for the expected historical host clone presence, preserve the imported bootstrap `hold_boundary.minimal_mcp_detail.status` value truthfully for the expected host rest-state mirror, preserve the imported bootstrap `hold_boundary.minimal_mcp` value truthfully for the expected host hold-boundary mirror, preserve the imported bootstrap `hold_boundary.deferred_ops_decision` value truthfully for the expected host hold-boundary decision, preserve the imported bootstrap `hold_boundary.deferred_ops` value truthfully for the expected host hold-boundary deferred-ops mirror, preserve the imported bootstrap `hold_boundary.outputs` value truthfully for the expected host hold-boundary outputs mirror, preserve the imported bootstrap `hold_boundary.packet_id` value truthfully for the expected host hold-boundary packet-id mirror, preserve the same accepted host run id through `host_success_runs` and `supporting_run_ids`, preserve the same host-success run-id set between the imported promotion artifact and the coordinator summary, keep every promoted supporting run id backed by the recorded successful host runs, keep the accepted host-success support on `env=host` and the same service as the accepted host run, keep the imported verifier `command` truthful for the expected packet-scoped verifier invocation plus output and profile arguments, keep copied promotion and coordinator-summary `artifact_path` values truthful for the copied files, keep copied promotion and coordinator-summary `tool` values truthful for the expected repo-owned helper surfaces, and keep copied promotion and coordinator-summary `command` values truthful for the expected packet-scoped repo helper invocation plus artifact arguments
 
 For the first rehearsal, prefer a coordinator block that reads like this in packet or closeout evidence:
@@ -173,4 +188,4 @@ Current baseline note:
 
 Use the current AI backbone as a controlled executor model: one executor by default, or two executors only when scaffold maintenance and trust hardening can stay disjoint.
 
-Do not treat the existence of those two lanes as approval for autonomous orchestration, multi-worker mutation, or generic parallel source execution.
+Do not treat the existence of those two lanes as approval for autonomous orchestration, multi-worker mutation, or generic parallel source execution. For the current delegated packet family, prefer the published Packet 831 through Packet 834 stack as the default coordination surface.

@@ -26,6 +26,7 @@ It uses the already-present minimal MCP trio and the `apex-jobs` ledger as the w
 8. `tools/ai/run-olares-hold-boundary-check.ps1`
 9. `tools/ai/run-olares-hold-boundary-check.sh`
 10. `tools/ai/run-olares-host-bootstrap-status.sh`
+11. `tools/ai/run_authoritative_host_packet.py`
 
 ## Boundary
 
@@ -51,9 +52,24 @@ It uses the already-present minimal MCP trio and the `apex-jobs` ledger as the w
 2. `apex-jobs` is also the current promotion gate because `promote_packet` refuses promotion unless a successful `env=host` run exists.
 3. `tools/ai/verify_minimal_mcp_trio.py` is the current negative-gate proof surface because it captures the expected refusal when no successful `env=host` run exists.
 4. `tools/ai/capture_apex_jobs_promotion.py` is the current positive-gate proof surface because it records one matching successful `env=host` run, verifies `list_runs` visibility, and captures the resulting `promote_packet` success as repo-visible JSON.
-5. `ai_tasks` remains a future orchestration or integration surface, not the controlling queue for this first slice.
-6. Claude Code is the current packetized first-slice AI execution surface for the minimal MCP trio.
-7. Codex is an approved premium-plan interactive surface, but it is not yet bound to this wrapper or its promotion path until a later explicit packet admits that integration.
+5. `tools/ai/run_authoritative_host_packet.py` is the current delegated packet helper surface because it reuses the admitted bootstrap, verifier, promotion, and coordinator-summary evidence path under one packet id while keeping the helper truthfulness gates intact.
+6. `ai_tasks` remains a future orchestration or integration surface, not the controlling queue for this first slice.
+7. Claude Code is the current packetized first-slice AI execution surface for the minimal MCP trio.
+8. Codex is an approved premium-plan interactive surface, but it is not yet bound to this wrapper or its promotion path until a later explicit packet admits that integration.
+
+## Current Delegated Execution Posture
+
+The current delegated execution posture is narrower than generic multi-agent control.
+
+It is currently bounded by the published Packet 830 through Packet 834 stack:
+
+1. Packet `2026-05-13-olares-dev-residency-830` is the current authoritative-host helper validation floor,
+2. Packet `2026-05-13-olares-dev-residency-831` is the current delegated dual-lane rehearsal floor,
+3. Packet `2026-05-13-olares-dev-residency-832` is the current delegated operator prompt template floor,
+4. Packet `2026-05-13-olares-dev-residency-833` is the current delegated coordinator closeout template floor,
+5. Packet `2026-05-13-olares-dev-residency-834` is the current delegated packet-definition template floor.
+
+Later delegated packets should reuse that published checklist-and-template stack rather than hand-authoring split rules, operator prompts, closeout wording, or packet JSON structure again.
 
 ## Default Runtime Posture
 
@@ -205,6 +221,8 @@ Packet 038 provided historical pre-rebind proof of the same first slice from `/h
 The runtime-governance lane for this first slice is now closed in favor of the lower-variance operator-on-demand posture.
 
 The next truthful follow-on is not default-runtime widening.
+
+The next truthful follow-on for this runbook is another delegated packet that reuses the published Packet 831 split checklist, Packet 832 operator prompt template, Packet 833 coordinator closeout template, and Packet 834 packet-definition template with a new disjoint lane objective.
 
 Reopen this runbook's runtime posture only if:
 
