@@ -19,15 +19,16 @@ Replace every placeholder before publication:
 3. `{{LANE_B_FILE}}`: absolute path to the single Lane B owned surface
 4. `{{LANE_B_SCOPE}}`: one-sentence summary of Lane B scope
 5. `{{HANDOFF_FILE}}`: absolute path to the coordinator-owned handoff file
-6. `{{HOST_PARITY_RESULT}}`: exact authoritative-host parity outcome
-7. `{{VERDICT}}`: final packet result such as `PASS` or `ABORTED`
+6. `{{HELPER_PROOF_SUMMARY}}`: compact accepted helper proof line using the delegated proof-summary rule
+7. `{{HOST_PARITY_RESULT}}`: exact authoritative-host parity outcome
+8. `{{VERDICT}}`: final packet result such as `PASS` or `ABORTED`
 
 ## Coordinator Fields
 
 Every published closeout should preserve all of the following fields:
 
 1. Packet metadata: packet id, date, scope, lane, and change type
-2. Lane A tuple: focused helper command and result, live helper command and result, exact emitted artifact names, final host rest-state result
+2. Lane A tuple: focused helper command and result, live helper command and result, exact emitted artifact names, final host rest-state result, and one compact helper proof summary line
 3. Lane B tuple: touched file, validation method, validation result, and exact scaffold scope
 4. Coordinator tuple: shared publication files, combined validation result, authoritative-host parity result, and final verdict
 5. Boundary confirmation: explicit statement that no helper mutation, controller widening, service admission widening, `ai_tasks` ownership, auth change, ingress change, runtime mutation, or business-logic mutation was opened
@@ -56,6 +57,7 @@ Every published closeout should preserve all of the following fields:
   - `<artifact four>`
   - `<artifact five when present>`
 - Final host rest-state result: `<exact result>`
+- Helper proof summary: {{HELPER_PROOF_SUMMARY}}
 
 ## Lane B Tuple
 
@@ -88,3 +90,7 @@ Packet `{{PACKET_ID}}` stayed bounded to its declared helper and scaffold surfac
 ## Packet 833 Application
 
 Packet `2026-05-13-olares-dev-residency-833` is the first packet to publish this reusable coordinator closeout template on top of the Packet 831 delegated split-governance floor and the Packet 832 operator prompt template floor.
+
+## Packet 853 Extension
+
+Packet `2026-05-14-olares-dev-residency-853` extends this reusable coordinator closeout template so later delegated packets can carry the compact accepted helper proof line directly inside the Lane A tuple instead of hand-authoring that field outside the template contract.
