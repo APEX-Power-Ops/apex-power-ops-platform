@@ -100,6 +100,10 @@ Packet `2026-05-13-olares-dev-residency-840` is the current post-guidance contro
 
 Packet `2026-05-13-olares-dev-residency-841` is the current higher-level guidance realignment floor.
 
+Packet `2026-05-13-olares-dev-residency-842` is the current post-guidance control realignment refresh floor.
+
+Packet `2026-05-14-olares-dev-residency-843` is the current higher-level guidance realignment refresh floor.
+
 Treat all of those as preserved inputs when authoring scaffold outputs; do not restate them as unresolved or future-first proof work.
 
 ## Done Definition
@@ -110,4 +114,4 @@ Your first pass is done when:
 2. the repo has a usable shell for later implementation,
 3. the boundary remains narrow and truthful,
 4. no file implies a wider orchestration rollout than the authority stack admits,
-5. no scaffold output contradicts the published delegated packet templates, the Packet 841-aligned higher-level guidance surfaces, the Packet 840-aligned post-guidance control surfaces, the Packet 837-aligned live guidance surfaces, the Packet 835-aligned orchestration entry surfaces, or the Packet 836-aligned execution plan and authority posture.
+5. no scaffold output contradicts the published delegated packet templates, the Packet 843-aligned higher-level guidance realignment refresh surfaces, the Packet 842-aligned post-guidance control realignment refresh surfaces, the Packet 837-aligned live guidance surfaces, the Packet 835-aligned orchestration entry surfaces, or the Packet 836-aligned execution plan and authority posture.
