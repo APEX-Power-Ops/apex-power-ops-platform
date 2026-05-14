@@ -2,13 +2,13 @@
 
 Date: 2026-05-13
 Status: Active delegated packet-definition template
-Scope: reusable packet JSON skeleton for delegated dual-lane packets after Packet 862
+Scope: reusable packet JSON skeleton for delegated dual-lane packets after Packet 864
 
 ## Purpose
 
-Use this template when a later Olares AI/operator packet needs a new packet JSON that reuses the delegated split checklist as extended by Packet 854, the operator prompt template as extended by Packet 858, Packet 860, and Packet 862, and the coordinator closeout template as extended by Packet 853 without hand-authoring the full packet structure from scratch.
+Use this template when a later Olares AI/operator packet needs a new packet JSON that reuses the delegated split checklist as extended by Packet 854, the operator prompt template as extended by Packet 858, Packet 860, Packet 862, and Packet 864, and the coordinator closeout template as extended by Packet 853 without hand-authoring the full packet structure from scratch.
 
-The template complements `docs/operations/OLARES-AI-DELEGATED-DUAL-LANE-EXECUTION-CHECKLIST-2026-05-13.md`, `docs/operations/OLARES-AI-DELEGATED-DUAL-LANE-OPERATOR-PROMPT-TEMPLATE-2026-05-13.md`, and `docs/operations/OLARES-AI-DELEGATED-DUAL-LANE-COORDINATOR-CLOSEOUT-TEMPLATE-2026-05-13.md` by making the packet-definition fields explicit: metadata, dependencies, constrained outputs, lane ownership, coordinator shared surfaces, execution gate wording, the compact helper-proof-summary plus closeout/checklist contract, the Packet 857 packet-definition prompt contract, the Packet 858 operator-prompt-template packet-definition-routing contract, the Packet 860 operator-prompt-template packet-definition floor contract, and the Packet 862 operator-prompt-template packet-definition floor refresh contract that later packets must preserve.
+The template complements `docs/operations/OLARES-AI-DELEGATED-DUAL-LANE-EXECUTION-CHECKLIST-2026-05-13.md`, `docs/operations/OLARES-AI-DELEGATED-DUAL-LANE-OPERATOR-PROMPT-TEMPLATE-2026-05-13.md`, and `docs/operations/OLARES-AI-DELEGATED-DUAL-LANE-COORDINATOR-CLOSEOUT-TEMPLATE-2026-05-13.md` by making the packet-definition fields explicit: metadata, dependencies, constrained outputs, lane ownership, coordinator shared surfaces, execution gate wording, the compact helper-proof-summary plus closeout/checklist contract, the Packet 857 packet-definition prompt contract, the Packet 858 operator-prompt-template packet-definition-routing contract, the Packet 860 operator-prompt-template packet-definition floor contract, the Packet 862 operator-prompt-template packet-definition floor refresh contract, and the Packet 864 operator-prompt-template packet-definition floor refresh contract that later packets must preserve.
 
 ## Required Replacements
 
@@ -33,7 +33,7 @@ Every delegated packet JSON should preserve all of the following fields:
 3. Inputs and outputs: `required_inputs`, `constrained_outputs`
 4. Lane ownership: one helper-driven live evidence lane and one single-file disjoint scaffold lane
 5. Coordinator fields: shared surfaces, required combined checks, required closeout contract, status, execution gate, timestamps
-6. Operator-prompt routing: the current delegated note stack, the coordinator shared-surface family, and the latest template-contract wording that later packets must preserve through the Packet 832 template as extended by Packet 858, Packet 860, and Packet 862
+6. Operator-prompt routing: the current delegated note stack, the coordinator shared-surface family, and the latest template-contract wording that later packets must preserve through the Packet 832 template as extended by Packet 858, Packet 860, Packet 862, and Packet 864
 
 ## JSON Skeleton
 
@@ -65,7 +65,7 @@ Every delegated packet JSON should preserve all of the following fields:
   "required_inputs": [
     "Current delegated baseline guidance from PROJECT_STATUS.md",
     "Current delegated execution checklist as extended by Packet 854",
-    "Current delegated operator prompt template as extended by Packet 858, Packet 860, and Packet 862",
+    "Current delegated operator prompt template as extended by Packet 858, Packet 860, Packet 862, and Packet 864",
     "Current delegated coordinator closeout template as extended by Packet 853",
     "Current delegated objective-selection, lane-selection, artifact-reading, status-alignment, parity-remediation, and proof-summary notes",
     "The unchanged helper execution surface and focused truthfulness suite"
@@ -121,7 +121,7 @@ Every delegated packet JSON should preserve all of the following fields:
       "Lane A must preserve the compact helper proof summary line: {{HELPER_PROOF_SUMMARY}}",
       "Coordinator closeout wording must route through the Packet 833 template as extended by Packet 853",
       "Delegated split ownership and validation wording must route through the Packet 831 checklist as extended by Packet 854",
-      "Packet-specific operator prompt wording must route through the Packet 832 template as extended by Packet 858, Packet 860, and Packet 862"
+      "Packet-specific operator prompt wording must route through the Packet 832 template as extended by Packet 858, Packet 860, Packet 862, and Packet 864"
     ]
   },
   "delegation_prompt": "{{PROMPT_FILE}}",
@@ -155,3 +155,7 @@ Packet `2026-05-14-olares-dev-residency-861` extends this reusable delegated pac
 ## Packet 863 Extension
 
 Packet `2026-05-14-olares-dev-residency-863` extends this reusable delegated packet-definition template so later packets must preserve the Packet 862 operator-prompt-template packet-definition floor refresh contract directly inside the packet-definition scaffold: the packet-definition surface must now route packet-specific prompt wording through the Packet 832 template as extended by Packet 858, Packet 860, and Packet 862 so the Packet 861 packet-template operator-prompt floor stays preserved inside the reusable packet-definition scaffold instead of leaving operator-prompt routing pinned below the Packet 862 operator-prompt-template packet-definition floor refresh.
+
+## Packet 865 Extension
+
+Packet `2026-05-14-olares-dev-residency-865` extends this reusable delegated packet-definition template so later packets must preserve the Packet 864 operator-prompt-template packet-definition floor refresh contract directly inside the packet-definition scaffold: the packet-definition surface must now route packet-specific prompt wording through the Packet 832 template as extended by Packet 858, Packet 860, Packet 862, and Packet 864 so the Packet 863 packet-template operator-prompt floor refresh stays preserved inside the reusable packet-definition scaffold instead of leaving operator-prompt routing pinned below the Packet 864 operator-prompt-template packet-definition floor refresh.
