@@ -121,6 +121,8 @@ Current proof floor for this cadence:
 - Packet 840 is the current post-guidance control refresh floor
 - Packet 841 is the current higher-level guidance realignment floor
 - Packet 842 is the current post-guidance control realignment refresh floor
+- Packet 843 is the current higher-level guidance realignment refresh floor
+- Packet 844 is the current post-guidance control realignment refresh floor
 
 ## Current Delegated Template Stack
 
@@ -130,7 +132,7 @@ Use the published delegated stack for any later bounded AI/operator packet that 
 - route packet-specific operator prompts through Packet 832 and `docs/operations/OLARES-AI-DELEGATED-DUAL-LANE-OPERATOR-PROMPT-TEMPLATE-2026-05-13.md`
 - route coordinator closeout wording through Packet 833 and `docs/operations/OLARES-AI-DELEGATED-DUAL-LANE-COORDINATOR-CLOSEOUT-TEMPLATE-2026-05-13.md`
 - route delegated packet JSON authoring through Packet 834 and `docs/operations/OLARES-AI-DELEGATED-DUAL-LANE-PACKET-TEMPLATE-2026-05-13.md`
-- preserve the higher-level orchestration entry surfaces in the Packet 835-aligned posture, the live guidance surfaces in the Packet 837-aligned posture, the higher-level guidance surfaces in the Packet 841-aligned posture, and the execution plan plus authority surfaces in the Packet 842-aligned post-guidance control realignment refresh posture
+- preserve the higher-level orchestration entry surfaces in the Packet 835-aligned posture, the live guidance surfaces in the Packet 837-aligned posture, the higher-level guidance surfaces in the Packet 845-aligned posture, and the execution plan plus authority surfaces in the Packet 844-aligned post-guidance control realignment refresh posture
 - do not reopen helper hardening, controller widening, or service-admission questions inside those later delegated packets unless a separate packet explicitly changes the boundary
 
 ## Checklist I - First Two-Lane Rehearsal Evidence Pattern
@@ -197,4 +199,4 @@ Current baseline note:
 
 Use the current AI backbone as a controlled executor model: one executor by default, or two executors only when scaffold maintenance and trust hardening can stay disjoint.
 
-Do not treat the existence of those two lanes as approval for autonomous orchestration, multi-worker mutation, or generic parallel source execution. For the current delegated packet family, prefer the published Packet 831 through Packet 834 stack as the default coordination surface while preserving the Packet 842-aligned post-guidance control realignment refresh surfaces, the Packet 841-aligned higher-level guidance realignment surfaces, the Packet 837-aligned live guidance surfaces, and the Packet 835-aligned orchestration entry surfaces on the next delegated follow-on.
+Do not treat the existence of those two lanes as approval for autonomous orchestration, multi-worker mutation, or generic parallel source execution. For the current delegated packet family, prefer the published Packet 831 through Packet 834 stack as the default coordination surface while preserving the Packet 844-aligned post-guidance control realignment refresh surfaces, the Packet 845-aligned higher-level guidance realignment refresh surfaces, the Packet 837-aligned live guidance surfaces, and the Packet 835-aligned orchestration entry surfaces, but execute Packet `2026-05-14-olares-dev-residency-846` first because it packages Packet 845 publication and authoritative-host parity now that local and host `HEAD` already match and the remaining blocker is the staged but uncommitted bounded Packet 845 and Packet 846 closeout set.

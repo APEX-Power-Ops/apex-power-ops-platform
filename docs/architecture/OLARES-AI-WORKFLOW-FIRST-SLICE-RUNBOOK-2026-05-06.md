@@ -61,7 +61,7 @@ It uses the already-present minimal MCP trio and the `apex-jobs` ledger as the w
 
 The current delegated execution posture is narrower than generic multi-agent control.
 
-It is currently bounded by the published Packet 830 through Packet 842 stack:
+It is currently bounded by the published Packet 830 through Packet 844 stack:
 
 1. Packet `2026-05-13-olares-dev-residency-830` is the current authoritative-host helper validation floor,
 2. Packet `2026-05-13-olares-dev-residency-831` is the current delegated dual-lane rehearsal floor,
@@ -75,9 +75,12 @@ It is currently bounded by the published Packet 830 through Packet 842 stack:
 10. Packet `2026-05-13-olares-dev-residency-839` is the current higher-level guidance refresh floor,
 11. Packet `2026-05-13-olares-dev-residency-840` is the current post-guidance control refresh floor,
 12. Packet `2026-05-13-olares-dev-residency-841` is the current higher-level guidance realignment floor,
-13. Packet `2026-05-13-olares-dev-residency-842` is the current post-guidance control realignment refresh floor.
+13. Packet `2026-05-13-olares-dev-residency-842` is the current post-guidance control realignment refresh floor,
+14. Packet `2026-05-14-olares-dev-residency-843` is the current higher-level guidance realignment refresh floor,
+15. Packet `2026-05-14-olares-dev-residency-844` is the current post-guidance control realignment refresh floor,
+16. Packet `2026-05-14-olares-dev-residency-845` is the current higher-level guidance realignment refresh floor.
 
-Later delegated packets should reuse that published checklist-and-template stack rather than hand-authoring split rules, operator prompts, closeout wording, or packet JSON structure again, while preserving the Packet 842-aligned post-guidance control realignment refresh surfaces, the Packet 841-aligned higher-level guidance realignment surfaces, the Packet 837-aligned live guidance surfaces, and the Packet 835-aligned orchestration entry surfaces.
+Later delegated packets should reuse that published checklist-and-template stack rather than hand-authoring split rules, operator prompts, closeout wording, or packet JSON structure again, while preserving the Packet 844-aligned post-guidance control realignment refresh surfaces, the Packet 845-aligned higher-level guidance realignment refresh surfaces, the Packet 837-aligned live guidance surfaces, and the Packet 835-aligned orchestration entry surfaces; first close Packet 845 publication and authoritative-host parity because local and host `HEAD` already match and the remaining blocker is the staged but uncommitted bounded Packet 845 and Packet 846 closeout set.
 
 ## Default Runtime Posture
 
@@ -185,6 +188,8 @@ If a live DSN is present but the current host posture lacks every usable live-qu
 
 Packet 058 established the current authoritative verdict from the workstation posture against a governed live Supabase DSN: both deferred views still have `0` rows, so the hold decision remains `HOLD` rather than `REOPEN`.
 
+Until that governed live-row evidence changes, treat the Operations Visibility hold-boundary lane as trigger-gated dormancy: reopen it only when an authoritative live-DSN rerun shows non-zero rows in `v_resource_allocation` or `v_equipment_needs`, or when a separately admitted bounded consumer path changes the interpretation of a truthful zero-row result.
+
 ### Live-DSN Examples
 
 Treat the examples below as workstation examples.
@@ -230,7 +235,9 @@ The runtime-governance lane for this first slice is now closed in favor of the l
 
 The next truthful follow-on is not default-runtime widening.
 
-The next truthful follow-on for this runbook is another delegated packet that reuses the published Packet 831 split checklist, Packet 832 operator prompt template, Packet 833 coordinator closeout template, and Packet 834 packet-definition template with a new disjoint lane objective while preserving the Packet 842-aligned post-guidance control realignment refresh surfaces, the Packet 841-aligned higher-level guidance realignment surfaces, the Packet 837-aligned live guidance surfaces, and the Packet 835-aligned orchestration entry surfaces.
+The next truthful follow-on for this runbook is Packet `2026-05-14-olares-dev-residency-846`, because it packages Packet 845 publication and authoritative-host parity closeout now that local and host `HEAD` already match at `aeed9e3457afed622954a9d569703f68ec809c15` and the remaining blocker is the staged but uncommitted bounded Packet 845 and Packet 846 closeout set rather than host drift. After that closeout, the next delegated packet can reuse the published Packet 831 split checklist, Packet 832 operator prompt template, Packet 833 coordinator closeout template, and Packet 834 packet-definition template with a new disjoint lane objective while preserving the Packet 844-aligned post-guidance control realignment refresh surfaces, the Packet 845-aligned higher-level guidance realignment refresh surfaces, the Packet 837-aligned live guidance surfaces, and the Packet 835-aligned orchestration entry surfaces.
+
+The Operations Visibility hold-boundary lane remains separately trigger-gated on authoritative live-row change and should not be widened implicitly under later delegated AI packets.
 
 Reopen this runbook's runtime posture only if:
 
