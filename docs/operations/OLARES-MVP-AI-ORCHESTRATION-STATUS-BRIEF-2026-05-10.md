@@ -73,7 +73,8 @@ The current proof floor is later than that first backbone tranche:
 14. Packet `2026-05-14-olares-dev-residency-843` is the current higher-level guidance realignment refresh floor,
 15. Packet `2026-05-14-olares-dev-residency-844` is the current post-guidance control realignment refresh floor,
 16. Packet `2026-05-14-olares-dev-residency-845` is the current higher-level guidance realignment refresh floor,
-17. later status, matrix, checklist, runbook, and scaffold guidance should preserve that delegated Packet 830 through Packet 845 stack rather than restating it as unresolved next work.
+17. Packet `2026-05-14-olares-dev-residency-847` is the current delegated objective-selection rubric floor,
+18. later status, matrix, checklist, runbook, and scaffold guidance should preserve that delegated Packet 830 through Packet 845 stack plus the Packet 847 objective-selection rubric floor rather than restating it as unresolved next work.
 
 ## Current Executor Readout
 
@@ -99,7 +100,7 @@ The currently admitted parallel shape is narrower:
 
 1. a helper-driven live evidence lane may reuse the admitted authoritative-host helper path for the current trio,
 2. a disjoint parallel lane may evolve scaffold, status, checklist, prompt, closeout, packet-definition, or similar repo-owned coordination surfaces,
-3. later delegated packets should route split rules through the published Packet 831 checklist plus the published Packet 832, Packet 833, and Packet 834 templates instead of reconstructing those control blocks ad hoc,
+3. later delegated packets should route split rules through the published Packet 831 checklist plus the published Packet 832, Packet 833, and Packet 834 templates and the published Packet 847 objective-selection rubric instead of reconstructing those control blocks ad hoc,
 4. both lanes must remain inside the already-admitted MCP trio and staging-shell boundary,
 5. neither lane may silently widen runtime, queue ownership, auth, hosting, or business logic scope.
 
@@ -127,10 +128,10 @@ It is not yet approved for:
 3. Treat scaffold authoring as the owner of shell structure and the parallel hardening lane as the owner of trust and evidence contracts.
 4. Prefer docs, tests, contract notes, checklist surfaces, and non-destructive skeleton wiring over shared implementation edits when work is split across lanes.
 5. Keep both the sandbox-only refusal proof and the helper-backed `env=host` positive-gate proof as the promotion truth model so bounded parallel work remains truthful instead of speculative.
-6. Route any fresh delegated packet through the published Packet 831 split checklist plus the Packet 832 operator prompt template, Packet 833 coordinator closeout template, and Packet 834 packet-definition template.
-7. Treat Packet `2026-05-14-olares-dev-residency-846` as the completed publication-and-authoritative-host-parity closeout for Packet 845 at commit `6e8ab44`, and route the next move back to a fresh delegated packet rather than another publication repair step.
-8. Preserve the Packet 844-aligned post-guidance control realignment refresh surfaces, the Packet 845-aligned higher-level guidance realignment refresh surfaces, the Packet 837-aligned live guidance surfaces, the Packet 835-aligned orchestration entry surfaces, and the Packet 836-aligned execution plan plus authority posture when opening the next delegated packet after that closeout.
-9. Use `../../plan/OLARES-AI-ORCHESTRATION-EXECUTION-PLAN-2026-05-10.md` as the default higher-level phase reference, but treat the delegated Packet 831 through Packet 845 stack as the current packet-authoring surface.
+6. Route any fresh delegated packet through the published Packet 831 split checklist plus the Packet 832 operator prompt template, Packet 833 coordinator closeout template, Packet 834 packet-definition template, and Packet 847 objective-selection rubric.
+7. Treat Packet `2026-05-14-olares-dev-residency-846` as the completed publication-and-authoritative-host-parity closeout for Packet 845 at commit `6e8ab44`, and treat Packet `2026-05-14-olares-dev-residency-847` as the current delegated objective-selection rubric floor on top of that closeout.
+8. Preserve the Packet 844-aligned post-guidance control realignment refresh surfaces, the Packet 845-aligned higher-level guidance realignment refresh surfaces, the Packet 837-aligned live guidance surfaces, the Packet 835-aligned orchestration entry surfaces, and the Packet 836-aligned execution plan plus authority posture when opening the next delegated packet after that closeout, and use Packet 847 to choose the next disjoint lane objective.
+9. Use `../../plan/OLARES-AI-ORCHESTRATION-EXECUTION-PLAN-2026-05-10.md` as the default higher-level phase reference, but treat the delegated Packet 831 through Packet 845 stack plus Packet 847 as the current packet-authoring surface.
 10. Keep the Operations Visibility hold-boundary lane trigger-gated through the workflow-first runbook until a governed live-DSN rerun shows non-zero authoritative rows or a separately admitted bounded consumer path changes the hold interpretation.
 11. Open any wider lane only from concrete operator insufficiency or a separately authorized packet that explicitly names the new boundary.
 
@@ -140,4 +141,4 @@ For near-term execution, treat the Olares MVP as structurally complete enough to
 
 For AI orchestration, treat the current target as controlled executor-governed parallel readiness inside the admitted backbone, not autonomous orchestration expansion.
 
-Treat Packet `2026-05-13-olares-dev-residency-830` through Packet `2026-05-13-olares-dev-residency-834` as the current delegated helper, rehearsal, and template stack for that target, preserve Packet `2026-05-14-olares-dev-residency-844` as the current post-guidance control realignment refresh floor, preserve Packet `2026-05-14-olares-dev-residency-845` as the current higher-level guidance realignment refresh floor, preserve Packet `2026-05-13-olares-dev-residency-837` as the current live guidance-refresh floor, preserve Packet `2026-05-13-olares-dev-residency-835` and Packet `2026-05-13-olares-dev-residency-836` as the current aligned orchestration-entry and control-authority surfaces, and treat Packet `2026-05-14-olares-dev-residency-846` as the now-complete publication-and-host-parity closeout so the immediate next move can return to a fresh delegated follow-on while the Operations Visibility hold-boundary lane remains trigger-gated on authoritative live-row change.
+Treat Packet `2026-05-13-olares-dev-residency-830` through Packet `2026-05-13-olares-dev-residency-834` as the current delegated helper, rehearsal, and template stack for that target, treat Packet `2026-05-14-olares-dev-residency-847` as the current delegated objective-selection rubric floor for choosing the next disjoint lane objective, preserve Packet `2026-05-14-olares-dev-residency-844` as the current post-guidance control realignment refresh floor, preserve Packet `2026-05-14-olares-dev-residency-845` as the current higher-level guidance realignment refresh floor, preserve Packet `2026-05-13-olares-dev-residency-837` as the current live guidance-refresh floor, preserve Packet `2026-05-13-olares-dev-residency-835` and Packet `2026-05-13-olares-dev-residency-836` as the current aligned orchestration-entry and control-authority surfaces, and treat Packet `2026-05-14-olares-dev-residency-846` as the now-complete publication-and-host-parity closeout so the immediate next move can return to a fresh delegated follow-on selected through Packet 847 while the Operations Visibility hold-boundary lane remains trigger-gated on authoritative live-row change.
