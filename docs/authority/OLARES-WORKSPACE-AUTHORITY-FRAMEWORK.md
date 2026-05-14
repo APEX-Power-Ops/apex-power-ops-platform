@@ -250,6 +250,8 @@ Current proof floor:
 7. Packet `2026-05-13-olares-dev-residency-835` remains the higher-level orchestration entry-surface alignment floor.
 8. Packet `2026-05-13-olares-dev-residency-836` remains the active plan and authority control-surface alignment floor.
 9. Packet `2026-05-13-olares-dev-residency-837` remains the live guidance-refresh floor.
+10. Packet `2026-05-13-olares-dev-residency-838` remains the post-guidance control-surface refresh floor.
+11. Packet `2026-05-13-olares-dev-residency-839` remains the higher-level guidance refresh floor.
 
 ### Phase D - First service graduation
 
