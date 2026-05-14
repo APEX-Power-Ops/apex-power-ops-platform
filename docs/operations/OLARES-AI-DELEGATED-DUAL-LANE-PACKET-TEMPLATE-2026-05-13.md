@@ -2,13 +2,13 @@
 
 Date: 2026-05-13
 Status: Active delegated packet-definition template
-Scope: reusable packet JSON skeleton for delegated dual-lane packets after Packet 854
+Scope: reusable packet JSON skeleton for delegated dual-lane packets after Packet 856
 
 ## Purpose
 
-Use this template when a later Olares AI/operator packet needs a new packet JSON that reuses the delegated split checklist as extended by Packet 854, the operator prompt template, and the coordinator closeout template as extended by Packet 853 without hand-authoring the full packet structure from scratch.
+Use this template when a later Olares AI/operator packet needs a new packet JSON that reuses the delegated split checklist as extended by Packet 854, the operator prompt template as extended by Packet 856, and the coordinator closeout template as extended by Packet 853 without hand-authoring the full packet structure from scratch.
 
-The template complements `docs/operations/OLARES-AI-DELEGATED-DUAL-LANE-EXECUTION-CHECKLIST-2026-05-13.md`, `docs/operations/OLARES-AI-DELEGATED-DUAL-LANE-OPERATOR-PROMPT-TEMPLATE-2026-05-13.md`, and `docs/operations/OLARES-AI-DELEGATED-DUAL-LANE-COORDINATOR-CLOSEOUT-TEMPLATE-2026-05-13.md` by making the packet-definition fields explicit: metadata, dependencies, constrained outputs, lane ownership, coordinator shared surfaces, execution gate wording, and the compact helper-proof-summary plus closeout/checklist contract that later packets must preserve.
+The template complements `docs/operations/OLARES-AI-DELEGATED-DUAL-LANE-EXECUTION-CHECKLIST-2026-05-13.md`, `docs/operations/OLARES-AI-DELEGATED-DUAL-LANE-OPERATOR-PROMPT-TEMPLATE-2026-05-13.md`, and `docs/operations/OLARES-AI-DELEGATED-DUAL-LANE-COORDINATOR-CLOSEOUT-TEMPLATE-2026-05-13.md` by making the packet-definition fields explicit: metadata, dependencies, constrained outputs, lane ownership, coordinator shared surfaces, execution gate wording, the compact helper-proof-summary plus closeout/checklist contract, and the Packet 856 operator-prompt contract that later packets must preserve.
 
 ## Required Replacements
 
@@ -22,6 +22,7 @@ Replace every placeholder before execution:
 6. `{{HANDOFF_FILE}}`: absolute path to the coordinator-owned handoff file
 7. `{{PROMPT_FILE}}`: absolute path to the packet-specific operator prompt file
 8. `{{HELPER_PROOF_SUMMARY}}`: compact accepted helper proof line using the delegated proof-summary rule
+9. `{{COORDINATOR_SHARED_FILES}}`: JSON string entries for coordinator-owned publication surfaces beyond `PROJECT_STATUS.md` and the packet handoff
 
 ## Packet Fields
 
@@ -32,6 +33,7 @@ Every delegated packet JSON should preserve all of the following fields:
 3. Inputs and outputs: `required_inputs`, `constrained_outputs`
 4. Lane ownership: one helper-driven live evidence lane and one single-file disjoint scaffold lane
 5. Coordinator fields: shared surfaces, required combined checks, required closeout contract, status, execution gate, timestamps
+6. Operator-prompt routing: the current delegated note stack, the coordinator shared-surface family, and the latest template-contract wording that later packets must preserve through the Packet 832 template as extended by Packet 856
 
 ## JSON Skeleton
 
@@ -63,7 +65,7 @@ Every delegated packet JSON should preserve all of the following fields:
   "required_inputs": [
     "Current delegated baseline guidance from PROJECT_STATUS.md",
     "Current delegated execution checklist as extended by Packet 854",
-    "Current delegated operator prompt template",
+    "Current delegated operator prompt template as extended by Packet 856",
     "Current delegated coordinator closeout template as extended by Packet 853",
     "Current delegated objective-selection, lane-selection, artifact-reading, status-alignment, parity-remediation, and proof-summary notes",
     "The unchanged helper execution surface and focused truthfulness suite"
@@ -106,6 +108,7 @@ Every delegated packet JSON should preserve all of the following fields:
   "coordinator": {
     "shared_surfaces": [
       "PROJECT_STATUS.md",
+      {{COORDINATOR_SHARED_FILES}},
       "{{HANDOFF_FILE}}"
     ],
     "required_combined_checks": [
@@ -117,7 +120,8 @@ Every delegated packet JSON should preserve all of the following fields:
     "required_closeout_contract": [
       "Lane A must preserve the compact helper proof summary line: {{HELPER_PROOF_SUMMARY}}",
       "Coordinator closeout wording must route through the Packet 833 template as extended by Packet 853",
-      "Delegated split ownership and validation wording must route through the Packet 831 checklist as extended by Packet 854"
+      "Delegated split ownership and validation wording must route through the Packet 831 checklist as extended by Packet 854",
+      "Packet-specific operator prompt wording must route through the Packet 832 template as extended by Packet 856"
     ]
   },
   "delegation_prompt": "{{PROMPT_FILE}}",
@@ -135,3 +139,7 @@ Packet `2026-05-13-olares-dev-residency-834` is the first packet to publish this
 ## Packet 855 Extension
 
 Packet `2026-05-14-olares-dev-residency-855` extends this reusable delegated packet-definition template so later packets must preserve the Packet 853 closeout-template extension contract, the Packet 854 checklist extension contract, and the compact accepted helper proof-summary line directly inside the packet-definition scaffold instead of treating those requirements as coordinator-only folklore outside the JSON definition surface.
+
+## Packet 857 Extension
+
+Packet `2026-05-14-olares-dev-residency-857` extends this reusable delegated packet-definition template so later packets must preserve the Packet 856 operator-prompt-template contract directly inside the packet-definition scaffold: the current delegated note stack remains a required input, coordinator-owned publication files remain a replaceable family through `{{COORDINATOR_SHARED_FILES}}`, and packet-specific prompt wording must route through the Packet 832 template as extended by Packet 856 instead of relying on coordinator memory outside the JSON definition surface.
