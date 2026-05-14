@@ -40,6 +40,10 @@ The Olares authority order is:
 7. `OLARES-BUILD-GUIDE.md`
 8. `../operations/OLARES-CHECKLIST.md`
 9. `../operations/OLARES-VSCODE-BUILD-SESSION-PROMPT.md`
+10. `../operations/OLARES-AI-DELEGATED-DUAL-LANE-EXECUTION-CHECKLIST-2026-05-13.md`
+11. `../operations/OLARES-AI-DELEGATED-DUAL-LANE-OPERATOR-PROMPT-TEMPLATE-2026-05-13.md`
+12. `../operations/OLARES-AI-DELEGATED-DUAL-LANE-COORDINATOR-CLOSEOUT-TEMPLATE-2026-05-13.md`
+13. `../operations/OLARES-AI-DELEGATED-DUAL-LANE-PACKET-TEMPLATE-2026-05-13.md`
 
 This order is mandatory.
 
@@ -237,8 +241,13 @@ Exit condition:
 
 Current proof floor:
 
-1. Packet `2026-05-13-olares-dev-residency-786` remains the first completed coordinator-owned two-lane rehearsal floor for this bounded authority stack.
-2. Packet `2026-05-13-olares-dev-residency-791` remains the current helper-backed positive-gate promotion proof floor.
+1. Packets `2026-05-13-olares-dev-residency-786` and `2026-05-13-olares-dev-residency-791` remain preserved earlier rehearsal and positive-gate hardening context for this authority stack.
+2. Packet `2026-05-13-olares-dev-residency-830` remains the current authoritative-host helper floor for delegated packet execution.
+3. Packet `2026-05-13-olares-dev-residency-831` remains the delegated split-governance checklist floor.
+4. Packet `2026-05-13-olares-dev-residency-832` remains the delegated operator prompt template floor.
+5. Packet `2026-05-13-olares-dev-residency-833` remains the delegated coordinator closeout template floor.
+6. Packet `2026-05-13-olares-dev-residency-834` remains the delegated packet-definition template floor.
+7. Packet `2026-05-13-olares-dev-residency-835` remains the higher-level orchestration entry-surface alignment floor.
 
 ### Phase D - First service graduation
 

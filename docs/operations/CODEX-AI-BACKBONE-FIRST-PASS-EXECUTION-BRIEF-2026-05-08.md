@@ -76,13 +76,19 @@ Assume a parallel hardening lane may be authoring docs or tests around:
 
 Do not take ownership of those hardening semantics beyond the minimum documentation needed for your scaffold outputs.
 
+When that parallel lane is executed as a delegated dual-lane packet, reuse the published Packet 831 checklist, Packet 832 operator prompt template, Packet 833 coordinator closeout template, and Packet 834 packet-definition template rather than inventing a new coordination shape for scaffold work.
+
 ## Current Alignment Note
 
-Packet `2026-05-13-olares-dev-residency-786` is the current completed first coordinator-owned two-lane rehearsal floor.
+Packets `2026-05-13-olares-dev-residency-786` and `2026-05-13-olares-dev-residency-791` remain preserved earlier hardening inputs.
 
-Packet `2026-05-13-olares-dev-residency-791` is the current helper-backed positive-gate promotion proof floor.
+Packet `2026-05-13-olares-dev-residency-830` is the current authoritative-host helper floor for this delegated cadence.
 
-Treat both as preserved hardening inputs when authoring scaffold outputs; do not restate them as unresolved or future-first proof work.
+Packets `2026-05-13-olares-dev-residency-831` through `2026-05-13-olares-dev-residency-834` are the current reusable delegated coordination template stack.
+
+Packet `2026-05-13-olares-dev-residency-835` is the current higher-level orchestration entry-surface alignment floor.
+
+Treat all of those as preserved inputs when authoring scaffold outputs; do not restate them as unresolved or future-first proof work.
 
 ## Done Definition
 
@@ -91,4 +97,5 @@ Your first pass is done when:
 1. the admitted backbone surfaces have coherent scaffold structure,
 2. the repo has a usable shell for later implementation,
 3. the boundary remains narrow and truthful,
-4. no file implies a wider orchestration rollout than the authority stack admits.
+4. no file implies a wider orchestration rollout than the authority stack admits,
+5. no scaffold output contradicts the published delegated packet templates or the Packet 835-aligned orchestration entry surfaces.

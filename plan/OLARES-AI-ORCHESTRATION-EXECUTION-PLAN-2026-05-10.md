@@ -24,7 +24,11 @@ Use this plan with:
 3. `../docs/operations/OLARES-AI-PARALLEL-TASK-READINESS-CHECKLIST-2026-05-10.md`,
 4. `../docs/authority/OLARES-AI-BACKBONE-FRAMEWORK-2026-05-08.md`,
 5. `../docs/operations/APEX-JOBS-TRUST-AND-PROMOTION-CONTRACT-2026-05-08.md`,
-6. `../docs/operations/OLARES-AI-OPERATOR-REAL-WORLD-VALIDATION-MATRIX-2026-05-12.md`.
+6. `../docs/operations/OLARES-AI-OPERATOR-REAL-WORLD-VALIDATION-MATRIX-2026-05-12.md`,
+7. `../docs/operations/OLARES-AI-DELEGATED-DUAL-LANE-EXECUTION-CHECKLIST-2026-05-13.md`,
+8. `../docs/operations/OLARES-AI-DELEGATED-DUAL-LANE-OPERATOR-PROMPT-TEMPLATE-2026-05-13.md`,
+9. `../docs/operations/OLARES-AI-DELEGATED-DUAL-LANE-COORDINATOR-CLOSEOUT-TEMPLATE-2026-05-13.md`,
+10. `../docs/operations/OLARES-AI-DELEGATED-DUAL-LANE-PACKET-TEMPLATE-2026-05-13.md`.
 
 ## Current Target
 
@@ -139,6 +143,15 @@ Exit gate:
 
 Goal: enable a safe two-executor pattern without widening the orchestration boundary.
 
+Current delegated proof floor for this phase:
+
+1. Packet `2026-05-13-olares-dev-residency-830` remains the authoritative-host helper floor for this packet cadence.
+2. Packet `2026-05-13-olares-dev-residency-831` remains the delegated split-governance checklist floor.
+3. Packet `2026-05-13-olares-dev-residency-832` remains the delegated operator prompt template floor.
+4. Packet `2026-05-13-olares-dev-residency-833` remains the delegated coordinator closeout template floor.
+5. Packet `2026-05-13-olares-dev-residency-834` remains the delegated packet-definition template floor.
+6. Packet `2026-05-13-olares-dev-residency-835` remains the higher-level orchestration entry-surface alignment floor.
+
 Allowed shape:
 
 1. one executor owns scaffold maintenance,
@@ -152,6 +165,11 @@ Required preconditions:
 2. file ownership is disjoint or final-write ownership is explicit,
 3. publication and host-proof cadence remain centrally governed,
 4. the work stays inside the admitted MCP trio and staging-shell boundary.
+
+Implementation note:
+
+1. when a new delegated two-lane packet opens, reuse the published Packet 831 checklist, Packet 832 operator prompt template, Packet 833 coordinator closeout template, and Packet 834 packet-definition template instead of hand-authoring those control blocks again.
+2. preserve the Packet 835-aligned status, readiness, and runbook posture when classifying the next bounded slice.
 
 Validation:
 
@@ -214,10 +232,11 @@ The truthful next steps are:
 
 1. keep this plan, the status brief, and the readiness checklist aligned,
 2. use the real-world validation matrix to prove the host operator path before opening any new widening discussion,
-3. open new work as one bounded slice at a time,
-4. prefer trust-hardening and evidence-routing improvements before any new shell widening,
-5. use two executors only when the split is obviously disjoint and written down first,
-6. keep host-evidence and promotion control central rather than executor-local.
+3. open new work as one bounded delegated packet at a time and reuse the published Packet 831 through Packet 834 execution surfaces rather than hand-authoring control scaffolding,
+4. preserve the Packet 835-aligned entry-surface posture while choosing the next disjoint lane objective,
+5. prefer trust-hardening and evidence-routing improvements before any new shell widening,
+6. use two executors only when the split is obviously disjoint and written down first,
+7. keep host-evidence and promotion control central rather than executor-local.
 
 ## Stop Conditions
 
