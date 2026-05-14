@@ -1,0 +1,112 @@
+{
+  "packet_id": "2026-05-14-olares-dev-residency-862",
+  "tool": "tools/ai/build_ai_packet_evidence_summary.py",
+  "command": "/usr/bin/python3 tools/ai/build_ai_packet_evidence_summary.py --packet-id 2026-05-14-olares-dev-residency-862 --verify-artifact /home/olares/code/apex/apex-power-ops-platform/tests/canary/mcp-contract/actual/verify-minimal-mcp-trio-2026-05-14-olares-dev-residency-862.json --promotion-artifact /home/olares/code/apex/apex-power-ops-platform/tests/canary/mcp-contract/actual/apex-jobs-promotion-2026-05-14-olares-dev-residency-862.json --output /home/olares/code/apex/apex-power-ops-platform/tests/canary/mcp-contract/actual/ai-packet-evidence-summary-2026-05-14-olares-dev-residency-862.json",
+  "verify_artifact_path": "/home/olares/code/apex/apex-power-ops-platform/tests/canary/mcp-contract/actual/verify-minimal-mcp-trio-2026-05-14-olares-dev-residency-862.json",
+  "verification": {
+    "profile": "strict-db-query",
+    "result": "PASS",
+    "guard_detail": "Packet 2026-05-14-olares-dev-residency-862-promote-guard-c3708a62 cannot be promoted: no successful env=host run is on record.",
+    "sandbox_run": {
+      "run_id": "1778780775941-t9hf7h2n",
+      "env": "sandbox",
+      "service": "ai-workflow",
+      "packet_id": "2026-05-14-olares-dev-residency-862",
+      "status": "success",
+      "created_at": "2026-05-14T17:46:15.941Z",
+      "notes": "minimal-mcp-trio verification",
+      "completed_at": "2026-05-14T17:46:15.944Z"
+    },
+    "listed_runs": [
+      {
+        "run_id": "1778780415250-qinqdlyy",
+        "env": "sandbox",
+        "service": "ai-workflow",
+        "packet_id": "2026-05-14-olares-dev-residency-862",
+        "status": "success",
+        "created_at": "2026-05-14T17:40:15.250Z",
+        "notes": "minimal-mcp-trio verification",
+        "completed_at": "2026-05-14T17:40:15.252Z"
+      },
+      {
+        "run_id": "1778780595128-5pcg3aea",
+        "env": "sandbox",
+        "service": "ai-workflow",
+        "packet_id": "2026-05-14-olares-dev-residency-862",
+        "status": "success",
+        "created_at": "2026-05-14T17:43:15.128Z",
+        "notes": "minimal-mcp-trio verification",
+        "completed_at": "2026-05-14T17:43:15.129Z"
+      },
+      {
+        "run_id": "1778780775941-t9hf7h2n",
+        "env": "sandbox",
+        "service": "ai-workflow",
+        "packet_id": "2026-05-14-olares-dev-residency-862",
+        "status": "success",
+        "created_at": "2026-05-14T17:46:15.941Z",
+        "notes": "minimal-mcp-trio verification",
+        "completed_at": "2026-05-14T17:46:15.944Z"
+      }
+    ]
+  },
+  "result": "PASS",
+  "artifact_path": "/home/olares/code/apex/apex-power-ops-platform/tests/canary/mcp-contract/actual/ai-packet-evidence-summary-2026-05-14-olares-dev-residency-862.json",
+  "promotion_artifact_path": "/home/olares/code/apex/apex-power-ops-platform/tests/canary/mcp-contract/actual/apex-jobs-promotion-2026-05-14-olares-dev-residency-862.json",
+  "promotion": {
+    "env": "host",
+    "service": "ai-workflow",
+    "result": "PASS",
+    "host_run": {
+      "run_id": "1778780776003-w9c27kxt",
+      "env": "host",
+      "service": "ai-workflow",
+      "packet_id": "2026-05-14-olares-dev-residency-862",
+      "status": "success",
+      "created_at": "2026-05-14T17:46:16.003Z",
+      "notes": "host promotion validation proof",
+      "completed_at": "2026-05-14T17:46:16.005Z"
+    },
+    "host_success_runs": [
+      {
+        "run_id": "1778780415310-564i7ajx",
+        "env": "host",
+        "service": "ai-workflow",
+        "packet_id": "2026-05-14-olares-dev-residency-862",
+        "status": "success",
+        "created_at": "2026-05-14T17:40:15.310Z",
+        "notes": "host promotion validation proof",
+        "completed_at": "2026-05-14T17:40:15.312Z"
+      },
+      {
+        "run_id": "1778780595187-lz4t7ml0",
+        "env": "host",
+        "service": "ai-workflow",
+        "packet_id": "2026-05-14-olares-dev-residency-862",
+        "status": "success",
+        "created_at": "2026-05-14T17:43:15.187Z",
+        "notes": "host promotion validation proof",
+        "completed_at": "2026-05-14T17:43:15.189Z"
+      },
+      {
+        "run_id": "1778780776003-w9c27kxt",
+        "env": "host",
+        "service": "ai-workflow",
+        "packet_id": "2026-05-14-olares-dev-residency-862",
+        "status": "success",
+        "created_at": "2026-05-14T17:46:16.003Z",
+        "notes": "host promotion validation proof",
+        "completed_at": "2026-05-14T17:46:16.005Z"
+      }
+    ],
+    "promotion_record": {
+      "packet_id": "2026-05-14-olares-dev-residency-862",
+      "promoted_at": "2026-05-14T17:46:16.007Z",
+      "supporting_run_ids": [
+        "1778780415310-564i7ajx",
+        "1778780595187-lz4t7ml0",
+        "1778780776003-w9c27kxt"
+      ]
+    }
+  }
+}
