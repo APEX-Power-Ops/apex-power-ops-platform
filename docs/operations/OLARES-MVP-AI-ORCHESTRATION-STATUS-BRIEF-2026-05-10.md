@@ -62,7 +62,9 @@ The current proof floor is later than that first backbone tranche:
 3. Packet `2026-05-13-olares-dev-residency-832` is the current delegated operator prompt template floor,
 4. Packet `2026-05-13-olares-dev-residency-833` is the current delegated coordinator closeout template floor,
 5. Packet `2026-05-13-olares-dev-residency-834` is the current delegated packet-definition template floor,
-6. later status, matrix, checklist, runbook, and scaffold guidance should preserve that delegated Packet 830 through Packet 834 stack rather than restating it as unresolved next work.
+6. Packet `2026-05-13-olares-dev-residency-835` is the current higher-level orchestration entry-surface alignment floor,
+7. Packet `2026-05-13-olares-dev-residency-836` is the current active plan and authority control-surface alignment floor,
+8. later status, matrix, checklist, runbook, and scaffold guidance should preserve that delegated Packet 830 through Packet 836 stack rather than restating it as unresolved next work.
 
 ## Current Executor Readout
 
@@ -117,8 +119,9 @@ It is not yet approved for:
 4. Prefer docs, tests, contract notes, checklist surfaces, and non-destructive skeleton wiring over shared implementation edits when work is split across lanes.
 5. Keep both the sandbox-only refusal proof and the helper-backed `env=host` positive-gate proof as the promotion truth model so bounded parallel work remains truthful instead of speculative.
 6. Route any fresh delegated packet through the published Packet 831 split checklist plus the Packet 832 operator prompt template, Packet 833 coordinator closeout template, and Packet 834 packet-definition template.
-7. Use `../../plan/OLARES-AI-ORCHESTRATION-EXECUTION-PLAN-2026-05-10.md` as the default higher-level phase reference, but treat the delegated Packet 831 through Packet 834 stack as the current packet-authoring surface.
-8. Open any wider lane only from concrete operator insufficiency or a separately authorized packet that explicitly names the new boundary.
+7. Preserve the Packet 835-aligned orchestration entry surfaces and the Packet 836-aligned execution plan plus authority posture when opening the next delegated packet.
+8. Use `../../plan/OLARES-AI-ORCHESTRATION-EXECUTION-PLAN-2026-05-10.md` as the default higher-level phase reference, but treat the delegated Packet 831 through Packet 836 stack as the current packet-authoring surface.
+9. Open any wider lane only from concrete operator insufficiency or a separately authorized packet that explicitly names the new boundary.
 
 ## Current Recommendation
 
@@ -126,4 +129,4 @@ For near-term execution, treat the Olares MVP as structurally complete enough to
 
 For AI orchestration, treat the current target as controlled executor-governed parallel readiness inside the admitted backbone, not autonomous orchestration expansion.
 
-Treat Packet `2026-05-13-olares-dev-residency-830` through Packet `2026-05-13-olares-dev-residency-834` as the current delegated helper, rehearsal, and template stack for that target.
+Treat Packet `2026-05-13-olares-dev-residency-830` through Packet `2026-05-13-olares-dev-residency-834` as the current delegated helper, rehearsal, and template stack for that target, and preserve Packet `2026-05-13-olares-dev-residency-835` plus Packet `2026-05-13-olares-dev-residency-836` as the current aligned control surfaces for the next delegated follow-on.
