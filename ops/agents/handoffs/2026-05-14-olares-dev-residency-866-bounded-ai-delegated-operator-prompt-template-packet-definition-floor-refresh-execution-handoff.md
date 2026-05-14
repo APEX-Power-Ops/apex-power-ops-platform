@@ -3,7 +3,7 @@
 - Date: 2026-05-14
 - Scope: publish the next delegated dual-lane packet after Packet 865 by reusing the unchanged authoritative-host helper surface for a fresh admitted-trio live evidence tuple while extending the reusable operator prompt template so later delegated packets explicitly route packet-definition wording through the Packet 834 template as extended by Packet 855, Packet 857, Packet 859, Packet 861, and Packet 865
 - Lane: bounded AI/operator delegated dual-lane execution
-- Change type: next delegated dual-lane packet after Packet 865, closing the reusable delegated operator-prompt-template packet-definition floor refresh surface with publication and authoritative-host parity pending
+- Change type: next delegated dual-lane packet after Packet 865, closing the reusable delegated operator-prompt-template packet-definition floor refresh surface with published Packet 866 artifacts and restored authoritative-host parity
 - Shared publication files: `PROJECT_STATUS.md`, `docs/operations/AI-BACKBONE-PARALLEL-HARDENING-BRIEF-2026-05-08.md`, `docs/operations/OLARES-AI-OPERATOR-REAL-WORLD-VALIDATION-MATRIX-2026-05-12.md`, `docs/operations/OLARES-MVP-AI-ORCHESTRATION-STATUS-BRIEF-2026-05-10.md`, `docs/operations/OLARES-AI-PARALLEL-TASK-READINESS-CHECKLIST-2026-05-10.md`, `docs/architecture/OLARES-AI-WORKFLOW-FIRST-SLICE-RUNBOOK-2026-05-06.md`, this handoff
 
 ## Lane A Tuple
@@ -30,11 +30,11 @@
 
 ## Coordinator Tuple
 
-- Shared publication files updated locally only after both lane tuples were green and the host returned to truthful `not-running` rest state: `PROJECT_STATUS.md`, `docs/operations/AI-BACKBONE-PARALLEL-HARDENING-BRIEF-2026-05-08.md`, `docs/operations/OLARES-AI-OPERATOR-REAL-WORLD-VALIDATION-MATRIX-2026-05-12.md`, `docs/operations/OLARES-MVP-AI-ORCHESTRATION-STATUS-BRIEF-2026-05-10.md`, `docs/operations/OLARES-AI-PARALLEL-TASK-READINESS-CHECKLIST-2026-05-10.md`, `docs/architecture/OLARES-AI-WORKFLOW-FIRST-SLICE-RUNBOOK-2026-05-06.md`, this handoff
+- Shared publication files were updated locally only after both lane tuples were green and the host returned to truthful `not-running` rest state, then the Packet 866 publication set was pushed to `origin/clean-main` and fast-forwarded onto the authoritative host: `PROJECT_STATUS.md`, `docs/operations/AI-BACKBONE-PARALLEL-HARDENING-BRIEF-2026-05-08.md`, `docs/operations/OLARES-AI-OPERATOR-REAL-WORLD-VALIDATION-MATRIX-2026-05-12.md`, `docs/operations/OLARES-MVP-AI-ORCHESTRATION-STATUS-BRIEF-2026-05-10.md`, `docs/operations/OLARES-AI-PARALLEL-TASK-READINESS-CHECKLIST-2026-05-10.md`, `docs/architecture/OLARES-AI-WORKFLOW-FIRST-SLICE-RUNBOOK-2026-05-06.md`, this handoff
 - Combined validation result: focused helper truthfulness suite passed, the live helper passed on the first attempt, the host returned to truthful `not-running`, Lane B operator-prompt-template validation passed, ownership remained disjoint, and no abort rule fired
-- Publication result: `PENDING`
-- Authoritative-host parity result: `PENDING`
-- Packet verdict: `PENDING PUBLICATION`
+- Publication result: `PASS (Packet 866 publication commit 0ff8ed884d934c0d5a59e8f81c51439363829e7e pushed to origin/clean-main)`
+- Authoritative-host parity result: `PASS (olares-mesh fast-forwarded to 0ff8ed884d934c0d5a59e8f81c51439363829e7e after move-aside plus cmp verification of the four tracked host artifacts; final host status clean)`
+- Packet verdict: `PASS`
 
 ## Boundary Confirmation
 
@@ -51,6 +51,6 @@ Packet `2026-05-14-olares-dev-residency-866` stayed bounded to its declared help
 
 Packet `2026-05-14-olares-dev-residency-866` proves the delegated lane can move one step beyond Packet 865 without reopening helper hardening or controller scope and can extend the reusable operator prompt template so later delegated packets preserve the Packet 865 packet-template operator-prompt floor refresh directly inside the reusable operator prompt instead of leaving packet-definition wording pinned below that floor.
 
-The coordinator retained final write ownership for `PROJECT_STATUS.md`, `docs/operations/AI-BACKBONE-PARALLEL-HARDENING-BRIEF-2026-05-08.md`, `docs/operations/OLARES-AI-OPERATOR-REAL-WORLD-VALIDATION-MATRIX-2026-05-12.md`, `docs/operations/OLARES-MVP-AI-ORCHESTRATION-STATUS-BRIEF-2026-05-10.md`, `docs/operations/OLARES-AI-PARALLEL-TASK-READINESS-CHECKLIST-2026-05-10.md`, `docs/architecture/OLARES-AI-WORKFLOW-FIRST-SLICE-RUNBOOK-2026-05-06.md`, and this handoff until both lane tuples were green, then prepared the closeout set for publication and authoritative-host parity restoration.
+The coordinator retained final write ownership for `PROJECT_STATUS.md`, `docs/operations/AI-BACKBONE-PARALLEL-HARDENING-BRIEF-2026-05-08.md`, `docs/operations/OLARES-AI-OPERATOR-REAL-WORLD-VALIDATION-MATRIX-2026-05-12.md`, `docs/operations/OLARES-MVP-AI-ORCHESTRATION-STATUS-BRIEF-2026-05-10.md`, `docs/operations/OLARES-AI-PARALLEL-TASK-READINESS-CHECKLIST-2026-05-10.md`, `docs/architecture/OLARES-AI-WORKFLOW-FIRST-SLICE-RUNBOOK-2026-05-06.md`, and this handoff until both lane tuples were green, then published the closeout set and restored authoritative-host parity.
 
 The next bounded step is another delegated packet that reuses the Packet 831 split checklist as extended by Packet 854, the Packet 832 operator prompt template as extended by Packet 858, Packet 860, Packet 862, Packet 864, and Packet 866, the Packet 833 coordinator closeout template as extended by Packet 853, the Packet 834 packet-definition template as extended by Packet 855, Packet 857, Packet 859, Packet 861, and Packet 865, the Packet 847 objective-selection rubric, the Packet 848 lane-selection note, the Packet 849 artifact-reading note, the Packet 850 status-alignment note, the Packet 851 parity-remediation note, and the Packet 852 proof-summary note with a new disjoint lane objective, while preserving the Packet 845-aligned higher-level guidance realignment refresh surfaces, the Packet 844-aligned post-guidance control realignment refresh surfaces, the Packet 837-aligned live guidance surfaces, the Packet 835-aligned orchestration entry surfaces, and the Packet 836-aligned execution plan, workspace authority framework, and Codex scaffold brief.
