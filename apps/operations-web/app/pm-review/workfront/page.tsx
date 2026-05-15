@@ -3,6 +3,8 @@
 import * as React from 'react'
 import Link from 'next/link'
 
+import { buildPmReturnContext, buildPmRoute } from '../route-navigation'
+
 type WorkfrontSummary = {
   total_count?: number
   blocked_count?: number
@@ -29,6 +31,7 @@ type WorkfrontRow = {
   status?: string
   status_label?: string
   readiness?: string
+  task_id?: string | null
   blocked?: boolean
   blocker_count?: number
   open_issue_count?: number
@@ -118,6 +121,7 @@ const READS_BASE = `${API_BASE}/reads`
 const MUTATIONS_BASE = `${API_BASE}/mutations`
 const PM_ACTOR = { actor_id: 'pm-001', actor_role: 'pm', project_scope: ['proj-001'] }
 const DECISION_HISTORY_LIMIT = 25
+const WORKFRONT_RETURN_CONTEXT = buildPmReturnContext('/pm-review/workfront', {}, 'PM workfront')
 
 function makeToken() {
   return `Bearer ${btoa(JSON.stringify(PM_ACTOR))}`
@@ -221,6 +225,37 @@ function rowDecisionEntityIds(row: WorkfrontRow) {
     if (issue.id) ids.add(issue.id)
   })
   return ids
+}
+
+function rowTaskLabel(row: WorkfrontRow) {
+  return row.task_name || row.apparatus_name || row.apparatus_id || row.id
+}
+
+function workfrontDrillthroughLinks(row: WorkfrontRow) {
+  const taskId = row.task_id || undefined
+  const taskLabel = rowTaskLabel(row)
+
+  return {
+    drivers: buildPmRoute('/pm-review', {
+      focusTaskId: taskId,
+      ...WORKFRONT_RETURN_CONTEXT,
+    }),
+    schedule: buildPmRoute('/pm-review/schedule', {
+      focusTaskId: taskId,
+      ...WORKFRONT_RETURN_CONTEXT,
+    }),
+    tracer: buildPmRoute('/pm-review/tracer', {
+      taskId,
+      taskLabel,
+      maxDepth: 10,
+      ...WORKFRONT_RETURN_CONTEXT,
+    }),
+    variance: buildPmRoute('/pm-review/variance', {
+      projectId: 'stack-dc',
+      focusTaskId: taskId,
+      ...WORKFRONT_RETURN_CONTEXT,
+    }),
+  }
 }
 
 function decisionTimestamp(row: DecisionHistoryRow) {
@@ -458,6 +493,7 @@ export default function PmWorkfrontPage() {
               const escalatedIssue = returnableIssue(row)
               const rowEntityIds = rowDecisionEntityIds(row)
               const rowHistory = historyRows.filter((event) => event.entity_id && rowEntityIds.has(event.entity_id))
+              const drillthroughLinks = workfrontDrillthroughLinks(row)
 
               return (
             <article
@@ -490,6 +526,23 @@ export default function PmWorkfrontPage() {
                 <p style={{ margin: '0.35rem 0 0', color: 'var(--muted)', lineHeight: 1.5 }}>
                   Checklist {row.checklist_complete_count ?? 0}/{row.checklist_total_count ?? 0} · {row.open_issue_count ?? 0} open issue{row.open_issue_count === 1 ? '' : 's'}
                 </p>
+                <div
+                  aria-label={`Schedule drillthrough for ${row.apparatus_name || row.apparatus_id || row.id}`}
+                  style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.65rem' }}
+                >
+                  <Link className="btn btn-outline" href={drillthroughLinks.drivers}>
+                    Drivers
+                  </Link>
+                  <Link className="btn btn-outline" href={drillthroughLinks.schedule}>
+                    Schedule
+                  </Link>
+                  <Link className="btn btn-outline" href={drillthroughLinks.tracer}>
+                    Trace
+                  </Link>
+                  <Link className="btn btn-outline" href={drillthroughLinks.variance}>
+                    Variance
+                  </Link>
+                </div>
               </div>
               <div>
                 <p style={{ margin: 0, fontFamily: 'var(--font-mono), monospace', fontSize: '0.78rem', color: 'var(--brand)', textTransform: 'uppercase' }}>

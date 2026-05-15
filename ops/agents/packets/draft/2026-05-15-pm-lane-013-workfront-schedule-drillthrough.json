@@ -1,0 +1,77 @@
+{
+  "packet_id": "2026-05-15-pm-lane-013",
+  "title": "PM Workfront Schedule Drillthrough",
+  "objective": "Add frontend-only row-level drillthrough from the PM workfront to the existing promoted PM drivers, schedule, tracer, and variance routes using existing task context and return-path conventions, without touching backend endpoints, schema, auth, ingress, or mutation scope.",
+  "domain": "pm-domain",
+  "active_role": "PM Runtime Product Coordinator",
+  "repo_paths": [
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/app/pm-review/workfront/page.tsx",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/app/pm-review/route-navigation.ts",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/tests/browser-shell.pm-workfront.smoke.spec.ts",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "dependencies": [
+    "2026-05-15-pm-lane-012",
+    "2026-05-15-pm-lane-011",
+    "2026-05-15-pm-lane-009",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-012-render-authenticated-mutation-seam-redeploy-and-live-data-proof-gate-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/app/pm-review/route-navigation.ts"
+  ],
+  "orchestration_inputs": [
+    "PM Lane 012 remains the deployment gate for hosted mutation-seam parity and live PM proof.",
+    "Read-only scout 019e2c83-d777-7941-bcde-6b443e6a003d confirmed the smallest Workfront schedule-drillthrough implementation uses existing route-navigation helpers, optional row task_id, and focused PM workfront Playwright assertions."
+  ],
+  "constrained_outputs": [
+    "WorkfrontRow accepts optional task_id for frontend drillthrough context.",
+    "PM workfront rows expose compact links to drivers, schedule, tracer, and variance.",
+    "Generated links preserve returnTo=/pm-review/workfront and returnLabel=PM workfront.",
+    "Tracer links include taskId, taskLabel, and maxDepth=10.",
+    "Variance links preserve projectId=stack-dc and focusTaskId when task_id exists.",
+    "Focused Playwright proof asserts the new URLs while keeping existing read-only history and mutation-sentinel expectations."
+  ],
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/app/pm-review/workfront/page.tsx",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/tests/browser-shell.pm-workfront.smoke.spec.ts",
+    "C:/APEX Platform/apex-power-ops-platform/PROJECT_STATUS.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-15-pm-lane-013-workfront-schedule-drillthrough.json",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-013-workfront-schedule-drillthrough-handoff.md"
+  ],
+  "validation_steps": [
+    "corepack pnpm --dir C:/APEX Platform/apex-power-ops-platform --filter @apex/operations-web typecheck",
+    "corepack pnpm --dir C:/APEX Platform/apex-power-ops-platform --filter @apex/operations-web build",
+    "CI=1 corepack pnpm --dir C:/APEX Platform/apex-power-ops-platform --filter @apex/operations-web exec playwright test tests/browser-shell.pm-workfront.smoke.spec.ts",
+    "git diff --check"
+  ],
+  "validation_results": [
+    "operations-web typecheck passed",
+    "operations-web production build passed",
+    "focused PM workfront Playwright proof passed 1/1 after rebuilding and forcing a fresh smoke server path with CI=1",
+    "initial Playwright attempt failed against a stale reused next start process before rebuild; no product defect remained after fresh build validation"
+  ],
+  "not_allowed": [
+    "No backend endpoint change.",
+    "No package script change.",
+    "No SQL or schema migration.",
+    "No live database write.",
+    "No service admission.",
+    "No auth or ingress widening.",
+    "No assignment mutation.",
+    "No schedule mutation.",
+    "No Operations Visibility reopening.",
+    "No Vercel promotion.",
+    "No Render deployment action.",
+    "No autonomous AI business-state mutation."
+  ],
+  "handoff_target": "Delegated Technical Repo Authority",
+  "status": "complete",
+  "execution_result": "PASS_LOCAL_FRONTEND_ONLY_HOSTED_PROOF_DEFERRED_TO_PM_LANE_012",
+  "delegation_status": "completed",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-013-workfront-schedule-drillthrough-handoff.md"
+  ],
+  "sql_permission": false,
+  "sql_permission_note": "Packet 2026-05-15-pm-lane-013 is frontend-only and does not authorize SQL writes, schema migration, live data mutation, auth widening, ingress widening, schedule mutation, assignment mutation, Vercel promotion, or Render deployment action.",
+  "ai_mutation_authority": "not_admitted",
+  "created_at": "2026-05-15",
+  "updated_at": "2026-05-15"
+}

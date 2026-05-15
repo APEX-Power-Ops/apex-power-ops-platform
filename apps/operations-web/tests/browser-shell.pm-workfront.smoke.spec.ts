@@ -66,6 +66,7 @@ test('pm workfront route renders read-only readiness queue from governed seam', 
             apparatus_name: 'Cable Assembly A',
             status: 'active',
             readiness: 'blocked',
+            task_id: 'task-002',
             blocker_count: 1,
             open_issue_count: 1,
             owner_name: 'Alex Rivera',
@@ -119,6 +120,7 @@ test('pm workfront route renders read-only readiness queue from governed seam', 
             apparatus_name: 'Main Switchgear',
             status: 'not_started',
             readiness: 'unassigned',
+            task_id: 'task-002',
             blocker_count: 0,
             open_issue_count: 0,
             owner_name: null,
@@ -137,6 +139,7 @@ test('pm workfront route renders read-only readiness queue from governed seam', 
             apparatus_name: 'Distribution Panel',
             status: 'ready',
             readiness: 'ready',
+            task_id: 'task-001',
             blocker_count: 0,
             open_issue_count: 0,
             owner_name: 'Alex Rivera',
@@ -207,6 +210,23 @@ test('pm workfront route renders read-only readiness queue from governed seam', 
   await expect(page.getByText(/SLD B-101/i)).toBeVisible()
   await expect(page.getByText(/Resolve blocker: IR reading below threshold/i).first()).toBeVisible()
   await expect(page.getByText(/Main Switchgear/i)).toBeVisible()
+  const cableScheduleDrillthrough = page.locator('[aria-label="Schedule drillthrough for Cable Assembly A"]')
+  await expect(cableScheduleDrillthrough.getByRole('link', { name: 'Drivers' })).toHaveAttribute(
+    'href',
+    /\/pm-review\?focusTaskId=task-002&returnTo=%2Fpm-review%2Fworkfront&returnLabel=PM\+workfront$/,
+  )
+  await expect(cableScheduleDrillthrough.getByRole('link', { name: 'Schedule' })).toHaveAttribute(
+    'href',
+    /\/pm-review\/schedule\?focusTaskId=task-002&returnTo=%2Fpm-review%2Fworkfront&returnLabel=PM\+workfront$/,
+  )
+  await expect(cableScheduleDrillthrough.getByRole('link', { name: 'Trace' })).toHaveAttribute(
+    'href',
+    /\/pm-review\/tracer\?taskId=task-002&taskLabel=Switchgear\+Sweep&maxDepth=10&returnTo=%2Fpm-review%2Fworkfront&returnLabel=PM\+workfront$/,
+  )
+  await expect(cableScheduleDrillthrough.getByRole('link', { name: 'Variance' })).toHaveAttribute(
+    'href',
+    /\/pm-review\/variance\?projectId=stack-dc&focusTaskId=task-002&returnTo=%2Fpm-review%2Fworkfront&returnLabel=PM\+workfront$/,
+  )
 
   await page.getByRole('button', { name: /Draft lead follow-up/i }).first().click()
   await expect(page.getByText('AI advisory', { exact: true })).toBeVisible()
