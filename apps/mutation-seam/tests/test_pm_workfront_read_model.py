@@ -66,6 +66,10 @@ def test_pm_workfront_read_model_surfaces_blocked_unassigned_owner_and_next_acti
     assert blocked["primary_blocking_issue_id"] in {"issue-002", "issue-003"}
     assert blocked["blocking_issues"][0]["id"] == blocked["primary_blocking_issue_id"]
     assert blocked["returnable_issue_id"] in {None, "issue-003"}
+    assert "blocked" in blocked["lens_tags"]
+    assert "stale_blocker" in blocked["lens_tags"]
+    assert workfront["lenses"]["blocked_count"] >= 1
+    assert workfront["lenses"]["stale_blocker_count"] >= 1
 
     assigned = next(row for row in workfront["rows"] if row["apparatus_id"] == "app-002")
     assert assigned["designation"] == "Pole Disconnect"
@@ -114,3 +118,8 @@ def test_pm_workfront_surfaces_returned_followup_evidence(client):
     assert returned["latest_pm_followup_note"] == note
     assert returned["latest_pm_followup_sent_at"] == "2026-05-15T15:30:00Z"
     assert returned["blocking_issues"][0]["pm_followup_note"] == note
+    assert "returned_to_lead" in returned["lens_tags"]
+    assert "stale_blocker" not in returned["lens_tags"]
+    assert returned["last_pm_decision"]["action_type"] == "return_to_lead"
+    assert returned["last_pm_decision"]["to_status"] == "in_review"
+    assert after["lenses"]["returned_to_lead_count"] >= 1

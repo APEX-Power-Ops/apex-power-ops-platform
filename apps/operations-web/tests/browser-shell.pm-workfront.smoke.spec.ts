@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test'
 
 test('pm workfront route renders read-only readiness queue from governed seam', async ({ page }) => {
   let readCalls = 0
+  let returnedToLead = false
   const mutationRequests: Array<{ authorization?: string; body: any }> = []
 
   await page.route('**/api/v1/mutations/issues', async (route) => {
@@ -9,6 +10,7 @@ test('pm workfront route renders read-only readiness queue from governed seam', 
       authorization: route.request().headers().authorization,
       body: route.request().postDataJSON(),
     })
+    returnedToLead = true
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -47,6 +49,14 @@ test('pm workfront route renders read-only readiness queue from governed seam', 
           ai_mutation_authority: 'not_admitted',
           recommended_focus: 'Resolve blocker: IR reading below threshold',
         },
+        lenses: {
+          all_count: 3,
+          blocked_count: 1,
+          needs_pm_disposition_count: returnedToLead ? 0 : 1,
+          returned_to_lead_count: returnedToLead ? 1 : 0,
+          stale_blocker_count: returnedToLead ? 0 : 1,
+          unassigned_count: 1,
+        },
         rows: [
           {
             id: 'workfront-app-003',
@@ -66,15 +76,32 @@ test('pm workfront route renders read-only readiness queue from governed seam', 
             checklist_total_count: 3,
             next_action: 'Resolve blocker: IR reading below threshold',
             primary_blocking_issue_id: 'issue-200',
-            returnable_issue_id: 'issue-200',
+            returnable_issue_id: returnedToLead ? null : 'issue-200',
+            lens_tags: returnedToLead ? ['all', 'blocked', 'returned_to_lead'] : ['all', 'blocked', 'needs_pm_disposition', 'stale_blocker'],
+            latest_pm_followup_note: returnedToLead ? 'Cable Assembly A is blocked for Primary Switchgear Testing / Switchgear Sweep; owner Alex Rivera; reference SLD B-101.' : null,
+            latest_pm_followup_sent_at: returnedToLead ? '2026-05-15T16:30:00Z' : null,
+            last_pm_decision: returnedToLead
+              ? {
+                  action_type: 'return_to_lead',
+                  actor_id: 'pm-001',
+                  actor_role: 'pm',
+                  entity_id: 'issue-200',
+                  reason: 'PM returned issue issue-200 to lead review',
+                  timestamp: '2026-05-15T16:30:00Z',
+                  from_status: 'escalated',
+                  to_status: 'in_review',
+                }
+              : null,
             blocking_issues: [
               {
                 id: 'issue-200',
                 title: 'IR reading below threshold',
-                status: 'escalated',
+                status: returnedToLead ? 'in_review' : 'escalated',
                 severity: 'high',
                 blocks_completion: true,
                 reported_by: 'tech-001',
+                pm_followup_note: returnedToLead ? 'Cable Assembly A is blocked for Primary Switchgear Testing / Switchgear Sweep; owner Alex Rivera; reference SLD B-101.' : null,
+                pm_followup_sent_at: returnedToLead ? '2026-05-15T16:30:00Z' : null,
               },
             ],
             ai_advisory: {
@@ -141,10 +168,16 @@ test('pm workfront route renders read-only readiness queue from governed seam', 
   await expect(page.getByText(/draft only .* not_admitted/i)).toBeVisible()
   await expect(page.getByText(/Lead target .* issue-200/i)).toBeVisible()
   await expect(page.getByText(/Requested lead follow-up: Resolve blocker: IR reading below threshold/i)).toBeVisible()
+  await expect(page.getByRole('button', { name: /Needs PM disposition 1/i })).toBeVisible()
+  await expect(page.getByRole('button', { name: /Stale blockers 1/i })).toBeVisible()
   expect(mutationRequests).toHaveLength(0)
 
   await page.getByRole('button', { name: /Return to lead/i }).click()
   await expect(page.getByText(/PM returned this issue to lead review/i)).toBeVisible()
+  await expect(page.getByText(/Returned to lead review/i)).toBeVisible()
+  await expect(page.getByText(/Last PM disposition/i)).toBeVisible()
+  await expect(page.getByText(/Last PM decision .* return to lead .* in_review/i)).toBeVisible()
+  await expect(page.getByText(/PM reason: PM returned issue issue-200 to lead review/i)).toBeVisible()
 
   expect(mutationRequests).toHaveLength(1)
   const mutation = mutationRequests[0]
@@ -167,6 +200,11 @@ test('pm workfront route renders read-only readiness queue from governed seam', 
   })
   expect(mutation.body.payload.pm_followup_note).toContain('Cable Assembly A is blocked')
   expect(readCalls).toBeGreaterThanOrEqual(2)
+
+  await page.getByRole('button', { name: /Returned to lead 1/i }).click()
+  await expect(page.getByText('Cable Assembly A', { exact: true })).toBeVisible()
+  await page.getByRole('button', { name: /Stale blockers 0/i }).click()
+  await expect(page.getByText(/No rows match this read-only lens/i)).toBeVisible()
 
   await page.getByRole('button', { name: /Unassigned 1/i }).click()
   await expect(page.getByText(/Main Switchgear/i)).toBeVisible()

@@ -13,6 +13,15 @@ type WorkfrontSummary = {
   complete_count?: number
 }
 
+type WorkfrontLenses = {
+  all_count?: number
+  blocked_count?: number
+  needs_pm_disposition_count?: number
+  returned_to_lead_count?: number
+  stale_blocker_count?: number
+  unassigned_count?: number
+}
+
 type WorkfrontRow = {
   id: string
   apparatus_id?: string
@@ -47,6 +56,19 @@ type WorkfrontRow = {
   }>
   latest_pm_followup_note?: string | null
   latest_pm_followup_sent_at?: string | null
+  lens_tags?: string[]
+  last_pm_decision?: {
+    id?: string
+    mutation_id?: string
+    actor_id?: string
+    actor_role?: string
+    action_type?: string
+    entity_id?: string
+    reason?: string
+    timestamp?: string
+    from_status?: string
+    to_status?: string
+  } | null
   ai_advisory?: {
     mode?: string
     mutation_authority?: string
@@ -57,6 +79,7 @@ type WorkfrontRow = {
 
 type WorkfrontPayload = {
   summary?: WorkfrontSummary
+  lenses?: WorkfrontLenses
   rows?: WorkfrontRow[]
   advisory?: {
     mode?: string
@@ -214,13 +237,20 @@ export default function PmWorkfrontPage() {
   }, [refresh])
 
   const summary = payload.summary || {}
+  const lenses = payload.lenses || {}
   const rows = payload.rows || []
-  const filteredRows = useMemo(() => (filter === 'all' ? rows : rows.filter((row) => row.readiness === filter)), [filter, rows])
+  const filteredRows = useMemo(
+    () => (filter === 'all' ? rows : rows.filter((row) => row.readiness === filter || row.lens_tags?.includes(filter))),
+    [filter, rows],
+  )
 
   const filters = [
-    ['all', `All ${summary.total_count ?? rows.length}`],
-    ['blocked', `Blocked ${summary.blocked_count ?? 0}`],
-    ['unassigned', `Unassigned ${summary.unassigned_count ?? 0}`],
+    ['all', `All ${lenses.all_count ?? summary.total_count ?? rows.length}`],
+    ['blocked', `Blocked ${lenses.blocked_count ?? summary.blocked_count ?? 0}`],
+    ['needs_pm_disposition', `Needs PM disposition ${lenses.needs_pm_disposition_count ?? 0}`],
+    ['returned_to_lead', `Returned to lead ${lenses.returned_to_lead_count ?? 0}`],
+    ['stale_blocker', `Stale blockers ${lenses.stale_blocker_count ?? 0}`],
+    ['unassigned', `Unassigned ${lenses.unassigned_count ?? summary.unassigned_count ?? 0}`],
     ['ready', `Ready ${summary.ready_count ?? 0}`],
     ['in_progress', `Active ${summary.in_progress_count ?? 0}`],
     ['pm_review', `PM review ${summary.pm_review_count ?? 0}`],
@@ -312,7 +342,7 @@ export default function PmWorkfrontPage() {
           <div>
             <h2>Read-Only PM Queue</h2>
             <p>
-              Filter by readiness while preserving the downstream context PM needs: owner, designation, drawing reference, task, blocker count, checklist progress, and next action.
+              Use read-only lenses while preserving the downstream context PM needs: owner, designation, drawing reference, task, blocker count, checklist progress, disposition history, and next action.
             </p>
           </div>
           <p className="pm-review-link-row">
@@ -419,11 +449,26 @@ export default function PmWorkfrontPage() {
                     <p style={{ margin: '0.35rem 0 0', color: 'var(--muted)', lineHeight: 1.5 }}>
                       Lead target · {escalatedIssue?.id || row.primary_blocking_issue_id || 'no escalated issue'}
                     </p>
+                    {row.last_pm_decision ? (
+                      <p style={{ margin: '0.35rem 0 0', color: 'var(--muted)', lineHeight: 1.5 }}>
+                        Last PM decision · {formatLabel(row.last_pm_decision.action_type)} · {row.last_pm_decision.to_status || 'unknown'}
+                      </p>
+                    ) : null}
                   </div>
                   <div>
                     {row.latest_pm_followup_note ? (
                       <p style={{ margin: '0 0 0.65rem', color: 'var(--ok)', lineHeight: 1.5 }}>
-                        Lead follow-up already sent{row.latest_pm_followup_sent_at ? ` at ${row.latest_pm_followup_sent_at}` : ''}.
+                        Returned to lead review{row.latest_pm_followup_sent_at ? ` at ${row.latest_pm_followup_sent_at}` : ''}.
+                      </p>
+                    ) : null}
+                    {row.last_pm_decision ? (
+                      <p style={{ margin: '0 0 0.65rem', fontFamily: 'var(--font-mono), monospace', fontSize: '0.78rem', color: 'var(--brand)', textTransform: 'uppercase' }}>
+                        Last PM disposition
+                      </p>
+                    ) : null}
+                    {row.last_pm_decision?.reason ? (
+                      <p style={{ margin: '0 0 0.65rem', color: 'var(--muted)', lineHeight: 1.5 }}>
+                        PM reason: {row.last_pm_decision.reason}
                       </p>
                     ) : null}
                     <p style={{ margin: 0, lineHeight: 1.55 }}>
@@ -454,7 +499,7 @@ export default function PmWorkfrontPage() {
               )
             })()
           ))}
-          {!filteredRows.length ? <p style={{ color: 'var(--muted)' }}>No rows match this readiness filter.</p> : null}
+          {!filteredRows.length ? <p style={{ color: 'var(--muted)' }}>No rows match this read-only lens.</p> : null}
         </div>
       </section>
     </main>

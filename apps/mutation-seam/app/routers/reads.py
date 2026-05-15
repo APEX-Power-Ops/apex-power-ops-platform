@@ -104,6 +104,7 @@ async def get_pm_workfront(actor: Actor = Depends(get_current_actor)) -> Dict[st
         workpackage_rows=list(store.workpackages.values()),
         issue_rows=list(store.issues.values()),
         checklist_rows=list(store.checklist_items.values()),
+        audit_rows=list(store.audit_log),
     )
 
 

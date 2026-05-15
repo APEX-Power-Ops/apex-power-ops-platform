@@ -6,6 +6,7 @@ from app.seed_workbooks import load_seed_data
 
 
 OPEN_ISSUE_STATUSES = {"open", "escalated", "new", "in_review"}
+PM_DECISION_ACTIONS = {"approve", "reject", "escalate_review", "resolve_escalated", "re_escalate", "return_to_lead"}
 
 
 def _is_open_issue(issue: Dict[str, Any]) -> bool:
@@ -14,6 +15,28 @@ def _is_open_issue(issue: Dict[str, Any]) -> bool:
 
 def _status_label(status: Any) -> str:
     return str(status or "unknown").replace("_", " ")
+
+
+def _event_timestamp(event: Dict[str, Any]) -> str:
+    return str(event.get("timestamp") or event.get("server_timestamp") or event.get("client_timestamp") or "")
+
+
+def _event_summary(event: Dict[str, Any] | None) -> Dict[str, Any] | None:
+    if not event:
+        return None
+
+    return {
+        "id": event.get("id"),
+        "mutation_id": event.get("mutation_id"),
+        "actor_id": event.get("actor_id"),
+        "actor_role": event.get("actor_role"),
+        "action_type": event.get("action_type"),
+        "entity_id": event.get("entity_id"),
+        "reason": event.get("reason"),
+        "timestamp": _event_timestamp(event),
+        "from_status": (event.get("from_state") or {}).get("status"),
+        "to_status": (event.get("to_state") or {}).get("status"),
+    }
 
 
 def _crew_name_map() -> Dict[str, str]:
@@ -118,12 +141,21 @@ def build_pm_workfront_read_model(
     workpackage_rows: List[Dict[str, Any]],
     issue_rows: List[Dict[str, Any]],
     checklist_rows: List[Dict[str, Any]],
+    audit_rows: List[Dict[str, Any]] | None = None,
 ) -> Dict[str, Any]:
     """Build a read-only PM workfront projection from seam store rows."""
     crew_names = _crew_name_map()
     task_map = {row.get("id"): row for row in task_rows}
     workpackage_map = {row.get("id"): row for row in workpackage_rows}
     assignment_by_apparatus = {row.get("apparatus_id"): row for row in assignment_rows if row.get("apparatus_id")}
+    audit_by_entity_id: Dict[str, List[Dict[str, Any]]] = {}
+    for event in audit_rows or []:
+        entity_id = event.get("entity_id")
+        if entity_id and (event.get("action_type") in PM_DECISION_ACTIONS or event.get("actor_role") == "pm"):
+            audit_by_entity_id.setdefault(str(entity_id), []).append(event)
+
+    for events in audit_by_entity_id.values():
+        events.sort(key=_event_timestamp, reverse=True)
 
     open_issues_by_apparatus: Dict[str, List[Dict[str, Any]]] = {}
     for issue in issue_rows:
@@ -154,6 +186,10 @@ def build_pm_workfront_read_model(
             None,
         )
         latest_followup_issue = next((issue for issue in blocking_issues if issue.get("pm_followup_note")), None)
+        issue_ids = [str(issue.get("id")) for issue in blocking_issues if issue.get("id")]
+        issue_decisions = [event for issue_id in issue_ids for event in audit_by_entity_id.get(issue_id, [])]
+        issue_decisions.sort(key=_event_timestamp, reverse=True)
+        last_pm_decision = _event_summary(issue_decisions[0] if issue_decisions else None)
         checklist = checklist_by_apparatus.get(apparatus_id, [])
         checklist_complete_count = sum(1 for item in checklist if item.get("completed"))
         checklist_total_count = len(checklist)
@@ -177,6 +213,17 @@ def build_pm_workfront_read_model(
             checklist_total_count=checklist_total_count,
             next_action=next_action,
         )
+        lens_tags = ["all", readiness]
+        if blocking_issues:
+            lens_tags.append("blocked")
+        if returnable_issue:
+            lens_tags.append("needs_pm_disposition")
+        if latest_followup_issue or (last_pm_decision and last_pm_decision.get("action_type") == "return_to_lead"):
+            lens_tags.append("returned_to_lead")
+        if blocking_issues and not latest_followup_issue:
+            lens_tags.append("stale_blocker")
+        if not owner_id:
+            lens_tags.append("unassigned")
 
         rows.append(
             {
@@ -195,6 +242,8 @@ def build_pm_workfront_read_model(
                 "blocking_issues": [_issue_summary(issue) for issue in blocking_issues],
                 "latest_pm_followup_note": latest_followup_issue.get("pm_followup_note") if latest_followup_issue else None,
                 "latest_pm_followup_sent_at": latest_followup_issue.get("pm_followup_sent_at") if latest_followup_issue else None,
+                "last_pm_decision": last_pm_decision,
+                "lens_tags": sorted(set(lens_tags)),
                 "owner_id": owner_id,
                 "owner_name": owner_name,
                 "task_id": task.get("id"),
@@ -236,9 +285,18 @@ def build_pm_workfront_read_model(
         "pm_review_count": sum(1 for row in rows if row["readiness"] == "pm_review"),
         "complete_count": sum(1 for row in rows if row["readiness"] == "complete"),
     }
+    lenses = {
+        "all_count": len(rows),
+        "blocked_count": sum(1 for row in rows if "blocked" in row["lens_tags"]),
+        "needs_pm_disposition_count": sum(1 for row in rows if "needs_pm_disposition" in row["lens_tags"]),
+        "returned_to_lead_count": sum(1 for row in rows if "returned_to_lead" in row["lens_tags"]),
+        "stale_blocker_count": sum(1 for row in rows if "stale_blocker" in row["lens_tags"]),
+        "unassigned_count": sum(1 for row in rows if "unassigned" in row["lens_tags"]),
+    }
 
     return {
         "summary": summary,
+        "lenses": lenses,
         "rows": rows,
         "advisory": {
             "mode": "read_only",

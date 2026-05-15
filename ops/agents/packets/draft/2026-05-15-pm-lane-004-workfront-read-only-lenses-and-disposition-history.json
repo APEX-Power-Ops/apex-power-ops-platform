@@ -1,0 +1,61 @@
+{
+  "packet_id": "2026-05-15-pm-lane-004",
+  "title": "PM Workfront Read-Only Lenses And Disposition History",
+  "objective": "Extend the PM workfront as a read-only triage surface by adding operational lens counts, row-level lens tags, and compact last-PM-disposition context while preserving the existing return_to_lead mutation as the only PM-clicked action on the route.",
+  "domain": "pm-domain",
+  "active_role": "PM Runtime Product Coordinator",
+  "repo_paths": [
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web",
+    "C:/APEX Platform/apex-power-ops-platform/docs/authority/APEX-OPS-DELEGATED-AUTHORITY-AND-AI-ORCHESTRATION-PROTOCOL-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "dependencies": [
+    "2026-05-15-pm-lane-003",
+    "docs/authority/APEX-OPS-DELEGATED-AUTHORITY-AND-AI-ORCHESTRATION-PROTOCOL-2026-05-15.md",
+    "ops/agents/handoffs/2026-05-15-pm-lane-003-workfront-return-to-lead-disposition-handoff.md"
+  ],
+  "required_inputs": [
+    "PM Lane 003 user-initiated return-to-lead disposition loop",
+    "Read-only backend scout 019e2c3d-c2a9-75f0-80d4-f09ff919d91d",
+    "Read-only frontend scout 019e2c3d-dd1a-7bb0-b814-64c4ad83948a",
+    "Focused backend, build, typecheck, and Playwright validation evidence"
+  ],
+  "constrained_outputs": [
+    "PM workfront read-model top-level lenses for all, blocked, needs PM disposition, returned to lead, stale blockers, and unassigned rows",
+    "PM workfront row-level lens_tags computed from existing readiness, blocking issue, ownership, follow-up, and audit context",
+    "PM workfront row-level last_pm_decision context derived from existing audit log rows without exposing the full audit payload",
+    "Operations-web read-only lens controls and returned-to-lead disposition-history display",
+    "Focused tests proving stale blocker and returned-to-lead lens transitions, last-PM-disposition context, no mutation from advisory open, and the unchanged PM-clicked return_to_lead request",
+    "No new read endpoint, no new mutation endpoint, no SQL or schema migration, no service admission, no auth or ingress widening, no assignment mutation, no schedule mutation, and no autonomous AI business-state action"
+  ],
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/pm_workfront_read_model.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/routers/reads.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests/test_pm_workfront_read_model.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/app/pm-review/workfront/page.tsx",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/tests/browser-shell.pm-workfront.smoke.spec.ts",
+    "C:/APEX Platform/apex-power-ops-platform/PROJECT_STATUS.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-15-pm-lane-004-workfront-read-only-lenses-and-disposition-history.json",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-004-workfront-read-only-lenses-and-disposition-history-handoff.md"
+  ],
+  "validation_steps": [
+    "Run focused mutation-seam PM workfront read-model, PM issue disposition, and pipeline integration pytest slices with SEAM_STORE_BACKEND=memory",
+    "Run operations-web production build",
+    "Run operations-web typecheck after build-generated Next types are available",
+    "Run focused Playwright browser smoke for the PM workfront route",
+    "Run packet JSON validation and git diff whitespace checks before publication"
+  ],
+  "handoff_target": "Delegated Technical Repo Authority",
+  "status": "complete",
+  "execution_result": "PASS",
+  "delegation_status": "complete",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-004-workfront-read-only-lenses-and-disposition-history-handoff.md"
+  ],
+  "sql_permission": false,
+  "sql_permission_note": "Packet 2026-05-15-pm-lane-004 enriches an existing read projection and reuses memory-focused validation. No SQL, schema migration, production data write, auth, ingress, or new mutation authority is authorized.",
+  "ai_mutation_authority": "not_admitted",
+  "created_at": "2026-05-15",
+  "updated_at": "2026-05-15"
+}
