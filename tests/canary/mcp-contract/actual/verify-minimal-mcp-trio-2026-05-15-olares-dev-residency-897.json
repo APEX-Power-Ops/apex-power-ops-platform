@@ -1,0 +1,99 @@
+{
+  "packet_id": "2026-05-15-olares-dev-residency-897",
+  "profile": "strict-db-query",
+  "command": "/usr/bin/python3 tools/ai/verify_minimal_mcp_trio.py --packet-id 2026-05-15-olares-dev-residency-897 --output /home/olares/code/apex/apex-power-ops-platform/tests/canary/mcp-contract/actual/verify-minimal-mcp-trio-2026-05-15-olares-dev-residency-897.json --fs-url http://127.0.0.1:8810/mcp --db-url http://127.0.0.1:8811/mcp --jobs-url http://127.0.0.1:8812/mcp --profile strict-db-query",
+  "endpoints": {
+    "fs": "http://127.0.0.1:8810/mcp",
+    "db": "http://127.0.0.1:8811/mcp",
+    "jobs": "http://127.0.0.1:8812/mcp"
+  },
+  "checks": {
+    "fs_tools": {
+      "status": "pass",
+      "tools": [
+        "list_roots",
+        "list_directory",
+        "read_text_file"
+      ]
+    },
+    "fs_read": {
+      "status": "pass",
+      "preview": "# Apex Power Ops Platform\n\nThis directory is the active platform monorepo root and the canonical Apex Ops git boundary.\n"
+    },
+    "db_tools": {
+      "status": "pass",
+      "tools": [
+        "list_tables",
+        "describe_table",
+        "query"
+      ]
+    },
+    "db_query": {
+      "status": "pass",
+      "result": {
+        "rowCount": 1,
+        "rows": [
+          {
+            "ok": 1
+          }
+        ]
+      }
+    },
+    "jobs_tools": {
+      "status": "pass",
+      "tools": [
+        "start_run",
+        "end_run",
+        "list_runs",
+        "promote_packet"
+      ]
+    },
+    "jobs_promote_guard": {
+      "status": "pass",
+      "packet_id": "2026-05-15-olares-dev-residency-897-promote-guard-afbe9b14",
+      "detail": "Packet 2026-05-15-olares-dev-residency-897-promote-guard-afbe9b14 cannot be promoted: no successful env=host run is on record."
+    },
+    "jobs_start_run": {
+      "status": "pass",
+      "run": {
+        "run_id": "1778821645479-0doz6nkv",
+        "env": "sandbox",
+        "service": "ai-workflow",
+        "packet_id": "2026-05-15-olares-dev-residency-897",
+        "status": "running",
+        "created_at": "2026-05-15T05:07:25.479Z"
+      }
+    },
+    "jobs_end_run": {
+      "status": "pass",
+      "run": {
+        "run_id": "1778821645479-0doz6nkv",
+        "env": "sandbox",
+        "service": "ai-workflow",
+        "packet_id": "2026-05-15-olares-dev-residency-897",
+        "status": "success",
+        "created_at": "2026-05-15T05:07:25.479Z",
+        "notes": "minimal-mcp-trio verification",
+        "completed_at": "2026-05-15T05:07:25.481Z"
+      }
+    },
+    "jobs_list_runs": {
+      "status": "pass",
+      "result": {
+        "runs": [
+          {
+            "run_id": "1778821645479-0doz6nkv",
+            "env": "sandbox",
+            "service": "ai-workflow",
+            "packet_id": "2026-05-15-olares-dev-residency-897",
+            "status": "success",
+            "created_at": "2026-05-15T05:07:25.479Z",
+            "notes": "minimal-mcp-trio verification",
+            "completed_at": "2026-05-15T05:07:25.481Z"
+          }
+        ]
+      }
+    }
+  },
+  "result": "PASS"
+}
