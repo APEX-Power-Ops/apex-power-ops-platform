@@ -257,10 +257,55 @@ def test_pm_return_to_lead_issue_disposition_is_audited_and_idempotent(client):
         headers={"Authorization": _make_token("pm-001", "pm")},
     )
     assert history.status_code == 200
-    assert any(
-        entry["action_type"] == "return_to_lead" and entry["entity_id"] == "issue-002"
-        for entry in history.json()
+    history_rows = history.json()
+    returned_history = next(
+        entry for entry in history_rows
+        if entry["action_type"] == "return_to_lead" and entry["entity_id"] == "issue-002"
     )
+    assert returned_history["timestamp"] == audit_entries[0]["server_timestamp"]
+
+
+def test_decision_history_normalizes_timestamp_shapes(client):
+    """Decision-history reads sort memory and persisted audit timestamp shapes consistently."""
+    from app.db.memory_store import store
+
+    store.audit_log.append(
+        {
+            "id": "audit-old-client",
+            "mutation_id": "mut-old-client",
+            "actor_id": "pm-001",
+            "actor_role": "pm",
+            "action_type": "approve",
+            "entity_id": "task-001",
+            "from_state": {"status": "awaiting_review"},
+            "to_state": {"status": "complete"},
+            "client_timestamp": "2026-05-15T09:00:00Z",
+        }
+    )
+    store.audit_log.append(
+        {
+            "id": "audit-new-server",
+            "mutation_id": "mut-new-server",
+            "actor_id": "pm-001",
+            "actor_role": "pm",
+            "action_type": "return_to_lead",
+            "entity_id": "issue-002",
+            "from_state": {"status": "escalated"},
+            "to_state": {"status": "in_review"},
+            "server_timestamp": "2026-05-15T10:00:00Z",
+        }
+    )
+
+    history = client.get(
+        "/api/v1/reads/decision-history",
+        headers={"Authorization": _make_token("pm-001", "pm")},
+    )
+
+    assert history.status_code == 200
+    rows = history.json()
+    assert [row["id"] for row in rows[:2]] == ["audit-new-server", "audit-old-client"]
+    assert rows[0]["timestamp"] == "2026-05-15T10:00:00Z"
+    assert rows[1]["timestamp"] == "2026-05-15T09:00:00Z"
 
 
 def test_field_tech_cannot_return_issue_to_lead(client, field_tech_token):

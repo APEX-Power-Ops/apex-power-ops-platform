@@ -15,6 +15,19 @@ from app.seed_workbooks import load_seed_data
 router = APIRouter(prefix="/api/v1/reads", tags=["reads"])
 
 
+PM_DECISION_ACTIONS = {"approve", "reject", "escalate_review", "resolve_escalated", "re_escalate", "return_to_lead"}
+
+
+def _audit_event_timestamp(event: Dict[str, Any]) -> str:
+    return str(event.get("timestamp") or event.get("server_timestamp") or event.get("client_timestamp") or "")
+
+
+def _decision_history_row(event: Dict[str, Any]) -> Dict[str, Any]:
+    row = dict(event)
+    row["timestamp"] = _audit_event_timestamp(row)
+    return row
+
+
 @router.get("/apparatus")
 async def list_apparatus(actor: Actor = Depends(get_current_actor)) -> List[Dict[str, Any]]:
     """List all apparatus in the store."""
@@ -137,12 +150,11 @@ async def get_decision_history(actor: Actor = Depends(get_current_actor)) -> Lis
     """
     PM decision history: audit trail of Class C approval/rejection/escalation actions.
     """
-    pm_actions = {"approve", "reject", "escalate_review", "resolve_escalated", "re_escalate", "return_to_lead"}
     history = [
-        e for e in store.audit_log
-        if e.get("action_type") in pm_actions or e.get("actor_role") == "pm"
+        _decision_history_row(e) for e in store.audit_log
+        if e.get("action_type") in PM_DECISION_ACTIONS or e.get("actor_role") == "pm"
     ]
-    return sorted(history, key=lambda x: x.get("timestamp", ""), reverse=True)
+    return sorted(history, key=_audit_event_timestamp, reverse=True)
 
 
 @router.get("/blocking-issues/{entity_type}/{entity_id}")

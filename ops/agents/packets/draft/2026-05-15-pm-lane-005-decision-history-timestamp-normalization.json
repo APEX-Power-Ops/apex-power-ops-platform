@@ -1,0 +1,51 @@
+{
+  "packet_id": "2026-05-15-pm-lane-005",
+  "title": "PM Decision-History Timestamp Normalization",
+  "objective": "Harden the existing decision-history read endpoint so memory-backed audit events and persisted audit rows sort and expose timestamps consistently before any wider PM timeline or history UI is admitted.",
+  "domain": "pm-domain",
+  "active_role": "PM Runtime Product Coordinator",
+  "repo_paths": [
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam",
+    "C:/APEX Platform/apex-power-ops-platform/docs/authority/APEX-OPS-DELEGATED-AUTHORITY-AND-AI-ORCHESTRATION-PROTOCOL-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "dependencies": [
+    "2026-05-15-pm-lane-004",
+    "docs/authority/APEX-OPS-DELEGATED-AUTHORITY-AND-AI-ORCHESTRATION-PROTOCOL-2026-05-15.md",
+    "ops/agents/handoffs/2026-05-15-pm-lane-004-workfront-read-only-lenses-and-disposition-history-handoff.md"
+  ],
+  "required_inputs": [
+    "PM Lane 004 read-only lens and last-PM-disposition context",
+    "Backend scout 019e2c3d-c2a9-75f0-80d4-f09ff919d91d parity-risk finding",
+    "Focused backend validation evidence"
+  ],
+  "constrained_outputs": [
+    "Decision-history read rows now include a normalized timestamp value derived from timestamp, server_timestamp, or client_timestamp",
+    "Decision-history sorting now uses the same timestamp fallback order for memory and persisted audit shapes",
+    "Focused tests prove return_to_lead history exposes memory server_timestamp as timestamp and mixed timestamp shapes sort newest-first",
+    "No frontend UI change, no new endpoint, no mutation endpoint change, no SQL or schema migration, no service admission, no auth or ingress widening, and no autonomous AI business-state action"
+  ],
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/routers/reads.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests/test_pipeline_integration.py",
+    "C:/APEX Platform/apex-power-ops-platform/PROJECT_STATUS.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-15-pm-lane-005-decision-history-timestamp-normalization.json",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-005-decision-history-timestamp-normalization-handoff.md"
+  ],
+  "validation_steps": [
+    "Run focused mutation-seam PM workfront read-model, PM issue disposition, and pipeline integration pytest slices with SEAM_STORE_BACKEND=memory",
+    "Run packet JSON validation and git diff whitespace checks before publication"
+  ],
+  "handoff_target": "Delegated Technical Repo Authority",
+  "status": "complete",
+  "execution_result": "PASS",
+  "delegation_status": "coordinator-executed",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-005-decision-history-timestamp-normalization-handoff.md"
+  ],
+  "sql_permission": false,
+  "sql_permission_note": "Packet 2026-05-15-pm-lane-005 changes only the read endpoint projection and memory-focused tests. No SQL, schema migration, production data write, auth, ingress, or new mutation authority is authorized.",
+  "ai_mutation_authority": "not_admitted",
+  "created_at": "2026-05-15",
+  "updated_at": "2026-05-15"
+}
