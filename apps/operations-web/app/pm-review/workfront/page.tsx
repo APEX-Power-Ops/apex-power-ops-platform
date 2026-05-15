@@ -33,6 +33,7 @@ type WorkfrontRow = {
   checklist_total_count?: number
   next_action?: string
   primary_blocking_issue_id?: string | null
+  returnable_issue_id?: string | null
   blocking_issues?: Array<{
     id?: string
     title?: string
@@ -40,7 +41,12 @@ type WorkfrontRow = {
     severity?: string
     blocks_completion?: boolean
     reported_by?: string
+    pm_followup_note?: string | null
+    pm_followup_sent_at?: string | null
+    pm_followup_workfront_row_id?: string | null
   }>
+  latest_pm_followup_note?: string | null
+  latest_pm_followup_sent_at?: string | null
   ai_advisory?: {
     mode?: string
     mutation_authority?: string
@@ -67,6 +73,7 @@ const API_BASE =
     : '/api/v1'
 
 const READS_BASE = `${API_BASE}/reads`
+const MUTATIONS_BASE = `${API_BASE}/mutations`
 const PM_ACTOR = { actor_id: 'pm-001', actor_role: 'pm', project_scope: ['proj-001'] }
 
 function makeToken() {
@@ -85,8 +92,66 @@ async function readWorkfront(): Promise<WorkfrontPayload> {
   return (await response.json()) as WorkfrontPayload
 }
 
+async function sendIssueFollowup(row: WorkfrontRow) {
+  const issue = returnableIssue(row)
+  const issueId = issue?.id || row.returnable_issue_id
+  if (!issueId) {
+    throw new Error('No escalated issue is available to return to lead')
+  }
+
+  const now = new Date().toISOString()
+  const note =
+    row.ai_advisory?.brief ||
+    `${row.apparatus_name || row.apparatus_id} needs lead follow-up: ${row.next_action || 'Monitor for next status'}.`
+  const idempotencyKey =
+    typeof crypto !== 'undefined' && 'randomUUID' in crypto
+      ? crypto.randomUUID()
+      : `pm-workfront-${issueId}-${Date.now()}`
+
+  const response = await fetch(`${MUTATIONS_BASE}/issues`, {
+    method: 'POST',
+    headers: {
+      Authorization: makeToken(),
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      idempotency_key: idempotencyKey,
+      mutation_class: 'C',
+      action_type: 'return_to_lead',
+      entity_id: issueId,
+      payload: {
+        status: 'in_review',
+        pm_disposition: 'return_to_lead',
+        pm_followup_note: note,
+        pm_followup_sent_at: now,
+        pm_followup_workfront_row_id: row.id,
+        pm_followup_source: 'pm_workfront',
+      },
+      reason: `PM returned issue ${issueId} to lead review`,
+      source: 'online',
+      client_timestamp: now,
+    }),
+  })
+
+  if (!response.ok) {
+    throw new Error('Failed to send lead follow-up')
+  }
+
+  const result = await response.json()
+  if (result.status !== 'accepted' && result.status !== 'idempotent_hit') {
+    throw new Error(result.error?.message || 'Lead follow-up was rejected')
+  }
+
+  return result
+}
+
 function formatLabel(value?: string | null) {
   return (value || 'unknown').replace(/_/g, ' ')
+}
+
+function returnableIssue(row: WorkfrontRow) {
+  return row.blocking_issues?.find((issue) => issue.status === 'escalated' && issue.id === row.returnable_issue_id) ||
+    row.blocking_issues?.find((issue) => issue.status === 'escalated')
 }
 
 function readinessTone(readiness?: string | null) {
@@ -129,6 +194,8 @@ export default function PmWorkfrontPage() {
   const [online, setOnline] = useState(true)
   const [filter, setFilter] = useState('all')
   const [draftRowId, setDraftRowId] = useState<string | null>(null)
+  const [sendingRowId, setSendingRowId] = useState<string | null>(null)
+  const [followupResult, setFollowupResult] = useState<Record<string, string>>({})
 
   const refresh = useCallback(async () => {
     try {
@@ -158,6 +225,28 @@ export default function PmWorkfrontPage() {
     ['in_progress', `Active ${summary.in_progress_count ?? 0}`],
     ['pm_review', `PM review ${summary.pm_review_count ?? 0}`],
   ]
+
+  const sendFollowup = useCallback(
+    async (row: WorkfrontRow) => {
+      try {
+        setSendingRowId(row.id)
+        await sendIssueFollowup(row)
+        setFollowupResult((current) => ({
+          ...current,
+          [row.id]: 'PM returned this issue to lead review.',
+        }))
+        await refresh()
+      } catch (error) {
+        setFollowupResult((current) => ({
+          ...current,
+          [row.id]: error instanceof Error ? error.message : 'Lead follow-up failed',
+        }))
+      } finally {
+        setSendingRowId(null)
+      }
+    },
+    [refresh],
+  )
 
   return (
     <main className="shell-page pm-review-page">
@@ -253,6 +342,10 @@ export default function PmWorkfrontPage() {
 
         <div style={{ display: 'grid', gap: '0.85rem' }}>
           {filteredRows.map((row) => (
+            (() => {
+              const escalatedIssue = returnableIssue(row)
+
+              return (
             <article
               key={row.id}
               className="card"
@@ -324,18 +417,42 @@ export default function PmWorkfrontPage() {
                       {(row.ai_advisory?.mode || 'draft_only').replace(/_/g, ' ')} · {row.ai_advisory?.mutation_authority || 'not_admitted'}
                     </p>
                     <p style={{ margin: '0.35rem 0 0', color: 'var(--muted)', lineHeight: 1.5 }}>
-                      Lead target · {row.primary_blocking_issue_id || row.blocking_issues?.[0]?.id || 'no blocking issue'}
+                      Lead target · {escalatedIssue?.id || row.primary_blocking_issue_id || 'no escalated issue'}
                     </p>
                   </div>
                   <div>
+                    {row.latest_pm_followup_note ? (
+                      <p style={{ margin: '0 0 0.65rem', color: 'var(--ok)', lineHeight: 1.5 }}>
+                        Lead follow-up already sent{row.latest_pm_followup_sent_at ? ` at ${row.latest_pm_followup_sent_at}` : ''}.
+                      </p>
+                    ) : null}
                     <p style={{ margin: 0, lineHeight: 1.55 }}>
                       {row.ai_advisory?.brief ||
                         `${row.apparatus_name || row.apparatus_id} needs lead follow-up: ${row.next_action || 'Monitor for next status'}.`}
                     </p>
+                    <div style={{ display: 'flex', gap: '0.65rem', alignItems: 'center', flexWrap: 'wrap', marginTop: '0.75rem' }}>
+                      <button
+                        className="btn btn-outline"
+                        onClick={() => void sendFollowup(row)}
+                        disabled={sendingRowId === row.id || !escalatedIssue}
+                      >
+                        {sendingRowId === row.id ? 'Returning...' : 'Return to lead'}
+                      </button>
+                      <span style={{ color: 'var(--muted)', fontSize: '0.86rem' }}>
+                        This records a PM disposition through the governed seam. AI advisory remains draft-only.
+                      </span>
+                    </div>
+                    {followupResult[row.id] ? (
+                      <p style={{ margin: '0.6rem 0 0', color: followupResult[row.id].startsWith('PM returned') ? 'var(--ok)' : 'var(--defer)', lineHeight: 1.5 }}>
+                        {followupResult[row.id]}
+                      </p>
+                    ) : null}
                   </div>
                 </div>
               ) : null}
             </article>
+              )
+            })()
           ))}
           {!filteredRows.length ? <p style={{ color: 'var(--muted)' }}>No rows match this readiness filter.</p> : null}
         </div>

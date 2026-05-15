@@ -313,6 +313,12 @@ async def execute_mutation(
     if not request.payload:
         request.payload = {}
 
+    if entity_type == "issue" and request.action_type == "return_to_lead":
+        disposition_error = _validate_issue_return_to_lead(request, actor, from_state)
+        if disposition_error:
+            save_idempotency(request.idempotency_key, disposition_error)
+            return disposition_error
+
     # ===== STAGE 8: Transition validation =====
     if action_meta["is_lifecycle"] and "status" in request.payload:
         new_status = request.payload["status"]
@@ -408,6 +414,55 @@ def _get_store_for_entity_type(entity_type: str) -> Dict[str, Any]:
         "snapshot": store.snapshots,
     }
     return stores.get(entity_type, {})
+
+
+def _validate_issue_return_to_lead(
+    request: MutationRequest,
+    actor: Actor,
+    from_state: Dict[str, Any],
+) -> Optional[MutationResponse]:
+    """Validate PM issue disposition semantics beyond generic issue transitions."""
+    project_id = from_state.get("project_id")
+    if not project_id or not check_scope(actor, project_id):
+        return error_response(
+            code=ErrorCode.UNAUTHORIZED_SCOPE,
+            message="Actor project scope does not include this issue",
+            entity_id=request.entity_id or "unknown",
+            entity_type="issue",
+            action_type=request.action_type,
+            detail={"project_id": project_id, "actor_scope": actor.project_scope},
+        )
+
+    if str(from_state.get("status") or "").lower() != "escalated":
+        return error_response(
+            code=ErrorCode.PRECONDITION_FAILED,
+            message="Only escalated issues can be returned to lead review",
+            entity_id=request.entity_id or "unknown",
+            entity_type="issue",
+            action_type=request.action_type,
+            detail={"current_status": from_state.get("status")},
+        )
+
+    if request.payload.get("status") != "in_review":
+        return error_response(
+            code=ErrorCode.INVALID_PAYLOAD,
+            message="return_to_lead requires payload.status to be in_review",
+            entity_id=request.entity_id or "unknown",
+            entity_type="issue",
+            action_type=request.action_type,
+            detail={"requested_status": request.payload.get("status")},
+        )
+
+    if not (request.reason or "").strip():
+        return error_response(
+            code=ErrorCode.INVALID_PAYLOAD,
+            message="return_to_lead requires a PM disposition reason",
+            entity_id=request.entity_id or "unknown",
+            entity_type="issue",
+            action_type=request.action_type,
+        )
+
+    return None
 
 
 def _get_blocking_issues_for_entity(entity_type: str, entity_id: str) -> List[Dict[str, Any]]:

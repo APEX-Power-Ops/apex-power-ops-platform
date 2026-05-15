@@ -1,13 +1,34 @@
 import { expect, test } from '@playwright/test'
 
 test('pm workfront route renders read-only readiness queue from governed seam', async ({ page }) => {
-  let mutationCalls = 0
-  await page.route('**/api/v1/mutations/**', async (route) => {
-    mutationCalls += 1
-    await route.fulfill({ status: 500, contentType: 'application/json', body: JSON.stringify({ error: 'unexpected mutation' }) })
+  let readCalls = 0
+  const mutationRequests: Array<{ authorization?: string; body: any }> = []
+
+  await page.route('**/api/v1/mutations/issues', async (route) => {
+    mutationRequests.push({
+      authorization: route.request().headers().authorization,
+      body: route.request().postDataJSON(),
+    })
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        status: 'accepted',
+        entity_id: 'issue-200',
+        entity_type: 'issue',
+        action_type: 'return_to_lead',
+        new_state: {
+          id: 'issue-200',
+          status: 'in_review',
+          pm_disposition: 'return_to_lead',
+          pm_followup_note: 'Cable Assembly A lead follow-up',
+        },
+      }),
+    })
   })
 
   await page.route('**/api/v1/reads/pm-workfront', async (route) => {
+    readCalls += 1
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -45,6 +66,7 @@ test('pm workfront route renders read-only readiness queue from governed seam', 
             checklist_total_count: 3,
             next_action: 'Resolve blocker: IR reading below threshold',
             primary_blocking_issue_id: 'issue-200',
+            returnable_issue_id: 'issue-200',
             blocking_issues: [
               {
                 id: 'issue-200',
@@ -115,11 +137,36 @@ test('pm workfront route renders read-only readiness queue from governed seam', 
   await expect(page.getByText(/Main Switchgear/i)).toBeVisible()
 
   await page.getByRole('button', { name: /Draft lead follow-up/i }).first().click()
-  await expect(page.getByText(/AI advisory/i)).toBeVisible()
+  await expect(page.getByText('AI advisory', { exact: true })).toBeVisible()
   await expect(page.getByText(/draft only .* not_admitted/i)).toBeVisible()
   await expect(page.getByText(/Lead target .* issue-200/i)).toBeVisible()
   await expect(page.getByText(/Requested lead follow-up: Resolve blocker: IR reading below threshold/i)).toBeVisible()
-  expect(mutationCalls).toBe(0)
+  expect(mutationRequests).toHaveLength(0)
+
+  await page.getByRole('button', { name: /Return to lead/i }).click()
+  await expect(page.getByText(/PM returned this issue to lead review/i)).toBeVisible()
+
+  expect(mutationRequests).toHaveLength(1)
+  const mutation = mutationRequests[0]
+  const tokenPayload = JSON.parse(Buffer.from((mutation.authorization || '').replace(/^Bearer /, ''), 'base64').toString('utf8'))
+  expect(tokenPayload.actor_role).toBe('pm')
+  expect(mutation.body.idempotency_key).toBeTruthy()
+  expect(Number.isNaN(Date.parse(mutation.body.client_timestamp))).toBeFalsy()
+  expect(mutation.body).toMatchObject({
+    mutation_class: 'C',
+    action_type: 'return_to_lead',
+    entity_id: 'issue-200',
+    payload: {
+      status: 'in_review',
+      pm_disposition: 'return_to_lead',
+      pm_followup_workfront_row_id: 'workfront-app-003',
+      pm_followup_source: 'pm_workfront',
+    },
+    reason: 'PM returned issue issue-200 to lead review',
+    source: 'online',
+  })
+  expect(mutation.body.payload.pm_followup_note).toContain('Cable Assembly A is blocked')
+  expect(readCalls).toBeGreaterThanOrEqual(2)
 
   await page.getByRole('button', { name: /Unassigned 1/i }).click()
   await expect(page.getByText(/Main Switchgear/i)).toBeVisible()

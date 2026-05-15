@@ -6,6 +6,19 @@ from uuid import uuid4
 import pytest
 
 
+def _make_token(actor_id: str, actor_role: str) -> str:
+    import base64
+    import json
+
+    payload = {
+        "actor_id": actor_id,
+        "actor_role": actor_role,
+        "project_scope": ["proj-001"],
+    }
+    encoded = base64.b64encode(json.dumps(payload).encode()).decode()
+    return f"Bearer {encoded}"
+
+
 def test_state_transition_validation_prevents_invalid_transition(
     client, field_tech_token, sample_apparatus_id
 ):
@@ -170,3 +183,104 @@ def test_multiple_mutations_independent(client, field_tech_token):
 
     assert store.apparatus["app-001"]["status"] == "active"
     assert store.apparatus["app-002"]["status"] == "active"
+
+
+def test_pm_return_to_lead_issue_disposition_is_audited_and_idempotent(client):
+    """PM can send an escalated issue back to lead through the governed Class C issue path."""
+    from app.db.memory_store import store
+
+    issue = store.issues["issue-002"].copy()
+    issue["status"] = "escalated"
+    issue["blocks_completion"] = True
+    store.issues["issue-002"] = issue
+
+    idempotency_key = str(uuid4())
+    payload = {
+        "idempotency_key": idempotency_key,
+        "mutation_class": "C",
+        "action_type": "return_to_lead",
+        "entity_id": "issue-002",
+        "payload": {
+            "status": "in_review",
+            "pm_followup_note": "Please verify torque record and return disposition.",
+            "pm_followup_sent_at": "2026-05-15T15:45:00Z",
+            "pm_followup_workfront_row_id": "workfront-app-001",
+        },
+        "reason": "PM workfront lead follow-up",
+        "source": "online",
+        "client_timestamp": "2026-05-15T15:45:00Z",
+    }
+
+    first = client.post(
+        "/api/v1/mutations/issues",
+        json=payload,
+        headers={"Authorization": _make_token("pm-001", "pm")},
+    )
+
+    assert first.status_code == 200
+    first_data = first.json()
+    assert first_data["status"] == "accepted"
+    assert first_data["entity_type"] == "issue"
+    assert first_data["action_type"] == "return_to_lead"
+    assert first_data["new_state"]["status"] == "in_review"
+    assert first_data["new_state"]["pm_followup_note"] == "Please verify torque record and return disposition."
+
+    audit_entries = [entry for entry in store.audit_log if entry["id"] == first_data["audit_event_id"]]
+    assert len(audit_entries) == 1
+    assert audit_entries[0]["actor_role"] == "pm"
+    assert audit_entries[0]["action_type"] == "return_to_lead"
+    assert audit_entries[0]["from_state"]["status"] == "escalated"
+    assert audit_entries[0]["to_state"]["status"] == "in_review"
+
+    duplicate = client.post(
+        "/api/v1/mutations/issues",
+        json={
+            **payload,
+            "payload": {
+                "status": "resolved",
+                "pm_followup_note": "This should be ignored by idempotency.",
+            },
+        },
+        headers={"Authorization": _make_token("pm-001", "pm")},
+    )
+
+    assert duplicate.status_code == 200
+    duplicate_data = duplicate.json()
+    assert duplicate_data["status"] == "idempotent_hit"
+    assert duplicate_data["mutation_id"] == first_data["mutation_id"]
+    assert duplicate_data["new_state"]["status"] == "in_review"
+    assert duplicate_data["new_state"]["pm_followup_note"] == "Please verify torque record and return disposition."
+    assert len([entry for entry in store.audit_log if entry["mutation_id"] == first_data["mutation_id"]]) == 1
+
+    history = client.get(
+        "/api/v1/reads/decision-history",
+        headers={"Authorization": _make_token("pm-001", "pm")},
+    )
+    assert history.status_code == 200
+    assert any(
+        entry["action_type"] == "return_to_lead" and entry["entity_id"] == "issue-002"
+        for entry in history.json()
+    )
+
+
+def test_field_tech_cannot_return_issue_to_lead(client, field_tech_token):
+    """The workfront issue disposition remains PM-only for this Class C action."""
+    response = client.post(
+        "/api/v1/mutations/issues",
+        json={
+            "idempotency_key": str(uuid4()),
+            "mutation_class": "C",
+            "action_type": "return_to_lead",
+            "entity_id": "issue-002",
+            "payload": {"status": "in_review"},
+            "reason": "Unauthorized attempt",
+            "source": "online",
+            "client_timestamp": "2026-05-15T15:50:00Z",
+        },
+        headers={"Authorization": field_tech_token},
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "rejected"
+    assert data["error"]["code"] == "UNAUTHORIZED_ROLE"

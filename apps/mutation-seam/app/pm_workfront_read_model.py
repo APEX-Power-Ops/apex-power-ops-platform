@@ -76,6 +76,9 @@ def _issue_summary(issue: Dict[str, Any]) -> Dict[str, Any]:
         "severity": issue.get("severity"),
         "blocks_completion": bool(issue.get("blocks_completion")),
         "reported_by": issue.get("reported_by"),
+        "pm_followup_note": issue.get("pm_followup_note"),
+        "pm_followup_sent_at": issue.get("pm_followup_sent_at"),
+        "pm_followup_workfront_row_id": issue.get("pm_followup_workfront_row_id") or issue.get("workfront_row_id"),
     }
 
 
@@ -146,6 +149,11 @@ def build_pm_workfront_read_model(
             issue for issue in issues
             if issue.get("blocks_completion") or str(issue.get("status") or "").lower() == "escalated"
         ]
+        returnable_issue = next(
+            (issue for issue in blocking_issues if str(issue.get("status") or "").lower() == "escalated"),
+            None,
+        )
+        latest_followup_issue = next((issue for issue in blocking_issues if issue.get("pm_followup_note")), None)
         checklist = checklist_by_apparatus.get(apparatus_id, [])
         checklist_complete_count = sum(1 for item in checklist if item.get("completed"))
         checklist_total_count = len(checklist)
@@ -182,8 +190,11 @@ def build_pm_workfront_read_model(
                 "blocker_count": len(blocking_issues),
                 "open_issue_count": len(issues),
                 "primary_blocking_issue_id": blocking_issues[0].get("id") if blocking_issues else None,
+                "returnable_issue_id": returnable_issue.get("id") if returnable_issue else None,
                 "blocking_issue_titles": [issue.get("title") or issue.get("id") for issue in blocking_issues],
                 "blocking_issues": [_issue_summary(issue) for issue in blocking_issues],
+                "latest_pm_followup_note": latest_followup_issue.get("pm_followup_note") if latest_followup_issue else None,
+                "latest_pm_followup_sent_at": latest_followup_issue.get("pm_followup_sent_at") if latest_followup_issue else None,
                 "owner_id": owner_id,
                 "owner_name": owner_name,
                 "task_id": task.get("id"),

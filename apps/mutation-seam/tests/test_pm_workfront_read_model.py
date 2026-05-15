@@ -1,5 +1,6 @@
 import base64
 import json
+from uuid import uuid4
 
 from openpyxl import Workbook
 
@@ -64,8 +65,52 @@ def test_pm_workfront_read_model_surfaces_blocked_unassigned_owner_and_next_acti
     assert blocked["apparatus_name"] in blocked["ai_advisory"]["brief"]
     assert blocked["primary_blocking_issue_id"] in {"issue-002", "issue-003"}
     assert blocked["blocking_issues"][0]["id"] == blocked["primary_blocking_issue_id"]
+    assert blocked["returnable_issue_id"] in {None, "issue-003"}
 
     assigned = next(row for row in workfront["rows"] if row["apparatus_id"] == "app-002")
     assert assigned["designation"] == "Pole Disconnect"
     assert assigned["owner_name"] == "Alex Rivera"
     assert assigned["next_action"] == "Start field work"
+
+
+def test_pm_workfront_surfaces_returned_followup_evidence(client):
+    issue = store.issues["issue-002"].copy()
+    issue["status"] = "escalated"
+    store.issues["issue-002"] = issue
+
+    before = client.get("/api/v1/reads/pm-workfront", headers=_make_token()).json()
+    blocked = next(row for row in before["rows"] if row["returnable_issue_id"] == "issue-002")
+    note = blocked["ai_advisory"]["brief"]
+
+    response = client.post(
+        "/api/v1/mutations/issues",
+        json={
+            "idempotency_key": str(uuid4()),
+            "mutation_class": "C",
+            "action_type": "return_to_lead",
+            "entity_id": "issue-002",
+            "payload": {
+                "status": "in_review",
+                "pm_followup_note": note,
+                "pm_followup_sent_at": "2026-05-15T15:30:00Z",
+                "pm_followup_workfront_row_id": blocked["id"],
+            },
+            "reason": "PM workfront lead follow-up",
+            "source": "online",
+            "client_timestamp": "2026-05-15T15:30:00Z",
+        },
+        headers=_make_token(),
+    )
+
+    assert response.status_code == 200
+    result = response.json()
+    assert result["status"] == "accepted"
+    assert result["new_state"]["status"] == "in_review"
+    assert result["new_state"]["pm_followup_note"] == note
+
+    after = client.get("/api/v1/reads/pm-workfront", headers=_make_token()).json()
+    returned = next(row for row in after["rows"] if row["primary_blocking_issue_id"] == "issue-002")
+    assert returned["returnable_issue_id"] is None
+    assert returned["latest_pm_followup_note"] == note
+    assert returned["latest_pm_followup_sent_at"] == "2026-05-15T15:30:00Z"
+    assert returned["blocking_issues"][0]["pm_followup_note"] == note
