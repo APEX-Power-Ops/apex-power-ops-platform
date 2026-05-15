@@ -19,7 +19,7 @@ The repo-owned target public host for this service is:
 https://mutation-seam.apexpowerops.com
 ```
 
-The repository now includes a Render blueprint at `render.yaml` for this host shape.
+The repository now includes the app-local Render blueprint at `apps/mutation-seam/render.yaml` for this host shape.
 
 Default Render service shape:
 
@@ -90,8 +90,9 @@ Current public-host status on 2026-05-15:
 2. `https://mutation-seam.apexpowerops.com/openapi.json` does not advertise `/api/v1/reads/pm-workfront`, even though the current repo code mounts that route.
 3. `https://mutation-seam.apexpowerops.com/api/v1/reads/pm-workfront` returns framework `404`.
 4. deployed schedule reads return `500` for `projects`, `drivers`, `tracer`, and `variance`.
-5. the smallest remediation path is deployment-first: inspect the Render service `apex-platform-mutation-seam`, confirm it deploys `clean-main` at `3e8bba2d063a7a7227eeae22967d1430349f0546` or later from `apps/mutation-seam`, redeploy the current head, then use Render logs to distinguish any remaining schedule DSN/schema/permission failure.
+5. the smallest remediation path is deployment-first: inspect the Render service `apex-platform-mutation-seam`, confirm it deploys `clean-main` at `18b16fe0e2fd4a7dbaa57652c177d4327b51b1b5` or later from `apps/mutation-seam`, redeploy the current head, then use Render logs to distinguish any remaining schedule DSN/schema/permission failure.
 6. without Render credentials, this workspace can run read-only public probes and GitHub smoke workflows, but it cannot inspect Render deploy commit, trigger a Render redeploy, view Render logs, or confirm hosted environment variables.
+7. PM Lane 012 is authored as the bounded Render-authenticated redeploy/log-inspection and live-data proof gate; it does not authorize product code changes, SQL writes, schema migrations, auth or ingress widening, or live PM business-state mutation.
 
 ## Operations Web Ingress Contract
 

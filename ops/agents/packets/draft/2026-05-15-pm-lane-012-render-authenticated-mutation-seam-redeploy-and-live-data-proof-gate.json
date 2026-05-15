@@ -1,0 +1,112 @@
+{
+  "packet_id": "2026-05-15-pm-lane-012",
+  "title": "PM Render-Authenticated Mutation-Seam Redeploy And Live-Data Proof Gate",
+  "objective": "Use a Render-authenticated surface to inspect and, if needed, repair only the existing mutation-seam deployment metadata for service apex-platform-mutation-seam, redeploy current clean-main from apps/mutation-seam, and rerun read-only hosted PM live-data proof without adding product code, schema, auth, ingress, or mutation scope.",
+  "domain": "pm-domain",
+  "active_role": "Hosted PM Runtime Coordinator",
+  "repo_paths": [
+    "C:/APEX Platform/apex-power-ops-platform",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/render.yaml",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/scripts/smoke_deployed_mutation_seam.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/scripts/smoke-pm-live-data.mjs",
+    "C:/APEX Platform/apex-power-ops-platform/.github/workflows/deployed-mutation-seam-smoke.yml"
+  ],
+  "dependencies": [
+    "2026-05-15-pm-lane-011",
+    "2026-05-15-pm-lane-010",
+    "2026-05-15-pm-lane-009",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-011-operations-web-promotion-and-hosted-seam-drift-isolation-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/DEPLOYMENT_VALIDATION.md",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/DEPLOYMENT_VALIDATION.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/authority/APEX-OPS-DELEGATED-AUTHORITY-AND-AI-ORCHESTRATION-PROTOCOL-2026-05-15.md"
+  ],
+  "current_evidence": [
+    "Local clean-main head is 18b16fe0e2fd4a7dbaa57652c177d4327b51b1b5 after PM Lane 011 closeout.",
+    "operations.apexpowerops.com serves Vercel production deployment dpl_CP53VXXgr98ArXJ34QSvUyh4E6N3 and hosted route smoke passed failed=0 passed=8.",
+    "mutation-seam.apexpowerops.com and apex-platform-mutation-seam.onrender.com both return /health 200.",
+    "Both hosted seam hosts still omit /api/v1/reads/pm-workfront from OpenAPI, return pm-workfront 404, and return schedule projects/drivers 500.",
+    "The repo-owned deployed seam smoke against https://mutation-seam.apexpowerops.com ends RESULT FAIL on schedule route 500s.",
+    "Local environment does not expose RENDER_API_KEY, RENDER_TOKEN, RENDER_SERVICE_ID, RENDER_OWNER_ID, or RENDER_WORKSPACE_ID."
+  ],
+  "orchestration_inputs": [
+    "Render deployability scout 019e2c7b-6d25-7023-94d8-dfd06a2ea9ac confirmed root render.yaml is absent, app-local apps/mutation-seam/render.yaml is authoritative, and no repo-owned Render CLI/API redeploy command exists.",
+    "PM product backlog scout 019e2c7b-9398-7782-b73a-c65492d612c5 confirmed hosted mutation-seam parity is the blocker before further hosted PM product proof, and queued product follow-ons behind this gate."
+  ],
+  "required_executor_capability": [
+    "Authenticated Render dashboard, API, or equivalent control surface with access to existing service apex-platform-mutation-seam.",
+    "Ability to trigger a redeploy of the existing service from GitHub clean-main.",
+    "Ability to inspect deployment commit, branch, working directory, build command, start command, health path, non-secret env key presence, and runtime logs without disclosing secret values."
+  ],
+  "allowed_runtime_actions": [
+    "Inspect existing Render service apex-platform-mutation-seam.",
+    "Confirm service repo is jasonlswenson-sys/apex-power-ops, branch is clean-main, working directory is apps/mutation-seam, and deployed commit is 18b16fe0e2fd4a7dbaa57652c177d4327b51b1b5 or later.",
+    "Repair only existing deployment metadata needed to match apps/mutation-seam/render.yaml: working directory apps/mutation-seam, build command pip install -r requirements.txt, start command uvicorn app.main:app --host 0.0.0.0 --port $PORT, health path /health, and autoDeploy true.",
+    "Confirm non-secret hosted env posture: SEAM_STORE_BACKEND=postgres and key presence for SEAM_DATABASE_URL, JWT_SECRET, CORS_ORIGINS, APP_ENV, LOG_LEVEL, and PYTHON_VERSION, without printing secret values.",
+    "Trigger a redeploy of the existing service from current clean-main.",
+    "Inspect Render logs only far enough to classify remaining schedule 500s as DSN, schema, permission, runtime import, or other bounded deployment failure.",
+    "Run read-only public probes, deployed seam smoke, and PM live-data smoke after redeploy."
+  ],
+  "not_allowed": [
+    "No product code changes.",
+    "No new endpoint.",
+    "No new package script.",
+    "No SQL write or schema migration.",
+    "No live database seed, fixture replay, or business-state mutation.",
+    "No auth widening.",
+    "No ingress widening.",
+    "No new Render service admission.",
+    "No Vercel production promotion unless a later packet explicitly authorizes it.",
+    "No Operations Visibility reopening.",
+    "No autonomous AI PM assignment, schedule, issue, or apparatus state mutation.",
+    "Do not print or commit secret values."
+  ],
+  "stop_conditions": [
+    "Stop if Render auth is unavailable.",
+    "Stop if repair would require creating a new service, changing DNS, changing auth, widening CORS beyond the existing operations and mutation-seam hosts, or changing public ingress.",
+    "Stop if schedule 500s require SQL writes, schema migration, secret rotation, or live fixture replay.",
+    "Stop if the service is already on current clean-main and logs indicate a product-code bug; author a follow-up code packet instead.",
+    "Stop if hosted proof would require a live mutation test."
+  ],
+  "constrained_outputs": [
+    "Render service inspection summary with commit, branch, working directory, and deployment metadata verdict.",
+    "Redeploy evidence or truthful Render-auth blockage.",
+    "Public OpenAPI route verdict for /api/v1/reads/pm-workfront.",
+    "Deployed seam smoke result against https://mutation-seam.apexpowerops.com.",
+    "Read-only PM live-data smoke result against https://operations.apexpowerops.com and https://mutation-seam.apexpowerops.com.",
+    "If still blocked, a log-backed blocker classification without secret disclosure.",
+    "No code, SQL, schema, auth, ingress, service-admission, Vercel promotion, live mutation, Operations Visibility, or autonomous AI business-state widening."
+  ],
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/PROJECT_STATUS.md",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/DEPLOYMENT.md",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/DEPLOYMENT_VALIDATION.md",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/DEPLOYMENT_VALIDATION.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-15-pm-lane-012-render-authenticated-mutation-seam-redeploy-and-live-data-proof-gate.json",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-012-render-authenticated-mutation-seam-redeploy-and-live-data-proof-gate-handoff.md"
+  ],
+  "validation_steps": [
+    "git rev-parse HEAD",
+    "git ls-remote origin clean-main",
+    "Render service inspection for apex-platform-mutation-seam: repo, branch, working directory, deploy commit, build command, start command, health path, autoDeploy, and env key posture",
+    "Trigger existing-service redeploy from clean-main if the service is stale or metadata repair is needed",
+    "Probe https://mutation-seam.apexpowerops.com/health",
+    "Probe https://mutation-seam.apexpowerops.com/openapi.json and confirm /api/v1/reads/pm-workfront is present",
+    "C:/APEX Platform/apex-power-ops-platform/.venv/Scripts/python.exe C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/scripts/smoke_deployed_mutation_seam.py --base-url https://mutation-seam.apexpowerops.com",
+    "corepack pnpm --dir C:/APEX Platform/apex-power-ops-platform --filter @apex/operations-web exec node scripts/smoke-pm-live-data.mjs --operations-web-base-url https://operations.apexpowerops.com --mutation-seam-base-url https://mutation-seam.apexpowerops.com --timeout-ms 20000",
+    "With SEAM_STORE_BACKEND=memory, C:/APEX Platform/apex-power-ops-platform/.venv/Scripts/python.exe -m pytest C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests/test_pm_workfront_read_model.py C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests/test_schedule_bridge.py -q"
+  ],
+  "handoff_target": "Render-authenticated Codex or Claude Code executor",
+  "status": "ready",
+  "execution_result": "PENDING_RENDER_AUTHENTICATED_EXECUTION",
+  "delegation_status": "ready_for_external_executor",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-012-render-authenticated-mutation-seam-redeploy-and-live-data-proof-gate-handoff.md"
+  ],
+  "sql_permission": false,
+  "sql_permission_note": "Packet 2026-05-15-pm-lane-012 authorizes Render deployment inspection/redeploy and read-only hosted proof only. It does not authorize SQL writes, schema migration, fixture replay, live data mutation, secret rotation, auth widening, ingress widening, or new service admission.",
+  "ai_mutation_authority": "not_admitted",
+  "created_at": "2026-05-15",
+  "updated_at": "2026-05-15"
+}

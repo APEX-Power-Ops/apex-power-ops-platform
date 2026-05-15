@@ -18,7 +18,7 @@ Visit `http://localhost:8000/health` to verify.
 
 Public-host note:
 
-1. the repository now carries a bounded Render blueprint at `render.yaml`
+1. the repository now carries a bounded app-local Render blueprint at `apps/mutation-seam/render.yaml`
 2. the intended public host contract is `https://mutation-seam.apexpowerops.com`
 3. `apps/operations-web` now proxies PM-facing same-origin `/api/v1/{reads,schedule,mutations}` traffic to that hosted seam through `MUTATION_SEAM_BASE_URL`
 
