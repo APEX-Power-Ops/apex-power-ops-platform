@@ -1,0 +1,98 @@
+{
+  "packet_id": "2026-05-15-pm-lane-030",
+  "title": "PM Project Data-Entry Tracker Lineage Preview",
+  "objective": "Bring the post-estimator project data-entry and tracker workbook import layer into the PM lane as read-only lineage evidence, so the old Task_Entry to All_Tasks workflow can inform a governed future import-candidate review without writing workbook or Supabase state.",
+  "domain": "pm-domain",
+  "active_role": "Delegated Technical Repo Authority / PM Runtime Product Coordinator",
+  "repo_paths": [
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/project_tracker_sources.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/scripts/preview_pm_planning_sources.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests/test_project_tracker_sources.py",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "dependencies": [
+    "2026-05-15-pm-lane-028",
+    "2026-05-15-pm-lane-029",
+    "2026-05-15-pm-lane-012",
+    "C:/Users/jjswe/Desktop/Project Miner PM Planning/RESA Power - Project Data Entry MASTER.xlsm",
+    "C:/Users/jjswe/Desktop/Project Miner PM Planning/Garney- Central Mesa Reuse Tracker #677562.xlsm",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/scripts/preview_pm_planning_sources.py"
+  ],
+  "orchestration_inputs": [
+    "The user identified the old post-estimator import process and two workbook artifacts used after estimator JSON export.",
+    "Inspection showed both workbooks share a template structure: Project_Form, Task_Entry, All_Tasks, All_Tasks_Billing, PowerBI_Data, Apparatus_List_w_Hours, and supporting templates.",
+    "The historical workflow appears to use Task_Entry as the PM/Ops shaping surface and All_Tasks as the expanded task/apparatus plan.",
+    "The RESA master workbook is a reusable shaping template with formula-error residue in All_Tasks, while the Garney workbook is a populated reference tracker with real statuses.",
+    "PM Lane 030 keeps this as read-only preview evidence and does not admit any workbook writeback or Supabase import."
+  ],
+  "constrained_outputs": [
+    "Add project_tracker_sources.py to parse Project_Form metadata and workscope names.",
+    "Parse Task_Entry rows into scope, NETA standard, task ID, task, apparatus, designation, drawing, and apparatus hours.",
+    "Parse All_Tasks rows into expanded task/apparatus plan context including due date, notes, assessment, datasheet, completion, delays, hours, status, availability, priority, and apparatus category.",
+    "Report scope counts, status counts, availability counts, apparatus-category counts, formula-error cell counts, and formula-error row counts.",
+    "Filter All_Tasks active-looking rows by task identity fields so template formula residue is not counted as project work.",
+    "Extend the PM planning preview with planning-workbook summaries and explicit data-entry/reference-tracker workbook overrides.",
+    "Document the old project data-entry/tracker workflow in the PM intake runbook as a model for future governed import-candidate review."
+  ],
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/project_tracker_sources.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/scripts/preview_pm_planning_sources.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests/test_project_tracker_sources.py",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/PROJECT_STATUS.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-15-pm-lane-030-project-data-entry-tracker-lineage-preview.json",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-030-project-data-entry-tracker-lineage-preview-handoff.md"
+  ],
+  "validation_steps": [
+    "& C:/APEX Platform/apex-power-ops-platform/.venv/Scripts/python.exe -m pytest C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests/test_project_seed_sources.py C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests/test_project_tracker_sources.py C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests/test_workbook_seed_reads.py C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests/test_pm_lane_seed.py C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests/test_pm_workfront_read_model.py -q",
+    "& C:/APEX Platform/apex-power-ops-platform/.venv/Scripts/python.exe -m py_compile C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/project_tracker_sources.py C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/scripts/preview_pm_planning_sources.py",
+    "& C:/APEX Platform/apex-power-ops-platform/.venv/Scripts/python.exe C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/scripts/preview_pm_planning_sources.py --planning-root C:/Users/jjswe/Desktop/Project Miner PM Planning --line-limit 2",
+    "& C:/APEX Platform/apex-power-ops-platform/.venv/Scripts/python.exe C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/scripts/preview_pm_planning_sources.py --planning-root C:/Users/jjswe/Desktop/Project Miner PM Planning --format json --line-limit 0",
+    "git diff --check"
+  ],
+  "validation_results": [
+    "Focused mutation-seam seed, tracker, and PM workfront tests passed 14/14 with existing Pydantic deprecation warnings.",
+    "py_compile passed for project_tracker_sources.py and preview_pm_planning_sources.py.",
+    "Default planning preview passed and included tracker summaries.",
+    "JSON planning-workbook preview passed.",
+    "The RESA master workbook resolved 14 Task_Entry rows, 234 active-looking All_Tasks rows, and 234 formula-error rows.",
+    "The Garney reference tracker resolved 6 Task_Entry rows, 143 All_Tasks rows, status counts COMPLETED=99 and NOT STARTED=34, and zero formula-error rows.",
+    "git diff --check passed."
+  ],
+  "not_allowed": [
+    "No SQL or schema migration.",
+    "No live database write.",
+    "No seed replay into Supabase.",
+    "No production import job.",
+    "No workbook writeback.",
+    "No workbook macro execution.",
+    "No Render deployment action.",
+    "No Vercel promotion.",
+    "No service admission.",
+    "No auth or ingress widening.",
+    "No package dependency addition.",
+    "No Excel MCP production runtime dependency.",
+    "No Dataverse import path reopening.",
+    "No assignment mutation.",
+    "No schedule mutation.",
+    "No status mutation.",
+    "No Operations Visibility reopening.",
+    "No AI helper mutation.",
+    "No AI service admission widening.",
+    "No autonomous AI business-state mutation."
+  ],
+  "handoff_target": "Delegated Technical Repo Authority / PM Runtime Product Coordinator",
+  "status": "complete",
+  "execution_result": "PASS_LOCAL_READ_ONLY_TRACKER_LINEAGE_PREVIEW_HOSTED_PM_PROOF_DEFERRED_TO_PM_LANE_012",
+  "delegation_status": "coordinator-executed-from-user-surfaced-import-workbook-lineage",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-030-project-data-entry-tracker-lineage-preview-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md"
+  ],
+  "sql_permission": false,
+  "sql_permission_note": "Packet 2026-05-15-pm-lane-030 does not authorize SQL writes, schema migration, live data mutation, seed replay into Supabase, production import, workbook writeback, macro execution, Render deployment, Vercel promotion, auth widening, ingress widening, package dependency addition, Excel MCP runtime dependency, Dataverse import reopening, schedule mutation, assignment mutation, status mutation, AI helper mutation, AI service admission widening, or autonomous AI business-state mutation.",
+  "ai_mutation_authority": "not_admitted",
+  "created_at": "2026-05-15",
+  "updated_at": "2026-05-15"
+}

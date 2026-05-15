@@ -27,6 +27,8 @@ Current files observed in that root:
 5. `Cupertino - Miner Estimator PHX Bldg A & B MV Rev9.xlsm`
 6. `15_ELECTRICAL_COMBINED.pdf`
 7. `Building B IFC.pdf`
+8. `RESA Power - Project Data Entry MASTER.xlsm`
+9. `Garney- Central Mesa Reuse Tracker #677562.xlsm`
 
 The current seeded PM lane starts from the smaller Miner Temp Power estimator and SLD package. The larger Building A/B estimator and IFC drawing sets are treated as next-project source evidence until a dedicated packet promotes them into the runtime seed.
 
@@ -70,6 +72,16 @@ To preview a specific estimator/PDF pair from the same planning folder:
   --sld-pdf "C:/Users/jjswe/Desktop/Project Miner PM Planning/Building B IFC.pdf"
 ```
 
+To include explicit project data-entry or reference tracker workbooks:
+
+```powershell
+& "C:/APEX Platform/apex-power-ops-platform/.venv/Scripts/python.exe" `
+  "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/scripts/preview_pm_planning_sources.py" `
+  --planning-root "C:/Users/jjswe/Desktop/Project Miner PM Planning" `
+  --data-entry-workbook "C:/Users/jjswe/Desktop/Project Miner PM Planning/RESA Power - Project Data Entry MASTER.xlsm" `
+  --reference-tracker-workbook "C:/Users/jjswe/Desktop/Project Miner PM Planning/Garney- Central Mesa Reuse Tracker #677562.xlsm"
+```
+
 The command is read-only. It does not write to Supabase, mutate schedules, assign work, change statuses, or run Excel macros.
 
 ## Environment Overrides
@@ -87,6 +99,8 @@ $env:APEX_PROJECT_ESTIMATOR_WORKBOOK = "C:/path/to/Estimator.xlsm"
 $env:APEX_PROJECT_SLD_PDF = "C:/path/to/SLD.pdf"
 $env:APEX_FIELD_SEED_EQUIPMENT_WORKBOOK = "C:/path/to/EQUIPMENT INVENTORY - 2026.xlsx"
 $env:APEX_FIELD_SEED_CAPABILITY_WORKBOOK = "C:/path/to/Phx Tech Testing Capability Matrix 032726.xlsx"
+$env:APEX_PROJECT_DATA_ENTRY_WORKBOOK = "C:/path/to/RESA Power - Project Data Entry MASTER.xlsm"
+$env:APEX_REFERENCE_TRACKER_WORKBOOK = "C:/path/to/Garney- Central Mesa Reuse Tracker #677562.xlsm"
 ```
 
 ## Excel MCP Tooling Posture
@@ -134,24 +148,53 @@ Current Project Miner workbooks no longer include `Dataverse_Import`, but they d
 
 The VBA files remain static reference evidence only. Do not run their macros as part of PM lane intake.
 
+## Project Data-Entry Workbook Lineage
+
+After the Dataverse JSON export, the old process used workbook tooling to turn streamlined estimator apparatus rows into a task-by-task and apparatus-by-apparatus project plan. The two reference files in the current planning folder are:
+
+1. `C:/Users/jjswe/Desktop/Project Miner PM Planning/RESA Power - Project Data Entry MASTER.xlsm`
+2. `C:/Users/jjswe/Desktop/Project Miner PM Planning/Garney- Central Mesa Reuse Tracker #677562.xlsm`
+
+The master workbook is the blank or reusable shaping surface. The Garney tracker is a populated example of the downstream project plan.
+
+Important sheet roles:
+
+1. `Project_Form` stores client, project, job number, start date, site, contact, project lead, and workscope names.
+2. `Task_Entry` is the transitional import/input table with `Scope`, `NETA_Standard`, `Task_ID`, `Task`, `Apparatus`, `Designation`, `Drawing`, and `Apparatus_Hourrs`.
+3. `All_Tasks` is the expanded task/apparatus plan with due date, notes, assessment, datasheet, completion, delays, hours, status, availability, priority, and apparatus category.
+4. `All_Tasks_Billing` and `PowerBI_Data` are downstream reporting/export surfaces.
+
+The PM lane preview now reads those workbooks as historical workflow evidence and reports project form metadata, workscope names, `Task_Entry` counts, `All_Tasks` counts, status counts, availability counts, apparatus-category counts, and formula-error counts. It does not write back to the workbooks.
+
+The new PM lane should recreate this workflow as a governed review/import candidate:
+
+1. estimator source rows become normalized apparatus candidates,
+2. PM/Ops groups or accepts them into task rows,
+3. the system preserves source workbook, sheet, and row traceability,
+4. a human approves the import candidate,
+5. only then may a later admitted packet write project, workpackage, task, and apparatus rows into Supabase.
+
 ## Workflow Levels
 
 Level 0 - Source Intake:
-Validate the planning folder exists and the preview command resolves the expected workbook, PDF, equipment inventory, and capability matrix.
+Validate the planning folder exists and the preview command resolves the expected estimator, PDF, equipment inventory, capability matrix, project data-entry workbook, and reference tracker.
 
 Level 1 - Scope Extraction:
 Read estimator line items into project, workpackage, task, and apparatus candidates. Preserve drawing references, designations, source sheet names, scope sheet names, and source row references where available.
 
-Level 2 - Resource Context:
+Level 2 - Task Plan Shaping:
+Transform estimator apparatus candidates into task-by-task and apparatus-by-apparatus import candidates, mirroring the old `Task_Entry` to `All_Tasks` workflow without writing production state.
+
+Level 3 - Resource Context:
 Read equipment inventory and technician capability rows so PM can understand whether the project can be staffed with available people and equipment.
 
-Level 3 - PM Workfront:
+Level 4 - PM Workfront:
 Surface readiness, blockers, unassigned rows, PM review rows, submitted snapshots, review signals, and drillthrough links in the Vercel UI.
 
-Level 4 - Lead/Field Execution:
+Level 5 - Lead/Field Execution:
 Lead assigns work and field updates apparatus/checklist/issue progress through governed mutation-seam endpoints only after the relevant write path is admitted.
 
-Level 5 - PM Review And Closeout:
+Level 6 - PM Review And Closeout:
 PM reviews escalations, submitted snapshots, task/workpackage review, disposition history, schedule drillthroughs, and variance context before approving or returning work.
 
 ## Guardrails
@@ -159,5 +202,6 @@ PM reviews escalations, submitted snapshots, task/workpackage review, dispositio
 1. Do not write directly from Excel to Supabase.
 2. Do not treat spreadsheet rows as production state until an admitted packet opens a live-data import or write path.
 3. Do not run workbook macros during read-only intake preview.
-4. Do not let Vercel become a second backend authority.
-5. Do not let AI auto-assign apparatus, change statuses, mutate schedules, or write PM business state until a later packet explicitly admits that authority.
+4. Do not write back to estimator, data-entry, or tracker workbooks during read-only preview.
+5. Do not let Vercel become a second backend authority.
+6. Do not let AI auto-assign apparatus, change statuses, mutate schedules, or write PM business state until a later packet explicitly admits that authority.
