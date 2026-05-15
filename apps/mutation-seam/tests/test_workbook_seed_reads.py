@@ -3,7 +3,12 @@ import json
 
 from openpyxl import Workbook
 
-from app.seed_workbooks import clear_seed_cache
+from app.seed_workbooks import (
+    DEFAULT_CAPABILITY_WORKBOOK_NAME,
+    DEFAULT_EQUIPMENT_WORKBOOK_NAME,
+    clear_seed_cache,
+    load_seed_data,
+)
 
 
 def _make_token(actor_id: str = "tech-001", actor_role: str = "field_tech") -> dict[str, str]:
@@ -91,3 +96,24 @@ def test_reads_inventory_and_capabilities_use_workbook_seed(client, monkeypatch,
     assert capabilities["score_scale"][0] == {"score": 0, "label": "No Experience"}
     assert capabilities["capabilities"][0]["test"] == "Infrared Scan (Energized)"
     assert capabilities["capabilities"][0]["scores"]["tech-001"] == 3
+
+
+def test_workbook_seed_uses_project_miner_planning_root(monkeypatch, tmp_path):
+    planning_root = tmp_path / "Project Miner PM Planning"
+    planning_root.mkdir()
+    equipment_path = planning_root / DEFAULT_EQUIPMENT_WORKBOOK_NAME
+    capability_path = planning_root / DEFAULT_CAPABILITY_WORKBOOK_NAME
+    _write_equipment_workbook(equipment_path)
+    _write_capability_workbook(capability_path)
+
+    monkeypatch.delenv("APEX_FIELD_SEED_EQUIPMENT_WORKBOOK", raising=False)
+    monkeypatch.delenv("APEX_FIELD_SEED_CAPABILITY_WORKBOOK", raising=False)
+    monkeypatch.setenv("APEX_PROJECT_MINER_PLANNING_ROOT", str(planning_root))
+    clear_seed_cache()
+
+    seed = load_seed_data()
+
+    assert seed["metadata"]["equipment_workbook_path"] == str(equipment_path)
+    assert seed["metadata"]["capability_workbook_path"] == str(capability_path)
+    assert seed["crew"][0]["name"] == "Ace Randolph"
+    assert seed["equipment_inventory"][0]["assigned_to_id"] == "tech-001"

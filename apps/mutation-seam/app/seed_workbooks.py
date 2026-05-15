@@ -8,8 +8,11 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 
-DEFAULT_EQUIPMENT_WORKBOOK_PATH = Path(r"C:\Users\jjswe\Desktop\EQUIPMENT INVENTORY - 2026.xlsx")
-DEFAULT_CAPABILITY_WORKBOOK_PATH = Path(r"C:\Users\jjswe\Desktop\Phx Tech Testing Capability Matrix 032726.xlsx")
+DEFAULT_PROJECT_MINER_PLANNING_ROOT = Path.home() / "Desktop" / "Project Miner PM Planning"
+DEFAULT_EQUIPMENT_WORKBOOK_NAME = "EQUIPMENT INVENTORY - 2026.xlsx"
+DEFAULT_CAPABILITY_WORKBOOK_NAME = "Phx Tech Testing Capability Matrix 032726.xlsx"
+LEGACY_EQUIPMENT_WORKBOOK_PATH = Path.home() / "Desktop" / DEFAULT_EQUIPMENT_WORKBOOK_NAME
+LEGACY_CAPABILITY_WORKBOOK_PATH = Path.home() / "Desktop" / DEFAULT_CAPABILITY_WORKBOOK_NAME
 
 FALLBACK_CREW = [
     {"id": "tech-001", "name": "Alex Rivera", "role": "field_tech"},
@@ -34,10 +37,32 @@ def _clean_cell(value: Any) -> Any:
     return value
 
 
+def _first_existing_path(*paths: Path) -> Path:
+    for path in paths:
+        if path.exists():
+            return path
+    return paths[0]
+
+
+def _project_miner_planning_root() -> Path:
+    return Path(
+        os.getenv("APEX_PROJECT_MINER_PLANNING_ROOT", str(DEFAULT_PROJECT_MINER_PLANNING_ROOT)).strip()
+    )
+
+
 def _workbook_paths() -> tuple[str, str]:
-    equipment_path = os.getenv("APEX_FIELD_SEED_EQUIPMENT_WORKBOOK", str(DEFAULT_EQUIPMENT_WORKBOOK_PATH)).strip()
-    capability_path = os.getenv("APEX_FIELD_SEED_CAPABILITY_WORKBOOK", str(DEFAULT_CAPABILITY_WORKBOOK_PATH)).strip()
-    return equipment_path, capability_path
+    planning_root = _project_miner_planning_root()
+    equipment_path = os.getenv("APEX_FIELD_SEED_EQUIPMENT_WORKBOOK")
+    capability_path = os.getenv("APEX_FIELD_SEED_CAPABILITY_WORKBOOK")
+    resolved_equipment_path = Path(equipment_path.strip()) if equipment_path else _first_existing_path(
+        planning_root / DEFAULT_EQUIPMENT_WORKBOOK_NAME,
+        LEGACY_EQUIPMENT_WORKBOOK_PATH,
+    )
+    resolved_capability_path = Path(capability_path.strip()) if capability_path else _first_existing_path(
+        planning_root / DEFAULT_CAPABILITY_WORKBOOK_NAME,
+        LEGACY_CAPABILITY_WORKBOOK_PATH,
+    )
+    return str(resolved_equipment_path), str(resolved_capability_path)
 
 
 def clear_seed_cache() -> None:

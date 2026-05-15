@@ -9,8 +9,11 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 
-DEFAULT_ESTIMATOR_WORKBOOK_PATH = Path(r"C:\Users\jjswe\Desktop\Estimator R3 - Project Miner Temp Power Testing.xlsm")
-DEFAULT_SLD_PDF_PATH = Path(r"C:\Users\jjswe\Desktop\Miner Temp SLD-AP-BCARRASCO.pdf")
+DEFAULT_PROJECT_MINER_PLANNING_ROOT = Path.home() / "Desktop" / "Project Miner PM Planning"
+DEFAULT_ESTIMATOR_WORKBOOK_NAME = "Estimator R3 - Project Miner Temp Power Testing.xlsm"
+DEFAULT_SLD_PDF_NAME = "Miner Temp SLD-AP-BCARRASCO.pdf"
+LEGACY_ESTIMATOR_WORKBOOK_PATH = Path.home() / "Desktop" / DEFAULT_ESTIMATOR_WORKBOOK_NAME
+LEGACY_SLD_PDF_PATH = Path.home() / "Desktop" / DEFAULT_SLD_PDF_NAME
 
 TOPOLOGY_PATTERNS = [
     re.compile(r"PWR\s+SKID\s*-\s*[A-Z0-9]+", re.IGNORECASE),
@@ -35,10 +38,32 @@ def _normalize_label(label: str) -> str:
     return re.sub(r"\s+", " ", label.strip()).upper()
 
 
+def _first_existing_path(*paths: Path) -> Path:
+    for path in paths:
+        if path.exists():
+            return path
+    return paths[0]
+
+
+def _project_miner_planning_root() -> Path:
+    return Path(
+        os.getenv("APEX_PROJECT_MINER_PLANNING_ROOT", str(DEFAULT_PROJECT_MINER_PLANNING_ROOT)).strip()
+    )
+
+
 def _default_paths() -> tuple[str, str]:
-    workbook_path = os.getenv("APEX_PROJECT_ESTIMATOR_WORKBOOK", str(DEFAULT_ESTIMATOR_WORKBOOK_PATH)).strip()
-    sld_path = os.getenv("APEX_PROJECT_SLD_PDF", str(DEFAULT_SLD_PDF_PATH)).strip()
-    return workbook_path, sld_path
+    planning_root = _project_miner_planning_root()
+    workbook_path = os.getenv("APEX_PROJECT_ESTIMATOR_WORKBOOK")
+    sld_path = os.getenv("APEX_PROJECT_SLD_PDF")
+    resolved_workbook_path = Path(workbook_path.strip()) if workbook_path else _first_existing_path(
+        planning_root / DEFAULT_ESTIMATOR_WORKBOOK_NAME,
+        LEGACY_ESTIMATOR_WORKBOOK_PATH,
+    )
+    resolved_sld_path = Path(sld_path.strip()) if sld_path else _first_existing_path(
+        planning_root / DEFAULT_SLD_PDF_NAME,
+        LEGACY_SLD_PDF_PATH,
+    )
+    return str(resolved_workbook_path), str(resolved_sld_path)
 
 
 def clear_project_seed_cache() -> None:

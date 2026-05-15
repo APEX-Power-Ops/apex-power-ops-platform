@@ -1,0 +1,100 @@
+{
+  "packet_id": "2026-05-15-pm-lane-028",
+  "title": "PM Project Miner Planning-Folder Intake Tooling",
+  "objective": "Make the Project Miner planning folder a first-class read-only PM lane intake source, add a deterministic local preview command for estimator/PDF/workbook evidence, and document the operator tooling posture for Excel MCP and spreadsheet tooling without adding a production runtime dependency.",
+  "domain": "pm-domain",
+  "active_role": "Delegated Technical Repo Authority / PM Runtime Product Coordinator",
+  "repo_paths": [
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/project_seed_sources.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/seed_workbooks.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/scripts/preview_pm_planning_sources.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests/test_project_seed_sources.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests/test_workbook_seed_reads.py",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "dependencies": [
+    "2026-05-15-pm-lane-001",
+    "2026-05-15-pm-lane-012",
+    "2026-05-15-pm-lane-027",
+    "C:/Users/jjswe/Desktop/Project Miner PM Planning",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/project_seed_sources.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/seed_workbooks.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests/test_pm_lane_seed.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests/test_pm_workfront_read_model.py"
+  ],
+  "orchestration_inputs": [
+    "The user identified C:/Users/jjswe/Desktop/Project Miner PM Planning as the live planning folder for upcoming New Mexico data-center projects.",
+    "The user asked whether sbroenne/mcp-server-excel or another available tool/skill/MCP server should be adopted if it improves PM lane and agent work.",
+    "Coordinator inspection found the repo already has deterministic openpyxl/pypdf seed readers and that the current default file paths pointed at legacy Desktop file locations rather than the new planning folder.",
+    "The selected solution admits a repo-owned read-only preview and operator runbook, while classifying Excel MCP as optional workstation tooling rather than a Render/Vercel/Supabase production dependency.",
+    "PM Lane 012 remains the hosted mutation-seam parity gate; PM Lane 028 does not claim hosted PM proof or live database import."
+  ],
+  "constrained_outputs": [
+    "A shared APEX_PROJECT_MINER_PLANNING_ROOT override now points seed readers at a planning folder before falling back to legacy Desktop defaults.",
+    "Project estimator and SLD source resolution now prefers C:/Users/jjswe/Desktop/Project Miner PM Planning when explicit APEX_PROJECT_ESTIMATOR_WORKBOOK or APEX_PROJECT_SLD_PDF values are absent.",
+    "Equipment inventory and capability matrix resolution now prefers C:/Users/jjswe/Desktop/Project Miner PM Planning when explicit APEX_FIELD_SEED_EQUIPMENT_WORKBOOK or APEX_FIELD_SEED_CAPABILITY_WORKBOOK values are absent.",
+    "A read-only preview command summarizes project metadata, line items, apparatus candidates, topology labels, crew, equipment inventory, standard tech list, and capability rows.",
+    "Focused tests prove planning-root default discovery for estimator/PDF and workbook seed sources.",
+    "The PM lane runbook explains day-to-day startup flow across Vercel UI, Render mutation seam/API, and Supabase DB.",
+    "The tooling posture documents sbroenne/mcp-server-excel as an optional Windows/Excel operator accelerator and existing spreadsheet tooling as artifact-oriented, not production runtime authority."
+  ],
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/project_seed_sources.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/seed_workbooks.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/scripts/preview_pm_planning_sources.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests/test_project_seed_sources.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests/test_workbook_seed_reads.py",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/PROJECT_STATUS.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-15-pm-lane-028-project-miner-planning-folder-intake-tooling.json",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-028-project-miner-planning-folder-intake-tooling-handoff.md"
+  ],
+  "validation_steps": [
+    "& C:/APEX Platform/apex-power-ops-platform/.venv/Scripts/python.exe C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/scripts/preview_pm_planning_sources.py --planning-root C:/Users/jjswe/Desktop/Project Miner PM Planning",
+    "& C:/APEX Platform/apex-power-ops-platform/.venv/Scripts/python.exe C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/scripts/preview_pm_planning_sources.py --planning-root C:/Users/jjswe/Desktop/Project Miner PM Planning --format json",
+    "& C:/APEX Platform/apex-power-ops-platform/.venv/Scripts/python.exe -m pytest C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests/test_project_seed_sources.py C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests/test_workbook_seed_reads.py C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests/test_pm_lane_seed.py C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests/test_pm_workfront_read_model.py -q",
+    "& C:/APEX Platform/apex-power-ops-platform/.venv/Scripts/python.exe -m py_compile C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/project_seed_sources.py C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/seed_workbooks.py C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/scripts/preview_pm_planning_sources.py",
+    "git diff --check"
+  ],
+  "validation_results": [
+    "Text preview passed against the actual planning folder and resolved Miner Temp Power, Santa Teresa NM, source sheet Updated, 15 line items, 186 apparatus candidates, 138 topology labels, 15 crew, 343 equipment inventory rows, 22 standard tech list rows, and 50 capability rows.",
+    "JSON preview passed against the actual planning folder with the same source counts and resolved all four active source files as found.",
+    "Focused mutation-seam seed and PM workfront tests passed 11/11 with existing Pydantic deprecation warnings.",
+    "py_compile passed for the modified seed readers and preview script.",
+    "git diff --check passed."
+  ],
+  "not_allowed": [
+    "No SQL or schema migration.",
+    "No live database write.",
+    "No seed replay into Supabase.",
+    "No production import job.",
+    "No Render deployment action.",
+    "No Vercel promotion.",
+    "No service admission.",
+    "No auth or ingress widening.",
+    "No package dependency addition.",
+    "No Excel MCP production runtime dependency.",
+    "No workbook macro execution.",
+    "No assignment mutation.",
+    "No schedule mutation.",
+    "No status mutation.",
+    "No Operations Visibility reopening.",
+    "No AI helper mutation.",
+    "No AI service admission widening.",
+    "No autonomous AI business-state mutation."
+  ],
+  "handoff_target": "Delegated Technical Repo Authority / PM Runtime Product Coordinator",
+  "status": "complete",
+  "execution_result": "PASS_LOCAL_READ_ONLY_INTAKE_TOOLING_HOSTED_PM_PROOF_DEFERRED_TO_PM_LANE_012",
+  "delegation_status": "coordinator-executed-with-existing-spreadsheet-skill-review",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-028-project-miner-planning-folder-intake-tooling-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md"
+  ],
+  "sql_permission": false,
+  "sql_permission_note": "Packet 2026-05-15-pm-lane-028 does not authorize SQL writes, schema migration, live data mutation, seed replay into Supabase, production import, Render deployment, Vercel promotion, auth widening, ingress widening, package dependency addition, Excel MCP runtime dependency, macro execution, schedule mutation, assignment mutation, status mutation, AI helper mutation, AI service admission widening, or autonomous AI business-state mutation.",
+  "ai_mutation_authority": "not_admitted",
+  "created_at": "2026-05-15",
+  "updated_at": "2026-05-15"
+}

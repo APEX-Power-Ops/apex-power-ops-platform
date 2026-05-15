@@ -3,7 +3,12 @@ import json
 
 from openpyxl import Workbook
 
-from app.project_seed_sources import clear_project_seed_cache, extract_topology_labels_from_text, load_project_seed_sources
+from app.project_seed_sources import (
+    DEFAULT_ESTIMATOR_WORKBOOK_NAME,
+    clear_project_seed_cache,
+    extract_topology_labels_from_text,
+    load_project_seed_sources,
+)
 
 
 def _make_token() -> dict[str, str]:
@@ -54,6 +59,25 @@ def test_load_project_seed_sources_reads_workbook_line_items(tmp_path):
     assert len(data["expanded_apparatus_candidates"]) == 5
     assert data["expanded_apparatus_candidates"][0]["display_name"] == "Pole Disconnect 01"
     assert data["expanded_apparatus_candidates"][3]["display_name"] == "SWBD 01"
+
+
+def test_load_project_seed_sources_uses_project_miner_planning_root(monkeypatch, tmp_path):
+    planning_root = tmp_path / "Project Miner PM Planning"
+    planning_root.mkdir()
+    workbook_path = planning_root / DEFAULT_ESTIMATOR_WORKBOOK_NAME
+    _write_estimator_workbook(workbook_path)
+
+    monkeypatch.delenv("APEX_PROJECT_ESTIMATOR_WORKBOOK", raising=False)
+    monkeypatch.delenv("APEX_PROJECT_SLD_PDF", raising=False)
+    monkeypatch.setenv("APEX_PROJECT_MINER_PLANNING_ROOT", str(planning_root))
+    clear_project_seed_cache()
+
+    data = load_project_seed_sources()
+
+    assert data["metadata"]["estimator_workbook_path"] == str(workbook_path)
+    assert data["metadata"]["estimator_workbook_found"] is True
+    assert data["project_name"] == "Miner Temp Power"
+    assert len(data["expanded_apparatus_candidates"]) == 5
 
 
 def test_project_apparatus_plan_route_returns_workbook_backed_rows(client, monkeypatch, tmp_path):
