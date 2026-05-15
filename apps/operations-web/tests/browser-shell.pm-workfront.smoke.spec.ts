@@ -92,6 +92,7 @@ test('pm workfront route renders read-only readiness queue from governed seam', 
             status: 'active',
             readiness: 'blocked',
             task_id: 'task-002',
+            workpackage_id: 'wp-001',
             blocker_count: 1,
             open_issue_count: 1,
             owner_name: 'Alex Rivera',
@@ -165,6 +166,7 @@ test('pm workfront route renders read-only readiness queue from governed seam', 
             status: 'awaiting_review',
             readiness: 'pm_review',
             task_id: 'task-001',
+            workpackage_id: 'wp-001',
             blocker_count: 0,
             open_issue_count: 0,
             owner_name: 'Alex Rivera',
@@ -389,6 +391,12 @@ test('pm workfront route renders read-only readiness queue from governed seam', 
     'href',
     /\/pm-review\/approval\?screen=task-review&detailId=task-001&returnTo=%2Fpm-review%2Fworkfront&returnLabel=PM\+workfront$/,
   )
+  const packageReviewLink = page.getByRole('link', { name: /Review package/i })
+  await expect(packageReviewLink).toHaveCount(1)
+  await expect(packageReviewLink).toHaveAttribute(
+    'href',
+    /\/pm-review\/approval\?screen=wp-review&detailId=wp-001&returnTo=%2Fpm-review%2Fworkfront&returnLabel=PM\+workfront$/,
+  )
   const cableScheduleDrillthrough = page.locator('[aria-label="Schedule drillthrough for Cable Assembly A"]')
   await expect(cableScheduleDrillthrough.getByRole('link', { name: 'Drivers' })).toHaveAttribute(
     'href',
@@ -466,6 +474,18 @@ test('pm workfront route renders read-only readiness queue from governed seam', 
     undefined,
     [/[?&]focusTaskId=/],
   )
+  expect(mutationRequests).toHaveLength(0)
+
+  await page.goto('/pm-review/workfront', { waitUntil: 'networkidle' })
+  await page.getByRole('link', { name: /Review package/i }).click()
+  await expect(page).toHaveURL(/\/pm-review\/approval\?[^#]*screen=wp-review/)
+  await expect(page).toHaveURL(/[?&]detailId=wp-001/)
+  await expect(page.getByRole('heading', { name: /Primary Switchgear Testing/i })).toBeVisible()
+  const packageReturnLink = page.getByRole('link', { name: /Return to PM workfront/i })
+  await expect(packageReturnLink).toHaveAttribute('href', /\/pm-review\/workfront$/)
+  await packageReturnLink.click()
+  await expect(page).toHaveURL(/\/pm-review\/workfront$/)
+  expect(historyRequests).toContainEqual({ entityIds: ['wp-001'], limit: '25' })
   expect(mutationRequests).toHaveLength(0)
 
   await page.goto('/pm-review/workfront', { waitUntil: 'networkidle' })

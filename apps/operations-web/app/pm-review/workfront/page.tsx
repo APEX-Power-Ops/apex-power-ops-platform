@@ -32,6 +32,7 @@ type WorkfrontRow = {
   status_label?: string
   readiness?: string
   task_id?: string | null
+  workpackage_id?: string | null
   blocked?: boolean
   blocker_count?: number
   open_issue_count?: number
@@ -280,6 +281,18 @@ function workfrontTaskReviewLink(row: WorkfrontRow) {
   })
 }
 
+function workfrontWorkPackageReviewLink(row: WorkfrontRow) {
+  if (!row.workpackage_id || (row.readiness !== 'pm_review' && row.status !== 'awaiting_review')) {
+    return null
+  }
+
+  return buildPmRoute('/pm-review/approval', {
+    screen: 'wp-review',
+    detailId: row.workpackage_id,
+    ...WORKFRONT_RETURN_CONTEXT,
+  })
+}
+
 function decisionTimestamp(row: DecisionHistoryRow) {
   return row.timestamp || row.server_timestamp || row.client_timestamp || ''
 }
@@ -518,6 +531,7 @@ export default function PmWorkfrontPage() {
               const drillthroughLinks = workfrontDrillthroughLinks(row)
               const escalationReviewLink = workfrontEscalationReviewLink(escalatedIssue?.id)
               const taskReviewLink = workfrontTaskReviewLink(row)
+              const workPackageReviewLink = workfrontWorkPackageReviewLink(row)
 
               return (
             <article
@@ -592,6 +606,11 @@ export default function PmWorkfrontPage() {
                 {taskReviewLink ? (
                   <Link className="btn btn-outline" href={taskReviewLink} style={{ marginTop: '0.75rem', marginLeft: '0.5rem' }}>
                     Review task
+                  </Link>
+                ) : null}
+                {workPackageReviewLink ? (
+                  <Link className="btn btn-outline" href={workPackageReviewLink} style={{ marginTop: '0.75rem', marginLeft: '0.5rem' }}>
+                    Review package
                   </Link>
                 ) : null}
               </div>
