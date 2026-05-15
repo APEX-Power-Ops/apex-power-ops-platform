@@ -430,7 +430,25 @@ function ApprovalQueue({ data, navigate }: { data: any; navigate: (target: strin
   )
 }
 
-function WorkPackageReview({ wpId, data, navigate, onMutate }: { wpId: string; data: any; navigate: (target: string, id?: string | null) => void; onMutate: () => void }) {
+function WorkPackageReview({
+  wpId,
+  data,
+  navigate,
+  onMutate,
+  onTraceTask,
+  onViewVariance,
+  onViewSchedule,
+  onViewDrivers,
+}: {
+  wpId: string
+  data: any
+  navigate: (target: string, id?: string | null) => void
+  onMutate: () => void
+  onTraceTask: (taskInfo: { taskId?: string; taskLabel?: string } | null) => void
+  onViewVariance: (taskId: string | null) => void
+  onViewSchedule: (taskId: string | null) => void
+  onViewDrivers: (taskId: string | null) => void
+}) {
   const { workpackages, tasks, apparatus, issues } = data
   const workPackage = workpackages.find((row: any) => row.id === wpId)
   const [reason, setReason] = useState('')
@@ -446,6 +464,7 @@ function WorkPackageReview({ wpId, data, navigate, onMutate }: { wpId: string; d
   const blockingIssues = workPackageIssues.filter((issue: any) => issue.blocks_completion && issue.status !== 'resolved' && issue.status !== 'closed')
   const completeTasks = workPackageTasks.filter((task: any) => task.status === 'complete').length
   const completeApparatus = workPackageApparatus.filter((item: any) => item.status === 'complete').length
+  const focusedTask = pickFocusedTask(workPackageTasks)
   const canApprove = workPackage.status === 'awaiting_review' && blockingIssues.length === 0
 
   const doAction = async (action: string, payload: Record<string, unknown>) => {
@@ -490,6 +509,20 @@ function WorkPackageReview({ wpId, data, navigate, onMutate }: { wpId: string; d
         React.createElement('h3', { className: 'text-sm font-bold text-red-700 mb-1' }, `⚠ ${blockingIssues.length} Unresolved Blocking Issue(s) — Approval Disabled`),
         blockingIssues.map((issue: any) => React.createElement('div', { key: issue.id, className: 'text-sm py-1' }, React.createElement(SeverityLabel, { severity: issue.severity }), ' ', issue.title)),
         React.createElement('p', { className: 'text-xs text-red-500 mt-2' }, 'Blocking issues must be resolved before this WorkPackage can be approved. This is a server-enforced precondition.'),
+      ),
+    focusedTask &&
+      React.createElement(
+        'div',
+        { className: 'card' },
+        React.createElement('h3', { className: 'text-sm font-bold text-gray-700 mb-3' }, 'Related Task Actions'),
+        React.createElement(
+          'div',
+          { className: 'flex gap-2 flex-wrap' },
+          React.createElement('button', { className: 'btn btn-outline', onClick: () => onTraceTask({ taskId: focusedTask.id, taskLabel: focusedTask.name }) }, 'Trace Task'),
+          React.createElement('button', { className: 'btn btn-outline', onClick: () => onViewSchedule(focusedTask.id) }, 'Open Schedule'),
+          React.createElement('button', { className: 'btn btn-outline', onClick: () => onViewDrivers(focusedTask.id) }, 'Open Drivers'),
+          React.createElement('button', { className: 'btn btn-outline', onClick: () => onViewVariance(focusedTask.id) }, 'Open Variance'),
+        ),
       ),
     React.createElement(
       'div',
@@ -940,7 +973,16 @@ function ApprovalSurfaceApp() {
         return React.createElement(ApprovalQueue, { data, navigate })
       case 'wp-review':
         return resolvedDetailId
-          ? React.createElement(WorkPackageReview, { wpId: resolvedDetailId, data, navigate, onMutate: data.refresh })
+          ? React.createElement(WorkPackageReview, {
+              wpId: resolvedDetailId,
+              data,
+              navigate,
+              onMutate: data.refresh,
+              onTraceTask,
+              onViewVariance,
+              onViewSchedule,
+              onViewDrivers,
+            })
           : React.createElement('div', { className: 'card' }, 'Select a work package from the queue to review it.')
       case 'task-review':
         return resolvedDetailId

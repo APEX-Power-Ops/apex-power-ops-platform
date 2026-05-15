@@ -281,3 +281,69 @@ test('approval task review exposes scoped history and task drillthrough', async 
     /\/pm-review\/approval\?screen=task-review&detailId=task-009&focusTaskId=task-009&taskLabel=Relay\+Functional\+Test$/,
   )
 })
+
+test('approval workpackage review uses focused task drillthrough', async ({ page }) => {
+  const { historyRequests } = await mockApprovalReads(page, {
+    queue: {
+      workpackages: [
+        {
+          id: 'wp-017',
+          name: 'Feeder Acceptance Package',
+          project_id: 'proj-001',
+          status: 'awaiting_review',
+        },
+      ],
+      total_count: 1,
+    },
+    apparatus: [
+      { id: 'app-017', name: 'Relay Bank A', task_id: 'task-017', status: 'complete', neta_standard: 'NETA ATS 7.10' },
+      { id: 'app-018', name: 'Relay Bank B', task_id: 'task-018', status: 'complete', neta_standard: 'NETA ATS 7.10' },
+    ],
+    tasks: [
+      { id: 'task-018', name: 'Completed WP Task', workpackage_id: 'wp-017', status: 'complete' },
+      { id: 'task-017', name: 'Focused WP Task', workpackage_id: 'wp-017', status: 'active' },
+    ],
+    workpackages: [{ id: 'wp-017', name: 'Feeder Acceptance Package', project_id: 'proj-001', status: 'awaiting_review' }],
+    decisionHistory: [
+      {
+        entity_id: 'wp-017',
+        entity_type: 'workpackage',
+        action_type: 'reject',
+        actor_id: 'pm-005',
+        actor_role: 'pm',
+        timestamp: '2026-05-04T18:00:00Z',
+        from_state: { status: 'awaiting_review' },
+        to_state: { status: 'awaiting_review' },
+        reason: 'WP needs focused task review',
+      },
+    ],
+  })
+
+  const approvalResponse = await page.goto('/pm-review/approval?screen=wp-review&detailId=wp-017', { waitUntil: 'networkidle' })
+  expect(approvalResponse?.ok()).toBeTruthy()
+  await expect.poll(() => historyRequests.length).toBeGreaterThan(0)
+  expect(historyRequests).toContainEqual({ entityIds: ['wp-017'], limit: '25' })
+  expect(historyRequests.some((request) => request.entityIds.length === 0)).toBe(false)
+  await expect(page.getByRole('heading', { name: /Feeder Acceptance Package/i })).toBeVisible()
+  await expect(page.getByRole('heading', { name: /Related Task Actions/i })).toBeVisible()
+  await expect(page.getByRole('button', { name: /Trace Task/i })).toBeVisible()
+  await expect(page.getByRole('button', { name: /Open Schedule/i })).toBeVisible()
+  await expect(page.getByRole('button', { name: /Open Drivers/i })).toBeVisible()
+  await expect(page.getByRole('button', { name: /Open Variance/i })).toBeVisible()
+
+  const historyContext = page.getByTestId('approval-decision-history-context')
+  await expect(historyContext).toBeVisible()
+  await expect(historyContext.getByTestId('approval-decision-history-row')).toHaveCount(1)
+  await expect(historyContext).toContainText(/reject/i)
+  await expect(historyContext).toContainText(/pm-005 \(pm\)/i)
+  await expect(historyContext).toContainText(/WP needs focused task review/i)
+
+  await page.getByRole('button', { name: /Trace Task/i }).click()
+
+  await expect(page).toHaveURL(/\/pm-review\/tracer\?[^#]*taskId=task-017/)
+  await expect(page.getByText(/Current seed: Focused WP Task \(task-017\)/i)).toBeVisible()
+  await expect(page.getByRole('link', { name: /Return to PM work package review/i })).toHaveAttribute(
+    'href',
+    /\/pm-review\/approval\?screen=wp-review&detailId=wp-017&focusTaskId=task-017&taskLabel=Focused\+WP\+Task$/,
+  )
+})
