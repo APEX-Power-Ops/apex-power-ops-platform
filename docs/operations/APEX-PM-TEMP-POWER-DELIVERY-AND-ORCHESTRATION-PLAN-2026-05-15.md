@@ -207,6 +207,15 @@ PM Lane 033 adds the first read-only PM UI review route:
 
 The route consumes `GET /api/v1/reads/project-import-candidate`, renders required decisions and warnings before dense task rows, keeps clean rows collapsed, and exposes guardrails from the candidate payload. It does not add approval, persistence, import, assignment, schedule, status, or production write authority.
 
+PM Lane 034 hardens the same route for day-to-day review:
+
+1. source stat fingerprints and availability are visible from the read-only candidate,
+2. warning severity and warning-code filters keep the review focused on exceptions,
+3. browser-only JSON export supports offline PM review and sidecar handoff without adding an import endpoint,
+4. local PM questions draft captures review notes in browser storage only.
+
+This still does not admit approval persistence, server-side notes, import mutation, assignment, schedule, status, production write authority, workbook macro execution, or autonomous AI business-state mutation.
+
 ## Capability-Gap Register
 
 Current known gaps:
@@ -216,6 +225,7 @@ Current known gaps:
 3. A durable AI-to-AI task queue is not admitted; packets and handoffs remain the relay surface.
 4. The project import mutation is not admitted; import-candidate review must come first.
 5. Workbook macros are not admitted for unattended intake.
+6. The local PM review route now supports export and local draft notes, but server-side PM note persistence is not admitted.
 
 Required response to new gaps:
 

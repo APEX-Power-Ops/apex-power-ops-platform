@@ -147,6 +147,13 @@ Current Temp Power local preview result:
 
 This import candidate is a review artifact only. It does not write Supabase rows, assign work, change status, mutate schedules, run Excel macros, or approve a project import.
 
+PM Lane 034 hardens the same review route without admitting persistence:
+
+1. source stat fingerprints show the source path, file size, modified time, availability, and aggregate candidate freshness key,
+2. warning filters let PM review all, blocker, warning, info, or specific warning-code subsets without fetching or mutating data,
+3. JSON export downloads the current read-only candidate plus the local PM draft notes for offline review or sidecar handoff,
+4. PM questions draft is retained only in the local browser and is not approval, import, Supabase state, or a server-side note.
+
 ## Environment Overrides
 
 Set this when using a different planning folder:
@@ -248,8 +255,9 @@ Current priority order:
 1. hosted Render mutation-seam parity for current PM reads,
 2. read-only Temp Power import-candidate review,
 3. import-candidate PM UI review,
-4. narrow idempotent import mutation only after human approval,
-5. PM, Lead, and Field pilot on a bounded Temp Power slice.
+4. import-candidate review hardening for source freshness, filters, export, and local questions,
+5. narrow idempotent import mutation only after human approval,
+6. PM, Lead, and Field pilot on a bounded Temp Power slice.
 
 Olares One should support this by reducing relay friction, preserving host validation, and keeping packet/handoff evidence durable. It is not currently assumed to provide autonomous AI-to-AI queue ownership.
 
@@ -263,6 +271,9 @@ Read estimator line items into project, workpackage, task, and apparatus candida
 
 Level 2 - Task Plan Shaping:
 Transform estimator apparatus candidates into task-by-task and apparatus-by-apparatus import candidates, mirroring the old `Task_Entry` to `All_Tasks` workflow without writing production state.
+
+Level 2A - Import Candidate Review Hardening:
+Review source freshness, warning filters, exported candidate JSON, and local PM questions before any import mutation is admitted.
 
 Level 3 - Resource Context:
 Read equipment inventory and technician capability rows so PM can understand whether the project can be staffed with available people and equipment.

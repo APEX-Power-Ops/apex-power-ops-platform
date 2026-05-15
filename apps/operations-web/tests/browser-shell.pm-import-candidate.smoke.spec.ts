@@ -42,6 +42,36 @@ test('pm import candidate route renders exception-first read-only review packet'
             formula_error_row_count: 234,
           },
         },
+        source_freshness: {
+          strategy: 'path_size_mtime_fingerprint',
+          mutation_authority: 'not_admitted',
+          available_count: 1,
+          missing_count: 1,
+          aggregate_fingerprint: 'stat-fingerprint-abc123',
+          review_action: 'Refresh this candidate if any source path, file size, or modified time changes before import approval is admitted.',
+          source_files: [
+            {
+              source_id: 'estimator_workbook',
+              label: 'Estimator workbook',
+              path: 'C:/Users/jjswe/Desktop/Project Miner PM Planning/Estimator R3 - Project Miner Temp Power Testing.xlsm',
+              found: true,
+              size_bytes: 84512,
+              modified_at: '2026-05-15T14:30:00Z',
+              fingerprint: 'estimator-stat-fp',
+              freshness_status: 'available',
+            },
+            {
+              source_id: 'sld_pdf',
+              label: 'SLD or drawing PDF',
+              path: 'C:/Users/jjswe/Desktop/Project Miner PM Planning/Miner Temp SLD-AP-BCARRASCO.pdf',
+              found: false,
+              size_bytes: null,
+              modified_at: null,
+              fingerprint: null,
+              freshness_status: 'missing',
+            },
+          ],
+        },
         summary: {
           workpackage_count: 7,
           task_count: 15,
@@ -146,9 +176,33 @@ test('pm import candidate route renders exception-first read-only review packet'
   await expect(page.getByText(/Does this candidate correctly represent/i)).toBeVisible()
   await expect(page.getByText(/PROJECT_DATA_ENTRY_FORMULA_ERRORS/i).first()).toBeVisible()
   await expect(page.getByRole('heading', { name: /Warning Review/i })).toBeVisible()
-  await expect(page.getByText(/MISSING_DESIGNATIONS/i)).toBeVisible()
+  const warningReview = page.getByLabel('Warning review')
+  await expect(warningReview.locator('article', { hasText: /MISSING_DESIGNATIONS/i })).toHaveCount(1)
+  await expect(page.getByRole('heading', { name: /Source Freshness/i })).toBeVisible()
+  await expect(page.getByText(/stat-fingerprint-abc123/i)).toBeVisible()
+  await expect(page.getByText(/Estimator workbook/i)).toBeVisible()
+  await expect(page.getByText(/estimator-stat-fp/i)).toBeVisible()
+  await expect(page.getByText(/SLD or drawing PDF/i)).toBeVisible()
+  await expect(page.getByText(/missing/i).first()).toBeVisible()
   await expect(page.getByRole('heading', { name: /Proposed Structure/i })).toBeVisible()
   await expect(page.getByText(/7.5 .* 2 tasks .* 15 apparatus .* 37.5 hours/i)).toBeVisible()
+
+  await warningReview.getByRole('button', { name: 'warning' }).click()
+  await expect(warningReview.locator('article', { hasText: /PROJECT_DATA_ENTRY_FORMULA_ERRORS/i })).toHaveCount(1)
+  await expect(warningReview.locator('article', { hasText: /MISSING_DESIGNATIONS/i })).toHaveCount(0)
+  await warningReview.getByLabel('Warning code filter').selectOption('MISSING_DESIGNATIONS')
+  await expect(warningReview.getByText(/No warnings match the active filter/i)).toBeVisible()
+  await warningReview.getByRole('button', { name: 'all' }).click()
+  await expect(warningReview.locator('article', { hasText: /MISSING_DESIGNATIONS/i })).toHaveCount(1)
+
+  await page.getByLabel('PM review notes draft').fill('Check PD-1 duplicate rows before future import approval.')
+  await expect(page.getByText(/56 characters retained in this browser/i)).toBeVisible()
+
+  const downloadPromise = page.waitForEvent('download')
+  await page.getByRole('button', { name: 'Export JSON' }).click()
+  const download = await downloadPromise
+  expect(download.suggestedFilename()).toBe('pm-import-candidate-miner-temp-power-review.json')
+  await expect(page.getByText(/prepared from the current read-only candidate/i)).toBeVisible()
 
   await page.getByText(/7.5 .* 2 tasks .* 15 apparatus .* 37.5 hours/i).click()
   await expect(page.getByText(/PD-1 - Switch MV - Fused Disconnect/i)).toBeVisible()
@@ -160,6 +214,9 @@ test('pm import candidate route renders exception-first read-only review packet'
   await expect(page.getByText(/run workbook macros/i)).toBeVisible()
   await expect(page.getByRole('button', { name: /Approve/i })).toHaveCount(0)
   await expect(page.getByRole('button', { name: /Import/i })).toHaveCount(0)
+
+  await page.reload({ waitUntil: 'networkidle' })
+  await expect(page.getByLabel('PM review notes draft')).toHaveValue('Check PD-1 duplicate rows before future import approval.')
   expect(mutationRequests).toHaveLength(0)
-  expect(readCalls).toBe(1)
+  expect(readCalls).toBe(2)
 })

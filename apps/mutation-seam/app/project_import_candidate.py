@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import hashlib
 import re
 from collections import Counter
+from datetime import datetime, timezone
 from functools import lru_cache
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from app.project_seed_sources import load_project_seed_sources
@@ -48,6 +51,87 @@ def _json_safe(value: Any) -> Any:
     if isinstance(value, dict):
         return {str(key): _json_safe(item) for key, item in value.items()}
     return str(value)
+
+
+def _source_file_state(source_id: str, label: str, path_value: Any) -> Dict[str, Any]:
+    path_text = _clean_text(path_value)
+    state: Dict[str, Any] = {
+        "source_id": source_id,
+        "label": label,
+        "path": path_text,
+        "found": False,
+        "size_bytes": None,
+        "modified_at": None,
+        "fingerprint": None,
+        "freshness_status": "missing",
+    }
+    if not path_text:
+        return state
+
+    path = Path(path_text)
+    try:
+        stat = path.stat()
+    except OSError:
+        return state
+
+    modified_at = datetime.fromtimestamp(stat.st_mtime, timezone.utc).isoformat().replace("+00:00", "Z")
+    fingerprint_input = f"{source_id}|{path.resolve()}|{stat.st_size}|{stat.st_mtime_ns}"
+    state.update(
+        {
+            "found": True,
+            "size_bytes": stat.st_size,
+            "modified_at": modified_at,
+            "fingerprint": hashlib.sha256(fingerprint_input.encode("utf-8")).hexdigest()[:24],
+            "freshness_status": "available",
+        }
+    )
+    return state
+
+
+def _source_freshness_summary(
+    project: Dict[str, Any],
+    trackers: Dict[str, Any],
+    seed: Dict[str, Any],
+) -> Dict[str, Any]:
+    metadata = project.get("metadata", {})
+    source_files = [
+        _source_file_state("estimator_workbook", "Estimator workbook", metadata.get("estimator_workbook_path")),
+        _source_file_state("sld_pdf", "SLD or drawing PDF", metadata.get("sld_pdf_path")),
+        _source_file_state(
+            "project_data_entry",
+            "Project data entry workbook",
+            trackers.get("project_data_entry", {}).get("path"),
+        ),
+        _source_file_state(
+            "reference_tracker",
+            "Reference tracker workbook",
+            trackers.get("reference_tracker", {}).get("path"),
+        ),
+        _source_file_state(
+            "equipment_workbook",
+            "Equipment inventory workbook",
+            seed.get("metadata", {}).get("equipment_workbook_path"),
+        ),
+        _source_file_state(
+            "capability_workbook",
+            "Crew capability workbook",
+            seed.get("metadata", {}).get("capability_workbook_path"),
+        ),
+    ]
+    aggregate_input = "|".join(
+        str(file_state.get("fingerprint") or file_state.get("path") or file_state.get("source_id"))
+        for file_state in source_files
+    )
+    missing_count = sum(1 for file_state in source_files if not file_state.get("found"))
+    return {
+        "strategy": "path_size_mtime_fingerprint",
+        "mutation_authority": MUTATION_AUTHORITY,
+        "source_files": source_files,
+        "available_count": len(source_files) - missing_count,
+        "missing_count": missing_count,
+        "aggregate_fingerprint": hashlib.sha256(aggregate_input.encode("utf-8")).hexdigest()[:24],
+        "review_action": "Refresh this candidate if any source path, file size, or modified time changes before import approval is admitted.",
+    }
 
 
 def _source_ref(project: Dict[str, Any], line_item: Dict[str, Any]) -> Dict[str, Any]:
@@ -289,6 +373,7 @@ def build_project_import_candidate(
     human_decisions = _human_decisions(warnings)
     project_slug = _slug(project.get("project_name") or "project-miner")
     warning_counts = Counter(warning["severity"] for warning in warnings)
+    source_freshness = _source_freshness_summary(project, trackers, seed)
 
     return {
         "candidate_id": f"pm-import-candidate-{project_slug}",
@@ -328,6 +413,7 @@ def build_project_import_candidate(
             "capability_workbook_path": seed.get("metadata", {}).get("capability_workbook_path"),
             "capability_workbook_found": seed.get("metadata", {}).get("capability_workbook_found"),
         },
+        "source_freshness": source_freshness,
         "summary": {
             "workpackage_count": len(workpackages),
             "task_count": len(line_items),

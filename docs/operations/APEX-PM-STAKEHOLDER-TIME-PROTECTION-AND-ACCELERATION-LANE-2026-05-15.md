@@ -167,6 +167,12 @@ The current UI tranche is:
 
 It surfaces the candidate at `/pm-review/import-candidate` with required decisions, warnings, proposed structure, source traceability, resource context, and guardrails before any approval or import mutation is admitted.
 
+The current hardening tranche is:
+
+`Import Candidate Review Hardening`
+
+It adds source stat freshness, warning filters, browser-only JSON export, and local PM questions draft to the same route. These are designed to reduce review burden while preserving the no-production-write boundary.
+
 The success standard is not just technical correctness. The candidate must reduce Jason's review burden by showing:
 
 1. what the system thinks the project is,

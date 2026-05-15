@@ -70,6 +70,15 @@ def test_load_project_import_candidate_groups_tasks_and_preserves_traceability(t
     assert "MISSING_DRAWING_REFS" in warning_codes
     assert candidate["summary"]["human_decision_count"] >= 2
     assert "write_supabase" in candidate["review_guidance"]["not_allowed_now"]
+    freshness = candidate["source_freshness"]
+    assert freshness["strategy"] == "path_size_mtime_fingerprint"
+    assert freshness["mutation_authority"] == "not_admitted"
+    assert freshness["missing_count"] >= 1
+    source_files = {source["source_id"]: source for source in freshness["source_files"]}
+    assert source_files["estimator_workbook"]["found"] is True
+    assert source_files["estimator_workbook"]["fingerprint"]
+    assert source_files["estimator_workbook"]["modified_at"].endswith("Z")
+    assert source_files["sld_pdf"]["freshness_status"] == "missing"
 
 
 def test_project_import_candidate_route_returns_read_only_candidate(client, monkeypatch, tmp_path):
@@ -87,3 +96,4 @@ def test_project_import_candidate_route_returns_read_only_candidate(client, monk
     assert candidate["summary"]["task_count"] == 3
     assert candidate["summary"]["apparatus_candidate_count"] == 4
     assert candidate["workpackages"][0]["tasks"][0]["source_ref"]["estimator_workbook_path"] == str(workbook_path)
+    assert candidate["source_freshness"]["source_files"][0]["source_id"] == "estimator_workbook"
