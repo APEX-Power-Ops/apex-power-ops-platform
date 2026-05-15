@@ -201,6 +201,12 @@ Expected outputs:
 
 Local PM Lane 032 proof currently produces a read-only candidate with 7 workpackages, 15 tasks, 186 apparatus candidates, 15 crew, 343 equipment inventory rows, 50 capability rows, and 2 review signals.
 
+PM Lane 033 adds the first read-only PM UI review route:
+
+`/pm-review/import-candidate`
+
+The route consumes `GET /api/v1/reads/project-import-candidate`, renders required decisions and warnings before dense task rows, keeps clean rows collapsed, and exposes guardrails from the candidate payload. It does not add approval, persistence, import, assignment, schedule, status, or production write authority.
+
 ## Capability-Gap Register
 
 Current known gaps:

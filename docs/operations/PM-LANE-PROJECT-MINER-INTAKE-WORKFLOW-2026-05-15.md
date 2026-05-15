@@ -127,6 +127,14 @@ The same read-only candidate is exposed from the mutation seam at:
 
 `GET /api/v1/reads/project-import-candidate`
 
+The PM-facing review route is:
+
+`https://operations.apexpowerops.com/pm-review/import-candidate`
+
+Local or preview environments expose the same route at:
+
+`/pm-review/import-candidate`
+
 Current Temp Power local preview result:
 
 1. 7 proposed workpackages,

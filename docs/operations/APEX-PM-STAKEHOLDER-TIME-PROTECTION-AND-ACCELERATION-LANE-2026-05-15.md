@@ -161,6 +161,12 @@ The current product tranche is:
 
 It creates a read-only review artifact and endpoint that group the current Project Miner Temp Power source files into proposed project, workpackage, task, and apparatus rows with source traceability and warnings.
 
+The current UI tranche is:
+
+`Import Candidate PM UI Review`
+
+It surfaces the candidate at `/pm-review/import-candidate` with required decisions, warnings, proposed structure, source traceability, resource context, and guardrails before any approval or import mutation is admitted.
+
 The success standard is not just technical correctness. The candidate must reduce Jason's review burden by showing:
 
 1. what the system thinks the project is,
