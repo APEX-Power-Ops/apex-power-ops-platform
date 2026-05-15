@@ -1,12 +1,13 @@
 import { expect, test } from '@playwright/test'
 
-function mockApprovalReads(page: Parameters<typeof test>[1] extends never ? never : any, overrides?: {
+async function mockApprovalReads(page: Parameters<typeof test>[1] extends never ? never : any, overrides?: {
   queue?: Record<string, unknown>
   apparatus?: Array<Record<string, unknown>>
   tasks?: Array<Record<string, unknown>>
   workpackages?: Array<Record<string, unknown>>
   snapshots?: Array<Record<string, unknown>>
   issues?: Array<Record<string, unknown>>
+  decisionHistory?: Array<Record<string, unknown>>
 }) {
   const queue = {
     tasks: [],
@@ -21,13 +22,20 @@ function mockApprovalReads(page: Parameters<typeof test>[1] extends never ? neve
   const workpackages = overrides?.workpackages ?? []
   const snapshots = overrides?.snapshots ?? []
   const issues = overrides?.issues ?? []
+  const decisionHistory = overrides?.decisionHistory ?? []
+  const historyRequests: Array<{ entityIds: string[]; limit: string | null }> = []
 
-  return Promise.all([
+  await Promise.all([
     page.route('**/api/v1/reads/approval-queue', async (route: any) => {
       await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(queue) })
     }),
-    page.route('**/api/v1/reads/decision-history', async (route: any) => {
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([]) })
+    page.route('**/api/v1/reads/decision-history**', async (route: any) => {
+      const url = new URL(route.request().url())
+      historyRequests.push({
+        entityIds: url.searchParams.getAll('entity_id'),
+        limit: url.searchParams.get('limit'),
+      })
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(decisionHistory) })
     }),
     page.route('**/api/v1/reads/apparatus', async (route: any) => {
       await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(apparatus) })
@@ -66,10 +74,12 @@ function mockApprovalReads(page: Parameters<typeof test>[1] extends never ? neve
       await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([]) })
     }),
   ])
+
+  return { historyRequests }
 }
 
 test('approval escalation deep link seeds tracer from the related task context', async ({ page }) => {
-  await mockApprovalReads(page, {
+  const { historyRequests } = await mockApprovalReads(page, {
     queue: {
       escalated_issues: [
         {
@@ -104,6 +114,9 @@ test('approval escalation deep link seeds tracer from the related task context',
 
   const approvalResponse = await page.goto('/pm-review/approval?screen=escalations&detailId=issue-001', { waitUntil: 'networkidle' })
   expect(approvalResponse?.ok()).toBeTruthy()
+  await expect.poll(() => historyRequests.length).toBeGreaterThan(0)
+  expect(historyRequests).toContainEqual({ entityIds: ['issue-001'], limit: '25' })
+  expect(historyRequests.some((request) => request.entityIds.length === 0)).toBe(false)
   await expect(page.getByRole('heading', { name: /Escalation Queue/i })).toBeVisible()
   await expect(page.getByText(/Insulation resistance out of range/i)).toBeVisible()
   await expect(page.getByRole('button', { name: /Resolve/i })).toBeVisible()
@@ -119,7 +132,7 @@ test('approval escalation deep link seeds tracer from the related task context',
 })
 
 test('approval snapshot review uses derived task context for schedule handoff', async ({ page }) => {
-  await mockApprovalReads(page, {
+  const { historyRequests } = await mockApprovalReads(page, {
     queue: {
       snapshots: [
         {
@@ -155,6 +168,9 @@ test('approval snapshot review uses derived task context for schedule handoff', 
 
   const approvalResponse = await page.goto('/pm-review/approval?screen=snapshot-review&detailId=snap-001', { waitUntil: 'networkidle' })
   expect(approvalResponse?.ok()).toBeTruthy()
+  await expect.poll(() => historyRequests.length).toBeGreaterThan(0)
+  expect(historyRequests).toContainEqual({ entityIds: ['snap-001'], limit: '25' })
+  expect(historyRequests.some((request) => request.entityIds.length === 0)).toBe(false)
   await expect(page.getByRole('heading', { name: /Progress Snapshot/i })).toBeVisible()
   await expect(page.getByRole('button', { name: /Open Schedule/i })).toBeVisible()
 

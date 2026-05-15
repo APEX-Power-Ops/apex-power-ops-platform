@@ -25,6 +25,7 @@ const API_BASE =
 const SEAM_BASE = `${API_BASE}/mutations`
 const READS_BASE = `${API_BASE}/reads`
 const PM_ACTOR = { actor_id: 'pm-001', actor_role: 'pm', project_scope: ['proj-001'] }
+const DECISION_HISTORY_LIMIT = 25
 
 const reviewModules = [
   { id: 'apex-approval-schedule-module', src: '/pm-review/schedule.js', isLoaded: () => !!window.ApexSchedule?.ScheduleView },
@@ -99,7 +100,34 @@ async function readData(endpoint: string) {
   return response.json()
 }
 
-function useProjectData() {
+function getApprovalDecisionHistoryEndpoint(screen: string, detailId: string | null) {
+  if (screen === 'history') {
+    return 'decision-history'
+  }
+
+  if (!detailId || screen === 'queue') {
+    return null
+  }
+
+  if (screen === 'task-review' || screen === 'wp-review' || screen === 'snapshot-review' || screen === 'escalations') {
+    const params = new URLSearchParams()
+    params.append('entity_id', detailId)
+    params.set('limit', String(DECISION_HISTORY_LIMIT))
+    return `decision-history?${params.toString()}`
+  }
+
+  return null
+}
+
+function getBrowserSearchParam(name: string) {
+  if (typeof window === 'undefined') {
+    return null
+  }
+
+  return new URLSearchParams(window.location.search).get(name)
+}
+
+function useProjectData(decisionHistoryEndpoint: string | null) {
   const [queue, setQueue] = useState({ tasks: [], workpackages: [], snapshots: [], escalated_issues: [], total_count: 0 } as any)
   const [history, setHistory] = useState<any[]>([])
   const [apparatus, setApparatus] = useState<any[]>([])
@@ -118,7 +146,7 @@ function useProjectData() {
       const [queueRows, historyRows, apparatusRows, taskRows, workPackageRows, snapshotRows, issueRows, assignmentRows] =
         await Promise.all([
           readData('approval-queue'),
-          readData('decision-history'),
+          decisionHistoryEndpoint ? readData(decisionHistoryEndpoint) : Promise.resolve([]),
           readData('apparatus'),
           readData('tasks'),
           readData('workpackages'),
@@ -142,7 +170,7 @@ function useProjectData() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [decisionHistoryEndpoint])
 
   useEffect(() => {
     void refresh()
@@ -702,11 +730,18 @@ function DecisionHistory({ data }: { data: any }) {
 function ApprovalSurfaceApp() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const data = useProjectData()
-  const [browserDetailId, setBrowserDetailId] = useState<string | null>(null)
-  const requestedScreen = searchParams.get('screen')
+  const browserScreen = getBrowserSearchParam('screen')
+  const browserDetailParam = getBrowserSearchParam('detailId')
+  const [browserDetailId, setBrowserDetailId] = useState<string | null>(browserDetailParam)
+  const requestedScreen = searchParams.get('screen') || browserScreen
   const screen = requestedScreen && APPROVAL_INTERNAL_SCREENS.has(requestedScreen) ? requestedScreen : 'queue'
-  const detailId = searchParams.get('detailId')
+  const detailId = searchParams.get('detailId') || browserDetailId || browserDetailParam
+  const routeDetailId = detailId || browserDetailId
+  const decisionHistoryEndpoint = useMemo(
+    () => getApprovalDecisionHistoryEndpoint(screen, routeDetailId),
+    [routeDetailId, screen],
+  )
+  const data = useProjectData(decisionHistoryEndpoint)
   const resolvedDetailId = detailId || browserDetailId || getImplicitApprovalDetailId(data, screen)
   const returnTo = searchParams.get('returnTo')
   const returnLabel = searchParams.get('returnLabel') || 'previous PM view'
@@ -718,7 +753,7 @@ function ApprovalSurfaceApp() {
       return
     }
 
-    setBrowserDetailId(new URLSearchParams(window.location.search).get('detailId'))
+    setBrowserDetailId(getBrowserSearchParam('detailId'))
   }, [searchParams])
 
   const navigate = useCallback((target: string, id?: string | null) => {
