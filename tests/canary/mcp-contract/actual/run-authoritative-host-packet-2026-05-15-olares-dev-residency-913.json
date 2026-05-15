@@ -1,0 +1,44 @@
+{
+  "packet_id": "2026-05-15-olares-dev-residency-913",
+  "tool": "tools/ai/run_authoritative_host_packet.py",
+  "command": "\"C:\\APEX Platform\\apex-power-ops-platform\\.venv\\Scripts\\python.exe\" \"C:/APEX Platform/apex-power-ops-platform/tools/ai/run_authoritative_host_packet.py\" --packet-id 2026-05-15-olares-dev-residency-913 --output \"C:/APEX Platform/apex-power-ops-platform/tests/canary/mcp-contract/actual/run-authoritative-host-packet-2026-05-15-olares-dev-residency-913.json\"",
+  "host": "olares-mesh",
+  "host_root": "/home/olares/code/apex/apex-power-ops-platform",
+  "profile": "strict-db-query",
+  "artifact_paths": {
+    "host_bootstrap": "C:/APEX Platform/apex-power-ops-platform/tests/canary/host-bootstrap-status/actual/host-bootstrap-status-2026-05-15-olares-dev-residency-913.json",
+    "verify": "C:/APEX Platform/apex-power-ops-platform/tests/canary/mcp-contract/actual/verify-minimal-mcp-trio-2026-05-15-olares-dev-residency-913.json",
+    "promotion": "C:/APEX Platform/apex-power-ops-platform/tests/canary/mcp-contract/actual/apex-jobs-promotion-2026-05-15-olares-dev-residency-913.json",
+    "coordinator_summary": "C:/APEX Platform/apex-power-ops-platform/tests/canary/mcp-contract/actual/ai-packet-evidence-summary-2026-05-15-olares-dev-residency-913.json"
+  },
+  "host_git_head": "b9b0733f1e396066662471a201341a4db5b6c31a",
+  "host_status_count": 0,
+  "preflight_status": "not-running",
+  "verify_result": "PASS",
+  "verify_profile": "strict-db-query",
+  "verify_artifact_name": "verify-minimal-mcp-trio-2026-05-15-olares-dev-residency-913.json",
+  "promotion_result": "PASS",
+  "host_run_id": "1778839037192-4sod4yvp",
+  "host_run_env": "host",
+  "host_service": "ai-workflow",
+  "promotion_promoted_at": "2026-05-15T09:57:17.196Z",
+  "promotion_artifact_name": "apex-jobs-promotion-2026-05-15-olares-dev-residency-913.json",
+  "host_success_run_ids": [
+    "1778839037192-4sod4yvp"
+  ],
+  "promotion_supporting_run_ids": [
+    "1778839037192-4sod4yvp"
+  ],
+  "coordinator_summary_result": "PASS",
+  "coordinator_verify_artifact_name": "verify-minimal-mcp-trio-2026-05-15-olares-dev-residency-913.json",
+  "coordinator_promotion_artifact_name": "apex-jobs-promotion-2026-05-15-olares-dev-residency-913.json",
+  "coordinator_promotion_promoted_at": "2026-05-15T09:57:17.196Z",
+  "coordinator_host_success_run_ids": [
+    "1778839037192-4sod4yvp"
+  ],
+  "coordinator_supporting_run_ids": [
+    "1778839037192-4sod4yvp"
+  ],
+  "result": "PASS",
+  "output_path": "C:/APEX Platform/apex-power-ops-platform/tests/canary/mcp-contract/actual/run-authoritative-host-packet-2026-05-15-olares-dev-residency-913.json"
+}
