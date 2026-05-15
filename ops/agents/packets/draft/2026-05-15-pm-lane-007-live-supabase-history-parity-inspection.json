@@ -1,0 +1,53 @@
+{
+  "packet_id": "2026-05-15-pm-lane-007",
+  "title": "PM Live Supabase History Parity Inspection",
+  "objective": "Run a non-mutating live Supabase/Postgres inspection for the PM decision-history and issue follow-up storage fields needed by PM Lane 006, then publish the truthful parity verdict without seeding, resetting, migrating, or writing production data.",
+  "domain": "pm-domain",
+  "active_role": "PM Runtime Product Coordinator",
+  "repo_paths": [
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam",
+    "C:/APEX Platform/apex-power-ops-platform/docs/authority/APEX-OPS-DELEGATED-AUTHORITY-AND-AI-ORCHESTRATION-PROTOCOL-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "dependencies": [
+    "2026-05-15-pm-lane-006",
+    "docs/authority/APEX-OPS-DELEGATED-AUTHORITY-AND-AI-ORCHESTRATION-PROTOCOL-2026-05-15.md",
+    "ops/agents/handoffs/2026-05-15-pm-lane-006-workfront-read-only-decision-history-panel-handoff.md"
+  ],
+  "required_inputs": [
+    "PM Lane 006 read-only decision-history panel",
+    "apps/mutation-seam/app/db/supabase_store.py",
+    "apps/mutation-seam/.env local SEAM_DATABASE_URL source",
+    "Read-only live Postgres inspection evidence"
+  ],
+  "constrained_outputs": [
+    "Read-only live connection proof to apex_pm_stage without printing secrets",
+    "Schema parity verdict for seam.audit_log and seam.issues fields needed by PM workfront history",
+    "Live data parity verdict for PM history rows and issue PM follow-up overflow keys",
+    "No SQL write, no schema migration, no fixture reset, no demo seed, no mutation seam persisted test run, no service admission, no auth or ingress widening, and no autonomous AI business-state action"
+  ],
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/PROJECT_STATUS.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-15-pm-lane-007-live-supabase-history-parity-inspection.json",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-007-live-supabase-history-parity-inspection-handoff.md"
+  ],
+  "validation_steps": [
+    "Load the local governed SEAM_DATABASE_URL source without printing the DSN",
+    "Connect with default_transaction_read_only=on",
+    "Inspect seam.audit_log and seam.issues columns through information_schema",
+    "Count live PM decision-history rows and issue PM follow-up overflow keys",
+    "Run packet JSON validation and git diff whitespace checks before publication"
+  ],
+  "handoff_target": "Delegated Technical Repo Authority",
+  "status": "complete",
+  "execution_result": "PASS_WITH_EMPTY_LIVE_HISTORY",
+  "delegation_status": "coordinator-executed",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-007-live-supabase-history-parity-inspection-handoff.md"
+  ],
+  "sql_permission": false,
+  "sql_permission_note": "Packet 2026-05-15-pm-lane-007 used only read-only SELECT inspection with default_transaction_read_only=on. No SQL write, migration, reset, seed, production data write, auth, ingress, or new mutation authority is authorized.",
+  "ai_mutation_authority": "not_admitted",
+  "created_at": "2026-05-15",
+  "updated_at": "2026-05-15"
+}
