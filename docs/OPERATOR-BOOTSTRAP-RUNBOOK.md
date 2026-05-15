@@ -187,6 +187,8 @@ Use `docs/operations/OLARES-AI-GOVERNED-LIVE-DSN-SOURCING-RUNBOOK-2026-05-12.md`
 
 Use `docs/operations/OLARES-AI-HOST-MANAGED-COLD-START-DRILL-RUNBOOK-2026-05-12.md` when the operator needs one copy-paste host-side managed cold-start drill with packet-id, command order, evidence expectations, and closeout guidance.
 
+Use `docs/authority/APEX-OPS-DELEGATED-AUTHORITY-AND-AI-ORCHESTRATION-PROTOCOL-2026-05-15.md` when Codex is acting as delegated technical repo authority, project manager, coordinator, reviewer, or executor across APEX Ops and Olares One lanes.
+
 Primary task:
 
 - `Olares host bootstrap status`
@@ -210,6 +212,7 @@ That surface reports:
 Use these local files first:
 - `docs/authority/README.md`
 - `docs/authority/OLARES-WORKSPACE-AUTHORITY-FRAMEWORK.md`
+- `docs/authority/APEX-OPS-DELEGATED-AUTHORITY-AND-AI-ORCHESTRATION-PROTOCOL-2026-05-15.md`
 - `apps/control-plane-api/docs/contracts/CHATGPT-REMOTE-CONTROL-PLANE-TOOL-SCHEMAS-2026-03-28.json`
 - `apps/control-plane-api/README.md`
 - `apps/control-plane-api/PUBLIC-APPARATUS-ROUTE-PROMOTION-CHECKLIST-2026-04-21.md` when a future hosted regression needs a compact rerun checklist rather than repo-local runtime repair

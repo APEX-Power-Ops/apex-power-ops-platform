@@ -11,9 +11,10 @@ This index remains the repo-owned authority entrypoint, but current Olares execu
 Current routing:
 
 1. use `OLARES-WORKSPACE-AUTHORITY-FRAMEWORK.md` for the governing Olares workspace authority order and boundary rules,
-2. use `../architecture/APEX-REPO-FOUNDATION-AND-CUTOVER-PLAN-2026-05-07.md` and `../architecture/OLARES-ONE-WORKSPACE-DESIGN-GOVERNANCE-AND-IMPLEMENTATION-PLAN-2026-05-06.md` for repo-shell and current Olares operating-model decisions,
-3. use `../../plan/infrastructure-olares-full-implementation-roadmap-1.md`, `../architecture/OLARES-POST-CLOSURE-EXECUTION-CHECKLIST-2026-04-25.md`, and `../architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md` for maintained closeout, rerun, and residue-routing work,
-4. treat `OLARES-BUILD-GUIDE.md`, `../operations/OLARES-CHECKLIST.md`, and `../operations/OLARES-VSCODE-BUILD-SESSION-PROMPT.md` as retained first-run references unless a deliberate replay or audit needs them.
+2. use `APEX-OPS-DELEGATED-AUTHORITY-AND-AI-ORCHESTRATION-PROTOCOL-2026-05-15.md` for standing delegated technical authority, PM coordination, executor orchestration, audit, approval, and closeout rules,
+3. use `../architecture/APEX-REPO-FOUNDATION-AND-CUTOVER-PLAN-2026-05-07.md` and `../architecture/OLARES-ONE-WORKSPACE-DESIGN-GOVERNANCE-AND-IMPLEMENTATION-PLAN-2026-05-06.md` for repo-shell and current Olares operating-model decisions,
+4. use `../../plan/infrastructure-olares-full-implementation-roadmap-1.md`, `../architecture/OLARES-POST-CLOSURE-EXECUTION-CHECKLIST-2026-04-25.md`, and `../architecture/OLARES-PUBLICATION-BOUNDARY-RETIREMENT-DEPENDENCY-INVENTORY-2026-05-06.md` for maintained closeout, rerun, and residue-routing work,
+5. treat `OLARES-BUILD-GUIDE.md`, `../operations/OLARES-CHECKLIST.md`, and `../operations/OLARES-VSCODE-BUILD-SESSION-PROMPT.md` as retained first-run references unless a deliberate replay or audit needs them.
 
 ## Role Of This Index
 
@@ -34,7 +35,8 @@ Current strategic authority order for repo-boundary and platform-shape questions
 3. `../architecture/APEX-REPO-FOUNDATION-AND-CUTOVER-PLAN-2026-05-07.md`
 4. `PLATFORM-DATA-AND-SCHEMA-STRATEGY-2026-04-12.md`
 5. `MULTI-AGENT-OPERATING-MODEL-2026-04-12.md`
-6. `../../plan/infrastructure-olares-full-implementation-roadmap-1.md`
+6. `APEX-OPS-DELEGATED-AUTHORITY-AND-AI-ORCHESTRATION-PROTOCOL-2026-05-15.md`
+7. `../../plan/infrastructure-olares-full-implementation-roadmap-1.md`
 
 The older `MONOREPO-TARGET-TOPOLOGY-2026-04-12.md` and `MIGRATION-ROADMAP-2026-04-12.md` remain useful as historical design input, but the current actionable repo-shape and execution authority now live in the repo-owned cutover and roadmap surfaces.
 
@@ -60,6 +62,7 @@ Use these repo-owned authority documents first when the question is local implem
 - `ENVIRONMENT-CONTRACT-MAP-2026-04-12.md`
 - `PLATFORM-DATA-AND-SCHEMA-STRATEGY-2026-04-12.md`
 - `MULTI-AGENT-OPERATING-MODEL-2026-04-12.md`
+- `APEX-OPS-DELEGATED-AUTHORITY-AND-AI-ORCHESTRATION-PROTOCOL-2026-05-15.md`
 - `OLARES-AI-BACKBONE-FRAMEWORK-2026-05-08.md`
 - `PYTHON-FRAMEWORK-GUIDELINES-2026-04-27.md`
 

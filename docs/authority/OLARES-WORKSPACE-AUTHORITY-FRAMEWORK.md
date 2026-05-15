@@ -14,8 +14,9 @@ Current routing:
 
 1. use `../architecture/APEX-REPO-FOUNDATION-AND-CUTOVER-PLAN-2026-05-07.md` for repo-shell and git-boundary decisions,
 2. use `../architecture/OLARES-ONE-WORKSPACE-DESIGN-GOVERNANCE-AND-IMPLEMENTATION-PLAN-2026-05-06.md` for the current Olares operating model,
-3. use `../../plan/infrastructure-olares-full-implementation-roadmap-1.md` and `../architecture/OLARES-POST-CLOSURE-EXECUTION-CHECKLIST-2026-04-25.md` for maintained closeout, rerun, and trigger guidance,
-4. treat the original MVP roadmap, build guide, checklist, and build-session prompt as retained first-run references unless a deliberate replay or audit requires them.
+3. use `APEX-OPS-DELEGATED-AUTHORITY-AND-AI-ORCHESTRATION-PROTOCOL-2026-05-15.md` for standing delegated technical authority, PM coordination, external AI executor orchestration, audit, approval, and closeout rules,
+4. use `../../plan/infrastructure-olares-full-implementation-roadmap-1.md` and `../architecture/OLARES-POST-CLOSURE-EXECUTION-CHECKLIST-2026-04-25.md` for maintained closeout, rerun, and trigger guidance,
+5. treat the original MVP roadmap, build guide, checklist, and build-session prompt as retained first-run references unless a deliberate replay or audit requires them.
 
 ## 1. Purpose
 
@@ -40,10 +41,11 @@ The Olares authority order is:
 7. `OLARES-BUILD-GUIDE.md`
 8. `../operations/OLARES-CHECKLIST.md`
 9. `../operations/OLARES-VSCODE-BUILD-SESSION-PROMPT.md`
-10. `../operations/OLARES-AI-DELEGATED-DUAL-LANE-EXECUTION-CHECKLIST-2026-05-13.md`
-11. `../operations/OLARES-AI-DELEGATED-DUAL-LANE-OPERATOR-PROMPT-TEMPLATE-2026-05-13.md`
-12. `../operations/OLARES-AI-DELEGATED-DUAL-LANE-COORDINATOR-CLOSEOUT-TEMPLATE-2026-05-13.md`
-13. `../operations/OLARES-AI-DELEGATED-DUAL-LANE-PACKET-TEMPLATE-2026-05-13.md`
+10. `APEX-OPS-DELEGATED-AUTHORITY-AND-AI-ORCHESTRATION-PROTOCOL-2026-05-15.md`
+11. `../operations/OLARES-AI-DELEGATED-DUAL-LANE-EXECUTION-CHECKLIST-2026-05-13.md`
+12. `../operations/OLARES-AI-DELEGATED-DUAL-LANE-OPERATOR-PROMPT-TEMPLATE-2026-05-13.md`
+13. `../operations/OLARES-AI-DELEGATED-DUAL-LANE-COORDINATOR-CLOSEOUT-TEMPLATE-2026-05-13.md`
+14. `../operations/OLARES-AI-DELEGATED-DUAL-LANE-PACKET-TEMPLATE-2026-05-13.md`
 
 This order is mandatory.
 
@@ -256,6 +258,7 @@ Current proof floor:
 13. Packet `2026-05-13-olares-dev-residency-841` remains the higher-level guidance realignment floor.
 14. Packet `2026-05-13-olares-dev-residency-842` remains the post-guidance control realignment refresh floor.
 15. Packet `2026-05-14-olares-dev-residency-843` remains the higher-level guidance realignment refresh floor.
+16. The alternating delegated Packet 844 through Packet 916 template and floor-refresh sequence is tracked in `../../PROJECT_STATUS.md` and the delegated packet templates; Packet 916 is the current closed operator-prompt-template packet-definition floor as of 2026-05-15.
 
 ### Phase D - First service graduation
 
@@ -336,6 +339,8 @@ This means:
 1. code that only runs in compose is not complete
 2. code that bypasses `apex-jobs` provenance and env tagging is not complete
 3. code that reaches the public internet without later explicit authorization is non-compliant
+
+When Codex is operating under standing delegated technical authority and PM responsibility, use `APEX-OPS-DELEGATED-AUTHORITY-AND-AI-ORCHESTRATION-PROTOCOL-2026-05-15.md` as the governing role, delegation, audit, approval, lane-priority, and closeout overlay. That overlay does not widen this framework's Olares workspace, ingress, service, or promotion boundaries by implication.
 
 ## 8. Recorded First-Pass Authoring Backlog
 

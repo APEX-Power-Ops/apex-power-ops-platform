@@ -1,6 +1,6 @@
 # Multi-Agent Operating Model
 ## Date: 2026-04-12
-## Status: Recommended future-state AI operating model
+## Status: Active repo-owned AI operating model with 2026-05-15 delegated-authority overlay
 
 _Repo-owned authority copy established 2026-05-07 so the strategic multi-agent governance model lives inside the canonical repo boundary._
 _Keep the parent-root `Platform-Authority` copy aligned as a historical mirror until the broader strategic-authority relocation lane is complete._
@@ -21,6 +21,11 @@ The system should support:
 
 Chat is not state.
 Tracked files, structured packets, queue state, and auditable logs are state.
+
+Active overlay:
+
+- `APEX-OPS-DELEGATED-AUTHORITY-AND-AI-ORCHESTRATION-PROTOCOL-2026-05-15.md` governs standing delegated technical repo authority, PM coordination, external Codex or Claude Code executor orchestration, audit, approval, and bounded closeout.
+- This model remains the role and artifact baseline; the delegated-authority protocol is the current operating rule for how those roles are applied in live APEX Ops and Olares One work.
 
 ## 3. Agent Roles
 
@@ -74,6 +79,8 @@ Owns:
 - artifact acceptance
 
 One human or AI can play multiple roles, but the task packet must still declare the active role.
+
+As of 2026-05-15, Codex may act as coordinator, technical repo authority, project manager, reviewer, release gate, and direct executor for bounded work admitted by repo authority. External Codex and Claude Code sessions are treated as bounded executors unless a packet explicitly assigns a narrower review or planning role.
 
 ## 4. Required Artifacts
 
