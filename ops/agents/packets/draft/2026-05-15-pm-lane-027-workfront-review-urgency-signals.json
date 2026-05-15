@@ -1,0 +1,90 @@
+{
+  "packet_id": "2026-05-15-pm-lane-027",
+  "title": "PM Workfront Review-Urgency Signals",
+  "objective": "Tighten local frontend-only PM workfront scan context by surfacing compact row-level PM signals from existing read-only workfront fields, lens tags, submitted snapshot context, blocker posture, owner gaps, and latest PM disposition context while preserving existing Review actions grouping, destinations, return context, and zero-mutation posture.",
+  "domain": "pm-domain",
+  "active_role": "PM Runtime Product Coordinator",
+  "repo_paths": [
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/app/pm-review/workfront/page.tsx",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/tests/browser-shell.pm-workfront.smoke.spec.ts",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "dependencies": [
+    "2026-05-15-pm-lane-012",
+    "2026-05-15-pm-lane-026",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-026-workfront-review-action-grouping-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/app/pm-review/workfront/page.tsx",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/tests/browser-shell.pm-workfront.smoke.spec.ts",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/tests/browser-shell.approval-context.smoke.spec.ts",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/tests/browser-shell.static-surfaces.smoke.spec.ts"
+  ],
+  "orchestration_inputs": [
+    "PM Lane 012 remains the deployment gate for hosted mutation-seam parity and live PM proof.",
+    "PM Lane 026 identified PM workfront scan context around disposition history and review urgency as the next local product slice.",
+    "Read-only product scout 019e2ce1-68b4-7533-bd45-1e403fbf72e1 confirmed the strongest Lane 027 slice is an always-visible, read-only PM signal strip using existing row and snapshot fields.",
+    "Read-only governance scout 019e2ce1-68f0-7043-9e5b-e3d0a09ea8b9 supplied the scan-context packet, handoff, status, validation, guardrail, and host parity closeout shape.",
+    "Coordinator execution kept write ownership local to operations-web frontend, focused browser proof, and governance surfaces while scouts ran as parallel read-only lanes."
+  ],
+  "constrained_outputs": [
+    "PM workfront now computes compact row-level PM signals from existing read-only workfront fields.",
+    "Signals include Needs PM disposition, Stale blocker, Returned to lead, Ready for PM review, Submitted snapshot, Owner unassigned, and open issue count where applicable.",
+    "PM signals render as non-interactive badges in a row-level region above schedule drillthrough links.",
+    "Signals update after the existing PM-clicked return-to-lead path, showing Returned to lead and dropping Stale blocker while preserving the existing review-action behavior.",
+    "The focused PM workfront smoke asserts scan-context rendering for blocked, PM-review, and unassigned rows, signal non-interactivity, no initial decision-history read, grouped review-action links, downstream return links, and zero-mutation posture before intentional PM disposition."
+  ],
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/app/pm-review/workfront/page.tsx",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/tests/browser-shell.pm-workfront.smoke.spec.ts",
+    "C:/APEX Platform/apex-power-ops-platform/PROJECT_STATUS.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-15-pm-lane-027-workfront-review-urgency-signals.json",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-027-workfront-review-urgency-signals-handoff.md"
+  ],
+  "validation_steps": [
+    "corepack pnpm --dir C:/APEX Platform/apex-power-ops-platform --filter @apex/operations-web typecheck",
+    "corepack pnpm --dir C:/APEX Platform/apex-power-ops-platform --filter @apex/operations-web build",
+    "CI=1 corepack pnpm --dir C:/APEX Platform/apex-power-ops-platform --filter @apex/operations-web exec playwright test tests/browser-shell.pm-workfront.smoke.spec.ts",
+    "CI=1 corepack pnpm --dir C:/APEX Platform/apex-power-ops-platform --filter @apex/operations-web exec playwright test tests/browser-shell.approval-context.smoke.spec.ts",
+    "CI=1 corepack pnpm --dir C:/APEX Platform/apex-power-ops-platform --filter @apex/operations-web exec playwright test tests/browser-shell.static-surfaces.smoke.spec.ts",
+    "git diff --check"
+  ],
+  "validation_results": [
+    "operations-web typecheck passed",
+    "operations-web production build passed",
+    "focused PM workfront Playwright proof passed 1/1",
+    "focused approval-context Playwright proof passed 4/4",
+    "focused static-surfaces Playwright proof passed 1/1",
+    "git diff --check passed"
+  ],
+  "not_allowed": [
+    "No backend endpoint change.",
+    "No read API shape change.",
+    "No approval route change.",
+    "No approval mutation behavior change.",
+    "No package script change.",
+    "No SQL or schema migration.",
+    "No live database write.",
+    "No seed or fixture replay.",
+    "No service admission.",
+    "No auth or ingress widening.",
+    "No assignment mutation.",
+    "No schedule mutation.",
+    "No Operations Visibility reopening.",
+    "No Vercel promotion.",
+    "No Render deployment action.",
+    "No AI helper mutation.",
+    "No AI service admission widening.",
+    "No autonomous AI business-state mutation."
+  ],
+  "handoff_target": "Delegated Technical Repo Authority",
+  "status": "complete",
+  "execution_result": "PASS_LOCAL_FRONTEND_ONLY_HOSTED_PROOF_DEFERRED_TO_PM_LANE_012",
+  "delegation_status": "coordinator-executed-with-parallel-read-only-scouts",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-027-workfront-review-urgency-signals-handoff.md"
+  ],
+  "sql_permission": false,
+  "sql_permission_note": "Packet 2026-05-15-pm-lane-027 does not authorize SQL writes, schema migration, live data mutation, seed or fixture replay, auth widening, ingress widening, schedule mutation, assignment mutation, Vercel promotion, Render deployment action, AI helper mutation, AI service admission widening, or autonomous AI business-state mutation.",
+  "ai_mutation_authority": "not_admitted",
+  "created_at": "2026-05-15",
+  "updated_at": "2026-05-15"
+}

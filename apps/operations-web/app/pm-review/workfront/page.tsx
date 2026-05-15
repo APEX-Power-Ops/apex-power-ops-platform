@@ -118,6 +118,12 @@ type ReviewAction = {
   group: 'issue' | 'work'
 }
 
+type ReviewSignal = {
+  key: string
+  label: string
+  tone: 'attention' | 'warning' | 'ok' | 'neutral'
+}
+
 type WorkfrontPayload = {
   summary?: WorkfrontSummary
   lenses?: WorkfrontLenses
@@ -345,6 +351,44 @@ function workfrontSnapshotReviewLink(snapshot: ReviewSnapshot | null) {
     detailId: snapshot.id,
     ...WORKFRONT_RETURN_CONTEXT,
   })
+}
+
+function compactReviewSignals(signals: Array<ReviewSignal | null>) {
+  return signals.filter((signal): signal is ReviewSignal => Boolean(signal?.label))
+}
+
+function reviewSignalTone(tone: ReviewSignal['tone']) {
+  switch (tone) {
+    case 'attention':
+      return { background: 'rgba(122, 61, 44, 0.12)', color: 'var(--defer)', borderColor: 'rgba(122, 61, 44, 0.22)' }
+    case 'warning':
+      return { background: 'rgba(163, 94, 26, 0.12)', color: 'var(--warn)', borderColor: 'rgba(163, 94, 26, 0.22)' }
+    case 'ok':
+      return { background: 'rgba(45, 122, 85, 0.12)', color: 'var(--ok)', borderColor: 'rgba(45, 122, 85, 0.22)' }
+    default:
+      return { background: 'rgba(89, 106, 119, 0.1)', color: 'var(--muted)', borderColor: 'rgba(89, 106, 119, 0.2)' }
+  }
+}
+
+function workfrontReviewSignals(row: WorkfrontRow, submittedSnapshot: ReviewSnapshot | null) {
+  const lensTags = new Set(row.lens_tags || [])
+  const openIssueCount = row.open_issue_count ?? row.blocker_count ?? 0
+
+  return compactReviewSignals([
+    lensTags.has('needs_pm_disposition') || row.returnable_issue_id
+      ? { key: 'needs-pm-disposition', label: 'Needs PM disposition', tone: 'attention' }
+      : null,
+    lensTags.has('stale_blocker') ? { key: 'stale-blocker', label: 'Stale blocker', tone: 'warning' } : null,
+    lensTags.has('returned_to_lead') || row.latest_pm_followup_note
+      ? { key: 'returned-to-lead', label: 'Returned to lead', tone: 'ok' }
+      : null,
+    rowNeedsPmReview(row) ? { key: 'pm-review', label: 'Ready for PM review', tone: 'attention' } : null,
+    submittedSnapshot?.id ? { key: 'submitted-snapshot', label: 'Submitted snapshot', tone: 'attention' } : null,
+    lensTags.has('unassigned') || !row.owner_name ? { key: 'owner-unassigned', label: 'Owner unassigned', tone: 'warning' } : null,
+    openIssueCount > 0
+      ? { key: 'open-issues', label: `${openIssueCount} open issue${openIssueCount === 1 ? '' : 's'}`, tone: 'neutral' }
+      : null,
+  ])
 }
 
 function compactReviewActions(actions: Array<ReviewAction | null>) {
@@ -610,8 +654,10 @@ export default function PmWorkfrontPage() {
               const escalationReviewLink = workfrontEscalationReviewLink(escalatedIssue?.id)
               const taskReviewLink = workfrontTaskReviewLink(row)
               const workPackageReviewLink = workfrontWorkPackageReviewLink(row)
-              const snapshotReviewLink = workfrontSnapshotReviewLink(workfrontSubmittedSnapshot(row, reviewSnapshots))
+              const submittedSnapshot = workfrontSubmittedSnapshot(row, reviewSnapshots)
+              const snapshotReviewLink = workfrontSnapshotReviewLink(submittedSnapshot)
               const decisionHistoryLink = workfrontDecisionHistoryLink(row)
+              const reviewSignals = workfrontReviewSignals(row, submittedSnapshot)
               const reviewActions = compactReviewActions([
                 escalationReviewLink ? { key: 'escalation', label: 'Review escalation', href: escalationReviewLink, group: 'issue' } : null,
                 taskReviewLink ? { key: 'task', label: 'Review task', href: taskReviewLink, group: 'work' } : null,
@@ -653,6 +699,34 @@ export default function PmWorkfrontPage() {
                 <p style={{ margin: '0.35rem 0 0', color: 'var(--muted)', lineHeight: 1.5 }}>
                   Checklist {row.checklist_complete_count ?? 0}/{row.checklist_total_count ?? 0} · {row.open_issue_count ?? 0} open issue{row.open_issue_count === 1 ? '' : 's'}
                 </p>
+                {reviewSignals.length ? (
+                  <div
+                    role="region"
+                    aria-label={`PM signals for ${rowName}`}
+                    style={{ display: 'flex', gap: '0.45rem', flexWrap: 'wrap', marginTop: '0.65rem' }}
+                  >
+                    {reviewSignals.map((signal) => {
+                      const toneStyle = reviewSignalTone(signal.tone)
+                      return (
+                        <span
+                          key={signal.key}
+                          style={{
+                            ...toneStyle,
+                            border: `1px solid ${toneStyle.borderColor}`,
+                            borderRadius: 999,
+                            padding: '0.24rem 0.55rem',
+                            fontSize: '0.74rem',
+                            fontFamily: 'var(--font-mono), monospace',
+                            textTransform: 'uppercase',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          {signal.label}
+                        </span>
+                      )
+                    })}
+                  </div>
+                ) : null}
                 <div
                   aria-label={`Schedule drillthrough for ${rowName}`}
                   style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.65rem' }}
