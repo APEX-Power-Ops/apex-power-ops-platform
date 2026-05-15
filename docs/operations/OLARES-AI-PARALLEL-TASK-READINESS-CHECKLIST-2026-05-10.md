@@ -189,15 +189,16 @@ Current proof floor for this cadence:
 - Packet 911 is the prior delegated packet-template operator-prompt floor refresh floor
 - Packet 912 is the prior delegated operator-prompt-template packet-definition floor refresh floor
 - Packet 913 is the prior delegated packet-template operator-prompt floor refresh floor
-- Packet 914 is the current delegated operator-prompt-template packet-definition floor refresh floor
+- Packet 914 is the prior delegated operator-prompt-template packet-definition floor refresh floor
 - Packet 915 is the current delegated packet-template operator-prompt floor refresh floor
+- Packet 916 is the current delegated operator-prompt-template packet-definition floor refresh floor
 
 ## Current Delegated Template Stack
 
 Use the published delegated stack for any later bounded AI/operator packet that keeps the helper lane unchanged:
 
 - route delegated split ownership, validation order, and abort rules through Packet 831 and `docs/operations/OLARES-AI-DELEGATED-DUAL-LANE-EXECUTION-CHECKLIST-2026-05-13.md`
-- route packet-specific operator prompts through Packet 832 as extended by Packet 858, Packet 860, Packet 862, Packet 864, Packet 866, Packet 868, Packet 870, Packet 872, Packet 874, Packet 876, Packet 878, Packet 880, Packet 882, Packet 884, Packet 886, Packet 888, Packet 890, Packet 892, Packet 894, Packet 896, Packet 898, Packet 900, Packet 902, Packet 904, Packet 906, Packet 908, Packet 910, Packet 912, and Packet 914 and `docs/operations/OLARES-AI-DELEGATED-DUAL-LANE-OPERATOR-PROMPT-TEMPLATE-2026-05-13.md`
+- route packet-specific operator prompts through Packet 832 as extended by Packet 858, Packet 860, Packet 862, Packet 864, Packet 866, Packet 868, Packet 870, Packet 872, Packet 874, Packet 876, Packet 878, Packet 880, Packet 882, Packet 884, Packet 886, Packet 888, Packet 890, Packet 892, Packet 894, Packet 896, Packet 898, Packet 900, Packet 902, Packet 904, Packet 906, Packet 908, Packet 910, Packet 912, Packet 914, and Packet 916 and `docs/operations/OLARES-AI-DELEGATED-DUAL-LANE-OPERATOR-PROMPT-TEMPLATE-2026-05-13.md`
 - route coordinator closeout wording through Packet 833 and `docs/operations/OLARES-AI-DELEGATED-DUAL-LANE-COORDINATOR-CLOSEOUT-TEMPLATE-2026-05-13.md`
 - route delegated packet JSON authoring through Packet 834 as extended by Packet 855, Packet 857, Packet 859, Packet 861, Packet 867, Packet 869, Packet 871, Packet 873, Packet 875, Packet 877, Packet 879, Packet 881, Packet 883, Packet 885, Packet 887, Packet 889, Packet 891, Packet 893, Packet 895, Packet 897, Packet 899, Packet 901, Packet 903, Packet 905, Packet 907, Packet 909, Packet 911, Packet 913, and Packet 915 and `docs/operations/OLARES-AI-DELEGATED-DUAL-LANE-PACKET-TEMPLATE-2026-05-13.md`
 - route delegated objective selection through Packet 847 and `docs/operations/OLARES-AI-DELEGATED-DUAL-LANE-OBJECTIVE-SELECTION-RUBRIC-2026-05-14.md`
