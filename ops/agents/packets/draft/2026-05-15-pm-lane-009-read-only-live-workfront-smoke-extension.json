@@ -1,0 +1,59 @@
+{
+  "packet_id": "2026-05-15-pm-lane-009",
+  "title": "PM Read-Only Live Workfront Smoke Extension",
+  "objective": "Extend the existing operations-web PM live-data smoke so deployment-time proof covers the PM workfront read model and row-scoped decision-history read without introducing any mutation, schema, service, auth, or ingress scope.",
+  "domain": "pm-domain",
+  "active_role": "PM Runtime Product Coordinator",
+  "repo_paths": [
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam",
+    "C:/APEX Platform/apex-power-ops-platform/docs/authority/APEX-OPS-DELEGATED-AUTHORITY-AND-AI-ORCHESTRATION-PROTOCOL-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "dependencies": [
+    "2026-05-15-pm-lane-008",
+    "docs/authority/APEX-OPS-DELEGATED-AUTHORITY-AND-AI-ORCHESTRATION-PROTOCOL-2026-05-15.md",
+    "ops/agents/handoffs/2026-05-15-pm-lane-008-decision-history-query-narrowing-handoff.md"
+  ],
+  "required_inputs": [
+    "PM Lane 008 decision-history query narrowing",
+    "PM Lane 007 PASS_WITH_EMPTY_LIVE_HISTORY verdict",
+    "Read-only backend/live-smoke scout 019e2c59-1e3a-7d72-86c2-e8a7637bd302",
+    "Read-only frontend/package scout 019e2c59-1e79-7560-8cf2-f7a7f84e187b",
+    "Local syntax, build, typecheck, and mocked workfront browser-smoke validation evidence"
+  ],
+  "constrained_outputs": [
+    "Existing smoke:pm-live-data runner now checks GET /api/v1/reads/pm-workfront shape and AI authority",
+    "Existing smoke:pm-live-data runner now checks row-scoped GET /api/v1/reads/decision-history?entity_id=...&limit=25 and accepts empty history truthfully",
+    "Existing hosted PM live-data Playwright spec now verifies same-origin PM workfront and narrowed decision-history reads through operations-web ingress",
+    "Playwright live-data smoke now installs a mutation sentinel for /api/v1/mutations/** and asserts no mutation request occurs",
+    "No new package script, no new endpoint, no SQL or schema migration, no live database write, no service admission, no auth or ingress widening, no assignment mutation, no schedule mutation, and no autonomous AI business-state action"
+  ],
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/scripts/smoke-pm-live-data.mjs",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/tests/browser-shell.pm-live-data.smoke.spec.ts",
+    "C:/APEX Platform/apex-power-ops-platform/PROJECT_STATUS.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-15-pm-lane-009-read-only-live-workfront-smoke-extension.json",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-009-read-only-live-workfront-smoke-extension-handoff.md"
+  ],
+  "validation_steps": [
+    "Run node syntax check for the smoke-pm-live-data runner",
+    "Run operations-web typecheck",
+    "Run operations-web production build",
+    "Run focused mocked PM workfront Playwright smoke",
+    "Record that the actual hosted smoke command is deployment-targeted and was not run against production before this clean-main change is deployed",
+    "Run packet JSON validation and git diff whitespace checks before publication"
+  ],
+  "handoff_target": "Delegated Technical Repo Authority",
+  "status": "complete",
+  "execution_result": "PASS_LOCAL_READY",
+  "delegation_status": "complete",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-009-read-only-live-workfront-smoke-extension-handoff.md"
+  ],
+  "sql_permission": false,
+  "sql_permission_note": "Packet 2026-05-15-pm-lane-009 changes only existing operations-web smoke tooling and tests. No SQL, schema migration, production data write, auth, ingress, backend endpoint, or new mutation authority is authorized.",
+  "ai_mutation_authority": "not_admitted",
+  "created_at": "2026-05-15",
+  "updated_at": "2026-05-15"
+}
