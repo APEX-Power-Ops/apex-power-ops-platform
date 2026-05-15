@@ -217,7 +217,8 @@ def scenario_escalation(c: HarnessClient) -> ScenarioResult:
 
     r = c.post(TOKENS["pm"], "issues", {
         "entity_id": "issue-001", "action_type": "resolve_escalated", "mutation_class": "C",
-        "idempotency_key": ukey("pm-res"), "source": "online", "payload": {"status": "resolved"}
+        "idempotency_key": ukey("pm-res"), "source": "online", "payload": {"status": "resolved"},
+        "reason": "PM reviewed and resolved escalated issue"
     })
     res.steps.append(StepResult("PM resolves escalated issue", r["status"] == "accepted", f"status={r['status']}"))
 

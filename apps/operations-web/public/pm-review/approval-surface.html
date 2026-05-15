@@ -481,7 +481,7 @@
                     result.status === 'accepted' ? '✓ Done' : `✗ ${result.error?.message || 'Failed'}`),
                   React.createElement('div', { className: 'flex gap-2' },
                     React.createElement('button', { className: 'btn btn-approve', onClick: () => doAction(issue.id, 'resolve_escalated', { status: 'resolved' }) }, 'Resolve'),
-                    React.createElement('button', { className: 'btn btn-escalate', onClick: () => doAction(issue.id, 're_escalate', {}) }, 'Re-escalate'),
+                    React.createElement('button', { className: 'btn btn-escalate', onClick: () => doAction(issue.id, 're_escalate', { status: 'escalated' }) }, 'Re-escalate'),
                     React.createElement('button', { className: 'btn btn-return', onClick: () => doAction(issue.id, 'return_to_lead', { status: 'in_review' }) }, 'Return to Lead'),
                     React.createElement('button', { className: 'btn btn-outline', onClick: () => { setActiveIssue(null); setReason(''); } }, 'Cancel'),
                   ),

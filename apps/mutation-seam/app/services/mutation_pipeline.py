@@ -16,6 +16,23 @@ from app.envelope.response import MutationResponse
 from app.idempotency.store import check_idempotency, save_idempotency
 from app.lifecycle.transitions import validate_transition
 
+PM_ISSUE_DISPOSITIONS: Dict[str, Dict[str, str]] = {
+    "resolve_escalated": {
+        "source_status": "escalated",
+        "target_status": "resolved",
+        "label": "resolved",
+    },
+    "re_escalate": {
+        "source_status": "in_review",
+        "target_status": "escalated",
+        "label": "re-escalated",
+    },
+    "return_to_lead": {
+        "source_status": "escalated",
+        "target_status": "in_review",
+        "label": "returned to lead review",
+    },
+}
 
 # Action registry: maps (entity_type, action_type) to mutation metadata.
 # Action names are scoped per entity family, matching the UI-006 spec 1.3.
@@ -313,8 +330,8 @@ async def execute_mutation(
     if not request.payload:
         request.payload = {}
 
-    if entity_type == "issue" and request.action_type == "return_to_lead":
-        disposition_error = _validate_issue_return_to_lead(request, actor, from_state)
+    if entity_type == "issue" and request.action_type in PM_ISSUE_DISPOSITIONS:
+        disposition_error = _validate_pm_issue_disposition(request, actor, from_state)
         if disposition_error:
             save_idempotency(request.idempotency_key, disposition_error)
             return disposition_error
@@ -416,12 +433,16 @@ def _get_store_for_entity_type(entity_type: str) -> Dict[str, Any]:
     return stores.get(entity_type, {})
 
 
-def _validate_issue_return_to_lead(
+def _validate_pm_issue_disposition(
     request: MutationRequest,
     actor: Actor,
     from_state: Dict[str, Any],
 ) -> Optional[MutationResponse]:
     """Validate PM issue disposition semantics beyond generic issue transitions."""
+    disposition = PM_ISSUE_DISPOSITIONS[request.action_type]
+    source_status = disposition["source_status"]
+    target_status = disposition["target_status"]
+
     project_id = from_state.get("project_id")
     if not project_id or not check_scope(actor, project_id):
         return error_response(
@@ -433,20 +454,20 @@ def _validate_issue_return_to_lead(
             detail={"project_id": project_id, "actor_scope": actor.project_scope},
         )
 
-    if str(from_state.get("status") or "").lower() != "escalated":
+    if str(from_state.get("status") or "").lower() != source_status:
         return error_response(
             code=ErrorCode.PRECONDITION_FAILED,
-            message="Only escalated issues can be returned to lead review",
+            message=f"Only {source_status} issues can be {disposition['label']}",
             entity_id=request.entity_id or "unknown",
             entity_type="issue",
             action_type=request.action_type,
             detail={"current_status": from_state.get("status")},
         )
 
-    if request.payload.get("status") != "in_review":
+    if request.payload.get("status") != target_status:
         return error_response(
             code=ErrorCode.INVALID_PAYLOAD,
-            message="return_to_lead requires payload.status to be in_review",
+            message=f"{request.action_type} requires payload.status to be {target_status}",
             entity_id=request.entity_id or "unknown",
             entity_type="issue",
             action_type=request.action_type,
@@ -456,7 +477,7 @@ def _validate_issue_return_to_lead(
     if not (request.reason or "").strip():
         return error_response(
             code=ErrorCode.INVALID_PAYLOAD,
-            message="return_to_lead requires a PM disposition reason",
+            message=f"{request.action_type} requires a PM disposition reason",
             entity_id=request.entity_id or "unknown",
             entity_type="issue",
             action_type=request.action_type,

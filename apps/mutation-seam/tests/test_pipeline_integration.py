@@ -266,6 +266,84 @@ def test_pm_return_to_lead_issue_disposition_is_audited_and_idempotent(client):
     assert returned_history["timestamp"] == audit_entries[0]["server_timestamp"]
 
 
+@pytest.mark.parametrize(
+    ("action_type", "source_status", "target_status"),
+    [
+        ("resolve_escalated", "escalated", "resolved"),
+        ("re_escalate", "in_review", "escalated"),
+    ],
+)
+def test_pm_issue_disposition_siblings_are_audited_and_idempotent(
+    client,
+    action_type,
+    source_status,
+    target_status,
+):
+    """Sibling PM issue dispositions require explicit status and audit exactly once."""
+    from app.db.memory_store import store
+
+    issue = store.issues["issue-002"].copy()
+    issue["status"] = source_status
+    issue["blocks_completion"] = True
+    store.issues["issue-002"] = issue
+
+    idempotency_key = str(uuid4())
+    payload = {
+        "idempotency_key": idempotency_key,
+        "mutation_class": "C",
+        "action_type": action_type,
+        "entity_id": "issue-002",
+        "payload": {
+            "status": target_status,
+            "pm_disposition": action_type,
+        },
+        "reason": f"PM issue disposition {action_type}",
+        "source": "online",
+        "client_timestamp": "2026-05-15T16:10:00Z",
+    }
+
+    first = client.post(
+        "/api/v1/mutations/issues",
+        json=payload,
+        headers={"Authorization": _make_token("pm-001", "pm")},
+    )
+
+    assert first.status_code == 200
+    first_data = first.json()
+    assert first_data["status"] == "accepted"
+    assert first_data["entity_type"] == "issue"
+    assert first_data["action_type"] == action_type
+    assert first_data["new_state"]["status"] == target_status
+    assert first_data["new_state"]["pm_disposition"] == action_type
+
+    audit_entries = [entry for entry in store.audit_log if entry["id"] == first_data["audit_event_id"]]
+    assert len(audit_entries) == 1
+    assert audit_entries[0]["actor_role"] == "pm"
+    assert audit_entries[0]["action_type"] == action_type
+    assert audit_entries[0]["from_state"]["status"] == source_status
+    assert audit_entries[0]["to_state"]["status"] == target_status
+
+    duplicate = client.post(
+        "/api/v1/mutations/issues",
+        json={
+            **payload,
+            "payload": {
+                "status": "in_review" if target_status == "resolved" else "resolved",
+                "pm_disposition": "ignored_by_idempotency",
+            },
+        },
+        headers={"Authorization": _make_token("pm-001", "pm")},
+    )
+
+    assert duplicate.status_code == 200
+    duplicate_data = duplicate.json()
+    assert duplicate_data["status"] == "idempotent_hit"
+    assert duplicate_data["mutation_id"] == first_data["mutation_id"]
+    assert duplicate_data["new_state"]["status"] == target_status
+    assert duplicate_data["new_state"]["pm_disposition"] == action_type
+    assert len([entry for entry in store.audit_log if entry["mutation_id"] == first_data["mutation_id"]]) == 1
+
+
 def test_decision_history_normalizes_timestamp_shapes(client):
     """Decision-history reads sort memory and persisted audit timestamp shapes consistently."""
     from app.db.memory_store import store

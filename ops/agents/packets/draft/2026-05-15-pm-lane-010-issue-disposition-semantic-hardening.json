@@ -1,0 +1,68 @@
+{
+  "packet_id": "2026-05-15-pm-lane-010",
+  "title": "PM Issue Disposition Semantic Hardening",
+  "objective": "Harden the existing Class C issue disposition seam so PM resolve_escalated, re_escalate, and return_to_lead actions require explicit source status, target status, actor project scope, and PM reason without adding any endpoint, service, schema, auth, ingress, or autonomous AI mutation authority.",
+  "domain": "pm-domain",
+  "active_role": "PM Runtime Product Coordinator",
+  "repo_paths": [
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web",
+    "C:/APEX Platform/apex-power-ops-platform/docs/authority/APEX-OPS-DELEGATED-AUTHORITY-AND-AI-ORCHESTRATION-PROTOCOL-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "dependencies": [
+    "2026-05-15-pm-lane-009",
+    "2026-05-15-pm-lane-003",
+    "docs/authority/APEX-OPS-DELEGATED-AUTHORITY-AND-AI-ORCHESTRATION-PROTOCOL-2026-05-15.md",
+    "ops/agents/handoffs/2026-05-15-pm-lane-009-read-only-live-workfront-smoke-extension-handoff.md"
+  ],
+  "required_inputs": [
+    "PM Lane 009 read-only live workfront smoke extension",
+    "PM Lane 003 return_to_lead semantic hardening precedent",
+    "Frontend/package scout 019e2c63-f15f-7b31-98fd-bcee35d52175",
+    "Backend/domain scout 019e2c64-2217-75f2-a1ce-bdf6b125b719",
+    "Read-only hosted smoke attempt showing mutation-seam schedule/projects HTTP 500 and pm-workfront HTTP 404 on the public host"
+  ],
+  "constrained_outputs": [
+    "Shared PM issue-disposition validator now covers return_to_lead, resolve_escalated, and re_escalate",
+    "resolve_escalated requires an escalated source issue, payload.status=resolved, actor project scope, and non-empty PM reason",
+    "re_escalate requires an in_review source issue, payload.status=escalated, actor project scope, and non-empty PM reason",
+    "return_to_lead preserves the existing escalated source issue, payload.status=in_review, actor project scope, and non-empty PM reason contract",
+    "Existing approval and static demo callers now send explicit status or reason where the hardened seam requires it",
+    "No new endpoint, SQL, schema migration, live database write, service admission, auth or ingress widening, assignment mutation, schedule mutation, Operations Visibility reopening, or autonomous AI business-state action"
+  ],
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/services/mutation_pipeline.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests/test_pm_issue_disposition.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests/test_pipeline_integration.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/validate.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/app/pm-review/approval/page.tsx",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/public/pm-review/approval-surface.html",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/public/integration-dashboard/index.html",
+    "C:/APEX Platform/apex-power-ops-platform/PROJECT_STATUS.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-15-pm-lane-010-issue-disposition-semantic-hardening.json",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-010-issue-disposition-semantic-hardening-handoff.md"
+  ],
+  "validation_steps": [
+    "Run focused mutation-seam PM issue disposition, pipeline integration, and PM workfront read-model tests under SEAM_STORE_BACKEND=memory",
+    "Run py_compile for the changed mutation-seam service and validation harness modules",
+    "Run operations-web typecheck",
+    "Run operations-web production build",
+    "Run focused approval-context Playwright smoke",
+    "Run focused PM workfront Playwright smoke",
+    "Run packet JSON validation and git diff whitespace checks before publication",
+    "Record that hosted PM live-data proof remains blocked by stale or failing public deployment state and was not claimed as passing"
+  ],
+  "handoff_target": "Delegated Technical Repo Authority",
+  "status": "complete",
+  "execution_result": "PASS_LOCAL_HOSTED_BLOCKED",
+  "delegation_status": "complete",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-010-issue-disposition-semantic-hardening-handoff.md"
+  ],
+  "sql_permission": false,
+  "sql_permission_note": "Packet 2026-05-15-pm-lane-010 changes only existing mutation-seam issue disposition semantics, tests, validation harness calls, and existing operations-web callers. No SQL, schema migration, production data write, auth, ingress, service, or new mutation endpoint is authorized.",
+  "ai_mutation_authority": "not_admitted",
+  "created_at": "2026-05-15",
+  "updated_at": "2026-05-15"
+}

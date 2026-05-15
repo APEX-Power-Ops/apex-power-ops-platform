@@ -187,7 +187,8 @@ const SCENARIOS = [
         const r = await seamPost(TOKENS.pm, 'issues', {
           entity_id: 'issue-001', action_type: 'resolve_escalated', mutation_class: 'C',
           idempotency_key: `int-pm-resolve-esc-${Date.now()}`, source: 'online',
-          payload: { status: 'resolved' }
+          payload: { status: 'resolved' },
+          reason: 'PM reviewed and resolved escalated issue'
         });
         log(r.status === 'accepted' ? 'pass' : 'fail', `PM resolves escalated: ${r.status}`);
         return r.status === 'accepted';
