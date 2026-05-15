@@ -77,6 +77,25 @@ type WorkfrontRow = {
   }
 }
 
+type DecisionHistoryRow = {
+  id?: string
+  mutation_id?: string
+  actor_id?: string
+  actor_role?: string
+  action_type?: string
+  entity_id?: string
+  reason?: string
+  timestamp?: string
+  server_timestamp?: string
+  client_timestamp?: string
+  from_state?: {
+    status?: string
+  }
+  to_state?: {
+    status?: string
+  }
+}
+
 type WorkfrontPayload = {
   summary?: WorkfrontSummary
   lenses?: WorkfrontLenses
@@ -113,6 +132,18 @@ async function readWorkfront(): Promise<WorkfrontPayload> {
   }
 
   return (await response.json()) as WorkfrontPayload
+}
+
+async function readDecisionHistory(): Promise<DecisionHistoryRow[]> {
+  const response = await fetch(`${READS_BASE}/decision-history`, {
+    headers: { Authorization: makeToken() },
+  })
+
+  if (!response.ok) {
+    throw new Error('Failed to read PM decision history')
+  }
+
+  return (await response.json()) as DecisionHistoryRow[]
 }
 
 async function sendIssueFollowup(row: WorkfrontRow) {
@@ -177,6 +208,27 @@ function returnableIssue(row: WorkfrontRow) {
     row.blocking_issues?.find((issue) => issue.status === 'escalated')
 }
 
+function rowDecisionEntityIds(row: WorkfrontRow) {
+  const ids = new Set<string>()
+  if (row.primary_blocking_issue_id) ids.add(row.primary_blocking_issue_id)
+  if (row.returnable_issue_id) ids.add(row.returnable_issue_id)
+  if (row.last_pm_decision?.entity_id) ids.add(row.last_pm_decision.entity_id)
+  row.blocking_issues?.forEach((issue) => {
+    if (issue.id) ids.add(issue.id)
+  })
+  return ids
+}
+
+function decisionTimestamp(row: DecisionHistoryRow) {
+  return row.timestamp || row.server_timestamp || row.client_timestamp || ''
+}
+
+function decisionTransition(row: DecisionHistoryRow) {
+  const fromStatus = row.from_state?.status
+  const toStatus = row.to_state?.status
+  return fromStatus || toStatus ? `${formatLabel(fromStatus)} -> ${formatLabel(toStatus)}` : 'No status transition recorded'
+}
+
 function readinessTone(readiness?: string | null) {
   switch (readiness) {
     case 'blocked':
@@ -219,6 +271,10 @@ export default function PmWorkfrontPage() {
   const [draftRowId, setDraftRowId] = useState<string | null>(null)
   const [sendingRowId, setSendingRowId] = useState<string | null>(null)
   const [followupResult, setFollowupResult] = useState<Record<string, string>>({})
+  const [historyRows, setHistoryRows] = useState<DecisionHistoryRow[]>([])
+  const [historyLoading, setHistoryLoading] = useState(false)
+  const [historyLoaded, setHistoryLoaded] = useState(false)
+  const [historyError, setHistoryError] = useState<string | null>(null)
 
   const refresh = useCallback(async () => {
     try {
@@ -277,6 +333,20 @@ export default function PmWorkfrontPage() {
     },
     [refresh],
   )
+
+  const refreshHistory = useCallback(async () => {
+    try {
+      setHistoryLoading(true)
+      setHistoryError(null)
+      setHistoryRows(await readDecisionHistory())
+      setHistoryLoaded(true)
+    } catch (error) {
+      setHistoryRows([])
+      setHistoryError(error instanceof Error ? error.message : 'Decision history is unavailable')
+    } finally {
+      setHistoryLoading(false)
+    }
+  }, [])
 
   return (
     <main className="shell-page pm-review-page">
@@ -374,6 +444,8 @@ export default function PmWorkfrontPage() {
           {filteredRows.map((row) => (
             (() => {
               const escalatedIssue = returnableIssue(row)
+              const rowEntityIds = rowDecisionEntityIds(row)
+              const rowHistory = historyRows.filter((event) => event.entity_id && rowEntityIds.has(event.entity_id))
 
               return (
             <article
@@ -471,6 +543,53 @@ export default function PmWorkfrontPage() {
                         PM reason: {row.last_pm_decision.reason}
                       </p>
                     ) : null}
+                    <div
+                      role="region"
+                      aria-label={`Disposition history for ${row.apparatus_name || row.apparatus_id || row.id}`}
+                      style={{
+                        border: '1px solid var(--border)',
+                        borderRadius: 8,
+                        padding: '0.85rem',
+                        marginBottom: '0.75rem',
+                      }}
+                    >
+                      <div className="status-row" style={{ gap: '0.65rem', alignItems: 'center' }}>
+                        <p style={{ margin: 0, fontFamily: 'var(--font-mono), monospace', fontSize: '0.78rem', color: 'var(--brand)', textTransform: 'uppercase' }}>
+                          Disposition history
+                        </p>
+                        <button className="btn btn-outline" onClick={() => void refreshHistory()} disabled={historyLoading}>
+                          {historyLoading ? 'Loading...' : historyLoaded ? 'Refresh history' : 'View history'}
+                        </button>
+                      </div>
+                      <p style={{ margin: '0.45rem 0 0', color: 'var(--muted)', fontSize: '0.86rem', lineHeight: 1.5 }}>
+                        This history panel is read-only. Return to lead is the only mutation action on this surface.
+                      </p>
+                      {historyError ? (
+                        <p style={{ margin: '0.55rem 0 0', color: 'var(--defer)', lineHeight: 1.5 }}>{historyError}</p>
+                      ) : null}
+                      {historyLoaded && !rowHistory.length && !historyError ? (
+                        <p style={{ margin: '0.55rem 0 0', color: 'var(--muted)', lineHeight: 1.5 }}>No PM disposition recorded.</p>
+                      ) : null}
+                      {!historyError && rowHistory.length ? (
+                        <div style={{ display: 'grid', gap: '0.55rem', marginTop: '0.65rem' }}>
+                          {rowHistory.map((event) => (
+                            <div key={event.id || `${event.entity_id}-${event.timestamp}`} style={{ borderTop: '1px solid var(--border)', paddingTop: '0.55rem' }}>
+                              <p style={{ margin: 0, lineHeight: 1.5 }}>
+                                {formatLabel(event.action_type)} · {decisionTransition(event)}
+                              </p>
+                              <p style={{ margin: '0.3rem 0 0', color: 'var(--muted)', lineHeight: 1.5 }}>
+                                {decisionTimestamp(event) || 'No timestamp'} · {event.actor_role || 'unknown actor'}
+                              </p>
+                              {event.reason ? (
+                                <p style={{ margin: '0.3rem 0 0', color: 'var(--muted)', lineHeight: 1.5 }}>
+                                  PM reason: {event.reason}
+                                </p>
+                              ) : null}
+                            </div>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
                     <p style={{ margin: 0, lineHeight: 1.55 }}>
                       {row.ai_advisory?.brief ||
                         `${row.apparatus_name || row.apparatus_id} needs lead follow-up: ${row.next_action || 'Monitor for next status'}.`}

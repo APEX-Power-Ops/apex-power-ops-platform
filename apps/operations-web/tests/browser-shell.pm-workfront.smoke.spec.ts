@@ -2,10 +2,11 @@ import { expect, test } from '@playwright/test'
 
 test('pm workfront route renders read-only readiness queue from governed seam', async ({ page }) => {
   let readCalls = 0
+  let historyCalls = 0
   let returnedToLead = false
   const mutationRequests: Array<{ authorization?: string; body: any }> = []
 
-  await page.route('**/api/v1/mutations/issues', async (route) => {
+  await page.route('**/api/v1/mutations/**', async (route) => {
     mutationRequests.push({
       authorization: route.request().headers().authorization,
       body: route.request().postDataJSON(),
@@ -152,6 +153,44 @@ test('pm workfront route renders read-only readiness queue from governed seam', 
     })
   })
 
+  await page.route('**/api/v1/reads/decision-history', async (route) => {
+    historyCalls += 1
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(
+        returnedToLead
+          ? [
+              {
+                id: 'audit-return-200',
+                mutation_id: 'mutation-return-200',
+                actor_id: 'pm-001',
+                actor_role: 'pm',
+                action_type: 'return_to_lead',
+                entity_id: 'issue-200',
+                reason: 'PM returned issue issue-200 to lead review',
+                timestamp: '2026-05-15T16:30:00Z',
+                from_state: { status: 'escalated' },
+                to_state: { status: 'in_review' },
+              },
+              {
+                id: 'audit-unrelated',
+                mutation_id: 'mutation-unrelated',
+                actor_id: 'pm-001',
+                actor_role: 'pm',
+                action_type: 'approve',
+                entity_id: 'issue-999',
+                reason: 'Unrelated approval',
+                timestamp: '2026-05-15T16:00:00Z',
+                from_state: { status: 'awaiting_review' },
+                to_state: { status: 'complete' },
+              },
+            ]
+          : [],
+      ),
+    })
+  })
+
   const response = await page.goto('/pm-review/workfront', { waitUntil: 'networkidle' })
   expect(response?.ok()).toBeTruthy()
 
@@ -170,6 +209,11 @@ test('pm workfront route renders read-only readiness queue from governed seam', 
   await expect(page.getByText(/Requested lead follow-up: Resolve blocker: IR reading below threshold/i)).toBeVisible()
   await expect(page.getByRole('button', { name: /Needs PM disposition 1/i })).toBeVisible()
   await expect(page.getByRole('button', { name: /Stale blockers 1/i })).toBeVisible()
+  await page.getByRole('button', { name: /View history/i }).click()
+  const historyPanel = page.getByRole('region', { name: /Disposition history for Cable Assembly A/i })
+  await expect(historyPanel.getByText(/This history panel is read-only/i)).toBeVisible()
+  await expect(historyPanel.getByText(/No PM disposition recorded/i)).toBeVisible()
+  expect(historyCalls).toBe(1)
   expect(mutationRequests).toHaveLength(0)
 
   await page.getByRole('button', { name: /Return to lead/i }).click()
@@ -178,8 +222,13 @@ test('pm workfront route renders read-only readiness queue from governed seam', 
   await expect(page.getByText(/Last PM disposition/i)).toBeVisible()
   await expect(page.getByText(/Last PM decision .* return to lead .* in_review/i)).toBeVisible()
   await expect(page.getByText(/PM reason: PM returned issue issue-200 to lead review/i)).toBeVisible()
+  await page.getByRole('button', { name: /Refresh history/i }).click()
+  await expect(historyPanel.getByText(/return to lead .* escalated -> in review/i)).toBeVisible()
+  await expect(historyPanel.getByText(/2026-05-15T16:30:00Z .* pm/i)).toBeVisible()
+  await expect(historyPanel.getByText(/Unrelated approval/i)).toHaveCount(0)
 
   expect(mutationRequests).toHaveLength(1)
+  expect(historyCalls).toBe(2)
   const mutation = mutationRequests[0]
   const tokenPayload = JSON.parse(Buffer.from((mutation.authorization || '').replace(/^Bearer /, ''), 'base64').toString('utf8'))
   expect(tokenPayload.actor_role).toBe('pm')

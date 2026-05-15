@@ -1,0 +1,57 @@
+{
+  "packet_id": "2026-05-15-pm-lane-006",
+  "title": "PM Workfront Read-Only Decision-History Panel",
+  "objective": "Add a lazy, read-only PM disposition-history panel to the existing PM workfront row expansion by reusing the normalized decision-history read seam from PM Lane 005 and preserving return_to_lead as the only PM-clicked mutation action on the route.",
+  "domain": "pm-domain",
+  "active_role": "PM Runtime Product Coordinator",
+  "repo_paths": [
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam",
+    "C:/APEX Platform/apex-power-ops-platform/docs/authority/APEX-OPS-DELEGATED-AUTHORITY-AND-AI-ORCHESTRATION-PROTOCOL-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "dependencies": [
+    "2026-05-15-pm-lane-005",
+    "docs/authority/APEX-OPS-DELEGATED-AUTHORITY-AND-AI-ORCHESTRATION-PROTOCOL-2026-05-15.md",
+    "ops/agents/handoffs/2026-05-15-pm-lane-005-decision-history-timestamp-normalization-handoff.md"
+  ],
+  "required_inputs": [
+    "PM Lane 005 normalized decision-history read contract",
+    "Read-only backend scout 019e2c49-3714-7390-b4e0-6341b56ebd9b",
+    "Read-only frontend scout 019e2c49-37bf-7f52-a855-63f62203a3b4",
+    "Focused backend, build, typecheck, and Playwright validation evidence"
+  ],
+  "constrained_outputs": [
+    "Operations-web PM workfront row expansion lazily reads GET /api/v1/reads/decision-history only when the PM opens or refreshes history",
+    "Decision-history panel filters locally by primary_blocking_issue_id, returnable_issue_id, last_pm_decision.entity_id, and blocking_issues[].id",
+    "Panel exposes action type, status transition, timestamp, actor role, and PM reason without coupling to full audit payloads or project-scope data",
+    "Focused Playwright proof asserts history read count, scoped row history rendering, unrelated history exclusion, no mutation from opening history, and unchanged PM-clicked return_to_lead request",
+    "No backend endpoint change, no new mutation endpoint, no SQL or schema migration, no service admission, no auth or ingress widening, no assignment mutation, no schedule mutation, and no autonomous AI business-state action"
+  ],
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/app/pm-review/workfront/page.tsx",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/tests/browser-shell.pm-workfront.smoke.spec.ts",
+    "C:/APEX Platform/apex-power-ops-platform/PROJECT_STATUS.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-15-pm-lane-006-workfront-read-only-decision-history-panel.json",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-006-workfront-read-only-decision-history-panel-handoff.md"
+  ],
+  "validation_steps": [
+    "Run operations-web production build",
+    "Run operations-web typecheck after build-generated Next types are available",
+    "Run focused Playwright browser smoke for the PM workfront route",
+    "Run focused mutation-seam PM workfront read-model, PM issue disposition, and pipeline integration pytest slices with SEAM_STORE_BACKEND=memory",
+    "Run packet JSON validation and git diff whitespace checks before publication"
+  ],
+  "handoff_target": "Delegated Technical Repo Authority",
+  "status": "complete",
+  "execution_result": "PASS",
+  "delegation_status": "complete",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-006-workfront-read-only-decision-history-panel-handoff.md"
+  ],
+  "sql_permission": false,
+  "sql_permission_note": "Packet 2026-05-15-pm-lane-006 changes only the operations-web read UI and focused browser smoke. No SQL, schema migration, production data write, auth, ingress, backend endpoint, or new mutation authority is authorized.",
+  "ai_mutation_authority": "not_admitted",
+  "created_at": "2026-05-15",
+  "updated_at": "2026-05-15"
+}
