@@ -223,6 +223,9 @@ test('approval escalation deep link seeds tracer from the related task context',
   await expect(page.getByRole('heading', { name: /Escalation Queue/i })).toBeVisible()
   await expect(page.getByText(/Insulation resistance out of range/i)).toBeVisible()
   await expect(page.getByRole('button', { name: /Resolve/i })).toBeVisible()
+  await expect(page.getByRole('button', { name: /Open Schedule/i })).toBeVisible()
+  await expect(page.getByRole('button', { name: /Open Drivers/i })).toBeVisible()
+  await expect(page.getByRole('button', { name: /Open Variance/i })).toBeVisible()
   const escalationHistoryContext = page.getByTestId('approval-decision-history-context')
   await expect(escalationHistoryContext).toBeVisible()
   await expect(escalationHistoryContext.getByTestId('approval-decision-history-row')).toHaveCount(1)
@@ -237,6 +240,33 @@ test('approval escalation deep link seeds tracer from the related task context',
   await expect(page.getByRole('link', { name: /Return to PM approval escalations/i })).toHaveAttribute(
     'href',
     /\/pm-review\/approval\?screen=escalations&detailId=issue-001&focusTaskId=task-002&taskLabel=Switchgear\+IR\+Sweep$/,
+  )
+
+  await assertApprovalDrillthroughReturn(
+    page,
+    '/pm-review/approval?screen=escalations&detailId=issue-001',
+    /Open Schedule/i,
+    /\/pm-review\/schedule\?[^#]*focusTaskId=task-002/,
+    /Return to PM approval escalations/i,
+    /\/pm-review\/approval\?screen=escalations&detailId=issue-001$/,
+  )
+  await assertApprovalDrillthroughReturn(
+    page,
+    '/pm-review/approval?screen=escalations&detailId=issue-001',
+    /Open Drivers/i,
+    /\/pm-review\?[^#]*focusTaskId=task-002/,
+    /Return to PM approval escalations/i,
+    /\/pm-review\/approval\?screen=escalations&detailId=issue-001$/,
+    /[?&]projectId=stack-dc/,
+  )
+  await assertApprovalDrillthroughReturn(
+    page,
+    '/pm-review/approval?screen=escalations&detailId=issue-001',
+    /Open Variance/i,
+    /\/pm-review\/variance\?[^#]*focusTaskId=task-002/,
+    /Return to PM approval escalations/i,
+    /\/pm-review\/approval\?screen=escalations&detailId=issue-001$/,
+    /[?&]projectId=stack-dc/,
   )
 })
 
@@ -295,6 +325,8 @@ test('approval snapshot review uses derived task context for schedule handoff', 
   expect(historyRequests.some((request) => request.entityIds.length === 0)).toBe(false)
   await expect(page.getByRole('heading', { name: /Progress Snapshot/i })).toBeVisible()
   await expect(page.getByRole('button', { name: /Open Schedule/i })).toBeVisible()
+  await expect(page.getByRole('button', { name: /Open Drivers/i })).toBeVisible()
+  await expect(page.getByRole('button', { name: /Open Variance/i })).toBeVisible()
   const snapshotHistoryContext = page.getByTestId('approval-decision-history-context')
   await expect(snapshotHistoryContext).toBeVisible()
   await expect(snapshotHistoryContext.getByTestId('approval-decision-history-row')).toHaveCount(1)
@@ -308,6 +340,25 @@ test('approval snapshot review uses derived task context for schedule handoff', 
   await expect(page.getByRole('link', { name: /Return to PM snapshot review/i })).toHaveAttribute(
     'href',
     /\/pm-review\/approval\?screen=snapshot-review&detailId=snap-001$/,
+  )
+
+  await assertApprovalDrillthroughReturn(
+    page,
+    '/pm-review/approval?screen=snapshot-review&detailId=snap-001',
+    /Open Drivers/i,
+    /\/pm-review\?[^#]*focusTaskId=task-007/,
+    /Return to PM snapshot review/i,
+    /\/pm-review\/approval\?screen=snapshot-review&detailId=snap-001$/,
+    /[?&]projectId=stack-dc/,
+  )
+  await assertApprovalDrillthroughReturn(
+    page,
+    '/pm-review/approval?screen=snapshot-review&detailId=snap-001',
+    /Open Variance/i,
+    /\/pm-review\/variance\?[^#]*focusTaskId=task-007/,
+    /Return to PM snapshot review/i,
+    /\/pm-review\/approval\?screen=snapshot-review&detailId=snap-001$/,
+    /[?&]projectId=stack-dc/,
   )
 })
 
