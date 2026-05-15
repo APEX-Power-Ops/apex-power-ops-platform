@@ -544,7 +544,25 @@ function WorkPackageReview({ wpId, data, navigate, onMutate }: { wpId: string; d
   )
 }
 
-function TaskReview({ taskId, data, navigate, onMutate }: { taskId: string; data: any; navigate: (target: string, id?: string | null) => void; onMutate: () => void }) {
+function TaskReview({
+  taskId,
+  data,
+  navigate,
+  onMutate,
+  onTraceTask,
+  onViewVariance,
+  onViewSchedule,
+  onViewDrivers,
+}: {
+  taskId: string
+  data: any
+  navigate: (target: string, id?: string | null) => void
+  onMutate: () => void
+  onTraceTask: (taskInfo: { taskId?: string; taskLabel?: string } | null) => void
+  onViewVariance: (taskId: string | null) => void
+  onViewSchedule: (taskId: string | null) => void
+  onViewDrivers: (taskId: string | null) => void
+}) {
   const { tasks, apparatus, issues, workpackages } = data
   const task = tasks.find((row: any) => row.id === taskId)
   const [reason, setReason] = useState('')
@@ -584,6 +602,19 @@ function TaskReview({ taskId, data, navigate, onMutate }: { taskId: string; data
     React.createElement('p', { className: 'text-sm text-gray-500 mb-4' }, `WorkPackage: ${workPackage?.name || task.workpackage_id}`),
     React.createElement('div', { className: 'grid grid-cols-3 gap-3 mb-4' }, React.createElement('div', { className: 'card text-center' }, React.createElement('div', { className: 'text-2xl font-bold resa-blue' }, `${taskApparatus.filter((item: any) => item.status === 'complete').length}/${taskApparatus.length}`), React.createElement('div', { className: 'text-xs text-gray-500' }, 'Apparatus Complete')), React.createElement('div', { className: 'card text-center' }, React.createElement('div', { className: 'text-2xl font-bold', style: { color: blockingIssues.length > 0 ? '#dc2626' : '#059669' } }, blockingIssues.length), React.createElement('div', { className: 'text-xs text-gray-500' }, 'Blocking Issues')), React.createElement('div', { className: 'card text-center' }, React.createElement('div', { className: 'text-2xl font-bold resa-blue' }, taskIssues.length), React.createElement('div', { className: 'text-xs text-gray-500' }, 'Total Issues'))),
     blockingIssues.length > 0 && React.createElement('div', { className: 'blocker-warning' }, React.createElement('h3', { className: 'text-sm font-bold text-red-700 mb-1' }, `⚠ ${blockingIssues.length} Blocking Issue(s) — Approval Disabled`), blockingIssues.map((issue: any) => React.createElement('div', { key: issue.id, className: 'text-sm py-1' }, React.createElement(SeverityLabel, { severity: issue.severity }), ' ', issue.title))),
+    React.createElement(
+      'div',
+      { className: 'card' },
+      React.createElement('h3', { className: 'text-sm font-bold text-gray-700 mb-3' }, 'Related Task Actions'),
+      React.createElement(
+        'div',
+        { className: 'flex gap-2 flex-wrap' },
+        React.createElement('button', { className: 'btn btn-outline', onClick: () => onTraceTask({ taskId: task.id, taskLabel: task.name }) }, 'Trace Task'),
+        React.createElement('button', { className: 'btn btn-outline', onClick: () => onViewSchedule(task.id) }, 'Open Schedule'),
+        React.createElement('button', { className: 'btn btn-outline', onClick: () => onViewDrivers(task.id) }, 'Open Drivers'),
+        React.createElement('button', { className: 'btn btn-outline', onClick: () => onViewVariance(task.id) }, 'Open Variance'),
+      ),
+    ),
     React.createElement('div', { className: 'card' }, React.createElement('h3', { className: 'text-sm font-bold text-gray-700 mb-2' }, 'Apparatus'), taskApparatus.map((item: any) => React.createElement('div', { key: item.id, className: 'flex justify-between py-1 border-b border-gray-100 text-sm' }, React.createElement('span', { className: 'font-medium' }, item.name), React.createElement('div', { className: 'flex gap-2' }, React.createElement('span', { className: 'text-xs text-gray-500' }, item.neta_standard), React.createElement(StatusBadge, { status: item.status }))))),
     React.createElement(ScopedDecisionHistory, { history: data.history }),
     React.createElement('div', { className: 'card', style: { borderTop: '3px solid #015687' } }, React.createElement('h3', { className: 'text-sm font-bold resa-blue mb-3' }, 'Decision'), React.createElement('textarea', { className: 'w-full border border-gray-300 rounded p-2 text-sm mb-3', rows: 3, placeholder: 'Decision reason/note (required)...', value: reason, onChange: (event: any) => setReason(event.target.value) }), result && React.createElement('div', { className: `text-sm mb-3 p-2 rounded ${result.status === 'accepted' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}` }, result.status === 'accepted' ? '✓ Decision recorded' : `✗ ${result.error?.message || JSON.stringify(result)}`), React.createElement('div', { className: 'flex gap-2' }, React.createElement('button', { className: 'btn btn-approve', disabled: !canApprove, onClick: () => void doAction('approve', { status: 'complete' }) }, canApprove ? 'Approve' : 'Approve (blocked)'), React.createElement('button', { className: 'btn btn-reject', onClick: () => void doAction('reject', { status: 'rejected' }) }, 'Reject'), React.createElement('button', { className: 'btn btn-escalate', onClick: () => void doAction('escalate_review', {}) }, 'Escalate'))),
@@ -913,7 +944,16 @@ function ApprovalSurfaceApp() {
           : React.createElement('div', { className: 'card' }, 'Select a work package from the queue to review it.')
       case 'task-review':
         return resolvedDetailId
-          ? React.createElement(TaskReview, { taskId: resolvedDetailId, data, navigate, onMutate: data.refresh })
+          ? React.createElement(TaskReview, {
+              taskId: resolvedDetailId,
+              data,
+              navigate,
+              onMutate: data.refresh,
+              onTraceTask,
+              onViewVariance,
+              onViewSchedule,
+              onViewDrivers,
+            })
           : React.createElement('div', { className: 'card' }, 'Select a task from the queue to review it.')
       case 'snapshot-review':
         return resolvedDetailId
@@ -960,7 +1000,7 @@ function ApprovalSurfaceApp() {
       default:
         return React.createElement(ApprovalQueue, { data, navigate })
     }
-  }, [data, detailId, navigate, onTraceTask, onViewDrivers, onViewSchedule, onViewVariance, screen])
+  }, [data, navigate, onTraceTask, onViewDrivers, onViewSchedule, onViewVariance, resolvedDetailId, screen])
 
   return React.createElement(
     'div',

@@ -1,0 +1,76 @@
+{
+  "packet_id": "2026-05-15-pm-lane-016",
+  "title": "PM Approval Task Review Drillthrough",
+  "objective": "Add frontend-only task-review drillthrough from the PM approval detail screen into existing promoted PM tracer, schedule, drivers, and variance routes while preserving scoped decision-history context, return-path conventions, and the existing mutation guardrails.",
+  "domain": "pm-domain",
+  "active_role": "PM Runtime Product Coordinator",
+  "repo_paths": [
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/app/pm-review/approval/page.tsx",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/tests/browser-shell.approval-context.smoke.spec.ts",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "dependencies": [
+    "2026-05-15-pm-lane-012",
+    "2026-05-15-pm-lane-015",
+    "2026-05-15-pm-lane-014",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-015-approval-detail-decision-history-context-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/app/pm-review/route-navigation.ts"
+  ],
+  "orchestration_inputs": [
+    "PM Lane 012 remains the deployment gate for hosted mutation-seam parity and live PM proof.",
+    "Read-only scout 019e2c98-9994-76a3-9f30-239c0fc65747 confirmed the smallest task-review slice is to reuse existing approval callbacks and add Related Task Actions before the apparatus/history/decision cards.",
+    "Coordinator execution kept write ownership local to the PM approval frontend and focused approval-context smoke while using the scout as the parallel orchestration lane."
+  ],
+  "constrained_outputs": [
+    "TaskReview accepts the same onTraceTask, onViewSchedule, onViewDrivers, and onViewVariance callbacks already used by snapshot and escalation flows.",
+    "Task review renders a Related Task Actions card with Trace Task, Open Schedule, Open Drivers, and Open Variance controls.",
+    "Task-review drillthrough preserves existing return-path conventions through buildPmReturnContext.",
+    "Focused Playwright proof adds a task-review deep link with scoped decision-history fixture data, asserts the scoped read, asserts the compact history context, verifies all task action controls, and proves tracer handoff plus return link.",
+    "Existing escalation and snapshot approval-context proofs remain intact."
+  ],
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/app/pm-review/approval/page.tsx",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/tests/browser-shell.approval-context.smoke.spec.ts",
+    "C:/APEX Platform/apex-power-ops-platform/PROJECT_STATUS.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-15-pm-lane-016-approval-task-review-drillthrough.json",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-016-approval-task-review-drillthrough-handoff.md"
+  ],
+  "validation_steps": [
+    "corepack pnpm --dir C:/APEX Platform/apex-power-ops-platform --filter @apex/operations-web typecheck",
+    "corepack pnpm --dir C:/APEX Platform/apex-power-ops-platform --filter @apex/operations-web build",
+    "CI=1 corepack pnpm --dir C:/APEX Platform/apex-power-ops-platform --filter @apex/operations-web exec playwright test tests/browser-shell.approval-context.smoke.spec.ts",
+    "git diff --check"
+  ],
+  "validation_results": [
+    "operations-web typecheck passed",
+    "operations-web production build passed",
+    "focused approval-context Playwright proof passed 3/3",
+    "git diff --check passed"
+  ],
+  "not_allowed": [
+    "No backend endpoint change.",
+    "No package script change.",
+    "No SQL or schema migration.",
+    "No live database write.",
+    "No service admission.",
+    "No auth or ingress widening.",
+    "No assignment mutation.",
+    "No schedule mutation.",
+    "No Operations Visibility reopening.",
+    "No Vercel promotion.",
+    "No Render deployment action.",
+    "No autonomous AI business-state mutation."
+  ],
+  "handoff_target": "Delegated Technical Repo Authority",
+  "status": "complete",
+  "execution_result": "PASS_LOCAL_FRONTEND_ONLY_HOSTED_PROOF_DEFERRED_TO_PM_LANE_012",
+  "delegation_status": "coordinator-executed-with-read-only-scout",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-016-approval-task-review-drillthrough-handoff.md"
+  ],
+  "sql_permission": false,
+  "sql_permission_note": "Packet 2026-05-15-pm-lane-016 is frontend-only and does not authorize SQL writes, schema migration, live data mutation, auth widening, ingress widening, schedule mutation, assignment mutation, Vercel promotion, or Render deployment action.",
+  "ai_mutation_authority": "not_admitted",
+  "created_at": "2026-05-15",
+  "updated_at": "2026-05-15"
+}

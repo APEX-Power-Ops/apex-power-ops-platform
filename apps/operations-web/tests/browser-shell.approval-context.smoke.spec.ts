@@ -220,3 +220,64 @@ test('approval snapshot review uses derived task context for schedule handoff', 
     /\/pm-review\/approval\?screen=snapshot-review&detailId=snap-001$/,
   )
 })
+
+test('approval task review exposes scoped history and task drillthrough', async ({ page }) => {
+  const { historyRequests } = await mockApprovalReads(page, {
+    queue: {
+      tasks: [
+        {
+          id: 'task-009',
+          name: 'Relay Functional Test',
+          workpackage_id: 'wp-009',
+          project_id: 'proj-001',
+          status: 'awaiting_review',
+        },
+      ],
+      total_count: 1,
+    },
+    apparatus: [{ id: 'app-009', name: 'Protection Relay 9', task_id: 'task-009', status: 'complete', neta_standard: 'NETA ATS 7.9' }],
+    tasks: [{ id: 'task-009', name: 'Relay Functional Test', workpackage_id: 'wp-009', status: 'awaiting_review' }],
+    workpackages: [{ id: 'wp-009', name: 'Relay Commissioning' }],
+    decisionHistory: [
+      {
+        entity_id: 'task-009',
+        entity_type: 'task',
+        action_type: 'reject',
+        actor_id: 'pm-004',
+        actor_role: 'pm',
+        timestamp: '2026-05-03T17:45:00Z',
+        from_state: { status: 'awaiting_review' },
+        to_state: { status: 'active' },
+        reason: 'Retest required before approval',
+      },
+    ],
+  })
+
+  const approvalResponse = await page.goto('/pm-review/approval?screen=task-review&detailId=task-009', { waitUntil: 'networkidle' })
+  expect(approvalResponse?.ok()).toBeTruthy()
+  await expect.poll(() => historyRequests.length).toBeGreaterThan(0)
+  expect(historyRequests).toContainEqual({ entityIds: ['task-009'], limit: '25' })
+  expect(historyRequests.some((request) => request.entityIds.length === 0)).toBe(false)
+  await expect(page.getByRole('heading', { name: /Relay Functional Test/i })).toBeVisible()
+  await expect(page.getByRole('heading', { name: /Related Task Actions/i })).toBeVisible()
+  await expect(page.getByRole('button', { name: /Trace Task/i })).toBeVisible()
+  await expect(page.getByRole('button', { name: /Open Schedule/i })).toBeVisible()
+  await expect(page.getByRole('button', { name: /Open Drivers/i })).toBeVisible()
+  await expect(page.getByRole('button', { name: /Open Variance/i })).toBeVisible()
+
+  const historyContext = page.getByTestId('approval-decision-history-context')
+  await expect(historyContext).toBeVisible()
+  await expect(historyContext.getByTestId('approval-decision-history-row')).toHaveCount(1)
+  await expect(historyContext).toContainText(/reject/i)
+  await expect(historyContext).toContainText(/pm-004 \(pm\)/i)
+  await expect(historyContext).toContainText(/Retest required before approval/i)
+
+  await page.getByRole('button', { name: /Trace Task/i }).click()
+
+  await expect(page).toHaveURL(/\/pm-review\/tracer\?[^#]*taskId=task-009/)
+  await expect(page.getByText(/Current seed: Relay Functional Test \(task-009\)/i)).toBeVisible()
+  await expect(page.getByRole('link', { name: /Return to PM task review/i })).toHaveAttribute(
+    'href',
+    /\/pm-review\/approval\?screen=task-review&detailId=task-009&focusTaskId=task-009&taskLabel=Relay\+Functional\+Test$/,
+  )
+})
