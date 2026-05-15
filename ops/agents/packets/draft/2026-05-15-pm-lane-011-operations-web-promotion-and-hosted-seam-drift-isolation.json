@@ -1,0 +1,65 @@
+{
+  "packet_id": "2026-05-15-pm-lane-011",
+  "title": "PM Operations-Web Production Promotion And Hosted Seam Drift Isolation",
+  "objective": "Promote the current operations-web PM lane stack to production, rerun hosted read-only PM proofs, and isolate the remaining live-data blocker to the hosted mutation-seam deployment without adding product code, schema, auth, ingress, or mutation scope.",
+  "domain": "pm-domain",
+  "active_role": "PM Runtime Product Coordinator",
+  "repo_paths": [
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam",
+    "C:/APEX Platform/apex-power-ops-platform/docs/authority/APEX-OPS-DELEGATED-AUTHORITY-AND-AI-ORCHESTRATION-PROTOCOL-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "dependencies": [
+    "2026-05-15-pm-lane-010",
+    "2026-05-15-pm-lane-009",
+    "docs/authority/APEX-OPS-DELEGATED-AUTHORITY-AND-AI-ORCHESTRATION-PROTOCOL-2026-05-15.md",
+    "ops/agents/handoffs/2026-05-15-pm-lane-010-issue-disposition-semantic-hardening-handoff.md"
+  ],
+  "required_inputs": [
+    "PM Lane 010 issue-disposition semantic hardening",
+    "Operations-web hosted promotion scout 019e2c70-7315-7c43-b363-c1d456997600",
+    "Mutation-seam hosted drift scout 019e2c70-5579-7883-8760-cd4d3a1c5f2e",
+    "Read-only public probes against operations.apexpowerops.com, mutation-seam.apexpowerops.com, and apex-platform-mutation-seam.onrender.com",
+    "Vercel production promotion evidence for deployment dpl_CP53VXXgr98ArXJ34QSvUyh4E6N3"
+  ],
+  "constrained_outputs": [
+    "operations.apexpowerops.com now serves Vercel production deployment dpl_CP53VXXgr98ArXJ34QSvUyh4E6N3 from the current clean-main PM lane stack",
+    "Hosted operations-web route smoke passed with SMOKE_SUMMARY failed=0 passed=8",
+    "PM workfront and approval production routes now return 200 from operations.apexpowerops.com",
+    "Hosted PM live-data proof still fails truthfully on mutation-seam schedule 500s and pm-workfront 404",
+    "Mutation-seam public OpenAPI currently omits /api/v1/reads/pm-workfront despite current repo code mounting it, indicating stale or wrong hosted deployment",
+    "No product code, endpoint, package script, SQL, schema migration, live database write, service admission, auth or ingress widening, assignment mutation, schedule mutation, or autonomous AI business-state action"
+  ],
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/DEPLOYMENT_VALIDATION.md",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/DEPLOYMENT_VALIDATION.md",
+    "C:/APEX Platform/apex-power-ops-platform/PROJECT_STATUS.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-15-pm-lane-011-operations-web-promotion-and-hosted-seam-drift-isolation.json",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-011-operations-web-promotion-and-hosted-seam-drift-isolation-handoff.md"
+  ],
+  "validation_steps": [
+    "Verify local clean-main equals origin/clean-main",
+    "Verify Vercel credentials with vercel whoami",
+    "Promote latest clean-main apex-operations-web preview to production",
+    "Inspect operations.apexpowerops.com production deployment",
+    "Probe operations-web production PM routes",
+    "Run hosted operations-web route smoke",
+    "Run read-only PM live-data smoke and record mutation-seam failure without claiming pass",
+    "Probe mutation-seam public OpenAPI and PM read routes",
+    "Run local focused PM workfront and schedule bridge backend tests",
+    "Run packet JSON validation and git diff whitespace checks before publication"
+  ],
+  "handoff_target": "Delegated Technical Repo Authority",
+  "status": "complete",
+  "execution_result": "PASS_OPERATIONS_WEB_PROMOTED_HOSTED_SEAM_BLOCKED",
+  "delegation_status": "complete",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-011-operations-web-promotion-and-hosted-seam-drift-isolation-handoff.md"
+  ],
+  "sql_permission": false,
+  "sql_permission_note": "Packet 2026-05-15-pm-lane-011 performed Vercel operations-web promotion and read-only hosted probes only. No SQL, schema migration, production data write, auth, ingress, service, or mutation endpoint change is authorized.",
+  "ai_mutation_authority": "not_admitted",
+  "created_at": "2026-05-15",
+  "updated_at": "2026-05-15"
+}

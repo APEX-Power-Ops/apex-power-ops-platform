@@ -84,6 +84,15 @@ Fail conditions:
 2. the PM read/schedule routes return framework `404 Not Found`
 3. the service boots but only exposes `/health` without the PM seam routes
 
+Current public-host status on 2026-05-15:
+
+1. `https://mutation-seam.apexpowerops.com/health` returns `200`.
+2. `https://mutation-seam.apexpowerops.com/openapi.json` does not advertise `/api/v1/reads/pm-workfront`, even though the current repo code mounts that route.
+3. `https://mutation-seam.apexpowerops.com/api/v1/reads/pm-workfront` returns framework `404`.
+4. deployed schedule reads return `500` for `projects`, `drivers`, `tracer`, and `variance`.
+5. the smallest remediation path is deployment-first: inspect the Render service `apex-platform-mutation-seam`, confirm it deploys `clean-main` at `3e8bba2d063a7a7227eeae22967d1430349f0546` or later from `apps/mutation-seam`, redeploy the current head, then use Render logs to distinguish any remaining schedule DSN/schema/permission failure.
+6. without Render credentials, this workspace can run read-only public probes and GitHub smoke workflows, but it cannot inspect Render deploy commit, trigger a Render redeploy, view Render logs, or confirm hosted environment variables.
+
 ## Operations Web Ingress Contract
 
 `apps/operations-web` now owns the same-origin ingress layer for PM surfaces through Next rewrites.

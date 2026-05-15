@@ -187,8 +187,9 @@ Current public-host status:
 
 1. the repo-owned promoted-host path is operational
 2. the latest public seam rerun against `https://control.apexpowerops.com` passes health, readiness, discovery, MCP, OpenAPI, and the governed apparatus route requirement, with readiness reporting `database: connected` and the overall script ending in `RESULT PASS`
-3. the 2026-05-03 production promotion now points `https://operations.apexpowerops.com` at deployment `dpl_2emJi8u3ZuMMKb42hDrWjo9Kxg5R`, sourced from clean-main commit `2b572b3`
-4. the promoted-host wrapper now ends with `PROMOTED_HOST_SUMMARY failed=0` after the compare-slice deployment recovery, including hosted-route smoke `failed=0` and browser smoke `3 passed`
+3. the 2026-05-15 PM Lane 011 production promotion now points `https://operations.apexpowerops.com` at deployment `dpl_CP53VXXgr98ArXJ34QSvUyh4E6N3`, sourced from the clean-main PM lane stack through commit `3e8bba2d063a7a7227eeae22967d1430349f0546`
+4. hosted route smoke against `https://operations.apexpowerops.com` passes with `SMOKE_SUMMARY failed=0 passed=8`
+5. PM live-data proof is still blocked by the hosted mutation-seam runtime, not by operations-web routing: `https://mutation-seam.apexpowerops.com/openapi.json` does not advertise `/api/v1/reads/pm-workfront`, `/api/v1/reads/pm-workfront` returns `404`, and schedule reads return `500`
 
 Pass conditions:
 
