@@ -58,6 +58,12 @@ def test_pm_workfront_read_model_surfaces_blocked_unassigned_owner_and_next_acti
     assert blocked["readiness"] == "blocked"
     assert blocked["drawing_ref"] in {"E01-00", "E01-01"}
     assert blocked["next_action"].startswith("Resolve blocker:")
+    assert blocked["ai_advisory"]["mode"] == "draft_only"
+    assert blocked["ai_advisory"]["mutation_authority"] == "not_admitted"
+    assert blocked["ai_advisory"]["target_audience"] == "lead"
+    assert blocked["apparatus_name"] in blocked["ai_advisory"]["brief"]
+    assert blocked["primary_blocking_issue_id"] in {"issue-002", "issue-003"}
+    assert blocked["blocking_issues"][0]["id"] == blocked["primary_blocking_issue_id"]
 
     assigned = next(row for row in workfront["rows"] if row["apparatus_id"] == "app-002")
     assert assigned["designation"] == "Pole Disconnect"

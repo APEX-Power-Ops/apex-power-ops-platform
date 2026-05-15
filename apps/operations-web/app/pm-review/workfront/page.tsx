@@ -32,6 +32,21 @@ type WorkfrontRow = {
   checklist_complete_count?: number
   checklist_total_count?: number
   next_action?: string
+  primary_blocking_issue_id?: string | null
+  blocking_issues?: Array<{
+    id?: string
+    title?: string
+    status?: string
+    severity?: string
+    blocks_completion?: boolean
+    reported_by?: string
+  }>
+  ai_advisory?: {
+    mode?: string
+    mutation_authority?: string
+    target_audience?: string
+    brief?: string
+  }
 }
 
 type WorkfrontPayload = {
@@ -113,6 +128,7 @@ export default function PmWorkfrontPage() {
   const [loading, setLoading] = useState(true)
   const [online, setOnline] = useState(true)
   const [filter, setFilter] = useState('all')
+  const [draftRowId, setDraftRowId] = useState<string | null>(null)
 
   const refresh = useCallback(async () => {
     try {
@@ -273,7 +289,52 @@ export default function PmWorkfrontPage() {
                   Next action
                 </p>
                 <p style={{ margin: '0.4rem 0 0', lineHeight: 1.55 }}>{row.next_action || 'Monitor for next status'}</p>
+                <button
+                  className="btn btn-outline"
+                  onClick={() => setDraftRowId(draftRowId === row.id ? null : row.id)}
+                  style={{ marginTop: '0.75rem' }}
+                >
+                  {draftRowId === row.id ? 'Hide follow-up' : 'Draft lead follow-up'}
+                </button>
               </div>
+              {draftRowId === row.id ? (
+                <div
+                  style={{
+                    gridColumn: '1 / -1',
+                    borderTop: '1px solid var(--border)',
+                    paddingTop: '0.85rem',
+                    display: 'grid',
+                    gridTemplateColumns: 'minmax(0, 0.8fr) minmax(0, 1.5fr)',
+                    gap: '1rem',
+                  }}
+                >
+                  <div>
+                    <p
+                      style={{
+                        margin: 0,
+                        fontFamily: 'var(--font-mono), monospace',
+                        fontSize: '0.74rem',
+                        color: 'var(--muted)',
+                        textTransform: 'uppercase',
+                      }}
+                    >
+                      AI advisory
+                    </p>
+                    <p style={{ margin: '0.35rem 0 0', color: 'var(--muted)', lineHeight: 1.5 }}>
+                      {(row.ai_advisory?.mode || 'draft_only').replace(/_/g, ' ')} · {row.ai_advisory?.mutation_authority || 'not_admitted'}
+                    </p>
+                    <p style={{ margin: '0.35rem 0 0', color: 'var(--muted)', lineHeight: 1.5 }}>
+                      Lead target · {row.primary_blocking_issue_id || row.blocking_issues?.[0]?.id || 'no blocking issue'}
+                    </p>
+                  </div>
+                  <div>
+                    <p style={{ margin: 0, lineHeight: 1.55 }}>
+                      {row.ai_advisory?.brief ||
+                        `${row.apparatus_name || row.apparatus_id} needs lead follow-up: ${row.next_action || 'Monitor for next status'}.`}
+                    </p>
+                  </div>
+                </div>
+              ) : null}
             </article>
           ))}
           {!filteredRows.length ? <p style={{ color: 'var(--muted)' }}>No rows match this readiness filter.</p> : null}

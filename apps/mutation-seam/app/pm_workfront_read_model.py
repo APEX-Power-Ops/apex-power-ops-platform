@@ -68,6 +68,45 @@ def _next_action(
     return "Monitor for next status"
 
 
+def _issue_summary(issue: Dict[str, Any]) -> Dict[str, Any]:
+    return {
+        "id": issue.get("id"),
+        "title": issue.get("title"),
+        "status": issue.get("status"),
+        "severity": issue.get("severity"),
+        "blocks_completion": bool(issue.get("blocks_completion")),
+        "reported_by": issue.get("reported_by"),
+    }
+
+
+def _advisory_brief(
+    *,
+    apparatus: Dict[str, Any],
+    readiness: str,
+    blocking_issues: List[Dict[str, Any]],
+    owner_name: str | None,
+    task: Dict[str, Any],
+    workpackage: Dict[str, Any],
+    checklist_complete_count: int,
+    checklist_total_count: int,
+    next_action: str,
+) -> str:
+    apparatus_name = apparatus.get("name") or apparatus.get("id") or "Unmapped apparatus"
+    owner_label = owner_name or "unassigned"
+    drawing_ref = apparatus.get("source_drawing_ref") or task.get("drawing_ref") or "no drawing reference"
+    workpackage_name = workpackage.get("name") or "unmapped work package"
+    task_name = task.get("name") or "unmapped task"
+    blocker = blocking_issues[0].get("title") if blocking_issues else None
+    issue_clause = f" Blocking issue: {blocker}." if blocker else ""
+    checklist_clause = f" Checklist {checklist_complete_count}/{checklist_total_count}."
+
+    return (
+        f"{apparatus_name} is {readiness.replace('_', ' ')} for {workpackage_name} / {task_name}; "
+        f"owner {owner_label}; reference {drawing_ref}.{issue_clause}{checklist_clause} "
+        f"Requested lead follow-up: {next_action}."
+    )
+
+
 def build_pm_workfront_read_model(
     *,
     apparatus_rows: List[Dict[str, Any]],
@@ -111,6 +150,25 @@ def build_pm_workfront_read_model(
         checklist_complete_count = sum(1 for item in checklist if item.get("completed"))
         checklist_total_count = len(checklist)
         readiness = _readiness(apparatus, blocking_issues)
+        next_action = _next_action(
+            apparatus,
+            readiness,
+            blocking_issues,
+            checklist_complete_count,
+            checklist_total_count,
+        )
+        owner_name = crew_names.get(str(owner_id), owner_id) if owner_id else None
+        advisory_brief = _advisory_brief(
+            apparatus=apparatus,
+            readiness=readiness,
+            blocking_issues=blocking_issues,
+            owner_name=owner_name,
+            task=task,
+            workpackage=workpackage,
+            checklist_complete_count=checklist_complete_count,
+            checklist_total_count=checklist_total_count,
+            next_action=next_action,
+        )
 
         rows.append(
             {
@@ -123,9 +181,11 @@ def build_pm_workfront_read_model(
                 "blocked": readiness == "blocked",
                 "blocker_count": len(blocking_issues),
                 "open_issue_count": len(issues),
+                "primary_blocking_issue_id": blocking_issues[0].get("id") if blocking_issues else None,
                 "blocking_issue_titles": [issue.get("title") or issue.get("id") for issue in blocking_issues],
+                "blocking_issues": [_issue_summary(issue) for issue in blocking_issues],
                 "owner_id": owner_id,
-                "owner_name": crew_names.get(str(owner_id), owner_id) if owner_id else None,
+                "owner_name": owner_name,
                 "task_id": task.get("id"),
                 "task_name": task.get("name"),
                 "workpackage_id": workpackage.get("id"),
@@ -135,13 +195,13 @@ def build_pm_workfront_read_model(
                 "drawing_ref": apparatus.get("source_drawing_ref") or task.get("drawing_ref"),
                 "checklist_complete_count": checklist_complete_count,
                 "checklist_total_count": checklist_total_count,
-                "next_action": _next_action(
-                    apparatus,
-                    readiness,
-                    blocking_issues,
-                    checklist_complete_count,
-                    checklist_total_count,
-                ),
+                "next_action": next_action,
+                "ai_advisory": {
+                    "mode": "draft_only",
+                    "mutation_authority": "not_admitted",
+                    "target_audience": "lead",
+                    "brief": advisory_brief,
+                },
             }
         )
 

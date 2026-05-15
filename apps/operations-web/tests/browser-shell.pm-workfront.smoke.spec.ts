@@ -1,6 +1,12 @@
 import { expect, test } from '@playwright/test'
 
 test('pm workfront route renders read-only readiness queue from governed seam', async ({ page }) => {
+  let mutationCalls = 0
+  await page.route('**/api/v1/mutations/**', async (route) => {
+    mutationCalls += 1
+    await route.fulfill({ status: 500, contentType: 'application/json', body: JSON.stringify({ error: 'unexpected mutation' }) })
+  })
+
   await page.route('**/api/v1/reads/pm-workfront', async (route) => {
     await route.fulfill({
       status: 200,
@@ -38,6 +44,23 @@ test('pm workfront route renders read-only readiness queue from governed seam', 
             checklist_complete_count: 1,
             checklist_total_count: 3,
             next_action: 'Resolve blocker: IR reading below threshold',
+            primary_blocking_issue_id: 'issue-200',
+            blocking_issues: [
+              {
+                id: 'issue-200',
+                title: 'IR reading below threshold',
+                status: 'escalated',
+                severity: 'high',
+                blocks_completion: true,
+                reported_by: 'tech-001',
+              },
+            ],
+            ai_advisory: {
+              mode: 'draft_only',
+              mutation_authority: 'not_admitted',
+              target_audience: 'lead',
+              brief: 'Cable Assembly A is blocked for Primary Switchgear Testing / Switchgear Sweep; owner Alex Rivera; reference SLD B-101. Blocking issue: IR reading below threshold. Checklist 1/3. Requested lead follow-up: Resolve blocker: IR reading below threshold.',
+            },
           },
           {
             id: 'workfront-app-004',
@@ -90,6 +113,13 @@ test('pm workfront route renders read-only readiness queue from governed seam', 
   await expect(page.getByText(/SLD B-101/i)).toBeVisible()
   await expect(page.getByText(/Resolve blocker: IR reading below threshold/i).first()).toBeVisible()
   await expect(page.getByText(/Main Switchgear/i)).toBeVisible()
+
+  await page.getByRole('button', { name: /Draft lead follow-up/i }).first().click()
+  await expect(page.getByText(/AI advisory/i)).toBeVisible()
+  await expect(page.getByText(/draft only .* not_admitted/i)).toBeVisible()
+  await expect(page.getByText(/Lead target .* issue-200/i)).toBeVisible()
+  await expect(page.getByText(/Requested lead follow-up: Resolve blocker: IR reading below threshold/i)).toBeVisible()
+  expect(mutationCalls).toBe(0)
 
   await page.getByRole('button', { name: /Unassigned 1/i }).click()
   await expect(page.getByText(/Main Switchgear/i)).toBeVisible()
