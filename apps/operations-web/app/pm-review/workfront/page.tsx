@@ -111,6 +111,13 @@ type ReviewSnapshot = {
   submitted_by?: string | null
 }
 
+type ReviewAction = {
+  key: string
+  label: string
+  href: string
+  group: 'issue' | 'work'
+}
+
 type WorkfrontPayload = {
   summary?: WorkfrontSummary
   lenses?: WorkfrontLenses
@@ -338,6 +345,10 @@ function workfrontSnapshotReviewLink(snapshot: ReviewSnapshot | null) {
     detailId: snapshot.id,
     ...WORKFRONT_RETURN_CONTEXT,
   })
+}
+
+function compactReviewActions(actions: Array<ReviewAction | null>) {
+  return actions.filter((action): action is ReviewAction => Boolean(action?.href))
 }
 
 function workfrontDecisionHistoryLink(row: WorkfrontRow) {
@@ -592,6 +603,7 @@ export default function PmWorkfrontPage() {
           {filteredRows.map((row) => (
             (() => {
               const escalatedIssue = returnableIssue(row)
+              const rowName = row.apparatus_name || row.apparatus_id || row.id
               const rowEntityIds = rowDecisionEntityIds(row)
               const rowHistory = historyRows.filter((event) => event.entity_id && rowEntityIds.has(event.entity_id))
               const drillthroughLinks = workfrontDrillthroughLinks(row)
@@ -600,6 +612,15 @@ export default function PmWorkfrontPage() {
               const workPackageReviewLink = workfrontWorkPackageReviewLink(row)
               const snapshotReviewLink = workfrontSnapshotReviewLink(workfrontSubmittedSnapshot(row, reviewSnapshots))
               const decisionHistoryLink = workfrontDecisionHistoryLink(row)
+              const reviewActions = compactReviewActions([
+                escalationReviewLink ? { key: 'escalation', label: 'Review escalation', href: escalationReviewLink, group: 'issue' } : null,
+                taskReviewLink ? { key: 'task', label: 'Review task', href: taskReviewLink, group: 'work' } : null,
+                workPackageReviewLink ? { key: 'package', label: 'Review package', href: workPackageReviewLink, group: 'work' } : null,
+                snapshotReviewLink ? { key: 'snapshot', label: 'Review snapshot', href: snapshotReviewLink, group: 'work' } : null,
+                decisionHistoryLink ? { key: 'history', label: 'Review history', href: decisionHistoryLink, group: 'issue' } : null,
+              ])
+              const issueReviewActions = reviewActions.filter((action) => action.group === 'issue')
+              const workReviewActions = reviewActions.filter((action) => action.group === 'work')
 
               return (
             <article
@@ -615,7 +636,7 @@ export default function PmWorkfrontPage() {
             >
               <div>
                 <div className="status-row" style={{ justifyContent: 'flex-start', gap: '0.65rem' }}>
-                  <strong>{row.apparatus_name || row.apparatus_id}</strong>
+                  <strong>{rowName}</strong>
                   <ReadinessBadge value={row.readiness} />
                 </div>
                 <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.5 }}>
@@ -633,7 +654,7 @@ export default function PmWorkfrontPage() {
                   Checklist {row.checklist_complete_count ?? 0}/{row.checklist_total_count ?? 0} · {row.open_issue_count ?? 0} open issue{row.open_issue_count === 1 ? '' : 's'}
                 </p>
                 <div
-                  aria-label={`Schedule drillthrough for ${row.apparatus_name || row.apparatus_id || row.id}`}
+                  aria-label={`Schedule drillthrough for ${rowName}`}
                   style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.65rem' }}
                 >
                   <Link className="btn btn-outline" href={drillthroughLinks.drivers}>
@@ -662,34 +683,44 @@ export default function PmWorkfrontPage() {
                 >
                   {draftRowId === row.id ? 'Hide follow-up' : 'Draft lead follow-up'}
                 </button>
-                {escalationReviewLink ? (
-                  <Link
-                    className="btn btn-outline"
-                    href={escalationReviewLink}
-                    style={{ marginTop: '0.75rem', marginLeft: '0.5rem' }}
+                {reviewActions.length ? (
+                  <div
+                    role="region"
+                    aria-label={`Review actions for ${rowName}`}
+                    style={{
+                      borderTop: '1px solid var(--border)',
+                      marginTop: '0.85rem',
+                      paddingTop: '0.75rem',
+                    }}
                   >
-                    Review escalation
-                  </Link>
-                ) : null}
-                {taskReviewLink ? (
-                  <Link className="btn btn-outline" href={taskReviewLink} style={{ marginTop: '0.75rem', marginLeft: '0.5rem' }}>
-                    Review task
-                  </Link>
-                ) : null}
-                {workPackageReviewLink ? (
-                  <Link className="btn btn-outline" href={workPackageReviewLink} style={{ marginTop: '0.75rem', marginLeft: '0.5rem' }}>
-                    Review package
-                  </Link>
-                ) : null}
-                {snapshotReviewLink ? (
-                  <Link className="btn btn-outline" href={snapshotReviewLink} style={{ marginTop: '0.75rem', marginLeft: '0.5rem' }}>
-                    Review snapshot
-                  </Link>
-                ) : null}
-                {decisionHistoryLink ? (
-                  <Link className="btn btn-outline" href={decisionHistoryLink} style={{ marginTop: '0.75rem', marginLeft: '0.5rem' }}>
-                    Review history
-                  </Link>
+                    <p style={{ margin: 0, fontFamily: 'var(--font-mono), monospace', fontSize: '0.74rem', color: 'var(--brand)', textTransform: 'uppercase' }}>
+                      Review actions
+                    </p>
+                    {issueReviewActions.length ? (
+                      <div role="group" aria-label={`Issue review links for ${rowName}`} style={{ marginTop: '0.55rem' }}>
+                        <p style={{ margin: '0 0 0.4rem', color: 'var(--muted)', fontSize: '0.82rem' }}>Issue review</p>
+                        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                          {issueReviewActions.map((action) => (
+                            <Link key={action.key} className="btn btn-outline" href={action.href}>
+                              {action.label}
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
+                    {workReviewActions.length ? (
+                      <div role="group" aria-label={`Work review links for ${rowName}`} style={{ marginTop: '0.55rem' }}>
+                        <p style={{ margin: '0 0 0.4rem', color: 'var(--muted)', fontSize: '0.82rem' }}>Work review</p>
+                        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                          {workReviewActions.map((action) => (
+                            <Link key={action.key} className="btn btn-outline" href={action.href}>
+                              {action.label}
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
                 ) : null}
               </div>
               {draftRowId === row.id ? (

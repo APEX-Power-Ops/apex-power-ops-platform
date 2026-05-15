@@ -396,6 +396,45 @@ test('pm workfront route renders read-only readiness queue from governed seam', 
   await expect(page.getByText(/SLD B-101/i)).toBeVisible()
   await expect(page.getByText(/Resolve blocker: IR reading below threshold/i).first()).toBeVisible()
   await expect(page.getByText(/Main Switchgear/i)).toBeVisible()
+  const cableReviewActions = page.getByRole('region', { name: /Review actions for Cable Assembly A/i })
+  await expect(cableReviewActions).toBeVisible()
+  await expect(cableReviewActions.getByText('Review actions', { exact: true })).toBeVisible()
+  await expect(cableReviewActions.getByRole('link')).toHaveCount(2)
+  const cableIssueReviewGroup = cableReviewActions.getByRole('group', { name: /Issue review links for Cable Assembly A/i })
+  await expect(cableIssueReviewGroup).toBeVisible()
+  await expect(cableIssueReviewGroup.getByText('Issue review', { exact: true })).toBeVisible()
+  await expect(cableIssueReviewGroup.getByRole('link')).toHaveCount(2)
+  await expect(cableIssueReviewGroup.getByRole('link', { name: /Review escalation/i })).toHaveAttribute(
+    'href',
+    /\/pm-review\/approval\?screen=escalations&detailId=issue-200&returnTo=%2Fpm-review%2Fworkfront&returnLabel=PM\+workfront$/,
+  )
+  await expect(cableIssueReviewGroup.getByRole('link', { name: /Review history/i })).toHaveAttribute(
+    'href',
+    /\/pm-review\/approval\?screen=history&historySearch=issue-200&returnTo=%2Fpm-review%2Fworkfront&returnLabel=PM\+workfront$/,
+  )
+  await expect(cableReviewActions.getByRole('group', { name: /Work review links for Cable Assembly A/i })).toHaveCount(0)
+  const panelReviewActions = page.getByRole('region', { name: /Review actions for Distribution Panel/i })
+  await expect(panelReviewActions).toBeVisible()
+  await expect(panelReviewActions.getByText('Review actions', { exact: true })).toBeVisible()
+  await expect(panelReviewActions.getByRole('link')).toHaveCount(3)
+  const panelWorkReviewGroup = panelReviewActions.getByRole('group', { name: /Work review links for Distribution Panel/i })
+  await expect(panelWorkReviewGroup).toBeVisible()
+  await expect(panelWorkReviewGroup.getByText('Work review', { exact: true })).toBeVisible()
+  await expect(panelWorkReviewGroup.getByRole('link')).toHaveCount(3)
+  await expect(panelWorkReviewGroup.getByRole('link', { name: /Review task/i })).toHaveAttribute(
+    'href',
+    /\/pm-review\/approval\?screen=task-review&detailId=task-001&returnTo=%2Fpm-review%2Fworkfront&returnLabel=PM\+workfront$/,
+  )
+  await expect(panelWorkReviewGroup.getByRole('link', { name: /Review package/i })).toHaveAttribute(
+    'href',
+    /\/pm-review\/approval\?screen=wp-review&detailId=wp-001&returnTo=%2Fpm-review%2Fworkfront&returnLabel=PM\+workfront$/,
+  )
+  await expect(panelWorkReviewGroup.getByRole('link', { name: /Review snapshot/i })).toHaveAttribute(
+    'href',
+    /\/pm-review\/approval\?screen=snapshot-review&detailId=snap-001&returnTo=%2Fpm-review%2Fworkfront&returnLabel=PM\+workfront$/,
+  )
+  await expect(panelReviewActions.getByRole('group', { name: /Issue review links for Distribution Panel/i })).toHaveCount(0)
+  await expect(page.getByRole('region', { name: /Review actions for Main Switchgear/i })).toHaveCount(0)
   const escalationReviewLink = page.getByRole('link', { name: /Review escalation/i })
   await expect(escalationReviewLink).toHaveAttribute(
     'href',

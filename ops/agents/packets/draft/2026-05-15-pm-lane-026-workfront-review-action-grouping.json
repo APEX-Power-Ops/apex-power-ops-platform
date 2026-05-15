@@ -1,0 +1,90 @@
+{
+  "packet_id": "2026-05-15-pm-lane-026",
+  "title": "PM Workfront Review-Action Grouping",
+  "objective": "Tighten local frontend-only PM workfront review-action scan ergonomics by grouping eligible row-level Review escalation, Review task, Review package, Review snapshot, and Review history actions into stable accessible issue-review and work-review groups while preserving existing hrefs, return context, and zero-mutation posture.",
+  "domain": "pm-domain",
+  "active_role": "PM Runtime Product Coordinator",
+  "repo_paths": [
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/app/pm-review/workfront/page.tsx",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/tests/browser-shell.pm-workfront.smoke.spec.ts",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "dependencies": [
+    "2026-05-15-pm-lane-012",
+    "2026-05-15-pm-lane-025",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-025-workfront-snapshot-review-drillthrough-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/app/pm-review/workfront/page.tsx",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/tests/browser-shell.pm-workfront.smoke.spec.ts",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/tests/browser-shell.approval-context.smoke.spec.ts",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/tests/browser-shell.static-surfaces.smoke.spec.ts"
+  ],
+  "orchestration_inputs": [
+    "PM Lane 012 remains the deployment gate for hosted mutation-seam parity and live PM proof.",
+    "PM Lane 025 identified review-action scan ergonomics as the next local product slice after completing workfront snapshot-review drillthrough.",
+    "Read-only product scout 019e2cd9-c60c-7972-9d1f-477891a29371 confirmed the grouped region should be split into Issue review and Work review groups, omit empty groups, and keep Draft lead follow-up outside the grouping.",
+    "Read-only governance scout 019e2cd9-c668-7441-ba1e-ef278ae7607a supplied packet, status, validation, guardrail, and host parity closeout wording for a local frontend-only Lane 026.",
+    "Coordinator execution kept write ownership local to operations-web frontend, focused browser proof, and governance surfaces while scouts ran as parallel read-only lanes."
+  ],
+  "constrained_outputs": [
+    "PM workfront now computes eligible review links into typed review actions without changing destination URL generation.",
+    "Rows with review actions now render a stable accessible Review actions region.",
+    "Issue-oriented actions render under an Issue review group for Review escalation and Review history.",
+    "Work-oriented actions render under a Work review group for Review task, Review package, and Review snapshot.",
+    "Empty groups and rows with no review actions are omitted.",
+    "The focused PM workfront smoke asserts grouped regions, issue/work group labels, link counts, generated hrefs, absence of empty groups, absence of a review-action region for rows with no review actions, downstream return links, and zero-mutation posture."
+  ],
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/app/pm-review/workfront/page.tsx",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/tests/browser-shell.pm-workfront.smoke.spec.ts",
+    "C:/APEX Platform/apex-power-ops-platform/PROJECT_STATUS.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-15-pm-lane-026-workfront-review-action-grouping.json",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-026-workfront-review-action-grouping-handoff.md"
+  ],
+  "validation_steps": [
+    "corepack pnpm --dir C:/APEX Platform/apex-power-ops-platform --filter @apex/operations-web typecheck",
+    "corepack pnpm --dir C:/APEX Platform/apex-power-ops-platform --filter @apex/operations-web build",
+    "CI=1 corepack pnpm --dir C:/APEX Platform/apex-power-ops-platform --filter @apex/operations-web exec playwright test tests/browser-shell.pm-workfront.smoke.spec.ts",
+    "CI=1 corepack pnpm --dir C:/APEX Platform/apex-power-ops-platform --filter @apex/operations-web exec playwright test tests/browser-shell.approval-context.smoke.spec.ts",
+    "CI=1 corepack pnpm --dir C:/APEX Platform/apex-power-ops-platform --filter @apex/operations-web exec playwright test tests/browser-shell.static-surfaces.smoke.spec.ts",
+    "git diff --check"
+  ],
+  "validation_results": [
+    "operations-web typecheck passed",
+    "operations-web production build passed",
+    "focused PM workfront Playwright proof passed 1/1",
+    "focused approval-context Playwright proof passed 4/4",
+    "focused static-surfaces Playwright proof passed 1/1",
+    "git diff --check passed"
+  ],
+  "not_allowed": [
+    "No backend endpoint change.",
+    "No read API shape change.",
+    "No approval route change.",
+    "No approval mutation behavior change.",
+    "No package script change.",
+    "No SQL or schema migration.",
+    "No live database write.",
+    "No service admission.",
+    "No auth or ingress widening.",
+    "No assignment mutation.",
+    "No schedule mutation.",
+    "No Operations Visibility reopening.",
+    "No Vercel promotion.",
+    "No Render deployment action.",
+    "No AI helper mutation.",
+    "No AI service admission widening.",
+    "No autonomous AI business-state mutation."
+  ],
+  "handoff_target": "Delegated Technical Repo Authority",
+  "status": "complete",
+  "execution_result": "PASS_LOCAL_FRONTEND_ONLY_HOSTED_PROOF_DEFERRED_TO_PM_LANE_012",
+  "delegation_status": "coordinator-executed-with-parallel-read-only-scouts",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-026-workfront-review-action-grouping-handoff.md"
+  ],
+  "sql_permission": false,
+  "sql_permission_note": "Packet 2026-05-15-pm-lane-026 does not authorize SQL writes, schema migration, live data mutation, auth widening, ingress widening, schedule mutation, assignment mutation, Vercel promotion, Render deployment action, AI helper mutation, AI service admission widening, or autonomous AI business-state mutation.",
+  "ai_mutation_authority": "not_admitted",
+  "created_at": "2026-05-15",
+  "updated_at": "2026-05-15"
+}
