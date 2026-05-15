@@ -293,6 +293,19 @@ function workfrontWorkPackageReviewLink(row: WorkfrontRow) {
   })
 }
 
+function workfrontDecisionHistoryLink(row: WorkfrontRow) {
+  const [historySearch] = Array.from(rowDecisionEntityIds(row))
+  if (!historySearch) {
+    return null
+  }
+
+  return buildPmRoute('/pm-review/approval', {
+    screen: 'history',
+    historySearch,
+    ...WORKFRONT_RETURN_CONTEXT,
+  })
+}
+
 function decisionTimestamp(row: DecisionHistoryRow) {
   return row.timestamp || row.server_timestamp || row.client_timestamp || ''
 }
@@ -532,6 +545,7 @@ export default function PmWorkfrontPage() {
               const escalationReviewLink = workfrontEscalationReviewLink(escalatedIssue?.id)
               const taskReviewLink = workfrontTaskReviewLink(row)
               const workPackageReviewLink = workfrontWorkPackageReviewLink(row)
+              const decisionHistoryLink = workfrontDecisionHistoryLink(row)
 
               return (
             <article
@@ -611,6 +625,11 @@ export default function PmWorkfrontPage() {
                 {workPackageReviewLink ? (
                   <Link className="btn btn-outline" href={workPackageReviewLink} style={{ marginTop: '0.75rem', marginLeft: '0.5rem' }}>
                     Review package
+                  </Link>
+                ) : null}
+                {decisionHistoryLink ? (
+                  <Link className="btn btn-outline" href={decisionHistoryLink} style={{ marginTop: '0.75rem', marginLeft: '0.5rem' }}>
+                    Review history
                   </Link>
                 ) : null}
               </div>

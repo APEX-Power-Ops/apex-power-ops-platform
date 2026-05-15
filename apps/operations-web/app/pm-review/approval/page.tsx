@@ -824,11 +824,15 @@ function EscalationQueue({
   )
 }
 
-function DecisionHistory({ data }: { data: any }) {
+function DecisionHistory({ data, initialSearch }: { data: any; initialSearch?: string | null }) {
   const { history } = data
   const [filterType, setFilterType] = useState('all')
   const [filterAction, setFilterAction] = useState('all')
-  const [search, setSearch] = useState('')
+  const [search, setSearch] = useState(initialSearch || '')
+
+  useEffect(() => {
+    setSearch(initialSearch || '')
+  }, [initialSearch])
 
   const filteredHistory = history.filter((entry: any) => {
     if (filterType !== 'all' && entry.entity_type !== filterType) {
@@ -847,7 +851,7 @@ function DecisionHistory({ data }: { data: any }) {
     'div',
     null,
     React.createElement('h1', { className: 'text-xl font-bold resa-blue mb-4' }, 'Decision History'),
-    React.createElement('div', { className: 'card flex gap-3 items-center mb-4' }, React.createElement('select', { value: filterType, onChange: (event: any) => setFilterType(event.target.value) }, React.createElement('option', { value: 'all' }, 'All Types'), ['task', 'workpackage', 'snapshot', 'issue'].map((type) => React.createElement('option', { key: type, value: type }, type))), React.createElement('select', { value: filterAction, onChange: (event: any) => setFilterAction(event.target.value) }, React.createElement('option', { value: 'all' }, 'All Actions'), ['approve', 'reject', 'escalate_review', 'resolve_escalated', 're_escalate', 'return_to_lead'].map((action) => React.createElement('option', { key: action, value: action }, action.replace(/_/g, ' ')))), React.createElement('input', { type: 'text', placeholder: 'Search...', value: search, onChange: (event: any) => setSearch(event.target.value), className: 'flex-1' })),
+    React.createElement('div', { className: 'card flex gap-3 items-center mb-4' }, React.createElement('select', { value: filterType, onChange: (event: any) => setFilterType(event.target.value) }, React.createElement('option', { value: 'all' }, 'All Types'), ['task', 'workpackage', 'snapshot', 'issue'].map((type) => React.createElement('option', { key: type, value: type }, type))), React.createElement('select', { value: filterAction, onChange: (event: any) => setFilterAction(event.target.value) }, React.createElement('option', { value: 'all' }, 'All Actions'), ['approve', 'reject', 'escalate_review', 'resolve_escalated', 're_escalate', 'return_to_lead'].map((action) => React.createElement('option', { key: action, value: action }, action.replace(/_/g, ' ')))), React.createElement('input', { type: 'text', 'aria-label': 'Decision history search', placeholder: 'Search...', value: search, onChange: (event: any) => setSearch(event.target.value), className: 'flex-1' })),
     filteredHistory.length === 0
       ? React.createElement('div', { className: 'card text-center text-gray-400 py-8' }, 'No decisions recorded yet')
       : React.createElement('div', { className: 'card' }, React.createElement('table', null, React.createElement('thead', null, React.createElement('tr', null, React.createElement('th', null, 'Time'), React.createElement('th', null, 'Type'), React.createElement('th', null, 'Entity'), React.createElement('th', null, 'Action'), React.createElement('th', null, 'Actor'), React.createElement('th', null, 'From → To'), React.createElement('th', null, 'Reason'))), React.createElement('tbody', null, filteredHistory.map((entry: any, index: number) => React.createElement('tr', { key: `${entry.entity_id ?? 'entry'}-${index}` }, React.createElement('td', { className: 'text-xs text-gray-500' }, entry.timestamp ? new Date(entry.timestamp).toLocaleString() : '—'), React.createElement('td', null, React.createElement(TypeBadge, { type: entry.entity_type || 'unknown' })), React.createElement('td', { className: 'text-xs font-medium' }, entry.entity_id), React.createElement('td', null, React.createElement('span', { className: 'badge bg-gray-100 text-gray-700' }, entry.action_type?.replace(/_/g, ' '))), React.createElement('td', { className: 'text-xs' }, `${entry.actor_id} (${entry.actor_role})`), React.createElement('td', { className: 'text-xs' }, `${entry.from_state?.status || '—'} → ${entry.to_state?.status || '—'}`), React.createElement('td', { className: 'text-xs text-gray-500', style: { maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis' } }, entry.reason || '—')))))),
@@ -872,6 +876,7 @@ function ApprovalSurfaceApp() {
   const resolvedDetailId = detailId || browserDetailId || getImplicitApprovalDetailId(data, screen)
   const returnTo = searchParams.get('returnTo')
   const returnLabel = searchParams.get('returnLabel') || 'previous PM view'
+  const historySearch = searchParams.get('historySearch') || getBrowserSearchParam('historySearch') || ''
   const approvalReturnLabel = getApprovalReturnLabel(screen)
   const approvalTraceContext = useMemo(() => getApprovalTraceContext(data, screen, resolvedDetailId), [data, resolvedDetailId, screen])
 
@@ -1022,7 +1027,7 @@ function ApprovalSurfaceApp() {
           onViewDrivers,
         })
       case 'history':
-        return React.createElement(DecisionHistory, { data })
+        return React.createElement(DecisionHistory, { data, initialSearch: historySearch })
       case 'schedule':
         return window.ApexSchedule?.ScheduleView
           ? React.createElement(window.ApexSchedule.ScheduleView, { onTraceTask, onViewVariance, onViewDrivers, focusTaskId: null })
@@ -1042,7 +1047,7 @@ function ApprovalSurfaceApp() {
       default:
         return React.createElement(ApprovalQueue, { data, navigate })
     }
-  }, [data, navigate, onTraceTask, onViewDrivers, onViewSchedule, onViewVariance, resolvedDetailId, screen])
+  }, [data, historySearch, navigate, onTraceTask, onViewDrivers, onViewSchedule, onViewVariance, resolvedDetailId, screen])
 
   return React.createElement(
     'div',

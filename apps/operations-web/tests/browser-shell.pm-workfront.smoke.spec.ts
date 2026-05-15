@@ -397,6 +397,12 @@ test('pm workfront route renders read-only readiness queue from governed seam', 
     'href',
     /\/pm-review\/approval\?screen=wp-review&detailId=wp-001&returnTo=%2Fpm-review%2Fworkfront&returnLabel=PM\+workfront$/,
   )
+  const decisionHistoryLink = page.getByRole('link', { name: /Review history/i })
+  await expect(decisionHistoryLink).toHaveCount(1)
+  await expect(decisionHistoryLink).toHaveAttribute(
+    'href',
+    /\/pm-review\/approval\?screen=history&historySearch=issue-200&returnTo=%2Fpm-review%2Fworkfront&returnLabel=PM\+workfront$/,
+  )
   const cableScheduleDrillthrough = page.locator('[aria-label="Schedule drillthrough for Cable Assembly A"]')
   await expect(cableScheduleDrillthrough.getByRole('link', { name: 'Drivers' })).toHaveAttribute(
     'href',
@@ -474,6 +480,21 @@ test('pm workfront route renders read-only readiness queue from governed seam', 
     undefined,
     [/[?&]focusTaskId=/],
   )
+  expect(mutationRequests).toHaveLength(0)
+
+  await page.goto('/pm-review/workfront', { waitUntil: 'networkidle' })
+  const historyRequestsBeforeApprovalHistory = historyRequests.length
+  await page.getByRole('link', { name: /Review history/i }).click()
+  await expect(page).toHaveURL(/\/pm-review\/approval\?[^#]*screen=history/)
+  await expect(page).toHaveURL(/[?&]historySearch=issue-200/)
+  await expect(page.getByRole('heading', { name: /Decision History/i })).toBeVisible()
+  await expect(page.getByRole('textbox', { name: /Decision history search/i })).toHaveValue('issue-200')
+  const historyReturnLink = page.getByRole('link', { name: /Return to PM workfront/i })
+  await expect(historyReturnLink).toHaveAttribute('href', /\/pm-review\/workfront$/)
+  expect(historyRequests.length).toBeGreaterThan(historyRequestsBeforeApprovalHistory)
+  expect(historyRequests.at(-1)).toEqual({ entityIds: [], limit: null })
+  await historyReturnLink.click()
+  await expect(page).toHaveURL(/\/pm-review\/workfront$/)
   expect(mutationRequests).toHaveLength(0)
 
   await page.goto('/pm-review/workfront', { waitUntil: 'networkidle' })
