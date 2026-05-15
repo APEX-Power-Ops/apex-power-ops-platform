@@ -117,6 +117,7 @@ const API_BASE =
 const READS_BASE = `${API_BASE}/reads`
 const MUTATIONS_BASE = `${API_BASE}/mutations`
 const PM_ACTOR = { actor_id: 'pm-001', actor_role: 'pm', project_scope: ['proj-001'] }
+const DECISION_HISTORY_LIMIT = 25
 
 function makeToken() {
   return `Bearer ${btoa(JSON.stringify(PM_ACTOR))}`
@@ -134,8 +135,11 @@ async function readWorkfront(): Promise<WorkfrontPayload> {
   return (await response.json()) as WorkfrontPayload
 }
 
-async function readDecisionHistory(): Promise<DecisionHistoryRow[]> {
-  const response = await fetch(`${READS_BASE}/decision-history`, {
+async function readDecisionHistory(entityIds: string[], limit = DECISION_HISTORY_LIMIT): Promise<DecisionHistoryRow[]> {
+  const params = new URLSearchParams()
+  entityIds.forEach((entityId) => params.append('entity_id', entityId))
+  params.set('limit', String(limit))
+  const response = await fetch(`${READS_BASE}/decision-history?${params.toString()}`, {
     headers: { Authorization: makeToken() },
   })
 
@@ -334,11 +338,19 @@ export default function PmWorkfrontPage() {
     [refresh],
   )
 
-  const refreshHistory = useCallback(async () => {
+  const refreshHistory = useCallback(async (row: WorkfrontRow) => {
+    const entityIds = Array.from(rowDecisionEntityIds(row))
+    if (!entityIds.length) {
+      setHistoryRows([])
+      setHistoryError(null)
+      setHistoryLoaded(true)
+      return
+    }
+
     try {
       setHistoryLoading(true)
       setHistoryError(null)
-      setHistoryRows(await readDecisionHistory())
+      setHistoryRows(await readDecisionHistory(entityIds))
       setHistoryLoaded(true)
     } catch (error) {
       setHistoryRows([])
@@ -557,7 +569,7 @@ export default function PmWorkfrontPage() {
                         <p style={{ margin: 0, fontFamily: 'var(--font-mono), monospace', fontSize: '0.78rem', color: 'var(--brand)', textTransform: 'uppercase' }}>
                           Disposition history
                         </p>
-                        <button className="btn btn-outline" onClick={() => void refreshHistory()} disabled={historyLoading}>
+                        <button className="btn btn-outline" onClick={() => void refreshHistory(row)} disabled={historyLoading}>
                           {historyLoading ? 'Loading...' : historyLoaded ? 'Refresh history' : 'View history'}
                         </button>
                       </div>

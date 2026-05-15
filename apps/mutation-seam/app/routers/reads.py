@@ -3,7 +3,7 @@ Read-only endpoints for prototype data access.
 In production, reads go through Supabase directly via RLS.
 For the prototype, we expose the in-memory store.
 """
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from typing import Any, Dict, List
 
 from app.auth.jwt import Actor, get_current_actor
@@ -16,6 +16,7 @@ router = APIRouter(prefix="/api/v1/reads", tags=["reads"])
 
 
 PM_DECISION_ACTIONS = {"approve", "reject", "escalate_review", "resolve_escalated", "re_escalate", "return_to_lead"}
+DECISION_HISTORY_LIMIT_MAX = 100
 
 
 def _audit_event_timestamp(event: Dict[str, Any]) -> str:
@@ -146,15 +147,24 @@ async def get_approval_queue(actor: Actor = Depends(get_current_actor)) -> Dict[
 
 
 @router.get("/decision-history")
-async def get_decision_history(actor: Actor = Depends(get_current_actor)) -> List[Dict[str, Any]]:
+async def get_decision_history(
+    actor: Actor = Depends(get_current_actor),
+    entity_id: List[str] | None = Query(default=None),
+    limit: int | None = Query(default=None, ge=1),
+) -> List[Dict[str, Any]]:
     """
     PM decision history: audit trail of Class C approval/rejection/escalation actions.
     """
+    entity_ids = {str(value) for value in entity_id or [] if value}
     history = [
         _decision_history_row(e) for e in store.audit_log
-        if e.get("action_type") in PM_DECISION_ACTIONS or e.get("actor_role") == "pm"
+        if (e.get("action_type") in PM_DECISION_ACTIONS or e.get("actor_role") == "pm")
+        and (not entity_ids or str(e.get("entity_id") or "") in entity_ids)
     ]
-    return sorted(history, key=_audit_event_timestamp, reverse=True)
+    sorted_history = sorted(history, key=_audit_event_timestamp, reverse=True)
+    if limit is not None:
+        return sorted_history[:min(limit, DECISION_HISTORY_LIMIT_MAX)]
+    return sorted_history
 
 
 @router.get("/blocking-issues/{entity_type}/{entity_id}")

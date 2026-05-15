@@ -1,0 +1,61 @@
+{
+  "packet_id": "2026-05-15-pm-lane-008",
+  "title": "PM Decision-History Query Narrowing",
+  "objective": "Add backward-compatible query narrowing to the existing PM decision-history read seam and update the PM workfront history panel to request only row-relevant issue history with a bounded limit.",
+  "domain": "pm-domain",
+  "active_role": "PM Runtime Product Coordinator",
+  "repo_paths": [
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web",
+    "C:/APEX Platform/apex-power-ops-platform/docs/authority/APEX-OPS-DELEGATED-AUTHORITY-AND-AI-ORCHESTRATION-PROTOCOL-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "dependencies": [
+    "2026-05-15-pm-lane-007",
+    "docs/authority/APEX-OPS-DELEGATED-AUTHORITY-AND-AI-ORCHESTRATION-PROTOCOL-2026-05-15.md",
+    "ops/agents/handoffs/2026-05-15-pm-lane-007-live-supabase-history-parity-inspection-handoff.md"
+  ],
+  "required_inputs": [
+    "PM Lane 006 read-only decision-history panel",
+    "PM Lane 007 live Supabase empty-history parity verdict",
+    "Read-only backend scout 019e2c52-c2a8-7251-aa65-f13181bdd1ba",
+    "Read-only frontend scout 019e2c52-c35e-7933-8022-01f7bf502cd5",
+    "Focused backend, build, typecheck, and Playwright validation evidence"
+  ],
+  "constrained_outputs": [
+    "GET /api/v1/reads/decision-history accepts repeated entity_id query params while preserving no-param full-history behavior",
+    "GET /api/v1/reads/decision-history accepts optional limit with ge=1 validation and a silent cap at 100 after newest-first sorting",
+    "PM workfront history panel requests row-scoped decision history with entity_id params and limit=25",
+    "Rows without decision entity IDs do not fall back to a full-history fetch",
+    "Focused tests cover repeated entity_id, limit=1 newest result, limit=0 validation, limit=250 cap, scoped browser history requests, no mutation from history open, and unchanged PM-clicked return_to_lead behavior",
+    "No new endpoint, no SQL or schema migration, no live database write, no service admission, no auth or ingress widening, no assignment mutation, no schedule mutation, and no autonomous AI business-state action"
+  ],
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/routers/reads.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests/test_pipeline_integration.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/app/pm-review/workfront/page.tsx",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/tests/browser-shell.pm-workfront.smoke.spec.ts",
+    "C:/APEX Platform/apex-power-ops-platform/PROJECT_STATUS.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-15-pm-lane-008-decision-history-query-narrowing.json",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-008-decision-history-query-narrowing-handoff.md"
+  ],
+  "validation_steps": [
+    "Run focused mutation-seam PM workfront read-model, PM issue disposition, and pipeline integration pytest slices with SEAM_STORE_BACKEND=memory",
+    "Run operations-web production build",
+    "Run operations-web typecheck after build-generated Next types are available",
+    "Run focused Playwright browser smoke for the PM workfront route",
+    "Run packet JSON validation and git diff whitespace checks before publication"
+  ],
+  "handoff_target": "Delegated Technical Repo Authority",
+  "status": "complete",
+  "execution_result": "PASS",
+  "delegation_status": "complete",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-008-decision-history-query-narrowing-handoff.md"
+  ],
+  "sql_permission": false,
+  "sql_permission_note": "Packet 2026-05-15-pm-lane-008 changes only an existing read endpoint, operations-web read behavior, and focused tests. No SQL, schema migration, production data write, auth, ingress, or new mutation authority is authorized.",
+  "ai_mutation_authority": "not_admitted",
+  "created_at": "2026-05-15",
+  "updated_at": "2026-05-15"
+}

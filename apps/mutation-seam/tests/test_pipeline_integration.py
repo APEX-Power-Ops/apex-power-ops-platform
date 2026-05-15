@@ -1,6 +1,7 @@
 """
 Integration tests for the mutation pipeline.
 """
+from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
 import pytest
@@ -306,6 +307,65 @@ def test_decision_history_normalizes_timestamp_shapes(client):
     assert [row["id"] for row in rows[:2]] == ["audit-new-server", "audit-old-client"]
     assert rows[0]["timestamp"] == "2026-05-15T10:00:00Z"
     assert rows[1]["timestamp"] == "2026-05-15T09:00:00Z"
+
+    filtered = client.get(
+        "/api/v1/reads/decision-history?entity_id=issue-002",
+        headers={"Authorization": _make_token("pm-001", "pm")},
+    )
+    assert filtered.status_code == 200
+    assert [row["id"] for row in filtered.json()] == ["audit-new-server"]
+
+    repeated = client.get(
+        "/api/v1/reads/decision-history?entity_id=issue-002&entity_id=task-001",
+        headers={"Authorization": _make_token("pm-001", "pm")},
+    )
+    assert repeated.status_code == 200
+    assert [row["id"] for row in repeated.json()] == ["audit-new-server", "audit-old-client"]
+
+    newest_only = client.get(
+        "/api/v1/reads/decision-history?entity_id=issue-002&entity_id=task-001&limit=1",
+        headers={"Authorization": _make_token("pm-001", "pm")},
+    )
+    assert newest_only.status_code == 200
+    assert [row["id"] for row in newest_only.json()] == ["audit-new-server"]
+
+    invalid_limit = client.get(
+        "/api/v1/reads/decision-history?limit=0",
+        headers={"Authorization": _make_token("pm-001", "pm")},
+    )
+    assert invalid_limit.status_code == 422
+
+
+def test_decision_history_limit_is_capped(client):
+    """Decision-history query narrowing keeps PM timeline reads bounded."""
+    from app.db.memory_store import store
+
+    base = datetime(2026, 5, 15, 10, 0, tzinfo=timezone.utc)
+    for index in range(120):
+        store.audit_log.append(
+            {
+                "id": f"audit-bulk-{index:03d}",
+                "mutation_id": f"mut-bulk-{index:03d}",
+                "actor_id": "pm-001",
+                "actor_role": "pm",
+                "action_type": "return_to_lead",
+                "entity_id": "issue-002",
+                "from_state": {"status": "escalated"},
+                "to_state": {"status": "in_review"},
+                "server_timestamp": (base + timedelta(minutes=index)).isoformat().replace("+00:00", "Z"),
+            }
+        )
+
+    limited = client.get(
+        "/api/v1/reads/decision-history?entity_id=issue-002&limit=250",
+        headers={"Authorization": _make_token("pm-001", "pm")},
+    )
+
+    assert limited.status_code == 200
+    rows = limited.json()
+    assert len(rows) == 100
+    assert rows[0]["id"] == "audit-bulk-119"
+    assert rows[-1]["id"] == "audit-bulk-020"
 
 
 def test_field_tech_cannot_return_issue_to_lead(client, field_tech_token):

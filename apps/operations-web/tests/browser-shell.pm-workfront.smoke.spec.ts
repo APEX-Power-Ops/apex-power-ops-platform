@@ -3,6 +3,7 @@ import { expect, test } from '@playwright/test'
 test('pm workfront route renders read-only readiness queue from governed seam', async ({ page }) => {
   let readCalls = 0
   let historyCalls = 0
+  const historyRequests: Array<{ entityIds: string[]; limit: string | null }> = []
   let returnedToLead = false
   const mutationRequests: Array<{ authorization?: string; body: any }> = []
 
@@ -153,8 +154,13 @@ test('pm workfront route renders read-only readiness queue from governed seam', 
     })
   })
 
-  await page.route('**/api/v1/reads/decision-history', async (route) => {
+  await page.route('**/api/v1/reads/decision-history**', async (route) => {
     historyCalls += 1
+    const url = new URL(route.request().url())
+    historyRequests.push({
+      entityIds: url.searchParams.getAll('entity_id'),
+      limit: url.searchParams.get('limit'),
+    })
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -214,6 +220,7 @@ test('pm workfront route renders read-only readiness queue from governed seam', 
   await expect(historyPanel.getByText(/This history panel is read-only/i)).toBeVisible()
   await expect(historyPanel.getByText(/No PM disposition recorded/i)).toBeVisible()
   expect(historyCalls).toBe(1)
+  expect(historyRequests[0]).toEqual({ entityIds: ['issue-200'], limit: '25' })
   expect(mutationRequests).toHaveLength(0)
 
   await page.getByRole('button', { name: /Return to lead/i }).click()
@@ -229,6 +236,7 @@ test('pm workfront route renders read-only readiness queue from governed seam', 
 
   expect(mutationRequests).toHaveLength(1)
   expect(historyCalls).toBe(2)
+  expect(historyRequests[1]).toEqual({ entityIds: ['issue-200'], limit: '25' })
   const mutation = mutationRequests[0]
   const tokenPayload = JSON.parse(Buffer.from((mutation.authorization || '').replace(/^Bearer /, ''), 'base64').toString('utf8'))
   expect(tokenPayload.actor_role).toBe('pm')
