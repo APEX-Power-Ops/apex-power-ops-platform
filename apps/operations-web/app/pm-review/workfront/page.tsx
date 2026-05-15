@@ -268,6 +268,18 @@ function workfrontEscalationReviewLink(issueId?: string | null) {
     : null
 }
 
+function workfrontTaskReviewLink(row: WorkfrontRow) {
+  if (!row.task_id || (row.readiness !== 'pm_review' && row.status !== 'awaiting_review')) {
+    return null
+  }
+
+  return buildPmRoute('/pm-review/approval', {
+    screen: 'task-review',
+    detailId: row.task_id,
+    ...WORKFRONT_RETURN_CONTEXT,
+  })
+}
+
 function decisionTimestamp(row: DecisionHistoryRow) {
   return row.timestamp || row.server_timestamp || row.client_timestamp || ''
 }
@@ -505,6 +517,7 @@ export default function PmWorkfrontPage() {
               const rowHistory = historyRows.filter((event) => event.entity_id && rowEntityIds.has(event.entity_id))
               const drillthroughLinks = workfrontDrillthroughLinks(row)
               const escalationReviewLink = workfrontEscalationReviewLink(escalatedIssue?.id)
+              const taskReviewLink = workfrontTaskReviewLink(row)
 
               return (
             <article
@@ -574,6 +587,11 @@ export default function PmWorkfrontPage() {
                     style={{ marginTop: '0.75rem', marginLeft: '0.5rem' }}
                   >
                     Review escalation
+                  </Link>
+                ) : null}
+                {taskReviewLink ? (
+                  <Link className="btn btn-outline" href={taskReviewLink} style={{ marginTop: '0.75rem', marginLeft: '0.5rem' }}>
+                    Review task
                   </Link>
                 ) : null}
               </div>

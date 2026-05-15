@@ -66,9 +66,9 @@ test('pm workfront route renders read-only readiness queue from governed seam', 
           total_count: 3,
           blocked_count: 1,
           unassigned_count: 1,
-          ready_count: 1,
+          ready_count: 0,
           in_progress_count: 0,
-          pm_review_count: 0,
+          pm_review_count: 1,
           complete_count: 0,
         },
         advisory: {
@@ -162,8 +162,8 @@ test('pm workfront route renders read-only readiness queue from governed seam', 
             id: 'workfront-app-002',
             apparatus_id: 'app-002',
             apparatus_name: 'Distribution Panel',
-            status: 'ready',
-            readiness: 'ready',
+            status: 'awaiting_review',
+            readiness: 'pm_review',
             task_id: 'task-001',
             blocker_count: 0,
             open_issue_count: 0,
@@ -175,7 +175,7 @@ test('pm workfront route renders read-only readiness queue from governed seam', 
             drawing_ref: 'SLD A-201',
             checklist_complete_count: 0,
             checklist_total_count: 3,
-            next_action: 'Start field work',
+            next_action: 'Review task completion',
           },
         ],
       }),
@@ -243,10 +243,18 @@ test('pm workfront route renders read-only readiness queue from governed seam', 
               reported_by: 'tech-001',
             },
           ],
-          tasks: [],
+          tasks: [
+            {
+              id: 'task-001',
+              name: 'Primary Intake Test',
+              workpackage_id: 'wp-001',
+              project_id: 'stack-dc',
+              status: 'awaiting_review',
+            },
+          ],
           workpackages: [],
           snapshots: [],
-          total_count: 1,
+          total_count: 2,
         }),
       })
     }),
@@ -254,14 +262,20 @@ test('pm workfront route renders read-only readiness queue from governed seam', 
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify([{ id: 'app-003', name: 'Cable Assembly A', task_id: 'task-002' }]),
+        body: JSON.stringify([
+          { id: 'app-002', name: 'Distribution Panel', task_id: 'task-001', status: 'complete' },
+          { id: 'app-003', name: 'Cable Assembly A', task_id: 'task-002' },
+        ]),
       })
     }),
     page.route('**/api/v1/reads/tasks', async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify([{ id: 'task-002', name: 'Switchgear Sweep', workpackage_id: 'wp-001', status: 'active' }]),
+        body: JSON.stringify([
+          { id: 'task-001', name: 'Primary Intake Test', workpackage_id: 'wp-001', status: 'awaiting_review' },
+          { id: 'task-002', name: 'Switchgear Sweep', workpackage_id: 'wp-001', status: 'active' },
+        ]),
       })
     }),
     page.route('**/api/v1/reads/workpackages', async (route) => {
@@ -369,6 +383,12 @@ test('pm workfront route renders read-only readiness queue from governed seam', 
     'href',
     /\/pm-review\/approval\?screen=escalations&detailId=issue-200&returnTo=%2Fpm-review%2Fworkfront&returnLabel=PM\+workfront$/,
   )
+  const taskReviewLink = page.getByRole('link', { name: /Review task/i })
+  await expect(taskReviewLink).toHaveCount(1)
+  await expect(taskReviewLink).toHaveAttribute(
+    'href',
+    /\/pm-review\/approval\?screen=task-review&detailId=task-001&returnTo=%2Fpm-review%2Fworkfront&returnLabel=PM\+workfront$/,
+  )
   const cableScheduleDrillthrough = page.locator('[aria-label="Schedule drillthrough for Cable Assembly A"]')
   await expect(cableScheduleDrillthrough.getByRole('link', { name: 'Drivers' })).toHaveAttribute(
     'href',
@@ -446,6 +466,17 @@ test('pm workfront route renders read-only readiness queue from governed seam', 
     undefined,
     [/[?&]focusTaskId=/],
   )
+  expect(mutationRequests).toHaveLength(0)
+
+  await page.goto('/pm-review/workfront', { waitUntil: 'networkidle' })
+  await page.getByRole('link', { name: /Review task/i }).click()
+  await expect(page).toHaveURL(/\/pm-review\/approval\?[^#]*screen=task-review/)
+  await expect(page).toHaveURL(/[?&]detailId=task-001/)
+  await expect(page.getByRole('heading', { name: /Primary Intake Test/i })).toBeVisible()
+  const taskReturnLink = page.getByRole('link', { name: /Return to PM workfront/i })
+  await expect(taskReturnLink).toHaveAttribute('href', /\/pm-review\/workfront$/)
+  await taskReturnLink.click()
+  await expect(page).toHaveURL(/\/pm-review\/workfront$/)
   expect(mutationRequests).toHaveLength(0)
 
   await page.goto('/pm-review/workfront', { waitUntil: 'networkidle' })
