@@ -100,6 +100,17 @@ type DecisionHistoryRow = {
   }
 }
 
+type ReviewSnapshot = {
+  id?: string
+  workpackage_id?: string | null
+  status?: string | null
+  period_start?: string | null
+  period_end?: string | null
+  percent_complete?: number | null
+  hours_reported?: number | null
+  submitted_by?: string | null
+}
+
 type WorkfrontPayload = {
   summary?: WorkfrontSummary
   lenses?: WorkfrontLenses
@@ -138,6 +149,18 @@ async function readWorkfront(): Promise<WorkfrontPayload> {
   }
 
   return (await response.json()) as WorkfrontPayload
+}
+
+async function readReviewSnapshots(): Promise<ReviewSnapshot[]> {
+  const response = await fetch(`${READS_BASE}/snapshots`, {
+    headers: { Authorization: makeToken() },
+  })
+
+  if (!response.ok) {
+    throw new Error('Failed to read progress snapshots')
+  }
+
+  return (await response.json()) as ReviewSnapshot[]
 }
 
 async function readDecisionHistory(entityIds: string[], limit = DECISION_HISTORY_LIMIT): Promise<DecisionHistoryRow[]> {
@@ -232,6 +255,10 @@ function rowTaskLabel(row: WorkfrontRow) {
   return row.task_name || row.apparatus_name || row.apparatus_id || row.id
 }
 
+function rowNeedsPmReview(row: WorkfrontRow) {
+  return row.readiness === 'pm_review' || row.status === 'awaiting_review'
+}
+
 function workfrontDrillthroughLinks(row: WorkfrontRow) {
   const taskId = row.task_id || undefined
   const taskLabel = rowTaskLabel(row)
@@ -270,7 +297,7 @@ function workfrontEscalationReviewLink(issueId?: string | null) {
 }
 
 function workfrontTaskReviewLink(row: WorkfrontRow) {
-  if (!row.task_id || (row.readiness !== 'pm_review' && row.status !== 'awaiting_review')) {
+  if (!row.task_id || !rowNeedsPmReview(row)) {
     return null
   }
 
@@ -282,13 +309,33 @@ function workfrontTaskReviewLink(row: WorkfrontRow) {
 }
 
 function workfrontWorkPackageReviewLink(row: WorkfrontRow) {
-  if (!row.workpackage_id || (row.readiness !== 'pm_review' && row.status !== 'awaiting_review')) {
+  if (!row.workpackage_id || !rowNeedsPmReview(row)) {
     return null
   }
 
   return buildPmRoute('/pm-review/approval', {
     screen: 'wp-review',
     detailId: row.workpackage_id,
+    ...WORKFRONT_RETURN_CONTEXT,
+  })
+}
+
+function workfrontSubmittedSnapshot(row: WorkfrontRow, snapshots: ReviewSnapshot[]) {
+  if (!row.workpackage_id || !rowNeedsPmReview(row)) {
+    return null
+  }
+
+  return snapshots.find((snapshot) => snapshot.id && snapshot.workpackage_id === row.workpackage_id && snapshot.status === 'submitted') || null
+}
+
+function workfrontSnapshotReviewLink(snapshot: ReviewSnapshot | null) {
+  if (!snapshot?.id) {
+    return null
+  }
+
+  return buildPmRoute('/pm-review/approval', {
+    screen: 'snapshot-review',
+    detailId: snapshot.id,
     ...WORKFRONT_RETURN_CONTEXT,
   })
 }
@@ -352,6 +399,7 @@ function ReadinessBadge({ value }: { value?: string | null }) {
 
 export default function PmWorkfrontPage() {
   const [payload, setPayload] = useState<WorkfrontPayload>({})
+  const [reviewSnapshots, setReviewSnapshots] = useState<ReviewSnapshot[]>([])
   const [loading, setLoading] = useState(true)
   const [online, setOnline] = useState(true)
   const [filter, setFilter] = useState('all')
@@ -366,7 +414,12 @@ export default function PmWorkfrontPage() {
   const refresh = useCallback(async () => {
     try {
       setLoading(true)
-      setPayload(await readWorkfront())
+      const [nextPayload, nextSnapshots] = await Promise.all([
+        readWorkfront(),
+        readReviewSnapshots().catch(() => [] as ReviewSnapshot[]),
+      ])
+      setPayload(nextPayload)
+      setReviewSnapshots(nextSnapshots)
       setOnline(true)
     } catch {
       setOnline(false)
@@ -545,6 +598,7 @@ export default function PmWorkfrontPage() {
               const escalationReviewLink = workfrontEscalationReviewLink(escalatedIssue?.id)
               const taskReviewLink = workfrontTaskReviewLink(row)
               const workPackageReviewLink = workfrontWorkPackageReviewLink(row)
+              const snapshotReviewLink = workfrontSnapshotReviewLink(workfrontSubmittedSnapshot(row, reviewSnapshots))
               const decisionHistoryLink = workfrontDecisionHistoryLink(row)
 
               return (
@@ -625,6 +679,11 @@ export default function PmWorkfrontPage() {
                 {workPackageReviewLink ? (
                   <Link className="btn btn-outline" href={workPackageReviewLink} style={{ marginTop: '0.75rem', marginLeft: '0.5rem' }}>
                     Review package
+                  </Link>
+                ) : null}
+                {snapshotReviewLink ? (
+                  <Link className="btn btn-outline" href={snapshotReviewLink} style={{ marginTop: '0.75rem', marginLeft: '0.5rem' }}>
+                    Review snapshot
                   </Link>
                 ) : null}
                 {decisionHistoryLink ? (

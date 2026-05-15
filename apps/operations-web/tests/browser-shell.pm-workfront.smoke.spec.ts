@@ -288,7 +288,23 @@ test('pm workfront route renders read-only readiness queue from governed seam', 
       })
     }),
     page.route('**/api/v1/reads/snapshots', async (route) => {
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([]) })
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([
+          {
+            id: 'snap-001',
+            workpackage_id: 'wp-001',
+            project_id: 'stack-dc',
+            period_start: '2026-05-01',
+            period_end: '2026-05-15',
+            status: 'submitted',
+            percent_complete: 65,
+            hours_reported: 42,
+            submitted_by: 'lead-001',
+          },
+        ]),
+      })
     }),
     page.route('**/api/v1/reads/issues', async (route) => {
       await route.fulfill({
@@ -396,6 +412,12 @@ test('pm workfront route renders read-only readiness queue from governed seam', 
   await expect(packageReviewLink).toHaveAttribute(
     'href',
     /\/pm-review\/approval\?screen=wp-review&detailId=wp-001&returnTo=%2Fpm-review%2Fworkfront&returnLabel=PM\+workfront$/,
+  )
+  const snapshotReviewLink = page.getByRole('link', { name: /Review snapshot/i })
+  await expect(snapshotReviewLink).toHaveCount(1)
+  await expect(snapshotReviewLink).toHaveAttribute(
+    'href',
+    /\/pm-review\/approval\?screen=snapshot-review&detailId=snap-001&returnTo=%2Fpm-review%2Fworkfront&returnLabel=PM\+workfront$/,
   )
   const decisionHistoryLink = page.getByRole('link', { name: /Review history/i })
   await expect(decisionHistoryLink).toHaveCount(1)
@@ -507,6 +529,18 @@ test('pm workfront route renders read-only readiness queue from governed seam', 
   await packageReturnLink.click()
   await expect(page).toHaveURL(/\/pm-review\/workfront$/)
   expect(historyRequests).toContainEqual({ entityIds: ['wp-001'], limit: '25' })
+  expect(mutationRequests).toHaveLength(0)
+
+  await page.goto('/pm-review/workfront', { waitUntil: 'networkidle' })
+  await page.getByRole('link', { name: /Review snapshot/i }).click()
+  await expect(page).toHaveURL(/\/pm-review\/approval\?[^#]*screen=snapshot-review/)
+  await expect(page).toHaveURL(/[?&]detailId=snap-001/)
+  await expect(page.getByRole('heading', { name: /Progress Snapshot/i })).toBeVisible()
+  const snapshotReturnLink = page.getByRole('link', { name: /Return to PM workfront/i })
+  await expect(snapshotReturnLink).toHaveAttribute('href', /\/pm-review\/workfront$/)
+  await snapshotReturnLink.click()
+  await expect(page).toHaveURL(/\/pm-review\/workfront$/)
+  expect(historyRequests).toContainEqual({ entityIds: ['snap-001'], limit: '25' })
   expect(mutationRequests).toHaveLength(0)
 
   await page.goto('/pm-review/workfront', { waitUntil: 'networkidle' })

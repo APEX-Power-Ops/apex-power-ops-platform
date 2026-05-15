@@ -1,0 +1,89 @@
+{
+  "packet_id": "2026-05-15-pm-lane-025",
+  "title": "PM Workfront Snapshot-Review Drillthrough",
+  "objective": "Add a focused read-only PM workfront path from PM-review rows with a submitted progress snapshot for the same workpackage into the existing PM approval snapshot-review screen, preserving return context back to PM workfront and zero mutation behavior.",
+  "domain": "pm-domain",
+  "active_role": "PM Runtime Product Coordinator",
+  "repo_paths": [
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/app/pm-review/workfront/page.tsx",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/tests/browser-shell.pm-workfront.smoke.spec.ts",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "dependencies": [
+    "2026-05-15-pm-lane-012",
+    "2026-05-15-pm-lane-024",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-024-workfront-decision-history-drillthrough-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/app/pm-review/workfront/page.tsx",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/app/pm-review/approval/page.tsx",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/app/pm-review/route-navigation.ts",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/tests/browser-shell.pm-workfront.smoke.spec.ts",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/tests/browser-shell.approval-context.smoke.spec.ts",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/tests/browser-shell.static-surfaces.smoke.spec.ts"
+  ],
+  "orchestration_inputs": [
+    "PM Lane 012 remains the deployment gate for hosted mutation-seam parity and live PM proof.",
+    "The coordinator selected workfront-to-approval snapshot-review drillthrough as the next local PM ergonomics slice after PM Lane 024.",
+    "Read-only product scout 019e2cd2-e992-7a01-b17e-e57c381159e9 confirmed snapshot-review drillthrough is the natural bounded Lane 025 candidate and requires no approval route or backend change.",
+    "Read-only governance scout 019e2cd2-e9cf-7e53-967c-0006a731a9ed supplied the packet, handoff, validation, and host parity closeout scaffold; the coordinator narrowed its suggested grouping lane to the concrete snapshot-review drillthrough scope.",
+    "Coordinator execution kept write ownership local to operations-web frontend, focused browser proof, and governance surfaces while scouts ran as parallel read-only lanes."
+  ],
+  "constrained_outputs": [
+    "PM workfront now reads existing submitted progress snapshots through /api/v1/reads/snapshots without creating a new endpoint.",
+    "PM-review rows with a submitted snapshot for the same workpackage now expose a focused Review snapshot link.",
+    "The link routes to /pm-review/approval with screen=snapshot-review, detailId=<snapshot id>, returnTo=/pm-review/workfront, and returnLabel=PM workfront.",
+    "The focused PM workfront smoke asserts the Review snapshot href, clicks into approval snapshot-review, verifies Progress Snapshot rendering, verifies scoped decision-history?entity_id=<snapshot id>&limit=25, verifies Return to PM workfront, and preserves zero-mutation posture.",
+    "Existing read-only advisory, schedule drillthrough, escalation approval drillthrough, task approval drillthrough, workpackage approval drillthrough, decision-history drillthrough, lens filters, and PM-clicked return-to-lead proof remain intact."
+  ],
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/app/pm-review/workfront/page.tsx",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/tests/browser-shell.pm-workfront.smoke.spec.ts",
+    "C:/APEX Platform/apex-power-ops-platform/PROJECT_STATUS.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-15-pm-lane-025-workfront-snapshot-review-drillthrough.json",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-025-workfront-snapshot-review-drillthrough-handoff.md"
+  ],
+  "validation_steps": [
+    "corepack pnpm --dir C:/APEX Platform/apex-power-ops-platform --filter @apex/operations-web typecheck",
+    "corepack pnpm --dir C:/APEX Platform/apex-power-ops-platform --filter @apex/operations-web build",
+    "CI=1 corepack pnpm --dir C:/APEX Platform/apex-power-ops-platform --filter @apex/operations-web exec playwright test tests/browser-shell.pm-workfront.smoke.spec.ts",
+    "CI=1 corepack pnpm --dir C:/APEX Platform/apex-power-ops-platform --filter @apex/operations-web exec playwright test tests/browser-shell.approval-context.smoke.spec.ts",
+    "CI=1 corepack pnpm --dir C:/APEX Platform/apex-power-ops-platform --filter @apex/operations-web exec playwright test tests/browser-shell.static-surfaces.smoke.spec.ts",
+    "git diff --check"
+  ],
+  "validation_results": [
+    "operations-web typecheck passed",
+    "operations-web production build passed",
+    "focused PM workfront Playwright proof passed 1/1",
+    "focused approval-context Playwright proof passed 4/4",
+    "focused static-surfaces Playwright proof passed 1/1",
+    "git diff --check passed"
+  ],
+  "not_allowed": [
+    "No backend endpoint change.",
+    "No approval mutation behavior change.",
+    "No package script change.",
+    "No SQL or schema migration.",
+    "No live database write.",
+    "No service admission.",
+    "No auth or ingress widening.",
+    "No assignment mutation.",
+    "No schedule mutation.",
+    "No Operations Visibility reopening.",
+    "No Vercel promotion.",
+    "No Render deployment action.",
+    "No AI helper mutation.",
+    "No AI service admission widening.",
+    "No autonomous AI business-state mutation."
+  ],
+  "handoff_target": "Delegated Technical Repo Authority",
+  "status": "complete",
+  "execution_result": "PASS_LOCAL_FRONTEND_ONLY_HOSTED_PROOF_DEFERRED_TO_PM_LANE_012",
+  "delegation_status": "coordinator-executed-with-parallel-read-only-scouts",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-025-workfront-snapshot-review-drillthrough-handoff.md"
+  ],
+  "sql_permission": false,
+  "sql_permission_note": "Packet 2026-05-15-pm-lane-025 does not authorize SQL writes, schema migration, live data mutation, auth widening, ingress widening, schedule mutation, assignment mutation, Vercel promotion, Render deployment action, AI helper mutation, AI service admission widening, or autonomous AI business-state mutation.",
+  "ai_mutation_authority": "not_admitted",
+  "created_at": "2026-05-15",
+  "updated_at": "2026-05-15"
+}
