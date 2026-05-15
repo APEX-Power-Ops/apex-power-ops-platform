@@ -102,6 +102,43 @@ To include explicit project data-entry or reference tracker workbooks:
 
 The command is read-only. It does not write to Supabase, mutate schedules, assign work, change statuses, or run Excel macros.
 
+## Import Candidate Preview
+
+PM Lane 032 adds a review-ready import candidate preview for Project Miner Temp Power.
+
+Run it from `C:/APEX Platform/apex-power-ops-platform`:
+
+```powershell
+& "C:/APEX Platform/apex-power-ops-platform/.venv/Scripts/python.exe" `
+  "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/scripts/preview_pm_import_candidate.py" `
+  --planning-root "C:/Users/jjswe/Desktop/Project Miner PM Planning"
+```
+
+JSON output for PM review or downstream UI work:
+
+```powershell
+& "C:/APEX Platform/apex-power-ops-platform/.venv/Scripts/python.exe" `
+  "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/scripts/preview_pm_import_candidate.py" `
+  --planning-root "C:/Users/jjswe/Desktop/Project Miner PM Planning" `
+  --format json
+```
+
+The same read-only candidate is exposed from the mutation seam at:
+
+`GET /api/v1/reads/project-import-candidate`
+
+Current Temp Power local preview result:
+
+1. 7 proposed workpackages,
+2. 15 proposed tasks,
+3. 186 apparatus candidates,
+4. 15 crew,
+5. 343 equipment inventory rows,
+6. 50 capability rows,
+7. 2 review signals: one missing-designation information item and one project-data-entry formula-warning item.
+
+This import candidate is a review artifact only. It does not write Supabase rows, assign work, change status, mutate schedules, run Excel macros, or approve a project import.
+
 ## Environment Overrides
 
 Set this when using a different planning folder:

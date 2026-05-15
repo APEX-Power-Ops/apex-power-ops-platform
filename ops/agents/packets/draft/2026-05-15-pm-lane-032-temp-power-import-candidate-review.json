@@ -1,0 +1,102 @@
+{
+  "packet_id": "2026-05-15-pm-lane-032",
+  "title": "Temp Power Import Candidate Review",
+  "objective": "Create a read-only Project Miner Temp Power import-candidate model, preview command, and mutation-seam read endpoint that group estimator line items into review-ready workpackage, task, and apparatus proposals with source traceability, warnings, human decision prompts, and explicit no-mutation authority.",
+  "domain": "pm-domain",
+  "active_role": "Delegated Technical Repo Authority / PM Runtime Product Coordinator / Import Candidate Executor",
+  "repo_paths": [
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/project_import_candidate.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/project_seed_sources.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/routers/reads.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/scripts/preview_pm_import_candidate.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests/test_project_import_candidate.py",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md"
+  ],
+  "dependencies": [
+    "2026-05-15-pm-lane-028",
+    "2026-05-15-pm-lane-029",
+    "2026-05-15-pm-lane-030",
+    "2026-05-15-pm-lane-031",
+    "2026-05-15-pm-acceleration-stakeholder-time-protection"
+  ],
+  "orchestration_inputs": [
+    "The stakeholder approved proceeding end-to-end under delegated technical authority and stakeholder approval.",
+    "The PM acceleration overlay requires the tranche to reduce Jason's manual review and coordination burden.",
+    "PM Lane 031 named Temp Power Import Candidate Review as the next bounded product move.",
+    "Existing readers already parse estimator, SLD/PDF topology, project data-entry tracker lineage, equipment inventory, and technician capability data."
+  ],
+  "constrained_outputs": [
+    "Add a deterministic read-only import-candidate builder.",
+    "Add source row traceability from flat estimator rows into line items and expanded apparatus candidates.",
+    "Add GET /api/v1/reads/project-import-candidate.",
+    "Add a preview_pm_import_candidate.py command with text and JSON output.",
+    "Add focused backend tests for grouping, traceability, warning surfacing, and endpoint no-mutation posture.",
+    "Update PM workflow and operating docs with the new command, endpoint, and current Temp Power preview counts."
+  ],
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/project_import_candidate.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/project_seed_sources.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/routers/reads.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/scripts/preview_pm_import_candidate.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests/test_project_import_candidate.py",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/APEX-PM-STAKEHOLDER-TIME-PROTECTION-AND-ACCELERATION-LANE-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/APEX-PM-TEMP-POWER-DELIVERY-AND-ORCHESTRATION-PLAN-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/PROJECT_STATUS.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-032-sidecar-import-candidate-review-scout-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-15-pm-lane-032-temp-power-import-candidate-review.json",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-032-temp-power-import-candidate-review-handoff.md"
+  ],
+  "validation_steps": [
+    "& C:/APEX Platform/apex-power-ops-platform/.venv/Scripts/python.exe -m pytest C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests/test_project_import_candidate.py C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests/test_project_seed_sources.py C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests/test_project_tracker_sources.py",
+    "& C:/APEX Platform/apex-power-ops-platform/.venv/Scripts/python.exe -m py_compile C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/project_import_candidate.py C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/scripts/preview_pm_import_candidate.py",
+    "& C:/APEX Platform/apex-power-ops-platform/.venv/Scripts/python.exe C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/scripts/preview_pm_import_candidate.py --planning-root C:/Users/jjswe/Desktop/Project Miner PM Planning",
+    "& C:/APEX Platform/apex-power-ops-platform/.venv/Scripts/python.exe -c \"import json; json.load(open(r'C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-15-pm-lane-032-temp-power-import-candidate-review.json', encoding='utf-8')); print('packet-json-ok')\"",
+    "git diff --check"
+  ],
+  "validation_results": [
+    "Focused backend tests passed: 9 passed.",
+    "py_compile passed.",
+    "Real Temp Power preview produced 7 workpackages, 15 tasks, 186 apparatus candidates, 15 crew, 343 equipment inventory rows, 50 capability rows, and 2 review signals.",
+    "Sidecar UI scout handoff completed as a handoff-only artifact with no staging, commits, macros, or Supabase/Render/Vercel access.",
+    "Packet JSON parsed successfully.",
+    "git diff --check passed."
+  ],
+  "not_allowed": [
+    "No SQL or schema migration.",
+    "No live database write.",
+    "No seed replay into Supabase.",
+    "No production import job.",
+    "No workbook writeback.",
+    "No workbook macro execution.",
+    "No Render deployment action.",
+    "No Vercel promotion.",
+    "No service admission.",
+    "No auth or ingress widening.",
+    "No package dependency addition.",
+    "No Excel MCP production runtime dependency.",
+    "No durable AI queue admission.",
+    "No ai_tasks ownership admission.",
+    "No Dataverse import path reopening.",
+    "No assignment mutation.",
+    "No schedule mutation.",
+    "No status mutation.",
+    "No Operations Visibility reopening.",
+    "No autonomous AI business-state mutation."
+  ],
+  "handoff_target": "Delegated Technical Repo Authority / PM Runtime Product Coordinator",
+  "status": "complete",
+  "execution_result": "PASS_LOCAL_READ_ONLY_IMPORT_CANDIDATE_REVIEW",
+  "delegation_status": "coordinator-executed-from-stakeholder-operating-directive",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/project_import_candidate.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/scripts/preview_pm_import_candidate.py",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-032-sidecar-import-candidate-review-scout-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-032-temp-power-import-candidate-review-handoff.md"
+  ],
+  "sql_permission": false,
+  "sql_permission_note": "Packet 2026-05-15-pm-lane-032 does not authorize SQL writes, schema migration, live data mutation, seed replay into Supabase, production import, workbook writeback, macro execution, Render deployment, Vercel promotion, auth widening, ingress widening, package dependency addition, Excel MCP runtime dependency, durable AI queue admission, ai_tasks ownership, Dataverse import reopening, schedule mutation, assignment mutation, status mutation, or autonomous AI business-state mutation.",
+  "ai_mutation_authority": "not_admitted",
+  "created_at": "2026-05-15",
+  "updated_at": "2026-05-15"
+}

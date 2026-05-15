@@ -174,9 +174,9 @@ Target sequence before field start:
 5. Admit a narrow, idempotent import mutation only after the candidate and approval workflow are proven.
 6. Pilot one Temp Power slice through PM, Lead, and Field workflow before importing broader Building A/B scope.
 
-## Immediate Next Packet Recommendation
+## Current Product Tranche
 
-Open PM Lane 031:
+PM Lane 032:
 
 `Temp Power Import Candidate Review`
 
@@ -198,6 +198,8 @@ Expected outputs:
 5. duplicate and formula-warning summary,
 6. review-ready JSON artifact,
 7. packet/handoff evidence for the future UI and import mutation lanes.
+
+Local PM Lane 032 proof currently produces a read-only candidate with 7 workpackages, 15 tasks, 186 apparatus candidates, 15 crew, 343 equipment inventory rows, 50 capability rows, and 2 review signals.
 
 ## Capability-Gap Register
 

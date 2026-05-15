@@ -155,11 +155,11 @@ Stop and escalate instead of pushing through when:
 
 ## Next Bounded Implementation Move
 
-The next product tranche remains:
+The current product tranche is:
 
 `Temp Power Import Candidate Review`
 
-It should create a read-only review artifact or endpoint that groups the current Project Miner Temp Power source files into proposed project, workpackage, task, and apparatus rows with source traceability and warnings.
+It creates a read-only review artifact and endpoint that group the current Project Miner Temp Power source files into proposed project, workpackage, task, and apparatus rows with source traceability and warnings.
 
 The success standard is not just technical correctness. The candidate must reduce Jason's review burden by showing:
 

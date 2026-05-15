@@ -180,6 +180,8 @@ def _append_expanded_candidates(
                 "drawing_ref": line_item.get("drawing_ref"),
                 "display_name": f"{display_name} {suffix}" if quantity > 1 else str(display_name),
                 "planned_hours": line_item.get("hrs_per_unit"),
+                "source_row": line_item.get("source_row"),
+                "scope_sheet": line_item.get("scope_sheet"),
             }
         )
     return apparatus_counter
@@ -194,7 +196,7 @@ def _flat_sheet_line_items(sheet_name: str, sheet: Any) -> Dict[str, Any]:
     line_index = 0
     apparatus_counter = 0
 
-    for row in sheet.iter_rows(min_row=6, values_only=True):
+    for row_number, row in enumerate(sheet.iter_rows(min_row=6, values_only=True), start=6):
         values = [_clean(value) for value in row]
         qty = values[2] if len(values) > 2 else None
         section = values[3] if len(values) > 3 else None
@@ -218,6 +220,7 @@ def _flat_sheet_line_items(sheet_name: str, sheet: Any) -> Dict[str, Any]:
             "drawing_ref": notes,
             "hrs_per_unit": hrs_per_unit,
             "hrs_line": hrs_line,
+            "source_row": row_number,
         }
         line_items.append(line_item)
         apparatus_counter = _append_expanded_candidates(expanded_candidates, line_item, apparatus_counter)
