@@ -110,6 +110,19 @@ test('approval escalation deep link seeds tracer from the related task context',
         reported_by: 'tech-001',
       },
     ],
+    decisionHistory: [
+      {
+        entity_id: 'issue-001',
+        entity_type: 'issue',
+        action_type: 'return_to_lead',
+        actor_id: 'pm-002',
+        actor_role: 'pm',
+        timestamp: '2026-05-01T15:00:00Z',
+        from_state: { status: 'escalated' },
+        to_state: { status: 'in_review' },
+        reason: 'Needs lead clarification',
+      },
+    ],
   })
 
   const approvalResponse = await page.goto('/pm-review/approval?screen=escalations&detailId=issue-001', { waitUntil: 'networkidle' })
@@ -120,6 +133,12 @@ test('approval escalation deep link seeds tracer from the related task context',
   await expect(page.getByRole('heading', { name: /Escalation Queue/i })).toBeVisible()
   await expect(page.getByText(/Insulation resistance out of range/i)).toBeVisible()
   await expect(page.getByRole('button', { name: /Resolve/i })).toBeVisible()
+  const escalationHistoryContext = page.getByTestId('approval-decision-history-context')
+  await expect(escalationHistoryContext).toBeVisible()
+  await expect(escalationHistoryContext.getByTestId('approval-decision-history-row')).toHaveCount(1)
+  await expect(escalationHistoryContext).toContainText(/return to lead/i)
+  await expect(escalationHistoryContext).toContainText(/pm-002 \(pm\)/i)
+  await expect(escalationHistoryContext).toContainText(/Needs lead clarification/i)
 
   await page.locator('.nav-item', { hasText: 'Tracer' }).click()
 
@@ -164,6 +183,19 @@ test('approval snapshot review uses derived task context for schedule handoff', 
         submitted_by: 'lead-001',
       },
     ],
+    decisionHistory: [
+      {
+        entity_id: 'snap-001',
+        entity_type: 'snapshot',
+        action_type: 'approve',
+        actor_id: 'pm-003',
+        actor_role: 'pm',
+        timestamp: '2026-05-02T16:30:00Z',
+        from_state: { status: 'submitted' },
+        to_state: { status: 'approved' },
+        reason: 'Progress accepted for period',
+      },
+    ],
   })
 
   const approvalResponse = await page.goto('/pm-review/approval?screen=snapshot-review&detailId=snap-001', { waitUntil: 'networkidle' })
@@ -173,6 +205,12 @@ test('approval snapshot review uses derived task context for schedule handoff', 
   expect(historyRequests.some((request) => request.entityIds.length === 0)).toBe(false)
   await expect(page.getByRole('heading', { name: /Progress Snapshot/i })).toBeVisible()
   await expect(page.getByRole('button', { name: /Open Schedule/i })).toBeVisible()
+  const snapshotHistoryContext = page.getByTestId('approval-decision-history-context')
+  await expect(snapshotHistoryContext).toBeVisible()
+  await expect(snapshotHistoryContext.getByTestId('approval-decision-history-row')).toHaveCount(1)
+  await expect(snapshotHistoryContext).toContainText(/approve/i)
+  await expect(snapshotHistoryContext).toContainText(/pm-003 \(pm\)/i)
+  await expect(snapshotHistoryContext).toContainText(/Progress accepted for period/i)
 
   await page.getByRole('button', { name: /Open Schedule/i }).click()
 

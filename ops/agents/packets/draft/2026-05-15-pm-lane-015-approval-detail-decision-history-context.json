@@ -1,0 +1,77 @@
+{
+  "packet_id": "2026-05-15-pm-lane-015",
+  "title": "PM Approval Detail Decision History Context",
+  "objective": "Render compact read-only decision-history context inside PM approval detail workflows using the scoped reads introduced by PM Lane 014, without adding fetches, backend endpoints, schema changes, auth changes, ingress changes, or mutation authority.",
+  "domain": "pm-domain",
+  "active_role": "PM Runtime Product Coordinator",
+  "repo_paths": [
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/app/pm-review/approval/page.tsx",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/tests/browser-shell.approval-context.smoke.spec.ts",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "dependencies": [
+    "2026-05-15-pm-lane-012",
+    "2026-05-15-pm-lane-014",
+    "2026-05-15-pm-lane-008",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-014-approval-scoped-decision-history-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/app/pm-review/approval/page.tsx"
+  ],
+  "orchestration_inputs": [
+    "PM Lane 012 remains the deployment gate for hosted mutation-seam parity and live PM proof.",
+    "Read-only scout 019e2c92-20ed-7260-b16d-809f2d39ffde confirmed the smallest next slice is a display-only compact history renderer fed by data.history, placed before mutable decision controls.",
+    "Coordinator execution kept write ownership local to the PM approval frontend and focused approval-context smoke while using the scout as the parallel orchestration lane."
+  ],
+  "constrained_outputs": [
+    "A reusable compact decision-history context renderer displays up to three scoped history rows with action, timestamp, state transition, actor, and reason.",
+    "Workpackage, task, snapshot, and active escalation approval detail panels render the compact history context before mutable decision/disposition controls.",
+    "No new decision-history fetch is added; the renderer consumes the data.history result produced by the PM Lane 014 route-derived endpoint.",
+    "Focused Playwright proof injects scoped decision-history fixture rows and asserts the compact context renders for escalation and snapshot detail screens.",
+    "Existing scoped-read assertions, tracer handoff, and schedule handoff remain covered by the same focused smoke."
+  ],
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/app/pm-review/approval/page.tsx",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/tests/browser-shell.approval-context.smoke.spec.ts",
+    "C:/APEX Platform/apex-power-ops-platform/PROJECT_STATUS.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-15-pm-lane-015-approval-detail-decision-history-context.json",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-015-approval-detail-decision-history-context-handoff.md"
+  ],
+  "validation_steps": [
+    "corepack pnpm --dir C:/APEX Platform/apex-power-ops-platform --filter @apex/operations-web typecheck",
+    "corepack pnpm --dir C:/APEX Platform/apex-power-ops-platform --filter @apex/operations-web build",
+    "CI=1 corepack pnpm --dir C:/APEX Platform/apex-power-ops-platform --filter @apex/operations-web exec playwright test tests/browser-shell.approval-context.smoke.spec.ts",
+    "git diff --check"
+  ],
+  "validation_results": [
+    "operations-web typecheck passed",
+    "operations-web production build passed",
+    "focused approval-context Playwright proof passed 2/2 after rebuilding operations-web",
+    "initial focused Playwright attempt before the rebuild exercised stale built output and failed the new compact-history assertions; the rebuilt bundle passed",
+    "git diff --check passed"
+  ],
+  "not_allowed": [
+    "No backend endpoint change.",
+    "No package script change.",
+    "No SQL or schema migration.",
+    "No live database write.",
+    "No service admission.",
+    "No auth or ingress widening.",
+    "No assignment mutation.",
+    "No schedule mutation.",
+    "No Operations Visibility reopening.",
+    "No Vercel promotion.",
+    "No Render deployment action.",
+    "No autonomous AI business-state mutation."
+  ],
+  "handoff_target": "Delegated Technical Repo Authority",
+  "status": "complete",
+  "execution_result": "PASS_LOCAL_FRONTEND_ONLY_HOSTED_PROOF_DEFERRED_TO_PM_LANE_012",
+  "delegation_status": "coordinator-executed-with-read-only-scout",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-015-approval-detail-decision-history-context-handoff.md"
+  ],
+  "sql_permission": false,
+  "sql_permission_note": "Packet 2026-05-15-pm-lane-015 is frontend-only and does not authorize SQL writes, schema migration, live data mutation, auth widening, ingress widening, schedule mutation, assignment mutation, Vercel promotion, or Render deployment action.",
+  "ai_mutation_authority": "not_admitted",
+  "created_at": "2026-05-15",
+  "updated_at": "2026-05-15"
+}

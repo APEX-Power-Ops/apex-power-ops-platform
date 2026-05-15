@@ -308,6 +308,42 @@ function SeverityLabel({ severity }: { severity: string }) {
   return React.createElement('span', { className: `severity-${severity}` }, severity)
 }
 
+function formatDecisionTime(value: string | null | undefined) {
+  return value ? new Date(value).toLocaleString() : 'No timestamp'
+}
+
+function ScopedDecisionHistory({ history }: { history: any[] }) {
+  return React.createElement(
+    'div',
+    { className: 'card', 'aria-label': 'Decision history', 'data-testid': 'approval-decision-history-context' },
+    React.createElement('h3', { className: 'text-sm font-bold text-gray-700 mb-2' }, 'Decision History'),
+    history.length === 0
+      ? React.createElement('p', { className: 'text-xs text-gray-400' }, 'No prior decisions for this item')
+      : React.createElement(
+          'div',
+          { className: 'space-y-2' },
+          history.slice(0, 3).map((entry: any, index: number) =>
+            React.createElement(
+              'div',
+              {
+                key: `${entry.entity_id ?? 'entry'}-${entry.action_type ?? 'action'}-${index}`,
+                className: 'border-b border-gray-100 pb-2 last:border-b-0',
+                'data-testid': 'approval-decision-history-row',
+              },
+              React.createElement(
+                'div',
+                { className: 'flex justify-between gap-3 text-xs' },
+                React.createElement('span', { className: 'font-medium resa-blue' }, entry.action_type?.replace(/_/g, ' ') || 'decision'),
+                React.createElement('span', { className: 'text-gray-400' }, formatDecisionTime(entry.timestamp)),
+              ),
+              React.createElement('div', { className: 'text-xs text-gray-500 mt-1' }, `${entry.from_state?.status || 'none'} -> ${entry.to_state?.status || 'none'} by ${entry.actor_id || 'unknown'} (${entry.actor_role || 'unknown'})`),
+              entry.reason && React.createElement('div', { className: 'text-xs text-gray-500 mt-1' }, entry.reason),
+            ),
+          ),
+        ),
+  )
+}
+
 function ApprovalQueue({ data, navigate }: { data: any; navigate: (target: string, id?: string | null) => void }) {
   const { queue } = data
   const allItems = [
@@ -495,6 +531,7 @@ function WorkPackageReview({ wpId, data, navigate, onMutate }: { wpId: string; d
           ),
         ),
       ),
+    React.createElement(ScopedDecisionHistory, { history: data.history }),
     React.createElement(
       'div',
       { className: 'card', style: { borderTop: '3px solid #015687' } },
@@ -548,6 +585,7 @@ function TaskReview({ taskId, data, navigate, onMutate }: { taskId: string; data
     React.createElement('div', { className: 'grid grid-cols-3 gap-3 mb-4' }, React.createElement('div', { className: 'card text-center' }, React.createElement('div', { className: 'text-2xl font-bold resa-blue' }, `${taskApparatus.filter((item: any) => item.status === 'complete').length}/${taskApparatus.length}`), React.createElement('div', { className: 'text-xs text-gray-500' }, 'Apparatus Complete')), React.createElement('div', { className: 'card text-center' }, React.createElement('div', { className: 'text-2xl font-bold', style: { color: blockingIssues.length > 0 ? '#dc2626' : '#059669' } }, blockingIssues.length), React.createElement('div', { className: 'text-xs text-gray-500' }, 'Blocking Issues')), React.createElement('div', { className: 'card text-center' }, React.createElement('div', { className: 'text-2xl font-bold resa-blue' }, taskIssues.length), React.createElement('div', { className: 'text-xs text-gray-500' }, 'Total Issues'))),
     blockingIssues.length > 0 && React.createElement('div', { className: 'blocker-warning' }, React.createElement('h3', { className: 'text-sm font-bold text-red-700 mb-1' }, `⚠ ${blockingIssues.length} Blocking Issue(s) — Approval Disabled`), blockingIssues.map((issue: any) => React.createElement('div', { key: issue.id, className: 'text-sm py-1' }, React.createElement(SeverityLabel, { severity: issue.severity }), ' ', issue.title))),
     React.createElement('div', { className: 'card' }, React.createElement('h3', { className: 'text-sm font-bold text-gray-700 mb-2' }, 'Apparatus'), taskApparatus.map((item: any) => React.createElement('div', { key: item.id, className: 'flex justify-between py-1 border-b border-gray-100 text-sm' }, React.createElement('span', { className: 'font-medium' }, item.name), React.createElement('div', { className: 'flex gap-2' }, React.createElement('span', { className: 'text-xs text-gray-500' }, item.neta_standard), React.createElement(StatusBadge, { status: item.status }))))),
+    React.createElement(ScopedDecisionHistory, { history: data.history }),
     React.createElement('div', { className: 'card', style: { borderTop: '3px solid #015687' } }, React.createElement('h3', { className: 'text-sm font-bold resa-blue mb-3' }, 'Decision'), React.createElement('textarea', { className: 'w-full border border-gray-300 rounded p-2 text-sm mb-3', rows: 3, placeholder: 'Decision reason/note (required)...', value: reason, onChange: (event: any) => setReason(event.target.value) }), result && React.createElement('div', { className: `text-sm mb-3 p-2 rounded ${result.status === 'accepted' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}` }, result.status === 'accepted' ? '✓ Decision recorded' : `✗ ${result.error?.message || JSON.stringify(result)}`), React.createElement('div', { className: 'flex gap-2' }, React.createElement('button', { className: 'btn btn-approve', disabled: !canApprove, onClick: () => void doAction('approve', { status: 'complete' }) }, canApprove ? 'Approve' : 'Approve (blocked)'), React.createElement('button', { className: 'btn btn-reject', onClick: () => void doAction('reject', { status: 'rejected' }) }, 'Reject'), React.createElement('button', { className: 'btn btn-escalate', onClick: () => void doAction('escalate_review', {}) }, 'Escalate'))),
   )
 }
@@ -606,6 +644,7 @@ function SnapshotReview({
     React.createElement('div', { className: 'card' }, React.createElement('div', { className: 'grid grid-cols-2 gap-4 text-sm' }, React.createElement('div', null, React.createElement('span', { className: 'text-gray-500' }, 'WorkPackage: '), React.createElement('span', { className: 'font-medium' }, workPackage?.name || snapshot.workpackage_id)), React.createElement('div', null, React.createElement('span', { className: 'text-gray-500' }, 'Period: '), React.createElement('span', null, `${snapshot.period_start} — ${snapshot.period_end}`)), React.createElement('div', null, React.createElement('span', { className: 'text-gray-500' }, 'Completion: '), React.createElement('span', { className: 'font-bold' }, `${snapshot.percent_complete}%`)), React.createElement('div', null, React.createElement('span', { className: 'text-gray-500' }, 'Hours Reported: '), React.createElement('span', null, snapshot.hours_reported)), React.createElement('div', null, React.createElement('span', { className: 'text-gray-500' }, 'Submitted By: '), React.createElement('span', null, snapshot.submitted_by)))),
     focusedTask && React.createElement('div', { className: 'card' }, React.createElement('h3', { className: 'text-sm font-bold text-gray-700 mb-3' }, 'Related Task Actions'), React.createElement('div', { className: 'flex gap-2 flex-wrap' }, React.createElement('button', { className: 'btn btn-outline', onClick: () => onTraceTask({ taskId: focusedTask.id, taskLabel: focusedTask.name }) }, 'Trace Task'), React.createElement('button', { className: 'btn btn-outline', onClick: () => onViewSchedule(focusedTask.id) }, 'Open Schedule'), React.createElement('button', { className: 'btn btn-outline', onClick: () => onViewDrivers(focusedTask.id) }, 'Open Drivers'), React.createElement('button', { className: 'btn btn-outline', onClick: () => onViewVariance(focusedTask.id) }, 'Open Variance'))),
     React.createElement('div', { className: 'card' }, React.createElement('div', { className: 'mb-3' }, React.createElement('span', { className: 'text-sm text-gray-500' }, 'Progress'), React.createElement('div', { className: 'progress-bar mt-1', style: { height: 10 } }, React.createElement('div', { className: 'progress-fill', style: { width: `${snapshot.percent_complete}%` } }))), React.createElement('p', { className: 'text-xs text-gray-400' }, 'Approved snapshot becomes period truth. Does not trigger billing (Class D deferred).')),
+    React.createElement(ScopedDecisionHistory, { history: data.history }),
     React.createElement('div', { className: 'card', style: { borderTop: '3px solid #015687' } }, React.createElement('h3', { className: 'text-sm font-bold resa-blue mb-3' }, 'Decision'), React.createElement('textarea', { className: 'w-full border border-gray-300 rounded p-2 text-sm mb-3', rows: 3, placeholder: 'Decision reason/note (required)...', value: reason, onChange: (event: any) => setReason(event.target.value) }), result && React.createElement('div', { className: `text-sm mb-3 p-2 rounded ${result.status === 'accepted' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}` }, result.status === 'accepted' ? '✓ Decision recorded' : `✗ ${result.error?.message || JSON.stringify(result)}`), React.createElement('div', { className: 'flex gap-2' }, React.createElement('button', { className: 'btn btn-approve', disabled: snapshot.status !== 'submitted', onClick: () => void doAction('approve', { status: 'approved' }) }, 'Approve'), React.createElement('button', { className: 'btn btn-reject', onClick: () => void doAction('reject', { status: 'rejected' }) }, 'Reject'))),
   )
 }
@@ -691,7 +730,31 @@ function EscalationQueue({
               !isActive && React.createElement('button', { className: 'btn btn-outline', onClick: () => { setActiveIssueId(issue.id); navigate('escalations', issue.id) } }, 'Take Action'),
             ),
             React.createElement('div', { className: 'text-xs text-gray-500 mb-2' }, `Apparatus: ${apparatusRow?.name || issue.apparatus_id} • Task: ${task?.name || '—'} • WP: ${workPackage?.name || '—'} • Reporter: ${issue.reported_by}`),
-            isActive && React.createElement('div', { className: 'mt-3 pt-3 border-t border-gray-200' }, task && React.createElement('div', { className: 'flex gap-2 mb-3 flex-wrap' }, React.createElement('button', { className: 'btn btn-outline', onClick: () => onTraceTask({ taskId: task.id, taskLabel: task.name }) }, 'Trace Task'), React.createElement('button', { className: 'btn btn-outline', onClick: () => onViewSchedule(task.id) }, 'Open Schedule'), React.createElement('button', { className: 'btn btn-outline', onClick: () => onViewDrivers(task.id) }, 'Open Drivers'), React.createElement('button', { className: 'btn btn-outline', onClick: () => onViewVariance(task.id) }, 'Open Variance')), React.createElement('textarea', { className: 'w-full border border-gray-300 rounded p-2 text-sm mb-3', rows: 2, placeholder: 'Disposition reason (required)...', value: reason, onChange: (event: any) => setReason(event.target.value) }), result && result.id === issue.id && React.createElement('div', { className: `text-sm mb-2 p-2 rounded ${result.status === 'accepted' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}` }, result.status === 'accepted' ? '✓ Done' : `✗ ${result.error?.message || 'Failed'}`), React.createElement('div', { className: 'flex gap-2' }, React.createElement('button', { className: 'btn btn-approve', onClick: () => void doAction(issue.id, 'resolve_escalated', { status: 'resolved' }) }, 'Resolve'), React.createElement('button', { className: 'btn btn-escalate', onClick: () => void doAction(issue.id, 're_escalate', { status: 'escalated' }) }, 'Re-escalate'), React.createElement('button', { className: 'btn btn-return', onClick: () => void doAction(issue.id, 'return_to_lead', { status: 'in_review' }) }, 'Return to Lead'), React.createElement('button', { className: 'btn btn-outline', onClick: () => { setActiveIssueId(null); navigate('escalations') } }, 'Cancel'))),
+            isActive &&
+              React.createElement(
+                'div',
+                { className: 'mt-3 pt-3 border-t border-gray-200' },
+                task &&
+                  React.createElement(
+                    'div',
+                    { className: 'flex gap-2 mb-3 flex-wrap' },
+                    React.createElement('button', { className: 'btn btn-outline', onClick: () => onTraceTask({ taskId: task.id, taskLabel: task.name }) }, 'Trace Task'),
+                    React.createElement('button', { className: 'btn btn-outline', onClick: () => onViewSchedule(task.id) }, 'Open Schedule'),
+                    React.createElement('button', { className: 'btn btn-outline', onClick: () => onViewDrivers(task.id) }, 'Open Drivers'),
+                    React.createElement('button', { className: 'btn btn-outline', onClick: () => onViewVariance(task.id) }, 'Open Variance'),
+                  ),
+                React.createElement(ScopedDecisionHistory, { history: data.history }),
+                React.createElement('textarea', { className: 'w-full border border-gray-300 rounded p-2 text-sm mb-3', rows: 2, placeholder: 'Disposition reason (required)...', value: reason, onChange: (event: any) => setReason(event.target.value) }),
+                result && result.id === issue.id && React.createElement('div', { className: `text-sm mb-2 p-2 rounded ${result.status === 'accepted' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}` }, result.status === 'accepted' ? '✓ Done' : `✗ ${result.error?.message || 'Failed'}`),
+                React.createElement(
+                  'div',
+                  { className: 'flex gap-2' },
+                  React.createElement('button', { className: 'btn btn-approve', onClick: () => void doAction(issue.id, 'resolve_escalated', { status: 'resolved' }) }, 'Resolve'),
+                  React.createElement('button', { className: 'btn btn-escalate', onClick: () => void doAction(issue.id, 're_escalate', { status: 'escalated' }) }, 'Re-escalate'),
+                  React.createElement('button', { className: 'btn btn-return', onClick: () => void doAction(issue.id, 'return_to_lead', { status: 'in_review' }) }, 'Return to Lead'),
+                  React.createElement('button', { className: 'btn btn-outline', onClick: () => { setActiveIssueId(null); navigate('escalations') } }, 'Cancel'),
+                ),
+              ),
           )
         }),
   )
