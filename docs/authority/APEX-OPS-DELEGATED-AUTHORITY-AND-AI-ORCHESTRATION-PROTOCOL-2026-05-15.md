@@ -102,14 +102,29 @@ Do not mix PM runtime edits and AI/orchestration template edits in one commit un
 
 The PM lane should move from truthful project-backed reads toward useful operator workfronts before opening broader mutation or autonomous AI action.
 
-Preferred next product direction:
+Current Temp Power product direction:
 
-1. close the current PM lead/field runtime tranche with focused backend and browser validation,
-2. add a PM workfront read model that answers ready, blocked, unassigned, owner, designation, drawing reference, and next action,
-3. surface that workfront in `apps/operations-web` as a dense operational view, not a planning-only artifact,
-4. add AI-generated briefs only as read-only advisory evidence at first.
+1. make Project Miner Temp Power usable as the first live pilot for the PM lane before the late-May or early-June 2026 field start window,
+2. preserve the current source lineage from estimator workbook, SLD/PDF, equipment inventory, capability matrix, project data-entry workbook, and tracker workbook,
+3. convert the read-only preview into a reviewed import candidate before any production write path is admitted,
+4. keep PM, Lead, and Field UI work tied to the import candidate and execution workflow rather than abstract template churn,
+5. add AI-generated summaries, grouping suggestions, and gap warnings only as read-only advisory evidence at first.
 
 AI may summarize, rank, and explain PM workfront state. AI must not auto-assign apparatus, change statuses, mutate schedules, or write PM business state until a later packet explicitly admits that authority and validation path.
+
+## 7A. Capability Gap And Best-Tool Duty
+
+Codex must not silently continue with a materially suboptimal path when a known missing tool, unavailable connector, absent credential, stale deployment, or platform limitation blocks the best execution path.
+
+Required behavior:
+
+1. disclose the capability gap in the current tranche or handoff when it materially affects quality, speed, safety, or validation confidence,
+2. name the missing or degraded capability directly, such as Excel automation, Render credentials, Supabase access, browser automation, Olares host access, external executor access, MCP availability, spreadsheet rendering, PDF rendering, or deployment control,
+3. state whether the current fallback is acceptable for the bounded slice or whether the slice should stop until the capability is resolved,
+4. recommend the best available tool or admission path when one is known,
+5. avoid normalizing temporary fallbacks into the permanent operating model without a packet that explicitly approves that downgrade.
+
+This duty does not mean every convenience tool should be installed. It means any real limitation must become visible decision material instead of hidden execution debt.
 
 ## 8. AI Orchestration Guardrails
 
@@ -122,6 +137,8 @@ The admitted AI/operator service boundary remains:
 Current delegated-packet work must continue to reuse the published packet family and evidence tuple unless a bounded helper-hardening packet explicitly changes that floor.
 
 Do not admit `ai_tasks`, new controller authority, new service admission, auth widening, ingress widening, runtime mutation, or business-logic widening as a side effect of delegation or PM product work.
+
+For Olares One, the current realistic relay model is repo-visible coordination, not assumed autonomous AI-to-AI messaging. Packets, handoffs, evidence files, host parity, and explicit ownership blocks are the admitted relay surfaces until a separate packet admits a durable queue, task bus, or new MCP/service boundary.
 
 ## 9. Publication And Closeout
 

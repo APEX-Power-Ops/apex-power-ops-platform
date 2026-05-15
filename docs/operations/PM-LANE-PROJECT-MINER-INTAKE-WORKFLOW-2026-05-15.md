@@ -12,6 +12,12 @@ This runbook explains how a real project starts in the PM lane using the current
 
 The Vercel URL is the user-facing PM application. Render is the governed API boundary between the UI and Supabase. Supabase is the data store and must not be treated as the user-facing workflow surface.
 
+Companion operating plan:
+
+`docs/operations/APEX-PM-TEMP-POWER-DELIVERY-AND-ORCHESTRATION-PLAN-2026-05-15.md`
+
+Use that plan for the Temp Power delivery target, Olares One orchestration posture, dual-lane execution rules, and capability-gap escalation duty.
+
 ## Current Source Packet
 
 Default local planning root:
@@ -173,6 +179,22 @@ The new PM lane should recreate this workflow as a governed review/import candid
 3. the system preserves source workbook, sheet, and row traceability,
 4. a human approves the import candidate,
 5. only then may a later admitted packet write project, workpackage, task, and apparatus rows into Supabase.
+
+## Current Delivery Target
+
+Project Miner Temp Power is the first live PM lane pilot.
+
+The near-term target is not a generic PM system demo. The target is a field-usable workflow before the late-May or early-June 2026 Temp Power start window.
+
+Current priority order:
+
+1. hosted Render mutation-seam parity for current PM reads,
+2. read-only Temp Power import-candidate review,
+3. import-candidate PM UI review,
+4. narrow idempotent import mutation only after human approval,
+5. PM, Lead, and Field pilot on a bounded Temp Power slice.
+
+Olares One should support this by reducing relay friction, preserving host validation, and keeping packet/handoff evidence durable. It is not currently assumed to provide autonomous AI-to-AI queue ownership.
 
 ## Workflow Levels
 
