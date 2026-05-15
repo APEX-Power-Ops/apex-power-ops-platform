@@ -127,7 +127,10 @@ export default function HomePage() {
             <li>Consumes the bounded relay discovery, context, settings, and preview seam through the same governed API boundary.</li>
             <li>Hosts the preserved cross-surface validation dashboard at /integration-dashboard/index.html.</li>
             <li>Hosts the re-homed lead operations prototype at /lead-ops/index.html.</li>
+            <li>Hosts the promoted lead assignment app route at /lead-ops.</li>
+            <li>Hosts the promoted field technician app route at /field-tech.</li>
             <li>Hosts the promoted PM drivers app route at /pm-review.</li>
+            <li>Hosts the read-only PM workfront app route at /pm-review/workfront.</li>
             <li>Hosts the promoted PM approval app route at /pm-review/approval.</li>
             <li>Hosts the promoted PM schedule app route at /pm-review/schedule.</li>
             <li>Hosts the promoted PM tracer app route at /pm-review/tracer.</li>
@@ -159,7 +162,16 @@ export default function HomePage() {
           The lead operations prototype is available in the active lane at <a href="/lead-ops/index.html">/lead-ops/index.html</a>.
         </p>
         <p>
+          The promoted lead assignment route is available in the governed shell at <a href="/lead-ops">/lead-ops</a>.
+        </p>
+        <p>
+          The promoted field technician route is available in the governed shell at <a href="/field-tech">/field-tech</a>.
+        </p>
+        <p>
           The promoted PM drivers route is available in the governed shell at <a href="/pm-review">/pm-review</a>.
+        </p>
+        <p>
+          The read-only PM workfront route is available in the governed shell at <a href="/pm-review/workfront">/pm-review/workfront</a>.
         </p>
         <p>
           The promoted PM approval route is available in the governed shell at <a href="/pm-review/approval">/pm-review/approval</a>.

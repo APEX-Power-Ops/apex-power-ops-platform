@@ -8,6 +8,9 @@ from typing import Any, Dict, List
 
 from app.auth.jwt import Actor, get_current_actor
 from app.db.memory_store import store
+from app.pm_workfront_read_model import build_pm_workfront_read_model
+from app.project_seed_sources import load_project_seed_sources
+from app.seed_workbooks import load_seed_data
 
 router = APIRouter(prefix="/api/v1/reads", tags=["reads"])
 
@@ -64,12 +67,44 @@ async def list_hours(actor: Actor = Depends(get_current_actor)) -> List[Dict[str
 
 @router.get("/crew")
 async def list_crew(actor: Actor = Depends(get_current_actor)) -> List[Dict[str, Any]]:
-    """List available crew members (prototype seed data)."""
-    return [
-        {"id": "tech-001", "name": "Alex Rivera", "role": "field_tech"},
-        {"id": "tech-002", "name": "Sam Chen", "role": "field_tech"},
-        {"id": "tech-003", "name": "Jordan Bell", "role": "field_tech"},
-    ]
+    """List available crew members from the workbook-backed field seed when present."""
+    return load_seed_data()["crew"]
+
+
+@router.get("/equipment-inventory")
+async def list_equipment_inventory(actor: Actor = Depends(get_current_actor)) -> List[Dict[str, Any]]:
+    """List workbook-backed equipment inventory rows for field seed hydration."""
+    return load_seed_data()["equipment_inventory"]
+
+
+@router.get("/tech-capabilities")
+async def list_tech_capabilities(actor: Actor = Depends(get_current_actor)) -> Dict[str, Any]:
+    """List workbook-backed technician capability rows and score scale."""
+    seed = load_seed_data()
+    return {
+        "crew": seed["crew"],
+        "score_scale": seed["capability_score_scale"],
+        "capabilities": seed["tech_capabilities"],
+    }
+
+
+@router.get("/project-apparatus-plan")
+async def get_project_apparatus_plan(actor: Actor = Depends(get_current_actor)) -> Dict[str, Any]:
+    """Return the workbook-backed project apparatus plan plus SLD-derived topology labels."""
+    return load_project_seed_sources()
+
+
+@router.get("/pm-workfront")
+async def get_pm_workfront(actor: Actor = Depends(get_current_actor)) -> Dict[str, Any]:
+    """Return a read-only PM workfront projection for apparatus readiness triage."""
+    return build_pm_workfront_read_model(
+        apparatus_rows=list(store.apparatus.values()),
+        assignment_rows=list(store.assignments.values()),
+        task_rows=list(store.tasks.values()),
+        workpackage_rows=list(store.workpackages.values()),
+        issue_rows=list(store.issues.values()),
+        checklist_rows=list(store.checklist_items.values()),
+    )
 
 
 @router.get("/snapshots")

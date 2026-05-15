@@ -15,8 +15,12 @@ def client():
 
 
 @pytest.fixture(autouse=True)
-def reset_store():
+def reset_store(monkeypatch, tmp_path):
     """Reset the memory store before each test."""
+    monkeypatch.setenv("APEX_PROJECT_ESTIMATOR_WORKBOOK", str(tmp_path / "missing-estimator.xlsm"))
+    monkeypatch.setenv("APEX_PROJECT_SLD_PDF", str(tmp_path / "missing-sld.pdf"))
+    monkeypatch.setenv("APEX_FIELD_SEED_EQUIPMENT_WORKBOOK", str(tmp_path / "missing-equipment.xlsx"))
+    monkeypatch.setenv("APEX_FIELD_SEED_CAPABILITY_WORKBOOK", str(tmp_path / "missing-capability.xlsx"))
     store.reset()
     yield
     # Cleanup after test

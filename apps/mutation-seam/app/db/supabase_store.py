@@ -13,6 +13,8 @@ from typing import Any, Dict, Iterator, List, Optional, Tuple
 import psycopg2
 import psycopg2.extras
 
+from app.pm_lane_seed import build_pm_lane_seed
+
 # ---------------------------------------------------------------------------
 # Connection factory
 # ---------------------------------------------------------------------------
@@ -364,171 +366,25 @@ class SupabaseStore:
     def seed_demo_data(self):
         """Populate the store with demo data (same data as MemoryStore)."""
         now = datetime.now(timezone.utc).isoformat()
+        seed = build_pm_lane_seed(now)
 
-        # Project
-        self.projects["proj-001"] = {
-            "id": "proj-001",
-            "name": "Stack Data Center",
-            "created_at": now,
-            "updated_at": now,
-        }
-
-        # Workpackages
-        self.workpackages["wp-001"] = {
-            "id": "wp-001",
-            "project_id": "proj-001",
-            "name": "Electrical Systems",
-            "status": "active",
-            "created_at": now,
-            "updated_at": now,
-        }
-        self.workpackages["wp-002"] = {
-            "id": "wp-002",
-            "project_id": "proj-001",
-            "name": "Safety & Controls",
-            "status": "active",
-            "created_at": now,
-            "updated_at": now,
-        }
-
-        # Tasks
-        tasks_data = [
-            ("task-001", "wp-001", "Ground Testing", 1.0),
-            ("task-002", "wp-001", "Insulation Testing", 0.8),
-            ("task-003", "wp-002", "Arc Flash Analysis", 0.6),
-            ("task-004", "wp-002", "Controls Documentation", 0.4),
-        ]
-        for task_id, wp_id, name, priority in tasks_data:
-            self.tasks[task_id] = {
-                "id": task_id,
-                "workpackage_id": wp_id,
-                "project_id": "proj-001",
-                "name": name,
-                "status": "not_started",
-                "priority": priority,
-                "assigned_to": None,
-                "created_at": now,
-                "updated_at": now,
-            }
-
-        # Apparatus
-        apparatus_data = [
-            ("app-001", "task-001", "Main Breaker 480V", "ATS", "not_started", None),
-            ("app-002", "task-001", "Distribution Panel", "MTS", "ready", "tech-001"),
-            ("app-003", "task-002", "Cable Assembly A", "ATS", "active", "tech-001"),
-            ("app-004", "task-002", "Cable Assembly B", "ATS", "not_started", None),
-            ("app-005", "task-003", "Control Transformer", "MTS", "not_started", None),
-            ("app-006", "task-004", "Safety Switch", "MTS", "ready", None),
-        ]
-        for app_id, task_id, name, standard, status, assigned_to in apparatus_data:
-            self.apparatus[app_id] = {
-                "id": app_id,
-                "task_id": task_id,
-                "project_id": "proj-001",
-                "name": name,
-                "neta_standard": standard,
-                "status": status,
-                "assigned_to": assigned_to,
-                "created_at": now,
-                "updated_at": now,
-            }
-
-        # Checklist items
-        checklist_names = ["Visual inspection", "Continuity test"]
-        item_counter = 1
-        for app_id in ["app-001", "app-002", "app-003", "app-004", "app-005", "app-006"]:
-            app = self.apparatus[app_id]
-            for cname in checklist_names:
-                item_id = f"item-{item_counter:03d}"
-                self.checklist_items[item_id] = {
-                    "id": item_id,
-                    "apparatus_id": app_id,
-                    "task_id": app["task_id"],
-                    "project_id": "proj-001",
-                    "name": cname,
-                    "completed": False,
-                    "created_at": now,
-                    "updated_at": now,
-                }
-                item_counter += 1
-
-        # Assignments
-        self.assignments["assign-001"] = {
-            "id": "assign-001",
-            "apparatus_id": "app-002",
-            "task_id": "task-001",
-            "project_id": "proj-001",
-            "assigned_to": "tech-001",
-            "assigned_by": "lead-001",
-            "created_at": now,
-            "updated_at": now,
-        }
-        self.assignments["assign-002"] = {
-            "id": "assign-002",
-            "apparatus_id": "app-003",
-            "task_id": "task-002",
-            "project_id": "proj-001",
-            "assigned_to": "tech-001",
-            "assigned_by": "lead-001",
-            "created_at": now,
-            "updated_at": now,
-        }
-
-        # Snapshots
-        self.snapshots["snap-001"] = {
-            "id": "snap-001",
-            "workpackage_id": "wp-001",
-            "project_id": "proj-001",
-            "period_start": "2026-04-01",
-            "period_end": "2026-04-15",
-            "status": "submitted",
-            "percent_complete": 45,
-            "hours_reported": 120,
-            "submitted_by": "lead-001",
-            "created_at": now,
-            "updated_at": now,
-        }
-        self.snapshots["snap-002"] = {
-            "id": "snap-002",
-            "workpackage_id": "wp-002",
-            "project_id": "proj-001",
-            "period_start": "2026-04-01",
-            "period_end": "2026-04-15",
-            "status": "draft",
-            "percent_complete": 20,
-            "hours_reported": 40,
-            "submitted_by": "lead-001",
-            "created_at": now,
-            "updated_at": now,
-        }
-
-        # Issues
-        self.issues["issue-001"] = {
-            "id": "issue-001",
-            "apparatus_id": "app-003",
-            "task_id": "task-002",
-            "project_id": "proj-001",
-            "title": "Insulation resistance out of range",
-            "severity": "medium",
-            "status": "open",
-            "blocks_completion": False,
-            "reported_by": "tech-001",
-            "created_at": now,
-            "updated_at": now,
-        }
-        self.issues["issue-002"] = {
-            "id": "issue-002",
-            "apparatus_id": "app-001",
-            "task_id": "task-001",
-            "project_id": "proj-001",
-            "title": "Ground rod connection loose",
-            "severity": "high",
-            "status": "open",
-            "blocks_completion": True,
-            "reported_by": "tech-001",
-            "created_at": now,
-            "updated_at": now,
-        }
+        self.projects[seed["project"]["id"]] = seed["project"]
+        for row in seed["workpackages"]:
+            self.workpackages[row["id"]] = row
+        for row in seed["tasks"]:
+            self.tasks[row["id"]] = row
+        for row in seed["apparatus"]:
+            self.apparatus[row["id"]] = row
+        for row in seed["checklist_items"]:
+            self.checklist_items[row["id"]] = row
+        for row in seed["assignments"]:
+            self.assignments[row["id"]] = row
+        for row in seed["hours"]:
+            self.hours[row["id"]] = row
+        for row in seed["snapshots"]:
+            self.snapshots[row["id"]] = row
+        for row in seed["issues"]:
+            self.issues[row["id"]] = row
 
     def reset(self):
         """Clear all data and reseed from Postgres."""

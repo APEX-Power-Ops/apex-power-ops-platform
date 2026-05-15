@@ -1,0 +1,62 @@
+{
+  "packet_id": "2026-05-15-pm-lane-001",
+  "title": "Miner Temp PM Lead Field And Workfront Read Model",
+  "objective": "Close the current Miner Temp PM lead/field runtime tranche and add the next read-only PM workfront projection that surfaces ready, blocked, unassigned, owner, designation, drawing reference, and next action without opening PM mutation or AI business-state authority.",
+  "domain": "pm-domain",
+  "active_role": "PM Runtime Product Coordinator",
+  "repo_paths": [
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web",
+    "C:/APEX Platform/apex-power-ops-platform/docs/authority/APEX-OPS-DELEGATED-AUTHORITY-AND-AI-ORCHESTRATION-PROTOCOL-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "dependencies": [
+    "2026-05-15-olares-dev-residency-916",
+    "docs/authority/APEX-OPS-DELEGATED-AUTHORITY-AND-AI-ORCHESTRATION-PROTOCOL-2026-05-15.md",
+    "ops/agents/handoffs/2026-05-15-apex-ops-standing-delegated-authority-protocol-update-handoff.md"
+  ],
+  "required_inputs": [
+    "Current PM lane worktree changes for workbook-backed Miner Temp seed hydration",
+    "Read-only backend sidecar review from delegated explorer 019e2c1d-a73d-71e2-9f23-f41ae0046601",
+    "Read-only frontend sidecar review from delegated explorer 019e2c1d-bb34-7030-af89-55448b06a65e",
+    "Focused backend and browser validation evidence"
+  ],
+  "constrained_outputs": [
+    "Workbook/PDF-backed PM seed hydration for mutation-seam memory and Supabase demo stores",
+    "Read endpoints for crew, equipment inventory, tech capabilities, project apparatus plan, and PM workfront",
+    "Promoted operations-web app routes for /lead-ops, /field-tech, and /pm-review/workfront",
+    "Focused backend tests for seed, project source, workbook source, and PM workfront read model",
+    "Focused browser smokes for lead, field, and workfront routes",
+    "No schema change, no new service admission, no auth or ingress widening, no Operations Visibility reopening, no AI business-state mutation"
+  ],
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/pyproject.toml",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/requirements.txt",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/app",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/tests",
+    "C:/APEX Platform/apex-power-ops-platform/PROJECT_STATUS.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-15-pm-lane-001-miner-temp-lead-field-workfront-read-model.json",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-001-miner-temp-lead-field-workfront-read-model-handoff.md"
+  ],
+  "validation_steps": [
+    "Run focused mutation-seam PM seed/read/workfront pytest slice",
+    "Run operations-web typecheck after build-generated Next types are available",
+    "Run operations-web production build",
+    "Run focused Playwright browser smoke for lead, field, and workfront routes",
+    "Run git diff --check before publication"
+  ],
+  "handoff_target": "Delegated Technical Repo Authority",
+  "status": "complete",
+  "execution_result": "PASS",
+  "delegation_status": "complete",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-001-miner-temp-lead-field-workfront-read-model-handoff.md"
+  ],
+  "sql_permission": false,
+  "sql_permission_note": "Packet 2026-05-15-pm-lane-001 is application read-model and browser-surface work only. No SQL, schema migration, production data write, auth, or ingress change is authorized.",
+  "ai_mutation_authority": "not_admitted",
+  "created_at": "2026-05-15",
+  "updated_at": "2026-05-15"
+}
