@@ -1,0 +1,84 @@
+{
+  "packet_id": "2026-05-15-pm-lane-020",
+  "title": "PM Workfront Drillthrough Return Coverage",
+  "objective": "Add focused test-only proof that PM workfront drillthrough links to drivers, schedule, tracer, and variance land on promoted PM routes and preserve the expected return link to PM workfront, without changing product code, backend endpoints, schema, auth, ingress, or mutation behavior.",
+  "domain": "pm-domain",
+  "active_role": "PM Runtime Product Coordinator",
+  "repo_paths": [
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/tests/browser-shell.pm-workfront.smoke.spec.ts",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "dependencies": [
+    "2026-05-15-pm-lane-012",
+    "2026-05-15-pm-lane-013",
+    "2026-05-15-pm-lane-018",
+    "2026-05-15-pm-lane-019",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-019-approval-snapshot-escalation-return-coverage-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/app/pm-review/workfront/page.tsx",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/app/pm-review/route-navigation.ts",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/tests/browser-shell.pm-workfront.smoke.spec.ts"
+  ],
+  "orchestration_inputs": [
+    "PM Lane 012 remains the deployment gate for hosted mutation-seam parity and live PM proof.",
+    "The coordinator selected workfront drillthrough return proof as the next local PM runtime slice after PM Lane 019.",
+    "Read-only scouts 019e2cae-0f5d-7300-a589-af62d26b4183 and 019e2cae-282f-7490-96f8-6950946c7021 were launched as parallel product/governance lanes while coordinator execution stayed local.",
+    "This remains a PM-runtime packet, not an AI dual-lane helper/template packet, and does not mutate AI helpers or service admission."
+  ],
+  "constrained_outputs": [
+    "The focused PM workfront smoke now has a shared drillthrough return helper.",
+    "The smoke now mocks promoted schedule read routes used by drivers, schedule, tracer, and variance destination pages.",
+    "Workfront Drivers click-through proof asserts the promoted drivers route receives focusTaskId and returns to PM workfront.",
+    "Workfront Schedule click-through proof asserts the promoted schedule route receives focusTaskId and returns to PM workfront.",
+    "Workfront Trace click-through proof asserts the promoted tracer route receives taskId and returns to PM workfront.",
+    "Workfront Variance click-through proof asserts the promoted variance route receives focusTaskId plus projectId and returns to PM workfront.",
+    "Taskless workfront-row proof asserts generated Drivers, Schedule, Trace, and Variance hrefs avoid undefined/null leakage, omit focusTaskId or taskId where no task exists, and still return to PM workfront.",
+    "Existing read-only advisory, scoped decision-history, no-mutation-on-advisory/history, and PM-clicked return-to-lead proof remain intact."
+  ],
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/tests/browser-shell.pm-workfront.smoke.spec.ts",
+    "C:/APEX Platform/apex-power-ops-platform/PROJECT_STATUS.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-15-pm-lane-020-workfront-drillthrough-return-coverage.json",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-020-workfront-drillthrough-return-coverage-handoff.md"
+  ],
+  "validation_steps": [
+    "CI=1 corepack pnpm --dir C:/APEX Platform/apex-power-ops-platform --filter @apex/operations-web exec playwright test tests/browser-shell.pm-workfront.smoke.spec.ts",
+    "corepack pnpm --dir C:/APEX Platform/apex-power-ops-platform --filter @apex/operations-web typecheck",
+    "corepack pnpm --dir C:/APEX Platform/apex-power-ops-platform --filter @apex/operations-web build",
+    "git diff --check"
+  ],
+  "validation_results": [
+    "focused PM workfront Playwright proof passed 1/1",
+    "operations-web typecheck passed",
+    "operations-web production build passed",
+    "git diff --check passed"
+  ],
+  "not_allowed": [
+    "No product code change.",
+    "No backend endpoint change.",
+    "No package script change.",
+    "No SQL or schema migration.",
+    "No live database write.",
+    "No service admission.",
+    "No auth or ingress widening.",
+    "No assignment mutation.",
+    "No schedule mutation.",
+    "No Operations Visibility reopening.",
+    "No Vercel promotion.",
+    "No Render deployment action.",
+    "No AI helper mutation.",
+    "No AI service admission widening.",
+    "No autonomous AI business-state mutation."
+  ],
+  "handoff_target": "Delegated Technical Repo Authority",
+  "status": "complete",
+  "execution_result": "PASS_LOCAL_TEST_ONLY_HOSTED_PROOF_DEFERRED_TO_PM_LANE_012",
+  "delegation_status": "coordinator-executed-with-parallel-read-only-scouts",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-020-workfront-drillthrough-return-coverage-handoff.md"
+  ],
+  "sql_permission": false,
+  "sql_permission_note": "Packet 2026-05-15-pm-lane-020 is test-only and does not authorize SQL writes, schema migration, live data mutation, product-code mutation, auth widening, ingress widening, schedule mutation, assignment mutation, Vercel promotion, Render deployment action, AI helper mutation, AI service admission widening, or autonomous AI business-state mutation.",
+  "ai_mutation_authority": "not_admitted",
+  "created_at": "2026-05-15",
+  "updated_at": "2026-05-15"
+}

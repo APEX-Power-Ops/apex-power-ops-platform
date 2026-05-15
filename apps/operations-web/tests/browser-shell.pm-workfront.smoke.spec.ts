@@ -1,5 +1,30 @@
 import { expect, test } from '@playwright/test'
 
+async function assertWorkfrontDrillthroughReturn(
+  page: Parameters<typeof test>[1] extends never ? never : any,
+  rowName: string,
+  linkName: string,
+  expectedUrl: RegExp,
+  additionalUrlExpectation?: RegExp,
+  absentUrlExpectations: RegExp[] = [],
+) {
+  const workfrontResponse = await page.goto('/pm-review/workfront', { waitUntil: 'networkidle' })
+  expect(workfrontResponse?.ok()).toBeTruthy()
+  const scheduleDrillthrough = page.locator(`[aria-label="Schedule drillthrough for ${rowName}"]`)
+  await scheduleDrillthrough.getByRole('link', { name: linkName }).click()
+  await expect(page).toHaveURL(expectedUrl)
+  if (additionalUrlExpectation) {
+    await expect(page).toHaveURL(additionalUrlExpectation)
+  }
+  for (const absentUrlExpectation of absentUrlExpectations) {
+    expect(page.url()).not.toMatch(absentUrlExpectation)
+  }
+  const returnLink = page.getByRole('link', { name: /Return to PM workfront/i })
+  await expect(returnLink).toHaveAttribute('href', /\/pm-review\/workfront$/)
+  await returnLink.click()
+  await expect(page).toHaveURL(/\/pm-review\/workfront$/)
+}
+
 test('pm workfront route renders read-only readiness queue from governed seam', async ({ page }) => {
   let readCalls = 0
   let historyCalls = 0
@@ -120,12 +145,12 @@ test('pm workfront route renders read-only readiness queue from governed seam', 
             apparatus_name: 'Main Switchgear',
             status: 'not_started',
             readiness: 'unassigned',
-            task_id: 'task-002',
+            task_id: null,
             blocker_count: 0,
             open_issue_count: 0,
             owner_name: null,
             workpackage_name: 'Primary Switchgear Testing',
-            task_name: 'Switchgear Sweep',
+            task_name: null,
             designation: 'MVS-4',
             apparatus_type: 'Switchgear - Medium Voltage',
             drawing_ref: 'SLD B-102',
@@ -200,6 +225,63 @@ test('pm workfront route renders read-only readiness queue from governed seam', 
     })
   })
 
+  await page.route('**/api/v1/schedule/**', async (route) => {
+    const url = new URL(route.request().url())
+    const path = url.pathname
+    let body: Array<Record<string, unknown>> = []
+    if (path.endsWith('/projects')) {
+      body = [{ id: 'stack-dc', name: 'Stack Data Center', data_date: '2026-05-15' }]
+    } else if (path.includes('/tasks-with-scope')) {
+      body = [
+        {
+          id: 'task-002',
+          task_id: 'task-002',
+          task_code: 'SWG-002',
+          name: 'Switchgear Sweep',
+          project_id: 'stack-dc',
+          start: '2026-05-15T08:00:00Z',
+          finish: '2026-05-16T17:00:00Z',
+        },
+      ]
+    } else if (path.includes('/drivers')) {
+      body = [
+        {
+          driver_task_id: 'task-001',
+          driver_task_code: 'PRI-001',
+          driven_task_id: 'task-002',
+          driven_task_code: 'SWG-002',
+          driven_critical_flag: true,
+          rel_type: 'FS',
+        },
+      ]
+    } else if (path.includes('/tracer')) {
+      body = [
+        {
+          depth: 1,
+          predecessor_task_id: 'task-001',
+          predecessor_task_code: 'PRI-001',
+          successor_task_id: 'task-002',
+          successor_task_code: 'SWG-002',
+          rel_type: 'FS',
+        },
+      ]
+    } else if (path.includes('/variance')) {
+      body = [
+        {
+          task_id: 'task-002',
+          task_code: 'SWG-002',
+          name: 'Switchgear Sweep',
+          project_id: 'stack-dc',
+          start_variance_hours: 0,
+          finish_variance_hours: 8,
+          duration_variance_hours: 8,
+        },
+      ]
+    }
+
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(body) })
+  })
+
   const response = await page.goto('/pm-review/workfront', { waitUntil: 'networkidle' })
   expect(response?.ok()).toBeTruthy()
 
@@ -227,6 +309,67 @@ test('pm workfront route renders read-only readiness queue from governed seam', 
     'href',
     /\/pm-review\/variance\?projectId=stack-dc&focusTaskId=task-002&returnTo=%2Fpm-review%2Fworkfront&returnLabel=PM\+workfront$/,
   )
+  const mainScheduleDrillthrough = page.locator('[aria-label="Schedule drillthrough for Main Switchgear"]')
+  const mainDriversHref = await mainScheduleDrillthrough.getByRole('link', { name: 'Drivers' }).getAttribute('href')
+  expect(mainDriversHref || '').toMatch(/\/pm-review\?returnTo=%2Fpm-review%2Fworkfront&returnLabel=PM\+workfront$/)
+  expect(mainDriversHref || '').not.toContain('focusTaskId')
+  expect(mainDriversHref || '').not.toContain('undefined')
+  const mainScheduleHref = await mainScheduleDrillthrough.getByRole('link', { name: 'Schedule' }).getAttribute('href')
+  expect(mainScheduleHref || '').toMatch(/\/pm-review\/schedule\?returnTo=%2Fpm-review%2Fworkfront&returnLabel=PM\+workfront$/)
+  expect(mainScheduleHref || '').not.toContain('focusTaskId')
+  expect(mainScheduleHref || '').not.toContain('undefined')
+  const mainTraceHref = await mainScheduleDrillthrough.getByRole('link', { name: 'Trace' }).getAttribute('href')
+  expect(mainTraceHref || '').toMatch(/\/pm-review\/tracer\?taskLabel=Main\+Switchgear&maxDepth=10&returnTo=%2Fpm-review%2Fworkfront&returnLabel=PM\+workfront$/)
+  expect(mainTraceHref || '').not.toContain('taskId')
+  expect(mainTraceHref || '').not.toContain('undefined')
+  const mainVarianceHref = await mainScheduleDrillthrough.getByRole('link', { name: 'Variance' }).getAttribute('href')
+  expect(mainVarianceHref || '').toMatch(/\/pm-review\/variance\?projectId=stack-dc&returnTo=%2Fpm-review%2Fworkfront&returnLabel=PM\+workfront$/)
+  expect(mainVarianceHref || '').not.toContain('focusTaskId')
+  expect(mainVarianceHref || '').not.toContain('undefined')
+
+  await assertWorkfrontDrillthroughReturn(page, 'Cable Assembly A', 'Drivers', /\/pm-review\?[^#]*focusTaskId=task-002/)
+  await assertWorkfrontDrillthroughReturn(page, 'Cable Assembly A', 'Schedule', /\/pm-review\/schedule\?[^#]*focusTaskId=task-002/)
+  await assertWorkfrontDrillthroughReturn(page, 'Cable Assembly A', 'Trace', /\/pm-review\/tracer\?[^#]*taskId=task-002/)
+  await assertWorkfrontDrillthroughReturn(
+    page,
+    'Cable Assembly A',
+    'Variance',
+    /\/pm-review\/variance\?[^#]*focusTaskId=task-002/,
+    /[?&]projectId=stack-dc/,
+  )
+  await assertWorkfrontDrillthroughReturn(
+    page,
+    'Main Switchgear',
+    'Drivers',
+    /\/pm-review\?[^#]*returnTo=%2Fpm-review%2Fworkfront/,
+    undefined,
+    [/[?&]focusTaskId=/],
+  )
+  await assertWorkfrontDrillthroughReturn(
+    page,
+    'Main Switchgear',
+    'Schedule',
+    /\/pm-review\/schedule\?[^#]*returnTo=%2Fpm-review%2Fworkfront/,
+    undefined,
+    [/[?&]focusTaskId=/],
+  )
+  await assertWorkfrontDrillthroughReturn(
+    page,
+    'Main Switchgear',
+    'Trace',
+    /\/pm-review\/tracer\?[^#]*taskLabel=Main\+Switchgear/,
+    undefined,
+    [/[?&]taskId=/],
+  )
+  await assertWorkfrontDrillthroughReturn(
+    page,
+    'Main Switchgear',
+    'Variance',
+    /\/pm-review\/variance\?[^#]*projectId=stack-dc/,
+    undefined,
+    [/[?&]focusTaskId=/],
+  )
+  expect(mutationRequests).toHaveLength(0)
 
   await page.getByRole('button', { name: /Draft lead follow-up/i }).first().click()
   await expect(page.getByText('AI advisory', { exact: true })).toBeVisible()
