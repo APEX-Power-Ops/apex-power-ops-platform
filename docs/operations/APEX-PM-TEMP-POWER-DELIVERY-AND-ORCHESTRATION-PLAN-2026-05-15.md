@@ -216,6 +216,22 @@ PM Lane 034 hardens the same route for day-to-day review:
 
 This still does not admit approval persistence, server-side notes, import mutation, assignment, schedule, status, production write authority, workbook macro execution, or autonomous AI business-state mutation.
 
+PM Lane 035 adds the first read-only import-admission plan route:
+
+`/pm-review/import-admission-plan`
+
+The route consumes `GET /api/v1/reads/project-import-admission-plan` and explains the future import gate before that gate can write. It exposes:
+
+1. approval record contract,
+2. idempotency key components and sample key,
+3. preview-to-import diff checks,
+4. no-go checks,
+5. target row plan,
+6. future import sequence,
+7. explicit not-allowed-now guardrails.
+
+This still does not admit approval persistence, import mutation, SQL, schema, live data write, workbook macro execution, workbook writeback, Render deployment, Vercel promotion, service admission, auth/ingress widening, assignment, schedule, status, or autonomous AI business-state mutation.
+
 ## Capability-Gap Register
 
 Current known gaps:
@@ -226,6 +242,7 @@ Current known gaps:
 4. The project import mutation is not admitted; import-candidate review must come first.
 5. Workbook macros are not admitted for unattended intake.
 6. The local PM review route now supports export and local draft notes, but server-side PM note persistence is not admitted.
+7. The import-admission plan defines the future write gate, but approval persistence and import mutation are still not admitted.
 
 Required response to new gaps:
 

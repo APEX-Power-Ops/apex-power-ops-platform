@@ -173,6 +173,12 @@ The current hardening tranche is:
 
 It adds source stat freshness, warning filters, browser-only JSON export, and local PM questions draft to the same route. These are designed to reduce review burden while preserving the no-production-write boundary.
 
+The current admission-planning tranche is:
+
+`Import Admission Plan`
+
+It adds `/pm-review/import-admission-plan` and `GET /api/v1/reads/project-import-admission-plan` so the future import gate is visible before it can write. The PM can review what approval, idempotency, diff checks, no-go checks, and target row counts will require, while approval persistence and import mutation remain unadmitted.
+
 The success standard is not just technical correctness. The candidate must reduce Jason's review burden by showing:
 
 1. what the system thinks the project is,

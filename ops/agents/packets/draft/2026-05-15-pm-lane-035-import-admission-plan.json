@@ -1,0 +1,99 @@
+{
+  "packet_id": "2026-05-15-pm-lane-035",
+  "title": "Import Admission Plan",
+  "objective": "Add a read-only Project Miner Temp Power import-admission plan seam and PM UI route that define the future approval record contract, idempotency strategy, preview-to-import diff checks, no-go checks, target row plan, and guardrails before any import mutation is admitted.",
+  "domain": "pm-domain",
+  "active_role": "Delegated Technical Repo Authority / PM Runtime Product Coordinator / Admission Design Executor",
+  "repo_paths": [
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/project_import_admission_plan.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/routers/reads.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests/test_project_import_admission_plan.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/app/pm-review/import-admission-plan/page.tsx",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/tests/browser-shell.pm-import-admission-plan.smoke.spec.ts"
+  ],
+  "dependencies": [
+    "2026-05-15-pm-lane-032",
+    "2026-05-15-pm-lane-033",
+    "2026-05-15-pm-lane-034"
+  ],
+  "orchestration_inputs": [
+    "PM Lane 034 recommended preparing the first human-approved import-admission design without implementing the write.",
+    "An internal read-only sidecar scout independently confirmed the GET-only admission-plan route shape, expected approval contract fields, idempotency components, diff checks, no-go checks, UI scope, and tests.",
+    "The coordinator retained final write ownership and integrated the sidecar recommendation into one bounded tranche."
+  ],
+  "constrained_outputs": [
+    "Add a read-only import admission plan builder derived from the current import candidate.",
+    "Expose GET /api/v1/reads/project-import-admission-plan.",
+    "Add /pm-review/import-admission-plan as a read-only operations-web route.",
+    "Link the admission plan from the import-candidate route and governed shell.",
+    "Render target rows, approval contract, idempotency plan, diff checks, no-go checks, future import sequence, and not-allowed-now guardrails.",
+    "Add focused backend and browser tests proving the plan remains read-only and no mutation requests occur.",
+    "Update PM operating docs and project status."
+  ],
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/project_import_admission_plan.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/routers/reads.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests/test_project_import_admission_plan.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/app/pm-review/import-admission-plan/page.tsx",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/app/pm-review/import-candidate/page.tsx",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/app/page.tsx",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/tests/browser-shell.pm-import-admission-plan.smoke.spec.ts",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/APEX-PM-STAKEHOLDER-TIME-PROTECTION-AND-ACCELERATION-LANE-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/APEX-PM-TEMP-POWER-DELIVERY-AND-ORCHESTRATION-PLAN-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/PROJECT_STATUS.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-15-pm-lane-035-import-admission-plan.json",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-035-import-admission-plan-handoff.md"
+  ],
+  "validation_steps": [
+    ".venv/Scripts/python.exe -m pytest apps/mutation-seam/tests/test_project_import_candidate.py apps/mutation-seam/tests/test_project_import_admission_plan.py",
+    "corepack pnpm --filter @apex/operations-web typecheck",
+    "corepack pnpm --filter @apex/operations-web build",
+    "corepack pnpm exec playwright test tests/browser-shell.pm-import-candidate.smoke.spec.ts tests/browser-shell.pm-import-admission-plan.smoke.spec.ts (from apps/operations-web)",
+    "& C:/APEX Platform/apex-power-ops-platform/.venv/Scripts/python.exe -c \"import json; json.load(open(r'C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-15-pm-lane-035-import-admission-plan.json', encoding='utf-8')); print('packet-json-ok')\"",
+    "git diff --check"
+  ],
+  "validation_results": [
+    "Focused mutation-seam import candidate plus admission-plan tests passed: 4 passed.",
+    "operations-web typecheck passed.",
+    "operations-web build passed and listed /pm-review/import-admission-plan.",
+    "Paired focused Playwright smokes passed: 2 passed after tightening duplicate text assertions.",
+    "Packet JSON parsed successfully.",
+    "git diff --check passed."
+  ],
+  "not_allowed": [
+    "No SQL or schema migration.",
+    "No live database write.",
+    "No production import job.",
+    "No approval persistence.",
+    "No workbook writeback.",
+    "No workbook macro execution.",
+    "No Render deployment action.",
+    "No Vercel promotion.",
+    "No service admission.",
+    "No auth or ingress widening.",
+    "No package dependency addition.",
+    "No server-side PM note persistence.",
+    "No candidate edit persistence.",
+    "No import mutation.",
+    "No assignment mutation.",
+    "No schedule mutation.",
+    "No status mutation.",
+    "No autonomous AI business-state mutation."
+  ],
+  "handoff_target": "Delegated Technical Repo Authority / PM Runtime Product Coordinator",
+  "status": "complete",
+  "execution_result": "PASS_LOCAL_READ_ONLY_IMPORT_ADMISSION_PLAN",
+  "delegation_status": "coordinator-executed-with-read-only-sidecar-scout-input",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/project_import_admission_plan.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/app/pm-review/import-admission-plan/page.tsx",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/tests/browser-shell.pm-import-admission-plan.smoke.spec.ts",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-035-import-admission-plan-handoff.md"
+  ],
+  "sql_permission": false,
+  "sql_permission_note": "Packet 2026-05-15-pm-lane-035 does not authorize SQL writes, schema migration, live data mutation, production import, approval persistence, workbook writeback, macro execution, Render deployment, Vercel promotion, auth widening, ingress widening, package dependency addition, server-side PM note persistence, candidate edit persistence, import mutation, schedule mutation, assignment mutation, status mutation, or autonomous AI business-state mutation.",
+  "ai_mutation_authority": "not_admitted",
+  "created_at": "2026-05-15",
+  "updated_at": "2026-05-15"
+}

@@ -9,6 +9,7 @@ from typing import Any, Dict, List
 from app.auth.jwt import Actor, get_current_actor
 from app.db.memory_store import store
 from app.pm_workfront_read_model import build_pm_workfront_read_model
+from app.project_import_admission_plan import load_project_import_admission_plan
 from app.project_import_candidate import load_project_import_candidate
 from app.project_seed_sources import load_project_seed_sources
 from app.seed_workbooks import load_seed_data
@@ -113,6 +114,12 @@ async def get_project_apparatus_plan(actor: Actor = Depends(get_current_actor)) 
 async def get_project_import_candidate(actor: Actor = Depends(get_current_actor)) -> Dict[str, Any]:
     """Return a read-only Project Miner import candidate for PM review before any import mutation."""
     return load_project_import_candidate()
+
+
+@router.get("/project-import-admission-plan")
+async def get_project_import_admission_plan(actor: Actor = Depends(get_current_actor)) -> Dict[str, Any]:
+    """Return a read-only import-admission plan for PM approval and future idempotent import design."""
+    return load_project_import_admission_plan()
 
 
 @router.get("/pm-workfront")

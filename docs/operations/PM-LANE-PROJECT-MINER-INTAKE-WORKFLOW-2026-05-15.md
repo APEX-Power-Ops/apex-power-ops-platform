@@ -154,6 +154,30 @@ PM Lane 034 hardens the same review route without admitting persistence:
 3. JSON export downloads the current read-only candidate plus the local PM draft notes for offline review or sidecar handoff,
 4. PM questions draft is retained only in the local browser and is not approval, import, Supabase state, or a server-side note.
 
+## Import Admission Plan
+
+PM Lane 035 adds a read-only import-admission plan before any import mutation exists.
+
+The read seam is:
+
+`GET /api/v1/reads/project-import-admission-plan`
+
+The PM-facing plan route is:
+
+`/pm-review/import-admission-plan`
+
+This route explains the future import gate:
+
+1. approval record contract,
+2. deterministic idempotency key strategy,
+3. preview-to-import diff checks,
+4. no-go checks,
+5. target row counts,
+6. future import sequence,
+7. actions that remain disallowed.
+
+This is not an approval screen and not an import screen. It does not persist approval, write Supabase rows, run workbook macros, write workbook cells, assign work, change status, mutate schedules, or admit autonomous AI business-state action.
+
 ## Environment Overrides
 
 Set this when using a different planning folder:
@@ -256,8 +280,9 @@ Current priority order:
 2. read-only Temp Power import-candidate review,
 3. import-candidate PM UI review,
 4. import-candidate review hardening for source freshness, filters, export, and local questions,
-5. narrow idempotent import mutation only after human approval,
-6. PM, Lead, and Field pilot on a bounded Temp Power slice.
+5. read-only import-admission plan for approval contract, idempotency, diff checks, and no-go checks,
+6. narrow idempotent import mutation only after human approval and explicit packet admission,
+7. PM, Lead, and Field pilot on a bounded Temp Power slice.
 
 Olares One should support this by reducing relay friction, preserving host validation, and keeping packet/handoff evidence durable. It is not currently assumed to provide autonomous AI-to-AI queue ownership.
 
@@ -274,6 +299,9 @@ Transform estimator apparatus candidates into task-by-task and apparatus-by-appa
 
 Level 2A - Import Candidate Review Hardening:
 Review source freshness, warning filters, exported candidate JSON, and local PM questions before any import mutation is admitted.
+
+Level 2B - Import Admission Planning:
+Review the approval contract, idempotency key, diff checks, target rows, and no-go checks that a later import packet must satisfy.
 
 Level 3 - Resource Context:
 Read equipment inventory and technician capability rows so PM can understand whether the project can be staffed with available people and equipment.

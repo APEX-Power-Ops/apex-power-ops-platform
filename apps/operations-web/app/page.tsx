@@ -132,6 +132,7 @@ export default function HomePage() {
             <li>Hosts the promoted PM drivers app route at /pm-review.</li>
             <li>Hosts the read-only PM workfront app route at /pm-review/workfront.</li>
             <li>Hosts the read-only PM import-candidate review route at /pm-review/import-candidate.</li>
+            <li>Hosts the read-only PM import-admission plan route at /pm-review/import-admission-plan.</li>
             <li>Hosts the promoted PM approval app route at /pm-review/approval.</li>
             <li>Hosts the promoted PM schedule app route at /pm-review/schedule.</li>
             <li>Hosts the promoted PM tracer app route at /pm-review/tracer.</li>
@@ -176,6 +177,9 @@ export default function HomePage() {
         </p>
         <p>
           The read-only PM import-candidate review route is available in the governed shell at <a href="/pm-review/import-candidate">/pm-review/import-candidate</a>.
+        </p>
+        <p>
+          The read-only PM import-admission plan route is available in the governed shell at <a href="/pm-review/import-admission-plan">/pm-review/import-admission-plan</a>.
         </p>
         <p>
           The promoted PM approval route is available in the governed shell at <a href="/pm-review/approval">/pm-review/approval</a>.

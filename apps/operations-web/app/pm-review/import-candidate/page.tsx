@@ -363,6 +363,7 @@ export default function PmImportCandidatePage() {
           <p className="pm-review-link-row">
             <Link href="/">Return to shell</Link>
             <Link href="/pm-review/workfront">PM workfront</Link>
+            <Link href="/pm-review/import-admission-plan">Admission plan</Link>
             <button className="btn btn-outline" onClick={exportCandidateJson} disabled={!candidate}>
               Export JSON
             </button>
