@@ -36,6 +36,9 @@ def _build_preview(line_limit: int) -> dict[str, Any]:
             "drawing_package": project.get("drawing_package"),
             "issue_date": project.get("issue_date"),
             "source_sheet": project.get("source_sheet"),
+            "source_format": project.get("source_format"),
+            "scope_count": project.get("scope_count"),
+            "scope_sheets": project.get("scope_sheets", []),
             "line_item_count": len(line_items),
             "apparatus_candidate_count": len(apparatus_candidates),
             "topology_label_count": len(project.get("topology_labels", [])),
@@ -73,6 +76,9 @@ def _print_text(preview: dict[str, Any]) -> None:
     print(f"Drawing package: {project.get('drawing_package') or 'unknown'}")
     print(f"Issue date: {project.get('issue_date') or 'unknown'}")
     print(f"Source sheet: {project.get('source_sheet') or 'unknown'}")
+    print(f"Source format: {project.get('source_format') or 'unknown'}")
+    if project.get("scope_count"):
+        print(f"Scope sheets: {project.get('scope_count')} {project.get('scope_sheets') or []}")
     print(f"Line items: {project['line_item_count']}")
     print(f"Apparatus candidates: {project['apparatus_candidate_count']}")
     print(f"Topology labels: {project['topology_label_count']} {project.get('topology_counts') or {}}")
@@ -105,12 +111,24 @@ def main() -> int:
         "--planning-root",
         help="Folder containing Project Miner estimator, SLD PDF, equipment inventory, and capability matrix.",
     )
+    parser.add_argument("--estimator-workbook", help="Specific estimator workbook to preview.")
+    parser.add_argument("--sld-pdf", help="Specific SLD or drawing PDF to preview.")
+    parser.add_argument("--equipment-workbook", help="Specific equipment inventory workbook to preview.")
+    parser.add_argument("--capability-workbook", help="Specific technician capability workbook to preview.")
     parser.add_argument("--format", choices=("text", "json"), default="text")
     parser.add_argument("--line-limit", type=int, default=8)
     args = parser.parse_args()
 
     if args.planning_root:
         os.environ["APEX_PROJECT_MINER_PLANNING_ROOT"] = args.planning_root
+    if args.estimator_workbook:
+        os.environ["APEX_PROJECT_ESTIMATOR_WORKBOOK"] = args.estimator_workbook
+    if args.sld_pdf:
+        os.environ["APEX_PROJECT_SLD_PDF"] = args.sld_pdf
+    if args.equipment_workbook:
+        os.environ["APEX_FIELD_SEED_EQUIPMENT_WORKBOOK"] = args.equipment_workbook
+    if args.capability_workbook:
+        os.environ["APEX_FIELD_SEED_CAPABILITY_WORKBOOK"] = args.capability_workbook
 
     preview = _build_preview(args.line_limit)
     if args.format == "json":

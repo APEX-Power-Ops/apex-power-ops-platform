@@ -1,0 +1,97 @@
+{
+  "packet_id": "2026-05-15-pm-lane-029",
+  "title": "PM Estimator VBA Lineage Scope-Sheet Intake",
+  "objective": "Use the historical estimator-to-Dataverse VBA modules as static mapping evidence to add read-only scope-sheet estimator intake support for the larger Project Miner Building A/B workbook, while preserving the existing flat Updated/Quote Tab reader and no-mutation PM lane posture.",
+  "domain": "pm-domain",
+  "active_role": "Delegated Technical Repo Authority / PM Runtime Product Coordinator",
+  "repo_paths": [
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/project_seed_sources.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/scripts/preview_pm_planning_sources.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests/test_project_seed_sources.py",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "dependencies": [
+    "2026-05-15-pm-lane-028",
+    "2026-05-15-pm-lane-012",
+    "C:/APEX Platform/Reference_Files/Excel/Estimator VBA Modules/DataverseExport.bas",
+    "C:/APEX Platform/Reference_Files/Excel/Estimator VBA Modules/DataverseMappingVerification.bas",
+    "C:/Users/jjswe/Desktop/Project Miner PM Planning/Cupertino - Miner Estimator PHX Bldg A & B MV Rev9.xlsm",
+    "C:/Users/jjswe/Desktop/Project Miner PM Planning/Building B IFC.pdf",
+    "C:/Users/jjswe/Desktop/Project Miner PM Planning/Estimator R3 - Project Miner Temp Power Testing.xlsm",
+    "C:/Users/jjswe/Desktop/Project Miner PM Planning/Miner Temp SLD-AP-BCARRASCO.pdf"
+  ],
+  "orchestration_inputs": [
+    "The user recalled two historical VBA modules created to let the estimator serve as the project intake source.",
+    "Coordinator review found the modules targeted Dataverse-era clipboard/file JSON and mapping verification workflows, but preserved the relevant estimator workbook map.",
+    "Current Project Miner workbooks do not include Dataverse_Import, but both include Equipment Reference.",
+    "The smaller Miner Temp workbook remains flat-reader compatible through Updated.",
+    "The larger Building A/B estimator is scope-sheet based and needs Equipment Reference driven discovery before it can be used as a PM intake source."
+  ],
+  "constrained_outputs": [
+    "The flat estimator reader still prefers Updated and then Quote Tab when those sheets contain line items.",
+    "A scope-sheet reader now discovers active estimator scopes from Equipment Reference column L/M rows with nonzero totals.",
+    "Scope-sheet metadata includes source_format, scope_sheets, scope_count, scope_sheet, scope_type, scope_total_hours, scope_multiplier, scope_quoted_amount, and source_row context.",
+    "Scope-sheet apparatus rows use quantity from column C, equipment type from column E, hours per unit from column I, and line total from column J.",
+    "Quantity expansion still produces one apparatus candidate per unit.",
+    "The preview script now accepts explicit estimator workbook, SLD PDF, equipment workbook, and capability workbook override arguments.",
+    "The PM intake runbook now records the two historical VBA modules as static lineage evidence and forbids macro execution during read-only intake."
+  ],
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/project_seed_sources.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/scripts/preview_pm_planning_sources.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests/test_project_seed_sources.py",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/PROJECT_STATUS.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-15-pm-lane-029-estimator-vba-lineage-scope-sheet-intake.json",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-029-estimator-vba-lineage-scope-sheet-intake-handoff.md"
+  ],
+  "validation_steps": [
+    "& C:/APEX Platform/apex-power-ops-platform/.venv/Scripts/python.exe -m pytest C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests/test_project_seed_sources.py C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests/test_workbook_seed_reads.py C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests/test_pm_lane_seed.py C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests/test_pm_workfront_read_model.py -q",
+    "& C:/APEX Platform/apex-power-ops-platform/.venv/Scripts/python.exe -m py_compile C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/project_seed_sources.py C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/scripts/preview_pm_planning_sources.py",
+    "& C:/APEX Platform/apex-power-ops-platform/.venv/Scripts/python.exe C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/scripts/preview_pm_planning_sources.py --planning-root C:/Users/jjswe/Desktop/Project Miner PM Planning --line-limit 2",
+    "& C:/APEX Platform/apex-power-ops-platform/.venv/Scripts/python.exe C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/scripts/preview_pm_planning_sources.py --planning-root C:/Users/jjswe/Desktop/Project Miner PM Planning --estimator-workbook C:/Users/jjswe/Desktop/Project Miner PM Planning/Cupertino - Miner Estimator PHX Bldg A & B MV Rev9.xlsm --sld-pdf C:/Users/jjswe/Desktop/Project Miner PM Planning/Building B IFC.pdf --line-limit 3",
+    "git diff --check"
+  ],
+  "validation_results": [
+    "Focused mutation-seam seed and PM workfront tests passed 12/12 with existing Pydantic deprecation warnings.",
+    "py_compile passed for the modified estimator reader and preview script.",
+    "Default Miner Temp preview still resolved source format flat_quote, 15 line items, 186 apparatus candidates, 138 topology labels, 15 crew, 343 equipment inventory rows, 22 standard tech list rows, and 50 capability rows.",
+    "Building A/B scope-sheet preview resolved source format scope_sheets, 9 active scope sheets, 122 line items, 5,400 apparatus candidates, 1 topology label, 15 crew, 343 equipment inventory rows, 22 standard tech list rows, and 50 capability rows.",
+    "git diff --check passed."
+  ],
+  "not_allowed": [
+    "No SQL or schema migration.",
+    "No live database write.",
+    "No seed replay into Supabase.",
+    "No production import job.",
+    "No Render deployment action.",
+    "No Vercel promotion.",
+    "No service admission.",
+    "No auth or ingress widening.",
+    "No package dependency addition.",
+    "No Excel MCP production runtime dependency.",
+    "No workbook macro execution.",
+    "No Dataverse import path reopening.",
+    "No assignment mutation.",
+    "No schedule mutation.",
+    "No status mutation.",
+    "No Operations Visibility reopening.",
+    "No AI helper mutation.",
+    "No AI service admission widening.",
+    "No autonomous AI business-state mutation."
+  ],
+  "handoff_target": "Delegated Technical Repo Authority / PM Runtime Product Coordinator",
+  "status": "complete",
+  "execution_result": "PASS_LOCAL_READ_ONLY_SCOPE_SHEET_INTAKE_HOSTED_PM_PROOF_DEFERRED_TO_PM_LANE_012",
+  "delegation_status": "coordinator-executed-from-user-surfaced-vba-lineage",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-029-estimator-vba-lineage-scope-sheet-intake-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md"
+  ],
+  "sql_permission": false,
+  "sql_permission_note": "Packet 2026-05-15-pm-lane-029 does not authorize SQL writes, schema migration, live data mutation, seed replay into Supabase, production import, Render deployment, Vercel promotion, auth widening, ingress widening, package dependency addition, Excel MCP runtime dependency, macro execution, Dataverse import reopening, schedule mutation, assignment mutation, status mutation, AI helper mutation, AI service admission widening, or autonomous AI business-state mutation.",
+  "ai_mutation_authority": "not_admitted",
+  "created_at": "2026-05-15",
+  "updated_at": "2026-05-15"
+}

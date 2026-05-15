@@ -60,6 +60,16 @@ JSON output for downstream inspection:
   --format json
 ```
 
+To preview a specific estimator/PDF pair from the same planning folder:
+
+```powershell
+& "C:/APEX Platform/apex-power-ops-platform/.venv/Scripts/python.exe" `
+  "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/scripts/preview_pm_planning_sources.py" `
+  --planning-root "C:/Users/jjswe/Desktop/Project Miner PM Planning" `
+  --estimator-workbook "C:/Users/jjswe/Desktop/Project Miner PM Planning/Cupertino - Miner Estimator PHX Bldg A & B MV Rev9.xlsm" `
+  --sld-pdf "C:/Users/jjswe/Desktop/Project Miner PM Planning/Building B IFC.pdf"
+```
+
 The command is read-only. It does not write to Supabase, mutate schedules, assign work, change statuses, or run Excel macros.
 
 ## Environment Overrides
@@ -101,13 +111,36 @@ The repo-owned baseline remains `openpyxl` and `pypdf` inside `apps/mutation-sea
 
 The built-in Codex spreadsheet tooling is appropriate for producing human-review workbooks, dashboards, or import QA summaries after a packet requests that artifact. It is not required for the live PM lane runtime and should not replace the deterministic seed readers without a bounded packet.
 
+## Estimator VBA Lineage
+
+Earlier estimator-intake work produced two VBA modules under:
+
+1. `C:/APEX Platform/Reference_Files/Excel/Estimator VBA Modules/DataverseExport.bas`
+2. `C:/APEX Platform/Reference_Files/Excel/Estimator VBA Modules/DataverseMappingVerification.bas`
+
+Those modules are Dataverse-era artifacts and should not be treated as the current production import path. Their value is the workbook mapping they preserve:
+
+1. metadata originally came from a `Dataverse_Import` sheet,
+2. scope totals came from `Equipment Reference`,
+3. active scope sheets were listed in `Equipment Reference!L:M`,
+4. scope-level fields used `C4`, `J3`, `M4`, `P3`, and `P4`,
+5. apparatus line rows used `C` for quantity, `E` for equipment type, `I` for hours per unit, and `J` for total hours,
+6. each quantity greater than one expanded into one apparatus candidate per unit.
+
+Current Project Miner workbooks no longer include `Dataverse_Import`, but they do still include `Equipment Reference`. The PM lane reader therefore supports two read-only estimator shapes:
+
+1. flat quote shape: `Updated` or `Quote Tab`,
+2. scope-sheet shape: active sheets listed in `Equipment Reference!L:M`.
+
+The VBA files remain static reference evidence only. Do not run their macros as part of PM lane intake.
+
 ## Workflow Levels
 
 Level 0 - Source Intake:
 Validate the planning folder exists and the preview command resolves the expected workbook, PDF, equipment inventory, and capability matrix.
 
 Level 1 - Scope Extraction:
-Read estimator line items into project, workpackage, task, and apparatus candidates. Preserve drawing references and designations.
+Read estimator line items into project, workpackage, task, and apparatus candidates. Preserve drawing references, designations, source sheet names, scope sheet names, and source row references where available.
 
 Level 2 - Resource Context:
 Read equipment inventory and technician capability rows so PM can understand whether the project can be staffed with available people and equipment.

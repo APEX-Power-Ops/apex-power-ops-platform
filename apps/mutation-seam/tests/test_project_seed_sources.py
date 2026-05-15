@@ -38,6 +38,35 @@ def _write_estimator_workbook(path):
         workbook.close()
 
 
+def _write_scope_estimator_workbook(path):
+    workbook = Workbook()
+    try:
+        reference_sheet = workbook.active
+        reference_sheet.title = "Equipment Reference"
+        reference_sheet["L4"] = "A1) Medium-Voltage - Core"
+        reference_sheet["M4"] = 91190.625
+        reference_sheet["L5"] = "10.X"
+        reference_sheet["M5"] = 0
+
+        scope_sheet = workbook.create_sheet("A1) Medium-Voltage - Core")
+        scope_sheet["C4"] = "ATS"
+        scope_sheet["J3"] = 10.5
+        scope_sheet["M4"] = 1
+        scope_sheet["P3"] = 91190.625
+        scope_sheet["E6"] = "Medium Voltage"
+        scope_sheet["C7"] = 2
+        scope_sheet["E7"] = "Transformer MV"
+        scope_sheet["I7"] = 3.5
+        scope_sheet["J7"] = 7
+        scope_sheet["C8"] = 1
+        scope_sheet["E8"] = "Switchgear MV"
+        scope_sheet["I8"] = 2
+        scope_sheet["J8"] = 2
+        workbook.save(path)
+    finally:
+        workbook.close()
+
+
 def test_extract_topology_labels_from_text_finds_equipment_labels():
     text = "MVTX -A SWBD -C PWR SKID -25 LVPP -2 MVS -4"
 
@@ -59,6 +88,29 @@ def test_load_project_seed_sources_reads_workbook_line_items(tmp_path):
     assert len(data["expanded_apparatus_candidates"]) == 5
     assert data["expanded_apparatus_candidates"][0]["display_name"] == "Pole Disconnect 01"
     assert data["expanded_apparatus_candidates"][3]["display_name"] == "SWBD 01"
+
+
+def test_load_project_seed_sources_reads_scope_sheet_estimator(tmp_path):
+    workbook_path = tmp_path / "building-ab-estimator.xlsm"
+    _write_scope_estimator_workbook(workbook_path)
+
+    data = load_project_seed_sources(str(workbook_path), str(tmp_path / "missing.pdf"))
+
+    assert data["project_name"] == "building-ab-estimator"
+    assert data["source_sheet"] == "scope_sheets"
+    assert data["source_format"] == "scope_sheets"
+    assert data["scope_count"] == 1
+    assert data["scope_sheets"] == ["A1) Medium-Voltage - Core"]
+    assert data["metadata"]["estimator_source_format"] == "scope_sheets"
+    assert data["metadata"]["estimator_scope_count"] == 1
+    assert len(data["line_items"]) == 2
+    assert data["line_items"][0]["section"] == "Medium Voltage"
+    assert data["line_items"][0]["scope_sheet"] == "A1) Medium-Voltage - Core"
+    assert data["line_items"][0]["scope_type"] == "ATS"
+    assert data["line_items"][0]["scope_quoted_amount"] == 91190.625
+    assert len(data["expanded_apparatus_candidates"]) == 3
+    assert data["expanded_apparatus_candidates"][0]["display_name"] == "Transformer MV 01"
+    assert data["expanded_apparatus_candidates"][2]["display_name"] == "Switchgear MV"
 
 
 def test_load_project_seed_sources_uses_project_miner_planning_root(monkeypatch, tmp_path):
