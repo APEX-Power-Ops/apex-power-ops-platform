@@ -16,6 +16,12 @@ Companion operating plan:
 
 `docs/operations/APEX-PM-TEMP-POWER-DELIVERY-AND-ORCHESTRATION-PLAN-2026-05-15.md`
 
+Companion visual map:
+
+`docs/operations/APEX-OPS-VISUAL-SYSTEM-MAP-2026-05-15.md`
+
+Start with the visual map when the platform split, PM workflow, or AI orchestration lanes are easier to understand as diagrams than as prose.
+
 Use that plan for the Temp Power delivery target, Olares One orchestration posture, dual-lane execution rules, and capability-gap escalation duty.
 
 ## Current Source Packet

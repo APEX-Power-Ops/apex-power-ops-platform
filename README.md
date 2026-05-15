@@ -13,6 +13,7 @@ Authority:
 - strategic authority entry now starts at `C:/APEX Platform/apex-power-ops-platform/docs/authority/README.md`
 - repo-structure authority now also lives in `C:/APEX Platform/apex-power-ops-platform/docs/architecture/APEX-REPO-FOUNDATION-AND-CUTOVER-PLAN-2026-05-07.md`
 - this root is the canonical implementation and git entrypoint for active Apex Ops work
+- visual orientation for the current Vercel, Render, Supabase, Olares, Project Miner, and AI orchestration split lives at `C:/APEX Platform/apex-power-ops-platform/docs/operations/APEX-OPS-VISUAL-SYSTEM-MAP-2026-05-15.md`
 
 ## Olares One Transition
 

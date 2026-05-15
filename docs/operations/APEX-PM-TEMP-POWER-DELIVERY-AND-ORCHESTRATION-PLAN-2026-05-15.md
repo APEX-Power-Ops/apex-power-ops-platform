@@ -10,6 +10,12 @@ This plan sets the current target lane for the APEX Operations Platform:
 
 Project Miner Temp Power must be able to use the new PM workflow from project intake through field execution and tracking before the late-May or early-June 2026 field start window.
 
+Companion visual map:
+
+`docs/operations/APEX-OPS-VISUAL-SYSTEM-MAP-2026-05-15.md`
+
+Use the visual map when explaining the current Vercel, Render, Supabase, Olares, Project Miner intake, and AI orchestration split.
+
 The plan also clarifies the role of Olares One. Olares should reduce operator burden and AI-to-AI relay friction, but only inside the current repo authority and trust boundaries. The platform is not assumed to provide autonomous agent coordination unless the repo admits that capability through a separate packet.
 
 ## Operating Principle
