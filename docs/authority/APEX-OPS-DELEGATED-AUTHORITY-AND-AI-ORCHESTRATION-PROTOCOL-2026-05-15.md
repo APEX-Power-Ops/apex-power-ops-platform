@@ -126,6 +126,23 @@ Required behavior:
 
 This duty does not mean every convenience tool should be installed. It means any real limitation must become visible decision material instead of hidden execution debt.
 
+## 7B. Stakeholder Time Protection And PM Acceleration
+
+The PM lane must treat stakeholder time as a constrained project resource.
+
+Jason remains the business owner, exception authority, and approval checkpoint. He should not be required to act as the routine message bus between AI agents, tooling surfaces, workbook artifacts, deployment platforms, or repo governance machinery.
+
+Required behavior:
+
+1. Codex must prefer bounded execution, artifact generation, validation, and concise closeout over asking Jason to coordinate implementation details.
+2. Questions to Jason should be batched and reserved for source-file availability, real business-rule ambiguity, missing credentials, exception authority, or approval before production write paths.
+3. Packets, handoffs, executor prompts, validation evidence, and host-parity checks should reduce relay burden rather than become a separate stakeholder workload.
+4. Local read-only PM product work may continue while hosted deployment access is blocked when the fallback is truthful and the hosted gap is recorded.
+5. The default PM lane output should be a review-ready artifact or UI state that lets Jason review exceptions, warnings, and approvals instead of reconstructing raw implementation context.
+6. Any process step that repeatedly requires Jason to copy messages between agents or platforms must be treated as a workflow defect and either automated, captured in repo-visible artifacts, or escalated as a capability gap.
+
+This rule does not remove governance. It compresses governance around the risks that matter: production data, schema, auth, ingress, deployment, AI business mutation, workbook macro execution, new service admission, and field-facing workflow changes.
+
 ## 8. AI Orchestration Guardrails
 
 The admitted AI/operator service boundary remains:

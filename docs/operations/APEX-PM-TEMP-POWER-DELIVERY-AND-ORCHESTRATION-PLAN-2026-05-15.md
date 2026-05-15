@@ -16,6 +16,12 @@ Companion visual map:
 
 Use the visual map when explaining the current Vercel, Render, Supabase, Olares, Project Miner intake, and AI orchestration split.
 
+Companion acceleration lane:
+
+`docs/operations/APEX-PM-STAKEHOLDER-TIME-PROTECTION-AND-ACCELERATION-LANE-2026-05-15.md`
+
+Use the acceleration lane when sequencing PM work so stakeholder time, relay burden, and workflow friction are treated as primary project constraints.
+
 The plan also clarifies the role of Olares One. Olares should reduce operator burden and AI-to-AI relay friction, but only inside the current repo authority and trust boundaries. The platform is not assumed to provide autonomous agent coordination unless the repo admits that capability through a separate packet.
 
 ## Operating Principle
@@ -38,6 +44,22 @@ This includes but is not limited to:
 10. absent durable task queue or AI-to-AI relay surfaces.
 
 Fallbacks are allowed only when they are truthful, bounded, and good enough for the current slice. Fallbacks must not become the permanent operating model by accident.
+
+## Stakeholder Time Constraint
+
+The Project Miner PM lane must account for the real operating constraint that Jason is already responsible for field execution, estimating, project management, and operations work.
+
+This means the PM lane is not successful if it requires Jason to become the routine relay between agents, tools, workbooks, platforms, and deployment surfaces.
+
+Default PM lane posture:
+
+1. Codex advances the next safe bounded move without asking Jason to coordinate implementation details.
+2. Jason is asked for source files, business decisions, credentials, exception authority, or approval of review-ready artifacts.
+3. Packet, handoff, and validation machinery should be generated and summarized by Codex, not manually maintained by Jason.
+4. Local read-only proof should proceed when hosted Render parity is blocked, as long as the hosted gap is recorded truthfully.
+5. Every new workflow step must either reduce Jason's future burden, reduce delivery risk, or preserve a non-negotiable governance boundary.
+
+The near-term product target is a PM flow where Jason reviews exceptions and approvals, not raw workbook mechanics or AI-to-AI handoffs.
 
 ## Current Reality
 
@@ -145,8 +167,8 @@ Abort the split if:
 
 Target sequence before field start:
 
-1. Restore hosted Render mutation-seam parity for current PM reads.
-2. Build Temp Power import-candidate review as read-only PM lane output.
+1. Build Temp Power import-candidate review as read-only PM lane output.
+2. Restore hosted Render mutation-seam parity for current PM reads in parallel or before hosted proof is required.
 3. Validate the candidate against estimator, SLD/PDF, data-entry, tracker, equipment, and capability lineage.
 4. Add PM UI review for the import candidate.
 5. Admit a narrow, idempotent import mutation only after the candidate and approval workflow are proven.

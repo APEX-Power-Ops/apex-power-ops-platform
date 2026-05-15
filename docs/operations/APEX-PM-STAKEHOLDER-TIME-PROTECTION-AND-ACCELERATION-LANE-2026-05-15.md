@@ -1,0 +1,174 @@
+# APEX PM Stakeholder Time Protection And Acceleration Lane
+
+Date: 2026-05-15
+Status: Active acceleration overlay
+Scope: Project Miner PM lane execution, AI orchestration, and Temp Power delivery sequencing
+
+## Purpose
+
+This lane records a practical operating constraint: Jason is responsible for managing real field, estimating, project management, and operations work, and the Project Miner PM modernization cannot depend on large amounts of extra unpaid coordination time.
+
+The platform must therefore reduce stakeholder burden as a primary success requirement. Governance still matters, but it must run mostly behind the scenes through repo-visible evidence, packets, validation, and closeout. It must not become another manual workload.
+
+## Governing Principle
+
+Jason is the business owner, exception authority, and approval checkpoint. He is not the message bus, manual QA department, packet clerk, or AI-to-AI relay surface.
+
+Codex, as delegated technical repo authority and PM coordinator, must optimize every PM lane tranche for:
+
+1. fewer stakeholder touchpoints,
+2. fewer manual copy/paste relay steps,
+3. fewer separate tools Jason must open,
+4. fewer decisions before there is a concrete artifact to review,
+5. default-safe automation before optional process ceremony,
+6. fast local proof before broader hosted or production proof when hosted access is the bottleneck,
+7. concise human review surfaces instead of raw implementation detail.
+
+## Required Operating Shift
+
+The PM acceleration lane changes the default posture from "ask Jason to coordinate" to "Codex advances the next safe bounded move and escalates only material decisions."
+
+Jason should normally be asked for only:
+
+1. source-file placement or missing source files,
+2. business-rule decisions that affect real project outcomes,
+3. credential or platform access that Codex cannot obtain,
+4. approval of a review-ready import candidate before any production write,
+5. exception decisions when guardrails would otherwise stop the tranche.
+
+Codex should normally own:
+
+1. task packet authorship,
+2. executor prompt authorship,
+3. local implementation,
+4. external executor delegation when useful,
+5. handoff review,
+6. validation,
+7. evidence summarization,
+8. commit, push, and host parity closeout,
+9. capability-gap tracking,
+10. next-slice recommendation.
+
+## Practical Touchpoint Budget
+
+For PM lane work, the desired interaction pattern is:
+
+1. one short stakeholder checkpoint before a tranche only when the business rule is ambiguous,
+2. one review-ready artifact after the tranche,
+3. one explicit approval gate only before a real production write or field-facing process change.
+
+If a lane requires Jason to repeatedly pass messages between tools, agents, tabs, files, or platforms, that is a process defect to be fixed, not the expected operating model.
+
+## Minimum Viable Day-To-Day Workflow
+
+The target day-to-day workflow must converge on this shape:
+
+1. Source files land in one Project Miner planning folder.
+2. A single command or UI action produces a read-only intake snapshot.
+3. The snapshot produces a review-ready import candidate with warnings, duplicates, traceability, and proposed grouping.
+4. PM/Ops reviews exceptions and approves, returns, or edits the candidate.
+5. A later admitted mutation imports approved project, workpackage, task, and apparatus rows through Render.
+6. Lead and Field users work from simple role-specific surfaces.
+7. PM reviews blockers, snapshots, exceptions, and closeout from the PM workfront.
+
+Any extra step must justify itself by reducing risk, reducing future workload, or preserving a non-negotiable governance boundary.
+
+## Acceleration Priorities
+
+Immediate PM lane priority order:
+
+1. Build the read-only Temp Power import-candidate artifact from real Project Miner files.
+2. Make that candidate understandable enough that Jason can review exceptions rather than reconstruct the entire workflow.
+3. Add a PM UI review surface for the candidate.
+4. Restore hosted Render parity in parallel or as a blocker only when hosted proof is actually required for the current slice.
+5. Admit the narrow import mutation only after the review flow is proven.
+6. Pilot one bounded Temp Power execution slice before expanding to the larger Building A/B scope.
+
+Immediate orchestration priority order:
+
+1. Stop cycling templates unless a real executor-friction signal exists.
+2. Use one executor by default.
+3. Use two lanes only when it saves time and file ownership is disjoint.
+4. Generate handoffs and review summaries that Jason can skim quickly.
+5. Surface missing tools, credentials, or MCP capability as early blockers or accelerators.
+
+## Tooling Expectations
+
+The best tool is the tool that reduces total burden without weakening trust.
+
+Expected accelerators:
+
+1. deterministic Python readers for repeatable Excel/PDF intake,
+2. Excel MCP or spreadsheet tooling when visual workbook inspection materially saves time,
+3. browser automation for UI proof when routes are available,
+4. Render, Vercel, and Supabase connectors or credentials when hosted proof is the blocker,
+5. Olares host parity for publication truth,
+6. packet and handoff generation templates only when they reduce relay work.
+
+Current acceptable fallback:
+
+1. use local deterministic preview and import-candidate artifacts while hosted Render parity remains blocked,
+2. record hosted parity as a blocker for hosted proof, not as a reason to delay all local PM candidate development,
+3. keep Excel MCP as an operator accelerator, not a production runtime requirement.
+
+## Governance Compression Rules
+
+Governance remains required, but it should be compressed around actual risk.
+
+Use full packet discipline when a tranche touches:
+
+1. production data,
+2. schema,
+3. auth,
+4. public ingress,
+5. deployment control,
+6. AI business-state mutation,
+7. workbook macro execution,
+8. new service admission,
+9. irreversible import or field-facing workflow changes.
+
+Use lighter repo-visible closeout when a tranche is:
+
+1. read-only,
+2. documentation-only,
+3. local preview-only,
+4. deterministic test-only,
+5. a review artifact with no production write path.
+
+Even lightweight closeout must still preserve:
+
+1. explicit file scope,
+2. validation result,
+3. no unrelated staging,
+4. capability-gap disclosure,
+5. commit, push, and host parity when governance truth changes.
+
+## Stop Conditions
+
+Stop and escalate instead of pushing through when:
+
+1. the only available path would require Jason to become a repeated manual relay,
+2. a production write is needed before there is a reviewable candidate,
+3. a missing credential or tool makes validation untrustworthy,
+4. an AI executor needs business context that should have been captured in packet or handoff form,
+5. the process adds more work for Jason than the feature removes.
+
+## Next Bounded Implementation Move
+
+The next product tranche remains:
+
+`Temp Power Import Candidate Review`
+
+It should create a read-only review artifact or endpoint that groups the current Project Miner Temp Power source files into proposed project, workpackage, task, and apparatus rows with source traceability and warnings.
+
+The success standard is not just technical correctness. The candidate must reduce Jason's review burden by showing:
+
+1. what the system thinks the project is,
+2. what tasks and apparatus it proposes,
+3. what source rows and drawings each proposal came from,
+4. what looks duplicated or risky,
+5. what needs a human decision before import.
+
+## Success Standard
+
+This acceleration lane succeeds when Jason can move a real project from intake toward field execution by reviewing exceptions and approving bounded artifacts, rather than manually coordinating agents, interpreting raw workbook structure, translating between platforms, or rebuilding project state by hand.

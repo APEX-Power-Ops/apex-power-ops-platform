@@ -22,6 +22,12 @@ Companion visual map:
 
 Start with the visual map when the platform split, PM workflow, or AI orchestration lanes are easier to understand as diagrams than as prose.
 
+Companion acceleration lane:
+
+`docs/operations/APEX-PM-STAKEHOLDER-TIME-PROTECTION-AND-ACCELERATION-LANE-2026-05-15.md`
+
+Use the acceleration lane when deciding whether a PM workflow step is actually helping. The PM lane should reduce Jason's coordination burden, not add another process he has to manually carry.
+
 Use that plan for the Temp Power delivery target, Olares One orchestration posture, dual-lane execution rules, and capability-gap escalation duty.
 
 ## Current Source Packet
