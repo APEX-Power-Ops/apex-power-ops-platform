@@ -2,11 +2,11 @@
 
 Date: 2026-05-13
 Status: Active delegated operator prompt template
-Scope: reusable absolute-path copy-paste prompt skeleton for delegated dual-lane packets after Packet 883
+Scope: reusable absolute-path copy-paste prompt skeleton for delegated dual-lane packets after Packet 885
 
 ## Purpose
 
-Use this template when a later Olares AI/operator packet delegates one live evidence lane and one disjoint scaffold or publication lane under coordinator ownership while reusing the Packet 831 split checklist as extended by Packet 854, the Packet 833 closeout template as extended by Packet 853, and the Packet 834 packet-definition template as extended by Packet 855, Packet 857, Packet 859, Packet 861, Packet 867, Packet 869, Packet 871, Packet 873, Packet 875, Packet 877, Packet 879, Packet 881, and Packet 883.
+Use this template when a later Olares AI/operator packet delegates one live evidence lane and one disjoint scaffold or publication lane under coordinator ownership while reusing the Packet 831 split checklist as extended by Packet 854, the Packet 833 closeout template as extended by Packet 853, and the Packet 834 packet-definition template as extended by Packet 855, Packet 857, Packet 859, Packet 861, Packet 867, Packet 869, Packet 871, Packet 873, Packet 875, Packet 877, Packet 879, Packet 881, Packet 883, and Packet 885.
 
 The template complements `docs/operations/OLARES-AI-DELEGATED-DUAL-LANE-EXECUTION-CHECKLIST-2026-05-13.md` by turning the ownership, validation order, abort rules, closeout tuple, and current delegated note stack into a packet-ready operator prompt with absolute paths.
 
@@ -64,7 +64,7 @@ Execution rules:
 3. Only if that passes, run the live helper exactly for {{PACKET_ID}} with the packet-scoped output path under tests/canary/mcp-contract/actual.
 4. Lane B may author only {{LANE_B_FILE}} and should stay limited to {{LANE_B_SCOPE}}.
 5. Validate Lane B with {{LANE_B_VALIDATION}}.
-6. When the packet reuses the delegated template stack, treat split wording as the Packet 831 checklist extended by Packet 854, coordinator closeout wording as the Packet 833 template extended by Packet 853, and packet-definition wording as the Packet 834 template extended by Packet 855, Packet 857, Packet 859, Packet 861, Packet 867, Packet 869, Packet 871, Packet 873, Packet 875, Packet 877, Packet 879, Packet 881, and Packet 883.
+6. When the packet reuses the delegated template stack, treat split wording as the Packet 831 checklist extended by Packet 854, coordinator closeout wording as the Packet 833 template extended by Packet 853, and packet-definition wording as the Packet 834 template extended by Packet 855, Packet 857, Packet 859, Packet 861, Packet 867, Packet 869, Packet 871, Packet 873, Packet 875, Packet 877, Packet 879, Packet 881, Packet 883, and Packet 885.
 7. Shared publication surfaces may be updated only by the coordinator after both lane validations are green and the host has returned to truthful not-running rest state.
 8. Abort the packet if either lane needs a file outside its declared set, if the helper precheck fails, if the live helper run fails, if a new MCP service is admitted, if ai_tasks ownership is opened, if a trigger-gated HOLD lane is reopened without new authoritative evidence, or if auth, ingress, runtime posture, or business-logic scope widens.
 
@@ -138,3 +138,7 @@ Packet `2026-05-14-olares-dev-residency-882` extends this reusable operator prom
 ## Packet 884 Extension
 
 Packet `2026-05-14-olares-dev-residency-884` extends this reusable operator prompt template so later delegated packets explicitly route packet-definition wording through the Packet 834 template as extended by Packet 855, Packet 857, Packet 859, Packet 861, Packet 867, Packet 869, Packet 871, Packet 873, Packet 875, Packet 877, Packet 879, Packet 881, and Packet 883 instead of leaving the reusable operator prompt pinned below the Packet 883 packet-template operator-prompt floor refresh.
+
+## Packet 886 Extension
+
+Packet `2026-05-14-olares-dev-residency-886` extends this reusable operator prompt template so later delegated packets explicitly route packet-definition wording through the Packet 834 template as extended by Packet 855, Packet 857, Packet 859, Packet 861, Packet 867, Packet 869, Packet 871, Packet 873, Packet 875, Packet 877, Packet 879, Packet 881, Packet 883, and Packet 885 instead of leaving the reusable operator prompt pinned below the Packet 885 packet-template operator-prompt floor refresh.
