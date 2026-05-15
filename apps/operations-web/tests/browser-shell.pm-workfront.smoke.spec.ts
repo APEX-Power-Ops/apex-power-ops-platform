@@ -225,6 +225,78 @@ test('pm workfront route renders read-only readiness queue from governed seam', 
     })
   })
 
+  await Promise.all([
+    page.route('**/api/v1/reads/approval-queue', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          escalated_issues: [
+            {
+              id: 'issue-200',
+              apparatus_id: 'app-003',
+              task_id: 'task-002',
+              title: 'IR reading below threshold',
+              severity: 'high',
+              status: 'escalated',
+              blocks_completion: true,
+              reported_by: 'tech-001',
+            },
+          ],
+          tasks: [],
+          workpackages: [],
+          snapshots: [],
+          total_count: 1,
+        }),
+      })
+    }),
+    page.route('**/api/v1/reads/apparatus', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([{ id: 'app-003', name: 'Cable Assembly A', task_id: 'task-002' }]),
+      })
+    }),
+    page.route('**/api/v1/reads/tasks', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([{ id: 'task-002', name: 'Switchgear Sweep', workpackage_id: 'wp-001', status: 'active' }]),
+      })
+    }),
+    page.route('**/api/v1/reads/workpackages', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([{ id: 'wp-001', name: 'Primary Switchgear Testing' }]),
+      })
+    }),
+    page.route('**/api/v1/reads/snapshots', async (route) => {
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([]) })
+    }),
+    page.route('**/api/v1/reads/issues', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([
+          {
+            id: 'issue-200',
+            apparatus_id: 'app-003',
+            task_id: 'task-002',
+            title: 'IR reading below threshold',
+            severity: 'high',
+            status: 'escalated',
+            blocks_completion: true,
+            reported_by: 'tech-001',
+          },
+        ]),
+      })
+    }),
+    page.route('**/api/v1/reads/assignments', async (route) => {
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([]) })
+    }),
+  ])
+
   await page.route('**/api/v1/schedule/**', async (route) => {
     const url = new URL(route.request().url())
     const path = url.pathname
@@ -292,6 +364,11 @@ test('pm workfront route renders read-only readiness queue from governed seam', 
   await expect(page.getByText(/SLD B-101/i)).toBeVisible()
   await expect(page.getByText(/Resolve blocker: IR reading below threshold/i).first()).toBeVisible()
   await expect(page.getByText(/Main Switchgear/i)).toBeVisible()
+  const escalationReviewLink = page.getByRole('link', { name: /Review escalation/i })
+  await expect(escalationReviewLink).toHaveAttribute(
+    'href',
+    /\/pm-review\/approval\?screen=escalations&detailId=issue-200&returnTo=%2Fpm-review%2Fworkfront&returnLabel=PM\+workfront$/,
+  )
   const cableScheduleDrillthrough = page.locator('[aria-label="Schedule drillthrough for Cable Assembly A"]')
   await expect(cableScheduleDrillthrough.getByRole('link', { name: 'Drivers' })).toHaveAttribute(
     'href',
@@ -371,6 +448,18 @@ test('pm workfront route renders read-only readiness queue from governed seam', 
   )
   expect(mutationRequests).toHaveLength(0)
 
+  await page.goto('/pm-review/workfront', { waitUntil: 'networkidle' })
+  await page.getByRole('link', { name: /Review escalation/i }).click()
+  await expect(page).toHaveURL(/\/pm-review\/approval\?[^#]*screen=escalations/)
+  await expect(page).toHaveURL(/[?&]detailId=issue-200/)
+  await expect(page.getByRole('heading', { name: /Escalation Queue/i })).toBeVisible()
+  await expect(page.getByText(/IR reading below threshold/i)).toBeVisible()
+  const approvalReturnLink = page.getByRole('link', { name: /Return to PM workfront/i })
+  await expect(approvalReturnLink).toHaveAttribute('href', /\/pm-review\/workfront$/)
+  await approvalReturnLink.click()
+  await expect(page).toHaveURL(/\/pm-review\/workfront$/)
+  expect(mutationRequests).toHaveLength(0)
+
   await page.getByRole('button', { name: /Draft lead follow-up/i }).first().click()
   await expect(page.getByText('AI advisory', { exact: true })).toBeVisible()
   await expect(page.getByText(/draft only .* not_admitted/i)).toBeVisible()
@@ -378,17 +467,19 @@ test('pm workfront route renders read-only readiness queue from governed seam', 
   await expect(page.getByText(/Requested lead follow-up: Resolve blocker: IR reading below threshold/i)).toBeVisible()
   await expect(page.getByRole('button', { name: /Needs PM disposition 1/i })).toBeVisible()
   await expect(page.getByRole('button', { name: /Stale blockers 1/i })).toBeVisible()
+  const historyCallsBeforeWorkfrontHistory = historyCalls
   await page.getByRole('button', { name: /View history/i }).click()
   const historyPanel = page.getByRole('region', { name: /Disposition history for Cable Assembly A/i })
   await expect(historyPanel.getByText(/This history panel is read-only/i)).toBeVisible()
   await expect(historyPanel.getByText(/No PM disposition recorded/i)).toBeVisible()
-  expect(historyCalls).toBe(1)
-  expect(historyRequests[0]).toEqual({ entityIds: ['issue-200'], limit: '25' })
+  expect(historyCalls).toBe(historyCallsBeforeWorkfrontHistory + 1)
+  expect(historyRequests.at(-1)).toEqual({ entityIds: ['issue-200'], limit: '25' })
   expect(mutationRequests).toHaveLength(0)
 
   await page.getByRole('button', { name: /Return to lead/i }).click()
   await expect(page.getByText(/PM returned this issue to lead review/i)).toBeVisible()
   await expect(page.getByText(/Returned to lead review/i)).toBeVisible()
+  await expect(page.getByRole('link', { name: /Review escalation/i })).toHaveCount(0)
   await expect(page.getByText(/Last PM disposition/i)).toBeVisible()
   await expect(page.getByText(/Last PM decision .* return to lead .* in_review/i)).toBeVisible()
   await expect(page.getByText(/PM reason: PM returned issue issue-200 to lead review/i)).toBeVisible()
@@ -398,8 +489,8 @@ test('pm workfront route renders read-only readiness queue from governed seam', 
   await expect(historyPanel.getByText(/Unrelated approval/i)).toHaveCount(0)
 
   expect(mutationRequests).toHaveLength(1)
-  expect(historyCalls).toBe(2)
-  expect(historyRequests[1]).toEqual({ entityIds: ['issue-200'], limit: '25' })
+  expect(historyCalls).toBe(historyCallsBeforeWorkfrontHistory + 2)
+  expect(historyRequests.at(-1)).toEqual({ entityIds: ['issue-200'], limit: '25' })
   const mutation = mutationRequests[0]
   const tokenPayload = JSON.parse(Buffer.from((mutation.authorization || '').replace(/^Bearer /, ''), 'base64').toString('utf8'))
   expect(tokenPayload.actor_role).toBe('pm')

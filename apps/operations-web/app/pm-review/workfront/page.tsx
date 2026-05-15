@@ -258,6 +258,16 @@ function workfrontDrillthroughLinks(row: WorkfrontRow) {
   }
 }
 
+function workfrontEscalationReviewLink(issueId?: string | null) {
+  return issueId
+    ? buildPmRoute('/pm-review/approval', {
+        screen: 'escalations',
+        detailId: issueId,
+        ...WORKFRONT_RETURN_CONTEXT,
+      })
+    : null
+}
+
 function decisionTimestamp(row: DecisionHistoryRow) {
   return row.timestamp || row.server_timestamp || row.client_timestamp || ''
 }
@@ -494,6 +504,7 @@ export default function PmWorkfrontPage() {
               const rowEntityIds = rowDecisionEntityIds(row)
               const rowHistory = historyRows.filter((event) => event.entity_id && rowEntityIds.has(event.entity_id))
               const drillthroughLinks = workfrontDrillthroughLinks(row)
+              const escalationReviewLink = workfrontEscalationReviewLink(escalatedIssue?.id)
 
               return (
             <article
@@ -556,6 +567,15 @@ export default function PmWorkfrontPage() {
                 >
                   {draftRowId === row.id ? 'Hide follow-up' : 'Draft lead follow-up'}
                 </button>
+                {escalationReviewLink ? (
+                  <Link
+                    className="btn btn-outline"
+                    href={escalationReviewLink}
+                    style={{ marginTop: '0.75rem', marginLeft: '0.5rem' }}
+                  >
+                    Review escalation
+                  </Link>
+                ) : null}
               </div>
               {draftRowId === row.id ? (
                 <div

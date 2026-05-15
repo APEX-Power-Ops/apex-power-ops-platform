@@ -1,0 +1,87 @@
+{
+  "packet_id": "2026-05-15-pm-lane-021",
+  "title": "PM Workfront Escalation Approval Drillthrough",
+  "objective": "Add a focused PM workfront ergonomics path from an active escalated workfront issue into the existing PM approval escalation detail route, preserving return context back to PM workfront and zero mutation behavior until an explicit PM disposition action.",
+  "domain": "pm-domain",
+  "active_role": "PM Runtime Product Coordinator",
+  "repo_paths": [
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/app/pm-review/workfront/page.tsx",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/tests/browser-shell.pm-workfront.smoke.spec.ts",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "dependencies": [
+    "2026-05-15-pm-lane-012",
+    "2026-05-15-pm-lane-020",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-020-workfront-drillthrough-return-coverage-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/app/pm-review/workfront/page.tsx",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/app/pm-review/approval/page.tsx",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/app/pm-review/route-navigation.ts",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/tests/browser-shell.pm-workfront.smoke.spec.ts",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/tests/browser-shell.approval-context.smoke.spec.ts"
+  ],
+  "orchestration_inputs": [
+    "PM Lane 012 remains the deployment gate for hosted mutation-seam parity and live PM proof.",
+    "The coordinator selected workfront-to-approval escalation drillthrough as the next local PM ergonomics slice after PM Lane 020.",
+    "Read-only scout 019e2cb4-f52b-7770-bab0-2bc8ee56b374 confirmed this should remain a PM-runtime frontend ergonomics packet, not an AI/helper lane or hosted parity lane.",
+    "Read-only scout 019e2cb4-daa4-7952-a761-412a978ebc39 confirmed the link should be gated on an actual active escalated issue rather than stale primary blocking issue context.",
+    "Coordinator execution kept write ownership local to the workfront page, focused browser proof, and governance surfaces while scouts ran as parallel read-only lanes."
+  ],
+  "constrained_outputs": [
+    "Workfront rows with an active escalated issue now expose a focused Review escalation link.",
+    "The link routes to /pm-review/approval with screen=escalations, detailId=<issue id>, returnTo=/pm-review/workfront, and returnLabel=PM workfront.",
+    "The link is gated on returnableIssue(row) so stale primary blocking issue context does not produce a dead escalation drillthrough after return-to-lead.",
+    "The focused PM workfront smoke now mocks approval reads, clicks Review escalation, verifies the escalation detail, verifies Return to PM workfront, and returns without mutation calls.",
+    "The focused smoke asserts Review escalation is absent after the PM-clicked return-to-lead path clears the active escalation.",
+    "Existing read-only advisory, scoped decision-history, workfront drillthrough return coverage, taskless-row coverage, lens filters, and PM-clicked return-to-lead proof remain intact."
+  ],
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/app/pm-review/workfront/page.tsx",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/tests/browser-shell.pm-workfront.smoke.spec.ts",
+    "C:/APEX Platform/apex-power-ops-platform/PROJECT_STATUS.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-15-pm-lane-021-workfront-escalation-approval-drillthrough.json",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-021-workfront-escalation-approval-drillthrough-handoff.md"
+  ],
+  "validation_steps": [
+    "corepack pnpm --dir C:/APEX Platform/apex-power-ops-platform --filter @apex/operations-web build",
+    "CI=1 corepack pnpm --dir C:/APEX Platform/apex-power-ops-platform --filter @apex/operations-web exec playwright test tests/browser-shell.pm-workfront.smoke.spec.ts",
+    "CI=1 corepack pnpm --dir C:/APEX Platform/apex-power-ops-platform --filter @apex/operations-web exec playwright test tests/browser-shell.approval-context.smoke.spec.ts",
+    "corepack pnpm --dir C:/APEX Platform/apex-power-ops-platform --filter @apex/operations-web typecheck",
+    "git diff --check"
+  ],
+  "validation_results": [
+    "operations-web production build passed",
+    "focused PM workfront Playwright proof passed 1/1",
+    "focused approval-context Playwright proof passed 4/4",
+    "operations-web typecheck passed",
+    "git diff --check passed"
+  ],
+  "not_allowed": [
+    "No backend endpoint change.",
+    "No approval mutation behavior change.",
+    "No package script change.",
+    "No SQL or schema migration.",
+    "No live database write.",
+    "No service admission.",
+    "No auth or ingress widening.",
+    "No assignment mutation.",
+    "No schedule mutation.",
+    "No Operations Visibility reopening.",
+    "No Vercel promotion.",
+    "No Render deployment action.",
+    "No AI helper mutation.",
+    "No AI service admission widening.",
+    "No autonomous AI business-state mutation."
+  ],
+  "handoff_target": "Delegated Technical Repo Authority",
+  "status": "complete",
+  "execution_result": "PASS_LOCAL_FRONTEND_ONLY_HOSTED_PROOF_DEFERRED_TO_PM_LANE_012",
+  "delegation_status": "coordinator-executed-with-parallel-read-only-scouts",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-021-workfront-escalation-approval-drillthrough-handoff.md"
+  ],
+  "sql_permission": false,
+  "sql_permission_note": "Packet 2026-05-15-pm-lane-021 does not authorize SQL writes, schema migration, live data mutation, auth widening, ingress widening, schedule mutation, assignment mutation, Vercel promotion, Render deployment action, AI helper mutation, AI service admission widening, or autonomous AI business-state mutation.",
+  "ai_mutation_authority": "not_admitted",
+  "created_at": "2026-05-15",
+  "updated_at": "2026-05-15"
+}
