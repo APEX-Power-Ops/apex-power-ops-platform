@@ -78,6 +78,96 @@ async function mockApprovalReads(page: Parameters<typeof test>[1] extends never 
   return { historyRequests }
 }
 
+function taskReviewFixture() {
+  return {
+    queue: {
+      tasks: [
+        {
+          id: 'task-009',
+          name: 'Relay Functional Test',
+          workpackage_id: 'wp-009',
+          project_id: 'proj-001',
+          status: 'awaiting_review',
+        },
+      ],
+      total_count: 1,
+    },
+    apparatus: [{ id: 'app-009', name: 'Protection Relay 9', task_id: 'task-009', status: 'complete', neta_standard: 'NETA ATS 7.9' }],
+    tasks: [{ id: 'task-009', name: 'Relay Functional Test', workpackage_id: 'wp-009', status: 'awaiting_review' }],
+    workpackages: [{ id: 'wp-009', name: 'Relay Commissioning' }],
+    decisionHistory: [
+      {
+        entity_id: 'task-009',
+        entity_type: 'task',
+        action_type: 'reject',
+        actor_id: 'pm-004',
+        actor_role: 'pm',
+        timestamp: '2026-05-03T17:45:00Z',
+        from_state: { status: 'awaiting_review' },
+        to_state: { status: 'active' },
+        reason: 'Retest required before approval',
+      },
+    ],
+  }
+}
+
+function workpackageReviewFixture() {
+  return {
+    queue: {
+      workpackages: [
+        {
+          id: 'wp-017',
+          name: 'Feeder Acceptance Package',
+          project_id: 'proj-001',
+          status: 'awaiting_review',
+        },
+      ],
+      total_count: 1,
+    },
+    apparatus: [
+      { id: 'app-017', name: 'Relay Bank A', task_id: 'task-017', status: 'complete', neta_standard: 'NETA ATS 7.10' },
+      { id: 'app-018', name: 'Relay Bank B', task_id: 'task-018', status: 'complete', neta_standard: 'NETA ATS 7.10' },
+    ],
+    tasks: [
+      { id: 'task-018', name: 'Completed WP Task', workpackage_id: 'wp-017', status: 'complete' },
+      { id: 'task-017', name: 'Focused WP Task', workpackage_id: 'wp-017', status: 'active' },
+    ],
+    workpackages: [{ id: 'wp-017', name: 'Feeder Acceptance Package', project_id: 'proj-001', status: 'awaiting_review' }],
+    decisionHistory: [
+      {
+        entity_id: 'wp-017',
+        entity_type: 'workpackage',
+        action_type: 'reject',
+        actor_id: 'pm-005',
+        actor_role: 'pm',
+        timestamp: '2026-05-04T18:00:00Z',
+        from_state: { status: 'awaiting_review' },
+        to_state: { status: 'awaiting_review' },
+        reason: 'WP needs focused task review',
+      },
+    ],
+  }
+}
+
+async function assertApprovalDrillthroughReturn(
+  page: Parameters<typeof test>[1] extends never ? never : any,
+  startUrl: string,
+  buttonName: RegExp,
+  expectedUrl: RegExp,
+  returnLinkName: RegExp,
+  expectedHref: RegExp,
+  additionalUrlExpectation?: RegExp,
+) {
+  const approvalResponse = await page.goto(startUrl, { waitUntil: 'networkidle' })
+  expect(approvalResponse?.ok()).toBeTruthy()
+  await page.getByRole('button', { name: buttonName }).click()
+  await expect(page).toHaveURL(expectedUrl)
+  if (additionalUrlExpectation) {
+    await expect(page).toHaveURL(additionalUrlExpectation)
+  }
+  await expect(page.getByRole('link', { name: returnLinkName })).toHaveAttribute('href', expectedHref)
+}
+
 test('approval escalation deep link seeds tracer from the related task context', async ({ page }) => {
   const { historyRequests } = await mockApprovalReads(page, {
     queue: {
@@ -222,36 +312,7 @@ test('approval snapshot review uses derived task context for schedule handoff', 
 })
 
 test('approval task review exposes scoped history and task drillthrough', async ({ page }) => {
-  const { historyRequests } = await mockApprovalReads(page, {
-    queue: {
-      tasks: [
-        {
-          id: 'task-009',
-          name: 'Relay Functional Test',
-          workpackage_id: 'wp-009',
-          project_id: 'proj-001',
-          status: 'awaiting_review',
-        },
-      ],
-      total_count: 1,
-    },
-    apparatus: [{ id: 'app-009', name: 'Protection Relay 9', task_id: 'task-009', status: 'complete', neta_standard: 'NETA ATS 7.9' }],
-    tasks: [{ id: 'task-009', name: 'Relay Functional Test', workpackage_id: 'wp-009', status: 'awaiting_review' }],
-    workpackages: [{ id: 'wp-009', name: 'Relay Commissioning' }],
-    decisionHistory: [
-      {
-        entity_id: 'task-009',
-        entity_type: 'task',
-        action_type: 'reject',
-        actor_id: 'pm-004',
-        actor_role: 'pm',
-        timestamp: '2026-05-03T17:45:00Z',
-        from_state: { status: 'awaiting_review' },
-        to_state: { status: 'active' },
-        reason: 'Retest required before approval',
-      },
-    ],
-  })
+  const { historyRequests } = await mockApprovalReads(page, taskReviewFixture())
 
   const approvalResponse = await page.goto('/pm-review/approval?screen=task-review&detailId=task-009', { waitUntil: 'networkidle' })
   expect(approvalResponse?.ok()).toBeTruthy()
@@ -280,44 +341,37 @@ test('approval task review exposes scoped history and task drillthrough', async 
     'href',
     /\/pm-review\/approval\?screen=task-review&detailId=task-009&focusTaskId=task-009&taskLabel=Relay\+Functional\+Test$/,
   )
+
+  await assertApprovalDrillthroughReturn(
+    page,
+    '/pm-review/approval?screen=task-review&detailId=task-009',
+    /Open Schedule/i,
+    /\/pm-review\/schedule\?[^#]*focusTaskId=task-009/,
+    /Return to PM task review/i,
+    /\/pm-review\/approval\?screen=task-review&detailId=task-009$/,
+  )
+  await assertApprovalDrillthroughReturn(
+    page,
+    '/pm-review/approval?screen=task-review&detailId=task-009',
+    /Open Drivers/i,
+    /\/pm-review\?[^#]*focusTaskId=task-009/,
+    /Return to PM task review/i,
+    /\/pm-review\/approval\?screen=task-review&detailId=task-009$/,
+    /[?&]projectId=stack-dc/,
+  )
+  await assertApprovalDrillthroughReturn(
+    page,
+    '/pm-review/approval?screen=task-review&detailId=task-009',
+    /Open Variance/i,
+    /\/pm-review\/variance\?[^#]*focusTaskId=task-009/,
+    /Return to PM task review/i,
+    /\/pm-review\/approval\?screen=task-review&detailId=task-009$/,
+    /[?&]projectId=stack-dc/,
+  )
 })
 
 test('approval workpackage review uses focused task drillthrough', async ({ page }) => {
-  const { historyRequests } = await mockApprovalReads(page, {
-    queue: {
-      workpackages: [
-        {
-          id: 'wp-017',
-          name: 'Feeder Acceptance Package',
-          project_id: 'proj-001',
-          status: 'awaiting_review',
-        },
-      ],
-      total_count: 1,
-    },
-    apparatus: [
-      { id: 'app-017', name: 'Relay Bank A', task_id: 'task-017', status: 'complete', neta_standard: 'NETA ATS 7.10' },
-      { id: 'app-018', name: 'Relay Bank B', task_id: 'task-018', status: 'complete', neta_standard: 'NETA ATS 7.10' },
-    ],
-    tasks: [
-      { id: 'task-018', name: 'Completed WP Task', workpackage_id: 'wp-017', status: 'complete' },
-      { id: 'task-017', name: 'Focused WP Task', workpackage_id: 'wp-017', status: 'active' },
-    ],
-    workpackages: [{ id: 'wp-017', name: 'Feeder Acceptance Package', project_id: 'proj-001', status: 'awaiting_review' }],
-    decisionHistory: [
-      {
-        entity_id: 'wp-017',
-        entity_type: 'workpackage',
-        action_type: 'reject',
-        actor_id: 'pm-005',
-        actor_role: 'pm',
-        timestamp: '2026-05-04T18:00:00Z',
-        from_state: { status: 'awaiting_review' },
-        to_state: { status: 'awaiting_review' },
-        reason: 'WP needs focused task review',
-      },
-    ],
-  })
+  const { historyRequests } = await mockApprovalReads(page, workpackageReviewFixture())
 
   const approvalResponse = await page.goto('/pm-review/approval?screen=wp-review&detailId=wp-017', { waitUntil: 'networkidle' })
   expect(approvalResponse?.ok()).toBeTruthy()
@@ -345,5 +399,32 @@ test('approval workpackage review uses focused task drillthrough', async ({ page
   await expect(page.getByRole('link', { name: /Return to PM work package review/i })).toHaveAttribute(
     'href',
     /\/pm-review\/approval\?screen=wp-review&detailId=wp-017&focusTaskId=task-017&taskLabel=Focused\+WP\+Task$/,
+  )
+
+  await assertApprovalDrillthroughReturn(
+    page,
+    '/pm-review/approval?screen=wp-review&detailId=wp-017',
+    /Open Schedule/i,
+    /\/pm-review\/schedule\?[^#]*focusTaskId=task-017/,
+    /Return to PM work package review/i,
+    /\/pm-review\/approval\?screen=wp-review&detailId=wp-017$/,
+  )
+  await assertApprovalDrillthroughReturn(
+    page,
+    '/pm-review/approval?screen=wp-review&detailId=wp-017',
+    /Open Drivers/i,
+    /\/pm-review\?[^#]*focusTaskId=task-017/,
+    /Return to PM work package review/i,
+    /\/pm-review\/approval\?screen=wp-review&detailId=wp-017$/,
+    /[?&]projectId=stack-dc/,
+  )
+  await assertApprovalDrillthroughReturn(
+    page,
+    '/pm-review/approval?screen=wp-review&detailId=wp-017',
+    /Open Variance/i,
+    /\/pm-review\/variance\?[^#]*focusTaskId=task-017/,
+    /Return to PM work package review/i,
+    /\/pm-review\/approval\?screen=wp-review&detailId=wp-017$/,
+    /[?&]projectId=stack-dc/,
   )
 })

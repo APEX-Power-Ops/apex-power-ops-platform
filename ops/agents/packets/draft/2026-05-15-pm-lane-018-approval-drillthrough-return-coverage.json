@@ -1,0 +1,76 @@
+{
+  "packet_id": "2026-05-15-pm-lane-018",
+  "title": "PM Approval Drillthrough Return Coverage",
+  "objective": "Add focused test-only proof that PM approval task-review and workpackage-review drillthrough to schedule, drivers, and variance preserve the expected return links and route query context, without changing product code, backend endpoints, schema, auth, ingress, or mutation behavior.",
+  "domain": "pm-domain",
+  "active_role": "PM Runtime Product Coordinator",
+  "repo_paths": [
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/tests/browser-shell.approval-context.smoke.spec.ts",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs"
+  ],
+  "dependencies": [
+    "2026-05-15-pm-lane-012",
+    "2026-05-15-pm-lane-017",
+    "2026-05-15-pm-lane-016",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-017-approval-workpackage-review-drillthrough-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/app/pm-review/approval/page.tsx",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/app/pm-review/route-navigation.ts"
+  ],
+  "orchestration_inputs": [
+    "PM Lane 012 remains the deployment gate for hosted mutation-seam parity and live PM proof.",
+    "Read-only scout 019e2ca1-7322-7513-ad89-4dcc1ff12d22 confirmed the smallest next slice is test-only route-return coverage for schedule, drivers, and variance from task and workpackage approval review contexts.",
+    "Coordinator execution kept write ownership local to the focused approval-context smoke and governance surfaces while using the scout as the parallel orchestration lane."
+  ],
+  "constrained_outputs": [
+    "Shared task-review and workpackage-review fixture helpers reduce duplicated approval-context test setup.",
+    "A route-return assertion helper reopens the approval context, clicks a drillthrough button, checks the destination URL, optionally checks projectId, and verifies the return link href.",
+    "Task-review smoke now proves Open Schedule, Open Drivers, and Open Variance preserve return links to PM task review.",
+    "Workpackage-review smoke now proves Open Schedule, Open Drivers, and Open Variance preserve return links to PM work package review.",
+    "Existing scoped history, compact history context, tracer, schedule snapshot, and escalation proofs remain intact."
+  ],
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/tests/browser-shell.approval-context.smoke.spec.ts",
+    "C:/APEX Platform/apex-power-ops-platform/PROJECT_STATUS.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-15-pm-lane-018-approval-drillthrough-return-coverage.json",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-018-approval-drillthrough-return-coverage-handoff.md"
+  ],
+  "validation_steps": [
+    "corepack pnpm --dir C:/APEX Platform/apex-power-ops-platform --filter @apex/operations-web typecheck",
+    "corepack pnpm --dir C:/APEX Platform/apex-power-ops-platform --filter @apex/operations-web build",
+    "CI=1 corepack pnpm --dir C:/APEX Platform/apex-power-ops-platform --filter @apex/operations-web exec playwright test tests/browser-shell.approval-context.smoke.spec.ts",
+    "git diff --check"
+  ],
+  "validation_results": [
+    "operations-web typecheck passed",
+    "operations-web production build passed",
+    "focused approval-context Playwright proof passed 4/4",
+    "git diff --check passed"
+  ],
+  "not_allowed": [
+    "No product code change.",
+    "No backend endpoint change.",
+    "No package script change.",
+    "No SQL or schema migration.",
+    "No live database write.",
+    "No service admission.",
+    "No auth or ingress widening.",
+    "No assignment mutation.",
+    "No schedule mutation.",
+    "No Operations Visibility reopening.",
+    "No Vercel promotion.",
+    "No Render deployment action.",
+    "No autonomous AI business-state mutation."
+  ],
+  "handoff_target": "Delegated Technical Repo Authority",
+  "status": "complete",
+  "execution_result": "PASS_LOCAL_TEST_ONLY_HOSTED_PROOF_DEFERRED_TO_PM_LANE_012",
+  "delegation_status": "coordinator-executed-with-read-only-scout",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-018-approval-drillthrough-return-coverage-handoff.md"
+  ],
+  "sql_permission": false,
+  "sql_permission_note": "Packet 2026-05-15-pm-lane-018 is test-only and does not authorize SQL writes, schema migration, live data mutation, product-code mutation, auth widening, ingress widening, schedule mutation, assignment mutation, Vercel promotion, or Render deployment action.",
+  "ai_mutation_authority": "not_admitted",
+  "created_at": "2026-05-15",
+  "updated_at": "2026-05-15"
+}
