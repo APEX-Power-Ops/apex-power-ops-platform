@@ -3761,23 +3761,32 @@ export default function ProjectMinerIntakeWorkbenchPage() {
               Review the source-derived project shape, current gates, and guardrails before moving to any dedicated detail route.
             </p>
           </div>
-          <div
+          <details
+            open
             aria-label="PM intake route links"
-            style={{ display: 'grid', gap: '0.65rem', gridTemplateColumns: 'repeat(auto-fit, minmax(12rem, 1fr))' }}
+            style={{ minWidth: 'min(100%, 34rem)' }}
           >
-            {PM_INTAKE_ROUTE_LINK_GROUPS.map((group) => (
-              <section key={group.id} aria-label={`${group.label} route links`} style={{ display: 'grid', gap: '0.45rem' }}>
-                <h3 style={{ fontSize: '0.95rem', margin: 0 }}>{group.label}</h3>
-                <div className="pm-review-link-row pm-review-link-row-start" style={{ margin: 0 }}>
-                  {group.items.map((item) => (
-                    <Link key={item.id} href={item.href}>
-                      {item.label}
-                    </Link>
-                  ))}
-                </div>
-              </section>
-            ))}
-          </div>
+            <summary style={{ cursor: 'pointer', marginBottom: '0.65rem' }}>
+              <h2 style={{ display: 'inline', margin: 0 }}>Route Links</h2>
+            </summary>
+            <div
+              aria-label="PM intake route link groups"
+              style={{ display: 'grid', gap: '0.65rem', gridTemplateColumns: 'repeat(auto-fit, minmax(12rem, 1fr))' }}
+            >
+              {PM_INTAKE_ROUTE_LINK_GROUPS.map((group) => (
+                <section key={group.id} aria-label={`${group.label} route links`} style={{ display: 'grid', gap: '0.45rem' }}>
+                  <h3 style={{ fontSize: '0.95rem', margin: 0 }}>{group.label}</h3>
+                  <div className="pm-review-link-row pm-review-link-row-start" style={{ margin: 0 }}>
+                    {group.items.map((item) => (
+                      <Link key={item.id} href={item.href}>
+                        {item.label}
+                      </Link>
+                    ))}
+                  </div>
+                </section>
+              ))}
+            </div>
+          </details>
         </div>
         <details
           open

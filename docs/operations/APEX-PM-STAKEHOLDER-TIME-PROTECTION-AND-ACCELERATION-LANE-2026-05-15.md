@@ -559,6 +559,8 @@ PM Lane 087 wraps the existing quick-jump rail in a default-open native disclosu
 
 PM Lane 088 wraps the existing conditional output status rail in a default-open native disclosure control. Jason can fold generated Review, Executor, and Field Prep export feedback after reviewing it, while the rail remains absent before any output status exists and no persisted collapsed state, status label, status message, count, export behavior, storage, read, or authority wording changes.
 
+PM Lane 089 wraps the existing route-link rail in a default-open native disclosure control. Jason can fold the Daily Intake Starting Point header navigation after orienting, with no persisted collapsed state and no change to Shell, Intake Reads, or PM Workfront group labels, link labels, href targets, link counts, order, storage, reads, or authority wording.
+
 This creates no approval record, SQL, schema migration, backend route, import mutation, issue, task, assignment, schedule, status, hosted proof, live task, work authorization, field release, work order, durable field record, production tracking write, product code, deployment, service, DNS, auth, ingress, secret, local storage key, new route, new export action, new export artifact, export contract widening, or production mutation.
 
 The next persistence tranche is:
