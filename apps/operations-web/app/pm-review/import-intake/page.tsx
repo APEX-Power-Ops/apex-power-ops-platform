@@ -5016,27 +5016,29 @@ export default function ProjectMinerIntakeWorkbenchPage() {
               {formatCount(readyPersistenceGateCount)} of {formatCount(persistenceReadinessGates.length)} ready
             </span>
           </summary>
-          <div aria-label="Approval persistence readiness controls">
-            <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
-              Local readiness map for the future approval-persistence packet. It reflects review context and blockers only; it does not approve, persist, import, assign, schedule, change status, or mutate production state.
-            </p>
-            <p style={{ margin: '0.45rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
-              PM Lane 049 authored the schema and adapter admission design. Hosted parity, schema authority, approval persistence authority, and import mutation authority remain blocked until later packets explicitly admit them.
-            </p>
-            <div style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
-              {persistenceReadinessGates.map((gate) => (
-                <article key={gate.id} className="card" style={{ padding: '0.85rem', boxShadow: 'none' }}>
-                  <div className="status-row" style={{ alignItems: 'start' }}>
-                    <div>
-                      <p style={{ margin: 0 }}>
-                        <strong>{gate.title}</strong>
-                      </p>
-                      <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{gate.detail}</p>
+          <div aria-label="Approval persistence readiness body controls">
+            <div aria-label="Approval persistence readiness controls">
+              <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+                Local readiness map for the future approval-persistence packet. It reflects review context and blockers only; it does not approve, persist, import, assign, schedule, change status, or mutate production state.
+              </p>
+              <p style={{ margin: '0.45rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+                PM Lane 049 authored the schema and adapter admission design. Hosted parity, schema authority, approval persistence authority, and import mutation authority remain blocked until later packets explicitly admit them.
+              </p>
+              <div style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
+                {persistenceReadinessGates.map((gate) => (
+                  <article key={gate.id} className="card" style={{ padding: '0.85rem', boxShadow: 'none' }}>
+                    <div className="status-row" style={{ alignItems: 'start' }}>
+                      <div>
+                        <p style={{ margin: 0 }}>
+                          <strong>{gate.title}</strong>
+                        </p>
+                        <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{gate.detail}</p>
+                      </div>
+                      <span className={`status-pill ${gate.status === 'ready' ? 'status-configured' : 'status-deferred'}`}>{formatLabel(gate.status)}</span>
                     </div>
-                    <span className={`status-pill ${gate.status === 'ready' ? 'status-configured' : 'status-deferred'}`}>{formatLabel(gate.status)}</span>
-                  </div>
-                </article>
-              ))}
+                  </article>
+                ))}
+              </div>
             </div>
           </div>
         </details>

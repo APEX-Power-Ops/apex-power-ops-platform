@@ -77,7 +77,7 @@ Any extra step must justify itself by reducing risk, reducing future workload, o
 
 Immediate prioritized PM task lanes:
 
-1. Local PM intake workbench usability - active and local-current through PM Lane 133. The current safe product lane keeps reducing Jason's daily scan burden on `/pm-review/import-intake`; the next bounded local move is PM Lane 134, Approval Persistence Readiness Body Controls.
+1. Local PM intake workbench usability - active and local-current through PM Lane 134. The current safe product lane keeps reducing Jason's daily scan burden on `/pm-review/import-intake`; the next bounded local move is PM Lane 135, Current PM Next Actions and Guardrails Body Controls.
 2. Hosted PM intake parity - accepted green for the PM intake path and broader deployed mutation-seam reads through Desktop Codex execution of PM Lane 041A, PM Lane 041B, PM Lane 041C, and the PM Lane 076 dispatch binder. Vercel production is green, Render PM-intake reads are green, and the former Supabase pooler DSN blocker for DB-backed approval/schedule reads is cleared.
 3. Approval/import authority - designed but not admitted. Approval persistence, schema execution, and import mutation remain blocked until a later packet explicitly admits the narrow write path.
 
@@ -651,6 +651,8 @@ PM Lane 131 wraps the existing Local Field Prep Coverage Snapshot body content i
 PM Lane 132 wraps the existing Local Field Prep Conversation Agenda body content in a labeled body-controls container under its already-existing default-open disclosure. Jason can fold and reopen the derived conversation agenda predictably, while the panel stays inside Field Prep Detail after Local Field Prep Coverage Snapshot; the existing disclosure, heading, derived pill, agenda summary, seven agenda articles, and authority wording remain unchanged.
 
 PM Lane 133 wraps the existing Local Field Observation Scratchpad body content in a labeled body-controls container under its already-existing default-open disclosure. Jason can fold and reopen the browser-local observation scratchpad predictably, while the panel stays inside Field Prep Detail after Local Field Prep Conversation Agenda; the existing disclosure, heading, browser-local pill, six textarea labels, clear button, candidate-scoped browser storage, export inclusion, derived field-prep behavior, and authority wording remain unchanged.
+
+PM Lane 134 wraps the existing Approval Persistence Readiness body content in a labeled body-controls container under its already-existing default-open disclosure. Jason can fold and reopen the future-authority gate map predictably, while the panel stays inside Authority Boundary Detail at `#approval-readiness`; the existing disclosure, heading, readiness count pill, two explanatory paragraphs, six readiness gate articles, blocked authority wording, readiness calculations, and no-storage behavior remain unchanged.
 
 This creates no approval record, SQL, schema migration, backend route, import mutation, issue, task, assignment, schedule, status, hosted proof, live task, work authorization, field release, work order, durable field record, production tracking write, product code, deployment, service, DNS, auth, ingress, secret, local storage key, new route, new export action, new export artifact, export contract widening, or production mutation.
 
