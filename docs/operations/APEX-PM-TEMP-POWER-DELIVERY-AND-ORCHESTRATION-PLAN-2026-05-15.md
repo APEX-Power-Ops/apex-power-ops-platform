@@ -389,6 +389,10 @@ PM Lane 075 promotes the existing `PM Intake Quick Jump Rail` near the top of `/
 
 PM Lane 076 adds the hosted PM intake parity executor dispatch binder. It is the current copy/paste surface for assigning Desktop Codex, or another authenticated Vercel and/or Render executor if needed, to the existing PM Lane 041A and 041B lanes after local workbench progress through PM Lane 119. This reduces Jason's AI-to-AI relay burden while preserving the no-deploy-from-coordinator, no-product-code, no-Supabase-write, no-schema, no-approval-persistence, no-import-mutation, and no-hosted-parity-claim boundary.
 
+PM Lane 076 closeout is now accepted for the hosted PM intake path. Desktop Codex promoted the existing operations-web production alias and redeployed the existing Render mutation-seam service; coordinator reruns prove `smoke:hosted` with `failed=0 passed=12` and paired PM intake hosted smoke with `failed=0`. The remaining Render failure is not a PM intake route/read parity failure: it is a broader Supabase pooler DSN/authentication circuit breaker affecting DB-backed approval and schedule reads. This keeps approval persistence, import mutation, schedule/status writes, SQL, schema migration, and secret rotation outside authority until a later packet admits the narrow fix.
+
+PM Lane 041C is authored as that narrow fix lane. It treats Render dashboard/service access as already available and scopes the remaining work to secret-safe hosted `SEAM_DATABASE_URL` confirmation or update, Supabase pooler cool-down if needed, existing-service restart/redeploy, and rerun of deployed mutation-seam plus paired PM-intake hosted smokes.
+
 PM Lane 077 groups the existing top output actions on `/pm-review/import-intake` so the Temp Power prep flow can distinguish review exports, executor handoff output, field prep outputs, and refresh without reading one long flat control row. This changes only the browser-local organization of existing buttons and adds no new export action, artifact, storage, backend route, hosted proof, SQL, schema migration, approval persistence, import mutation, issue, task, assignment, schedule, status, durable field record, production tracking write, or production state.
 
 PM Lane 078 groups the existing output status messages on `/pm-review/import-intake` so the Temp Power prep flow can distinguish review feedback, executor handoff feedback, and field-prep feedback after exports run. This changes only the browser-local organization of existing status text and adds no new export action, artifact, storage, backend route, hosted proof, SQL, schema migration, approval persistence, import mutation, issue, task, assignment, schedule, status, durable field record, production tracking write, or production state.
@@ -484,21 +488,21 @@ PM Lane 122 wraps the existing Workflow Gates body content on `/pm-review/import
 ## Current Prioritized Task-Lane Status
 
 1. Local PM intake workbench usability is active and local-current through PM Lane 122. The next bounded local product move is PM Lane 123, Local Exception Review And PM Decision Detail Body Controls, which should continue the body-control ergonomics pattern without widening route, export, storage, backend, hosted, approval, import, assignment, schedule, status, or production authority.
-2. Hosted PM intake parity is ready for Desktop Codex authenticated execution but not yet green. PM Lane 041A owns Vercel operations-web promotion for the existing production alias, PM Lane 041B owns Render mutation-seam redeploy or blocker classification for the four PM intake reads, and PM Lane 076 is the current dispatch binder. Coordinator acceptance still requires green hosted smoke or precise blocker classification.
-3. Approval/import authority is designed but not admitted. The approval contract, storage plan, readiness UI, and schema/adapter admission context are present, but approval persistence and project import mutation remain blocked until hosted read parity is current or precisely classified and a later packet explicitly opens the write path.
+2. Hosted PM intake parity is accepted green for the PM intake path. PM Lane 041A operations-web promotion is green, PM Lane 041B Render PM-intake read parity is green, and the remaining hosted blocker is classified as a broader Supabase pooler DSN issue for DB-backed approval/schedule reads.
+3. Approval/import authority is designed but not admitted. The approval contract, storage plan, readiness UI, and schema/adapter admission context are present, but approval persistence and project import mutation remain blocked until the DSN blocker is resolved or explicitly scoped around and a later packet explicitly opens the write path.
 
 ## Capability-Gap Register
 
 Current known gaps:
 
-1. Hosted Render mutation-seam parity remains a blocker for hosted PM live proof: PM Lane 041 and PM Lane 037 are ready for a Render-authenticated executor, the production seam is healthy but stale for the new PM intake reads, and schedule reads still return `500`.
+1. Hosted PM intake route/read parity is no longer the blocker: operations-web hosted routes are current and all four mutation-seam PM intake reads return `200`. The remaining hosted blocker is the broader mutation-seam Supabase pooler DSN issue where approval queue and schedule reads still return `500`.
 2. Excel MCP is useful for real Excel inspection, but not admitted as production runtime.
 3. A durable AI-to-AI task queue is not admitted; packets and handoffs remain the relay surface.
 4. The project import mutation is not admitted; import-candidate review must come first.
 5. Workbook macros are not admitted for unattended intake.
 6. The local PM review route now supports export and local draft notes, but server-side PM note persistence is not admitted.
 7. The import-admission plan, approval contract, approval storage plan, and approval-readiness UI define the future write gate, but schema, approval persistence, and import mutation are still not admitted.
-8. Render auth/token/service metadata are not available in the current Codex workspace; this must be resolved before claiming hosted backend parity.
+8. Render service metadata was available to the Desktop Codex hosted executor and the PM intake path is accepted green; remaining deployment access is needed only for the broader Supabase pooler DSN correction/classification lane.
 9. Approval persistence needs a later dedicated schema/adapter admission before implementation; it should not be smuggled into audit log alone and must not import project rows.
 10. The approval-contract and approval-storage-plan read endpoints are local-current only until Render serves the current mutation-seam code.
 11. The approval-readiness UI route is local-current until the next operations-web production promotion.

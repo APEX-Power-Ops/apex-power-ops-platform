@@ -1,0 +1,75 @@
+{
+  "packet_id": "2026-05-16-pm-lane-041c",
+  "title": "Render Supabase DSN Repair For Hosted Mutation-Seam DB Reads",
+  "objective": "Repair the existing Render mutation-seam service database connection so DB-backed approval and schedule reads stop returning 500, while preserving the already-green hosted PM intake path and all production-write guardrails.",
+  "domain": "pm-domain",
+  "active_role": "Desktop Codex Authenticated Hosted Executor / Technical Repo Authority Review",
+  "source_floor": {
+    "branch": "clean-main",
+    "commit": "59ab1fd6e2ad247f2ee8ebf30a6720d88e296760",
+    "meaning": "Current clean-main after PM Lane 041A/041B closeouts were committed and Olares fast-forwarded."
+  },
+  "dependencies": [
+    "2026-05-15-pm-lane-041a",
+    "2026-05-15-pm-lane-041b",
+    "2026-05-15-pm-lane-076",
+    "2026-05-16-pm-lane-041a-closeout",
+    "2026-05-16-pm-lane-041b-closeout"
+  ],
+  "current_state": [
+    "Render access is not the blocker; the authenticated dashboard path already allowed service inspection, root directory repair, redeploy, and blocker classification.",
+    "Existing Render service is apex-platform-mutation-seam.",
+    "Existing Render root directory is repaired to apps/mutation-seam.",
+    "Existing Render service is deployed from clean-main.",
+    "Hosted PM intake endpoints return 200 for project-import-candidate, project-import-admission-plan, project-import-approval-contract, and project-import-approval-storage-plan.",
+    "Remaining deployed mutation-seam failures are DB-backed approval/schedule reads returning 500.",
+    "Render logs classify the remaining failure as Supabase pooler ECIRCUITBREAKER from too many authentication failures.",
+    "No SQL, schema migration, secret rotation, import mutation, or business-state mutation has been performed."
+  ],
+  "allowed_scope": [
+    "Confirm the correct SEAM_DATABASE_URL value from an authorized secret source without printing or committing the secret value.",
+    "Compare the hosted Render SEAM_DATABASE_URL against the authorized value using secret-safe evidence only, such as key presence, hostname/project reference, or redacted/fingerprint comparison.",
+    "Update the existing Render service SEAM_DATABASE_URL only if it is stale or wrong.",
+    "Let the Supabase pooler authentication circuit breaker cool down if necessary.",
+    "Restart or redeploy the existing Render service apex-platform-mutation-seam after the env update or after confirming the existing value is already correct.",
+    "Rerun the deployed mutation-seam smoke with --include-pm-intake and the paired PM intake hosted smoke.",
+    "Publish a closeout handoff with exact command results, secret-safe DSN confirmation method, Render deploy/restart evidence, PM intake proof, DB-backed approval/schedule proof, blocker classification if still red, and guardrail confirmation."
+  ],
+  "not_allowed": [
+    "No secret value may be printed, pasted into a repo file, committed, logged into a handoff, or summarized in plaintext.",
+    "No Supabase password rotation unless a later explicit stakeholder approval admits rotation.",
+    "No SQL write.",
+    "No schema migration.",
+    "No fixture replay.",
+    "No approval persistence.",
+    "No import mutation.",
+    "No new Render service.",
+    "No DNS change.",
+    "No auth widening.",
+    "No ingress widening.",
+    "No project, workpackage, task, issue, work order, assignment, schedule, status, durable field record, production tracking write, or autonomous AI business-state mutation.",
+    "If the correct DSN cannot be confirmed from an authorized source, stop and close out with a blocker instead of guessing."
+  ],
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-16-pm-lane-041c-render-supabase-dsn-repair-closeout-handoff.md"
+  ],
+  "validation_steps": [
+    "& \"C:/APEX Platform/apex-power-ops-platform/.venv/Scripts/python.exe\" \"C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/scripts/smoke_deployed_mutation_seam.py\" --base-url https://mutation-seam.apexpowerops.com --include-pm-intake",
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform\" --filter @apex/operations-web exec node scripts/smoke-pm-intake-hosted.mjs --operations-web-base-url https://operations.apexpowerops.com --mutation-seam-base-url https://mutation-seam.apexpowerops.com --timeout-ms 20000",
+    "Render log inspection must show whether Supabase pooler ECIRCUITBREAKER/authentication failures are gone, cooling down, or still present."
+  ],
+  "success_criteria": [
+    "Hosted mutation-seam health and root return 200.",
+    "All four PM intake reads remain 200.",
+    "DB-backed approval queue and schedule reads no longer return 500, or any remaining 500 is precisely reclassified with logs after secret-safe DSN verification.",
+    "Paired PM intake hosted smoke remains failed=0.",
+    "No production write or authority widening occurred."
+  ],
+  "validation_result": "PENDING_EXTERNAL_EXECUTOR",
+  "delegation_status": "ready_for_desktop_codex_authenticated_render_and_secret_source_executor",
+  "next_recommended_lane": "After DSN repair closeout, coordinator should accept/reject the closeout and then continue PM Lane 123 local exception review and PM decision detail body controls if approval/import authority remains blocked.",
+  "sql_permission": false,
+  "ai_mutation_authority": "not_admitted",
+  "created_at": "2026-05-16",
+  "updated_at": "2026-05-16"
+}
