@@ -300,6 +300,16 @@ type MeetingReadoutItem = {
   detail: string
 }
 
+type ConstraintRadarStatus = 'constraint' | 'attention' | 'context' | 'blocked'
+
+type ConstraintRadarItem = {
+  id: string
+  title: string
+  status: ConstraintRadarStatus
+  href: string
+  detail: string
+}
+
 type WorkflowMapStatus = 'source' | 'attention' | 'context' | 'draft' | 'prep' | 'audit' | 'blocked'
 
 type WorkflowMapItem = {
@@ -362,6 +372,12 @@ const PM_INTAKE_QUICK_JUMPS: QuickJumpItem[] = [
     label: 'Meeting Readout',
     href: '#pm-meeting-readout',
     detail: 'Conversation summary.',
+  },
+  {
+    id: 'constraint-radar',
+    label: 'Constraint Radar',
+    href: '#pm-constraint-radar',
+    detail: 'Constraint scan.',
   },
   {
     id: 'start-here',
@@ -690,6 +706,12 @@ function commandCenterTone(status: CommandCenterStatus) {
 }
 
 function meetingReadoutTone(status: MeetingReadoutStatus) {
+  if (status === 'context') return 'status-configured'
+  if (status === 'blocked') return 'status-deferred'
+  return 'status-awaiting-values'
+}
+
+function constraintRadarTone(status: ConstraintRadarStatus) {
   if (status === 'context') return 'status-configured'
   if (status === 'blocked') return 'status-deferred'
   return 'status-awaiting-values'
@@ -1568,6 +1590,69 @@ function buildPmIntakeMeetingReadout(
       status: 'blocked',
       href: '#approval-readiness',
       detail: `${blockedPersistenceGateCount} of ${persistenceReadinessGates.length} approval-persistence gates remain blocked; project import remains ${formatLabel(admissionAuthority)}; executor closeout evidence is ${closeoutCheckedCount} of ${CLOSEOUT_CHECKLIST_ITEMS.length}.`,
+    },
+  ]
+}
+
+function buildPmIntakeConstraintRadar(
+  candidate: CandidatePayload | undefined,
+  importExceptionRegister: ImportExceptionRegisterItem[],
+  reviewChecks: Record<string, boolean>,
+  approvalDraft: ApprovalDecisionDraft,
+  fieldPrepQueue: OperatingQueueItem[],
+  closeoutChecks: Record<string, boolean>,
+  fieldQuestionsDraft: FieldQuestionsDraft,
+  fieldObservationScratchpad: FieldObservationScratchpad,
+  persistenceReadinessGates: ReadinessGate[],
+  admissionPlan: AdmissionPlan | undefined,
+): ConstraintRadarItem[] {
+  const exceptionCount = importExceptionRegisterCounts(importExceptionRegister)
+  const reviewCheckedCount = REVIEW_CHECKLIST_ITEMS.filter((item) => reviewChecks[item.id]).length
+  const decisionDraftComplete = Boolean(approvalDraft.decision && approvalDraft.review_notes.trim() && approvalDraft.local_attestation)
+  const decisionDraftStarted = hasApprovalDraftContent(approvalDraft)
+  const completeFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'complete').length
+  const nextFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'next').length
+  const blockedFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'blocked').length
+  const hasFieldQuestions = hasFieldQuestionsDraftContent(fieldQuestionsDraft)
+  const hasFieldObservations = hasFieldObservationScratchpadContent(fieldObservationScratchpad)
+  const closeoutCheckedCount = CLOSEOUT_CHECKLIST_ITEMS.filter((item) => closeoutChecks[item.id]).length
+  const blockedPersistenceGateCount = persistenceReadinessGates.filter((gate) => gate.status === 'blocked').length
+  const sourceFingerprint = candidate?.source_freshness?.aggregate_fingerprint || 'source fingerprint pending'
+  const admissionAuthority = admissionPlan?.mutation_authority || 'not_admitted'
+  const reviewNotesState = decisionDraftComplete
+    ? 'are captured'
+    : decisionDraftStarted
+      ? 'are partial'
+      : 'have not started'
+
+  return [
+    {
+      id: 'source-review-constraint',
+      title: 'Source and review constraints',
+      status: exceptionCount.open || !decisionDraftComplete ? 'attention' : 'context',
+      href: '#import-exception-register',
+      detail: `Source fingerprint ${sourceFingerprint}; review checklist has ${reviewCheckedCount} of ${REVIEW_CHECKLIST_ITEMS.length} local checks marked; exceptions are ${importExceptionRegisterSummary(exceptionCount)}; local review notes ${reviewNotesState}.`,
+    },
+    {
+      id: 'field-prep-constraint',
+      title: 'Field-prep constraints',
+      status: blockedFieldPrepQueueCount ? 'attention' : 'context',
+      href: '#field-prep',
+      detail: `Field prep is ${completeFieldPrepQueueCount} complete / ${nextFieldPrepQueueCount} next / ${blockedFieldPrepQueueCount} blocked. Field questions present: ${hasFieldQuestions ? 'yes' : 'no'}; field observations present: ${hasFieldObservations ? 'yes' : 'no'}.`,
+    },
+    {
+      id: 'executor-hosted-constraint',
+      title: 'Executor and hosted constraints',
+      status: closeoutCheckedCount ? 'attention' : 'blocked',
+      href: '#executor-closeout',
+      detail: `Executor closeout evidence is ${closeoutCheckedCount} of ${CLOSEOUT_CHECKLIST_ITEMS.length}; hosted parity remains an external executor boundary and is not claimed here.`,
+    },
+    {
+      id: 'future-write-authority-constraint',
+      title: 'Future write authority constraints',
+      status: 'blocked',
+      href: '#approval-readiness',
+      detail: `${blockedPersistenceGateCount} of ${persistenceReadinessGates.length} approval-persistence gates remain blocked; project import remains ${formatLabel(admissionAuthority)}; future write authority remains outside this browser-local workbench.`,
     },
   ]
 }
@@ -3177,6 +3262,10 @@ export default function ProjectMinerIntakeWorkbenchPage() {
     () => buildPmIntakeMeetingReadout(candidate, importExceptionRegister, approvalDraft, fieldPrepQueue, closeoutChecks, fieldQuestionsDraft, fieldObservationScratchpad, persistenceReadinessGates, admissionPlan),
     [candidate, importExceptionRegister, approvalDraft, fieldPrepQueue, closeoutChecks, fieldQuestionsDraft, fieldObservationScratchpad, persistenceReadinessGates, admissionPlan],
   )
+  const pmIntakeConstraintRadar = useMemo(
+    () => buildPmIntakeConstraintRadar(candidate, importExceptionRegister, reviewChecks, approvalDraft, fieldPrepQueue, closeoutChecks, fieldQuestionsDraft, fieldObservationScratchpad, persistenceReadinessGates, admissionPlan),
+    [candidate, importExceptionRegister, reviewChecks, approvalDraft, fieldPrepQueue, closeoutChecks, fieldQuestionsDraft, fieldObservationScratchpad, persistenceReadinessGates, admissionPlan],
+  )
   const pmIntakeOutputSelector = useMemo(
     () => buildPmIntakeOutputSelector(approvalDraft, reviewChecks, fieldPrepQueue, closeoutChecks, fieldQuestionsDraft, fieldObservationScratchpad),
     [approvalDraft, reviewChecks, fieldPrepQueue, closeoutChecks, fieldQuestionsDraft, fieldObservationScratchpad],
@@ -3695,6 +3784,36 @@ export default function ProjectMinerIntakeWorkbenchPage() {
                     <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
                   </div>
                   <span className={`status-pill ${meetingReadoutTone(item.status)}`}>{formatLabel(item.status)}</span>
+                </div>
+              </a>
+            ))}
+          </div>
+        </section>
+
+        <section id="pm-constraint-radar" aria-label="Local PM intake constraint radar" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
+          <div className="status-row">
+            <h2 style={{ margin: 0 }}>Local PM Intake Constraint Radar</h2>
+            <span className="status-pill status-awaiting-values">browser-local</span>
+          </div>
+          <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+            Constraint scan for source/review, field-prep, executor/hosted, and future write-authority boundaries. It does not approve, persist, import, assign, schedule, change status, create tasks, create issues, call live services, claim hosted parity, or mutate production state; it creates no localStorage key, export artifact, backend route, schema, approval record, durable field record, production tracking row, workbook macro path, workbook writeback, or production write.
+          </p>
+          <div style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
+            {pmIntakeConstraintRadar.map((item) => (
+              <a
+                key={item.id}
+                className="card"
+                href={item.href}
+                style={{ color: 'inherit', display: 'block', padding: '0.85rem', textDecoration: 'none', boxShadow: 'none' }}
+              >
+                <div className="status-row" style={{ alignItems: 'start' }}>
+                  <div>
+                    <p style={{ margin: 0 }}>
+                      <strong>{item.title}</strong>
+                    </p>
+                    <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
+                  </div>
+                  <span className={`status-pill ${constraintRadarTone(item.status)}`}>{formatLabel(item.status)}</span>
                 </div>
               </a>
             ))}

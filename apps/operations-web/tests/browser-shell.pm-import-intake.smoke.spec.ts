@@ -248,6 +248,20 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(meetingReadout.getByText(/Exceptions are 0 covered, 4 open, 2 blocked and local review notes have not started/i)).toBeVisible()
   await expect(meetingReadout.getByText(/Field prep is 0 complete \/ 1 next \/ 4 blocked. Capture field questions draft: Capture drawing\/source, access\/safety, material, customer, or PM follow-up questions before the kickoff brief is used/i)).toBeVisible()
   await expect(meetingReadout.getByText(/6 of 6 approval-persistence gates remain blocked; project import remains not admitted; executor closeout evidence is 0 of 8/i)).toBeVisible()
+  const constraintRadar = page.getByLabel('Local PM intake constraint radar')
+  await expect(constraintRadar.getByRole('heading', { name: /Local PM Intake Constraint Radar/i })).toBeVisible()
+  await expect(constraintRadar.getByText('browser-local', { exact: true })).toBeVisible()
+  await expect(constraintRadar.getByText(/Constraint scan for source\/review, field-prep, executor\/hosted, and future write-authority boundaries/i)).toBeVisible()
+  await expect(constraintRadar.getByText(/does not approve, persist, import, assign, schedule, change status, create tasks, create issues, call live services, claim hosted parity, or mutate production state/i)).toBeVisible()
+  await expect(constraintRadar.getByText(/creates no localStorage key, export artifact, backend route, schema, approval record, durable field record, production tracking row, workbook macro path, workbook writeback, or production write/i)).toBeVisible()
+  await expect(constraintRadar.locator('a').filter({ hasText: /^Source and review constraints/ })).toHaveAttribute('href', '#import-exception-register')
+  await expect(constraintRadar.locator('a').filter({ hasText: /^Field-prep constraints/ })).toHaveAttribute('href', '#field-prep')
+  await expect(constraintRadar.locator('a').filter({ hasText: /^Executor and hosted constraints/ })).toHaveAttribute('href', '#executor-closeout')
+  await expect(constraintRadar.locator('a').filter({ hasText: /^Future write authority constraints/ })).toHaveAttribute('href', '#approval-readiness')
+  await expect(constraintRadar.getByText(/Source fingerprint stat-fingerprint-abc123; review checklist has 0 of 7 local checks marked; exceptions are 0 covered, 4 open, 2 blocked; local review notes have not started/i)).toBeVisible()
+  await expect(constraintRadar.getByText(/Field prep is 0 complete \/ 1 next \/ 4 blocked. Field questions present: no; field observations present: no/i)).toBeVisible()
+  await expect(constraintRadar.getByText(/Executor closeout evidence is 0 of 8; hosted parity remains an external executor boundary and is not claimed here/i)).toBeVisible()
+  await expect(constraintRadar.getByText(/6 of 6 approval-persistence gates remain blocked; project import remains not admitted; future write authority remains outside this browser-local workbench/i)).toBeVisible()
   const startHere = page.getByLabel('Local PM intake start here')
   await expect(startHere.getByRole('heading', { name: /Local PM Intake Start Here/i })).toBeVisible()
   await expect(startHere.getByText('browser-local')).toBeVisible()
@@ -353,6 +367,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(quickJumpRail.getByText(/do not approve, persist, import, assign, schedule, change status, create tasks, create issues, call live services, or mutate production state/i)).toBeVisible()
   await expect(quickJumpRail.getByRole('link', { name: /Command Center/i })).toHaveAttribute('href', '#pm-command-center')
   await expect(quickJumpRail.getByRole('link', { name: /Meeting Readout/i })).toHaveAttribute('href', '#pm-meeting-readout')
+  await expect(quickJumpRail.getByRole('link', { name: /Constraint Radar/i })).toHaveAttribute('href', '#pm-constraint-radar')
   await expect(quickJumpRail.getByRole('link', { name: /Start Here/i })).toHaveAttribute('href', '#pm-start-here')
   await expect(quickJumpRail.getByRole('link', { name: /Daily Script/i })).toHaveAttribute('href', '#pm-daily-review-script')
   await expect(quickJumpRail.getByRole('link', { name: /Output Selector/i })).toHaveAttribute('href', '#pm-output-selector')
@@ -371,6 +386,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   for (const target of [
     '#pm-command-center',
     '#pm-meeting-readout',
+    '#pm-constraint-radar',
     '#pm-start-here',
     '#pm-daily-review-script',
     '#pm-output-selector',
@@ -456,6 +472,8 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(commandCenter.getByText(/Local handoff context exists from decision draft: yes; closeout checks: 0 of 8; field questions: no; field observations: no/i)).toBeVisible()
   await expect(meetingReadout.locator('a').filter({ hasText: /^Review posture/ })).toHaveAttribute('href', '#pm-output-selector')
   await expect(meetingReadout.getByText(/Local review notes are captured; exceptions are 4 covered, 0 open, 2 blocked for later packet context/i)).toBeVisible()
+  await expect(constraintRadar.getByText(/Source fingerprint stat-fingerprint-abc123; review checklist has 2 of 7 local checks marked; exceptions are 4 covered, 0 open, 2 blocked; local review notes are captured/i)).toBeVisible()
+  await expect(constraintRadar.getByText(/4 of 6 approval-persistence gates remain blocked; project import remains not admitted; future write authority remains outside this browser-local workbench/i)).toBeVisible()
   await expect(handoffGuide.getByText(/Use the workbench for Jason review while exceptions are 4 covered, 0 open, 2 blocked and local decision draft has decision value, review notes, and local-only attestation/i)).toBeVisible()
   await expect(handoffGuide.getByText(/Existing Executor Handoff context has 0 of 8 local closeout evidence checks marked plus local decision draft has decision value, review notes, and local-only attestation/i)).toBeVisible()
   await expect(workflowMap.getByText(/Import exception register: 4 covered, 0 open, 2 blocked/i)).toBeVisible()
@@ -477,6 +495,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(outputSelector.getByText(/Executor Handoff has 2 of 8 local closeout evidence checks marked for returned executor context/i)).toBeVisible()
   await expect(commandCenter.getByText(/Local handoff context exists from decision draft: yes; closeout checks: 2 of 8; field questions: no; field observations: no/i)).toBeVisible()
   await expect(meetingReadout.getByText(/4 of 6 approval-persistence gates remain blocked; project import remains not admitted; executor closeout evidence is 2 of 8/i)).toBeVisible()
+  await expect(constraintRadar.getByText(/Executor closeout evidence is 2 of 8; hosted parity remains an external executor boundary and is not claimed here/i)).toBeVisible()
   await expect(handoffGuide.getByText(/Existing Executor Handoff context has 2 of 8 local closeout evidence checks marked plus local decision draft has decision value, review notes, and local-only attestation/i)).toBeVisible()
   await expect(workflowMap.getByText(/2 of 8 local closeout checks marked for returned executor evidence/i)).toBeVisible()
   await expect(openItems.getByText(/2 of 8 local closeout evidence checks are marked/i)).toBeVisible()
@@ -542,6 +561,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(commandCenter.getByText(/Field prep queue is 2 complete \/ 2 next \/ 1 blocked. Export field kickoff prep brief: Use the Field Kickoff Brief as local conversation prep for PM, lead, and field review/i)).toBeVisible()
   await expect(commandCenter.getByText(/Local handoff context exists from decision draft: yes; closeout checks: 2 of 8; field questions: yes; field observations: no/i)).toBeVisible()
   await expect(meetingReadout.getByText(/Field prep is 2 complete \/ 2 next \/ 1 blocked. Export field kickoff prep brief: Use the Field Kickoff Brief as local conversation prep for PM, lead, and field review/i)).toBeVisible()
+  await expect(constraintRadar.getByText(/Field prep is 2 complete \/ 2 next \/ 1 blocked. Field questions present: yes; field observations present: no/i)).toBeVisible()
   await expect(handoffGuide.getByText(/Field prep queue is 2 complete \/ 2 next \/ 1 blocked. Export field kickoff prep brief: Use the Field Kickoff Brief as local conversation prep for PM, lead, and field review/i)).toBeVisible()
   await expect(workflowMap.getByText(/Export field kickoff prep brief: Use the Field Kickoff Brief as local conversation prep for PM, lead, and field review/i)).toBeVisible()
   await expect(fieldPrepQueue.getByText('2 complete / 2 next / 1 blocked')).toBeVisible()
@@ -556,6 +576,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await fieldObservations.getByLabel(/Access and safety observations/i).fill('Escort and LOTO review need confirmation before field reliance.')
   await expect(fieldObservations.getByRole('button', { name: 'Clear field observations' })).toBeEnabled()
   await expect(commandCenter.getByText(/Local handoff context exists from decision draft: yes; closeout checks: 2 of 8; field questions: yes; field observations: yes/i)).toBeVisible()
+  await expect(constraintRadar.getByText(/Field prep is 2 complete \/ 2 next \/ 1 blocked. Field questions present: yes; field observations present: yes/i)).toBeVisible()
   await expect(fieldPrepCoverage.getByText('2 covered, 0 partial, 3 open, 2 blocked')).toBeVisible()
   await expect(fieldPrepAgenda.getByText('2 context, 3 ask, 1 confirm, 1 blocked')).toBeVisible()
   await expect(pmIntakeSnapshot.getByText('3 covered, 1 open, 2 blocked', { exact: true })).toBeVisible()
@@ -573,6 +594,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
     pmIntakeSnapshot: window.localStorage.getItem('pm-import-intake-pm-intake-snapshot:pm-import-candidate-miner-temp-power'),
     commandCenter: window.localStorage.getItem('pm-import-intake-command-center:pm-import-candidate-miner-temp-power'),
     meetingReadout: window.localStorage.getItem('pm-import-intake-meeting-readout:pm-import-candidate-miner-temp-power'),
+    constraintRadar: window.localStorage.getItem('pm-import-intake-constraint-radar:pm-import-candidate-miner-temp-power'),
     quickJumpRail: window.localStorage.getItem('pm-import-intake-quick-jump-rail:pm-import-candidate-miner-temp-power'),
     startHere: window.localStorage.getItem('pm-import-intake-start-here:pm-import-candidate-miner-temp-power'),
     dailyScript: window.localStorage.getItem('pm-import-intake-daily-review-script:pm-import-candidate-miner-temp-power'),
@@ -600,6 +622,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   expect(localState.pmIntakeSnapshot).toBeNull()
   expect(localState.commandCenter).toBeNull()
   expect(localState.meetingReadout).toBeNull()
+  expect(localState.constraintRadar).toBeNull()
   expect(localState.quickJumpRail).toBeNull()
   expect(localState.startHere).toBeNull()
   expect(localState.dailyScript).toBeNull()
@@ -1194,6 +1217,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
     quickJumpRail: window.localStorage.getItem('pm-import-intake-quick-jump-rail:pm-import-candidate-miner-temp-power'),
     commandCenter: window.localStorage.getItem('pm-import-intake-command-center:pm-import-candidate-miner-temp-power'),
     meetingReadout: window.localStorage.getItem('pm-import-intake-meeting-readout:pm-import-candidate-miner-temp-power'),
+    constraintRadar: window.localStorage.getItem('pm-import-intake-constraint-radar:pm-import-candidate-miner-temp-power'),
     startHere: window.localStorage.getItem('pm-import-intake-start-here:pm-import-candidate-miner-temp-power'),
     dailyScript: window.localStorage.getItem('pm-import-intake-daily-review-script:pm-import-candidate-miner-temp-power'),
     outputSelector: window.localStorage.getItem('pm-import-intake-output-selector:pm-import-candidate-miner-temp-power'),
@@ -1201,7 +1225,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
     workflowMap: window.localStorage.getItem('pm-import-intake-workflow-map:pm-import-candidate-miner-temp-power'),
     openItems: window.localStorage.getItem('pm-import-intake-open-items:pm-import-candidate-miner-temp-power'),
   }))
-  expect(resetLocalState).toEqual({ checklist: null, draft: null, closeout: null, fieldReadiness: null, fieldQuestions: null, fieldObservations: null, pmIntakeSnapshot: null, fieldPrepCoverage: null, fieldPrepAgenda: null, fieldPrepPacket: null, importExceptionRegister: null, quickJumpRail: null, commandCenter: null, meetingReadout: null, startHere: null, dailyScript: null, outputSelector: null, handoffGuide: null, workflowMap: null, openItems: null })
+  expect(resetLocalState).toEqual({ checklist: null, draft: null, closeout: null, fieldReadiness: null, fieldQuestions: null, fieldObservations: null, pmIntakeSnapshot: null, fieldPrepCoverage: null, fieldPrepAgenda: null, fieldPrepPacket: null, importExceptionRegister: null, quickJumpRail: null, commandCenter: null, meetingReadout: null, constraintRadar: null, startHere: null, dailyScript: null, outputSelector: null, handoffGuide: null, workflowMap: null, openItems: null })
   await expect(page.getByRole('button', { name: /Approve/i })).toHaveCount(0)
   await expect(page.getByRole('button', { name: /Persist/i })).toHaveCount(0)
   await expect(page.getByRole('button', { name: /Submit/i })).toHaveCount(0)

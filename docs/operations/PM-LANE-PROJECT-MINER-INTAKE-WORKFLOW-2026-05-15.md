@@ -457,6 +457,10 @@ PM Lane 072 adds a browser-local `Local PM Intake Meeting Readout` panel to `/pm
 
 This meeting readout is browser-local synthesis only and adds no local storage key, export action, export contract, or handoff artifact. It does not create issues, create tasks, create live work orders, approve, persist, import, create schema, run SQL, write Supabase rows, call live services, run workbook macros, write workbook cells, assign work, change status, mutate schedules, create durable field records, write production tracking rows, claim hosted parity, or admit autonomous AI business-state action.
 
+PM Lane 073 adds a browser-local `Local PM Intake Constraint Radar` panel to `/pm-review/import-intake`. It derives a constraint-first scan from current workbench state: source/review constraints, field-prep constraints, executor/hosted constraints, and future write-authority constraints.
+
+This radar is browser-local synthesis only and adds no local storage key, export action, export contract, or handoff artifact. It does not create issues, create tasks, create live work orders, approve, persist, import, create schema, run SQL, write Supabase rows, call live services, run workbook macros, write workbook cells, assign work, change status, mutate schedules, create durable field records, write production tracking rows, claim hosted parity, or admit autonomous AI business-state action.
+
 ## Environment Overrides
 
 Set this when using a different planning folder:
