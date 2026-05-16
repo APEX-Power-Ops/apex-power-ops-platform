@@ -575,6 +575,8 @@ PM Lane 095 wraps the existing Local Import Exception Decision Register panel in
 
 PM Lane 096 wraps the existing Workflow Gates panel in a default-open native disclosure control. Jason can fold the gate summary after reviewing it, while the panel stays inside Source and Exception Detail after the exception register and the six gate items, item order, status pills, detail text, read-only label, quick-jump target, export references, no-storage behavior, reads, and authority wording remain unchanged.
 
+PM Lane 097 wraps the existing Exception Review and PM Decisions detail panel in a default-open native disclosure control. Jason can fold the raw exception and decision prompt cards after reviewing them, while the panel stays inside Source and Exception Detail after Workflow Gates and the warning card, PM decision card, warning severity/code pills, decision prompt/recommended action text, fallback empty states, no-storage behavior, export behavior, reads, and authority wording remain unchanged.
+
 This creates no approval record, SQL, schema migration, backend route, import mutation, issue, task, assignment, schedule, status, hosted proof, live task, work authorization, field release, work order, durable field record, production tracking write, product code, deployment, service, DNS, auth, ingress, secret, local storage key, new route, new export action, new export artifact, export contract widening, or production mutation.
 
 The next persistence tranche is:
