@@ -567,6 +567,8 @@ PM Lane 091 wraps the existing Local PM Intake Workflow Map panel in a default-o
 
 PM Lane 092 wraps the existing Local PM Intake Open Items Lens panel in a default-open native disclosure control. Jason can fold the attention/blocker lens after reviewing it, while the panel stays inside Workflow Review Panels and the six derived items, labels, hrefs, order, status pills, dynamic text, no-storage behavior, reads, and authority wording remain unchanged.
 
+PM Lane 093 wraps the existing Local PM Intake Snapshot panel in a default-open native disclosure control. Jason can fold the compact snapshot after reviewing it, while the panel stays inside Review Snapshot Detail and the six derived snapshot entries, count summary, labels, detail/evidence text, status pills, dynamic behavior, export behavior, no-storage behavior, reads, and authority wording remain unchanged.
+
 This creates no approval record, SQL, schema migration, backend route, import mutation, issue, task, assignment, schedule, status, hosted proof, live task, work authorization, field release, work order, durable field record, production tracking write, product code, deployment, service, DNS, auth, ingress, secret, local storage key, new route, new export action, new export artifact, export contract widening, or production mutation.
 
 The next persistence tranche is:

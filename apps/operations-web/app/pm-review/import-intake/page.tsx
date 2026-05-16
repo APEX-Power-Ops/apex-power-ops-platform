@@ -4262,18 +4262,18 @@ export default function ProjectMinerIntakeWorkbenchPage() {
               <h2 style={{ display: 'inline', margin: 0 }}>Review Snapshot Detail</h2>
             </summary>
 
-        <section id="pm-intake-snapshot" aria-label="Local PM intake snapshot" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
-          <div className="status-row">
+        <details id="pm-intake-snapshot" open aria-label="Local PM intake snapshot" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
+          <summary className="status-row" style={{ cursor: 'pointer' }}>
             <h2 style={{ margin: 0 }}>Local PM Intake Snapshot</h2>
             <span className="status-pill status-awaiting-values">browser-local</span>
-          </div>
+          </summary>
           <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
             Compact scan view for exception posture, decision draft, field-prep context, next local action, hosted parity, and future write boundaries. It does not approve, persist, import, assign, schedule, change status, create tasks, create issues, or mutate production state.
           </p>
           <p style={{ margin: '0.45rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
             {pmIntakeSnapshotSummary(pmIntakeSnapshotCount)}
           </p>
-          <div style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
+          <div aria-label="Local PM intake snapshot items" style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
             {pmIntakeSnapshot.map((item) => (
               <article key={item.id} className="card" style={{ padding: '0.85rem', boxShadow: 'none' }}>
                 <div className="status-row" style={{ alignItems: 'start' }}>
@@ -4289,7 +4289,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
               </article>
             ))}
           </div>
-        </section>
+        </details>
 
         <section id="pm-operating-queue" aria-label="Local PM operating queue" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
           <div className="status-row">
