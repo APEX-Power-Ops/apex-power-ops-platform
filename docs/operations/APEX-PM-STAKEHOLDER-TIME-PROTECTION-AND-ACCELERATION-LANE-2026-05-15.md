@@ -527,6 +527,14 @@ PM Lane 083 hardens the focused `/pm-review/import-intake` Playwright smoke so p
 
 This is test-only governance. It creates no approval record, SQL, schema migration, backend route, import mutation, issue, task, assignment, schedule, status, hosted proof, live task, work authorization, field release, work order, durable field record, production tracking write, product code, deployment, service, DNS, auth, ingress, secret, local storage key, new route, new export action, new export artifact, export contract widening, or production mutation.
 
+The current detail-collapse ergonomics tranche is:
+
+`Project Miner Local PM Intake Detail Group Collapse Controls`
+
+PM Lane 084 wraps the six PM Lane 082 detail-workbench groups in default-open native disclosure controls. Jason can fold Review Snapshot Detail, Source and Exception Detail, Approval Prep Detail, Executor Closeout Detail, Field Prep Detail, and Authority Boundary Detail while reviewing, with no persisted collapsed state and no change to child panels, ids, labels, anchors, links, exports, storage, reads, or authority wording.
+
+This creates no approval record, SQL, schema migration, backend route, import mutation, issue, task, assignment, schedule, status, hosted proof, live task, work authorization, field release, work order, durable field record, production tracking write, product code, deployment, service, DNS, auth, ingress, secret, local storage key, new route, new export action, new export artifact, export contract widening, or production mutation.
+
 The next persistence tranche is:
 
 `Import Candidate Approval Persistence Schema And Adapter Implementation`

@@ -338,6 +338,25 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(authorityBoundaryDetail.getByRole('heading', { name: 'Authority Boundary Detail', exact: true })).toBeVisible()
   await expect(authorityBoundaryDetail.locator('#approval-readiness')).toHaveCount(1)
   await expect(authorityBoundaryDetail.locator('#guardrails')).toHaveCount(1)
+  for (const label of [
+    'Review snapshot detail panels',
+    'Source and exception detail panels',
+    'Approval prep detail panels',
+    'Executor closeout detail panels',
+    'Field prep detail panels',
+    'Authority boundary detail panels',
+  ]) {
+    await expect(page.locator(`details[aria-label="${label}"]`)).toHaveAttribute('open', '')
+  }
+  const reviewSnapshotDisclosure = page.locator('details[aria-label="Review snapshot detail panels"]')
+  await reviewSnapshotDisclosure.locator('summary').click()
+  await expect(reviewSnapshotDisclosure).not.toHaveAttribute('open', '')
+  await expect(reviewSnapshotDetail.locator('#pm-intake-snapshot')).toBeHidden()
+  const collapseStateKeys = await page.evaluate(() => Object.keys(window.localStorage).filter((key) => key.startsWith('pm-import-intake-') && /collapse|detail|disclosure/i.test(key)))
+  expect(collapseStateKeys).toEqual([])
+  await reviewSnapshotDisclosure.locator('summary').click()
+  await expect(reviewSnapshotDisclosure).toHaveAttribute('open', '')
+  await expect(reviewSnapshotDetail.locator('#pm-intake-snapshot')).toBeVisible()
   for (const heading of [
     'Review Snapshot Detail',
     'Source and Exception Detail',

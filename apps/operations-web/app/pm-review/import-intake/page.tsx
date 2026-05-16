@@ -4223,8 +4223,10 @@ export default function ProjectMinerIntakeWorkbenchPage() {
         </section>
 
         <section aria-label="PM intake detail workbench" style={{ display: 'grid', gap: '1rem' }}>
-          <section aria-label="Review snapshot detail panels" style={{ display: 'grid', gap: '0.75rem' }}>
-            <h2 style={{ margin: 0 }}>Review Snapshot Detail</h2>
+          <details open aria-label="Review snapshot detail panels" style={{ display: 'grid', gap: '0.75rem' }}>
+            <summary style={{ cursor: 'pointer' }}>
+              <h2 style={{ display: 'inline', margin: 0 }}>Review Snapshot Detail</h2>
+            </summary>
 
         <section id="pm-intake-snapshot" aria-label="Local PM intake snapshot" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
           <div className="status-row">
@@ -4283,9 +4285,11 @@ export default function ProjectMinerIntakeWorkbenchPage() {
           </div>
         </section>
 
-          </section>
-          <section aria-label="Source and exception detail panels" style={{ display: 'grid', gap: '0.75rem' }}>
-            <h2 style={{ margin: 0 }}>Source and Exception Detail</h2>
+          </details>
+          <details open aria-label="Source and exception detail panels" style={{ display: 'grid', gap: '0.75rem' }}>
+            <summary style={{ cursor: 'pointer' }}>
+              <h2 style={{ display: 'inline', margin: 0 }}>Source and Exception Detail</h2>
+            </summary>
 
         <section id="project-packet" aria-label="Project packet and source freshness" className="notes-grid" style={{ marginBottom: '1rem' }}>
           <article className="notes-card">
@@ -4416,9 +4420,11 @@ export default function ProjectMinerIntakeWorkbenchPage() {
           </article>
         </section>
 
-          </section>
-          <section aria-label="Approval prep detail panels" style={{ display: 'grid', gap: '0.75rem' }}>
-            <h2 style={{ margin: 0 }}>Approval Prep Detail</h2>
+          </details>
+          <details open aria-label="Approval prep detail panels" style={{ display: 'grid', gap: '0.75rem' }}>
+            <summary style={{ cursor: 'pointer' }}>
+              <h2 style={{ display: 'inline', margin: 0 }}>Approval Prep Detail</h2>
+            </summary>
 
         <section aria-label="Admission and approval contract" className="notes-grid" style={{ marginBottom: '1rem' }}>
           <article className="notes-card">
@@ -4567,9 +4573,11 @@ export default function ProjectMinerIntakeWorkbenchPage() {
           </div>
         </section>
 
-          </section>
-          <section aria-label="Executor closeout detail panels" style={{ display: 'grid', gap: '0.75rem' }}>
-            <h2 style={{ margin: 0 }}>Executor Closeout Detail</h2>
+          </details>
+          <details open aria-label="Executor closeout detail panels" style={{ display: 'grid', gap: '0.75rem' }}>
+            <summary style={{ cursor: 'pointer' }}>
+              <h2 style={{ display: 'inline', margin: 0 }}>Executor Closeout Detail</h2>
+            </summary>
 
         <section id="executor-closeout" aria-label="Local executor closeout intake" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
           <div className="status-row">
@@ -4605,9 +4613,11 @@ export default function ProjectMinerIntakeWorkbenchPage() {
           </div>
         </section>
 
-          </section>
-          <section aria-label="Field prep detail panels" style={{ display: 'grid', gap: '0.75rem' }}>
-            <h2 style={{ margin: 0 }}>Field Prep Detail</h2>
+          </details>
+          <details open aria-label="Field prep detail panels" style={{ display: 'grid', gap: '0.75rem' }}>
+            <summary style={{ cursor: 'pointer' }}>
+              <h2 style={{ display: 'inline', margin: 0 }}>Field Prep Detail</h2>
+            </summary>
 
         <section aria-label="Local field readiness checklist" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
           <div className="status-row">
@@ -4883,9 +4893,11 @@ export default function ProjectMinerIntakeWorkbenchPage() {
           </div>
         </section>
 
-          </section>
-          <section aria-label="Authority boundary detail panels" style={{ display: 'grid', gap: '0.75rem' }}>
-            <h2 style={{ margin: 0 }}>Authority Boundary Detail</h2>
+          </details>
+          <details open aria-label="Authority boundary detail panels" style={{ display: 'grid', gap: '0.75rem' }}>
+            <summary style={{ cursor: 'pointer' }}>
+              <h2 style={{ display: 'inline', margin: 0 }}>Authority Boundary Detail</h2>
+            </summary>
 
         <section id="approval-readiness" aria-label="Approval persistence readiness gates" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
           <div className="status-row">
@@ -4936,7 +4948,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
             </ul>
           </article>
         </section>
-          </section>
+          </details>
         </section>
       </section>
     </main>
