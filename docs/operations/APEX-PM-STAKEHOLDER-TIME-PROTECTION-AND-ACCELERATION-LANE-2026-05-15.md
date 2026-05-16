@@ -581,6 +581,8 @@ PM Lane 098 wraps the existing Admission and Approval Contract panel in a defaul
 
 PM Lane 099 wraps the existing Local Review Checklist panel in a default-open native disclosure control. Jason can fold the checklist after reviewing it, while the panel stays inside Approval Prep Detail after Admission and Approval Contract and before Local Approval Decision Draft, and the seven checklist items, item labels/details, count text, checkbox behavior, clear button, existing candidate-scoped storage key, export inclusion, dynamic derived-state behavior, reads, and authority wording remain unchanged.
 
+PM Lane 100 wraps the existing Local Approval Decision Draft panel in a default-open native disclosure control. Jason can fold the draft controls after reviewing them, while the panel stays inside Approval Prep Detail after Local Review Checklist and the decision selector, review notes textarea, local-only attestation, clear button, existing candidate-scoped storage key, export inclusion, dynamic derived-state behavior, reads, and authority wording remain unchanged.
+
 This creates no approval record, SQL, schema migration, backend route, import mutation, issue, task, assignment, schedule, status, hosted proof, live task, work authorization, field release, work order, durable field record, production tracking write, product code, deployment, service, DNS, auth, ingress, secret, local storage key, new route, new export action, new export artifact, export contract widening, or production mutation.
 
 The next persistence tranche is:

@@ -4559,11 +4559,12 @@ export default function ProjectMinerIntakeWorkbenchPage() {
           </div>
         </details>
 
-        <section aria-label="Local approval decision draft" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
-          <div className="status-row">
+        <details open aria-label="Local approval decision draft" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
+          <summary className="status-row" style={{ cursor: 'pointer' }}>
             <h2 style={{ margin: 0 }}>Local Approval Decision Draft</h2>
             <span className="status-pill status-awaiting-values">local only</span>
-          </div>
+          </summary>
+          <div aria-label="Approval draft controls">
           <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
             Draft the future approval decision and notes for the PM brief only. This does not approve, persist, import, assign, schedule, change status, or mutate production state.
           </p>
@@ -4617,7 +4618,8 @@ export default function ProjectMinerIntakeWorkbenchPage() {
             </button>
             <span style={{ color: 'var(--muted)', lineHeight: 1.55 }}>Included in the PM brief only when exported from this browser.</span>
           </div>
-        </section>
+          </div>
+        </details>
 
           </details>
           <details open aria-label="Executor closeout detail panels" style={{ display: 'grid', gap: '0.75rem' }}>
