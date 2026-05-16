@@ -4105,36 +4105,38 @@ export default function ProjectMinerIntakeWorkbenchPage() {
           </div>
         </details>
 
-        <section id="pm-start-here" aria-label="Local PM intake start here" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
-          <div className="status-row">
+        <details open id="pm-start-here" aria-label="Local PM intake start here" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
+          <summary className="status-row" style={{ cursor: 'pointer' }}>
             <h2 style={{ margin: 0 }}>Local PM Intake Start Here</h2>
             <span className="status-pill status-awaiting-values">browser-local</span>
-          </div>
-          <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
-            Top-level focus for this intake session, derived from the existing workbench state. It does not approve, persist, import, assign, schedule, change status, create tasks, create issues, call live services, or mutate production state.
-            {' '}It links to existing local sections and exports only; it creates no localStorage key, export artifact, backend route, schema, approval record, task, issue, or production write.
-          </p>
-          <div style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
-            {pmIntakeStartHere.map((item) => (
-              <a
-                key={item.id}
-                className="card"
-                href={item.href}
-                style={{ color: 'inherit', display: 'block', padding: '0.85rem', textDecoration: 'none', boxShadow: 'none' }}
-              >
-                <div className="status-row" style={{ alignItems: 'start' }}>
-                  <div>
-                    <p style={{ margin: 0 }}>
-                      <strong>{item.title}</strong>
-                    </p>
-                    <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
+          </summary>
+          <div aria-label="Start here controls">
+            <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+              Top-level focus for this intake session, derived from the existing workbench state. It does not approve, persist, import, assign, schedule, change status, create tasks, create issues, call live services, or mutate production state.
+              {' '}It links to existing local sections and exports only; it creates no localStorage key, export artifact, backend route, schema, approval record, task, issue, or production write.
+            </p>
+            <div style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
+              {pmIntakeStartHere.map((item) => (
+                <a
+                  key={item.id}
+                  className="card"
+                  href={item.href}
+                  style={{ color: 'inherit', display: 'block', padding: '0.85rem', textDecoration: 'none', boxShadow: 'none' }}
+                >
+                  <div className="status-row" style={{ alignItems: 'start' }}>
+                    <div>
+                      <p style={{ margin: 0 }}>
+                        <strong>{item.title}</strong>
+                      </p>
+                      <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
+                    </div>
+                    <span className={`status-pill ${startHereTone(item.status)}`}>{formatLabel(item.status)}</span>
                   </div>
-                  <span className={`status-pill ${startHereTone(item.status)}`}>{formatLabel(item.status)}</span>
-                </div>
-              </a>
-            ))}
+                </a>
+              ))}
+            </div>
           </div>
-        </section>
+        </details>
 
         <section id="pm-output-selector" aria-label="Local PM intake output selector" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
           <div className="status-row">
