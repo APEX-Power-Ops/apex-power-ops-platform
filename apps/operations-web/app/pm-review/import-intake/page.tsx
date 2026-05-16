@@ -4596,60 +4596,62 @@ export default function ProjectMinerIntakeWorkbenchPage() {
             <h2 style={{ margin: 0 }}>Local Approval Decision Draft</h2>
             <span className="status-pill status-awaiting-values">local only</span>
           </summary>
-          <div aria-label="Approval draft controls">
-          <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
-            Draft the future approval decision and notes for the PM brief only. This does not approve, persist, import, assign, schedule, change status, or mutate production state.
-          </p>
-          <div className="notes-grid" style={{ marginTop: '0.85rem' }}>
-            <label className="card" style={{ display: 'grid', gap: '0.45rem', padding: '0.85rem', boxShadow: 'none' }}>
-              <strong>Decision draft</strong>
-              <select
-                value={approvalDraft.decision}
-                onChange={(event) => updateApprovalDraft({ decision: event.target.value })}
-                disabled={!permittedDecisions.length}
-                style={{ width: '100%', minHeight: '2.5rem' }}
-              >
-                <option value="">Select local draft decision</option>
-                {permittedDecisions.map((decision) => (
-                  <option key={decision} value={decision}>
-                    {formatLabel(decision)}
-                  </option>
-                ))}
-              </select>
-              <span style={{ color: 'var(--muted)', lineHeight: 1.5 }}>Allowed by the read-only approval contract, but not persisted by this screen.</span>
-            </label>
-            <label className="card" style={{ display: 'grid', gap: '0.45rem', padding: '0.85rem', boxShadow: 'none' }}>
-              <strong>Review notes draft</strong>
-              <textarea
-                value={approvalDraft.review_notes}
-                onChange={(event) => updateApprovalDraft({ review_notes: event.target.value })}
-                rows={5}
-                placeholder="Summarize reviewed exceptions, assumptions, and open questions for the future approval packet."
-                style={{ width: '100%', resize: 'vertical', minHeight: '8rem' }}
-              />
-              <span style={{ color: 'var(--muted)', lineHeight: 1.5 }}>Retained in this browser for the current candidate only.</span>
-            </label>
-          </div>
-          <label className="card" style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0.75rem', padding: '0.85rem', boxShadow: 'none', cursor: 'pointer', marginTop: '0.85rem' }}>
-            <input
-              type="checkbox"
-              checked={approvalDraft.local_attestation}
-              onChange={(event) => updateApprovalDraft({ local_attestation: event.target.checked })}
-              style={{ marginTop: '0.25rem' }}
-            />
-            <span>
-              <strong>Local-only draft attestation</strong>
-              <span style={{ display: 'block', marginTop: '0.35rem', color: 'var(--muted)', lineHeight: 1.5 }}>
-                I understand this draft is local review prep and a later admitted packet must own any approval persistence or import mutation.
-              </span>
-            </span>
-          </label>
-          <div className="pm-review-link-row pm-review-link-row-start" style={{ alignItems: 'center' }}>
-            <button className="btn btn-outline" onClick={clearApprovalDraft} disabled={!approvalDraftHasContent}>
-              Clear decision draft
-            </button>
-            <span style={{ color: 'var(--muted)', lineHeight: 1.55 }}>Included in the PM brief only when exported from this browser.</span>
-          </div>
+          <div aria-label="Local approval decision draft controls">
+            <div aria-label="Approval draft controls">
+              <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+                Draft the future approval decision and notes for the PM brief only. This does not approve, persist, import, assign, schedule, change status, or mutate production state.
+              </p>
+              <div className="notes-grid" style={{ marginTop: '0.85rem' }}>
+                <label className="card" style={{ display: 'grid', gap: '0.45rem', padding: '0.85rem', boxShadow: 'none' }}>
+                  <strong>Decision draft</strong>
+                  <select
+                    value={approvalDraft.decision}
+                    onChange={(event) => updateApprovalDraft({ decision: event.target.value })}
+                    disabled={!permittedDecisions.length}
+                    style={{ width: '100%', minHeight: '2.5rem' }}
+                  >
+                    <option value="">Select local draft decision</option>
+                    {permittedDecisions.map((decision) => (
+                      <option key={decision} value={decision}>
+                        {formatLabel(decision)}
+                      </option>
+                    ))}
+                  </select>
+                  <span style={{ color: 'var(--muted)', lineHeight: 1.5 }}>Allowed by the read-only approval contract, but not persisted by this screen.</span>
+                </label>
+                <label className="card" style={{ display: 'grid', gap: '0.45rem', padding: '0.85rem', boxShadow: 'none' }}>
+                  <strong>Review notes draft</strong>
+                  <textarea
+                    value={approvalDraft.review_notes}
+                    onChange={(event) => updateApprovalDraft({ review_notes: event.target.value })}
+                    rows={5}
+                    placeholder="Summarize reviewed exceptions, assumptions, and open questions for the future approval packet."
+                    style={{ width: '100%', resize: 'vertical', minHeight: '8rem' }}
+                  />
+                  <span style={{ color: 'var(--muted)', lineHeight: 1.5 }}>Retained in this browser for the current candidate only.</span>
+                </label>
+              </div>
+              <label className="card" style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0.75rem', padding: '0.85rem', boxShadow: 'none', cursor: 'pointer', marginTop: '0.85rem' }}>
+                <input
+                  type="checkbox"
+                  checked={approvalDraft.local_attestation}
+                  onChange={(event) => updateApprovalDraft({ local_attestation: event.target.checked })}
+                  style={{ marginTop: '0.25rem' }}
+                />
+                <span>
+                  <strong>Local-only draft attestation</strong>
+                  <span style={{ display: 'block', marginTop: '0.35rem', color: 'var(--muted)', lineHeight: 1.5 }}>
+                    I understand this draft is local review prep and a later admitted packet must own any approval persistence or import mutation.
+                  </span>
+                </span>
+              </label>
+              <div className="pm-review-link-row pm-review-link-row-start" style={{ alignItems: 'center' }}>
+                <button className="btn btn-outline" onClick={clearApprovalDraft} disabled={!approvalDraftHasContent}>
+                  Clear decision draft
+                </button>
+                <span style={{ color: 'var(--muted)', lineHeight: 1.55 }}>Included in the PM brief only when exported from this browser.</span>
+              </div>
+            </div>
           </div>
         </details>
 

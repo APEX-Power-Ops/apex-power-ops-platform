@@ -77,7 +77,7 @@ Any extra step must justify itself by reducing risk, reducing future workload, o
 
 Immediate prioritized PM task lanes:
 
-1. Local PM intake workbench usability - active and local-current through PM Lane 125. The current safe product lane keeps reducing Jason's daily scan burden on `/pm-review/import-intake`; the next bounded local move is PM Lane 126, Local Approval Decision Draft Body Controls.
+1. Local PM intake workbench usability - active and local-current through PM Lane 126. The current safe product lane keeps reducing Jason's daily scan burden on `/pm-review/import-intake`; the next bounded local move is PM Lane 127, Local Executor Closeout Intake Body Controls.
 2. Hosted PM intake parity - accepted green for the PM intake path and broader deployed mutation-seam reads through Desktop Codex execution of PM Lane 041A, PM Lane 041B, PM Lane 041C, and the PM Lane 076 dispatch binder. Vercel production is green, Render PM-intake reads are green, and the former Supabase pooler DSN blocker for DB-backed approval/schedule reads is cleared.
 3. Approval/import authority - designed but not admitted. Approval persistence, schema execution, and import mutation remain blocked until a later packet explicitly admits the narrow write path.
 
@@ -635,6 +635,8 @@ PM Lane 123 wraps the existing Exception Review and PM Decisions body content in
 PM Lane 124 wraps the existing Admission and Approval Contract body content in a labeled body-controls container under its already-existing default-open disclosure. Jason can fold and reopen the approval-prep contract scan predictably, while the panel stays inside Approval Prep Detail before Local Review Checklist; the existing disclosure, heading, Admission Shape card, Approval Contract card, labels, values, order, fallback text, reads, export behavior, and authority wording remain unchanged.
 
 PM Lane 125 wraps the existing Local Review Checklist body content in a labeled body-controls container under its already-existing default-open disclosure. Jason can fold and reopen the review checklist predictably, while the panel stays inside Approval Prep Detail after Admission and Approval Contract; the existing disclosure, heading, checklist count, seven checklist items, checkbox behavior, clear button, candidate-scoped browser storage, export behavior, and authority wording remain unchanged.
+
+PM Lane 126 wraps the existing Local Approval Decision Draft body content in a labeled body-controls container under its already-existing default-open disclosure. Jason can fold and reopen the approval draft predictably, while the panel stays inside Approval Prep Detail after Local Review Checklist; the existing disclosure, heading, local-only pill, decision select, review notes textarea, local-only attestation checkbox, clear button, candidate-scoped browser storage, export behavior, and authority wording remain unchanged.
 
 This creates no approval record, SQL, schema migration, backend route, import mutation, issue, task, assignment, schedule, status, hosted proof, live task, work authorization, field release, work order, durable field record, production tracking write, product code, deployment, service, DNS, auth, ingress, secret, local storage key, new route, new export action, new export artifact, export contract widening, or production mutation.
 

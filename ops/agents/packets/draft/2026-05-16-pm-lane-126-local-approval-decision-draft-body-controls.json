@@ -1,0 +1,62 @@
+{
+  "packet_id": "2026-05-16-pm-lane-126",
+  "title": "Local Approval Decision Draft Body Controls",
+  "objective": "Wrap only the existing Local Approval Decision Draft body content on /pm-review/import-intake in a labeled body-controls container under its already-existing default-open disclosure, preserving all browser-local draft behavior and authority boundaries.",
+  "domain": "pm-domain",
+  "active_role": "Technical Repo Authority / PM Lane Coordinator / Local UI Ergonomics Executor",
+  "source_floor": {
+    "branch": "clean-main",
+    "commit": "91e8206e1a3b56f5a0eac7b75e690b1e5bf4a4dd",
+    "meaning": "Current local, origin, and Olares clean-main after PM Lane 125 local review checklist body controls."
+  },
+  "dependencies": [
+    "2026-05-16-pm-lane-125",
+    "2026-05-15-pm-lane-083",
+    "2026-05-16-pm-lane-100",
+    "2026-05-16-pm-lane-041c"
+  ],
+  "allowed_scope": [
+    "Wrap the existing Local Approval Decision Draft content in one labeled body container.",
+    "Preserve the existing Local approval decision draft disclosure, aria label, summary, heading, placement inside Approval Prep Detail, local-only pill, decision select, select options, review notes textarea, local-only attestation checkbox, clear button, candidate-scoped browser storage, export behavior, no persisted collapse state, and authority wording.",
+    "Add focused smoke coverage proving default-open state, visible approval draft body controls, collapse/reopen behavior, hidden/visible draft controls, three draft labels, no disclosure-state localStorage key, preserved local decision-select/notes/attestation behavior, preserved clear button behavior, and continued PM Lane 083 authority guard posture.",
+    "Use the read-only sidecar scout result only to recommend the next adjacent local body-control lane.",
+    "Update PM lane docs, status docs, packet, and handoff evidence."
+  ],
+  "not_allowed": [
+    "No backend endpoint change.",
+    "No new route or route target change.",
+    "No quick-jump, route-link, output action, output status, project packet, source freshness, intake snapshot, operating queue, import exception register, workflow gates, exception review detail, admission and approval contract, local review checklist, local executor closeout intake, local field readiness checklist, local field questions draft, field prep queue, field prep coverage snapshot, field prep conversation agenda, field observation scratchpad, approval-readiness, guardrails, command-center, meeting-readout, constraint radar, daily-review-script, start-here, output-selector, handoff-guide, workflow-map, or open-items behavior change.",
+    "No approval draft label, select option, textarea, attestation checkbox, clear button behavior, candidate-scoped storage key, dynamic text, or export behavior change.",
+    "No helper panel relocation or detail group relocation.",
+    "No new localStorage key and no persisted collapse state.",
+    "No new export action, export artifact, export contract widening, read seam, mutation seam, hosted parity claim, SQL, schema migration, Supabase write, approval persistence, import mutation, live service call, Render redeploy, Vercel promotion, service creation, DNS/auth/ingress/secret change, fixture replay, workbook macro execution, workbook writeback, work authorization, field release, issue creation, task creation, live work order creation, durable field record, production tracking write, assignment mutation, schedule mutation, status mutation, or autonomous AI business-state mutation."
+  ],
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/app/pm-review/import-intake/page.tsx",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/tests/browser-shell.pm-import-intake.smoke.spec.ts",
+    "C:/APEX Platform/apex-power-ops-platform/PROJECT_STATUS.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/APEX-PM-TEMP-POWER-DELIVERY-AND-ORCHESTRATION-PLAN-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/APEX-PM-STAKEHOLDER-TIME-PROTECTION-AND-ACCELERATION-LANE-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-16-pm-lane-126-local-approval-decision-draft-body-controls.json",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-16-pm-lane-126-local-approval-decision-draft-body-controls-handoff.md"
+  ],
+  "validation_steps": [
+    "corepack pnpm --filter @apex/operations-web typecheck",
+    "corepack pnpm --filter @apex/operations-web build",
+    "rg -n \"selected recipient|handoff created|assigned|scheduled|ready for execution|ready for field|field ready|field log of record|hosted parity proven|approval ready|packet admitted|daily report|tracking system|percent complete|released|cleared|approved|accepted|authorized|go/no-go passed|dispatch|dispatched|customer confirmed|JHA complete|LOTO approved|material released|issue created|task created|work order|production-ready\" apps/operations-web/app/pm-review/import-intake/page.tsx apps/operations-web/tests/browser-shell.pm-import-intake.smoke.spec.ts",
+    "corepack pnpm --dir apps/operations-web exec playwright test tests/browser-shell.pm-import-intake.smoke.spec.ts",
+    "corepack pnpm --dir apps/operations-web exec playwright test tests/browser-shell.pm-import-candidate.smoke.spec.ts tests/browser-shell.pm-import-admission-plan.smoke.spec.ts tests/browser-shell.pm-import-approval-readiness.smoke.spec.ts tests/browser-shell.pm-import-intake.smoke.spec.ts",
+    "& \"C:/APEX Platform/apex-power-ops-platform/.venv/Scripts/python.exe\" -c \"import json; json.load(open(r'C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-16-pm-lane-126-local-approval-decision-draft-body-controls.json', encoding='utf-8')); print('packet-json-ok')\"",
+    "git diff --check",
+    "git diff --cached --check"
+  ],
+  "validation_result": "PASS: operations-web typecheck passed; operations-web build passed with /pm-review/import-intake in static route output; authority wording scan returned no matches; focused PM import-intake Playwright smoke passed with 1 test using OPERATIONS_WEB_BROWSER_SMOKE_PORT=3037; four-route PM intake Playwright suite passed with 4 tests using OPERATIONS_WEB_BROWSER_SMOKE_PORT=3038; packet JSON parse returned packet-json-ok; git diff --check passed with line-ending warnings only.",
+  "delegation_status": "coordinator_executed_locally_with_read_only_sidecar_scout_for_next_lane_completed",
+  "sidecar_result": "Read-only sidecar scout recommended PM Lane 127 - Local Executor Closeout Intake Body Controls as the next adjacent local body-control lane. The scout made no edits, staged nothing, committed nothing, ran no browser or live service calls, and did not touch Supabase, Render, Vercel, Olares, or workbook files.",
+  "next_recommended_lane": "PM Lane 127 - Local Executor Closeout Intake Body Controls",
+  "sql_permission": false,
+  "ai_mutation_authority": "not_admitted",
+  "created_at": "2026-05-16",
+  "updated_at": "2026-05-16"
+}
