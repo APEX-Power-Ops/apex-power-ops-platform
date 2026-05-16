@@ -601,6 +601,8 @@ PM Lane 108 wraps the existing Approval Persistence Readiness panel in a default
 
 PM Lane 109 wraps the existing Current PM Next Actions and Guardrails footer in a default-open native disclosure control. Jason can fold the final next-action and not-allowed list after reviewing it, while the footer stays after Approval Persistence Readiness and the `#guardrails` anchor, both inner cards, list text, list order, not-allowed fallback rendering, route and quick-jump links, reads, and authority wording remain unchanged.
 
+PM Lane 110 wraps the existing Local PM Intake Command Center panel in a default-open native disclosure control. Jason can fold the top-of-page orchestration summary after reviewing it, while the panel stays under Intake Triage Panels and the `#pm-command-center` anchor, heading, browser-local pill, explanatory no-authority wording, four derived command-center cards, card order, hrefs, dynamic text, status pills, quick-jump target, reads, and authority wording remain unchanged.
+
 This creates no approval record, SQL, schema migration, backend route, import mutation, issue, task, assignment, schedule, status, hosted proof, live task, work authorization, field release, work order, durable field record, production tracking write, product code, deployment, service, DNS, auth, ingress, secret, local storage key, new route, new export action, new export artifact, export contract widening, or production mutation.
 
 The next persistence tranche is:
