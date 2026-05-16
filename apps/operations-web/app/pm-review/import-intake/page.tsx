@@ -4451,37 +4451,39 @@ export default function ProjectMinerIntakeWorkbenchPage() {
           <summary style={{ cursor: 'pointer' }}>
             <h2 style={{ display: 'inline', margin: 0 }}>Exception Review and PM Decisions</h2>
           </summary>
-          <div aria-label="Exception and PM decision detail cards" className="notes-grid" style={{ marginTop: '0.85rem' }}>
-            <article className="notes-card">
-              <h2>Exception Review</h2>
-              <div style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
-                {visibleWarnings(warnings).map((warning) => (
-                  <article key={`${warning.code}-${warning.message}`} className="card" style={{ padding: '0.85rem', boxShadow: 'none' }}>
-                    <div className="status-row" style={{ justifyContent: 'flex-start' }}>
-                      <span className={`status-pill ${statusTone(warning.severity)}`}>{formatLabel(warning.severity)}</span>
-                      <span className="status-pill status-backend-routed">{warning.code || 'WARNING'}</span>
-                    </div>
-                    <p style={{ margin: '0.55rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{warning.message || 'Review warning.'}</p>
-                  </article>
-                ))}
-                {!warnings.length ? <p style={{ color: 'var(--muted)' }}>No candidate warnings are currently reported.</p> : null}
-              </div>
-            </article>
-            <article className="notes-card accent-card">
-              <h2>PM Decisions</h2>
-              <div style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
-                {visibleDecisions(decisions).map((decision) => (
-                  <article key={decision.decision_id || decision.prompt} className="card" style={{ padding: '0.85rem', boxShadow: 'none' }}>
-                    <p style={{ margin: 0 }}>
-                      <strong>{formatLabel(decision.decision_id)}</strong>
-                    </p>
-                    <p style={{ margin: '0.45rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{decision.prompt || 'Decision prompt is waiting for the candidate.'}</p>
-                    <p style={{ margin: '0.35rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{decision.recommended_action || 'Review before future import.'}</p>
-                  </article>
-                ))}
-                {!decisions.length ? <p style={{ color: 'var(--muted)' }}>No PM decisions are currently reported.</p> : null}
-              </div>
-            </article>
+          <div aria-label="Exception review and PM decision detail controls">
+            <div aria-label="Exception and PM decision detail cards" className="notes-grid" style={{ marginTop: '0.85rem' }}>
+              <article className="notes-card">
+                <h2>Exception Review</h2>
+                <div style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
+                  {visibleWarnings(warnings).map((warning) => (
+                    <article key={`${warning.code}-${warning.message}`} className="card" style={{ padding: '0.85rem', boxShadow: 'none' }}>
+                      <div className="status-row" style={{ justifyContent: 'flex-start' }}>
+                        <span className={`status-pill ${statusTone(warning.severity)}`}>{formatLabel(warning.severity)}</span>
+                        <span className="status-pill status-backend-routed">{warning.code || 'WARNING'}</span>
+                      </div>
+                      <p style={{ margin: '0.55rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{warning.message || 'Review warning.'}</p>
+                    </article>
+                  ))}
+                  {!warnings.length ? <p style={{ color: 'var(--muted)' }}>No candidate warnings are currently reported.</p> : null}
+                </div>
+              </article>
+              <article className="notes-card accent-card">
+                <h2>PM Decisions</h2>
+                <div style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
+                  {visibleDecisions(decisions).map((decision) => (
+                    <article key={decision.decision_id || decision.prompt} className="card" style={{ padding: '0.85rem', boxShadow: 'none' }}>
+                      <p style={{ margin: 0 }}>
+                        <strong>{formatLabel(decision.decision_id)}</strong>
+                      </p>
+                      <p style={{ margin: '0.45rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{decision.prompt || 'Decision prompt is waiting for the candidate.'}</p>
+                      <p style={{ margin: '0.35rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{decision.recommended_action || 'Review before future import.'}</p>
+                    </article>
+                  ))}
+                  {!decisions.length ? <p style={{ color: 'var(--muted)' }}>No PM decisions are currently reported.</p> : null}
+                </div>
+              </article>
+            </div>
           </div>
         </details>
 

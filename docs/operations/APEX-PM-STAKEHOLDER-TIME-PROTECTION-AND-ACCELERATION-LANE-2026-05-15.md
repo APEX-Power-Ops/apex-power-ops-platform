@@ -77,7 +77,7 @@ Any extra step must justify itself by reducing risk, reducing future workload, o
 
 Immediate prioritized PM task lanes:
 
-1. Local PM intake workbench usability - active and local-current through PM Lane 122. The current safe product lane keeps reducing Jason's daily scan burden on `/pm-review/import-intake`; the next bounded local move is PM Lane 123, Local Exception Review And PM Decision Detail Body Controls.
+1. Local PM intake workbench usability - active and local-current through PM Lane 123. The current safe product lane keeps reducing Jason's daily scan burden on `/pm-review/import-intake`; the next bounded local move is PM Lane 124, Local Admission And Approval Contract Body Controls.
 2. Hosted PM intake parity - accepted green for the PM intake path and broader deployed mutation-seam reads through Desktop Codex execution of PM Lane 041A, PM Lane 041B, PM Lane 041C, and the PM Lane 076 dispatch binder. Vercel production is green, Render PM-intake reads are green, and the former Supabase pooler DSN blocker for DB-backed approval/schedule reads is cleared.
 3. Approval/import authority - designed but not admitted. Approval persistence, schema execution, and import mutation remain blocked until a later packet explicitly admits the narrow write path.
 
@@ -629,6 +629,8 @@ PM Lane 120 wraps the existing Local PM Operating Queue body content in a labele
 PM Lane 121 wraps the existing Local Import Exception Decision Register body content in a labeled body-controls container under its already-existing default-open disclosure. Jason can fold and reopen the exception-register scan predictably, while the panel stays inside Source and Exception Detail; the `#import-exception-register` anchor, existing disclosure, heading, browser-local pill, explanatory no-authority wording, covered/open/blocked summary count, six derived register cards, card order, dynamic detail/evidence text, status pills, quick-jump target, reads, export behavior, and authority wording remain unchanged.
 
 PM Lane 122 wraps the existing Workflow Gates body content in a labeled body-controls container under its already-existing default-open disclosure. Jason can fold and reopen the workflow-gate scan predictably, while the panel stays inside Source and Exception Detail after the exception register; the `#workflow-gates` anchor, existing disclosure, heading, read-only pill, six gate cards, card order, detail text, status pills, quick-jump target, reads, export references, and authority wording remain unchanged.
+
+PM Lane 123 wraps the existing Exception Review and PM Decisions body content in a labeled body-controls container under its already-existing default-open disclosure. Jason can fold and reopen the warning/decision scan predictably, while the panel stays inside Source and Exception Detail after Workflow Gates; the existing disclosure, heading, two detail cards, warning severity/code pills, PM decision prompt/recommended-action text, fallback empty states, reads, export behavior, and authority wording remain unchanged.
 
 This creates no approval record, SQL, schema migration, backend route, import mutation, issue, task, assignment, schedule, status, hosted proof, live task, work authorization, field release, work order, durable field record, production tracking write, product code, deployment, service, DNS, auth, ingress, secret, local storage key, new route, new export action, new export artifact, export contract widening, or production mutation.
 
