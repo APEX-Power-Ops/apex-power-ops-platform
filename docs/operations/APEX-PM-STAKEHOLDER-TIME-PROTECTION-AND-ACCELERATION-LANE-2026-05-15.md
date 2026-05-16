@@ -253,6 +253,12 @@ The current local review-prep tranche is:
 
 PM Lane 046 adds a candidate-scoped browser-local checklist to `/pm-review/import-intake` for source freshness, warning review, PM decision capture, admission no-go review, approval storage understanding, hosted-parity awareness, and write-guardrail confirmation. The checklist appears in the exported Markdown PM brief so Jason or an executor can see what was reviewed without converting the screen into approval, persistence, import, assignment, schedule, status, or production state.
 
+The current local decision-prep tranche is:
+
+`Project Miner PM Intake Approval-Decision Draft`
+
+PM Lane 047 adds a candidate-scoped browser-local approval-decision draft to `/pm-review/import-intake`. It uses the permitted decisions from the read-only approval contract, captures PM review notes, requires a local-only attestation, and includes the result in the Markdown PM brief. This reduces future packet relay work without creating an approval record, persisting data, importing rows, assigning work, scheduling, changing status, or mutating production state.
+
 The next persistence tranche is:
 
 `Import Candidate Approval Persistence Schema And Adapter Admission`

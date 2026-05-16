@@ -141,6 +141,12 @@ type ReviewChecklistItem = {
   detail: string
 }
 
+type ApprovalDecisionDraft = {
+  decision: string
+  review_notes: string
+  local_attestation: boolean
+}
+
 const { useCallback, useEffect, useMemo, useState } = React
 
 const API_BASE =
@@ -150,6 +156,11 @@ const API_BASE =
 
 const READS_BASE = `${API_BASE}/reads`
 const PM_ACTOR = { actor_id: 'pm-001', actor_role: 'pm', project_scope: ['proj-001'] }
+const EMPTY_APPROVAL_DRAFT: ApprovalDecisionDraft = {
+  decision: '',
+  review_notes: '',
+  local_attestation: false,
+}
 const REVIEW_CHECKLIST_ITEMS: ReviewChecklistItem[] = [
   {
     id: 'source_freshness_reviewed',
@@ -265,12 +276,22 @@ function markdownList(items: string[]) {
   return items.length ? items.map((item) => `- ${item}`).join('\n') : '- none reported'
 }
 
+function formatMultilineMarkdown(value: string) {
+  const trimmed = value.trim()
+  return trimmed ? trimmed.replace(/\r\n/g, '\n').replace(/\n/g, '\n  ') : 'none entered'
+}
+
+function hasApprovalDraftContent(draft: ApprovalDecisionDraft) {
+  return Boolean(draft.decision || draft.review_notes.trim() || draft.local_attestation)
+}
+
 function buildIntakeBrief(
   packet: IntakeWorkbenchPacket,
   workflowGates: Array<{ title: string; status: string; detail: string }>,
   notAllowed: string[],
   futureRoute: string,
   reviewChecks: Record<string, boolean>,
+  approvalDraft: ApprovalDecisionDraft,
 ) {
   const candidate = packet.candidate
   const admissionPlan = packet.admissionPlan
@@ -288,6 +309,7 @@ function buildIntakeBrief(
   const gateLines = workflowGates.map((gate) => `${gate.title}: ${formatLabel(gate.status)} - ${gate.detail}`)
   const checklistLines = REVIEW_CHECKLIST_ITEMS.map((item) => `${reviewChecks[item.id] ? '[x]' : '[ ]'} ${item.label}: ${item.detail}`)
   const checkedCount = REVIEW_CHECKLIST_ITEMS.filter((item) => reviewChecks[item.id]).length
+  const draftPresent = hasApprovalDraftContent(approvalDraft)
 
   return [
     '# Project Miner PM Intake Brief',
@@ -333,6 +355,16 @@ function buildIntakeBrief(
     '',
     markdownList(checklistLines),
     '',
+    '## Local Approval Decision Draft',
+    '',
+    `Draft present: ${draftPresent ? 'yes' : 'no'}.`,
+    '',
+    'This browser-local decision draft is review prep only. It is not approval, persistence, import, assignment, schedule, status, or production state.',
+    '',
+    `- Decision draft: ${approvalDraft.decision || 'none selected'}`,
+    `- Local-only attestation checked: ${approvalDraft.local_attestation ? 'yes' : 'no'}`,
+    `- Review notes draft: ${formatMultilineMarkdown(approvalDraft.review_notes)}`,
+    '',
     '## Admission And Approval',
     '',
     `- Admission plan: ${admissionPlan.admission_plan_id || 'unknown'}`,
@@ -370,6 +402,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
   const [online, setOnline] = useState(true)
   const [briefStatus, setBriefStatus] = useState('')
   const [reviewChecks, setReviewChecks] = useState<Record<string, boolean>>({})
+  const [approvalDraft, setApprovalDraft] = useState<ApprovalDecisionDraft>(EMPTY_APPROVAL_DRAFT)
 
   const refresh = useCallback(async () => {
     try {
@@ -398,6 +431,8 @@ export default function ProjectMinerIntakeWorkbenchPage() {
   const noGoChecks = admissionPlan?.no_go_checks || []
   const targetRows = admissionPlan?.target_row_plan || {}
   const reviewChecklistKey = candidate?.candidate_id ? `pm-import-intake-review-checklist:${candidate.candidate_id}` : null
+  const approvalDraftKey = candidate?.candidate_id ? `pm-import-intake-approval-draft:${candidate.candidate_id}` : null
+  const permittedDecisions = approvalContract?.approval_record_contract?.permitted_decisions || []
   const notAllowed = useMemo(
     () =>
       uniqueItems(
@@ -447,6 +482,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
     },
   ]
   const checklistCheckedCount = REVIEW_CHECKLIST_ITEMS.filter((item) => reviewChecks[item.id]).length
+  const approvalDraftHasContent = hasApprovalDraftContent(approvalDraft)
 
   useEffect(() => {
     if (!reviewChecklistKey || typeof window === 'undefined') {
@@ -460,6 +496,19 @@ export default function ProjectMinerIntakeWorkbenchPage() {
       setReviewChecks({})
     }
   }, [reviewChecklistKey])
+
+  useEffect(() => {
+    if (!approvalDraftKey || typeof window === 'undefined') {
+      return
+    }
+
+    try {
+      const stored = window.localStorage.getItem(approvalDraftKey)
+      setApprovalDraft(stored ? { ...EMPTY_APPROVAL_DRAFT, ...(JSON.parse(stored) as Partial<ApprovalDecisionDraft>) } : EMPTY_APPROVAL_DRAFT)
+    } catch {
+      setApprovalDraft(EMPTY_APPROVAL_DRAFT)
+    }
+  }, [approvalDraftKey])
 
   function updateReviewCheck(itemId: string, checked: boolean) {
     const next = { ...reviewChecks, [itemId]: checked }
@@ -476,12 +525,27 @@ export default function ProjectMinerIntakeWorkbenchPage() {
     }
   }
 
+  function updateApprovalDraft(nextPartial: Partial<ApprovalDecisionDraft>) {
+    const next = { ...approvalDraft, ...nextPartial }
+    setApprovalDraft(next)
+    if (approvalDraftKey && typeof window !== 'undefined') {
+      window.localStorage.setItem(approvalDraftKey, JSON.stringify(next))
+    }
+  }
+
+  function clearApprovalDraft() {
+    setApprovalDraft(EMPTY_APPROVAL_DRAFT)
+    if (approvalDraftKey && typeof window !== 'undefined') {
+      window.localStorage.removeItem(approvalDraftKey)
+    }
+  }
+
   function exportPmBrief() {
     if (!packet) {
       return
     }
 
-    downloadTextFile(briefFileName(candidate), buildIntakeBrief(packet, workflowGates, notAllowed, futureRoute, reviewChecks), 'text/markdown')
+    downloadTextFile(briefFileName(candidate), buildIntakeBrief(packet, workflowGates, notAllowed, futureRoute, reviewChecks, approvalDraft), 'text/markdown')
     setBriefStatus(`PM brief prepared from ${candidate?.candidate_id || 'the current intake packet'} without a server write.`)
   }
 
@@ -775,6 +839,66 @@ export default function ProjectMinerIntakeWorkbenchPage() {
               Clear checklist
             </button>
             <span style={{ color: 'var(--muted)', lineHeight: 1.55 }}>Retained in this browser for the current candidate only.</span>
+          </div>
+        </section>
+
+        <section aria-label="Local approval decision draft" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
+          <div className="status-row">
+            <h2 style={{ margin: 0 }}>Local Approval Decision Draft</h2>
+            <span className="status-pill status-awaiting-values">local only</span>
+          </div>
+          <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+            Draft the future approval decision and notes for the PM brief only. This does not approve, persist, import, assign, schedule, change status, or mutate production state.
+          </p>
+          <div className="notes-grid" style={{ marginTop: '0.85rem' }}>
+            <label className="card" style={{ display: 'grid', gap: '0.45rem', padding: '0.85rem', boxShadow: 'none' }}>
+              <strong>Decision draft</strong>
+              <select
+                value={approvalDraft.decision}
+                onChange={(event) => updateApprovalDraft({ decision: event.target.value })}
+                disabled={!permittedDecisions.length}
+                style={{ width: '100%', minHeight: '2.5rem' }}
+              >
+                <option value="">Select local draft decision</option>
+                {permittedDecisions.map((decision) => (
+                  <option key={decision} value={decision}>
+                    {formatLabel(decision)}
+                  </option>
+                ))}
+              </select>
+              <span style={{ color: 'var(--muted)', lineHeight: 1.5 }}>Allowed by the read-only approval contract, but not persisted by this screen.</span>
+            </label>
+            <label className="card" style={{ display: 'grid', gap: '0.45rem', padding: '0.85rem', boxShadow: 'none' }}>
+              <strong>Review notes draft</strong>
+              <textarea
+                value={approvalDraft.review_notes}
+                onChange={(event) => updateApprovalDraft({ review_notes: event.target.value })}
+                rows={5}
+                placeholder="Summarize reviewed exceptions, assumptions, and open questions for the future approval packet."
+                style={{ width: '100%', resize: 'vertical', minHeight: '8rem' }}
+              />
+              <span style={{ color: 'var(--muted)', lineHeight: 1.5 }}>Retained in this browser for the current candidate only.</span>
+            </label>
+          </div>
+          <label className="card" style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0.75rem', padding: '0.85rem', boxShadow: 'none', cursor: 'pointer', marginTop: '0.85rem' }}>
+            <input
+              type="checkbox"
+              checked={approvalDraft.local_attestation}
+              onChange={(event) => updateApprovalDraft({ local_attestation: event.target.checked })}
+              style={{ marginTop: '0.25rem' }}
+            />
+            <span>
+              <strong>Local-only draft attestation</strong>
+              <span style={{ display: 'block', marginTop: '0.35rem', color: 'var(--muted)', lineHeight: 1.5 }}>
+                I understand this draft is local review prep and a later admitted packet must own any approval persistence or import mutation.
+              </span>
+            </span>
+          </label>
+          <div className="pm-review-link-row pm-review-link-row-start" style={{ alignItems: 'center' }}>
+            <button className="btn btn-outline" onClick={clearApprovalDraft} disabled={!approvalDraftHasContent}>
+              Clear decision draft
+            </button>
+            <span style={{ color: 'var(--muted)', lineHeight: 1.55 }}>Included in the PM brief only when exported from this browser.</span>
           </div>
         </section>
 

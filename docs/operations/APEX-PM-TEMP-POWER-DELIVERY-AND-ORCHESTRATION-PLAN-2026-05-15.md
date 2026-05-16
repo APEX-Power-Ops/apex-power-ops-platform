@@ -327,6 +327,8 @@ PM Lane 045 adds a local-only Markdown PM intake brief export to `/pm-review/imp
 
 PM Lane 046 adds a browser-local PM review checklist to `/pm-review/import-intake` and folds its checked state into the Markdown PM intake brief. This creates a lightweight day-to-day review-prep trail for source freshness, warnings, PM decisions, no-go checks, approval-storage understanding, hosted parity, and write guardrails while still avoiding hosted proof, backend routes, approval persistence, import mutation, assignment, schedule, status, or production writes.
 
+PM Lane 047 adds a browser-local approval-decision draft to `/pm-review/import-intake` and folds its decision value, review notes, and local-only attestation into the Markdown PM intake brief. This gives the PM lane a practical future-packet context artifact while still avoiding hosted proof, backend routes, approval persistence, import mutation, assignment, schedule, status, or production writes.
+
 ## Capability-Gap Register
 
 Current known gaps:

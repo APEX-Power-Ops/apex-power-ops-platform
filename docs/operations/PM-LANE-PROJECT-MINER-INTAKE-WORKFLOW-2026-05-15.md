@@ -359,6 +359,8 @@ PM Lane 045 adds a local-only `Export PM Brief` action to `/pm-review/import-int
 
 PM Lane 046 adds a browser-local `Local Review Checklist` to `/pm-review/import-intake`. The checklist is candidate-scoped in browser storage and covers source freshness, warning review, PM decision capture, admission no-go review, approval storage understanding, hosted-parity awareness, and write-guardrail confirmation. Checked state is included in the local Markdown PM brief so a reviewer or executor can see what was reviewed without turning the checklist into approval, persistence, import, assignment, schedule, status, or production state.
 
+PM Lane 047 adds a browser-local `Local Approval Decision Draft` to `/pm-review/import-intake`. The draft is candidate-scoped in browser storage and lets the PM choose a local decision value from the read-only approval contract, write review notes, and check a local-only attestation. The draft is included in the local Markdown PM brief for future packet context, but it is not approval, persistence, import, assignment, schedule, status, or production state.
+
 ## Environment Overrides
 
 Set this when using a different planning folder:
