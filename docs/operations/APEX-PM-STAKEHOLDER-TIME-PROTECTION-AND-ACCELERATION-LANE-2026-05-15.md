@@ -383,6 +383,14 @@ PM Lane 063 adds a browser-local `Local PM Intake Snapshot` and `Export PM Intak
 
 This still creates no approval record, SQL, schema migration, backend route, import mutation, issue, task, assignment, schedule, status, hosted proof, live task, work authorization, field release, work order, durable field record, production tracking write, local storage key, or production mutation.
 
+The current workbench navigation tranche is:
+
+`Project Miner Local PM Intake Quick Jump Rail`
+
+PM Lane 064 adds a browser-local `PM Intake Quick Jump Rail` to `/pm-review/import-intake`. The rail links to the snapshot, operating queue, exception register, project/source packet, workflow gates, approval readiness, field-prep, executor closeout, and guardrails sections so Jason can move through the current workbench without losing time to page hunting.
+
+This still creates no approval record, SQL, schema migration, backend route, import mutation, issue, task, assignment, schedule, status, hosted proof, live task, work authorization, field release, work order, durable field record, production tracking write, local storage key, export contract, or production mutation.
+
 The next persistence tranche is:
 
 `Import Candidate Approval Persistence Schema And Adapter Implementation`

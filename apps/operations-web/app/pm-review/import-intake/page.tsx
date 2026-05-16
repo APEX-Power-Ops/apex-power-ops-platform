@@ -233,6 +233,13 @@ type PmIntakeSnapshotItem = {
   evidence: string
 }
 
+type QuickJumpItem = {
+  id: string
+  label: string
+  href: string
+  detail: string
+}
+
 const { useCallback, useEffect, useMemo, useState } = React
 
 const API_BASE =
@@ -263,6 +270,62 @@ const EMPTY_FIELD_OBSERVATION_SCRATCHPAD: FieldObservationScratchpad = {
   material_equipment_observations: '',
   open_questions_pm_followup: '',
 }
+const PM_INTAKE_QUICK_JUMPS: QuickJumpItem[] = [
+  {
+    id: 'snapshot',
+    label: 'Snapshot',
+    href: '#pm-intake-snapshot',
+    detail: 'Top scan view.',
+  },
+  {
+    id: 'operating-queue',
+    label: 'Operating Queue',
+    href: '#pm-operating-queue',
+    detail: 'Current local PM moves.',
+  },
+  {
+    id: 'exception-register',
+    label: 'Exception Register',
+    href: '#import-exception-register',
+    detail: 'Warning and decision synthesis.',
+  },
+  {
+    id: 'project-packet',
+    label: 'Project Packet',
+    href: '#project-packet',
+    detail: 'Candidate and source fingerprint.',
+  },
+  {
+    id: 'workflow-gates',
+    label: 'Workflow Gates',
+    href: '#workflow-gates',
+    detail: 'Read-only gate posture.',
+  },
+  {
+    id: 'approval-readiness',
+    label: 'Approval Readiness',
+    href: '#approval-readiness',
+    detail: 'Future persistence blockers.',
+  },
+  {
+    id: 'field-prep',
+    label: 'Field Prep',
+    href: '#field-prep',
+    detail: 'Local field-prep context.',
+  },
+  {
+    id: 'executor-closeout',
+    label: 'Executor Closeout',
+    href: '#executor-closeout',
+    detail: 'Returned executor evidence.',
+  },
+  {
+    id: 'guardrails',
+    label: 'Guardrails',
+    href: '#guardrails',
+    detail: 'Current boundaries.',
+  },
+]
 const REVIEW_CHECKLIST_ITEMS: ReviewChecklistItem[] = [
   {
     id: 'source_freshness_reviewed',
@@ -2828,7 +2891,33 @@ export default function ProjectMinerIntakeWorkbenchPage() {
           </article>
         </section>
 
-        <section aria-label="Local PM intake snapshot" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
+        <section aria-label="PM intake quick jump rail" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
+          <div className="status-row">
+            <h2 style={{ margin: 0 }}>PM Intake Quick Jump Rail</h2>
+            <span className="status-pill status-awaiting-values">browser-local</span>
+          </div>
+          <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+            Fast local navigation for the current intake workbench. These links do not approve, persist, import, assign, schedule, change status, create tasks, create issues, call live services, or mutate production state.
+          </p>
+          <nav
+            aria-label="PM intake section links"
+            style={{ display: 'grid', gap: '0.65rem', gridTemplateColumns: 'repeat(auto-fit, minmax(12rem, 1fr))', marginTop: '0.85rem' }}
+          >
+            {PM_INTAKE_QUICK_JUMPS.map((item) => (
+              <a
+                key={item.id}
+                className="btn btn-outline"
+                href={item.href}
+                style={{ alignItems: 'start', display: 'grid', gap: '0.25rem', height: '100%', justifyContent: 'stretch', textAlign: 'left', whiteSpace: 'normal' }}
+              >
+                <strong>{item.label}</strong>
+                <span style={{ color: 'var(--muted)', fontSize: '0.86rem', lineHeight: 1.35 }}>{item.detail}</span>
+              </a>
+            ))}
+          </nav>
+        </section>
+
+        <section id="pm-intake-snapshot" aria-label="Local PM intake snapshot" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
           <div className="status-row">
             <h2 style={{ margin: 0 }}>Local PM Intake Snapshot</h2>
             <span className="status-pill status-awaiting-values">browser-local</span>
@@ -2857,7 +2946,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
           </div>
         </section>
 
-        <section aria-label="Local PM operating queue" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
+        <section id="pm-operating-queue" aria-label="Local PM operating queue" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
           <div className="status-row">
             <h2 style={{ margin: 0 }}>Local PM Operating Queue</h2>
             <span className="status-pill status-awaiting-values">browser-local</span>
@@ -2885,7 +2974,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
           </div>
         </section>
 
-        <section className="notes-grid" style={{ marginBottom: '1rem' }}>
+        <section id="project-packet" aria-label="Project packet and source freshness" className="notes-grid" style={{ marginBottom: '1rem' }}>
           <article className="notes-card">
             <h2>Project Packet</h2>
             <dl className="contract-panel">
@@ -2930,7 +3019,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
           </article>
         </section>
 
-        <section aria-label="Local import exception decision register" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
+        <section id="import-exception-register" aria-label="Local import exception decision register" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
           <div className="status-row">
             <h2 style={{ margin: 0 }}>Local Import Exception Decision Register</h2>
             <span className="status-pill status-awaiting-values">browser-local</span>
@@ -2959,7 +3048,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
           </div>
         </section>
 
-        <section aria-label="Workflow gates" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
+        <section id="workflow-gates" aria-label="Workflow gates" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
           <div className="status-row">
             <h2 style={{ margin: 0 }}>Workflow Gates</h2>
             <span className="status-pill status-awaiting-values">read-only</span>
@@ -3161,7 +3250,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
           </div>
         </section>
 
-        <section aria-label="Local executor closeout intake" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
+        <section id="executor-closeout" aria-label="Local executor closeout intake" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
           <div className="status-row">
             <h2 style={{ margin: 0 }}>Local Executor Closeout Intake</h2>
             <span className="status-pill status-awaiting-values">
@@ -3307,7 +3396,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
           </div>
         </section>
 
-        <section aria-label="Local field prep queue" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
+        <section id="field-prep" aria-label="Local field prep queue" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
           <div className="status-row">
             <h2 style={{ margin: 0 }}>Local Field Prep Queue</h2>
             <span className="status-pill status-awaiting-values">browser-local</span>
@@ -3469,7 +3558,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
           </div>
         </section>
 
-        <section aria-label="Approval persistence readiness gates" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
+        <section id="approval-readiness" aria-label="Approval persistence readiness gates" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
           <div className="status-row">
             <h2 style={{ margin: 0 }}>Approval Persistence Readiness</h2>
             <span className="status-pill status-awaiting-values">
@@ -3499,7 +3588,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
           </div>
         </section>
 
-        <section aria-label="Current PM next actions and guardrails" className="notes-grid">
+        <section id="guardrails" aria-label="Current PM next actions and guardrails" className="notes-grid">
           <article className="notes-card">
             <h2>Current PM Next Actions</h2>
             <ol>

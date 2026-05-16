@@ -217,9 +217,41 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(page.getByText(/persist approval record/i)).toBeVisible()
   await expect(page.getByText(/run schema migration/i)).toBeVisible()
   await expect(page.getByText(/import project rows/i)).toBeVisible()
-  await expect(page.getByRole('link', { name: /Import candidate/i })).toHaveAttribute('href', '/pm-review/import-candidate')
-  await expect(page.getByRole('link', { name: /Admission plan/i })).toHaveAttribute('href', '/pm-review/import-admission-plan')
-  await expect(page.getByRole('link', { name: /Approval readiness/i })).toHaveAttribute('href', '/pm-review/import-approval-readiness')
+  await expect(page.getByRole('link', { name: 'Import candidate', exact: true })).toHaveAttribute('href', '/pm-review/import-candidate')
+  await expect(page.getByRole('link', { name: 'Admission plan', exact: true })).toHaveAttribute('href', '/pm-review/import-admission-plan')
+  await expect(page.getByRole('link', { name: 'Approval readiness', exact: true })).toHaveAttribute('href', '/pm-review/import-approval-readiness')
+  const quickJumpRail = page.getByLabel('PM intake quick jump rail')
+  await expect(quickJumpRail.getByRole('heading', { name: /PM Intake Quick Jump Rail/i })).toBeVisible()
+  await expect(quickJumpRail.getByText('browser-local')).toBeVisible()
+  await expect(quickJumpRail.getByText(/Fast local navigation for the current intake workbench/i)).toBeVisible()
+  await expect(quickJumpRail.getByText(/do not approve, persist, import, assign, schedule, change status, create tasks, create issues, call live services, or mutate production state/i)).toBeVisible()
+  await expect(quickJumpRail.getByRole('link', { name: /Snapshot/i })).toHaveAttribute('href', '#pm-intake-snapshot')
+  await expect(quickJumpRail.getByRole('link', { name: /Operating Queue/i })).toHaveAttribute('href', '#pm-operating-queue')
+  await expect(quickJumpRail.getByRole('link', { name: /Exception Register/i })).toHaveAttribute('href', '#import-exception-register')
+  await expect(quickJumpRail.getByRole('link', { name: /Project Packet/i })).toHaveAttribute('href', '#project-packet')
+  await expect(quickJumpRail.getByRole('link', { name: /Workflow Gates/i })).toHaveAttribute('href', '#workflow-gates')
+  await expect(quickJumpRail.getByRole('link', { name: /Approval Readiness/i })).toHaveAttribute('href', '#approval-readiness')
+  await expect(quickJumpRail.getByRole('link', { name: /Field Prep/i })).toHaveAttribute('href', '#field-prep')
+  await expect(quickJumpRail.getByRole('link', { name: /Executor Closeout/i })).toHaveAttribute('href', '#executor-closeout')
+  await expect(quickJumpRail.getByRole('link', { name: /Guardrails/i })).toHaveAttribute('href', '#guardrails')
+  for (const target of [
+    '#pm-intake-snapshot',
+    '#pm-operating-queue',
+    '#import-exception-register',
+    '#project-packet',
+    '#workflow-gates',
+    '#approval-readiness',
+    '#field-prep',
+    '#executor-closeout',
+    '#guardrails',
+  ]) {
+    await expect(page.locator(target)).toHaveCount(1)
+  }
+  await quickJumpRail.getByRole('link', { name: /Snapshot/i }).click()
+  await expect(page).toHaveURL(/#pm-intake-snapshot$/)
+  await quickJumpRail.getByRole('link', { name: /Guardrails/i }).click()
+  await expect(page).toHaveURL(/#guardrails$/)
+  await expect(page.getByLabel('Project packet and source freshness').getByRole('heading', { name: /Project Packet/i })).toBeVisible()
   const pmIntakeSnapshot = page.getByLabel('Local PM intake snapshot')
   await expect(pmIntakeSnapshot.getByRole('heading', { name: /Local PM Intake Snapshot/i })).toBeVisible()
   await expect(pmIntakeSnapshot.getByText('browser-local')).toBeVisible()
@@ -361,6 +393,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
     fieldPrepPacket: window.localStorage.getItem('pm-import-intake-field-prep-packet:pm-import-candidate-miner-temp-power'),
     importExceptionRegister: window.localStorage.getItem('pm-import-intake-import-exception-register:pm-import-candidate-miner-temp-power'),
     pmIntakeSnapshot: window.localStorage.getItem('pm-import-intake-pm-intake-snapshot:pm-import-candidate-miner-temp-power'),
+    quickJumpRail: window.localStorage.getItem('pm-import-intake-quick-jump-rail:pm-import-candidate-miner-temp-power'),
   }))
   expect(localState.checklist).toContain('source_freshness_reviewed')
   expect(localState.checklist).toContain('exceptions_reviewed')
@@ -379,6 +412,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   expect(localState.fieldPrepPacket).toBeNull()
   expect(localState.importExceptionRegister).toBeNull()
   expect(localState.pmIntakeSnapshot).toBeNull()
+  expect(localState.quickJumpRail).toBeNull()
   const readiness = page.getByLabel('Approval persistence readiness gates')
   await expect(readiness.getByRole('heading', { name: /Approval Persistence Readiness/i })).toBeVisible()
   await expect(readiness.getByText('2 of 6 ready')).toBeVisible()
@@ -963,8 +997,9 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
     fieldPrepAgenda: window.localStorage.getItem('pm-import-intake-field-prep-agenda:pm-import-candidate-miner-temp-power'),
     fieldPrepPacket: window.localStorage.getItem('pm-import-intake-field-prep-packet:pm-import-candidate-miner-temp-power'),
     importExceptionRegister: window.localStorage.getItem('pm-import-intake-import-exception-register:pm-import-candidate-miner-temp-power'),
+    quickJumpRail: window.localStorage.getItem('pm-import-intake-quick-jump-rail:pm-import-candidate-miner-temp-power'),
   }))
-  expect(resetLocalState).toEqual({ checklist: null, draft: null, closeout: null, fieldReadiness: null, fieldQuestions: null, fieldObservations: null, pmIntakeSnapshot: null, fieldPrepCoverage: null, fieldPrepAgenda: null, fieldPrepPacket: null, importExceptionRegister: null })
+  expect(resetLocalState).toEqual({ checklist: null, draft: null, closeout: null, fieldReadiness: null, fieldQuestions: null, fieldObservations: null, pmIntakeSnapshot: null, fieldPrepCoverage: null, fieldPrepAgenda: null, fieldPrepPacket: null, importExceptionRegister: null, quickJumpRail: null })
   await expect(page.getByRole('button', { name: /Approve/i })).toHaveCount(0)
   await expect(page.getByRole('button', { name: /Persist/i })).toHaveCount(0)
   await expect(page.getByRole('button', { name: /Submit/i })).toHaveCount(0)

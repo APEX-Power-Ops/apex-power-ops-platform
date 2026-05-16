@@ -421,6 +421,10 @@ PM Lane 063 adds a browser-local `Local PM Intake Snapshot` and `Export PM Intak
 
 This snapshot is browser-local review synthesis only and adds no local storage key. It does not create issues, create tasks, create live work orders, approve, persist, import, create schema, run SQL, write Supabase rows, call live services, run workbook macros, write workbook cells, assign work, change status, mutate schedules, create durable field records, write production tracking rows, claim hosted parity, or admit autonomous AI business-state action.
 
+PM Lane 064 adds a browser-local `PM Intake Quick Jump Rail` to `/pm-review/import-intake`. It links directly to the existing snapshot, operating queue, exception register, project/source packet, workflow gates, approval readiness, field-prep, executor closeout, and guardrails sections so the daily workbench can be used without reconstructing the vertical page map.
+
+This rail is browser-local navigation only and adds no local storage key or export contract. It does not create issues, create tasks, create live work orders, approve, persist, import, create schema, run SQL, write Supabase rows, call live services, run workbook macros, write workbook cells, assign work, change status, mutate schedules, create durable field records, write production tracking rows, claim hosted parity, or admit autonomous AI business-state action.
+
 ## Environment Overrides
 
 Set this when using a different planning folder:
