@@ -260,6 +260,16 @@ type WorkflowMapItem = {
   detail: string
 }
 
+type OpenItemsStatus = 'open' | 'blocked' | 'context'
+
+type OpenItemsLensItem = {
+  id: string
+  title: string
+  status: OpenItemsStatus
+  href: string
+  detail: string
+}
+
 const { useCallback, useEffect, useMemo, useState } = React
 
 const API_BASE =
@@ -302,6 +312,12 @@ const PM_INTAKE_QUICK_JUMPS: QuickJumpItem[] = [
     label: 'Workflow Map',
     href: '#pm-workflow-map',
     detail: 'Current intake path.',
+  },
+  {
+    id: 'open-items',
+    label: 'Open Items',
+    href: '#pm-open-items',
+    detail: 'Attention and blockers.',
   },
   {
     id: 'snapshot',
@@ -571,6 +587,12 @@ function startHereTone(status: StartHereStatus) {
 
 function workflowMapTone(status: WorkflowMapStatus) {
   if (status === 'source' || status === 'context' || status === 'prep' || status === 'audit') return 'status-configured'
+  if (status === 'blocked') return 'status-deferred'
+  return 'status-awaiting-values'
+}
+
+function openItemsTone(status: OpenItemsStatus) {
+  if (status === 'context') return 'status-configured'
   if (status === 'blocked') return 'status-deferred'
   return 'status-awaiting-values'
 }
@@ -1302,6 +1324,74 @@ function buildPmIntakeWorkflowMap(
     },
     {
       id: 'project-import-boundary',
+      title: 'Project import boundary',
+      status: 'blocked',
+      href: '#guardrails',
+      detail: `Project import remains ${formatLabel(admissionAuthority)} for project, workpackage, task, apparatus, assignment, schedule, and status rows.`,
+    },
+  ]
+}
+
+function buildPmIntakeOpenItemsLens(
+  importExceptionRegister: ImportExceptionRegisterItem[],
+  approvalDraft: ApprovalDecisionDraft,
+  fieldPrepQueue: OperatingQueueItem[],
+  closeoutChecks: Record<string, boolean>,
+  persistenceReadinessGates: ReadinessGate[],
+  admissionPlan: AdmissionPlan | undefined,
+): OpenItemsLensItem[] {
+  const exceptionCount = importExceptionRegisterCounts(importExceptionRegister)
+  const decisionDraftComplete = Boolean(approvalDraft.decision && approvalDraft.review_notes.trim() && approvalDraft.local_attestation)
+  const fieldPrepNextCount = fieldPrepQueue.filter((item) => item.status === 'next').length
+  const fieldPrepBlockedCount = fieldPrepQueue.filter((item) => item.status === 'blocked').length
+  const closeoutCheckedCount = CLOSEOUT_CHECKLIST_ITEMS.filter((item) => closeoutChecks[item.id]).length
+  const blockedPersistenceGateCount = persistenceReadinessGates.filter((gate) => gate.status === 'blocked').length
+  const admissionAuthority = admissionPlan?.mutation_authority || 'not_admitted'
+
+  return [
+    {
+      id: 'exception-review-open-items',
+      title: 'Exception review',
+      status: exceptionCount.open ? 'open' : exceptionCount.blocked ? 'blocked' : 'context',
+      href: '#import-exception-register',
+      detail: exceptionCount.open
+        ? `${exceptionCount.open} local exception item(s) still need attention; ${exceptionCount.blocked} future boundary item(s) remain blocked.`
+        : exceptionCount.blocked
+          ? `Local exception attention is covered, but ${exceptionCount.blocked} future boundary item(s) remain blocked.`
+          : 'No local exception items are currently open.',
+    },
+    {
+      id: 'decision-draft-open-items',
+      title: 'Decision draft',
+      status: decisionDraftComplete ? 'context' : 'open',
+      href: '#pm-operating-queue',
+      detail: decisionDraftComplete
+        ? 'Local decision value, review notes, and local-only attestation are present.'
+        : 'Decision value, review notes, and local-only attestation still need local draft context.',
+    },
+    {
+      id: 'field-prep-open-items',
+      title: 'Field prep',
+      status: fieldPrepNextCount ? 'open' : fieldPrepBlockedCount ? 'blocked' : 'context',
+      href: '#field-prep',
+      detail: `${fieldPrepNextCount} field-prep item(s) are next; ${fieldPrepBlockedCount} field-prep item(s) are blocked.`,
+    },
+    {
+      id: 'executor-closeout-open-items',
+      title: 'Executor closeout evidence',
+      status: closeoutCheckedCount === CLOSEOUT_CHECKLIST_ITEMS.length ? 'context' : 'open',
+      href: '#executor-closeout',
+      detail: `${closeoutCheckedCount} of ${CLOSEOUT_CHECKLIST_ITEMS.length} local closeout evidence checks are marked.`,
+    },
+    {
+      id: 'approval-persistence-open-items',
+      title: 'Approval persistence boundary',
+      status: 'blocked',
+      href: '#approval-readiness',
+      detail: `${blockedPersistenceGateCount} of ${persistenceReadinessGates.length} approval-persistence gates remain blocked until a later packet admits that path.`,
+    },
+    {
+      id: 'project-import-open-items',
       title: 'Project import boundary',
       status: 'blocked',
       href: '#guardrails',
@@ -2634,6 +2724,10 @@ export default function ProjectMinerIntakeWorkbenchPage() {
     () => buildPmIntakeWorkflowMap(candidate, importExceptionRegister, approvalDraft, fieldPrepQueue, closeoutChecks, persistenceReadinessGates, admissionPlan),
     [candidate, importExceptionRegister, approvalDraft, fieldPrepQueue, closeoutChecks, persistenceReadinessGates, admissionPlan],
   )
+  const pmIntakeOpenItems = useMemo(
+    () => buildPmIntakeOpenItemsLens(importExceptionRegister, approvalDraft, fieldPrepQueue, closeoutChecks, persistenceReadinessGates, admissionPlan),
+    [importExceptionRegister, approvalDraft, fieldPrepQueue, closeoutChecks, persistenceReadinessGates, admissionPlan],
+  )
   const completeQueueCount = operatingQueue.filter((item) => item.status === 'complete').length
   const nextQueueCount = operatingQueue.filter((item) => item.status === 'next').length
   const blockedQueueCount = operatingQueue.filter((item) => item.status === 'blocked').length
@@ -3137,6 +3231,36 @@ export default function ProjectMinerIntakeWorkbenchPage() {
                     <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
                   </div>
                   <span className={`status-pill ${workflowMapTone(item.status)}`}>{formatLabel(item.status)}</span>
+                </div>
+              </a>
+            ))}
+          </div>
+        </section>
+
+        <section id="pm-open-items" aria-label="Local PM intake open items lens" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
+          <div className="status-row">
+            <h2 style={{ margin: 0 }}>Local PM Intake Open Items Lens</h2>
+            <span className="status-pill status-awaiting-values">browser-local</span>
+          </div>
+          <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+            Exception-first lens for local attention items and future authority blockers. It creates no localStorage key, export artifact, backend route, schema, approval record, task, issue, work authorization, or production write.
+          </p>
+          <div style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
+            {pmIntakeOpenItems.map((item) => (
+              <a
+                key={item.id}
+                className="card"
+                href={item.href}
+                style={{ color: 'inherit', display: 'block', padding: '0.85rem', textDecoration: 'none', boxShadow: 'none' }}
+              >
+                <div className="status-row" style={{ alignItems: 'start' }}>
+                  <div>
+                    <p style={{ margin: 0 }}>
+                      <strong>{item.title}</strong>
+                    </p>
+                    <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
+                  </div>
+                  <span className={`status-pill ${openItemsTone(item.status)}`}>{formatLabel(item.status)}</span>
                 </div>
               </a>
             ))}

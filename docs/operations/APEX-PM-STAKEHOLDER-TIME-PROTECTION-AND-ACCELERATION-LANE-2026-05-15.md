@@ -407,6 +407,14 @@ PM Lane 066 adds a browser-local `Local PM Intake Workflow Map` panel to `/pm-re
 
 This still creates no approval record, SQL, schema migration, backend route, import mutation, issue, task, assignment, schedule, status, hosted proof, live task, work authorization, field release, work order, durable field record, production tracking write, local storage key, export contract, or production mutation.
 
+The current open-items tranche is:
+
+`Project Miner Local PM Intake Open Items Lens`
+
+PM Lane 067 adds a browser-local `Local PM Intake Open Items Lens` panel to `/pm-review/import-intake`. The lens derives exception review, decision draft, field-prep queue, executor closeout evidence, approval-persistence boundary, and project-import boundary from existing workbench state so Jason can see the current local attention items separately from future authority blockers.
+
+This still creates no approval record, SQL, schema migration, backend route, import mutation, issue, task, assignment, schedule, status, hosted proof, live task, work authorization, field release, work order, durable field record, production tracking write, local storage key, export contract, or production mutation.
+
 The next persistence tranche is:
 
 `Import Candidate Approval Persistence Schema And Adapter Implementation`

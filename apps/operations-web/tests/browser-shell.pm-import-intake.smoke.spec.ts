@@ -255,6 +255,23 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(workflowMap.getByText(/0 of 8 local closeout checks marked for returned executor evidence/i)).toBeVisible()
   await expect(workflowMap.getByText(/6 of 6 approval-persistence gates remain blocked until a later packet admits that path/i)).toBeVisible()
   await expect(workflowMap.getByText(/Project import remains not admitted for project, workpackage, task, apparatus, assignment, schedule, and status rows/i)).toBeVisible()
+  const openItems = page.getByLabel('Local PM intake open items lens')
+  await expect(openItems.getByRole('heading', { name: /Local PM Intake Open Items Lens/i })).toBeVisible()
+  await expect(openItems.getByText('browser-local')).toBeVisible()
+  await expect(openItems.getByText(/Exception-first lens for local attention items and future authority blockers/i)).toBeVisible()
+  await expect(openItems.getByText(/creates no localStorage key, export artifact, backend route, schema, approval record, task, issue, work authorization, or production write/i)).toBeVisible()
+  await expect(openItems.getByRole('link', { name: /Exception review/i })).toHaveAttribute('href', '#import-exception-register')
+  await expect(openItems.getByRole('link', { name: /Decision draft/i })).toHaveAttribute('href', '#pm-operating-queue')
+  await expect(openItems.getByRole('link', { name: /Field prep/i })).toHaveAttribute('href', '#field-prep')
+  await expect(openItems.getByRole('link', { name: /Executor closeout evidence/i })).toHaveAttribute('href', '#executor-closeout')
+  await expect(openItems.getByRole('link', { name: /Approval persistence boundary/i })).toHaveAttribute('href', '#approval-readiness')
+  await expect(openItems.getByRole('link', { name: /Project import boundary/i })).toHaveAttribute('href', '#guardrails')
+  await expect(openItems.getByText(/4 local exception item\(s\) still need attention; 2 future boundary item\(s\) remain blocked/i)).toBeVisible()
+  await expect(openItems.getByText(/Decision value, review notes, and local-only attestation still need local draft context/i)).toBeVisible()
+  await expect(openItems.getByText(/1 field-prep item\(s\) are next; 4 field-prep item\(s\) are blocked/i)).toBeVisible()
+  await expect(openItems.getByText(/0 of 8 local closeout evidence checks are marked/i)).toBeVisible()
+  await expect(openItems.getByText(/6 of 6 approval-persistence gates remain blocked until a later packet admits that path/i)).toBeVisible()
+  await expect(openItems.getByText(/Project import remains not admitted for project, workpackage, task, apparatus, assignment, schedule, and status rows/i)).toBeVisible()
   const quickJumpRail = page.getByLabel('PM intake quick jump rail')
   await expect(quickJumpRail.getByRole('heading', { name: /PM Intake Quick Jump Rail/i })).toBeVisible()
   await expect(quickJumpRail.getByText('browser-local')).toBeVisible()
@@ -262,6 +279,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(quickJumpRail.getByText(/do not approve, persist, import, assign, schedule, change status, create tasks, create issues, call live services, or mutate production state/i)).toBeVisible()
   await expect(quickJumpRail.getByRole('link', { name: /Start Here/i })).toHaveAttribute('href', '#pm-start-here')
   await expect(quickJumpRail.getByRole('link', { name: /Workflow Map/i })).toHaveAttribute('href', '#pm-workflow-map')
+  await expect(quickJumpRail.getByRole('link', { name: /Open Items/i })).toHaveAttribute('href', '#pm-open-items')
   await expect(quickJumpRail.getByRole('link', { name: /Snapshot/i })).toHaveAttribute('href', '#pm-intake-snapshot')
   await expect(quickJumpRail.getByRole('link', { name: /Operating Queue/i })).toHaveAttribute('href', '#pm-operating-queue')
   await expect(quickJumpRail.getByRole('link', { name: /Exception Register/i })).toHaveAttribute('href', '#import-exception-register')
@@ -274,6 +292,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   for (const target of [
     '#pm-start-here',
     '#pm-workflow-map',
+    '#pm-open-items',
     '#pm-intake-snapshot',
     '#pm-operating-queue',
     '#import-exception-register',
@@ -346,6 +365,8 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(startHere.getByText(/Import exception register: 4 covered, 0 open, 2 blocked/i)).toBeVisible()
   await expect(workflowMap.getByText(/Import exception register: 4 covered, 0 open, 2 blocked/i)).toBeVisible()
   await expect(workflowMap.getByText(/Local decision draft has a decision value, review notes, and local-only attestation/i)).toBeVisible()
+  await expect(openItems.getByText(/Local exception attention is covered, but 2 future boundary item\(s\) remain blocked/i)).toBeVisible()
+  await expect(openItems.getByText(/Local decision value, review notes, and local-only attestation are present/i)).toBeVisible()
   const closeoutIntake = page.getByLabel('Local executor closeout intake')
   await expect(closeoutIntake.getByRole('heading', { name: /Local Executor Closeout Intake/i })).toBeVisible()
   await expect(closeoutIntake.getByText(/Browser-local audit prep for external executor returns/i)).toBeVisible()
@@ -358,6 +379,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await closeoutIntake.getByRole('checkbox', { name: /Validation results captured/i }).check()
   await expect(closeoutIntake.getByText('2 of 8')).toBeVisible()
   await expect(workflowMap.getByText(/2 of 8 local closeout checks marked for returned executor evidence/i)).toBeVisible()
+  await expect(openItems.getByText(/2 of 8 local closeout evidence checks are marked/i)).toBeVisible()
   const fieldReadiness = page.getByLabel('Local field readiness checklist')
   await expect(fieldReadiness.getByRole('heading', { name: /Local Field Readiness Checklist/i })).toBeVisible()
   await expect(fieldReadiness.getByText(/Browser-local prep evidence for PM, lead, and field review conversations/i)).toBeVisible()
@@ -416,6 +438,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(startHere.getByText(/Use Export Field Prep Packet when the next conversation needs field-prep context/i)).toBeVisible()
   await expect(workflowMap.getByText(/Export field kickoff prep brief: Use the Field Kickoff Brief as local conversation prep for PM, lead, and field review/i)).toBeVisible()
   await expect(fieldPrepQueue.getByText('2 complete / 2 next / 1 blocked')).toBeVisible()
+  await expect(openItems.getByText(/2 field-prep item\(s\) are next; 1 field-prep item\(s\) are blocked/i)).toBeVisible()
   const fieldObservations = page.getByLabel('Local field observation scratchpad')
   await expect(fieldObservations.getByRole('heading', { name: /Local Field Observation Scratchpad/i })).toBeVisible()
   await expect(fieldObservations.getByText('browser-local', { exact: true })).toBeVisible()
@@ -443,6 +466,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
     quickJumpRail: window.localStorage.getItem('pm-import-intake-quick-jump-rail:pm-import-candidate-miner-temp-power'),
     startHere: window.localStorage.getItem('pm-import-intake-start-here:pm-import-candidate-miner-temp-power'),
     workflowMap: window.localStorage.getItem('pm-import-intake-workflow-map:pm-import-candidate-miner-temp-power'),
+    openItems: window.localStorage.getItem('pm-import-intake-open-items:pm-import-candidate-miner-temp-power'),
   }))
   expect(localState.checklist).toContain('source_freshness_reviewed')
   expect(localState.checklist).toContain('exceptions_reviewed')
@@ -464,6 +488,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   expect(localState.quickJumpRail).toBeNull()
   expect(localState.startHere).toBeNull()
   expect(localState.workflowMap).toBeNull()
+  expect(localState.openItems).toBeNull()
   const readiness = page.getByLabel('Approval persistence readiness gates')
   await expect(readiness.getByRole('heading', { name: /Approval Persistence Readiness/i })).toBeVisible()
   await expect(readiness.getByText('2 of 6 ready')).toBeVisible()
@@ -1051,8 +1076,9 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
     quickJumpRail: window.localStorage.getItem('pm-import-intake-quick-jump-rail:pm-import-candidate-miner-temp-power'),
     startHere: window.localStorage.getItem('pm-import-intake-start-here:pm-import-candidate-miner-temp-power'),
     workflowMap: window.localStorage.getItem('pm-import-intake-workflow-map:pm-import-candidate-miner-temp-power'),
+    openItems: window.localStorage.getItem('pm-import-intake-open-items:pm-import-candidate-miner-temp-power'),
   }))
-  expect(resetLocalState).toEqual({ checklist: null, draft: null, closeout: null, fieldReadiness: null, fieldQuestions: null, fieldObservations: null, pmIntakeSnapshot: null, fieldPrepCoverage: null, fieldPrepAgenda: null, fieldPrepPacket: null, importExceptionRegister: null, quickJumpRail: null, startHere: null, workflowMap: null })
+  expect(resetLocalState).toEqual({ checklist: null, draft: null, closeout: null, fieldReadiness: null, fieldQuestions: null, fieldObservations: null, pmIntakeSnapshot: null, fieldPrepCoverage: null, fieldPrepAgenda: null, fieldPrepPacket: null, importExceptionRegister: null, quickJumpRail: null, startHere: null, workflowMap: null, openItems: null })
   await expect(page.getByRole('button', { name: /Approve/i })).toHaveCount(0)
   await expect(page.getByRole('button', { name: /Persist/i })).toHaveCount(0)
   await expect(page.getByRole('button', { name: /Submit/i })).toHaveCount(0)
