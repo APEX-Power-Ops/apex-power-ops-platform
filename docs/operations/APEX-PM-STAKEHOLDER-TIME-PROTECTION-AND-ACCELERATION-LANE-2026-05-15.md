@@ -431,9 +431,9 @@ PM Lane 069 adds a browser-local `Local PM Intake Output Selector` panel to `/pm
 
 This still creates no approval record, SQL, schema migration, backend route, import mutation, issue, task, assignment, schedule, status, hosted proof, live task, work authorization, field release, work order, durable field record, production tracking write, local storage key, export contract, export action, or production mutation.
 
-The current constraint-export tranche is:
+The current top-navigation tranche is:
 
-`Project Miner Local PM Intake Constraint Context Exports`
+`Project Miner Local PM Intake Quick Jump Rail Promotion`
 
 PM Lane 070 adds a browser-local `Local PM Intake Handoff Guide` panel to `/pm-review/import-intake`. The guide derives next-context lane guidance for Jason local review, field conversation prep, bounded executor context, hosted parity executor boundary, and future approval-persistence packet boundary so Jason does not have to translate workbench state into the next relay target manually.
 
@@ -444,6 +444,8 @@ PM Lane 072 adds a browser-local `Local PM Intake Meeting Readout` panel to `/pm
 PM Lane 073 adds a browser-local `Local PM Intake Constraint Radar` panel to `/pm-review/import-intake`. The radar derives source/review, field-prep, executor/hosted, and future write-authority constraints so Jason can see what prevents the candidate from becoming real project, field, or production state before relying on it.
 
 PM Lane 074 carries the same constraint radar into the existing PM Brief and Executor Handoff exports. This reduces AI-to-AI and PM-to-executor relay burden by keeping source/review, field-prep, executor/hosted, and future write-authority constraints inside the artifact Jason already downloads.
+
+PM Lane 075 promotes the existing `PM Intake Quick Jump Rail` to the top of `/pm-review/import-intake`, immediately after the project summary. This makes navigation available before Jason scrolls through the helper-panel stack and directly reduces first-screen orientation burden.
 
 This still creates no approval record, SQL, schema migration, backend route, import mutation, issue, task, assignment, schedule, status, hosted proof, live task, work authorization, field release, work order, durable field record, production tracking write, local storage key, new export action, new export artifact, handoff artifact, or production mutation.
 
@@ -456,6 +458,8 @@ PM Lane 072 adds a browser-local `Local PM Intake Meeting Readout` panel to `/pm
 PM Lane 073 adds a browser-local `Local PM Intake Constraint Radar` panel to `/pm-review/import-intake`. The radar derives constraint-first cards for source/review, field-prep, executor/hosted, and future write-authority boundaries without generating a new artifact.
 
 PM Lane 074 extends the existing PM Brief and Executor Handoff exports with that same constraint-radar context. It does not create a separate export or new handoff artifact; it makes the existing artifacts more useful for review and bounded executor relay.
+
+PM Lane 075 moves the existing quick jump rail above the command center, meeting readout, constraint radar, daily script, start-here, output selector, handoff guide, workflow map, and open-items panels. It keeps the same navigation links but makes the rail usable as an actual entry point.
 
 This still creates no approval record, SQL, schema migration, backend route, import mutation, issue, task, assignment, schedule, status, hosted proof, live task, work authorization, field release, work order, durable field record, production tracking write, local storage key, new export action, new export artifact, handoff artifact, or production mutation.
 

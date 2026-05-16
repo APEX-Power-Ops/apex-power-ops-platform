@@ -3746,6 +3746,32 @@ export default function ProjectMinerIntakeWorkbenchPage() {
           </article>
         </section>
 
+        <section id="pm-quick-jump-rail" aria-label="PM intake quick jump rail" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
+          <div className="status-row">
+            <h2 style={{ margin: 0 }}>PM Intake Quick Jump Rail</h2>
+            <span className="status-pill status-awaiting-values">browser-local</span>
+          </div>
+          <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+            Fast local navigation for the current intake workbench. These links do not approve, persist, import, assign, schedule, change status, create tasks, create issues, call live services, or mutate production state.
+          </p>
+          <nav
+            aria-label="PM intake section links"
+            style={{ display: 'grid', gap: '0.65rem', gridTemplateColumns: 'repeat(auto-fit, minmax(12rem, 1fr))', marginTop: '0.85rem' }}
+          >
+            {PM_INTAKE_QUICK_JUMPS.map((item) => (
+              <a
+                key={item.id}
+                className="btn btn-outline"
+                href={item.href}
+                style={{ alignItems: 'start', display: 'grid', gap: '0.25rem', height: '100%', justifyContent: 'stretch', textAlign: 'left', whiteSpace: 'normal' }}
+              >
+                <strong>{item.label}</strong>
+                <span style={{ color: 'var(--muted)', fontSize: '0.86rem', lineHeight: 1.35 }}>{item.detail}</span>
+              </a>
+            ))}
+          </nav>
+        </section>
+
         <section id="pm-command-center" aria-label="Local PM intake command center" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
           <div className="status-row">
             <h2 style={{ margin: 0 }}>Local PM Intake Command Center</h2>
@@ -4015,32 +4041,6 @@ export default function ProjectMinerIntakeWorkbenchPage() {
               </a>
             ))}
           </div>
-        </section>
-
-        <section aria-label="PM intake quick jump rail" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
-          <div className="status-row">
-            <h2 style={{ margin: 0 }}>PM Intake Quick Jump Rail</h2>
-            <span className="status-pill status-awaiting-values">browser-local</span>
-          </div>
-          <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
-            Fast local navigation for the current intake workbench. These links do not approve, persist, import, assign, schedule, change status, create tasks, create issues, call live services, or mutate production state.
-          </p>
-          <nav
-            aria-label="PM intake section links"
-            style={{ display: 'grid', gap: '0.65rem', gridTemplateColumns: 'repeat(auto-fit, minmax(12rem, 1fr))', marginTop: '0.85rem' }}
-          >
-            {PM_INTAKE_QUICK_JUMPS.map((item) => (
-              <a
-                key={item.id}
-                className="btn btn-outline"
-                href={item.href}
-                style={{ alignItems: 'start', display: 'grid', gap: '0.25rem', height: '100%', justifyContent: 'stretch', textAlign: 'left', whiteSpace: 'normal' }}
-              >
-                <strong>{item.label}</strong>
-                <span style={{ color: 'var(--muted)', fontSize: '0.86rem', lineHeight: 1.35 }}>{item.detail}</span>
-              </a>
-            ))}
-          </nav>
         </section>
 
         <section id="pm-intake-snapshot" aria-label="Local PM intake snapshot" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>

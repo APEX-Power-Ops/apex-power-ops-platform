@@ -465,6 +465,10 @@ PM Lane 074 carries the `Local PM Intake Constraint Radar` into the existing `Ex
 
 This is an existing-export context extension only and adds no new storage key, export action, new export artifact, backend route, approval record, schema, SQL, live service call, hosted claim, task, issue, assignment, schedule, status, durable field record, production tracking row, or production write.
 
+PM Lane 075 promotes the existing browser-local `PM Intake Quick Jump Rail` to the top of `/pm-review/import-intake`, immediately after the project summary and before the helper-panel stack. It keeps the same links but makes navigation available before Jason scrolls through command center, meeting readout, constraint radar, daily script, start-here, output selector, handoff guide, workflow map, and open-items panels.
+
+This is existing navigation placement only and adds no new storage key, export action, new export artifact, backend route, approval record, schema, SQL, live service call, hosted claim, task, issue, assignment, schedule, status, durable field record, production tracking row, or production write.
+
 ## Environment Overrides
 
 Set this when using a different planning folder:

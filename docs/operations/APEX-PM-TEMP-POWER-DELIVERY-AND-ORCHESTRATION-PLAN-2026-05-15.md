@@ -385,6 +385,8 @@ PM Lane 073 adds a browser-local `Local PM Intake Constraint Radar` panel to `/p
 
 PM Lane 074 carries that constraint radar into the existing PM Brief and Executor Handoff exports. It lets Temp Power review or bounded executor conversations receive the same source/review, field-prep, executor/hosted, and future write-authority constraints without Jason manually relaying them. This context extension adds no storage key, new export action, new export artifact, backend route, hosted proof, SQL, schema migration, approval persistence, import mutation, issue, task, assignment, schedule, status, durable field record, production tracking write, or production state.
 
+PM Lane 075 promotes the existing `PM Intake Quick Jump Rail` near the top of `/pm-review/import-intake`, directly after the project summary. This lets the Temp Power prep flow jump to command center, meeting readout, constraint radar, exports, field prep, executor closeout, approval readiness, or guardrails before scrolling through the full helper-panel stack. This placement change adds no storage key, new export action, new export artifact, backend route, hosted proof, SQL, schema migration, approval persistence, import mutation, issue, task, assignment, schedule, status, durable field record, production tracking write, or production state.
+
 ## Capability-Gap Register
 
 Current known gaps:

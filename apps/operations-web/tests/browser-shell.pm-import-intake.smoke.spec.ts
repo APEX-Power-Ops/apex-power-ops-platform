@@ -361,10 +361,24 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(openItems.getByText(/6 of 6 approval-persistence gates remain blocked until a later packet admits that path/i)).toBeVisible()
   await expect(openItems.getByText(/Project import remains not admitted for project, workpackage, task, apparatus, assignment, schedule, and status rows/i)).toBeVisible()
   const quickJumpRail = page.getByLabel('PM intake quick jump rail')
+  await expect(page.locator('#pm-quick-jump-rail')).toHaveCount(1)
   await expect(quickJumpRail.getByRole('heading', { name: /PM Intake Quick Jump Rail/i })).toBeVisible()
   await expect(quickJumpRail.getByText('browser-local')).toBeVisible()
   await expect(quickJumpRail.getByText(/Fast local navigation for the current intake workbench/i)).toBeVisible()
   await expect(quickJumpRail.getByText(/do not approve, persist, import, assign, schedule, change status, create tasks, create issues, call live services, or mutate production state/i)).toBeVisible()
+  const quickJumpRailOrder = await page.evaluate(() => {
+    const summary = document.querySelector('[aria-label="Project Miner intake summary"]')
+    const rail = document.querySelector('#pm-quick-jump-rail')
+    const commandCenter = document.querySelector('#pm-command-center')
+    return Boolean(
+      summary
+      && rail
+      && commandCenter
+      && (summary.compareDocumentPosition(rail) & Node.DOCUMENT_POSITION_FOLLOWING)
+      && (rail.compareDocumentPosition(commandCenter) & Node.DOCUMENT_POSITION_FOLLOWING),
+    )
+  })
+  expect(quickJumpRailOrder).toBe(true)
   await expect(quickJumpRail.getByRole('link', { name: /Command Center/i })).toHaveAttribute('href', '#pm-command-center')
   await expect(quickJumpRail.getByRole('link', { name: /Meeting Readout/i })).toHaveAttribute('href', '#pm-meeting-readout')
   await expect(quickJumpRail.getByRole('link', { name: /Constraint Radar/i })).toHaveAttribute('href', '#pm-constraint-radar')
@@ -384,6 +398,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(quickJumpRail.getByRole('link', { name: /Executor Closeout/i })).toHaveAttribute('href', '#executor-closeout')
   await expect(quickJumpRail.getByRole('link', { name: /Guardrails/i })).toHaveAttribute('href', '#guardrails')
   for (const target of [
+    '#pm-quick-jump-rail',
     '#pm-command-center',
     '#pm-meeting-readout',
     '#pm-constraint-radar',
