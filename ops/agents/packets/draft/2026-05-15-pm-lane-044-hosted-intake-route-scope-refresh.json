@@ -1,0 +1,82 @@
+{
+  "packet_id": "2026-05-15-pm-lane-044",
+  "title": "Hosted PM Intake Route Scope Refresh",
+  "objective": "Refresh hosted PM intake smoke, executor packets, handoffs, and closeout evidence requirements so PM Lane 043's /pm-review/import-intake workbench is included in the existing Vercel operations-web promotion lane without widening Render, schema, approval persistence, import mutation, or live business-state authority.",
+  "domain": "pm-domain",
+  "active_role": "Delegated Technical Repo Authority / PM Hosted Parity Coordinator / Dual-Lane Orchestration Maintainer",
+  "dependencies": [
+    "2026-05-15-pm-lane-041",
+    "2026-05-15-pm-lane-041a",
+    "2026-05-15-pm-lane-041b",
+    "2026-05-15-pm-lane-042",
+    "2026-05-15-pm-lane-043"
+  ],
+  "implementation_summary": [
+    "Added /pm-review/import-intake to the hosted route smoke.",
+    "Added /pm-review/import-intake to the hosted PM intake smoke.",
+    "Updated the PM Lane 041 parent packet, handoff, and dispatch board so hosted proof expects both /pm-review/import-approval-readiness and /pm-review/import-intake.",
+    "Updated PM Lane 041A Vercel packet and handoff so the authenticated executor promotes current clean-main at or after PM Lane 043 and proves both operations-web routes.",
+    "Updated the hosted executor closeout template so Vercel closeout evidence records route build proof for both routes.",
+    "Left PM Lane 041B Render scope unchanged because /pm-review/import-intake consumes the same four PM intake read seams already assigned to Render parity.",
+    "Used a read-only sidecar scout to confirm the minimum safe update set and guardrails."
+  ],
+  "changed_files": [
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/scripts/smoke-hosted-routes.mjs",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/scripts/smoke-pm-intake-hosted.mjs",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/DEPLOYMENT_VALIDATION.md",
+    "C:/APEX Platform/apex-power-ops-platform/PROJECT_STATUS.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/APEX-PM-TEMP-POWER-DELIVERY-AND-ORCHESTRATION-PLAN-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/APEX-PM-STAKEHOLDER-TIME-PROTECTION-AND-ACCELERATION-LANE-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-15-pm-lane-041-hosted-pm-intake-parity-refresh.json",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-15-pm-lane-041a-vercel-operations-web-promotion.json",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-15-pm-lane-044-hosted-intake-route-scope-refresh.json",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-041-hosted-pm-intake-parity-refresh-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-041-dual-executor-dispatch-board.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-041a-vercel-operations-web-promotion-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/templates/pm-hosted-executor-closeout-template.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-044-hosted-intake-route-scope-refresh-handoff.md"
+  ],
+  "validation_steps": [
+    "node --check apps/operations-web/scripts/smoke-hosted-routes.mjs",
+    "node --check apps/operations-web/scripts/smoke-pm-intake-hosted.mjs",
+    "corepack pnpm --dir apps/operations-web smoke:hosted -- --base-url https://operations.apexpowerops.com",
+    "corepack pnpm --dir apps/operations-web smoke:pm-intake-hosted",
+    "C:/APEX Platform/apex-power-ops-platform/.venv/Scripts/python.exe -c \"import json; json.load(open(r'C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-15-pm-lane-041-hosted-pm-intake-parity-refresh.json', encoding='utf-8')); json.load(open(r'C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-15-pm-lane-041a-vercel-operations-web-promotion.json', encoding='utf-8')); json.load(open(r'C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-15-pm-lane-044-hosted-intake-route-scope-refresh.json', encoding='utf-8')); print('packet-json-ok')\"",
+    "git diff --check"
+  ],
+  "validation_results": [
+    "node --check passed for both hosted smoke scripts.",
+    "Hosted route smoke failed truthfully with 2 failures: /pm-review/import-approval-readiness returned 404 and /pm-review/import-intake returned 404; 10 routes passed.",
+    "Hosted PM intake smoke failed truthfully with 7 failures: /pm-review/import-approval-readiness returned 404, /pm-review/import-intake returned 404, hosted mutation-seam OpenAPI is missing current PM intake reads, and all four PM intake reads returned 404.",
+    "Packet JSON parse passed with packet-json-ok for the updated 041, 041A, and 044 packets.",
+    "git diff --check passed with line-ending normalization warnings only."
+  ],
+  "not_allowed": [
+    "No Vercel promotion from this unauthenticated workspace.",
+    "No Render redeploy from this unauthenticated workspace.",
+    "No new hosted service.",
+    "No DNS change.",
+    "No auth or ingress widening.",
+    "No backend endpoint change.",
+    "No SQL write.",
+    "No schema migration.",
+    "No fixture replay.",
+    "No approval persistence.",
+    "No import mutation.",
+    "No live database write.",
+    "No workbook macro execution.",
+    "No workbook writeback.",
+    "No assignment mutation.",
+    "No schedule mutation.",
+    "No status mutation.",
+    "No autonomous AI business-state mutation."
+  ],
+  "execution_result": "HOSTED_ROUTE_SCOPE_REFRESH_AUTHORED",
+  "delegation_status": "ready_for_existing_041a_and_041b_authenticated_executors",
+  "hosted_status": "truthfully_red_until_vercel_and_render_executors_close",
+  "sql_permission": false,
+  "ai_mutation_authority": "not_admitted",
+  "created_at": "2026-05-15",
+  "updated_at": "2026-05-15"
+}

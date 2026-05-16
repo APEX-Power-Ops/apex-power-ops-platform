@@ -353,6 +353,8 @@ This route is a navigation and review accelerator only. It does not approve, per
 
 Hosted note: PM Lane 043 is local-current only until PM Lane 041A/041B close hosted Vercel and Render parity. Do not claim hosted live-data parity for `/pm-review/import-intake` until those closeouts are accepted.
 
+PM Lane 044 updates the hosted parity proof and executor handoffs so `/pm-review/import-intake` is included in the same Vercel promotion lane as `/pm-review/import-approval-readiness`. The refreshed hosted PM intake smoke currently passes import-candidate and import-admission-plan, but returns `404` for both `/pm-review/import-approval-readiness` and `/pm-review/import-intake` until an authenticated Vercel executor promotes current `origin/clean-main`.
+
 ## Environment Overrides
 
 Set this when using a different planning folder:

@@ -191,9 +191,9 @@ Current public-host status:
 4. hosted route smoke against `https://operations.apexpowerops.com` passes with `SMOKE_SUMMARY failed=0 passed=8`
 5. PM live-data proof is still blocked by the hosted mutation-seam runtime, not by operations-web routing: `https://mutation-seam.apexpowerops.com/openapi.json` does not advertise `/api/v1/reads/pm-workfront`, `/api/v1/reads/pm-workfront` returns `404`, and schedule reads return `500`
 6. PM Lane 012 is the bounded Render-authenticated mutation-seam redeploy/log-inspection gate before further hosted PM product proof is claimed
-7. PM Lane 041 read-only hosted proof after the Lane 040 UI route shows `/pm-review/import-candidate` and `/pm-review/import-admission-plan` still pass on `https://operations.apexpowerops.com`, but `/pm-review/import-approval-readiness` returns `404`
+7. PM Lane 044 read-only hosted proof after the Lane 043 import-intake workbench shows `/pm-review/import-candidate` and `/pm-review/import-admission-plan` still pass on `https://operations.apexpowerops.com`, but `/pm-review/import-approval-readiness` and `/pm-review/import-intake` return `404`
 8. PM Lane 041 local capability check found no Vercel CLI binary and no `VERCEL_*` environment names; `pnpm dlx vercel whoami` timed out waiting for authentication and was stopped
-9. The next operations-web hosted action is existing-project promotion of current `origin/clean-main` by a Vercel-authenticated executor, followed by `smoke:hosted` and `smoke:pm-intake-hosted`
+9. The next operations-web hosted action is existing-project promotion of current `origin/clean-main` by a Vercel-authenticated executor so both `/pm-review/import-approval-readiness` and `/pm-review/import-intake` are hosted, followed by `smoke:hosted` and `smoke:pm-intake-hosted`
 
 Pass conditions:
 

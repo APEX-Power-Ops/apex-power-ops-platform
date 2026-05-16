@@ -235,6 +235,12 @@ PM Lane 043 adds `/pm-review/import-intake` as one read-only starting point for 
 
 The sidecar recommendation was accepted in bounded form: use `/pm-review/import-intake` so the route fits the existing import route cluster while staying review-only. The route has no approve, persist, submit, import, assignment, schedule, schema, or status controls.
 
+The current orchestration refresh tranche is:
+
+`Hosted PM Intake Route Scope Refresh`
+
+PM Lane 044 updates the hosted smoke scripts, 041A Vercel handoff, 041 parent packet, dispatch board, and closeout template so an authenticated Vercel executor proves both `/pm-review/import-approval-readiness` and `/pm-review/import-intake`. Render remains bounded to the existing four read seams; no backend endpoint, schema, or mutation scope is added for the workbench.
+
 The next persistence tranche is:
 
 `Import Candidate Approval Persistence Schema And Adapter Admission`

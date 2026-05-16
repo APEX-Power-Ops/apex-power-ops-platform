@@ -12,7 +12,7 @@ This board removes Jason from the AI-to-AI relay loop for the hosted parity step
 
 | Lane | Owner Surface | Handoff | Goal | Status |
 | --- | --- | --- | --- | --- |
-| 041A | Vercel-authenticated executor | `ops/agents/handoffs/2026-05-15-pm-lane-041a-vercel-operations-web-promotion-handoff.md` | Promote current operations-web so `/pm-review/import-approval-readiness` is hosted | ready |
+| 041A | Vercel-authenticated executor | `ops/agents/handoffs/2026-05-15-pm-lane-041a-vercel-operations-web-promotion-handoff.md` | Promote current operations-web so `/pm-review/import-approval-readiness` and `/pm-review/import-intake` are hosted | ready |
 | 041B | Render-authenticated executor | `ops/agents/handoffs/2026-05-15-pm-lane-041b-render-mutation-seam-redeploy-classification-handoff.md` | Redeploy existing mutation-seam or classify PM intake read blocker | ready |
 
 ## Current Hosted Split
@@ -20,10 +20,11 @@ This board removes Jason from the AI-to-AI relay loop for the hosted parity step
 1. `https://operations.apexpowerops.com/pm-review/import-candidate` passes.
 2. `https://operations.apexpowerops.com/pm-review/import-admission-plan` passes.
 3. `https://operations.apexpowerops.com/pm-review/import-approval-readiness` returns `404`.
-4. `https://mutation-seam.apexpowerops.com/health` returns `200`.
-5. Hosted mutation-seam OpenAPI is missing all four current PM intake reads.
-6. Hosted mutation-seam returns `404` for all four current PM intake reads.
-7. Hosted mutation-seam schedule reads still return `500`.
+4. `https://operations.apexpowerops.com/pm-review/import-intake` returns `404`.
+5. `https://mutation-seam.apexpowerops.com/health` returns `200`.
+6. Hosted mutation-seam OpenAPI is missing all four current PM intake reads.
+7. Hosted mutation-seam returns `404` for all four current PM intake reads.
+8. Hosted mutation-seam schedule reads still return `500`.
 
 ## Sequencing
 
@@ -37,7 +38,7 @@ If only one hosted credential surface is available:
 
 Full PM intake hosted parity requires both:
 
-1. operations-web serving the Lane 040 route,
+1. operations-web serving the Lane 040 route and the Lane 043 workbench route,
 2. mutation-seam serving the four current PM intake reads.
 
 ## Coordinator Acceptance

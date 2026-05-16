@@ -17,6 +17,11 @@ const routeChecks = [
     path: 'pm-review/import-approval-readiness',
     marker: 'Review the approval gate before it can persist',
   },
+  {
+    label: 'operations-web import intake workbench',
+    path: 'pm-review/import-intake',
+    marker: 'Run Project Miner intake from one workbench',
+  },
 ];
 
 function parseArgs(argv) {

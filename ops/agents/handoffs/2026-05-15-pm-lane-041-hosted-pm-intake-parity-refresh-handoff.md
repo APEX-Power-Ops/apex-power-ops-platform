@@ -6,7 +6,7 @@ Scope: Hosted operations-web and mutation-seam parity after PM Lane 040
 
 ## Executive Summary
 
-PM Lane 041 refreshes the hosted parity gate after Lane 040.
+PM Lane 041 refreshes the hosted parity gate after Lane 040. PM Lane 044 refreshes the same hosted proof after Lane 043 added the import-intake workbench.
 
 The local product stack now includes:
 
@@ -14,6 +14,7 @@ The local product stack now includes:
 /pm-review/import-candidate
 /pm-review/import-admission-plan
 /pm-review/import-approval-readiness
+/pm-review/import-intake
 GET /api/v1/reads/project-import-candidate
 GET /api/v1/reads/project-import-admission-plan
 GET /api/v1/reads/project-import-approval-contract
@@ -25,10 +26,11 @@ Hosted proof is currently split:
 1. `https://operations.apexpowerops.com/pm-review/import-candidate` passes.
 2. `https://operations.apexpowerops.com/pm-review/import-admission-plan` passes.
 3. `https://operations.apexpowerops.com/pm-review/import-approval-readiness` returns `404`.
-4. `https://mutation-seam.apexpowerops.com/health` returns `200`.
-5. Hosted mutation-seam OpenAPI is missing all four current PM intake reads.
-6. Hosted mutation-seam returns `404` for all four current PM intake reads.
-7. Hosted mutation-seam schedule reads still return `500`.
+4. `https://operations.apexpowerops.com/pm-review/import-intake` returns `404`.
+5. `https://mutation-seam.apexpowerops.com/health` returns `200`.
+6. Hosted mutation-seam OpenAPI is missing all four current PM intake reads.
+7. Hosted mutation-seam returns `404` for all four current PM intake reads.
+8. Hosted mutation-seam schedule reads still return `500`.
 
 This lane does not admit approval persistence or import. It creates the executor-ready hosted parity plan.
 
@@ -58,13 +60,14 @@ Result:
 PM_INTAKE_HOSTED_OK operations-web import candidate
 PM_INTAKE_HOSTED_OK operations-web import admission plan
 PM_INTAKE_HOSTED_FAIL operations-web import approval readiness operations-web import approval readiness returned HTTP 404
+PM_INTAKE_HOSTED_FAIL operations-web import intake workbench operations-web import intake workbench returned HTTP 404
 PM_INTAKE_HOSTED_OK mutation seam health
 PM_INTAKE_HOSTED_FAIL mutation seam OpenAPI intake read paths mutation seam OpenAPI is missing /api/v1/reads/project-import-candidate
 PM_INTAKE_HOSTED_FAIL mutation seam import candidate read mutation seam import candidate read returned HTTP 404
 PM_INTAKE_HOSTED_FAIL mutation seam import admission plan read mutation seam import admission plan read returned HTTP 404
 PM_INTAKE_HOSTED_FAIL mutation seam import approval contract read mutation seam import approval contract read returned HTTP 404
 PM_INTAKE_HOSTED_FAIL mutation seam import approval storage plan read mutation seam import approval storage plan read returned HTTP 404
-PM_INTAKE_HOSTED_SUMMARY failed=6
+PM_INTAKE_HOSTED_SUMMARY failed=7
 ```
 
 Deployed mutation-seam smoke:
@@ -117,13 +120,14 @@ Promote current `origin/clean-main` so the hosted operations-web project include
 
 ```text
 /pm-review/import-approval-readiness
+/pm-review/import-intake
 ```
 
 Allowed:
 
 1. inspect the existing Vercel project serving `https://operations.apexpowerops.com`,
 2. deploy or promote current `origin/clean-main` for the existing operations-web project only,
-3. confirm the build includes `/pm-review/import-approval-readiness`,
+3. confirm the build includes `/pm-review/import-approval-readiness` and `/pm-review/import-intake`,
 4. run hosted route smoke and PM intake hosted smoke.
 
 Not allowed:
@@ -219,7 +223,7 @@ Read first:
 6. C:\APEX Platform\apex-power-ops-platform\apps\mutation-seam\scripts\smoke_deployed_mutation_seam.py
 
 Current source:
-origin/clean-main at or after ee214d9559ed5d0ebc2fa4311def407a3711c390.
+origin/clean-main at or after 8901a11b030a93ec136b90eb70c36e24c28fc68d.
 
 Tasks:
 1. If you have Vercel access, execute Lane 041A against the existing operations-web project and alias only.

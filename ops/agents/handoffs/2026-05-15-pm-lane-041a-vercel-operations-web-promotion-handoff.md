@@ -2,16 +2,17 @@
 
 Date: 2026-05-15
 Status: Ready for Vercel-authenticated executor
-Scope: Existing operations-web production promotion for `/pm-review/import-approval-readiness`
+Scope: Existing operations-web production promotion for `/pm-review/import-approval-readiness` and `/pm-review/import-intake`
 
 ## Executive Summary
 
 PM Lane 041A is the Vercel-only half of the hosted parity refresh.
 
-Its only runtime goal is to promote current `origin/clean-main` to the existing operations-web production alias so this route is hosted:
+Its only runtime goal is to promote current `origin/clean-main` to the existing operations-web production alias so these routes are hosted:
 
 ```text
 https://operations.apexpowerops.com/pm-review/import-approval-readiness
+https://operations.apexpowerops.com/pm-review/import-intake
 ```
 
 This does not touch Render, Supabase, schema, approval persistence, import mutation, auth, ingress, DNS, or business state.
@@ -19,10 +20,12 @@ This does not touch Render, Supabase, schema, approval persistence, import mutat
 ## Current Evidence
 
 1. PM Lane 040 added `/pm-review/import-approval-readiness` locally and pushed it to `origin/clean-main`.
-2. PM Lane 041 read-only hosted smoke shows `/pm-review/import-candidate` passes.
-3. PM Lane 041 read-only hosted smoke shows `/pm-review/import-admission-plan` passes.
-4. PM Lane 041 read-only hosted smoke shows `/pm-review/import-approval-readiness` returns `404`.
-5. The coordinator workspace lacks Vercel auth: no `vercel` CLI binary, no `VERCEL_*` environment names, and `pnpm dlx vercel whoami` timed out waiting for login.
+2. PM Lane 043 added `/pm-review/import-intake` locally and pushed it to `origin/clean-main` at `8901a11b030a93ec136b90eb70c36e24c28fc68d`.
+3. PM Lane 041 read-only hosted smoke shows `/pm-review/import-candidate` passes.
+4. PM Lane 041 read-only hosted smoke shows `/pm-review/import-admission-plan` passes.
+5. PM Lane 041 read-only hosted smoke shows `/pm-review/import-approval-readiness` returns `404`.
+6. PM Lane 044 refresh makes `/pm-review/import-intake` part of the same operations-web hosted promotion proof.
+7. The coordinator workspace lacks Vercel auth: no `vercel` CLI binary, no `VERCEL_*` environment names, and `pnpm dlx vercel whoami` timed out waiting for login.
 
 ## Target
 
@@ -36,12 +39,13 @@ Expected route after promotion:
 
 ```text
 https://operations.apexpowerops.com/pm-review/import-approval-readiness
+https://operations.apexpowerops.com/pm-review/import-intake
 ```
 
 ## Allowed
 
 1. Inspect the existing Vercel project serving `https://operations.apexpowerops.com`.
-2. Confirm the deployment source is `jasonlswenson-sys/apex-power-ops`, branch `clean-main`, at or after `ee214d9559ed5d0ebc2fa4311def407a3711c390`.
+2. Confirm the deployment source is `jasonlswenson-sys/apex-power-ops`, branch `clean-main`, at or after `8901a11b030a93ec136b90eb70c36e24c28fc68d`.
 3. Confirm the operations-web root/build settings still match the existing deployment contract.
 4. Deploy or promote current clean-main to the existing production alias.
 5. Run hosted route smoke and PM intake hosted smoke.
@@ -77,7 +81,7 @@ git ls-remote origin clean-main
 Confirm hosted deployment source is at or after:
 
 ```text
-ee214d9559ed5d0ebc2fa4311def407a3711c390
+8901a11b030a93ec136b90eb70c36e24c28fc68d
 ```
 
 Then run:
@@ -94,8 +98,8 @@ corepack pnpm --dir "C:/APEX Platform/apex-power-ops-platform" --filter @apex/op
 
 Expected intermediate result:
 
-1. hosted route smoke includes and passes `/pm-review/import-approval-readiness`,
-2. PM intake hosted smoke no longer reports an operations-web `404` for import approval readiness,
+1. hosted route smoke includes and passes `/pm-review/import-approval-readiness` and `/pm-review/import-intake`,
+2. PM intake hosted smoke no longer reports operations-web `404` failures for import approval readiness or the import intake workbench,
 3. mutation-seam failures may remain until PM Lane 041B completes.
 
 ## Copy/Paste Executor Prompt
@@ -119,7 +123,7 @@ Read first:
 4. C:\APEX Platform\apex-power-ops-platform\apps\operations-web\scripts\smoke-pm-intake-hosted.mjs
 
 Task:
-Promote current origin/clean-main to the existing operations-web production alias so https://operations.apexpowerops.com/pm-review/import-approval-readiness is live.
+Promote current origin/clean-main to the existing operations-web production alias so https://operations.apexpowerops.com/pm-review/import-approval-readiness and https://operations.apexpowerops.com/pm-review/import-intake are live.
 
 Constraints:
 Use the existing Vercel project and alias only. Do not create a project, change DNS, widen auth, change preview protection, touch Render, change backend code, run SQL, migrate schema, persist approval, import rows, or mutate business state.
@@ -138,6 +142,6 @@ Update only scoped closeout/status surfaces, commit, and push. Preserve unrelate
 
 Success is not full PM intake parity by itself. Success is operations-web parity:
 
-1. `/pm-review/import-approval-readiness` is hosted,
+1. `/pm-review/import-approval-readiness` and `/pm-review/import-intake` are hosted,
 2. the operations-web route smoke passes,
 3. any remaining hosted PM intake failures are mutation-seam-only and are assigned to PM Lane 041B.

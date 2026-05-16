@@ -52,7 +52,8 @@ For Vercel:
 2. deployment id,
 3. production alias,
 4. source commit,
-5. route build evidence for `/pm-review/import-approval-readiness`.
+5. route build evidence for `/pm-review/import-approval-readiness`,
+6. route build evidence for `/pm-review/import-intake`.
 
 For Render:
 

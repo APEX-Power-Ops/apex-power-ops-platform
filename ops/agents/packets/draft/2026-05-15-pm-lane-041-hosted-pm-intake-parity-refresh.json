@@ -1,7 +1,7 @@
 {
   "packet_id": "2026-05-15-pm-lane-041",
   "title": "Hosted PM Intake Parity Refresh And Blocker Classification",
-  "objective": "Refresh the hosted PM intake parity lane after PM Lane 040 by proving or precisely classifying the split between operations-web, Render mutation-seam, and the current PM intake reads without admitting schema, approval persistence, import mutation, or live business-state writes.",
+  "objective": "Refresh the hosted PM intake parity lane after PM Lane 043 by proving or precisely classifying the split between operations-web, Render mutation-seam, and the current PM intake reads without admitting schema, approval persistence, import mutation, or live business-state writes.",
   "domain": "pm-domain",
   "active_role": "Delegated Technical Repo Authority / Hosted PM Runtime Coordinator / Dual-Lane Executor Packet Author",
   "repo_paths": [
@@ -17,12 +17,14 @@
     "2026-05-15-pm-lane-037",
     "2026-05-15-pm-lane-038",
     "2026-05-15-pm-lane-039",
-    "2026-05-15-pm-lane-040"
+    "2026-05-15-pm-lane-040",
+    "2026-05-15-pm-lane-043"
   ],
   "current_evidence": [
-    "Local clean-main is at ee214d9559ed5d0ebc2fa4311def407a3711c390 after PM Lane 040.",
+    "Local clean-main is at 8901a11b030a93ec136b90eb70c36e24c28fc68d after PM Lane 043.",
     "PM Lane 040 added /pm-review/import-approval-readiness locally and pushed it to origin/clean-main.",
-    "Hosted PM intake smoke after PM Lane 040 shows operations-web import-candidate and import-admission-plan routes passing, but /pm-review/import-approval-readiness returning 404 on https://operations.apexpowerops.com.",
+    "PM Lane 043 added /pm-review/import-intake locally and pushed it to origin/clean-main.",
+    "Hosted PM intake smoke after PM Lane 044 smoke refresh shows operations-web import-candidate and import-admission-plan routes passing, but /pm-review/import-approval-readiness and /pm-review/import-intake returning 404 on https://operations.apexpowerops.com.",
     "Hosted mutation-seam health returns 200.",
     "Hosted mutation-seam OpenAPI is missing all current PM intake read paths: project-import-candidate, project-import-admission-plan, project-import-approval-contract, and project-import-approval-storage-plan.",
     "Hosted mutation-seam returns 404 for all current PM intake reads.",
@@ -34,11 +36,11 @@
       "lane": "041A",
       "name": "Vercel-authenticated operations-web promotion",
       "target": "existing operations.apexpowerops.com operations-web project and alias",
-      "goal": "Promote current clean-main so /pm-review/import-approval-readiness is hosted, then prove hosted route smoke.",
+      "goal": "Promote current clean-main so /pm-review/import-approval-readiness and /pm-review/import-intake are hosted, then prove hosted route smoke.",
       "allowed": [
         "Inspect the existing Vercel project serving https://operations.apexpowerops.com.",
         "Deploy or promote current origin/clean-main for the existing operations-web project only.",
-        "Confirm the build includes /pm-review/import-approval-readiness.",
+        "Confirm the build includes /pm-review/import-approval-readiness and /pm-review/import-intake.",
         "Run hosted route smoke and PM intake hosted smoke."
       ],
       "not_allowed": [
@@ -124,7 +126,7 @@
     "git diff --check for the Lane 041 file set"
   ],
   "validation_results": [
-    "Read-only hosted PM intake smoke failed truthfully with six failures: /pm-review/import-approval-readiness returned 404, OpenAPI is missing current PM intake read paths, and all four PM intake reads returned 404.",
+    "Read-only hosted PM intake smoke failed truthfully with seven failures after the PM Lane 044 smoke refresh: /pm-review/import-approval-readiness returned 404, /pm-review/import-intake returned 404, OpenAPI is missing current PM intake read paths, and all four PM intake reads returned 404.",
     "Read-only deployed mutation-seam smoke with --include-pm-intake failed truthfully with schedule reads returning 500, OpenAPI missing all four PM intake read paths, and all four PM intake reads returning 404.",
     "Local capability check found no Render CLI, no RENDER_* env names, no Vercel CLI binary, and no VERCEL_* env names.",
     "pnpm dlx vercel whoami timed out waiting for authentication and was stopped.",

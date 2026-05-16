@@ -10,6 +10,7 @@ const routeChecks = [
   { path: '/pm-review/import-candidate', marker: 'Review exceptions before import exists' },
   { path: '/pm-review/import-admission-plan', marker: 'Design the import gate before it can write' },
   { path: '/pm-review/import-approval-readiness', marker: 'Review the approval gate before it can persist' },
+  { path: '/pm-review/import-intake', marker: 'Run Project Miner intake from one workbench' },
 ];
 
 function parseArgs(argv) {

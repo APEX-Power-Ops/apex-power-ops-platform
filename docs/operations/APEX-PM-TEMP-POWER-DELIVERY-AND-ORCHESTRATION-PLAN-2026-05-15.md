@@ -321,6 +321,8 @@ The route consumes the four current PM intake reads in one place: import candida
 
 This remains local-current and read-only. It does not add backend endpoints, hosted deployment, Vercel promotion, Render redeploy, schema, approval persistence, import mutation, live data write, workbook macro execution, assignment, schedule, status, or autonomous AI business-state mutation.
 
+PM Lane 044 refreshes the hosted parity route scope after Lane 043. The hosted smoke scripts and Vercel executor packet now require both `/pm-review/import-approval-readiness` and `/pm-review/import-intake` to be promoted on the existing operations-web production alias. Render scope does not expand because the workbench consumes the same four PM intake reads already assigned to the Render parity lane.
+
 ## Capability-Gap Register
 
 Current known gaps:
