@@ -417,6 +417,10 @@ PM Lane 062 adds a browser-local `Local Import Exception Decision Register` and 
 
 This register is browser-local review synthesis only and adds no local storage key. It does not create issues, create tasks, create live work orders, approve, persist, import, create schema, run SQL, write Supabase rows, call live services, run workbook macros, write workbook cells, assign work, change status, mutate schedules, create durable field records, write production tracking rows, claim hosted parity, or admit autonomous AI business-state action.
 
+PM Lane 063 adds a browser-local `Local PM Intake Snapshot` and `Export PM Intake Snapshot` action to `/pm-review/import-intake`. It compresses exception posture, decision draft posture, field-prep context, next local action, approval-persistence boundary, and hosted-parity boundary into one covered, open, and blocked scan view near the top of the workbench.
+
+This snapshot is browser-local review synthesis only and adds no local storage key. It does not create issues, create tasks, create live work orders, approve, persist, import, create schema, run SQL, write Supabase rows, call live services, run workbook macros, write workbook cells, assign work, change status, mutate schedules, create durable field records, write production tracking rows, claim hosted parity, or admit autonomous AI business-state action.
+
 ## Environment Overrides
 
 Set this when using a different planning folder:

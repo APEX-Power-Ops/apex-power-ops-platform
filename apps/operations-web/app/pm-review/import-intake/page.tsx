@@ -223,6 +223,16 @@ type ImportExceptionRegisterItem = {
   evidence: string
 }
 
+type PmIntakeSnapshotStatus = 'covered' | 'open' | 'blocked'
+
+type PmIntakeSnapshotItem = {
+  id: string
+  title: string
+  status: PmIntakeSnapshotStatus
+  detail: string
+  evidence: string
+}
+
 const { useCallback, useEffect, useMemo, useState } = React
 
 const API_BASE =
@@ -452,6 +462,12 @@ function importExceptionRegisterTone(status: ImportExceptionRegisterStatus) {
   return 'status-deferred'
 }
 
+function pmIntakeSnapshotTone(status: PmIntakeSnapshotStatus) {
+  if (status === 'covered') return 'status-configured'
+  if (status === 'open') return 'status-awaiting-values'
+  return 'status-deferred'
+}
+
 function uniqueItems(...lists: Array<string[] | undefined>) {
   return Array.from(new Set(lists.flatMap((items) => items || []))).sort()
 }
@@ -511,6 +527,11 @@ function fieldPrepPacketFileName(candidate?: CandidatePayload | null) {
 function importExceptionRegisterFileName(candidate?: CandidatePayload | null) {
   const candidateId = candidate?.candidate_id || 'project-miner-intake'
   return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-import-exception-register.md`
+}
+
+function pmIntakeSnapshotFileName(candidate?: CandidatePayload | null) {
+  const candidateId = candidate?.candidate_id || 'project-miner-intake'
+  return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-pm-intake-snapshot.md`
 }
 
 function markdownList(items: string[]) {
@@ -955,6 +976,94 @@ function importExceptionRegisterSummary(counts: ReturnType<typeof importExceptio
   return `${counts.covered} covered, ${counts.open} open, ${counts.blocked} blocked`
 }
 
+function buildPmIntakeSnapshot(
+  persistenceReadinessGates: ReadinessGate[],
+  operatingQueue: OperatingQueueItem[],
+  importExceptionRegister: ImportExceptionRegisterItem[],
+  fieldPrepCoverageSnapshot: FieldPrepCoverageItem[],
+  fieldPrepConversationAgenda: FieldPrepAgendaItem[],
+  closeoutChecks: Record<string, boolean>,
+  fieldReadinessChecks: Record<string, boolean>,
+  fieldQuestionsDraft: FieldQuestionsDraft,
+  fieldObservationScratchpad: FieldObservationScratchpad,
+  approvalDraft: ApprovalDecisionDraft,
+): PmIntakeSnapshotItem[] {
+  const registerCount = importExceptionRegisterCounts(importExceptionRegister)
+  const nextQueueItem = operatingQueue.find((item) => item.status === 'next')
+  const readyPersistenceGateCount = persistenceReadinessGates.filter((gate) => gate.status === 'ready').length
+  const fieldPrepCoverageCount = fieldPrepCoverageCounts(fieldPrepCoverageSnapshot)
+  const fieldPrepAgendaCount = fieldPrepAgendaCounts(fieldPrepConversationAgenda)
+  const closeoutCheckedCount = CLOSEOUT_CHECKLIST_ITEMS.filter((item) => closeoutChecks[item.id]).length
+  const fieldReadinessCheckedCount = FIELD_READINESS_CHECKLIST_ITEMS.filter((item) => fieldReadinessChecks[item.id]).length
+  const decisionDraftComplete = Boolean(approvalDraft.decision && approvalDraft.review_notes.trim() && approvalDraft.local_attestation)
+  const fieldPrepContextPresent = Boolean(
+    FIELD_READINESS_CHECKLIST_ITEMS.some((item) => fieldReadinessChecks[item.id])
+      || hasFieldQuestionsDraftContent(fieldQuestionsDraft)
+      || hasFieldObservationScratchpadContent(fieldObservationScratchpad),
+  )
+
+  return [
+    {
+      id: 'exception-review-snapshot',
+      title: 'Exception review snapshot',
+      status: registerCount.open ? 'open' : 'covered',
+      detail: `Import exception register: ${importExceptionRegisterSummary(registerCount)}.`,
+      evidence: registerCount.open
+        ? 'Open local exception evidence remains in the register.'
+        : 'Local exception evidence is covered; future write boundaries may still be blocked.',
+    },
+    {
+      id: 'decision-draft-snapshot',
+      title: 'Decision draft snapshot',
+      status: decisionDraftComplete ? 'covered' : 'open',
+      detail: decisionDraftComplete
+        ? 'Decision value, review notes, and local-only attestation are present.'
+        : 'Decision value, review notes, and local-only attestation still need local draft context.',
+      evidence: `Decision draft: ${approvalDraft.decision || 'none selected'}`,
+    },
+    {
+      id: 'field-prep-snapshot',
+      title: 'Field prep snapshot',
+      status: fieldPrepContextPresent ? 'covered' : 'open',
+      detail: `Coverage snapshot: ${fieldPrepCoverageSummary(fieldPrepCoverageCount)}. Conversation agenda: ${fieldPrepAgendaSummary(fieldPrepAgendaCount)}.`,
+      evidence: `Field readiness checks: ${fieldReadinessCheckedCount} of ${FIELD_READINESS_CHECKLIST_ITEMS.length}; field questions draft: ${hasFieldQuestionsDraftContent(fieldQuestionsDraft) ? 'yes' : 'no'}; observation scratchpad: ${hasFieldObservationScratchpadContent(fieldObservationScratchpad) ? 'yes' : 'no'}.`,
+    },
+    {
+      id: 'next-local-action-snapshot',
+      title: 'Next local action snapshot',
+      status: nextQueueItem ? 'open' : 'covered',
+      detail: nextQueueItem ? `${nextQueueItem.title}: ${nextQueueItem.detail}` : 'No next local operating-queue item is currently reported.',
+      evidence: `Executor closeout intake: ${closeoutCheckedCount} of ${CLOSEOUT_CHECKLIST_ITEMS.length} checked.`,
+    },
+    {
+      id: 'approval-persistence-boundary',
+      title: 'Approval persistence boundary',
+      status: 'blocked',
+      detail: `Approval persistence readiness gates: ${readyPersistenceGateCount} of ${persistenceReadinessGates.length} ready.`,
+      evidence: 'Schema authority, approval persistence authority, and import mutation remain blocked until a later packet admits them.',
+    },
+    {
+      id: 'hosted-parity-boundary',
+      title: 'Hosted parity boundary',
+      status: 'blocked',
+      detail: 'PM Lane 041A/041B still own hosted Vercel promotion and Render mutation-seam parity evidence.',
+      evidence: 'This snapshot is local-current only until hosted executor closeout is returned and audited.',
+    },
+  ]
+}
+
+function pmIntakeSnapshotCounts(snapshot: PmIntakeSnapshotItem[]) {
+  return {
+    covered: snapshot.filter((item) => item.status === 'covered').length,
+    open: snapshot.filter((item) => item.status === 'open').length,
+    blocked: snapshot.filter((item) => item.status === 'blocked').length,
+  }
+}
+
+function pmIntakeSnapshotSummary(counts: ReturnType<typeof pmIntakeSnapshotCounts>) {
+  return `${counts.covered} covered, ${counts.open} open, ${counts.blocked} blocked`
+}
+
 function buildApprovalPacketPreview(
   packet: IntakeWorkbenchPacket,
   notAllowed: string[],
@@ -1030,6 +1139,7 @@ function buildIntakeBrief(
   workflowGates: Array<{ title: string; status: string; detail: string }>,
   persistenceReadinessGates: ReadinessGate[],
   operatingQueue: OperatingQueueItem[],
+  pmIntakeSnapshot: PmIntakeSnapshotItem[],
   importExceptionRegister: ImportExceptionRegisterItem[],
   fieldPrepQueue: OperatingQueueItem[],
   fieldPrepCoverageSnapshot: FieldPrepCoverageItem[],
@@ -1059,6 +1169,7 @@ function buildIntakeBrief(
   const gateLines = workflowGates.map((gate) => `${gate.title}: ${formatLabel(gate.status)} - ${gate.detail}`)
   const persistenceGateLines = persistenceReadinessGates.map((gate) => `${gate.title}: ${formatLabel(gate.status)} - ${gate.detail}`)
   const operatingQueueLines = operatingQueue.map((item) => `${item.title}: ${formatLabel(item.status)} - ${item.detail}`)
+  const pmIntakeSnapshotLines = pmIntakeSnapshot.map((item) => `${item.title}: ${formatLabel(item.status)} - ${item.detail} Evidence: ${item.evidence}`)
   const importExceptionRegisterLines = importExceptionRegister.map((item) => `${item.title}: ${formatLabel(item.status)} - ${item.detail} Evidence: ${item.evidence}`)
   const fieldPrepQueueLines = fieldPrepQueue.map((item) => `${item.title}: ${formatLabel(item.status)} - ${item.detail}`)
   const fieldPrepCoverageLines = fieldPrepCoverageSnapshot.map((item) => `${item.title}: ${formatLabel(item.status)} - ${item.detail}`)
@@ -1085,6 +1196,7 @@ function buildIntakeBrief(
   const completeQueueCount = operatingQueue.filter((item) => item.status === 'complete').length
   const nextQueueCount = operatingQueue.filter((item) => item.status === 'next').length
   const blockedQueueCount = operatingQueue.filter((item) => item.status === 'blocked').length
+  const pmIntakeSnapshotCount = pmIntakeSnapshotCounts(pmIntakeSnapshot)
   const importExceptionRegisterCount = importExceptionRegisterCounts(importExceptionRegister)
   const completeFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'complete').length
   const nextFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'next').length
@@ -1161,6 +1273,14 @@ function buildIntakeBrief(
     'This queue is local review guidance only. It does not approve, persist, import, assign, schedule, change status, or mutate production state.',
     '',
     markdownList(operatingQueueLines),
+    '',
+    '## Local PM Intake Snapshot',
+    '',
+    `PM intake snapshot: ${pmIntakeSnapshotSummary(pmIntakeSnapshotCount)}.`,
+    '',
+    'This snapshot is browser-local review synthesis only. It does not approve, persist, import, assign, schedule, change status, create issues, create tasks, create durable field records, or write production state.',
+    '',
+    markdownList(pmIntakeSnapshotLines),
     '',
     '## Local Import Exception Decision Register',
     '',
@@ -1250,6 +1370,7 @@ function buildExecutorHandoff(
   workflowGates: Array<{ title: string; status: string; detail: string }>,
   persistenceReadinessGates: ReadinessGate[],
   operatingQueue: OperatingQueueItem[],
+  pmIntakeSnapshot: PmIntakeSnapshotItem[],
   importExceptionRegister: ImportExceptionRegisterItem[],
   notAllowed: string[],
   futureRoute: string,
@@ -1282,6 +1403,8 @@ function buildExecutorHandoff(
   const blockedQueueLines = blockedQueueItems.map((item) => `${item.title}: ${item.detail}`)
   const blockedGateLines = blockedReadinessGates.map((gate) => `${gate.title}: ${gate.detail}`)
   const workflowGateLines = workflowGates.map((gate) => `${gate.title}: ${formatLabel(gate.status)} - ${gate.detail}`)
+  const pmIntakeSnapshotCount = pmIntakeSnapshotCounts(pmIntakeSnapshot)
+  const pmIntakeSnapshotLines = pmIntakeSnapshot.map((item) => `${item.title}: ${formatLabel(item.status)} - ${item.detail} Evidence: ${item.evidence}`)
   const importExceptionRegisterCount = importExceptionRegisterCounts(importExceptionRegister)
   const importExceptionRegisterLines = importExceptionRegister.map((item) => `${item.title}: ${formatLabel(item.status)} - ${item.detail} Evidence: ${item.evidence}`)
 
@@ -1335,6 +1458,12 @@ function buildExecutorHandoff(
     'Blocked future moves:',
     '',
     markdownList(blockedQueueLines),
+    '',
+    '## PM Intake Snapshot',
+    '',
+    `PM intake snapshot: ${pmIntakeSnapshotSummary(pmIntakeSnapshotCount)}.`,
+    '',
+    markdownList(pmIntakeSnapshotLines),
     '',
     '## Import Exception Decision Register',
     '',
@@ -2044,6 +2173,64 @@ function buildImportExceptionRegisterExport(
   ].join('\n')
 }
 
+function buildPmIntakeSnapshotExport(
+  packet: IntakeWorkbenchPacket,
+  pmIntakeSnapshot: PmIntakeSnapshotItem[],
+  notAllowed: string[],
+  futureRoute: string,
+) {
+  const candidate = packet.candidate
+  const admissionPlan = packet.admissionPlan
+  const storagePlan = packet.storagePlan
+  const summary = candidate.summary || {}
+  const project = candidate.project || {}
+  const snapshotCount = pmIntakeSnapshotCounts(pmIntakeSnapshot)
+  const snapshotLines = pmIntakeSnapshot.map((item) => `${item.title}: ${formatLabel(item.status)} - ${item.detail} Evidence: ${item.evidence}`)
+
+  return [
+    '# Project Miner Local PM Intake Snapshot',
+    '',
+    'Generated locally from the read-only PM intake workbench. This snapshot is browser-local review synthesis only and grants no authority to approve, persist, import, assign, schedule, change status, create schema, run SQL, call live services, create tasks, create issues, create durable field records, write production tracking rows, or mutate production state.',
+    '',
+    '## Candidate Context',
+    '',
+    `- Candidate: ${candidate.candidate_id || 'unknown'}`,
+    `- Candidate version: ${candidate.candidate_version || 'unknown'}`,
+    `- Candidate authority: ${candidate.mutation_authority || 'not_admitted'}`,
+    `- Project: ${project.name || 'unknown project'}`,
+    `- Location: ${project.location || 'unknown location'}`,
+    `- Source freshness: ${candidate.source_freshness?.aggregate_fingerprint || 'unknown'}`,
+    `- Workpackages: ${formatCount(summary.workpackage_count)}`,
+    `- Tasks: ${formatCount(summary.task_count)}`,
+    `- Apparatus candidates: ${formatCount(summary.apparatus_candidate_count)}`,
+    `- Warnings: ${formatCount(summary.warning_count)}`,
+    `- Human decisions: ${formatCount(summary.human_decision_count)}`,
+    '',
+    '## Snapshot Summary',
+    '',
+    `PM intake snapshot: ${pmIntakeSnapshotSummary(snapshotCount)}.`,
+    '',
+    markdownList(snapshotLines),
+    '',
+    '## Future Surfaces Are Not Admitted',
+    '',
+    `- Future approval table: ${storagePlan.recommended_table || 'not admitted'}`,
+    `- Future approval route: ${futureRoute}`,
+    `- Admission authority: ${admissionPlan.mutation_authority || 'not_admitted'}`,
+    '- Approval persistence, project import, assignment, schedule, status, issue, task, durable field record, and production tracking writes remain blocked.',
+    '',
+    '## Not Allowed',
+    '',
+    markdownList(notAllowed.map(formatLabel)),
+    '',
+    '## Minimum Use',
+    '',
+    '- Use this snapshot as scan-level PM review synthesis only.',
+    '- Do not treat this snapshot as approval, persistence authority, import authority, work authorization, assignment, schedule, status update, task creation, issue creation, durable field record, hosted parity proof, or production tracking.',
+    '- Keep approval persistence and project import blocked until a later packet explicitly admits the required write path.',
+  ].join('\n')
+}
+
 function downloadTextFile(fileName: string, contents: string, contentType: string) {
   const blob = new Blob([contents], { type: contentType })
   const url = URL.createObjectURL(blob)
@@ -2063,6 +2250,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
   const [briefStatus, setBriefStatus] = useState('')
   const [previewStatus, setPreviewStatus] = useState('')
   const [handoffStatus, setHandoffStatus] = useState('')
+  const [pmIntakeSnapshotStatus, setPmIntakeSnapshotStatus] = useState('')
   const [exceptionRegisterStatus, setExceptionRegisterStatus] = useState('')
   const [fieldBriefStatus, setFieldBriefStatus] = useState('')
   const [fieldObservationStatus, setFieldObservationStatus] = useState('')
@@ -2188,9 +2376,14 @@ export default function ProjectMinerIntakeWorkbenchPage() {
     () => buildFieldPrepConversationAgenda(fieldPrepCoverageSnapshot),
     [fieldPrepCoverageSnapshot],
   )
+  const pmIntakeSnapshot = useMemo(
+    () => buildPmIntakeSnapshot(persistenceReadinessGates, operatingQueue, importExceptionRegister, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, closeoutChecks, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad, approvalDraft),
+    [persistenceReadinessGates, operatingQueue, importExceptionRegister, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, closeoutChecks, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad, approvalDraft],
+  )
   const completeQueueCount = operatingQueue.filter((item) => item.status === 'complete').length
   const nextQueueCount = operatingQueue.filter((item) => item.status === 'next').length
   const blockedQueueCount = operatingQueue.filter((item) => item.status === 'blocked').length
+  const pmIntakeSnapshotCount = pmIntakeSnapshotCounts(pmIntakeSnapshot)
   const importExceptionRegisterCount = importExceptionRegisterCounts(importExceptionRegister)
   const completeFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'complete').length
   const nextFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'next').length
@@ -2373,7 +2566,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
 
     downloadTextFile(
       briefFileName(candidate),
-      buildIntakeBrief(packet, workflowGates, persistenceReadinessGates, operatingQueue, importExceptionRegister, fieldPrepQueue, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, notAllowed, futureRoute, reviewChecks, closeoutChecks, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad, approvalDraft),
+      buildIntakeBrief(packet, workflowGates, persistenceReadinessGates, operatingQueue, pmIntakeSnapshot, importExceptionRegister, fieldPrepQueue, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, notAllowed, futureRoute, reviewChecks, closeoutChecks, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad, approvalDraft),
       'text/markdown',
     )
     setBriefStatus(`PM brief prepared from ${candidate?.candidate_id || 'the current intake packet'} without a server write.`)
@@ -2396,10 +2589,23 @@ export default function ProjectMinerIntakeWorkbenchPage() {
 
     downloadTextFile(
       executorHandoffFileName(candidate),
-      buildExecutorHandoff(packet, workflowGates, persistenceReadinessGates, operatingQueue, importExceptionRegister, notAllowed, futureRoute, reviewChecks, closeoutChecks, approvalDraft),
+      buildExecutorHandoff(packet, workflowGates, persistenceReadinessGates, operatingQueue, pmIntakeSnapshot, importExceptionRegister, notAllowed, futureRoute, reviewChecks, closeoutChecks, approvalDraft),
       'text/markdown',
     )
     setHandoffStatus(`Executor handoff prepared from ${candidate?.candidate_id || 'the current intake packet'} without a server write.`)
+  }
+
+  function exportPmIntakeSnapshot() {
+    if (!packet) {
+      return
+    }
+
+    downloadTextFile(
+      pmIntakeSnapshotFileName(candidate),
+      buildPmIntakeSnapshotExport(packet, pmIntakeSnapshot, notAllowed, futureRoute),
+      'text/markdown',
+    )
+    setPmIntakeSnapshotStatus(`PM intake snapshot prepared from ${candidate?.candidate_id || 'the current intake packet'} without a server write.`)
   }
 
   function exportImportExceptionRegister() {
@@ -2564,6 +2770,9 @@ export default function ProjectMinerIntakeWorkbenchPage() {
             <button className="btn btn-outline" onClick={exportExecutorHandoff} disabled={!packet}>
               Export Executor Handoff
             </button>
+            <button className="btn btn-outline" onClick={exportPmIntakeSnapshot} disabled={!packet}>
+              Export PM Intake Snapshot
+            </button>
             <button className="btn btn-outline" onClick={exportImportExceptionRegister} disabled={!packet}>
               Export Import Exception Register
             </button>
@@ -2590,6 +2799,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
         {briefStatus ? <p style={{ margin: '0 0 1rem', color: 'var(--muted)', lineHeight: 1.55 }}>{briefStatus}</p> : null}
         {previewStatus ? <p style={{ margin: '0 0 1rem', color: 'var(--muted)', lineHeight: 1.55 }}>{previewStatus}</p> : null}
         {handoffStatus ? <p style={{ margin: '0 0 1rem', color: 'var(--muted)', lineHeight: 1.55 }}>{handoffStatus}</p> : null}
+        {pmIntakeSnapshotStatus ? <p style={{ margin: '0 0 1rem', color: 'var(--muted)', lineHeight: 1.55 }}>{pmIntakeSnapshotStatus}</p> : null}
         {exceptionRegisterStatus ? <p style={{ margin: '0 0 1rem', color: 'var(--muted)', lineHeight: 1.55 }}>{exceptionRegisterStatus}</p> : null}
         {fieldBriefStatus ? <p style={{ margin: '0 0 1rem', color: 'var(--muted)', lineHeight: 1.55 }}>{fieldBriefStatus}</p> : null}
         {fieldObservationStatus ? <p style={{ margin: '0 0 1rem', color: 'var(--muted)', lineHeight: 1.55 }}>{fieldObservationStatus}</p> : null}
@@ -2616,6 +2826,35 @@ export default function ProjectMinerIntakeWorkbenchPage() {
               {formatCount(summary.warning_count)} warnings, {formatCount(summary.blocker_count)} blockers, {formatCount(summary.human_decision_count)} human decisions.
             </p>
           </article>
+        </section>
+
+        <section aria-label="Local PM intake snapshot" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
+          <div className="status-row">
+            <h2 style={{ margin: 0 }}>Local PM Intake Snapshot</h2>
+            <span className="status-pill status-awaiting-values">browser-local</span>
+          </div>
+          <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+            Compact scan view for exception posture, decision draft, field-prep context, next local action, hosted parity, and future write boundaries. It does not approve, persist, import, assign, schedule, change status, create tasks, create issues, or mutate production state.
+          </p>
+          <p style={{ margin: '0.45rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+            {pmIntakeSnapshotSummary(pmIntakeSnapshotCount)}
+          </p>
+          <div style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
+            {pmIntakeSnapshot.map((item) => (
+              <article key={item.id} className="card" style={{ padding: '0.85rem', boxShadow: 'none' }}>
+                <div className="status-row" style={{ alignItems: 'start' }}>
+                  <div>
+                    <p style={{ margin: 0 }}>
+                      <strong>{item.title}</strong>
+                    </p>
+                    <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
+                    <p style={{ margin: '0.35rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.evidence}</p>
+                  </div>
+                  <span className={`status-pill ${pmIntakeSnapshotTone(item.status)}`}>{formatLabel(item.status)}</span>
+                </div>
+              </article>
+            ))}
+          </div>
         </section>
 
         <section aria-label="Local PM operating queue" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>

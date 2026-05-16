@@ -220,6 +220,18 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(page.getByRole('link', { name: /Import candidate/i })).toHaveAttribute('href', '/pm-review/import-candidate')
   await expect(page.getByRole('link', { name: /Admission plan/i })).toHaveAttribute('href', '/pm-review/import-admission-plan')
   await expect(page.getByRole('link', { name: /Approval readiness/i })).toHaveAttribute('href', '/pm-review/import-approval-readiness')
+  const pmIntakeSnapshot = page.getByLabel('Local PM intake snapshot')
+  await expect(pmIntakeSnapshot.getByRole('heading', { name: /Local PM Intake Snapshot/i })).toBeVisible()
+  await expect(pmIntakeSnapshot.getByText('browser-local')).toBeVisible()
+  await expect(pmIntakeSnapshot.getByText(/Compact scan view for exception posture, decision draft, field-prep context, next local action, hosted parity, and future write boundaries/i)).toBeVisible()
+  await expect(pmIntakeSnapshot.getByText(/does not approve, persist, import, assign, schedule, change status, create tasks, create issues, or mutate production state/i)).toBeVisible()
+  await expect(pmIntakeSnapshot.getByText('0 covered, 4 open, 2 blocked', { exact: true })).toBeVisible()
+  await expect(pmIntakeSnapshot.getByText('Exception review snapshot', { exact: true })).toBeVisible()
+  await expect(pmIntakeSnapshot.getByText('Decision draft snapshot', { exact: true })).toBeVisible()
+  await expect(pmIntakeSnapshot.getByText('Field prep snapshot', { exact: true })).toBeVisible()
+  await expect(pmIntakeSnapshot.getByText('Next local action snapshot', { exact: true })).toBeVisible()
+  await expect(pmIntakeSnapshot.getByText('Approval persistence boundary', { exact: true })).toBeVisible()
+  await expect(pmIntakeSnapshot.getByText('Hosted parity boundary', { exact: true })).toBeVisible()
   const operatingQueue = page.getByLabel('Local PM operating queue')
   await expect(operatingQueue.getByRole('heading', { name: /Local PM Operating Queue/i })).toBeVisible()
   await expect(operatingQueue.getByText('browser-local')).toBeVisible()
@@ -336,6 +348,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(fieldObservations.getByRole('button', { name: 'Clear field observations' })).toBeEnabled()
   await expect(fieldPrepCoverage.getByText('2 covered, 0 partial, 3 open, 2 blocked')).toBeVisible()
   await expect(fieldPrepAgenda.getByText('2 context, 3 ask, 1 confirm, 1 blocked')).toBeVisible()
+  await expect(pmIntakeSnapshot.getByText('3 covered, 1 open, 2 blocked', { exact: true })).toBeVisible()
   const localState = await page.evaluate(() => ({
     checklist: window.localStorage.getItem('pm-import-intake-review-checklist:pm-import-candidate-miner-temp-power'),
     draft: window.localStorage.getItem('pm-import-intake-approval-draft:pm-import-candidate-miner-temp-power'),
@@ -347,6 +360,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
     fieldPrepAgenda: window.localStorage.getItem('pm-import-intake-field-prep-agenda:pm-import-candidate-miner-temp-power'),
     fieldPrepPacket: window.localStorage.getItem('pm-import-intake-field-prep-packet:pm-import-candidate-miner-temp-power'),
     importExceptionRegister: window.localStorage.getItem('pm-import-intake-import-exception-register:pm-import-candidate-miner-temp-power'),
+    pmIntakeSnapshot: window.localStorage.getItem('pm-import-intake-pm-intake-snapshot:pm-import-candidate-miner-temp-power'),
   }))
   expect(localState.checklist).toContain('source_freshness_reviewed')
   expect(localState.checklist).toContain('exceptions_reviewed')
@@ -364,6 +378,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   expect(localState.fieldPrepAgenda).toBeNull()
   expect(localState.fieldPrepPacket).toBeNull()
   expect(localState.importExceptionRegister).toBeNull()
+  expect(localState.pmIntakeSnapshot).toBeNull()
   const readiness = page.getByLabel('Approval persistence readiness gates')
   await expect(readiness.getByRole('heading', { name: /Approval Persistence Readiness/i })).toBeVisible()
   await expect(readiness.getByText('2 of 6 ready')).toBeVisible()
@@ -409,6 +424,11 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   expect(handoff).toContain('Hosted parity executor closeout: PM Lane 041A/041B still need executor closeout before hosted parity can be claimed.')
   expect(handoff).toContain('Approval persistence implementation: PM Lane 049 is design-only; schema and adapter implementation still need an explicit later packet.')
   expect(handoff).toContain('Project import packet: Project, workpackage, task, and apparatus rows remain blocked until approval persistence is explicitly admitted and validated in a later packet.')
+  expect(handoff).toContain('## PM Intake Snapshot')
+  expect(handoff).toContain('PM intake snapshot: 3 covered, 1 open, 2 blocked.')
+  expect(handoff).toContain('Exception review snapshot: covered')
+  expect(handoff).toContain('Field prep snapshot: covered')
+  expect(handoff).toContain('Approval persistence boundary: blocked')
   expect(handoff).toContain('## Import Exception Decision Register')
   expect(handoff).toContain('Import exception register: 4 covered, 0 open, 2 blocked.')
   expect(handoff).toContain('Source freshness evidence: covered')
@@ -431,6 +451,41 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   expect(handoff).toContain('- import project rows')
   expect(handoff).toContain('Preserve zero mutation calls for review-only work.')
   await expect(page.getByText(/Executor handoff prepared from pm-import-candidate-miner-temp-power without a server write/i)).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Export PM Intake Snapshot' })).toBeEnabled()
+  const pmIntakeSnapshotDownloadPromise = page.waitForEvent('download')
+  await page.getByRole('button', { name: 'Export PM Intake Snapshot' }).click()
+  const pmIntakeSnapshotDownload = await pmIntakeSnapshotDownloadPromise
+  expect(pmIntakeSnapshotDownload.suggestedFilename()).toBe('pm-import-candidate-miner-temp-power-pm-intake-snapshot.md')
+  const pmIntakeSnapshotStream = await pmIntakeSnapshotDownload.createReadStream()
+  expect(pmIntakeSnapshotStream).not.toBeNull()
+  const pmIntakeSnapshotChunks: Buffer[] = []
+  for await (const chunk of pmIntakeSnapshotStream!) {
+    pmIntakeSnapshotChunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk))
+  }
+  const pmIntakeSnapshotExport = Buffer.concat(pmIntakeSnapshotChunks).toString('utf8')
+  expect(pmIntakeSnapshotExport).toContain('# Project Miner Local PM Intake Snapshot')
+  expect(pmIntakeSnapshotExport).toContain('Generated locally from the read-only PM intake workbench.')
+  expect(pmIntakeSnapshotExport).toContain('browser-local review synthesis only and grants no authority to approve, persist, import, assign, schedule, change status, create schema, run SQL, call live services, create tasks, create issues, create durable field records, write production tracking rows, or mutate production state.')
+  expect(pmIntakeSnapshotExport).toContain('- Candidate: pm-import-candidate-miner-temp-power')
+  expect(pmIntakeSnapshotExport).toContain('- Candidate authority: not_admitted')
+  expect(pmIntakeSnapshotExport).toContain('- Source freshness: stat-fingerprint-abc123')
+  expect(pmIntakeSnapshotExport).toContain('## Snapshot Summary')
+  expect(pmIntakeSnapshotExport).toContain('PM intake snapshot: 3 covered, 1 open, 2 blocked.')
+  expect(pmIntakeSnapshotExport).toContain('Exception review snapshot: covered')
+  expect(pmIntakeSnapshotExport).toContain('Decision draft snapshot: covered')
+  expect(pmIntakeSnapshotExport).toContain('Field prep snapshot: covered')
+  expect(pmIntakeSnapshotExport).toContain('Next local action snapshot: open')
+  expect(pmIntakeSnapshotExport).toContain('Approval persistence boundary: blocked')
+  expect(pmIntakeSnapshotExport).toContain('Hosted parity boundary: blocked')
+  expect(pmIntakeSnapshotExport).toContain('## Future Surfaces Are Not Admitted')
+  expect(pmIntakeSnapshotExport).toContain('- Future approval route: /api/v1/mutations/project-import-approvals')
+  expect(pmIntakeSnapshotExport).toContain('## Not Allowed')
+  expect(pmIntakeSnapshotExport).toContain('- write supabase')
+  expect(pmIntakeSnapshotExport).toContain('- persist approval record')
+  expect(pmIntakeSnapshotExport).toContain('- import project rows')
+  expect(pmIntakeSnapshotExport).toContain('Use this snapshot as scan-level PM review synthesis only.')
+  expect(pmIntakeSnapshotExport).toContain('Keep approval persistence and project import blocked until a later packet explicitly admits the required write path.')
+  await expect(page.getByText(/PM intake snapshot prepared from pm-import-candidate-miner-temp-power without a server write/i)).toBeVisible()
   await expect(page.getByRole('button', { name: 'Export Import Exception Register' })).toBeEnabled()
   const exceptionRegisterDownloadPromise = page.waitForEvent('download')
   await page.getByRole('button', { name: 'Export Import Exception Register' }).click()
@@ -813,6 +868,11 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   expect(brief).toContain('Hosted parity executor closeout: blocked')
   expect(brief).toContain('Approval persistence implementation: blocked')
   expect(brief).toContain('Project import packet: blocked')
+  expect(brief).toContain('## Local PM Intake Snapshot')
+  expect(brief).toContain('PM intake snapshot: 3 covered, 1 open, 2 blocked.')
+  expect(brief).toContain('Exception review snapshot: covered')
+  expect(brief).toContain('Next local action snapshot: open')
+  expect(brief).toContain('Hosted parity boundary: blocked')
   expect(brief).toContain('## Local Import Exception Decision Register')
   expect(brief).toContain('Import exception register: 4 covered, 0 open, 2 blocked.')
   expect(brief).toContain('Candidate warning signals: covered')
@@ -886,6 +946,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(fieldObservations.getByRole('button', { name: 'Clear field observations' })).toBeDisabled()
   await expect(readiness.getByText('0 of 6 ready')).toBeVisible()
   await expect(operatingQueue.getByText('0 complete / 1 next / 5 blocked')).toBeVisible()
+  await expect(pmIntakeSnapshot.getByText('0 covered, 4 open, 2 blocked', { exact: true })).toBeVisible()
   await expect(exceptionRegister.getByText('0 covered, 4 open, 2 blocked')).toBeVisible()
   await expect(fieldPrepQueue.getByText('0 complete / 1 next / 4 blocked')).toBeVisible()
   await expect(fieldPrepCoverage.getByText('0 covered, 0 partial, 5 open, 2 blocked')).toBeVisible()
@@ -897,10 +958,13 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
     fieldReadiness: window.localStorage.getItem('pm-import-intake-field-readiness:pm-import-candidate-miner-temp-power'),
     fieldQuestions: window.localStorage.getItem('pm-import-intake-field-questions:pm-import-candidate-miner-temp-power'),
     fieldObservations: window.localStorage.getItem('pm-import-intake-field-observations:pm-import-candidate-miner-temp-power'),
+    pmIntakeSnapshot: window.localStorage.getItem('pm-import-intake-pm-intake-snapshot:pm-import-candidate-miner-temp-power'),
     fieldPrepCoverage: window.localStorage.getItem('pm-import-intake-field-prep-coverage:pm-import-candidate-miner-temp-power'),
     fieldPrepAgenda: window.localStorage.getItem('pm-import-intake-field-prep-agenda:pm-import-candidate-miner-temp-power'),
+    fieldPrepPacket: window.localStorage.getItem('pm-import-intake-field-prep-packet:pm-import-candidate-miner-temp-power'),
+    importExceptionRegister: window.localStorage.getItem('pm-import-intake-import-exception-register:pm-import-candidate-miner-temp-power'),
   }))
-  expect(resetLocalState).toEqual({ checklist: null, draft: null, closeout: null, fieldReadiness: null, fieldQuestions: null, fieldObservations: null, fieldPrepCoverage: null, fieldPrepAgenda: null })
+  expect(resetLocalState).toEqual({ checklist: null, draft: null, closeout: null, fieldReadiness: null, fieldQuestions: null, fieldObservations: null, pmIntakeSnapshot: null, fieldPrepCoverage: null, fieldPrepAgenda: null, fieldPrepPacket: null, importExceptionRegister: null })
   await expect(page.getByRole('button', { name: /Approve/i })).toHaveCount(0)
   await expect(page.getByRole('button', { name: /Persist/i })).toHaveCount(0)
   await expect(page.getByRole('button', { name: /Submit/i })).toHaveCount(0)
