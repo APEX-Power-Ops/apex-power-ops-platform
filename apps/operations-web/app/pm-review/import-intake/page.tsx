@@ -301,6 +301,11 @@ function approvalPreviewFileName(candidate?: CandidatePayload | null) {
   return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-approval-packet-preview.json`
 }
 
+function executorHandoffFileName(candidate?: CandidatePayload | null) {
+  const candidateId = candidate?.candidate_id || 'project-miner-intake'
+  return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-executor-handoff.md`
+}
+
 function markdownList(items: string[]) {
   return items.length ? items.map((item) => `- ${item}`).join('\n') : '- none reported'
 }
@@ -618,6 +623,129 @@ function buildIntakeBrief(
   ].join('\n')
 }
 
+function buildExecutorHandoff(
+  packet: IntakeWorkbenchPacket,
+  workflowGates: Array<{ title: string; status: string; detail: string }>,
+  persistenceReadinessGates: ReadinessGate[],
+  operatingQueue: OperatingQueueItem[],
+  notAllowed: string[],
+  futureRoute: string,
+  reviewChecks: Record<string, boolean>,
+  approvalDraft: ApprovalDecisionDraft,
+) {
+  const candidate = packet.candidate
+  const admissionPlan = packet.admissionPlan
+  const approvalContract = packet.approvalContract
+  const storagePlan = packet.storagePlan
+  const summary = candidate.summary || {}
+  const project = candidate.project || {}
+  const warnings = candidate.warnings || []
+  const decisions = candidate.human_decisions || []
+  const checkedItems = REVIEW_CHECKLIST_ITEMS.filter((item) => reviewChecks[item.id])
+  const openChecklistItems = REVIEW_CHECKLIST_ITEMS.filter((item) => !reviewChecks[item.id])
+  const nextQueueItems = operatingQueue.filter((item) => item.status === 'next')
+  const blockedQueueItems = operatingQueue.filter((item) => item.status === 'blocked')
+  const blockedReadinessGates = persistenceReadinessGates.filter((gate) => gate.status === 'blocked')
+  const warningLines = warnings.map((warning) => `${warning.severity || 'unknown'} - ${warning.code || 'WARNING'}: ${warning.message || 'Review warning.'}`)
+  const decisionLines = decisions.map((decision) => `${formatLabel(decision.decision_id)}: ${decision.prompt || 'Decision prompt unavailable.'}`)
+  const checkedLines = checkedItems.map((item) => `${item.label}: ${item.detail}`)
+  const openChecklistLines = openChecklistItems.map((item) => `${item.label}: ${item.detail}`)
+  const nextQueueLines = nextQueueItems.map((item) => `${item.title}: ${item.detail}`)
+  const blockedQueueLines = blockedQueueItems.map((item) => `${item.title}: ${item.detail}`)
+  const blockedGateLines = blockedReadinessGates.map((gate) => `${gate.title}: ${gate.detail}`)
+  const workflowGateLines = workflowGates.map((gate) => `${gate.title}: ${formatLabel(gate.status)} - ${gate.detail}`)
+
+  return [
+    '# Project Miner Intake Executor Handoff',
+    '',
+    'Generated locally from the read-only PM intake workbench. This handoff is context only and grants no authority to approve, persist, import, assign, schedule, change status, create schema, run SQL, call live services, or mutate production state.',
+    '',
+    '## Bounded Instruction',
+    '',
+    'Use this handoff only to review context, draft a later packet, or perform explicitly authorized read-only analysis. Do not treat this handoff as approval, persistence authority, import authority, hosted parity proof, or task creation.',
+    '',
+    '## Candidate Context',
+    '',
+    `- Candidate: ${candidate.candidate_id || 'unknown'}`,
+    `- Candidate version: ${candidate.candidate_version || 'unknown'}`,
+    `- Candidate authority: ${candidate.mutation_authority || 'not_admitted'}`,
+    `- Project: ${project.name || 'unknown project'}`,
+    `- Location: ${project.location || 'unknown location'}`,
+    `- Drawings: ${project.drawing_package || 'unknown'}`,
+    `- Source freshness: ${candidate.source_freshness?.aggregate_fingerprint || 'unknown'}`,
+    `- Workpackages: ${formatCount(summary.workpackage_count)}`,
+    `- Tasks: ${formatCount(summary.task_count)}`,
+    `- Apparatus candidates: ${formatCount(summary.apparatus_candidate_count)}`,
+    `- Warnings: ${formatCount(summary.warning_count)}`,
+    `- Blockers: ${formatCount(summary.blocker_count)}`,
+    `- Human decisions: ${formatCount(summary.human_decision_count)}`,
+    '',
+    '## Current PM Review State',
+    '',
+    `- Checklist checked: ${checkedItems.length} of ${REVIEW_CHECKLIST_ITEMS.length}`,
+    `- Decision draft: ${approvalDraft.decision || 'none selected'}`,
+    `- Local-only attestation checked: ${approvalDraft.local_attestation ? 'yes' : 'no'}`,
+    `- Review notes draft: ${formatMultilineMarkdown(approvalDraft.review_notes)}`,
+    '',
+    '## Checked Review Evidence',
+    '',
+    markdownList(checkedLines),
+    '',
+    '## Open Review Evidence',
+    '',
+    markdownList(openChecklistLines),
+    '',
+    '## Operating Queue',
+    '',
+    'Next local review moves:',
+    '',
+    markdownList(nextQueueLines),
+    '',
+    'Blocked future moves:',
+    '',
+    markdownList(blockedQueueLines),
+    '',
+    '## Approval Persistence Blockers',
+    '',
+    markdownList(blockedGateLines),
+    '',
+    '## Exceptions And Decisions',
+    '',
+    'Warnings:',
+    '',
+    markdownList(warningLines),
+    '',
+    'Human decisions:',
+    '',
+    markdownList(decisionLines),
+    '',
+    '## Workflow Gates',
+    '',
+    markdownList(workflowGateLines),
+    '',
+    '## Future Surfaces Are Not Admitted',
+    '',
+    `- Future approval table: ${storagePlan.recommended_table || 'not admitted'}`,
+    `- Future approval route: ${futureRoute}`,
+    `- Admission plan: ${admissionPlan.admission_plan_id || 'unknown'}`,
+    `- Admission authority: ${admissionPlan.mutation_authority || 'not_admitted'}`,
+    `- Approval contract: ${approvalContract.approval_contract_id || 'unknown'}`,
+    `- Approval persistence authority: ${approvalContract.persistence_authority || storagePlan.persistence_authority || 'not_admitted'}`,
+    '',
+    '## Not Allowed',
+    '',
+    markdownList(notAllowed.map(formatLabel)),
+    '',
+    '## Minimum Safe Next Packet Evidence',
+    '',
+    '- Keep exact read-only source and candidate identity visible.',
+    '- Keep hosted Vercel and Render parity classified before claiming hosted proof.',
+    '- Keep schema, approval persistence, and import mutation blocked unless a later packet explicitly admits them.',
+    '- Preserve zero mutation calls for review-only work.',
+    '- Do not widen backend routes, auth, ingress, secrets, SQL, workbook macros, assignment, schedule, status, or autonomous AI business-state authority.',
+  ].join('\n')
+}
+
 function downloadTextFile(fileName: string, contents: string, contentType: string) {
   const blob = new Blob([contents], { type: contentType })
   const url = URL.createObjectURL(blob)
@@ -636,6 +764,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
   const [online, setOnline] = useState(true)
   const [briefStatus, setBriefStatus] = useState('')
   const [previewStatus, setPreviewStatus] = useState('')
+  const [handoffStatus, setHandoffStatus] = useState('')
   const [reviewChecks, setReviewChecks] = useState<Record<string, boolean>>({})
   const [approvalDraft, setApprovalDraft] = useState<ApprovalDecisionDraft>(EMPTY_APPROVAL_DRAFT)
 
@@ -810,6 +939,19 @@ export default function ProjectMinerIntakeWorkbenchPage() {
     setPreviewStatus(`Approval packet preview prepared from ${candidate?.candidate_id || 'the current intake packet'} without a server write.`)
   }
 
+  function exportExecutorHandoff() {
+    if (!packet) {
+      return
+    }
+
+    downloadTextFile(
+      executorHandoffFileName(candidate),
+      buildExecutorHandoff(packet, workflowGates, persistenceReadinessGates, operatingQueue, notAllowed, futureRoute, reviewChecks, approvalDraft),
+      'text/markdown',
+    )
+    setHandoffStatus(`Executor handoff prepared from ${candidate?.candidate_id || 'the current intake packet'} without a server write.`)
+  }
+
   return (
     <main className="shell-page pm-review-page">
       <section className="hero-card pm-review-hero">
@@ -891,6 +1033,9 @@ export default function ProjectMinerIntakeWorkbenchPage() {
             <button className="btn btn-outline" onClick={exportApprovalPacketPreview} disabled={!packet}>
               Export Approval Preview JSON
             </button>
+            <button className="btn btn-outline" onClick={exportExecutorHandoff} disabled={!packet}>
+              Export Executor Handoff
+            </button>
             <button className="btn btn-outline" onClick={() => void refresh()} disabled={loading}>
               {loading ? 'Refreshing...' : 'Refresh'}
             </button>
@@ -898,6 +1043,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
         </div>
         {briefStatus ? <p style={{ margin: '0 0 1rem', color: 'var(--muted)', lineHeight: 1.55 }}>{briefStatus}</p> : null}
         {previewStatus ? <p style={{ margin: '0 0 1rem', color: 'var(--muted)', lineHeight: 1.55 }}>{previewStatus}</p> : null}
+        {handoffStatus ? <p style={{ margin: '0 0 1rem', color: 'var(--muted)', lineHeight: 1.55 }}>{handoffStatus}</p> : null}
 
         <section className="status-grid status-grid-wide" aria-label="Project Miner intake summary" style={{ marginBottom: '1rem' }}>
           <article className="status-card">

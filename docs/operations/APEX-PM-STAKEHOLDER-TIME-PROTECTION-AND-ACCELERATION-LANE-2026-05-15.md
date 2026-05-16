@@ -287,6 +287,14 @@ PM Lane 051 adds a browser-local `Local PM Operating Queue` near the top of `/pm
 
 This still creates no approval record, SQL, schema migration, backend route, import mutation, assignment, schedule, status, hosted proof, or production mutation.
 
+The current relay-reduction tranche is:
+
+`Project Miner Local Executor Handoff Export`
+
+PM Lane 052 adds a browser-local `Export Executor Handoff` action to `/pm-review/import-intake`. The downloaded Markdown packages the current candidate, local review state, checked/open review evidence, local PM operating queue, readiness blockers, future-not-admitted surfaces, guardrails, and minimum safe next-packet evidence. This gives an external Codex or Claude executor a bounded starting point without Jason relaying context manually.
+
+This still creates no approval record, SQL, schema migration, backend route, import mutation, assignment, schedule, status, hosted proof, live task, or production mutation.
+
 The next persistence tranche is:
 
 `Import Candidate Approval Persistence Schema And Adapter Implementation`

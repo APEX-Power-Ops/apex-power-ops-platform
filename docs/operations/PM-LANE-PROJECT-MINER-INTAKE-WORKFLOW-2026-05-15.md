@@ -373,6 +373,10 @@ PM Lane 051 adds a browser-local `Local PM Operating Queue` near the top of `/pm
 
 This is still local review guidance only. It does not create live tasks, approve, persist, import, create schema, run SQL, write Supabase rows, call live services, run workbook macros, write workbook cells, assign work, change status, mutate schedules, or admit autonomous AI business-state action.
 
+PM Lane 052 adds a browser-local `Export Executor Handoff` action to `/pm-review/import-intake`. The Markdown handoff packages candidate identity, local review state, checked and open review evidence, the local PM operating queue, approval-persistence blockers, workflow gates, future-not-admitted surfaces, not-allowed guardrails, and minimum safe next-packet evidence for a later bounded executor.
+
+This handoff is context only and grants no authority. It does not create live tasks, approve, persist, import, create schema, run SQL, write Supabase rows, call live services, run workbook macros, write workbook cells, assign work, change status, mutate schedules, or admit autonomous AI business-state action.
+
 ## Environment Overrides
 
 Set this when using a different planning folder:
