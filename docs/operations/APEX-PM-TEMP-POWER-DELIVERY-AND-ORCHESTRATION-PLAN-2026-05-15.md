@@ -120,7 +120,8 @@ Key UI lanes:
 2. `/pm-review/approval` for PM task, workpackage, snapshot, escalation, and history review.
 3. `/lead-ops` for lead execution and assignment flow.
 4. `/field-tech` for apparatus-first field execution.
-5. future import-candidate review surface for Temp Power intake approval.
+5. `/pm-review/import-candidate` for read-only Temp Power import candidate review.
+6. `/pm-review/import-admission-plan` for read-only import gate planning before approval or import writes exist.
 
 ## Olares Orchestration Role
 
@@ -232,17 +233,28 @@ The route consumes `GET /api/v1/reads/project-import-admission-plan` and explain
 
 This still does not admit approval persistence, import mutation, SQL, schema, live data write, workbook macro execution, workbook writeback, Render deployment, Vercel promotion, service admission, auth/ingress widening, assignment, schedule, status, or autonomous AI business-state mutation.
 
+PM Lane 036 promotes the PM intake UI routes to Vercel production and proves the remaining hosted split:
+
+1. Vercel production deployment `dpl_GhaHP7v2QPA8SKDC7t7yU5PzNfCt` is aliased to `https://operations.apexpowerops.com`.
+2. Hosted route smoke passes for `/pm-review/import-candidate` and `/pm-review/import-admission-plan`.
+3. A repo-root `.vercelignore` now keeps root-invoked operations-web deploys scoped away from docs, ops, backend services, private infra, caches, and local residue.
+4. Hosted Render mutation-seam health is `200`, but OpenAPI omits the two new PM intake read paths and both routes return `404`.
+5. Render auth/token/service metadata are not available in this workspace, so the backend parity closeout requires a Render-authenticated redeploy/log-inspection lane.
+
+This still does not admit Render deployment from this workspace, approval persistence, import mutation, SQL, schema, live data write, workbook macro execution, workbook writeback, service admission, auth/ingress widening, assignment, schedule, status, or autonomous AI business-state mutation.
+
 ## Capability-Gap Register
 
 Current known gaps:
 
-1. Hosted Render mutation-seam parity remains a blocker for hosted PM live proof.
+1. Hosted Render mutation-seam parity remains a blocker for hosted PM live proof: the production seam is healthy but stale for the new PM intake reads, and schedule reads still return `500`.
 2. Excel MCP is useful for real Excel inspection, but not admitted as production runtime.
 3. A durable AI-to-AI task queue is not admitted; packets and handoffs remain the relay surface.
 4. The project import mutation is not admitted; import-candidate review must come first.
 5. Workbook macros are not admitted for unattended intake.
 6. The local PM review route now supports export and local draft notes, but server-side PM note persistence is not admitted.
 7. The import-admission plan defines the future write gate, but approval persistence and import mutation are still not admitted.
+8. Render auth/token/service metadata are not available in the current Codex workspace; this must be resolved before claiming hosted backend parity.
 
 Required response to new gaps:
 

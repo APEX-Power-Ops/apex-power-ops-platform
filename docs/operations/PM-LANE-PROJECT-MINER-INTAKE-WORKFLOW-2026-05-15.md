@@ -166,6 +166,10 @@ The PM-facing plan route is:
 
 `/pm-review/import-admission-plan`
 
+Hosted PM intake UI route:
+
+`https://operations.apexpowerops.com/pm-review/import-admission-plan`
+
 This route explains the future import gate:
 
 1. approval record contract,
@@ -177,6 +181,24 @@ This route explains the future import gate:
 7. actions that remain disallowed.
 
 This is not an approval screen and not an import screen. It does not persist approval, write Supabase rows, run workbook macros, write workbook cells, assign work, change status, mutate schedules, or admit autonomous AI business-state action.
+
+## Hosted Intake Parity Status
+
+PM Lane 036 promoted the operations-web PM intake routes to Vercel production:
+
+1. `https://operations.apexpowerops.com/pm-review/import-candidate`
+2. `https://operations.apexpowerops.com/pm-review/import-admission-plan`
+
+Hosted route smoke passed with both markers present.
+
+The matching Render mutation-seam routes are not yet hosted-current:
+
+1. `https://mutation-seam.apexpowerops.com/health` returns `200`,
+2. hosted OpenAPI does not list `/api/v1/reads/project-import-candidate`,
+3. hosted OpenAPI does not list `/api/v1/reads/project-import-admission-plan`,
+4. both PM intake read routes currently return `404`.
+
+This means the user-facing pages are visible, but hosted live intake data remains blocked until a Render-authenticated mutation-seam redeploy and log inspection closes the backend parity gap.
 
 ## Environment Overrides
 
@@ -276,13 +298,10 @@ The near-term target is not a generic PM system demo. The target is a field-usab
 
 Current priority order:
 
-1. hosted Render mutation-seam parity for current PM reads,
-2. read-only Temp Power import-candidate review,
-3. import-candidate PM UI review,
-4. import-candidate review hardening for source freshness, filters, export, and local questions,
-5. read-only import-admission plan for approval contract, idempotency, diff checks, and no-go checks,
-6. narrow idempotent import mutation only after human approval and explicit packet admission,
-7. PM, Lead, and Field pilot on a bounded Temp Power slice.
+1. Render-authenticated mutation-seam parity for the new PM intake read endpoints,
+2. approval-persistence design for the reviewed import candidate,
+3. narrow idempotent import mutation only after human approval and explicit packet admission,
+4. PM, Lead, and Field pilot on a bounded Temp Power slice.
 
 Olares One should support this by reducing relay friction, preserving host validation, and keeping packet/handoff evidence durable. It is not currently assumed to provide autonomous AI-to-AI queue ownership.
 

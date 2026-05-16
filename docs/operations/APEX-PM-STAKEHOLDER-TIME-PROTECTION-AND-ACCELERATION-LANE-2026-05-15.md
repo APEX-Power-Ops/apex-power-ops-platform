@@ -77,12 +77,10 @@ Any extra step must justify itself by reducing risk, reducing future workload, o
 
 Immediate PM lane priority order:
 
-1. Build the read-only Temp Power import-candidate artifact from real Project Miner files.
-2. Make that candidate understandable enough that Jason can review exceptions rather than reconstruct the entire workflow.
-3. Add a PM UI review surface for the candidate.
-4. Restore hosted Render parity in parallel or as a blocker only when hosted proof is actually required for the current slice.
-5. Admit the narrow import mutation only after the review flow is proven.
-6. Pilot one bounded Temp Power execution slice before expanding to the larger Building A/B scope.
+1. Restore hosted Render parity for the new PM intake read endpoints so the Vercel UI can consume current backend data.
+2. Prepare approval persistence as its own bounded gate, without importing rows.
+3. Admit the narrow import mutation only after the review and approval flow is proven.
+4. Pilot one bounded Temp Power execution slice before expanding to the larger Building A/B scope.
 
 Immediate orchestration priority order:
 
@@ -178,6 +176,12 @@ The current admission-planning tranche is:
 `Import Admission Plan`
 
 It adds `/pm-review/import-admission-plan` and `GET /api/v1/reads/project-import-admission-plan` so the future import gate is visible before it can write. The PM can review what approval, idempotency, diff checks, no-go checks, and target row counts will require, while approval persistence and import mutation remain unadmitted.
+
+The current hosted-proof tranche is:
+
+`Hosted PM Intake UI Promotion And Render Parity Blocker`
+
+It promotes `/pm-review/import-candidate` and `/pm-review/import-admission-plan` to `https://operations.apexpowerops.com`, adds repeatable hosted smoke coverage, and records the remaining blocker truthfully: Render mutation-seam is healthy but stale for the new PM intake reads, and Render-authenticated redeploy/log inspection is required before hosted PM intake live-data parity can be claimed.
 
 The success standard is not just technical correctness. The candidate must reduce Jason's review burden by showing:
 

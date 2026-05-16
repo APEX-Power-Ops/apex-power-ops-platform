@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit",
     "smoke:hosted": "node scripts/smoke-hosted-routes.mjs",
     "smoke:browser": "next build && playwright test",
+    "smoke:pm-intake-hosted": "node scripts/smoke-pm-intake-hosted.mjs",
     "smoke:pm-live-data": "node scripts/smoke-pm-live-data.mjs",
     "smoke:promoted-host": "node scripts/smoke-promoted-host.mjs"
   },

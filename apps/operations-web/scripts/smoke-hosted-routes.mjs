@@ -7,6 +7,8 @@ const routeChecks = [
   { path: '/pm-review/schedule.html', marker: 'APEX PM Schedule Review' },
   { path: '/pm-review/tracer.html', marker: 'APEX PM Upstream Tracer Review' },
   { path: '/pm-review/variance.html', marker: 'APEX PM Variance Review' },
+  { path: '/pm-review/import-candidate', marker: 'Review exceptions before import exists' },
+  { path: '/pm-review/import-admission-plan', marker: 'Design the import gate before it can write' },
 ];
 
 function parseArgs(argv) {
@@ -14,6 +16,10 @@ function parseArgs(argv) {
 
   for (let index = 0; index < argv.length; index += 1) {
     const argument = argv[index];
+
+    if (argument === '--') {
+      continue;
+    }
 
     if (argument === '--help' || argument === '-h') {
       parsed.help = true;

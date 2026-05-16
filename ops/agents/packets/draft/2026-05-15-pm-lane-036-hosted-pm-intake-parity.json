@@ -1,0 +1,104 @@
+{
+  "packet_id": "2026-05-15-pm-lane-036",
+  "title": "Hosted PM Intake UI Promotion And Render Parity Blocker",
+  "objective": "Promote the PM intake review routes to the hosted operations-web surface, add repeatable hosted PM intake smoke coverage, and truthfully classify the remaining Render mutation-seam backend parity blocker without widening runtime authority.",
+  "domain": "pm-domain",
+  "active_role": "Delegated Technical Repo Authority / PM Runtime Product Coordinator / Hosted Parity Auditor",
+  "repo_paths": [
+    "C:/APEX Platform/apex-power-ops-platform/.vercelignore",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/package.json",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/scripts/smoke-hosted-routes.mjs",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/scripts/smoke-pm-intake-hosted.mjs",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/APEX-PM-STAKEHOLDER-TIME-PROTECTION-AND-ACCELERATION-LANE-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/APEX-PM-TEMP-POWER-DELIVERY-AND-ORCHESTRATION-PLAN-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/PROJECT_STATUS.md"
+  ],
+  "dependencies": [
+    "2026-05-15-pm-lane-011",
+    "2026-05-15-pm-lane-012",
+    "2026-05-15-pm-lane-035"
+  ],
+  "orchestration_inputs": [
+    "PM Lane 035 recommended hosted parity if Render remained stale before claiming user-facing proof.",
+    "An internal read-only sidecar scout confirmed Vercel auth was available, Render auth/token/service metadata were unavailable, and the safest closeout was Vercel-only UI promotion plus Render parity-blocker documentation.",
+    "The coordinator retained final write ownership, executed Vercel promotion, added smoke tooling, and recorded the backend blocker without attempting Render deployment."
+  ],
+  "constrained_outputs": [
+    "Promote operations-web PM intake routes to Vercel production.",
+    "Add root .vercelignore deployment hygiene so root-invoked operations-web deploys exclude docs, ops, backend services, private infra, caches, and local residue.",
+    "Extend hosted route smoke to include /pm-review/import-candidate and /pm-review/import-admission-plan.",
+    "Add a hosted PM intake smoke that checks the Vercel UI routes and the matching Render mutation-seam OpenAPI/read endpoints.",
+    "Record that Vercel UI parity is live and Render backend parity remains blocked.",
+    "Update PM operating docs and project status."
+  ],
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/.vercelignore",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/package.json",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/scripts/smoke-hosted-routes.mjs",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/scripts/smoke-pm-intake-hosted.mjs",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/APEX-PM-STAKEHOLDER-TIME-PROTECTION-AND-ACCELERATION-LANE-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/APEX-PM-TEMP-POWER-DELIVERY-AND-ORCHESTRATION-PLAN-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/PROJECT_STATUS.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-15-pm-lane-036-hosted-pm-intake-parity.json",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-036-hosted-pm-intake-parity-handoff.md"
+  ],
+  "validation_steps": [
+    "npx vercel deploy --prod --yes with VERCEL_ORG_ID and VERCEL_PROJECT_ID set for apex-operations-web",
+    "npx vercel inspect apex-operations-bta6ofrnp-jasonlswenson-sys-projects.vercel.app",
+    "node --check apps/operations-web/scripts/smoke-pm-intake-hosted.mjs",
+    "node --check apps/operations-web/scripts/smoke-hosted-routes.mjs",
+    "corepack pnpm --filter @apex/operations-web typecheck",
+    "corepack pnpm --filter @apex/operations-web smoke:hosted -- --base-url https://operations.apexpowerops.com",
+    "corepack pnpm --filter @apex/operations-web smoke:pm-intake-hosted -- --operations-web-base-url https://operations.apexpowerops.com --mutation-seam-base-url https://mutation-seam.apexpowerops.com",
+    ".venv/Scripts/python.exe apps/mutation-seam/scripts/smoke_deployed_mutation_seam.py --base-url https://mutation-seam.apexpowerops.com",
+    "git diff --check",
+    "packet JSON parse"
+  ],
+  "validation_results": [
+    "Vercel production deployment succeeded: dpl_GhaHP7v2QPA8SKDC7t7yU5PzNfCt, alias https://operations.apexpowerops.com, upload size 14.0KB, Vercel build listed /pm-review/import-candidate and /pm-review/import-admission-plan.",
+    "Vercel inspect confirmed deployment dpl_GhaHP7v2QPA8SKDC7t7yU5PzNfCt is Ready and aliased to https://operations.apexpowerops.com.",
+    "node --check passed for the hosted PM intake smoke and hosted route smoke.",
+    "operations-web typecheck passed.",
+    "Hosted route smoke passed: SMOKE_SUMMARY failed=0 passed=10 base_url=https://operations.apexpowerops.com/.",
+    "Hosted PM intake smoke executed and failed truthfully on Render backend parity only: UI route checks passed, health passed, OpenAPI missed the two PM intake read paths, and both new read routes returned 404.",
+    "Deployed mutation-seam smoke executed and failed truthfully on existing hosted schedule read 500 responses while health/root/approval queue passed.",
+    "Render auth/token/service metadata were absent in the current workspace and no Render CLI was available, so no Render deployment or log inspection was attempted.",
+    "Packet JSON parsed successfully and scoped git diff --check passed."
+  ],
+  "not_allowed": [
+    "No Render deployment action from this workspace.",
+    "No Render metadata repair.",
+    "No SQL or schema migration.",
+    "No live database write.",
+    "No production import job.",
+    "No approval persistence.",
+    "No workbook writeback.",
+    "No workbook macro execution.",
+    "No service admission.",
+    "No auth or ingress widening.",
+    "No package dependency addition.",
+    "No server-side PM note persistence.",
+    "No candidate edit persistence.",
+    "No import mutation.",
+    "No assignment mutation.",
+    "No schedule mutation.",
+    "No status mutation.",
+    "No autonomous AI business-state mutation."
+  ],
+  "handoff_target": "Delegated Technical Repo Authority / PM Runtime Product Coordinator",
+  "status": "complete",
+  "execution_result": "PASS_FRONTEND_HOSTED_RENDER_PARITY_BLOCKED",
+  "delegation_status": "coordinator-executed-with-read-only-sidecar-scout-input",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/scripts/smoke-pm-intake-hosted.mjs",
+    "C:/APEX Platform/apex-power-ops-platform/.vercelignore",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-036-hosted-pm-intake-parity-handoff.md"
+  ],
+  "sql_permission": false,
+  "sql_permission_note": "Packet 2026-05-15-pm-lane-036 does not authorize Render deployment, Render metadata repair, SQL writes, schema migration, live data mutation, production import, approval persistence, workbook writeback, macro execution, service admission, auth widening, ingress widening, package dependency addition, server-side PM note persistence, candidate edit persistence, import mutation, schedule mutation, assignment mutation, status mutation, or autonomous AI business-state mutation.",
+  "ai_mutation_authority": "not_admitted",
+  "created_at": "2026-05-15",
+  "updated_at": "2026-05-15"
+}
