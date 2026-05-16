@@ -653,14 +653,13 @@ Project Miner Temp Power is the first live PM lane pilot.
 
 The near-term target is not a generic PM system demo. The target is a field-usable workflow before the late-May or early-June 2026 Temp Power start window.
 
-Current priority order:
+Current prioritized task-lane status:
 
-1. hosted parity refresh and blocker classification through PM Lane 041,
-2. Vercel-authenticated promotion for the Lane 040 UI route if auto-deploy remains stale,
-3. Render-authenticated mutation-seam parity for the new PM intake read endpoints through PM Lane 041 or PM Lane 037,
-4. approval-persistence mutation only after hosted reads are current and explicit packet admission exists,
-5. narrow idempotent import mutation only after human approval and explicit packet admission,
-6. PM, Lead, and Field pilot on a bounded Temp Power slice.
+1. Local PM intake workbench usability - active and local-current. PM Lanes 043 through 119 have built the `/pm-review/import-intake` daily workbench, local review outputs, field-prep artifacts, grouped/disclosed panels, authority-wording guard, and predictable body-control wrappers through the Local PM Intake Snapshot. The next bounded local move is PM Lane 120, Local PM Operating Queue Body Controls.
+2. Hosted PM intake parity - ready for authenticated executor action, not yet accepted as green. PM Lane 041A covers existing Vercel operations-web promotion, PM Lane 041B covers existing Render mutation-seam redeploy or blocker classification, and PM Lane 076 is the current copy/paste dispatch binder. Hosted parity remains unclaimed until closeouts prove the hosted routes and four PM intake reads are current or precisely classify the remaining blocker.
+3. Approval/import authority - designed but not admitted. The approval contract, approval storage plan, approval-readiness UI, and schema/adapter admission packet context exist, but approval persistence and import mutation remain blocked until hosted reads are current or precisely classified and a later packet explicitly admits the narrow write path.
+
+Execution order remains conservative: local PM ergonomics may continue while hosted parity is pursued, but approval persistence, import mutation, work authorization, assignment, schedule, status, durable field records, and production tracking writes remain outside authority until explicitly admitted.
 
 Olares One should support this by reducing relay friction, preserving host validation, and keeping packet/handoff evidence durable. It is not currently assumed to provide autonomous AI-to-AI queue ownership.
 

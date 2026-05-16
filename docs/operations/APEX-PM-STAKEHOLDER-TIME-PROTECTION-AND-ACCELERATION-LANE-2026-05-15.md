@@ -75,14 +75,13 @@ Any extra step must justify itself by reducing risk, reducing future workload, o
 
 ## Acceleration Priorities
 
-Immediate PM lane priority order:
+Immediate prioritized PM task lanes:
 
-1. Restore hosted Render parity for the new PM intake read endpoints so the Vercel UI can consume current backend data.
-2. Prepare and review the approval contract as its own bounded gate, without importing rows or persisting approval.
-3. Prepare and review the approval storage plan as its own bounded gate, without schema changes or persisting approval.
-4. Admit approval persistence only after the storage decision and hosted read parity are proven.
-5. Admit the narrow import mutation only after the review and approval flow is proven.
-6. Pilot one bounded Temp Power execution slice before expanding to the larger Building A/B scope.
+1. Local PM intake workbench usability - active and local-current through PM Lane 119. The current safe product lane keeps reducing Jason's daily scan burden on `/pm-review/import-intake`; the next bounded local move is PM Lane 120, Local PM Operating Queue Body Controls.
+2. Hosted PM intake parity - ready for authenticated executor action through PM Lane 041A, PM Lane 041B, and the PM Lane 076 dispatch binder. This lane is still not green until Vercel and Render closeouts prove or precisely classify hosted route and read parity.
+3. Approval/import authority - designed but not admitted. Approval persistence, schema execution, and import mutation remain blocked until hosted reads are current or precisely classified and a later packet explicitly admits the narrow write path.
+
+Pilot expansion to PM, Lead, and Field execution remains downstream of these three lanes and must not be pulled forward by local UI progress alone.
 
 Immediate orchestration priority order:
 

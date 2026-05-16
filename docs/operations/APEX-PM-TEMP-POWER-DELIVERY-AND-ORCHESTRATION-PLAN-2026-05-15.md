@@ -475,6 +475,12 @@ PM Lane 118 wraps the existing Local PM Intake Open Items Lens body content on `
 
 PM Lane 119 wraps the existing Local PM Intake Snapshot body content on `/pm-review/import-intake` in a labeled body-controls container under its already-existing default-open disclosure so the Temp Power prep flow can fold and reopen the snapshot scan predictably. This changes only browser-local snapshot scanning and AI/orchestration ergonomics, keeps the panel inside Review Snapshot Detail before `#pm-operating-queue`, preserves the `#pm-intake-snapshot` anchor, existing disclosure, heading, browser-local pill, explanatory no-authority wording, snapshot summary count, six derived snapshot cards, card order, dynamic detail/evidence text, status pills, quick-jump target, export behavior, PM Lane 083 authority guard, and PM Lane 084/085/086/087/088/089/090/091/092/093/094/095/096/097/098/099/100/101/102/103/104/105/106/107/108/109/110/111/112/113/114/115/116/117/118 disclosure coverage, and adds no new route, export action, artifact, storage contract, backend route, hosted proof, SQL, schema migration, approval persistence, import mutation, issue, task, assignment, schedule, status, durable field record, production tracking write, or production state.
 
+## Current Prioritized Task-Lane Status
+
+1. Local PM intake workbench usability is active and local-current through PM Lane 119. The next bounded local product move is PM Lane 120, Local PM Operating Queue Body Controls, which should continue the body-control ergonomics pattern without widening route, export, storage, backend, hosted, approval, import, assignment, schedule, status, or production authority.
+2. Hosted PM intake parity is ready for authenticated execution but not yet green. PM Lane 041A owns Vercel operations-web promotion for the existing production alias, PM Lane 041B owns Render mutation-seam redeploy or blocker classification for the four PM intake reads, and PM Lane 076 is the current dispatch binder. Coordinator acceptance still requires green hosted smoke or precise blocker classification.
+3. Approval/import authority is designed but not admitted. The approval contract, storage plan, readiness UI, and schema/adapter admission context are present, but approval persistence and project import mutation remain blocked until hosted read parity is current or precisely classified and a later packet explicitly opens the write path.
+
 ## Capability-Gap Register
 
 Current known gaps:
