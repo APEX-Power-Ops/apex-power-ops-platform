@@ -40,6 +40,8 @@ C:\APEX Platform\apex-power-ops-platform\ops\agents\handoffs\templates\pm-hosted
 
 ## First Step
 
+Before selecting a hosted lane, pull the latest `clean-main` with `git pull --ff-only`. Treat the source floor above as the minimum dispatch floor; if `clean-main` is newer, validate and deploy from the newer `clean-main` head unless a coordinator closeout says otherwise.
+
 Inspect your available hosted credential surface:
 
 1. If you have authenticated Vercel access for the existing operations-web project, execute PM Lane 041A.
