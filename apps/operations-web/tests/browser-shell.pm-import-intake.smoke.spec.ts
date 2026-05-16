@@ -9,6 +9,10 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   }
   const mutationRequests: string[] = []
 
+  await page.route('**/api/v1/**', async (route) => {
+    throw new Error(`Unexpected unmocked API request: ${route.request().url()}`)
+  })
+
   await page.route('**/api/v1/mutations/**', async (route) => {
     mutationRequests.push(route.request().url())
     await route.fulfill({
@@ -212,6 +216,13 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(page.getByRole('link', { name: /Import candidate/i })).toHaveAttribute('href', '/pm-review/import-candidate')
   await expect(page.getByRole('link', { name: /Admission plan/i })).toHaveAttribute('href', '/pm-review/import-admission-plan')
   await expect(page.getByRole('link', { name: /Approval readiness/i })).toHaveAttribute('href', '/pm-review/import-approval-readiness')
+  const checklist = page.getByLabel('Local review checklist')
+  await expect(checklist.getByRole('heading', { name: /Local Review Checklist/i })).toBeVisible()
+  await expect(checklist.getByText(/Browser-local review prep only/i)).toBeVisible()
+  await expect(checklist.getByText('0 of 7')).toBeVisible()
+  await checklist.getByRole('checkbox', { name: /Source freshness reviewed/i }).check()
+  await checklist.getByRole('checkbox', { name: /Warnings reviewed/i }).check()
+  await expect(checklist.getByText('2 of 7')).toBeVisible()
   await expect(page.getByRole('button', { name: 'Export PM Brief' })).toBeEnabled()
   const downloadPromise = page.waitForEvent('download')
   await page.getByRole('button', { name: 'Export PM Brief' }).click()
@@ -236,7 +247,16 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   expect(brief).toContain('- write supabase')
   expect(brief).toContain('- persist approval record')
   expect(brief).toContain('- import project rows')
+  expect(brief).toContain('## Local Review Checklist')
+  expect(brief).toContain('Checklist progress: 2 of 7 checked.')
+  expect(brief).toContain('[x] Source freshness reviewed')
+  expect(brief).toContain('[x] Warnings reviewed')
+  expect(brief).toContain('[ ] Hosted parity acknowledged')
   await expect(page.getByText(/PM brief prepared from pm-import-candidate-miner-temp-power without a server write/i)).toBeVisible()
+  await checklist.getByRole('button', { name: 'Clear checklist' }).click()
+  await expect(checklist.getByText('0 of 7')).toBeVisible()
+  await expect(checklist.getByRole('checkbox', { name: /Source freshness reviewed/i })).not.toBeChecked()
+  await expect(checklist.getByRole('checkbox', { name: /Warnings reviewed/i })).not.toBeChecked()
   await expect(page.getByRole('button', { name: /Approve/i })).toHaveCount(0)
   await expect(page.getByRole('button', { name: /Persist/i })).toHaveCount(0)
   await expect(page.getByRole('button', { name: /Submit/i })).toHaveCount(0)

@@ -247,6 +247,12 @@ The current PM handoff compression tranche is:
 
 PM Lane 045 adds an `Export PM Brief` action to `/pm-review/import-intake`. The brief is downloaded as Markdown from the already-loaded read-only intake packet and can be used as a concise reviewer or executor context handoff. This is explicitly not approval, persistence, import, assignment, schedule, status, or production state.
 
+The current local review-prep tranche is:
+
+`Project Miner PM Intake Local Review Checklist`
+
+PM Lane 046 adds a candidate-scoped browser-local checklist to `/pm-review/import-intake` for source freshness, warning review, PM decision capture, admission no-go review, approval storage understanding, hosted-parity awareness, and write-guardrail confirmation. The checklist appears in the exported Markdown PM brief so Jason or an executor can see what was reviewed without converting the screen into approval, persistence, import, assignment, schedule, status, or production state.
+
 The next persistence tranche is:
 
 `Import Candidate Approval Persistence Schema And Adapter Admission`

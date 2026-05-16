@@ -1,0 +1,73 @@
+{
+  "packet_id": "2026-05-15-pm-lane-046",
+  "title": "Project Miner PM Intake Local Review Checklist",
+  "objective": "Add a browser-local, candidate-scoped PM review checklist to /pm-review/import-intake and include its checked state in the local Markdown PM brief without adding approval, persistence, import mutation, backend endpoints, hosted deployment, or live business-state writes.",
+  "domain": "pm-domain",
+  "active_role": "Delegated Technical Repo Authority / PM Product Coordinator / Local Implementation Executor",
+  "route": "/pm-review/import-intake",
+  "dependencies": [
+    "2026-05-15-pm-lane-043",
+    "2026-05-15-pm-lane-044",
+    "2026-05-15-pm-lane-045"
+  ],
+  "implementation_summary": [
+    "Added a Local Review Checklist section to the Project Miner import-intake workbench.",
+    "The checklist is stored only in browser localStorage under pm-import-intake-review-checklist:${candidate_id}.",
+    "The checklist covers source freshness, warning review, PM decision capture, admission no-go review, approval storage understanding, hosted-parity awareness, and write-guardrail confirmation.",
+    "The exported Markdown PM brief now includes a Local Review Checklist section with checked and unchecked review-prep states.",
+    "The focused import-intake Playwright smoke now includes a catch-all unmocked /api/v1/** guard so the route cannot accidentally call live or unmocked API seams during local proof.",
+    "A read-only sidecar independently confirmed the candidate-scoped local checklist boundary and recommended the unmocked API guard."
+  ],
+  "changed_files": [
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/app/pm-review/import-intake/page.tsx",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/tests/browser-shell.pm-import-intake.smoke.spec.ts",
+    "C:/APEX Platform/apex-power-ops-platform/PROJECT_STATUS.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/APEX-PM-TEMP-POWER-DELIVERY-AND-ORCHESTRATION-PLAN-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/APEX-PM-STAKEHOLDER-TIME-PROTECTION-AND-ACCELERATION-LANE-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-15-pm-lane-046-local-review-checklist.json",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-046-local-review-checklist-handoff.md"
+  ],
+  "validation_steps": [
+    "corepack pnpm --filter @apex/operations-web typecheck",
+    "corepack pnpm --filter @apex/operations-web build",
+    "corepack pnpm --dir apps/operations-web exec playwright test tests/browser-shell.pm-import-intake.smoke.spec.ts",
+    "corepack pnpm --dir apps/operations-web exec playwright test tests/browser-shell.pm-import-candidate.smoke.spec.ts tests/browser-shell.pm-import-admission-plan.smoke.spec.ts tests/browser-shell.pm-import-approval-readiness.smoke.spec.ts tests/browser-shell.pm-import-intake.smoke.spec.ts",
+    "C:/APEX Platform/apex-power-ops-platform/.venv/Scripts/python.exe -c \"import json; json.load(open(r'C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-15-pm-lane-046-local-review-checklist.json', encoding='utf-8')); print('packet-json-ok')\"",
+    "git diff --check"
+  ],
+  "validation_results": [
+    "operations-web typecheck passed.",
+    "operations-web production build passed and route output included /pm-review/import-intake.",
+    "Focused import-intake Playwright smoke passed with 1 passed after verifying checklist initial state, checked count, Markdown brief checked/unchecked states, clear behavior, exact four reads, zero mutation calls, no unmocked API calls, and no approve/persist/submit/import buttons.",
+    "Focused PM intake Playwright suite passed with 4 passed.",
+    "Packet JSON parse passed with packet-json-ok.",
+    "git diff --check passed with line-ending normalization warnings only."
+  ],
+  "not_allowed": [
+    "No backend endpoint change.",
+    "No hosted deployment.",
+    "No Vercel promotion.",
+    "No Render redeploy.",
+    "No SQL write.",
+    "No schema migration.",
+    "No approval persistence.",
+    "No import mutation.",
+    "No live database write.",
+    "No workbook macro execution.",
+    "No workbook writeback.",
+    "No service admission.",
+    "No auth or ingress widening.",
+    "No assignment mutation.",
+    "No schedule mutation.",
+    "No status mutation.",
+    "No autonomous AI business-state mutation."
+  ],
+  "execution_result": "LOCAL_READ_ONLY_PM_INTAKE_REVIEW_CHECKLIST_IMPLEMENTED",
+  "delegation_status": "sidecar_read_only_scope_and_assertion_scout_completed",
+  "hosted_status": "local_current_only; hosted promotion remains assigned to PM Lane 041A/041B",
+  "sql_permission": false,
+  "ai_mutation_authority": "not_admitted",
+  "created_at": "2026-05-15",
+  "updated_at": "2026-05-15"
+}

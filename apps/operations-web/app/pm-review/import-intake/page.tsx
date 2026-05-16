@@ -135,6 +135,12 @@ type IntakeWorkbenchPacket = {
   storagePlan: ApprovalStoragePlan
 }
 
+type ReviewChecklistItem = {
+  id: string
+  label: string
+  detail: string
+}
+
 const { useCallback, useEffect, useMemo, useState } = React
 
 const API_BASE =
@@ -144,6 +150,43 @@ const API_BASE =
 
 const READS_BASE = `${API_BASE}/reads`
 const PM_ACTOR = { actor_id: 'pm-001', actor_role: 'pm', project_scope: ['proj-001'] }
+const REVIEW_CHECKLIST_ITEMS: ReviewChecklistItem[] = [
+  {
+    id: 'source_freshness_reviewed',
+    label: 'Source freshness reviewed',
+    detail: 'Source paths, modified times, and aggregate fingerprint were checked before relying on this candidate.',
+  },
+  {
+    id: 'exceptions_reviewed',
+    label: 'Warnings reviewed',
+    detail: 'Candidate warnings and blocker counts were reviewed before moving toward approval planning.',
+  },
+  {
+    id: 'pm_decisions_captured',
+    label: 'PM decisions captured',
+    detail: 'Human decision prompts were reviewed and any open questions were captured outside production state.',
+  },
+  {
+    id: 'admission_no_go_reviewed',
+    label: 'Admission no-go checks reviewed',
+    detail: 'No-go checks and target row counts were reviewed before any future import packet.',
+  },
+  {
+    id: 'approval_storage_understood',
+    label: 'Approval storage understood',
+    detail: 'The future approval table and route were reviewed as design-only, not admitted persistence.',
+  },
+  {
+    id: 'hosted_parity_acknowledged',
+    label: 'Hosted parity acknowledged',
+    detail: 'Vercel and Render hosted parity still require executor closeout before production-read proof.',
+  },
+  {
+    id: 'write_guardrails_confirmed',
+    label: 'Write guardrails confirmed',
+    detail: 'No Supabase write, approval persistence, import, assignment, schedule, or status mutation is admitted.',
+  },
+]
 
 function makeToken() {
   return `Bearer ${btoa(JSON.stringify(PM_ACTOR))}`
@@ -227,6 +270,7 @@ function buildIntakeBrief(
   workflowGates: Array<{ title: string; status: string; detail: string }>,
   notAllowed: string[],
   futureRoute: string,
+  reviewChecks: Record<string, boolean>,
 ) {
   const candidate = packet.candidate
   const admissionPlan = packet.admissionPlan
@@ -242,6 +286,8 @@ function buildIntakeBrief(
   const warningLines = warnings.map((warning) => `${warning.severity || 'unknown'} - ${warning.code || 'WARNING'}: ${warning.message || 'Review warning.'}`)
   const decisionLines = decisions.map((decision) => `${formatLabel(decision.decision_id)}: ${decision.prompt || 'Decision prompt unavailable.'}`)
   const gateLines = workflowGates.map((gate) => `${gate.title}: ${formatLabel(gate.status)} - ${gate.detail}`)
+  const checklistLines = REVIEW_CHECKLIST_ITEMS.map((item) => `${reviewChecks[item.id] ? '[x]' : '[ ]'} ${item.label}: ${item.detail}`)
+  const checkedCount = REVIEW_CHECKLIST_ITEMS.filter((item) => reviewChecks[item.id]).length
 
   return [
     '# Project Miner PM Intake Brief',
@@ -279,6 +325,14 @@ function buildIntakeBrief(
     '',
     markdownList(gateLines),
     '',
+    '## Local Review Checklist',
+    '',
+    `Checklist progress: ${checkedCount} of ${REVIEW_CHECKLIST_ITEMS.length} checked.`,
+    '',
+    'This browser-local checklist is review prep only. It is not approval, persistence, import, assignment, schedule, status, or production state.',
+    '',
+    markdownList(checklistLines),
+    '',
     '## Admission And Approval',
     '',
     `- Admission plan: ${admissionPlan.admission_plan_id || 'unknown'}`,
@@ -315,6 +369,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
   const [loading, setLoading] = useState(true)
   const [online, setOnline] = useState(true)
   const [briefStatus, setBriefStatus] = useState('')
+  const [reviewChecks, setReviewChecks] = useState<Record<string, boolean>>({})
 
   const refresh = useCallback(async () => {
     try {
@@ -342,6 +397,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
   const decisions = candidate?.human_decisions || []
   const noGoChecks = admissionPlan?.no_go_checks || []
   const targetRows = admissionPlan?.target_row_plan || {}
+  const reviewChecklistKey = candidate?.candidate_id ? `pm-import-intake-review-checklist:${candidate.candidate_id}` : null
   const notAllowed = useMemo(
     () =>
       uniqueItems(
@@ -390,13 +446,42 @@ export default function ProjectMinerIntakeWorkbenchPage() {
       detail: 'Project, workpackage, task, apparatus, assignment, schedule, and status writes remain blocked.',
     },
   ]
+  const checklistCheckedCount = REVIEW_CHECKLIST_ITEMS.filter((item) => reviewChecks[item.id]).length
+
+  useEffect(() => {
+    if (!reviewChecklistKey || typeof window === 'undefined') {
+      return
+    }
+
+    try {
+      const stored = window.localStorage.getItem(reviewChecklistKey)
+      setReviewChecks(stored ? (JSON.parse(stored) as Record<string, boolean>) : {})
+    } catch {
+      setReviewChecks({})
+    }
+  }, [reviewChecklistKey])
+
+  function updateReviewCheck(itemId: string, checked: boolean) {
+    const next = { ...reviewChecks, [itemId]: checked }
+    setReviewChecks(next)
+    if (reviewChecklistKey && typeof window !== 'undefined') {
+      window.localStorage.setItem(reviewChecklistKey, JSON.stringify(next))
+    }
+  }
+
+  function clearReviewChecklist() {
+    setReviewChecks({})
+    if (reviewChecklistKey && typeof window !== 'undefined') {
+      window.localStorage.removeItem(reviewChecklistKey)
+    }
+  }
 
   function exportPmBrief() {
     if (!packet) {
       return
     }
 
-    downloadTextFile(briefFileName(candidate), buildIntakeBrief(packet, workflowGates, notAllowed, futureRoute), 'text/markdown')
+    downloadTextFile(briefFileName(candidate), buildIntakeBrief(packet, workflowGates, notAllowed, futureRoute, reviewChecks), 'text/markdown')
     setBriefStatus(`PM brief prepared from ${candidate?.candidate_id || 'the current intake packet'} without a server write.`)
   }
 
@@ -657,6 +742,40 @@ export default function ProjectMinerIntakeWorkbenchPage() {
               </div>
             </dl>
           </article>
+        </section>
+
+        <section aria-label="Local review checklist" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
+          <div className="status-row">
+            <h2 style={{ margin: 0 }}>Local Review Checklist</h2>
+            <span className="status-pill status-configured">
+              {formatCount(checklistCheckedCount)} of {formatCount(REVIEW_CHECKLIST_ITEMS.length)}
+            </span>
+          </div>
+          <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+            Browser-local review prep only. Checking these items does not approve, persist, import, assign, schedule, change status, or mutate production state.
+          </p>
+          <div style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
+            {REVIEW_CHECKLIST_ITEMS.map((item) => (
+              <label key={item.id} className="card" style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0.75rem', padding: '0.85rem', boxShadow: 'none', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={Boolean(reviewChecks[item.id])}
+                  onChange={(event) => updateReviewCheck(item.id, event.target.checked)}
+                  style={{ marginTop: '0.25rem' }}
+                />
+                <span>
+                  <strong>{item.label}</strong>
+                  <span style={{ display: 'block', marginTop: '0.35rem', color: 'var(--muted)', lineHeight: 1.5 }}>{item.detail}</span>
+                </span>
+              </label>
+            ))}
+          </div>
+          <div className="pm-review-link-row pm-review-link-row-start" style={{ alignItems: 'center' }}>
+            <button className="btn btn-outline" onClick={clearReviewChecklist} disabled={!checklistCheckedCount}>
+              Clear checklist
+            </button>
+            <span style={{ color: 'var(--muted)', lineHeight: 1.55 }}>Retained in this browser for the current candidate only.</span>
+          </div>
         </section>
 
         <section aria-label="Current PM next actions and guardrails" className="notes-grid">

@@ -325,6 +325,8 @@ PM Lane 044 refreshes the hosted parity route scope after Lane 043. The hosted s
 
 PM Lane 045 adds a local-only Markdown PM intake brief export to `/pm-review/import-intake`. This lets Jason or an executor receive one concise source-derived brief without requiring another manual summary or chat relay. The export is browser-local, generated from already-loaded reads, and does not add hosted proof, backend routes, approval persistence, import mutation, or production writes.
 
+PM Lane 046 adds a browser-local PM review checklist to `/pm-review/import-intake` and folds its checked state into the Markdown PM intake brief. This creates a lightweight day-to-day review-prep trail for source freshness, warnings, PM decisions, no-go checks, approval-storage understanding, hosted parity, and write guardrails while still avoiding hosted proof, backend routes, approval persistence, import mutation, assignment, schedule, status, or production writes.
+
 ## Capability-Gap Register
 
 Current known gaps:
