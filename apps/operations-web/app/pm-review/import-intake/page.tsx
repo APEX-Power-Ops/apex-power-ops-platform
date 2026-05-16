@@ -4194,15 +4194,15 @@ export default function ProjectMinerIntakeWorkbenchPage() {
               <h2 style={{ display: 'inline', margin: 0 }}>Workflow Review Panels</h2>
             </summary>
 
-        <section id="pm-workflow-map" aria-label="Local PM intake workflow map" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
-          <div className="status-row">
+        <details id="pm-workflow-map" open aria-label="Local PM intake workflow map" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
+          <summary className="status-row" style={{ cursor: 'pointer' }}>
             <h2 style={{ margin: 0 }}>Local PM Intake Workflow Map</h2>
             <span className="status-pill status-awaiting-values">browser-local</span>
-          </div>
+          </summary>
           <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
             Visual map of the current intake path from source review through field-prep context, executor closeout, and still-blocked future write authority. It creates no localStorage key, export artifact, backend route, schema, approval record, task, issue, or production write.
           </p>
-          <div style={{ display: 'grid', gap: '0.75rem', gridTemplateColumns: 'repeat(auto-fit, minmax(14rem, 1fr))', marginTop: '0.85rem' }}>
+          <div aria-label="Local PM intake workflow map items" style={{ display: 'grid', gap: '0.75rem', gridTemplateColumns: 'repeat(auto-fit, minmax(14rem, 1fr))', marginTop: '0.85rem' }}>
             {pmIntakeWorkflowMap.map((item) => (
               <a
                 key={item.id}
@@ -4222,7 +4222,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
               </a>
             ))}
           </div>
-        </section>
+        </details>
 
         <section id="pm-open-items" aria-label="Local PM intake open items lens" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
           <div className="status-row">

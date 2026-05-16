@@ -563,6 +563,8 @@ PM Lane 089 wraps the existing route-link rail in a default-open native disclosu
 
 PM Lane 090 wraps the existing Local PM Intake Handoff Guide panel in a default-open native disclosure control. Jason can fold the next-context guide after reviewing it, while the panel stays inside Daily Action Panels and the five derived items, labels, hrefs, order, status pills, dynamic text, no-storage behavior, reads, and authority wording remain unchanged.
 
+PM Lane 091 wraps the existing Local PM Intake Workflow Map panel in a default-open native disclosure control. Jason can fold the workflow map after reviewing it, while the panel stays inside Workflow Review Panels and the seven derived items, labels, hrefs, order, status pills, dynamic text, no-storage behavior, reads, and authority wording remain unchanged.
+
 This creates no approval record, SQL, schema migration, backend route, import mutation, issue, task, assignment, schedule, status, hosted proof, live task, work authorization, field release, work order, durable field record, production tracking write, product code, deployment, service, DNS, auth, ingress, secret, local storage key, new route, new export action, new export artifact, export contract widening, or production mutation.
 
 The next persistence tranche is:
