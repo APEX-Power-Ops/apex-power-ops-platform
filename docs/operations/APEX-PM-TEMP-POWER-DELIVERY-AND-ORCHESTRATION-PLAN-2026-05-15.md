@@ -343,6 +343,8 @@ PM Lane 052 adds a browser-local executor handoff export to `/pm-review/import-i
 
 PM Lane 053 adds a browser-local executor closeout intake checklist to `/pm-review/import-intake`. It gives the coordinator a lightweight audit-prep checklist for returned executor evidence without claiming acceptance, hosted proof, backend routes, SQL, schema migration, approval persistence, import mutation, assignment, schedule, status, or production writes.
 
+PM Lane 054 adds a browser-local `Export Field Kickoff Brief` action to `/pm-review/import-intake`. It gives PM, lead, and field review conversations one portable prep artifact with candidate shape, workpackage preview, field-prep questions, warnings, human decisions, local review evidence, executor closeout evidence, and guardrails without creating work authorization, live tasks, hosted proof, backend routes, SQL, schema migration, approval persistence, import mutation, assignment, schedule, status, or production writes.
+
 ## Capability-Gap Register
 
 Current known gaps:

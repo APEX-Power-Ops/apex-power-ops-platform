@@ -381,6 +381,10 @@ PM Lane 053 adds a browser-local `Local Executor Closeout Intake` checklist to `
 
 This closeout intake is audit prep only and grants no acceptance authority. It does not create live tasks, approve, persist, import, create schema, run SQL, write Supabase rows, call live services, run workbook macros, write workbook cells, assign work, change status, mutate schedules, or admit autonomous AI business-state action.
 
+PM Lane 054 adds a browser-local `Export Field Kickoff Brief` action to `/pm-review/import-intake`. The Markdown brief packages the current candidate identity, project location, source freshness, proposed workpackage/task/apparatus shape, workpackage preview, field-prep questions, exceptions, PM decisions, local review evidence, local executor closeout evidence, operating queue, workflow gates, future-not-admitted surfaces, and not-allowed guardrails.
+
+This field kickoff brief is field-prep context only and grants no work authorization. It does not create live tasks, approve, persist, import, create schema, run SQL, write Supabase rows, call live services, run workbook macros, write workbook cells, assign work, change status, mutate schedules, claim hosted parity, or admit autonomous AI business-state action.
+
 ## Environment Overrides
 
 Set this when using a different planning folder:

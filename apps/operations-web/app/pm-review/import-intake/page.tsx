@@ -354,6 +354,11 @@ function executorHandoffFileName(candidate?: CandidatePayload | null) {
   return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-executor-handoff.md`
 }
 
+function fieldKickoffBriefFileName(candidate?: CandidatePayload | null) {
+  const candidateId = candidate?.candidate_id || 'project-miner-intake'
+  return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-field-kickoff-brief.md`
+}
+
 function markdownList(items: string[]) {
   return items.length ? items.map((item) => `- ${item}`).join('\n') : '- none reported'
 }
@@ -823,6 +828,149 @@ function buildExecutorHandoff(
   ].join('\n')
 }
 
+function buildFieldKickoffBrief(
+  packet: IntakeWorkbenchPacket,
+  workflowGates: Array<{ title: string; status: string; detail: string }>,
+  operatingQueue: OperatingQueueItem[],
+  notAllowed: string[],
+  futureRoute: string,
+  reviewChecks: Record<string, boolean>,
+  closeoutChecks: Record<string, boolean>,
+  approvalDraft: ApprovalDecisionDraft,
+) {
+  const candidate = packet.candidate
+  const admissionPlan = packet.admissionPlan
+  const approvalContract = packet.approvalContract
+  const storagePlan = packet.storagePlan
+  const summary = candidate.summary || {}
+  const project = candidate.project || {}
+  const warnings = candidate.warnings || []
+  const decisions = candidate.human_decisions || []
+  const workpackages = candidate.workpackages || []
+  const checkedItems = REVIEW_CHECKLIST_ITEMS.filter((item) => reviewChecks[item.id])
+  const checkedCloseoutItems = CLOSEOUT_CHECKLIST_ITEMS.filter((item) => closeoutChecks[item.id])
+  const nextQueueItems = operatingQueue.filter((item) => item.status === 'next')
+  const blockedQueueItems = operatingQueue.filter((item) => item.status === 'blocked')
+  const warningLines = warnings.map((warning) => `${warning.severity || 'unknown'} - ${warning.code || 'WARNING'}: ${warning.message || 'Review warning.'}`)
+  const decisionLines = decisions.map((decision) => `${formatLabel(decision.decision_id)}: ${decision.prompt || 'Decision prompt unavailable.'}`)
+  const workpackageLines = workpackages.map((workpackage) => {
+    const drawingRefs = workpackage.drawing_refs?.length ? workpackage.drawing_refs.join(', ') : 'drawing refs not listed'
+    return `${workpackage.title || workpackage.workpackage_id || 'Untitled workpackage'}: ${formatCount(workpackage.task_count)} tasks, ${formatCount(workpackage.apparatus_candidate_count)} apparatus candidates, drawings ${drawingRefs}`
+  })
+  const checkedReviewLines = checkedItems.map((item) => `${item.label}: ${item.detail}`)
+  const checkedCloseoutLines = checkedCloseoutItems.map((item) => `${item.label}: ${item.detail}`)
+  const nextQueueLines = nextQueueItems.map((item) => `${item.title}: ${item.detail}`)
+  const blockedQueueLines = blockedQueueItems.map((item) => `${item.title}: ${item.detail}`)
+  const workflowGateLines = workflowGates.map((gate) => `${gate.title}: ${formatLabel(gate.status)} - ${gate.detail}`)
+  const fieldPrepLines = [
+    'Confirm latest drawings, estimator source, and Project Data Entry source remain current before field reliance.',
+    'Review warnings and human-decision prompts with PM before using the candidate shape for field planning.',
+    'Use workpackage and apparatus counts to prepare questions, material review, and crew/equipment discussion only.',
+    'Keep assignment, schedule, status, approval persistence, and import rows blocked until later admitted packets own those writes.',
+  ]
+
+  return [
+    '# Project Miner Field Kickoff Prep Brief',
+    '',
+    'Generated locally from the read-only PM intake workbench. This brief is field-prep context only and grants no authority to approve, persist, import, assign, schedule, change status, create schema, run SQL, call live services, or mutate production state.',
+    '',
+    '## Field-Prep Boundary',
+    '',
+    'Use this brief to align PM, lead, and field review conversations before execution tracking exists in production state. Do not treat it as a work authorization, schedule, assignment, status update, hosted parity proof, approval record, import packet, or task creation.',
+    '',
+    '## Project Snapshot',
+    '',
+    `- Candidate: ${candidate.candidate_id || 'unknown'}`,
+    `- Candidate version: ${candidate.candidate_version || 'unknown'}`,
+    `- Candidate authority: ${candidate.mutation_authority || 'not_admitted'}`,
+    `- Project: ${project.name || 'unknown project'}`,
+    `- Location: ${project.location || 'unknown location'}`,
+    `- Drawings: ${project.drawing_package || 'unknown'}`,
+    `- Source sheet: ${project.source_sheet || 'unknown'}`,
+    `- Source freshness: ${candidate.source_freshness?.aggregate_fingerprint || 'unknown'}`,
+    '',
+    '## Proposed Field Shape',
+    '',
+    `- Workpackages: ${formatCount(summary.workpackage_count)}`,
+    `- Tasks: ${formatCount(summary.task_count)}`,
+    `- Apparatus candidates: ${formatCount(summary.apparatus_candidate_count)}`,
+    `- Crew rows: ${formatCount(summary.crew_count)}`,
+    `- Equipment inventory rows: ${formatCount(summary.equipment_inventory_count)}`,
+    `- Capability rows: ${formatCount(summary.capability_count)}`,
+    `- Warnings: ${formatCount(summary.warning_count)}`,
+    `- Blockers: ${formatCount(summary.blocker_count)}`,
+    `- Human decisions: ${formatCount(summary.human_decision_count)}`,
+    '',
+    '## Workpackage Preview',
+    '',
+    markdownList(workpackageLines),
+    '',
+    '## Field Prep Questions',
+    '',
+    markdownList(fieldPrepLines),
+    '',
+    '## Exceptions And PM Decisions',
+    '',
+    'Warnings:',
+    '',
+    markdownList(warningLines),
+    '',
+    'Human decisions:',
+    '',
+    markdownList(decisionLines),
+    '',
+    '## Local Review Evidence',
+    '',
+    `- Review checklist: ${checkedItems.length} of ${REVIEW_CHECKLIST_ITEMS.length} checked`,
+    `- Executor closeout intake: ${checkedCloseoutItems.length} of ${CLOSEOUT_CHECKLIST_ITEMS.length} checked`,
+    `- Decision draft: ${approvalDraft.decision || 'none selected'}`,
+    `- Local-only attestation checked: ${approvalDraft.local_attestation ? 'yes' : 'no'}`,
+    `- Review notes draft: ${formatMultilineMarkdown(approvalDraft.review_notes)}`,
+    '',
+    'Checked review evidence:',
+    '',
+    markdownList(checkedReviewLines),
+    '',
+    'Checked executor closeout evidence:',
+    '',
+    markdownList(checkedCloseoutLines),
+    '',
+    '## Local PM Operating Queue',
+    '',
+    'Next local moves:',
+    '',
+    markdownList(nextQueueLines),
+    '',
+    'Blocked future moves:',
+    '',
+    markdownList(blockedQueueLines),
+    '',
+    '## Workflow Gates',
+    '',
+    markdownList(workflowGateLines),
+    '',
+    '## Future Surfaces Are Not Admitted',
+    '',
+    `- Future approval table: ${storagePlan.recommended_table || 'not admitted'}`,
+    `- Future approval route: ${futureRoute}`,
+    `- Admission plan: ${admissionPlan.admission_plan_id || 'unknown'}`,
+    `- Admission authority: ${admissionPlan.mutation_authority || 'not_admitted'}`,
+    `- Approval contract: ${approvalContract.approval_contract_id || 'unknown'}`,
+    `- Approval persistence authority: ${approvalContract.persistence_authority || storagePlan.persistence_authority || 'not_admitted'}`,
+    '',
+    '## Not Allowed',
+    '',
+    markdownList(notAllowed.map(formatLabel)),
+    '',
+    '## Minimum Field-Prep Use',
+    '',
+    '- Use this brief as conversation prep and issue discovery only.',
+    '- Do not create assignments, schedules, status changes, approval records, schema, SQL, or import rows from this brief.',
+    '- Do not claim hosted parity from this local export.',
+    '- Keep production execution tracking blocked until a later packet explicitly admits the required write path.',
+  ].join('\n')
+}
+
 function downloadTextFile(fileName: string, contents: string, contentType: string) {
   const blob = new Blob([contents], { type: contentType })
   const url = URL.createObjectURL(blob)
@@ -842,6 +990,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
   const [briefStatus, setBriefStatus] = useState('')
   const [previewStatus, setPreviewStatus] = useState('')
   const [handoffStatus, setHandoffStatus] = useState('')
+  const [fieldBriefStatus, setFieldBriefStatus] = useState('')
   const [reviewChecks, setReviewChecks] = useState<Record<string, boolean>>({})
   const [closeoutChecks, setCloseoutChecks] = useState<Record<string, boolean>>({})
   const [approvalDraft, setApprovalDraft] = useState<ApprovalDecisionDraft>(EMPTY_APPROVAL_DRAFT)
@@ -1060,6 +1209,19 @@ export default function ProjectMinerIntakeWorkbenchPage() {
     setHandoffStatus(`Executor handoff prepared from ${candidate?.candidate_id || 'the current intake packet'} without a server write.`)
   }
 
+  function exportFieldKickoffBrief() {
+    if (!packet) {
+      return
+    }
+
+    downloadTextFile(
+      fieldKickoffBriefFileName(candidate),
+      buildFieldKickoffBrief(packet, workflowGates, operatingQueue, notAllowed, futureRoute, reviewChecks, closeoutChecks, approvalDraft),
+      'text/markdown',
+    )
+    setFieldBriefStatus(`Field kickoff prep brief prepared from ${candidate?.candidate_id || 'the current intake packet'} without a server write.`)
+  }
+
   return (
     <main className="shell-page pm-review-page">
       <section className="hero-card pm-review-hero">
@@ -1144,6 +1306,9 @@ export default function ProjectMinerIntakeWorkbenchPage() {
             <button className="btn btn-outline" onClick={exportExecutorHandoff} disabled={!packet}>
               Export Executor Handoff
             </button>
+            <button className="btn btn-outline" onClick={exportFieldKickoffBrief} disabled={!packet}>
+              Export Field Kickoff Brief
+            </button>
             <button className="btn btn-outline" onClick={() => void refresh()} disabled={loading}>
               {loading ? 'Refreshing...' : 'Refresh'}
             </button>
@@ -1152,6 +1317,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
         {briefStatus ? <p style={{ margin: '0 0 1rem', color: 'var(--muted)', lineHeight: 1.55 }}>{briefStatus}</p> : null}
         {previewStatus ? <p style={{ margin: '0 0 1rem', color: 'var(--muted)', lineHeight: 1.55 }}>{previewStatus}</p> : null}
         {handoffStatus ? <p style={{ margin: '0 0 1rem', color: 'var(--muted)', lineHeight: 1.55 }}>{handoffStatus}</p> : null}
+        {fieldBriefStatus ? <p style={{ margin: '0 0 1rem', color: 'var(--muted)', lineHeight: 1.55 }}>{fieldBriefStatus}</p> : null}
 
         <section className="status-grid status-grid-wide" aria-label="Project Miner intake summary" style={{ marginBottom: '1rem' }}>
           <article className="status-card">

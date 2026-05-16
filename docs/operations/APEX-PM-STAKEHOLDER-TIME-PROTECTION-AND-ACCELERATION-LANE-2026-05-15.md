@@ -303,6 +303,14 @@ PM Lane 053 adds a browser-local `Local Executor Closeout Intake` checklist to `
 
 This still creates no approval record, SQL, schema migration, backend route, import mutation, assignment, schedule, status, hosted proof, live task, closeout acceptance, or production mutation.
 
+The current field-prep tranche is:
+
+`Project Miner Local Field Kickoff Prep Brief Export`
+
+PM Lane 054 adds a browser-local `Export Field Kickoff Brief` action to `/pm-review/import-intake`. The brief packages source-derived candidate shape, workpackage preview, field-prep questions, warnings, human decisions, local review evidence, executor closeout evidence, operating queue, workflow gates, future-not-admitted surfaces, and not-allowed guardrails. It gives PM, lead, and field conversations one portable context artifact without calling it release-to-field authority.
+
+This still creates no approval record, SQL, schema migration, backend route, import mutation, assignment, schedule, status, hosted proof, live task, work authorization, or production mutation.
+
 The next persistence tranche is:
 
 `Import Candidate Approval Persistence Schema And Adapter Implementation`
