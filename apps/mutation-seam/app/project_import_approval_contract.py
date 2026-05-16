@@ -123,7 +123,7 @@ def build_project_import_approval_contract(admission_plan: Mapping[str, Any]) ->
         "future_mutation_contract": {
             "proposed_entity_type": "pm_import_candidate_approval",
             "proposed_action": "persist_import_approval",
-            "proposed_route": "/api/v1/project-import-approvals",
+            "proposed_route": "/api/v1/mutations/project-import-approvals",
             "current_authority": "not_admitted",
             "idempotency_policy": (admission_plan.get("idempotency_plan") or {}).get("collision_policy"),
         },

@@ -140,6 +140,7 @@ def main() -> int:
             '/api/v1/reads/project-import-candidate',
             '/api/v1/reads/project-import-admission-plan',
             '/api/v1/reads/project-import-approval-contract',
+            '/api/v1/reads/project-import-approval-storage-plan',
         }
         status, payload = request_json(f'{base_url}/openapi.json', timeout_seconds=args.timeout_seconds)
         expect_status(
@@ -169,6 +170,16 @@ def main() -> int:
                 {
                     'approval_contract_id',
                     'decision_payload_template',
+                    'mutation_authority',
+                    'persistence_authority',
+                },
+            ),
+            (
+                'project_import_approval_storage_plan',
+                '/api/v1/reads/project-import-approval-storage-plan',
+                {
+                    'recommended_table',
+                    'selected_storage_decision',
                     'mutation_authority',
                     'persistence_authority',
                 },

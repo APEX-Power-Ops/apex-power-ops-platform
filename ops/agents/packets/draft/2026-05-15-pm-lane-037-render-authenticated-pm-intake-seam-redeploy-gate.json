@@ -19,15 +19,15 @@
     "Workstation clean-main started this packet at 4eca3dcc6b8d93b687b187a31d58188179ca8f22 after PM Lane 036.",
     "operations.apexpowerops.com serves the PM intake UI routes from Vercel deployment dpl_GhaHP7v2QPA8SKDC7t7yU5PzNfCt.",
     "https://mutation-seam.apexpowerops.com/health returns 200.",
-    "Hosted mutation-seam OpenAPI omits /api/v1/reads/project-import-candidate and /api/v1/reads/project-import-admission-plan.",
-    "Hosted mutation-seam returns 404 for both PM intake read endpoints.",
+    "Hosted mutation-seam OpenAPI omits the current PM intake reads including /api/v1/reads/project-import-candidate, /api/v1/reads/project-import-admission-plan, /api/v1/reads/project-import-approval-contract, and /api/v1/reads/project-import-approval-storage-plan until Render serves current clean-main.",
+    "Hosted mutation-seam returns 404 for currently stale PM intake read endpoints.",
     "Hosted mutation-seam schedule projects, drivers, tracer, and variance reads still return 500.",
     "Current workspace still has no Render auth/token/service metadata and no render CLI, so this packet is ready for a Render-authenticated external executor rather than local deployment."
   ],
   "orchestration_inputs": [
     "PM Lane 036 closed as frontend hosted proof with Render backend parity blocked.",
     "The previous PM Lane 012 packet remains useful precedent but targets the earlier PM workfront route and older commit; this packet refreshes the executor boundary for the current PM intake routes.",
-    "A separate read-only sidecar scout produced ops/agents/handoffs/2026-05-15-pm-lane-038-sidecar-import-approval-persistence-design-scout-handoff.md for the following approval-persistence product lane; this packet stays focused on Render parity."
+    "PM Lane 038 and PM Lane 039 locally added read-only approval-contract and storage-plan design reads; this packet stays focused on Render parity and must not add persistence or import writes."
   ],
   "required_executor_capability": [
     "Authenticated Render dashboard, API, or equivalent control surface with access to existing service apex-platform-mutation-seam.",
@@ -87,7 +87,7 @@
     "Render service inspection for apex-platform-mutation-seam: repo, branch, working directory, deploy commit, build command, start command, health path, autoDeploy, and env key posture",
     "Trigger existing-service redeploy from clean-main if the service is stale or metadata repair is needed",
     "Probe https://mutation-seam.apexpowerops.com/health",
-    "Probe https://mutation-seam.apexpowerops.com/openapi.json and confirm /api/v1/reads/project-import-candidate plus /api/v1/reads/project-import-admission-plan are present",
+    "Probe https://mutation-seam.apexpowerops.com/openapi.json and confirm all current PM intake read paths are present: /api/v1/reads/project-import-candidate, /api/v1/reads/project-import-admission-plan, /api/v1/reads/project-import-approval-contract, and /api/v1/reads/project-import-approval-storage-plan",
     "C:/APEX Platform/apex-power-ops-platform/.venv/Scripts/python.exe C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/scripts/smoke_deployed_mutation_seam.py --base-url https://mutation-seam.apexpowerops.com --include-pm-intake",
     "corepack pnpm --dir C:/APEX Platform/apex-power-ops-platform --filter @apex/operations-web exec node scripts/smoke-pm-intake-hosted.mjs --operations-web-base-url https://operations.apexpowerops.com --mutation-seam-base-url https://mutation-seam.apexpowerops.com --timeout-ms 20000",
     "With SEAM_STORE_BACKEND=memory, C:/APEX Platform/apex-power-ops-platform/.venv/Scripts/python.exe -m pytest C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests/test_project_import_candidate.py C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests/test_project_import_admission_plan.py -q"
@@ -95,7 +95,7 @@
   "authoring_validation_results": [
     "py_compile passed for apps/mutation-seam/scripts/smoke_deployed_mutation_seam.py.",
     "smoke_deployed_mutation_seam.py --help includes --include-pm-intake.",
-    "Hosted deployed seam smoke with --include-pm-intake executed and failed truthfully on current Render stale-backend evidence: schedule reads 500, PM intake OpenAPI paths missing, and both PM intake reads 404.",
+    "Hosted deployed seam smoke with --include-pm-intake executed and failed truthfully on current Render stale-backend evidence: schedule reads 500, PM intake OpenAPI paths missing, and stale PM intake reads 404.",
     "Focused local PM import candidate plus admission-plan tests passed: 4 passed.",
     "Packet JSON parsed successfully.",
     "Scoped git diff --check passed."

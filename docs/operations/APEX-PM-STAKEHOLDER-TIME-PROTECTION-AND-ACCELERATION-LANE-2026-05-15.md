@@ -79,8 +79,10 @@ Immediate PM lane priority order:
 
 1. Restore hosted Render parity for the new PM intake read endpoints so the Vercel UI can consume current backend data.
 2. Prepare and review the approval contract as its own bounded gate, without importing rows or persisting approval.
-3. Admit the narrow import mutation only after the review and approval flow is proven.
-4. Pilot one bounded Temp Power execution slice before expanding to the larger Building A/B scope.
+3. Prepare and review the approval storage plan as its own bounded gate, without schema changes or persisting approval.
+4. Admit approval persistence only after the storage decision and hosted read parity are proven.
+5. Admit the narrow import mutation only after the review and approval flow is proven.
+6. Pilot one bounded Temp Power execution slice before expanding to the larger Building A/B scope.
 
 Immediate orchestration priority order:
 
@@ -189,7 +191,7 @@ The current Render-auth packet is:
 
 PM Lane 037 refreshes the older Render-authenticated packet around the current PM intake routes. It adds backend-only `--include-pm-intake` smoke coverage and a copy/paste executor prompt for a Render-authenticated Codex or Claude Code lane. This keeps Jason out of the relay loop while making the missing credential/tool gap explicit.
 
-The current product-design tranche is:
+The completed approval-contract tranche is:
 
 `Import Candidate Approval Persistence Design`
 
@@ -197,11 +199,19 @@ PM Lane 038 implements the no-write version of that design as `GET /api/v1/reads
 
 The sidecar recommendation was accepted in bounded form: this tranche stays out of the mutation pipeline and store adapters, validates approval payload shape locally, extends the deployed-seam smoke so hosted parity checks all current PM intake reads, and does not import project, workpackage, task, or apparatus rows.
 
-The next storage tranche is:
+The current storage-design tranche is:
 
 `Import Candidate Approval Persistence Storage Decision`
 
-That future tranche should decide the smallest governed storage surface for the PM approval record before any server-side note persistence or import mutation is admitted.
+PM Lane 039 implements the no-write version of that storage decision as `GET /api/v1/reads/project-import-approval-storage-plan`. It chooses a future dedicated insert-only `seam.pm_import_candidate_approvals` table and `/api/v1/mutations/project-import-approvals` route, while leaving schema, approval persistence, and import rows blocked.
+
+The sidecar recommendation was accepted in bounded form again: actual persistence is deferred because the mutation-seam store defaults to Supabase-backed collections, no approval collection exists, and the generic mutation pipeline does not own `pm_import_candidate_approval`. The storage plan rejects audit-log-only approval storage, reuse of issue/task/workpackage rows, browser-local storage as canonical approval, generic PgDict upsert without an adapter, and direct Supabase writes from Excel or UI.
+
+The next persistence tranche is:
+
+`Import Candidate Approval Persistence Schema And Adapter Admission`
+
+That future tranche should add the dedicated schema and adapter only after hosted reads are current or the Render blocker is precisely classified. It must still avoid project, workpackage, task, apparatus, assignment, schedule, and status writes.
 
 The success standard is not just technical correctness. The candidate must reduce Jason's review burden by showing:
 

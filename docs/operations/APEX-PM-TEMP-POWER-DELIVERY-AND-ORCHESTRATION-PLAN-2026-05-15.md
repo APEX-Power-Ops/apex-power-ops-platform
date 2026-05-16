@@ -127,7 +127,8 @@ Current backend-only PM intake design reads also include:
 
 1. `GET /api/v1/reads/project-import-candidate`,
 2. `GET /api/v1/reads/project-import-admission-plan`,
-3. `GET /api/v1/reads/project-import-approval-contract`.
+3. `GET /api/v1/reads/project-import-approval-contract`,
+4. `GET /api/v1/reads/project-import-approval-storage-plan`.
 
 ## Olares Orchestration Role
 
@@ -178,8 +179,10 @@ Target sequence before field start:
 2. Restore hosted Render mutation-seam parity for current PM reads in parallel or before hosted proof is required.
 3. Validate the candidate against estimator, SLD/PDF, data-entry, tracker, equipment, and capability lineage.
 4. Add PM UI review for the import candidate.
-5. Admit a narrow, idempotent import mutation only after the candidate and approval workflow are proven.
-6. Pilot one Temp Power slice through PM, Lead, and Field workflow before importing broader Building A/B scope.
+5. Define approval contract and approval storage shape without admitting writes.
+6. Admit approval persistence only after the storage decision and hosted read parity are proven.
+7. Admit a narrow, idempotent import mutation only after the candidate and approval workflow are proven.
+8. Pilot one Temp Power slice through PM, Lead, and Field workflow before importing broader Building A/B scope.
 
 ## Current Product Tranche
 
@@ -269,6 +272,18 @@ PM Lane 038 executes the local read-only approval-contract design slice:
 
 This still does not admit approval persistence, import mutation, SQL, schema, live data write, workbook macro execution, workbook writeback, Render deployment, Vercel promotion, service admission, auth/ingress widening, assignment, schedule, status, or autonomous AI business-state mutation.
 
+PM Lane 039 executes the local read-only approval-storage-plan design slice:
+
+1. `apps/mutation-seam/app/project_import_approval_storage_plan.py` builds the future approval storage decision from the current approval contract.
+2. `GET /api/v1/reads/project-import-approval-storage-plan` exposes the storage plan for PM review and future implementation work.
+3. The plan selects a dedicated insert-only `seam.pm_import_candidate_approvals` table, entity type `pm_import_candidate_approval`, and future route `/api/v1/mutations/project-import-approvals`.
+4. The plan defines recommended columns, constraints, adapter requirements, readback requirements, rejected unsafe storage options, and the later admission sequence.
+5. The plan rejects audit-log-only approval storage, reusing issue/task/workpackage rows, browser-local storage as canonical approval, generic PgDict upsert without an adapter, and direct Supabase writes from Excel or UI.
+6. `apps/mutation-seam/scripts/smoke_deployed_mutation_seam.py --include-pm-intake` now includes the storage-plan read so Render parity proof covers all current PM intake reads.
+7. A sidecar scout independently confirmed actual persistence is unsafe until a dedicated table/adapter is admitted because the default store is Supabase-backed and the generic mutation pipeline does not own this entity.
+
+This still does not admit approval persistence, import mutation, SQL, schema, live data write, workbook macro execution, workbook writeback, Render deployment, Vercel promotion, service admission, auth/ingress widening, assignment, schedule, status, or autonomous AI business-state mutation.
+
 ## Capability-Gap Register
 
 Current known gaps:
@@ -279,10 +294,10 @@ Current known gaps:
 4. The project import mutation is not admitted; import-candidate review must come first.
 5. Workbook macros are not admitted for unattended intake.
 6. The local PM review route now supports export and local draft notes, but server-side PM note persistence is not admitted.
-7. The import-admission plan and approval contract define the future write gate, but approval persistence and import mutation are still not admitted.
+7. The import-admission plan, approval contract, and approval storage plan define the future write gate, but schema, approval persistence, and import mutation are still not admitted.
 8. Render auth/token/service metadata are not available in the current Codex workspace; this must be resolved before claiming hosted backend parity.
-9. Approval persistence needs a small governed storage decision before implementation; it should not be smuggled into audit log alone and must not import project rows.
-10. The approval-contract read endpoint is local-current only until Render serves the current mutation-seam code.
+9. Approval persistence needs a later dedicated schema/adapter admission before implementation; it should not be smuggled into audit log alone and must not import project rows.
+10. The approval-contract and approval-storage-plan read endpoints are local-current only until Render serves the current mutation-seam code.
 
 Required response to new gaps:
 

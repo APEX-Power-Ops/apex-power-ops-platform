@@ -206,6 +206,34 @@ The backend also includes a pure local validator for this approval payload. The 
 
 This is still not approval persistence and not import. It does not write Supabase rows, store PM notes, import project rows, run workbook macros, write workbook cells, assign work, change status, mutate schedules, or admit autonomous AI business-state action.
 
+## Import Approval Storage Plan
+
+PM Lane 039 adds a read-only storage decision plan before any approval persistence can be implemented.
+
+The read seam is:
+
+`GET /api/v1/reads/project-import-approval-storage-plan`
+
+The plan selects the future persistence shape without opening that write path:
+
+1. dedicated insert-only table: `seam.pm_import_candidate_approvals`,
+2. future mutation route: `/api/v1/mutations/project-import-approvals`,
+3. future entity type: `pm_import_candidate_approval`,
+4. typed identity columns plus JSONB approval payload and validation result,
+5. append-only or strict idempotent replay lifecycle,
+6. audit as evidence after insert, not as the canonical approval store,
+7. readback requirements for current, stale, returned, rejected, or approved candidate state.
+
+The plan explicitly rejects unsafe shortcuts:
+
+1. audit-log-only approval storage,
+2. reusing issue, task, or workpackage rows for pre-import approval,
+3. browser-local storage as canonical approval,
+4. generic PgDict upsert without an explicit approval adapter,
+5. direct Supabase writes from Excel or the UI.
+
+This is still not approval persistence and not import. It does not create a table, run SQL, write Supabase rows, store PM notes, import project rows, run workbook macros, write workbook cells, assign work, change status, mutate schedules, or admit autonomous AI business-state action.
+
 ## Hosted Intake Parity Status
 
 PM Lane 036 promoted the operations-web PM intake routes to Vercel production:
@@ -240,6 +268,12 @@ After PM Lane 038, the same flag also checks:
 1. OpenAPI registration of `/api/v1/reads/project-import-approval-contract`,
 2. `GET /api/v1/reads/project-import-approval-contract`,
 3. approval-contract payload fields including `mutation_authority` and `persistence_authority`.
+
+After PM Lane 039, it also checks:
+
+1. OpenAPI registration of `/api/v1/reads/project-import-approval-storage-plan`,
+2. `GET /api/v1/reads/project-import-approval-storage-plan`,
+3. storage-plan payload fields including `selected_storage_decision`, `recommended_table`, `mutation_authority`, and `persistence_authority`.
 
 ## Environment Overrides
 
@@ -340,10 +374,11 @@ The near-term target is not a generic PM system demo. The target is a field-usab
 Current priority order:
 
 1. Render-authenticated mutation-seam parity for the new PM intake read endpoints through PM Lane 037,
-2. PM Lane 038 approval-contract review and storage decision while keeping persistence unadmitted,
-3. approval-persistence mutation only after hosted reads are current and explicit packet admission exists,
-4. narrow idempotent import mutation only after human approval and explicit packet admission,
-5. PM, Lead, and Field pilot on a bounded Temp Power slice.
+2. PM Lane 038 approval-contract review while keeping persistence unadmitted,
+3. PM Lane 039 storage-plan review while keeping schema and persistence unadmitted,
+4. approval-persistence mutation only after hosted reads are current and explicit packet admission exists,
+5. narrow idempotent import mutation only after human approval and explicit packet admission,
+6. PM, Lead, and Field pilot on a bounded Temp Power slice.
 
 Olares One should support this by reducing relay friction, preserving host validation, and keeping packet/handoff evidence durable. It is not currently assumed to provide autonomous AI-to-AI queue ownership.
 
@@ -367,7 +402,10 @@ Review the approval contract, idempotency key, diff checks, target rows, and no-
 Level 2C - Approval Contract Design:
 Define and validate the PM approval packet shape, candidate fingerprints, warning acceptance, human-acceptance no-go acknowledgements, actor/timestamp fields, and reviewer notes before any approval persistence exists.
 
-Level 2D - Approval Persistence:
+Level 2D - Approval Storage Design:
+Define the dedicated approval record table, future mutation route, adapter rules, idempotent replay behavior, audit/readback expectations, and rejected storage shortcuts before any schema or approval persistence exists.
+
+Level 2E - Approval Persistence:
 Persist only the PM approval decision, candidate fingerprints, warning acceptance, no-go acknowledgement notes, and reviewer notes for the import candidate after a later packet admits a narrow storage path. This is not an import mutation and must not write project, workpackage, task, or apparatus rows.
 
 Level 3 - Resource Context:

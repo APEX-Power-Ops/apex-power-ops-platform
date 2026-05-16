@@ -34,9 +34,13 @@ That flag keeps the existing default smoke behavior unchanged, then adds backend
 
 1. OpenAPI registration of `/api/v1/reads/project-import-candidate`,
 2. OpenAPI registration of `/api/v1/reads/project-import-admission-plan`,
-3. `GET /api/v1/reads/project-import-candidate`,
-4. `GET /api/v1/reads/project-import-admission-plan`,
-5. `mutation_authority: not_admitted` on both PM intake payloads.
+3. OpenAPI registration of `/api/v1/reads/project-import-approval-contract`,
+4. OpenAPI registration of `/api/v1/reads/project-import-approval-storage-plan`,
+5. `GET /api/v1/reads/project-import-candidate`,
+6. `GET /api/v1/reads/project-import-admission-plan`,
+7. `GET /api/v1/reads/project-import-approval-contract`,
+8. `GET /api/v1/reads/project-import-approval-storage-plan`,
+9. `mutation_authority: not_admitted` on PM intake payloads.
 
 ## Coordinator Evidence
 
@@ -174,7 +178,7 @@ Target public host:
 https://mutation-seam.apexpowerops.com
 
 Required source:
-current origin/clean-main. At minimum, deployment must be later than PM Lane 036 starting head 4eca3dcc6b8d93b687b187a31d58188179ca8f22 and must include the PM intake read routes plus this PM Lane 037 handoff.
+current origin/clean-main. At minimum, deployment must be later than PM Lane 036 starting head 4eca3dcc6b8d93b687b187a31d58188179ca8f22 and must include the current PM intake read routes plus this PM Lane 037 handoff.
 
 Your task:
 1. Inspect existing Render service apex-platform-mutation-seam.
@@ -238,6 +242,9 @@ This packet does not authorize:
 
 Once PM Lane 037 closes with hosted PM intake live-data proof green or a precise log-backed blocker, the next PM product lane should be approval persistence design for the reviewed import candidate. That lane must remain separate from the Render deployment packet and must not import project rows.
 
-The sidecar recommendation for that next product lane is captured at:
+PM Lane 038 and PM Lane 039 have since advanced that design locally without writes:
 
-`ops/agents/handoffs/2026-05-15-pm-lane-038-sidecar-import-approval-persistence-design-scout-handoff.md`
+1. `ops/agents/handoffs/2026-05-15-pm-lane-038-import-approval-contract-design-handoff.md`
+2. `ops/agents/handoffs/2026-05-15-pm-lane-039-import-approval-storage-plan-design-handoff.md`
+
+The Render parity executor should still treat this as deployment proof only. Do not add approval persistence, schema, or import mutation in the Render lane.

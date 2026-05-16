@@ -1,0 +1,90 @@
+{
+  "packet_id": "2026-05-15-pm-lane-039",
+  "title": "Import Approval Storage-Plan Design",
+  "objective": "Define and locally validate the future storage decision for Project Miner import approval persistence while keeping schema, approval persistence, import mutation, and all business-state writes unadmitted.",
+  "domain": "pm-domain",
+  "active_role": "Delegated Technical Repo Authority / PM Lane Product Coordinator / Approval Storage Designer",
+  "repo_paths": [
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/project_import_approval_storage_plan.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/project_import_approval_contract.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/routers/reads.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/scripts/smoke_deployed_mutation_seam.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests/test_project_import_approval_storage_plan.py",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/APEX-PM-TEMP-POWER-DELIVERY-AND-ORCHESTRATION-PLAN-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/APEX-PM-STAKEHOLDER-TIME-PROTECTION-AND-ACCELERATION-LANE-2026-05-15.md"
+  ],
+  "dependencies": [
+    "2026-05-15-pm-lane-035",
+    "2026-05-15-pm-lane-038"
+  ],
+  "current_evidence": [
+    "PM Lane 038 exposes a read-only approval contract and pure validator.",
+    "The mutation-seam store defaults to Supabase-backed fixed collections unless SEAM_STORE_BACKEND=memory.",
+    "The existing mutation pipeline applies writes for admitted actions and has no pm_import_candidate_approval entity.",
+    "A read-only sidecar scout independently recommended a design-only storage decision before persistence."
+  ],
+  "selected_storage_decision": {
+    "table": "seam.pm_import_candidate_approvals",
+    "entity_type": "pm_import_candidate_approval",
+    "future_route": "/api/v1/mutations/project-import-approvals",
+    "write_model": "insert_once_with_idempotent_replay",
+    "status": "selected_for_future_packet_not_admitted"
+  },
+  "allowed_actions": [
+    "Add a pure backend module that builds a read-only storage plan from the current approval contract.",
+    "Expose the storage plan through a GET-only read endpoint.",
+    "Extend deployed-seam --include-pm-intake smoke coverage for the storage-plan read.",
+    "Add focused local tests for storage decision shape, rejected unsafe options, columns, constraints, and route payload.",
+    "Update PM lane status and operating docs.",
+    "Use one read-only sidecar scout to inspect persistence risks."
+  ],
+  "not_allowed": [
+    "No schema migration.",
+    "No approval persistence.",
+    "No import mutation.",
+    "No mutation_pipeline.py action admission.",
+    "No store adapter write path.",
+    "No SQL write.",
+    "No live database write.",
+    "No workbook macro execution.",
+    "No workbook writeback.",
+    "No Render deployment.",
+    "No Vercel promotion.",
+    "No service admission.",
+    "No auth or ingress widening.",
+    "No assignment, schedule, status, apparatus, issue, task, workpackage, project, or autonomous AI business-state mutation."
+  ],
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/project_import_approval_storage_plan.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/project_import_approval_contract.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/routers/reads.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/scripts/smoke_deployed_mutation_seam.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests/test_project_import_approval_storage_plan.py",
+    "C:/APEX Platform/apex-power-ops-platform/PROJECT_STATUS.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/APEX-PM-TEMP-POWER-DELIVERY-AND-ORCHESTRATION-PLAN-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/APEX-PM-STAKEHOLDER-TIME-PROTECTION-AND-ACCELERATION-LANE-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-15-pm-lane-039-import-approval-storage-plan-design.json",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-039-import-approval-storage-plan-design-handoff.md"
+  ],
+  "validation_steps": [
+    "C:/APEX Platform/apex-power-ops-platform/.venv/Scripts/python.exe -m py_compile C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/project_import_approval_storage_plan.py C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/project_import_approval_contract.py C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/scripts/smoke_deployed_mutation_seam.py",
+    "With SEAM_STORE_BACKEND=memory, C:/APEX Platform/apex-power-ops-platform/.venv/Scripts/python.exe -m pytest C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests/test_project_import_candidate.py C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests/test_project_import_admission_plan.py C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests/test_project_import_approval_contract.py C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests/test_project_import_approval_storage_plan.py -q",
+    "C:/APEX Platform/apex-power-ops-platform/.venv/Scripts/python.exe -c \"import json; json.load(open(r'C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-15-pm-lane-039-import-approval-storage-plan-design.json', encoding='utf-8')); print('packet-json-ok')\"",
+    "git diff --check for the Lane 039 file set"
+  ],
+  "validation_results": [
+    "py_compile passed for project_import_approval_contract.py, project_import_approval_storage_plan.py, and smoke_deployed_mutation_seam.py.",
+    "Focused mutation-seam import candidate, admission-plan, approval-contract, and approval-storage-plan tests passed: 12 passed.",
+    "PM Lane 039 packet JSON and refreshed PM Lane 037 packet JSON parsed successfully.",
+    "Sidecar read-only scout completed without edits and confirmed design-only storage decision as the safe next step."
+  ],
+  "execution_result": "LOCAL_READ_ONLY_STORAGE_PLAN_EXECUTED",
+  "delegation_status": "sidecar_scout_completed",
+  "sql_permission": false,
+  "sql_permission_note": "Packet 2026-05-15-pm-lane-039 authorizes read-only local approval storage-plan design and validation only. It does not authorize SQL writes, schema migration, approval persistence, import mutation, live data mutation, secret rotation, auth widening, ingress widening, service admission, assignment mutation, schedule mutation, status mutation, or autonomous AI business-state mutation.",
+  "ai_mutation_authority": "not_admitted",
+  "created_at": "2026-05-15",
+  "updated_at": "2026-05-15"
+}
