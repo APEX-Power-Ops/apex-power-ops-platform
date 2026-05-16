@@ -4993,25 +4993,30 @@ export default function ProjectMinerIntakeWorkbenchPage() {
           </div>
         </details>
 
-        <section id="guardrails" aria-label="Current PM next actions and guardrails" className="notes-grid">
-          <article className="notes-card">
-            <h2>Current PM Next Actions</h2>
-            <ol>
-              <li>Review candidate exceptions, source freshness, and required human decisions.</li>
-              <li>Confirm the Project Miner source files have not changed before any future approval packet is used.</li>
-              <li>Use the Vercel and Render executor closeout lanes for hosted parity before claiming production-read proof.</li>
-              <li>Keep approval persistence and project import blocked until a later packet explicitly admits those writes.</li>
-            </ol>
-          </article>
-          <article className="notes-card accent-card">
-            <h2>Not Allowed Now</h2>
-            <ul>
-              {(notAllowed.length ? notAllowed : ['write_supabase', 'persist_approval_record', 'import_project_rows', 'run_workbook_macros', 'assign_work', 'mutate_schedule', 'change_status']).map((item) => (
-                <li key={item}>{formatLabel(item)}</li>
-              ))}
-            </ul>
-          </article>
-        </section>
+        <details open id="guardrails" aria-label="Current PM next actions and guardrails" style={{ marginBottom: '1rem' }}>
+          <summary style={{ cursor: 'pointer' }}>
+            <h2 style={{ display: 'inline', margin: 0 }}>Current PM Next Actions and Guardrails</h2>
+          </summary>
+          <div aria-label="Current PM guardrails controls" className="notes-grid" style={{ marginTop: '0.85rem' }}>
+            <article className="notes-card">
+              <h2>Current PM Next Actions</h2>
+              <ol>
+                <li>Review candidate exceptions, source freshness, and required human decisions.</li>
+                <li>Confirm the Project Miner source files have not changed before any future approval packet is used.</li>
+                <li>Use the Vercel and Render executor closeout lanes for hosted parity before claiming production-read proof.</li>
+                <li>Keep approval persistence and project import blocked until a later packet explicitly admits those writes.</li>
+              </ol>
+            </article>
+            <article className="notes-card accent-card">
+              <h2>Not Allowed Now</h2>
+              <ul>
+                {(notAllowed.length ? notAllowed : ['write_supabase', 'persist_approval_record', 'import_project_rows', 'run_workbook_macros', 'assign_work', 'mutate_schedule', 'change_status']).map((item) => (
+                  <li key={item}>{formatLabel(item)}</li>
+                ))}
+              </ul>
+            </article>
+          </div>
+        </details>
           </details>
         </section>
       </section>

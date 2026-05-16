@@ -599,6 +599,8 @@ PM Lane 107 wraps the existing Local Field Observation Scratchpad panel in a def
 
 PM Lane 108 wraps the existing Approval Persistence Readiness panel in a default-open native disclosure control. Jason can fold the future write-authority gate map after reviewing it, while the panel stays inside Authority Boundary Detail and the `#approval-readiness` anchor, heading, readiness count pill, two explanatory paragraphs, six readiness gates, gate order, gate statuses, route and quick-jump links, reads, and authority wording remain unchanged.
 
+PM Lane 109 wraps the existing Current PM Next Actions and Guardrails footer in a default-open native disclosure control. Jason can fold the final next-action and not-allowed list after reviewing it, while the footer stays after Approval Persistence Readiness and the `#guardrails` anchor, both inner cards, list text, list order, not-allowed fallback rendering, route and quick-jump links, reads, and authority wording remain unchanged.
+
 This creates no approval record, SQL, schema migration, backend route, import mutation, issue, task, assignment, schedule, status, hosted proof, live task, work authorization, field release, work order, durable field record, production tracking write, product code, deployment, service, DNS, auth, ingress, secret, local storage key, new route, new export action, new export artifact, export contract widening, or production mutation.
 
 The next persistence tranche is:
