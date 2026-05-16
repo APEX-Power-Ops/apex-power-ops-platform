@@ -4428,20 +4428,22 @@ export default function ProjectMinerIntakeWorkbenchPage() {
             <h2 style={{ margin: 0 }}>Workflow Gates</h2>
             <span className="status-pill status-awaiting-values">read-only</span>
           </summary>
-          <div aria-label="Workflow gate items" style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
-            {workflowGates.map((gate) => (
-              <article key={gate.title} className="card" style={{ padding: '0.85rem', boxShadow: 'none' }}>
-                <div className="status-row" style={{ alignItems: 'start' }}>
-                  <div>
-                    <p style={{ margin: 0 }}>
-                      <strong>{gate.title}</strong>
-                    </p>
-                    <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{gate.detail}</p>
+          <div aria-label="Workflow gates controls">
+            <div aria-label="Workflow gate items" style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
+              {workflowGates.map((gate) => (
+                <article key={gate.title} className="card" style={{ padding: '0.85rem', boxShadow: 'none' }}>
+                  <div className="status-row" style={{ alignItems: 'start' }}>
+                    <div>
+                      <p style={{ margin: 0 }}>
+                        <strong>{gate.title}</strong>
+                      </p>
+                      <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{gate.detail}</p>
+                    </div>
+                    <span className={`status-pill ${statusTone(gate.status)}`}>{formatLabel(gate.status)}</span>
                   </div>
-                  <span className={`status-pill ${statusTone(gate.status)}`}>{formatLabel(gate.status)}</span>
-                </div>
-              </article>
-            ))}
+                </article>
+              ))}
+            </div>
           </div>
         </details>
 
