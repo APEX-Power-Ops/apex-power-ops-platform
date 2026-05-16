@@ -120,9 +120,10 @@ Key UI lanes:
 2. `/pm-review/approval` for PM task, workpackage, snapshot, escalation, and history review.
 3. `/lead-ops` for lead execution and assignment flow.
 4. `/field-tech` for apparatus-first field execution.
-5. `/pm-review/import-candidate` for read-only Temp Power import candidate review.
-6. `/pm-review/import-admission-plan` for read-only import gate planning before approval or import writes exist.
-7. `/pm-review/import-approval-readiness` for read-only approval contract and storage-plan review before approval persistence exists.
+5. `/pm-review/import-intake` for the read-only Project Miner intake workbench and day-to-day starting point.
+6. `/pm-review/import-candidate` for read-only Temp Power import candidate review.
+7. `/pm-review/import-admission-plan` for read-only import gate planning before approval or import writes exist.
+8. `/pm-review/import-approval-readiness` for read-only approval contract and storage-plan review before approval persistence exists.
 
 Current backend-only PM intake design reads also include:
 
@@ -312,6 +313,14 @@ The split packets and handoffs now exist as separate copy/paste executor surface
 
 PM Lane 042 adds the closeout intake template that those hosted executors must use when returning results. This creates a consistent audit shape for deployment evidence, remaining blockers, validation commands, and guardrail confirmations.
 
+PM Lane 043 executes the local read-only Project Miner import-intake workbench:
+
+`/pm-review/import-intake`
+
+The route consumes the four current PM intake reads in one place: import candidate, import-admission plan, approval contract, and approval storage plan. It gives Jason a single starting surface for source freshness, candidate counts, warning signals, required PM decisions, workflow gates, admission row plan, future approval table, future approval route, hosted-parity status, and guardrails.
+
+This remains local-current and read-only. It does not add backend endpoints, hosted deployment, Vercel promotion, Render redeploy, schema, approval persistence, import mutation, live data write, workbook macro execution, assignment, schedule, status, or autonomous AI business-state mutation.
+
 ## Capability-Gap Register
 
 Current known gaps:
@@ -328,6 +337,7 @@ Current known gaps:
 10. The approval-contract and approval-storage-plan read endpoints are local-current only until Render serves the current mutation-seam code.
 11. The approval-readiness UI route is local-current until the next operations-web production promotion.
 12. This workspace currently lacks authenticated hosted deployment capability for both Render and Vercel; hosted repair requires an authenticated executor or installed/authorized deployment tool.
+13. The Project Miner import-intake workbench is local-current only until a later hosted operations-web promotion includes `/pm-review/import-intake` and Render serves the current PM intake reads.
 
 Required response to new gaps:
 

@@ -227,6 +227,14 @@ Those two executor lanes now have separate packets, handoffs, and a dispatch boa
 
 PM Lane 042 adds the closeout intake contract for those hosted executor lanes. Executors should return completed closeout handoffs using `ops/agents/handoffs/templates/pm-hosted-executor-closeout-template.md`, which lets the coordinator audit exact evidence, blockers, and guardrails without Jason becoming the relay.
 
+The current local PM acceleration tranche is:
+
+`Project Miner Import Intake Workbench`
+
+PM Lane 043 adds `/pm-review/import-intake` as one read-only starting point for candidate review, admission planning, approval contract review, and approval storage-plan review. It reduces Jason's day-to-day navigation burden by showing source freshness, proposed counts, warning signals, required PM decisions, workflow gates, future table/route, hosted-parity status, and guardrails in one place.
+
+The sidecar recommendation was accepted in bounded form: use `/pm-review/import-intake` so the route fits the existing import route cluster while staying review-only. The route has no approve, persist, submit, import, assignment, schedule, schema, or status controls.
+
 The next persistence tranche is:
 
 `Import Candidate Approval Persistence Schema And Adapter Admission`

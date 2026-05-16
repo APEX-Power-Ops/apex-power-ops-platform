@@ -334,6 +334,25 @@ PM Lane 042 adds the required closeout intake template for these hosted executor
 
 The coordinator should not accept a hosted executor result without source commit, hosted action evidence, exact validation results, blocker classification if red, and guardrail confirmation.
 
+## Project Miner Intake Workbench
+
+PM Lane 043 adds a local-current, read-only PM workbench route:
+
+`/pm-review/import-intake`
+
+The workbench is the day-to-day Project Miner intake starting point. It consolidates the four current intake reads without opening a write path:
+
+1. `GET /api/v1/reads/project-import-candidate`,
+2. `GET /api/v1/reads/project-import-admission-plan`,
+3. `GET /api/v1/reads/project-import-approval-contract`,
+4. `GET /api/v1/reads/project-import-approval-storage-plan`.
+
+It shows candidate identity, source freshness, project location, proposed row counts, warning signals, required PM decisions, workflow gates, admission target rows, approval contract authority, the future `seam.pm_import_candidate_approvals` table, the future `/api/v1/mutations/project-import-approvals` route, hosted-parity status, and merged guardrails.
+
+This route is a navigation and review accelerator only. It does not approve, persist, import, create schema, run SQL, write Supabase rows, run workbook macros, write workbook cells, assign work, change status, mutate schedules, or admit autonomous AI business-state action.
+
+Hosted note: PM Lane 043 is local-current only until PM Lane 041A/041B close hosted Vercel and Render parity. Do not claim hosted live-data parity for `/pm-review/import-intake` until those closeouts are accepted.
+
 ## Environment Overrides
 
 Set this when using a different planning folder:
@@ -463,6 +482,9 @@ Define and validate the PM approval packet shape, candidate fingerprints, warnin
 
 Level 2D - Approval Storage Design:
 Define the dedicated approval record table, future mutation route, adapter rules, idempotent replay behavior, audit/readback expectations, and rejected storage shortcuts before any schema or approval persistence exists.
+
+Level 2D.5 - Import Intake Workbench:
+Review the candidate, admission plan, approval contract, and approval storage plan from `/pm-review/import-intake` as the daily PM starting point. This is a read-only consolidation layer and does not replace the dedicated detail routes.
 
 Level 2E - Approval Persistence:
 Persist only the PM approval decision, candidate fingerprints, warning acceptance, no-go acknowledgement notes, and reviewer notes for the import candidate after a later packet admits a narrow storage path. This is not an import mutation and must not write project, workpackage, task, or apparatus rows.

@@ -1,0 +1,86 @@
+{
+  "packet_id": "2026-05-15-pm-lane-043",
+  "title": "Project Miner Import Intake Workbench",
+  "objective": "Add a read-only Project Miner intake workbench in operations-web that consolidates the current import candidate, admission plan, approval contract, and approval storage plan into one day-to-day PM starting surface without admitting approval persistence, import mutation, schema changes, deployment, or live business-state writes.",
+  "domain": "pm-domain",
+  "active_role": "Delegated Technical Repo Authority / PM Product Coordinator / Local Implementation Executor",
+  "route": "/pm-review/import-intake",
+  "dependencies": [
+    "2026-05-15-pm-lane-032",
+    "2026-05-15-pm-lane-035",
+    "2026-05-15-pm-lane-038",
+    "2026-05-15-pm-lane-039",
+    "2026-05-15-pm-lane-040",
+    "2026-05-15-pm-lane-041",
+    "2026-05-15-pm-lane-042"
+  ],
+  "read_seams": [
+    "GET /api/v1/reads/project-import-candidate",
+    "GET /api/v1/reads/project-import-admission-plan",
+    "GET /api/v1/reads/project-import-approval-contract",
+    "GET /api/v1/reads/project-import-approval-storage-plan"
+  ],
+  "changed_files": [
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/app/pm-review/import-intake/page.tsx",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/tests/browser-shell.pm-import-intake.smoke.spec.ts",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/app/page.tsx",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/app/pm-review/page.tsx",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/app/pm-review/import-candidate/page.tsx",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/app/pm-review/import-admission-plan/page.tsx",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/app/pm-review/import-approval-readiness/page.tsx",
+    "C:/APEX Platform/apex-power-ops-platform/PROJECT_STATUS.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/APEX-PM-TEMP-POWER-DELIVERY-AND-ORCHESTRATION-PLAN-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/APEX-PM-STAKEHOLDER-TIME-PROTECTION-AND-ACCELERATION-LANE-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-15-pm-lane-043-project-miner-intake-workbench.json",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-043-project-miner-intake-workbench-handoff.md"
+  ],
+  "implementation_summary": [
+    "Added /pm-review/import-intake as a consolidated read-only PM workbench.",
+    "The route reads the four current PM import-intake seams in parallel using the existing PM bearer-token pattern.",
+    "The route surfaces candidate identity, source freshness, Project Miner summary counts, warnings, PM decisions, workflow gates, admission row plan, approval contract authority, future approval table, future mutation route, hosted-parity status, and not-allowed-now guardrails.",
+    "Linked the workbench from the governed shell, PM drivers route, import-candidate route, import-admission-plan route, and import-approval-readiness route.",
+    "Added focused Playwright coverage that stubs all four reads, asserts zero mutation route calls, and verifies no approve, persist, submit, or import buttons are present.",
+    "Used a read-only sidecar scout to verify route naming and smoke scope; the scout recommended /pm-review/import-intake and no edits were delegated."
+  ],
+  "validation_steps": [
+    "corepack pnpm --filter @apex/operations-web typecheck",
+    "corepack pnpm --filter @apex/operations-web build",
+    "corepack pnpm --dir apps/operations-web exec playwright test tests/browser-shell.pm-import-candidate.smoke.spec.ts tests/browser-shell.pm-import-admission-plan.smoke.spec.ts tests/browser-shell.pm-import-approval-readiness.smoke.spec.ts tests/browser-shell.pm-import-intake.smoke.spec.ts",
+    "C:/APEX Platform/apex-power-ops-platform/.venv/Scripts/python.exe -c \"import json; json.load(open(r'C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-15-pm-lane-043-project-miner-intake-workbench.json', encoding='utf-8')); print('packet-json-ok')\"",
+    "git diff --check --cached"
+  ],
+  "validation_results": [
+    "operations-web typecheck passed.",
+    "operations-web production build passed and route output included /pm-review/import-intake.",
+    "Focused PM intake Playwright smokes passed with 4 passed after tightening one location assertion from regex to exact text.",
+    "Packet JSON parse passed with packet-json-ok.",
+    "git diff --check passed with line-ending normalization warnings only."
+  ],
+  "not_allowed": [
+    "No backend endpoint change.",
+    "No hosted deployment.",
+    "No Vercel promotion.",
+    "No Render redeploy.",
+    "No SQL write.",
+    "No schema migration.",
+    "No approval persistence.",
+    "No import mutation.",
+    "No live database write.",
+    "No workbook macro execution.",
+    "No workbook writeback.",
+    "No service admission.",
+    "No auth or ingress widening.",
+    "No assignment mutation.",
+    "No schedule mutation.",
+    "No status mutation.",
+    "No autonomous AI business-state mutation."
+  ],
+  "execution_result": "LOCAL_READ_ONLY_PM_INTAKE_WORKBENCH_IMPLEMENTED",
+  "delegation_status": "sidecar_read_only_route_and_smoke_scout_completed",
+  "hosted_status": "local_current_only; PM Lane 041A/041B still own hosted Vercel and Render parity closeouts",
+  "sql_permission": false,
+  "ai_mutation_authority": "not_admitted",
+  "created_at": "2026-05-15",
+  "updated_at": "2026-05-15"
+}

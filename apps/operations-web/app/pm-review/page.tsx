@@ -166,6 +166,7 @@ export default function PmDriversPage() {
           <p className="pm-review-link-row">
             <Link href="/">Return to shell</Link>
             <Link href="/pm-review/workfront">Open PM workfront</Link>
+            <Link href="/pm-review/import-intake">Project Miner intake</Link>
             {returnTo && <Link href={returnTo}>Return to {returnLabel}</Link>}
             <Link href="/pm-review/index.html">Open legacy static page</Link>
           </p>

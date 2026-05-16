@@ -214,6 +214,7 @@ export default function PmImportAdmissionPlanPage() {
           </div>
           <p className="pm-review-link-row">
             <Link href="/">Return to shell</Link>
+            <Link href="/pm-review/import-intake">Intake workbench</Link>
             <Link href="/pm-review/import-candidate">Import candidate</Link>
             <Link href="/pm-review/import-approval-readiness">Approval readiness</Link>
             <Link href="/pm-review/workfront">PM workfront</Link>
