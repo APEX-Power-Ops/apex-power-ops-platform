@@ -441,6 +441,10 @@ PM Lane 068 adds a browser-local `Local PM Intake Daily Review Script` panel to 
 
 This script is browser-local synthesis only and adds no local storage key or export contract. It does not create issues, create tasks, create live work orders, approve, persist, import, create schema, run SQL, write Supabase rows, call live services, run workbook macros, write workbook cells, assign work, change status, mutate schedules, create durable field records, write production tracking rows, claim hosted parity, or admit autonomous AI business-state action.
 
+PM Lane 069 adds a browser-local `Local PM Intake Output Selector` panel to `/pm-review/import-intake`. It derives existing-output guidance from current workbench state for the PM Brief, Approval Preview JSON, Executor Handoff, Field Kickoff Brief, and Field Prep Packet.
+
+This selector is browser-local synthesis only and adds no local storage key, export action, or export contract. It does not create issues, create tasks, create live work orders, approve, persist, import, create schema, run SQL, write Supabase rows, call live services, run workbook macros, write workbook cells, assign work, change status, mutate schedules, create durable field records, write production tracking rows, claim hosted parity, or admit autonomous AI business-state action.
+
 ## Environment Overrides
 
 Set this when using a different planning folder:

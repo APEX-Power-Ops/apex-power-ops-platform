@@ -423,6 +423,14 @@ PM Lane 068 adds a browser-local `Local PM Intake Daily Review Script` panel to 
 
 This still creates no approval record, SQL, schema migration, backend route, import mutation, issue, task, assignment, schedule, status, hosted proof, live task, work authorization, field release, work order, durable field record, production tracking write, local storage key, export contract, or production mutation.
 
+The current output-selector tranche is:
+
+`Project Miner Local PM Intake Output Selector`
+
+PM Lane 069 adds a browser-local `Local PM Intake Output Selector` panel to `/pm-review/import-intake`. The selector derives existing-output guidance for the PM Brief, Approval Preview JSON, Executor Handoff, Field Kickoff Brief, and Field Prep Packet so Jason does not have to remember which local artifact fits the next conversation or packet handoff.
+
+This still creates no approval record, SQL, schema migration, backend route, import mutation, issue, task, assignment, schedule, status, hosted proof, live task, work authorization, field release, work order, durable field record, production tracking write, local storage key, export contract, export action, or production mutation.
+
 The next persistence tranche is:
 
 `Import Candidate Approval Persistence Schema And Adapter Implementation`
