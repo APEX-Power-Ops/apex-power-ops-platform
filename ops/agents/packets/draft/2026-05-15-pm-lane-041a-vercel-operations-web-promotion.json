@@ -1,0 +1,86 @@
+{
+  "packet_id": "2026-05-15-pm-lane-041a",
+  "title": "Vercel Operations-Web PM Intake Route Promotion",
+  "objective": "Promote current origin/clean-main to the existing operations-web Vercel production alias so /pm-review/import-approval-readiness is hosted, while keeping backend, schema, auth, ingress, and business-state authority unchanged.",
+  "domain": "pm-domain",
+  "active_role": "Vercel-Authenticated Operations-Web Promotion Executor",
+  "parent_packet": "2026-05-15-pm-lane-041",
+  "target_host": "https://operations.apexpowerops.com",
+  "target_route": "/pm-review/import-approval-readiness",
+  "target_project": {
+    "provider": "vercel",
+    "project_name": "apex-power-ops-platform",
+    "known_operations_project_label": "apex-operations-web",
+    "production_alias": "https://operations.apexpowerops.com",
+    "root_directory_note": "Existing Vercel project root must remain aligned with apex-power-ops-platform/apps/operations-web for the current workspace layout."
+  },
+  "dependencies": [
+    "2026-05-15-pm-lane-036",
+    "2026-05-15-pm-lane-040",
+    "2026-05-15-pm-lane-041"
+  ],
+  "current_evidence": [
+    "PM Lane 040 added /pm-review/import-approval-readiness locally and pushed it to origin/clean-main at ee214d9559ed5d0ebc2fa4311def407a3711c390.",
+    "PM Lane 041 read-only hosted smoke shows /pm-review/import-candidate and /pm-review/import-admission-plan pass on operations.apexpowerops.com.",
+    "PM Lane 041 read-only hosted smoke shows /pm-review/import-approval-readiness returns 404 on operations.apexpowerops.com.",
+    "The local coordinator workspace has no Vercel CLI binary, no VERCEL_* env names, and pnpm dlx vercel whoami timed out waiting for authentication."
+  ],
+  "required_executor_capability": [
+    "Authenticated Vercel dashboard, CLI, or equivalent control surface for the existing operations-web production project.",
+    "Ability to deploy or promote current origin/clean-main for the existing project and alias without creating a new project or changing DNS.",
+    "Ability to inspect deployment build output enough to confirm /pm-review/import-approval-readiness is included."
+  ],
+  "allowed_runtime_actions": [
+    "Inspect the existing Vercel project serving https://operations.apexpowerops.com.",
+    "Confirm the deployment source is repository jasonlswenson-sys/apex-power-ops on branch clean-main at or after ee214d9559ed5d0ebc2fa4311def407a3711c390.",
+    "Confirm the project root/build settings still target operations-web and do not upload unrelated repo content beyond the existing deployment contract.",
+    "Deploy or promote current clean-main to the existing production alias.",
+    "Run hosted route smoke and PM intake hosted smoke after promotion.",
+    "Update only closeout/status surfaces with exact deployment evidence and route-smoke results."
+  ],
+  "not_allowed": [
+    "No new Vercel project.",
+    "No DNS change.",
+    "No preview-protection or auth widening.",
+    "No Render action.",
+    "No backend endpoint change.",
+    "No product code change unless the hosted build fails from a product-code bug and the coordinator opens a new packet.",
+    "No SQL write.",
+    "No schema migration.",
+    "No approval persistence.",
+    "No import mutation.",
+    "No live business-state mutation."
+  ],
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/PROJECT_STATUS.md",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/DEPLOYMENT_VALIDATION.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-15-pm-lane-041a-vercel-operations-web-promotion.json",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-041a-vercel-operations-web-promotion-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-041-dual-executor-dispatch-board.md"
+  ],
+  "validation_steps": [
+    "git rev-parse HEAD",
+    "git ls-remote origin clean-main",
+    "Confirm hosted deployment source commit is at or after ee214d9559ed5d0ebc2fa4311def407a3711c390.",
+    "corepack pnpm --dir C:/APEX Platform/apex-power-ops-platform --filter @apex/operations-web smoke:hosted -- --base-url https://operations.apexpowerops.com",
+    "corepack pnpm --dir C:/APEX Platform/apex-power-ops-platform --filter @apex/operations-web exec node scripts/smoke-pm-intake-hosted.mjs --operations-web-base-url https://operations.apexpowerops.com --mutation-seam-base-url https://mutation-seam.apexpowerops.com --timeout-ms 20000"
+  ],
+  "success_criteria": [
+    "https://operations.apexpowerops.com/pm-review/import-approval-readiness returns HTML with the expected route marker.",
+    "operations-web hosted route smoke includes and passes the import-approval-readiness route.",
+    "The paired PM intake hosted smoke no longer reports an operations-web 404 for import approval readiness.",
+    "Any remaining PM intake hosted smoke failures are mutation-seam-only and are handed to PM Lane 041B."
+  ],
+  "stop_conditions": [
+    "Vercel auth is unavailable.",
+    "The project would require a new Vercel project, DNS change, auth widening, preview-protection change, or root-directory change outside the existing contract.",
+    "The hosted build fails from a product-code issue that requires repo changes.",
+    "The requested proof would require Render access, backend mutation, SQL, schema migration, or live business-state mutation."
+  ],
+  "execution_result": "READY_FOR_VERCEL_AUTHENTICATED_EXECUTOR",
+  "delegation_status": "ready",
+  "sql_permission": false,
+  "ai_mutation_authority": "not_admitted",
+  "created_at": "2026-05-15",
+  "updated_at": "2026-05-15"
+}

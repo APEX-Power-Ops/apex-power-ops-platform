@@ -223,6 +223,8 @@ PM Lane 041 refreshes the hosted proof boundary after Lane 040. Hosted operation
 
 The sidecar recommendation was accepted in bounded form: do not begin approval persistence schema or adapter work yet. First execute or delegate the hosted parity refresh through two strict executor lanes: Vercel-authenticated existing operations-web promotion and Render-authenticated existing mutation-seam redeploy/classification.
 
+Those two executor lanes now have separate packets, handoffs, and a dispatch board so the coordinator can assign either or both without Jason manually translating between AI sessions.
+
 The next persistence tranche is:
 
 `Import Candidate Approval Persistence Schema And Adapter Admission`

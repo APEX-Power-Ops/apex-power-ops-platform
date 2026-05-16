@@ -75,6 +75,13 @@
       ]
     }
   ],
+  "split_dispatch_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-15-pm-lane-041a-vercel-operations-web-promotion.json",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-041a-vercel-operations-web-promotion-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-15-pm-lane-041b-render-mutation-seam-redeploy-classification.json",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-041b-render-mutation-seam-redeploy-classification-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-041-dual-executor-dispatch-board.md"
+  ],
   "allowed_local_actions": [
     "Run read-only hosted smoke probes against operations-web and mutation-seam.",
     "Author or refresh packet, handoff, deployment-validation, and status surfaces.",
@@ -123,7 +130,7 @@
     "pnpm dlx vercel whoami timed out waiting for authentication and was stopped.",
     "Read-only sidecar scout recommended hosted parity refresh and blocker classification as the next bounded lane, not approval persistence."
   ],
-  "execution_result": "HOSTED_PARITY_REFRESH_PACKET_AUTHORED",
+  "execution_result": "HOSTED_PARITY_REFRESH_AND_SPLIT_DISPATCH_AUTHORED",
   "delegation_status": "ready_for_vercel_and_render_authenticated_executors",
   "sql_permission": false,
   "sql_permission_note": "Packet 2026-05-15-pm-lane-041 authorizes read-only hosted probes, packet/handoff refresh, existing Vercel operations-web promotion by an authenticated executor, and existing Render mutation-seam redeploy/classification by an authenticated executor. It does not authorize SQL writes, schema migration, fixture replay, live data mutation, secret rotation, auth widening, ingress widening, new service admission, approval persistence, import mutation, schedule mutation, assignment mutation, status mutation, or autonomous AI business-state mutation.",

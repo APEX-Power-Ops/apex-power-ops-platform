@@ -1,0 +1,88 @@
+{
+  "packet_id": "2026-05-15-pm-lane-041b",
+  "title": "Render Mutation-Seam PM Intake Redeploy And Blocker Classification",
+  "objective": "Redeploy current origin/clean-main to the existing Render mutation-seam service or classify why hosted PM intake reads remain missing, without creating services, changing schema, persisting approvals, importing rows, or mutating business state.",
+  "domain": "pm-domain",
+  "active_role": "Render-Authenticated Mutation-Seam Hosted Runtime Executor",
+  "parent_packet": "2026-05-15-pm-lane-041",
+  "target_host": "https://mutation-seam.apexpowerops.com",
+  "target_service": "apex-platform-mutation-seam",
+  "dependencies": [
+    "2026-05-15-pm-lane-037",
+    "2026-05-15-pm-lane-038",
+    "2026-05-15-pm-lane-039",
+    "2026-05-15-pm-lane-041"
+  ],
+  "current_evidence": [
+    "PM Lane 041 read-only hosted proof shows https://mutation-seam.apexpowerops.com/health returns 200.",
+    "Hosted OpenAPI is missing /api/v1/reads/project-import-candidate, /api/v1/reads/project-import-admission-plan, /api/v1/reads/project-import-approval-contract, and /api/v1/reads/project-import-approval-storage-plan.",
+    "All four current PM intake reads return framework 404 on the hosted mutation seam.",
+    "Hosted schedule projects, drivers, tracer, and variance reads return 500.",
+    "The local coordinator workspace has no Render CLI and no RENDER_* env names."
+  ],
+  "required_executor_capability": [
+    "Authenticated Render dashboard, API, or equivalent control surface for existing service apex-platform-mutation-seam.",
+    "Ability to inspect service metadata, deployment commit, non-secret environment key presence, and logs without printing secret values.",
+    "Ability to trigger redeploy of the existing service from current origin/clean-main."
+  ],
+  "allowed_runtime_actions": [
+    "Inspect existing Render service apex-platform-mutation-seam.",
+    "Confirm repository jasonlswenson-sys/apex-power-ops, branch clean-main, working directory apps/mutation-seam, and deployed commit at or after ee214d9559ed5d0ebc2fa4311def407a3711c390.",
+    "Confirm build command pip install -r requirements.txt, start command uvicorn app.main:app --host 0.0.0.0 --port $PORT, health path /health, and autoDeploy posture.",
+    "Confirm non-secret env key presence only: SEAM_STORE_BACKEND, SEAM_DATABASE_URL, JWT_SECRET, CORS_ORIGINS, APP_ENV, LOG_LEVEL, and PYTHON_VERSION.",
+    "Repair only existing-service metadata needed to match apps/mutation-seam/render.yaml.",
+    "Trigger existing-service redeploy from current clean-main if stale or metadata repair is needed.",
+    "Inspect logs only far enough to classify remaining PM intake 404s or schedule 500s.",
+    "Run deployed mutation-seam smoke with --include-pm-intake and the paired hosted PM intake smoke."
+  ],
+  "not_allowed": [
+    "No new Render service.",
+    "No DNS change.",
+    "No auth widening.",
+    "No ingress widening.",
+    "No secret value disclosure.",
+    "No secret rotation.",
+    "No SQL write.",
+    "No schema migration.",
+    "No fixture replay.",
+    "No product code change unless the coordinator opens a new packet.",
+    "No approval persistence.",
+    "No import mutation.",
+    "No schedule mutation.",
+    "No assignment, status, issue, task, workpackage, project, or autonomous AI business-state mutation."
+  ],
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/PROJECT_STATUS.md",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/DEPLOYMENT_VALIDATION.md",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/DEPLOYMENT_VALIDATION.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-15-pm-lane-041b-render-mutation-seam-redeploy-classification.json",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-041b-render-mutation-seam-redeploy-classification-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-041-dual-executor-dispatch-board.md"
+  ],
+  "validation_steps": [
+    "git rev-parse HEAD",
+    "git ls-remote origin clean-main",
+    "Render service inspection for apex-platform-mutation-seam: repo, branch, working directory, deploy commit, build command, start command, health path, autoDeploy, and non-secret env key posture.",
+    "Trigger existing-service redeploy from clean-main if the service is stale or metadata repair is needed.",
+    "C:/APEX Platform/apex-power-ops-platform/.venv/Scripts/python.exe C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/scripts/smoke_deployed_mutation_seam.py --base-url https://mutation-seam.apexpowerops.com --include-pm-intake",
+    "corepack pnpm --dir C:/APEX Platform/apex-power-ops-platform --filter @apex/operations-web exec node scripts/smoke-pm-intake-hosted.mjs --operations-web-base-url https://operations.apexpowerops.com --mutation-seam-base-url https://mutation-seam.apexpowerops.com --timeout-ms 20000"
+  ],
+  "success_criteria": [
+    "Hosted OpenAPI includes all four current PM intake read paths.",
+    "All four current PM intake reads return governed read-only payloads instead of framework 404.",
+    "If schedule reads still return 500, logs classify the blocker without SQL writes, schema migration, or secret disclosure.",
+    "If PM intake reads remain blocked, the blocker is classified as stale deploy, Render auth unavailable, DSN, schema, permission, runtime import, or product-code issue."
+  ],
+  "stop_conditions": [
+    "Render auth is unavailable.",
+    "Repair would require a new service, DNS change, auth change, ingress widening, secret rotation, SQL write, schema migration, fixture replay, or live mutation.",
+    "Logs point to a product-code issue that requires repo changes.",
+    "Hosted proof would require a live mutation test."
+  ],
+  "execution_result": "READY_FOR_RENDER_AUTHENTICATED_EXECUTOR",
+  "delegation_status": "ready",
+  "sql_permission": false,
+  "ai_mutation_authority": "not_admitted",
+  "created_at": "2026-05-15",
+  "updated_at": "2026-05-15"
+}

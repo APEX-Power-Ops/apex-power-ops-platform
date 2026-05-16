@@ -322,6 +322,12 @@ Lane 041 therefore splits hosted work into two bounded executor lanes:
 
 No approval persistence, import mutation, schema migration, SQL write, service admission, auth widening, ingress widening, fixture replay, or live business-state mutation is admitted by this parity lane.
 
+The split executor handoffs are:
+
+1. `ops/agents/handoffs/2026-05-15-pm-lane-041a-vercel-operations-web-promotion-handoff.md`,
+2. `ops/agents/handoffs/2026-05-15-pm-lane-041b-render-mutation-seam-redeploy-classification-handoff.md`,
+3. `ops/agents/handoffs/2026-05-15-pm-lane-041-dual-executor-dispatch-board.md`.
+
 ## Environment Overrides
 
 Set this when using a different planning folder:

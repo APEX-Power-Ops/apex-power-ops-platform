@@ -308,6 +308,8 @@ PM Lane 041 authors the hosted parity refresh and blocker-classification lane af
 
 Lane 041 splits the next hosted work into two authenticated executor lanes: Vercel operations-web promotion for the Lane 040 route, and Render mutation-seam redeploy/classification for the current PM intake reads. Both lanes are existing-service only and do not admit SQL, schema, approval persistence, import mutation, auth or ingress widening, fixture replay, or live business-state mutation.
 
+The split packets and handoffs now exist as separate copy/paste executor surfaces for Vercel and Render, plus a dual-executor dispatch board. This keeps Jason out of the relay loop while preserving the coordinator acceptance gate.
+
 ## Capability-Gap Register
 
 Current known gaps:

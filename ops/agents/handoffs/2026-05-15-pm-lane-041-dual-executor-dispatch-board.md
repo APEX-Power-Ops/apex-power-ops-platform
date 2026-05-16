@@ -1,0 +1,63 @@
+# PM Lane 041 Dual Executor Dispatch Board
+
+Date: 2026-05-15
+Status: Ready for authenticated hosted executors
+Coordinator: Codex, repo technical authority and PM lane coordinator
+
+## Purpose
+
+This board removes Jason from the AI-to-AI relay loop for the hosted parity step. It points each executor at one bounded handoff and keeps the coordinator decision visible in the repo.
+
+## Dispatch Map
+
+| Lane | Owner Surface | Handoff | Goal | Status |
+| --- | --- | --- | --- | --- |
+| 041A | Vercel-authenticated executor | `ops/agents/handoffs/2026-05-15-pm-lane-041a-vercel-operations-web-promotion-handoff.md` | Promote current operations-web so `/pm-review/import-approval-readiness` is hosted | ready |
+| 041B | Render-authenticated executor | `ops/agents/handoffs/2026-05-15-pm-lane-041b-render-mutation-seam-redeploy-classification-handoff.md` | Redeploy existing mutation-seam or classify PM intake read blocker | ready |
+
+## Current Hosted Split
+
+1. `https://operations.apexpowerops.com/pm-review/import-candidate` passes.
+2. `https://operations.apexpowerops.com/pm-review/import-admission-plan` passes.
+3. `https://operations.apexpowerops.com/pm-review/import-approval-readiness` returns `404`.
+4. `https://mutation-seam.apexpowerops.com/health` returns `200`.
+5. Hosted mutation-seam OpenAPI is missing all four current PM intake reads.
+6. Hosted mutation-seam returns `404` for all four current PM intake reads.
+7. Hosted mutation-seam schedule reads still return `500`.
+
+## Sequencing
+
+The two executor lanes are independent enough to run in parallel.
+
+If only one hosted credential surface is available:
+
+1. run 041A alone if Vercel access is available,
+2. run 041B alone if Render access is available,
+3. record the unavailable surface explicitly instead of blocking silently.
+
+Full PM intake hosted parity requires both:
+
+1. operations-web serving the Lane 040 route,
+2. mutation-seam serving the four current PM intake reads.
+
+## Coordinator Acceptance
+
+Coordinator accepts the hosted parity step only when one of these is true:
+
+1. paired hosted PM intake smoke is green, or
+2. remaining red checks are precisely classified with owner, blocker type, and next packet recommendation.
+
+## Guardrails
+
+No lane may:
+
+1. create a new hosted service,
+2. change DNS,
+3. widen auth or ingress,
+4. print or rotate secrets,
+5. run SQL writes,
+6. migrate schema,
+7. replay fixtures,
+8. persist approval,
+9. import project rows,
+10. mutate assignment, schedule, status, issue, task, workpackage, project, or autonomous AI business state.

@@ -95,6 +95,14 @@ RESULT FAIL
 
 Use two bounded hosted lanes only if both authenticated surfaces are available.
 
+Split executor artifacts are now available:
+
+1. `ops/agents/packets/draft/2026-05-15-pm-lane-041a-vercel-operations-web-promotion.json`
+2. `ops/agents/handoffs/2026-05-15-pm-lane-041a-vercel-operations-web-promotion-handoff.md`
+3. `ops/agents/packets/draft/2026-05-15-pm-lane-041b-render-mutation-seam-redeploy-classification.json`
+4. `ops/agents/handoffs/2026-05-15-pm-lane-041b-render-mutation-seam-redeploy-classification-handoff.md`
+5. `ops/agents/handoffs/2026-05-15-pm-lane-041-dual-executor-dispatch-board.md`
+
 ### Lane 041A - Vercel Operations-Web Promotion
 
 Target:
