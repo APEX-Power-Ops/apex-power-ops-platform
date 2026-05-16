@@ -437,6 +437,10 @@ PM Lane 067 adds a browser-local `Local PM Intake Open Items Lens` panel to `/pm
 
 This lens is browser-local synthesis only and adds no local storage key or export contract. It does not create issues, create tasks, create live work orders, approve, persist, import, create schema, run SQL, write Supabase rows, call live services, run workbook macros, write workbook cells, assign work, change status, mutate schedules, create durable field records, write production tracking rows, claim hosted parity, or admit autonomous AI business-state action.
 
+PM Lane 068 adds a browser-local `Local PM Intake Daily Review Script` panel to `/pm-review/import-intake`. It derives the first five minutes of PM intake review from existing workbench state: source context, exception posture, local draft notes, field-prep questions, executor closeout evidence, approval-persistence boundary, and project-import boundary.
+
+This script is browser-local synthesis only and adds no local storage key or export contract. It does not create issues, create tasks, create live work orders, approve, persist, import, create schema, run SQL, write Supabase rows, call live services, run workbook macros, write workbook cells, assign work, change status, mutate schedules, create durable field records, write production tracking rows, claim hosted parity, or admit autonomous AI business-state action.
+
 ## Environment Overrides
 
 Set this when using a different planning folder:

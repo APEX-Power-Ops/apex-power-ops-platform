@@ -250,6 +250,16 @@ type StartHereItem = {
   detail: string
 }
 
+type DailyReviewScriptStatus = 'do-now' | 'confirm' | 'context' | 'blocked'
+
+type DailyReviewScriptItem = {
+  id: string
+  title: string
+  status: DailyReviewScriptStatus
+  href: string
+  detail: string
+}
+
 type WorkflowMapStatus = 'source' | 'attention' | 'context' | 'draft' | 'prep' | 'audit' | 'blocked'
 
 type WorkflowMapItem = {
@@ -306,6 +316,12 @@ const PM_INTAKE_QUICK_JUMPS: QuickJumpItem[] = [
     label: 'Start Here',
     href: '#pm-start-here',
     detail: 'First local focus.',
+  },
+  {
+    id: 'daily-script',
+    label: 'Daily Script',
+    href: '#pm-daily-review-script',
+    detail: 'Five-minute routine.',
   },
   {
     id: 'workflow-map',
@@ -580,6 +596,12 @@ function pmIntakeSnapshotTone(status: PmIntakeSnapshotStatus) {
 }
 
 function startHereTone(status: StartHereStatus) {
+  if (status === 'context') return 'status-configured'
+  if (status === 'blocked') return 'status-deferred'
+  return 'status-awaiting-values'
+}
+
+function dailyReviewScriptTone(status: DailyReviewScriptStatus) {
   if (status === 'context') return 'status-configured'
   if (status === 'blocked') return 'status-deferred'
   return 'status-awaiting-values'
@@ -1249,6 +1271,73 @@ function buildPmIntakeStartHere(
       status: 'blocked',
       href: '#approval-readiness',
       detail: `${blockedPersistenceGateCount} of ${persistenceReadinessGates.length} approval-persistence gates remain blocked. Snapshot posture: ${pmIntakeSnapshotSummary(snapshotCount)}.`,
+    },
+  ]
+}
+
+function buildPmIntakeDailyReviewScript(
+  candidate: CandidatePayload | undefined,
+  importExceptionRegister: ImportExceptionRegisterItem[],
+  approvalDraft: ApprovalDecisionDraft,
+  fieldPrepQueue: OperatingQueueItem[],
+  closeoutChecks: Record<string, boolean>,
+  persistenceReadinessGates: ReadinessGate[],
+  admissionPlan: AdmissionPlan | undefined,
+): DailyReviewScriptItem[] {
+  const exceptionCount = importExceptionRegisterCounts(importExceptionRegister)
+  const nextFieldPrepMove = fieldPrepQueue.find((item) => item.status === 'next') || fieldPrepQueue.find((item) => item.status === 'blocked')
+  const decisionDraftComplete = Boolean(approvalDraft.decision && approvalDraft.review_notes.trim() && approvalDraft.local_attestation)
+  const decisionDraftStarted = hasApprovalDraftContent(approvalDraft)
+  const closeoutCheckedCount = CLOSEOUT_CHECKLIST_ITEMS.filter((item) => closeoutChecks[item.id]).length
+  const blockedPersistenceGateCount = persistenceReadinessGates.filter((gate) => gate.status === 'blocked').length
+  const completeFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'complete').length
+  const nextFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'next').length
+  const blockedFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'blocked').length
+  const projectName = candidate?.project?.name || candidate?.candidate_id || 'current Project Miner candidate'
+  const sourceFingerprint = candidate?.source_freshness?.aggregate_fingerprint || 'source fingerprint pending'
+  const admissionAuthority = admissionPlan?.mutation_authority || 'not_admitted'
+
+  return [
+    {
+      id: 'minute-0-confirm-source-context',
+      title: 'Minute 0: Confirm source context',
+      status: sourceFingerprint === 'source fingerprint pending' ? 'do-now' : 'confirm',
+      href: '#project-packet',
+      detail: `${projectName}: source fingerprint ${sourceFingerprint}; candidate authority remains ${formatLabel(admissionAuthority)}.`,
+    },
+    {
+      id: 'minute-1-scan-exceptions',
+      title: 'Minute 1: Scan exceptions',
+      status: exceptionCount.open ? 'do-now' : 'confirm',
+      href: '#import-exception-register',
+      detail: `Import exception register: ${importExceptionRegisterSummary(exceptionCount)}.`,
+    },
+    {
+      id: 'minute-2-capture-local-draft-notes',
+      title: 'Minute 2: Capture local draft notes',
+      status: decisionDraftComplete ? 'context' : decisionDraftStarted ? 'confirm' : 'do-now',
+      href: '#pm-operating-queue',
+      detail: decisionDraftComplete
+        ? 'Local decision draft has decision value, review notes, and local-only attestation for this browser-local review.'
+        : decisionDraftStarted
+          ? 'Local decision draft has partial browser-local context; confirm the missing decision, notes, or local-only attestation.'
+          : 'Local decision draft has not started; capture decision value, review notes, and local-only attestation before any future persistence packet.',
+    },
+    {
+      id: 'minute-3-check-field-prep-questions',
+      title: 'Minute 3: Check field-prep questions',
+      status: nextFieldPrepMove?.status === 'blocked' ? 'blocked' : 'do-now',
+      href: '#field-prep',
+      detail: nextFieldPrepMove
+        ? `Field prep queue: ${completeFieldPrepQueueCount} complete / ${nextFieldPrepQueueCount} next / ${blockedFieldPrepQueueCount} blocked. ${nextFieldPrepMove.title}: ${nextFieldPrepMove.detail}`
+        : 'No local field-prep queue item is currently reported.',
+    },
+    {
+      id: 'minute-4-name-blocked-future-authority',
+      title: 'Minute 4: Name blocked future authority',
+      status: 'blocked',
+      href: '#approval-readiness',
+      detail: `${closeoutCheckedCount} of ${CLOSEOUT_CHECKLIST_ITEMS.length} local closeout evidence checks are marked; ${blockedPersistenceGateCount} of ${persistenceReadinessGates.length} approval-persistence gates remain blocked and project import remains ${formatLabel(admissionAuthority)}.`,
     },
   ]
 }
@@ -2720,6 +2809,10 @@ export default function ProjectMinerIntakeWorkbenchPage() {
     () => buildPmIntakeStartHere(operatingQueue, importExceptionRegister, fieldPrepQueue, pmIntakeSnapshot, persistenceReadinessGates),
     [operatingQueue, importExceptionRegister, fieldPrepQueue, pmIntakeSnapshot, persistenceReadinessGates],
   )
+  const pmIntakeDailyReviewScript = useMemo(
+    () => buildPmIntakeDailyReviewScript(candidate, importExceptionRegister, approvalDraft, fieldPrepQueue, closeoutChecks, persistenceReadinessGates, admissionPlan),
+    [candidate, importExceptionRegister, approvalDraft, fieldPrepQueue, closeoutChecks, persistenceReadinessGates, admissionPlan],
+  )
   const pmIntakeWorkflowMap = useMemo(
     () => buildPmIntakeWorkflowMap(candidate, importExceptionRegister, approvalDraft, fieldPrepQueue, closeoutChecks, persistenceReadinessGates, admissionPlan),
     [candidate, importExceptionRegister, approvalDraft, fieldPrepQueue, closeoutChecks, persistenceReadinessGates, admissionPlan],
@@ -3174,6 +3267,36 @@ export default function ProjectMinerIntakeWorkbenchPage() {
               {formatCount(summary.warning_count)} warnings, {formatCount(summary.blocker_count)} blockers, {formatCount(summary.human_decision_count)} human decisions.
             </p>
           </article>
+        </section>
+
+        <section id="pm-daily-review-script" aria-label="Local PM intake daily review script" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
+          <div className="status-row">
+            <h2 style={{ margin: 0 }}>Local PM Intake Daily Review Script</h2>
+            <span className="status-pill status-awaiting-values">browser-local</span>
+          </div>
+          <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+            First 5 minutes of browser-local review, derived from the existing workbench state. It creates no localStorage key, export artifact, backend route, schema, approval record, task, issue, schedule, status, durable field record, production tracking row, hosted parity claim, or production write.
+          </p>
+          <div style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
+            {pmIntakeDailyReviewScript.map((item) => (
+              <a
+                key={item.id}
+                className="card"
+                href={item.href}
+                style={{ color: 'inherit', display: 'block', padding: '0.85rem', textDecoration: 'none', boxShadow: 'none' }}
+              >
+                <div className="status-row" style={{ alignItems: 'start' }}>
+                  <div>
+                    <p style={{ margin: 0 }}>
+                      <strong>{item.title}</strong>
+                    </p>
+                    <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
+                  </div>
+                  <span className={`status-pill ${dailyReviewScriptTone(item.status)}`}>{formatLabel(item.status)}</span>
+                </div>
+              </a>
+            ))}
+          </div>
         </section>
 
         <section id="pm-start-here" aria-label="Local PM intake start here" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>

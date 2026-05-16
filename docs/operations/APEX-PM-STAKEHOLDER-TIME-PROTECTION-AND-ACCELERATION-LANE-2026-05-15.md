@@ -415,6 +415,14 @@ PM Lane 067 adds a browser-local `Local PM Intake Open Items Lens` panel to `/pm
 
 This still creates no approval record, SQL, schema migration, backend route, import mutation, issue, task, assignment, schedule, status, hosted proof, live task, work authorization, field release, work order, durable field record, production tracking write, local storage key, export contract, or production mutation.
 
+The current daily-review tranche is:
+
+`Project Miner Local PM Intake Daily Review Script`
+
+PM Lane 068 adds a browser-local `Local PM Intake Daily Review Script` panel to `/pm-review/import-intake`. The script derives minute-by-minute first-pass review prompts from the existing workbench state so Jason can open the route and immediately see how to scan source context, exception posture, draft notes, field-prep questions, and future authority blockers.
+
+This still creates no approval record, SQL, schema migration, backend route, import mutation, issue, task, assignment, schedule, status, hosted proof, live task, work authorization, field release, work order, durable field record, production tracking write, local storage key, export contract, or production mutation.
+
 The next persistence tranche is:
 
 `Import Candidate Approval Persistence Schema And Adapter Implementation`

@@ -371,6 +371,8 @@ PM Lane 066 adds a browser-local `Local PM Intake Workflow Map` panel to `/pm-re
 
 PM Lane 067 adds a browser-local `Local PM Intake Open Items Lens` panel to `/pm-review/import-intake`. It gives the Temp Power prep flow a compact exception-first triage view separating local attention from future authority blockers for exception review, decision draft, field-prep queue, executor closeout evidence, approval persistence, and project import. The lens adds no storage key or export contract and creates no issues, tasks, work authorization, live work orders, durable field records, hosted proof, backend routes, SQL, schema migration, approval persistence, import mutation, assignment, schedule, status, production tracking writes, or production state.
 
+PM Lane 068 adds a browser-local `Local PM Intake Daily Review Script` panel to `/pm-review/import-intake`. It gives the Temp Power prep flow a five-minute first-pass script for source context, exception scan, local draft notes, field-prep questions, and blocked future authority. The script adds no storage key or export contract and creates no issues, tasks, work authorization, live work orders, durable field records, hosted proof, backend routes, SQL, schema migration, approval persistence, import mutation, assignment, schedule, status, production tracking writes, or production state.
+
 ## Capability-Gap Register
 
 Current known gaps:
