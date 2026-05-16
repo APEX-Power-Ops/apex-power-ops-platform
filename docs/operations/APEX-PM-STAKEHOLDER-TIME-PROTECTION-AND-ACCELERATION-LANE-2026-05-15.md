@@ -271,6 +271,14 @@ The current design-admission tranche is:
 
 PM Lane 049 authors the design-only packet and handoff for the future `seam.pm_import_candidate_approvals` table and explicit insert-only approval adapter. It uses the Lane 048 preview JSON shape as the input contract and records columns, constraints, adapter validation, evidence requirements, hosted-parity blockers, and guardrails. This reduces later executor ambiguity while still creating no SQL file, schema migration, backend route, approval record, import mutation, assignment, schedule, status, hosted proof, or production mutation.
 
+The current UI acceleration tranche is:
+
+`Project Miner Approval Persistence Readiness Gates`
+
+PM Lane 050 adds an `Approval Persistence Readiness` panel to `/pm-review/import-intake` so Jason does not have to infer the current approval-persistence blockers from packet documents alone. The workbench now shows local preview context and checklist evidence as ready-able gates, while hosted parity closeout, schema authority, approval persistence authority, and import mutation authority remain visibly blocked.
+
+This reduces relay burden for the later persistence executor while still creating no approval record, SQL, schema migration, backend route, import mutation, assignment, schedule, status, hosted proof, or production mutation.
+
 The next persistence tranche is:
 
 `Import Candidate Approval Persistence Schema And Adapter Implementation`

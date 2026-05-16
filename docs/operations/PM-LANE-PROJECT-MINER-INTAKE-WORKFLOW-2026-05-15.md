@@ -365,6 +365,10 @@ PM Lane 048 adds a browser-only `Export Approval Preview JSON` action to `/pm-re
 
 PM Lane 049 authors the design-only approval persistence schema and adapter admission packet. It defines the future `seam.pm_import_candidate_approvals` table, explicit insert-only adapter boundary, validation evidence, readback classification, hosted-parity blockers, and guardrails using the PM Lane 048 preview JSON as the input contract. It does not add SQL, run a migration, implement a backend route, persist approval, import rows, assign work, schedule work, change status, or mutate production state.
 
+PM Lane 050 adds a local `Approval Persistence Readiness` panel to `/pm-review/import-intake`. The panel makes the approval-persistence runway visible inside the daily PM workbench: local preview context and review-checklist evidence can turn ready, while hosted parity closeout, schema authority, approval persistence authority, and import mutation authority remain blocked.
+
+This is still local review context only. It does not approve, persist, import, create schema, run SQL, write Supabase rows, call live services, run workbook macros, write workbook cells, assign work, change status, mutate schedules, or admit autonomous AI business-state action.
+
 ## Environment Overrides
 
 Set this when using a different planning folder:

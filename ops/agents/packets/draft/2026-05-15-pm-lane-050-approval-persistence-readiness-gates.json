@@ -1,0 +1,119 @@
+{
+  "packet_id": "2026-05-15-pm-lane-050",
+  "title": "Project Miner Approval Persistence Readiness Gates",
+  "objective": "Surface the current approval-persistence runway and blockers inside the local Project Miner intake workbench while preserving the no-write boundary for schema, approval persistence, import mutation, hosted proof, and production state.",
+  "domain": "pm-domain",
+  "active_role": "Technical Repo Authority / PM Product Coordinator / Local Intake Workbench Implementer",
+  "dependencies": [
+    "2026-05-15-pm-lane-043",
+    "2026-05-15-pm-lane-048",
+    "2026-05-15-pm-lane-049",
+    "2026-05-15-pm-lane-041A",
+    "2026-05-15-pm-lane-041B"
+  ],
+  "admission_status": "local_ui_readiness_context_only",
+  "implemented_scope": [
+    "Add a local Approval Persistence Readiness panel to /pm-review/import-intake.",
+    "Show local preview context and review-checklist evidence as readiness gates that can become ready.",
+    "Show hosted parity closeout, schema authority, approval persistence authority, and import mutation authority as blocked gates.",
+    "Include the readiness gate summary in the browser-generated Markdown PM brief.",
+    "Extend the focused import-intake smoke to prove the panel, localStorage state, brief content, exact read seams, zero mutation calls, and no approve/persist/submit/import controls."
+  ],
+  "readiness_gates": [
+    {
+      "id": "approval-preview-context",
+      "status_rule": "ready only when a packet is loaded and the local decision draft is complete",
+      "authority": "browser_local_review_context_only"
+    },
+    {
+      "id": "review-checklist-evidence",
+      "status_rule": "ready only when the candidate-scoped browser-local checklist has at least one checked item",
+      "authority": "browser_local_review_context_only"
+    },
+    {
+      "id": "hosted-parity-closeout",
+      "status_rule": "blocked until PM Lane 041A/041B close or classify hosted parity",
+      "authority": "not_admitted"
+    },
+    {
+      "id": "schema-authority",
+      "status_rule": "blocked because PM Lane 049 is design-only and no SQL execution is admitted",
+      "authority": "not_admitted"
+    },
+    {
+      "id": "approval-persistence-authority",
+      "status_rule": "blocked until a later packet admits the dedicated table and adapter implementation",
+      "authority": "not_admitted"
+    },
+    {
+      "id": "import-mutation-authority",
+      "status_rule": "blocked until approval persistence is green and a separate import packet is admitted",
+      "authority": "not_admitted"
+    }
+  ],
+  "allowed_actions": [
+    "Modify the local operations-web import-intake page.",
+    "Modify focused operations-web smoke tests.",
+    "Update PM lane operating docs, project status, packet, and handoff.",
+    "Use one read-only sidecar scout for boundary review.",
+    "Run focused local validation, commit, push, and restore host parity."
+  ],
+  "not_allowed": [
+    "No backend endpoint change.",
+    "No SQL file creation.",
+    "No SQL execution.",
+    "No schema migration.",
+    "No Supabase write.",
+    "No adapter implementation.",
+    "No approval persistence.",
+    "No import mutation.",
+    "No live service call.",
+    "No Render redeploy.",
+    "No Vercel promotion.",
+    "No hosted parity claim.",
+    "No service creation.",
+    "No DNS, auth, ingress, or secret change.",
+    "No fixture replay.",
+    "No workbook macro execution.",
+    "No workbook writeback.",
+    "No assignment mutation.",
+    "No schedule mutation.",
+    "No status mutation.",
+    "No autonomous AI business-state mutation."
+  ],
+  "changed_files": [
+    "C:/APEX Platform/apex-power-ops-platform/PROJECT_STATUS.md",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/app/pm-review/import-intake/page.tsx",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/tests/browser-shell.pm-import-intake.smoke.spec.ts",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/APEX-PM-TEMP-POWER-DELIVERY-AND-ORCHESTRATION-PLAN-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/APEX-PM-STAKEHOLDER-TIME-PROTECTION-AND-ACCELERATION-LANE-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-15-pm-lane-050-approval-persistence-readiness-gates.json",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-050-approval-persistence-readiness-gates-handoff.md"
+  ],
+  "validation_steps": [
+    "corepack pnpm --filter @apex/operations-web typecheck",
+    "corepack pnpm --filter @apex/operations-web build",
+    "corepack pnpm --dir apps/operations-web exec playwright test tests/browser-shell.pm-import-intake.smoke.spec.ts",
+    "corepack pnpm --dir apps/operations-web exec playwright test tests/browser-shell.pm-import-candidate.smoke.spec.ts tests/browser-shell.pm-import-admission-plan.smoke.spec.ts tests/browser-shell.pm-import-approval-readiness.smoke.spec.ts tests/browser-shell.pm-import-intake.smoke.spec.ts",
+    "& \"C:/APEX Platform/apex-power-ops-platform/.venv/Scripts/python.exe\" -c \"import json; json.load(open(r'C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-15-pm-lane-050-approval-persistence-readiness-gates.json', encoding='utf-8')); print('packet-json-ok')\"",
+    "git diff --check",
+    "git diff --cached --check"
+  ],
+  "validation_results": [
+    "operations-web typecheck passed.",
+    "operations-web production build passed with /pm-review/import-intake in the route output.",
+    "Focused import-intake Playwright smoke passed with 1 passed.",
+    "Focused PM intake Playwright smoke suite passed with 4 passed.",
+    "Packet JSON parse passed with packet-json-ok after quoted PowerShell invocation.",
+    "git diff --check passed with line-ending normalization warnings only.",
+    "Scoped git diff --cached --check passed."
+  ],
+  "execution_result": "LOCAL_APPROVAL_PERSISTENCE_READINESS_GATES_IMPLEMENTED",
+  "delegation_status": "sidecar_read_only_scope_scout_completed",
+  "hosted_status": "local_current_only_until_PM_Lane_041A_041B_close_or_classify_hosted_parity",
+  "sql_permission": false,
+  "ai_mutation_authority": "not_admitted",
+  "created_at": "2026-05-15",
+  "updated_at": "2026-05-15"
+}

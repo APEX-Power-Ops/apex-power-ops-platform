@@ -333,6 +333,10 @@ PM Lane 048 adds a browser-only approval packet preview JSON export to `/pm-revi
 
 PM Lane 049 authors the design-only approval persistence schema and adapter admission packet. It turns the Lane 048 preview JSON shape into a later-executor contract for the dedicated `seam.pm_import_candidate_approvals` table and insert-only approval adapter, while still avoiding SQL execution, schema migration, backend routes, approval persistence, import mutation, assignment, schedule, status, or production writes.
 
+PM Lane 050 adds approval-persistence readiness gates to `/pm-review/import-intake`. This brings the Lane 049 design blockers into the day-to-day PM surface: local preview context and checklist evidence can be ready, while hosted parity closeout, schema authority, approval persistence authority, and import mutation authority stay blocked until later packets admit them.
+
+This remains local-current and read-only. It does not add hosted proof, backend routes, SQL, schema migration, approval persistence, import mutation, assignment, schedule, status, or production writes.
+
 ## Capability-Gap Register
 
 Current known gaps:

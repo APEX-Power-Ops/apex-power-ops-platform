@@ -147,6 +147,15 @@ type ApprovalDecisionDraft = {
   local_attestation: boolean
 }
 
+type ReadinessGateStatus = 'ready' | 'blocked'
+
+type ReadinessGate = {
+  id: string
+  title: string
+  status: ReadinessGateStatus
+  detail: string
+}
+
 const { useCallback, useEffect, useMemo, useState } = React
 
 const API_BASE =
@@ -290,6 +299,59 @@ function hasApprovalDraftContent(draft: ApprovalDecisionDraft) {
   return Boolean(draft.decision || draft.review_notes.trim() || draft.local_attestation)
 }
 
+function buildPersistenceReadinessGates(
+  packet: IntakeWorkbenchPacket | null,
+  approvalDraft: ApprovalDecisionDraft,
+  reviewChecks: Record<string, boolean>,
+): ReadinessGate[] {
+  const draftComplete = Boolean(approvalDraft.decision && approvalDraft.review_notes.trim() && approvalDraft.local_attestation)
+  const checklistHasEvidence = REVIEW_CHECKLIST_ITEMS.some((item) => reviewChecks[item.id])
+  const hasPacketContext = Boolean(packet && packet.candidate.candidate_id && packet.approvalContract && packet.storagePlan)
+
+  return [
+    {
+      id: 'approval-preview-context',
+      title: 'Approval preview context',
+      status: hasPacketContext && draftComplete ? 'ready' : 'blocked',
+      detail: hasPacketContext && draftComplete
+        ? 'Local preview context can carry candidate, contract, storage, checklist, and decision-draft evidence.'
+        : 'Prepare a complete local decision draft before treating the preview as later packet context.',
+    },
+    {
+      id: 'review-checklist-evidence',
+      title: 'Review checklist evidence',
+      status: checklistHasEvidence ? 'ready' : 'blocked',
+      detail: checklistHasEvidence
+        ? 'Browser-local checklist evidence is present for the current candidate.'
+        : 'Use the local checklist before relying on the preview as review context.',
+    },
+    {
+      id: 'hosted-parity-closeout',
+      title: 'Hosted parity closeout',
+      status: 'blocked',
+      detail: 'PM Lane 041A/041B must prove or precisely classify Vercel and Render hosted parity before live approval persistence is claimed.',
+    },
+    {
+      id: 'schema-authority',
+      title: 'Schema authority',
+      status: 'blocked',
+      detail: 'PM Lane 049 authored the schema and adapter admission design, but no SQL execution or schema migration is admitted.',
+    },
+    {
+      id: 'approval-persistence-authority',
+      title: 'Approval persistence authority',
+      status: 'blocked',
+      detail: 'No approval record may be persisted until a later packet admits the dedicated table and adapter implementation.',
+    },
+    {
+      id: 'import-mutation-authority',
+      title: 'Import mutation authority',
+      status: 'blocked',
+      detail: 'Project, workpackage, task, and apparatus import remain blocked until approval persistence is green in a later packet.',
+    },
+  ]
+}
+
 function buildApprovalPacketPreview(
   packet: IntakeWorkbenchPacket,
   notAllowed: string[],
@@ -363,6 +425,7 @@ function buildApprovalPacketPreview(
 function buildIntakeBrief(
   packet: IntakeWorkbenchPacket,
   workflowGates: Array<{ title: string; status: string; detail: string }>,
+  persistenceReadinessGates: ReadinessGate[],
   notAllowed: string[],
   futureRoute: string,
   reviewChecks: Record<string, boolean>,
@@ -382,9 +445,11 @@ function buildIntakeBrief(
   const warningLines = warnings.map((warning) => `${warning.severity || 'unknown'} - ${warning.code || 'WARNING'}: ${warning.message || 'Review warning.'}`)
   const decisionLines = decisions.map((decision) => `${formatLabel(decision.decision_id)}: ${decision.prompt || 'Decision prompt unavailable.'}`)
   const gateLines = workflowGates.map((gate) => `${gate.title}: ${formatLabel(gate.status)} - ${gate.detail}`)
+  const persistenceGateLines = persistenceReadinessGates.map((gate) => `${gate.title}: ${formatLabel(gate.status)} - ${gate.detail}`)
   const checklistLines = REVIEW_CHECKLIST_ITEMS.map((item) => `${reviewChecks[item.id] ? '[x]' : '[ ]'} ${item.label}: ${item.detail}`)
   const checkedCount = REVIEW_CHECKLIST_ITEMS.filter((item) => reviewChecks[item.id]).length
   const draftPresent = hasApprovalDraftContent(approvalDraft)
+  const readyPersistenceGateCount = persistenceReadinessGates.filter((gate) => gate.status === 'ready').length
 
   return [
     '# Project Miner PM Intake Brief',
@@ -439,6 +504,14 @@ function buildIntakeBrief(
     `- Decision draft: ${approvalDraft.decision || 'none selected'}`,
     `- Local-only attestation checked: ${approvalDraft.local_attestation ? 'yes' : 'no'}`,
     `- Review notes draft: ${formatMultilineMarkdown(approvalDraft.review_notes)}`,
+    '',
+    '## Approval Persistence Readiness',
+    '',
+    `Readiness gates ready: ${readyPersistenceGateCount} of ${persistenceReadinessGates.length}.`,
+    '',
+    'These readiness gates are local review context only. They do not approve, persist, import, assign, schedule, change status, or mutate production state.',
+    '',
+    markdownList(persistenceGateLines),
     '',
     '## Admission And Approval',
     '',
@@ -559,6 +632,11 @@ export default function ProjectMinerIntakeWorkbenchPage() {
   ]
   const checklistCheckedCount = REVIEW_CHECKLIST_ITEMS.filter((item) => reviewChecks[item.id]).length
   const approvalDraftHasContent = hasApprovalDraftContent(approvalDraft)
+  const persistenceReadinessGates = useMemo(
+    () => buildPersistenceReadinessGates(packet, approvalDraft, reviewChecks),
+    [packet, approvalDraft, reviewChecks],
+  )
+  const readyPersistenceGateCount = persistenceReadinessGates.filter((gate) => gate.status === 'ready').length
 
   useEffect(() => {
     if (!reviewChecklistKey || typeof window === 'undefined') {
@@ -621,7 +699,11 @@ export default function ProjectMinerIntakeWorkbenchPage() {
       return
     }
 
-    downloadTextFile(briefFileName(candidate), buildIntakeBrief(packet, workflowGates, notAllowed, futureRoute, reviewChecks, approvalDraft), 'text/markdown')
+    downloadTextFile(
+      briefFileName(candidate),
+      buildIntakeBrief(packet, workflowGates, persistenceReadinessGates, notAllowed, futureRoute, reviewChecks, approvalDraft),
+      'text/markdown',
+    )
     setBriefStatus(`PM brief prepared from ${candidate?.candidate_id || 'the current intake packet'} without a server write.`)
   }
 
@@ -989,6 +1071,36 @@ export default function ProjectMinerIntakeWorkbenchPage() {
               Clear decision draft
             </button>
             <span style={{ color: 'var(--muted)', lineHeight: 1.55 }}>Included in the PM brief only when exported from this browser.</span>
+          </div>
+        </section>
+
+        <section aria-label="Approval persistence readiness gates" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
+          <div className="status-row">
+            <h2 style={{ margin: 0 }}>Approval Persistence Readiness</h2>
+            <span className="status-pill status-awaiting-values">
+              {formatCount(readyPersistenceGateCount)} of {formatCount(persistenceReadinessGates.length)} ready
+            </span>
+          </div>
+          <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+            Local readiness map for the future approval-persistence packet. It reflects review context and blockers only; it does not approve, persist, import, assign, schedule, change status, or mutate production state.
+          </p>
+          <p style={{ margin: '0.45rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+            PM Lane 049 authored the schema and adapter admission design. Hosted parity, schema authority, approval persistence authority, and import mutation authority remain blocked until later packets explicitly admit them.
+          </p>
+          <div style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
+            {persistenceReadinessGates.map((gate) => (
+              <article key={gate.id} className="card" style={{ padding: '0.85rem', boxShadow: 'none' }}>
+                <div className="status-row" style={{ alignItems: 'start' }}>
+                  <div>
+                    <p style={{ margin: 0 }}>
+                      <strong>{gate.title}</strong>
+                    </p>
+                    <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{gate.detail}</p>
+                  </div>
+                  <span className={`status-pill ${gate.status === 'ready' ? 'status-configured' : 'status-deferred'}`}>{formatLabel(gate.status)}</span>
+                </div>
+              </article>
+            ))}
           </div>
         </section>
 

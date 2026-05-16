@@ -230,6 +230,30 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await approvalDraft.getByLabel(/Review notes draft/i).fill('Reviewed formula warnings; return for revision until source workbook errors are resolved.')
   await approvalDraft.getByRole('checkbox', { name: /Local-only draft attestation/i }).check()
   await expect(approvalDraft.getByRole('button', { name: 'Clear decision draft' })).toBeEnabled()
+  const localState = await page.evaluate(() => ({
+    checklist: window.localStorage.getItem('pm-import-intake-review-checklist:pm-import-candidate-miner-temp-power'),
+    draft: window.localStorage.getItem('pm-import-intake-approval-draft:pm-import-candidate-miner-temp-power'),
+  }))
+  expect(localState.checklist).toContain('source_freshness_reviewed')
+  expect(localState.checklist).toContain('exceptions_reviewed')
+  expect(localState.draft).toContain('return_for_revision')
+  expect(localState.draft).toContain('Reviewed formula warnings')
+  const readiness = page.getByLabel('Approval persistence readiness gates')
+  await expect(readiness.getByRole('heading', { name: /Approval Persistence Readiness/i })).toBeVisible()
+  await expect(readiness.getByText('2 of 6 ready')).toBeVisible()
+  await expect(readiness.getByText('Approval preview context', { exact: true })).toBeVisible()
+  await expect(readiness.getByText('Review checklist evidence', { exact: true })).toBeVisible()
+  await expect(readiness.getByText('Hosted parity closeout', { exact: true })).toBeVisible()
+  await expect(readiness.getByText('Schema authority', { exact: true })).toBeVisible()
+  await expect(readiness.getByText('Approval persistence authority', { exact: true })).toBeVisible()
+  await expect(readiness.getByText('Import mutation authority', { exact: true })).toBeVisible()
+  await expect(
+    readiness.getByText(
+      'PM Lane 049 authored the schema and adapter admission design. Hosted parity, schema authority, approval persistence authority, and import mutation authority remain blocked until later packets explicitly admit them.',
+      { exact: true },
+    ),
+  ).toBeVisible()
+  await expect(readiness.getByText(/does not approve, persist, import, assign, schedule, change status, or mutate production state/i)).toBeVisible()
   await expect(page.getByRole('button', { name: 'Export Approval Preview JSON' })).toBeEnabled()
   const previewDownloadPromise = page.waitForEvent('download')
   await page.getByRole('button', { name: 'Export Approval Preview JSON' }).click()
@@ -314,6 +338,14 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   expect(brief).toContain('- Decision draft: return_for_revision')
   expect(brief).toContain('- Local-only attestation checked: yes')
   expect(brief).toContain('Reviewed formula warnings; return for revision until source workbook errors are resolved.')
+  expect(brief).toContain('## Approval Persistence Readiness')
+  expect(brief).toContain('Readiness gates ready: 2 of 6.')
+  expect(brief).toContain('Approval preview context: ready')
+  expect(brief).toContain('Review checklist evidence: ready')
+  expect(brief).toContain('Hosted parity closeout: blocked')
+  expect(brief).toContain('Schema authority: blocked')
+  expect(brief).toContain('Approval persistence authority: blocked')
+  expect(brief).toContain('Import mutation authority: blocked')
   await expect(page.getByText(/PM brief prepared from pm-import-candidate-miner-temp-power without a server write/i)).toBeVisible()
   await checklist.getByRole('button', { name: 'Clear checklist' }).click()
   await expect(checklist.getByText('0 of 7')).toBeVisible()
@@ -324,6 +356,12 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(approvalDraft.getByLabel(/Review notes draft/i)).toHaveValue('')
   await expect(approvalDraft.getByRole('checkbox', { name: /Local-only draft attestation/i })).not.toBeChecked()
   await expect(approvalDraft.getByRole('button', { name: 'Clear decision draft' })).toBeDisabled()
+  await expect(readiness.getByText('0 of 6 ready')).toBeVisible()
+  const clearedLocalState = await page.evaluate(() => ({
+    checklist: window.localStorage.getItem('pm-import-intake-review-checklist:pm-import-candidate-miner-temp-power'),
+    draft: window.localStorage.getItem('pm-import-intake-approval-draft:pm-import-candidate-miner-temp-power'),
+  }))
+  expect(clearedLocalState).toEqual({ checklist: null, draft: null })
   await expect(page.getByRole('button', { name: /Approve/i })).toHaveCount(0)
   await expect(page.getByRole('button', { name: /Persist/i })).toHaveCount(0)
   await expect(page.getByRole('button', { name: /Submit/i })).toHaveCount(0)
