@@ -357,6 +357,8 @@ PM Lane 059 adds a browser-local `Local Field Prep Coverage Snapshot` and `Expor
 
 PM Lane 060 adds a browser-local `Local Field Prep Conversation Agenda` and `Export Field Prep Conversation Agenda` action to `/pm-review/import-intake`. It derives context, ask, confirm, and blocked agenda items from the coverage snapshot so the Temp Power prep flow can turn local coverage into a concise next-conversation script. The agenda is included in the PM brief and Field Kickoff Brief without adding a storage key or creating issues, tasks, work authorization, live work orders, durable field records, hosted proof, backend routes, SQL, schema migration, approval persistence, import mutation, assignment, schedule, status, production tracking writes, or production state.
 
+PM Lane 061 adds a browser-local `Export Field Prep Packet` action to `/pm-review/import-intake`. It bundles the existing field prep queue, coverage snapshot, conversation agenda, readiness evidence, questions draft, observation scratchpad, review/closeout context, workflow gates, future-not-admitted surfaces, and guardrails into one Markdown packet for Temp Power prep conversations without adding a storage key or creating issues, tasks, work authorization, live work orders, durable field records, hosted proof, backend routes, SQL, schema migration, approval persistence, import mutation, assignment, schedule, status, production tracking writes, or production state.
+
 ## Capability-Gap Register
 
 Current known gaps:

@@ -359,6 +359,14 @@ PM Lane 060 adds a browser-local `Local Field Prep Conversation Agenda` and `Exp
 
 This still creates no approval record, SQL, schema migration, backend route, import mutation, issue, task, assignment, schedule, status, hosted proof, live task, work authorization, field release, work order, durable field record, production tracking write, local storage key, or production mutation.
 
+The current field-prep bundle tranche is:
+
+`Project Miner Local Field Prep Packet Bundle Export`
+
+PM Lane 061 adds `Export Field Prep Packet` to `/pm-review/import-intake`. The packet bundles the field prep queue, coverage snapshot, conversation agenda, readiness evidence, questions draft, observation scratchpad, review/closeout context, workflow gates, future-not-admitted surfaces, and guardrails into one Markdown artifact so Jason does not have to export or relay five separate local surfaces for a single conversation.
+
+This still creates no approval record, SQL, schema migration, backend route, import mutation, issue, task, assignment, schedule, status, hosted proof, live task, work authorization, field release, work order, durable field record, production tracking write, local storage key, new form, or production mutation.
+
 The next persistence tranche is:
 
 `Import Candidate Approval Persistence Schema And Adapter Implementation`
