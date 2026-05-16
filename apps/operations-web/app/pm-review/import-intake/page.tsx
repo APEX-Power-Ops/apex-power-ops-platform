@@ -156,6 +156,15 @@ type ReadinessGate = {
   detail: string
 }
 
+type OperatingQueueStatus = 'complete' | 'next' | 'blocked'
+
+type OperatingQueueItem = {
+  id: string
+  title: string
+  status: OperatingQueueStatus
+  detail: string
+}
+
 const { useCallback, useEffect, useMemo, useState } = React
 
 const API_BASE =
@@ -260,6 +269,12 @@ function statusTone(value?: string | null) {
   return 'status-configured'
 }
 
+function operatingQueueTone(status: OperatingQueueStatus) {
+  if (status === 'complete') return 'status-configured'
+  if (status === 'next') return 'status-awaiting-values'
+  return 'status-deferred'
+}
+
 function uniqueItems(...lists: Array<string[] | undefined>) {
   return Array.from(new Set(lists.flatMap((items) => items || []))).sort()
 }
@@ -352,6 +367,64 @@ function buildPersistenceReadinessGates(
   ]
 }
 
+function buildPmOperatingQueue(
+  approvalDraft: ApprovalDecisionDraft,
+  reviewChecks: Record<string, boolean>,
+  persistenceReadinessGates: ReadinessGate[],
+): OperatingQueueItem[] {
+  const sourceAndWarningReviewDone = Boolean(reviewChecks.source_freshness_reviewed && reviewChecks.exceptions_reviewed)
+  const checklistHasEvidence = REVIEW_CHECKLIST_ITEMS.some((item) => reviewChecks[item.id])
+  const draftComplete = Boolean(approvalDraft.decision && approvalDraft.review_notes.trim() && approvalDraft.local_attestation)
+  const previewContextReady = persistenceReadinessGates.some((gate) => gate.id === 'approval-preview-context' && gate.status === 'ready')
+
+  return [
+    {
+      id: 'source-exception-review',
+      title: 'Review source and exceptions',
+      status: sourceAndWarningReviewDone ? 'complete' : 'next',
+      detail: sourceAndWarningReviewDone
+        ? 'Source freshness and warning review are marked in local prep for the current candidate.'
+        : 'Start with source freshness and warning review before relying on the candidate shape.',
+    },
+    {
+      id: 'local-decision-draft',
+      title: 'Prepare local decision draft',
+      status: draftComplete ? 'complete' : checklistHasEvidence ? 'next' : 'blocked',
+      detail: draftComplete
+        ? 'A local decision value, review notes, and local-only attestation are present.'
+        : checklistHasEvidence
+          ? 'Add a local decision value, review notes, and local-only attestation for future packet context.'
+          : 'Capture at least one local checklist item before preparing the decision draft.',
+    },
+    {
+      id: 'review-artifact-export',
+      title: 'Export review artifacts',
+      status: previewContextReady && checklistHasEvidence ? 'next' : 'blocked',
+      detail: previewContextReady && checklistHasEvidence
+        ? 'Use the PM brief and approval preview JSON as browser-local context for the next admitted packet.'
+        : 'Complete local checklist evidence and the decision draft before treating exports as packet context.',
+    },
+    {
+      id: 'hosted-parity-executor-closeout',
+      title: 'Hosted parity executor closeout',
+      status: 'blocked',
+      detail: 'PM Lane 041A/041B still need executor closeout before hosted parity can be claimed.',
+    },
+    {
+      id: 'approval-persistence-implementation',
+      title: 'Approval persistence implementation',
+      status: 'blocked',
+      detail: 'PM Lane 049 is design-only; schema and adapter implementation still need an explicit later packet.',
+    },
+    {
+      id: 'project-import-packet',
+      title: 'Project import packet',
+      status: 'blocked',
+      detail: 'Project, workpackage, task, and apparatus rows remain blocked until approval persistence is admitted and green.',
+    },
+  ]
+}
+
 function buildApprovalPacketPreview(
   packet: IntakeWorkbenchPacket,
   notAllowed: string[],
@@ -426,6 +499,7 @@ function buildIntakeBrief(
   packet: IntakeWorkbenchPacket,
   workflowGates: Array<{ title: string; status: string; detail: string }>,
   persistenceReadinessGates: ReadinessGate[],
+  operatingQueue: OperatingQueueItem[],
   notAllowed: string[],
   futureRoute: string,
   reviewChecks: Record<string, boolean>,
@@ -446,10 +520,14 @@ function buildIntakeBrief(
   const decisionLines = decisions.map((decision) => `${formatLabel(decision.decision_id)}: ${decision.prompt || 'Decision prompt unavailable.'}`)
   const gateLines = workflowGates.map((gate) => `${gate.title}: ${formatLabel(gate.status)} - ${gate.detail}`)
   const persistenceGateLines = persistenceReadinessGates.map((gate) => `${gate.title}: ${formatLabel(gate.status)} - ${gate.detail}`)
+  const operatingQueueLines = operatingQueue.map((item) => `${item.title}: ${formatLabel(item.status)} - ${item.detail}`)
   const checklistLines = REVIEW_CHECKLIST_ITEMS.map((item) => `${reviewChecks[item.id] ? '[x]' : '[ ]'} ${item.label}: ${item.detail}`)
   const checkedCount = REVIEW_CHECKLIST_ITEMS.filter((item) => reviewChecks[item.id]).length
   const draftPresent = hasApprovalDraftContent(approvalDraft)
   const readyPersistenceGateCount = persistenceReadinessGates.filter((gate) => gate.status === 'ready').length
+  const completeQueueCount = operatingQueue.filter((item) => item.status === 'complete').length
+  const nextQueueCount = operatingQueue.filter((item) => item.status === 'next').length
+  const blockedQueueCount = operatingQueue.filter((item) => item.status === 'blocked').length
 
   return [
     '# Project Miner PM Intake Brief',
@@ -512,6 +590,14 @@ function buildIntakeBrief(
     'These readiness gates are local review context only. They do not approve, persist, import, assign, schedule, change status, or mutate production state.',
     '',
     markdownList(persistenceGateLines),
+    '',
+    '## PM Operating Queue',
+    '',
+    `Queue status: ${completeQueueCount} complete, ${nextQueueCount} next, ${blockedQueueCount} blocked.`,
+    '',
+    'This queue is local review guidance only. It does not approve, persist, import, assign, schedule, change status, or mutate production state.',
+    '',
+    markdownList(operatingQueueLines),
     '',
     '## Admission And Approval',
     '',
@@ -637,6 +723,13 @@ export default function ProjectMinerIntakeWorkbenchPage() {
     [packet, approvalDraft, reviewChecks],
   )
   const readyPersistenceGateCount = persistenceReadinessGates.filter((gate) => gate.status === 'ready').length
+  const operatingQueue = useMemo(
+    () => buildPmOperatingQueue(approvalDraft, reviewChecks, persistenceReadinessGates),
+    [approvalDraft, reviewChecks, persistenceReadinessGates],
+  )
+  const completeQueueCount = operatingQueue.filter((item) => item.status === 'complete').length
+  const nextQueueCount = operatingQueue.filter((item) => item.status === 'next').length
+  const blockedQueueCount = operatingQueue.filter((item) => item.status === 'blocked').length
 
   useEffect(() => {
     if (!reviewChecklistKey || typeof window === 'undefined') {
@@ -701,7 +794,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
 
     downloadTextFile(
       briefFileName(candidate),
-      buildIntakeBrief(packet, workflowGates, persistenceReadinessGates, notAllowed, futureRoute, reviewChecks, approvalDraft),
+      buildIntakeBrief(packet, workflowGates, persistenceReadinessGates, operatingQueue, notAllowed, futureRoute, reviewChecks, approvalDraft),
       'text/markdown',
     )
     setBriefStatus(`PM brief prepared from ${candidate?.candidate_id || 'the current intake packet'} without a server write.`)
@@ -825,6 +918,34 @@ export default function ProjectMinerIntakeWorkbenchPage() {
               {formatCount(summary.warning_count)} warnings, {formatCount(summary.blocker_count)} blockers, {formatCount(summary.human_decision_count)} human decisions.
             </p>
           </article>
+        </section>
+
+        <section aria-label="Local PM operating queue" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
+          <div className="status-row">
+            <h2 style={{ margin: 0 }}>Local PM Operating Queue</h2>
+            <span className="status-pill status-awaiting-values">browser-local</span>
+          </div>
+          <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+            Local queue for today&apos;s intake work. It translates the checklist, local decision draft, and readiness gates into practical next moves without approving, persisting, importing, assigning, scheduling, changing status, or mutating production state.
+          </p>
+          <p style={{ margin: '0.45rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+            {formatCount(completeQueueCount)} complete / {formatCount(nextQueueCount)} next / {formatCount(blockedQueueCount)} blocked
+          </p>
+          <div style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
+            {operatingQueue.map((item) => (
+              <article key={item.id} className="card" style={{ padding: '0.85rem', boxShadow: 'none' }}>
+                <div className="status-row" style={{ alignItems: 'start' }}>
+                  <div>
+                    <p style={{ margin: 0 }}>
+                      <strong>{item.title}</strong>
+                    </p>
+                    <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
+                  </div>
+                  <span className={`status-pill ${operatingQueueTone(item.status)}`}>{formatLabel(item.status)}</span>
+                </div>
+              </article>
+            ))}
+          </div>
         </section>
 
         <section className="notes-grid" style={{ marginBottom: '1rem' }}>

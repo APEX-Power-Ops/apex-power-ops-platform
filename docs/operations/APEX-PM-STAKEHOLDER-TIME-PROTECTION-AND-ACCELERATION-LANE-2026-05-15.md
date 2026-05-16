@@ -279,6 +279,14 @@ PM Lane 050 adds an `Approval Persistence Readiness` panel to `/pm-review/import
 
 This reduces relay burden for the later persistence executor while still creating no approval record, SQL, schema migration, backend route, import mutation, assignment, schedule, status, hosted proof, or production mutation.
 
+The current day-to-day queue tranche is:
+
+`Project Miner Local PM Operating Queue`
+
+PM Lane 051 adds a browser-local `Local PM Operating Queue` near the top of `/pm-review/import-intake`. The queue derives complete, next, and blocked PM review moves from the local checklist, local approval-decision draft, and approval-persistence readiness gates. This gives Jason a practical first-pass work order without creating live tasks or requiring another chat relay.
+
+This still creates no approval record, SQL, schema migration, backend route, import mutation, assignment, schedule, status, hosted proof, or production mutation.
+
 The next persistence tranche is:
 
 `Import Candidate Approval Persistence Schema And Adapter Implementation`

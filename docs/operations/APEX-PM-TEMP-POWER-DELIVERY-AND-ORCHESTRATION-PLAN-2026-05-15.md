@@ -337,6 +337,8 @@ PM Lane 050 adds approval-persistence readiness gates to `/pm-review/import-inta
 
 This remains local-current and read-only. It does not add hosted proof, backend routes, SQL, schema migration, approval persistence, import mutation, assignment, schedule, status, or production writes.
 
+PM Lane 051 adds a browser-local PM operating queue to `/pm-review/import-intake`. It sits high in the workbench after the intake summary and turns the current checklist, local decision draft, and approval-persistence readiness state into complete, next, and blocked PM review moves. This reduces the daily interpretation burden while still avoiding live task creation, hosted proof, backend routes, SQL, schema migration, approval persistence, import mutation, assignment, schedule, status, or production writes.
+
 ## Capability-Gap Register
 
 Current known gaps:

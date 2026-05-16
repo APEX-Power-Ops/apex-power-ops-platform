@@ -369,6 +369,10 @@ PM Lane 050 adds a local `Approval Persistence Readiness` panel to `/pm-review/i
 
 This is still local review context only. It does not approve, persist, import, create schema, run SQL, write Supabase rows, call live services, run workbook macros, write workbook cells, assign work, change status, mutate schedules, or admit autonomous AI business-state action.
 
+PM Lane 051 adds a browser-local `Local PM Operating Queue` near the top of `/pm-review/import-intake`. The queue derives complete, next, and blocked status from the checklist, local approval-decision draft, and approval-persistence readiness gates so the day-to-day PM next move is visible without reading packet docs.
+
+This is still local review guidance only. It does not create live tasks, approve, persist, import, create schema, run SQL, write Supabase rows, call live services, run workbook macros, write workbook cells, assign work, change status, mutate schedules, or admit autonomous AI business-state action.
+
 ## Environment Overrides
 
 Set this when using a different planning folder:

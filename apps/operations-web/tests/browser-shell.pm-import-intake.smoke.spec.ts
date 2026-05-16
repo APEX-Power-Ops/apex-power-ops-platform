@@ -23,6 +23,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   })
 
   await page.route('**/api/v1/reads/project-import-candidate', async (route) => {
+    expect(route.request().method()).toBe('GET')
     readCalls.candidate += 1
     await route.fulfill({
       status: 200,
@@ -94,6 +95,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   })
 
   await page.route('**/api/v1/reads/project-import-admission-plan', async (route) => {
+    expect(route.request().method()).toBe('GET')
     readCalls.admissionPlan += 1
     await route.fulfill({
       status: 200,
@@ -131,6 +133,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   })
 
   await page.route('**/api/v1/reads/project-import-approval-contract', async (route) => {
+    expect(route.request().method()).toBe('GET')
     readCalls.approvalContract += 1
     await route.fulfill({
       status: 200,
@@ -158,6 +161,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   })
 
   await page.route('**/api/v1/reads/project-import-approval-storage-plan', async (route) => {
+    expect(route.request().method()).toBe('GET')
     readCalls.storagePlan += 1
     await route.fulfill({
       status: 200,
@@ -216,6 +220,18 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(page.getByRole('link', { name: /Import candidate/i })).toHaveAttribute('href', '/pm-review/import-candidate')
   await expect(page.getByRole('link', { name: /Admission plan/i })).toHaveAttribute('href', '/pm-review/import-admission-plan')
   await expect(page.getByRole('link', { name: /Approval readiness/i })).toHaveAttribute('href', '/pm-review/import-approval-readiness')
+  const operatingQueue = page.getByLabel('Local PM operating queue')
+  await expect(operatingQueue.getByRole('heading', { name: /Local PM Operating Queue/i })).toBeVisible()
+  await expect(operatingQueue.getByText('browser-local')).toBeVisible()
+  await expect(operatingQueue.getByText('0 complete / 1 next / 5 blocked')).toBeVisible()
+  await expect(operatingQueue.getByText('Review source and exceptions', { exact: true })).toBeVisible()
+  await expect(operatingQueue.getByText('Prepare local decision draft', { exact: true })).toBeVisible()
+  await expect(operatingQueue.getByText('Export review artifacts', { exact: true })).toBeVisible()
+  await expect(operatingQueue.getByText('Hosted parity executor closeout', { exact: true })).toBeVisible()
+  await expect(operatingQueue.getByText('Approval persistence implementation', { exact: true })).toBeVisible()
+  await expect(operatingQueue.getByText('Project import packet', { exact: true })).toBeVisible()
+  await expect(operatingQueue.getByText(/Local queue for today's intake work/i)).toBeVisible()
+  await expect(operatingQueue.getByText(/without approving, persisting, importing, assigning, scheduling, changing status, or mutating production state/i)).toBeVisible()
   const checklist = page.getByLabel('Local review checklist')
   await expect(checklist.getByRole('heading', { name: /Local Review Checklist/i })).toBeVisible()
   await expect(checklist.getByText(/Browser-local review prep only/i)).toBeVisible()
@@ -254,6 +270,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
     ),
   ).toBeVisible()
   await expect(readiness.getByText(/does not approve, persist, import, assign, schedule, change status, or mutate production state/i)).toBeVisible()
+  await expect(operatingQueue.getByText('2 complete / 1 next / 3 blocked')).toBeVisible()
   await expect(page.getByRole('button', { name: 'Export Approval Preview JSON' })).toBeEnabled()
   const previewDownloadPromise = page.waitForEvent('download')
   await page.getByRole('button', { name: 'Export Approval Preview JSON' }).click()
@@ -346,6 +363,14 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   expect(brief).toContain('Schema authority: blocked')
   expect(brief).toContain('Approval persistence authority: blocked')
   expect(brief).toContain('Import mutation authority: blocked')
+  expect(brief).toContain('## PM Operating Queue')
+  expect(brief).toContain('Queue status: 2 complete, 1 next, 3 blocked.')
+  expect(brief).toContain('Review source and exceptions: complete')
+  expect(brief).toContain('Prepare local decision draft: complete')
+  expect(brief).toContain('Export review artifacts: next')
+  expect(brief).toContain('Hosted parity executor closeout: blocked')
+  expect(brief).toContain('Approval persistence implementation: blocked')
+  expect(brief).toContain('Project import packet: blocked')
   await expect(page.getByText(/PM brief prepared from pm-import-candidate-miner-temp-power without a server write/i)).toBeVisible()
   await checklist.getByRole('button', { name: 'Clear checklist' }).click()
   await expect(checklist.getByText('0 of 7')).toBeVisible()
@@ -357,6 +382,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(approvalDraft.getByRole('checkbox', { name: /Local-only draft attestation/i })).not.toBeChecked()
   await expect(approvalDraft.getByRole('button', { name: 'Clear decision draft' })).toBeDisabled()
   await expect(readiness.getByText('0 of 6 ready')).toBeVisible()
+  await expect(operatingQueue.getByText('0 complete / 1 next / 5 blocked')).toBeVisible()
   const clearedLocalState = await page.evaluate(() => ({
     checklist: window.localStorage.getItem('pm-import-intake-review-checklist:pm-import-candidate-miner-temp-power'),
     draft: window.localStorage.getItem('pm-import-intake-approval-draft:pm-import-candidate-miner-temp-power'),
