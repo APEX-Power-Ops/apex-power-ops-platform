@@ -162,6 +162,15 @@ type FieldQuestionsDraft = {
   pm_followup_notes: string
 }
 
+type FieldObservationScratchpad = {
+  observation_date_or_shift: string
+  observer_source: string
+  workpackage_area_reference: string
+  access_safety_observations: string
+  material_equipment_observations: string
+  open_questions_pm_followup: string
+}
+
 type ApprovalDecisionDraft = {
   decision: string
   review_notes: string
@@ -207,6 +216,14 @@ const EMPTY_FIELD_QUESTIONS_DRAFT: FieldQuestionsDraft = {
   material_staging_questions: '',
   customer_constraint_questions: '',
   pm_followup_notes: '',
+}
+const EMPTY_FIELD_OBSERVATION_SCRATCHPAD: FieldObservationScratchpad = {
+  observation_date_or_shift: '',
+  observer_source: '',
+  workpackage_area_reference: '',
+  access_safety_observations: '',
+  material_equipment_observations: '',
+  open_questions_pm_followup: '',
 }
 const REVIEW_CHECKLIST_ITEMS: ReviewChecklistItem[] = [
   {
@@ -424,6 +441,11 @@ function fieldKickoffBriefFileName(candidate?: CandidatePayload | null) {
   return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-field-kickoff-brief.md`
 }
 
+function fieldObservationNotesFileName(candidate?: CandidatePayload | null) {
+  const candidateId = candidate?.candidate_id || 'project-miner-intake'
+  return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-field-observation-notes.md`
+}
+
 function markdownList(items: string[]) {
   return items.length ? items.map((item) => `- ${item}`).join('\n') : '- none reported'
 }
@@ -446,6 +468,28 @@ function hasFieldQuestionsDraftContent(draft: FieldQuestionsDraft) {
       || draft.customer_constraint_questions.trim()
       || draft.pm_followup_notes.trim(),
   )
+}
+
+function hasFieldObservationScratchpadContent(draft: FieldObservationScratchpad) {
+  return Boolean(
+    draft.observation_date_or_shift.trim()
+      || draft.observer_source.trim()
+      || draft.workpackage_area_reference.trim()
+      || draft.access_safety_observations.trim()
+      || draft.material_equipment_observations.trim()
+      || draft.open_questions_pm_followup.trim(),
+  )
+}
+
+function buildFieldObservationLines(draft: FieldObservationScratchpad) {
+  return [
+    `Observation date or shift note: ${formatMultilineMarkdown(draft.observation_date_or_shift)}`,
+    `Observer / source: ${formatMultilineMarkdown(draft.observer_source)}`,
+    `Workpackage or area reference: ${formatMultilineMarkdown(draft.workpackage_area_reference)}`,
+    `Access and safety observations: ${formatMultilineMarkdown(draft.access_safety_observations)}`,
+    `Material, staging, or equipment observations: ${formatMultilineMarkdown(draft.material_equipment_observations)}`,
+    `Open questions / PM follow-up: ${formatMultilineMarkdown(draft.open_questions_pm_followup)}`,
+  ]
 }
 
 function buildPersistenceReadinessGates(
@@ -696,6 +740,7 @@ function buildIntakeBrief(
   closeoutChecks: Record<string, boolean>,
   fieldReadinessChecks: Record<string, boolean>,
   fieldQuestionsDraft: FieldQuestionsDraft,
+  fieldObservationScratchpad: FieldObservationScratchpad,
   approvalDraft: ApprovalDecisionDraft,
 ) {
   const candidate = packet.candidate
@@ -730,6 +775,8 @@ function buildIntakeBrief(
     `Customer constraint questions: ${formatMultilineMarkdown(fieldQuestionsDraft.customer_constraint_questions)}`,
     `PM follow-up notes: ${formatMultilineMarkdown(fieldQuestionsDraft.pm_followup_notes)}`,
   ]
+  const fieldObservationScratchpadPresent = hasFieldObservationScratchpadContent(fieldObservationScratchpad)
+  const fieldObservationLines = buildFieldObservationLines(fieldObservationScratchpad)
   const draftPresent = hasApprovalDraftContent(approvalDraft)
   const readyPersistenceGateCount = persistenceReadinessGates.filter((gate) => gate.status === 'ready').length
   const completeQueueCount = operatingQueue.filter((item) => item.status === 'complete').length
@@ -840,6 +887,14 @@ function buildIntakeBrief(
     'This browser-local field questions draft is prep context only. It is not a task, issue, work authorization, approval, persistence, import, assignment, schedule, status, or production state.',
     '',
     markdownList(fieldQuestionLines),
+    '',
+    '## Local Field Observation Scratchpad',
+    '',
+    `Scratchpad present: ${fieldObservationScratchpadPresent ? 'yes' : 'no'}.`,
+    '',
+    'This browser-local observation scratchpad is field-prep context only. It is not a task, issue, work authorization, approval, persistence, import, assignment, schedule, status, or production state.',
+    '',
+    markdownList(fieldObservationLines),
     '',
     '## Admission And Approval',
     '',
@@ -1012,6 +1067,7 @@ function buildFieldKickoffBrief(
   closeoutChecks: Record<string, boolean>,
   fieldReadinessChecks: Record<string, boolean>,
   fieldQuestionsDraft: FieldQuestionsDraft,
+  fieldObservationScratchpad: FieldObservationScratchpad,
   approvalDraft: ApprovalDecisionDraft,
 ) {
   const candidate = packet.candidate
@@ -1052,6 +1108,8 @@ function buildFieldKickoffBrief(
     `Customer constraint questions: ${formatMultilineMarkdown(fieldQuestionsDraft.customer_constraint_questions)}`,
     `PM follow-up notes: ${formatMultilineMarkdown(fieldQuestionsDraft.pm_followup_notes)}`,
   ]
+  const fieldObservationScratchpadPresent = hasFieldObservationScratchpadContent(fieldObservationScratchpad)
+  const fieldObservationLines = buildFieldObservationLines(fieldObservationScratchpad)
   const nextQueueLines = nextQueueItems.map((item) => `${item.title}: ${item.detail}`)
   const blockedQueueLines = blockedQueueItems.map((item) => `${item.title}: ${item.detail}`)
   const workflowGateLines = workflowGates.map((gate) => `${gate.title}: ${formatLabel(gate.status)} - ${gate.detail}`)
@@ -1145,6 +1203,14 @@ function buildFieldKickoffBrief(
     '',
     markdownList(fieldQuestionLines),
     '',
+    '## Local Field Observation Scratchpad',
+    '',
+    `Scratchpad present: ${fieldObservationScratchpadPresent ? 'yes' : 'no'}.`,
+    '',
+    'This browser-local observation scratchpad is field-prep context only. It does not create tasks, issues, work authorization, assignments, schedule state, status updates, approval records, import packets, or production writes.',
+    '',
+    markdownList(fieldObservationLines),
+    '',
     '## Local Field Prep Queue',
     '',
     `Field prep queue: ${completeFieldPrepQueueCount} complete, ${nextFieldPrepQueueCount} next, ${blockedFieldPrepQueueCount} blocked.`,
@@ -1189,6 +1255,71 @@ function buildFieldKickoffBrief(
   ].join('\n')
 }
 
+function buildFieldObservationNotes(
+  packet: IntakeWorkbenchPacket,
+  fieldPrepQueue: OperatingQueueItem[],
+  notAllowed: string[],
+  fieldReadinessChecks: Record<string, boolean>,
+  fieldQuestionsDraft: FieldQuestionsDraft,
+  fieldObservationScratchpad: FieldObservationScratchpad,
+) {
+  const candidate = packet.candidate
+  const project = candidate.project || {}
+  const checkedFieldReadinessItems = FIELD_READINESS_CHECKLIST_ITEMS.filter((item) => fieldReadinessChecks[item.id])
+  const fieldQuestionsDraftPresent = hasFieldQuestionsDraftContent(fieldQuestionsDraft)
+  const fieldObservationScratchpadPresent = hasFieldObservationScratchpadContent(fieldObservationScratchpad)
+  const fieldObservationLines = buildFieldObservationLines(fieldObservationScratchpad)
+  const fieldPrepQueueLines = fieldPrepQueue.map((item) => `${item.title}: ${formatLabel(item.status)} - ${item.detail}`)
+  const completeFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'complete').length
+  const nextFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'next').length
+  const blockedFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'blocked').length
+
+  return [
+    '# Project Miner Local Field Observation Notes',
+    '',
+    'Generated locally from the read-only PM intake workbench. These notes are browser-local field-prep context only and grant no authority to approve, persist, import, assign, schedule, change status, create schema, run SQL, call live services, create tasks, create issues, or mutate production state.',
+    '',
+    '## Field-Prep Boundary',
+    '',
+    'Use these notes to remember PM, lead, customer, and field conversation context. Do not treat them as work authorization, assignment, schedule, status update, approval record, import packet, task creation, issue creation, hosted parity proof, or production tracking.',
+    '',
+    '## Candidate Context',
+    '',
+    `- Candidate: ${candidate.candidate_id || 'unknown'}`,
+    `- Candidate version: ${candidate.candidate_version || 'unknown'}`,
+    `- Candidate authority: ${candidate.mutation_authority || 'not_admitted'}`,
+    `- Project: ${project.name || 'unknown project'}`,
+    `- Location: ${project.location || 'unknown location'}`,
+    `- Drawings: ${project.drawing_package || 'unknown'}`,
+    `- Source freshness: ${candidate.source_freshness?.aggregate_fingerprint || 'unknown'}`,
+    '',
+    '## Observation Scratchpad',
+    '',
+    `Scratchpad present: ${fieldObservationScratchpadPresent ? 'yes' : 'no'}.`,
+    '',
+    markdownList(fieldObservationLines),
+    '',
+    '## Local Field Prep Context',
+    '',
+    `- Field readiness prep: ${checkedFieldReadinessItems.length} of ${FIELD_READINESS_CHECKLIST_ITEMS.length} checked`,
+    `- Field questions draft present: ${fieldQuestionsDraftPresent ? 'yes' : 'no'}`,
+    `- Field prep queue: ${completeFieldPrepQueueCount} complete, ${nextFieldPrepQueueCount} next, ${blockedFieldPrepQueueCount} blocked`,
+    '',
+    markdownList(fieldPrepQueueLines),
+    '',
+    '## Not Allowed',
+    '',
+    markdownList(notAllowed.map(formatLabel)),
+    '',
+    '## Minimum Use',
+    '',
+    '- Keep these notes local unless a later admitted packet owns a durable field record.',
+    '- Use them as conversation prep and follow-up question capture only.',
+    '- Do not create assignments, schedules, status changes, approval records, schema, SQL, task rows, issue rows, or import rows from these notes.',
+    '- Keep production execution tracking blocked until a later packet explicitly admits the required write path.',
+  ].join('\n')
+}
+
 function downloadTextFile(fileName: string, contents: string, contentType: string) {
   const blob = new Blob([contents], { type: contentType })
   const url = URL.createObjectURL(blob)
@@ -1209,10 +1340,12 @@ export default function ProjectMinerIntakeWorkbenchPage() {
   const [previewStatus, setPreviewStatus] = useState('')
   const [handoffStatus, setHandoffStatus] = useState('')
   const [fieldBriefStatus, setFieldBriefStatus] = useState('')
+  const [fieldObservationStatus, setFieldObservationStatus] = useState('')
   const [reviewChecks, setReviewChecks] = useState<Record<string, boolean>>({})
   const [closeoutChecks, setCloseoutChecks] = useState<Record<string, boolean>>({})
   const [fieldReadinessChecks, setFieldReadinessChecks] = useState<Record<string, boolean>>({})
   const [fieldQuestionsDraft, setFieldQuestionsDraft] = useState<FieldQuestionsDraft>(EMPTY_FIELD_QUESTIONS_DRAFT)
+  const [fieldObservationScratchpad, setFieldObservationScratchpad] = useState<FieldObservationScratchpad>(EMPTY_FIELD_OBSERVATION_SCRATCHPAD)
   const [approvalDraft, setApprovalDraft] = useState<ApprovalDecisionDraft>(EMPTY_APPROVAL_DRAFT)
 
   const refresh = useCallback(async () => {
@@ -1245,6 +1378,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
   const closeoutChecklistKey = candidate?.candidate_id ? `pm-import-intake-executor-closeout:${candidate.candidate_id}` : null
   const fieldReadinessChecklistKey = candidate?.candidate_id ? `pm-import-intake-field-readiness:${candidate.candidate_id}` : null
   const fieldQuestionsDraftKey = candidate?.candidate_id ? `pm-import-intake-field-questions:${candidate.candidate_id}` : null
+  const fieldObservationScratchpadKey = candidate?.candidate_id ? `pm-import-intake-field-observations:${candidate.candidate_id}` : null
   const approvalDraftKey = candidate?.candidate_id ? `pm-import-intake-approval-draft:${candidate.candidate_id}` : null
   const permittedDecisions = approvalContract?.approval_record_contract?.permitted_decisions || []
   const notAllowed = useMemo(
@@ -1299,6 +1433,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
   const closeoutCheckedCount = CLOSEOUT_CHECKLIST_ITEMS.filter((item) => closeoutChecks[item.id]).length
   const fieldReadinessCheckedCount = FIELD_READINESS_CHECKLIST_ITEMS.filter((item) => fieldReadinessChecks[item.id]).length
   const fieldQuestionsDraftHasContent = hasFieldQuestionsDraftContent(fieldQuestionsDraft)
+  const fieldObservationScratchpadHasContent = hasFieldObservationScratchpadContent(fieldObservationScratchpad)
   const approvalDraftHasContent = hasApprovalDraftContent(approvalDraft)
   const persistenceReadinessGates = useMemo(
     () => buildPersistenceReadinessGates(packet, approvalDraft, reviewChecks),
@@ -1373,6 +1508,19 @@ export default function ProjectMinerIntakeWorkbenchPage() {
   }, [fieldQuestionsDraftKey])
 
   useEffect(() => {
+    if (!fieldObservationScratchpadKey || typeof window === 'undefined') {
+      return
+    }
+
+    try {
+      const stored = window.localStorage.getItem(fieldObservationScratchpadKey)
+      setFieldObservationScratchpad(stored ? { ...EMPTY_FIELD_OBSERVATION_SCRATCHPAD, ...(JSON.parse(stored) as Partial<FieldObservationScratchpad>) } : EMPTY_FIELD_OBSERVATION_SCRATCHPAD)
+    } catch {
+      setFieldObservationScratchpad(EMPTY_FIELD_OBSERVATION_SCRATCHPAD)
+    }
+  }, [fieldObservationScratchpadKey])
+
+  useEffect(() => {
     if (!approvalDraftKey || typeof window === 'undefined') {
       return
     }
@@ -1445,6 +1593,21 @@ export default function ProjectMinerIntakeWorkbenchPage() {
     }
   }
 
+  function updateFieldObservationScratchpad(nextPartial: Partial<FieldObservationScratchpad>) {
+    const next = { ...fieldObservationScratchpad, ...nextPartial }
+    setFieldObservationScratchpad(next)
+    if (fieldObservationScratchpadKey && typeof window !== 'undefined') {
+      window.localStorage.setItem(fieldObservationScratchpadKey, JSON.stringify(next))
+    }
+  }
+
+  function clearFieldObservationScratchpad() {
+    setFieldObservationScratchpad(EMPTY_FIELD_OBSERVATION_SCRATCHPAD)
+    if (fieldObservationScratchpadKey && typeof window !== 'undefined') {
+      window.localStorage.removeItem(fieldObservationScratchpadKey)
+    }
+  }
+
   function updateApprovalDraft(nextPartial: Partial<ApprovalDecisionDraft>) {
     const next = { ...approvalDraft, ...nextPartial }
     setApprovalDraft(next)
@@ -1467,7 +1630,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
 
     downloadTextFile(
       briefFileName(candidate),
-      buildIntakeBrief(packet, workflowGates, persistenceReadinessGates, operatingQueue, fieldPrepQueue, notAllowed, futureRoute, reviewChecks, closeoutChecks, fieldReadinessChecks, fieldQuestionsDraft, approvalDraft),
+      buildIntakeBrief(packet, workflowGates, persistenceReadinessGates, operatingQueue, fieldPrepQueue, notAllowed, futureRoute, reviewChecks, closeoutChecks, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad, approvalDraft),
       'text/markdown',
     )
     setBriefStatus(`PM brief prepared from ${candidate?.candidate_id || 'the current intake packet'} without a server write.`)
@@ -1503,10 +1666,23 @@ export default function ProjectMinerIntakeWorkbenchPage() {
 
     downloadTextFile(
       fieldKickoffBriefFileName(candidate),
-      buildFieldKickoffBrief(packet, workflowGates, operatingQueue, fieldPrepQueue, notAllowed, futureRoute, reviewChecks, closeoutChecks, fieldReadinessChecks, fieldQuestionsDraft, approvalDraft),
+      buildFieldKickoffBrief(packet, workflowGates, operatingQueue, fieldPrepQueue, notAllowed, futureRoute, reviewChecks, closeoutChecks, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad, approvalDraft),
       'text/markdown',
     )
     setFieldBriefStatus(`Field kickoff prep brief prepared from ${candidate?.candidate_id || 'the current intake packet'} without a server write.`)
+  }
+
+  function exportFieldObservationNotes() {
+    if (!packet) {
+      return
+    }
+
+    downloadTextFile(
+      fieldObservationNotesFileName(candidate),
+      buildFieldObservationNotes(packet, fieldPrepQueue, notAllowed, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad),
+      'text/markdown',
+    )
+    setFieldObservationStatus(`Field observation notes prepared from ${candidate?.candidate_id || 'the current intake packet'} without a server write.`)
   }
 
   return (
@@ -1596,6 +1772,9 @@ export default function ProjectMinerIntakeWorkbenchPage() {
             <button className="btn btn-outline" onClick={exportFieldKickoffBrief} disabled={!packet}>
               Export Field Kickoff Brief
             </button>
+            <button className="btn btn-outline" onClick={exportFieldObservationNotes} disabled={!packet}>
+              Export Field Observation Notes
+            </button>
             <button className="btn btn-outline" onClick={() => void refresh()} disabled={loading}>
               {loading ? 'Refreshing...' : 'Refresh'}
             </button>
@@ -1605,6 +1784,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
         {previewStatus ? <p style={{ margin: '0 0 1rem', color: 'var(--muted)', lineHeight: 1.55 }}>{previewStatus}</p> : null}
         {handoffStatus ? <p style={{ margin: '0 0 1rem', color: 'var(--muted)', lineHeight: 1.55 }}>{handoffStatus}</p> : null}
         {fieldBriefStatus ? <p style={{ margin: '0 0 1rem', color: 'var(--muted)', lineHeight: 1.55 }}>{fieldBriefStatus}</p> : null}
+        {fieldObservationStatus ? <p style={{ margin: '0 0 1rem', color: 'var(--muted)', lineHeight: 1.55 }}>{fieldObservationStatus}</p> : null}
 
         <section className="status-grid status-grid-wide" aria-label="Project Miner intake summary" style={{ marginBottom: '1rem' }}>
           <article className="status-card">
@@ -2073,6 +2253,84 @@ export default function ProjectMinerIntakeWorkbenchPage() {
                 </div>
               </article>
             ))}
+          </div>
+        </section>
+
+        <section aria-label="Local field observation scratchpad" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
+          <div className="status-row">
+            <h2 style={{ margin: 0 }}>Local Field Observation Scratchpad</h2>
+            <span className="status-pill status-awaiting-values">browser-local</span>
+          </div>
+          <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+            Browser-local observation notes for PM, lead, and field conversations. These notes do not create tasks, issues, work authorization, assignments, schedules, status updates, approval records, imports, or production writes.
+          </p>
+          <div className="notes-grid" style={{ marginTop: '0.85rem' }}>
+            <label className="card" style={{ display: 'grid', gap: '0.45rem', padding: '0.85rem', boxShadow: 'none' }}>
+              <strong>Observation date or shift note</strong>
+              <textarea
+                value={fieldObservationScratchpad.observation_date_or_shift}
+                onChange={(event) => updateFieldObservationScratchpad({ observation_date_or_shift: event.target.value })}
+                rows={3}
+                placeholder="Capture the date, shift, or conversation timing for local field-prep context."
+                style={{ width: '100%', resize: 'vertical', minHeight: '5rem' }}
+              />
+            </label>
+            <label className="card" style={{ display: 'grid', gap: '0.45rem', padding: '0.85rem', boxShadow: 'none' }}>
+              <strong>Observer / source</strong>
+              <textarea
+                value={fieldObservationScratchpad.observer_source}
+                onChange={(event) => updateFieldObservationScratchpad({ observer_source: event.target.value })}
+                rows={3}
+                placeholder="Capture who provided the local observation, such as PM, lead, customer, or field contact."
+                style={{ width: '100%', resize: 'vertical', minHeight: '5rem' }}
+              />
+            </label>
+            <label className="card" style={{ display: 'grid', gap: '0.45rem', padding: '0.85rem', boxShadow: 'none' }}>
+              <strong>Workpackage or area reference</strong>
+              <textarea
+                value={fieldObservationScratchpad.workpackage_area_reference}
+                onChange={(event) => updateFieldObservationScratchpad({ workpackage_area_reference: event.target.value })}
+                rows={3}
+                placeholder="Capture the workpackage, apparatus group, room, yard, or area being discussed."
+                style={{ width: '100%', resize: 'vertical', minHeight: '5rem' }}
+              />
+            </label>
+            <label className="card" style={{ display: 'grid', gap: '0.45rem', padding: '0.85rem', boxShadow: 'none' }}>
+              <strong>Access and safety observations</strong>
+              <textarea
+                value={fieldObservationScratchpad.access_safety_observations}
+                onChange={(event) => updateFieldObservationScratchpad({ access_safety_observations: event.target.value })}
+                rows={4}
+                placeholder="Capture access, escort, PPE, LOTO, energization, or safety conversation notes without creating a field record."
+                style={{ width: '100%', resize: 'vertical', minHeight: '6rem' }}
+              />
+            </label>
+            <label className="card" style={{ display: 'grid', gap: '0.45rem', padding: '0.85rem', boxShadow: 'none' }}>
+              <strong>Material, staging, or equipment observations</strong>
+              <textarea
+                value={fieldObservationScratchpad.material_equipment_observations}
+                onChange={(event) => updateFieldObservationScratchpad({ material_equipment_observations: event.target.value })}
+                rows={4}
+                placeholder="Capture material, staging, laydown, receiving, equipment, tooling, or rental notes without assigning resources."
+                style={{ width: '100%', resize: 'vertical', minHeight: '6rem' }}
+              />
+            </label>
+            <label className="card" style={{ display: 'grid', gap: '0.45rem', padding: '0.85rem', boxShadow: 'none' }}>
+              <strong>Open questions / PM follow-up</strong>
+              <textarea
+                value={fieldObservationScratchpad.open_questions_pm_followup}
+                onChange={(event) => updateFieldObservationScratchpad({ open_questions_pm_followup: event.target.value })}
+                rows={4}
+                placeholder="Capture follow-up questions for PM review or a later bounded packet."
+                style={{ width: '100%', resize: 'vertical', minHeight: '6rem' }}
+              />
+            </label>
+          </div>
+          <div className="pm-review-link-row pm-review-link-row-start" style={{ alignItems: 'center' }}>
+            <button className="btn btn-outline" onClick={clearFieldObservationScratchpad} disabled={!fieldObservationScratchpadHasContent}>
+              Clear field observations
+            </button>
+            <span style={{ color: 'var(--muted)', lineHeight: 1.55 }}>Retained in this browser for the current candidate only and included in local field-prep exports.</span>
           </div>
         </section>
 

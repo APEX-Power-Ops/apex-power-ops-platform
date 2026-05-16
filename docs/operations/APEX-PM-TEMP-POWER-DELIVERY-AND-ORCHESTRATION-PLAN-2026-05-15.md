@@ -351,6 +351,8 @@ PM Lane 056 adds a browser-local `Local Field Questions Draft` to `/pm-review/im
 
 PM Lane 057 adds a browser-local `Local Field Prep Queue` to `/pm-review/import-intake`. It derives practical complete/next/blocked prep moves from the field readiness checklist and field questions draft, then includes the queue in the PM brief and Field Kickoff Brief without storing additional state or creating issues, tasks, work authorization, live work orders, hosted proof, backend routes, SQL, schema migration, approval persistence, import mutation, assignment, schedule, status, or production writes.
 
+PM Lane 058 adds a browser-local `Local Field Observation Scratchpad` and `Export Field Observation Notes` action to `/pm-review/import-intake`. It gives the Temp Power prep flow a local place to capture PM, lead, customer, and field conversation observations for date/shift, observer/source, workpackage or area, access/safety, material/staging/equipment, and open PM follow-up questions. The notes are included in the PM brief and Field Kickoff Brief without creating issues, tasks, work authorization, live work orders, durable field records, hosted proof, backend routes, SQL, schema migration, approval persistence, import mutation, assignment, schedule, status, production tracking writes, or production state.
+
 ## Capability-Gap Register
 
 Current known gaps:

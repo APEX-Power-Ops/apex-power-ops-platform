@@ -397,6 +397,10 @@ PM Lane 057 adds a browser-local `Local Field Prep Queue` to `/pm-review/import-
 
 This queue is browser-local prep guidance only and stores no additional state. It does not create issues, create tasks, create live work orders, approve, persist, import, create schema, run SQL, write Supabase rows, call live services, run workbook macros, write workbook cells, assign work, change status, mutate schedules, claim hosted parity, or admit autonomous AI business-state action.
 
+PM Lane 058 adds a browser-local `Local Field Observation Scratchpad` and `Export Field Observation Notes` action to `/pm-review/import-intake`. It captures date or shift note, observer/source, workpackage or area reference, access/safety observations, material/staging/equipment observations, and open PM follow-up questions as local field-prep context.
+
+This scratchpad is candidate-scoped browser context only and is not the durable field record. It does not create issues, create tasks, create live work orders, approve, persist, import, create schema, run SQL, write Supabase rows, call live services, run workbook macros, write workbook cells, assign work, change status, mutate schedules, create durable field records, write production tracking rows, claim hosted parity, or admit autonomous AI business-state action.
+
 ## Environment Overrides
 
 Set this when using a different planning folder:

@@ -335,6 +335,14 @@ PM Lane 057 adds a browser-local `Local Field Prep Queue` to `/pm-review/import-
 
 This still creates no approval record, SQL, schema migration, backend route, import mutation, issue, task, assignment, schedule, status, hosted proof, live task, work authorization, field release, work order, durable queue row, or production mutation.
 
+The current field-observation tranche is:
+
+`Project Miner Local Field Observation Scratchpad Export`
+
+PM Lane 058 adds a browser-local `Local Field Observation Scratchpad` and `Export Field Observation Notes` action to `/pm-review/import-intake`. The scratchpad captures date or shift note, observer/source, workpackage or area reference, access/safety observations, material/staging/equipment observations, and open PM follow-up questions, then includes that context in the PM brief and Field Kickoff Brief.
+
+This still creates no approval record, SQL, schema migration, backend route, import mutation, issue, task, assignment, schedule, status, hosted proof, live task, work authorization, field release, work order, durable field record, production tracking write, or production mutation.
+
 The next persistence tranche is:
 
 `Import Candidate Approval Persistence Schema And Adapter Implementation`
