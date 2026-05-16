@@ -617,6 +617,8 @@ PM Lane 116 wraps the existing Local PM Intake Handoff Guide body content in a l
 
 PM Lane 117 wraps the existing Local PM Intake Workflow Map body content in a labeled body-controls container under its already-existing default-open disclosure. Jason can fold and reopen the workflow orientation map predictably, while the panel stays inside Workflow Review Panels after `#pm-handoff-guide`; the `#pm-workflow-map` anchor, existing disclosure, heading, browser-local pill, explanatory no-authority wording, seven derived workflow-map cards, card order, hrefs, dynamic text, status pills, quick-jump target, reads, and authority wording remain unchanged.
 
+PM Lane 118 wraps the existing Local PM Intake Open Items Lens body content in a labeled body-controls container under its already-existing default-open disclosure. Jason can fold and reopen the attention/blocker lens predictably, while the panel stays inside Workflow Review Panels after `#pm-workflow-map`; the `#pm-open-items` anchor, existing disclosure, heading, browser-local pill, explanatory no-authority wording, six derived open-items cards, card order, hrefs, dynamic text, status pills, quick-jump target, reads, and authority wording remain unchanged.
+
 This creates no approval record, SQL, schema migration, backend route, import mutation, issue, task, assignment, schedule, status, hosted proof, live task, work authorization, field release, work order, durable field record, production tracking write, product code, deployment, service, DNS, auth, ingress, secret, local storage key, new route, new export action, new export artifact, export contract widening, or production mutation.
 
 The next persistence tranche is:

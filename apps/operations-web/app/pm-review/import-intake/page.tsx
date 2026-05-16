@@ -4245,28 +4245,30 @@ export default function ProjectMinerIntakeWorkbenchPage() {
             <h2 style={{ margin: 0 }}>Local PM Intake Open Items Lens</h2>
             <span className="status-pill status-awaiting-values">browser-local</span>
           </summary>
-          <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
-            Exception-first lens for local attention items and future authority blockers. It creates no localStorage key, export artifact, backend route, schema, approval record, task, issue, work authorization, or production write.
-          </p>
-          <div aria-label="Local PM intake open items lens items" style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
-            {pmIntakeOpenItems.map((item) => (
-              <a
-                key={item.id}
-                className="card"
-                href={item.href}
-                style={{ color: 'inherit', display: 'block', padding: '0.85rem', textDecoration: 'none', boxShadow: 'none' }}
-              >
-                <div className="status-row" style={{ alignItems: 'start' }}>
-                  <div>
-                    <p style={{ margin: 0 }}>
-                      <strong>{item.title}</strong>
-                    </p>
-                    <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
+          <div aria-label="Open items lens controls">
+            <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+              Exception-first lens for local attention items and future authority blockers. It creates no localStorage key, export artifact, backend route, schema, approval record, task, issue, work authorization, or production write.
+            </p>
+            <div aria-label="Local PM intake open items lens items" style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
+              {pmIntakeOpenItems.map((item) => (
+                <a
+                  key={item.id}
+                  className="card"
+                  href={item.href}
+                  style={{ color: 'inherit', display: 'block', padding: '0.85rem', textDecoration: 'none', boxShadow: 'none' }}
+                >
+                  <div className="status-row" style={{ alignItems: 'start' }}>
+                    <div>
+                      <p style={{ margin: 0 }}>
+                        <strong>{item.title}</strong>
+                      </p>
+                      <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
+                    </div>
+                    <span className={`status-pill ${openItemsTone(item.status)}`}>{formatLabel(item.status)}</span>
                   </div>
-                  <span className={`status-pill ${openItemsTone(item.status)}`}>{formatLabel(item.status)}</span>
-                </div>
-              </a>
-            ))}
+                </a>
+              ))}
+            </div>
           </div>
         </details>
           </details>
