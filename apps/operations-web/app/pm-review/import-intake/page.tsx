@@ -4560,31 +4560,33 @@ export default function ProjectMinerIntakeWorkbenchPage() {
               {formatCount(checklistCheckedCount)} of {formatCount(REVIEW_CHECKLIST_ITEMS.length)}
             </span>
           </summary>
-          <div aria-label="Review checklist controls">
-            <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
-              Browser-local review prep only. Checking these items does not approve, persist, import, assign, schedule, change status, or mutate production state.
-            </p>
-            <div style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
-              {REVIEW_CHECKLIST_ITEMS.map((item) => (
-                <label key={item.id} className="card" style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0.75rem', padding: '0.85rem', boxShadow: 'none', cursor: 'pointer' }}>
-                  <input
-                    type="checkbox"
-                    checked={Boolean(reviewChecks[item.id])}
-                    onChange={(event) => updateReviewCheck(item.id, event.target.checked)}
-                    style={{ marginTop: '0.25rem' }}
-                  />
-                  <span>
-                    <strong>{item.label}</strong>
-                    <span style={{ display: 'block', marginTop: '0.35rem', color: 'var(--muted)', lineHeight: 1.5 }}>{item.detail}</span>
-                  </span>
-                </label>
-              ))}
-            </div>
-            <div className="pm-review-link-row pm-review-link-row-start" style={{ alignItems: 'center' }}>
-              <button className="btn btn-outline" onClick={clearReviewChecklist} disabled={!checklistCheckedCount}>
-                Clear checklist
-              </button>
-              <span style={{ color: 'var(--muted)', lineHeight: 1.55 }}>Retained in this browser for the current candidate only.</span>
+          <div aria-label="Local review checklist controls">
+            <div aria-label="Review checklist controls">
+              <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+                Browser-local review prep only. Checking these items does not approve, persist, import, assign, schedule, change status, or mutate production state.
+              </p>
+              <div style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
+                {REVIEW_CHECKLIST_ITEMS.map((item) => (
+                  <label key={item.id} className="card" style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0.75rem', padding: '0.85rem', boxShadow: 'none', cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={Boolean(reviewChecks[item.id])}
+                      onChange={(event) => updateReviewCheck(item.id, event.target.checked)}
+                      style={{ marginTop: '0.25rem' }}
+                    />
+                    <span>
+                      <strong>{item.label}</strong>
+                      <span style={{ display: 'block', marginTop: '0.35rem', color: 'var(--muted)', lineHeight: 1.5 }}>{item.detail}</span>
+                    </span>
+                  </label>
+                ))}
+              </div>
+              <div className="pm-review-link-row pm-review-link-row-start" style={{ alignItems: 'center' }}>
+                <button className="btn btn-outline" onClick={clearReviewChecklist} disabled={!checklistCheckedCount}>
+                  Clear checklist
+                </button>
+                <span style={{ color: 'var(--muted)', lineHeight: 1.55 }}>Retained in this browser for the current candidate only.</span>
+              </div>
             </div>
           </div>
         </details>
