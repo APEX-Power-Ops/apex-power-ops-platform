@@ -4224,15 +4224,15 @@ export default function ProjectMinerIntakeWorkbenchPage() {
           </div>
         </details>
 
-        <section id="pm-open-items" aria-label="Local PM intake open items lens" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
-          <div className="status-row">
+        <details id="pm-open-items" open aria-label="Local PM intake open items lens" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
+          <summary className="status-row" style={{ cursor: 'pointer' }}>
             <h2 style={{ margin: 0 }}>Local PM Intake Open Items Lens</h2>
             <span className="status-pill status-awaiting-values">browser-local</span>
-          </div>
+          </summary>
           <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
             Exception-first lens for local attention items and future authority blockers. It creates no localStorage key, export artifact, backend route, schema, approval record, task, issue, work authorization, or production write.
           </p>
-          <div style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
+          <div aria-label="Local PM intake open items lens items" style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
             {pmIntakeOpenItems.map((item) => (
               <a
                 key={item.id}
@@ -4252,7 +4252,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
               </a>
             ))}
           </div>
-        </section>
+        </details>
           </details>
         </section>
 
