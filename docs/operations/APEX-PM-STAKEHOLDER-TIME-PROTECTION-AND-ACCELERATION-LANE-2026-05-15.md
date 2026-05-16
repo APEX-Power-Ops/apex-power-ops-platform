@@ -551,6 +551,14 @@ PM Lane 086 wraps the top output action rail in a default-open native disclosure
 
 This creates no approval record, SQL, schema migration, backend route, import mutation, issue, task, assignment, schedule, status, hosted proof, live task, work authorization, field release, work order, durable field record, production tracking write, product code, deployment, service, DNS, auth, ingress, secret, local storage key, new route, new export action, new export artifact, export contract widening, or production mutation.
 
+The current quick-jump ergonomics tranche is:
+
+`Project Miner Local PM Intake Quick Jump Rail Disclosure Controls`
+
+PM Lane 087 wraps the existing quick-jump rail in a default-open native disclosure control. Jason can fold the dense local navigator after orienting, with no persisted collapsed state and no change to the rail id, aria label, group headings, link labels, href targets, link counts, order, target sections, storage, reads, or authority wording.
+
+This creates no approval record, SQL, schema migration, backend route, import mutation, issue, task, assignment, schedule, status, hosted proof, live task, work authorization, field release, work order, durable field record, production tracking write, product code, deployment, service, DNS, auth, ingress, secret, local storage key, new route, new export action, new export artifact, export contract widening, or production mutation.
+
 The next persistence tranche is:
 
 `Import Candidate Approval Persistence Schema And Adapter Implementation`

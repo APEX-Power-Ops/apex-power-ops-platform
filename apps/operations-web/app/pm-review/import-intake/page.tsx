@@ -3913,11 +3913,11 @@ export default function ProjectMinerIntakeWorkbenchPage() {
           </article>
         </section>
 
-        <section id="pm-quick-jump-rail" aria-label="PM intake quick jump rail" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
-          <div className="status-row">
+        <details id="pm-quick-jump-rail" open aria-label="PM intake quick jump rail" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
+          <summary className="status-row" style={{ cursor: 'pointer' }}>
             <h2 style={{ margin: 0 }}>PM Intake Quick Jump Rail</h2>
             <span className="status-pill status-awaiting-values">browser-local</span>
-          </div>
+          </summary>
           <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
             Fast local navigation for the current intake workbench. These links do not approve, persist, import, assign, schedule, change status, create tasks, create issues, call live services, or mutate production state.
           </p>
@@ -3944,7 +3944,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
               </section>
             ))}
           </nav>
-        </section>
+        </details>
 
         <section aria-label="PM intake helper panel stack" style={{ display: 'grid', gap: '1rem', marginBottom: '1rem' }}>
           <details open aria-label="Intake triage helper panels" style={{ display: 'grid', gap: '0.75rem' }}>
