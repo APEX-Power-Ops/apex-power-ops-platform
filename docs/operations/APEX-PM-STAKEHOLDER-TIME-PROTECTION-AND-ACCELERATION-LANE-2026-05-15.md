@@ -343,6 +343,14 @@ PM Lane 058 adds a browser-local `Local Field Observation Scratchpad` and `Expor
 
 This still creates no approval record, SQL, schema migration, backend route, import mutation, issue, task, assignment, schedule, status, hosted proof, live task, work authorization, field release, work order, durable field record, production tracking write, or production mutation.
 
+The current field-prep synthesis tranche is:
+
+`Project Miner Local Field Prep Coverage Snapshot`
+
+PM Lane 059 adds a browser-local `Local Field Prep Coverage Snapshot` and `Export Field Prep Coverage Snapshot` action to `/pm-review/import-intake`. The snapshot derives covered, partial, open, and blocked coverage from existing local field readiness, questions, observation notes, and boundary state so Jason can see what has enough conversation context without reading every field-prep panel.
+
+This still creates no approval record, SQL, schema migration, backend route, import mutation, issue, task, assignment, schedule, status, hosted proof, live task, work authorization, field release, work order, durable field record, production tracking write, local storage key, or production mutation.
+
 The next persistence tranche is:
 
 `Import Candidate Approval Persistence Schema And Adapter Implementation`

@@ -401,6 +401,10 @@ PM Lane 058 adds a browser-local `Local Field Observation Scratchpad` and `Expor
 
 This scratchpad is candidate-scoped browser context only and is not the durable field record. It does not create issues, create tasks, create live work orders, approve, persist, import, create schema, run SQL, write Supabase rows, call live services, run workbook macros, write workbook cells, assign work, change status, mutate schedules, create durable field records, write production tracking rows, claim hosted parity, or admit autonomous AI business-state action.
 
+PM Lane 059 adds a browser-local `Local Field Prep Coverage Snapshot` and `Export Field Prep Coverage Snapshot` action to `/pm-review/import-intake`. It derives covered, partial, open, and blocked coverage from the existing local review checklist, field readiness checklist, field questions draft, and field observation scratchpad. The snapshot covers source/drawing, access/safety, crew/equipment, material/staging, customer constraints, field authority boundary, and the production tracking boundary.
+
+This snapshot is derived conversation prep only and adds no local storage key. It does not create issues, create tasks, create live work orders, approve, persist, import, create schema, run SQL, write Supabase rows, call live services, run workbook macros, write workbook cells, assign work, change status, mutate schedules, create durable field records, write production tracking rows, claim hosted parity, or admit autonomous AI business-state action.
+
 ## Environment Overrides
 
 Set this when using a different planning folder:

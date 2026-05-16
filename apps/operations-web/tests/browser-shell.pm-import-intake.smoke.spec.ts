@@ -276,6 +276,19 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(fieldPrepQueue.getByText('Export field kickoff prep brief', { exact: true })).toBeVisible()
   await expect(fieldPrepQueue.getByText('Confirm field authority boundary', { exact: true })).toBeVisible()
   await expect(fieldPrepQueue.getByText('Production execution tracking', { exact: true })).toBeVisible()
+  const fieldPrepCoverage = page.getByLabel('Local field prep coverage snapshot')
+  await expect(fieldPrepCoverage.getByRole('heading', { name: /Local Field Prep Coverage Snapshot/i })).toBeVisible()
+  await expect(fieldPrepCoverage.getByText('derived', { exact: true })).toBeVisible()
+  await expect(fieldPrepCoverage.getByText(/Browser-local coverage snapshot derived from existing local prep state/i)).toBeVisible()
+  await expect(fieldPrepCoverage.getByText(/without creating tasks, issues, work authorization, assignments, schedules, status updates, approval records, import rows, durable field records, production tracking rows, or production writes/i)).toBeVisible()
+  await expect(fieldPrepCoverage.getByText('0 covered, 0 partial, 5 open, 2 blocked')).toBeVisible()
+  await expect(fieldPrepCoverage.getByText('Source and drawing coverage', { exact: true })).toBeVisible()
+  await expect(fieldPrepCoverage.getByText('Access and safety coverage', { exact: true })).toBeVisible()
+  await expect(fieldPrepCoverage.getByText('Crew and equipment coverage', { exact: true })).toBeVisible()
+  await expect(fieldPrepCoverage.getByText('Material and staging coverage', { exact: true })).toBeVisible()
+  await expect(fieldPrepCoverage.getByText('Customer constraint coverage', { exact: true })).toBeVisible()
+  await expect(fieldPrepCoverage.getByText('Field authority boundary', { exact: true })).toBeVisible()
+  await expect(fieldPrepCoverage.getByText('Production tracking boundary', { exact: true })).toBeVisible()
   await fieldReadiness.getByRole('checkbox', { name: /Drawing and source questions captured/i }).check()
   await fieldReadiness.getByRole('checkbox', { name: /Safety planning questions captured/i }).check()
   await expect(fieldReadiness.getByText('2 of 8')).toBeVisible()
@@ -298,6 +311,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await fieldObservations.getByLabel(/Observer \/ source/i).fill('PM call with lead and customer site contact.')
   await fieldObservations.getByLabel(/Access and safety observations/i).fill('Escort and LOTO review need confirmation before field reliance.')
   await expect(fieldObservations.getByRole('button', { name: 'Clear field observations' })).toBeEnabled()
+  await expect(fieldPrepCoverage.getByText('2 covered, 0 partial, 3 open, 2 blocked')).toBeVisible()
   const localState = await page.evaluate(() => ({
     checklist: window.localStorage.getItem('pm-import-intake-review-checklist:pm-import-candidate-miner-temp-power'),
     draft: window.localStorage.getItem('pm-import-intake-approval-draft:pm-import-candidate-miner-temp-power'),
@@ -305,6 +319,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
     fieldReadiness: window.localStorage.getItem('pm-import-intake-field-readiness:pm-import-candidate-miner-temp-power'),
     fieldQuestions: window.localStorage.getItem('pm-import-intake-field-questions:pm-import-candidate-miner-temp-power'),
     fieldObservations: window.localStorage.getItem('pm-import-intake-field-observations:pm-import-candidate-miner-temp-power'),
+    fieldPrepCoverage: window.localStorage.getItem('pm-import-intake-field-prep-coverage:pm-import-candidate-miner-temp-power'),
   }))
   expect(localState.checklist).toContain('source_freshness_reviewed')
   expect(localState.checklist).toContain('exceptions_reviewed')
@@ -318,6 +333,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   expect(localState.fieldQuestions).toContain('Confirm escort, access hours, and LOTO review questions before field discussion.')
   expect(localState.fieldObservations).toContain('Day-one temp power prep conversation before field mobilization.')
   expect(localState.fieldObservations).toContain('PM call with lead and customer site contact.')
+  expect(localState.fieldPrepCoverage).toBeNull()
   const readiness = page.getByLabel('Approval persistence readiness gates')
   await expect(readiness.getByRole('heading', { name: /Approval Persistence Readiness/i })).toBeVisible()
   await expect(readiness.getByText('2 of 6 ready')).toBeVisible()
@@ -436,6 +452,13 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   expect(fieldBrief).toContain('Export field kickoff prep brief: next')
   expect(fieldBrief).toContain('Confirm field authority boundary: next')
   expect(fieldBrief).toContain('Production execution tracking: blocked')
+  expect(fieldBrief).toContain('## Local Field Prep Coverage Snapshot')
+  expect(fieldBrief).toContain('Coverage snapshot: 2 covered, 0 partial, 3 open, 2 blocked.')
+  expect(fieldBrief).toContain('Source and drawing coverage: covered')
+  expect(fieldBrief).toContain('Access and safety coverage: covered')
+  expect(fieldBrief).toContain('Crew and equipment coverage: open')
+  expect(fieldBrief).toContain('Field authority boundary: blocked')
+  expect(fieldBrief).toContain('Production tracking boundary: blocked')
   expect(fieldBrief).toContain('## Future Surfaces Are Not Admitted')
   expect(fieldBrief).toContain('- Future approval route: /api/v1/mutations/project-import-approvals')
   expect(fieldBrief).toContain('## Not Allowed')
@@ -480,6 +503,42 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   expect(fieldObservationNotes).toContain('- import project rows')
   expect(fieldObservationNotes).toContain('Keep production execution tracking blocked until a later packet explicitly admits the required write path.')
   await expect(page.getByText(/Field observation notes prepared from pm-import-candidate-miner-temp-power without a server write/i)).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Export Field Prep Coverage Snapshot' })).toBeEnabled()
+  const fieldPrepCoverageDownloadPromise = page.waitForEvent('download')
+  await page.getByRole('button', { name: 'Export Field Prep Coverage Snapshot' }).click()
+  const fieldPrepCoverageDownload = await fieldPrepCoverageDownloadPromise
+  expect(fieldPrepCoverageDownload.suggestedFilename()).toBe('pm-import-candidate-miner-temp-power-field-prep-coverage-snapshot.md')
+  const fieldPrepCoverageStream = await fieldPrepCoverageDownload.createReadStream()
+  expect(fieldPrepCoverageStream).not.toBeNull()
+  const fieldPrepCoverageChunks: Buffer[] = []
+  for await (const chunk of fieldPrepCoverageStream!) {
+    fieldPrepCoverageChunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk))
+  }
+  const fieldPrepCoverageExport = Buffer.concat(fieldPrepCoverageChunks).toString('utf8')
+  expect(fieldPrepCoverageExport).toContain('# Project Miner Local Field Prep Coverage Snapshot')
+  expect(fieldPrepCoverageExport).toContain('Generated locally from the read-only PM intake workbench.')
+  expect(fieldPrepCoverageExport).toContain('browser-local conversation prep only and grants no authority to approve, persist, import, assign, schedule, change status, create schema, run SQL, call live services, create tasks, create issues, create durable field records, write production tracking rows, or mutate production state.')
+  expect(fieldPrepCoverageExport).toContain('- Candidate: pm-import-candidate-miner-temp-power')
+  expect(fieldPrepCoverageExport).toContain('- Candidate authority: not_admitted')
+  expect(fieldPrepCoverageExport).toContain('- Workpackages: 7')
+  expect(fieldPrepCoverageExport).toContain('- Tasks: 15')
+  expect(fieldPrepCoverageExport).toContain('- Apparatus candidates: 186')
+  expect(fieldPrepCoverageExport).toContain('## Coverage Snapshot')
+  expect(fieldPrepCoverageExport).toContain('Coverage snapshot: 2 covered, 0 partial, 3 open, 2 blocked.')
+  expect(fieldPrepCoverageExport).toContain('Source and drawing coverage: covered')
+  expect(fieldPrepCoverageExport).toContain('Access and safety coverage: covered')
+  expect(fieldPrepCoverageExport).toContain('Material and staging coverage: open')
+  expect(fieldPrepCoverageExport).toContain('Production tracking boundary: blocked')
+  expect(fieldPrepCoverageExport).toContain('## Field Prep Queue Summary')
+  expect(fieldPrepCoverageExport).toContain('Field prep queue: 2 complete, 2 next, 1 blocked.')
+  expect(fieldPrepCoverageExport).toContain('- Field observation scratchpad present: yes')
+  expect(fieldPrepCoverageExport).toContain('- Production execution tracking: blocked')
+  expect(fieldPrepCoverageExport).toContain('## Not Allowed')
+  expect(fieldPrepCoverageExport).toContain('- write supabase')
+  expect(fieldPrepCoverageExport).toContain('- persist approval record')
+  expect(fieldPrepCoverageExport).toContain('- import project rows')
+  expect(fieldPrepCoverageExport).toContain('Use this as conversation prep only.')
+  await expect(page.getByText(/Field prep coverage snapshot prepared from pm-import-candidate-miner-temp-power without a server write/i)).toBeVisible()
   await expect(page.getByRole('button', { name: 'Export Approval Preview JSON' })).toBeEnabled()
   const previewDownloadPromise = page.waitForEvent('download')
   await page.getByRole('button', { name: 'Export Approval Preview JSON' }).click()
@@ -585,6 +644,13 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   expect(brief).toContain('Capture field questions draft: complete')
   expect(brief).toContain('Export field kickoff prep brief: next')
   expect(brief).toContain('Production execution tracking: blocked')
+  expect(brief).toContain('## Local Field Prep Coverage Snapshot')
+  expect(brief).toContain('Coverage snapshot: 2 covered, 0 partial, 3 open, 2 blocked.')
+  expect(brief).toContain('Source and drawing coverage: covered')
+  expect(brief).toContain('Access and safety coverage: covered')
+  expect(brief).toContain('Crew and equipment coverage: open')
+  expect(brief).toContain('Field authority boundary: blocked')
+  expect(brief).toContain('Production tracking boundary: blocked')
   expect(brief).toContain('## Local Executor Closeout Intake')
   expect(brief).toContain('Closeout checks: 2 of 8 checked.')
   expect(brief).toContain('[x] Source commit recorded')
@@ -636,6 +702,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(readiness.getByText('0 of 6 ready')).toBeVisible()
   await expect(operatingQueue.getByText('0 complete / 1 next / 5 blocked')).toBeVisible()
   await expect(fieldPrepQueue.getByText('0 complete / 1 next / 4 blocked')).toBeVisible()
+  await expect(fieldPrepCoverage.getByText('0 covered, 0 partial, 5 open, 2 blocked')).toBeVisible()
   const resetLocalState = await page.evaluate(() => ({
     checklist: window.localStorage.getItem('pm-import-intake-review-checklist:pm-import-candidate-miner-temp-power'),
     draft: window.localStorage.getItem('pm-import-intake-approval-draft:pm-import-candidate-miner-temp-power'),
@@ -643,8 +710,9 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
     fieldReadiness: window.localStorage.getItem('pm-import-intake-field-readiness:pm-import-candidate-miner-temp-power'),
     fieldQuestions: window.localStorage.getItem('pm-import-intake-field-questions:pm-import-candidate-miner-temp-power'),
     fieldObservations: window.localStorage.getItem('pm-import-intake-field-observations:pm-import-candidate-miner-temp-power'),
+    fieldPrepCoverage: window.localStorage.getItem('pm-import-intake-field-prep-coverage:pm-import-candidate-miner-temp-power'),
   }))
-  expect(resetLocalState).toEqual({ checklist: null, draft: null, closeout: null, fieldReadiness: null, fieldQuestions: null, fieldObservations: null })
+  expect(resetLocalState).toEqual({ checklist: null, draft: null, closeout: null, fieldReadiness: null, fieldQuestions: null, fieldObservations: null, fieldPrepCoverage: null })
   await expect(page.getByRole('button', { name: /Approve/i })).toHaveCount(0)
   await expect(page.getByRole('button', { name: /Persist/i })).toHaveCount(0)
   await expect(page.getByRole('button', { name: /Submit/i })).toHaveCount(0)

@@ -195,6 +195,15 @@ type OperatingQueueItem = {
   detail: string
 }
 
+type FieldPrepCoverageStatus = 'covered' | 'partial' | 'open' | 'blocked'
+
+type FieldPrepCoverageItem = {
+  id: string
+  title: string
+  status: FieldPrepCoverageStatus
+  detail: string
+}
+
 const { useCallback, useEffect, useMemo, useState } = React
 
 const API_BASE =
@@ -405,6 +414,13 @@ function operatingQueueTone(status: OperatingQueueStatus) {
   return 'status-deferred'
 }
 
+function fieldPrepCoverageTone(status: FieldPrepCoverageStatus) {
+  if (status === 'covered') return 'status-configured'
+  if (status === 'partial') return 'status-awaiting-values'
+  if (status === 'open') return 'status-awaiting-values'
+  return 'status-deferred'
+}
+
 function uniqueItems(...lists: Array<string[] | undefined>) {
   return Array.from(new Set(lists.flatMap((items) => items || []))).sort()
 }
@@ -444,6 +460,11 @@ function fieldKickoffBriefFileName(candidate?: CandidatePayload | null) {
 function fieldObservationNotesFileName(candidate?: CandidatePayload | null) {
   const candidateId = candidate?.candidate_id || 'project-miner-intake'
   return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-field-observation-notes.md`
+}
+
+function fieldPrepCoverageSnapshotFileName(candidate?: CandidatePayload | null) {
+  const candidateId = candidate?.candidate_id || 'project-miner-intake'
+  return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-field-prep-coverage-snapshot.md`
 }
 
 function markdownList(items: string[]) {
@@ -490,6 +511,12 @@ function buildFieldObservationLines(draft: FieldObservationScratchpad) {
     `Material, staging, or equipment observations: ${formatMultilineMarkdown(draft.material_equipment_observations)}`,
     `Open questions / PM follow-up: ${formatMultilineMarkdown(draft.open_questions_pm_followup)}`,
   ]
+}
+
+function fieldPrepCoverageStatus(hasCheck: boolean, hasText: boolean): FieldPrepCoverageStatus {
+  if (hasCheck && hasText) return 'covered'
+  if (hasCheck || hasText) return 'partial'
+  return 'open'
 }
 
 function buildPersistenceReadinessGates(
@@ -658,6 +685,80 @@ function buildFieldPrepQueue(
   ]
 }
 
+function buildFieldPrepCoverageSnapshot(
+  reviewChecks: Record<string, boolean>,
+  fieldReadinessChecks: Record<string, boolean>,
+  fieldQuestionsDraft: FieldQuestionsDraft,
+  fieldObservationScratchpad: FieldObservationScratchpad,
+): FieldPrepCoverageItem[] {
+  const drawingSourceQuestionText = Boolean(fieldQuestionsDraft.drawing_source_questions.trim())
+  const accessSafetyText = Boolean(fieldQuestionsDraft.site_access_safety_questions.trim() || fieldObservationScratchpad.access_safety_observations.trim())
+  const crewEquipmentText = Boolean(fieldQuestionsDraft.crew_equipment_questions.trim())
+  const materialStagingText = Boolean(fieldQuestionsDraft.material_staging_questions.trim() || fieldObservationScratchpad.material_equipment_observations.trim())
+  const customerConstraintText = Boolean(fieldQuestionsDraft.customer_constraint_questions.trim())
+  const fieldBoundaryAcknowledged = Boolean(fieldReadinessChecks.field_authority_boundary_acknowledged)
+
+  return [
+    {
+      id: 'source-drawing-coverage',
+      title: 'Source and drawing coverage',
+      status: fieldPrepCoverageStatus(Boolean(fieldReadinessChecks.drawing_source_questions_captured), drawingSourceQuestionText),
+      detail: 'Uses the drawing/source readiness check and drawing/source question text as browser-local conversation coverage.',
+    },
+    {
+      id: 'access-safety-coverage',
+      title: 'Access and safety coverage',
+      status: fieldPrepCoverageStatus(Boolean(fieldReadinessChecks.safety_planning_questions_captured), accessSafetyText),
+      detail: 'Uses the safety planning readiness check plus site/access/safety questions or access/safety observation notes.',
+    },
+    {
+      id: 'crew-equipment-coverage',
+      title: 'Crew and equipment coverage',
+      status: fieldPrepCoverageStatus(Boolean(fieldReadinessChecks.crew_equipment_questions_captured), Boolean(fieldQuestionsDraft.crew_equipment_questions.trim())),
+      detail: 'Uses the crew/equipment readiness check and crew/equipment question text as local prep coverage.',
+    },
+    {
+      id: 'material-staging-coverage',
+      title: 'Material and staging coverage',
+      status: fieldPrepCoverageStatus(Boolean(fieldReadinessChecks.material_staging_questions_captured), materialStagingText),
+      detail: 'Uses the material/staging readiness check plus material/staging questions or material/equipment observation notes.',
+    },
+    {
+      id: 'customer-constraint-coverage',
+      title: 'Customer constraint coverage',
+      status: fieldPrepCoverageStatus(Boolean(fieldReadinessChecks.customer_constraint_questions_captured), customerConstraintText),
+      detail: 'Uses the customer constraint readiness check and customer constraint question text as local prep coverage.',
+    },
+    {
+      id: 'field-authority-boundary',
+      title: 'Field authority boundary',
+      status: fieldBoundaryAcknowledged ? 'covered' : 'blocked',
+      detail: fieldBoundaryAcknowledged
+        ? 'The local field-prep authority boundary is acknowledged for this candidate.'
+        : 'Boundary acknowledgement remains blocked until explicitly checked; local prep does not authorize work.',
+    },
+    {
+      id: 'production-tracking-boundary',
+      title: 'Production tracking boundary',
+      status: 'blocked',
+      detail: 'Production tracking remains blocked until a later packet explicitly admits the required write path.',
+    },
+  ]
+}
+
+function fieldPrepCoverageCounts(fieldPrepCoverageSnapshot: FieldPrepCoverageItem[]) {
+  return {
+    covered: fieldPrepCoverageSnapshot.filter((item) => item.status === 'covered').length,
+    partial: fieldPrepCoverageSnapshot.filter((item) => item.status === 'partial').length,
+    open: fieldPrepCoverageSnapshot.filter((item) => item.status === 'open').length,
+    blocked: fieldPrepCoverageSnapshot.filter((item) => item.status === 'blocked').length,
+  }
+}
+
+function fieldPrepCoverageSummary(counts: ReturnType<typeof fieldPrepCoverageCounts>) {
+  return `${counts.covered} covered, ${counts.partial} partial, ${counts.open} open, ${counts.blocked} blocked`
+}
+
 function buildApprovalPacketPreview(
   packet: IntakeWorkbenchPacket,
   notAllowed: string[],
@@ -734,6 +835,7 @@ function buildIntakeBrief(
   persistenceReadinessGates: ReadinessGate[],
   operatingQueue: OperatingQueueItem[],
   fieldPrepQueue: OperatingQueueItem[],
+  fieldPrepCoverageSnapshot: FieldPrepCoverageItem[],
   notAllowed: string[],
   futureRoute: string,
   reviewChecks: Record<string, boolean>,
@@ -760,6 +862,7 @@ function buildIntakeBrief(
   const persistenceGateLines = persistenceReadinessGates.map((gate) => `${gate.title}: ${formatLabel(gate.status)} - ${gate.detail}`)
   const operatingQueueLines = operatingQueue.map((item) => `${item.title}: ${formatLabel(item.status)} - ${item.detail}`)
   const fieldPrepQueueLines = fieldPrepQueue.map((item) => `${item.title}: ${formatLabel(item.status)} - ${item.detail}`)
+  const fieldPrepCoverageLines = fieldPrepCoverageSnapshot.map((item) => `${item.title}: ${formatLabel(item.status)} - ${item.detail}`)
   const checklistLines = REVIEW_CHECKLIST_ITEMS.map((item) => `${reviewChecks[item.id] ? '[x]' : '[ ]'} ${item.label}: ${item.detail}`)
   const closeoutChecklistLines = CLOSEOUT_CHECKLIST_ITEMS.map((item) => `${closeoutChecks[item.id] ? '[x]' : '[ ]'} ${item.label}: ${item.detail}`)
   const fieldReadinessChecklistLines = FIELD_READINESS_CHECKLIST_ITEMS.map((item) => `${fieldReadinessChecks[item.id] ? '[x]' : '[ ]'} ${item.label}: ${item.detail}`)
@@ -785,6 +888,7 @@ function buildIntakeBrief(
   const completeFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'complete').length
   const nextFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'next').length
   const blockedFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'blocked').length
+  const fieldPrepCoverageCount = fieldPrepCoverageCounts(fieldPrepCoverageSnapshot)
 
   return [
     '# Project Miner PM Intake Brief',
@@ -863,6 +967,14 @@ function buildIntakeBrief(
     'This queue is browser-local prep guidance only. It does not create tasks, issues, work authorization, assignments, schedules, status updates, approval records, import rows, or production writes.',
     '',
     markdownList(fieldPrepQueueLines),
+    '',
+    '## Local Field Prep Coverage Snapshot',
+    '',
+    `Coverage snapshot: ${fieldPrepCoverageSummary(fieldPrepCoverageCount)}.`,
+    '',
+    'This snapshot is browser-local conversation prep only. It does not create tasks, issues, work authorization, assignments, schedules, status updates, approval records, import rows, durable field records, production tracking rows, or production writes.',
+    '',
+    markdownList(fieldPrepCoverageLines),
     '',
     '## Local Executor Closeout Intake',
     '',
@@ -1061,6 +1173,7 @@ function buildFieldKickoffBrief(
   workflowGates: Array<{ title: string; status: string; detail: string }>,
   operatingQueue: OperatingQueueItem[],
   fieldPrepQueue: OperatingQueueItem[],
+  fieldPrepCoverageSnapshot: FieldPrepCoverageItem[],
   notAllowed: string[],
   futureRoute: string,
   reviewChecks: Record<string, boolean>,
@@ -1089,6 +1202,8 @@ function buildFieldKickoffBrief(
   const nextFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'next').length
   const blockedFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'blocked').length
   const fieldPrepQueueLines = fieldPrepQueue.map((item) => `${item.title}: ${formatLabel(item.status)} - ${item.detail}`)
+  const fieldPrepCoverageCount = fieldPrepCoverageCounts(fieldPrepCoverageSnapshot)
+  const fieldPrepCoverageLines = fieldPrepCoverageSnapshot.map((item) => `${item.title}: ${formatLabel(item.status)} - ${item.detail}`)
   const warningLines = warnings.map((warning) => `${warning.severity || 'unknown'} - ${warning.code || 'WARNING'}: ${warning.message || 'Review warning.'}`)
   const decisionLines = decisions.map((decision) => `${formatLabel(decision.decision_id)}: ${decision.prompt || 'Decision prompt unavailable.'}`)
   const workpackageLines = workpackages.map((workpackage) => {
@@ -1219,6 +1334,14 @@ function buildFieldKickoffBrief(
     '',
     markdownList(fieldPrepQueueLines),
     '',
+    '## Local Field Prep Coverage Snapshot',
+    '',
+    `Coverage snapshot: ${fieldPrepCoverageSummary(fieldPrepCoverageCount)}.`,
+    '',
+    'This snapshot is browser-local conversation prep only. It does not create tasks, issues, work authorization, assignments, schedules, status updates, approval records, import rows, durable field records, production tracking rows, or production writes.',
+    '',
+    markdownList(fieldPrepCoverageLines),
+    '',
     '## Local PM Operating Queue',
     '',
     'Next local moves:',
@@ -1320,6 +1443,79 @@ function buildFieldObservationNotes(
   ].join('\n')
 }
 
+function buildFieldPrepCoverageSnapshotExport(
+  packet: IntakeWorkbenchPacket,
+  fieldPrepQueue: OperatingQueueItem[],
+  fieldPrepCoverageSnapshot: FieldPrepCoverageItem[],
+  fieldObservationScratchpad: FieldObservationScratchpad,
+  notAllowed: string[],
+) {
+  const candidate = packet.candidate
+  const summary = candidate.summary || {}
+  const project = candidate.project || {}
+  const fieldPrepQueueLines = fieldPrepQueue.map((item) => `${item.title}: ${formatLabel(item.status)} - ${item.detail}`)
+  const fieldPrepCoverageLines = fieldPrepCoverageSnapshot.map((item) => `${item.title}: ${formatLabel(item.status)} - ${item.detail}`)
+  const completeFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'complete').length
+  const nextFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'next').length
+  const blockedFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'blocked').length
+  const fieldPrepCoverageCount = fieldPrepCoverageCounts(fieldPrepCoverageSnapshot)
+  const fieldObservationScratchpadPresent = hasFieldObservationScratchpadContent(fieldObservationScratchpad)
+
+  return [
+    '# Project Miner Local Field Prep Coverage Snapshot',
+    '',
+    'Generated locally from the read-only PM intake workbench. This snapshot is browser-local conversation prep only and grants no authority to approve, persist, import, assign, schedule, change status, create schema, run SQL, call live services, create tasks, create issues, create durable field records, write production tracking rows, or mutate production state.',
+    '',
+    '## Candidate Context',
+    '',
+    `- Candidate: ${candidate.candidate_id || 'unknown'}`,
+    `- Candidate version: ${candidate.candidate_version || 'unknown'}`,
+    `- Candidate authority: ${candidate.mutation_authority || 'not_admitted'}`,
+    `- Project: ${project.name || 'unknown project'}`,
+    `- Location: ${project.location || 'unknown location'}`,
+    `- Drawings: ${project.drawing_package || 'unknown'}`,
+    `- Source freshness: ${candidate.source_freshness?.aggregate_fingerprint || 'unknown'}`,
+    '',
+    '## Proposed Shape',
+    '',
+    `- Workpackages: ${formatCount(summary.workpackage_count)}`,
+    `- Tasks: ${formatCount(summary.task_count)}`,
+    `- Apparatus candidates: ${formatCount(summary.apparatus_candidate_count)}`,
+    `- Warnings: ${formatCount(summary.warning_count)}`,
+    `- Human decisions: ${formatCount(summary.human_decision_count)}`,
+    '',
+    '## Coverage Snapshot',
+    '',
+    `Coverage snapshot: ${fieldPrepCoverageSummary(fieldPrepCoverageCount)}.`,
+    '',
+    markdownList(fieldPrepCoverageLines),
+    '',
+    '## Field Prep Queue Summary',
+    '',
+    `Field prep queue: ${completeFieldPrepQueueCount} complete, ${nextFieldPrepQueueCount} next, ${blockedFieldPrepQueueCount} blocked.`,
+    '',
+    markdownList(fieldPrepQueueLines),
+    '',
+    '## Observation Presence',
+    '',
+    `- Field observation scratchpad present: ${fieldObservationScratchpadPresent ? 'yes' : 'no'}`,
+    '',
+    '## Production Tracking Boundary',
+    '',
+    '- Production execution tracking: blocked',
+    '',
+    '## Not Allowed',
+    '',
+    markdownList(notAllowed.map(formatLabel)),
+    '',
+    '## Minimum Use',
+    '',
+    '- Use this as conversation prep only.',
+    '- Do not treat this snapshot as work authorization, assignment, schedule, status update, approval record, import packet, task creation, issue creation, durable field record, hosted parity proof, or production tracking.',
+    '- Keep production execution tracking blocked until a later packet explicitly admits the required write path.',
+  ].join('\n')
+}
+
 function downloadTextFile(fileName: string, contents: string, contentType: string) {
   const blob = new Blob([contents], { type: contentType })
   const url = URL.createObjectURL(blob)
@@ -1341,6 +1537,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
   const [handoffStatus, setHandoffStatus] = useState('')
   const [fieldBriefStatus, setFieldBriefStatus] = useState('')
   const [fieldObservationStatus, setFieldObservationStatus] = useState('')
+  const [fieldPrepCoverageStatus, setFieldPrepCoverageStatus] = useState('')
   const [reviewChecks, setReviewChecks] = useState<Record<string, boolean>>({})
   const [closeoutChecks, setCloseoutChecks] = useState<Record<string, boolean>>({})
   const [fieldReadinessChecks, setFieldReadinessChecks] = useState<Record<string, boolean>>({})
@@ -1448,12 +1645,17 @@ export default function ProjectMinerIntakeWorkbenchPage() {
     () => buildFieldPrepQueue(fieldReadinessChecks, fieldQuestionsDraft),
     [fieldReadinessChecks, fieldQuestionsDraft],
   )
+  const fieldPrepCoverageSnapshot = useMemo(
+    () => buildFieldPrepCoverageSnapshot(reviewChecks, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad),
+    [reviewChecks, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad],
+  )
   const completeQueueCount = operatingQueue.filter((item) => item.status === 'complete').length
   const nextQueueCount = operatingQueue.filter((item) => item.status === 'next').length
   const blockedQueueCount = operatingQueue.filter((item) => item.status === 'blocked').length
   const completeFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'complete').length
   const nextFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'next').length
   const blockedFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'blocked').length
+  const fieldPrepCoverageCount = fieldPrepCoverageCounts(fieldPrepCoverageSnapshot)
 
   useEffect(() => {
     if (!reviewChecklistKey || typeof window === 'undefined') {
@@ -1630,7 +1832,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
 
     downloadTextFile(
       briefFileName(candidate),
-      buildIntakeBrief(packet, workflowGates, persistenceReadinessGates, operatingQueue, fieldPrepQueue, notAllowed, futureRoute, reviewChecks, closeoutChecks, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad, approvalDraft),
+      buildIntakeBrief(packet, workflowGates, persistenceReadinessGates, operatingQueue, fieldPrepQueue, fieldPrepCoverageSnapshot, notAllowed, futureRoute, reviewChecks, closeoutChecks, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad, approvalDraft),
       'text/markdown',
     )
     setBriefStatus(`PM brief prepared from ${candidate?.candidate_id || 'the current intake packet'} without a server write.`)
@@ -1666,7 +1868,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
 
     downloadTextFile(
       fieldKickoffBriefFileName(candidate),
-      buildFieldKickoffBrief(packet, workflowGates, operatingQueue, fieldPrepQueue, notAllowed, futureRoute, reviewChecks, closeoutChecks, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad, approvalDraft),
+      buildFieldKickoffBrief(packet, workflowGates, operatingQueue, fieldPrepQueue, fieldPrepCoverageSnapshot, notAllowed, futureRoute, reviewChecks, closeoutChecks, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad, approvalDraft),
       'text/markdown',
     )
     setFieldBriefStatus(`Field kickoff prep brief prepared from ${candidate?.candidate_id || 'the current intake packet'} without a server write.`)
@@ -1683,6 +1885,19 @@ export default function ProjectMinerIntakeWorkbenchPage() {
       'text/markdown',
     )
     setFieldObservationStatus(`Field observation notes prepared from ${candidate?.candidate_id || 'the current intake packet'} without a server write.`)
+  }
+
+  function exportFieldPrepCoverageSnapshot() {
+    if (!packet) {
+      return
+    }
+
+    downloadTextFile(
+      fieldPrepCoverageSnapshotFileName(candidate),
+      buildFieldPrepCoverageSnapshotExport(packet, fieldPrepQueue, fieldPrepCoverageSnapshot, fieldObservationScratchpad, notAllowed),
+      'text/markdown',
+    )
+    setFieldPrepCoverageStatus(`Field prep coverage snapshot prepared from ${candidate?.candidate_id || 'the current intake packet'} without a server write.`)
   }
 
   return (
@@ -1775,6 +1990,9 @@ export default function ProjectMinerIntakeWorkbenchPage() {
             <button className="btn btn-outline" onClick={exportFieldObservationNotes} disabled={!packet}>
               Export Field Observation Notes
             </button>
+            <button className="btn btn-outline" onClick={exportFieldPrepCoverageSnapshot} disabled={!packet}>
+              Export Field Prep Coverage Snapshot
+            </button>
             <button className="btn btn-outline" onClick={() => void refresh()} disabled={loading}>
               {loading ? 'Refreshing...' : 'Refresh'}
             </button>
@@ -1785,6 +2003,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
         {handoffStatus ? <p style={{ margin: '0 0 1rem', color: 'var(--muted)', lineHeight: 1.55 }}>{handoffStatus}</p> : null}
         {fieldBriefStatus ? <p style={{ margin: '0 0 1rem', color: 'var(--muted)', lineHeight: 1.55 }}>{fieldBriefStatus}</p> : null}
         {fieldObservationStatus ? <p style={{ margin: '0 0 1rem', color: 'var(--muted)', lineHeight: 1.55 }}>{fieldObservationStatus}</p> : null}
+        {fieldPrepCoverageStatus ? <p style={{ margin: '0 0 1rem', color: 'var(--muted)', lineHeight: 1.55 }}>{fieldPrepCoverageStatus}</p> : null}
 
         <section className="status-grid status-grid-wide" aria-label="Project Miner intake summary" style={{ marginBottom: '1rem' }}>
           <article className="status-card">
@@ -2250,6 +2469,34 @@ export default function ProjectMinerIntakeWorkbenchPage() {
                     <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
                   </div>
                   <span className={`status-pill ${operatingQueueTone(item.status)}`}>{formatLabel(item.status)}</span>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section aria-label="Local field prep coverage snapshot" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
+          <div className="status-row">
+            <h2 style={{ margin: 0 }}>Local Field Prep Coverage Snapshot</h2>
+            <span className="status-pill status-awaiting-values">derived</span>
+          </div>
+          <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+            Browser-local coverage snapshot derived from existing local prep state. It shows what field-prep context is covered, partial, open, or blocked without creating tasks, issues, work authorization, assignments, schedules, status updates, approval records, import rows, durable field records, production tracking rows, or production writes.
+          </p>
+          <p style={{ margin: '0.6rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+            {fieldPrepCoverageSummary(fieldPrepCoverageCount)}
+          </p>
+          <div style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
+            {fieldPrepCoverageSnapshot.map((item) => (
+              <article key={item.id} className="card" style={{ padding: '0.85rem', boxShadow: 'none' }}>
+                <div className="status-row" style={{ alignItems: 'start' }}>
+                  <div>
+                    <p style={{ margin: 0 }}>
+                      <strong>{item.title}</strong>
+                    </p>
+                    <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
+                  </div>
+                  <span className={`status-pill ${fieldPrepCoverageTone(item.status)}`}>{formatLabel(item.status)}</span>
                 </div>
               </article>
             ))}
