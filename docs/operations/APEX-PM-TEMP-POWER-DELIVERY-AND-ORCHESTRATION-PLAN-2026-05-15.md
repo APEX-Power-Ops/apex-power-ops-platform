@@ -347,6 +347,8 @@ PM Lane 054 adds a browser-local `Export Field Kickoff Brief` action to `/pm-rev
 
 PM Lane 055 adds a browser-local `Local Field Readiness Checklist` to `/pm-review/import-intake`. It lets the Temp Power prep flow capture drawing/source questions, scope assumptions, site access, safety planning, crew/equipment questions, material/staging questions, customer constraint questions, and field-authority boundary acknowledgement as local evidence in the PM brief and Field Kickoff Brief without creating work authorization, live tasks, hosted proof, backend routes, SQL, schema migration, approval persistence, import mutation, assignment, schedule, status, or production writes.
 
+PM Lane 056 adds a browser-local `Local Field Questions Draft` to `/pm-review/import-intake`. It lets the Temp Power prep flow capture actual question text for drawings/source, site access and safety, crew/equipment, material/staging, customer constraints, and PM follow-up notes in the PM brief and Field Kickoff Brief without creating issues, tasks, work authorization, live work orders, hosted proof, backend routes, SQL, schema migration, approval persistence, import mutation, assignment, schedule, status, or production writes.
+
 ## Capability-Gap Register
 
 Current known gaps:

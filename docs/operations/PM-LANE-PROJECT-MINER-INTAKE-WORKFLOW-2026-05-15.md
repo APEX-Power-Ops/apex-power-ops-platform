@@ -389,6 +389,10 @@ PM Lane 055 adds a browser-local `Local Field Readiness Checklist` to `/pm-revie
 
 This checklist is candidate-scoped browser prep evidence only and grants no field release. It does not create live tasks, approve, persist, import, create schema, run SQL, write Supabase rows, call live services, run workbook macros, write workbook cells, assign work, change status, mutate schedules, claim hosted parity, or admit autonomous AI business-state action.
 
+PM Lane 056 adds a browser-local `Local Field Questions Draft` to `/pm-review/import-intake`. It captures draft text for drawing/source questions, site access and safety questions, crew/equipment questions, material/staging questions, customer constraint questions, and PM follow-up notes.
+
+This draft is candidate-scoped browser prep context only and is not a system of record. It does not create issues, create tasks, create live work orders, approve, persist, import, create schema, run SQL, write Supabase rows, call live services, run workbook macros, write workbook cells, assign work, change status, mutate schedules, claim hosted parity, or admit autonomous AI business-state action.
+
 ## Environment Overrides
 
 Set this when using a different planning folder:

@@ -153,6 +153,15 @@ type FieldReadinessChecklistItem = {
   detail: string
 }
 
+type FieldQuestionsDraft = {
+  drawing_source_questions: string
+  site_access_safety_questions: string
+  crew_equipment_questions: string
+  material_staging_questions: string
+  customer_constraint_questions: string
+  pm_followup_notes: string
+}
+
 type ApprovalDecisionDraft = {
   decision: string
   review_notes: string
@@ -190,6 +199,14 @@ const EMPTY_APPROVAL_DRAFT: ApprovalDecisionDraft = {
   decision: '',
   review_notes: '',
   local_attestation: false,
+}
+const EMPTY_FIELD_QUESTIONS_DRAFT: FieldQuestionsDraft = {
+  drawing_source_questions: '',
+  site_access_safety_questions: '',
+  crew_equipment_questions: '',
+  material_staging_questions: '',
+  customer_constraint_questions: '',
+  pm_followup_notes: '',
 }
 const REVIEW_CHECKLIST_ITEMS: ReviewChecklistItem[] = [
   {
@@ -420,6 +437,17 @@ function hasApprovalDraftContent(draft: ApprovalDecisionDraft) {
   return Boolean(draft.decision || draft.review_notes.trim() || draft.local_attestation)
 }
 
+function hasFieldQuestionsDraftContent(draft: FieldQuestionsDraft) {
+  return Boolean(
+    draft.drawing_source_questions.trim()
+      || draft.site_access_safety_questions.trim()
+      || draft.crew_equipment_questions.trim()
+      || draft.material_staging_questions.trim()
+      || draft.customer_constraint_questions.trim()
+      || draft.pm_followup_notes.trim(),
+  )
+}
+
 function buildPersistenceReadinessGates(
   packet: IntakeWorkbenchPacket | null,
   approvalDraft: ApprovalDecisionDraft,
@@ -611,6 +639,7 @@ function buildIntakeBrief(
   reviewChecks: Record<string, boolean>,
   closeoutChecks: Record<string, boolean>,
   fieldReadinessChecks: Record<string, boolean>,
+  fieldQuestionsDraft: FieldQuestionsDraft,
   approvalDraft: ApprovalDecisionDraft,
 ) {
   const candidate = packet.candidate
@@ -635,6 +664,15 @@ function buildIntakeBrief(
   const checkedCount = REVIEW_CHECKLIST_ITEMS.filter((item) => reviewChecks[item.id]).length
   const closeoutCheckedCount = CLOSEOUT_CHECKLIST_ITEMS.filter((item) => closeoutChecks[item.id]).length
   const fieldReadinessCheckedCount = FIELD_READINESS_CHECKLIST_ITEMS.filter((item) => fieldReadinessChecks[item.id]).length
+  const fieldQuestionsDraftPresent = hasFieldQuestionsDraftContent(fieldQuestionsDraft)
+  const fieldQuestionLines = [
+    `Drawing/source questions: ${formatMultilineMarkdown(fieldQuestionsDraft.drawing_source_questions)}`,
+    `Site access and safety questions: ${formatMultilineMarkdown(fieldQuestionsDraft.site_access_safety_questions)}`,
+    `Crew and equipment questions: ${formatMultilineMarkdown(fieldQuestionsDraft.crew_equipment_questions)}`,
+    `Material and staging questions: ${formatMultilineMarkdown(fieldQuestionsDraft.material_staging_questions)}`,
+    `Customer constraint questions: ${formatMultilineMarkdown(fieldQuestionsDraft.customer_constraint_questions)}`,
+    `PM follow-up notes: ${formatMultilineMarkdown(fieldQuestionsDraft.pm_followup_notes)}`,
+  ]
   const draftPresent = hasApprovalDraftContent(approvalDraft)
   const readyPersistenceGateCount = persistenceReadinessGates.filter((gate) => gate.status === 'ready').length
   const completeQueueCount = operatingQueue.filter((item) => item.status === 'complete').length
@@ -727,6 +765,14 @@ function buildIntakeBrief(
     '',
     markdownList(fieldReadinessChecklistLines),
     '',
+    '## Local Field Questions Draft',
+    '',
+    `Draft present: ${fieldQuestionsDraftPresent ? 'yes' : 'no'}.`,
+    '',
+    'This browser-local field questions draft is prep context only. It is not a task, issue, work authorization, approval, persistence, import, assignment, schedule, status, or production state.',
+    '',
+    markdownList(fieldQuestionLines),
+    '',
     '## Admission And Approval',
     '',
     `- Admission plan: ${admissionPlan.admission_plan_id || 'unknown'}`,
@@ -790,7 +836,7 @@ function buildExecutorHandoff(
     '',
     '## Bounded Instruction',
     '',
-    'Use this handoff only to review context, draft a later packet, or perform explicitly authorized read-only analysis. Do not treat this handoff as approval, persistence authority, import authority, hosted parity proof, or task creation.',
+    'Use this handoff only to review context, draft a later packet, or perform explicitly allowed read-only analysis. Do not treat this handoff as approval, persistence authority, import authority, hosted parity proof, or task creation.',
     '',
     '## Candidate Context',
     '',
@@ -896,6 +942,7 @@ function buildFieldKickoffBrief(
   reviewChecks: Record<string, boolean>,
   closeoutChecks: Record<string, boolean>,
   fieldReadinessChecks: Record<string, boolean>,
+  fieldQuestionsDraft: FieldQuestionsDraft,
   approvalDraft: ApprovalDecisionDraft,
 ) {
   const candidate = packet.candidate
@@ -923,6 +970,15 @@ function buildFieldKickoffBrief(
   const checkedCloseoutLines = checkedCloseoutItems.map((item) => `${item.label}: ${item.detail}`)
   const checkedFieldReadinessLines = checkedFieldReadinessItems.map((item) => `${item.label}: ${item.detail}`)
   const openFieldReadinessLines = openFieldReadinessItems.map((item) => `${item.label}: ${item.detail}`)
+  const fieldQuestionsDraftPresent = hasFieldQuestionsDraftContent(fieldQuestionsDraft)
+  const fieldQuestionLines = [
+    `Drawing/source questions: ${formatMultilineMarkdown(fieldQuestionsDraft.drawing_source_questions)}`,
+    `Site access and safety questions: ${formatMultilineMarkdown(fieldQuestionsDraft.site_access_safety_questions)}`,
+    `Crew and equipment questions: ${formatMultilineMarkdown(fieldQuestionsDraft.crew_equipment_questions)}`,
+    `Material and staging questions: ${formatMultilineMarkdown(fieldQuestionsDraft.material_staging_questions)}`,
+    `Customer constraint questions: ${formatMultilineMarkdown(fieldQuestionsDraft.customer_constraint_questions)}`,
+    `PM follow-up notes: ${formatMultilineMarkdown(fieldQuestionsDraft.pm_followup_notes)}`,
+  ]
   const nextQueueLines = nextQueueItems.map((item) => `${item.title}: ${item.detail}`)
   const blockedQueueLines = blockedQueueItems.map((item) => `${item.title}: ${item.detail}`)
   const workflowGateLines = workflowGates.map((gate) => `${gate.title}: ${formatLabel(gate.status)} - ${gate.detail}`)
@@ -1008,6 +1064,14 @@ function buildFieldKickoffBrief(
     '',
     markdownList(openFieldReadinessLines),
     '',
+    '## Local Field Questions Draft',
+    '',
+    `Draft present: ${fieldQuestionsDraftPresent ? 'yes' : 'no'}.`,
+    '',
+    'This browser-local questions draft is prep context only. It does not create tasks, issues, work authorization, assignments, schedule state, status updates, approval records, import packets, or production writes.',
+    '',
+    markdownList(fieldQuestionLines),
+    '',
     '## Local PM Operating Queue',
     '',
     'Next local moves:',
@@ -1067,6 +1131,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
   const [reviewChecks, setReviewChecks] = useState<Record<string, boolean>>({})
   const [closeoutChecks, setCloseoutChecks] = useState<Record<string, boolean>>({})
   const [fieldReadinessChecks, setFieldReadinessChecks] = useState<Record<string, boolean>>({})
+  const [fieldQuestionsDraft, setFieldQuestionsDraft] = useState<FieldQuestionsDraft>(EMPTY_FIELD_QUESTIONS_DRAFT)
   const [approvalDraft, setApprovalDraft] = useState<ApprovalDecisionDraft>(EMPTY_APPROVAL_DRAFT)
 
   const refresh = useCallback(async () => {
@@ -1098,6 +1163,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
   const reviewChecklistKey = candidate?.candidate_id ? `pm-import-intake-review-checklist:${candidate.candidate_id}` : null
   const closeoutChecklistKey = candidate?.candidate_id ? `pm-import-intake-executor-closeout:${candidate.candidate_id}` : null
   const fieldReadinessChecklistKey = candidate?.candidate_id ? `pm-import-intake-field-readiness:${candidate.candidate_id}` : null
+  const fieldQuestionsDraftKey = candidate?.candidate_id ? `pm-import-intake-field-questions:${candidate.candidate_id}` : null
   const approvalDraftKey = candidate?.candidate_id ? `pm-import-intake-approval-draft:${candidate.candidate_id}` : null
   const permittedDecisions = approvalContract?.approval_record_contract?.permitted_decisions || []
   const notAllowed = useMemo(
@@ -1151,6 +1217,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
   const checklistCheckedCount = REVIEW_CHECKLIST_ITEMS.filter((item) => reviewChecks[item.id]).length
   const closeoutCheckedCount = CLOSEOUT_CHECKLIST_ITEMS.filter((item) => closeoutChecks[item.id]).length
   const fieldReadinessCheckedCount = FIELD_READINESS_CHECKLIST_ITEMS.filter((item) => fieldReadinessChecks[item.id]).length
+  const fieldQuestionsDraftHasContent = hasFieldQuestionsDraftContent(fieldQuestionsDraft)
   const approvalDraftHasContent = hasApprovalDraftContent(approvalDraft)
   const persistenceReadinessGates = useMemo(
     () => buildPersistenceReadinessGates(packet, approvalDraft, reviewChecks),
@@ -1203,6 +1270,19 @@ export default function ProjectMinerIntakeWorkbenchPage() {
       setFieldReadinessChecks({})
     }
   }, [fieldReadinessChecklistKey])
+
+  useEffect(() => {
+    if (!fieldQuestionsDraftKey || typeof window === 'undefined') {
+      return
+    }
+
+    try {
+      const stored = window.localStorage.getItem(fieldQuestionsDraftKey)
+      setFieldQuestionsDraft(stored ? { ...EMPTY_FIELD_QUESTIONS_DRAFT, ...(JSON.parse(stored) as Partial<FieldQuestionsDraft>) } : EMPTY_FIELD_QUESTIONS_DRAFT)
+    } catch {
+      setFieldQuestionsDraft(EMPTY_FIELD_QUESTIONS_DRAFT)
+    }
+  }, [fieldQuestionsDraftKey])
 
   useEffect(() => {
     if (!approvalDraftKey || typeof window === 'undefined') {
@@ -1262,6 +1342,21 @@ export default function ProjectMinerIntakeWorkbenchPage() {
     }
   }
 
+  function updateFieldQuestionsDraft(nextPartial: Partial<FieldQuestionsDraft>) {
+    const next = { ...fieldQuestionsDraft, ...nextPartial }
+    setFieldQuestionsDraft(next)
+    if (fieldQuestionsDraftKey && typeof window !== 'undefined') {
+      window.localStorage.setItem(fieldQuestionsDraftKey, JSON.stringify(next))
+    }
+  }
+
+  function clearFieldQuestionsDraft() {
+    setFieldQuestionsDraft(EMPTY_FIELD_QUESTIONS_DRAFT)
+    if (fieldQuestionsDraftKey && typeof window !== 'undefined') {
+      window.localStorage.removeItem(fieldQuestionsDraftKey)
+    }
+  }
+
   function updateApprovalDraft(nextPartial: Partial<ApprovalDecisionDraft>) {
     const next = { ...approvalDraft, ...nextPartial }
     setApprovalDraft(next)
@@ -1284,7 +1379,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
 
     downloadTextFile(
       briefFileName(candidate),
-      buildIntakeBrief(packet, workflowGates, persistenceReadinessGates, operatingQueue, notAllowed, futureRoute, reviewChecks, closeoutChecks, fieldReadinessChecks, approvalDraft),
+      buildIntakeBrief(packet, workflowGates, persistenceReadinessGates, operatingQueue, notAllowed, futureRoute, reviewChecks, closeoutChecks, fieldReadinessChecks, fieldQuestionsDraft, approvalDraft),
       'text/markdown',
     )
     setBriefStatus(`PM brief prepared from ${candidate?.candidate_id || 'the current intake packet'} without a server write.`)
@@ -1320,7 +1415,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
 
     downloadTextFile(
       fieldKickoffBriefFileName(candidate),
-      buildFieldKickoffBrief(packet, workflowGates, operatingQueue, notAllowed, futureRoute, reviewChecks, closeoutChecks, fieldReadinessChecks, approvalDraft),
+      buildFieldKickoffBrief(packet, workflowGates, operatingQueue, notAllowed, futureRoute, reviewChecks, closeoutChecks, fieldReadinessChecks, fieldQuestionsDraft, approvalDraft),
       'text/markdown',
     )
     setFieldBriefStatus(`Field kickoff prep brief prepared from ${candidate?.candidate_id || 'the current intake packet'} without a server write.`)
@@ -1784,6 +1879,84 @@ export default function ProjectMinerIntakeWorkbenchPage() {
               Clear field readiness
             </button>
             <span style={{ color: 'var(--muted)', lineHeight: 1.55 }}>Retained in this browser for the current candidate only.</span>
+          </div>
+        </section>
+
+        <section aria-label="Local field questions draft" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
+          <div className="status-row">
+            <h2 style={{ margin: 0 }}>Local Field Questions Draft</h2>
+            <span className="status-pill status-awaiting-values">local only</span>
+          </div>
+          <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+            Browser-local question notes for PM, lead, and field prep conversations. These notes do not create tasks, issues, work authorization, assignments, schedules, status updates, approval records, imports, or production writes.
+          </p>
+          <div className="notes-grid" style={{ marginTop: '0.85rem' }}>
+            <label className="card" style={{ display: 'grid', gap: '0.45rem', padding: '0.85rem', boxShadow: 'none' }}>
+              <strong>Drawing/source questions</strong>
+              <textarea
+                value={fieldQuestionsDraft.drawing_source_questions}
+                onChange={(event) => updateFieldQuestionsDraft({ drawing_source_questions: event.target.value })}
+                rows={4}
+                placeholder="Capture drawing, estimator, Project Data Entry, source-freshness, or scope-origin questions."
+                style={{ width: '100%', resize: 'vertical', minHeight: '6rem' }}
+              />
+            </label>
+            <label className="card" style={{ display: 'grid', gap: '0.45rem', padding: '0.85rem', boxShadow: 'none' }}>
+              <strong>Site access and safety questions</strong>
+              <textarea
+                value={fieldQuestionsDraft.site_access_safety_questions}
+                onChange={(event) => updateFieldQuestionsDraft({ site_access_safety_questions: event.target.value })}
+                rows={4}
+                placeholder="Capture access, escort, badging, JHA, PPE, LOTO, energization, or temp-power safety questions."
+                style={{ width: '100%', resize: 'vertical', minHeight: '6rem' }}
+              />
+            </label>
+            <label className="card" style={{ display: 'grid', gap: '0.45rem', padding: '0.85rem', boxShadow: 'none' }}>
+              <strong>Crew and equipment questions</strong>
+              <textarea
+                value={fieldQuestionsDraft.crew_equipment_questions}
+                onChange={(event) => updateFieldQuestionsDraft({ crew_equipment_questions: event.target.value })}
+                rows={4}
+                placeholder="Capture crew size, tooling, lift, rental, equipment, or logistics questions without assigning resources."
+                style={{ width: '100%', resize: 'vertical', minHeight: '6rem' }}
+              />
+            </label>
+            <label className="card" style={{ display: 'grid', gap: '0.45rem', padding: '0.85rem', boxShadow: 'none' }}>
+              <strong>Material and staging questions</strong>
+              <textarea
+                value={fieldQuestionsDraft.material_staging_questions}
+                onChange={(event) => updateFieldQuestionsDraft({ material_staging_questions: event.target.value })}
+                rows={4}
+                placeholder="Capture material, apparatus staging, laydown, delivery, receiving, or storage questions."
+                style={{ width: '100%', resize: 'vertical', minHeight: '6rem' }}
+              />
+            </label>
+            <label className="card" style={{ display: 'grid', gap: '0.45rem', padding: '0.85rem', boxShadow: 'none' }}>
+              <strong>Customer constraint questions</strong>
+              <textarea
+                value={fieldQuestionsDraft.customer_constraint_questions}
+                onChange={(event) => updateFieldQuestionsDraft({ customer_constraint_questions: event.target.value })}
+                rows={4}
+                placeholder="Capture outage, access-window, communication, milestone, or customer coordination questions without changing schedule state."
+                style={{ width: '100%', resize: 'vertical', minHeight: '6rem' }}
+              />
+            </label>
+            <label className="card" style={{ display: 'grid', gap: '0.45rem', padding: '0.85rem', boxShadow: 'none' }}>
+              <strong>PM follow-up notes</strong>
+              <textarea
+                value={fieldQuestionsDraft.pm_followup_notes}
+                onChange={(event) => updateFieldQuestionsDraft({ pm_followup_notes: event.target.value })}
+                rows={4}
+                placeholder="Capture PM follow-up notes for the next conversation or bounded packet."
+                style={{ width: '100%', resize: 'vertical', minHeight: '6rem' }}
+              />
+            </label>
+          </div>
+          <div className="pm-review-link-row pm-review-link-row-start" style={{ alignItems: 'center' }}>
+            <button className="btn btn-outline" onClick={clearFieldQuestionsDraft} disabled={!fieldQuestionsDraftHasContent}>
+              Clear field questions
+            </button>
+            <span style={{ color: 'var(--muted)', lineHeight: 1.55 }}>Retained in this browser for the current candidate only and included in local exports.</span>
           </div>
         </section>
 

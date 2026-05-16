@@ -319,6 +319,14 @@ PM Lane 055 adds a browser-local `Local Field Readiness Checklist` to `/pm-revie
 
 This still creates no approval record, SQL, schema migration, backend route, import mutation, assignment, schedule, status, hosted proof, live task, work authorization, field release, or production mutation.
 
+The current field-question tranche is:
+
+`Project Miner Local Field Questions Draft`
+
+PM Lane 056 adds a browser-local `Local Field Questions Draft` to `/pm-review/import-intake`. The draft captures actual field-prep questions for drawings/source, site access and safety, crew/equipment, material/staging, customer constraints, and PM follow-up notes, then includes those notes in the PM brief and Field Kickoff Brief.
+
+This still creates no approval record, SQL, schema migration, backend route, import mutation, issue, task, assignment, schedule, status, hosted proof, live task, work authorization, field release, work order, or production mutation.
+
 The next persistence tranche is:
 
 `Import Candidate Approval Persistence Schema And Adapter Implementation`

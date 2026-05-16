@@ -268,11 +268,21 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await fieldReadiness.getByRole('checkbox', { name: /Drawing and source questions captured/i }).check()
   await fieldReadiness.getByRole('checkbox', { name: /Safety planning questions captured/i }).check()
   await expect(fieldReadiness.getByText('2 of 8')).toBeVisible()
+  const fieldQuestions = page.getByLabel('Local field questions draft')
+  await expect(fieldQuestions.getByRole('heading', { name: /Local Field Questions Draft/i })).toBeVisible()
+  await expect(fieldQuestions.getByText('local only')).toBeVisible()
+  await expect(fieldQuestions.getByText(/Browser-local question notes for PM, lead, and field prep conversations/i)).toBeVisible()
+  await expect(fieldQuestions.getByText(/These notes do not create tasks/i)).toBeVisible()
+  await expect(fieldQuestions.getByText(/production writes/i)).toBeVisible()
+  await fieldQuestions.getByLabel(/Drawing\/source questions/i).fill('Confirm latest one-line drawings match the temp power candidate shape.')
+  await fieldQuestions.getByLabel(/Site access and safety questions/i).fill('Confirm escort, access hours, and LOTO review questions before field discussion.')
+  await expect(fieldQuestions.getByRole('button', { name: 'Clear field questions' })).toBeEnabled()
   const localState = await page.evaluate(() => ({
     checklist: window.localStorage.getItem('pm-import-intake-review-checklist:pm-import-candidate-miner-temp-power'),
     draft: window.localStorage.getItem('pm-import-intake-approval-draft:pm-import-candidate-miner-temp-power'),
     closeout: window.localStorage.getItem('pm-import-intake-executor-closeout:pm-import-candidate-miner-temp-power'),
     fieldReadiness: window.localStorage.getItem('pm-import-intake-field-readiness:pm-import-candidate-miner-temp-power'),
+    fieldQuestions: window.localStorage.getItem('pm-import-intake-field-questions:pm-import-candidate-miner-temp-power'),
   }))
   expect(localState.checklist).toContain('source_freshness_reviewed')
   expect(localState.checklist).toContain('exceptions_reviewed')
@@ -282,6 +292,8 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   expect(localState.closeout).toContain('validation_results_captured')
   expect(localState.fieldReadiness).toContain('drawing_source_questions_captured')
   expect(localState.fieldReadiness).toContain('safety_planning_questions_captured')
+  expect(localState.fieldQuestions).toContain('Confirm latest one-line drawings match the temp power candidate shape.')
+  expect(localState.fieldQuestions).toContain('Confirm escort, access hours, and LOTO review questions before field discussion.')
   const readiness = page.getByLabel('Approval persistence readiness gates')
   await expect(readiness.getByRole('heading', { name: /Approval Persistence Readiness/i })).toBeVisible()
   await expect(readiness.getByText('2 of 6 ready')).toBeVisible()
@@ -382,6 +394,11 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   expect(fieldBrief).toContain('Safety planning questions captured: JHA, PPE, LOTO, energization, and temp-power safety questions are captured for field discussion before any work authorization.')
   expect(fieldBrief).toContain('Open field readiness prep:')
   expect(fieldBrief).toContain('Field authority boundary acknowledged: This checklist is field-prep evidence only and does not authorize work, create tasks, assign resources, schedule work, change status, or write production state.')
+  expect(fieldBrief).toContain('## Local Field Questions Draft')
+  expect(fieldBrief).toContain('Draft present: yes.')
+  expect(fieldBrief).toContain('This browser-local questions draft is prep context only. It does not create tasks, issues, work authorization, assignments, schedule state, status updates, approval records, import packets, or production writes.')
+  expect(fieldBrief).toContain('Drawing/source questions: Confirm latest one-line drawings match the temp power candidate shape.')
+  expect(fieldBrief).toContain('Site access and safety questions: Confirm escort, access hours, and LOTO review questions before field discussion.')
   expect(fieldBrief).toContain('## Future Surfaces Are Not Admitted')
   expect(fieldBrief).toContain('- Future approval route: /api/v1/mutations/project-import-approvals')
   expect(fieldBrief).toContain('## Not Allowed')
@@ -501,6 +518,11 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   expect(brief).toContain('[x] Drawing and source questions captured')
   expect(brief).toContain('[x] Safety planning questions captured')
   expect(brief).toContain('[ ] Field authority boundary acknowledged')
+  expect(brief).toContain('## Local Field Questions Draft')
+  expect(brief).toContain('Draft present: yes.')
+  expect(brief).toContain('This browser-local field questions draft is prep context only. It is not a task, issue, work authorization, approval, persistence, import, assignment, schedule, status, or production state.')
+  expect(brief).toContain('Drawing/source questions: Confirm latest one-line drawings match the temp power candidate shape.')
+  expect(brief).toContain('Site access and safety questions: Confirm escort, access hours, and LOTO review questions before field discussion.')
   await expect(page.getByText(/PM brief prepared from pm-import-candidate-miner-temp-power without a server write/i)).toBeVisible()
   await checklist.getByRole('button', { name: 'Clear checklist' }).click()
   await expect(checklist.getByText('0 of 7')).toBeVisible()
@@ -519,15 +541,20 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(fieldReadiness.getByText('0 of 8')).toBeVisible()
   await expect(fieldReadiness.getByRole('checkbox', { name: /Drawing and source questions captured/i })).not.toBeChecked()
   await expect(fieldReadiness.getByRole('checkbox', { name: /Safety planning questions captured/i })).not.toBeChecked()
+  await fieldQuestions.getByRole('button', { name: 'Clear field questions' }).click()
+  await expect(fieldQuestions.getByLabel(/Drawing\/source questions/i)).toHaveValue('')
+  await expect(fieldQuestions.getByLabel(/Site access and safety questions/i)).toHaveValue('')
+  await expect(fieldQuestions.getByRole('button', { name: 'Clear field questions' })).toBeDisabled()
   await expect(readiness.getByText('0 of 6 ready')).toBeVisible()
   await expect(operatingQueue.getByText('0 complete / 1 next / 5 blocked')).toBeVisible()
-  const clearedLocalState = await page.evaluate(() => ({
+  const resetLocalState = await page.evaluate(() => ({
     checklist: window.localStorage.getItem('pm-import-intake-review-checklist:pm-import-candidate-miner-temp-power'),
     draft: window.localStorage.getItem('pm-import-intake-approval-draft:pm-import-candidate-miner-temp-power'),
     closeout: window.localStorage.getItem('pm-import-intake-executor-closeout:pm-import-candidate-miner-temp-power'),
     fieldReadiness: window.localStorage.getItem('pm-import-intake-field-readiness:pm-import-candidate-miner-temp-power'),
+    fieldQuestions: window.localStorage.getItem('pm-import-intake-field-questions:pm-import-candidate-miner-temp-power'),
   }))
-  expect(clearedLocalState).toEqual({ checklist: null, draft: null, closeout: null, fieldReadiness: null })
+  expect(resetLocalState).toEqual({ checklist: null, draft: null, closeout: null, fieldReadiness: null, fieldQuestions: null })
   await expect(page.getByRole('button', { name: /Approve/i })).toHaveCount(0)
   await expect(page.getByRole('button', { name: /Persist/i })).toHaveCount(0)
   await expect(page.getByRole('button', { name: /Submit/i })).toHaveCount(0)
