@@ -479,6 +479,14 @@ PM Lane 077 separates route links from the existing output buttons and groups th
 
 This still creates no approval record, SQL, schema migration, backend route, import mutation, issue, task, assignment, schedule, status, hosted proof, live task, work authorization, field release, work order, durable field record, production tracking write, product code, deployment, service, DNS, auth, ingress, secret, local storage key, new export action, new export artifact, export contract widening, or production mutation.
 
+The current output-feedback ergonomics tranche is:
+
+`Project Miner Local PM Intake Output Status Grouping`
+
+PM Lane 078 groups the existing browser-local export status messages into Review Output Status, Executor Output Status, and Field Prep Output Status after exports run. It keeps every existing export label, handler, filename, output content, storage key, and read seam unchanged while making prepared-artifact feedback easier to scan during a real PM review.
+
+This still creates no approval record, SQL, schema migration, backend route, import mutation, issue, task, assignment, schedule, status, hosted proof, live task, work authorization, field release, work order, durable field record, production tracking write, product code, deployment, service, DNS, auth, ingress, secret, local storage key, new export action, new export artifact, export contract widening, or production mutation.
+
 The next persistence tranche is:
 
 `Import Candidate Approval Persistence Schema And Adapter Implementation`

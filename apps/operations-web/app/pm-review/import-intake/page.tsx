@@ -3308,6 +3308,10 @@ export default function ProjectMinerIntakeWorkbenchPage() {
   const blockedFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'blocked').length
   const fieldPrepCoverageCount = fieldPrepCoverageCounts(fieldPrepCoverageSnapshot)
   const fieldPrepAgendaCount = fieldPrepAgendaCounts(fieldPrepConversationAgenda)
+  const reviewOutputStatuses = [briefStatus, previewStatus, pmIntakeSnapshotStatus, exceptionRegisterStatus].filter(Boolean)
+  const executorOutputStatuses = [handoffStatus].filter(Boolean)
+  const fieldPrepOutputStatuses = [fieldBriefStatus, fieldObservationStatus, fieldPrepCoverageStatus, fieldPrepAgendaStatus, fieldPrepPacketStatus].filter(Boolean)
+  const hasOutputStatuses = reviewOutputStatuses.length > 0 || executorOutputStatuses.length > 0 || fieldPrepOutputStatuses.length > 0
 
   useEffect(() => {
     if (!reviewChecklistKey || typeof window === 'undefined') {
@@ -3739,16 +3743,51 @@ export default function ProjectMinerIntakeWorkbenchPage() {
             </div>
           </section>
         </div>
-        {briefStatus ? <p style={{ margin: '0 0 1rem', color: 'var(--muted)', lineHeight: 1.55 }}>{briefStatus}</p> : null}
-        {previewStatus ? <p style={{ margin: '0 0 1rem', color: 'var(--muted)', lineHeight: 1.55 }}>{previewStatus}</p> : null}
-        {handoffStatus ? <p style={{ margin: '0 0 1rem', color: 'var(--muted)', lineHeight: 1.55 }}>{handoffStatus}</p> : null}
-        {pmIntakeSnapshotStatus ? <p style={{ margin: '0 0 1rem', color: 'var(--muted)', lineHeight: 1.55 }}>{pmIntakeSnapshotStatus}</p> : null}
-        {exceptionRegisterStatus ? <p style={{ margin: '0 0 1rem', color: 'var(--muted)', lineHeight: 1.55 }}>{exceptionRegisterStatus}</p> : null}
-        {fieldBriefStatus ? <p style={{ margin: '0 0 1rem', color: 'var(--muted)', lineHeight: 1.55 }}>{fieldBriefStatus}</p> : null}
-        {fieldObservationStatus ? <p style={{ margin: '0 0 1rem', color: 'var(--muted)', lineHeight: 1.55 }}>{fieldObservationStatus}</p> : null}
-        {fieldPrepCoverageStatus ? <p style={{ margin: '0 0 1rem', color: 'var(--muted)', lineHeight: 1.55 }}>{fieldPrepCoverageStatus}</p> : null}
-        {fieldPrepAgendaStatus ? <p style={{ margin: '0 0 1rem', color: 'var(--muted)', lineHeight: 1.55 }}>{fieldPrepAgendaStatus}</p> : null}
-        {fieldPrepPacketStatus ? <p style={{ margin: '0 0 1rem', color: 'var(--muted)', lineHeight: 1.55 }}>{fieldPrepPacketStatus}</p> : null}
+        {hasOutputStatuses ? (
+          <div
+            aria-label="PM intake output status rail"
+            style={{
+              borderBottom: '1px solid var(--border)',
+              borderTop: '1px solid var(--border)',
+              display: 'grid',
+              gap: '0.85rem',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(15rem, 1fr))',
+              margin: '0 0 1rem',
+              padding: '0.85rem 0',
+            }}
+          >
+            {reviewOutputStatuses.length > 0 ? (
+              <section aria-label="Review output status" style={{ display: 'grid', gap: '0.45rem' }}>
+                <h3 style={{ fontSize: '0.95rem', margin: 0 }}>Review Output Status</h3>
+                {reviewOutputStatuses.map((status) => (
+                  <p key={status} style={{ margin: 0, color: 'var(--muted)', lineHeight: 1.55 }}>
+                    {status}
+                  </p>
+                ))}
+              </section>
+            ) : null}
+            {executorOutputStatuses.length > 0 ? (
+              <section aria-label="Executor output status" style={{ display: 'grid', gap: '0.45rem' }}>
+                <h3 style={{ fontSize: '0.95rem', margin: 0 }}>Executor Output Status</h3>
+                {executorOutputStatuses.map((status) => (
+                  <p key={status} style={{ margin: 0, color: 'var(--muted)', lineHeight: 1.55 }}>
+                    {status}
+                  </p>
+                ))}
+              </section>
+            ) : null}
+            {fieldPrepOutputStatuses.length > 0 ? (
+              <section aria-label="Field prep output status" style={{ display: 'grid', gap: '0.45rem' }}>
+                <h3 style={{ fontSize: '0.95rem', margin: 0 }}>Field Prep Output Status</h3>
+                {fieldPrepOutputStatuses.map((status) => (
+                  <p key={status} style={{ margin: 0, color: 'var(--muted)', lineHeight: 1.55 }}>
+                    {status}
+                  </p>
+                ))}
+              </section>
+            ) : null}
+          </div>
+        ) : null}
 
         <section className="status-grid status-grid-wide" aria-label="Project Miner intake summary" style={{ marginBottom: '1rem' }}>
           <article className="status-card">

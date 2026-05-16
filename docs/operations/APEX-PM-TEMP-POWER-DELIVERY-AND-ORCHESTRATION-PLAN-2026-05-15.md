@@ -391,6 +391,8 @@ PM Lane 076 adds the hosted PM intake parity executor dispatch binder. It is the
 
 PM Lane 077 groups the existing top output actions on `/pm-review/import-intake` so the Temp Power prep flow can distinguish review exports, executor handoff output, field prep outputs, and refresh without reading one long flat control row. This changes only the browser-local organization of existing buttons and adds no new export action, artifact, storage, backend route, hosted proof, SQL, schema migration, approval persistence, import mutation, issue, task, assignment, schedule, status, durable field record, production tracking write, or production state.
 
+PM Lane 078 groups the existing output status messages on `/pm-review/import-intake` so the Temp Power prep flow can distinguish review feedback, executor handoff feedback, and field-prep feedback after exports run. This changes only the browser-local organization of existing status text and adds no new export action, artifact, storage, backend route, hosted proof, SQL, schema migration, approval persistence, import mutation, issue, task, assignment, schedule, status, durable field record, production tracking write, or production state.
+
 ## Capability-Gap Register
 
 Current known gaps:
