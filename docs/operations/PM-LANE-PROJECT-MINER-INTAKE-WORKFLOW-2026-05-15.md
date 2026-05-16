@@ -429,6 +429,10 @@ PM Lane 065 adds a browser-local `Local PM Intake Start Here` panel to `/pm-revi
 
 This panel is browser-local synthesis only and adds no local storage key or export contract. It does not create issues, create tasks, create live work orders, approve, persist, import, create schema, run SQL, write Supabase rows, call live services, run workbook macros, write workbook cells, assign work, change status, mutate schedules, create durable field records, write production tracking rows, claim hosted parity, or admit autonomous AI business-state action.
 
+PM Lane 066 adds a browser-local `Local PM Intake Workflow Map` panel to `/pm-review/import-intake`. It derives the visible intake path from existing workbench state: source intake, exception review, decision draft, field prep, executor closeout, approval-persistence boundary, and project-import boundary.
+
+This map is browser-local synthesis only and adds no local storage key or export contract. It does not create issues, create tasks, create live work orders, approve, persist, import, create schema, run SQL, write Supabase rows, call live services, run workbook macros, write workbook cells, assign work, change status, mutate schedules, create durable field records, write production tracking rows, claim hosted parity, or admit autonomous AI business-state action.
+
 ## Environment Overrides
 
 Set this when using a different planning folder:

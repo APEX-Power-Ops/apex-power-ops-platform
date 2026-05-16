@@ -250,6 +250,16 @@ type StartHereItem = {
   detail: string
 }
 
+type WorkflowMapStatus = 'source' | 'attention' | 'context' | 'draft' | 'prep' | 'audit' | 'blocked'
+
+type WorkflowMapItem = {
+  id: string
+  title: string
+  status: WorkflowMapStatus
+  href: string
+  detail: string
+}
+
 const { useCallback, useEffect, useMemo, useState } = React
 
 const API_BASE =
@@ -286,6 +296,12 @@ const PM_INTAKE_QUICK_JUMPS: QuickJumpItem[] = [
     label: 'Start Here',
     href: '#pm-start-here',
     detail: 'First local focus.',
+  },
+  {
+    id: 'workflow-map',
+    label: 'Workflow Map',
+    href: '#pm-workflow-map',
+    detail: 'Current intake path.',
   },
   {
     id: 'snapshot',
@@ -549,6 +565,12 @@ function pmIntakeSnapshotTone(status: PmIntakeSnapshotStatus) {
 
 function startHereTone(status: StartHereStatus) {
   if (status === 'context') return 'status-configured'
+  if (status === 'blocked') return 'status-deferred'
+  return 'status-awaiting-values'
+}
+
+function workflowMapTone(status: WorkflowMapStatus) {
+  if (status === 'source' || status === 'context' || status === 'prep' || status === 'audit') return 'status-configured'
   if (status === 'blocked') return 'status-deferred'
   return 'status-awaiting-values'
 }
@@ -1205,6 +1227,85 @@ function buildPmIntakeStartHere(
       status: 'blocked',
       href: '#approval-readiness',
       detail: `${blockedPersistenceGateCount} of ${persistenceReadinessGates.length} approval-persistence gates remain blocked. Snapshot posture: ${pmIntakeSnapshotSummary(snapshotCount)}.`,
+    },
+  ]
+}
+
+function buildPmIntakeWorkflowMap(
+  candidate: CandidatePayload | undefined,
+  importExceptionRegister: ImportExceptionRegisterItem[],
+  approvalDraft: ApprovalDecisionDraft,
+  fieldPrepQueue: OperatingQueueItem[],
+  closeoutChecks: Record<string, boolean>,
+  persistenceReadinessGates: ReadinessGate[],
+  admissionPlan: AdmissionPlan | undefined,
+): WorkflowMapItem[] {
+  const exceptionCount = importExceptionRegisterCounts(importExceptionRegister)
+  const decisionDraftComplete = Boolean(approvalDraft.decision && approvalDraft.review_notes.trim() && approvalDraft.local_attestation)
+  const decisionDraftStarted = hasApprovalDraftContent(approvalDraft)
+  const nextFieldPrepMove = fieldPrepQueue.find((item) => item.status === 'next') || fieldPrepQueue.find((item) => item.status === 'blocked')
+  const closeoutCheckedCount = CLOSEOUT_CHECKLIST_ITEMS.filter((item) => closeoutChecks[item.id]).length
+  const blockedPersistenceGateCount = persistenceReadinessGates.filter((gate) => gate.status === 'blocked').length
+  const sourceFingerprint = candidate?.source_freshness?.aggregate_fingerprint
+  const admissionAuthority = admissionPlan?.mutation_authority || 'not_admitted'
+
+  return [
+    {
+      id: 'source-intake',
+      title: 'Source intake',
+      status: sourceFingerprint ? 'source' : 'attention',
+      href: '#project-packet',
+      detail: sourceFingerprint
+        ? `Source fingerprint ${sourceFingerprint} is loaded for the current candidate.`
+        : 'Source freshness is waiting for the candidate read.',
+    },
+    {
+      id: 'exception-review',
+      title: 'Exception review',
+      status: exceptionCount.open ? 'attention' : exceptionCount.blocked ? 'blocked' : 'context',
+      href: '#import-exception-register',
+      detail: `Import exception register: ${importExceptionRegisterSummary(exceptionCount)}.`,
+    },
+    {
+      id: 'decision-draft',
+      title: 'Decision draft',
+      status: decisionDraftComplete ? 'context' : decisionDraftStarted ? 'draft' : 'attention',
+      href: '#pm-operating-queue',
+      detail: decisionDraftComplete
+        ? 'Local decision draft has a decision value, review notes, and local-only attestation.'
+        : decisionDraftStarted
+          ? 'Local decision draft has partial browser-local context.'
+          : 'Decision draft has not started.',
+    },
+    {
+      id: 'field-prep',
+      title: 'Field prep',
+      status: nextFieldPrepMove?.status === 'blocked' ? 'blocked' : 'prep',
+      href: '#field-prep',
+      detail: nextFieldPrepMove
+        ? `${nextFieldPrepMove.title}: ${nextFieldPrepMove.detail}`
+        : 'No local field-prep queue item is currently reported.',
+    },
+    {
+      id: 'executor-closeout',
+      title: 'Executor closeout',
+      status: closeoutCheckedCount ? 'audit' : 'attention',
+      href: '#executor-closeout',
+      detail: `${closeoutCheckedCount} of ${CLOSEOUT_CHECKLIST_ITEMS.length} local closeout checks marked for returned executor evidence.`,
+    },
+    {
+      id: 'approval-persistence-boundary',
+      title: 'Approval persistence boundary',
+      status: 'blocked',
+      href: '#approval-readiness',
+      detail: `${blockedPersistenceGateCount} of ${persistenceReadinessGates.length} approval-persistence gates remain blocked until a later packet admits that path.`,
+    },
+    {
+      id: 'project-import-boundary',
+      title: 'Project import boundary',
+      status: 'blocked',
+      href: '#guardrails',
+      detail: `Project import remains ${formatLabel(admissionAuthority)} for project, workpackage, task, apparatus, assignment, schedule, and status rows.`,
     },
   ]
 }
@@ -2529,6 +2630,10 @@ export default function ProjectMinerIntakeWorkbenchPage() {
     () => buildPmIntakeStartHere(operatingQueue, importExceptionRegister, fieldPrepQueue, pmIntakeSnapshot, persistenceReadinessGates),
     [operatingQueue, importExceptionRegister, fieldPrepQueue, pmIntakeSnapshot, persistenceReadinessGates],
   )
+  const pmIntakeWorkflowMap = useMemo(
+    () => buildPmIntakeWorkflowMap(candidate, importExceptionRegister, approvalDraft, fieldPrepQueue, closeoutChecks, persistenceReadinessGates, admissionPlan),
+    [candidate, importExceptionRegister, approvalDraft, fieldPrepQueue, closeoutChecks, persistenceReadinessGates, admissionPlan],
+  )
   const completeQueueCount = operatingQueue.filter((item) => item.status === 'complete').length
   const nextQueueCount = operatingQueue.filter((item) => item.status === 'next').length
   const blockedQueueCount = operatingQueue.filter((item) => item.status === 'blocked').length
@@ -3002,6 +3107,36 @@ export default function ProjectMinerIntakeWorkbenchPage() {
                     <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
                   </div>
                   <span className={`status-pill ${startHereTone(item.status)}`}>{formatLabel(item.status)}</span>
+                </div>
+              </a>
+            ))}
+          </div>
+        </section>
+
+        <section id="pm-workflow-map" aria-label="Local PM intake workflow map" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
+          <div className="status-row">
+            <h2 style={{ margin: 0 }}>Local PM Intake Workflow Map</h2>
+            <span className="status-pill status-awaiting-values">browser-local</span>
+          </div>
+          <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+            Visual map of the current intake path from source review through field-prep context, executor closeout, and still-blocked future write authority. It creates no localStorage key, export artifact, backend route, schema, approval record, task, issue, or production write.
+          </p>
+          <div style={{ display: 'grid', gap: '0.75rem', gridTemplateColumns: 'repeat(auto-fit, minmax(14rem, 1fr))', marginTop: '0.85rem' }}>
+            {pmIntakeWorkflowMap.map((item) => (
+              <a
+                key={item.id}
+                className="card"
+                href={item.href}
+                style={{ color: 'inherit', display: 'block', padding: '0.85rem', textDecoration: 'none', boxShadow: 'none' }}
+              >
+                <div className="status-row" style={{ alignItems: 'start' }}>
+                  <div>
+                    <p style={{ margin: 0 }}>
+                      <strong>{item.title}</strong>
+                    </p>
+                    <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
+                  </div>
+                  <span className={`status-pill ${workflowMapTone(item.status)}`}>{formatLabel(item.status)}</span>
                 </div>
               </a>
             ))}
