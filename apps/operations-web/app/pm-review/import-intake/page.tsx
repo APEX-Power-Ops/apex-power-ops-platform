@@ -4465,58 +4465,63 @@ export default function ProjectMinerIntakeWorkbenchPage() {
               <h2 style={{ display: 'inline', margin: 0 }}>Approval Prep Detail</h2>
             </summary>
 
-        <section aria-label="Admission and approval contract" className="notes-grid" style={{ marginBottom: '1rem' }}>
-          <article className="notes-card">
-            <h2>Admission Shape</h2>
-            <dl className="contract-panel">
-              <div>
-                <dt>Admission plan</dt>
-                <dd>{admissionPlan?.admission_plan_id || 'waiting for admission plan'}</dd>
-              </div>
-              <div>
-                <dt>Admission authority</dt>
-                <dd>{admissionPlan?.mutation_authority || 'not_admitted'}</dd>
-              </div>
-              <div>
-                <dt>Target rows</dt>
-                <dd>{Object.entries(targetRows).map(([key, value]) => `${formatLabel(key)}: ${formatValue(value)}`).join('; ') || 'none reported'}</dd>
-              </div>
-              <div>
-                <dt>No-go checks</dt>
-                <dd>{formatCount(noGoChecks.length)}</dd>
-              </div>
-            </dl>
-          </article>
-          <article className="notes-card accent-card">
-            <h2>Approval Contract</h2>
-            <dl className="contract-panel">
-              <div>
-                <dt>Contract</dt>
-                <dd>{approvalContract?.approval_contract_id || 'waiting for approval contract'}</dd>
-              </div>
-              <div>
-                <dt>Record type</dt>
-                <dd>{approvalContract?.approval_record_contract?.record_type || storagePlan?.recommended_entity_type || 'unknown'}</dd>
-              </div>
-              <div>
-                <dt>Contract authority</dt>
-                <dd>{approvalContract?.mutation_authority || 'not_admitted'}</dd>
-              </div>
-              <div>
-                <dt>Persistence authority</dt>
-                <dd>{approvalContract?.persistence_authority || storagePlan?.persistence_authority || 'not_admitted'}</dd>
-              </div>
-              <div>
-                <dt>Storage table</dt>
-                <dd>{storagePlan?.recommended_table || 'not admitted'}</dd>
-              </div>
-              <div>
-                <dt>Mutation route</dt>
-                <dd>{futureRoute}</dd>
-              </div>
-            </dl>
-          </article>
-        </section>
+        <details open aria-label="Admission and approval contract" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
+          <summary style={{ cursor: 'pointer' }}>
+            <h2 style={{ display: 'inline', margin: 0 }}>Admission and Approval Contract</h2>
+          </summary>
+          <div aria-label="Admission and approval contract cards" className="notes-grid" style={{ marginTop: '0.85rem' }}>
+            <article className="notes-card">
+              <h2>Admission Shape</h2>
+              <dl className="contract-panel">
+                <div>
+                  <dt>Admission plan</dt>
+                  <dd>{admissionPlan?.admission_plan_id || 'waiting for admission plan'}</dd>
+                </div>
+                <div>
+                  <dt>Admission authority</dt>
+                  <dd>{admissionPlan?.mutation_authority || 'not_admitted'}</dd>
+                </div>
+                <div>
+                  <dt>Target rows</dt>
+                  <dd>{Object.entries(targetRows).map(([key, value]) => `${formatLabel(key)}: ${formatValue(value)}`).join('; ') || 'none reported'}</dd>
+                </div>
+                <div>
+                  <dt>No-go checks</dt>
+                  <dd>{formatCount(noGoChecks.length)}</dd>
+                </div>
+              </dl>
+            </article>
+            <article className="notes-card accent-card">
+              <h2>Approval Contract</h2>
+              <dl className="contract-panel">
+                <div>
+                  <dt>Contract</dt>
+                  <dd>{approvalContract?.approval_contract_id || 'waiting for approval contract'}</dd>
+                </div>
+                <div>
+                  <dt>Record type</dt>
+                  <dd>{approvalContract?.approval_record_contract?.record_type || storagePlan?.recommended_entity_type || 'unknown'}</dd>
+                </div>
+                <div>
+                  <dt>Contract authority</dt>
+                  <dd>{approvalContract?.mutation_authority || 'not_admitted'}</dd>
+                </div>
+                <div>
+                  <dt>Persistence authority</dt>
+                  <dd>{approvalContract?.persistence_authority || storagePlan?.persistence_authority || 'not_admitted'}</dd>
+                </div>
+                <div>
+                  <dt>Storage table</dt>
+                  <dd>{storagePlan?.recommended_table || 'not admitted'}</dd>
+                </div>
+                <div>
+                  <dt>Mutation route</dt>
+                  <dd>{futureRoute}</dd>
+                </div>
+              </dl>
+            </article>
+          </div>
+        </details>
 
         <section aria-label="Local review checklist" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
           <div className="status-row">
