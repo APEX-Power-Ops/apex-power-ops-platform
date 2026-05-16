@@ -51,6 +51,7 @@
     "If the correct DSN cannot be confirmed from an authorized source, stop and close out with a blocker instead of guessing."
   ],
   "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-16-pm-lane-041c-render-supabase-dsn-repair-blocker-handoff.md",
     "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-16-pm-lane-041c-render-supabase-dsn-repair-closeout-handoff.md"
   ],
   "validation_steps": [
@@ -65,11 +66,19 @@
     "Paired PM intake hosted smoke remains failed=0.",
     "No production write or authority widening occurred."
   ],
-  "validation_result": "PENDING_EXTERNAL_EXECUTOR",
-  "delegation_status": "ready_for_desktop_codex_authenticated_render_and_secret_source_executor",
-  "next_recommended_lane": "After DSN repair closeout, coordinator should accept/reject the closeout and then continue PM Lane 123 local exception review and PM decision detail body controls if approval/import authority remains blocked.",
+  "closeout_evidence": [
+    "ops/agents/handoffs/2026-05-16-pm-lane-041c-render-supabase-dsn-repair-blocker-handoff.md",
+    "ops/agents/handoffs/2026-05-16-pm-lane-041c-render-supabase-dsn-repair-closeout-handoff.md",
+    "Coordinator rerun: smoke_deployed_mutation_seam.py --include-pm-intake returned RESULT PASS.",
+    "Coordinator rerun: smoke-pm-intake-hosted.mjs returned PM_INTAKE_HOSTED_SUMMARY failed=0."
+  ],
+  "validation_result": "PASS_HOSTED_DSN_REPAIR_ACCEPTED",
+  "execution_result": "PM Lane 041C closed by secret-safe Supabase password rotation, Olares Vault custody, Render SEAM_DATABASE_URL update, live deploy, and hosted smoke proof.",
+  "delegation_status": "completed_by_desktop_codex_authenticated_hosted_executor_and_accepted_by_coordinator",
+  "next_recommended_lane": "Continue PM Lane 123 local exception review and PM decision detail body controls while authoring a separate narrow approval/import write-admission packet when business approval is ready.",
   "sql_permission": false,
   "ai_mutation_authority": "not_admitted",
   "created_at": "2026-05-16",
+  "completed_at": "2026-05-16",
   "updated_at": "2026-05-16"
 }
