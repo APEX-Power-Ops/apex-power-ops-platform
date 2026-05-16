@@ -213,10 +213,108 @@ function visibleDecisions(decisions: CandidateDecision[]) {
   return decisions.slice(0, 3)
 }
 
+function briefFileName(candidate?: CandidatePayload | null) {
+  const candidateId = candidate?.candidate_id || 'project-miner-intake'
+  return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-intake-brief.md`
+}
+
+function markdownList(items: string[]) {
+  return items.length ? items.map((item) => `- ${item}`).join('\n') : '- none reported'
+}
+
+function buildIntakeBrief(
+  packet: IntakeWorkbenchPacket,
+  workflowGates: Array<{ title: string; status: string; detail: string }>,
+  notAllowed: string[],
+  futureRoute: string,
+) {
+  const candidate = packet.candidate
+  const admissionPlan = packet.admissionPlan
+  const approvalContract = packet.approvalContract
+  const storagePlan = packet.storagePlan
+  const summary = candidate.summary || {}
+  const project = candidate.project || {}
+  const warnings = candidate.warnings || []
+  const decisions = candidate.human_decisions || []
+  const targetRows = admissionPlan.target_row_plan || {}
+
+  const targetRowLines = Object.entries(targetRows).map(([key, value]) => `${formatLabel(key)}: ${formatValue(value)}`)
+  const warningLines = warnings.map((warning) => `${warning.severity || 'unknown'} - ${warning.code || 'WARNING'}: ${warning.message || 'Review warning.'}`)
+  const decisionLines = decisions.map((decision) => `${formatLabel(decision.decision_id)}: ${decision.prompt || 'Decision prompt unavailable.'}`)
+  const gateLines = workflowGates.map((gate) => `${gate.title}: ${formatLabel(gate.status)} - ${gate.detail}`)
+
+  return [
+    '# Project Miner PM Intake Brief',
+    '',
+    'Generated locally from the read-only PM intake workbench. This brief is not approval, persistence, import, assignment, schedule, status, or production state.',
+    '',
+    '## Project',
+    '',
+    `- Candidate: ${candidate.candidate_id || 'unknown'}`,
+    `- Candidate version: ${candidate.candidate_version || 'unknown'}`,
+    `- Candidate authority: ${candidate.mutation_authority || 'not_admitted'}`,
+    `- Project: ${project.name || 'unknown project'}`,
+    `- Location: ${project.location || 'unknown location'}`,
+    `- Drawings: ${project.drawing_package || 'unknown'}`,
+    `- Source freshness: ${candidate.source_freshness?.aggregate_fingerprint || 'unknown'}`,
+    '',
+    '## Proposed Shape',
+    '',
+    `- Workpackages: ${formatCount(summary.workpackage_count)}`,
+    `- Tasks: ${formatCount(summary.task_count)}`,
+    `- Apparatus candidates: ${formatCount(summary.apparatus_candidate_count)}`,
+    `- Warnings: ${formatCount(summary.warning_count)}`,
+    `- Blockers: ${formatCount(summary.blocker_count)}`,
+    `- Human decisions: ${formatCount(summary.human_decision_count)}`,
+    '',
+    '## Exceptions',
+    '',
+    markdownList(warningLines),
+    '',
+    '## PM Decisions',
+    '',
+    markdownList(decisionLines),
+    '',
+    '## Workflow Gates',
+    '',
+    markdownList(gateLines),
+    '',
+    '## Admission And Approval',
+    '',
+    `- Admission plan: ${admissionPlan.admission_plan_id || 'unknown'}`,
+    `- Admission authority: ${admissionPlan.mutation_authority || 'not_admitted'}`,
+    `- Approval contract: ${approvalContract.approval_contract_id || 'unknown'}`,
+    `- Approval persistence authority: ${approvalContract.persistence_authority || storagePlan.persistence_authority || 'not_admitted'}`,
+    `- Future approval table: ${storagePlan.recommended_table || 'not admitted'}`,
+    `- Future approval route: ${futureRoute}`,
+    '',
+    '## Target Rows',
+    '',
+    markdownList(targetRowLines),
+    '',
+    '## Not Allowed Now',
+    '',
+    markdownList(notAllowed.map(formatLabel)),
+  ].join('\n')
+}
+
+function downloadTextFile(fileName: string, contents: string, contentType: string) {
+  const blob = new Blob([contents], { type: contentType })
+  const url = URL.createObjectURL(blob)
+  const anchor = document.createElement('a')
+  anchor.href = url
+  anchor.download = fileName
+  document.body.appendChild(anchor)
+  anchor.click()
+  anchor.remove()
+  URL.revokeObjectURL(url)
+}
+
 export default function ProjectMinerIntakeWorkbenchPage() {
   const [packet, setPacket] = useState<IntakeWorkbenchPacket | null>(null)
   const [loading, setLoading] = useState(true)
   const [online, setOnline] = useState(true)
+  const [briefStatus, setBriefStatus] = useState('')
 
   const refresh = useCallback(async () => {
     try {
@@ -293,6 +391,15 @@ export default function ProjectMinerIntakeWorkbenchPage() {
     },
   ]
 
+  function exportPmBrief() {
+    if (!packet) {
+      return
+    }
+
+    downloadTextFile(briefFileName(candidate), buildIntakeBrief(packet, workflowGates, notAllowed, futureRoute), 'text/markdown')
+    setBriefStatus(`PM brief prepared from ${candidate?.candidate_id || 'the current intake packet'} without a server write.`)
+  }
+
   return (
     <main className="shell-page pm-review-page">
       <section className="hero-card pm-review-hero">
@@ -368,11 +475,15 @@ export default function ProjectMinerIntakeWorkbenchPage() {
             <Link href="/pm-review/import-admission-plan">Admission plan</Link>
             <Link href="/pm-review/import-approval-readiness">Approval readiness</Link>
             <Link href="/pm-review/workfront">PM workfront</Link>
+            <button className="btn btn-outline" onClick={exportPmBrief} disabled={!packet}>
+              Export PM Brief
+            </button>
             <button className="btn btn-outline" onClick={() => void refresh()} disabled={loading}>
               {loading ? 'Refreshing...' : 'Refresh'}
             </button>
           </p>
         </div>
+        {briefStatus ? <p style={{ margin: '0 0 1rem', color: 'var(--muted)', lineHeight: 1.55 }}>{briefStatus}</p> : null}
 
         <section className="status-grid status-grid-wide" aria-label="Project Miner intake summary" style={{ marginBottom: '1rem' }}>
           <article className="status-card">

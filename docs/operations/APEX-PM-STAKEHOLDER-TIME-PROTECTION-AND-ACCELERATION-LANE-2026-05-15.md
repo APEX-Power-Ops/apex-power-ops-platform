@@ -241,6 +241,12 @@ The current orchestration refresh tranche is:
 
 PM Lane 044 updates the hosted smoke scripts, 041A Vercel handoff, 041 parent packet, dispatch board, and closeout template so an authenticated Vercel executor proves both `/pm-review/import-approval-readiness` and `/pm-review/import-intake`. Render remains bounded to the existing four read seams; no backend endpoint, schema, or mutation scope is added for the workbench.
 
+The current PM handoff compression tranche is:
+
+`Project Miner PM Intake Brief Export`
+
+PM Lane 045 adds an `Export PM Brief` action to `/pm-review/import-intake`. The brief is downloaded as Markdown from the already-loaded read-only intake packet and can be used as a concise reviewer or executor context handoff. This is explicitly not approval, persistence, import, assignment, schedule, status, or production state.
+
 The next persistence tranche is:
 
 `Import Candidate Approval Persistence Schema And Adapter Admission`

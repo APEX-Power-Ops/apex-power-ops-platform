@@ -323,6 +323,8 @@ This remains local-current and read-only. It does not add backend endpoints, hos
 
 PM Lane 044 refreshes the hosted parity route scope after Lane 043. The hosted smoke scripts and Vercel executor packet now require both `/pm-review/import-approval-readiness` and `/pm-review/import-intake` to be promoted on the existing operations-web production alias. Render scope does not expand because the workbench consumes the same four PM intake reads already assigned to the Render parity lane.
 
+PM Lane 045 adds a local-only Markdown PM intake brief export to `/pm-review/import-intake`. This lets Jason or an executor receive one concise source-derived brief without requiring another manual summary or chat relay. The export is browser-local, generated from already-loaded reads, and does not add hosted proof, backend routes, approval persistence, import mutation, or production writes.
+
 ## Capability-Gap Register
 
 Current known gaps:

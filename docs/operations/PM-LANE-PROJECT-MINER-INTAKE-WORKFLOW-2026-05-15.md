@@ -355,6 +355,8 @@ Hosted note: PM Lane 043 is local-current only until PM Lane 041A/041B close hos
 
 PM Lane 044 updates the hosted parity proof and executor handoffs so `/pm-review/import-intake` is included in the same Vercel promotion lane as `/pm-review/import-approval-readiness`. The refreshed hosted PM intake smoke currently passes import-candidate and import-admission-plan, but returns `404` for both `/pm-review/import-approval-readiness` and `/pm-review/import-intake` until an authenticated Vercel executor promotes current `origin/clean-main`.
 
+PM Lane 045 adds a local-only `Export PM Brief` action to `/pm-review/import-intake`. The Markdown brief is generated entirely in the browser from the already-loaded four PM intake reads and includes candidate identity, source freshness, proposed row counts, warning signals, PM decisions, workflow gates, admission and approval authority, future approval table/route, target rows, and not-allowed-now guardrails. It is a portable review and executor-handoff artifact only; it is not approval, persistence, import, assignment, schedule, status, or production state.
+
 ## Environment Overrides
 
 Set this when using a different planning folder:
