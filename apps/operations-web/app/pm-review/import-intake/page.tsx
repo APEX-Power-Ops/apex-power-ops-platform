@@ -4712,31 +4712,33 @@ export default function ProjectMinerIntakeWorkbenchPage() {
               {formatCount(fieldReadinessCheckedCount)} of {formatCount(FIELD_READINESS_CHECKLIST_ITEMS.length)}
             </span>
           </summary>
-          <div aria-label="Field readiness controls">
-            <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
-              Browser-local prep evidence for PM, lead, and field review conversations. Checking these items does not authorize work, approve, persist, import, assign, schedule, change status, or mutate production state.
-            </p>
-            <div style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
-              {FIELD_READINESS_CHECKLIST_ITEMS.map((item) => (
-                <label key={item.id} className="card" style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0.75rem', padding: '0.85rem', boxShadow: 'none', cursor: 'pointer' }}>
-                  <input
-                    type="checkbox"
-                    checked={Boolean(fieldReadinessChecks[item.id])}
-                    onChange={(event) => updateFieldReadinessCheck(item.id, event.target.checked)}
-                    style={{ marginTop: '0.25rem' }}
-                  />
-                  <span>
-                    <strong>{item.label}</strong>
-                    <span style={{ display: 'block', marginTop: '0.35rem', color: 'var(--muted)', lineHeight: 1.5 }}>{item.detail}</span>
-                  </span>
-                </label>
-              ))}
-            </div>
-            <div className="pm-review-link-row pm-review-link-row-start" style={{ alignItems: 'center' }}>
-              <button className="btn btn-outline" onClick={clearFieldReadinessChecklist} disabled={!fieldReadinessCheckedCount}>
-                Clear field readiness
-              </button>
-              <span style={{ color: 'var(--muted)', lineHeight: 1.55 }}>Retained in this browser for the current candidate only.</span>
+          <div aria-label="Local field readiness checklist controls">
+            <div aria-label="Field readiness controls">
+              <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+                Browser-local prep evidence for PM, lead, and field review conversations. Checking these items does not authorize work, approve, persist, import, assign, schedule, change status, or mutate production state.
+              </p>
+              <div style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
+                {FIELD_READINESS_CHECKLIST_ITEMS.map((item) => (
+                  <label key={item.id} className="card" style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0.75rem', padding: '0.85rem', boxShadow: 'none', cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={Boolean(fieldReadinessChecks[item.id])}
+                      onChange={(event) => updateFieldReadinessCheck(item.id, event.target.checked)}
+                      style={{ marginTop: '0.25rem' }}
+                    />
+                    <span>
+                      <strong>{item.label}</strong>
+                      <span style={{ display: 'block', marginTop: '0.35rem', color: 'var(--muted)', lineHeight: 1.5 }}>{item.detail}</span>
+                    </span>
+                  </label>
+                ))}
+              </div>
+              <div className="pm-review-link-row pm-review-link-row-start" style={{ alignItems: 'center' }}>
+                <button className="btn btn-outline" onClick={clearFieldReadinessChecklist} disabled={!fieldReadinessCheckedCount}>
+                  Clear field readiness
+                </button>
+                <span style={{ color: 'var(--muted)', lineHeight: 1.55 }}>Retained in this browser for the current candidate only.</span>
+              </div>
             </div>
           </div>
         </details>
