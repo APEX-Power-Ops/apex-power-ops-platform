@@ -4399,12 +4399,12 @@ export default function ProjectMinerIntakeWorkbenchPage() {
           </div>
         </details>
 
-        <section id="workflow-gates" aria-label="Workflow gates" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
-          <div className="status-row">
+        <details id="workflow-gates" open aria-label="Workflow gates" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
+          <summary className="status-row" style={{ cursor: 'pointer' }}>
             <h2 style={{ margin: 0 }}>Workflow Gates</h2>
             <span className="status-pill status-awaiting-values">read-only</span>
-          </div>
-          <div style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
+          </summary>
+          <div aria-label="Workflow gate items" style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
             {workflowGates.map((gate) => (
               <article key={gate.title} className="card" style={{ padding: '0.85rem', boxShadow: 'none' }}>
                 <div className="status-row" style={{ alignItems: 'start' }}>
@@ -4419,7 +4419,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
               </article>
             ))}
           </div>
-        </section>
+        </details>
 
         <section aria-label="Exception review and PM decision detail" className="notes-grid" style={{ marginBottom: '1rem' }}>
           <article className="notes-card">
