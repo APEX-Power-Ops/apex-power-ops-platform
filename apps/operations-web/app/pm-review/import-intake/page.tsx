@@ -141,6 +141,12 @@ type ReviewChecklistItem = {
   detail: string
 }
 
+type CloseoutChecklistItem = {
+  id: string
+  label: string
+  detail: string
+}
+
 type ApprovalDecisionDraft = {
   decision: string
   review_notes: string
@@ -214,6 +220,48 @@ const REVIEW_CHECKLIST_ITEMS: ReviewChecklistItem[] = [
     id: 'write_guardrails_confirmed',
     label: 'Write guardrails confirmed',
     detail: 'No Supabase write, approval persistence, import, assignment, schedule, or status mutation is admitted.',
+  },
+]
+const CLOSEOUT_CHECKLIST_ITEMS: CloseoutChecklistItem[] = [
+  {
+    id: 'source_commit_recorded',
+    label: 'Source commit recorded',
+    detail: 'Executor return names the exact source branch and commit tested.',
+  },
+  {
+    id: 'changed_files_listed',
+    label: 'Changed files listed',
+    detail: 'Executor return lists all changed repo files, or explicitly says no repo files changed.',
+  },
+  {
+    id: 'hosted_action_evidence_captured',
+    label: 'Hosted action evidence captured',
+    detail: 'Executor return includes non-secret hosted action evidence or clearly states that hosted action was unavailable.',
+  },
+  {
+    id: 'validation_results_captured',
+    label: 'Validation results captured',
+    detail: 'Executor return includes exact validation commands and exact results without summarizing failures as success.',
+  },
+  {
+    id: 'final_verdict_classified',
+    label: 'Final verdict classified',
+    detail: 'Executor return uses a concrete final verdict such as PASS, PARTIAL_PASS_WITH_REMAINING_BLOCKER, or a blocked classification.',
+  },
+  {
+    id: 'remaining_blocker_classified',
+    label: 'Remaining blocker classified',
+    detail: 'If the result is not PASS, the remaining blocker is classified with a specific hosted, schema, permission, or product-code cause.',
+  },
+  {
+    id: 'guardrails_confirmed',
+    label: 'Guardrails confirmed',
+    detail: 'Executor return confirms no widened service, DNS, auth, ingress, secret, SQL, schema, approval, import, assignment, schedule, status, or AI mutation.',
+  },
+  {
+    id: 'coordinator_recommendation_captured',
+    label: 'Coordinator recommendation captured',
+    detail: 'Executor return recommends one bounded next action such as record and continue, redelegate, open a product packet, or stop for stakeholder exception.',
   },
 ]
 
@@ -367,7 +415,7 @@ function buildPersistenceReadinessGates(
       id: 'import-mutation-authority',
       title: 'Import mutation authority',
       status: 'blocked',
-      detail: 'Project, workpackage, task, and apparatus import remain blocked until approval persistence is green in a later packet.',
+      detail: 'Project, workpackage, task, and apparatus import remain blocked until approval persistence is explicitly admitted and validated in a later packet.',
     },
   ]
 }
@@ -425,7 +473,7 @@ function buildPmOperatingQueue(
       id: 'project-import-packet',
       title: 'Project import packet',
       status: 'blocked',
-      detail: 'Project, workpackage, task, and apparatus rows remain blocked until approval persistence is admitted and green.',
+      detail: 'Project, workpackage, task, and apparatus rows remain blocked until approval persistence is explicitly admitted and validated in a later packet.',
     },
   ]
 }
@@ -508,6 +556,7 @@ function buildIntakeBrief(
   notAllowed: string[],
   futureRoute: string,
   reviewChecks: Record<string, boolean>,
+  closeoutChecks: Record<string, boolean>,
   approvalDraft: ApprovalDecisionDraft,
 ) {
   const candidate = packet.candidate
@@ -527,7 +576,9 @@ function buildIntakeBrief(
   const persistenceGateLines = persistenceReadinessGates.map((gate) => `${gate.title}: ${formatLabel(gate.status)} - ${gate.detail}`)
   const operatingQueueLines = operatingQueue.map((item) => `${item.title}: ${formatLabel(item.status)} - ${item.detail}`)
   const checklistLines = REVIEW_CHECKLIST_ITEMS.map((item) => `${reviewChecks[item.id] ? '[x]' : '[ ]'} ${item.label}: ${item.detail}`)
+  const closeoutChecklistLines = CLOSEOUT_CHECKLIST_ITEMS.map((item) => `${closeoutChecks[item.id] ? '[x]' : '[ ]'} ${item.label}: ${item.detail}`)
   const checkedCount = REVIEW_CHECKLIST_ITEMS.filter((item) => reviewChecks[item.id]).length
+  const closeoutCheckedCount = CLOSEOUT_CHECKLIST_ITEMS.filter((item) => closeoutChecks[item.id]).length
   const draftPresent = hasApprovalDraftContent(approvalDraft)
   const readyPersistenceGateCount = persistenceReadinessGates.filter((gate) => gate.status === 'ready').length
   const completeQueueCount = operatingQueue.filter((item) => item.status === 'complete').length
@@ -604,6 +655,14 @@ function buildIntakeBrief(
     '',
     markdownList(operatingQueueLines),
     '',
+    '## Local Executor Closeout Intake',
+    '',
+    `Closeout checks: ${closeoutCheckedCount} of ${CLOSEOUT_CHECKLIST_ITEMS.length} checked.`,
+    '',
+    'This browser-local closeout intake is audit prep only. It is not acceptance, approval, persistence, import, deployment, assignment, schedule, status, or production state.',
+    '',
+    markdownList(closeoutChecklistLines),
+    '',
     '## Admission And Approval',
     '',
     `- Admission plan: ${admissionPlan.admission_plan_id || 'unknown'}`,
@@ -631,6 +690,7 @@ function buildExecutorHandoff(
   notAllowed: string[],
   futureRoute: string,
   reviewChecks: Record<string, boolean>,
+  closeoutChecks: Record<string, boolean>,
   approvalDraft: ApprovalDecisionDraft,
 ) {
   const candidate = packet.candidate
@@ -643,6 +703,8 @@ function buildExecutorHandoff(
   const decisions = candidate.human_decisions || []
   const checkedItems = REVIEW_CHECKLIST_ITEMS.filter((item) => reviewChecks[item.id])
   const openChecklistItems = REVIEW_CHECKLIST_ITEMS.filter((item) => !reviewChecks[item.id])
+  const checkedCloseoutItems = CLOSEOUT_CHECKLIST_ITEMS.filter((item) => closeoutChecks[item.id])
+  const openCloseoutItems = CLOSEOUT_CHECKLIST_ITEMS.filter((item) => !closeoutChecks[item.id])
   const nextQueueItems = operatingQueue.filter((item) => item.status === 'next')
   const blockedQueueItems = operatingQueue.filter((item) => item.status === 'blocked')
   const blockedReadinessGates = persistenceReadinessGates.filter((gate) => gate.status === 'blocked')
@@ -650,6 +712,8 @@ function buildExecutorHandoff(
   const decisionLines = decisions.map((decision) => `${formatLabel(decision.decision_id)}: ${decision.prompt || 'Decision prompt unavailable.'}`)
   const checkedLines = checkedItems.map((item) => `${item.label}: ${item.detail}`)
   const openChecklistLines = openChecklistItems.map((item) => `${item.label}: ${item.detail}`)
+  const checkedCloseoutLines = checkedCloseoutItems.map((item) => `${item.label}: ${item.detail}`)
+  const openCloseoutLines = openCloseoutItems.map((item) => `${item.label}: ${item.detail}`)
   const nextQueueLines = nextQueueItems.map((item) => `${item.title}: ${item.detail}`)
   const blockedQueueLines = blockedQueueItems.map((item) => `${item.title}: ${item.detail}`)
   const blockedGateLines = blockedReadinessGates.map((gate) => `${gate.title}: ${gate.detail}`)
@@ -683,6 +747,7 @@ function buildExecutorHandoff(
     '## Current PM Review State',
     '',
     `- Checklist checked: ${checkedItems.length} of ${REVIEW_CHECKLIST_ITEMS.length}`,
+    `- Closeout checks: ${checkedCloseoutItems.length} of ${CLOSEOUT_CHECKLIST_ITEMS.length}`,
     `- Decision draft: ${approvalDraft.decision || 'none selected'}`,
     `- Local-only attestation checked: ${approvalDraft.local_attestation ? 'yes' : 'no'}`,
     `- Review notes draft: ${formatMultilineMarkdown(approvalDraft.review_notes)}`,
@@ -704,6 +769,18 @@ function buildExecutorHandoff(
     'Blocked future moves:',
     '',
     markdownList(blockedQueueLines),
+    '',
+    '## Executor Closeout Intake',
+    '',
+    'This intake checklist is browser-local audit prep only. It does not accept, approve, persist, deploy, import, assign, schedule, change status, or mutate production state.',
+    '',
+    'Checked closeout evidence:',
+    '',
+    markdownList(checkedCloseoutLines),
+    '',
+    'Open closeout evidence:',
+    '',
+    markdownList(openCloseoutLines),
     '',
     '## Approval Persistence Blockers',
     '',
@@ -766,6 +843,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
   const [previewStatus, setPreviewStatus] = useState('')
   const [handoffStatus, setHandoffStatus] = useState('')
   const [reviewChecks, setReviewChecks] = useState<Record<string, boolean>>({})
+  const [closeoutChecks, setCloseoutChecks] = useState<Record<string, boolean>>({})
   const [approvalDraft, setApprovalDraft] = useState<ApprovalDecisionDraft>(EMPTY_APPROVAL_DRAFT)
 
   const refresh = useCallback(async () => {
@@ -795,6 +873,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
   const noGoChecks = admissionPlan?.no_go_checks || []
   const targetRows = admissionPlan?.target_row_plan || {}
   const reviewChecklistKey = candidate?.candidate_id ? `pm-import-intake-review-checklist:${candidate.candidate_id}` : null
+  const closeoutChecklistKey = candidate?.candidate_id ? `pm-import-intake-executor-closeout:${candidate.candidate_id}` : null
   const approvalDraftKey = candidate?.candidate_id ? `pm-import-intake-approval-draft:${candidate.candidate_id}` : null
   const permittedDecisions = approvalContract?.approval_record_contract?.permitted_decisions || []
   const notAllowed = useMemo(
@@ -846,6 +925,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
     },
   ]
   const checklistCheckedCount = REVIEW_CHECKLIST_ITEMS.filter((item) => reviewChecks[item.id]).length
+  const closeoutCheckedCount = CLOSEOUT_CHECKLIST_ITEMS.filter((item) => closeoutChecks[item.id]).length
   const approvalDraftHasContent = hasApprovalDraftContent(approvalDraft)
   const persistenceReadinessGates = useMemo(
     () => buildPersistenceReadinessGates(packet, approvalDraft, reviewChecks),
@@ -872,6 +952,19 @@ export default function ProjectMinerIntakeWorkbenchPage() {
       setReviewChecks({})
     }
   }, [reviewChecklistKey])
+
+  useEffect(() => {
+    if (!closeoutChecklistKey || typeof window === 'undefined') {
+      return
+    }
+
+    try {
+      const stored = window.localStorage.getItem(closeoutChecklistKey)
+      setCloseoutChecks(stored ? (JSON.parse(stored) as Record<string, boolean>) : {})
+    } catch {
+      setCloseoutChecks({})
+    }
+  }, [closeoutChecklistKey])
 
   useEffect(() => {
     if (!approvalDraftKey || typeof window === 'undefined') {
@@ -901,6 +994,21 @@ export default function ProjectMinerIntakeWorkbenchPage() {
     }
   }
 
+  function updateCloseoutCheck(itemId: string, checked: boolean) {
+    const next = { ...closeoutChecks, [itemId]: checked }
+    setCloseoutChecks(next)
+    if (closeoutChecklistKey && typeof window !== 'undefined') {
+      window.localStorage.setItem(closeoutChecklistKey, JSON.stringify(next))
+    }
+  }
+
+  function clearCloseoutChecklist() {
+    setCloseoutChecks({})
+    if (closeoutChecklistKey && typeof window !== 'undefined') {
+      window.localStorage.removeItem(closeoutChecklistKey)
+    }
+  }
+
   function updateApprovalDraft(nextPartial: Partial<ApprovalDecisionDraft>) {
     const next = { ...approvalDraft, ...nextPartial }
     setApprovalDraft(next)
@@ -923,7 +1031,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
 
     downloadTextFile(
       briefFileName(candidate),
-      buildIntakeBrief(packet, workflowGates, persistenceReadinessGates, operatingQueue, notAllowed, futureRoute, reviewChecks, approvalDraft),
+      buildIntakeBrief(packet, workflowGates, persistenceReadinessGates, operatingQueue, notAllowed, futureRoute, reviewChecks, closeoutChecks, approvalDraft),
       'text/markdown',
     )
     setBriefStatus(`PM brief prepared from ${candidate?.candidate_id || 'the current intake packet'} without a server write.`)
@@ -946,7 +1054,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
 
     downloadTextFile(
       executorHandoffFileName(candidate),
-      buildExecutorHandoff(packet, workflowGates, persistenceReadinessGates, operatingQueue, notAllowed, futureRoute, reviewChecks, approvalDraft),
+      buildExecutorHandoff(packet, workflowGates, persistenceReadinessGates, operatingQueue, notAllowed, futureRoute, reviewChecks, closeoutChecks, approvalDraft),
       'text/markdown',
     )
     setHandoffStatus(`Executor handoff prepared from ${candidate?.candidate_id || 'the current intake packet'} without a server write.`)
@@ -1338,6 +1446,40 @@ export default function ProjectMinerIntakeWorkbenchPage() {
               Clear decision draft
             </button>
             <span style={{ color: 'var(--muted)', lineHeight: 1.55 }}>Included in the PM brief only when exported from this browser.</span>
+          </div>
+        </section>
+
+        <section aria-label="Local executor closeout intake" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
+          <div className="status-row">
+            <h2 style={{ margin: 0 }}>Local Executor Closeout Intake</h2>
+            <span className="status-pill status-awaiting-values">
+              {formatCount(closeoutCheckedCount)} of {formatCount(CLOSEOUT_CHECKLIST_ITEMS.length)}
+            </span>
+          </div>
+          <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+            Browser-local audit prep for external executor returns. Checking these items does not accept, approve, persist, deploy, import, assign, schedule, change status, or mutate production state.
+          </p>
+          <div style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
+            {CLOSEOUT_CHECKLIST_ITEMS.map((item) => (
+              <label key={item.id} className="card" style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0.75rem', padding: '0.85rem', boxShadow: 'none', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={Boolean(closeoutChecks[item.id])}
+                  onChange={(event) => updateCloseoutCheck(item.id, event.target.checked)}
+                  style={{ marginTop: '0.25rem' }}
+                />
+                <span>
+                  <strong>{item.label}</strong>
+                  <span style={{ display: 'block', marginTop: '0.35rem', color: 'var(--muted)', lineHeight: 1.5 }}>{item.detail}</span>
+                </span>
+              </label>
+            ))}
+          </div>
+          <div className="pm-review-link-row pm-review-link-row-start" style={{ alignItems: 'center' }}>
+            <button className="btn btn-outline" onClick={clearCloseoutChecklist} disabled={!closeoutCheckedCount}>
+              Clear closeout intake
+            </button>
+            <span style={{ color: 'var(--muted)', lineHeight: 1.55 }}>Retained in this browser for the current candidate only.</span>
           </div>
         </section>
 

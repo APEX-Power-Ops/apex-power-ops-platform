@@ -377,6 +377,10 @@ PM Lane 052 adds a browser-local `Export Executor Handoff` action to `/pm-review
 
 This handoff is context only and grants no authority. It does not create live tasks, approve, persist, import, create schema, run SQL, write Supabase rows, call live services, run workbook macros, write workbook cells, assign work, change status, mutate schedules, or admit autonomous AI business-state action.
 
+PM Lane 053 adds a browser-local `Local Executor Closeout Intake` checklist to `/pm-review/import-intake`. It helps review returned executor evidence for source commit, changed files, hosted action evidence, exact validation results, final verdict, remaining blocker classification, guardrail confirmation, and bounded coordinator recommendation.
+
+This closeout intake is audit prep only and grants no acceptance authority. It does not create live tasks, approve, persist, import, create schema, run SQL, write Supabase rows, call live services, run workbook macros, write workbook cells, assign work, change status, mutate schedules, or admit autonomous AI business-state action.
+
 ## Environment Overrides
 
 Set this when using a different planning folder:

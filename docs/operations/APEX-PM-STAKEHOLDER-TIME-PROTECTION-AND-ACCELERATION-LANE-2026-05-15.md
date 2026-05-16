@@ -295,6 +295,14 @@ PM Lane 052 adds a browser-local `Export Executor Handoff` action to `/pm-review
 
 This still creates no approval record, SQL, schema migration, backend route, import mutation, assignment, schedule, status, hosted proof, live task, or production mutation.
 
+The current return-path tranche is:
+
+`Project Miner Local Executor Closeout Intake`
+
+PM Lane 053 adds a browser-local `Local Executor Closeout Intake` checklist to `/pm-review/import-intake`. The checklist mirrors the hosted closeout convention: source commit, changed files, hosted action evidence, exact validation results, final verdict, blocker classification, guardrail confirmation, and bounded coordinator recommendation. It lets the coordinator audit returned executor results with less manual reconstruction.
+
+This still creates no approval record, SQL, schema migration, backend route, import mutation, assignment, schedule, status, hosted proof, live task, closeout acceptance, or production mutation.
+
 The next persistence tranche is:
 
 `Import Candidate Approval Persistence Schema And Adapter Implementation`

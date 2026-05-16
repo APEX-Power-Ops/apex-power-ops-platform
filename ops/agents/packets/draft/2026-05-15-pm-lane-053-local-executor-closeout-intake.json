@@ -1,0 +1,98 @@
+{
+  "packet_id": "2026-05-15-pm-lane-053",
+  "title": "Project Miner Local Executor Closeout Intake",
+  "objective": "Reduce PM/AI orchestration return-path friction by adding a browser-local executor closeout intake checklist to the Project Miner intake workbench, while preserving that the checklist is audit prep only and grants no acceptance, hosted proof, persistence, import, or production authority.",
+  "domain": "pm-domain",
+  "active_role": "Technical Repo Authority / PM Product Coordinator / AI Orchestration Closeout Implementer",
+  "dependencies": [
+    "2026-05-15-pm-lane-042",
+    "2026-05-15-pm-lane-043",
+    "2026-05-15-pm-lane-052"
+  ],
+  "admission_status": "browser_local_closeout_audit_prep_only",
+  "implemented_scope": [
+    "Add a browser-local Local Executor Closeout Intake checklist to /pm-review/import-intake.",
+    "Persist closeout checklist state only in candidate-scoped browser localStorage.",
+    "Include closeout checklist state in the browser-local PM brief.",
+    "Include checked and open closeout evidence in the browser-local executor handoff.",
+    "Extend the focused import-intake smoke to prove localStorage state, clear behavior, exported content, exact four read seams, zero mutation calls, and no approve/persist/submit/import controls.",
+    "Update PM lane operating docs, project status, packet, and handoff."
+  ],
+  "closeout_checklist_items": [
+    "Source commit recorded",
+    "Changed files listed",
+    "Hosted action evidence captured",
+    "Validation results captured",
+    "Final verdict classified",
+    "Remaining blocker classified",
+    "Guardrails confirmed",
+    "Coordinator recommendation captured"
+  ],
+  "allowed_actions": [
+    "Modify the local operations-web import-intake page.",
+    "Modify focused operations-web smoke tests.",
+    "Update PM lane operating docs, project status, packet, and handoff.",
+    "Use one read-only sidecar scout for closeout-intake boundary and checklist review.",
+    "Run focused local validation, commit, push, and restore host parity."
+  ],
+  "not_allowed": [
+    "No backend endpoint change.",
+    "No closeout acceptance.",
+    "No hosted parity claim.",
+    "No task creation.",
+    "No SQL file creation.",
+    "No SQL execution.",
+    "No schema migration.",
+    "No Supabase write.",
+    "No adapter implementation.",
+    "No approval persistence.",
+    "No import mutation.",
+    "No live service call.",
+    "No Render redeploy.",
+    "No Vercel promotion.",
+    "No service creation.",
+    "No DNS, auth, ingress, or secret change.",
+    "No fixture replay.",
+    "No workbook macro execution.",
+    "No workbook writeback.",
+    "No assignment mutation.",
+    "No schedule mutation.",
+    "No status mutation.",
+    "No autonomous AI business-state mutation."
+  ],
+  "changed_files": [
+    "C:/APEX Platform/apex-power-ops-platform/PROJECT_STATUS.md",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/app/pm-review/import-intake/page.tsx",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/tests/browser-shell.pm-import-intake.smoke.spec.ts",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/APEX-PM-TEMP-POWER-DELIVERY-AND-ORCHESTRATION-PLAN-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/APEX-PM-STAKEHOLDER-TIME-PROTECTION-AND-ACCELERATION-LANE-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-15-pm-lane-053-local-executor-closeout-intake.json",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-053-local-executor-closeout-intake-handoff.md"
+  ],
+  "validation_steps": [
+    "corepack pnpm --filter @apex/operations-web typecheck",
+    "corepack pnpm --filter @apex/operations-web build",
+    "corepack pnpm --dir apps/operations-web exec playwright test tests/browser-shell.pm-import-intake.smoke.spec.ts",
+    "corepack pnpm --dir apps/operations-web exec playwright test tests/browser-shell.pm-import-candidate.smoke.spec.ts tests/browser-shell.pm-import-admission-plan.smoke.spec.ts tests/browser-shell.pm-import-approval-readiness.smoke.spec.ts tests/browser-shell.pm-import-intake.smoke.spec.ts",
+    "& \"C:/APEX Platform/apex-power-ops-platform/.venv/Scripts/python.exe\" -c \"import json; json.load(open(r'C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-15-pm-lane-053-local-executor-closeout-intake.json', encoding='utf-8')); print('packet-json-ok')\"",
+    "git diff --check",
+    "git diff --cached --check"
+  ],
+  "validation_results": [
+    "operations-web typecheck passed after correcting helper signatures.",
+    "operations-web production build passed with /pm-review/import-intake in the route output.",
+    "Focused import-intake Playwright smoke passed with 1 passed after refreshing the production build.",
+    "Focused PM intake Playwright smoke suite passed with 4 passed.",
+    "Packet JSON parse passed with packet-json-ok.",
+    "git diff --check passed with line-ending normalization warnings only.",
+    "Scoped git diff --cached --check passed."
+  ],
+  "execution_result": "LOCAL_EXECUTOR_CLOSEOUT_INTAKE_IMPLEMENTED",
+  "delegation_status": "sidecar_read_only_scope_scout_completed",
+  "hosted_status": "local_current_only_until_PM_Lane_041A_041B_close_or_classify_hosted_parity",
+  "sql_permission": false,
+  "ai_mutation_authority": "not_admitted",
+  "created_at": "2026-05-15",
+  "updated_at": "2026-05-15"
+}
