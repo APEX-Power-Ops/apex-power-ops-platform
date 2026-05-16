@@ -4291,18 +4291,18 @@ export default function ProjectMinerIntakeWorkbenchPage() {
           </div>
         </details>
 
-        <section id="pm-operating-queue" aria-label="Local PM operating queue" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
-          <div className="status-row">
+        <details id="pm-operating-queue" open aria-label="Local PM operating queue" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
+          <summary className="status-row" style={{ cursor: 'pointer' }}>
             <h2 style={{ margin: 0 }}>Local PM Operating Queue</h2>
             <span className="status-pill status-awaiting-values">browser-local</span>
-          </div>
+          </summary>
           <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
             Local queue for today&apos;s intake work. It translates the checklist, local decision draft, and readiness gates into practical next moves without approving, persisting, importing, assigning, scheduling, changing status, or mutating production state.
           </p>
           <p style={{ margin: '0.45rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
             {formatCount(completeQueueCount)} complete / {formatCount(nextQueueCount)} next / {formatCount(blockedQueueCount)} blocked
           </p>
-          <div style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
+          <div aria-label="Local PM operating queue items" style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
             {operatingQueue.map((item) => (
               <article key={item.id} className="card" style={{ padding: '0.85rem', boxShadow: 'none' }}>
                 <div className="status-row" style={{ alignItems: 'start' }}>
@@ -4317,7 +4317,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
               </article>
             ))}
           </div>
-        </section>
+        </details>
 
           </details>
           <details open aria-label="Source and exception detail panels" style={{ display: 'grid', gap: '0.75rem' }}>
