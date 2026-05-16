@@ -1,0 +1,117 @@
+{
+  "packet_id": "2026-05-15-pm-lane-037",
+  "title": "Render-Authenticated PM Intake Mutation-Seam Redeploy Gate",
+  "objective": "Prepare the current bounded Render-authenticated executor packet for the Project Miner PM intake backend blocker: inspect existing service apex-platform-mutation-seam, redeploy current clean-main from apps/mutation-seam if stale, and prove the hosted PM intake read endpoints without adding product code, schema, auth, ingress, or live business-state mutation.",
+  "domain": "pm-domain",
+  "active_role": "Delegated Technical Repo Authority / Hosted PM Runtime Coordinator / Render Parity Packet Author",
+  "repo_paths": [
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/render.yaml",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/scripts/smoke_deployed_mutation_seam.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/scripts/smoke-pm-intake-hosted.mjs",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-036-hosted-pm-intake-parity-handoff.md"
+  ],
+  "dependencies": [
+    "2026-05-15-pm-lane-012",
+    "2026-05-15-pm-lane-035",
+    "2026-05-15-pm-lane-036"
+  ],
+  "current_evidence": [
+    "Workstation clean-main started this packet at 4eca3dcc6b8d93b687b187a31d58188179ca8f22 after PM Lane 036.",
+    "operations.apexpowerops.com serves the PM intake UI routes from Vercel deployment dpl_GhaHP7v2QPA8SKDC7t7yU5PzNfCt.",
+    "https://mutation-seam.apexpowerops.com/health returns 200.",
+    "Hosted mutation-seam OpenAPI omits /api/v1/reads/project-import-candidate and /api/v1/reads/project-import-admission-plan.",
+    "Hosted mutation-seam returns 404 for both PM intake read endpoints.",
+    "Hosted mutation-seam schedule projects, drivers, tracer, and variance reads still return 500.",
+    "Current workspace still has no Render auth/token/service metadata and no render CLI, so this packet is ready for a Render-authenticated external executor rather than local deployment."
+  ],
+  "orchestration_inputs": [
+    "PM Lane 036 closed as frontend hosted proof with Render backend parity blocked.",
+    "The previous PM Lane 012 packet remains useful precedent but targets the earlier PM workfront route and older commit; this packet refreshes the executor boundary for the current PM intake routes.",
+    "A separate read-only sidecar scout produced ops/agents/handoffs/2026-05-15-pm-lane-038-sidecar-import-approval-persistence-design-scout-handoff.md for the following approval-persistence product lane; this packet stays focused on Render parity."
+  ],
+  "required_executor_capability": [
+    "Authenticated Render dashboard, API, or equivalent control surface with access to existing service apex-platform-mutation-seam.",
+    "Ability to inspect existing Render service metadata and trigger a redeploy of the existing service from GitHub clean-main.",
+    "Ability to inspect non-secret env key presence and deployment logs without printing secret values."
+  ],
+  "allowed_runtime_actions": [
+    "Inspect existing Render service apex-platform-mutation-seam.",
+    "Confirm service repository is jasonlswenson-sys/apex-power-ops, branch is clean-main, working directory is apps/mutation-seam, and deployed commit is current origin/clean-main or later than the PM Lane 036 starting head 4eca3dcc6b8d93b687b187a31d58188179ca8f22.",
+    "Repair only existing deployment metadata needed to match apps/mutation-seam/render.yaml: working directory apps/mutation-seam, build command pip install -r requirements.txt, start command uvicorn app.main:app --host 0.0.0.0 --port $PORT, health path /health, and autoDeploy true.",
+    "Confirm non-secret env posture only: SEAM_STORE_BACKEND=postgres and key presence for SEAM_DATABASE_URL, JWT_SECRET, CORS_ORIGINS, APP_ENV, LOG_LEVEL, and PYTHON_VERSION, without printing secret values.",
+    "Trigger a redeploy of the existing service from current clean-main if the service is stale or metadata repair is needed.",
+    "Inspect Render logs only far enough to classify any remaining PM intake 404s or schedule 500s as stale deployment, DSN, schema, permission, runtime import, or other bounded deployment failure.",
+    "Run read-only public probes, deployed seam smoke with --include-pm-intake, and hosted PM intake smoke after redeploy."
+  ],
+  "not_allowed": [
+    "No product code changes in the Render executor lane.",
+    "No new endpoint beyond deploying current clean-main.",
+    "No SQL write or schema migration.",
+    "No live database seed, fixture replay, or business-state mutation.",
+    "No auth widening.",
+    "No ingress widening.",
+    "No new Render service admission.",
+    "No Vercel production promotion.",
+    "No Operations Visibility reopening.",
+    "No approval persistence.",
+    "No import mutation.",
+    "No autonomous AI PM assignment, schedule, issue, apparatus, or approval state mutation.",
+    "Do not print or commit secret values."
+  ],
+  "stop_conditions": [
+    "Stop if Render auth is unavailable.",
+    "Stop if repair would require creating a new service, changing DNS, changing auth, widening CORS beyond the existing operations and mutation-seam hosts, or changing public ingress.",
+    "Stop if the service is already on current clean-main and logs indicate a product-code bug rather than stale deployment metadata.",
+    "Stop if schedule 500s require SQL writes, schema migration, secret rotation, or live fixture replay.",
+    "Stop if hosted proof would require a live mutation test."
+  ],
+  "constrained_outputs": [
+    "Render service inspection summary with commit, branch, working directory, deployment metadata, and non-secret env key posture.",
+    "Redeploy evidence or truthful Render-auth blockage.",
+    "Public OpenAPI route verdict for both PM intake read paths.",
+    "Deployed seam smoke result with --include-pm-intake against https://mutation-seam.apexpowerops.com.",
+    "Hosted PM intake smoke result against https://operations.apexpowerops.com and https://mutation-seam.apexpowerops.com.",
+    "If still blocked, log-backed blocker classification without secret disclosure.",
+    "No product code, SQL, schema, auth, ingress, service-admission, Vercel promotion, approval persistence, import mutation, live mutation, Operations Visibility, or autonomous AI business-state widening."
+  ],
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/PROJECT_STATUS.md",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/DEPLOYMENT_VALIDATION.md",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/DEPLOYMENT_VALIDATION.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-15-pm-lane-037-render-authenticated-pm-intake-seam-redeploy-gate.json",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-037-render-authenticated-pm-intake-seam-redeploy-gate-handoff.md"
+  ],
+  "validation_steps": [
+    "git rev-parse HEAD",
+    "git ls-remote origin clean-main",
+    "Render service inspection for apex-platform-mutation-seam: repo, branch, working directory, deploy commit, build command, start command, health path, autoDeploy, and env key posture",
+    "Trigger existing-service redeploy from clean-main if the service is stale or metadata repair is needed",
+    "Probe https://mutation-seam.apexpowerops.com/health",
+    "Probe https://mutation-seam.apexpowerops.com/openapi.json and confirm /api/v1/reads/project-import-candidate plus /api/v1/reads/project-import-admission-plan are present",
+    "C:/APEX Platform/apex-power-ops-platform/.venv/Scripts/python.exe C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/scripts/smoke_deployed_mutation_seam.py --base-url https://mutation-seam.apexpowerops.com --include-pm-intake",
+    "corepack pnpm --dir C:/APEX Platform/apex-power-ops-platform --filter @apex/operations-web exec node scripts/smoke-pm-intake-hosted.mjs --operations-web-base-url https://operations.apexpowerops.com --mutation-seam-base-url https://mutation-seam.apexpowerops.com --timeout-ms 20000",
+    "With SEAM_STORE_BACKEND=memory, C:/APEX Platform/apex-power-ops-platform/.venv/Scripts/python.exe -m pytest C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests/test_project_import_candidate.py C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests/test_project_import_admission_plan.py -q"
+  ],
+  "authoring_validation_results": [
+    "py_compile passed for apps/mutation-seam/scripts/smoke_deployed_mutation_seam.py.",
+    "smoke_deployed_mutation_seam.py --help includes --include-pm-intake.",
+    "Hosted deployed seam smoke with --include-pm-intake executed and failed truthfully on current Render stale-backend evidence: schedule reads 500, PM intake OpenAPI paths missing, and both PM intake reads 404.",
+    "Focused local PM import candidate plus admission-plan tests passed: 4 passed.",
+    "Packet JSON parsed successfully.",
+    "Scoped git diff --check passed."
+  ],
+  "handoff_target": "Render-authenticated Codex or Claude Code executor",
+  "status": "ready",
+  "execution_result": "PENDING_RENDER_AUTHENTICATED_EXECUTION",
+  "delegation_status": "ready_for_external_executor",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/scripts/smoke_deployed_mutation_seam.py",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-037-render-authenticated-pm-intake-seam-redeploy-gate-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-038-sidecar-import-approval-persistence-design-scout-handoff.md"
+  ],
+  "sql_permission": false,
+  "sql_permission_note": "Packet 2026-05-15-pm-lane-037 authorizes Render deployment inspection/redeploy and read-only hosted proof only. It does not authorize SQL writes, schema migration, fixture replay, live data mutation, secret rotation, auth widening, ingress widening, new service admission, approval persistence, import mutation, schedule mutation, assignment mutation, status mutation, or autonomous AI business-state mutation.",
+  "ai_mutation_authority": "not_admitted",
+  "created_at": "2026-05-15",
+  "updated_at": "2026-05-15"
+}

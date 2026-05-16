@@ -243,11 +243,22 @@ PM Lane 036 promotes the PM intake UI routes to Vercel production and proves the
 
 This still does not admit Render deployment from this workspace, approval persistence, import mutation, SQL, schema, live data write, workbook macro execution, workbook writeback, service admission, auth/ingress widening, assignment, schedule, status, or autonomous AI business-state mutation.
 
+PM Lane 037 refreshes the Render-authenticated executor packet around the current PM intake backend blocker:
+
+1. `ops/agents/packets/draft/2026-05-15-pm-lane-037-render-authenticated-pm-intake-seam-redeploy-gate.json` is ready for a Render-authenticated executor.
+2. `ops/agents/handoffs/2026-05-15-pm-lane-037-render-authenticated-pm-intake-seam-redeploy-gate-handoff.md` contains the copy/paste executor prompt.
+3. `apps/mutation-seam/scripts/smoke_deployed_mutation_seam.py --include-pm-intake` now checks the PM intake OpenAPI paths and read-only route payloads after the existing deployed seam checks.
+4. The current local run against production still fails as expected: schedule reads return `500`, OpenAPI misses both PM intake paths, and both PM intake reads return `404`.
+
+This still does not admit Render deployment from the local Codex workspace, approval persistence, import mutation, SQL, schema, live data write, workbook macro execution, workbook writeback, service admission, auth/ingress widening, assignment, schedule, status, or autonomous AI business-state mutation.
+
+The next product lane after hosted PM intake reads are current should be approval-persistence design only. A read-only sidecar scout recommends a narrow PM approval record for the import candidate, preserving candidate id/version, source fingerprint, shape fingerprint, warning acceptance, no-go notes, reviewer notes, and decision state while keeping import rows blocked.
+
 ## Capability-Gap Register
 
 Current known gaps:
 
-1. Hosted Render mutation-seam parity remains a blocker for hosted PM live proof: the production seam is healthy but stale for the new PM intake reads, and schedule reads still return `500`.
+1. Hosted Render mutation-seam parity remains a blocker for hosted PM live proof: PM Lane 037 is ready for a Render-authenticated executor, the production seam is healthy but stale for the new PM intake reads, and schedule reads still return `500`.
 2. Excel MCP is useful for real Excel inspection, but not admitted as production runtime.
 3. A durable AI-to-AI task queue is not admitted; packets and handoffs remain the relay surface.
 4. The project import mutation is not admitted; import-candidate review must come first.
@@ -255,6 +266,7 @@ Current known gaps:
 6. The local PM review route now supports export and local draft notes, but server-side PM note persistence is not admitted.
 7. The import-admission plan defines the future write gate, but approval persistence and import mutation are still not admitted.
 8. Render auth/token/service metadata are not available in the current Codex workspace; this must be resolved before claiming hosted backend parity.
+9. Approval persistence needs a small governed storage decision before implementation; it should not be smuggled into audit log alone and must not import project rows.
 
 Required response to new gaps:
 

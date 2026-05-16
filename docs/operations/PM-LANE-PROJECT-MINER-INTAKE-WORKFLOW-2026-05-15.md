@@ -200,6 +200,17 @@ The matching Render mutation-seam routes are not yet hosted-current:
 
 This means the user-facing pages are visible, but hosted live intake data remains blocked until a Render-authenticated mutation-seam redeploy and log inspection closes the backend parity gap.
 
+PM Lane 037 refreshes the Render-authenticated executor packet for this exact blocker and adds backend-only smoke coverage:
+
+```powershell
+& "C:/APEX Platform/apex-power-ops-platform/.venv/Scripts/python.exe" `
+  "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/scripts/smoke_deployed_mutation_seam.py" `
+  --base-url "https://mutation-seam.apexpowerops.com" `
+  --include-pm-intake
+```
+
+That smoke should remain red until Render serves the current mutation-seam code. It checks the existing health, approval, and schedule reads plus the PM intake OpenAPI paths and read-only payload shape.
+
 ## Environment Overrides
 
 Set this when using a different planning folder:
@@ -298,8 +309,8 @@ The near-term target is not a generic PM system demo. The target is a field-usab
 
 Current priority order:
 
-1. Render-authenticated mutation-seam parity for the new PM intake read endpoints,
-2. approval-persistence design for the reviewed import candidate,
+1. Render-authenticated mutation-seam parity for the new PM intake read endpoints through PM Lane 037,
+2. approval-persistence design for the reviewed import candidate after hosted reads are current,
 3. narrow idempotent import mutation only after human approval and explicit packet admission,
 4. PM, Lead, and Field pilot on a bounded Temp Power slice.
 
@@ -321,6 +332,9 @@ Review source freshness, warning filters, exported candidate JSON, and local PM 
 
 Level 2B - Import Admission Planning:
 Review the approval contract, idempotency key, diff checks, target rows, and no-go checks that a later import packet must satisfy.
+
+Level 2C - Approval Persistence Design:
+Persist only the PM approval decision, candidate fingerprints, warning acceptance, no-go override notes, and reviewer notes for the import candidate. This is not an import mutation and must not write project, workpackage, task, or apparatus rows.
 
 Level 3 - Resource Context:
 Read equipment inventory and technician capability rows so PM can understand whether the project can be staffed with available people and equipment.

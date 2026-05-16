@@ -183,6 +183,18 @@ The current hosted-proof tranche is:
 
 It promotes `/pm-review/import-candidate` and `/pm-review/import-admission-plan` to `https://operations.apexpowerops.com`, adds repeatable hosted smoke coverage, and records the remaining blocker truthfully: Render mutation-seam is healthy but stale for the new PM intake reads, and Render-authenticated redeploy/log inspection is required before hosted PM intake live-data parity can be claimed.
 
+The current Render-auth packet is:
+
+`Render-Authenticated PM Intake Mutation-Seam Redeploy Gate`
+
+PM Lane 037 refreshes the older Render-authenticated packet around the current PM intake routes. It adds backend-only `--include-pm-intake` smoke coverage and a copy/paste executor prompt for a Render-authenticated Codex or Claude Code lane. This keeps Jason out of the relay loop while making the missing credential/tool gap explicit.
+
+The next product-design tranche is:
+
+`Import Candidate Approval Persistence Design`
+
+The sidecar recommendation is to persist only the PM approval decision, candidate fingerprints, warning acceptance, no-go override notes, and reviewer notes. It must not import project, workpackage, task, or apparatus rows, and it should wait until hosted intake reads are current or the Render blocker is precisely classified.
+
 The success standard is not just technical correctness. The candidate must reduce Jason's review burden by showing:
 
 1. what the system thinks the project is,
