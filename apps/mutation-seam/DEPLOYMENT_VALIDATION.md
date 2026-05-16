@@ -93,6 +93,9 @@ Current public-host status on 2026-05-15:
 5. the smallest remediation path is deployment-first: inspect the Render service `apex-platform-mutation-seam`, confirm it deploys `clean-main` at `18b16fe0e2fd4a7dbaa57652c177d4327b51b1b5` or later from `apps/mutation-seam`, redeploy the current head, then use Render logs to distinguish any remaining schedule DSN/schema/permission failure.
 6. without Render credentials, this workspace can run read-only public probes and GitHub smoke workflows, but it cannot inspect Render deploy commit, trigger a Render redeploy, view Render logs, or confirm hosted environment variables.
 7. PM Lane 012 is authored as the bounded Render-authenticated redeploy/log-inspection and live-data proof gate; it does not authorize product code changes, SQL writes, schema migrations, auth or ingress widening, or live PM business-state mutation.
+8. PM Lane 041 read-only hosted proof after the PM intake route expansion shows OpenAPI missing all four current PM intake reads: `/api/v1/reads/project-import-candidate`, `/api/v1/reads/project-import-admission-plan`, `/api/v1/reads/project-import-approval-contract`, and `/api/v1/reads/project-import-approval-storage-plan`.
+9. PM Lane 041 deployed smoke with `--include-pm-intake` shows those four PM intake reads returning framework `404` while schedule projects, drivers, tracer, and variance still return `500`.
+10. PM Lane 041 local capability check found no Render CLI and no `RENDER_*` environment names, so the next mutation-seam hosted action remains existing-service redeploy and blocker classification by a Render-authenticated executor.
 
 ## Operations Web Ingress Contract
 

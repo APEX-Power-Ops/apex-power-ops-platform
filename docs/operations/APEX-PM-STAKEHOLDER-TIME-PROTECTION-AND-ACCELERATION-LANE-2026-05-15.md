@@ -215,6 +215,14 @@ PM Lane 040 implements the no-write UI version of the approval contract and stor
 
 The sidecar recommendation was accepted in bounded form again: this route is read-only and has no forms, local drafts, approval controls, persistence controls, import controls, or production write authority.
 
+The current hosted-parity tranche is:
+
+`Hosted PM Intake Parity Refresh And Blocker Classification`
+
+PM Lane 041 refreshes the hosted proof boundary after Lane 040. Hosted operations-web still serves import-candidate and import-admission-plan, but does not yet serve `/pm-review/import-approval-readiness`. Hosted mutation-seam is healthy, but OpenAPI is missing all four current PM intake reads, those reads return `404`, and schedule reads still return `500`.
+
+The sidecar recommendation was accepted in bounded form: do not begin approval persistence schema or adapter work yet. First execute or delegate the hosted parity refresh through two strict executor lanes: Vercel-authenticated existing operations-web promotion and Render-authenticated existing mutation-seam redeploy/classification.
+
 The next persistence tranche is:
 
 `Import Candidate Approval Persistence Schema And Adapter Admission`

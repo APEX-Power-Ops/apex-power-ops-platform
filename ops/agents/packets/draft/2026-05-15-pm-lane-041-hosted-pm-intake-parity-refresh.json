@@ -1,0 +1,133 @@
+{
+  "packet_id": "2026-05-15-pm-lane-041",
+  "title": "Hosted PM Intake Parity Refresh And Blocker Classification",
+  "objective": "Refresh the hosted PM intake parity lane after PM Lane 040 by proving or precisely classifying the split between operations-web, Render mutation-seam, and the current PM intake reads without admitting schema, approval persistence, import mutation, or live business-state writes.",
+  "domain": "pm-domain",
+  "active_role": "Delegated Technical Repo Authority / Hosted PM Runtime Coordinator / Dual-Lane Executor Packet Author",
+  "repo_paths": [
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/scripts/smoke-hosted-routes.mjs",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/scripts/smoke-pm-intake-hosted.mjs",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/scripts/smoke_deployed_mutation_seam.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/DEPLOYMENT_VALIDATION.md",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/DEPLOYMENT_VALIDATION.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-040-import-approval-readiness-ui-handoff.md"
+  ],
+  "dependencies": [
+    "2026-05-15-pm-lane-036",
+    "2026-05-15-pm-lane-037",
+    "2026-05-15-pm-lane-038",
+    "2026-05-15-pm-lane-039",
+    "2026-05-15-pm-lane-040"
+  ],
+  "current_evidence": [
+    "Local clean-main is at ee214d9559ed5d0ebc2fa4311def407a3711c390 after PM Lane 040.",
+    "PM Lane 040 added /pm-review/import-approval-readiness locally and pushed it to origin/clean-main.",
+    "Hosted PM intake smoke after PM Lane 040 shows operations-web import-candidate and import-admission-plan routes passing, but /pm-review/import-approval-readiness returning 404 on https://operations.apexpowerops.com.",
+    "Hosted mutation-seam health returns 200.",
+    "Hosted mutation-seam OpenAPI is missing all current PM intake read paths: project-import-candidate, project-import-admission-plan, project-import-approval-contract, and project-import-approval-storage-plan.",
+    "Hosted mutation-seam returns 404 for all current PM intake reads.",
+    "Hosted mutation-seam schedule projects, drivers, tracer, and variance reads still return 500.",
+    "The current workspace has no render CLI, no Render env token metadata, no vercel CLI binary, no Vercel env token metadata, and pnpm dlx vercel whoami timed out waiting for authentication."
+  ],
+  "dual_lane_plan": [
+    {
+      "lane": "041A",
+      "name": "Vercel-authenticated operations-web promotion",
+      "target": "existing operations.apexpowerops.com operations-web project and alias",
+      "goal": "Promote current clean-main so /pm-review/import-approval-readiness is hosted, then prove hosted route smoke.",
+      "allowed": [
+        "Inspect the existing Vercel project serving https://operations.apexpowerops.com.",
+        "Deploy or promote current origin/clean-main for the existing operations-web project only.",
+        "Confirm the build includes /pm-review/import-approval-readiness.",
+        "Run hosted route smoke and PM intake hosted smoke."
+      ],
+      "not_allowed": [
+        "No new Vercel project.",
+        "No DNS change.",
+        "No auth or preview-protection widening.",
+        "No backend code change.",
+        "No mutation, schema, or live data write."
+      ]
+    },
+    {
+      "lane": "041B",
+      "name": "Render-authenticated mutation-seam redeploy and blocker classification",
+      "target": "existing Render service apex-platform-mutation-seam",
+      "goal": "Redeploy current clean-main or classify why hosted PM intake reads remain stale/missing.",
+      "allowed": [
+        "Inspect the existing Render service apex-platform-mutation-seam.",
+        "Confirm repo, branch, working directory, deploy commit, build command, start command, health path, autoDeploy, and non-secret env key presence.",
+        "Trigger a redeploy of the existing service from current clean-main if stale or metadata repair is needed.",
+        "Inspect logs only far enough to classify remaining PM intake 404s or schedule 500s.",
+        "Run deployed mutation-seam smoke with --include-pm-intake and hosted PM intake smoke."
+      ],
+      "not_allowed": [
+        "No new Render service.",
+        "No DNS change.",
+        "No auth or ingress widening.",
+        "No secret rotation.",
+        "No SQL write.",
+        "No schema migration.",
+        "No fixture replay.",
+        "No approval persistence.",
+        "No import mutation.",
+        "No live business-state mutation."
+      ]
+    }
+  ],
+  "allowed_local_actions": [
+    "Run read-only hosted smoke probes against operations-web and mutation-seam.",
+    "Author or refresh packet, handoff, deployment-validation, and status surfaces.",
+    "Use a read-only sidecar scout to verify next-lane recommendation.",
+    "Commit and push the packet/handoff/documentation refresh.",
+    "Restore Olares host parity after publication."
+  ],
+  "not_allowed": [
+    "No local Vercel production promotion without authenticated Vercel capability.",
+    "No local Render redeploy without authenticated Render capability.",
+    "No product code changes.",
+    "No backend endpoint changes.",
+    "No approval persistence.",
+    "No import mutation.",
+    "No schema migration.",
+    "No SQL write.",
+    "No live database write.",
+    "No workbook macro execution.",
+    "No workbook writeback.",
+    "No service admission.",
+    "No auth or ingress widening.",
+    "No assignment, schedule, status, apparatus, issue, task, workpackage, project, or autonomous AI business-state mutation."
+  ],
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/PROJECT_STATUS.md",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/DEPLOYMENT_VALIDATION.md",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/DEPLOYMENT_VALIDATION.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/APEX-PM-TEMP-POWER-DELIVERY-AND-ORCHESTRATION-PLAN-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/APEX-PM-STAKEHOLDER-TIME-PROTECTION-AND-ACCELERATION-LANE-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-15-pm-lane-041-hosted-pm-intake-parity-refresh.json",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-041-hosted-pm-intake-parity-refresh-handoff.md"
+  ],
+  "validation_steps": [
+    "corepack pnpm --dir apps/operations-web smoke:pm-intake-hosted",
+    "C:/APEX Platform/apex-power-ops-platform/.venv/Scripts/python.exe C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/scripts/smoke_deployed_mutation_seam.py --base-url https://mutation-seam.apexpowerops.com --include-pm-intake",
+    "node --check C:/APEX Platform/apex-power-ops-platform/apps/operations-web/scripts/smoke-hosted-routes.mjs",
+    "node --check C:/APEX Platform/apex-power-ops-platform/apps/operations-web/scripts/smoke-pm-intake-hosted.mjs",
+    "C:/APEX Platform/apex-power-ops-platform/.venv/Scripts/python.exe -c \"import json; json.load(open(r'C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-15-pm-lane-041-hosted-pm-intake-parity-refresh.json', encoding='utf-8')); print('packet-json-ok')\"",
+    "git diff --check for the Lane 041 file set"
+  ],
+  "validation_results": [
+    "Read-only hosted PM intake smoke failed truthfully with six failures: /pm-review/import-approval-readiness returned 404, OpenAPI is missing current PM intake read paths, and all four PM intake reads returned 404.",
+    "Read-only deployed mutation-seam smoke with --include-pm-intake failed truthfully with schedule reads returning 500, OpenAPI missing all four PM intake read paths, and all four PM intake reads returning 404.",
+    "Local capability check found no Render CLI, no RENDER_* env names, no Vercel CLI binary, and no VERCEL_* env names.",
+    "pnpm dlx vercel whoami timed out waiting for authentication and was stopped.",
+    "Read-only sidecar scout recommended hosted parity refresh and blocker classification as the next bounded lane, not approval persistence."
+  ],
+  "execution_result": "HOSTED_PARITY_REFRESH_PACKET_AUTHORED",
+  "delegation_status": "ready_for_vercel_and_render_authenticated_executors",
+  "sql_permission": false,
+  "sql_permission_note": "Packet 2026-05-15-pm-lane-041 authorizes read-only hosted probes, packet/handoff refresh, existing Vercel operations-web promotion by an authenticated executor, and existing Render mutation-seam redeploy/classification by an authenticated executor. It does not authorize SQL writes, schema migration, fixture replay, live data mutation, secret rotation, auth widening, ingress widening, new service admission, approval persistence, import mutation, schedule mutation, assignment mutation, status mutation, or autonomous AI business-state mutation.",
+  "ai_mutation_authority": "not_admitted",
+  "created_at": "2026-05-15",
+  "updated_at": "2026-05-15"
+}

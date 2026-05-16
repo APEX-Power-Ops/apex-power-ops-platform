@@ -305,6 +305,23 @@ After PM Lane 039, it also checks:
 
 After PM Lane 040, operations-web hosted route smoke and PM-intake hosted smoke also include `/pm-review/import-approval-readiness`; the mutation-seam side of that hosted smoke still depends on Render serving the current PM intake reads.
 
+PM Lane 041 refreshes the hosted parity packet around the current split:
+
+1. hosted operations-web still serves `/pm-review/import-candidate`,
+2. hosted operations-web still serves `/pm-review/import-admission-plan`,
+3. hosted operations-web does not yet serve `/pm-review/import-approval-readiness`,
+4. hosted mutation-seam health is reachable,
+5. hosted mutation-seam OpenAPI is missing all four current PM intake read paths,
+6. hosted mutation-seam returns `404` for all four current PM intake reads,
+7. hosted schedule reads still return `500`.
+
+Lane 041 therefore splits hosted work into two bounded executor lanes:
+
+1. Vercel-authenticated existing operations-web promotion for the Lane 040 UI route,
+2. Render-authenticated existing mutation-seam redeploy and blocker classification for the PM intake reads.
+
+No approval persistence, import mutation, schema migration, SQL write, service admission, auth widening, ingress widening, fixture replay, or live business-state mutation is admitted by this parity lane.
+
 ## Environment Overrides
 
 Set this when using a different planning folder:
@@ -403,9 +420,9 @@ The near-term target is not a generic PM system demo. The target is a field-usab
 
 Current priority order:
 
-1. Render-authenticated mutation-seam parity for the new PM intake read endpoints through PM Lane 037,
-2. PM Lane 038 approval-contract review while keeping persistence unadmitted,
-3. PM Lane 039 storage-plan review while keeping schema and persistence unadmitted,
+1. hosted parity refresh and blocker classification through PM Lane 041,
+2. Vercel-authenticated promotion for the Lane 040 UI route if auto-deploy remains stale,
+3. Render-authenticated mutation-seam parity for the new PM intake read endpoints through PM Lane 041 or PM Lane 037,
 4. approval-persistence mutation only after hosted reads are current and explicit packet admission exists,
 5. narrow idempotent import mutation only after human approval and explicit packet admission,
 6. PM, Lead, and Field pilot on a bounded Temp Power slice.

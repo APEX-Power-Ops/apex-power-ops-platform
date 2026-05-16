@@ -297,11 +297,22 @@ Validation passed operations-web typecheck, operations-web build, and focused PM
 
 This still does not admit approval persistence, import mutation, SQL, schema, live data write, workbook macro execution, workbook writeback, Render deployment, Vercel promotion, service admission, auth/ingress widening, assignment, schedule, status, or autonomous AI business-state mutation.
 
+PM Lane 041 authors the hosted parity refresh and blocker-classification lane after the approval-readiness UI:
+
+1. current `origin/clean-main` includes the Lane 040 route and read-only PM intake stack,
+2. hosted operations-web still serves import-candidate and import-admission-plan,
+3. hosted operations-web does not yet serve `/pm-review/import-approval-readiness`,
+4. hosted mutation-seam is healthy but stale for all four PM intake reads,
+5. hosted schedule reads still return `500`,
+6. this workspace lacks authenticated Render and Vercel deployment capability.
+
+Lane 041 splits the next hosted work into two authenticated executor lanes: Vercel operations-web promotion for the Lane 040 route, and Render mutation-seam redeploy/classification for the current PM intake reads. Both lanes are existing-service only and do not admit SQL, schema, approval persistence, import mutation, auth or ingress widening, fixture replay, or live business-state mutation.
+
 ## Capability-Gap Register
 
 Current known gaps:
 
-1. Hosted Render mutation-seam parity remains a blocker for hosted PM live proof: PM Lane 037 is ready for a Render-authenticated executor, the production seam is healthy but stale for the new PM intake reads, and schedule reads still return `500`.
+1. Hosted Render mutation-seam parity remains a blocker for hosted PM live proof: PM Lane 041 and PM Lane 037 are ready for a Render-authenticated executor, the production seam is healthy but stale for the new PM intake reads, and schedule reads still return `500`.
 2. Excel MCP is useful for real Excel inspection, but not admitted as production runtime.
 3. A durable AI-to-AI task queue is not admitted; packets and handoffs remain the relay surface.
 4. The project import mutation is not admitted; import-candidate review must come first.
@@ -312,6 +323,7 @@ Current known gaps:
 9. Approval persistence needs a later dedicated schema/adapter admission before implementation; it should not be smuggled into audit log alone and must not import project rows.
 10. The approval-contract and approval-storage-plan read endpoints are local-current only until Render serves the current mutation-seam code.
 11. The approval-readiness UI route is local-current until the next operations-web production promotion.
+12. This workspace currently lacks authenticated hosted deployment capability for both Render and Vercel; hosted repair requires an authenticated executor or installed/authorized deployment tool.
 
 Required response to new gaps:
 
