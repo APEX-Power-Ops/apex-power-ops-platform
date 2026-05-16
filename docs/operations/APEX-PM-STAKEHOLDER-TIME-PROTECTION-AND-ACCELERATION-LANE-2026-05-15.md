@@ -611,6 +611,8 @@ PM Lane 113 wraps the existing Local PM Intake Daily Review Script panel in a de
 
 PM Lane 114 wraps the existing Local PM Intake Start Here panel in a default-open native disclosure control. Jason can fold the top-level orientation list after reviewing it, while the panel stays under Daily Action Panels after `#pm-daily-review-script`; the `#pm-start-here` anchor, heading, browser-local pill, explanatory no-authority wording, five derived start-here cards, card order, hrefs, dynamic text, status pills, quick-jump target, reads, and authority wording remain unchanged.
 
+PM Lane 115 wraps the existing Local PM Intake Output Selector panel in a default-open native disclosure control. Jason can fold the local output chooser after reviewing it, while the panel stays under Daily Action Panels after `#pm-start-here` and before `#pm-handoff-guide`; the `#pm-output-selector` anchor, heading, browser-local pill, explanatory no-authority wording, five derived output-selector cards, card order, hrefs, dynamic text, status pills, quick-jump target, reads, and authority wording remain unchanged.
+
 This creates no approval record, SQL, schema migration, backend route, import mutation, issue, task, assignment, schedule, status, hosted proof, live task, work authorization, field release, work order, durable field record, production tracking write, product code, deployment, service, DNS, auth, ingress, secret, local storage key, new route, new export action, new export artifact, export contract widening, or production mutation.
 
 The next persistence tranche is:
