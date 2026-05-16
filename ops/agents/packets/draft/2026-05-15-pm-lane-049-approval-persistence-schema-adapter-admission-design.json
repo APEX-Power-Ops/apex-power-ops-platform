@@ -1,0 +1,133 @@
+{
+  "packet_id": "2026-05-15-pm-lane-049",
+  "title": "Import Candidate Approval Persistence Schema And Adapter Admission - Design Only",
+  "objective": "Admit the design contract for the future Project Miner import-candidate approval persistence schema and explicit adapter, using the PM Lane 048 approval preview JSON as the input contract, while still not running SQL, creating schema, persisting approval, importing rows, deploying, or touching live services.",
+  "domain": "pm-domain",
+  "active_role": "Delegated Technical Repo Authority / PM Product Coordinator / Approval Persistence Admission Designer",
+  "dependencies": [
+    "2026-05-15-pm-lane-039",
+    "2026-05-15-pm-lane-048",
+    "2026-05-15-pm-lane-041A",
+    "2026-05-15-pm-lane-041B"
+  ],
+  "admission_status": "design_only_not_admitted_for_execution",
+  "input_contract": {
+    "source": "PM Lane 048 approval packet preview JSON",
+    "preview_kind": "pm_import_candidate_approval_packet_preview",
+    "preview_version": "pm_import_candidate_approval_packet_preview_v1",
+    "input_authority": "browser_local_review_context_only_not_canonical_approval"
+  },
+  "target_storage": {
+    "schema": "seam",
+    "table": "seam.pm_import_candidate_approvals",
+    "entity_type": "pm_import_candidate_approval",
+    "future_route": "/api/v1/mutations/project-import-approvals",
+    "write_model": "insert_once_with_strict_idempotent_replay",
+    "runtime_policy": "append_only_no_update_delete_runtime_path"
+  },
+  "target_columns": [
+    {"name": "approval_record_id", "type": "text", "required": true, "constraint": "primary key"},
+    {"name": "candidate_id", "type": "text", "required": true},
+    {"name": "candidate_version", "type": "text", "required": true},
+    {"name": "source_stat_fingerprint", "type": "text", "required": true},
+    {"name": "candidate_shape_fingerprint", "type": "text", "required": true},
+    {"name": "idempotency_key", "type": "text", "required": true},
+    {"name": "decision", "type": "text", "required": true, "allowed_values": ["approve_for_import_packet", "return_for_revision", "reject_candidate"]},
+    {"name": "approved_by_actor_id", "type": "text", "required": true},
+    {"name": "approved_at_utc", "type": "timestamptz", "required": true},
+    {"name": "accepted_warning_codes", "type": "jsonb", "required": true, "shape": "json_array"},
+    {"name": "accepted_no_go_overrides", "type": "jsonb", "required": true, "shape": "json_array"},
+    {"name": "review_notes", "type": "text", "required": true},
+    {"name": "approval_payload", "type": "jsonb", "required": true},
+    {"name": "validation_result", "type": "jsonb", "required": true},
+    {"name": "created_at", "type": "timestamptz", "required": true, "default": "now()"}
+  ],
+  "constraints": [
+    "approval_record_id is the primary key and is deterministic from candidate identity plus idempotency key.",
+    "candidate identity fields are non-null and must match the current approval contract.",
+    "decision must be one of approve_for_import_packet, return_for_revision, or reject_candidate.",
+    "accepted_warning_codes must be a JSON array matching the current candidate warning-code set.",
+    "accepted_no_go_overrides must be a JSON array containing only human-acceptance check ids.",
+    "review_notes must be non-empty.",
+    "canonical approval rows are append-only; changed source or candidate shape produces a new record.",
+    "idempotent replay is allowed only when approval_record_id and normalized approval_payload match the stored row."
+  ],
+  "adapter_boundary": [
+    "Implement a dedicated approval adapter or repository only in a later execution packet.",
+    "Do not route approval persistence through generic mutation_pipeline.py apply/upsert behavior.",
+    "Validate with validate_project_import_approval_payload before insert.",
+    "Use authenticated PM actor context for approved_by_actor_id and server time for approved_at_utc.",
+    "Write only one canonical approval row and a later audit event after insert succeeds.",
+    "Reject direct Supabase writes from UI, Excel, browser-local storage, or generic PgDict upsert.",
+    "Do not create or update project, workpackage, task, apparatus, issue, assignment, schedule, status, workbook, or import rows."
+  ],
+  "future_validation_requirements": [
+    "Validate a saved/example Lane 048 approval preview payload against the expected JSON shape.",
+    "Add validator tests for stale candidate id, candidate version, source fingerprint, candidate shape fingerprint, idempotency key, warning-code mismatch, non-overridable no-go acknowledgement, missing actor, missing timestamp, empty review notes, and unsupported decision.",
+    "Add adapter contract tests using memory or fake store only for insert-once behavior, strict replay, replay mismatch rejection, and no generic mutation_pipeline.py call.",
+    "Review schema DDL as text before execution; do not execute SQL in this design-only lane.",
+    "Add readback design tests proving current, stale, returned, rejected, and approved status classification without audit-log-only inference."
+  ],
+  "blockers_before_execution": [
+    "Hosted PM intake parity must be green or the remaining hosted blocker must be precisely accepted and classified.",
+    "No live schema authority has been granted.",
+    "No approval persistence authority has been granted.",
+    "No import mutation authority has been granted.",
+    "PM Lane 048 preview JSON is browser-local context, not a canonical approval record."
+  ],
+  "allowed_actions": [
+    "Author design-only packet and handoff.",
+    "Document target table, columns, constraints, adapter boundary, validation, evidence, blockers, and guardrails.",
+    "Use one read-only sidecar scout for design boundary review.",
+    "Validate packet JSON and diff hygiene."
+  ],
+  "not_allowed": [
+    "No SQL file creation.",
+    "No SQL execution.",
+    "No schema migration.",
+    "No Supabase write.",
+    "No backend endpoint change.",
+    "No adapter implementation.",
+    "No mutation_pipeline.py admission.",
+    "No approval persistence.",
+    "No import mutation.",
+    "No live service call.",
+    "No Render redeploy.",
+    "No Vercel promotion.",
+    "No service creation.",
+    "No DNS, auth, ingress, or secret change.",
+    "No fixture replay.",
+    "No workbook macro execution.",
+    "No workbook writeback.",
+    "No assignment mutation.",
+    "No schedule mutation.",
+    "No status mutation.",
+    "No autonomous AI business-state mutation."
+  ],
+  "changed_files": [
+    "C:/APEX Platform/apex-power-ops-platform/PROJECT_STATUS.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/APEX-PM-TEMP-POWER-DELIVERY-AND-ORCHESTRATION-PLAN-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/APEX-PM-STAKEHOLDER-TIME-PROTECTION-AND-ACCELERATION-LANE-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-15-pm-lane-049-approval-persistence-schema-adapter-admission-design.json",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-049-approval-persistence-schema-adapter-admission-design-handoff.md"
+  ],
+  "validation_steps": [
+    "C:/APEX Platform/apex-power-ops-platform/.venv/Scripts/python.exe -c \"import json; json.load(open(r'C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-15-pm-lane-049-approval-persistence-schema-adapter-admission-design.json', encoding='utf-8')); print('packet-json-ok')\"",
+    "git diff --check",
+    "git diff --cached --check"
+  ],
+  "validation_results": [
+    "Packet JSON parse passed with packet-json-ok.",
+    "git diff --check passed with line-ending normalization warnings only.",
+    "Scoped git diff --cached --check passed after staging only Lane 049 files.",
+    "No SQL, schema migration, adapter implementation, backend route, live service call, approval persistence, or import mutation was performed."
+  ],
+  "execution_result": "DESIGN_ONLY_APPROVAL_PERSISTENCE_ADMISSION_PACKET_AUTHORED",
+  "delegation_status": "sidecar_read_only_scope_scout_completed",
+  "hosted_status": "execution blocked until hosted PM intake parity is green or blocker is precisely classified",
+  "sql_permission": false,
+  "ai_mutation_authority": "not_admitted",
+  "created_at": "2026-05-15",
+  "updated_at": "2026-05-15"
+}

@@ -363,6 +363,8 @@ PM Lane 047 adds a browser-local `Local Approval Decision Draft` to `/pm-review/
 
 PM Lane 048 adds a browser-only `Export Approval Preview JSON` action to `/pm-review/import-intake`. The preview is generated from the four already-loaded read-only intake reads, the local checklist, and the local approval-decision draft. It gives a later admitted approval-persistence packet structured candidate, contract, storage, review-evidence, and boundary context without approving, persisting, importing, assigning, scheduling, changing status, or mutating production state.
 
+PM Lane 049 authors the design-only approval persistence schema and adapter admission packet. It defines the future `seam.pm_import_candidate_approvals` table, explicit insert-only adapter boundary, validation evidence, readback classification, hosted-parity blockers, and guardrails using the PM Lane 048 preview JSON as the input contract. It does not add SQL, run a migration, implement a backend route, persist approval, import rows, assign work, schedule work, change status, or mutate production state.
+
 ## Environment Overrides
 
 Set this when using a different planning folder:

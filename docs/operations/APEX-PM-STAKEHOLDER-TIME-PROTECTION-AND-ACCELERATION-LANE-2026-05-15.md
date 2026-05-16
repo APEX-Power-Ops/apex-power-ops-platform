@@ -265,11 +265,17 @@ The current local packet-prep tranche is:
 
 PM Lane 048 adds a browser-only `Export Approval Preview JSON` action to `/pm-review/import-intake`. It combines the current candidate identity, approval contract, storage plan, local review checklist, local approval-decision draft, and future packet boundary into one structured artifact. This gives the later admitted approval-persistence lane a precise input shape while keeping Jason out of the relay loop and still creating no approval record, persistence, import, assignment, schedule, status, hosted proof, or production mutation.
 
+The current design-admission tranche is:
+
+`Import Candidate Approval Persistence Schema And Adapter Admission - Design Only`
+
+PM Lane 049 authors the design-only packet and handoff for the future `seam.pm_import_candidate_approvals` table and explicit insert-only approval adapter. It uses the Lane 048 preview JSON shape as the input contract and records columns, constraints, adapter validation, evidence requirements, hosted-parity blockers, and guardrails. This reduces later executor ambiguity while still creating no SQL file, schema migration, backend route, approval record, import mutation, assignment, schedule, status, hosted proof, or production mutation.
+
 The next persistence tranche is:
 
-`Import Candidate Approval Persistence Schema And Adapter Admission`
+`Import Candidate Approval Persistence Schema And Adapter Implementation`
 
-That future tranche should add the dedicated schema and adapter only after hosted reads are current or the Render blocker is precisely classified. It must still avoid project, workpackage, task, apparatus, assignment, schedule, and status writes.
+That future tranche should add the dedicated schema and adapter only after hosted reads are current or the Render blocker is precisely classified and the Lane 049 admission packet is explicitly accepted. It must still avoid project, workpackage, task, apparatus, assignment, schedule, and status writes.
 
 The success standard is not just technical correctness. The candidate must reduce Jason's review burden by showing:
 

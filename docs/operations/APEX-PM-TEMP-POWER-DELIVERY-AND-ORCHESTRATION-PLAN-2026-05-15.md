@@ -331,6 +331,8 @@ PM Lane 047 adds a browser-local approval-decision draft to `/pm-review/import-i
 
 PM Lane 048 adds a browser-only approval packet preview JSON export to `/pm-review/import-intake`. The preview combines current candidate identity, approval contract, storage plan, local review checklist, local decision draft, and future packet boundary into one structured artifact for the later admitted persistence lane while still avoiding hosted proof, backend routes, approval persistence, import mutation, assignment, schedule, status, or production writes.
 
+PM Lane 049 authors the design-only approval persistence schema and adapter admission packet. It turns the Lane 048 preview JSON shape into a later-executor contract for the dedicated `seam.pm_import_candidate_approvals` table and insert-only approval adapter, while still avoiding SQL execution, schema migration, backend routes, approval persistence, import mutation, assignment, schedule, status, or production writes.
+
 ## Capability-Gap Register
 
 Current known gaps:
