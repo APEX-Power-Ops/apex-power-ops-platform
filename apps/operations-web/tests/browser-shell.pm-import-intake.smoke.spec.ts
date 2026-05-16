@@ -1,4 +1,42 @@
-import { expect, test } from '@playwright/test'
+import { expect, type Page, test } from '@playwright/test'
+
+const guardedPhrase = (...parts: string[]) => new RegExp(parts.join('[\\s/-]+'), 'i')
+
+const impliedAuthorityControlNames = [
+  /^Approve$/i,
+  /^Persist$/i,
+  /^Submit$/i,
+  /^Assign$/i,
+  /^Schedule$/i,
+  /^Import$/i,
+  /change status/i,
+  /create task/i,
+  /create issue/i,
+  guardedPhrase('field', 'release'),
+  guardedPhrase('ready', 'for', 'field'),
+  guardedPhrase('field', 'ready'),
+  guardedPhrase('work', 'order'),
+  guardedPhrase('hosted', 'parity', 'proven'),
+  guardedPhrase('production', 'ready'),
+]
+
+const unsafeAuthorityTextPhrases = [
+  guardedPhrase('hosted', 'parity', 'proven'),
+  guardedPhrase('packet', 'admitted'),
+  guardedPhrase('ready', 'for', 'execution'),
+  guardedPhrase('ready', 'for', 'field'),
+  guardedPhrase('field', 'ready'),
+  guardedPhrase('field', 'log', 'of', 'record'),
+  guardedPhrase('go', 'no', 'go', 'passed'),
+  guardedPhrase('production', 'ready'),
+]
+
+async function expectNoImpliedAuthorityControls(page: Page) {
+  for (const name of impliedAuthorityControlNames) {
+    await expect(page.getByRole('button', { name })).toHaveCount(0)
+    await expect(page.getByRole('link', { name })).toHaveCount(0)
+  }
+}
 
 test('pm import intake workbench renders consolidated read-only Project Miner gates', async ({ page }) => {
   const readCalls = {
@@ -252,6 +290,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(outputActionRail.getByLabel('Field prep output actions').getByRole('button', { name: 'Export Field Prep Conversation Agenda' })).toBeVisible()
   await expect(outputActionRail.getByLabel('Field prep output actions').getByRole('button', { name: 'Export Field Prep Packet' })).toBeVisible()
   await expect(page.getByLabel('PM intake output status rail')).toHaveCount(0)
+  await expectNoImpliedAuthorityControls(page)
   const helperPanelStack = page.getByLabel('PM intake helper panel stack')
   const intakeTriagePanels = helperPanelStack.getByLabel('Intake triage helper panels')
   await expect(intakeTriagePanels.getByRole('heading', { name: 'Intake Triage Panels', exact: true })).toBeVisible()
@@ -299,6 +338,21 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(authorityBoundaryDetail.getByRole('heading', { name: 'Authority Boundary Detail', exact: true })).toBeVisible()
   await expect(authorityBoundaryDetail.locator('#approval-readiness')).toHaveCount(1)
   await expect(authorityBoundaryDetail.locator('#guardrails')).toHaveCount(1)
+  for (const heading of [
+    'Review Snapshot Detail',
+    'Source and Exception Detail',
+    'Approval Prep Detail',
+    'Executor Closeout Detail',
+    'Field Prep Detail',
+    'Authority Boundary Detail',
+  ]) {
+    await expect(detailWorkbench.getByRole('heading', { name: heading, exact: true })).toBeVisible()
+  }
+  const unsafeAuthorityTextMatches = await page.locator('main').evaluate((main, patterns) => {
+    const text = (main as HTMLElement).innerText
+    return patterns.filter((pattern) => new RegExp(pattern, 'i').test(text))
+  }, unsafeAuthorityTextPhrases.map((pattern) => pattern.source))
+  expect(unsafeAuthorityTextMatches).toEqual([])
   const commandCenter = page.getByLabel('Local PM intake command center')
   await expect(commandCenter.getByRole('heading', { name: /Local PM Intake Command Center/i })).toBeVisible()
   await expect(commandCenter.getByText('browser-local', { exact: true })).toBeVisible()
@@ -1385,6 +1439,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(page.getByRole('button', { name: /Persist/i })).toHaveCount(0)
   await expect(page.getByRole('button', { name: /Submit/i })).toHaveCount(0)
   await expect(page.getByRole('button', { name: /^Import$/i })).toHaveCount(0)
+  await expectNoImpliedAuthorityControls(page)
 
   expect(mutationRequests).toHaveLength(0)
   expect(readCalls).toEqual({

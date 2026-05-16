@@ -401,6 +401,8 @@ PM Lane 081 groups the existing helper-panel stack below the quick-jump rail on 
 
 PM Lane 082 groups the existing detail workbench below the helper-panel stack on `/pm-review/import-intake` so the Temp Power prep flow can distinguish review snapshot, source and exception review, approval prep, executor closeout, field prep, and authority boundaries without reading one long detail stack. This changes only the browser-local organization of existing detail panels and adds no new route, export action, artifact, storage, backend route, hosted proof, SQL, schema migration, approval persistence, import mutation, issue, task, assignment, schedule, status, durable field record, production tracking write, or production state.
 
+PM Lane 083 hardens the focused `/pm-review/import-intake` smoke so the Temp Power prep flow keeps its post-082 workbench wording under test. The smoke now rejects implied approval, persistence, import, assignment, schedule, status, task/issue creation, field-release, work-order, hosted-proof, or production-readiness controls while preserving existing route-link, quick-jump, export, output-status, storage, read-count, and zero-mutation coverage. This changes only test governance and adds no new route, export action, artifact, storage, backend route, hosted proof, SQL, schema migration, approval persistence, import mutation, issue, task, assignment, schedule, status, durable field record, production tracking write, or production state.
+
 ## Capability-Gap Register
 
 Current known gaps:

@@ -519,6 +519,14 @@ PM Lane 082 groups the existing detail workbench below the helper-panel stack in
 
 This still creates no approval record, SQL, schema migration, backend route, import mutation, issue, task, assignment, schedule, status, hosted proof, live task, work authorization, field release, work order, durable field record, production tracking write, product code, deployment, service, DNS, auth, ingress, secret, local storage key, new route, new export action, new export artifact, export contract widening, or production mutation.
 
+The current authority-smoke governance tranche is:
+
+`Project Miner Local PM Intake Authority Wording Smoke Guard`
+
+PM Lane 083 hardens the focused `/pm-review/import-intake` Playwright smoke so post-082 wording does not drift into implied production authority. The smoke rejects visible action controls that look like approval, persistence, import, assignment, schedule, status, task/issue creation, field-release, work-order, hosted-proof, or production-readiness controls; verifies the detail-workbench headings remain review/detail/boundary oriented; and preserves the route-link, quick-jump, export, output-status, localStorage, read-count, and zero-mutation assertions.
+
+This is test-only governance. It creates no approval record, SQL, schema migration, backend route, import mutation, issue, task, assignment, schedule, status, hosted proof, live task, work authorization, field release, work order, durable field record, production tracking write, product code, deployment, service, DNS, auth, ingress, secret, local storage key, new route, new export action, new export artifact, export contract widening, or production mutation.
+
 The next persistence tranche is:
 
 `Import Candidate Approval Persistence Schema And Adapter Implementation`
