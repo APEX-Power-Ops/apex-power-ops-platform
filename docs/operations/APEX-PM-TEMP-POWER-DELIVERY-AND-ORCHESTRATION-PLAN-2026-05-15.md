@@ -377,6 +377,8 @@ PM Lane 069 adds a browser-local `Local PM Intake Output Selector` panel to `/pm
 
 PM Lane 070 adds a browser-local `Local PM Intake Handoff Guide` panel to `/pm-review/import-intake`. It gives the Temp Power prep flow a derived next-context guide for Jason local review, field conversation prep, bounded executor context, hosted parity executor boundary, and future approval-persistence packet boundary. The guide adds no storage key, export action, export contract, or handoff artifact and creates no issues, tasks, work authorization, live work orders, durable field records, hosted proof, backend routes, SQL, schema migration, approval persistence, import mutation, assignment, schedule, status, production tracking writes, or production state.
 
+PM Lane 071 adds a browser-local `Local PM Intake Command Center` panel to `/pm-review/import-intake`. It gives the Temp Power prep flow one top-of-page scan for the current local PM move, next field-question posture, handoff context, and still-blocked future authority. The command center adds no storage key, export action, export contract, or handoff artifact and creates no issues, tasks, work authorization, live work orders, durable field records, hosted proof, backend routes, SQL, schema migration, approval persistence, import mutation, assignment, schedule, status, production tracking writes, or production state.
+
 ## Capability-Gap Register
 
 Current known gaps:

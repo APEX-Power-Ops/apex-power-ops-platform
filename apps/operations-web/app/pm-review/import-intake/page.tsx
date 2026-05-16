@@ -280,6 +280,16 @@ type HandoffGuideItem = {
   detail: string
 }
 
+type CommandCenterStatus = 'do-now' | 'ask-next' | 'prepare-context' | 'blocked'
+
+type CommandCenterItem = {
+  id: string
+  title: string
+  status: CommandCenterStatus
+  href: string
+  detail: string
+}
+
 type WorkflowMapStatus = 'source' | 'attention' | 'context' | 'draft' | 'prep' | 'audit' | 'blocked'
 
 type WorkflowMapItem = {
@@ -331,6 +341,12 @@ const EMPTY_FIELD_OBSERVATION_SCRATCHPAD: FieldObservationScratchpad = {
   open_questions_pm_followup: '',
 }
 const PM_INTAKE_QUICK_JUMPS: QuickJumpItem[] = [
+  {
+    id: 'command-center',
+    label: 'Command Center',
+    href: '#pm-command-center',
+    detail: 'Top local scan.',
+  },
   {
     id: 'start-here',
     label: 'Start Here',
@@ -647,6 +663,12 @@ function outputSelectorTone(status: OutputSelectorStatus) {
 
 function handoffGuideTone(status: HandoffGuideStatus) {
   if (status === 'field-context' || status === 'executor-context') return 'status-configured'
+  if (status === 'blocked') return 'status-deferred'
+  return 'status-awaiting-values'
+}
+
+function commandCenterTone(status: CommandCenterStatus) {
+  if (status === 'prepare-context') return 'status-configured'
   if (status === 'blocked') return 'status-deferred'
   return 'status-awaiting-values'
 }
@@ -1382,6 +1404,81 @@ function buildPmIntakeDailyReviewScript(
       status: 'blocked',
       href: '#approval-readiness',
       detail: `${closeoutCheckedCount} of ${CLOSEOUT_CHECKLIST_ITEMS.length} local closeout evidence checks are marked; ${blockedPersistenceGateCount} of ${persistenceReadinessGates.length} approval-persistence gates remain blocked and project import remains ${formatLabel(admissionAuthority)}.`,
+    },
+  ]
+}
+
+function buildPmIntakeCommandCenter(
+  candidate: CandidatePayload | undefined,
+  importExceptionRegister: ImportExceptionRegisterItem[],
+  reviewChecks: Record<string, boolean>,
+  approvalDraft: ApprovalDecisionDraft,
+  fieldPrepQueue: OperatingQueueItem[],
+  closeoutChecks: Record<string, boolean>,
+  fieldQuestionsDraft: FieldQuestionsDraft,
+  fieldObservationScratchpad: FieldObservationScratchpad,
+  persistenceReadinessGates: ReadinessGate[],
+  admissionPlan: AdmissionPlan | undefined,
+): CommandCenterItem[] {
+  const exceptionCount = importExceptionRegisterCounts(importExceptionRegister)
+  const reviewCheckedCount = REVIEW_CHECKLIST_ITEMS.filter((item) => reviewChecks[item.id]).length
+  const sourceAndWarningReviewDone = Boolean(reviewChecks.source_freshness_reviewed && reviewChecks.exceptions_reviewed)
+  const decisionDraftComplete = Boolean(approvalDraft.decision && approvalDraft.review_notes.trim() && approvalDraft.local_attestation)
+  const completeFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'complete').length
+  const nextFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'next').length
+  const blockedFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'blocked').length
+  const hasFieldQuestions = hasFieldQuestionsDraftContent(fieldQuestionsDraft)
+  const hasFieldObservations = hasFieldObservationScratchpadContent(fieldObservationScratchpad)
+  const closeoutCheckedCount = CLOSEOUT_CHECKLIST_ITEMS.filter((item) => closeoutChecks[item.id]).length
+  const blockedPersistenceGateCount = persistenceReadinessGates.filter((gate) => gate.status === 'blocked').length
+  const projectName = candidate?.project?.name || candidate?.candidate_id || 'current Project Miner candidate'
+  const sourceFingerprint = candidate?.source_freshness?.aggregate_fingerprint || 'source fingerprint pending'
+  const admissionAuthority = admissionPlan?.mutation_authority || 'not_admitted'
+  const nextFieldPrepMove = fieldPrepQueue.find((item) => item.status === 'next') || fieldPrepQueue.find((item) => item.status === 'blocked')
+  const doNowHref = exceptionCount.open || !sourceAndWarningReviewDone
+    ? '#import-exception-register'
+    : decisionDraftComplete
+      ? '#pm-output-selector'
+      : '#pm-operating-queue'
+  const doNowDetail = exceptionCount.open || !sourceAndWarningReviewDone
+    ? `${projectName}: start with source and exception review. Source fingerprint ${sourceFingerprint}; review checklist has ${reviewCheckedCount} of ${REVIEW_CHECKLIST_ITEMS.length} local checks marked and exceptions are ${importExceptionRegisterSummary(exceptionCount)}.`
+    : decisionDraftComplete
+      ? 'Local review context is captured; use the output selector to choose the existing local artifact for the next conversation or packet context.'
+      : 'Source and exception review have local checklist context; capture local decision value, review notes, and local-only attestation next.'
+  const handoffContextPresent = decisionDraftComplete || closeoutCheckedCount > 0 || hasFieldQuestions || hasFieldObservations
+
+  return [
+    {
+      id: 'do-now-command-center',
+      title: 'Do now',
+      status: 'do-now',
+      href: doNowHref,
+      detail: doNowDetail,
+    },
+    {
+      id: 'ask-next-command-center',
+      title: 'Ask next',
+      status: nextFieldPrepMove?.status === 'blocked' ? 'blocked' : 'ask-next',
+      href: '#field-prep',
+      detail: nextFieldPrepMove
+        ? `Field prep queue is ${completeFieldPrepQueueCount} complete / ${nextFieldPrepQueueCount} next / ${blockedFieldPrepQueueCount} blocked. ${nextFieldPrepMove.title}: ${nextFieldPrepMove.detail}`
+        : `Field prep queue is ${completeFieldPrepQueueCount} complete / ${nextFieldPrepQueueCount} next / ${blockedFieldPrepQueueCount} blocked.`,
+    },
+    {
+      id: 'prepare-handoff-command-center',
+      title: 'Prepare handoff context',
+      status: handoffContextPresent ? 'prepare-context' : 'do-now',
+      href: handoffContextPresent ? '#pm-handoff-guide' : '#pm-output-selector',
+      detail: handoffContextPresent
+        ? `Local handoff context exists from decision draft: ${decisionDraftComplete ? 'yes' : 'no'}; closeout checks: ${closeoutCheckedCount} of ${CLOSEOUT_CHECKLIST_ITEMS.length}; field questions: ${hasFieldQuestions ? 'yes' : 'no'}; field observations: ${hasFieldObservations ? 'yes' : 'no'}.`
+        : 'Use the output selector after local decision notes, field questions, observation notes, or executor closeout evidence exist.',
+    },
+    {
+      id: 'blocked-command-center',
+      title: 'Still blocked',
+      status: 'blocked',
+      href: '#approval-readiness',
+      detail: `${blockedPersistenceGateCount} of ${persistenceReadinessGates.length} approval-persistence gates remain blocked and project import remains ${formatLabel(admissionAuthority)}.`,
     },
   ]
 }
@@ -2983,6 +3080,10 @@ export default function ProjectMinerIntakeWorkbenchPage() {
     () => buildPmIntakeDailyReviewScript(candidate, importExceptionRegister, approvalDraft, fieldPrepQueue, closeoutChecks, persistenceReadinessGates, admissionPlan),
     [candidate, importExceptionRegister, approvalDraft, fieldPrepQueue, closeoutChecks, persistenceReadinessGates, admissionPlan],
   )
+  const pmIntakeCommandCenter = useMemo(
+    () => buildPmIntakeCommandCenter(candidate, importExceptionRegister, reviewChecks, approvalDraft, fieldPrepQueue, closeoutChecks, fieldQuestionsDraft, fieldObservationScratchpad, persistenceReadinessGates, admissionPlan),
+    [candidate, importExceptionRegister, reviewChecks, approvalDraft, fieldPrepQueue, closeoutChecks, fieldQuestionsDraft, fieldObservationScratchpad, persistenceReadinessGates, admissionPlan],
+  )
   const pmIntakeOutputSelector = useMemo(
     () => buildPmIntakeOutputSelector(approvalDraft, reviewChecks, fieldPrepQueue, closeoutChecks, fieldQuestionsDraft, fieldObservationScratchpad),
     [approvalDraft, reviewChecks, fieldPrepQueue, closeoutChecks, fieldQuestionsDraft, fieldObservationScratchpad],
@@ -3445,6 +3546,36 @@ export default function ProjectMinerIntakeWorkbenchPage() {
               {formatCount(summary.warning_count)} warnings, {formatCount(summary.blocker_count)} blockers, {formatCount(summary.human_decision_count)} human decisions.
             </p>
           </article>
+        </section>
+
+        <section id="pm-command-center" aria-label="Local PM intake command center" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
+          <div className="status-row">
+            <h2 style={{ margin: 0 }}>Local PM Intake Command Center</h2>
+            <span className="status-pill status-awaiting-values">browser-local</span>
+          </div>
+          <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+            Compact top-of-page scan for the current local PM move, next field question posture, handoff context, and blocked future authority. It does not approve, persist, import, assign, schedule, change status, create tasks, create issues, call live services, claim hosted parity, or mutate production state; it creates no localStorage key, export artifact, backend route, schema, approval record, durable field record, production tracking row, or production write.
+          </p>
+          <div style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
+            {pmIntakeCommandCenter.map((item) => (
+              <a
+                key={item.id}
+                className="card"
+                href={item.href}
+                style={{ color: 'inherit', display: 'block', padding: '0.85rem', textDecoration: 'none', boxShadow: 'none' }}
+              >
+                <div className="status-row" style={{ alignItems: 'start' }}>
+                  <div>
+                    <p style={{ margin: 0 }}>
+                      <strong>{item.title}</strong>
+                    </p>
+                    <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
+                  </div>
+                  <span className={`status-pill ${commandCenterTone(item.status)}`}>{formatLabel(item.status)}</span>
+                </div>
+              </a>
+            ))}
+          </div>
         </section>
 
         <section id="pm-daily-review-script" aria-label="Local PM intake daily review script" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>

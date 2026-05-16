@@ -449,6 +449,10 @@ PM Lane 070 adds a browser-local `Local PM Intake Handoff Guide` panel to `/pm-r
 
 This guide is browser-local synthesis only and adds no local storage key, export action, export contract, or handoff artifact. It does not create issues, create tasks, create live work orders, approve, persist, import, create schema, run SQL, write Supabase rows, call live services, run workbook macros, write workbook cells, assign work, change status, mutate schedules, create durable field records, write production tracking rows, claim hosted parity, or admit autonomous AI business-state action.
 
+PM Lane 071 adds a browser-local `Local PM Intake Command Center` panel to `/pm-review/import-intake`. It derives one compact top-of-page scan from current workbench state: current local PM move, next field-question posture, handoff context, and blocked future authority.
+
+This command center is browser-local synthesis only and adds no local storage key, export action, export contract, or handoff artifact. It does not create issues, create tasks, create live work orders, approve, persist, import, create schema, run SQL, write Supabase rows, call live services, run workbook macros, write workbook cells, assign work, change status, mutate schedules, create durable field records, write production tracking rows, claim hosted parity, or admit autonomous AI business-state action.
+
 ## Environment Overrides
 
 Set this when using a different planning folder:
