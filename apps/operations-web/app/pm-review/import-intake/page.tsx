@@ -213,6 +213,16 @@ type FieldPrepAgendaItem = {
   detail: string
 }
 
+type ImportExceptionRegisterStatus = 'covered' | 'open' | 'blocked'
+
+type ImportExceptionRegisterItem = {
+  id: string
+  title: string
+  status: ImportExceptionRegisterStatus
+  detail: string
+  evidence: string
+}
+
 const { useCallback, useEffect, useMemo, useState } = React
 
 const API_BASE =
@@ -436,6 +446,12 @@ function fieldPrepAgendaTone(status: FieldPrepAgendaStatus) {
   return 'status-deferred'
 }
 
+function importExceptionRegisterTone(status: ImportExceptionRegisterStatus) {
+  if (status === 'covered') return 'status-configured'
+  if (status === 'open') return 'status-awaiting-values'
+  return 'status-deferred'
+}
+
 function uniqueItems(...lists: Array<string[] | undefined>) {
   return Array.from(new Set(lists.flatMap((items) => items || []))).sort()
 }
@@ -490,6 +506,11 @@ function fieldPrepConversationAgendaFileName(candidate?: CandidatePayload | null
 function fieldPrepPacketFileName(candidate?: CandidatePayload | null) {
   const candidateId = candidate?.candidate_id || 'project-miner-intake'
   return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-field-prep-packet.md`
+}
+
+function importExceptionRegisterFileName(candidate?: CandidatePayload | null) {
+  const candidateId = candidate?.candidate_id || 'project-miner-intake'
+  return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-import-exception-register.md`
 }
 
 function markdownList(items: string[]) {
@@ -852,6 +873,88 @@ function fieldPrepAgendaSummary(counts: ReturnType<typeof fieldPrepAgendaCounts>
   return `${counts.context} context, ${counts.ask} ask, ${counts.confirm} confirm, ${counts.blocked} blocked`
 }
 
+function buildImportExceptionRegister(
+  candidate: CandidatePayload | undefined,
+  noGoChecks: AdmissionPlan['no_go_checks'],
+  reviewChecks: Record<string, boolean>,
+  approvalDraft: ApprovalDecisionDraft,
+): ImportExceptionRegisterItem[] {
+  const warnings = candidate?.warnings || []
+  const decisions = candidate?.human_decisions || []
+  const noGoCheckItems = noGoChecks || []
+  const draftComplete = Boolean(approvalDraft.decision && approvalDraft.review_notes.trim() && approvalDraft.local_attestation)
+  const draftStarted = hasApprovalDraftContent(approvalDraft)
+  const hasNoGoBlocker = noGoCheckItems.some((check) => (check.status || '').includes('no_go'))
+  const noGoEvidence = noGoCheckItems.map((check) => `${formatLabel(check.check_id)}: ${formatLabel(check.status)} - ${check.message || 'Review check.'}`)
+
+  return [
+    {
+      id: 'source-freshness-evidence',
+      title: 'Source freshness evidence',
+      status: reviewChecks.source_freshness_reviewed ? 'covered' : 'open',
+      detail: reviewChecks.source_freshness_reviewed
+        ? 'Source freshness review is marked in local prep for this candidate.'
+        : 'Mark source freshness review before relying on the candidate shape for later packet context.',
+      evidence: candidate?.source_freshness?.aggregate_fingerprint || 'unknown fingerprint',
+    },
+    {
+      id: 'candidate-warning-signals',
+      title: 'Candidate warning signals',
+      status: warnings.length && !reviewChecks.exceptions_reviewed ? 'open' : 'covered',
+      detail: warnings.length
+        ? `${warnings.length} warning signal(s) are present for PM review.`
+        : 'No candidate warnings are currently reported.',
+      evidence: warnings.map((warning) => `${warning.code || 'WARNING'}: ${warning.message || 'Review warning.'}`).join('; ') || 'none reported',
+    },
+    {
+      id: 'human-decision-prompts',
+      title: 'Human decision prompts',
+      status: decisions.length && !reviewChecks.pm_decisions_captured && !draftStarted ? 'open' : 'covered',
+      detail: decisions.length
+        ? `${decisions.length} human decision prompt(s) need local PM context before any later import packet.`
+        : 'No human decision prompts are currently reported.',
+      evidence: decisions.map((decision) => `${formatLabel(decision.decision_id)}: ${decision.prompt || 'Decision prompt unavailable.'}`).join('; ') || 'none reported',
+    },
+    {
+      id: 'admission-no-go-checks',
+      title: 'Admission no-go checks',
+      status: hasNoGoBlocker ? 'blocked' : reviewChecks.admission_no_go_reviewed ? 'covered' : 'open',
+      detail: hasNoGoBlocker
+        ? 'At least one admission no-go check keeps import mutation blocked.'
+        : 'Admission no-go checks need local PM review before any later import packet.',
+      evidence: noGoEvidence.join('; ') || 'none reported',
+    },
+    {
+      id: 'local-decision-draft-evidence',
+      title: 'Local decision draft evidence',
+      status: draftComplete ? 'covered' : 'open',
+      detail: draftComplete
+        ? 'A decision value, review notes, and local-only attestation are present.'
+        : 'Prepare a local decision value, review notes, and local-only attestation for future packet context.',
+      evidence: `Decision draft: ${approvalDraft.decision || 'none selected'}; notes: ${formatMultilineMarkdown(approvalDraft.review_notes)}; attestation: ${approvalDraft.local_attestation ? 'yes' : 'no'}`,
+    },
+    {
+      id: 'future-write-boundary',
+      title: 'Future write boundary',
+      status: 'blocked',
+      detail: 'Approval persistence, import rows, assignment, schedule, status, issue, task, durable field record, and production tracking writes remain blocked.',
+      evidence: 'A later packet must explicitly admit any write path before implementation.',
+    },
+  ]
+}
+
+function importExceptionRegisterCounts(register: ImportExceptionRegisterItem[]) {
+  return {
+    covered: register.filter((item) => item.status === 'covered').length,
+    open: register.filter((item) => item.status === 'open').length,
+    blocked: register.filter((item) => item.status === 'blocked').length,
+  }
+}
+
+function importExceptionRegisterSummary(counts: ReturnType<typeof importExceptionRegisterCounts>) {
+  return `${counts.covered} covered, ${counts.open} open, ${counts.blocked} blocked`
+}
+
 function buildApprovalPacketPreview(
   packet: IntakeWorkbenchPacket,
   notAllowed: string[],
@@ -927,6 +1030,7 @@ function buildIntakeBrief(
   workflowGates: Array<{ title: string; status: string; detail: string }>,
   persistenceReadinessGates: ReadinessGate[],
   operatingQueue: OperatingQueueItem[],
+  importExceptionRegister: ImportExceptionRegisterItem[],
   fieldPrepQueue: OperatingQueueItem[],
   fieldPrepCoverageSnapshot: FieldPrepCoverageItem[],
   fieldPrepConversationAgenda: FieldPrepAgendaItem[],
@@ -955,6 +1059,7 @@ function buildIntakeBrief(
   const gateLines = workflowGates.map((gate) => `${gate.title}: ${formatLabel(gate.status)} - ${gate.detail}`)
   const persistenceGateLines = persistenceReadinessGates.map((gate) => `${gate.title}: ${formatLabel(gate.status)} - ${gate.detail}`)
   const operatingQueueLines = operatingQueue.map((item) => `${item.title}: ${formatLabel(item.status)} - ${item.detail}`)
+  const importExceptionRegisterLines = importExceptionRegister.map((item) => `${item.title}: ${formatLabel(item.status)} - ${item.detail} Evidence: ${item.evidence}`)
   const fieldPrepQueueLines = fieldPrepQueue.map((item) => `${item.title}: ${formatLabel(item.status)} - ${item.detail}`)
   const fieldPrepCoverageLines = fieldPrepCoverageSnapshot.map((item) => `${item.title}: ${formatLabel(item.status)} - ${item.detail}`)
   const fieldPrepAgendaLines = fieldPrepConversationAgenda.map((item) => `${item.title}: ${formatLabel(item.status)} - ${item.detail}`)
@@ -980,6 +1085,7 @@ function buildIntakeBrief(
   const completeQueueCount = operatingQueue.filter((item) => item.status === 'complete').length
   const nextQueueCount = operatingQueue.filter((item) => item.status === 'next').length
   const blockedQueueCount = operatingQueue.filter((item) => item.status === 'blocked').length
+  const importExceptionRegisterCount = importExceptionRegisterCounts(importExceptionRegister)
   const completeFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'complete').length
   const nextFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'next').length
   const blockedFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'blocked').length
@@ -1055,6 +1161,14 @@ function buildIntakeBrief(
     'This queue is local review guidance only. It does not approve, persist, import, assign, schedule, change status, or mutate production state.',
     '',
     markdownList(operatingQueueLines),
+    '',
+    '## Local Import Exception Decision Register',
+    '',
+    `Import exception register: ${importExceptionRegisterSummary(importExceptionRegisterCount)}.`,
+    '',
+    'This register is browser-local review synthesis only. It does not approve, persist, import, assign, schedule, change status, create issues, create tasks, create durable field records, or write production state.',
+    '',
+    markdownList(importExceptionRegisterLines),
     '',
     '## Local Field Prep Queue',
     '',
@@ -1136,6 +1250,7 @@ function buildExecutorHandoff(
   workflowGates: Array<{ title: string; status: string; detail: string }>,
   persistenceReadinessGates: ReadinessGate[],
   operatingQueue: OperatingQueueItem[],
+  importExceptionRegister: ImportExceptionRegisterItem[],
   notAllowed: string[],
   futureRoute: string,
   reviewChecks: Record<string, boolean>,
@@ -1167,6 +1282,8 @@ function buildExecutorHandoff(
   const blockedQueueLines = blockedQueueItems.map((item) => `${item.title}: ${item.detail}`)
   const blockedGateLines = blockedReadinessGates.map((gate) => `${gate.title}: ${gate.detail}`)
   const workflowGateLines = workflowGates.map((gate) => `${gate.title}: ${formatLabel(gate.status)} - ${gate.detail}`)
+  const importExceptionRegisterCount = importExceptionRegisterCounts(importExceptionRegister)
+  const importExceptionRegisterLines = importExceptionRegister.map((item) => `${item.title}: ${formatLabel(item.status)} - ${item.detail} Evidence: ${item.evidence}`)
 
   return [
     '# Project Miner Intake Executor Handoff',
@@ -1218,6 +1335,12 @@ function buildExecutorHandoff(
     'Blocked future moves:',
     '',
     markdownList(blockedQueueLines),
+    '',
+    '## Import Exception Decision Register',
+    '',
+    `Import exception register: ${importExceptionRegisterSummary(importExceptionRegisterCount)}.`,
+    '',
+    markdownList(importExceptionRegisterLines),
     '',
     '## Executor Closeout Intake',
     '',
@@ -1826,6 +1949,101 @@ function buildFieldPrepPacket(
   ].join('\n')
 }
 
+function buildImportExceptionRegisterExport(
+  packet: IntakeWorkbenchPacket,
+  importExceptionRegister: ImportExceptionRegisterItem[],
+  notAllowed: string[],
+  reviewChecks: Record<string, boolean>,
+  approvalDraft: ApprovalDecisionDraft,
+) {
+  const candidate = packet.candidate
+  const admissionPlan = packet.admissionPlan
+  const storagePlan = packet.storagePlan
+  const summary = candidate.summary || {}
+  const project = candidate.project || {}
+  const warnings = candidate.warnings || []
+  const decisions = candidate.human_decisions || []
+  const noGoChecks = admissionPlan.no_go_checks || []
+  const registerCount = importExceptionRegisterCounts(importExceptionRegister)
+  const registerLines = importExceptionRegister.map((item) => `${item.title}: ${formatLabel(item.status)} - ${item.detail} Evidence: ${item.evidence}`)
+  const warningLines = warnings.map((warning) => `${warning.severity || 'unknown'} - ${warning.code || 'WARNING'}: ${warning.message || 'Review warning.'}`)
+  const decisionLines = decisions.map((decision) => `${formatLabel(decision.decision_id)}: ${decision.prompt || 'Decision prompt unavailable.'} Recommended action: ${decision.recommended_action || 'Review before future import.'}`)
+  const noGoLines = noGoChecks.map((check) => `${formatLabel(check.check_id)}: ${formatLabel(check.status)} - ${check.message || 'Review check.'}`)
+  const checkedReviewLines = REVIEW_CHECKLIST_ITEMS.filter((item) => reviewChecks[item.id]).map((item) => `${item.label}: ${item.detail}`)
+  const openReviewLines = REVIEW_CHECKLIST_ITEMS.filter((item) => !reviewChecks[item.id]).map((item) => `${item.label}: ${item.detail}`)
+
+  return [
+    '# Project Miner Local Import Exception Decision Register',
+    '',
+    'Generated locally from the read-only PM intake workbench. This register is browser-local review synthesis only and grants no authority to approve, persist, import, assign, schedule, change status, create schema, run SQL, call live services, create tasks, create issues, create durable field records, write production tracking rows, or mutate production state.',
+    '',
+    '## Candidate Context',
+    '',
+    `- Candidate: ${candidate.candidate_id || 'unknown'}`,
+    `- Candidate version: ${candidate.candidate_version || 'unknown'}`,
+    `- Candidate authority: ${candidate.mutation_authority || 'not_admitted'}`,
+    `- Project: ${project.name || 'unknown project'}`,
+    `- Location: ${project.location || 'unknown location'}`,
+    `- Source freshness: ${candidate.source_freshness?.aggregate_fingerprint || 'unknown'}`,
+    `- Workpackages: ${formatCount(summary.workpackage_count)}`,
+    `- Tasks: ${formatCount(summary.task_count)}`,
+    `- Apparatus candidates: ${formatCount(summary.apparatus_candidate_count)}`,
+    `- Warnings: ${formatCount(summary.warning_count)}`,
+    `- Human decisions: ${formatCount(summary.human_decision_count)}`,
+    '',
+    '## Register Summary',
+    '',
+    `Import exception register: ${importExceptionRegisterSummary(registerCount)}.`,
+    '',
+    markdownList(registerLines),
+    '',
+    '## Warning Signals',
+    '',
+    markdownList(warningLines),
+    '',
+    '## Human Decision Prompts',
+    '',
+    markdownList(decisionLines),
+    '',
+    '## Admission No-Go Checks',
+    '',
+    markdownList(noGoLines),
+    '',
+    '## Local Review Evidence',
+    '',
+    'Checked review evidence:',
+    '',
+    markdownList(checkedReviewLines),
+    '',
+    'Open review evidence:',
+    '',
+    markdownList(openReviewLines),
+    '',
+    '## Local Decision Draft',
+    '',
+    `- Decision draft: ${approvalDraft.decision || 'none selected'}`,
+    `- Local-only attestation checked: ${approvalDraft.local_attestation ? 'yes' : 'no'}`,
+    `- Review notes draft: ${formatMultilineMarkdown(approvalDraft.review_notes)}`,
+    '',
+    '## Future Surfaces Are Not Admitted',
+    '',
+    `- Future approval table: ${storagePlan.recommended_table || 'not admitted'}`,
+    `- Future approval route: ${storagePlan.recommended_route || 'not admitted'}`,
+    `- Admission authority: ${admissionPlan.mutation_authority || 'not_admitted'}`,
+    '- Approval persistence, import rows, assignment, schedule, status, issue, task, durable field record, and production tracking writes remain blocked.',
+    '',
+    '## Not Allowed',
+    '',
+    markdownList(notAllowed.map(formatLabel)),
+    '',
+    '## Minimum Use',
+    '',
+    '- Use this register as exception-review synthesis only.',
+    '- Do not treat this register as approval, persistence authority, import authority, work authorization, assignment, schedule, status update, task creation, issue creation, durable field record, hosted parity proof, or production tracking.',
+    '- Keep approval persistence and project import blocked until a later packet explicitly admits the required write path.',
+  ].join('\n')
+}
+
 function downloadTextFile(fileName: string, contents: string, contentType: string) {
   const blob = new Blob([contents], { type: contentType })
   const url = URL.createObjectURL(blob)
@@ -1845,6 +2063,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
   const [briefStatus, setBriefStatus] = useState('')
   const [previewStatus, setPreviewStatus] = useState('')
   const [handoffStatus, setHandoffStatus] = useState('')
+  const [exceptionRegisterStatus, setExceptionRegisterStatus] = useState('')
   const [fieldBriefStatus, setFieldBriefStatus] = useState('')
   const [fieldObservationStatus, setFieldObservationStatus] = useState('')
   const [fieldPrepCoverageStatus, setFieldPrepCoverageStatus] = useState('')
@@ -1953,6 +2172,10 @@ export default function ProjectMinerIntakeWorkbenchPage() {
     () => buildPmOperatingQueue(approvalDraft, reviewChecks, persistenceReadinessGates),
     [approvalDraft, reviewChecks, persistenceReadinessGates],
   )
+  const importExceptionRegister = useMemo(
+    () => buildImportExceptionRegister(candidate, noGoChecks, reviewChecks, approvalDraft),
+    [candidate, noGoChecks, reviewChecks, approvalDraft],
+  )
   const fieldPrepQueue = useMemo(
     () => buildFieldPrepQueue(fieldReadinessChecks, fieldQuestionsDraft),
     [fieldReadinessChecks, fieldQuestionsDraft],
@@ -1968,6 +2191,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
   const completeQueueCount = operatingQueue.filter((item) => item.status === 'complete').length
   const nextQueueCount = operatingQueue.filter((item) => item.status === 'next').length
   const blockedQueueCount = operatingQueue.filter((item) => item.status === 'blocked').length
+  const importExceptionRegisterCount = importExceptionRegisterCounts(importExceptionRegister)
   const completeFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'complete').length
   const nextFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'next').length
   const blockedFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'blocked').length
@@ -2149,7 +2373,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
 
     downloadTextFile(
       briefFileName(candidate),
-      buildIntakeBrief(packet, workflowGates, persistenceReadinessGates, operatingQueue, fieldPrepQueue, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, notAllowed, futureRoute, reviewChecks, closeoutChecks, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad, approvalDraft),
+      buildIntakeBrief(packet, workflowGates, persistenceReadinessGates, operatingQueue, importExceptionRegister, fieldPrepQueue, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, notAllowed, futureRoute, reviewChecks, closeoutChecks, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad, approvalDraft),
       'text/markdown',
     )
     setBriefStatus(`PM brief prepared from ${candidate?.candidate_id || 'the current intake packet'} without a server write.`)
@@ -2172,10 +2396,23 @@ export default function ProjectMinerIntakeWorkbenchPage() {
 
     downloadTextFile(
       executorHandoffFileName(candidate),
-      buildExecutorHandoff(packet, workflowGates, persistenceReadinessGates, operatingQueue, notAllowed, futureRoute, reviewChecks, closeoutChecks, approvalDraft),
+      buildExecutorHandoff(packet, workflowGates, persistenceReadinessGates, operatingQueue, importExceptionRegister, notAllowed, futureRoute, reviewChecks, closeoutChecks, approvalDraft),
       'text/markdown',
     )
     setHandoffStatus(`Executor handoff prepared from ${candidate?.candidate_id || 'the current intake packet'} without a server write.`)
+  }
+
+  function exportImportExceptionRegister() {
+    if (!packet) {
+      return
+    }
+
+    downloadTextFile(
+      importExceptionRegisterFileName(candidate),
+      buildImportExceptionRegisterExport(packet, importExceptionRegister, notAllowed, reviewChecks, approvalDraft),
+      'text/markdown',
+    )
+    setExceptionRegisterStatus(`Import exception register prepared from ${candidate?.candidate_id || 'the current intake packet'} without a server write.`)
   }
 
   function exportFieldKickoffBrief() {
@@ -2327,6 +2564,9 @@ export default function ProjectMinerIntakeWorkbenchPage() {
             <button className="btn btn-outline" onClick={exportExecutorHandoff} disabled={!packet}>
               Export Executor Handoff
             </button>
+            <button className="btn btn-outline" onClick={exportImportExceptionRegister} disabled={!packet}>
+              Export Import Exception Register
+            </button>
             <button className="btn btn-outline" onClick={exportFieldKickoffBrief} disabled={!packet}>
               Export Field Kickoff Brief
             </button>
@@ -2350,6 +2590,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
         {briefStatus ? <p style={{ margin: '0 0 1rem', color: 'var(--muted)', lineHeight: 1.55 }}>{briefStatus}</p> : null}
         {previewStatus ? <p style={{ margin: '0 0 1rem', color: 'var(--muted)', lineHeight: 1.55 }}>{previewStatus}</p> : null}
         {handoffStatus ? <p style={{ margin: '0 0 1rem', color: 'var(--muted)', lineHeight: 1.55 }}>{handoffStatus}</p> : null}
+        {exceptionRegisterStatus ? <p style={{ margin: '0 0 1rem', color: 'var(--muted)', lineHeight: 1.55 }}>{exceptionRegisterStatus}</p> : null}
         {fieldBriefStatus ? <p style={{ margin: '0 0 1rem', color: 'var(--muted)', lineHeight: 1.55 }}>{fieldBriefStatus}</p> : null}
         {fieldObservationStatus ? <p style={{ margin: '0 0 1rem', color: 'var(--muted)', lineHeight: 1.55 }}>{fieldObservationStatus}</p> : null}
         {fieldPrepCoverageStatus ? <p style={{ margin: '0 0 1rem', color: 'var(--muted)', lineHeight: 1.55 }}>{fieldPrepCoverageStatus}</p> : null}
@@ -2448,6 +2689,35 @@ export default function ProjectMinerIntakeWorkbenchPage() {
               </div>
             </dl>
           </article>
+        </section>
+
+        <section aria-label="Local import exception decision register" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
+          <div className="status-row">
+            <h2 style={{ margin: 0 }}>Local Import Exception Decision Register</h2>
+            <span className="status-pill status-awaiting-values">browser-local</span>
+          </div>
+          <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+            Derived exception register for candidate warnings, human decision prompts, admission no-go checks, local review evidence, and local decision draft context. It does not approve, persist, import, assign, schedule, change status, create tasks, create issues, or mutate production state.
+          </p>
+          <p style={{ margin: '0.45rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+            {importExceptionRegisterSummary(importExceptionRegisterCount)}
+          </p>
+          <div style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
+            {importExceptionRegister.map((item) => (
+              <article key={item.id} className="card" style={{ padding: '0.85rem', boxShadow: 'none' }}>
+                <div className="status-row" style={{ alignItems: 'start' }}>
+                  <div>
+                    <p style={{ margin: 0 }}>
+                      <strong>{item.title}</strong>
+                    </p>
+                    <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
+                    <p style={{ margin: '0.35rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.evidence}</p>
+                  </div>
+                  <span className={`status-pill ${importExceptionRegisterTone(item.status)}`}>{formatLabel(item.status)}</span>
+                </div>
+              </article>
+            ))}
+          </div>
         </section>
 
         <section aria-label="Workflow gates" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>

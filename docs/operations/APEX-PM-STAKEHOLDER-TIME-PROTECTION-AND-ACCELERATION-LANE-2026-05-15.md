@@ -367,6 +367,14 @@ PM Lane 061 adds `Export Field Prep Packet` to `/pm-review/import-intake`. The p
 
 This still creates no approval record, SQL, schema migration, backend route, import mutation, issue, task, assignment, schedule, status, hosted proof, live task, work authorization, field release, work order, durable field record, production tracking write, local storage key, new form, or production mutation.
 
+The current exception-review ergonomics tranche is:
+
+`Project Miner Local Import Exception Decision Register`
+
+PM Lane 062 adds a browser-local `Local Import Exception Decision Register` and `Export Import Exception Register` action to `/pm-review/import-intake`. The register consolidates source freshness evidence, candidate warning signals, human decision prompts, admission no-go checks, local decision draft evidence, and the future write boundary into a covered/open/blocked review synthesis so Jason can see what still needs exception attention without reading every panel.
+
+This still creates no approval record, SQL, schema migration, backend route, import mutation, issue, task, assignment, schedule, status, hosted proof, live task, work authorization, field release, work order, durable field record, production tracking write, local storage key, or production mutation.
+
 The next persistence tranche is:
 
 `Import Candidate Approval Persistence Schema And Adapter Implementation`

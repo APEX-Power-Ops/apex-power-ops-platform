@@ -359,6 +359,8 @@ PM Lane 060 adds a browser-local `Local Field Prep Conversation Agenda` and `Exp
 
 PM Lane 061 adds a browser-local `Export Field Prep Packet` action to `/pm-review/import-intake`. It bundles the existing field prep queue, coverage snapshot, conversation agenda, readiness evidence, questions draft, observation scratchpad, review/closeout context, workflow gates, future-not-admitted surfaces, and guardrails into one Markdown packet for Temp Power prep conversations without adding a storage key or creating issues, tasks, work authorization, live work orders, durable field records, hosted proof, backend routes, SQL, schema migration, approval persistence, import mutation, assignment, schedule, status, production tracking writes, or production state.
 
+PM Lane 062 adds a browser-local `Local Import Exception Decision Register` and `Export Import Exception Register` action to `/pm-review/import-intake`. It turns source freshness evidence, candidate warning signals, human decision prompts, admission no-go checks, local decision draft evidence, and the future write boundary into a covered/open/blocked exception path for Temp Power intake review. The register is included in the PM brief and executor handoff without adding a storage key or creating issues, tasks, work authorization, live work orders, durable field records, hosted proof, backend routes, SQL, schema migration, approval persistence, import mutation, assignment, schedule, status, production tracking writes, or production state.
+
 ## Capability-Gap Register
 
 Current known gaps:
