@@ -397,6 +397,8 @@ PM Lane 079 groups the existing quick-jump links on `/pm-review/import-intake` s
 
 PM Lane 080 groups the existing top route links on `/pm-review/import-intake` so the Temp Power prep flow can distinguish shell return, intake read routes, and PM workfront without reading one flat route row. This changes only the browser-local organization of existing route links and adds no new route, export action, artifact, storage, backend route, hosted proof, SQL, schema migration, approval persistence, import mutation, issue, task, assignment, schedule, status, durable field record, production tracking write, or production state.
 
+PM Lane 081 groups the existing helper-panel stack below the quick-jump rail on `/pm-review/import-intake` so the Temp Power prep flow can distinguish intake triage context, daily action helpers, and workflow review helpers without reading one long panel stack. This changes only the browser-local organization of existing helper panels and adds no new route, export action, artifact, storage, backend route, hosted proof, SQL, schema migration, approval persistence, import mutation, issue, task, assignment, schedule, status, durable field record, production tracking write, or production state.
+
 ## Capability-Gap Register
 
 Current known gaps:

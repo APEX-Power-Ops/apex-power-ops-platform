@@ -503,6 +503,14 @@ PM Lane 080 groups the existing top route links into Shell, Intake Reads, and PM
 
 This still creates no approval record, SQL, schema migration, backend route, import mutation, issue, task, assignment, schedule, status, hosted proof, live task, work authorization, field release, work order, durable field record, production tracking write, product code, deployment, service, DNS, auth, ingress, secret, local storage key, new route, new export action, new export artifact, export contract widening, or production mutation.
 
+The current helper-panel ergonomics tranche is:
+
+`Project Miner Local PM Intake Helper Panel Stack Grouping`
+
+PM Lane 081 groups the existing helper-panel stack below the quick-jump rail into Intake Triage Panels, Daily Action Panels, and Workflow Review Panels. It keeps every existing panel id, aria label, anchor target, route link, quick-jump link, export behavior, output status, storage boundary, and read seam unchanged while making the workbench helper layer easier to scan during a real PM review.
+
+This still creates no approval record, SQL, schema migration, backend route, import mutation, issue, task, assignment, schedule, status, hosted proof, live task, work authorization, field release, work order, durable field record, production tracking write, product code, deployment, service, DNS, auth, ingress, secret, local storage key, new route, new export action, new export artifact, export contract widening, or production mutation.
+
 The next persistence tranche is:
 
 `Import Candidate Approval Persistence Schema And Adapter Implementation`
