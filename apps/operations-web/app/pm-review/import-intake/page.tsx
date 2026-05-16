@@ -290,6 +290,16 @@ type CommandCenterItem = {
   detail: string
 }
 
+type MeetingReadoutStatus = 'say-now' | 'ask-next' | 'context' | 'blocked'
+
+type MeetingReadoutItem = {
+  id: string
+  title: string
+  status: MeetingReadoutStatus
+  href: string
+  detail: string
+}
+
 type WorkflowMapStatus = 'source' | 'attention' | 'context' | 'draft' | 'prep' | 'audit' | 'blocked'
 
 type WorkflowMapItem = {
@@ -346,6 +356,12 @@ const PM_INTAKE_QUICK_JUMPS: QuickJumpItem[] = [
     label: 'Command Center',
     href: '#pm-command-center',
     detail: 'Top local scan.',
+  },
+  {
+    id: 'meeting-readout',
+    label: 'Meeting Readout',
+    href: '#pm-meeting-readout',
+    detail: 'Conversation summary.',
   },
   {
     id: 'start-here',
@@ -669,6 +685,12 @@ function handoffGuideTone(status: HandoffGuideStatus) {
 
 function commandCenterTone(status: CommandCenterStatus) {
   if (status === 'prepare-context') return 'status-configured'
+  if (status === 'blocked') return 'status-deferred'
+  return 'status-awaiting-values'
+}
+
+function meetingReadoutTone(status: MeetingReadoutStatus) {
+  if (status === 'context') return 'status-configured'
   if (status === 'blocked') return 'status-deferred'
   return 'status-awaiting-values'
 }
@@ -1479,6 +1501,73 @@ function buildPmIntakeCommandCenter(
       status: 'blocked',
       href: '#approval-readiness',
       detail: `${blockedPersistenceGateCount} of ${persistenceReadinessGates.length} approval-persistence gates remain blocked and project import remains ${formatLabel(admissionAuthority)}.`,
+    },
+  ]
+}
+
+function buildPmIntakeMeetingReadout(
+  candidate: CandidatePayload | undefined,
+  importExceptionRegister: ImportExceptionRegisterItem[],
+  approvalDraft: ApprovalDecisionDraft,
+  fieldPrepQueue: OperatingQueueItem[],
+  closeoutChecks: Record<string, boolean>,
+  fieldQuestionsDraft: FieldQuestionsDraft,
+  fieldObservationScratchpad: FieldObservationScratchpad,
+  persistenceReadinessGates: ReadinessGate[],
+  admissionPlan: AdmissionPlan | undefined,
+): MeetingReadoutItem[] {
+  const project = candidate?.project || {}
+  const summary = candidate?.summary || {}
+  const exceptionCount = importExceptionRegisterCounts(importExceptionRegister)
+  const decisionDraftComplete = Boolean(approvalDraft.decision && approvalDraft.review_notes.trim() && approvalDraft.local_attestation)
+  const decisionDraftStarted = hasApprovalDraftContent(approvalDraft)
+  const nextFieldPrepMove = fieldPrepQueue.find((item) => item.status === 'next') || fieldPrepQueue.find((item) => item.status === 'blocked')
+  const completeFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'complete').length
+  const nextFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'next').length
+  const blockedFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'blocked').length
+  const hasFieldQuestions = hasFieldQuestionsDraftContent(fieldQuestionsDraft)
+  const hasFieldObservations = hasFieldObservationScratchpadContent(fieldObservationScratchpad)
+  const closeoutCheckedCount = CLOSEOUT_CHECKLIST_ITEMS.filter((item) => closeoutChecks[item.id]).length
+  const blockedPersistenceGateCount = persistenceReadinessGates.filter((gate) => gate.status === 'blocked').length
+  const projectName = project.name || candidate?.candidate_id || 'current Project Miner candidate'
+  const location = project.location || 'unknown location'
+  const sourceFingerprint = candidate?.source_freshness?.aggregate_fingerprint || 'source fingerprint pending'
+  const admissionAuthority = admissionPlan?.mutation_authority || 'not_admitted'
+
+  return [
+    {
+      id: 'project-meeting-readout',
+      title: 'Project readout',
+      status: 'context',
+      href: '#project-packet',
+      detail: `${projectName} in ${location}: ${formatCount(summary.workpackage_count)} workpackages, ${formatCount(summary.task_count)} tasks, and ${formatCount(summary.apparatus_candidate_count)} apparatus candidates are loaded from source fingerprint ${sourceFingerprint}.`,
+    },
+    {
+      id: 'review-meeting-readout',
+      title: 'Review posture',
+      status: decisionDraftComplete ? 'context' : exceptionCount.open ? 'say-now' : 'ask-next',
+      href: decisionDraftComplete ? '#pm-output-selector' : '#import-exception-register',
+      detail: decisionDraftComplete
+        ? `Local review notes are captured; exceptions are ${importExceptionRegisterSummary(exceptionCount)} for later packet context.`
+        : decisionDraftStarted
+          ? `Local review notes are partial; exceptions are ${importExceptionRegisterSummary(exceptionCount)}.`
+          : `Exceptions are ${importExceptionRegisterSummary(exceptionCount)} and local review notes have not started.`,
+    },
+    {
+      id: 'field-meeting-readout',
+      title: 'Field ask',
+      status: nextFieldPrepMove?.status === 'blocked' ? 'blocked' : hasFieldQuestions || hasFieldObservations || completeFieldPrepQueueCount ? 'context' : 'ask-next',
+      href: '#field-prep',
+      detail: nextFieldPrepMove
+        ? `Field prep is ${completeFieldPrepQueueCount} complete / ${nextFieldPrepQueueCount} next / ${blockedFieldPrepQueueCount} blocked. ${nextFieldPrepMove.title}: ${nextFieldPrepMove.detail}`
+        : `Field prep is ${completeFieldPrepQueueCount} complete / ${nextFieldPrepQueueCount} next / ${blockedFieldPrepQueueCount} blocked.`,
+    },
+    {
+      id: 'boundary-meeting-readout',
+      title: 'Boundary statement',
+      status: 'blocked',
+      href: '#approval-readiness',
+      detail: `${blockedPersistenceGateCount} of ${persistenceReadinessGates.length} approval-persistence gates remain blocked; project import remains ${formatLabel(admissionAuthority)}; executor closeout evidence is ${closeoutCheckedCount} of ${CLOSEOUT_CHECKLIST_ITEMS.length}.`,
     },
   ]
 }
@@ -3084,6 +3173,10 @@ export default function ProjectMinerIntakeWorkbenchPage() {
     () => buildPmIntakeCommandCenter(candidate, importExceptionRegister, reviewChecks, approvalDraft, fieldPrepQueue, closeoutChecks, fieldQuestionsDraft, fieldObservationScratchpad, persistenceReadinessGates, admissionPlan),
     [candidate, importExceptionRegister, reviewChecks, approvalDraft, fieldPrepQueue, closeoutChecks, fieldQuestionsDraft, fieldObservationScratchpad, persistenceReadinessGates, admissionPlan],
   )
+  const pmIntakeMeetingReadout = useMemo(
+    () => buildPmIntakeMeetingReadout(candidate, importExceptionRegister, approvalDraft, fieldPrepQueue, closeoutChecks, fieldQuestionsDraft, fieldObservationScratchpad, persistenceReadinessGates, admissionPlan),
+    [candidate, importExceptionRegister, approvalDraft, fieldPrepQueue, closeoutChecks, fieldQuestionsDraft, fieldObservationScratchpad, persistenceReadinessGates, admissionPlan],
+  )
   const pmIntakeOutputSelector = useMemo(
     () => buildPmIntakeOutputSelector(approvalDraft, reviewChecks, fieldPrepQueue, closeoutChecks, fieldQuestionsDraft, fieldObservationScratchpad),
     [approvalDraft, reviewChecks, fieldPrepQueue, closeoutChecks, fieldQuestionsDraft, fieldObservationScratchpad],
@@ -3572,6 +3665,36 @@ export default function ProjectMinerIntakeWorkbenchPage() {
                     <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
                   </div>
                   <span className={`status-pill ${commandCenterTone(item.status)}`}>{formatLabel(item.status)}</span>
+                </div>
+              </a>
+            ))}
+          </div>
+        </section>
+
+        <section id="pm-meeting-readout" aria-label="Local PM intake meeting readout" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
+          <div className="status-row">
+            <h2 style={{ margin: 0 }}>Local PM Intake Meeting Readout</h2>
+            <span className="status-pill status-awaiting-values">browser-local</span>
+          </div>
+          <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+            Conversation-ready local summary for PM, lead, customer, or field review. It does not approve, persist, import, assign, schedule, change status, create tasks, create issues, call live services, claim hosted parity, or mutate production state; it creates no localStorage key, export artifact, backend route, schema, approval record, durable field record, production tracking row, or production write.
+          </p>
+          <div style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
+            {pmIntakeMeetingReadout.map((item) => (
+              <a
+                key={item.id}
+                className="card"
+                href={item.href}
+                style={{ color: 'inherit', display: 'block', padding: '0.85rem', textDecoration: 'none', boxShadow: 'none' }}
+              >
+                <div className="status-row" style={{ alignItems: 'start' }}>
+                  <div>
+                    <p style={{ margin: 0 }}>
+                      <strong>{item.title}</strong>
+                    </p>
+                    <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
+                  </div>
+                  <span className={`status-pill ${meetingReadoutTone(item.status)}`}>{formatLabel(item.status)}</span>
                 </div>
               </a>
             ))}
