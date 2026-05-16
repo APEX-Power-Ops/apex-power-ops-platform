@@ -385,6 +385,10 @@ PM Lane 054 adds a browser-local `Export Field Kickoff Brief` action to `/pm-rev
 
 This field kickoff brief is field-prep context only and grants no work authorization. It does not create live tasks, approve, persist, import, create schema, run SQL, write Supabase rows, call live services, run workbook macros, write workbook cells, assign work, change status, mutate schedules, claim hosted parity, or admit autonomous AI business-state action.
 
+PM Lane 055 adds a browser-local `Local Field Readiness Checklist` to `/pm-review/import-intake`. It captures field-prep evidence for drawing/source questions, scope assumptions, site access and contacts, safety planning, crew/equipment questions, material/staging questions, customer constraint questions, and field-authority boundary acknowledgement.
+
+This checklist is candidate-scoped browser prep evidence only and grants no field release. It does not create live tasks, approve, persist, import, create schema, run SQL, write Supabase rows, call live services, run workbook macros, write workbook cells, assign work, change status, mutate schedules, claim hosted parity, or admit autonomous AI business-state action.
+
 ## Environment Overrides
 
 Set this when using a different planning folder:

@@ -311,6 +311,14 @@ PM Lane 054 adds a browser-local `Export Field Kickoff Brief` action to `/pm-rev
 
 This still creates no approval record, SQL, schema migration, backend route, import mutation, assignment, schedule, status, hosted proof, live task, work authorization, or production mutation.
 
+The current field-prep evidence tranche is:
+
+`Project Miner Local Field Readiness Checklist`
+
+PM Lane 055 adds a browser-local `Local Field Readiness Checklist` to `/pm-review/import-intake`. The checklist captures drawing/source questions, scope assumptions, site access and contacts, safety planning, crew/equipment questions, material/staging questions, customer constraint questions, and field-authority boundary acknowledgement as local evidence in the PM brief and Field Kickoff Brief.
+
+This still creates no approval record, SQL, schema migration, backend route, import mutation, assignment, schedule, status, hosted proof, live task, work authorization, field release, or production mutation.
+
 The next persistence tranche is:
 
 `Import Candidate Approval Persistence Schema And Adapter Implementation`

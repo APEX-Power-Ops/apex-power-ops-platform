@@ -345,6 +345,8 @@ PM Lane 053 adds a browser-local executor closeout intake checklist to `/pm-revi
 
 PM Lane 054 adds a browser-local `Export Field Kickoff Brief` action to `/pm-review/import-intake`. It gives PM, lead, and field review conversations one portable prep artifact with candidate shape, workpackage preview, field-prep questions, warnings, human decisions, local review evidence, executor closeout evidence, and guardrails without creating work authorization, live tasks, hosted proof, backend routes, SQL, schema migration, approval persistence, import mutation, assignment, schedule, status, or production writes.
 
+PM Lane 055 adds a browser-local `Local Field Readiness Checklist` to `/pm-review/import-intake`. It lets the Temp Power prep flow capture drawing/source questions, scope assumptions, site access, safety planning, crew/equipment questions, material/staging questions, customer constraint questions, and field-authority boundary acknowledgement as local evidence in the PM brief and Field Kickoff Brief without creating work authorization, live tasks, hosted proof, backend routes, SQL, schema migration, approval persistence, import mutation, assignment, schedule, status, or production writes.
+
 ## Capability-Gap Register
 
 Current known gaps:

@@ -147,6 +147,12 @@ type CloseoutChecklistItem = {
   detail: string
 }
 
+type FieldReadinessChecklistItem = {
+  id: string
+  label: string
+  detail: string
+}
+
 type ApprovalDecisionDraft = {
   decision: string
   review_notes: string
@@ -262,6 +268,48 @@ const CLOSEOUT_CHECKLIST_ITEMS: CloseoutChecklistItem[] = [
     id: 'coordinator_recommendation_captured',
     label: 'Coordinator recommendation captured',
     detail: 'Executor return recommends one bounded next action such as record and continue, redelegate, open a product packet, or stop for stakeholder exception.',
+  },
+]
+const FIELD_READINESS_CHECKLIST_ITEMS: FieldReadinessChecklistItem[] = [
+  {
+    id: 'drawing_source_questions_captured',
+    label: 'Drawing and source questions captured',
+    detail: 'Open drawing, estimator, or Project Data Entry source questions are captured for PM and lead review before field reliance.',
+  },
+  {
+    id: 'scope_assumptions_reviewed',
+    label: 'Scope assumptions reviewed',
+    detail: 'Candidate workpackage and apparatus assumptions are reviewed as planning context only, not imported project scope.',
+  },
+  {
+    id: 'site_access_contacts_captured',
+    label: 'Site access and contacts captured',
+    detail: 'Known site access, customer contact, escort, badging, and entry questions are captured for follow-up outside production state.',
+  },
+  {
+    id: 'safety_planning_questions_captured',
+    label: 'Safety planning questions captured',
+    detail: 'JHA, PPE, LOTO, energization, and temp-power safety questions are captured for field discussion before any work authorization.',
+  },
+  {
+    id: 'crew_equipment_questions_captured',
+    label: 'Crew and equipment questions captured',
+    detail: 'Crew, equipment, tooling, lift, and rental questions are captured as planning prompts only, not assignment or schedule state.',
+  },
+  {
+    id: 'material_staging_questions_captured',
+    label: 'Material and staging questions captured',
+    detail: 'Material, apparatus staging, laydown, delivery, and receiving questions are captured before relying on the candidate shape.',
+  },
+  {
+    id: 'customer_constraint_questions_captured',
+    label: 'Customer constraint questions captured',
+    detail: 'Customer, outage, access-window, milestone, and communication constraints are captured for PM review without changing schedule state.',
+  },
+  {
+    id: 'field_authority_boundary_acknowledged',
+    label: 'Field authority boundary acknowledged',
+    detail: 'This checklist is field-prep evidence only and does not authorize work, create tasks, assign resources, schedule work, change status, or write production state.',
   },
 ]
 
@@ -562,6 +610,7 @@ function buildIntakeBrief(
   futureRoute: string,
   reviewChecks: Record<string, boolean>,
   closeoutChecks: Record<string, boolean>,
+  fieldReadinessChecks: Record<string, boolean>,
   approvalDraft: ApprovalDecisionDraft,
 ) {
   const candidate = packet.candidate
@@ -582,8 +631,10 @@ function buildIntakeBrief(
   const operatingQueueLines = operatingQueue.map((item) => `${item.title}: ${formatLabel(item.status)} - ${item.detail}`)
   const checklistLines = REVIEW_CHECKLIST_ITEMS.map((item) => `${reviewChecks[item.id] ? '[x]' : '[ ]'} ${item.label}: ${item.detail}`)
   const closeoutChecklistLines = CLOSEOUT_CHECKLIST_ITEMS.map((item) => `${closeoutChecks[item.id] ? '[x]' : '[ ]'} ${item.label}: ${item.detail}`)
+  const fieldReadinessChecklistLines = FIELD_READINESS_CHECKLIST_ITEMS.map((item) => `${fieldReadinessChecks[item.id] ? '[x]' : '[ ]'} ${item.label}: ${item.detail}`)
   const checkedCount = REVIEW_CHECKLIST_ITEMS.filter((item) => reviewChecks[item.id]).length
   const closeoutCheckedCount = CLOSEOUT_CHECKLIST_ITEMS.filter((item) => closeoutChecks[item.id]).length
+  const fieldReadinessCheckedCount = FIELD_READINESS_CHECKLIST_ITEMS.filter((item) => fieldReadinessChecks[item.id]).length
   const draftPresent = hasApprovalDraftContent(approvalDraft)
   const readyPersistenceGateCount = persistenceReadinessGates.filter((gate) => gate.status === 'ready').length
   const completeQueueCount = operatingQueue.filter((item) => item.status === 'complete').length
@@ -667,6 +718,14 @@ function buildIntakeBrief(
     'This browser-local closeout intake is audit prep only. It is not acceptance, approval, persistence, import, deployment, assignment, schedule, status, or production state.',
     '',
     markdownList(closeoutChecklistLines),
+    '',
+    '## Local Field Readiness Checklist',
+    '',
+    `Field readiness checks: ${fieldReadinessCheckedCount} of ${FIELD_READINESS_CHECKLIST_ITEMS.length} checked.`,
+    '',
+    'This browser-local field readiness checklist is prep evidence only. It is not work authorization, approval, persistence, import, assignment, schedule, status, or production state.',
+    '',
+    markdownList(fieldReadinessChecklistLines),
     '',
     '## Admission And Approval',
     '',
@@ -836,6 +895,7 @@ function buildFieldKickoffBrief(
   futureRoute: string,
   reviewChecks: Record<string, boolean>,
   closeoutChecks: Record<string, boolean>,
+  fieldReadinessChecks: Record<string, boolean>,
   approvalDraft: ApprovalDecisionDraft,
 ) {
   const candidate = packet.candidate
@@ -849,6 +909,8 @@ function buildFieldKickoffBrief(
   const workpackages = candidate.workpackages || []
   const checkedItems = REVIEW_CHECKLIST_ITEMS.filter((item) => reviewChecks[item.id])
   const checkedCloseoutItems = CLOSEOUT_CHECKLIST_ITEMS.filter((item) => closeoutChecks[item.id])
+  const checkedFieldReadinessItems = FIELD_READINESS_CHECKLIST_ITEMS.filter((item) => fieldReadinessChecks[item.id])
+  const openFieldReadinessItems = FIELD_READINESS_CHECKLIST_ITEMS.filter((item) => !fieldReadinessChecks[item.id])
   const nextQueueItems = operatingQueue.filter((item) => item.status === 'next')
   const blockedQueueItems = operatingQueue.filter((item) => item.status === 'blocked')
   const warningLines = warnings.map((warning) => `${warning.severity || 'unknown'} - ${warning.code || 'WARNING'}: ${warning.message || 'Review warning.'}`)
@@ -859,6 +921,8 @@ function buildFieldKickoffBrief(
   })
   const checkedReviewLines = checkedItems.map((item) => `${item.label}: ${item.detail}`)
   const checkedCloseoutLines = checkedCloseoutItems.map((item) => `${item.label}: ${item.detail}`)
+  const checkedFieldReadinessLines = checkedFieldReadinessItems.map((item) => `${item.label}: ${item.detail}`)
+  const openFieldReadinessLines = openFieldReadinessItems.map((item) => `${item.label}: ${item.detail}`)
   const nextQueueLines = nextQueueItems.map((item) => `${item.title}: ${item.detail}`)
   const blockedQueueLines = blockedQueueItems.map((item) => `${item.title}: ${item.detail}`)
   const workflowGateLines = workflowGates.map((gate) => `${gate.title}: ${formatLabel(gate.status)} - ${gate.detail}`)
@@ -923,6 +987,7 @@ function buildFieldKickoffBrief(
     '',
     `- Review checklist: ${checkedItems.length} of ${REVIEW_CHECKLIST_ITEMS.length} checked`,
     `- Executor closeout intake: ${checkedCloseoutItems.length} of ${CLOSEOUT_CHECKLIST_ITEMS.length} checked`,
+    `- Field readiness prep: ${checkedFieldReadinessItems.length} of ${FIELD_READINESS_CHECKLIST_ITEMS.length} checked`,
     `- Decision draft: ${approvalDraft.decision || 'none selected'}`,
     `- Local-only attestation checked: ${approvalDraft.local_attestation ? 'yes' : 'no'}`,
     `- Review notes draft: ${formatMultilineMarkdown(approvalDraft.review_notes)}`,
@@ -934,6 +999,14 @@ function buildFieldKickoffBrief(
     'Checked executor closeout evidence:',
     '',
     markdownList(checkedCloseoutLines),
+    '',
+    'Checked field readiness prep:',
+    '',
+    markdownList(checkedFieldReadinessLines),
+    '',
+    'Open field readiness prep:',
+    '',
+    markdownList(openFieldReadinessLines),
     '',
     '## Local PM Operating Queue',
     '',
@@ -993,6 +1066,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
   const [fieldBriefStatus, setFieldBriefStatus] = useState('')
   const [reviewChecks, setReviewChecks] = useState<Record<string, boolean>>({})
   const [closeoutChecks, setCloseoutChecks] = useState<Record<string, boolean>>({})
+  const [fieldReadinessChecks, setFieldReadinessChecks] = useState<Record<string, boolean>>({})
   const [approvalDraft, setApprovalDraft] = useState<ApprovalDecisionDraft>(EMPTY_APPROVAL_DRAFT)
 
   const refresh = useCallback(async () => {
@@ -1023,6 +1097,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
   const targetRows = admissionPlan?.target_row_plan || {}
   const reviewChecklistKey = candidate?.candidate_id ? `pm-import-intake-review-checklist:${candidate.candidate_id}` : null
   const closeoutChecklistKey = candidate?.candidate_id ? `pm-import-intake-executor-closeout:${candidate.candidate_id}` : null
+  const fieldReadinessChecklistKey = candidate?.candidate_id ? `pm-import-intake-field-readiness:${candidate.candidate_id}` : null
   const approvalDraftKey = candidate?.candidate_id ? `pm-import-intake-approval-draft:${candidate.candidate_id}` : null
   const permittedDecisions = approvalContract?.approval_record_contract?.permitted_decisions || []
   const notAllowed = useMemo(
@@ -1075,6 +1150,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
   ]
   const checklistCheckedCount = REVIEW_CHECKLIST_ITEMS.filter((item) => reviewChecks[item.id]).length
   const closeoutCheckedCount = CLOSEOUT_CHECKLIST_ITEMS.filter((item) => closeoutChecks[item.id]).length
+  const fieldReadinessCheckedCount = FIELD_READINESS_CHECKLIST_ITEMS.filter((item) => fieldReadinessChecks[item.id]).length
   const approvalDraftHasContent = hasApprovalDraftContent(approvalDraft)
   const persistenceReadinessGates = useMemo(
     () => buildPersistenceReadinessGates(packet, approvalDraft, reviewChecks),
@@ -1114,6 +1190,19 @@ export default function ProjectMinerIntakeWorkbenchPage() {
       setCloseoutChecks({})
     }
   }, [closeoutChecklistKey])
+
+  useEffect(() => {
+    if (!fieldReadinessChecklistKey || typeof window === 'undefined') {
+      return
+    }
+
+    try {
+      const stored = window.localStorage.getItem(fieldReadinessChecklistKey)
+      setFieldReadinessChecks(stored ? (JSON.parse(stored) as Record<string, boolean>) : {})
+    } catch {
+      setFieldReadinessChecks({})
+    }
+  }, [fieldReadinessChecklistKey])
 
   useEffect(() => {
     if (!approvalDraftKey || typeof window === 'undefined') {
@@ -1158,6 +1247,21 @@ export default function ProjectMinerIntakeWorkbenchPage() {
     }
   }
 
+  function updateFieldReadinessCheck(itemId: string, checked: boolean) {
+    const next = { ...fieldReadinessChecks, [itemId]: checked }
+    setFieldReadinessChecks(next)
+    if (fieldReadinessChecklistKey && typeof window !== 'undefined') {
+      window.localStorage.setItem(fieldReadinessChecklistKey, JSON.stringify(next))
+    }
+  }
+
+  function clearFieldReadinessChecklist() {
+    setFieldReadinessChecks({})
+    if (fieldReadinessChecklistKey && typeof window !== 'undefined') {
+      window.localStorage.removeItem(fieldReadinessChecklistKey)
+    }
+  }
+
   function updateApprovalDraft(nextPartial: Partial<ApprovalDecisionDraft>) {
     const next = { ...approvalDraft, ...nextPartial }
     setApprovalDraft(next)
@@ -1180,7 +1284,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
 
     downloadTextFile(
       briefFileName(candidate),
-      buildIntakeBrief(packet, workflowGates, persistenceReadinessGates, operatingQueue, notAllowed, futureRoute, reviewChecks, closeoutChecks, approvalDraft),
+      buildIntakeBrief(packet, workflowGates, persistenceReadinessGates, operatingQueue, notAllowed, futureRoute, reviewChecks, closeoutChecks, fieldReadinessChecks, approvalDraft),
       'text/markdown',
     )
     setBriefStatus(`PM brief prepared from ${candidate?.candidate_id || 'the current intake packet'} without a server write.`)
@@ -1216,7 +1320,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
 
     downloadTextFile(
       fieldKickoffBriefFileName(candidate),
-      buildFieldKickoffBrief(packet, workflowGates, operatingQueue, notAllowed, futureRoute, reviewChecks, closeoutChecks, approvalDraft),
+      buildFieldKickoffBrief(packet, workflowGates, operatingQueue, notAllowed, futureRoute, reviewChecks, closeoutChecks, fieldReadinessChecks, approvalDraft),
       'text/markdown',
     )
     setFieldBriefStatus(`Field kickoff prep brief prepared from ${candidate?.candidate_id || 'the current intake packet'} without a server write.`)
@@ -1644,6 +1748,40 @@ export default function ProjectMinerIntakeWorkbenchPage() {
           <div className="pm-review-link-row pm-review-link-row-start" style={{ alignItems: 'center' }}>
             <button className="btn btn-outline" onClick={clearCloseoutChecklist} disabled={!closeoutCheckedCount}>
               Clear closeout intake
+            </button>
+            <span style={{ color: 'var(--muted)', lineHeight: 1.55 }}>Retained in this browser for the current candidate only.</span>
+          </div>
+        </section>
+
+        <section aria-label="Local field readiness checklist" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
+          <div className="status-row">
+            <h2 style={{ margin: 0 }}>Local Field Readiness Checklist</h2>
+            <span className="status-pill status-awaiting-values">
+              {formatCount(fieldReadinessCheckedCount)} of {formatCount(FIELD_READINESS_CHECKLIST_ITEMS.length)}
+            </span>
+          </div>
+          <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+            Browser-local prep evidence for PM, lead, and field review conversations. Checking these items does not authorize work, approve, persist, import, assign, schedule, change status, or mutate production state.
+          </p>
+          <div style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
+            {FIELD_READINESS_CHECKLIST_ITEMS.map((item) => (
+              <label key={item.id} className="card" style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0.75rem', padding: '0.85rem', boxShadow: 'none', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={Boolean(fieldReadinessChecks[item.id])}
+                  onChange={(event) => updateFieldReadinessCheck(item.id, event.target.checked)}
+                  style={{ marginTop: '0.25rem' }}
+                />
+                <span>
+                  <strong>{item.label}</strong>
+                  <span style={{ display: 'block', marginTop: '0.35rem', color: 'var(--muted)', lineHeight: 1.5 }}>{item.detail}</span>
+                </span>
+              </label>
+            ))}
+          </div>
+          <div className="pm-review-link-row pm-review-link-row-start" style={{ alignItems: 'center' }}>
+            <button className="btn btn-outline" onClick={clearFieldReadinessChecklist} disabled={!fieldReadinessCheckedCount}>
+              Clear field readiness
             </button>
             <span style={{ color: 'var(--muted)', lineHeight: 1.55 }}>Retained in this browser for the current candidate only.</span>
           </div>
