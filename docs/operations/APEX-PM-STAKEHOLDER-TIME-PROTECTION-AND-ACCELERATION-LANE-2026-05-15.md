@@ -495,6 +495,14 @@ PM Lane 079 groups the existing quick-jump links into Daily Review, Outputs and 
 
 This still creates no approval record, SQL, schema migration, backend route, import mutation, issue, task, assignment, schedule, status, hosted proof, live task, work authorization, field release, work order, durable field record, production tracking write, product code, deployment, service, DNS, auth, ingress, secret, local storage key, new route, new export action, new export artifact, export contract widening, or production mutation.
 
+The current route-link ergonomics tranche is:
+
+`Project Miner Local PM Intake Route Link Grouping`
+
+PM Lane 080 groups the existing top route links into Shell, Intake Reads, and PM Workfront. It keeps every existing href, route target, quick-jump link, export behavior, output status, storage boundary, and read seam unchanged while making the Daily Intake Starting Point easier to scan during a real PM review.
+
+This still creates no approval record, SQL, schema migration, backend route, import mutation, issue, task, assignment, schedule, status, hosted proof, live task, work authorization, field release, work order, durable field record, production tracking write, product code, deployment, service, DNS, auth, ingress, secret, local storage key, new route, new export action, new export artifact, export contract widening, or production mutation.
+
 The next persistence tranche is:
 
 `Import Candidate Approval Persistence Schema And Adapter Implementation`

@@ -246,6 +246,18 @@ type QuickJumpGroup = {
   items: QuickJumpItem[]
 }
 
+type RouteLinkItem = {
+  id: string
+  label: string
+  href: string
+}
+
+type RouteLinkGroup = {
+  id: string
+  label: string
+  items: RouteLinkItem[]
+}
+
 type StartHereStatus = 'focus' | 'attention' | 'context' | 'blocked'
 
 type StartHereItem = {
@@ -366,6 +378,50 @@ const EMPTY_FIELD_OBSERVATION_SCRATCHPAD: FieldObservationScratchpad = {
   material_equipment_observations: '',
   open_questions_pm_followup: '',
 }
+const PM_INTAKE_ROUTE_LINKS: RouteLinkItem[] = [
+  {
+    id: 'return-shell',
+    label: 'Return to shell',
+    href: '/',
+  },
+  {
+    id: 'import-candidate',
+    label: 'Import candidate',
+    href: '/pm-review/import-candidate',
+  },
+  {
+    id: 'admission-plan',
+    label: 'Admission plan',
+    href: '/pm-review/import-admission-plan',
+  },
+  {
+    id: 'approval-readiness',
+    label: 'Approval readiness',
+    href: '/pm-review/import-approval-readiness',
+  },
+  {
+    id: 'pm-workfront',
+    label: 'PM workfront',
+    href: '/pm-review/workfront',
+  },
+]
+const PM_INTAKE_ROUTE_LINK_GROUPS: RouteLinkGroup[] = [
+  {
+    id: 'shell',
+    label: 'Shell',
+    items: PM_INTAKE_ROUTE_LINKS.slice(0, 1),
+  },
+  {
+    id: 'intake-reads',
+    label: 'Intake Reads',
+    items: PM_INTAKE_ROUTE_LINKS.slice(1, 4),
+  },
+  {
+    id: 'pm-workfront',
+    label: 'PM Workfront',
+    items: PM_INTAKE_ROUTE_LINKS.slice(4),
+  },
+]
 const PM_INTAKE_QUICK_JUMPS: QuickJumpItem[] = [
   {
     id: 'command-center',
@@ -3705,12 +3761,22 @@ export default function ProjectMinerIntakeWorkbenchPage() {
               Review the source-derived project shape, current gates, and guardrails before moving to any dedicated detail route.
             </p>
           </div>
-          <div className="pm-review-link-row" aria-label="PM intake route links">
-            <Link href="/">Return to shell</Link>
-            <Link href="/pm-review/import-candidate">Import candidate</Link>
-            <Link href="/pm-review/import-admission-plan">Admission plan</Link>
-            <Link href="/pm-review/import-approval-readiness">Approval readiness</Link>
-            <Link href="/pm-review/workfront">PM workfront</Link>
+          <div
+            aria-label="PM intake route links"
+            style={{ display: 'grid', gap: '0.65rem', gridTemplateColumns: 'repeat(auto-fit, minmax(12rem, 1fr))' }}
+          >
+            {PM_INTAKE_ROUTE_LINK_GROUPS.map((group) => (
+              <section key={group.id} aria-label={`${group.label} route links`} style={{ display: 'grid', gap: '0.45rem' }}>
+                <h3 style={{ fontSize: '0.95rem', margin: 0 }}>{group.label}</h3>
+                <div className="pm-review-link-row pm-review-link-row-start" style={{ margin: 0 }}>
+                  {group.items.map((item) => (
+                    <Link key={item.id} href={item.href}>
+                      {item.label}
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            ))}
           </div>
         </div>
         <div
