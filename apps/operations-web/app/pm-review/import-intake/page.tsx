@@ -4961,35 +4961,37 @@ export default function ProjectMinerIntakeWorkbenchPage() {
               <h2 style={{ display: 'inline', margin: 0 }}>Authority Boundary Detail</h2>
             </summary>
 
-        <section id="approval-readiness" aria-label="Approval persistence readiness gates" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
-          <div className="status-row">
+        <details open id="approval-readiness" aria-label="Approval persistence readiness gates" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
+          <summary className="status-row" style={{ cursor: 'pointer' }}>
             <h2 style={{ margin: 0 }}>Approval Persistence Readiness</h2>
             <span className="status-pill status-awaiting-values">
               {formatCount(readyPersistenceGateCount)} of {formatCount(persistenceReadinessGates.length)} ready
             </span>
-          </div>
-          <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
-            Local readiness map for the future approval-persistence packet. It reflects review context and blockers only; it does not approve, persist, import, assign, schedule, change status, or mutate production state.
-          </p>
-          <p style={{ margin: '0.45rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
-            PM Lane 049 authored the schema and adapter admission design. Hosted parity, schema authority, approval persistence authority, and import mutation authority remain blocked until later packets explicitly admit them.
-          </p>
-          <div style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
-            {persistenceReadinessGates.map((gate) => (
-              <article key={gate.id} className="card" style={{ padding: '0.85rem', boxShadow: 'none' }}>
-                <div className="status-row" style={{ alignItems: 'start' }}>
-                  <div>
-                    <p style={{ margin: 0 }}>
-                      <strong>{gate.title}</strong>
-                    </p>
-                    <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{gate.detail}</p>
+          </summary>
+          <div aria-label="Approval persistence readiness controls">
+            <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+              Local readiness map for the future approval-persistence packet. It reflects review context and blockers only; it does not approve, persist, import, assign, schedule, change status, or mutate production state.
+            </p>
+            <p style={{ margin: '0.45rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+              PM Lane 049 authored the schema and adapter admission design. Hosted parity, schema authority, approval persistence authority, and import mutation authority remain blocked until later packets explicitly admit them.
+            </p>
+            <div style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
+              {persistenceReadinessGates.map((gate) => (
+                <article key={gate.id} className="card" style={{ padding: '0.85rem', boxShadow: 'none' }}>
+                  <div className="status-row" style={{ alignItems: 'start' }}>
+                    <div>
+                      <p style={{ margin: 0 }}>
+                        <strong>{gate.title}</strong>
+                      </p>
+                      <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{gate.detail}</p>
+                    </div>
+                    <span className={`status-pill ${gate.status === 'ready' ? 'status-configured' : 'status-deferred'}`}>{formatLabel(gate.status)}</span>
                   </div>
-                  <span className={`status-pill ${gate.status === 'ready' ? 'status-configured' : 'status-deferred'}`}>{formatLabel(gate.status)}</span>
-                </div>
-              </article>
-            ))}
+                </article>
+              ))}
+            </div>
           </div>
-        </section>
+        </details>
 
         <section id="guardrails" aria-label="Current PM next actions and guardrails" className="notes-grid">
           <article className="notes-card">
