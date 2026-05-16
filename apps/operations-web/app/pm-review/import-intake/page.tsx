@@ -4370,18 +4370,18 @@ export default function ProjectMinerIntakeWorkbenchPage() {
           </article>
         </section>
 
-        <section id="import-exception-register" aria-label="Local import exception decision register" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
-          <div className="status-row">
+        <details id="import-exception-register" open aria-label="Local import exception decision register" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
+          <summary className="status-row" style={{ cursor: 'pointer' }}>
             <h2 style={{ margin: 0 }}>Local Import Exception Decision Register</h2>
             <span className="status-pill status-awaiting-values">browser-local</span>
-          </div>
+          </summary>
           <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
             Derived exception register for candidate warnings, human decision prompts, admission no-go checks, local review evidence, and local decision draft context. It does not approve, persist, import, assign, schedule, change status, create tasks, create issues, or mutate production state.
           </p>
           <p style={{ margin: '0.45rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
             {importExceptionRegisterSummary(importExceptionRegisterCount)}
           </p>
-          <div style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
+          <div aria-label="Local import exception decision register items" style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
             {importExceptionRegister.map((item) => (
               <article key={item.id} className="card" style={{ padding: '0.85rem', boxShadow: 'none' }}>
                 <div className="status-row" style={{ alignItems: 'start' }}>
@@ -4397,7 +4397,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
               </article>
             ))}
           </div>
-        </section>
+        </details>
 
         <section id="workflow-gates" aria-label="Workflow gates" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
           <div className="status-row">
