@@ -591,6 +591,8 @@ PM Lane 103 wraps the existing Local Field Questions Draft panel in a default-op
 
 PM Lane 104 wraps the existing Local Field Prep Queue panel in a default-open native disclosure control. Jason can fold the derived next-move queue after reviewing it, while the panel stays inside Field Prep Detail with the `#field-prep` anchor and the five queue items, item order, summary count text, status pills, dynamic derived behavior, reads, quick-jump target, and authority wording remain unchanged.
 
+PM Lane 105 wraps the existing Local Field Prep Coverage Snapshot panel in a default-open native disclosure control. Jason can fold the derived coverage snapshot after reviewing it, while the panel stays inside Field Prep Detail and the seven coverage items, item order, summary text, status pills, dynamic derived behavior, export inclusion, reads, and authority wording remain unchanged.
+
 This creates no approval record, SQL, schema migration, backend route, import mutation, issue, task, assignment, schedule, status, hosted proof, live task, work authorization, field release, work order, durable field record, production tracking write, product code, deployment, service, DNS, auth, ingress, secret, local storage key, new route, new export action, new export artifact, export contract widening, or production mutation.
 
 The next persistence tranche is:

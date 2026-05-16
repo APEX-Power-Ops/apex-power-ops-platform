@@ -4815,33 +4815,35 @@ export default function ProjectMinerIntakeWorkbenchPage() {
           </div>
         </details>
 
-        <section aria-label="Local field prep coverage snapshot" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
-          <div className="status-row">
+        <details open aria-label="Local field prep coverage snapshot" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
+          <summary className="status-row" style={{ cursor: 'pointer' }}>
             <h2 style={{ margin: 0 }}>Local Field Prep Coverage Snapshot</h2>
             <span className="status-pill status-awaiting-values">derived</span>
-          </div>
-          <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
-            Browser-local coverage snapshot derived from existing local prep state. It shows what field-prep context is covered, partial, open, or blocked without creating tasks, issues, work authorization, assignments, schedules, status updates, approval records, import rows, durable field records, production tracking rows, or production writes.
-          </p>
-          <p style={{ margin: '0.6rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
-            {fieldPrepCoverageSummary(fieldPrepCoverageCount)}
-          </p>
-          <div style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
-            {fieldPrepCoverageSnapshot.map((item) => (
-              <article key={item.id} className="card" style={{ padding: '0.85rem', boxShadow: 'none' }}>
-                <div className="status-row" style={{ alignItems: 'start' }}>
-                  <div>
-                    <p style={{ margin: 0 }}>
-                      <strong>{item.title}</strong>
-                    </p>
-                    <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
+          </summary>
+          <div aria-label="Field prep coverage controls">
+            <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+              Browser-local coverage snapshot derived from existing local prep state. It shows what field-prep context is covered, partial, open, or blocked without creating tasks, issues, work authorization, assignments, schedules, status updates, approval records, import rows, durable field records, production tracking rows, or production writes.
+            </p>
+            <p style={{ margin: '0.6rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+              {fieldPrepCoverageSummary(fieldPrepCoverageCount)}
+            </p>
+            <div style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
+              {fieldPrepCoverageSnapshot.map((item) => (
+                <article key={item.id} className="card" style={{ padding: '0.85rem', boxShadow: 'none' }}>
+                  <div className="status-row" style={{ alignItems: 'start' }}>
+                    <div>
+                      <p style={{ margin: 0 }}>
+                        <strong>{item.title}</strong>
+                      </p>
+                      <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
+                    </div>
+                    <span className={`status-pill ${fieldPrepCoverageTone(item.status)}`}>{formatLabel(item.status)}</span>
                   </div>
-                  <span className={`status-pill ${fieldPrepCoverageTone(item.status)}`}>{formatLabel(item.status)}</span>
-                </div>
-              </article>
-            ))}
+                </article>
+              ))}
+            </div>
           </div>
-        </section>
+        </details>
 
         <section aria-label="Local field prep conversation agenda" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
           <div className="status-row">
