@@ -4175,28 +4175,30 @@ export default function ProjectMinerIntakeWorkbenchPage() {
             <h2 style={{ margin: 0 }}>Local PM Intake Handoff Guide</h2>
             <span className="status-pill status-awaiting-values">browser-local</span>
           </summary>
-          <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
-            Browser-local guide for the next context lane. It creates no localStorage key, export artifact, backend route, schema, approval record, task, issue, schedule, status, durable field record, production tracking row, hosted parity claim, or production write.
-          </p>
-          <div aria-label="Local PM intake handoff guide items" style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
-            {pmIntakeHandoffGuide.map((item) => (
-              <a
-                key={item.id}
-                className="card"
-                href={item.href}
-                style={{ color: 'inherit', display: 'block', padding: '0.85rem', textDecoration: 'none', boxShadow: 'none' }}
-              >
-                <div className="status-row" style={{ alignItems: 'start' }}>
-                  <div>
-                    <p style={{ margin: 0 }}>
-                      <strong>{item.title}</strong>
-                    </p>
-                    <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
+          <div aria-label="Handoff guide controls">
+            <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+              Browser-local guide for the next context lane. It creates no localStorage key, export artifact, backend route, schema, approval record, task, issue, schedule, status, durable field record, production tracking row, hosted parity claim, or production write.
+            </p>
+            <div aria-label="Local PM intake handoff guide items" style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
+              {pmIntakeHandoffGuide.map((item) => (
+                <a
+                  key={item.id}
+                  className="card"
+                  href={item.href}
+                  style={{ color: 'inherit', display: 'block', padding: '0.85rem', textDecoration: 'none', boxShadow: 'none' }}
+                >
+                  <div className="status-row" style={{ alignItems: 'start' }}>
+                    <div>
+                      <p style={{ margin: 0 }}>
+                        <strong>{item.title}</strong>
+                      </p>
+                      <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
+                    </div>
+                    <span className={`status-pill ${handoffGuideTone(item.status)}`}>{formatLabel(item.status)}</span>
                   </div>
-                  <span className={`status-pill ${handoffGuideTone(item.status)}`}>{formatLabel(item.status)}</span>
-                </div>
-              </a>
-            ))}
+                </a>
+              ))}
+            </div>
           </div>
         </details>
 
