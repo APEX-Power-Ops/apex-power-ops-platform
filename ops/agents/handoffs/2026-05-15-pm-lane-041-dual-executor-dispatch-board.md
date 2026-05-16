@@ -10,7 +10,7 @@ This board removes Jason from the AI-to-AI relay loop for the hosted parity step
 
 ## Current Dispatch Wrapper
 
-PM Lane 076 is the current top-level copy/paste wrapper for this board after the local PM intake workbench through PM Lane 075:
+PM Lane 076 is the current top-level copy/paste wrapper for this board after the local PM intake workbench through PM Lane 119:
 
 ```text
 ops/agents/handoffs/2026-05-15-pm-lane-076-hosted-pm-intake-parity-executor-copy-paste-prompt.md
@@ -19,10 +19,10 @@ ops/agents/handoffs/2026-05-15-pm-lane-076-hosted-pm-intake-parity-executor-copy
 Current source floor:
 
 ```text
-clean-main cb1f10b83bbd61664be8eea7df0516a3d912d21e
+clean-main e89cabb7a1226ceeb3a431b25147d889402ea1a3
 ```
 
-Use Lane 076 when assigning the hosted parity step to Codex Desktop, Claude Code, or another authenticated executor so the executor can select Vercel, Render, both, or credential-unavailable closeout without Jason relaying packet context manually.
+Use Lane 076 when assigning the hosted parity step to Desktop Codex, Claude Code, or another authenticated executor so the executor can select Vercel, Render, both, or credential-unavailable closeout without Jason relaying packet context manually.
 
 ## Dispatch Map
 

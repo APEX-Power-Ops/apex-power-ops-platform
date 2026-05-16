@@ -11,7 +11,13 @@ C:\APEX Platform\apex-power-ops-platform
 Current source floor:
 
 ```text
-clean-main cb1f10b83bbd61664be8eea7df0516a3d912d21e
+clean-main e89cabb7a1226ceeb3a431b25147d889402ea1a3
+```
+
+Preferred executor for this run:
+
+```text
+Desktop Codex, using whichever authenticated Vercel and/or Render credential surface is available in that application.
 ```
 
 Authoritative dispatch packet:
@@ -42,6 +48,7 @@ Inspect your available hosted credential surface:
 4. If you have neither, stop and create a credential-unavailable closeout using the template.
 
 Do not ask Jason to relay technical details that are already in the repo handoffs.
+Do not edit local PM Lane 120 files; the coordinator is continuing local PM work separately while this hosted parity lane runs.
 
 ## Lane 041A - Vercel Operations-Web Promotion
 

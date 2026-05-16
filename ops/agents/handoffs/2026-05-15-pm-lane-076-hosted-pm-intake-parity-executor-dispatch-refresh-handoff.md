@@ -1,7 +1,7 @@
 # PM Lane 076 Handoff - Hosted PM Intake Parity Executor Dispatch Binder
 
 Date: 2026-05-15
-Status: Authored, ready for authenticated hosted executor selection
+Status: Refreshed 2026-05-16 for Desktop Codex authenticated hosted executor selection
 Scope: Current dispatch wrapper for PM Lane 041A Vercel and PM Lane 041B Render hosted parity work
 
 ## Executive Summary
@@ -13,7 +13,7 @@ It creates a current, copy/paste-ready hosted parity dispatch wrapper so an auth
 Current source floor:
 
 ```text
-clean-main cb1f10b83bbd61664be8eea7df0516a3d912d21e
+clean-main e89cabb7a1226ceeb3a431b25147d889402ea1a3
 ```
 
 Hosted parity is still not claimed. The next executor must either return green hosted proof or a completed closeout that classifies the remaining blocker.
@@ -29,12 +29,12 @@ A read-only sidecar reviewed the existing hosted parity stack and recommended th
 
 ## Why This Lane
 
-The local PM intake workbench has continued to improve through PM Lane 075, but hosted proof still depends on two authenticated surfaces that are outside this coordinator workspace:
+The local PM intake workbench has continued to improve through PM Lane 119, but hosted proof still depends on two authenticated surfaces that are outside this coordinator workspace:
 
 1. Vercel for the operations-web production alias.
 2. Render for the mutation-seam production service.
 
-PM Lane 076 keeps the work moving without asking Jason to translate packet context between agents. It points the next executor at the right lane based on the credential surface they actually have.
+PM Lane 076 keeps the work moving without asking Jason to translate packet context between agents. It points Desktop Codex, or another authenticated executor if needed, at the right lane based on the credential surface it actually has.
 
 ## Current Hosted Truth
 
@@ -44,7 +44,7 @@ PM Lane 076 keeps the work moving without asking Jason to translate packet conte
 4. `https://operations.apexpowerops.com/pm-review/import-intake` still requires authenticated Vercel promotion.
 5. `https://mutation-seam.apexpowerops.com/health` was previously reachable.
 6. Hosted mutation-seam still needs authenticated Render redeploy or blocker classification for the four current PM intake reads.
-7. PM Lane 075 was local-current UI navigation placement only and did not change the hosted backend scope.
+7. PM Lanes 075 through 119 were local-current PM intake ergonomics slices and did not change the hosted backend scope.
 
 ## Dispatch Decision
 
@@ -197,7 +197,7 @@ Coordinator validation for this authoring lane:
 ```
 
 ```powershell
-rg -n "PM Lane 076|2026-05-15-pm-lane-076|cb1f10b83bbd61664be8eea7df0516a3d912d21e" PROJECT_STATUS.md docs/operations ops/agents/handoffs ops/agents/packets/draft
+rg -n "PM Lane 076|2026-05-15-pm-lane-076|e89cabb7a1226ceeb3a431b25147d889402ea1a3|Desktop Codex" PROJECT_STATUS.md docs/operations ops/agents/handoffs ops/agents/packets/draft
 ```
 
 ```powershell
@@ -206,4 +206,4 @@ git diff --check
 
 ## Next Recommended Move
 
-Hand the copy/paste prompt to an authenticated hosted executor, ideally Codex Desktop or Claude Code with the relevant Vercel and/or Render access. The executor should run only the lane matching its credential surface and return the closeout handoff.
+Hand the copy/paste prompt to Desktop Codex first, using whichever authenticated Vercel and/or Render credential surface is available there. The executor should run only the lane matching its credential surface and return the closeout handoff.

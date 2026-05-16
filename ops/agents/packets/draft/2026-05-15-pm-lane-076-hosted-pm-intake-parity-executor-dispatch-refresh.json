@@ -1,7 +1,7 @@
 {
   "packet_id": "2026-05-15-pm-lane-076",
   "title": "Hosted PM Intake Parity Executor Dispatch Binder",
-  "objective": "Refresh the hosted PM intake parity dispatch surface after PM Lane 075 so an authenticated external Codex or Claude Code executor can select and execute the existing Vercel and/or Render hosted lanes without Jason serving as the technical relay.",
+  "objective": "Refresh the hosted PM intake parity dispatch surface through PM Lane 119 so Desktop Codex or another authenticated external executor can select and execute the existing Vercel and/or Render hosted lanes without Jason serving as the technical relay.",
   "domain": "pm-domain",
   "active_role": "Technical Repo Authority / PM Hosted Parity Coordinator / AI Orchestration Dispatch Author",
   "dependencies": [
@@ -10,21 +10,23 @@
     "2026-05-15-pm-lane-041b",
     "2026-05-15-pm-lane-042",
     "2026-05-15-pm-lane-044",
-    "2026-05-15-pm-lane-075"
+    "2026-05-15-pm-lane-075",
+    "2026-05-16-pm-lane-119"
   ],
   "current_source_floor": {
     "branch": "clean-main",
-    "commit": "cb1f10b83bbd61664be8eea7df0516a3d912d21e",
-    "meaning": "Current local and origin clean-main after PM Lane 075 local PM intake quick jump rail promotion. Hosted executors should validate against this commit or a later clean-main commit."
+    "commit": "e89cabb7a1226ceeb3a431b25147d889402ea1a3",
+    "meaning": "Current local, origin, and Olares clean-main after PM Lane 119 local PM intake snapshot body controls and the 2026-05-16 prioritized task-lane status update. Hosted executors should validate against this commit or a later clean-main commit."
   },
   "current_evidence": [
     "PM Lane 041 split hosted parity into Vercel operations-web promotion and Render mutation-seam redeploy/classification lanes.",
     "PM Lane 042 created the hosted executor closeout template.",
     "PM Lane 044 added /pm-review/import-intake to hosted route and hosted PM intake proof expectations.",
-    "PM Lane 075 moved the local PM Intake Quick Jump Rail near the top of /pm-review/import-intake, but did not change hosted parity requirements.",
+    "PM Lanes 075 through 119 improved local /pm-review/import-intake ergonomics and status publication, but did not change hosted backend parity requirements.",
     "Hosted operations-web still needs authenticated Vercel promotion before /pm-review/import-approval-readiness and /pm-review/import-intake can be claimed hosted-current.",
     "Hosted mutation-seam still needs authenticated Render redeploy or blocker classification before the four current PM intake reads can be claimed hosted-current.",
-    "The coordinator workspace still must not claim hosted parity without returned executor closeouts or green hosted smoke proof."
+    "The coordinator workspace still must not claim hosted parity without returned executor closeouts or green hosted smoke proof.",
+    "Desktop Codex is the preferred first authenticated executor surface for this dispatch."
   ],
   "dispatch_targets": [
     {
@@ -95,16 +97,16 @@
   ],
   "validation_steps": [
     "& \"C:/APEX Platform/apex-power-ops-platform/.venv/Scripts/python.exe\" -c \"import json; json.load(open(r'C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-15-pm-lane-076-hosted-pm-intake-parity-executor-dispatch-refresh.json', encoding='utf-8')); print('packet-json-ok')\"",
-    "rg -n \"PM Lane 076|2026-05-15-pm-lane-076|cb1f10b83bbd61664be8eea7df0516a3d912d21e\" PROJECT_STATUS.md docs/operations ops/agents/handoffs ops/agents/packets/draft",
+    "rg -n \"PM Lane 076|2026-05-15-pm-lane-076|e89cabb7a1226ceeb3a431b25147d889402ea1a3|Desktop Codex\" PROJECT_STATUS.md docs/operations ops/agents/handoffs ops/agents/packets/draft",
     "git diff --check",
     "git diff --cached --check"
   ],
   "sidecar_result": "Read-only sidecar recommended a governance-only dual hosted executor dispatch readiness binder that packages PM Lane 041A, PM Lane 041B, and the PM Lane 042 closeout template without product code, hosted actions, Supabase writes, schema changes, or parity claims.",
   "execution_result": "HOSTED_PARITY_EXECUTOR_DISPATCH_BINDER_AUTHORED",
-  "delegation_status": "ready_for_external_vercel_or_render_authenticated_executor_selection",
+  "delegation_status": "ready_for_desktop_codex_or_external_vercel_or_render_authenticated_executor_selection",
   "hosted_status": "not_claimed_until_PM_Lane_041A_041B_closeouts_or_green_hosted_smokes",
   "sql_permission": false,
   "ai_mutation_authority": "not_admitted",
   "created_at": "2026-05-15",
-  "updated_at": "2026-05-15"
+  "updated_at": "2026-05-16"
 }

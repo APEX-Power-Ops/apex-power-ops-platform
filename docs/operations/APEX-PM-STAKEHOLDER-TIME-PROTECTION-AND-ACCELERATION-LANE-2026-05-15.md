@@ -78,7 +78,7 @@ Any extra step must justify itself by reducing risk, reducing future workload, o
 Immediate prioritized PM task lanes:
 
 1. Local PM intake workbench usability - active and local-current through PM Lane 119. The current safe product lane keeps reducing Jason's daily scan burden on `/pm-review/import-intake`; the next bounded local move is PM Lane 120, Local PM Operating Queue Body Controls.
-2. Hosted PM intake parity - ready for authenticated executor action through PM Lane 041A, PM Lane 041B, and the PM Lane 076 dispatch binder. This lane is still not green until Vercel and Render closeouts prove or precisely classify hosted route and read parity.
+2. Hosted PM intake parity - ready for Desktop Codex authenticated executor action through PM Lane 041A, PM Lane 041B, and the PM Lane 076 dispatch binder. This lane is still not green until Vercel and Render closeouts prove or precisely classify hosted route and read parity.
 3. Approval/import authority - designed but not admitted. Approval persistence, schema execution, and import mutation remain blocked until hosted reads are current or precisely classified and a later packet explicitly admits the narrow write path.
 
 Pilot expansion to PM, Lead, and Field execution remains downstream of these three lanes and must not be pulled forward by local UI progress alone.
@@ -466,7 +466,7 @@ The current hosted executor relay tranche is:
 
 `Hosted PM Intake Parity Executor Dispatch Binder`
 
-PM Lane 076 packages the existing PM Lane 041A Vercel promotion lane, PM Lane 041B Render redeploy/classification lane, PM Lane 042 closeout template, and current `clean-main cb1f10b83bbd61664be8eea7df0516a3d912d21e` source floor into one copy/paste dispatch surface for an authenticated external Codex or Claude Code executor. It is explicitly a governance and relay-reduction binder, not hosted proof.
+PM Lane 076 packages the existing PM Lane 041A Vercel promotion lane, PM Lane 041B Render redeploy/classification lane, PM Lane 042 closeout template, and current `clean-main e89cabb7a1226ceeb3a431b25147d889402ea1a3` source floor into one copy/paste dispatch surface for Desktop Codex or another authenticated external executor. It is explicitly a governance and relay-reduction binder, not hosted proof.
 
 This still creates no approval record, SQL, schema migration, backend route, import mutation, issue, task, assignment, schedule, status, hosted proof, live task, work authorization, field release, work order, durable field record, production tracking write, product code, deployment, service, DNS, auth, ingress, secret, local storage key, new app feature, or production mutation.
 
