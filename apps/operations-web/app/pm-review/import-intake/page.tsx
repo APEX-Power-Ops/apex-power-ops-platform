@@ -4035,35 +4035,37 @@ export default function ProjectMinerIntakeWorkbenchPage() {
           </div>
         </details>
 
-        <section id="pm-constraint-radar" aria-label="Local PM intake constraint radar" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
-          <div className="status-row">
+        <details open id="pm-constraint-radar" aria-label="Local PM intake constraint radar" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
+          <summary className="status-row" style={{ cursor: 'pointer' }}>
             <h2 style={{ margin: 0 }}>Local PM Intake Constraint Radar</h2>
             <span className="status-pill status-awaiting-values">browser-local</span>
-          </div>
-          <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
-            Constraint scan for source/review, field-prep, executor/hosted, and future write-authority boundaries. It does not approve, persist, import, assign, schedule, change status, create tasks, create issues, call live services, claim hosted parity, or mutate production state; it creates no localStorage key, export artifact, backend route, schema, approval record, durable field record, production tracking row, workbook macro path, workbook writeback, or production write.
-          </p>
-          <div style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
-            {pmIntakeConstraintRadar.map((item) => (
-              <a
-                key={item.id}
-                className="card"
-                href={item.href}
-                style={{ color: 'inherit', display: 'block', padding: '0.85rem', textDecoration: 'none', boxShadow: 'none' }}
-              >
-                <div className="status-row" style={{ alignItems: 'start' }}>
-                  <div>
-                    <p style={{ margin: 0 }}>
-                      <strong>{item.title}</strong>
-                    </p>
-                    <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
+          </summary>
+          <div aria-label="Constraint radar controls">
+            <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+              Constraint scan for source/review, field-prep, executor/hosted, and future write-authority boundaries. It does not approve, persist, import, assign, schedule, change status, create tasks, create issues, call live services, claim hosted parity, or mutate production state; it creates no localStorage key, export artifact, backend route, schema, approval record, durable field record, production tracking row, workbook macro path, workbook writeback, or production write.
+            </p>
+            <div style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
+              {pmIntakeConstraintRadar.map((item) => (
+                <a
+                  key={item.id}
+                  className="card"
+                  href={item.href}
+                  style={{ color: 'inherit', display: 'block', padding: '0.85rem', textDecoration: 'none', boxShadow: 'none' }}
+                >
+                  <div className="status-row" style={{ alignItems: 'start' }}>
+                    <div>
+                      <p style={{ margin: 0 }}>
+                        <strong>{item.title}</strong>
+                      </p>
+                      <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
+                    </div>
+                    <span className={`status-pill ${constraintRadarTone(item.status)}`}>{formatLabel(item.status)}</span>
                   </div>
-                  <span className={`status-pill ${constraintRadarTone(item.status)}`}>{formatLabel(item.status)}</span>
-                </div>
-              </a>
-            ))}
+                </a>
+              ))}
+            </div>
           </div>
-        </section>
+        </details>
 
           </details>
           <details open aria-label="Daily action helper panels" style={{ display: 'grid', gap: '0.75rem' }}>
