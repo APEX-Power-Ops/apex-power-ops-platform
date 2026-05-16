@@ -393,6 +393,10 @@ PM Lane 056 adds a browser-local `Local Field Questions Draft` to `/pm-review/im
 
 This draft is candidate-scoped browser prep context only and is not a system of record. It does not create issues, create tasks, create live work orders, approve, persist, import, create schema, run SQL, write Supabase rows, call live services, run workbook macros, write workbook cells, assign work, change status, mutate schedules, claim hosted parity, or admit autonomous AI business-state action.
 
+PM Lane 057 adds a browser-local `Local Field Prep Queue` to `/pm-review/import-intake`. It derives complete, next, and blocked prep moves from the field questions draft and field readiness checklist so the next field-prep action is visible without turning local notes into production tasks.
+
+This queue is browser-local prep guidance only and stores no additional state. It does not create issues, create tasks, create live work orders, approve, persist, import, create schema, run SQL, write Supabase rows, call live services, run workbook macros, write workbook cells, assign work, change status, mutate schedules, claim hosted parity, or admit autonomous AI business-state action.
+
 ## Environment Overrides
 
 Set this when using a different planning folder:

@@ -559,6 +559,61 @@ function buildPmOperatingQueue(
   ]
 }
 
+function buildFieldPrepQueue(
+  fieldReadinessChecks: Record<string, boolean>,
+  fieldQuestionsDraft: FieldQuestionsDraft,
+): OperatingQueueItem[] {
+  const readinessEvidencePresent = FIELD_READINESS_CHECKLIST_ITEMS.some((item) => fieldReadinessChecks[item.id])
+  const fieldQuestionsPresent = hasFieldQuestionsDraftContent(fieldQuestionsDraft)
+  const fieldBoundaryAcknowledged = Boolean(fieldReadinessChecks.field_authority_boundary_acknowledged)
+  const fieldPrepContextReady = readinessEvidencePresent && fieldQuestionsPresent
+
+  return [
+    {
+      id: 'field-questions-draft',
+      title: 'Capture field questions draft',
+      status: fieldQuestionsPresent ? 'complete' : 'next',
+      detail: fieldQuestionsPresent
+        ? 'Browser-local field questions are present for the current candidate.'
+        : 'Capture drawing/source, access/safety, material, customer, or PM follow-up questions before the kickoff brief is used.',
+    },
+    {
+      id: 'field-readiness-evidence',
+      title: 'Mark field readiness prep evidence',
+      status: readinessEvidencePresent ? 'complete' : fieldQuestionsPresent ? 'next' : 'blocked',
+      detail: readinessEvidencePresent
+        ? 'Browser-local field readiness evidence is present for the current candidate.'
+        : fieldQuestionsPresent
+          ? 'Mark local field readiness evidence before treating the kickoff brief as conversation prep.'
+          : 'Capture field questions before marking readiness evidence as useful prep context.',
+    },
+    {
+      id: 'field-kickoff-brief-export',
+      title: 'Export field kickoff prep brief',
+      status: fieldPrepContextReady ? 'next' : 'blocked',
+      detail: fieldPrepContextReady
+        ? 'Use the Field Kickoff Brief as local conversation prep for PM, lead, and field review.'
+        : 'Field questions and readiness evidence are needed before the kickoff brief has useful prep context.',
+    },
+    {
+      id: 'field-authority-boundary-review',
+      title: 'Confirm field authority boundary',
+      status: fieldBoundaryAcknowledged ? 'complete' : fieldPrepContextReady ? 'next' : 'blocked',
+      detail: fieldBoundaryAcknowledged
+        ? 'The local field-authority boundary is acknowledged for this candidate.'
+        : fieldPrepContextReady
+          ? 'Acknowledge that field prep evidence does not authorize work, tasks, assignments, schedules, or status changes.'
+          : 'Field authority boundary review waits for field questions and readiness evidence.',
+    },
+    {
+      id: 'production-execution-tracking',
+      title: 'Production execution tracking',
+      status: 'blocked',
+      detail: 'No issue, task, assignment, schedule, status, import, approval, or production tracking write is admitted by this local workbench.',
+    },
+  ]
+}
+
 function buildApprovalPacketPreview(
   packet: IntakeWorkbenchPacket,
   notAllowed: string[],
@@ -634,6 +689,7 @@ function buildIntakeBrief(
   workflowGates: Array<{ title: string; status: string; detail: string }>,
   persistenceReadinessGates: ReadinessGate[],
   operatingQueue: OperatingQueueItem[],
+  fieldPrepQueue: OperatingQueueItem[],
   notAllowed: string[],
   futureRoute: string,
   reviewChecks: Record<string, boolean>,
@@ -658,6 +714,7 @@ function buildIntakeBrief(
   const gateLines = workflowGates.map((gate) => `${gate.title}: ${formatLabel(gate.status)} - ${gate.detail}`)
   const persistenceGateLines = persistenceReadinessGates.map((gate) => `${gate.title}: ${formatLabel(gate.status)} - ${gate.detail}`)
   const operatingQueueLines = operatingQueue.map((item) => `${item.title}: ${formatLabel(item.status)} - ${item.detail}`)
+  const fieldPrepQueueLines = fieldPrepQueue.map((item) => `${item.title}: ${formatLabel(item.status)} - ${item.detail}`)
   const checklistLines = REVIEW_CHECKLIST_ITEMS.map((item) => `${reviewChecks[item.id] ? '[x]' : '[ ]'} ${item.label}: ${item.detail}`)
   const closeoutChecklistLines = CLOSEOUT_CHECKLIST_ITEMS.map((item) => `${closeoutChecks[item.id] ? '[x]' : '[ ]'} ${item.label}: ${item.detail}`)
   const fieldReadinessChecklistLines = FIELD_READINESS_CHECKLIST_ITEMS.map((item) => `${fieldReadinessChecks[item.id] ? '[x]' : '[ ]'} ${item.label}: ${item.detail}`)
@@ -678,6 +735,9 @@ function buildIntakeBrief(
   const completeQueueCount = operatingQueue.filter((item) => item.status === 'complete').length
   const nextQueueCount = operatingQueue.filter((item) => item.status === 'next').length
   const blockedQueueCount = operatingQueue.filter((item) => item.status === 'blocked').length
+  const completeFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'complete').length
+  const nextFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'next').length
+  const blockedFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'blocked').length
 
   return [
     '# Project Miner PM Intake Brief',
@@ -748,6 +808,14 @@ function buildIntakeBrief(
     'This queue is local review guidance only. It does not approve, persist, import, assign, schedule, change status, or mutate production state.',
     '',
     markdownList(operatingQueueLines),
+    '',
+    '## Local Field Prep Queue',
+    '',
+    `Field prep queue: ${completeFieldPrepQueueCount} complete, ${nextFieldPrepQueueCount} next, ${blockedFieldPrepQueueCount} blocked.`,
+    '',
+    'This queue is browser-local prep guidance only. It does not create tasks, issues, work authorization, assignments, schedules, status updates, approval records, import rows, or production writes.',
+    '',
+    markdownList(fieldPrepQueueLines),
     '',
     '## Local Executor Closeout Intake',
     '',
@@ -937,6 +1005,7 @@ function buildFieldKickoffBrief(
   packet: IntakeWorkbenchPacket,
   workflowGates: Array<{ title: string; status: string; detail: string }>,
   operatingQueue: OperatingQueueItem[],
+  fieldPrepQueue: OperatingQueueItem[],
   notAllowed: string[],
   futureRoute: string,
   reviewChecks: Record<string, boolean>,
@@ -960,6 +1029,10 @@ function buildFieldKickoffBrief(
   const openFieldReadinessItems = FIELD_READINESS_CHECKLIST_ITEMS.filter((item) => !fieldReadinessChecks[item.id])
   const nextQueueItems = operatingQueue.filter((item) => item.status === 'next')
   const blockedQueueItems = operatingQueue.filter((item) => item.status === 'blocked')
+  const completeFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'complete').length
+  const nextFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'next').length
+  const blockedFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'blocked').length
+  const fieldPrepQueueLines = fieldPrepQueue.map((item) => `${item.title}: ${formatLabel(item.status)} - ${item.detail}`)
   const warningLines = warnings.map((warning) => `${warning.severity || 'unknown'} - ${warning.code || 'WARNING'}: ${warning.message || 'Review warning.'}`)
   const decisionLines = decisions.map((decision) => `${formatLabel(decision.decision_id)}: ${decision.prompt || 'Decision prompt unavailable.'}`)
   const workpackageLines = workpackages.map((workpackage) => {
@@ -1071,6 +1144,14 @@ function buildFieldKickoffBrief(
     'This browser-local questions draft is prep context only. It does not create tasks, issues, work authorization, assignments, schedule state, status updates, approval records, import packets, or production writes.',
     '',
     markdownList(fieldQuestionLines),
+    '',
+    '## Local Field Prep Queue',
+    '',
+    `Field prep queue: ${completeFieldPrepQueueCount} complete, ${nextFieldPrepQueueCount} next, ${blockedFieldPrepQueueCount} blocked.`,
+    '',
+    'This queue is browser-local prep guidance only. It does not create tasks, issues, work authorization, assignments, schedules, status updates, approval records, import rows, or production writes.',
+    '',
+    markdownList(fieldPrepQueueLines),
     '',
     '## Local PM Operating Queue',
     '',
@@ -1228,9 +1309,16 @@ export default function ProjectMinerIntakeWorkbenchPage() {
     () => buildPmOperatingQueue(approvalDraft, reviewChecks, persistenceReadinessGates),
     [approvalDraft, reviewChecks, persistenceReadinessGates],
   )
+  const fieldPrepQueue = useMemo(
+    () => buildFieldPrepQueue(fieldReadinessChecks, fieldQuestionsDraft),
+    [fieldReadinessChecks, fieldQuestionsDraft],
+  )
   const completeQueueCount = operatingQueue.filter((item) => item.status === 'complete').length
   const nextQueueCount = operatingQueue.filter((item) => item.status === 'next').length
   const blockedQueueCount = operatingQueue.filter((item) => item.status === 'blocked').length
+  const completeFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'complete').length
+  const nextFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'next').length
+  const blockedFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'blocked').length
 
   useEffect(() => {
     if (!reviewChecklistKey || typeof window === 'undefined') {
@@ -1379,7 +1467,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
 
     downloadTextFile(
       briefFileName(candidate),
-      buildIntakeBrief(packet, workflowGates, persistenceReadinessGates, operatingQueue, notAllowed, futureRoute, reviewChecks, closeoutChecks, fieldReadinessChecks, fieldQuestionsDraft, approvalDraft),
+      buildIntakeBrief(packet, workflowGates, persistenceReadinessGates, operatingQueue, fieldPrepQueue, notAllowed, futureRoute, reviewChecks, closeoutChecks, fieldReadinessChecks, fieldQuestionsDraft, approvalDraft),
       'text/markdown',
     )
     setBriefStatus(`PM brief prepared from ${candidate?.candidate_id || 'the current intake packet'} without a server write.`)
@@ -1415,7 +1503,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
 
     downloadTextFile(
       fieldKickoffBriefFileName(candidate),
-      buildFieldKickoffBrief(packet, workflowGates, operatingQueue, notAllowed, futureRoute, reviewChecks, closeoutChecks, fieldReadinessChecks, fieldQuestionsDraft, approvalDraft),
+      buildFieldKickoffBrief(packet, workflowGates, operatingQueue, fieldPrepQueue, notAllowed, futureRoute, reviewChecks, closeoutChecks, fieldReadinessChecks, fieldQuestionsDraft, approvalDraft),
       'text/markdown',
     )
     setFieldBriefStatus(`Field kickoff prep brief prepared from ${candidate?.candidate_id || 'the current intake packet'} without a server write.`)
@@ -1957,6 +2045,34 @@ export default function ProjectMinerIntakeWorkbenchPage() {
               Clear field questions
             </button>
             <span style={{ color: 'var(--muted)', lineHeight: 1.55 }}>Retained in this browser for the current candidate only and included in local exports.</span>
+          </div>
+        </section>
+
+        <section aria-label="Local field prep queue" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
+          <div className="status-row">
+            <h2 style={{ margin: 0 }}>Local Field Prep Queue</h2>
+            <span className="status-pill status-awaiting-values">browser-local</span>
+          </div>
+          <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+            Derived queue for field-prep conversations. It translates local field questions and readiness evidence into practical next moves without creating tasks, issues, assignments, schedules, status updates, approval records, import rows, or production writes.
+          </p>
+          <p style={{ margin: '0.6rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+            {formatCount(completeFieldPrepQueueCount)} complete / {formatCount(nextFieldPrepQueueCount)} next / {formatCount(blockedFieldPrepQueueCount)} blocked
+          </p>
+          <div style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
+            {fieldPrepQueue.map((item) => (
+              <article key={item.id} className="card" style={{ padding: '0.85rem', boxShadow: 'none' }}>
+                <div className="status-row" style={{ alignItems: 'start' }}>
+                  <div>
+                    <p style={{ margin: 0 }}>
+                      <strong>{item.title}</strong>
+                    </p>
+                    <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
+                  </div>
+                  <span className={`status-pill ${operatingQueueTone(item.status)}`}>{formatLabel(item.status)}</span>
+                </div>
+              </article>
+            ))}
           </div>
         </section>
 
