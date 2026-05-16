@@ -535,6 +535,14 @@ PM Lane 084 wraps the six PM Lane 082 detail-workbench groups in default-open na
 
 This creates no approval record, SQL, schema migration, backend route, import mutation, issue, task, assignment, schedule, status, hosted proof, live task, work authorization, field release, work order, durable field record, production tracking write, product code, deployment, service, DNS, auth, ingress, secret, local storage key, new route, new export action, new export artifact, export contract widening, or production mutation.
 
+The current helper-collapse ergonomics tranche is:
+
+`Project Miner Local PM Intake Helper Group Disclosure Controls`
+
+PM Lane 085 wraps the three PM Lane 081 helper-panel groups in default-open native disclosure controls. Jason can fold Intake Triage Panels, Daily Action Panels, and Workflow Review Panels while reviewing, with no persisted collapsed state and no change to child panels, ids, labels, anchors, links, exports, storage, reads, or authority wording.
+
+This creates no approval record, SQL, schema migration, backend route, import mutation, issue, task, assignment, schedule, status, hosted proof, live task, work authorization, field release, work order, durable field record, production tracking write, product code, deployment, service, DNS, auth, ingress, secret, local storage key, new route, new export action, new export artifact, export contract widening, or production mutation.
+
 The next persistence tranche is:
 
 `Import Candidate Approval Persistence Schema And Adapter Implementation`

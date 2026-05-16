@@ -307,6 +307,22 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(workflowReviewPanels.getByRole('heading', { name: 'Workflow Review Panels', exact: true })).toBeVisible()
   await expect(workflowReviewPanels.locator('#pm-workflow-map')).toHaveCount(1)
   await expect(workflowReviewPanels.locator('#pm-open-items')).toHaveCount(1)
+  for (const label of [
+    'Intake triage helper panels',
+    'Daily action helper panels',
+    'Workflow review helper panels',
+  ]) {
+    await expect(page.locator(`details[aria-label="${label}"]`)).toHaveAttribute('open', '')
+  }
+  const intakeTriageDisclosure = page.locator('details[aria-label="Intake triage helper panels"]')
+  await intakeTriageDisclosure.locator('summary').click()
+  await expect(intakeTriageDisclosure).not.toHaveAttribute('open', '')
+  await expect(intakeTriagePanels.locator('#pm-command-center')).toBeHidden()
+  const helperCollapseStateKeys = await page.evaluate(() => Object.keys(window.localStorage).filter((key) => key.startsWith('pm-import-intake-') && /collapse|disclosure/i.test(key)))
+  expect(helperCollapseStateKeys).toEqual([])
+  await intakeTriageDisclosure.locator('summary').click()
+  await expect(intakeTriageDisclosure).toHaveAttribute('open', '')
+  await expect(intakeTriagePanels.locator('#pm-command-center')).toBeVisible()
   const detailWorkbench = page.getByLabel('PM intake detail workbench')
   const reviewSnapshotDetail = detailWorkbench.getByLabel('Review snapshot detail panels')
   await expect(reviewSnapshotDetail.getByRole('heading', { name: 'Review Snapshot Detail', exact: true })).toBeVisible()

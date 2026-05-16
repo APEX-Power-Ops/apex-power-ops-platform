@@ -3938,8 +3938,10 @@ export default function ProjectMinerIntakeWorkbenchPage() {
         </section>
 
         <section aria-label="PM intake helper panel stack" style={{ display: 'grid', gap: '1rem', marginBottom: '1rem' }}>
-          <section aria-label="Intake triage helper panels" style={{ display: 'grid', gap: '0.75rem' }}>
-            <h2 style={{ margin: 0 }}>Intake Triage Panels</h2>
+          <details open aria-label="Intake triage helper panels" style={{ display: 'grid', gap: '0.75rem' }}>
+            <summary style={{ cursor: 'pointer' }}>
+              <h2 style={{ display: 'inline', margin: 0 }}>Intake Triage Panels</h2>
+            </summary>
 
         <section id="pm-command-center" aria-label="Local PM intake command center" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
           <div className="status-row">
@@ -4031,9 +4033,11 @@ export default function ProjectMinerIntakeWorkbenchPage() {
           </div>
         </section>
 
-          </section>
-          <section aria-label="Daily action helper panels" style={{ display: 'grid', gap: '0.75rem' }}>
-            <h2 style={{ margin: 0 }}>Daily Action Panels</h2>
+          </details>
+          <details open aria-label="Daily action helper panels" style={{ display: 'grid', gap: '0.75rem' }}>
+            <summary style={{ cursor: 'pointer' }}>
+              <h2 style={{ display: 'inline', margin: 0 }}>Daily Action Panels</h2>
+            </summary>
 
         <section id="pm-daily-review-script" aria-label="Local PM intake daily review script" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
           <div className="status-row">
@@ -4156,9 +4160,11 @@ export default function ProjectMinerIntakeWorkbenchPage() {
           </div>
         </section>
 
-          </section>
-          <section aria-label="Workflow review helper panels" style={{ display: 'grid', gap: '0.75rem' }}>
-            <h2 style={{ margin: 0 }}>Workflow Review Panels</h2>
+          </details>
+          <details open aria-label="Workflow review helper panels" style={{ display: 'grid', gap: '0.75rem' }}>
+            <summary style={{ cursor: 'pointer' }}>
+              <h2 style={{ display: 'inline', margin: 0 }}>Workflow Review Panels</h2>
+            </summary>
 
         <section id="pm-workflow-map" aria-label="Local PM intake workflow map" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
           <div className="status-row">
@@ -4219,7 +4225,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
             ))}
           </div>
         </section>
-          </section>
+          </details>
         </section>
 
         <section aria-label="PM intake detail workbench" style={{ display: 'grid', gap: '1rem' }}>
