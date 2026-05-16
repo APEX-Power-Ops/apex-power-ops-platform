@@ -4158,15 +4158,15 @@ export default function ProjectMinerIntakeWorkbenchPage() {
           </div>
         </section>
 
-        <section id="pm-handoff-guide" aria-label="Local PM intake handoff guide" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
-          <div className="status-row">
+        <details id="pm-handoff-guide" open aria-label="Local PM intake handoff guide" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
+          <summary className="status-row" style={{ cursor: 'pointer' }}>
             <h2 style={{ margin: 0 }}>Local PM Intake Handoff Guide</h2>
             <span className="status-pill status-awaiting-values">browser-local</span>
-          </div>
+          </summary>
           <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
             Browser-local guide for the next context lane. It creates no localStorage key, export artifact, backend route, schema, approval record, task, issue, schedule, status, durable field record, production tracking row, hosted parity claim, or production write.
           </p>
-          <div style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
+          <div aria-label="Local PM intake handoff guide items" style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
             {pmIntakeHandoffGuide.map((item) => (
               <a
                 key={item.id}
@@ -4186,7 +4186,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
               </a>
             ))}
           </div>
-        </section>
+        </details>
 
           </details>
           <details open aria-label="Workflow review helper panels" style={{ display: 'grid', gap: '0.75rem' }}>

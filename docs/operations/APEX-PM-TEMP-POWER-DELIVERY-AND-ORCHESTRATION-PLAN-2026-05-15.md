@@ -415,6 +415,8 @@ PM Lane 088 wraps the existing conditional output status rail on `/pm-review/imp
 
 PM Lane 089 wraps the existing route-link rail on `/pm-review/import-intake` in a default-open native disclosure control so the Temp Power prep flow can fold the header navigation after orienting. This changes only browser-local section ergonomics, does not persist collapse state, preserves the PM Lane 080 route-link grouping and PM Lane 083 authority guard plus PM Lane 084/085/086/087/088 disclosure coverage, and adds no new route, export action, artifact, storage, backend route, hosted proof, SQL, schema migration, approval persistence, import mutation, issue, task, assignment, schedule, status, durable field record, production tracking write, or production state.
 
+PM Lane 090 wraps the existing Local PM Intake Handoff Guide panel on `/pm-review/import-intake` in a default-open native disclosure control so the Temp Power prep flow can fold next-context guidance after reviewing it. This changes only browser-local AI/orchestration handoff ergonomics, keeps the guide inside Daily Action Panels, does not persist collapse state, preserves the guide's five derived items, labels, hrefs, order, status pills, dynamic text, no-authority wording, PM Lane 083 authority guard, and PM Lane 084/085/086/087/088/089 disclosure coverage, and adds no new route, export action, artifact, storage, backend route, hosted proof, SQL, schema migration, approval persistence, import mutation, issue, task, assignment, schedule, status, durable field record, production tracking write, or production state.
+
 ## Capability-Gap Register
 
 Current known gaps:
