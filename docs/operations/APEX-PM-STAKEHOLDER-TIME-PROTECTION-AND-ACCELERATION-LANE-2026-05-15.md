@@ -607,6 +607,8 @@ PM Lane 111 wraps the existing Local PM Intake Meeting Readout panel in a defaul
 
 PM Lane 112 wraps the existing Local PM Intake Constraint Radar panel in a default-open native disclosure control. Jason can fold the constraint-first scan after reviewing it, while the panel stays under Intake Triage Panels after `#pm-meeting-readout`; the `#pm-constraint-radar` anchor, heading, browser-local pill, explanatory no-authority wording, four derived constraint cards, card order, hrefs, dynamic text, status pills, quick-jump target, reads, export inclusion, and authority wording remain unchanged.
 
+PM Lane 113 wraps the existing Local PM Intake Daily Review Script panel in a default-open native disclosure control. Jason can fold the five-minute first-pass script after reviewing it, while the panel stays under Daily Action Panels before `#pm-start-here`; the `#pm-daily-review-script` anchor, heading, browser-local pill, explanatory no-authority wording, five derived script cards, card order, hrefs, dynamic text, status pills, quick-jump target, reads, and authority wording remain unchanged.
+
 This creates no approval record, SQL, schema migration, backend route, import mutation, issue, task, assignment, schedule, status, hosted proof, live task, work authorization, field release, work order, durable field record, production tracking write, product code, deployment, service, DNS, auth, ingress, secret, local storage key, new route, new export action, new export artifact, export contract widening, or production mutation.
 
 The next persistence tranche is:
