@@ -215,6 +215,7 @@ export default function PmImportAdmissionPlanPage() {
           <p className="pm-review-link-row">
             <Link href="/">Return to shell</Link>
             <Link href="/pm-review/import-candidate">Import candidate</Link>
+            <Link href="/pm-review/import-approval-readiness">Approval readiness</Link>
             <Link href="/pm-review/workfront">PM workfront</Link>
             <button className="btn btn-outline" onClick={() => void refresh()} disabled={loading}>
               {loading ? 'Refreshing...' : 'Refresh'}

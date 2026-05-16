@@ -207,6 +207,14 @@ PM Lane 039 implements the no-write version of that storage decision as `GET /ap
 
 The sidecar recommendation was accepted in bounded form again: actual persistence is deferred because the mutation-seam store defaults to Supabase-backed collections, no approval collection exists, and the generic mutation pipeline does not own `pm_import_candidate_approval`. The storage plan rejects audit-log-only approval storage, reuse of issue/task/workpackage rows, browser-local storage as canonical approval, generic PgDict upsert without an adapter, and direct Supabase writes from Excel or UI.
 
+The current approval-readiness UI tranche is:
+
+`Import Approval Readiness PM UI Review`
+
+PM Lane 040 implements the no-write UI version of the approval contract and storage decision at `/pm-review/import-approval-readiness`. It consumes only the existing approval-contract and approval-storage-plan read seams, keeps the route separate from the current `/pm-review/approval` mutation workflow, and gives Jason one inspection surface for required approval fields, permitted decisions, human-acceptance policy, validation checks, future route/table, adapter requirements, rejected storage shortcuts, future admission sequence, and guardrails.
+
+The sidecar recommendation was accepted in bounded form again: this route is read-only and has no forms, local drafts, approval controls, persistence controls, import controls, or production write authority.
+
 The next persistence tranche is:
 
 `Import Candidate Approval Persistence Schema And Adapter Admission`

@@ -9,6 +9,7 @@ const routeChecks = [
   { path: '/pm-review/variance.html', marker: 'APEX PM Variance Review' },
   { path: '/pm-review/import-candidate', marker: 'Review exceptions before import exists' },
   { path: '/pm-review/import-admission-plan', marker: 'Design the import gate before it can write' },
+  { path: '/pm-review/import-approval-readiness', marker: 'Review the approval gate before it can persist' },
 ];
 
 function parseArgs(argv) {

@@ -12,6 +12,11 @@ const routeChecks = [
     path: 'pm-review/import-admission-plan',
     marker: 'Design the import gate before it can write',
   },
+  {
+    label: 'operations-web import approval readiness',
+    path: 'pm-review/import-approval-readiness',
+    marker: 'Review the approval gate before it can persist',
+  },
 ];
 
 function parseArgs(argv) {
@@ -144,7 +149,14 @@ function assertOpenApiHasIntakeReads(openApi) {
     throw new Error('mutation seam OpenAPI did not include a paths object');
   }
 
-  for (const path of ['/api/v1/reads/project-import-candidate', '/api/v1/reads/project-import-admission-plan']) {
+  const requiredPaths = [
+    '/api/v1/reads/project-import-candidate',
+    '/api/v1/reads/project-import-admission-plan',
+    '/api/v1/reads/project-import-approval-contract',
+    '/api/v1/reads/project-import-approval-storage-plan',
+  ];
+
+  for (const path of requiredPaths) {
     if (!Object.prototype.hasOwnProperty.call(paths, path)) {
       throw new Error(`mutation seam OpenAPI is missing ${path}`);
     }
@@ -184,6 +196,50 @@ function assertAdmissionPlan(plan) {
 
   if (!Array.isArray(plan.no_go_checks)) {
     throw new Error('admission plan did not include no_go_checks');
+  }
+}
+
+function assertApprovalContract(contract) {
+  if (!contract || typeof contract !== 'object') {
+    throw new Error('approval contract returned a non-object payload');
+  }
+
+  if (contract.mutation_authority !== 'not_admitted') {
+    throw new Error(`approval contract mutation authority is ${contract.mutation_authority}`);
+  }
+
+  if (contract.persistence_authority !== 'design_only_not_admitted') {
+    throw new Error(`approval contract persistence authority is ${contract.persistence_authority}`);
+  }
+
+  if (!Array.isArray(contract.required_fields) || !contract.required_fields.includes('idempotency_key')) {
+    throw new Error('approval contract did not include the expected required_fields');
+  }
+
+  if (!contract.future_mutation_contract || contract.future_mutation_contract.proposed_route !== '/api/v1/mutations/project-import-approvals') {
+    throw new Error('approval contract did not include the expected future mutation route');
+  }
+}
+
+function assertApprovalStoragePlan(plan) {
+  if (!plan || typeof plan !== 'object') {
+    throw new Error('approval storage plan returned a non-object payload');
+  }
+
+  if (plan.mutation_authority !== 'not_admitted') {
+    throw new Error(`approval storage plan mutation authority is ${plan.mutation_authority}`);
+  }
+
+  if (plan.persistence_authority !== 'storage_decision_only_not_admitted') {
+    throw new Error(`approval storage plan persistence authority is ${plan.persistence_authority}`);
+  }
+
+  if (plan.recommended_table !== 'seam.pm_import_candidate_approvals') {
+    throw new Error(`approval storage plan recommended table is ${plan.recommended_table}`);
+  }
+
+  if (plan.recommended_route !== '/api/v1/mutations/project-import-approvals') {
+    throw new Error(`approval storage plan recommended route is ${plan.recommended_route}`);
   }
 }
 
@@ -255,6 +311,22 @@ async function main() {
       timeoutMs,
     );
     assertAdmissionPlan(plan);
+  });
+  await runCheck('mutation seam import approval contract read', failures, async () => {
+    const contract = await expectJson(
+      new URL('api/v1/reads/project-import-approval-contract', mutationSeamBaseUrl),
+      'mutation seam import approval contract read',
+      timeoutMs,
+    );
+    assertApprovalContract(contract);
+  });
+  await runCheck('mutation seam import approval storage plan read', failures, async () => {
+    const plan = await expectJson(
+      new URL('api/v1/reads/project-import-approval-storage-plan', mutationSeamBaseUrl),
+      'mutation seam import approval storage plan read',
+      timeoutMs,
+    );
+    assertApprovalStoragePlan(plan);
   });
 
   if (failures.length > 0) {

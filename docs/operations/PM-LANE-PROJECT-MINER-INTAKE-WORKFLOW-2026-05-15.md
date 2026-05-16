@@ -234,6 +234,34 @@ The plan explicitly rejects unsafe shortcuts:
 
 This is still not approval persistence and not import. It does not create a table, run SQL, write Supabase rows, store PM notes, import project rows, run workbook macros, write workbook cells, assign work, change status, mutate schedules, or admit autonomous AI business-state action.
 
+## Import Approval Readiness UI
+
+PM Lane 040 adds a read-only PM UI route that combines the approval contract and approval storage plan before any approval can be persisted.
+
+The operations-web route is:
+
+`/pm-review/import-approval-readiness`
+
+The route consumes only:
+
+1. `GET /api/v1/reads/project-import-approval-contract`,
+2. `GET /api/v1/reads/project-import-approval-storage-plan`.
+
+It shows:
+
+1. approval contract identity and candidate identity,
+2. required fields, permitted decisions, expected values, and decision payload template,
+3. human-acceptance policy and non-overridable blocked checks,
+4. approval validation matrix,
+5. future mutation contract placeholder,
+6. selected dedicated storage table and future route,
+7. record lifecycle, adapter requirements, recommended columns, constraints, and rejected storage shortcuts,
+8. future admission sequence and merged not-allowed-now guardrails.
+
+The route is intentionally separate from `/pm-review/approval`, because that existing PM route owns admitted PM approval mutation flows for current project work. This readiness route is inspection-only for the future Project Miner import approval packet.
+
+This is still not approval persistence and not import. It does not show approval controls, persist notes, create a table, run SQL, write Supabase rows, import project rows, run workbook macros, write workbook cells, assign work, change status, mutate schedules, or admit autonomous AI business-state action.
+
 ## Hosted Intake Parity Status
 
 PM Lane 036 promoted the operations-web PM intake routes to Vercel production:
@@ -274,6 +302,8 @@ After PM Lane 039, it also checks:
 1. OpenAPI registration of `/api/v1/reads/project-import-approval-storage-plan`,
 2. `GET /api/v1/reads/project-import-approval-storage-plan`,
 3. storage-plan payload fields including `selected_storage_decision`, `recommended_table`, `mutation_authority`, and `persistence_authority`.
+
+After PM Lane 040, operations-web hosted route smoke and PM-intake hosted smoke also include `/pm-review/import-approval-readiness`; the mutation-seam side of that hosted smoke still depends on Render serving the current PM intake reads.
 
 ## Environment Overrides
 

@@ -1,0 +1,91 @@
+{
+  "packet_id": "2026-05-15-pm-lane-040",
+  "title": "Import Approval Readiness PM UI Review",
+  "objective": "Expose the existing Project Miner import approval contract and approval storage plan in a read-only PM-facing operations-web route while keeping approval persistence, import mutation, schema changes, and all business-state writes unadmitted.",
+  "domain": "pm-domain",
+  "active_role": "Delegated Technical Repo Authority / PM Lane Product Coordinator / Approval Readiness UI Implementer",
+  "repo_paths": [
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/app/pm-review/import-approval-readiness/page.tsx",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/tests/browser-shell.pm-import-approval-readiness.smoke.spec.ts",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/app/pm-review/import-candidate/page.tsx",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/app/pm-review/import-admission-plan/page.tsx",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/app/page.tsx",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/scripts/smoke-hosted-routes.mjs",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/scripts/smoke-pm-intake-hosted.mjs",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/APEX-PM-TEMP-POWER-DELIVERY-AND-ORCHESTRATION-PLAN-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/APEX-PM-STAKEHOLDER-TIME-PROTECTION-AND-ACCELERATION-LANE-2026-05-15.md"
+  ],
+  "dependencies": [
+    "2026-05-15-pm-lane-035",
+    "2026-05-15-pm-lane-038",
+    "2026-05-15-pm-lane-039"
+  ],
+  "current_evidence": [
+    "PM Lane 038 exposes a read-only approval contract and pure validator.",
+    "PM Lane 039 exposes a read-only approval storage plan selecting a future dedicated approval table and route.",
+    "The existing /pm-review/approval route owns admitted PM approval mutation workflows and should not be confused with Project Miner import approval readiness.",
+    "A read-only sidecar scout independently recommended a separate read-only /pm-review/import-approval-readiness route and zero mutation controls."
+  ],
+  "allowed_actions": [
+    "Add a new operations-web route that fetches only the approval-contract and approval-storage-plan read seams.",
+    "Render approval contract identity, candidate identity, required fields, permitted decisions, human-acceptance policy, validation matrix, future mutation contract, storage decision, adapter requirements, rejected storage options, future sequence, and guardrails.",
+    "Add discoverability links from the governed shell, import-candidate route, and import-admission-plan route.",
+    "Extend hosted route smoke and PM-intake hosted smoke to include the new route and current approval-readiness read seams.",
+    "Add focused Playwright smoke coverage proving both reads are called once and no mutation route is called.",
+    "Update PM lane status and operating docs."
+  ],
+  "not_allowed": [
+    "No backend endpoint changes.",
+    "No approval persistence.",
+    "No import mutation.",
+    "No schema migration.",
+    "No SQL write.",
+    "No live database write.",
+    "No localStorage or browser-draft approval capture.",
+    "No approval, persist, import, submit, or production write control.",
+    "No workbook macro execution.",
+    "No workbook writeback.",
+    "No Render deployment.",
+    "No Vercel promotion.",
+    "No service admission.",
+    "No auth or ingress widening.",
+    "No assignment, schedule, status, apparatus, issue, task, workpackage, project, or autonomous AI business-state mutation."
+  ],
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/app/pm-review/import-approval-readiness/page.tsx",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/tests/browser-shell.pm-import-approval-readiness.smoke.spec.ts",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/app/pm-review/import-candidate/page.tsx",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/app/pm-review/import-admission-plan/page.tsx",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/app/page.tsx",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/scripts/smoke-hosted-routes.mjs",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/scripts/smoke-pm-intake-hosted.mjs",
+    "C:/APEX Platform/apex-power-ops-platform/PROJECT_STATUS.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/APEX-PM-TEMP-POWER-DELIVERY-AND-ORCHESTRATION-PLAN-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/APEX-PM-STAKEHOLDER-TIME-PROTECTION-AND-ACCELERATION-LANE-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-15-pm-lane-040-import-approval-readiness-ui.json",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-040-import-approval-readiness-ui-handoff.md"
+  ],
+  "validation_steps": [
+    "corepack pnpm --filter @apex/operations-web typecheck",
+    "corepack pnpm --filter @apex/operations-web build",
+    "corepack pnpm --dir apps/operations-web exec playwright test tests/browser-shell.pm-import-candidate.smoke.spec.ts tests/browser-shell.pm-import-admission-plan.smoke.spec.ts tests/browser-shell.pm-import-approval-readiness.smoke.spec.ts",
+    "C:/APEX Platform/apex-power-ops-platform/.venv/Scripts/python.exe -c \"import json; json.load(open(r'C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-15-pm-lane-040-import-approval-readiness-ui.json', encoding='utf-8')); print('packet-json-ok')\"",
+    "git diff --check for the Lane 040 file set"
+  ],
+  "validation_results": [
+    "operations-web typecheck passed.",
+    "operations-web build passed and included /pm-review/import-approval-readiness in the static route output.",
+    "Focused Playwright PM intake smokes passed: 3 passed, including proof that /pm-review/import-approval-readiness called both read seams once and called zero mutation routes.",
+    "The first Playwright attempt failed because it was run in parallel with the production build and next start raced before .next existed; rerun after build passed.",
+    "Sidecar read-only scout completed without edits and recommended the separate read-only route name and zero mutation controls."
+  ],
+  "execution_result": "LOCAL_READ_ONLY_APPROVAL_READINESS_UI_EXECUTED",
+  "delegation_status": "sidecar_scout_completed",
+  "sql_permission": false,
+  "sql_permission_note": "Packet 2026-05-15-pm-lane-040 authorizes read-only local operations-web UI work and validation only. It does not authorize SQL writes, schema migration, approval persistence, import mutation, live data mutation, secret rotation, auth widening, ingress widening, service admission, assignment mutation, schedule mutation, status mutation, or autonomous AI business-state mutation.",
+  "ai_mutation_authority": "not_admitted",
+  "created_at": "2026-05-15",
+  "updated_at": "2026-05-15"
+}

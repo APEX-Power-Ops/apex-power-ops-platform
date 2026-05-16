@@ -122,6 +122,7 @@ Key UI lanes:
 4. `/field-tech` for apparatus-first field execution.
 5. `/pm-review/import-candidate` for read-only Temp Power import candidate review.
 6. `/pm-review/import-admission-plan` for read-only import gate planning before approval or import writes exist.
+7. `/pm-review/import-approval-readiness` for read-only approval contract and storage-plan review before approval persistence exists.
 
 Current backend-only PM intake design reads also include:
 
@@ -284,6 +285,18 @@ PM Lane 039 executes the local read-only approval-storage-plan design slice:
 
 This still does not admit approval persistence, import mutation, SQL, schema, live data write, workbook macro execution, workbook writeback, Render deployment, Vercel promotion, service admission, auth/ingress widening, assignment, schedule, status, or autonomous AI business-state mutation.
 
+PM Lane 040 executes the local read-only import-approval-readiness UI slice:
+
+`/pm-review/import-approval-readiness`
+
+The route consumes only the existing approval-contract and approval-storage-plan read seams. It shows the future approval packet shape, candidate identity, human-acceptance policy, validation matrix, storage decision, recommended approval table, adapter requirements, rejected storage shortcuts, future admission sequence, and guardrails in one PM-facing review surface.
+
+This route is separate from `/pm-review/approval`, because the existing approval route owns current PM approval mutation workflows. The new route remains inspection-only for the future Project Miner import approval packet.
+
+Validation passed operations-web typecheck, operations-web build, and focused PM intake browser smokes with `3 passed`.
+
+This still does not admit approval persistence, import mutation, SQL, schema, live data write, workbook macro execution, workbook writeback, Render deployment, Vercel promotion, service admission, auth/ingress widening, assignment, schedule, status, or autonomous AI business-state mutation.
+
 ## Capability-Gap Register
 
 Current known gaps:
@@ -294,10 +307,11 @@ Current known gaps:
 4. The project import mutation is not admitted; import-candidate review must come first.
 5. Workbook macros are not admitted for unattended intake.
 6. The local PM review route now supports export and local draft notes, but server-side PM note persistence is not admitted.
-7. The import-admission plan, approval contract, and approval storage plan define the future write gate, but schema, approval persistence, and import mutation are still not admitted.
+7. The import-admission plan, approval contract, approval storage plan, and approval-readiness UI define the future write gate, but schema, approval persistence, and import mutation are still not admitted.
 8. Render auth/token/service metadata are not available in the current Codex workspace; this must be resolved before claiming hosted backend parity.
 9. Approval persistence needs a later dedicated schema/adapter admission before implementation; it should not be smuggled into audit log alone and must not import project rows.
 10. The approval-contract and approval-storage-plan read endpoints are local-current only until Render serves the current mutation-seam code.
+11. The approval-readiness UI route is local-current until the next operations-web production promotion.
 
 Required response to new gaps:
 
