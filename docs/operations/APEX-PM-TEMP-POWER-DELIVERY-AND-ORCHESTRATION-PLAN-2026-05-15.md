@@ -365,6 +365,8 @@ PM Lane 063 adds a browser-local `Local PM Intake Snapshot` and `Export PM Intak
 
 PM Lane 064 adds a browser-local `PM Intake Quick Jump Rail` to `/pm-review/import-intake`. It gives the Temp Power prep flow direct links to the snapshot, operating queue, exception register, project/source packet, workflow gates, approval readiness, field-prep, executor closeout, and guardrails sections. The rail adds no storage key or export contract and creates no issues, tasks, work authorization, live work orders, durable field records, hosted proof, backend routes, SQL, schema migration, approval persistence, import mutation, assignment, schedule, status, production tracking writes, or production state.
 
+PM Lane 065 adds a browser-local `Local PM Intake Start Here` panel to `/pm-review/import-intake`. It gives the Temp Power prep flow one top-level focus list for first local move, exception attention, field-prep focus, useful local export, and blocked future authority. The panel adds no storage key or export contract and creates no issues, tasks, work authorization, live work orders, durable field records, hosted proof, backend routes, SQL, schema migration, approval persistence, import mutation, assignment, schedule, status, production tracking writes, or production state.
+
 ## Capability-Gap Register
 
 Current known gaps:

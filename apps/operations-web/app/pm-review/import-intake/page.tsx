@@ -240,6 +240,16 @@ type QuickJumpItem = {
   detail: string
 }
 
+type StartHereStatus = 'focus' | 'attention' | 'context' | 'blocked'
+
+type StartHereItem = {
+  id: string
+  title: string
+  status: StartHereStatus
+  href: string
+  detail: string
+}
+
 const { useCallback, useEffect, useMemo, useState } = React
 
 const API_BASE =
@@ -271,6 +281,12 @@ const EMPTY_FIELD_OBSERVATION_SCRATCHPAD: FieldObservationScratchpad = {
   open_questions_pm_followup: '',
 }
 const PM_INTAKE_QUICK_JUMPS: QuickJumpItem[] = [
+  {
+    id: 'start-here',
+    label: 'Start Here',
+    href: '#pm-start-here',
+    detail: 'First local focus.',
+  },
   {
     id: 'snapshot',
     label: 'Snapshot',
@@ -529,6 +545,12 @@ function pmIntakeSnapshotTone(status: PmIntakeSnapshotStatus) {
   if (status === 'covered') return 'status-configured'
   if (status === 'open') return 'status-awaiting-values'
   return 'status-deferred'
+}
+
+function startHereTone(status: StartHereStatus) {
+  if (status === 'context') return 'status-configured'
+  if (status === 'blocked') return 'status-deferred'
+  return 'status-awaiting-values'
 }
 
 function uniqueItems(...lists: Array<string[] | undefined>) {
@@ -1125,6 +1147,66 @@ function pmIntakeSnapshotCounts(snapshot: PmIntakeSnapshotItem[]) {
 
 function pmIntakeSnapshotSummary(counts: ReturnType<typeof pmIntakeSnapshotCounts>) {
   return `${counts.covered} covered, ${counts.open} open, ${counts.blocked} blocked`
+}
+
+function buildPmIntakeStartHere(
+  operatingQueue: OperatingQueueItem[],
+  importExceptionRegister: ImportExceptionRegisterItem[],
+  fieldPrepQueue: OperatingQueueItem[],
+  pmIntakeSnapshot: PmIntakeSnapshotItem[],
+  persistenceReadinessGates: ReadinessGate[],
+): StartHereItem[] {
+  const nextOperatingMove = operatingQueue.find((item) => item.status === 'next') || operatingQueue.find((item) => item.status === 'blocked')
+  const nextFieldPrepMove = fieldPrepQueue.find((item) => item.status === 'next') || fieldPrepQueue.find((item) => item.status === 'blocked')
+  const exceptionCount = importExceptionRegisterCounts(importExceptionRegister)
+  const snapshotCount = pmIntakeSnapshotCounts(pmIntakeSnapshot)
+  const blockedPersistenceGateCount = persistenceReadinessGates.filter((gate) => gate.status === 'blocked').length
+  const hasFieldPrepContext = fieldPrepQueue.some((item) => item.status === 'complete')
+  const usefulExport = hasFieldPrepContext
+    ? 'Use Export Field Prep Packet when the next conversation needs field-prep context.'
+    : 'Use Export PM Brief first when the next review needs compact candidate, gate, and guardrail context.'
+
+  return [
+    {
+      id: 'first-local-move',
+      title: 'First local move',
+      status: nextOperatingMove?.status === 'blocked' ? 'blocked' : 'focus',
+      href: '#pm-operating-queue',
+      detail: nextOperatingMove
+        ? `${nextOperatingMove.title}: ${nextOperatingMove.detail}`
+        : 'No local PM operating-queue item is currently reported.',
+    },
+    {
+      id: 'exception-attention',
+      title: 'Exception attention',
+      status: exceptionCount.open ? 'attention' : exceptionCount.blocked ? 'blocked' : 'context',
+      href: '#import-exception-register',
+      detail: `Import exception register: ${importExceptionRegisterSummary(exceptionCount)}.`,
+    },
+    {
+      id: 'field-prep-focus',
+      title: 'Field-prep focus',
+      status: nextFieldPrepMove?.status === 'blocked' ? 'blocked' : 'focus',
+      href: '#field-prep',
+      detail: nextFieldPrepMove
+        ? `${nextFieldPrepMove.title}: ${nextFieldPrepMove.detail}`
+        : 'No local field-prep queue item is currently reported.',
+    },
+    {
+      id: 'useful-local-export',
+      title: 'Useful local export',
+      status: 'context',
+      href: hasFieldPrepContext ? '#field-prep' : '#pm-intake-snapshot',
+      detail: usefulExport,
+    },
+    {
+      id: 'blocked-future-authority',
+      title: 'Blocked future authority',
+      status: 'blocked',
+      href: '#approval-readiness',
+      detail: `${blockedPersistenceGateCount} of ${persistenceReadinessGates.length} approval-persistence gates remain blocked. Snapshot posture: ${pmIntakeSnapshotSummary(snapshotCount)}.`,
+    },
+  ]
 }
 
 function buildApprovalPacketPreview(
@@ -2443,6 +2525,10 @@ export default function ProjectMinerIntakeWorkbenchPage() {
     () => buildPmIntakeSnapshot(persistenceReadinessGates, operatingQueue, importExceptionRegister, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, closeoutChecks, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad, approvalDraft),
     [persistenceReadinessGates, operatingQueue, importExceptionRegister, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, closeoutChecks, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad, approvalDraft],
   )
+  const pmIntakeStartHere = useMemo(
+    () => buildPmIntakeStartHere(operatingQueue, importExceptionRegister, fieldPrepQueue, pmIntakeSnapshot, persistenceReadinessGates),
+    [operatingQueue, importExceptionRegister, fieldPrepQueue, pmIntakeSnapshot, persistenceReadinessGates],
+  )
   const completeQueueCount = operatingQueue.filter((item) => item.status === 'complete').length
   const nextQueueCount = operatingQueue.filter((item) => item.status === 'next').length
   const blockedQueueCount = operatingQueue.filter((item) => item.status === 'blocked').length
@@ -2889,6 +2975,37 @@ export default function ProjectMinerIntakeWorkbenchPage() {
               {formatCount(summary.warning_count)} warnings, {formatCount(summary.blocker_count)} blockers, {formatCount(summary.human_decision_count)} human decisions.
             </p>
           </article>
+        </section>
+
+        <section id="pm-start-here" aria-label="Local PM intake start here" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
+          <div className="status-row">
+            <h2 style={{ margin: 0 }}>Local PM Intake Start Here</h2>
+            <span className="status-pill status-awaiting-values">browser-local</span>
+          </div>
+          <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+            Top-level focus for this intake session, derived from the existing workbench state. It does not approve, persist, import, assign, schedule, change status, create tasks, create issues, call live services, or mutate production state.
+            {' '}It links to existing local sections and exports only; it creates no localStorage key, export artifact, backend route, schema, approval record, task, issue, or production write.
+          </p>
+          <div style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
+            {pmIntakeStartHere.map((item) => (
+              <a
+                key={item.id}
+                className="card"
+                href={item.href}
+                style={{ color: 'inherit', display: 'block', padding: '0.85rem', textDecoration: 'none', boxShadow: 'none' }}
+              >
+                <div className="status-row" style={{ alignItems: 'start' }}>
+                  <div>
+                    <p style={{ margin: 0 }}>
+                      <strong>{item.title}</strong>
+                    </p>
+                    <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
+                  </div>
+                  <span className={`status-pill ${startHereTone(item.status)}`}>{formatLabel(item.status)}</span>
+                </div>
+              </a>
+            ))}
+          </div>
         </section>
 
         <section aria-label="PM intake quick jump rail" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>

@@ -391,6 +391,14 @@ PM Lane 064 adds a browser-local `PM Intake Quick Jump Rail` to `/pm-review/impo
 
 This still creates no approval record, SQL, schema migration, backend route, import mutation, issue, task, assignment, schedule, status, hosted proof, live task, work authorization, field release, work order, durable field record, production tracking write, local storage key, export contract, or production mutation.
 
+The current start-here ergonomics tranche is:
+
+`Project Miner Local PM Intake Start Here`
+
+PM Lane 065 adds a browser-local `Local PM Intake Start Here` panel to `/pm-review/import-intake`. The panel derives first local move, exception attention, field-prep focus, useful local export, and blocked future authority from the existing workbench state so Jason can open the page and immediately see where to begin.
+
+This still creates no approval record, SQL, schema migration, backend route, import mutation, issue, task, assignment, schedule, status, hosted proof, live task, work authorization, field release, work order, durable field record, production tracking write, local storage key, export contract, or production mutation.
+
 The next persistence tranche is:
 
 `Import Candidate Approval Persistence Schema And Adapter Implementation`
