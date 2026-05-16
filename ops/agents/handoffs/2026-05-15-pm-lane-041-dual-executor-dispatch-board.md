@@ -8,6 +8,22 @@ Coordinator: Codex, repo technical authority and PM lane coordinator
 
 This board removes Jason from the AI-to-AI relay loop for the hosted parity step. It points each executor at one bounded handoff and keeps the coordinator decision visible in the repo.
 
+## Current Dispatch Wrapper
+
+PM Lane 076 is the current top-level copy/paste wrapper for this board after the local PM intake workbench through PM Lane 075:
+
+```text
+ops/agents/handoffs/2026-05-15-pm-lane-076-hosted-pm-intake-parity-executor-copy-paste-prompt.md
+```
+
+Current source floor:
+
+```text
+clean-main cb1f10b83bbd61664be8eea7df0516a3d912d21e
+```
+
+Use Lane 076 when assigning the hosted parity step to Codex Desktop, Claude Code, or another authenticated executor so the executor can select Vercel, Render, both, or credential-unavailable closeout without Jason relaying packet context manually.
+
 ## Dispatch Map
 
 | Lane | Owner Surface | Handoff | Goal | Status |

@@ -1,6 +1,6 @@
 # PM Hosted Executor Closeout Template
 
-Use this template when closing PM Lane 041A, PM Lane 041B, or another hosted PM parity executor lane.
+Use this template when closing PM Lane 041A, PM Lane 041B, PM Lane 076-selected execution, or another hosted PM parity executor lane.
 
 Do not paste secrets. Do not summarize a failed command as success. If a hosted credential, deployment action, or validation command is unavailable, say that directly.
 

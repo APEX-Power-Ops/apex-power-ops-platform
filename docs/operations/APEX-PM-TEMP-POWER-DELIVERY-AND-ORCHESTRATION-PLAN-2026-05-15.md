@@ -387,6 +387,8 @@ PM Lane 074 carries that constraint radar into the existing PM Brief and Executo
 
 PM Lane 075 promotes the existing `PM Intake Quick Jump Rail` near the top of `/pm-review/import-intake`, directly after the project summary. This lets the Temp Power prep flow jump to command center, meeting readout, constraint radar, exports, field prep, executor closeout, approval readiness, or guardrails before scrolling through the full helper-panel stack. This placement change adds no storage key, new export action, new export artifact, backend route, hosted proof, SQL, schema migration, approval persistence, import mutation, issue, task, assignment, schedule, status, durable field record, production tracking write, or production state.
 
+PM Lane 076 adds the hosted PM intake parity executor dispatch binder. It is the current copy/paste surface for assigning an authenticated Vercel and/or Render executor to the existing PM Lane 041A and 041B lanes after local workbench progress through PM Lane 075. This reduces Jason's AI-to-AI relay burden while preserving the no-deploy-from-coordinator, no-product-code, no-Supabase-write, no-schema, no-approval-persistence, no-import-mutation, and no-hosted-parity-claim boundary.
+
 ## Capability-Gap Register
 
 Current known gaps:
