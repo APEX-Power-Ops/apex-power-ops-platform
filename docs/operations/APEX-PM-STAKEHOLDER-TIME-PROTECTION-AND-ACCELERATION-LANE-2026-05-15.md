@@ -77,7 +77,7 @@ Any extra step must justify itself by reducing risk, reducing future workload, o
 
 Immediate prioritized PM task lanes:
 
-1. Local PM intake workbench usability - active and local-current through PM Lane 119. The current safe product lane keeps reducing Jason's daily scan burden on `/pm-review/import-intake`; the next bounded local move is PM Lane 120, Local PM Operating Queue Body Controls.
+1. Local PM intake workbench usability - active and local-current through PM Lane 120. The current safe product lane keeps reducing Jason's daily scan burden on `/pm-review/import-intake`; the next bounded local move is PM Lane 121, Local Import Exception Decision Register Body Controls.
 2. Hosted PM intake parity - ready for Desktop Codex authenticated executor action through PM Lane 041A, PM Lane 041B, and the PM Lane 076 dispatch binder. This lane is still not green until Vercel and Render closeouts prove or precisely classify hosted route and read parity.
 3. Approval/import authority - designed but not admitted. Approval persistence, schema execution, and import mutation remain blocked until hosted reads are current or precisely classified and a later packet explicitly admits the narrow write path.
 
@@ -619,6 +619,8 @@ PM Lane 117 wraps the existing Local PM Intake Workflow Map body content in a la
 PM Lane 118 wraps the existing Local PM Intake Open Items Lens body content in a labeled body-controls container under its already-existing default-open disclosure. Jason can fold and reopen the attention/blocker lens predictably, while the panel stays inside Workflow Review Panels after `#pm-workflow-map`; the `#pm-open-items` anchor, existing disclosure, heading, browser-local pill, explanatory no-authority wording, six derived open-items cards, card order, hrefs, dynamic text, status pills, quick-jump target, reads, and authority wording remain unchanged.
 
 PM Lane 119 wraps the existing Local PM Intake Snapshot body content in a labeled body-controls container under its already-existing default-open disclosure. Jason can fold and reopen the snapshot scan predictably, while the panel stays inside Review Snapshot Detail before `#pm-operating-queue`; the `#pm-intake-snapshot` anchor, existing disclosure, heading, browser-local pill, explanatory no-authority wording, snapshot summary count, six derived snapshot cards, card order, dynamic detail/evidence text, status pills, quick-jump target, reads, export behavior, and authority wording remain unchanged.
+
+PM Lane 120 wraps the existing Local PM Operating Queue body content in a labeled body-controls container under its already-existing default-open disclosure. Jason can fold and reopen the practical next-move queue predictably, while the panel stays inside Review Snapshot Detail after `#pm-intake-snapshot`; the `#pm-operating-queue` anchor, existing disclosure, heading, browser-local pill, explanatory no-authority wording, complete/next/blocked summary count, six derived queue cards, card order, dynamic detail text, status pills, quick-jump target, reads, export references, and authority wording remain unchanged.
 
 This creates no approval record, SQL, schema migration, backend route, import mutation, issue, task, assignment, schedule, status, hosted proof, live task, work authorization, field release, work order, durable field record, production tracking write, product code, deployment, service, DNS, auth, ingress, secret, local storage key, new route, new export action, new export artifact, export contract widening, or production mutation.
 
