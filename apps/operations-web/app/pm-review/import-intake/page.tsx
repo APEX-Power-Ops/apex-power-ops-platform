@@ -3847,49 +3847,59 @@ export default function ProjectMinerIntakeWorkbenchPage() {
           </div>
         </details>
         {hasOutputStatuses ? (
-          <div
+          <details
+            open
             aria-label="PM intake output status rail"
             style={{
               borderBottom: '1px solid var(--border)',
               borderTop: '1px solid var(--border)',
-              display: 'grid',
-              gap: '0.85rem',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(15rem, 1fr))',
               margin: '0 0 1rem',
               padding: '0.85rem 0',
             }}
           >
-            {reviewOutputStatuses.length > 0 ? (
-              <section aria-label="Review output status" style={{ display: 'grid', gap: '0.45rem' }}>
-                <h3 style={{ fontSize: '0.95rem', margin: 0 }}>Review Output Status</h3>
-                {reviewOutputStatuses.map((status) => (
-                  <p key={status} style={{ margin: 0, color: 'var(--muted)', lineHeight: 1.55 }}>
-                    {status}
-                  </p>
-                ))}
-              </section>
-            ) : null}
-            {executorOutputStatuses.length > 0 ? (
-              <section aria-label="Executor output status" style={{ display: 'grid', gap: '0.45rem' }}>
-                <h3 style={{ fontSize: '0.95rem', margin: 0 }}>Executor Output Status</h3>
-                {executorOutputStatuses.map((status) => (
-                  <p key={status} style={{ margin: 0, color: 'var(--muted)', lineHeight: 1.55 }}>
-                    {status}
-                  </p>
-                ))}
-              </section>
-            ) : null}
-            {fieldPrepOutputStatuses.length > 0 ? (
-              <section aria-label="Field prep output status" style={{ display: 'grid', gap: '0.45rem' }}>
-                <h3 style={{ fontSize: '0.95rem', margin: 0 }}>Field Prep Output Status</h3>
-                {fieldPrepOutputStatuses.map((status) => (
-                  <p key={status} style={{ margin: 0, color: 'var(--muted)', lineHeight: 1.55 }}>
-                    {status}
-                  </p>
-                ))}
-              </section>
-            ) : null}
-          </div>
+            <summary style={{ cursor: 'pointer', marginBottom: '0.65rem' }}>
+              <h2 style={{ display: 'inline', margin: 0 }}>Output Status</h2>
+            </summary>
+            <div
+              aria-label="PM intake output status groups"
+              style={{
+                display: 'grid',
+                gap: '0.85rem',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(15rem, 1fr))',
+              }}
+            >
+              {reviewOutputStatuses.length > 0 ? (
+                <section aria-label="Review output status" style={{ display: 'grid', gap: '0.45rem' }}>
+                  <h3 style={{ fontSize: '0.95rem', margin: 0 }}>Review Output Status</h3>
+                  {reviewOutputStatuses.map((status) => (
+                    <p key={status} style={{ margin: 0, color: 'var(--muted)', lineHeight: 1.55 }}>
+                      {status}
+                    </p>
+                  ))}
+                </section>
+              ) : null}
+              {executorOutputStatuses.length > 0 ? (
+                <section aria-label="Executor output status" style={{ display: 'grid', gap: '0.45rem' }}>
+                  <h3 style={{ fontSize: '0.95rem', margin: 0 }}>Executor Output Status</h3>
+                  {executorOutputStatuses.map((status) => (
+                    <p key={status} style={{ margin: 0, color: 'var(--muted)', lineHeight: 1.55 }}>
+                      {status}
+                    </p>
+                  ))}
+                </section>
+              ) : null}
+              {fieldPrepOutputStatuses.length > 0 ? (
+                <section aria-label="Field prep output status" style={{ display: 'grid', gap: '0.45rem' }}>
+                  <h3 style={{ fontSize: '0.95rem', margin: 0 }}>Field Prep Output Status</h3>
+                  {fieldPrepOutputStatuses.map((status) => (
+                    <p key={status} style={{ margin: 0, color: 'var(--muted)', lineHeight: 1.55 }}>
+                      {status}
+                    </p>
+                  ))}
+                </section>
+              ) : null}
+            </div>
+          </details>
         ) : null}
 
         <section className="status-grid status-grid-wide" aria-label="Project Miner intake summary" style={{ marginBottom: '1rem' }}>

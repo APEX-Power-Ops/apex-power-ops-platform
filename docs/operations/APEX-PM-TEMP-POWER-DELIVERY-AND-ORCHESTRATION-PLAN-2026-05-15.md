@@ -411,6 +411,8 @@ PM Lane 086 wraps the top output action rail on `/pm-review/import-intake` in a 
 
 PM Lane 087 wraps the existing quick-jump rail on `/pm-review/import-intake` in a default-open native disclosure control so the Temp Power prep flow can fold the dense navigator after orienting. This changes only browser-local section ergonomics, does not persist collapse state, preserves the PM Lane 083 authority guard and PM Lane 084/085/086 disclosure coverage, and adds no new route, export action, artifact, storage, backend route, hosted proof, SQL, schema migration, approval persistence, import mutation, issue, task, assignment, schedule, status, durable field record, production tracking write, or production state.
 
+PM Lane 088 wraps the existing conditional output status rail on `/pm-review/import-intake` in a default-open native disclosure control so the Temp Power prep flow can fold generated export feedback after reviewing it. This changes only browser-local section ergonomics, keeps the rail absent before any output status exists, does not persist collapse state, preserves the PM Lane 083 authority guard and PM Lane 084/085/086/087 disclosure coverage, and adds no new route, export action, artifact, storage, backend route, hosted proof, SQL, schema migration, approval persistence, import mutation, issue, task, assignment, schedule, status, durable field record, production tracking write, or production state.
+
 ## Capability-Gap Register
 
 Current known gaps:
