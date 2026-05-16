@@ -543,6 +543,14 @@ PM Lane 085 wraps the three PM Lane 081 helper-panel groups in default-open nati
 
 This creates no approval record, SQL, schema migration, backend route, import mutation, issue, task, assignment, schedule, status, hosted proof, live task, work authorization, field release, work order, durable field record, production tracking write, product code, deployment, service, DNS, auth, ingress, secret, local storage key, new route, new export action, new export artifact, export contract widening, or production mutation.
 
+The current output-action ergonomics tranche is:
+
+`Project Miner Local PM Intake Output Action Rail Disclosure Controls`
+
+PM Lane 086 wraps the top output action rail in a default-open native disclosure control. Jason can fold the Review Outputs, Executor Output, Field Prep Outputs, and Refresh button block after using it, with no persisted collapsed state and no change to child groups, button labels, button counts, export handlers, refresh handler, storage, reads, or authority wording.
+
+This creates no approval record, SQL, schema migration, backend route, import mutation, issue, task, assignment, schedule, status, hosted proof, live task, work authorization, field release, work order, durable field record, production tracking write, product code, deployment, service, DNS, auth, ingress, secret, local storage key, new route, new export action, new export artifact, export contract widening, or production mutation.
+
 The next persistence tranche is:
 
 `Import Candidate Approval Persistence Schema And Adapter Implementation`

@@ -407,6 +407,8 @@ PM Lane 084 wraps the six PM Lane 082 detail groups on `/pm-review/import-intake
 
 PM Lane 085 wraps the three PM Lane 081 helper-panel groups on `/pm-review/import-intake` in default-open native disclosure controls so the Temp Power prep flow can fold helper panels while reviewing. This changes only browser-local section ergonomics, does not persist collapse state, preserves the PM Lane 083 authority guard and PM Lane 084 detail-disclosure coverage, and adds no new route, export action, artifact, storage, backend route, hosted proof, SQL, schema migration, approval persistence, import mutation, issue, task, assignment, schedule, status, durable field record, production tracking write, or production state.
 
+PM Lane 086 wraps the top output action rail on `/pm-review/import-intake` in a default-open native disclosure control so the Temp Power prep flow can fold the export/refresh button block after using it. This changes only browser-local section ergonomics, does not persist collapse state, preserves the PM Lane 083 authority guard and PM Lane 084/085 disclosure coverage, and adds no new route, export action, artifact, storage, backend route, hosted proof, SQL, schema migration, approval persistence, import mutation, issue, task, assignment, schedule, status, durable field record, production tracking write, or production state.
+
 ## Capability-Gap Register
 
 Current known gaps:
