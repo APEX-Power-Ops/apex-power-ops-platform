@@ -225,6 +225,8 @@ The sidecar recommendation was accepted in bounded form: do not begin approval p
 
 Those two executor lanes now have separate packets, handoffs, and a dispatch board so the coordinator can assign either or both without Jason manually translating between AI sessions.
 
+PM Lane 042 adds the closeout intake contract for those hosted executor lanes. Executors should return completed closeout handoffs using `ops/agents/handoffs/templates/pm-hosted-executor-closeout-template.md`, which lets the coordinator audit exact evidence, blockers, and guardrails without Jason becoming the relay.
+
 The next persistence tranche is:
 
 `Import Candidate Approval Persistence Schema And Adapter Admission`

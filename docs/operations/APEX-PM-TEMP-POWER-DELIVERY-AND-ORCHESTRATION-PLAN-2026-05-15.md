@@ -310,6 +310,8 @@ Lane 041 splits the next hosted work into two authenticated executor lanes: Verc
 
 The split packets and handoffs now exist as separate copy/paste executor surfaces for Vercel and Render, plus a dual-executor dispatch board. This keeps Jason out of the relay loop while preserving the coordinator acceptance gate.
 
+PM Lane 042 adds the closeout intake template that those hosted executors must use when returning results. This creates a consistent audit shape for deployment evidence, remaining blockers, validation commands, and guardrail confirmations.
+
 ## Capability-Gap Register
 
 Current known gaps:

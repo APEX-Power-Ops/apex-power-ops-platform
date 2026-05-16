@@ -128,6 +128,9 @@ Validation:
 Run the two hosted smoke commands from this handoff. Record exact deployment id, alias, route-smoke result, and any remaining mutation-seam-only failures.
 
 Closeout:
+Use ops/agents/handoffs/templates/pm-hosted-executor-closeout-template.md to create:
+ops/agents/handoffs/2026-05-15-pm-lane-041a-vercel-operations-web-promotion-closeout-handoff.md
+
 Update only scoped closeout/status surfaces, commit, and push. Preserve unrelated residue.
 ```
 

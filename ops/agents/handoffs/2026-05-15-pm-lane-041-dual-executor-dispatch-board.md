@@ -47,6 +47,19 @@ Coordinator accepts the hosted parity step only when one of these is true:
 1. paired hosted PM intake smoke is green, or
 2. remaining red checks are precisely classified with owner, blocker type, and next packet recommendation.
 
+Each executor must return a completed closeout handoff using:
+
+```text
+ops/agents/handoffs/templates/pm-hosted-executor-closeout-template.md
+```
+
+Expected closeout paths:
+
+```text
+ops/agents/handoffs/2026-05-15-pm-lane-041a-vercel-operations-web-promotion-closeout-handoff.md
+ops/agents/handoffs/2026-05-15-pm-lane-041b-render-mutation-seam-redeploy-classification-closeout-handoff.md
+```
+
 ## Guardrails
 
 No lane may:

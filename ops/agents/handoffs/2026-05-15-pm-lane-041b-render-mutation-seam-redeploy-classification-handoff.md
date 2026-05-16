@@ -146,6 +146,9 @@ Constraints:
 No new service, DNS change, auth widening, ingress widening, secret value disclosure, secret rotation, SQL write, schema migration, fixture replay, product-code change, approval persistence, import mutation, schedule mutation, or business-state mutation.
 
 Closeout:
+Use ops/agents/handoffs/templates/pm-hosted-executor-closeout-template.md to create:
+ops/agents/handoffs/2026-05-15-pm-lane-041b-render-mutation-seam-redeploy-classification-closeout-handoff.md
+
 Update only scoped closeout/status surfaces, commit, and push. Preserve unrelated residue.
 ```
 

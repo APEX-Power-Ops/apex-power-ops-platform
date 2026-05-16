@@ -328,6 +328,12 @@ The split executor handoffs are:
 2. `ops/agents/handoffs/2026-05-15-pm-lane-041b-render-mutation-seam-redeploy-classification-handoff.md`,
 3. `ops/agents/handoffs/2026-05-15-pm-lane-041-dual-executor-dispatch-board.md`.
 
+PM Lane 042 adds the required closeout intake template for these hosted executor returns:
+
+`ops/agents/handoffs/templates/pm-hosted-executor-closeout-template.md`
+
+The coordinator should not accept a hosted executor result without source commit, hosted action evidence, exact validation results, blocker classification if red, and guardrail confirmation.
+
 ## Environment Overrides
 
 Set this when using a different planning folder:
