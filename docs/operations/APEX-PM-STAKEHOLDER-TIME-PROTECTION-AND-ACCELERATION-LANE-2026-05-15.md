@@ -431,6 +431,14 @@ PM Lane 069 adds a browser-local `Local PM Intake Output Selector` panel to `/pm
 
 This still creates no approval record, SQL, schema migration, backend route, import mutation, issue, task, assignment, schedule, status, hosted proof, live task, work authorization, field release, work order, durable field record, production tracking write, local storage key, export contract, export action, or production mutation.
 
+The current handoff-guide tranche is:
+
+`Project Miner Local PM Intake Handoff Guide`
+
+PM Lane 070 adds a browser-local `Local PM Intake Handoff Guide` panel to `/pm-review/import-intake`. The guide derives next-context lane guidance for Jason local review, field conversation prep, bounded executor context, hosted parity executor boundary, and future approval-persistence packet boundary so Jason does not have to translate workbench state into the next relay target manually.
+
+This still creates no approval record, SQL, schema migration, backend route, import mutation, issue, task, assignment, schedule, status, hosted proof, live task, work authorization, field release, work order, durable field record, production tracking write, local storage key, export contract, export action, handoff artifact, or production mutation.
+
 The next persistence tranche is:
 
 `Import Candidate Approval Persistence Schema And Adapter Implementation`

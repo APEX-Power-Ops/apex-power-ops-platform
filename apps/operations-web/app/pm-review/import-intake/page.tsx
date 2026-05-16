@@ -270,6 +270,16 @@ type OutputSelectorItem = {
   detail: string
 }
 
+type HandoffGuideStatus = 'local-review' | 'field-context' | 'executor-context' | 'blocked'
+
+type HandoffGuideItem = {
+  id: string
+  title: string
+  status: HandoffGuideStatus
+  href: string
+  detail: string
+}
+
 type WorkflowMapStatus = 'source' | 'attention' | 'context' | 'draft' | 'prep' | 'audit' | 'blocked'
 
 type WorkflowMapItem = {
@@ -338,6 +348,12 @@ const PM_INTAKE_QUICK_JUMPS: QuickJumpItem[] = [
     label: 'Output Selector',
     href: '#pm-output-selector',
     detail: 'Choose an existing artifact.',
+  },
+  {
+    id: 'handoff-guide',
+    label: 'Handoff Guide',
+    href: '#pm-handoff-guide',
+    detail: 'Next context lane.',
   },
   {
     id: 'workflow-map',
@@ -625,6 +641,12 @@ function dailyReviewScriptTone(status: DailyReviewScriptStatus) {
 
 function outputSelectorTone(status: OutputSelectorStatus) {
   if (status === 'available-context' || status === 'field-context') return 'status-configured'
+  if (status === 'blocked') return 'status-deferred'
+  return 'status-awaiting-values'
+}
+
+function handoffGuideTone(status: HandoffGuideStatus) {
+  if (status === 'field-context' || status === 'executor-context') return 'status-configured'
   if (status === 'blocked') return 'status-deferred'
   return 'status-awaiting-values'
 }
@@ -1420,6 +1442,72 @@ function buildPmIntakeOutputSelector(
       status: hasFieldQuestions || hasFieldObservations || completeFieldPrepQueueCount ? 'field-context' : 'needs-local-context',
       href: '#field-prep',
       detail: `Field Prep Packet is the bundled field-prep artifact when the next conversation needs questions, coverage, agenda, readiness evidence, and observation context; current field prep queue is ${completeFieldPrepQueueCount} complete / ${nextFieldPrepQueueCount} next / ${blockedFieldPrepQueueCount} blocked.`,
+    },
+  ]
+}
+
+function buildPmIntakeHandoffGuide(
+  importExceptionRegister: ImportExceptionRegisterItem[],
+  approvalDraft: ApprovalDecisionDraft,
+  fieldPrepQueue: OperatingQueueItem[],
+  closeoutChecks: Record<string, boolean>,
+  persistenceReadinessGates: ReadinessGate[],
+  admissionPlan: AdmissionPlan | undefined,
+): HandoffGuideItem[] {
+  const exceptionCount = importExceptionRegisterCounts(importExceptionRegister)
+  const decisionDraftComplete = Boolean(approvalDraft.decision && approvalDraft.review_notes.trim() && approvalDraft.local_attestation)
+  const decisionDraftState = decisionDraftComplete
+    ? 'local decision draft has decision value, review notes, and local-only attestation'
+    : hasApprovalDraftContent(approvalDraft)
+      ? 'local decision draft has partial browser-local context'
+      : 'local decision draft has not started'
+  const nextFieldPrepMove = fieldPrepQueue.find((item) => item.status === 'next') || fieldPrepQueue.find((item) => item.status === 'blocked')
+  const completeFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'complete').length
+  const nextFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'next').length
+  const blockedFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'blocked').length
+  const closeoutCheckedCount = CLOSEOUT_CHECKLIST_ITEMS.filter((item) => closeoutChecks[item.id]).length
+  const blockedPersistenceGateCount = persistenceReadinessGates.filter((gate) => gate.status === 'blocked').length
+  const admissionAuthority = admissionPlan?.mutation_authority || 'not_admitted'
+
+  return [
+    {
+      id: 'jason-local-review-context',
+      title: 'Jason local review',
+      status: 'local-review',
+      href: '#import-exception-register',
+      detail: `Use the workbench for Jason review while exceptions are ${importExceptionRegisterSummary(exceptionCount)} and ${decisionDraftState}.`,
+    },
+    {
+      id: 'field-conversation-context',
+      title: 'Field conversation prep',
+      status: nextFieldPrepMove?.status === 'blocked' ? 'blocked' : 'field-context',
+      href: '#field-prep',
+      detail: nextFieldPrepMove
+        ? `Field prep queue is ${completeFieldPrepQueueCount} complete / ${nextFieldPrepQueueCount} next / ${blockedFieldPrepQueueCount} blocked. ${nextFieldPrepMove.title}: ${nextFieldPrepMove.detail}`
+        : 'No local field-prep queue item is currently reported.',
+    },
+    {
+      id: 'bounded-executor-context',
+      title: 'Bounded executor context',
+      status: closeoutCheckedCount || decisionDraftComplete ? 'executor-context' : 'local-review',
+      href: '#executor-closeout',
+      detail: closeoutCheckedCount || decisionDraftComplete
+        ? `Existing Executor Handoff context has ${closeoutCheckedCount} of ${CLOSEOUT_CHECKLIST_ITEMS.length} local closeout evidence checks marked plus ${decisionDraftState}.`
+        : 'Keep executor context local until review notes, local decision context, or closeout evidence are present.',
+    },
+    {
+      id: 'hosted-parity-executor-boundary',
+      title: 'Hosted parity executor boundary',
+      status: 'blocked',
+      href: '#approval-readiness',
+      detail: 'Hosted Vercel and Render parity remain external executor lanes; this local workbench claims no hosted parity.',
+    },
+    {
+      id: 'future-persistence-packet-boundary',
+      title: 'Future approval-persistence packet boundary',
+      status: 'blocked',
+      href: '#approval-readiness',
+      detail: `${blockedPersistenceGateCount} of ${persistenceReadinessGates.length} approval-persistence gates remain blocked and project import remains ${formatLabel(admissionAuthority)}.`,
     },
   ]
 }
@@ -2899,6 +2987,10 @@ export default function ProjectMinerIntakeWorkbenchPage() {
     () => buildPmIntakeOutputSelector(approvalDraft, reviewChecks, fieldPrepQueue, closeoutChecks, fieldQuestionsDraft, fieldObservationScratchpad),
     [approvalDraft, reviewChecks, fieldPrepQueue, closeoutChecks, fieldQuestionsDraft, fieldObservationScratchpad],
   )
+  const pmIntakeHandoffGuide = useMemo(
+    () => buildPmIntakeHandoffGuide(importExceptionRegister, approvalDraft, fieldPrepQueue, closeoutChecks, persistenceReadinessGates, admissionPlan),
+    [importExceptionRegister, approvalDraft, fieldPrepQueue, closeoutChecks, persistenceReadinessGates, admissionPlan],
+  )
   const pmIntakeWorkflowMap = useMemo(
     () => buildPmIntakeWorkflowMap(candidate, importExceptionRegister, approvalDraft, fieldPrepQueue, closeoutChecks, persistenceReadinessGates, admissionPlan),
     [candidate, importExceptionRegister, approvalDraft, fieldPrepQueue, closeoutChecks, persistenceReadinessGates, admissionPlan],
@@ -3440,6 +3532,36 @@ export default function ProjectMinerIntakeWorkbenchPage() {
                     <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
                   </div>
                   <span className={`status-pill ${outputSelectorTone(item.status)}`}>{formatLabel(item.status)}</span>
+                </div>
+              </a>
+            ))}
+          </div>
+        </section>
+
+        <section id="pm-handoff-guide" aria-label="Local PM intake handoff guide" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
+          <div className="status-row">
+            <h2 style={{ margin: 0 }}>Local PM Intake Handoff Guide</h2>
+            <span className="status-pill status-awaiting-values">browser-local</span>
+          </div>
+          <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+            Browser-local guide for the next context lane. It creates no localStorage key, export artifact, backend route, schema, approval record, task, issue, schedule, status, durable field record, production tracking row, hosted parity claim, or production write.
+          </p>
+          <div style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
+            {pmIntakeHandoffGuide.map((item) => (
+              <a
+                key={item.id}
+                className="card"
+                href={item.href}
+                style={{ color: 'inherit', display: 'block', padding: '0.85rem', textDecoration: 'none', boxShadow: 'none' }}
+              >
+                <div className="status-row" style={{ alignItems: 'start' }}>
+                  <div>
+                    <p style={{ margin: 0 }}>
+                      <strong>{item.title}</strong>
+                    </p>
+                    <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
+                  </div>
+                  <span className={`status-pill ${handoffGuideTone(item.status)}`}>{formatLabel(item.status)}</span>
                 </div>
               </a>
             ))}
