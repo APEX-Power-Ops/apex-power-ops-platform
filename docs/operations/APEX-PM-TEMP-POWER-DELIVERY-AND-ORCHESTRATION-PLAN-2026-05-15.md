@@ -389,6 +389,8 @@ PM Lane 075 promotes the existing `PM Intake Quick Jump Rail` near the top of `/
 
 PM Lane 076 adds the hosted PM intake parity executor dispatch binder. It is the current copy/paste surface for assigning an authenticated Vercel and/or Render executor to the existing PM Lane 041A and 041B lanes after local workbench progress through PM Lane 075. This reduces Jason's AI-to-AI relay burden while preserving the no-deploy-from-coordinator, no-product-code, no-Supabase-write, no-schema, no-approval-persistence, no-import-mutation, and no-hosted-parity-claim boundary.
 
+PM Lane 077 groups the existing top output actions on `/pm-review/import-intake` so the Temp Power prep flow can distinguish review exports, executor handoff output, field prep outputs, and refresh without reading one long flat control row. This changes only the browser-local organization of existing buttons and adds no new export action, artifact, storage, backend route, hosted proof, SQL, schema migration, approval persistence, import mutation, issue, task, assignment, schedule, status, durable field record, production tracking write, or production state.
+
 ## Capability-Gap Register
 
 Current known gaps:

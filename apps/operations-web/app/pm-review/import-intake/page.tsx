@@ -3673,46 +3673,71 @@ export default function ProjectMinerIntakeWorkbenchPage() {
               Review the source-derived project shape, current gates, and guardrails before moving to any dedicated detail route.
             </p>
           </div>
-          <p className="pm-review-link-row">
+          <div className="pm-review-link-row" aria-label="PM intake route links">
             <Link href="/">Return to shell</Link>
             <Link href="/pm-review/import-candidate">Import candidate</Link>
             <Link href="/pm-review/import-admission-plan">Admission plan</Link>
             <Link href="/pm-review/import-approval-readiness">Approval readiness</Link>
             <Link href="/pm-review/workfront">PM workfront</Link>
-            <button className="btn btn-outline" onClick={exportPmBrief} disabled={!packet}>
-              Export PM Brief
-            </button>
-            <button className="btn btn-outline" onClick={exportApprovalPacketPreview} disabled={!packet}>
-              Export Approval Preview JSON
-            </button>
-            <button className="btn btn-outline" onClick={exportExecutorHandoff} disabled={!packet}>
-              Export Executor Handoff
-            </button>
-            <button className="btn btn-outline" onClick={exportPmIntakeSnapshot} disabled={!packet}>
-              Export PM Intake Snapshot
-            </button>
-            <button className="btn btn-outline" onClick={exportImportExceptionRegister} disabled={!packet}>
-              Export Import Exception Register
-            </button>
-            <button className="btn btn-outline" onClick={exportFieldKickoffBrief} disabled={!packet}>
-              Export Field Kickoff Brief
-            </button>
-            <button className="btn btn-outline" onClick={exportFieldObservationNotes} disabled={!packet}>
-              Export Field Observation Notes
-            </button>
-            <button className="btn btn-outline" onClick={exportFieldPrepCoverageSnapshot} disabled={!packet}>
-              Export Field Prep Coverage Snapshot
-            </button>
-            <button className="btn btn-outline" onClick={exportFieldPrepConversationAgenda} disabled={!packet}>
-              Export Field Prep Conversation Agenda
-            </button>
-            <button className="btn btn-outline" onClick={exportFieldPrepPacket} disabled={!packet}>
-              Export Field Prep Packet
-            </button>
-            <button className="btn btn-outline" onClick={() => void refresh()} disabled={loading}>
-              {loading ? 'Refreshing...' : 'Refresh'}
-            </button>
-          </p>
+          </div>
+        </div>
+        <div
+          aria-label="PM intake output action rail"
+          style={{ display: 'grid', gap: '0.85rem', gridTemplateColumns: 'repeat(auto-fit, minmax(15rem, 1fr))', margin: '0.85rem 0 1rem' }}
+        >
+          <section aria-label="Review output actions" style={{ display: 'grid', gap: '0.55rem' }}>
+            <h3 style={{ fontSize: '0.95rem', margin: 0 }}>Review Outputs</h3>
+            <div className="pm-review-link-row pm-review-link-row-start" style={{ margin: 0 }}>
+              <button className="btn btn-outline" onClick={exportPmBrief} disabled={!packet}>
+                Export PM Brief
+              </button>
+              <button className="btn btn-outline" onClick={exportApprovalPacketPreview} disabled={!packet}>
+                Export Approval Preview JSON
+              </button>
+              <button className="btn btn-outline" onClick={exportPmIntakeSnapshot} disabled={!packet}>
+                Export PM Intake Snapshot
+              </button>
+              <button className="btn btn-outline" onClick={exportImportExceptionRegister} disabled={!packet}>
+                Export Import Exception Register
+              </button>
+            </div>
+          </section>
+          <section aria-label="Executor output actions" style={{ display: 'grid', gap: '0.55rem' }}>
+            <h3 style={{ fontSize: '0.95rem', margin: 0 }}>Executor Output</h3>
+            <div className="pm-review-link-row pm-review-link-row-start" style={{ margin: 0 }}>
+              <button className="btn btn-outline" onClick={exportExecutorHandoff} disabled={!packet}>
+                Export Executor Handoff
+              </button>
+            </div>
+          </section>
+          <section aria-label="Field prep output actions" style={{ display: 'grid', gap: '0.55rem' }}>
+            <h3 style={{ fontSize: '0.95rem', margin: 0 }}>Field Prep Outputs</h3>
+            <div className="pm-review-link-row pm-review-link-row-start" style={{ margin: 0 }}>
+              <button className="btn btn-outline" onClick={exportFieldKickoffBrief} disabled={!packet}>
+                Export Field Kickoff Brief
+              </button>
+              <button className="btn btn-outline" onClick={exportFieldObservationNotes} disabled={!packet}>
+                Export Field Observation Notes
+              </button>
+              <button className="btn btn-outline" onClick={exportFieldPrepCoverageSnapshot} disabled={!packet}>
+                Export Field Prep Coverage Snapshot
+              </button>
+              <button className="btn btn-outline" onClick={exportFieldPrepConversationAgenda} disabled={!packet}>
+                Export Field Prep Conversation Agenda
+              </button>
+              <button className="btn btn-outline" onClick={exportFieldPrepPacket} disabled={!packet}>
+                Export Field Prep Packet
+              </button>
+            </div>
+          </section>
+          <section aria-label="Refresh action" style={{ display: 'grid', gap: '0.55rem' }}>
+            <h3 style={{ fontSize: '0.95rem', margin: 0 }}>Refresh</h3>
+            <div className="pm-review-link-row pm-review-link-row-start" style={{ margin: 0 }}>
+              <button className="btn btn-outline" onClick={() => void refresh()} disabled={loading}>
+                {loading ? 'Refreshing...' : 'Refresh'}
+              </button>
+            </div>
+          </section>
         </div>
         {briefStatus ? <p style={{ margin: '0 0 1rem', color: 'var(--muted)', lineHeight: 1.55 }}>{briefStatus}</p> : null}
         {previewStatus ? <p style={{ margin: '0 0 1rem', color: 'var(--muted)', lineHeight: 1.55 }}>{previewStatus}</p> : null}

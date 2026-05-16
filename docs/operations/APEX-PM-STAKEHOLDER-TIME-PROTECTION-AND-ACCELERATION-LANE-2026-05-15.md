@@ -471,6 +471,14 @@ PM Lane 076 packages the existing PM Lane 041A Vercel promotion lane, PM Lane 04
 
 This still creates no approval record, SQL, schema migration, backend route, import mutation, issue, task, assignment, schedule, status, hosted proof, live task, work authorization, field release, work order, durable field record, production tracking write, product code, deployment, service, DNS, auth, ingress, secret, local storage key, new app feature, or production mutation.
 
+The current action-selection ergonomics tranche is:
+
+`Project Miner Local PM Intake Output Action Rail Grouping`
+
+PM Lane 077 separates route links from the existing output buttons and groups those buttons into Review Outputs, Executor Output, Field Prep Outputs, and Refresh. It keeps every existing export label, handler, filename, output content, storage key, and read seam unchanged while making the first screen easier to use during a real PM review.
+
+This still creates no approval record, SQL, schema migration, backend route, import mutation, issue, task, assignment, schedule, status, hosted proof, live task, work authorization, field release, work order, durable field record, production tracking write, product code, deployment, service, DNS, auth, ingress, secret, local storage key, new export action, new export artifact, export contract widening, or production mutation.
+
 The next persistence tranche is:
 
 `Import Candidate Approval Persistence Schema And Adapter Implementation`
