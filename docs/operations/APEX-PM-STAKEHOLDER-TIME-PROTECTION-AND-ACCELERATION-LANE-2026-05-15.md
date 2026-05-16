@@ -259,6 +259,12 @@ The current local decision-prep tranche is:
 
 PM Lane 047 adds a candidate-scoped browser-local approval-decision draft to `/pm-review/import-intake`. It uses the permitted decisions from the read-only approval contract, captures PM review notes, requires a local-only attestation, and includes the result in the Markdown PM brief. This reduces future packet relay work without creating an approval record, persisting data, importing rows, assigning work, scheduling, changing status, or mutating production state.
 
+The current local packet-prep tranche is:
+
+`Project Miner PM Intake Approval Packet Preview Export`
+
+PM Lane 048 adds a browser-only `Export Approval Preview JSON` action to `/pm-review/import-intake`. It combines the current candidate identity, approval contract, storage plan, local review checklist, local approval-decision draft, and future packet boundary into one structured artifact. This gives the later admitted approval-persistence lane a precise input shape while keeping Jason out of the relay loop and still creating no approval record, persistence, import, assignment, schedule, status, hosted proof, or production mutation.
+
 The next persistence tranche is:
 
 `Import Candidate Approval Persistence Schema And Adapter Admission`

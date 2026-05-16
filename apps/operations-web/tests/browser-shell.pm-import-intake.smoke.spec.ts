@@ -230,6 +230,56 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await approvalDraft.getByLabel(/Review notes draft/i).fill('Reviewed formula warnings; return for revision until source workbook errors are resolved.')
   await approvalDraft.getByRole('checkbox', { name: /Local-only draft attestation/i }).check()
   await expect(approvalDraft.getByRole('button', { name: 'Clear decision draft' })).toBeEnabled()
+  await expect(page.getByRole('button', { name: 'Export Approval Preview JSON' })).toBeEnabled()
+  const previewDownloadPromise = page.waitForEvent('download')
+  await page.getByRole('button', { name: 'Export Approval Preview JSON' }).click()
+  const previewDownload = await previewDownloadPromise
+  expect(previewDownload.suggestedFilename()).toBe('pm-import-candidate-miner-temp-power-approval-packet-preview.json')
+  const previewStream = await previewDownload.createReadStream()
+  expect(previewStream).not.toBeNull()
+  const previewChunks: Buffer[] = []
+  for await (const chunk of previewStream!) {
+    previewChunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk))
+  }
+  const preview = JSON.parse(Buffer.concat(previewChunks).toString('utf8'))
+  expect(preview).toMatchObject({
+    preview_kind: 'pm_import_candidate_approval_packet_preview',
+    preview_version: 'pm_import_candidate_approval_packet_preview_v1',
+    mutation_authority: 'not_admitted',
+    persistence_authority: 'design_only_not_admitted',
+    candidate_identity: {
+      candidate_id: 'pm-import-candidate-miner-temp-power',
+      source_fingerprint: 'stat-fingerprint-abc123',
+      warning_count: 2,
+      blocker_count: 0,
+    },
+    approval_contract: {
+      record_type: 'pm_import_candidate_approval',
+      permitted_decisions: ['approve_for_import_packet', 'return_for_revision', 'reject_candidate'],
+    },
+    storage_plan: {
+      recommended_table: 'seam.pm_import_candidate_approvals',
+      recommended_route: '/api/v1/mutations/project-import-approvals',
+    },
+    local_review_evidence: {
+      checklist_checked_count: 2,
+      checklist_total_count: 7,
+      checklist_checked_items: ['source_freshness_reviewed', 'exceptions_reviewed'],
+      decision_draft: {
+        decision: 'return_for_revision',
+        review_notes: 'Reviewed formula warnings; return for revision until source workbook errors are resolved.',
+        local_attestation: true,
+        draft_complete: true,
+      },
+    },
+    future_packet_boundary: {
+      target_route: '/api/v1/mutations/project-import-approvals',
+      target_table: 'seam.pm_import_candidate_approvals',
+      not_allowed_now: expect.arrayContaining(['write_supabase', 'persist_approval_record', 'import_project_rows']),
+    },
+  })
+  expect(preview.generated_locally_at).toEqual(expect.any(String))
+  await expect(page.getByText(/Approval packet preview prepared from pm-import-candidate-miner-temp-power without a server write/i)).toBeVisible()
   await expect(page.getByRole('button', { name: 'Export PM Brief' })).toBeEnabled()
   const downloadPromise = page.waitForEvent('download')
   await page.getByRole('button', { name: 'Export PM Brief' }).click()

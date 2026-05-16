@@ -272,6 +272,11 @@ function briefFileName(candidate?: CandidatePayload | null) {
   return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-intake-brief.md`
 }
 
+function approvalPreviewFileName(candidate?: CandidatePayload | null) {
+  const candidateId = candidate?.candidate_id || 'project-miner-intake'
+  return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-approval-packet-preview.json`
+}
+
 function markdownList(items: string[]) {
   return items.length ? items.map((item) => `- ${item}`).join('\n') : '- none reported'
 }
@@ -283,6 +288,76 @@ function formatMultilineMarkdown(value: string) {
 
 function hasApprovalDraftContent(draft: ApprovalDecisionDraft) {
   return Boolean(draft.decision || draft.review_notes.trim() || draft.local_attestation)
+}
+
+function buildApprovalPacketPreview(
+  packet: IntakeWorkbenchPacket,
+  notAllowed: string[],
+  futureRoute: string,
+  reviewChecks: Record<string, boolean>,
+  approvalDraft: ApprovalDecisionDraft,
+) {
+  const candidate = packet.candidate
+  const admissionPlan = packet.admissionPlan
+  const approvalContract = packet.approvalContract
+  const storagePlan = packet.storagePlan
+  const checkedItems = REVIEW_CHECKLIST_ITEMS.filter((item) => reviewChecks[item.id]).map((item) => item.id)
+  const draftComplete = Boolean(approvalDraft.decision && approvalDraft.review_notes.trim() && approvalDraft.local_attestation)
+
+  return {
+    preview_kind: 'pm_import_candidate_approval_packet_preview',
+    preview_version: 'pm_import_candidate_approval_packet_preview_v1',
+    generated_locally_at: new Date().toISOString(),
+    mutation_authority: 'not_admitted',
+    persistence_authority: approvalContract.persistence_authority || storagePlan.persistence_authority || 'not_admitted',
+    candidate_identity: {
+      candidate_id: candidate.candidate_id || null,
+      candidate_version: candidate.candidate_version || null,
+      project_name: candidate.project?.name || null,
+      project_location: candidate.project?.location || null,
+      source_fingerprint: candidate.source_freshness?.aggregate_fingerprint || null,
+      warning_count: candidate.summary?.warning_count ?? null,
+      blocker_count: candidate.summary?.blocker_count ?? null,
+    },
+    approval_contract: {
+      approval_contract_id: approvalContract.approval_contract_id || null,
+      approval_contract_version: approvalContract.approval_contract_version || null,
+      record_type: approvalContract.approval_record_contract?.record_type || storagePlan.recommended_entity_type || null,
+      required_fields: approvalContract.approval_record_contract?.required_fields || [],
+      permitted_decisions: approvalContract.approval_record_contract?.permitted_decisions || [],
+      operator_attestation: approvalContract.approval_record_contract?.operator_attestation || null,
+    },
+    storage_plan: {
+      storage_plan_id: storagePlan.storage_plan_id || null,
+      recommended_table: storagePlan.recommended_table || null,
+      recommended_route: futureRoute,
+      selected_storage_decision: storagePlan.selected_storage_decision || null,
+      adapter_requirements: storagePlan.adapter_requirements || [],
+    },
+    local_review_evidence: {
+      checklist_checked_count: checkedItems.length,
+      checklist_total_count: REVIEW_CHECKLIST_ITEMS.length,
+      checklist_checked_items: checkedItems,
+      decision_draft: {
+        decision: approvalDraft.decision || null,
+        review_notes: approvalDraft.review_notes.trim() || null,
+        local_attestation: approvalDraft.local_attestation,
+        draft_complete: draftComplete,
+      },
+    },
+    future_packet_boundary: {
+      target_route: futureRoute,
+      target_table: storagePlan.recommended_table || null,
+      admission_plan_id: admissionPlan.admission_plan_id || null,
+      not_allowed_now: notAllowed,
+      required_later_authority: [
+        'dedicated approval schema migration',
+        'explicit approval persistence adapter',
+        'hosted Vercel and Render parity closeout',
+        'operator approval of the admitted persistence packet',
+      ],
+    },
+  }
 }
 
 function buildIntakeBrief(
@@ -401,6 +476,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
   const [loading, setLoading] = useState(true)
   const [online, setOnline] = useState(true)
   const [briefStatus, setBriefStatus] = useState('')
+  const [previewStatus, setPreviewStatus] = useState('')
   const [reviewChecks, setReviewChecks] = useState<Record<string, boolean>>({})
   const [approvalDraft, setApprovalDraft] = useState<ApprovalDecisionDraft>(EMPTY_APPROVAL_DRAFT)
 
@@ -549,6 +625,16 @@ export default function ProjectMinerIntakeWorkbenchPage() {
     setBriefStatus(`PM brief prepared from ${candidate?.candidate_id || 'the current intake packet'} without a server write.`)
   }
 
+  function exportApprovalPacketPreview() {
+    if (!packet) {
+      return
+    }
+
+    const preview = buildApprovalPacketPreview(packet, notAllowed, futureRoute, reviewChecks, approvalDraft)
+    downloadTextFile(approvalPreviewFileName(candidate), `${JSON.stringify(preview, null, 2)}\n`, 'application/json')
+    setPreviewStatus(`Approval packet preview prepared from ${candidate?.candidate_id || 'the current intake packet'} without a server write.`)
+  }
+
   return (
     <main className="shell-page pm-review-page">
       <section className="hero-card pm-review-hero">
@@ -627,12 +713,16 @@ export default function ProjectMinerIntakeWorkbenchPage() {
             <button className="btn btn-outline" onClick={exportPmBrief} disabled={!packet}>
               Export PM Brief
             </button>
+            <button className="btn btn-outline" onClick={exportApprovalPacketPreview} disabled={!packet}>
+              Export Approval Preview JSON
+            </button>
             <button className="btn btn-outline" onClick={() => void refresh()} disabled={loading}>
               {loading ? 'Refreshing...' : 'Refresh'}
             </button>
           </p>
         </div>
         {briefStatus ? <p style={{ margin: '0 0 1rem', color: 'var(--muted)', lineHeight: 1.55 }}>{briefStatus}</p> : null}
+        {previewStatus ? <p style={{ margin: '0 0 1rem', color: 'var(--muted)', lineHeight: 1.55 }}>{previewStatus}</p> : null}
 
         <section className="status-grid status-grid-wide" aria-label="Project Miner intake summary" style={{ marginBottom: '1rem' }}>
           <article className="status-card">

@@ -329,6 +329,8 @@ PM Lane 046 adds a browser-local PM review checklist to `/pm-review/import-intak
 
 PM Lane 047 adds a browser-local approval-decision draft to `/pm-review/import-intake` and folds its decision value, review notes, and local-only attestation into the Markdown PM intake brief. This gives the PM lane a practical future-packet context artifact while still avoiding hosted proof, backend routes, approval persistence, import mutation, assignment, schedule, status, or production writes.
 
+PM Lane 048 adds a browser-only approval packet preview JSON export to `/pm-review/import-intake`. The preview combines current candidate identity, approval contract, storage plan, local review checklist, local decision draft, and future packet boundary into one structured artifact for the later admitted persistence lane while still avoiding hosted proof, backend routes, approval persistence, import mutation, assignment, schedule, status, or production writes.
+
 ## Capability-Gap Register
 
 Current known gaps:
