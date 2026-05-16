@@ -4285,27 +4285,29 @@ export default function ProjectMinerIntakeWorkbenchPage() {
             <h2 style={{ margin: 0 }}>Local PM Intake Snapshot</h2>
             <span className="status-pill status-awaiting-values">browser-local</span>
           </summary>
-          <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
-            Compact scan view for exception posture, decision draft, field-prep context, next local action, hosted parity, and future write boundaries. It does not approve, persist, import, assign, schedule, change status, create tasks, create issues, or mutate production state.
-          </p>
-          <p style={{ margin: '0.45rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
-            {pmIntakeSnapshotSummary(pmIntakeSnapshotCount)}
-          </p>
-          <div aria-label="Local PM intake snapshot items" style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
-            {pmIntakeSnapshot.map((item) => (
-              <article key={item.id} className="card" style={{ padding: '0.85rem', boxShadow: 'none' }}>
-                <div className="status-row" style={{ alignItems: 'start' }}>
-                  <div>
-                    <p style={{ margin: 0 }}>
-                      <strong>{item.title}</strong>
-                    </p>
-                    <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
-                    <p style={{ margin: '0.35rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.evidence}</p>
+          <div aria-label="PM intake snapshot controls">
+            <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+              Compact scan view for exception posture, decision draft, field-prep context, next local action, hosted parity, and future write boundaries. It does not approve, persist, import, assign, schedule, change status, create tasks, create issues, or mutate production state.
+            </p>
+            <p style={{ margin: '0.45rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+              {pmIntakeSnapshotSummary(pmIntakeSnapshotCount)}
+            </p>
+            <div aria-label="Local PM intake snapshot items" style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
+              {pmIntakeSnapshot.map((item) => (
+                <article key={item.id} className="card" style={{ padding: '0.85rem', boxShadow: 'none' }}>
+                  <div className="status-row" style={{ alignItems: 'start' }}>
+                    <div>
+                      <p style={{ margin: 0 }}>
+                        <strong>{item.title}</strong>
+                      </p>
+                      <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
+                      <p style={{ margin: '0.35rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.evidence}</p>
+                    </div>
+                    <span className={`status-pill ${pmIntakeSnapshotTone(item.status)}`}>{formatLabel(item.status)}</span>
                   </div>
-                  <span className={`status-pill ${pmIntakeSnapshotTone(item.status)}`}>{formatLabel(item.status)}</span>
-                </div>
-              </article>
-            ))}
+                </article>
+              ))}
+            </div>
           </div>
         </details>
 
