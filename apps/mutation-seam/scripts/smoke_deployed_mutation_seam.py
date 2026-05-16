@@ -139,6 +139,7 @@ def main() -> int:
         intake_paths = {
             '/api/v1/reads/project-import-candidate',
             '/api/v1/reads/project-import-admission-plan',
+            '/api/v1/reads/project-import-approval-contract',
         }
         status, payload = request_json(f'{base_url}/openapi.json', timeout_seconds=args.timeout_seconds)
         expect_status(
@@ -161,6 +162,16 @@ def main() -> int:
                 'project_import_admission_plan',
                 '/api/v1/reads/project-import-admission-plan',
                 {'admission_plan_id', 'approval_record_contract', 'mutation_authority', 'no_go_checks'},
+            ),
+            (
+                'project_import_approval_contract',
+                '/api/v1/reads/project-import-approval-contract',
+                {
+                    'approval_contract_id',
+                    'decision_payload_template',
+                    'mutation_authority',
+                    'persistence_authority',
+                },
             ),
         ]
         for label, path, required_fields in intake_checks:

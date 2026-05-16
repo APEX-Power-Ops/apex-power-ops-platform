@@ -123,6 +123,12 @@ Key UI lanes:
 5. `/pm-review/import-candidate` for read-only Temp Power import candidate review.
 6. `/pm-review/import-admission-plan` for read-only import gate planning before approval or import writes exist.
 
+Current backend-only PM intake design reads also include:
+
+1. `GET /api/v1/reads/project-import-candidate`,
+2. `GET /api/v1/reads/project-import-admission-plan`,
+3. `GET /api/v1/reads/project-import-approval-contract`.
+
 ## Olares Orchestration Role
 
 Olares One should enhance execution by providing:
@@ -252,7 +258,16 @@ PM Lane 037 refreshes the Render-authenticated executor packet around the curren
 
 This still does not admit Render deployment from the local Codex workspace, approval persistence, import mutation, SQL, schema, live data write, workbook macro execution, workbook writeback, service admission, auth/ingress widening, assignment, schedule, status, or autonomous AI business-state mutation.
 
-The next product lane after hosted PM intake reads are current should be approval-persistence design only. A read-only sidecar scout recommends a narrow PM approval record for the import candidate, preserving candidate id/version, source fingerprint, shape fingerprint, warning acceptance, no-go notes, reviewer notes, and decision state while keeping import rows blocked.
+PM Lane 038 executes the local read-only approval-contract design slice:
+
+1. `apps/mutation-seam/app/project_import_approval_contract.py` builds the approval-persistence contract from the current import-admission plan.
+2. `GET /api/v1/reads/project-import-approval-contract` exposes the contract for PM review and future UI work.
+3. The contract defines required fields, permitted decisions, expected candidate identity, warning-code acceptance, human-acceptance no-go acknowledgements, non-overridable blocked checks, a decision payload template, validation matrix, and a future mutation contract placeholder.
+4. A pure validator rejects stale source fingerprints, changed warning-code sets, unsupported decisions, non-overridable check acknowledgements, missing PM actor/timestamp fields, and empty PM review notes.
+5. `apps/mutation-seam/scripts/smoke_deployed_mutation_seam.py --include-pm-intake` now includes the approval-contract read so Render parity proof covers all current PM intake reads.
+6. A sidecar scout independently confirmed this should stay out of `mutation_pipeline.py` and store adapters until a later persistence packet is explicitly admitted.
+
+This still does not admit approval persistence, import mutation, SQL, schema, live data write, workbook macro execution, workbook writeback, Render deployment, Vercel promotion, service admission, auth/ingress widening, assignment, schedule, status, or autonomous AI business-state mutation.
 
 ## Capability-Gap Register
 
@@ -264,9 +279,10 @@ Current known gaps:
 4. The project import mutation is not admitted; import-candidate review must come first.
 5. Workbook macros are not admitted for unattended intake.
 6. The local PM review route now supports export and local draft notes, but server-side PM note persistence is not admitted.
-7. The import-admission plan defines the future write gate, but approval persistence and import mutation are still not admitted.
+7. The import-admission plan and approval contract define the future write gate, but approval persistence and import mutation are still not admitted.
 8. Render auth/token/service metadata are not available in the current Codex workspace; this must be resolved before claiming hosted backend parity.
 9. Approval persistence needs a small governed storage decision before implementation; it should not be smuggled into audit log alone and must not import project rows.
+10. The approval-contract read endpoint is local-current only until Render serves the current mutation-seam code.
 
 Required response to new gaps:
 

@@ -182,6 +182,30 @@ This route explains the future import gate:
 
 This is not an approval screen and not an import screen. It does not persist approval, write Supabase rows, run workbook macros, write workbook cells, assign work, change status, mutate schedules, or admit autonomous AI business-state action.
 
+## Import Approval Contract
+
+PM Lane 038 adds a read-only approval-persistence contract before any approval record can be stored.
+
+The read seam is:
+
+`GET /api/v1/reads/project-import-approval-contract`
+
+This contract explains the future approval packet in machine-checkable form:
+
+1. candidate id, version, source fingerprint, shape fingerprint, and idempotency key that must match,
+2. permitted PM decisions,
+3. required approval fields,
+4. warning codes the PM must accept exactly,
+5. human-acceptance no-go checks that may be acknowledged,
+6. non-overridable no-go checks that still block import,
+7. decision payload template,
+8. validation matrix,
+9. future mutation contract placeholder.
+
+The backend also includes a pure local validator for this approval payload. The validator rejects stale fingerprints, changed warning-code sets, unsupported decisions, missing PM actor/timestamp fields, empty review notes, and attempts to override non-overridable checks.
+
+This is still not approval persistence and not import. It does not write Supabase rows, store PM notes, import project rows, run workbook macros, write workbook cells, assign work, change status, mutate schedules, or admit autonomous AI business-state action.
+
 ## Hosted Intake Parity Status
 
 PM Lane 036 promoted the operations-web PM intake routes to Vercel production:
@@ -210,6 +234,12 @@ PM Lane 037 refreshes the Render-authenticated executor packet for this exact bl
 ```
 
 That smoke should remain red until Render serves the current mutation-seam code. It checks the existing health, approval, and schedule reads plus the PM intake OpenAPI paths and read-only payload shape.
+
+After PM Lane 038, the same flag also checks:
+
+1. OpenAPI registration of `/api/v1/reads/project-import-approval-contract`,
+2. `GET /api/v1/reads/project-import-approval-contract`,
+3. approval-contract payload fields including `mutation_authority` and `persistence_authority`.
 
 ## Environment Overrides
 
@@ -310,9 +340,10 @@ The near-term target is not a generic PM system demo. The target is a field-usab
 Current priority order:
 
 1. Render-authenticated mutation-seam parity for the new PM intake read endpoints through PM Lane 037,
-2. approval-persistence design for the reviewed import candidate after hosted reads are current,
-3. narrow idempotent import mutation only after human approval and explicit packet admission,
-4. PM, Lead, and Field pilot on a bounded Temp Power slice.
+2. PM Lane 038 approval-contract review and storage decision while keeping persistence unadmitted,
+3. approval-persistence mutation only after hosted reads are current and explicit packet admission exists,
+4. narrow idempotent import mutation only after human approval and explicit packet admission,
+5. PM, Lead, and Field pilot on a bounded Temp Power slice.
 
 Olares One should support this by reducing relay friction, preserving host validation, and keeping packet/handoff evidence durable. It is not currently assumed to provide autonomous AI-to-AI queue ownership.
 
@@ -333,8 +364,11 @@ Review source freshness, warning filters, exported candidate JSON, and local PM 
 Level 2B - Import Admission Planning:
 Review the approval contract, idempotency key, diff checks, target rows, and no-go checks that a later import packet must satisfy.
 
-Level 2C - Approval Persistence Design:
-Persist only the PM approval decision, candidate fingerprints, warning acceptance, no-go override notes, and reviewer notes for the import candidate. This is not an import mutation and must not write project, workpackage, task, or apparatus rows.
+Level 2C - Approval Contract Design:
+Define and validate the PM approval packet shape, candidate fingerprints, warning acceptance, human-acceptance no-go acknowledgements, actor/timestamp fields, and reviewer notes before any approval persistence exists.
+
+Level 2D - Approval Persistence:
+Persist only the PM approval decision, candidate fingerprints, warning acceptance, no-go acknowledgement notes, and reviewer notes for the import candidate after a later packet admits a narrow storage path. This is not an import mutation and must not write project, workpackage, task, or apparatus rows.
 
 Level 3 - Resource Context:
 Read equipment inventory and technician capability rows so PM can understand whether the project can be staffed with available people and equipment.

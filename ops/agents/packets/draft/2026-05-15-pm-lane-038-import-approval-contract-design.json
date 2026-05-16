@@ -1,0 +1,90 @@
+{
+  "packet_id": "2026-05-15-pm-lane-038",
+  "title": "Import Approval Contract Design",
+  "objective": "Define and locally validate a read-only Project Miner import approval contract so PM approval payload shape, stale-candidate rejection rules, warning acceptance, and no-go acknowledgement policy are explicit before any approval persistence or import mutation is admitted.",
+  "domain": "pm-domain",
+  "active_role": "Delegated Technical Repo Authority / PM Lane Product Coordinator / Approval Contract Designer",
+  "repo_paths": [
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/project_import_approval_contract.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/routers/reads.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/scripts/smoke_deployed_mutation_seam.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests/test_project_import_approval_contract.py",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/APEX-PM-TEMP-POWER-DELIVERY-AND-ORCHESTRATION-PLAN-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/APEX-PM-STAKEHOLDER-TIME-PROTECTION-AND-ACCELERATION-LANE-2026-05-15.md"
+  ],
+  "dependencies": [
+    "2026-05-15-pm-lane-032",
+    "2026-05-15-pm-lane-035",
+    "2026-05-15-pm-lane-037"
+  ],
+  "current_evidence": [
+    "PM Lane 035 exposes a read-only import-admission plan with approval record contract, idempotency plan, diff checks, no-go checks, and not_allowed_now guardrails.",
+    "PM Lane 037 keeps hosted Render parity separate and ready for a Render-authenticated executor.",
+    "A read-only sidecar scout recommended the smallest safe Lane 038 shape: pure approval contract and validator, no mutation_pipeline.py change, no store adapter change, no persistence."
+  ],
+  "allowed_actions": [
+    "Add a pure backend module that builds an import approval contract from the current import-admission plan.",
+    "Add a pure validator that checks candidate id, version, source fingerprint, shape fingerprint, idempotency key, warning-code acceptance, human-acceptance no-go acknowledgement, PM actor, PM timestamp, review notes, and permitted decision.",
+    "Expose the contract through a GET-only read endpoint.",
+    "Extend the existing deployed-seam --include-pm-intake smoke so hosted parity proof covers the approval-contract read.",
+    "Add focused local tests for contract shape, valid payload acceptance, stale payload rejection, and route shape.",
+    "Update PM lane status and operating docs."
+  ],
+  "not_allowed": [
+    "No approval persistence.",
+    "No import mutation.",
+    "No mutation_pipeline.py action.",
+    "No store adapter write path.",
+    "No SQL or schema migration.",
+    "No live database write.",
+    "No workbook macro execution.",
+    "No workbook writeback.",
+    "No Render deployment.",
+    "No Vercel promotion.",
+    "No service admission.",
+    "No auth or ingress widening.",
+    "No assignment, schedule, status, apparatus, issue, task, workpackage, project, or autonomous AI business-state mutation."
+  ],
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/project_import_approval_contract.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/routers/reads.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/scripts/smoke_deployed_mutation_seam.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests/test_project_import_approval_contract.py",
+    "C:/APEX Platform/apex-power-ops-platform/PROJECT_STATUS.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/APEX-PM-TEMP-POWER-DELIVERY-AND-ORCHESTRATION-PLAN-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/APEX-PM-STAKEHOLDER-TIME-PROTECTION-AND-ACCELERATION-LANE-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-15-pm-lane-038-import-approval-contract-design.json",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-038-import-approval-contract-design-handoff.md"
+  ],
+  "validation_steps": [
+    "With SEAM_STORE_BACKEND=memory, C:/APEX Platform/apex-power-ops-platform/.venv/Scripts/python.exe -m pytest C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests/test_project_import_candidate.py C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests/test_project_import_admission_plan.py C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests/test_project_import_approval_contract.py -q",
+    "C:/APEX Platform/apex-power-ops-platform/.venv/Scripts/python.exe -m py_compile C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/project_import_approval_contract.py",
+    "C:/APEX Platform/apex-power-ops-platform/.venv/Scripts/python.exe -m py_compile C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/scripts/smoke_deployed_mutation_seam.py",
+    "C:/APEX Platform/apex-power-ops-platform/.venv/Scripts/python.exe -c \"import json; json.load(open(r'C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-15-pm-lane-038-import-approval-contract-design.json', encoding='utf-8')); print('packet-json-ok')\"",
+    "git diff --check -- C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/project_import_approval_contract.py C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/routers/reads.py C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/scripts/smoke_deployed_mutation_seam.py C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests/test_project_import_approval_contract.py C:/APEX Platform/apex-power-ops-platform/PROJECT_STATUS.md C:/APEX Platform/apex-power-ops-platform/docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md C:/APEX Platform/apex-power-ops-platform/docs/operations/APEX-PM-TEMP-POWER-DELIVERY-AND-ORCHESTRATION-PLAN-2026-05-15.md C:/APEX Platform/apex-power-ops-platform/docs/operations/APEX-PM-STAKEHOLDER-TIME-PROTECTION-AND-ACCELERATION-LANE-2026-05-15.md C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-15-pm-lane-038-import-approval-contract-design.json C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-038-import-approval-contract-design-handoff.md"
+  ],
+  "validation_results": [
+    "Focused mutation-seam import candidate, admission-plan, and approval-contract tests passed: 8 passed.",
+    "py_compile passed for apps/mutation-seam/app/project_import_approval_contract.py.",
+    "py_compile passed for apps/mutation-seam/scripts/smoke_deployed_mutation_seam.py.",
+    "Packet JSON parsed successfully.",
+    "Scoped git diff --check passed for the Lane 038 file set.",
+    "Sidecar read-only scout completed without edits and confirmed the no-store/no-pipeline design boundary."
+  ],
+  "execution_result": "LOCAL_READ_ONLY_CONTRACT_EXECUTED",
+  "delegation_status": "sidecar_scout_completed",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/project_import_approval_contract.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/scripts/smoke_deployed_mutation_seam.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests/test_project_import_approval_contract.py",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-038-sidecar-import-approval-persistence-design-scout-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-15-pm-lane-038-import-approval-contract-design-handoff.md"
+  ],
+  "sql_permission": false,
+  "sql_permission_note": "Packet 2026-05-15-pm-lane-038 authorizes read-only local approval contract design and validation only. It does not authorize SQL writes, schema migration, approval persistence, import mutation, live data mutation, secret rotation, auth widening, ingress widening, service admission, assignment mutation, schedule mutation, status mutation, or autonomous AI business-state mutation.",
+  "ai_mutation_authority": "not_admitted",
+  "created_at": "2026-05-15",
+  "updated_at": "2026-05-15"
+}

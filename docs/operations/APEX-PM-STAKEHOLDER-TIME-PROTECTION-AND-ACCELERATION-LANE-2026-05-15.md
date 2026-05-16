@@ -78,7 +78,7 @@ Any extra step must justify itself by reducing risk, reducing future workload, o
 Immediate PM lane priority order:
 
 1. Restore hosted Render parity for the new PM intake read endpoints so the Vercel UI can consume current backend data.
-2. Prepare approval persistence as its own bounded gate, without importing rows.
+2. Prepare and review the approval contract as its own bounded gate, without importing rows or persisting approval.
 3. Admit the narrow import mutation only after the review and approval flow is proven.
 4. Pilot one bounded Temp Power execution slice before expanding to the larger Building A/B scope.
 
@@ -189,11 +189,19 @@ The current Render-auth packet is:
 
 PM Lane 037 refreshes the older Render-authenticated packet around the current PM intake routes. It adds backend-only `--include-pm-intake` smoke coverage and a copy/paste executor prompt for a Render-authenticated Codex or Claude Code lane. This keeps Jason out of the relay loop while making the missing credential/tool gap explicit.
 
-The next product-design tranche is:
+The current product-design tranche is:
 
 `Import Candidate Approval Persistence Design`
 
-The sidecar recommendation is to persist only the PM approval decision, candidate fingerprints, warning acceptance, no-go override notes, and reviewer notes. It must not import project, workpackage, task, or apparatus rows, and it should wait until hosted intake reads are current or the Render blocker is precisely classified.
+PM Lane 038 implements the no-write version of that design as `GET /api/v1/reads/project-import-approval-contract`. It gives Codex and a future PM UI a machine-checkable approval packet shape: required fields, permitted decisions, expected candidate/source/shape/idempotency values, warning-code acceptance, human-acceptance no-go acknowledgement, non-overridable blocked checks, and a future mutation contract placeholder.
+
+The sidecar recommendation was accepted in bounded form: this tranche stays out of the mutation pipeline and store adapters, validates approval payload shape locally, extends the deployed-seam smoke so hosted parity checks all current PM intake reads, and does not import project, workpackage, task, or apparatus rows.
+
+The next storage tranche is:
+
+`Import Candidate Approval Persistence Storage Decision`
+
+That future tranche should decide the smallest governed storage surface for the PM approval record before any server-side note persistence or import mutation is admitted.
 
 The success standard is not just technical correctness. The candidate must reduce Jason's review burden by showing:
 
