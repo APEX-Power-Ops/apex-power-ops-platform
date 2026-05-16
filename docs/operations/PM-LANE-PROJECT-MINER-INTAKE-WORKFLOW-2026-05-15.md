@@ -405,6 +405,10 @@ PM Lane 059 adds a browser-local `Local Field Prep Coverage Snapshot` and `Expor
 
 This snapshot is derived conversation prep only and adds no local storage key. It does not create issues, create tasks, create live work orders, approve, persist, import, create schema, run SQL, write Supabase rows, call live services, run workbook macros, write workbook cells, assign work, change status, mutate schedules, create durable field records, write production tracking rows, claim hosted parity, or admit autonomous AI business-state action.
 
+PM Lane 060 adds a browser-local `Local Field Prep Conversation Agenda` and `Export Field Prep Conversation Agenda` action to `/pm-review/import-intake`. It derives context, ask, confirm, and blocked agenda items from the local field-prep coverage snapshot so PM, lead, customer, and field conversations can start from the next useful question instead of another manual summary.
+
+This agenda is derived conversation prep only and adds no local storage key. It does not create issues, create tasks, create live work orders, approve, persist, import, create schema, run SQL, write Supabase rows, call live services, run workbook macros, write workbook cells, assign work, change status, mutate schedules, create durable field records, write production tracking rows, claim hosted parity, or admit autonomous AI business-state action.
+
 ## Environment Overrides
 
 Set this when using a different planning folder:

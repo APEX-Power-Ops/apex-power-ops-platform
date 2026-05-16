@@ -204,6 +204,15 @@ type FieldPrepCoverageItem = {
   detail: string
 }
 
+type FieldPrepAgendaStatus = 'context' | 'ask' | 'confirm' | 'blocked'
+
+type FieldPrepAgendaItem = {
+  id: string
+  title: string
+  status: FieldPrepAgendaStatus
+  detail: string
+}
+
 const { useCallback, useEffect, useMemo, useState } = React
 
 const API_BASE =
@@ -421,6 +430,12 @@ function fieldPrepCoverageTone(status: FieldPrepCoverageStatus) {
   return 'status-deferred'
 }
 
+function fieldPrepAgendaTone(status: FieldPrepAgendaStatus) {
+  if (status === 'context') return 'status-configured'
+  if (status === 'ask' || status === 'confirm') return 'status-awaiting-values'
+  return 'status-deferred'
+}
+
 function uniqueItems(...lists: Array<string[] | undefined>) {
   return Array.from(new Set(lists.flatMap((items) => items || []))).sort()
 }
@@ -465,6 +480,11 @@ function fieldObservationNotesFileName(candidate?: CandidatePayload | null) {
 function fieldPrepCoverageSnapshotFileName(candidate?: CandidatePayload | null) {
   const candidateId = candidate?.candidate_id || 'project-miner-intake'
   return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-field-prep-coverage-snapshot.md`
+}
+
+function fieldPrepConversationAgendaFileName(candidate?: CandidatePayload | null) {
+  const candidateId = candidate?.candidate_id || 'project-miner-intake'
+  return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-field-prep-conversation-agenda.md`
 }
 
 function markdownList(items: string[]) {
@@ -759,6 +779,74 @@ function fieldPrepCoverageSummary(counts: ReturnType<typeof fieldPrepCoverageCou
   return `${counts.covered} covered, ${counts.partial} partial, ${counts.open} open, ${counts.blocked} blocked`
 }
 
+function buildFieldPrepConversationAgenda(fieldPrepCoverageSnapshot: FieldPrepCoverageItem[]): FieldPrepAgendaItem[] {
+  const coverageById = new Map(fieldPrepCoverageSnapshot.map((item) => [item.id, item]))
+  const conversationCoverageItems = fieldPrepCoverageSnapshot.filter((item) =>
+    item.id !== 'field-authority-boundary' && item.id !== 'production-tracking-boundary',
+  )
+  const hasConversationContext = conversationCoverageItems.some((item) => item.status === 'covered' || item.status === 'partial')
+  const fieldBoundaryCoverage = coverageById.get('field-authority-boundary')
+
+  const agendaItems = conversationCoverageItems.map((item): FieldPrepAgendaItem => {
+    if (item.status === 'covered') {
+      return {
+        id: `${item.id}-agenda`,
+        title: item.title,
+        status: 'context',
+        detail: `Use existing ${item.title.toLowerCase()} as conversation context and only revisit it if source or site context changes.`,
+      }
+    }
+
+    if (item.status === 'partial') {
+      return {
+        id: `${item.id}-agenda`,
+        title: item.title,
+        status: 'confirm',
+        detail: `Confirm the missing local check or note for ${item.title.toLowerCase()} before relying on the field-prep brief.`,
+      }
+    }
+
+    return {
+      id: `${item.id}-agenda`,
+      title: item.title,
+      status: 'ask',
+      detail: `Ask PM, lead, customer, or field contact for ${item.title.toLowerCase()} context before the next field-prep conversation.`,
+    }
+  })
+
+  agendaItems.push({
+    id: 'field-authority-boundary-agenda',
+    title: 'Field authority boundary conversation',
+    status: fieldBoundaryCoverage?.status === 'covered' ? 'context' : hasConversationContext ? 'confirm' : 'blocked',
+    detail: fieldBoundaryCoverage?.status === 'covered'
+      ? 'Use the acknowledged local boundary as context: field-prep artifacts do not authorize work.'
+      : hasConversationContext
+        ? 'Confirm that local field-prep context does not authorize work, assignments, schedules, status changes, or production writes.'
+        : 'Boundary conversation waits for at least one local field-prep coverage area.',
+  })
+  agendaItems.push({
+    id: 'production-tracking-boundary-agenda',
+    title: 'Production tracking boundary',
+    status: 'blocked',
+    detail: 'Keep production execution tracking blocked until a later packet explicitly admits the required write path.',
+  })
+
+  return agendaItems
+}
+
+function fieldPrepAgendaCounts(fieldPrepConversationAgenda: FieldPrepAgendaItem[]) {
+  return {
+    context: fieldPrepConversationAgenda.filter((item) => item.status === 'context').length,
+    ask: fieldPrepConversationAgenda.filter((item) => item.status === 'ask').length,
+    confirm: fieldPrepConversationAgenda.filter((item) => item.status === 'confirm').length,
+    blocked: fieldPrepConversationAgenda.filter((item) => item.status === 'blocked').length,
+  }
+}
+
+function fieldPrepAgendaSummary(counts: ReturnType<typeof fieldPrepAgendaCounts>) {
+  return `${counts.context} context, ${counts.ask} ask, ${counts.confirm} confirm, ${counts.blocked} blocked`
+}
+
 function buildApprovalPacketPreview(
   packet: IntakeWorkbenchPacket,
   notAllowed: string[],
@@ -836,6 +924,7 @@ function buildIntakeBrief(
   operatingQueue: OperatingQueueItem[],
   fieldPrepQueue: OperatingQueueItem[],
   fieldPrepCoverageSnapshot: FieldPrepCoverageItem[],
+  fieldPrepConversationAgenda: FieldPrepAgendaItem[],
   notAllowed: string[],
   futureRoute: string,
   reviewChecks: Record<string, boolean>,
@@ -863,6 +952,7 @@ function buildIntakeBrief(
   const operatingQueueLines = operatingQueue.map((item) => `${item.title}: ${formatLabel(item.status)} - ${item.detail}`)
   const fieldPrepQueueLines = fieldPrepQueue.map((item) => `${item.title}: ${formatLabel(item.status)} - ${item.detail}`)
   const fieldPrepCoverageLines = fieldPrepCoverageSnapshot.map((item) => `${item.title}: ${formatLabel(item.status)} - ${item.detail}`)
+  const fieldPrepAgendaLines = fieldPrepConversationAgenda.map((item) => `${item.title}: ${formatLabel(item.status)} - ${item.detail}`)
   const checklistLines = REVIEW_CHECKLIST_ITEMS.map((item) => `${reviewChecks[item.id] ? '[x]' : '[ ]'} ${item.label}: ${item.detail}`)
   const closeoutChecklistLines = CLOSEOUT_CHECKLIST_ITEMS.map((item) => `${closeoutChecks[item.id] ? '[x]' : '[ ]'} ${item.label}: ${item.detail}`)
   const fieldReadinessChecklistLines = FIELD_READINESS_CHECKLIST_ITEMS.map((item) => `${fieldReadinessChecks[item.id] ? '[x]' : '[ ]'} ${item.label}: ${item.detail}`)
@@ -889,6 +979,7 @@ function buildIntakeBrief(
   const nextFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'next').length
   const blockedFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'blocked').length
   const fieldPrepCoverageCount = fieldPrepCoverageCounts(fieldPrepCoverageSnapshot)
+  const fieldPrepAgendaCount = fieldPrepAgendaCounts(fieldPrepConversationAgenda)
 
   return [
     '# Project Miner PM Intake Brief',
@@ -975,6 +1066,14 @@ function buildIntakeBrief(
     'This snapshot is browser-local conversation prep only. It does not create tasks, issues, work authorization, assignments, schedules, status updates, approval records, import rows, durable field records, production tracking rows, or production writes.',
     '',
     markdownList(fieldPrepCoverageLines),
+    '',
+    '## Local Field Prep Conversation Agenda',
+    '',
+    `Conversation agenda: ${fieldPrepAgendaSummary(fieldPrepAgendaCount)}.`,
+    '',
+    'This agenda is browser-local conversation prep only. It does not create tasks, issues, work authorization, assignments, schedules, status updates, approval records, import rows, durable field records, production tracking rows, or production writes.',
+    '',
+    markdownList(fieldPrepAgendaLines),
     '',
     '## Local Executor Closeout Intake',
     '',
@@ -1174,6 +1273,7 @@ function buildFieldKickoffBrief(
   operatingQueue: OperatingQueueItem[],
   fieldPrepQueue: OperatingQueueItem[],
   fieldPrepCoverageSnapshot: FieldPrepCoverageItem[],
+  fieldPrepConversationAgenda: FieldPrepAgendaItem[],
   notAllowed: string[],
   futureRoute: string,
   reviewChecks: Record<string, boolean>,
@@ -1204,6 +1304,8 @@ function buildFieldKickoffBrief(
   const fieldPrepQueueLines = fieldPrepQueue.map((item) => `${item.title}: ${formatLabel(item.status)} - ${item.detail}`)
   const fieldPrepCoverageCount = fieldPrepCoverageCounts(fieldPrepCoverageSnapshot)
   const fieldPrepCoverageLines = fieldPrepCoverageSnapshot.map((item) => `${item.title}: ${formatLabel(item.status)} - ${item.detail}`)
+  const fieldPrepAgendaCount = fieldPrepAgendaCounts(fieldPrepConversationAgenda)
+  const fieldPrepAgendaLines = fieldPrepConversationAgenda.map((item) => `${item.title}: ${formatLabel(item.status)} - ${item.detail}`)
   const warningLines = warnings.map((warning) => `${warning.severity || 'unknown'} - ${warning.code || 'WARNING'}: ${warning.message || 'Review warning.'}`)
   const decisionLines = decisions.map((decision) => `${formatLabel(decision.decision_id)}: ${decision.prompt || 'Decision prompt unavailable.'}`)
   const workpackageLines = workpackages.map((workpackage) => {
@@ -1341,6 +1443,14 @@ function buildFieldKickoffBrief(
     'This snapshot is browser-local conversation prep only. It does not create tasks, issues, work authorization, assignments, schedules, status updates, approval records, import rows, durable field records, production tracking rows, or production writes.',
     '',
     markdownList(fieldPrepCoverageLines),
+    '',
+    '## Local Field Prep Conversation Agenda',
+    '',
+    `Conversation agenda: ${fieldPrepAgendaSummary(fieldPrepAgendaCount)}.`,
+    '',
+    'This agenda is browser-local conversation prep only. It does not create tasks, issues, work authorization, assignments, schedules, status updates, approval records, import rows, durable field records, production tracking rows, or production writes.',
+    '',
+    markdownList(fieldPrepAgendaLines),
     '',
     '## Local PM Operating Queue',
     '',
@@ -1516,6 +1626,63 @@ function buildFieldPrepCoverageSnapshotExport(
   ].join('\n')
 }
 
+function buildFieldPrepConversationAgendaExport(
+  packet: IntakeWorkbenchPacket,
+  fieldPrepCoverageSnapshot: FieldPrepCoverageItem[],
+  fieldPrepConversationAgenda: FieldPrepAgendaItem[],
+  notAllowed: string[],
+) {
+  const candidate = packet.candidate
+  const summary = candidate.summary || {}
+  const project = candidate.project || {}
+  const fieldPrepCoverageCount = fieldPrepCoverageCounts(fieldPrepCoverageSnapshot)
+  const fieldPrepCoverageLines = fieldPrepCoverageSnapshot.map((item) => `${item.title}: ${formatLabel(item.status)} - ${item.detail}`)
+  const fieldPrepAgendaCount = fieldPrepAgendaCounts(fieldPrepConversationAgenda)
+  const fieldPrepAgendaLines = fieldPrepConversationAgenda.map((item) => `${item.title}: ${formatLabel(item.status)} - ${item.detail}`)
+
+  return [
+    '# Project Miner Local Field Prep Conversation Agenda',
+    '',
+    'Generated locally from the read-only PM intake workbench. This agenda is browser-local conversation prep only and grants no authority to approve, persist, import, assign, schedule, change status, create schema, run SQL, call live services, create tasks, create issues, create durable field records, write production tracking rows, or mutate production state.',
+    '',
+    '## Candidate Context',
+    '',
+    `- Candidate: ${candidate.candidate_id || 'unknown'}`,
+    `- Candidate version: ${candidate.candidate_version || 'unknown'}`,
+    `- Candidate authority: ${candidate.mutation_authority || 'not_admitted'}`,
+    `- Project: ${project.name || 'unknown project'}`,
+    `- Location: ${project.location || 'unknown location'}`,
+    `- Source freshness: ${candidate.source_freshness?.aggregate_fingerprint || 'unknown'}`,
+    `- Workpackages: ${formatCount(summary.workpackage_count)}`,
+    `- Tasks: ${formatCount(summary.task_count)}`,
+    `- Apparatus candidates: ${formatCount(summary.apparatus_candidate_count)}`,
+    `- Warnings: ${formatCount(summary.warning_count)}`,
+    `- Human decisions: ${formatCount(summary.human_decision_count)}`,
+    '',
+    '## Conversation Agenda',
+    '',
+    `Conversation agenda: ${fieldPrepAgendaSummary(fieldPrepAgendaCount)}.`,
+    '',
+    markdownList(fieldPrepAgendaLines),
+    '',
+    '## Coverage Context',
+    '',
+    `Coverage snapshot: ${fieldPrepCoverageSummary(fieldPrepCoverageCount)}.`,
+    '',
+    markdownList(fieldPrepCoverageLines),
+    '',
+    '## Not Allowed',
+    '',
+    markdownList(notAllowed.map(formatLabel)),
+    '',
+    '## Minimum Use',
+    '',
+    '- Use this as conversation prep only.',
+    '- Do not treat this agenda as work authorization, assignment, schedule, status update, approval record, import packet, task creation, issue creation, durable field record, hosted parity proof, or production tracking.',
+    '- Keep production execution tracking blocked until a later packet explicitly admits the required write path.',
+  ].join('\n')
+}
+
 function downloadTextFile(fileName: string, contents: string, contentType: string) {
   const blob = new Blob([contents], { type: contentType })
   const url = URL.createObjectURL(blob)
@@ -1538,6 +1705,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
   const [fieldBriefStatus, setFieldBriefStatus] = useState('')
   const [fieldObservationStatus, setFieldObservationStatus] = useState('')
   const [fieldPrepCoverageStatus, setFieldPrepCoverageStatus] = useState('')
+  const [fieldPrepAgendaStatus, setFieldPrepAgendaStatus] = useState('')
   const [reviewChecks, setReviewChecks] = useState<Record<string, boolean>>({})
   const [closeoutChecks, setCloseoutChecks] = useState<Record<string, boolean>>({})
   const [fieldReadinessChecks, setFieldReadinessChecks] = useState<Record<string, boolean>>({})
@@ -1649,6 +1817,10 @@ export default function ProjectMinerIntakeWorkbenchPage() {
     () => buildFieldPrepCoverageSnapshot(reviewChecks, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad),
     [reviewChecks, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad],
   )
+  const fieldPrepConversationAgenda = useMemo(
+    () => buildFieldPrepConversationAgenda(fieldPrepCoverageSnapshot),
+    [fieldPrepCoverageSnapshot],
+  )
   const completeQueueCount = operatingQueue.filter((item) => item.status === 'complete').length
   const nextQueueCount = operatingQueue.filter((item) => item.status === 'next').length
   const blockedQueueCount = operatingQueue.filter((item) => item.status === 'blocked').length
@@ -1656,6 +1828,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
   const nextFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'next').length
   const blockedFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'blocked').length
   const fieldPrepCoverageCount = fieldPrepCoverageCounts(fieldPrepCoverageSnapshot)
+  const fieldPrepAgendaCount = fieldPrepAgendaCounts(fieldPrepConversationAgenda)
 
   useEffect(() => {
     if (!reviewChecklistKey || typeof window === 'undefined') {
@@ -1832,7 +2005,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
 
     downloadTextFile(
       briefFileName(candidate),
-      buildIntakeBrief(packet, workflowGates, persistenceReadinessGates, operatingQueue, fieldPrepQueue, fieldPrepCoverageSnapshot, notAllowed, futureRoute, reviewChecks, closeoutChecks, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad, approvalDraft),
+      buildIntakeBrief(packet, workflowGates, persistenceReadinessGates, operatingQueue, fieldPrepQueue, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, notAllowed, futureRoute, reviewChecks, closeoutChecks, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad, approvalDraft),
       'text/markdown',
     )
     setBriefStatus(`PM brief prepared from ${candidate?.candidate_id || 'the current intake packet'} without a server write.`)
@@ -1868,7 +2041,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
 
     downloadTextFile(
       fieldKickoffBriefFileName(candidate),
-      buildFieldKickoffBrief(packet, workflowGates, operatingQueue, fieldPrepQueue, fieldPrepCoverageSnapshot, notAllowed, futureRoute, reviewChecks, closeoutChecks, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad, approvalDraft),
+      buildFieldKickoffBrief(packet, workflowGates, operatingQueue, fieldPrepQueue, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, notAllowed, futureRoute, reviewChecks, closeoutChecks, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad, approvalDraft),
       'text/markdown',
     )
     setFieldBriefStatus(`Field kickoff prep brief prepared from ${candidate?.candidate_id || 'the current intake packet'} without a server write.`)
@@ -1898,6 +2071,19 @@ export default function ProjectMinerIntakeWorkbenchPage() {
       'text/markdown',
     )
     setFieldPrepCoverageStatus(`Field prep coverage snapshot prepared from ${candidate?.candidate_id || 'the current intake packet'} without a server write.`)
+  }
+
+  function exportFieldPrepConversationAgenda() {
+    if (!packet) {
+      return
+    }
+
+    downloadTextFile(
+      fieldPrepConversationAgendaFileName(candidate),
+      buildFieldPrepConversationAgendaExport(packet, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, notAllowed),
+      'text/markdown',
+    )
+    setFieldPrepAgendaStatus(`Field prep conversation agenda prepared from ${candidate?.candidate_id || 'the current intake packet'} without a server write.`)
   }
 
   return (
@@ -1993,6 +2179,9 @@ export default function ProjectMinerIntakeWorkbenchPage() {
             <button className="btn btn-outline" onClick={exportFieldPrepCoverageSnapshot} disabled={!packet}>
               Export Field Prep Coverage Snapshot
             </button>
+            <button className="btn btn-outline" onClick={exportFieldPrepConversationAgenda} disabled={!packet}>
+              Export Field Prep Conversation Agenda
+            </button>
             <button className="btn btn-outline" onClick={() => void refresh()} disabled={loading}>
               {loading ? 'Refreshing...' : 'Refresh'}
             </button>
@@ -2004,6 +2193,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
         {fieldBriefStatus ? <p style={{ margin: '0 0 1rem', color: 'var(--muted)', lineHeight: 1.55 }}>{fieldBriefStatus}</p> : null}
         {fieldObservationStatus ? <p style={{ margin: '0 0 1rem', color: 'var(--muted)', lineHeight: 1.55 }}>{fieldObservationStatus}</p> : null}
         {fieldPrepCoverageStatus ? <p style={{ margin: '0 0 1rem', color: 'var(--muted)', lineHeight: 1.55 }}>{fieldPrepCoverageStatus}</p> : null}
+        {fieldPrepAgendaStatus ? <p style={{ margin: '0 0 1rem', color: 'var(--muted)', lineHeight: 1.55 }}>{fieldPrepAgendaStatus}</p> : null}
 
         <section className="status-grid status-grid-wide" aria-label="Project Miner intake summary" style={{ marginBottom: '1rem' }}>
           <article className="status-card">
@@ -2497,6 +2687,34 @@ export default function ProjectMinerIntakeWorkbenchPage() {
                     <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
                   </div>
                   <span className={`status-pill ${fieldPrepCoverageTone(item.status)}`}>{formatLabel(item.status)}</span>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section aria-label="Local field prep conversation agenda" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
+          <div className="status-row">
+            <h2 style={{ margin: 0 }}>Local Field Prep Conversation Agenda</h2>
+            <span className="status-pill status-awaiting-values">derived</span>
+          </div>
+          <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+            Browser-local agenda derived from the coverage snapshot. It turns covered, partial, open, and blocked prep areas into conversation context, ask, confirm, and blocked agenda items without creating tasks, issues, work authorization, assignments, schedules, status updates, approval records, import rows, durable field records, production tracking rows, or production writes.
+          </p>
+          <p style={{ margin: '0.6rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+            {fieldPrepAgendaSummary(fieldPrepAgendaCount)}
+          </p>
+          <div style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
+            {fieldPrepConversationAgenda.map((item) => (
+              <article key={item.id} className="card" style={{ padding: '0.85rem', boxShadow: 'none' }}>
+                <div className="status-row" style={{ alignItems: 'start' }}>
+                  <div>
+                    <p style={{ margin: 0 }}>
+                      <strong>{item.title}</strong>
+                    </p>
+                    <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
+                  </div>
+                  <span className={`status-pill ${fieldPrepAgendaTone(item.status)}`}>{formatLabel(item.status)}</span>
                 </div>
               </article>
             ))}
