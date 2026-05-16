@@ -511,6 +511,14 @@ PM Lane 081 groups the existing helper-panel stack below the quick-jump rail int
 
 This still creates no approval record, SQL, schema migration, backend route, import mutation, issue, task, assignment, schedule, status, hosted proof, live task, work authorization, field release, work order, durable field record, production tracking write, product code, deployment, service, DNS, auth, ingress, secret, local storage key, new route, new export action, new export artifact, export contract widening, or production mutation.
 
+The current detail-workbench ergonomics tranche is:
+
+`Project Miner Local PM Intake Detail Workbench Grouping`
+
+PM Lane 082 groups the existing detail workbench below the helper-panel stack into Review Snapshot Detail, Source and Exception Detail, Approval Prep Detail, Executor Closeout Detail, Field Prep Detail, and Authority Boundary Detail. It keeps every existing panel id, aria label, anchor target, route link, quick-jump link, export behavior, output status, storage boundary, and read seam unchanged while making the long workbench body easier to scan during a real PM review.
+
+This still creates no approval record, SQL, schema migration, backend route, import mutation, issue, task, assignment, schedule, status, hosted proof, live task, work authorization, field release, work order, durable field record, production tracking write, product code, deployment, service, DNS, auth, ingress, secret, local storage key, new route, new export action, new export artifact, export contract widening, or production mutation.
+
 The next persistence tranche is:
 
 `Import Candidate Approval Persistence Schema And Adapter Implementation`

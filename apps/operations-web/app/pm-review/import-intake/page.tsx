@@ -4222,6 +4222,10 @@ export default function ProjectMinerIntakeWorkbenchPage() {
           </section>
         </section>
 
+        <section aria-label="PM intake detail workbench" style={{ display: 'grid', gap: '1rem' }}>
+          <section aria-label="Review snapshot detail panels" style={{ display: 'grid', gap: '0.75rem' }}>
+            <h2 style={{ margin: 0 }}>Review Snapshot Detail</h2>
+
         <section id="pm-intake-snapshot" aria-label="Local PM intake snapshot" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
           <div className="status-row">
             <h2 style={{ margin: 0 }}>Local PM Intake Snapshot</h2>
@@ -4278,6 +4282,10 @@ export default function ProjectMinerIntakeWorkbenchPage() {
             ))}
           </div>
         </section>
+
+          </section>
+          <section aria-label="Source and exception detail panels" style={{ display: 'grid', gap: '0.75rem' }}>
+            <h2 style={{ margin: 0 }}>Source and Exception Detail</h2>
 
         <section id="project-packet" aria-label="Project packet and source freshness" className="notes-grid" style={{ marginBottom: '1rem' }}>
           <article className="notes-card">
@@ -4375,7 +4383,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
           </div>
         </section>
 
-        <section className="notes-grid" style={{ marginBottom: '1rem' }}>
+        <section aria-label="Exception review and PM decision detail" className="notes-grid" style={{ marginBottom: '1rem' }}>
           <article className="notes-card">
             <h2>Exception Review</h2>
             <div style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
@@ -4407,6 +4415,10 @@ export default function ProjectMinerIntakeWorkbenchPage() {
             </div>
           </article>
         </section>
+
+          </section>
+          <section aria-label="Approval prep detail panels" style={{ display: 'grid', gap: '0.75rem' }}>
+            <h2 style={{ margin: 0 }}>Approval Prep Detail</h2>
 
         <section aria-label="Admission and approval contract" className="notes-grid" style={{ marginBottom: '1rem' }}>
           <article className="notes-card">
@@ -4555,6 +4567,10 @@ export default function ProjectMinerIntakeWorkbenchPage() {
           </div>
         </section>
 
+          </section>
+          <section aria-label="Executor closeout detail panels" style={{ display: 'grid', gap: '0.75rem' }}>
+            <h2 style={{ margin: 0 }}>Executor Closeout Detail</h2>
+
         <section id="executor-closeout" aria-label="Local executor closeout intake" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
           <div className="status-row">
             <h2 style={{ margin: 0 }}>Local Executor Closeout Intake</h2>
@@ -4588,6 +4604,10 @@ export default function ProjectMinerIntakeWorkbenchPage() {
             <span style={{ color: 'var(--muted)', lineHeight: 1.55 }}>Retained in this browser for the current candidate only.</span>
           </div>
         </section>
+
+          </section>
+          <section aria-label="Field prep detail panels" style={{ display: 'grid', gap: '0.75rem' }}>
+            <h2 style={{ margin: 0 }}>Field Prep Detail</h2>
 
         <section aria-label="Local field readiness checklist" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
           <div className="status-row">
@@ -4863,6 +4883,10 @@ export default function ProjectMinerIntakeWorkbenchPage() {
           </div>
         </section>
 
+          </section>
+          <section aria-label="Authority boundary detail panels" style={{ display: 'grid', gap: '0.75rem' }}>
+            <h2 style={{ margin: 0 }}>Authority Boundary Detail</h2>
+
         <section id="approval-readiness" aria-label="Approval persistence readiness gates" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
           <div className="status-row">
             <h2 style={{ margin: 0 }}>Approval Persistence Readiness</h2>
@@ -4911,6 +4935,8 @@ export default function ProjectMinerIntakeWorkbenchPage() {
               ))}
             </ul>
           </article>
+        </section>
+          </section>
         </section>
       </section>
     </main>
