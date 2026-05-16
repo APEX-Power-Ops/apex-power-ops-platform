@@ -595,6 +595,8 @@ PM Lane 105 wraps the existing Local Field Prep Coverage Snapshot panel in a def
 
 PM Lane 106 wraps the existing Local Field Prep Conversation Agenda panel in a default-open native disclosure control. Jason can fold the derived conversation agenda after reviewing it, while the panel stays inside Field Prep Detail and the seven agenda items, item order, summary text, status pills, dynamic counts, export inclusion, reads, and authority wording remain unchanged.
 
+PM Lane 107 wraps the existing Local Field Observation Scratchpad panel in a default-open native disclosure control. Jason can fold the browser-local observation notes after reviewing them, while the panel stays inside Field Prep Detail and the six textarea labels, placeholders, candidate-scoped browser-local storage key, clear button behavior, derived field-observations behavior, export inclusion, reads, and authority wording remain unchanged.
+
 This creates no approval record, SQL, schema migration, backend route, import mutation, issue, task, assignment, schedule, status, hosted proof, live task, work authorization, field release, work order, durable field record, production tracking write, product code, deployment, service, DNS, auth, ingress, secret, local storage key, new route, new export action, new export artifact, export contract widening, or production mutation.
 
 The next persistence tranche is:
