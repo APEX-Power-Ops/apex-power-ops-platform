@@ -587,6 +587,8 @@ PM Lane 101 wraps the existing Local Executor Closeout Intake panel in a default
 
 PM Lane 102 wraps the existing Local Field Readiness Checklist panel in a default-open native disclosure control. Jason can fold the field-readiness prep checklist after reviewing it, while the panel stays inside Field Prep Detail and the eight readiness checklist items, labels/details, count text, checkbox behavior, clear button, existing candidate-scoped storage key, export inclusion, dynamic derived-state behavior, reads, and authority wording remain unchanged.
 
+PM Lane 103 wraps the existing Local Field Questions Draft panel in a default-open native disclosure control. Jason can fold the six-textarea draft after reviewing it, while the panel stays inside Field Prep Detail and the textarea labels/values, local-only pill, clear button, existing candidate-scoped storage key, export inclusion, dynamic field-prep derived-state behavior, reads, and authority wording remain unchanged.
+
 This creates no approval record, SQL, schema migration, backend route, import mutation, issue, task, assignment, schedule, status, hosted proof, live task, work authorization, field release, work order, durable field record, production tracking write, product code, deployment, service, DNS, auth, ingress, secret, local storage key, new route, new export action, new export artifact, export contract widening, or production mutation.
 
 The next persistence tranche is:
