@@ -461,6 +461,10 @@ PM Lane 073 adds a browser-local `Local PM Intake Constraint Radar` panel to `/p
 
 This radar is browser-local synthesis only and adds no local storage key, export action, export contract, or handoff artifact. It does not create issues, create tasks, create live work orders, approve, persist, import, create schema, run SQL, write Supabase rows, call live services, run workbook macros, write workbook cells, assign work, change status, mutate schedules, create durable field records, write production tracking rows, claim hosted parity, or admit autonomous AI business-state action.
 
+PM Lane 074 carries the `Local PM Intake Constraint Radar` into the existing `Export PM Brief` and `Export Executor Handoff` downloads from `/pm-review/import-intake`. It keeps the same source/review, field-prep, executor/hosted, and future write-authority constraints visible when a local PM artifact is used for review or a bounded executor handoff.
+
+This is an existing-export context extension only and adds no new storage key, export action, new export artifact, backend route, approval record, schema, SQL, live service call, hosted claim, task, issue, assignment, schedule, status, durable field record, production tracking row, or production write.
+
 ## Environment Overrides
 
 Set this when using a different planning folder:

@@ -383,6 +383,8 @@ PM Lane 072 adds a browser-local `Local PM Intake Meeting Readout` panel to `/pm
 
 PM Lane 073 adds a browser-local `Local PM Intake Constraint Radar` panel to `/pm-review/import-intake`. It gives the Temp Power prep flow a constraint-first scan for source/review, field-prep, executor/hosted, and future write-authority boundaries. The radar adds no storage key, export action, export contract, or handoff artifact and creates no issues, tasks, work authorization, live work orders, durable field records, hosted proof, backend routes, SQL, schema migration, approval persistence, import mutation, assignment, schedule, status, production tracking writes, or production state.
 
+PM Lane 074 carries that constraint radar into the existing PM Brief and Executor Handoff exports. It lets Temp Power review or bounded executor conversations receive the same source/review, field-prep, executor/hosted, and future write-authority constraints without Jason manually relaying them. This context extension adds no storage key, new export action, new export artifact, backend route, hosted proof, SQL, schema migration, approval persistence, import mutation, issue, task, assignment, schedule, status, durable field record, production tracking write, or production state.
+
 ## Capability-Gap Register
 
 Current known gaps:

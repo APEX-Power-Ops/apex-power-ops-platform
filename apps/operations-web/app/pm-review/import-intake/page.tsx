@@ -2006,6 +2006,7 @@ function buildIntakeBrief(
   persistenceReadinessGates: ReadinessGate[],
   operatingQueue: OperatingQueueItem[],
   pmIntakeSnapshot: PmIntakeSnapshotItem[],
+  pmIntakeConstraintRadar: ConstraintRadarItem[],
   importExceptionRegister: ImportExceptionRegisterItem[],
   fieldPrepQueue: OperatingQueueItem[],
   fieldPrepCoverageSnapshot: FieldPrepCoverageItem[],
@@ -2036,6 +2037,7 @@ function buildIntakeBrief(
   const persistenceGateLines = persistenceReadinessGates.map((gate) => `${gate.title}: ${formatLabel(gate.status)} - ${gate.detail}`)
   const operatingQueueLines = operatingQueue.map((item) => `${item.title}: ${formatLabel(item.status)} - ${item.detail}`)
   const pmIntakeSnapshotLines = pmIntakeSnapshot.map((item) => `${item.title}: ${formatLabel(item.status)} - ${item.detail} Evidence: ${item.evidence}`)
+  const pmIntakeConstraintRadarLines = pmIntakeConstraintRadar.map((item) => `${item.title}: ${formatLabel(item.status)} - ${item.detail}`)
   const importExceptionRegisterLines = importExceptionRegister.map((item) => `${item.title}: ${formatLabel(item.status)} - ${item.detail} Evidence: ${item.evidence}`)
   const fieldPrepQueueLines = fieldPrepQueue.map((item) => `${item.title}: ${formatLabel(item.status)} - ${item.detail}`)
   const fieldPrepCoverageLines = fieldPrepCoverageSnapshot.map((item) => `${item.title}: ${formatLabel(item.status)} - ${item.detail}`)
@@ -2148,6 +2150,12 @@ function buildIntakeBrief(
     '',
     markdownList(pmIntakeSnapshotLines),
     '',
+    '## Local PM Constraint Radar',
+    '',
+    'This radar is browser-local constraint synthesis only. It does not approve, persist, import, assign, schedule, change status, create issues, create tasks, create durable field records, claim hosted parity, or write production state.',
+    '',
+    markdownList(pmIntakeConstraintRadarLines),
+    '',
     '## Local Import Exception Decision Register',
     '',
     `Import exception register: ${importExceptionRegisterSummary(importExceptionRegisterCount)}.`,
@@ -2237,6 +2245,7 @@ function buildExecutorHandoff(
   persistenceReadinessGates: ReadinessGate[],
   operatingQueue: OperatingQueueItem[],
   pmIntakeSnapshot: PmIntakeSnapshotItem[],
+  pmIntakeConstraintRadar: ConstraintRadarItem[],
   importExceptionRegister: ImportExceptionRegisterItem[],
   notAllowed: string[],
   futureRoute: string,
@@ -2271,6 +2280,7 @@ function buildExecutorHandoff(
   const workflowGateLines = workflowGates.map((gate) => `${gate.title}: ${formatLabel(gate.status)} - ${gate.detail}`)
   const pmIntakeSnapshotCount = pmIntakeSnapshotCounts(pmIntakeSnapshot)
   const pmIntakeSnapshotLines = pmIntakeSnapshot.map((item) => `${item.title}: ${formatLabel(item.status)} - ${item.detail} Evidence: ${item.evidence}`)
+  const pmIntakeConstraintRadarLines = pmIntakeConstraintRadar.map((item) => `${item.title}: ${formatLabel(item.status)} - ${item.detail}`)
   const importExceptionRegisterCount = importExceptionRegisterCounts(importExceptionRegister)
   const importExceptionRegisterLines = importExceptionRegister.map((item) => `${item.title}: ${formatLabel(item.status)} - ${item.detail} Evidence: ${item.evidence}`)
 
@@ -2330,6 +2340,12 @@ function buildExecutorHandoff(
     `PM intake snapshot: ${pmIntakeSnapshotSummary(pmIntakeSnapshotCount)}.`,
     '',
     markdownList(pmIntakeSnapshotLines),
+    '',
+    '## PM Constraint Radar',
+    '',
+    'This radar is browser-local constraint synthesis only. It does not approve, persist, import, assign, schedule, change status, create issues, create tasks, create durable field records, claim hosted parity, or write production state.',
+    '',
+    markdownList(pmIntakeConstraintRadarLines),
     '',
     '## Import Exception Decision Register',
     '',
@@ -3468,7 +3484,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
 
     downloadTextFile(
       briefFileName(candidate),
-      buildIntakeBrief(packet, workflowGates, persistenceReadinessGates, operatingQueue, pmIntakeSnapshot, importExceptionRegister, fieldPrepQueue, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, notAllowed, futureRoute, reviewChecks, closeoutChecks, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad, approvalDraft),
+      buildIntakeBrief(packet, workflowGates, persistenceReadinessGates, operatingQueue, pmIntakeSnapshot, pmIntakeConstraintRadar, importExceptionRegister, fieldPrepQueue, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, notAllowed, futureRoute, reviewChecks, closeoutChecks, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad, approvalDraft),
       'text/markdown',
     )
     setBriefStatus(`PM brief prepared from ${candidate?.candidate_id || 'the current intake packet'} without a server write.`)
@@ -3491,7 +3507,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
 
     downloadTextFile(
       executorHandoffFileName(candidate),
-      buildExecutorHandoff(packet, workflowGates, persistenceReadinessGates, operatingQueue, pmIntakeSnapshot, importExceptionRegister, notAllowed, futureRoute, reviewChecks, closeoutChecks, approvalDraft),
+      buildExecutorHandoff(packet, workflowGates, persistenceReadinessGates, operatingQueue, pmIntakeSnapshot, pmIntakeConstraintRadar, importExceptionRegister, notAllowed, futureRoute, reviewChecks, closeoutChecks, approvalDraft),
       'text/markdown',
     )
     setHandoffStatus(`Executor handoff prepared from ${candidate?.candidate_id || 'the current intake packet'} without a server write.`)
