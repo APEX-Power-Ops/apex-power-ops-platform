@@ -393,6 +393,8 @@ PM Lane 077 groups the existing top output actions on `/pm-review/import-intake`
 
 PM Lane 078 groups the existing output status messages on `/pm-review/import-intake` so the Temp Power prep flow can distinguish review feedback, executor handoff feedback, and field-prep feedback after exports run. This changes only the browser-local organization of existing status text and adds no new export action, artifact, storage, backend route, hosted proof, SQL, schema migration, approval persistence, import mutation, issue, task, assignment, schedule, status, durable field record, production tracking write, or production state.
 
+PM Lane 079 groups the existing quick-jump links on `/pm-review/import-intake` so the Temp Power prep flow can scan Daily Review, Outputs and Handoff, Review Flow, and Source/Field/Guardrails without reading one long flat navigation row. This changes only the browser-local organization of existing links and adds no new route, export action, artifact, storage, backend route, hosted proof, SQL, schema migration, approval persistence, import mutation, issue, task, assignment, schedule, status, durable field record, production tracking write, or production state.
+
 ## Capability-Gap Register
 
 Current known gaps:

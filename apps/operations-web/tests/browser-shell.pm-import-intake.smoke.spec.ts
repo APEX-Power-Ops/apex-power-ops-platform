@@ -399,6 +399,15 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
     )
   })
   expect(quickJumpRailOrder).toBe(true)
+  const quickJumpSectionLinks = quickJumpRail.getByLabel('PM intake section links')
+  await expect(quickJumpSectionLinks.getByLabel('Daily Review quick jump links').getByRole('heading', { name: 'Daily Review', exact: true })).toBeVisible()
+  await expect(quickJumpSectionLinks.getByLabel('Daily Review quick jump links').getByRole('link')).toHaveCount(5)
+  await expect(quickJumpSectionLinks.getByLabel('Outputs and Handoff quick jump links').getByRole('heading', { name: 'Outputs and Handoff', exact: true })).toBeVisible()
+  await expect(quickJumpSectionLinks.getByLabel('Outputs and Handoff quick jump links').getByRole('link')).toHaveCount(2)
+  await expect(quickJumpSectionLinks.getByLabel('Review Flow quick jump links').getByRole('heading', { name: 'Review Flow', exact: true })).toBeVisible()
+  await expect(quickJumpSectionLinks.getByLabel('Review Flow quick jump links').getByRole('link')).toHaveCount(5)
+  await expect(quickJumpSectionLinks.getByLabel('Source, Field, and Guardrails quick jump links').getByRole('heading', { name: 'Source, Field, and Guardrails', exact: true })).toBeVisible()
+  await expect(quickJumpSectionLinks.getByLabel('Source, Field, and Guardrails quick jump links').getByRole('link')).toHaveCount(6)
   await expect(quickJumpRail.getByRole('link', { name: /Command Center/i })).toHaveAttribute('href', '#pm-command-center')
   await expect(quickJumpRail.getByRole('link', { name: /Meeting Readout/i })).toHaveAttribute('href', '#pm-meeting-readout')
   await expect(quickJumpRail.getByRole('link', { name: /Constraint Radar/i })).toHaveAttribute('href', '#pm-constraint-radar')
@@ -417,6 +426,28 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(quickJumpRail.getByRole('link', { name: /Field Prep/i })).toHaveAttribute('href', '#field-prep')
   await expect(quickJumpRail.getByRole('link', { name: /Executor Closeout/i })).toHaveAttribute('href', '#executor-closeout')
   await expect(quickJumpRail.getByRole('link', { name: /Guardrails/i })).toHaveAttribute('href', '#guardrails')
+  for (const target of [
+    '#pm-command-center',
+    '#pm-meeting-readout',
+    '#pm-constraint-radar',
+    '#pm-start-here',
+    '#pm-daily-review-script',
+    '#pm-output-selector',
+    '#pm-handoff-guide',
+    '#pm-workflow-map',
+    '#pm-open-items',
+    '#pm-intake-snapshot',
+    '#pm-operating-queue',
+    '#import-exception-register',
+    '#project-packet',
+    '#workflow-gates',
+    '#approval-readiness',
+    '#field-prep',
+    '#executor-closeout',
+    '#guardrails',
+  ]) {
+    await expect(quickJumpRail.locator(`a[href="${target}"]`)).toHaveCount(1)
+  }
   for (const target of [
     '#pm-quick-jump-rail',
     '#pm-command-center',

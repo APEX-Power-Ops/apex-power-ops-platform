@@ -240,6 +240,12 @@ type QuickJumpItem = {
   detail: string
 }
 
+type QuickJumpGroup = {
+  id: string
+  label: string
+  items: QuickJumpItem[]
+}
+
 type StartHereStatus = 'focus' | 'attention' | 'context' | 'blocked'
 
 type StartHereItem = {
@@ -468,6 +474,28 @@ const PM_INTAKE_QUICK_JUMPS: QuickJumpItem[] = [
     label: 'Guardrails',
     href: '#guardrails',
     detail: 'Current boundaries.',
+  },
+]
+const PM_INTAKE_QUICK_JUMP_GROUPS: QuickJumpGroup[] = [
+  {
+    id: 'daily-review',
+    label: 'Daily Review',
+    items: PM_INTAKE_QUICK_JUMPS.slice(0, 5),
+  },
+  {
+    id: 'outputs-and-handoff',
+    label: 'Outputs and Handoff',
+    items: PM_INTAKE_QUICK_JUMPS.slice(5, 7),
+  },
+  {
+    id: 'review-flow',
+    label: 'Review Flow',
+    items: PM_INTAKE_QUICK_JUMPS.slice(7, 12),
+  },
+  {
+    id: 'source-field-guardrails',
+    label: 'Source, Field, and Guardrails',
+    items: PM_INTAKE_QUICK_JUMPS.slice(12),
   },
 ]
 const REVIEW_CHECKLIST_ITEMS: ReviewChecklistItem[] = [
@@ -3822,16 +3850,23 @@ export default function ProjectMinerIntakeWorkbenchPage() {
             aria-label="PM intake section links"
             style={{ display: 'grid', gap: '0.65rem', gridTemplateColumns: 'repeat(auto-fit, minmax(12rem, 1fr))', marginTop: '0.85rem' }}
           >
-            {PM_INTAKE_QUICK_JUMPS.map((item) => (
-              <a
-                key={item.id}
-                className="btn btn-outline"
-                href={item.href}
-                style={{ alignItems: 'start', display: 'grid', gap: '0.25rem', height: '100%', justifyContent: 'stretch', textAlign: 'left', whiteSpace: 'normal' }}
-              >
-                <strong>{item.label}</strong>
-                <span style={{ color: 'var(--muted)', fontSize: '0.86rem', lineHeight: 1.35 }}>{item.detail}</span>
-              </a>
+            {PM_INTAKE_QUICK_JUMP_GROUPS.map((group) => (
+              <section key={group.id} aria-label={`${group.label} quick jump links`} style={{ display: 'grid', gap: '0.55rem' }}>
+                <h3 style={{ fontSize: '0.95rem', margin: 0 }}>{group.label}</h3>
+                <div style={{ display: 'grid', gap: '0.5rem' }}>
+                  {group.items.map((item) => (
+                    <a
+                      key={item.id}
+                      className="btn btn-outline"
+                      href={item.href}
+                      style={{ alignItems: 'start', display: 'grid', gap: '0.25rem', height: '100%', justifyContent: 'stretch', textAlign: 'left', whiteSpace: 'normal' }}
+                    >
+                      <strong>{item.label}</strong>
+                      <span style={{ color: 'var(--muted)', fontSize: '0.86rem', lineHeight: 1.35 }}>{item.detail}</span>
+                    </a>
+                  ))}
+                </div>
+              </section>
             ))}
           </nav>
         </section>

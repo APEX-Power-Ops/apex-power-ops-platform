@@ -487,6 +487,14 @@ PM Lane 078 groups the existing browser-local export status messages into Review
 
 This still creates no approval record, SQL, schema migration, backend route, import mutation, issue, task, assignment, schedule, status, hosted proof, live task, work authorization, field release, work order, durable field record, production tracking write, product code, deployment, service, DNS, auth, ingress, secret, local storage key, new export action, new export artifact, export contract widening, or production mutation.
 
+The current navigation ergonomics tranche is:
+
+`Project Miner Local PM Intake Quick Jump Rail Grouping`
+
+PM Lane 079 groups the existing quick-jump links into Daily Review, Outputs and Handoff, Review Flow, and Source, Field, and Guardrails. It keeps every existing href, target section, route, export behavior, storage boundary, and read seam unchanged while making the top navigation rail easier to scan during a real PM review.
+
+This still creates no approval record, SQL, schema migration, backend route, import mutation, issue, task, assignment, schedule, status, hosted proof, live task, work authorization, field release, work order, durable field record, production tracking write, product code, deployment, service, DNS, auth, ingress, secret, local storage key, new route, new export action, new export artifact, export contract widening, or production mutation.
+
 The next persistence tranche is:
 
 `Import Candidate Approval Persistence Schema And Adapter Implementation`
