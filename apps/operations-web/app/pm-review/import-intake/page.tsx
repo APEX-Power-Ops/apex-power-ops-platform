@@ -4627,39 +4627,41 @@ export default function ProjectMinerIntakeWorkbenchPage() {
               <h2 style={{ display: 'inline', margin: 0 }}>Executor Closeout Detail</h2>
             </summary>
 
-        <section id="executor-closeout" aria-label="Local executor closeout intake" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
-          <div className="status-row">
+        <details open id="executor-closeout" aria-label="Local executor closeout intake" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
+          <summary className="status-row" style={{ cursor: 'pointer' }}>
             <h2 style={{ margin: 0 }}>Local Executor Closeout Intake</h2>
             <span className="status-pill status-awaiting-values">
               {formatCount(closeoutCheckedCount)} of {formatCount(CLOSEOUT_CHECKLIST_ITEMS.length)}
             </span>
+          </summary>
+          <div aria-label="Executor closeout controls">
+            <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+              Browser-local audit prep for external executor returns. Checking these items does not accept, approve, persist, deploy, import, assign, schedule, change status, or mutate production state.
+            </p>
+            <div style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
+              {CLOSEOUT_CHECKLIST_ITEMS.map((item) => (
+                <label key={item.id} className="card" style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0.75rem', padding: '0.85rem', boxShadow: 'none', cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={Boolean(closeoutChecks[item.id])}
+                    onChange={(event) => updateCloseoutCheck(item.id, event.target.checked)}
+                    style={{ marginTop: '0.25rem' }}
+                  />
+                  <span>
+                    <strong>{item.label}</strong>
+                    <span style={{ display: 'block', marginTop: '0.35rem', color: 'var(--muted)', lineHeight: 1.5 }}>{item.detail}</span>
+                  </span>
+                </label>
+              ))}
+            </div>
+            <div className="pm-review-link-row pm-review-link-row-start" style={{ alignItems: 'center' }}>
+              <button className="btn btn-outline" onClick={clearCloseoutChecklist} disabled={!closeoutCheckedCount}>
+                Clear closeout intake
+              </button>
+              <span style={{ color: 'var(--muted)', lineHeight: 1.55 }}>Retained in this browser for the current candidate only.</span>
+            </div>
           </div>
-          <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
-            Browser-local audit prep for external executor returns. Checking these items does not accept, approve, persist, deploy, import, assign, schedule, change status, or mutate production state.
-          </p>
-          <div style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
-            {CLOSEOUT_CHECKLIST_ITEMS.map((item) => (
-              <label key={item.id} className="card" style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0.75rem', padding: '0.85rem', boxShadow: 'none', cursor: 'pointer' }}>
-                <input
-                  type="checkbox"
-                  checked={Boolean(closeoutChecks[item.id])}
-                  onChange={(event) => updateCloseoutCheck(item.id, event.target.checked)}
-                  style={{ marginTop: '0.25rem' }}
-                />
-                <span>
-                  <strong>{item.label}</strong>
-                  <span style={{ display: 'block', marginTop: '0.35rem', color: 'var(--muted)', lineHeight: 1.5 }}>{item.detail}</span>
-                </span>
-              </label>
-            ))}
-          </div>
-          <div className="pm-review-link-row pm-review-link-row-start" style={{ alignItems: 'center' }}>
-            <button className="btn btn-outline" onClick={clearCloseoutChecklist} disabled={!closeoutCheckedCount}>
-              Clear closeout intake
-            </button>
-            <span style={{ color: 'var(--muted)', lineHeight: 1.55 }}>Retained in this browser for the current candidate only.</span>
-          </div>
-        </section>
+        </details>
 
           </details>
           <details open aria-label="Field prep detail panels" style={{ display: 'grid', gap: '0.75rem' }}>
