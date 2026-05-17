@@ -264,6 +264,10 @@ def _build_warnings(
                     "message": f"{row_count} planning-workbook row(s) include formula errors across {cell_count} cell(s).",
                     "review_action": "Treat the tracker as lineage evidence only until formula errors are understood.",
                     "source_path": source.get("path"),
+                    "formula_error_row_count": row_count,
+                    "formula_error_cell_count": cell_count,
+                    "formula_error_column_counts": _json_safe(source.get("formula_error_column_counts", {})),
+                    "formula_error_sample_rows": _json_safe(source.get("formula_error_sample_rows", [])),
                 }
             )
 

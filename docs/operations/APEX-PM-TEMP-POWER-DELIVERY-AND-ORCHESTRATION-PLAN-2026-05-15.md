@@ -720,6 +720,8 @@ PM Lane 235 executes the Project Miner Temp Power Decision Return Intake And No-
 
 PM Lane 236 executes the Project Miner Temp Power Source Correction No-Live Packet tranche. Jason returned `REQUEST_SOURCE_CORRECTION_NO_LIVE` and clarified that source row 28 / `miner-line-015` should be handled as one ground-resistance test with multiple measurements. The repo-local candidate now uses designation `Ground Resistance Test Lot`, preserves quantity 3 and 24 planned hours, collapses that row to one lot-level apparatus candidate, clears `MISSING_DESIGNATIONS`, and leaves `PROJECT_DATA_ENTRY_FORMULA_ERRORS` as the only remaining warning for later PM classification. Approval POST, approval-row creation, project import, hosted proof, field/customer/production/finance writes, source workbook writeback, source PDF content edit, workbook macro/writeback, Desktop Codex PM decision authority, and autonomous AI business-state mutation remain blocked.
 
+PM Lane 237 enriches the remaining Project Data Entry warning as a no-live review detail. The corrected Temp Power candidate still has 15 tasks, 184 apparatus candidates, one warning, and zero blockers; the warning now exposes 234 formula-error rows, 3510 formula-error cells, affected formula columns, and bounded sample rows. The warning is not a corrected-estimator candidate-shape blocker, but the Project Data Entry workbook remains lineage-only until PM accepts the warning as non-blocking or requests workbook correction before live admission.
+
 ## Capability-Gap Register
 
 Current known gaps:

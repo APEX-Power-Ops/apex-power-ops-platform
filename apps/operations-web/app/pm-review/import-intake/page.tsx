@@ -29,6 +29,19 @@ type CandidateWarning = {
   code?: string
   message?: string
   review_action?: string
+  source_path?: string
+  formula_error_row_count?: number
+  formula_error_cell_count?: number
+  formula_error_column_counts?: Record<string, number>
+  formula_error_sample_rows?: Array<{
+    source_row?: number
+    scope?: string
+    task_id?: string
+    task?: string
+    apparatus?: string
+    designation?: string
+    error_columns?: string[]
+  }>
 }
 
 type CandidateDecision = {
@@ -1187,6 +1200,24 @@ function firstAvailable(...values: Array<string | undefined | null>) {
 
 function visibleWarnings(warnings: CandidateWarning[]) {
   return warnings.slice(0, 3)
+}
+
+function warningColumnSummary(warning: CandidateWarning) {
+  const counts = warning.formula_error_column_counts || {}
+  return Object.entries(counts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 4)
+    .map(([column, count]) => `${column}: ${formatCount(count)}`)
+    .join('; ')
+}
+
+function warningSampleSummary(warning: CandidateWarning) {
+  return (warning.formula_error_sample_rows || []).slice(0, 3).map((row) => {
+    const rowLabel = row.source_row ? `row ${row.source_row}` : 'sample row'
+    const taskLabel = firstAvailable(row.task_id, row.task, row.apparatus, row.designation)
+    const columns = row.error_columns?.join(', ') || 'formula column'
+    return `${rowLabel}: ${taskLabel} (${columns})`
+  })
 }
 
 function visibleDecisions(decisions: CandidateDecision[]) {
@@ -9794,6 +9825,21 @@ export default function ProjectMinerIntakeWorkbenchPage() {
                             <span className="status-pill status-backend-routed">{warning.code || 'WARNING'}</span>
                           </div>
                           <p style={{ margin: '0.55rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{warning.message || 'Review warning.'}</p>
+                          {warning.review_action ? <p style={{ margin: '0.35rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{warning.review_action}</p> : null}
+                          {warning.formula_error_row_count || warning.formula_error_cell_count ? (
+                            <p style={{ margin: '0.35rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+                              Formula detail: {formatCount(warning.formula_error_row_count)} row(s), {formatCount(warning.formula_error_cell_count)} cell(s).
+                            </p>
+                          ) : null}
+                          {warningColumnSummary(warning) ? (
+                            <p style={{ margin: '0.35rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+                              Affected columns: {warningColumnSummary(warning)}.
+                            </p>
+                          ) : null}
+                          {warningSampleSummary(warning).map((sample) => (
+                            <p key={sample} style={{ margin: '0.25rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{sample}</p>
+                          ))}
+                          {warning.source_path ? <p style={{ margin: '0.35rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>Source: {warning.source_path}</p> : null}
                         </article>
                       ))}
                       {!warnings.length ? <p style={{ color: 'var(--muted)' }}>No candidate warnings are currently reported.</p> : null}

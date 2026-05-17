@@ -875,6 +875,8 @@ PM Lane 234 turns that narrowed PM judgment into a one-screen Jason decision car
 PM Lane 235 intakes the current continuation instruction against that decision card and records that no allowed Jason response label is present yet. The decision card remains open, the source row 28 / `miner-line-015` `MISSING_DESIGNATIONS` warning remains not accepted, not corrected, and not live-admitted, and Desktop Codex remains limited to optional clarity and relay-burden review only.
 
 PM Lane 236 receives Jason's `REQUEST_SOURCE_CORRECTION_NO_LIVE` return and applies the narrow repo-local candidate correction: source row 28 / `miner-line-015` is represented as `Ground Resistance Test Lot`, with quantity 3 preserved as measurement count, one lot-level apparatus candidate, and 24 planned hours. The prior missing-designation warning is cleared, and the remaining warning is the separate `PROJECT_DATA_ENTRY_FORMULA_ERRORS` review item.
+
+PM Lane 237 triages that remaining Project Data Entry warning without opening live authority. The warning now shows formula-error row count, cell count, affected column counts, bounded sample rows, and source path in the existing Exception Review card. It is classified as planning/import-shaping lineage evidence rather than a Temp Power estimator candidate-shape blocker, but PM still must accept it as non-blocking or request workbook correction before a later live admission can rely on that workbook.
 The success standard is not just technical correctness. The candidate must reduce Jason's review burden by showing:
 
 1. what the system thinks the project is,

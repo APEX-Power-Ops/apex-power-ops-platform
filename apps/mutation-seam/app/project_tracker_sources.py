@@ -50,6 +50,8 @@ ALL_TASK_COLUMNS = [
     ("priority", "PRIORITY"),
     ("apparatus_category", "Apparatus Category"),
 ]
+FORMULA_ERROR_SAMPLE_LIMIT = 5
+FORMULA_ERROR_SAMPLE_KEYS = ["scope", "task_id", "task", "apparatus", "designation"]
 
 
 def _clean_cell(value: Any) -> Any:
@@ -135,20 +137,31 @@ def _read_rows(
     return rows
 
 
-def _formula_error_counts(rows: List[Dict[str, Any]]) -> Dict[str, int]:
+def _formula_error_summary(rows: List[Dict[str, Any]], columns: List[tuple[str, str]]) -> Dict[str, Any]:
+    label_by_key = {key: label for key, label in columns}
+    column_counts: Counter[str] = Counter()
+    sample_rows: List[Dict[str, Any]] = []
     cell_count = 0
     row_count = 0
     for row in rows:
-        row_has_error = False
-        for value in row.values():
+        error_columns: List[str] = []
+        for key, value in row.items():
             if isinstance(value, str) and value.startswith("#"):
                 cell_count += 1
-                row_has_error = True
-        if row_has_error:
+                column_label = label_by_key.get(key, key)
+                column_counts[column_label] += 1
+                error_columns.append(column_label)
+        if error_columns:
             row_count += 1
+            if len(sample_rows) < FORMULA_ERROR_SAMPLE_LIMIT:
+                sample = {"source_row": row.get("source_row"), "error_columns": error_columns}
+                sample.update({key: row.get(key) for key in FORMULA_ERROR_SAMPLE_KEYS if row.get(key) is not None})
+                sample_rows.append(sample)
     return {
         "formula_error_cell_count": cell_count,
         "formula_error_row_count": row_count,
+        "formula_error_column_counts": dict(column_counts),
+        "formula_error_sample_rows": sample_rows,
     }
 
 
@@ -175,6 +188,8 @@ def _read_planning_workbook(path: Path) -> Dict[str, Any]:
             "apparatus_category_counts": {},
             "formula_error_cell_count": 0,
             "formula_error_row_count": 0,
+            "formula_error_column_counts": {},
+            "formula_error_sample_rows": [],
             "task_entry_sample": [],
             "all_tasks_sample": [],
         }
@@ -198,7 +213,7 @@ def _read_planning_workbook(path: Path) -> Dict[str, Any]:
             if ALL_TASKS_SHEET_NAME in workbook.sheetnames
             else []
         )
-        error_counts = _formula_error_counts(all_tasks_rows)
+        error_counts = _formula_error_summary(all_tasks_rows, ALL_TASK_COLUMNS)
         return {
             "path": str(path),
             "found": True,

@@ -139,6 +139,32 @@ def test_load_project_tracker_sources_reads_task_entry_and_all_tasks(tmp_path):
     assert data["project_data_entry"]["status_counts"] == {"NOT STARTED": 1, "#REF!": 1}
     assert data["project_data_entry"]["formula_error_row_count"] == 1
     assert data["project_data_entry"]["formula_error_cell_count"] == 6
+    assert data["project_data_entry"]["formula_error_column_counts"] == {
+        "Drawing": 1,
+        "Date Due": 1,
+        "Apparatus Hours": 1,
+        "Remaining Hours": 1,
+        "STATUS": 1,
+        "AVAILABILITY": 1,
+    }
+    assert data["project_data_entry"]["formula_error_sample_rows"] == [
+        {
+            "source_row": 3,
+            "error_columns": [
+                "Drawing",
+                "Date Due",
+                "Apparatus Hours",
+                "Remaining Hours",
+                "STATUS",
+                "AVAILABILITY",
+            ],
+            "scope": "Scope_1",
+            "task_id": "1.1.2",
+            "task": "SWGR-A",
+            "apparatus": "Circuit Breaker LV - EO (LSIG)",
+            "designation": "CB-1",
+        }
+    ]
     assert data["project_data_entry"]["task_entry_sample"][0]["apparatus_hours"] == 4
     assert data["reference_tracker"]["project_form"]["Project"] == "Central Mesa"
     assert data["reference_tracker"]["status_counts"] == {"COMPLETED": 1, "#REF!": 1}
