@@ -1,0 +1,110 @@
+{
+  "packet_id": "2026-05-17-pm-lane-239-project-miner-temp-power-data-entry-decision-hold-and-admission-ledger-no-live-packet",
+  "title": "PM Lane 239 - Project Miner Temp Power Data Entry Decision Hold And Admission Ledger No-Live Packet",
+  "date": "2026-05-17",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_DATA_ENTRY_DECISION_HOLD_AND_ADMISSION_LEDGER_NO_LIVE",
+  "selected_outcome": "NO_DATA_ENTRY_DECISION_LABEL_PRESENT_KEEP_CARD_OPEN_RECORD_ADMISSION_PREREQS_NO_LIVE",
+  "current_instruction_classification": {
+    "continuation_authority_present": true,
+    "allowed_pm_lane_238_response_present": false,
+    "interpreted_as_pm_decision": false,
+    "data_entry_warning_acceptance_present": false,
+    "workbook_correction_request_present": false,
+    "hold_label_present": false,
+    "exact_live_admission_phrase_present_as_current_instruction": false
+  },
+  "candidate": {
+    "candidate_id": "pm-import-candidate-miner-temp-power",
+    "project_name": "Miner Temp Power",
+    "task_count": 15,
+    "apparatus_candidate_count": 184,
+    "warning_count": 1,
+    "blocker_count": 0,
+    "mutation_authority": "not_admitted"
+  },
+  "prior_decision_card": {
+    "lane": "PM Lane 238",
+    "path": "docs/operations/APEX-PM-LANE-238-PROJECT-MINER-TEMP-POWER-PROJECT-DATA-ENTRY-WARNING-DECISION-CARD-NO-LIVE-PACKET-2026-05-17.md",
+    "allowed_responses": [
+      "ACCEPT_DATA_ENTRY_WARNING_NON_BLOCKING_NO_LIVE",
+      "REQUEST_DATA_ENTRY_WORKBOOK_CORRECTION_NO_LIVE",
+      "HOLD_DATA_ENTRY_WARNING_NO_LIVE",
+      "PROVIDE_EXACT_LIVE_ADMISSION_LATER"
+    ],
+    "status_after_this_packet": "open"
+  },
+  "warning_state": {
+    "warning_code": "PROJECT_DATA_ENTRY_FORMULA_ERRORS",
+    "formula_error_rows": 234,
+    "formula_error_cells": 3510,
+    "classification": "Project Data Entry planning/import-shaping lineage evidence",
+    "corrected_temp_power_candidate_blockers": 0,
+    "accepted": false,
+    "workbook_correction_requested": false,
+    "hold_selected": false,
+    "live_admitted": false
+  },
+  "admission_prerequisite_ledger": [
+    "current candidate remains pm-import-candidate-miner-temp-power",
+    "candidate summary remains 15 tasks, 184 apparatus candidates, one warning, and zero blockers",
+    "source correction for miner-line-015 remains represented as Ground Resistance Test Lot",
+    "Project Data Entry warning is dispositioned by one allowed PM Lane 238 label",
+    "exact live admission phrase is provided as a current instruction",
+    "hosted read surfaces are verified current before any live write packet",
+    "replay/idempotency and approval-row evidence requirements remain explicit",
+    "Desktop Codex support remains review-burden or scout-only"
+  ],
+  "future_live_gate_phrase": "I explicitly admit PM Lane 142 live approval POST and first approval-row creation for the current Project Miner Temp Power import candidate.",
+  "desktop_codex_support": {
+    "prompt_path": "ops/agents/handoffs/2026-05-17-desktop-codex-pm-lane-239-data-entry-decision-hold-and-admission-ledger-review-burden-scout-prompt.md",
+    "status": "available_not_required",
+    "allowed_scope": [
+      "decision hold clarity review",
+      "admission ledger clarity review",
+      "relay-burden review",
+      "no-live closeout recommendation"
+    ],
+    "blocked_scope": [
+      "PM decision authority",
+      "product code edit",
+      "repo publication",
+      "hosted service access",
+      "workbook content read",
+      "source PDF content read",
+      "macro execution",
+      "warning acceptance",
+      "approval/import authority",
+      "business-state mutation"
+    ]
+  },
+  "blocked_authority": [
+    "live approval POST",
+    "approval row creation",
+    "project import",
+    "note or task creation",
+    "owner or due-date assignment",
+    "field authorization",
+    "lead or crew assignment",
+    "schedule/status write",
+    "customer commitment",
+    "customer report",
+    "field instruction",
+    "durable field record",
+    "production tracking",
+    "completion evidence",
+    "billing/payroll/invoice/accounting output",
+    "Supabase/Render/Vercel/Olares mutation",
+    "SQL/schema migration",
+    "source workbook writeback",
+    "source PDF content edit",
+    "workbook macro/writeback",
+    "autonomous AI business-state mutation"
+  ],
+  "validation": [
+    "python -m json.tool ops/agents/packets/draft/2026-05-17-pm-lane-239-project-miner-temp-power-data-entry-decision-hold-and-admission-ledger-no-live-packet.json",
+    "rg guardrail search on touched Lane 239 files",
+    "corrupted-token scan on touched Lane 239 files",
+    "git diff --check on touched Lane 239 files"
+  ],
+  "validation_result": "PASS"
+}
