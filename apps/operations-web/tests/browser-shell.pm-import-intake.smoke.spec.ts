@@ -129,6 +129,71 @@ async function expectWorkbenchViewportScan(page: Page, viewport: { width: number
   }
 }
 
+async function expectMobileFieldLaunchUsePath(page: Page, mutationRequests: string[]) {
+  await page.setViewportSize({ width: 390, height: 844 })
+
+  const quickJumpRail = page.locator('details#pm-quick-jump-rail[aria-label="PM intake quick jump rail"]')
+  await quickJumpRail.scrollIntoViewIfNeeded()
+  await expect(quickJumpRail).toHaveAttribute('open', '')
+  await quickJumpRail.getByRole('link', { name: /Daily Script/i }).click()
+  await expect(page).toHaveURL(/#pm-daily-review-script$/)
+
+  const dailyScript = page.locator('details#pm-daily-review-script[aria-label="Local PM intake daily review script"]')
+  await expect(dailyScript).toBeVisible()
+  await expect(dailyScript.getByRole('heading', { name: 'Local PM Intake Daily Review Script', exact: true })).toBeVisible()
+  await expect(dailyScript.getByText(/Field prep queue: 2 complete \/ 2 next \/ 1 blocked/i)).toBeVisible()
+  const fieldPrepMinuteLink = dailyScript.getByRole('link', { name: /Minute 3: Check field-prep questions/i })
+  await expect(fieldPrepMinuteLink).toHaveAttribute('href', '#field-prep')
+  await fieldPrepMinuteLink.click()
+  await expect(page).toHaveURL(/#field-prep$/)
+
+  const fieldPrepQueue = page.locator('details#field-prep[aria-label="Local field prep queue"]')
+  await expect(fieldPrepQueue).toBeVisible()
+  await expect(fieldPrepQueue).toHaveAttribute('open', '')
+  await expect(fieldPrepQueue.getByText('2 complete / 2 next / 1 blocked')).toBeVisible()
+  await expect(fieldPrepQueue.getByText('Export field kickoff prep brief', { exact: true })).toBeVisible()
+  await expect(fieldPrepQueue.getByText('Confirm field authority boundary', { exact: true })).toBeVisible()
+  await expect(fieldPrepQueue.getByText('Production execution tracking', { exact: true })).toBeVisible()
+
+  const fieldQuestions = page.locator('details[aria-label="Local field questions draft"]')
+  await fieldQuestions.scrollIntoViewIfNeeded()
+  await expect(fieldQuestions).toHaveAttribute('open', '')
+  await expect(fieldQuestions.getByRole('heading', { name: /Local Field Questions Draft/i })).toBeVisible()
+  await expect(fieldQuestions.getByLabel(/Drawing\/source questions/i)).toHaveValue('Confirm latest one-line drawings match the temp power candidate shape.')
+  await expect(fieldQuestions.getByLabel(/Site access and safety questions/i)).toHaveValue('Confirm escort, access hours, and LOTO review questions before field discussion.')
+  await expect(fieldQuestions.getByText(/These notes do not create tasks/i)).toBeVisible()
+
+  const fieldObservations = page.locator('details[aria-label="Local field observation scratchpad"]')
+  await fieldObservations.scrollIntoViewIfNeeded()
+  await expect(fieldObservations).toHaveAttribute('open', '')
+  await expect(fieldObservations.getByRole('heading', { name: /Local Field Observation Scratchpad/i })).toBeVisible()
+  await expect(fieldObservations.getByLabel(/Observation date or shift note/i)).toHaveValue('Day-one temp power prep conversation before field mobilization.')
+  await expect(fieldObservations.getByLabel(/Observer \/ source/i)).toHaveValue('PM call with lead and customer site contact.')
+  await expect(fieldObservations.getByLabel(/Access and safety observations/i)).toHaveValue('Escort and LOTO review need confirmation before field reliance.')
+  await expect(fieldObservations.getByText(/do not create tasks, issues, work authorization, assignments, schedules, status updates, approval records, imports, or production writes/i)).toBeVisible()
+
+  await expect(page.getByRole('button', { name: 'Export Field Kickoff Brief' })).toBeEnabled()
+  await expect(page.getByRole('button', { name: 'Export Field Observation Notes' })).toBeEnabled()
+  await expect(page.getByRole('button', { name: 'Export Field Prep Coverage Snapshot' })).toBeEnabled()
+  await expect(page.getByRole('button', { name: 'Export Field Prep Conversation Agenda' })).toBeEnabled()
+  await expect(page.getByRole('button', { name: 'Export Field Prep Packet' })).toBeEnabled()
+  await expect(page.getByRole('button', { name: 'Export Field Start Preflight' })).toBeEnabled()
+
+  await quickJumpRail.scrollIntoViewIfNeeded()
+  await quickJumpRail.getByRole('link', { name: /Guardrails/i }).click()
+  await expect(page).toHaveURL(/#guardrails$/)
+  const guardrails = page.locator('details#guardrails[aria-label="Current PM next actions and guardrails"]')
+  await expect(guardrails).toHaveAttribute('open', '')
+  await expect(guardrails.getByRole('heading', { name: 'Current PM Next Actions and Guardrails', exact: true })).toBeVisible()
+  await expect(guardrails.getByText(/Keep browser approval submission and project import blocked until later packets explicitly admit those writes/i)).toBeVisible()
+  await expect(guardrails.getByText('write supabase', { exact: true })).toBeVisible()
+
+  const mobilePathStorageKeys = await page.evaluate(() => Object.keys(window.localStorage).filter((key) => key.startsWith('pm-import-intake-') && /mobile|field-launch|use-path/i.test(key)))
+  expect(mobilePathStorageKeys).toEqual([])
+  expect(mutationRequests).toHaveLength(0)
+  await page.setViewportSize({ width: 1280, height: 720 })
+}
+
 test('pm import intake workbench renders consolidated read-only Project Miner gates', async ({ page }) => {
   const readCalls = {
     candidate: 0,
@@ -2008,6 +2073,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(constraintRadar.getByText(/Field prep is 2 complete \/ 2 next \/ 1 blocked. Field questions present: yes; field observations present: yes/i)).toBeVisible()
   await expect(fieldPrepCoverage.getByText('2 covered, 0 partial, 3 open, 2 blocked')).toBeVisible()
   await expect(fieldPrepAgenda.getByText('2 context, 3 ask, 1 confirm, 1 blocked')).toBeVisible()
+  await expectMobileFieldLaunchUsePath(page, mutationRequests)
   await expect(pmIntakeSnapshot.getByText('4 covered, 1 open, 1 blocked', { exact: true })).toBeVisible()
   const localState = await page.evaluate(() => ({
     checklist: window.localStorage.getItem('pm-import-intake-review-checklist:pm-import-candidate-miner-temp-power'),
