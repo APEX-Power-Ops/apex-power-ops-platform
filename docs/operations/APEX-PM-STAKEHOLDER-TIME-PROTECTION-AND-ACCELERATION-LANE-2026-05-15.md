@@ -932,6 +932,8 @@ PM Lane 263 defines the Data Entry workbook correction-evidence gate. Before lat
 
 PM Lane 264 records Jason's revised exact Project Data Entry warning return: `ACCEPT_DATA_ENTRY_WARNING_NON_BLOCKING_NO_LIVE`. The warning is now accepted non-blocking for no-live Temp Power review, while the PM Lane 262/263 correction-evidence branch remains preserved as history but is superseded and parked for the current review path. The corrected candidate remains 15 tasks, 184 apparatus candidates, and zero blockers. No live approval, approval-row creation, project import, hosted action, workbook content read/write, macro/writeback, Desktop Codex PM decision authority, or business-state mutation is admitted.
 
+PM Lane 265 refreshes the approval-readiness ledger after the accepted warning disposition. `PROJECT_DATA_ENTRY_FORMULA_ERRORS` is now an accepted warning code for no-live Temp Power review, while live approval/import remain blocked pending exact live-admission language, PM decision value and notes, hosted-read evidence after admission, approval POST proof, idempotent replay, approval-status readback, project import stop boundary, and downstream field/schedule/resource/customer/production/finance stop boundaries. No hosted action, approval row, project import, workbook content read/write, macro/writeback, Desktop Codex PM decision authority, or business-state mutation is admitted.
+
 The success standard is not just technical correctness. The candidate must reduce Jason's review burden by showing:
 
 1. what the system thinks the project is,

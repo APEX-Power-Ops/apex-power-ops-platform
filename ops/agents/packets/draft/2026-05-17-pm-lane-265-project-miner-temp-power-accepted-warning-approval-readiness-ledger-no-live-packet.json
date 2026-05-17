@@ -1,0 +1,86 @@
+{
+  "packet_id": "2026-05-17-pm-lane-265-project-miner-temp-power-accepted-warning-approval-readiness-ledger-no-live-packet",
+  "title": "PM Lane 265 - Project Miner Temp Power Accepted Warning Approval Readiness Ledger No-Live Packet",
+  "date": "2026-05-17",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_ACCEPTED_WARNING_APPROVAL_READINESS_LEDGER_NO_LIVE",
+  "selected_outcome": "ACCEPTED_DATA_ENTRY_WARNING_READY_FOR_NO_LIVE_APPROVAL_REVIEW_NOT_AUTHORIZED",
+  "source_packet": "PM Lane 264",
+  "candidate": {
+    "candidate_id": "pm-import-candidate-miner-temp-power",
+    "project_name": "Miner Temp Power",
+    "task_count": 15,
+    "apparatus_candidate_count": 184,
+    "blocker_count": 0,
+    "mutation_authority": "not_admitted",
+    "live_approval_authority": "not_admitted",
+    "project_import_authority": "not_admitted"
+  },
+  "warning_readiness": {
+    "accepted_warning_codes": [
+      "PROJECT_DATA_ENTRY_FORMULA_ERRORS"
+    ],
+    "unresolved_warning_codes_for_no_live_review": [],
+    "prior_correction_branch": "PM Lane 262 and PM Lane 263 preserved as history, superseded and parked by PM Lane 264"
+  },
+  "live_admission_requirements": [
+    "exact current live-admission phrase",
+    "PM decision value and review notes",
+    "current hosted-read evidence after admission",
+    "approval POST path with pre-write row count",
+    "same-payload idempotent replay proof",
+    "approval-status readback",
+    "project import stop boundary",
+    "downstream field/schedule/resource/customer/production/finance stop boundaries"
+  ],
+  "no_live_next_options": [
+    "PREPARE_LIVE_ADMISSION_REVIEW_PACKET_NO_LIVE",
+    "HOLD_ACCEPTED_WARNING_NO_LIVE",
+    "CONTINUE_FIELD_START_QUESTION_PREP_NO_LIVE",
+    "AWAIT_DESKTOP_CODEX_PM_256_CLOSEOUT_NO_LIVE"
+  ],
+  "desktop_codex_boundary": {
+    "pm_256_still_separate": true,
+    "new_desktop_codex_prompt_created": false,
+    "pm_decision_authority": false,
+    "workbook_content_inspection_authority": false,
+    "hosted_access_authority": false
+  },
+  "next_safe_packet": "PM Lane 266 - Project Miner Temp Power Live Admission Review Packet No-Live",
+  "validation": [
+    "packet JSON parse",
+    "PM Lane 265 text search",
+    "guardrail keyword scan",
+    "corrupted-token scan",
+    "git diff --check"
+  ],
+  "validation_result": "PASS",
+  "blocked_authority": [
+    "product code",
+    "UI writable control",
+    "hosted call",
+    "live approval POST",
+    "approval row creation",
+    "project import",
+    "note or task creation",
+    "owner or due-date assignment",
+    "field authorization",
+    "lead or crew assignment",
+    "schedule/status write",
+    "procurement or rental commitment",
+    "customer commitment",
+    "customer report",
+    "durable field record",
+    "production tracking",
+    "billing/payroll/invoice/accounting output",
+    "Supabase/Render/Vercel/Olares action",
+    "SQL/schema migration",
+    "source workbook writeback",
+    "source PDF content edit",
+    "workbook content read",
+    "workbook content write",
+    "workbook macro/writeback",
+    "durable source fingerprint promotion",
+    "Desktop Codex PM decision authority",
+    "autonomous AI business-state mutation"
+  ]
+}
