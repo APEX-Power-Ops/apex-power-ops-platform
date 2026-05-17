@@ -1,0 +1,51 @@
+{
+  "packet_id": "2026-05-17-pm-lane-190",
+  "title": "PM Lane 190 - PM Intake Field Start Customer/Site Questions Quick Review",
+  "lane": "PM lane development",
+  "status": "completed",
+  "owner": "VS Code Codex",
+  "authority": "repo technical authority; PM lane implementation authority; final integration authority",
+  "date": "2026-05-17",
+  "objective": "Expose a phone-first, browser-local customer/site questions quick review inside the PM intake workbench so Jason can scan the morning-of Temp Power conversation questions without creating a task, assignment, customer commitment, report, route, storage key, export, hosted call, or write path.",
+  "scope": [
+    "Added a `Local Field Start Customer/Site Questions Quick Review` panel directly under the Lane 189 stop-line review on `/pm-review/import-intake`.",
+    "Derived five linked customer/site question cards from existing field questions and field observation scratchpad state.",
+    "Covered site access/safety, customer constraints, material/staging, drawing/source, and PM follow-up/customer commitment boundary context.",
+    "Kept the panel links/cards only: no buttons, no export action, no text inputs, no persisted disclosure state, no new localStorage key, and no backend route.",
+    "Extended the focused read-only PM import-intake smoke to prove desktop presence, `390x844` mobile visibility, initial and populated question-context states, five links, zero buttons, no customer-site question-review storage key, no implied-authority link/control text, and zero mutation calls.",
+    "Used a read-only sidecar to confirm the safest placement, derived-item shape, copy-risk boundary, proof assertions, and no-write boundary while VS Code Codex retained PM implementation and final integration authority."
+  ],
+  "guardrails": [
+    "No hosted service access.",
+    "No Supabase, Render, Vercel, or Olares product action.",
+    "No SQL or schema migration.",
+    "No browser approval button, approval POST wiring, approval submission, or approval-row creation.",
+    "No project import mutation.",
+    "No new export action, filename, payload version, localStorage schema, backend route, handler, service/auth/ingress change, or autonomous AI business-state mutation.",
+    "No task, issue, field authorization, lead or crew assignment, schedule/status write, customer commitment, customer report, durable field record, production tracking, completion evidence, billing, payroll, invoice, accounting, or external finance-system write.",
+    "No workbook macro or writeback."
+  ],
+  "changed_files": [
+    "apps/operations-web/app/pm-review/import-intake/page.tsx",
+    "apps/operations-web/tests/browser-shell.pm-import-intake.smoke.spec.ts",
+    "PROJECT_STATUS.md",
+    "docs/operations/APEX-PM-STAKEHOLDER-TIME-PROTECTION-AND-ACCELERATION-LANE-2026-05-15.md",
+    "docs/operations/APEX-PM-TEMP-POWER-DELIVERY-AND-ORCHESTRATION-PLAN-2026-05-15.md",
+    "docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md",
+    "ops/agents/packets/draft/2026-05-17-pm-lane-190-pm-intake-field-start-customer-site-questions-quick-review.json",
+    "ops/agents/handoffs/2026-05-17-pm-lane-190-pm-intake-field-start-customer-site-questions-quick-review-handoff.md"
+  ],
+  "validation": [
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform\" --filter @apex/operations-web typecheck",
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform\" --filter @apex/operations-web build",
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform/apps/operations-web\" exec playwright test \"browser-shell.pm-import-intake.smoke.spec.ts\"",
+    "Get-Content -LiteralPath \"C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-17-pm-lane-190-pm-intake-field-start-customer-site-questions-quick-review.json\" | ConvertFrom-Json | Select-Object -ExpandProperty packet_id",
+    "rg -n \"PM Lane 190|Local Field Start Customer/Site Questions Quick Review|fieldStartCustomerSiteQuestions|pm-field-start-customer-site-questions|customer/site questions quick review|customer-site question-review storage|mutationRequests\\)\\.toHaveLength\\(0\\)\" PROJECT_STATUS.md docs/operations ops/agents apps/operations-web",
+    "Null-byte check on PM status docs",
+    "git diff --check"
+  ],
+  "validation_result": "PASS - operations-web typecheck passed; operations-web production build passed with /pm-review/import-intake in the route output; focused Playwright pm import-intake smoke passed cleanly with the Local Field Start Customer/Site Questions Quick Review, 390x844 mobile proof, five links, zero buttons, no customer-site question-review disclosure storage key, no implied-authority link/control text, and zero mutation calls; packet JSON parsed as 2026-05-17-pm-lane-190; PM Lane 190 guardrail rg passed; null-byte check passed on PM status docs; git diff --check passed with only expected LF-to-CRLF warnings on touched and unrelated files.",
+  "sidecar_result": "Read-only sidecar Faraday recommended adding the customer/site questions quick review directly after the stop-line review, keeping it links/cards only, deriving from existing field questions and observations, proving the phone path at 390x844, avoiding direction or commitment wording, and adding no state, export, localStorage key, backend route, handler, hosted call, or write path.",
+  "next_recommended_lane": "PM Lane 191 - PM Intake Field Start PM Follow-up Capture Prompt Review",
+  "execution_result": "PASS"
+}

@@ -369,6 +369,16 @@ type FieldStartStopLineReviewItem = {
   detail: string
 }
 
+type FieldStartCustomerSiteQuestionStatus = 'captured' | 'ask' | 'context' | 'blocked'
+
+type FieldStartCustomerSiteQuestionItem = {
+  id: string
+  title: string
+  status: FieldStartCustomerSiteQuestionStatus
+  href: string
+  detail: string
+}
+
 type OutputSelectorStatus = 'available-context' | 'needs-local-context' | 'field-context' | 'blocked'
 
 type OutputSelectorItem = {
@@ -980,6 +990,12 @@ function fieldStartOperatorScriptTone(status: FieldStartOperatorScriptStatus) {
 
 function fieldStartStopLineReviewTone(status: FieldStartStopLineReviewStatus) {
   if (status === 'context') return 'status-configured'
+  return 'status-deferred'
+}
+
+function fieldStartCustomerSiteQuestionTone(status: FieldStartCustomerSiteQuestionStatus) {
+  if (status === 'captured' || status === 'context') return 'status-configured'
+  if (status === 'ask') return 'status-awaiting-values'
   return 'status-deferred'
 }
 
@@ -2412,6 +2428,67 @@ function buildFieldStartStopLineReview(
       status: 'context',
       href: '#approval-readiness',
       detail: `Use the operator script and local exports only as conversation context; ${blockedBoundaryCount} blocked boundaries remain outside this browser-local review.`,
+    },
+  ]
+}
+
+function buildFieldStartCustomerSiteQuestions(
+  candidate: CandidatePayload | undefined,
+  fieldQuestionsDraft: FieldQuestionsDraft,
+  fieldObservationScratchpad: FieldObservationScratchpad,
+): FieldStartCustomerSiteQuestionItem[] {
+  const projectName = candidate?.project?.name || candidate?.candidate_id || 'current Project Miner candidate'
+  const drawingSourceQuestionsPresent = Boolean(fieldQuestionsDraft.drawing_source_questions.trim())
+  const siteAccessQuestionsPresent = Boolean(fieldQuestionsDraft.site_access_safety_questions.trim() || fieldObservationScratchpad.access_safety_observations.trim())
+  const materialStagingQuestionsPresent = Boolean(fieldQuestionsDraft.material_staging_questions.trim() || fieldObservationScratchpad.material_equipment_observations.trim())
+  const customerConstraintQuestionsPresent = Boolean(fieldQuestionsDraft.customer_constraint_questions.trim())
+  const pmFollowupContextPresent = Boolean(fieldQuestionsDraft.pm_followup_notes.trim() || fieldObservationScratchpad.open_questions_pm_followup.trim() || fieldObservationScratchpad.observer_source.trim())
+
+  return [
+    {
+      id: 'site-access-safety-question-review',
+      title: 'Site access and safety questions',
+      status: siteAccessQuestionsPresent ? 'captured' : 'ask',
+      href: '#field-prep',
+      detail: siteAccessQuestionsPresent
+        ? `${projectName}: site access, escort, safety, or LOTO question context is captured locally; treat it as conversation only.`
+        : `${projectName}: capture site access, escort, safety, or LOTO questions before the field-start conversation; do not turn them into instructions or commitments here.`,
+    },
+    {
+      id: 'customer-constraint-question-review',
+      title: 'Customer constraint questions',
+      status: customerConstraintQuestionsPresent ? 'captured' : 'ask',
+      href: '#field-prep',
+      detail: customerConstraintQuestionsPresent
+        ? 'Customer/site constraint question context is captured locally; keep it as conversation context before any future field authority packet.'
+        : 'Customer/site constraint questions are still open; ask about access windows, shutdown constraints, escort requirements, and site contact questions as conversation context only.',
+    },
+    {
+      id: 'material-staging-question-review',
+      title: 'Material and staging questions',
+      status: materialStagingQuestionsPresent ? 'captured' : 'ask',
+      href: '#field-prep',
+      detail: materialStagingQuestionsPresent
+        ? 'Material, equipment, or staging question context is captured locally for the PM and lead conversation.'
+        : 'Material, equipment, and staging questions are still open; keep them as local prep questions until a later approved field packet exists.',
+    },
+    {
+      id: 'drawing-source-question-review',
+      title: 'Drawing and source questions',
+      status: drawingSourceQuestionsPresent ? 'captured' : 'ask',
+      href: '#field-prep',
+      detail: drawingSourceQuestionsPresent
+        ? 'Drawing/source question context is captured locally for the PM and lead conversation.'
+        : 'Drawing/source questions are still open; review source truth before any future field-authority packet.',
+    },
+    {
+      id: 'pm-followup-customer-commitment-boundary',
+      title: 'PM follow-up and customer commitment boundary',
+      status: pmFollowupContextPresent ? 'context' : 'blocked',
+      href: '#guardrails',
+      detail: pmFollowupContextPresent
+        ? 'Use PM follow-up notes and field observations only to frame questions; do not turn them into owner lists, assignments, customer commitments, customer reports, schedule/status changes, or field direction.'
+        : 'No PM follow-up/customer-site context is captured yet; do not turn questions into owner lists, assignments, customer commitments, customer reports, schedule/status changes, or field direction from this workbench.',
     },
   ]
 }
@@ -7091,6 +7168,10 @@ export default function ProjectMinerIntakeWorkbenchPage() {
     () => buildFieldStartStopLineReview(candidate, fieldStartPreflight, notAllowed),
     [candidate, fieldStartPreflight, notAllowed],
   )
+  const fieldStartCustomerSiteQuestions = useMemo(
+    () => buildFieldStartCustomerSiteQuestions(candidate, fieldQuestionsDraft, fieldObservationScratchpad),
+    [candidate, fieldQuestionsDraft, fieldObservationScratchpad],
+  )
   const pmIntakeSnapshot = useMemo(
     () => buildPmIntakeSnapshot(persistenceReadinessGates, operatingQueue, importExceptionRegister, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, closeoutChecks, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad, approvalDraft),
     [persistenceReadinessGates, operatingQueue, importExceptionRegister, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, closeoutChecks, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad, approvalDraft],
@@ -8174,6 +8255,38 @@ export default function ProjectMinerIntakeWorkbenchPage() {
                       <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
                     </div>
                     <span className={`status-pill ${fieldStartStopLineReviewTone(item.status)}`}>{formatLabel(item.status)}</span>
+                  </div>
+                </a>
+              ))}
+            </div>
+          </div>
+        </details>
+
+        <details open id="pm-field-start-customer-site-questions" aria-label="Local field start customer site questions quick review" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
+          <summary className="status-row" style={{ cursor: 'pointer' }}>
+            <h2 style={{ margin: 0 }}>Local Field Start Customer/Site Questions Quick Review</h2>
+            <span className="status-pill status-awaiting-values">question review</span>
+          </summary>
+          <div aria-label="Local field start customer site questions quick review controls">
+            <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+              Morning-of Temp Power customer/site question review derived from existing field questions and observations. It creates no localStorage key, export artifact, backend route, task, issue, assignment, schedule/status change, customer commitment, customer report, field instruction, hosted write claim, or production write.
+            </p>
+            <div style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
+              {fieldStartCustomerSiteQuestions.map((item) => (
+                <a
+                  key={item.id}
+                  className="card"
+                  href={item.href}
+                  style={{ color: 'inherit', display: 'block', padding: '0.85rem', textDecoration: 'none', boxShadow: 'none' }}
+                >
+                  <div className="status-row" style={{ alignItems: 'start' }}>
+                    <div>
+                      <p style={{ margin: 0 }}>
+                        <strong>{item.title}</strong>
+                      </p>
+                      <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
+                    </div>
+                    <span className={`status-pill ${fieldStartCustomerSiteQuestionTone(item.status)}`}>{formatLabel(item.status)}</span>
                   </div>
                 </a>
               ))}
