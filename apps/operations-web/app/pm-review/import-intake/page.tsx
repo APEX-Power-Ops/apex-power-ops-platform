@@ -2136,6 +2136,91 @@ function buildApprovalPacketPreview(
   }
 }
 
+function buildLocalApprovalSubmissionDryRun(
+  packet: IntakeWorkbenchPacket,
+  notAllowed: string[],
+  futureRoute: string,
+  reviewChecks: Record<string, boolean>,
+  approvalDraft: ApprovalDecisionDraft,
+) {
+  const candidate = packet.candidate
+  const admissionPlan = packet.admissionPlan
+  const approvalContract = packet.approvalContract
+  const storagePlan = packet.storagePlan
+  const approvalStatus = packet.approvalStatus
+  const checkedItems = REVIEW_CHECKLIST_ITEMS.filter((item) => reviewChecks[item.id]).map((item) => item.id)
+  const warningCodes = (candidate.warnings || []).map((warning) => warning.code).filter(Boolean)
+  const noGoCheckIds = (admissionPlan.no_go_checks || []).map((check) => check.check_id).filter(Boolean)
+  const sourceFingerprint = candidate.source_freshness?.aggregate_fingerprint || 'source-fingerprint-missing'
+  const draftComplete = Boolean(approvalDraft.decision && approvalDraft.review_notes.trim() && approvalDraft.local_attestation)
+  const idempotencyBase = [
+    candidate.candidate_id || 'candidate-unknown',
+    candidate.candidate_version || 'candidate-version-unknown',
+    sourceFingerprint,
+    approvalDraft.decision || 'decision-missing',
+  ].join(':')
+
+  return {
+    dry_run_kind: 'pm_import_candidate_browser_approval_dry_run',
+    dry_run_version: 'pm_lane_142a_local_mock_v1',
+    generated_locally_at: new Date().toISOString(),
+    authority_boundary: {
+      mutation_authority: 'not_admitted',
+      local_mock_only: true,
+      live_post_performed: false,
+      approval_row_created: false,
+      hosted_deploy_performed: false,
+      project_import_authority: admissionPlan.mutation_authority || 'not_admitted',
+    },
+    intended_request: {
+      method: 'POST',
+      route: futureRoute,
+      route_not_called_by_this_screen: true,
+      server_write_performed: false,
+    },
+    envelope: {
+      mutation_class: 'C',
+      action_type: 'persist_import_approval',
+      idempotency_key: `pm-import-approval:${idempotencyBase}`,
+      actor: PM_ACTOR,
+    },
+    payload: {
+      candidate_id: candidate.candidate_id || null,
+      candidate_version: candidate.candidate_version || null,
+      source_fingerprint: sourceFingerprint,
+      decision: approvalDraft.decision || null,
+      review_notes: approvalDraft.review_notes.trim() || null,
+      local_attestation: approvalDraft.local_attestation,
+      accepted_warning_codes: reviewChecks.exceptions_reviewed ? warningCodes : [],
+      acknowledged_no_go_check_ids: reviewChecks.admission_no_go_reviewed ? noGoCheckIds : [],
+      approval_contract_id: approvalContract.approval_contract_id || null,
+      storage_table: storagePlan.recommended_table || null,
+      approval_status_before_dry_run: {
+        classification: approvalStatus.classification || null,
+        approval_record_count_for_candidate: approvalStatus.approval_record_count_for_candidate ?? null,
+        current_candidate_match: approvalStatus.current_candidate_match ?? null,
+      },
+    },
+    local_validation: {
+      decision_draft_complete: draftComplete,
+      checklist_checked_count: checkedItems.length,
+      checklist_checked_items: checkedItems,
+      warning_acceptance_ready: Boolean(reviewChecks.exceptions_reviewed),
+      no_go_acknowledgement_ready: Boolean(reviewChecks.admission_no_go_reviewed),
+      write_guardrail_confirmed: Boolean(reviewChecks.write_guardrails_confirmed),
+    },
+    blocked_boundaries: [
+      ...notAllowed,
+      'live_approval_post',
+      'approval_row_creation',
+      'project_import',
+      'workpackage_task_apparatus_rows',
+      'assignment_schedule_status_writes',
+      'production_tracking_writes',
+    ],
+  }
+}
+
 function buildIntakeBrief(
   packet: IntakeWorkbenchPacket,
   workflowGates: Array<{ title: string; status: string; detail: string }>,
@@ -3297,6 +3382,8 @@ export default function ProjectMinerIntakeWorkbenchPage() {
   const [fieldPrepCoverageStatus, setFieldPrepCoverageStatus] = useState('')
   const [fieldPrepAgendaStatus, setFieldPrepAgendaStatus] = useState('')
   const [fieldPrepPacketStatus, setFieldPrepPacketStatus] = useState('')
+  const [approvalDryRunStatus, setApprovalDryRunStatus] = useState('')
+  const [approvalDryRunPreview, setApprovalDryRunPreview] = useState('')
   const [reviewChecks, setReviewChecks] = useState<Record<string, boolean>>({})
   const [closeoutChecks, setCloseoutChecks] = useState<Record<string, boolean>>({})
   const [fieldReadinessChecks, setFieldReadinessChecks] = useState<Record<string, boolean>>({})
@@ -3661,6 +3748,21 @@ export default function ProjectMinerIntakeWorkbenchPage() {
     const preview = buildApprovalPacketPreview(packet, notAllowed, futureRoute, reviewChecks, approvalDraft)
     downloadTextFile(approvalPreviewFileName(candidate), `${JSON.stringify(preview, null, 2)}\n`, 'application/json')
     setPreviewStatus(`Approval packet preview prepared from ${candidate?.candidate_id || 'the current intake packet'} without a server write.`)
+  }
+
+  function buildApprovalDryRun() {
+    if (!packet) {
+      return
+    }
+
+    const dryRun = buildLocalApprovalSubmissionDryRun(packet, notAllowed, futureRoute, reviewChecks, approvalDraft)
+    setApprovalDryRunPreview(`${JSON.stringify(dryRun, null, 2)}\n`)
+    setApprovalDryRunStatus(`Local approval dry run prepared for ${candidate?.candidate_id || 'the current intake packet'}; no network request was sent.`)
+  }
+
+  function clearApprovalDryRun() {
+    setApprovalDryRunPreview('')
+    setApprovalDryRunStatus('')
   }
 
   function exportExecutorHandoff() {
@@ -4762,6 +4864,57 @@ export default function ProjectMinerIntakeWorkbenchPage() {
                 </button>
                 <span style={{ color: 'var(--muted)', lineHeight: 1.55 }}>Included in the PM brief only when exported from this browser.</span>
               </div>
+            </div>
+          </div>
+        </details>
+
+        <details open aria-label="Local approval submission dry run" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
+          <summary className="status-row" style={{ cursor: 'pointer' }}>
+            <h2 style={{ margin: 0 }}>Local Approval Submission Dry Run</h2>
+            <span className="status-pill status-awaiting-values">mock only</span>
+          </summary>
+          <div aria-label="Local approval submission dry run controls">
+            <div aria-label="Approval dry run controls">
+              <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+                Builds the future approval POST envelope in this browser for review only. It does not call live services, perform hosted writes, create an approval record, import project rows, assign work, schedule work, change status, or mutate production state.
+              </p>
+              <div className="notes-grid" style={{ marginTop: '0.85rem' }}>
+                <article className="card" style={{ padding: '0.85rem', boxShadow: 'none' }}>
+                  <h2>Future route</h2>
+                  <p style={{ margin: '0.45rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{futureRoute}</p>
+                </article>
+                <article className="card" style={{ padding: '0.85rem', boxShadow: 'none' }}>
+                  <h2>Local draft gate</h2>
+                  <p style={{ margin: '0.45rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+                    {approvalDraft.decision && approvalDraft.review_notes.trim() && approvalDraft.local_attestation
+                      ? 'Decision value, review notes, and local-only attestation are present.'
+                      : 'Decision value, review notes, and local-only attestation are needed before this dry run is useful packet context.'}
+                  </p>
+                </article>
+                <article className="card" style={{ padding: '0.85rem', boxShadow: 'none' }}>
+                  <h2>Write boundary</h2>
+                  <p style={{ margin: '0.45rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+                    Live approval POST, first approval-row creation, and project import remain blocked until a separate explicit admission.
+                  </p>
+                </article>
+              </div>
+              <div className="pm-review-link-row pm-review-link-row-start" style={{ alignItems: 'center' }}>
+                <button className="btn btn-outline" onClick={buildApprovalDryRun} disabled={!packet}>
+                  Build Local Approval Dry Run
+                </button>
+                <button className="btn btn-outline" onClick={clearApprovalDryRun} disabled={!approvalDryRunPreview && !approvalDryRunStatus}>
+                  Clear dry run
+                </button>
+                <span style={{ color: 'var(--muted)', lineHeight: 1.55 }}>The generated envelope stays on this screen and sends no request.</span>
+              </div>
+              {approvalDryRunStatus ? <p role="status" style={{ color: 'var(--muted)', lineHeight: 1.55 }}>{approvalDryRunStatus}</p> : null}
+              {approvalDryRunPreview ? (
+                <pre data-testid="local-approval-dry-run-preview" style={{ marginTop: '0.85rem', maxHeight: '24rem', overflow: 'auto', whiteSpace: 'pre-wrap' }}>
+                  {approvalDryRunPreview}
+                </pre>
+              ) : (
+                <p style={{ color: 'var(--muted)', lineHeight: 1.55 }}>No local dry run has been built for this browser session.</p>
+              )}
             </div>
           </div>
         </details>

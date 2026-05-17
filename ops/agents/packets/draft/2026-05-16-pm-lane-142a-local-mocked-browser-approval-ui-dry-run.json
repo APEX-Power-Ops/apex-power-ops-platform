@@ -1,0 +1,52 @@
+{
+  "packet_id": "2026-05-16-pm-lane-142a",
+  "lane": "PM Lane 142A",
+  "title": "Local Mocked Browser Approval UI Dry Run",
+  "created_at_local": "2026-05-16",
+  "source_floor_commit": "db1529d602b82aecd538b61e22f8f64e693ce829",
+  "objective": "Implement a local-only browser approval dry-run panel on /pm-review/import-intake that builds the future PM approval envelope without sending a live POST or creating an approval row.",
+  "execution_mode": "local_product_code_plus_status_docs",
+  "scope": [
+    "Add a Local Approval Submission Dry Run panel to the Project Miner PM intake workbench.",
+    "Build the future approval envelope from candidate identity, source fingerprint, local decision draft, checked review evidence, warning acceptance, no-go acknowledgement, approval-status readback, and the future approval route.",
+    "Keep the dry run on-screen in browser state only.",
+    "Extend the focused Playwright smoke to prove dry-run payload shape and zero mutation requests.",
+    "Update PM lane status/docs and record governed packet/handoff artifacts."
+  ],
+  "not_allowed": [
+    "No live POST to /api/v1/mutations/project-import-approvals.",
+    "No approval row creation.",
+    "No hosted deployment or promotion.",
+    "No Supabase, Render, Vercel, or Olares action.",
+    "No SQL or schema migration.",
+    "No secret access or secret rotation.",
+    "No project import, workpackage rows, task rows, apparatus rows, assignment, schedule, status, durable field record, production tracking, workbook macro, or workbook writeback.",
+    "No service, auth, DNS, ingress, or control-plane widening.",
+    "No autonomous AI business-state mutation."
+  ],
+  "live_write_gate": {
+    "status": "not_admitted",
+    "required_phrase": "I explicitly admit PM Lane 142 live approval POST and first approval-row creation for the current Project Miner Temp Power import candidate.",
+    "note": "This phrase was not present for PM Lane 142A, so the lane remains local dry-run only."
+  },
+  "changed_files": [
+    "PROJECT_STATUS.md",
+    "apps/operations-web/app/pm-review/import-intake/page.tsx",
+    "apps/operations-web/tests/browser-shell.pm-import-intake.smoke.spec.ts",
+    "docs/operations/APEX-PM-STAKEHOLDER-TIME-PROTECTION-AND-ACCELERATION-LANE-2026-05-15.md",
+    "docs/operations/APEX-PM-TEMP-POWER-DELIVERY-AND-ORCHESTRATION-PLAN-2026-05-15.md",
+    "docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md",
+    "ops/agents/packets/draft/2026-05-16-pm-lane-142a-local-mocked-browser-approval-ui-dry-run.json",
+    "ops/agents/handoffs/2026-05-16-pm-lane-142a-local-mocked-browser-approval-ui-dry-run-handoff.md"
+  ],
+  "validation_steps": [
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform\" --filter @apex/operations-web typecheck",
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform\" --filter @apex/operations-web build",
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform/apps/operations-web\" exec playwright test \"browser-shell.pm-import-intake.smoke.spec.ts\"",
+    "rg -n \"PM Lane 142A|Local Approval Submission Dry Run|local mocked|No live POST|No approval row|project import remains blocked|mutationRequests\\)\\.toHaveLength\\(0\\)\" PROJECT_STATUS.md docs/operations ops/agents apps/operations-web",
+    "git diff --check"
+  ],
+  "validation_result": "PASS: operations-web typecheck passed, operations-web production build passed, focused PM import-intake Playwright smoke passed with 1 passed, guardrail search confirmed Lane 142A/dry-run/no-live-write language, and scoped diff check passed.",
+  "sidecar_result": "Read-only sidecar recommended PM Lane 142A as a local mocked browser approval UI implementation touching the PM intake page, focused smoke, status/docs, and packet/handoff artifacts only. It reiterated no live POST, no approval row, no hosted action, no SQL/schema change, and no project import.",
+  "next_recommended_lane": "PM Lane 143 - dry-run envelope export or operator review ergonomics, still no live POST unless the exact explicit admission phrase is provided"
+}
