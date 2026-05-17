@@ -395,6 +395,12 @@ type OpenItemsLensItem = {
   detail: string
 }
 
+type OpenItemsLensGroup = {
+  id: string
+  label: string
+  items: OpenItemsLensItem[]
+}
+
 const { useCallback, useEffect, useMemo, useState } = React
 
 const API_BASE =
@@ -2598,7 +2604,7 @@ function buildPmIntakeOpenItemsLens(
   closeoutChecks: Record<string, boolean>,
   persistenceReadinessGates: ReadinessGate[],
   admissionPlan: AdmissionPlan | undefined,
-): OpenItemsLensItem[] {
+): OpenItemsLensGroup[] {
   const exceptionCount = importExceptionRegisterCounts(importExceptionRegister)
   const decisionDraftComplete = Boolean(approvalDraft.decision && approvalDraft.review_notes.trim() && approvalDraft.local_attestation)
   const fieldPrepNextCount = fieldPrepQueue.filter((item) => item.status === 'next').length
@@ -2609,52 +2615,70 @@ function buildPmIntakeOpenItemsLens(
 
   return [
     {
-      id: 'exception-review-open-items',
-      title: 'Exception review',
-      status: exceptionCount.open ? 'open' : exceptionCount.blocked ? 'blocked' : 'context',
-      href: '#import-exception-register',
-      detail: exceptionCount.open
-        ? `${exceptionCount.open} local exception item(s) still need attention; ${exceptionCount.blocked} future boundary item(s) remain blocked.`
-        : exceptionCount.blocked
-          ? `Local exception attention is covered, but ${exceptionCount.blocked} future boundary item(s) remain blocked.`
-          : 'No local exception items are currently open.',
+      id: 'local-attention-items',
+      label: 'Local Attention Items',
+      items: [
+        {
+          id: 'exception-review-open-items',
+          title: 'Exception review',
+          status: exceptionCount.open ? 'open' : exceptionCount.blocked ? 'blocked' : 'context',
+          href: '#import-exception-register',
+          detail: exceptionCount.open
+            ? `${exceptionCount.open} local exception item(s) still need attention; ${exceptionCount.blocked} future boundary item(s) remain blocked.`
+            : exceptionCount.blocked
+              ? `Local exception attention is covered, but ${exceptionCount.blocked} future boundary item(s) remain blocked.`
+              : 'No local exception items are currently open.',
+        },
+        {
+          id: 'decision-draft-open-items',
+          title: 'Decision draft',
+          status: decisionDraftComplete ? 'context' : 'open',
+          href: '#pm-operating-queue',
+          detail: decisionDraftComplete
+            ? 'Local decision value, review notes, and local-only attestation are present.'
+            : 'Decision value, review notes, and local-only attestation still need local draft context.',
+        },
+        {
+          id: 'field-prep-open-items',
+          title: 'Field prep',
+          status: fieldPrepNextCount ? 'open' : fieldPrepBlockedCount ? 'blocked' : 'context',
+          href: '#field-prep',
+          detail: `${fieldPrepNextCount} field-prep item(s) are next; ${fieldPrepBlockedCount} field-prep item(s) are blocked.`,
+        },
+      ],
     },
     {
-      id: 'decision-draft-open-items',
-      title: 'Decision draft',
-      status: decisionDraftComplete ? 'context' : 'open',
-      href: '#pm-operating-queue',
-      detail: decisionDraftComplete
-        ? 'Local decision value, review notes, and local-only attestation are present.'
-        : 'Decision value, review notes, and local-only attestation still need local draft context.',
+      id: 'executor-evidence-context',
+      label: 'Executor Evidence Context',
+      items: [
+        {
+          id: 'executor-closeout-open-items',
+          title: 'Executor closeout evidence',
+          status: closeoutCheckedCount === CLOSEOUT_CHECKLIST_ITEMS.length ? 'context' : 'open',
+          href: '#executor-closeout',
+          detail: `${closeoutCheckedCount} of ${CLOSEOUT_CHECKLIST_ITEMS.length} local closeout evidence checks are marked.`,
+        },
+      ],
     },
     {
-      id: 'field-prep-open-items',
-      title: 'Field prep',
-      status: fieldPrepNextCount ? 'open' : fieldPrepBlockedCount ? 'blocked' : 'context',
-      href: '#field-prep',
-      detail: `${fieldPrepNextCount} field-prep item(s) are next; ${fieldPrepBlockedCount} field-prep item(s) are blocked.`,
-    },
-    {
-      id: 'executor-closeout-open-items',
-      title: 'Executor closeout evidence',
-      status: closeoutCheckedCount === CLOSEOUT_CHECKLIST_ITEMS.length ? 'context' : 'open',
-      href: '#executor-closeout',
-      detail: `${closeoutCheckedCount} of ${CLOSEOUT_CHECKLIST_ITEMS.length} local closeout evidence checks are marked.`,
-    },
-    {
-      id: 'approval-persistence-open-items',
-      title: 'Approval persistence boundary',
-      status: 'blocked',
-      href: '#approval-readiness',
-      detail: `${blockedPersistenceGateCount} of ${persistenceReadinessGates.length} approval-persistence gates remain blocked until a later packet admits that path.`,
-    },
-    {
-      id: 'project-import-open-items',
-      title: 'Project import boundary',
-      status: 'blocked',
-      href: '#guardrails',
-      detail: `Project import remains ${formatLabel(admissionAuthority)} for project, workpackage, task, apparatus, assignment, schedule, and status rows.`,
+      id: 'future-authority-blockers',
+      label: 'Future Authority Blockers',
+      items: [
+        {
+          id: 'approval-persistence-open-items',
+          title: 'Approval persistence boundary',
+          status: 'blocked',
+          href: '#approval-readiness',
+          detail: `${blockedPersistenceGateCount} of ${persistenceReadinessGates.length} approval-persistence gates remain blocked until a later packet admits that path.`,
+        },
+        {
+          id: 'project-import-open-items',
+          title: 'Project import boundary',
+          status: 'blocked',
+          href: '#guardrails',
+          detail: `Project import remains ${formatLabel(admissionAuthority)} for project, workpackage, task, apparatus, assignment, schedule, and status rows.`,
+        },
+      ],
     },
   ]
 }
@@ -7786,24 +7810,31 @@ export default function ProjectMinerIntakeWorkbenchPage() {
             <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
               Exception-first lens for local attention items and future authority blockers. It creates no localStorage key, export artifact, backend route, schema, approval record, task, issue, work authorization, or production write.
             </p>
-            <div aria-label="Local PM intake open items lens items" style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
-              {pmIntakeOpenItems.map((item) => (
-                <a
-                  key={item.id}
-                  className="card"
-                  href={item.href}
-                  style={{ color: 'inherit', display: 'block', padding: '0.85rem', textDecoration: 'none', boxShadow: 'none' }}
-                >
-                  <div className="status-row" style={{ alignItems: 'start' }}>
-                    <div>
-                      <p style={{ margin: 0 }}>
-                        <strong>{item.title}</strong>
-                      </p>
-                      <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
-                    </div>
-                    <span className={`status-pill ${openItemsTone(item.status)}`}>{formatLabel(item.status)}</span>
+            <div aria-label="Local PM intake open items lens groups" style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
+              {pmIntakeOpenItems.map((group) => (
+                <section key={group.id} aria-label={`${group.label} open items lens group`} className="card" style={{ padding: '0.85rem', boxShadow: 'none' }}>
+                  <h3 style={{ fontSize: '0.95rem', margin: '0 0 0.65rem' }}>{group.label}</h3>
+                  <div aria-label={`${group.label} open items lens items`} style={{ display: 'grid', gap: '0.75rem' }}>
+                    {group.items.map((item) => (
+                      <a
+                        key={item.id}
+                        className="card"
+                        href={item.href}
+                        style={{ color: 'inherit', display: 'block', padding: '0.85rem', textDecoration: 'none', boxShadow: 'none' }}
+                      >
+                        <div className="status-row" style={{ alignItems: 'start' }}>
+                          <div>
+                            <p style={{ margin: 0 }}>
+                              <strong>{item.title}</strong>
+                            </p>
+                            <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
+                          </div>
+                          <span className={`status-pill ${openItemsTone(item.status)}`}>{formatLabel(item.status)}</span>
+                        </div>
+                      </a>
+                    ))}
                   </div>
-                </a>
+                </section>
               ))}
             </div>
           </div>
