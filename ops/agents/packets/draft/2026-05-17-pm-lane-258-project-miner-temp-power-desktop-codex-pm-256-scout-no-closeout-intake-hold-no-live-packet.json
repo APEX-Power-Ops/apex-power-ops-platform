@@ -1,0 +1,42 @@
+{
+  "packet_id": "2026-05-17-pm-lane-258-project-miner-temp-power-desktop-codex-pm-256-scout-no-closeout-intake-hold-no-live-packet",
+  "title": "PM Lane 258 - Project Miner Temp Power Desktop Codex PM-256 Scout No-Closeout Intake Hold No-Live Packet",
+  "date": "2026-05-17",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_DESKTOP_CODEX_PM_256_SCOUT_NO_CLOSEOUT_INTAKE_HOLD_NO_LIVE",
+  "selected_outcome": "DESKTOP_CODEX_PM_256_SCOUT_AWAITING_CLOSEOUT_KEEP_NO_LIVE",
+  "desktop_codex_dispatch": {
+    "support_item": "PM-256-SCOUT",
+    "expected_closeout_path": "ops/agents/handoffs/2026-05-17-desktop-codex-pm-lane-256-state-review-next-move-selector-scout-closeout.md",
+    "closeout_present": false,
+    "closeout_result_inferred": false,
+    "queue_state": "IN_PROGRESS_GOVERNED_SCOUT_AWAITING_CLOSEOUT",
+    "authority_band": "Band A PM support under VS Code Codex technical authority"
+  },
+  "active_warning_gate": {
+    "warning_code": "PROJECT_DATA_ENTRY_FORMULA_ERRORS",
+    "valid_pm_lane_238_label_present": false,
+    "warning_disposition_changed": false,
+    "mutation_authority": "not_admitted"
+  },
+  "allowed_next_transitions": [
+    "VS Code Codex reviews the allowed closeout if it appears",
+    "PM work continues only as no-code review-control work if no closeout appears",
+    "scope widening or capability-gap requests are classified before any action"
+  ],
+  "required_pm_lane_238_labels": [
+    "ACCEPT_DATA_ENTRY_WARNING_NON_BLOCKING_NO_LIVE",
+    "REQUEST_DATA_ENTRY_WORKBOOK_CORRECTION_NO_LIVE",
+    "HOLD_DATA_ENTRY_WARNING_NO_LIVE",
+    "PROVIDE_EXACT_LIVE_ADMISSION_LATER"
+  ],
+  "validation": [
+    "packet JSON parse",
+    "closeout absence check",
+    "dispatch-hold text search",
+    "queue text search",
+    "marker-token scan",
+    "corrupted-token scan",
+    "git diff --check"
+  ],
+  "validation_result": "PASS"
+}

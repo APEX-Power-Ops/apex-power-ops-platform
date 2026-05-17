@@ -918,6 +918,8 @@ PM Lane 256 records the post-Lane 255 PM lane state and selects the next safe po
 
 PM Lane 257 queues the PM Lane 256 Desktop Codex support prompt as a governed read-only scout. Desktop Codex may write exactly one closeout handoff, may review clarity, relay burden, cue saturation, and authority boundary only, and still may not choose a PM Lane 238 label, accept warnings, approve rows, import project data, assign resources, mutate schedule/status, or create customer/business commitments.
 
+PM Lane 258 records that the allowed Desktop Codex PM-256 closeout has not returned yet. The PM support queue stays open under `IN_PROGRESS_GOVERNED_SCOUT_AWAITING_CLOSEOUT`, no Desktop Codex result is inferred, and the Project Data Entry warning gate remains unchanged until exactly one PM Lane 238 label is returned.
+
 The success standard is not just technical correctness. The candidate must reduce Jason's review burden by showing:
 
 1. what the system thinks the project is,

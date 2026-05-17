@@ -760,6 +760,7 @@ Current known gaps:
 30. PM Lane 255 adds the same no-live source/resource question-prep cue to Daily Action Panels after the field-start operator script and before stop-line review. It creates no links, buttons, export artifact, storage key, source access/writeback, resource assignment, schedule/status change, procurement or rental commitment, customer commitment, warning acceptance, approval row, project import, or Desktop Codex PM decision authority.
 31. PM Lane 256 pauses additional display-only workbench cues unless fresh scan-burden evidence appears. The next safe PM move is exact-label intake for `PROJECT_DATA_ENTRY_FORMULA_ERRORS` or no-code review-control work only, with live admission, approval rows, project import, resource assignment, schedule/status mutation, customer commitments, and Desktop Codex PM decision authority still blocked.
 32. PM Lane 257 queues the Desktop Codex PM Lane 256 read-only scout with exactly one closeout handoff write allowed. This tests dual-lane support without allowing Desktop Codex to make PM decisions, edit product code, access hosted services, read source contents, accept warnings, approve/import rows, assign resources, mutate schedule/status, or create business-state changes.
+33. PM Lane 258 records that the Desktop Codex PM-256 closeout has not returned yet and updates the PM support queue to `IN_PROGRESS_GOVERNED_SCOUT_AWAITING_CLOSEOUT`. No scout result is inferred, and the active Data Entry warning gate remains unchanged.
 
 Required response to new gaps:
 
