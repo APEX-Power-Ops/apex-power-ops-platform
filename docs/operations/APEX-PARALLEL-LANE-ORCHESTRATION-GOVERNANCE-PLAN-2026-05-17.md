@@ -1,7 +1,7 @@
 # APEX Parallel Lane Orchestration Governance Plan
 
 Date: 2026-05-17
-Status: Technically approved by VS Code Codex with required amendments; activation pending stakeholder approval statement
+Status: Active under VS Code Codex technical authority for non-PM orchestration governance only
 Scope: Desktop Codex delegated orchestration governance, VS Code Codex PM-lane authority protection, and parallel lane admission rules
 
 ## Purpose
@@ -21,18 +21,18 @@ That authority is intentional and useful for the time-sensitive Project Miner Te
 
 ## Repo Technical Authority Decision
 
-Decision: approved with required operating amendments.
+Decision: approved and activated with required operating amendments.
 
 VS Code Codex reviewed this plan as repo technical authority and approves the proposed operating model because it protects the PM lane, preserves VS Code Codex final integration authority, and keeps production/schema/credential/runtime authority outside Desktop Codex by default.
 
-This technical approval does not activate expanded Desktop Codex authority by implication. Activation still requires the approval statement in this document or a later packet that explicitly admits the same boundary.
+Stakeholder activation was provided in the VS Code Codex session with the clarified boundary that VS Code Codex remains technical authority over all APEX Ops lanes, including NETA, TCC, Relay, Olares, hosted services, schemas, credentials, repo publication, and PM lane execution.
 
-Publication of this plan admits no product code change, deployment, schema change, credential handling, MCP service admission, Olares runtime change, PM business-state mutation, or autonomous queue ownership.
+This activation admits Desktop Codex orchestration governance for non-PM lanes only. It admits no product code change, deployment, schema change, credential handling, MCP service admission, Olares runtime change, PM business-state mutation, repo publication authority, or autonomous queue ownership.
 
 ### Required Amendments
 
-1. Technical approval and activation are separate gates. This document records VS Code Codex technical approval, but Desktop Codex does not become active orchestration governor until the stakeholder approval statement is provided or a later packet explicitly admits the same boundary.
-2. The first active Desktop Codex-governed move must be documentation and governance only: one orchestration queue, three bounded non-PM prompts, one closeout handoff, and one `READY_FOR_JASON_DECISION` summary.
+1. VS Code Codex remains technical authority over all APEX Ops lanes. Desktop Codex is a delegated orchestration governor only, not a parallel technical authority.
+2. The first active Desktop Codex-governed move is documentation and governance only: one orchestration queue, three bounded non-PM prompts, one closeout handoff, and one `READY_FOR_JASON_DECISION` summary.
 3. Desktop Codex may not stage, commit, push, fast-forward the Olares host, or publish status surfaces unless an approved packet explicitly assigns that closeout authority and exact file set.
 4. Desktop Codex-governed packets must name exact read paths, write paths, forbidden paths, commands, validation, closeout path, stop conditions, and escalation target before any executor begins.
 5. Any capability gap must be surfaced as `BLOCKED_CAPABILITY_GAP`; Desktop Codex must not route around missing credentials, missing tools, unavailable connectors, or unclear authority.
@@ -310,9 +310,9 @@ Desktop Codex must stop and escalate if any lane attempts to:
 | TCC | Proposed parallel lane | Band A first | Govern scout packet and dependency map | Architecture review at integration boundary | Approve TCC scout scope |
 | Relay | Proposed parallel lane | Band A/B | Govern orchestration templates and review-burden metrics | Review before any admitted orchestration widening | Approve relay governance packet |
 
-## First Approved Move After Activation
+## First Approved Move
 
-If this plan is activated by the approval statement or a later admitting packet, the first move should be a Desktop Codex-governed packet that creates the orchestration queue and three non-PM lane prompts:
+The first activated Desktop Codex-governed move creates the orchestration queue and three non-PM lane prompts:
 
 1. NETA Study Material scout/build prompt,
 2. TCC scout prompt,
@@ -326,6 +326,14 @@ Expected output:
 2. three bounded non-PM prompts,
 3. one closeout handoff,
 4. a short `READY_FOR_JASON_DECISION` summary.
+
+Output paths:
+
+1. `ops/agents/handoffs/2026-05-17-desktop-codex-parallel-lane-orchestration-queue.md`,
+2. `ops/agents/handoffs/2026-05-17-desktop-codex-neta-study-material-scout-build-prompt.md`,
+3. `ops/agents/handoffs/2026-05-17-desktop-codex-tcc-scout-prompt.md`,
+4. `ops/agents/handoffs/2026-05-17-desktop-codex-relay-review-burden-prompt.md`,
+5. `ops/agents/handoffs/2026-05-17-desktop-codex-governance-activation-closeout-handoff.md`.
 
 ## Approval Statement
 

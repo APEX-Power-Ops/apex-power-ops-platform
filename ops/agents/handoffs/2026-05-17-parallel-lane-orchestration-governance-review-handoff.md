@@ -1,16 +1,16 @@
-# Parallel Lane Orchestration Governance Technical Approval Handoff
+# Parallel Lane Orchestration Governance Technical Approval And Activation Handoff
 
 ## Summary
 
-The proposed parallel-lane orchestration governance plan was reviewed by VS Code Codex as repo technical authority and technically approved with required operating amendments.
+The proposed parallel-lane orchestration governance plan was reviewed by VS Code Codex as repo technical authority, technically approved with required operating amendments, and activated for non-PM orchestration governance only.
 
-The plan keeps the PM lane under VS Code Codex technical authority while proposing Desktop Codex as a delegated orchestration governor for non-PM lanes.
+The plan keeps all APEX Ops lanes under VS Code Codex technical authority while admitting Desktop Codex as a delegated orchestration governor for non-PM lanes under the approved criteria.
 
 ## Review Verdict
 
-Technically approved with required amendments.
+Technically approved and activated with required amendments.
 
-Activation is still pending the explicit approval statement in the plan or a later packet that admits the same boundary.
+Activation is limited to orchestration governance, packet framing, sidecar delegation, evidence collection, and readiness classification for non-PM lanes.
 
 ## Required Amendments Added
 
@@ -25,6 +25,7 @@ Activation is still pending the explicit approval statement in the plan or a lat
 ## Boundary Preserved
 
 - No expanded Desktop Codex production authority was activated.
+- VS Code Codex remains technical authority over all APEX Ops lanes.
 - No product code changed.
 - No schema, SQL, Supabase, Render, Vercel, Olares, credential, MCP service, auth, ingress, or runtime change was admitted.
 - No PM business-state mutation was admitted.
@@ -36,16 +37,25 @@ Activation is still pending the explicit approval statement in the plan or a lat
 - `PROJECT_STATUS.md`
 - `docs/operations/APEX-PARALLEL-LANE-ORCHESTRATION-GOVERNANCE-PLAN-2026-05-17.md`
 - `ops/agents/handoffs/2026-05-17-parallel-lane-orchestration-governance-review-handoff.md`
+- `ops/agents/handoffs/2026-05-17-desktop-codex-parallel-lane-orchestration-queue.md`
+- `ops/agents/handoffs/2026-05-17-desktop-codex-neta-study-material-scout-build-prompt.md`
+- `ops/agents/handoffs/2026-05-17-desktop-codex-tcc-scout-prompt.md`
+- `ops/agents/handoffs/2026-05-17-desktop-codex-relay-review-burden-prompt.md`
+- `ops/agents/handoffs/2026-05-17-desktop-codex-governance-activation-closeout-handoff.md`
 
 ## Validation
 
 ```powershell
-rg -n "Technically approved by VS Code Codex|Repo Technical Authority Decision|Technical approval and activation are separate gates|Activation is still pending" PROJECT_STATUS.md docs/operations/APEX-PARALLEL-LANE-ORCHESTRATION-GOVERNANCE-PLAN-2026-05-17.md ops/agents/handoffs/2026-05-17-parallel-lane-orchestration-governance-review-handoff.md
-git diff --check -- PROJECT_STATUS.md docs/operations/APEX-PARALLEL-LANE-ORCHESTRATION-GOVERNANCE-PLAN-2026-05-17.md ops/agents/handoffs/2026-05-17-parallel-lane-orchestration-governance-review-handoff.md
+rg -n "Active under VS Code Codex technical authority|Technically approved and activated|READY_FOR_JASON_DECISION|Desktop Codex governance is ready" PROJECT_STATUS.md docs/operations/APEX-PARALLEL-LANE-ORCHESTRATION-GOVERNANCE-PLAN-2026-05-17.md ops/agents/handoffs
+git diff --check -- PROJECT_STATUS.md docs/operations/APEX-PARALLEL-LANE-ORCHESTRATION-GOVERNANCE-PLAN-2026-05-17.md ops/agents/handoffs/2026-05-17-parallel-lane-orchestration-governance-review-handoff.md ops/agents/handoffs/2026-05-17-desktop-codex-*.md
 ```
 
 Expected result: both checks pass.
 
 ## Next Safe Move
 
-If the approval statement is provided, the first admitted Desktop Codex-governed move should create the orchestration queue and three bounded non-PM lane prompts only. It should not change product code, deployment, schema, credentials, MCP services, Olares runtime, PM business state, or repo publication state unless the admitting packet explicitly includes that closeout authority and exact file set.
+The first recommended Desktop Codex assignment is the Relay review-burden prompt:
+
+- `ops/agents/handoffs/2026-05-17-desktop-codex-relay-review-burden-prompt.md`
+
+It should not change product code, deployment, schema, credentials, MCP services, Olares runtime, PM business state, or repo publication state unless a later admitting packet explicitly includes that closeout authority and exact file set.
