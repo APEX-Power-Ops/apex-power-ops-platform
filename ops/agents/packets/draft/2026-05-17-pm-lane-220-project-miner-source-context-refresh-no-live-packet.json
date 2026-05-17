@@ -1,0 +1,148 @@
+{
+  "packet_id": "2026-05-17-pm-lane-220",
+  "title": "PM Lane 220 - Project Miner Source Context Refresh No-Live Packet",
+  "lane": "PM",
+  "status": "local_no_live_source_context_refresh_packet",
+  "decision_label": "PROJECT_MINER_SOURCE_CONTEXT_REFRESH_NO_LIVE_METADATA_ONLY_NO_WRITE",
+  "scope": [
+    "Refresh Project Miner source-context metadata from local file names, sizes, modified times, and expected path existence.",
+    "Record human confirmation questions for current source-of-truth selection.",
+    "Prepare the next no-live source artifact role confirmation packet.",
+    "Exercise dual-lane orchestration through bounded read-only review only."
+  ],
+  "metadata_only_sources_reviewed": [
+    {
+      "path": "C:\\Users\\jjswe\\Desktop\\Project Miner PM Planning",
+      "inspection": "directory listing by filename, size, and modified time only"
+    },
+    {
+      "path": "C:\\APEX Platform\\Reference_Files\\Excel\\Estimator VBA Modules\\DataverseExport.bas",
+      "inspection": "existence check only"
+    },
+    {
+      "path": "C:\\APEX Platform\\Reference_Files\\Excel\\Estimator VBA Modules\\DataverseMappingVerification.bas",
+      "inspection": "existence check only"
+    }
+  ],
+  "source_items": [
+    {
+      "name": "15_ELECTRICAL_COMBINED.pdf",
+      "size_bytes": 315039039,
+      "last_modified": "2026-03-12 09:05:10",
+      "lane_interpretation": "drawing/source reference candidate; content not opened"
+    },
+    {
+      "name": "Building B IFC.pdf",
+      "size_bytes": 530280550,
+      "last_modified": "2026-04-01 09:57:09",
+      "lane_interpretation": "drawing/source reference candidate; content not opened"
+    },
+    {
+      "name": "Cupertino - Miner Estimator PHX Bldg A & B MV Rev9.xlsm",
+      "size_bytes": 1306791,
+      "last_modified": "2026-05-13 12:36:02",
+      "lane_interpretation": "estimator workbook candidate; workbook not opened and macros not run"
+    },
+    {
+      "name": "EQUIPMENT INVENTORY - 2026.xlsx",
+      "size_bytes": 50762,
+      "last_modified": "2026-05-13 08:09:38",
+      "lane_interpretation": "resource context candidate; workbook not opened"
+    },
+    {
+      "name": "Estimator R3 - Project Miner Temp Power Testing.xlsm",
+      "size_bytes": 914288,
+      "last_modified": "2026-05-15 05:42:08",
+      "lane_interpretation": "Temp Power estimator candidate; workbook not opened and macros not run"
+    },
+    {
+      "name": "Garney- Central Mesa Reuse Tracker #677562.xlsm",
+      "size_bytes": 4513105,
+      "last_modified": "2025-12-29 08:36:56",
+      "lane_interpretation": "existing PM tracker/import-planning reference; workbook not opened and macros not run"
+    },
+    {
+      "name": "Miner Temp SLD-AP-BCARRASCO.pdf",
+      "size_bytes": 6223173,
+      "last_modified": "2026-04-16 20:14:30",
+      "lane_interpretation": "Temp Power drawing/source reference candidate; content not opened"
+    },
+    {
+      "name": "Phx Tech Testing Capability Matrix 032726.xlsx",
+      "size_bytes": 29557,
+      "last_modified": "2026-04-24 10:14:08",
+      "lane_interpretation": "technician/resource context candidate; workbook not opened"
+    },
+    {
+      "name": "RESA Power - Project Data Entry MASTER.xlsm",
+      "size_bytes": 4202870,
+      "last_modified": "2026-05-15 13:31:14",
+      "lane_interpretation": "Project Data Entry planning workbook candidate; workbook not opened and macros not run"
+    }
+  ],
+  "source_context_buckets": [
+    "CURRENT_SOURCE_CANDIDATE",
+    "REFERENCE_ONLY",
+    "RESOURCE_CONTEXT",
+    "UNKNOWN_OR_STALE",
+    "STOP_AUTHORITY_REQUIRED"
+  ],
+  "sidecar_review": {
+    "recommended_label": "PROJECT_MINER_SOURCE_CONTEXT_REFRESH_NO_LIVE_NO_WRITE",
+    "technical_authority_disposition": [
+      "Adopt the sidecar's no-live/no-write shape.",
+      "Use the stricter metadata-only decision label because this lane inspected local source filenames, sizes, modified times, and path existence only.",
+      "Defer any Desktop Codex source classification handoff until after this formal packet exists and a separate review is needed."
+    ]
+  },
+  "human_confirmation_questions": [
+    "Which file is the current estimator source for the Temp Power work?",
+    "Is Estimator R3 - Project Miner Temp Power Testing.xlsm the current Temp Power estimator, a test workbook, or a scratch copy?",
+    "Is Cupertino - Miner Estimator PHX Bldg A & B MV Rev9.xlsm part of the current Project Miner work, or a related/older estimator reference?",
+    "Is RESA Power - Project Data Entry MASTER.xlsm still the intended apparatus/task planning workbook for turning estimator output into PM review rows?",
+    "Is Garney- Central Mesa Reuse Tracker #677562.xlsm an example/import-planning reference only, or does it still carry current process logic?",
+    "Which drawing files should be considered current for Temp Power scope review?",
+    "Are the two upcoming New Mexico data-center projects represented in this folder, or is a separate source package still expected?",
+    "Which source files may be safely opened later by an admitted review packet, and which should remain metadata-only?",
+    "Which source artifacts must be excluded from Git or only referenced as external local/Box sources?",
+    "What candidate identity should be used later, if and only if a separate no-write candidate review packet is admitted?"
+  ],
+  "next_recommended_lane": "PM Lane 221 - Project Miner Source Artifact Role Confirmation No-Live Packet",
+  "non_actions": [
+    "No hosted smoke",
+    "No browser live route access",
+    "No Supabase, Render, Vercel, or Olares action",
+    "No SQL or schema migration",
+    "No secret exposure",
+    "No workbook content read",
+    "No workbook macro execution",
+    "No workbook writeback",
+    "No source PDF content read",
+    "No durable source fingerprint",
+    "No live approval POST",
+    "No approval row creation",
+    "No project import",
+    "No notes, tasks, action items, owners, or due dates",
+    "No field or production write",
+    "No customer or finance output",
+    "No autonomous AI business-state mutation"
+  ],
+  "hard_stop_conditions": [
+    "Hosted proof, browser live route, Supabase, Render, Vercel, Olares, credentials, or secrets required",
+    "Workbook content inspection, macro execution, workbook writeback, or source PDF content review required without a separately admitted packet",
+    "Live approval POST, approval-row creation, project import, assignment, schedule/status, field, production, customer, or finance write required",
+    "Exact PM Lane 142 phrase absent but executor attempts to continue toward live approval",
+    "Local source metadata treated as candidate fingerprint, source fingerprint, shape fingerprint, or current business-state truth",
+    "Sidecar attempts to stage, commit, push, publish, or create PM business state",
+    "Secret exposure attempted",
+    "Autonomous AI business-state mutation attempted"
+  ],
+  "validation_commands": [
+    "Get-Content -LiteralPath 'ops/agents/packets/draft/2026-05-17-pm-lane-220-project-miner-source-context-refresh-no-live-packet.json' | ConvertFrom-Json | Select-Object -ExpandProperty packet_id",
+    "rg -n \"PM Lane 220|PROJECT_MINER_SOURCE_CONTEXT_REFRESH_NO_LIVE_METADATA_ONLY_NO_WRITE|CURRENT_SOURCE_CANDIDATE|UNKNOWN_OR_STALE|STOP_AUTHORITY_REQUIRED|PM Lane 221|No workbook content read|No source PDF content read|No project import\" PROJECT_STATUS.md docs/operations/APEX-PM-LANE-220-PROJECT-MINER-SOURCE-CONTEXT-REFRESH-NO-LIVE-PACKET-2026-05-17.md docs/operations/APEX-PM-STAKEHOLDER-TIME-PROTECTION-AND-ACCELERATION-LANE-2026-05-15.md docs/operations/APEX-PM-TEMP-POWER-DELIVERY-AND-ORCHESTRATION-PLAN-2026-05-15.md docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md ops/agents/packets/draft/2026-05-17-pm-lane-220-project-miner-source-context-refresh-no-live-packet.json ops/agents/handoffs/2026-05-17-pm-lane-220-project-miner-source-context-refresh-no-live-packet-handoff.md ops/agents/handoffs/2026-05-17-pm-lane-220-project-miner-source-context-refresh-no-live-packet-closeout.md",
+    "corrupted-token scan on touched Lane 220 files",
+    "null-byte check on touched Lane 220 files",
+    "git diff --check on touched Lane 220 files"
+  ],
+  "validation_result": "PASS - Packet JSON parsed; Lane 220 guardrails and decision labels found across intended touched files; corrupted-token scan found no matches after validation-result update; null-byte check passed; git diff --check reported only line-ending warnings."
+}

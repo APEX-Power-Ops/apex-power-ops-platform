@@ -163,6 +163,8 @@ PM Lane 218 publishes the no-code Project Miner Field-Start Clarification Review
 
 PM Lane 219 publishes the no-code Project Miner Field-Start Clarification Return Closeout And Next-Packet Selection packet. It adds a local classifier under `PROJECT_MINER_FIELD_START_CLARIFICATION_RETURN_CLOSEOUT_NEXT_PACKET_SELECTION_NO_LIVE_NO_WRITE` so returned clarification can be sorted into hold, source refresh, later approval prep, or later import prep, with customer/site, lead/resource, UI scan-burden, and authority-required stop conditions tracked as context flags. It opens no hosted proof, browser live route, approval POST, approval row, project import, notes/tasks/owners/due dates, field instruction, assignment, schedule/status, customer report, finance output, or downstream PM business-state mutation.
 
+PM Lane 220 publishes the no-code Project Miner Source Context Refresh No-Live Packet. It uses metadata-only local evidence under `PROJECT_MINER_SOURCE_CONTEXT_REFRESH_NO_LIVE_METADATA_ONLY_NO_WRITE` to confirm that the Project Miner planning folder, estimator export modules, tracker workbook, and Project Data Entry workbook are visible before the next source-role decision. It asks which files are current source candidates, reference only, resource context, unknown/stale, or authority-required stops, while opening no workbook content read, PDF content read, macro execution, durable fingerprint, hosted proof, browser live route, approval POST, approval row, project import, notes/tasks/owners/due dates, field instruction, assignment, schedule/status, customer report, finance output, or downstream PM business-state mutation.
+
 Immediate orchestration priority order:
 
 1. Stop cycling templates unless a real executor-friction signal exists.
