@@ -1,0 +1,75 @@
+{
+  "packet_id": "2026-05-17-pm-lane-256-project-miner-temp-power-pm-lane-state-review-and-next-move-selector-no-live-packet",
+  "title": "PM Lane 256 - Project Miner Temp Power PM Lane State Review And Next Move Selector No-Live Packet",
+  "date": "2026-05-17",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_PM_LANE_STATE_REVIEW_AND_NEXT_MOVE_SELECTOR_NO_LIVE",
+  "selected_outcome": "PM_LANE_STATE_REVIEW_UI_ADDITIONS_PAUSED_NEXT_MOVE_SELECTED_NO_LIVE",
+  "candidate": {
+    "candidate_id": "pm-import-candidate-miner-temp-power",
+    "tasks": 15,
+    "apparatus_candidates": 184,
+    "warnings": 1,
+    "blockers": 0,
+    "active_warning_code": "PROJECT_DATA_ENTRY_FORMULA_ERRORS",
+    "mutation_authority": "not_admitted"
+  },
+  "state_review": {
+    "ground_resistance_source_correction": "Ground Resistance Test Lot already applied",
+    "valid_pm_lane_238_label_returned": false,
+    "source_resource_question_prep_visible": [
+      "Local Field Questions Draft",
+      "Daily Action Panels"
+    ],
+    "workbench_cue_saturation": "additional display-only workbench cues paused unless fresh scan-burden evidence appears"
+  },
+  "next_move_selector": {
+    "selected_next_move": "WAIT_FOR_EXACT_DATA_ENTRY_LABEL_OR_CONTINUE_ONLY_NO_CODE_REVIEW_CONTROL_NO_LIVE",
+    "if_exact_label_returned": "record in a no-live decision-intake packet before any live admission work",
+    "if_no_exact_label_returned": "continue only no-code PM lane control work, packet drafting, and Desktop Codex read-only scout review",
+    "display_only_ui_additions": "paused unless fresh scan-burden evidence appears",
+    "invalid_gate_closing_evidence": [
+      "continuation language",
+      "explanation text",
+      "paraphrase",
+      "REQUEST_SOURCE_CORRECTION_NO_LIVE"
+    ]
+  },
+  "required_pm_lane_238_labels": [
+    "ACCEPT_DATA_ENTRY_WARNING_NON_BLOCKING_NO_LIVE",
+    "REQUEST_DATA_ENTRY_WORKBOOK_CORRECTION_NO_LIVE",
+    "HOLD_DATA_ENTRY_WARNING_NO_LIVE",
+    "PROVIDE_EXACT_LIVE_ADMISSION_LATER"
+  ],
+  "desktop_codex_support": {
+    "prompt_path": "ops/agents/handoffs/2026-05-17-desktop-codex-pm-lane-256-state-review-next-move-selector-scout-prompt.md",
+    "status": "available_not_required",
+    "allowed_scope": [
+      "classification clarity review",
+      "relay-burden reduction review",
+      "cue-saturation risk review",
+      "authority-boundary risk review"
+    ],
+    "blocked_scope": [
+      "PM decision authority",
+      "product code edit",
+      "repo publication",
+      "hosted service access",
+      "workbook content read",
+      "source PDF content read",
+      "macro execution",
+      "warning acceptance",
+      "resource assignment",
+      "schedule/status mutation",
+      "approval/import authority",
+      "business-state mutation"
+    ]
+  },
+  "validation": [
+    "packet JSON parse",
+    "lane-state text search",
+    "marker-token scan",
+    "corrupted-token scan",
+    "git diff --check"
+  ],
+  "validation_result": "PASS"
+}

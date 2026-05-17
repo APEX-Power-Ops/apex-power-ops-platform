@@ -914,6 +914,8 @@ PM Lane 254 turns that allowed source/resource question preparation into a bound
 
 PM Lane 255 moves that same no-live source/resource question-prep context into the Daily Action Panels morning path. The new display-only `Local Field-Start Source/Resource Question Prep Cue` sits after the operator script and before stop-line review, has no links, buttons, export, or storage key, and keeps resource assignment, schedule/status changes, procurement/rental commitments, customer commitments, warning acceptance, approval rows, project import, hosted access, and Desktop Codex PM decision authority blocked.
 
+PM Lane 256 records the post-Lane 255 PM lane state and selects the next safe posture without adding more workbench UI. The active `PROJECT_DATA_ENTRY_FORMULA_ERRORS` warning remains open until exactly one PM Lane 238 Data Entry label is returned, PM Lanes 240 through 255 already make the current decision/context cues visible, and additional display-only workbench cues are paused unless fresh scan-burden evidence appears. The next PM move is either exact-label intake in a later no-live packet or no-code review-control work only.
+
 The success standard is not just technical correctness. The candidate must reduce Jason's review burden by showing:
 
 1. what the system thinks the project is,
