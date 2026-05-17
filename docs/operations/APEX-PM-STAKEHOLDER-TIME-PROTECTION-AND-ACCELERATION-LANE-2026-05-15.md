@@ -924,6 +924,8 @@ PM Lane 259 consolidates the two active returns into one no-code lane-control re
 
 PM Lane 260 engages a continuation loop guard. Further PM packets should not restate the same absent Data Entry label and absent Desktop Codex closeout unless an exact PM Lane 238 label returns, the allowed Desktop closeout appears, concrete new review-control evidence appears, or Jason requests a different bounded PM review artifact.
 
+PM Lane 261 refreshes the Desktop Codex PM-256 scout return kit with PM Lane 259 and 260 context. The one allowed Desktop closeout path is unchanged, Desktop Codex remains PM support only, and VS Code Codex must review the returned closeout before any queue widening or product work.
+
 The success standard is not just technical correctness. The candidate must reduce Jason's review burden by showing:
 
 1. what the system thinks the project is,

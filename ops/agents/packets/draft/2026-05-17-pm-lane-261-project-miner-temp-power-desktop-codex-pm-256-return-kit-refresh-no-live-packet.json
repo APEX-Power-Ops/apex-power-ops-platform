@@ -1,0 +1,51 @@
+{
+  "packet_id": "2026-05-17-pm-lane-261-project-miner-temp-power-desktop-codex-pm-256-return-kit-refresh-no-live-packet",
+  "title": "PM Lane 261 - Project Miner Temp Power Desktop Codex PM-256 Return Kit Refresh No-Live Packet",
+  "date": "2026-05-17",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_DESKTOP_CODEX_PM_256_RETURN_KIT_REFRESH_NO_LIVE",
+  "selected_outcome": "DESKTOP_PM_256_SCOUT_PROMPT_REFRESHED_WITH_LOOP_GUARD_CONTEXT_NO_LIVE",
+  "updated_support_prompt": "ops/agents/handoffs/2026-05-17-desktop-codex-pm-lane-256-state-review-next-move-selector-scout-prompt.md",
+  "expected_closeout_path": "ops/agents/handoffs/2026-05-17-desktop-codex-pm-lane-256-state-review-next-move-selector-scout-closeout.md",
+  "closeout_present_at_refresh": false,
+  "prompt_context_added": [
+    "PM Lane 259 active-return register",
+    "PM Lane 260 continuation-loop guard",
+    "current support queue posture",
+    "single closeout write rule",
+    "no PM decision inference rule"
+  ],
+  "desktop_codex_authority": {
+    "role": "PM support scout only",
+    "allowed_write_count": 1,
+    "allowed_write_path": "ops/agents/handoffs/2026-05-17-desktop-codex-pm-lane-256-state-review-next-move-selector-scout-closeout.md",
+    "pm_decision_authority": false,
+    "queue_widening_authority": false,
+    "business_state_mutation_authority": false
+  },
+  "blocked_authority": [
+    "product_code",
+    "tests",
+    "additional_docs",
+    "additional_packet_files",
+    "additional_handoffs",
+    "hosted_access",
+    "workbook_content_read",
+    "pdf_content_read",
+    "macros",
+    "warning_acceptance",
+    "approval_import",
+    "resource_assignment",
+    "schedule_status_mutation",
+    "business_state_mutation"
+  ],
+  "validation": [
+    "packet JSON parse",
+    "closeout absence check",
+    "support-prompt context search",
+    "queue text search",
+    "marker-token scan",
+    "corrupted-token scan",
+    "git diff --check"
+  ],
+  "validation_result": "PASS"
+}

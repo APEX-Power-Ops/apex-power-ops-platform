@@ -1004,6 +1004,8 @@ PM Lane 259 executes the Project Miner Temp Power Active Return Register And Nex
 
 PM Lane 260 executes the Project Miner Temp Power Continuation Loop Guard And Next Return Selector No-Live Packet tranche. The workflow now prevents repeated continuation packets from restating the same two open returns. The next PM packet in this branch should wait for exactly one PM Lane 238 Data Entry label, the allowed Desktop Codex PM-256 closeout, concrete new review-control evidence, or a new explicit bounded PM review request.
 
+PM Lane 261 executes the Project Miner Temp Power Desktop Codex PM-256 Return Kit Refresh No-Live Packet tranche. The existing Desktop Codex PM-256 scout prompt now carries PM Lane 259 active-return and PM Lane 260 loop-guard context, keeps exactly one allowed closeout write, and preserves VS Code Codex review before any queue widening.
+
 Level 3 - Resource Context:
 Read equipment inventory and technician capability rows so PM can understand whether the project can be staffed with available people and equipment.
 
