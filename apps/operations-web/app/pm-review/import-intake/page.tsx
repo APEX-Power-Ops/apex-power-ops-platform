@@ -999,6 +999,11 @@ function pilotLaunchStandupCardFileName(candidate?: CandidatePayload | null) {
   return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-pilot-launch-standup-card.json`
 }
 
+function pilotLaunchCaptureSheetFileName(candidate?: CandidatePayload | null) {
+  const candidateId = candidate?.candidate_id || 'project-miner-intake'
+  return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-pilot-launch-capture-sheet.json`
+}
+
 function importExceptionRegisterFileName(candidate?: CandidatePayload | null) {
   const candidateId = candidate?.candidate_id || 'project-miner-intake'
   return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-import-exception-register.md`
@@ -5759,6 +5764,135 @@ function buildPilotLaunchStandupCardExport(
   }
 }
 
+function buildPilotLaunchCaptureSheetExport(
+  packet: IntakeWorkbenchPacket,
+  approvalDryRunReadiness: ApprovalDryRunReadinessItem[],
+  reviewChecks: Record<string, boolean>,
+  approvalDraft: ApprovalDecisionDraft,
+  fieldPrepQueue: OperatingQueueItem[],
+  fieldPrepCoverageSnapshot: FieldPrepCoverageItem[],
+  fieldPrepConversationAgenda: FieldPrepAgendaItem[],
+  notAllowed: string[],
+  futureRoute: string,
+  fieldReadinessChecks: Record<string, boolean>,
+  fieldQuestionsDraft: FieldQuestionsDraft,
+  fieldObservationScratchpad: FieldObservationScratchpad,
+) {
+  const candidate = packet.candidate
+  const standupCard = buildPilotLaunchStandupCardExport(packet, approvalDryRunReadiness, reviewChecks, approvalDraft, fieldPrepQueue, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, notAllowed, futureRoute, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad)
+  const captureSections = [
+    {
+      section_id: 'pm-decisions-to-review',
+      label: 'PM decisions to review',
+      capture_mode: 'local_prompt_only',
+      prompt: 'Write down the decisions Jason needs to make or approve after the launch conversation.',
+      captured_value: null,
+      prohibited_use: 'This section does not create an approval row, PM decision record, or project import.',
+    },
+    {
+      section_id: 'field-start-blockers',
+      label: 'Field-start blockers',
+      capture_mode: 'local_prompt_only',
+      prompt: 'Capture site, safety, access, crew, material, apparatus, schedule, or status blockers that need follow-up before any later field authorization.',
+      captured_value: null,
+      prohibited_use: 'This section does not authorize field work, assign a lead, assign a crew, or change schedule/status.',
+    },
+    {
+      section_id: 'customer-site-questions',
+      label: 'Customer and site questions',
+      capture_mode: 'local_prompt_only',
+      prompt: 'Capture customer/site constraints, access notes, and completion-evidence questions that need future agreement.',
+      captured_value: null,
+      prohibited_use: 'This section does not create a customer commitment, customer report, or completion evidence record.',
+    },
+    {
+      section_id: 'executor-ai-relay-followup',
+      label: 'Executor and AI relay follow-up',
+      capture_mode: 'local_prompt_only',
+      prompt: 'Capture what needs to be relayed back from Desktop Codex, sidecar scouts, or external executors for VS Code Codex review.',
+      captured_value: null,
+      prohibited_use: 'This section does not stage executor output, mutate hosted services, or delegate implementation authority.',
+    },
+    {
+      section_id: 'next-packet-recommendation',
+      label: 'Next packet recommendation',
+      capture_mode: 'local_prompt_only',
+      prompt: 'Recommend the next bounded packet: stay local-only, wait for Desktop Codex closeout, prepare PM Lane 142 admission, or open another scout.',
+      captured_value: null,
+      prohibited_use: 'This section does not authorize live approval, import, field, production, customer, finance, or hosted-service writes.',
+    },
+  ]
+  const handoffRules = [
+    'treat handwritten or copied notes from this sheet as review context only until a later packet admits persistence',
+    'bring no-go items back to VS Code Codex before any implementation lane is opened',
+    'keep customer-facing, field-direction, assignment, schedule/status, production, and finance outputs blocked',
+    'preserve Desktop Codex and sidecar outputs as evidence for review, not as direct merge or deployment authority',
+  ]
+
+  return {
+    capture_sheet_kind: 'pm_import_candidate_pilot_launch_capture_sheet',
+    capture_sheet_version: 'pm_lane_161_local_pilot_launch_capture_sheet_v1',
+    generated_locally_at: new Date().toISOString(),
+    candidate_identity: standupCard.candidate_identity,
+    field_shape: standupCard.field_shape,
+    source_standup_card: {
+      file_name: pilotLaunchStandupCardFileName(candidate),
+      standup_card_kind: standupCard.standup_card_kind,
+      standup_card_version: standupCard.standup_card_version,
+      card_status: standupCard.launch_day_summary.card_status,
+      capture_prompt_count: standupCard.launch_day_summary.capture_prompt_count,
+      no_go_count: standupCard.launch_day_summary.no_go_count,
+    },
+    capture_sheet_summary: {
+      section_count: captureSections.length,
+      handoff_rule_count: handoffRules.length,
+      no_go_count: standupCard.no_go_checks.length,
+      sheet_status: 'local_capture_sheet_available_live_writes_blocked',
+    },
+    source_artifact_manifest: standupCard.source_artifact_manifest,
+    capture_sections: captureSections,
+    handoff_rules: handoffRules,
+    inherited_no_go_checks: standupCard.no_go_checks,
+    next_packet_options: standupCard.next_packet_options,
+    authority_boundary: {
+      mutation_authority: 'not_admitted',
+      local_pilot_launch_capture_sheet_only: true,
+      live_approval_post_performed: false,
+      approval_row_created: false,
+      project_import_performed: false,
+      field_authorization_created: false,
+      field_work_authorized: false,
+      lead_assignment_created: false,
+      crew_assignment_created: false,
+      schedule_plan_created: false,
+      status_change_performed: false,
+      durable_field_record_created: false,
+      production_tracking_performed: false,
+      customer_report_created: false,
+      customer_completion_evidence_created: false,
+      customer_commitment_created: false,
+      financial_handoff_route_created: false,
+      billing_export_created: false,
+      payroll_export_created: false,
+      invoice_record_created: false,
+      accounting_record_created: false,
+      external_finance_sync_created: false,
+      meeting_note_persisted: false,
+      owner_assignment_created: false,
+      server_write_performed: false,
+    },
+    blocked_boundaries: Array.from(new Set([
+      ...standupCard.blocked_boundaries,
+      'pilot_launch_capture_sheet_server_write',
+      'capture_sheet_business_state_write',
+      'meeting_note_persistence',
+      'owner_assignment_write',
+      'field_direction_write',
+      'customer_commitment_write',
+    ])),
+  }
+}
+
 function buildImportExceptionRegisterExport(
   packet: IntakeWorkbenchPacket,
   importExceptionRegister: ImportExceptionRegisterItem[],
@@ -5950,6 +6084,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
   const [pilotLaunchBinderStatus, setPilotLaunchBinderStatus] = useState('')
   const [pilotLaunchDailyBriefStatus, setPilotLaunchDailyBriefStatus] = useState('')
   const [pilotLaunchStandupCardStatus, setPilotLaunchStandupCardStatus] = useState('')
+  const [pilotLaunchCaptureSheetStatus, setPilotLaunchCaptureSheetStatus] = useState('')
   const [approvalDryRunStatus, setApprovalDryRunStatus] = useState('')
   const [approvalDryRunPreview, setApprovalDryRunPreview] = useState('')
   const [reviewChecks, setReviewChecks] = useState<Record<string, boolean>>({})
@@ -6129,7 +6264,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
   const fieldPrepAgendaCount = fieldPrepAgendaCounts(fieldPrepConversationAgenda)
   const reviewOutputStatuses = [briefStatus, previewStatus, pmIntakeSnapshotStatus, exceptionRegisterStatus].filter(Boolean)
   const executorOutputStatuses = [handoffStatus].filter(Boolean)
-  const fieldPrepOutputStatuses = [fieldBriefStatus, fieldObservationStatus, fieldPrepCoverageStatus, fieldPrepAgendaStatus, fieldPrepPacketStatus, fieldStartPreflightStatus, fieldExecutionGateDesignStatus, leadFieldAssignmentDraftStatus, fieldAuthorizationAssignmentDraftStatus, scheduleStatusControlsDraftStatus, durableFieldRecordDraftStatus, productionTrackingDraftStatus, customerReportingDraftStatus, financialHandoffDraftStatus, pilotLaunchBinderStatus, pilotLaunchDailyBriefStatus, pilotLaunchStandupCardStatus].filter(Boolean)
+  const fieldPrepOutputStatuses = [fieldBriefStatus, fieldObservationStatus, fieldPrepCoverageStatus, fieldPrepAgendaStatus, fieldPrepPacketStatus, fieldStartPreflightStatus, fieldExecutionGateDesignStatus, leadFieldAssignmentDraftStatus, fieldAuthorizationAssignmentDraftStatus, scheduleStatusControlsDraftStatus, durableFieldRecordDraftStatus, productionTrackingDraftStatus, customerReportingDraftStatus, financialHandoffDraftStatus, pilotLaunchBinderStatus, pilotLaunchDailyBriefStatus, pilotLaunchStandupCardStatus, pilotLaunchCaptureSheetStatus].filter(Boolean)
   const hasOutputStatuses = reviewOutputStatuses.length > 0 || executorOutputStatuses.length > 0 || fieldPrepOutputStatuses.length > 0
 
   useEffect(() => {
@@ -6609,6 +6744,16 @@ export default function ProjectMinerIntakeWorkbenchPage() {
     setPilotLaunchStandupCardStatus(`Pilot launch standup card prepared from ${candidate?.candidate_id || 'the current intake packet'} without a server write.`)
   }
 
+  function exportPilotLaunchCaptureSheet() {
+    if (!packet) {
+      return
+    }
+
+    const captureSheet = buildPilotLaunchCaptureSheetExport(packet, approvalDryRunReadiness, reviewChecks, approvalDraft, fieldPrepQueue, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, notAllowed, futureRoute, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad)
+    downloadTextFile(pilotLaunchCaptureSheetFileName(candidate), `${JSON.stringify(captureSheet, null, 2)}\n`, 'application/json')
+    setPilotLaunchCaptureSheetStatus(`Pilot launch capture sheet prepared from ${candidate?.candidate_id || 'the current intake packet'} without a server write.`)
+  }
+
   return (
     <main className="shell-page pm-review-page">
       <section className="hero-card pm-review-hero">
@@ -6795,6 +6940,9 @@ export default function ProjectMinerIntakeWorkbenchPage() {
                 </button>
                 <button className="btn btn-outline" onClick={exportPilotLaunchStandupCard} disabled={!packet}>
                   Export Pilot Launch Standup Card
+                </button>
+                <button className="btn btn-outline" onClick={exportPilotLaunchCaptureSheet} disabled={!packet}>
+                  Export Pilot Launch Capture Sheet
                 </button>
               </div>
             </section>
