@@ -54,8 +54,8 @@ Assign the Relay review-burden prompt first:
 
 Rationale: it tests the orchestration layer itself without touching product code, PM business state, hosted services, schemas, credentials, Olares runtime, or MCP admission.
 
-Relay returned a clean closeout proving Desktop Codex can reduce Jason relay load and protect VS Code Codex focus. The first NETA scout and NETA source-map/artifact-backlog follow-up also returned clean closeouts. VS Code Codex accepts those proofs and recommends a NETA Level II Electrical Fundamentals pilot content audit next. TCC remains parked until that pilot audit returns clean or Jason explicitly reprioritizes TCC.
+Relay returned a clean closeout proving Desktop Codex can reduce Jason relay load and protect VS Code Codex focus. The first NETA scout and revised NETA source-map/artifact-backlog follow-up also returned clean closeouts. VS Code Codex accepts those proofs and recommends a read-only `NETA Topic Spine Comparative Audit - Electrical Fundamentals` next. TCC remains parked until that comparative audit returns clean or Jason explicitly reprioritizes TCC.
 
 ## READY_FOR_JASON_DECISION
 
-Desktop Codex governance is ready for one bounded NETA pilot decision. Recommended decision: admit or revise the NETA Level II Electrical Fundamentals pilot content audit, then review whether its closeout meaningfully reduces Jason relay load before assigning TCC.
+Desktop Codex governance is ready for one bounded NETA comparative-audit decision. Recommended decision: admit or revise the NETA Topic Spine Comparative Audit, then review whether its closeout meaningfully reduces Jason relay load before assigning TCC.

@@ -51,9 +51,9 @@ VS Code Codex accepts the Relay closeout, the first NETA scout closeout, and the
 
 Recommended next non-PM decision:
 
-- admit, revise, or park the NETA Level II Electrical Fundamentals pilot content audit proposed by the source-map closeout.
+- admit, revise, or park the NETA Topic Spine Comparative Audit proposed by the revised source-map closeout.
 
-TCC remains parked until the NETA pilot audit proves the same evidence-compression pattern or Jason explicitly reprioritizes TCC.
+TCC remains parked until the NETA comparative audit proves the same evidence-compression pattern or Jason explicitly reprioritizes TCC.
 
 ## Validation
 
@@ -61,7 +61,7 @@ TCC remains parked until the NETA pilot audit proves the same evidence-compressi
 corepack pnpm --dir "C:/APEX Platform/apex-power-ops-platform" --filter @apex/operations-web typecheck
 corepack pnpm --dir "C:/APEX Platform/apex-power-ops-platform" --filter @apex/operations-web build
 corepack pnpm --dir "C:/APEX Platform/apex-power-ops-platform/apps/operations-web" exec playwright test "browser-shell.pm-import-intake.smoke.spec.ts"
-rg -n "PM Lane 143|Export Dry Run Envelope|approval-dry-run-envelope|Relay closeout|NETA Level II|TCC remains parked" PROJECT_STATUS.md docs/operations ops/agents apps/operations-web
+rg -n "PM Lane 143|Export Dry Run Envelope|approval-dry-run-envelope|Relay closeout|NETA Topic Spine|TCC remains parked" PROJECT_STATUS.md docs/operations ops/agents apps/operations-web
 git diff --check
 ```
 
@@ -70,9 +70,9 @@ Result:
 - PASS: operations-web typecheck passed.
 - PASS: operations-web production build passed.
 - PASS: focused PM import-intake Playwright smoke passed with `1 passed` after rerunning it after the build completed.
-- PASS: guardrail search confirmed PM Lane 143, dry-run export, Relay closeout, NETA Level II pilot-audit, and TCC-parked language.
+- PASS: guardrail search confirmed PM Lane 143, dry-run export, Relay closeout, NETA Topic Spine comparative-audit, and TCC-parked language.
 - PASS: scoped diff check passed.
 
 ## Next Recommended Lane
 
-Keep the PM lane local/no-write unless the exact live-write admission phrase is provided. The next Desktop Codex decision is whether to admit the NETA Level II Electrical Fundamentals pilot content audit while keeping TCC parked.
+Keep the PM lane local/no-write unless the exact live-write admission phrase is provided. The next Desktop Codex decision is whether to admit the NETA Topic Spine Comparative Audit while keeping TCC parked.

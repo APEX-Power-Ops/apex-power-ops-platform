@@ -206,6 +206,15 @@ type ReadinessGate = {
   detail: string
 }
 
+type ApprovalDryRunReadinessStatus = 'ready' | 'needs_review' | 'blocked'
+
+type ApprovalDryRunReadinessItem = {
+  id: string
+  title: string
+  status: ApprovalDryRunReadinessStatus
+  detail: string
+}
+
 type OperatingQueueStatus = 'complete' | 'next' | 'blocked'
 
 type OperatingQueueItem = {
@@ -763,6 +772,12 @@ function approvalStatusSummary(status?: ApprovalPersistenceStatus | null) {
   return `${formatLabel(status.classification)}; ${storage}; import authority ${formatLabel(status.import_authority || 'not_admitted')}`
 }
 
+function approvalDryRunReadinessTone(status: ApprovalDryRunReadinessStatus) {
+  if (status === 'ready') return 'status-configured'
+  if (status === 'needs_review') return 'status-awaiting-values'
+  return 'status-deferred'
+}
+
 function operatingQueueTone(status: OperatingQueueStatus) {
   if (status === 'complete') return 'status-configured'
   if (status === 'next') return 'status-awaiting-values'
@@ -1022,6 +1037,91 @@ function buildPersistenceReadinessGates(
       detail: 'Project, workpackage, task, and apparatus import remain blocked until a later packet admits import after an approved approval record exists.',
     },
   ]
+}
+
+function buildApprovalDryRunReadiness(
+  packet: IntakeWorkbenchPacket | null,
+  reviewChecks: Record<string, boolean>,
+  approvalDraft: ApprovalDecisionDraft,
+): ApprovalDryRunReadinessItem[] {
+  const candidate = packet?.candidate
+  const admissionPlan = packet?.admissionPlan
+  const approvalStatus = packet?.approvalStatus
+  const summary = candidate?.summary || {}
+  const warnings = candidate?.warnings || []
+  const noGoChecks = admissionPlan?.no_go_checks || []
+  const sourceFingerprint = candidate?.source_freshness?.aggregate_fingerprint
+  const draftComplete = Boolean(approvalDraft.decision && approvalDraft.review_notes.trim() && approvalDraft.local_attestation)
+  const draftStarted = hasApprovalDraftContent(approvalDraft)
+  const sourceAndWarningsReviewed = Boolean(reviewChecks.source_freshness_reviewed && reviewChecks.exceptions_reviewed)
+  const checklistHasEvidence = REVIEW_CHECKLIST_ITEMS.some((item) => reviewChecks[item.id])
+  const noGoCheckIds = noGoChecks.map((check) => check.check_id).filter(Boolean)
+  const noGoBlockerCount = noGoChecks.filter((check) => (check.status || '').includes('no_go')).length
+  const approvalRecordCount = approvalStatus?.approval_record_count_for_candidate ?? 0
+  const approvalStorageReady = Boolean(approvalStatus && approvalStatus.approval_storage_available !== false)
+
+  return [
+    {
+      id: 'candidate-source-context',
+      title: 'Candidate source context',
+      status: candidate?.candidate_id && sourceFingerprint ? 'ready' : 'blocked',
+      detail: candidate?.candidate_id && sourceFingerprint
+        ? `${candidate.candidate_id} is loaded with source fingerprint ${sourceFingerprint}.`
+        : 'Candidate identity or source fingerprint is missing; the dry-run envelope should not be used as packet context yet.',
+    },
+    {
+      id: 'source-warning-review',
+      title: 'Source and warning review',
+      status: sourceAndWarningsReviewed ? 'ready' : checklistHasEvidence ? 'needs_review' : 'blocked',
+      detail: sourceAndWarningsReviewed
+        ? `Source freshness and warnings are checked locally; candidate reports ${formatCount(summary.warning_count)} warning(s) and ${formatCount(summary.blocker_count)} blocker(s).`
+        : 'Mark source freshness and warning review before treating the envelope as review-ready.',
+    },
+    {
+      id: 'local-decision-draft',
+      title: 'Local decision draft',
+      status: draftComplete ? 'ready' : draftStarted ? 'needs_review' : 'blocked',
+      detail: draftComplete
+        ? `Decision draft is ${formatLabel(approvalDraft.decision)} with notes and local-only attestation present.`
+        : 'Decision value, review notes, and local-only attestation are all required before the dry-run envelope is useful.',
+    },
+    {
+      id: 'admission-no-go-review',
+      title: 'Admission no-go review',
+      status: noGoCheckIds.length ? reviewChecks.admission_no_go_reviewed ? noGoBlockerCount ? 'needs_review' : 'ready' : 'needs_review' : 'ready',
+      detail: noGoCheckIds.length
+        ? reviewChecks.admission_no_go_reviewed
+          ? `${formatCount(noGoCheckIds.length)} no-go check(s) reviewed locally; ${formatCount(noGoBlockerCount)} still report no-go posture for later human decision.`
+          : `${formatCount(noGoCheckIds.length)} no-go check(s) exist; mark admission no-go review before relying on the envelope.`
+        : 'No admission no-go checks are reported for the current candidate.',
+    },
+    {
+      id: 'approval-status-readback',
+      title: 'Approval status readback',
+      status: approvalStorageReady && approvalRecordCount === 0 ? 'ready' : approvalStatus ? 'needs_review' : 'blocked',
+      detail: approvalStatus
+        ? `${approvalStatusSummary(approvalStatus)}; ${formatCount(approvalRecordCount)} approval record(s) are reported for this candidate.`
+        : 'Approval status readback has not loaded yet.',
+    },
+    {
+      id: 'live-write-authority',
+      title: 'Live write authority',
+      status: 'blocked',
+      detail: 'The exact PM Lane 142 live-write admission phrase is still required before any browser approval POST, approval-row creation, or project import.',
+    },
+  ]
+}
+
+function approvalDryRunReadinessCounts(items: ApprovalDryRunReadinessItem[]) {
+  return {
+    ready: items.filter((item) => item.status === 'ready').length,
+    needsReview: items.filter((item) => item.status === 'needs_review').length,
+    blocked: items.filter((item) => item.status === 'blocked').length,
+  }
+}
+
+function approvalDryRunReadinessSummary(counts: ReturnType<typeof approvalDryRunReadinessCounts>) {
+  return `${counts.ready} ready, ${counts.needsReview} needs review, ${counts.blocked} blocked`
 }
 
 function buildPmOperatingQueue(
@@ -3489,6 +3589,11 @@ export default function ProjectMinerIntakeWorkbenchPage() {
     [packet, approvalDraft, reviewChecks],
   )
   const readyPersistenceGateCount = persistenceReadinessGates.filter((gate) => gate.status === 'ready').length
+  const approvalDryRunReadiness = useMemo(
+    () => buildApprovalDryRunReadiness(packet, reviewChecks, approvalDraft),
+    [packet, reviewChecks, approvalDraft],
+  )
+  const approvalDryRunReadinessCount = approvalDryRunReadinessCounts(approvalDryRunReadiness)
   const operatingQueue = useMemo(
     () => buildPmOperatingQueue(approvalDraft, reviewChecks, persistenceReadinessGates),
     [approvalDraft, reviewChecks, persistenceReadinessGates],
@@ -4888,13 +4993,28 @@ export default function ProjectMinerIntakeWorkbenchPage() {
         <details open aria-label="Local approval submission dry run" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
           <summary className="status-row" style={{ cursor: 'pointer' }}>
             <h2 style={{ margin: 0 }}>Local Approval Submission Dry Run</h2>
-            <span className="status-pill status-awaiting-values">mock only</span>
+            <span className="status-pill status-awaiting-values">
+              {approvalDryRunReadinessSummary(approvalDryRunReadinessCount)}
+            </span>
           </summary>
           <div aria-label="Local approval submission dry run controls">
             <div aria-label="Approval dry run controls">
               <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
                 Builds the future approval POST envelope in this browser for review only. It does not call live services, perform hosted writes, create an approval record, import project rows, assign work, schedule work, change status, or mutate production state.
               </p>
+              <div aria-label="Approval dry run readiness checkpoint" className="notes-grid" style={{ marginTop: '0.85rem' }}>
+                {approvalDryRunReadiness.map((item) => (
+                  <article key={item.id} className="card" style={{ padding: '0.85rem', boxShadow: 'none' }}>
+                    <div className="status-row" style={{ alignItems: 'flex-start' }}>
+                      <h2 style={{ margin: 0 }}>{item.title}</h2>
+                      <span className={`status-pill ${approvalDryRunReadinessTone(item.status)}`}>
+                        {formatLabel(item.status)}
+                      </span>
+                    </div>
+                    <p style={{ margin: '0.45rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
+                  </article>
+                ))}
+              </div>
               <div className="notes-grid" style={{ marginTop: '0.85rem' }}>
                 <article className="card" style={{ padding: '0.85rem', boxShadow: 'none' }}>
                   <h2>Future route</h2>

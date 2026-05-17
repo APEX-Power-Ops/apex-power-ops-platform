@@ -1,0 +1,62 @@
+{
+  "packet_id": "2026-05-17-pm-lane-144",
+  "lane": "PM Lane 144",
+  "title": "Local Dry-Run Readiness Checkpoint",
+  "created_at_local": "2026-05-17",
+  "source_floor_commit": "9389e3ffe3d798cace5f3c7a1b526a3f5260b0a7",
+  "objective": "Add a local-only readiness checkpoint to the Project Miner PM intake dry-run panel so Jason can see whether the mock approval envelope has usable source, review, draft, readback, and authority context before any future live gate.",
+  "execution_mode": "local_product_code_plus_status_docs_and_sidecar_prompt",
+  "scope": [
+    "Add ready/needs-review/blocked classification for candidate source context, source and warning review, local decision draft, admission no-go review, approval status readback, and live-write authority.",
+    "Render the checkpoint inside the existing Local Approval Submission Dry Run panel.",
+    "Keep the checkpoint local-only and informational.",
+    "Extend the focused Playwright smoke to prove the checkpoint and zero mutation requests.",
+    "Accept the revised NETA source-map recommendation and author the next Desktop Codex comparative-audit prompt while keeping TCC parked."
+  ],
+  "not_allowed": [
+    "No live POST to /api/v1/mutations/project-import-approvals.",
+    "No approval row creation.",
+    "No hosted deployment or promotion.",
+    "No Supabase, Render, Vercel, or Olares action.",
+    "No SQL or schema migration.",
+    "No secret access or secret rotation.",
+    "No backend route or mutation route change.",
+    "No project import, workpackage rows, task rows, apparatus rows, assignment, schedule, status, durable field record, production tracking, workbook macro, or workbook writeback.",
+    "No service, auth, DNS, ingress, or control-plane widening.",
+    "No autonomous AI business-state mutation."
+  ],
+  "live_write_gate": {
+    "status": "not_admitted",
+    "required_phrase": "I explicitly admit PM Lane 142 live approval POST and first approval-row creation for the current Project Miner Temp Power import candidate.",
+    "note": "This phrase was not present for PM Lane 144, so the lane remains local dry-run readiness only."
+  },
+  "changed_files": [
+    "PROJECT_STATUS.md",
+    "apps/operations-web/app/pm-review/import-intake/page.tsx",
+    "apps/operations-web/tests/browser-shell.pm-import-intake.smoke.spec.ts",
+    "docs/operations/APEX-PARALLEL-LANE-ORCHESTRATION-GOVERNANCE-PLAN-2026-05-17.md",
+    "docs/operations/APEX-PM-STAKEHOLDER-TIME-PROTECTION-AND-ACCELERATION-LANE-2026-05-15.md",
+    "docs/operations/APEX-PM-TEMP-POWER-DELIVERY-AND-ORCHESTRATION-PLAN-2026-05-15.md",
+    "docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md",
+    "ops/agents/handoffs/2026-05-17-desktop-codex-parallel-lane-orchestration-queue.md",
+    "ops/agents/handoffs/2026-05-17-desktop-codex-governance-activation-closeout-handoff.md",
+    "ops/agents/handoffs/2026-05-17-parallel-lane-orchestration-governance-review-handoff.md",
+    "ops/agents/handoffs/2026-05-17-desktop-codex-neta-source-map-and-artifact-backlog-closeout.md",
+    "ops/agents/handoffs/2026-05-17-desktop-codex-neta-source-map-and-artifact-backlog-acceptance-handoff.md",
+    "ops/agents/handoffs/2026-05-17-desktop-codex-neta-topic-spine-comparative-audit-prompt.md",
+    "ops/agents/packets/draft/2026-05-17-pm-lane-143-local-dry-run-envelope-export.json",
+    "ops/agents/handoffs/2026-05-17-pm-lane-143-local-dry-run-envelope-export-handoff.md",
+    "ops/agents/packets/draft/2026-05-17-pm-lane-144-local-dry-run-readiness-checkpoint.json",
+    "ops/agents/handoffs/2026-05-17-pm-lane-144-local-dry-run-readiness-checkpoint-handoff.md"
+  ],
+  "validation_steps": [
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform\" --filter @apex/operations-web typecheck",
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform\" --filter @apex/operations-web build",
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform/apps/operations-web\" exec playwright test \"browser-shell.pm-import-intake.smoke.spec.ts\"",
+    "rg -n \"PM Lane 144|Dry-Run Readiness|dry-run readiness|NETA Topic Spine|TCC remains parked|mutationRequests\\)\\.toHaveLength\\(0\\)\" PROJECT_STATUS.md docs/operations ops/agents apps/operations-web",
+    "git diff --check"
+  ],
+  "validation_result": "PASS: operations-web typecheck passed, operations-web production build passed, focused PM import-intake Playwright smoke passed with 1 passed, packet JSON parsed, guardrail search confirmed PM Lane 144 plus NETA Topic Spine/TCC parked language, stale Level II pilot language was removed from active status and queue surfaces, and git diff --check passed.",
+  "sidecar_result": "Revised Desktop Codex NETA source-map closeout recommends a read-only Topic Spine Comparative Audit before authoring. VS Code Codex accepts that amendment and authored a guarded Desktop Codex prompt while keeping TCC parked.",
+  "next_recommended_lane": "PM lane may continue local operator-review ergonomics or await explicit PM Lane 142 live-write admission; Desktop Codex may receive the NETA Topic Spine Comparative Audit prompt if Jason admits that side lane."
+}

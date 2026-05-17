@@ -54,10 +54,10 @@
     "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform\" --filter @apex/operations-web typecheck",
     "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform\" --filter @apex/operations-web build",
     "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform/apps/operations-web\" exec playwright test \"browser-shell.pm-import-intake.smoke.spec.ts\"",
-    "rg -n \"PM Lane 143|Export Dry Run Envelope|approval-dry-run-envelope|Relay closeout|NETA Level II|TCC remains parked\" PROJECT_STATUS.md docs/operations ops/agents apps/operations-web",
+    "rg -n \"PM Lane 143|Export Dry Run Envelope|approval-dry-run-envelope|Relay closeout|NETA Topic Spine|TCC remains parked\" PROJECT_STATUS.md docs/operations ops/agents apps/operations-web",
     "git diff --check"
   ],
   "validation_result": "PASS: operations-web typecheck passed, operations-web production build passed, focused PM import-intake Playwright smoke passed with 1 passed after resequencing the smoke after build, guardrail search confirmed PM Lane 143 plus Relay/NETA/TCC orchestration language, and scoped diff check passed.",
   "sidecar_result": "Desktop Codex Relay review-burden proof, first NETA scout, and NETA source-map/artifact-backlog closeout all returned READY_FOR_JASON_DECISION and stayed within their bounded read-only/one-handoff authority.",
-  "next_recommended_lane": "PM lane may continue local operator-review ergonomics or await explicit PM Lane 142 live-write admission; Desktop Codex next non-PM decision is whether to admit the NETA Level II Electrical Fundamentals pilot content audit while keeping TCC parked."
+  "next_recommended_lane": "PM lane may continue local operator-review ergonomics or await explicit PM Lane 142 live-write admission; Desktop Codex next non-PM decision is whether to admit the NETA Topic Spine Comparative Audit while keeping TCC parked."
 }

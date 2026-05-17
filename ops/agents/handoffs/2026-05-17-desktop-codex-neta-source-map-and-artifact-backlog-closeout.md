@@ -7,11 +7,13 @@ Authority band: Band A/B only
 
 ## Summary
 
-The NETA Study Material lane is ready for a focused read-only pilot content audit. It is not ready for broad content authoring, source import, Supabase reconciliation, or generated artifact production.
+The NETA Study Material lane is ready for a focused read-only comparative pilot audit. It is not ready for broad content authoring, source import, Supabase reconciliation, or generated artifact production.
 
-The source-domain workspace already contains a large student-facing artifact set by level, mature build specifications, process guides, extraction inventories, and APEX-side extraction/gap reports. The practical bottleneck is not missing folders or lack of candidate material. The bottleneck is deciding which artifact family should become the first governed pilot and proving that its study guide, reference sheet, practice test, flashcard, source citation, KSA mapping, and quality checks line up without requiring Jason to manually inspect the whole corpus.
+The source-domain workspace already contains v1 HTML proof-of-concept material, v2.3 guide-format work, v2.4 instructional-format work, a large student-facing artifact set by level, build specifications, process guides, extraction inventories, and APEX-side extraction/gap reports. None of those surfaces should be treated as final or concrete. They are evidence for the next platform-design decision.
 
-Recommended next admission: one read-only `NETA Level II Electrical Fundamentals Pilot Content Audit` packet. That packet should audit one low-risk foundational family before any authoring or schema work.
+The practical bottleneck is not simply missing folders or lack of candidate material. The bottleneck is determining the best professional study-content structure: one that teaches a topic from foundation through Level II, III, and IV technical relevance, preserves the validated POC learning value, improves on the v1 HTML expansion limits, and evaluates the v2.3/v2.4 approach without assuming either is final.
+
+Recommended next admission: one read-only `NETA Topic Spine Comparative Audit - Electrical Fundamentals` packet. That packet should compare v1 HTML POC content, v2.3 content-format evidence, v2.4/latest content-format evidence, and current level-folder outputs before any authoring or schema work.
 
 ## Source-To-Artifact Map
 
@@ -20,6 +22,9 @@ Recommended next admission: one read-only `NETA Level II Electrical Fundamentals
 | `README.md`, `GOVERNANCE-FRAMEWORK.md`, `MASTER-STANDARDS.md` | Source-domain authority and operating model | Active startup chain, authority hierarchy, folder standards, naming rules, resource governance | Packet guardrails, stop conditions, artifact ownership boundaries | Jason/VS Code approval before changing source-domain governance |
 | `Build-Specs/*.md` | Canonical artifact specifications | Complete specs for practice tests, study guides, reference sheets, flashcards, staging, infrastructure, scaffolding, templates | Audit rubric, backlog acceptance criteria, future authoring prompt templates | Jason approval before treating any generated artifact as final |
 | `Process-Guides/*.md` | Supporting workflow and QA | Content creation workflow, citation guide, quality checklist, extraction guides, session protocol | QA checklist, citation rules, audit pass/fail fields | Jason approval for any content-quality disposition that affects priority |
+| `Development/NETA-Equipment-Test-Reference-Preview-v1.html`, `Development/NETA-Equipment-Test-Reference.html`, current `NETA-2/3/4` HTML packages | v1 HTML POC and deployed-style learner artifacts | The POC validated that technicians could use single-location curated study content, but HTML output made expansion and enhancement difficult | Baseline for learning effectiveness, navigation, topic presentation, and platform shortcomings | Human approval before discarding POC strengths or adopting a new structure |
+| `Development/CONTENT-FORMAT-SPEC-v2.3.md` | v2.3 guide-format evidence | Locked multi-section structure, KSA coverage, source attribution, safety, mistakes, quick reference, scenarios, field tips, standards, further study, and image placeholders | Compare against v1 POC and v2.4 for teaching value and maintainability | Treat as draft evidence, not final platform architecture |
+| `Development/CONTENT-FORMAT-SPEC-v2.4.md` and v2.4 adoption/reload matrices | latest instructional-format evidence | Adds instructional front matter, learning objectives, concept-first expert orientation, retention guidance, study-path improvements, and explicit tone requirements | Candidate model for professional topic-spine guides | Treat as current candidate, not final architecture |
 | `Resources/Extractions/ETT-2022` | KSA source | Level II, III, IV KSA extraction files and index observed by inventory | KSA coverage checks for guides, tests, flashcards | Human review for ambiguous KSA mapping |
 | `Resources/Extractions/Exam-Resources` | Exam orientation and direct prep | Exam outline, reference list, formulas, study guide, quiz questions, broader exam resources | Exam-alignment checks, source priority hints, question-bank source candidates | Human approval before using quiz content in generated questions |
 | `Resources/Extractions/ETT-Study-Aids` | High-value study aids and fact sheets | 28 files observed by inventory; APEX reports say these were previously high-value ETT aids | Pilot source pool for foundational and equipment-topic audits | Human approval before copying/adapting content |
@@ -98,32 +103,31 @@ Recommended backlog order:
 3. Treat system coordination, SCADA/IEC 61850, DER, NERC, relay coordination, and power-system studies as higher-review topics.
 4. Require VS Code/Jason review before authoring or integrating any advanced runtime, schema, hosted, TCC, or platform-facing work.
 
-## Candidate First Pilot Family
+## Candidate First Pilot
 
 Recommended first pilot:
 
-`NETA Level II Electrical Fundamentals Pilot Content Audit`
+`NETA Topic Spine Comparative Audit - Electrical Fundamentals`
 
 Suggested pilot scope:
 
-1. `NETA-2/03-Study-Guides/01-Ohms-Law-Complete-Guide.html`
-2. `NETA-2/03-Study-Guides/02-Power-Calculations-Guide.html`
-3. `NETA-2/03-Study-Guides/03-Series-Parallel-Circuits-Guide.html`
-4. `NETA-2/03-Study-Guides/04-Three-Phase-Fundamentals-Guide.html`
-5. matching Level II reference sheets where present,
-6. matching Level II practice tests `01` through `04`,
-7. related `ETT-Study-Aids` and exam-resource extractions only as read-only citation/context sources.
+1. v1 HTML POC/reference surfaces, including `Development/NETA-Equipment-Test-Reference-Preview-v1.html`, `Development/NETA-Equipment-Test-Reference.html`, and relevant old/current level HTML outputs.
+2. v2.3 format evidence from `Development/CONTENT-FORMAT-SPEC-v2.3.md` and representative v2.3 staged guides.
+3. v2.4/latest format evidence from `Development/CONTENT-FORMAT-SPEC-v2.4.md`, `Development/ETT-CONTENT-FORMAT-v2.4-ADOPTION-AND-INTEGRATION-PATH.md`, `Development/ETT-V2.4-EXISTING-GUIDE-INTEGRATION-MATRIX-2026-03-25.md`, and `Development/Control-Plane/ETT-V2.4-RELOAD-DECISION-MATRIX-2026-03-26.md`.
+4. current Level II/III/IV outputs for Ohm's Law, power calculations, series/parallel circuits, three-phase fundamentals, or the closest available electrical-fundamentals topic spine.
+5. related `ETT-Study-Aids` and exam-resource extractions only as read-only citation/context sources.
 
 Pilot output should be one APEX handoff only, not edits to source-domain artifacts.
 
 Pilot audit should answer:
 
-1. Which files form the family?
-2. Are study guide, reference sheet, practice test, and flashcard coverage aligned?
-3. Are citations present and suitable?
-4. Are KSA references present or missing?
-5. Are practice-test question objects compatible with the existing schema?
-6. What specific authoring work should be admitted next, if any?
+1. What did the v1 HTML POC prove about learner usefulness, single-location access, and technician study behavior?
+2. What did the v1 HTML format make hard to expand, enhance, or maintain?
+3. What did v2.3 improve, and where did it still read too much like a reference packet instead of a teaching platform?
+4. What did v2.4 improve, especially around concept-first orientation, learning objectives, retention, and all-level progression?
+5. What should the durable topic-spine structure be for one topic that teaches foundation first and then Level II/III/IV relevance?
+6. Where should flashcards, mock exams, and TestGuy-style practice content appear only after instruction has occurred?
+7. What should be redesigned, preserved, expanded, or discarded before any authoring packet begins?
 
 ## QA Checklist Proposal
 
@@ -168,7 +172,7 @@ Minimum checklist:
 
 ### Current Gaps
 
-1. The first pilot family has not been audited at file-content level in this packet.
+1. The v1 HTML POC and v2.3/v2.4 latest content surfaces have not yet been compared at file-content level in a single audit.
 2. Source-domain generated HTML files were inventoried but not opened or browser-tested.
 3. Practice-test JavaScript/question object details were not parsed.
 4. Flashcard canonical source versus HTML app source-of-truth remains unproven.
@@ -236,7 +240,7 @@ Human-approved:
 
 Packet name:
 
-`Desktop Codex NETA Level II Electrical Fundamentals Pilot Content Audit`
+`Desktop Codex NETA Topic Spine Comparative Audit - Electrical Fundamentals`
 
 Recommended status after this closeout:
 
@@ -249,8 +253,10 @@ Allowed reads:
 3. APEX parallel-lane governance plan and queue,
 4. source-domain `README.md`, `GOVERNANCE-FRAMEWORK.md`, `MASTER-STANDARDS.md`,
 5. relevant `Build-Specs/*.md` and `Process-Guides/*.md`,
-6. the Level II pilot family files listed above,
-7. directly related `Resources/Extractions/ETT-Study-Aids`, `Exam-Resources`, and standards extraction files only when needed for citation checks.
+6. v1 HTML POC/reference surfaces listed above,
+7. v2.3 and v2.4 content-format, adoption, integration, reload, and remaining-guide inventory surfaces,
+8. current Level II/III/IV electrical-fundamentals outputs or nearest available topic-spine equivalents,
+9. directly related `Resources/Extractions/ETT-Study-Aids`, `Exam-Resources`, and standards extraction files only when needed for citation checks.
 
 Allowed write:
 
@@ -270,15 +276,15 @@ Forbidden:
 
 Expected output:
 
-1. pilot family file map,
-2. pass/warn/block audit table,
-3. exact source/citation/KSA/schema gaps,
-4. recommended authoring packet or schema-audit packet,
-5. explicit decision on whether question-bank schema audit should come next.
+1. v1 vs v2.3 vs v2.4 comparison map,
+2. topic-spine learning model proposal,
+3. preserve/improve/discard recommendations,
+4. exact source/citation/KSA/schema gaps,
+5. recommendation on the next authoring, platform-format, or schema-audit packet.
 
 Recommendation:
 
-Run the pilot content audit next. Defer question-bank schema audit until at least one real Level II guide/test family proves the content-quality and source-traceability pattern. Defer pilot artifact authoring until after that audit returns a narrow authoring list.
+Run the comparative topic-spine audit next. Defer question-bank schema audit until the learning platform structure is clearer. Defer pilot artifact authoring until the audit returns a narrow topic-spine model and a preserve/improve/discard decision for the v1, v2.3, and v2.4 patterns.
 
 ## Stop-Condition Confirmation
 
@@ -337,6 +343,10 @@ Source-domain files:
 19. `C:\APEX Platform\source-domains\neta-ett-study-material\Process-Guides\RESOURCE-EXTRACTION-GUIDE.md`
 20. `C:\APEX Platform\source-domains\neta-ett-study-material\Process-Guides\SESSION-PROTOCOL.md`
 21. `C:\APEX Platform\source-domains\neta-ett-study-material\Process-Guides\SOURCE-CITATION-GUIDE.md`
+22. `C:\APEX Platform\source-domains\neta-ett-study-material\Development\CONTENT-FORMAT-SPEC-v2.3.md`
+23. `C:\APEX Platform\source-domains\neta-ett-study-material\Development\CONTENT-FORMAT-SPEC-v2.4.md`
+24. `C:\APEX Platform\source-domains\neta-ett-study-material\Development\ETT-CONTENT-FORMAT-v2.4-ADOPTION-AND-INTEGRATION-PATH.md`
+25. `C:\APEX Platform\source-domains\neta-ett-study-material\Development\Control-Plane\ETT-V2.4-RELOAD-DECISION-MATRIX-2026-03-26.md`
 
 Read-only directory inventories:
 

@@ -25,19 +25,19 @@ The closeout stayed within the admitted Band A/B boundary:
 
 ## Approved Interpretation
 
-The NETA lane is now ready for one bounded read-only pilot content audit, not broad content authoring and not platform integration.
+The NETA lane is now ready for one bounded read-only comparative audit, not broad content authoring and not platform integration.
 
 Recommended next non-PM packet:
 
-`Desktop Codex NETA Level II Electrical Fundamentals Pilot Content Audit`
+`Desktop Codex NETA Topic Spine Comparative Audit - Electrical Fundamentals`
 
 That packet should produce one APEX closeout handoff with:
 
-- pilot family file map,
-- pass/warn/block audit table,
-- source/citation/KSA/schema gaps,
-- exact recommended next authoring or schema-audit packet,
-- explicit decision on whether question-bank schema audit should follow.
+- v1 versus v2.3 versus v2.4 comparison map,
+- durable topic-spine learning model proposal,
+- preserve/improve/discard recommendations,
+- exact source/citation/KSA/schema gaps,
+- recommendation on the next authoring, platform-format, or schema-audit packet.
 
 ## Guardrails
 
@@ -55,10 +55,10 @@ The next NETA packet remains forbidden from:
 
 TCC remains parked.
 
-Although the source-map proof is accepted, the best next use of Desktop Codex is the Level II pilot content audit because it tests whether non-PM substance work can keep producing concise, decision-ready evidence without pulling VS Code Codex away from the PM lane.
+Although the source-map proof is accepted, the best next use of Desktop Codex is the Electrical Fundamentals topic-spine comparative audit because it tests whether non-PM substance work can keep producing concise, decision-ready evidence without pulling VS Code Codex away from the PM lane.
 
-TCC can be reconsidered only after the Level II pilot audit returns a clean closeout or after Jason explicitly reprioritizes TCC.
+TCC can be reconsidered only after the comparative audit returns a clean closeout or after Jason explicitly reprioritizes TCC.
 
 ## READY_FOR_JASON_DECISION
 
-Admit, revise, or park the proposed `Desktop Codex NETA Level II Electrical Fundamentals Pilot Content Audit`.
+Admit, revise, or park the proposed `Desktop Codex NETA Topic Spine Comparative Audit - Electrical Fundamentals`.
