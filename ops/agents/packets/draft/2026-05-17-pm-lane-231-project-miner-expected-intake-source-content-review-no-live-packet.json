@@ -1,0 +1,201 @@
+{
+  "packet_id": "2026-05-17-pm-lane-231",
+  "title": "PM Lane 231 - Project Miner Expected Intake Source Content Review No-Live Packet",
+  "status": "local_bounded_source_content_review_packet",
+  "decision_label": "PROJECT_MINER_EXPECTED_INTAKE_SOURCE_CONTENT_REVIEW_NO_LIVE_NO_MACRO_NO_WRITE",
+  "selected_outcome": "CONTENT_REVIEW_COMPLETE_TEMP_POWER_READY_FOR_DECISION_AB_MV_REQUIRES_SCOPE_AND_WARNING_REVIEW",
+  "admission_basis": {
+    "source": "Jason",
+    "received_date": "2026-05-17",
+    "instruction": "Proceed with all required PM activities using the current project context as needed",
+    "interpreted_scope": "bounded local source content review for the seven expected intake sources from PM Lane 230"
+  },
+  "reviewed_sources": [
+    {
+      "file_name": "15_ELECTRICAL_COMBINED.pdf",
+      "role": "ab_drawing_context",
+      "review_performed": "page_count_and_first_8_pages_text_topology_orientation",
+      "page_count": 396,
+      "routing_result": "broad_ab_electrical_context_not_full_takeoff_truth"
+    },
+    {
+      "file_name": "Building B IFC.pdf",
+      "role": "ab_building_b_drawing_context",
+      "review_performed": "page_count_and_first_8_pages_text_topology_orientation",
+      "page_count": 360,
+      "routing_result": "building_b_drawing_context_not_full_takeoff_truth"
+    },
+    {
+      "file_name": "Cupertino - Miner Estimator PHX Bldg A & B MV Rev9.xlsm",
+      "role": "ab_mv_estimator_candidate",
+      "review_performed": "read_only_data_only_workbook_and_import_candidate_preview",
+      "macro_present": true,
+      "macro_executed": false,
+      "routing_result": "readable_candidate_requires_scope_and_warning_review"
+    },
+    {
+      "file_name": "EQUIPMENT INVENTORY - 2026.xlsx",
+      "role": "equipment_resource_context",
+      "review_performed": "read_only_data_only_workbook_preview",
+      "inventory_rows": 343,
+      "standard_tech_list_rows": 22,
+      "routing_result": "resource_context_only"
+    },
+    {
+      "file_name": "Estimator R3 - Project Miner Temp Power Testing.xlsm",
+      "role": "temp_power_estimator_candidate",
+      "review_performed": "read_only_data_only_workbook_and_import_candidate_preview",
+      "macro_present": true,
+      "macro_executed": false,
+      "routing_result": "temp_power_candidate_ready_for_no_live_approval_readiness_refresh"
+    },
+    {
+      "file_name": "Miner Temp SLD-AP-BCARRASCO.pdf",
+      "role": "temp_power_sld_candidate",
+      "review_performed": "page_count_and_all_6_pages_text_topology_orientation",
+      "page_count": 6,
+      "topology_label_count": 138,
+      "routing_result": "temp_power_sld_context_readable"
+    },
+    {
+      "file_name": "Phx Tech Testing Capability Matrix 032726.xlsx",
+      "role": "technician_capability_context",
+      "review_performed": "read_only_data_only_workbook_preview",
+      "capability_rows": 50,
+      "routing_result": "resource_context_only"
+    }
+  ],
+  "excluded_not_read": [
+    "RESA Power - Project Data Entry MASTER.xlsm",
+    "Garney- Central Mesa Reuse Tracker #677562.xlsm"
+  ],
+  "temp_power_candidate": {
+    "candidate_id": "pm-import-candidate-miner-temp-power",
+    "project_name": "Miner Temp Power",
+    "location": "Santa Teresa, NM",
+    "drawing_package": "SLD: E01-00, E01-01, E01-02",
+    "issue_date": "Dated: 03/05/2026",
+    "source_format": "flat_quote",
+    "source_sheet": "Updated",
+    "workpackage_count": 7,
+    "task_count": 15,
+    "line_item_count": 15,
+    "apparatus_candidate_count": 186,
+    "topology_label_count": 138,
+    "warning_count": 1,
+    "blocker_count": 0,
+    "human_decision_count": 1,
+    "warnings": [
+      {
+        "code": "MISSING_DESIGNATIONS",
+        "severity": "info",
+        "message": "1 estimator line items do not have explicit designations."
+      }
+    ],
+    "workpackages": [
+      {"title": "7.5", "task_count": 2, "apparatus_candidate_count": 15, "planned_hours": 37.5},
+      {"title": "7.3", "task_count": 2, "apparatus_candidate_count": 11, "planned_hours": 49.5},
+      {"title": "7.1", "task_count": 3, "apparatus_candidate_count": 32, "planned_hours": 57.75},
+      {"title": "7.2", "task_count": 2, "apparatus_candidate_count": 24, "planned_hours": 92.0},
+      {"title": "7.6", "task_count": 3, "apparatus_candidate_count": 71, "planned_hours": 166.0},
+      {"title": "Misc", "task_count": 1, "apparatus_candidate_count": 26, "planned_hours": 156.0},
+      {"title": "7.13", "task_count": 2, "apparatus_candidate_count": 7, "planned_hours": 48.0}
+    ]
+  },
+  "ab_mv_candidate": {
+    "candidate_id": "pm-import-candidate-cupertino-miner-estimator-phx-bldg-a-b-mv-rev9",
+    "project_name": "Cupertino - Miner Estimator PHX Bldg A & B MV Rev9",
+    "source_format": "scope_sheets",
+    "scope_sheet_count": 9,
+    "workpackage_count": 9,
+    "task_count": 122,
+    "line_item_count": 122,
+    "apparatus_candidate_count": 5400,
+    "warning_count": 2,
+    "blocker_count": 0,
+    "human_decision_count": 2,
+    "warnings": [
+      {
+        "code": "MISSING_DESIGNATIONS",
+        "severity": "info",
+        "message": "122 estimator line items do not have explicit designations."
+      },
+      {
+        "code": "DUPLICATE_LINE_ITEM_GROUPS",
+        "severity": "warning",
+        "message": "16 repeated estimator line-item group(s) should be reviewed for intended duplicates."
+      }
+    ],
+    "workpackages": [
+      {"title": "A1) Medium-Voltage - Core", "task_count": 14, "apparatus_candidate_count": 114, "planned_hours": 362.5},
+      {"title": "A2) Medium-Voltage - Mech", "task_count": 24, "apparatus_candidate_count": 1144, "planned_hours": 3768.0},
+      {"title": "A3) Medium-Voltage - Production", "task_count": 14, "apparatus_candidate_count": 1296, "planned_hours": 4516.0},
+      {"title": "A4) Medium-Voltage - Spine", "task_count": 14, "apparatus_candidate_count": 124, "planned_hours": 400.5},
+      {"title": "B1) Medium-Voltage - Mech", "task_count": 24, "apparatus_candidate_count": 1144, "planned_hours": 3768.0},
+      {"title": "B2) Medium-Voltage - Production", "task_count": 14, "apparatus_candidate_count": 1264, "planned_hours": 4356.0},
+      {"title": "B3) Medium-Voltage -Spine", "task_count": 14, "apparatus_candidate_count": 122, "planned_hours": 390.5},
+      {"title": "Mod Chiller Plant - Bldg. A", "task_count": 2, "apparatus_candidate_count": 96, "planned_hours": 388.8},
+      {"title": "Mod Chiller Plant - Bldg. B", "task_count": 2, "apparatus_candidate_count": 96, "planned_hours": 388.8}
+    ]
+  },
+  "resource_context": {
+    "crew_rows": 15,
+    "equipment_inventory_rows": 343,
+    "standard_tech_list_rows": 22,
+    "capability_rows": 50
+  },
+  "required_pm_decisions": [
+    "Temp Power no-live approval/readiness refresh using current candidate identity and warning context",
+    "A/B MV separate contract scope confirmation before import or field execution",
+    "A/B MV warning review for missing designations and repeated line-item groups",
+    "Drawing authority decision for A/B slices: 15_ELECTRICAL_COMBINED.pdf versus Building B IFC.pdf by scope",
+    "Building A low-voltage remains parked until award/scope confirmation"
+  ],
+  "next_safe_packet": "PM Lane 232 - Project Miner Temp Power Current Candidate Approval Readiness Refresh No-Live Packet",
+  "validation": [
+    "repo-local venv preview_pm_planning_sources.py Temp Power with excluded workbook sentinel overrides",
+    "repo-local venv preview_pm_planning_sources.py A/B MV Rev 9 with excluded workbook sentinel overrides",
+    "repo-local venv preview_pm_import_candidate.py Temp Power with excluded workbook sentinel overrides",
+    "repo-local venv preview_pm_import_candidate.py A/B MV Rev 9 with excluded workbook sentinel overrides",
+    "bounded workbook/PDF source orientation script"
+  ],
+  "validation_result": "PASS",
+  "no_live_boundary": {
+    "product_code": false,
+    "ui_control": false,
+    "route": false,
+    "backend_seam": false,
+    "payload_version": false,
+    "local_storage_schema": false,
+    "session_storage_schema": false,
+    "hosted_call": false,
+    "hosted_smoke": false,
+    "browser_live_route_access": false,
+    "live_approval_post": false,
+    "approval_row": false,
+    "project_import": false,
+    "task": false,
+    "action_item": false,
+    "owner_due_date_field": false,
+    "issue": false,
+    "field_authorization": false,
+    "lead_selection": false,
+    "crew_assignment": false,
+    "schedule_status_write": false,
+    "customer_commitment": false,
+    "customer_report": false,
+    "field_instruction": false,
+    "durable_field_record": false,
+    "production_tracking_row": false,
+    "completion_evidence": false,
+    "finance_output": false,
+    "supabase_render_vercel_olares_action": false,
+    "sql_schema_migration": false,
+    "service_auth_ingress_change": false,
+    "workbook_macro_writeback": false,
+    "durable_source_fingerprint": false,
+    "confirmed_source_truth_promotion": false,
+    "desktop_codex_source_classification_dispatch": false,
+    "autonomous_ai_business_state_mutation": false
+  }
+}
