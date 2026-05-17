@@ -224,6 +224,12 @@ type OperatingQueueItem = {
   detail: string
 }
 
+type OperatingQueueGroup = {
+  id: string
+  label: string
+  items: OperatingQueueItem[]
+}
+
 type FieldPrepCoverageStatus = 'covered' | 'partial' | 'open' | 'blocked'
 
 type FieldPrepCoverageItem = {
@@ -1493,6 +1499,29 @@ function buildPmOperatingQueue(
       title: 'Project import packet',
       status: 'blocked',
       detail: 'Project, workpackage, task, and apparatus rows remain blocked until approval submission has been admitted and audited in a separate packet.',
+    },
+  ]
+}
+
+function groupPmOperatingQueueItems(queue: OperatingQueueItem[]): OperatingQueueGroup[] {
+  const byId = new Map(queue.map((item) => [item.id, item]))
+  const take = (ids: string[]) => ids.map((id) => byId.get(id)).filter((item): item is OperatingQueueItem => Boolean(item))
+
+  return [
+    {
+      id: 'local-review-moves',
+      label: 'Local Review Moves',
+      items: take(['source-exception-review', 'local-decision-draft', 'review-artifact-export']),
+    },
+    {
+      id: 'approval-submission-boundary',
+      label: 'Approval Submission Boundary',
+      items: take(['hosted-approval-gate-complete', 'browser-approval-submission-packet', 'approval-row-creation']),
+    },
+    {
+      id: 'future-import-boundary',
+      label: 'Future Import Boundary',
+      items: take(['project-import-packet']),
     },
   ]
 }
@@ -6636,6 +6665,10 @@ export default function ProjectMinerIntakeWorkbenchPage() {
     () => buildPmOperatingQueue(approvalDraft, reviewChecks, persistenceReadinessGates),
     [approvalDraft, reviewChecks, persistenceReadinessGates],
   )
+  const operatingQueueGroups = useMemo(
+    () => groupPmOperatingQueueItems(operatingQueue),
+    [operatingQueue],
+  )
   const importExceptionRegister = useMemo(
     () => buildImportExceptionRegister(candidate, noGoChecks, reviewChecks, approvalDraft),
     [candidate, noGoChecks, reviewChecks, approvalDraft],
@@ -7931,19 +7964,26 @@ export default function ProjectMinerIntakeWorkbenchPage() {
             <p style={{ margin: '0.45rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
               {formatCount(completeQueueCount)} complete / {formatCount(nextQueueCount)} next / {formatCount(blockedQueueCount)} blocked
             </p>
-            <div aria-label="Local PM operating queue items" style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
-              {operatingQueue.map((item) => (
-                <article key={item.id} className="card" style={{ padding: '0.85rem', boxShadow: 'none' }}>
-                  <div className="status-row" style={{ alignItems: 'start' }}>
-                    <div>
-                      <p style={{ margin: 0 }}>
-                        <strong>{item.title}</strong>
-                      </p>
-                      <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
-                    </div>
-                    <span className={`status-pill ${operatingQueueTone(item.status)}`}>{formatLabel(item.status)}</span>
+            <div aria-label="Local PM operating queue groups" style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
+              {operatingQueueGroups.map((group) => (
+                <section key={group.id} aria-label={`${group.label} operating queue group`} className="card" style={{ padding: '0.85rem', boxShadow: 'none' }}>
+                  <h3 style={{ fontSize: '0.95rem', margin: '0 0 0.65rem' }}>{group.label}</h3>
+                  <div aria-label={`${group.label} operating queue items`} style={{ display: 'grid', gap: '0.75rem' }}>
+                    {group.items.map((item) => (
+                      <article key={item.id} className="card" style={{ padding: '0.85rem', boxShadow: 'none' }}>
+                        <div className="status-row" style={{ alignItems: 'start' }}>
+                          <div>
+                            <p style={{ margin: 0 }}>
+                              <strong>{item.title}</strong>
+                            </p>
+                            <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
+                          </div>
+                          <span className={`status-pill ${operatingQueueTone(item.status)}`}>{formatLabel(item.status)}</span>
+                        </div>
+                      </article>
+                    ))}
                   </div>
-                </article>
+                </section>
               ))}
             </div>
           </div>

@@ -1,0 +1,47 @@
+{
+  "packet_id": "2026-05-17-pm-lane-169",
+  "title": "PM Lane 169 - Local PM Operating Queue Grouping",
+  "lane": "PM lane development",
+  "status": "completed",
+  "owner": "VS Code Codex",
+  "authority": "repo technical authority; PM lane implementation authority; final integration authority",
+  "date": "2026-05-17",
+  "objective": "Reduce Project Miner Temp Power operating-queue scan burden by grouping the existing Local PM Operating Queue cards without changing queue content, exports, storage behavior, or write boundaries.",
+  "scope": [
+    "Grouped the existing Local PM Operating Queue into Local Review Moves, Approval Submission Boundary, and Future Import Boundary.",
+    "Preserved the same seven browser-local queue cards, labels, dynamic detail text, status pills, complete/next/blocked summary count, and no-write language.",
+    "Kept the operating-queue disclosure behavior local and stateless with no operating-queue localStorage key.",
+    "Used a read-only sidecar to scout the next safe follow-on tranche while VS Code Codex retained PM implementation and final integration authority."
+  ],
+  "guardrails": [
+    "No hosted service access.",
+    "No Supabase, Render, Vercel, or Olares product action.",
+    "No SQL or schema migration.",
+    "No approval POST or approval-row creation.",
+    "No project import mutation.",
+    "No field authorization, assignment, schedule/status, durable field record, production tracking, customer report, completion evidence, billing, payroll, invoice, accounting, or external finance-system write.",
+    "No workbook macro or writeback.",
+    "No new export action, export handler, filename, payload version, localStorage key, backend route, service/auth/ingress change, or autonomous AI business-state mutation."
+  ],
+  "changed_files": [
+    "apps/operations-web/app/pm-review/import-intake/page.tsx",
+    "apps/operations-web/tests/browser-shell.pm-import-intake.smoke.spec.ts",
+    "PROJECT_STATUS.md",
+    "docs/operations/APEX-PM-STAKEHOLDER-TIME-PROTECTION-AND-ACCELERATION-LANE-2026-05-15.md",
+    "docs/operations/APEX-PM-TEMP-POWER-DELIVERY-AND-ORCHESTRATION-PLAN-2026-05-15.md",
+    "docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md",
+    "ops/agents/packets/draft/2026-05-17-pm-lane-169-local-pm-operating-queue-grouping.json",
+    "ops/agents/handoffs/2026-05-17-pm-lane-169-local-pm-operating-queue-grouping-handoff.md"
+  ],
+  "validation": [
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform\" --filter @apex/operations-web typecheck",
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform\" --filter @apex/operations-web build",
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform/apps/operations-web\" exec playwright test \"browser-shell.pm-import-intake.smoke.spec.ts\"",
+    "Get-Content -LiteralPath \"C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-17-pm-lane-169-local-pm-operating-queue-grouping.json\" | ConvertFrom-Json | Select-Object -ExpandProperty packet_id",
+    "rg -n \"PM Lane 169|Local PM operating queue groups|Local Review Moves operating queue group|Approval Submission Boundary operating queue group|Future Import Boundary operating queue group|mutationRequests\\)\\.toHaveLength\\(0\\)\" PROJECT_STATUS.md docs/operations ops/agents apps/operations-web",
+    "git diff --check"
+  ],
+  "validation_result": "PASS - operations-web typecheck passed; operations-web build passed; focused Playwright pm import-intake smoke passed; packet JSON parsed; PM Lane 169 guardrail rg passed; git diff --check passed with only expected CRLF warnings on touched and unrelated markdown files.",
+  "sidecar_result": "Read-only sidecar Anscombe recommended PM Lane 170 as Local Import Exception Register Grouping after Lane 169, grouping the six existing exception-register cards into Source Review Signals, PM Decision Context, and Admission Boundary without changing copy, status logic, exports, storage, routes, persistence, or authority boundaries.",
+  "execution_result": "PASS"
+}
