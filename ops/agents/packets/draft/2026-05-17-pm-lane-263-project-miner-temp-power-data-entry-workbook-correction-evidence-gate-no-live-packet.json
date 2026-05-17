@@ -1,0 +1,81 @@
+{
+  "packet_id": "2026-05-17-pm-lane-263-project-miner-temp-power-data-entry-workbook-correction-evidence-gate-no-live-packet",
+  "title": "PM Lane 263 - Project Miner Temp Power Data Entry Workbook Correction Evidence Gate No-Live Packet",
+  "date": "2026-05-17",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_DATA_ENTRY_WORKBOOK_CORRECTION_EVIDENCE_GATE_NO_LIVE",
+  "selected_outcome": "DATA_ENTRY_WORKBOOK_CORRECTION_EVIDENCE_GATE_DEFINED_NO_LIVE",
+  "source_packet": "PM Lane 262",
+  "prior_input_response_label": "REQUEST_DATA_ENTRY_WORKBOOK_CORRECTION_NO_LIVE",
+  "candidate": {
+    "candidate_id": "pm-import-candidate-miner-temp-power",
+    "project_name": "Miner Temp Power",
+    "task_count": 15,
+    "apparatus_candidate_count": 184,
+    "blocker_count": 0,
+    "mutation_authority": "not_admitted"
+  },
+  "active_warning": {
+    "warning_code": "PROJECT_DATA_ENTRY_FORMULA_ERRORS",
+    "disposition": "workbook_correction_requested",
+    "exact_label_wait": "closed",
+    "correction_evidence_required": true
+  },
+  "evidence_gate_requirements": [
+    "source identity",
+    "correction scope",
+    "formula-error disposition",
+    "macro boundary",
+    "preview impact",
+    "PM reliance decision"
+  ],
+  "allowed_future_evidence_paths": [
+    "CORRECTED_WORKBOOK_EVIDENCE_RETURNED_NO_LIVE",
+    "NO_MACRO_LOCAL_INSPECTION_ADMITTED_LATER",
+    "LINEAGE_ONLY_WITH_RESIDUAL_RISK_LATER",
+    "HOLD_UNTIL_CORRECTION_EVIDENCE"
+  ],
+  "desktop_codex_boundary": {
+    "pm_256_still_separate": true,
+    "new_desktop_codex_prompt_created": false,
+    "pm_decision_authority": false,
+    "workbook_content_inspection_authority": false,
+    "hosted_access_authority": false
+  },
+  "next_safe_packet": "PM Lane 264 - Project Miner Temp Power Data Entry Workbook Correction Evidence Request Intake Card No-Live Packet",
+  "validation": [
+    "packet JSON parse",
+    "PM Lane 263 text search",
+    "guardrail keyword scan",
+    "corrupted-token scan",
+    "git diff --check"
+  ],
+  "validation_result": "PASS",
+  "blocked_authority": [
+    "product code",
+    "UI writable control",
+    "hosted call",
+    "live approval POST",
+    "approval row creation",
+    "project import",
+    "note or task creation",
+    "owner or due-date assignment",
+    "field authorization",
+    "lead or crew assignment",
+    "schedule/status write",
+    "procurement or rental commitment",
+    "customer commitment",
+    "customer report",
+    "durable field record",
+    "production tracking",
+    "billing/payroll/invoice/accounting output",
+    "Supabase/Render/Vercel/Olares action",
+    "SQL/schema migration",
+    "source workbook writeback",
+    "source PDF content edit",
+    "workbook content read",
+    "workbook macro/writeback",
+    "durable source fingerprint promotion",
+    "Desktop Codex PM decision authority",
+    "autonomous AI business-state mutation"
+  ]
+}

@@ -1008,6 +1008,8 @@ PM Lane 261 executes the Project Miner Temp Power Desktop Codex PM-256 Return Ki
 
 PM Lane 262 executes the Project Miner Temp Power Data Entry Workbook Correction Request Intake No-Live Packet tranche. Jason returned the exact PM Lane 238 label `REQUEST_DATA_ENTRY_WORKBOOK_CORRECTION_NO_LIVE`, so the `PROJECT_DATA_ENTRY_FORMULA_ERRORS` exact-label wait is closed and the warning routes to workbook-correction evidence before any later live admission relies on the Project Data Entry workbook. The warning is not accepted as non-blocking, approval/import authority remains blocked, the corrected Temp Power candidate remains 15 tasks, 184 apparatus candidates, and zero blockers, and Desktop Codex PM-256 remains separately awaiting its one allowed closeout.
 
+PM Lane 263 executes the Project Miner Temp Power Data Entry Workbook Correction Evidence Gate No-Live Packet tranche. The workflow now defines the correction-evidence gate for the Project Data Entry workbook: later live admission cannot rely on that workbook until source identity, correction scope, formula-error disposition, macro boundary, preview impact, and PM reliance decision are collected or validated by a bounded packet. Allowed future evidence paths are corrected workbook evidence, later no-macro local inspection, lineage-only with residual risk, or hold until evidence. No workbook content read/write, macro, approval row, project import, hosted action, Desktop Codex PM decision authority, or business-state mutation is admitted.
+
 Level 3 - Resource Context:
 Read equipment inventory and technician capability rows so PM can understand whether the project can be staffed with available people and equipment.
 
