@@ -9301,6 +9301,25 @@ export default function ProjectMinerIntakeWorkbenchPage() {
               </div>
               <span className="status-pill status-awaiting-values">packet candidate lens</span>
             </div>
+            <div
+              id="pm-field-start-later-bounded-packet-future-boundary-reminder"
+              role="note"
+              aria-label="PM Lane 203 future packet boundary reminder"
+              className="card"
+              style={{ padding: '0.75rem', marginTop: '0.75rem', boxShadow: 'none' }}
+            >
+              <div className="status-row" style={{ alignItems: 'start' }}>
+                <div>
+                  <p style={{ margin: 0 }}>
+                    <strong>Future packet boundary reminder</strong>
+                  </p>
+                  <p style={{ margin: '0.35rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+                    PM Lane 203 reminder: this lane classifies a future bounded packet question only. It does not create the packet, assign accountability, set timing, write status, direct field work, create customer-facing language, publish reports, create storage, call a backend route, expose controls, or admit any write path.
+                  </p>
+                </div>
+                <span className="status-pill status-blocked">future packet boundary</span>
+              </div>
+            </div>
             <div aria-label="Local field-start later bounded packet candidate bring-back lens controls" style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
               {fieldStartLaterBoundedPacketCandidateBringBackLens.map((item) => (
                 <a

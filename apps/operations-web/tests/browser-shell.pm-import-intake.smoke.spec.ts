@@ -64,6 +64,7 @@ async function expectWorkbenchViewportScan(page: Page, viewport: { width: number
       ['field-start-customer-site-clarification-bring-back-lens', '#pm-field-start-customer-site-clarification-bring-back-lens'],
       ['field-start-lead-resource-clarification-bring-back-lens', '#pm-field-start-lead-resource-clarification-bring-back-lens'],
       ['field-start-later-bounded-packet-candidate-bring-back-lens', '#pm-field-start-later-bounded-packet-candidate-bring-back-lens'],
+      ['field-start-later-bounded-packet-future-boundary-reminder', '#pm-field-start-later-bounded-packet-future-boundary-reminder'],
       ['start-here', '#pm-start-here'],
       ['output-selector', '#pm-output-selector'],
       ['command-center', '#pm-command-center'],
@@ -365,6 +366,15 @@ async function expectMobileFieldLaunchUsePath(page: Page, mutationRequests: stri
   await expect(laterBoundedPacketCandidateBringBackLens.getByText(/Read-only later bounded packet candidate lens for returned field-start conversation items/i)).toBeVisible()
   await expect(laterBoundedPacketCandidateBringBackLens.getByText(/future packet for authority, evidence, owner\/timing, customer-facing language, or write-path admission/i)).toBeVisible()
   await expect(laterBoundedPacketCandidateBringBackLens.getByText(/creates no meeting note, localStorage key, export artifact, backend route, task, action item, owner, due date, assignment, schedule\/status write, customer commitment, customer report, field instruction, durable record, production tracking row, hosted write claim, or production write, and exposes no buttons/i)).toBeVisible()
+  const futureBoundaryReminder = laterBoundedPacketCandidateBringBackLens.locator('#pm-field-start-later-bounded-packet-future-boundary-reminder[aria-label="PM Lane 203 future packet boundary reminder"]')
+  await expect(futureBoundaryReminder).toBeVisible()
+  await expect(futureBoundaryReminder).toHaveAttribute('role', 'note')
+  await expect(futureBoundaryReminder.getByText('Future packet boundary reminder', { exact: true })).toBeVisible()
+  await expect(futureBoundaryReminder.getByText('future packet boundary', { exact: true })).toBeVisible()
+  await expect(futureBoundaryReminder.getByText(/PM Lane 203 reminder: this lane classifies a future bounded packet question only/i)).toBeVisible()
+  await expect(futureBoundaryReminder.getByText(/does not create the packet, assign accountability, set timing, write status, direct field work, create customer-facing language, publish reports, create storage, call a backend route, expose controls, or admit any write path/i)).toBeVisible()
+  await expect(futureBoundaryReminder.locator('a')).toHaveCount(0)
+  await expect(futureBoundaryReminder.getByRole('button')).toHaveCount(0)
   await expect(laterBoundedPacketCandidateBringBackLens.getByText(/If the return needs a move beyond local review, classify only the future packet question/i)).toBeVisible()
   await expect(laterBoundedPacketCandidateBringBackLens.getByText(/If the return needs approval submission, import, field authorization, assignment, schedule\/status, durable record, production tracking, report, or billing authority/i)).toBeVisible()
   await expect(laterBoundedPacketCandidateBringBackLens.getByText(/If the return depends on a drawing, workbook, site note, observer, work area, or source record/i)).toBeVisible()
@@ -455,6 +465,10 @@ async function expectMobileFieldLaunchUsePath(page: Page, mutationRequests: stri
   expect(leadResourceClarificationBringBackLensStorageKeys).toEqual([])
   const laterBoundedPacketCandidateBringBackLensStorageKeys = await page.evaluate(() => Object.keys(window.localStorage).filter((key) => key.startsWith('pm-import-intake-') && /later.?bounded.?packet|bounded.?packet.?candidate|future.?packet|authority.?admission|evidence.?context|owner.?timing|task|action.?item|owner|due.?date|assignment|schedule.?status|customer.?commitment|customer.?report|field.?instruction|durable.?record|production.?tracking|export|storage.?key|backend.?route|button/i.test(key)))
   expect(laterBoundedPacketCandidateBringBackLensStorageKeys).toEqual([])
+  const futureBoundaryReminderStorageKeys = await page.evaluate(() => Object.keys(window.localStorage).filter((key) => key.startsWith('pm-import-intake-') && /lane.?203|future.?packet.?boundary|boundary.?reminder|packet.?creation|owner|due.?date|assignment|schedule.?status|customer.?report|field.?instruction|backend.?route|write.?path/i.test(key)))
+  expect(futureBoundaryReminderStorageKeys).toEqual([])
+  const futureBoundaryReminderSessionKeys = await page.evaluate(() => Object.keys(window.sessionStorage).filter((key) => key.startsWith('pm-import-intake-') && /lane.?203|future.?packet.?boundary|boundary.?reminder|packet.?creation|owner|due.?date|assignment|schedule.?status|customer.?report|field.?instruction|backend.?route|write.?path/i.test(key)))
+  expect(futureBoundaryReminderSessionKeys).toEqual([])
   expect(mutationRequests).toHaveLength(0)
   await page.setViewportSize({ width: 1280, height: 720 })
 }
@@ -838,6 +852,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(dailyActionPanels.locator('section#pm-field-start-customer-site-clarification-bring-back-lens[aria-label="Local field-start customer/site clarification bring-back lens"]')).toHaveCount(1)
   await expect(dailyActionPanels.locator('section#pm-field-start-lead-resource-clarification-bring-back-lens[aria-label="Local field-start lead/resource clarification bring-back lens"]')).toHaveCount(1)
   await expect(dailyActionPanels.locator('section#pm-field-start-later-bounded-packet-candidate-bring-back-lens[aria-label="Local field-start later bounded packet candidate bring-back lens"]')).toHaveCount(1)
+  await expect(dailyActionPanels.locator('#pm-field-start-later-bounded-packet-future-boundary-reminder[aria-label="PM Lane 203 future packet boundary reminder"]')).toHaveCount(1)
   await expect(dailyActionPanels.locator('details#pm-start-here[aria-label="Local PM intake start here"]')).toHaveCount(1)
   await expect(dailyActionPanels.locator('details#pm-output-selector[aria-label="Local PM intake output selector"]')).toHaveCount(1)
   await expect(dailyActionPanels.locator('#pm-handoff-guide')).toHaveCount(1)
@@ -2437,8 +2452,21 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(laterBoundedPacketCandidateBringBackLens.getByText(/Read-only later bounded packet candidate lens for returned field-start conversation items/i)).toBeVisible()
   await expect(laterBoundedPacketCandidateBringBackLens.getByText(/future packet for authority, evidence, owner\/timing, customer-facing language, or write-path admission/i)).toBeVisible()
   await expect(laterBoundedPacketCandidateBringBackLens.getByText(/creates no meeting note, localStorage key, export artifact, backend route, task, action item, owner, due date, assignment, schedule\/status write, customer commitment, customer report, field instruction, durable record, production tracking row, hosted write claim, or production write, and exposes no buttons/i)).toBeVisible()
+  const futureBoundaryReminder = laterBoundedPacketCandidateBringBackLens.locator('#pm-field-start-later-bounded-packet-future-boundary-reminder[aria-label="PM Lane 203 future packet boundary reminder"]')
+  await expect(futureBoundaryReminder).toBeVisible()
+  await expect(futureBoundaryReminder).toHaveAttribute('role', 'note')
+  await expect(futureBoundaryReminder.getByText('Future packet boundary reminder', { exact: true })).toBeVisible()
+  await expect(futureBoundaryReminder.getByText('future packet boundary', { exact: true })).toBeVisible()
+  await expect(futureBoundaryReminder.getByText(/PM Lane 203 reminder: this lane classifies a future bounded packet question only/i)).toBeVisible()
+  await expect(futureBoundaryReminder.getByText(/does not create the packet, assign accountability, set timing, write status, direct field work, create customer-facing language, publish reports, create storage, call a backend route, expose controls, or admit any write path/i)).toBeVisible()
+  await expect(futureBoundaryReminder.locator('a')).toHaveCount(0)
+  await expect(futureBoundaryReminder.getByRole('button')).toHaveCount(0)
   const laterBoundedPacketCandidateBringBackLensStorageKeys = await page.evaluate(() => Object.keys(window.localStorage).filter((key) => key.startsWith('pm-import-intake-') && /later.?bounded.?packet.?candidate|bounded.?packet.?lens|future.?packet|authority.?admission|evidence.?context|owner.?timing|bounded.?packet.?stop|task|action.?item|owner|due.?date|assignment|schedule.?status|customer.?commitment|customer.?report|field.?instruction|durable.?record|production.?tracking|export|storage.?key|backend.?route|button/i.test(key)))
   expect(laterBoundedPacketCandidateBringBackLensStorageKeys).toEqual([])
+  const futureBoundaryReminderStorageKeys = await page.evaluate(() => Object.keys(window.localStorage).filter((key) => key.startsWith('pm-import-intake-') && /lane.?203|future.?packet.?boundary|boundary.?reminder|packet.?creation|owner|due.?date|assignment|schedule.?status|customer.?report|field.?instruction|backend.?route|write.?path/i.test(key)))
+  expect(futureBoundaryReminderStorageKeys).toEqual([])
+  const futureBoundaryReminderSessionKeys = await page.evaluate(() => Object.keys(window.sessionStorage).filter((key) => key.startsWith('pm-import-intake-') && /lane.?203|future.?packet.?boundary|boundary.?reminder|packet.?creation|owner|due.?date|assignment|schedule.?status|customer.?report|field.?instruction|backend.?route|write.?path/i.test(key)))
+  expect(futureBoundaryReminderSessionKeys).toEqual([])
   await expect(laterBoundedPacketCandidateBringBackLens.getByRole('link', { name: /Future packet trigger check/i })).toHaveAttribute('href', '#guardrails')
   await expect(laterBoundedPacketCandidateBringBackLens.getByRole('link', { name: /Authority admission check/i })).toHaveAttribute('href', '#guardrails')
   await expect(laterBoundedPacketCandidateBringBackLens.getByRole('link', { name: /Evidence\/context check/i })).toHaveAttribute('href', '#field-prep')
