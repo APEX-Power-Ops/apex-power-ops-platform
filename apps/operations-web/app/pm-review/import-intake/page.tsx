@@ -874,6 +874,11 @@ function approvalPreviewFileName(candidate?: CandidatePayload | null) {
   return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-approval-packet-preview.json`
 }
 
+function approvalDryRunEnvelopeFileName(candidate?: CandidatePayload | null) {
+  const candidateId = candidate?.candidate_id || 'project-miner-intake'
+  return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-approval-dry-run-envelope.json`
+}
+
 function executorHandoffFileName(candidate?: CandidatePayload | null) {
   const candidateId = candidate?.candidate_id || 'project-miner-intake'
   return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-executor-handoff.md`
@@ -3760,6 +3765,18 @@ export default function ProjectMinerIntakeWorkbenchPage() {
     setApprovalDryRunStatus(`Local approval dry run prepared for ${candidate?.candidate_id || 'the current intake packet'}; no network request was sent.`)
   }
 
+  function exportApprovalDryRunEnvelope() {
+    if (!packet) {
+      return
+    }
+
+    const dryRun = buildLocalApprovalSubmissionDryRun(packet, notAllowed, futureRoute, reviewChecks, approvalDraft)
+    const contents = `${JSON.stringify(dryRun, null, 2)}\n`
+    setApprovalDryRunPreview(contents)
+    downloadTextFile(approvalDryRunEnvelopeFileName(candidate), contents, 'application/json')
+    setApprovalDryRunStatus(`Local approval dry run envelope exported for ${candidate?.candidate_id || 'the current intake packet'}; no network request was sent.`)
+  }
+
   function clearApprovalDryRun() {
     setApprovalDryRunPreview('')
     setApprovalDryRunStatus('')
@@ -4902,10 +4919,13 @@ export default function ProjectMinerIntakeWorkbenchPage() {
                 <button className="btn btn-outline" onClick={buildApprovalDryRun} disabled={!packet}>
                   Build Local Approval Dry Run
                 </button>
+                <button className="btn btn-outline" onClick={exportApprovalDryRunEnvelope} disabled={!packet}>
+                  Export Dry Run Envelope
+                </button>
                 <button className="btn btn-outline" onClick={clearApprovalDryRun} disabled={!approvalDryRunPreview && !approvalDryRunStatus}>
                   Clear dry run
                 </button>
-                <span style={{ color: 'var(--muted)', lineHeight: 1.55 }}>The generated envelope stays on this screen and sends no request.</span>
+                <span style={{ color: 'var(--muted)', lineHeight: 1.55 }}>The generated envelope stays local to this browser or downloads as a review artifact and sends no request.</span>
               </div>
               {approvalDryRunStatus ? <p role="status" style={{ color: 'var(--muted)', lineHeight: 1.55 }}>{approvalDryRunStatus}</p> : null}
               {approvalDryRunPreview ? (

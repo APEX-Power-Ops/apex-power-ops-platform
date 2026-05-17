@@ -29,7 +29,7 @@ Stakeholder activation was provided in the VS Code Codex session with the clarif
 
 This activation admits Desktop Codex orchestration governance for non-PM lanes only. It admits no product code change, deployment, schema change, credential handling, MCP service admission, Olares runtime change, PM business-state mutation, repo publication authority, or autonomous queue ownership.
 
-The first admitted execution proof is the Relay review-burden prompt only. NETA Study Material and TCC prompts remain parked until Desktop Codex returns a clean Relay closeout that reduces Jason's relay load and avoids premature VS Code Codex interruption.
+The first admitted execution proof was the Relay review-burden prompt. Desktop Codex returned a clean `READY_FOR_JASON_DECISION` closeout, accepted by VS Code Codex as proof that the orchestration model can reduce Jason relay load and avoid premature VS Code Codex interruption. The first NETA Study Material scout and follow-on NETA source-map/artifact-backlog closeout also returned clean `READY_FOR_JASON_DECISION` closeouts. VS Code Codex accepts both as evidence that one low-risk non-PM substance lane can stay concise. The next non-PM candidate is a NETA Level II Electrical Fundamentals pilot content audit; TCC remains parked until that pilot audit returns clean or Jason explicitly reprioritizes TCC.
 
 ### Required Amendments
 
@@ -308,9 +308,9 @@ Desktop Codex must stop and escalate if any lane attempts to:
 | Lane | Status | Authority Band | Desktop Codex Role | VS Code Codex Role | Next Approval Gate |
 | --- | --- | --- | --- | --- | --- |
 | PM Temp Power | Active priority | Band C where packet-approved | Support and evidence compression | Primary executor and repo authority | Jason approval for business workflow and production state changes |
-| NETA Study Material | Parked until Relay proof is accepted | Band A/B | Govern packet, delegate content/scaffold work, collect evidence after later admission | Review only if shared repo/product surfaces are touched | Relay closeout must recommend graduation before NETA assignment |
-| TCC | Parked until Relay proof is accepted | Band A first | Govern scout packet and dependency map after later admission | Architecture review at integration boundary | Relay closeout must recommend graduation before TCC assignment |
-| Relay | First admitted execution proof | Band A/B | Govern orchestration templates and review-burden metrics | Review before orchestration widening or NETA/TCC graduation | Execute Relay review-burden prompt only |
+| NETA Study Material | Level II Electrical Fundamentals pilot content audit recommended next | Band A/B | Govern next NETA pilot audit if admitted | Review only if shared repo/product surfaces are touched | Decide whether to admit the Level II pilot content audit |
+| TCC | Parked until NETA pilot audit proof is accepted or Jason reprioritizes TCC | Band A first | Govern scout packet and dependency map after later admission | Architecture review at integration boundary | NETA pilot audit closeout must prove compression pattern before default TCC assignment |
+| Relay | Accepted proof | Band A/B | Govern orchestration templates and review-burden metrics | Review before additional orchestration widening | Relay closeout accepted; do not rerun unless governance model changes |
 
 ## First Approved Move
 

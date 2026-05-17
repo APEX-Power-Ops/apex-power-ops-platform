@@ -1111,6 +1111,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(approvalDryRun.getByText(/Builds the future approval POST envelope in this browser for review only/i)).toBeVisible()
   await expect(approvalDryRun.getByText(/Live approval POST, first approval-row creation, and project import remain blocked/i)).toBeVisible()
   await expect(approvalDryRun.getByRole('button', { name: 'Build Local Approval Dry Run' })).toBeVisible()
+  await expect(approvalDryRun.getByRole('button', { name: 'Export Dry Run Envelope' })).toBeVisible()
   await expect(approvalDryRun.getByRole('button', { name: 'Clear dry run' })).toBeDisabled()
   await approvalDryRun.locator(':scope > summary').click()
   await expect(approvalDryRun).not.toHaveAttribute('open', '')
@@ -1130,6 +1131,58 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(approvalDryRunPreview).toContainText('"decision": "return_for_revision"')
   await expect(approvalDryRunPreview).toContainText('"accepted_warning_codes"')
   await expect(approvalDryRun.getByRole('button', { name: 'Clear dry run' })).toBeEnabled()
+  expect(mutationRequests).toHaveLength(0)
+  const dryRunDownloadPromise = page.waitForEvent('download')
+  await approvalDryRun.getByRole('button', { name: 'Export Dry Run Envelope' }).click()
+  const dryRunDownload = await dryRunDownloadPromise
+  expect(dryRunDownload.suggestedFilename()).toBe('pm-import-candidate-miner-temp-power-approval-dry-run-envelope.json')
+  const dryRunStream = await dryRunDownload.createReadStream()
+  expect(dryRunStream).not.toBeNull()
+  const dryRunChunks: Buffer[] = []
+  for await (const chunk of dryRunStream!) {
+    dryRunChunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk))
+  }
+  const dryRunEnvelope = JSON.parse(Buffer.concat(dryRunChunks).toString('utf8'))
+  expect(dryRunEnvelope).toMatchObject({
+    dry_run_kind: 'pm_import_candidate_browser_approval_dry_run',
+    dry_run_version: 'pm_lane_142a_local_mock_v1',
+    authority_boundary: {
+      mutation_authority: 'not_admitted',
+      local_mock_only: true,
+      live_post_performed: false,
+      approval_row_created: false,
+      hosted_deploy_performed: false,
+    },
+    intended_request: {
+      method: 'POST',
+      route: '/api/v1/mutations/project-import-approvals',
+      route_not_called_by_this_screen: true,
+      server_write_performed: false,
+    },
+    payload: {
+      candidate_id: 'pm-import-candidate-miner-temp-power',
+      decision: 'return_for_revision',
+      review_notes: 'Reviewed formula warnings; return for revision until source workbook errors are resolved.',
+      local_attestation: true,
+      accepted_warning_codes: ['PROJECT_DATA_ENTRY_FORMULA_ERRORS'],
+      approval_status_before_dry_run: {
+        classification: 'no_approval_record',
+        approval_record_count_for_candidate: 0,
+        current_candidate_match: false,
+      },
+    },
+    local_validation: {
+      decision_draft_complete: true,
+      checklist_checked_count: 2,
+      checklist_checked_items: ['source_freshness_reviewed', 'exceptions_reviewed'],
+      warning_acceptance_ready: true,
+      no_go_acknowledgement_ready: false,
+      write_guardrail_confirmed: false,
+    },
+  })
+  expect(dryRunEnvelope.generated_locally_at).toEqual(expect.any(String))
+  expect(dryRunEnvelope.blocked_boundaries).toEqual(expect.arrayContaining(['live_approval_post', 'approval_row_creation', 'project_import']))
+  await expect(approvalDryRun.getByRole('status')).toContainText(/Local approval dry run envelope exported/i)
   expect(mutationRequests).toHaveLength(0)
   const closeoutIntake = page.locator('details#executor-closeout[aria-label="Local executor closeout intake"]')
   await expect(closeoutIntake).toHaveAttribute('open', '')

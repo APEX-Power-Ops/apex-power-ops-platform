@@ -1,0 +1,63 @@
+{
+  "packet_id": "2026-05-17-pm-lane-143",
+  "lane": "PM Lane 143",
+  "title": "Local Dry-Run Envelope Export",
+  "created_at_local": "2026-05-17",
+  "source_floor_commit": "9ba11d4430cef7277fd8f5ec5d41cbdfc998f26f",
+  "objective": "Add a local-only JSON export for the browser approval dry-run envelope on /pm-review/import-intake without sending a live approval POST or creating an approval row.",
+  "execution_mode": "local_product_code_plus_status_docs",
+  "scope": [
+    "Add an Export Dry Run Envelope action to the existing Local Approval Submission Dry Run panel.",
+    "Download the same mock-only approval envelope as JSON.",
+    "Refresh the on-screen dry-run preview when exporting.",
+    "Extend the focused Playwright smoke to prove the downloaded envelope and zero mutation requests.",
+    "Accept the Desktop Codex Relay review-burden closeout, first NETA scout, and NETA source-map/artifact-backlog closeout while keeping TCC parked."
+  ],
+  "not_allowed": [
+    "No live POST to /api/v1/mutations/project-import-approvals.",
+    "No approval row creation.",
+    "No hosted deployment or promotion.",
+    "No Supabase, Render, Vercel, or Olares action.",
+    "No SQL or schema migration.",
+    "No secret access or secret rotation.",
+    "No backend route or mutation route change.",
+    "No project import, workpackage rows, task rows, apparatus rows, assignment, schedule, status, durable field record, production tracking, workbook macro, or workbook writeback.",
+    "No service, auth, DNS, ingress, or control-plane widening.",
+    "No autonomous AI business-state mutation."
+  ],
+  "live_write_gate": {
+    "status": "not_admitted",
+    "required_phrase": "I explicitly admit PM Lane 142 live approval POST and first approval-row creation for the current Project Miner Temp Power import candidate.",
+    "note": "This phrase was not present for PM Lane 143, so the lane remains local dry-run export only."
+  },
+  "changed_files": [
+    "PROJECT_STATUS.md",
+    "apps/operations-web/app/pm-review/import-intake/page.tsx",
+    "apps/operations-web/tests/browser-shell.pm-import-intake.smoke.spec.ts",
+    "docs/operations/APEX-PM-STAKEHOLDER-TIME-PROTECTION-AND-ACCELERATION-LANE-2026-05-15.md",
+    "docs/operations/APEX-PM-TEMP-POWER-DELIVERY-AND-ORCHESTRATION-PLAN-2026-05-15.md",
+    "docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md",
+    "docs/operations/APEX-PARALLEL-LANE-ORCHESTRATION-GOVERNANCE-PLAN-2026-05-17.md",
+    "ops/agents/handoffs/2026-05-17-desktop-codex-parallel-lane-orchestration-queue.md",
+    "ops/agents/handoffs/2026-05-17-desktop-codex-governance-activation-closeout-handoff.md",
+    "ops/agents/handoffs/2026-05-17-parallel-lane-orchestration-governance-review-handoff.md",
+    "ops/agents/handoffs/2026-05-17-desktop-codex-relay-review-burden-closeout.md",
+    "ops/agents/handoffs/2026-05-17-desktop-codex-relay-review-burden-acceptance-handoff.md",
+    "ops/agents/handoffs/2026-05-17-desktop-codex-neta-study-material-scout-build-closeout.md",
+    "ops/agents/handoffs/2026-05-17-desktop-codex-neta-study-material-scout-build-acceptance-handoff.md",
+    "ops/agents/handoffs/2026-05-17-desktop-codex-neta-source-map-and-artifact-backlog-closeout.md",
+    "ops/agents/handoffs/2026-05-17-desktop-codex-neta-source-map-and-artifact-backlog-acceptance-handoff.md",
+    "ops/agents/packets/draft/2026-05-17-pm-lane-143-local-dry-run-envelope-export.json",
+    "ops/agents/handoffs/2026-05-17-pm-lane-143-local-dry-run-envelope-export-handoff.md"
+  ],
+  "validation_steps": [
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform\" --filter @apex/operations-web typecheck",
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform\" --filter @apex/operations-web build",
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform/apps/operations-web\" exec playwright test \"browser-shell.pm-import-intake.smoke.spec.ts\"",
+    "rg -n \"PM Lane 143|Export Dry Run Envelope|approval-dry-run-envelope|Relay closeout|NETA Level II|TCC remains parked\" PROJECT_STATUS.md docs/operations ops/agents apps/operations-web",
+    "git diff --check"
+  ],
+  "validation_result": "PASS: operations-web typecheck passed, operations-web production build passed, focused PM import-intake Playwright smoke passed with 1 passed after resequencing the smoke after build, guardrail search confirmed PM Lane 143 plus Relay/NETA/TCC orchestration language, and scoped diff check passed.",
+  "sidecar_result": "Desktop Codex Relay review-burden proof, first NETA scout, and NETA source-map/artifact-backlog closeout all returned READY_FOR_JASON_DECISION and stayed within their bounded read-only/one-handoff authority.",
+  "next_recommended_lane": "PM lane may continue local operator-review ergonomics or await explicit PM Lane 142 live-write admission; Desktop Codex next non-PM decision is whether to admit the NETA Level II Electrical Fundamentals pilot content audit while keeping TCC parked."
+}
