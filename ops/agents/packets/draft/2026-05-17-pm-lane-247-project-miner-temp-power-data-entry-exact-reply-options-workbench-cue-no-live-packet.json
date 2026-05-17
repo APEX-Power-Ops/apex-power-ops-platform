@@ -1,0 +1,63 @@
+{
+  "packet_id": "2026-05-17-pm-lane-247-project-miner-temp-power-data-entry-exact-reply-options-workbench-cue-no-live-packet",
+  "title": "PM Lane 247 - Project Miner Temp Power Data Entry Exact Reply Options Workbench Cue No-Live Packet",
+  "date": "2026-05-17",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_DATA_ENTRY_EXACT_REPLY_OPTIONS_WORKBENCH_CUE_NO_LIVE",
+  "selected_outcome": "DATA_ENTRY_WORKBENCH_SHOWS_COPY_SAFE_ONE_LINE_REPLY_OPTIONS_NO_LIVE",
+  "candidate": {
+    "candidate_id": "pm-import-candidate-miner-temp-power",
+    "active_warning_code": "PROJECT_DATA_ENTRY_FORMULA_ERRORS",
+    "warning_count": 1,
+    "blocker_count": 0,
+    "mutation_authority": "not_admitted"
+  },
+  "workbench_cue": {
+    "surface": "PM Decision Context",
+    "aria_label": "Project Data Entry exact reply options",
+    "instruction": "Copy exactly one line only",
+    "blocked_reply_content": [
+      "explanation text",
+      "paraphrase",
+      "REQUEST_SOURCE_CORRECTION_NO_LIVE"
+    ],
+    "no_live_boundary": true
+  },
+  "allowed_reply_lines": [
+    "ACCEPT_DATA_ENTRY_WARNING_NON_BLOCKING_NO_LIVE",
+    "REQUEST_DATA_ENTRY_WORKBOOK_CORRECTION_NO_LIVE",
+    "HOLD_DATA_ENTRY_WARNING_NO_LIVE",
+    "PROVIDE_EXACT_LIVE_ADMISSION_LATER"
+  ],
+  "desktop_codex_support": {
+    "prompt_path": "ops/agents/handoffs/2026-05-17-desktop-codex-pm-lane-247-data-entry-exact-reply-options-review-scout-prompt.md",
+    "status": "available_not_required",
+    "allowed_scope": [
+      "reply-option clarity review",
+      "copy-risk wording review",
+      "authority-boundary risk review"
+    ],
+    "blocked_scope": [
+      "PM decision authority",
+      "product code edit",
+      "repo publication",
+      "hosted service access",
+      "workbook content read",
+      "source PDF content read",
+      "macro execution",
+      "warning acceptance",
+      "approval/import authority",
+      "business-state mutation"
+    ]
+  },
+  "validation": [
+    "operations-web typecheck",
+    "operations-web build",
+    "focused pm-import-intake Playwright smoke",
+    "packet JSON parse",
+    "guardrail label search",
+    "pending-marker scan",
+    "corrupted-token scan",
+    "git diff --check"
+  ],
+  "validation_result": "PASS"
+}

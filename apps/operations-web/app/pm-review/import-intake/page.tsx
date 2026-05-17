@@ -10065,6 +10065,28 @@ export default function ProjectMinerIntakeWorkbenchPage() {
                           </ul>
                         </article>
                       ) : null}
+                      {hasProjectDataEntryWarning ? (
+                        <article aria-label="Project Data Entry exact reply options" className="card" style={{ padding: '0.85rem', boxShadow: 'none' }}>
+                          <div className="status-row" style={{ alignItems: 'start' }}>
+                            <div>
+                              <p style={{ margin: 0 }}>
+                                <strong>Exact reply options</strong>
+                              </p>
+                              <p style={{ margin: '0.45rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+                                Copy exactly one line only. Do not include explanation text, a paraphrase, or {PROJECT_MINER_RESOLVED_SOURCE_CORRECTION_LABEL}.
+                              </p>
+                            </div>
+                            <span className="status-pill status-awaiting-values">one-line reply</span>
+                          </div>
+                          <ul style={{ margin: '0.65rem 0 0', paddingLeft: '1.15rem', color: 'var(--muted)', lineHeight: 1.55 }}>
+                            {PROJECT_DATA_ENTRY_DECISION_LABELS.map((label) => (
+                              <li key={label}>
+                                <code>{label}</code>
+                              </li>
+                            ))}
+                          </ul>
+                        </article>
+                      ) : null}
                       {!decisions.length ? <p style={{ color: 'var(--muted)' }}>No PM decisions are currently reported.</p> : null}
                     </div>
                   </article>
