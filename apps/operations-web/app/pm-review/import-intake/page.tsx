@@ -1229,6 +1229,25 @@ const PROJECT_DATA_ENTRY_DECISION_LABELS = [
   'PROVIDE_EXACT_LIVE_ADMISSION_LATER',
 ]
 
+const PROJECT_DATA_ENTRY_DECISION_LABEL_DETAILS = [
+  {
+    label: 'ACCEPT_DATA_ENTRY_WARNING_NON_BLOCKING_NO_LIVE',
+    meaning: 'reviewed warning is accepted as non-blocking for no-live planning context only',
+  },
+  {
+    label: 'REQUEST_DATA_ENTRY_WORKBOOK_CORRECTION_NO_LIVE',
+    meaning: 'source workbook correction is requested before warning acceptance or later live admission',
+  },
+  {
+    label: 'HOLD_DATA_ENTRY_WARNING_NO_LIVE',
+    meaning: 'keep the warning unresolved and continue no-live review only',
+  },
+  {
+    label: 'PROVIDE_EXACT_LIVE_ADMISSION_LATER',
+    meaning: 'defer warning disposition and live admission to a later exact-gate packet',
+  },
+]
+
 const PROJECT_MINER_RESOLVED_SOURCE_CORRECTION_LABEL = 'REQUEST_SOURCE_CORRECTION_NO_LIVE'
 const PROJECT_MINER_RESOLVED_SOURCE_CORRECTION_DESIGNATION = 'Ground Resistance Test Lot'
 
@@ -1277,6 +1296,19 @@ function projectDataEntrySourceCorrectionBoundary() {
   }
 }
 
+function projectDataEntryNextInputNeeded(present: boolean) {
+  return {
+    required: present,
+    response_format: present ? 'return_exactly_one_pm_lane_238_label' : 'not_required',
+    warning_code: PROJECT_DATA_ENTRY_WARNING_CODE,
+    allowed_labels: present ? PROJECT_DATA_ENTRY_DECISION_LABEL_DETAILS : [],
+    no_live_boundary: true,
+    detail: present
+      ? 'Return exactly one PM Lane 238 label to disposition the Project Data Entry formula warning; paraphrases and prior source-correction labels do not close this gate.'
+      : 'No Project Data Entry warning label is needed for this candidate.',
+  }
+}
+
 function projectDataEntryWarningDispositionGate(warnings: CandidateWarning[]) {
   const present = hasWarningCode(warnings, PROJECT_DATA_ENTRY_WARNING_CODE)
 
@@ -1288,6 +1320,7 @@ function projectDataEntryWarningDispositionGate(warnings: CandidateWarning[]) {
     allowed_labels: present ? PROJECT_DATA_ENTRY_DECISION_LABELS : [],
     admission_prerequisites: present ? PROJECT_DATA_ENTRY_ADMISSION_PREREQUISITES : [],
     source_correction_boundary: present ? projectDataEntrySourceCorrectionBoundary() : null,
+    next_input_needed: projectDataEntryNextInputNeeded(present),
     detail: present
       ? 'The Project Data Entry warning has been reviewed locally, but it is not accepted for approval context until Jason provides one exact allowed no-live label.'
       : 'The Project Data Entry warning is not present on this candidate.',
@@ -10005,6 +10038,28 @@ export default function ProjectMinerIntakeWorkbenchPage() {
                           <p style={{ margin: '0.35rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
                             Admission prerequisites: {PROJECT_DATA_ENTRY_ADMISSION_PREREQUISITES.join('; ')}.
                           </p>
+                        </article>
+                      ) : null}
+                      {hasProjectDataEntryWarning ? (
+                        <article aria-label="Project Data Entry next input needed" className="card" style={{ padding: '0.85rem', boxShadow: 'none' }}>
+                          <div className="status-row" style={{ alignItems: 'start' }}>
+                            <div>
+                              <p style={{ margin: 0 }}>
+                                <strong>Next exact input needed</strong>
+                              </p>
+                              <p style={{ margin: '0.45rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+                                Return exactly one PM Lane 238 label for {PROJECT_DATA_ENTRY_WARNING_CODE}. Do not use paraphrases or the already-applied Ground Resistance source-correction label.
+                              </p>
+                            </div>
+                            <span className="status-pill status-awaiting-values">waiting</span>
+                          </div>
+                          <ul style={{ margin: '0.65rem 0 0', paddingLeft: '1.15rem', color: 'var(--muted)', lineHeight: 1.55 }}>
+                            {PROJECT_DATA_ENTRY_DECISION_LABEL_DETAILS.map((item) => (
+                              <li key={item.label}>
+                                <code>{item.label}</code>: {item.meaning}
+                              </li>
+                            ))}
+                          </ul>
                         </article>
                       ) : null}
                       {!decisions.length ? <p style={{ color: 'var(--muted)' }}>No PM decisions are currently reported.</p> : null}

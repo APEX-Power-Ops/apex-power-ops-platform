@@ -1624,14 +1624,16 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(exceptionDecisionGroups.locator('.notes-card')).toHaveCount(2)
   await expect(exceptionDecisionGroups.getByRole('heading', { name: 'Exception Review', exact: true })).toBeVisible()
   await expect(exceptionDecisionGroups.getByRole('heading', { name: 'PM Decisions', exact: true })).toBeVisible()
-  await expect(exceptionDecisionDetail.getByText('PROJECT_DATA_ENTRY_FORMULA_ERRORS')).toBeVisible()
+  await expect(exceptionDecisionDetail.getByText('PROJECT_DATA_ENTRY_FORMULA_ERRORS', { exact: true })).toBeVisible()
   await expect(exceptionDecisionDetail.getByText('234 planning-workbook rows include formula errors.')).toBeVisible()
   await expect(exceptionDecisionDetail.getByLabel('Project Data Entry decision gate')).toBeVisible()
-  await expect(exceptionDecisionDetail.getByText('ACCEPT_DATA_ENTRY_WARNING_NON_BLOCKING_NO_LIVE')).toBeVisible()
+  await expect(exceptionDecisionDetail.getByText('ACCEPT_DATA_ENTRY_WARNING_NON_BLOCKING_NO_LIVE', { exact: true })).toBeVisible()
   await expect(exceptionDecisionDetail.locator('p').filter({ hasText: 'Allowed labels:' }).filter({ hasText: 'REQUEST_DATA_ENTRY_WORKBOOK_CORRECTION_NO_LIVE' })).toBeVisible()
-  await expect(exceptionDecisionDetail.getByText('HOLD_DATA_ENTRY_WARNING_NO_LIVE')).toBeVisible()
-  await expect(exceptionDecisionDetail.getByText('PROVIDE_EXACT_LIVE_ADMISSION_LATER')).toBeVisible()
+  await expect(exceptionDecisionDetail.getByText('HOLD_DATA_ENTRY_WARNING_NO_LIVE', { exact: true })).toBeVisible()
+  await expect(exceptionDecisionDetail.getByText('PROVIDE_EXACT_LIVE_ADMISSION_LATER', { exact: true })).toBeVisible()
   await expect(exceptionDecisionDetail.getByText(/Prior source correction is already applied: REQUEST_SOURCE_CORRECTION_NO_LIVE -> Ground Resistance Test Lot/i)).toBeVisible()
+  await expect(exceptionDecisionDetail.getByLabel('Project Data Entry next input needed')).toBeVisible()
+  await expect(exceptionDecisionDetail.getByText(/Return exactly one PM Lane 238 label for PROJECT_DATA_ENTRY_FORMULA_ERRORS/i)).toBeVisible()
   await expect(exceptionDecisionDetail.getByText(/Admission prerequisites: current candidate identity; warning disposition; exact live phrase/i)).toBeVisible()
   await expect(exceptionDecisionDetail.getByText('decision approve candidate for import planning')).toBeVisible()
   await expect(exceptionDecisionDetail.getByText('Does this candidate correctly represent the project, workpackages, tasks, and apparatus?')).toBeVisible()
@@ -1929,6 +1931,12 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
           corrected_candidate_designation: 'Ground Resistance Test Lot',
           applies_to_current_warning: false,
           current_workbook_correction_label: 'REQUEST_DATA_ENTRY_WORKBOOK_CORRECTION_NO_LIVE',
+        },
+        next_input_needed: {
+          required: true,
+          response_format: 'return_exactly_one_pm_lane_238_label',
+          warning_code: 'PROJECT_DATA_ENTRY_FORMULA_ERRORS',
+          no_live_boundary: true,
         },
       },
       approval_status_before_dry_run: {
@@ -5041,6 +5049,12 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
             corrected_candidate_designation: 'Ground Resistance Test Lot',
             applies_to_current_warning: false,
             current_workbook_correction_label: 'REQUEST_DATA_ENTRY_WORKBOOK_CORRECTION_NO_LIVE',
+          },
+          next_input_needed: {
+            required: true,
+            response_format: 'return_exactly_one_pm_lane_238_label',
+            warning_code: 'PROJECT_DATA_ENTRY_FORMULA_ERRORS',
+            no_live_boundary: true,
           },
         },
       },

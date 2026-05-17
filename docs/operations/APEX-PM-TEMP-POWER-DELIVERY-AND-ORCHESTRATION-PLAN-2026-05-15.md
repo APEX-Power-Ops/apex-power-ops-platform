@@ -747,6 +747,7 @@ Current known gaps:
 17. PM Lane 242 guards approval dry-run warning acceptance. `PROJECT_DATA_ENTRY_FORMULA_ERRORS` remains reviewed but unresolved, is excluded from accepted warning codes, and now appears as an unresolved warning-disposition gate in dry-run readiness and live-gate preflight while validation passed.
 18. PM Lane 243 carries that warning-disposition guard into the approval packet preview export. The preview now records the Data Entry warning as reviewed but unresolved, with accepted warning codes empty, while validation passed and live approval/import authority remains blocked.
 19. PM Lane 244 adds a source-correction boundary cue to that Data Entry warning gate. The prior `REQUEST_SOURCE_CORRECTION_NO_LIVE` / `Ground Resistance Test Lot` correction is marked already applied, while `REQUEST_DATA_ENTRY_WORKBOOK_CORRECTION_NO_LIVE` remains the active workbook-correction label and validation passed.
+20. PM Lane 245 adds an exact-label relay cue to the Data Entry warning gate. The next required response format is `return_exactly_one_pm_lane_238_label`; the workbench shows a "Next exact input needed" card, while validation passed and live approval/import authority remains blocked.
 
 Required response to new gaps:
 
