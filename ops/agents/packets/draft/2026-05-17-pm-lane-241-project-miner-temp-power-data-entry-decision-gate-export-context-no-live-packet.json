@@ -1,0 +1,73 @@
+{
+  "packet_id": "2026-05-17-pm-lane-241-project-miner-temp-power-data-entry-decision-gate-export-context-no-live-packet",
+  "title": "PM Lane 241 - Project Miner Temp Power Data Entry Decision Gate Export Context No-Live Packet",
+  "date": "2026-05-17",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_DATA_ENTRY_DECISION_GATE_EXPORT_CONTEXT_NO_LIVE",
+  "selected_outcome": "DATA_ENTRY_DECISION_GATE_INCLUDED_IN_LOCAL_EXPORTS_NO_LIVE",
+  "candidate": {
+    "candidate_id": "pm-import-candidate-miner-temp-power",
+    "warning_code": "PROJECT_DATA_ENTRY_FORMULA_ERRORS",
+    "task_count": 15,
+    "apparatus_candidate_count": 184,
+    "warning_count": 1,
+    "blocker_count": 0,
+    "mutation_authority": "not_admitted"
+  },
+  "export_change": {
+    "surfaces": [
+      "PM intake brief",
+      "Local import exception decision register"
+    ],
+    "behavior": "local_export_context_only",
+    "storage_change": false,
+    "network_call_change": false,
+    "mutation_change": false
+  },
+  "allowed_labels": [
+    "ACCEPT_DATA_ENTRY_WARNING_NON_BLOCKING_NO_LIVE",
+    "REQUEST_DATA_ENTRY_WORKBOOK_CORRECTION_NO_LIVE",
+    "HOLD_DATA_ENTRY_WARNING_NO_LIVE",
+    "PROVIDE_EXACT_LIVE_ADMISSION_LATER"
+  ],
+  "admission_prerequisites": [
+    "current candidate identity",
+    "warning disposition",
+    "exact live phrase",
+    "hosted-read currency",
+    "replay/idempotency requirements",
+    "approval-row evidence",
+    "Desktop Codex review-only boundary"
+  ],
+  "desktop_codex_support": {
+    "prompt_path": "ops/agents/handoffs/2026-05-17-desktop-codex-pm-lane-241-data-entry-decision-gate-export-context-review-scout-prompt.md",
+    "status": "available_not_required",
+    "allowed_scope": [
+      "export wording clarity review",
+      "relay-burden review",
+      "authority-boundary risk review"
+    ],
+    "blocked_scope": [
+      "PM decision authority",
+      "product code edit",
+      "repo publication",
+      "hosted service access",
+      "workbook content read",
+      "source PDF content read",
+      "macro execution",
+      "warning acceptance",
+      "approval/import authority",
+      "business-state mutation"
+    ]
+  },
+  "validation": [
+    "operations-web typecheck",
+    "operations-web build",
+    "focused pm-import-intake Playwright smoke",
+    "packet JSON parse",
+    "guardrail label search",
+    "pending-marker scan",
+    "corrupted-token scan",
+    "git diff --check"
+  ],
+  "validation_result": "PASS"
+}

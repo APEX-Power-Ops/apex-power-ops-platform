@@ -1243,6 +1243,24 @@ function hasWarningCode(warnings: CandidateWarning[], code: string) {
   return warnings.some((warning) => warning.code === code)
 }
 
+function projectDataEntryDecisionGateExportLines(warnings: CandidateWarning[]) {
+  if (!hasWarningCode(warnings, PROJECT_DATA_ENTRY_WARNING_CODE)) {
+    return []
+  }
+
+  return [
+    '## Project Data Entry Decision Gate',
+    '',
+    `- Warning code: ${PROJECT_DATA_ENTRY_WARNING_CODE}`,
+    '- Current state: no-live, waiting for one exact PM label before any later live admission path.',
+    '- Allowed labels:',
+    ...PROJECT_DATA_ENTRY_DECISION_LABELS.map((label) => `  - ${label}`),
+    '- Admission prerequisites:',
+    ...PROJECT_DATA_ENTRY_ADMISSION_PREREQUISITES.map((prerequisite) => `  - ${prerequisite}`),
+    '- Authority boundary: display/export context only; no approval POST, approval row, import write, source writeback, hosted call, or business-state mutation.',
+  ]
+}
+
 function visibleDecisions(decisions: CandidateDecision[]) {
   return decisions.slice(0, 3)
 }
@@ -4105,6 +4123,7 @@ function buildIntakeBrief(
   const targetRowLines = Object.entries(targetRows).map(([key, value]) => `${formatLabel(key)}: ${formatValue(value)}`)
   const warningLines = warnings.map((warning) => `${warning.severity || 'unknown'} - ${warning.code || 'WARNING'}: ${warning.message || 'Review warning.'}`)
   const decisionLines = decisions.map((decision) => `${formatLabel(decision.decision_id)}: ${decision.prompt || 'Decision prompt unavailable.'}`)
+  const projectDataEntryDecisionGateLines = projectDataEntryDecisionGateExportLines(warnings)
   const gateLines = workflowGates.map((gate) => `${gate.title}: ${formatLabel(gate.status)} - ${gate.detail}`)
   const persistenceGateLines = persistenceReadinessGates.map((gate) => `${gate.title}: ${formatLabel(gate.status)} - ${gate.detail}`)
   const operatingQueueLines = operatingQueue.map((item) => `${item.title}: ${formatLabel(item.status)} - ${item.detail}`)
@@ -4176,6 +4195,7 @@ function buildIntakeBrief(
     '',
     markdownList(decisionLines),
     '',
+    ...(projectDataEntryDecisionGateLines.length ? [...projectDataEntryDecisionGateLines, ''] : []),
     '## Workflow Gates',
     '',
     markdownList(gateLines),
@@ -7544,6 +7564,7 @@ function buildImportExceptionRegisterExport(
   const registerLines = importExceptionRegister.map((item) => `${item.title}: ${formatLabel(item.status)} - ${item.detail} Evidence: ${item.evidence}`)
   const warningLines = warnings.map((warning) => `${warning.severity || 'unknown'} - ${warning.code || 'WARNING'}: ${warning.message || 'Review warning.'}`)
   const decisionLines = decisions.map((decision) => `${formatLabel(decision.decision_id)}: ${decision.prompt || 'Decision prompt unavailable.'} Recommended action: ${decision.recommended_action || 'Review before future import.'}`)
+  const projectDataEntryDecisionGateLines = projectDataEntryDecisionGateExportLines(warnings)
   const noGoLines = noGoChecks.map((check) => `${formatLabel(check.check_id)}: ${formatLabel(check.status)} - ${check.message || 'Review check.'}`)
   const checkedReviewLines = REVIEW_CHECKLIST_ITEMS.filter((item) => reviewChecks[item.id]).map((item) => `${item.label}: ${item.detail}`)
   const openReviewLines = REVIEW_CHECKLIST_ITEMS.filter((item) => !reviewChecks[item.id]).map((item) => `${item.label}: ${item.detail}`)
@@ -7581,6 +7602,7 @@ function buildImportExceptionRegisterExport(
     '',
     markdownList(decisionLines),
     '',
+    ...(projectDataEntryDecisionGateLines.length ? [...projectDataEntryDecisionGateLines, ''] : []),
     '## Admission No-Go Checks',
     '',
     markdownList(noGoLines),

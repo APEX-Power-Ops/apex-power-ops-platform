@@ -964,6 +964,8 @@ PM Lane 239 executes the Project Miner Temp Power Data Entry Decision Hold And A
 
 PM Lane 240 executes the Project Miner Temp Power Data Entry Decision Gate Workbench Cue No-Live Packet tranche. The `/pm-review/import-intake` Exception Review and PM Decisions panel now includes a display-only Project Data Entry decision gate when `PROJECT_DATA_ENTRY_FORMULA_ERRORS` is present. It shows the four no-live labels and later admission prerequisites in the review surface without adding an approval/import button, storage key, hosted call, approval row, project import write, source writeback, Desktop Codex PM decision authority, or autonomous AI business-state mutation.
 
+PM Lane 241 executes the Project Miner Temp Power Data Entry Decision Gate Export Context No-Live Packet tranche. The PM intake brief export and local import exception decision register export now include that same Project Data Entry decision gate when `PROJECT_DATA_ENTRY_FORMULA_ERRORS` is present. The exported block carries the four no-live labels, later admission prerequisites, and display/export-only authority boundary without adding live approval, approval-row creation, project import, source writeback, hosted access, Desktop Codex PM decision authority, or autonomous AI business-state mutation. Validation passed.
+
 Level 3 - Resource Context:
 Read equipment inventory and technician capability rows so PM can understand whether the project can be staffed with available people and equipment.
 

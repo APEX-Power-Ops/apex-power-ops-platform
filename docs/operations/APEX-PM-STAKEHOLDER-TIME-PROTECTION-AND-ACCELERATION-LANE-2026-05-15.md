@@ -883,6 +883,8 @@ PM Lane 238 compresses the Project Data Entry warning into a one-screen decision
 PM Lane 239 intakes the continued PM lane instruction against that decision card and records that no allowed PM Lane 238 response label is present yet. The Project Data Entry warning remains open, no-live remains active, and the later live-admission prerequisite ledger is now explicit so the next exact PM decision can land without widening Desktop Codex authority or opening live writes by implication.
 
 PM Lane 240 makes that same decision boundary visible inside `/pm-review/import-intake`. The existing Exception Review and PM Decisions panel now shows a display-only Project Data Entry decision gate when `PROJECT_DATA_ENTRY_FORMULA_ERRORS` is present, including the four no-live labels and later admission prerequisites, with no approval/import button, no new storage key, no hosted call, and no mutation authority.
+
+PM Lane 241 carries that same no-live decision boundary into exported PM review artifacts. The PM intake brief and local import exception decision register now include the Project Data Entry decision gate when `PROJECT_DATA_ENTRY_FORMULA_ERRORS` is present, including the four allowed labels, later admission prerequisites, and display/export-only authority boundary. Validation passed, and live approval, approval-row creation, project import, hosted calls, source writeback, Desktop Codex PM decision authority, and business-state mutation remain blocked.
 The success standard is not just technical correctness. The candidate must reduce Jason's review burden by showing:
 
 1. what the system thinks the project is,
