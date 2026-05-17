@@ -379,6 +379,16 @@ type FieldStartCustomerSiteQuestionItem = {
   detail: string
 }
 
+type FieldStartPmFollowupPromptReviewStatus = 'prompt' | 'ask' | 'context' | 'blocked'
+
+type FieldStartPmFollowupPromptReviewItem = {
+  id: string
+  title: string
+  status: FieldStartPmFollowupPromptReviewStatus
+  href: string
+  detail: string
+}
+
 type OutputSelectorStatus = 'available-context' | 'needs-local-context' | 'field-context' | 'blocked'
 
 type OutputSelectorItem = {
@@ -996,6 +1006,12 @@ function fieldStartStopLineReviewTone(status: FieldStartStopLineReviewStatus) {
 function fieldStartCustomerSiteQuestionTone(status: FieldStartCustomerSiteQuestionStatus) {
   if (status === 'captured' || status === 'context') return 'status-configured'
   if (status === 'ask') return 'status-awaiting-values'
+  return 'status-deferred'
+}
+
+function fieldStartPmFollowupPromptReviewTone(status: FieldStartPmFollowupPromptReviewStatus) {
+  if (status === 'context') return 'status-configured'
+  if (status === 'prompt' || status === 'ask') return 'status-awaiting-values'
   return 'status-deferred'
 }
 
@@ -2489,6 +2505,64 @@ function buildFieldStartCustomerSiteQuestions(
       detail: pmFollowupContextPresent
         ? 'Use PM follow-up notes and field observations only to frame questions; do not turn them into owner lists, assignments, customer commitments, customer reports, schedule/status changes, or field direction.'
         : 'No PM follow-up/customer-site context is captured yet; do not turn questions into owner lists, assignments, customer commitments, customer reports, schedule/status changes, or field direction from this workbench.',
+    },
+  ]
+}
+
+function buildFieldStartPmFollowupPromptReview(
+  candidate: CandidatePayload | undefined,
+  fieldQuestionsDraft: FieldQuestionsDraft,
+  fieldObservationScratchpad: FieldObservationScratchpad,
+): FieldStartPmFollowupPromptReviewItem[] {
+  const projectName = candidate?.project?.name || candidate?.candidate_id || 'current Project Miner candidate'
+  const pmFollowupPromptPresent = Boolean(fieldQuestionsDraft.pm_followup_notes.trim() || fieldObservationScratchpad.open_questions_pm_followup.trim())
+  const customerSitePromptContextPresent = Boolean(fieldQuestionsDraft.customer_constraint_questions.trim() || fieldQuestionsDraft.site_access_safety_questions.trim() || fieldObservationScratchpad.access_safety_observations.trim())
+  const leadPromptContextPresent = Boolean(fieldQuestionsDraft.drawing_source_questions.trim() || fieldQuestionsDraft.crew_equipment_questions.trim() || fieldQuestionsDraft.material_staging_questions.trim() || fieldObservationScratchpad.material_equipment_observations.trim())
+  const evidencePromptContextPresent = Boolean(fieldObservationScratchpad.observer_source.trim() || fieldObservationScratchpad.observation_date_or_shift.trim() || fieldObservationScratchpad.workpackage_area_reference.trim())
+
+  return [
+    {
+      id: 'pm-followup-question-prompt',
+      title: 'PM follow-up question prompt',
+      status: pmFollowupPromptPresent ? 'context' : 'ask',
+      href: '#field-prep',
+      detail: pmFollowupPromptPresent
+        ? `${projectName}: existing PM follow-up prompt context is available; use it only to decide the next question for the PM, lead, or customer conversation.`
+        : `${projectName}: PM follow-up prompt is open; decide the next PM question before accountability, timing, field instruction, customer commitment, or status language is discussed.`,
+    },
+    {
+      id: 'customer-site-return-prompt',
+      title: 'Customer/site return prompt',
+      status: customerSitePromptContextPresent ? 'context' : 'ask',
+      href: '#field-prep',
+      detail: customerSitePromptContextPresent
+        ? 'Use the customer/site question review to pick one return question; do not promise access, shutdown windows, dates, scope outcomes, or customer reporting.'
+        : 'Return to site access, escort, shutdown-window, and contact-path questions before relying on field assumptions.',
+    },
+    {
+      id: 'lead-conversation-prompt',
+      title: 'Lead conversation prompt',
+      status: leadPromptContextPresent ? 'prompt' : 'ask',
+      href: '#field-prep',
+      detail: leadPromptContextPresent
+        ? 'Ask the lead which drawing, safety, material, equipment, or staging uncertainty needs clarification next; keep the answer as local conversation context.'
+        : 'Lead prompt is open; start with source, access, material, equipment, and staging unknowns before field reliance.',
+    },
+    {
+      id: 'evidence-source-prompt',
+      title: 'Evidence/source prompt',
+      status: evidencePromptContextPresent ? 'context' : 'ask',
+      href: '#field-prep',
+      detail: evidencePromptContextPresent
+        ? 'Observation source context is available; ask what source record, site note, or workbook lineage should be reviewed next.'
+        : 'Evidence/source prompt is open; identify what source record or site note should be checked before a later bounded packet.',
+    },
+    {
+      id: 'next-packet-boundary-prompt',
+      title: 'Next packet boundary prompt',
+      status: 'blocked',
+      href: '#guardrails',
+      detail: 'If the follow-up needs accountability, timing, customer-facing language, field direction, report, schedule/status update, or durable record, stop here and author a later bounded packet; this section records none.',
     },
   ]
 }
@@ -7172,6 +7246,10 @@ export default function ProjectMinerIntakeWorkbenchPage() {
     () => buildFieldStartCustomerSiteQuestions(candidate, fieldQuestionsDraft, fieldObservationScratchpad),
     [candidate, fieldQuestionsDraft, fieldObservationScratchpad],
   )
+  const fieldStartPmFollowupPromptReview = useMemo(
+    () => buildFieldStartPmFollowupPromptReview(candidate, fieldQuestionsDraft, fieldObservationScratchpad),
+    [candidate, fieldQuestionsDraft, fieldObservationScratchpad],
+  )
   const pmIntakeSnapshot = useMemo(
     () => buildPmIntakeSnapshot(persistenceReadinessGates, operatingQueue, importExceptionRegister, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, closeoutChecks, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad, approvalDraft),
     [persistenceReadinessGates, operatingQueue, importExceptionRegister, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, closeoutChecks, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad, approvalDraft],
@@ -8292,6 +8370,37 @@ export default function ProjectMinerIntakeWorkbenchPage() {
               ))}
             </div>
           </div>
+          <section id="pm-field-start-pm-followup-prompt-review" aria-label="Local PM follow-up prompt review" className="card" style={{ padding: '0.9rem', marginTop: '0.85rem', boxShadow: 'none' }}>
+            <div className="status-row" style={{ alignItems: 'start' }}>
+              <div>
+                <h3 style={{ margin: 0 }}>Local PM Follow-up Prompt Review</h3>
+                <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+                  Copy/paste prompt review for the next PM, lead, or customer question after the customer/site check. It creates no localStorage key, export artifact, backend route, task, action item, owner, due date, customer commitment, hosted write claim, or production write.
+                </p>
+              </div>
+              <span className="status-pill status-awaiting-values">prompt review</span>
+            </div>
+            <div aria-label="Local PM follow-up prompt review controls" style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
+              {fieldStartPmFollowupPromptReview.map((item) => (
+                <a
+                  key={item.id}
+                  className="card"
+                  href={item.href}
+                  style={{ color: 'inherit', display: 'block', padding: '0.85rem', textDecoration: 'none', boxShadow: 'none' }}
+                >
+                  <div className="status-row" style={{ alignItems: 'start' }}>
+                    <div>
+                      <p style={{ margin: 0 }}>
+                        <strong>{item.title}</strong>
+                      </p>
+                      <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
+                    </div>
+                    <span className={`status-pill ${fieldStartPmFollowupPromptReviewTone(item.status)}`}>{formatLabel(item.status)}</span>
+                  </div>
+                </a>
+              ))}
+            </div>
+          </section>
         </details>
 
         <details open id="pm-start-here" aria-label="Local PM intake start here" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
