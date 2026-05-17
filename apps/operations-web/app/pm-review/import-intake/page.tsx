@@ -419,6 +419,16 @@ type FieldStartSourceReviewBringBackLensItem = {
   detail: string
 }
 
+type FieldStartCustomerSiteClarificationBringBackLensStatus = 'check' | 'review' | 'context' | 'blocked'
+
+type FieldStartCustomerSiteClarificationBringBackLensItem = {
+  id: string
+  title: string
+  status: FieldStartCustomerSiteClarificationBringBackLensStatus
+  href: string
+  detail: string
+}
+
 type OutputSelectorStatus = 'available-context' | 'needs-local-context' | 'field-context' | 'blocked'
 
 type OutputSelectorItem = {
@@ -1058,6 +1068,12 @@ function fieldStartBringBackReviewQueueTone(status: FieldStartBringBackReviewQue
 }
 
 function fieldStartSourceReviewBringBackLensTone(status: FieldStartSourceReviewBringBackLensStatus) {
+  if (status === 'context' || status === 'review') return 'status-configured'
+  if (status === 'check') return 'status-awaiting-values'
+  return 'status-deferred'
+}
+
+function fieldStartCustomerSiteClarificationBringBackLensTone(status: FieldStartCustomerSiteClarificationBringBackLensStatus) {
   if (status === 'context' || status === 'review') return 'status-configured'
   if (status === 'check') return 'status-awaiting-values'
   return 'status-deferred'
@@ -2785,6 +2801,64 @@ function buildFieldStartSourceReviewBringBackLens(
       detail: laterPacketSourceQuestionPresent
         ? 'Open PM follow-up source context exists; if the return requires accountability, field direction, schedule/status, customer-facing language, durable record, report, or write authority, stop and author a later bounded packet.'
         : 'If a returned source item needs more than local review, classify only the packet question; do not create records, tasks, timing fields, commitments, reports, or writes here.',
+    },
+  ]
+}
+
+function buildFieldStartCustomerSiteClarificationBringBackLens(
+  candidate: CandidatePayload | undefined,
+  fieldQuestionsDraft: FieldQuestionsDraft,
+  fieldObservationScratchpad: FieldObservationScratchpad,
+): FieldStartCustomerSiteClarificationBringBackLensItem[] {
+  const projectName = candidate?.project?.name || candidate?.candidate_id || 'current Project Miner candidate'
+  const accessShutdownContextPresent = Boolean(fieldQuestionsDraft.customer_constraint_questions.trim() || fieldQuestionsDraft.site_access_safety_questions.trim() || fieldObservationScratchpad.access_safety_observations.trim())
+  const escortContactContextPresent = Boolean(fieldQuestionsDraft.site_access_safety_questions.trim() || fieldQuestionsDraft.customer_constraint_questions.trim() || fieldObservationScratchpad.observer_source.trim() || fieldObservationScratchpad.open_questions_pm_followup.trim())
+  const safetyLotoContextPresent = Boolean(fieldQuestionsDraft.site_access_safety_questions.trim() || fieldObservationScratchpad.access_safety_observations.trim())
+  const constraintAnswerContextPresent = Boolean(fieldQuestionsDraft.customer_constraint_questions.trim() || fieldQuestionsDraft.pm_followup_notes.trim() || fieldObservationScratchpad.open_questions_pm_followup.trim())
+
+  return [
+    {
+      id: 'access-shutdown-answer-check-lens',
+      title: 'Access/shutdown answer check',
+      status: accessShutdownContextPresent ? 'review' : 'check',
+      href: '#field-prep',
+      detail: accessShutdownContextPresent
+        ? `${projectName}: access, shutdown, escort, safety, or site-entry clarification context is available; keep it as browser-local review context only before any field reliance.`
+        : `${projectName}: if the return names access, shutdown, escort, gate, badge, or site-entry details, keep it as customer/site clarification only.`,
+    },
+    {
+      id: 'escort-contact-path-check-lens',
+      title: 'Escort/contact path check',
+      status: escortContactContextPresent ? 'context' : 'check',
+      href: '#field-prep',
+      detail: escortContactContextPresent
+        ? 'Customer/site or observer context exists; verify the escort, site contact, or conversation source before any later bounded packet.'
+        : 'If the return depends on a customer contact, site escort, observer, or conversation timing, keep that context local and do not assign ownership here.',
+    },
+    {
+      id: 'safety-loto-clarification-check-lens',
+      title: 'Safety/LOTO clarification check',
+      status: safetyLotoContextPresent ? 'review' : 'check',
+      href: '#field-prep',
+      detail: safetyLotoContextPresent
+        ? 'Safety, LOTO, or access observation context exists; review it as customer/site clarification only before field reliance.'
+        : 'If the return names safety, LOTO, PPE, escort, or access restrictions, classify it for local customer/site clarification before field reliance.',
+    },
+    {
+      id: 'constraint-answer-boundary-lens',
+      title: 'Constraint answer boundary',
+      status: constraintAnswerContextPresent ? 'context' : 'check',
+      href: '#guardrails',
+      detail: constraintAnswerContextPresent
+        ? 'Customer constraint or PM follow-up context exists; keep shutdown, outage-window, timing, and customer-facing answers as local clarification until a later bounded packet.'
+        : 'If the return names shutdown windows, outage constraints, access hours, timing assumptions, or customer-facing language, classify only the packet question.',
+    },
+    {
+      id: 'customer-site-promise-stop-line-lens',
+      title: 'Customer/site promise stop line',
+      status: 'blocked',
+      href: '#guardrails',
+      detail: `${projectName}: if a returned customer/site answer needs accountability, timing, customer-facing language, field direction, report, schedule/status update, durable record, or write authority, stop and author a later bounded packet; do not create promises here.`,
     },
   ]
 }
@@ -7484,6 +7558,10 @@ export default function ProjectMinerIntakeWorkbenchPage() {
     () => buildFieldStartSourceReviewBringBackLens(candidate, fieldQuestionsDraft, fieldObservationScratchpad),
     [candidate, fieldQuestionsDraft, fieldObservationScratchpad],
   )
+  const fieldStartCustomerSiteClarificationBringBackLens = useMemo(
+    () => buildFieldStartCustomerSiteClarificationBringBackLens(candidate, fieldQuestionsDraft, fieldObservationScratchpad),
+    [candidate, fieldQuestionsDraft, fieldObservationScratchpad],
+  )
   const pmIntakeSnapshot = useMemo(
     () => buildPmIntakeSnapshot(persistenceReadinessGates, operatingQueue, importExceptionRegister, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, closeoutChecks, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad, approvalDraft),
     [persistenceReadinessGates, operatingQueue, importExceptionRegister, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, closeoutChecks, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad, approvalDraft],
@@ -8723,6 +8801,37 @@ export default function ProjectMinerIntakeWorkbenchPage() {
                       <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
                     </div>
                     <span className={`status-pill ${fieldStartSourceReviewBringBackLensTone(item.status)}`}>{formatLabel(item.status)}</span>
+                  </div>
+                </a>
+              ))}
+            </div>
+          </section>
+          <section id="pm-field-start-customer-site-clarification-bring-back-lens" aria-label="Local field-start customer/site clarification bring-back lens" className="card" style={{ padding: '0.9rem', marginTop: '0.85rem', boxShadow: 'none' }}>
+            <div className="status-row" style={{ alignItems: 'start' }}>
+              <div>
+                <h3 style={{ margin: 0 }}>Local Field Start Customer/Site Clarification Bring-Back Lens</h3>
+                <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+                  Read-only customer/site clarification lens for returned field-start conversation items. It helps classify access, shutdown, escort, contact, safety, and constraint answers as browser-local review context only; it creates no meeting note, localStorage key, export artifact, backend route, task, action item, owner, due date, customer commitment, customer report, field instruction, durable record, hosted write claim, or production write.
+                </p>
+              </div>
+              <span className="status-pill status-awaiting-values">clarification lens</span>
+            </div>
+            <div aria-label="Local field-start customer/site clarification bring-back lens controls" style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
+              {fieldStartCustomerSiteClarificationBringBackLens.map((item) => (
+                <a
+                  key={item.id}
+                  className="card"
+                  href={item.href}
+                  style={{ color: 'inherit', display: 'block', padding: '0.85rem', textDecoration: 'none', boxShadow: 'none' }}
+                >
+                  <div className="status-row" style={{ alignItems: 'start' }}>
+                    <div>
+                      <p style={{ margin: 0 }}>
+                        <strong>{item.title}</strong>
+                      </p>
+                      <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
+                    </div>
+                    <span className={`status-pill ${fieldStartCustomerSiteClarificationBringBackLensTone(item.status)}`}>{formatLabel(item.status)}</span>
                   </div>
                 </a>
               ))}
