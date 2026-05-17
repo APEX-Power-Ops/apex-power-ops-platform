@@ -1,0 +1,80 @@
+{
+  "packet_id": "2026-05-17-pm-lane-222",
+  "title": "PM Lane 222 - Project Miner Source Role Return Classifier No-Live Packet",
+  "lane": "PM",
+  "status": "local_no_live_source_role_return_classifier_packet",
+  "decision_label": "PROJECT_MINER_SOURCE_ROLE_RETURN_CLASSIFIER_NO_LIVE_NO_CONTENT_READ_NO_WRITE",
+  "scope": [
+    "Define how future returned source-role confirmations are classified.",
+    "Keep default state as no Jason source-role return present and hold no-live because no current source-role return exists in this lane.",
+    "Prevent metadata, sidecar recommendations, or source-role questions from becoming source truth by implication.",
+    "Preserve source-content, fingerprint, approval, import, field, customer, production, and finance write boundaries."
+  ],
+  "classifier_buckets": [
+    "CURRENT_SOURCE_CANDIDATE",
+    "REFERENCE_ONLY",
+    "RESOURCE_CONTEXT",
+    "UNKNOWN_OR_STALE",
+    "STOP_AUTHORITY_REQUIRED"
+  ],
+  "context_flags": [
+    "CURRENT_SOURCE_CANDIDATE_NAMED",
+    "REFERENCE_ONLY_NAMED",
+    "RESOURCE_CONTEXT_NAMED",
+    "UNKNOWN_OR_STALE_NAMED",
+    "CONTENT_READ_REQUESTED",
+    "FINGERPRINT_REQUESTED",
+    "APPROVAL_IMPORT_AUTHORITY_IMPLIED",
+    "FIELD_CUSTOMER_FINANCE_AUTHORITY_IMPLIED"
+  ],
+  "default_classifier": "NO_JASON_SOURCE_ROLE_RETURN_PRESENT_HOLD_NO_LIVE",
+  "sidecar_review": {
+    "recommended_label": "PROJECT_MINER_SOURCE_ROLE_RETURN_CLASSIFIER_NO_LIVE_NO_CONTENT_READ_NO_WRITE",
+    "technical_authority_disposition": [
+      "Adopt the sidecar's formal label.",
+      "Use only Lane 221's five role buckets.",
+      "Set default state to NO_JASON_SOURCE_ROLE_RETURN_PRESENT_HOLD_NO_LIVE.",
+      "Keep Desktop Codex source classification deferred until a later packet explicitly asks for it."
+    ]
+  },
+  "next_recommended_lane": "PM Lane 223 - Project Miner Source Role Return Closeout And Next-Packet Selection No-Live Packet",
+  "non_actions": [
+    "No hosted smoke",
+    "No browser live route access",
+    "No Supabase, Render, Vercel, or Olares action",
+    "No SQL or schema migration",
+    "No secret exposure",
+    "No workbook content read",
+    "No workbook macro execution",
+    "No workbook writeback",
+    "No source PDF content read",
+    "No durable source fingerprint",
+    "No confirmed source-of-truth decision",
+    "No live approval POST",
+    "No approval row creation",
+    "No project import",
+    "No notes, tasks, action items, owners, or due dates",
+    "No field or production write",
+    "No customer or finance output",
+    "No autonomous AI business-state mutation"
+  ],
+  "hard_stop_conditions": [
+    "Hosted proof, browser live route, Supabase, Render, Vercel, Olares, credentials, or secrets required",
+    "Workbook content inspection, macro execution, workbook writeback, source PDF content review, or durable fingerprinting required without a separately admitted packet",
+    "Live approval POST, approval-row creation, project import, assignment, schedule/status, field, production, customer, or finance write required",
+    "Returned source role treated as approval/import authority",
+    "Likely or provisional source role treated as confirmed without Jason confirmation",
+    "Local source metadata treated as candidate fingerprint, source fingerprint, shape fingerprint, or current business-state truth",
+    "Sidecar attempts to stage, commit, push, publish, or create PM business state",
+    "Secret exposure attempted",
+    "Autonomous AI business-state mutation attempted"
+  ],
+  "validation_commands": [
+    "Get-Content -LiteralPath 'ops/agents/packets/draft/2026-05-17-pm-lane-222-project-miner-source-role-return-classifier-no-live-packet.json' | ConvertFrom-Json | Select-Object -ExpandProperty packet_id",
+    "rg -n \"PM Lane 222|PROJECT_MINER_SOURCE_ROLE_RETURN_CLASSIFIER_NO_LIVE_NO_CONTENT_READ_NO_WRITE|NO_JASON_SOURCE_ROLE_RETURN_PRESENT_HOLD_NO_LIVE|STOP_AUTHORITY_REQUIRED|PM Lane 223|No workbook content read|No source PDF content read|No project import\" PROJECT_STATUS.md docs/operations/APEX-PM-LANE-222-PROJECT-MINER-SOURCE-ROLE-RETURN-CLASSIFIER-NO-LIVE-PACKET-2026-05-17.md docs/operations/APEX-PM-STAKEHOLDER-TIME-PROTECTION-AND-ACCELERATION-LANE-2026-05-15.md docs/operations/APEX-PM-TEMP-POWER-DELIVERY-AND-ORCHESTRATION-PLAN-2026-05-15.md docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md ops/agents/packets/draft/2026-05-17-pm-lane-222-project-miner-source-role-return-classifier-no-live-packet.json ops/agents/handoffs/2026-05-17-pm-lane-222-project-miner-source-role-return-classifier-no-live-packet-handoff.md ops/agents/handoffs/2026-05-17-pm-lane-222-project-miner-source-role-return-classifier-no-live-packet-closeout.md",
+    "corrupted-token scan on touched Lane 222 files",
+    "null-byte check on touched Lane 222 files",
+    "git diff --check on touched Lane 222 files"
+  ],
+  "validation_result": "PASS - Packet JSON parsed; Lane 222 guardrails and decision labels found across intended touched files; corrupted-token scan found no matches after validation-result update; null-byte check passed; git diff --check reported only line-ending warnings."
+}
