@@ -970,6 +970,8 @@ PM Lane 242 executes the Project Miner Temp Power Data Entry Warning Approval Dr
 
 PM Lane 243 executes the Project Miner Temp Power Approval Preview Warning Disposition Guard No-Live Packet tranche. The approval packet preview export now carries the same reviewed-but-unresolved Data Entry warning posture: reviewed warning codes include `PROJECT_DATA_ENTRY_FORMULA_ERRORS`, accepted warning codes remain empty, unresolved warning codes include `PROJECT_DATA_ENTRY_FORMULA_ERRORS`, and the warning-disposition gate remains present until one exact PM Lane 238 label is provided. Validation passed, with no live approval, approval-row creation, project import, source writeback, hosted access, Desktop Codex PM decision authority, or autonomous AI business-state mutation added.
 
+PM Lane 244 executes the Project Miner Temp Power Data Entry Source-Correction Boundary Cue No-Live Packet tranche. The Project Data Entry warning-disposition gate now records that `REQUEST_SOURCE_CORRECTION_NO_LIVE` already belongs to the resolved Ground Resistance correction, with corrected candidate designation `Ground Resistance Test Lot`, and does not apply to the current `PROJECT_DATA_ENTRY_FORMULA_ERRORS` warning. The active workbook-correction label is `REQUEST_DATA_ENTRY_WORKBOOK_CORRECTION_NO_LIVE`; validation passed, with no warning acceptance, live approval, approval-row creation, project import, source writeback, hosted access, Desktop Codex PM decision authority, or autonomous AI business-state mutation added.
+
 Level 3 - Resource Context:
 Read equipment inventory and technician capability rows so PM can understand whether the project can be staffed with available people and equipment.
 

@@ -1628,9 +1628,10 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(exceptionDecisionDetail.getByText('234 planning-workbook rows include formula errors.')).toBeVisible()
   await expect(exceptionDecisionDetail.getByLabel('Project Data Entry decision gate')).toBeVisible()
   await expect(exceptionDecisionDetail.getByText('ACCEPT_DATA_ENTRY_WARNING_NON_BLOCKING_NO_LIVE')).toBeVisible()
-  await expect(exceptionDecisionDetail.getByText('REQUEST_DATA_ENTRY_WORKBOOK_CORRECTION_NO_LIVE')).toBeVisible()
+  await expect(exceptionDecisionDetail.locator('p').filter({ hasText: 'Allowed labels:' }).filter({ hasText: 'REQUEST_DATA_ENTRY_WORKBOOK_CORRECTION_NO_LIVE' })).toBeVisible()
   await expect(exceptionDecisionDetail.getByText('HOLD_DATA_ENTRY_WARNING_NO_LIVE')).toBeVisible()
   await expect(exceptionDecisionDetail.getByText('PROVIDE_EXACT_LIVE_ADMISSION_LATER')).toBeVisible()
+  await expect(exceptionDecisionDetail.getByText(/Prior source correction is already applied: REQUEST_SOURCE_CORRECTION_NO_LIVE -> Ground Resistance Test Lot/i)).toBeVisible()
   await expect(exceptionDecisionDetail.getByText(/Admission prerequisites: current candidate identity; warning disposition; exact live phrase/i)).toBeVisible()
   await expect(exceptionDecisionDetail.getByText('decision approve candidate for import planning')).toBeVisible()
   await expect(exceptionDecisionDetail.getByText('Does this candidate correctly represent the project, workpackages, tasks, and apparatus?')).toBeVisible()
@@ -1922,6 +1923,13 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
         present: true,
         disposition_status: 'requires_exact_pm_label',
         accepted_by_current_local_review: false,
+        source_correction_boundary: {
+          prior_source_correction_label: 'REQUEST_SOURCE_CORRECTION_NO_LIVE',
+          prior_source_correction_status: 'already_applied',
+          corrected_candidate_designation: 'Ground Resistance Test Lot',
+          applies_to_current_warning: false,
+          current_workbook_correction_label: 'REQUEST_DATA_ENTRY_WORKBOOK_CORRECTION_NO_LIVE',
+        },
       },
       approval_status_before_dry_run: {
         classification: 'no_approval_record',
@@ -5027,6 +5035,13 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
           present: true,
           disposition_status: 'requires_exact_pm_label',
           accepted_by_current_local_review: false,
+          source_correction_boundary: {
+            prior_source_correction_label: 'REQUEST_SOURCE_CORRECTION_NO_LIVE',
+            prior_source_correction_status: 'already_applied',
+            corrected_candidate_designation: 'Ground Resistance Test Lot',
+            applies_to_current_warning: false,
+            current_workbook_correction_label: 'REQUEST_DATA_ENTRY_WORKBOOK_CORRECTION_NO_LIVE',
+          },
         },
       },
       decision_draft: {

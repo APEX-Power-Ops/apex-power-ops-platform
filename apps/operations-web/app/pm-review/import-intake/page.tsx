@@ -1229,6 +1229,9 @@ const PROJECT_DATA_ENTRY_DECISION_LABELS = [
   'PROVIDE_EXACT_LIVE_ADMISSION_LATER',
 ]
 
+const PROJECT_MINER_RESOLVED_SOURCE_CORRECTION_LABEL = 'REQUEST_SOURCE_CORRECTION_NO_LIVE'
+const PROJECT_MINER_RESOLVED_SOURCE_CORRECTION_DESIGNATION = 'Ground Resistance Test Lot'
+
 const PROJECT_DATA_ENTRY_ADMISSION_PREREQUISITES = [
   'current candidate identity',
   'warning disposition',
@@ -1253,12 +1256,25 @@ function projectDataEntryDecisionGateExportLines(warnings: CandidateWarning[]) {
     '',
     `- Warning code: ${PROJECT_DATA_ENTRY_WARNING_CODE}`,
     '- Current state: no-live, waiting for one exact PM label before any later live admission path.',
+    `- Prior source correction already applied: ${PROJECT_MINER_RESOLVED_SOURCE_CORRECTION_LABEL} -> ${PROJECT_MINER_RESOLVED_SOURCE_CORRECTION_DESIGNATION}.`,
+    '- Current workbook-correction label: REQUEST_DATA_ENTRY_WORKBOOK_CORRECTION_NO_LIVE.',
     '- Allowed labels:',
     ...PROJECT_DATA_ENTRY_DECISION_LABELS.map((label) => `  - ${label}`),
     '- Admission prerequisites:',
     ...PROJECT_DATA_ENTRY_ADMISSION_PREREQUISITES.map((prerequisite) => `  - ${prerequisite}`),
     '- Authority boundary: display/export context only; no approval POST, approval row, import write, source writeback, hosted call, or business-state mutation.',
   ]
+}
+
+function projectDataEntrySourceCorrectionBoundary() {
+  return {
+    prior_source_correction_label: PROJECT_MINER_RESOLVED_SOURCE_CORRECTION_LABEL,
+    prior_source_correction_status: 'already_applied',
+    corrected_candidate_designation: PROJECT_MINER_RESOLVED_SOURCE_CORRECTION_DESIGNATION,
+    applies_to_current_warning: false,
+    current_workbook_correction_label: 'REQUEST_DATA_ENTRY_WORKBOOK_CORRECTION_NO_LIVE',
+    detail: 'The Ground Resistance source-correction label is already resolved for miner-line-015; the current Project Data Entry formula warning requires a Data Entry-specific label before warning acceptance.',
+  }
 }
 
 function projectDataEntryWarningDispositionGate(warnings: CandidateWarning[]) {
@@ -1271,6 +1287,7 @@ function projectDataEntryWarningDispositionGate(warnings: CandidateWarning[]) {
     accepted_by_current_local_review: false,
     allowed_labels: present ? PROJECT_DATA_ENTRY_DECISION_LABELS : [],
     admission_prerequisites: present ? PROJECT_DATA_ENTRY_ADMISSION_PREREQUISITES : [],
+    source_correction_boundary: present ? projectDataEntrySourceCorrectionBoundary() : null,
     detail: present
       ? 'The Project Data Entry warning has been reviewed locally, but it is not accepted for approval context until Jason provides one exact allowed no-live label.'
       : 'The Project Data Entry warning is not present on this candidate.',
@@ -9981,6 +9998,9 @@ export default function ProjectMinerIntakeWorkbenchPage() {
                           </div>
                           <p style={{ margin: '0.55rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
                             Allowed labels: {PROJECT_DATA_ENTRY_DECISION_LABELS.join('; ')}.
+                          </p>
+                          <p style={{ margin: '0.35rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+                            Prior source correction is already applied: {PROJECT_MINER_RESOLVED_SOURCE_CORRECTION_LABEL} -&gt; {PROJECT_MINER_RESOLVED_SOURCE_CORRECTION_DESIGNATION}. For this Project Data Entry warning, use REQUEST_DATA_ENTRY_WORKBOOK_CORRECTION_NO_LIVE if workbook correction is requested.
                           </p>
                           <p style={{ margin: '0.35rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
                             Admission prerequisites: {PROJECT_DATA_ENTRY_ADMISSION_PREREQUISITES.join('; ')}.

@@ -1,0 +1,69 @@
+{
+  "packet_id": "2026-05-17-pm-lane-244-project-miner-temp-power-data-entry-source-correction-boundary-cue-no-live-packet",
+  "title": "PM Lane 244 - Project Miner Temp Power Data Entry Source-Correction Boundary Cue No-Live Packet",
+  "date": "2026-05-17",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_DATA_ENTRY_SOURCE_CORRECTION_BOUNDARY_CUE_NO_LIVE",
+  "selected_outcome": "DATA_ENTRY_WARNING_GATE_NAMES_PRIOR_SOURCE_CORRECTION_AS_ALREADY_APPLIED",
+  "candidate": {
+    "candidate_id": "pm-import-candidate-miner-temp-power",
+    "active_warning_code": "PROJECT_DATA_ENTRY_FORMULA_ERRORS",
+    "task_count": 15,
+    "apparatus_candidate_count": 184,
+    "warning_count": 1,
+    "blocker_count": 0,
+    "mutation_authority": "not_admitted"
+  },
+  "resolved_source_correction": {
+    "prior_label": "REQUEST_SOURCE_CORRECTION_NO_LIVE",
+    "status": "already_applied",
+    "corrected_candidate_designation": "Ground Resistance Test Lot",
+    "applies_to_current_warning": false
+  },
+  "active_data_entry_warning_gate": {
+    "warning_code": "PROJECT_DATA_ENTRY_FORMULA_ERRORS",
+    "accepted_warning_codes_for_current_candidate": [],
+    "unresolved_warning_codes": [
+      "PROJECT_DATA_ENTRY_FORMULA_ERRORS"
+    ],
+    "current_workbook_correction_label": "REQUEST_DATA_ENTRY_WORKBOOK_CORRECTION_NO_LIVE",
+    "warning_disposition_gate_remains_present": true
+  },
+  "allowed_labels_still_required": [
+    "ACCEPT_DATA_ENTRY_WARNING_NON_BLOCKING_NO_LIVE",
+    "REQUEST_DATA_ENTRY_WORKBOOK_CORRECTION_NO_LIVE",
+    "HOLD_DATA_ENTRY_WARNING_NO_LIVE",
+    "PROVIDE_EXACT_LIVE_ADMISSION_LATER"
+  ],
+  "desktop_codex_support": {
+    "prompt_path": "ops/agents/handoffs/2026-05-17-desktop-codex-pm-lane-244-data-entry-source-correction-boundary-review-scout-prompt.md",
+    "status": "available_not_required",
+    "allowed_scope": [
+      "PM relay clarity review",
+      "source-correction boundary wording review",
+      "warning-disposition label confusion risk review"
+    ],
+    "blocked_scope": [
+      "PM decision authority",
+      "product code edit",
+      "repo publication",
+      "hosted service access",
+      "workbook content read",
+      "source PDF content read",
+      "macro execution",
+      "warning acceptance",
+      "approval/import authority",
+      "business-state mutation"
+    ]
+  },
+  "validation": [
+    "operations-web typecheck",
+    "operations-web build",
+    "focused pm-import-intake Playwright smoke",
+    "packet JSON parse",
+    "guardrail label search",
+    "pending-marker scan",
+    "corrupted-token scan",
+    "git diff --check"
+  ],
+  "validation_result": "PASS"
+}
