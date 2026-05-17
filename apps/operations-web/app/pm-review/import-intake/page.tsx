@@ -266,6 +266,12 @@ type FieldPrepAgendaItem = {
   detail: string
 }
 
+type FieldPrepAgendaGroup = {
+  id: string
+  label: string
+  items: FieldPrepAgendaItem[]
+}
+
 type ImportExceptionRegisterStatus = 'covered' | 'open' | 'blocked'
 
 type ImportExceptionRegisterItem = {
@@ -1838,6 +1844,29 @@ function buildFieldPrepConversationAgenda(fieldPrepCoverageSnapshot: FieldPrepCo
   })
 
   return agendaItems
+}
+
+function groupFieldPrepConversationAgendaItems(fieldPrepConversationAgenda: FieldPrepAgendaItem[]): FieldPrepAgendaGroup[] {
+  const byId = new Map(fieldPrepConversationAgenda.map((item) => [item.id, item]))
+  const take = (ids: string[]) => ids.map((id) => byId.get(id)).filter((item): item is FieldPrepAgendaItem => Boolean(item))
+
+  return [
+    {
+      id: 'source-and-access-conversation',
+      label: 'Source And Access Conversation',
+      items: take(['source-drawing-coverage-agenda', 'access-safety-coverage-agenda']),
+    },
+    {
+      id: 'resource-and-staging-conversation',
+      label: 'Resource And Staging Conversation',
+      items: take(['crew-equipment-coverage-agenda', 'material-staging-coverage-agenda', 'customer-constraint-coverage-agenda']),
+    },
+    {
+      id: 'authority-and-production-boundary',
+      label: 'Authority And Production Boundary',
+      items: take(['field-authority-boundary-agenda', 'production-tracking-boundary-agenda']),
+    },
+  ]
 }
 
 function fieldPrepAgendaCounts(fieldPrepConversationAgenda: FieldPrepAgendaItem[]) {
@@ -6874,6 +6903,10 @@ export default function ProjectMinerIntakeWorkbenchPage() {
     () => buildFieldPrepConversationAgenda(fieldPrepCoverageSnapshot),
     [fieldPrepCoverageSnapshot],
   )
+  const fieldPrepConversationAgendaGroups = useMemo(
+    () => groupFieldPrepConversationAgendaItems(fieldPrepConversationAgenda),
+    [fieldPrepConversationAgenda],
+  )
   const pmIntakeSnapshot = useMemo(
     () => buildPmIntakeSnapshot(persistenceReadinessGates, operatingQueue, importExceptionRegister, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, closeoutChecks, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad, approvalDraft),
     [persistenceReadinessGates, operatingQueue, importExceptionRegister, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, closeoutChecks, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad, approvalDraft],
@@ -8970,19 +9003,26 @@ export default function ProjectMinerIntakeWorkbenchPage() {
               <p style={{ margin: '0.6rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
                 {fieldPrepAgendaSummary(fieldPrepAgendaCount)}
               </p>
-              <div style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
-                {fieldPrepConversationAgenda.map((item) => (
-                  <article key={item.id} className="card" style={{ padding: '0.85rem', boxShadow: 'none' }}>
-                    <div className="status-row" style={{ alignItems: 'start' }}>
-                      <div>
-                        <p style={{ margin: 0 }}>
-                          <strong>{item.title}</strong>
-                        </p>
-                        <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
-                      </div>
-                      <span className={`status-pill ${fieldPrepAgendaTone(item.status)}`}>{formatLabel(item.status)}</span>
+              <div aria-label="Local field prep conversation agenda groups" className="notes-grid" style={{ marginTop: '0.85rem' }}>
+                {fieldPrepConversationAgendaGroups.map((group) => (
+                  <section key={group.id} aria-label={`${group.label} field prep agenda group`}>
+                    <h3 style={{ fontSize: '0.95rem', margin: '0 0 0.65rem' }}>{group.label}</h3>
+                    <div aria-label={`${group.label} field prep agenda items`} style={{ display: 'grid', gap: '0.75rem' }}>
+                      {group.items.map((item) => (
+                        <article key={item.id} className="card" style={{ padding: '0.85rem', boxShadow: 'none' }}>
+                          <div className="status-row" style={{ alignItems: 'start' }}>
+                            <div>
+                              <p style={{ margin: 0 }}>
+                                <strong>{item.title}</strong>
+                              </p>
+                              <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
+                            </div>
+                            <span className={`status-pill ${fieldPrepAgendaTone(item.status)}`}>{formatLabel(item.status)}</span>
+                          </div>
+                        </article>
+                      ))}
                     </div>
-                  </article>
+                  </section>
                 ))}
               </div>
             </div>
