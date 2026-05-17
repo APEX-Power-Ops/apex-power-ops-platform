@@ -678,6 +678,8 @@ PM Lane 214 executes the no-code Approval First-Row No-Live Decision Return Clos
 
 PM Lane 215 executes the no-code Approval First-Row No-Live Evidence Gap Triage And Jason Question Closeout Packet tranche. For the upcoming Temp Power work, the approval first-row path now has a clear gap classification under `READY_FOR_JASON_QUESTION_CLOSEOUT_NOT_AUTHORIZED_NO_LIVE_GAP_TRIAGE`: repo-local lane evidence is confirmed, live-use candidate/fingerprint/warning context is stale, PM decision and notes are absent, and hosted readiness plus approval-write proof remains deferred. This lane keeps hosted smoke, browser live route, live approval POST, approval row, project import write, and downstream PM business-state writes blocked.
 
+PM Lane 216 executes the no-code Approval First-Row No-Live Evidence Gap Closeout And Hold Continuation Packet tranche. For the upcoming Temp Power work, the approval first-row branch is parked at `APPROVAL_BRANCH_PARKED_NO_LIVE_HOLD_CONTINUES` and PM focus returns to non-live Project Miner readiness work: field-start context packaging, source/customer/lead clarification capture, local evidence review ergonomics, Temp Power day-one readiness surfaces, and no-live import/field readiness prompts. This lane keeps hosted smoke, browser live route, live approval POST, approval row, project import write, and downstream PM business-state writes blocked.
+
 ## Capability-Gap Register
 
 Current known gaps:

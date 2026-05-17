@@ -914,6 +914,8 @@ PM Lane 214 executes the no-code Approval First-Row No-Live Decision Return Clos
 
 PM Lane 215 executes the no-code Approval First-Row No-Live Evidence Gap Triage And Jason Question Closeout Packet tranche. The Project Miner intake workflow now classifies the approval first-row gaps under `READY_FOR_JASON_QUESTION_CLOSEOUT_NOT_AUTHORIZED_NO_LIVE_GAP_TRIAGE`: repo-local lane evidence is confirmed, live-use candidate/fingerprint/warning context is stale, PM decision and notes are absent, and hosted readiness plus approval-write proof remains deferred. This lane keeps hosted smoke, browser live route, live approval POST, approval row, project import write, and downstream PM business-state writes blocked.
 
+PM Lane 216 executes the no-code Approval First-Row No-Live Evidence Gap Closeout And Hold Continuation Packet tranche. The Project Miner intake workflow now parks the approval first-row branch at `APPROVAL_BRANCH_PARKED_NO_LIVE_HOLD_CONTINUES` and returns PM focus to non-live readiness work: field-start context packaging, source/customer/lead clarification capture, local evidence review ergonomics, Temp Power day-one readiness surfaces, and no-live import/field readiness prompts. This lane keeps hosted smoke, browser live route, live approval POST, approval row, project import write, and downstream PM business-state writes blocked.
+
 Level 3 - Resource Context:
 Read equipment inventory and technician capability rows so PM can understand whether the project can be staffed with available people and equipment.
 
