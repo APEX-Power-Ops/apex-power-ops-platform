@@ -1,0 +1,47 @@
+{
+  "packet_id": "2026-05-17-pm-lane-176",
+  "title": "PM Lane 176 - Local Approval Submission Dry Run Grouping",
+  "lane": "PM lane development",
+  "status": "completed",
+  "owner": "VS Code Codex",
+  "authority": "repo technical authority; PM lane implementation authority; final integration authority",
+  "date": "2026-05-17",
+  "objective": "Reduce Project Miner Temp Power approval dry-run scan burden by grouping the existing Local Approval Submission Dry Run panel without changing dry-run builders, export handlers, filenames, payloads, no-request behavior, disclosure behavior, or write boundaries.",
+  "scope": [
+    "Grouped the existing Local Approval Submission Dry Run readiness checkpoint, future route/local draft gate/write boundary cards, and local artifact actions into Dry Run Readiness Context, Future Request Boundary Context, and Local Artifact Actions Context.",
+    "Preserved the same dry-run envelope builder, readiness checkpoint export, review bundle export, live-gate preflight export, clear behavior, preview/status behavior, filenames, payload versions, no-request posture, and no-write language.",
+    "Kept the local approval submission dry run disclosure behavior stateless with no approval-dry-run disclosure localStorage key.",
+    "Used a read-only sidecar to verify the grouping shape and smoke hardening while VS Code Codex retained PM implementation and final integration authority."
+  ],
+  "guardrails": [
+    "No hosted service access.",
+    "No Supabase, Render, Vercel, or Olares product action.",
+    "No SQL or schema migration.",
+    "No approval POST or approval-row creation.",
+    "No project import mutation.",
+    "No field authorization, assignment, schedule/status, durable field record, production tracking, customer report, completion evidence, billing, payroll, invoice, accounting, or external finance-system write.",
+    "No workbook macro or writeback.",
+    "No new export action, export handler, filename, payload version, localStorage key, backend route, service/auth/ingress change, or autonomous AI business-state mutation."
+  ],
+  "changed_files": [
+    "apps/operations-web/app/pm-review/import-intake/page.tsx",
+    "apps/operations-web/tests/browser-shell.pm-import-intake.smoke.spec.ts",
+    "PROJECT_STATUS.md",
+    "docs/operations/APEX-PM-STAKEHOLDER-TIME-PROTECTION-AND-ACCELERATION-LANE-2026-05-15.md",
+    "docs/operations/APEX-PM-TEMP-POWER-DELIVERY-AND-ORCHESTRATION-PLAN-2026-05-15.md",
+    "docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md",
+    "ops/agents/packets/draft/2026-05-17-pm-lane-176-local-approval-submission-dry-run-grouping.json",
+    "ops/agents/handoffs/2026-05-17-pm-lane-176-local-approval-submission-dry-run-grouping-handoff.md"
+  ],
+  "validation": [
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform\" --filter @apex/operations-web typecheck",
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform/apps/operations-web\" exec playwright test \"browser-shell.pm-import-intake.smoke.spec.ts\"",
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform\" --filter @apex/operations-web build",
+    "Get-Content -LiteralPath \"C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-17-pm-lane-176-local-approval-submission-dry-run-grouping.json\" | ConvertFrom-Json | Select-Object -ExpandProperty packet_id",
+    "rg -n \"PM Lane 176|Approval dry run groups|Dry Run Readiness Context approval dry run group|Future Request Boundary Context approval dry run group|Local Artifact Actions Context approval dry run group|mutationRequests\\)\\.toHaveLength\\(0\\)\" PROJECT_STATUS.md docs/operations ops/agents apps/operations-web",
+    "git diff --check"
+  ],
+  "validation_result": "PASS - operations-web typecheck passed; focused Playwright pm import-intake smoke passed; operations-web build passed; packet JSON parsed; PM Lane 176 guardrail rg passed; git diff --check passed with only expected CRLF warnings on touched and unrelated markdown files.",
+  "sidecar_result": "Read-only sidecar Laplace independently recommended the exact three groups used here, emphasized wrapper-only JSX, and recommended smoke assertions for group count, readiness cards, boundary cards, exact local artifact button order, preserved download payloads, no disclosure storage, and mutationRequests length 0.",
+  "execution_result": "PASS"
+}

@@ -8500,68 +8500,81 @@ export default function ProjectMinerIntakeWorkbenchPage() {
               <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
                 Builds the future approval POST envelope in this browser for review only. It does not call live services, perform hosted writes, create an approval record, import project rows, assign work, schedule work, change status, or mutate production state.
               </p>
-              <div aria-label="Approval dry run readiness checkpoint" className="notes-grid" style={{ marginTop: '0.85rem' }}>
-                {approvalDryRunReadiness.map((item) => (
-                  <article key={item.id} className="card" style={{ padding: '0.85rem', boxShadow: 'none' }}>
-                    <div className="status-row" style={{ alignItems: 'flex-start' }}>
-                      <h2 style={{ margin: 0 }}>{item.title}</h2>
-                      <span className={`status-pill ${approvalDryRunReadinessTone(item.status)}`}>
-                        {formatLabel(item.status)}
-                      </span>
+              <div aria-label="Approval dry run groups" style={{ display: 'grid', gap: '0.85rem', marginTop: '0.85rem' }}>
+                <section aria-label="Dry Run Readiness Context approval dry run group">
+                  <h3 style={{ fontSize: '0.95rem', margin: '0 0 0.65rem' }}>Dry Run Readiness Context</h3>
+                  <div aria-label="Approval dry run readiness checkpoint" className="notes-grid">
+                    {approvalDryRunReadiness.map((item) => (
+                      <article key={item.id} className="card" style={{ padding: '0.85rem', boxShadow: 'none' }}>
+                        <div className="status-row" style={{ alignItems: 'flex-start' }}>
+                          <h2 style={{ margin: 0 }}>{item.title}</h2>
+                          <span className={`status-pill ${approvalDryRunReadinessTone(item.status)}`}>
+                            {formatLabel(item.status)}
+                          </span>
+                        </div>
+                        <p style={{ margin: '0.45rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
+                      </article>
+                    ))}
+                  </div>
+                </section>
+                <section aria-label="Future Request Boundary Context approval dry run group">
+                  <h3 style={{ fontSize: '0.95rem', margin: '0 0 0.65rem' }}>Future Request Boundary Context</h3>
+                  <div aria-label="Approval dry run future request boundary cards" className="notes-grid">
+                    <article className="card" style={{ padding: '0.85rem', boxShadow: 'none' }}>
+                      <h2>Future route</h2>
+                      <p style={{ margin: '0.45rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{futureRoute}</p>
+                    </article>
+                    <article className="card" style={{ padding: '0.85rem', boxShadow: 'none' }}>
+                      <h2>Local draft gate</h2>
+                      <p style={{ margin: '0.45rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+                        {approvalDraft.decision && approvalDraft.review_notes.trim() && approvalDraft.local_attestation
+                          ? 'Decision value, review notes, and local-only attestation are present.'
+                          : 'Decision value, review notes, and local-only attestation are needed before this dry run is useful packet context.'}
+                      </p>
+                    </article>
+                    <article className="card" style={{ padding: '0.85rem', boxShadow: 'none' }}>
+                      <h2>Write boundary</h2>
+                      <p style={{ margin: '0.45rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+                        Live approval POST, first approval-row creation, and project import remain blocked until a separate explicit admission.
+                      </p>
+                    </article>
+                  </div>
+                </section>
+                <section aria-label="Local Artifact Actions Context approval dry run group">
+                  <h3 style={{ fontSize: '0.95rem', margin: '0 0 0.65rem' }}>Local Artifact Actions Context</h3>
+                  <div aria-label="Approval dry run local artifact actions">
+                    <div className="pm-review-link-row pm-review-link-row-start" style={{ alignItems: 'center' }}>
+                      <button className="btn btn-outline" onClick={buildApprovalDryRun} disabled={!packet}>
+                        Build Local Approval Dry Run
+                      </button>
+                      <button className="btn btn-outline" onClick={exportApprovalDryRunEnvelope} disabled={!packet}>
+                        Export Dry Run Envelope
+                      </button>
+                      <button className="btn btn-outline" onClick={exportApprovalDryRunReadiness} disabled={!packet}>
+                        Export Readiness Checkpoint
+                      </button>
+                      <button className="btn btn-outline" onClick={exportApprovalReviewBundle} disabled={!packet}>
+                        Export Review Bundle
+                      </button>
+                      <button className="btn btn-outline" onClick={exportApprovalLiveGatePreflight} disabled={!packet}>
+                        Export Live Gate Preflight
+                      </button>
+                      <button className="btn btn-outline" onClick={clearApprovalDryRun} disabled={!approvalDryRunPreview && !approvalDryRunStatus}>
+                        Clear dry run
+                      </button>
+                      <span style={{ color: 'var(--muted)', lineHeight: 1.55 }}>The generated envelope stays local to this browser or downloads as a review artifact and sends no request.</span>
                     </div>
-                    <p style={{ margin: '0.45rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
-                  </article>
-                ))}
+                    {approvalDryRunStatus ? <p role="status" style={{ color: 'var(--muted)', lineHeight: 1.55 }}>{approvalDryRunStatus}</p> : null}
+                    {approvalDryRunPreview ? (
+                      <pre data-testid="local-approval-dry-run-preview" style={{ marginTop: '0.85rem', maxHeight: '24rem', overflow: 'auto', whiteSpace: 'pre-wrap' }}>
+                        {approvalDryRunPreview}
+                      </pre>
+                    ) : (
+                      <p style={{ color: 'var(--muted)', lineHeight: 1.55 }}>No local dry run has been built for this browser session.</p>
+                    )}
+                  </div>
+                </section>
               </div>
-              <div className="notes-grid" style={{ marginTop: '0.85rem' }}>
-                <article className="card" style={{ padding: '0.85rem', boxShadow: 'none' }}>
-                  <h2>Future route</h2>
-                  <p style={{ margin: '0.45rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{futureRoute}</p>
-                </article>
-                <article className="card" style={{ padding: '0.85rem', boxShadow: 'none' }}>
-                  <h2>Local draft gate</h2>
-                  <p style={{ margin: '0.45rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
-                    {approvalDraft.decision && approvalDraft.review_notes.trim() && approvalDraft.local_attestation
-                      ? 'Decision value, review notes, and local-only attestation are present.'
-                      : 'Decision value, review notes, and local-only attestation are needed before this dry run is useful packet context.'}
-                  </p>
-                </article>
-                <article className="card" style={{ padding: '0.85rem', boxShadow: 'none' }}>
-                  <h2>Write boundary</h2>
-                  <p style={{ margin: '0.45rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
-                    Live approval POST, first approval-row creation, and project import remain blocked until a separate explicit admission.
-                  </p>
-                </article>
-              </div>
-              <div className="pm-review-link-row pm-review-link-row-start" style={{ alignItems: 'center' }}>
-                <button className="btn btn-outline" onClick={buildApprovalDryRun} disabled={!packet}>
-                  Build Local Approval Dry Run
-                </button>
-                <button className="btn btn-outline" onClick={exportApprovalDryRunEnvelope} disabled={!packet}>
-                  Export Dry Run Envelope
-                </button>
-                <button className="btn btn-outline" onClick={exportApprovalDryRunReadiness} disabled={!packet}>
-                  Export Readiness Checkpoint
-                </button>
-                <button className="btn btn-outline" onClick={exportApprovalReviewBundle} disabled={!packet}>
-                  Export Review Bundle
-                </button>
-                <button className="btn btn-outline" onClick={exportApprovalLiveGatePreflight} disabled={!packet}>
-                  Export Live Gate Preflight
-                </button>
-                <button className="btn btn-outline" onClick={clearApprovalDryRun} disabled={!approvalDryRunPreview && !approvalDryRunStatus}>
-                  Clear dry run
-                </button>
-                <span style={{ color: 'var(--muted)', lineHeight: 1.55 }}>The generated envelope stays local to this browser or downloads as a review artifact and sends no request.</span>
-              </div>
-              {approvalDryRunStatus ? <p role="status" style={{ color: 'var(--muted)', lineHeight: 1.55 }}>{approvalDryRunStatus}</p> : null}
-              {approvalDryRunPreview ? (
-                <pre data-testid="local-approval-dry-run-preview" style={{ marginTop: '0.85rem', maxHeight: '24rem', overflow: 'auto', whiteSpace: 'pre-wrap' }}>
-                  {approvalDryRunPreview}
-                </pre>
-              ) : (
-                <p style={{ color: 'var(--muted)', lineHeight: 1.55 }}>No local dry run has been built for this browser session.</p>
-              )}
             </div>
           </div>
         </details>

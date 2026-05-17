@@ -1330,9 +1330,31 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(approvalDryRun.getByText(/Builds the future approval POST envelope in this browser for review only/i)).toBeVisible()
   await expect(approvalDryRun.getByText(/Live approval POST, first approval-row creation, and project import remain blocked/i)).toBeVisible()
   await expect(approvalDryRun.getByText('4 ready, 1 needs review, 1 blocked')).toBeVisible()
-  const approvalDryRunReadiness = approvalDryRun.getByLabel('Approval dry run readiness checkpoint')
+  const approvalDryRunGroups = approvalDryRunControls.locator('[aria-label="Approval dry run groups"]')
+  await expect(approvalDryRunGroups).toBeVisible()
+  await expect(approvalDryRunGroups.locator(':scope > section')).toHaveCount(3)
+  const dryRunReadinessContextGroup = approvalDryRunGroups.locator('[aria-label="Dry Run Readiness Context approval dry run group"]')
+  const futureRequestBoundaryContextGroup = approvalDryRunGroups.locator('[aria-label="Future Request Boundary Context approval dry run group"]')
+  const localArtifactActionsContextGroup = approvalDryRunGroups.locator('[aria-label="Local Artifact Actions Context approval dry run group"]')
+  await expect(dryRunReadinessContextGroup.getByRole('heading', { name: 'Dry Run Readiness Context' })).toBeVisible()
+  await expect(futureRequestBoundaryContextGroup.getByRole('heading', { name: 'Future Request Boundary Context' })).toBeVisible()
+  await expect(localArtifactActionsContextGroup.getByRole('heading', { name: 'Local Artifact Actions Context' })).toBeVisible()
+  const approvalDryRunReadiness = dryRunReadinessContextGroup.getByLabel('Approval dry run readiness checkpoint')
   await expect(approvalDryRunReadiness).toBeVisible()
   await expect(approvalDryRunReadiness.locator(':scope > article')).toHaveCount(6)
+  const approvalDryRunBoundaryCards = futureRequestBoundaryContextGroup.getByLabel('Approval dry run future request boundary cards')
+  await expect(approvalDryRunBoundaryCards).toBeVisible()
+  await expect(approvalDryRunBoundaryCards.locator(':scope > article')).toHaveCount(3)
+  const approvalDryRunActions = localArtifactActionsContextGroup.getByLabel('Approval dry run local artifact actions')
+  await expect(approvalDryRunActions).toBeVisible()
+  await expect(approvalDryRunActions.getByRole('button')).toHaveText([
+    'Build Local Approval Dry Run',
+    'Export Dry Run Envelope',
+    'Export Readiness Checkpoint',
+    'Export Review Bundle',
+    'Export Live Gate Preflight',
+    'Clear dry run',
+  ])
   await expect(approvalDryRunReadiness.getByText('Candidate source context')).toBeVisible()
   await expect(approvalDryRunReadiness.getByText(/Source freshness and warnings are checked locally/i)).toBeVisible()
   await expect(approvalDryRunReadiness.getByText(/Decision draft is return for revision/i)).toBeVisible()
@@ -1347,10 +1369,15 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await approvalDryRun.locator(':scope > summary').click()
   await expect(approvalDryRun).not.toHaveAttribute('open', '')
   await expect(approvalDryRunBodyControls).toBeHidden()
+  await expect(approvalDryRunGroups).toBeHidden()
   const approvalDryRunDisclosureStateKeys = await page.evaluate(() => Object.keys(window.localStorage).filter((key) => key.startsWith('pm-import-intake-') && /collapse|disclosure|approval-dry-run|approval-submission-dry-run/i.test(key)))
   expect(approvalDryRunDisclosureStateKeys).toEqual([])
   await approvalDryRun.locator(':scope > summary').click()
   await expect(approvalDryRun).toHaveAttribute('open', '')
+  await expect(approvalDryRunGroups).toBeVisible()
+  await expect(approvalDryRunReadiness).toBeVisible()
+  await expect(approvalDryRunBoundaryCards).toBeVisible()
+  await expect(approvalDryRunActions).toBeVisible()
   await approvalDryRun.getByRole('button', { name: 'Build Local Approval Dry Run' }).click()
   await expect(approvalDryRun.getByRole('status')).toContainText(/no network request was sent/i)
   const approvalDryRunPreview = approvalDryRun.getByTestId('local-approval-dry-run-preview')
