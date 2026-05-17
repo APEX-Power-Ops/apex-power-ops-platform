@@ -421,6 +421,12 @@ type FieldStartBringBackSummaryTriageStripItem = {
 
 type FieldStartBringBackDetailJumpRailItem = FieldStartBringBackSummaryTriageStripItem
 
+type FieldStartBringBackCueStatusLegendItem = {
+  id: string
+  label: FieldStartBringBackSummaryTriageStripStatus
+  detail: string
+}
+
 type FieldStartSourceReviewBringBackLensStatus = 'check' | 'review' | 'context' | 'blocked'
 
 type FieldStartSourceReviewBringBackLensItem = {
@@ -2900,6 +2906,31 @@ function buildFieldStartBringBackLensOpenContextCue(
     return `Populated detail lens context: ${populated.join('; ')}. All bring-back lenses currently have local context; keep the cue read-only and use later bounded packets for anything beyond local review.`
   }
   return `Populated detail lens context: ${populated.join('; ')}. ${empty.join(' and ')} lenses have no returned context yet.`
+}
+
+function buildFieldStartBringBackCueStatusLegend(): FieldStartBringBackCueStatusLegendItem[] {
+  return [
+    {
+      id: 'context-status-legend',
+      label: 'context',
+      detail: 'Context means populated source-review local context exists; review the matching lens before any later bounded packet.',
+    },
+    {
+      id: 'review-status-legend',
+      label: 'review',
+      detail: 'Review means populated clarification context exists; inspect the matching lens locally before field reliance.',
+    },
+    {
+      id: 'open-status-legend',
+      label: 'open',
+      detail: 'Open means no returned context is captured yet; keep any future return browser-local until admitted.',
+    },
+    {
+      id: 'blocked-status-legend',
+      label: 'blocked',
+      detail: 'Blocked means a later bounded packet may be needed; classify only the packet question here.',
+    },
+  ]
 }
 
 function buildFieldStartSourceReviewBringBackLens(
@@ -7821,6 +7852,10 @@ export default function ProjectMinerIntakeWorkbenchPage() {
     () => buildFieldStartBringBackLensOpenContextCue(fieldStartBringBackSummaryTriageStrip),
     [fieldStartBringBackSummaryTriageStrip],
   )
+  const fieldStartBringBackCueStatusLegend = useMemo(
+    () => buildFieldStartBringBackCueStatusLegend(),
+    [],
+  )
   const fieldStartBringBackReviewQueue = useMemo(
     () => buildFieldStartBringBackReviewQueue(candidate, fieldQuestionsDraft, fieldObservationScratchpad),
     [candidate, fieldQuestionsDraft, fieldObservationScratchpad],
@@ -9075,6 +9110,27 @@ export default function ProjectMinerIntakeWorkbenchPage() {
                   </p>
                 </div>
                 <span className="status-pill status-awaiting-values">context cue</span>
+              </div>
+            </div>
+            <div id="pm-field-start-bring-back-cue-status-legend" aria-label="Local field-start bring-back cue status legend" className="card" style={{ padding: '0.75rem', marginTop: '0.75rem', boxShadow: 'none' }}>
+              <div className="status-row" style={{ alignItems: 'start' }}>
+                <div>
+                  <p style={{ margin: 0 }}>
+                    <strong>Cue status legend</strong>
+                  </p>
+                  <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+                    Display-only legend for the bring-back cue and detail jump statuses. It explains existing status words only; it creates no meeting note, link, button, localStorage key, sessionStorage key, task, action item, owner, due date, assignment, schedule/status write, customer commitment, customer report, field instruction, durable record, production tracking row, report, export artifact, backend route, hosted write claim, or write path.
+                  </p>
+                </div>
+                <span className="status-pill status-awaiting-values">status legend</span>
+              </div>
+              <div aria-label="Local field-start bring-back cue status legend items" style={{ display: 'grid', gap: '0.55rem', marginTop: '0.75rem' }}>
+                {fieldStartBringBackCueStatusLegend.map((item) => (
+                  <div key={item.id} className="status-row" style={{ alignItems: 'start' }}>
+                    <span className={`status-pill ${fieldStartBringBackSummaryTriageStripTone(item.label)}`}>{item.label}</span>
+                    <p style={{ margin: 0, color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
+                  </div>
+                ))}
               </div>
             </div>
             <nav aria-label="Local field-start bring-back detail jump rail links" style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
