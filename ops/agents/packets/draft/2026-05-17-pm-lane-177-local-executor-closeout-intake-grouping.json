@@ -1,0 +1,47 @@
+{
+  "packet_id": "2026-05-17-pm-lane-177",
+  "title": "PM Lane 177 - Local Executor Closeout Intake Grouping",
+  "lane": "PM lane development",
+  "status": "completed",
+  "owner": "VS Code Codex",
+  "authority": "repo technical authority; PM lane implementation authority; final integration authority",
+  "date": "2026-05-17",
+  "objective": "Reduce Project Miner Temp Power executor-closeout scan burden by grouping the existing Local Executor Closeout Intake checklist without changing checklist state, candidate-scoped browser storage, export inclusion, clear behavior, disclosure behavior, or write boundaries.",
+  "scope": [
+    "Grouped the existing Local Executor Closeout Intake checklist into Source and Hosted Evidence, Validation and Verdict Evidence, and Guardrails and Next Action.",
+    "Preserved the same eight checklist labels/details, checkbox behavior, candidate-scoped browser storage key, clear button behavior, export inclusion, disclosure behavior, no-disclosure-storage posture, and no-write/no-acceptance language.",
+    "Kept the Local Executor Closeout Intake disclosure behavior stateless with no executor-closeout disclosure localStorage key.",
+    "Used a read-only sidecar to verify the grouping shape and smoke hardening while VS Code Codex retained PM implementation and final integration authority."
+  ],
+  "guardrails": [
+    "No hosted service access.",
+    "No Supabase, Render, Vercel, or Olares product action.",
+    "No SQL or schema migration.",
+    "No approval POST or approval-row creation.",
+    "No project import mutation.",
+    "No field authorization, assignment, schedule/status, durable field record, production tracking, customer report, completion evidence, billing, payroll, invoice, accounting, or external finance-system write.",
+    "No workbook macro or writeback.",
+    "No new export action, export handler, filename, payload version, localStorage key, backend route, service/auth/ingress change, or autonomous AI business-state mutation."
+  ],
+  "changed_files": [
+    "apps/operations-web/app/pm-review/import-intake/page.tsx",
+    "apps/operations-web/tests/browser-shell.pm-import-intake.smoke.spec.ts",
+    "PROJECT_STATUS.md",
+    "docs/operations/APEX-PM-STAKEHOLDER-TIME-PROTECTION-AND-ACCELERATION-LANE-2026-05-15.md",
+    "docs/operations/APEX-PM-TEMP-POWER-DELIVERY-AND-ORCHESTRATION-PLAN-2026-05-15.md",
+    "docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md",
+    "ops/agents/packets/draft/2026-05-17-pm-lane-177-local-executor-closeout-intake-grouping.json",
+    "ops/agents/handoffs/2026-05-17-pm-lane-177-local-executor-closeout-intake-grouping-handoff.md"
+  ],
+  "validation": [
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform\" --filter @apex/operations-web typecheck",
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform/apps/operations-web\" exec playwright test \"browser-shell.pm-import-intake.smoke.spec.ts\"",
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform\" --filter @apex/operations-web build",
+    "Get-Content -LiteralPath \"C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-17-pm-lane-177-local-executor-closeout-intake-grouping.json\" | ConvertFrom-Json | Select-Object -ExpandProperty packet_id",
+    "rg -n \"PM Lane 177|Local executor closeout intake groups|Source and Hosted Evidence executor closeout group|Validation and Verdict Evidence executor closeout group|Guardrails and Next Action executor closeout group|mutationRequests\\)\\.toHaveLength\\(0\\)\" PROJECT_STATUS.md docs/operations ops/agents apps/operations-web",
+    "git diff --check"
+  ],
+  "validation_result": "PASS - operations-web typecheck passed; focused Playwright pm import-intake smoke passed; operations-web build passed; packet JSON parsed; PM Lane 177 guardrail rg passed; git diff --check passed with only expected CRLF warnings on touched and unrelated markdown files.",
+  "sidecar_result": "Read-only sidecar James recommended the three wrapper-only groups used here, with exact ARIA labels and smoke assertions for group visibility, 3/3/2 item distribution, no disclosure storage, preserved checklist behavior, and mutationRequests length 0.",
+  "execution_result": "PASS"
+}

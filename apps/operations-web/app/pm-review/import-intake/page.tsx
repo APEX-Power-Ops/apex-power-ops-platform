@@ -735,6 +735,24 @@ const CLOSEOUT_CHECKLIST_ITEMS: CloseoutChecklistItem[] = [
     detail: 'Executor return recommends one bounded next action such as record and continue, redelegate, open a product packet, or stop for stakeholder exception.',
   },
 ]
+
+const CLOSEOUT_CHECKLIST_GROUPS = [
+  {
+    id: 'source-and-hosted-evidence',
+    label: 'Source and Hosted Evidence',
+    itemIds: ['source_commit_recorded', 'changed_files_listed', 'hosted_action_evidence_captured'],
+  },
+  {
+    id: 'validation-and-verdict-evidence',
+    label: 'Validation and Verdict Evidence',
+    itemIds: ['validation_results_captured', 'final_verdict_classified', 'remaining_blocker_classified'],
+  },
+  {
+    id: 'guardrails-and-next-action',
+    label: 'Guardrails and Next Action',
+    itemIds: ['guardrails_confirmed', 'coordinator_recommendation_captured'],
+  },
+]
 const FIELD_READINESS_CHECKLIST_ITEMS: FieldReadinessChecklistItem[] = [
   {
     id: 'drawing_source_questions_captured',
@@ -8597,20 +8615,27 @@ export default function ProjectMinerIntakeWorkbenchPage() {
               <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
                 Browser-local audit prep for external executor returns. Checking these items does not accept, approve, persist, deploy, import, assign, schedule, change status, or mutate production state.
               </p>
-              <div style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
-                {CLOSEOUT_CHECKLIST_ITEMS.map((item) => (
-                  <label key={item.id} className="card" style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0.75rem', padding: '0.85rem', boxShadow: 'none', cursor: 'pointer' }}>
-                    <input
-                      type="checkbox"
-                      checked={Boolean(closeoutChecks[item.id])}
-                      onChange={(event) => updateCloseoutCheck(item.id, event.target.checked)}
-                      style={{ marginTop: '0.25rem' }}
-                    />
-                    <span>
-                      <strong>{item.label}</strong>
-                      <span style={{ display: 'block', marginTop: '0.35rem', color: 'var(--muted)', lineHeight: 1.5 }}>{item.detail}</span>
-                    </span>
-                  </label>
+              <div aria-label="Local executor closeout intake groups" className="notes-grid" style={{ marginTop: '0.85rem' }}>
+                {CLOSEOUT_CHECKLIST_GROUPS.map((group) => (
+                  <section key={group.id} aria-label={`${group.label} executor closeout group`}>
+                    <h3 style={{ fontSize: '0.95rem', margin: '0 0 0.65rem' }}>{group.label}</h3>
+                    <div aria-label={`${group.label} executor closeout items`} style={{ display: 'grid', gap: '0.75rem' }}>
+                      {CLOSEOUT_CHECKLIST_ITEMS.filter((item) => group.itemIds.includes(item.id)).map((item) => (
+                        <label key={item.id} className="card" style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0.75rem', padding: '0.85rem', boxShadow: 'none', cursor: 'pointer' }}>
+                          <input
+                            type="checkbox"
+                            checked={Boolean(closeoutChecks[item.id])}
+                            onChange={(event) => updateCloseoutCheck(item.id, event.target.checked)}
+                            style={{ marginTop: '0.25rem' }}
+                          />
+                          <span>
+                            <strong>{item.label}</strong>
+                            <span style={{ display: 'block', marginTop: '0.35rem', color: 'var(--muted)', lineHeight: 1.5 }}>{item.detail}</span>
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  </section>
                 ))}
               </div>
               <div className="pm-review-link-row pm-review-link-row-start" style={{ alignItems: 'center' }}>
