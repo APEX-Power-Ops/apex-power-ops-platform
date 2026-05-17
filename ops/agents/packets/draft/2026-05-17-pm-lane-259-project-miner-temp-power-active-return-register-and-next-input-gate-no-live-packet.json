@@ -1,0 +1,63 @@
+{
+  "packet_id": "2026-05-17-pm-lane-259-project-miner-temp-power-active-return-register-and-next-input-gate-no-live-packet",
+  "title": "PM Lane 259 - Project Miner Temp Power Active Return Register And Next Input Gate No-Live Packet",
+  "date": "2026-05-17",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_ACTIVE_RETURN_REGISTER_AND_NEXT_INPUT_GATE_NO_LIVE",
+  "selected_outcome": "ACTIVE_RETURNS_CONSOLIDATED_AWAIT_EXACT_LABEL_OR_DESKTOP_CLOSEOUT_NO_LIVE",
+  "active_returns": [
+    {
+      "return_id": "PROJECT_DATA_ENTRY_FORMULA_ERRORS_DISPOSITION",
+      "current_state": "open",
+      "required_return": "exactly one PM Lane 238 Data Entry label",
+      "classification": "PM decision return",
+      "valid_labels": [
+        "ACCEPT_DATA_ENTRY_WARNING_NON_BLOCKING_NO_LIVE",
+        "REQUEST_DATA_ENTRY_WORKBOOK_CORRECTION_NO_LIVE",
+        "HOLD_DATA_ENTRY_WARNING_NO_LIVE",
+        "PROVIDE_EXACT_LIVE_ADMISSION_LATER"
+      ],
+      "label_present": false,
+      "warning_disposition_changed": false
+    },
+    {
+      "return_id": "PM_256_SCOUT_CLOSEOUT",
+      "current_state": "awaiting_closeout",
+      "required_return": "ops/agents/handoffs/2026-05-17-desktop-codex-pm-lane-256-state-review-next-move-selector-scout-closeout.md",
+      "classification": "dual-lane support return",
+      "closeout_present": false,
+      "closeout_result_inferred": false,
+      "queue_state": "IN_PROGRESS_GOVERNED_SCOUT_AWAITING_CLOSEOUT"
+    }
+  ],
+  "allowed_next_transitions": [
+    "record an exact PM Lane 238 Data Entry label in a later no-live decision-intake packet if one is returned",
+    "review the allowed Desktop Codex PM-256 closeout before any queue widening if it appears",
+    "continue only no-code review-control work if neither return appears",
+    "classify scope-widening or capability-gap requests before any action"
+  ],
+  "blocked_authority": [
+    "product_code",
+    "ui_section",
+    "hosted_access",
+    "source_content_read",
+    "workbook_macro",
+    "warning_acceptance_by_inference",
+    "approval_post",
+    "approval_row",
+    "project_import",
+    "resource_assignment",
+    "schedule_status_mutation",
+    "customer_commitment",
+    "business_state_mutation"
+  ],
+  "validation": [
+    "packet JSON parse",
+    "closeout absence check",
+    "active-return text search",
+    "queue text search",
+    "marker-token scan",
+    "corrupted-token scan",
+    "git diff --check"
+  ],
+  "validation_result": "PASS"
+}

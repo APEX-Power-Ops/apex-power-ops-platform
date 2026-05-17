@@ -920,6 +920,8 @@ PM Lane 257 queues the PM Lane 256 Desktop Codex support prompt as a governed re
 
 PM Lane 258 records that the allowed Desktop Codex PM-256 closeout has not returned yet. The PM support queue stays open under `IN_PROGRESS_GOVERNED_SCOUT_AWAITING_CLOSEOUT`, no Desktop Codex result is inferred, and the Project Data Entry warning gate remains unchanged until exactly one PM Lane 238 label is returned.
 
+PM Lane 259 consolidates the two active returns into one no-code lane-control register. The Project Data Entry warning still requires exactly one PM Lane 238 Data Entry label, and the Desktop Codex PM-256 scout closeout is still absent. No warning disposition changes, no Desktop Codex result is inferred, and the next allowed movement remains exact-label intake, VS Code Codex review of the allowed Desktop closeout, or no-code review-control work only.
+
 The success standard is not just technical correctness. The candidate must reduce Jason's review burden by showing:
 
 1. what the system thinks the project is,

@@ -761,6 +761,7 @@ Current known gaps:
 31. PM Lane 256 pauses additional display-only workbench cues unless fresh scan-burden evidence appears. The next safe PM move is exact-label intake for `PROJECT_DATA_ENTRY_FORMULA_ERRORS` or no-code review-control work only, with live admission, approval rows, project import, resource assignment, schedule/status mutation, customer commitments, and Desktop Codex PM decision authority still blocked.
 32. PM Lane 257 queues the Desktop Codex PM Lane 256 read-only scout with exactly one closeout handoff write allowed. This tests dual-lane support without allowing Desktop Codex to make PM decisions, edit product code, access hosted services, read source contents, accept warnings, approve/import rows, assign resources, mutate schedule/status, or create business-state changes.
 33. PM Lane 258 records that the Desktop Codex PM-256 closeout has not returned yet and updates the PM support queue to `IN_PROGRESS_GOVERNED_SCOUT_AWAITING_CLOSEOUT`. No scout result is inferred, and the active Data Entry warning gate remains unchanged.
+34. PM Lane 259 consolidates the active open returns into one no-code control register: the Data Entry warning still needs exactly one PM Lane 238 label, and PM-256-SCOUT still awaits the allowed Desktop Codex closeout. No warning disposition, queue widening, live admission, approval/import authority, or PM business-state mutation is admitted.
 
 Required response to new gaps:
 
