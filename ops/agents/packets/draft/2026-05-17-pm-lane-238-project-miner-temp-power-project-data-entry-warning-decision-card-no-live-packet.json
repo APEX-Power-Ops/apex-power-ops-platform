@@ -1,0 +1,95 @@
+{
+  "packet_id": "2026-05-17-pm-lane-238-project-miner-temp-power-project-data-entry-warning-decision-card-no-live-packet",
+  "title": "PM Lane 238 - Project Miner Temp Power Project Data Entry Warning Decision Card No-Live Packet",
+  "date": "2026-05-17",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_PROJECT_DATA_ENTRY_WARNING_DECISION_CARD_NO_LIVE",
+  "selected_outcome": "DATA_ENTRY_WARNING_DECISION_CARD_READY_NO_LIVE",
+  "candidate": {
+    "candidate_id": "pm-import-candidate-miner-temp-power",
+    "project_name": "Miner Temp Power",
+    "task_count": 15,
+    "apparatus_candidate_count": 184,
+    "warning_count": 1,
+    "blocker_count": 0,
+    "mutation_authority": "not_admitted"
+  },
+  "warning": {
+    "code": "PROJECT_DATA_ENTRY_FORMULA_ERRORS",
+    "classification": "planning_import_shaping_lineage_evidence",
+    "candidate_shape_blocker": false,
+    "formula_error_row_count": 234,
+    "formula_error_cell_count": 3510,
+    "sample_row_count": 5,
+    "top_formula_error_columns": {
+      "Drawing": 234,
+      "Date Due": 234,
+      "Notes": 234,
+      "Assessment": 234,
+      "DATASHEET": 234,
+      "DATE COMPLETED": 234
+    }
+  },
+  "allowed_responses": [
+    {
+      "label": "ACCEPT_DATA_ENTRY_WARNING_NON_BLOCKING_NO_LIVE",
+      "meaning": "Accept the Project Data Entry formula warning as non-blocking for Temp Power candidate review while keeping live writes blocked."
+    },
+    {
+      "label": "REQUEST_DATA_ENTRY_WORKBOOK_CORRECTION_NO_LIVE",
+      "meaning": "Request workbook correction before any later live admission relies on the Project Data Entry workbook."
+    },
+    {
+      "label": "HOLD_DATA_ENTRY_WARNING_NO_LIVE",
+      "meaning": "Keep the warning unresolved and hold live admission."
+    },
+    {
+      "label": "PROVIDE_EXACT_LIVE_ADMISSION_LATER",
+      "meaning": "Signal that exact live-admission wording may be provided later, without admitting live writes in this packet."
+    }
+  ],
+  "desktop_codex_support_boundary": {
+    "allowed": [
+      "clarity review",
+      "relay-burden review",
+      "suggest shorter wording"
+    ],
+    "not_allowed": [
+      "PM decision authority",
+      "source workbook or PDF content read",
+      "macro execution",
+      "hosted service access",
+      "repo publication",
+      "business-state mutation"
+    ]
+  },
+  "validation": [
+    "python -m json.tool ops/agents/packets/draft/2026-05-17-pm-lane-238-project-miner-temp-power-project-data-entry-warning-decision-card-no-live-packet.json",
+    "rg guardrail search on touched Lane 238 files",
+    "corrupted-token scan on touched Lane 238 files",
+    "git diff --check on touched Lane 238 files"
+  ],
+  "validation_result": "PASS",
+  "next_safe_packet": "PM Lane 239 - Project Data Entry Warning Decision Return Intake No-Live Packet",
+  "blocked_authority": [
+    "live approval POST",
+    "approval row creation",
+    "project import",
+    "note or task creation",
+    "owner or due-date assignment",
+    "field authorization",
+    "lead or crew assignment",
+    "schedule/status write",
+    "customer commitment",
+    "customer report",
+    "field instruction",
+    "durable field record",
+    "production tracking",
+    "completion evidence",
+    "billing/payroll/invoice/accounting output",
+    "Supabase/Render/Vercel/Olares mutation",
+    "SQL/schema migration",
+    "source workbook writeback",
+    "workbook macro/writeback",
+    "autonomous AI business-state mutation"
+  ]
+}

@@ -877,6 +877,8 @@ PM Lane 235 intakes the current continuation instruction against that decision c
 PM Lane 236 receives Jason's `REQUEST_SOURCE_CORRECTION_NO_LIVE` return and applies the narrow repo-local candidate correction: source row 28 / `miner-line-015` is represented as `Ground Resistance Test Lot`, with quantity 3 preserved as measurement count, one lot-level apparatus candidate, and 24 planned hours. The prior missing-designation warning is cleared, and the remaining warning is the separate `PROJECT_DATA_ENTRY_FORMULA_ERRORS` review item.
 
 PM Lane 237 triages that remaining Project Data Entry warning without opening live authority. The warning now shows formula-error row count, cell count, affected column counts, bounded sample rows, and source path in the existing Exception Review card. It is classified as planning/import-shaping lineage evidence rather than a Temp Power estimator candidate-shape blocker, but PM still must accept it as non-blocking or request workbook correction before a later live admission can rely on that workbook.
+
+PM Lane 238 compresses the Project Data Entry warning into a one-screen decision card with four allowed response labels: `ACCEPT_DATA_ENTRY_WARNING_NON_BLOCKING_NO_LIVE`, `REQUEST_DATA_ENTRY_WORKBOOK_CORRECTION_NO_LIVE`, `HOLD_DATA_ENTRY_WARNING_NO_LIVE`, and `PROVIDE_EXACT_LIVE_ADMISSION_LATER`. Desktop Codex may only review the card for clarity and relay-burden reduction; VS Code Codex remains PM technical authority and Jason remains PM decision authority.
 The success standard is not just technical correctness. The candidate must reduce Jason's review burden by showing:
 
 1. what the system thinks the project is,

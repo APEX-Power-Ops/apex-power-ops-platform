@@ -722,6 +722,8 @@ PM Lane 236 executes the Project Miner Temp Power Source Correction No-Live Pack
 
 PM Lane 237 enriches the remaining Project Data Entry warning as a no-live review detail. The corrected Temp Power candidate still has 15 tasks, 184 apparatus candidates, one warning, and zero blockers; the warning now exposes 234 formula-error rows, 3510 formula-error cells, affected formula columns, and bounded sample rows. The warning is not a corrected-estimator candidate-shape blocker, but the Project Data Entry workbook remains lineage-only until PM accepts the warning as non-blocking or requests workbook correction before live admission.
 
+PM Lane 238 turns that remaining Project Data Entry warning into the next compact no-live decision card. The allowed labels are `ACCEPT_DATA_ENTRY_WARNING_NON_BLOCKING_NO_LIVE`, `REQUEST_DATA_ENTRY_WORKBOOK_CORRECTION_NO_LIVE`, `HOLD_DATA_ENTRY_WARNING_NO_LIVE`, and `PROVIDE_EXACT_LIVE_ADMISSION_LATER`. The card does not admit live writes, approval POST, approval-row creation, project import, workbook correction, or hosted proof.
+
 ## Capability-Gap Register
 
 Current known gaps:
