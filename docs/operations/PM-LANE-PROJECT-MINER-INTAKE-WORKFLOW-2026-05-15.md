@@ -916,6 +916,8 @@ PM Lane 215 executes the no-code Approval First-Row No-Live Evidence Gap Triage 
 
 PM Lane 216 executes the no-code Approval First-Row No-Live Evidence Gap Closeout And Hold Continuation Packet tranche. The Project Miner intake workflow now parks the approval first-row branch at `APPROVAL_BRANCH_PARKED_NO_LIVE_HOLD_CONTINUES` and returns PM focus to non-live readiness work: field-start context packaging, source/customer/lead clarification capture, local evidence review ergonomics, Temp Power day-one readiness surfaces, and no-live import/field readiness prompts. This lane keeps hosted smoke, browser live route, live approval POST, approval row, project import write, and downstream PM business-state writes blocked.
 
+PM Lane 217 executes the no-code Project Miner No-Live Readiness Return Packet tranche. The Project Miner intake workflow now routes the next safe PM move into a field-start clarification review return under `PROJECT_MINER_READINESS_RETURN_NO_LIVE_NO_WRITE`, covering project identity, source/scope floor, customer/site questions, lead/resource questions, import-candidate context, blocked authority, and next packet options from existing local surfaces. This lane keeps hosted smoke, browser live route, live approval POST, approval row, project import write, assignments, schedule/status, field direction, durable field records, production tracking, customer reporting, billing, payroll, invoice, accounting, and external finance-system writes blocked.
+
 Level 3 - Resource Context:
 Read equipment inventory and technician capability rows so PM can understand whether the project can be staffed with available people and equipment.
 

@@ -157,6 +157,8 @@ PM Lane 215 publishes the no-code Approval First-Row No-Live Evidence Gap Triage
 
 PM Lane 216 publishes the no-code Approval First-Row No-Live Evidence Gap Closeout And Hold Continuation Packet. It parks the approval branch under `APPROVAL_BRANCH_PARKED_NO_LIVE_HOLD_CONTINUES`, preserving that readiness is not authorization and historical guardrail text is not current admission. PM focus now returns to non-live Project Miner readiness work such as field-start context packaging, source/customer/lead clarification capture, local evidence review ergonomics, Temp Power day-one readiness surfaces, and no-live import/field readiness prompts. It opens no hosted proof, browser live route, approval POST, approval row, project import, or downstream PM business-state mutation.
 
+PM Lane 217 publishes the no-code Project Miner No-Live Readiness Return Packet. It returns focus from the parked approval branch to source/customer/lead clarification capture under `PROJECT_MINER_READINESS_RETURN_NO_LIVE_NO_WRITE`, using existing local field-start surfaces rather than adding UI/storage/export scope. The next selected safe packet is PM Lane 218 Project Miner Field-Start Clarification Review Return. It opens no hosted proof, browser live route, approval POST, approval row, project import, field instruction, assignment, schedule/status, customer report, finance output, or downstream PM business-state mutation.
+
 Immediate orchestration priority order:
 
 1. Stop cycling templates unless a real executor-friction signal exists.

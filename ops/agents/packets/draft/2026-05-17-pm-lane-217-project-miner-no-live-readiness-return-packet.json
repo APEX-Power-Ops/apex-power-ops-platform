@@ -1,0 +1,95 @@
+{
+  "packet_id": "2026-05-17-pm-lane-217",
+  "title": "PM Lane 217 - Project Miner No-Live Readiness Return Packet",
+  "lane": "PM",
+  "status": "local_no_live_readiness_return_packet",
+  "decision_label": "PROJECT_MINER_READINESS_RETURN_NO_LIVE_NO_WRITE",
+  "scope": [
+    "Return PM focus from the parked approval first-row branch to Project Miner readiness work.",
+    "Select a field-start clarification review return as the next safe no-live PM development move.",
+    "Reduce Jason coordination burden without approval, import, assignment, field, customer, production, or finance writes.",
+    "Exercise dual-lane orchestration through bounded review only."
+  ],
+  "sidecar_review": {
+    "recommended_label": "PROJECT_MINER_READINESS_RETURN_NO_LIVE_APPROVAL_BRANCH_PARKED",
+    "technical_authority_disposition": [
+      "Retain PROJECT_MINER_READINESS_RETURN_NO_LIVE_NO_WRITE as the formal repo decision label.",
+      "Adopt the sidecar no-code direction-selection posture.",
+      "Select source/customer/lead clarification capture from existing local field-start surfaces as the next readiness focus.",
+      "Keep PM Lane 218 no-live and preferably no-code."
+    ]
+  },
+  "readiness_focus": [
+    "source and scope floor",
+    "customer and site clarification prompts",
+    "lead and resource clarification prompts",
+    "import-candidate review posture",
+    "current no-go and blocked-authority list",
+    "next packet decision options"
+  ],
+  "why_no_code": [
+    "PM Lane 206 parked more field-start UI notelets unless new scan-burden evidence appears.",
+    "PM Lane 216 parked approval-row work until fresh context or exact live admission arrives.",
+    "A no-code clarification return reduces Jason coordination burden faster than another display-only UI change.",
+    "The lane can exercise dual-lane orchestration without giving a sidecar write authority."
+  ],
+  "clarification_return_sections": [
+    "Project Identity",
+    "Scope Floor",
+    "Customer And Site Questions",
+    "Lead And Resource Questions",
+    "Import Candidate Context",
+    "Blocked Authority",
+    "Next Packet Options"
+  ],
+  "sidecar_boundaries": {
+    "allowed": [
+      "review readiness packet shape",
+      "recommend missing no-live context categories",
+      "identify duplicated or low-value packet work",
+      "recommend the next safe bounded packet"
+    ],
+    "prohibited": [
+      "admit live approval or import authority",
+      "access hosted services",
+      "mutate repo files unless separately authorized in a bounded executor packet",
+      "stage, commit, push, or publish repo changes",
+      "create or infer PM business state"
+    ]
+  },
+  "non_actions": [
+    "No hosted smoke",
+    "No browser live route access",
+    "No Supabase, Render, Vercel, or Olares action",
+    "No SQL or schema migration",
+    "No secret exposure",
+    "No live approval POST",
+    "No approval row creation",
+    "No project import",
+    "No field or production write",
+    "No customer or finance output",
+    "No workbook macro or writeback",
+    "No new UI, storage, or export scope without fresh scan-burden evidence",
+    "No autonomous AI business-state mutation"
+  ],
+  "hard_stop_conditions": [
+    "Hosted proof, browser live route, Supabase, Render, Vercel, Olares, credentials, or secrets required",
+    "Live approval POST, approval-row creation, project import, assignment, schedule/status, field, production, customer, or finance write required",
+    "Exact PM Lane 142 phrase absent but executor attempts to continue toward live approval",
+    "Stale candidate identity, source fingerprint, shape fingerprint, PM decision, review notes, warning, or no-go context treated as current live-use evidence",
+    "Sidecar attempts to stage, commit, push, publish, or create PM business state",
+    "New UI, storage, or export scope attempted without fresh scan-burden evidence",
+    "Local clarification treated as business-state truth",
+    "Secret exposure attempted",
+    "Autonomous AI business-state mutation attempted"
+  ],
+  "validation_commands": [
+    "Get-Content -LiteralPath 'ops/agents/packets/draft/2026-05-17-pm-lane-217-project-miner-no-live-readiness-return-packet.json' | ConvertFrom-Json | Select-Object -ExpandProperty packet_id",
+    "rg -n \"PM Lane 217|PROJECT_MINER_READINESS_RETURN_NO_LIVE_NO_WRITE|PROJECT_MINER_READINESS_RETURN_NO_LIVE_APPROVAL_BRANCH_PARKED|field-start clarification|PM Lane 218|No live approval POST|No project import\" PROJECT_STATUS.md docs/operations/APEX-PM-LANE-217-PROJECT-MINER-NO-LIVE-READINESS-RETURN-PACKET-2026-05-17.md docs/operations/APEX-PM-STAKEHOLDER-TIME-PROTECTION-AND-ACCELERATION-LANE-2026-05-15.md docs/operations/APEX-PM-TEMP-POWER-DELIVERY-AND-ORCHESTRATION-PLAN-2026-05-15.md docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md ops/agents/packets/draft/2026-05-17-pm-lane-217-project-miner-no-live-readiness-return-packet.json ops/agents/handoffs/2026-05-17-pm-lane-217-project-miner-no-live-readiness-return-packet-handoff.md ops/agents/handoffs/2026-05-17-pm-lane-217-project-miner-no-live-readiness-return-packet-closeout.md",
+    "corrupted-token scan on touched Lane 217 files",
+    "null-byte check on touched Lane 217 files",
+    "git diff --check on touched Lane 217 files"
+  ],
+  "validation_result": "PASS - Packet JSON parsed; Lane 217 guardrails and decision labels found across intended touched files; corrupted-token scan found no matches; null-byte check passed; git diff --check reported only line-ending warnings.",
+  "next_recommended_lane": "PM Lane 218 - Project Miner Field-Start Clarification Review Return Packet"
+}

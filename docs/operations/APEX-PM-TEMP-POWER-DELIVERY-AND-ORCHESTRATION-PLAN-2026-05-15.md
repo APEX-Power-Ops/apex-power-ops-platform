@@ -680,6 +680,8 @@ PM Lane 215 executes the no-code Approval First-Row No-Live Evidence Gap Triage 
 
 PM Lane 216 executes the no-code Approval First-Row No-Live Evidence Gap Closeout And Hold Continuation Packet tranche. For the upcoming Temp Power work, the approval first-row branch is parked at `APPROVAL_BRANCH_PARKED_NO_LIVE_HOLD_CONTINUES` and PM focus returns to non-live Project Miner readiness work: field-start context packaging, source/customer/lead clarification capture, local evidence review ergonomics, Temp Power day-one readiness surfaces, and no-live import/field readiness prompts. This lane keeps hosted smoke, browser live route, live approval POST, approval row, project import write, and downstream PM business-state writes blocked.
 
+PM Lane 217 executes the no-code Project Miner No-Live Readiness Return Packet tranche. For the upcoming Temp Power work, the next safe PM delivery move is a field-start clarification review return that packages project identity, source/scope floor, customer/site questions, lead/resource questions, import-candidate context, blocked authority, and next packet choices from existing local surfaces. This lane keeps hosted smoke, browser live route, live approval POST, approval row, project import write, assignments, schedule/status, field direction, durable field records, production tracking, customer reporting, billing, payroll, invoice, accounting, and external finance-system writes blocked.
+
 ## Capability-Gap Register
 
 Current known gaps:
