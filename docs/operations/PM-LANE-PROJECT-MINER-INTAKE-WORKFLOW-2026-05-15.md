@@ -812,6 +812,8 @@ PM Lane 162 implements the local pilot launch follow-up packet export without op
 
 PM Lane 163 implements local field-prep output subgrouping without opening approval, import, field, production, customer, meeting-note, action-item, review-return, billing, payroll, invoice, accounting, or external finance-system mutations. `/pm-review/import-intake` now groups the existing 19 Field Prep Outputs into Field Prep Basics, Admission Drafts, and Pilot Launch Outputs while preserving every existing button label, handler, filename, payload, storage behavior, read seam, export content, and write boundary.
 
+PM Lane 164 implements local output-selector group parity without opening approval, import, field, production, customer, meeting-note, action-item, review-return, billing, payroll, invoice, accounting, or external finance-system mutations. `/pm-review/import-intake` now groups the browser-local Output Selector into Review Outputs, Executor Output, Field Prep Basics, Admission Drafts, and Pilot Launch Outputs so the selector mirrors the existing output action rail while preserving every existing export action, button label, handler, filename, payload, storage behavior, read seam, export content, and write boundary.
+
 Level 3 - Resource Context:
 Read equipment inventory and technician capability rows so PM can understand whether the project can be staffed with available people and equipment.
 

@@ -317,6 +317,12 @@ type OutputSelectorItem = {
   detail: string
 }
 
+type OutputSelectorGroup = {
+  id: string
+  label: string
+  items: OutputSelectorItem[]
+}
+
 type HandoffGuideStatus = 'local-review' | 'field-context' | 'executor-context' | 'covered-context' | 'blocked'
 
 type HandoffGuideItem = {
@@ -2173,7 +2179,7 @@ function buildPmIntakeOutputSelector(
   closeoutChecks: Record<string, boolean>,
   fieldQuestionsDraft: FieldQuestionsDraft,
   fieldObservationScratchpad: FieldObservationScratchpad,
-): OutputSelectorItem[] {
+): OutputSelectorGroup[] {
   const decisionDraftComplete = Boolean(approvalDraft.decision && approvalDraft.review_notes.trim() && approvalDraft.local_attestation)
   const reviewCheckedCount = REVIEW_CHECKLIST_ITEMS.filter((item) => reviewChecks[item.id]).length
   const closeoutCheckedCount = CLOSEOUT_CHECKLIST_ITEMS.filter((item) => closeoutChecks[item.id]).length
@@ -2182,46 +2188,212 @@ function buildPmIntakeOutputSelector(
   const blockedFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'blocked').length
   const hasFieldQuestions = hasFieldQuestionsDraftContent(fieldQuestionsDraft)
   const hasFieldObservations = hasFieldObservationScratchpadContent(fieldObservationScratchpad)
+  const reviewContextStatus: Exclude<OutputSelectorStatus, 'blocked'> = decisionDraftComplete && reviewCheckedCount ? 'available-context' : 'needs-local-context'
+  const fieldContextStatus: Exclude<OutputSelectorStatus, 'blocked'> = hasFieldQuestions || hasFieldObservations || completeFieldPrepQueueCount ? 'field-context' : 'needs-local-context'
+  const fieldQueueSummary = `${completeFieldPrepQueueCount} complete / ${nextFieldPrepQueueCount} next / ${blockedFieldPrepQueueCount} blocked`
 
   return [
     {
-      id: 'pm-brief-output',
-      title: 'PM Brief',
-      status: 'available-context',
-      href: '#pm-intake-snapshot',
-      detail: 'Use PM Brief when the next review needs compact candidate, gate, and guardrail context.',
+      id: 'review-outputs',
+      label: 'Review Outputs',
+      items: [
+        {
+          id: 'pm-brief-output',
+          title: 'PM Brief',
+          status: 'available-context',
+          href: '#pm-intake-snapshot',
+          detail: 'Use PM Brief when the next review needs compact candidate, gate, and guardrail context.',
+        },
+        {
+          id: 'approval-preview-output',
+          title: 'Approval Preview JSON',
+          status: reviewContextStatus,
+          href: '#pm-operating-queue',
+          detail: decisionDraftComplete && reviewCheckedCount
+            ? `Approval Preview JSON has local decision draft context and ${reviewCheckedCount} of ${REVIEW_CHECKLIST_ITEMS.length} review checks for a later admitted approval-persistence packet.`
+            : 'Approval Preview JSON should wait on local decision value, review notes, local-only attestation, and checklist evidence for useful later-packet context.',
+        },
+        {
+          id: 'pm-intake-snapshot-output',
+          title: 'PM Intake Snapshot',
+          status: 'available-context',
+          href: '#pm-intake-snapshot',
+          detail: 'Use PM Intake Snapshot when the next review needs a compact local scan of exception posture, field prep, hosted parity, and blocked write boundaries.',
+        },
+        {
+          id: 'import-exception-register-output',
+          title: 'Import Exception Register',
+          status: 'available-context',
+          href: '#import-exception-register',
+          detail: 'Use Import Exception Register when the next review needs source freshness, warning signals, human decisions, and no-go checks in one local view.',
+        },
+      ],
     },
     {
-      id: 'approval-preview-output',
-      title: 'Approval Preview JSON',
-      status: decisionDraftComplete && reviewCheckedCount ? 'available-context' : 'needs-local-context',
-      href: '#pm-operating-queue',
-      detail: decisionDraftComplete && reviewCheckedCount
-        ? `Approval Preview JSON has local decision draft context and ${reviewCheckedCount} of ${REVIEW_CHECKLIST_ITEMS.length} review checks for a later admitted approval-persistence packet.`
-        : 'Approval Preview JSON should wait on local decision value, review notes, local-only attestation, and checklist evidence for useful later-packet context.',
+      id: 'executor-output',
+      label: 'Executor Output',
+      items: [
+        {
+          id: 'executor-handoff-output',
+          title: 'Executor Handoff',
+          status: closeoutCheckedCount ? 'available-context' : 'needs-local-context',
+          href: '#executor-closeout',
+          detail: closeoutCheckedCount
+            ? `Executor Handoff has ${closeoutCheckedCount} of ${CLOSEOUT_CHECKLIST_ITEMS.length} local closeout evidence checks marked for returned executor context.`
+            : 'Executor Handoff should wait on local closeout evidence checks when the next packet needs returned executor context.',
+        },
+      ],
     },
     {
-      id: 'executor-handoff-output',
-      title: 'Executor Handoff',
-      status: closeoutCheckedCount ? 'available-context' : 'needs-local-context',
-      href: '#executor-closeout',
-      detail: closeoutCheckedCount
-        ? `Executor Handoff has ${closeoutCheckedCount} of ${CLOSEOUT_CHECKLIST_ITEMS.length} local closeout evidence checks marked for returned executor context.`
-        : 'Executor Handoff should wait on local closeout evidence checks when the next packet needs returned executor context.',
+      id: 'field-prep-basics',
+      label: 'Field Prep Basics',
+      items: [
+        {
+          id: 'field-kickoff-output',
+          title: 'Field Kickoff Brief',
+          status: hasFieldQuestions || completeFieldPrepQueueCount ? 'field-context' : 'needs-local-context',
+          href: '#field-prep',
+          detail: `Field Kickoff Brief is most useful after field questions or readiness evidence are captured; current field prep queue is ${fieldQueueSummary}.`,
+        },
+        {
+          id: 'field-observation-output',
+          title: 'Field Observation Notes',
+          status: hasFieldObservations ? 'field-context' : 'needs-local-context',
+          href: '#field-prep',
+          detail: 'Use Field Observation Notes when local day-one observation context has been captured for PM and lead conversation prep.',
+        },
+        {
+          id: 'field-coverage-output',
+          title: 'Field Prep Coverage Snapshot',
+          status: fieldContextStatus,
+          href: '#field-prep',
+          detail: `Use Field Prep Coverage Snapshot when the next conversation needs source, access, material, crew, authority, and production-boundary coverage context; field prep queue is ${fieldQueueSummary}.`,
+        },
+        {
+          id: 'field-agenda-output',
+          title: 'Field Prep Conversation Agenda',
+          status: fieldContextStatus,
+          href: '#field-prep',
+          detail: 'Use Field Prep Conversation Agenda when the next conversation needs context, asks, confirmations, and blocked boundary prompts grouped for review.',
+        },
+        {
+          id: 'field-prep-packet-output',
+          title: 'Field Prep Packet',
+          status: fieldContextStatus,
+          href: '#field-prep',
+          detail: `Field Prep Packet is the bundled field-prep artifact when the next conversation needs questions, coverage, agenda, readiness evidence, and observation context; current field prep queue is ${fieldQueueSummary}.`,
+        },
+        {
+          id: 'field-start-preflight-output',
+          title: 'Field Start Preflight',
+          status: fieldContextStatus,
+          href: '#field-prep',
+          detail: 'Use Field Start Preflight as browser-local readiness context before any later packet admits field authority or production tracking.',
+        },
+      ],
     },
     {
-      id: 'field-kickoff-output',
-      title: 'Field Kickoff Brief',
-      status: hasFieldQuestions || completeFieldPrepQueueCount ? 'field-context' : 'needs-local-context',
-      href: '#field-prep',
-      detail: `Field Kickoff Brief is most useful after field questions or readiness evidence are captured; current field prep queue is ${completeFieldPrepQueueCount} complete / ${nextFieldPrepQueueCount} next / ${blockedFieldPrepQueueCount} blocked.`,
+      id: 'admission-drafts',
+      label: 'Admission Drafts',
+      items: [
+        {
+          id: 'field-execution-gate-output',
+          title: 'Field Execution Gate Design',
+          status: fieldContextStatus,
+          href: '#approval-readiness',
+          detail: 'Use Field Execution Gate Design when the next packet needs the no-write bridge toward later approval, import, field, and production admission.',
+        },
+        {
+          id: 'lead-field-assignment-output',
+          title: 'Lead Field Assignment Draft',
+          status: fieldContextStatus,
+          href: '#field-prep',
+          detail: 'Use Lead Field Assignment Draft for PM and lead review before any assignment, authorization, schedule, status, or durable record write is admitted.',
+        },
+        {
+          id: 'field-authorization-assignment-output',
+          title: 'Field Authorization Assignment Draft',
+          status: fieldContextStatus,
+          href: '#field-prep',
+          detail: 'Use Field Authorization Assignment Draft as packet-design context only; it does not authorize work or assign people.',
+        },
+        {
+          id: 'schedule-status-output',
+          title: 'Schedule Status Controls Draft',
+          status: fieldContextStatus,
+          href: '#field-prep',
+          detail: 'Use Schedule Status Controls Draft to review later schedule/status proof needs while schedule and status mutations stay blocked.',
+        },
+        {
+          id: 'durable-field-record-output',
+          title: 'Durable Field Record Draft',
+          status: fieldContextStatus,
+          href: '#field-prep',
+          detail: 'Use Durable Field Record Draft to review later daily record proof while durable record, evidence, production, customer, and finance writes stay blocked.',
+        },
+        {
+          id: 'production-tracking-output',
+          title: 'Production Tracking Draft',
+          status: fieldContextStatus,
+          href: '#field-prep',
+          detail: 'Use Production Tracking Draft to review later quantity, labor, apparatus, progress, audit, and readback proof while production tracking stays blocked.',
+        },
+        {
+          id: 'customer-reporting-output',
+          title: 'Customer Reporting Draft',
+          status: fieldContextStatus,
+          href: '#field-prep',
+          detail: 'Use Customer Reporting Draft to review later report and completion evidence proof while customer-facing outputs stay blocked.',
+        },
+        {
+          id: 'financial-handoff-output',
+          title: 'Financial Handoff Draft',
+          status: fieldContextStatus,
+          href: '#field-prep',
+          detail: 'Use Financial Handoff Draft to review later billing, payroll, invoice/accounting, labor reconciliation, audit, and readback proof while finance writes stay blocked.',
+        },
+      ],
     },
     {
-      id: 'field-prep-packet-output',
-      title: 'Field Prep Packet',
-      status: hasFieldQuestions || hasFieldObservations || completeFieldPrepQueueCount ? 'field-context' : 'needs-local-context',
-      href: '#field-prep',
-      detail: `Field Prep Packet is the bundled field-prep artifact when the next conversation needs questions, coverage, agenda, readiness evidence, and observation context; current field prep queue is ${completeFieldPrepQueueCount} complete / ${nextFieldPrepQueueCount} next / ${blockedFieldPrepQueueCount} blocked.`,
+      id: 'pilot-launch-outputs',
+      label: 'Pilot Launch Outputs',
+      items: [
+        {
+          id: 'pilot-launch-binder-output',
+          title: 'Pilot Launch Binder',
+          status: fieldContextStatus,
+          href: '#field-prep',
+          detail: 'Use Pilot Launch Binder when the next review needs one bundled local context across approval preflight, field start, admission drafts, and blocked boundaries.',
+        },
+        {
+          id: 'pilot-launch-daily-brief-output',
+          title: 'Pilot Launch Daily Brief',
+          status: fieldContextStatus,
+          href: '#field-prep',
+          detail: 'Use Pilot Launch Daily Brief when the next PM, lead, or customer conversation needs a compact today-focused review sequence.',
+        },
+        {
+          id: 'pilot-launch-standup-card-output',
+          title: 'Pilot Launch Standup Card',
+          status: fieldContextStatus,
+          href: '#field-prep',
+          detail: 'Use Pilot Launch Standup Card when the next conversation needs role-based talk tracks, no-go checks, and local capture prompts.',
+        },
+        {
+          id: 'pilot-launch-capture-sheet-output',
+          title: 'Pilot Launch Capture Sheet',
+          status: fieldContextStatus,
+          href: '#field-prep',
+          detail: 'Use Pilot Launch Capture Sheet when the next meeting needs blank local prompts for PM decisions, blockers, customer/site questions, and executor follow-up.',
+        },
+        {
+          id: 'pilot-launch-followup-output',
+          title: 'Pilot Launch Follow-Up Packet',
+          status: fieldContextStatus,
+          href: '#field-prep',
+          detail: 'Use Pilot Launch Follow-Up Packet when the next review needs copy/paste return sections for VS Code Codex, Desktop Codex, or sidecar scout closeout.',
+        },
+      ],
     },
   ]
 }
@@ -7443,24 +7615,31 @@ export default function ProjectMinerIntakeWorkbenchPage() {
             <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
               Browser-local chooser for existing outputs already on this workbench. It creates no localStorage key, export artifact, backend route, schema, approval record, task, issue, schedule, status, durable field record, production tracking row, hosted write claim, or production write.
             </p>
-            <div style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
-              {pmIntakeOutputSelector.map((item) => (
-                <a
-                  key={item.id}
-                  className="card"
-                  href={item.href}
-                  style={{ color: 'inherit', display: 'block', padding: '0.85rem', textDecoration: 'none', boxShadow: 'none' }}
-                >
-                  <div className="status-row" style={{ alignItems: 'start' }}>
-                    <div>
-                      <p style={{ margin: 0 }}>
-                        <strong>{item.title}</strong>
-                      </p>
-                      <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
-                    </div>
-                    <span className={`status-pill ${outputSelectorTone(item.status)}`}>{formatLabel(item.status)}</span>
+            <div aria-label="Output selector groups" style={{ display: 'grid', gap: '0.85rem', gridTemplateColumns: 'repeat(auto-fit, minmax(15rem, 1fr))', marginTop: '0.85rem' }}>
+              {pmIntakeOutputSelector.map((group) => (
+                <section key={group.id} aria-label={`${group.label} selector group`} style={{ display: 'grid', gap: '0.55rem' }}>
+                  <h3 style={{ fontSize: '0.95rem', margin: 0 }}>{group.label}</h3>
+                  <div aria-label={`${group.label} selector outputs`} style={{ display: 'grid', gap: '0.75rem' }}>
+                    {group.items.map((item) => (
+                      <a
+                        key={item.id}
+                        className="card"
+                        href={item.href}
+                        style={{ color: 'inherit', display: 'block', padding: '0.85rem', textDecoration: 'none', boxShadow: 'none' }}
+                      >
+                        <div className="status-row" style={{ alignItems: 'start' }}>
+                          <div>
+                            <p style={{ margin: 0 }}>
+                              <strong>{item.title}</strong>
+                            </p>
+                            <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
+                          </div>
+                          <span className={`status-pill ${outputSelectorTone(item.status)}`}>{formatLabel(item.status)}</span>
+                        </div>
+                      </a>
+                    ))}
                   </div>
-                </a>
+                </section>
               ))}
             </div>
           </div>

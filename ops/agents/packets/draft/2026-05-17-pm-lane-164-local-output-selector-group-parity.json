@@ -1,0 +1,47 @@
+{
+  "packet_id": "2026-05-17-pm-lane-164",
+  "title": "PM Lane 164 - Local Output Selector Group Parity",
+  "lane": "PM lane development",
+  "status": "completed",
+  "owner": "VS Code Codex",
+  "authority": "repo technical authority; PM lane implementation authority; final integration authority",
+  "date": "2026-05-17",
+  "objective": "Reduce Project Miner Temp Power output-selection scan burden by making the existing browser-local Output Selector mirror the grouped Output Actions structure without adding exports, handlers, filenames, payloads, storage, read seams, or write boundaries.",
+  "scope": [
+    "Grouped the existing Local PM Intake Output Selector into Review Outputs, Executor Output, Field Prep Basics, Admission Drafts, and Pilot Launch Outputs.",
+    "Kept selector entries as advisory links to existing local workbench sections.",
+    "Preserved the Output Actions rail counts and all existing export buttons, handlers, filenames, payloads, and no-write boundaries.",
+    "Used a read-only sidecar to identify the selector-parity slice while VS Code Codex retained PM implementation and final integration authority."
+  ],
+  "guardrails": [
+    "No hosted service access.",
+    "No Supabase, Render, Vercel, or Olares action.",
+    "No SQL or schema migration.",
+    "No approval POST or approval-row creation.",
+    "No project import mutation.",
+    "No field authorization, assignment, schedule/status, durable field record, production tracking, customer report, completion evidence, billing, payroll, invoice, accounting, or external finance-system write.",
+    "No workbook macro or writeback.",
+    "No new export action, export handler, filename, payload version, localStorage key, backend route, service/auth/ingress change, or autonomous AI business-state mutation."
+  ],
+  "changed_files": [
+    "apps/operations-web/app/pm-review/import-intake/page.tsx",
+    "apps/operations-web/tests/browser-shell.pm-import-intake.smoke.spec.ts",
+    "PROJECT_STATUS.md",
+    "docs/operations/APEX-PM-STAKEHOLDER-TIME-PROTECTION-AND-ACCELERATION-LANE-2026-05-15.md",
+    "docs/operations/APEX-PM-TEMP-POWER-DELIVERY-AND-ORCHESTRATION-PLAN-2026-05-15.md",
+    "docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md",
+    "ops/agents/packets/draft/2026-05-17-pm-lane-164-local-output-selector-group-parity.json",
+    "ops/agents/handoffs/2026-05-17-pm-lane-164-local-output-selector-group-parity-handoff.md"
+  ],
+  "validation": [
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform\" --filter @apex/operations-web typecheck",
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform\" --filter @apex/operations-web build",
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform/apps/operations-web\" exec playwright test \"browser-shell.pm-import-intake.smoke.spec.ts\"",
+    "Get-Content -LiteralPath \"C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-17-pm-lane-164-local-output-selector-group-parity.json\" | ConvertFrom-Json | Select-Object -ExpandProperty packet_id",
+    "rg -n \"PM Lane 164|Output selector groups|Review Outputs selector group|Field Prep Basics selector group|Admission Drafts selector group|Pilot Launch Outputs selector group|mutationRequests\\)\\.toHaveLength\\(0\\)\" PROJECT_STATUS.md docs/operations ops/agents apps/operations-web",
+    "git diff --check"
+  ],
+  "validation_result": "PASS - operations-web typecheck passed; operations-web build passed; focused Playwright pm import-intake smoke passed; packet JSON parsed; PM Lane 164 guardrail rg passed; git diff --check passed with only expected CRLF warnings on touched and unrelated markdown files.",
+  "sidecar_result": "Read-only sidecar Boole recommended PM Lane 164 as Local Output Selector Group Parity, specifically mirroring the PM Lane 163 output action grouping inside the advisory output selector while avoiding new buttons, downloads, localStorage, payload fields, handler changes, routes, persistence, or authority wording.",
+  "execution_result": "PASS"
+}

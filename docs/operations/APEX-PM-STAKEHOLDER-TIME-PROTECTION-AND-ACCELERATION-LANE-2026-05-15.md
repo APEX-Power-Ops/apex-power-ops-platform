@@ -732,6 +732,8 @@ PM Lane 162 executes the local Pilot Launch Follow-Up Packet Export tranche. It 
 
 PM Lane 163 executes the local Field Prep Output Subgrouping tranche. It keeps all 19 Field Prep Outputs in the same output rail but groups them into Field Prep Basics, Admission Drafts, and Pilot Launch Outputs without changing button labels, handlers, filenames, payloads, storage, read seams, or write boundaries.
 
+PM Lane 164 executes the local Output Selector Group Parity tranche. It keeps the selector advisory-only and mirrors the existing Output Actions structure with Review Outputs, Executor Output, Field Prep Basics, Admission Drafts, and Pilot Launch Outputs so Jason can choose the right local artifact faster without adding exports, changing handlers, changing payloads, persisting selector state, or opening any write path.
+
 The success standard is not just technical correctness. The candidate must reduce Jason's review burden by showing:
 
 1. what the system thinks the project is,
