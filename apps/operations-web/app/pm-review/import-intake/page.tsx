@@ -939,6 +939,11 @@ function fieldPrepPacketFileName(candidate?: CandidatePayload | null) {
   return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-field-prep-packet.md`
 }
 
+function fieldStartPreflightFileName(candidate?: CandidatePayload | null) {
+  const candidateId = candidate?.candidate_id || 'project-miner-intake'
+  return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-field-start-preflight.json`
+}
+
 function importExceptionRegisterFileName(candidate?: CandidatePayload | null) {
   const candidateId = candidate?.candidate_id || 'project-miner-intake'
   return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-import-exception-register.md`
@@ -3517,6 +3522,146 @@ function buildFieldPrepPacket(
   ].join('\n')
 }
 
+function buildFieldStartPreflightExport(
+  packet: IntakeWorkbenchPacket,
+  fieldPrepQueue: OperatingQueueItem[],
+  fieldPrepCoverageSnapshot: FieldPrepCoverageItem[],
+  fieldPrepConversationAgenda: FieldPrepAgendaItem[],
+  notAllowed: string[],
+  futureRoute: string,
+  fieldReadinessChecks: Record<string, boolean>,
+  fieldQuestionsDraft: FieldQuestionsDraft,
+  fieldObservationScratchpad: FieldObservationScratchpad,
+) {
+  const candidate = packet.candidate
+  const summary = candidate.summary || {}
+  const project = candidate.project || {}
+  const fieldQuestionsPresent = hasFieldQuestionsDraftContent(fieldQuestionsDraft)
+  const fieldObservationsPresent = hasFieldObservationScratchpadContent(fieldObservationScratchpad)
+  const fieldReadinessCheckedItems = FIELD_READINESS_CHECKLIST_ITEMS.filter((item) => fieldReadinessChecks[item.id])
+  const fieldBoundaryAcknowledged = Boolean(fieldReadinessChecks.field_authority_boundary_acknowledged)
+  const fieldPrepCoverageCount = fieldPrepCoverageCounts(fieldPrepCoverageSnapshot)
+  const fieldPrepAgendaCount = fieldPrepAgendaCounts(fieldPrepConversationAgenda)
+  const completeFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'complete').length
+  const nextFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'next').length
+  const blockedFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'blocked').length
+  const preflightItems: ApprovalDryRunReadinessItem[] = [
+    {
+      id: 'field-questions-context',
+      title: 'Field questions context',
+      status: fieldQuestionsPresent ? 'ready' : 'blocked',
+      detail: fieldQuestionsPresent
+        ? 'Browser-local field questions exist for PM, lead, and field review conversations.'
+        : 'Capture local field questions before using this candidate as day-one field-start context.',
+    },
+    {
+      id: 'field-readiness-evidence',
+      title: 'Field readiness evidence',
+      status: fieldReadinessCheckedItems.length > 0 ? 'ready' : 'blocked',
+      detail: fieldReadinessCheckedItems.length > 0
+        ? `${fieldReadinessCheckedItems.length} of ${FIELD_READINESS_CHECKLIST_ITEMS.length} field-readiness checks are marked as local prep evidence.`
+        : 'Mark at least one field-readiness check before relying on the field-start preflight.',
+    },
+    {
+      id: 'field-observation-context',
+      title: 'Field observation context',
+      status: fieldObservationsPresent ? 'ready' : 'needs_review',
+      detail: fieldObservationsPresent
+        ? 'Browser-local field observation context exists for the next PM or field conversation.'
+        : 'Field observation scratchpad context is optional but should be reviewed before field reliance.',
+    },
+    {
+      id: 'field-authority-boundary',
+      title: 'Field authority boundary',
+      status: fieldBoundaryAcknowledged ? 'ready' : 'blocked',
+      detail: fieldBoundaryAcknowledged
+        ? 'The local field-prep authority boundary is acknowledged for this candidate.'
+        : 'Field authority boundary remains blocked; this preflight does not authorize work.',
+    },
+    {
+      id: 'production-tracking-boundary',
+      title: 'Production tracking boundary',
+      status: 'blocked',
+      detail: 'Durable field records, production tracking, assignments, schedules, and statuses remain blocked until a later packet explicitly admits the write path.',
+    },
+  ]
+  const preflightCounts = approvalDryRunReadinessCounts(preflightItems)
+
+  return {
+    preflight_kind: 'pm_import_candidate_field_start_preflight',
+    preflight_version: 'pm_lane_148_local_field_start_preflight_v1',
+    generated_locally_at: new Date().toISOString(),
+    candidate_identity: {
+      candidate_id: candidate.candidate_id || null,
+      candidate_version: candidate.candidate_version || null,
+      project_name: project.name || null,
+      source_fingerprint: candidate.source_freshness?.aggregate_fingerprint || null,
+    },
+    field_shape: {
+      workpackage_count: summary.workpackage_count ?? null,
+      task_count: summary.task_count ?? null,
+      apparatus_candidate_count: summary.apparatus_candidate_count ?? null,
+      crew_count: summary.crew_count ?? null,
+      equipment_inventory_count: summary.equipment_inventory_count ?? null,
+    },
+    preflight_summary: {
+      ready_count: preflightCounts.ready,
+      needs_review_count: preflightCounts.needsReview,
+      blocked_count: preflightCounts.blocked,
+      summary: approvalDryRunReadinessSummary(preflightCounts),
+      field_start_status: 'blocked_until_field_authority_and_tracking_packet',
+    },
+    field_prep_queue_summary: {
+      complete_count: completeFieldPrepQueueCount,
+      next_count: nextFieldPrepQueueCount,
+      blocked_count: blockedFieldPrepQueueCount,
+      summary: `${completeFieldPrepQueueCount} complete, ${nextFieldPrepQueueCount} next, ${blockedFieldPrepQueueCount} blocked`,
+    },
+    field_prep_coverage_summary: {
+      covered_count: fieldPrepCoverageCount.covered,
+      partial_count: fieldPrepCoverageCount.partial,
+      open_count: fieldPrepCoverageCount.open,
+      blocked_count: fieldPrepCoverageCount.blocked,
+      summary: fieldPrepCoverageSummary(fieldPrepCoverageCount),
+    },
+    field_prep_agenda_summary: {
+      context_count: fieldPrepAgendaCount.context,
+      ask_count: fieldPrepAgendaCount.ask,
+      confirm_count: fieldPrepAgendaCount.confirm,
+      blocked_count: fieldPrepAgendaCount.blocked,
+      summary: fieldPrepAgendaSummary(fieldPrepAgendaCount),
+    },
+    preflight_items: preflightItems,
+    field_prep_packet_context: {
+      field_prep_packet_file: fieldPrepPacketFileName(candidate),
+      field_kickoff_brief_file: fieldKickoffBriefFileName(candidate),
+      field_observation_notes_file: fieldObservationNotesFileName(candidate),
+      coverage_snapshot_file: fieldPrepCoverageSnapshotFileName(candidate),
+      conversation_agenda_file: fieldPrepConversationAgendaFileName(candidate),
+    },
+    authority_boundary: {
+      mutation_authority: 'not_admitted',
+      local_preflight_only: true,
+      field_start_authority: 'not_admitted',
+      future_approval_route: futureRoute,
+      assignment_performed: false,
+      schedule_performed: false,
+      status_change_performed: false,
+      durable_field_record_created: false,
+      production_tracking_performed: false,
+      server_write_performed: false,
+    },
+    blocked_boundaries: Array.from(new Set([
+      ...notAllowed,
+      'field_work_authorization',
+      'assignment_schedule_status_writes',
+      'durable_field_record_creation',
+      'production_tracking_writes',
+      'project_import',
+    ])),
+  }
+}
+
 function buildImportExceptionRegisterExport(
   packet: IntakeWorkbenchPacket,
   importExceptionRegister: ImportExceptionRegisterItem[],
@@ -3696,6 +3841,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
   const [fieldPrepCoverageStatus, setFieldPrepCoverageStatus] = useState('')
   const [fieldPrepAgendaStatus, setFieldPrepAgendaStatus] = useState('')
   const [fieldPrepPacketStatus, setFieldPrepPacketStatus] = useState('')
+  const [fieldStartPreflightStatus, setFieldStartPreflightStatus] = useState('')
   const [approvalDryRunStatus, setApprovalDryRunStatus] = useState('')
   const [approvalDryRunPreview, setApprovalDryRunPreview] = useState('')
   const [reviewChecks, setReviewChecks] = useState<Record<string, boolean>>({})
@@ -3875,7 +4021,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
   const fieldPrepAgendaCount = fieldPrepAgendaCounts(fieldPrepConversationAgenda)
   const reviewOutputStatuses = [briefStatus, previewStatus, pmIntakeSnapshotStatus, exceptionRegisterStatus].filter(Boolean)
   const executorOutputStatuses = [handoffStatus].filter(Boolean)
-  const fieldPrepOutputStatuses = [fieldBriefStatus, fieldObservationStatus, fieldPrepCoverageStatus, fieldPrepAgendaStatus, fieldPrepPacketStatus].filter(Boolean)
+  const fieldPrepOutputStatuses = [fieldBriefStatus, fieldObservationStatus, fieldPrepCoverageStatus, fieldPrepAgendaStatus, fieldPrepPacketStatus, fieldStartPreflightStatus].filter(Boolean)
   const hasOutputStatuses = reviewOutputStatuses.length > 0 || executorOutputStatuses.length > 0 || fieldPrepOutputStatuses.length > 0
 
   useEffect(() => {
@@ -4235,6 +4381,16 @@ export default function ProjectMinerIntakeWorkbenchPage() {
     setFieldPrepPacketStatus(`Field prep packet prepared from ${candidate?.candidate_id || 'the current intake packet'} without a server write.`)
   }
 
+  function exportFieldStartPreflight() {
+    if (!packet) {
+      return
+    }
+
+    const preflight = buildFieldStartPreflightExport(packet, fieldPrepQueue, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, notAllowed, futureRoute, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad)
+    downloadTextFile(fieldStartPreflightFileName(candidate), `${JSON.stringify(preflight, null, 2)}\n`, 'application/json')
+    setFieldStartPreflightStatus(`Field start preflight prepared from ${candidate?.candidate_id || 'the current intake packet'} without a server write.`)
+  }
+
   return (
     <main className="shell-page pm-review-page">
       <section className="hero-card pm-review-hero">
@@ -4385,6 +4541,9 @@ export default function ProjectMinerIntakeWorkbenchPage() {
                 </button>
                 <button className="btn btn-outline" onClick={exportFieldPrepPacket} disabled={!packet}>
                   Export Field Prep Packet
+                </button>
+                <button className="btn btn-outline" onClick={exportFieldStartPreflight} disabled={!packet}>
+                  Export Field Start Preflight
                 </button>
               </div>
             </section>

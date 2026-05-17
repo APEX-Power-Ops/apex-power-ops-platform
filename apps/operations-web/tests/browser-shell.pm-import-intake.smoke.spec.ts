@@ -318,7 +318,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(outputActionRail.getByLabel('PM intake output action groups')).toBeVisible()
   await expect(outputActionRail.getByLabel('Review output actions').getByRole('button')).toHaveCount(4)
   await expect(outputActionRail.getByLabel('Executor output actions').getByRole('button')).toHaveCount(1)
-  await expect(outputActionRail.getByLabel('Field prep output actions').getByRole('button')).toHaveCount(5)
+  await expect(outputActionRail.getByLabel('Field prep output actions').getByRole('button')).toHaveCount(6)
   await expect(outputActionRail.getByLabel('Refresh action').getByRole('button')).toHaveCount(1)
   await expect(outputActionRail.getByLabel('Review output actions').getByRole('button', { name: 'Export PM Brief' })).toBeVisible()
   await expect(outputActionRail.getByLabel('Review output actions').getByRole('button', { name: 'Export Approval Preview JSON' })).toBeVisible()
@@ -330,6 +330,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(outputActionRail.getByLabel('Field prep output actions').getByRole('button', { name: 'Export Field Prep Coverage Snapshot' })).toBeVisible()
   await expect(outputActionRail.getByLabel('Field prep output actions').getByRole('button', { name: 'Export Field Prep Conversation Agenda' })).toBeVisible()
   await expect(outputActionRail.getByLabel('Field prep output actions').getByRole('button', { name: 'Export Field Prep Packet' })).toBeVisible()
+  await expect(outputActionRail.getByLabel('Field prep output actions').getByRole('button', { name: 'Export Field Start Preflight' })).toBeVisible()
   await outputActionDisclosure.locator(':scope > summary').click()
   await expect(outputActionDisclosure).not.toHaveAttribute('open', '')
   await expect(outputActionRail.getByLabel('PM intake output action groups')).toBeHidden()
@@ -340,7 +341,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(outputActionRail.getByLabel('PM intake output action groups')).toBeVisible()
   await expect(outputActionRail.getByLabel('Review output actions').getByRole('button')).toHaveCount(4)
   await expect(outputActionRail.getByLabel('Executor output actions').getByRole('button')).toHaveCount(1)
-  await expect(outputActionRail.getByLabel('Field prep output actions').getByRole('button')).toHaveCount(5)
+  await expect(outputActionRail.getByLabel('Field prep output actions').getByRole('button')).toHaveCount(6)
   await expect(outputActionRail.getByLabel('Refresh action').getByRole('button')).toHaveCount(1)
   await expect(page.getByLabel('PM intake output status rail')).toHaveCount(0)
   await expectNoImpliedAuthorityControls(page)
@@ -2071,6 +2072,100 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(fieldPrepOutputStatus.getByText(/Field prep coverage snapshot prepared from pm-import-candidate-miner-temp-power without a server write/i)).toBeVisible()
   await expect(fieldPrepOutputStatus.getByText(/Field prep conversation agenda prepared from pm-import-candidate-miner-temp-power without a server write/i)).toBeVisible()
   await expect(fieldPrepOutputStatus.getByText(/Field prep packet prepared from pm-import-candidate-miner-temp-power without a server write/i)).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Export Field Start Preflight' })).toBeEnabled()
+  const fieldStartPreflightDownloadPromise = page.waitForEvent('download')
+  await page.getByRole('button', { name: 'Export Field Start Preflight' }).click()
+  const fieldStartPreflightDownload = await fieldStartPreflightDownloadPromise
+  expect(fieldStartPreflightDownload.suggestedFilename()).toBe('pm-import-candidate-miner-temp-power-field-start-preflight.json')
+  const fieldStartPreflightStream = await fieldStartPreflightDownload.createReadStream()
+  expect(fieldStartPreflightStream).not.toBeNull()
+  const fieldStartPreflightChunks: Buffer[] = []
+  for await (const chunk of fieldStartPreflightStream!) {
+    fieldStartPreflightChunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk))
+  }
+  const fieldStartPreflight = JSON.parse(Buffer.concat(fieldStartPreflightChunks).toString('utf8'))
+  expect(fieldStartPreflight).toMatchObject({
+    preflight_kind: 'pm_import_candidate_field_start_preflight',
+    preflight_version: 'pm_lane_148_local_field_start_preflight_v1',
+    candidate_identity: {
+      candidate_id: 'pm-import-candidate-miner-temp-power',
+      candidate_version: 'pm_import_candidate_read_only_v1',
+      project_name: 'Miner Temp Power',
+      source_fingerprint: 'stat-fingerprint-abc123',
+    },
+    field_shape: {
+      workpackage_count: 7,
+      task_count: 15,
+      apparatus_candidate_count: 186,
+      crew_count: 15,
+      equipment_inventory_count: 343,
+    },
+    preflight_summary: {
+      ready_count: 3,
+      needs_review_count: 0,
+      blocked_count: 2,
+      summary: '3 ready, 0 needs review, 2 blocked',
+      field_start_status: 'blocked_until_field_authority_and_tracking_packet',
+    },
+    field_prep_queue_summary: {
+      complete_count: 2,
+      next_count: 2,
+      blocked_count: 1,
+      summary: '2 complete, 2 next, 1 blocked',
+    },
+    field_prep_coverage_summary: {
+      covered_count: 2,
+      partial_count: 0,
+      open_count: 3,
+      blocked_count: 2,
+      summary: '2 covered, 0 partial, 3 open, 2 blocked',
+    },
+    field_prep_agenda_summary: {
+      context_count: 2,
+      ask_count: 3,
+      confirm_count: 1,
+      blocked_count: 1,
+      summary: '2 context, 3 ask, 1 confirm, 1 blocked',
+    },
+    field_prep_packet_context: {
+      field_prep_packet_file: 'pm-import-candidate-miner-temp-power-field-prep-packet.md',
+      field_kickoff_brief_file: 'pm-import-candidate-miner-temp-power-field-kickoff-brief.md',
+      field_observation_notes_file: 'pm-import-candidate-miner-temp-power-field-observation-notes.md',
+      coverage_snapshot_file: 'pm-import-candidate-miner-temp-power-field-prep-coverage-snapshot.md',
+      conversation_agenda_file: 'pm-import-candidate-miner-temp-power-field-prep-conversation-agenda.md',
+    },
+    authority_boundary: {
+      mutation_authority: 'not_admitted',
+      local_preflight_only: true,
+      field_start_authority: 'not_admitted',
+      future_approval_route: '/api/v1/mutations/project-import-approvals',
+      assignment_performed: false,
+      schedule_performed: false,
+      status_change_performed: false,
+      durable_field_record_created: false,
+      production_tracking_performed: false,
+      server_write_performed: false,
+    },
+  })
+  expect(fieldStartPreflight.generated_locally_at).toEqual(expect.any(String))
+  expect(fieldStartPreflight.preflight_items.map((item: { id: string, status: string }) => `${item.id}:${item.status}`)).toEqual([
+    'field-questions-context:ready',
+    'field-readiness-evidence:ready',
+    'field-observation-context:ready',
+    'field-authority-boundary:blocked',
+    'production-tracking-boundary:blocked',
+  ])
+  expect(fieldStartPreflight.blocked_boundaries).toEqual(expect.arrayContaining([
+    'write_supabase',
+    'persist_approval_record',
+    'import_project_rows',
+    'field_work_authorization',
+    'assignment_schedule_status_writes',
+    'durable_field_record_creation',
+    'production_tracking_writes',
+    'project_import',
+  ]))
+  await expect(fieldPrepOutputStatus.getByText(/Field start preflight prepared from pm-import-candidate-miner-temp-power without a server write/i)).toBeVisible()
   await expect(page.getByRole('button', { name: 'Export Approval Preview JSON' })).toBeEnabled()
   const previewDownloadPromise = page.waitForEvent('download')
   await page.getByRole('button', { name: 'Export Approval Preview JSON' }).click()
