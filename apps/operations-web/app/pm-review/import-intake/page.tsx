@@ -258,6 +258,12 @@ type ImportExceptionRegisterItem = {
   evidence: string
 }
 
+type ImportExceptionRegisterGroup = {
+  id: string
+  label: string
+  items: ImportExceptionRegisterItem[]
+}
+
 type PmIntakeSnapshotStatus = 'covered' | 'open' | 'blocked'
 
 type PmIntakeSnapshotItem = {
@@ -1789,6 +1795,29 @@ function buildImportExceptionRegister(
       status: 'blocked',
       detail: 'Approval persistence, import rows, assignment, schedule, status, issue, task, durable field record, and production tracking writes remain blocked.',
       evidence: 'A later packet must explicitly admit any write path before implementation.',
+    },
+  ]
+}
+
+function groupImportExceptionRegisterItems(register: ImportExceptionRegisterItem[]): ImportExceptionRegisterGroup[] {
+  const byId = new Map(register.map((item) => [item.id, item]))
+  const take = (ids: string[]) => ids.map((id) => byId.get(id)).filter((item): item is ImportExceptionRegisterItem => Boolean(item))
+
+  return [
+    {
+      id: 'source-review-signals',
+      label: 'Source Review Signals',
+      items: take(['source-freshness-evidence', 'candidate-warning-signals']),
+    },
+    {
+      id: 'pm-decision-context',
+      label: 'PM Decision Context',
+      items: take(['human-decision-prompts', 'local-decision-draft-evidence']),
+    },
+    {
+      id: 'admission-boundary',
+      label: 'Admission Boundary',
+      items: take(['admission-no-go-checks', 'future-write-boundary']),
     },
   ]
 }
@@ -6673,6 +6702,10 @@ export default function ProjectMinerIntakeWorkbenchPage() {
     () => buildImportExceptionRegister(candidate, noGoChecks, reviewChecks, approvalDraft),
     [candidate, noGoChecks, reviewChecks, approvalDraft],
   )
+  const importExceptionRegisterGroups = useMemo(
+    () => groupImportExceptionRegisterItems(importExceptionRegister),
+    [importExceptionRegister],
+  )
   const fieldPrepQueue = useMemo(
     () => buildFieldPrepQueue(fieldReadinessChecks, fieldQuestionsDraft),
     [fieldReadinessChecks, fieldQuestionsDraft],
@@ -8052,20 +8085,27 @@ export default function ProjectMinerIntakeWorkbenchPage() {
             <p style={{ margin: '0.45rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
               {importExceptionRegisterSummary(importExceptionRegisterCount)}
             </p>
-            <div aria-label="Local import exception decision register items" style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
-              {importExceptionRegister.map((item) => (
-                <article key={item.id} className="card" style={{ padding: '0.85rem', boxShadow: 'none' }}>
-                  <div className="status-row" style={{ alignItems: 'start' }}>
-                    <div>
-                      <p style={{ margin: 0 }}>
-                        <strong>{item.title}</strong>
-                      </p>
-                      <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
-                      <p style={{ margin: '0.35rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.evidence}</p>
-                    </div>
-                    <span className={`status-pill ${importExceptionRegisterTone(item.status)}`}>{formatLabel(item.status)}</span>
+            <div aria-label="Local import exception decision register groups" style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
+              {importExceptionRegisterGroups.map((group) => (
+                <section key={group.id} aria-label={`${group.label} import exception group`} className="card" style={{ padding: '0.85rem', boxShadow: 'none' }}>
+                  <h3 style={{ fontSize: '0.95rem', margin: '0 0 0.65rem' }}>{group.label}</h3>
+                  <div aria-label={`${group.label} import exception items`} style={{ display: 'grid', gap: '0.75rem' }}>
+                    {group.items.map((item) => (
+                      <article key={item.id} className="card" style={{ padding: '0.85rem', boxShadow: 'none' }}>
+                        <div className="status-row" style={{ alignItems: 'start' }}>
+                          <div>
+                            <p style={{ margin: 0 }}>
+                              <strong>{item.title}</strong>
+                            </p>
+                            <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
+                            <p style={{ margin: '0.35rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.evidence}</p>
+                          </div>
+                          <span className={`status-pill ${importExceptionRegisterTone(item.status)}`}>{formatLabel(item.status)}</span>
+                        </div>
+                      </article>
+                    ))}
                   </div>
-                </article>
+                </section>
               ))}
             </div>
           </div>
