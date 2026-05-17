@@ -429,6 +429,16 @@ type FieldStartCustomerSiteClarificationBringBackLensItem = {
   detail: string
 }
 
+type FieldStartLeadResourceClarificationBringBackLensStatus = 'check' | 'review' | 'context' | 'blocked'
+
+type FieldStartLeadResourceClarificationBringBackLensItem = {
+  id: string
+  title: string
+  status: FieldStartLeadResourceClarificationBringBackLensStatus
+  href: string
+  detail: string
+}
+
 type OutputSelectorStatus = 'available-context' | 'needs-local-context' | 'field-context' | 'blocked'
 
 type OutputSelectorItem = {
@@ -1074,6 +1084,12 @@ function fieldStartSourceReviewBringBackLensTone(status: FieldStartSourceReviewB
 }
 
 function fieldStartCustomerSiteClarificationBringBackLensTone(status: FieldStartCustomerSiteClarificationBringBackLensStatus) {
+  if (status === 'context' || status === 'review') return 'status-configured'
+  if (status === 'check') return 'status-awaiting-values'
+  return 'status-deferred'
+}
+
+function fieldStartLeadResourceClarificationBringBackLensTone(status: FieldStartLeadResourceClarificationBringBackLensStatus) {
   if (status === 'context' || status === 'review') return 'status-configured'
   if (status === 'check') return 'status-awaiting-values'
   return 'status-deferred'
@@ -2859,6 +2875,56 @@ function buildFieldStartCustomerSiteClarificationBringBackLens(
       status: 'blocked',
       href: '#guardrails',
       detail: `${projectName}: if a returned customer/site answer needs accountability, timing, customer-facing language, field direction, report, schedule/status update, durable record, or write authority, stop and author a later bounded packet; do not create promises here.`,
+    },
+  ]
+}
+
+function buildFieldStartLeadResourceClarificationBringBackLens(
+  candidate: CandidatePayload | undefined,
+  fieldQuestionsDraft: FieldQuestionsDraft,
+  fieldObservationScratchpad: FieldObservationScratchpad,
+): FieldStartLeadResourceClarificationBringBackLensItem[] {
+  const projectName = candidate?.project?.name || candidate?.candidate_id || 'current Project Miner candidate'
+  const leadConversationSourcePresent = Boolean(fieldObservationScratchpad.observer_source.trim() || fieldObservationScratchpad.observation_date_or_shift.trim())
+  const crewEquipmentContextPresent = Boolean(fieldQuestionsDraft.crew_equipment_questions.trim())
+  const materialStagingContextPresent = Boolean(fieldQuestionsDraft.material_staging_questions.trim() || fieldObservationScratchpad.material_equipment_observations.trim())
+  const workAreaResourceContextPresent = Boolean(fieldQuestionsDraft.material_staging_questions.trim() || fieldObservationScratchpad.workpackage_area_reference.trim())
+
+  return [
+    {
+      id: 'lead-resource-source-check-lens',
+      title: 'Lead conversation source check',
+      status: leadConversationSourcePresent ? 'context' : 'check',
+      href: '#field-prep',
+      detail: 'If the return depends on who said it or when it was discussed, classify it as lead/resource clarification only and do not assign ownership here.',
+    },
+    {
+      id: 'crew-equipment-readiness-check-lens',
+      title: 'Crew readiness clarification check',
+      status: crewEquipmentContextPresent ? 'review' : 'check',
+      href: '#field-prep',
+      detail: 'If the return names crew count, role mix, readiness, tooling, or lead availability, classify it as lead/resource clarification only before field reliance.',
+    },
+    {
+      id: 'material-staging-path-check-lens',
+      title: 'Material/equipment clarification check',
+      status: materialStagingContextPresent ? 'context' : 'check',
+      href: '#field-prep',
+      detail: 'If the return names material, rental, equipment, tooling, delivery, or receiving details, classify it as lead/resource clarification only before any later packet.',
+    },
+    {
+      id: 'work-area-resource-fit-check-lens',
+      title: 'Staging/resource limit check',
+      status: workAreaResourceContextPresent ? 'context' : 'check',
+      href: '#field-prep',
+      detail: 'If the return names laydown, staging, access-for-equipment, work area, or resource limits, keep it as browser-local review context only.',
+    },
+    {
+      id: 'lead-resource-assignment-stop-line-lens',
+      title: 'Lead/resource authority stop line',
+      status: 'blocked',
+      href: '#guardrails',
+      detail: `${projectName}: if a returned lead/resource answer needs a task, action item, owner, due date, assignment, timing field, schedule/status write, durable record, production tracking, report, export, backend route, storage key, button, or write authority, stop and author a later bounded packet; do not create it here.`,
     },
   ]
 }
@@ -7562,6 +7628,10 @@ export default function ProjectMinerIntakeWorkbenchPage() {
     () => buildFieldStartCustomerSiteClarificationBringBackLens(candidate, fieldQuestionsDraft, fieldObservationScratchpad),
     [candidate, fieldQuestionsDraft, fieldObservationScratchpad],
   )
+  const fieldStartLeadResourceClarificationBringBackLens = useMemo(
+    () => buildFieldStartLeadResourceClarificationBringBackLens(candidate, fieldQuestionsDraft, fieldObservationScratchpad),
+    [candidate, fieldQuestionsDraft, fieldObservationScratchpad],
+  )
   const pmIntakeSnapshot = useMemo(
     () => buildPmIntakeSnapshot(persistenceReadinessGates, operatingQueue, importExceptionRegister, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, closeoutChecks, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad, approvalDraft),
     [persistenceReadinessGates, operatingQueue, importExceptionRegister, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, closeoutChecks, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad, approvalDraft],
@@ -8832,6 +8902,37 @@ export default function ProjectMinerIntakeWorkbenchPage() {
                       <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
                     </div>
                     <span className={`status-pill ${fieldStartCustomerSiteClarificationBringBackLensTone(item.status)}`}>{formatLabel(item.status)}</span>
+                  </div>
+                </a>
+              ))}
+            </div>
+          </section>
+          <section id="pm-field-start-lead-resource-clarification-bring-back-lens" aria-label="Local field-start lead/resource clarification bring-back lens" className="card" style={{ padding: '0.9rem', marginTop: '0.85rem', boxShadow: 'none' }}>
+            <div className="status-row" style={{ alignItems: 'start' }}>
+              <div>
+                <h3 style={{ margin: 0 }}>Local Field Start Lead/Resource Clarification Bring-Back Lens</h3>
+                <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+                  Read-only lead/resource clarification lens for returned field-start conversation items. It helps classify lead, crew-readiness, material, equipment, staging, and resource-limit details as browser-local review context only; it creates no meeting note, localStorage key, export artifact, backend route, task, action item, owner, due date, assignment, schedule/status write, customer commitment, customer report, field instruction, durable record, production tracking row, hosted write claim, or production write, and exposes no buttons.
+                </p>
+              </div>
+              <span className="status-pill status-awaiting-values">lead/resource lens</span>
+            </div>
+            <div aria-label="Local field-start lead/resource clarification bring-back lens controls" style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
+              {fieldStartLeadResourceClarificationBringBackLens.map((item) => (
+                <a
+                  key={item.id}
+                  className="card"
+                  href={item.href}
+                  style={{ color: 'inherit', display: 'block', padding: '0.85rem', textDecoration: 'none', boxShadow: 'none' }}
+                >
+                  <div className="status-row" style={{ alignItems: 'start' }}>
+                    <div>
+                      <p style={{ margin: 0 }}>
+                        <strong>{item.title}</strong>
+                      </p>
+                      <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
+                    </div>
+                    <span className={`status-pill ${fieldStartLeadResourceClarificationBringBackLensTone(item.status)}`}>{formatLabel(item.status)}</span>
                   </div>
                 </a>
               ))}
