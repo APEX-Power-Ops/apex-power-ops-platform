@@ -1,0 +1,86 @@
+{
+  "packet_id": "2026-05-17-pm-lane-264-project-miner-temp-power-data-entry-revised-non-blocking-acceptance-intake-no-live-packet",
+  "title": "PM Lane 264 - Project Miner Temp Power Data Entry Revised Non-Blocking Acceptance Intake No-Live Packet",
+  "date": "2026-05-17",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_DATA_ENTRY_REVISED_NON_BLOCKING_ACCEPTANCE_INTAKE_NO_LIVE",
+  "input_response_label": "ACCEPT_DATA_ENTRY_WARNING_NON_BLOCKING_NO_LIVE",
+  "selected_outcome": "DATA_ENTRY_WARNING_ACCEPTED_NON_BLOCKING_SUPERSEDES_CORRECTION_GATE_NO_LIVE",
+  "source_packets": [
+    "PM Lane 262",
+    "PM Lane 263"
+  ],
+  "superseded_prior_branch": {
+    "prior_input_response_label": "REQUEST_DATA_ENTRY_WORKBOOK_CORRECTION_NO_LIVE",
+    "prior_gate": "DATA_ENTRY_WORKBOOK_CORRECTION_EVIDENCE_GATE_DEFINED_NO_LIVE",
+    "handling": "superseded_and_parked_by_later_exact_pm_response",
+    "history_preserved": true
+  },
+  "candidate": {
+    "candidate_id": "pm-import-candidate-miner-temp-power",
+    "project_name": "Miner Temp Power",
+    "task_count": 15,
+    "apparatus_candidate_count": 184,
+    "blocker_count": 0,
+    "mutation_authority": "not_admitted"
+  },
+  "active_warning": {
+    "warning_code": "PROJECT_DATA_ENTRY_FORMULA_ERRORS",
+    "disposition": "accepted_non_blocking_for_no_live_temp_power_review",
+    "exact_label_wait": "closed",
+    "correction_evidence_required_for_current_no_live_review": false,
+    "live_admission_authority": false
+  },
+  "live_admission_boundary": {
+    "exact_live_admission_required_later": true,
+    "pm_decision_and_notes_required_later": true,
+    "hosted_read_currency_required_later": true,
+    "replay_idempotency_required_later": true,
+    "approval_row_evidence_required_later": true,
+    "project_import_admitted": false
+  },
+  "desktop_codex_boundary": {
+    "pm_256_still_separate": true,
+    "new_desktop_codex_prompt_created": false,
+    "pm_decision_authority": false,
+    "workbook_content_inspection_authority": false,
+    "hosted_access_authority": false
+  },
+  "next_safe_packet": "PM Lane 265 - Project Miner Temp Power No-Live Approval Readiness Ledger Refresh With Accepted Data Entry Warning",
+  "validation": [
+    "packet JSON parse",
+    "PM Lane 264 text search",
+    "guardrail keyword scan",
+    "corrupted-token scan",
+    "git diff --check"
+  ],
+  "validation_result": "PASS",
+  "blocked_authority": [
+    "product code",
+    "UI writable control",
+    "hosted call",
+    "live approval POST",
+    "approval row creation",
+    "project import",
+    "note or task creation",
+    "owner or due-date assignment",
+    "field authorization",
+    "lead or crew assignment",
+    "schedule/status write",
+    "procurement or rental commitment",
+    "customer commitment",
+    "customer report",
+    "durable field record",
+    "production tracking",
+    "billing/payroll/invoice/accounting output",
+    "Supabase/Render/Vercel/Olares action",
+    "SQL/schema migration",
+    "source workbook writeback",
+    "source PDF content edit",
+    "workbook content read",
+    "workbook content write",
+    "workbook macro/writeback",
+    "durable source fingerprint promotion",
+    "Desktop Codex PM decision authority",
+    "autonomous AI business-state mutation"
+  ]
+}

@@ -930,6 +930,8 @@ PM Lane 262 records Jason's exact Project Data Entry warning return: `REQUEST_DA
 
 PM Lane 263 defines the Data Entry workbook correction-evidence gate. Before later live admission relies on that workbook, a bounded packet must collect or validate source identity, correction scope, formula-error disposition, macro boundary, preview impact, and PM reliance decision. The allowed evidence routes are corrected workbook evidence, later no-macro local inspection, lineage-only with residual risk, or hold until correction evidence. No workbook content read/write, macro, approval row, project import, hosted action, Desktop Codex PM decision authority, or business-state mutation is admitted.
 
+PM Lane 264 records Jason's revised exact Project Data Entry warning return: `ACCEPT_DATA_ENTRY_WARNING_NON_BLOCKING_NO_LIVE`. The warning is now accepted non-blocking for no-live Temp Power review, while the PM Lane 262/263 correction-evidence branch remains preserved as history but is superseded and parked for the current review path. The corrected candidate remains 15 tasks, 184 apparatus candidates, and zero blockers. No live approval, approval-row creation, project import, hosted action, workbook content read/write, macro/writeback, Desktop Codex PM decision authority, or business-state mutation is admitted.
+
 The success standard is not just technical correctness. The candidate must reduce Jason's review burden by showing:
 
 1. what the system thinks the project is,
