@@ -9112,6 +9112,19 @@ export default function ProjectMinerIntakeWorkbenchPage() {
                 <span className="status-pill status-awaiting-values">context cue</span>
               </div>
             </div>
+            <div id="pm-field-start-bring-back-review-order-hint" aria-label="Local field-start bring-back review order hint" className="card" style={{ padding: '0.75rem', marginTop: '0.75rem', boxShadow: 'none' }}>
+              <div className="status-row" style={{ alignItems: 'start' }}>
+                <div>
+                  <p style={{ margin: 0 }}>
+                    <strong>Review order hint</strong>
+                  </p>
+                  <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+                    Review first: Source review lens when returned context names a drawing, workbook row, site note, observer/source, or work-area reference; then customer/site clarification; then lead/resource clarification; use the later bounded packet candidate lens only to classify a future packet question. Browser-local display hint only; creates no link, button, localStorage key, sessionStorage key, task, action item, owner, due date, assignment, schedule/status write, customer report, field instruction, export artifact, backend route, hosted write claim, or write path.
+                  </p>
+                </div>
+                <span className="status-pill status-awaiting-values">review order</span>
+              </div>
+            </div>
             <div id="pm-field-start-bring-back-cue-status-legend" aria-label="Local field-start bring-back cue status legend" className="card" style={{ padding: '0.75rem', marginTop: '0.75rem', boxShadow: 'none' }}>
               <div className="status-row" style={{ alignItems: 'start' }}>
                 <div>
