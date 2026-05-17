@@ -712,6 +712,8 @@ PM Lane 231 executes the Project Miner Expected Intake Source Content Review No-
 
 PM Lane 232 executes the Project Miner Temp Power Current Candidate Approval Readiness Refresh No-Live Packet tranche. The Temp Power approval/readiness branch now has current candidate context under `PROJECT_MINER_TEMP_POWER_CURRENT_CANDIDATE_APPROVAL_READINESS_REFRESH_NO_LIVE`: candidate `pm-import-candidate-miner-temp-power`, Lane 231 source evidence, one informational missing-designation warning, zero blockers, and no stale candidate identity. This is still not live authorization. The exact PM Lane 142 phrase is absent as a current instruction, PM decision value and review notes are not provided in this lane, and approval POST, approval-row creation, project import, hosted proof, field/customer/production/finance writes, and autonomous AI business-state mutation remain blocked.
 
+PM Lane 233 executes the Project Miner Temp Power Current Candidate Warning Triage And Decision Gate No-Live Packet tranche. The single `MISSING_DESIGNATIONS` warning is now traced to source row 28 / `miner-line-015`: quantity 3, section `7.13`, apparatus type `Ground Resistance Test - Two-Point (Lot)`, drawing reference `E01-00, E01-01, E01-02`, and 24 total hours. This appears technically likely non-blocking because it is a lot-level testing row, but PM acceptance or source correction is still required before any later approval/import packet. Approval POST, approval-row creation, project import, hosted proof, field/customer/production/finance writes, workbook macro/writeback, and autonomous AI business-state mutation remain blocked.
+
 ## Capability-Gap Register
 
 Current known gaps:

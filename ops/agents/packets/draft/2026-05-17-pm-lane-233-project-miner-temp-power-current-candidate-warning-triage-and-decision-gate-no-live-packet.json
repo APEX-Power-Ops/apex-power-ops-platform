@@ -1,0 +1,86 @@
+{
+  "packet_id": "2026-05-17-pm-lane-233-project-miner-temp-power-current-candidate-warning-triage-and-decision-gate-no-live-packet",
+  "title": "PM Lane 233 - Project Miner Temp Power Current Candidate Warning Triage And Decision Gate No-Live Packet",
+  "date": "2026-05-17",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_CURRENT_CANDIDATE_WARNING_TRIAGE_DECISION_GATE_NO_LIVE",
+  "selected_outcome": "WARNING_TRIAGED_PM_DECISION_STILL_REQUIRED_NO_LIVE",
+  "candidate": {
+    "candidate_id": "pm-import-candidate-miner-temp-power",
+    "project_name": "Miner Temp Power",
+    "workpackage_count": 7,
+    "task_count": 15,
+    "apparatus_candidate_count": 186,
+    "topology_label_count": 138,
+    "warning_count": 1,
+    "blocker_count": 0,
+    "mutation_authority": "not_admitted"
+  },
+  "warning_triage": {
+    "warning_code": "MISSING_DESIGNATIONS",
+    "severity": "info",
+    "missing_designation_count": 1,
+    "line_item": {
+      "line_id": "miner-line-015",
+      "source_row": 28,
+      "quantity": 3,
+      "section": "7.13",
+      "apparatus_type": "Ground Resistance Test - Two-Point (Lot)",
+      "designation": null,
+      "drawing_ref": "E01-00, E01-01, E01-02",
+      "hours_per_unit": 8,
+      "hours_line": 24
+    },
+    "technical_interpretation": "Likely non-blocking informational warning because the line appears lot-level rather than apparatus-specific, but PM acceptance or source correction is still required before any later live approval/import packet."
+  },
+  "verification": [
+    "repo-local venv inline read-only project seed preview with Temp Power source paths",
+    "excluded MASTER workbook held behind sentinel non-existent path override",
+    "excluded Garney tracker held behind sentinel non-existent path override",
+    "no workbook macros",
+    "no workbook writeback",
+    "no hosted service access",
+    "no Supabase/Render/Vercel/Olares mutation"
+  ],
+  "pm_decision_options": [
+    "ACCEPT_WARNING_NON_BLOCKING_NO_LIVE",
+    "REQUEST_SOURCE_CORRECTION_NO_LIVE",
+    "HOLD_NO_LIVE",
+    "PROVIDE_EXACT_LIVE_ADMISSION_LATER"
+  ],
+  "future_live_gate_phrase": "I explicitly admit PM Lane 142 live approval POST and first approval-row creation for the current Project Miner Temp Power import candidate.",
+  "current_instruction_contains_live_gate_phrase": false,
+  "next_safe_packets": {
+    "warning_accepted_or_notes_returned": "PM Lane 234 - Project Miner Temp Power PM Decision Capture No-Live Packet",
+    "source_correction_requested": "PM Lane 234 - Project Miner Temp Power Source Correction Intake No-Live Packet",
+    "live_admission_later": "PM Lane 234 - Project Miner Temp Power First Approval Row Live Admission Execution Packet"
+  },
+  "blocked_authority": [
+    "live approval POST",
+    "approval row creation",
+    "project import",
+    "task or action item creation",
+    "owner or due-date assignment",
+    "field authorization",
+    "lead or crew assignment",
+    "schedule/status write",
+    "customer commitment",
+    "customer report",
+    "field instruction",
+    "durable field record",
+    "production tracking",
+    "completion evidence",
+    "billing/payroll/invoice/accounting output",
+    "Supabase/Render/Vercel/Olares mutation",
+    "SQL/schema migration",
+    "workbook macro/writeback",
+    "autonomous AI business-state mutation"
+  ],
+  "validation": [
+    "python -m json.tool ops/agents/packets/draft/2026-05-17-pm-lane-233-project-miner-temp-power-current-candidate-warning-triage-and-decision-gate-no-live-packet.json",
+    "rg guardrail search on touched Lane 233 files",
+    "corrupted-token scan on touched Lane 233 files",
+    "null-byte scan on touched Lane 233 files",
+    "git diff --check on touched Lane 233 files"
+  ],
+  "validation_result": "PASS"
+}

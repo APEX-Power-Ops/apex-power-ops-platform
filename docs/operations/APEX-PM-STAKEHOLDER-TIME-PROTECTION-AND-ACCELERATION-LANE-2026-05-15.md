@@ -867,6 +867,8 @@ PM Lane 176 executes the local Approval Submission Dry Run Grouping tranche. The
 PM Lane 177 executes the local Executor Closeout Intake Grouping tranche. The Local Executor Closeout Intake now groups the same eight browser-local closeout evidence checklist items into Source and Hosted Evidence, Validation and Verdict Evidence, and Guardrails and Next Action while preserving the same checkbox behavior, candidate-scoped browser storage, clear button behavior, export inclusion, disclosure behavior, read seams, and write boundaries.
 
 PM Lane 178 executes the local Field Readiness Checklist Grouping tranche. The Local Field Readiness Checklist now groups the same eight browser-local field-prep evidence checklist items into Source and Scope Readiness, Site Access and Safety Readiness, Crew Material and Staging Readiness, and Customer Constraints and Authority Boundary while preserving the same checkbox behavior, candidate-scoped browser storage, clear button behavior, export inclusion, disclosure behavior, read seams, and write boundaries.
+
+PM Lane 233 continues the Project Miner PM lane under technical-authority continuation rules. It identifies the only current Temp Power candidate warning without asking Jason for premature review: source row 28 / `miner-line-015`, section `7.13`, `Ground Resistance Test - Two-Point (Lot)`, drawing reference `E01-00, E01-01, E01-02`, and 24 total hours has no explicit designation. The remaining ask is now a real PM judgment only: accept the warning as non-blocking, request source correction, hold no-live, or provide a later exact live admission phrase.
 The success standard is not just technical correctness. The candidate must reduce Jason's review burden by showing:
 
 1. what the system thinks the project is,
