@@ -1297,6 +1297,33 @@ const PROJECT_DATA_ENTRY_SAFE_CONTINUATION_MOVES = [
   },
 ]
 
+const PROJECT_SOURCE_RESOURCE_QUESTION_PREP_CUES = [
+  {
+    term: 'review context',
+    detail: 'use estimator, SLD/PDF, equipment inventory, and technician capability context to shape questions only',
+  },
+  {
+    term: 'allowed question prep',
+    detail: 'clarify source lineage, crew/tooling/lift/rental/equipment logistics, capability coverage, and customer/site constraints',
+  },
+  {
+    term: 'blocked until admitted',
+    detail: 'resource assignment, schedule/status changes, procurement or rental commitments, customer commitments, warning acceptance, approval rows, and project import',
+  },
+  {
+    term: 'Desktop Codex support',
+    detail: 'read-only clarity or relay-burden review only; no workbook/PDF content read, macros, hosted access, PM decision authority, or business-state mutation',
+  },
+]
+
+function projectSourceResourceQuestionPrepCueLines(summary: { equipment_inventory_count?: number | null; capability_count?: number | null } = {}) {
+  return [
+    `equipment inventory context: ${formatCount(summary.equipment_inventory_count)} rows available for question shaping only`,
+    `technician capability context: ${formatCount(summary.capability_count)} rows available for coverage questions only`,
+    ...PROJECT_SOURCE_RESOURCE_QUESTION_PREP_CUES.map((item) => `${item.term}: ${item.detail}`),
+  ]
+}
+
 const PROJECT_MINER_RESOLVED_SOURCE_CORRECTION_LABEL = 'REQUEST_SOURCE_CORRECTION_NO_LIVE'
 const PROJECT_MINER_RESOLVED_SOURCE_CORRECTION_DESIGNATION = 'Ground Resistance Test Lot'
 
@@ -1314,7 +1341,10 @@ function hasWarningCode(warnings: CandidateWarning[], code: string) {
   return warnings.some((warning) => warning.code === code)
 }
 
-function projectDataEntryDecisionGateExportLines(warnings: CandidateWarning[]) {
+function projectDataEntryDecisionGateExportLines(
+  warnings: CandidateWarning[],
+  summary: { equipment_inventory_count?: number | null; capability_count?: number | null } = {},
+) {
   if (!hasWarningCode(warnings, PROJECT_DATA_ENTRY_WARNING_CODE)) {
     return []
   }
@@ -1337,6 +1367,8 @@ function projectDataEntryDecisionGateExportLines(warnings: CandidateWarning[]) {
     ...PROJECT_DATA_ENTRY_VALID_RETURN_CHECKLIST.map((item) => `  - ${item.term}: ${item.detail}`),
     '- Safe no-live continuation moves:',
     ...PROJECT_DATA_ENTRY_SAFE_CONTINUATION_MOVES.map((item) => `  - ${item.term}: ${item.detail}`),
+    '- Source/resource question prep cue:',
+    ...projectSourceResourceQuestionPrepCueLines(summary).map((line) => `  - ${line}`),
     '- Admission prerequisites:',
     ...PROJECT_DATA_ENTRY_ADMISSION_PREREQUISITES.map((prerequisite) => `  - ${prerequisite}`),
     '- Authority boundary: display/export context only; no approval POST, approval row, import write, source writeback, hosted call, or business-state mutation.',
@@ -4289,7 +4321,7 @@ function buildIntakeBrief(
   const targetRowLines = Object.entries(targetRows).map(([key, value]) => `${formatLabel(key)}: ${formatValue(value)}`)
   const warningLines = warnings.map((warning) => `${warning.severity || 'unknown'} - ${warning.code || 'WARNING'}: ${warning.message || 'Review warning.'}`)
   const decisionLines = decisions.map((decision) => `${formatLabel(decision.decision_id)}: ${decision.prompt || 'Decision prompt unavailable.'}`)
-  const projectDataEntryDecisionGateLines = projectDataEntryDecisionGateExportLines(warnings)
+  const projectDataEntryDecisionGateLines = projectDataEntryDecisionGateExportLines(warnings, summary)
   const gateLines = workflowGates.map((gate) => `${gate.title}: ${formatLabel(gate.status)} - ${gate.detail}`)
   const persistenceGateLines = persistenceReadinessGates.map((gate) => `${gate.title}: ${formatLabel(gate.status)} - ${gate.detail}`)
   const operatingQueueLines = operatingQueue.map((item) => `${item.title}: ${formatLabel(item.status)} - ${item.detail}`)
@@ -4306,6 +4338,9 @@ function buildIntakeBrief(
   const closeoutCheckedCount = CLOSEOUT_CHECKLIST_ITEMS.filter((item) => closeoutChecks[item.id]).length
   const fieldReadinessCheckedCount = FIELD_READINESS_CHECKLIST_ITEMS.filter((item) => fieldReadinessChecks[item.id]).length
   const fieldQuestionsDraftPresent = hasFieldQuestionsDraftContent(fieldQuestionsDraft)
+  const sourceResourceQuestionPrepLines = hasWarningCode(warnings, PROJECT_DATA_ENTRY_WARNING_CODE)
+    ? projectSourceResourceQuestionPrepCueLines(summary)
+    : []
   const fieldQuestionLines = [
     `Drawing/source questions: ${formatMultilineMarkdown(fieldQuestionsDraft.drawing_source_questions)}`,
     `Site access and safety questions: ${formatMultilineMarkdown(fieldQuestionsDraft.site_access_safety_questions)}`,
@@ -4479,6 +4514,16 @@ function buildIntakeBrief(
     '',
     'This browser-local field questions draft is prep context only. It is not a task, issue, work authorization, approval, persistence, import, assignment, schedule, status, or production state.',
     '',
+    ...(sourceResourceQuestionPrepLines.length
+      ? [
+          'No-live source and resource question preparation cue:',
+          '',
+          markdownList(sourceResourceQuestionPrepLines),
+          '',
+          'This cue prepares PM/lead questions only. It does not grant live source access, source writeback, resource assignment, schedule/status change, task creation, field authorization, approval, import, or business-state mutation.',
+          '',
+        ]
+      : []),
     markdownList(fieldQuestionLines),
     '',
     '## Local Field Observation Scratchpad',
@@ -4735,6 +4780,9 @@ function buildFieldKickoffBrief(
   const checkedFieldReadinessLines = checkedFieldReadinessItems.map((item) => `${item.label}: ${item.detail}`)
   const openFieldReadinessLines = openFieldReadinessItems.map((item) => `${item.label}: ${item.detail}`)
   const fieldQuestionsDraftPresent = hasFieldQuestionsDraftContent(fieldQuestionsDraft)
+  const sourceResourceQuestionPrepLines = hasWarningCode(warnings, PROJECT_DATA_ENTRY_WARNING_CODE)
+    ? projectSourceResourceQuestionPrepCueLines(summary)
+    : []
   const fieldQuestionLines = [
     `Drawing/source questions: ${formatMultilineMarkdown(fieldQuestionsDraft.drawing_source_questions)}`,
     `Site access and safety questions: ${formatMultilineMarkdown(fieldQuestionsDraft.site_access_safety_questions)}`,
@@ -4836,6 +4884,16 @@ function buildFieldKickoffBrief(
     '',
     'This browser-local questions draft is prep context only. It does not create tasks, issues, work authorization, assignments, schedule state, status updates, approval records, import packets, or production writes.',
     '',
+    ...(sourceResourceQuestionPrepLines.length
+      ? [
+          'No-live source and resource question preparation cue:',
+          '',
+          markdownList(sourceResourceQuestionPrepLines),
+          '',
+          'This cue prepares PM/lead questions only. It does not grant live source access, source writeback, resource assignment, schedule/status change, task creation, field authorization, approval, import, or business-state mutation.',
+          '',
+        ]
+      : []),
     markdownList(fieldQuestionLines),
     '',
     '## Local Field Observation Scratchpad',
@@ -5120,6 +5178,7 @@ function buildFieldPrepPacket(
   const candidate = packet.candidate
   const summary = candidate.summary || {}
   const project = candidate.project || {}
+  const warnings = candidate.warnings || []
   const checkedReviewItems = REVIEW_CHECKLIST_ITEMS.filter((item) => reviewChecks[item.id])
   const checkedCloseoutItems = CLOSEOUT_CHECKLIST_ITEMS.filter((item) => closeoutChecks[item.id])
   const checkedFieldReadinessItems = FIELD_READINESS_CHECKLIST_ITEMS.filter((item) => fieldReadinessChecks[item.id])
@@ -5146,6 +5205,9 @@ function buildFieldPrepPacket(
   const nextQueueCount = operatingQueue.filter((item) => item.status === 'next').length
   const blockedQueueCount = operatingQueue.filter((item) => item.status === 'blocked').length
   const fieldQuestionsDraftPresent = hasFieldQuestionsDraftContent(fieldQuestionsDraft)
+  const sourceResourceQuestionPrepLines = hasWarningCode(warnings, PROJECT_DATA_ENTRY_WARNING_CODE)
+    ? projectSourceResourceQuestionPrepCueLines(summary)
+    : []
   const fieldObservationScratchpadPresent = hasFieldObservationScratchpadContent(fieldObservationScratchpad)
   const approvalDraftPresent = hasApprovalDraftContent(approvalDraft)
 
@@ -5197,6 +5259,16 @@ function buildFieldPrepPacket(
     '',
     `Draft present: ${fieldQuestionsDraftPresent ? 'yes' : 'no'}.`,
     '',
+    ...(sourceResourceQuestionPrepLines.length
+      ? [
+          'No-live source and resource question preparation cue:',
+          '',
+          markdownList(sourceResourceQuestionPrepLines),
+          '',
+          'This cue prepares PM/lead questions only. It does not grant live source access, source writeback, resource assignment, schedule/status change, task creation, field authorization, approval, import, or business-state mutation.',
+          '',
+        ]
+      : []),
     markdownList(fieldQuestionLines),
     '',
     '## Field Observation Scratchpad',
@@ -7730,7 +7802,7 @@ function buildImportExceptionRegisterExport(
   const registerLines = importExceptionRegister.map((item) => `${item.title}: ${formatLabel(item.status)} - ${item.detail} Evidence: ${item.evidence}`)
   const warningLines = warnings.map((warning) => `${warning.severity || 'unknown'} - ${warning.code || 'WARNING'}: ${warning.message || 'Review warning.'}`)
   const decisionLines = decisions.map((decision) => `${formatLabel(decision.decision_id)}: ${decision.prompt || 'Decision prompt unavailable.'} Recommended action: ${decision.recommended_action || 'Review before future import.'}`)
-  const projectDataEntryDecisionGateLines = projectDataEntryDecisionGateExportLines(warnings)
+  const projectDataEntryDecisionGateLines = projectDataEntryDecisionGateExportLines(warnings, summary)
   const noGoLines = noGoChecks.map((check) => `${formatLabel(check.check_id)}: ${formatLabel(check.status)} - ${check.message || 'Review check.'}`)
   const checkedReviewLines = REVIEW_CHECKLIST_ITEMS.filter((item) => reviewChecks[item.id]).map((item) => `${item.label}: ${item.detail}`)
   const openReviewLines = REVIEW_CHECKLIST_ITEMS.filter((item) => !reviewChecks[item.id]).map((item) => `${item.label}: ${item.detail}`)
@@ -10686,6 +10758,33 @@ export default function ProjectMinerIntakeWorkbenchPage() {
                       />
                     </label>
                   </div>
+                  {hasProjectDataEntryWarning ? (
+                    <article aria-label="No-live source and resource question preparation cue" className="card" style={{ display: 'grid', gap: '0.55rem', padding: '0.85rem', boxShadow: 'none', marginTop: '0.75rem' }}>
+                      <div className="status-row" style={{ alignItems: 'start' }}>
+                        <div>
+                          <p style={{ margin: 0 }}>
+                            <strong>No-live source and resource question prep</strong>
+                          </p>
+                          <p style={{ margin: '0.45rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+                            Prepare PM or lead questions about source records, drawings, workbook rows, crew, equipment, capability coverage, material, or staging context. This does not close the Data Entry warning gate.
+                          </p>
+                        </div>
+                        <span className="status-pill status-awaiting-values">question prep</span>
+                      </div>
+                      <ul style={{ margin: 0, paddingLeft: '1.15rem', color: 'var(--muted)', lineHeight: 1.55 }}>
+                        <li>Equipment inventory context: {formatCount(summary.equipment_inventory_count)} rows available for question shaping only.</li>
+                        <li>Technician capability context: {formatCount(summary.capability_count)} rows available for coverage questions only.</li>
+                        {PROJECT_SOURCE_RESOURCE_QUESTION_PREP_CUES.map((item) => (
+                          <li key={item.term}>
+                            <strong>{item.term}</strong>: {item.detail}
+                          </li>
+                        ))}
+                      </ul>
+                      <p style={{ margin: 0, color: 'var(--muted)', lineHeight: 1.55 }}>
+                        No live source access, source writeback, resource assignment, schedule/status change, task creation, field authorization, approval, import, or business-state mutation is granted.
+                      </p>
+                    </article>
+                  ) : null}
                 </section>
                 <section aria-label="Crew Material and Staging Questions field questions group">
                   <h3 style={{ fontSize: '0.95rem', margin: '0 0 0.65rem' }}>Crew Material and Staging Questions</h3>
