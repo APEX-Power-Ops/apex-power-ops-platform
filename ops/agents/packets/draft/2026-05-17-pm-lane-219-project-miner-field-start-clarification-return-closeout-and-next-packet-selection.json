@@ -1,0 +1,85 @@
+{
+  "packet_id": "2026-05-17-pm-lane-219",
+  "title": "PM Lane 219 - Project Miner Field-Start Clarification Return Closeout And Next-Packet Selection",
+  "lane": "PM",
+  "status": "local_no_live_clarification_classifier_packet",
+  "decision_label": "PROJECT_MINER_FIELD_START_CLARIFICATION_RETURN_CLOSEOUT_NEXT_PACKET_SELECTION_NO_LIVE_NO_WRITE",
+  "scope": [
+    "Define how returned Project Miner field-start clarification is classified.",
+    "Select safe next-packet options without assuming returned clarification exists.",
+    "Preserve approval, import, assignment, field, customer, production, and finance write boundaries.",
+    "Exercise dual-lane orchestration through bounded review only."
+  ],
+  "sidecar_review": {
+    "recommended_label": "PROJECT_MINER_FIELD_START_CLARIFICATION_RETURN_CLOSEOUT_NEXT_PACKET_SELECTION_NO_LIVE_NO_WRITE",
+    "technical_authority_disposition": [
+      "Adopt the sidecar label as the formal repo decision label.",
+      "Use four primary classifier buckets.",
+      "Keep UI scan-burden review gated to a concrete Jason-identified scan-burden issue.",
+      "Default next safe packet to PM Lane 220 Project Miner Source Context Refresh No-Live Packet unless the classifier lands on HOLD_NO_LIVE."
+    ]
+  },
+  "classifier_buckets": [
+    "HOLD_NO_LIVE",
+    "REFRESH_SOURCE_CONTEXT_NO_LIVE",
+    "PREPARE_APPROVAL_ADMISSION_LATER",
+    "PREPARE_IMPORT_REVIEW_LATER"
+  ],
+  "context_flags": [
+    "CUSTOMER_SITE_CONTEXT",
+    "LEAD_RESOURCE_CONTEXT",
+    "UI_SCAN_BURDEN_SIGNAL",
+    "STOP_AUTHORITY_REQUIRED"
+  ],
+  "default_selection": "HOLD_NO_LIVE",
+  "next_packet_by_classifier": {
+    "HOLD_NO_LIVE": "No next packet required unless Jason asks to continue",
+    "REFRESH_SOURCE_CONTEXT_NO_LIVE": "PM Lane 220 - Project Miner Source Context Refresh No-Live Packet",
+    "PREPARE_APPROVAL_ADMISSION_LATER": "PM Lane 221 - Approval Admission Prep No-Execute Packet",
+    "PREPARE_IMPORT_REVIEW_LATER": "PM Lane 222 - Import Review Prep No-Execute Packet"
+  },
+  "closeout_template": [
+    "Returned clarification present",
+    "Primary classifier",
+    "Context flags",
+    "Source context status",
+    "Customer/site context status",
+    "Lead/resource context status",
+    "Authority required",
+    "Recommended next packet",
+    "Stop conditions triggered"
+  ],
+  "non_actions": [
+    "No hosted smoke",
+    "No browser live route access",
+    "No Supabase, Render, Vercel, or Olares action",
+    "No SQL or schema migration",
+    "No secret exposure",
+    "No live approval POST",
+    "No approval row creation",
+    "No project import",
+    "No notes, tasks, action items, owners, or due dates",
+    "No field or production write",
+    "No customer or finance output",
+    "No workbook macro or writeback",
+    "No autonomous AI business-state mutation"
+  ],
+  "hard_stop_conditions": [
+    "Hosted proof, browser live route, Supabase, Render, Vercel, Olares, credentials, or secrets required",
+    "Live approval POST, approval-row creation, project import, assignment, schedule/status, field, production, customer, or finance write required",
+    "Exact PM Lane 142 phrase absent but executor attempts to continue toward live approval",
+    "Local clarification treated as business-state truth",
+    "Sidecar attempts to stage, commit, push, publish, or create PM business state",
+    "Secret exposure attempted",
+    "Autonomous AI business-state mutation attempted"
+  ],
+  "validation_commands": [
+    "Get-Content -LiteralPath 'ops/agents/packets/draft/2026-05-17-pm-lane-219-project-miner-field-start-clarification-return-closeout-and-next-packet-selection.json' | ConvertFrom-Json | Select-Object -ExpandProperty packet_id",
+    "rg -n \"PM Lane 219|PROJECT_MINER_FIELD_START_CLARIFICATION_RETURN_CLOSEOUT_NEXT_PACKET_SELECTION_NO_LIVE_NO_WRITE|HOLD_NO_LIVE|REFRESH_SOURCE_CONTEXT_NO_LIVE|STOP_AUTHORITY_REQUIRED|PM Lane 220|No live approval POST|No project import\" PROJECT_STATUS.md docs/operations/APEX-PM-LANE-219-PROJECT-MINER-FIELD-START-CLARIFICATION-RETURN-CLOSEOUT-AND-NEXT-PACKET-SELECTION-2026-05-17.md docs/operations/APEX-PM-STAKEHOLDER-TIME-PROTECTION-AND-ACCELERATION-LANE-2026-05-15.md docs/operations/APEX-PM-TEMP-POWER-DELIVERY-AND-ORCHESTRATION-PLAN-2026-05-15.md docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md ops/agents/packets/draft/2026-05-17-pm-lane-219-project-miner-field-start-clarification-return-closeout-and-next-packet-selection.json ops/agents/handoffs/2026-05-17-pm-lane-219-project-miner-field-start-clarification-return-closeout-and-next-packet-selection-handoff.md ops/agents/handoffs/2026-05-17-pm-lane-219-project-miner-field-start-clarification-return-closeout-and-next-packet-selection-closeout.md",
+    "corrupted-token scan on touched Lane 219 files",
+    "null-byte check on touched Lane 219 files",
+    "git diff --check on touched Lane 219 files"
+  ],
+  "validation_result": "PASS - Packet JSON parsed; Lane 219 guardrails and decision labels found across intended touched files; corrupted-token scan found no matches; null-byte check passed; git diff --check reported only line-ending warnings.",
+  "next_recommended_lane": "PM Lane 220 - Project Miner Source Context Refresh No-Live Packet"
+}
