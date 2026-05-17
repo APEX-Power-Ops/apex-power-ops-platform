@@ -796,6 +796,29 @@ const FIELD_READINESS_CHECKLIST_ITEMS: FieldReadinessChecklistItem[] = [
   },
 ]
 
+const FIELD_READINESS_CHECKLIST_GROUPS = [
+  {
+    id: 'source-and-scope-context',
+    label: 'Source and Scope Readiness',
+    itemIds: ['drawing_source_questions_captured', 'scope_assumptions_reviewed'],
+  },
+  {
+    id: 'site-access-and-safety-readiness',
+    label: 'Site Access and Safety Readiness',
+    itemIds: ['site_access_contacts_captured', 'safety_planning_questions_captured'],
+  },
+  {
+    id: 'crew-material-and-staging-readiness',
+    label: 'Crew Material and Staging Readiness',
+    itemIds: ['crew_equipment_questions_captured', 'material_staging_questions_captured'],
+  },
+  {
+    id: 'customer-constraints-and-authority-boundary',
+    label: 'Customer Constraints and Authority Boundary',
+    itemIds: ['customer_constraint_questions_captured', 'field_authority_boundary_acknowledged'],
+  },
+]
+
 function makeToken() {
   return `Bearer ${btoa(JSON.stringify(PM_ACTOR))}`
 }
@@ -8666,20 +8689,27 @@ export default function ProjectMinerIntakeWorkbenchPage() {
               <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
                 Browser-local prep evidence for PM, lead, and field review conversations. Checking these items does not authorize work, approve, persist, import, assign, schedule, change status, or mutate production state.
               </p>
-              <div style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
-                {FIELD_READINESS_CHECKLIST_ITEMS.map((item) => (
-                  <label key={item.id} className="card" style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0.75rem', padding: '0.85rem', boxShadow: 'none', cursor: 'pointer' }}>
-                    <input
-                      type="checkbox"
-                      checked={Boolean(fieldReadinessChecks[item.id])}
-                      onChange={(event) => updateFieldReadinessCheck(item.id, event.target.checked)}
-                      style={{ marginTop: '0.25rem' }}
-                    />
-                    <span>
-                      <strong>{item.label}</strong>
-                      <span style={{ display: 'block', marginTop: '0.35rem', color: 'var(--muted)', lineHeight: 1.5 }}>{item.detail}</span>
-                    </span>
-                  </label>
+              <div aria-label="Local field readiness checklist groups" className="notes-grid" style={{ marginTop: '0.85rem' }}>
+                {FIELD_READINESS_CHECKLIST_GROUPS.map((group) => (
+                  <section key={group.id} aria-label={`${group.label} field readiness group`}>
+                    <h3 style={{ fontSize: '0.95rem', margin: '0 0 0.65rem' }}>{group.label}</h3>
+                    <div aria-label={`${group.label} field readiness items`} style={{ display: 'grid', gap: '0.75rem' }}>
+                      {FIELD_READINESS_CHECKLIST_ITEMS.filter((item) => group.itemIds.includes(item.id)).map((item) => (
+                        <label key={item.id} className="card" style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0.75rem', padding: '0.85rem', boxShadow: 'none', cursor: 'pointer' }}>
+                          <input
+                            type="checkbox"
+                            checked={Boolean(fieldReadinessChecks[item.id])}
+                            onChange={(event) => updateFieldReadinessCheck(item.id, event.target.checked)}
+                            style={{ marginTop: '0.25rem' }}
+                          />
+                          <span>
+                            <strong>{item.label}</strong>
+                            <span style={{ display: 'block', marginTop: '0.35rem', color: 'var(--muted)', lineHeight: 1.5 }}>{item.detail}</span>
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  </section>
                 ))}
               </div>
               <div className="pm-review-link-row pm-review-link-row-start" style={{ alignItems: 'center' }}>

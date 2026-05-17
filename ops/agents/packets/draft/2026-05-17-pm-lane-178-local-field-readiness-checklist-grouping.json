@@ -1,0 +1,47 @@
+{
+  "packet_id": "2026-05-17-pm-lane-178",
+  "title": "PM Lane 178 - Local Field Readiness Checklist Grouping",
+  "lane": "PM lane development",
+  "status": "completed",
+  "owner": "VS Code Codex",
+  "authority": "repo technical authority; PM lane implementation authority; final integration authority",
+  "date": "2026-05-17",
+  "objective": "Reduce Project Miner Temp Power field-readiness scan burden by grouping the existing Local Field Readiness Checklist without changing checklist state, candidate-scoped browser storage, export inclusion, clear behavior, disclosure behavior, or field-authorization/write boundaries.",
+  "scope": [
+    "Grouped the existing Local Field Readiness Checklist into Source and Scope Readiness, Site Access and Safety Readiness, Crew Material and Staging Readiness, and Customer Constraints and Authority Boundary.",
+    "Preserved the same eight checklist labels/details, checkbox behavior, candidate-scoped browser storage key, clear button behavior, export inclusion, disclosure behavior, no-disclosure-storage posture, and no-field-authorization/no-write language.",
+    "Kept the Local Field Readiness Checklist disclosure behavior stateless with no field-readiness disclosure localStorage key.",
+    "Used a read-only sidecar to verify the grouping shape and smoke hardening while VS Code Codex retained PM implementation and final integration authority."
+  ],
+  "guardrails": [
+    "No hosted service access.",
+    "No Supabase, Render, Vercel, or Olares product action.",
+    "No SQL or schema migration.",
+    "No approval POST or approval-row creation.",
+    "No project import mutation.",
+    "No field authorization, assignment, schedule/status, durable field record, production tracking, customer report, completion evidence, billing, payroll, invoice, accounting, or external finance-system write.",
+    "No workbook macro or writeback.",
+    "No new export action, export handler, filename, payload version, localStorage key, backend route, service/auth/ingress change, or autonomous AI business-state mutation."
+  ],
+  "changed_files": [
+    "apps/operations-web/app/pm-review/import-intake/page.tsx",
+    "apps/operations-web/tests/browser-shell.pm-import-intake.smoke.spec.ts",
+    "PROJECT_STATUS.md",
+    "docs/operations/APEX-PM-STAKEHOLDER-TIME-PROTECTION-AND-ACCELERATION-LANE-2026-05-15.md",
+    "docs/operations/APEX-PM-TEMP-POWER-DELIVERY-AND-ORCHESTRATION-PLAN-2026-05-15.md",
+    "docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md",
+    "ops/agents/packets/draft/2026-05-17-pm-lane-178-local-field-readiness-checklist-grouping.json",
+    "ops/agents/handoffs/2026-05-17-pm-lane-178-local-field-readiness-checklist-grouping-handoff.md"
+  ],
+  "validation": [
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform\" --filter @apex/operations-web typecheck",
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform/apps/operations-web\" exec playwright test \"browser-shell.pm-import-intake.smoke.spec.ts\"",
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform\" --filter @apex/operations-web build",
+    "Get-Content -LiteralPath \"C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-17-pm-lane-178-local-field-readiness-checklist-grouping.json\" | ConvertFrom-Json | Select-Object -ExpandProperty packet_id",
+    "rg -n \"PM Lane 178|Local field readiness checklist groups|Source and Scope Readiness field readiness group|Site Access and Safety Readiness field readiness group|Crew Material and Staging Readiness field readiness group|Customer Constraints and Authority Boundary field readiness group|mutationRequests\\)\\.toHaveLength\\(0\\)\" PROJECT_STATUS.md docs/operations ops/agents apps/operations-web",
+    "git diff --check"
+  ],
+  "validation_result": "PASS - operations-web typecheck passed; focused Playwright pm import-intake smoke passed; operations-web build passed; packet JSON parsed; PM Lane 178 guardrail rg passed; git diff --check passed with only expected CRLF warnings on touched and unrelated markdown files.",
+  "sidecar_result": "Read-only sidecar Linnaeus recommended the four wrapper-only groups used here, with exact ARIA labels and smoke assertions for group visibility, 2/2/2/2 item distribution, no disclosure storage, preserved checklist behavior, no field authorization, and mutationRequests length 0.",
+  "execution_result": "PASS"
+}
