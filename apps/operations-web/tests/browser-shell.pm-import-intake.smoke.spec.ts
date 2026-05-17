@@ -66,6 +66,7 @@ async function expectWorkbenchViewportScan(page: Page, viewport: { width: number
       ['field-start-later-bounded-packet-candidate-bring-back-lens', '#pm-field-start-later-bounded-packet-candidate-bring-back-lens'],
       ['field-start-later-bounded-packet-future-boundary-reminder', '#pm-field-start-later-bounded-packet-future-boundary-reminder'],
       ['field-start-bring-back-local-review-closeout-cue', '#pm-field-start-bring-back-local-review-closeout-cue'],
+      ['field-start-bring-back-review-exit-summary', '#pm-field-start-bring-back-review-exit-summary'],
       ['start-here', '#pm-start-here'],
       ['output-selector', '#pm-output-selector'],
       ['command-center', '#pm-command-center'],
@@ -397,6 +398,15 @@ async function expectMobileFieldLaunchUsePath(page: Page, mutationRequests: stri
   await expect(localReviewCloseoutCue.getByText(/Classify what still belongs in source review, customer\/site clarification, lead\/resource clarification, or future packet classification/i)).toBeVisible()
   await expect(localReviewCloseoutCue.getByText(/do not record meeting notes, create tasks, assign owners, set dates, direct field work, publish reports, call routes, create storage, export artifacts, expose controls, or admit write paths/i)).toBeVisible()
   await expect(localReviewCloseoutCue.locator('a,button,input,textarea,select')).toHaveCount(0)
+  const reviewExitSummary = fieldStartCustomerSiteQuestions.locator('section#pm-field-start-bring-back-review-exit-summary[aria-label="Local field-start bring-back review exit summary"]')
+  await expect(reviewExitSummary).toBeVisible()
+  await expect(reviewExitSummary).toHaveAttribute('role', 'note')
+  await expect(reviewExitSummary.getByRole('heading', { name: /Local Field Start Bring-Back Review Exit Summary/i })).toBeVisible()
+  await expect(reviewExitSummary.getByText('local exit summary', { exact: true })).toBeVisible()
+  await expect(reviewExitSummary.getByText(/PM Lane 205 summary: leave this panel with four browser-local classifications only/i)).toBeVisible()
+  await expect(reviewExitSummary.getByText(/source review, customer\/site clarification, lead\/resource clarification, and future packet question/i)).toBeVisible()
+  await expect(reviewExitSummary.getByText(/Anything needing approval submission, import, assignment, schedule\/status, field direction, customer report, storage, export, route, control, or write authority needs a later bounded packet/i)).toBeVisible()
+  await expect(reviewExitSummary.locator('a,button,input,textarea,select')).toHaveCount(0)
   const fieldPrepMinuteLink = dailyScript.getByRole('link', { name: /Minute 3: Check field-prep questions/i })
   await expect(fieldPrepMinuteLink).toHaveAttribute('href', '#field-prep')
   await fieldPrepMinuteLink.click()
@@ -868,6 +878,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(dailyActionPanels.locator('section#pm-field-start-later-bounded-packet-candidate-bring-back-lens[aria-label="Local field-start later bounded packet candidate bring-back lens"]')).toHaveCount(1)
   await expect(dailyActionPanels.locator('#pm-field-start-later-bounded-packet-future-boundary-reminder[aria-label="PM Lane 203 future packet boundary reminder"]')).toHaveCount(1)
   await expect(dailyActionPanels.locator('section#pm-field-start-bring-back-local-review-closeout-cue[aria-label="Local field-start bring-back local review closeout cue"]')).toHaveCount(1)
+  await expect(dailyActionPanels.locator('section#pm-field-start-bring-back-review-exit-summary[aria-label="Local field-start bring-back review exit summary"]')).toHaveCount(1)
   await expect(dailyActionPanels.locator('details#pm-start-here[aria-label="Local PM intake start here"]')).toHaveCount(1)
   await expect(dailyActionPanels.locator('details#pm-output-selector[aria-label="Local PM intake output selector"]')).toHaveCount(1)
   await expect(dailyActionPanels.locator('#pm-handoff-guide')).toHaveCount(1)
@@ -2486,6 +2497,10 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   expect(localReviewCloseoutCueStorageKeys).toEqual([])
   const localReviewCloseoutCueSessionKeys = await page.evaluate(() => Object.keys(window.sessionStorage).filter((key) => key.startsWith('pm-import-intake-') && /lane.?204|local.?review.?closeout|closeout.?cue|bring.?back.?closeout|review.?closeout|write.?path/i.test(key)))
   expect(localReviewCloseoutCueSessionKeys).toEqual([])
+  const reviewExitSummaryStorageKeys = await page.evaluate(() => Object.keys(window.localStorage).filter((key) => key.startsWith('pm-import-intake-') && /lane.?205|review.?exit.?summary|exit.?summary|local.?exit.?summary|write.?authority/i.test(key)))
+  expect(reviewExitSummaryStorageKeys).toEqual([])
+  const reviewExitSummarySessionKeys = await page.evaluate(() => Object.keys(window.sessionStorage).filter((key) => key.startsWith('pm-import-intake-') && /lane.?205|review.?exit.?summary|exit.?summary|local.?exit.?summary|write.?authority/i.test(key)))
+  expect(reviewExitSummarySessionKeys).toEqual([])
   await expect(laterBoundedPacketCandidateBringBackLens.getByRole('link', { name: /Future packet trigger check/i })).toHaveAttribute('href', '#guardrails')
   await expect(laterBoundedPacketCandidateBringBackLens.getByRole('link', { name: /Authority admission check/i })).toHaveAttribute('href', '#guardrails')
   await expect(laterBoundedPacketCandidateBringBackLens.getByRole('link', { name: /Evidence\/context check/i })).toHaveAttribute('href', '#field-prep')
@@ -2505,6 +2520,15 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(localReviewCloseoutCue.getByText(/Classify what still belongs in source review, customer\/site clarification, lead\/resource clarification, or future packet classification/i)).toBeVisible()
   await expect(localReviewCloseoutCue.getByText(/do not record meeting notes, create tasks, assign owners, set dates, direct field work, publish reports, call routes, create storage, export artifacts, expose controls, or admit write paths/i)).toBeVisible()
   await expect(localReviewCloseoutCue.locator('a,button,input,textarea,select')).toHaveCount(0)
+  const reviewExitSummary = fieldStartCustomerSiteQuestions.locator('section#pm-field-start-bring-back-review-exit-summary[aria-label="Local field-start bring-back review exit summary"]')
+  await expect(reviewExitSummary).toBeVisible()
+  await expect(reviewExitSummary).toHaveAttribute('role', 'note')
+  await expect(reviewExitSummary.getByRole('heading', { name: /Local Field Start Bring-Back Review Exit Summary/i })).toBeVisible()
+  await expect(reviewExitSummary.getByText('local exit summary', { exact: true })).toBeVisible()
+  await expect(reviewExitSummary.getByText(/PM Lane 205 summary: leave this panel with four browser-local classifications only/i)).toBeVisible()
+  await expect(reviewExitSummary.getByText(/source review, customer\/site clarification, lead\/resource clarification, and future packet question/i)).toBeVisible()
+  await expect(reviewExitSummary.getByText(/Anything needing approval submission, import, assignment, schedule\/status, field direction, customer report, storage, export, route, control, or write authority needs a later bounded packet/i)).toBeVisible()
+  await expect(reviewExitSummary.locator('a,button,input,textarea,select')).toHaveCount(0)
   const fieldReadiness = page.locator('details[aria-label="Local field readiness checklist"]')
   await expect(fieldReadiness).toHaveAttribute('open', '')
   await expect(fieldReadiness.getByRole('heading', { name: /Local Field Readiness Checklist/i })).toBeVisible()

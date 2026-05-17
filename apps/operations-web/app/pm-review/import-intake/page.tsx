@@ -9358,6 +9358,23 @@ export default function ProjectMinerIntakeWorkbenchPage() {
               <span className="status-pill status-blocked">local closeout cue</span>
             </div>
           </section>
+          <section
+            id="pm-field-start-bring-back-review-exit-summary"
+            role="note"
+            aria-label="Local field-start bring-back review exit summary"
+            className="card"
+            style={{ padding: '0.9rem', marginTop: '0.85rem', boxShadow: 'none' }}
+          >
+            <div className="status-row" style={{ alignItems: 'start' }}>
+              <div>
+                <h3 style={{ margin: 0 }}>Local Field Start Bring-Back Review Exit Summary</h3>
+                <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+                  PM Lane 205 summary: leave this panel with four browser-local classifications only: source review, customer/site clarification, lead/resource clarification, and future packet question. Anything needing approval submission, import, assignment, schedule/status, field direction, customer report, storage, export, route, control, or write authority needs a later bounded packet.
+                </p>
+              </div>
+              <span className="status-pill status-blocked">local exit summary</span>
+            </div>
+          </section>
         </details>
 
         <details open id="pm-start-here" aria-label="Local PM intake start here" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
