@@ -949,6 +949,11 @@ function fieldExecutionGateDesignFileName(candidate?: CandidatePayload | null) {
   return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-field-execution-gate-design.json`
 }
 
+function leadFieldAssignmentDraftFileName(candidate?: CandidatePayload | null) {
+  const candidateId = candidate?.candidate_id || 'project-miner-intake'
+  return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-lead-field-assignment-draft.json`
+}
+
 function importExceptionRegisterFileName(candidate?: CandidatePayload | null) {
   const candidateId = candidate?.candidate_id || 'project-miner-intake'
   return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-import-exception-register.md`
@@ -3814,6 +3819,203 @@ function buildFieldExecutionGateDesignExport(
   }
 }
 
+function buildLeadFieldAssignmentDraftExport(
+  packet: IntakeWorkbenchPacket,
+  fieldPrepQueue: OperatingQueueItem[],
+  fieldPrepCoverageSnapshot: FieldPrepCoverageItem[],
+  fieldPrepConversationAgenda: FieldPrepAgendaItem[],
+  notAllowed: string[],
+  futureRoute: string,
+  fieldReadinessChecks: Record<string, boolean>,
+  fieldQuestionsDraft: FieldQuestionsDraft,
+  fieldObservationScratchpad: FieldObservationScratchpad,
+) {
+  const candidate = packet.candidate
+  const project = candidate.project || {}
+  const summary = candidate.summary || {}
+  const fieldStartPreflight = buildFieldStartPreflightExport(packet, fieldPrepQueue, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, notAllowed, futureRoute, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad)
+  const fieldExecutionGateDesign = buildFieldExecutionGateDesignExport(packet, fieldPrepQueue, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, notAllowed, futureRoute, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad)
+  const fieldPrepAgendaCount = fieldPrepAgendaCounts(fieldPrepConversationAgenda)
+  const fieldPrepCoverageCount = fieldPrepCoverageCounts(fieldPrepCoverageSnapshot)
+  const completeFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'complete').length
+  const nextFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'next').length
+  const blockedFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'blocked').length
+  const assignmentItems: ApprovalDryRunReadinessItem[] = [
+    {
+      id: 'field-context-package',
+      title: 'Field context package',
+      status: fieldStartPreflight.preflight_summary.ready_count > 0 ? 'ready' : 'needs_review',
+      detail: `${fieldStartPreflightFileName(candidate)} and ${fieldPrepPacketFileName(candidate)} provide local field-start context for lead review.`,
+    },
+    {
+      id: 'field-questions-and-observations',
+      title: 'Field questions and observations',
+      status: hasFieldQuestionsDraftContent(fieldQuestionsDraft) && hasFieldObservationScratchpadContent(fieldObservationScratchpad) ? 'ready' : 'needs_review',
+      detail: hasFieldQuestionsDraftContent(fieldQuestionsDraft) && hasFieldObservationScratchpadContent(fieldObservationScratchpad)
+        ? 'Local field questions and observation context are present for the lead assignment conversation.'
+        : 'Capture field questions and observation context before relying on this draft as a lead assignment handoff.',
+    },
+    {
+      id: 'lead-review-agenda',
+      title: 'Lead review agenda',
+      status: fieldPrepAgendaCount.ask > 0 || fieldPrepAgendaCount.confirm > 0 ? 'ready' : 'needs_review',
+      detail: `${fieldPrepConversationAgendaFileName(candidate)} carries ${fieldPrepAgendaSummary(fieldPrepAgendaCount)} for PM and lead review.`,
+    },
+    {
+      id: 'approval-before-assignment',
+      title: 'Approval before assignment',
+      status: 'blocked',
+      detail: 'The first approval row is still blocked until PM Lane 142 live-write admission and proof complete.',
+    },
+    {
+      id: 'import-before-assignment',
+      title: 'Import before assignment',
+      status: 'blocked',
+      detail: 'Project, workpackage, task, and apparatus rows must be imported before any durable assignment can exist.',
+    },
+    {
+      id: 'field-authorization-before-work',
+      title: 'Field authorization before work',
+      status: 'blocked',
+      detail: 'Field work authorization remains blocked until a later packet admits the exact authorization and assignment write path.',
+    },
+    {
+      id: 'schedule-status-authority',
+      title: 'Schedule and status authority',
+      status: 'blocked',
+      detail: 'Schedule and status changes remain blocked until a later packet admits the exact mutation contract and readback proof.',
+    },
+    {
+      id: 'durable-record-and-production-authority',
+      title: 'Durable record and production authority',
+      status: 'blocked',
+      detail: 'Durable field records and production tracking remain blocked until a later packet admits storage, audit, and readback proof.',
+    },
+  ]
+  const assignmentCounts = approvalDryRunReadinessCounts(assignmentItems)
+
+  return {
+    draft_kind: 'pm_import_candidate_lead_field_assignment_draft',
+    draft_version: 'pm_lane_150_local_lead_field_assignment_draft_v1',
+    generated_locally_at: new Date().toISOString(),
+    candidate_identity: {
+      candidate_id: candidate.candidate_id || null,
+      candidate_version: candidate.candidate_version || null,
+      project_name: project.name || null,
+      source_fingerprint: candidate.source_freshness?.aggregate_fingerprint || null,
+    },
+    field_shape: {
+      workpackage_count: summary.workpackage_count ?? null,
+      task_count: summary.task_count ?? null,
+      apparatus_candidate_count: summary.apparatus_candidate_count ?? null,
+      crew_count: summary.crew_count ?? null,
+      equipment_inventory_count: summary.equipment_inventory_count ?? null,
+    },
+    draft_summary: {
+      ready_count: assignmentCounts.ready,
+      needs_review_count: assignmentCounts.needsReview,
+      blocked_count: assignmentCounts.blocked,
+      summary: approvalDryRunReadinessSummary(assignmentCounts),
+      assignment_status: 'blocked_until_import_field_authorization_and_assignment_packet',
+    },
+    field_start_preflight_summary: {
+      file_name: fieldStartPreflightFileName(candidate),
+      ready_count: fieldStartPreflight.preflight_summary.ready_count,
+      needs_review_count: fieldStartPreflight.preflight_summary.needs_review_count,
+      blocked_count: fieldStartPreflight.preflight_summary.blocked_count,
+      summary: fieldStartPreflight.preflight_summary.summary,
+      field_start_status: fieldStartPreflight.preflight_summary.field_start_status,
+    },
+    field_execution_gate_summary: {
+      file_name: fieldExecutionGateDesignFileName(candidate),
+      ready_count: fieldExecutionGateDesign.gate_summary.ready_count,
+      needs_review_count: fieldExecutionGateDesign.gate_summary.needs_review_count,
+      blocked_count: fieldExecutionGateDesign.gate_summary.blocked_count,
+      summary: fieldExecutionGateDesign.gate_summary.summary,
+      execution_gate_status: fieldExecutionGateDesign.gate_summary.execution_gate_status,
+    },
+    local_prep_context: {
+      field_prep_queue_summary: `${completeFieldPrepQueueCount} complete, ${nextFieldPrepQueueCount} next, ${blockedFieldPrepQueueCount} blocked`,
+      field_prep_coverage_summary: fieldPrepCoverageSummary(fieldPrepCoverageCount),
+      field_prep_agenda_summary: fieldPrepAgendaSummary(fieldPrepAgendaCount),
+      source_files: {
+        field_prep_packet_file: fieldPrepPacketFileName(candidate),
+        field_start_preflight_file: fieldStartPreflightFileName(candidate),
+        field_execution_gate_design_file: fieldExecutionGateDesignFileName(candidate),
+        field_kickoff_brief_file: fieldKickoffBriefFileName(candidate),
+        field_observation_notes_file: fieldObservationNotesFileName(candidate),
+        coverage_snapshot_file: fieldPrepCoverageSnapshotFileName(candidate),
+        conversation_agenda_file: fieldPrepConversationAgendaFileName(candidate),
+      },
+    },
+    proposed_assignment_draft: {
+      assignment_kind: 'lead_field_assignment',
+      assigned_lead: null,
+      assigned_crew: null,
+      assignment_source: 'not_admitted',
+      requires_pm_selection: true,
+      requires_imported_workpackage_rows: true,
+      requires_field_authorization_packet: true,
+      requires_schedule_status_packet: true,
+      requires_durable_field_record_packet: true,
+      note: 'This draft is conversation context only. It does not select a lead, assign a crew, authorize work, schedule work, change status, or create a durable field record.',
+    },
+    assignment_items: assignmentItems,
+    proposed_handoff_sequence: [
+      {
+        step: 'review_local_context',
+        status: 'ready',
+        detail: 'Use field prep, preflight, coverage, agenda, questions, and observation artifacts as PM/lead conversation context.',
+      },
+      {
+        step: 'complete_first_approval_row_gate',
+        status: 'blocked',
+        detail: 'Complete explicit PM Lane 142 live-write admission before any approval row or import can be used.',
+      },
+      {
+        step: 'admit_project_import_packet',
+        status: 'blocked',
+        detail: 'Admit project import only after approval proof exists and import idempotency/readback rules are approved.',
+      },
+      {
+        step: 'admit_field_authorization_and_assignment_packet',
+        status: 'blocked',
+        detail: 'Admit field work authorization and lead/crew assignment write rules before operational field assignment.',
+      },
+      {
+        step: 'admit_schedule_status_and_tracking_packets',
+        status: 'blocked',
+        detail: 'Admit schedule/status, durable field record, and production tracking packets before field progress is persisted.',
+      },
+    ],
+    authority_boundary: {
+      mutation_authority: 'not_admitted',
+      local_draft_only: true,
+      live_approval_post_performed: false,
+      approval_row_created: false,
+      project_import_performed: false,
+      field_work_authorized: false,
+      lead_selected: false,
+      lead_assignment_created: false,
+      crew_assignment_created: false,
+      schedule_performed: false,
+      status_change_performed: false,
+      durable_field_record_created: false,
+      production_tracking_performed: false,
+      server_write_performed: false,
+    },
+    blocked_boundaries: Array.from(new Set([
+      ...fieldExecutionGateDesign.blocked_boundaries,
+      'lead_named_assignment',
+      'crew_assignment_writes',
+      'field_authorization_write',
+      'schedule_status_write',
+      'durable_field_record_creation',
+      'production_tracking_writes',
+    ])),
+  }
+}
+
 function buildImportExceptionRegisterExport(
   packet: IntakeWorkbenchPacket,
   importExceptionRegister: ImportExceptionRegisterItem[],
@@ -3995,6 +4197,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
   const [fieldPrepPacketStatus, setFieldPrepPacketStatus] = useState('')
   const [fieldStartPreflightStatus, setFieldStartPreflightStatus] = useState('')
   const [fieldExecutionGateDesignStatus, setFieldExecutionGateDesignStatus] = useState('')
+  const [leadFieldAssignmentDraftStatus, setLeadFieldAssignmentDraftStatus] = useState('')
   const [approvalDryRunStatus, setApprovalDryRunStatus] = useState('')
   const [approvalDryRunPreview, setApprovalDryRunPreview] = useState('')
   const [reviewChecks, setReviewChecks] = useState<Record<string, boolean>>({})
@@ -4174,7 +4377,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
   const fieldPrepAgendaCount = fieldPrepAgendaCounts(fieldPrepConversationAgenda)
   const reviewOutputStatuses = [briefStatus, previewStatus, pmIntakeSnapshotStatus, exceptionRegisterStatus].filter(Boolean)
   const executorOutputStatuses = [handoffStatus].filter(Boolean)
-  const fieldPrepOutputStatuses = [fieldBriefStatus, fieldObservationStatus, fieldPrepCoverageStatus, fieldPrepAgendaStatus, fieldPrepPacketStatus, fieldStartPreflightStatus, fieldExecutionGateDesignStatus].filter(Boolean)
+  const fieldPrepOutputStatuses = [fieldBriefStatus, fieldObservationStatus, fieldPrepCoverageStatus, fieldPrepAgendaStatus, fieldPrepPacketStatus, fieldStartPreflightStatus, fieldExecutionGateDesignStatus, leadFieldAssignmentDraftStatus].filter(Boolean)
   const hasOutputStatuses = reviewOutputStatuses.length > 0 || executorOutputStatuses.length > 0 || fieldPrepOutputStatuses.length > 0
 
   useEffect(() => {
@@ -4554,6 +4757,16 @@ export default function ProjectMinerIntakeWorkbenchPage() {
     setFieldExecutionGateDesignStatus(`Field execution gate design prepared from ${candidate?.candidate_id || 'the current intake packet'} without a server write.`)
   }
 
+  function exportLeadFieldAssignmentDraft() {
+    if (!packet) {
+      return
+    }
+
+    const draft = buildLeadFieldAssignmentDraftExport(packet, fieldPrepQueue, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, notAllowed, futureRoute, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad)
+    downloadTextFile(leadFieldAssignmentDraftFileName(candidate), `${JSON.stringify(draft, null, 2)}\n`, 'application/json')
+    setLeadFieldAssignmentDraftStatus(`Lead field assignment draft prepared from ${candidate?.candidate_id || 'the current intake packet'} without a server write.`)
+  }
+
   return (
     <main className="shell-page pm-review-page">
       <section className="hero-card pm-review-hero">
@@ -4710,6 +4923,9 @@ export default function ProjectMinerIntakeWorkbenchPage() {
                 </button>
                 <button className="btn btn-outline" onClick={exportFieldExecutionGateDesign} disabled={!packet}>
                   Export Field Execution Gate Design
+                </button>
+                <button className="btn btn-outline" onClick={exportLeadFieldAssignmentDraft} disabled={!packet}>
+                  Export Lead Field Assignment Draft
                 </button>
               </div>
             </section>

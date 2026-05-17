@@ -1,0 +1,52 @@
+{
+  "packet_id": "2026-05-17-pm-lane-150",
+  "lane": "PM Lane 150",
+  "title": "Local Lead Field Assignment Draft Export",
+  "created_at_local": "2026-05-17",
+  "source_floor_commit": "4a52b53dfa6d226354356f05044f94ed2cf18e67",
+  "objective": "Add a browser-local lead field assignment draft export that prepares PM/lead review context before any lead selection, crew assignment, field authorization, schedule/status, durable field record, or production tracking write path is admitted.",
+  "execution_mode": "local_product_code_plus_status_docs",
+  "scope": [
+    "Add an Export Lead Field Assignment Draft action to the existing Field Prep Outputs rail.",
+    "Download one JSON artifact that includes field-start preflight summary, field execution gate summary, local prep source files, proposed handoff sequence, assignment readiness statuses, authority boundary flags, and blocked write boundaries.",
+    "Keep the export local-only and informational.",
+    "Extend the focused Playwright smoke to prove the downloaded lead field assignment draft artifact and zero mutation requests."
+  ],
+  "not_allowed": [
+    "No live POST to /api/v1/mutations/project-import-approvals.",
+    "No approval row creation.",
+    "No hosted deployment or promotion.",
+    "No Supabase, Render, Vercel, or Olares action.",
+    "No SQL or schema migration.",
+    "No secret access or secret rotation.",
+    "No backend route or mutation route change.",
+    "No project import, workpackage rows, task rows, apparatus rows, field work authorization, lead selection, lead assignment, crew assignment, schedule, status, durable field record, production tracking, workbook macro, or workbook writeback.",
+    "No service, auth, DNS, ingress, or control-plane widening.",
+    "No autonomous AI business-state mutation."
+  ],
+  "lead_field_assignment_draft": {
+    "status": "not_admitted",
+    "note": "This lane creates local PM/lead conversation context only. Lead selection, crew assignment, field authorization, schedule/status changes, durable field records, and production tracking remain blocked until later admitted packets own those write paths."
+  },
+  "changed_files": [
+    "PROJECT_STATUS.md",
+    "apps/operations-web/app/pm-review/import-intake/page.tsx",
+    "apps/operations-web/tests/browser-shell.pm-import-intake.smoke.spec.ts",
+    "docs/operations/APEX-PM-STAKEHOLDER-TIME-PROTECTION-AND-ACCELERATION-LANE-2026-05-15.md",
+    "docs/operations/APEX-PM-TEMP-POWER-DELIVERY-AND-ORCHESTRATION-PLAN-2026-05-15.md",
+    "docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md",
+    "ops/agents/packets/draft/2026-05-17-pm-lane-150-local-lead-field-assignment-draft-export.json",
+    "ops/agents/handoffs/2026-05-17-pm-lane-150-local-lead-field-assignment-draft-export-handoff.md"
+  ],
+  "validation_steps": [
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform\" --filter @apex/operations-web typecheck",
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform\" --filter @apex/operations-web build",
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform/apps/operations-web\" exec playwright test \"browser-shell.pm-import-intake.smoke.spec.ts\"",
+    "Get-Content -Path \"ops/agents/packets/draft/2026-05-17-pm-lane-150-local-lead-field-assignment-draft-export.json\" | ConvertFrom-Json | Select-Object -ExpandProperty packet_id",
+    "rg -n \"PM Lane 150|Export Lead Field Assignment Draft|lead-field-assignment-draft|pm_lane_150_local_lead_field_assignment_draft_v1|mutationRequests\\)\\.toHaveLength\\(0\\)\" PROJECT_STATUS.md docs/operations ops/agents apps/operations-web",
+    "git diff --check"
+  ],
+  "validation_result": "PASS: operations-web typecheck passed, operations-web production build passed, focused PM import-intake Playwright smoke passed with 1 passed, packet JSON parsed, guardrail search confirmed PM Lane 150/lead-field-assignment-draft/zero-mutation evidence plus Desktop Codex parked language, and git diff --check passed.",
+  "sidecar_result": "Desktop Codex NETA comparative-audit, topic-spine design, pilot-module blueprint, visual-assets structural-cleanup scout, heavy-audit cleanup cataloging phase-zero, and study-root structural catalog cleanup scout closeouts remain untracked and intentionally parked for a separate technical-authority review lane. They are not staged into PM Lane 150.",
+  "next_recommended_lane": "Use this lead field assignment draft as PM/lead conversation context for the Temp Power pilot. The next PM lane should either prepare the field authorization and assignment admission packet or pause for the explicit PM Lane 142 live approval admission before any approval POST, first approval row, import mutation, or assignment write."
+}
