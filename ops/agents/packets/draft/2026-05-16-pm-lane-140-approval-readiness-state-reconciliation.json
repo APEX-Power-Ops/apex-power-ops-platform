@@ -1,0 +1,62 @@
+{
+  "packet_id": "2026-05-16-pm-lane-140",
+  "title": "Approval Readiness State Reconciliation",
+  "objective": "Reconcile the Project Miner PM intake workbench and focused smoke expectations with the post-PM Lane 138 hosted truth: hosted schema, approval status readback, approval POST route registration, and bounded MCP read proof are green, while browser approval submission, first approval-row creation, project import, and field execution writes remain blocked.",
+  "domain": "pm-domain",
+  "active_role": "Technical Repo Authority / PM Lane Coordinator / Workbench Reconciliation Executor",
+  "source_floor": {
+    "branch": "clean-main",
+    "commit": "5b8d1e934c30ad4723ab59950be9d032bf46822f",
+    "meaning": "Current clean-main after PM Lane 138 hosted schema gate closeout and post-closeout control-plane pooler maintenance closure."
+  },
+  "dependencies": [
+    "2026-05-16-pm-lane-041c",
+    "2026-05-16-pm-lane-138",
+    "2026-05-16-pm-lane-139"
+  ],
+  "allowed_scope": [
+    "Update /pm-review/import-intake browser-local copy, readiness gates, operating queue, PM snapshot, handoff guide, exported Markdown text, and current action wording to reflect hosted schema/readback readiness truthfully.",
+    "Update the focused PM intake Playwright smoke expectations so the no-write workbench proves 2 of 6 readiness gates are ready initially and 4 of 6 are ready after local review evidence.",
+    "Keep approval status readback and hosted route registration as context only, not browser approval authority.",
+    "Update PM lane operating docs, status, and packet/handoff evidence for the no-write reconciliation lane.",
+    "Use read-only sidecar scout output only as recommendation context."
+  ],
+  "not_allowed": [
+    "No browser approval button.",
+    "No browser approval POST wiring.",
+    "No live approval POST smoke.",
+    "No approval row creation.",
+    "No project, workpackage, task, apparatus, issue, assignment, schedule, status, durable field record, production tracking, workbook, or import rows.",
+    "No live Supabase SQL application or schema migration.",
+    "No Render, Vercel, Olares, or Supabase action.",
+    "No secret value access, print, rotation, or repo storage.",
+    "No workbook macro execution or workbook writeback.",
+    "No service creation, DNS/auth/ingress change, fixture replay into live data, work authorization, field release, live work order creation, or autonomous AI business-state mutation."
+  ],
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/PROJECT_STATUS.md",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/app/pm-review/import-intake/page.tsx",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/tests/browser-shell.pm-import-intake.smoke.spec.ts",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/APEX-PM-TEMP-POWER-DELIVERY-AND-ORCHESTRATION-PLAN-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/APEX-PM-STAKEHOLDER-TIME-PROTECTION-AND-ACCELERATION-LANE-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-16-pm-lane-140-approval-readiness-state-reconciliation.json",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-16-pm-lane-140-approval-readiness-state-reconciliation-handoff.md"
+  ],
+  "validation_steps": [
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform\" --filter @apex/operations-web typecheck",
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform\" --filter @apex/operations-web build",
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform/apps/operations-web\" exec playwright test \"browser-shell.pm-import-intake.smoke.spec.ts\"",
+    "PowerShell ConvertFrom-Json parse for this packet",
+    "git diff --check",
+    "git diff --cached --check"
+  ],
+  "validation_result": "PASS: operations-web typecheck passed; operations-web production build passed; focused PM import-intake Playwright smoke passed with 1 passed; packet JSON parsed with ConvertFrom-Json; git diff --check passed; git diff --cached --check passed after scoped staging.",
+  "delegation_status": "coordinator_executed_locally_with_read_only_sidecar_scout",
+  "sidecar_result": "Read-only sidecar recommended PM Lane 140 - Approval Readiness State Reconciliation. It identified the safe no-write scope: hosted schema gate green, approval status readback green, approval POST route registered, approval table still at zero rows, browser POST blocked, and project import blocked.",
+  "next_recommended_lane": "PM Lane 141 - Browser Approval Submission Packet Design, still no live POST until explicitly admitted",
+  "sql_permission": false,
+  "live_deploy_permission": false,
+  "ai_mutation_authority": "not_admitted",
+  "created_at": "2026-05-16",
+  "updated_at": "2026-05-16"
+}

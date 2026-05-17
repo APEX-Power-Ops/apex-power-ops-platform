@@ -308,7 +308,7 @@ type OutputSelectorItem = {
   detail: string
 }
 
-type HandoffGuideStatus = 'local-review' | 'field-context' | 'executor-context' | 'blocked'
+type HandoffGuideStatus = 'local-review' | 'field-context' | 'executor-context' | 'covered-context' | 'blocked'
 
 type HandoffGuideItem = {
   id: string
@@ -598,17 +598,17 @@ const REVIEW_CHECKLIST_ITEMS: ReviewChecklistItem[] = [
   {
     id: 'approval_storage_understood',
     label: 'Approval storage understood',
-    detail: 'The future approval table and route were reviewed as design-only, not admitted persistence.',
+    detail: 'The hosted approval table and PM-only route are ready for a later controlled submission packet, not browser approval yet.',
   },
   {
     id: 'hosted_parity_acknowledged',
     label: 'Hosted parity acknowledged',
-    detail: 'Vercel and Render hosted parity still require executor closeout before production-read proof.',
+    detail: 'Hosted PM intake, approval readback, and bounded Supabase read proof are green; this checklist still grants no browser write authority.',
   },
   {
     id: 'write_guardrails_confirmed',
     label: 'Write guardrails confirmed',
-    detail: 'No Supabase write, approval persistence, import, assignment, schedule, or status mutation is admitted.',
+    detail: 'No browser approval submission, project import, assignment, schedule, or status mutation is admitted.',
   },
 ]
 const CLOSEOUT_CHECKLIST_ITEMS: CloseoutChecklistItem[] = [
@@ -813,7 +813,7 @@ function outputSelectorTone(status: OutputSelectorStatus) {
 }
 
 function handoffGuideTone(status: HandoffGuideStatus) {
-  if (status === 'field-context' || status === 'executor-context') return 'status-configured'
+  if (status === 'field-context' || status === 'executor-context' || status === 'covered-context') return 'status-configured'
   if (status === 'blocked') return 'status-deferred'
   return 'status-awaiting-values'
 }
@@ -993,28 +993,28 @@ function buildPersistenceReadinessGates(
         : 'Use the local checklist before relying on the preview as review context.',
     },
     {
-      id: 'hosted-parity-closeout',
-      title: 'Hosted parity closeout',
-      status: 'blocked',
-      detail: 'PM Lane 041A/041B must prove or precisely classify Vercel and Render hosted parity before live approval persistence is claimed.',
+      id: 'hosted-schema-gate',
+      title: 'Hosted schema gate',
+      status: 'ready',
+      detail: 'PM Lane 138 applied migration 003 on hosted Supabase and proved the approval table plus insert-only triggers with zero approval rows.',
     },
     {
-      id: 'schema-authority',
-      title: 'Schema authority',
-      status: 'blocked',
-      detail: 'PM Lane 049 authored the schema and adapter admission design, but no SQL execution or schema migration is admitted.',
+      id: 'hosted-approval-route-gate',
+      title: 'Hosted approval route gate',
+      status: 'ready',
+      detail: 'Hosted mutation-seam exposes approval status readback and the PM-only approval POST route, but this workbench does not call that POST.',
     },
     {
-      id: 'approval-persistence-authority',
-      title: 'Approval persistence authority',
+      id: 'browser-approval-submit-authority',
+      title: 'Browser approval submit authority',
       status: 'blocked',
-      detail: 'No approval record may be persisted until a later packet admits the dedicated table and adapter implementation.',
+      detail: 'No browser approval button, approval POST wiring, or live approval-row creation is admitted until a later packet owns that UI submission path.',
     },
     {
       id: 'import-mutation-authority',
       title: 'Import mutation authority',
       status: 'blocked',
-      detail: 'Project, workpackage, task, and apparatus import remain blocked until approval persistence is explicitly admitted and validated in a later packet.',
+      detail: 'Project, workpackage, task, and apparatus import remain blocked until a later packet admits import after an approved approval record exists.',
     },
   ]
 }
@@ -1057,22 +1057,28 @@ function buildPmOperatingQueue(
         : 'Complete local checklist evidence and the decision draft before treating exports as packet context.',
     },
     {
-      id: 'hosted-parity-executor-closeout',
-      title: 'Hosted parity executor closeout',
-      status: 'blocked',
-      detail: 'PM Lane 041A/041B still need executor closeout before hosted parity can be claimed.',
+      id: 'hosted-approval-gate-complete',
+      title: 'Hosted approval gate complete',
+      status: 'complete',
+      detail: 'Hosted schema, approval status readback, approval POST route registration, and bounded MCP read proof are green with zero approval rows.',
     },
     {
-      id: 'approval-persistence-implementation',
-      title: 'Approval persistence implementation',
+      id: 'browser-approval-submission-packet',
+      title: 'Browser approval submission packet',
       status: 'blocked',
-      detail: 'PM Lane 049 is design-only; schema and adapter implementation still need an explicit later packet.',
+      detail: 'A later packet must admit the browser approval control, live POST evidence, idempotent row creation, and rollback/return handling.',
+    },
+    {
+      id: 'approval-row-creation',
+      title: 'Approval row creation',
+      status: 'blocked',
+      detail: 'The approval table is empty by proof; this workbench must not create the first hosted approval row.',
     },
     {
       id: 'project-import-packet',
       title: 'Project import packet',
       status: 'blocked',
-      detail: 'Project, workpackage, task, and apparatus rows remain blocked until approval persistence is explicitly admitted and validated in a later packet.',
+      detail: 'Project, workpackage, task, and apparatus rows remain blocked until approval submission has been admitted and audited in a separate packet.',
     },
   ]
 }
@@ -1420,14 +1426,14 @@ function buildPmIntakeSnapshot(
       title: 'Approval persistence boundary',
       status: 'blocked',
       detail: `Approval persistence readiness gates: ${readyPersistenceGateCount} of ${persistenceReadinessGates.length} ready.`,
-      evidence: 'Schema authority, approval persistence authority, and import mutation remain blocked until a later packet admits them.',
+      evidence: 'Hosted schema and approval route gates are ready; browser approval submission, first approval row creation, and import mutation remain blocked.',
     },
     {
       id: 'hosted-parity-boundary',
       title: 'Hosted parity boundary',
-      status: 'blocked',
-      detail: 'PM Lane 041A/041B still own hosted Vercel promotion and Render mutation-seam parity evidence.',
-      evidence: 'This snapshot is local-current only until hosted executor closeout is returned and audited.',
+      status: 'covered',
+      detail: 'Hosted PM intake, mutation-seam reads, approval status readback, and bounded Supabase MCP read proof are green.',
+      evidence: 'PM Lane 041A/041B/041C/138 plus control-plane pooler maintenance closed the hosted read and schema gates.',
     },
   ]
 }
@@ -1762,9 +1768,9 @@ function buildPmIntakeConstraintRadar(
     {
       id: 'executor-hosted-constraint',
       title: 'Executor and hosted constraints',
-      status: closeoutCheckedCount ? 'attention' : 'blocked',
+      status: closeoutCheckedCount ? 'attention' : 'context',
       href: '#executor-closeout',
-      detail: `Executor closeout evidence is ${closeoutCheckedCount} of ${CLOSEOUT_CHECKLIST_ITEMS.length}; hosted parity remains an external executor boundary and is not claimed here.`,
+      detail: `Executor closeout intake is ${closeoutCheckedCount} of ${CLOSEOUT_CHECKLIST_ITEMS.length}; hosted read, schema, approval status, and bounded MCP proof are green while closeout checks remain audit-prep context only.`,
     },
     {
       id: 'future-write-authority-constraint',
@@ -1887,10 +1893,10 @@ function buildPmIntakeHandoffGuide(
     },
     {
       id: 'hosted-parity-executor-boundary',
-      title: 'Hosted parity executor boundary',
-      status: 'blocked',
+      title: 'Hosted readiness context',
+      status: 'covered-context',
       href: '#approval-readiness',
-      detail: 'Hosted Vercel and Render parity remain external executor lanes; this local workbench claims no hosted parity.',
+      detail: 'Hosted Vercel, Render, approval status readback, and bounded MCP proof are green; this local workbench still grants no browser write authority.',
     },
     {
       id: 'future-persistence-packet-boundary',
@@ -2294,7 +2300,7 @@ function buildIntakeBrief(
     '',
     '## Local PM Constraint Radar',
     '',
-    'This radar is browser-local constraint synthesis only. It does not approve, persist, import, assign, schedule, change status, create issues, create tasks, create durable field records, claim hosted parity, or write production state.',
+    'This radar is browser-local constraint synthesis only. It does not approve, persist, import, assign, schedule, change status, create issues, create tasks, create durable field records, perform hosted writes, or write production state.',
     '',
     markdownList(pmIntakeConstraintRadarLines),
     '',
@@ -2367,9 +2373,9 @@ function buildIntakeBrief(
     `- Admission plan: ${admissionPlan.admission_plan_id || 'unknown'}`,
     `- Admission authority: ${admissionPlan.mutation_authority || 'not_admitted'}`,
     `- Approval contract: ${approvalContract.approval_contract_id || 'unknown'}`,
-    `- Approval persistence authority: ${approvalContract.persistence_authority || storagePlan.persistence_authority || 'not_admitted'}`,
-    `- Future approval table: ${storagePlan.recommended_table || 'not admitted'}`,
-    `- Future approval route: ${futureRoute}`,
+    `- Approval storage/design authority: ${approvalContract.persistence_authority || storagePlan.persistence_authority || 'not_admitted'}`,
+    `- Hosted approval table: ${storagePlan.recommended_table || 'not admitted'}`,
+    `- Hosted approval route: ${futureRoute}`,
     '',
     '## Target Rows',
     '',
@@ -2434,7 +2440,7 @@ function buildExecutorHandoff(
     '',
     '## Bounded Instruction',
     '',
-    'Use this handoff only to review context, draft a later packet, or perform explicitly allowed read-only analysis. Do not treat this handoff as approval, persistence authority, import authority, hosted parity proof, or task creation.',
+    'Use this handoff only to review context, draft a later packet, or perform explicitly allowed read-only analysis. Do not treat this handoff as approval, persistence authority, import authority, hosted write proof, or task creation.',
     '',
     '## Candidate Context',
     '',
@@ -2486,7 +2492,7 @@ function buildExecutorHandoff(
     '',
     '## PM Constraint Radar',
     '',
-    'This radar is browser-local constraint synthesis only. It does not approve, persist, import, assign, schedule, change status, create issues, create tasks, create durable field records, claim hosted parity, or write production state.',
+    'This radar is browser-local constraint synthesis only. It does not approve, submit approval rows, import, assign, schedule, change status, create issues, create tasks, create durable field records, perform hosted writes, or write production state.',
     '',
     markdownList(pmIntakeConstraintRadarLines),
     '',
@@ -2508,7 +2514,7 @@ function buildExecutorHandoff(
     '',
     markdownList(openCloseoutLines),
     '',
-    '## Approval Persistence Blockers',
+    '## Remaining Approval Submission Blockers',
     '',
     markdownList(blockedGateLines),
     '',
@@ -2535,14 +2541,14 @@ function buildExecutorHandoff(
     '',
     markdownList(workflowGateLines),
     '',
-    '## Future Surfaces Are Not Admitted',
+    '## Hosted Approval Surface And Remaining Blocks',
     '',
-    `- Future approval table: ${storagePlan.recommended_table || 'not admitted'}`,
-    `- Future approval route: ${futureRoute}`,
+    `- Hosted approval table: ${storagePlan.recommended_table || 'not admitted'}`,
+    `- Hosted approval route: ${futureRoute}`,
     `- Admission plan: ${admissionPlan.admission_plan_id || 'unknown'}`,
     `- Admission authority: ${admissionPlan.mutation_authority || 'not_admitted'}`,
     `- Approval contract: ${approvalContract.approval_contract_id || 'unknown'}`,
-    `- Approval persistence authority: ${approvalContract.persistence_authority || storagePlan.persistence_authority || 'not_admitted'}`,
+    `- Approval storage/design authority: ${approvalContract.persistence_authority || storagePlan.persistence_authority || 'not_admitted'}`,
     '',
     '## Not Allowed',
     '',
@@ -2551,8 +2557,8 @@ function buildExecutorHandoff(
     '## Minimum Safe Next Packet Evidence',
     '',
     '- Keep exact read-only source and candidate identity visible.',
-    '- Keep hosted Vercel and Render parity classified before claiming hosted proof.',
-    '- Keep schema, approval persistence, and import mutation blocked unless a later packet explicitly admits them.',
+    '- Preserve hosted schema, hosted readback, and bounded MCP proof as context only; do not treat them as browser approval authority.',
+    '- Keep browser approval submission, first approval-row creation, and import mutation blocked unless a later packet explicitly admits them.',
     '- Preserve zero mutation calls for review-only work.',
     '- Do not widen backend routes, auth, ingress, secrets, SQL, workbook macros, assignment, schedule, status, or autonomous AI business-state authority.',
   ].join('\n')
@@ -2635,7 +2641,7 @@ function buildFieldKickoffBrief(
     '',
     '## Field-Prep Boundary',
     '',
-    'Use this brief to align PM, lead, and field review conversations before execution tracking exists in production state. Do not treat it as a work authorization, schedule, assignment, status update, hosted parity proof, approval record, import packet, or task creation.',
+    'Use this brief to align PM, lead, and field review conversations before execution tracking exists in production state. Do not treat it as a work authorization, schedule, assignment, status update, hosted write proof, approval record, import packet, or task creation.',
     '',
     '## Project Snapshot',
     '',
@@ -2757,14 +2763,14 @@ function buildFieldKickoffBrief(
     '',
     markdownList(workflowGateLines),
     '',
-    '## Future Surfaces Are Not Admitted',
+    '## Hosted Approval Surface And Remaining Blocks',
     '',
-    `- Future approval table: ${storagePlan.recommended_table || 'not admitted'}`,
-    `- Future approval route: ${futureRoute}`,
+    `- Hosted approval table: ${storagePlan.recommended_table || 'not admitted'}`,
+    `- Hosted approval route: ${futureRoute}`,
     `- Admission plan: ${admissionPlan.admission_plan_id || 'unknown'}`,
     `- Admission authority: ${admissionPlan.mutation_authority || 'not_admitted'}`,
     `- Approval contract: ${approvalContract.approval_contract_id || 'unknown'}`,
-    `- Approval persistence authority: ${approvalContract.persistence_authority || storagePlan.persistence_authority || 'not_admitted'}`,
+    `- Approval storage/design authority: ${approvalContract.persistence_authority || storagePlan.persistence_authority || 'not_admitted'}`,
     '',
     '## Not Allowed',
     '',
@@ -2774,7 +2780,7 @@ function buildFieldKickoffBrief(
     '',
     '- Use this brief as conversation prep and issue discovery only.',
     '- Do not create assignments, schedules, status changes, approval records, schema, SQL, or import rows from this brief.',
-    '- Do not claim hosted parity from this local export.',
+    '- Do not treat this local export as browser approval submission authority or hosted write evidence.',
     '- Keep production execution tracking blocked until a later packet explicitly admits the required write path.',
   ].join('\n')
 }
@@ -2805,7 +2811,7 @@ function buildFieldObservationNotes(
     '',
     '## Field-Prep Boundary',
     '',
-    'Use these notes to remember PM, lead, customer, and field conversation context. Do not treat them as work authorization, assignment, schedule, status update, approval record, import packet, task creation, issue creation, hosted parity proof, or production tracking.',
+    'Use these notes to remember PM, lead, customer, and field conversation context. Do not treat them as work authorization, assignment, schedule, status update, approval record, import packet, task creation, issue creation, hosted write proof, or production tracking.',
     '',
     '## Candidate Context',
     '',
@@ -2912,7 +2918,7 @@ function buildFieldPrepCoverageSnapshotExport(
     '## Minimum Use',
     '',
     '- Use this as conversation prep only.',
-    '- Do not treat this snapshot as work authorization, assignment, schedule, status update, approval record, import packet, task creation, issue creation, durable field record, hosted parity proof, or production tracking.',
+    '- Do not treat this snapshot as work authorization, assignment, schedule, status update, approval record, import packet, task creation, issue creation, durable field record, hosted write proof, or production tracking.',
     '- Keep production execution tracking blocked until a later packet explicitly admits the required write path.',
   ].join('\n')
 }
@@ -2969,7 +2975,7 @@ function buildFieldPrepConversationAgendaExport(
     '## Minimum Use',
     '',
     '- Use this as conversation prep only.',
-    '- Do not treat this agenda as work authorization, assignment, schedule, status update, approval record, import packet, task creation, issue creation, durable field record, hosted parity proof, or production tracking.',
+    '- Do not treat this agenda as work authorization, assignment, schedule, status update, approval record, import packet, task creation, issue creation, durable field record, hosted write proof, or production tracking.',
     '- Keep production execution tracking blocked until a later packet explicitly admits the required write path.',
   ].join('\n')
 }
@@ -3094,11 +3100,11 @@ function buildFieldPrepPacket(
     '',
     markdownList(workflowGateLines),
     '',
-    '## Future Surfaces Are Not Admitted',
+    '## Hosted Approval Surface And Remaining Blocks',
     '',
-    `- Future approval route: ${futureRoute}`,
-    `- Future approval table: ${packet.storagePlan.recommended_table || 'not admitted'}`,
-    '- Approval persistence, project import, assignment, schedule, status, issue, task, durable field record, and production tracking writes remain blocked.',
+    `- Hosted approval route: ${futureRoute}`,
+    `- Hosted approval table: ${packet.storagePlan.recommended_table || 'not admitted'}`,
+    '- Browser approval submission, first approval-row creation, project import, assignment, schedule, status, issue, task, durable field record, and production tracking writes remain blocked.',
     '',
     '## Not Allowed',
     '',
@@ -3188,12 +3194,12 @@ function buildImportExceptionRegisterExport(
     `- Local-only attestation checked: ${approvalDraft.local_attestation ? 'yes' : 'no'}`,
     `- Review notes draft: ${formatMultilineMarkdown(approvalDraft.review_notes)}`,
     '',
-    '## Future Surfaces Are Not Admitted',
+    '## Hosted Approval Surface And Remaining Blocks',
     '',
-    `- Future approval table: ${storagePlan.recommended_table || 'not admitted'}`,
-    `- Future approval route: ${storagePlan.recommended_route || 'not admitted'}`,
+    `- Hosted approval table: ${storagePlan.recommended_table || 'not admitted'}`,
+    `- Hosted approval route: ${storagePlan.recommended_route || 'not admitted'}`,
     `- Admission authority: ${admissionPlan.mutation_authority || 'not_admitted'}`,
-    '- Approval persistence, import rows, assignment, schedule, status, issue, task, durable field record, and production tracking writes remain blocked.',
+    '- Browser approval submission, first approval-row creation, import rows, assignment, schedule, status, issue, task, durable field record, and production tracking writes remain blocked.',
     '',
     '## Not Allowed',
     '',
@@ -3202,8 +3208,8 @@ function buildImportExceptionRegisterExport(
     '## Minimum Use',
     '',
     '- Use this register as exception-review synthesis only.',
-    '- Do not treat this register as approval, persistence authority, import authority, work authorization, assignment, schedule, status update, task creation, issue creation, durable field record, hosted parity proof, or production tracking.',
-    '- Keep approval persistence and project import blocked until a later packet explicitly admits the required write path.',
+    '- Do not treat this register as approval, persistence authority, import authority, work authorization, assignment, schedule, status update, task creation, issue creation, durable field record, hosted write proof, or production tracking.',
+    '- Keep browser approval submission and project import blocked until a later packet explicitly admits the required write path.',
   ].join('\n')
 }
 
@@ -3246,12 +3252,12 @@ function buildPmIntakeSnapshotExport(
     '',
     markdownList(snapshotLines),
     '',
-    '## Future Surfaces Are Not Admitted',
+    '## Hosted Approval Surface And Remaining Blocks',
     '',
-    `- Future approval table: ${storagePlan.recommended_table || 'not admitted'}`,
-    `- Future approval route: ${futureRoute}`,
+    `- Hosted approval table: ${storagePlan.recommended_table || 'not admitted'}`,
+    `- Hosted approval route: ${futureRoute}`,
     `- Admission authority: ${admissionPlan.mutation_authority || 'not_admitted'}`,
-    '- Approval persistence, project import, assignment, schedule, status, issue, task, durable field record, and production tracking writes remain blocked.',
+    '- Browser approval submission, first approval-row creation, project import, assignment, schedule, status, issue, task, durable field record, and production tracking writes remain blocked.',
     '',
     '## Not Allowed',
     '',
@@ -3260,8 +3266,8 @@ function buildPmIntakeSnapshotExport(
     '## Minimum Use',
     '',
     '- Use this snapshot as scan-level PM review synthesis only.',
-    '- Do not treat this snapshot as approval, persistence authority, import authority, work authorization, assignment, schedule, status update, task creation, issue creation, durable field record, hosted parity proof, or production tracking.',
-    '- Keep approval persistence and project import blocked until a later packet explicitly admits the required write path.',
+    '- Do not treat this snapshot as approval, persistence authority, import authority, work authorization, assignment, schedule, status update, task creation, issue creation, durable field record, hosted write proof, or production tracking.',
+    '- Keep browser approval submission and project import blocked until a later packet explicitly admits the required write path.',
   ].join('\n')
 }
 
@@ -3367,12 +3373,12 @@ export default function ProjectMinerIntakeWorkbenchPage() {
     {
       title: 'Approval readiness',
       status: approvalStatus?.classification || approvalContract?.persistence_authority || storagePlan?.persistence_authority || 'not_admitted',
-      detail: `Approval readback is ${approvalStatusSummary(approvalStatus)}; future import remains blocked at ${futureRoute}.`,
+      detail: `Approval readback is ${approvalStatusSummary(approvalStatus)}; browser approval submission and future import remain blocked at ${futureRoute}.`,
     },
     {
       title: 'Hosted parity',
-      status: 'ready_for_hosted_application_gate',
-      detail: 'PM Lane 041A/041B/041C proved hosted parity; the next hosted gate must apply only the approval persistence migration before live approval persistence is claimed.',
+      status: 'hosted_schema_and_readback_green',
+      detail: 'PM Lane 041A/041B/041C/138 plus control-plane pooler maintenance proved hosted reads, schema, approval status readback, approval POST registration, and bounded MCP read proof; browser approval submission remains blocked.',
     },
     {
       title: 'Future import',
@@ -3815,10 +3821,10 @@ export default function ProjectMinerIntakeWorkbenchPage() {
         </article>
         <article className="status-card">
           <div className="status-row">
-            <h2>Hosted parity</h2>
-            <span className="status-pill status-awaiting-values">pending</span>
+            <h2>Hosted readiness</h2>
+            <span className="status-pill status-ready">green</span>
           </div>
-          <p>Use PM Lane 041 closeouts before claiming hosted live parity for this consolidated route.</p>
+          <p>Hosted PM intake reads, approval status readback, approval route registration, and bounded MCP read proof are green.</p>
         </article>
       </section>
 
@@ -4047,7 +4053,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
           </summary>
           <div aria-label="Command center controls">
             <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
-              Compact top-of-page scan for the current local PM move, next field question posture, handoff context, and blocked future authority. It does not approve, persist, import, assign, schedule, change status, create tasks, create issues, call live services, claim hosted parity, or mutate production state; it creates no localStorage key, export artifact, backend route, schema, approval record, durable field record, production tracking row, or production write.
+              Compact top-of-page scan for the current local PM move, next field question posture, handoff context, and blocked future authority. It does not approve, persist, import, assign, schedule, change status, create tasks, create issues, call live services, perform hosted writes, or mutate production state; it creates no localStorage key, export artifact, backend route, schema, approval record, durable field record, production tracking row, or production write.
             </p>
             <div style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
               {pmIntakeCommandCenter.map((item) => (
@@ -4079,7 +4085,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
           </summary>
           <div aria-label="Meeting readout controls">
             <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
-              Conversation-ready local summary for PM, lead, customer, or field review. It does not approve, persist, import, assign, schedule, change status, create tasks, create issues, call live services, claim hosted parity, or mutate production state; it creates no localStorage key, export artifact, backend route, schema, approval record, durable field record, production tracking row, or production write.
+              Conversation-ready local summary for PM, lead, customer, or field review. It does not approve, persist, import, assign, schedule, change status, create tasks, create issues, call live services, perform hosted writes, or mutate production state; it creates no localStorage key, export artifact, backend route, schema, approval record, durable field record, production tracking row, or production write.
             </p>
             <div style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
               {pmIntakeMeetingReadout.map((item) => (
@@ -4111,7 +4117,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
           </summary>
           <div aria-label="Constraint radar controls">
             <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
-              Constraint scan for source/review, field-prep, executor/hosted, and future write-authority boundaries. It does not approve, persist, import, assign, schedule, change status, create tasks, create issues, call live services, claim hosted parity, or mutate production state; it creates no localStorage key, export artifact, backend route, schema, approval record, durable field record, production tracking row, workbook macro path, workbook writeback, or production write.
+              Constraint scan for source/review, field-prep, executor/hosted, and future write-authority boundaries. It does not approve, persist, import, assign, schedule, change status, create tasks, create issues, call live services, perform hosted writes, or mutate production state; it creates no localStorage key, export artifact, backend route, schema, approval record, durable field record, production tracking row, workbook macro path, workbook writeback, or production write.
             </p>
             <div style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
               {pmIntakeConstraintRadar.map((item) => (
@@ -4149,7 +4155,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
           </summary>
           <div aria-label="Daily review script controls">
             <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
-              First 5 minutes of browser-local review, derived from the existing workbench state. It creates no localStorage key, export artifact, backend route, schema, approval record, task, issue, schedule, status, durable field record, production tracking row, hosted parity claim, or production write.
+              First 5 minutes of browser-local review, derived from the existing workbench state. It creates no localStorage key, export artifact, backend route, schema, approval record, task, issue, schedule, status, durable field record, production tracking row, hosted write claim, or production write.
             </p>
             <div style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
               {pmIntakeDailyReviewScript.map((item) => (
@@ -4214,7 +4220,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
           </summary>
           <div aria-label="Output selector controls">
             <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
-              Browser-local chooser for existing outputs already on this workbench. It creates no localStorage key, export artifact, backend route, schema, approval record, task, issue, schedule, status, durable field record, production tracking row, hosted parity claim, or production write.
+              Browser-local chooser for existing outputs already on this workbench. It creates no localStorage key, export artifact, backend route, schema, approval record, task, issue, schedule, status, durable field record, production tracking row, hosted write claim, or production write.
             </p>
             <div style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
               {pmIntakeOutputSelector.map((item) => (
@@ -4246,7 +4252,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
           </summary>
           <div aria-label="Handoff guide controls">
             <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
-              Browser-local guide for the next context lane. It creates no localStorage key, export artifact, backend route, schema, approval record, task, issue, schedule, status, durable field record, production tracking row, hosted parity claim, or production write.
+              Browser-local guide for the next context lane. It creates no localStorage key, export artifact, backend route, schema, approval record, task, issue, schedule, status, durable field record, production tracking row, hosted write claim, or production write.
             </p>
             <div aria-label="Local PM intake handoff guide items" style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
               {pmIntakeHandoffGuide.map((item) => (
@@ -5127,7 +5133,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
                 Local readiness map for the future approval-persistence packet. It reflects review context and blockers only; it does not approve, persist, import, assign, schedule, change status, or mutate production state.
               </p>
               <p style={{ margin: '0.45rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
-                PM Lane 049 authored the schema and adapter admission design. Hosted parity, schema authority, approval persistence authority, and import mutation authority remain blocked until later packets explicitly admit them.
+                PM Lane 138 closed the hosted schema gate with zero approval rows, and the bounded Supabase MCP read path is restored. Browser approval submission and import mutation remain blocked until later packets explicitly admit them.
               </p>
               <div className="notes-grid" style={{ marginTop: '0.85rem' }}>
                 <article className="notes-card accent-card">
@@ -5185,8 +5191,8 @@ export default function ProjectMinerIntakeWorkbenchPage() {
                 <ol>
                   <li>Review candidate exceptions, source freshness, and required human decisions.</li>
                   <li>Confirm the Project Miner source files have not changed before any future approval packet is used.</li>
-                  <li>Use the Vercel and Render executor closeout lanes for hosted parity before claiming production-read proof.</li>
-                  <li>Keep approval persistence and project import blocked until a later packet explicitly admits those writes.</li>
+                  <li>Treat hosted schema, hosted readback, and bounded Supabase read proof as green, with approval rows still at zero.</li>
+                  <li>Keep browser approval submission and project import blocked until later packets explicitly admit those writes.</li>
                 </ol>
               </article>
               <article className="notes-card accent-card">
