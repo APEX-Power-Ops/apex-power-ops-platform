@@ -954,6 +954,11 @@ function leadFieldAssignmentDraftFileName(candidate?: CandidatePayload | null) {
   return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-lead-field-assignment-draft.json`
 }
 
+function fieldAuthorizationAssignmentDraftFileName(candidate?: CandidatePayload | null) {
+  const candidateId = candidate?.candidate_id || 'project-miner-intake'
+  return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-field-authorization-assignment-draft.json`
+}
+
 function importExceptionRegisterFileName(candidate?: CandidatePayload | null) {
   const candidateId = candidate?.candidate_id || 'project-miner-intake'
   return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-import-exception-register.md`
@@ -4016,6 +4021,192 @@ function buildLeadFieldAssignmentDraftExport(
   }
 }
 
+function buildFieldAuthorizationAssignmentDraftExport(
+  packet: IntakeWorkbenchPacket,
+  fieldPrepQueue: OperatingQueueItem[],
+  fieldPrepCoverageSnapshot: FieldPrepCoverageItem[],
+  fieldPrepConversationAgenda: FieldPrepAgendaItem[],
+  notAllowed: string[],
+  futureRoute: string,
+  fieldReadinessChecks: Record<string, boolean>,
+  fieldQuestionsDraft: FieldQuestionsDraft,
+  fieldObservationScratchpad: FieldObservationScratchpad,
+) {
+  const candidate = packet.candidate
+  const project = candidate.project || {}
+  const summary = candidate.summary || {}
+  const fieldExecutionGateDesign = buildFieldExecutionGateDesignExport(packet, fieldPrepQueue, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, notAllowed, futureRoute, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad)
+  const leadFieldAssignmentDraft = buildLeadFieldAssignmentDraftExport(packet, fieldPrepQueue, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, notAllowed, futureRoute, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad)
+  const admissionItems: ApprovalDryRunReadinessItem[] = [
+    {
+      id: 'field-execution-gate-context',
+      title: 'Field execution gate context',
+      status: 'ready',
+      detail: `${fieldExecutionGateDesignFileName(candidate)} maps the future approval, import, field, assignment, schedule/status, durable record, and production tracking gates.`,
+    },
+    {
+      id: 'lead-field-assignment-draft-context',
+      title: 'Lead field assignment draft context',
+      status: 'ready',
+      detail: `${leadFieldAssignmentDraftFileName(candidate)} provides PM/lead conversation context before a real assignment exists.`,
+    },
+    {
+      id: 'approval-first-row-prerequisite',
+      title: 'Approval first-row prerequisite',
+      status: 'blocked',
+      detail: 'The first approval row remains blocked until the explicit PM Lane 142 live-write gate is admitted and proved.',
+    },
+    {
+      id: 'project-import-prerequisite',
+      title: 'Project import prerequisite',
+      status: 'blocked',
+      detail: 'Project, workpackage, task, and apparatus rows must exist before any field authorization or assignment write can target durable records.',
+    },
+    {
+      id: 'field-authorization-contract',
+      title: 'Field authorization contract',
+      status: 'blocked',
+      detail: 'A later packet must define who can authorize field work, which candidate/import records it covers, and how audit/readback prove the authorization.',
+    },
+    {
+      id: 'assignment-write-contract',
+      title: 'Assignment write contract',
+      status: 'blocked',
+      detail: 'A later packet must define lead/crew assignment write rules, idempotency, rollback posture, audit linkage, and readback proof.',
+    },
+    {
+      id: 'schedule-status-prerequisite',
+      title: 'Schedule and status prerequisite',
+      status: 'blocked',
+      detail: 'Schedule and status mutations remain separate gates until exact routes, validations, and readback proof are admitted.',
+    },
+    {
+      id: 'durable-record-production-prerequisite',
+      title: 'Durable record and production prerequisite',
+      status: 'blocked',
+      detail: 'Durable field records and production tracking remain separate gates until storage, audit, and readback proof are admitted.',
+    },
+  ]
+  const admissionCounts = approvalDryRunReadinessCounts(admissionItems)
+
+  return {
+    draft_kind: 'pm_import_candidate_field_authorization_assignment_admission_draft',
+    draft_version: 'pm_lane_151_local_field_authorization_assignment_admission_draft_v1',
+    generated_locally_at: new Date().toISOString(),
+    candidate_identity: {
+      candidate_id: candidate.candidate_id || null,
+      candidate_version: candidate.candidate_version || null,
+      project_name: project.name || null,
+      source_fingerprint: candidate.source_freshness?.aggregate_fingerprint || null,
+    },
+    field_shape: {
+      workpackage_count: summary.workpackage_count ?? null,
+      task_count: summary.task_count ?? null,
+      apparatus_candidate_count: summary.apparatus_candidate_count ?? null,
+      crew_count: summary.crew_count ?? null,
+      equipment_inventory_count: summary.equipment_inventory_count ?? null,
+    },
+    admission_draft_summary: {
+      ready_count: admissionCounts.ready,
+      needs_review_count: admissionCounts.needsReview,
+      blocked_count: admissionCounts.blocked,
+      summary: approvalDryRunReadinessSummary(admissionCounts),
+      admission_status: 'blocked_until_approval_import_and_explicit_field_authorization_packet',
+    },
+    field_execution_gate_summary: {
+      file_name: fieldExecutionGateDesignFileName(candidate),
+      ready_count: fieldExecutionGateDesign.gate_summary.ready_count,
+      needs_review_count: fieldExecutionGateDesign.gate_summary.needs_review_count,
+      blocked_count: fieldExecutionGateDesign.gate_summary.blocked_count,
+      summary: fieldExecutionGateDesign.gate_summary.summary,
+      execution_gate_status: fieldExecutionGateDesign.gate_summary.execution_gate_status,
+    },
+    lead_field_assignment_draft_summary: {
+      file_name: leadFieldAssignmentDraftFileName(candidate),
+      ready_count: leadFieldAssignmentDraft.draft_summary.ready_count,
+      needs_review_count: leadFieldAssignmentDraft.draft_summary.needs_review_count,
+      blocked_count: leadFieldAssignmentDraft.draft_summary.blocked_count,
+      summary: leadFieldAssignmentDraft.draft_summary.summary,
+      assignment_status: leadFieldAssignmentDraft.draft_summary.assignment_status,
+    },
+    proposed_admission_packet: {
+      packet_kind: 'field_authorization_and_assignment',
+      authority_status: 'not_admitted',
+      required_after: ['approval-first-row', 'project-import'],
+      required_before: ['field_execution', 'schedule_status_mutation', 'durable_field_record', 'production_tracking'],
+      proposed_routes: {
+        field_authorization_route: 'not_admitted',
+        lead_assignment_route: 'not_admitted',
+        crew_assignment_route: 'not_admitted',
+        schedule_status_route: 'not_admitted',
+        durable_field_record_route: 'not_admitted',
+        production_tracking_route: 'not_admitted',
+      },
+      minimum_proof: [
+        'accepted approval row exists',
+        'imported project/workpackage/task/apparatus rows exist',
+        'field authorization write contract is approved',
+        'lead/crew assignment idempotency is defined',
+        'audit linkage and readback are proved',
+        'downstream schedule/status and production tracking remain blocked unless separately admitted',
+      ],
+    },
+    admission_items: admissionItems,
+    proposed_packet_sequence: [
+      {
+        step: 'complete_approval_first_row_gate',
+        status: 'blocked',
+        detail: 'Use the PM Lane 142 exact admission phrase and proof before any live approval POST or first approval row.',
+      },
+      {
+        step: 'complete_project_import_gate',
+        status: 'blocked',
+        detail: 'Admit project import only after approval proof exists and import idempotency/readback rules are accepted.',
+      },
+      {
+        step: 'admit_field_authorization_contract',
+        status: 'blocked',
+        detail: 'Define field work authorization scope, PM approval requirements, audit fields, and readback proof.',
+      },
+      {
+        step: 'admit_assignment_write_contract',
+        status: 'blocked',
+        detail: 'Define lead/crew assignment target records, idempotency, replay behavior, rollback posture, and audit linkage.',
+      },
+      {
+        step: 'keep_downstream_tracking_blocked',
+        status: 'blocked',
+        detail: 'Keep schedule/status, durable field record, and production tracking writes blocked until separate packets admit them.',
+      },
+    ],
+    authority_boundary: {
+      mutation_authority: 'not_admitted',
+      local_admission_draft_only: true,
+      live_approval_post_performed: false,
+      approval_row_created: false,
+      project_import_performed: false,
+      field_authorization_created: false,
+      field_work_authorized: false,
+      lead_selected: false,
+      lead_assignment_created: false,
+      crew_assignment_created: false,
+      schedule_performed: false,
+      status_change_performed: false,
+      durable_field_record_created: false,
+      production_tracking_performed: false,
+      server_write_performed: false,
+    },
+    blocked_boundaries: Array.from(new Set([
+      ...leadFieldAssignmentDraft.blocked_boundaries,
+      'field_authorization_contract_write',
+      'lead_assignment_contract_write',
+      'crew_assignment_contract_write',
+      'assignment_audit_write',
+      'assignment_readback_route',
+    ])),
+  }
+}
+
 function buildImportExceptionRegisterExport(
   packet: IntakeWorkbenchPacket,
   importExceptionRegister: ImportExceptionRegisterItem[],
@@ -4198,6 +4389,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
   const [fieldStartPreflightStatus, setFieldStartPreflightStatus] = useState('')
   const [fieldExecutionGateDesignStatus, setFieldExecutionGateDesignStatus] = useState('')
   const [leadFieldAssignmentDraftStatus, setLeadFieldAssignmentDraftStatus] = useState('')
+  const [fieldAuthorizationAssignmentDraftStatus, setFieldAuthorizationAssignmentDraftStatus] = useState('')
   const [approvalDryRunStatus, setApprovalDryRunStatus] = useState('')
   const [approvalDryRunPreview, setApprovalDryRunPreview] = useState('')
   const [reviewChecks, setReviewChecks] = useState<Record<string, boolean>>({})
@@ -4377,7 +4569,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
   const fieldPrepAgendaCount = fieldPrepAgendaCounts(fieldPrepConversationAgenda)
   const reviewOutputStatuses = [briefStatus, previewStatus, pmIntakeSnapshotStatus, exceptionRegisterStatus].filter(Boolean)
   const executorOutputStatuses = [handoffStatus].filter(Boolean)
-  const fieldPrepOutputStatuses = [fieldBriefStatus, fieldObservationStatus, fieldPrepCoverageStatus, fieldPrepAgendaStatus, fieldPrepPacketStatus, fieldStartPreflightStatus, fieldExecutionGateDesignStatus, leadFieldAssignmentDraftStatus].filter(Boolean)
+  const fieldPrepOutputStatuses = [fieldBriefStatus, fieldObservationStatus, fieldPrepCoverageStatus, fieldPrepAgendaStatus, fieldPrepPacketStatus, fieldStartPreflightStatus, fieldExecutionGateDesignStatus, leadFieldAssignmentDraftStatus, fieldAuthorizationAssignmentDraftStatus].filter(Boolean)
   const hasOutputStatuses = reviewOutputStatuses.length > 0 || executorOutputStatuses.length > 0 || fieldPrepOutputStatuses.length > 0
 
   useEffect(() => {
@@ -4767,6 +4959,16 @@ export default function ProjectMinerIntakeWorkbenchPage() {
     setLeadFieldAssignmentDraftStatus(`Lead field assignment draft prepared from ${candidate?.candidate_id || 'the current intake packet'} without a server write.`)
   }
 
+  function exportFieldAuthorizationAssignmentDraft() {
+    if (!packet) {
+      return
+    }
+
+    const draft = buildFieldAuthorizationAssignmentDraftExport(packet, fieldPrepQueue, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, notAllowed, futureRoute, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad)
+    downloadTextFile(fieldAuthorizationAssignmentDraftFileName(candidate), `${JSON.stringify(draft, null, 2)}\n`, 'application/json')
+    setFieldAuthorizationAssignmentDraftStatus(`Field authorization assignment draft prepared from ${candidate?.candidate_id || 'the current intake packet'} without a server write.`)
+  }
+
   return (
     <main className="shell-page pm-review-page">
       <section className="hero-card pm-review-hero">
@@ -4926,6 +5128,9 @@ export default function ProjectMinerIntakeWorkbenchPage() {
                 </button>
                 <button className="btn btn-outline" onClick={exportLeadFieldAssignmentDraft} disabled={!packet}>
                   Export Lead Field Assignment Draft
+                </button>
+                <button className="btn btn-outline" onClick={exportFieldAuthorizationAssignmentDraft} disabled={!packet}>
+                  Export Field Authorization Assignment Draft
                 </button>
               </div>
             </section>

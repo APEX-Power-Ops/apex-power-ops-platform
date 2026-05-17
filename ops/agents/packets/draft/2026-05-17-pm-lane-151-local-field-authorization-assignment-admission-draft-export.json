@@ -1,0 +1,52 @@
+{
+  "packet_id": "2026-05-17-pm-lane-151",
+  "lane": "PM Lane 151",
+  "title": "Local Field Authorization Assignment Admission Draft Export",
+  "created_at_local": "2026-05-17",
+  "source_floor_commit": "17f31b3ec6d235f41b4137c7afdad8bda4f0eae3",
+  "objective": "Add a browser-local field authorization and assignment admission draft export that defines the later proof requirements for field authorization, lead assignment, crew assignment, audit/readback, and downstream tracking boundaries before any write path is admitted.",
+  "execution_mode": "local_product_code_plus_status_docs",
+  "scope": [
+    "Add an Export Field Authorization Assignment Draft action to the existing Field Prep Outputs rail.",
+    "Download one JSON artifact that includes field execution gate summary, lead field assignment draft summary, proposed admission packet, admission readiness statuses, proposed packet sequence, authority boundary flags, and blocked write boundaries.",
+    "Keep the export local-only and informational.",
+    "Extend the focused Playwright smoke to prove the downloaded field authorization assignment admission draft artifact and zero mutation requests."
+  ],
+  "not_allowed": [
+    "No live POST to /api/v1/mutations/project-import-approvals.",
+    "No approval row creation.",
+    "No hosted deployment or promotion.",
+    "No Supabase, Render, Vercel, or Olares action.",
+    "No SQL or schema migration.",
+    "No secret access or secret rotation.",
+    "No backend route or mutation route change.",
+    "No project import, workpackage rows, task rows, apparatus rows, field work authorization, field authorization contract write, lead selection, lead assignment, crew assignment, assignment audit write, assignment readback route, schedule, status, durable field record, production tracking, workbook macro, or workbook writeback.",
+    "No service, auth, DNS, ingress, or control-plane widening.",
+    "No autonomous AI business-state mutation."
+  ],
+  "field_authorization_assignment_admission_draft": {
+    "status": "not_admitted",
+    "note": "This lane creates local admission-design context only. Field authorization, lead selection, lead assignment, crew assignment, schedule/status changes, durable field records, and production tracking remain blocked until later admitted packets own those write paths."
+  },
+  "changed_files": [
+    "PROJECT_STATUS.md",
+    "apps/operations-web/app/pm-review/import-intake/page.tsx",
+    "apps/operations-web/tests/browser-shell.pm-import-intake.smoke.spec.ts",
+    "docs/operations/APEX-PM-STAKEHOLDER-TIME-PROTECTION-AND-ACCELERATION-LANE-2026-05-15.md",
+    "docs/operations/APEX-PM-TEMP-POWER-DELIVERY-AND-ORCHESTRATION-PLAN-2026-05-15.md",
+    "docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md",
+    "ops/agents/packets/draft/2026-05-17-pm-lane-151-local-field-authorization-assignment-admission-draft-export.json",
+    "ops/agents/handoffs/2026-05-17-pm-lane-151-local-field-authorization-assignment-admission-draft-export-handoff.md"
+  ],
+  "validation_steps": [
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform\" --filter @apex/operations-web typecheck",
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform\" --filter @apex/operations-web build",
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform/apps/operations-web\" exec playwright test \"browser-shell.pm-import-intake.smoke.spec.ts\"",
+    "Get-Content -Path \"ops/agents/packets/draft/2026-05-17-pm-lane-151-local-field-authorization-assignment-admission-draft-export.json\" | ConvertFrom-Json | Select-Object -ExpandProperty packet_id",
+    "rg -n \"PM Lane 151|Export Field Authorization Assignment Draft|field-authorization-assignment-draft|pm_lane_151_local_field_authorization_assignment_admission_draft_v1|mutationRequests\\)\\.toHaveLength\\(0\\)\" PROJECT_STATUS.md docs/operations ops/agents apps/operations-web",
+    "git diff --check"
+  ],
+  "validation_result": "PASS: operations-web typecheck passed, operations-web production build passed, focused PM import-intake Playwright smoke passed with 1 passed, packet JSON parsed, guardrail search confirmed PM Lane 151/field-authorization-assignment-draft/zero-mutation evidence plus Desktop Codex parked language, and git diff --check passed.",
+  "sidecar_result": "Desktop Codex NETA comparative-audit, topic-spine design, pilot-module blueprint, visual-assets structural-cleanup scout, heavy-audit cleanup cataloging phase-zero, study-root structural catalog cleanup scout, study-root manifest/freeze-gate, generated local build artifact cleanup, and development temp evidence retention cleanup closeouts remain untracked and intentionally parked for a separate technical-authority review lane. They are not staged into PM Lane 151.",
+  "next_recommended_lane": "Use this field authorization and assignment admission draft as the no-write proof checklist for the Temp Power pilot. The next PM lane should either prepare a copy/paste executor packet for the field authorization/assignment admission design or pause for explicit PM Lane 142 live approval admission before any approval POST, first approval row, import mutation, or assignment write."
+}

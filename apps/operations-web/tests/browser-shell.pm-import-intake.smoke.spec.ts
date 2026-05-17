@@ -318,7 +318,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(outputActionRail.getByLabel('PM intake output action groups')).toBeVisible()
   await expect(outputActionRail.getByLabel('Review output actions').getByRole('button')).toHaveCount(4)
   await expect(outputActionRail.getByLabel('Executor output actions').getByRole('button')).toHaveCount(1)
-  await expect(outputActionRail.getByLabel('Field prep output actions').getByRole('button')).toHaveCount(8)
+  await expect(outputActionRail.getByLabel('Field prep output actions').getByRole('button')).toHaveCount(9)
   await expect(outputActionRail.getByLabel('Refresh action').getByRole('button')).toHaveCount(1)
   await expect(outputActionRail.getByLabel('Review output actions').getByRole('button', { name: 'Export PM Brief' })).toBeVisible()
   await expect(outputActionRail.getByLabel('Review output actions').getByRole('button', { name: 'Export Approval Preview JSON' })).toBeVisible()
@@ -333,6 +333,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(outputActionRail.getByLabel('Field prep output actions').getByRole('button', { name: 'Export Field Start Preflight' })).toBeVisible()
   await expect(outputActionRail.getByLabel('Field prep output actions').getByRole('button', { name: 'Export Field Execution Gate Design' })).toBeVisible()
   await expect(outputActionRail.getByLabel('Field prep output actions').getByRole('button', { name: 'Export Lead Field Assignment Draft' })).toBeVisible()
+  await expect(outputActionRail.getByLabel('Field prep output actions').getByRole('button', { name: 'Export Field Authorization Assignment Draft' })).toBeVisible()
   await outputActionDisclosure.locator(':scope > summary').click()
   await expect(outputActionDisclosure).not.toHaveAttribute('open', '')
   await expect(outputActionRail.getByLabel('PM intake output action groups')).toBeHidden()
@@ -343,7 +344,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(outputActionRail.getByLabel('PM intake output action groups')).toBeVisible()
   await expect(outputActionRail.getByLabel('Review output actions').getByRole('button')).toHaveCount(4)
   await expect(outputActionRail.getByLabel('Executor output actions').getByRole('button')).toHaveCount(1)
-  await expect(outputActionRail.getByLabel('Field prep output actions').getByRole('button')).toHaveCount(8)
+  await expect(outputActionRail.getByLabel('Field prep output actions').getByRole('button')).toHaveCount(9)
   await expect(outputActionRail.getByLabel('Refresh action').getByRole('button')).toHaveCount(1)
   await expect(page.getByLabel('PM intake output status rail')).toHaveCount(0)
   await expectNoImpliedAuthorityControls(page)
@@ -2388,6 +2389,125 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
     'durable_field_record_writes',
   ]))
   await expect(fieldPrepOutputStatus.getByText(/Lead field assignment draft prepared from pm-import-candidate-miner-temp-power without a server write/i)).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Export Field Authorization Assignment Draft' })).toBeEnabled()
+  const fieldAuthorizationAssignmentDraftDownloadPromise = page.waitForEvent('download')
+  await page.getByRole('button', { name: 'Export Field Authorization Assignment Draft' }).click()
+  const fieldAuthorizationAssignmentDraftDownload = await fieldAuthorizationAssignmentDraftDownloadPromise
+  expect(fieldAuthorizationAssignmentDraftDownload.suggestedFilename()).toBe('pm-import-candidate-miner-temp-power-field-authorization-assignment-draft.json')
+  const fieldAuthorizationAssignmentDraftStream = await fieldAuthorizationAssignmentDraftDownload.createReadStream()
+  expect(fieldAuthorizationAssignmentDraftStream).not.toBeNull()
+  const fieldAuthorizationAssignmentDraftChunks: Buffer[] = []
+  for await (const chunk of fieldAuthorizationAssignmentDraftStream!) {
+    fieldAuthorizationAssignmentDraftChunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk))
+  }
+  const fieldAuthorizationAssignmentDraft = JSON.parse(Buffer.concat(fieldAuthorizationAssignmentDraftChunks).toString('utf8'))
+  expect(fieldAuthorizationAssignmentDraft).toMatchObject({
+    draft_kind: 'pm_import_candidate_field_authorization_assignment_admission_draft',
+    draft_version: 'pm_lane_151_local_field_authorization_assignment_admission_draft_v1',
+    candidate_identity: {
+      candidate_id: 'pm-import-candidate-miner-temp-power',
+      candidate_version: 'pm_import_candidate_read_only_v1',
+      project_name: 'Miner Temp Power',
+      source_fingerprint: 'stat-fingerprint-abc123',
+    },
+    field_shape: {
+      workpackage_count: 7,
+      task_count: 15,
+      apparatus_candidate_count: 186,
+      crew_count: 15,
+      equipment_inventory_count: 343,
+    },
+    admission_draft_summary: {
+      ready_count: 2,
+      needs_review_count: 0,
+      blocked_count: 6,
+      summary: '2 ready, 0 needs review, 6 blocked',
+      admission_status: 'blocked_until_approval_import_and_explicit_field_authorization_packet',
+    },
+    field_execution_gate_summary: {
+      file_name: 'pm-import-candidate-miner-temp-power-field-execution-gate-design.json',
+      ready_count: 1,
+      needs_review_count: 0,
+      blocked_count: 6,
+      summary: '1 ready, 0 needs review, 6 blocked',
+      execution_gate_status: 'blocked_until_approval_import_and_field_tracking_packets',
+    },
+    lead_field_assignment_draft_summary: {
+      file_name: 'pm-import-candidate-miner-temp-power-lead-field-assignment-draft.json',
+      ready_count: 3,
+      needs_review_count: 0,
+      blocked_count: 5,
+      summary: '3 ready, 0 needs review, 5 blocked',
+      assignment_status: 'blocked_until_import_field_authorization_and_assignment_packet',
+    },
+    proposed_admission_packet: {
+      packet_kind: 'field_authorization_and_assignment',
+      authority_status: 'not_admitted',
+      required_after: ['approval-first-row', 'project-import'],
+      required_before: ['field_execution', 'schedule_status_mutation', 'durable_field_record', 'production_tracking'],
+      proposed_routes: {
+        field_authorization_route: 'not_admitted',
+        lead_assignment_route: 'not_admitted',
+        crew_assignment_route: 'not_admitted',
+        schedule_status_route: 'not_admitted',
+        durable_field_record_route: 'not_admitted',
+        production_tracking_route: 'not_admitted',
+      },
+    },
+    authority_boundary: {
+      mutation_authority: 'not_admitted',
+      local_admission_draft_only: true,
+      live_approval_post_performed: false,
+      approval_row_created: false,
+      project_import_performed: false,
+      field_authorization_created: false,
+      field_work_authorized: false,
+      lead_selected: false,
+      lead_assignment_created: false,
+      crew_assignment_created: false,
+      schedule_performed: false,
+      status_change_performed: false,
+      durable_field_record_created: false,
+      production_tracking_performed: false,
+      server_write_performed: false,
+    },
+  })
+  expect(fieldAuthorizationAssignmentDraft.generated_locally_at).toEqual(expect.any(String))
+  expect(fieldAuthorizationAssignmentDraft.admission_items.map((item: { id: string, status: string }) => `${item.id}:${item.status}`)).toEqual([
+    'field-execution-gate-context:ready',
+    'lead-field-assignment-draft-context:ready',
+    'approval-first-row-prerequisite:blocked',
+    'project-import-prerequisite:blocked',
+    'field-authorization-contract:blocked',
+    'assignment-write-contract:blocked',
+    'schedule-status-prerequisite:blocked',
+    'durable-record-production-prerequisite:blocked',
+  ])
+  expect(fieldAuthorizationAssignmentDraft.proposed_packet_sequence.map((item: { step: string, status: string }) => `${item.step}:${item.status}`)).toEqual([
+    'complete_approval_first_row_gate:blocked',
+    'complete_project_import_gate:blocked',
+    'admit_field_authorization_contract:blocked',
+    'admit_assignment_write_contract:blocked',
+    'keep_downstream_tracking_blocked:blocked',
+  ])
+  expect(fieldAuthorizationAssignmentDraft.blocked_boundaries).toEqual(expect.arrayContaining([
+    'write_supabase',
+    'persist_approval_record',
+    'import_project_rows',
+    'field_work_authorization',
+    'lead_assignment_writes',
+    'crew_assignment_writes',
+    'field_authorization_write',
+    'field_authorization_contract_write',
+    'lead_assignment_contract_write',
+    'crew_assignment_contract_write',
+    'assignment_audit_write',
+    'assignment_readback_route',
+    'schedule_status_write',
+    'durable_field_record_writes',
+    'production_tracking_writes',
+  ]))
+  await expect(fieldPrepOutputStatus.getByText(/Field authorization assignment draft prepared from pm-import-candidate-miner-temp-power without a server write/i)).toBeVisible()
   await expect(page.getByRole('button', { name: 'Export Approval Preview JSON' })).toBeEnabled()
   const previewDownloadPromise = page.waitForEvent('download')
   await page.getByRole('button', { name: 'Export Approval Preview JSON' }).click()
