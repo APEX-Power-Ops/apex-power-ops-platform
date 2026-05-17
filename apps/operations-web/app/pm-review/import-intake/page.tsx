@@ -1004,6 +1004,11 @@ function pilotLaunchCaptureSheetFileName(candidate?: CandidatePayload | null) {
   return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-pilot-launch-capture-sheet.json`
 }
 
+function pilotLaunchFollowupPacketFileName(candidate?: CandidatePayload | null) {
+  const candidateId = candidate?.candidate_id || 'project-miner-intake'
+  return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-pilot-launch-follow-up-packet.json`
+}
+
 function importExceptionRegisterFileName(candidate?: CandidatePayload | null) {
   const candidateId = candidate?.candidate_id || 'project-miner-intake'
   return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-import-exception-register.md`
@@ -5893,6 +5898,167 @@ function buildPilotLaunchCaptureSheetExport(
   }
 }
 
+function buildPilotLaunchFollowupPacketExport(
+  packet: IntakeWorkbenchPacket,
+  approvalDryRunReadiness: ApprovalDryRunReadinessItem[],
+  reviewChecks: Record<string, boolean>,
+  approvalDraft: ApprovalDecisionDraft,
+  fieldPrepQueue: OperatingQueueItem[],
+  fieldPrepCoverageSnapshot: FieldPrepCoverageItem[],
+  fieldPrepConversationAgenda: FieldPrepAgendaItem[],
+  notAllowed: string[],
+  futureRoute: string,
+  fieldReadinessChecks: Record<string, boolean>,
+  fieldQuestionsDraft: FieldQuestionsDraft,
+  fieldObservationScratchpad: FieldObservationScratchpad,
+) {
+  const candidate = packet.candidate
+  const captureSheet = buildPilotLaunchCaptureSheetExport(packet, approvalDryRunReadiness, reviewChecks, approvalDraft, fieldPrepQueue, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, notAllowed, futureRoute, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad)
+  const reviewReturnSections = [
+    {
+      section_id: 'decisions-to-return',
+      source_section_id: 'pm-decisions-to-review',
+      return_mode: 'copy_paste_review_only',
+      prompt: 'Paste or summarize PM decisions that need VS Code Codex review before any later admission packet.',
+      returned_value: null,
+      prohibited_use: 'This section does not create an approval row, decision record, owner assignment, due date, or project import.',
+    },
+    {
+      section_id: 'blockers-to-return',
+      source_section_id: 'field-start-blockers',
+      return_mode: 'copy_paste_review_only',
+      prompt: 'Paste or summarize field-start blockers that need packet planning or PM follow-up.',
+      returned_value: null,
+      prohibited_use: 'This section does not authorize field work, schedule work, change status, assign a lead, or assign a crew.',
+    },
+    {
+      section_id: 'customer-site-questions-to-return',
+      source_section_id: 'customer-site-questions',
+      return_mode: 'copy_paste_review_only',
+      prompt: 'Paste or summarize customer/site questions that should remain review context until a later admitted customer-reporting lane.',
+      returned_value: null,
+      prohibited_use: 'This section does not create a customer commitment, customer report, completion evidence, or external customer delivery.',
+    },
+    {
+      section_id: 'executor-ai-relay-to-return',
+      source_section_id: 'executor-ai-relay-followup',
+      return_mode: 'copy_paste_review_only',
+      prompt: 'Paste or summarize Desktop Codex, sidecar, or executor evidence that needs technical-authority review.',
+      returned_value: null,
+      prohibited_use: 'This section does not stage executor output, approve a delegated closeout, mutate hosted services, or grant implementation authority.',
+    },
+    {
+      section_id: 'next-packet-recommendation-to-return',
+      source_section_id: 'next-packet-recommendation',
+      return_mode: 'copy_paste_review_only',
+      prompt: 'Paste or summarize the recommended next bounded packet for VS Code Codex review.',
+      returned_value: null,
+      prohibited_use: 'This section does not admit live approval, import, field, production, customer, finance, hosted-service, or autonomous AI writes.',
+    },
+  ]
+  const orchestrationReviewSlots = [
+    {
+      slot_id: 'vs-code-codex-review',
+      slot_status: 'review_context_only',
+      expected_input: 'Paste the returned follow-up notes into the next VS Code Codex review turn.',
+      prohibited_action: 'Do not treat this packet as direct approval to implement or write business state.',
+    },
+    {
+      slot_id: 'desktop-codex-closeout-review',
+      slot_status: 'review_context_only',
+      expected_input: 'Attach or summarize Desktop Codex closeout evidence when it exists.',
+      prohibited_action: 'Do not stage, merge, publish, or deploy Desktop Codex output without VS Code Codex review.',
+    },
+    {
+      slot_id: 'sidecar-scout-review',
+      slot_status: 'review_context_only',
+      expected_input: 'Attach or summarize sidecar scout findings that influence the next bounded packet.',
+      prohibited_action: 'Do not convert scout findings into assignments, schedule/status updates, customer commitments, or hosted writes.',
+    },
+  ]
+
+  return {
+    follow_up_packet_kind: 'pm_import_candidate_pilot_launch_follow_up_packet',
+    follow_up_packet_version: 'pm_lane_162_local_pilot_launch_follow_up_packet_v1',
+    generated_locally_at: new Date().toISOString(),
+    candidate_identity: captureSheet.candidate_identity,
+    field_shape: captureSheet.field_shape,
+    source_capture_sheet: {
+      file_name: pilotLaunchCaptureSheetFileName(candidate),
+      capture_sheet_kind: captureSheet.capture_sheet_kind,
+      capture_sheet_version: captureSheet.capture_sheet_version,
+      sheet_status: captureSheet.capture_sheet_summary.sheet_status,
+      section_count: captureSheet.capture_sheet_summary.section_count,
+    },
+    follow_up_summary: {
+      review_return_section_count: reviewReturnSections.length,
+      orchestration_review_slot_count: orchestrationReviewSlots.length,
+      inherited_no_go_count: captureSheet.inherited_no_go_checks.length,
+      packet_status: 'local_follow_up_packet_available_live_writes_blocked',
+    },
+    source_artifact_manifest: captureSheet.source_artifact_manifest,
+    review_return_sections: reviewReturnSections,
+    orchestration_review_slots: orchestrationReviewSlots,
+    review_return_rules: [
+      ...captureSheet.handoff_rules,
+      'use this packet as copy/paste review context only',
+      'do not create owners, due dates, action items, customer commitments, or schedule/status records from this packet',
+    ],
+    inherited_no_go_checks: captureSheet.inherited_no_go_checks,
+    next_packet_options: captureSheet.next_packet_options,
+    authority_boundary: {
+      mutation_authority: 'not_admitted',
+      persistence_authority: 'not_admitted',
+      local_pilot_launch_follow_up_packet_only: true,
+      copy_paste_review_return_only: true,
+      live_approval_post_performed: false,
+      approval_row_created: false,
+      project_import_performed: false,
+      field_authorization_created: false,
+      field_work_authorized: false,
+      lead_assignment_created: false,
+      crew_assignment_created: false,
+      owner_assignment_created: false,
+      schedule_plan_created: false,
+      status_change_performed: false,
+      durable_field_record_created: false,
+      production_tracking_performed: false,
+      customer_report_created: false,
+      customer_completion_evidence_created: false,
+      customer_commitment_created: false,
+      financial_handoff_route_created: false,
+      billing_export_created: false,
+      payroll_export_created: false,
+      invoice_record_created: false,
+      accounting_record_created: false,
+      external_finance_sync_created: false,
+      meeting_note_persisted: false,
+      action_item_persisted: false,
+      review_return_persisted: false,
+      executor_assignment_created: false,
+      due_date_assignment_created: false,
+      hosted_service_mutated: false,
+      server_write_performed: false,
+    },
+    blocked_boundaries: Array.from(new Set([
+      ...captureSheet.blocked_boundaries,
+      'pilot_launch_follow_up_packet_server_write',
+      'follow_up_packet_business_state_write',
+      'copy_paste_packet_submission',
+      'review_return_persistence',
+      'meeting_note_persistence',
+      'action_item_persistence',
+      'owner_assignment_write',
+      'due_date_assignment_write',
+      'field_direction_write',
+      'customer_commitment_write',
+      'executor_delegation_write',
+      'desktop_codex_output_publication',
+      'hosted_service_mutation',
+    ])),
+  }
+}
+
 function buildImportExceptionRegisterExport(
   packet: IntakeWorkbenchPacket,
   importExceptionRegister: ImportExceptionRegisterItem[],
@@ -6085,6 +6251,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
   const [pilotLaunchDailyBriefStatus, setPilotLaunchDailyBriefStatus] = useState('')
   const [pilotLaunchStandupCardStatus, setPilotLaunchStandupCardStatus] = useState('')
   const [pilotLaunchCaptureSheetStatus, setPilotLaunchCaptureSheetStatus] = useState('')
+  const [pilotLaunchFollowupPacketStatus, setPilotLaunchFollowupPacketStatus] = useState('')
   const [approvalDryRunStatus, setApprovalDryRunStatus] = useState('')
   const [approvalDryRunPreview, setApprovalDryRunPreview] = useState('')
   const [reviewChecks, setReviewChecks] = useState<Record<string, boolean>>({})
@@ -6264,7 +6431,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
   const fieldPrepAgendaCount = fieldPrepAgendaCounts(fieldPrepConversationAgenda)
   const reviewOutputStatuses = [briefStatus, previewStatus, pmIntakeSnapshotStatus, exceptionRegisterStatus].filter(Boolean)
   const executorOutputStatuses = [handoffStatus].filter(Boolean)
-  const fieldPrepOutputStatuses = [fieldBriefStatus, fieldObservationStatus, fieldPrepCoverageStatus, fieldPrepAgendaStatus, fieldPrepPacketStatus, fieldStartPreflightStatus, fieldExecutionGateDesignStatus, leadFieldAssignmentDraftStatus, fieldAuthorizationAssignmentDraftStatus, scheduleStatusControlsDraftStatus, durableFieldRecordDraftStatus, productionTrackingDraftStatus, customerReportingDraftStatus, financialHandoffDraftStatus, pilotLaunchBinderStatus, pilotLaunchDailyBriefStatus, pilotLaunchStandupCardStatus, pilotLaunchCaptureSheetStatus].filter(Boolean)
+  const fieldPrepOutputStatuses = [fieldBriefStatus, fieldObservationStatus, fieldPrepCoverageStatus, fieldPrepAgendaStatus, fieldPrepPacketStatus, fieldStartPreflightStatus, fieldExecutionGateDesignStatus, leadFieldAssignmentDraftStatus, fieldAuthorizationAssignmentDraftStatus, scheduleStatusControlsDraftStatus, durableFieldRecordDraftStatus, productionTrackingDraftStatus, customerReportingDraftStatus, financialHandoffDraftStatus, pilotLaunchBinderStatus, pilotLaunchDailyBriefStatus, pilotLaunchStandupCardStatus, pilotLaunchCaptureSheetStatus, pilotLaunchFollowupPacketStatus].filter(Boolean)
   const hasOutputStatuses = reviewOutputStatuses.length > 0 || executorOutputStatuses.length > 0 || fieldPrepOutputStatuses.length > 0
 
   useEffect(() => {
@@ -6754,6 +6921,16 @@ export default function ProjectMinerIntakeWorkbenchPage() {
     setPilotLaunchCaptureSheetStatus(`Pilot launch capture sheet prepared from ${candidate?.candidate_id || 'the current intake packet'} without a server write.`)
   }
 
+  function exportPilotLaunchFollowupPacket() {
+    if (!packet) {
+      return
+    }
+
+    const followupPacket = buildPilotLaunchFollowupPacketExport(packet, approvalDryRunReadiness, reviewChecks, approvalDraft, fieldPrepQueue, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, notAllowed, futureRoute, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad)
+    downloadTextFile(pilotLaunchFollowupPacketFileName(candidate), `${JSON.stringify(followupPacket, null, 2)}\n`, 'application/json')
+    setPilotLaunchFollowupPacketStatus(`Pilot launch follow-up packet prepared from ${candidate?.candidate_id || 'the current intake packet'} without a server write.`)
+  }
+
   return (
     <main className="shell-page pm-review-page">
       <section className="hero-card pm-review-hero">
@@ -6943,6 +7120,9 @@ export default function ProjectMinerIntakeWorkbenchPage() {
                 </button>
                 <button className="btn btn-outline" onClick={exportPilotLaunchCaptureSheet} disabled={!packet}>
                   Export Pilot Launch Capture Sheet
+                </button>
+                <button className="btn btn-outline" onClick={exportPilotLaunchFollowupPacket} disabled={!packet}>
+                  Export Pilot Launch Follow-Up Packet
                 </button>
               </div>
             </section>
