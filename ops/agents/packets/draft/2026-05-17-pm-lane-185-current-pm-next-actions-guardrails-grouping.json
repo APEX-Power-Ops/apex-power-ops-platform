@@ -1,0 +1,48 @@
+{
+  "packet_id": "2026-05-17-pm-lane-185",
+  "title": "PM Lane 185 - Current PM Next Actions And Guardrails Grouping",
+  "lane": "PM lane development",
+  "status": "completed",
+  "owner": "VS Code Codex",
+  "authority": "repo technical authority; PM lane implementation authority; final integration authority",
+  "date": "2026-05-17",
+  "objective": "Reduce Project Miner Temp Power final-footer scan burden by grouping the existing Current PM Next Actions and Guardrails cards without changing the #guardrails anchor, footer heading, card titles, list text, list order, not-allowed fallback rendering, disclosure behavior, no-storage posture, route behavior, quick-jump behavior, or write boundaries.",
+  "scope": [
+    "Grouped the existing Current PM Next Actions card and Not Allowed Now card into Current Review Actions and Blocked Write Guardrails.",
+    "Preserved the details#guardrails anchor, heading, default-open disclosure behavior, body/control wrappers, two existing cards, action list text/order, not-allowed list fallback rendering, route and quick-jump behavior, and no-disclosure-storage posture.",
+    "Kept the footer as read-only authority context only with no approval, import, field, production, finance, hosted, or mutation authority changes.",
+    "Used a read-only sidecar to verify the grouping shape while VS Code Codex retained PM implementation and final integration authority."
+  ],
+  "guardrails": [
+    "No hosted service access.",
+    "No Supabase, Render, Vercel, or Olares product action.",
+    "No SQL or schema migration.",
+    "No browser approval button, approval POST wiring, approval submission, or approval-row creation.",
+    "No project import mutation.",
+    "No field authorization, assignment, schedule/status, durable field record, production tracking, customer report, completion evidence, billing, payroll, invoice, accounting, or external finance-system write.",
+    "No workbook macro or writeback.",
+    "No new export action, export handler, filename, payload version, localStorage key, backend route, service/auth/ingress change, or autonomous AI business-state mutation."
+  ],
+  "changed_files": [
+    "apps/operations-web/app/pm-review/import-intake/page.tsx",
+    "apps/operations-web/tests/browser-shell.pm-import-intake.smoke.spec.ts",
+    "PROJECT_STATUS.md",
+    "docs/operations/APEX-PM-STAKEHOLDER-TIME-PROTECTION-AND-ACCELERATION-LANE-2026-05-15.md",
+    "docs/operations/APEX-PM-TEMP-POWER-DELIVERY-AND-ORCHESTRATION-PLAN-2026-05-15.md",
+    "docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md",
+    "ops/agents/packets/draft/2026-05-17-pm-lane-185-current-pm-next-actions-guardrails-grouping.json",
+    "ops/agents/handoffs/2026-05-17-pm-lane-185-current-pm-next-actions-guardrails-grouping-handoff.md"
+  ],
+  "validation": [
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform\" --filter @apex/operations-web typecheck",
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform/apps/operations-web\" exec playwright test \"browser-shell.pm-import-intake.smoke.spec.ts\"",
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform\" --filter @apex/operations-web build",
+    "Get-Content -LiteralPath \"C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-17-pm-lane-185-current-pm-next-actions-guardrails-grouping.json\" | ConvertFrom-Json | Select-Object -ExpandProperty packet_id",
+    "rg -n \"PM Lane 185|Current PM guardrail groups|Current Review Actions guardrail group|Blocked Write Guardrails guardrail group|mutationRequests\\)\\.toHaveLength\\(0\\)\" PROJECT_STATUS.md docs/operations ops/agents apps/operations-web",
+    "git diff --check"
+  ],
+  "validation_result": "PASS - operations-web typecheck passed; focused Playwright pm import-intake smoke passed; operations-web build passed; packet JSON parsed; PM Lane 185 guardrail rg passed; git diff --check passed with only expected CRLF warnings on touched and unrelated markdown files.",
+  "sidecar_result": "Read-only sidecar Locke recommended grouping the existing two guardrail footer cards into Current Review Actions and Blocked Write Guardrails while preserving details#guardrails, the summary heading, body/control wrappers, both existing cards, list text/order, not-allowed fallback rendering, quick-jump behavior, no-storage posture, and mutation boundary.",
+  "next_recommended_lane": "PM Lane 186 - PM Intake Workbench Visual QA And Mobile Scan",
+  "execution_result": "PASS"
+}

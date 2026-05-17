@@ -9235,24 +9235,36 @@ export default function ProjectMinerIntakeWorkbenchPage() {
             <h2 style={{ display: 'inline', margin: 0 }}>Current PM Next Actions and Guardrails</h2>
           </summary>
           <div aria-label="Current PM guardrails body controls">
-            <div aria-label="Current PM guardrails controls" className="notes-grid" style={{ marginTop: '0.85rem' }}>
-              <article className="notes-card">
-                <h2>Current PM Next Actions</h2>
-                <ol>
-                  <li>Review candidate exceptions, source freshness, and required human decisions.</li>
-                  <li>Confirm the Project Miner source files have not changed before any future approval packet is used.</li>
-                  <li>Treat hosted schema, hosted readback, and bounded Supabase read proof as green, with approval rows still at zero.</li>
-                  <li>Keep browser approval submission and project import blocked until later packets explicitly admit those writes.</li>
-                </ol>
-              </article>
-              <article className="notes-card accent-card">
-                <h2>Not Allowed Now</h2>
-                <ul>
-                  {(notAllowed.length ? notAllowed : ['write_supabase', 'persist_approval_record', 'import_project_rows', 'run_workbook_macros', 'assign_work', 'mutate_schedule', 'change_status']).map((item) => (
-                    <li key={item}>{formatLabel(item)}</li>
-                  ))}
-                </ul>
-              </article>
+            <div aria-label="Current PM guardrails controls">
+              <div aria-label="Current PM guardrail groups" className="notes-grid" style={{ marginTop: '0.85rem' }}>
+                <section aria-label="Current Review Actions guardrail group">
+                  <h3 style={{ fontSize: '0.95rem', margin: '0 0 0.65rem' }}>Current Review Actions</h3>
+                  <div aria-label="Current Review Actions guardrail items" style={{ display: 'grid', gap: '0.75rem' }}>
+                    <article className="notes-card">
+                      <h2>Current PM Next Actions</h2>
+                      <ol>
+                        <li>Review candidate exceptions, source freshness, and required human decisions.</li>
+                        <li>Confirm the Project Miner source files have not changed before any future approval packet is used.</li>
+                        <li>Treat hosted schema, hosted readback, and bounded Supabase read proof as green, with approval rows still at zero.</li>
+                        <li>Keep browser approval submission and project import blocked until later packets explicitly admit those writes.</li>
+                      </ol>
+                    </article>
+                  </div>
+                </section>
+                <section aria-label="Blocked Write Guardrails guardrail group">
+                  <h3 style={{ fontSize: '0.95rem', margin: '0 0 0.65rem' }}>Blocked Write Guardrails</h3>
+                  <div aria-label="Blocked Write Guardrails guardrail items" style={{ display: 'grid', gap: '0.75rem' }}>
+                    <article className="notes-card accent-card">
+                      <h2>Not Allowed Now</h2>
+                      <ul>
+                        {(notAllowed.length ? notAllowed : ['write_supabase', 'persist_approval_record', 'import_project_rows', 'run_workbook_macros', 'assign_work', 'mutate_schedule', 'change_status']).map((item) => (
+                          <li key={item}>{formatLabel(item)}</li>
+                        ))}
+                      </ul>
+                    </article>
+                  </div>
+                </section>
+              </div>
             </div>
           </div>
         </details>
