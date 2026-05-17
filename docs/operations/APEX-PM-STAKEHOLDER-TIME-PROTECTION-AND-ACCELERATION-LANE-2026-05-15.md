@@ -78,8 +78,8 @@ Any extra step must justify itself by reducing risk, reducing future workload, o
 Immediate prioritized PM task lanes:
 
 1. Local PM intake workbench usability - active and local-current through PM Lane 137. The safe local ergonomics run has reduced Jason's daily scan burden on `/pm-review/import-intake`; PM Lane 136 adds the repo-local backend approval-record persistence path and PM Lane 137 now shows approval status readback without requiring Jason to inspect backend details or relay context manually.
-2. Hosted PM intake parity - accepted green for the PM intake path and broader deployed mutation-seam reads through Desktop Codex execution of PM Lane 041A, PM Lane 041B, PM Lane 041C, and the PM Lane 076 dispatch binder. Vercel production is green, Render PM-intake reads are green, the former Supabase pooler DSN blocker for DB-backed approval/schedule reads is cleared, and PM Lane 139 now tightens the hosted smoke/closeout contract for the PM Lane 138 migration gate.
-3. Approval/import authority - narrowly advanced for approval-record persistence only. PM Lane 136 implements the dedicated table migration, insert-only adapter, PM-only mutation route, idempotent replay, audit linkage, and readback classifier locally; PM Lane 137 adds read-only status surfacing and a PM Lane 138 hosted gate prompt; PM Lane 139 makes the standard hosted smokes prove approval-status GET plus approval POST OpenAPI registration without live POST. Live SQL execution and hosted deployment remain isolated to the separate PM Lane 138 migration-003 gate, while frontend POST wiring and project import mutation remain blocked until later packets explicitly admit them.
+2. Hosted PM intake parity - accepted green for the PM intake path and broader deployed mutation-seam reads through Desktop Codex execution of PM Lane 041A, PM Lane 041B, PM Lane 041C, and the PM Lane 076 dispatch binder. Vercel production is green, Render PM-intake reads are green, the former Supabase pooler DSN blocker for DB-backed approval/schedule reads is cleared, PM Lane 138 applies the approval-persistence hosted schema gate, and PM Lane 139 tightens the reusable hosted smoke/closeout contract.
+3. Approval/import authority - narrowly advanced for approval-record persistence only. PM Lane 136 implements the dedicated table migration, insert-only adapter, PM-only mutation route, idempotent replay, audit linkage, and readback classifier locally; PM Lane 137 adds read-only status surfacing; PM Lane 138 applies the hosted approval table/schema gate with zero approval rows; PM Lane 139 makes the standard hosted smokes prove approval-status GET plus approval POST OpenAPI registration without live POST. Frontend POST wiring and project import mutation remain blocked until later packets explicitly admit them.
 
 Pilot expansion to PM, Lead, and Field execution remains downstream of these three lanes and must not be pulled forward by local UI progress alone.
 
@@ -675,6 +675,12 @@ The current hosted-gate orchestration tranche is:
 `Approval Persistence Hosted Gate Smoke And Closeout Contract Tightening`
 
 PM Lane 139 executes that tranche locally. It makes the standard hosted mutation-seam and paired PM-intake smokes verify approval-status GET readback plus approval POST OpenAPI registration, and it aligns the hosted closeout template with the PM Lane 138 migration-003 exception. This reduces executor ambiguity without asking Jason to relay the evidence contract manually, and still avoids live SQL execution, hosted deployment, approval row creation, live POST smoke, frontend approval controls, project import, assignment, schedule, status, durable field records, and production tracking writes.
+
+The current hosted schema-gate tranche is:
+
+`Approval Persistence Hosted Application Gate`
+
+PM Lane 138 is accepted closed. Codex used the authenticated native Supabase connector to apply exactly migration 003, proved the hosted approval table and insert-only triggers exist, proved no approval records were created, and reran hosted mutation-seam plus paired PM-intake smokes green. This reduces the remaining hosted relay burden for the approval workflow, while keeping browser approval controls, live approval POST smoke, project import, assignment, schedule, status, durable field records, and production tracking writes outside authority.
 
 The success standard is not just technical correctness. The candidate must reduce Jason's review burden by showing:
 
