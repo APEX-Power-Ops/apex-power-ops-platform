@@ -359,6 +359,16 @@ type FieldStartOperatorScriptItem = {
   detail: string
 }
 
+type FieldStartStopLineReviewStatus = 'blocked' | 'context'
+
+type FieldStartStopLineReviewItem = {
+  id: string
+  title: string
+  status: FieldStartStopLineReviewStatus
+  href: string
+  detail: string
+}
+
 type OutputSelectorStatus = 'available-context' | 'needs-local-context' | 'field-context' | 'blocked'
 
 type OutputSelectorItem = {
@@ -965,6 +975,11 @@ function dailyReviewScriptTone(status: DailyReviewScriptStatus) {
 
 function fieldStartOperatorScriptTone(status: FieldStartOperatorScriptStatus) {
   if (status === 'say-now' || status === 'check' || status === 'export') return 'status-configured'
+  return 'status-deferred'
+}
+
+function fieldStartStopLineReviewTone(status: FieldStartStopLineReviewStatus) {
+  if (status === 'context') return 'status-configured'
   return 'status-deferred'
 }
 
@@ -2348,6 +2363,55 @@ function buildFieldStartOperatorScript(
       status: 'blocked',
       href: '#guardrails',
       detail: `Do not approve, import, authorize field work, assign crews, schedule/status work, create durable field records, or start production tracking from this workbench. Field observations present: ${fieldObservationsPresent ? 'yes' : 'no'}.`,
+    },
+  ]
+}
+
+function buildFieldStartStopLineReview(
+  candidate: CandidatePayload | undefined,
+  fieldStartPreflight: ReturnType<typeof buildFieldStartPreflightExport> | null,
+  notAllowed: string[],
+): FieldStartStopLineReviewItem[] {
+  const projectName = candidate?.project?.name || candidate?.candidate_id || 'current Project Miner candidate'
+  const preflightSummary = fieldStartPreflight?.preflight_summary.summary || 'field-start preflight pending'
+  const fieldStartStatus = fieldStartPreflight?.preflight_summary.field_start_status || 'blocked_until_field_authority_and_tracking_packet'
+  const blockedBoundaryCount = fieldStartPreflight?.blocked_boundaries.length || notAllowed.length
+
+  return [
+    {
+      id: 'field-authority-stop-line',
+      title: 'Field authority stop line',
+      status: 'blocked',
+      href: '#field-prep',
+      detail: `${projectName}: field start authority remains ${formatLabel(fieldStartStatus)}; preflight is ${preflightSummary}.`,
+    },
+    {
+      id: 'assignment-schedule-status-stop-line',
+      title: 'Assignment, schedule, and status stop line',
+      status: 'blocked',
+      href: '#guardrails',
+      detail: 'Do not assign leads or crews, schedule work, alter status, or direct field execution from this workbench.',
+    },
+    {
+      id: 'durable-production-stop-line',
+      title: 'Durable record and production stop line',
+      status: 'blocked',
+      href: '#guardrails',
+      detail: 'Do not create durable field records, production quantities, progress rows, completion evidence, or customer-facing production truth.',
+    },
+    {
+      id: 'customer-finance-stop-line',
+      title: 'Customer and finance stop line',
+      status: 'blocked',
+      href: '#guardrails',
+      detail: 'Do not create customer reports, billing exports, payroll exports, invoices, accounting postings, or external finance-system syncs.',
+    },
+    {
+      id: 'context-only-stop-line',
+      title: 'Context-only use',
+      status: 'context',
+      href: '#approval-readiness',
+      detail: `Use the operator script and local exports only as conversation context; ${blockedBoundaryCount} blocked boundaries remain outside this browser-local review.`,
     },
   ]
 }
@@ -7023,6 +7087,10 @@ export default function ProjectMinerIntakeWorkbenchPage() {
     () => buildFieldStartOperatorScript(candidate, fieldStartPreflight, fieldPrepQueue, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, fieldQuestionsDraft, fieldObservationScratchpad),
     [candidate, fieldStartPreflight, fieldPrepQueue, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, fieldQuestionsDraft, fieldObservationScratchpad],
   )
+  const fieldStartStopLineReview = useMemo(
+    () => buildFieldStartStopLineReview(candidate, fieldStartPreflight, notAllowed),
+    [candidate, fieldStartPreflight, notAllowed],
+  )
   const pmIntakeSnapshot = useMemo(
     () => buildPmIntakeSnapshot(persistenceReadinessGates, operatingQueue, importExceptionRegister, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, closeoutChecks, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad, approvalDraft),
     [persistenceReadinessGates, operatingQueue, importExceptionRegister, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, closeoutChecks, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad, approvalDraft],
@@ -8074,6 +8142,38 @@ export default function ProjectMinerIntakeWorkbenchPage() {
                       <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
                     </div>
                     <span className={`status-pill ${fieldStartOperatorScriptTone(item.status)}`}>{formatLabel(item.status)}</span>
+                  </div>
+                </a>
+              ))}
+            </div>
+          </div>
+        </details>
+
+        <details open id="pm-field-start-stop-line-review" aria-label="Local field start stop-line quick review" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
+          <summary className="status-row" style={{ cursor: 'pointer' }}>
+            <h2 style={{ margin: 0 }}>Local Field Start Stop-Line Quick Review</h2>
+            <span className="status-pill status-deferred">blocked writes</span>
+          </summary>
+          <div aria-label="Local field start stop-line quick review controls">
+            <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+              Morning-of Temp Power stop-line check for the field-start conversation. It creates no approval, import, field, production, customer, or finance write; no localStorage key, export artifact, backend route, approval row, field authorization, assignment, schedule/status change, durable field record, production tracking row, customer report, finance output, hosted write claim, or production write.
+            </p>
+            <div style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
+              {fieldStartStopLineReview.map((item) => (
+                <a
+                  key={item.id}
+                  className="card"
+                  href={item.href}
+                  style={{ color: 'inherit', display: 'block', padding: '0.85rem', textDecoration: 'none', boxShadow: 'none' }}
+                >
+                  <div className="status-row" style={{ alignItems: 'start' }}>
+                    <div>
+                      <p style={{ margin: 0 }}>
+                        <strong>{item.title}</strong>
+                      </p>
+                      <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
+                    </div>
+                    <span className={`status-pill ${fieldStartStopLineReviewTone(item.status)}`}>{formatLabel(item.status)}</span>
                   </div>
                 </a>
               ))}
