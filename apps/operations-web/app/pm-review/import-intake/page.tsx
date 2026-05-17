@@ -9341,6 +9341,23 @@ export default function ProjectMinerIntakeWorkbenchPage() {
               ))}
             </div>
           </section>
+          <section
+            id="pm-field-start-bring-back-local-review-closeout-cue"
+            role="note"
+            aria-label="Local field-start bring-back local review closeout cue"
+            className="card"
+            style={{ padding: '0.9rem', marginTop: '0.85rem', boxShadow: 'none' }}
+          >
+            <div className="status-row" style={{ alignItems: 'start' }}>
+              <div>
+                <h3 style={{ margin: 0 }}>Local Field Start Bring-Back Local Review Closeout Cue</h3>
+                <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+                  PM Lane 204 cue: before leaving this bring-back panel, keep the return as browser-local review only. Classify what still belongs in source review, customer/site clarification, lead/resource clarification, or future packet classification; do not record meeting notes, create tasks, assign owners, set dates, direct field work, publish reports, call routes, create storage, export artifacts, expose controls, or admit write paths.
+                </p>
+              </div>
+              <span className="status-pill status-blocked">local closeout cue</span>
+            </div>
+          </section>
         </details>
 
         <details open id="pm-start-here" aria-label="Local PM intake start here" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>

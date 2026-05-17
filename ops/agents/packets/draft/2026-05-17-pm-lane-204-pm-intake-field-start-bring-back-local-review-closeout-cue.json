@@ -1,0 +1,43 @@
+{
+  "packet_id": "2026-05-17-pm-lane-204",
+  "title": "PM Lane 204 - PM Intake Field Start Bring-Back Local Review Closeout Cue",
+  "lane": "PM",
+  "status": "completed",
+  "created_at": "2026-05-17",
+  "completed_at": "2026-05-17",
+  "summary": [
+    "Added a browser-local `Local Review Closeout Cue` at the end of the existing field-start bring-back panel on `/pm-review/import-intake`.",
+    "Placed the cue after source review, customer/site clarification, lead/resource clarification, and later bounded packet candidate review are all visible so Jason gets a final no-write reminder before leaving the bring-back panel.",
+    "Explained that PM Lane 204 keeps the return as browser-local review only: context may be classified into source review, customer/site clarification, lead/resource clarification, or future packet classification, but no meeting note, task, owner, date, field direction, customer report, route, storage, export, control, or write path is created.",
+    "Kept the cue browser-local and non-interactive: no meeting-note capture, no localStorage or sessionStorage key, no export artifact, no backend route, no link, no button, no input, no textarea, no select, no task, no action item, no owner/due-date field, no lead selection, no crew assignment, no schedule/status write, no field instruction, no durable record, no production tracking row, no hosted write claim, and no production write.",
+    "Extended the focused read-only PM import-intake smoke to prove desktop presence, 390x844 mobile visibility, cue copy, zero links/buttons/inputs/textarea/select controls, no localStorage or sessionStorage local review closeout cue keys, no implied-authority link/control text, and zero mutation calls.",
+    "Used read-only sidecar Dewey for placement and guardrail review only; VS Code Codex retained PM lane implementation and final integration authority."
+  ],
+  "changed_files": [
+    "apps/operations-web/app/pm-review/import-intake/page.tsx",
+    "apps/operations-web/tests/browser-shell.pm-import-intake.smoke.spec.ts",
+    "PROJECT_STATUS.md",
+    "docs/operations/APEX-PM-STAKEHOLDER-TIME-PROTECTION-AND-ACCELERATION-LANE-2026-05-15.md",
+    "docs/operations/APEX-PM-TEMP-POWER-DELIVERY-AND-ORCHESTRATION-PLAN-2026-05-15.md",
+    "docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md",
+    "ops/agents/packets/draft/2026-05-17-pm-lane-204-pm-intake-field-start-bring-back-local-review-closeout-cue.json",
+    "ops/agents/handoffs/2026-05-17-pm-lane-204-pm-intake-field-start-bring-back-local-review-closeout-cue-handoff.md"
+  ],
+  "validation": [
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform\" --filter @apex/operations-web typecheck",
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform/apps/operations-web\" exec playwright test \"browser-shell.pm-import-intake.smoke.spec.ts\"",
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform\" --filter @apex/operations-web build",
+    "Get-Content -LiteralPath 'ops/agents/packets/draft/2026-05-17-pm-lane-204-pm-intake-field-start-bring-back-local-review-closeout-cue.json' | ConvertFrom-Json | Select-Object -ExpandProperty packet_id",
+    "rg -n \"PM Lane 204|Field Start Bring-Back Local Review Closeout Cue|pm-field-start-bring-back-local-review-closeout-cue|Local Review Closeout Cue|localReviewCloseoutCue|mutationRequests\\)\\.toHaveLength\\(0\\)\" PROJECT_STATUS.md docs/operations ops/agents apps/operations-web",
+    "null-byte check on PM status docs",
+    "git diff --check"
+  ],
+  "validation_result": "PASS - operations-web typecheck passed; focused Playwright PM import-intake smoke passed cleanly with the local review closeout cue, 390x844 mobile proof, zero cue links/buttons/inputs/textarea/select controls, no localStorage or sessionStorage local review closeout cue keys, no implied-authority link/control text, and zero mutation calls; operations-web production build passed with /pm-review/import-intake in the route output; packet JSON parsed as 2026-05-17-pm-lane-204; PM Lane 204 guardrail rg passed; null-byte check passed on PM status docs; git diff --check passed with only expected LF-to-CRLF warnings on touched and unrelated files.",
+  "sidecar_result": "Dewey completed read-only placement and guardrail review only and recommended a narrower customer/site clarification lens placement. VS Code Codex instead kept the cue at the end of the full bring-back panel so the final no-write closeout reminder appears after source review, customer/site clarification, lead/resource clarification, and later bounded packet candidate review are all visible. VS Code Codex retained PM lane implementation/final integration authority. No files were edited, staged, or committed by the sidecar.",
+  "guardrails": [
+    "No meeting-note capture was added.",
+    "No localStorage key/schema or sessionStorage key/schema was added for the local review closeout cue.",
+    "No export artifact, link, button, input, textarea, select, handler, backend route, read seam, write seam, SQL, schema migration, hosted service call, approval POST, approval row, project import, field authorization, lead selection, crew assignment, schedule/status write, field instruction, durable field record, production tracking row, customer report, billing/payroll/invoice/accounting output, workbook macro/writeback, or autonomous AI business-state mutation was introduced."
+  ],
+  "next_recommended_lane": "PM Lane 205 - PM Intake Field Start Bring-Back Review Exit Summary, only if a display-only exit summary would reduce Jason's morning scan burden without adding state or write authority."
+}

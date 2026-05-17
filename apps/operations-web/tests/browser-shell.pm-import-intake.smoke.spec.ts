@@ -65,6 +65,7 @@ async function expectWorkbenchViewportScan(page: Page, viewport: { width: number
       ['field-start-lead-resource-clarification-bring-back-lens', '#pm-field-start-lead-resource-clarification-bring-back-lens'],
       ['field-start-later-bounded-packet-candidate-bring-back-lens', '#pm-field-start-later-bounded-packet-candidate-bring-back-lens'],
       ['field-start-later-bounded-packet-future-boundary-reminder', '#pm-field-start-later-bounded-packet-future-boundary-reminder'],
+      ['field-start-bring-back-local-review-closeout-cue', '#pm-field-start-bring-back-local-review-closeout-cue'],
       ['start-here', '#pm-start-here'],
       ['output-selector', '#pm-output-selector'],
       ['command-center', '#pm-command-center'],
@@ -387,6 +388,15 @@ async function expectMobileFieldLaunchUsePath(page: Page, mutationRequests: stri
   await expect(laterBoundedPacketCandidateBringBackLens.getByRole('link', { name: /Evidence\/context check/i })).toHaveAttribute('href', '#field-prep')
   await expect(laterBoundedPacketCandidateBringBackLens.getByRole('link', { name: /Owner\/timing language check/i })).toHaveAttribute('href', '#guardrails')
   await expect(laterBoundedPacketCandidateBringBackLens.getByRole('link', { name: /Bounded packet stop line/i })).toHaveAttribute('href', '#guardrails')
+  const localReviewCloseoutCue = fieldStartCustomerSiteQuestions.locator('section#pm-field-start-bring-back-local-review-closeout-cue[aria-label="Local field-start bring-back local review closeout cue"]')
+  await expect(localReviewCloseoutCue).toBeVisible()
+  await expect(localReviewCloseoutCue).toHaveAttribute('role', 'note')
+  await expect(localReviewCloseoutCue.getByRole('heading', { name: /Local Field Start Bring-Back Local Review Closeout Cue/i })).toBeVisible()
+  await expect(localReviewCloseoutCue.getByText('local closeout cue', { exact: true })).toBeVisible()
+  await expect(localReviewCloseoutCue.getByText(/PM Lane 204 cue: before leaving this bring-back panel, keep the return as browser-local review only/i)).toBeVisible()
+  await expect(localReviewCloseoutCue.getByText(/Classify what still belongs in source review, customer\/site clarification, lead\/resource clarification, or future packet classification/i)).toBeVisible()
+  await expect(localReviewCloseoutCue.getByText(/do not record meeting notes, create tasks, assign owners, set dates, direct field work, publish reports, call routes, create storage, export artifacts, expose controls, or admit write paths/i)).toBeVisible()
+  await expect(localReviewCloseoutCue.locator('a,button,input,textarea,select')).toHaveCount(0)
   const fieldPrepMinuteLink = dailyScript.getByRole('link', { name: /Minute 3: Check field-prep questions/i })
   await expect(fieldPrepMinuteLink).toHaveAttribute('href', '#field-prep')
   await fieldPrepMinuteLink.click()
@@ -469,6 +479,10 @@ async function expectMobileFieldLaunchUsePath(page: Page, mutationRequests: stri
   expect(futureBoundaryReminderStorageKeys).toEqual([])
   const futureBoundaryReminderSessionKeys = await page.evaluate(() => Object.keys(window.sessionStorage).filter((key) => key.startsWith('pm-import-intake-') && /lane.?203|future.?packet.?boundary|boundary.?reminder|packet.?creation|owner|due.?date|assignment|schedule.?status|customer.?report|field.?instruction|backend.?route|write.?path/i.test(key)))
   expect(futureBoundaryReminderSessionKeys).toEqual([])
+  const localReviewCloseoutCueStorageKeys = await page.evaluate(() => Object.keys(window.localStorage).filter((key) => key.startsWith('pm-import-intake-') && /lane.?204|local.?review.?closeout|closeout.?cue|bring.?back.?closeout|review.?closeout|write.?path/i.test(key)))
+  expect(localReviewCloseoutCueStorageKeys).toEqual([])
+  const localReviewCloseoutCueSessionKeys = await page.evaluate(() => Object.keys(window.sessionStorage).filter((key) => key.startsWith('pm-import-intake-') && /lane.?204|local.?review.?closeout|closeout.?cue|bring.?back.?closeout|review.?closeout|write.?path/i.test(key)))
+  expect(localReviewCloseoutCueSessionKeys).toEqual([])
   expect(mutationRequests).toHaveLength(0)
   await page.setViewportSize({ width: 1280, height: 720 })
 }
@@ -853,6 +867,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(dailyActionPanels.locator('section#pm-field-start-lead-resource-clarification-bring-back-lens[aria-label="Local field-start lead/resource clarification bring-back lens"]')).toHaveCount(1)
   await expect(dailyActionPanels.locator('section#pm-field-start-later-bounded-packet-candidate-bring-back-lens[aria-label="Local field-start later bounded packet candidate bring-back lens"]')).toHaveCount(1)
   await expect(dailyActionPanels.locator('#pm-field-start-later-bounded-packet-future-boundary-reminder[aria-label="PM Lane 203 future packet boundary reminder"]')).toHaveCount(1)
+  await expect(dailyActionPanels.locator('section#pm-field-start-bring-back-local-review-closeout-cue[aria-label="Local field-start bring-back local review closeout cue"]')).toHaveCount(1)
   await expect(dailyActionPanels.locator('details#pm-start-here[aria-label="Local PM intake start here"]')).toHaveCount(1)
   await expect(dailyActionPanels.locator('details#pm-output-selector[aria-label="Local PM intake output selector"]')).toHaveCount(1)
   await expect(dailyActionPanels.locator('#pm-handoff-guide')).toHaveCount(1)
@@ -2467,6 +2482,10 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   expect(futureBoundaryReminderStorageKeys).toEqual([])
   const futureBoundaryReminderSessionKeys = await page.evaluate(() => Object.keys(window.sessionStorage).filter((key) => key.startsWith('pm-import-intake-') && /lane.?203|future.?packet.?boundary|boundary.?reminder|packet.?creation|owner|due.?date|assignment|schedule.?status|customer.?report|field.?instruction|backend.?route|write.?path/i.test(key)))
   expect(futureBoundaryReminderSessionKeys).toEqual([])
+  const localReviewCloseoutCueStorageKeys = await page.evaluate(() => Object.keys(window.localStorage).filter((key) => key.startsWith('pm-import-intake-') && /lane.?204|local.?review.?closeout|closeout.?cue|bring.?back.?closeout|review.?closeout|write.?path/i.test(key)))
+  expect(localReviewCloseoutCueStorageKeys).toEqual([])
+  const localReviewCloseoutCueSessionKeys = await page.evaluate(() => Object.keys(window.sessionStorage).filter((key) => key.startsWith('pm-import-intake-') && /lane.?204|local.?review.?closeout|closeout.?cue|bring.?back.?closeout|review.?closeout|write.?path/i.test(key)))
+  expect(localReviewCloseoutCueSessionKeys).toEqual([])
   await expect(laterBoundedPacketCandidateBringBackLens.getByRole('link', { name: /Future packet trigger check/i })).toHaveAttribute('href', '#guardrails')
   await expect(laterBoundedPacketCandidateBringBackLens.getByRole('link', { name: /Authority admission check/i })).toHaveAttribute('href', '#guardrails')
   await expect(laterBoundedPacketCandidateBringBackLens.getByRole('link', { name: /Evidence\/context check/i })).toHaveAttribute('href', '#field-prep')
@@ -2477,6 +2496,15 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(laterBoundedPacketCandidateBringBackLens.getByText(/If the return depends on a drawing, workbook, site note, observer, work area, or source record/i)).toBeVisible()
   await expect(laterBoundedPacketCandidateBringBackLens.getByText(/If the return needs owner, due date, timing, customer-facing language, field direction, or accountability/i)).toBeVisible()
   await expect(laterBoundedPacketCandidateBringBackLens.getByText(/if a returned item needs a task, action item, owner, due date, assignment, timing field, schedule\/status write, customer commitment, customer report, field instruction, durable record, production tracking, export, backend route, storage key, button, or write authority/i)).toBeVisible()
+  const localReviewCloseoutCue = fieldStartCustomerSiteQuestions.locator('section#pm-field-start-bring-back-local-review-closeout-cue[aria-label="Local field-start bring-back local review closeout cue"]')
+  await expect(localReviewCloseoutCue).toBeVisible()
+  await expect(localReviewCloseoutCue).toHaveAttribute('role', 'note')
+  await expect(localReviewCloseoutCue.getByRole('heading', { name: /Local Field Start Bring-Back Local Review Closeout Cue/i })).toBeVisible()
+  await expect(localReviewCloseoutCue.getByText('local closeout cue', { exact: true })).toBeVisible()
+  await expect(localReviewCloseoutCue.getByText(/PM Lane 204 cue: before leaving this bring-back panel, keep the return as browser-local review only/i)).toBeVisible()
+  await expect(localReviewCloseoutCue.getByText(/Classify what still belongs in source review, customer\/site clarification, lead\/resource clarification, or future packet classification/i)).toBeVisible()
+  await expect(localReviewCloseoutCue.getByText(/do not record meeting notes, create tasks, assign owners, set dates, direct field work, publish reports, call routes, create storage, export artifacts, expose controls, or admit write paths/i)).toBeVisible()
+  await expect(localReviewCloseoutCue.locator('a,button,input,textarea,select')).toHaveCount(0)
   const fieldReadiness = page.locator('details[aria-label="Local field readiness checklist"]')
   await expect(fieldReadiness).toHaveAttribute('open', '')
   await expect(fieldReadiness.getByRole('heading', { name: /Local Field Readiness Checklist/i })).toBeVisible()
