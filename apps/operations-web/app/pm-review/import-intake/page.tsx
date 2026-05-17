@@ -944,6 +944,11 @@ function fieldStartPreflightFileName(candidate?: CandidatePayload | null) {
   return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-field-start-preflight.json`
 }
 
+function fieldExecutionGateDesignFileName(candidate?: CandidatePayload | null) {
+  const candidateId = candidate?.candidate_id || 'project-miner-intake'
+  return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-field-execution-gate-design.json`
+}
+
 function importExceptionRegisterFileName(candidate?: CandidatePayload | null) {
   const candidateId = candidate?.candidate_id || 'project-miner-intake'
   return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-import-exception-register.md`
@@ -3662,6 +3667,153 @@ function buildFieldStartPreflightExport(
   }
 }
 
+function buildFieldExecutionGateDesignExport(
+  packet: IntakeWorkbenchPacket,
+  fieldPrepQueue: OperatingQueueItem[],
+  fieldPrepCoverageSnapshot: FieldPrepCoverageItem[],
+  fieldPrepConversationAgenda: FieldPrepAgendaItem[],
+  notAllowed: string[],
+  futureRoute: string,
+  fieldReadinessChecks: Record<string, boolean>,
+  fieldQuestionsDraft: FieldQuestionsDraft,
+  fieldObservationScratchpad: FieldObservationScratchpad,
+) {
+  const candidate = packet.candidate
+  const project = candidate.project || {}
+  const fieldStartPreflight = buildFieldStartPreflightExport(packet, fieldPrepQueue, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, notAllowed, futureRoute, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad)
+  const gateItems: ApprovalDryRunReadinessItem[] = [
+    {
+      id: 'field-start-preflight-context',
+      title: 'Field start preflight context',
+      status: fieldStartPreflight.preflight_summary.ready_count > 0 ? 'ready' : 'needs_review',
+      detail: `${fieldStartPreflightFileName(candidate)} provides the current no-write field-prep context for this design gate.`,
+    },
+    {
+      id: 'approval-first-row-gate',
+      title: 'Approval first-row gate',
+      status: 'blocked',
+      detail: 'PM Lane 142 exact live-write admission and first approval-row proof are still required before import or field execution can proceed.',
+    },
+    {
+      id: 'project-import-gate',
+      title: 'Project import gate',
+      status: 'blocked',
+      detail: 'Project, workpackage, task, and apparatus rows are not imported; no downstream field work can be assigned from this candidate yet.',
+    },
+    {
+      id: 'lead-assignment-gate',
+      title: 'Lead assignment gate',
+      status: 'blocked',
+      detail: 'Lead assignment is blocked until imported work exists and a later packet admits assignment write authority.',
+    },
+    {
+      id: 'schedule-status-gate',
+      title: 'Schedule and status gate',
+      status: 'blocked',
+      detail: 'Schedule and status changes are blocked until a later packet admits the exact mutation path and validation proof.',
+    },
+    {
+      id: 'durable-field-record-gate',
+      title: 'Durable field record gate',
+      status: 'blocked',
+      detail: 'Durable field records are blocked until a later packet admits the storage contract, mutation route, and audit/readback proof.',
+    },
+    {
+      id: 'production-tracking-gate',
+      title: 'Production tracking gate',
+      status: 'blocked',
+      detail: 'Production tracking rows and progress metrics remain blocked until a later packet admits the write path and rollback/readback rules.',
+    },
+  ]
+  const gateCounts = approvalDryRunReadinessCounts(gateItems)
+
+  return {
+    gate_kind: 'pm_import_candidate_field_execution_gate_design',
+    gate_version: 'pm_lane_149_local_field_execution_gate_design_v1',
+    generated_locally_at: new Date().toISOString(),
+    candidate_identity: {
+      candidate_id: candidate.candidate_id || null,
+      candidate_version: candidate.candidate_version || null,
+      project_name: project.name || null,
+      source_fingerprint: candidate.source_freshness?.aggregate_fingerprint || null,
+    },
+    field_start_preflight_summary: {
+      file_name: fieldStartPreflightFileName(candidate),
+      ready_count: fieldStartPreflight.preflight_summary.ready_count,
+      needs_review_count: fieldStartPreflight.preflight_summary.needs_review_count,
+      blocked_count: fieldStartPreflight.preflight_summary.blocked_count,
+      summary: fieldStartPreflight.preflight_summary.summary,
+      field_start_status: fieldStartPreflight.preflight_summary.field_start_status,
+    },
+    gate_summary: {
+      ready_count: gateCounts.ready,
+      needs_review_count: gateCounts.needsReview,
+      blocked_count: gateCounts.blocked,
+      summary: approvalDryRunReadinessSummary(gateCounts),
+      execution_gate_status: 'blocked_until_approval_import_and_field_tracking_packets',
+    },
+    gate_items: gateItems,
+    proposed_future_routes: {
+      approval_route: futureRoute,
+      project_import_route: 'not_admitted',
+      lead_ops_route: '/lead-ops',
+      field_tech_route: '/field-tech',
+      pm_workfront_route: '/pm-review/workfront',
+      durable_field_record_route: 'not_admitted',
+      production_tracking_route: 'not_admitted',
+    },
+    minimum_admission_packets: [
+      {
+        id: 'approval-first-row',
+        required_before: 'project_import',
+        detail: 'Use the PM Lane 142 gate before any first approval row or live approval POST.',
+      },
+      {
+        id: 'project-import',
+        required_before: 'lead_assignment',
+        detail: 'Admit an idempotent import mutation only after an accepted approval record exists.',
+      },
+      {
+        id: 'field-authorization-and-assignment',
+        required_before: 'field_execution',
+        detail: 'Admit explicit field work authorization and assignment write rules before lead or field work starts.',
+      },
+      {
+        id: 'schedule-status-controls',
+        required_before: 'status_mutation',
+        detail: 'Admit exact schedule and status mutation contracts before UI controls can change those records.',
+      },
+      {
+        id: 'durable-field-record-and-production-tracking',
+        required_before: 'production_tracking',
+        detail: 'Admit durable field record storage, production tracking rows, audit proof, and readback before field progress is persisted.',
+      },
+    ],
+    authority_boundary: {
+      mutation_authority: 'not_admitted',
+      local_design_only: true,
+      live_approval_post_performed: false,
+      approval_row_created: false,
+      project_import_performed: false,
+      field_work_authorized: false,
+      assignment_performed: false,
+      schedule_performed: false,
+      status_change_performed: false,
+      durable_field_record_created: false,
+      production_tracking_performed: false,
+      server_write_performed: false,
+    },
+    blocked_boundaries: Array.from(new Set([
+      ...fieldStartPreflight.blocked_boundaries,
+      'live_approval_post',
+      'first_approval_row_creation',
+      'lead_assignment_writes',
+      'schedule_status_mutations',
+      'durable_field_record_writes',
+    ])),
+  }
+}
+
 function buildImportExceptionRegisterExport(
   packet: IntakeWorkbenchPacket,
   importExceptionRegister: ImportExceptionRegisterItem[],
@@ -3842,6 +3994,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
   const [fieldPrepAgendaStatus, setFieldPrepAgendaStatus] = useState('')
   const [fieldPrepPacketStatus, setFieldPrepPacketStatus] = useState('')
   const [fieldStartPreflightStatus, setFieldStartPreflightStatus] = useState('')
+  const [fieldExecutionGateDesignStatus, setFieldExecutionGateDesignStatus] = useState('')
   const [approvalDryRunStatus, setApprovalDryRunStatus] = useState('')
   const [approvalDryRunPreview, setApprovalDryRunPreview] = useState('')
   const [reviewChecks, setReviewChecks] = useState<Record<string, boolean>>({})
@@ -4021,7 +4174,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
   const fieldPrepAgendaCount = fieldPrepAgendaCounts(fieldPrepConversationAgenda)
   const reviewOutputStatuses = [briefStatus, previewStatus, pmIntakeSnapshotStatus, exceptionRegisterStatus].filter(Boolean)
   const executorOutputStatuses = [handoffStatus].filter(Boolean)
-  const fieldPrepOutputStatuses = [fieldBriefStatus, fieldObservationStatus, fieldPrepCoverageStatus, fieldPrepAgendaStatus, fieldPrepPacketStatus, fieldStartPreflightStatus].filter(Boolean)
+  const fieldPrepOutputStatuses = [fieldBriefStatus, fieldObservationStatus, fieldPrepCoverageStatus, fieldPrepAgendaStatus, fieldPrepPacketStatus, fieldStartPreflightStatus, fieldExecutionGateDesignStatus].filter(Boolean)
   const hasOutputStatuses = reviewOutputStatuses.length > 0 || executorOutputStatuses.length > 0 || fieldPrepOutputStatuses.length > 0
 
   useEffect(() => {
@@ -4391,6 +4544,16 @@ export default function ProjectMinerIntakeWorkbenchPage() {
     setFieldStartPreflightStatus(`Field start preflight prepared from ${candidate?.candidate_id || 'the current intake packet'} without a server write.`)
   }
 
+  function exportFieldExecutionGateDesign() {
+    if (!packet) {
+      return
+    }
+
+    const design = buildFieldExecutionGateDesignExport(packet, fieldPrepQueue, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, notAllowed, futureRoute, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad)
+    downloadTextFile(fieldExecutionGateDesignFileName(candidate), `${JSON.stringify(design, null, 2)}\n`, 'application/json')
+    setFieldExecutionGateDesignStatus(`Field execution gate design prepared from ${candidate?.candidate_id || 'the current intake packet'} without a server write.`)
+  }
+
   return (
     <main className="shell-page pm-review-page">
       <section className="hero-card pm-review-hero">
@@ -4544,6 +4707,9 @@ export default function ProjectMinerIntakeWorkbenchPage() {
                 </button>
                 <button className="btn btn-outline" onClick={exportFieldStartPreflight} disabled={!packet}>
                   Export Field Start Preflight
+                </button>
+                <button className="btn btn-outline" onClick={exportFieldExecutionGateDesign} disabled={!packet}>
+                  Export Field Execution Gate Design
                 </button>
               </div>
             </section>

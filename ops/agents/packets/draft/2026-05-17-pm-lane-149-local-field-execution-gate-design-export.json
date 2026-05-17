@@ -1,0 +1,52 @@
+{
+  "packet_id": "2026-05-17-pm-lane-149",
+  "lane": "PM Lane 149",
+  "title": "Local Field Execution Gate Design Export",
+  "created_at_local": "2026-05-17",
+  "source_floor_commit": "0ddd83a78b037b19a50ae38672e66c47d2950928",
+  "objective": "Add a browser-local field execution gate design export that maps the future approval, import, lead assignment, field authorization, schedule/status, durable field record, and production tracking packets before any of those write paths are admitted.",
+  "execution_mode": "local_product_code_plus_status_docs",
+  "scope": [
+    "Add an Export Field Execution Gate Design action to the existing Field Prep Outputs rail.",
+    "Download one JSON artifact that includes the current field-start preflight summary, future route map, minimum admission packet sequence, execution gate statuses, authority boundary flags, and blocked write boundaries.",
+    "Keep the export local-only and informational.",
+    "Extend the focused Playwright smoke to prove the downloaded field execution gate design artifact and zero mutation requests."
+  ],
+  "not_allowed": [
+    "No live POST to /api/v1/mutations/project-import-approvals.",
+    "No approval row creation.",
+    "No hosted deployment or promotion.",
+    "No Supabase, Render, Vercel, or Olares action.",
+    "No SQL or schema migration.",
+    "No secret access or secret rotation.",
+    "No backend route or mutation route change.",
+    "No project import, workpackage rows, task rows, apparatus rows, field work authorization, lead assignment, schedule, status, durable field record, production tracking, workbook macro, or workbook writeback.",
+    "No service, auth, DNS, ingress, or control-plane widening.",
+    "No autonomous AI business-state mutation."
+  ],
+  "field_execution_gate": {
+    "status": "not_admitted",
+    "note": "This lane creates local design context only. Approval first row, project import, field authorization, lead assignment, schedule/status changes, durable field records, and production tracking remain blocked until later admitted packets own those write paths."
+  },
+  "changed_files": [
+    "PROJECT_STATUS.md",
+    "apps/operations-web/app/pm-review/import-intake/page.tsx",
+    "apps/operations-web/tests/browser-shell.pm-import-intake.smoke.spec.ts",
+    "docs/operations/APEX-PM-STAKEHOLDER-TIME-PROTECTION-AND-ACCELERATION-LANE-2026-05-15.md",
+    "docs/operations/APEX-PM-TEMP-POWER-DELIVERY-AND-ORCHESTRATION-PLAN-2026-05-15.md",
+    "docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md",
+    "ops/agents/packets/draft/2026-05-17-pm-lane-149-local-field-execution-gate-design-export.json",
+    "ops/agents/handoffs/2026-05-17-pm-lane-149-local-field-execution-gate-design-export-handoff.md"
+  ],
+  "validation_steps": [
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform\" --filter @apex/operations-web typecheck",
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform\" --filter @apex/operations-web build",
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform/apps/operations-web\" exec playwright test \"browser-shell.pm-import-intake.smoke.spec.ts\"",
+    "Get-Content -Path \"ops/agents/packets/draft/2026-05-17-pm-lane-149-local-field-execution-gate-design-export.json\" | ConvertFrom-Json | Select-Object -ExpandProperty packet_id",
+    "rg -n \"PM Lane 149|Export Field Execution Gate Design|field-execution-gate-design|pm_lane_149_local_field_execution_gate_design_v1|mutationRequests\\)\\.toHaveLength\\(0\\)\" PROJECT_STATUS.md docs/operations ops/agents apps/operations-web",
+    "git diff --check"
+  ],
+  "validation_result": "PASS: operations-web typecheck passed, operations-web production build passed, focused PM import-intake Playwright smoke passed with 1 passed, packet JSON parsed, guardrail search confirmed PM Lane 149/field-execution-gate-design/zero-mutation evidence plus Desktop Codex parked language, and git diff --check passed.",
+  "sidecar_result": "Desktop Codex NETA comparative-audit, topic-spine design, and pilot-module blueprint closeouts remain untracked and intentionally parked for a separate technical-authority review lane. They are not staged into PM Lane 149.",
+  "next_recommended_lane": "Use this field execution gate design as the no-write map for the Temp Power pilot. The next PM lane may either prepare one of the named field/import admission packets or pause for the explicit PM Lane 142 live approval admission before any approval POST or import mutation."
+}

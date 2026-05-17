@@ -318,7 +318,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(outputActionRail.getByLabel('PM intake output action groups')).toBeVisible()
   await expect(outputActionRail.getByLabel('Review output actions').getByRole('button')).toHaveCount(4)
   await expect(outputActionRail.getByLabel('Executor output actions').getByRole('button')).toHaveCount(1)
-  await expect(outputActionRail.getByLabel('Field prep output actions').getByRole('button')).toHaveCount(6)
+  await expect(outputActionRail.getByLabel('Field prep output actions').getByRole('button')).toHaveCount(7)
   await expect(outputActionRail.getByLabel('Refresh action').getByRole('button')).toHaveCount(1)
   await expect(outputActionRail.getByLabel('Review output actions').getByRole('button', { name: 'Export PM Brief' })).toBeVisible()
   await expect(outputActionRail.getByLabel('Review output actions').getByRole('button', { name: 'Export Approval Preview JSON' })).toBeVisible()
@@ -331,6 +331,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(outputActionRail.getByLabel('Field prep output actions').getByRole('button', { name: 'Export Field Prep Conversation Agenda' })).toBeVisible()
   await expect(outputActionRail.getByLabel('Field prep output actions').getByRole('button', { name: 'Export Field Prep Packet' })).toBeVisible()
   await expect(outputActionRail.getByLabel('Field prep output actions').getByRole('button', { name: 'Export Field Start Preflight' })).toBeVisible()
+  await expect(outputActionRail.getByLabel('Field prep output actions').getByRole('button', { name: 'Export Field Execution Gate Design' })).toBeVisible()
   await outputActionDisclosure.locator(':scope > summary').click()
   await expect(outputActionDisclosure).not.toHaveAttribute('open', '')
   await expect(outputActionRail.getByLabel('PM intake output action groups')).toBeHidden()
@@ -341,7 +342,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(outputActionRail.getByLabel('PM intake output action groups')).toBeVisible()
   await expect(outputActionRail.getByLabel('Review output actions').getByRole('button')).toHaveCount(4)
   await expect(outputActionRail.getByLabel('Executor output actions').getByRole('button')).toHaveCount(1)
-  await expect(outputActionRail.getByLabel('Field prep output actions').getByRole('button')).toHaveCount(6)
+  await expect(outputActionRail.getByLabel('Field prep output actions').getByRole('button')).toHaveCount(7)
   await expect(outputActionRail.getByLabel('Refresh action').getByRole('button')).toHaveCount(1)
   await expect(page.getByLabel('PM intake output status rail')).toHaveCount(0)
   await expectNoImpliedAuthorityControls(page)
@@ -2166,6 +2167,98 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
     'project_import',
   ]))
   await expect(fieldPrepOutputStatus.getByText(/Field start preflight prepared from pm-import-candidate-miner-temp-power without a server write/i)).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Export Field Execution Gate Design' })).toBeEnabled()
+  const fieldExecutionGateDesignDownloadPromise = page.waitForEvent('download')
+  await page.getByRole('button', { name: 'Export Field Execution Gate Design' }).click()
+  const fieldExecutionGateDesignDownload = await fieldExecutionGateDesignDownloadPromise
+  expect(fieldExecutionGateDesignDownload.suggestedFilename()).toBe('pm-import-candidate-miner-temp-power-field-execution-gate-design.json')
+  const fieldExecutionGateDesignStream = await fieldExecutionGateDesignDownload.createReadStream()
+  expect(fieldExecutionGateDesignStream).not.toBeNull()
+  const fieldExecutionGateDesignChunks: Buffer[] = []
+  for await (const chunk of fieldExecutionGateDesignStream!) {
+    fieldExecutionGateDesignChunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk))
+  }
+  const fieldExecutionGateDesign = JSON.parse(Buffer.concat(fieldExecutionGateDesignChunks).toString('utf8'))
+  expect(fieldExecutionGateDesign).toMatchObject({
+    gate_kind: 'pm_import_candidate_field_execution_gate_design',
+    gate_version: 'pm_lane_149_local_field_execution_gate_design_v1',
+    candidate_identity: {
+      candidate_id: 'pm-import-candidate-miner-temp-power',
+      candidate_version: 'pm_import_candidate_read_only_v1',
+      project_name: 'Miner Temp Power',
+      source_fingerprint: 'stat-fingerprint-abc123',
+    },
+    field_start_preflight_summary: {
+      file_name: 'pm-import-candidate-miner-temp-power-field-start-preflight.json',
+      ready_count: 3,
+      needs_review_count: 0,
+      blocked_count: 2,
+      summary: '3 ready, 0 needs review, 2 blocked',
+      field_start_status: 'blocked_until_field_authority_and_tracking_packet',
+    },
+    gate_summary: {
+      ready_count: 1,
+      needs_review_count: 0,
+      blocked_count: 6,
+      summary: '1 ready, 0 needs review, 6 blocked',
+      execution_gate_status: 'blocked_until_approval_import_and_field_tracking_packets',
+    },
+    proposed_future_routes: {
+      approval_route: '/api/v1/mutations/project-import-approvals',
+      project_import_route: 'not_admitted',
+      lead_ops_route: '/lead-ops',
+      field_tech_route: '/field-tech',
+      pm_workfront_route: '/pm-review/workfront',
+      durable_field_record_route: 'not_admitted',
+      production_tracking_route: 'not_admitted',
+    },
+    authority_boundary: {
+      mutation_authority: 'not_admitted',
+      local_design_only: true,
+      live_approval_post_performed: false,
+      approval_row_created: false,
+      project_import_performed: false,
+      field_work_authorized: false,
+      assignment_performed: false,
+      schedule_performed: false,
+      status_change_performed: false,
+      durable_field_record_created: false,
+      production_tracking_performed: false,
+      server_write_performed: false,
+    },
+  })
+  expect(fieldExecutionGateDesign.generated_locally_at).toEqual(expect.any(String))
+  expect(fieldExecutionGateDesign.gate_items.map((item: { id: string, status: string }) => `${item.id}:${item.status}`)).toEqual([
+    'field-start-preflight-context:ready',
+    'approval-first-row-gate:blocked',
+    'project-import-gate:blocked',
+    'lead-assignment-gate:blocked',
+    'schedule-status-gate:blocked',
+    'durable-field-record-gate:blocked',
+    'production-tracking-gate:blocked',
+  ])
+  expect(fieldExecutionGateDesign.minimum_admission_packets.map((item: { id: string }) => item.id)).toEqual([
+    'approval-first-row',
+    'project-import',
+    'field-authorization-and-assignment',
+    'schedule-status-controls',
+    'durable-field-record-and-production-tracking',
+  ])
+  expect(fieldExecutionGateDesign.blocked_boundaries).toEqual(expect.arrayContaining([
+    'write_supabase',
+    'persist_approval_record',
+    'import_project_rows',
+    'field_work_authorization',
+    'assignment_schedule_status_writes',
+    'durable_field_record_creation',
+    'production_tracking_writes',
+    'live_approval_post',
+    'first_approval_row_creation',
+    'lead_assignment_writes',
+    'schedule_status_mutations',
+    'durable_field_record_writes',
+  ]))
+  await expect(fieldPrepOutputStatus.getByText(/Field execution gate design prepared from pm-import-candidate-miner-temp-power without a server write/i)).toBeVisible()
   await expect(page.getByRole('button', { name: 'Export Approval Preview JSON' })).toBeEnabled()
   const previewDownloadPromise = page.waitForEvent('download')
   await page.getByRole('button', { name: 'Export Approval Preview JSON' }).click()
