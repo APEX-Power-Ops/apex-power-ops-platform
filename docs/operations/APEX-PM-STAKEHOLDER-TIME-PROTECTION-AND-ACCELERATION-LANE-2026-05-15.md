@@ -149,6 +149,8 @@ PM Lane 211 publishes the no-code Approval First-Row Live-Admission Readiness Re
 
 PM Lane 212 publishes the no-code Approval First-Row Admission Hold And Evidence Gap Closeout. It records the current first-row approval state as `STOPPED_NO_LIVE_ADMISSION_WITH_EVIDENCE_GAP_CLOSEOUT`: review-ready but not authorized, with the live gate closed because the exact PM Lane 142 phrase is still absent as current admission. This lane names the remaining evidence gaps and does not run hosted smokes, open browser live routes, POST, create an approval row, import a project, or mutate downstream business state.
 
+PM Lane 213 publishes the no-code Approval First-Row No-Live Decision Return And Evidence Refresh Packet. It converts the hold into the Jason-facing label `READY_FOR_JASON_DECISION_NOT_AUTHORIZED_NO_LIVE_REFRESH`, returns the bounded choices `HOLD_NO_LIVE`, `RETURN_WITH_QUESTIONS`, and `PROVIDE_EXACT_ADMISSION_PHRASE_LATER`, and keeps all hosted proof, browser live route access, live approval POST, approval row creation, project import, and downstream PM business-state mutation blocked unless a later turn provides the exact PM Lane 142 phrase as current admission.
+
 Immediate orchestration priority order:
 
 1. Stop cycling templates unless a real executor-friction signal exists.

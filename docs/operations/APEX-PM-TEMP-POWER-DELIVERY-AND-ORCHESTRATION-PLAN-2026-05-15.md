@@ -672,6 +672,8 @@ PM Lane 211 executes the no-code Approval First-Row Live-Admission Readiness Rev
 
 PM Lane 212 executes the no-code Approval First-Row Admission Hold And Evidence Gap Closeout tranche. For the upcoming Temp Power work, the approval first-row path is explicitly held at `STOPPED_NO_LIVE_ADMISSION_WITH_EVIDENCE_GAP_CLOSEOUT`: the Lane 211 packet is reviewable but not authorization, and the exact PM Lane 142 phrase remains absent as current admission. The closeout records the blocking evidence gaps and keeps hosted smoke, browser live route, live approval POST, approval row, project import write, and downstream PM business-state writes blocked until separate explicit admission.
 
+PM Lane 213 executes the no-code Approval First-Row No-Live Decision Return And Evidence Refresh Packet tranche. For the upcoming Temp Power work, the approval first-row path is now returned to Jason as `READY_FOR_JASON_DECISION_NOT_AUTHORIZED_NO_LIVE_REFRESH` with three safe choices: hold no-live, return with questions, or provide the exact PM Lane 142 phrase later as current admission for a separate admitted live-execution packet. This lane allows only repo-local evidence refresh and keeps hosted smoke, browser live route, live approval POST, approval row, project import write, and downstream PM business-state writes blocked.
+
 ## Capability-Gap Register
 
 Current known gaps:

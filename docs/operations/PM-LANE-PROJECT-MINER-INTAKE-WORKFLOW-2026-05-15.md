@@ -908,6 +908,8 @@ PM Lane 211 executes the no-code Approval First-Row Live-Admission Readiness Rev
 
 PM Lane 212 executes the no-code Approval First-Row Admission Hold And Evidence Gap Closeout tranche. The Project Miner intake workflow now records the current approval first-row state as `STOPPED_NO_LIVE_ADMISSION_WITH_EVIDENCE_GAP_CLOSEOUT`: Lane 211 is reviewable but not authorization, and the exact PM Lane 142 phrase remains absent as current admission. The closeout names the evidence gaps that block live execution and keeps hosted smoke, browser live route, live approval POST, approval row, project import write, and downstream PM business-state writes blocked until a later explicit admission packet.
 
+PM Lane 213 executes the no-code Approval First-Row No-Live Decision Return And Evidence Refresh Packet tranche. The Project Miner intake workflow now returns the first approval-row decision to Jason as `READY_FOR_JASON_DECISION_NOT_AUTHORIZED_NO_LIVE_REFRESH` with the bounded options to hold no-live, return with questions, or provide the exact PM Lane 142 phrase later as current admission for a separate admitted packet. This lane allows only repo-local evidence refresh and keeps hosted smoke, browser live route, live approval POST, approval row, project import write, and downstream PM business-state writes blocked.
+
 Level 3 - Resource Context:
 Read equipment inventory and technician capability rows so PM can understand whether the project can be staffed with available people and equipment.
 

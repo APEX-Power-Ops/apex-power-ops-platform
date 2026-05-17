@@ -1,0 +1,74 @@
+{
+  "packet_id": "2026-05-17-pm-lane-213",
+  "title": "PM Lane 213 - Approval First-Row No-Live Decision Return And Evidence Refresh Packet",
+  "lane": "PM",
+  "status": "local_no_live_decision_return_packet",
+  "decision_label": "READY_FOR_JASON_DECISION_NOT_AUTHORIZED_NO_LIVE_REFRESH",
+  "scope": [
+    "Return the PM Lane 212 hold state to Jason as compact decision choices.",
+    "Define repo-local evidence fields that may be refreshed without live service access.",
+    "Keep the exact PM Lane 142 phrase as the only opener for a later admitted live-execution packet.",
+    "Preserve PM lane technical authority and no-autonomous-write guardrails."
+  ],
+  "jason_choices": [
+    "HOLD_NO_LIVE",
+    "RETURN_WITH_QUESTIONS",
+    "PROVIDE_EXACT_ADMISSION_PHRASE_LATER"
+  ],
+  "evidence_refresh_fields": [
+    "Current no-live decision label",
+    "PM Lane 141 through PM Lane 147 evidence-chain inventory",
+    "PM Lane 208 through PM Lane 212 evidence-chain inventory",
+    "Candidate identity if already present in repo-local artifacts",
+    "Source fingerprint if already present in repo-local artifacts",
+    "Shape fingerprint if already present in repo-local artifacts",
+    "PM decision value if already present in repo-local draft artifacts",
+    "PM review notes if already present in repo-local draft artifacts",
+    "Warning and no-go posture if already present in repo-local review artifacts",
+    "Future live proof checklist marked deferred until explicit admission"
+  ],
+  "deferred_live_proof": [
+    "Hosted readiness proof",
+    "Browser live route access",
+    "Approval pre-write count",
+    "Live approval POST",
+    "Approval-row creation",
+    "Same-payload replay",
+    "Table-backed approval readback",
+    "Downstream count verification"
+  ],
+  "non_actions": [
+    "No hosted smoke",
+    "No browser live route access",
+    "No Supabase, Render, Vercel, or Olares action",
+    "No SQL or schema migration",
+    "No secret exposure",
+    "No live approval POST",
+    "No approval row creation",
+    "No project import",
+    "No field or production write",
+    "No customer or finance output",
+    "No workbook macro or writeback",
+    "No autonomous AI business-state mutation"
+  ],
+  "hard_stop_conditions": [
+    "Exact PM Lane 142 phrase absent, paraphrased, quoted only as history, or ambiguous",
+    "Approval requested without explicit live approval POST and first approval-row creation admission",
+    "Candidate identity, source fingerprint, shape fingerprint, PM decision, review notes, warning, or no-go context missing or stale",
+    "Hosted proof, browser live route, Supabase, Render, Vercel, Olares, credentials, or secrets required before admission",
+    "SQL direct write, browser approval path bypass, or more than one approval row",
+    "Project import or downstream PM business-state mutation attempted",
+    "Secret exposure attempted",
+    "Autonomous AI business-state mutation attempted"
+  ],
+  "sidecar_result": "Read-only sidecar Carson recommended decision label READY_FOR_JASON_DECISION_NOT_AUTHORIZED_NO_LIVE_REFRESH, the three Jason choices, local evidence-refresh fields, hard stop conditions, and PM Lane 214 as the next safe no-live packet. Carson made no edits, staged no files, committed nothing, pushed nothing, and performed no hosted, browser-live, service, secret, SQL, approval, import, field, production, customer, or finance action.",
+  "validation_commands": [
+    "Get-Content -LiteralPath 'ops/agents/packets/draft/2026-05-17-pm-lane-213-approval-first-row-no-live-decision-return-and-evidence-refresh-packet.json' | ConvertFrom-Json | Select-Object -ExpandProperty packet_id",
+    "rg -n \"PM Lane 213|No-Live Decision Return|READY_FOR_JASON_DECISION_NOT_AUTHORIZED_NO_LIVE_REFRESH|exact PM Lane 142 phrase|No live approval POST|PM Lane 214\" PROJECT_STATUS.md docs/operations/APEX-PM-LANE-213-APPROVAL-FIRST-ROW-NO-LIVE-DECISION-RETURN-AND-EVIDENCE-REFRESH-PACKET-2026-05-17.md docs/operations/APEX-PM-STAKEHOLDER-TIME-PROTECTION-AND-ACCELERATION-LANE-2026-05-15.md docs/operations/APEX-PM-TEMP-POWER-DELIVERY-AND-ORCHESTRATION-PLAN-2026-05-15.md docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md ops/agents/packets/draft/2026-05-17-pm-lane-213-approval-first-row-no-live-decision-return-and-evidence-refresh-packet.json ops/agents/handoffs/2026-05-17-pm-lane-213-approval-first-row-no-live-decision-return-and-evidence-refresh-packet-handoff.md ops/agents/handoffs/2026-05-17-pm-lane-213-approval-first-row-no-live-decision-return-and-evidence-refresh-packet-closeout.md",
+    "corrupted-token scan on touched Lane 213 files",
+    "null-byte check on touched Lane 213 files",
+    "git diff --check on touched Lane 213 files"
+  ],
+  "validation_result": "PASS - packet JSON parsed, Lane 213 guardrail search passed, corrupted-token scan passed, null-byte check passed, and git diff --check passed with line-ending warnings only.",
+  "next_recommended_lane": "PM Lane 214 - Approval First-Row No-Live Decision Return Closeout And Question Packet"
+}
