@@ -443,6 +443,12 @@ type OpenItemsLensGroup = {
   items: OpenItemsLensItem[]
 }
 
+type PersistenceReadinessGateGroup = {
+  id: string
+  label: string
+  items: ReadinessGate[]
+}
+
 const { useCallback, useEffect, useMemo, useState } = React
 
 const API_BASE =
@@ -1246,6 +1252,27 @@ function buildPersistenceReadinessGates(
       title: 'Import mutation authority',
       status: 'blocked',
       detail: 'Project, workpackage, task, and apparatus import remain blocked until a later packet admits import after an approved approval record exists.',
+    },
+  ]
+}
+
+function groupPersistenceReadinessGates(gates: ReadinessGate[]): PersistenceReadinessGateGroup[] {
+  const take = (ids: string[]) => gates.filter((gate) => ids.includes(gate.id))
+  return [
+    {
+      id: 'local-review-context',
+      label: 'Local Review Context',
+      items: take(['approval-preview-context', 'review-checklist-evidence']),
+    },
+    {
+      id: 'hosted-persistence-surface',
+      label: 'Hosted Persistence Surface',
+      items: take(['hosted-schema-gate', 'hosted-approval-route-gate']),
+    },
+    {
+      id: 'blocked-future-write-authority',
+      label: 'Blocked Future Write Authority',
+      items: take(['browser-approval-submit-authority', 'import-mutation-authority']),
     },
   ]
 }
@@ -6861,6 +6888,10 @@ export default function ProjectMinerIntakeWorkbenchPage() {
     () => buildPersistenceReadinessGates(packet, approvalDraft, reviewChecks),
     [packet, approvalDraft, reviewChecks],
   )
+  const persistenceReadinessGateGroups = useMemo(
+    () => groupPersistenceReadinessGates(persistenceReadinessGates),
+    [persistenceReadinessGates],
+  )
   const readyPersistenceGateCount = persistenceReadinessGates.filter((gate) => gate.status === 'ready').length
   const approvalDryRunReadiness = useMemo(
     () => buildApprovalDryRunReadiness(packet, reviewChecks, approvalDraft),
@@ -9173,19 +9204,26 @@ export default function ProjectMinerIntakeWorkbenchPage() {
                   </p>
                 </article>
               </div>
-              <div style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
-                {persistenceReadinessGates.map((gate) => (
-                  <article key={gate.id} className="card" style={{ padding: '0.85rem', boxShadow: 'none' }}>
-                    <div className="status-row" style={{ alignItems: 'start' }}>
-                      <div>
-                        <p style={{ margin: 0 }}>
-                          <strong>{gate.title}</strong>
-                        </p>
-                        <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{gate.detail}</p>
-                      </div>
-                      <span className={`status-pill ${gate.status === 'ready' ? 'status-configured' : 'status-deferred'}`}>{formatLabel(gate.status)}</span>
+              <div aria-label="Approval persistence readiness gate groups" className="notes-grid" style={{ marginTop: '0.85rem' }}>
+                {persistenceReadinessGateGroups.map((group) => (
+                  <section key={group.id} aria-label={`${group.label} approval persistence readiness group`}>
+                    <h3 style={{ fontSize: '0.95rem', margin: '0 0 0.65rem' }}>{group.label}</h3>
+                    <div aria-label={`${group.label} approval readiness items`} style={{ display: 'grid', gap: '0.75rem' }}>
+                      {group.items.map((gate) => (
+                        <article key={gate.id} className="card" style={{ padding: '0.85rem', boxShadow: 'none' }}>
+                          <div className="status-row" style={{ alignItems: 'start' }}>
+                            <div>
+                              <p style={{ margin: 0 }}>
+                                <strong>{gate.title}</strong>
+                              </p>
+                              <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{gate.detail}</p>
+                            </div>
+                            <span className={`status-pill ${gate.status === 'ready' ? 'status-configured' : 'status-deferred'}`}>{formatLabel(gate.status)}</span>
+                          </div>
+                        </article>
+                      ))}
                     </div>
-                  </article>
+                  </section>
                 ))}
               </div>
             </div>

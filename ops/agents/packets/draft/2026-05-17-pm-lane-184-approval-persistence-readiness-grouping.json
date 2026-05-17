@@ -1,0 +1,48 @@
+{
+  "packet_id": "2026-05-17-pm-lane-184",
+  "title": "PM Lane 184 - Approval Persistence Readiness Grouping",
+  "lane": "PM lane development",
+  "status": "completed",
+  "owner": "VS Code Codex",
+  "authority": "repo technical authority; PM lane implementation authority; final integration authority",
+  "date": "2026-05-17",
+  "objective": "Reduce Project Miner Temp Power approval-readiness scan burden by grouping the existing Approval Persistence Readiness gates without changing gate ids, titles, details, status logic, readiness counts, readback card, route anchors, export references, disclosure behavior, no-storage posture, or approval/import write boundaries.",
+  "scope": [
+    "Grouped the existing six Approval Persistence Readiness gates into Local Review Context, Hosted Persistence Surface, and Blocked Future Write Authority.",
+    "Preserved the Approval Status Readback card as non-gate context above the grouped readiness gates.",
+    "Preserved the same gate ids, titles, details, status logic, 4-of-6 readiness count, details disclosure behavior, no-disclosure-storage posture, route and quick-jump anchors, read seams, export references, and zero-mutation boundary.",
+    "Used a read-only sidecar to verify the grouping shape while VS Code Codex retained PM implementation and final integration authority."
+  ],
+  "guardrails": [
+    "No hosted service access.",
+    "No Supabase, Render, Vercel, or Olares product action.",
+    "No SQL or schema migration.",
+    "No browser approval button, approval POST wiring, approval submission, or approval-row creation.",
+    "No project import mutation.",
+    "No field authorization, assignment, schedule/status, durable field record, production tracking, customer report, completion evidence, billing, payroll, invoice, accounting, or external finance-system write.",
+    "No workbook macro or writeback.",
+    "No new export action, export handler, filename, payload version, localStorage key, backend route, service/auth/ingress change, or autonomous AI business-state mutation."
+  ],
+  "changed_files": [
+    "apps/operations-web/app/pm-review/import-intake/page.tsx",
+    "apps/operations-web/tests/browser-shell.pm-import-intake.smoke.spec.ts",
+    "PROJECT_STATUS.md",
+    "docs/operations/APEX-PM-STAKEHOLDER-TIME-PROTECTION-AND-ACCELERATION-LANE-2026-05-15.md",
+    "docs/operations/APEX-PM-TEMP-POWER-DELIVERY-AND-ORCHESTRATION-PLAN-2026-05-15.md",
+    "docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md",
+    "ops/agents/packets/draft/2026-05-17-pm-lane-184-approval-persistence-readiness-grouping.json",
+    "ops/agents/handoffs/2026-05-17-pm-lane-184-approval-persistence-readiness-grouping-handoff.md"
+  ],
+  "validation": [
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform\" --filter @apex/operations-web typecheck",
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform/apps/operations-web\" exec playwright test \"browser-shell.pm-import-intake.smoke.spec.ts\"",
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform\" --filter @apex/operations-web build",
+    "Get-Content -LiteralPath \"C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-17-pm-lane-184-approval-persistence-readiness-grouping.json\" | ConvertFrom-Json | Select-Object -ExpandProperty packet_id",
+    "rg -n \"PM Lane 184|Approval persistence readiness gate groups|Local Review Context approval persistence readiness group|Hosted Persistence Surface approval persistence readiness group|Blocked Future Write Authority approval persistence readiness group|mutationRequests\\)\\.toHaveLength\\(0\\)\" PROJECT_STATUS.md docs/operations ops/agents apps/operations-web",
+    "git diff --check"
+  ],
+  "validation_result": "PASS - operations-web typecheck passed; focused Playwright pm import-intake smoke passed; operations-web build passed; packet JSON parsed; PM Lane 184 guardrail rg passed; git diff --check passed with only expected CRLF warnings on touched and unrelated markdown files.",
+  "sidecar_result": "Read-only sidecar Leibniz recommended grouping the existing six approval-readiness gates into Local Review Context, Hosted Persistence Surface, and Blocked Future Write Authority while leaving Approval Status Readback as non-gate context above the grouped gate list and preserving gate ids, titles, details, status logic, readiness count, route links, quick-jump target, no-storage posture, and mutation boundary.",
+  "next_recommended_lane": "PM Lane 185 - Current PM Next Actions And Guardrails Grouping",
+  "execution_result": "PASS"
+}
