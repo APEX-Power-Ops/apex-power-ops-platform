@@ -902,6 +902,8 @@ PM Lane 208 executes the no-code Approval First-Row Executor Prompt Refresh tran
 
 PM Lane 209 executes the no-code Approval First-Row No-Admission Stop Drill tranche. The Project Miner intake workflow now has proof that the refreshed first-row executor prompt stops with `STOPPED_NO_LIVE_ADMISSION` when the exact PM Lane 142 phrase is absent as current admission, with no hosted smoke, browser live route, live approval POST, approval row, project import write, or downstream PM business-state write admitted by this lane.
 
+PM Lane 210 executes the no-code Approval First-Row Live-Admission Evidence Checklist tranche. The Project Miner intake workflow now has a concise checklist for the future live approval-row decision: exact phrase admission, source floor, candidate identity, PM decision and notes, local zero-mutation proof, hosted readiness after admission, pre-write row count, one browser-path approval POST, one same-payload idempotent replay, approval-status readback, unchanged downstream counts, and secret-free closeout. The exact PM Lane 142 phrase remains absent as current admission in this lane, so no hosted smoke, browser live route, live approval POST, approval row, project import write, or downstream PM business-state write is admitted by this lane.
+
 Level 3 - Resource Context:
 Read equipment inventory and technician capability rows so PM can understand whether the project can be staffed with available people and equipment.
 

@@ -666,6 +666,8 @@ PM Lane 208 executes the no-code Approval First-Row Executor Prompt Refresh tran
 
 PM Lane 209 executes the no-code Approval First-Row No-Admission Stop Drill tranche. For the upcoming Temp Power work, the approval first-row executor path now has a proven safe stop branch: without the exact PM Lane 142 phrase as current admission, the executor stops before hosted smokes, browser live routes, approval POST, approval-row creation, project import, field authorization, assignment, schedule/status, durable record, production tracking, customer reporting, billing, payroll, invoice, accounting, and external finance-system writes.
 
+PM Lane 210 executes the no-code Approval First-Row Live-Admission Evidence Checklist tranche. For the upcoming Temp Power work, the approval first-row path now has a concise evidence checklist for any future live-admission decision: exact phrase admission, source floor, candidate identity, PM decision and notes, local zero-mutation proof, hosted readiness after admission, pre-write row count, one browser-path POST, one same-payload idempotent replay, approval-status readback, unchanged downstream counts, and secret-free closeout. The exact PM Lane 142 phrase is not provided as current admission in this lane, so no hosted smoke, browser live route, approval POST, approval row, project import, field authorization, assignment, schedule/status, durable record, production tracking, customer reporting, billing, payroll, invoice, accounting, or external finance-system write is performed.
+
 ## Capability-Gap Register
 
 Current known gaps:

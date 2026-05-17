@@ -143,6 +143,8 @@ PM Lane 208 refreshes the approval first-row executor prompt and closeout checkl
 
 PM Lane 209 tests that refreshed prompt without opening the live write. It records the correct `STOPPED_NO_LIVE_ADMISSION` outcome when the exact PM Lane 142 phrase is absent as current admission, proving a future executor should stop before hosted smokes, browser live routes, approval POST, approval-row creation, project import, or downstream business-state writes.
 
+PM Lane 210 publishes the no-code Approval First-Row Live-Admission Evidence Checklist. It converts the refreshed executor prompt and no-admission stop drill into a concise review surface for Jason: exact phrase admission, source floor, candidate identity, PM decision and notes, local zero-mutation proof, hosted readiness after admission, pre-write row count, one browser-path POST, one same-payload replay, approval-status readback, unchanged downstream counts, and secret-free closeout. This lane does not provide the exact PM Lane 142 phrase as current admission and does not run hosted smokes, open browser live routes, POST, create an approval row, import a project, or mutate downstream business state.
+
 Immediate orchestration priority order:
 
 1. Stop cycling templates unless a real executor-friction signal exists.
