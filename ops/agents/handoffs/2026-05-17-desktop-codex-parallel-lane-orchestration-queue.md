@@ -1,7 +1,7 @@
 # Desktop Codex Parallel Lane Orchestration Queue
 
 Date: 2026-05-17
-Status: Active governance framework under VS Code Codex technical authority
+Status: Active governance framework under VS Code Codex technical authority; Relay proof admitted first
 
 ## Authority Model
 
@@ -25,9 +25,9 @@ Desktop Codex does not own final repo integration, PM business-state decisions, 
 | Lane | Current Objective | Authority Band | Executor | Allowed Writes | Forbidden Surfaces | Validation Evidence | Approval Gate | Status | Next Decision | VS Code Review |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | PM Temp Power | Keep Project Miner PM lane moving toward first governed approval-row execution and field-ready workflow | Band C only where packet-approved | VS Code Codex primary; Desktop Codex support only | Only packet-approved PM support notes or handoffs | PM business-state mutation, Supabase writes, schema, hosted deploy, approval POST, import mutation, schedule/status writes | PM lane packet validations and hosted smokes owned by VS Code Codex | Jason approval for business workflow and live writes | Active priority | Continue PM lane under VS Code Codex | Always required |
-| NETA Study Material | Produce a bounded scout/build package for study material organization and question-bank scaffolding | Band A/B | Desktop Codex or sidecar executor | A future lane-owned handoff only unless separately admitted | Shared code, package files, product UI, repo-wide status, credentials, hosted services, macros | Source inventory summary, proposed artifact map, risk list | VS Code Codex review only if shared repo/product surfaces are touched | HOLD_NOT_ADMITTED until prompt is assigned | Approve or revise NETA prompt | Conditional |
-| TCC | Produce a scout packet that maps requirements, interfaces, dependencies, and integration risks | Band A | Desktop Codex or sidecar executor | A future lane-owned handoff only unless separately admitted | Shared service contract changes, schema, API, auth, deployment, production workflow, credentials | Requirements map, interface map, dependency/risk list | VS Code Codex architecture review at integration boundary | HOLD_NOT_ADMITTED until prompt is assigned | Approve or revise TCC prompt | Conditional |
-| Relay | Measure relay burden and improve handoff/prompt governance without admitting autonomous runtime | Band A/B | Desktop Codex or sidecar executor | A future lane-owned handoff only unless separately admitted | Autonomous queue ownership, new MCP services, always-on runtime, controller widening, credentials | Burden observations, template recommendations, stop-condition checklist | VS Code Codex review before orchestration widening | HOLD_NOT_ADMITTED until prompt is assigned | Approve or revise Relay prompt | Required before widening |
+| NETA Study Material | Produce a bounded scout/build package for study material organization and question-bank scaffolding | Band A/B | Desktop Codex or sidecar executor | A future lane-owned handoff only unless separately admitted | Shared code, package files, product UI, repo-wide status, credentials, hosted services, macros | Source inventory summary, proposed artifact map, risk list | VS Code Codex review only if shared repo/product surfaces are touched | HOLD_NOT_ADMITTED until Relay proof is accepted | Wait for Relay closeout before assignment | Conditional |
+| TCC | Produce a scout packet that maps requirements, interfaces, dependencies, and integration risks | Band A | Desktop Codex or sidecar executor | A future lane-owned handoff only unless separately admitted | Shared service contract changes, schema, API, auth, deployment, production workflow, credentials | Requirements map, interface map, dependency/risk list | VS Code Codex architecture review at integration boundary | HOLD_NOT_ADMITTED until Relay proof is accepted | Wait for Relay closeout before assignment | Conditional |
+| Relay | Measure relay burden and improve handoff/prompt governance without admitting autonomous runtime | Band A/B | Desktop Codex or sidecar executor | `ops/agents/handoffs/2026-05-17-desktop-codex-relay-review-burden-closeout.md` only | Autonomous queue ownership, new MCP services, always-on runtime, controller widening, credentials | Burden observations, template recommendations, stop-condition checklist | VS Code Codex review before orchestration widening | READY_FOR_JASON_DECISION for first assignment | Assign Relay prompt as first proof | Required before widening |
 
 ## Desktop Codex Stop Conditions
 
@@ -46,4 +46,4 @@ Desktop Codex must stop and return `ABORTED_SCOPE_WIDENING` or `BLOCKED_CAPABILI
 
 ## Current READY_FOR_JASON_DECISION Summary
 
-Desktop Codex governance is ready to start only with the bounded non-PM scout prompts created beside this queue. The recommended first assignment is the Relay review-burden prompt because it tests the orchestration layer itself without touching product, schema, hosted, credential, or PM business-state surfaces.
+Desktop Codex governance is approved to start with the Relay review-burden prompt only. NETA and TCC remain `HOLD_NOT_ADMITTED` until Relay returns a clean, concise closeout that actually reduces Jason's relay load and avoids early VS Code Codex interruption.

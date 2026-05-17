@@ -1,7 +1,7 @@
 # APEX Parallel Lane Orchestration Governance Plan
 
 Date: 2026-05-17
-Status: Active under VS Code Codex technical authority for non-PM orchestration governance only
+Status: Active under VS Code Codex technical authority for non-PM orchestration governance only; Relay proof admitted first
 Scope: Desktop Codex delegated orchestration governance, VS Code Codex PM-lane authority protection, and parallel lane admission rules
 
 ## Purpose
@@ -28,6 +28,8 @@ VS Code Codex reviewed this plan as repo technical authority and approves the pr
 Stakeholder activation was provided in the VS Code Codex session with the clarified boundary that VS Code Codex remains technical authority over all APEX Ops lanes, including NETA, TCC, Relay, Olares, hosted services, schemas, credentials, repo publication, and PM lane execution.
 
 This activation admits Desktop Codex orchestration governance for non-PM lanes only. It admits no product code change, deployment, schema change, credential handling, MCP service admission, Olares runtime change, PM business-state mutation, repo publication authority, or autonomous queue ownership.
+
+The first admitted execution proof is the Relay review-burden prompt only. NETA Study Material and TCC prompts remain parked until Desktop Codex returns a clean Relay closeout that reduces Jason's relay load and avoids premature VS Code Codex interruption.
 
 ### Required Amendments
 
@@ -306,26 +308,30 @@ Desktop Codex must stop and escalate if any lane attempts to:
 | Lane | Status | Authority Band | Desktop Codex Role | VS Code Codex Role | Next Approval Gate |
 | --- | --- | --- | --- | --- | --- |
 | PM Temp Power | Active priority | Band C where packet-approved | Support and evidence compression | Primary executor and repo authority | Jason approval for business workflow and production state changes |
-| NETA Study Material | Proposed parallel lane | Band A/B | Govern packet, delegate content/scaffold work, collect evidence | Review only if shared repo/product surfaces are touched | Approve NETA lane packet and output location |
-| TCC | Proposed parallel lane | Band A first | Govern scout packet and dependency map | Architecture review at integration boundary | Approve TCC scout scope |
-| Relay | Proposed parallel lane | Band A/B | Govern orchestration templates and review-burden metrics | Review before any admitted orchestration widening | Approve relay governance packet |
+| NETA Study Material | Parked until Relay proof is accepted | Band A/B | Govern packet, delegate content/scaffold work, collect evidence after later admission | Review only if shared repo/product surfaces are touched | Relay closeout must recommend graduation before NETA assignment |
+| TCC | Parked until Relay proof is accepted | Band A first | Govern scout packet and dependency map after later admission | Architecture review at integration boundary | Relay closeout must recommend graduation before TCC assignment |
+| Relay | First admitted execution proof | Band A/B | Govern orchestration templates and review-burden metrics | Review before orchestration widening or NETA/TCC graduation | Execute Relay review-burden prompt only |
 
 ## First Approved Move
 
-The first activated Desktop Codex-governed move creates the orchestration queue and three non-PM lane prompts:
+The first activated Desktop Codex-governed move created the orchestration queue and three non-PM lane prompts:
 
 1. NETA Study Material scout/build prompt,
 2. TCC scout prompt,
 3. Relay lane review-burden prompt.
 
-That first packet should not change product code, deployment, schema, credentials, MCP services, Olares runtime, or PM business state.
+Those prompt artifacts are governance scaffolds. Execution is admitted first for Relay only:
+
+`ops/agents/handoffs/2026-05-17-desktop-codex-relay-review-burden-prompt.md`
+
+The Relay proof tests the orchestration model before Desktop Codex receives NETA or TCC substance work. It should not change product code, deployment, schema, credentials, MCP services, Olares runtime, or PM business state.
 
 Expected output:
 
-1. one lane board,
-2. three bounded non-PM prompts,
-3. one closeout handoff,
-4. a short `READY_FOR_JASON_DECISION` summary.
+1. one Relay closeout handoff,
+2. one concise review-burden analysis,
+3. one recommendation on whether Desktop Codex should graduate to NETA and TCC scout work,
+4. a short `READY_FOR_JASON_DECISION` or `READY_FOR_VSCODE_REVIEW` summary.
 
 Output paths:
 

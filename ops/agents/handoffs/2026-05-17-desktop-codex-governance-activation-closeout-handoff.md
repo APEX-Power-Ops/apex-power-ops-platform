@@ -54,6 +54,8 @@ Assign the Relay review-burden prompt first:
 
 Rationale: it tests the orchestration layer itself without touching product code, PM business state, hosted services, schemas, credentials, Olares runtime, or MCP admission.
 
+NETA and TCC remain parked until the Relay closeout proves Desktop Codex can reduce Jason relay load and protect VS Code Codex focus. Relay must recommend whether Desktop Codex should graduate to NETA/TCC scout work or revise the orchestration model first.
+
 ## READY_FOR_JASON_DECISION
 
 Desktop Codex governance is ready for one bounded first assignment. Recommended decision: give Desktop Codex the Relay review-burden prompt first, then review whether its closeout meaningfully reduces Jason relay load before assigning NETA or TCC.

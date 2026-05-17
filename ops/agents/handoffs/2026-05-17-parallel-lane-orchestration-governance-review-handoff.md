@@ -58,4 +58,6 @@ The first recommended Desktop Codex assignment is the Relay review-burden prompt
 
 - `ops/agents/handoffs/2026-05-17-desktop-codex-relay-review-burden-prompt.md`
 
+NETA and TCC remain parked until Relay returns a clean closeout showing reduced Jason relay load and protected VS Code Codex focus. The Relay closeout must recommend whether Desktop Codex should graduate to NETA/TCC scout work or revise the orchestration model first.
+
 It should not change product code, deployment, schema, credentials, MCP services, Olares runtime, PM business state, or repo publication state unless a later admitting packet explicitly includes that closeout authority and exact file set.

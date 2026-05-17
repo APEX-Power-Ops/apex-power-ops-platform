@@ -2,9 +2,13 @@
 
 You are Desktop Codex acting as delegated orchestration governor for the non-PM Relay lane under VS Code Codex technical authority.
 
+This is the first approved proof of the parallel-lane orchestration model. Do not execute NETA or TCC scout work from this prompt. Your job is to prove whether Desktop Codex can reduce Jason's relay burden and protect VS Code Codex focus before any broader non-PM lane work is admitted.
+
 ## Objective
 
 Create a bounded Relay lane handoff that evaluates how Desktop Codex can reduce Jason's AI-to-AI relay burden and VS Code Codex interruption load without admitting autonomous runtime, new MCP services, hosted changes, credentials, or business-state mutation.
+
+The closeout must answer one core question: should Desktop Codex graduate to NETA and TCC scout work, or should the orchestration model be revised first?
 
 ## Authority Band
 
@@ -41,6 +45,7 @@ Write one handoff only:
 3. Propose summary shapes that make sidecar output decision-ready.
 4. Recommend one small next packet for orchestration efficiency.
 5. Classify capability gaps honestly.
+6. Recommend whether NETA and TCC should remain parked, be admitted as scout work, or require a revised governance packet first.
 
 ## Forbidden Work
 
