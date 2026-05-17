@@ -8239,93 +8239,108 @@ export default function ProjectMinerIntakeWorkbenchPage() {
             <h2 style={{ display: 'inline', margin: 0 }}>Admission and Approval Contract</h2>
           </summary>
           <div aria-label="Admission and approval contract controls">
-            <div aria-label="Admission and approval contract cards" className="notes-grid" style={{ marginTop: '0.85rem' }}>
-              <article className="notes-card">
-                <h2>Admission Shape</h2>
-                <dl className="contract-panel">
-                  <div>
-                    <dt>Admission plan</dt>
-                    <dd>{admissionPlan?.admission_plan_id || 'waiting for admission plan'}</dd>
-                  </div>
-                  <div>
-                    <dt>Admission authority</dt>
-                    <dd>{admissionPlan?.mutation_authority || 'not_admitted'}</dd>
-                  </div>
-                  <div>
-                    <dt>Target rows</dt>
-                    <dd>{Object.entries(targetRows).map(([key, value]) => `${formatLabel(key)}: ${formatValue(value)}`).join('; ') || 'none reported'}</dd>
-                  </div>
-                  <div>
-                    <dt>No-go checks</dt>
-                    <dd>{formatCount(noGoChecks.length)}</dd>
-                  </div>
-                </dl>
-              </article>
-              <article className="notes-card accent-card">
-                <h2>Approval Contract</h2>
-                <dl className="contract-panel">
-                  <div>
-                    <dt>Contract</dt>
-                    <dd>{approvalContract?.approval_contract_id || 'waiting for approval contract'}</dd>
-                  </div>
-                  <div>
-                    <dt>Record type</dt>
-                    <dd>{approvalContract?.approval_record_contract?.record_type || storagePlan?.recommended_entity_type || 'unknown'}</dd>
-                  </div>
-                  <div>
-                    <dt>Contract authority</dt>
-                    <dd>{approvalContract?.mutation_authority || 'not_admitted'}</dd>
-                  </div>
-                  <div>
-                    <dt>Persistence authority</dt>
-                    <dd>{approvalContract?.persistence_authority || storagePlan?.persistence_authority || 'not_admitted'}</dd>
-                  </div>
-                  <div>
-                    <dt>Storage table</dt>
-                    <dd>{storagePlan?.recommended_table || 'not admitted'}</dd>
-                  </div>
-                  <div>
-                    <dt>Mutation route</dt>
-                    <dd>{futureRoute}</dd>
-                  </div>
-                </dl>
-              </article>
-              <article className="notes-card">
-                <h2>Approval Status Readback</h2>
-                <dl className="contract-panel">
-                  <div>
-                    <dt>Status</dt>
-                    <dd>
-                      <span className={`status-pill ${approvalStatusTone(approvalStatus)}`}>
-                        {formatLabel(approvalStatus?.classification)}
-                      </span>
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>Current candidate match</dt>
-                    <dd>{formatValue(approvalStatus?.current_candidate_match)}</dd>
-                  </div>
-                  <div>
-                    <dt>Storage</dt>
-                    <dd>{approvalStatus?.approval_storage_available === false ? 'unavailable' : 'available'}</dd>
-                  </div>
-                  <div>
-                    <dt>Approval records</dt>
-                    <dd>{formatCount(approvalStatus?.approval_record_count_for_candidate)}</dd>
-                  </div>
-                  <div>
-                    <dt>Import authority</dt>
-                    <dd>{approvalStatus?.import_authority || 'not_admitted'}</dd>
-                  </div>
-                  <div>
-                    <dt>Read route</dt>
-                    <dd>{approvalStatus?.route || '/api/v1/reads/project-import-approval-status'}</dd>
-                  </div>
-                </dl>
-                <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
-                  Status readback only. This panel does not approve, persist, import, assign, schedule, change status, or mutate production state.
-                </p>
-              </article>
+            <div aria-label="Admission and approval contract groups" className="notes-grid" style={{ marginTop: '0.85rem' }}>
+              <section aria-label="Admission Shape Context contract group">
+                <h3 style={{ fontSize: '0.95rem', margin: '0 0 0.65rem' }}>Admission Shape Context</h3>
+                <div aria-label="Admission Shape Context contract cards">
+                  <article className="notes-card">
+                    <h2>Admission Shape</h2>
+                    <dl className="contract-panel">
+                      <div>
+                        <dt>Admission plan</dt>
+                        <dd>{admissionPlan?.admission_plan_id || 'waiting for admission plan'}</dd>
+                      </div>
+                      <div>
+                        <dt>Admission authority</dt>
+                        <dd>{admissionPlan?.mutation_authority || 'not_admitted'}</dd>
+                      </div>
+                      <div>
+                        <dt>Target rows</dt>
+                        <dd>{Object.entries(targetRows).map(([key, value]) => `${formatLabel(key)}: ${formatValue(value)}`).join('; ') || 'none reported'}</dd>
+                      </div>
+                      <div>
+                        <dt>No-go checks</dt>
+                        <dd>{formatCount(noGoChecks.length)}</dd>
+                      </div>
+                    </dl>
+                  </article>
+                </div>
+              </section>
+              <section aria-label="Approval Contract Context contract group">
+                <h3 style={{ fontSize: '0.95rem', margin: '0 0 0.65rem' }}>Approval Contract Context</h3>
+                <div aria-label="Approval Contract Context contract cards">
+                  <article className="notes-card accent-card">
+                    <h2>Approval Contract</h2>
+                    <dl className="contract-panel">
+                      <div>
+                        <dt>Contract</dt>
+                        <dd>{approvalContract?.approval_contract_id || 'waiting for approval contract'}</dd>
+                      </div>
+                      <div>
+                        <dt>Record type</dt>
+                        <dd>{approvalContract?.approval_record_contract?.record_type || storagePlan?.recommended_entity_type || 'unknown'}</dd>
+                      </div>
+                      <div>
+                        <dt>Contract authority</dt>
+                        <dd>{approvalContract?.mutation_authority || 'not_admitted'}</dd>
+                      </div>
+                      <div>
+                        <dt>Persistence authority</dt>
+                        <dd>{approvalContract?.persistence_authority || storagePlan?.persistence_authority || 'not_admitted'}</dd>
+                      </div>
+                      <div>
+                        <dt>Storage table</dt>
+                        <dd>{storagePlan?.recommended_table || 'not admitted'}</dd>
+                      </div>
+                      <div>
+                        <dt>Mutation route</dt>
+                        <dd>{futureRoute}</dd>
+                      </div>
+                    </dl>
+                  </article>
+                </div>
+              </section>
+              <section aria-label="Approval Status Context contract group">
+                <h3 style={{ fontSize: '0.95rem', margin: '0 0 0.65rem' }}>Approval Status Context</h3>
+                <div aria-label="Approval Status Context contract cards">
+                  <article className="notes-card">
+                    <h2>Approval Status Readback</h2>
+                    <dl className="contract-panel">
+                      <div>
+                        <dt>Status</dt>
+                        <dd>
+                          <span className={`status-pill ${approvalStatusTone(approvalStatus)}`}>
+                            {formatLabel(approvalStatus?.classification)}
+                          </span>
+                        </dd>
+                      </div>
+                      <div>
+                        <dt>Current candidate match</dt>
+                        <dd>{formatValue(approvalStatus?.current_candidate_match)}</dd>
+                      </div>
+                      <div>
+                        <dt>Storage</dt>
+                        <dd>{approvalStatus?.approval_storage_available === false ? 'unavailable' : 'available'}</dd>
+                      </div>
+                      <div>
+                        <dt>Approval records</dt>
+                        <dd>{formatCount(approvalStatus?.approval_record_count_for_candidate)}</dd>
+                      </div>
+                      <div>
+                        <dt>Import authority</dt>
+                        <dd>{approvalStatus?.import_authority || 'not_admitted'}</dd>
+                      </div>
+                      <div>
+                        <dt>Read route</dt>
+                        <dd>{approvalStatus?.route || '/api/v1/reads/project-import-approval-status'}</dd>
+                      </div>
+                    </dl>
+                    <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+                      Status readback only. This panel does not approve, persist, import, assign, schedule, change status, or mutate production state.
+                    </p>
+                  </article>
+                </div>
+              </section>
             </div>
           </div>
         </details>

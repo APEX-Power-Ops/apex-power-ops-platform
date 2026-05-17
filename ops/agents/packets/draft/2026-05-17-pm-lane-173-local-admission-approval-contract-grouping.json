@@ -1,0 +1,47 @@
+{
+  "packet_id": "2026-05-17-pm-lane-173",
+  "title": "PM Lane 173 - Local Admission and Approval Contract Grouping",
+  "lane": "PM lane development",
+  "status": "completed",
+  "owner": "VS Code Codex",
+  "authority": "repo technical authority; PM lane implementation authority; final integration authority",
+  "date": "2026-05-17",
+  "objective": "Reduce Project Miner Temp Power admission and approval contract scan burden by grouping the existing Admission Shape, Approval Contract, and Approval Status Readback cards without changing admission values, approval values, status readback, exports, storage behavior, or write boundaries.",
+  "scope": [
+    "Grouped the existing Admission Shape, Approval Contract, and Approval Status Readback cards into Admission Shape Context, Approval Contract Context, and Approval Status Context.",
+    "Preserved the same three top-level contract cards, admission plan values, target-row/no-go readback, approval contract values, storage table/route values, approval-status readback, and no-write sentence.",
+    "Kept the admission/approval contract disclosure behavior local and stateless with no admission or approval-contract localStorage key.",
+    "Used a read-only sidecar to verify the existing contract review shape while VS Code Codex retained PM implementation and final integration authority."
+  ],
+  "guardrails": [
+    "No hosted service access.",
+    "No Supabase, Render, Vercel, or Olares product action.",
+    "No SQL or schema migration.",
+    "No approval POST or approval-row creation.",
+    "No project import mutation.",
+    "No field authorization, assignment, schedule/status, durable field record, production tracking, customer report, completion evidence, billing, payroll, invoice, accounting, or external finance-system write.",
+    "No workbook macro or writeback.",
+    "No new export action, export handler, filename, payload version, localStorage key, backend route, service/auth/ingress change, or autonomous AI business-state mutation."
+  ],
+  "changed_files": [
+    "apps/operations-web/app/pm-review/import-intake/page.tsx",
+    "apps/operations-web/tests/browser-shell.pm-import-intake.smoke.spec.ts",
+    "PROJECT_STATUS.md",
+    "docs/operations/APEX-PM-STAKEHOLDER-TIME-PROTECTION-AND-ACCELERATION-LANE-2026-05-15.md",
+    "docs/operations/APEX-PM-TEMP-POWER-DELIVERY-AND-ORCHESTRATION-PLAN-2026-05-15.md",
+    "docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md",
+    "ops/agents/packets/draft/2026-05-17-pm-lane-173-local-admission-approval-contract-grouping.json",
+    "ops/agents/handoffs/2026-05-17-pm-lane-173-local-admission-approval-contract-grouping-handoff.md"
+  ],
+  "validation": [
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform\" --filter @apex/operations-web typecheck",
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform\" --filter @apex/operations-web build",
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform/apps/operations-web\" exec playwright test \"browser-shell.pm-import-intake.smoke.spec.ts\"",
+    "Get-Content -LiteralPath \"C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-17-pm-lane-173-local-admission-approval-contract-grouping.json\" | ConvertFrom-Json | Select-Object -ExpandProperty packet_id",
+    "rg -n \"PM Lane 173|Admission and approval contract groups|Admission Shape Context contract group|Approval Contract Context contract group|Approval Status Context contract group|mutationRequests\\)\\.toHaveLength\\(0\\)\" PROJECT_STATUS.md docs/operations ops/agents apps/operations-web",
+    "git diff --check"
+  ],
+  "validation_result": "PASS - operations-web typecheck passed; operations-web build passed; focused Playwright pm import-intake smoke passed; packet JSON parsed; PM Lane 173 guardrail rg passed; git diff --check passed with only expected CRLF warnings on touched and unrelated markdown files.",
+  "sidecar_result": "Read-only sidecar Bacon confirmed the existing Admission and Approval Contract panel already had the right three-card shape, recommended preserving card text and behavior, and called out a useful no-write sentence assertion. VS Code Codex limited Lane 173 to a presentation-only grouping layer with no state, controls, routes, exports, storage, persistence, or authority widening.",
+  "execution_result": "PASS"
+}
