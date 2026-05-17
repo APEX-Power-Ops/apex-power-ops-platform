@@ -762,6 +762,7 @@ Current known gaps:
 32. PM Lane 257 queues the Desktop Codex PM Lane 256 read-only scout with exactly one closeout handoff write allowed. This tests dual-lane support without allowing Desktop Codex to make PM decisions, edit product code, access hosted services, read source contents, accept warnings, approve/import rows, assign resources, mutate schedule/status, or create business-state changes.
 33. PM Lane 258 records that the Desktop Codex PM-256 closeout has not returned yet and updates the PM support queue to `IN_PROGRESS_GOVERNED_SCOUT_AWAITING_CLOSEOUT`. No scout result is inferred, and the active Data Entry warning gate remains unchanged.
 34. PM Lane 259 consolidates the active open returns into one no-code control register: the Data Entry warning still needs exactly one PM Lane 238 label, and PM-256-SCOUT still awaits the allowed Desktop Codex closeout. No warning disposition, queue widening, live admission, approval/import authority, or PM business-state mutation is admitted.
+35. PM Lane 260 engages a continuation loop guard: do not author another same-class PM packet unless an exact Data Entry label returns, the allowed Desktop Codex closeout appears, concrete new review-control evidence appears, or Jason requests a different bounded PM review artifact.
 
 Required response to new gaps:
 

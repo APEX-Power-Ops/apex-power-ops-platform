@@ -1002,6 +1002,8 @@ PM Lane 258 executes the Project Miner Temp Power Desktop Codex PM-256 Scout No-
 
 PM Lane 259 executes the Project Miner Temp Power Active Return Register And Next Input Gate No-Live Packet tranche. The workflow now has one control register for the two active returns: the open `PROJECT_DATA_ENTRY_FORMULA_ERRORS` decision label return and the absent Desktop Codex PM-256 scout closeout. The lane changes no warning disposition, infers no Desktop Codex result, and keeps approval, import, resource assignment, schedule/status, customer commitment, hosted access, source access/writeback, and PM business-state mutation blocked.
 
+PM Lane 260 executes the Project Miner Temp Power Continuation Loop Guard And Next Return Selector No-Live Packet tranche. The workflow now prevents repeated continuation packets from restating the same two open returns. The next PM packet in this branch should wait for exactly one PM Lane 238 Data Entry label, the allowed Desktop Codex PM-256 closeout, concrete new review-control evidence, or a new explicit bounded PM review request.
+
 Level 3 - Resource Context:
 Read equipment inventory and technician capability rows so PM can understand whether the project can be staffed with available people and equipment.
 

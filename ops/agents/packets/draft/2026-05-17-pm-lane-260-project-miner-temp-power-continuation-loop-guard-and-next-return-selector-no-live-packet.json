@@ -1,0 +1,76 @@
+{
+  "packet_id": "2026-05-17-pm-lane-260-project-miner-temp-power-continuation-loop-guard-and-next-return-selector-no-live-packet",
+  "title": "PM Lane 260 - Project Miner Temp Power Continuation Loop Guard And Next Return Selector No-Live Packet",
+  "date": "2026-05-17",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_CONTINUATION_LOOP_GUARD_AND_NEXT_RETURN_SELECTOR_NO_LIVE",
+  "selected_outcome": "LOOP_GUARD_ENGAGED_AWAIT_EXACT_LABEL_OR_DESKTOP_CLOSEOUT_NO_LIVE",
+  "loop_guard": {
+    "state": "engaged",
+    "reason": "PM Lane 259 already consolidated the active open returns",
+    "do_not_repeat_packet_when_only_evidence_is": [
+      "Desktop Codex PM-256 closeout absent",
+      "PM Lane 238 Data Entry label absent",
+      "no new scan-burden evidence",
+      "no new source-lineage evidence",
+      "no new validation evidence",
+      "no new authority-boundary evidence"
+    ]
+  },
+  "current_inputs": {
+    "continuation_instruction_classification": "PM work authorization only",
+    "exact_data_entry_label_returned": false,
+    "desktop_pm_256_closeout_present": false,
+    "warning_disposition_changed": false,
+    "queue_widening_admitted": false
+  },
+  "next_return_selector": [
+    {
+      "return_type": "exact_data_entry_label",
+      "allowed_result": "record exactly one PM Lane 238 label in a later no-live decision-intake packet"
+    },
+    {
+      "return_type": "desktop_pm_256_closeout",
+      "allowed_result": "VS Code Codex reviews the allowed closeout before queue widening"
+    },
+    {
+      "return_type": "new_review_control_evidence",
+      "allowed_result": "author a bounded no-code PM packet only if concrete new evidence appears"
+    },
+    {
+      "return_type": "new_explicit_bounded_request",
+      "allowed_result": "author the requested PM review artifact without live writes or business-state mutation"
+    }
+  ],
+  "required_pm_lane_238_labels": [
+    "ACCEPT_DATA_ENTRY_WARNING_NON_BLOCKING_NO_LIVE",
+    "REQUEST_DATA_ENTRY_WORKBOOK_CORRECTION_NO_LIVE",
+    "HOLD_DATA_ENTRY_WARNING_NO_LIVE",
+    "PROVIDE_EXACT_LIVE_ADMISSION_LATER"
+  ],
+  "desktop_codex_expected_closeout": "ops/agents/handoffs/2026-05-17-desktop-codex-pm-lane-256-state-review-next-move-selector-scout-closeout.md",
+  "blocked_authority": [
+    "warning_acceptance_by_inference",
+    "queue_widening_by_inference",
+    "product_code",
+    "hosted_access",
+    "source_content_read",
+    "workbook_macro",
+    "approval_post",
+    "approval_row",
+    "project_import",
+    "resource_assignment",
+    "schedule_status_mutation",
+    "customer_commitment",
+    "business_state_mutation"
+  ],
+  "validation": [
+    "packet JSON parse",
+    "closeout absence check",
+    "loop-guard text search",
+    "queue text search",
+    "marker-token scan",
+    "corrupted-token scan",
+    "git diff --check"
+  ],
+  "validation_result": "PASS"
+}

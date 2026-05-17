@@ -922,6 +922,8 @@ PM Lane 258 records that the allowed Desktop Codex PM-256 closeout has not retur
 
 PM Lane 259 consolidates the two active returns into one no-code lane-control register. The Project Data Entry warning still requires exactly one PM Lane 238 Data Entry label, and the Desktop Codex PM-256 scout closeout is still absent. No warning disposition changes, no Desktop Codex result is inferred, and the next allowed movement remains exact-label intake, VS Code Codex review of the allowed Desktop closeout, or no-code review-control work only.
 
+PM Lane 260 engages a continuation loop guard. Further PM packets should not restate the same absent Data Entry label and absent Desktop Codex closeout unless an exact PM Lane 238 label returns, the allowed Desktop closeout appears, concrete new review-control evidence appears, or Jason requests a different bounded PM review artifact.
+
 The success standard is not just technical correctness. The candidate must reduce Jason's review burden by showing:
 
 1. what the system thinks the project is,
