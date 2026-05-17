@@ -159,11 +159,25 @@ function assertOpenApiHasIntakeReads(openApi) {
     '/api/v1/reads/project-import-admission-plan',
     '/api/v1/reads/project-import-approval-contract',
     '/api/v1/reads/project-import-approval-storage-plan',
+    '/api/v1/reads/project-import-approval-status',
+    '/api/v1/mutations/project-import-approvals',
   ];
 
   for (const path of requiredPaths) {
     if (!Object.prototype.hasOwnProperty.call(paths, path)) {
       throw new Error(`mutation seam OpenAPI is missing ${path}`);
+    }
+  }
+
+  const requiredMethods = [
+    ['/api/v1/reads/project-import-approval-status', 'get'],
+    ['/api/v1/mutations/project-import-approvals', 'post'],
+  ];
+
+  for (const [path, method] of requiredMethods) {
+    const route = paths[path];
+    if (!route || typeof route !== 'object' || !Object.prototype.hasOwnProperty.call(route, method)) {
+      throw new Error(`mutation seam OpenAPI is missing ${method.toUpperCase()} ${path}`);
     }
   }
 }
@@ -248,6 +262,36 @@ function assertApprovalStoragePlan(plan) {
   }
 }
 
+function assertApprovalStatus(status) {
+  if (!status || typeof status !== 'object') {
+    throw new Error('approval status returned a non-object payload');
+  }
+
+  if (status.import_authority !== 'not_admitted') {
+    throw new Error(`approval status import authority is ${status.import_authority}`);
+  }
+
+  if (status.approval_storage_available !== true) {
+    throw new Error(`approval status storage availability is ${status.approval_storage_available}`);
+  }
+
+  if (status.audit_log_used_for_current_status !== false) {
+    throw new Error(`approval status audit dependency is ${status.audit_log_used_for_current_status}`);
+  }
+
+  if (status.source !== 'seam.pm_import_candidate_approvals') {
+    throw new Error(`approval status source is ${status.source}`);
+  }
+
+  if (status.route !== '/api/v1/reads/project-import-approval-status') {
+    throw new Error(`approval status route is ${status.route}`);
+  }
+
+  if (!status.classification) {
+    throw new Error('approval status did not include classification');
+  }
+}
+
 async function runCheck(label, failures, callback) {
   try {
     await callback();
@@ -297,7 +341,7 @@ async function main() {
   await runCheck('mutation seam health', failures, () =>
     expectJson(new URL('health', mutationSeamBaseUrl), 'mutation seam health', timeoutMs),
   );
-  await runCheck('mutation seam OpenAPI intake read paths', failures, async () => {
+  await runCheck('mutation seam OpenAPI intake and approval paths', failures, async () => {
     const openApi = await expectJson(new URL('openapi.json', mutationSeamBaseUrl), 'mutation seam OpenAPI', timeoutMs);
     assertOpenApiHasIntakeReads(openApi);
   });
@@ -332,6 +376,14 @@ async function main() {
       timeoutMs,
     );
     assertApprovalStoragePlan(plan);
+  });
+  await runCheck('mutation seam import approval status read', failures, async () => {
+    const status = await expectJson(
+      new URL('api/v1/reads/project-import-approval-status', mutationSeamBaseUrl),
+      'mutation seam import approval status read',
+      timeoutMs,
+    );
+    assertApprovalStatus(status);
   });
 
   if (failures.length > 0) {

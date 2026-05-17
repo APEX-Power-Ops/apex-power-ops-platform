@@ -31,6 +31,7 @@ Expected examples:
 1. Vercel existing-project promotion for operations-web.
 2. Render existing-service redeploy/classification for mutation-seam.
 3. Read-only hosted proof without deployment.
+4. PM Lane 138 approval-persistence hosted gate: apply only migration 003 and redeploy only the existing Render mutation-seam service.
 
 ## Changed Files
 
@@ -66,6 +67,15 @@ For Render:
 7. build/start/health metadata,
 8. log-backed blocker classification if validation remains red.
 
+For PM Lane 138 approval-persistence hosted gate:
+
+1. exact migration file applied: `apps/mutation-seam/migrations/003_pm_import_candidate_approvals.sql`,
+2. schema proof tuple for the approval table and insert-only triggers,
+3. existing Render service name `apex-platform-mutation-seam`,
+4. confirmation that `SEAM_DATABASE_URL` was present without printing it,
+5. OpenAPI proof for `POST /api/v1/mutations/project-import-approvals`,
+6. OpenAPI proof for `GET /api/v1/reads/project-import-approval-status`.
+
 ## Validation Commands And Results
 
 Paste each command exactly, then record the exact result.
@@ -89,6 +99,18 @@ Required for PM Lane 041B:
 ```powershell
 corepack pnpm --dir "C:/APEX Platform/apex-power-ops-platform" --filter @apex/operations-web exec node scripts/smoke-pm-intake-hosted.mjs --operations-web-base-url https://operations.apexpowerops.com --mutation-seam-base-url https://mutation-seam.apexpowerops.com --timeout-ms 20000
 ```
+
+Required for PM Lane 138:
+
+```powershell
+& "C:/APEX Platform/apex-power-ops-platform/.venv/Scripts/python.exe" "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/scripts/smoke_deployed_mutation_seam.py" --base-url https://mutation-seam.apexpowerops.com --include-pm-intake
+```
+
+```powershell
+corepack pnpm --dir "C:/APEX Platform/apex-power-ops-platform" --filter @apex/operations-web exec node scripts/smoke-pm-intake-hosted.mjs --operations-web-base-url https://operations.apexpowerops.com --mutation-seam-base-url https://mutation-seam.apexpowerops.com --timeout-ms 20000
+```
+
+Both PM Lane 138 hosted smokes must prove the approval-status GET route and approval POST OpenAPI registration. They must not send a live approval POST or create an approval row.
 
 ## Final Verdict
 
@@ -138,6 +160,13 @@ Confirm each item:
 10. no approval persistence,
 11. no import mutation,
 12. no assignment, schedule, status, issue, task, workpackage, project, or autonomous AI business-state mutation.
+
+For PM Lane 138 only, replace items 7, 8, and 10 with these narrower confirmations:
+
+1. only migration 003 was applied,
+2. no SQL other than migration 003 was executed,
+3. approval persistence was admitted only as the dedicated table/schema gate and no approval row was created,
+4. no UI approval POST wiring, browser approval button, live POST smoke, project import, assignment, schedule, status, issue, task, workpackage, project, production tracking, or autonomous AI business-state mutation occurred.
 
 ## Coordinator Recommendation
 

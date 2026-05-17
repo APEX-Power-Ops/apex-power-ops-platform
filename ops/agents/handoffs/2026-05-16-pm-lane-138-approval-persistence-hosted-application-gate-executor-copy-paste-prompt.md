@@ -90,6 +90,14 @@ Record non-secret deploy evidence: service name, deploy id or timestamp, deploye
 corepack pnpm --dir "C:/APEX Platform/apex-power-ops-platform" --filter @apex/operations-web exec node scripts/smoke-pm-intake-hosted.mjs --operations-web-base-url https://operations.apexpowerops.com --mutation-seam-base-url https://mutation-seam.apexpowerops.com --timeout-ms 20000
 ```
 
+The standard hosted smokes now verify:
+
+1. OpenAPI registration for `GET /api/v1/reads/project-import-approval-status`,
+2. hosted readback from `GET /api/v1/reads/project-import-approval-status`,
+3. OpenAPI registration for `POST /api/v1/mutations/project-import-approvals`.
+
+They must not send a live approval POST or create an approval row.
+
 OpenAPI route proof:
 
 ```powershell
@@ -101,6 +109,10 @@ OpenAPI route proof:
 Create one closeout handoff under:
 
 `C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/`
+
+Use the PM Lane 138 section of:
+
+`C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/templates/pm-hosted-executor-closeout-template.md`
 
 Include:
 

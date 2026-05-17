@@ -1,0 +1,65 @@
+{
+  "packet_id": "2026-05-16-pm-lane-139",
+  "title": "Approval Persistence Hosted Gate Smoke And Closeout Contract Tightening",
+  "objective": "Tighten the standard hosted PM intake validation and closeout contract so PM Lane 138 executors can prove approval-status readback and approval POST route registration without sending a live approval POST or widening into project import.",
+  "domain": "pm-domain",
+  "active_role": "Technical Repo Authority / PM Lane Coordinator / Hosted Gate Contract Executor",
+  "source_floor": {
+    "branch": "clean-main",
+    "commit": "ba653cadb7d3b2f671ea757540879cce9873e142",
+    "meaning": "Current clean-main after PM Lane 137 approval persistence status readback and UI surfacing."
+  },
+  "dependencies": [
+    "2026-05-16-pm-lane-041c",
+    "2026-05-16-pm-lane-137",
+    "2026-05-16-pm-lane-138"
+  ],
+  "allowed_scope": [
+    "Extend deployed mutation-seam hosted smoke OpenAPI checks to require approval-status GET and approval POST route registration.",
+    "Extend paired operations-web PM intake hosted smoke OpenAPI checks to require approval-status GET and approval POST route registration.",
+    "Preserve hosted approval-status GET readback checks without sending a live approval POST.",
+    "Update the PM hosted executor closeout template with a PM Lane 138-specific migration-003 guardrail section.",
+    "Update the PM Lane 138 executor prompt to reference the tightened hosted proof and closeout template.",
+    "Update PM lane operating docs and project status to reflect the hosted-gate evidence contract."
+  ],
+  "not_allowed": [
+    "No live Supabase SQL application.",
+    "No Render, Vercel, or Olares deployment.",
+    "No secret value access, print, rotation, or repo storage.",
+    "No live approval POST smoke or approval row creation.",
+    "No operations-web approval button or frontend approval POST wiring.",
+    "No project import mutation.",
+    "No project, workpackage, task, apparatus, issue, assignment, schedule, status, durable field record, production tracking, workbook, or import rows.",
+    "No workbook macro execution or workbook writeback.",
+    "No service creation, DNS/auth/ingress change, fixture replay into live data, work authorization, field release, live work order creation, or autonomous AI business-state mutation."
+  ],
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/PROJECT_STATUS.md",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/scripts/smoke_deployed_mutation_seam.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/scripts/smoke-pm-intake-hosted.mjs",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/APEX-PM-TEMP-POWER-DELIVERY-AND-ORCHESTRATION-PLAN-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/APEX-PM-STAKEHOLDER-TIME-PROTECTION-AND-ACCELERATION-LANE-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/templates/pm-hosted-executor-closeout-template.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-16-pm-lane-138-approval-persistence-hosted-application-gate-executor-copy-paste-prompt.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-16-pm-lane-139-approval-persistence-hosted-gate-smoke-closeout-contract.json",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-16-pm-lane-139-approval-persistence-hosted-gate-smoke-closeout-contract-handoff.md"
+  ],
+  "validation_steps": [
+    "& \"C:/APEX Platform/apex-power-ops-platform/.venv/Scripts/python.exe\" -m py_compile apps/mutation-seam/scripts/smoke_deployed_mutation_seam.py",
+    "& \"C:/APEX Platform/apex-power-ops-platform/.venv/Scripts/python.exe\" apps/mutation-seam/scripts/smoke_deployed_mutation_seam.py --help",
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform\" --filter @apex/operations-web exec node --check scripts/smoke-pm-intake-hosted.mjs",
+    "& \"C:/APEX Platform/apex-power-ops-platform/.venv/Scripts/python.exe\" -c \"import json; json.load(open(r'C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-16-pm-lane-139-approval-persistence-hosted-gate-smoke-closeout-contract.json', encoding='utf-8')); print('packet-json-ok')\"",
+    "git diff --check",
+    "git diff --cached --check"
+  ],
+  "validation_result": "PASS: py_compile passed for deployed mutation-seam smoke; smoke_deployed_mutation_seam.py --help returned usage; operations-web hosted PM intake smoke passed node --check; packet JSON parse returned packet-json-ok; rg evidence check found approval-status GET, approval POST OpenAPI registration, migration-003 guardrails, and PM Lane 138/139 references; git diff --check and git diff --cached --check passed.",
+  "delegation_status": "coordinator_executed_locally_with_read_only_sidecar_scout",
+  "sidecar_result": "Read-only sidecar scout recommended tightening the hosted smoke and closeout contract rather than adding more UI work. It identified that PM Lane 138 needs proof of approval POST OpenAPI registration and a closeout template section whose guardrails match the migration-003 application gate.",
+  "next_recommended_lane": "PM Lane 138 - Approval Persistence Hosted Application Gate, when an authenticated hosted executor is available",
+  "sql_permission": false,
+  "live_deploy_permission": false,
+  "ai_mutation_authority": "not_admitted",
+  "created_at": "2026-05-16",
+  "updated_at": "2026-05-16"
+}

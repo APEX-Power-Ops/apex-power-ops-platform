@@ -97,6 +97,20 @@ def expect_openapi_paths(*, payload: Any, required_paths: set[str], failures: li
             failures.append(f'openapi missing {route_path}')
 
 
+def expect_openapi_methods(*, payload: Any, required_methods: dict[str, set[str]], failures: list[str]) -> None:
+    paths = payload.get('paths') if isinstance(payload, dict) else None
+    if not isinstance(paths, dict):
+        return
+    for route_path, route_methods in sorted(required_methods.items()):
+        route_spec = paths.get(route_path)
+        if not isinstance(route_spec, dict):
+            continue
+        available_methods = {method.lower() for method in route_spec}
+        for route_method in sorted(route_methods):
+            if route_method.lower() not in available_methods:
+                failures.append(f'openapi missing {route_method.upper()} {route_path}')
+
+
 def expect_fields(*, label: str, payload: Any, required_fields: set[str], failures: list[str]) -> None:
     if not isinstance(payload, dict):
         failures.append(f'{label} returned non-object payload')
@@ -141,6 +155,12 @@ def main() -> int:
             '/api/v1/reads/project-import-admission-plan',
             '/api/v1/reads/project-import-approval-contract',
             '/api/v1/reads/project-import-approval-storage-plan',
+            '/api/v1/reads/project-import-approval-status',
+            '/api/v1/mutations/project-import-approvals',
+        }
+        required_openapi_methods = {
+            '/api/v1/reads/project-import-approval-status': {'get'},
+            '/api/v1/mutations/project-import-approvals': {'post'},
         }
         status, payload = request_json(f'{base_url}/openapi.json', timeout_seconds=args.timeout_seconds)
         expect_status(
@@ -152,6 +172,7 @@ def main() -> int:
         )
         if status == 200:
             expect_openapi_paths(payload=payload, required_paths=intake_paths, failures=failures)
+            expect_openapi_methods(payload=payload, required_methods=required_openapi_methods, failures=failures)
 
         intake_checks = [
             (
@@ -184,6 +205,18 @@ def main() -> int:
                     'persistence_authority',
                 },
             ),
+            (
+                'project_import_approval_status',
+                '/api/v1/reads/project-import-approval-status',
+                {
+                    'classification',
+                    'source',
+                    'route',
+                    'approval_storage_available',
+                    'audit_log_used_for_current_status',
+                    'import_authority',
+                },
+            ),
         ]
         for label, path, required_fields in intake_checks:
             status, payload = request_json(
@@ -200,7 +233,18 @@ def main() -> int:
             )
             if status == 200:
                 expect_fields(label=label, payload=payload, required_fields=required_fields, failures=failures)
-                if isinstance(payload, dict) and payload.get('mutation_authority') != 'not_admitted':
+                if label == 'project_import_approval_status':
+                    if isinstance(payload, dict) and payload.get('import_authority') != 'not_admitted':
+                        failures.append(f'{label} returned import_authority={payload.get("import_authority")}')
+                    if isinstance(payload, dict) and payload.get('approval_storage_available') is not True:
+                        failures.append(
+                            f'{label} returned approval_storage_available={payload.get("approval_storage_available")}'
+                        )
+                    if isinstance(payload, dict) and payload.get('audit_log_used_for_current_status') is not False:
+                        failures.append(
+                            f'{label} returned audit_log_used_for_current_status={payload.get("audit_log_used_for_current_status")}'
+                        )
+                elif isinstance(payload, dict) and payload.get('mutation_authority') != 'not_admitted':
                     failures.append(f'{label} returned mutation_authority={payload.get("mutation_authority")}')
 
     if failures:
