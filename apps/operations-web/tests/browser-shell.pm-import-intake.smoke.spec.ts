@@ -1123,6 +1123,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(approvalDryRun.getByRole('button', { name: 'Export Dry Run Envelope' })).toBeVisible()
   await expect(approvalDryRun.getByRole('button', { name: 'Export Readiness Checkpoint' })).toBeVisible()
   await expect(approvalDryRun.getByRole('button', { name: 'Export Review Bundle' })).toBeVisible()
+  await expect(approvalDryRun.getByRole('button', { name: 'Export Live Gate Preflight' })).toBeVisible()
   await expect(approvalDryRun.getByRole('button', { name: 'Clear dry run' })).toBeDisabled()
   await approvalDryRun.locator(':scope > summary').click()
   await expect(approvalDryRun).not.toHaveAttribute('open', '')
@@ -1309,6 +1310,69 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   expect(reviewBundle.review_sequence).toHaveLength(4)
   expect(reviewBundle.blocked_boundaries).toEqual(expect.arrayContaining(['live_approval_post', 'approval_row_creation', 'project_import']))
   await expect(approvalDryRun.getByRole('status')).toContainText(/Local approval review bundle exported/i)
+  expect(mutationRequests).toHaveLength(0)
+  const preflightDownloadPromise = page.waitForEvent('download')
+  await approvalDryRun.getByRole('button', { name: 'Export Live Gate Preflight' }).click()
+  const preflightDownload = await preflightDownloadPromise
+  expect(preflightDownload.suggestedFilename()).toBe('pm-import-candidate-miner-temp-power-approval-live-gate-preflight.json')
+  const preflightStream = await preflightDownload.createReadStream()
+  expect(preflightStream).not.toBeNull()
+  const preflightChunks: Buffer[] = []
+  for await (const chunk of preflightStream!) {
+    preflightChunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk))
+  }
+  const preflight = JSON.parse(Buffer.concat(preflightChunks).toString('utf8'))
+  expect(preflight).toMatchObject({
+    preflight_kind: 'pm_import_candidate_approval_live_gate_preflight',
+    preflight_version: 'pm_lane_147_local_live_gate_preflight_v1',
+    candidate_identity: {
+      candidate_id: 'pm-import-candidate-miner-temp-power',
+      candidate_version: 'pm_import_candidate_read_only_v1',
+      source_fingerprint: 'stat-fingerprint-abc123',
+    },
+    preflight_summary: {
+      ready_count: 3,
+      needs_review_count: 1,
+      blocked_count: 2,
+      summary: '3 ready, 1 needs review, 2 blocked',
+      live_gate_status: 'blocked_until_exact_phrase',
+    },
+    approval_review_bundle: {
+      bundle_kind: 'pm_import_candidate_approval_local_review_bundle',
+      bundle_version: 'pm_lane_146_local_review_bundle_v1',
+      dry_run_envelope: {
+        dry_run_kind: 'pm_import_candidate_browser_approval_dry_run',
+        payload: {
+          candidate_id: 'pm-import-candidate-miner-temp-power',
+          decision: 'return_for_revision',
+        },
+      },
+      readiness_checkpoint: {
+        readiness_version: 'pm_lane_145_local_readiness_v1',
+      },
+    },
+    authority_boundary: {
+      mutation_authority: 'not_admitted',
+      local_preflight_only: true,
+      future_route: '/api/v1/mutations/project-import-approvals',
+      live_post_performed: false,
+      approval_row_created: false,
+      project_import_performed: false,
+      server_write_performed: false,
+    },
+    required_live_write_gate: 'I explicitly admit PM Lane 142 live approval POST and first approval-row creation for the current Project Miner Temp Power import candidate.',
+  })
+  expect(preflight.generated_locally_at).toEqual(expect.any(String))
+  expect(preflight.preflight_items.map((item: { id: string; status: string }) => `${item.id}:${item.status}`)).toEqual([
+    'candidate-identity:ready',
+    'local-review-bundle:ready',
+    'approval-status-readback:ready',
+    'admission-no-go-posture:needs_review',
+    'live-write-admission:blocked',
+    'downstream-import-boundary:blocked',
+  ])
+  expect(preflight.blocked_boundaries).toEqual(expect.arrayContaining(['live_approval_post', 'approval_row_creation', 'project_import']))
+  await expect(approvalDryRun.getByRole('status')).toContainText(/Local approval live-gate preflight exported/i)
   expect(mutationRequests).toHaveLength(0)
   const closeoutIntake = page.locator('details#executor-closeout[aria-label="Local executor closeout intake"]')
   await expect(closeoutIntake).toHaveAttribute('open', '')

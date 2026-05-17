@@ -904,6 +904,11 @@ function approvalReviewBundleFileName(candidate?: CandidatePayload | null) {
   return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-approval-review-bundle.json`
 }
 
+function approvalLiveGatePreflightFileName(candidate?: CandidatePayload | null) {
+  const candidateId = candidate?.candidate_id || 'project-miner-intake'
+  return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-approval-live-gate-preflight.json`
+}
+
 function executorHandoffFileName(candidate?: CandidatePayload | null) {
   const candidateId = candidate?.candidate_id || 'project-miner-intake'
   return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-executor-handoff.md`
@@ -1237,6 +1242,94 @@ function buildApprovalReviewBundleExport(
       ...dryRunEnvelope.blocked_boundaries,
       ...readinessCheckpoint.blocked_boundaries,
     ])),
+  }
+}
+
+function buildApprovalLiveGatePreflightExport(
+  packet: IntakeWorkbenchPacket,
+  readinessItems: ApprovalDryRunReadinessItem[],
+  notAllowed: string[],
+  futureRoute: string,
+  reviewChecks: Record<string, boolean>,
+  approvalDraft: ApprovalDecisionDraft,
+) {
+  const candidate = packet.candidate
+  const approvalStatus = packet.approvalStatus
+  const sourceFingerprint = candidate.source_freshness?.aggregate_fingerprint
+  const reviewBundle = buildApprovalReviewBundleExport(packet, readinessItems, notAllowed, futureRoute, reviewChecks, approvalDraft)
+  const dryRunEnvelope = reviewBundle.dry_run_envelope
+  const admissionNoGoReadiness = readinessItems.find((item) => item.id === 'admission-no-go-review')
+  const preflightItems: ApprovalDryRunReadinessItem[] = [
+    {
+      id: 'candidate-identity',
+      title: 'Candidate identity',
+      status: candidate.candidate_id && candidate.candidate_version && sourceFingerprint ? 'ready' : 'blocked',
+      detail: candidate.candidate_id && candidate.candidate_version && sourceFingerprint
+        ? `${candidate.candidate_id} ${candidate.candidate_version} is paired with source fingerprint ${sourceFingerprint}.`
+        : 'Candidate id, candidate version, and source fingerprint are all required before a live gate can be considered.',
+    },
+    {
+      id: 'local-review-bundle',
+      title: 'Local review bundle',
+      status: dryRunEnvelope.local_validation.decision_draft_complete ? 'ready' : 'blocked',
+      detail: dryRunEnvelope.local_validation.decision_draft_complete
+        ? 'The browser-local review bundle contains a complete decision draft and dry-run envelope.'
+        : 'Complete the local decision draft before using the review bundle as live-gate context.',
+    },
+    {
+      id: 'approval-status-readback',
+      title: 'Approval status readback',
+      status: approvalStatus.classification === 'no_approval_record' && approvalStatus.approval_record_count_for_candidate === 0 ? 'ready' : 'needs_review',
+      detail: approvalStatus.classification === 'no_approval_record' && approvalStatus.approval_record_count_for_candidate === 0
+        ? 'Approval status readback reports no current approval record for this candidate.'
+        : 'Approval status readback should be reviewed before any live approval-row attempt.',
+    },
+    {
+      id: 'admission-no-go-posture',
+      title: 'Admission no-go posture',
+      status: admissionNoGoReadiness?.status || 'needs_review',
+      detail: admissionNoGoReadiness?.detail || 'Admission no-go posture must be reviewed before any live approval-row attempt.',
+    },
+    {
+      id: 'live-write-admission',
+      title: 'Live write admission',
+      status: 'blocked',
+      detail: 'The exact PM Lane 142 live-write admission phrase has not been provided in this lane.',
+    },
+    {
+      id: 'downstream-import-boundary',
+      title: 'Downstream import boundary',
+      status: 'blocked',
+      detail: 'Project import, workpackage/task/apparatus writes, assignment, schedule, status, and production tracking remain blocked after any approval preflight.',
+    },
+  ]
+  const counts = approvalDryRunReadinessCounts(preflightItems)
+
+  return {
+    preflight_kind: 'pm_import_candidate_approval_live_gate_preflight',
+    preflight_version: 'pm_lane_147_local_live_gate_preflight_v1',
+    generated_locally_at: new Date().toISOString(),
+    candidate_identity: reviewBundle.candidate_identity,
+    preflight_summary: {
+      ready_count: counts.ready,
+      needs_review_count: counts.needsReview,
+      blocked_count: counts.blocked,
+      summary: approvalDryRunReadinessSummary(counts),
+      live_gate_status: 'blocked_until_exact_phrase',
+    },
+    preflight_items: preflightItems,
+    approval_review_bundle: reviewBundle,
+    authority_boundary: {
+      mutation_authority: 'not_admitted',
+      local_preflight_only: true,
+      future_route: futureRoute,
+      live_post_performed: false,
+      approval_row_created: false,
+      project_import_performed: false,
+      server_write_performed: false,
+    },
+    required_live_write_gate: 'I explicitly admit PM Lane 142 live approval POST and first approval-row creation for the current Project Miner Temp Power import candidate.',
+    blocked_boundaries: reviewBundle.blocked_boundaries,
   }
 }
 
@@ -4021,6 +4114,18 @@ export default function ProjectMinerIntakeWorkbenchPage() {
     setApprovalDryRunStatus(`Local approval review bundle exported for ${candidate?.candidate_id || 'the current intake packet'}; no network request was sent.`)
   }
 
+  function exportApprovalLiveGatePreflight() {
+    if (!packet) {
+      return
+    }
+
+    const preflight = buildApprovalLiveGatePreflightExport(packet, approvalDryRunReadiness, notAllowed, futureRoute, reviewChecks, approvalDraft)
+    const contents = `${JSON.stringify(preflight, null, 2)}\n`
+    setApprovalDryRunPreview(contents)
+    downloadTextFile(approvalLiveGatePreflightFileName(candidate), contents, 'application/json')
+    setApprovalDryRunStatus(`Local approval live-gate preflight exported for ${candidate?.candidate_id || 'the current intake packet'}; no network request was sent.`)
+  }
+
   function clearApprovalDryRun() {
     setApprovalDryRunPreview('')
     setApprovalDryRunStatus('')
@@ -5186,6 +5291,9 @@ export default function ProjectMinerIntakeWorkbenchPage() {
                 </button>
                 <button className="btn btn-outline" onClick={exportApprovalReviewBundle} disabled={!packet}>
                   Export Review Bundle
+                </button>
+                <button className="btn btn-outline" onClick={exportApprovalLiveGatePreflight} disabled={!packet}>
+                  Export Live Gate Preflight
                 </button>
                 <button className="btn btn-outline" onClick={clearApprovalDryRun} disabled={!approvalDryRunPreview && !approvalDryRunStatus}>
                   Clear dry run
