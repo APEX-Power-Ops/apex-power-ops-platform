@@ -251,6 +251,12 @@ type FieldPrepCoverageItem = {
   detail: string
 }
 
+type FieldPrepCoverageGroup = {
+  id: string
+  label: string
+  items: FieldPrepCoverageItem[]
+}
+
 type FieldPrepAgendaStatus = 'context' | 'ask' | 'confirm' | 'blocked'
 
 type FieldPrepAgendaItem = {
@@ -1739,6 +1745,29 @@ function buildFieldPrepCoverageSnapshot(
       title: 'Production tracking boundary',
       status: 'blocked',
       detail: 'Production tracking remains blocked until a later packet explicitly admits the required write path.',
+    },
+  ]
+}
+
+function groupFieldPrepCoverageSnapshotItems(fieldPrepCoverageSnapshot: FieldPrepCoverageItem[]): FieldPrepCoverageGroup[] {
+  const byId = new Map(fieldPrepCoverageSnapshot.map((item) => [item.id, item]))
+  const take = (ids: string[]) => ids.map((id) => byId.get(id)).filter((item): item is FieldPrepCoverageItem => Boolean(item))
+
+  return [
+    {
+      id: 'source-and-access-coverage',
+      label: 'Source And Access Context',
+      items: take(['source-drawing-coverage', 'access-safety-coverage']),
+    },
+    {
+      id: 'crew-material-and-customer-coverage',
+      label: 'Resource And Staging Context',
+      items: take(['crew-equipment-coverage', 'material-staging-coverage', 'customer-constraint-coverage']),
+    },
+    {
+      id: 'authority-and-production-coverage',
+      label: 'Authority And Production Boundary',
+      items: take(['field-authority-boundary', 'production-tracking-boundary']),
     },
   ]
 }
@@ -6837,6 +6866,10 @@ export default function ProjectMinerIntakeWorkbenchPage() {
     () => buildFieldPrepCoverageSnapshot(reviewChecks, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad),
     [reviewChecks, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad],
   )
+  const fieldPrepCoverageSnapshotGroups = useMemo(
+    () => groupFieldPrepCoverageSnapshotItems(fieldPrepCoverageSnapshot),
+    [fieldPrepCoverageSnapshot],
+  )
   const fieldPrepConversationAgenda = useMemo(
     () => buildFieldPrepConversationAgenda(fieldPrepCoverageSnapshot),
     [fieldPrepCoverageSnapshot],
@@ -8898,19 +8931,26 @@ export default function ProjectMinerIntakeWorkbenchPage() {
               <p style={{ margin: '0.6rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
                 {fieldPrepCoverageSummary(fieldPrepCoverageCount)}
               </p>
-              <div style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
-                {fieldPrepCoverageSnapshot.map((item) => (
-                  <article key={item.id} className="card" style={{ padding: '0.85rem', boxShadow: 'none' }}>
-                    <div className="status-row" style={{ alignItems: 'start' }}>
-                      <div>
-                        <p style={{ margin: 0 }}>
-                          <strong>{item.title}</strong>
-                        </p>
-                        <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
-                      </div>
-                      <span className={`status-pill ${fieldPrepCoverageTone(item.status)}`}>{formatLabel(item.status)}</span>
+              <div aria-label="Local field prep coverage snapshot groups" className="notes-grid" style={{ marginTop: '0.85rem' }}>
+                {fieldPrepCoverageSnapshotGroups.map((group) => (
+                  <section key={group.id} aria-label={`${group.label} field prep coverage group`}>
+                    <h3 style={{ fontSize: '0.95rem', margin: '0 0 0.65rem' }}>{group.label}</h3>
+                    <div aria-label={`${group.label} field prep coverage items`} style={{ display: 'grid', gap: '0.75rem' }}>
+                      {group.items.map((item) => (
+                        <article key={item.id} className="card" style={{ padding: '0.85rem', boxShadow: 'none' }}>
+                          <div className="status-row" style={{ alignItems: 'start' }}>
+                            <div>
+                              <p style={{ margin: 0 }}>
+                                <strong>{item.title}</strong>
+                              </p>
+                              <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
+                            </div>
+                            <span className={`status-pill ${fieldPrepCoverageTone(item.status)}`}>{formatLabel(item.status)}</span>
+                          </div>
+                        </article>
+                      ))}
                     </div>
-                  </article>
+                  </section>
                 ))}
               </div>
             </div>
