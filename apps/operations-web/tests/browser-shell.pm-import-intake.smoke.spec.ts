@@ -1,5 +1,7 @@
 import { expect, type Page, test } from '@playwright/test'
 
+test.setTimeout(60000)
+
 const guardedPhrase = (...parts: string[]) => new RegExp(parts.join('[\\s/-]+'), 'i')
 
 const impliedAuthorityControlNames = [
@@ -318,7 +320,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(outputActionRail.getByLabel('PM intake output action groups')).toBeVisible()
   await expect(outputActionRail.getByLabel('Review output actions').getByRole('button')).toHaveCount(4)
   await expect(outputActionRail.getByLabel('Executor output actions').getByRole('button')).toHaveCount(1)
-  await expect(outputActionRail.getByLabel('Field prep output actions').getByRole('button')).toHaveCount(16)
+  await expect(outputActionRail.getByLabel('Field prep output actions').getByRole('button')).toHaveCount(17)
   await expect(outputActionRail.getByLabel('Refresh action').getByRole('button')).toHaveCount(1)
   await expect(outputActionRail.getByLabel('Review output actions').getByRole('button', { name: 'Export PM Brief' })).toBeVisible()
   await expect(outputActionRail.getByLabel('Review output actions').getByRole('button', { name: 'Export Approval Preview JSON' })).toBeVisible()
@@ -341,6 +343,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(outputActionRail.getByLabel('Field prep output actions').getByRole('button', { name: 'Export Financial Handoff Draft' })).toBeVisible()
   await expect(outputActionRail.getByLabel('Field prep output actions').getByRole('button', { name: 'Export Pilot Launch Binder' })).toBeVisible()
   await expect(outputActionRail.getByLabel('Field prep output actions').getByRole('button', { name: 'Export Pilot Launch Daily Brief' })).toBeVisible()
+  await expect(outputActionRail.getByLabel('Field prep output actions').getByRole('button', { name: 'Export Pilot Launch Standup Card' })).toBeVisible()
   await outputActionDisclosure.locator(':scope > summary').click()
   await expect(outputActionDisclosure).not.toHaveAttribute('open', '')
   await expect(outputActionRail.getByLabel('PM intake output action groups')).toBeHidden()
@@ -351,7 +354,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(outputActionRail.getByLabel('PM intake output action groups')).toBeVisible()
   await expect(outputActionRail.getByLabel('Review output actions').getByRole('button')).toHaveCount(4)
   await expect(outputActionRail.getByLabel('Executor output actions').getByRole('button')).toHaveCount(1)
-  await expect(outputActionRail.getByLabel('Field prep output actions').getByRole('button')).toHaveCount(16)
+  await expect(outputActionRail.getByLabel('Field prep output actions').getByRole('button')).toHaveCount(17)
   await expect(outputActionRail.getByLabel('Refresh action').getByRole('button')).toHaveCount(1)
   await expect(page.getByLabel('PM intake output status rail')).toHaveCount(0)
   await expectNoImpliedAuthorityControls(page)
@@ -3368,6 +3371,111 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
     'field_daily_plan_write',
   ]))
   await expect(fieldPrepOutputStatus.getByText(/Pilot launch daily brief prepared from pm-import-candidate-miner-temp-power without a server write/i)).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Export Pilot Launch Standup Card' })).toBeEnabled()
+  const pilotLaunchStandupCardDownloadPromise = page.waitForEvent('download')
+  await page.getByRole('button', { name: 'Export Pilot Launch Standup Card' }).click()
+  const pilotLaunchStandupCardDownload = await pilotLaunchStandupCardDownloadPromise
+  expect(pilotLaunchStandupCardDownload.suggestedFilename()).toBe('pm-import-candidate-miner-temp-power-pilot-launch-standup-card.json')
+  const pilotLaunchStandupCardStream = await pilotLaunchStandupCardDownload.createReadStream()
+  expect(pilotLaunchStandupCardStream).not.toBeNull()
+  const pilotLaunchStandupCardChunks: Buffer[] = []
+  for await (const chunk of pilotLaunchStandupCardStream!) {
+    pilotLaunchStandupCardChunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk))
+  }
+  const pilotLaunchStandupCard = JSON.parse(Buffer.concat(pilotLaunchStandupCardChunks).toString('utf8'))
+  expect(pilotLaunchStandupCard).toMatchObject({
+    standup_card_kind: 'pm_import_candidate_pilot_launch_standup_card',
+    standup_card_version: 'pm_lane_160_local_pilot_launch_standup_card_v1',
+    candidate_identity: {
+      candidate_id: 'pm-import-candidate-miner-temp-power',
+      candidate_version: 'pm_import_candidate_read_only_v1',
+      project_name: 'Miner Temp Power',
+      source_fingerprint: 'stat-fingerprint-abc123',
+    },
+    source_daily_brief: {
+      file_name: 'pm-import-candidate-miner-temp-power-pilot-launch-daily-brief.json',
+      brief_kind: 'pm_import_candidate_pilot_launch_daily_brief',
+      brief_version: 'pm_lane_159_local_pilot_launch_daily_brief_v1',
+      brief_status: 'local_daily_brief_available_live_writes_blocked',
+      summary: '2 review-only, 5 blocked',
+    },
+    launch_day_summary: {
+      role_card_count: 4,
+      capture_prompt_count: 3,
+      no_go_count: 4,
+      card_status: 'local_standup_card_available_live_writes_blocked',
+    },
+    authority_boundary: {
+      mutation_authority: 'not_admitted',
+      local_pilot_launch_standup_card_only: true,
+      live_approval_post_performed: false,
+      approval_row_created: false,
+      project_import_performed: false,
+      field_authorization_created: false,
+      field_work_authorized: false,
+      lead_assignment_created: false,
+      crew_assignment_created: false,
+      schedule_plan_created: false,
+      status_change_performed: false,
+      durable_field_record_created: false,
+      production_tracking_performed: false,
+      customer_report_created: false,
+      customer_completion_evidence_created: false,
+      financial_handoff_route_created: false,
+      billing_export_created: false,
+      payroll_export_created: false,
+      invoice_record_created: false,
+      accounting_record_created: false,
+      external_finance_sync_created: false,
+      server_write_performed: false,
+    },
+  })
+  expect(pilotLaunchStandupCard.generated_locally_at).toEqual(expect.any(String))
+  expect(pilotLaunchStandupCard.source_artifact_manifest).toHaveLength(10)
+  expect(pilotLaunchStandupCard.standup_sequence).toHaveLength(4)
+  expect(pilotLaunchStandupCard.role_cards.map((item: { role_id: string, status: string }) => `${item.role_id}:${item.status}`)).toEqual([
+    'pm:lead_conversation_only',
+    'field_lead:context_review_only',
+    'customer_or_site_contact:expectation_alignment_only',
+    'executor_ai_relay:evidence_collection_only',
+  ])
+  expect(pilotLaunchStandupCard.no_go_checks.map((item: { check_id: string, status: string }) => `${item.check_id}:${item.status}`)).toEqual([
+    'approval-live-write-not-admitted:no_go',
+    'project-import-not-admitted:no_go',
+    'field-direction-not-admitted:no_go',
+    'customer-finance-output-not-admitted:no_go',
+  ])
+  expect(pilotLaunchStandupCard.capture_prompts.map((item: { prompt_id: string, capture_mode: string }) => `${item.prompt_id}:${item.capture_mode}`)).toEqual([
+    'open-decisions:local_prompt_only',
+    'field-start-blockers:local_prompt_only',
+    'next-packet-selection:local_prompt_only',
+  ])
+  expect(pilotLaunchStandupCard.next_packet_options.map((item: { option: string, status: string }) => `${item.option}:${item.status}`)).toEqual([
+    'approval-first-row-execution-gate:blocked_until_exact_pm_lane_142_phrase',
+    'project-import-mutation-design:blocked_until_approval_row_proof',
+    'field-execution-write-paths:blocked_until_import_and_field_authorization_packets',
+  ])
+  expect(pilotLaunchStandupCard.blocked_boundaries).toEqual(expect.arrayContaining([
+    'write_supabase',
+    'persist_approval_record',
+    'import_project_rows',
+    'field_work_authorization',
+    'lead_assignment_writes',
+    'schedule_status_write',
+    'customer_reporting_contract_write',
+    'financial_handoff_contract_write',
+    'billing_export_write',
+    'payroll_export_write',
+    'invoice_record_write',
+    'accounting_record_write',
+    'finance_system_integration',
+    'pilot_launch_standup_card_server_write',
+    'standup_card_business_state_write',
+    'meeting_action_item_write',
+    'field_direction_write',
+    'customer_commitment_write',
+  ]))
+  await expect(fieldPrepOutputStatus.getByText(/Pilot launch standup card prepared from pm-import-candidate-miner-temp-power without a server write/i)).toBeVisible()
   expect(mutationRequests).toHaveLength(0)
   await expect(page.getByRole('button', { name: 'Export Approval Preview JSON' })).toBeEnabled()
   const previewDownloadPromise = page.waitForEvent('download')

@@ -994,6 +994,11 @@ function pilotLaunchDailyBriefFileName(candidate?: CandidatePayload | null) {
   return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-pilot-launch-daily-brief.json`
 }
 
+function pilotLaunchStandupCardFileName(candidate?: CandidatePayload | null) {
+  const candidateId = candidate?.candidate_id || 'project-miner-intake'
+  return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-pilot-launch-standup-card.json`
+}
+
 function importExceptionRegisterFileName(candidate?: CandidatePayload | null) {
   const candidateId = candidate?.candidate_id || 'project-miner-intake'
   return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-import-exception-register.md`
@@ -5584,6 +5589,176 @@ function buildPilotLaunchDailyBriefExport(
   }
 }
 
+function buildPilotLaunchStandupCardExport(
+  packet: IntakeWorkbenchPacket,
+  approvalDryRunReadiness: ApprovalDryRunReadinessItem[],
+  reviewChecks: Record<string, boolean>,
+  approvalDraft: ApprovalDecisionDraft,
+  fieldPrepQueue: OperatingQueueItem[],
+  fieldPrepCoverageSnapshot: FieldPrepCoverageItem[],
+  fieldPrepConversationAgenda: FieldPrepAgendaItem[],
+  notAllowed: string[],
+  futureRoute: string,
+  fieldReadinessChecks: Record<string, boolean>,
+  fieldQuestionsDraft: FieldQuestionsDraft,
+  fieldObservationScratchpad: FieldObservationScratchpad,
+) {
+  const candidate = packet.candidate
+  const dailyBrief = buildPilotLaunchDailyBriefExport(packet, approvalDryRunReadiness, reviewChecks, approvalDraft, fieldPrepQueue, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, notAllowed, futureRoute, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad)
+  const roleCards = [
+    {
+      role_id: 'pm',
+      role_title: 'Project manager',
+      status: 'lead_conversation_only',
+      say_now: 'Use the daily brief to confirm what is review-only, what is blocked, and what proof is still required before any live approval, import, field, production, customer, or finance write exists.',
+      ask_now: [
+        'What must be clarified before the Temp Power start conversation?',
+        'Which open item would block mobilization discussion if it stays unanswered?',
+      ],
+      do_not_cross: ['do_not_approve_candidate', 'do_not_import_project_rows', 'do_not_authorize_field_work'],
+    },
+    {
+      role_id: 'field_lead',
+      role_title: 'Field lead',
+      status: 'context_review_only',
+      say_now: 'Review field-start, lead assignment, field authorization, schedule/status, durable record, and production tracking drafts as context only.',
+      ask_now: [
+        'What site access, safety, crew, material, or apparatus question needs PM/customer follow-up?',
+        'What would the lead need before any later authorized field start?',
+      ],
+      do_not_cross: ['do_not_assign_lead', 'do_not_assign_crew', 'do_not_change_schedule_or_status'],
+    },
+    {
+      role_id: 'customer_or_site_contact',
+      role_title: 'Customer or site contact',
+      status: 'expectation_alignment_only',
+      say_now: 'Confirm customer-facing expectations, constraints, and completion-evidence questions without creating a customer report or customer commitment record.',
+      ask_now: [
+        'What customer/site constraint should be recorded as an open question?',
+        'What completion evidence will need later agreement before customer reporting exists?',
+      ],
+      do_not_cross: ['do_not_create_customer_report', 'do_not_create_completion_evidence', 'do_not_create_customer_commitment'],
+    },
+    {
+      role_id: 'executor_ai_relay',
+      role_title: 'Executor and AI relay',
+      status: 'evidence_collection_only',
+      say_now: 'Capture returned evidence and packet recommendations for VS Code Codex review without admitting implementation or live-write authority.',
+      ask_now: [
+        'Has Desktop Codex returned the PM Lane 158 financial handoff admission design closeout?',
+        'Does the next packet need VS Code implementation, Desktop Codex scout work, or explicit PM Lane 142 live-write admission?',
+      ],
+      do_not_cross: ['do_not_stage_executor_output_without_review', 'do_not_mutate_hosted_services', 'do_not_sync_external_finance_systems'],
+    },
+  ]
+  const noGoChecks = [
+    {
+      check_id: 'approval-live-write-not-admitted',
+      status: 'no_go',
+      detail: 'No browser approval POST or first approval row may be created without the exact PM Lane 142 admission phrase.',
+    },
+    {
+      check_id: 'project-import-not-admitted',
+      status: 'no_go',
+      detail: 'No project, workpackage, task, or apparatus import mutation may be created from this standup card.',
+    },
+    {
+      check_id: 'field-direction-not-admitted',
+      status: 'no_go',
+      detail: 'No field authorization, lead assignment, crew assignment, schedule/status update, or daily field record may be created from this standup card.',
+    },
+    {
+      check_id: 'customer-finance-output-not-admitted',
+      status: 'no_go',
+      detail: 'No customer report, completion evidence, billing export, payroll export, invoice, accounting record, or external finance-system sync may be created from this standup card.',
+    },
+  ]
+  const capturePrompts = [
+    {
+      prompt_id: 'open-decisions',
+      label: 'Open decisions to bring back to PM review',
+      capture_mode: 'local_prompt_only',
+      guidance: 'Capture unresolved PM, lead, customer, or executor questions outside the app; this export does not persist them.',
+    },
+    {
+      prompt_id: 'field-start-blockers',
+      label: 'Field-start blockers or dependencies',
+      capture_mode: 'local_prompt_only',
+      guidance: 'List site, safety, access, material, apparatus, crew, schedule, or customer blockers without creating a field record.',
+    },
+    {
+      prompt_id: 'next-packet-selection',
+      label: 'Next packet recommendation',
+      capture_mode: 'local_prompt_only',
+      guidance: 'Choose whether the next bounded packet should wait for PM Lane 158 closeout, stay local-only, or request explicit PM Lane 142 live-write admission.',
+    },
+  ]
+
+  return {
+    standup_card_kind: 'pm_import_candidate_pilot_launch_standup_card',
+    standup_card_version: 'pm_lane_160_local_pilot_launch_standup_card_v1',
+    generated_locally_at: new Date().toISOString(),
+    candidate_identity: dailyBrief.candidate_identity,
+    field_shape: dailyBrief.field_shape,
+    source_daily_brief: {
+      file_name: pilotLaunchDailyBriefFileName(candidate),
+      brief_kind: dailyBrief.brief_kind,
+      brief_version: dailyBrief.brief_version,
+      brief_status: dailyBrief.daily_brief_summary.brief_status,
+      summary: dailyBrief.daily_brief_summary.summary,
+    },
+    launch_day_summary: {
+      role_card_count: roleCards.length,
+      capture_prompt_count: capturePrompts.length,
+      no_go_count: noGoChecks.length,
+      card_status: 'local_standup_card_available_live_writes_blocked',
+    },
+    source_artifact_manifest: dailyBrief.source_artifact_manifest,
+    standup_sequence: [
+      'open with the PM Lane 159 daily brief status and confirm this standup is review-only',
+      'walk the PM, field lead, customer/site contact, and executor/AI relay role cards',
+      'record open decisions, blockers, and next-packet recommendation outside the app',
+      'close by confirming no approval, import, field, production, customer, or finance write was admitted',
+    ],
+    role_cards: roleCards,
+    no_go_checks: noGoChecks,
+    capture_prompts: capturePrompts,
+    next_packet_options: dailyBrief.blocked_next_packet_options,
+    authority_boundary: {
+      mutation_authority: 'not_admitted',
+      local_pilot_launch_standup_card_only: true,
+      live_approval_post_performed: false,
+      approval_row_created: false,
+      project_import_performed: false,
+      field_authorization_created: false,
+      field_work_authorized: false,
+      lead_assignment_created: false,
+      crew_assignment_created: false,
+      schedule_plan_created: false,
+      status_change_performed: false,
+      durable_field_record_created: false,
+      production_tracking_performed: false,
+      customer_report_created: false,
+      customer_completion_evidence_created: false,
+      financial_handoff_route_created: false,
+      billing_export_created: false,
+      payroll_export_created: false,
+      invoice_record_created: false,
+      accounting_record_created: false,
+      external_finance_sync_created: false,
+      server_write_performed: false,
+    },
+    blocked_boundaries: Array.from(new Set([
+      ...dailyBrief.blocked_boundaries,
+      'pilot_launch_standup_card_server_write',
+      'standup_card_business_state_write',
+      'meeting_action_item_write',
+      'field_direction_write',
+      'customer_commitment_write',
+    ])),
+  }
+}
+
 function buildImportExceptionRegisterExport(
   packet: IntakeWorkbenchPacket,
   importExceptionRegister: ImportExceptionRegisterItem[],
@@ -5774,6 +5949,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
   const [financialHandoffDraftStatus, setFinancialHandoffDraftStatus] = useState('')
   const [pilotLaunchBinderStatus, setPilotLaunchBinderStatus] = useState('')
   const [pilotLaunchDailyBriefStatus, setPilotLaunchDailyBriefStatus] = useState('')
+  const [pilotLaunchStandupCardStatus, setPilotLaunchStandupCardStatus] = useState('')
   const [approvalDryRunStatus, setApprovalDryRunStatus] = useState('')
   const [approvalDryRunPreview, setApprovalDryRunPreview] = useState('')
   const [reviewChecks, setReviewChecks] = useState<Record<string, boolean>>({})
@@ -5953,7 +6129,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
   const fieldPrepAgendaCount = fieldPrepAgendaCounts(fieldPrepConversationAgenda)
   const reviewOutputStatuses = [briefStatus, previewStatus, pmIntakeSnapshotStatus, exceptionRegisterStatus].filter(Boolean)
   const executorOutputStatuses = [handoffStatus].filter(Boolean)
-  const fieldPrepOutputStatuses = [fieldBriefStatus, fieldObservationStatus, fieldPrepCoverageStatus, fieldPrepAgendaStatus, fieldPrepPacketStatus, fieldStartPreflightStatus, fieldExecutionGateDesignStatus, leadFieldAssignmentDraftStatus, fieldAuthorizationAssignmentDraftStatus, scheduleStatusControlsDraftStatus, durableFieldRecordDraftStatus, productionTrackingDraftStatus, customerReportingDraftStatus, financialHandoffDraftStatus, pilotLaunchBinderStatus, pilotLaunchDailyBriefStatus].filter(Boolean)
+  const fieldPrepOutputStatuses = [fieldBriefStatus, fieldObservationStatus, fieldPrepCoverageStatus, fieldPrepAgendaStatus, fieldPrepPacketStatus, fieldStartPreflightStatus, fieldExecutionGateDesignStatus, leadFieldAssignmentDraftStatus, fieldAuthorizationAssignmentDraftStatus, scheduleStatusControlsDraftStatus, durableFieldRecordDraftStatus, productionTrackingDraftStatus, customerReportingDraftStatus, financialHandoffDraftStatus, pilotLaunchBinderStatus, pilotLaunchDailyBriefStatus, pilotLaunchStandupCardStatus].filter(Boolean)
   const hasOutputStatuses = reviewOutputStatuses.length > 0 || executorOutputStatuses.length > 0 || fieldPrepOutputStatuses.length > 0
 
   useEffect(() => {
@@ -6423,6 +6599,16 @@ export default function ProjectMinerIntakeWorkbenchPage() {
     setPilotLaunchDailyBriefStatus(`Pilot launch daily brief prepared from ${candidate?.candidate_id || 'the current intake packet'} without a server write.`)
   }
 
+  function exportPilotLaunchStandupCard() {
+    if (!packet) {
+      return
+    }
+
+    const standupCard = buildPilotLaunchStandupCardExport(packet, approvalDryRunReadiness, reviewChecks, approvalDraft, fieldPrepQueue, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, notAllowed, futureRoute, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad)
+    downloadTextFile(pilotLaunchStandupCardFileName(candidate), `${JSON.stringify(standupCard, null, 2)}\n`, 'application/json')
+    setPilotLaunchStandupCardStatus(`Pilot launch standup card prepared from ${candidate?.candidate_id || 'the current intake packet'} without a server write.`)
+  }
+
   return (
     <main className="shell-page pm-review-page">
       <section className="hero-card pm-review-hero">
@@ -6606,6 +6792,9 @@ export default function ProjectMinerIntakeWorkbenchPage() {
                 </button>
                 <button className="btn btn-outline" onClick={exportPilotLaunchDailyBrief} disabled={!packet}>
                   Export Pilot Launch Daily Brief
+                </button>
+                <button className="btn btn-outline" onClick={exportPilotLaunchStandupCard} disabled={!packet}>
+                  Export Pilot Launch Standup Card
                 </button>
               </div>
             </section>

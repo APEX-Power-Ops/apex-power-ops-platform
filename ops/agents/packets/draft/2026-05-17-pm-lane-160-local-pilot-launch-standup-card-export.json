@@ -1,0 +1,53 @@
+{
+  "packet_id": "2026-05-17-pm-lane-160",
+  "title": "PM Lane 160 - Local Pilot Launch Standup Card Export",
+  "lane": "PM",
+  "status": "completed",
+  "execution_mode": "vs_code_codex_primary_with_read_only_sidecar",
+  "created_at": "2026-05-17",
+  "completed_at": "2026-05-17",
+  "scope": {
+    "primary_surface": "apps/operations-web/app/pm-review/import-intake/page.tsx",
+    "route": "/pm-review/import-intake",
+    "change_type": "browser_local_export_only",
+    "artifact": "pm-import-candidate-miner-temp-power-pilot-launch-standup-card.json"
+  },
+  "objective": "Reduce Project Miner Temp Power launch-day PM burden by converting the PM Lane 159 daily brief into a role-based standup card for PM, field lead, customer/site contact, and executor/AI relay discussion without admitting any write path.",
+  "changes": [
+    "Added Export Pilot Launch Standup Card to the Field Prep Outputs rail.",
+    "Added a browser-local JSON builder with standup card kind/version, source daily brief lineage, launch-day summary, role cards, no-go checks, capture prompts, next packet options, authority boundary flags, and blocked boundaries.",
+    "Extended the focused PM import-intake smoke to prove the new download, PM Lane 159 lineage, role-card content, no-go checks, local capture prompts, blocked boundaries, and mutationRequests=0.",
+    "Raised the focused smoke timeout to 60 seconds because the single comprehensive smoke now validates all local PM output downloads."
+  ],
+  "guardrails": {
+    "live_approval_post": "not_admitted",
+    "approval_row_creation": "not_performed",
+    "project_import": "not_performed",
+    "field_authorization": "not_performed",
+    "lead_or_crew_assignment": "not_performed",
+    "schedule_or_status_write": "not_performed",
+    "durable_field_record": "not_performed",
+    "production_tracking": "not_performed",
+    "customer_reporting_or_completion_evidence": "not_performed",
+    "financial_handoff_or_billing_payroll_invoice_accounting": "not_performed",
+    "external_finance_sync": "not_performed",
+    "hosted_services": "not_touched",
+    "supabase_render_vercel_olares": "not_touched",
+    "sql_schema_migration": "not_performed",
+    "secrets": "not_touched",
+    "backend_or_mutation_route": "not_changed",
+    "workbook_macro_or_writeback": "not_performed",
+    "autonomous_ai_business_state_mutation": "not_performed"
+  },
+  "validation": [
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform\" --filter @apex/operations-web typecheck",
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform\" --filter @apex/operations-web build",
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform/apps/operations-web\" exec playwright test \"browser-shell.pm-import-intake.smoke.spec.ts\"",
+    "Get-Content -Path \"ops/agents/packets/draft/2026-05-17-pm-lane-160-local-pilot-launch-standup-card-export.json\" | ConvertFrom-Json | Select-Object -ExpandProperty packet_id",
+    "rg -n \"PM Lane 160|Export Pilot Launch Standup Card|pilot-launch-standup-card|pm_lane_160_local_pilot_launch_standup_card_v1|mutationRequests\\)\\.toHaveLength\\(0\\)\" PROJECT_STATUS.md docs/operations ops/agents apps/operations-web",
+    "git diff --check"
+  ],
+  "validation_result": "PASS - operations-web typecheck passed; operations-web build passed; focused Playwright pm import-intake smoke passed after the test timeout was raised to 60 seconds for the comprehensive local-output download proof; packet JSON parsed; PM Lane 160 guardrail rg passed; git diff --check passed with only expected CRLF warnings on touched and unrelated markdown files.",
+  "sidecar_result": "Read-only sidecar Wegener recommended PM Lane 160 as a Local Pilot Launch Standup Card Export, confirmed the expected file set, role-card JSON fields, zero-mutation proof, and red flags for implied approval/import/field/customer/finance authority.",
+  "next_recommendation": "Keep waiting for the Desktop Codex PM Lane 158 financial handoff admission design closeout. If it is still not returned and live approval remains unadmitted, the next safe PM lane can continue with local-only launch meeting capture or explicit PM Lane 142 admission preparation without opening a write path."
+}
