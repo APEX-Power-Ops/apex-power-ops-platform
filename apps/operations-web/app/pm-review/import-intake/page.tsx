@@ -1659,6 +1659,29 @@ function buildFieldPrepQueue(
   ]
 }
 
+function groupFieldPrepQueueItems(queue: OperatingQueueItem[]): OperatingQueueGroup[] {
+  const byId = new Map(queue.map((item) => [item.id, item]))
+  const take = (ids: string[]) => ids.map((id) => byId.get(id)).filter((item): item is OperatingQueueItem => Boolean(item))
+
+  return [
+    {
+      id: 'field-prep-inputs',
+      label: 'Field Prep Inputs',
+      items: take(['field-questions-draft', 'field-readiness-evidence']),
+    },
+    {
+      id: 'kickoff-artifact',
+      label: 'Kickoff Artifact',
+      items: take(['field-kickoff-brief-export']),
+    },
+    {
+      id: 'authority-and-production-boundary',
+      label: 'Authority And Production Boundary',
+      items: take(['field-authority-boundary-review', 'production-execution-tracking']),
+    },
+  ]
+}
+
 function buildFieldPrepCoverageSnapshot(
   reviewChecks: Record<string, boolean>,
   fieldReadinessChecks: Record<string, boolean>,
@@ -6806,6 +6829,10 @@ export default function ProjectMinerIntakeWorkbenchPage() {
     () => buildFieldPrepQueue(fieldReadinessChecks, fieldQuestionsDraft),
     [fieldReadinessChecks, fieldQuestionsDraft],
   )
+  const fieldPrepQueueGroups = useMemo(
+    () => groupFieldPrepQueueItems(fieldPrepQueue),
+    [fieldPrepQueue],
+  )
   const fieldPrepCoverageSnapshot = useMemo(
     () => buildFieldPrepCoverageSnapshot(reviewChecks, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad),
     [reviewChecks, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad],
@@ -8832,19 +8859,26 @@ export default function ProjectMinerIntakeWorkbenchPage() {
               <p style={{ margin: '0.6rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
                 {formatCount(completeFieldPrepQueueCount)} complete / {formatCount(nextFieldPrepQueueCount)} next / {formatCount(blockedFieldPrepQueueCount)} blocked
               </p>
-              <div style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
-                {fieldPrepQueue.map((item) => (
-                  <article key={item.id} className="card" style={{ padding: '0.85rem', boxShadow: 'none' }}>
-                    <div className="status-row" style={{ alignItems: 'start' }}>
-                      <div>
-                        <p style={{ margin: 0 }}>
-                          <strong>{item.title}</strong>
-                        </p>
-                        <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
-                      </div>
-                      <span className={`status-pill ${operatingQueueTone(item.status)}`}>{formatLabel(item.status)}</span>
+              <div aria-label="Local field prep queue groups" className="notes-grid" style={{ marginTop: '0.85rem' }}>
+                {fieldPrepQueueGroups.map((group) => (
+                  <section key={group.id} aria-label={`${group.label} field prep queue group`}>
+                    <h3 style={{ fontSize: '0.95rem', margin: '0 0 0.65rem' }}>{group.label}</h3>
+                    <div aria-label={`${group.label} field prep queue items`} style={{ display: 'grid', gap: '0.75rem' }}>
+                      {group.items.map((item) => (
+                        <article key={item.id} className="card" style={{ padding: '0.85rem', boxShadow: 'none' }}>
+                          <div className="status-row" style={{ alignItems: 'start' }}>
+                            <div>
+                              <p style={{ margin: 0 }}>
+                                <strong>{item.title}</strong>
+                              </p>
+                              <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
+                            </div>
+                            <span className={`status-pill ${operatingQueueTone(item.status)}`}>{formatLabel(item.status)}</span>
+                          </div>
+                        </article>
+                      ))}
                     </div>
-                  </article>
+                  </section>
                 ))}
               </div>
             </div>
