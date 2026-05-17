@@ -1267,6 +1267,21 @@ const PROJECT_DATA_ENTRY_DECISION_OUTCOME_ROUTES = [
   },
 ]
 
+const PROJECT_DATA_ENTRY_VALID_RETURN_CHECKLIST = [
+  {
+    term: 'accepted',
+    detail: 'exactly one PM Lane 238 Data Entry label',
+  },
+  {
+    term: 'rejected',
+    detail: 'explanation text; paraphrase; REQUEST_SOURCE_CORRECTION_NO_LIVE; multiple labels; live admission language without a later admitting packet',
+  },
+  {
+    term: 'after valid label',
+    detail: 'record the label in a no-live decision packet and keep live admission separate',
+  },
+]
+
 const PROJECT_MINER_RESOLVED_SOURCE_CORRECTION_LABEL = 'REQUEST_SOURCE_CORRECTION_NO_LIVE'
 const PROJECT_MINER_RESOLVED_SOURCE_CORRECTION_DESIGNATION = 'Ground Resistance Test Lot'
 
@@ -1303,6 +1318,8 @@ function projectDataEntryDecisionGateExportLines(warnings: CandidateWarning[]) {
     ...PROJECT_DATA_ENTRY_DECISION_LABELS.map((label) => `  - ${label}`),
     '- Outcome routes:',
     ...PROJECT_DATA_ENTRY_DECISION_OUTCOME_ROUTES.map((item) => `  - ${item.label}: ${item.route}`),
+    '- Valid return checklist:',
+    ...PROJECT_DATA_ENTRY_VALID_RETURN_CHECKLIST.map((item) => `  - ${item.term}: ${item.detail}`),
     '- Admission prerequisites:',
     ...PROJECT_DATA_ENTRY_ADMISSION_PREREQUISITES.map((prerequisite) => `  - ${prerequisite}`),
     '- Authority boundary: display/export context only; no approval POST, approval row, import write, source writeback, hosted call, or business-state mutation.',
@@ -10125,6 +10142,28 @@ export default function ProjectMinerIntakeWorkbenchPage() {
                             {PROJECT_DATA_ENTRY_DECISION_OUTCOME_ROUTES.map((item) => (
                               <li key={item.label}>
                                 <code>{item.label}</code>: {item.route}
+                              </li>
+                            ))}
+                          </ul>
+                        </article>
+                      ) : null}
+                      {hasProjectDataEntryWarning ? (
+                        <article aria-label="Project Data Entry valid return checklist" className="card" style={{ padding: '0.85rem', boxShadow: 'none' }}>
+                          <div className="status-row" style={{ alignItems: 'start' }}>
+                            <div>
+                              <p style={{ margin: 0 }}>
+                                <strong>Valid return checklist</strong>
+                              </p>
+                              <p style={{ margin: '0.45rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+                                Use this only to screen a future reply. It does not choose a label.
+                              </p>
+                            </div>
+                            <span className="status-pill status-awaiting-values">intake rule</span>
+                          </div>
+                          <ul style={{ margin: '0.65rem 0 0', paddingLeft: '1.15rem', color: 'var(--muted)', lineHeight: 1.55 }}>
+                            {PROJECT_DATA_ENTRY_VALID_RETURN_CHECKLIST.map((item) => (
+                              <li key={item.term}>
+                                <strong>{item.term}</strong>: {item.detail}
                               </li>
                             ))}
                           </ul>

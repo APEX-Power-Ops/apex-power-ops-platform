@@ -753,6 +753,7 @@ Current known gaps:
 23. PM Lane 248 surfaces the same open Data Entry decision in Current PM Next Actions and Guardrails. The guardrail cue points back to the exact reply options card and repeats the no-explanation/no-paraphrase/no-prior-source-correction rule, while validation passed and live approval/import authority remains blocked.
 24. PM Lane 249 classifies the returned `REQUEST_SOURCE_CORRECTION_NO_LIVE` label as the already-applied Ground Resistance correction, not the active Data Entry warning disposition. The `PROJECT_DATA_ENTRY_FORMULA_ERRORS` gate remains open until exactly one PM Lane 238 Data Entry label is returned, while validation passed and live approval/import authority remains blocked.
 25. PM Lane 250 adds a no-live outcome route preview for the four exact PM Lane 238 Data Entry labels in PM Decision Context and in the local import exception register export. The route preview does not choose a label or open warning acceptance, workbook correction, live admission, approval, or import authority.
+26. PM Lane 251 adds a no-live valid-return checklist in PM Decision Context and exported PM review artifacts. A valid return is exactly one PM Lane 238 Data Entry label; explanation text, paraphrases, `REQUEST_SOURCE_CORRECTION_NO_LIVE`, multiple labels, and live-admission language without a later admitting packet do not close the gate.
 
 Required response to new gaps:
 
