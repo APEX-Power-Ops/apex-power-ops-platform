@@ -409,6 +409,16 @@ type FieldStartBringBackReviewQueueItem = {
   detail: string
 }
 
+type FieldStartSourceReviewBringBackLensStatus = 'check' | 'review' | 'context' | 'blocked'
+
+type FieldStartSourceReviewBringBackLensItem = {
+  id: string
+  title: string
+  status: FieldStartSourceReviewBringBackLensStatus
+  href: string
+  detail: string
+}
+
 type OutputSelectorStatus = 'available-context' | 'needs-local-context' | 'field-context' | 'blocked'
 
 type OutputSelectorItem = {
@@ -1044,6 +1054,12 @@ function fieldStartConversationCloseoutPromptTone(status: FieldStartConversation
 function fieldStartBringBackReviewQueueTone(status: FieldStartBringBackReviewQueueStatus) {
   if (status === 'context' || status === 'review') return 'status-configured'
   if (status === 'classify') return 'status-awaiting-values'
+  return 'status-deferred'
+}
+
+function fieldStartSourceReviewBringBackLensTone(status: FieldStartSourceReviewBringBackLensStatus) {
+  if (status === 'context' || status === 'review') return 'status-configured'
+  if (status === 'check') return 'status-awaiting-values'
   return 'status-deferred'
 }
 
@@ -2707,6 +2723,68 @@ function buildFieldStartBringBackReviewQueue(
       detail: boundedPacketCandidatePresent
         ? 'Open PM follow-up context exists; if the return needs accountability, timing, customer-facing language, field direction, durable record, schedule/status update, report, or write authority, stop and author a later bounded packet.'
         : 'If a returned item needs a move beyond local review, classify only the packet question; do not create work lists, timing fields, commitments, reports, records, or writes here.',
+    },
+  ]
+}
+
+function buildFieldStartSourceReviewBringBackLens(
+  candidate: CandidatePayload | undefined,
+  fieldQuestionsDraft: FieldQuestionsDraft,
+  fieldObservationScratchpad: FieldObservationScratchpad,
+): FieldStartSourceReviewBringBackLensItem[] {
+  const projectName = candidate?.project?.name || candidate?.candidate_id || 'current Project Miner candidate'
+  const sourceFingerprint = candidate?.source_freshness?.aggregate_fingerprint || 'source fingerprint pending'
+  const drawingWorkbookContextPresent = Boolean(fieldQuestionsDraft.drawing_source_questions.trim() || candidate?.source_freshness?.aggregate_fingerprint)
+  const siteNoteContextPresent = Boolean(fieldObservationScratchpad.access_safety_observations.trim() || fieldObservationScratchpad.material_equipment_observations.trim() || fieldObservationScratchpad.open_questions_pm_followup.trim())
+  const observerSourceContextPresent = Boolean(fieldObservationScratchpad.observer_source.trim() || fieldObservationScratchpad.observation_date_or_shift.trim())
+  const workAreaReferencePresent = Boolean(fieldObservationScratchpad.workpackage_area_reference.trim())
+  const laterPacketSourceQuestionPresent = Boolean(fieldQuestionsDraft.pm_followup_notes.trim() || fieldObservationScratchpad.open_questions_pm_followup.trim())
+
+  return [
+    {
+      id: 'drawing-workbook-source-lens',
+      title: 'Drawing/workbook source check',
+      status: drawingWorkbookContextPresent ? 'review' : 'check',
+      href: '#project-packet',
+      detail: drawingWorkbookContextPresent
+        ? `${projectName}: drawing, workbook, or source fingerprint context is available; review it locally before relying on a returned field-start source item. Fingerprint: ${sourceFingerprint}.`
+        : `${projectName}: if the return names a drawing, workbook row, or estimator source, check source lineage before any later bounded packet.`,
+    },
+    {
+      id: 'site-note-source-lens',
+      title: 'Site note source check',
+      status: siteNoteContextPresent ? 'context' : 'check',
+      href: '#field-prep',
+      detail: siteNoteContextPresent
+        ? 'Returned site-note context exists in local observations; review it as source context only before any field reliance.'
+        : 'If the return is a site note, access observation, safety observation, or material/equipment note, classify it for local source review before field reliance.',
+    },
+    {
+      id: 'observer-source-lens',
+      title: 'Observer/source context check',
+      status: observerSourceContextPresent ? 'context' : 'check',
+      href: '#field-prep',
+      detail: observerSourceContextPresent
+        ? 'Observer/source context exists; verify who provided the return and when it was discussed before any later bounded packet.'
+        : 'If the return depends on who said it or when it was discussed, keep that question outside this lens and classify it for source review only.',
+    },
+    {
+      id: 'work-area-reference-lens',
+      title: 'Work-area reference check',
+      status: workAreaReferencePresent ? 'context' : 'check',
+      href: '#field-prep',
+      detail: workAreaReferencePresent
+        ? 'Work-area reference context exists; review the returned area, workpackage, or apparatus reference locally before field reliance.'
+        : 'If the return names an area, workpackage, apparatus, or location reference, check it against source context before any later packet.',
+    },
+    {
+      id: 'source-review-packet-boundary-lens',
+      title: 'Source review packet boundary',
+      status: laterPacketSourceQuestionPresent ? 'blocked' : 'check',
+      href: '#guardrails',
+      detail: laterPacketSourceQuestionPresent
+        ? 'Open PM follow-up source context exists; if the return requires accountability, field direction, schedule/status, customer-facing language, durable record, report, or write authority, stop and author a later bounded packet.'
+        : 'If a returned source item needs more than local review, classify only the packet question; do not create records, tasks, timing fields, commitments, reports, or writes here.',
     },
   ]
 }
@@ -7402,6 +7480,10 @@ export default function ProjectMinerIntakeWorkbenchPage() {
     () => buildFieldStartBringBackReviewQueue(candidate, fieldQuestionsDraft, fieldObservationScratchpad),
     [candidate, fieldQuestionsDraft, fieldObservationScratchpad],
   )
+  const fieldStartSourceReviewBringBackLens = useMemo(
+    () => buildFieldStartSourceReviewBringBackLens(candidate, fieldQuestionsDraft, fieldObservationScratchpad),
+    [candidate, fieldQuestionsDraft, fieldObservationScratchpad],
+  )
   const pmIntakeSnapshot = useMemo(
     () => buildPmIntakeSnapshot(persistenceReadinessGates, operatingQueue, importExceptionRegister, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, closeoutChecks, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad, approvalDraft),
     [persistenceReadinessGates, operatingQueue, importExceptionRegister, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, closeoutChecks, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad, approvalDraft],
@@ -8610,6 +8692,37 @@ export default function ProjectMinerIntakeWorkbenchPage() {
                       <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
                     </div>
                     <span className={`status-pill ${fieldStartBringBackReviewQueueTone(item.status)}`}>{formatLabel(item.status)}</span>
+                  </div>
+                </a>
+              ))}
+            </div>
+          </section>
+          <section id="pm-field-start-source-review-bring-back-lens" aria-label="Local field-start source review bring-back lens" className="card" style={{ padding: '0.9rem', marginTop: '0.85rem', boxShadow: 'none' }}>
+            <div className="status-row" style={{ alignItems: 'start' }}>
+              <div>
+                <h3 style={{ margin: 0 }}>Local Field Start Source Review Bring-Back Lens</h3>
+                <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+                  Read-only source review lens for returned field-start conversation items. It helps classify drawings, workbook rows, site notes, observer/source context, and work-area references before any later bounded packet; it creates no meeting note, localStorage key, export artifact, backend route, task, action item, owner, due date, customer commitment, customer report, field instruction, durable record, hosted write claim, or production write.
+                </p>
+              </div>
+              <span className="status-pill status-awaiting-values">source lens</span>
+            </div>
+            <div aria-label="Local field-start source review bring-back lens controls" style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
+              {fieldStartSourceReviewBringBackLens.map((item) => (
+                <a
+                  key={item.id}
+                  className="card"
+                  href={item.href}
+                  style={{ color: 'inherit', display: 'block', padding: '0.85rem', textDecoration: 'none', boxShadow: 'none' }}
+                >
+                  <div className="status-row" style={{ alignItems: 'start' }}>
+                    <div>
+                      <p style={{ margin: 0 }}>
+                        <strong>{item.title}</strong>
+                      </p>
+                      <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
+                    </div>
+                    <span className={`status-pill ${fieldStartSourceReviewBringBackLensTone(item.status)}`}>{formatLabel(item.status)}</span>
                   </div>
                 </a>
               ))}
