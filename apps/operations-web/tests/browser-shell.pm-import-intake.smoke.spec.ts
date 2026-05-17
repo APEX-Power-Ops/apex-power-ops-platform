@@ -1121,6 +1121,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(approvalDryRunReadiness.getByText(/The exact PM Lane 142 live-write admission phrase/i)).toBeVisible()
   await expect(approvalDryRun.getByRole('button', { name: 'Build Local Approval Dry Run' })).toBeVisible()
   await expect(approvalDryRun.getByRole('button', { name: 'Export Dry Run Envelope' })).toBeVisible()
+  await expect(approvalDryRun.getByRole('button', { name: 'Export Readiness Checkpoint' })).toBeVisible()
   await expect(approvalDryRun.getByRole('button', { name: 'Clear dry run' })).toBeDisabled()
   await approvalDryRun.locator(':scope > summary').click()
   await expect(approvalDryRun).not.toHaveAttribute('open', '')
@@ -1192,6 +1193,62 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   expect(dryRunEnvelope.generated_locally_at).toEqual(expect.any(String))
   expect(dryRunEnvelope.blocked_boundaries).toEqual(expect.arrayContaining(['live_approval_post', 'approval_row_creation', 'project_import']))
   await expect(approvalDryRun.getByRole('status')).toContainText(/Local approval dry run envelope exported/i)
+  expect(mutationRequests).toHaveLength(0)
+  const readinessDownloadPromise = page.waitForEvent('download')
+  await approvalDryRun.getByRole('button', { name: 'Export Readiness Checkpoint' }).click()
+  const readinessDownload = await readinessDownloadPromise
+  expect(readinessDownload.suggestedFilename()).toBe('pm-import-candidate-miner-temp-power-approval-dry-run-readiness.json')
+  const readinessStream = await readinessDownload.createReadStream()
+  expect(readinessStream).not.toBeNull()
+  const readinessChunks: Buffer[] = []
+  for await (const chunk of readinessStream!) {
+    readinessChunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk))
+  }
+  const readinessExport = JSON.parse(Buffer.concat(readinessChunks).toString('utf8'))
+  expect(readinessExport).toMatchObject({
+    readiness_kind: 'pm_import_candidate_approval_dry_run_readiness',
+    readiness_version: 'pm_lane_145_local_readiness_v1',
+    candidate_identity: {
+      candidate_id: 'pm-import-candidate-miner-temp-power',
+      candidate_version: 'pm_import_candidate_read_only_v1',
+      source_fingerprint: 'stat-fingerprint-abc123',
+    },
+    readiness_summary: {
+      ready_count: 4,
+      needs_review_count: 1,
+      blocked_count: 1,
+      summary: '4 ready, 1 needs review, 1 blocked',
+    },
+    approval_status_readback: {
+      classification: 'no_approval_record',
+      current_candidate_match: false,
+      approval_record_count_for_candidate: 0,
+      import_authority: 'not_admitted',
+      route: '/api/v1/reads/project-import-approval-status',
+    },
+    authority_boundary: {
+      mutation_authority: 'not_admitted',
+      local_review_only: true,
+      future_route: '/api/v1/mutations/project-import-approvals',
+      project_import_authority: 'not_admitted',
+      live_post_performed: false,
+      approval_row_created: false,
+      project_import_performed: false,
+      server_write_performed: false,
+    },
+  })
+  expect(readinessExport.generated_locally_at).toEqual(expect.any(String))
+  expect(readinessExport.readiness_items).toHaveLength(6)
+  expect(readinessExport.readiness_items.map((item: { id: string; status: string }) => `${item.id}:${item.status}`)).toEqual([
+    'candidate-source-context:ready',
+    'source-warning-review:ready',
+    'local-decision-draft:ready',
+    'admission-no-go-review:needs_review',
+    'approval-status-readback:ready',
+    'live-write-authority:blocked',
+  ])
+  expect(readinessExport.blocked_boundaries).toEqual(expect.arrayContaining(['live_approval_post', 'approval_row_creation', 'project_import']))
+  await expect(approvalDryRun.getByRole('status')).toContainText(/Local approval dry run readiness exported/i)
   expect(mutationRequests).toHaveLength(0)
   const closeoutIntake = page.locator('details#executor-closeout[aria-label="Local executor closeout intake"]')
   await expect(closeoutIntake).toHaveAttribute('open', '')

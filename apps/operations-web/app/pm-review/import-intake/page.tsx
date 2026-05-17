@@ -894,6 +894,11 @@ function approvalDryRunEnvelopeFileName(candidate?: CandidatePayload | null) {
   return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-approval-dry-run-envelope.json`
 }
 
+function approvalDryRunReadinessFileName(candidate?: CandidatePayload | null) {
+  const candidateId = candidate?.candidate_id || 'project-miner-intake'
+  return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-approval-dry-run-readiness.json`
+}
+
 function executorHandoffFileName(candidate?: CandidatePayload | null) {
   const candidateId = candidate?.candidate_id || 'project-miner-intake'
   return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-executor-handoff.md`
@@ -1122,6 +1127,64 @@ function approvalDryRunReadinessCounts(items: ApprovalDryRunReadinessItem[]) {
 
 function approvalDryRunReadinessSummary(counts: ReturnType<typeof approvalDryRunReadinessCounts>) {
   return `${counts.ready} ready, ${counts.needsReview} needs review, ${counts.blocked} blocked`
+}
+
+function buildApprovalDryRunReadinessExport(
+  packet: IntakeWorkbenchPacket,
+  readinessItems: ApprovalDryRunReadinessItem[],
+  notAllowed: string[],
+  futureRoute: string,
+) {
+  const candidate = packet.candidate
+  const admissionPlan = packet.admissionPlan
+  const approvalStatus = packet.approvalStatus
+  const counts = approvalDryRunReadinessCounts(readinessItems)
+
+  return {
+    readiness_kind: 'pm_import_candidate_approval_dry_run_readiness',
+    readiness_version: 'pm_lane_145_local_readiness_v1',
+    generated_locally_at: new Date().toISOString(),
+    candidate_identity: {
+      candidate_id: candidate.candidate_id || null,
+      candidate_version: candidate.candidate_version || null,
+      project_name: candidate.project?.name || null,
+      source_fingerprint: candidate.source_freshness?.aggregate_fingerprint || null,
+    },
+    readiness_summary: {
+      ready_count: counts.ready,
+      needs_review_count: counts.needsReview,
+      blocked_count: counts.blocked,
+      summary: approvalDryRunReadinessSummary(counts),
+    },
+    readiness_items: readinessItems,
+    approval_status_readback: {
+      classification: approvalStatus.classification || null,
+      current_candidate_match: approvalStatus.current_candidate_match ?? null,
+      approval_record_count_for_candidate: approvalStatus.approval_record_count_for_candidate ?? null,
+      import_authority: approvalStatus.import_authority || 'not_admitted',
+      route: approvalStatus.route || '/api/v1/reads/project-import-approval-status',
+    },
+    authority_boundary: {
+      mutation_authority: 'not_admitted',
+      local_review_only: true,
+      future_route: futureRoute,
+      project_import_authority: admissionPlan.mutation_authority || 'not_admitted',
+      live_post_performed: false,
+      approval_row_created: false,
+      project_import_performed: false,
+      server_write_performed: false,
+    },
+    required_live_write_gate: 'I explicitly admit PM Lane 142 live approval POST and first approval-row creation for the current Project Miner Temp Power import candidate.',
+    blocked_boundaries: [
+      ...notAllowed,
+      'live_approval_post',
+      'approval_row_creation',
+      'project_import',
+      'workpackage_task_apparatus_rows',
+      'assignment_schedule_status_writes',
+      'production_tracking_writes',
+    ],
+  }
 }
 
 function buildPmOperatingQueue(
@@ -3882,6 +3945,17 @@ export default function ProjectMinerIntakeWorkbenchPage() {
     setApprovalDryRunStatus(`Local approval dry run envelope exported for ${candidate?.candidate_id || 'the current intake packet'}; no network request was sent.`)
   }
 
+  function exportApprovalDryRunReadiness() {
+    if (!packet) {
+      return
+    }
+
+    const readiness = buildApprovalDryRunReadinessExport(packet, approvalDryRunReadiness, notAllowed, futureRoute)
+    const contents = `${JSON.stringify(readiness, null, 2)}\n`
+    downloadTextFile(approvalDryRunReadinessFileName(candidate), contents, 'application/json')
+    setApprovalDryRunStatus(`Local approval dry run readiness exported for ${candidate?.candidate_id || 'the current intake packet'}; no network request was sent.`)
+  }
+
   function clearApprovalDryRun() {
     setApprovalDryRunPreview('')
     setApprovalDryRunStatus('')
@@ -5041,6 +5115,9 @@ export default function ProjectMinerIntakeWorkbenchPage() {
                 </button>
                 <button className="btn btn-outline" onClick={exportApprovalDryRunEnvelope} disabled={!packet}>
                   Export Dry Run Envelope
+                </button>
+                <button className="btn btn-outline" onClick={exportApprovalDryRunReadiness} disabled={!packet}>
+                  Export Readiness Checkpoint
                 </button>
                 <button className="btn btn-outline" onClick={clearApprovalDryRun} disabled={!approvalDryRunPreview && !approvalDryRunStatus}>
                   Clear dry run
