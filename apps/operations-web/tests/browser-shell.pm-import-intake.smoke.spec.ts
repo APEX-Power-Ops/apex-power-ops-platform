@@ -40,6 +40,95 @@ async function expectNoImpliedAuthorityControls(page: Page) {
   }
 }
 
+async function expectWorkbenchViewportScan(page: Page, viewport: { width: number, height: number }, label: string) {
+  await page.setViewportSize(viewport)
+  await page.locator('main').scrollIntoViewIfNeeded()
+
+  const scan = await page.evaluate(() => {
+    const viewportWidth = document.documentElement.clientWidth
+    const namedSelectors = [
+      ['main', 'main'],
+      ['quick-jump-rail', '#pm-quick-jump-rail'],
+      ['start-here', '#pm-start-here'],
+      ['output-selector', '#pm-output-selector'],
+      ['command-center', '#pm-command-center'],
+      ['workflow-map', '#pm-workflow-map'],
+      ['field-prep', '#field-prep'],
+      ['approval-readiness', '#approval-readiness'],
+      ['guardrails', '#guardrails'],
+      ['guardrail-groups', '[aria-label="Current PM guardrail groups"]'],
+    ] as const
+    const trackedSelectors = [
+      'main .notes-grid',
+      'main .status-grid',
+      'main .card',
+      'main .notes-card',
+      'main .status-row',
+      'main .pm-review-link-row',
+      'main details',
+      'main summary',
+    ]
+    const isVisible = (element: Element) => {
+      const rect = element.getBoundingClientRect()
+      const style = window.getComputedStyle(element)
+      return rect.width > 0 && rect.height > 0 && style.display !== 'none' && style.visibility !== 'hidden'
+    }
+    const offscreenElements = trackedSelectors
+      .flatMap((selector) => Array.from(document.querySelectorAll(selector)).map((element) => ({ selector, element })))
+      .filter(({ element }) => isVisible(element))
+      .map(({ selector, element }) => {
+        const rect = element.getBoundingClientRect()
+        return {
+          selector,
+          label: element.getAttribute('aria-label') || element.id || element.textContent?.trim().slice(0, 72) || element.tagName,
+          left: rect.left,
+          right: rect.right,
+        }
+      })
+      .filter((item) => item.left < -1 || item.right > viewportWidth + 1)
+      .slice(0, 10)
+    const requiredSurfaces = namedSelectors.map(([name, selector]) => {
+      const element = document.querySelector(selector)
+      if (!element) {
+        return { name, found: false, visible: false, width: 0 }
+      }
+      const rect = element.getBoundingClientRect()
+      return { name, found: true, visible: isVisible(element), width: rect.width }
+    })
+    const guardrailGroups = document.querySelector('[aria-label="Current PM guardrail groups"]')
+    const approvalReadinessGroups = document.querySelector('[aria-label="Approval persistence readiness gate groups"]')
+    const gridColumnCount = (element: Element | null) => {
+      if (!element) return 0
+      return window.getComputedStyle(element).gridTemplateColumns.split(' ').filter(Boolean).length
+    }
+
+    return {
+      documentHorizontalOverflow: document.documentElement.scrollWidth - viewportWidth,
+      bodyHorizontalOverflow: document.body.scrollWidth - viewportWidth,
+      offscreenElements,
+      requiredSurfaces,
+      guardrailGroupColumnCount: gridColumnCount(guardrailGroups),
+      approvalReadinessGroupColumnCount: gridColumnCount(approvalReadinessGroups),
+    }
+  })
+
+  const offscreenSummary = JSON.stringify(scan.offscreenElements)
+  expect(scan.documentHorizontalOverflow, `${label} document horizontal overflow; offscreen=${offscreenSummary}`).toBeLessThanOrEqual(1)
+  expect(scan.bodyHorizontalOverflow, `${label} body horizontal overflow; offscreen=${offscreenSummary}`).toBeLessThanOrEqual(1)
+  expect(scan.offscreenElements, `${label} visible workbench elements stay within the viewport`).toEqual([])
+  for (const surface of scan.requiredSurfaces) {
+    expect(surface, `${label} ${surface.name} surface is present and visible`).toMatchObject({ found: true, visible: true })
+    expect(surface.width, `${label} ${surface.name} surface has measurable width`).toBeGreaterThan(0)
+  }
+  if (viewport.width <= 480) {
+    expect(scan.guardrailGroupColumnCount, `${label} guardrail groups collapse to one mobile column`).toBe(1)
+    expect(scan.approvalReadinessGroupColumnCount, `${label} approval readiness groups collapse to one mobile column`).toBe(1)
+  } else {
+    expect(scan.guardrailGroupColumnCount, `${label} guardrail groups keep the desktop two-column scan`).toBe(2)
+    expect(scan.approvalReadinessGroupColumnCount, `${label} approval readiness groups keep the desktop two-column scan`).toBe(2)
+  }
+}
+
 test('pm import intake workbench renders consolidated read-only Project Miner gates', async ({ page }) => {
   const readCalls = {
     candidate: 0,
@@ -4293,6 +4382,15 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(page.getByRole('button', { name: /Submit/i })).toHaveCount(0)
   await expect(page.getByRole('button', { name: /^Import$/i })).toHaveCount(0)
   await expectNoImpliedAuthorityControls(page)
+  for (const viewport of [
+    { label: 'desktop PM intake visual scan', width: 1440, height: 900 },
+    { label: 'laptop PM intake visual scan', width: 1366, height: 768 },
+    { label: 'tablet PM intake visual scan', width: 1024, height: 768 },
+    { label: 'mobile PM intake visual scan', width: 390, height: 844 },
+    { label: 'small mobile PM intake visual scan', width: 360, height: 800 },
+  ]) {
+    await expectWorkbenchViewportScan(page, { width: viewport.width, height: viewport.height }, viewport.label)
+  }
 
   expect(mutationRequests).toHaveLength(0)
   expect(readCalls).toEqual({

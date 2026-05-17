@@ -116,6 +116,7 @@ body {
 .notes-grid {
   display: grid;
   gap: 1rem;
+  min-width: 0;
 }
 
 .status-grid {
@@ -129,7 +130,9 @@ body {
 
 .status-card,
 .notes-card {
+  min-width: 0;
   padding: 1.35rem;
+  overflow-wrap: anywhere;
 }
 
 .status-row {
@@ -137,6 +140,7 @@ body {
   justify-content: space-between;
   gap: 1rem;
   align-items: center;
+  min-width: 0;
 }
 
 .status-card h2,
@@ -201,6 +205,8 @@ body {
   border: 1px solid var(--border);
   border-radius: 22px;
   box-shadow: 0 12px 30px rgba(21, 38, 54, 0.08);
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .btn {
@@ -1012,6 +1018,17 @@ body {
 
   .pm-review-link-row {
     justify-content: flex-start;
+    flex-wrap: wrap;
     min-width: 0;
+  }
+
+  .status-row {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .status-pill {
+    max-width: 100%;
+    overflow-wrap: anywhere;
   }
 }

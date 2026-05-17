@@ -1,0 +1,49 @@
+{
+  "packet_id": "2026-05-17-pm-lane-186",
+  "title": "PM Lane 186 - PM Intake Workbench Visual QA And Mobile Scan",
+  "lane": "PM lane development",
+  "status": "completed",
+  "owner": "VS Code Codex",
+  "authority": "repo technical authority; PM lane implementation authority; final integration authority",
+  "date": "2026-05-17",
+  "objective": "Add repeatable visual and mobile viewport proof for the grouped Project Miner PM intake workbench, then apply only the smallest layout containment fix needed to keep the workbench readable without opening any write path.",
+  "scope": [
+    "Added a desktop/laptop/tablet/mobile/small-mobile visual scan to the existing read-only PM import-intake smoke.",
+    "Covered 1440x900, 1366x768, 1024x768, 390x844, and 360x800 viewports.",
+    "Asserted no horizontal document/body overflow, no visible tracked workbench elements outside the viewport, visible key PM workbench surfaces, and expected desktop/mobile group column behavior for Approval Persistence Readiness and Current PM guardrail groups.",
+    "Fixed a proven mobile horizontal overflow by adding min-width containment and long-token wrapping to existing grid/card/status primitives plus mobile status-row and link-row wrapping.",
+    "Used a read-only sidecar to define visual QA criteria and low-risk layout-only fix options while VS Code Codex retained PM implementation and final integration authority."
+  ],
+  "guardrails": [
+    "No hosted service access.",
+    "No Supabase, Render, Vercel, or Olares product action.",
+    "No SQL or schema migration.",
+    "No browser approval button, approval POST wiring, approval submission, or approval-row creation.",
+    "No project import mutation.",
+    "No field authorization, assignment, schedule/status, durable field record, production tracking, customer report, completion evidence, billing, payroll, invoice, accounting, or external finance-system write.",
+    "No workbook macro or writeback.",
+    "No new export action, export handler, filename, payload version, localStorage key, backend route, service/auth/ingress change, or autonomous AI business-state mutation."
+  ],
+  "changed_files": [
+    "apps/operations-web/app/globals.css",
+    "apps/operations-web/tests/browser-shell.pm-import-intake.smoke.spec.ts",
+    "PROJECT_STATUS.md",
+    "docs/operations/APEX-PM-STAKEHOLDER-TIME-PROTECTION-AND-ACCELERATION-LANE-2026-05-15.md",
+    "docs/operations/APEX-PM-TEMP-POWER-DELIVERY-AND-ORCHESTRATION-PLAN-2026-05-15.md",
+    "docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md",
+    "ops/agents/packets/draft/2026-05-17-pm-lane-186-pm-intake-workbench-visual-qa-mobile-scan.json",
+    "ops/agents/handoffs/2026-05-17-pm-lane-186-pm-intake-workbench-visual-qa-mobile-scan-handoff.md"
+  ],
+  "validation": [
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform\" --filter @apex/operations-web typecheck",
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform/apps/operations-web\" exec playwright test \"browser-shell.pm-import-intake.smoke.spec.ts\"",
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform\" --filter @apex/operations-web build",
+    "Get-Content -LiteralPath \"C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-17-pm-lane-186-pm-intake-workbench-visual-qa-mobile-scan.json\" | ConvertFrom-Json | Select-Object -ExpandProperty packet_id",
+    "rg -n \"PM Lane 186|expectWorkbenchViewportScan|1440x900|360x800|documentHorizontalOverflow|grid/card/status-row|mobile overflow|mutationRequests\\)\\.toHaveLength\\(0\\)\" PROJECT_STATUS.md docs/operations ops/agents apps/operations-web",
+    "git diff --check"
+  ],
+  "validation_result": "PASS - operations-web typecheck passed; operations-web build passed after CSS containment; focused Playwright pm import-intake smoke passed with desktop 1440x900, laptop 1366x768, tablet 1024x768, mobile 390x844, and small-mobile 360x800 viewport checks; packet JSON parsed; PM Lane 186 guardrail rg passed; git diff --check passed with only expected CRLF warnings on touched and unrelated markdown files.",
+  "sidecar_result": "Read-only sidecar Lagrange recommended desktop 1440x900, laptop 1366x768, tablet 1024x768, mobile 390x844, and small-mobile 360x800 checks; pass criteria included no horizontal overflow, visible key surfaces, responsive group columns, no status/text overlap, and no write-authority wording or controls. The sidecar identified min-width containment, status-row wrapping, and long-token wrapping as low-risk layout-only fixes if screenshots or viewport proof showed overflow.",
+  "next_recommended_lane": "PM Lane 187 - PM Intake Field Launch Mobile Use Path",
+  "execution_result": "PASS"
+}
