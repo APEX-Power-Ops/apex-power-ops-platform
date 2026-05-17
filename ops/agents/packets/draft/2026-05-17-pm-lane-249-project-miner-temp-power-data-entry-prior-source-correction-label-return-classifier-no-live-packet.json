@@ -1,0 +1,60 @@
+{
+  "packet_id": "2026-05-17-pm-lane-249-project-miner-temp-power-data-entry-prior-source-correction-label-return-classifier-no-live-packet",
+  "title": "PM Lane 249 - Project Miner Temp Power Data Entry Prior Source-Correction Label Return Classifier No-Live Packet",
+  "date": "2026-05-17",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_DATA_ENTRY_PRIOR_SOURCE_CORRECTION_LABEL_RETURN_CLASSIFIER_NO_LIVE",
+  "selected_outcome": "PRIOR_SOURCE_CORRECTION_LABEL_RETURNED_KEEP_DATA_ENTRY_WARNING_OPEN_NO_LIVE",
+  "input_return": {
+    "returned_label": "REQUEST_SOURCE_CORRECTION_NO_LIVE",
+    "returned_note": "Use designation Ground Resistance Test Lot.",
+    "classification": "prior_source_correction_label_already_applied_not_active_data_entry_disposition"
+  },
+  "prior_source_correction": {
+    "source_lane": "PM Lane 236",
+    "label": "REQUEST_SOURCE_CORRECTION_NO_LIVE",
+    "status": "already_applied",
+    "corrected_candidate_designation": "Ground Resistance Test Lot"
+  },
+  "active_warning_gate": {
+    "warning_code": "PROJECT_DATA_ENTRY_FORMULA_ERRORS",
+    "valid_pm_lane_238_label_present": false,
+    "warning_disposition_changed": false,
+    "no_live_posture": "preserved",
+    "mutation_authority": "not_admitted"
+  },
+  "required_pm_lane_238_labels": [
+    "ACCEPT_DATA_ENTRY_WARNING_NON_BLOCKING_NO_LIVE",
+    "REQUEST_DATA_ENTRY_WORKBOOK_CORRECTION_NO_LIVE",
+    "HOLD_DATA_ENTRY_WARNING_NO_LIVE",
+    "PROVIDE_EXACT_LIVE_ADMISSION_LATER"
+  ],
+  "desktop_codex_support": {
+    "prompt_path": "ops/agents/handoffs/2026-05-17-desktop-codex-pm-lane-249-data-entry-prior-source-correction-label-return-classifier-review-scout-prompt.md",
+    "status": "available_not_required",
+    "allowed_scope": [
+      "classification clarity review",
+      "relay-burden reduction review",
+      "authority-boundary risk review"
+    ],
+    "blocked_scope": [
+      "PM decision authority",
+      "product code edit",
+      "repo publication",
+      "hosted service access",
+      "workbook content read",
+      "source PDF content read",
+      "macro execution",
+      "warning acceptance",
+      "approval/import authority",
+      "business-state mutation"
+    ]
+  },
+  "validation": [
+    "packet JSON parse",
+    "classification text search",
+    "pending-marker scan",
+    "corrupted-token scan",
+    "git diff --check"
+  ],
+  "validation_result": "PASS"
+}
