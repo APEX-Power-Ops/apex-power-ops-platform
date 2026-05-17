@@ -399,6 +399,16 @@ type FieldStartConversationCloseoutPromptItem = {
   detail: string
 }
 
+type FieldStartBringBackReviewQueueStatus = 'classify' | 'review' | 'context' | 'blocked'
+
+type FieldStartBringBackReviewQueueItem = {
+  id: string
+  title: string
+  status: FieldStartBringBackReviewQueueStatus
+  href: string
+  detail: string
+}
+
 type OutputSelectorStatus = 'available-context' | 'needs-local-context' | 'field-context' | 'blocked'
 
 type OutputSelectorItem = {
@@ -1028,6 +1038,12 @@ function fieldStartPmFollowupPromptReviewTone(status: FieldStartPmFollowupPrompt
 function fieldStartConversationCloseoutPromptTone(status: FieldStartConversationCloseoutPromptStatus) {
   if (status === 'context') return 'status-configured'
   if (status === 'prompt' || status === 'confirm') return 'status-awaiting-values'
+  return 'status-deferred'
+}
+
+function fieldStartBringBackReviewQueueTone(status: FieldStartBringBackReviewQueueStatus) {
+  if (status === 'context' || status === 'review') return 'status-configured'
+  if (status === 'classify') return 'status-awaiting-values'
   return 'status-deferred'
 }
 
@@ -2640,6 +2656,57 @@ function buildFieldStartConversationCloseoutPrompts(
       detail: hasPmOpenQuestionReturn
         ? 'Open PM follow-up context exists; if it requires accountability, timing, customer-facing language, field direction, report, schedule/status update, or durable record, stop and author a later bounded packet.'
         : 'If the conversation reveals a needed next move, bring back only the packet question; do not turn it into work lists, accountability fields, timing fields, commitments, reports, or writes here.',
+    },
+  ]
+}
+
+function buildFieldStartBringBackReviewQueue(
+  candidate: CandidatePayload | undefined,
+  fieldQuestionsDraft: FieldQuestionsDraft,
+  fieldObservationScratchpad: FieldObservationScratchpad,
+): FieldStartBringBackReviewQueueItem[] {
+  const projectName = candidate?.project?.name || candidate?.candidate_id || 'current Project Miner candidate'
+  const sourceReviewContextPresent = Boolean(fieldQuestionsDraft.drawing_source_questions.trim() || fieldObservationScratchpad.observer_source.trim() || fieldObservationScratchpad.workpackage_area_reference.trim())
+  const customerSiteClarificationPresent = Boolean(fieldQuestionsDraft.customer_constraint_questions.trim() || fieldQuestionsDraft.site_access_safety_questions.trim() || fieldObservationScratchpad.access_safety_observations.trim())
+  const leadResourceClarificationPresent = Boolean(fieldQuestionsDraft.crew_equipment_questions.trim() || fieldQuestionsDraft.material_staging_questions.trim() || fieldObservationScratchpad.material_equipment_observations.trim())
+  const boundedPacketCandidatePresent = Boolean(fieldQuestionsDraft.pm_followup_notes.trim() || fieldObservationScratchpad.open_questions_pm_followup.trim())
+
+  return [
+    {
+      id: 'source-review-return-queue',
+      title: 'Source review',
+      status: sourceReviewContextPresent ? 'context' : 'classify',
+      href: '#field-prep',
+      detail: sourceReviewContextPresent
+        ? `${projectName}: source-review context exists; route returned drawing, workbook row, site note, observer/source, or work-area context to local source review only.`
+        : `${projectName}: if the conversation returns a drawing, workbook row, site note, observer/source, or work-area question, classify it as local source review only.`,
+    },
+    {
+      id: 'customer-site-clarification-return-queue',
+      title: 'Customer/site clarification',
+      status: customerSiteClarificationPresent ? 'review' : 'classify',
+      href: '#field-prep',
+      detail: customerSiteClarificationPresent
+        ? 'Customer/site clarification context exists; route returned access, shutdown, escort, contact, safety, or constraint answers to local review only.'
+        : 'If the conversation returns access, shutdown, escort, contact, safety, or constraint answers, classify them as customer/site clarification only.',
+    },
+    {
+      id: 'lead-resource-clarification-return-queue',
+      title: 'Lead/resource clarification',
+      status: leadResourceClarificationPresent ? 'review' : 'classify',
+      href: '#field-prep',
+      detail: leadResourceClarificationPresent
+        ? 'Lead/resource clarification context exists; route returned lead, material, equipment, staging, or crew-readiness context to local review only.'
+        : 'If the conversation returns lead, material, equipment, staging, or crew-readiness context, classify it as lead/resource clarification only.',
+    },
+    {
+      id: 'later-bounded-packet-candidate-return-queue',
+      title: 'Later bounded packet candidate',
+      status: boundedPacketCandidatePresent ? 'blocked' : 'classify',
+      href: '#guardrails',
+      detail: boundedPacketCandidatePresent
+        ? 'Open PM follow-up context exists; if the return needs accountability, timing, customer-facing language, field direction, durable record, schedule/status update, report, or write authority, stop and author a later bounded packet.'
+        : 'If a returned item needs a move beyond local review, classify only the packet question; do not create work lists, timing fields, commitments, reports, records, or writes here.',
     },
   ]
 }
@@ -7331,6 +7398,10 @@ export default function ProjectMinerIntakeWorkbenchPage() {
     () => buildFieldStartConversationCloseoutPrompts(candidate, fieldQuestionsDraft, fieldObservationScratchpad),
     [candidate, fieldQuestionsDraft, fieldObservationScratchpad],
   )
+  const fieldStartBringBackReviewQueue = useMemo(
+    () => buildFieldStartBringBackReviewQueue(candidate, fieldQuestionsDraft, fieldObservationScratchpad),
+    [candidate, fieldQuestionsDraft, fieldObservationScratchpad],
+  )
   const pmIntakeSnapshot = useMemo(
     () => buildPmIntakeSnapshot(persistenceReadinessGates, operatingQueue, importExceptionRegister, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, closeoutChecks, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad, approvalDraft),
     [persistenceReadinessGates, operatingQueue, importExceptionRegister, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, closeoutChecks, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad, approvalDraft],
@@ -8508,6 +8579,37 @@ export default function ProjectMinerIntakeWorkbenchPage() {
                       <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
                     </div>
                     <span className={`status-pill ${fieldStartConversationCloseoutPromptTone(item.status)}`}>{formatLabel(item.status)}</span>
+                  </div>
+                </a>
+              ))}
+            </div>
+          </section>
+          <section id="pm-field-start-bring-back-review-queue" aria-label="Local field-start bring-back review queue" className="card" style={{ padding: '0.9rem', marginTop: '0.85rem', boxShadow: 'none' }}>
+            <div className="status-row" style={{ alignItems: 'start' }}>
+              <div>
+                <h3 style={{ margin: 0 }}>Local Field Start Bring-Back Review Queue</h3>
+                <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+                  Read-only bring-back queue for returned field-start conversation items. It classifies local review context only and creates no meeting note, localStorage key, export artifact, backend route, task, action item, owner, due date, customer commitment, customer report, field instruction, hosted write claim, or production write.
+                </p>
+              </div>
+              <span className="status-pill status-awaiting-values">review queue</span>
+            </div>
+            <div aria-label="Local field-start bring-back review queue controls" style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
+              {fieldStartBringBackReviewQueue.map((item) => (
+                <a
+                  key={item.id}
+                  className="card"
+                  href={item.href}
+                  style={{ color: 'inherit', display: 'block', padding: '0.85rem', textDecoration: 'none', boxShadow: 'none' }}
+                >
+                  <div className="status-row" style={{ alignItems: 'start' }}>
+                    <div>
+                      <p style={{ margin: 0 }}>
+                        <strong>{item.title}</strong>
+                      </p>
+                      <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
+                    </div>
+                    <span className={`status-pill ${fieldStartBringBackReviewQueueTone(item.status)}`}>{formatLabel(item.status)}</span>
                   </div>
                 </a>
               ))}
