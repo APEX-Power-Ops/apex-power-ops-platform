@@ -959,6 +959,11 @@ function fieldAuthorizationAssignmentDraftFileName(candidate?: CandidatePayload 
   return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-field-authorization-assignment-draft.json`
 }
 
+function scheduleStatusControlsDraftFileName(candidate?: CandidatePayload | null) {
+  const candidateId = candidate?.candidate_id || 'project-miner-intake'
+  return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-schedule-status-controls-draft.json`
+}
+
 function importExceptionRegisterFileName(candidate?: CandidatePayload | null) {
   const candidateId = candidate?.candidate_id || 'project-miner-intake'
   return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-import-exception-register.md`
@@ -4207,6 +4212,187 @@ function buildFieldAuthorizationAssignmentDraftExport(
   }
 }
 
+function buildScheduleStatusControlsDraftExport(
+  packet: IntakeWorkbenchPacket,
+  fieldPrepQueue: OperatingQueueItem[],
+  fieldPrepCoverageSnapshot: FieldPrepCoverageItem[],
+  fieldPrepConversationAgenda: FieldPrepAgendaItem[],
+  notAllowed: string[],
+  futureRoute: string,
+  fieldReadinessChecks: Record<string, boolean>,
+  fieldQuestionsDraft: FieldQuestionsDraft,
+  fieldObservationScratchpad: FieldObservationScratchpad,
+) {
+  const candidate = packet.candidate
+  const project = candidate.project || {}
+  const summary = candidate.summary || {}
+  const fieldAuthorizationAssignmentDraft = buildFieldAuthorizationAssignmentDraftExport(packet, fieldPrepQueue, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, notAllowed, futureRoute, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad)
+  const controlItems: ApprovalDryRunReadinessItem[] = [
+    {
+      id: 'field-authorization-assignment-context',
+      title: 'Field authorization and assignment context',
+      status: 'ready',
+      detail: `${fieldAuthorizationAssignmentDraftFileName(candidate)} defines the no-write prerequisite packet for later schedule/status controls.`,
+    },
+    {
+      id: 'approval-import-field-prerequisites',
+      title: 'Approval, import, and field prerequisites',
+      status: 'blocked',
+      detail: 'Accepted approval row, imported work rows, and admitted field authorization/assignment proof are required before schedule/status mutation authority can exist.',
+    },
+    {
+      id: 'schedule-plan-contract',
+      title: 'Schedule plan contract',
+      status: 'blocked',
+      detail: 'A later packet must define schedule targets, date/status fields, validation rules, idempotency, and rollback posture before schedule writes.',
+    },
+    {
+      id: 'status-transition-contract',
+      title: 'Status transition contract',
+      status: 'blocked',
+      detail: 'A later packet must define permitted task/workpackage/field statuses, transition rules, actor authority, and no-go checks before status writes.',
+    },
+    {
+      id: 'lead-field-review-contract',
+      title: 'Lead and field review contract',
+      status: 'blocked',
+      detail: 'Schedule/status changes require PM and lead review boundaries before controls can be exposed to lead or field routes.',
+    },
+    {
+      id: 'audit-readback-contract',
+      title: 'Audit and readback contract',
+      status: 'blocked',
+      detail: 'A later packet must prove audit linkage, schedule/status readback, idempotent replay, and unchanged downstream counts.',
+    },
+    {
+      id: 'durable-record-production-boundary',
+      title: 'Durable record and production boundary',
+      status: 'blocked',
+      detail: 'Schedule/status controls cannot create durable field records or production tracking rows unless separate packets admit those writes.',
+    },
+    {
+      id: 'hosted-ui-mutation-boundary',
+      title: 'Hosted UI mutation boundary',
+      status: 'blocked',
+      detail: 'No hosted UI control, backend route, deployment, or production mutation is admitted by this local draft.',
+    },
+  ]
+  const controlCounts = approvalDryRunReadinessCounts(controlItems)
+
+  return {
+    draft_kind: 'pm_import_candidate_schedule_status_controls_admission_draft',
+    draft_version: 'pm_lane_152_local_schedule_status_controls_admission_draft_v1',
+    generated_locally_at: new Date().toISOString(),
+    candidate_identity: {
+      candidate_id: candidate.candidate_id || null,
+      candidate_version: candidate.candidate_version || null,
+      project_name: project.name || null,
+      source_fingerprint: candidate.source_freshness?.aggregate_fingerprint || null,
+    },
+    field_shape: {
+      workpackage_count: summary.workpackage_count ?? null,
+      task_count: summary.task_count ?? null,
+      apparatus_candidate_count: summary.apparatus_candidate_count ?? null,
+      crew_count: summary.crew_count ?? null,
+      equipment_inventory_count: summary.equipment_inventory_count ?? null,
+    },
+    control_draft_summary: {
+      ready_count: controlCounts.ready,
+      needs_review_count: controlCounts.needsReview,
+      blocked_count: controlCounts.blocked,
+      summary: approvalDryRunReadinessSummary(controlCounts),
+      control_status: 'blocked_until_field_authorization_assignment_and_schedule_status_packet',
+    },
+    field_authorization_assignment_draft_summary: {
+      file_name: fieldAuthorizationAssignmentDraftFileName(candidate),
+      ready_count: fieldAuthorizationAssignmentDraft.admission_draft_summary.ready_count,
+      needs_review_count: fieldAuthorizationAssignmentDraft.admission_draft_summary.needs_review_count,
+      blocked_count: fieldAuthorizationAssignmentDraft.admission_draft_summary.blocked_count,
+      summary: fieldAuthorizationAssignmentDraft.admission_draft_summary.summary,
+      admission_status: fieldAuthorizationAssignmentDraft.admission_draft_summary.admission_status,
+    },
+    proposed_schedule_status_packet: {
+      packet_kind: 'schedule_status_controls',
+      authority_status: 'not_admitted',
+      required_after: ['approval-first-row', 'project-import', 'field-authorization-and-assignment'],
+      required_before: ['durable-field-record', 'production-tracking'],
+      proposed_routes: {
+        schedule_plan_route: 'not_admitted',
+        status_update_route: 'not_admitted',
+        schedule_readback_route: 'not_admitted',
+        status_history_route: 'not_admitted',
+        lead_ops_route: '/lead-ops',
+        field_tech_route: '/field-tech',
+        pm_workfront_route: '/pm-review/workfront',
+      },
+      minimum_proof: [
+        'accepted approval row exists',
+        'imported project/workpackage/task/apparatus rows exist',
+        'field authorization and assignment proof exists',
+        'schedule write contract is approved',
+        'status transition contract is approved',
+        'audit linkage and readback are proved',
+        'durable field record and production tracking remain blocked unless separately admitted',
+      ],
+    },
+    control_items: controlItems,
+    proposed_packet_sequence: [
+      {
+        step: 'complete_field_authorization_assignment_gate',
+        status: 'blocked',
+        detail: 'Complete approval, import, field authorization, and lead/crew assignment gates before schedule/status controls can be considered.',
+      },
+      {
+        step: 'admit_schedule_plan_contract',
+        status: 'blocked',
+        detail: 'Define schedule targets, date fields, validation, idempotency, replay behavior, rollback posture, and readback.',
+      },
+      {
+        step: 'admit_status_transition_contract',
+        status: 'blocked',
+        detail: 'Define permitted statuses, actor authority, transition rules, no-go checks, audit fields, and readback.',
+      },
+      {
+        step: 'prove_hosted_readback_without_downstream_writes',
+        status: 'blocked',
+        detail: 'Prove schedule/status reads without creating durable field records or production tracking rows.',
+      },
+      {
+        step: 'keep_durable_and_production_tracking_blocked',
+        status: 'blocked',
+        detail: 'Keep durable field records and production tracking blocked until later packets admit those storage contracts.',
+      },
+    ],
+    authority_boundary: {
+      mutation_authority: 'not_admitted',
+      local_control_draft_only: true,
+      live_approval_post_performed: false,
+      approval_row_created: false,
+      project_import_performed: false,
+      field_authorization_created: false,
+      field_work_authorized: false,
+      lead_assignment_created: false,
+      crew_assignment_created: false,
+      schedule_plan_created: false,
+      schedule_performed: false,
+      status_change_performed: false,
+      schedule_status_route_created: false,
+      durable_field_record_created: false,
+      production_tracking_performed: false,
+      server_write_performed: false,
+    },
+    blocked_boundaries: Array.from(new Set([
+      ...fieldAuthorizationAssignmentDraft.blocked_boundaries,
+      'schedule_plan_contract_write',
+      'status_transition_contract_write',
+      'schedule_status_mutation_route',
+      'schedule_status_audit_write',
+      'schedule_status_readback_route',
+      'hosted_schedule_status_ui_controls',
+    ])),
+  }
+}
+
 function buildImportExceptionRegisterExport(
   packet: IntakeWorkbenchPacket,
   importExceptionRegister: ImportExceptionRegisterItem[],
@@ -4390,6 +4576,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
   const [fieldExecutionGateDesignStatus, setFieldExecutionGateDesignStatus] = useState('')
   const [leadFieldAssignmentDraftStatus, setLeadFieldAssignmentDraftStatus] = useState('')
   const [fieldAuthorizationAssignmentDraftStatus, setFieldAuthorizationAssignmentDraftStatus] = useState('')
+  const [scheduleStatusControlsDraftStatus, setScheduleStatusControlsDraftStatus] = useState('')
   const [approvalDryRunStatus, setApprovalDryRunStatus] = useState('')
   const [approvalDryRunPreview, setApprovalDryRunPreview] = useState('')
   const [reviewChecks, setReviewChecks] = useState<Record<string, boolean>>({})
@@ -4569,7 +4756,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
   const fieldPrepAgendaCount = fieldPrepAgendaCounts(fieldPrepConversationAgenda)
   const reviewOutputStatuses = [briefStatus, previewStatus, pmIntakeSnapshotStatus, exceptionRegisterStatus].filter(Boolean)
   const executorOutputStatuses = [handoffStatus].filter(Boolean)
-  const fieldPrepOutputStatuses = [fieldBriefStatus, fieldObservationStatus, fieldPrepCoverageStatus, fieldPrepAgendaStatus, fieldPrepPacketStatus, fieldStartPreflightStatus, fieldExecutionGateDesignStatus, leadFieldAssignmentDraftStatus, fieldAuthorizationAssignmentDraftStatus].filter(Boolean)
+  const fieldPrepOutputStatuses = [fieldBriefStatus, fieldObservationStatus, fieldPrepCoverageStatus, fieldPrepAgendaStatus, fieldPrepPacketStatus, fieldStartPreflightStatus, fieldExecutionGateDesignStatus, leadFieldAssignmentDraftStatus, fieldAuthorizationAssignmentDraftStatus, scheduleStatusControlsDraftStatus].filter(Boolean)
   const hasOutputStatuses = reviewOutputStatuses.length > 0 || executorOutputStatuses.length > 0 || fieldPrepOutputStatuses.length > 0
 
   useEffect(() => {
@@ -4969,6 +5156,16 @@ export default function ProjectMinerIntakeWorkbenchPage() {
     setFieldAuthorizationAssignmentDraftStatus(`Field authorization assignment draft prepared from ${candidate?.candidate_id || 'the current intake packet'} without a server write.`)
   }
 
+  function exportScheduleStatusControlsDraft() {
+    if (!packet) {
+      return
+    }
+
+    const draft = buildScheduleStatusControlsDraftExport(packet, fieldPrepQueue, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, notAllowed, futureRoute, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad)
+    downloadTextFile(scheduleStatusControlsDraftFileName(candidate), `${JSON.stringify(draft, null, 2)}\n`, 'application/json')
+    setScheduleStatusControlsDraftStatus(`Schedule status controls draft prepared from ${candidate?.candidate_id || 'the current intake packet'} without a server write.`)
+  }
+
   return (
     <main className="shell-page pm-review-page">
       <section className="hero-card pm-review-hero">
@@ -5131,6 +5328,9 @@ export default function ProjectMinerIntakeWorkbenchPage() {
                 </button>
                 <button className="btn btn-outline" onClick={exportFieldAuthorizationAssignmentDraft} disabled={!packet}>
                   Export Field Authorization Assignment Draft
+                </button>
+                <button className="btn btn-outline" onClick={exportScheduleStatusControlsDraft} disabled={!packet}>
+                  Export Schedule Status Controls Draft
                 </button>
               </div>
             </section>

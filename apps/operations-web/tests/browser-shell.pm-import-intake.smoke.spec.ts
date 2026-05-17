@@ -318,7 +318,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(outputActionRail.getByLabel('PM intake output action groups')).toBeVisible()
   await expect(outputActionRail.getByLabel('Review output actions').getByRole('button')).toHaveCount(4)
   await expect(outputActionRail.getByLabel('Executor output actions').getByRole('button')).toHaveCount(1)
-  await expect(outputActionRail.getByLabel('Field prep output actions').getByRole('button')).toHaveCount(9)
+  await expect(outputActionRail.getByLabel('Field prep output actions').getByRole('button')).toHaveCount(10)
   await expect(outputActionRail.getByLabel('Refresh action').getByRole('button')).toHaveCount(1)
   await expect(outputActionRail.getByLabel('Review output actions').getByRole('button', { name: 'Export PM Brief' })).toBeVisible()
   await expect(outputActionRail.getByLabel('Review output actions').getByRole('button', { name: 'Export Approval Preview JSON' })).toBeVisible()
@@ -334,6 +334,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(outputActionRail.getByLabel('Field prep output actions').getByRole('button', { name: 'Export Field Execution Gate Design' })).toBeVisible()
   await expect(outputActionRail.getByLabel('Field prep output actions').getByRole('button', { name: 'Export Lead Field Assignment Draft' })).toBeVisible()
   await expect(outputActionRail.getByLabel('Field prep output actions').getByRole('button', { name: 'Export Field Authorization Assignment Draft' })).toBeVisible()
+  await expect(outputActionRail.getByLabel('Field prep output actions').getByRole('button', { name: 'Export Schedule Status Controls Draft' })).toBeVisible()
   await outputActionDisclosure.locator(':scope > summary').click()
   await expect(outputActionDisclosure).not.toHaveAttribute('open', '')
   await expect(outputActionRail.getByLabel('PM intake output action groups')).toBeHidden()
@@ -344,7 +345,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(outputActionRail.getByLabel('PM intake output action groups')).toBeVisible()
   await expect(outputActionRail.getByLabel('Review output actions').getByRole('button')).toHaveCount(4)
   await expect(outputActionRail.getByLabel('Executor output actions').getByRole('button')).toHaveCount(1)
-  await expect(outputActionRail.getByLabel('Field prep output actions').getByRole('button')).toHaveCount(9)
+  await expect(outputActionRail.getByLabel('Field prep output actions').getByRole('button')).toHaveCount(10)
   await expect(outputActionRail.getByLabel('Refresh action').getByRole('button')).toHaveCount(1)
   await expect(page.getByLabel('PM intake output status rail')).toHaveCount(0)
   await expectNoImpliedAuthorityControls(page)
@@ -2508,6 +2509,119 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
     'production_tracking_writes',
   ]))
   await expect(fieldPrepOutputStatus.getByText(/Field authorization assignment draft prepared from pm-import-candidate-miner-temp-power without a server write/i)).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Export Schedule Status Controls Draft' })).toBeEnabled()
+  const scheduleStatusControlsDraftDownloadPromise = page.waitForEvent('download')
+  await page.getByRole('button', { name: 'Export Schedule Status Controls Draft' }).click()
+  const scheduleStatusControlsDraftDownload = await scheduleStatusControlsDraftDownloadPromise
+  expect(scheduleStatusControlsDraftDownload.suggestedFilename()).toBe('pm-import-candidate-miner-temp-power-schedule-status-controls-draft.json')
+  const scheduleStatusControlsDraftStream = await scheduleStatusControlsDraftDownload.createReadStream()
+  expect(scheduleStatusControlsDraftStream).not.toBeNull()
+  const scheduleStatusControlsDraftChunks: Buffer[] = []
+  for await (const chunk of scheduleStatusControlsDraftStream!) {
+    scheduleStatusControlsDraftChunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk))
+  }
+  const scheduleStatusControlsDraft = JSON.parse(Buffer.concat(scheduleStatusControlsDraftChunks).toString('utf8'))
+  expect(scheduleStatusControlsDraft).toMatchObject({
+    draft_kind: 'pm_import_candidate_schedule_status_controls_admission_draft',
+    draft_version: 'pm_lane_152_local_schedule_status_controls_admission_draft_v1',
+    candidate_identity: {
+      candidate_id: 'pm-import-candidate-miner-temp-power',
+      candidate_version: 'pm_import_candidate_read_only_v1',
+      project_name: 'Miner Temp Power',
+      source_fingerprint: 'stat-fingerprint-abc123',
+    },
+    field_shape: {
+      workpackage_count: 7,
+      task_count: 15,
+      apparatus_candidate_count: 186,
+      crew_count: 15,
+      equipment_inventory_count: 343,
+    },
+    control_draft_summary: {
+      ready_count: 1,
+      needs_review_count: 0,
+      blocked_count: 7,
+      summary: '1 ready, 0 needs review, 7 blocked',
+      control_status: 'blocked_until_field_authorization_assignment_and_schedule_status_packet',
+    },
+    field_authorization_assignment_draft_summary: {
+      file_name: 'pm-import-candidate-miner-temp-power-field-authorization-assignment-draft.json',
+      ready_count: 2,
+      needs_review_count: 0,
+      blocked_count: 6,
+      summary: '2 ready, 0 needs review, 6 blocked',
+      admission_status: 'blocked_until_approval_import_and_explicit_field_authorization_packet',
+    },
+    proposed_schedule_status_packet: {
+      packet_kind: 'schedule_status_controls',
+      authority_status: 'not_admitted',
+      required_after: ['approval-first-row', 'project-import', 'field-authorization-and-assignment'],
+      required_before: ['durable-field-record', 'production-tracking'],
+      proposed_routes: {
+        schedule_plan_route: 'not_admitted',
+        status_update_route: 'not_admitted',
+        schedule_readback_route: 'not_admitted',
+        status_history_route: 'not_admitted',
+        lead_ops_route: '/lead-ops',
+        field_tech_route: '/field-tech',
+        pm_workfront_route: '/pm-review/workfront',
+      },
+    },
+    authority_boundary: {
+      mutation_authority: 'not_admitted',
+      local_control_draft_only: true,
+      live_approval_post_performed: false,
+      approval_row_created: false,
+      project_import_performed: false,
+      field_authorization_created: false,
+      field_work_authorized: false,
+      lead_assignment_created: false,
+      crew_assignment_created: false,
+      schedule_plan_created: false,
+      schedule_performed: false,
+      status_change_performed: false,
+      schedule_status_route_created: false,
+      durable_field_record_created: false,
+      production_tracking_performed: false,
+      server_write_performed: false,
+    },
+  })
+  expect(scheduleStatusControlsDraft.generated_locally_at).toEqual(expect.any(String))
+  expect(scheduleStatusControlsDraft.control_items.map((item: { id: string, status: string }) => `${item.id}:${item.status}`)).toEqual([
+    'field-authorization-assignment-context:ready',
+    'approval-import-field-prerequisites:blocked',
+    'schedule-plan-contract:blocked',
+    'status-transition-contract:blocked',
+    'lead-field-review-contract:blocked',
+    'audit-readback-contract:blocked',
+    'durable-record-production-boundary:blocked',
+    'hosted-ui-mutation-boundary:blocked',
+  ])
+  expect(scheduleStatusControlsDraft.proposed_packet_sequence.map((item: { step: string, status: string }) => `${item.step}:${item.status}`)).toEqual([
+    'complete_field_authorization_assignment_gate:blocked',
+    'admit_schedule_plan_contract:blocked',
+    'admit_status_transition_contract:blocked',
+    'prove_hosted_readback_without_downstream_writes:blocked',
+    'keep_durable_and_production_tracking_blocked:blocked',
+  ])
+  expect(scheduleStatusControlsDraft.blocked_boundaries).toEqual(expect.arrayContaining([
+    'write_supabase',
+    'persist_approval_record',
+    'import_project_rows',
+    'field_work_authorization',
+    'lead_assignment_writes',
+    'schedule_status_mutations',
+    'schedule_status_write',
+    'schedule_plan_contract_write',
+    'status_transition_contract_write',
+    'schedule_status_mutation_route',
+    'schedule_status_audit_write',
+    'schedule_status_readback_route',
+    'hosted_schedule_status_ui_controls',
+    'durable_field_record_writes',
+    'production_tracking_writes',
+  ]))
+  await expect(fieldPrepOutputStatus.getByText(/Schedule status controls draft prepared from pm-import-candidate-miner-temp-power without a server write/i)).toBeVisible()
   await expect(page.getByRole('button', { name: 'Export Approval Preview JSON' })).toBeEnabled()
   const previewDownloadPromise = page.waitForEvent('download')
   await page.getByRole('button', { name: 'Export Approval Preview JSON' }).click()

@@ -1,0 +1,52 @@
+{
+  "packet_id": "2026-05-17-pm-lane-152",
+  "lane": "PM Lane 152",
+  "title": "Local Schedule Status Controls Admission Draft Export",
+  "created_at_local": "2026-05-17",
+  "source_floor_commit": "e4b0d41c65b58d9f2a92aa1f5fc0addfb20acc17",
+  "objective": "Add a browser-local schedule/status controls admission draft export that defines the later proof requirements for schedule plans, status transitions, audit/readback, and downstream durable field record and production tracking boundaries before any write path is admitted.",
+  "execution_mode": "local_product_code_plus_status_docs",
+  "scope": [
+    "Add an Export Schedule Status Controls Draft action to the existing Field Prep Outputs rail.",
+    "Download one JSON artifact that includes field authorization assignment draft summary, proposed schedule/status packet, control readiness statuses, proposed packet sequence, authority boundary flags, and blocked write boundaries.",
+    "Keep the export local-only and informational.",
+    "Extend the focused Playwright smoke to prove the downloaded schedule/status controls admission draft artifact and zero mutation requests."
+  ],
+  "not_allowed": [
+    "No live POST to /api/v1/mutations/project-import-approvals.",
+    "No approval row creation.",
+    "No hosted deployment or promotion.",
+    "No Supabase, Render, Vercel, or Olares action.",
+    "No SQL or schema migration.",
+    "No secret access or secret rotation.",
+    "No backend route or mutation route change.",
+    "No project import, workpackage rows, task rows, apparatus rows, field work authorization, assignment write, schedule plan contract write, status transition contract write, schedule/status mutation route, schedule/status audit write, schedule/status readback route, hosted schedule/status UI controls, durable field record, production tracking, workbook macro, or workbook writeback.",
+    "No service, auth, DNS, ingress, or control-plane widening.",
+    "No autonomous AI business-state mutation."
+  ],
+  "schedule_status_controls_admission_draft": {
+    "status": "not_admitted",
+    "note": "This lane creates local admission-design context only. Schedule plans, status transitions, schedule/status routes, durable field records, and production tracking remain blocked until later admitted packets own those write paths."
+  },
+  "changed_files": [
+    "PROJECT_STATUS.md",
+    "apps/operations-web/app/pm-review/import-intake/page.tsx",
+    "apps/operations-web/tests/browser-shell.pm-import-intake.smoke.spec.ts",
+    "docs/operations/APEX-PM-STAKEHOLDER-TIME-PROTECTION-AND-ACCELERATION-LANE-2026-05-15.md",
+    "docs/operations/APEX-PM-TEMP-POWER-DELIVERY-AND-ORCHESTRATION-PLAN-2026-05-15.md",
+    "docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md",
+    "ops/agents/packets/draft/2026-05-17-pm-lane-152-local-schedule-status-controls-admission-draft-export.json",
+    "ops/agents/handoffs/2026-05-17-pm-lane-152-local-schedule-status-controls-admission-draft-export-handoff.md"
+  ],
+  "validation_steps": [
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform\" --filter @apex/operations-web typecheck",
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform\" --filter @apex/operations-web build",
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform/apps/operations-web\" exec playwright test \"browser-shell.pm-import-intake.smoke.spec.ts\"",
+    "Get-Content -Path \"ops/agents/packets/draft/2026-05-17-pm-lane-152-local-schedule-status-controls-admission-draft-export.json\" | ConvertFrom-Json | Select-Object -ExpandProperty packet_id",
+    "rg -n \"PM Lane 152|Export Schedule Status Controls Draft|schedule-status-controls-draft|pm_lane_152_local_schedule_status_controls_admission_draft_v1|mutationRequests\\)\\.toHaveLength\\(0\\)\" PROJECT_STATUS.md docs/operations ops/agents apps/operations-web",
+    "git diff --check"
+  ],
+  "validation_result": "PASS: operations-web typecheck passed, operations-web production build passed, focused PM import-intake Playwright smoke passed with 1 passed, packet JSON parsed, guardrail search confirmed PM Lane 152/schedule-status-controls-draft/zero-mutation evidence plus Desktop Codex parked language, and git diff --check passed.",
+  "sidecar_result": "Desktop Codex NETA comparative-audit, topic-spine design, pilot-module blueprint, visual-assets structural-cleanup scout, heavy-audit cleanup cataloging phase-zero, study-root structural catalog cleanup scout, study-root manifest/freeze-gate, generated local build artifact cleanup, development temp evidence retention cleanup, development temp evidence archive long-path cleanup, and source-domain resources deletion review queue closeouts remain untracked and intentionally parked for a separate technical-authority review lane. They are not staged into PM Lane 152.",
+  "next_recommended_lane": "Use this schedule/status controls admission draft as the no-write proof checklist for the Temp Power schedule/status lane. The next PM lane should either prepare a copy/paste executor packet for schedule/status admission design or continue to the durable field record and production tracking admission draft while writes remain blocked."
+}
