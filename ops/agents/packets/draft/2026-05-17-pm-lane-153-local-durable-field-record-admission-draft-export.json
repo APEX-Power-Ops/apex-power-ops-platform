@@ -1,0 +1,52 @@
+{
+  "packet_id": "2026-05-17-pm-lane-153",
+  "lane": "PM Lane 153",
+  "title": "Local Durable Field Record Admission Draft Export",
+  "created_at_local": "2026-05-17",
+  "source_floor_commit": "024d2123854ebd32b5f89b592256dc5cf87c69e5",
+  "objective": "Add a browser-local durable field record admission draft export that defines the later proof requirements for daily field records, field evidence, PM/lead review, audit/readback, and downstream production/customer/billing boundaries before any durable field record write path is admitted.",
+  "execution_mode": "local_product_code_plus_status_docs",
+  "scope": [
+    "Add an Export Durable Field Record Draft action to the existing Field Prep Outputs rail.",
+    "Download one JSON artifact that includes schedule/status controls draft summary, proposed durable field record packet, durable record readiness statuses, proposed packet sequence, authority boundary flags, and blocked write boundaries.",
+    "Keep the export local-only and informational.",
+    "Extend the focused Playwright smoke to prove the downloaded durable field record admission draft artifact and zero mutation requests."
+  ],
+  "not_allowed": [
+    "No live POST to /api/v1/mutations/project-import-approvals.",
+    "No approval row creation.",
+    "No hosted deployment or promotion.",
+    "No Supabase, Render, Vercel, or Olares action.",
+    "No SQL or schema migration.",
+    "No secret access or secret rotation.",
+    "No backend route or mutation route change.",
+    "No project import, workpackage rows, task rows, apparatus rows, field work authorization, assignment write, schedule/status write, durable field record contract write, field daily record write, field evidence attachment write, durable field record mutation route, durable field record audit write, durable field record readback route, hosted durable field record UI controls, production tracking, customer reporting export, billing/payroll export, workbook macro, or workbook writeback.",
+    "No service, auth, DNS, ingress, or control-plane widening.",
+    "No autonomous AI business-state mutation."
+  ],
+  "durable_field_record_admission_draft": {
+    "status": "not_admitted",
+    "note": "This lane creates local admission-design context only. Durable field records, field evidence, production tracking, customer reporting, billing, and payroll outputs remain blocked until later admitted packets own those write paths."
+  },
+  "changed_files": [
+    "PROJECT_STATUS.md",
+    "apps/operations-web/app/pm-review/import-intake/page.tsx",
+    "apps/operations-web/tests/browser-shell.pm-import-intake.smoke.spec.ts",
+    "docs/operations/APEX-PM-STAKEHOLDER-TIME-PROTECTION-AND-ACCELERATION-LANE-2026-05-15.md",
+    "docs/operations/APEX-PM-TEMP-POWER-DELIVERY-AND-ORCHESTRATION-PLAN-2026-05-15.md",
+    "docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md",
+    "ops/agents/packets/draft/2026-05-17-pm-lane-153-local-durable-field-record-admission-draft-export.json",
+    "ops/agents/handoffs/2026-05-17-pm-lane-153-local-durable-field-record-admission-draft-export-handoff.md"
+  ],
+  "validation_steps": [
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform\" --filter @apex/operations-web typecheck",
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform\" --filter @apex/operations-web build",
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform/apps/operations-web\" exec playwright test \"browser-shell.pm-import-intake.smoke.spec.ts\"",
+    "Get-Content -Path \"ops/agents/packets/draft/2026-05-17-pm-lane-153-local-durable-field-record-admission-draft-export.json\" | ConvertFrom-Json | Select-Object -ExpandProperty packet_id",
+    "rg -n \"PM Lane 153|Export Durable Field Record Draft|durable-field-record-draft|pm_lane_153_local_durable_field_record_admission_draft_v1|mutationRequests\\)\\.toHaveLength\\(0\\)\" PROJECT_STATUS.md docs/operations ops/agents apps/operations-web",
+    "git diff --check"
+  ],
+  "validation_result": "PASS: operations-web typecheck passed, operations-web production build passed, focused PM import-intake Playwright smoke passed with 1 passed, packet JSON parsed, guardrail search confirmed PM Lane 153/durable-field-record-draft/zero-mutation evidence plus Desktop Codex parked language, and git diff --check passed.",
+  "sidecar_result": "Read-only explorer Arendt recommended PM Lane 153 as the local durable field record admission draft export, using PM Lane 152 as upstream schedule/status context and keeping production tracking downstream. Desktop Codex NETA closeouts remain untracked and intentionally parked for a separate technical-authority review lane. They are not staged into PM Lane 153.",
+  "next_recommended_lane": "Use this durable field record admission draft as the no-write proof checklist for a later durable field record packet. The next PM lane should either prepare a copy/paste executor packet for durable field record admission design or continue to the production tracking admission draft while writes remain blocked."
+}

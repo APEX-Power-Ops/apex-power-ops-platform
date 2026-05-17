@@ -964,6 +964,11 @@ function scheduleStatusControlsDraftFileName(candidate?: CandidatePayload | null
   return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-schedule-status-controls-draft.json`
 }
 
+function durableFieldRecordDraftFileName(candidate?: CandidatePayload | null) {
+  const candidateId = candidate?.candidate_id || 'project-miner-intake'
+  return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-durable-field-record-draft.json`
+}
+
 function importExceptionRegisterFileName(candidate?: CandidatePayload | null) {
   const candidateId = candidate?.candidate_id || 'project-miner-intake'
   return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-import-exception-register.md`
@@ -4393,6 +4398,203 @@ function buildScheduleStatusControlsDraftExport(
   }
 }
 
+function buildDurableFieldRecordDraftExport(
+  packet: IntakeWorkbenchPacket,
+  fieldPrepQueue: OperatingQueueItem[],
+  fieldPrepCoverageSnapshot: FieldPrepCoverageItem[],
+  fieldPrepConversationAgenda: FieldPrepAgendaItem[],
+  notAllowed: string[],
+  futureRoute: string,
+  fieldReadinessChecks: Record<string, boolean>,
+  fieldQuestionsDraft: FieldQuestionsDraft,
+  fieldObservationScratchpad: FieldObservationScratchpad,
+) {
+  const candidate = packet.candidate
+  const project = candidate.project || {}
+  const summary = candidate.summary || {}
+  const scheduleStatusControlsDraft = buildScheduleStatusControlsDraftExport(packet, fieldPrepQueue, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, notAllowed, futureRoute, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad)
+  const durableRecordItems: ApprovalDryRunReadinessItem[] = [
+    {
+      id: 'schedule-status-controls-context',
+      title: 'Schedule and status controls context',
+      status: 'ready',
+      detail: `${scheduleStatusControlsDraftFileName(candidate)} defines the no-write prerequisite packet for later durable field record controls.`,
+    },
+    {
+      id: 'approval-import-field-schedule-prerequisites',
+      title: 'Approval, import, field, schedule, and status prerequisites',
+      status: 'blocked',
+      detail: 'Accepted approval row, imported work rows, field authorization/assignment proof, and admitted schedule/status controls are required before durable field record mutation authority can exist.',
+    },
+    {
+      id: 'durable-field-record-storage-contract',
+      title: 'Durable field record storage contract',
+      status: 'blocked',
+      detail: 'A later packet must define daily field record shape, required fields, actor authority, attachment rules, idempotency, rollback posture, and readback before durable field records can be created.',
+    },
+    {
+      id: 'daily-field-record-required-fields',
+      title: 'Daily field record required fields',
+      status: 'blocked',
+      detail: 'A later packet must define the minimum daily record fields for work performed, site conditions, blockers, safety notes, apparatus context, labor context, and PM/lead acknowledgement.',
+    },
+    {
+      id: 'field-evidence-attachment-contract',
+      title: 'Field evidence and attachment contract',
+      status: 'blocked',
+      detail: 'A later packet must define whether field photos, notes, files, device-offline drafts, and retry behavior are admitted before any field evidence storage is created.',
+    },
+    {
+      id: 'pm-lead-review-contract',
+      title: 'PM and lead review contract',
+      status: 'blocked',
+      detail: 'PM and lead review boundaries must be defined before field-submitted records become visible as operational truth.',
+    },
+    {
+      id: 'audit-readback-reconciliation-contract',
+      title: 'Audit, readback, and reconciliation contract',
+      status: 'blocked',
+      detail: 'A later packet must prove durable field record readback, audit linkage, idempotent replay, reconciliation posture, and unchanged downstream business counts.',
+    },
+    {
+      id: 'production-tracking-boundary',
+      title: 'Production tracking boundary',
+      status: 'blocked',
+      detail: 'Durable field record controls cannot create production tracking rows, quantity updates, customer reports, billing exports, or payroll exports unless separate packets admit those outputs.',
+    },
+    {
+      id: 'hosted-ui-mutation-boundary',
+      title: 'Hosted UI mutation boundary',
+      status: 'blocked',
+      detail: 'No hosted UI control, backend route, deployment, or production mutation is admitted by this local draft.',
+    },
+  ]
+  const durableRecordCounts = approvalDryRunReadinessCounts(durableRecordItems)
+
+  return {
+    draft_kind: 'pm_import_candidate_durable_field_record_admission_draft',
+    draft_version: 'pm_lane_153_local_durable_field_record_admission_draft_v1',
+    generated_locally_at: new Date().toISOString(),
+    candidate_identity: {
+      candidate_id: candidate.candidate_id || null,
+      candidate_version: candidate.candidate_version || null,
+      project_name: project.name || null,
+      source_fingerprint: candidate.source_freshness?.aggregate_fingerprint || null,
+    },
+    field_shape: {
+      workpackage_count: summary.workpackage_count ?? null,
+      task_count: summary.task_count ?? null,
+      apparatus_candidate_count: summary.apparatus_candidate_count ?? null,
+      crew_count: summary.crew_count ?? null,
+      equipment_inventory_count: summary.equipment_inventory_count ?? null,
+    },
+    durable_record_draft_summary: {
+      ready_count: durableRecordCounts.ready,
+      needs_review_count: durableRecordCounts.needsReview,
+      blocked_count: durableRecordCounts.blocked,
+      summary: approvalDryRunReadinessSummary(durableRecordCounts),
+      durable_record_status: 'blocked_until_schedule_status_and_durable_field_record_packet',
+    },
+    schedule_status_controls_draft_summary: {
+      file_name: scheduleStatusControlsDraftFileName(candidate),
+      ready_count: scheduleStatusControlsDraft.control_draft_summary.ready_count,
+      needs_review_count: scheduleStatusControlsDraft.control_draft_summary.needs_review_count,
+      blocked_count: scheduleStatusControlsDraft.control_draft_summary.blocked_count,
+      summary: scheduleStatusControlsDraft.control_draft_summary.summary,
+      control_status: scheduleStatusControlsDraft.control_draft_summary.control_status,
+    },
+    proposed_durable_field_record_packet: {
+      packet_kind: 'durable_field_record_controls',
+      authority_status: 'not_admitted',
+      required_after: ['approval-first-row', 'project-import', 'field-authorization-and-assignment', 'schedule-status-controls'],
+      required_before: ['production-tracking', 'customer-or-billing-reporting'],
+      proposed_routes: {
+        field_record_create_route: 'not_admitted',
+        field_record_update_route: 'not_admitted',
+        field_record_readback_route: 'not_admitted',
+        field_record_history_route: 'not_admitted',
+        lead_ops_route: '/lead-ops',
+        field_tech_route: '/field-tech',
+        pm_workfront_route: '/pm-review/workfront',
+      },
+      minimum_proof: [
+        'accepted approval row exists',
+        'imported project/workpackage/task/apparatus rows exist',
+        'field authorization and assignment proof exists',
+        'schedule/status controls proof exists',
+        'durable field record storage contract is approved',
+        'daily field record required fields and evidence rules are approved',
+        'PM/lead review, audit, readback, and reconciliation are proved',
+        'production tracking, customer reporting, billing, and payroll outputs remain blocked unless separately admitted',
+      ],
+    },
+    durable_record_items: durableRecordItems,
+    proposed_packet_sequence: [
+      {
+        step: 'complete_schedule_status_controls_gate',
+        status: 'blocked',
+        detail: 'Complete approval, import, field authorization, assignment, schedule, and status controls before durable field record or production tracking writes can be considered.',
+      },
+      {
+        step: 'admit_durable_field_record_contract',
+        status: 'blocked',
+        detail: 'Define daily record shape, required fields, actor authority, attachments, idempotency, retry behavior, rollback posture, and readback.',
+      },
+      {
+        step: 'admit_field_evidence_and_review_contract',
+        status: 'blocked',
+        detail: 'Define field evidence, offline draft, PM/lead review, audit, and reconciliation rules before daily records become operational truth.',
+      },
+      {
+        step: 'prove_hosted_readback_without_production_tracking',
+        status: 'blocked',
+        detail: 'Prove durable field record reads and audit history without creating production tracking rows, customer reports, billing exports, payroll exports, or customer-facing completion evidence.',
+      },
+      {
+        step: 'keep_production_customer_billing_and_payroll_outputs_blocked',
+        status: 'blocked',
+        detail: 'Keep production tracking, customer reporting, billing, payroll, and external delivery outputs blocked until later packets admit those surfaces.',
+      },
+    ],
+    authority_boundary: {
+      mutation_authority: 'not_admitted',
+      local_durable_record_draft_only: true,
+      live_approval_post_performed: false,
+      approval_row_created: false,
+      project_import_performed: false,
+      field_authorization_created: false,
+      field_work_authorized: false,
+      lead_assignment_created: false,
+      crew_assignment_created: false,
+      schedule_plan_created: false,
+      status_change_performed: false,
+      schedule_status_route_created: false,
+      durable_field_record_route_created: false,
+      durable_field_record_created: false,
+      field_daily_record_created: false,
+      production_tracking_performed: false,
+      production_quantity_created: false,
+      customer_report_created: false,
+      billing_export_created: false,
+      server_write_performed: false,
+    },
+    blocked_boundaries: Array.from(new Set([
+      ...scheduleStatusControlsDraft.blocked_boundaries,
+      'durable_field_record_contract_write',
+      'field_daily_record_write',
+      'field_evidence_attachment_write',
+      'durable_field_record_mutation_route',
+      'durable_field_record_audit_write',
+      'durable_field_record_readback_route',
+      'hosted_durable_field_record_ui_controls',
+      'production_tracking_contract_write',
+      'production_quantity_tracking_write',
+      'customer_reporting_export',
+      'billing_or_payroll_export',
+    ])),
+  }
+}
+
 function buildImportExceptionRegisterExport(
   packet: IntakeWorkbenchPacket,
   importExceptionRegister: ImportExceptionRegisterItem[],
@@ -4577,6 +4779,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
   const [leadFieldAssignmentDraftStatus, setLeadFieldAssignmentDraftStatus] = useState('')
   const [fieldAuthorizationAssignmentDraftStatus, setFieldAuthorizationAssignmentDraftStatus] = useState('')
   const [scheduleStatusControlsDraftStatus, setScheduleStatusControlsDraftStatus] = useState('')
+  const [durableFieldRecordDraftStatus, setDurableFieldRecordDraftStatus] = useState('')
   const [approvalDryRunStatus, setApprovalDryRunStatus] = useState('')
   const [approvalDryRunPreview, setApprovalDryRunPreview] = useState('')
   const [reviewChecks, setReviewChecks] = useState<Record<string, boolean>>({})
@@ -4756,7 +4959,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
   const fieldPrepAgendaCount = fieldPrepAgendaCounts(fieldPrepConversationAgenda)
   const reviewOutputStatuses = [briefStatus, previewStatus, pmIntakeSnapshotStatus, exceptionRegisterStatus].filter(Boolean)
   const executorOutputStatuses = [handoffStatus].filter(Boolean)
-  const fieldPrepOutputStatuses = [fieldBriefStatus, fieldObservationStatus, fieldPrepCoverageStatus, fieldPrepAgendaStatus, fieldPrepPacketStatus, fieldStartPreflightStatus, fieldExecutionGateDesignStatus, leadFieldAssignmentDraftStatus, fieldAuthorizationAssignmentDraftStatus, scheduleStatusControlsDraftStatus].filter(Boolean)
+  const fieldPrepOutputStatuses = [fieldBriefStatus, fieldObservationStatus, fieldPrepCoverageStatus, fieldPrepAgendaStatus, fieldPrepPacketStatus, fieldStartPreflightStatus, fieldExecutionGateDesignStatus, leadFieldAssignmentDraftStatus, fieldAuthorizationAssignmentDraftStatus, scheduleStatusControlsDraftStatus, durableFieldRecordDraftStatus].filter(Boolean)
   const hasOutputStatuses = reviewOutputStatuses.length > 0 || executorOutputStatuses.length > 0 || fieldPrepOutputStatuses.length > 0
 
   useEffect(() => {
@@ -5166,6 +5369,16 @@ export default function ProjectMinerIntakeWorkbenchPage() {
     setScheduleStatusControlsDraftStatus(`Schedule status controls draft prepared from ${candidate?.candidate_id || 'the current intake packet'} without a server write.`)
   }
 
+  function exportDurableFieldRecordDraft() {
+    if (!packet) {
+      return
+    }
+
+    const draft = buildDurableFieldRecordDraftExport(packet, fieldPrepQueue, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, notAllowed, futureRoute, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad)
+    downloadTextFile(durableFieldRecordDraftFileName(candidate), `${JSON.stringify(draft, null, 2)}\n`, 'application/json')
+    setDurableFieldRecordDraftStatus(`Durable field record draft prepared from ${candidate?.candidate_id || 'the current intake packet'} without a server write.`)
+  }
+
   return (
     <main className="shell-page pm-review-page">
       <section className="hero-card pm-review-hero">
@@ -5331,6 +5544,9 @@ export default function ProjectMinerIntakeWorkbenchPage() {
                 </button>
                 <button className="btn btn-outline" onClick={exportScheduleStatusControlsDraft} disabled={!packet}>
                   Export Schedule Status Controls Draft
+                </button>
+                <button className="btn btn-outline" onClick={exportDurableFieldRecordDraft} disabled={!packet}>
+                  Export Durable Field Record Draft
                 </button>
               </div>
             </section>
