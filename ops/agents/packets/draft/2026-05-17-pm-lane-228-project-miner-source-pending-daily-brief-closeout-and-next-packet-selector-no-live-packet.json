@@ -32,6 +32,13 @@
     "LIVE_APPROVAL_AUTHORITY_REQUEST_PRESENT_STOP_FOR_LANE_142_ADMISSION"
   ],
   "next_recommended_lane": "PM Lane 229 - Project Miner Source-Pending Brief Refresh And Operator Card Compression No-Live Packet",
+  "post_return_supersession": {
+    "superseded": true,
+    "reason": "Jason provided the source confirmation return before the optional brief-refresh packet was executed.",
+    "lane_229_actual_use": "PM Lane 229 - Project Miner Source Confirmation Return Received No-Live Packet",
+    "content_review_opened": false,
+    "pm_business_state_mutation_opened": false
+  },
   "lane_229_allowed_purpose": [
     "Compress the current Lane 224/Lane 225/Lane 227/Lane 228 posture into a shorter operator card.",
     "Keep the card source-pending and no-live.",

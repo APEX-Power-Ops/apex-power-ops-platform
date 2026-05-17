@@ -87,3 +87,7 @@ No product code, UI control, route, backend seam, payload version, localStorage 
 5. `git diff --check`.
 
 Result: PASS. Packet JSON parsed, Lane 228 guardrails and decision labels were found across the intended touched files, stale-string scan found no matches, corrupted-token scan found no matches, null-byte check passed, and git diff --check reported only known line-ending warnings.
+
+## Post-Return Supersession
+
+Jason provided the source confirmation return before the optional brief-refresh packet was executed. The PM Lane 229 slot is therefore used for `Project Miner Source Confirmation Return Received No-Live Packet` instead of the optional brief-refresh packet.

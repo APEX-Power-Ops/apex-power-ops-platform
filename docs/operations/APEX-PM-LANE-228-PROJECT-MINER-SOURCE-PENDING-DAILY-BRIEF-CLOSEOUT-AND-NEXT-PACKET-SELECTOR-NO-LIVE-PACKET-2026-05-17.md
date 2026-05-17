@@ -180,6 +180,10 @@ Next safe packet:
 
 That packet should compress the current source-pending posture into a shorter operator card only. It must not run live routes, access hosted services, read workbook/PDF contents, create source truth, change product code, execute approval/import, issue field/customer commitments, or mutate PM business state.
 
+Post-return supersession:
+
+Jason provided the source confirmation return before the optional brief-refresh packet was executed. The PM Lane 229 slot is therefore used for `Project Miner Source Confirmation Return Received No-Live Packet` instead of the optional brief-refresh packet, and the branch now routes through source-confirmation return handling without opening content review or PM business-state writes.
+
 ## No-Live Boundary
 
 PM Lane 228 adds no product code, UI control, route, backend seam, payload version, localStorage schema, sessionStorage schema, hosted call, hosted smoke, browser live route access, live approval POST, approval row, project import, task, action item, owner/due-date field, issue, field authorization, lead selection, crew assignment, schedule/status write, customer commitment, customer report, field instruction, durable field record, production tracking row, completion evidence, billing/payroll/invoice/accounting output, Supabase/Render/Vercel/Olares action, SQL/schema migration, service/auth/ingress change, workbook content read, workbook macro/writeback, source PDF content read, durable source fingerprint, confirmed source-of-truth decision, Desktop Codex source classification dispatch, or autonomous AI business-state mutation.
