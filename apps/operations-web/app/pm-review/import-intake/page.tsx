@@ -674,6 +674,25 @@ const REVIEW_CHECKLIST_ITEMS: ReviewChecklistItem[] = [
     detail: 'No browser approval submission, project import, assignment, schedule, or status mutation is admitted.',
   },
 ]
+
+const REVIEW_CHECKLIST_GROUPS = [
+  {
+    id: 'source-review-evidence',
+    label: 'Source Review Evidence',
+    itemIds: ['source_freshness_reviewed', 'exceptions_reviewed', 'pm_decisions_captured'],
+  },
+  {
+    id: 'approval-readiness-evidence',
+    label: 'Approval Readiness Evidence',
+    itemIds: ['admission_no_go_reviewed', 'approval_storage_understood', 'hosted_parity_acknowledged'],
+  },
+  {
+    id: 'write-boundary-confirmation',
+    label: 'Write Boundary Confirmation',
+    itemIds: ['write_guardrails_confirmed'],
+  },
+]
+
 const CLOSEOUT_CHECKLIST_ITEMS: CloseoutChecklistItem[] = [
   {
     id: 'source_commit_recorded',
@@ -8357,20 +8376,27 @@ export default function ProjectMinerIntakeWorkbenchPage() {
               <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
                 Browser-local review prep only. Checking these items does not approve, persist, import, assign, schedule, change status, or mutate production state.
               </p>
-              <div style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
-                {REVIEW_CHECKLIST_ITEMS.map((item) => (
-                  <label key={item.id} className="card" style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0.75rem', padding: '0.85rem', boxShadow: 'none', cursor: 'pointer' }}>
-                    <input
-                      type="checkbox"
-                      checked={Boolean(reviewChecks[item.id])}
-                      onChange={(event) => updateReviewCheck(item.id, event.target.checked)}
-                      style={{ marginTop: '0.25rem' }}
-                    />
-                    <span>
-                      <strong>{item.label}</strong>
-                      <span style={{ display: 'block', marginTop: '0.35rem', color: 'var(--muted)', lineHeight: 1.5 }}>{item.detail}</span>
-                    </span>
-                  </label>
+              <div aria-label="Review checklist groups" className="notes-grid" style={{ marginTop: '0.85rem' }}>
+                {REVIEW_CHECKLIST_GROUPS.map((group) => (
+                  <section key={group.id} aria-label={`${group.label} checklist group`}>
+                    <h3 style={{ fontSize: '0.95rem', margin: '0 0 0.65rem' }}>{group.label}</h3>
+                    <div aria-label={`${group.label} checklist items`} style={{ display: 'grid', gap: '0.75rem' }}>
+                      {REVIEW_CHECKLIST_ITEMS.filter((item) => group.itemIds.includes(item.id)).map((item) => (
+                        <label key={item.id} className="card" style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0.75rem', padding: '0.85rem', boxShadow: 'none', cursor: 'pointer' }}>
+                          <input
+                            type="checkbox"
+                            checked={Boolean(reviewChecks[item.id])}
+                            onChange={(event) => updateReviewCheck(item.id, event.target.checked)}
+                            style={{ marginTop: '0.25rem' }}
+                          />
+                          <span>
+                            <strong>{item.label}</strong>
+                            <span style={{ display: 'block', marginTop: '0.35rem', color: 'var(--muted)', lineHeight: 1.5 }}>{item.detail}</span>
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  </section>
                 ))}
               </div>
               <div className="pm-review-link-row pm-review-link-row-start" style={{ alignItems: 'center' }}>

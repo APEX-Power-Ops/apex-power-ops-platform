@@ -1204,7 +1204,35 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(checklistBodyControls).toBeVisible()
   const checklistControls = checklistBodyControls.getByLabel('Review checklist controls')
   await expect(checklistControls).toBeVisible()
-  await expect(checklistControls.locator('label')).toHaveCount(7)
+  const reviewChecklistNames = [
+    'Source freshness reviewed',
+    'Warnings reviewed',
+    'PM decisions captured',
+    'Admission no-go checks reviewed',
+    'Approval storage understood',
+    'Hosted parity acknowledged',
+    'Write guardrails confirmed',
+  ]
+  const checklistGroups = checklistControls.getByLabel('Review checklist groups')
+  await expect(checklistGroups).toBeVisible()
+  await expect(checklistGroups.locator(':scope > section')).toHaveCount(3)
+  await expect(checklistGroups.getByRole('heading', { name: 'Source Review Evidence', exact: true })).toBeVisible()
+  await expect(checklistGroups.getByRole('heading', { name: 'Approval Readiness Evidence', exact: true })).toBeVisible()
+  await expect(checklistGroups.getByRole('heading', { name: 'Write Boundary Confirmation', exact: true })).toBeVisible()
+  const sourceReviewEvidenceGroup = checklistGroups.getByLabel('Source Review Evidence checklist group')
+  const approvalReadinessEvidenceGroup = checklistGroups.getByLabel('Approval Readiness Evidence checklist group')
+  const writeBoundaryConfirmationGroup = checklistGroups.getByLabel('Write Boundary Confirmation checklist group')
+  await expect(sourceReviewEvidenceGroup.getByLabel('Source Review Evidence checklist items').locator('label')).toHaveCount(3)
+  await expect(sourceReviewEvidenceGroup.getByLabel('Source Review Evidence checklist items').getByRole('checkbox')).toHaveCount(3)
+  await expect(approvalReadinessEvidenceGroup.getByLabel('Approval Readiness Evidence checklist items').locator('label')).toHaveCount(3)
+  await expect(approvalReadinessEvidenceGroup.getByLabel('Approval Readiness Evidence checklist items').getByRole('checkbox')).toHaveCount(3)
+  await expect(writeBoundaryConfirmationGroup.getByLabel('Write Boundary Confirmation checklist items').locator('label')).toHaveCount(1)
+  await expect(writeBoundaryConfirmationGroup.getByLabel('Write Boundary Confirmation checklist items').getByRole('checkbox')).toHaveCount(1)
+  await expect(checklistGroups.locator('label')).toHaveCount(7)
+  await expect(checklistControls.getByRole('checkbox')).toHaveCount(7)
+  for (const name of reviewChecklistNames) {
+    await expect(checklist.getByRole('checkbox', { name })).toHaveCount(1)
+  }
   await expect(checklist.getByRole('heading', { name: /Local Review Checklist/i })).toBeVisible()
   await expect(checklist.getByText(/Browser-local review prep only/i)).toBeVisible()
   await expect(checklist.getByText('0 of 7')).toBeVisible()
@@ -1213,12 +1241,16 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(checklist).not.toHaveAttribute('open', '')
   await expect(checklistBodyControls).toBeHidden()
   await expect(checklistControls).toBeHidden()
+  await expect(checklistGroups).toBeHidden()
   const reviewChecklistDisclosureStateKeys = await page.evaluate(() => Object.keys(window.localStorage).filter((key) => key.startsWith('pm-import-intake-') && /collapse|disclosure|local-review-checklist/i.test(key)))
   expect(reviewChecklistDisclosureStateKeys).toEqual([])
   await checklist.locator(':scope > summary').click()
   await expect(checklist).toHaveAttribute('open', '')
   await expect(checklistBodyControls).toBeVisible()
   await expect(checklistControls).toBeVisible()
+  await expect(checklistGroups).toBeVisible()
+  await expect(checklistGroups.locator(':scope > section')).toHaveCount(3)
+  await expect(checklistGroups.locator('label')).toHaveCount(7)
   await checklist.getByRole('checkbox', { name: /Source freshness reviewed/i }).check()
   await checklist.getByRole('checkbox', { name: /Warnings reviewed/i }).check()
   await expect(checklist.getByText('2 of 7')).toBeVisible()
@@ -3944,9 +3976,17 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   expect(brief).toContain('- import project rows')
   expect(brief).toContain('## Local Review Checklist')
   expect(brief).toContain('Checklist progress: 2 of 7 checked.')
-  expect(brief).toContain('[x] Source freshness reviewed')
-  expect(brief).toContain('[x] Warnings reviewed')
-  expect(brief).toContain('[ ] Hosted parity acknowledged')
+  for (const line of [
+    '[x] Source freshness reviewed',
+    '[x] Warnings reviewed',
+    '[ ] PM decisions captured',
+    '[ ] Admission no-go checks reviewed',
+    '[ ] Approval storage understood',
+    '[ ] Hosted parity acknowledged',
+    '[ ] Write guardrails confirmed',
+  ]) {
+    expect(brief).toContain(line)
+  }
   expect(brief).toContain('## Local Approval Decision Draft')
   expect(brief).toContain('Draft present: yes.')
   expect(brief).toContain('- Decision draft: return_for_revision')
@@ -4028,8 +4068,9 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(reviewOutputStatus.getByText(/PM brief prepared from pm-import-candidate-miner-temp-power without a server write/i)).toBeVisible()
   await checklist.getByRole('button', { name: 'Clear checklist' }).click()
   await expect(checklist.getByText('0 of 7')).toBeVisible()
-  await expect(checklist.getByRole('checkbox', { name: /Source freshness reviewed/i })).not.toBeChecked()
-  await expect(checklist.getByRole('checkbox', { name: /Warnings reviewed/i })).not.toBeChecked()
+  for (const name of reviewChecklistNames) {
+    await expect(checklist.getByRole('checkbox', { name })).not.toBeChecked()
+  }
   await approvalDraft.getByRole('button', { name: 'Clear decision draft' }).click()
   await expect(approvalDraftDecisionSelect).toHaveValue('')
   await expect(approvalDraftNotes).toHaveValue('')
