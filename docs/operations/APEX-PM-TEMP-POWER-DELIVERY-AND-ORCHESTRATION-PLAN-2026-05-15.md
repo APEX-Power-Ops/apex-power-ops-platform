@@ -714,6 +714,8 @@ PM Lane 232 executes the Project Miner Temp Power Current Candidate Approval Rea
 
 PM Lane 233 executes the Project Miner Temp Power Current Candidate Warning Triage And Decision Gate No-Live Packet tranche. The single `MISSING_DESIGNATIONS` warning is now traced to source row 28 / `miner-line-015`: quantity 3, section `7.13`, apparatus type `Ground Resistance Test - Two-Point (Lot)`, drawing reference `E01-00, E01-01, E01-02`, and 24 total hours. This appears technically likely non-blocking because it is a lot-level testing row, but PM acceptance or source correction is still required before any later approval/import packet. Approval POST, approval-row creation, project import, hosted proof, field/customer/production/finance writes, workbook macro/writeback, and autonomous AI business-state mutation remain blocked.
 
+PM Lane 234 executes the Project Miner Temp Power Jason Decision Card No-Live Packet tranche. The current Temp Power candidate review is now compressed into four allowed Jason response labels: `ACCEPT_WARNING_NON_BLOCKING_NO_LIVE`, `REQUEST_SOURCE_CORRECTION_NO_LIVE`, `HOLD_NO_LIVE`, and `PROVIDE_EXACT_LIVE_ADMISSION_LATER`. An optional Desktop Codex support prompt may review the decision card for clarity and relay burden only; it cannot decide the PM response, edit PM artifacts, access hosted services, read source contents, run macros, stage, commit, push, or mutate business state. Approval POST, approval-row creation, project import, hosted proof, field/customer/production/finance writes, workbook content reads, source PDF content reads, workbook macro/writeback, and autonomous AI business-state mutation remain blocked.
+
 ## Capability-Gap Register
 
 Current known gaps:

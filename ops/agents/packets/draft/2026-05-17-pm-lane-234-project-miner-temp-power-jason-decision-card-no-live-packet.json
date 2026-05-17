@@ -1,0 +1,90 @@
+{
+  "packet_id": "2026-05-17-pm-lane-234-project-miner-temp-power-jason-decision-card-no-live-packet",
+  "title": "PM Lane 234 - Project Miner Temp Power Jason Decision Card No-Live Packet",
+  "date": "2026-05-17",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_JASON_DECISION_CARD_NO_LIVE",
+  "selected_outcome": "JASON_DECISION_CARD_READY_NO_LIVE",
+  "candidate": {
+    "candidate_id": "pm-import-candidate-miner-temp-power",
+    "project_name": "Miner Temp Power",
+    "workpackage_count": 7,
+    "task_count": 15,
+    "apparatus_candidate_count": 186,
+    "topology_label_count": 138,
+    "warning_count": 1,
+    "blocker_count": 0,
+    "mutation_authority": "not_admitted"
+  },
+  "decision_card": {
+    "question": "Should the single missing-designation warning on the current Temp Power candidate be accepted, corrected, held, or routed to later live admission?",
+    "warning_code": "MISSING_DESIGNATIONS",
+    "line_item": {
+      "line_id": "miner-line-015",
+      "source_row": 28,
+      "quantity": 3,
+      "section": "7.13",
+      "apparatus_type": "Ground Resistance Test - Two-Point (Lot)",
+      "designation": null,
+      "drawing_ref": "E01-00, E01-01, E01-02",
+      "hours_per_unit": 8,
+      "hours_line": 24
+    },
+    "technical_note": "Likely non-blocking because it is a lot-level ground-resistance-test line rather than apparatus-specific equipment designation; PM acceptance or source correction is still required before any later approval/import packet."
+  },
+  "allowed_jason_responses": [
+    "ACCEPT_WARNING_NON_BLOCKING_NO_LIVE",
+    "REQUEST_SOURCE_CORRECTION_NO_LIVE",
+    "HOLD_NO_LIVE",
+    "PROVIDE_EXACT_LIVE_ADMISSION_LATER"
+  ],
+  "next_packet_map": {
+    "ACCEPT_WARNING_NON_BLOCKING_NO_LIVE": "PM Lane 235 - Temp Power Warning Acceptance Capture No-Live Packet",
+    "REQUEST_SOURCE_CORRECTION_NO_LIVE": "PM Lane 235 - Temp Power Source Correction Intake No-Live Packet",
+    "HOLD_NO_LIVE": "PM Lane 235 - Temp Power Hold And Review Parking No-Live Packet",
+    "PROVIDE_EXACT_LIVE_ADMISSION_LATER": "PM Lane 235 - Temp Power Live Admission Preflight Packet, only if the exact PM Lane 142 phrase is also provided as a current instruction"
+  },
+  "future_live_gate_phrase": "I explicitly admit PM Lane 142 live approval POST and first approval-row creation for the current Project Miner Temp Power import candidate.",
+  "current_instruction_contains_live_gate_phrase": false,
+  "desktop_codex_support_prompt": "ops/agents/handoffs/2026-05-17-desktop-codex-pm-lane-234-decision-card-review-burden-scout-prompt.md",
+  "desktop_codex_support_limits": [
+    "review decision card clarity only",
+    "no PM decision authority",
+    "no product code",
+    "no repo publication",
+    "no hosted service access",
+    "no workbook or PDF content read",
+    "no macros",
+    "no live write"
+  ],
+  "blocked_authority": [
+    "live approval POST",
+    "approval row creation",
+    "project import",
+    "task or action item creation",
+    "owner or due-date assignment",
+    "field authorization",
+    "lead or crew assignment",
+    "schedule/status write",
+    "customer commitment",
+    "customer report",
+    "field instruction",
+    "durable field record",
+    "production tracking",
+    "completion evidence",
+    "billing/payroll/invoice/accounting output",
+    "Supabase/Render/Vercel/Olares mutation",
+    "SQL/schema migration",
+    "workbook content read",
+    "source PDF content read",
+    "workbook macro/writeback",
+    "autonomous AI business-state mutation"
+  ],
+  "validation": [
+    "python -m json.tool ops/agents/packets/draft/2026-05-17-pm-lane-234-project-miner-temp-power-jason-decision-card-no-live-packet.json",
+    "rg guardrail search on touched Lane 234 files",
+    "corrupted-token scan on touched Lane 234 files",
+    "null-byte scan on touched Lane 234 files",
+    "git diff --check on touched Lane 234 files"
+  ],
+  "validation_result": "PASS"
+}
