@@ -10933,6 +10933,17 @@ export default function ProjectMinerIntakeWorkbenchPage() {
                         <li>Keep browser approval submission and project import blocked until later packets explicitly admit those writes.</li>
                       </ol>
                     </article>
+                    {hasProjectDataEntryWarning ? (
+                      <article aria-label="Current open Project Data Entry decision" className="notes-card accent-card">
+                        <h2>Current Open PM Decision</h2>
+                        <p>
+                          PROJECT_DATA_ENTRY_FORMULA_ERRORS remains open. Return exactly one PM Lane 238 label from the Project Data Entry exact reply options card; do not use explanation text, a paraphrase, or {PROJECT_MINER_RESOLVED_SOURCE_CORRECTION_LABEL}.
+                        </p>
+                        <p style={{ marginBottom: 0 }}>
+                          No-live boundary: this cue does not accept the warning, approve the candidate, create an approval row, import project rows, write source files, or call a hosted mutation.
+                        </p>
+                      </article>
+                    ) : null}
                   </div>
                 </section>
                 <section aria-label="Blocked Write Guardrails guardrail group">

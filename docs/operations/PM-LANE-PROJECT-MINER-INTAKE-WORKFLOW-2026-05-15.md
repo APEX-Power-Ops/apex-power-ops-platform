@@ -978,6 +978,8 @@ PM Lane 246 executes the Project Miner Temp Power Data Entry Exact Label Export 
 
 PM Lane 247 executes the Project Miner Temp Power Data Entry Exact Reply Options Workbench Cue No-Live Packet tranche. The PM Decision Context now includes a display-only exact reply options card that asks for exactly one copied line, lists the four PM Lane 238 labels, and excludes explanation text, paraphrases, and `REQUEST_SOURCE_CORRECTION_NO_LIVE` from the reply. Validation passed, with no warning acceptance, live approval, approval-row creation, project import, source writeback, hosted access, Desktop Codex PM decision authority, copy button, or autonomous AI business-state mutation added.
 
+PM Lane 248 executes the Project Miner Temp Power Data Entry Current Open Decision Guardrail Cue No-Live Packet tranche. Current PM Next Actions and Guardrails now includes a display-only cue for the open `PROJECT_DATA_ENTRY_FORMULA_ERRORS` decision, pointing reviewers back to the exact reply options card and repeating the no-explanation, no-paraphrase, no-`REQUEST_SOURCE_CORRECTION_NO_LIVE` reply boundary. Validation passed, with no warning acceptance, live approval, approval-row creation, project import, source writeback, hosted access, Desktop Codex PM decision authority, copy button, or autonomous AI business-state mutation added.
+
 Level 3 - Resource Context:
 Read equipment inventory and technician capability rows so PM can understand whether the project can be staffed with available people and equipment.
 

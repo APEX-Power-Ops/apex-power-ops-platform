@@ -1,0 +1,64 @@
+{
+  "packet_id": "2026-05-17-pm-lane-248-project-miner-temp-power-data-entry-current-open-decision-guardrail-cue-no-live-packet",
+  "title": "PM Lane 248 - Project Miner Temp Power Data Entry Current Open Decision Guardrail Cue No-Live Packet",
+  "date": "2026-05-17",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_DATA_ENTRY_CURRENT_OPEN_DECISION_GUARDRAIL_CUE_NO_LIVE",
+  "selected_outcome": "DATA_ENTRY_OPEN_DECISION_VISIBLE_IN_CURRENT_GUARDRAILS_NO_LIVE",
+  "candidate": {
+    "candidate_id": "pm-import-candidate-miner-temp-power",
+    "active_warning_code": "PROJECT_DATA_ENTRY_FORMULA_ERRORS",
+    "warning_count": 1,
+    "blocker_count": 0,
+    "mutation_authority": "not_admitted"
+  },
+  "guardrail_cue": {
+    "surface": "Current PM Next Actions and Guardrails",
+    "aria_label": "Current open Project Data Entry decision",
+    "heading": "Current Open PM Decision",
+    "points_to": "Project Data Entry exact reply options",
+    "blocked_reply_content": [
+      "explanation text",
+      "paraphrase",
+      "REQUEST_SOURCE_CORRECTION_NO_LIVE"
+    ],
+    "no_live_boundary": true
+  },
+  "allowed_reply_lines": [
+    "ACCEPT_DATA_ENTRY_WARNING_NON_BLOCKING_NO_LIVE",
+    "REQUEST_DATA_ENTRY_WORKBOOK_CORRECTION_NO_LIVE",
+    "HOLD_DATA_ENTRY_WARNING_NO_LIVE",
+    "PROVIDE_EXACT_LIVE_ADMISSION_LATER"
+  ],
+  "desktop_codex_support": {
+    "prompt_path": "ops/agents/handoffs/2026-05-17-desktop-codex-pm-lane-248-data-entry-current-open-decision-guardrail-cue-review-scout-prompt.md",
+    "status": "available_not_required",
+    "allowed_scope": [
+      "guardrail cue clarity review",
+      "scan-burden reduction review",
+      "authority-boundary risk review"
+    ],
+    "blocked_scope": [
+      "PM decision authority",
+      "product code edit",
+      "repo publication",
+      "hosted service access",
+      "workbook content read",
+      "source PDF content read",
+      "macro execution",
+      "warning acceptance",
+      "approval/import authority",
+      "business-state mutation"
+    ]
+  },
+  "validation": [
+    "operations-web typecheck",
+    "operations-web build",
+    "focused pm-import-intake Playwright smoke",
+    "packet JSON parse",
+    "guardrail label search",
+    "pending-marker scan",
+    "corrupted-token scan",
+    "git diff --check"
+  ],
+  "validation_result": "PASS"
+}
