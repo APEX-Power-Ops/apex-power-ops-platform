@@ -1261,6 +1261,36 @@ function projectDataEntryDecisionGateExportLines(warnings: CandidateWarning[]) {
   ]
 }
 
+function projectDataEntryWarningDispositionGate(warnings: CandidateWarning[]) {
+  const present = hasWarningCode(warnings, PROJECT_DATA_ENTRY_WARNING_CODE)
+
+  return {
+    warning_code: PROJECT_DATA_ENTRY_WARNING_CODE,
+    present,
+    disposition_status: present ? 'requires_exact_pm_label' : 'not_applicable',
+    accepted_by_current_local_review: false,
+    allowed_labels: present ? PROJECT_DATA_ENTRY_DECISION_LABELS : [],
+    admission_prerequisites: present ? PROJECT_DATA_ENTRY_ADMISSION_PREREQUISITES : [],
+    detail: present
+      ? 'The Project Data Entry warning has been reviewed locally, but it is not accepted for approval context until Jason provides one exact allowed no-live label.'
+      : 'The Project Data Entry warning is not present on this candidate.',
+  }
+}
+
+function unresolvedProjectDataEntryWarningCodes(warnings: CandidateWarning[]) {
+  return hasWarningCode(warnings, PROJECT_DATA_ENTRY_WARNING_CODE) ? [PROJECT_DATA_ENTRY_WARNING_CODE] : []
+}
+
+function acceptedWarningCodesForDryRun(warnings: CandidateWarning[], exceptionsReviewed: boolean) {
+  if (!exceptionsReviewed) {
+    return []
+  }
+
+  return warnings
+    .map((warning) => warning.code)
+    .filter((code): code is string => Boolean(code) && code !== PROJECT_DATA_ENTRY_WARNING_CODE)
+}
+
 function visibleDecisions(decisions: CandidateDecision[]) {
   return decisions.slice(0, 3)
 }
@@ -1546,6 +1576,7 @@ function buildApprovalDryRunReadiness(
   const draftComplete = Boolean(approvalDraft.decision && approvalDraft.review_notes.trim() && approvalDraft.local_attestation)
   const draftStarted = hasApprovalDraftContent(approvalDraft)
   const sourceAndWarningsReviewed = Boolean(reviewChecks.source_freshness_reviewed && reviewChecks.exceptions_reviewed)
+  const dataEntryWarningUnresolved = hasWarningCode(warnings, PROJECT_DATA_ENTRY_WARNING_CODE)
   const checklistHasEvidence = REVIEW_CHECKLIST_ITEMS.some((item) => reviewChecks[item.id])
   const noGoCheckIds = noGoChecks.map((check) => check.check_id).filter(Boolean)
   const noGoBlockerCount = noGoChecks.filter((check) => (check.status || '').includes('no_go')).length
@@ -1564,9 +1595,11 @@ function buildApprovalDryRunReadiness(
     {
       id: 'source-warning-review',
       title: 'Source and warning review',
-      status: sourceAndWarningsReviewed ? 'ready' : checklistHasEvidence ? 'needs_review' : 'blocked',
+      status: sourceAndWarningsReviewed ? dataEntryWarningUnresolved ? 'needs_review' : 'ready' : checklistHasEvidence ? 'needs_review' : 'blocked',
       detail: sourceAndWarningsReviewed
-        ? `Source freshness and warnings are checked locally; candidate reports ${formatCount(summary.warning_count)} warning(s) and ${formatCount(summary.blocker_count)} blocker(s).`
+        ? dataEntryWarningUnresolved
+          ? `Source freshness and warnings are checked locally, but ${PROJECT_DATA_ENTRY_WARNING_CODE} still needs one exact PM label before warning acceptance is available.`
+          : `Source freshness and warnings are checked locally; candidate reports ${formatCount(summary.warning_count)} warning(s) and ${formatCount(summary.blocker_count)} blocker(s).`
         : 'Mark source freshness and warning review before treating the envelope as review-ready.',
     },
     {
@@ -1626,6 +1659,7 @@ function buildApprovalDryRunReadinessExport(
   const admissionPlan = packet.admissionPlan
   const approvalStatus = packet.approvalStatus
   const counts = approvalDryRunReadinessCounts(readinessItems)
+  const warnings = candidate.warnings || []
 
   return {
     readiness_kind: 'pm_import_candidate_approval_dry_run_readiness',
@@ -1643,6 +1677,7 @@ function buildApprovalDryRunReadinessExport(
       blocked_count: counts.blocked,
       summary: approvalDryRunReadinessSummary(counts),
     },
+    warning_disposition_gate: projectDataEntryWarningDispositionGate(warnings),
     readiness_items: readinessItems,
     approval_status_readback: {
       classification: approvalStatus.classification || null,
@@ -1736,6 +1771,7 @@ function buildApprovalLiveGatePreflightExport(
   const reviewBundle = buildApprovalReviewBundleExport(packet, readinessItems, notAllowed, futureRoute, reviewChecks, approvalDraft)
   const dryRunEnvelope = reviewBundle.dry_run_envelope
   const admissionNoGoReadiness = readinessItems.find((item) => item.id === 'admission-no-go-review')
+  const dataEntryWarningDisposition = projectDataEntryWarningDispositionGate(candidate.warnings || [])
   const preflightItems: ApprovalDryRunReadinessItem[] = [
     {
       id: 'candidate-identity',
@@ -1760,6 +1796,14 @@ function buildApprovalLiveGatePreflightExport(
       detail: approvalStatus.classification === 'no_approval_record' && approvalStatus.approval_record_count_for_candidate === 0
         ? 'Approval status readback reports no current approval record for this candidate.'
         : 'Approval status readback should be reviewed before any live approval-row attempt.',
+    },
+    {
+      id: 'warning-disposition-gate',
+      title: 'Warning disposition gate',
+      status: dataEntryWarningDisposition.present ? 'needs_review' : 'ready',
+      detail: dataEntryWarningDisposition.present
+        ? `${PROJECT_DATA_ENTRY_WARNING_CODE} remains reviewed but not accepted until one exact PM label is supplied.`
+        : 'No Project Data Entry warning disposition is required for this candidate.',
     },
     {
       id: 'admission-no-go-posture',
@@ -4017,7 +4061,8 @@ function buildLocalApprovalSubmissionDryRun(
   const storagePlan = packet.storagePlan
   const approvalStatus = packet.approvalStatus
   const checkedItems = REVIEW_CHECKLIST_ITEMS.filter((item) => reviewChecks[item.id]).map((item) => item.id)
-  const warningCodes = (candidate.warnings || []).map((warning) => warning.code).filter(Boolean)
+  const unresolvedWarningCodes = unresolvedProjectDataEntryWarningCodes(candidate.warnings || [])
+  const acceptedWarningCodes = acceptedWarningCodesForDryRun(candidate.warnings || [], Boolean(reviewChecks.exceptions_reviewed))
   const noGoCheckIds = (admissionPlan.no_go_checks || []).map((check) => check.check_id).filter(Boolean)
   const sourceFingerprint = candidate.source_freshness?.aggregate_fingerprint || 'source-fingerprint-missing'
   const draftComplete = Boolean(approvalDraft.decision && approvalDraft.review_notes.trim() && approvalDraft.local_attestation)
@@ -4059,7 +4104,9 @@ function buildLocalApprovalSubmissionDryRun(
       decision: approvalDraft.decision || null,
       review_notes: approvalDraft.review_notes.trim() || null,
       local_attestation: approvalDraft.local_attestation,
-      accepted_warning_codes: reviewChecks.exceptions_reviewed ? warningCodes : [],
+      accepted_warning_codes: acceptedWarningCodes,
+      unresolved_warning_codes: unresolvedWarningCodes,
+      warning_disposition_gate: projectDataEntryWarningDispositionGate(candidate.warnings || []),
       acknowledged_no_go_check_ids: reviewChecks.admission_no_go_reviewed ? noGoCheckIds : [],
       approval_contract_id: approvalContract.approval_contract_id || null,
       storage_table: storagePlan.recommended_table || null,
@@ -4073,7 +4120,7 @@ function buildLocalApprovalSubmissionDryRun(
       decision_draft_complete: draftComplete,
       checklist_checked_count: checkedItems.length,
       checklist_checked_items: checkedItems,
-      warning_acceptance_ready: Boolean(reviewChecks.exceptions_reviewed),
+      warning_acceptance_ready: Boolean(reviewChecks.exceptions_reviewed) && unresolvedWarningCodes.length === 0,
       no_go_acknowledgement_ready: Boolean(reviewChecks.admission_no_go_reviewed),
       write_guardrail_confirmed: Boolean(reviewChecks.write_guardrails_confirmed),
     },

@@ -1,0 +1,64 @@
+{
+  "packet_id": "2026-05-17-pm-lane-242-project-miner-temp-power-data-entry-warning-approval-dry-run-guard-no-live-packet",
+  "title": "PM Lane 242 - Project Miner Temp Power Data Entry Warning Approval Dry-Run Guard No-Live Packet",
+  "date": "2026-05-17",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_DATA_ENTRY_WARNING_APPROVAL_DRY_RUN_GUARD_NO_LIVE",
+  "selected_outcome": "DATA_ENTRY_WARNING_REVIEWED_NOT_ACCEPTED_IN_APPROVAL_DRY_RUN_NO_LIVE",
+  "candidate": {
+    "candidate_id": "pm-import-candidate-miner-temp-power",
+    "warning_code": "PROJECT_DATA_ENTRY_FORMULA_ERRORS",
+    "task_count": 15,
+    "apparatus_candidate_count": 184,
+    "warning_count": 1,
+    "blocker_count": 0,
+    "mutation_authority": "not_admitted"
+  },
+  "approval_dry_run_guard": {
+    "reviewed_is_not_accepted": true,
+    "accepted_warning_codes_for_current_candidate": [],
+    "unresolved_warning_codes": [
+      "PROJECT_DATA_ENTRY_FORMULA_ERRORS"
+    ],
+    "warning_acceptance_ready": false,
+    "readiness_summary_after_guard": "3 ready, 2 needs review, 1 blocked",
+    "preflight_summary_after_guard": "3 ready, 2 needs review, 2 blocked"
+  },
+  "allowed_labels_still_required": [
+    "ACCEPT_DATA_ENTRY_WARNING_NON_BLOCKING_NO_LIVE",
+    "REQUEST_DATA_ENTRY_WORKBOOK_CORRECTION_NO_LIVE",
+    "HOLD_DATA_ENTRY_WARNING_NO_LIVE",
+    "PROVIDE_EXACT_LIVE_ADMISSION_LATER"
+  ],
+  "desktop_codex_support": {
+    "prompt_path": "ops/agents/handoffs/2026-05-17-desktop-codex-pm-lane-242-data-entry-warning-approval-dry-run-guard-review-scout-prompt.md",
+    "status": "available_not_required",
+    "allowed_scope": [
+      "dry-run wording clarity review",
+      "warning acceptance boundary review",
+      "authority-boundary risk review"
+    ],
+    "blocked_scope": [
+      "PM decision authority",
+      "product code edit",
+      "repo publication",
+      "hosted service access",
+      "workbook content read",
+      "source PDF content read",
+      "macro execution",
+      "warning acceptance",
+      "approval/import authority",
+      "business-state mutation"
+    ]
+  },
+  "validation": [
+    "operations-web typecheck",
+    "operations-web build",
+    "focused pm-import-intake Playwright smoke",
+    "packet JSON parse",
+    "guardrail label search",
+    "pending-marker scan",
+    "corrupted-token scan",
+    "git diff --check"
+  ],
+  "validation_result": "PASS"
+}

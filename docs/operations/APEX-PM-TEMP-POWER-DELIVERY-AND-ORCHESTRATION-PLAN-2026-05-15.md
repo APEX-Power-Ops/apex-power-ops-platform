@@ -744,6 +744,7 @@ Current known gaps:
 14. PM Lane 239 keeps the Project Data Entry warning decision card open because no allowed PM Lane 238 response label is present in the current continuation instruction. The corrected Temp Power candidate remains 15 tasks, 184 apparatus candidates, one warning, zero blockers, and mutation authority `not_admitted`; the live-admission prerequisite ledger is recorded as review context only.
 15. PM Lane 240 surfaces that decision boundary in the local workbench. `/pm-review/import-intake` shows the Project Data Entry decision gate only as display context; it adds no approval/import control, storage key, hosted call, or write authority.
 16. PM Lane 241 carries the Project Data Entry decision gate into the PM intake brief and local import exception decision register exports. The exports now preserve the allowed no-live labels and later admission prerequisites for review handoff, while validation passed and live approval/import authority remains blocked.
+17. PM Lane 242 guards approval dry-run warning acceptance. `PROJECT_DATA_ENTRY_FORMULA_ERRORS` remains reviewed but unresolved, is excluded from accepted warning codes, and now appears as an unresolved warning-disposition gate in dry-run readiness and live-gate preflight while validation passed.
 
 Required response to new gaps:
 

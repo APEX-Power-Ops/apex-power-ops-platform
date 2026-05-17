@@ -1822,7 +1822,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(approvalDryRun.getByRole('heading', { name: /Local Approval Submission Dry Run/i })).toBeVisible()
   await expect(approvalDryRun.getByText(/Builds the future approval POST envelope in this browser for review only/i)).toBeVisible()
   await expect(approvalDryRun.getByText(/Live approval POST, first approval-row creation, and project import remain blocked/i)).toBeVisible()
-  await expect(approvalDryRun.getByText('4 ready, 1 needs review, 1 blocked')).toBeVisible()
+  await expect(approvalDryRun.getByText('3 ready, 2 needs review, 1 blocked')).toBeVisible()
   const approvalDryRunGroups = approvalDryRunControls.locator('[aria-label="Approval dry run groups"]')
   await expect(approvalDryRunGroups).toBeVisible()
   await expect(approvalDryRunGroups.locator(':scope > section')).toHaveCount(3)
@@ -1915,7 +1915,14 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
       decision: 'return_for_revision',
       review_notes: 'Reviewed formula warnings; return for revision until source workbook errors are resolved.',
       local_attestation: true,
-      accepted_warning_codes: ['PROJECT_DATA_ENTRY_FORMULA_ERRORS'],
+      accepted_warning_codes: [],
+      unresolved_warning_codes: ['PROJECT_DATA_ENTRY_FORMULA_ERRORS'],
+      warning_disposition_gate: {
+        warning_code: 'PROJECT_DATA_ENTRY_FORMULA_ERRORS',
+        present: true,
+        disposition_status: 'requires_exact_pm_label',
+        accepted_by_current_local_review: false,
+      },
       approval_status_before_dry_run: {
         classification: 'no_approval_record',
         approval_record_count_for_candidate: 0,
@@ -1926,7 +1933,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
       decision_draft_complete: true,
       checklist_checked_count: 2,
       checklist_checked_items: ['source_freshness_reviewed', 'exceptions_reviewed'],
-      warning_acceptance_ready: true,
+      warning_acceptance_ready: false,
       no_go_acknowledgement_ready: false,
       write_guardrail_confirmed: false,
     },
@@ -1955,10 +1962,15 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
       source_fingerprint: 'stat-fingerprint-abc123',
     },
     readiness_summary: {
-      ready_count: 4,
-      needs_review_count: 1,
+      ready_count: 3,
+      needs_review_count: 2,
       blocked_count: 1,
-      summary: '4 ready, 1 needs review, 1 blocked',
+      summary: '3 ready, 2 needs review, 1 blocked',
+    },
+    warning_disposition_gate: {
+      warning_code: 'PROJECT_DATA_ENTRY_FORMULA_ERRORS',
+      present: true,
+      disposition_status: 'requires_exact_pm_label',
     },
     approval_status_readback: {
       classification: 'no_approval_record',
@@ -1982,7 +1994,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   expect(readinessExport.readiness_items).toHaveLength(6)
   expect(readinessExport.readiness_items.map((item: { id: string; status: string }) => `${item.id}:${item.status}`)).toEqual([
     'candidate-source-context:ready',
-    'source-warning-review:ready',
+    'source-warning-review:needs_review',
     'local-decision-draft:ready',
     'admission-no-go-review:needs_review',
     'approval-status-readback:ready',
@@ -2028,8 +2040,8 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
       readiness_kind: 'pm_import_candidate_approval_dry_run_readiness',
       readiness_version: 'pm_lane_145_local_readiness_v1',
       readiness_summary: {
-        ready_count: 4,
-        needs_review_count: 1,
+        ready_count: 3,
+        needs_review_count: 2,
         blocked_count: 1,
       },
     },
@@ -2071,9 +2083,9 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
     },
     preflight_summary: {
       ready_count: 3,
-      needs_review_count: 1,
+      needs_review_count: 2,
       blocked_count: 2,
-      summary: '3 ready, 1 needs review, 2 blocked',
+      summary: '3 ready, 2 needs review, 2 blocked',
       live_gate_status: 'blocked_until_exact_phrase',
     },
     approval_review_bundle: {
@@ -2106,6 +2118,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
     'candidate-identity:ready',
     'local-review-bundle:ready',
     'approval-status-readback:ready',
+    'warning-disposition-gate:needs_review',
     'admission-no-go-posture:needs_review',
     'live-write-admission:blocked',
     'downstream-import-boundary:blocked',
