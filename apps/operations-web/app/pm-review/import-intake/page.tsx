@@ -1274,11 +1274,26 @@ const PROJECT_DATA_ENTRY_VALID_RETURN_CHECKLIST = [
   },
   {
     term: 'rejected',
-    detail: 'explanation text; paraphrase; REQUEST_SOURCE_CORRECTION_NO_LIVE; multiple labels; live admission language without a later admitting packet',
+    detail: 'explanation text; paraphrase; REQUEST_SOURCE_CORRECTION_NO_LIVE; multiple labels; continuation instruction; live admission language without a later admitting packet',
   },
   {
     term: 'after valid label',
     detail: 'record the label in a no-live decision packet and keep live admission separate',
+  },
+]
+
+const PROJECT_DATA_ENTRY_SAFE_CONTINUATION_MOVES = [
+  {
+    term: 'allowed no-live continuation',
+    detail: 'candidate/readiness review, packet drafting, Desktop Codex read-only scout review, and source/resource question preparation',
+  },
+  {
+    term: 'requires exact PM label first',
+    detail: 'warning acceptance, workbook-correction action, live admission packet, approval POST, approval row, and project import',
+  },
+  {
+    term: 'Desktop Codex boundary',
+    detail: 'review clarity and relay burden only; do not choose the PM label or mutate business state',
   },
 ]
 
@@ -1320,6 +1335,8 @@ function projectDataEntryDecisionGateExportLines(warnings: CandidateWarning[]) {
     ...PROJECT_DATA_ENTRY_DECISION_OUTCOME_ROUTES.map((item) => `  - ${item.label}: ${item.route}`),
     '- Valid return checklist:',
     ...PROJECT_DATA_ENTRY_VALID_RETURN_CHECKLIST.map((item) => `  - ${item.term}: ${item.detail}`),
+    '- Safe no-live continuation moves:',
+    ...PROJECT_DATA_ENTRY_SAFE_CONTINUATION_MOVES.map((item) => `  - ${item.term}: ${item.detail}`),
     '- Admission prerequisites:',
     ...PROJECT_DATA_ENTRY_ADMISSION_PREREQUISITES.map((prerequisite) => `  - ${prerequisite}`),
     '- Authority boundary: display/export context only; no approval POST, approval row, import write, source writeback, hosted call, or business-state mutation.',
@@ -10162,6 +10179,28 @@ export default function ProjectMinerIntakeWorkbenchPage() {
                           </div>
                           <ul style={{ margin: '0.65rem 0 0', paddingLeft: '1.15rem', color: 'var(--muted)', lineHeight: 1.55 }}>
                             {PROJECT_DATA_ENTRY_VALID_RETURN_CHECKLIST.map((item) => (
+                              <li key={item.term}>
+                                <strong>{item.term}</strong>: {item.detail}
+                              </li>
+                            ))}
+                          </ul>
+                        </article>
+                      ) : null}
+                      {hasProjectDataEntryWarning ? (
+                        <article aria-label="Project Data Entry safe no-live continuation" className="card" style={{ padding: '0.85rem', boxShadow: 'none' }}>
+                          <div className="status-row" style={{ alignItems: 'start' }}>
+                            <div>
+                              <p style={{ margin: 0 }}>
+                                <strong>Safe no-live continuation</strong>
+                              </p>
+                              <p style={{ margin: '0.45rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+                                These moves may continue while the exact Project Data Entry label is pending. They do not close the warning gate.
+                              </p>
+                            </div>
+                            <span className="status-pill status-awaiting-values">safe path</span>
+                          </div>
+                          <ul style={{ margin: '0.65rem 0 0', paddingLeft: '1.15rem', color: 'var(--muted)', lineHeight: 1.55 }}>
+                            {PROJECT_DATA_ENTRY_SAFE_CONTINUATION_MOVES.map((item) => (
                               <li key={item.term}>
                                 <strong>{item.term}</strong>: {item.detail}
                               </li>

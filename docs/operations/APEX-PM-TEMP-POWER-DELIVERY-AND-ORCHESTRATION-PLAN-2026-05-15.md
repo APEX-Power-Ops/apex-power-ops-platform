@@ -755,6 +755,7 @@ Current known gaps:
 25. PM Lane 250 adds a no-live outcome route preview for the four exact PM Lane 238 Data Entry labels in PM Decision Context and in the local import exception register export. The route preview does not choose a label or open warning acceptance, workbook correction, live admission, approval, or import authority.
 26. PM Lane 251 adds a no-live valid-return checklist in PM Decision Context and exported PM review artifacts. A valid return is exactly one PM Lane 238 Data Entry label; explanation text, paraphrases, `REQUEST_SOURCE_CORRECTION_NO_LIVE`, multiple labels, and live-admission language without a later admitting packet do not close the gate.
 27. PM Lane 252 classifies the current continuation instruction as not a valid Project Data Entry warning-disposition return. The active `PROJECT_DATA_ENTRY_FORMULA_ERRORS` gate remains open until exactly one PM Lane 238 Data Entry label is returned, and Desktop Codex remains review-only.
+28. PM Lane 253 adds a safe no-live continuation cue for that parked gate. Candidate/readiness review, packet drafting, Desktop Codex read-only scout review, and source/resource question preparation may continue, while warning acceptance, workbook-correction action, live admission, approval POST, approval row, and project import still require the exact Data Entry label first. The visible valid-return checklist also now rejects continuation instruction as gate-closing evidence.
 
 Required response to new gaps:
 

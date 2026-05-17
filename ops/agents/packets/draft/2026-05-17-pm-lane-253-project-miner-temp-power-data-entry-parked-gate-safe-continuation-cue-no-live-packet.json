@@ -1,0 +1,81 @@
+{
+  "packet_id": "2026-05-17-pm-lane-253-project-miner-temp-power-data-entry-parked-gate-safe-continuation-cue-no-live-packet",
+  "title": "PM Lane 253 - Project Miner Temp Power Data Entry Parked Gate Safe Continuation Cue No-Live Packet",
+  "date": "2026-05-17",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_DATA_ENTRY_PARKED_GATE_SAFE_CONTINUATION_CUE_NO_LIVE",
+  "selected_outcome": "DATA_ENTRY_GATE_PARKED_SAFE_CONTINUATION_VISIBLE_NO_LIVE",
+  "candidate": {
+    "candidate_id": "pm-import-candidate-miner-temp-power",
+    "active_warning_code": "PROJECT_DATA_ENTRY_FORMULA_ERRORS",
+    "warning_count": 1,
+    "blocker_count": 0,
+    "mutation_authority": "not_admitted"
+  },
+  "safe_continuation_rules": {
+    "allowed_no_live_continuation": [
+      "candidate/readiness review",
+      "packet drafting",
+      "Desktop Codex read-only scout review",
+      "source/resource question preparation"
+    ],
+    "requires_exact_pm_label_first": [
+      "warning acceptance",
+      "workbook-correction action",
+      "live admission packet",
+      "approval POST",
+      "approval row",
+      "project import"
+    ],
+    "desktop_codex_boundary": "review clarity and relay burden only; do not choose the PM label or mutate business state"
+  },
+  "ui_changes": {
+    "surface": "PM Decision Context",
+    "aria_label": "Project Data Entry safe no-live continuation",
+    "heading": "Safe no-live continuation",
+    "type": "display_only_safe_path",
+    "copy_safe_answer_source_unchanged": "Project Data Entry exact reply options"
+  },
+  "export_changes": {
+    "artifacts": [
+      "PM intake brief",
+      "local import exception register"
+    ],
+    "adds_safe_continuation_lines": true
+  },
+  "valid_return_checklist_alignment": {
+    "adds_rejected_shape": "continuation instruction",
+    "reason": "PM Lane 252 classified continuation language as not a valid warning-disposition return"
+  },
+  "desktop_codex_support": {
+    "prompt_path": "ops/agents/handoffs/2026-05-17-desktop-codex-pm-lane-253-data-entry-safe-continuation-cue-review-scout-prompt.md",
+    "status": "available_not_required",
+    "allowed_scope": [
+      "safe-continuation clarity review",
+      "relay-burden reduction review",
+      "authority-boundary risk review"
+    ],
+    "blocked_scope": [
+      "PM decision authority",
+      "product code edit",
+      "repo publication",
+      "hosted service access",
+      "workbook content read",
+      "source PDF content read",
+      "macro execution",
+      "warning acceptance",
+      "approval/import authority",
+      "business-state mutation"
+    ]
+  },
+  "validation": [
+    "operations-web typecheck",
+    "operations-web build",
+    "focused pm-import-intake Playwright smoke",
+    "packet JSON parse",
+    "safe-continuation text search",
+    "pending-marker scan",
+    "corrupted-token scan",
+    "git diff --check"
+  ],
+  "validation_result": "PASS"
+}
