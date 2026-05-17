@@ -1220,6 +1220,29 @@ function warningSampleSummary(warning: CandidateWarning) {
   })
 }
 
+const PROJECT_DATA_ENTRY_WARNING_CODE = 'PROJECT_DATA_ENTRY_FORMULA_ERRORS'
+
+const PROJECT_DATA_ENTRY_DECISION_LABELS = [
+  'ACCEPT_DATA_ENTRY_WARNING_NON_BLOCKING_NO_LIVE',
+  'REQUEST_DATA_ENTRY_WORKBOOK_CORRECTION_NO_LIVE',
+  'HOLD_DATA_ENTRY_WARNING_NO_LIVE',
+  'PROVIDE_EXACT_LIVE_ADMISSION_LATER',
+]
+
+const PROJECT_DATA_ENTRY_ADMISSION_PREREQUISITES = [
+  'current candidate identity',
+  'warning disposition',
+  'exact live phrase',
+  'hosted-read currency',
+  'replay/idempotency requirements',
+  'approval-row evidence',
+  'Desktop Codex review-only boundary',
+]
+
+function hasWarningCode(warnings: CandidateWarning[], code: string) {
+  return warnings.some((warning) => warning.code === code)
+}
+
 function visibleDecisions(decisions: CandidateDecision[]) {
   return decisions.slice(0, 3)
 }
@@ -7729,6 +7752,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
   const project = candidate?.project || {}
   const warnings = candidate?.warnings || []
   const decisions = candidate?.human_decisions || []
+  const hasProjectDataEntryWarning = hasWarningCode(warnings, PROJECT_DATA_ENTRY_WARNING_CODE)
   const noGoChecks = admissionPlan?.no_go_checks || []
   const targetRows = admissionPlan?.target_row_plan || {}
   const reviewChecklistKey = candidate?.candidate_id ? `pm-import-intake-review-checklist:${candidate.candidate_id}` : null
@@ -9862,6 +9886,27 @@ export default function ProjectMinerIntakeWorkbenchPage() {
                           <p style={{ margin: '0.35rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{decision.recommended_action || 'Review before future import.'}</p>
                         </article>
                       ))}
+                      {hasProjectDataEntryWarning ? (
+                        <article aria-label="Project Data Entry decision gate" className="card" style={{ padding: '0.85rem', boxShadow: 'none' }}>
+                          <div className="status-row" style={{ alignItems: 'start' }}>
+                            <div>
+                              <p style={{ margin: 0 }}>
+                                <strong>Project Data Entry decision gate</strong>
+                              </p>
+                              <p style={{ margin: '0.45rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+                                PM Lane 239 keeps this warning open until one exact no-live label is returned. This cue does not approve, import, persist, or write source files.
+                              </p>
+                            </div>
+                            <span className="status-pill status-awaiting-values">no-live</span>
+                          </div>
+                          <p style={{ margin: '0.55rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+                            Allowed labels: {PROJECT_DATA_ENTRY_DECISION_LABELS.join('; ')}.
+                          </p>
+                          <p style={{ margin: '0.35rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+                            Admission prerequisites: {PROJECT_DATA_ENTRY_ADMISSION_PREREQUISITES.join('; ')}.
+                          </p>
+                        </article>
+                      ) : null}
                       {!decisions.length ? <p style={{ color: 'var(--muted)' }}>No PM decisions are currently reported.</p> : null}
                     </div>
                   </article>

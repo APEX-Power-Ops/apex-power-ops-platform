@@ -742,6 +742,7 @@ Current known gaps:
 12. This workspace currently lacks authenticated hosted deployment capability for both Render and Vercel; hosted repair requires an authenticated executor or installed/authorized deployment tool.
 13. The Project Miner import-intake workbench is local-current only until a later hosted operations-web promotion includes `/pm-review/import-intake` and Render serves the current PM intake reads.
 14. PM Lane 239 keeps the Project Data Entry warning decision card open because no allowed PM Lane 238 response label is present in the current continuation instruction. The corrected Temp Power candidate remains 15 tasks, 184 apparatus candidates, one warning, zero blockers, and mutation authority `not_admitted`; the live-admission prerequisite ledger is recorded as review context only.
+15. PM Lane 240 surfaces that decision boundary in the local workbench. `/pm-review/import-intake` shows the Project Data Entry decision gate only as display context; it adds no approval/import control, storage key, hosted call, or write authority.
 
 Required response to new gaps:
 
