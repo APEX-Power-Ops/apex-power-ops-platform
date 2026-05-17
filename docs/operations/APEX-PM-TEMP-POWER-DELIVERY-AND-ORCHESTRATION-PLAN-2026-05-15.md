@@ -764,6 +764,7 @@ Current known gaps:
 34. PM Lane 259 consolidates the active open returns into one no-code control register: the Data Entry warning still needs exactly one PM Lane 238 label, and PM-256-SCOUT still awaits the allowed Desktop Codex closeout. No warning disposition, queue widening, live admission, approval/import authority, or PM business-state mutation is admitted.
 35. PM Lane 260 engages a continuation loop guard: do not author another same-class PM packet unless an exact Data Entry label returns, the allowed Desktop Codex closeout appears, concrete new review-control evidence appears, or Jason requests a different bounded PM review artifact.
 36. PM Lane 261 refreshes the Desktop Codex PM-256 return kit with PM Lane 259 and 260 context while preserving the one-closeout-only support boundary and no PM decision authority.
+37. PM Lane 262 records Jason's exact Data Entry return `REQUEST_DATA_ENTRY_WORKBOOK_CORRECTION_NO_LIVE`. The exact-label wait is closed, the warning is not accepted as non-blocking, and the new open gate is Data Entry workbook correction evidence before any later live admission relies on the workbook. No source workbook writeback, macro, live approval, approval row, project import, hosted action, Desktop Codex PM decision authority, or business-state mutation is admitted.
 
 Required response to new gaps:
 

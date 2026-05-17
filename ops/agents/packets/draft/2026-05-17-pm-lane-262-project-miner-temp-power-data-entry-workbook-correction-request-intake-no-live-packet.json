@@ -1,0 +1,84 @@
+{
+  "packet_id": "2026-05-17-pm-lane-262-project-miner-temp-power-data-entry-workbook-correction-request-intake-no-live-packet",
+  "title": "PM Lane 262 - Project Miner Temp Power Data Entry Workbook Correction Request Intake No-Live Packet",
+  "date": "2026-05-17",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_DATA_ENTRY_WORKBOOK_CORRECTION_REQUEST_INTAKE_NO_LIVE",
+  "input_response_label": "REQUEST_DATA_ENTRY_WORKBOOK_CORRECTION_NO_LIVE",
+  "selected_outcome": "DATA_ENTRY_WORKBOOK_CORRECTION_REQUESTED_KEEP_NO_LIVE_NO_SOURCE_WRITEBACK",
+  "candidate": {
+    "candidate_id": "pm-import-candidate-miner-temp-power",
+    "project_name": "Miner Temp Power",
+    "task_count": 15,
+    "apparatus_candidate_count": 184,
+    "blocker_count": 0,
+    "mutation_authority": "not_admitted"
+  },
+  "warning_disposition": {
+    "warning_code": "PROJECT_DATA_ENTRY_FORMULA_ERRORS",
+    "prior_status": "exact_data_entry_label_awaited",
+    "new_status": "workbook_correction_requested",
+    "accepted_as_non_blocking": false,
+    "live_admission_allowed": false,
+    "source_workbook_writeback_performed": false,
+    "workbook_macros_run": false,
+    "approval_row_created": false,
+    "project_import_performed": false
+  },
+  "correction_evidence_gate": {
+    "status": "open",
+    "required_before_live_admission_relies_on_workbook": true,
+    "allowed_future_paths": [
+      "Jason-provided corrected workbook evidence",
+      "bounded local no-macro workbook inspection packet",
+      "correction-evidence checklist that keeps workbook lineage-only",
+      "later explicit live-admission packet with named residual risk and separate authority gate"
+    ]
+  },
+  "desktop_codex_pm_256": {
+    "closeout_required_for_this_intake": false,
+    "still_awaited_for_review_burden_feedback": true,
+    "expected_closeout_path": "ops/agents/handoffs/2026-05-17-desktop-codex-pm-lane-256-state-review-next-move-selector-scout-closeout.md"
+  },
+  "active_pm_state_after_intake": {
+    "data_entry_exact_label_wait": "closed",
+    "data_entry_workbook_correction_evidence": "open",
+    "approval_import_authority": "blocked",
+    "no_live_posture": "preserved"
+  },
+  "validation": [
+    "packet JSON parse",
+    "PM Lane 262 text search",
+    "guardrail keyword scan",
+    "corrupted-token scan",
+    "git diff --check"
+  ],
+  "validation_result": "PASS",
+  "next_safe_packet": "PM Lane 263 - Project Miner Temp Power Data Entry Workbook Correction Evidence Gate No-Live Packet",
+  "blocked_authority": [
+    "product code",
+    "UI writable control",
+    "hosted call",
+    "live approval POST",
+    "approval row creation",
+    "project import",
+    "note or task creation",
+    "owner or due-date assignment",
+    "field authorization",
+    "lead or crew assignment",
+    "schedule/status write",
+    "procurement or rental commitment",
+    "customer commitment",
+    "customer report",
+    "durable field record",
+    "production tracking",
+    "billing/payroll/invoice/accounting output",
+    "Supabase/Render/Vercel/Olares action",
+    "SQL/schema migration",
+    "source workbook writeback",
+    "source PDF content edit",
+    "workbook macro/writeback",
+    "durable source fingerprint promotion",
+    "Desktop Codex PM decision authority",
+    "autonomous AI business-state mutation"
+  ]
+}

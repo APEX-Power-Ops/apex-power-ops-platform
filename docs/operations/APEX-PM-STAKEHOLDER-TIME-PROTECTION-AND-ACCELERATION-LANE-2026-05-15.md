@@ -926,6 +926,8 @@ PM Lane 260 engages a continuation loop guard. Further PM packets should not res
 
 PM Lane 261 refreshes the Desktop Codex PM-256 scout return kit with PM Lane 259 and 260 context. The one allowed Desktop closeout path is unchanged, Desktop Codex remains PM support only, and VS Code Codex must review the returned closeout before any queue widening or product work.
 
+PM Lane 262 records Jason's exact Project Data Entry warning return: `REQUEST_DATA_ENTRY_WORKBOOK_CORRECTION_NO_LIVE`. This closes the exact-label wait without accepting the warning as non-blocking. The active PM gate is now Data Entry workbook correction evidence before any later live admission relies on the workbook, while source workbook writeback, macros, approval rows, project import, hosted actions, Desktop Codex PM decision authority, and business-state mutation remain blocked.
+
 The success standard is not just technical correctness. The candidate must reduce Jason's review burden by showing:
 
 1. what the system thinks the project is,

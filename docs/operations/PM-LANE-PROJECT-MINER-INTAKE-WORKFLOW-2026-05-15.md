@@ -1006,6 +1006,8 @@ PM Lane 260 executes the Project Miner Temp Power Continuation Loop Guard And Ne
 
 PM Lane 261 executes the Project Miner Temp Power Desktop Codex PM-256 Return Kit Refresh No-Live Packet tranche. The existing Desktop Codex PM-256 scout prompt now carries PM Lane 259 active-return and PM Lane 260 loop-guard context, keeps exactly one allowed closeout write, and preserves VS Code Codex review before any queue widening.
 
+PM Lane 262 executes the Project Miner Temp Power Data Entry Workbook Correction Request Intake No-Live Packet tranche. Jason returned the exact PM Lane 238 label `REQUEST_DATA_ENTRY_WORKBOOK_CORRECTION_NO_LIVE`, so the `PROJECT_DATA_ENTRY_FORMULA_ERRORS` exact-label wait is closed and the warning routes to workbook-correction evidence before any later live admission relies on the Project Data Entry workbook. The warning is not accepted as non-blocking, approval/import authority remains blocked, the corrected Temp Power candidate remains 15 tasks, 184 apparatus candidates, and zero blockers, and Desktop Codex PM-256 remains separately awaiting its one allowed closeout.
+
 Level 3 - Resource Context:
 Read equipment inventory and technician capability rows so PM can understand whether the project can be staffed with available people and equipment.
 
