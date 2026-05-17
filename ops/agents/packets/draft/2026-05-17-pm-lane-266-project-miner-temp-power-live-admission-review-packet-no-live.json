@@ -1,0 +1,89 @@
+{
+  "packet_id": "2026-05-17-pm-lane-266-project-miner-temp-power-live-admission-review-packet-no-live",
+  "title": "PM Lane 266 - Project Miner Temp Power Live Admission Review Packet No-Live",
+  "date": "2026-05-17",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_LIVE_ADMISSION_REVIEW_PACKET_NO_LIVE",
+  "selected_outcome": "LIVE_ADMISSION_REVIEW_READY_STOPPED_AWAITING_EXACT_PM_LANE_142_PHRASE",
+  "source_packet": "PM Lane 265",
+  "candidate": {
+    "candidate_id": "pm-import-candidate-miner-temp-power",
+    "project_name": "Miner Temp Power",
+    "task_count": 15,
+    "apparatus_candidate_count": 184,
+    "blocker_count": 0,
+    "accepted_warning_codes": [
+      "PROJECT_DATA_ENTRY_FORMULA_ERRORS"
+    ],
+    "mutation_authority": "not_admitted",
+    "live_approval_authority": "not_admitted",
+    "project_import_authority": "not_admitted"
+  },
+  "true_blocker": {
+    "status": "STOPPED_AWAITING_EXACT_PM_LANE_142_LIVE_ADMISSION",
+    "exact_phrase_required": "I explicitly admit PM Lane 142 live approval POST and first approval-row creation for the current Project Miner Temp Power import candidate.",
+    "phrase_must_be_current_instruction": true,
+    "paraphrase_allowed": false,
+    "quoted_historical_text_allowed": false
+  },
+  "additional_live_use_inputs_required": [
+    "PM decision value",
+    "PM review notes",
+    "project import remains blocked acknowledgement",
+    "downstream field/schedule/resource/customer/production/finance writes remain blocked acknowledgement",
+    "hosted-read freshness check after admission",
+    "pre-write approval-row count",
+    "same-payload idempotent replay requirement",
+    "approval-status readback requirement"
+  ],
+  "allowed_later_responses": [
+    "HOLD_LIVE_ADMISSION_NO_LIVE",
+    "RETURN_WITH_LIVE_ADMISSION_QUESTIONS_NO_LIVE",
+    "exact PM Lane 142 live-admission phrase plus PM decision value and review notes"
+  ],
+  "desktop_codex_boundary": {
+    "pm_256_still_separate": true,
+    "new_desktop_codex_prompt_created": false,
+    "pm_decision_authority": false,
+    "workbook_content_inspection_authority": false,
+    "hosted_access_authority": false
+  },
+  "next_safe_packet_if_admitted": "PM Lane 267 - Project Miner Temp Power First Approval Row Live Executor Gate",
+  "validation": [
+    "packet JSON parse",
+    "PM Lane 266 text search",
+    "exact phrase search",
+    "guardrail keyword scan",
+    "corrupted-token scan",
+    "git diff --check"
+  ],
+  "validation_result": "PASS",
+  "blocked_authority": [
+    "product code",
+    "UI writable control",
+    "hosted call",
+    "live approval POST",
+    "approval row creation",
+    "project import",
+    "note or task creation",
+    "owner or due-date assignment",
+    "field authorization",
+    "lead or crew assignment",
+    "schedule/status write",
+    "procurement or rental commitment",
+    "customer commitment",
+    "customer report",
+    "durable field record",
+    "production tracking",
+    "billing/payroll/invoice/accounting output",
+    "Supabase/Render/Vercel/Olares action",
+    "SQL/schema migration",
+    "source workbook writeback",
+    "source PDF content edit",
+    "workbook content read",
+    "workbook content write",
+    "workbook macro/writeback",
+    "durable source fingerprint promotion",
+    "Desktop Codex PM decision authority",
+    "autonomous AI business-state mutation"
+  ]
+}

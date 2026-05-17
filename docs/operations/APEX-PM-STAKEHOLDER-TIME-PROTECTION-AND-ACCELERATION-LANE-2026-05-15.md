@@ -934,6 +934,8 @@ PM Lane 264 records Jason's revised exact Project Data Entry warning return: `AC
 
 PM Lane 265 refreshes the approval-readiness ledger after the accepted warning disposition. `PROJECT_DATA_ENTRY_FORMULA_ERRORS` is now an accepted warning code for no-live Temp Power review, while live approval/import remain blocked pending exact live-admission language, PM decision value and notes, hosted-read evidence after admission, approval POST proof, idempotent replay, approval-status readback, project import stop boundary, and downstream field/schedule/resource/customer/production/finance stop boundaries. No hosted action, approval row, project import, workbook content read/write, macro/writeback, Desktop Codex PM decision authority, or business-state mutation is admitted.
 
+PM Lane 266 packages the next true blocker for first approval-row execution. The branch is stopped at `STOPPED_AWAITING_EXACT_PM_LANE_142_LIVE_ADMISSION`; the exact later phrase is `I explicitly admit PM Lane 142 live approval POST and first approval-row creation for the current Project Miner Temp Power import candidate.` The live executor also needs PM decision value, review notes, and stop-boundary acknowledgement. This lane performs no hosted action, approval POST, approval row creation, project import, workbook content read/write, macro/writeback, Desktop Codex PM decision authority, or business-state mutation.
+
 The success standard is not just technical correctness. The candidate must reduce Jason's review burden by showing:
 
 1. what the system thinks the project is,
