@@ -1,0 +1,99 @@
+{
+  "packet_id": "2026-05-17-pm-lane-158",
+  "lane": "PM Lane 158",
+  "title": "Financial Handoff Admission Design Executor Dispatch",
+  "created_at_local": "2026-05-17",
+  "source_floor_commit": "09073a3b0aa570b5eee977260944005a1711a25d",
+  "objective": "Author the bounded Desktop Codex executor dispatch for a no-write financial handoff admission design closeout, using PM Lane 156 and PM Lane 157 as context while keeping live approval, project import, field execution, production tracking, customer reporting, billing, payroll, invoice, accounting, and external finance-system writes blocked.",
+  "execution_mode": "packet_authoring_and_copy_paste_executor_prompt_only",
+  "authority_band": "Band A/B - read-only design and one closeout handoff only",
+  "owner": "VS Code Codex remains repo technical authority, PM lane authority, final review authority, and repo integration authority.",
+  "delegated_executor": "Desktop Codex may execute only the copy/paste prompt and may write only the executor closeout.",
+  "credential_posture": "No credential, secret, Supabase, Render, Vercel, Olares, MCP, hosted-service, schema, auth, ingress, runtime, or control-plane access is admitted.",
+  "closeout_artifact_path": "ops/agents/handoffs/2026-05-17-pm-lane-158-financial-handoff-admission-design-executor-closeout.md",
+  "review_requirement": "VS Code Codex review is required after the executor closeout and before any implementation, repo integration, live approval, import, financial handoff, hosted action, or write path.",
+  "scope": [
+    "Create a copy/paste executor prompt for Desktop Codex to draft the financial handoff admission design closeout.",
+    "Require the executor to use PM Lane 156 financial handoff draft and PM Lane 157 pilot launch binder as context.",
+    "Require a design-only closeout that identifies upstream proof gates, financial boundary options, audit/readback needs, reconciliation checks, and next packet recommendation.",
+    "Keep the executor write scope to exactly one closeout handoff.",
+    "Preserve VS Code Codex as final review, repo integration, and technical authority."
+  ],
+  "not_allowed": [
+    "No product code change.",
+    "No operations-web route or UI change.",
+    "No mutation-seam route change.",
+    "No backend route or mutation route creation.",
+    "No live POST to /api/v1/mutations/project-import-approvals.",
+    "No approval row creation.",
+    "No project import.",
+    "No hosted deployment or promotion.",
+    "No Supabase, Render, Vercel, Olares, MCP, or hosted-service access.",
+    "No SQL or schema migration.",
+    "No secret access or secret rotation.",
+    "No billing export, payroll export, invoice record, payroll record, accounting record, labor reconciliation record, customer billing delivery, or external finance-system sync.",
+    "No workbook macro execution or workbook writeback.",
+    "No service, auth, DNS, ingress, or control-plane widening.",
+    "No autonomous AI business-state mutation."
+  ],
+  "executor_allowed_write": [
+    "ops/agents/handoffs/2026-05-17-pm-lane-158-financial-handoff-admission-design-executor-closeout.md"
+  ],
+  "executor_forbidden_files": [
+    "apps/**",
+    "packages/**",
+    "services/**",
+    "infra/**",
+    "apps/mutation-seam/**",
+    "apps/operations-web/**",
+    "docs/operations/** except the required read-only inputs",
+    "PROJECT_STATUS.md",
+    "database, migration, schema, environment, secret, deployment, hosted, workbook, and source planning files"
+  ],
+  "allowed_commands": [
+    "Read-only file inspection commands.",
+    "git status --short.",
+    "git diff --check for the one closeout handoff when meaningful."
+  ],
+  "forbidden_commands": [
+    "git add",
+    "git commit",
+    "git push",
+    "git pull",
+    "host fast-forward commands",
+    "Supabase, Render, Vercel, Olares, MCP, hosted-service, credential, secret, SQL, migration, macro, workbook-writeback, deployment, or mutation commands"
+  ],
+  "executor_required_reads": [
+    "ops/agents/packets/draft/2026-05-17-pm-lane-156-local-financial-handoff-admission-draft-export.json",
+    "ops/agents/handoffs/2026-05-17-pm-lane-156-local-financial-handoff-admission-draft-export-handoff.md",
+    "ops/agents/packets/draft/2026-05-17-pm-lane-157-local-pilot-launch-binder-export.json",
+    "ops/agents/handoffs/2026-05-17-pm-lane-157-local-pilot-launch-binder-export-handoff.md",
+    "docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md",
+    "docs/operations/APEX-PM-TEMP-POWER-DELIVERY-AND-ORCHESTRATION-PLAN-2026-05-15.md",
+    "docs/operations/APEX-PM-STAKEHOLDER-TIME-PROTECTION-AND-ACCELERATION-LANE-2026-05-15.md"
+  ],
+  "changed_files": [
+    "PROJECT_STATUS.md",
+    "docs/operations/APEX-PM-STAKEHOLDER-TIME-PROTECTION-AND-ACCELERATION-LANE-2026-05-15.md",
+    "docs/operations/APEX-PM-TEMP-POWER-DELIVERY-AND-ORCHESTRATION-PLAN-2026-05-15.md",
+    "docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md",
+    "ops/agents/packets/draft/2026-05-17-pm-lane-158-financial-handoff-admission-design-executor-dispatch.json",
+    "ops/agents/handoffs/2026-05-17-pm-lane-158-financial-handoff-admission-design-executor-dispatch-handoff.md",
+    "ops/agents/handoffs/2026-05-17-pm-lane-158-financial-handoff-admission-design-executor-copy-paste-prompt.md"
+  ],
+  "validation_steps": [
+    "Get-Content -Path \"ops/agents/packets/draft/2026-05-17-pm-lane-158-financial-handoff-admission-design-executor-dispatch.json\" | ConvertFrom-Json | Select-Object -ExpandProperty packet_id",
+    "rg -n \"PM Lane 158|Financial Handoff Admission Design|design-only|one-closeout|financial handoff admission design|No live POST|No approval row|No project import|No billing export|No payroll export|No invoice|No accounting|external finance-system|executor closeout|not_admitted\" PROJECT_STATUS.md docs/operations ops/agents",
+    "rg -n \"TO[D]O|T[B]D|PLACE[H]OLDER\" ops/agents/packets/draft/2026-05-17-pm-lane-158-financial-handoff-admission-design-executor-dispatch.json ops/agents/handoffs/2026-05-17-pm-lane-158-financial-handoff-admission-design-executor-dispatch-handoff.md ops/agents/handoffs/2026-05-17-pm-lane-158-financial-handoff-admission-design-executor-copy-paste-prompt.md",
+    "git diff --check"
+  ],
+  "validation_result": "PASS - packet parse returned 2026-05-17-pm-lane-158; guardrail/status search returned the PM Lane 158 design-only, one-closeout, no-live-POST, no-approval-row, no-project-import, no-financial-write, and not_admitted references; placeholder marker scan returned no markers; git diff --check passed with line-ending warnings only.",
+  "stop_conditions": [
+    "Stop if the executor needs to edit product code, services, schema, migrations, hosted configuration, credentials, or workbooks.",
+    "Stop if the executor needs a live approval POST, approval row, project import, field authorization, assignment, schedule/status, durable field record, production tracking, customer report, completion evidence, billing export, payroll export, invoice, accounting record, labor reconciliation write, customer billing delivery, external finance-system sync, or any other business-state mutation.",
+    "Stop if the executor needs staging, committing, pushing, host fast-forward, new MCP services, DNS/auth/ingress/control-plane widening, or autonomous AI business-state mutation."
+  ],
+  "escalation_target": "Return BLOCKED_CAPABILITY_GAP or ABORTED_SCOPE_WIDENING to VS Code Codex with exact evidence and no repo publication.",
+  "sidecar_status": "Read-only sidecar Mencius reviewed the planned PM Lane 158 scope and confirmed the file set, dispatch-only posture, one-closeout executor write, no-product-code boundary, validation commands, and red-flag stop conditions.",
+  "next_recommended_lane": "Review the Desktop Codex PM Lane 158 closeout when returned. If clean, decide whether to author the next no-write financial handoff contract packet or pivot to PM Lane 142 live approval-row admission only if Jason explicitly provides the required phrase."
+}
