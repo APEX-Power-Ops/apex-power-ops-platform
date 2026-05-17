@@ -318,7 +318,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(outputActionRail.getByLabel('PM intake output action groups')).toBeVisible()
   await expect(outputActionRail.getByLabel('Review output actions').getByRole('button')).toHaveCount(4)
   await expect(outputActionRail.getByLabel('Executor output actions').getByRole('button')).toHaveCount(1)
-  await expect(outputActionRail.getByLabel('Field prep output actions').getByRole('button')).toHaveCount(13)
+  await expect(outputActionRail.getByLabel('Field prep output actions').getByRole('button')).toHaveCount(14)
   await expect(outputActionRail.getByLabel('Refresh action').getByRole('button')).toHaveCount(1)
   await expect(outputActionRail.getByLabel('Review output actions').getByRole('button', { name: 'Export PM Brief' })).toBeVisible()
   await expect(outputActionRail.getByLabel('Review output actions').getByRole('button', { name: 'Export Approval Preview JSON' })).toBeVisible()
@@ -338,6 +338,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(outputActionRail.getByLabel('Field prep output actions').getByRole('button', { name: 'Export Durable Field Record Draft' })).toBeVisible()
   await expect(outputActionRail.getByLabel('Field prep output actions').getByRole('button', { name: 'Export Production Tracking Draft' })).toBeVisible()
   await expect(outputActionRail.getByLabel('Field prep output actions').getByRole('button', { name: 'Export Customer Reporting Draft' })).toBeVisible()
+  await expect(outputActionRail.getByLabel('Field prep output actions').getByRole('button', { name: 'Export Financial Handoff Draft' })).toBeVisible()
   await outputActionDisclosure.locator(':scope > summary').click()
   await expect(outputActionDisclosure).not.toHaveAttribute('open', '')
   await expect(outputActionRail.getByLabel('PM intake output action groups')).toBeHidden()
@@ -348,7 +349,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(outputActionRail.getByLabel('PM intake output action groups')).toBeVisible()
   await expect(outputActionRail.getByLabel('Review output actions').getByRole('button')).toHaveCount(4)
   await expect(outputActionRail.getByLabel('Executor output actions').getByRole('button')).toHaveCount(1)
-  await expect(outputActionRail.getByLabel('Field prep output actions').getByRole('button')).toHaveCount(13)
+  await expect(outputActionRail.getByLabel('Field prep output actions').getByRole('button')).toHaveCount(14)
   await expect(outputActionRail.getByLabel('Refresh action').getByRole('button')).toHaveCount(1)
   await expect(page.getByLabel('PM intake output status rail')).toHaveCount(0)
   await expectNoImpliedAuthorityControls(page)
@@ -3011,6 +3012,147 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
     'accounting_record_write',
   ]))
   await expect(fieldPrepOutputStatus.getByText(/Customer reporting draft prepared from pm-import-candidate-miner-temp-power without a server write/i)).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Export Financial Handoff Draft' })).toBeEnabled()
+  const financialHandoffDraftDownloadPromise = page.waitForEvent('download')
+  await page.getByRole('button', { name: 'Export Financial Handoff Draft' }).click()
+  const financialHandoffDraftDownload = await financialHandoffDraftDownloadPromise
+  expect(financialHandoffDraftDownload.suggestedFilename()).toBe('pm-import-candidate-miner-temp-power-financial-handoff-draft.json')
+  const financialHandoffDraftStream = await financialHandoffDraftDownload.createReadStream()
+  expect(financialHandoffDraftStream).not.toBeNull()
+  const financialHandoffDraftChunks: Buffer[] = []
+  for await (const chunk of financialHandoffDraftStream!) {
+    financialHandoffDraftChunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk))
+  }
+  const financialHandoffDraft = JSON.parse(Buffer.concat(financialHandoffDraftChunks).toString('utf8'))
+  expect(financialHandoffDraft).toMatchObject({
+    draft_kind: 'pm_import_candidate_financial_handoff_admission_draft',
+    draft_version: 'pm_lane_156_local_financial_handoff_admission_draft_v1',
+    candidate_identity: {
+      candidate_id: 'pm-import-candidate-miner-temp-power',
+      candidate_version: 'pm_import_candidate_read_only_v1',
+      project_name: 'Miner Temp Power',
+      source_fingerprint: 'stat-fingerprint-abc123',
+    },
+    field_shape: {
+      workpackage_count: 7,
+      task_count: 15,
+      apparatus_candidate_count: 186,
+      crew_count: 15,
+      equipment_inventory_count: 343,
+    },
+    financial_handoff_draft_summary: {
+      ready_count: 1,
+      needs_review_count: 0,
+      blocked_count: 8,
+      summary: '1 ready, 0 needs review, 8 blocked',
+      financial_handoff_status: 'blocked_until_customer_reporting_and_financial_handoff_packet',
+    },
+    customer_reporting_draft_summary: {
+      file_name: 'pm-import-candidate-miner-temp-power-customer-reporting-draft.json',
+      ready_count: 1,
+      needs_review_count: 0,
+      blocked_count: 7,
+      summary: '1 ready, 0 needs review, 7 blocked',
+      customer_reporting_status: 'blocked_until_production_tracking_and_customer_reporting_packet',
+    },
+    proposed_financial_handoff_packet: {
+      packet_kind: 'billing_payroll_accounting_boundary_controls',
+      authority_status: 'not_admitted',
+      required_after: ['approval-first-row', 'project-import', 'field-authorization-and-assignment', 'schedule-status-controls', 'durable-field-record', 'production-tracking', 'customer-reporting-and-completion-evidence'],
+      required_before: ['billing-export', 'payroll-export', 'invoice-creation', 'accounting-posting', 'external-finance-system-sync'],
+      proposed_routes: {
+        billing_export_create_route: 'not_admitted',
+        payroll_export_create_route: 'not_admitted',
+        invoice_record_create_route: 'not_admitted',
+        accounting_record_create_route: 'not_admitted',
+        financial_handoff_readback_route: 'not_admitted',
+        financial_handoff_history_route: 'not_admitted',
+        pm_workfront_route: '/pm-review/workfront',
+      },
+    },
+    authority_boundary: {
+      mutation_authority: 'not_admitted',
+      local_financial_handoff_draft_only: true,
+      live_approval_post_performed: false,
+      approval_row_created: false,
+      project_import_performed: false,
+      field_authorization_created: false,
+      field_work_authorized: false,
+      lead_assignment_created: false,
+      crew_assignment_created: false,
+      schedule_plan_created: false,
+      status_change_performed: false,
+      schedule_status_route_created: false,
+      durable_field_record_route_created: false,
+      durable_field_record_created: false,
+      field_daily_record_created: false,
+      production_tracking_route_created: false,
+      production_tracking_performed: false,
+      production_quantity_created: false,
+      production_labor_created: false,
+      production_apparatus_progress_created: false,
+      customer_reporting_route_created: false,
+      customer_report_created: false,
+      customer_completion_evidence_created: false,
+      customer_delivery_performed: false,
+      financial_handoff_route_created: false,
+      billing_export_created: false,
+      payroll_export_created: false,
+      invoice_record_created: false,
+      accounting_record_created: false,
+      external_finance_sync_created: false,
+      server_write_performed: false,
+    },
+  })
+  expect(financialHandoffDraft.generated_locally_at).toEqual(expect.any(String))
+  expect(financialHandoffDraft.financial_handoff_items.map((item: { id: string, status: string }) => `${item.id}:${item.status}`)).toEqual([
+    'customer-reporting-context:ready',
+    'approval-import-field-production-customer-prerequisites:blocked',
+    'billing-export-contract:blocked',
+    'payroll-export-contract:blocked',
+    'invoice-accounting-boundary:blocked',
+    'labor-reconciliation-boundary:blocked',
+    'customer-release-boundary:blocked',
+    'audit-readback-reconciliation-contract:blocked',
+    'hosted-finance-mutation-boundary:blocked',
+  ])
+  expect(financialHandoffDraft.proposed_packet_sequence.map((item: { step: string, status: string }) => `${item.step}:${item.status}`)).toEqual([
+    'complete_customer_reporting_gate:blocked',
+    'admit_billing_export_contract:blocked',
+    'admit_payroll_export_contract:blocked',
+    'admit_invoice_accounting_boundary_contract:blocked',
+    'prove_readback_without_external_finance_sync:blocked',
+    'keep_external_finance_and_payroll_processing_blocked:blocked',
+  ])
+  expect(financialHandoffDraft.blocked_boundaries).toEqual(expect.arrayContaining([
+    'write_supabase',
+    'persist_approval_record',
+    'import_project_rows',
+    'field_work_authorization',
+    'lead_assignment_writes',
+    'schedule_status_write',
+    'durable_field_record_contract_write',
+    'production_tracking_contract_write',
+    'customer_reporting_contract_write',
+    'customer_report_write',
+    'customer_completion_evidence_write',
+    'billing_export_contract_write',
+    'payroll_export_contract_write',
+    'accounting_record_write',
+    'financial_handoff_contract_write',
+    'financial_handoff_mutation_route',
+    'financial_handoff_audit_write',
+    'financial_handoff_readback_route',
+    'billing_export_write',
+    'payroll_export_write',
+    'invoice_record_write',
+    'payroll_record_write',
+    'labor_reconciliation_write',
+    'customer_billing_delivery',
+    'finance_system_integration',
+    'hosted_financial_handoff_ui_controls',
+  ]))
+  await expect(fieldPrepOutputStatus.getByText(/Financial handoff draft prepared from pm-import-candidate-miner-temp-power without a server write/i)).toBeVisible()
   await expect(page.getByRole('button', { name: 'Export Approval Preview JSON' })).toBeEnabled()
   const previewDownloadPromise = page.waitForEvent('download')
   await page.getByRole('button', { name: 'Export Approval Preview JSON' }).click()

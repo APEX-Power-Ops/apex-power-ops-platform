@@ -979,6 +979,11 @@ function customerReportingDraftFileName(candidate?: CandidatePayload | null) {
   return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-customer-reporting-draft.json`
 }
 
+function financialHandoffDraftFileName(candidate?: CandidatePayload | null) {
+  const candidateId = candidate?.candidate_id || 'project-miner-intake'
+  return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-financial-handoff-draft.json`
+}
+
 function importExceptionRegisterFileName(candidate?: CandidatePayload | null) {
   const candidateId = candidate?.candidate_id || 'project-miner-intake'
   return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-import-exception-register.md`
@@ -4995,6 +5000,222 @@ function buildCustomerReportingDraftExport(
   }
 }
 
+function buildFinancialHandoffDraftExport(
+  packet: IntakeWorkbenchPacket,
+  fieldPrepQueue: OperatingQueueItem[],
+  fieldPrepCoverageSnapshot: FieldPrepCoverageItem[],
+  fieldPrepConversationAgenda: FieldPrepAgendaItem[],
+  notAllowed: string[],
+  futureRoute: string,
+  fieldReadinessChecks: Record<string, boolean>,
+  fieldQuestionsDraft: FieldQuestionsDraft,
+  fieldObservationScratchpad: FieldObservationScratchpad,
+) {
+  const candidate = packet.candidate
+  const project = candidate.project || {}
+  const summary = candidate.summary || {}
+  const customerReportingDraft = buildCustomerReportingDraftExport(packet, fieldPrepQueue, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, notAllowed, futureRoute, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad)
+  const financialItems: ApprovalDryRunReadinessItem[] = [
+    {
+      id: 'customer-reporting-context',
+      title: 'Customer reporting context',
+      status: 'ready',
+      detail: `${customerReportingDraftFileName(candidate)} defines the no-write prerequisite packet for later billing, payroll, invoice, and accounting boundaries.`,
+    },
+    {
+      id: 'approval-import-field-production-customer-prerequisites',
+      title: 'Approval, field, production, and customer prerequisites',
+      status: 'blocked',
+      detail: 'Accepted approval row, imported work rows, field authorization/assignment proof, schedule/status proof, durable field record proof, production tracking proof, and customer reporting proof are required before financial handoff authority can exist.',
+    },
+    {
+      id: 'billing-export-contract',
+      title: 'Billing export contract',
+      status: 'blocked',
+      detail: 'A later packet must define billable scope, included customer evidence, quantities, rates, exclusions, review state, idempotency, rollback posture, and readback before any billing export can exist.',
+    },
+    {
+      id: 'payroll-export-contract',
+      title: 'Payroll export contract',
+      status: 'blocked',
+      detail: 'A later packet must define approved labor source, technician mapping, time boundaries, exceptions, supervisor review, and payroll-system handoff before payroll export can exist.',
+    },
+    {
+      id: 'invoice-accounting-boundary',
+      title: 'Invoice and accounting boundary',
+      status: 'blocked',
+      detail: 'Invoices, accounting records, cost postings, and external finance-system sync remain outside the PM workbench until separate finance authority is admitted.',
+    },
+    {
+      id: 'labor-reconciliation-boundary',
+      title: 'Labor reconciliation boundary',
+      status: 'blocked',
+      detail: 'Production labor, field records, customer report evidence, and payroll source rows must be reconciled before any payroll or cost export is trusted.',
+    },
+    {
+      id: 'customer-release-boundary',
+      title: 'Customer release boundary',
+      status: 'blocked',
+      detail: 'Customer-facing report release and completion evidence acceptance must be separated from billing, payroll, and accounting output creation.',
+    },
+    {
+      id: 'audit-readback-reconciliation-contract',
+      title: 'Audit, readback, and reconciliation contract',
+      status: 'blocked',
+      detail: 'A later packet must prove financial handoff readback, audit lineage, idempotent replay, exception handling, and reconciliation against customer reporting evidence.',
+    },
+    {
+      id: 'hosted-finance-mutation-boundary',
+      title: 'Hosted finance mutation boundary',
+      status: 'blocked',
+      detail: 'No hosted UI control, backend route, deployment, finance integration, or production mutation is admitted by this local draft.',
+    },
+  ]
+  const financialCounts = approvalDryRunReadinessCounts(financialItems)
+
+  return {
+    draft_kind: 'pm_import_candidate_financial_handoff_admission_draft',
+    draft_version: 'pm_lane_156_local_financial_handoff_admission_draft_v1',
+    generated_locally_at: new Date().toISOString(),
+    candidate_identity: {
+      candidate_id: candidate.candidate_id || null,
+      candidate_version: candidate.candidate_version || null,
+      project_name: project.name || null,
+      source_fingerprint: candidate.source_freshness?.aggregate_fingerprint || null,
+    },
+    field_shape: {
+      workpackage_count: summary.workpackage_count ?? null,
+      task_count: summary.task_count ?? null,
+      apparatus_candidate_count: summary.apparatus_candidate_count ?? null,
+      crew_count: summary.crew_count ?? null,
+      equipment_inventory_count: summary.equipment_inventory_count ?? null,
+    },
+    financial_handoff_draft_summary: {
+      ready_count: financialCounts.ready,
+      needs_review_count: financialCounts.needsReview,
+      blocked_count: financialCounts.blocked,
+      summary: approvalDryRunReadinessSummary(financialCounts),
+      financial_handoff_status: 'blocked_until_customer_reporting_and_financial_handoff_packet',
+    },
+    customer_reporting_draft_summary: {
+      file_name: customerReportingDraftFileName(candidate),
+      ready_count: customerReportingDraft.customer_reporting_draft_summary.ready_count,
+      needs_review_count: customerReportingDraft.customer_reporting_draft_summary.needs_review_count,
+      blocked_count: customerReportingDraft.customer_reporting_draft_summary.blocked_count,
+      summary: customerReportingDraft.customer_reporting_draft_summary.summary,
+      customer_reporting_status: customerReportingDraft.customer_reporting_draft_summary.customer_reporting_status,
+    },
+    proposed_financial_handoff_packet: {
+      packet_kind: 'billing_payroll_accounting_boundary_controls',
+      authority_status: 'not_admitted',
+      required_after: ['approval-first-row', 'project-import', 'field-authorization-and-assignment', 'schedule-status-controls', 'durable-field-record', 'production-tracking', 'customer-reporting-and-completion-evidence'],
+      required_before: ['billing-export', 'payroll-export', 'invoice-creation', 'accounting-posting', 'external-finance-system-sync'],
+      proposed_routes: {
+        billing_export_create_route: 'not_admitted',
+        payroll_export_create_route: 'not_admitted',
+        invoice_record_create_route: 'not_admitted',
+        accounting_record_create_route: 'not_admitted',
+        financial_handoff_readback_route: 'not_admitted',
+        financial_handoff_history_route: 'not_admitted',
+        pm_workfront_route: '/pm-review/workfront',
+      },
+      minimum_proof: [
+        'accepted approval row exists',
+        'imported project/workpackage/task/apparatus rows exist',
+        'field authorization and assignment proof exists',
+        'schedule/status controls proof exists',
+        'durable field record proof exists',
+        'production tracking proof exists',
+        'customer report and completion evidence proof exists',
+        'billing export, payroll export, invoice/accounting, audit, and readback contracts are approved',
+        'external finance system, payroll processing, and accounting posting remain blocked unless separately admitted',
+      ],
+    },
+    financial_handoff_items: financialItems,
+    proposed_packet_sequence: [
+      {
+        step: 'complete_customer_reporting_gate',
+        status: 'blocked',
+        detail: 'Complete approval, import, field authorization, assignment, schedule, status, durable field record, production tracking, customer report, and completion evidence gates before financial handoff can be considered.',
+      },
+      {
+        step: 'admit_billing_export_contract',
+        status: 'blocked',
+        detail: 'Define billable scope, quantities, customer evidence, exclusions, review state, idempotency, rollback posture, audit, and readback.',
+      },
+      {
+        step: 'admit_payroll_export_contract',
+        status: 'blocked',
+        detail: 'Define labor source, technician mapping, time boundaries, exceptions, supervisor review, payroll handoff, audit, and reconciliation.',
+      },
+      {
+        step: 'admit_invoice_accounting_boundary_contract',
+        status: 'blocked',
+        detail: 'Define what remains inside PM evidence versus what belongs to invoice creation, accounting posting, or external finance-system sync.',
+      },
+      {
+        step: 'prove_readback_without_external_finance_sync',
+        status: 'blocked',
+        detail: 'Prove financial handoff readback and audit history without creating invoices, payroll records, accounting records, or finance-system sync payloads.',
+      },
+      {
+        step: 'keep_external_finance_and_payroll_processing_blocked',
+        status: 'blocked',
+        detail: 'Keep invoice creation, payroll processing, accounting posting, and external finance-system outputs blocked until later packets admit those surfaces.',
+      },
+    ],
+    authority_boundary: {
+      mutation_authority: 'not_admitted',
+      local_financial_handoff_draft_only: true,
+      live_approval_post_performed: false,
+      approval_row_created: false,
+      project_import_performed: false,
+      field_authorization_created: false,
+      field_work_authorized: false,
+      lead_assignment_created: false,
+      crew_assignment_created: false,
+      schedule_plan_created: false,
+      status_change_performed: false,
+      schedule_status_route_created: false,
+      durable_field_record_route_created: false,
+      durable_field_record_created: false,
+      field_daily_record_created: false,
+      production_tracking_route_created: false,
+      production_tracking_performed: false,
+      production_quantity_created: false,
+      production_labor_created: false,
+      production_apparatus_progress_created: false,
+      customer_reporting_route_created: false,
+      customer_report_created: false,
+      customer_completion_evidence_created: false,
+      customer_delivery_performed: false,
+      financial_handoff_route_created: false,
+      billing_export_created: false,
+      payroll_export_created: false,
+      invoice_record_created: false,
+      accounting_record_created: false,
+      external_finance_sync_created: false,
+      server_write_performed: false,
+    },
+    blocked_boundaries: Array.from(new Set([
+      ...customerReportingDraft.blocked_boundaries,
+      'financial_handoff_contract_write',
+      'financial_handoff_mutation_route',
+      'financial_handoff_audit_write',
+      'financial_handoff_readback_route',
+      'billing_export_write',
+      'payroll_export_write',
+      'invoice_record_write',
+      'payroll_record_write',
+      'accounting_record_write',
+      'labor_reconciliation_write',
+      'customer_billing_delivery',
+      'finance_system_integration',
+      'hosted_financial_handoff_ui_controls',
+    ])),
+  }
+}
+
 function buildImportExceptionRegisterExport(
   packet: IntakeWorkbenchPacket,
   importExceptionRegister: ImportExceptionRegisterItem[],
@@ -5182,6 +5403,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
   const [durableFieldRecordDraftStatus, setDurableFieldRecordDraftStatus] = useState('')
   const [productionTrackingDraftStatus, setProductionTrackingDraftStatus] = useState('')
   const [customerReportingDraftStatus, setCustomerReportingDraftStatus] = useState('')
+  const [financialHandoffDraftStatus, setFinancialHandoffDraftStatus] = useState('')
   const [approvalDryRunStatus, setApprovalDryRunStatus] = useState('')
   const [approvalDryRunPreview, setApprovalDryRunPreview] = useState('')
   const [reviewChecks, setReviewChecks] = useState<Record<string, boolean>>({})
@@ -5361,7 +5583,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
   const fieldPrepAgendaCount = fieldPrepAgendaCounts(fieldPrepConversationAgenda)
   const reviewOutputStatuses = [briefStatus, previewStatus, pmIntakeSnapshotStatus, exceptionRegisterStatus].filter(Boolean)
   const executorOutputStatuses = [handoffStatus].filter(Boolean)
-  const fieldPrepOutputStatuses = [fieldBriefStatus, fieldObservationStatus, fieldPrepCoverageStatus, fieldPrepAgendaStatus, fieldPrepPacketStatus, fieldStartPreflightStatus, fieldExecutionGateDesignStatus, leadFieldAssignmentDraftStatus, fieldAuthorizationAssignmentDraftStatus, scheduleStatusControlsDraftStatus, durableFieldRecordDraftStatus, productionTrackingDraftStatus, customerReportingDraftStatus].filter(Boolean)
+  const fieldPrepOutputStatuses = [fieldBriefStatus, fieldObservationStatus, fieldPrepCoverageStatus, fieldPrepAgendaStatus, fieldPrepPacketStatus, fieldStartPreflightStatus, fieldExecutionGateDesignStatus, leadFieldAssignmentDraftStatus, fieldAuthorizationAssignmentDraftStatus, scheduleStatusControlsDraftStatus, durableFieldRecordDraftStatus, productionTrackingDraftStatus, customerReportingDraftStatus, financialHandoffDraftStatus].filter(Boolean)
   const hasOutputStatuses = reviewOutputStatuses.length > 0 || executorOutputStatuses.length > 0 || fieldPrepOutputStatuses.length > 0
 
   useEffect(() => {
@@ -5801,6 +6023,16 @@ export default function ProjectMinerIntakeWorkbenchPage() {
     setCustomerReportingDraftStatus(`Customer reporting draft prepared from ${candidate?.candidate_id || 'the current intake packet'} without a server write.`)
   }
 
+  function exportFinancialHandoffDraft() {
+    if (!packet) {
+      return
+    }
+
+    const draft = buildFinancialHandoffDraftExport(packet, fieldPrepQueue, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, notAllowed, futureRoute, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad)
+    downloadTextFile(financialHandoffDraftFileName(candidate), `${JSON.stringify(draft, null, 2)}\n`, 'application/json')
+    setFinancialHandoffDraftStatus(`Financial handoff draft prepared from ${candidate?.candidate_id || 'the current intake packet'} without a server write.`)
+  }
+
   return (
     <main className="shell-page pm-review-page">
       <section className="hero-card pm-review-hero">
@@ -5975,6 +6207,9 @@ export default function ProjectMinerIntakeWorkbenchPage() {
                 </button>
                 <button className="btn btn-outline" onClick={exportCustomerReportingDraft} disabled={!packet}>
                   Export Customer Reporting Draft
+                </button>
+                <button className="btn btn-outline" onClick={exportFinancialHandoffDraft} disabled={!packet}>
+                  Export Financial Handoff Draft
                 </button>
               </div>
             </section>

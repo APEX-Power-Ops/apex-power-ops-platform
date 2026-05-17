@@ -1,0 +1,52 @@
+{
+  "packet_id": "2026-05-17-pm-lane-156",
+  "lane": "PM Lane 156",
+  "title": "Local Financial Handoff Admission Draft Export",
+  "created_at_local": "2026-05-17",
+  "source_floor_commit": "a0c7a7a6f5b0b225e901d84854bb11de188a891a",
+  "objective": "Add a browser-local financial handoff admission draft export that defines later proof requirements for billing export, payroll export, invoice/accounting boundaries, labor reconciliation, audit/readback, and external finance-system sync boundaries before any financial output write path is admitted.",
+  "execution_mode": "local_product_code_plus_status_docs",
+  "scope": [
+    "Add an Export Financial Handoff Draft action to the existing Field Prep Outputs rail.",
+    "Download one JSON artifact that includes customer reporting draft summary, proposed billing/payroll/accounting boundary packet, financial handoff readiness statuses, proposed packet sequence, authority boundary flags, and blocked write boundaries.",
+    "Keep the export local-only and informational.",
+    "Extend the focused Playwright smoke to prove the downloaded financial handoff admission draft artifact and zero mutation requests."
+  ],
+  "not_allowed": [
+    "No live POST to /api/v1/mutations/project-import-approvals.",
+    "No approval row creation.",
+    "No hosted deployment or promotion.",
+    "No Supabase, Render, Vercel, or Olares action.",
+    "No SQL or schema migration.",
+    "No secret access or secret rotation.",
+    "No backend route or mutation route change.",
+    "No project import, workpackage rows, task rows, apparatus rows, field work authorization, assignment write, schedule/status write, durable field record write, production tracking write, customer reporting write, customer report write, customer completion evidence write, customer delivery, financial handoff contract write, financial handoff mutation route, financial handoff audit write, financial handoff readback route, billing export write, payroll export write, invoice record write, payroll record write, accounting record write, labor reconciliation write, customer billing delivery, finance system integration, hosted financial handoff UI controls, workbook macro, or workbook writeback.",
+    "No service, auth, DNS, ingress, or control-plane widening.",
+    "No autonomous AI business-state mutation."
+  ],
+  "financial_handoff_admission_draft": {
+    "status": "not_admitted",
+    "note": "This lane creates local admission-design context only. Billing exports, payroll exports, invoices, payroll records, accounting records, customer billing delivery, and external finance-system sync remain blocked until later admitted packets own those write paths."
+  },
+  "changed_files": [
+    "PROJECT_STATUS.md",
+    "apps/operations-web/app/pm-review/import-intake/page.tsx",
+    "apps/operations-web/tests/browser-shell.pm-import-intake.smoke.spec.ts",
+    "docs/operations/APEX-PM-STAKEHOLDER-TIME-PROTECTION-AND-ACCELERATION-LANE-2026-05-15.md",
+    "docs/operations/APEX-PM-TEMP-POWER-DELIVERY-AND-ORCHESTRATION-PLAN-2026-05-15.md",
+    "docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md",
+    "ops/agents/packets/draft/2026-05-17-pm-lane-156-local-financial-handoff-admission-draft-export.json",
+    "ops/agents/handoffs/2026-05-17-pm-lane-156-local-financial-handoff-admission-draft-export-handoff.md"
+  ],
+  "validation_steps": [
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform\" --filter @apex/operations-web typecheck",
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform\" --filter @apex/operations-web build",
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform/apps/operations-web\" exec playwright test \"browser-shell.pm-import-intake.smoke.spec.ts\"",
+    "Get-Content -Path \"ops/agents/packets/draft/2026-05-17-pm-lane-156-local-financial-handoff-admission-draft-export.json\" | ConvertFrom-Json | Select-Object -ExpandProperty packet_id",
+    "rg -n \"PM Lane 156|Export Financial Handoff Draft|financial-handoff-draft|pm_lane_156_local_financial_handoff_admission_draft_v1|mutationRequests\\)\\.toHaveLength\\(0\\)\" PROJECT_STATUS.md docs/operations ops/agents apps/operations-web",
+    "git diff --check"
+  ],
+  "validation_result": "PASS - operations-web typecheck passed; operations-web build passed; focused Playwright pm import-intake smoke passed with the financial handoff draft download and mutationRequests=0; packet JSON parsed; PM Lane 156 guardrail rg passed; git diff --check passed.",
+  "sidecar_result": "Read-only explorer Schrodinger confirmed PM Lane 156 should be a local billing, payroll, invoice, and accounting admission draft export while writes remain blocked. Desktop Codex NETA closeouts and TCC remain parked outside this PM lane.",
+  "next_recommended_lane": "Use this financial handoff admission draft as the no-write proof checklist for later billing/payroll/accounting boundary design. The next PM lane should either prepare a copy/paste executor packet for financial handoff admission design or pivot back toward approval-row/live import prerequisites if Jason wants to advance execution gates."
+}
