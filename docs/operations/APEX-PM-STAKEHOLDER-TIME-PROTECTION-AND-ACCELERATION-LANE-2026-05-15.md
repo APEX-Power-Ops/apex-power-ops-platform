@@ -151,6 +151,8 @@ PM Lane 212 publishes the no-code Approval First-Row Admission Hold And Evidence
 
 PM Lane 213 publishes the no-code Approval First-Row No-Live Decision Return And Evidence Refresh Packet. It converts the hold into the Jason-facing label `READY_FOR_JASON_DECISION_NOT_AUTHORIZED_NO_LIVE_REFRESH`, returns the bounded choices `HOLD_NO_LIVE`, `RETURN_WITH_QUESTIONS`, and `PROVIDE_EXACT_ADMISSION_PHRASE_LATER`, and keeps all hosted proof, browser live route access, live approval POST, approval row creation, project import, and downstream PM business-state mutation blocked unless a later turn provides the exact PM Lane 142 phrase as current admission.
 
+PM Lane 214 publishes the no-code Approval First-Row No-Live Decision Return Closeout And Question Packet. It converts the Lane 213 decision return into `READY_FOR_JASON_QUESTIONS_NOT_AUTHORIZED_NO_LIVE_CLOSEOUT` and asks only the compact no-live questions needed for hold/no-live posture, missing or stale candidate/fingerprint/PM decision/review-note/warning/no-go fields, evidence-gap closeout, and whether any later live execution will require the exact PM Lane 142 phrase as a fresh current instruction in a separate turn. It opens no hosted proof, browser live route, approval POST, approval row, project import, or downstream PM business-state mutation.
+
 Immediate orchestration priority order:
 
 1. Stop cycling templates unless a real executor-friction signal exists.
