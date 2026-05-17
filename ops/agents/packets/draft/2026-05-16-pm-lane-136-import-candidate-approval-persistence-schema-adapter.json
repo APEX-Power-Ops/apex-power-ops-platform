@@ -1,0 +1,73 @@
+{
+  "packet_id": "2026-05-16-pm-lane-136",
+  "title": "Import Candidate Approval Persistence Schema And Adapter Implementation",
+  "objective": "Implement the first repo-local Project Miner import-candidate approval persistence path using only the dedicated approval table, insert-only adapter, PM-only mutation route, stable replay identity, linked audit append, and table-backed readback classification.",
+  "domain": "pm-domain",
+  "active_role": "Technical Repo Authority / PM Lane Coordinator / Backend Approval Persistence Executor",
+  "source_floor": {
+    "branch": "clean-main",
+    "commit": "25167ccbbbefaa2c46e201e031ed81d61569d10b",
+    "meaning": "Current local, origin, and Olares clean-main after PM Lane 135 current PM next actions and guardrails body controls."
+  },
+  "dependencies": [
+    "2026-05-15-pm-lane-049",
+    "2026-05-16-pm-lane-041c",
+    "2026-05-16-pm-lane-135"
+  ],
+  "allowed_scope": [
+    "Add a repo migration for the dedicated seam.pm_import_candidate_approvals table.",
+    "Add a mutation-seam store adapter that inserts approval rows only into seam.pm_import_candidate_approvals.",
+    "Add a PM-only Class C POST /api/v1/mutations/project-import-approvals route.",
+    "Validate approval payloads against the existing approval contract before any insert.",
+    "Preserve idempotent replay by returning the original mutation_id and audit_event_id for identical requests.",
+    "Append exactly one linked audit event for each accepted approval insert.",
+    "Classify approval readback status from the approval table, not from audit-log-only storage.",
+    "Add focused tests for accepted insert, replay, replay mismatch, invalid payload rejection, PM/online/Class C gates, table-backed readback status, migration boundary, and existing mutation audit entity_type."
+  ],
+  "not_allowed": [
+    "No live Supabase SQL application.",
+    "No hosted Supabase row writes.",
+    "No Render, Vercel, or Olares deployment.",
+    "No operations-web POST wiring or approval button.",
+    "No project import mutation.",
+    "No project, workpackage, task, apparatus, issue, assignment, schedule, status, durable field record, production tracking, workbook, or import rows.",
+    "No generic mutation-pipeline registration for pm_import_candidate_approval.",
+    "No workbook macro execution or workbook writeback.",
+    "No service creation, DNS/auth/ingress/secret change, fixture replay into live data, work authorization, field release, live work order creation, or autonomous AI business-state mutation."
+  ],
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/PROJECT_STATUS.md",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/audit/logger.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/db/memory_store_original.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/db/supabase_store.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/main.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/project_import_approval_persistence.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/routers/project_import_approvals.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/services/mutation_pipeline.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/migrations/003_pm_import_candidate_approvals.sql",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests/conftest.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests/test_pipeline_integration.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests/test_project_import_approval_persistence.py",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/APEX-PM-TEMP-POWER-DELIVERY-AND-ORCHESTRATION-PLAN-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/APEX-PM-STAKEHOLDER-TIME-PROTECTION-AND-ACCELERATION-LANE-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-16-pm-lane-136-import-candidate-approval-persistence-schema-adapter.json",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-16-pm-lane-136-import-candidate-approval-persistence-schema-adapter-handoff.md"
+  ],
+  "validation_steps": [
+    "& \"C:/APEX Platform/apex-power-ops-platform/.venv/Scripts/python.exe\" -m py_compile apps/mutation-seam/app/project_import_approval_persistence.py apps/mutation-seam/app/db/supabase_store.py apps/mutation-seam/app/audit/logger.py apps/mutation-seam/app/services/mutation_pipeline.py",
+    "$env:SEAM_STORE_BACKEND='memory'; & \"C:/APEX Platform/apex-power-ops-platform/.venv/Scripts/python.exe\" -m pytest apps/mutation-seam/tests/test_project_import_approval_persistence.py apps/mutation-seam/tests/test_project_import_approval_contract.py apps/mutation-seam/tests/test_project_import_approval_storage_plan.py apps/mutation-seam/tests/test_project_import_admission_plan.py apps/mutation-seam/tests/test_project_import_candidate.py apps/mutation-seam/tests/test_pipeline_integration.py",
+    "& \"C:/APEX Platform/apex-power-ops-platform/.venv/Scripts/python.exe\" -c \"import json; json.load(open(r'C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-16-pm-lane-136-import-candidate-approval-persistence-schema-adapter.json', encoding='utf-8')); print('packet-json-ok')\"",
+    "git diff --check",
+    "git diff --cached --check"
+  ],
+  "validation_result": "PASS: py_compile passed; focused backend tests passed with 32 passed and 21 warnings; packet JSON parse returned packet-json-ok; git diff --check passed; git diff --cached --check passed after scoped staging.",
+  "delegation_status": "coordinator_executed_locally_with_read_only_sidecar_audit_completed",
+  "sidecar_result": "Read-only sidecar audit found no blocking boundary findings. It confirmed the diff stays within the dedicated approval table, PM-only route, stable replay, one-audit-append, no-import, no-frontend-POST, no-live-deploy boundary. The sidecar noted low residual risk around shared audit plumbing and insert-only enforcement; both were hardened with mutation-pipeline audit entity_type regression coverage and DB update/delete rejection triggers.",
+  "next_recommended_lane": "PM Lane 137 - Approval Persistence Hosted Application Gate And Status Surfacing",
+  "sql_permission": false,
+  "live_deploy_permission": false,
+  "ai_mutation_authority": "not_admitted",
+  "created_at": "2026-05-16",
+  "updated_at": "2026-05-16"
+}

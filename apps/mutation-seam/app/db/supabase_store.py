@@ -344,6 +344,142 @@ class PgList:
 
 
 # ---------------------------------------------------------------------------
+# ApprovalPersistenceStore — insert-only adapter target for PM import approvals
+# ---------------------------------------------------------------------------
+
+class ApprovalPersistenceStore:
+    """Insert-only table adapter for seam.pm_import_candidate_approvals."""
+
+    _table = "seam.pm_import_candidate_approvals"
+    _pk = "approval_record_id"
+
+    def _cur(self):
+        return _conn_get().cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+    def _row_to_dict(self, row: dict) -> dict:
+        out = {}
+        for k, v in row.items():
+            if isinstance(v, datetime):
+                out[k] = v.isoformat()
+            else:
+                out[k] = v
+        return out
+
+    def __contains__(self, key: str) -> bool:
+        with self._cur() as cur:
+            cur.execute(f"SELECT 1 FROM {self._table} WHERE {self._pk} = %s", (key,))
+            return cur.fetchone() is not None
+
+    def __getitem__(self, key: str) -> dict:
+        with self._cur() as cur:
+            cur.execute(f"SELECT * FROM {self._table} WHERE {self._pk} = %s", (key,))
+            row = cur.fetchone()
+        if row is None:
+            raise KeyError(key)
+        return self._row_to_dict(dict(row))
+
+    def _approval_columns(self) -> List[str]:
+        return [
+            "approval_record_id",
+            "mutation_id",
+            "audit_event_id",
+            "candidate_id",
+            "candidate_version",
+            "source_stat_fingerprint",
+            "candidate_shape_fingerprint",
+            "idempotency_key",
+            "decision",
+            "approved_by_actor_id",
+            "approved_at_utc",
+            "accepted_warning_codes",
+            "accepted_no_go_overrides",
+            "review_notes",
+            "approval_payload",
+            "validation_result",
+            "created_at",
+        ]
+
+    def _approval_values(self, record: dict, cols: List[str]) -> List[Any]:
+        values = []
+        for col in cols:
+            value = record.get(col)
+            if col in {
+                "accepted_warning_codes",
+                "accepted_no_go_overrides",
+                "approval_payload",
+                "validation_result",
+            }:
+                value = json.dumps(value)
+            values.append(value)
+        return values
+
+    def insert(self, record: dict) -> None:
+        cols = self._approval_columns()
+        values = self._approval_values(record, cols)
+        placeholders = ", ".join(["%s"] * len(cols))
+        sql = f"INSERT INTO {self._table} ({', '.join(cols)}) VALUES ({placeholders})"
+        with self._cur() as cur:
+            cur.execute(sql, values)
+
+    def insert_with_audit(self, record: dict, audit_event: dict) -> None:
+        conn = _conn_get()
+        previous_autocommit = conn.autocommit
+        conn.autocommit = False
+        try:
+            with conn.cursor() as cur:
+                approval_cols = self._approval_columns()
+                approval_values = self._approval_values(record, approval_cols)
+                approval_placeholders = ", ".join(["%s"] * len(approval_cols))
+                cur.execute(
+                    f"INSERT INTO {self._table} ({', '.join(approval_cols)}) VALUES ({approval_placeholders})",
+                    approval_values,
+                )
+
+                audit_cols = [
+                    "id",
+                    "mutation_id",
+                    "actor_id",
+                    "actor_role",
+                    "entity_type",
+                    "entity_id",
+                    "action_type",
+                    "from_state",
+                    "to_state",
+                    "reason",
+                    "timestamp",
+                ]
+                audit_values = [
+                    audit_event.get("id"),
+                    audit_event.get("mutation_id"),
+                    audit_event.get("actor_id"),
+                    audit_event.get("actor_role"),
+                    audit_event.get("entity_type"),
+                    audit_event.get("entity_id"),
+                    audit_event.get("action_type"),
+                    json.dumps(audit_event.get("from_state", {})),
+                    json.dumps(audit_event.get("to_state", {})),
+                    audit_event.get("reason"),
+                    audit_event.get("server_timestamp"),
+                ]
+                audit_placeholders = ", ".join(["%s"] * len(audit_cols))
+                cur.execute(
+                    f"INSERT INTO seam.audit_log ({', '.join(audit_cols)}) VALUES ({audit_placeholders})",
+                    audit_values,
+                )
+            conn.commit()
+        except Exception:
+            conn.rollback()
+            raise
+        finally:
+            conn.autocommit = previous_autocommit
+
+    def values(self) -> List[dict]:
+        with self._cur() as cur:
+            cur.execute(f"SELECT * FROM {self._table} ORDER BY created_at")
+            return [self._row_to_dict(dict(row)) for row in cur.fetchall()]
+
+
+# ---------------------------------------------------------------------------
 # SupabaseStore — drop-in replacement for MemoryStore
 # ---------------------------------------------------------------------------
 
@@ -360,6 +496,7 @@ class SupabaseStore:
         self.workpackages = PgDict("workpackages")
         self.snapshots = PgDict("snapshots")
         self.idempotency_keys = PgDict("idempotency_keys", pk_col="key", payload_col="response")
+        self.pm_import_candidate_approvals = ApprovalPersistenceStore()
         self.audit_log = PgList()
         self.projects = PgDict("projects")
 
@@ -391,6 +528,7 @@ class SupabaseStore:
         # Truncate in FK-safe order
         tables = [
             "seam.idempotency_keys",
+            "seam.pm_import_candidate_approvals",
             "seam.audit_log",
             "seam.checklist_items",
             "seam.hours",

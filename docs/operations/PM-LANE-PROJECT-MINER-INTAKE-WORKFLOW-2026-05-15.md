@@ -689,11 +689,11 @@ The near-term target is not a generic PM system demo. The target is a field-usab
 
 Current prioritized task-lane status:
 
-1. Local PM intake workbench usability - active and local-current. PM Lanes 043 through 135 have built the `/pm-review/import-intake` daily workbench, local review outputs, field-prep artifacts, grouped/disclosed panels, authority-wording guard, and predictable body-control wrappers through Current PM Next Actions and Guardrails. The next bounded product move is PM Lane 136, Import Candidate Approval Persistence Schema and Adapter Implementation.
+1. Local PM intake workbench usability - active and local-current. PM Lanes 043 through 135 have built the `/pm-review/import-intake` daily workbench, local review outputs, field-prep artifacts, grouped/disclosed panels, authority-wording guard, and predictable body-control wrappers through Current PM Next Actions and Guardrails. PM Lane 136 now adds the repo-local backend approval-persistence implementation behind that workbench boundary without adding frontend POST wiring.
 2. Hosted PM intake parity - accepted green for the PM intake path and the broader deployed mutation-seam read surface. PM Lane 041A Vercel promotion is green, PM Lane 041B Render PM-intake read parity is green, PM Lane 076 closeouts are accepted, and PM Lane 041C clears the former Supabase pooler DSN blocker for DB-backed approval/schedule reads.
-3. Approval/import authority - designed but not admitted. The approval contract, approval storage plan, approval-readiness UI, and schema/adapter admission packet context exist, and the hosted DSN blocker is cleared, but approval persistence and import mutation remain blocked until a later packet explicitly admits the narrow write path.
+3. Approval/import authority - narrowly advanced for approval-record persistence only. PM Lane 136 adds the dedicated approval table migration, insert-only adapter, PM-only mutation route, idempotent replay, audit linkage, and readback classifier. Live SQL application/deploy and all project import, workpackage, task, apparatus, assignment, schedule, status, durable field record, and production tracking writes remain blocked until separate packets explicitly admit them.
 
-Execution order remains conservative: local PM ergonomics may continue while hosted parity is pursued, but approval persistence, import mutation, work authorization, assignment, schedule, status, durable field records, and production tracking writes remain outside authority until explicitly admitted.
+Execution order remains conservative: repo-local approval-record persistence may advance only inside the dedicated table/adapter/route boundary, while live schema application, hosted deployment, import mutation, work authorization, assignment, schedule, status, durable field records, and production tracking writes remain outside authority until explicitly admitted.
 
 Olares One should support this by reducing relay friction, preserving host validation, and keeping packet/handoff evidence durable. It is not currently assumed to provide autonomous AI-to-AI queue ownership.
 
@@ -725,6 +725,8 @@ Review the candidate, admission plan, approval contract, and approval storage pl
 
 Level 2E - Approval Persistence:
 Persist only the PM approval decision, candidate fingerprints, warning acceptance, no-go acknowledgement notes, and reviewer notes for the import candidate after a later packet admits a narrow storage path. This is not an import mutation and must not write project, workpackage, task, or apparatus rows.
+
+PM Lane 136 implements the first repo-local version of Level 2E. The admitted write path is limited to `seam.pm_import_candidate_approvals` plus one linked audit append through `POST /api/v1/mutations/project-import-approvals`; idempotent replays return the original mutation and audit IDs, and readback classification is table-backed rather than audit-log-only. This lane does not apply live SQL, deploy Render or Vercel, wire a frontend approval button, import project/work rows, or mutate assignment, schedule, status, durable field records, or production tracking.
 
 Level 3 - Resource Context:
 Read equipment inventory and technician capability rows so PM can understand whether the project can be staffed with available people and equipment.

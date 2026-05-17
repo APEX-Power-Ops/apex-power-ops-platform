@@ -16,6 +16,8 @@ def record_audit_event(
     from_state: Dict[str, Any],
     to_state: Dict[str, Any],
     mutation_id: str,
+    event_id: str | None = None,
+    entity_type: str | None = None,
 ) -> str:
     """
     Record a mutation to the audit log.
@@ -30,7 +32,7 @@ def record_audit_event(
     Returns:
         The audit event ID
     """
-    event_id = f"audit-{uuid4()}"
+    event_id = event_id or f"audit-{uuid4()}"
     now = datetime.now(timezone.utc).isoformat()
 
     event = {
@@ -38,6 +40,7 @@ def record_audit_event(
         "mutation_id": mutation_id,
         "actor_id": actor.actor_id,
         "actor_role": actor.actor_role,
+        "entity_type": entity_type or to_state.get("entity_type"),
         "action_type": request.action_type,
         "entity_id": request.entity_id,
         "mutation_class": request.mutation_class,

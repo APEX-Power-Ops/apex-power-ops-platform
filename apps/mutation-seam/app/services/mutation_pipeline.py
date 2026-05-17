@@ -397,6 +397,7 @@ async def execute_mutation(
         from_state=from_state,
         to_state=to_state,
         mutation_id=mutation_id,
+        entity_type=entity_type,
     )
 
     # ===== STAGE 11: Save idempotency =====

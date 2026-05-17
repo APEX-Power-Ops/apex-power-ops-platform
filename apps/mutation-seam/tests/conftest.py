@@ -1,8 +1,12 @@
 """
 Pytest configuration and fixtures.
 """
+import os
+
 import pytest
 from fastapi.testclient import TestClient
+
+os.environ.setdefault("SEAM_STORE_BACKEND", "memory")
 
 from app.db.memory_store import store
 from app.main import app

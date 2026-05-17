@@ -23,6 +23,7 @@ class MemoryStore:
         self.workpackages: Dict[str, Dict[str, Any]] = {}
         self.snapshots: Dict[str, Dict[str, Any]] = {}
         self.idempotency_keys: Dict[str, Dict[str, Any]] = {}
+        self.pm_import_candidate_approvals: Dict[str, Dict[str, Any]] = {}
         self.audit_log: List[Dict[str, Any]] = []
         self.projects: Dict[str, Dict[str, Any]] = {}
 

@@ -102,6 +102,7 @@ def test_audit_log_records_mutation(
 
     entry = audit_entries[0]
     assert entry["action_type"] == "update_status"
+    assert entry["entity_type"] == "apparatus"
     assert entry["entity_id"] == sample_apparatus_id
     assert entry["actor_id"] == "tech-001"
     assert entry["actor_role"] == "field_tech"
@@ -229,6 +230,7 @@ def test_pm_return_to_lead_issue_disposition_is_audited_and_idempotent(client):
     audit_entries = [entry for entry in store.audit_log if entry["id"] == first_data["audit_event_id"]]
     assert len(audit_entries) == 1
     assert audit_entries[0]["actor_role"] == "pm"
+    assert audit_entries[0]["entity_type"] == "issue"
     assert audit_entries[0]["action_type"] == "return_to_lead"
     assert audit_entries[0]["from_state"]["status"] == "escalated"
     assert audit_entries[0]["to_state"]["status"] == "in_review"
