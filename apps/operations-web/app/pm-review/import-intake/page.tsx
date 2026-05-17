@@ -989,6 +989,11 @@ function pilotLaunchBinderFileName(candidate?: CandidatePayload | null) {
   return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-pilot-launch-binder.json`
 }
 
+function pilotLaunchDailyBriefFileName(candidate?: CandidatePayload | null) {
+  const candidateId = candidate?.candidate_id || 'project-miner-intake'
+  return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-pilot-launch-daily-brief.json`
+}
+
 function importExceptionRegisterFileName(candidate?: CandidatePayload | null) {
   const candidateId = candidate?.candidate_id || 'project-miner-intake'
   return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-import-exception-register.md`
@@ -5460,6 +5465,125 @@ function buildPilotLaunchBinderExport(
   }
 }
 
+function buildPilotLaunchDailyBriefExport(
+  packet: IntakeWorkbenchPacket,
+  approvalDryRunReadiness: ApprovalDryRunReadinessItem[],
+  reviewChecks: Record<string, boolean>,
+  approvalDraft: ApprovalDecisionDraft,
+  fieldPrepQueue: OperatingQueueItem[],
+  fieldPrepCoverageSnapshot: FieldPrepCoverageItem[],
+  fieldPrepConversationAgenda: FieldPrepAgendaItem[],
+  notAllowed: string[],
+  futureRoute: string,
+  fieldReadinessChecks: Record<string, boolean>,
+  fieldQuestionsDraft: FieldQuestionsDraft,
+  fieldObservationScratchpad: FieldObservationScratchpad,
+) {
+  const candidate = packet.candidate
+  const binder = buildPilotLaunchBinderExport(packet, approvalDryRunReadiness, reviewChecks, approvalDraft, fieldPrepQueue, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, notAllowed, futureRoute, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad)
+  const dailyBriefItems = [
+    {
+      id: 'approval-live-gate',
+      title: 'Approval live gate',
+      status: 'blocked',
+      detail: 'Do not send a browser approval POST or create the first approval row until the exact PM Lane 142 phrase is admitted.',
+    },
+    {
+      id: 'field-start-context-review',
+      title: 'Field start context review',
+      status: 'review_only',
+      detail: `${fieldStartPreflightFileName(candidate)} is available for PM, lead, and customer conversation context only.`,
+    },
+    {
+      id: 'lead-and-crew-readiness-review',
+      title: 'Lead and crew readiness review',
+      status: 'review_only',
+      detail: 'Use the lead field assignment draft and field authorization assignment draft as discussion context without creating lead, crew, or field work records.',
+    },
+    {
+      id: 'schedule-status-review',
+      title: 'Schedule and status review',
+      status: 'blocked',
+      detail: 'Schedule and status changes remain blocked until a later packet admits storage, audit, readback, and rollback proof.',
+    },
+    {
+      id: 'daily-field-record-review',
+      title: 'Daily field record review',
+      status: 'blocked',
+      detail: 'Durable daily field records remain blocked until a later packet admits the record contract and readback checks.',
+    },
+    {
+      id: 'production-customer-review',
+      title: 'Production and customer review',
+      status: 'blocked',
+      detail: 'Production tracking, customer reports, and completion evidence remain blocked until separate packets admit those surfaces.',
+    },
+    {
+      id: 'financial-handoff-review',
+      title: 'Financial handoff review',
+      status: 'blocked',
+      detail: 'Billing, payroll, invoice, accounting, labor reconciliation, customer billing delivery, and external finance-system sync remain blocked.',
+    },
+  ]
+  const reviewOnlyCount = dailyBriefItems.filter((item) => item.status === 'review_only').length
+  const blockedCount = dailyBriefItems.filter((item) => item.status === 'blocked').length
+
+  return {
+    brief_kind: 'pm_import_candidate_pilot_launch_daily_brief',
+    brief_version: 'pm_lane_159_local_pilot_launch_daily_brief_v1',
+    generated_locally_at: new Date().toISOString(),
+    candidate_identity: binder.candidate_identity,
+    field_shape: binder.field_shape,
+    daily_brief_summary: {
+      review_only_count: reviewOnlyCount,
+      blocked_count: blockedCount,
+      summary: `${reviewOnlyCount} review-only, ${blockedCount} blocked`,
+      brief_status: 'local_daily_brief_available_live_writes_blocked',
+    },
+    source_artifact_manifest: binder.source_artifact_manifest,
+    source_artifact_summaries: binder.source_artifact_summaries,
+    today_review_sequence: [
+      'read the approval live-gate preflight before discussing any approval-row action',
+      'use the field-start preflight for PM, lead, and customer conversation context',
+      'review lead, field authorization, schedule/status, durable record, and production drafts before field reliance',
+      'review customer reporting and financial handoff drafts before customer-facing or finance-facing outputs',
+      'keep every write path blocked unless a later packet explicitly admits that exact route and proof set',
+    ],
+    daily_brief_items: dailyBriefItems,
+    blocked_next_packet_options: binder.next_packet_options,
+    authority_boundary: {
+      mutation_authority: 'not_admitted',
+      local_pilot_launch_daily_brief_only: true,
+      live_approval_post_performed: false,
+      approval_row_created: false,
+      project_import_performed: false,
+      field_authorization_created: false,
+      field_work_authorized: false,
+      lead_assignment_created: false,
+      crew_assignment_created: false,
+      schedule_plan_created: false,
+      status_change_performed: false,
+      durable_field_record_created: false,
+      production_tracking_performed: false,
+      customer_report_created: false,
+      customer_completion_evidence_created: false,
+      financial_handoff_route_created: false,
+      billing_export_created: false,
+      payroll_export_created: false,
+      invoice_record_created: false,
+      accounting_record_created: false,
+      external_finance_sync_created: false,
+      server_write_performed: false,
+    },
+    blocked_boundaries: Array.from(new Set([
+      ...binder.blocked_boundaries,
+      'pilot_launch_daily_brief_server_write',
+      'daily_brief_business_state_write',
+      'field_daily_plan_write',
+    ])),
+  }
+}
+
 function buildImportExceptionRegisterExport(
   packet: IntakeWorkbenchPacket,
   importExceptionRegister: ImportExceptionRegisterItem[],
@@ -5649,6 +5773,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
   const [customerReportingDraftStatus, setCustomerReportingDraftStatus] = useState('')
   const [financialHandoffDraftStatus, setFinancialHandoffDraftStatus] = useState('')
   const [pilotLaunchBinderStatus, setPilotLaunchBinderStatus] = useState('')
+  const [pilotLaunchDailyBriefStatus, setPilotLaunchDailyBriefStatus] = useState('')
   const [approvalDryRunStatus, setApprovalDryRunStatus] = useState('')
   const [approvalDryRunPreview, setApprovalDryRunPreview] = useState('')
   const [reviewChecks, setReviewChecks] = useState<Record<string, boolean>>({})
@@ -5828,7 +5953,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
   const fieldPrepAgendaCount = fieldPrepAgendaCounts(fieldPrepConversationAgenda)
   const reviewOutputStatuses = [briefStatus, previewStatus, pmIntakeSnapshotStatus, exceptionRegisterStatus].filter(Boolean)
   const executorOutputStatuses = [handoffStatus].filter(Boolean)
-  const fieldPrepOutputStatuses = [fieldBriefStatus, fieldObservationStatus, fieldPrepCoverageStatus, fieldPrepAgendaStatus, fieldPrepPacketStatus, fieldStartPreflightStatus, fieldExecutionGateDesignStatus, leadFieldAssignmentDraftStatus, fieldAuthorizationAssignmentDraftStatus, scheduleStatusControlsDraftStatus, durableFieldRecordDraftStatus, productionTrackingDraftStatus, customerReportingDraftStatus, financialHandoffDraftStatus, pilotLaunchBinderStatus].filter(Boolean)
+  const fieldPrepOutputStatuses = [fieldBriefStatus, fieldObservationStatus, fieldPrepCoverageStatus, fieldPrepAgendaStatus, fieldPrepPacketStatus, fieldStartPreflightStatus, fieldExecutionGateDesignStatus, leadFieldAssignmentDraftStatus, fieldAuthorizationAssignmentDraftStatus, scheduleStatusControlsDraftStatus, durableFieldRecordDraftStatus, productionTrackingDraftStatus, customerReportingDraftStatus, financialHandoffDraftStatus, pilotLaunchBinderStatus, pilotLaunchDailyBriefStatus].filter(Boolean)
   const hasOutputStatuses = reviewOutputStatuses.length > 0 || executorOutputStatuses.length > 0 || fieldPrepOutputStatuses.length > 0
 
   useEffect(() => {
@@ -6288,6 +6413,16 @@ export default function ProjectMinerIntakeWorkbenchPage() {
     setPilotLaunchBinderStatus(`Pilot launch binder prepared from ${candidate?.candidate_id || 'the current intake packet'} without a server write.`)
   }
 
+  function exportPilotLaunchDailyBrief() {
+    if (!packet) {
+      return
+    }
+
+    const dailyBrief = buildPilotLaunchDailyBriefExport(packet, approvalDryRunReadiness, reviewChecks, approvalDraft, fieldPrepQueue, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, notAllowed, futureRoute, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad)
+    downloadTextFile(pilotLaunchDailyBriefFileName(candidate), `${JSON.stringify(dailyBrief, null, 2)}\n`, 'application/json')
+    setPilotLaunchDailyBriefStatus(`Pilot launch daily brief prepared from ${candidate?.candidate_id || 'the current intake packet'} without a server write.`)
+  }
+
   return (
     <main className="shell-page pm-review-page">
       <section className="hero-card pm-review-hero">
@@ -6468,6 +6603,9 @@ export default function ProjectMinerIntakeWorkbenchPage() {
                 </button>
                 <button className="btn btn-outline" onClick={exportPilotLaunchBinder} disabled={!packet}>
                   Export Pilot Launch Binder
+                </button>
+                <button className="btn btn-outline" onClick={exportPilotLaunchDailyBrief} disabled={!packet}>
+                  Export Pilot Launch Daily Brief
                 </button>
               </div>
             </section>

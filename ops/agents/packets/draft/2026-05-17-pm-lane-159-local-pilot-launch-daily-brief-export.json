@@ -1,0 +1,54 @@
+{
+  "packet_id": "2026-05-17-pm-lane-159",
+  "lane": "PM Lane 159",
+  "title": "Local Pilot Launch Daily Brief Export",
+  "created_at_local": "2026-05-17",
+  "source_floor_commit": "48ae0dbab6fb337f3f3bcfdad8ce60445177ad7f",
+  "objective": "Add a browser-local pilot launch daily brief export that condenses the PM Lane 157 pilot launch binder into one day-to-day PM, lead, and customer review artifact while keeping live approval, project import, field execution, production tracking, customer reporting, billing, payroll, invoice, accounting, and external finance-system writes blocked.",
+  "execution_mode": "local_product_code_plus_status_docs",
+  "scope": [
+    "Add an Export Pilot Launch Daily Brief action to the existing Field Prep Outputs rail.",
+    "Download one JSON artifact that summarizes the current approval, field-start, lead, schedule/status, durable field record, production, customer reporting, and financial handoff review posture.",
+    "Include the PM Lane 157 source artifact manifest, today's review sequence, daily brief items, next packet options, authority boundary flags, and blocked write boundaries.",
+    "Keep the export browser-local and informational.",
+    "Extend the focused Playwright smoke to prove the downloaded daily brief artifact and zero mutation requests."
+  ],
+  "not_allowed": [
+    "No live POST to /api/v1/mutations/project-import-approvals.",
+    "No approval row creation.",
+    "No project import.",
+    "No hosted deployment or promotion.",
+    "No Supabase, Render, Vercel, or Olares action.",
+    "No SQL or schema migration.",
+    "No secret access or secret rotation.",
+    "No backend route or mutation route change.",
+    "No workpackage rows, task rows, apparatus rows, field work authorization, assignment write, schedule/status write, durable field record write, production tracking write, customer reporting write, customer report write, customer completion evidence write, customer delivery, financial handoff route, billing export write, payroll export write, invoice record write, payroll record write, accounting record write, labor reconciliation write, customer billing delivery, finance system integration, workbook macro, or workbook writeback.",
+    "No service, auth, DNS, ingress, or control-plane widening.",
+    "No autonomous AI business-state mutation."
+  ],
+  "pilot_launch_daily_brief": {
+    "status": "local_only",
+    "note": "This lane creates a daily review brief only. It condenses the already-local pilot launch binder so Jason can walk the current PM/lead/customer conversation without exporting every component. It does not admit live approval, import, field, production, customer, or financial writes."
+  },
+  "changed_files": [
+    "PROJECT_STATUS.md",
+    "apps/operations-web/app/pm-review/import-intake/page.tsx",
+    "apps/operations-web/tests/browser-shell.pm-import-intake.smoke.spec.ts",
+    "docs/operations/APEX-PM-STAKEHOLDER-TIME-PROTECTION-AND-ACCELERATION-LANE-2026-05-15.md",
+    "docs/operations/APEX-PM-TEMP-POWER-DELIVERY-AND-ORCHESTRATION-PLAN-2026-05-15.md",
+    "docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md",
+    "ops/agents/packets/draft/2026-05-17-pm-lane-159-local-pilot-launch-daily-brief-export.json",
+    "ops/agents/handoffs/2026-05-17-pm-lane-159-local-pilot-launch-daily-brief-export-handoff.md"
+  ],
+  "validation_steps": [
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform\" --filter @apex/operations-web typecheck",
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform\" --filter @apex/operations-web build",
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform/apps/operations-web\" exec playwright test \"browser-shell.pm-import-intake.smoke.spec.ts\"",
+    "Get-Content -Path \"ops/agents/packets/draft/2026-05-17-pm-lane-159-local-pilot-launch-daily-brief-export.json\" | ConvertFrom-Json | Select-Object -ExpandProperty packet_id",
+    "rg -n \"PM Lane 159|Export Pilot Launch Daily Brief|pilot-launch-daily-brief|pm_lane_159_local_pilot_launch_daily_brief_v1|mutationRequests\\)\\.toHaveLength\\(0\\)\" PROJECT_STATUS.md docs/operations ops/agents apps/operations-web",
+    "git diff --check"
+  ],
+  "validation_result": "PASS - operations-web typecheck passed; operations-web build passed; focused Playwright pm import-intake smoke passed with the pilot launch daily brief download and mutationRequests=0 after the production build completed; packet JSON parsed; PM Lane 159 guardrail rg passed; git diff --check passed with only expected CRLF warnings on touched and unrelated markdown files.",
+  "sidecar_result": "Read-only explorer Hubble reviewed the planned PM Lane 159 scope and confirmed the expected file set, browser-local export posture, focused smoke expectations, zero-mutation proof, validation commands, and red flags for hosted/backend/write-authority widening.",
+  "next_recommended_lane": "Review the Desktop Codex PM Lane 158 closeout when returned. If it is not yet returned and live approval remains unadmitted, the next safe PM lane can continue reducing launch-day review burden with local-only meeting or field-start review artifacts."
+}
