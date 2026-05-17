@@ -318,7 +318,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(outputActionRail.getByLabel('PM intake output action groups')).toBeVisible()
   await expect(outputActionRail.getByLabel('Review output actions').getByRole('button')).toHaveCount(4)
   await expect(outputActionRail.getByLabel('Executor output actions').getByRole('button')).toHaveCount(1)
-  await expect(outputActionRail.getByLabel('Field prep output actions').getByRole('button')).toHaveCount(11)
+  await expect(outputActionRail.getByLabel('Field prep output actions').getByRole('button')).toHaveCount(12)
   await expect(outputActionRail.getByLabel('Refresh action').getByRole('button')).toHaveCount(1)
   await expect(outputActionRail.getByLabel('Review output actions').getByRole('button', { name: 'Export PM Brief' })).toBeVisible()
   await expect(outputActionRail.getByLabel('Review output actions').getByRole('button', { name: 'Export Approval Preview JSON' })).toBeVisible()
@@ -336,6 +336,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(outputActionRail.getByLabel('Field prep output actions').getByRole('button', { name: 'Export Field Authorization Assignment Draft' })).toBeVisible()
   await expect(outputActionRail.getByLabel('Field prep output actions').getByRole('button', { name: 'Export Schedule Status Controls Draft' })).toBeVisible()
   await expect(outputActionRail.getByLabel('Field prep output actions').getByRole('button', { name: 'Export Durable Field Record Draft' })).toBeVisible()
+  await expect(outputActionRail.getByLabel('Field prep output actions').getByRole('button', { name: 'Export Production Tracking Draft' })).toBeVisible()
   await outputActionDisclosure.locator(':scope > summary').click()
   await expect(outputActionDisclosure).not.toHaveAttribute('open', '')
   await expect(outputActionRail.getByLabel('PM intake output action groups')).toBeHidden()
@@ -346,7 +347,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(outputActionRail.getByLabel('PM intake output action groups')).toBeVisible()
   await expect(outputActionRail.getByLabel('Review output actions').getByRole('button')).toHaveCount(4)
   await expect(outputActionRail.getByLabel('Executor output actions').getByRole('button')).toHaveCount(1)
-  await expect(outputActionRail.getByLabel('Field prep output actions').getByRole('button')).toHaveCount(11)
+  await expect(outputActionRail.getByLabel('Field prep output actions').getByRole('button')).toHaveCount(12)
   await expect(outputActionRail.getByLabel('Refresh action').getByRole('button')).toHaveCount(1)
   await expect(page.getByLabel('PM intake output status rail')).toHaveCount(0)
   await expectNoImpliedAuthorityControls(page)
@@ -2746,6 +2747,137 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
     'billing_or_payroll_export',
   ]))
   await expect(fieldPrepOutputStatus.getByText(/Durable field record draft prepared from pm-import-candidate-miner-temp-power without a server write/i)).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Export Production Tracking Draft' })).toBeEnabled()
+  const productionTrackingDraftDownloadPromise = page.waitForEvent('download')
+  await page.getByRole('button', { name: 'Export Production Tracking Draft' }).click()
+  const productionTrackingDraftDownload = await productionTrackingDraftDownloadPromise
+  expect(productionTrackingDraftDownload.suggestedFilename()).toBe('pm-import-candidate-miner-temp-power-production-tracking-draft.json')
+  const productionTrackingDraftStream = await productionTrackingDraftDownload.createReadStream()
+  expect(productionTrackingDraftStream).not.toBeNull()
+  const productionTrackingDraftChunks: Buffer[] = []
+  for await (const chunk of productionTrackingDraftStream!) {
+    productionTrackingDraftChunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk))
+  }
+  const productionTrackingDraft = JSON.parse(Buffer.concat(productionTrackingDraftChunks).toString('utf8'))
+  expect(productionTrackingDraft).toMatchObject({
+    draft_kind: 'pm_import_candidate_production_tracking_admission_draft',
+    draft_version: 'pm_lane_154_local_production_tracking_admission_draft_v1',
+    candidate_identity: {
+      candidate_id: 'pm-import-candidate-miner-temp-power',
+      candidate_version: 'pm_import_candidate_read_only_v1',
+      project_name: 'Miner Temp Power',
+      source_fingerprint: 'stat-fingerprint-abc123',
+    },
+    field_shape: {
+      workpackage_count: 7,
+      task_count: 15,
+      apparatus_candidate_count: 186,
+      crew_count: 15,
+      equipment_inventory_count: 343,
+    },
+    production_tracking_draft_summary: {
+      ready_count: 1,
+      needs_review_count: 0,
+      blocked_count: 7,
+      summary: '1 ready, 0 needs review, 7 blocked',
+      production_tracking_status: 'blocked_until_durable_field_record_and_production_tracking_packet',
+    },
+    durable_field_record_draft_summary: {
+      file_name: 'pm-import-candidate-miner-temp-power-durable-field-record-draft.json',
+      ready_count: 1,
+      needs_review_count: 0,
+      blocked_count: 8,
+      summary: '1 ready, 0 needs review, 8 blocked',
+      durable_record_status: 'blocked_until_schedule_status_and_durable_field_record_packet',
+    },
+    proposed_production_tracking_packet: {
+      packet_kind: 'production_tracking_controls',
+      authority_status: 'not_admitted',
+      required_after: ['approval-first-row', 'project-import', 'field-authorization-and-assignment', 'schedule-status-controls', 'durable-field-record'],
+      required_before: ['customer-or-billing-reporting', 'payroll-export', 'customer-facing-completion-evidence'],
+      proposed_routes: {
+        production_quantity_update_route: 'not_admitted',
+        production_labor_update_route: 'not_admitted',
+        production_apparatus_update_route: 'not_admitted',
+        production_tracking_readback_route: 'not_admitted',
+        production_tracking_history_route: 'not_admitted',
+        lead_ops_route: '/lead-ops',
+        field_tech_route: '/field-tech',
+        pm_workfront_route: '/pm-review/workfront',
+      },
+    },
+    authority_boundary: {
+      mutation_authority: 'not_admitted',
+      local_production_tracking_draft_only: true,
+      live_approval_post_performed: false,
+      approval_row_created: false,
+      project_import_performed: false,
+      field_authorization_created: false,
+      field_work_authorized: false,
+      lead_assignment_created: false,
+      crew_assignment_created: false,
+      schedule_plan_created: false,
+      status_change_performed: false,
+      schedule_status_route_created: false,
+      durable_field_record_route_created: false,
+      durable_field_record_created: false,
+      field_daily_record_created: false,
+      production_tracking_route_created: false,
+      production_tracking_performed: false,
+      production_quantity_created: false,
+      production_labor_created: false,
+      production_apparatus_progress_created: false,
+      customer_report_created: false,
+      billing_export_created: false,
+      payroll_export_created: false,
+      server_write_performed: false,
+    },
+  })
+  expect(productionTrackingDraft.generated_locally_at).toEqual(expect.any(String))
+  expect(productionTrackingDraft.production_items.map((item: { id: string, status: string }) => `${item.id}:${item.status}`)).toEqual([
+    'durable-field-record-context:ready',
+    'approval-import-field-schedule-durable-prerequisites:blocked',
+    'production-quantity-contract:blocked',
+    'labor-apparatus-progress-contract:blocked',
+    'pm-lead-production-review-contract:blocked',
+    'audit-readback-reconciliation-contract:blocked',
+    'customer-billing-payroll-boundary:blocked',
+    'hosted-ui-mutation-boundary:blocked',
+  ])
+  expect(productionTrackingDraft.proposed_packet_sequence.map((item: { step: string, status: string }) => `${item.step}:${item.status}`)).toEqual([
+    'complete_durable_field_record_gate:blocked',
+    'admit_production_quantity_contract:blocked',
+    'admit_labor_apparatus_progress_contract:blocked',
+    'prove_hosted_readback_without_customer_reporting:blocked',
+    'keep_customer_billing_payroll_and_completion_outputs_blocked:blocked',
+  ])
+  expect(productionTrackingDraft.blocked_boundaries).toEqual(expect.arrayContaining([
+    'write_supabase',
+    'persist_approval_record',
+    'import_project_rows',
+    'field_work_authorization',
+    'lead_assignment_writes',
+    'schedule_status_write',
+    'durable_field_record_contract_write',
+    'field_daily_record_write',
+    'field_evidence_attachment_write',
+    'durable_field_record_mutation_route',
+    'durable_field_record_readback_route',
+    'production_tracking_writes',
+    'production_tracking_contract_write',
+    'production_quantity_tracking_write',
+    'production_tracking_mutation_route',
+    'production_tracking_audit_write',
+    'production_tracking_readback_route',
+    'hosted_production_tracking_ui_controls',
+    'production_labor_tracking_write',
+    'production_apparatus_progress_write',
+    'customer_reporting_export',
+    'billing_or_payroll_export',
+    'customer_completion_evidence_export',
+    'payroll_export',
+  ]))
+  await expect(fieldPrepOutputStatus.getByText(/Production tracking draft prepared from pm-import-candidate-miner-temp-power without a server write/i)).toBeVisible()
   await expect(page.getByRole('button', { name: 'Export Approval Preview JSON' })).toBeEnabled()
   const previewDownloadPromise = page.waitForEvent('download')
   await page.getByRole('button', { name: 'Export Approval Preview JSON' }).click()

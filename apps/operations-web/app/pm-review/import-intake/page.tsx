@@ -969,6 +969,11 @@ function durableFieldRecordDraftFileName(candidate?: CandidatePayload | null) {
   return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-durable-field-record-draft.json`
 }
 
+function productionTrackingDraftFileName(candidate?: CandidatePayload | null) {
+  const candidateId = candidate?.candidate_id || 'project-miner-intake'
+  return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-production-tracking-draft.json`
+}
+
 function importExceptionRegisterFileName(candidate?: CandidatePayload | null) {
   const candidateId = candidate?.candidate_id || 'project-miner-intake'
   return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-import-exception-register.md`
@@ -4595,6 +4600,199 @@ function buildDurableFieldRecordDraftExport(
   }
 }
 
+function buildProductionTrackingDraftExport(
+  packet: IntakeWorkbenchPacket,
+  fieldPrepQueue: OperatingQueueItem[],
+  fieldPrepCoverageSnapshot: FieldPrepCoverageItem[],
+  fieldPrepConversationAgenda: FieldPrepAgendaItem[],
+  notAllowed: string[],
+  futureRoute: string,
+  fieldReadinessChecks: Record<string, boolean>,
+  fieldQuestionsDraft: FieldQuestionsDraft,
+  fieldObservationScratchpad: FieldObservationScratchpad,
+) {
+  const candidate = packet.candidate
+  const project = candidate.project || {}
+  const summary = candidate.summary || {}
+  const durableFieldRecordDraft = buildDurableFieldRecordDraftExport(packet, fieldPrepQueue, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, notAllowed, futureRoute, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad)
+  const productionItems: ApprovalDryRunReadinessItem[] = [
+    {
+      id: 'durable-field-record-context',
+      title: 'Durable field record context',
+      status: 'ready',
+      detail: `${durableFieldRecordDraftFileName(candidate)} defines the no-write prerequisite packet for later production tracking controls.`,
+    },
+    {
+      id: 'approval-import-field-schedule-durable-prerequisites',
+      title: 'Approval, import, field, schedule, and durable record prerequisites',
+      status: 'blocked',
+      detail: 'Accepted approval row, imported work rows, field authorization/assignment proof, admitted schedule/status controls, and admitted durable field record proof are required before production tracking mutation authority can exist.',
+    },
+    {
+      id: 'production-quantity-contract',
+      title: 'Production quantity contract',
+      status: 'blocked',
+      detail: 'A later packet must define quantity fields, units, validation rules, idempotency, rollback posture, and readback before production quantity rows can be created.',
+    },
+    {
+      id: 'labor-apparatus-progress-contract',
+      title: 'Labor, apparatus, and progress contract',
+      status: 'blocked',
+      detail: 'A later packet must define labor, apparatus, progress, exception, and variance tracking fields before production progress becomes operational truth.',
+    },
+    {
+      id: 'pm-lead-production-review-contract',
+      title: 'PM and lead production review contract',
+      status: 'blocked',
+      detail: 'PM and lead review boundaries must be defined before production updates can drive schedule, reporting, billing, or customer-facing completion posture.',
+    },
+    {
+      id: 'audit-readback-reconciliation-contract',
+      title: 'Audit, readback, and reconciliation contract',
+      status: 'blocked',
+      detail: 'A later packet must prove production tracking readback, history, audit linkage, idempotent replay, and reconciliation against durable field records.',
+    },
+    {
+      id: 'customer-billing-payroll-boundary',
+      title: 'Customer, billing, and payroll boundary',
+      status: 'blocked',
+      detail: 'Production tracking controls cannot create customer reports, billing exports, payroll exports, or customer-facing completion evidence unless separate packets admit those outputs.',
+    },
+    {
+      id: 'hosted-ui-mutation-boundary',
+      title: 'Hosted UI mutation boundary',
+      status: 'blocked',
+      detail: 'No hosted UI control, backend route, deployment, or production mutation is admitted by this local draft.',
+    },
+  ]
+  const productionCounts = approvalDryRunReadinessCounts(productionItems)
+
+  return {
+    draft_kind: 'pm_import_candidate_production_tracking_admission_draft',
+    draft_version: 'pm_lane_154_local_production_tracking_admission_draft_v1',
+    generated_locally_at: new Date().toISOString(),
+    candidate_identity: {
+      candidate_id: candidate.candidate_id || null,
+      candidate_version: candidate.candidate_version || null,
+      project_name: project.name || null,
+      source_fingerprint: candidate.source_freshness?.aggregate_fingerprint || null,
+    },
+    field_shape: {
+      workpackage_count: summary.workpackage_count ?? null,
+      task_count: summary.task_count ?? null,
+      apparatus_candidate_count: summary.apparatus_candidate_count ?? null,
+      crew_count: summary.crew_count ?? null,
+      equipment_inventory_count: summary.equipment_inventory_count ?? null,
+    },
+    production_tracking_draft_summary: {
+      ready_count: productionCounts.ready,
+      needs_review_count: productionCounts.needsReview,
+      blocked_count: productionCounts.blocked,
+      summary: approvalDryRunReadinessSummary(productionCounts),
+      production_tracking_status: 'blocked_until_durable_field_record_and_production_tracking_packet',
+    },
+    durable_field_record_draft_summary: {
+      file_name: durableFieldRecordDraftFileName(candidate),
+      ready_count: durableFieldRecordDraft.durable_record_draft_summary.ready_count,
+      needs_review_count: durableFieldRecordDraft.durable_record_draft_summary.needs_review_count,
+      blocked_count: durableFieldRecordDraft.durable_record_draft_summary.blocked_count,
+      summary: durableFieldRecordDraft.durable_record_draft_summary.summary,
+      durable_record_status: durableFieldRecordDraft.durable_record_draft_summary.durable_record_status,
+    },
+    proposed_production_tracking_packet: {
+      packet_kind: 'production_tracking_controls',
+      authority_status: 'not_admitted',
+      required_after: ['approval-first-row', 'project-import', 'field-authorization-and-assignment', 'schedule-status-controls', 'durable-field-record'],
+      required_before: ['customer-or-billing-reporting', 'payroll-export', 'customer-facing-completion-evidence'],
+      proposed_routes: {
+        production_quantity_update_route: 'not_admitted',
+        production_labor_update_route: 'not_admitted',
+        production_apparatus_update_route: 'not_admitted',
+        production_tracking_readback_route: 'not_admitted',
+        production_tracking_history_route: 'not_admitted',
+        lead_ops_route: '/lead-ops',
+        field_tech_route: '/field-tech',
+        pm_workfront_route: '/pm-review/workfront',
+      },
+      minimum_proof: [
+        'accepted approval row exists',
+        'imported project/workpackage/task/apparatus rows exist',
+        'field authorization and assignment proof exists',
+        'schedule/status controls proof exists',
+        'durable field record proof exists',
+        'production quantity, labor, apparatus, and progress contracts are approved',
+        'PM/lead production review, audit, readback, and reconciliation are proved',
+        'customer reporting, billing, payroll, and customer-facing completion evidence remain blocked unless separately admitted',
+      ],
+    },
+    production_items: productionItems,
+    proposed_packet_sequence: [
+      {
+        step: 'complete_durable_field_record_gate',
+        status: 'blocked',
+        detail: 'Complete approval, import, field authorization, assignment, schedule, status, and durable field record gates before production tracking writes can be considered.',
+      },
+      {
+        step: 'admit_production_quantity_contract',
+        status: 'blocked',
+        detail: 'Define quantity fields, units, validation, actor authority, idempotency, rollback posture, and readback.',
+      },
+      {
+        step: 'admit_labor_apparatus_progress_contract',
+        status: 'blocked',
+        detail: 'Define labor, apparatus, progress, exception, variance, PM/lead review, audit, and reconciliation rules.',
+      },
+      {
+        step: 'prove_hosted_readback_without_customer_reporting',
+        status: 'blocked',
+        detail: 'Prove production tracking reads and audit history without creating customer reports, billing exports, payroll exports, or customer-facing completion evidence.',
+      },
+      {
+        step: 'keep_customer_billing_payroll_and_completion_outputs_blocked',
+        status: 'blocked',
+        detail: 'Keep customer reporting, billing, payroll, and external completion evidence outputs blocked until later packets admit those surfaces.',
+      },
+    ],
+    authority_boundary: {
+      mutation_authority: 'not_admitted',
+      local_production_tracking_draft_only: true,
+      live_approval_post_performed: false,
+      approval_row_created: false,
+      project_import_performed: false,
+      field_authorization_created: false,
+      field_work_authorized: false,
+      lead_assignment_created: false,
+      crew_assignment_created: false,
+      schedule_plan_created: false,
+      status_change_performed: false,
+      schedule_status_route_created: false,
+      durable_field_record_route_created: false,
+      durable_field_record_created: false,
+      field_daily_record_created: false,
+      production_tracking_route_created: false,
+      production_tracking_performed: false,
+      production_quantity_created: false,
+      production_labor_created: false,
+      production_apparatus_progress_created: false,
+      customer_report_created: false,
+      billing_export_created: false,
+      payroll_export_created: false,
+      server_write_performed: false,
+    },
+    blocked_boundaries: Array.from(new Set([
+      ...durableFieldRecordDraft.blocked_boundaries,
+      'production_tracking_mutation_route',
+      'production_tracking_audit_write',
+      'production_tracking_readback_route',
+      'hosted_production_tracking_ui_controls',
+      'production_labor_tracking_write',
+      'production_apparatus_progress_write',
+      'customer_completion_evidence_export',
+      'payroll_export',
+    ])),
+  }
+}
+
 function buildImportExceptionRegisterExport(
   packet: IntakeWorkbenchPacket,
   importExceptionRegister: ImportExceptionRegisterItem[],
@@ -4780,6 +4978,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
   const [fieldAuthorizationAssignmentDraftStatus, setFieldAuthorizationAssignmentDraftStatus] = useState('')
   const [scheduleStatusControlsDraftStatus, setScheduleStatusControlsDraftStatus] = useState('')
   const [durableFieldRecordDraftStatus, setDurableFieldRecordDraftStatus] = useState('')
+  const [productionTrackingDraftStatus, setProductionTrackingDraftStatus] = useState('')
   const [approvalDryRunStatus, setApprovalDryRunStatus] = useState('')
   const [approvalDryRunPreview, setApprovalDryRunPreview] = useState('')
   const [reviewChecks, setReviewChecks] = useState<Record<string, boolean>>({})
@@ -4959,7 +5158,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
   const fieldPrepAgendaCount = fieldPrepAgendaCounts(fieldPrepConversationAgenda)
   const reviewOutputStatuses = [briefStatus, previewStatus, pmIntakeSnapshotStatus, exceptionRegisterStatus].filter(Boolean)
   const executorOutputStatuses = [handoffStatus].filter(Boolean)
-  const fieldPrepOutputStatuses = [fieldBriefStatus, fieldObservationStatus, fieldPrepCoverageStatus, fieldPrepAgendaStatus, fieldPrepPacketStatus, fieldStartPreflightStatus, fieldExecutionGateDesignStatus, leadFieldAssignmentDraftStatus, fieldAuthorizationAssignmentDraftStatus, scheduleStatusControlsDraftStatus, durableFieldRecordDraftStatus].filter(Boolean)
+  const fieldPrepOutputStatuses = [fieldBriefStatus, fieldObservationStatus, fieldPrepCoverageStatus, fieldPrepAgendaStatus, fieldPrepPacketStatus, fieldStartPreflightStatus, fieldExecutionGateDesignStatus, leadFieldAssignmentDraftStatus, fieldAuthorizationAssignmentDraftStatus, scheduleStatusControlsDraftStatus, durableFieldRecordDraftStatus, productionTrackingDraftStatus].filter(Boolean)
   const hasOutputStatuses = reviewOutputStatuses.length > 0 || executorOutputStatuses.length > 0 || fieldPrepOutputStatuses.length > 0
 
   useEffect(() => {
@@ -5379,6 +5578,16 @@ export default function ProjectMinerIntakeWorkbenchPage() {
     setDurableFieldRecordDraftStatus(`Durable field record draft prepared from ${candidate?.candidate_id || 'the current intake packet'} without a server write.`)
   }
 
+  function exportProductionTrackingDraft() {
+    if (!packet) {
+      return
+    }
+
+    const draft = buildProductionTrackingDraftExport(packet, fieldPrepQueue, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, notAllowed, futureRoute, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad)
+    downloadTextFile(productionTrackingDraftFileName(candidate), `${JSON.stringify(draft, null, 2)}\n`, 'application/json')
+    setProductionTrackingDraftStatus(`Production tracking draft prepared from ${candidate?.candidate_id || 'the current intake packet'} without a server write.`)
+  }
+
   return (
     <main className="shell-page pm-review-page">
       <section className="hero-card pm-review-hero">
@@ -5547,6 +5756,9 @@ export default function ProjectMinerIntakeWorkbenchPage() {
                 </button>
                 <button className="btn btn-outline" onClick={exportDurableFieldRecordDraft} disabled={!packet}>
                   Export Durable Field Record Draft
+                </button>
+                <button className="btn btn-outline" onClick={exportProductionTrackingDraft} disabled={!packet}>
+                  Export Production Tracking Draft
                 </button>
               </div>
             </section>
