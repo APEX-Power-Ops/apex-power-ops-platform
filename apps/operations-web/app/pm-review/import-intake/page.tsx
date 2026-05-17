@@ -419,6 +419,8 @@ type FieldStartBringBackSummaryTriageStripItem = {
   detail: string
 }
 
+type FieldStartBringBackDetailJumpRailItem = FieldStartBringBackSummaryTriageStripItem
+
 type FieldStartSourceReviewBringBackLensStatus = 'check' | 'review' | 'context' | 'blocked'
 
 type FieldStartSourceReviewBringBackLensItem = {
@@ -2840,6 +2842,43 @@ function buildFieldStartBringBackSummaryTriageStrip(
         : 'No later bounded packet candidate context is captured yet; if one returns, classify the packet question without creating work here.',
     },
   ]
+}
+
+function buildFieldStartBringBackDetailJumpRail(
+  summaryItems: FieldStartBringBackSummaryTriageStripItem[],
+): FieldStartBringBackDetailJumpRailItem[] {
+  return summaryItems.map((item) => {
+    if (item.id === 'source-review-summary-triage') {
+      return {
+        ...item,
+        id: 'source-review-detail-jump',
+        title: 'Open source review lens',
+        detail: 'Jump to the source review lens for drawing, workbook, site note, observer/source, or work-area context only.',
+      }
+    }
+    if (item.id === 'customer-site-summary-triage') {
+      return {
+        ...item,
+        id: 'customer-site-detail-jump',
+        title: 'Open customer/site clarification lens',
+        detail: 'Jump to the customer/site clarification lens for access, shutdown, escort, contact, safety, or constraint review only.',
+      }
+    }
+    if (item.id === 'lead-resource-summary-triage') {
+      return {
+        ...item,
+        id: 'lead-resource-detail-jump',
+        title: 'Open lead/resource clarification lens',
+        detail: 'Jump to the lead/resource clarification lens for lead, crew, material, equipment, staging, or resource review only.',
+      }
+    }
+    return {
+      ...item,
+      id: 'later-packet-detail-jump',
+      title: 'Open later packet candidate lens',
+      detail: 'Jump to the later bounded packet candidate lens only to classify whether a later bounded packet is needed; do not create that packet here.',
+    }
+  })
 }
 
 function buildFieldStartSourceReviewBringBackLens(
@@ -7753,6 +7792,10 @@ export default function ProjectMinerIntakeWorkbenchPage() {
     () => buildFieldStartBringBackSummaryTriageStrip(candidate, fieldQuestionsDraft, fieldObservationScratchpad),
     [candidate, fieldQuestionsDraft, fieldObservationScratchpad],
   )
+  const fieldStartBringBackDetailJumpRail = useMemo(
+    () => buildFieldStartBringBackDetailJumpRail(fieldStartBringBackSummaryTriageStrip),
+    [fieldStartBringBackSummaryTriageStrip],
+  )
   const fieldStartBringBackReviewQueue = useMemo(
     () => buildFieldStartBringBackReviewQueue(candidate, fieldQuestionsDraft, fieldObservationScratchpad),
     [candidate, fieldQuestionsDraft, fieldObservationScratchpad],
@@ -8985,6 +9028,37 @@ export default function ProjectMinerIntakeWorkbenchPage() {
                 </a>
               ))}
             </div>
+          </section>
+          <section id="pm-field-start-bring-back-detail-jump-rail" aria-label="Local field-start bring-back detail jump rail" className="card" style={{ padding: '0.9rem', marginTop: '0.85rem', boxShadow: 'none' }}>
+            <div className="status-row" style={{ alignItems: 'start' }}>
+              <div>
+                <h3 style={{ margin: 0 }}>Local Field Start Bring-Back Detail Jump Rail</h3>
+                <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+                  Compact read-only jump rail from the summary triage strip to the exact bring-back detail lens. It only navigates within this browser-local review panel; it creates no meeting note, localStorage key, export artifact, backend route, task, action item, owner, due date, assignment, schedule/status write, customer commitment, customer report, field instruction, durable record, production tracking row, hosted write claim, or production write, and exposes no buttons.
+                </p>
+              </div>
+              <span className="status-pill status-awaiting-values">detail jumps</span>
+            </div>
+            <nav aria-label="Local field-start bring-back detail jump rail links" style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
+              {fieldStartBringBackDetailJumpRail.map((item) => (
+                <a
+                  key={item.id}
+                  className="card"
+                  href={item.href}
+                  style={{ color: 'inherit', display: 'block', padding: '0.85rem', textDecoration: 'none', boxShadow: 'none' }}
+                >
+                  <div className="status-row" style={{ alignItems: 'start' }}>
+                    <div>
+                      <p style={{ margin: 0 }}>
+                        <strong>{item.title}</strong>
+                      </p>
+                      <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
+                    </div>
+                    <span className={`status-pill ${fieldStartBringBackSummaryTriageStripTone(item.status)}`}>{formatLabel(item.status)}</span>
+                  </div>
+                </a>
+              ))}
+            </nav>
           </section>
           <section id="pm-field-start-bring-back-review-queue" aria-label="Local field-start bring-back review queue" className="card" style={{ padding: '0.9rem', marginTop: '0.85rem', boxShadow: 'none' }}>
             <div className="status-row" style={{ alignItems: 'start' }}>
