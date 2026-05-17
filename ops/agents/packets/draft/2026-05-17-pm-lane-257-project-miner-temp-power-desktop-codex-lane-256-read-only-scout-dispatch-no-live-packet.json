@@ -1,0 +1,56 @@
+{
+  "packet_id": "2026-05-17-pm-lane-257-project-miner-temp-power-desktop-codex-lane-256-read-only-scout-dispatch-no-live-packet",
+  "title": "PM Lane 257 - Project Miner Temp Power Desktop Codex Lane 256 Read-Only Scout Dispatch No-Live Packet",
+  "date": "2026-05-17",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_DESKTOP_CODEX_LANE_256_READ_ONLY_SCOUT_DISPATCH_NO_LIVE",
+  "selected_outcome": "DESKTOP_CODEX_PM_LANE_256_SCOUT_QUEUED_WITH_CLOSEOUT_ONLY_WRITE_NO_LIVE",
+  "active_warning_gate": {
+    "warning_code": "PROJECT_DATA_ENTRY_FORMULA_ERRORS",
+    "valid_pm_lane_238_label_present": false,
+    "warning_disposition_changed": false,
+    "mutation_authority": "not_admitted"
+  },
+  "desktop_codex_dispatch": {
+    "prompt_path": "ops/agents/handoffs/2026-05-17-desktop-codex-pm-lane-256-state-review-next-move-selector-scout-prompt.md",
+    "expected_closeout_path": "ops/agents/handoffs/2026-05-17-desktop-codex-pm-lane-256-state-review-next-move-selector-scout-closeout.md",
+    "authority_band": "Band A PM support under VS Code Codex technical authority",
+    "allowed_write_paths": [
+      "ops/agents/handoffs/2026-05-17-desktop-codex-pm-lane-256-state-review-next-move-selector-scout-closeout.md"
+    ],
+    "forbidden_scope": [
+      "PM decision authority",
+      "product code edit",
+      "repo publication",
+      "hosted service access",
+      "workbook content read",
+      "source PDF content read",
+      "macro execution",
+      "warning acceptance",
+      "resource assignment",
+      "schedule/status mutation",
+      "approval/import authority",
+      "business-state mutation"
+    ],
+    "required_closeout_statuses": [
+      "READY_FOR_VSCODE_REVIEW",
+      "READY_FOR_JASON_DECISION",
+      "BLOCKED_CAPABILITY_GAP",
+      "ABORTED_SCOPE_WIDENING"
+    ]
+  },
+  "required_pm_lane_238_labels": [
+    "ACCEPT_DATA_ENTRY_WARNING_NON_BLOCKING_NO_LIVE",
+    "REQUEST_DATA_ENTRY_WORKBOOK_CORRECTION_NO_LIVE",
+    "HOLD_DATA_ENTRY_WARNING_NO_LIVE",
+    "PROVIDE_EXACT_LIVE_ADMISSION_LATER"
+  ],
+  "validation": [
+    "packet JSON parse",
+    "dispatch text search",
+    "queue text search",
+    "marker-token scan",
+    "corrupted-token scan",
+    "git diff --check"
+  ],
+  "validation_result": "PASS"
+}

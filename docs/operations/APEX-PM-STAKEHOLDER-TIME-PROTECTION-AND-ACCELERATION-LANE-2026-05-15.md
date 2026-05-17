@@ -916,6 +916,8 @@ PM Lane 255 moves that same no-live source/resource question-prep context into t
 
 PM Lane 256 records the post-Lane 255 PM lane state and selects the next safe posture without adding more workbench UI. The active `PROJECT_DATA_ENTRY_FORMULA_ERRORS` warning remains open until exactly one PM Lane 238 Data Entry label is returned, PM Lanes 240 through 255 already make the current decision/context cues visible, and additional display-only workbench cues are paused unless fresh scan-burden evidence appears. The next PM move is either exact-label intake in a later no-live packet or no-code review-control work only.
 
+PM Lane 257 queues the PM Lane 256 Desktop Codex support prompt as a governed read-only scout. Desktop Codex may write exactly one closeout handoff, may review clarity, relay burden, cue saturation, and authority boundary only, and still may not choose a PM Lane 238 label, accept warnings, approve rows, import project data, assign resources, mutate schedule/status, or create customer/business commitments.
+
 The success standard is not just technical correctness. The candidate must reduce Jason's review burden by showing:
 
 1. what the system thinks the project is,

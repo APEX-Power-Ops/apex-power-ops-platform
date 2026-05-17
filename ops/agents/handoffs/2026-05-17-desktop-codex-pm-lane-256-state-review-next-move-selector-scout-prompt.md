@@ -23,6 +23,14 @@ Status surfaces:
 3. `docs/operations/APEX-PM-TEMP-POWER-DELIVERY-AND-ORCHESTRATION-PLAN-2026-05-15.md`
 4. `docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md`
 
+## Allowed Write
+
+Create exactly one closeout file:
+
+`ops/agents/handoffs/2026-05-17-desktop-codex-pm-lane-256-state-review-next-move-selector-scout-closeout.md`
+
+Do not edit any other file.
+
 ## Questions To Answer
 
 1. Does PM Lane 256 correctly keep `PROJECT_DATA_ENTRY_FORMULA_ERRORS` open until exactly one PM Lane 238 label is returned?
@@ -33,4 +41,4 @@ Status surfaces:
 
 ## Guardrails
 
-Read only. Do not edit product code, tests, docs, packet files, or handoffs. Do not open hosted services. Do not read source workbook contents. Do not read source PDF contents. Do not run workbook macros. Do not stage, commit, or push. Do not choose or infer a PM Lane 238 Data Entry label. Do not assign resources, change schedule/status, make procurement/rental commitments, create customer commitments, approve rows, import project rows, or mutate business state.
+Read only except for the single closeout file named above. Do not edit product code, tests, docs, packet files, or any other handoffs. Do not open hosted services. Do not read source workbook contents. Do not read source PDF contents. Do not run workbook macros. Do not stage, commit, or push. Do not choose or infer a PM Lane 238 Data Entry label. Do not assign resources, change schedule/status, make procurement/rental commitments, create customer commitments, approve rows, import project rows, or mutate business state.

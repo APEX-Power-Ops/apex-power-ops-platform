@@ -996,6 +996,8 @@ PM Lane 255 executes the Project Miner Temp Power Source Resource Daily Question
 
 PM Lane 256 executes the Project Miner Temp Power PM Lane State Review And Next Move Selector No-Live Packet tranche. The workflow now records that PM Lanes 240 through 255 already surface the current Project Data Entry decision/context cues and source/resource question-prep cues, so additional display-only workbench cues are paused unless fresh scan-burden evidence appears. The active `PROJECT_DATA_ENTRY_FORMULA_ERRORS` gate remains open until exactly one PM Lane 238 Data Entry label is returned, and the next safe PM move is exact-label intake or no-code review-control work only. This does not add product code, source access, source writeback, resource assignment, schedule/status mutation, procurement/rental commitment, customer commitment, warning acceptance, approval row, project import, hosted access, Desktop Codex PM decision authority, or autonomous AI business-state mutation.
 
+PM Lane 257 executes the Project Miner Temp Power Desktop Codex Lane 256 Read-Only Scout Dispatch No-Live Packet tranche. The workflow now queues Desktop Codex PM support for the Lane 256 state selector with exactly one closeout handoff write allowed and no other file edits. Desktop Codex may review clarity, relay burden, cue saturation, and authority boundary only; it may not choose a PM Lane 238 label, accept warnings, approve rows, import project data, assign resources, mutate schedule/status, access hosted services, read workbook/PDF contents, run macros, or mutate business state.
+
 Level 3 - Resource Context:
 Read equipment inventory and technician capability rows so PM can understand whether the project can be staffed with available people and equipment.
 

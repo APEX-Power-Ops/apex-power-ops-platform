@@ -29,6 +29,14 @@ Desktop Codex does not own final repo integration, PM business-state decisions, 
 | TCC | Produce a scout packet that maps requirements, interfaces, dependencies, and integration risks | Band A | Desktop Codex or sidecar executor | A future lane-owned handoff only unless separately admitted | Shared service contract changes, schema, API, auth, deployment, production workflow, credentials | Requirements map, interface map, dependency/risk list | VS Code Codex architecture review at integration boundary | HOLD_NOT_ADMITTED until NETA comparative audit proof is accepted or Jason reprioritizes TCC | Wait for NETA comparative audit closeout before default assignment | Conditional |
 | Relay | Measure relay burden and improve handoff/prompt governance without admitting autonomous runtime | Band A/B | Desktop Codex or sidecar executor | `ops/agents/handoffs/2026-05-17-desktop-codex-relay-review-burden-closeout.md` only | Autonomous queue ownership, new MCP services, always-on runtime, controller widening, credentials | Burden observations, template recommendations, stop-condition checklist | VS Code Codex review before orchestration widening | Accepted by VS Code Codex | Use closeout recommendation to admit NETA next | Required before widening |
 
+## PM Support Dispatch Register
+
+Desktop Codex PM support remains subordinate to VS Code Codex technical authority. PM support dispatches are not non-PM orchestration governance and do not grant PM decision authority.
+
+| Support Item | Objective | Authority Band | Executor | Allowed Writes | Forbidden Surfaces | Validation Evidence | Approval Gate | Status | Next Decision | VS Code Review |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| PM-256-SCOUT | Review PM Lane 256 state selector for exact-label gate clarity, cue-saturation risk, relay-burden reduction, and authority-boundary risk | Band A PM support | Desktop Codex support only | `ops/agents/handoffs/2026-05-17-desktop-codex-pm-lane-256-state-review-next-move-selector-scout-closeout.md` only | Product code, tests, docs, packet files, other handoffs, hosted services, workbook/PDF content, macros, PM decisions, warning acceptance, approval/import, resources, schedule/status, business-state mutation | PM Lane 257 packet and closeout, prompt guardrail update, queue registration | VS Code Codex review after closeout | READY_FOR_JASON_DECISION for Desktop Codex dispatch | Run the PM Lane 256 read-only scout or leave parked | Required |
+
 ## Desktop Codex Stop Conditions
 
 Desktop Codex must stop and return `ABORTED_SCOPE_WIDENING` or `BLOCKED_CAPABILITY_GAP` if work attempts to:
