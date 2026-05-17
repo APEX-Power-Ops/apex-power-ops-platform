@@ -871,6 +871,8 @@ PM Lane 178 executes the local Field Readiness Checklist Grouping tranche. The L
 PM Lane 233 continues the Project Miner PM lane under technical-authority continuation rules. It identifies the only current Temp Power candidate warning without asking Jason for premature review: source row 28 / `miner-line-015`, section `7.13`, `Ground Resistance Test - Two-Point (Lot)`, drawing reference `E01-00, E01-01, E01-02`, and 24 total hours has no explicit designation. The remaining ask is now a real PM judgment only: accept the warning as non-blocking, request source correction, hold no-live, or provide a later exact live admission phrase.
 
 PM Lane 234 turns that narrowed PM judgment into a one-screen Jason decision card while preserving VS Code Codex PM authority. The only allowed responses are `ACCEPT_WARNING_NON_BLOCKING_NO_LIVE`, `REQUEST_SOURCE_CORRECTION_NO_LIVE`, `HOLD_NO_LIVE`, and `PROVIDE_EXACT_LIVE_ADMISSION_LATER`. A Desktop Codex support prompt is authored only for clarity and relay-burden review, with no PM decision authority, no repo publication authority, and no hosted/source-content/write authority.
+
+PM Lane 235 intakes the current continuation instruction against that decision card and records that no allowed Jason response label is present yet. The decision card remains open, the source row 28 / `miner-line-015` `MISSING_DESIGNATIONS` warning remains not accepted, not corrected, and not live-admitted, and Desktop Codex remains limited to optional clarity and relay-burden review only.
 The success standard is not just technical correctness. The candidate must reduce Jason's review burden by showing:
 
 1. what the system thinks the project is,
