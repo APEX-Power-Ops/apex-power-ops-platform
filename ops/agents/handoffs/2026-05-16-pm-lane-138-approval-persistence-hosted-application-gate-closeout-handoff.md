@@ -220,7 +220,7 @@ PASS
 
 None for PM Lane 138.
 
-The Apex-specific bounded Supabase MCP credential should be refreshed separately so future read-only SQL proof can use the bounded connector again. The native Supabase connector is working.
+Post-closeout note: the Apex-specific bounded Supabase MCP credential maintenance gap was resolved later on 2026-05-16 by aligning the existing `apex-platform-control-plane-api` Render `DATABASE_URL` runtime credential with the freshly rotated Supabase session-pooler credential already proven on mutation-seam. Verification after the deploy returned a successful bounded read-only SQL probe and the PM Lane 138 schema tuple: approval table present, update trigger present, delete trigger present, approval record count `0`.
 
 ## Guardrails Confirmed
 
