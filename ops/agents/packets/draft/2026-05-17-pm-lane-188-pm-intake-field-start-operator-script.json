@@ -1,0 +1,50 @@
+{
+  "packet_id": "2026-05-17-pm-lane-188",
+  "title": "PM Lane 188 - PM Intake Field Start Operator Script",
+  "lane": "PM lane development",
+  "status": "completed",
+  "owner": "VS Code Codex",
+  "authority": "repo technical authority; PM lane implementation authority; final integration authority",
+  "date": "2026-05-17",
+  "objective": "Expose a phone-friendly, browser-local field-start operator script inside the PM intake workbench so Jason can run the morning-of Temp Power field-start conversation from existing local prep state without creating a new artifact, route, storage key, hosted call, or write path.",
+  "scope": [
+    "Added a `Local Field Start Operator Script` panel to the Daily Action panels on `/pm-review/import-intake`.",
+    "Derived five operator-script rows from existing field-start preflight, field-prep queue, coverage, agenda, field questions, and field observation state.",
+    "Covered field-start posture, source/access question check, queue/coverage/agenda walk, context-export reminder, and stop-line boundary.",
+    "Linked each row to the existing local review surface it references instead of adding new controls or exports.",
+    "Extended the focused read-only PM import-intake smoke to prove desktop presence, mobile `390x844` visibility, initial and populated states, five links, zero mutation calls, and no operator-script disclosure storage key.",
+    "Used a read-only sidecar to define the operator-script placement and proof criteria while VS Code Codex retained PM implementation and final integration authority."
+  ],
+  "guardrails": [
+    "No hosted service access.",
+    "No Supabase, Render, Vercel, or Olares product action.",
+    "No SQL or schema migration.",
+    "No browser approval button, approval POST wiring, approval submission, or approval-row creation.",
+    "No project import mutation.",
+    "No new export action, filename, payload version, localStorage schema, backend route, handler, service/auth/ingress change, or autonomous AI business-state mutation.",
+    "No field authorization, lead or crew assignment, schedule/status write, durable field record, production tracking, customer report, completion evidence, billing, payroll, invoice, accounting, or external finance-system write.",
+    "No workbook macro or writeback."
+  ],
+  "changed_files": [
+    "apps/operations-web/app/pm-review/import-intake/page.tsx",
+    "apps/operations-web/tests/browser-shell.pm-import-intake.smoke.spec.ts",
+    "PROJECT_STATUS.md",
+    "docs/operations/APEX-PM-STAKEHOLDER-TIME-PROTECTION-AND-ACCELERATION-LANE-2026-05-15.md",
+    "docs/operations/APEX-PM-TEMP-POWER-DELIVERY-AND-ORCHESTRATION-PLAN-2026-05-15.md",
+    "docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md",
+    "ops/agents/packets/draft/2026-05-17-pm-lane-188-pm-intake-field-start-operator-script.json",
+    "ops/agents/handoffs/2026-05-17-pm-lane-188-pm-intake-field-start-operator-script-handoff.md"
+  ],
+  "validation": [
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform\" --filter @apex/operations-web typecheck",
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform\" --filter @apex/operations-web build",
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform/apps/operations-web\" exec playwright test \"browser-shell.pm-import-intake.smoke.spec.ts\"",
+    "Get-Content -LiteralPath \"C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-17-pm-lane-188-pm-intake-field-start-operator-script.json\" | ConvertFrom-Json | Select-Object -ExpandProperty packet_id",
+    "rg -n \"PM Lane 188|Local Field Start Operator Script|fieldStartOperatorScript|pm-field-start-operator-script|field-start operator script|operator-script storage|mutationRequests\\)\\.toHaveLength\\(0\\)\" PROJECT_STATUS.md docs/operations ops/agents apps/operations-web",
+    "git diff --check"
+  ],
+  "validation_result": "PASS - operations-web typecheck passed; operations-web production build passed with /pm-review/import-intake in the route output; focused Playwright pm import-intake smoke passed cleanly with the Local Field Start Operator Script, 390x844 mobile proof, five script links, no operator-script disclosure storage key, and zero mutation calls; packet JSON parsed; PM Lane 188 guardrail rg passed; git diff --check passed with only expected LF-to-CRLF warnings on touched and unrelated files.",
+  "sidecar_result": "Read-only sidecar Chandrasekhar recommended exposing the existing field-start preflight context as an on-page Daily Action operator script, proving the `390x844` mobile path, keeping five script rows, and adding no export, localStorage key, backend route, handler, hosted call, or write path.",
+  "next_recommended_lane": "PM Lane 189 - PM Intake Field Start Stop-Line Quick Review",
+  "execution_result": "PASS"
+}

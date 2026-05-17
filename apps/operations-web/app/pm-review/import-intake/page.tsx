@@ -349,6 +349,16 @@ type DailyReviewScriptItem = {
   detail: string
 }
 
+type FieldStartOperatorScriptStatus = 'say-now' | 'check' | 'export' | 'blocked'
+
+type FieldStartOperatorScriptItem = {
+  id: string
+  title: string
+  status: FieldStartOperatorScriptStatus
+  href: string
+  detail: string
+}
+
 type OutputSelectorStatus = 'available-context' | 'needs-local-context' | 'field-context' | 'blocked'
 
 type OutputSelectorItem = {
@@ -951,6 +961,11 @@ function dailyReviewScriptTone(status: DailyReviewScriptStatus) {
   if (status === 'context') return 'status-configured'
   if (status === 'blocked') return 'status-deferred'
   return 'status-awaiting-values'
+}
+
+function fieldStartOperatorScriptTone(status: FieldStartOperatorScriptStatus) {
+  if (status === 'say-now' || status === 'check' || status === 'export') return 'status-configured'
+  return 'status-deferred'
 }
 
 function outputSelectorTone(status: OutputSelectorStatus) {
@@ -2271,6 +2286,68 @@ function buildPmIntakeDailyReviewScript(
       status: 'blocked',
       href: '#approval-readiness',
       detail: `${closeoutCheckedCount} of ${CLOSEOUT_CHECKLIST_ITEMS.length} local closeout evidence checks are marked; ${blockedPersistenceGateCount} of ${persistenceReadinessGates.length} approval-persistence gates remain blocked and project import remains ${formatLabel(admissionAuthority)}.`,
+    },
+  ]
+}
+
+function buildFieldStartOperatorScript(
+  candidate: CandidatePayload | undefined,
+  fieldStartPreflight: ReturnType<typeof buildFieldStartPreflightExport> | null,
+  fieldPrepQueue: OperatingQueueItem[],
+  fieldPrepCoverageSnapshot: FieldPrepCoverageItem[],
+  fieldPrepConversationAgenda: FieldPrepAgendaItem[],
+  fieldQuestionsDraft: FieldQuestionsDraft,
+  fieldObservationScratchpad: FieldObservationScratchpad,
+): FieldStartOperatorScriptItem[] {
+  const projectName = candidate?.project?.name || candidate?.candidate_id || 'current Project Miner candidate'
+  const completeFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'complete').length
+  const nextFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'next').length
+  const blockedFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'blocked').length
+  const nextFieldPrepMove = fieldPrepQueue.find((item) => item.status === 'next') || fieldPrepQueue.find((item) => item.status === 'blocked')
+  const fieldPrepCoverageCount = fieldPrepCoverageCounts(fieldPrepCoverageSnapshot)
+  const fieldPrepAgendaCount = fieldPrepAgendaCounts(fieldPrepConversationAgenda)
+  const fieldQuestionsPresent = hasFieldQuestionsDraftContent(fieldQuestionsDraft)
+  const fieldObservationsPresent = hasFieldObservationScratchpadContent(fieldObservationScratchpad)
+  const preflightSummary = fieldStartPreflight?.preflight_summary.summary || 'field-start preflight pending'
+  const fieldStartStatus = fieldStartPreflight?.preflight_summary.field_start_status || 'not_admitted'
+
+  return [
+    {
+      id: 'say-field-start-posture',
+      title: 'Say field-start posture',
+      status: 'say-now',
+      href: '#field-prep',
+      detail: `${projectName}: field-start preflight is ${preflightSummary}; field start authority remains ${formatLabel(fieldStartStatus)}.`,
+    },
+    {
+      id: 'check-source-access-questions',
+      title: 'Check source and access questions',
+      status: fieldQuestionsPresent ? 'check' : 'blocked',
+      href: '#field-prep',
+      detail: fieldQuestionsPresent
+        ? 'Use captured drawing/source and access/safety questions before field reliance.'
+        : 'Capture drawing/source and access/safety questions before field reliance.',
+    },
+    {
+      id: 'walk-queue-coverage-agenda',
+      title: 'Walk queue, coverage, and agenda',
+      status: nextFieldPrepMove?.status === 'blocked' ? 'blocked' : 'check',
+      href: '#field-prep',
+      detail: `Field prep queue: ${completeFieldPrepQueueCount} complete / ${nextFieldPrepQueueCount} next / ${blockedFieldPrepQueueCount} blocked. Coverage: ${fieldPrepCoverageSummary(fieldPrepCoverageCount)}. Agenda: ${fieldPrepAgendaSummary(fieldPrepAgendaCount)}.`,
+    },
+    {
+      id: 'export-context-only',
+      title: 'Export context only',
+      status: 'export',
+      href: '#pm-output-selector',
+      detail: `Use ${fieldStartPreflightFileName(candidate)} or ${fieldPrepPacketFileName(candidate)} as local conversation context; do not treat exports as authorization.`,
+    },
+    {
+      id: 'stop-line-before-field-authority',
+      title: 'Stop line before field authority',
+      status: 'blocked',
+      href: '#guardrails',
+      detail: `Do not approve, import, authorize field work, assign crews, schedule/status work, create durable field records, or start production tracking from this workbench. Field observations present: ${fieldObservationsPresent ? 'yes' : 'no'}.`,
     },
   ]
 }
@@ -6938,6 +7015,14 @@ export default function ProjectMinerIntakeWorkbenchPage() {
     () => groupFieldPrepConversationAgendaItems(fieldPrepConversationAgenda),
     [fieldPrepConversationAgenda],
   )
+  const fieldStartPreflight = useMemo(
+    () => packet ? buildFieldStartPreflightExport(packet, fieldPrepQueue, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, notAllowed, futureRoute, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad) : null,
+    [packet, fieldPrepQueue, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, notAllowed, futureRoute, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad],
+  )
+  const fieldStartOperatorScript = useMemo(
+    () => buildFieldStartOperatorScript(candidate, fieldStartPreflight, fieldPrepQueue, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, fieldQuestionsDraft, fieldObservationScratchpad),
+    [candidate, fieldStartPreflight, fieldPrepQueue, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, fieldQuestionsDraft, fieldObservationScratchpad],
+  )
   const pmIntakeSnapshot = useMemo(
     () => buildPmIntakeSnapshot(persistenceReadinessGates, operatingQueue, importExceptionRegister, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, closeoutChecks, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad, approvalDraft),
     [persistenceReadinessGates, operatingQueue, importExceptionRegister, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, closeoutChecks, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad, approvalDraft],
@@ -7964,6 +8049,38 @@ export default function ProjectMinerIntakeWorkbenchPage() {
           </div>
         </details>
 
+        <details open id="pm-field-start-operator-script" aria-label="Local field start operator script" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
+          <summary className="status-row" style={{ cursor: 'pointer' }}>
+            <h2 style={{ margin: 0 }}>Local Field Start Operator Script</h2>
+            <span className="status-pill status-awaiting-values">browser-local</span>
+          </summary>
+          <div aria-label="Local field start operator script controls">
+            <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+              Morning-of field-start conversation script derived from existing local prep state. It creates no localStorage key, export artifact, backend route, task, issue, field authorization, assignment, schedule/status change, durable field record, production tracking row, hosted write claim, or production write.
+            </p>
+            <div style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
+              {fieldStartOperatorScript.map((item) => (
+                <a
+                  key={item.id}
+                  className="card"
+                  href={item.href}
+                  style={{ color: 'inherit', display: 'block', padding: '0.85rem', textDecoration: 'none', boxShadow: 'none' }}
+                >
+                  <div className="status-row" style={{ alignItems: 'start' }}>
+                    <div>
+                      <p style={{ margin: 0 }}>
+                        <strong>{item.title}</strong>
+                      </p>
+                      <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
+                    </div>
+                    <span className={`status-pill ${fieldStartOperatorScriptTone(item.status)}`}>{formatLabel(item.status)}</span>
+                  </div>
+                </a>
+              ))}
+            </div>
+          </div>
+        </details>
+
         <details open id="pm-start-here" aria-label="Local PM intake start here" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
           <summary className="status-row" style={{ cursor: 'pointer' }}>
             <h2 style={{ margin: 0 }}>Local PM Intake Start Here</h2>
@@ -8363,7 +8480,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
         </details>
 
         <details open aria-label="Exception review and PM decision detail" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
-          <summary style={{ cursor: 'pointer' }}>
+            <summary style={{ cursor: 'pointer' }}>
             <h2 style={{ display: 'inline', margin: 0 }}>Exception Review and PM Decisions</h2>
           </summary>
           <div aria-label="Exception review and PM decision detail controls">
@@ -8797,7 +8914,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
 
           </details>
           <details open aria-label="Field prep detail panels" style={{ display: 'grid', gap: '0.75rem' }}>
-            <summary style={{ cursor: 'pointer' }}>
+          <summary style={{ cursor: 'pointer' }}>
               <h2 style={{ display: 'inline', margin: 0 }}>Field Prep Detail</h2>
             </summary>
 
