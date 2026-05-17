@@ -9039,67 +9039,82 @@ export default function ProjectMinerIntakeWorkbenchPage() {
               <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
                 Browser-local observation notes for PM, lead, and field conversations. These notes do not create tasks, issues, work authorization, assignments, schedules, status updates, approval records, imports, or production writes.
               </p>
-              <div className="notes-grid" style={{ marginTop: '0.85rem' }}>
-                <label className="card" style={{ display: 'grid', gap: '0.45rem', padding: '0.85rem', boxShadow: 'none' }}>
-                  <strong>Observation date or shift note</strong>
-                  <textarea
-                    value={fieldObservationScratchpad.observation_date_or_shift}
-                    onChange={(event) => updateFieldObservationScratchpad({ observation_date_or_shift: event.target.value })}
-                    rows={3}
-                    placeholder="Capture the date, shift, or conversation timing for local field-prep context."
-                    style={{ width: '100%', resize: 'vertical', minHeight: '5rem' }}
-                  />
-                </label>
-                <label className="card" style={{ display: 'grid', gap: '0.45rem', padding: '0.85rem', boxShadow: 'none' }}>
-                  <strong>Observer / source</strong>
-                  <textarea
-                    value={fieldObservationScratchpad.observer_source}
-                    onChange={(event) => updateFieldObservationScratchpad({ observer_source: event.target.value })}
-                    rows={3}
-                    placeholder="Capture who provided the local observation, such as PM, lead, customer, or field contact."
-                    style={{ width: '100%', resize: 'vertical', minHeight: '5rem' }}
-                  />
-                </label>
-                <label className="card" style={{ display: 'grid', gap: '0.45rem', padding: '0.85rem', boxShadow: 'none' }}>
-                  <strong>Workpackage or area reference</strong>
-                  <textarea
-                    value={fieldObservationScratchpad.workpackage_area_reference}
-                    onChange={(event) => updateFieldObservationScratchpad({ workpackage_area_reference: event.target.value })}
-                    rows={3}
-                    placeholder="Capture the workpackage, apparatus group, room, yard, or area being discussed."
-                    style={{ width: '100%', resize: 'vertical', minHeight: '5rem' }}
-                  />
-                </label>
-                <label className="card" style={{ display: 'grid', gap: '0.45rem', padding: '0.85rem', boxShadow: 'none' }}>
-                  <strong>Access and safety observations</strong>
-                  <textarea
-                    value={fieldObservationScratchpad.access_safety_observations}
-                    onChange={(event) => updateFieldObservationScratchpad({ access_safety_observations: event.target.value })}
-                    rows={4}
-                    placeholder="Capture access, escort, PPE, LOTO, energization, or safety conversation notes without creating a field record."
-                    style={{ width: '100%', resize: 'vertical', minHeight: '6rem' }}
-                  />
-                </label>
-                <label className="card" style={{ display: 'grid', gap: '0.45rem', padding: '0.85rem', boxShadow: 'none' }}>
-                  <strong>Material, staging, or equipment observations</strong>
-                  <textarea
-                    value={fieldObservationScratchpad.material_equipment_observations}
-                    onChange={(event) => updateFieldObservationScratchpad({ material_equipment_observations: event.target.value })}
-                    rows={4}
-                    placeholder="Capture material, staging, laydown, receiving, equipment, tooling, or rental notes without assigning resources."
-                    style={{ width: '100%', resize: 'vertical', minHeight: '6rem' }}
-                  />
-                </label>
-                <label className="card" style={{ display: 'grid', gap: '0.45rem', padding: '0.85rem', boxShadow: 'none' }}>
-                  <strong>Open questions / PM follow-up</strong>
-                  <textarea
-                    value={fieldObservationScratchpad.open_questions_pm_followup}
-                    onChange={(event) => updateFieldObservationScratchpad({ open_questions_pm_followup: event.target.value })}
-                    rows={4}
-                    placeholder="Capture follow-up questions for PM review or a later bounded packet."
-                    style={{ width: '100%', resize: 'vertical', minHeight: '6rem' }}
-                  />
-                </label>
+              <div aria-label="Local field observation scratchpad groups" className="notes-grid" style={{ marginTop: '0.85rem' }}>
+                <section aria-label="Source And Area Observation field observation group">
+                  <h3 style={{ fontSize: '0.95rem', margin: '0 0 0.65rem' }}>Source And Area Observation</h3>
+                  <div aria-label="Source And Area Observation field observation items" style={{ display: 'grid', gap: '0.75rem' }}>
+                    <label className="card" style={{ display: 'grid', gap: '0.45rem', padding: '0.85rem', boxShadow: 'none' }}>
+                      <strong>Observation date or shift note</strong>
+                      <textarea
+                        value={fieldObservationScratchpad.observation_date_or_shift}
+                        onChange={(event) => updateFieldObservationScratchpad({ observation_date_or_shift: event.target.value })}
+                        rows={3}
+                        placeholder="Capture the date, shift, or conversation timing for local field-prep context."
+                        style={{ width: '100%', resize: 'vertical', minHeight: '5rem' }}
+                      />
+                    </label>
+                    <label className="card" style={{ display: 'grid', gap: '0.45rem', padding: '0.85rem', boxShadow: 'none' }}>
+                      <strong>Observer / source</strong>
+                      <textarea
+                        value={fieldObservationScratchpad.observer_source}
+                        onChange={(event) => updateFieldObservationScratchpad({ observer_source: event.target.value })}
+                        rows={3}
+                        placeholder="Capture who provided the local observation, such as PM, lead, customer, or field contact."
+                        style={{ width: '100%', resize: 'vertical', minHeight: '5rem' }}
+                      />
+                    </label>
+                    <label className="card" style={{ display: 'grid', gap: '0.45rem', padding: '0.85rem', boxShadow: 'none' }}>
+                      <strong>Workpackage or area reference</strong>
+                      <textarea
+                        value={fieldObservationScratchpad.workpackage_area_reference}
+                        onChange={(event) => updateFieldObservationScratchpad({ workpackage_area_reference: event.target.value })}
+                        rows={3}
+                        placeholder="Capture the workpackage, apparatus group, room, yard, or area being discussed."
+                        style={{ width: '100%', resize: 'vertical', minHeight: '5rem' }}
+                      />
+                    </label>
+                  </div>
+                </section>
+                <section aria-label="Access And Resource Observation field observation group">
+                  <h3 style={{ fontSize: '0.95rem', margin: '0 0 0.65rem' }}>Access And Resource Observation</h3>
+                  <div aria-label="Access And Resource Observation field observation items" style={{ display: 'grid', gap: '0.75rem' }}>
+                    <label className="card" style={{ display: 'grid', gap: '0.45rem', padding: '0.85rem', boxShadow: 'none' }}>
+                      <strong>Access and safety observations</strong>
+                      <textarea
+                        value={fieldObservationScratchpad.access_safety_observations}
+                        onChange={(event) => updateFieldObservationScratchpad({ access_safety_observations: event.target.value })}
+                        rows={4}
+                        placeholder="Capture access, escort, PPE, LOTO, energization, or safety conversation notes without creating a field record."
+                        style={{ width: '100%', resize: 'vertical', minHeight: '6rem' }}
+                      />
+                    </label>
+                    <label className="card" style={{ display: 'grid', gap: '0.45rem', padding: '0.85rem', boxShadow: 'none' }}>
+                      <strong>Material, staging, or equipment observations</strong>
+                      <textarea
+                        value={fieldObservationScratchpad.material_equipment_observations}
+                        onChange={(event) => updateFieldObservationScratchpad({ material_equipment_observations: event.target.value })}
+                        rows={4}
+                        placeholder="Capture material, staging, laydown, receiving, equipment, tooling, or rental notes without assigning resources."
+                        style={{ width: '100%', resize: 'vertical', minHeight: '6rem' }}
+                      />
+                    </label>
+                  </div>
+                </section>
+                <section aria-label="PM Follow-up And Authority Boundary field observation group">
+                  <h3 style={{ fontSize: '0.95rem', margin: '0 0 0.65rem' }}>PM Follow-up And Authority Boundary</h3>
+                  <div aria-label="PM Follow-up And Authority Boundary field observation items" style={{ display: 'grid', gap: '0.75rem' }}>
+                    <label className="card" style={{ display: 'grid', gap: '0.45rem', padding: '0.85rem', boxShadow: 'none' }}>
+                      <strong>Open questions / PM follow-up</strong>
+                      <textarea
+                        value={fieldObservationScratchpad.open_questions_pm_followup}
+                        onChange={(event) => updateFieldObservationScratchpad({ open_questions_pm_followup: event.target.value })}
+                        rows={4}
+                        placeholder="Capture follow-up questions for PM review or a later bounded packet."
+                        style={{ width: '100%', resize: 'vertical', minHeight: '6rem' }}
+                      />
+                    </label>
+                  </div>
+                </section>
               </div>
               <div className="pm-review-link-row pm-review-link-row-start" style={{ alignItems: 'center' }}>
                 <button className="btn btn-outline" onClick={clearFieldObservationScratchpad} disabled={!fieldObservationScratchpadHasContent}>
