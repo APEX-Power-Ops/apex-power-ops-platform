@@ -8732,67 +8732,82 @@ export default function ProjectMinerIntakeWorkbenchPage() {
               <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
                 Browser-local question notes for PM, lead, and field prep conversations. These notes do not create tasks, issues, work authorization, assignments, schedules, status updates, approval records, imports, or production writes.
               </p>
-              <div className="notes-grid" style={{ marginTop: '0.85rem' }}>
-                <label className="card" style={{ display: 'grid', gap: '0.45rem', padding: '0.85rem', boxShadow: 'none' }}>
-                  <strong>Drawing/source questions</strong>
-                  <textarea
-                    value={fieldQuestionsDraft.drawing_source_questions}
-                    onChange={(event) => updateFieldQuestionsDraft({ drawing_source_questions: event.target.value })}
-                    rows={4}
-                    placeholder="Capture drawing, estimator, Project Data Entry, source-freshness, or scope-origin questions."
-                    style={{ width: '100%', resize: 'vertical', minHeight: '6rem' }}
-                  />
-                </label>
-                <label className="card" style={{ display: 'grid', gap: '0.45rem', padding: '0.85rem', boxShadow: 'none' }}>
-                  <strong>Site access and safety questions</strong>
-                  <textarea
-                    value={fieldQuestionsDraft.site_access_safety_questions}
-                    onChange={(event) => updateFieldQuestionsDraft({ site_access_safety_questions: event.target.value })}
-                    rows={4}
-                    placeholder="Capture access, escort, badging, JHA, PPE, LOTO, energization, or temp-power safety questions."
-                    style={{ width: '100%', resize: 'vertical', minHeight: '6rem' }}
-                  />
-                </label>
-                <label className="card" style={{ display: 'grid', gap: '0.45rem', padding: '0.85rem', boxShadow: 'none' }}>
-                  <strong>Crew and equipment questions</strong>
-                  <textarea
-                    value={fieldQuestionsDraft.crew_equipment_questions}
-                    onChange={(event) => updateFieldQuestionsDraft({ crew_equipment_questions: event.target.value })}
-                    rows={4}
-                    placeholder="Capture crew size, tooling, lift, rental, equipment, or logistics questions without assigning resources."
-                    style={{ width: '100%', resize: 'vertical', minHeight: '6rem' }}
-                  />
-                </label>
-                <label className="card" style={{ display: 'grid', gap: '0.45rem', padding: '0.85rem', boxShadow: 'none' }}>
-                  <strong>Material and staging questions</strong>
-                  <textarea
-                    value={fieldQuestionsDraft.material_staging_questions}
-                    onChange={(event) => updateFieldQuestionsDraft({ material_staging_questions: event.target.value })}
-                    rows={4}
-                    placeholder="Capture material, apparatus staging, laydown, delivery, receiving, or storage questions."
-                    style={{ width: '100%', resize: 'vertical', minHeight: '6rem' }}
-                  />
-                </label>
-                <label className="card" style={{ display: 'grid', gap: '0.45rem', padding: '0.85rem', boxShadow: 'none' }}>
-                  <strong>Customer constraint questions</strong>
-                  <textarea
-                    value={fieldQuestionsDraft.customer_constraint_questions}
-                    onChange={(event) => updateFieldQuestionsDraft({ customer_constraint_questions: event.target.value })}
-                    rows={4}
-                    placeholder="Capture outage, access-window, communication, milestone, or customer coordination questions without changing schedule state."
-                    style={{ width: '100%', resize: 'vertical', minHeight: '6rem' }}
-                  />
-                </label>
-                <label className="card" style={{ display: 'grid', gap: '0.45rem', padding: '0.85rem', boxShadow: 'none' }}>
-                  <strong>PM follow-up notes</strong>
-                  <textarea
-                    value={fieldQuestionsDraft.pm_followup_notes}
-                    onChange={(event) => updateFieldQuestionsDraft({ pm_followup_notes: event.target.value })}
-                    rows={4}
-                    placeholder="Capture PM follow-up notes for the next conversation or bounded packet."
-                    style={{ width: '100%', resize: 'vertical', minHeight: '6rem' }}
-                  />
-                </label>
+              <div aria-label="Local field questions draft groups" className="notes-grid" style={{ marginTop: '0.85rem' }}>
+                <section aria-label="Source and Site Questions field questions group">
+                  <h3 style={{ fontSize: '0.95rem', margin: '0 0 0.65rem' }}>Source and Site Questions</h3>
+                  <div aria-label="Source and Site Questions field question items" style={{ display: 'grid', gap: '0.75rem' }}>
+                    <label className="card" style={{ display: 'grid', gap: '0.45rem', padding: '0.85rem', boxShadow: 'none' }}>
+                      <strong>Drawing/source questions</strong>
+                      <textarea
+                        value={fieldQuestionsDraft.drawing_source_questions}
+                        onChange={(event) => updateFieldQuestionsDraft({ drawing_source_questions: event.target.value })}
+                        rows={4}
+                        placeholder="Capture drawing, estimator, Project Data Entry, source-freshness, or scope-origin questions."
+                        style={{ width: '100%', resize: 'vertical', minHeight: '6rem' }}
+                      />
+                    </label>
+                    <label className="card" style={{ display: 'grid', gap: '0.45rem', padding: '0.85rem', boxShadow: 'none' }}>
+                      <strong>Site access and safety questions</strong>
+                      <textarea
+                        value={fieldQuestionsDraft.site_access_safety_questions}
+                        onChange={(event) => updateFieldQuestionsDraft({ site_access_safety_questions: event.target.value })}
+                        rows={4}
+                        placeholder="Capture access, escort, badging, JHA, PPE, LOTO, energization, or temp-power safety questions."
+                        style={{ width: '100%', resize: 'vertical', minHeight: '6rem' }}
+                      />
+                    </label>
+                  </div>
+                </section>
+                <section aria-label="Crew Material and Staging Questions field questions group">
+                  <h3 style={{ fontSize: '0.95rem', margin: '0 0 0.65rem' }}>Crew Material and Staging Questions</h3>
+                  <div aria-label="Crew Material and Staging Questions field question items" style={{ display: 'grid', gap: '0.75rem' }}>
+                    <label className="card" style={{ display: 'grid', gap: '0.45rem', padding: '0.85rem', boxShadow: 'none' }}>
+                      <strong>Crew and equipment questions</strong>
+                      <textarea
+                        value={fieldQuestionsDraft.crew_equipment_questions}
+                        onChange={(event) => updateFieldQuestionsDraft({ crew_equipment_questions: event.target.value })}
+                        rows={4}
+                        placeholder="Capture crew size, tooling, lift, rental, equipment, or logistics questions without assigning resources."
+                        style={{ width: '100%', resize: 'vertical', minHeight: '6rem' }}
+                      />
+                    </label>
+                    <label className="card" style={{ display: 'grid', gap: '0.45rem', padding: '0.85rem', boxShadow: 'none' }}>
+                      <strong>Material and staging questions</strong>
+                      <textarea
+                        value={fieldQuestionsDraft.material_staging_questions}
+                        onChange={(event) => updateFieldQuestionsDraft({ material_staging_questions: event.target.value })}
+                        rows={4}
+                        placeholder="Capture material, apparatus staging, laydown, delivery, receiving, or storage questions."
+                        style={{ width: '100%', resize: 'vertical', minHeight: '6rem' }}
+                      />
+                    </label>
+                  </div>
+                </section>
+                <section aria-label="Customer Constraints and PM Follow-up field questions group">
+                  <h3 style={{ fontSize: '0.95rem', margin: '0 0 0.65rem' }}>Customer Constraints and PM Follow-up</h3>
+                  <div aria-label="Customer Constraints and PM Follow-up field question items" style={{ display: 'grid', gap: '0.75rem' }}>
+                    <label className="card" style={{ display: 'grid', gap: '0.45rem', padding: '0.85rem', boxShadow: 'none' }}>
+                      <strong>Customer constraint questions</strong>
+                      <textarea
+                        value={fieldQuestionsDraft.customer_constraint_questions}
+                        onChange={(event) => updateFieldQuestionsDraft({ customer_constraint_questions: event.target.value })}
+                        rows={4}
+                        placeholder="Capture outage, access-window, communication, milestone, or customer coordination questions without changing schedule state."
+                        style={{ width: '100%', resize: 'vertical', minHeight: '6rem' }}
+                      />
+                    </label>
+                    <label className="card" style={{ display: 'grid', gap: '0.45rem', padding: '0.85rem', boxShadow: 'none' }}>
+                      <strong>PM follow-up notes</strong>
+                      <textarea
+                        value={fieldQuestionsDraft.pm_followup_notes}
+                        onChange={(event) => updateFieldQuestionsDraft({ pm_followup_notes: event.target.value })}
+                        rows={4}
+                        placeholder="Capture PM follow-up notes for the next conversation or bounded packet."
+                        style={{ width: '100%', resize: 'vertical', minHeight: '6rem' }}
+                      />
+                    </label>
+                  </div>
+                </section>
               </div>
               <div className="pm-review-link-row pm-review-link-row-start" style={{ alignItems: 'center' }}>
                 <button className="btn btn-outline" onClick={clearFieldQuestionsDraft} disabled={!fieldQuestionsDraftHasContent}>
