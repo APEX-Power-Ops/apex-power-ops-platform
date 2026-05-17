@@ -1,0 +1,47 @@
+{
+  "packet_id": "2026-05-17-pm-lane-208",
+  "title": "PM Lane 208 - Approval First-Row Executor Prompt Refresh",
+  "lane": "PM",
+  "status": "completed",
+  "created_at": "2026-05-17",
+  "completed_at": "2026-05-17",
+  "summary": [
+    "Refreshed the first approval-row executor prompt and closeout checklist selected by PM Lane 207.",
+    "Preserved the exact PM Lane 142 phrase as the only live-write opener for any future browser approval POST or first approval-row creation.",
+    "Clarified that the gate phrase appearing inside guardrail text does not count as admission; it must be present as explicit current instruction from Jason or VS Code Codex coordinator.",
+    "Defined the no-admission stop result as STOPPED_NO_LIVE_ADMISSION.",
+    "Defined the future admitted branch as exactly one browser approval POST, one same-payload idempotent replay, approval-status readback, unchanged downstream counts, and secret-free closeout.",
+    "Kept Lane 208 no-code and no-live-write: no product code, no hosted action, no approval POST, no approval row, no project import, and no business-state mutation."
+  ],
+  "changed_files": [
+    "PROJECT_STATUS.md",
+    "docs/operations/APEX-PM-STAKEHOLDER-TIME-PROTECTION-AND-ACCELERATION-LANE-2026-05-15.md",
+    "docs/operations/APEX-PM-TEMP-POWER-DELIVERY-AND-ORCHESTRATION-PLAN-2026-05-15.md",
+    "docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md",
+    "docs/operations/APEX-PM-LANE-208-APPROVAL-FIRST-ROW-EXECUTOR-PROMPT-REFRESH-2026-05-17.md",
+    "ops/agents/packets/draft/2026-05-17-pm-lane-208-approval-first-row-executor-prompt-refresh.json",
+    "ops/agents/handoffs/2026-05-17-pm-lane-208-approval-first-row-executor-prompt-refresh-handoff.md",
+    "ops/agents/handoffs/2026-05-17-pm-lane-208-approval-first-row-executor-prompt-refresh-copy-paste-prompt.md"
+  ],
+  "validation": [
+    "Get-Content -LiteralPath 'ops/agents/packets/draft/2026-05-17-pm-lane-208-approval-first-row-executor-prompt-refresh.json' | ConvertFrom-Json | Select-Object -ExpandProperty packet_id",
+    "rg -n \"PM Lane 208|Approval First-Row Executor Prompt Refresh|STOPPED_NO_LIVE_ADMISSION|exact PM Lane 142 phrase|copy/paste|no live approval POST\" PROJECT_STATUS.md docs/operations ops/agents",
+    "null-byte check on PM status docs and PM Lane 208 artifacts",
+    "git diff --check"
+  ],
+  "validation_result": "PASS - packet JSON parsed, PM Lane 208 guardrail rg found expected publication surfaces, null-byte check passed, and git diff --check passed.",
+  "sidecar_result": "Read-only sidecar Banach inspected PM Lane 142, PM Lane 207, current PM status docs, and PM import-intake UI/test references. Banach agreed PM Lane 208 should remain a no-code executor prompt refresh and recommended source floor checks, authoritative Lane 141 through Lane 147 and Lane 207 inputs, exact-phrase stop behavior, current candidate proof, local mocked zero-mutation proof, hosted/readback evidence, conditional one-POST/idempotent-replay/readback proof, unchanged downstream-count proof, and secret-free closeout. VS Code Codex retained PM lane implementation/final integration authority.",
+  "readiness_decision": {
+    "live_write_gate_status": "not_admitted",
+    "required_phrase": "I explicitly admit PM Lane 142 live approval POST and first approval-row creation for the current Project Miner Temp Power import candidate.",
+    "phrase_present_as_current_admission_in_lane_208": false,
+    "decision": "executor_prompt_refreshed_live_write_not_admitted",
+    "decision_meaning": "The future executor prompt and closeout checklist are refreshed. Live execution remains blocked unless the exact PM Lane 142 phrase is provided as explicit current instruction."
+  },
+  "guardrails": [
+    "No product code or UI control was added.",
+    "No localStorage key/schema or sessionStorage key/schema was added.",
+    "No hosted call, deploy, approval POST, approval row, project import, field authorization, lead selection, crew assignment, schedule/status write, durable field record, production tracking row, customer report, billing/payroll/invoice/accounting output, SQL/schema migration, service/auth/ingress change, workbook macro/writeback, or autonomous AI business-state mutation was performed."
+  ],
+  "next_recommended_lane": "PM Lane 209 - Approval First-Row No-Admission Stop Drill"
+}
