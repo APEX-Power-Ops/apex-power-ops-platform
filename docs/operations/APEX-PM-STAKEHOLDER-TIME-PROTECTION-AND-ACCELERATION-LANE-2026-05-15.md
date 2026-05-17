@@ -77,9 +77,9 @@ Any extra step must justify itself by reducing risk, reducing future workload, o
 
 Immediate prioritized PM task lanes:
 
-1. Local PM intake workbench usability - active and local-current through PM Lane 135. The safe local ergonomics run has reduced Jason's daily scan burden on `/pm-review/import-intake`; PM Lane 136 now adds the repo-local backend approval-record persistence path that can later sit behind a PM-controlled approval action.
+1. Local PM intake workbench usability - active and local-current through PM Lane 137. The safe local ergonomics run has reduced Jason's daily scan burden on `/pm-review/import-intake`; PM Lane 136 adds the repo-local backend approval-record persistence path and PM Lane 137 now shows approval status readback without requiring Jason to inspect backend details or relay context manually.
 2. Hosted PM intake parity - accepted green for the PM intake path and broader deployed mutation-seam reads through Desktop Codex execution of PM Lane 041A, PM Lane 041B, PM Lane 041C, and the PM Lane 076 dispatch binder. Vercel production is green, Render PM-intake reads are green, and the former Supabase pooler DSN blocker for DB-backed approval/schedule reads is cleared.
-3. Approval/import authority - narrowly advanced for approval-record persistence only. PM Lane 136 implements the dedicated table migration, insert-only adapter, PM-only mutation route, idempotent replay, audit linkage, and readback classifier locally; live SQL execution, hosted deployment, frontend POST wiring, and project import mutation remain blocked until later packets explicitly admit them.
+3. Approval/import authority - narrowly advanced for approval-record persistence only. PM Lane 136 implements the dedicated table migration, insert-only adapter, PM-only mutation route, idempotent replay, audit linkage, and readback classifier locally; PM Lane 137 adds read-only status surfacing and a PM Lane 138 hosted gate prompt. Live SQL execution, hosted deployment, frontend POST wiring, and project import mutation remain blocked until later packets explicitly admit them.
 
 Pilot expansion to PM, Lead, and Field execution remains downstream of these three lanes and must not be pulled forward by local UI progress alone.
 
@@ -663,6 +663,12 @@ The current persistence tranche is:
 `Import Candidate Approval Persistence Schema And Adapter Implementation`
 
 PM Lane 136 executes that tranche locally. It adds the dedicated `seam.pm_import_candidate_approvals` migration, insert-only adapter, PM-only mutation route, stable idempotent replay using the original mutation and audit IDs, one linked audit append per accepted insert, and table-backed approval status classification. It still avoids live SQL application, hosted deploy, frontend approval controls, project import, workpackage/task/apparatus writes, assignment, schedule, status, durable field records, and production tracking writes.
+
+The current readback tranche is:
+
+`Approval Persistence Status Readback And UI Surfacing`
+
+PM Lane 137 executes that tranche locally. It exposes `GET /api/v1/reads/project-import-approval-status`, shows the current approval classification and storage availability inside `/pm-review/import-intake`, includes that readback in local exports, and packages PM Lane 138 as a hosted application gate handoff. This reduces Jason's relay burden by making approval state visible in the workbench while still avoiding live SQL application, hosted deploy, frontend approval controls, project import, assignment, schedule, status, durable field records, and production tracking writes.
 
 The success standard is not just technical correctness. The candidate must reduce Jason's review burden by showing:
 

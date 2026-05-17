@@ -128,11 +128,31 @@ type ApprovalStoragePlan = {
   not_allowed_now?: string[]
 }
 
+type ApprovalPersistenceStatus = {
+  classification?: string
+  current_candidate_match?: boolean
+  candidate_id?: string
+  candidate_version?: string
+  approval_record_id?: string
+  decision?: string
+  mutation_id?: string
+  audit_event_id?: string
+  stale_fields?: string[]
+  source?: string
+  route?: string
+  approval_storage_available?: boolean
+  approval_record_count_for_candidate?: number
+  audit_log_used_for_current_status?: boolean
+  import_authority?: string
+  error_type?: string
+}
+
 type IntakeWorkbenchPacket = {
   candidate: CandidatePayload
   admissionPlan: AdmissionPlan
   approvalContract: ApprovalContract
   storagePlan: ApprovalStoragePlan
+  approvalStatus: ApprovalPersistenceStatus
 }
 
 type ReviewChecklistItem = {
@@ -693,14 +713,15 @@ async function readJson<T>(path: string): Promise<T> {
 }
 
 async function readIntakeWorkbench(): Promise<IntakeWorkbenchPacket> {
-  const [candidate, admissionPlan, approvalContract, storagePlan] = await Promise.all([
+  const [candidate, admissionPlan, approvalContract, storagePlan, approvalStatus] = await Promise.all([
     readJson<CandidatePayload>('project-import-candidate'),
     readJson<AdmissionPlan>('project-import-admission-plan'),
     readJson<ApprovalContract>('project-import-approval-contract'),
     readJson<ApprovalStoragePlan>('project-import-approval-storage-plan'),
+    readJson<ApprovalPersistenceStatus>('project-import-approval-status'),
   ])
 
-  return { candidate, admissionPlan, approvalContract, storagePlan }
+  return { candidate, admissionPlan, approvalContract, storagePlan, approvalStatus }
 }
 
 function formatLabel(value?: string | null) {
@@ -726,6 +747,20 @@ function statusTone(value?: string | null) {
   if (value.includes('not_admitted') || value.includes('blocked') || value.includes('no_go')) return 'status-deferred'
   if (value.includes('needs') || value.includes('pending') || value.includes('future') || value.includes('design')) return 'status-awaiting-values'
   return 'status-configured'
+}
+
+function approvalStatusTone(status?: ApprovalPersistenceStatus | null) {
+  const classification = status?.classification || ''
+  if (!status || status.approval_storage_available === false) return 'status-deferred'
+  if (classification === 'approved_for_import_packet') return 'status-configured'
+  if (classification === 'no_approval_record' || classification === 'stale_approval_record') return 'status-awaiting-values'
+  return 'status-deferred'
+}
+
+function approvalStatusSummary(status?: ApprovalPersistenceStatus | null) {
+  if (!status) return 'waiting for approval status read'
+  const storage = status.approval_storage_available === false ? 'storage unavailable' : 'storage available'
+  return `${formatLabel(status.classification)}; ${storage}; import authority ${formatLabel(status.import_authority || 'not_admitted')}`
 }
 
 function operatingQueueTone(status: OperatingQueueStatus) {
@@ -2025,6 +2060,7 @@ function buildApprovalPacketPreview(
   const admissionPlan = packet.admissionPlan
   const approvalContract = packet.approvalContract
   const storagePlan = packet.storagePlan
+  const approvalStatus = packet.approvalStatus
   const checkedItems = REVIEW_CHECKLIST_ITEMS.filter((item) => reviewChecks[item.id]).map((item) => item.id)
   const draftComplete = Boolean(approvalDraft.decision && approvalDraft.review_notes.trim() && approvalDraft.local_attestation)
 
@@ -2057,6 +2093,16 @@ function buildApprovalPacketPreview(
       recommended_route: futureRoute,
       selected_storage_decision: storagePlan.selected_storage_decision || null,
       adapter_requirements: storagePlan.adapter_requirements || [],
+    },
+    approval_status_readback: {
+      classification: approvalStatus.classification || null,
+      current_candidate_match: approvalStatus.current_candidate_match ?? null,
+      approval_record_id: approvalStatus.approval_record_id || null,
+      approval_storage_available: approvalStatus.approval_storage_available ?? null,
+      approval_record_count_for_candidate: approvalStatus.approval_record_count_for_candidate ?? null,
+      source: approvalStatus.source || null,
+      route: approvalStatus.route || '/api/v1/reads/project-import-approval-status',
+      import_authority: approvalStatus.import_authority || 'not_admitted',
     },
     local_review_evidence: {
       checklist_checked_count: checkedItems.length,
@@ -2108,6 +2154,7 @@ function buildIntakeBrief(
   const admissionPlan = packet.admissionPlan
   const approvalContract = packet.approvalContract
   const storagePlan = packet.storagePlan
+  const approvalStatus = packet.approvalStatus
   const summary = candidate.summary || {}
   const project = candidate.project || {}
   const warnings = candidate.warnings || []
@@ -2217,6 +2264,17 @@ function buildIntakeBrief(
     'These readiness gates are local review context only. They do not approve, persist, import, assign, schedule, change status, or mutate production state.',
     '',
     markdownList(persistenceGateLines),
+    '',
+    '## Approval Persistence Status Readback',
+    '',
+    `Status: ${approvalStatusSummary(approvalStatus)}.`,
+    '',
+    `- Current candidate match: ${formatValue(approvalStatus.current_candidate_match)}`,
+    `- Approval records for candidate: ${formatCount(approvalStatus.approval_record_count_for_candidate)}`,
+    `- Storage source: ${approvalStatus.source || storagePlan.recommended_table || 'not reported'}`,
+    `- Read route: ${approvalStatus.route || '/api/v1/reads/project-import-approval-status'}`,
+    '',
+    'This status readback is informational only. It is not approval, persistence authority, import authority, assignment, schedule, status, or production state.',
     '',
     '## PM Operating Queue',
     '',
@@ -2341,6 +2399,7 @@ function buildExecutorHandoff(
   const admissionPlan = packet.admissionPlan
   const approvalContract = packet.approvalContract
   const storagePlan = packet.storagePlan
+  const approvalStatus = packet.approvalStatus
   const summary = candidate.summary || {}
   const project = candidate.project || {}
   const warnings = candidate.warnings || []
@@ -2452,6 +2511,15 @@ function buildExecutorHandoff(
     '## Approval Persistence Blockers',
     '',
     markdownList(blockedGateLines),
+    '',
+    '## Approval Persistence Status Readback',
+    '',
+    `- Status: ${approvalStatusSummary(approvalStatus)}`,
+    `- Current candidate match: ${formatValue(approvalStatus.current_candidate_match)}`,
+    `- Approval records for candidate: ${formatCount(approvalStatus.approval_record_count_for_candidate)}`,
+    `- Storage source: ${approvalStatus.source || storagePlan.recommended_table || 'not reported'}`,
+    `- Read route: ${approvalStatus.route || '/api/v1/reads/project-import-approval-status'}`,
+    '- This readback does not approve, persist, import, assign, schedule, change status, or mutate production state.',
     '',
     '## Exceptions And Decisions',
     '',
@@ -3250,6 +3318,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
   const admissionPlan = packet?.admissionPlan
   const approvalContract = packet?.approvalContract
   const storagePlan = packet?.storagePlan
+  const approvalStatus = packet?.approvalStatus
   const summary = candidate?.summary || {}
   const project = candidate?.project || {}
   const warnings = candidate?.warnings || []
@@ -3297,13 +3366,13 @@ export default function ProjectMinerIntakeWorkbenchPage() {
     },
     {
       title: 'Approval readiness',
-      status: approvalContract?.persistence_authority || storagePlan?.persistence_authority || 'not_admitted',
-      detail: `Future approval persistence is shaped for ${storagePlan?.recommended_table || 'a dedicated approval table'} and ${futureRoute}.`,
+      status: approvalStatus?.classification || approvalContract?.persistence_authority || storagePlan?.persistence_authority || 'not_admitted',
+      detail: `Approval readback is ${approvalStatusSummary(approvalStatus)}; future import remains blocked at ${futureRoute}.`,
     },
     {
       title: 'Hosted parity',
-      status: 'executor closeout pending',
-      detail: 'PM Lane 041A/041B still own hosted Vercel promotion and Render mutation-seam parity evidence.',
+      status: 'ready_for_hosted_application_gate',
+      detail: 'PM Lane 041A/041B/041C proved hosted parity; the next hosted gate must apply only the approval persistence migration before live approval persistence is claimed.',
     },
     {
       title: 'Future import',
@@ -4549,6 +4618,42 @@ export default function ProjectMinerIntakeWorkbenchPage() {
                   </div>
                 </dl>
               </article>
+              <article className="notes-card">
+                <h2>Approval Status Readback</h2>
+                <dl className="contract-panel">
+                  <div>
+                    <dt>Status</dt>
+                    <dd>
+                      <span className={`status-pill ${approvalStatusTone(approvalStatus)}`}>
+                        {formatLabel(approvalStatus?.classification)}
+                      </span>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Current candidate match</dt>
+                    <dd>{formatValue(approvalStatus?.current_candidate_match)}</dd>
+                  </div>
+                  <div>
+                    <dt>Storage</dt>
+                    <dd>{approvalStatus?.approval_storage_available === false ? 'unavailable' : 'available'}</dd>
+                  </div>
+                  <div>
+                    <dt>Approval records</dt>
+                    <dd>{formatCount(approvalStatus?.approval_record_count_for_candidate)}</dd>
+                  </div>
+                  <div>
+                    <dt>Import authority</dt>
+                    <dd>{approvalStatus?.import_authority || 'not_admitted'}</dd>
+                  </div>
+                  <div>
+                    <dt>Read route</dt>
+                    <dd>{approvalStatus?.route || '/api/v1/reads/project-import-approval-status'}</dd>
+                  </div>
+                </dl>
+                <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+                  Status readback only. This panel does not approve, persist, import, assign, schedule, change status, or mutate production state.
+                </p>
+              </article>
             </div>
           </div>
         </details>
@@ -5024,6 +5129,32 @@ export default function ProjectMinerIntakeWorkbenchPage() {
               <p style={{ margin: '0.45rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
                 PM Lane 049 authored the schema and adapter admission design. Hosted parity, schema authority, approval persistence authority, and import mutation authority remain blocked until later packets explicitly admit them.
               </p>
+              <div className="notes-grid" style={{ marginTop: '0.85rem' }}>
+                <article className="notes-card accent-card">
+                  <h2>Approval Status Readback</h2>
+                  <dl className="contract-panel">
+                    <div>
+                      <dt>Current status</dt>
+                      <dd>{formatLabel(approvalStatus?.classification)}</dd>
+                    </div>
+                    <div>
+                      <dt>Storage source</dt>
+                      <dd>{approvalStatus?.source || storagePlan?.recommended_table || 'not reported'}</dd>
+                    </div>
+                    <div>
+                      <dt>Audit dependency</dt>
+                      <dd>{approvalStatus?.audit_log_used_for_current_status ? 'audit log used' : 'approval table readback'}</dd>
+                    </div>
+                    <div>
+                      <dt>Boundary</dt>
+                      <dd>{approvalStatus?.import_authority || 'not_admitted'}</dd>
+                    </div>
+                  </dl>
+                  <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+                    Readback is informational only; project import remains blocked until a later packet explicitly admits that write path.
+                  </p>
+                </article>
+              </div>
               <div style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
                 {persistenceReadinessGates.map((gate) => (
                   <article key={gate.id} className="card" style={{ padding: '0.85rem', boxShadow: 'none' }}>

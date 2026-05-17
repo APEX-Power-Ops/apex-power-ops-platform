@@ -1,0 +1,68 @@
+{
+  "packet_id": "2026-05-16-pm-lane-137",
+  "title": "Approval Persistence Status Readback And UI Surfacing",
+  "objective": "Expose the current Project Miner import-candidate approval persistence state through a read-only mutation-seam status seam and surface that state inside the PM import-intake workbench without adding frontend approval POST wiring or project import authority.",
+  "domain": "pm-domain",
+  "active_role": "Technical Repo Authority / PM Lane Coordinator / Readback Surface Executor",
+  "source_floor": {
+    "branch": "clean-main",
+    "commit": "97a97b3554ec7d17b6f91a2e5f678e4677e114e5",
+    "meaning": "Current local, origin, and Olares clean-main after PM Lane 136 import candidate approval persistence schema and adapter implementation."
+  },
+  "dependencies": [
+    "2026-05-16-pm-lane-041c",
+    "2026-05-16-pm-lane-076",
+    "2026-05-16-pm-lane-136"
+  ],
+  "allowed_scope": [
+    "Add read-only GET /api/v1/reads/project-import-approval-status.",
+    "Return approval persistence classification from the dedicated approval record store, not audit-log-only state.",
+    "Classify missing or unavailable approval storage without mutating state.",
+    "Surface approval status readback in /pm-review/import-intake.",
+    "Include approval status readback in the local approval preview JSON, PM brief, and executor handoff exports.",
+    "Keep approval persistence status informational and keep import authority not_admitted.",
+    "Author a bounded hosted application gate executor handoff for applying only migration 003 and redeploying only the existing Render mutation-seam service."
+  ],
+  "not_allowed": [
+    "No live Supabase SQL application.",
+    "No hosted Supabase row write.",
+    "No Render, Vercel, or Olares deployment.",
+    "No operations-web approval button or approval POST wiring.",
+    "No project import mutation.",
+    "No project, workpackage, task, apparatus, issue, assignment, schedule, status, durable field record, production tracking, workbook, or import rows.",
+    "No workbook macro execution or workbook writeback.",
+    "No new hosted service, DNS/auth/ingress/secret change, fixture replay into live data, work authorization, field release, live work order creation, or autonomous AI business-state mutation."
+  ],
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/PROJECT_STATUS.md",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/project_import_approval_persistence.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/routers/reads.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests/test_project_import_approval_persistence.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/app/pm-review/import-intake/page.tsx",
+    "C:/APEX Platform/apex-power-ops-platform/apps/operations-web/tests/browser-shell.pm-import-intake.smoke.spec.ts",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/APEX-PM-TEMP-POWER-DELIVERY-AND-ORCHESTRATION-PLAN-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/APEX-PM-STAKEHOLDER-TIME-PROTECTION-AND-ACCELERATION-LANE-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-16-pm-lane-137-approval-persistence-status-readback-ui.json",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-16-pm-lane-137-approval-persistence-status-readback-ui-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-16-pm-lane-138-approval-persistence-hosted-application-gate-executor-copy-paste-prompt.md"
+  ],
+  "validation_steps": [
+    "$env:SEAM_STORE_BACKEND='memory'; & \"C:/APEX Platform/apex-power-ops-platform/.venv/Scripts/python.exe\" -m pytest apps/mutation-seam/tests/test_project_import_approval_persistence.py",
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform\" --filter @apex/operations-web typecheck",
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform\" --filter @apex/operations-web build",
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform/apps/operations-web\" exec playwright test \"browser-shell.pm-import-intake.smoke.spec.ts\"",
+    "& \"C:/APEX Platform/apex-power-ops-platform/.venv/Scripts/python.exe\" -c \"import json; json.load(open(r'C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-16-pm-lane-137-approval-persistence-status-readback-ui.json', encoding='utf-8')); print('packet-json-ok')\"",
+    "git diff --check",
+    "git diff --cached --check"
+  ],
+  "validation_result": "PASS: py_compile passed for approval persistence and reads router; focused backend approval persistence tests passed with 9 passed; operations-web typecheck passed; operations-web build passed; focused import-intake Playwright smoke passed with 1 passed; packet JSON parse returned packet-json-ok; git diff --check passed.",
+  "delegation_status": "coordinator_executed_locally_with_read_only_sidecar_hosted_gate_scout",
+  "sidecar_result": "Read-only sidecar scout recommended a strict hosted application gate for applying only apps/mutation-seam/migrations/003_pm_import_candidate_approvals.sql and redeploying only the existing Render apex-platform-mutation-seam service. It prohibited UI POST wiring, project import, service creation, secret disclosure, and production state mutation.",
+  "next_recommended_lane": "PM Lane 138 - Approval Persistence Hosted Application Gate",
+  "sql_permission": false,
+  "live_deploy_permission": false,
+  "ai_mutation_authority": "not_admitted",
+  "created_at": "2026-05-16",
+  "updated_at": "2026-05-16"
+}

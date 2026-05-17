@@ -262,6 +262,31 @@ The route is intentionally separate from `/pm-review/approval`, because that exi
 
 This is still not approval persistence and not import. It does not show approval controls, persist notes, create a table, run SQL, write Supabase rows, import project rows, run workbook macros, write workbook cells, assign work, change status, mutate schedules, or admit autonomous AI business-state action.
 
+## Import Approval Persistence Status Readback
+
+PM Lane 137 adds the read-only approval persistence status seam after the repo-local approval persistence implementation.
+
+The read seam is:
+
+`GET /api/v1/reads/project-import-approval-status`
+
+The status read returns:
+
+1. current approval classification,
+2. current candidate match flag,
+3. approval record id, mutation id, and audit event id when a record exists,
+4. approval storage availability,
+5. approval record count for the current candidate,
+6. storage source and read route,
+7. `audit_log_used_for_current_status: false`,
+8. `import_authority: not_admitted`.
+
+The status read can classify no-record, current approved, stale, returned, rejected, unsupported, or storage-unavailable states. The current-state source is the dedicated approval record store, not audit history alone.
+
+`/pm-review/import-intake` now consumes the status read and shows Approval Status Readback in the admission/approval and approval-readiness areas. It also includes status readback in the Approval Preview JSON, PM Brief, and Executor Handoff exports.
+
+This is not UI approval activation and not project import. It does not add an approval button, call the approval POST route from the browser, apply hosted SQL, deploy Render/Vercel, import project rows, run workbook macros, write workbook cells, assign work, change status, mutate schedules, or admit autonomous AI business-state action.
+
 ## Hosted Intake Parity Status
 
 PM Lane 036 promoted the operations-web PM intake routes to Vercel production:
@@ -345,7 +370,8 @@ The workbench is the day-to-day Project Miner intake starting point. It consolid
 1. `GET /api/v1/reads/project-import-candidate`,
 2. `GET /api/v1/reads/project-import-admission-plan`,
 3. `GET /api/v1/reads/project-import-approval-contract`,
-4. `GET /api/v1/reads/project-import-approval-storage-plan`.
+4. `GET /api/v1/reads/project-import-approval-storage-plan`,
+5. `GET /api/v1/reads/project-import-approval-status`.
 
 It shows candidate identity, source freshness, project location, proposed row counts, warning signals, required PM decisions, workflow gates, admission target rows, approval contract authority, the future `seam.pm_import_candidate_approvals` table, the future `/api/v1/mutations/project-import-approvals` route, hosted-parity status, and merged guardrails.
 
@@ -358,6 +384,10 @@ PM Lane 044 updates the hosted parity proof and executor handoffs so `/pm-review
 PM Lane 076 adds the hosted parity executor dispatch binder after the local workbench through PM Lane 119. Desktop Codex executed the binder end to end on 2026-05-16: PM Lane 041A Vercel promotion is accepted green and PM Lane 041B Render PM-intake read parity is accepted green. PM Lane 041C then resolved the remaining Supabase pooler DSN blocker for DB-backed approval/schedule reads by rotating the runtime credential and updating only the existing Render `SEAM_DATABASE_URL`. The closeouts do not admit approval persistence, import mutation, schema work, SQL writes, assignment, schedule/status writes, or autonomous AI business-state mutation.
 
 PM Lane 041C is executed and accepted closed. The secret-safe storage pattern is non-git Olares Vault as the canonical credential boundary and Render `SEAM_DATABASE_URL` as the only live app copy; repo files, handoffs, markdown notes, and repo-local `.env` files must not store the password or DSN value.
+
+PM Lane 137 adds approval persistence status readback to the same workbench. The route now shows whether the current candidate has no approval record, a current approved record, a stale record, a return/rejection record, or unavailable approval storage. The status is informational only and keeps approval persistence/import authority separated from browser-local review.
+
+PM Lane 138 is prepared as the next hosted executor handoff. It may apply only `apps/mutation-seam/migrations/003_pm_import_candidate_approvals.sql` and redeploy only the existing Render `apex-platform-mutation-seam` service; it may not add UI POST wiring, create approval records by live smoke, import project rows, create services, expose secrets, or mutate production business state.
 
 PM Lane 077 groups the existing top output actions on `/pm-review/import-intake` into Review Outputs, Executor Output, Field Prep Outputs, and Refresh. The route links remain separate, and all export labels, handlers, filenames, contents, read seams, and storage keys remain unchanged. This is local UI organization only and does not create a new export, write path, hosted proof, approval record, import mutation, task, issue, schedule, status, or production state.
 
@@ -689,9 +719,9 @@ The near-term target is not a generic PM system demo. The target is a field-usab
 
 Current prioritized task-lane status:
 
-1. Local PM intake workbench usability - active and local-current. PM Lanes 043 through 135 have built the `/pm-review/import-intake` daily workbench, local review outputs, field-prep artifacts, grouped/disclosed panels, authority-wording guard, and predictable body-control wrappers through Current PM Next Actions and Guardrails. PM Lane 136 now adds the repo-local backend approval-persistence implementation behind that workbench boundary without adding frontend POST wiring.
+1. Local PM intake workbench usability - active and local-current. PM Lanes 043 through 135 built the `/pm-review/import-intake` daily workbench, PM Lane 136 added the repo-local backend approval-persistence implementation, and PM Lane 137 now surfaces approval persistence status readback without adding frontend POST wiring.
 2. Hosted PM intake parity - accepted green for the PM intake path and the broader deployed mutation-seam read surface. PM Lane 041A Vercel promotion is green, PM Lane 041B Render PM-intake read parity is green, PM Lane 076 closeouts are accepted, and PM Lane 041C clears the former Supabase pooler DSN blocker for DB-backed approval/schedule reads.
-3. Approval/import authority - narrowly advanced for approval-record persistence only. PM Lane 136 adds the dedicated approval table migration, insert-only adapter, PM-only mutation route, idempotent replay, audit linkage, and readback classifier. Live SQL application/deploy and all project import, workpackage, task, apparatus, assignment, schedule, status, durable field record, and production tracking writes remain blocked until separate packets explicitly admit them.
+3. Approval/import authority - narrowly advanced for approval-record persistence only. PM Lane 136 adds the dedicated approval table migration, insert-only adapter, PM-only mutation route, idempotent replay, audit linkage, and readback classifier; PM Lane 137 adds a read-only approval status route and UI/export surfacing. Live SQL application/deploy and all project import, workpackage, task, apparatus, assignment, schedule, status, durable field record, and production tracking writes remain blocked until separate packets explicitly admit them.
 
 Execution order remains conservative: repo-local approval-record persistence may advance only inside the dedicated table/adapter/route boundary, while live schema application, hosted deployment, import mutation, work authorization, assignment, schedule, status, durable field records, and production tracking writes remain outside authority until explicitly admitted.
 
@@ -727,6 +757,8 @@ Level 2E - Approval Persistence:
 Persist only the PM approval decision, candidate fingerprints, warning acceptance, no-go acknowledgement notes, and reviewer notes for the import candidate after a later packet admits a narrow storage path. This is not an import mutation and must not write project, workpackage, task, or apparatus rows.
 
 PM Lane 136 implements the first repo-local version of Level 2E. The admitted write path is limited to `seam.pm_import_candidate_approvals` plus one linked audit append through `POST /api/v1/mutations/project-import-approvals`; idempotent replays return the original mutation and audit IDs, and readback classification is table-backed rather than audit-log-only. This lane does not apply live SQL, deploy Render or Vercel, wire a frontend approval button, import project/work rows, or mutate assignment, schedule, status, durable field records, or production tracking.
+
+PM Lane 137 makes Level 2E visible to the PM workbench without adding write authority. `GET /api/v1/reads/project-import-approval-status` reports the current table-backed approval classification, storage availability, candidate match, record count, route/source, and import authority. `/pm-review/import-intake` displays that readback and includes it in local exports, while keeping the UI approval POST, project import, assignment, schedule, status, and production tracking paths blocked.
 
 Level 3 - Resource Context:
 Read equipment inventory and technician capability rows so PM can understand whether the project can be staffed with available people and equipment.

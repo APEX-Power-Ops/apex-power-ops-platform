@@ -44,6 +44,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
     admissionPlan: 0,
     approvalContract: 0,
     storagePlan: 0,
+    approvalStatus: 0,
   }
   const mutationRequests: string[] = []
 
@@ -231,6 +232,27 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
           'import_project_rows',
           'autonomous_ai_business_state_mutation',
         ],
+      }),
+    })
+  })
+
+  await page.route('**/api/v1/reads/project-import-approval-status', async (route) => {
+    expect(route.request().method()).toBe('GET')
+    readCalls.approvalStatus += 1
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        classification: 'no_approval_record',
+        current_candidate_match: false,
+        candidate_id: 'pm-import-candidate-miner-temp-power',
+        candidate_version: 'pm_import_candidate_read_only_v1',
+        source: 'seam.pm_import_candidate_approvals',
+        route: '/api/v1/reads/project-import-approval-status',
+        approval_storage_available: true,
+        approval_record_count_for_candidate: 0,
+        audit_log_used_for_current_status: false,
+        import_authority: 'not_admitted',
       }),
     })
   })
@@ -981,9 +1003,10 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(admissionApprovalContractControls).toBeVisible()
   const admissionApprovalContractCards = admissionApprovalContract.locator('[aria-label="Admission and approval contract cards"]')
   await expect(admissionApprovalContractCards).toBeVisible()
-  await expect(admissionApprovalContractCards.locator(':scope > article')).toHaveCount(2)
+  await expect(admissionApprovalContractCards.locator(':scope > article')).toHaveCount(3)
   await expect(admissionApprovalContractCards.getByRole('heading', { name: 'Admission Shape', exact: true })).toBeVisible()
   await expect(admissionApprovalContractCards.getByRole('heading', { name: 'Approval Contract', exact: true })).toBeVisible()
+  await expect(admissionApprovalContractCards.getByRole('heading', { name: 'Approval Status Readback', exact: true })).toBeVisible()
   await expect(admissionApprovalContract.getByText('pm-import-candidate-miner-temp-power-admission-plan')).toBeVisible()
   await expect(admissionApprovalContract.getByText('project rows: 1; workpackage rows: 7; task rows: 15; apparatus rows: 186; approval rows: 1; write authority: not_admitted')).toBeVisible()
   await expect(admissionApprovalContract.locator('div').filter({ hasText: /^No-go checks2$/ })).toBeVisible()
@@ -992,6 +1015,8 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(admissionApprovalContract.getByText('design_only_not_admitted')).toBeVisible()
   await expect(admissionApprovalContract.getByText('seam.pm_import_candidate_approvals')).toBeVisible()
   await expect(admissionApprovalContract.getByText('/api/v1/mutations/project-import-approvals')).toBeVisible()
+  await expect(admissionApprovalContract.getByText('no approval record')).toBeVisible()
+  await expect(admissionApprovalContract.getByText('/api/v1/reads/project-import-approval-status')).toBeVisible()
   await admissionApprovalContract.locator(':scope > summary').click()
   await expect(admissionApprovalContract).not.toHaveAttribute('open', '')
   await expect(admissionApprovalContractControls).toBeHidden()
@@ -1002,7 +1027,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(admissionApprovalContract).toHaveAttribute('open', '')
   await expect(admissionApprovalContractControls).toBeVisible()
   await expect(admissionApprovalContractCards).toBeVisible()
-  await expect(admissionApprovalContractCards.locator(':scope > article')).toHaveCount(2)
+  await expect(admissionApprovalContractCards.locator(':scope > article')).toHaveCount(3)
   const checklist = page.locator('details[aria-label="Local review checklist"]')
   await expect(checklist).toHaveAttribute('open', '')
   const checklistBodyControls = checklist.getByLabel('Local review checklist controls')
@@ -1334,8 +1359,10 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(readinessBodyControls).toBeVisible()
   const readinessControls = readinessBodyControls.locator('[aria-label="Approval persistence readiness controls"]')
   await expect(readinessControls).toBeVisible()
-  await expect(readinessControls.locator('article')).toHaveCount(6)
+  await expect(readinessControls.locator('article')).toHaveCount(7)
   await expect(readiness.getByText('2 of 6 ready')).toBeVisible()
+  await expect(readiness.getByRole('heading', { name: 'Approval Status Readback', exact: true })).toBeVisible()
+  await expect(readiness.getByText('approval table readback')).toBeVisible()
   await expect(readiness.getByText('Approval preview context', { exact: true })).toBeVisible()
   await expect(readiness.getByText('Review checklist evidence', { exact: true })).toBeVisible()
   await expect(readiness.getByText('Hosted parity closeout', { exact: true })).toBeVisible()
@@ -1994,5 +2021,6 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
     admissionPlan: 1,
     approvalContract: 1,
     storagePlan: 1,
+    approvalStatus: 1,
   })
 })

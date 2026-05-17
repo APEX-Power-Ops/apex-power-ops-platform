@@ -130,7 +130,8 @@ Current backend-only PM intake design reads also include:
 1. `GET /api/v1/reads/project-import-candidate`,
 2. `GET /api/v1/reads/project-import-admission-plan`,
 3. `GET /api/v1/reads/project-import-approval-contract`,
-4. `GET /api/v1/reads/project-import-approval-storage-plan`.
+4. `GET /api/v1/reads/project-import-approval-storage-plan`,
+5. `GET /api/v1/reads/project-import-approval-status`.
 
 ## Olares Orchestration Role
 
@@ -513,11 +514,13 @@ PM Lane 135 wraps the existing Current PM Next Actions and Guardrails body conte
 
 PM Lane 136 implements the repo-local Import Candidate Approval Persistence Schema and Adapter tranche. It adds only the dedicated `seam.pm_import_candidate_approvals` migration, insert-only approval adapter, PM-only approval mutation route, stable idempotent replay, one linked audit append per accepted insert, and table-backed approval status classification. This is the first backend approval-record persistence implementation, but it does not apply live SQL, deploy hosted services, wire frontend approval controls, import project rows, create workpackages/tasks/apparatus, assign work, mutate schedules/status, create durable field records, write production tracking rows, or change production state.
 
+PM Lane 137 implements the read-only Approval Persistence Status Readback tranche. It exposes `GET /api/v1/reads/project-import-approval-status`, shows that readback inside `/pm-review/import-intake`, includes it in local PM exports, and authors the bounded PM Lane 138 hosted application gate handoff. This makes the approval-record state visible without adding a browser approval POST, live SQL application, hosted deploy, project import, work assignment, schedule/status mutation, durable field record, production tracking write, or production state change.
+
 ## Current Prioritized Task-Lane Status
 
-1. Local PM intake workbench usability is active and local-current through PM Lane 135, and PM Lane 136 now adds the repo-local backend approval-persistence implementation that the workbench can later consume. It admits only the narrow approval-record persistence contract and keeps hosted deploy, project import, workpackage, task, apparatus, assignment, schedule, status, and production tracking writes blocked.
+1. Local PM intake workbench usability is active and local-current through PM Lane 137. PM Lane 136 adds the repo-local backend approval-persistence implementation and PM Lane 137 surfaces the read-only approval status in the workbench without adding UI write authority. It admits only the narrow approval-record persistence contract and keeps hosted deploy, project import, workpackage, task, apparatus, assignment, schedule, status, and production tracking writes blocked.
 2. Hosted PM intake parity is accepted green for the PM intake path and the broader deployed mutation-seam read surface. PM Lane 041A operations-web promotion is green, PM Lane 041B Render PM-intake read parity is green, and PM Lane 041C cleared the prior Supabase pooler DSN issue for DB-backed approval/schedule reads.
-3. Approval/import authority is narrowly advanced for approval-record persistence only. The dedicated table migration, insert-only adapter, PM-only mutation route, idempotent replay, audit linkage, and readback classifier are implemented locally, but live schema application, hosted deployment, frontend approval controls, and project import mutation remain blocked until later packets explicitly open those paths.
+3. Approval/import authority is narrowly advanced for approval-record persistence only. The dedicated table migration, insert-only adapter, PM-only mutation route, idempotent replay, audit linkage, and read-only status route are implemented locally, but live schema application, hosted deployment, frontend approval controls, and project import mutation remain blocked until later packets explicitly open those paths.
 
 ## Capability-Gap Register
 
@@ -529,7 +532,7 @@ Current known gaps:
 4. The project import mutation is not admitted; import-candidate review must come first.
 5. Workbook macros are not admitted for unattended intake.
 6. The local PM review route now supports export and local draft notes, but server-side PM note persistence is not admitted.
-7. The import-admission plan, approval contract, approval storage plan, and approval-readiness UI define the write gate, and PM Lane 136 now implements the repo-local approval-record persistence path behind that gate.
+7. The import-admission plan, approval contract, approval storage plan, approval-readiness UI, and approval-status readback define the write gate, and PM Lane 136/137 now implement the repo-local approval-record persistence path and read-only visibility behind that gate.
 8. Render service metadata was available to the Desktop Codex hosted executor, the PM intake path is accepted green, and the broader Supabase pooler DSN correction lane is accepted closed.
 9. Approval persistence is implemented only through the dedicated table/adapter path; it is not audit-log-only storage and still must not import project rows or mutate downstream execution state.
 10. The approval-contract and approval-storage-plan read endpoints are hosted-current on mutation-seam, but remain read-only until a later write-admission packet.

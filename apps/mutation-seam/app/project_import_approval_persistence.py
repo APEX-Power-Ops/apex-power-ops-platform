@@ -142,6 +142,8 @@ def classify_project_import_approval_record(
             "candidate_id": active_contract.get("candidate_id"),
             "candidate_version": active_contract.get("candidate_version"),
             "source": APPROVAL_STATUS_SOURCE,
+            "route": "/api/v1/reads/project-import-approval-status",
+            "approval_storage_available": True,
             "audit_log_used_for_current_status": False,
             "import_authority": "not_admitted",
         }
@@ -171,6 +173,8 @@ def classify_project_import_approval_record(
         "stale_fields": [mismatch["field"] for mismatch in mismatches],
         "mismatches": mismatches,
         "source": APPROVAL_STATUS_SOURCE,
+        "route": "/api/v1/reads/project-import-approval-status",
+        "approval_storage_available": True,
         "audit_log_used_for_current_status": False,
         "import_authority": record.get("import_authority") or "not_admitted",
     }
@@ -179,11 +183,26 @@ def classify_project_import_approval_record(
 def load_project_import_approval_status() -> Dict[str, Any]:
     contract = load_project_import_approval_contract()
     expected = contract.get("minimum_expected_values") or {}
-    records = [
-        dict(record)
-        for record in _approval_records().values()
-        if record.get("candidate_id") == expected.get("candidate_id")
-    ]
+    try:
+        records = [
+            dict(record)
+            for record in _approval_records().values()
+            if record.get("candidate_id") == expected.get("candidate_id")
+        ]
+    except Exception as exc:
+        return {
+            "classification": "approval_storage_unavailable",
+            "current_candidate_match": False,
+            "candidate_id": expected.get("candidate_id"),
+            "candidate_version": expected.get("candidate_version"),
+            "source": APPROVAL_STATUS_SOURCE,
+            "route": "/api/v1/reads/project-import-approval-status",
+            "approval_storage_available": False,
+            "approval_record_count_for_candidate": 0,
+            "audit_log_used_for_current_status": False,
+            "import_authority": "not_admitted",
+            "error_type": exc.__class__.__name__,
+        }
     records.sort(key=lambda record: str(record.get("created_at") or ""), reverse=True)
     selected = records[0] if records else None
     status = classify_project_import_approval_record(selected, contract)

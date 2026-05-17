@@ -171,7 +171,13 @@ def test_project_import_approval_readback_classifies_current_and_stale_records(c
 
     missing = load_project_import_approval_status()
     assert missing["classification"] == "no_approval_record"
+    assert missing["approval_storage_available"] is True
+    assert missing["route"] == "/api/v1/reads/project-import-approval-status"
     assert missing["audit_log_used_for_current_status"] is False
+
+    missing_route = client.get("/api/v1/reads/project-import-approval-status", headers=_token())
+    assert missing_route.status_code == 200
+    assert missing_route.json()["classification"] == "no_approval_record"
 
     response = client.post("/api/v1/mutations/project-import-approvals", json=request, headers=_token())
     accepted = response.json()
@@ -181,8 +187,15 @@ def test_project_import_approval_readback_classifies_current_and_stale_records(c
     assert current["approval_record_id"] == accepted["entity_id"]
     assert current["mutation_id"] == accepted["mutation_id"]
     assert current["audit_event_id"] == accepted["audit_event_id"]
+    assert current["approval_storage_available"] is True
+    assert current["route"] == "/api/v1/reads/project-import-approval-status"
     assert current["audit_log_used_for_current_status"] is False
     assert current["import_authority"] == "not_admitted"
+
+    current_route = client.get("/api/v1/reads/project-import-approval-status", headers=_token())
+    assert current_route.status_code == 200
+    assert current_route.json()["classification"] == "approved_for_import_packet"
+    assert current_route.json()["approval_record_id"] == accepted["entity_id"]
 
     stored_record = store.pm_import_candidate_approvals[accepted["entity_id"]]
     stale_record = dict(stored_record)
@@ -221,6 +234,25 @@ def test_project_import_approval_readback_classifies_returned_and_rejected_witho
     assert rejected_status["classification"] == "rejected_candidate"
     assert returned_status["audit_log_used_for_current_status"] is False
     assert rejected_status["audit_log_used_for_current_status"] is False
+
+
+def test_project_import_approval_status_read_classifies_storage_unavailable(monkeypatch, tmp_path):
+    _approval_contract(tmp_path, monkeypatch)
+
+    class BrokenApprovalStore:
+        def values(self):
+            raise RuntimeError("approval table missing")
+
+    monkeypatch.setattr(store, "pm_import_candidate_approvals", BrokenApprovalStore())
+
+    status = load_project_import_approval_status()
+
+    assert status["classification"] == "approval_storage_unavailable"
+    assert status["approval_storage_available"] is False
+    assert status["approval_record_count_for_candidate"] == 0
+    assert status["audit_log_used_for_current_status"] is False
+    assert status["import_authority"] == "not_admitted"
+    assert status["error_type"] == "RuntimeError"
 
 
 def test_project_import_approval_route_rejects_replay_mismatch(client, monkeypatch, tmp_path):
