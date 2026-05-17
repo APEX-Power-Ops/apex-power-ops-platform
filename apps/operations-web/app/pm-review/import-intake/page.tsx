@@ -389,6 +389,16 @@ type FieldStartPmFollowupPromptReviewItem = {
   detail: string
 }
 
+type FieldStartConversationCloseoutPromptStatus = 'prompt' | 'confirm' | 'context' | 'blocked'
+
+type FieldStartConversationCloseoutPromptItem = {
+  id: string
+  title: string
+  status: FieldStartConversationCloseoutPromptStatus
+  href: string
+  detail: string
+}
+
 type OutputSelectorStatus = 'available-context' | 'needs-local-context' | 'field-context' | 'blocked'
 
 type OutputSelectorItem = {
@@ -1012,6 +1022,12 @@ function fieldStartCustomerSiteQuestionTone(status: FieldStartCustomerSiteQuesti
 function fieldStartPmFollowupPromptReviewTone(status: FieldStartPmFollowupPromptReviewStatus) {
   if (status === 'context') return 'status-configured'
   if (status === 'prompt' || status === 'ask') return 'status-awaiting-values'
+  return 'status-deferred'
+}
+
+function fieldStartConversationCloseoutPromptTone(status: FieldStartConversationCloseoutPromptStatus) {
+  if (status === 'context') return 'status-configured'
+  if (status === 'prompt' || status === 'confirm') return 'status-awaiting-values'
   return 'status-deferred'
 }
 
@@ -2563,6 +2579,67 @@ function buildFieldStartPmFollowupPromptReview(
       status: 'blocked',
       href: '#guardrails',
       detail: 'If the follow-up needs accountability, timing, customer-facing language, field direction, report, schedule/status update, or durable record, stop here and author a later bounded packet; this section records none.',
+    },
+  ]
+}
+
+function buildFieldStartConversationCloseoutPrompts(
+  candidate: CandidatePayload | undefined,
+  fieldQuestionsDraft: FieldQuestionsDraft,
+  fieldObservationScratchpad: FieldObservationScratchpad,
+): FieldStartConversationCloseoutPromptItem[] {
+  const projectName = candidate?.project?.name || candidate?.candidate_id || 'current Project Miner candidate'
+  const hasConversationSource = Boolean(fieldObservationScratchpad.observer_source.trim() || fieldObservationScratchpad.observation_date_or_shift.trim())
+  const hasCustomerSiteReturn = Boolean(fieldQuestionsDraft.customer_constraint_questions.trim() || fieldQuestionsDraft.site_access_safety_questions.trim() || fieldObservationScratchpad.access_safety_observations.trim())
+  const hasLeadResourceReturn = Boolean(fieldQuestionsDraft.crew_equipment_questions.trim() || fieldQuestionsDraft.material_staging_questions.trim() || fieldObservationScratchpad.material_equipment_observations.trim())
+  const hasEvidenceReturn = Boolean(fieldQuestionsDraft.drawing_source_questions.trim() || fieldObservationScratchpad.workpackage_area_reference.trim())
+  const hasPmOpenQuestionReturn = Boolean(fieldQuestionsDraft.pm_followup_notes.trim() || fieldObservationScratchpad.open_questions_pm_followup.trim())
+
+  return [
+    {
+      id: 'conversation-summary-return-prompt',
+      title: 'Conversation summary return prompt',
+      status: hasConversationSource ? 'context' : 'prompt',
+      href: '#field-prep',
+      detail: hasConversationSource
+        ? `${projectName}: conversation source context exists; bring back only the summary of what was clarified, what stayed open, and what needs later packet authority.`
+        : `${projectName}: after the field-start conversation, bring back a short summary of what changed and what stayed open; do not store the summary in this panel.`,
+    },
+    {
+      id: 'customer-site-return-closeout-prompt',
+      title: 'Customer/site return closeout prompt',
+      status: hasCustomerSiteReturn ? 'context' : 'confirm',
+      href: '#field-prep',
+      detail: hasCustomerSiteReturn
+        ? 'Bring back customer/site clarifications as local review context only; do not turn access, shutdown, escort, or contact answers into promises or field direction here.'
+        : 'Customer/site return remains open; ask what access, shutdown, escort, or contact answer still needs local review before any later bounded packet.',
+    },
+    {
+      id: 'lead-resource-return-closeout-prompt',
+      title: 'Lead/resource return closeout prompt',
+      status: hasLeadResourceReturn ? 'context' : 'confirm',
+      href: '#field-prep',
+      detail: hasLeadResourceReturn
+        ? 'Bring back lead, material, equipment, and staging clarifications as local review context only; do not create crew direction, assignments, or schedule/status changes here.'
+        : 'Lead/resource return remains open; ask what material, equipment, staging, or lead clarification should be reviewed locally before field reliance.',
+    },
+    {
+      id: 'evidence-source-return-closeout-prompt',
+      title: 'Evidence/source return prompt',
+      status: hasEvidenceReturn ? 'context' : 'confirm',
+      href: '#field-prep',
+      detail: hasEvidenceReturn
+        ? 'Bring back the source record, drawing, workbook row, or site note that should be checked next; keep it as local source-review context.'
+        : 'Evidence/source return remains open; identify the source record, drawing, workbook row, or site note to inspect before any later authority packet.',
+    },
+    {
+      id: 'next-packet-closeout-boundary',
+      title: 'Next packet closeout boundary',
+      status: hasPmOpenQuestionReturn ? 'blocked' : 'prompt',
+      href: '#guardrails',
+      detail: hasPmOpenQuestionReturn
+        ? 'Open PM follow-up context exists; if it requires accountability, timing, customer-facing language, field direction, report, schedule/status update, or durable record, stop and author a later bounded packet.'
+        : 'If the conversation reveals a needed next move, bring back only the packet question; do not turn it into work lists, accountability fields, timing fields, commitments, reports, or writes here.',
     },
   ]
 }
@@ -7250,6 +7327,10 @@ export default function ProjectMinerIntakeWorkbenchPage() {
     () => buildFieldStartPmFollowupPromptReview(candidate, fieldQuestionsDraft, fieldObservationScratchpad),
     [candidate, fieldQuestionsDraft, fieldObservationScratchpad],
   )
+  const fieldStartConversationCloseoutPrompts = useMemo(
+    () => buildFieldStartConversationCloseoutPrompts(candidate, fieldQuestionsDraft, fieldObservationScratchpad),
+    [candidate, fieldQuestionsDraft, fieldObservationScratchpad],
+  )
   const pmIntakeSnapshot = useMemo(
     () => buildPmIntakeSnapshot(persistenceReadinessGates, operatingQueue, importExceptionRegister, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, closeoutChecks, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad, approvalDraft),
     [persistenceReadinessGates, operatingQueue, importExceptionRegister, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, closeoutChecks, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad, approvalDraft],
@@ -8396,6 +8477,37 @@ export default function ProjectMinerIntakeWorkbenchPage() {
                       <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
                     </div>
                     <span className={`status-pill ${fieldStartPmFollowupPromptReviewTone(item.status)}`}>{formatLabel(item.status)}</span>
+                  </div>
+                </a>
+              ))}
+            </div>
+          </section>
+          <section id="pm-field-start-conversation-closeout-prompt-review" aria-label="Local field-start conversation closeout prompt review" className="card" style={{ padding: '0.9rem', marginTop: '0.85rem', boxShadow: 'none' }}>
+            <div className="status-row" style={{ alignItems: 'start' }}>
+              <div>
+                <h3 style={{ margin: 0 }}>Local Field-Start Conversation Closeout Prompt Review</h3>
+                <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+                  Copy/paste review context for what to bring back after the field-start conversation. It creates no meeting note, localStorage key, export artifact, backend route, task, action item, owner, due date, customer commitment, customer report, field instruction, hosted write claim, or production write.
+                </p>
+              </div>
+              <span className="status-pill status-awaiting-values">closeout prompt</span>
+            </div>
+            <div aria-label="Local field-start conversation closeout prompt review controls" style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
+              {fieldStartConversationCloseoutPrompts.map((item) => (
+                <a
+                  key={item.id}
+                  className="card"
+                  href={item.href}
+                  style={{ color: 'inherit', display: 'block', padding: '0.85rem', textDecoration: 'none', boxShadow: 'none' }}
+                >
+                  <div className="status-row" style={{ alignItems: 'start' }}>
+                    <div>
+                      <p style={{ margin: 0 }}>
+                        <strong>{item.title}</strong>
+                      </p>
+                      <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
+                    </div>
+                    <span className={`status-pill ${fieldStartConversationCloseoutPromptTone(item.status)}`}>{formatLabel(item.status)}</span>
                   </div>
                 </a>
               ))}
