@@ -1,0 +1,122 @@
+{
+  "packet_id": "2026-05-16-pm-lane-141",
+  "title": "Browser Approval Submission Packet Design",
+  "objective": "Author the governed design bridge from the read-only PM intake workbench to a later explicitly admitted browser approval submission lane, defining the payload, UI confirmation, success/failure handling, idempotent replay, readback proof, and first approval-row execution gate without sending a live POST or creating an approval row.",
+  "domain": "pm-domain",
+  "active_role": "Technical Repo Authority / PM Lane Coordinator / Browser Approval Submission Design Author",
+  "source_floor": {
+    "branch": "clean-main",
+    "commit": "bbe1bfc83d93fac4edbb6594aeaf7ac674a01086",
+    "meaning": "Current clean-main after PM Lane 140 reconciled the PM intake workbench with hosted approval-readiness truth while preserving zero browser approval/import mutation authority."
+  },
+  "dependencies": [
+    "2026-05-16-pm-lane-041c",
+    "2026-05-16-pm-lane-138",
+    "2026-05-16-pm-lane-139",
+    "2026-05-16-pm-lane-140"
+  ],
+  "allowed_scope": [
+    "Author the browser approval submission design and future execution gate requirements.",
+    "Define the exact approval persistence envelope and payload fields already required by apps/mutation-seam.",
+    "Define PM-facing confirmation copy, blocked-state copy, success-state copy, failure-state copy, idempotent replay handling, and status-readback expectations for a later UI implementation lane.",
+    "Define the minimum acceptance evidence for the future first approval-row creation lane.",
+    "Update PM operating docs, status, packet, and handoff surfaces for the no-write design lane.",
+    "Use read-only sidecar scout output as recommendation context."
+  ],
+  "not_allowed": [
+    "No browser approval button.",
+    "No browser approval POST wiring.",
+    "No live POST to /api/v1/mutations/project-import-approvals.",
+    "No approval row creation.",
+    "No project import mutation.",
+    "No project, workpackage, task, apparatus, issue, assignment, schedule, status, durable field record, production tracking, workbook, or import rows.",
+    "No app product code changes in this design lane.",
+    "No live Supabase SQL application or schema migration.",
+    "No Render, Vercel, Olares, or Supabase action.",
+    "No secret value access, print, rotation, or repo storage.",
+    "No workbook macro execution or workbook writeback.",
+    "No service creation, DNS/auth/ingress change, fixture replay into live data, work authorization, field release, live work order creation, or autonomous AI business-state mutation."
+  ],
+  "browser_submission_design": {
+    "future_route": "/api/v1/mutations/project-import-approvals",
+    "target_table": "seam.pm_import_candidate_approvals",
+    "target_entity_type": "pm_import_candidate_approval",
+    "required_envelope": {
+      "idempotency_key": "Must equal payload.idempotency_key from the current approval contract.",
+      "mutation_class": "C",
+      "action_type": "persist_import_approval",
+      "entity_id": "Must be omitted or equal the deterministic approval_record_id produced from candidate_id, candidate_version, source_stat_fingerprint, candidate_shape_fingerprint, and idempotency_key.",
+      "payload": "Must contain the required approval payload fields listed below.",
+      "reason": "Must clearly state this persists only the PM import-candidate approval record and does not import rows.",
+      "source": "online",
+      "client_timestamp": "Browser timestamp for submission evidence; server remains source of approved_at_utc."
+    },
+    "required_payload_fields": [
+      "candidate_id",
+      "candidate_version",
+      "source_stat_fingerprint",
+      "candidate_shape_fingerprint",
+      "idempotency_key",
+      "decision",
+      "approved_by_actor_id",
+      "approved_at_utc",
+      "accepted_warning_codes",
+      "accepted_no_go_overrides",
+      "review_notes"
+    ],
+    "payload_rules": [
+      "decision must be one of approve_for_import_packet, return_for_revision, or reject_candidate.",
+      "accepted_warning_codes must exactly match the current candidate warning-code set from the approval contract.",
+      "accepted_no_go_overrides must exactly match the approval contract's needs_human_acceptance check ids.",
+      "review_notes must be nonempty.",
+      "PM actor authority comes from the authenticated token; the backend normalizes approved_by_actor_id and approved_at_utc.",
+      "offline_queue source is rejected for this Class C approval persistence path."
+    ],
+    "ui_confirmation_requirements": [
+      "Require an explicit PM confirmation control before any future POST is enabled.",
+      "Show candidate id, candidate version, source fingerprint, shape fingerprint, decision value, warning-code acceptance, no-go acknowledgement, and review notes in the confirmation view.",
+      "Warn that approval persistence is not project import authority and does not create workpackages, tasks, apparatus, assignments, schedules, statuses, field records, work orders, or production tracking rows.",
+      "Keep project import controls absent after approval persistence succeeds until a separate import packet admits that mutation."
+    ],
+    "future_success_evidence": [
+      "HTTP 200 accepted or idempotent_hit response from POST /api/v1/mutations/project-import-approvals.",
+      "Response entity_type is pm_import_candidate_approval and action_type is persist_import_approval.",
+      "Response new_state.import_authority remains not_admitted.",
+      "GET /api/v1/reads/project-import-approval-status returns approved_for_import_packet, returned_for_revision, or rejected_candidate as appropriate for the same candidate.",
+      "Approval record count changes from 0 to 1 only in the explicitly admitted first-row execution lane, or remains 1 on idempotent replay.",
+      "Project, workpackage, task, apparatus, assignment, schedule, status, durable field record, and production tracking counts remain unchanged."
+    ],
+    "future_failure_handling": [
+      "Reject stale candidate/source/shape/idempotency values and return the PM to source review.",
+      "Reject warning-code mismatches and require renewed warning acceptance.",
+      "Reject missing or mismatched human-acceptance no-go acknowledgements.",
+      "Reject unsupported decisions and empty review notes.",
+      "Treat idempotency duplicate with mismatched payload as a blocker, not as success.",
+      "Show storage-unavailable readback as a blocker and do not proceed to import."
+    ]
+  },
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/PROJECT_STATUS.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/APEX-PM-TEMP-POWER-DELIVERY-AND-ORCHESTRATION-PLAN-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/APEX-PM-STAKEHOLDER-TIME-PROTECTION-AND-ACCELERATION-LANE-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-16-pm-lane-141-browser-approval-submission-packet-design.json",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-16-pm-lane-141-browser-approval-submission-packet-design-handoff.md"
+  ],
+  "validation_steps": [
+    "Get-Content -Path \"C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-16-pm-lane-141-browser-approval-submission-packet-design.json\" | ConvertFrom-Json | Select-Object -ExpandProperty packet_id",
+    "rg -n \"PM Lane 141|No live approval POST|No approval row|not_admitted|Browser Approval Submission Packet Design\" PROJECT_STATUS.md docs/operations ops/agents",
+    "git diff --check",
+    "git diff --cached --check"
+  ],
+  "validation_result": "PASS: packet JSON parsed with ConvertFrom-Json; scoped guardrail/status rg returned PM Lane 141, no-live-POST, no-approval-row, not_admitted, and Browser Approval Submission Packet Design references; scoped git diff --check passed.",
+  "delegation_status": "coordinator_executed_design_lane_with_read_only_sidecar_scout",
+  "sidecar_result": "Read-only sidecar recommended PM Lane 141 as a browser approval submission design/packet lane, not a live submission lane. It identified the exact likely files, guardrails, and validation commands, and recommended a separate explicit execution lane for first approval-row creation.",
+  "next_recommended_lane": "PM Lane 142 - Browser Approval Submission First-Row Execution Gate, only after explicit stakeholder admission of live POST and first approval-row creation",
+  "sql_permission": false,
+  "live_deploy_permission": false,
+  "live_post_permission": false,
+  "ai_mutation_authority": "not_admitted",
+  "created_at": "2026-05-16",
+  "updated_at": "2026-05-16"
+}
