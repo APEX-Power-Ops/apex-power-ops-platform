@@ -333,6 +333,12 @@ type HandoffGuideItem = {
   detail: string
 }
 
+type HandoffGuideGroup = {
+  id: string
+  label: string
+  items: HandoffGuideItem[]
+}
+
 type CommandCenterStatus = 'do-now' | 'ask-next' | 'prepare-context' | 'blocked'
 
 type CommandCenterItem = {
@@ -2405,7 +2411,7 @@ function buildPmIntakeHandoffGuide(
   closeoutChecks: Record<string, boolean>,
   persistenceReadinessGates: ReadinessGate[],
   admissionPlan: AdmissionPlan | undefined,
-): HandoffGuideItem[] {
+): HandoffGuideGroup[] {
   const exceptionCount = importExceptionRegisterCounts(importExceptionRegister)
   const decisionDraftComplete = Boolean(approvalDraft.decision && approvalDraft.review_notes.trim() && approvalDraft.local_attestation)
   const decisionDraftState = decisionDraftComplete
@@ -2423,43 +2429,61 @@ function buildPmIntakeHandoffGuide(
 
   return [
     {
-      id: 'jason-local-review-context',
-      title: 'Jason local review',
-      status: 'local-review',
-      href: '#import-exception-register',
-      detail: `Use the workbench for Jason review while exceptions are ${importExceptionRegisterSummary(exceptionCount)} and ${decisionDraftState}.`,
+      id: 'review-context-handoff',
+      label: 'Review Context',
+      items: [
+        {
+          id: 'jason-local-review-context',
+          title: 'Jason local review',
+          status: 'local-review',
+          href: '#import-exception-register',
+          detail: `Use the workbench for Jason review while exceptions are ${importExceptionRegisterSummary(exceptionCount)} and ${decisionDraftState}.`,
+        },
+      ],
     },
     {
-      id: 'field-conversation-context',
-      title: 'Field conversation prep',
-      status: nextFieldPrepMove?.status === 'blocked' ? 'blocked' : 'field-context',
-      href: '#field-prep',
-      detail: nextFieldPrepMove
-        ? `Field prep queue is ${completeFieldPrepQueueCount} complete / ${nextFieldPrepQueueCount} next / ${blockedFieldPrepQueueCount} blocked. ${nextFieldPrepMove.title}: ${nextFieldPrepMove.detail}`
-        : 'No local field-prep queue item is currently reported.',
+      id: 'field-executor-context-handoff',
+      label: 'Field And Executor Context',
+      items: [
+        {
+          id: 'field-conversation-context',
+          title: 'Field conversation prep',
+          status: nextFieldPrepMove?.status === 'blocked' ? 'blocked' : 'field-context',
+          href: '#field-prep',
+          detail: nextFieldPrepMove
+            ? `Field prep queue is ${completeFieldPrepQueueCount} complete / ${nextFieldPrepQueueCount} next / ${blockedFieldPrepQueueCount} blocked. ${nextFieldPrepMove.title}: ${nextFieldPrepMove.detail}`
+            : 'No local field-prep queue item is currently reported.',
+        },
+        {
+          id: 'bounded-executor-context',
+          title: 'Bounded executor context',
+          status: closeoutCheckedCount || decisionDraftComplete ? 'executor-context' : 'local-review',
+          href: '#executor-closeout',
+          detail: closeoutCheckedCount || decisionDraftComplete
+            ? `Existing Executor Handoff context has ${closeoutCheckedCount} of ${CLOSEOUT_CHECKLIST_ITEMS.length} local closeout evidence checks marked plus ${decisionDraftState}.`
+            : 'Keep executor context local until review notes, local decision context, or closeout evidence are present.',
+        },
+      ],
     },
     {
-      id: 'bounded-executor-context',
-      title: 'Bounded executor context',
-      status: closeoutCheckedCount || decisionDraftComplete ? 'executor-context' : 'local-review',
-      href: '#executor-closeout',
-      detail: closeoutCheckedCount || decisionDraftComplete
-        ? `Existing Executor Handoff context has ${closeoutCheckedCount} of ${CLOSEOUT_CHECKLIST_ITEMS.length} local closeout evidence checks marked plus ${decisionDraftState}.`
-        : 'Keep executor context local until review notes, local decision context, or closeout evidence are present.',
-    },
-    {
-      id: 'hosted-parity-executor-boundary',
-      title: 'Hosted readiness context',
-      status: 'covered-context',
-      href: '#approval-readiness',
-      detail: 'Hosted Vercel, Render, approval status readback, and bounded MCP proof are green; this local workbench still grants no browser write authority.',
-    },
-    {
-      id: 'future-persistence-packet-boundary',
-      title: 'Future approval-persistence packet boundary',
-      status: 'blocked',
-      href: '#approval-readiness',
-      detail: `${blockedPersistenceGateCount} of ${persistenceReadinessGates.length} approval-persistence gates remain blocked and project import remains ${formatLabel(admissionAuthority)}.`,
+      id: 'approval-boundary-context-handoff',
+      label: 'Approval Boundary Context',
+      items: [
+        {
+          id: 'hosted-parity-executor-boundary',
+          title: 'Hosted readiness context',
+          status: 'covered-context',
+          href: '#approval-readiness',
+          detail: 'Hosted Vercel, Render, approval status readback, and bounded MCP proof are green; this local workbench still grants no browser write authority.',
+        },
+        {
+          id: 'future-persistence-packet-boundary',
+          title: 'Future approval-persistence packet boundary',
+          status: 'blocked',
+          href: '#approval-readiness',
+          detail: `${blockedPersistenceGateCount} of ${persistenceReadinessGates.length} approval-persistence gates remain blocked and project import remains ${formatLabel(admissionAuthority)}.`,
+        },
+      ],
     },
   ]
 }
@@ -7654,24 +7678,31 @@ export default function ProjectMinerIntakeWorkbenchPage() {
             <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
               Browser-local guide for the next context lane. It creates no localStorage key, export artifact, backend route, schema, approval record, task, issue, schedule, status, durable field record, production tracking row, hosted write claim, or production write.
             </p>
-            <div aria-label="Local PM intake handoff guide items" style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
-              {pmIntakeHandoffGuide.map((item) => (
-                <a
-                  key={item.id}
-                  className="card"
-                  href={item.href}
-                  style={{ color: 'inherit', display: 'block', padding: '0.85rem', textDecoration: 'none', boxShadow: 'none' }}
-                >
-                  <div className="status-row" style={{ alignItems: 'start' }}>
-                    <div>
-                      <p style={{ margin: 0 }}>
-                        <strong>{item.title}</strong>
-                      </p>
-                      <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
-                    </div>
-                    <span className={`status-pill ${handoffGuideTone(item.status)}`}>{formatLabel(item.status)}</span>
+            <div aria-label="Local PM intake handoff guide groups" style={{ display: 'grid', gap: '0.85rem', gridTemplateColumns: 'repeat(auto-fit, minmax(15rem, 1fr))', marginTop: '0.85rem' }}>
+              {pmIntakeHandoffGuide.map((group) => (
+                <section key={group.id} aria-label={`${group.label} handoff guide group`} style={{ display: 'grid', gap: '0.55rem' }}>
+                  <h3 style={{ fontSize: '0.95rem', margin: 0 }}>{group.label}</h3>
+                  <div aria-label={`${group.label} handoff guide items`} style={{ display: 'grid', gap: '0.75rem' }}>
+                    {group.items.map((item) => (
+                      <a
+                        key={item.id}
+                        className="card"
+                        href={item.href}
+                        style={{ color: 'inherit', display: 'block', padding: '0.85rem', textDecoration: 'none', boxShadow: 'none' }}
+                      >
+                        <div className="status-row" style={{ alignItems: 'start' }}>
+                          <div>
+                            <p style={{ margin: 0 }}>
+                              <strong>{item.title}</strong>
+                            </p>
+                            <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
+                          </div>
+                          <span className={`status-pill ${handoffGuideTone(item.status)}`}>{formatLabel(item.status)}</span>
+                        </div>
+                      </a>
+                    ))}
                   </div>
-                </a>
+                </section>
               ))}
             </div>
           </div>
