@@ -439,6 +439,16 @@ type FieldStartLeadResourceClarificationBringBackLensItem = {
   detail: string
 }
 
+type FieldStartLaterBoundedPacketCandidateBringBackLensStatus = 'check' | 'review' | 'context' | 'blocked'
+
+type FieldStartLaterBoundedPacketCandidateBringBackLensItem = {
+  id: string
+  title: string
+  status: FieldStartLaterBoundedPacketCandidateBringBackLensStatus
+  href: string
+  detail: string
+}
+
 type OutputSelectorStatus = 'available-context' | 'needs-local-context' | 'field-context' | 'blocked'
 
 type OutputSelectorItem = {
@@ -1090,6 +1100,12 @@ function fieldStartCustomerSiteClarificationBringBackLensTone(status: FieldStart
 }
 
 function fieldStartLeadResourceClarificationBringBackLensTone(status: FieldStartLeadResourceClarificationBringBackLensStatus) {
+  if (status === 'context' || status === 'review') return 'status-configured'
+  if (status === 'check') return 'status-awaiting-values'
+  return 'status-deferred'
+}
+
+function fieldStartLaterBoundedPacketCandidateBringBackLensTone(status: FieldStartLaterBoundedPacketCandidateBringBackLensStatus) {
   if (status === 'context' || status === 'review') return 'status-configured'
   if (status === 'check') return 'status-awaiting-values'
   return 'status-deferred'
@@ -2925,6 +2941,56 @@ function buildFieldStartLeadResourceClarificationBringBackLens(
       status: 'blocked',
       href: '#guardrails',
       detail: `${projectName}: if a returned lead/resource answer needs a task, action item, owner, due date, assignment, timing field, schedule/status write, durable record, production tracking, report, export, backend route, storage key, button, or write authority, stop and author a later bounded packet; do not create it here.`,
+    },
+  ]
+}
+
+function buildFieldStartLaterBoundedPacketCandidateBringBackLens(
+  candidate: CandidatePayload | undefined,
+  fieldQuestionsDraft: FieldQuestionsDraft,
+  fieldObservationScratchpad: FieldObservationScratchpad,
+): FieldStartLaterBoundedPacketCandidateBringBackLensItem[] {
+  const projectName = candidate?.project?.name || candidate?.candidate_id || 'current Project Miner candidate'
+  const futurePacketContextPresent = Boolean(fieldQuestionsDraft.pm_followup_notes.trim() || fieldObservationScratchpad.open_questions_pm_followup.trim())
+  const evidenceContextPresent = Boolean(fieldQuestionsDraft.drawing_source_questions.trim() || fieldObservationScratchpad.observer_source.trim() || fieldObservationScratchpad.workpackage_area_reference.trim())
+  const ownerTimingContextPresent = Boolean(fieldQuestionsDraft.customer_constraint_questions.trim() || fieldObservationScratchpad.open_questions_pm_followup.trim())
+  const writePathContextPresent = Boolean(fieldQuestionsDraft.pm_followup_notes.trim() || fieldQuestionsDraft.customer_constraint_questions.trim() || fieldObservationScratchpad.open_questions_pm_followup.trim())
+
+  return [
+    {
+      id: 'future-packet-trigger-check-lens',
+      title: 'Future packet trigger check',
+      status: futurePacketContextPresent ? 'review' : 'check',
+      href: '#guardrails',
+      detail: 'If the return needs a move beyond local review, classify only the future packet question; do not create work lists, timing fields, commitments, reports, records, or writes here.',
+    },
+    {
+      id: 'authority-admission-check-lens',
+      title: 'Authority admission check',
+      status: writePathContextPresent ? 'blocked' : 'check',
+      href: '#guardrails',
+      detail: 'If the return needs approval submission, import, field authorization, assignment, schedule/status, durable record, production tracking, report, or billing authority, stop and author a later bounded packet.',
+    },
+    {
+      id: 'evidence-context-check-lens',
+      title: 'Evidence/context check',
+      status: evidenceContextPresent ? 'context' : 'check',
+      href: '#field-prep',
+      detail: 'If the return depends on a drawing, workbook, site note, observer, work area, or source record, classify the evidence needed for the future packet without storing it here.',
+    },
+    {
+      id: 'owner-timing-language-check-lens',
+      title: 'Owner/timing language check',
+      status: ownerTimingContextPresent ? 'context' : 'check',
+      href: '#guardrails',
+      detail: 'If the return needs owner, due date, timing, customer-facing language, field direction, or accountability, classify only that future-packet need and keep this section read-only.',
+    },
+    {
+      id: 'bounded-packet-stop-line-lens',
+      title: 'Bounded packet stop line',
+      status: 'blocked',
+      href: '#guardrails',
+      detail: `${projectName}: if a returned item needs a task, action item, owner, due date, assignment, timing field, schedule/status write, customer commitment, customer report, field instruction, durable record, production tracking, export, backend route, storage key, button, or write authority, stop and author a later bounded packet; do not create it here.`,
     },
   ]
 }
@@ -7632,6 +7698,10 @@ export default function ProjectMinerIntakeWorkbenchPage() {
     () => buildFieldStartLeadResourceClarificationBringBackLens(candidate, fieldQuestionsDraft, fieldObservationScratchpad),
     [candidate, fieldQuestionsDraft, fieldObservationScratchpad],
   )
+  const fieldStartLaterBoundedPacketCandidateBringBackLens = useMemo(
+    () => buildFieldStartLaterBoundedPacketCandidateBringBackLens(candidate, fieldQuestionsDraft, fieldObservationScratchpad),
+    [candidate, fieldQuestionsDraft, fieldObservationScratchpad],
+  )
   const pmIntakeSnapshot = useMemo(
     () => buildPmIntakeSnapshot(persistenceReadinessGates, operatingQueue, importExceptionRegister, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, closeoutChecks, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad, approvalDraft),
     [persistenceReadinessGates, operatingQueue, importExceptionRegister, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, closeoutChecks, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad, approvalDraft],
@@ -8933,6 +9003,37 @@ export default function ProjectMinerIntakeWorkbenchPage() {
                       <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
                     </div>
                     <span className={`status-pill ${fieldStartLeadResourceClarificationBringBackLensTone(item.status)}`}>{formatLabel(item.status)}</span>
+                  </div>
+                </a>
+              ))}
+            </div>
+          </section>
+          <section id="pm-field-start-later-bounded-packet-candidate-bring-back-lens" aria-label="Local field-start later bounded packet candidate bring-back lens" className="card" style={{ padding: '0.9rem', marginTop: '0.85rem', boxShadow: 'none' }}>
+            <div className="status-row" style={{ alignItems: 'start' }}>
+              <div>
+                <h3 style={{ margin: 0 }}>Local Field Start Later Bounded Packet Candidate Bring-Back Lens</h3>
+                <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+                  Read-only later bounded packet candidate lens for returned field-start conversation items. It helps classify whether a returned item needs a future packet for authority, evidence, owner/timing, customer-facing language, or write-path admission; it creates no meeting note, localStorage key, export artifact, backend route, task, action item, owner, due date, assignment, schedule/status write, customer commitment, customer report, field instruction, durable record, production tracking row, hosted write claim, or production write, and exposes no buttons.
+                </p>
+              </div>
+              <span className="status-pill status-awaiting-values">packet candidate lens</span>
+            </div>
+            <div aria-label="Local field-start later bounded packet candidate bring-back lens controls" style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
+              {fieldStartLaterBoundedPacketCandidateBringBackLens.map((item) => (
+                <a
+                  key={item.id}
+                  className="card"
+                  href={item.href}
+                  style={{ color: 'inherit', display: 'block', padding: '0.85rem', textDecoration: 'none', boxShadow: 'none' }}
+                >
+                  <div className="status-row" style={{ alignItems: 'start' }}>
+                    <div>
+                      <p style={{ margin: 0 }}>
+                        <strong>{item.title}</strong>
+                      </p>
+                      <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
+                    </div>
+                    <span className={`status-pill ${fieldStartLaterBoundedPacketCandidateBringBackLensTone(item.status)}`}>{formatLabel(item.status)}</span>
                   </div>
                 </a>
               ))}
