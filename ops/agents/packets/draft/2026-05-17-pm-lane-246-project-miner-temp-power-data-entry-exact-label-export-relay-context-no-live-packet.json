@@ -1,0 +1,63 @@
+{
+  "packet_id": "2026-05-17-pm-lane-246-project-miner-temp-power-data-entry-exact-label-export-relay-context-no-live-packet",
+  "title": "PM Lane 246 - Project Miner Temp Power Data Entry Exact Label Export Relay Context No-Live Packet",
+  "date": "2026-05-17",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_DATA_ENTRY_EXACT_LABEL_EXPORT_RELAY_CONTEXT_NO_LIVE",
+  "selected_outcome": "DATA_ENTRY_EXPORTS_CARRY_EXACT_ONE_LABEL_RESPONSE_FORMAT_NO_LIVE",
+  "candidate": {
+    "candidate_id": "pm-import-candidate-miner-temp-power",
+    "active_warning_code": "PROJECT_DATA_ENTRY_FORMULA_ERRORS",
+    "warning_count": 1,
+    "blocker_count": 0,
+    "mutation_authority": "not_admitted"
+  },
+  "export_context": {
+    "surfaces": [
+      "PM intake brief export",
+      "local import exception register export"
+    ],
+    "next_input_needed": "return exactly one PM Lane 238 label",
+    "response_format": "return_exactly_one_pm_lane_238_label",
+    "paraphrases_close_gate": false,
+    "prior_source_correction_label_closes_gate": false,
+    "no_live_boundary": true
+  },
+  "allowed_labels": [
+    "ACCEPT_DATA_ENTRY_WARNING_NON_BLOCKING_NO_LIVE",
+    "REQUEST_DATA_ENTRY_WORKBOOK_CORRECTION_NO_LIVE",
+    "HOLD_DATA_ENTRY_WARNING_NO_LIVE",
+    "PROVIDE_EXACT_LIVE_ADMISSION_LATER"
+  ],
+  "desktop_codex_support": {
+    "prompt_path": "ops/agents/handoffs/2026-05-17-desktop-codex-pm-lane-246-data-entry-exact-label-export-relay-review-scout-prompt.md",
+    "status": "available_not_required",
+    "allowed_scope": [
+      "export relay clarity review",
+      "exact-label wording review",
+      "authority-boundary risk review"
+    ],
+    "blocked_scope": [
+      "PM decision authority",
+      "product code edit",
+      "repo publication",
+      "hosted service access",
+      "workbook content read",
+      "source PDF content read",
+      "macro execution",
+      "warning acceptance",
+      "approval/import authority",
+      "business-state mutation"
+    ]
+  },
+  "validation": [
+    "operations-web typecheck",
+    "operations-web build",
+    "focused pm-import-intake Playwright smoke",
+    "packet JSON parse",
+    "guardrail label search",
+    "pending-marker scan",
+    "corrupted-token scan",
+    "git diff --check"
+  ],
+  "validation_result": "PASS"
+}
