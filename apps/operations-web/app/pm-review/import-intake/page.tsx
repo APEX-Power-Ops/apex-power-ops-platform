@@ -379,6 +379,12 @@ type WorkflowMapItem = {
   detail: string
 }
 
+type WorkflowMapGroup = {
+  id: string
+  label: string
+  items: WorkflowMapItem[]
+}
+
 type OpenItemsStatus = 'open' | 'blocked' | 'context'
 
 type OpenItemsLensItem = {
@@ -2496,7 +2502,7 @@ function buildPmIntakeWorkflowMap(
   closeoutChecks: Record<string, boolean>,
   persistenceReadinessGates: ReadinessGate[],
   admissionPlan: AdmissionPlan | undefined,
-): WorkflowMapItem[] {
+): WorkflowMapGroup[] {
   const exceptionCount = importExceptionRegisterCounts(importExceptionRegister)
   const decisionDraftComplete = Boolean(approvalDraft.decision && approvalDraft.review_notes.trim() && approvalDraft.local_attestation)
   const decisionDraftStarted = hasApprovalDraftContent(approvalDraft)
@@ -2508,61 +2514,79 @@ function buildPmIntakeWorkflowMap(
 
   return [
     {
-      id: 'source-intake',
-      title: 'Source intake',
-      status: sourceFingerprint ? 'source' : 'attention',
-      href: '#project-packet',
-      detail: sourceFingerprint
-        ? `Source fingerprint ${sourceFingerprint} is loaded for the current candidate.`
-        : 'Source freshness is waiting for the candidate read.',
+      id: 'intake-review-path',
+      label: 'Intake Review Path',
+      items: [
+        {
+          id: 'source-intake',
+          title: 'Source intake',
+          status: sourceFingerprint ? 'source' : 'attention',
+          href: '#project-packet',
+          detail: sourceFingerprint
+            ? `Source fingerprint ${sourceFingerprint} is loaded for the current candidate.`
+            : 'Source freshness is waiting for the candidate read.',
+        },
+        {
+          id: 'exception-review',
+          title: 'Exception review',
+          status: exceptionCount.open ? 'attention' : exceptionCount.blocked ? 'blocked' : 'context',
+          href: '#import-exception-register',
+          detail: `Import exception register: ${importExceptionRegisterSummary(exceptionCount)}.`,
+        },
+        {
+          id: 'decision-draft',
+          title: 'Decision draft',
+          status: decisionDraftComplete ? 'context' : decisionDraftStarted ? 'draft' : 'attention',
+          href: '#pm-operating-queue',
+          detail: decisionDraftComplete
+            ? 'Local decision draft has a decision value, review notes, and local-only attestation.'
+            : decisionDraftStarted
+              ? 'Local decision draft has partial browser-local context.'
+              : 'Decision draft has not started.',
+        },
+      ],
     },
     {
-      id: 'exception-review',
-      title: 'Exception review',
-      status: exceptionCount.open ? 'attention' : exceptionCount.blocked ? 'blocked' : 'context',
-      href: '#import-exception-register',
-      detail: `Import exception register: ${importExceptionRegisterSummary(exceptionCount)}.`,
+      id: 'field-executor-path',
+      label: 'Field And Executor Path',
+      items: [
+        {
+          id: 'field-prep',
+          title: 'Field prep',
+          status: nextFieldPrepMove?.status === 'blocked' ? 'blocked' : 'prep',
+          href: '#field-prep',
+          detail: nextFieldPrepMove
+            ? `${nextFieldPrepMove.title}: ${nextFieldPrepMove.detail}`
+            : 'No local field-prep queue item is currently reported.',
+        },
+        {
+          id: 'executor-closeout',
+          title: 'Executor closeout',
+          status: closeoutCheckedCount ? 'audit' : 'attention',
+          href: '#executor-closeout',
+          detail: `${closeoutCheckedCount} of ${CLOSEOUT_CHECKLIST_ITEMS.length} local closeout checks marked for returned executor evidence.`,
+        },
+      ],
     },
     {
-      id: 'decision-draft',
-      title: 'Decision draft',
-      status: decisionDraftComplete ? 'context' : decisionDraftStarted ? 'draft' : 'attention',
-      href: '#pm-operating-queue',
-      detail: decisionDraftComplete
-        ? 'Local decision draft has a decision value, review notes, and local-only attestation.'
-        : decisionDraftStarted
-          ? 'Local decision draft has partial browser-local context.'
-          : 'Decision draft has not started.',
-    },
-    {
-      id: 'field-prep',
-      title: 'Field prep',
-      status: nextFieldPrepMove?.status === 'blocked' ? 'blocked' : 'prep',
-      href: '#field-prep',
-      detail: nextFieldPrepMove
-        ? `${nextFieldPrepMove.title}: ${nextFieldPrepMove.detail}`
-        : 'No local field-prep queue item is currently reported.',
-    },
-    {
-      id: 'executor-closeout',
-      title: 'Executor closeout',
-      status: closeoutCheckedCount ? 'audit' : 'attention',
-      href: '#executor-closeout',
-      detail: `${closeoutCheckedCount} of ${CLOSEOUT_CHECKLIST_ITEMS.length} local closeout checks marked for returned executor evidence.`,
-    },
-    {
-      id: 'approval-persistence-boundary',
-      title: 'Approval persistence boundary',
-      status: 'blocked',
-      href: '#approval-readiness',
-      detail: `${blockedPersistenceGateCount} of ${persistenceReadinessGates.length} approval-persistence gates remain blocked until a later packet admits that path.`,
-    },
-    {
-      id: 'project-import-boundary',
-      title: 'Project import boundary',
-      status: 'blocked',
-      href: '#guardrails',
-      detail: `Project import remains ${formatLabel(admissionAuthority)} for project, workpackage, task, apparatus, assignment, schedule, and status rows.`,
+      id: 'future-authority-boundaries',
+      label: 'Future Authority Boundaries',
+      items: [
+        {
+          id: 'approval-persistence-boundary',
+          title: 'Approval persistence boundary',
+          status: 'blocked',
+          href: '#approval-readiness',
+          detail: `${blockedPersistenceGateCount} of ${persistenceReadinessGates.length} approval-persistence gates remain blocked until a later packet admits that path.`,
+        },
+        {
+          id: 'project-import-boundary',
+          title: 'Project import boundary',
+          status: 'blocked',
+          href: '#guardrails',
+          detail: `Project import remains ${formatLabel(admissionAuthority)} for project, workpackage, task, apparatus, assignment, schedule, and status rows.`,
+        },
+      ],
     },
   ]
 }
@@ -7723,24 +7747,31 @@ export default function ProjectMinerIntakeWorkbenchPage() {
             <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
               Visual map of the current intake path from source review through field-prep context, executor closeout, and still-blocked future write authority. It creates no localStorage key, export artifact, backend route, schema, approval record, task, issue, or production write.
             </p>
-            <div aria-label="Local PM intake workflow map items" style={{ display: 'grid', gap: '0.75rem', gridTemplateColumns: 'repeat(auto-fit, minmax(14rem, 1fr))', marginTop: '0.85rem' }}>
-              {pmIntakeWorkflowMap.map((item) => (
-                <a
-                  key={item.id}
-                  className="card"
-                  href={item.href}
-                  style={{ color: 'inherit', display: 'block', padding: '0.85rem', textDecoration: 'none', boxShadow: 'none' }}
-                >
-                  <div className="status-row" style={{ alignItems: 'start' }}>
-                    <div>
-                      <p style={{ margin: 0 }}>
-                        <strong>{item.title}</strong>
-                      </p>
-                      <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
-                    </div>
-                    <span className={`status-pill ${workflowMapTone(item.status)}`}>{formatLabel(item.status)}</span>
+            <div aria-label="Local PM intake workflow map groups" style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
+              {pmIntakeWorkflowMap.map((group) => (
+                <section key={group.id} aria-label={`${group.label} workflow map group`} className="card" style={{ padding: '0.85rem', boxShadow: 'none' }}>
+                  <h3 style={{ fontSize: '0.95rem', margin: '0 0 0.65rem' }}>{group.label}</h3>
+                  <div aria-label={`${group.label} workflow map items`} style={{ display: 'grid', gap: '0.75rem', gridTemplateColumns: 'repeat(auto-fit, minmax(14rem, 1fr))' }}>
+                    {group.items.map((item) => (
+                      <a
+                        key={item.id}
+                        className="card"
+                        href={item.href}
+                        style={{ color: 'inherit', display: 'block', padding: '0.85rem', textDecoration: 'none', boxShadow: 'none' }}
+                      >
+                        <div className="status-row" style={{ alignItems: 'start' }}>
+                          <div>
+                            <p style={{ margin: 0 }}>
+                              <strong>{item.title}</strong>
+                            </p>
+                            <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
+                          </div>
+                          <span className={`status-pill ${workflowMapTone(item.status)}`}>{formatLabel(item.status)}</span>
+                        </div>
+                      </a>
+                    ))}
                   </div>
-                </a>
+                </section>
               ))}
             </div>
           </div>
