@@ -30,6 +30,8 @@ TOPOLOGY_PATTERNS = [
     re.compile(r"LVTX\s*-\s*[A-Z0-9]+", re.IGNORECASE),
 ]
 
+GROUND_RESISTANCE_TEST_LOT_DESIGNATION = "Ground Resistance Test Lot"
+
 
 def _clean(value: Any) -> Any:
     if value is None:
@@ -58,6 +60,29 @@ def _as_positive_int(value: Any) -> Optional[int]:
     if number is None or number <= 0:
         return None
     return int(number)
+
+
+def _is_ground_resistance_test_lot(apparatus_type: Any) -> bool:
+    text = str(apparatus_type or "")
+    return "Ground Resistance Test" in text and "Lot" in text
+
+
+def _correct_line_designation(apparatus_type: Any, designation: Any) -> Any:
+    if designation is None and _is_ground_resistance_test_lot(apparatus_type):
+        return GROUND_RESISTANCE_TEST_LOT_DESIGNATION
+    return designation
+
+
+def _expanded_candidate_quantity(line_item: Dict[str, Any]) -> int:
+    if _is_ground_resistance_test_lot(line_item.get("apparatus_type")):
+        return 1
+    return max(1, int(line_item.get("qty") or 1))
+
+
+def _expanded_candidate_planned_hours(line_item: Dict[str, Any]) -> Any:
+    if _is_ground_resistance_test_lot(line_item.get("apparatus_type")):
+        return line_item.get("hrs_line") or line_item.get("hrs_per_unit")
+    return line_item.get("hrs_per_unit")
 
 
 def _first_existing_path(*paths: Path) -> Path:
@@ -165,7 +190,7 @@ def _append_expanded_candidates(
     line_item: Dict[str, Any],
     apparatus_counter: int,
 ) -> int:
-    quantity = max(1, int(line_item.get("qty") or 1))
+    quantity = _expanded_candidate_quantity(line_item)
     for item_index in range(1, quantity + 1):
         apparatus_counter += 1
         suffix = f"{item_index:02d}" if quantity > 1 else "01"
@@ -179,7 +204,7 @@ def _append_expanded_candidates(
                 "designation": line_item.get("designation"),
                 "drawing_ref": line_item.get("drawing_ref"),
                 "display_name": f"{display_name} {suffix}" if quantity > 1 else str(display_name),
-                "planned_hours": line_item.get("hrs_per_unit"),
+                "planned_hours": _expanded_candidate_planned_hours(line_item),
                 "source_row": line_item.get("source_row"),
                 "scope_sheet": line_item.get("scope_sheet"),
             }
@@ -210,13 +235,14 @@ def _flat_sheet_line_items(sheet_name: str, sheet: Any) -> Dict[str, Any]:
             continue
 
         quantity = _as_positive_int(qty) or 1
+        corrected_designation = _correct_line_designation(apparatus_type, designation)
         line_index += 1
         line_item = {
             "line_id": f"miner-line-{line_index:03d}",
             "qty": quantity,
             "section": section,
             "apparatus_type": apparatus_type,
-            "designation": designation,
+            "designation": corrected_designation,
             "drawing_ref": notes,
             "hrs_per_unit": hrs_per_unit,
             "hrs_line": hrs_line,
@@ -299,12 +325,13 @@ def _scope_sheet_line_items(workbook_path: Path, workbook: Any) -> Dict[str, Any
                 continue
 
             line_index += 1
+            corrected_designation = _correct_line_designation(apparatus_type, None)
             line_item = {
                 "line_id": f"miner-line-{line_index:03d}",
                 "qty": quantity,
                 "section": current_section,
                 "apparatus_type": apparatus_type,
-                "designation": None,
+                "designation": corrected_designation,
                 "drawing_ref": scope_name,
                 "hrs_per_unit": hrs_per_unit,
                 "hrs_line": hrs_line,

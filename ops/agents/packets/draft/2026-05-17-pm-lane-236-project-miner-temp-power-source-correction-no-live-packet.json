@@ -1,0 +1,88 @@
+{
+  "packet_id": "2026-05-17-pm-lane-236-project-miner-temp-power-source-correction-no-live-packet",
+  "title": "PM Lane 236 - Project Miner Temp Power Source Correction No-Live Packet",
+  "date": "2026-05-17",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_SOURCE_CORRECTION_NO_LIVE",
+  "input_response_label": "REQUEST_SOURCE_CORRECTION_NO_LIVE",
+  "selected_outcome": "SOURCE_CORRECTION_APPLIED_GROUND_RESISTANCE_TEST_LOT_NO_LIVE",
+  "jason_clarification": {
+    "summary": "The row is typically performed as a single test consisting of multiple individual measurements.",
+    "candidate_designation": "Ground Resistance Test Lot"
+  },
+  "candidate": {
+    "candidate_id": "pm-import-candidate-miner-temp-power",
+    "project_name": "Miner Temp Power",
+    "task_count": 15,
+    "apparatus_candidate_count_after_correction": 184,
+    "warning_count_after_correction": 1,
+    "blocker_count_after_correction": 0,
+    "remaining_warning_codes": [
+      "PROJECT_DATA_ENTRY_FORMULA_ERRORS"
+    ],
+    "mutation_authority": "not_admitted"
+  },
+  "corrected_line_item": {
+    "line_id": "miner-line-015",
+    "source_row": 28,
+    "quantity": 3,
+    "section": "7.13",
+    "apparatus_type": "Ground Resistance Test - Two-Point (Lot)",
+    "candidate_designation": "Ground Resistance Test Lot",
+    "candidate_shape": "one lot-level task candidate with three measurements",
+    "apparatus_candidate_count": 1,
+    "planned_hours": 24
+  },
+  "implementation": {
+    "files_changed": [
+      "apps/mutation-seam/app/project_seed_sources.py",
+      "apps/mutation-seam/tests/test_project_import_candidate.py"
+    ],
+    "source_workbook_writeback_performed": false,
+    "workbook_macros_run": false,
+    "source_pdf_content_edit_performed": false,
+    "hosted_service_access_performed": false,
+    "live_approval_post_performed": false,
+    "approval_row_created": false,
+    "project_import_performed": false
+  },
+  "behavior_changes": [
+    "missing designation on a Ground Resistance Test lot row resolves to Ground Resistance Test Lot",
+    "task quantity remains 3 to preserve the source measurement count",
+    "expanded apparatus candidates collapse to one lot-level candidate for the row",
+    "line planned hours are preserved on the lot-level candidate",
+    "other blank designations continue to produce MISSING_DESIGNATIONS"
+  ],
+  "validation": [
+    "python -m pytest apps/mutation-seam/tests/test_project_import_candidate.py",
+    "read-only local preview summary for pm-import-candidate-miner-temp-power",
+    "python -m json.tool ops/agents/packets/draft/2026-05-17-pm-lane-236-project-miner-temp-power-source-correction-no-live-packet.json",
+    "rg guardrail search on touched Lane 236 files",
+    "corrupted-token scan on touched Lane 236 files",
+    "null-byte scan on touched Lane 236 files",
+    "git diff --check on touched Lane 236 files"
+  ],
+  "validation_result": "PASS",
+  "next_safe_packet": "PM Lane 237 - Corrected Candidate Approval Readiness Refresh And Remaining Warning Triage No-Live Packet",
+  "blocked_authority": [
+    "live approval POST",
+    "approval row creation",
+    "project import",
+    "note or task creation",
+    "owner or due-date assignment",
+    "field authorization",
+    "lead or crew assignment",
+    "schedule/status write",
+    "customer commitment",
+    "customer report",
+    "field instruction",
+    "durable field record",
+    "production tracking",
+    "completion evidence",
+    "billing/payroll/invoice/accounting output",
+    "Supabase/Render/Vercel/Olares mutation",
+    "SQL/schema migration",
+    "source workbook writeback",
+    "workbook macro/writeback",
+    "autonomous AI business-state mutation"
+  ]
+}

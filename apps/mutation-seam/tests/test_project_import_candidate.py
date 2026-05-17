@@ -44,6 +44,35 @@ def _write_candidate_estimator(path):
         workbook.close()
 
 
+def _write_ground_resistance_lot_estimator(path):
+    workbook = Workbook()
+    try:
+        sheet = workbook.active
+        sheet.title = "Updated"
+        sheet.append([])
+        sheet.append([None, "Updated"])
+        sheet.append([None, None, "NETA", None, "Miner Temp Power", "SLD: E01-00, E01-01"])
+        sheet.append([None, None, "ATS", None, "Santa Teresa, NM", "Dated: 03/05/2026"])
+        sheet.append([None, None, "QTY", "Section", "Apparatus Type", "Designation", "Notes", None, "Hrs/Unit", "Hrs/Line"])
+        sheet.append(
+            [
+                None,
+                None,
+                3,
+                "7.13",
+                "Ground Resistance Test - Two-Point (Lot)",
+                None,
+                "E01-00, E01-01, E01-02",
+                None,
+                8,
+                24,
+            ]
+        )
+        workbook.save(path)
+    finally:
+        workbook.close()
+
+
 def test_load_project_import_candidate_groups_tasks_and_preserves_traceability(tmp_path):
     workbook_path = tmp_path / "estimator.xlsm"
     _write_candidate_estimator(workbook_path)
@@ -79,6 +108,27 @@ def test_load_project_import_candidate_groups_tasks_and_preserves_traceability(t
     assert source_files["estimator_workbook"]["fingerprint"]
     assert source_files["estimator_workbook"]["modified_at"].endswith("Z")
     assert source_files["sld_pdf"]["freshness_status"] == "missing"
+
+
+def test_ground_resistance_lot_gets_pm_designation_without_expanding_measurements(tmp_path):
+    workbook_path = tmp_path / "estimator.xlsm"
+    _write_ground_resistance_lot_estimator(workbook_path)
+    _clear_all_caches()
+
+    candidate = load_project_import_candidate(str(workbook_path), str(tmp_path / "missing.pdf"))
+
+    task = candidate["workpackages"][0]["tasks"][0]
+    assert task["source_line_id"] == "miner-line-001"
+    assert task["designation"] == "Ground Resistance Test Lot"
+    assert task["quantity"] == 3
+    assert task["planned_hours"] == 24.0
+    assert len(task["apparatus_candidates"]) == 1
+    assert task["apparatus_candidates"][0]["designation"] == "Ground Resistance Test Lot"
+    assert task["apparatus_candidates"][0]["display_name"] == "Ground Resistance Test Lot"
+    assert task["apparatus_candidates"][0]["planned_hours"] == 24
+    assert candidate["summary"]["apparatus_candidate_count"] == 1
+    warning_codes = {warning["code"] for warning in candidate["warnings"]}
+    assert "MISSING_DESIGNATIONS" not in warning_codes
 
 
 def test_project_import_candidate_route_returns_read_only_candidate(client, monkeypatch, tmp_path):

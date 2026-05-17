@@ -873,6 +873,8 @@ PM Lane 233 continues the Project Miner PM lane under technical-authority contin
 PM Lane 234 turns that narrowed PM judgment into a one-screen Jason decision card while preserving VS Code Codex PM authority. The only allowed responses are `ACCEPT_WARNING_NON_BLOCKING_NO_LIVE`, `REQUEST_SOURCE_CORRECTION_NO_LIVE`, `HOLD_NO_LIVE`, and `PROVIDE_EXACT_LIVE_ADMISSION_LATER`. A Desktop Codex support prompt is authored only for clarity and relay-burden review, with no PM decision authority, no repo publication authority, and no hosted/source-content/write authority.
 
 PM Lane 235 intakes the current continuation instruction against that decision card and records that no allowed Jason response label is present yet. The decision card remains open, the source row 28 / `miner-line-015` `MISSING_DESIGNATIONS` warning remains not accepted, not corrected, and not live-admitted, and Desktop Codex remains limited to optional clarity and relay-burden review only.
+
+PM Lane 236 receives Jason's `REQUEST_SOURCE_CORRECTION_NO_LIVE` return and applies the narrow repo-local candidate correction: source row 28 / `miner-line-015` is represented as `Ground Resistance Test Lot`, with quantity 3 preserved as measurement count, one lot-level apparatus candidate, and 24 planned hours. The prior missing-designation warning is cleared, and the remaining warning is the separate `PROJECT_DATA_ENTRY_FORMULA_ERRORS` review item.
 The success standard is not just technical correctness. The candidate must reduce Jason's review burden by showing:
 
 1. what the system thinks the project is,
