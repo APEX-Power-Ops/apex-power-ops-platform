@@ -5017,6 +5017,18 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
       checklist_checked_count: 2,
       checklist_total_count: 7,
       checklist_checked_items: ['source_freshness_reviewed', 'exceptions_reviewed'],
+      warning_review: {
+        exceptions_reviewed: true,
+        reviewed_warning_codes: ['PROJECT_DATA_ENTRY_FORMULA_ERRORS'],
+        accepted_warning_codes: [],
+        unresolved_warning_codes: ['PROJECT_DATA_ENTRY_FORMULA_ERRORS'],
+        warning_disposition_gate: {
+          warning_code: 'PROJECT_DATA_ENTRY_FORMULA_ERRORS',
+          present: true,
+          disposition_status: 'requires_exact_pm_label',
+          accepted_by_current_local_review: false,
+        },
+      },
       decision_draft: {
         decision: 'return_for_revision',
         review_notes: 'Reviewed formula warnings; return for revision until source workbook errors are resolved.',

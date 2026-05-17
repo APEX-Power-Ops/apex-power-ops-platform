@@ -3980,6 +3980,10 @@ function buildApprovalPacketPreview(
   const storagePlan = packet.storagePlan
   const approvalStatus = packet.approvalStatus
   const checkedItems = REVIEW_CHECKLIST_ITEMS.filter((item) => reviewChecks[item.id]).map((item) => item.id)
+  const warnings = candidate.warnings || []
+  const warningCodes = warnings.map((warning) => warning.code).filter((code): code is string => Boolean(code))
+  const unresolvedWarningCodes = unresolvedProjectDataEntryWarningCodes(warnings)
+  const acceptedWarningCodes = acceptedWarningCodesForDryRun(warnings, Boolean(reviewChecks.exceptions_reviewed))
   const draftComplete = Boolean(approvalDraft.decision && approvalDraft.review_notes.trim() && approvalDraft.local_attestation)
 
   return {
@@ -4026,6 +4030,13 @@ function buildApprovalPacketPreview(
       checklist_checked_count: checkedItems.length,
       checklist_total_count: REVIEW_CHECKLIST_ITEMS.length,
       checklist_checked_items: checkedItems,
+      warning_review: {
+        exceptions_reviewed: Boolean(reviewChecks.exceptions_reviewed),
+        reviewed_warning_codes: reviewChecks.exceptions_reviewed ? warningCodes : [],
+        accepted_warning_codes: acceptedWarningCodes,
+        unresolved_warning_codes: unresolvedWarningCodes,
+        warning_disposition_gate: projectDataEntryWarningDispositionGate(warnings),
+      },
       decision_draft: {
         decision: approvalDraft.decision || null,
         review_notes: approvalDraft.review_notes.trim() || null,
