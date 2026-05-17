@@ -2881,6 +2881,27 @@ function buildFieldStartBringBackDetailJumpRail(
   })
 }
 
+function buildFieldStartBringBackLensOpenContextCue(
+  summaryItems: FieldStartBringBackSummaryTriageStripItem[],
+): string {
+  const cueNames = new Map<string, string>([
+    ['source-review-summary-triage', 'Source review'],
+    ['customer-site-summary-triage', 'Customer/site clarification'],
+    ['lead-resource-summary-triage', 'Lead/resource'],
+    ['later-packet-summary-triage', 'later packet candidate'],
+  ])
+  const populated = summaryItems.filter((item) => item.status !== 'open').map((item) => cueNames.get(item.id) || item.title)
+  const empty = summaryItems.filter((item) => item.status === 'open').map((item) => cueNames.get(item.id) || item.title)
+
+  if (populated.length === 0) {
+    return 'Populated detail lens context: none yet. Keep returned field-start details local until a later bounded packet admits more.'
+  }
+  if (empty.length === 0) {
+    return `Populated detail lens context: ${populated.join('; ')}. All bring-back lenses currently have local context; keep the cue read-only and use later bounded packets for anything beyond local review.`
+  }
+  return `Populated detail lens context: ${populated.join('; ')}. ${empty.join(' and ')} lenses have no returned context yet.`
+}
+
 function buildFieldStartSourceReviewBringBackLens(
   candidate: CandidatePayload | undefined,
   fieldQuestionsDraft: FieldQuestionsDraft,
@@ -7796,6 +7817,10 @@ export default function ProjectMinerIntakeWorkbenchPage() {
     () => buildFieldStartBringBackDetailJumpRail(fieldStartBringBackSummaryTriageStrip),
     [fieldStartBringBackSummaryTriageStrip],
   )
+  const fieldStartBringBackLensOpenContextCue = useMemo(
+    () => buildFieldStartBringBackLensOpenContextCue(fieldStartBringBackSummaryTriageStrip),
+    [fieldStartBringBackSummaryTriageStrip],
+  )
   const fieldStartBringBackReviewQueue = useMemo(
     () => buildFieldStartBringBackReviewQueue(candidate, fieldQuestionsDraft, fieldObservationScratchpad),
     [candidate, fieldQuestionsDraft, fieldObservationScratchpad],
@@ -9038,6 +9063,19 @@ export default function ProjectMinerIntakeWorkbenchPage() {
                 </p>
               </div>
               <span className="status-pill status-awaiting-values">detail jumps</span>
+            </div>
+            <div id="pm-field-start-bring-back-lens-open-context-cue" aria-label="Local field-start bring-back lens open-context cue" className="card" style={{ padding: '0.75rem', marginTop: '0.85rem', boxShadow: 'none' }}>
+              <div className="status-row" style={{ alignItems: 'start' }}>
+                <div>
+                  <p style={{ margin: 0 }}>
+                    <strong>Open-context cue</strong>
+                  </p>
+                  <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+                    {fieldStartBringBackLensOpenContextCue} This is a browser-local open-context cue only. It shows which existing bring-back detail lens currently has local context; it creates no meeting note, localStorage key, task, action item, owner, due date, assignment, customer commitment, customer report, field instruction, durable field record, production tracking row, report, export artifact, storage key, backend route, button, hosted write claim, or write path.
+                  </p>
+                </div>
+                <span className="status-pill status-awaiting-values">context cue</span>
+              </div>
             </div>
             <nav aria-label="Local field-start bring-back detail jump rail links" style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
               {fieldStartBringBackDetailJumpRail.map((item) => (

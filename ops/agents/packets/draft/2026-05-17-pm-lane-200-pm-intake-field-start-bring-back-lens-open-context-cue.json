@@ -1,0 +1,43 @@
+{
+  "packet_id": "2026-05-17-pm-lane-200",
+  "title": "PM Lane 200 - PM Intake Field Start Bring-Back Lens Open-Context Cue",
+  "lane": "PM",
+  "status": "completed",
+  "created_at": "2026-05-17",
+  "completed_at": "2026-05-17",
+  "summary": [
+    "Added a browser-local `Open-context cue` inside the existing `Local Field Start Bring-Back Detail Jump Rail` section on `/pm-review/import-intake`.",
+    "Placed the cue directly under the Lane 199 jump-rail intro and before the lens links so Jason can see which bring-back detail lenses currently have populated local context before opening a lens.",
+    "Derived the cue from the existing Lane 198 summary triage state; no new storage, payload, backend route, or read/write seam was introduced.",
+    "Kept the cue browser-local and non-interactive: no meeting-note capture, no localStorage key, no export artifact, no backend route, no link, no button, no action item, no owner/due-date field, no lead selection, no crew assignment, no schedule/status write, no field instruction, no durable record, no production tracking row, no hosted write claim, and no production write.",
+    "Extended the focused read-only PM import-intake smoke to prove desktop presence, 390x844 mobile visibility, cue text, zero links, zero buttons, no bring-back lens open-context cue storage key, no implied-authority link/control text, and zero mutation calls.",
+    "Used read-only sidecar Beauvoir for proof-shaping only; VS Code Codex retained PM lane implementation and final integration authority."
+  ],
+  "changed_files": [
+    "apps/operations-web/app/pm-review/import-intake/page.tsx",
+    "apps/operations-web/tests/browser-shell.pm-import-intake.smoke.spec.ts",
+    "PROJECT_STATUS.md",
+    "docs/operations/APEX-PM-STAKEHOLDER-TIME-PROTECTION-AND-ACCELERATION-LANE-2026-05-15.md",
+    "docs/operations/APEX-PM-TEMP-POWER-DELIVERY-AND-ORCHESTRATION-PLAN-2026-05-15.md",
+    "docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md",
+    "ops/agents/packets/draft/2026-05-17-pm-lane-200-pm-intake-field-start-bring-back-lens-open-context-cue.json",
+    "ops/agents/handoffs/2026-05-17-pm-lane-200-pm-intake-field-start-bring-back-lens-open-context-cue-handoff.md"
+  ],
+  "validation": [
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform\" --filter @apex/operations-web typecheck",
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform/apps/operations-web\" exec playwright test \"browser-shell.pm-import-intake.smoke.spec.ts\"",
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform\" --filter @apex/operations-web build",
+    "Get-Content -LiteralPath 'ops/agents/packets/draft/2026-05-17-pm-lane-200-pm-intake-field-start-bring-back-lens-open-context-cue.json' | ConvertFrom-Json | Select-Object -ExpandProperty packet_id",
+    "rg -n \"PM Lane 200|Field Start Bring-Back Lens Open-Context Cue|fieldStartBringBackLensOpenContextCue|pm-field-start-bring-back-lens-open-context-cue|open-context cue|mutationRequests\\)\\.toHaveLength\\(0\\)\" PROJECT_STATUS.md docs/operations ops/agents apps/operations-web",
+    "null-byte check on PM status docs",
+    "git diff --check"
+  ],
+  "validation_result": "PASS - operations-web typecheck passed; focused Playwright pm import-intake smoke passed cleanly with the inline open-context cue, 390x844 mobile proof, zero cue links, zero cue buttons, no bring-back lens open-context cue storage key, no implied-authority link/control text, and zero mutation calls; operations-web production build passed with /pm-review/import-intake in the route output; packet JSON parsed as 2026-05-17-pm-lane-200; PM Lane 200 guardrail rg passed; null-byte check passed on PM status docs; git diff --check passed with only expected LF-to-CRLF warnings on touched and unrelated files.",
+  "sidecar_result": "Beauvoir completed read-only proof-shaping only and recommended placing the cue inside the existing Lane 199 detail jump rail, using compact populated-context wording, no links/buttons, a negative storage regex, and no-state/no-write guardrails. VS Code Codex accepted the placement recommendation and retained PM lane implementation/final integration authority. No files were edited, staged, or committed by the sidecar.",
+  "guardrails": [
+    "No meeting-note capture was added.",
+    "No localStorage key/schema was added for the bring-back lens open-context cue.",
+    "No export artifact, link, button, handler, backend route, read seam, write seam, SQL, schema migration, hosted service call, approval POST, approval row, project import, field authorization, lead selection, crew assignment, schedule/status write, field instruction, durable field record, production tracking row, customer report, billing/payroll/invoice/accounting output, workbook macro/writeback, or autonomous AI business-state mutation was introduced."
+  ],
+  "next_recommended_lane": "PM Lane 201 - PM Intake Field Start Bring-Back Cue Status Legend"
+}
