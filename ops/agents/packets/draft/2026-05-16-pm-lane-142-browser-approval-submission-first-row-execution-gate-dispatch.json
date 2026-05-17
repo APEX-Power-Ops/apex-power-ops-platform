@@ -1,0 +1,117 @@
+{
+  "packet_id": "2026-05-16-pm-lane-142",
+  "title": "Browser Approval Submission First-Row Execution Gate Dispatch",
+  "objective": "Prepare the strict future-executor dispatch packet and copy/paste prompt for the first browser approval submission and first hosted approval-row creation, while this coordinator lane performs no live POST, creates no approval row, and keeps project import blocked.",
+  "domain": "pm-domain",
+  "active_role": "Technical Repo Authority / PM Lane Coordinator / Live Approval Gate Dispatch Author",
+  "source_floor": {
+    "branch": "clean-main",
+    "commit": "04cdba43e3d062fd8a9bbb37007d210f75f52f33",
+    "meaning": "Current clean-main after PM Lane 141 authored the browser approval submission design bridge without live POST authority."
+  },
+  "dependencies": [
+    "2026-05-16-pm-lane-138",
+    "2026-05-16-pm-lane-139",
+    "2026-05-16-pm-lane-140",
+    "2026-05-16-pm-lane-141"
+  ],
+  "allowed_scope": [
+    "Author a future-executor packet, handoff, and copy/paste prompt for the first browser approval submission lane.",
+    "Require an explicit stakeholder admission phrase before the future executor may send a live approval POST or create the first approval row.",
+    "Define future execution phases for local UI implementation, mocked browser validation, hosted deployment if needed, live first-row submission, idempotent replay proof, approval-status readback, and unchanged downstream domain-count proof.",
+    "Preserve project import, workpackage, task, apparatus, assignment, schedule, status, field records, production tracking, workbook, and AI business-state writes as blocked.",
+    "Update PM operating docs and status surfaces so the next relay step is repo-visible."
+  ],
+  "not_allowed": [
+    "No live POST to /api/v1/mutations/project-import-approvals in this coordinator lane.",
+    "No approval row creation in this coordinator lane.",
+    "No browser approval button or product code change in this coordinator lane.",
+    "No project import mutation.",
+    "No project, workpackage, task, apparatus, issue, assignment, schedule, status, durable field record, production tracking, workbook, or import rows.",
+    "No live Supabase SQL application or schema migration.",
+    "No Render, Vercel, Olares, or Supabase action.",
+    "No secret value access, print, rotation, or repo storage.",
+    "No workbook macro execution or workbook writeback.",
+    "No service creation, DNS/auth/ingress change, fixture replay into live data, work authorization, field release, live work order creation, or autonomous AI business-state mutation."
+  ],
+  "explicit_admission_required_for_future_executor": {
+    "required_phrase": "I explicitly admit PM Lane 142 live approval POST and first approval-row creation for the current Project Miner Temp Power import candidate.",
+    "stop_rule": "If the future executor prompt does not include the exact required phrase from Jason or the coordinator, the executor must stop after local mocked validation and must not send a live POST, deploy, or create an approval row.",
+    "admitted_write_when_present": "Exactly one browser approval persistence row may be created through POST /api/v1/mutations/project-import-approvals for the current candidate, followed by same-payload idempotent replay proof. No import mutation is admitted."
+  },
+  "future_executor_phases": [
+    {
+      "phase": "local-preflight",
+      "requirements": [
+        "Fast-forward to latest clean-main.",
+        "Confirm PM Lane 141 packet and handoff are present.",
+        "Confirm hosted PM intake reads, approval-status GET, and approval POST OpenAPI registration are green using existing smokes.",
+        "Confirm current approval record count for the candidate is zero before first-row execution."
+      ]
+    },
+    {
+      "phase": "local-ui-implementation-if-needed",
+      "requirements": [
+        "Edit only operations-web import-intake UI and focused smoke files if a browser control does not yet exist.",
+        "Use the PM Lane 141 envelope and payload contract exactly.",
+        "Keep project import controls absent.",
+        "Mock mutation calls in local Playwright proof; do not allow unmocked /api/v1/mutations calls during local smoke."
+      ]
+    },
+    {
+      "phase": "hosted-promotion-if-needed",
+      "requirements": [
+        "Deploy only the existing operations-web Vercel project if UI changes are required.",
+        "Use only the existing production alias https://operations.apexpowerops.com.",
+        "Do not create new Vercel, Render, Supabase, or Olares services."
+      ]
+    },
+    {
+      "phase": "live-first-row-execution-only-after-explicit-admission",
+      "requirements": [
+        "Use the browser approval submission path, not a direct database write.",
+        "Send exactly one live POST for the current candidate and decision context.",
+        "Verify response status accepted, entity_type pm_import_candidate_approval, action_type persist_import_approval, and new_state.import_authority not_admitted.",
+        "Run same-payload idempotent replay proof and verify it does not create a second approval row.",
+        "Run approval-status readback and verify expected candidate classification.",
+        "Verify project, workpackage, task, apparatus, assignment, schedule, status, durable field record, and production tracking counts are unchanged."
+      ]
+    }
+  ],
+  "future_acceptance_evidence": [
+    "Exact source commit and deployed commit when hosted UI deployment is required.",
+    "Local mocked Playwright approval-submission proof with zero unmocked API calls.",
+    "Hosted route and PM intake smoke proof after any operations-web promotion.",
+    "Pre-submit approval record count for the candidate.",
+    "Live POST response proof with secret-free payload summary.",
+    "Idempotent replay proof showing one approval record.",
+    "Approval-status GET proof after submission.",
+    "Unchanged downstream domain-count proof.",
+    "Explicit guardrail confirmation that project import remains blocked."
+  ],
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/PROJECT_STATUS.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/APEX-PM-TEMP-POWER-DELIVERY-AND-ORCHESTRATION-PLAN-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/APEX-PM-STAKEHOLDER-TIME-PROTECTION-AND-ACCELERATION-LANE-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-16-pm-lane-142-browser-approval-submission-first-row-execution-gate-dispatch.json",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-16-pm-lane-142-browser-approval-submission-first-row-execution-gate-dispatch-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-16-pm-lane-142-browser-approval-submission-first-row-executor-copy-paste-prompt.md"
+  ],
+  "validation_steps": [
+    "Get-Content -Path \"C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-16-pm-lane-142-browser-approval-submission-first-row-execution-gate-dispatch.json\" | ConvertFrom-Json | Select-Object -ExpandProperty packet_id",
+    "rg -n \"PM Lane 142|explicitly admit PM Lane 142|No live POST|No approval row|first approval-row|project import remains blocked\" PROJECT_STATUS.md docs/operations ops/agents",
+    "git diff --check",
+    "git diff --cached --check"
+  ],
+  "validation_result": "PASS: packet JSON parsed, executor copy/paste prompt path exists, guardrail search confirms PM Lane 142/no-live-write language across status/docs/artifacts, no unresolved placeholders remain in the Lane 142 packet or handoff, and scoped git diff check passed.",
+  "delegation_status": "coordinator_executed_dispatch_authoring_with_read_only_sidecar_scout",
+  "sidecar_result": "Read-only sidecar agreed PM Lane 142 should be dispatch/packet/prompt only, not live execution. It recommended touching only status/docs plus the three Lane 142 artifacts, keeping all live permissions false, and requiring the exact explicit admission phrase before any live approval POST or first approval-row creation.",
+  "next_recommended_lane": "PM Lane 142A local mocked browser approval UI implementation, or PM Lane 142 live first-row execution only after the exact explicit admission phrase is provided",
+  "sql_permission": false,
+  "live_deploy_permission": false,
+  "live_post_permission": false,
+  "ai_mutation_authority": "not_admitted",
+  "created_at": "2026-05-16",
+  "updated_at": "2026-05-16"
+}
