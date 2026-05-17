@@ -984,6 +984,11 @@ function financialHandoffDraftFileName(candidate?: CandidatePayload | null) {
   return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-financial-handoff-draft.json`
 }
 
+function pilotLaunchBinderFileName(candidate?: CandidatePayload | null) {
+  const candidateId = candidate?.candidate_id || 'project-miner-intake'
+  return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-pilot-launch-binder.json`
+}
+
 function importExceptionRegisterFileName(candidate?: CandidatePayload | null) {
   const candidateId = candidate?.candidate_id || 'project-miner-intake'
   return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-import-exception-register.md`
@@ -5216,6 +5221,245 @@ function buildFinancialHandoffDraftExport(
   }
 }
 
+function buildPilotLaunchBinderExport(
+  packet: IntakeWorkbenchPacket,
+  approvalDryRunReadiness: ApprovalDryRunReadinessItem[],
+  reviewChecks: Record<string, boolean>,
+  approvalDraft: ApprovalDecisionDraft,
+  fieldPrepQueue: OperatingQueueItem[],
+  fieldPrepCoverageSnapshot: FieldPrepCoverageItem[],
+  fieldPrepConversationAgenda: FieldPrepAgendaItem[],
+  notAllowed: string[],
+  futureRoute: string,
+  fieldReadinessChecks: Record<string, boolean>,
+  fieldQuestionsDraft: FieldQuestionsDraft,
+  fieldObservationScratchpad: FieldObservationScratchpad,
+) {
+  const candidate = packet.candidate
+  const project = candidate.project || {}
+  const summary = candidate.summary || {}
+  const approvalLiveGatePreflight = buildApprovalLiveGatePreflightExport(packet, approvalDryRunReadiness, notAllowed, futureRoute, reviewChecks, approvalDraft)
+  const fieldStartPreflight = buildFieldStartPreflightExport(packet, fieldPrepQueue, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, notAllowed, futureRoute, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad)
+  const fieldExecutionGateDesign = buildFieldExecutionGateDesignExport(packet, fieldPrepQueue, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, notAllowed, futureRoute, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad)
+  const leadFieldAssignmentDraft = buildLeadFieldAssignmentDraftExport(packet, fieldPrepQueue, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, notAllowed, futureRoute, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad)
+  const fieldAuthorizationAssignmentDraft = buildFieldAuthorizationAssignmentDraftExport(packet, fieldPrepQueue, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, notAllowed, futureRoute, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad)
+  const scheduleStatusControlsDraft = buildScheduleStatusControlsDraftExport(packet, fieldPrepQueue, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, notAllowed, futureRoute, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad)
+  const durableFieldRecordDraft = buildDurableFieldRecordDraftExport(packet, fieldPrepQueue, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, notAllowed, futureRoute, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad)
+  const productionTrackingDraft = buildProductionTrackingDraftExport(packet, fieldPrepQueue, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, notAllowed, futureRoute, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad)
+  const customerReportingDraft = buildCustomerReportingDraftExport(packet, fieldPrepQueue, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, notAllowed, futureRoute, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad)
+  const financialHandoffDraft = buildFinancialHandoffDraftExport(packet, fieldPrepQueue, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, notAllowed, futureRoute, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad)
+  const sourceArtifacts = [
+    {
+      artifact_id: 'approval-live-gate-preflight',
+      file_name: approvalLiveGatePreflightFileName(candidate),
+      artifact_kind: approvalLiveGatePreflight.preflight_kind,
+      local_status: 'ready',
+      authority_status: approvalLiveGatePreflight.preflight_summary.live_gate_status,
+      summary: approvalLiveGatePreflight.preflight_summary.summary,
+    },
+    {
+      artifact_id: 'field-start-preflight',
+      file_name: fieldStartPreflightFileName(candidate),
+      artifact_kind: fieldStartPreflight.preflight_kind,
+      local_status: 'ready',
+      authority_status: fieldStartPreflight.preflight_summary.field_start_status,
+      summary: fieldStartPreflight.preflight_summary.summary,
+    },
+    {
+      artifact_id: 'field-execution-gate-design',
+      file_name: fieldExecutionGateDesignFileName(candidate),
+      artifact_kind: fieldExecutionGateDesign.gate_kind,
+      local_status: 'ready',
+      authority_status: fieldExecutionGateDesign.gate_summary.execution_gate_status,
+      summary: fieldExecutionGateDesign.gate_summary.summary,
+    },
+    {
+      artifact_id: 'lead-field-assignment-draft',
+      file_name: leadFieldAssignmentDraftFileName(candidate),
+      artifact_kind: leadFieldAssignmentDraft.draft_kind,
+      local_status: 'ready',
+      authority_status: leadFieldAssignmentDraft.draft_summary.assignment_status,
+      summary: leadFieldAssignmentDraft.draft_summary.summary,
+    },
+    {
+      artifact_id: 'field-authorization-assignment-draft',
+      file_name: fieldAuthorizationAssignmentDraftFileName(candidate),
+      artifact_kind: fieldAuthorizationAssignmentDraft.draft_kind,
+      local_status: 'ready',
+      authority_status: fieldAuthorizationAssignmentDraft.admission_draft_summary.admission_status,
+      summary: fieldAuthorizationAssignmentDraft.admission_draft_summary.summary,
+    },
+    {
+      artifact_id: 'schedule-status-controls-draft',
+      file_name: scheduleStatusControlsDraftFileName(candidate),
+      artifact_kind: scheduleStatusControlsDraft.draft_kind,
+      local_status: 'ready',
+      authority_status: scheduleStatusControlsDraft.control_draft_summary.control_status,
+      summary: scheduleStatusControlsDraft.control_draft_summary.summary,
+    },
+    {
+      artifact_id: 'durable-field-record-draft',
+      file_name: durableFieldRecordDraftFileName(candidate),
+      artifact_kind: durableFieldRecordDraft.draft_kind,
+      local_status: 'ready',
+      authority_status: durableFieldRecordDraft.durable_record_draft_summary.durable_record_status,
+      summary: durableFieldRecordDraft.durable_record_draft_summary.summary,
+    },
+    {
+      artifact_id: 'production-tracking-draft',
+      file_name: productionTrackingDraftFileName(candidate),
+      artifact_kind: productionTrackingDraft.draft_kind,
+      local_status: 'ready',
+      authority_status: productionTrackingDraft.production_tracking_draft_summary.production_tracking_status,
+      summary: productionTrackingDraft.production_tracking_draft_summary.summary,
+    },
+    {
+      artifact_id: 'customer-reporting-draft',
+      file_name: customerReportingDraftFileName(candidate),
+      artifact_kind: customerReportingDraft.draft_kind,
+      local_status: 'ready',
+      authority_status: customerReportingDraft.customer_reporting_draft_summary.customer_reporting_status,
+      summary: customerReportingDraft.customer_reporting_draft_summary.summary,
+    },
+    {
+      artifact_id: 'financial-handoff-draft',
+      file_name: financialHandoffDraftFileName(candidate),
+      artifact_kind: financialHandoffDraft.draft_kind,
+      local_status: 'ready',
+      authority_status: financialHandoffDraft.financial_handoff_draft_summary.financial_handoff_status,
+      summary: financialHandoffDraft.financial_handoff_draft_summary.summary,
+    },
+  ]
+  const binderItems: ApprovalDryRunReadinessItem[] = [
+    ...sourceArtifacts.map((artifact) => ({
+      id: artifact.artifact_id,
+      title: artifact.artifact_id.split('-').map(formatLabel).join(' '),
+      status: 'ready' as ApprovalDryRunReadinessStatus,
+      detail: `${artifact.file_name} is available as local review context. Its authority status remains ${artifact.authority_status}.`,
+    })),
+    {
+      id: 'live-approval-row-authority',
+      title: 'Live approval row authority',
+      status: 'blocked',
+      detail: 'The PM Lane 142 exact live-write phrase is still required before any browser approval POST or first approval row can exist.',
+    },
+    {
+      id: 'project-import-authority',
+      title: 'Project import authority',
+      status: 'blocked',
+      detail: 'Project, workpackage, task, and apparatus import writes remain blocked until a later import packet is admitted after approval-row proof.',
+    },
+    {
+      id: 'field-production-customer-finance-authority',
+      title: 'Field, production, customer, and finance authority',
+      status: 'blocked',
+      detail: 'Field authorization, assignment, schedule/status, durable records, production tracking, customer reporting, billing, payroll, invoices, accounting, and external finance sync remain blocked.',
+    },
+  ]
+  const binderCounts = approvalDryRunReadinessCounts(binderItems)
+
+  return {
+    binder_kind: 'pm_import_candidate_pilot_launch_binder',
+    binder_version: 'pm_lane_157_local_pilot_launch_binder_v1',
+    generated_locally_at: new Date().toISOString(),
+    candidate_identity: {
+      candidate_id: candidate.candidate_id || null,
+      candidate_version: candidate.candidate_version || null,
+      project_name: project.name || null,
+      source_fingerprint: candidate.source_freshness?.aggregate_fingerprint || null,
+    },
+    field_shape: {
+      workpackage_count: summary.workpackage_count ?? null,
+      task_count: summary.task_count ?? null,
+      apparatus_candidate_count: summary.apparatus_candidate_count ?? null,
+      crew_count: summary.crew_count ?? null,
+      equipment_inventory_count: summary.equipment_inventory_count ?? null,
+    },
+    pilot_launch_binder_summary: {
+      ready_count: binderCounts.ready,
+      needs_review_count: binderCounts.needsReview,
+      blocked_count: binderCounts.blocked,
+      summary: approvalDryRunReadinessSummary(binderCounts),
+      launch_status: 'local_binder_ready_live_writes_blocked',
+    },
+    source_artifact_manifest: sourceArtifacts,
+    source_artifact_summaries: {
+      approval_live_gate_preflight: approvalLiveGatePreflight.preflight_summary,
+      field_start_preflight: fieldStartPreflight.preflight_summary,
+      field_execution_gate_design: fieldExecutionGateDesign.gate_summary,
+      lead_field_assignment_draft: leadFieldAssignmentDraft.draft_summary,
+      field_authorization_assignment_draft: fieldAuthorizationAssignmentDraft.admission_draft_summary,
+      schedule_status_controls_draft: scheduleStatusControlsDraft.control_draft_summary,
+      durable_field_record_draft: durableFieldRecordDraft.durable_record_draft_summary,
+      production_tracking_draft: productionTrackingDraft.production_tracking_draft_summary,
+      customer_reporting_draft: customerReportingDraft.customer_reporting_draft_summary,
+      financial_handoff_draft: financialHandoffDraft.financial_handoff_draft_summary,
+    },
+    binder_items: binderItems,
+    recommended_review_sequence: [
+      'confirm approval live-gate preflight remains blocked without exact PM Lane 142 phrase',
+      'review field-start context with lead/customer before mobilization',
+      'review field execution gate design before any write-path packet',
+      'review lead field assignment draft before selecting or assigning a lead',
+      'review field authorization and assignment draft before authorizing field work',
+      'review schedule/status controls draft before schedule or status mutation',
+      'review durable field record draft before daily field record persistence',
+      'review production tracking draft before quantity, labor, apparatus, or progress writes',
+      'review customer reporting draft before customer report or completion evidence writes',
+      'review financial handoff draft before billing, payroll, invoice, accounting, or external finance-system outputs',
+    ],
+    next_packet_options: [
+      {
+        option: 'approval-first-row-execution-gate',
+        status: 'blocked_until_exact_pm_lane_142_phrase',
+        detail: 'Use the binder as review context only unless Jason provides the exact PM Lane 142 live-write admission phrase.',
+      },
+      {
+        option: 'project-import-mutation-design',
+        status: 'blocked_until_approval_row_proof',
+        detail: 'Do not design or run project import mutation until approval-row proof is accepted.',
+      },
+      {
+        option: 'field-execution-write-paths',
+        status: 'blocked_until_import_and_field_authorization_packets',
+        detail: 'Do not admit field, production, customer, billing, payroll, invoice, accounting, or finance-system write paths from this binder.',
+      },
+    ],
+    authority_boundary: {
+      mutation_authority: 'not_admitted',
+      local_pilot_launch_binder_only: true,
+      live_approval_post_performed: false,
+      approval_row_created: false,
+      project_import_performed: false,
+      field_authorization_created: false,
+      field_work_authorized: false,
+      lead_assignment_created: false,
+      crew_assignment_created: false,
+      schedule_plan_created: false,
+      status_change_performed: false,
+      durable_field_record_created: false,
+      production_tracking_performed: false,
+      customer_report_created: false,
+      customer_completion_evidence_created: false,
+      financial_handoff_route_created: false,
+      billing_export_created: false,
+      payroll_export_created: false,
+      invoice_record_created: false,
+      accounting_record_created: false,
+      external_finance_sync_created: false,
+      server_write_performed: false,
+    },
+    blocked_boundaries: Array.from(new Set([
+      ...approvalLiveGatePreflight.blocked_boundaries,
+      ...financialHandoffDraft.blocked_boundaries,
+      'pilot_launch_binder_server_write',
+      'browser_batch_submit',
+      'project_launch_write_path',
+      'executor_autonomous_business_state',
+    ])),
+  }
+}
+
 function buildImportExceptionRegisterExport(
   packet: IntakeWorkbenchPacket,
   importExceptionRegister: ImportExceptionRegisterItem[],
@@ -5404,6 +5648,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
   const [productionTrackingDraftStatus, setProductionTrackingDraftStatus] = useState('')
   const [customerReportingDraftStatus, setCustomerReportingDraftStatus] = useState('')
   const [financialHandoffDraftStatus, setFinancialHandoffDraftStatus] = useState('')
+  const [pilotLaunchBinderStatus, setPilotLaunchBinderStatus] = useState('')
   const [approvalDryRunStatus, setApprovalDryRunStatus] = useState('')
   const [approvalDryRunPreview, setApprovalDryRunPreview] = useState('')
   const [reviewChecks, setReviewChecks] = useState<Record<string, boolean>>({})
@@ -5583,7 +5828,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
   const fieldPrepAgendaCount = fieldPrepAgendaCounts(fieldPrepConversationAgenda)
   const reviewOutputStatuses = [briefStatus, previewStatus, pmIntakeSnapshotStatus, exceptionRegisterStatus].filter(Boolean)
   const executorOutputStatuses = [handoffStatus].filter(Boolean)
-  const fieldPrepOutputStatuses = [fieldBriefStatus, fieldObservationStatus, fieldPrepCoverageStatus, fieldPrepAgendaStatus, fieldPrepPacketStatus, fieldStartPreflightStatus, fieldExecutionGateDesignStatus, leadFieldAssignmentDraftStatus, fieldAuthorizationAssignmentDraftStatus, scheduleStatusControlsDraftStatus, durableFieldRecordDraftStatus, productionTrackingDraftStatus, customerReportingDraftStatus, financialHandoffDraftStatus].filter(Boolean)
+  const fieldPrepOutputStatuses = [fieldBriefStatus, fieldObservationStatus, fieldPrepCoverageStatus, fieldPrepAgendaStatus, fieldPrepPacketStatus, fieldStartPreflightStatus, fieldExecutionGateDesignStatus, leadFieldAssignmentDraftStatus, fieldAuthorizationAssignmentDraftStatus, scheduleStatusControlsDraftStatus, durableFieldRecordDraftStatus, productionTrackingDraftStatus, customerReportingDraftStatus, financialHandoffDraftStatus, pilotLaunchBinderStatus].filter(Boolean)
   const hasOutputStatuses = reviewOutputStatuses.length > 0 || executorOutputStatuses.length > 0 || fieldPrepOutputStatuses.length > 0
 
   useEffect(() => {
@@ -6033,6 +6278,16 @@ export default function ProjectMinerIntakeWorkbenchPage() {
     setFinancialHandoffDraftStatus(`Financial handoff draft prepared from ${candidate?.candidate_id || 'the current intake packet'} without a server write.`)
   }
 
+  function exportPilotLaunchBinder() {
+    if (!packet) {
+      return
+    }
+
+    const binder = buildPilotLaunchBinderExport(packet, approvalDryRunReadiness, reviewChecks, approvalDraft, fieldPrepQueue, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, notAllowed, futureRoute, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad)
+    downloadTextFile(pilotLaunchBinderFileName(candidate), `${JSON.stringify(binder, null, 2)}\n`, 'application/json')
+    setPilotLaunchBinderStatus(`Pilot launch binder prepared from ${candidate?.candidate_id || 'the current intake packet'} without a server write.`)
+  }
+
   return (
     <main className="shell-page pm-review-page">
       <section className="hero-card pm-review-hero">
@@ -6210,6 +6465,9 @@ export default function ProjectMinerIntakeWorkbenchPage() {
                 </button>
                 <button className="btn btn-outline" onClick={exportFinancialHandoffDraft} disabled={!packet}>
                   Export Financial Handoff Draft
+                </button>
+                <button className="btn btn-outline" onClick={exportPilotLaunchBinder} disabled={!packet}>
+                  Export Pilot Launch Binder
                 </button>
               </div>
             </section>

@@ -318,7 +318,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(outputActionRail.getByLabel('PM intake output action groups')).toBeVisible()
   await expect(outputActionRail.getByLabel('Review output actions').getByRole('button')).toHaveCount(4)
   await expect(outputActionRail.getByLabel('Executor output actions').getByRole('button')).toHaveCount(1)
-  await expect(outputActionRail.getByLabel('Field prep output actions').getByRole('button')).toHaveCount(14)
+  await expect(outputActionRail.getByLabel('Field prep output actions').getByRole('button')).toHaveCount(15)
   await expect(outputActionRail.getByLabel('Refresh action').getByRole('button')).toHaveCount(1)
   await expect(outputActionRail.getByLabel('Review output actions').getByRole('button', { name: 'Export PM Brief' })).toBeVisible()
   await expect(outputActionRail.getByLabel('Review output actions').getByRole('button', { name: 'Export Approval Preview JSON' })).toBeVisible()
@@ -339,6 +339,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(outputActionRail.getByLabel('Field prep output actions').getByRole('button', { name: 'Export Production Tracking Draft' })).toBeVisible()
   await expect(outputActionRail.getByLabel('Field prep output actions').getByRole('button', { name: 'Export Customer Reporting Draft' })).toBeVisible()
   await expect(outputActionRail.getByLabel('Field prep output actions').getByRole('button', { name: 'Export Financial Handoff Draft' })).toBeVisible()
+  await expect(outputActionRail.getByLabel('Field prep output actions').getByRole('button', { name: 'Export Pilot Launch Binder' })).toBeVisible()
   await outputActionDisclosure.locator(':scope > summary').click()
   await expect(outputActionDisclosure).not.toHaveAttribute('open', '')
   await expect(outputActionRail.getByLabel('PM intake output action groups')).toBeHidden()
@@ -349,7 +350,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(outputActionRail.getByLabel('PM intake output action groups')).toBeVisible()
   await expect(outputActionRail.getByLabel('Review output actions').getByRole('button')).toHaveCount(4)
   await expect(outputActionRail.getByLabel('Executor output actions').getByRole('button')).toHaveCount(1)
-  await expect(outputActionRail.getByLabel('Field prep output actions').getByRole('button')).toHaveCount(14)
+  await expect(outputActionRail.getByLabel('Field prep output actions').getByRole('button')).toHaveCount(15)
   await expect(outputActionRail.getByLabel('Refresh action').getByRole('button')).toHaveCount(1)
   await expect(page.getByLabel('PM intake output status rail')).toHaveCount(0)
   await expectNoImpliedAuthorityControls(page)
@@ -3153,6 +3154,130 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
     'hosted_financial_handoff_ui_controls',
   ]))
   await expect(fieldPrepOutputStatus.getByText(/Financial handoff draft prepared from pm-import-candidate-miner-temp-power without a server write/i)).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Export Pilot Launch Binder' })).toBeEnabled()
+  const pilotLaunchBinderDownloadPromise = page.waitForEvent('download')
+  await page.getByRole('button', { name: 'Export Pilot Launch Binder' }).click()
+  const pilotLaunchBinderDownload = await pilotLaunchBinderDownloadPromise
+  expect(pilotLaunchBinderDownload.suggestedFilename()).toBe('pm-import-candidate-miner-temp-power-pilot-launch-binder.json')
+  const pilotLaunchBinderStream = await pilotLaunchBinderDownload.createReadStream()
+  expect(pilotLaunchBinderStream).not.toBeNull()
+  const pilotLaunchBinderChunks: Buffer[] = []
+  for await (const chunk of pilotLaunchBinderStream!) {
+    pilotLaunchBinderChunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk))
+  }
+  const pilotLaunchBinder = JSON.parse(Buffer.concat(pilotLaunchBinderChunks).toString('utf8'))
+  expect(pilotLaunchBinder).toMatchObject({
+    binder_kind: 'pm_import_candidate_pilot_launch_binder',
+    binder_version: 'pm_lane_157_local_pilot_launch_binder_v1',
+    candidate_identity: {
+      candidate_id: 'pm-import-candidate-miner-temp-power',
+      candidate_version: 'pm_import_candidate_read_only_v1',
+      project_name: 'Miner Temp Power',
+      source_fingerprint: 'stat-fingerprint-abc123',
+    },
+    field_shape: {
+      workpackage_count: 7,
+      task_count: 15,
+      apparatus_candidate_count: 186,
+      crew_count: 15,
+      equipment_inventory_count: 343,
+    },
+    pilot_launch_binder_summary: {
+      ready_count: 10,
+      needs_review_count: 0,
+      blocked_count: 3,
+      summary: '10 ready, 0 needs review, 3 blocked',
+      launch_status: 'local_binder_ready_live_writes_blocked',
+    },
+    source_artifact_summaries: {
+      approval_live_gate_preflight: {
+        live_gate_status: 'blocked_until_exact_phrase',
+      },
+      financial_handoff_draft: {
+        financial_handoff_status: 'blocked_until_customer_reporting_and_financial_handoff_packet',
+      },
+    },
+    authority_boundary: {
+      mutation_authority: 'not_admitted',
+      local_pilot_launch_binder_only: true,
+      live_approval_post_performed: false,
+      approval_row_created: false,
+      project_import_performed: false,
+      field_authorization_created: false,
+      field_work_authorized: false,
+      lead_assignment_created: false,
+      crew_assignment_created: false,
+      schedule_plan_created: false,
+      status_change_performed: false,
+      durable_field_record_created: false,
+      production_tracking_performed: false,
+      customer_report_created: false,
+      customer_completion_evidence_created: false,
+      financial_handoff_route_created: false,
+      billing_export_created: false,
+      payroll_export_created: false,
+      invoice_record_created: false,
+      accounting_record_created: false,
+      external_finance_sync_created: false,
+      server_write_performed: false,
+    },
+  })
+  expect(pilotLaunchBinder.generated_locally_at).toEqual(expect.any(String))
+  expect(pilotLaunchBinder.source_artifact_manifest).toHaveLength(10)
+  expect(pilotLaunchBinder.source_artifact_manifest.map((item: { artifact_id: string, local_status: string }) => `${item.artifact_id}:${item.local_status}`)).toEqual([
+    'approval-live-gate-preflight:ready',
+    'field-start-preflight:ready',
+    'field-execution-gate-design:ready',
+    'lead-field-assignment-draft:ready',
+    'field-authorization-assignment-draft:ready',
+    'schedule-status-controls-draft:ready',
+    'durable-field-record-draft:ready',
+    'production-tracking-draft:ready',
+    'customer-reporting-draft:ready',
+    'financial-handoff-draft:ready',
+  ])
+  expect(pilotLaunchBinder.binder_items.map((item: { id: string, status: string }) => `${item.id}:${item.status}`)).toEqual([
+    'approval-live-gate-preflight:ready',
+    'field-start-preflight:ready',
+    'field-execution-gate-design:ready',
+    'lead-field-assignment-draft:ready',
+    'field-authorization-assignment-draft:ready',
+    'schedule-status-controls-draft:ready',
+    'durable-field-record-draft:ready',
+    'production-tracking-draft:ready',
+    'customer-reporting-draft:ready',
+    'financial-handoff-draft:ready',
+    'live-approval-row-authority:blocked',
+    'project-import-authority:blocked',
+    'field-production-customer-finance-authority:blocked',
+  ])
+  expect(pilotLaunchBinder.next_packet_options.map((item: { option: string, status: string }) => `${item.option}:${item.status}`)).toEqual([
+    'approval-first-row-execution-gate:blocked_until_exact_pm_lane_142_phrase',
+    'project-import-mutation-design:blocked_until_approval_row_proof',
+    'field-execution-write-paths:blocked_until_import_and_field_authorization_packets',
+  ])
+  expect(pilotLaunchBinder.blocked_boundaries).toEqual(expect.arrayContaining([
+    'write_supabase',
+    'persist_approval_record',
+    'import_project_rows',
+    'field_work_authorization',
+    'lead_assignment_writes',
+    'schedule_status_write',
+    'durable_field_record_contract_write',
+    'production_tracking_contract_write',
+    'customer_reporting_contract_write',
+    'financial_handoff_contract_write',
+    'billing_export_write',
+    'payroll_export_write',
+    'invoice_record_write',
+    'accounting_record_write',
+    'finance_system_integration',
+    'pilot_launch_binder_server_write',
+    'browser_batch_submit',
+    'project_launch_write_path',
+    'executor_autonomous_business_state',
+  ]))
+  await expect(fieldPrepOutputStatus.getByText(/Pilot launch binder prepared from pm-import-candidate-miner-temp-power without a server write/i)).toBeVisible()
   await expect(page.getByRole('button', { name: 'Export Approval Preview JSON' })).toBeEnabled()
   const previewDownloadPromise = page.waitForEvent('download')
   await page.getByRole('button', { name: 'Export Approval Preview JSON' }).click()

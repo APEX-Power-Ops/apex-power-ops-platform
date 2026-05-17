@@ -1,0 +1,54 @@
+{
+  "packet_id": "2026-05-17-pm-lane-157",
+  "lane": "PM Lane 157",
+  "title": "Local Pilot Launch Binder Export",
+  "created_at_local": "2026-05-17",
+  "source_floor_commit": "e4cda2a27c98fd3fe83bfa3e6086fca2f99359fb",
+  "objective": "Add a browser-local pilot launch binder export that bundles the current approval preflight, field-start context, field execution gate, lead/assignment/schedule/durable/production/customer/financial draft chain, next packet options, and blocked write boundaries into one review artifact before any live write path is admitted.",
+  "execution_mode": "local_product_code_plus_status_docs",
+  "scope": [
+    "Add an Export Pilot Launch Binder action to the existing Field Prep Outputs rail.",
+    "Download one JSON artifact that includes a source artifact manifest for the approval live-gate preflight, field-start preflight, field execution gate design, lead field assignment draft, field authorization assignment draft, schedule/status controls draft, durable field record draft, production tracking draft, customer reporting draft, and financial handoff draft.",
+    "Include source artifact summaries, recommended review sequence, next packet options, authority boundary flags, and blocked write boundaries.",
+    "Keep the export browser-local and informational.",
+    "Extend the focused Playwright smoke to prove the downloaded pilot launch binder artifact and zero mutation requests."
+  ],
+  "not_allowed": [
+    "No live POST to /api/v1/mutations/project-import-approvals.",
+    "No approval row creation.",
+    "No project import.",
+    "No hosted deployment or promotion.",
+    "No Supabase, Render, Vercel, or Olares action.",
+    "No SQL or schema migration.",
+    "No secret access or secret rotation.",
+    "No backend route or mutation route change.",
+    "No workpackage rows, task rows, apparatus rows, field work authorization, assignment write, schedule/status write, durable field record write, production tracking write, customer reporting write, customer report write, customer completion evidence write, customer delivery, financial handoff route, billing export write, payroll export write, invoice record write, payroll record write, accounting record write, labor reconciliation write, customer billing delivery, finance system integration, workbook macro, or workbook writeback.",
+    "No service, auth, DNS, ingress, or control-plane widening.",
+    "No autonomous AI business-state mutation."
+  ],
+  "pilot_launch_binder": {
+    "status": "local_only",
+    "note": "This lane creates a review binder only. It bundles already-local artifacts so Jason can review the launch chain without manually exporting every component. It does not admit live approval, import, field, production, customer, or financial writes."
+  },
+  "changed_files": [
+    "PROJECT_STATUS.md",
+    "apps/operations-web/app/pm-review/import-intake/page.tsx",
+    "apps/operations-web/tests/browser-shell.pm-import-intake.smoke.spec.ts",
+    "docs/operations/APEX-PM-STAKEHOLDER-TIME-PROTECTION-AND-ACCELERATION-LANE-2026-05-15.md",
+    "docs/operations/APEX-PM-TEMP-POWER-DELIVERY-AND-ORCHESTRATION-PLAN-2026-05-15.md",
+    "docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md",
+    "ops/agents/packets/draft/2026-05-17-pm-lane-157-local-pilot-launch-binder-export.json",
+    "ops/agents/handoffs/2026-05-17-pm-lane-157-local-pilot-launch-binder-export-handoff.md"
+  ],
+  "validation_steps": [
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform\" --filter @apex/operations-web typecheck",
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform\" --filter @apex/operations-web build",
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform/apps/operations-web\" exec playwright test \"browser-shell.pm-import-intake.smoke.spec.ts\"",
+    "Get-Content -Path \"ops/agents/packets/draft/2026-05-17-pm-lane-157-local-pilot-launch-binder-export.json\" | ConvertFrom-Json | Select-Object -ExpandProperty packet_id",
+    "rg -n \"PM Lane 157|Export Pilot Launch Binder|pilot-launch-binder|pm_lane_157_local_pilot_launch_binder_v1|mutationRequests\\)\\.toHaveLength\\(0\\)\" PROJECT_STATUS.md docs/operations ops/agents apps/operations-web",
+    "git diff --check"
+  ],
+  "validation_result": "PASS - operations-web typecheck passed; operations-web build passed; focused Playwright pm import-intake smoke passed with the pilot launch binder download and mutationRequests=0 after the production build completed; packet JSON parsed; PM Lane 157 guardrail rg passed; git diff --check passed with only expected CRLF warnings on touched and unrelated markdown files.",
+  "sidecar_result": "Read-only explorer Confucius recommended PM Lane 157 as a financial handoff admission design executor dispatch and warned that no live approval/import path should be opened. VS Code Codex accepted the guardrail and preserved that dispatch-only recommendation as the next possible packet, while completing this local pilot launch binder first because it reduces Jason's review burden without adding any write authority.",
+  "next_recommended_lane": "PM Lane 158 should prepare a copy/paste executor packet for financial handoff admission design, or pivot back to the approval-row/live import prerequisites if Jason explicitly wants to advance execution gates."
+}
