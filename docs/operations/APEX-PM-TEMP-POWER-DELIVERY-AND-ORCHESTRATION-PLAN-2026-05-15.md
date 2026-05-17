@@ -682,6 +682,8 @@ PM Lane 216 executes the no-code Approval First-Row No-Live Evidence Gap Closeou
 
 PM Lane 217 executes the no-code Project Miner No-Live Readiness Return Packet tranche. For the upcoming Temp Power work, the next safe PM delivery move is a field-start clarification review return that packages project identity, source/scope floor, customer/site questions, lead/resource questions, import-candidate context, blocked authority, and next packet choices from existing local surfaces. This lane keeps hosted smoke, browser live route, live approval POST, approval row, project import write, assignments, schedule/status, field direction, durable field records, production tracking, customer reporting, billing, payroll, invoice, accounting, and external finance-system writes blocked.
 
+PM Lane 218 executes the no-code Project Miner Field-Start Clarification Review Return Packet tranche. For the upcoming Temp Power work, Jason now has a repo-local return shape under `PROJECT_MINER_FIELD_START_CLARIFICATION_REVIEW_RETURN_NO_LIVE_NO_WRITE` for project identity, source evidence reviewed, customer/site clarification, lead/resource clarification, import-candidate context, known no-go or blocked authority, and requested next packet. This lane keeps hosted smoke, browser live route, live approval POST, approval row, project import write, notes, tasks, owners, due dates, assignments, schedule/status, field direction, durable field records, production tracking, customer reporting, billing, payroll, invoice, accounting, and external finance-system writes blocked.
+
 ## Capability-Gap Register
 
 Current known gaps:

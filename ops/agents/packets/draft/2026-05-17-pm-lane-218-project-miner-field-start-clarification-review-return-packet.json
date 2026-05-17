@@ -1,0 +1,97 @@
+{
+  "packet_id": "2026-05-17-pm-lane-218",
+  "title": "PM Lane 218 - Project Miner Field-Start Clarification Review Return Packet",
+  "lane": "PM",
+  "status": "local_no_live_clarification_review_return_packet",
+  "decision_label": "PROJECT_MINER_FIELD_START_CLARIFICATION_REVIEW_RETURN_NO_LIVE_NO_WRITE",
+  "scope": [
+    "Convert Lane 217's readiness return into a compact source/customer/lead clarification review return.",
+    "Package Project Miner Temp Power clarification without creating business state.",
+    "Preserve approval, import, assignment, field, customer, production, and finance write boundaries.",
+    "Exercise dual-lane orchestration through bounded review only."
+  ],
+  "sidecar_review": {
+    "recommended_label": "PROJECT_MINER_FIELD_START_CLARIFICATION_REVIEW_RETURN_NO_LIVE_NO_WRITE",
+    "technical_authority_disposition": [
+      "Adopt the sidecar label as the formal repo decision label.",
+      "Keep Lane 218 no-code and use existing local field-start surfaces.",
+      "Do not add panels, controls, storage keys, routes, handlers, or exports.",
+      "Select PM Lane 219 Field-Start Clarification Return Closeout And Next-Packet Selection as the next safe no-live packet."
+    ]
+  },
+  "review_return_sections": [
+    "Project Identity Snapshot",
+    "Source Evidence Review",
+    "Customer And Site Clarification",
+    "Lead And Resource Clarification",
+    "Import Candidate Context",
+    "Blocked Authority And No-Go List",
+    "Return Package For Codex Or Sidecar",
+    "Next Packet Decision Menu"
+  ],
+  "return_package_template": [
+    "Project identity",
+    "Source evidence reviewed",
+    "Customer/site clarification",
+    "Lead/resource clarification",
+    "Import-candidate context",
+    "Known no-go or blocked authority",
+    "Requested next packet"
+  ],
+  "next_packet_decision_menu": [
+    "HOLD_NO_LIVE",
+    "REFRESH_SOURCE_CONTEXT_NO_LIVE",
+    "PREPARE_APPROVAL_ADMISSION_LATER",
+    "PREPARE_IMPORT_REVIEW_LATER",
+    "REQUEST_UI_SCAN_BURDEN_REVIEW"
+  ],
+  "sidecar_boundaries": {
+    "allowed": [
+      "review this return shape",
+      "identify missing no-live clarification categories",
+      "recommend whether a returned item belongs in source, customer/site, lead/resource, import-candidate, or future-packet buckets",
+      "recommend the next safe bounded packet"
+    ],
+    "prohibited": [
+      "access hosted services",
+      "run macros",
+      "read or print secrets",
+      "stage, commit, push, or publish repo changes unless separately authorized",
+      "treat clarification as business-state truth",
+      "admit approval, import, assignment, field, customer, production, or finance authority"
+    ]
+  },
+  "non_actions": [
+    "No hosted smoke",
+    "No browser live route access",
+    "No Supabase, Render, Vercel, or Olares action",
+    "No SQL or schema migration",
+    "No secret exposure",
+    "No live approval POST",
+    "No approval row creation",
+    "No project import",
+    "No notes, tasks, action items, owners, or due dates",
+    "No field or production write",
+    "No customer or finance output",
+    "No workbook macro or writeback",
+    "No autonomous AI business-state mutation"
+  ],
+  "hard_stop_conditions": [
+    "Hosted proof, browser live route, Supabase, Render, Vercel, Olares, credentials, or secrets required",
+    "Live approval POST, approval-row creation, project import, assignment, schedule/status, field, production, customer, or finance write required",
+    "Exact PM Lane 142 phrase absent but executor attempts to continue toward live approval",
+    "Local clarification treated as business-state truth",
+    "Sidecar attempts to stage, commit, push, publish, or create PM business state",
+    "Secret exposure attempted",
+    "Autonomous AI business-state mutation attempted"
+  ],
+  "validation_commands": [
+    "Get-Content -LiteralPath 'ops/agents/packets/draft/2026-05-17-pm-lane-218-project-miner-field-start-clarification-review-return-packet.json' | ConvertFrom-Json | Select-Object -ExpandProperty packet_id",
+    "rg -n \"PM Lane 218|PROJECT_MINER_FIELD_START_CLARIFICATION_REVIEW_RETURN_NO_LIVE_NO_WRITE|Project identity|Source Evidence Review|Customer And Site Clarification|Lead And Resource Clarification|PM Lane 219|No live approval POST|No project import\" PROJECT_STATUS.md docs/operations/APEX-PM-LANE-218-PROJECT-MINER-FIELD-START-CLARIFICATION-REVIEW-RETURN-PACKET-2026-05-17.md docs/operations/APEX-PM-STAKEHOLDER-TIME-PROTECTION-AND-ACCELERATION-LANE-2026-05-15.md docs/operations/APEX-PM-TEMP-POWER-DELIVERY-AND-ORCHESTRATION-PLAN-2026-05-15.md docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md ops/agents/packets/draft/2026-05-17-pm-lane-218-project-miner-field-start-clarification-review-return-packet.json ops/agents/handoffs/2026-05-17-pm-lane-218-project-miner-field-start-clarification-review-return-packet-handoff.md ops/agents/handoffs/2026-05-17-pm-lane-218-project-miner-field-start-clarification-review-return-packet-closeout.md",
+    "corrupted-token scan on touched Lane 218 files",
+    "null-byte check on touched Lane 218 files",
+    "git diff --check on touched Lane 218 files"
+  ],
+  "validation_result": "PASS - Packet JSON parsed; Lane 218 guardrails and decision labels found across intended touched files; corrupted-token scan found no matches; null-byte check passed; git diff --check reported only line-ending warnings.",
+  "next_recommended_lane": "PM Lane 219 - Project Miner Field-Start Clarification Return Closeout And Next-Packet Selection"
+}
