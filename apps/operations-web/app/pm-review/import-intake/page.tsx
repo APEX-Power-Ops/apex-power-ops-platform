@@ -262,6 +262,12 @@ type PmIntakeSnapshotItem = {
   evidence: string
 }
 
+type PmIntakeSnapshotGroup = {
+  id: string
+  label: string
+  items: PmIntakeSnapshotItem[]
+}
+
 type QuickJumpItem = {
   id: string
   label: string
@@ -1856,6 +1862,29 @@ function pmIntakeSnapshotCounts(snapshot: PmIntakeSnapshotItem[]) {
 
 function pmIntakeSnapshotSummary(counts: ReturnType<typeof pmIntakeSnapshotCounts>) {
   return `${counts.covered} covered, ${counts.open} open, ${counts.blocked} blocked`
+}
+
+function groupPmIntakeSnapshotItems(snapshot: PmIntakeSnapshotItem[]): PmIntakeSnapshotGroup[] {
+  const byId = new Map(snapshot.map((item) => [item.id, item]))
+  const take = (ids: string[]) => ids.map((id) => byId.get(id)).filter((item): item is PmIntakeSnapshotItem => Boolean(item))
+
+  return [
+    {
+      id: 'review-posture-snapshot',
+      label: 'Review Posture',
+      items: take(['exception-review-snapshot', 'decision-draft-snapshot']),
+    },
+    {
+      id: 'field-readiness-posture-snapshot',
+      label: 'Field Readiness Posture',
+      items: take(['field-prep-snapshot', 'next-local-action-snapshot']),
+    },
+    {
+      id: 'authority-boundary-posture-snapshot',
+      label: 'Authority Boundary Posture',
+      items: take(['approval-persistence-boundary', 'hosted-parity-boundary']),
+    },
+  ]
 }
 
 function buildPmIntakeStartHere(
@@ -6627,6 +6656,10 @@ export default function ProjectMinerIntakeWorkbenchPage() {
     () => buildPmIntakeSnapshot(persistenceReadinessGates, operatingQueue, importExceptionRegister, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, closeoutChecks, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad, approvalDraft),
     [persistenceReadinessGates, operatingQueue, importExceptionRegister, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, closeoutChecks, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad, approvalDraft],
   )
+  const pmIntakeSnapshotGroups = useMemo(
+    () => groupPmIntakeSnapshotItems(pmIntakeSnapshot),
+    [pmIntakeSnapshot],
+  )
   const pmIntakeStartHere = useMemo(
     () => buildPmIntakeStartHere(operatingQueue, importExceptionRegister, fieldPrepQueue, pmIntakeSnapshot, persistenceReadinessGates),
     [operatingQueue, importExceptionRegister, fieldPrepQueue, pmIntakeSnapshot, persistenceReadinessGates],
@@ -7860,20 +7893,27 @@ export default function ProjectMinerIntakeWorkbenchPage() {
             <p style={{ margin: '0.45rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
               {pmIntakeSnapshotSummary(pmIntakeSnapshotCount)}
             </p>
-            <div aria-label="Local PM intake snapshot items" style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
-              {pmIntakeSnapshot.map((item) => (
-                <article key={item.id} className="card" style={{ padding: '0.85rem', boxShadow: 'none' }}>
-                  <div className="status-row" style={{ alignItems: 'start' }}>
-                    <div>
-                      <p style={{ margin: 0 }}>
-                        <strong>{item.title}</strong>
-                      </p>
-                      <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
-                      <p style={{ margin: '0.35rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.evidence}</p>
-                    </div>
-                    <span className={`status-pill ${pmIntakeSnapshotTone(item.status)}`}>{formatLabel(item.status)}</span>
+            <div aria-label="Local PM intake snapshot groups" style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
+              {pmIntakeSnapshotGroups.map((group) => (
+                <section key={group.id} aria-label={`${group.label} snapshot group`} className="card" style={{ padding: '0.85rem', boxShadow: 'none' }}>
+                  <h3 style={{ fontSize: '0.95rem', margin: '0 0 0.65rem' }}>{group.label}</h3>
+                  <div aria-label={`${group.label} snapshot items`} style={{ display: 'grid', gap: '0.75rem' }}>
+                    {group.items.map((item) => (
+                      <article key={item.id} className="card" style={{ padding: '0.85rem', boxShadow: 'none' }}>
+                        <div className="status-row" style={{ alignItems: 'start' }}>
+                          <div>
+                            <p style={{ margin: 0 }}>
+                              <strong>{item.title}</strong>
+                            </p>
+                            <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.detail}</p>
+                            <p style={{ margin: '0.35rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{item.evidence}</p>
+                          </div>
+                          <span className={`status-pill ${pmIntakeSnapshotTone(item.status)}`}>{formatLabel(item.status)}</span>
+                        </div>
+                      </article>
+                    ))}
                   </div>
-                </article>
+                </section>
               ))}
             </div>
           </div>
