@@ -230,6 +230,18 @@ type OperatingQueueGroup = {
   items: OperatingQueueItem[]
 }
 
+type WorkflowGateItem = {
+  title: string
+  status: string
+  detail: string
+}
+
+type WorkflowGateGroup = {
+  id: string
+  label: string
+  items: WorkflowGateItem[]
+}
+
 type FieldPrepCoverageStatus = 'covered' | 'partial' | 'open' | 'blocked'
 
 type FieldPrepCoverageItem = {
@@ -1818,6 +1830,29 @@ function groupImportExceptionRegisterItems(register: ImportExceptionRegisterItem
       id: 'admission-boundary',
       label: 'Admission Boundary',
       items: take(['admission-no-go-checks', 'future-write-boundary']),
+    },
+  ]
+}
+
+function groupWorkflowGateItems(workflowGates: WorkflowGateItem[]): WorkflowGateGroup[] {
+  const byTitle = new Map(workflowGates.map((gate) => [gate.title, gate]))
+  const take = (titles: string[]) => titles.map((title) => byTitle.get(title)).filter((gate): gate is WorkflowGateItem => Boolean(gate))
+
+  return [
+    {
+      id: 'source-review-gates',
+      label: 'Source Review Gates',
+      items: take(['Source intake', 'Candidate review']),
+    },
+    {
+      id: 'approval-readiness-gates',
+      label: 'Approval Readiness Gates',
+      items: take(['Admission gate', 'Approval readiness', 'Hosted parity']),
+    },
+    {
+      id: 'future-import-boundary',
+      label: 'Future Import Boundary',
+      items: take(['Future import']),
     },
   ]
 }
@@ -6642,7 +6677,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
     ],
   )
   const futureRoute = firstAvailable(storagePlan?.recommended_route, approvalContract?.future_mutation_contract?.proposed_route)
-  const workflowGates = [
+  const workflowGates: WorkflowGateItem[] = [
     {
       title: 'Source intake',
       status: candidate?.source_freshness?.aggregate_fingerprint ? 'source current' : 'waiting',
@@ -6674,6 +6709,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
       detail: 'Project, workpackage, task, apparatus, assignment, schedule, and status writes remain blocked.',
     },
   ]
+  const workflowGateGroups = groupWorkflowGateItems(workflowGates)
   const checklistCheckedCount = REVIEW_CHECKLIST_ITEMS.filter((item) => reviewChecks[item.id]).length
   const closeoutCheckedCount = CLOSEOUT_CHECKLIST_ITEMS.filter((item) => closeoutChecks[item.id]).length
   const fieldReadinessCheckedCount = FIELD_READINESS_CHECKLIST_ITEMS.filter((item) => fieldReadinessChecks[item.id]).length
@@ -8117,19 +8153,26 @@ export default function ProjectMinerIntakeWorkbenchPage() {
             <span className="status-pill status-awaiting-values">read-only</span>
           </summary>
           <div aria-label="Workflow gates controls">
-            <div aria-label="Workflow gate items" style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
-              {workflowGates.map((gate) => (
-                <article key={gate.title} className="card" style={{ padding: '0.85rem', boxShadow: 'none' }}>
-                  <div className="status-row" style={{ alignItems: 'start' }}>
-                    <div>
-                      <p style={{ margin: 0 }}>
-                        <strong>{gate.title}</strong>
-                      </p>
-                      <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{gate.detail}</p>
-                    </div>
-                    <span className={`status-pill ${statusTone(gate.status)}`}>{formatLabel(gate.status)}</span>
+            <div aria-label="Workflow gate groups" style={{ display: 'grid', gap: '0.75rem', marginTop: '0.85rem' }}>
+              {workflowGateGroups.map((group) => (
+                <section key={group.id} aria-label={`${group.label} workflow gate group`} className="card" style={{ padding: '0.85rem', boxShadow: 'none' }}>
+                  <h3 style={{ fontSize: '0.95rem', margin: '0 0 0.65rem' }}>{group.label}</h3>
+                  <div aria-label={`${group.label} workflow gate items`} style={{ display: 'grid', gap: '0.75rem' }}>
+                    {group.items.map((gate) => (
+                      <article key={gate.title} className="card" style={{ padding: '0.85rem', boxShadow: 'none' }}>
+                        <div className="status-row" style={{ alignItems: 'start' }}>
+                          <div>
+                            <p style={{ margin: 0 }}>
+                              <strong>{gate.title}</strong>
+                            </p>
+                            <p style={{ margin: '0.4rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{gate.detail}</p>
+                          </div>
+                          <span className={`status-pill ${statusTone(gate.status)}`}>{formatLabel(gate.status)}</span>
+                        </div>
+                      </article>
+                    ))}
                   </div>
-                </article>
+                </section>
               ))}
             </div>
           </div>
