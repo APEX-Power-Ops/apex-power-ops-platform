@@ -1,0 +1,47 @@
+{
+  "packet_id": "2026-05-17-pm-lane-175",
+  "title": "PM Lane 175 - Local Approval Decision Draft Grouping",
+  "lane": "PM lane development",
+  "status": "completed",
+  "owner": "VS Code Codex",
+  "authority": "repo technical authority; PM lane implementation authority; final integration authority",
+  "date": "2026-05-17",
+  "objective": "Reduce Project Miner Temp Power approval-draft scan burden by grouping the existing Local Approval Decision Draft controls without changing decision select behavior, review notes behavior, local-only attestation behavior, candidate-scoped browser storage, export inclusion, clear behavior, disclosure behavior, or write boundaries.",
+  "scope": [
+    "Grouped the existing Local Approval Decision Draft decision select, review notes textarea, and local-only attestation checkbox into Decision Value Context, Review Notes Context, and Local Attestation Context.",
+    "Preserved the same decision select, permitted decision source, review notes textarea, local-only attestation checkbox, candidate-scoped browser storage, clear button behavior, PM brief/export inclusion, approval preview export inclusion, and no-write language.",
+    "Kept the local approval decision draft disclosure behavior stateless with no approval-draft disclosure localStorage key.",
+    "Used a read-only sidecar to review the grouping shape and smoke risks while VS Code Codex retained PM implementation and final integration authority."
+  ],
+  "guardrails": [
+    "No hosted service access.",
+    "No Supabase, Render, Vercel, or Olares product action.",
+    "No SQL or schema migration.",
+    "No approval POST or approval-row creation.",
+    "No project import mutation.",
+    "No field authorization, assignment, schedule/status, durable field record, production tracking, customer report, completion evidence, billing, payroll, invoice, accounting, or external finance-system write.",
+    "No workbook macro or writeback.",
+    "No new export action, export handler, filename, payload version, localStorage key, backend route, service/auth/ingress change, or autonomous AI business-state mutation."
+  ],
+  "changed_files": [
+    "apps/operations-web/app/pm-review/import-intake/page.tsx",
+    "apps/operations-web/tests/browser-shell.pm-import-intake.smoke.spec.ts",
+    "PROJECT_STATUS.md",
+    "docs/operations/APEX-PM-STAKEHOLDER-TIME-PROTECTION-AND-ACCELERATION-LANE-2026-05-15.md",
+    "docs/operations/APEX-PM-TEMP-POWER-DELIVERY-AND-ORCHESTRATION-PLAN-2026-05-15.md",
+    "docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md",
+    "ops/agents/packets/draft/2026-05-17-pm-lane-175-local-approval-decision-draft-grouping.json",
+    "ops/agents/handoffs/2026-05-17-pm-lane-175-local-approval-decision-draft-grouping-handoff.md"
+  ],
+  "validation": [
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform\" --filter @apex/operations-web typecheck",
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform/apps/operations-web\" exec playwright test \"browser-shell.pm-import-intake.smoke.spec.ts\"",
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform\" --filter @apex/operations-web build",
+    "Get-Content -LiteralPath \"C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-17-pm-lane-175-local-approval-decision-draft-grouping.json\" | ConvertFrom-Json | Select-Object -ExpandProperty packet_id",
+    "rg -n \"PM Lane 175|Approval decision draft groups|Decision Value Context approval draft group|Review Notes Context approval draft group|Local Attestation Context approval draft group|mutationRequests\\)\\.toHaveLength\\(0\\)\" PROJECT_STATUS.md docs/operations ops/agents apps/operations-web",
+    "git diff --check"
+  ],
+  "validation_result": "PASS - operations-web typecheck passed; focused Playwright pm import-intake smoke passed; operations-web build passed; packet JSON parsed; PM Lane 175 guardrail rg passed; git diff --check passed with only expected CRLF warnings on touched and unrelated markdown files.",
+  "sidecar_result": "Read-only sidecar Kierkegaard recommended keeping the outer Local approval decision draft disclosure unchanged, using internal labeled grouping, preserving state/storage/export/clear behavior, and hardening smoke assertions for select, textarea, attestation, no disclosure storage, export inclusion, clear behavior, and zero mutation. VS Code Codex accepted the risk notes and chose three single-purpose groups to match the current PM grouping pattern.",
+  "execution_result": "PASS"
+}
