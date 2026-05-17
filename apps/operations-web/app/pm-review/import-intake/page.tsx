@@ -7066,64 +7066,79 @@ export default function ProjectMinerIntakeWorkbenchPage() {
             </section>
             <section aria-label="Field prep output actions" style={{ display: 'grid', gap: '0.55rem' }}>
               <h3 style={{ fontSize: '0.95rem', margin: 0 }}>Field Prep Outputs</h3>
-              <div className="pm-review-link-row pm-review-link-row-start" style={{ margin: 0 }}>
-                <button className="btn btn-outline" onClick={exportFieldKickoffBrief} disabled={!packet}>
-                  Export Field Kickoff Brief
-                </button>
-                <button className="btn btn-outline" onClick={exportFieldObservationNotes} disabled={!packet}>
-                  Export Field Observation Notes
-                </button>
-                <button className="btn btn-outline" onClick={exportFieldPrepCoverageSnapshot} disabled={!packet}>
-                  Export Field Prep Coverage Snapshot
-                </button>
-                <button className="btn btn-outline" onClick={exportFieldPrepConversationAgenda} disabled={!packet}>
-                  Export Field Prep Conversation Agenda
-                </button>
-                <button className="btn btn-outline" onClick={exportFieldPrepPacket} disabled={!packet}>
-                  Export Field Prep Packet
-                </button>
-                <button className="btn btn-outline" onClick={exportFieldStartPreflight} disabled={!packet}>
-                  Export Field Start Preflight
-                </button>
-                <button className="btn btn-outline" onClick={exportFieldExecutionGateDesign} disabled={!packet}>
-                  Export Field Execution Gate Design
-                </button>
-                <button className="btn btn-outline" onClick={exportLeadFieldAssignmentDraft} disabled={!packet}>
-                  Export Lead Field Assignment Draft
-                </button>
-                <button className="btn btn-outline" onClick={exportFieldAuthorizationAssignmentDraft} disabled={!packet}>
-                  Export Field Authorization Assignment Draft
-                </button>
-                <button className="btn btn-outline" onClick={exportScheduleStatusControlsDraft} disabled={!packet}>
-                  Export Schedule Status Controls Draft
-                </button>
-                <button className="btn btn-outline" onClick={exportDurableFieldRecordDraft} disabled={!packet}>
-                  Export Durable Field Record Draft
-                </button>
-                <button className="btn btn-outline" onClick={exportProductionTrackingDraft} disabled={!packet}>
-                  Export Production Tracking Draft
-                </button>
-                <button className="btn btn-outline" onClick={exportCustomerReportingDraft} disabled={!packet}>
-                  Export Customer Reporting Draft
-                </button>
-                <button className="btn btn-outline" onClick={exportFinancialHandoffDraft} disabled={!packet}>
-                  Export Financial Handoff Draft
-                </button>
-                <button className="btn btn-outline" onClick={exportPilotLaunchBinder} disabled={!packet}>
-                  Export Pilot Launch Binder
-                </button>
-                <button className="btn btn-outline" onClick={exportPilotLaunchDailyBrief} disabled={!packet}>
-                  Export Pilot Launch Daily Brief
-                </button>
-                <button className="btn btn-outline" onClick={exportPilotLaunchStandupCard} disabled={!packet}>
-                  Export Pilot Launch Standup Card
-                </button>
-                <button className="btn btn-outline" onClick={exportPilotLaunchCaptureSheet} disabled={!packet}>
-                  Export Pilot Launch Capture Sheet
-                </button>
-                <button className="btn btn-outline" onClick={exportPilotLaunchFollowupPacket} disabled={!packet}>
-                  Export Pilot Launch Follow-Up Packet
-                </button>
+              <div aria-label="Field prep output subgroups" style={{ display: 'grid', gap: '0.75rem' }}>
+                <section aria-label="Field prep basics output actions" style={{ display: 'grid', gap: '0.4rem' }}>
+                  <h4 style={{ color: 'var(--muted)', fontSize: '0.8rem', fontWeight: 700, letterSpacing: 0, margin: 0, textTransform: 'uppercase' }}>Field Prep Basics</h4>
+                  <div className="pm-review-link-row pm-review-link-row-start" style={{ margin: 0 }}>
+                    <button className="btn btn-outline" onClick={exportFieldKickoffBrief} disabled={!packet}>
+                      Export Field Kickoff Brief
+                    </button>
+                    <button className="btn btn-outline" onClick={exportFieldObservationNotes} disabled={!packet}>
+                      Export Field Observation Notes
+                    </button>
+                    <button className="btn btn-outline" onClick={exportFieldPrepCoverageSnapshot} disabled={!packet}>
+                      Export Field Prep Coverage Snapshot
+                    </button>
+                    <button className="btn btn-outline" onClick={exportFieldPrepConversationAgenda} disabled={!packet}>
+                      Export Field Prep Conversation Agenda
+                    </button>
+                    <button className="btn btn-outline" onClick={exportFieldPrepPacket} disabled={!packet}>
+                      Export Field Prep Packet
+                    </button>
+                    <button className="btn btn-outline" onClick={exportFieldStartPreflight} disabled={!packet}>
+                      Export Field Start Preflight
+                    </button>
+                  </div>
+                </section>
+                <section aria-label="Admission draft output actions" style={{ display: 'grid', gap: '0.4rem' }}>
+                  <h4 style={{ color: 'var(--muted)', fontSize: '0.8rem', fontWeight: 700, letterSpacing: 0, margin: 0, textTransform: 'uppercase' }}>Admission Drafts</h4>
+                  <div className="pm-review-link-row pm-review-link-row-start" style={{ margin: 0 }}>
+                    <button className="btn btn-outline" onClick={exportFieldExecutionGateDesign} disabled={!packet}>
+                      Export Field Execution Gate Design
+                    </button>
+                    <button className="btn btn-outline" onClick={exportLeadFieldAssignmentDraft} disabled={!packet}>
+                      Export Lead Field Assignment Draft
+                    </button>
+                    <button className="btn btn-outline" onClick={exportFieldAuthorizationAssignmentDraft} disabled={!packet}>
+                      Export Field Authorization Assignment Draft
+                    </button>
+                    <button className="btn btn-outline" onClick={exportScheduleStatusControlsDraft} disabled={!packet}>
+                      Export Schedule Status Controls Draft
+                    </button>
+                    <button className="btn btn-outline" onClick={exportDurableFieldRecordDraft} disabled={!packet}>
+                      Export Durable Field Record Draft
+                    </button>
+                    <button className="btn btn-outline" onClick={exportProductionTrackingDraft} disabled={!packet}>
+                      Export Production Tracking Draft
+                    </button>
+                    <button className="btn btn-outline" onClick={exportCustomerReportingDraft} disabled={!packet}>
+                      Export Customer Reporting Draft
+                    </button>
+                    <button className="btn btn-outline" onClick={exportFinancialHandoffDraft} disabled={!packet}>
+                      Export Financial Handoff Draft
+                    </button>
+                  </div>
+                </section>
+                <section aria-label="Pilot launch output actions" style={{ display: 'grid', gap: '0.4rem' }}>
+                  <h4 style={{ color: 'var(--muted)', fontSize: '0.8rem', fontWeight: 700, letterSpacing: 0, margin: 0, textTransform: 'uppercase' }}>Pilot Launch Outputs</h4>
+                  <div className="pm-review-link-row pm-review-link-row-start" style={{ margin: 0 }}>
+                    <button className="btn btn-outline" onClick={exportPilotLaunchBinder} disabled={!packet}>
+                      Export Pilot Launch Binder
+                    </button>
+                    <button className="btn btn-outline" onClick={exportPilotLaunchDailyBrief} disabled={!packet}>
+                      Export Pilot Launch Daily Brief
+                    </button>
+                    <button className="btn btn-outline" onClick={exportPilotLaunchStandupCard} disabled={!packet}>
+                      Export Pilot Launch Standup Card
+                    </button>
+                    <button className="btn btn-outline" onClick={exportPilotLaunchCaptureSheet} disabled={!packet}>
+                      Export Pilot Launch Capture Sheet
+                    </button>
+                    <button className="btn btn-outline" onClick={exportPilotLaunchFollowupPacket} disabled={!packet}>
+                      Export Pilot Launch Follow-Up Packet
+                    </button>
+                  </div>
+                </section>
               </div>
             </section>
             <section aria-label="Refresh action" style={{ display: 'grid', gap: '0.55rem' }}>

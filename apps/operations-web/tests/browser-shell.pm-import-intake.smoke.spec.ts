@@ -318,9 +318,41 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(outputActionRail.getByRole('heading', { name: 'Field Prep Outputs', exact: true })).toBeVisible()
   await expect(outputActionRail.getByRole('heading', { name: 'Refresh', exact: true })).toBeVisible()
   await expect(outputActionRail.getByLabel('PM intake output action groups')).toBeVisible()
+  await expect(outputActionRail.getByLabel('Field prep output subgroups')).toBeVisible()
+  await expect(outputActionRail.getByLabel('Field prep output actions').getByRole('heading', { name: 'Field Prep Basics' })).toBeVisible()
+  await expect(outputActionRail.getByLabel('Field prep output actions').getByRole('heading', { name: 'Admission Drafts' })).toBeVisible()
+  await expect(outputActionRail.getByLabel('Field prep output actions').getByRole('heading', { name: 'Pilot Launch Outputs' })).toBeVisible()
   await expect(outputActionRail.getByLabel('Review output actions').getByRole('button')).toHaveCount(4)
   await expect(outputActionRail.getByLabel('Executor output actions').getByRole('button')).toHaveCount(1)
   await expect(outputActionRail.getByLabel('Field prep output actions').getByRole('button')).toHaveCount(19)
+  await expect(outputActionRail.getByLabel('Field prep basics output actions').getByRole('button')).toHaveCount(6)
+  await expect(outputActionRail.getByLabel('Admission draft output actions').getByRole('button')).toHaveCount(8)
+  await expect(outputActionRail.getByLabel('Pilot launch output actions').getByRole('button')).toHaveCount(5)
+  await expect(outputActionRail.getByLabel('Field prep basics output actions').getByRole('button')).toHaveText([
+    'Export Field Kickoff Brief',
+    'Export Field Observation Notes',
+    'Export Field Prep Coverage Snapshot',
+    'Export Field Prep Conversation Agenda',
+    'Export Field Prep Packet',
+    'Export Field Start Preflight',
+  ])
+  await expect(outputActionRail.getByLabel('Admission draft output actions').getByRole('button')).toHaveText([
+    'Export Field Execution Gate Design',
+    'Export Lead Field Assignment Draft',
+    'Export Field Authorization Assignment Draft',
+    'Export Schedule Status Controls Draft',
+    'Export Durable Field Record Draft',
+    'Export Production Tracking Draft',
+    'Export Customer Reporting Draft',
+    'Export Financial Handoff Draft',
+  ])
+  await expect(outputActionRail.getByLabel('Pilot launch output actions').getByRole('button')).toHaveText([
+    'Export Pilot Launch Binder',
+    'Export Pilot Launch Daily Brief',
+    'Export Pilot Launch Standup Card',
+    'Export Pilot Launch Capture Sheet',
+    'Export Pilot Launch Follow-Up Packet',
+  ])
   await expect(outputActionRail.getByLabel('Refresh action').getByRole('button')).toHaveCount(1)
   await expect(outputActionRail.getByLabel('Review output actions').getByRole('button', { name: 'Export PM Brief' })).toBeVisible()
   await expect(outputActionRail.getByLabel('Review output actions').getByRole('button', { name: 'Export Approval Preview JSON' })).toBeVisible()
@@ -357,6 +389,9 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(outputActionRail.getByLabel('Review output actions').getByRole('button')).toHaveCount(4)
   await expect(outputActionRail.getByLabel('Executor output actions').getByRole('button')).toHaveCount(1)
   await expect(outputActionRail.getByLabel('Field prep output actions').getByRole('button')).toHaveCount(19)
+  await expect(outputActionRail.getByLabel('Field prep basics output actions').getByRole('button')).toHaveCount(6)
+  await expect(outputActionRail.getByLabel('Admission draft output actions').getByRole('button')).toHaveCount(8)
+  await expect(outputActionRail.getByLabel('Pilot launch output actions').getByRole('button')).toHaveCount(5)
   await expect(outputActionRail.getByLabel('Refresh action').getByRole('button')).toHaveCount(1)
   await expect(page.getByLabel('PM intake output status rail')).toHaveCount(0)
   await expectNoImpliedAuthorityControls(page)
