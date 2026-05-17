@@ -1248,6 +1248,25 @@ const PROJECT_DATA_ENTRY_DECISION_LABEL_DETAILS = [
   },
 ]
 
+const PROJECT_DATA_ENTRY_DECISION_OUTCOME_ROUTES = [
+  {
+    label: 'ACCEPT_DATA_ENTRY_WARNING_NON_BLOCKING_NO_LIVE',
+    route: 'record no-live warning acceptance context; keep live admission separate',
+  },
+  {
+    label: 'REQUEST_DATA_ENTRY_WORKBOOK_CORRECTION_NO_LIVE',
+    route: 'open a no-live workbook-correction packet before warning acceptance or live admission',
+  },
+  {
+    label: 'HOLD_DATA_ENTRY_WARNING_NO_LIVE',
+    route: 'keep the warning unresolved and continue no-live readiness only',
+  },
+  {
+    label: 'PROVIDE_EXACT_LIVE_ADMISSION_LATER',
+    route: 'defer disposition until a later exact live-admission packet',
+  },
+]
+
 const PROJECT_MINER_RESOLVED_SOURCE_CORRECTION_LABEL = 'REQUEST_SOURCE_CORRECTION_NO_LIVE'
 const PROJECT_MINER_RESOLVED_SOURCE_CORRECTION_DESIGNATION = 'Ground Resistance Test Lot'
 
@@ -1282,6 +1301,8 @@ function projectDataEntryDecisionGateExportLines(warnings: CandidateWarning[]) {
     '- Paraphrases or prior source-correction labels do not close this gate.',
     '- Allowed labels:',
     ...PROJECT_DATA_ENTRY_DECISION_LABELS.map((label) => `  - ${label}`),
+    '- Outcome routes:',
+    ...PROJECT_DATA_ENTRY_DECISION_OUTCOME_ROUTES.map((item) => `  - ${item.label}: ${item.route}`),
     '- Admission prerequisites:',
     ...PROJECT_DATA_ENTRY_ADMISSION_PREREQUISITES.map((prerequisite) => `  - ${prerequisite}`),
     '- Authority boundary: display/export context only; no approval POST, approval row, import write, source writeback, hosted call, or business-state mutation.',
@@ -10082,6 +10103,28 @@ export default function ProjectMinerIntakeWorkbenchPage() {
                             {PROJECT_DATA_ENTRY_DECISION_LABELS.map((label) => (
                               <li key={label}>
                                 <code>{label}</code>
+                              </li>
+                            ))}
+                          </ul>
+                        </article>
+                      ) : null}
+                      {hasProjectDataEntryWarning ? (
+                        <article aria-label="Project Data Entry outcome routes" className="card" style={{ padding: '0.85rem', boxShadow: 'none' }}>
+                          <div className="status-row" style={{ alignItems: 'start' }}>
+                            <div>
+                              <p style={{ margin: 0 }}>
+                                <strong>What each reply does next</strong>
+                              </p>
+                              <p style={{ margin: '0.45rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+                                Route preview only. These outcomes do not run until one exact PM Lane 238 label is returned and a later packet records it.
+                              </p>
+                            </div>
+                            <span className="status-pill status-awaiting-values">route preview</span>
+                          </div>
+                          <ul style={{ margin: '0.65rem 0 0', paddingLeft: '1.15rem', color: 'var(--muted)', lineHeight: 1.55 }}>
+                            {PROJECT_DATA_ENTRY_DECISION_OUTCOME_ROUTES.map((item) => (
+                              <li key={item.label}>
+                                <code>{item.label}</code>: {item.route}
                               </li>
                             ))}
                           </ul>

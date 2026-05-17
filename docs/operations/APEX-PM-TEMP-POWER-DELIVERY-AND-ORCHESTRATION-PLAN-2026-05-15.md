@@ -752,6 +752,7 @@ Current known gaps:
 22. PM Lane 247 adds a copy-safe exact reply options card to the workbench. PM Decision Context now tells Jason to copy exactly one line only, lists the four PM Lane 238 labels, and excludes explanation text, paraphrases, and `REQUEST_SOURCE_CORRECTION_NO_LIVE`, while validation passed and live approval/import authority remains blocked.
 23. PM Lane 248 surfaces the same open Data Entry decision in Current PM Next Actions and Guardrails. The guardrail cue points back to the exact reply options card and repeats the no-explanation/no-paraphrase/no-prior-source-correction rule, while validation passed and live approval/import authority remains blocked.
 24. PM Lane 249 classifies the returned `REQUEST_SOURCE_CORRECTION_NO_LIVE` label as the already-applied Ground Resistance correction, not the active Data Entry warning disposition. The `PROJECT_DATA_ENTRY_FORMULA_ERRORS` gate remains open until exactly one PM Lane 238 Data Entry label is returned, while validation passed and live approval/import authority remains blocked.
+25. PM Lane 250 adds a no-live outcome route preview for the four exact PM Lane 238 Data Entry labels in PM Decision Context and in the local import exception register export. The route preview does not choose a label or open warning acceptance, workbook correction, live admission, approval, or import authority.
 
 Required response to new gaps:
 

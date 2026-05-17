@@ -982,6 +982,8 @@ PM Lane 248 executes the Project Miner Temp Power Data Entry Current Open Decisi
 
 PM Lane 249 executes the Project Miner Temp Power Data Entry Prior Source-Correction Label Return Classifier No-Live Packet tranche. The returned `REQUEST_SOURCE_CORRECTION_NO_LIVE` label is recorded as already-applied PM Lane 236 source-correction context for `Ground Resistance Test Lot`, not as a valid PM Lane 238 Data Entry warning disposition. The active `PROJECT_DATA_ENTRY_FORMULA_ERRORS` gate remains open until exactly one PM Lane 238 Data Entry label is returned. Validation passed, with no product code, warning acceptance, live approval, approval-row creation, project import, source writeback, hosted access, Desktop Codex PM decision authority, copy button, or autonomous AI business-state mutation added.
 
+PM Lane 250 executes the Project Miner Temp Power Data Entry Decision Outcome Route Preview No-Live Packet tranche. PM Decision Context now includes a display-only "What each reply does next" route preview for the four exact PM Lane 238 labels, and the local import exception register export includes matching outcome route lines. The exact reply options card remains the copy-safe answer source, and the route preview does not choose a label, accept the warning, run workbook correction, open live admission, approve the candidate, import rows, or grant Desktop Codex PM decision authority. Validation passed.
+
 Level 3 - Resource Context:
 Read equipment inventory and technician capability rows so PM can understand whether the project can be staffed with available people and equipment.
 
