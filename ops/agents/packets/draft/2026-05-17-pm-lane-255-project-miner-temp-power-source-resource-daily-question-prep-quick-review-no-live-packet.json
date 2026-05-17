@@ -1,0 +1,79 @@
+{
+  "packet_id": "2026-05-17-pm-lane-255-project-miner-temp-power-source-resource-daily-question-prep-quick-review-no-live-packet",
+  "title": "PM Lane 255 - Project Miner Temp Power Source Resource Daily Question Prep Quick Review No-Live Packet",
+  "date": "2026-05-17",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_SOURCE_RESOURCE_DAILY_QUESTION_PREP_QUICK_REVIEW_NO_LIVE",
+  "selected_outcome": "SOURCE_RESOURCE_DAILY_QUESTION_PREP_CUE_VISIBLE_NO_LIVE",
+  "candidate": {
+    "candidate_id": "pm-import-candidate-miner-temp-power",
+    "active_warning_code": "PROJECT_DATA_ENTRY_FORMULA_ERRORS",
+    "mutation_authority": "not_admitted"
+  },
+  "scope": {
+    "surface": "Daily Action Panels",
+    "component_id": "pm-field-start-source-resource-question-prep-cue",
+    "aria_label": "Local field-start source and resource question prep cue",
+    "type": "display_only_daily_question_prep_cue",
+    "placement": "after Local Field Start Operator Script and before Local Field Start Stop-Line Quick Review",
+    "new_state": false,
+    "new_inputs": false,
+    "links": false,
+    "buttons": false,
+    "existing_field_question_inputs_preserved": 6
+  },
+  "allowed_no_live_question_prep": [
+    "source lineage questions",
+    "crew/tooling/lift/rental/equipment logistics questions",
+    "technician capability coverage questions",
+    "material/staging/customer-site constraint questions"
+  ],
+  "blocked_until_admitted": [
+    "resource assignment",
+    "schedule/status changes",
+    "procurement or rental commitments",
+    "customer commitments",
+    "warning acceptance",
+    "approval rows",
+    "project import"
+  ],
+  "export_changes": {
+    "pm_intake_brief": false,
+    "field_kickoff_brief": false,
+    "field_prep_packet": false,
+    "local_import_exception_register": false
+  },
+  "desktop_codex_support": {
+    "prompt_path": "ops/agents/handoffs/2026-05-17-desktop-codex-pm-lane-255-source-resource-daily-question-prep-quick-review-scout-prompt.md",
+    "status": "available_not_required",
+    "allowed_scope": [
+      "cue clarity review",
+      "daily review placement review",
+      "relay-burden reduction review",
+      "authority-boundary risk review"
+    ],
+    "blocked_scope": [
+      "product code edit",
+      "repo publication",
+      "hosted service access",
+      "workbook content read",
+      "source PDF content read",
+      "macro execution",
+      "PM decision authority",
+      "resource assignment",
+      "schedule/status mutation",
+      "approval/import authority",
+      "business-state mutation"
+    ]
+  },
+  "validation": [
+    "operations-web typecheck",
+    "operations-web build",
+    "focused pm-import-intake Playwright smoke",
+    "packet JSON parse",
+    "daily source-resource cue text search",
+    "unresolved-marker scan",
+    "corrupted-token scan",
+    "git diff --check"
+  ],
+  "validation_result": "PASS"
+}

@@ -9249,6 +9249,32 @@ export default function ProjectMinerIntakeWorkbenchPage() {
           </div>
         </details>
 
+        {hasProjectDataEntryWarning ? (
+          <section id="pm-field-start-source-resource-question-prep-cue" aria-label="Local field-start source and resource question prep cue" className="card" style={{ display: 'grid', gap: '0.65rem', padding: '1rem', marginBottom: '1rem' }}>
+            <div className="status-row" style={{ alignItems: 'start' }}>
+              <div>
+                <h2 style={{ margin: 0 }}>Local Field-Start Source/Resource Question Prep Cue</h2>
+                <p style={{ margin: '0.45rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+                  Prepare PM/lead questions only from existing source/resource context. This cue creates no localStorage key, export artifact, backend route, task, action item, owner, due date, source access, source writeback, resource assignment, schedule/status change, procurement or rental commitment, customer commitment, warning acceptance, approval row, import, hosted write claim, or production write.
+                </p>
+              </div>
+              <span className="status-pill status-awaiting-values">question prep</span>
+            </div>
+            <ul style={{ margin: 0, paddingLeft: '1.15rem', color: 'var(--muted)', lineHeight: 1.55 }}>
+              <li>Equipment inventory context: {formatCount(summary.equipment_inventory_count)} rows available for question shaping only.</li>
+              <li>Technician capability context: {formatCount(summary.capability_count)} rows available for coverage questions only.</li>
+              {PROJECT_SOURCE_RESOURCE_QUESTION_PREP_CUES.map((item) => (
+                <li key={item.term}>
+                  <strong>{item.term}</strong>: {item.detail}
+                </li>
+              ))}
+            </ul>
+            <p style={{ margin: 0, color: 'var(--muted)', lineHeight: 1.55 }}>
+              No live source access, source writeback, resource assignment, schedule/status change, procurement or rental commitment, customer commitment, warning acceptance, approval, import, field authorization, or business-state mutation is granted.
+            </p>
+          </section>
+        ) : null}
+
         <details open id="pm-field-start-stop-line-review" aria-label="Local field start stop-line quick review" className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
           <summary className="status-row" style={{ cursor: 'pointer' }}>
             <h2 style={{ margin: 0 }}>Local Field Start Stop-Line Quick Review</h2>

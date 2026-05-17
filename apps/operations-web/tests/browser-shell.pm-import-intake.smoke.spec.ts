@@ -50,6 +50,7 @@ async function expectWorkbenchViewportScan(page: Page, viewport: { width: number
       ['main', 'main'],
       ['quick-jump-rail', '#pm-quick-jump-rail'],
       ['field-start-operator-script', '#pm-field-start-operator-script'],
+      ['field-start-source-resource-question-prep-cue', '#pm-field-start-source-resource-question-prep-cue'],
       ['field-start-stop-line-review', '#pm-field-start-stop-line-review'],
       ['field-start-customer-site-questions', '#pm-field-start-customer-site-questions'],
       ['field-start-pm-followup-prompt-review', '#pm-field-start-pm-followup-prompt-review'],
@@ -169,6 +170,18 @@ async function expectMobileFieldLaunchUsePath(page: Page, mutationRequests: stri
   await expect(fieldStartOperatorScript.getByText(/Field prep queue: 2 complete \/ 2 next \/ 1 blocked. Coverage: 2 covered, 0 partial, 3 open, 2 blocked. Agenda: 2 context, 3 ask, 1 confirm, 1 blocked/i)).toBeVisible()
   await expect(fieldStartOperatorScript.getByText(/Use pm-import-candidate-miner-temp-power-field-start-preflight.json or pm-import-candidate-miner-temp-power-field-prep-packet.md as local conversation context; do not treat exports as authorization/i)).toBeVisible()
   await expect(fieldStartOperatorScript.getByText(/Do not approve, import, authorize field work, assign crews, schedule\/status work, create durable field records, or start production tracking from this workbench. Field observations present: yes/i)).toBeVisible()
+  const fieldStartSourceResourceQuestionPrepCue = page.locator('section#pm-field-start-source-resource-question-prep-cue[aria-label="Local field-start source and resource question prep cue"]')
+  await expect(fieldStartSourceResourceQuestionPrepCue).toBeVisible()
+  await expect(fieldStartSourceResourceQuestionPrepCue.getByRole('heading', { name: /Local Field-Start Source\/Resource Question Prep Cue/i })).toBeVisible()
+  await expect(fieldStartSourceResourceQuestionPrepCue.getByText(/Prepare PM\/lead questions only from existing source\/resource context/i)).toBeVisible()
+  await expect(fieldStartSourceResourceQuestionPrepCue.getByText(/creates no localStorage key, export artifact, backend route, task, action item, owner, due date, source access, source writeback, resource assignment, schedule\/status change, procurement or rental commitment, customer commitment, warning acceptance, approval row, import, hosted write claim, or production write/i)).toBeVisible()
+  await expect(fieldStartSourceResourceQuestionPrepCue.getByText(/Equipment inventory context: 343 rows available for question shaping only/i)).toBeVisible()
+  await expect(fieldStartSourceResourceQuestionPrepCue.getByText(/Technician capability context: 50 rows available for coverage questions only/i)).toBeVisible()
+  await expect(fieldStartSourceResourceQuestionPrepCue.getByText(/allowed question prep: clarify source lineage, crew\/tooling\/lift\/rental\/equipment logistics, capability coverage, and customer\/site constraints/i)).toBeVisible()
+  await expect(fieldStartSourceResourceQuestionPrepCue.getByText(/blocked until admitted: resource assignment, schedule\/status changes, procurement or rental commitments, customer commitments, warning acceptance, approval rows, and project import/i)).toBeVisible()
+  await expect(fieldStartSourceResourceQuestionPrepCue.getByText(/No live source access, source writeback, resource assignment, schedule\/status change, procurement or rental commitment, customer commitment, warning acceptance, approval, import, field authorization, or business-state mutation is granted/i)).toBeVisible()
+  await expect(fieldStartSourceResourceQuestionPrepCue.locator('a')).toHaveCount(0)
+  await expect(fieldStartSourceResourceQuestionPrepCue.getByRole('button')).toHaveCount(0)
   const fieldStartStopLineReview = page.locator('details#pm-field-start-stop-line-review[aria-label="Local field start stop-line quick review"]')
   await expect(fieldStartStopLineReview).toBeVisible()
   await expect(fieldStartStopLineReview).toHaveAttribute('open', '')
@@ -862,6 +875,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(dailyActionPanels.getByRole('heading', { name: 'Daily Action Panels', exact: true })).toBeVisible()
   await expect(dailyActionPanels.locator('details#pm-daily-review-script[aria-label="Local PM intake daily review script"]')).toHaveCount(1)
   await expect(dailyActionPanels.locator('details#pm-field-start-operator-script[aria-label="Local field start operator script"]')).toHaveCount(1)
+  await expect(dailyActionPanels.locator('section#pm-field-start-source-resource-question-prep-cue[aria-label="Local field-start source and resource question prep cue"]')).toHaveCount(1)
   await expect(dailyActionPanels.locator('details#pm-field-start-stop-line-review[aria-label="Local field start stop-line quick review"]')).toHaveCount(1)
   await expect(dailyActionPanels.locator('details#pm-field-start-customer-site-questions[aria-label="Local field start customer site questions quick review"]')).toHaveCount(1)
   await expect(dailyActionPanels.locator('section#pm-field-start-pm-followup-prompt-review[aria-label="Local PM follow-up prompt review"]')).toHaveCount(1)
@@ -2261,6 +2275,17 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(fieldStartOperatorScript.getByText(/Field prep queue: 0 complete \/ 1 next \/ 4 blocked. Coverage: 0 covered, 0 partial, 5 open, 2 blocked. Agenda: 0 context, 5 ask, 0 confirm, 2 blocked/i)).toBeVisible()
   await expect(fieldStartOperatorScript.getByText(/Use pm-import-candidate-miner-temp-power-field-start-preflight.json or pm-import-candidate-miner-temp-power-field-prep-packet.md as local conversation context; do not treat exports as authorization/i)).toBeVisible()
   await expect(fieldStartOperatorScript.getByText(/Do not approve, import, authorize field work, assign crews, schedule\/status work, create durable field records, or start production tracking from this workbench. Field observations present: no/i)).toBeVisible()
+  const dailySourceResourceQuestionPrepCue = page.locator('section#pm-field-start-source-resource-question-prep-cue[aria-label="Local field-start source and resource question prep cue"]')
+  await expect(dailySourceResourceQuestionPrepCue).toBeVisible()
+  await expect(dailySourceResourceQuestionPrepCue.getByRole('heading', { name: /Local Field-Start Source\/Resource Question Prep Cue/i })).toBeVisible()
+  await expect(dailySourceResourceQuestionPrepCue.getByText(/Prepare PM\/lead questions only from existing source\/resource context/i)).toBeVisible()
+  await expect(dailySourceResourceQuestionPrepCue.getByText(/Equipment inventory context: 343 rows available for question shaping only/i)).toBeVisible()
+  await expect(dailySourceResourceQuestionPrepCue.getByText(/Technician capability context: 50 rows available for coverage questions only/i)).toBeVisible()
+  await expect(dailySourceResourceQuestionPrepCue.getByText(/blocked until admitted: resource assignment, schedule\/status changes, procurement or rental commitments, customer commitments, warning acceptance, approval rows, and project import/i)).toBeVisible()
+  await expect(dailySourceResourceQuestionPrepCue.locator('a')).toHaveCount(0)
+  await expect(dailySourceResourceQuestionPrepCue.getByRole('button')).toHaveCount(0)
+  const dailySourceResourceCueStateKeys = await page.evaluate(() => Object.keys(window.localStorage).filter((key) => key.startsWith('pm-import-intake-') && /field-start-source-resource-question-prep|source.?resource.?daily.?question.?prep|source.?resource.?question.?prep.?cue/i.test(key)))
+  expect(dailySourceResourceCueStateKeys).toEqual([])
   const fieldStartStopLineReview = page.locator('details#pm-field-start-stop-line-review[aria-label="Local field start stop-line quick review"]')
   await expect(fieldStartStopLineReview).toHaveAttribute('open', '')
   await expect(fieldStartStopLineReview.getByRole('heading', { name: /Local Field Start Stop-Line Quick Review/i })).toBeVisible()
