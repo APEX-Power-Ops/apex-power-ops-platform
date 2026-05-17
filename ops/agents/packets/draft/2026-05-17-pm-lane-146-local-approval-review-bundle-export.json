@@ -1,0 +1,53 @@
+{
+  "packet_id": "2026-05-17-pm-lane-146",
+  "lane": "PM Lane 146",
+  "title": "Local Approval Review Bundle Export",
+  "created_at_local": "2026-05-17",
+  "source_floor_commit": "8906fb0d82dbfff56dd7777484eba381646577fc",
+  "objective": "Add a browser-local approval review bundle export that combines the PM approval dry-run envelope and readiness checkpoint without sending a live approval POST, creating an approval row, or mutating project/import state.",
+  "execution_mode": "local_product_code_plus_status_docs",
+  "scope": [
+    "Add an Export Review Bundle action to the existing Local Approval Submission Dry Run panel.",
+    "Download one JSON artifact that includes the dry-run approval envelope, readiness checkpoint, included artifact filenames, review sequence, live-write gate text, and blocked boundaries.",
+    "Keep the export local-only and informational.",
+    "Extend the focused Playwright smoke to prove the downloaded review bundle and zero mutation requests."
+  ],
+  "not_allowed": [
+    "No live POST to /api/v1/mutations/project-import-approvals.",
+    "No approval row creation.",
+    "No hosted deployment or promotion.",
+    "No Supabase, Render, Vercel, or Olares action.",
+    "No SQL or schema migration.",
+    "No secret access or secret rotation.",
+    "No backend route or mutation route change.",
+    "No project import, workpackage rows, task rows, apparatus rows, assignment, schedule, status, durable field record, production tracking, workbook macro, or workbook writeback.",
+    "No service, auth, DNS, ingress, or control-plane widening.",
+    "No autonomous AI business-state mutation."
+  ],
+  "live_write_gate": {
+    "status": "not_admitted",
+    "required_phrase": "I explicitly admit PM Lane 142 live approval POST and first approval-row creation for the current Project Miner Temp Power import candidate.",
+    "note": "This phrase was not present for PM Lane 146, so the lane remains local review-bundle export only."
+  },
+  "changed_files": [
+    "PROJECT_STATUS.md",
+    "apps/operations-web/app/pm-review/import-intake/page.tsx",
+    "apps/operations-web/tests/browser-shell.pm-import-intake.smoke.spec.ts",
+    "docs/operations/APEX-PM-STAKEHOLDER-TIME-PROTECTION-AND-ACCELERATION-LANE-2026-05-15.md",
+    "docs/operations/APEX-PM-TEMP-POWER-DELIVERY-AND-ORCHESTRATION-PLAN-2026-05-15.md",
+    "docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md",
+    "ops/agents/packets/draft/2026-05-17-pm-lane-146-local-approval-review-bundle-export.json",
+    "ops/agents/handoffs/2026-05-17-pm-lane-146-local-approval-review-bundle-export-handoff.md"
+  ],
+  "validation_steps": [
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform\" --filter @apex/operations-web typecheck",
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform\" --filter @apex/operations-web build",
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform/apps/operations-web\" exec playwright test \"browser-shell.pm-import-intake.smoke.spec.ts\"",
+    "Get-Content -Path \"ops/agents/packets/draft/2026-05-17-pm-lane-146-local-approval-review-bundle-export.json\" | ConvertFrom-Json | Select-Object -ExpandProperty packet_id",
+    "rg -n \"PM Lane 146|Export Review Bundle|approval-review-bundle|pm_lane_146_local_review_bundle_v1|mutationRequests\\)\\.toHaveLength\\(0\\)\" PROJECT_STATUS.md docs/operations ops/agents apps/operations-web",
+    "git diff --check"
+  ],
+  "validation_result": "PASS: operations-web typecheck passed, operations-web production build passed, focused PM import-intake Playwright smoke passed with 1 passed, packet JSON parsed, guardrail search confirmed PM Lane 146/review-bundle/zero-mutation evidence plus NETA Topic Spine/TCC parked language, and git diff --check passed.",
+  "sidecar_result": "No new Desktop Codex execution was needed. Existing NETA Topic Spine Comparative Audit prompt remains the next optional non-PM side-lane handoff if Jason admits it.",
+  "next_recommended_lane": "PM lane may continue local operator-review ergonomics or await explicit PM Lane 142 live-write admission; Desktop Codex may receive the NETA Topic Spine Comparative Audit prompt if Jason admits that side lane."
+}

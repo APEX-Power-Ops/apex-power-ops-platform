@@ -1122,6 +1122,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(approvalDryRun.getByRole('button', { name: 'Build Local Approval Dry Run' })).toBeVisible()
   await expect(approvalDryRun.getByRole('button', { name: 'Export Dry Run Envelope' })).toBeVisible()
   await expect(approvalDryRun.getByRole('button', { name: 'Export Readiness Checkpoint' })).toBeVisible()
+  await expect(approvalDryRun.getByRole('button', { name: 'Export Review Bundle' })).toBeVisible()
   await expect(approvalDryRun.getByRole('button', { name: 'Clear dry run' })).toBeDisabled()
   await approvalDryRun.locator(':scope > summary').click()
   await expect(approvalDryRun).not.toHaveAttribute('open', '')
@@ -1249,6 +1250,65 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   ])
   expect(readinessExport.blocked_boundaries).toEqual(expect.arrayContaining(['live_approval_post', 'approval_row_creation', 'project_import']))
   await expect(approvalDryRun.getByRole('status')).toContainText(/Local approval dry run readiness exported/i)
+  expect(mutationRequests).toHaveLength(0)
+  const reviewBundleDownloadPromise = page.waitForEvent('download')
+  await approvalDryRun.getByRole('button', { name: 'Export Review Bundle' }).click()
+  const reviewBundleDownload = await reviewBundleDownloadPromise
+  expect(reviewBundleDownload.suggestedFilename()).toBe('pm-import-candidate-miner-temp-power-approval-review-bundle.json')
+  const reviewBundleStream = await reviewBundleDownload.createReadStream()
+  expect(reviewBundleStream).not.toBeNull()
+  const reviewBundleChunks: Buffer[] = []
+  for await (const chunk of reviewBundleStream!) {
+    reviewBundleChunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk))
+  }
+  const reviewBundle = JSON.parse(Buffer.concat(reviewBundleChunks).toString('utf8'))
+  expect(reviewBundle).toMatchObject({
+    bundle_kind: 'pm_import_candidate_approval_local_review_bundle',
+    bundle_version: 'pm_lane_146_local_review_bundle_v1',
+    candidate_identity: {
+      candidate_id: 'pm-import-candidate-miner-temp-power',
+      candidate_version: 'pm_import_candidate_read_only_v1',
+      source_fingerprint: 'stat-fingerprint-abc123',
+    },
+    included_artifacts: {
+      dry_run_envelope_file: 'pm-import-candidate-miner-temp-power-approval-dry-run-envelope.json',
+      readiness_checkpoint_file: 'pm-import-candidate-miner-temp-power-approval-dry-run-readiness.json',
+      review_bundle_file: 'pm-import-candidate-miner-temp-power-approval-review-bundle.json',
+    },
+    dry_run_envelope: {
+      dry_run_kind: 'pm_import_candidate_browser_approval_dry_run',
+      dry_run_version: 'pm_lane_142a_local_mock_v1',
+      payload: {
+        candidate_id: 'pm-import-candidate-miner-temp-power',
+        decision: 'return_for_revision',
+        review_notes: 'Reviewed formula warnings; return for revision until source workbook errors are resolved.',
+      },
+    },
+    readiness_checkpoint: {
+      readiness_kind: 'pm_import_candidate_approval_dry_run_readiness',
+      readiness_version: 'pm_lane_145_local_readiness_v1',
+      readiness_summary: {
+        ready_count: 4,
+        needs_review_count: 1,
+        blocked_count: 1,
+      },
+    },
+    authority_boundary: {
+      mutation_authority: 'not_admitted',
+      local_review_only: true,
+      bundle_export_only: true,
+      future_route: '/api/v1/mutations/project-import-approvals',
+      live_post_performed: false,
+      approval_row_created: false,
+      project_import_performed: false,
+      server_write_performed: false,
+    },
+    required_live_write_gate: 'I explicitly admit PM Lane 142 live approval POST and first approval-row creation for the current Project Miner Temp Power import candidate.',
+  })
+  expect(reviewBundle.generated_locally_at).toEqual(expect.any(String))
+  expect(reviewBundle.review_sequence).toHaveLength(4)
+  expect(reviewBundle.blocked_boundaries).toEqual(expect.arrayContaining(['live_approval_post', 'approval_row_creation', 'project_import']))
+  await expect(approvalDryRun.getByRole('status')).toContainText(/Local approval review bundle exported/i)
   expect(mutationRequests).toHaveLength(0)
   const closeoutIntake = page.locator('details#executor-closeout[aria-label="Local executor closeout intake"]')
   await expect(closeoutIntake).toHaveAttribute('open', '')

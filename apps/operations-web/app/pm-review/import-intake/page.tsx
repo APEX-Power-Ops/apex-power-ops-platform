@@ -899,6 +899,11 @@ function approvalDryRunReadinessFileName(candidate?: CandidatePayload | null) {
   return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-approval-dry-run-readiness.json`
 }
 
+function approvalReviewBundleFileName(candidate?: CandidatePayload | null) {
+  const candidateId = candidate?.candidate_id || 'project-miner-intake'
+  return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-approval-review-bundle.json`
+}
+
 function executorHandoffFileName(candidate?: CandidatePayload | null) {
   const candidateId = candidate?.candidate_id || 'project-miner-intake'
   return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-executor-handoff.md`
@@ -1184,6 +1189,54 @@ function buildApprovalDryRunReadinessExport(
       'assignment_schedule_status_writes',
       'production_tracking_writes',
     ],
+  }
+}
+
+function buildApprovalReviewBundleExport(
+  packet: IntakeWorkbenchPacket,
+  readinessItems: ApprovalDryRunReadinessItem[],
+  notAllowed: string[],
+  futureRoute: string,
+  reviewChecks: Record<string, boolean>,
+  approvalDraft: ApprovalDecisionDraft,
+) {
+  const candidate = packet.candidate
+  const dryRunEnvelope = buildLocalApprovalSubmissionDryRun(packet, notAllowed, futureRoute, reviewChecks, approvalDraft)
+  const readinessCheckpoint = buildApprovalDryRunReadinessExport(packet, readinessItems, notAllowed, futureRoute)
+
+  return {
+    bundle_kind: 'pm_import_candidate_approval_local_review_bundle',
+    bundle_version: 'pm_lane_146_local_review_bundle_v1',
+    generated_locally_at: new Date().toISOString(),
+    candidate_identity: readinessCheckpoint.candidate_identity,
+    included_artifacts: {
+      dry_run_envelope_file: approvalDryRunEnvelopeFileName(candidate),
+      readiness_checkpoint_file: approvalDryRunReadinessFileName(candidate),
+      review_bundle_file: approvalReviewBundleFileName(candidate),
+    },
+    review_sequence: [
+      'Confirm source freshness, warning review, and exception posture.',
+      'Confirm local decision draft, review notes, and local-only attestation.',
+      'Confirm approval status readback still reports no current approval record.',
+      'Confirm the exact PM Lane 142 live-write gate is intentionally admitted before any future browser POST.',
+    ],
+    dry_run_envelope: dryRunEnvelope,
+    readiness_checkpoint: readinessCheckpoint,
+    authority_boundary: {
+      mutation_authority: 'not_admitted',
+      local_review_only: true,
+      bundle_export_only: true,
+      future_route: futureRoute,
+      live_post_performed: false,
+      approval_row_created: false,
+      project_import_performed: false,
+      server_write_performed: false,
+    },
+    required_live_write_gate: 'I explicitly admit PM Lane 142 live approval POST and first approval-row creation for the current Project Miner Temp Power import candidate.',
+    blocked_boundaries: Array.from(new Set([
+      ...dryRunEnvelope.blocked_boundaries,
+      ...readinessCheckpoint.blocked_boundaries,
+    ])),
   }
 }
 
@@ -3956,6 +4009,18 @@ export default function ProjectMinerIntakeWorkbenchPage() {
     setApprovalDryRunStatus(`Local approval dry run readiness exported for ${candidate?.candidate_id || 'the current intake packet'}; no network request was sent.`)
   }
 
+  function exportApprovalReviewBundle() {
+    if (!packet) {
+      return
+    }
+
+    const bundle = buildApprovalReviewBundleExport(packet, approvalDryRunReadiness, notAllowed, futureRoute, reviewChecks, approvalDraft)
+    const contents = `${JSON.stringify(bundle, null, 2)}\n`
+    setApprovalDryRunPreview(`${JSON.stringify(bundle.dry_run_envelope, null, 2)}\n`)
+    downloadTextFile(approvalReviewBundleFileName(candidate), contents, 'application/json')
+    setApprovalDryRunStatus(`Local approval review bundle exported for ${candidate?.candidate_id || 'the current intake packet'}; no network request was sent.`)
+  }
+
   function clearApprovalDryRun() {
     setApprovalDryRunPreview('')
     setApprovalDryRunStatus('')
@@ -5118,6 +5183,9 @@ export default function ProjectMinerIntakeWorkbenchPage() {
                 </button>
                 <button className="btn btn-outline" onClick={exportApprovalDryRunReadiness} disabled={!packet}>
                   Export Readiness Checkpoint
+                </button>
+                <button className="btn btn-outline" onClick={exportApprovalReviewBundle} disabled={!packet}>
+                  Export Review Bundle
                 </button>
                 <button className="btn btn-outline" onClick={clearApprovalDryRun} disabled={!approvalDryRunPreview && !approvalDryRunStatus}>
                   Clear dry run
