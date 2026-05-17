@@ -1,0 +1,113 @@
+{
+  "packet_id": "2026-05-17-pm-lane-232",
+  "title": "PM Lane 232 - Project Miner Temp Power Current Candidate Approval Readiness Refresh No-Live Packet",
+  "status": "local_no_live_approval_readiness_refresh_packet",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_CURRENT_CANDIDATE_APPROVAL_READINESS_REFRESH_NO_LIVE",
+  "selected_outcome": "CURRENT_TEMP_POWER_CANDIDATE_READY_FOR_JASON_REVIEW_NOT_LIVE_AUTHORIZED",
+  "source_evidence_lane": "PM Lane 231",
+  "candidate": {
+    "candidate_id": "pm-import-candidate-miner-temp-power",
+    "project_name": "Miner Temp Power",
+    "location": "Santa Teresa, NM",
+    "drawing_package": "SLD: E01-00, E01-01, E01-02",
+    "issue_date": "Dated: 03/05/2026",
+    "source_format": "flat_quote",
+    "source_sheet": "Updated",
+    "workpackage_count": 7,
+    "task_count": 15,
+    "apparatus_candidate_count": 186,
+    "topology_label_count": 138,
+    "crew_rows": 15,
+    "equipment_inventory_rows": 343,
+    "standard_tech_list_rows": 22,
+    "capability_rows": 50,
+    "warning_count": 1,
+    "blocker_count": 0
+  },
+  "current_warning_context": [
+    {
+      "code": "MISSING_DESIGNATIONS",
+      "severity": "info",
+      "message": "1 estimator line item does not have an explicit designation.",
+      "review_action": "Confirm this does not block the review candidate or identify the missing designation before any later live approval/import packet."
+    }
+  ],
+  "workpackages": [
+    {"title": "7.5", "task_count": 2, "apparatus_candidate_count": 15, "planned_hours": 37.5},
+    {"title": "7.3", "task_count": 2, "apparatus_candidate_count": 11, "planned_hours": 49.5},
+    {"title": "7.1", "task_count": 3, "apparatus_candidate_count": 32, "planned_hours": 57.75},
+    {"title": "7.2", "task_count": 2, "apparatus_candidate_count": 24, "planned_hours": 92.0},
+    {"title": "7.6", "task_count": 3, "apparatus_candidate_count": 71, "planned_hours": 166.0},
+    {"title": "Misc", "task_count": 1, "apparatus_candidate_count": 26, "planned_hours": 156.0},
+    {"title": "7.13", "task_count": 2, "apparatus_candidate_count": 7, "planned_hours": 48.0}
+  ],
+  "approval_readiness": {
+    "candidate_identity_current": true,
+    "source_review_current": true,
+    "warning_context_current": true,
+    "blockers_present": false,
+    "pm_decision_value_present": false,
+    "pm_review_notes_present": false,
+    "exact_live_admission_phrase_present_as_current_instruction": false,
+    "live_approval_post_authorized": false,
+    "approval_row_creation_authorized": false,
+    "project_import_authorized": false
+  },
+  "future_live_gate_phrase": "I explicitly admit PM Lane 142 live approval POST and first approval-row creation for the current Project Miner Temp Power import candidate.",
+  "current_instruction_contains_live_gate_phrase": false,
+  "next_input_options": [
+    "HOLD_NO_LIVE",
+    "RETURN_WITH_PM_DECISION_NOTES",
+    "PROVIDE_EXACT_LIVE_ADMISSION_LATER"
+  ],
+  "next_safe_packets": {
+    "hold_no_live": "PM Lane 233 - Project Miner Temp Power Current Candidate Review Decision Return No-Live Packet",
+    "live_admission_later": "PM Lane 233 - Project Miner Temp Power First Approval Row Live Admission Execution Packet"
+  },
+  "validation": [
+    "python -m json.tool ops/agents/packets/draft/2026-05-17-pm-lane-232-project-miner-temp-power-current-candidate-approval-readiness-refresh-no-live-packet.json",
+    "rg guardrail search on touched Lane 232 files",
+    "corrupted-token scan on touched Lane 232 files",
+    "null-byte check on touched Lane 232 files",
+    "git diff --check on touched Lane 232 files"
+  ],
+  "validation_result": "PASS",
+  "no_live_boundary": {
+    "product_code": false,
+    "ui_control": false,
+    "route": false,
+    "backend_seam": false,
+    "payload_version": false,
+    "local_storage_schema": false,
+    "session_storage_schema": false,
+    "hosted_call": false,
+    "hosted_smoke": false,
+    "browser_live_route_access": false,
+    "live_approval_post": false,
+    "approval_row": false,
+    "project_import": false,
+    "task": false,
+    "action_item": false,
+    "owner_due_date_field": false,
+    "issue": false,
+    "field_authorization": false,
+    "lead_selection": false,
+    "crew_assignment": false,
+    "schedule_status_write": false,
+    "customer_commitment": false,
+    "customer_report": false,
+    "field_instruction": false,
+    "durable_field_record": false,
+    "production_tracking_row": false,
+    "completion_evidence": false,
+    "finance_output": false,
+    "supabase_render_vercel_olares_action": false,
+    "sql_schema_migration": false,
+    "service_auth_ingress_change": false,
+    "workbook_macro_writeback": false,
+    "durable_source_fingerprint": false,
+    "confirmed_source_truth_promotion": false,
+    "desktop_codex_source_classification_dispatch": false,
+    "autonomous_ai_business_state_mutation": false
+  }
+}
