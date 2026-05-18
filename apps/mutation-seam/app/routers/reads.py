@@ -8,6 +8,7 @@ from typing import Any, Dict, List
 
 from app.auth.jwt import Actor, get_current_actor
 from app.db.memory_store import store
+from app.durable_field_record_persistence import load_durable_field_record_status
 from app.pm_workfront_read_model import build_pm_workfront_read_model
 from app.project_import_admission_plan import load_project_import_admission_plan
 from app.project_import_approval_contract import load_project_import_approval_contract
@@ -83,6 +84,18 @@ async def list_checklist_for_apparatus(apparatus_id: str, actor: Actor = Depends
 async def list_hours(actor: Actor = Depends(get_current_actor)) -> List[Dict[str, Any]]:
     """List all hours entries."""
     return list(store.hours.values())
+
+
+@router.get("/durable-field-records")
+async def list_durable_field_records(actor: Actor = Depends(get_current_actor)) -> List[Dict[str, Any]]:
+    """List durable field records."""
+    return list(store.durable_field_records.values())
+
+
+@router.get("/durable-field-record-status")
+async def get_durable_field_record_status(actor: Actor = Depends(get_current_actor)) -> Dict[str, Any]:
+    """Return read-only durable field record status for the Temp Power pilot."""
+    return load_durable_field_record_status()
 
 
 @router.get("/crew")

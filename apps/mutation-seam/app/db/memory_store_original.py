@@ -19,6 +19,7 @@ class MemoryStore:
         self.hours: Dict[str, Dict[str, Any]] = {}
         self.issues: Dict[str, Dict[str, Any]] = {}
         self.assignments: Dict[str, Dict[str, Any]] = {}
+        self.durable_field_records: Dict[str, Dict[str, Any]] = {}
         self.tasks: Dict[str, Dict[str, Any]] = {}
         self.workpackages: Dict[str, Dict[str, Any]] = {}
         self.snapshots: Dict[str, Dict[str, Any]] = {}

@@ -156,11 +156,15 @@ def main() -> int:
             '/api/v1/reads/project-import-approval-contract',
             '/api/v1/reads/project-import-approval-storage-plan',
             '/api/v1/reads/project-import-approval-status',
+            '/api/v1/reads/durable-field-record-status',
             '/api/v1/mutations/project-import-approvals',
+            '/api/v1/mutations/durable-field-records',
         }
         required_openapi_methods = {
             '/api/v1/reads/project-import-approval-status': {'get'},
+            '/api/v1/reads/durable-field-record-status': {'get'},
             '/api/v1/mutations/project-import-approvals': {'post'},
+            '/api/v1/mutations/durable-field-records': {'post'},
         }
         status, payload = request_json(f'{base_url}/openapi.json', timeout_seconds=args.timeout_seconds)
         expect_status(
@@ -217,6 +221,17 @@ def main() -> int:
                     'import_authority',
                 },
             ),
+            (
+                'durable_field_record_status',
+                '/api/v1/reads/durable-field-record-status',
+                {
+                    'classification',
+                    'route',
+                    'production_tracking_authority',
+                    'customer_reporting_authority',
+                    'finance_authority',
+                },
+            ),
         ]
         for label, path, required_fields in intake_checks:
             status, payload = request_json(
@@ -244,6 +259,16 @@ def main() -> int:
                         failures.append(
                             f'{label} returned audit_log_used_for_current_status={payload.get("audit_log_used_for_current_status")}'
                         )
+                elif label == 'durable_field_record_status':
+                    if isinstance(payload, dict) and payload.get('storage_available') is not True:
+                        failures.append(f'{label} returned storage_available={payload.get("storage_available")}')
+                    for authority_field in [
+                        'production_tracking_authority',
+                        'customer_reporting_authority',
+                        'finance_authority',
+                    ]:
+                        if isinstance(payload, dict) and payload.get(authority_field) != 'not_admitted':
+                            failures.append(f'{label} returned {authority_field}={payload.get(authority_field)}')
                 elif isinstance(payload, dict) and payload.get('mutation_authority') != 'not_admitted':
                     failures.append(f'{label} returned mutation_authority={payload.get("mutation_authority")}')
 

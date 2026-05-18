@@ -492,6 +492,7 @@ class SupabaseStore:
         self.hours = PgDict("hours")
         self.issues = PgDict("issues")
         self.assignments = PgDict("assignments")
+        self.durable_field_records = PgDict("durable_field_records")
         self.tasks = PgDict("tasks")
         self.workpackages = PgDict("workpackages")
         self.snapshots = PgDict("snapshots")
@@ -532,6 +533,7 @@ class SupabaseStore:
             "seam.audit_log",
             "seam.checklist_items",
             "seam.hours",
+            "seam.durable_field_records",
             "seam.assignments",
             "seam.issues",
             "seam.snapshots",

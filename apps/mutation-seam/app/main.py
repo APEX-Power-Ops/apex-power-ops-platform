@@ -9,6 +9,7 @@ from app.routers import (
     apparatus,
     assignments,
     checklist,
+    durable_field_records,
     health,
     hours,
     issues,
@@ -41,6 +42,7 @@ app.include_router(health.router)
 app.include_router(apparatus.router)
 app.include_router(assignments.router)
 app.include_router(checklist.router)
+app.include_router(durable_field_records.router)
 app.include_router(hours.router)
 app.include_router(issues.router)
 app.include_router(project_import_approvals.router)
