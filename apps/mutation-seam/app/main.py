@@ -11,6 +11,7 @@ from app.routers import (
     checklist,
     customer_completion,
     durable_field_records,
+    financial_handoff,
     health,
     hours,
     issues,
@@ -46,6 +47,7 @@ app.include_router(assignments.router)
 app.include_router(checklist.router)
 app.include_router(customer_completion.router)
 app.include_router(durable_field_records.router)
+app.include_router(financial_handoff.router)
 app.include_router(hours.router)
 app.include_router(issues.router)
 app.include_router(production_tracking.router)

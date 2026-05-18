@@ -10,6 +10,7 @@ from app.auth.jwt import Actor, get_current_actor
 from app.customer_completion_persistence import load_customer_completion_status
 from app.db.memory_store import store
 from app.durable_field_record_persistence import load_durable_field_record_status
+from app.financial_handoff_persistence import load_financial_handoff_status
 from app.pm_workfront_read_model import build_pm_workfront_read_model
 from app.project_import_admission_plan import load_project_import_admission_plan
 from app.project_import_approval_contract import load_project_import_approval_contract
@@ -122,6 +123,18 @@ async def list_customer_completion_records(actor: Actor = Depends(get_current_ac
 async def get_customer_completion_status(actor: Actor = Depends(get_current_actor)) -> Dict[str, Any]:
     """Return read-only customer completion status for the Temp Power pilot."""
     return load_customer_completion_status()
+
+
+@router.get("/financial-handoff-records")
+async def list_financial_handoff_records(actor: Actor = Depends(get_current_actor)) -> List[Dict[str, Any]]:
+    """List financial handoff records."""
+    return list(store.financial_handoff_records.values())
+
+
+@router.get("/financial-handoff-status")
+async def get_financial_handoff_status(actor: Actor = Depends(get_current_actor)) -> Dict[str, Any]:
+    """Return read-only financial handoff status for the Temp Power pilot."""
+    return load_financial_handoff_status()
 
 
 @router.get("/crew")

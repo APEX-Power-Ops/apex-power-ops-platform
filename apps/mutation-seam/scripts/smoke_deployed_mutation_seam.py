@@ -159,20 +159,24 @@ def main() -> int:
             '/api/v1/reads/durable-field-record-status',
             '/api/v1/reads/production-tracking-status',
             '/api/v1/reads/customer-completion-status',
+            '/api/v1/reads/financial-handoff-status',
             '/api/v1/mutations/project-import-approvals',
             '/api/v1/mutations/durable-field-records',
             '/api/v1/mutations/production-tracking',
             '/api/v1/mutations/customer-completion',
+            '/api/v1/mutations/financial-handoff',
         }
         required_openapi_methods = {
             '/api/v1/reads/project-import-approval-status': {'get'},
             '/api/v1/reads/durable-field-record-status': {'get'},
             '/api/v1/reads/production-tracking-status': {'get'},
             '/api/v1/reads/customer-completion-status': {'get'},
+            '/api/v1/reads/financial-handoff-status': {'get'},
             '/api/v1/mutations/project-import-approvals': {'post'},
             '/api/v1/mutations/durable-field-records': {'post'},
             '/api/v1/mutations/production-tracking': {'post'},
             '/api/v1/mutations/customer-completion': {'post'},
+            '/api/v1/mutations/financial-handoff': {'post'},
         }
         status, payload = request_json(f'{base_url}/openapi.json', timeout_seconds=args.timeout_seconds)
         expect_status(
@@ -266,6 +270,23 @@ def main() -> int:
                     'payroll_authority',
                     'invoice_authority',
                     'accounting_authority',
+                },
+            ),
+            (
+                'financial_handoff_status',
+                '/api/v1/reads/financial-handoff-status',
+                {
+                    'classification',
+                    'route',
+                    'financial_handoff_authority',
+                    'labor_reconciliation_authority',
+                    'finance_authority',
+                    'billing_export_authority',
+                    'payroll_export_authority',
+                    'invoice_authority',
+                    'accounting_authority',
+                    'external_finance_sync_authority',
+                    'customer_billing_delivery_authority',
                 },
             ),
         ]
@@ -364,6 +385,38 @@ def main() -> int:
                         'payroll_authority',
                         'invoice_authority',
                         'accounting_authority',
+                    ]:
+                        if isinstance(payload, dict) and payload.get(authority_field) != 'not_admitted':
+                            failures.append(f'{label} returned {authority_field}={payload.get(authority_field)}')
+                elif label == 'financial_handoff_status':
+                    if isinstance(payload, dict) and payload.get('storage_available') is not True:
+                        failures.append(f'{label} returned storage_available={payload.get("storage_available")}')
+                    if (
+                        isinstance(payload, dict)
+                        and payload.get('financial_handoff_authority')
+                        != 'admitted_by_pm_lane_284_zero_finance_handoff_baseline'
+                    ):
+                        failures.append(
+                            f'{label} returned financial_handoff_authority='
+                            f'{payload.get("financial_handoff_authority")}'
+                        )
+                    if (
+                        isinstance(payload, dict)
+                        and payload.get('labor_reconciliation_authority')
+                        != 'admitted_by_pm_lane_284_zero_labor_reconciliation_baseline'
+                    ):
+                        failures.append(
+                            f'{label} returned labor_reconciliation_authority='
+                            f'{payload.get("labor_reconciliation_authority")}'
+                        )
+                    for authority_field in [
+                        'finance_authority',
+                        'billing_export_authority',
+                        'payroll_export_authority',
+                        'invoice_authority',
+                        'accounting_authority',
+                        'external_finance_sync_authority',
+                        'customer_billing_delivery_authority',
                     ]:
                         if isinstance(payload, dict) and payload.get(authority_field) != 'not_admitted':
                             failures.append(f'{label} returned {authority_field}={payload.get(authority_field)}')

@@ -516,6 +516,7 @@ class SupabaseStore:
         self.durable_field_records = PgDict("durable_field_records")
         self.production_tracking_records = PgDict("production_tracking_records")
         self.customer_completion_records = PgDict("customer_completion_records")
+        self.financial_handoff_records = PgDict("financial_handoff_records")
         self.tasks = PgDict("tasks")
         self.workpackages = PgDict("workpackages")
         self.snapshots = PgDict("snapshots")
@@ -556,6 +557,7 @@ class SupabaseStore:
             "seam.audit_log",
             "seam.checklist_items",
             "seam.hours",
+            "seam.financial_handoff_records",
             "seam.customer_completion_records",
             "seam.production_tracking_records",
             "seam.durable_field_records",
