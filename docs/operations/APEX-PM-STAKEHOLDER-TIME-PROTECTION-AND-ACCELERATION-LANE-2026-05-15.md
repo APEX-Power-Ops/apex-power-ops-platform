@@ -954,6 +954,10 @@ PM Lane 274 uses the delegated no-live authority to run that admitted runtime ex
 
 PM Lane 275 removes that loader unknown. The fallback is now implemented behind `APEX_PROJECT_IMPORT_CANDIDATE_SNAPSHOT_PATH`, validates checksums and derived-source authority before serving snapshot reads, and leaves normal source-file reads untouched when the env var is absent. The Render unblock is now operational rather than architectural: place the Lane 274 snapshot files on a governed hosted path, set the env var on the existing mutation-seam service, restart or redeploy, then prove hosted readback matches Temp Power before any live approval-row retry.
 
+PM Lane 276 converts that operational Render unblock into a VS Code Copilot handoff packet. Copilot may use authenticated Internal browser access for the existing Render service, hosted file placement, non-secret env var update, restart/redeploy, log inspection, and read-only hosted validation. The packet prefers the PM Lane 275 snapshot env path and keeps the PM Lane 270 source-files repair as fallback only if the snapshot route is blocked. The live approval-row gate stays closed until hosted readback proves the current Temp Power candidate and a later packet explicitly admits the write.
+
+PM Lane 276 executor return is accepted. The existing Render mutation-seam service now serves the Temp Power snapshot from hosted secret-file storage, and independent hosted validation confirms `pm-import-candidate-miner-temp-power`, 7 workpackages, 15 tasks, 184 apparatus candidates, source fingerprint `e111fdbe934bf9de07ed24c1`, shape fingerprint `ddc49565eb586af913ad48b2`, warning `PROJECT_DATA_ENTRY_FORMULA_ERRORS`, `mutation_authority: not_admitted`, and approval status `no_approval_record`. This clears the hosted-read blocker without creating approval rows or importing project data.
+
 The success standard is not just technical correctness. The candidate must reduce Jason's review burden by showing:
 
 1. what the system thinks the project is,

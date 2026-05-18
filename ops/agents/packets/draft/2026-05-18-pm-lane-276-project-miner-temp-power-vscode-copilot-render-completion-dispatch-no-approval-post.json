@@ -1,0 +1,146 @@
+{
+  "packet_id": "2026-05-18-pm-lane-276-project-miner-temp-power-vscode-copilot-render-completion-dispatch-no-approval-post",
+  "title": "PM Lane 276 - Project Miner Temp Power VS Code Copilot Render Completion Dispatch",
+  "date": "2026-05-18",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_VSCODE_COPILOT_RENDER_COMPLETION_DISPATCH_NO_APPROVAL_POST",
+  "selected_outcome": "RENDER_COMPLETION_PACKET_AUTHORED_FOR_VSCODE_COPILOT_NO_APPROVAL_POST",
+  "executor_return": {
+    "closeout": "ops/agents/handoffs/2026-05-18-pm-lane-276-vscode-copilot-render-completion-executor-closeout.md",
+    "commit": "02af12cd6dcf7b1e6c734adb289ec10d0f353c98",
+    "final_outcome": "RENDER_SNAPSHOT_ENV_DEPLOY_PASS_NO_APPROVAL_POST",
+    "accepted_by_vs_code_codex": true,
+    "hosted_candidate_readback": {
+      "candidate_id": "pm-import-candidate-miner-temp-power",
+      "workpackage_count": 7,
+      "task_count": 15,
+      "apparatus_candidate_count": 184,
+      "source_stat_fingerprint": "e111fdbe934bf9de07ed24c1",
+      "candidate_shape_fingerprint": "ddc49565eb586af913ad48b2",
+      "warning_code": "PROJECT_DATA_ENTRY_FORMULA_ERRORS",
+      "mutation_authority": "not_admitted",
+      "approval_status_classification": "no_approval_record"
+    },
+    "validation": {
+      "deployed_mutation_seam_smoke": "RESULT PASS",
+      "hosted_pm_intake_smoke": "PM_INTAKE_HOSTED_SUMMARY failed=0",
+      "minimal_mcp_trio_status": "{\"status\":\"not-running\"}"
+    }
+  },
+  "source_packets": [
+    "PM Lane 270",
+    "PM Lane 274",
+    "PM Lane 275"
+  ],
+  "previous_blocker": "STOPPED_AWAITING_RENDER_AUTHENTICATED_SOURCE_PLACEMENT_OR_SNAPSHOT_ENV_DEPLOY_NO_APPROVAL_POST",
+  "render_blocker_result": "CLEARED_RENDER_HOSTED_TEMP_POWER_READBACK_NO_APPROVAL_POST",
+  "next_blocker": "STOPPED_AWAITING_EXPLICIT_LIVE_APPROVAL_POST_PACKET_NO_IMPORT",
+  "executor": {
+    "name": "VS Code Copilot",
+    "authenticated_surface": "Internal browser",
+    "role": "authenticated Render executor",
+    "technical_authority_owner": "VS Code Codex"
+  },
+  "target_service": {
+    "provider": "Render",
+    "service_name": "apex-platform-mutation-seam",
+    "root_directory": "apps/mutation-seam",
+    "base_url": "https://mutation-seam.apexpowerops.com",
+    "existing_service_only": true
+  },
+  "preferred_path": {
+    "label": "snapshot_env_deploy",
+    "env_var": "APEX_PROJECT_IMPORT_CANDIDATE_SNAPSHOT_PATH",
+    "preferred_hosted_path": "/var/data/project-import-snapshots/pm-lane-274-project-miner-temp-power-snapshot-2026-05-18",
+    "source_runtime_snapshot": "C:/APEX Platform/runtime/pm-lane-274-project-miner-temp-power-snapshot-2026-05-18",
+    "files": [
+      "candidate.json",
+      "admission-plan.json",
+      "manifest.json",
+      "SHA256SUMS.txt"
+    ]
+  },
+  "fallback_path": {
+    "label": "source_files_env_repair",
+    "source_packet": "PM Lane 270",
+    "allowed_only_if_snapshot_env_deploy_is_blocked": true,
+    "existing_service_only": true
+  },
+  "snapshot_identity": {
+    "candidate_id": "pm-import-candidate-miner-temp-power",
+    "workpackage_count": 7,
+    "task_count": 15,
+    "apparatus_candidate_count": 184,
+    "warning_codes": [
+      "PROJECT_DATA_ENTRY_FORMULA_ERRORS"
+    ],
+    "source_stat_fingerprint": "e111fdbe934bf9de07ed24c1",
+    "candidate_shape_fingerprint": "ddc49565eb586af913ad48b2",
+    "mutation_authority": "not_admitted"
+  },
+  "payload_hashes": {
+    "candidate.json": "813013d12cab476ffa67cfbb42d0421bc107d5e189a229e2450f490fc9022445",
+    "admission-plan.json": "b370e6999e9beddc5ae70feca8454052c001dec47dc42fcfc19269d853ce01cd",
+    "manifest.json": "80a05dcc70728099ee52ff0f80204feee5e6f4102334f919837016ef89b87f95"
+  },
+  "render_docs_checked": [
+    "https://render.com/docs/disks",
+    "https://render.com/docs/deploys",
+    "https://render.com/docs/ssh",
+    "https://render.com/docs/environment-variables"
+  ],
+  "allowed_render_actions": {
+    "inspect_existing_service": true,
+    "use_internal_browser": true,
+    "use_dashboard_shell_or_ssh_scp": true,
+    "place_runtime_snapshot_files": true,
+    "set_non_secret_env_var": true,
+    "confirm_secret_env_keys_without_printing_values": true,
+    "restart_or_redeploy_existing_service": true,
+    "inspect_deploy_logs": true,
+    "create_new_render_service": false,
+    "change_dns_or_ingress": false,
+    "create_public_storage": false
+  },
+  "repo_write_scope": {
+    "executor_closeout": "ops/agents/handoffs/2026-05-18-pm-lane-276-vscode-copilot-render-completion-executor-closeout.md",
+    "other_repo_writes_allowed": false,
+    "commit_runtime_payloads_allowed": false,
+    "commit_source_files_allowed": false
+  },
+  "expected_executor_outcomes": [
+    "RENDER_SNAPSHOT_ENV_DEPLOY_PASS_NO_APPROVAL_POST",
+    "RENDER_SOURCE_FILES_ENV_REPAIR_PASS_NO_APPROVAL_POST",
+    "BLOCKED_RENDER_AUTH_UNAVAILABLE_NO_APPROVAL_POST",
+    "BLOCKED_RENDER_STORAGE_REQUIRES_NEW_RESOURCE_NO_APPROVAL_POST",
+    "BLOCKED_RENDER_RUNTIME_FILE_TRANSFER_UNAVAILABLE_NO_APPROVAL_POST",
+    "BLOCKED_RENDER_DEPLOY_OR_RESTART_FAILED_NO_APPROVAL_POST",
+    "BLOCKED_HOSTED_SNAPSHOT_CHECKSUM_OR_AUTHORITY_MISMATCH_NO_APPROVAL_POST",
+    "BLOCKED_HOSTED_CANDIDATE_STILL_NOT_TEMP_POWER_NO_APPROVAL_POST"
+  ],
+  "validation_required": [
+    "deployed mutation-seam smoke with --include-pm-intake",
+    "operations-web paired PM intake hosted smoke",
+    "direct hosted candidate/admission/status route readback with exact Temp Power counts and fingerprints",
+    "secret-free executor closeout"
+  ],
+  "write_execution": {
+    "approval_post_allowed": false,
+    "approval_row_creation_allowed": false,
+    "project_import_allowed": false,
+    "supabase_write_allowed": false,
+    "source_workbook_commit_allowed": false,
+    "source_pdf_commit_allowed": false,
+    "workbook_macro_allowed": false,
+    "business_state_mutation_allowed": false
+  },
+  "validation": [
+    "PM Lane 274 runtime snapshot evidence review",
+    "PM Lane 275 loader closeout review",
+    "current Render docs refresh",
+    "packet JSON parse",
+    "guardrail keyword scan",
+    "corrupted-token scan",
+    "git diff --check"
+  ],
+  "validation_result": "PASS"
+}
