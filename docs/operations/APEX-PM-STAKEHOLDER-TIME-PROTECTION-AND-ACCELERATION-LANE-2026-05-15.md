@@ -950,6 +950,8 @@ PM Lane 272 turns the snapshot fallback from a vague option into a bounded desig
 
 PM Lane 273 implements that local exporter and proves it with synthetic tests, which removes a technical unknown without asking Jason for another micro-approval. The exporter is now ready for a later admitted runtime export packet: it can write candidate, admission-plan, manifest, and checksum files; it redacts manifest paths; it blocks repo output by default; and it preserves `not_admitted` mutation authority. It has not touched the real Project Miner source files and has not created a durable snapshot. The next real blocker is therefore clear: either an authenticated Render executor completes PM Lane 270 source placement, or a later no-live packet explicitly admits real-source read plus transient snapshot creation.
 
+PM Lane 274 uses the delegated no-live authority to run that admitted runtime export. The generated payloads stay outside Git at `C:/APEX Platform/runtime/pm-lane-274-project-miner-temp-power-snapshot-2026-05-18`, while committed docs record only redacted source metadata, counts, fingerprints, and hashes. This gives the PM lane a portable derived snapshot of the current Temp Power candidate without turning the repo into a source-file archive or opening live approval authority. The remaining blocker is hosted consumption: either Render source placement returns clean, or a later no-live packet must admit a hosted snapshot loader behind an explicit runtime env var before any live approval retry.
+
 The success standard is not just technical correctness. The candidate must reduce Jason's review burden by showing:
 
 1. what the system thinks the project is,

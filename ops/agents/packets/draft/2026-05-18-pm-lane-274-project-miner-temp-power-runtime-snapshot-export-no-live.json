@@ -1,0 +1,78 @@
+{
+  "packet_id": "2026-05-18-pm-lane-274-project-miner-temp-power-runtime-snapshot-export-no-live",
+  "title": "PM Lane 274 - Project Miner Temp Power Runtime Snapshot Export No-Live",
+  "date": "2026-05-18",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_RUNTIME_SNAPSHOT_EXPORT_NO_LIVE",
+  "selected_outcome": "RUNTIME_SNAPSHOT_EXPORTED_NO_LIVE_HOSTED_REPAIR_STILL_BLOCKED",
+  "source_packets": [
+    "PM Lane 270",
+    "PM Lane 271",
+    "PM Lane 272",
+    "PM Lane 273"
+  ],
+  "runtime_output": {
+    "output_dir": "C:/APEX Platform/runtime/pm-lane-274-project-miner-temp-power-snapshot-2026-05-18",
+    "committed_to_repo": false,
+    "files": [
+      "candidate.json",
+      "admission-plan.json",
+      "manifest.json",
+      "SHA256SUMS.txt"
+    ]
+  },
+  "snapshot_identity": {
+    "candidate_id": "pm-import-candidate-miner-temp-power",
+    "candidate_version": "pm_import_candidate_read_only_v1",
+    "admission_plan_version": "pm_import_admission_plan_read_only_v1",
+    "authority": "derived_source_snapshot_no_live",
+    "mutation_authority": "not_admitted",
+    "source_stat_fingerprint": "e111fdbe934bf9de07ed24c1",
+    "candidate_shape_fingerprint": "ddc49565eb586af913ad48b2",
+    "workpackage_count": 7,
+    "task_count": 15,
+    "apparatus_candidate_count": 184,
+    "warning_codes": [
+      "PROJECT_DATA_ENTRY_FORMULA_ERRORS"
+    ]
+  },
+  "payload_hashes": {
+    "candidate.json": "813013d12cab476ffa67cfbb42d0421bc107d5e189a229e2450f490fc9022445",
+    "admission-plan.json": "b370e6999e9beddc5ae70feca8454052c001dec47dc42fcfc19269d853ce01cd",
+    "manifest.json": "80a05dcc70728099ee52ff0f80204feee5e6f4102334f919837016ef89b87f95"
+  },
+  "source_manifest": {
+    "redacted_paths": true,
+    "all_expected_sources_found": true,
+    "file_names": [
+      "Estimator R3 - Project Miner Temp Power Testing.xlsm",
+      "Miner Temp SLD-AP-BCARRASCO.pdf",
+      "RESA Power - Project Data Entry MASTER.xlsm",
+      "Garney- Central Mesa Reuse Tracker #677562.xlsm",
+      "EQUIPMENT INVENTORY - 2026.xlsx",
+      "Phx Tech Testing Capability Matrix 032726.xlsx"
+    ]
+  },
+  "validation": {
+    "exporter_completed": true,
+    "manifest_json_parse": true,
+    "sha256sums_verified": true,
+    "runtime_output_outside_repo": true,
+    "existing_openpyxl_data_validation_warning_seen": true
+  },
+  "write_execution": {
+    "approval_post_sent": false,
+    "approval_row_created": false,
+    "project_import_performed": false,
+    "supabase_write_performed": false,
+    "render_env_updated": false,
+    "render_deploy_performed": false,
+    "hosted_source_uploaded": false,
+    "hosted_loader_added": false,
+    "source_workbook_committed": false,
+    "source_pdf_committed": false,
+    "macro_run": false
+  },
+  "next_blocker": "STOPPED_AWAITING_HOSTED_SOURCE_REPAIR_OR_SNAPSHOT_LOADER_ADMISSION_NO_APPROVAL_POST",
+  "preferred_next_path": "PM Lane 270 authenticated Render source placement",
+  "fallback_next_packet": "PM Lane 275 - Project Miner Temp Power Snapshot Loader Design No-Live"
+}
