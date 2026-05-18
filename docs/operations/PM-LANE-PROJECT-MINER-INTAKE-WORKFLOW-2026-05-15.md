@@ -1040,6 +1040,8 @@ PM Lane 276 executor return is accepted. The closeout at `ops/agents/handoffs/20
 
 PM Lane 277 records the 2026-05-18 standing PM blocker authority and executes the first approval-row path. The hosted preflight proved Temp Power current with zero approval rows, the application-path approval POST returned `accepted`, same-payload replay returned `idempotent_hit`, and approval-status readback now reports `approved_for_import_packet`, `approval_record_count_for_candidate=1`, `current_candidate_match=true`, and `import_authority=not_admitted`. Accessible downstream counts for workpackages, tasks, apparatus, assignments, snapshots, issues, hours, approval queue, and schedule context remained unchanged. Project import remains blocked until a bounded import mutation packet is implemented/admitted.
 
+PM Lane 278 implements that bounded import mutation packet. The application now has a narrow `POST /api/v1/mutations/project-imports` path and `GET /api/v1/reads/project-import-status` readback, gated by the current PM approval record and candidate identity. It writes only project, workpackage, task, and apparatus rows, embeds source trace and warning-review evidence in those admitted rows, and keeps assignments, field authorization, schedule/status, durable records, production, customer, finance, workbook, schema, and autonomous AI writes blocked. Local tests passed; hosted still needs Render deployment before the live import can execute.
+
 Level 3 - Resource Context:
 Read equipment inventory and technician capability rows so PM can understand whether the project can be staffed with available people and equipment.
 

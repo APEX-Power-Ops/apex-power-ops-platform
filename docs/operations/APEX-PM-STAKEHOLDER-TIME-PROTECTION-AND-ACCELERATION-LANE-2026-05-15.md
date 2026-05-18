@@ -960,6 +960,8 @@ PM Lane 276 executor return is accepted. The existing Render mutation-seam servi
 
 PM Lane 277 accepts Jason's current standing blocker authority for the PM framework and uses it for the next narrow blocker only: first approval-record persistence. Hosted preflight and post-write smokes passed; the first application-path POST returned `accepted`, same-payload replay returned `idempotent_hit`, and approval-status readback now reports `approved_for_import_packet` with exactly one row for the current Temp Power candidate. This reduces relay burden by clearing the approval-row gate while preserving project import and all downstream field, schedule, customer, production, and finance writes as separately packeted.
 
+PM Lane 278 uses the same standing blocker authority for the next separately packeted blocker: approved import mutation admission. The repo now implements `POST /api/v1/mutations/project-imports` and `GET /api/v1/reads/project-import-status` with strict approval/candidate/idempotency checks and local validation passing. Hosted still serves the pre-route build (`404` for the new route), so the relay burden is compressed into one authenticated Render executor prompt to deploy commit `4d5af24f` and run the live import only after preflight still matches.
+
 The success standard is not just technical correctness. The candidate must reduce Jason's review burden by showing:
 
 1. what the system thinks the project is,
