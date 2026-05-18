@@ -147,6 +147,20 @@ class PgDict:
                 self._cols_cache = [r["column_name"] for r in cur.fetchall()]
         return self._cols_cache
 
+    def _json_columns(self) -> List[str]:
+        """Return JSON/JSONB column names for this table."""
+        if not hasattr(self, "_json_cols_cache"):
+            schema, tbl = self._table.split(".")
+            with self._cur() as cur:
+                cur.execute(
+                    "SELECT column_name FROM information_schema.columns "
+                    "WHERE table_schema = %s AND table_name = %s "
+                    "AND data_type IN ('json', 'jsonb')",
+                    (schema, tbl),
+                )
+                self._json_cols_cache = [r["column_name"] for r in cur.fetchall()]
+        return self._json_cols_cache
+
     # -- dict interface --
 
     def __contains__(self, key: str) -> bool:
@@ -190,6 +204,13 @@ class PgDict:
 
         # Ensure PK is set
         known[self._pk] = key
+
+        # psycopg2 does not adapt plain dict/list values for typed JSONB
+        # columns in this generic path; overflow `data` is handled above.
+        json_columns = set(self._json_columns())
+        for column in json_columns.intersection(known):
+            if isinstance(known[column], (dict, list)):
+                known[column] = json.dumps(known[column])
 
         # Ensure timestamps — but ONLY for tables that actually own them.
         # seam.idempotency_keys has created_at (DEFAULT now()) but no
