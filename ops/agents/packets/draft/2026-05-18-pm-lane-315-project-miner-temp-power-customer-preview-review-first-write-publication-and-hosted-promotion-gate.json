@@ -1,0 +1,57 @@
+{
+  "packet_id": "2026-05-18-pm-lane-315",
+  "title": "PM Lane 315 - Project Miner Temp Power Customer Preview Review First Write Publication And Hosted Promotion Gate",
+  "status": "complete",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_CUSTOMER_PREVIEW_REVIEW_FIRST_WRITE_PUBLICATION_AND_HOSTED_PROMOTION_GATE",
+  "selected_outcome": "CUSTOMER_PREVIEW_REVIEW_PUBLICATION_GATE_CLOSED_HOSTED_GREEN",
+  "authority_basis": "Standing PM blocker authority and repo technical authority, used here to execute the already-admitted Temp Power customer-preview review first-write slice, publish it to clean-main, and classify the immediate post-publication hosted state truthfully.",
+  "dependencies": [
+    "2026-05-18-pm-lane-291",
+    "2026-05-18-pm-lane-292",
+    "2026-05-18-pm-lane-295",
+    "2026-05-18-pm-lane-296",
+    "2026-05-18-pm-lane-297",
+    "2026-05-18-pm-lane-300",
+    "2026-05-18-pm-lane-301",
+    "2026-05-18-pm-lane-302",
+    "2026-05-18-pm-lane-303",
+    "2026-05-18-pm-lane-314"
+  ],
+  "activation_condition": [
+    "The exact admission phrase ADMIT_TEMP_POWER_ACTUALS_CUSTOMER_CAPTURE_REVIEW_FIRST_WRITE_PACKET_ONLY is already present in the current instruction chain.",
+    "The actuals capture-review slice is already hosted-green from Lane 314.",
+    "There is no existing customer-preview review route implementation in apps/mutation-seam.",
+    "The next truthful blocker is the missing customer-preview review first-write implementation and promotion path."
+  ],
+  "current_truth": [
+    "The Temp Power customer-preview review first-write slice was implemented locally with focused tests, a local first-write proof runner, and hosted smoke wiring using the same bounded mutation-seam pattern as the admitted actuals slice.",
+    "Focused pytest for apps/mutation-seam/tests/test_temp_power_customer_preview_review_persistence.py passed locally with 6 passing tests.",
+    "The local first-write proof runner for the customer-preview review slice passed with accepted write, idempotent replay, delivery-blocked readback classification, unchanged downstream counts, and not_admitted delivery/finance/source-writeback boundaries.",
+    "The slice was published to clean-main as commit 666f649d020d19cc24d1a5e57b9a1796928f45d8 with commit title Add temp power customer preview review slice.",
+    "Bounded hosted smoke now passes on both https://mutation-seam.apexpowerops.com and https://apex-platform-mutation-seam.onrender.com with the Temp Power customer-preview routes present and the customer-preview status readback returning 200.",
+    "There is no remaining blocker inside the admitted Temp Power customer-preview review first-write slice."
+  ],
+  "allowed_actions": [
+    "Publish only the admitted customer-preview review first-write slice to clean-main.",
+    "Use bounded hosted smoke with --include-temp-power-customer-preview-review and --include-temp-power-actuals-review to verify promotion on both hosts.",
+    "Update PM lane docs and canonical status only after hosted truth is revalidated."
+  ],
+  "not_allowed": [
+    "No hosted customer-preview POST.",
+    "No customer delivery completion claim or durable delivery evidence.",
+    "No finance, payroll, billing, invoice, or accounting outputs.",
+    "No source-system writeback.",
+    "No auth, ingress, DNS, or secret changes.",
+    "No widening beyond the customer-preview review first-write slice."
+  ],
+  "validation": [
+    "Focused pytest for temp power customer preview review persistence",
+    "Local first-write proof runner",
+    "git diff --cached --check before publication",
+    "git push origin clean-main",
+    "Bounded hosted smoke on both the custom domain and the Render hostname using --include-temp-power-customer-preview-review"
+  ],
+  "validation_result": "PASS: local implementation, proof, publication, and dual-host hosted smoke are all green for the admitted customer-preview review first-write slice.",
+  "next_blocker": "NONE_WITHIN_ADMITTED_CUSTOMER_PREVIEW_REVIEW_FIRST_WRITE_SLICE",
+  "current_status": "closed"
+}

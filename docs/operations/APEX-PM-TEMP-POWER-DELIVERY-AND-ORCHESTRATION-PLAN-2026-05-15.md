@@ -203,24 +203,25 @@ Current controlling lanes:
 4. PM Lane 307 proves the hosted blocker is stale service deployment, not custom-domain drift, by matching failures on both the custom domain and Render hostname.
 5. PM Lane 308 executes authenticated Render inspection and redeploy against the existing service.
 6. PM Lane 314 publishes the admitted actuals route slice to `clean-main` as commit `3d47834eb32aa29b80152df3973f91d7c62a2e30`.
-7. Render auto-deploy promotes that commit on the existing mutation-seam service and bounded hosted smoke passes on both the custom domain and the Render hostname.
+7. PM Lane 315 implements and publishes the admitted Temp Power customer-preview review first-write slice to `clean-main` as commit `666f649d020d19cc24d1a5e57b9a1796928f45d8`.
+8. Render auto-deploy promotes both admitted slices on the existing mutation-seam service and bounded hosted smoke passes on both the custom domain and the Render hostname.
 
 Current boundary of the active branch:
 
 1. admitted: actuals capture review persistence and readback
-2. not admitted: customer-facing delivery
-3. not admitted: finance or payroll output
-4. not admitted: source-system writeback
-5. not admitted: customer-preview route execution beyond the bounded review posture
+2. admitted: customer-preview review first-write persistence and readback
+3. not admitted: customer-facing delivery or durable delivery proof
+4. not admitted: finance, payroll, billing, invoice, or accounting output
+5. not admitted: source-system writeback
 
 Current blocker:
 
-1. there is no remaining blocker inside the admitted Temp Power actuals capture-review slice
-2. existing service `apex-platform-mutation-seam` is live on committed `clean-main` at `3d47834eb32aa29b80152df3973f91d7c62a2e30`
-3. both hosted seam URLs now expose the Temp Power actuals routes and the bounded hosted smoke returns `RESULT PASS`
-4. any next move beyond this point requires a new explicit admission lane because customer-facing delivery, finance/payroll output, source writeback, and wider customer-preview execution remain out of scope
+1. there is no remaining blocker inside the admitted Temp Power actuals plus customer-preview review first-write slice
+2. existing service `apex-platform-mutation-seam` is live on committed `clean-main` at `666f649d020d19cc24d1a5e57b9a1796928f45d8`
+3. both hosted seam URLs now expose the Temp Power actuals routes and the Temp Power customer-preview review routes and the bounded hosted smoke returns `RESULT PASS`
+4. any next move beyond this point requires a new explicit admission lane because customer-facing delivery, finance/payroll output, source writeback, and other downstream widening remain out of scope
 
-Read this section first when continuing the Temp Power lane. The lane history below remains valid as background, but the admitted actuals capture-review slice is now complete and hosted-green.
+Read this section first when continuing the Temp Power lane. The lane history below remains valid as background, but the admitted actuals plus customer-preview review first-write slice is now complete and hosted-green.
 
 ## Historical Branch Narrative
 
