@@ -13,6 +13,7 @@ from app.routers import (
     health,
     hours,
     issues,
+    production_tracking,
     project_import_approvals,
     project_imports,
     reads,
@@ -45,6 +46,7 @@ app.include_router(checklist.router)
 app.include_router(durable_field_records.router)
 app.include_router(hours.router)
 app.include_router(issues.router)
+app.include_router(production_tracking.router)
 app.include_router(project_import_approvals.router)
 app.include_router(project_imports.router)
 app.include_router(tasks.router)

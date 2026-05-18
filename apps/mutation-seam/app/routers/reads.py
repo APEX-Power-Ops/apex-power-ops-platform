@@ -17,6 +17,7 @@ from app.project_import_approval_storage_plan import load_project_import_approva
 from app.project_import_candidate import load_project_import_candidate
 from app.project_import_persistence import load_project_import_status
 from app.project_seed_sources import load_project_seed_sources
+from app.production_tracking_persistence import load_production_tracking_status
 from app.seed_workbooks import load_seed_data
 
 router = APIRouter(prefix="/api/v1/reads", tags=["reads"])
@@ -96,6 +97,18 @@ async def list_durable_field_records(actor: Actor = Depends(get_current_actor)) 
 async def get_durable_field_record_status(actor: Actor = Depends(get_current_actor)) -> Dict[str, Any]:
     """Return read-only durable field record status for the Temp Power pilot."""
     return load_durable_field_record_status()
+
+
+@router.get("/production-tracking-records")
+async def list_production_tracking_records(actor: Actor = Depends(get_current_actor)) -> List[Dict[str, Any]]:
+    """List production tracking records."""
+    return list(store.production_tracking_records.values())
+
+
+@router.get("/production-tracking-status")
+async def get_production_tracking_status(actor: Actor = Depends(get_current_actor)) -> Dict[str, Any]:
+    """Return read-only production tracking status for the Temp Power pilot."""
+    return load_production_tracking_status()
 
 
 @router.get("/crew")
