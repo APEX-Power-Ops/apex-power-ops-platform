@@ -134,3 +134,9 @@ For the Temp Power actuals-capture review route, use one of the following bounde
 1. `python apps/mutation-seam/scripts/smoke_deployed_mutation_seam.py --base-url https://mutation-seam.apexpowerops.com --include-temp-power-actuals-review`
 2. VS Code task: `Mutation-seam hosted actuals-review smoke`
 3. GitHub Actions manual dispatch: `Deployed Mutation Seam Smoke` with `include_temp_power_actuals_review=true`
+
+For the Temp Power customer-preview review route, use one of the following bounded hosted-readiness probes after deploy:
+
+1. `python apps/mutation-seam/scripts/smoke_deployed_mutation_seam.py --base-url https://mutation-seam.apexpowerops.com --include-temp-power-customer-preview-review`
+2. VS Code task: `Mutation-seam hosted customer-preview smoke`
+3. GitHub Actions manual dispatch: `Deployed Mutation Seam Smoke` with `include_temp_power_customer_preview_review=true`

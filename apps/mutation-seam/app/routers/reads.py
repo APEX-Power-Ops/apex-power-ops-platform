@@ -22,6 +22,7 @@ from app.project_seed_sources import load_project_seed_sources
 from app.production_tracking_persistence import load_production_tracking_status
 from app.seed_workbooks import load_seed_data
 from app.temp_power_actuals_capture_review_persistence import load_temp_power_actuals_capture_review_status
+from app.temp_power_customer_preview_review_persistence import load_temp_power_customer_preview_review_status
 
 router = APIRouter(prefix="/api/v1/reads", tags=["reads"])
 
@@ -78,6 +79,14 @@ async def get_temp_power_actuals_capture_review_status(
 ) -> Dict[str, Any]:
     """Return the latest admitted Temp Power actuals-capture review status readback."""
     return load_temp_power_actuals_capture_review_status()
+
+
+@router.get("/temp-power-customer-preview-status")
+async def get_temp_power_customer_preview_review_status(
+    actor: Actor = Depends(get_current_actor),
+) -> Dict[str, Any]:
+    """Return the latest admitted Temp Power customer-preview review status readback."""
+    return load_temp_power_customer_preview_review_status()
 
 
 @router.get("/issues")

@@ -35,6 +35,11 @@ def build_parser() -> argparse.ArgumentParser:
         action='store_true',
         help='Also validate Temp Power actuals-capture review route registration and readback shape without sending a POST.',
     )
+    parser.add_argument(
+        '--include-temp-power-customer-preview-review',
+        action='store_true',
+        help='Also validate Temp Power customer-preview review route registration and readback shape without sending a POST.',
+    )
     return parser
 
 
@@ -502,6 +507,88 @@ def main() -> int:
                 failures.append(
                     'temp_power_actuals_capture_review_status returned '
                     f'durable_delivery_event={payload.get("durable_delivery_event")}'
+                )
+
+    if args.include_temp_power_customer_preview_review:
+        customer_preview_paths = {
+            '/api/v1/reads/temp-power-customer-preview-status',
+            '/api/v1/mutations/temp-power-customer-preview-reviews',
+        }
+        customer_preview_methods = {
+            '/api/v1/reads/temp-power-customer-preview-status': {'get'},
+            '/api/v1/mutations/temp-power-customer-preview-reviews': {'post'},
+        }
+        status, payload = request_json(f'{base_url}/openapi.json', timeout_seconds=args.timeout_seconds)
+        expect_status(
+            label='openapi_temp_power_customer_preview_review',
+            status=status,
+            payload=payload,
+            allowed_statuses={200},
+            failures=failures,
+        )
+        if status == 200:
+            expect_openapi_paths(payload=payload, required_paths=customer_preview_paths, failures=failures)
+            expect_openapi_methods(payload=payload, required_methods=customer_preview_methods, failures=failures)
+
+        status, payload = request_json(
+            f'{base_url}/api/v1/reads/temp-power-customer-preview-status',
+            timeout_seconds=args.timeout_seconds,
+            headers=pm_auth_header(),
+        )
+        expect_status(
+            label='temp_power_customer_preview_status',
+            status=status,
+            payload=payload,
+            allowed_statuses={200},
+            failures=failures,
+        )
+        if status == 200:
+            expect_fields(
+                label='temp_power_customer_preview_status',
+                payload=payload,
+                required_fields={
+                    'project_id',
+                    'candidate_id',
+                    'source_fingerprint',
+                    'current_candidate_match',
+                    'current_source_fingerprint_match',
+                    'status',
+                    'record_count',
+                    'storage_route_registered',
+                    'storage_source',
+                    'entity_type',
+                    'customer_delivery_authority',
+                    'finance_authority',
+                    'source_writeback_authority',
+                    'durable_delivery_event',
+                    'delivery_proof_recorded',
+                },
+                failures=failures,
+            )
+            if isinstance(payload, dict) and payload.get('storage_route_registered') is not True:
+                failures.append(
+                    'temp_power_customer_preview_status returned '
+                    f'storage_route_registered={payload.get("storage_route_registered")}'
+                )
+            for authority_field in [
+                'customer_delivery_authority',
+                'finance_authority',
+                'source_writeback_authority',
+            ]:
+                if isinstance(payload, dict) and payload.get(authority_field) != 'not_admitted':
+                    failures.append(
+                        'temp_power_customer_preview_status returned '
+                        f'{authority_field}={payload.get(authority_field)}'
+                    )
+            if isinstance(payload, dict) and payload.get('durable_delivery_event') is not False:
+                failures.append(
+                    'temp_power_customer_preview_status returned '
+                    f'durable_delivery_event={payload.get("durable_delivery_event")}'
+                )
+            if isinstance(payload, dict) and payload.get('delivery_proof_recorded') is not False:
+                failures.append(
+                    'temp_power_customer_preview_status returned '
+                    f'delivery_proof_recorded={payload.get("delivery_proof_recorded")}'
                 )
 
     if failures:

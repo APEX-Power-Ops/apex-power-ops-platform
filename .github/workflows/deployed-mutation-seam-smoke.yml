@@ -23,6 +23,11 @@ on:
         required: false
         default: false
         type: boolean
+      include_temp_power_customer_preview_review:
+        description: Also validate Temp Power customer-preview review route registration and readback shape
+        required: false
+        default: false
+        type: boolean
   workflow_call:
     inputs:
       base_url:
@@ -41,6 +46,10 @@ on:
         required: false
         type: boolean
         default: false
+      include_temp_power_customer_preview_review:
+        required: false
+        type: boolean
+        default: false
   repository_dispatch:
     types:
       - mutation-seam-deploy-complete
@@ -56,6 +65,7 @@ jobs:
       INITIAL_WAIT_SECONDS: ${{ inputs.initial_wait_seconds || github.event.client_payload.initial_wait_seconds || '0' }}
       ENVIRONMENT_LABEL: ${{ inputs.environment || github.event.client_payload.environment || 'production' }}
       INCLUDE_TEMP_POWER_ACTUALS_REVIEW: ${{ inputs.include_temp_power_actuals_review || github.event.client_payload.include_temp_power_actuals_review || false }}
+      INCLUDE_TEMP_POWER_CUSTOMER_PREVIEW_REVIEW: ${{ inputs.include_temp_power_customer_preview_review || github.event.client_payload.include_temp_power_customer_preview_review || false }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -76,6 +86,9 @@ jobs:
           args=(apps/mutation-seam/scripts/smoke_deployed_mutation_seam.py --base-url "$BASE_URL")
           if [[ "${INCLUDE_TEMP_POWER_ACTUALS_REVIEW}" == "true" ]]; then
             args+=(--include-temp-power-actuals-review)
+          fi
+          if [[ "${INCLUDE_TEMP_POWER_CUSTOMER_PREVIEW_REVIEW}" == "true" ]]; then
+            args+=(--include-temp-power-customer-preview-review)
           fi
           python "${args[@]}" | tee deployed-mutation-seam-smoke-output.txt
       - name: Upload smoke output artifact
