@@ -1,0 +1,49 @@
+{
+  "packet_id": "2026-05-18-pm-lane-317",
+  "title": "PM Lane 317 - Project Miner Temp Power Customer Delivery And Durable Proof Contract Design No-Live Packet",
+  "status": "complete",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_CUSTOMER_DELIVERY_DURABLE_PROOF_CONTRACT_DESIGN_NO_LIVE_NO_OUTPUT_WRITE",
+  "selected_outcome": "CUSTOMER_DELIVERY_DURABLE_PROOF_CONTRACT_DESIGN_READY_NO_LIVE",
+  "authority_basis": "Standing PM blocker authority and repo technical authority, used here to resolve lane 316's open shape question by translating the already accepted no-live delivery defaults into a design-first contract packet rather than widening directly into implementation.",
+  "dependencies": [
+    "2026-05-18-pm-lane-283",
+    "2026-05-18-pm-lane-291",
+    "2026-05-18-pm-lane-295",
+    "2026-05-18-pm-lane-296",
+    "2026-05-18-pm-lane-315",
+    "2026-05-18-pm-lane-316"
+  ],
+  "activation_condition": [
+    "Lane 316 already fixed the next adjacent candidate as customer delivery completion and durable proof admission.",
+    "No Temp Power customer delivery and durable proof contract packet exists yet.",
+    "The existing customer-completion seam remains a zero baseline with customer_delivery_authority not admitted and is not itself a reusable delivery contract."
+  ],
+  "current_truth": [
+    "Lane 291 already supplies the accepted no-live delivery defaults: PM approval before delivery, named customer PM or owner representative, controlled email or later approved portal, no durable delivery event in the current review slice, and later proof types such as email receipt, signed transmittal, or portal timestamp once separately admitted.",
+    "Lane 295 requires customer-preview readback to keep delivery_proof_recorded false unless a later separately admitted delivery lane exists.",
+    "Lane 296 requires durable_delivery_event false and delivery_proof_recorded false in the hosted-green customer-preview review slice.",
+    "Lane 283's customer completion baseline is zero-report and zero-evidence only and preserves customer_delivery_authority as not_admitted_external_delivery, so direct implementation would outrun the currently documented contract.",
+    "The next truthful move is design-first: define the future customer-delivery and durable-proof contract before any storage, readback, route, or live admission packet is attempted."
+  ],
+  "allowed_actions": [
+    "Define future contract fields, validator rules, review checklist, and payload-template boundaries for customer delivery completion and durable proof recording.",
+    "Keep the packet no-live and design-only.",
+    "Preserve separation between customer delivery proof, finance outputs, and source writeback."
+  ],
+  "not_allowed": [
+    "No product code, schema, route, or hosted action.",
+    "No live or local POST claiming delivery occurred.",
+    "No durable delivery event creation or proof recording in runtime state.",
+    "No finance, payroll, billing, invoice, accounting, external finance sync, or source writeback work.",
+    "No auth, ingress, DNS, or secret changes."
+  ],
+  "validation": [
+    "Packet JSON parses",
+    "Decision label, selected outcome, contract fields, validator rules, and blocked-domain boundaries are present across touched lane 317 files",
+    "Canonical PM docs/status route the next follow-on step through customer delivery contract design rather than direct delivery implementation",
+    "git diff --check passes for touched lane 317 and canonical PM doc surfaces"
+  ],
+  "validation_result": "PASS: lane 317 converts the next-admission gate into a design-first customer-delivery and durable-proof contract without widening into implementation, finance, or source-writeback behavior.",
+  "next_blocker": "STOPPED_AWAITING_CUSTOMER_DELIVERY_DURABLE_PROOF_REVIEW_SURFACE_DESIGN_NO_LIVE_PACKET",
+  "current_status": "closed"
+}

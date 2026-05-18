@@ -220,7 +220,8 @@ Current blocker:
 2. existing service `apex-platform-mutation-seam` is live on committed `clean-main` at `666f649d020d19cc24d1a5e57b9a1796928f45d8`
 3. both hosted seam URLs now expose the Temp Power actuals routes and the Temp Power customer-preview review routes and the bounded hosted smoke returns `RESULT PASS`
 4. PM Lane 316 now defines the next explicit admission boundary: separate customer delivery completion and durable proof recording admission is the next adjacent candidate
-5. finance/payroll output, source writeback, and other downstream widening remain out of scope for that next adjacent candidate
+5. PM Lane 317 now resolves that next boundary as design-first and defines the customer delivery and durable proof contract without opening implementation
+6. finance/payroll output, source writeback, and other downstream widening remain out of scope for that next adjacent candidate
 
 Read this section first when continuing the Temp Power lane. The lane history below remains valid as background, but the admitted actuals plus customer-preview review first-write slice is now complete and hosted-green.
 
