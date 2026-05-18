@@ -106,6 +106,30 @@ corepack pnpm --dir "C:/APEX Platform/apex-power-ops-platform" --filter @apex/op
 corepack pnpm --dir "C:/APEX Platform/apex-power-ops-platform" --filter @apex/operations-web exec node scripts/smoke-hosted-routes.mjs --base-url https://operations.apexpowerops.com
 ```
 
+## Live Closeout
+
+Hosted execution is complete.
+
+Results:
+
+- first POST: `accepted`
+- replay POST: `idempotent_hit`
+- mutation: `mut-76b3aeba-446f-4399-b452-21d98ab66d27`
+- audit: `audit-70d8cc1f-151f-4730-b8db-4b3fc1b5765c`
+- final direct mutation-seam status: `durable_field_recorded`, `record_count=1`
+- final operations-web status: `durable_field_recorded`, `record_count=1`
+- downstream authorities: production/customer/finance `not_admitted`
+- field evidence authority: `not_admitted_attachment_write`
+- production quantity count: `0`
+
+The first hosted live POST returned HTTP 500 before the JSONB adapter correction. Pre-retry readback showed `record_count=0`, commit `f801cf38` fixed typed JSONB serialization in the Supabase-backed PgDict adapter, and the live write/replay then passed.
+
+Hosted validation passed:
+
+- deployed mutation-seam smoke: `RESULT PASS`
+- hosted PM intake smoke: `PM_INTAKE_HOSTED_SUMMARY failed=0`
+- hosted operations routes smoke: `SMOKE_SUMMARY failed=0 passed=12`
+
 ## Next Blocker
 
-After live record closeout, the next blocker is production tracking admission after durable field record proof.
+`STOPPED_AWAITING_PRODUCTION_TRACKING_ADMISSION_PACKET_AFTER_DURABLE_FIELD_RECORD`

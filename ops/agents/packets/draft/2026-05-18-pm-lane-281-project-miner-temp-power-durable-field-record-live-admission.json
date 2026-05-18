@@ -89,6 +89,15 @@
     "git diff --check"
   ],
   "local_validation_result": "PASS: durable field record tests passed, import persistence tests passed, approval persistence tests passed, py_compile passed, migration applied to runtime DSN, table/trigger/RLS/read-count preflight passed, and scoped git diff check passed.",
-  "current_status": "admitted_pending_hosted_deploy_and_live_record",
+  "hosted_execution_result": {
+    "pre_write_status": "direct mutation-seam and operations-web returned no_durable_field_record, storage_available=true, record_count=0, downstream production/customer/finance authorities not_admitted.",
+    "first_live_post": "accepted",
+    "replay_post": "idempotent_hit",
+    "mutation_id": "mut-76b3aeba-446f-4399-b452-21d98ab66d27",
+    "audit_event_id": "audit-70d8cc1f-151f-4730-b8db-4b3fc1b5765c",
+    "final_status": "direct mutation-seam and operations-web returned durable_field_recorded, record_count=1, production_tracking_authority/customer_reporting_authority/finance_authority not_admitted, field_evidence_authority not_admitted_attachment_write, production_quantity_count=0.",
+    "correction_note": "The first hosted live POST returned HTTP 500 before commit f801cf38 fixed typed JSONB serialization in the Supabase-backed PgDict adapter; pre-retry status confirmed no partial durable record was inserted."
+  },
+  "current_status": "complete",
   "next_recommended_lane": "After live record closeout, the next blocker is production tracking admission after durable field record proof."
 }
