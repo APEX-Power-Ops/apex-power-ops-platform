@@ -253,6 +253,22 @@
       "group": "test"
     },
     {
+      "label": "Mutation-seam hosted customer-delivery-execution smoke",
+      "type": "shell",
+      "command": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
+      "args": [
+        "apps/mutation-seam/scripts/smoke_deployed_mutation_seam.py",
+        "--base-url",
+        "https://mutation-seam.apexpowerops.com",
+        "--include-temp-power-customer-delivery-execution"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "group": "test"
+    },
+    {
       "label": "Forms engine clean artifacts",
       "type": "shell",
       "command": "pwsh",

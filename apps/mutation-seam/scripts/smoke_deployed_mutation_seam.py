@@ -45,6 +45,11 @@ def build_parser() -> argparse.ArgumentParser:
         action='store_true',
         help='Also validate Temp Power customer-delivery/durable-proof review route registration and readback shape without sending a POST.',
     )
+    parser.add_argument(
+        '--include-temp-power-customer-delivery-execution',
+        action='store_true',
+        help='Also validate Temp Power customer-facing delivery execution route registration and readback shape without sending a POST.',
+    )
     return parser
 
 
@@ -665,6 +670,80 @@ def main() -> int:
                 if isinstance(payload, dict) and payload.get(authority_field) != 'not_admitted':
                     failures.append(
                         'temp_power_customer_delivery_proof_status returned '
+                        f'{authority_field}={payload.get(authority_field)}'
+                    )
+
+    if args.include_temp_power_customer_delivery_execution:
+        delivery_execution_paths = {
+            '/api/v1/reads/temp-power-customer-delivery-event-status',
+            '/api/v1/mutations/temp-power-customer-delivery-events',
+        }
+        delivery_execution_methods = {
+            '/api/v1/reads/temp-power-customer-delivery-event-status': {'get'},
+            '/api/v1/mutations/temp-power-customer-delivery-events': {'post'},
+        }
+        status, payload = request_json(f'{base_url}/openapi.json', timeout_seconds=args.timeout_seconds)
+        expect_status(
+            label='openapi_temp_power_customer_delivery_execution',
+            status=status,
+            payload=payload,
+            allowed_statuses={200},
+            failures=failures,
+        )
+        if status == 200:
+            expect_openapi_paths(payload=payload, required_paths=delivery_execution_paths, failures=failures)
+            expect_openapi_methods(payload=payload, required_methods=delivery_execution_methods, failures=failures)
+
+        status, payload = request_json(
+            f'{base_url}/api/v1/reads/temp-power-customer-delivery-event-status',
+            timeout_seconds=args.timeout_seconds,
+            headers=pm_auth_header(),
+        )
+        expect_status(
+            label='temp_power_customer_delivery_event_status',
+            status=status,
+            payload=payload,
+            allowed_statuses={200},
+            failures=failures,
+        )
+        if status == 200:
+            expect_fields(
+                label='temp_power_customer_delivery_event_status',
+                payload=payload,
+                required_fields={
+                    'project_id',
+                    'candidate_id',
+                    'source_fingerprint',
+                    'preview_review_id',
+                    'delivery_proof_review_id',
+                    'current_candidate_match',
+                    'current_source_fingerprint_match',
+                    'preview_review_lineage_match',
+                    'delivery_proof_review_lineage_match',
+                    'status',
+                    'record_count',
+                    'storage_route_registered',
+                    'storage_source',
+                    'entity_type',
+                    'finance_authority',
+                    'source_writeback_authority',
+                    'customer_billing_delivery_authority',
+                },
+                failures=failures,
+            )
+            if isinstance(payload, dict) and payload.get('storage_route_registered') is not True:
+                failures.append(
+                    'temp_power_customer_delivery_event_status returned '
+                    f'storage_route_registered={payload.get("storage_route_registered")}'
+                )
+            for authority_field in [
+                'finance_authority',
+                'source_writeback_authority',
+                'customer_billing_delivery_authority',
+            ]:
+                if isinstance(payload, dict) and payload.get(authority_field) != 'not_admitted':
+                    failures.append(
+                        'temp_power_customer_delivery_event_status returned '
                         f'{authority_field}={payload.get(authority_field)}'
                     )
 

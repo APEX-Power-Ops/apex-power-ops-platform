@@ -33,6 +33,11 @@ on:
         required: false
         default: false
         type: boolean
+      include_temp_power_customer_delivery_execution:
+        description: Also validate Temp Power customer-facing delivery execution route registration and readback shape
+        required: false
+        default: false
+        type: boolean
   workflow_call:
     inputs:
       base_url:
@@ -59,6 +64,10 @@ on:
         required: false
         type: boolean
         default: false
+      include_temp_power_customer_delivery_execution:
+        required: false
+        type: boolean
+        default: false
   repository_dispatch:
     types:
       - mutation-seam-deploy-complete
@@ -76,6 +85,7 @@ jobs:
       INCLUDE_TEMP_POWER_ACTUALS_REVIEW: ${{ inputs.include_temp_power_actuals_review || github.event.client_payload.include_temp_power_actuals_review || false }}
       INCLUDE_TEMP_POWER_CUSTOMER_PREVIEW_REVIEW: ${{ inputs.include_temp_power_customer_preview_review || github.event.client_payload.include_temp_power_customer_preview_review || false }}
       INCLUDE_TEMP_POWER_CUSTOMER_DELIVERY_PROOF_REVIEW: ${{ inputs.include_temp_power_customer_delivery_proof_review || github.event.client_payload.include_temp_power_customer_delivery_proof_review || false }}
+      INCLUDE_TEMP_POWER_CUSTOMER_DELIVERY_EXECUTION: ${{ inputs.include_temp_power_customer_delivery_execution || github.event.client_payload.include_temp_power_customer_delivery_execution || false }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -102,6 +112,9 @@ jobs:
           fi
           if [[ "${INCLUDE_TEMP_POWER_CUSTOMER_DELIVERY_PROOF_REVIEW}" == "true" ]]; then
             args+=(--include-temp-power-customer-delivery-proof-review)
+          fi
+          if [[ "${INCLUDE_TEMP_POWER_CUSTOMER_DELIVERY_EXECUTION}" == "true" ]]; then
+            args+=(--include-temp-power-customer-delivery-execution)
           fi
           python "${args[@]}" | tee deployed-mutation-seam-smoke-output.txt
       - name: Upload smoke output artifact
