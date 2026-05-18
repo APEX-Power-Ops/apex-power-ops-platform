@@ -1,0 +1,92 @@
+{
+  "packet_id": "2026-05-18-pm-lane-272-project-miner-temp-power-signed-source-snapshot-exporter-design-no-live",
+  "title": "PM Lane 272 - Project Miner Temp Power Signed Source Snapshot Exporter Design No-Live",
+  "date": "2026-05-18",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_SIGNED_SOURCE_SNAPSHOT_EXPORTER_DESIGN_NO_LIVE",
+  "selected_outcome": "EXPORTER_DESIGN_READY_LOCAL_SCRIPT_ONLY_IMPLEMENTATION_RECOMMENDED_NO_LIVE",
+  "source_packets": [
+    "PM Lane 270",
+    "PM Lane 271"
+  ],
+  "current_blocker": "STOPPED_AWAITING_RENDER_AUTHENTICATED_SOURCE_FILES_REPAIR_NO_APPROVAL_POST",
+  "design_scope": {
+    "script_path_recommended": "apps/mutation-seam/scripts/export_pm_import_candidate_snapshot.py",
+    "implementation_in_this_packet": false,
+    "creates_snapshot_artifact": false,
+    "adds_hosted_loader": false,
+    "adds_runtime_env_var": false,
+    "approval_post_allowed": false
+  },
+  "recommended_output_files": [
+    "candidate.json",
+    "admission-plan.json",
+    "manifest.json",
+    "SHA256SUMS.txt"
+  ],
+  "manifest_schema": {
+    "schema_version": "pm_import_candidate_snapshot_manifest_v1",
+    "authority": "derived_source_snapshot_no_live",
+    "redaction_required": true,
+    "source_file_fields_allowed": [
+      "source_id",
+      "label",
+      "file_name",
+      "extension",
+      "found",
+      "size_bytes",
+      "modified_at",
+      "freshness_status",
+      "fingerprint"
+    ],
+    "source_file_fields_forbidden": [
+      "absolute_path",
+      "directory_name",
+      "source_row_content",
+      "workbook_cell_values",
+      "pdf_text",
+      "proprietary_task_detail"
+    ]
+  },
+  "hash_signed_meaning": {
+    "uses_sha256_payload_digests": true,
+    "uses_private_key": false,
+    "uses_secret_or_certificate": false,
+    "requires_later_hosted_digest_readback": true
+  },
+  "required_future_tests": [
+    "manifest JSON parses",
+    "manifest source entries contain file names but no absolute paths",
+    "payload SHA-256 values match file contents",
+    "candidate and admission payloads preserve mutation_authority not_admitted",
+    "warning-code and count fields match candidate/admission plan",
+    "output directory is explicit",
+    "repo-tracked output is rejected unless later admitted",
+    "no hosted loader or approval/import behavior is changed"
+  ],
+  "recommended_future_packet": "PM Lane 273 - Project Miner Temp Power Signed Source Snapshot Exporter Local Script No-Live",
+  "write_execution": {
+    "approval_post_sent": false,
+    "approval_row_created": false,
+    "project_import_performed": false,
+    "supabase_write_performed": false,
+    "render_env_updated": false,
+    "render_deploy_performed": false,
+    "hosted_source_uploaded": false,
+    "signed_snapshot_artifact_created": false,
+    "snapshot_exporter_script_added": false,
+    "snapshot_loader_code_added": false,
+    "source_workbook_committed": false,
+    "source_pdf_committed": false,
+    "macro_run": false
+  },
+  "validation": [
+    "PM Lane 270/271 blocker context review",
+    "existing candidate/admission code-path inspection",
+    "PM Lane 272 text search",
+    "packet JSON parse",
+    "guardrail keyword scan",
+    "corrupted-token scan",
+    "git diff --check"
+  ],
+  "validation_result": "PASS"
+}
