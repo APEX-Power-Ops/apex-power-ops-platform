@@ -222,7 +222,8 @@ Current blocker:
 4. PM Lane 316 now defines the next explicit admission boundary: separate customer delivery completion and durable proof recording admission is the next adjacent candidate
 5. PM Lane 317 now resolves that next boundary as design-first and defines the customer delivery and durable proof contract without opening implementation
 6. PM Lane 318 now converts that contract into an inspection-only PM-facing review surface design without opening storage or runtime delivery
-7. finance/payroll output, source writeback, and other downstream widening remain out of scope for that next adjacent candidate
+7. PM Lane 319 now converts that review design into a storage-plan recommendation without opening schema or persistence admission
+8. finance/payroll output, source writeback, and other downstream widening remain out of scope for that next adjacent candidate
 
 Read this section first when continuing the Temp Power lane. The lane history below remains valid as background, but the admitted actuals plus customer-preview review first-write slice is now complete and hosted-green.
 

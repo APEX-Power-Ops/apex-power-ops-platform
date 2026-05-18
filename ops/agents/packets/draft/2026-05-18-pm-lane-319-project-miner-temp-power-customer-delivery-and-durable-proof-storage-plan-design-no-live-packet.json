@@ -1,0 +1,46 @@
+{
+  "packet_id": "2026-05-18-pm-lane-319",
+  "title": "PM Lane 319 - Project Miner Temp Power Customer Delivery And Durable Proof Storage Plan Design No-Live Packet",
+  "status": "complete",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_CUSTOMER_DELIVERY_DURABLE_PROOF_STORAGE_PLAN_DESIGN_NO_LIVE_NO_OUTPUT_WRITE",
+  "selected_outcome": "CUSTOMER_DELIVERY_DURABLE_PROOF_STORAGE_PLAN_DESIGN_READY_NO_LIVE",
+  "authority_basis": "Standing PM blocker authority and repo technical authority, used here to convert Lane 317 and Lane 318 into a future storage decision without admitting schema, persistence, or runtime delivery execution.",
+  "dependencies": [
+    "2026-05-18-pm-lane-315",
+    "2026-05-18-pm-lane-317",
+    "2026-05-18-pm-lane-318"
+  ],
+  "activation_condition": [
+    "Lane 317 already defines the delivery/proof contract fields and validator rules.",
+    "Lane 318 already defines the PM-facing review surface for that contract.",
+    "No Temp Power customer delivery and durable proof storage-plan packet exists yet."
+  ],
+  "current_truth": [
+    "Lane 315 remains the hosted-green runtime baseline, and it still blocks actual delivery execution inside the current customer-preview review slice.",
+    "Lane 317 defines what a future delivery/proof record must contain, while Lane 318 defines what a PM must be able to inspect before runtime admission is considered.",
+    "The next bounded design step is storage planning only: decide where a future delivery/proof review record would live, what adapter/readback needs it would impose, and which shortcuts stay explicitly rejected.",
+    "Schema admission, persistence, readback routes, and runtime delivery/proof execution remain separate later packets.",
+    "Finance/payroll/billing/invoice/accounting outputs and source writeback remain outside this lane."
+  ],
+  "allowed_actions": [
+    "Define recommended future table, entity, route, column, and constraint decisions for customer delivery and durable proof review storage.",
+    "Document adapter and readback requirements for any later admitted implementation.",
+    "Keep storage planning design-only and no-live."
+  ],
+  "not_allowed": [
+    "No product code, schema, route, UI implementation, or hosted action.",
+    "No persistence contract execution or live storage admission.",
+    "No live or local POST claiming customer delivery or proof recording occurred.",
+    "No finance, payroll, billing, invoice, accounting, external finance sync, or source writeback work.",
+    "No auth, ingress, DNS, or secret changes."
+  ],
+  "validation": [
+    "Packet JSON parses",
+    "Decision label, selected outcome, recommended storage decisions, rejected unsafe storage options, and blocked-domain boundaries are present across touched lane 319 files",
+    "Canonical PM docs/status route the next follow-on step through readback design rather than schema or runtime delivery admission",
+    "git diff --check passes for touched lane 319 and canonical PM doc surfaces"
+  ],
+  "validation_result": "PASS: lane 319 defines the future delivery/proof storage plan and keeps schema, runtime delivery, finance, and source-writeback widening deferred.",
+  "next_blocker": "STOPPED_AWAITING_CUSTOMER_DELIVERY_DURABLE_PROOF_READBACK_DESIGN_NO_LIVE_PACKET",
+  "current_status": "closed"
+}
