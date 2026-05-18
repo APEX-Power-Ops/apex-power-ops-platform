@@ -94,6 +94,12 @@ Even with the exact phrase, the gate still does not admit:
 4. any second route beyond the explicitly chosen operations-web orchestration surface and seam mutation/status pair
 5. browser-direct database writes, hidden external-send logic, or any unrelated mutation or autonomous AI business-state mutation
 
+## Current Stop Boundary
+
+The PM lane is truthfully stopped at:
+
+`STOPPED_UNTIL_EXACT_CUSTOMER_FACING_DELIVERY_EXECUTION_ADMISSION_PHRASE_PRESENT`
+
 ## Validation Checks
 
 Required validation for this lane:
