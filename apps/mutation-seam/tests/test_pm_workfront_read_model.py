@@ -120,6 +120,55 @@ def test_pm_workfront_counts_assignment_row_owner_when_apparatus_is_not_denormal
     assert "unassigned" not in workfront["rows"][0]["lens_tags"]
 
 
+def test_pm_workfront_ignores_planning_only_apparatus_rows():
+    workfront = build_pm_workfront_read_model(
+        apparatus_rows=[
+            {
+                "id": "app-planning-only",
+                "name": "Planning-only apparatus",
+                "status": "planned",
+                "task_id": "task-planning-only",
+                "planning_context_only": True,
+            },
+            {
+                "id": "app-live",
+                "name": "Live apparatus",
+                "status": "not_started",
+                "task_id": "task-live",
+            },
+        ],
+        assignment_rows=[],
+        task_rows=[
+            {
+                "id": "task-planning-only",
+                "name": "Planning-only task",
+                "workpackage_id": "wp-planning-only",
+            },
+            {
+                "id": "task-live",
+                "name": "Live task",
+                "workpackage_id": "wp-live",
+            },
+        ],
+        workpackage_rows=[
+            {
+                "id": "wp-planning-only",
+                "name": "Planning-only workpackage",
+            },
+            {
+                "id": "wp-live",
+                "name": "Live workpackage",
+            },
+        ],
+        issue_rows=[],
+        checklist_rows=[],
+        audit_rows=[],
+    )
+
+    assert workfront["summary"]["total_count"] == 1
+    assert workfront["rows"][0]["apparatus_id"] == "app-live"
+
+
 def test_pm_workfront_surfaces_returned_followup_evidence(client):
     issue = store.issues["issue-002"].copy()
     issue["status"] = "escalated"

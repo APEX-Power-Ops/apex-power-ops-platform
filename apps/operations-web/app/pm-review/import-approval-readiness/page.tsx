@@ -103,6 +103,37 @@ type ApprovalReadinessPacket = {
   storagePlan: ApprovalStoragePlan
 }
 
+type ApprovalPreviewTaskGroup = {
+  group_id?: string
+  title?: string
+  designation?: string
+  apparatus_count?: number
+  planned_hours?: number
+}
+
+type ApprovalPreviewManualTaskShaping = {
+  summary?: {
+    group_count?: number
+    regrouped_apparatus_count?: number
+    designation_override_count?: number
+  }
+  groups?: ApprovalPreviewTaskGroup[]
+}
+
+type CandidateApprovalPreviewArtifact = {
+  preview_kind?: string
+  preview_version?: string
+  generated_locally_at?: string
+  storage?: string
+  local_review_evidence?: {
+    review_notes?: string | null
+    manual_task_shaping?: ApprovalPreviewManualTaskShaping | null
+  }
+  downstream_review_context?: {
+    contract_role?: string
+  }
+}
+
 const { useCallback, useEffect, useMemo, useState } = React
 
 const API_BASE =
@@ -179,10 +210,28 @@ function uniqueGuardrails(contractItems?: string[], storageItems?: string[]) {
   return Array.from(new Set([...(contractItems || []), ...(storageItems || [])])).sort()
 }
 
+function approvalPreviewStorageKey(candidateId?: string | null) {
+  return candidateId ? `pm-import-candidate-approval-preview:${candidateId}` : null
+}
+
+function parseApprovalPreview(raw: string | null) {
+  if (!raw) {
+    return null
+  }
+
+  try {
+    const parsed = JSON.parse(raw) as CandidateApprovalPreviewArtifact
+    return parsed && typeof parsed === 'object' ? parsed : null
+  } catch {
+    return null
+  }
+}
+
 export default function PmImportApprovalReadinessPage() {
   const [packet, setPacket] = useState<ApprovalReadinessPacket | null>(null)
   const [loading, setLoading] = useState(true)
   const [online, setOnline] = useState(true)
+  const [localPreview, setLocalPreview] = useState<CandidateApprovalPreviewArtifact | null>(null)
 
   const refresh = useCallback(async () => {
     try {
@@ -206,10 +255,22 @@ export default function PmImportApprovalReadinessPage() {
   const humanPolicy = contract?.human_acceptance_policy || {}
   const futureMutation = contract?.future_mutation_contract || {}
   const recordLifecycle = storagePlan?.record_lifecycle || {}
+  const previewCandidateId = contract?.candidate_id || storagePlan?.candidate_id || null
   const notAllowed = useMemo(
     () => uniqueGuardrails(contract?.not_allowed_now, storagePlan?.not_allowed_now),
     [contract?.not_allowed_now, storagePlan?.not_allowed_now],
   )
+  const previewStorageKey = previewCandidateId ? approvalPreviewStorageKey(previewCandidateId) : null
+  const previewManualTaskShaping = localPreview?.local_review_evidence?.manual_task_shaping || null
+
+  useEffect(() => {
+    if (!previewStorageKey || typeof window === 'undefined') {
+      setLocalPreview(null)
+      return
+    }
+
+    setLocalPreview(parseApprovalPreview(window.localStorage.getItem(previewStorageKey)))
+  }, [previewStorageKey])
 
   return (
     <main className="shell-page pm-review-page">
@@ -267,6 +328,17 @@ export default function PmImportApprovalReadinessPage() {
             <span className="status-pill status-awaiting-values">future</span>
           </div>
           <p>{storagePlan?.recommended_table || 'No storage table decision is available.'}</p>
+        </article>
+        <article className="status-card">
+          <div className="status-row">
+            <h2>Staged Review Context</h2>
+            <span className={`status-pill ${localPreview ? 'status-configured' : 'status-deferred'}`}>{localPreview ? 'staged' : 'not staged'}</span>
+          </div>
+          <p>
+            {localPreview?.generated_locally_at
+              ? `Import candidate staged browser-local approval preview context at ${localPreview.generated_locally_at}.`
+              : 'Use Import candidate export to stage browser-local PM review context before checking downstream approval readiness.'}
+          </p>
         </article>
       </section>
 
@@ -332,6 +404,70 @@ export default function PmImportApprovalReadinessPage() {
                 <dd>{storagePlan?.recommended_route || 'not admitted'}</dd>
               </div>
             </dl>
+          </article>
+        </section>
+
+        <section aria-label="Candidate review context" className="notes-grid pm-section-spaced">
+          <article className="notes-card pm-review-context-card">
+            <h2>Candidate Review Context</h2>
+            <p className="pm-copy-muted pm-copy-main">
+              {localPreview
+                ? 'Import candidate exported browser-local PM review context into this governed approval-readiness gate. No network request or persistence path was used.'
+                : 'Export Approval Preview JSON from Import candidate to stage PM review notes and manual task shaping here as browser-local review context only.'}
+            </p>
+            <dl className="contract-panel">
+              <div>
+                <dt>Preview kind</dt>
+                <dd>{localPreview?.preview_kind || 'not staged'}</dd>
+              </div>
+              <div>
+                <dt>Generated locally</dt>
+                <dd>{localPreview?.generated_locally_at || 'not yet exported from Import candidate'}</dd>
+              </div>
+              <div>
+                <dt>Storage</dt>
+                <dd>{localPreview?.storage || 'browser local only after export'}</dd>
+              </div>
+              <div>
+                <dt>Contract role</dt>
+                <dd>{localPreview?.downstream_review_context?.contract_role || 'No local preview contract is currently staged.'}</dd>
+              </div>
+            </dl>
+          </article>
+          <article className="notes-card">
+            <h2>Manual Task Shaping Context</h2>
+            {localPreview ? (
+              <>
+                <p className="pm-copy-muted pm-copy-main">
+                  {localPreview.local_review_evidence?.review_notes || 'No PM review notes were included in the staged approval preview.'}
+                </p>
+                <dl className="contract-panel">
+                  <div>
+                    <dt>Local groups</dt>
+                    <dd>{formatValue(previewManualTaskShaping?.summary?.group_count)}</dd>
+                  </div>
+                  <div>
+                    <dt>Regrouped apparatus</dt>
+                    <dd>{formatValue(previewManualTaskShaping?.summary?.regrouped_apparatus_count)}</dd>
+                  </div>
+                  <div>
+                    <dt>Designation overrides</dt>
+                    <dd>{formatValue(previewManualTaskShaping?.summary?.designation_override_count)}</dd>
+                  </div>
+                </dl>
+                <ul>
+                  {(previewManualTaskShaping?.groups || []).map((group) => (
+                    <li key={group.group_id || group.title}>
+                      <strong>{group.title || 'Untitled local task'}</strong>: {formatValue(group.apparatus_count)} apparatus, {formatValue(group.planned_hours)} hours, {group.designation || 'no designation'}
+                    </li>
+                  ))}
+                </ul>
+              </>
+            ) : (
+              <p className="pm-copy-muted pm-copy-main">
+                No manual task shaping preview is staged yet. Use the Import candidate route to export Approval Preview JSON before reviewing downstream approval context here.
+              </p>
+            )}
           </article>
         </section>
 

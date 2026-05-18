@@ -175,6 +175,8 @@ def build_pm_workfront_read_model(
 
     rows: List[Dict[str, Any]] = []
     for apparatus in apparatus_rows:
+        if apparatus.get("planning_context_only"):
+            continue
         apparatus_id = str(apparatus.get("id"))
         task = task_map.get(apparatus.get("task_id"), {})
         workpackage = workpackage_map.get(task.get("workpackage_id"), {})

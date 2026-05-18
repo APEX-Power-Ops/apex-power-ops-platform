@@ -5,6 +5,47 @@ test('pm import approval readiness renders read-only approval and storage gates'
   let storagePlanReadCalls = 0
   const mutationRequests: string[] = []
 
+  await page.addInitScript(() => {
+    window.localStorage.setItem(
+      'pm-import-candidate-approval-preview:pm-import-candidate-miner-temp-power',
+      JSON.stringify({
+        preview_kind: 'pm_import_candidate_review_approval_preview',
+        preview_version: 'pm_import_candidate_review_approval_preview_v1',
+        generated_locally_at: '2026-05-18T15:45:00.000Z',
+        storage: 'local_browser_only',
+        local_review_evidence: {
+          review_notes: 'Check PD-1 duplicate rows before future import approval.',
+          manual_task_shaping: {
+            summary: {
+              group_count: 2,
+              regrouped_apparatus_count: 1,
+              designation_override_count: 1,
+            },
+            groups: [
+              {
+                group_id: 'source-task:candidate-task-0001',
+                title: 'PD-1 - Switch MV - Fused Disconnect',
+                designation: 'PD-1',
+                apparatus_count: 1,
+                planned_hours: 2.5,
+              },
+              {
+                group_id: 'manual-task:2:test',
+                title: 'Breaker lineup split',
+                designation: 'PD-1B',
+                apparatus_count: 1,
+                planned_hours: 2.5,
+              },
+            ],
+          },
+        },
+        downstream_review_context: {
+          contract_role: 'Browser-local PM review context for later admitted approval persistence review only.',
+        },
+      }),
+    )
+  })
+
   await page.route('**/api/v1/mutations/**', async (route) => {
     mutationRequests.push(route.request().url())
     await route.fulfill({
@@ -246,6 +287,7 @@ test('pm import approval readiness renders read-only approval and storage gates'
   await expect(page.getByText(/pm_import_approval_storage_plan_read_only_v1/i).first()).toBeVisible()
   await expect(page.getByText(/design_only_not_admitted/i).first()).toBeVisible()
   await expect(page.getByText(/storage_decision_only_not_admitted/i).first()).toBeVisible()
+  await expect(page.getByText(/Import candidate staged browser-local approval preview context at 2026-05-18T15:45:00.000Z/i)).toBeVisible()
   await expect(page.getByText(/seam\.pm_import_candidate_approvals/i).first()).toBeVisible()
   await expect(page.getByText('/api/v1/mutations/project-import-approvals').first()).toBeVisible()
   await expect(page.getByText(/audit log only/i)).toBeVisible()
@@ -253,6 +295,10 @@ test('pm import approval readiness renders read-only approval and storage gates'
   await expect(page.getByText(/run schema migration/i)).toBeVisible()
   await expect(page.getByText(/persist approval record/i)).toBeVisible()
   await expect(page.getByText(/autonomous ai business state mutation/i)).toBeVisible()
+  await expect(page.getByRole('heading', { name: /Candidate Review Context/i })).toBeVisible()
+  await expect(page.getByText(/Check PD-1 duplicate rows before future import approval./i)).toBeVisible()
+  await expect(page.getByText(/Breaker lineup split/i)).toBeVisible()
+  await expect(page.getByText(/Regrouped apparatus/i)).toBeVisible()
   await expect(page.getByRole('link', { name: /Import candidate/i })).toHaveAttribute('href', '/pm-review/import-candidate')
   await expect(page.getByRole('link', { name: /Admission plan/i })).toHaveAttribute('href', '/pm-review/import-admission-plan')
   await expect(page.getByRole('button', { name: /Approve/i })).toHaveCount(0)

@@ -261,6 +261,189 @@ body {
   padding: 1.5rem;
 }
 
+.pm-section-spaced {
+  margin-bottom: 1rem;
+}
+
+.pm-review-section {
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.pm-section-title {
+  margin: 0;
+}
+
+.pm-section-status {
+  margin: 0 0 1rem;
+}
+
+.pm-stack-xs {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.pm-stack-sm {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.pm-stack-md {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.pm-stack-lg {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.pm-top-sm {
+  margin-top: 0.75rem;
+}
+
+.pm-top-md {
+  margin-top: 0.85rem;
+}
+
+.pm-top-lg {
+  margin-top: 0.9rem;
+}
+
+.pm-copy-reset {
+  margin: 0;
+}
+
+.pm-copy-top-xs {
+  margin-top: 0.35rem;
+}
+
+.pm-copy-top-sm {
+  margin-top: 0.45rem;
+}
+
+.pm-copy-top-md {
+  margin-top: 0.55rem;
+}
+
+.pm-copy-top-lg {
+  margin-top: 0.65rem;
+}
+
+.pm-copy-main {
+  line-height: 1.55;
+}
+
+.pm-copy-detail {
+  line-height: 1.5;
+}
+
+.pm-copy-muted {
+  color: var(--muted);
+}
+
+.pm-status-row-start {
+  justify-content: flex-start;
+}
+
+.pm-status-row-top {
+  align-items: flex-start;
+}
+
+.pm-link-row-center {
+  align-items: center;
+}
+
+.pm-link-row-bottom {
+  margin-bottom: 0.9rem;
+}
+
+.pm-subcard {
+  padding: 0.85rem;
+  box-shadow: none;
+}
+
+.pm-subcard-compact {
+  padding: 0.75rem;
+  box-shadow: none;
+}
+
+.pm-summary {
+  cursor: pointer;
+}
+
+.pm-summary-meta {
+  color: var(--muted);
+}
+
+.pm-form-grid-wide {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+}
+
+.pm-form-grid-compact {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+}
+
+.pm-field {
+  display: grid;
+  gap: 0.35rem;
+  font-weight: 600;
+}
+
+.pm-control,
+.pm-control-select,
+.pm-control-textarea {
+  width: 100%;
+  border: 1px solid rgba(18, 62, 87, 0.18);
+  background: #fffdf8;
+  color: var(--ink);
+  font: inherit;
+}
+
+.pm-control,
+.pm-control-select {
+  padding: 0.7rem 0.85rem;
+  border-radius: 14px;
+}
+
+.pm-control-select {
+  min-width: 0;
+}
+
+.pm-control-select-pill {
+  min-width: 14rem;
+  padding: 0.45rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid rgba(18, 62, 87, 0.22);
+  background: #fffdf8;
+  color: var(--brand);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.pm-control-textarea {
+  min-height: 7.5rem;
+  margin-top: 0.85rem;
+  padding: 0.9rem 1rem;
+  resize: vertical;
+  border-radius: 16px;
+  line-height: 1.5;
+}
+
+.pm-review-context-card {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(216, 229, 234, 0.28));
+}
+
+.pm-label-heading {
+  margin: 0 0 0.45rem;
+  font-weight: 700;
+}
+
 .pm-review-header {
   display: flex;
   justify-content: space-between;
