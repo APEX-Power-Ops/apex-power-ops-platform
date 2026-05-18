@@ -94,6 +94,22 @@
     "Hosted smokes: deployed mutation-seam smoke with PM intake, hosted PM intake smoke, hosted operations routes smoke.",
     "git diff --check"
   ],
-  "current_status": "admitted_pending_local_validation_runtime_migration_hosted_deploy_and_live_record",
+  "schema_result": {
+    "local_env_target": "local_apex_pm_stage_not_hosted",
+    "bounded_apex_migration_wrapper": "blocked_by_server_env_SUPABASE_ENABLE_MIGRATION_APPLY_false",
+    "olares_governed_live_dsn_loader": "present_but_session_pooler_password_auth_failed_for_postgres",
+    "runtime_schema_ensure": "applied_exact_migration_005_from_hosted_app_connection_when_table_missing",
+    "hosted_pre_write_status_after_recovery": "no_production_tracking_record storage_available=true record_count=0 durable_field_record_count=1"
+  },
+  "local_validation_result": "PASS: production tracking tests passed, durable field record tests passed, import persistence tests passed, approval persistence tests passed, py_compile passed, packet JSON parsed, and scoped git diff check passed.",
+  "hosted_execution_result": {
+    "pre_write_status": "direct mutation-seam and operations-web returned no_production_tracking_record, storage_available=true, record_count=0, durable_field_record_count=1, downstream customer/finance authorities not_admitted.",
+    "first_live_post": "accepted",
+    "replay_post": "idempotent_hit",
+    "mutation_id": "mut-fcbdadd0-aa51-4fd3-9f36-ce55721189cf",
+    "audit_event_id": "audit-ce7cdcb5-a032-49b3-9059-d3f4975a25a4",
+    "final_status": "direct mutation-seam and operations-web returned production_tracking_baseline_recorded, record_count=1, production_quantity_count=0, labor_entry_count=0, actual_labor_hours=0.00, apparatus_progress_count=0, progress_update_count=0, customer_reporting_authority/finance_authority not_admitted."
+  },
+  "current_status": "complete",
   "next_recommended_lane": "After live production tracking baseline closeout, the next blocker is customer reporting and completion evidence admission after production tracking proof."
 }

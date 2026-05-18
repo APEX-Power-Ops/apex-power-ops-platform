@@ -103,6 +103,33 @@ corepack pnpm --dir "C:/APEX Platform/apex-power-ops-platform" --filter @apex/op
 corepack pnpm --dir "C:/APEX Platform/apex-power-ops-platform" --filter @apex/operations-web exec node scripts/smoke-hosted-routes.mjs --base-url https://operations.apexpowerops.com
 ```
 
+## Live Closeout
+
+Hosted execution is complete.
+
+Results:
+
+- first POST: `accepted`
+- replay POST: `idempotent_hit`
+- mutation: `mut-fcbdadd0-aa51-4fd3-9f36-ce55721189cf`
+- audit: `audit-ce7cdcb5-a032-49b3-9059-d3f4975a25a4`
+- final direct mutation-seam status: `production_tracking_baseline_recorded`, `record_count=1`
+- final operations-web status: `production_tracking_baseline_recorded`, `record_count=1`
+- production quantity count: `0`
+- labor entry count: `0`
+- actual labor hours: `0.00`
+- apparatus progress count: `0`
+- progress update count: `0`
+- downstream authorities: customer/finance `not_admitted`
+
+Hosted schema preflight initially returned `UndefinedTable` for `seam.production_tracking_records`. The bounded Supabase migration tool was disabled by server env, and the Olares governed live DSN loader had stale session-pooler password material. Commit `5c5e9b37` added a bounded runtime schema-ensure fallback that applied exact migration 005 through the existing hosted app DB connection only when the Lane 282 table was missing; pre-write status then returned `no_production_tracking_record`, `storage_available=true`, `record_count=0`, and durable field record count `1`.
+
+Hosted validation passed:
+
+- deployed mutation-seam smoke: `RESULT PASS`
+- hosted PM intake smoke: `PM_INTAKE_HOSTED_SUMMARY failed=0`
+- hosted operations routes smoke: `SMOKE_SUMMARY failed=0 passed=12`
+
 ## Next Blocker
 
-After live production tracking baseline closeout, the next blocker is customer reporting and completion evidence admission after production tracking proof.
+`STOPPED_AWAITING_CUSTOMER_REPORTING_COMPLETION_EVIDENCE_ADMISSION_PACKET_AFTER_PRODUCTION_TRACKING`
