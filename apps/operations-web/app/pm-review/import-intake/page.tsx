@@ -160,12 +160,31 @@ type ApprovalPersistenceStatus = {
   error_type?: string
 }
 
+type TaskPlanStatus = {
+  classification?: string
+  route?: string
+  task_plan_route?: string
+  task_plan_authority?: string
+  project_id?: string
+  persisted_at?: string | null
+  current_candidate_match?: boolean
+  planning_context_only?: boolean
+  persisted_row_counts?: {
+    projects?: number
+    workpackages?: number
+    tasks?: number
+    apparatus?: number
+  }
+  blocked_downstream?: string[]
+}
+
 type IntakeWorkbenchPacket = {
   candidate: CandidatePayload
   admissionPlan: AdmissionPlan
   approvalContract: ApprovalContract
   storagePlan: ApprovalStoragePlan
   approvalStatus: ApprovalPersistenceStatus
+  taskPlanStatus: TaskPlanStatus
 }
 
 type ReviewChecklistItem = {
@@ -990,15 +1009,16 @@ async function readJson<T>(path: string): Promise<T> {
 }
 
 async function readIntakeWorkbench(): Promise<IntakeWorkbenchPacket> {
-  const [candidate, admissionPlan, approvalContract, storagePlan, approvalStatus] = await Promise.all([
+  const [candidate, admissionPlan, approvalContract, storagePlan, approvalStatus, taskPlanStatus] = await Promise.all([
     readJson<CandidatePayload>('project-import-candidate'),
     readJson<AdmissionPlan>('project-import-admission-plan'),
     readJson<ApprovalContract>('project-import-approval-contract'),
     readJson<ApprovalStoragePlan>('project-import-approval-storage-plan'),
     readJson<ApprovalPersistenceStatus>('project-import-approval-status'),
+    readJson<TaskPlanStatus>('project-import-task-plan-status'),
   ])
 
-  return { candidate, admissionPlan, approvalContract, storagePlan, approvalStatus }
+  return { candidate, admissionPlan, approvalContract, storagePlan, approvalStatus, taskPlanStatus }
 }
 
 function formatLabel(value?: string | null) {
@@ -1038,6 +1058,20 @@ function approvalStatusSummary(status?: ApprovalPersistenceStatus | null) {
   if (!status) return 'waiting for approval status read'
   const storage = status.approval_storage_available === false ? 'storage unavailable' : 'storage available'
   return `${formatLabel(status.classification)}; ${storage}; import authority ${formatLabel(status.import_authority || 'not_admitted')}`
+}
+
+function taskPlanStatusTone(status?: TaskPlanStatus | null) {
+  const classification = status?.classification || ''
+  if (!status) return 'status-awaiting-values'
+  if (classification === 'task_plan_persisted') return 'status-configured'
+  if (classification === 'no_task_plan_record') return 'status-awaiting-values'
+  return 'status-deferred'
+}
+
+function taskPlanStatusSummary(status?: TaskPlanStatus | null) {
+  if (!status) return 'waiting for task-plan status read'
+  const planningBoundary = status.planning_context_only === false ? 'planning boundary unclear' : 'planning only'
+  return `${formatLabel(status.classification)}; ${planningBoundary}; route ${status.task_plan_route || 'not reported'}`
 }
 
 function approvalDryRunReadinessTone(status: ApprovalDryRunReadinessStatus) {
@@ -1802,7 +1836,8 @@ function buildApprovalDryRunReadinessExport(
 ) {
   const candidate = packet.candidate
   const admissionPlan = packet.admissionPlan
-  const approvalStatus = packet.approvalStatus
+  const approvalStatus = packet?.approvalStatus
+  const taskPlanStatus = packet?.taskPlanStatus
   const counts = approvalDryRunReadinessCounts(readinessItems)
   const warnings = candidate.warnings || []
 
@@ -4442,6 +4477,18 @@ function buildIntakeBrief(
     `- Read route: ${approvalStatus.route || '/api/v1/reads/project-import-approval-status'}`,
     '',
     'This status readback is informational only. It is not approval, persistence authority, import authority, assignment, schedule, status, or production state.',
+    '',
+    '## Durable Task Plan Status Readback',
+    '',
+    `Status: ${taskPlanStatusSummary(packet.taskPlanStatus)}.`,
+    '',
+    `- Current candidate match: ${formatValue(packet.taskPlanStatus.current_candidate_match)}`,
+    `- Planning boundary: ${packet.taskPlanStatus.planning_context_only === false ? 'not reported as planning only' : 'planning only'}`,
+    `- Persisted rows: ${packet.taskPlanStatus.persisted_row_counts ? `${formatCount(packet.taskPlanStatus.persisted_row_counts.tasks)} tasks / ${formatCount(packet.taskPlanStatus.persisted_row_counts.apparatus)} apparatus` : 'no planning rows persisted yet'}`,
+    `- Task-plan authority: ${packet.taskPlanStatus.task_plan_authority || 'not reported'}`,
+    `- Read route: ${packet.taskPlanStatus.route || '/api/v1/reads/project-import-task-plan-status'}`,
+    '',
+    'This task-plan readback is informational only. It preserves PM grouping context and does not approve, import, assign, schedule, change status, or mutate production state.',
     '',
     '## PM Operating Queue',
     '',
@@ -8013,6 +8060,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
   const approvalContract = packet?.approvalContract
   const storagePlan = packet?.storagePlan
   const approvalStatus = packet?.approvalStatus
+  const taskPlanStatus = packet?.taskPlanStatus
   const summary = candidate?.summary || {}
   const project = candidate?.project || {}
   const warnings = candidate?.warnings || []
@@ -10429,6 +10477,46 @@ export default function ProjectMinerIntakeWorkbenchPage() {
                     </dl>
                     <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
                       Status readback only. This panel does not approve, persist, import, assign, schedule, change status, or mutate production state.
+                    </p>
+                  </article>
+                  <article className="notes-card">
+                    <h2>Durable Task Plan Status</h2>
+                    <dl className="contract-panel">
+                      <div>
+                        <dt>Status</dt>
+                        <dd>
+                          <span className={`status-pill ${taskPlanStatusTone(taskPlanStatus)}`}>
+                            {formatLabel(taskPlanStatus?.classification)}
+                          </span>
+                        </dd>
+                      </div>
+                      <div>
+                        <dt>Current candidate match</dt>
+                        <dd>{formatValue(taskPlanStatus?.current_candidate_match)}</dd>
+                      </div>
+                      <div>
+                        <dt>Planning boundary</dt>
+                        <dd>{taskPlanStatus?.planning_context_only === false ? 'not reported as planning only' : 'planning only'}</dd>
+                      </div>
+                      <div>
+                        <dt>Persisted rows</dt>
+                        <dd>
+                          {taskPlanStatus?.persisted_row_counts
+                            ? `${formatCount(taskPlanStatus.persisted_row_counts.tasks)} tasks · ${formatCount(taskPlanStatus.persisted_row_counts.apparatus)} apparatus`
+                            : 'no planning rows persisted yet'}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt>Task-plan authority</dt>
+                        <dd>{taskPlanStatus?.task_plan_authority || 'not reported'}</dd>
+                      </div>
+                      <div>
+                        <dt>Read route</dt>
+                        <dd>{taskPlanStatus?.route || '/api/v1/reads/project-import-task-plan-status'}</dd>
+                      </div>
+                    </dl>
+                    <p style={{ margin: '0.65rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+                      {taskPlanStatusSummary(taskPlanStatus)}. Durable task-plan rows preserve PM grouping context only; they do not approve, import, assign, schedule, change status, or mutate production state.
                     </p>
                   </article>
                 </div>

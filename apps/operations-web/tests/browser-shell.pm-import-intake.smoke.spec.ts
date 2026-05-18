@@ -517,6 +517,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
     approvalContract: 0,
     storagePlan: 0,
     approvalStatus: 0,
+    taskPlanStatus: 0,
   }
   const mutationRequests: string[] = []
 
@@ -729,6 +730,30 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
     })
   })
 
+  await page.route('**/api/v1/reads/project-import-task-plan-status', async (route) => {
+    expect(route.request().method()).toBe('GET')
+    readCalls.taskPlanStatus += 1
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        classification: 'no_task_plan_record',
+        route: '/api/v1/reads/project-import-task-plan-status',
+        task_plan_route: '/api/v1/mutations/project-import-task-plans',
+        task_plan_authority: 'admitted_by_pm_lane_361_task_plan_persistence',
+        current_candidate_match: false,
+        planning_context_only: true,
+        persisted_row_counts: {
+          projects: 0,
+          workpackages: 0,
+          tasks: 0,
+          apparatus: 0,
+        },
+        blocked_downstream: ['approval', 'import', 'schedule', 'finance'],
+      }),
+    })
+  })
+
   const response = await page.goto('/pm-review/import-intake', { waitUntil: 'networkidle' })
   expect(response?.ok()).toBeTruthy()
 
@@ -755,7 +780,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(routeLinks.getByRole('heading', { name: 'Route Links', exact: true })).toBeVisible()
   await expect(routeLinks.getByLabel('PM intake route link groups')).toBeVisible()
   await expect(routeLinks.getByLabel('Shell route links').getByRole('heading', { name: 'Shell', exact: true })).toBeVisible()
-  await expect(routeLinks.getByLabel('Shell route links').getByRole('link')).toHaveCount(1)
+  await expect(routeLinks.getByLabel('Shell route links').getByRole('link')).toHaveCount(2)
   await expect(routeLinks.getByLabel('Intake Reads route links').getByRole('heading', { name: 'Intake Reads', exact: true })).toBeVisible()
   await expect(routeLinks.getByLabel('Intake Reads route links').getByRole('link')).toHaveCount(3)
   await expect(routeLinks.getByLabel('PM Workfront route links').getByRole('heading', { name: 'PM Workfront', exact: true })).toBeVisible()
@@ -768,15 +793,16 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await routeLinkDisclosure.locator(':scope > summary').click()
   await expect(routeLinkDisclosure).toHaveAttribute('open', '')
   await expect(routeLinks.getByLabel('PM intake route link groups')).toBeVisible()
-  await expect(routeLinks.getByLabel('Shell route links').getByRole('link')).toHaveCount(1)
+  await expect(routeLinks.getByLabel('Shell route links').getByRole('link')).toHaveCount(2)
   await expect(routeLinks.getByLabel('Intake Reads route links').getByRole('link')).toHaveCount(3)
   await expect(routeLinks.getByLabel('PM Workfront route links').getByRole('link')).toHaveCount(1)
   await expect(routeLinks.getByRole('link', { name: 'Return to shell', exact: true })).toHaveAttribute('href', '/')
+  await expect(routeLinks.getByRole('link', { name: 'Project overview', exact: true })).toHaveAttribute('href', '/pm-review/project-overview')
   await expect(routeLinks.getByRole('link', { name: 'Import candidate', exact: true })).toHaveAttribute('href', '/pm-review/import-candidate')
   await expect(routeLinks.getByRole('link', { name: 'Admission plan', exact: true })).toHaveAttribute('href', '/pm-review/import-admission-plan')
   await expect(routeLinks.getByRole('link', { name: 'Approval readiness', exact: true })).toHaveAttribute('href', '/pm-review/import-approval-readiness')
   await expect(routeLinks.getByRole('link', { name: 'PM workfront', exact: true })).toHaveAttribute('href', '/pm-review/workfront')
-  for (const target of ['/', '/pm-review/import-candidate', '/pm-review/import-admission-plan', '/pm-review/import-approval-readiness', '/pm-review/workfront']) {
+  for (const target of ['/', '/pm-review/project-overview', '/pm-review/import-candidate', '/pm-review/import-admission-plan', '/pm-review/import-approval-readiness', '/pm-review/workfront']) {
     await expect(routeLinks.locator(`a[href="${target}"]`)).toHaveCount(1)
   }
   const outputActionRail = page.getByLabel('PM intake output action rail')
@@ -1719,11 +1745,12 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   const approvalStatusContextGroup = admissionApprovalContractGroups.getByLabel('Approval Status Context contract group')
   await expect(admissionShapeContextGroup.getByLabel('Admission Shape Context contract cards').locator(':scope > article')).toHaveCount(1)
   await expect(approvalContractContextGroup.getByLabel('Approval Contract Context contract cards').locator(':scope > article')).toHaveCount(1)
-  await expect(approvalStatusContextGroup.getByLabel('Approval Status Context contract cards').locator(':scope > article')).toHaveCount(1)
-  await expect(admissionApprovalContractGroups.locator('.notes-card')).toHaveCount(3)
+  await expect(approvalStatusContextGroup.getByLabel('Approval Status Context contract cards').locator(':scope > article')).toHaveCount(2)
+  await expect(admissionApprovalContractGroups.locator('.notes-card')).toHaveCount(4)
   await expect(admissionApprovalContractGroups.getByRole('heading', { name: 'Admission Shape', exact: true })).toBeVisible()
   await expect(admissionApprovalContractGroups.getByRole('heading', { name: 'Approval Contract', exact: true })).toBeVisible()
   await expect(admissionApprovalContractGroups.getByRole('heading', { name: 'Approval Status Readback', exact: true })).toBeVisible()
+  await expect(admissionApprovalContractGroups.getByRole('heading', { name: 'Durable Task Plan Status', exact: true })).toBeVisible()
   await expect(admissionApprovalContract.getByText('pm-import-candidate-miner-temp-power-admission-plan')).toBeVisible()
   await expect(admissionApprovalContract.getByText('project rows: 1; workpackage rows: 7; task rows: 15; apparatus rows: 186; approval rows: 1; write authority: not_admitted')).toBeVisible()
   await expect(admissionShapeContextGroup.getByText('No-go checks')).toBeVisible()
@@ -1735,6 +1762,8 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(admissionApprovalContract.getByText('/api/v1/mutations/project-import-approvals')).toBeVisible()
   await expect(admissionApprovalContract.getByText('no approval record')).toBeVisible()
   await expect(admissionApprovalContract.getByText('/api/v1/reads/project-import-approval-status')).toBeVisible()
+  await expect(admissionApprovalContract.getByText('no task plan record', { exact: true })).toBeVisible()
+  await expect(admissionApprovalContract.getByText('/api/v1/reads/project-import-task-plan-status')).toBeVisible()
   await expect(approvalStatusContextGroup.getByText(/Status readback only\. This panel does not approve, persist, import, assign, schedule, change status, or mutate production state\./i)).toBeVisible()
   await admissionApprovalContract.locator(':scope > summary').click()
   await expect(admissionApprovalContract).not.toHaveAttribute('open', '')
@@ -1747,7 +1776,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(admissionApprovalContractControls).toBeVisible()
   await expect(admissionApprovalContractGroups).toBeVisible()
   await expect(admissionApprovalContractGroups.locator(':scope > section')).toHaveCount(3)
-  await expect(admissionApprovalContractGroups.locator('.notes-card')).toHaveCount(3)
+  await expect(admissionApprovalContractGroups.locator('.notes-card')).toHaveCount(4)
   const checklist = page.locator('details[aria-label="Local review checklist"]')
   await expect(checklist).toHaveAttribute('open', '')
   const checklistBodyControls = checklist.getByLabel('Local review checklist controls')
@@ -5394,5 +5423,6 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
     approvalContract: 1,
     storagePlan: 1,
     approvalStatus: 1,
+    taskPlanStatus: 1,
   })
 })
