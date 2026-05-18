@@ -57,6 +57,7 @@ Current workflow truth:
 4. There is no remaining blocker inside this admitted slice.
 5. PM Lane 316 records the next follow-on boundary: customer-delivery and durable-proof admission.
 6. PM Lane 317 resolves that follow-on boundary as a design-first contract packet, not direct implementation, and keeps finance and source-writeback out of scope.
+7. PM Lane 318 turns that contract into an inspection-only PM-facing review-surface definition; storage and runtime delivery still remain separate later packets.
 
 Use this section first when continuing the Temp Power workflow. The detailed PM intake sections below remain valid background, but they are not the controlling next move.
 

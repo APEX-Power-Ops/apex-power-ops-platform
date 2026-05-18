@@ -1,0 +1,47 @@
+{
+  "packet_id": "2026-05-18-pm-lane-318",
+  "title": "PM Lane 318 - Project Miner Temp Power Customer Delivery And Durable Proof Review Surface Design No-Live Packet",
+  "status": "complete",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_CUSTOMER_DELIVERY_DURABLE_PROOF_REVIEW_SURFACE_DESIGN_NO_LIVE_NO_OUTPUT_WRITE",
+  "selected_outcome": "CUSTOMER_DELIVERY_DURABLE_PROOF_REVIEW_SURFACE_DESIGN_READY_NO_LIVE",
+  "authority_basis": "Standing PM blocker authority and repo technical authority, used here to convert Lane 317's delivery/proof contract into the next bounded PM-facing review surface definition without admitting storage, route, or delivery execution.",
+  "dependencies": [
+    "2026-05-18-pm-lane-291",
+    "2026-05-18-pm-lane-315",
+    "2026-05-18-pm-lane-316",
+    "2026-05-18-pm-lane-317"
+  ],
+  "activation_condition": [
+    "Lane 317 already defines the customer delivery and durable proof contract fields and validator rules.",
+    "No Temp Power PM-facing customer delivery and durable proof review-surface packet exists yet.",
+    "The next blocker after lane 317 is still design-only and does not yet justify storage or runtime admission."
+  ],
+  "current_truth": [
+    "Lane 315 remains the hosted-green runtime baseline, and it still blocks delivery execution inside the current customer-preview review slice.",
+    "Lane 317 defines the future delivery/proof contract around preview-review linkage, recipient identity, delivery channel, delivered artifact refs, delivery timestamp, proof type/ref, and PM delivery approval fields.",
+    "The next bounded step is to define one PM-facing inspection-only review surface that shows this future delivery/proof contract clearly without creating a write path.",
+    "Storage planning, runtime persistence, readback routes, and any live durable delivery claim remain separate later packets.",
+    "Finance/payroll/billing/invoice/accounting outputs and source writeback remain outside this lane."
+  ],
+  "allowed_actions": [
+    "Define required PM-facing review sections, display rules, review-only states, and export-safe artifacts for future delivery/proof inspection.",
+    "Keep the surface inspection-only and no-live.",
+    "Preserve visible blocked boundaries for finance, writeback, and runtime delivery execution."
+  ],
+  "not_allowed": [
+    "No product code, schema, route, UI implementation, or hosted action.",
+    "No storage plan or persistence contract beyond read-only review-surface design.",
+    "No live or local POST claiming customer delivery or proof recording occurred.",
+    "No finance, payroll, billing, invoice, accounting, external finance sync, or source writeback work.",
+    "No auth, ingress, DNS, or secret changes."
+  ],
+  "validation": [
+    "Packet JSON parses",
+    "Decision label, selected outcome, required surface sections, display rules, and blocked-domain boundaries are present across touched lane 318 files",
+    "Canonical PM docs/status route the next follow-on step through review-surface design rather than storage or runtime delivery admission",
+    "git diff --check passes for touched lane 318 and canonical PM doc surfaces"
+  ],
+  "validation_result": "PASS: lane 318 defines the PM-facing delivery/proof review surface as inspection-only and keeps storage, runtime delivery, finance, and source-writeback widening deferred.",
+  "next_blocker": "STOPPED_AWAITING_CUSTOMER_DELIVERY_DURABLE_PROOF_STORAGE_PLAN_DESIGN_NO_LIVE_PACKET",
+  "current_status": "closed"
+}

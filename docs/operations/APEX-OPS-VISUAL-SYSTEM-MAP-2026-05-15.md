@@ -239,6 +239,7 @@ For the current Temp Power PM lane work, start here:
 6. Both hosted seam URLs now pass the bounded `--include-temp-power-actuals-review` and `--include-temp-power-customer-preview-review` smoke, so the admitted actuals plus customer-preview review first-write slice is complete within current scope.
 7. Treat PM Lane 316 as the next-boundary marker: any follow-on lane starts with customer delivery and durable proof admission, not finance or source writeback.
 8. Treat PM Lane 317 as the current design marker: the next delivery/proof work is design-first contract work, not direct implementation.
+9. Treat PM Lane 318 as the current review-design marker: the next delivery/proof work is an inspection-only PM surface, while storage and runtime admission stay deferred.
 
 For AI orchestration work, start here:
 

@@ -283,7 +283,8 @@ Current blocker truth:
 4. there is no remaining blocker inside the admitted branch,
 5. PM Lane 316 now fixes the next expected blocker as separate customer delivery and durable proof admission,
 6. PM Lane 317 now fixes the next expected move as design-first customer delivery and durable proof contract definition,
-7. wider finance and source-writeback work still requires later separate admission beyond that adjacent delivery boundary.
+7. PM Lane 318 now fixes the next expected move as PM-facing customer delivery and durable proof review-surface design,
+8. wider finance and source-writeback work still requires later separate admission beyond that adjacent delivery boundary.
 
 Use the current active branch refresh above before following the historical tranche narrative below.
 
