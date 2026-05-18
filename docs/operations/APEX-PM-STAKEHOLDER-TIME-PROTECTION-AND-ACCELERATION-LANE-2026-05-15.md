@@ -958,6 +958,8 @@ PM Lane 276 converts that operational Render unblock into a VS Code Copilot hand
 
 PM Lane 276 executor return is accepted. The existing Render mutation-seam service now serves the Temp Power snapshot from hosted secret-file storage, and independent hosted validation confirms `pm-import-candidate-miner-temp-power`, 7 workpackages, 15 tasks, 184 apparatus candidates, source fingerprint `e111fdbe934bf9de07ed24c1`, shape fingerprint `ddc49565eb586af913ad48b2`, warning `PROJECT_DATA_ENTRY_FORMULA_ERRORS`, `mutation_authority: not_admitted`, and approval status `no_approval_record`. This clears the hosted-read blocker without creating approval rows or importing project data.
 
+PM Lane 277 accepts Jason's current standing blocker authority for the PM framework and uses it for the next narrow blocker only: first approval-record persistence. Hosted preflight and post-write smokes passed; the first application-path POST returned `accepted`, same-payload replay returned `idempotent_hit`, and approval-status readback now reports `approved_for_import_packet` with exactly one row for the current Temp Power candidate. This reduces relay burden by clearing the approval-row gate while preserving project import and all downstream field, schedule, customer, production, and finance writes as separately packeted.
+
 The success standard is not just technical correctness. The candidate must reduce Jason's review burden by showing:
 
 1. what the system thinks the project is,

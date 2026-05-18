@@ -143,6 +143,22 @@ Required behavior:
 
 This rule does not remove governance. It compresses governance around the risks that matter: production data, schema, auth, ingress, deployment, AI business mutation, workbook macro execution, new service admission, and field-facing workflow changes.
 
+## 7C. PM Lane Standing Blocker Authority Extension
+
+On 2026-05-18 Jason supplied current stakeholder authority for Codex to clear PM-lane blocker items along the predetermined framework and path end-to-end without stopping for a separate approval turn at each step.
+
+This extension converts that instruction into repo-owned authority for bounded PM packets only. Codex may author, admit, execute, validate, close out, commit, push, and restore host parity for the next predetermined PM-lane blocker when all of these are true:
+
+1. the current packet names the exact write or hosted action being opened,
+2. the action is already part of the PM Lane 141 through PM Lane 276 framework or a direct successor packet,
+3. the packet records the stakeholder authority, decision value, review notes, pre-write evidence, idempotency or replay proof when applicable, and unchanged downstream boundary proof,
+4. the action uses the admitted application/API path and not direct table mutation unless a later packet explicitly admits read-only database proof,
+5. project import, field authorization, lead/crew assignment, schedule/status mutation, durable field records, production tracking, customer reporting, billing, payroll, invoice, accounting, workbook writeback, workbook macros, secrets, schema, auth, ingress, DNS, new services, and autonomous AI business-state mutation remain separately packeted.
+
+For PM Lane 277, this authority admits exactly one first approval-row execution for the current hosted Temp Power import candidate through `POST /api/v1/mutations/project-import-approvals`, followed by one same-payload idempotent replay. The approved PM decision value is `approve_for_import_packet`; the accepted warning code is `PROJECT_DATA_ENTRY_FORMULA_ERRORS`; the acknowledged human-acceptance check is `warnings-reviewed-by-pm`; and project import remains `not_admitted` after the approval row is created.
+
+This extension does not create standing permission for destructive git recovery, schema migration, secret exposure, direct SQL approval-row insertion, new service admission, source workbook/PDF writeback, workbook macros, public ingress/auth changes, or autonomous PM business-state mutation. Those remain stop conditions unless a later packet explicitly admits the narrow action with validation.
+
 ## 8. AI Orchestration Guardrails
 
 The admitted AI/operator service boundary remains:

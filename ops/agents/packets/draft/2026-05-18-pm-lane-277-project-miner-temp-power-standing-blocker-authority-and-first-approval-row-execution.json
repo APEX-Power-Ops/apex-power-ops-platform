@@ -1,0 +1,117 @@
+{
+  "packet_id": "2026-05-18-pm-lane-277",
+  "title": "Project Miner Temp Power Standing Blocker Authority And First Approval Row Execution",
+  "objective": "Record the current stakeholder authority to clear PM-lane blocker approvals along the predetermined framework, then execute exactly one first approval-record persistence row for the current hosted Temp Power import candidate with one same-payload idempotent replay and no project import.",
+  "domain": "pm-domain",
+  "active_role": "VS Code Codex Technical Repo Authority / PM Stakeholder Delegate / Approval Row Executor",
+  "source_floor": {
+    "branch": "clean-main",
+    "commit": "646a56824773a2908b435874b0da8147fb5ce5e9",
+    "meaning": "PM Lane 276 Render executor return accepted; hosted mutation-seam serves the Temp Power snapshot and approval status is no_approval_record."
+  },
+  "dependencies": [
+    "2026-05-16-pm-lane-141",
+    "2026-05-16-pm-lane-142",
+    "2026-05-17-pm-lane-266",
+    "2026-05-17-pm-lane-267",
+    "2026-05-18-pm-lane-276"
+  ],
+  "stakeholder_authority": {
+    "authority_date": "2026-05-18",
+    "summary": "Jason instructed Codex to move forward with authority for approval of all blocker items that allows work on the predetermined PM lane framework and path end-to-end without stopping for approval at each step as repo technical authority and project stakeholder.",
+    "bounded_interpretation": "This packet admits the next predetermined PM blocker only: first approval-row persistence for the current hosted Temp Power candidate. Later import and downstream writes require their own bounded packet but do not require a separate chat approval if they stay inside the standing authority and validation path."
+  },
+  "admitted_write": {
+    "method": "POST",
+    "route": "/api/v1/mutations/project-import-approvals",
+    "target_table": "seam.pm_import_candidate_approvals",
+    "entity_type": "pm_import_candidate_approval",
+    "action_type": "persist_import_approval",
+    "decision": "approve_for_import_packet",
+    "first_row_only": true,
+    "same_payload_replay_required": true,
+    "project_import_authority_after_write": "not_admitted"
+  },
+  "expected_candidate": {
+    "candidate_id": "pm-import-candidate-miner-temp-power",
+    "candidate_version": "pm_import_candidate_read_only_v1",
+    "workpackages": 7,
+    "tasks": 15,
+    "apparatus_candidates": 184,
+    "warning_codes": [
+      "PROJECT_DATA_ENTRY_FORMULA_ERRORS"
+    ],
+    "blockers": 0,
+    "source_stat_fingerprint": "e111fdbe934bf9de07ed24c1",
+    "candidate_shape_fingerprint": "ddc49565eb586af913ad48b2",
+    "idempotency_key": "pm-import:a2acafe8e9928899e8645736"
+  },
+  "payload_requirements": {
+    "accepted_warning_codes": [
+      "PROJECT_DATA_ENTRY_FORMULA_ERRORS"
+    ],
+    "accepted_no_go_overrides": [
+      "warnings-reviewed-by-pm"
+    ],
+    "review_notes": "Stakeholder/PM authority on 2026-05-18 admits first approval-row persistence for the current Temp Power candidate, accepts PROJECT_DATA_ENTRY_FORMULA_ERRORS as reviewed non-blocking warning context for a later import packet, and keeps project import plus downstream field/schedule/resource/customer/production/finance writes blocked."
+  },
+  "preflight_requirements": [
+    "deployed mutation-seam smoke with PM intake RESULT PASS",
+    "operations-web hosted smoke SMOKE_SUMMARY failed=0",
+    "paired PM intake hosted smoke PM_INTAKE_HOSTED_SUMMARY failed=0",
+    "hosted candidate readback matches pm-import-candidate-miner-temp-power and expected counts/fingerprints",
+    "approval status readback reports no_approval_record and approval_record_count_for_candidate=0",
+    "downstream accessible counts are captured before the write"
+  ],
+  "post_write_requirements": [
+    "first POST returns status accepted",
+    "first POST returns entity_type pm_import_candidate_approval and action_type persist_import_approval",
+    "first POST returns new_state.import_authority not_admitted",
+    "same-payload replay returns idempotent_hit",
+    "approval status readback returns approved_for_import_packet and approval_record_count_for_candidate=1",
+    "downstream accessible counts remain unchanged",
+    "project import remains blocked"
+  ],
+  "not_allowed": [
+    "No project import mutation.",
+    "No workpackage, task, apparatus, source-trace, warning-review, assignment, schedule, status, field record, production tracking, customer report, billing, payroll, invoice, accounting, or external finance-system write.",
+    "No direct SQL insertion for the approval row.",
+    "No schema migration.",
+    "No Render, Vercel, Supabase, Olares, DNS, auth, ingress, or new service change.",
+    "No source workbook or PDF content edit or writeback.",
+    "No workbook macro execution.",
+    "No secret exposure.",
+    "No autonomous AI business-state mutation."
+  ],
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/docs/authority/APEX-OPS-DELEGATED-AUTHORITY-AND-AI-ORCHESTRATION-PROTOCOL-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/APEX-PM-LANE-277-PROJECT-MINER-TEMP-POWER-STANDING-BLOCKER-AUTHORITY-AND-FIRST-APPROVAL-ROW-EXECUTION-2026-05-18.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-18-pm-lane-277-project-miner-temp-power-standing-blocker-authority-and-first-approval-row-execution.json",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-18-pm-lane-277-project-miner-temp-power-standing-blocker-authority-and-first-approval-row-execution-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-18-pm-lane-277-project-miner-temp-power-standing-blocker-authority-and-first-approval-row-execution-closeout.md",
+    "C:/APEX Platform/apex-power-ops-platform/PROJECT_STATUS.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/APEX-PM-STAKEHOLDER-TIME-PROTECTION-AND-ACCELERATION-LANE-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/APEX-PM-TEMP-POWER-DELIVERY-AND-ORCHESTRATION-PLAN-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-17-desktop-codex-parallel-lane-orchestration-queue.md"
+  ],
+  "validation_steps": [
+    "Hosted preflight smokes and readbacks",
+    "First approval POST",
+    "Same-payload idempotent replay",
+    "Approval-status readback",
+    "Downstream accessible count comparison",
+    "Packet JSON parse",
+    "PM Lane 277 text search",
+    "Guardrail keyword scan",
+    "git diff --check"
+  ],
+  "live_post_permission": true,
+  "project_import_permission": false,
+  "sql_permission": false,
+  "schema_permission": false,
+  "hosted_deploy_permission": false,
+  "ai_mutation_authority": "approval_record_only_not_project_import",
+  "created_at": "2026-05-18",
+  "updated_at": "2026-05-18"
+}
