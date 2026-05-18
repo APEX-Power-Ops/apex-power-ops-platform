@@ -1,0 +1,54 @@
+{
+  "packet_id": "2026-05-18-pm-lane-314",
+  "title": "PM Lane 314 - Project Miner Temp Power Actuals Route Publication Gate After Authenticated Redeploy",
+  "status": "complete",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_ACTUALS_ROUTE_PUBLICATION_GATE_AFTER_AUTHENTICATED_REDEPLOY",
+  "selected_outcome": "ACTUALS_ROUTE_PUBLICATION_GATE_READY",
+  "authority_basis": "Standing PM blocker authority and repo technical authority, constrained to truthful blocker reclassification and bounded publication follow-through planning after authenticated Render execution succeeded.",
+  "dependencies": [
+    "2026-05-18-pm-lane-304",
+    "2026-05-18-pm-lane-305",
+    "2026-05-18-pm-lane-306",
+    "2026-05-18-pm-lane-307",
+    "2026-05-18-pm-lane-308",
+    "2026-05-18-pm-lane-309",
+    "2026-05-18-pm-lane-310",
+    "2026-05-18-pm-lane-311",
+    "2026-05-18-pm-lane-312",
+    "2026-05-18-pm-lane-313",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-18-pm-lane-308-render-authenticated-actuals-route-redeploy-executor-closeout.md"
+  ],
+  "activation_condition": [
+    "Authenticated Render execution is complete.",
+    "The existing mutation-seam service is live on current committed clean-main.",
+    "Both hosted seam URLs still omit the Temp Power actuals routes and return framework 404 for the actuals readback route.",
+    "The admitted actuals route slice remains modified or untracked in the local worktree rather than published in clean-main."
+  ],
+  "current_truth": [
+    "Render auth was not the real remaining blocker once browser-authenticated execution became available.",
+    "Manual redeploy of the existing service succeeded and produced live deploy dep-d85ipjjeo5us73f02c6g on commit 2bd07725d97d8b806d1c0e35e98e6595c5b1d584.",
+    "Both the custom domain and the Render hostname still omit the Temp Power actuals routes and return framework 404 for the actuals readback route.",
+    "The admitted actuals route implementation and proof slice are still local-only worktree changes, so current committed clean-main cannot expose those routes yet."
+  ],
+  "allowed_actions": [
+    "Publish only the admitted Temp Power actuals route slice to clean-main using the existing repo boundary.",
+    "After publication, rely on auto-deploy or rerun the existing Lane 308 bounded redeploy step against the same service.",
+    "Rerun the bounded hosted smoke with --include-temp-power-actuals-review after publication."
+  ],
+  "not_allowed": [
+    "No hosted actuals POST.",
+    "No customer-preview route execution.",
+    "No SQL or schema widening beyond the already-authored admitted slice.",
+    "No auth, ingress, DNS, or secret changes.",
+    "No new service creation.",
+    "No finance, delivery, or source-writeback widening."
+  ],
+  "validation": [
+    "Packet JSON parse",
+    "Decision-label and selected-outcome marker search across touched Lane 314 files",
+    "git diff --check on touched Lane 314 files"
+  ],
+  "validation_result": "PASS: the blocker is now truthfully reframed as a publication gate, not an external-auth gate, and the next bounded move is pre-packaged.",
+  "next_blocker": "PUBLISH_ADMITTED_ACTUALS_ROUTE_SLICE_TO_CLEAN_MAIN_BEFORE_HOSTED_RETRY",
+  "current_status": "complete"
+}

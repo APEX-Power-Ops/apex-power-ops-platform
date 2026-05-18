@@ -34,6 +34,9 @@ The short version:
 ## Current Platform Split
 
 ```mermaid
+---
+id: 333df061-b7a1-4188-81a7-22aa18b63452
+---
 flowchart LR
   Users["PM / Operations / Lead / Field users"]
   Vercel["Vercel<br/>user-facing UI<br/>pm-review, lead-ops, field-tech"]
@@ -80,6 +83,9 @@ Read this as two connected lanes:
 ## Project Miner PM Lane Flow
 
 ```mermaid
+---
+id: 0392806f-7143-4549-80aa-f2068b08d2cf
+---
 flowchart TD
   L0["Level 0<br/>Source intake<br/>Planning folder exists and files resolve"]
   L1["Level 1<br/>Scope extraction<br/>Estimator rows, PDFs, designations, source rows"]
@@ -117,6 +123,9 @@ The important idea: the first live Temp Power move is not "dump Excel into the d
 ## Day-To-Day PM Operation
 
 ```mermaid
+---
+id: 3bc990b1-0a52-4a9c-a9ad-015a32887c77
+---
 sequenceDiagram
   participant Est as Estimator / Source Folder
   participant Ops as PM / Operations
@@ -145,6 +154,9 @@ sequenceDiagram
 ## AI Orchestration Split
 
 ```mermaid
+---
+id: 01aa8299-ad7a-47df-bf17-8a7014d28d37
+---
 flowchart LR
   Stakeholder["Stakeholder intent<br/>business priority and exception authority"]
   Coordinator["Codex coordinator<br/>repo authority, PM sequencing, audit, release gate"]
@@ -177,6 +189,9 @@ The default is one executor. Two lanes are only useful when the work is clearly 
 ## Current Authority Boundary
 
 ```mermaid
+---
+id: e71dab8f-dfd5-4085-9b2b-0b3044cb7f04
+---
 flowchart TB
   subgraph Current["Admitted now"]
     C1["Read-only planning-folder preview"]
@@ -214,12 +229,13 @@ This is the key safety line: AI can help explain, group, summarize, and warn. AI
 
 ## Where To Start
 
-For the next Temp Power PM lane work, start here:
+For the current Temp Power PM lane work, start here:
 
-1. Confirm the planning folder preview still resolves real Project Miner files.
-2. Build the read-only import-candidate review output.
-3. Show the candidate in the PM UI.
-4. Only after human review and a separate admitted packet, add the narrow import mutation.
+1. Treat the original import-candidate and PM-intake parity branches as completed background, not as the current blocker.
+2. Use the controlling actuals-branch admission phrase `ADMIT_TEMP_POWER_ACTUALS_CUSTOMER_CAPTURE_REVIEW_FIRST_WRITE_PACKET_ONLY`.
+3. Treat authenticated Render redeploy as completed proof, not as the current blocker.
+4. Use PM Lane 314 as the current blocker surface because the admitted actuals route slice is still unpublished local worktree state.
+5. Publish the admitted actuals slice to `clean-main`, then rerun the bounded hosted smoke with `--include-temp-power-actuals-review`.
 
 For AI orchestration work, start here:
 

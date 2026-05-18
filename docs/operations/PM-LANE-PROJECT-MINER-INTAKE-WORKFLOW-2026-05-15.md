@@ -1,7 +1,7 @@
 # PM Lane Project Miner Intake Workflow
 
 Date: 2026-05-15
-Status: Active operator workflow
+Status: Active operator workflow with 2026-05-18 Temp Power actuals branch refresh
 Scope: Project Miner planning-folder intake into the PM lane
 
 ## Purpose
@@ -29,6 +29,33 @@ Companion acceleration lane:
 Use the acceleration lane when deciding whether a PM workflow step is actually helping. The PM lane should reduce Jason's coordination burden, not add another process he has to manually carry.
 
 Use that plan for the Temp Power delivery target, Olares One orchestration posture, dual-lane execution rules, and capability-gap escalation duty.
+
+## Current Active Temp Power Branch
+
+The original PM intake hosted-parity branch is no longer the controlling Temp Power blocker.
+
+As of 2026-05-18, the controlling Temp Power execution branch is the admitted actuals-capture-review path governed by:
+
+`ADMIT_TEMP_POWER_ACTUALS_CUSTOMER_CAPTURE_REVIEW_FIRST_WRITE_PACKET_ONLY`
+
+Current controlling sequence:
+
+1. PM Lane 304 implements local Temp Power actuals capture review persistence and readback.
+2. PM Lane 305 proves first write, replay, and readback locally.
+3. PM Lane 306 extends hosted smoke/readiness with `--include-temp-power-actuals-review`.
+4. PM Lane 307 proves the hosted blocker is service-wide stale deployment, not custom-domain drift.
+5. PM Lane 308 executed the authenticated Render redeploy and proved current committed `clean-main` is live on the existing service.
+6. PM Lane 314 is now the controlling publication gate because the admitted actuals route slice remains unpublished local worktree state.
+7. PM Lane 310 refreshes the canonical Temp Power operating plan and must now be read with the Lane 314 blocker update.
+
+Current workflow truth:
+
+1. PM intake hosted parity is already accepted and no longer the active blocker.
+2. Authenticated hosted redeploy is complete and no longer the active blocker.
+3. The remaining blocker is publication of the admitted Temp Power actuals route slice to `clean-main`, followed by a bounded hosted retry.
+4. The controlling publication handoff is `ops/agents/handoffs/2026-05-18-pm-lane-314-project-miner-temp-power-actuals-route-publication-gate-after-authenticated-redeploy-handoff.md`.
+
+Use this section first when continuing the Temp Power workflow. The detailed PM intake sections below remain valid background, but they are not the controlling next move.
 
 ## Current Source Packet
 
@@ -288,6 +315,17 @@ The status read can classify no-record, current approved, stale, returned, rejec
 This is not UI approval activation and not project import. It does not add an approval button, call the approval POST route from the browser, apply hosted SQL, deploy Render/Vercel, import project rows, run workbook macros, write workbook cells, assign work, change status, mutate schedules, or admit autonomous AI business-state action.
 
 ## Hosted Intake Parity Status
+
+PM intake hosted parity is historically important but no longer the controlling Temp Power blocker.
+
+Current controlling hosted blocker:
+
+1. both live mutation-seam hosts still omit `/api/v1/mutations/temp-power-actuals-capture-reviews` from OpenAPI,
+2. both live mutation-seam hosts still omit `/api/v1/reads/temp-power-actuals-capture-review-status` from OpenAPI,
+3. both hosts return framework `404 Not Found` for the actuals review status route,
+4. the remaining step is external Render-authenticated redeploy and bounded rerun of `apps/mutation-seam/scripts/smoke_deployed_mutation_seam.py --base-url https://mutation-seam.apexpowerops.com --include-temp-power-actuals-review`.
+
+The PM intake hosted-parity details below remain as historical branch context.
 
 PM Lane 036 promoted the operations-web PM intake routes to Vercel production:
 

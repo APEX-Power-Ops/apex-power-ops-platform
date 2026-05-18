@@ -1,0 +1,66 @@
+{
+  "packet_id": "2026-05-18-pm-lane-306",
+  "title": "PM Lane 306 - Project Miner Temp Power Actuals Capture Review Hosted Smoke Readiness Packet",
+  "status": "complete",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_ACTUALS_CAPTURE_REVIEW_HOSTED_SMOKE_READINESS_PACKET",
+  "selected_outcome": "HOSTED_ACTUALS_ROUTE_SMOKE_READINESS_IMPLEMENTED",
+  "authority_basis": "Standing PM blocker authority and standing repo technical authority to continue autonomously, constrained to no-live hosted-readiness work for the already admitted actuals route.",
+  "scope": {
+    "target_file": "apps/mutation-seam/scripts/smoke_deployed_mutation_seam.py",
+    "new_flag": "--include-temp-power-actuals-review",
+    "behavior": "Verify hosted OpenAPI registration and readback shape for the Temp Power actuals-capture review route without sending a hosted POST request."
+  },
+  "hosted_checks_prepared": {
+    "openapi_paths": [
+      "/api/v1/mutations/temp-power-actuals-capture-reviews",
+      "/api/v1/reads/temp-power-actuals-capture-review-status"
+    ],
+    "openapi_methods": {
+      "/api/v1/mutations/temp-power-actuals-capture-reviews": [
+        "post"
+      ],
+      "/api/v1/reads/temp-power-actuals-capture-review-status": [
+        "get"
+      ]
+    },
+    "readback_required_fields": [
+      "project_id",
+      "candidate_id",
+      "source_fingerprint",
+      "current_candidate_match",
+      "current_source_fingerprint_match",
+      "status",
+      "record_count",
+      "storage_route_registered",
+      "storage_source",
+      "entity_type",
+      "customer_delivery_authority",
+      "finance_authority",
+      "source_writeback_authority",
+      "durable_delivery_event"
+    ],
+    "readback_expected_boundaries": {
+      "customer_delivery_authority": "not_admitted",
+      "finance_authority": "not_admitted",
+      "source_writeback_authority": "not_admitted",
+      "durable_delivery_event": false
+    }
+  },
+  "validation": [
+    "get_errors on apps/mutation-seam/scripts/smoke_deployed_mutation_seam.py",
+    "python -m py_compile apps/mutation-seam/scripts/smoke_deployed_mutation_seam.py",
+    "Packet JSON parse",
+    "Decision-label and selected-outcome marker search across touched Lane 306 files",
+    "git diff --check on touched Lane 306 files"
+  ],
+  "validation_result": "PASS: the updated smoke script reported no diagnostics and compiled successfully; the lane records hosted-readiness only and makes no claim of hosted execution.",
+  "still_blocked": [
+    "Hosted actuals-capture review write execution",
+    "Hosted idempotent replay proof",
+    "Hosted persistence proof",
+    "POST /api/v1/mutations/temp-power-customer-preview-reviews",
+    "Any customer delivery, finance, or source-writeback admission"
+  ],
+  "next_blocker": "HOSTED_ACTUALS_ROUTE_EXECUTION_AND_CUSTOMER_PREVIEW_ROUTE_REMAIN_SEPARATELY_ADMITTED",
+  "current_status": "complete"
+}

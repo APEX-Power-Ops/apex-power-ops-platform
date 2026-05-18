@@ -1,0 +1,70 @@
+{
+  "packet_id": "2026-05-18-pm-lane-313",
+  "title": "PM Lane 313 - Project Miner Temp Power Actuals Route Post-Redeploy Code Build Defect Gate",
+  "status": "complete",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_ACTUALS_ROUTE_POST_REDEPLOY_CODE_BUILD_DEFECT_GATE",
+  "selected_outcome": "ACTUALS_ROUTE_POST_REDEPLOY_CODE_BUILD_DEFECT_GATE_READY",
+  "authority_basis": "Standing PM blocker authority and repo technical authority, constrained to a fallback repo-local code/build investigation only after Lane 308 proves deployed clean-main still omits the actuals routes.",
+  "activation_condition": [
+    "Lane 308 closeout returns final outcome BLOCKED_HOSTED_ACTUALS_ROUTE_STILL_ABSENT_AFTER_REDEPLOY.",
+    "Lane 308 hosted evidence proves existing service apex-platform-mutation-seam is on repository jasonlswenson-sys/apex-power-ops, branch clean-main, working directory apps/mutation-seam.",
+    "Lane 308 hosted evidence proves the deployed commit matches current clean-main or later current repo head under the same bounded scope.",
+    "The admitted Temp Power actuals route files are already published in clean-main and are not still local-only modified or untracked worktree state.",
+    "The missing-route condition persists after redeploy, so further redeploy repetition is no longer the truthful next move."
+  ],
+  "active_executor_lane": {
+    "lane": "PM Lane 313 - Project Miner Temp Power Actuals Route Post-Redeploy Code Build Defect Gate",
+    "packet": "ops/agents/packets/draft/2026-05-18-pm-lane-313-project-miner-temp-power-actuals-route-post-redeploy-code-build-defect-gate.json",
+    "handoff": "ops/agents/handoffs/2026-05-18-pm-lane-313-project-miner-temp-power-actuals-route-post-redeploy-code-build-defect-gate-handoff.md",
+    "prompt": "ops/agents/handoffs/2026-05-18-pm-lane-313-actuals-route-post-redeploy-code-build-defect-investigation-prompt.md"
+  },
+  "dependencies": [
+    "2026-05-18-pm-lane-304",
+    "2026-05-18-pm-lane-305",
+    "2026-05-18-pm-lane-306",
+    "2026-05-18-pm-lane-307",
+    "2026-05-18-pm-lane-308",
+    "2026-05-18-pm-lane-309",
+    "2026-05-18-pm-lane-310",
+    "2026-05-18-pm-lane-311",
+    "2026-05-18-pm-lane-312"
+  ],
+  "repo_paths": [
+    "C:/APEX Platform/apex-power-ops-platform",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/main.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/routers/reads.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/routers/temp_power_actuals_capture_reviews.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/temp_power_actuals_capture_review_persistence.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/render.yaml",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/scripts/smoke_deployed_mutation_seam.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests/test_temp_power_actuals_capture_review_persistence.py"
+  ],
+  "current_truth": [
+    "Lane 308 remains the current controlling blocker until an authenticated executor actually returns a closeout.",
+    "The fallback outcome BLOCKED_HOSTED_ACTUALS_ROUTE_STILL_ABSENT_AFTER_REDEPLOY already exists in the Lane 308 prompt and closeout template.",
+    "If the admitted actuals route slice is still unpublished local worktree state, the correct next lane is a publication gate rather than this code/build-defect gate.",
+    "No packet previously existed for the repo-local follow-on if redeploy succeeded but the routes still remained absent.",
+    "This lane removes that next coordination gap without reopening hosted exploration early."
+  ],
+  "allowed_actions": [
+    "Read the Lane 308 closeout and verify activation conditions before making any repo-local code decision.",
+    "Inspect route wiring, FastAPI OpenAPI registration, app include_router wiring, and build/deploy path alignment limited to the Temp Power actuals route surfaces.",
+    "Run focused local validation such as the actuals persistence test slice and a local OpenAPI presence check.",
+    "Apply the smallest repo-local code or build-surface fix needed if a bounded defect is confirmed."
+  ],
+  "not_allowed": [
+    "Do not rerun hosted redeploy blindly once Lane 308 proves current clean-main is already deployed.",
+    "Do not execute hosted mutation POSTs.",
+    "Do not widen into customer-preview, finance, delivery, or source-writeback scope.",
+    "Do not introduce SQL or schema work.",
+    "Do not change auth, ingress, DNS, secrets, or service topology."
+  ],
+  "validation": [
+    "Packet JSON parse",
+    "Decision-label and selected-outcome marker search across touched Lane 313 files",
+    "git diff --check on touched Lane 313 files"
+  ],
+  "validation_result": "PASS: the fallback code/build-defect lane is now pre-authored, so a successful redeploy with still-missing routes no longer stalls on missing coordination.",
+  "next_blocker": "LANE_308_EXECUTION_REMAINS_CURRENT_UNTIL_ABSENT_AFTER_REDEPLOY_IS_PROVEN",
+  "current_status": "complete"
+}

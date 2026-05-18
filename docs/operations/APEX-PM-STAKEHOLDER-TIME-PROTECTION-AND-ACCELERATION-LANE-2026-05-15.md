@@ -260,43 +260,66 @@ Stop and escalate instead of pushing through when:
 
 ## Next Bounded Implementation Move
 
-The current product tranche is:
+## Current Active Branch Refresh
+
+The older Temp Power intake, approval, hosted-source, and first-import tranches remain valid history, but they are no longer the controlling active blocker for this branch.
+
+As of 2026-05-18, the controlling Temp Power branch is the admitted actuals-capture-review path:
+
+1. PM Lane 304 implements local actuals capture review persistence and readback.
+2. PM Lane 305 proves first write, replay, and readback locally.
+3. PM Lane 306 extends hosted smoke/readiness with `--include-temp-power-actuals-review`.
+4. PM Lane 307 proves the hosted blocker is stale service deployment across both the custom domain and the Render hostname.
+5. PM Lane 308 executes the authenticated Render redeploy and proves current committed `clean-main` is live on the existing service.
+6. PM Lane 314 is now the controlling publication gate because the admitted actuals route slice remains unpublished local worktree state.
+7. PM Lane 310 and PM Lane 311 remain the canonical plan/runbook surfaces but must now be read with the Lane 314 blocker update.
+
+Current blocker truth:
+
+1. local implementation and proof are complete for the admitted actuals branch,
+2. hosted smoke readiness and blocker classification are complete,
+3. authenticated Render execution and hosted closeout are complete,
+4. the remaining blocker is publication of the admitted Temp Power actuals route slice to `clean-main` before the next hosted retry.
+
+Use the current active branch refresh above before following the historical tranche narrative below.
+
+The historical product tranche at the start of this branch narrative is:
 
 `Temp Power Import Candidate Review`
 
 It creates a read-only review artifact and endpoint that group the current Project Miner Temp Power source files into proposed project, workpackage, task, and apparatus rows with source traceability and warnings.
 
-The current UI tranche is:
+The historical UI tranche in this branch narrative is:
 
 `Import Candidate PM UI Review`
 
 It surfaces the candidate at `/pm-review/import-candidate` with required decisions, warnings, proposed structure, source traceability, resource context, and guardrails before any approval or import mutation is admitted.
 
-The current hardening tranche is:
+The historical hardening tranche in this branch narrative is:
 
 `Import Candidate Review Hardening`
 
 It adds source stat freshness, warning filters, browser-only JSON export, and local PM questions draft to the same route. These are designed to reduce review burden while preserving the no-production-write boundary.
 
-The current admission-planning tranche is:
+The historical admission-planning tranche in this branch narrative is:
 
 `Import Admission Plan`
 
 It adds `/pm-review/import-admission-plan` and `GET /api/v1/reads/project-import-admission-plan` so the future import gate is visible before it can write. The PM can review what approval, idempotency, diff checks, no-go checks, and target row counts will require, while approval persistence and import mutation remain unadmitted.
 
-The current hosted-proof tranche is:
+The historical hosted-proof tranche in this branch narrative is:
 
 `Hosted PM Intake UI Promotion And Render Parity Blocker`
 
 It promotes `/pm-review/import-candidate` and `/pm-review/import-admission-plan` to `https://operations.apexpowerops.com`, adds repeatable hosted smoke coverage, and records the remaining blocker truthfully: Render mutation-seam is healthy but stale for the new PM intake reads, and Render-authenticated redeploy/log inspection is required before hosted PM intake live-data parity can be claimed.
 
-The current Render-auth packet is:
+The historical PM-intake Render-auth packet in this branch narrative is:
 
 `Render-Authenticated PM Intake Mutation-Seam Redeploy Gate`
 
 PM Lane 037 refreshes the older Render-authenticated packet around the current PM intake routes. It adds backend-only `--include-pm-intake` smoke coverage and a copy/paste executor prompt for a Render-authenticated Codex or Claude Code lane. This keeps Jason out of the relay loop while making the missing credential/tool gap explicit.
 
-The completed approval-contract tranche is:
+The historical approval-contract tranche in this branch narrative is:
 
 `Import Candidate Approval Persistence Design`
 
@@ -304,7 +327,7 @@ PM Lane 038 implements the no-write version of that design as `GET /api/v1/reads
 
 The sidecar recommendation was accepted in bounded form: this tranche stays out of the mutation pipeline and store adapters, validates approval payload shape locally, extends the deployed-seam smoke so hosted parity checks all current PM intake reads, and does not import project, workpackage, task, or apparatus rows.
 
-The current storage-design tranche is:
+The historical storage-design tranche in this branch narrative is:
 
 `Import Candidate Approval Persistence Storage Decision`
 
@@ -312,7 +335,7 @@ PM Lane 039 implements the no-write version of that storage decision as `GET /ap
 
 The sidecar recommendation was accepted in bounded form again: actual persistence is deferred because the mutation-seam store defaults to Supabase-backed collections, no approval collection exists, and the generic mutation pipeline does not own `pm_import_candidate_approval`. The storage plan rejects audit-log-only approval storage, reuse of issue/task/workpackage rows, browser-local storage as canonical approval, generic PgDict upsert without an adapter, and direct Supabase writes from Excel or UI.
 
-The current approval-readiness UI tranche is:
+The historical approval-readiness UI tranche in this branch narrative is:
 
 `Import Approval Readiness PM UI Review`
 

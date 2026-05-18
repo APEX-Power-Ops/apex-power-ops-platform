@@ -1,0 +1,105 @@
+{
+  "packet_id": "2026-05-18-pm-lane-293",
+  "title": "PM Lane 293 - Project Miner Temp Power Actuals And Customer Capture Review Surface Design No-Live Packet",
+  "status": "complete",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_ACTUALS_CUSTOMER_CAPTURE_REVIEW_SURFACE_DESIGN_NO_LIVE_NO_OUTPUT_WRITE",
+  "selected_outcome": "ACTUALS_CUSTOMER_CAPTURE_REVIEW_SURFACE_DESIGN_READY_NO_LIVE",
+  "authority_basis": "Jason's 2026-05-18 standing PM blocker authority plus explicit permission to continue as PM and lane authority without per-step approval.",
+  "source_lane": {
+    "lane": "PM Lane 292 - Project Miner Temp Power Actuals And Customer Capture Contract Design No-Live Packet",
+    "selected_outcome": "ACTUALS_CUSTOMER_CAPTURE_CONTRACT_DESIGN_READY_NO_LIVE"
+  },
+  "surface_scope": {
+    "project_id": "pm-import-project-miner-temp-power",
+    "candidate_id": "pm-import-candidate-miner-temp-power",
+    "surface_type": "PM-facing review surface",
+    "surface_behavior": "inspection-only",
+    "future_route_placeholder": "not_admitted_read_only_surface_placeholder",
+    "downstream_output_authority": "not_admitted"
+  },
+  "required_surface_sections": [
+    "Identity header",
+    "Actuals capture summary",
+    "Evidence readiness panel",
+    "Correction panel",
+    "PM review panel",
+    "Customer preview panel",
+    "Boundary panel",
+    "Payload preview panel"
+  ],
+  "display_rules": [
+    "Show project/candidate/source identity before any editable-looking field preview",
+    "Visually mark nonzero actuals as blocked until evidence requirements are present",
+    "Render replacement linkage only when correction_mode=VOID_AND_REPLACEMENT",
+    "Always show durable_delivery_event=false as a locked boundary",
+    "Show blocked finance/payroll/invoice/accounting/external-finance/source-writeback boundaries in the same view",
+    "Do not show send, submit, save, approve, post, export-to-source, or customer-deliver actions"
+  ],
+  "export_safe_review_artifacts": [
+    "contract summary JSON",
+    "actuals capture preview JSON",
+    "customer preview JSON",
+    "combined review checkpoint JSON"
+  ],
+  "review_outcome_states": [
+    "REVIEW_ONLY_INCOMPLETE_EVIDENCE",
+    "REVIEW_ONLY_READY_FOR_PM_REVIEW",
+    "REVIEW_ONLY_CUSTOMER_PREVIEW_DRAFT",
+    "REVIEW_ONLY_BLOCKED_BY_DELIVERY_ADMISSION"
+  ],
+  "guardrails": [
+    "No persistence route or backend write path",
+    "No customer delivery trigger or durable delivery event",
+    "No finance, payroll, invoice, accounting, or external finance controls",
+    "No workbook writeback or macro execution path",
+    "No hidden bypass around evidence readiness or PM review requirements",
+    "No autonomous AI execution path"
+  ],
+  "blocked_authority": [
+    "Product code",
+    "UI control",
+    "Route",
+    "Backend seam",
+    "Payload version",
+    "Hosted call",
+    "Hosted smoke",
+    "Browser live route access",
+    "Live mutation POST",
+    "Schema migration",
+    "Supabase/Render/Vercel/Olares action",
+    "Service/auth/ingress/secret change",
+    "Source workbook/PDF writeback",
+    "Workbook macro",
+    "Production quantity",
+    "Labor entry",
+    "Actual labor hour",
+    "Apparatus progress",
+    "Progress update",
+    "Customer report",
+    "Completion evidence",
+    "Customer delivery",
+    "Billing export",
+    "Payroll export",
+    "Invoice",
+    "Payroll record",
+    "Accounting record",
+    "Labor reconciliation",
+    "External finance sync",
+    "Customer billing delivery",
+    "Autonomous AI business-state mutation"
+  ],
+  "validation": [
+    "Packet JSON parse",
+    "Decision-label search across touched Lane 293 files",
+    "Selected-outcome search across touched Lane 293 files",
+    "Required surface sections search",
+    "Display rules search",
+    "durable_delivery_event=false search",
+    "Blocked-output guardrail search",
+    "git diff --check on touched Lane 293 files"
+  ],
+  "validation_result": "PASS: packet JSON parsed; decision label, selected outcome, required surface sections, display rules, durable_delivery_event=false, and blocked-output guardrails were found across touched Lane 293 files; scoped git diff check passed.",
+  "next_recommended_lane": "PM Lane 294 - Project Miner Temp Power Actuals And Customer Capture Storage Plan Design No-Live Packet",
+  "next_blocker": "STOPPED_AWAITING_PM_LANE_294_ACTUALS_CUSTOMER_CAPTURE_STORAGE_PLAN_DESIGN_NO_LIVE",
+  "current_status": "complete"
+}

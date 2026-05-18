@@ -1,0 +1,169 @@
+{
+  "packet_id": "2026-05-18-pm-lane-294",
+  "title": "PM Lane 294 - Project Miner Temp Power Actuals And Customer Capture Storage Plan Design No-Live Packet",
+  "status": "complete",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_ACTUALS_CUSTOMER_CAPTURE_STORAGE_PLAN_DESIGN_NO_LIVE_NO_OUTPUT_WRITE",
+  "selected_outcome": "ACTUALS_CUSTOMER_CAPTURE_STORAGE_PLAN_DESIGN_READY_NO_LIVE",
+  "authority_basis": "Jason's 2026-05-18 standing PM blocker authority plus explicit permission to continue as PM and lane authority without per-step approval.",
+  "source_lane": {
+    "lane": "PM Lane 293 - Project Miner Temp Power Actuals And Customer Capture Review Surface Design No-Live Packet",
+    "selected_outcome": "ACTUALS_CUSTOMER_CAPTURE_REVIEW_SURFACE_DESIGN_READY_NO_LIVE"
+  },
+  "storage_scope": {
+    "project_id": "pm-import-project-miner-temp-power",
+    "candidate_id": "pm-import-candidate-miner-temp-power",
+    "storage_owner": "mutation seam only",
+    "finance_storage_scope": "blocked",
+    "source_writeback_scope": "blocked",
+    "delivery_event_storage_scope": "blocked"
+  },
+  "recommended_storage": {
+    "tables": [
+      "seam.pm_actuals_capture_reviews",
+      "seam.pm_customer_preview_reviews"
+    ],
+    "entity_types": [
+      "pm_actuals_capture_review",
+      "pm_customer_preview_review"
+    ],
+    "mutation_routes": [
+      "/api/v1/mutations/temp-power-actuals-capture-reviews",
+      "/api/v1/mutations/temp-power-customer-preview-reviews"
+    ],
+    "readback_routes": [
+      "/api/v1/reads/temp-power-actuals-capture-review-status",
+      "/api/v1/reads/temp-power-customer-preview-status"
+    ]
+  },
+  "recommended_columns_and_constraints": {
+    "pm_actuals_capture_reviews": [
+      "review_id",
+      "project_id",
+      "candidate_id",
+      "source_fingerprint",
+      "task_id",
+      "apparatus_id",
+      "task_day_fallback_reason",
+      "work_date",
+      "recorder_role",
+      "pm_review_status",
+      "pm_review_note",
+      "pm_actor",
+      "pm_reviewed_at",
+      "actual_labor_hours_preview",
+      "work_summary_note",
+      "primary_evidence_type",
+      "primary_evidence_ref",
+      "supporting_evidence_refs_json",
+      "correction_mode",
+      "supersedes_review_id",
+      "replacement_reason",
+      "idempotency_key",
+      "mutation_class",
+      "created_at",
+      "source_route"
+    ],
+    "pm_customer_preview_reviews": [
+      "customer_preview_review_id",
+      "project_id",
+      "candidate_id",
+      "source_fingerprint",
+      "customer_preview_id",
+      "coverage_scope_task_ids_json",
+      "coverage_scope_apparatus_ids_json",
+      "preview_summary",
+      "preview_artifact_refs_json",
+      "future_delivery_proof_requirements_json",
+      "named_recipient_name",
+      "named_recipient_role",
+      "delivery_channel",
+      "approver_role",
+      "pm_review_status",
+      "pm_review_note",
+      "pm_actor",
+      "pm_reviewed_at",
+      "durable_delivery_event",
+      "delivery_block_reason",
+      "idempotency_key",
+      "mutation_class",
+      "created_at",
+      "source_route"
+    ],
+    "constraints": [
+      "Insert-only storage",
+      "Unique idempotency_key per route and canonical record",
+      "durable_delivery_event must remain false for customer preview rows",
+      "No finance/accounting/payroll/export columns",
+      "No source workbook path or macro command columns"
+    ]
+  },
+  "adapter_and_readback_requirements": [
+    "Dedicated adapters rather than generic PgDict upsert",
+    "Readback classification for current status, candidate/source match, record counts, and last-review metadata",
+    "Same-payload idempotent replay behavior returning original canonical record ids",
+    "Append-only correction lineage readback for actuals review replacements",
+    "Explicit proof in readback that customer preview storage is not customer delivery"
+  ],
+  "rejected_unsafe_storage_options": [
+    "Audit-log-only storage as canonical review state",
+    "Reusing projects/tasks/apparatus/delivery rows for review-state persistence",
+    "Browser-local storage as canonical PM review storage",
+    "Generic PgDict upsert without a dedicated adapter and readback contract",
+    "Direct Supabase writes from Excel, UI, or ad hoc scripts",
+    "Any storage path that implies customer delivery or finance export occurred"
+  ],
+  "later_admission_sequence": [
+    "Storage-plan review acceptance",
+    "Readback contract design",
+    "Route and payload admission",
+    "Dedicated schema admission",
+    "Bounded execution gate with idempotent replay proof"
+  ],
+  "blocked_authority": [
+    "Product code",
+    "UI control",
+    "Route",
+    "Backend seam",
+    "Payload version",
+    "Hosted call",
+    "Hosted smoke",
+    "Browser live route access",
+    "Live mutation POST",
+    "Schema migration",
+    "Supabase/Render/Vercel/Olares action",
+    "Service/auth/ingress/secret change",
+    "Source workbook/PDF writeback",
+    "Workbook macro",
+    "Production quantity",
+    "Labor entry",
+    "Actual labor hour",
+    "Apparatus progress",
+    "Progress update",
+    "Customer report",
+    "Completion evidence",
+    "Customer delivery",
+    "Billing export",
+    "Payroll export",
+    "Invoice",
+    "Payroll record",
+    "Accounting record",
+    "Labor reconciliation",
+    "External finance sync",
+    "Customer billing delivery",
+    "Autonomous AI business-state mutation"
+  ],
+  "validation": [
+    "Packet JSON parse",
+    "Decision-label search across touched Lane 294 files",
+    "Selected-outcome search across touched Lane 294 files",
+    "Recommended tables and routes search",
+    "Rejected unsafe storage options search",
+    "durable_delivery_event=false search",
+    "Blocked-output guardrail search",
+    "git diff --check on touched Lane 294 files"
+  ],
+  "validation_result": "PASS: packet JSON parsed; decision label, selected outcome, recommended tables and routes, rejected unsafe storage options, durable_delivery_event boundary, and blocked-output guardrails were found across touched Lane 294 files; scoped git diff check passed.",
+  "next_recommended_lane": "PM Lane 295 - Project Miner Temp Power Actuals And Customer Capture Readback Design No-Live Packet",
+  "next_blocker": "STOPPED_AWAITING_PM_LANE_295_ACTUALS_CUSTOMER_CAPTURE_READBACK_DESIGN_NO_LIVE",
+  "current_status": "complete"
+}

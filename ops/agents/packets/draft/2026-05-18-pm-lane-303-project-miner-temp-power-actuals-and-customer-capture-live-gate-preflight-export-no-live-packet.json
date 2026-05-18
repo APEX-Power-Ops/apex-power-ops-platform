@@ -1,0 +1,92 @@
+{
+  "packet_id": "2026-05-18-pm-lane-303",
+  "title": "PM Lane 303 - Project Miner Temp Power Actuals And Customer Capture Live-Gate Preflight Export No-Live Packet",
+  "status": "complete",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_ACTUALS_CUSTOMER_CAPTURE_LIVE_GATE_PREFLIGHT_EXPORT_NO_LIVE_NO_OUTPUT_WRITE",
+  "selected_outcome": "ACTUALS_CUSTOMER_CAPTURE_LIVE_GATE_PREFLIGHT_EXPORT_READY_NO_LIVE_FINAL_STOP",
+  "authority_basis": "Jason's 2026-05-18 standing PM blocker authority plus explicit permission to continue as PM and lane authority without per-step approval.",
+  "source_lane": {
+    "lane": "PM Lane 302 - Project Miner Temp Power Actuals And Customer Capture Review Bundle Export No-Live Packet",
+    "selected_outcome": "ACTUALS_CUSTOMER_CAPTURE_REVIEW_BUNDLE_EXPORT_READY_NO_LIVE"
+  },
+  "live_gate_preflight_contract": [
+    "artifact_type:temp_power_actuals_customer_capture_live_gate_preflight",
+    "preflight_timestamp",
+    "preflight_actor",
+    "review_bundle_artifact",
+    "preflight_status_counts",
+    "paired_review_readback_posture",
+    "admission_no_go_posture",
+    "live_gate_status",
+    "required_admission_phrase",
+    "blocked_downstream_boundaries",
+    "boundary_flags"
+  ],
+  "preflight_status_counts": [
+    "ready_count",
+    "needs_review_count",
+    "blocked_count",
+    "chosen_route_count"
+  ],
+  "paired_review_readback_posture": [
+    "same-payload replay leaves canonical ids stable",
+    "stale source fingerprints are classified explicitly",
+    "current candidate/source matches are visible without reading workbook contents",
+    "customer preview storage remains distinct from customer delivery",
+    "downstream finance, writeback, and live-output counts remain outside these readbacks"
+  ],
+  "admission_no_go_posture": [
+    "Current instruction does not itself admit a live request",
+    "No executor may proceed unless the exact admission phrase is present as current instruction",
+    "One future separately packeted first-write sequence is the maximum possible admission if the phrase is later present"
+  ],
+  "live_gate_status_allowed_values": [
+    "blocked",
+    "admission_required",
+    "bounded_first_write_only_if_admitted"
+  ],
+  "live_gate_status_current": "admission_required",
+  "required_admission_phrase": "ADMIT_TEMP_POWER_ACTUALS_CUSTOMER_CAPTURE_REVIEW_FIRST_WRITE_PACKET_ONLY",
+  "boundary_flags": [
+    "network_request_sent=false",
+    "record_created=false",
+    "durable_delivery_event=false",
+    "delivery_proof_recorded=false"
+  ],
+  "preflight_behavior_rules": [
+    "Include the current review bundle artifact only",
+    "Keep the result browser-local or packet-local only",
+    "Preserve the current stop posture and blocked downstream boundaries",
+    "Reject export if the review bundle is stale or internally inconsistent",
+    "Stop the current branch after export unless later separate admission is provided"
+  ],
+  "required_local_preflight_proof": [
+    "Exported preflight artifact type",
+    "Included review bundle artifact",
+    "Explicit status counts",
+    "Explicit admission no-go posture",
+    "Exact required admission phrase",
+    "Unchanged downstream delivery/finance/writeback posture"
+  ],
+  "not_admitted": [
+    "Browser controls that submit a request",
+    "Any runtime route call or network request",
+    "Any record creation or replay proof",
+    "Customer delivery or delivery-proof recording",
+    "Any finance/export/accounting/source-writeback behavior"
+  ],
+  "validation": [
+    "Packet JSON parse",
+    "Decision-label search across touched Lane 303 files",
+    "Selected-outcome search across touched Lane 303 files",
+    "Live-gate preflight contract search",
+    "Preflight status counts, readback posture, live gate status, and admission phrase search",
+    "network_request_sent/record_created/durable_delivery_event/delivery_proof_recorded boundary search",
+    "Final stop boundary and blocked-output guardrail search",
+    "git diff --check on touched Lane 303 files"
+  ],
+  "validation_result": "PASS: packet JSON parsed; decision label, selected outcome, live-gate preflight contract, preflight status counts, paired review readback posture, admission no-go posture, live gate status, exact future admission phrase, final stop boundary, and blocked-output guardrails were found across touched Lane 303 files; scoped git diff check passed.",
+  "next_recommended_lane": "SEPARATE_ADMISSION_ONLY_PROJECT_MINER_TEMP_POWER_ACTUALS_CUSTOMER_CAPTURE_REVIEW_FIRST_WRITE_PACKET",
+  "next_blocker": "STOPPED_AWAITING_EXACT_ADMISSION_PHRASE_FOR_SEPARATE_FIRST_WRITE_PACKET",
+  "current_status": "complete"
+}

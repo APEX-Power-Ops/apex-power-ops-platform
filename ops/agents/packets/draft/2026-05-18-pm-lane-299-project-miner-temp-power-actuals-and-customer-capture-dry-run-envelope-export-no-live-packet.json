@@ -1,0 +1,88 @@
+{
+  "packet_id": "2026-05-18-pm-lane-299",
+  "title": "PM Lane 299 - Project Miner Temp Power Actuals And Customer Capture Dry Run Envelope Export No-Live Packet",
+  "status": "complete",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_ACTUALS_CUSTOMER_CAPTURE_DRY_RUN_ENVELOPE_EXPORT_NO_LIVE_NO_OUTPUT_WRITE",
+  "selected_outcome": "ACTUALS_CUSTOMER_CAPTURE_DRY_RUN_ENVELOPE_EXPORT_READY_NO_LIVE",
+  "authority_basis": "Jason's 2026-05-18 standing PM blocker authority plus explicit permission to continue as PM and lane authority without per-step approval.",
+  "source_lane": {
+    "lane": "PM Lane 298 - Project Miner Temp Power Actuals And Customer Capture Local Mocked Request Dry Run No-Live Packet",
+    "selected_outcome": "ACTUALS_CUSTOMER_CAPTURE_LOCAL_MOCKED_REQUEST_DRY_RUN_READY_NO_LIVE"
+  },
+  "export_scope": {
+    "allowed_routes": [
+      "POST /api/v1/mutations/temp-power-actuals-capture-reviews",
+      "POST /api/v1/mutations/temp-power-customer-preview-reviews"
+    ],
+    "required_common_fields": [
+      "project_id",
+      "candidate_id",
+      "source_fingerprint",
+      "idempotency_key",
+      "mutation_class:C",
+      "pm_actor",
+      "pm_actor_role:PM",
+      "pm_timestamp"
+    ]
+  },
+  "export_artifact_contract": [
+    "artifact_type:temp_power_actuals_customer_capture_dry_run_envelope",
+    "route_selected",
+    "export_timestamp",
+    "export_actor",
+    "mock_envelope",
+    "mock_payload",
+    "boundary_flags",
+    "blocked_domains"
+  ],
+  "boundary_flags": [
+    "network_request_sent=false",
+    "record_created=false",
+    "durable_delivery_event=false",
+    "delivery_proof_recorded=false"
+  ],
+  "export_behavior_rules": [
+    "Export only the current chosen route preview",
+    "Refresh the local preview after export",
+    "Keep the result browser-local or packet-local only",
+    "Reject export if project/candidate/source identity is stale or incomplete",
+    "Preserve unchanged downstream delivery/finance/writeback posture"
+  ],
+  "customer_preview_export_rules": [
+    "named recipient and recipient-role review",
+    "delivery-channel review",
+    "preview artifact references",
+    "delivery_block_reason",
+    "future delivery-proof placeholders"
+  ],
+  "required_local_export_proof": [
+    "Chosen route",
+    "Exported artifact type",
+    "Exact envelope preview snapshot",
+    "Exact payload preview snapshot",
+    "network_request_sent=false",
+    "record_created=false",
+    "Unchanged downstream delivery/finance/writeback posture"
+  ],
+  "not_admitted": [
+    "Browser controls that submit a request",
+    "Any runtime route call or network request",
+    "Any record creation or replay proof",
+    "Customer delivery or delivery-proof recording",
+    "Any finance/export/accounting/source-writeback behavior"
+  ],
+  "validation": [
+    "Packet JSON parse",
+    "Decision-label search across touched Lane 299 files",
+    "Selected-outcome search across touched Lane 299 files",
+    "Export artifact contract search",
+    "Chosen routes and artifact type search",
+    "network_request_sent/record_created/durable_delivery_event/delivery_proof_recorded boundary search",
+    "Blocked-output guardrail search",
+    "git diff --check on touched Lane 299 files"
+  ],
+  "validation_result": "PASS: packet JSON parsed; decision label, selected outcome, export artifact contract, chosen routes, artifact type, zero-network and zero-record boundaries, customer-preview no-delivery boundaries, and blocked-output guardrails were found across touched Lane 299 files; scoped git diff check passed.",
+  "next_recommended_lane": "PM Lane 300 - Project Miner Temp Power Actuals And Customer Capture Dry Run Readiness Checkpoint No-Live Packet",
+  "next_blocker": "STOPPED_AWAITING_PM_LANE_300_ACTUALS_CUSTOMER_CAPTURE_DRY_RUN_READINESS_CHECKPOINT_NO_LIVE",
+  "current_status": "complete"
+}

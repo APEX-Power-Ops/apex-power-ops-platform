@@ -1,0 +1,74 @@
+{
+  "packet_id": "2026-05-18-pm-lane-300",
+  "title": "PM Lane 300 - Project Miner Temp Power Actuals And Customer Capture Dry Run Readiness Checkpoint No-Live Packet",
+  "status": "complete",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_ACTUALS_CUSTOMER_CAPTURE_DRY_RUN_READINESS_CHECKPOINT_NO_LIVE_NO_OUTPUT_WRITE",
+  "selected_outcome": "ACTUALS_CUSTOMER_CAPTURE_DRY_RUN_READINESS_CHECKPOINT_READY_NO_LIVE",
+  "authority_basis": "Jason's 2026-05-18 standing PM blocker authority plus explicit permission to continue as PM and lane authority without per-step approval.",
+  "source_lane": {
+    "lane": "PM Lane 299 - Project Miner Temp Power Actuals And Customer Capture Dry Run Envelope Export No-Live Packet",
+    "selected_outcome": "ACTUALS_CUSTOMER_CAPTURE_DRY_RUN_ENVELOPE_EXPORT_READY_NO_LIVE"
+  },
+  "readiness_items": [
+    "project_source_identity_context",
+    "actuals_evidence_review",
+    "customer_preview_review",
+    "route_and_mock_envelope_continuity",
+    "readback_and_execution_gate_context",
+    "live_write_authority"
+  ],
+  "allowed_states": [
+    "ready",
+    "needs_review",
+    "blocked"
+  ],
+  "state_rules": [
+    "ready means the required local evidence is present and consistent with the current mock envelope",
+    "needs_review means no live write is needed, but PM confirmation or local evidence cleanup is still required",
+    "blocked means the item cannot be treated as reusable packet context",
+    "live_write_authority must stay blocked unless the exact future admission phrase is current instruction"
+  ],
+  "minimum_classification_criteria": [
+    "project_source_identity_context requires matching project_id, candidate_id, and source_fingerprint across mock envelope and export snapshot",
+    "actuals_evidence_review requires actuals/labor preview fields, evidence bundle fields, and correction linkage fields when needed",
+    "customer_preview_review requires recipient review, delivery-channel review, preview artifact references, and delivery-block posture",
+    "route_and_mock_envelope_continuity requires identical chosen route, action type, and idempotency key across preview and export",
+    "readback_and_execution_gate_context requires visible designed readback posture and exact future admission phrase in current packet context",
+    "live_write_authority remains blocked when the exact future admission phrase is absent from current instruction"
+  ],
+  "checkpoint_summary_rules": [
+    "per-item status",
+    "per-item reason",
+    "checkpoint timestamp",
+    "checkpoint actor",
+    "unchanged no-live boundary summary"
+  ],
+  "required_local_checkpoint_proof": [
+    "All six readiness items",
+    "Allowed states only",
+    "Explicit reason for each non-ready item",
+    "live_write_authority=blocked unless separately admitted later",
+    "Unchanged downstream delivery/finance/writeback posture"
+  ],
+  "not_admitted": [
+    "Browser controls that submit a request",
+    "Any runtime route call or network request",
+    "Any record creation or replay proof",
+    "Customer delivery or delivery-proof recording",
+    "Any finance/export/accounting/source-writeback behavior"
+  ],
+  "validation": [
+    "Packet JSON parse",
+    "Decision-label search across touched Lane 300 files",
+    "Selected-outcome search across touched Lane 300 files",
+    "Readiness items and allowed states search",
+    "State rules and minimum classification criteria search",
+    "live_write_authority blocked posture search",
+    "Blocked-output guardrail search",
+    "git diff --check on touched Lane 300 files"
+  ],
+  "validation_result": "PASS: packet JSON parsed; decision label, selected outcome, readiness items, allowed states, state rules, minimum classification criteria, live_write_authority blocked posture, and blocked-output guardrails were found across touched Lane 300 files; scoped git diff check passed.",
+  "next_recommended_lane": "PM Lane 301 - Project Miner Temp Power Actuals And Customer Capture Dry Run Readiness Export No-Live Packet",
+  "next_blocker": "STOPPED_AWAITING_PM_LANE_301_ACTUALS_CUSTOMER_CAPTURE_DRY_RUN_READINESS_EXPORT_NO_LIVE",
+  "current_status": "complete"
+}

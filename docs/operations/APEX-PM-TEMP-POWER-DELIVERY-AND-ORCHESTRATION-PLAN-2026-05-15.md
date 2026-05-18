@@ -1,7 +1,7 @@
 # APEX PM Temp Power Delivery And AI Orchestration Plan
 
 Date: 2026-05-15
-Status: Active operating plan
+Status: Active operating plan with 2026-05-18 Temp Power actuals branch refresh
 Scope: Project Miner Temp Power PM lane delivery, Olares One orchestration posture, and capability-gap escalation rules
 
 ## Purpose
@@ -187,7 +187,43 @@ Target sequence before field start:
 7. Admit a narrow, idempotent import mutation only after the candidate and approval workflow are proven.
 8. Pilot one Temp Power slice through PM, Lead, and Field workflow before importing broader Building A/B scope.
 
-## Current Product Tranche
+## Current Active Branch Refresh
+
+As of 2026-05-18, the controlling Temp Power PM branch is no longer just the original import-candidate and approval-readiness stack.
+
+The active branch is the bounded Temp Power actuals-capture-review path admitted by the exact phrase:
+
+`ADMIT_TEMP_POWER_ACTUALS_CUSTOMER_CAPTURE_REVIEW_FIRST_WRITE_PACKET_ONLY`
+
+Current controlling lanes:
+
+1. PM Lane 304 implements the admitted local mutation/readback slice for Temp Power actuals capture review only.
+2. PM Lane 305 proves first write, idempotent replay, and readback locally.
+3. PM Lane 306 extends the hosted smoke/readiness surface with `--include-temp-power-actuals-review`.
+4. PM Lane 307 proves the hosted blocker is stale service deployment, not custom-domain drift, by matching failures on both the custom domain and Render hostname.
+5. PM Lane 308 executes authenticated Render inspection and redeploy against the existing service.
+6. That redeploy reaches live committed `clean-main` but still leaves both hosted seam URLs without the actuals routes.
+7. PM Lane 314 is now the controlling publication gate because the admitted actuals route slice is still local-only worktree state and therefore is not yet present in hosted `clean-main`.
+
+Current boundary of the active branch:
+
+1. admitted: actuals capture review persistence and readback
+2. not admitted: customer-facing delivery
+3. not admitted: finance or payroll output
+4. not admitted: source-system writeback
+5. not admitted: customer-preview route execution beyond the bounded review posture
+
+Current blocker:
+
+1. authenticated Render execution is complete and no longer the blocker
+2. existing service `apex-platform-mutation-seam` is live on committed `clean-main` at `2bd07725d97d8b806d1c0e35e98e6595c5b1d584`
+3. both hosted seam URLs still omit the Temp Power actuals routes and still return framework `404 Not Found` for the actuals readback route
+4. the controlling blocker is publication of the admitted actuals route slice to `clean-main`
+5. the controlling publication handoff is `ops/agents/handoffs/2026-05-18-pm-lane-314-project-miner-temp-power-actuals-route-publication-gate-after-authenticated-redeploy-handoff.md`
+
+Read this section first when continuing the Temp Power lane. The lane history below remains valid as background, but the active next move is publication of the admitted actuals slice, not another hosted-auth discovery pass.
+
+## Historical Branch Narrative
 
 PM Lane 032:
 

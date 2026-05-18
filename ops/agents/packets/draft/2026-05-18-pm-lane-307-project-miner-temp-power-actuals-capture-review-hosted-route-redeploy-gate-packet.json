@@ -1,0 +1,55 @@
+{
+  "packet_id": "2026-05-18-pm-lane-307",
+  "title": "PM Lane 307 - Project Miner Temp Power Actuals Capture Review Hosted Route Redeploy Gate Packet",
+  "status": "complete",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_ACTUALS_CAPTURE_REVIEW_HOSTED_ROUTE_REDEPLOY_GATE_PACKET",
+  "selected_outcome": "HOSTED_ACTUALS_ROUTE_ABSENT_REDEPLOY_REQUIRED",
+  "authority_basis": "Standing PM blocker authority and repo technical authority, using bounded hosted smoke only and no hosted write execution.",
+  "hosts_checked": [
+    "https://mutation-seam.apexpowerops.com",
+    "https://apex-platform-mutation-seam.onrender.com"
+  ],
+  "command": "python apps/mutation-seam/scripts/smoke_deployed_mutation_seam.py --base-url <host> --include-temp-power-actuals-review",
+  "observed_results": {
+    "common_successes": {
+      "health": 200,
+      "root": 200,
+      "approval_queue": 200,
+      "schedule_projects": 200,
+      "schedule_drivers": 200,
+      "schedule_tracer": 200,
+      "schedule_variance": 200,
+      "openapi": 200
+    },
+    "common_failures": [
+      "openapi missing /api/v1/mutations/temp-power-actuals-capture-reviews",
+      "openapi missing /api/v1/reads/temp-power-actuals-capture-review-status",
+      "GET /api/v1/reads/temp-power-actuals-capture-review-status returned framework 404 Not Found"
+    ],
+    "classification": "service_wide_hosted_deploy_lag_not_custom_domain_drift"
+  },
+  "operator_entrypoints_added": {
+    "workflow": ".github/workflows/deployed-mutation-seam-smoke.yml",
+    "workflow_input": "include_temp_power_actuals_review",
+    "task": "Mutation-seam hosted actuals-review smoke",
+    "deployment_validation_doc": "apps/mutation-seam/DEPLOYMENT_VALIDATION.md"
+  },
+  "still_blocked": [
+    "Hosted actuals-capture first-write proof",
+    "Hosted idempotent replay proof",
+    "Hosted persistence proof",
+    "POST /api/v1/mutations/temp-power-customer-preview-reviews",
+    "Any customer delivery, finance, or source-writeback admission"
+  ],
+  "required_next_action": "Redeploy the existing hosted mutation-seam service from current clean-main, then rerun the bounded hosted smoke with --include-temp-power-actuals-review.",
+  "validation": [
+    "Hosted smoke against https://mutation-seam.apexpowerops.com",
+    "Hosted smoke against https://apex-platform-mutation-seam.onrender.com",
+    "get_errors on .github/workflows/deployed-mutation-seam-smoke.yml and .vscode/tasks.json",
+    "Get-Content .vscode/tasks.json | ConvertFrom-Json",
+    "git diff --check on touched Lane 307 files"
+  ],
+  "validation_result": "PASS: both hosted probes failed identically, proving service-wide hosted deploy lag rather than custom-domain drift; operator entrypoints for the bounded actuals smoke are now repo-owned and validated.",
+  "next_blocker": "HOSTED_MUTATION_SEAM_REDEPLOY_REQUIRED_BEFORE_ANY_ACTUALS_ROUTE_HOSTED_PROOF",
+  "current_status": "complete"
+}

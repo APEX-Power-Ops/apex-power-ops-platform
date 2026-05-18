@@ -1,6 +1,6 @@
 # PM Hosted Executor Closeout Template
 
-Use this template when closing PM Lane 041A, PM Lane 041B, PM Lane 076-selected execution, or another hosted PM parity executor lane.
+Use this template when closing PM Lane 041A, PM Lane 041B, PM Lane 076-selected execution, PM Lane 308, or another hosted PM parity executor lane.
 
 Do not paste secrets. Do not summarize a failed command as success. If a hosted credential, deployment action, or validation command is unavailable, say that directly.
 
@@ -67,6 +67,19 @@ For Render:
 7. build/start/health metadata,
 8. log-backed blocker classification if validation remains red.
 
+For PM Lane 308 actuals-route redeploy:
+
+1. exact service name `apex-platform-mutation-seam`,
+2. repository and branch,
+3. working directory,
+4. deployment id or timestamp,
+5. deployed commit,
+6. proof that OpenAPI now includes or still omits `/api/v1/mutations/temp-power-actuals-capture-reviews`,
+7. proof that OpenAPI now includes or still omits `/api/v1/reads/temp-power-actuals-capture-review-status`,
+8. exact result of the bounded hosted smoke using `--include-temp-power-actuals-review`,
+9. whether custom domain and Render hostname matched or diverged after redeploy,
+10. log-backed blocker classification if the actuals routes still remain absent.
+
 For PM Lane 138 approval-persistence hosted gate:
 
 1. exact migration file applied: `apps/mutation-seam/migrations/003_pm_import_candidate_approvals.sql`,
@@ -98,6 +111,18 @@ Required for PM Lane 041B:
 
 ```powershell
 corepack pnpm --dir "C:/APEX Platform/apex-power-ops-platform" --filter @apex/operations-web exec node scripts/smoke-pm-intake-hosted.mjs --operations-web-base-url https://operations.apexpowerops.com --mutation-seam-base-url https://mutation-seam.apexpowerops.com --timeout-ms 20000
+```
+
+Required for PM Lane 308:
+
+```powershell
+& "C:/APEX Platform/apex-power-ops-platform/.venv/Scripts/python.exe" "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/scripts/smoke_deployed_mutation_seam.py" --base-url https://mutation-seam.apexpowerops.com --include-temp-power-actuals-review
+```
+
+Optional disambiguation for PM Lane 308 only when the custom domain still appears stale:
+
+```powershell
+& "C:/APEX Platform/apex-power-ops-platform/.venv/Scripts/python.exe" "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/scripts/smoke_deployed_mutation_seam.py" --base-url https://apex-platform-mutation-seam.onrender.com --include-temp-power-actuals-review
 ```
 
 Required for PM Lane 138:
@@ -142,7 +167,8 @@ Allowed classifications:
 8. runtime import/startup issue,
 9. product-code issue,
 10. route promotion incomplete,
-11. other deployment failure.
+11. actuals routes still absent after redeploy,
+12. other deployment failure.
 
 ## Guardrails Confirmed
 

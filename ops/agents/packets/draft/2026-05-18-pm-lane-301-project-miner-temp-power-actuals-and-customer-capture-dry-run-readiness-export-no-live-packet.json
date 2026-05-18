@@ -1,0 +1,71 @@
+{
+  "packet_id": "2026-05-18-pm-lane-301",
+  "title": "PM Lane 301 - Project Miner Temp Power Actuals And Customer Capture Dry Run Readiness Export No-Live Packet",
+  "status": "complete",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_ACTUALS_CUSTOMER_CAPTURE_DRY_RUN_READINESS_EXPORT_NO_LIVE_NO_OUTPUT_WRITE",
+  "selected_outcome": "ACTUALS_CUSTOMER_CAPTURE_DRY_RUN_READINESS_EXPORT_READY_NO_LIVE",
+  "authority_basis": "Jason's 2026-05-18 standing PM blocker authority plus explicit permission to continue as PM and lane authority without per-step approval.",
+  "source_lane": {
+    "lane": "PM Lane 300 - Project Miner Temp Power Actuals And Customer Capture Dry Run Readiness Checkpoint No-Live Packet",
+    "selected_outcome": "ACTUALS_CUSTOMER_CAPTURE_DRY_RUN_READINESS_CHECKPOINT_READY_NO_LIVE"
+  },
+  "readiness_export_contract": [
+    "artifact_type:temp_power_actuals_customer_capture_readiness_checkpoint",
+    "checkpoint_timestamp",
+    "checkpoint_actor",
+    "readiness_items",
+    "required_admission_phrase",
+    "blocked_domain_summary",
+    "boundary_flags"
+  ],
+  "readiness_items": [
+    "project_source_identity_context",
+    "actuals_evidence_review",
+    "customer_preview_review",
+    "route_and_mock_envelope_continuity",
+    "readback_and_execution_gate_context",
+    "live_write_authority"
+  ],
+  "required_admission_phrase": "ADMIT_TEMP_POWER_ACTUALS_CUSTOMER_CAPTURE_REVIEW_FIRST_WRITE_PACKET_ONLY",
+  "boundary_flags": [
+    "network_request_sent=false",
+    "record_created=false",
+    "durable_delivery_event=false",
+    "delivery_proof_recorded=false"
+  ],
+  "export_behavior_rules": [
+    "Export the current checkpoint only",
+    "Keep the result browser-local or packet-local only",
+    "Preserve per-item status and per-item reason",
+    "Preserve the blocked-domain summary",
+    "Reject export if the checkpoint is stale or internally inconsistent"
+  ],
+  "required_local_export_proof": [
+    "Exported artifact type",
+    "All six readiness items with status and reason",
+    "Exact required admission phrase",
+    "live_write_authority=blocked unless separately admitted later",
+    "Unchanged downstream delivery/finance/writeback posture"
+  ],
+  "not_admitted": [
+    "Browser controls that submit a request",
+    "Any runtime route call or network request",
+    "Any record creation or replay proof",
+    "Customer delivery or delivery-proof recording",
+    "Any finance/export/accounting/source-writeback behavior"
+  ],
+  "validation": [
+    "Packet JSON parse",
+    "Decision-label search across touched Lane 301 files",
+    "Selected-outcome search across touched Lane 301 files",
+    "Readiness export contract search",
+    "Readiness items and admission phrase search",
+    "network_request_sent/record_created/durable_delivery_event/delivery_proof_recorded boundary search",
+    "Blocked-output guardrail search",
+    "git diff --check on touched Lane 301 files"
+  ],
+  "validation_result": "PASS: packet JSON parsed; decision label, selected outcome, readiness export contract, all six readiness items, exact future admission phrase, zero-network and zero-record boundaries, and blocked-output guardrails were found across touched Lane 301 files; scoped git diff check passed.",
+  "next_recommended_lane": "PM Lane 302 - Project Miner Temp Power Actuals And Customer Capture Review Bundle Export No-Live Packet",
+  "next_blocker": "STOPPED_AWAITING_PM_LANE_302_ACTUALS_CUSTOMER_CAPTURE_REVIEW_BUNDLE_EXPORT_NO_LIVE",
+  "current_status": "complete"
+}

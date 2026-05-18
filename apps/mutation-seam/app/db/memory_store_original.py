@@ -23,6 +23,7 @@ class MemoryStore:
         self.production_tracking_records: Dict[str, Dict[str, Any]] = {}
         self.customer_completion_records: Dict[str, Dict[str, Any]] = {}
         self.financial_handoff_records: Dict[str, Dict[str, Any]] = {}
+        self.temp_power_actuals_capture_reviews: Dict[str, Dict[str, Any]] = {}
         self.tasks: Dict[str, Dict[str, Any]] = {}
         self.workpackages: Dict[str, Dict[str, Any]] = {}
         self.snapshots: Dict[str, Dict[str, Any]] = {}

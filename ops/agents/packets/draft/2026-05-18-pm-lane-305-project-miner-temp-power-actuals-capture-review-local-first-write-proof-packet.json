@@ -1,0 +1,91 @@
+{
+  "packet_id": "2026-05-18-pm-lane-305",
+  "title": "PM Lane 305 - Project Miner Temp Power Actuals Capture Review Local First Write Proof Packet",
+  "status": "complete",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_ACTUALS_CAPTURE_REVIEW_LOCAL_FIRST_WRITE_PROOF_PACKET",
+  "selected_outcome": "ACTUALS_CAPTURE_REVIEW_LOCAL_FIRST_WRITE_PROOF_RECORDED",
+  "authority_basis": "Jason's explicit current instruction ADMIT_TEMP_POWER_ACTUALS_CUSTOMER_CAPTURE_REVIEW_FIRST_WRITE_PACKET_ONLY plus standing PM blocker authority and permission to continue as PM and repo technical authority without per-step approval.",
+  "source_lane": {
+    "lane": "PM Lane 304 - Project Miner Temp Power Actuals Capture Review First Write Mutation Seam Packet",
+    "selected_outcome": "ACTUALS_CAPTURE_REVIEW_FIRST_WRITE_IMPLEMENTED_AND_VALIDATED_LOCALLY"
+  },
+  "proof_runner": "apps/mutation-seam/scripts/run_temp_power_actuals_capture_review_local_proof.py",
+  "request": {
+    "route": "POST /api/v1/mutations/temp-power-actuals-capture-reviews",
+    "action_type": "persist_temp_power_actuals_capture_review",
+    "entity_id": "temp-power-actuals-capture-review-f042997ced32e02f7f81f367",
+    "idempotency_key": "pm-lane-305-actuals-review-local-proof:pm-import-project-miner-temp-power:task-0001:app-0001:2026-05-18",
+    "task_id": "pm-import-project-miner-temp-power-task-0001",
+    "apparatus_id": "pm-import-project-miner-temp-power-app-0001",
+    "work_date": "2026-05-18"
+  },
+  "accepted_write": {
+    "status": "accepted",
+    "entity_id": "temp-power-actuals-capture-review-f042997ced32e02f7f81f367",
+    "mutation_id": "mut-6c51d8f7-c99b-4b8b-b61c-3412ca473fc5",
+    "audit_event_id": "audit-9014e420-8c64-40df-ad27-e796088f3082"
+  },
+  "replay": {
+    "status": "idempotent_hit",
+    "mutation_id": "mut-6c51d8f7-c99b-4b8b-b61c-3412ca473fc5",
+    "audit_event_id": "audit-9014e420-8c64-40df-ad27-e796088f3082",
+    "same_mutation_id_as_first": true,
+    "same_audit_event_id_as_first": true
+  },
+  "readback": {
+    "route": "GET /api/v1/reads/temp-power-actuals-capture-review-status",
+    "status": "actuals_capture_review_recorded_current_match",
+    "current_candidate_match": true,
+    "current_source_fingerprint_match": true,
+    "record_count": 1,
+    "latest_review_id": "temp-power-actuals-capture-review-f042997ced32e02f7f81f367"
+  },
+  "downstream_counts": {
+    "before": {
+      "projects": 2,
+      "workpackages": 5,
+      "tasks": 16,
+      "apparatus": 185,
+      "assignments": 56,
+      "hours": 32,
+      "issues": 4
+    },
+    "after": {
+      "projects": 2,
+      "workpackages": 5,
+      "tasks": 16,
+      "apparatus": 185,
+      "assignments": 56,
+      "hours": 32,
+      "issues": 4
+    },
+    "unchanged": true
+  },
+  "blocked_boundaries": {
+    "customer_delivery_authority": "not_admitted",
+    "finance_authority": "not_admitted",
+    "source_writeback_authority": "not_admitted",
+    "durable_delivery_event": false
+  },
+  "audit_log_count": 1,
+  "canonical_record_count": 1,
+  "still_blocked": [
+    "Hosted mutation-seam promotion or hosted row proof",
+    "POST /api/v1/mutations/temp-power-customer-preview-reviews",
+    "Any customer preview persistence or delivery event",
+    "Any finance/export/accounting behavior",
+    "Any source workbook writeback or macro behavior"
+  ],
+  "validation": [
+    ".venv python apps/mutation-seam/scripts/run_temp_power_actuals_capture_review_local_proof.py",
+    "Packet JSON parse",
+    "Decision-label and selected-outcome marker search across touched Lane 305 files",
+    "Accepted-write, replay, readback, unchanged-count, and blocked-boundary marker search across touched Lane 305 files",
+    "get_errors on the proof runner",
+    "git diff --check on touched Lane 305 files"
+  ],
+  "validation_result": "PASS: the local proof runner returned accepted write, same-payload idempotent replay with stable mutation_id and audit_event_id, current-match readback, unchanged downstream counts, blocked downstream authorities, audit_log_count=1, and canonical_record_count=1; packet JSON parsed; markers were found across touched Lane 305 files; the proof runner reported no diagnostics; scoped git diff check passed.",
+  "next_recommended_lane": "SEPARATE_ADMISSION_ONLY_HOSTED_ACTUALS_ROUTE_PROOF_OR_CUSTOMER_PREVIEW_FIRST_WRITE_PACKET",
+  "next_blocker": "HOSTED_ACTUALS_ROUTE_PROOF_AND_CUSTOMER_PREVIEW_ROUTE_BOTH_REMAIN_SEPARATELY_ADMITTED",
+  "current_status": "complete"
+}

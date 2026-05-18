@@ -1,0 +1,37 @@
+{
+  "packet_id": "2026-05-18-pm-lane-311",
+  "title": "PM Lane 311 - Project Miner Temp Power Intake Workflow Runbook Refresh",
+  "status": "complete",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_INTAKE_WORKFLOW_RUNBOOK_REFRESH",
+  "selected_outcome": "TEMP_POWER_WORKFLOW_RUNBOOK_REFRESHED_TO_CURRENT_BRANCH",
+  "authority_basis": "Standing PM blocker authority and repo technical authority, constrained to documentation-only coordination for the current Temp Power workflow runbook.",
+  "runbook": "docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md",
+  "refresh_scope": [
+    "Controlling actuals-branch admission phrase.",
+    "Active Lane 304 through Lane 310 sequence.",
+    "PM intake hosted parity as historical background rather than controlling blocker.",
+    "Remaining external Render-authenticated execution blocker for Lane 308.",
+    "Controlling executor prompt and shared hosted closeout template."
+  ],
+  "current_truth": [
+    "PM intake hosted parity remains accepted historical background.",
+    "Local actuals-capture review implementation and proof are complete.",
+    "Hosted smoke readiness and blocker classification are complete.",
+    "The remaining blocker is still external Render-authenticated execution for Lane 308."
+  ],
+  "not_allowed": [
+    "No hosted redeploy from this shell.",
+    "No hosted actuals POST execution.",
+    "No customer-preview route expansion.",
+    "No finance or source-writeback admission.",
+    "No SQL, schema, auth, ingress, or secret changes."
+  ],
+  "validation": [
+    "Packet JSON parse",
+    "Marker search across the Lane 311 files and refreshed workflow runbook markers",
+    "git diff --check on touched Lane 311 files and the workflow runbook"
+  ],
+  "validation_result": "PASS: the day-to-day Temp Power workflow runbook now points at the controlling actuals branch and no longer leaves the old PM intake parity blocker as the implied next move.",
+  "next_blocker": "RENDER_AUTHENTICATED_EXECUTION_REQUIRED_FOR_LANE_308",
+  "current_status": "complete"
+}

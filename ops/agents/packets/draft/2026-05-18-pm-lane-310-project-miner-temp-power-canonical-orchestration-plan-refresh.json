@@ -1,0 +1,37 @@
+{
+  "packet_id": "2026-05-18-pm-lane-310",
+  "title": "PM Lane 310 - Project Miner Temp Power Canonical Orchestration Plan Refresh",
+  "status": "complete",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_CANONICAL_ORCHESTRATION_PLAN_REFRESH",
+  "selected_outcome": "CANONICAL_TEMP_POWER_PLAN_REFRESHED_TO_CURRENT_BRANCH",
+  "authority_basis": "Standing PM blocker authority and repo technical authority, constrained to documentation-only coordination for the controlling Temp Power branch.",
+  "canonical_plan": "docs/operations/APEX-PM-TEMP-POWER-DELIVERY-AND-ORCHESTRATION-PLAN-2026-05-15.md",
+  "refresh_scope": [
+    "Controlling admission phrase for the current branch.",
+    "Active Lane 304 through Lane 309 sequence.",
+    "Current admitted and non-admitted boundary.",
+    "Remaining external Render-authenticated execution blocker.",
+    "Controlling Lane 308 executor prompt and shared hosted closeout template."
+  ],
+  "current_truth": [
+    "Local actuals-capture review implementation and proof are complete.",
+    "Hosted smoke readiness and blocker classification are complete.",
+    "Executor prompt, closeout template, and dispatch binder are complete.",
+    "The remaining blocker is still external Render-authenticated execution for Lane 308."
+  ],
+  "not_allowed": [
+    "No hosted redeploy from this shell.",
+    "No hosted actuals POST execution.",
+    "No customer-preview route expansion.",
+    "No finance or source-writeback admission.",
+    "No SQL, schema, auth, ingress, or secret changes."
+  ],
+  "validation": [
+    "Packet JSON parse",
+    "Marker search across the Lane 310 files and canonical plan refresh markers",
+    "git diff --check on touched Lane 310 files and the canonical plan"
+  ],
+  "validation_result": "PASS: the canonical Temp Power plan now exposes the controlling actuals branch and the remaining external Render blocker without changing execution authority.",
+  "next_blocker": "RENDER_AUTHENTICATED_EXECUTION_REQUIRED_FOR_LANE_308",
+  "current_status": "complete"
+}

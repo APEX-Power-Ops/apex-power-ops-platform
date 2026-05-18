@@ -1,0 +1,149 @@
+{
+  "packet_id": "2026-05-18-pm-lane-296",
+  "title": "PM Lane 296 - Project Miner Temp Power Actuals And Customer Capture Route And Payload Design No-Live Packet",
+  "status": "complete",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_ACTUALS_CUSTOMER_CAPTURE_ROUTE_AND_PAYLOAD_DESIGN_NO_LIVE_NO_OUTPUT_WRITE",
+  "selected_outcome": "ACTUALS_CUSTOMER_CAPTURE_ROUTE_AND_PAYLOAD_DESIGN_READY_NO_LIVE",
+  "authority_basis": "Jason's 2026-05-18 standing PM blocker authority plus explicit permission to continue as PM and lane authority without per-step approval.",
+  "source_lane": {
+    "lane": "PM Lane 295 - Project Miner Temp Power Actuals And Customer Capture Readback Design No-Live Packet",
+    "selected_outcome": "ACTUALS_CUSTOMER_CAPTURE_READBACK_DESIGN_READY_NO_LIVE"
+  },
+  "future_mutation_routes": [
+    "POST /api/v1/mutations/temp-power-actuals-capture-reviews",
+    "POST /api/v1/mutations/temp-power-customer-preview-reviews"
+  ],
+  "common_envelope_requirements": {
+    "required_fields": [
+      "mutation_class",
+      "idempotency_key",
+      "project_id",
+      "candidate_id",
+      "source_fingerprint",
+      "pm_actor",
+      "pm_actor_role",
+      "pm_timestamp",
+      "action_type",
+      "payload"
+    ],
+    "required_values": [
+      "mutation_class:C",
+      "pm_actor_role:PM"
+    ],
+    "validators": [
+      "Reject stale candidate or source fingerprints",
+      "Require exact envelope/payload idempotency-key match",
+      "Reject finance/export/delivery-complete/source-writeback fields"
+    ]
+  },
+  "actuals_capture_review_request": {
+    "route": "POST /api/v1/mutations/temp-power-actuals-capture-reviews",
+    "action_type": "persist_temp_power_actuals_capture_review",
+    "required_payload_fields": [
+      "idempotency_key",
+      "project_id",
+      "candidate_id",
+      "source_fingerprint",
+      "task_id",
+      "apparatus_id_or_task_day_fallback_reason",
+      "work_date",
+      "recorder_role",
+      "actual_labor_hours_preview",
+      "work_summary_note",
+      "primary_evidence_type",
+      "primary_evidence_ref",
+      "supporting_evidence_refs",
+      "correction_mode",
+      "supersedes_review_id_when_replacing",
+      "replacement_reason_when_replacing",
+      "pm_review_status",
+      "pm_review_note"
+    ]
+  },
+  "customer_preview_review_request": {
+    "route": "POST /api/v1/mutations/temp-power-customer-preview-reviews",
+    "action_type": "persist_temp_power_customer_preview_review",
+    "required_payload_fields": [
+      "idempotency_key",
+      "project_id",
+      "candidate_id",
+      "source_fingerprint",
+      "customer_preview_id",
+      "coverage_scope_task_ids",
+      "coverage_scope_apparatus_ids",
+      "preview_summary",
+      "preview_artifact_refs",
+      "named_recipient_name",
+      "named_recipient_role",
+      "delivery_channel",
+      "future_delivery_proof_requirements",
+      "durable_delivery_event",
+      "delivery_proof_recorded",
+      "delivery_block_reason",
+      "pm_review_status",
+      "pm_review_note"
+    ]
+  },
+  "success_replay_failure_expectations": [
+    "First accepted request returns canonical record id plus accepted_for_review_storage",
+    "Same-payload replay returns idempotent_hit and original canonical record id",
+    "Mismatched candidate or source returns stale-source rejection class",
+    "Missing PM actor/timestamp or malformed payload returns validation rejection",
+    "Successful write must be followed by matching status readback"
+  ],
+  "follow_up_readback_proof": [
+    "Current candidate/source match status",
+    "Canonical record count",
+    "Latest review id and timestamp",
+    "Replacement lineage visibility for actuals reviews when applicable",
+    "durable_delivery_event=false and delivery_proof_recorded=false for customer preview reviews"
+  ],
+  "execution_gate_requirement": "First execution of either future route must remain owned by a separate explicit execution-gate packet.",
+  "blocked_authority": [
+    "Product code",
+    "UI control",
+    "Route",
+    "Backend seam",
+    "Payload version",
+    "Hosted call",
+    "Hosted smoke",
+    "Browser live route access",
+    "Live mutation POST",
+    "Schema migration",
+    "Supabase/Render/Vercel/Olares action",
+    "Service/auth/ingress/secret change",
+    "Source workbook/PDF writeback",
+    "Workbook macro",
+    "Production quantity",
+    "Labor entry",
+    "Actual labor hour",
+    "Apparatus progress",
+    "Progress update",
+    "Customer report",
+    "Completion evidence",
+    "Customer delivery",
+    "Billing export",
+    "Payroll export",
+    "Invoice",
+    "Payroll record",
+    "Accounting record",
+    "Labor reconciliation",
+    "External finance sync",
+    "Customer billing delivery",
+    "Autonomous AI business-state mutation"
+  ],
+  "validation": [
+    "Packet JSON parse",
+    "Decision-label search across touched Lane 296 files",
+    "Selected-outcome search across touched Lane 296 files",
+    "Future mutation routes and action types search",
+    "Required payload fields search",
+    "durable_delivery_event=false and delivery_proof_recorded=false search",
+    "Separate execution-gate requirement search",
+    "git diff --check on touched Lane 296 files"
+  ],
+  "validation_result": "PASS: packet JSON parsed; decision label, selected outcome, future mutation routes, action types, required payload fields, durable_delivery_event and delivery_proof_recorded boundaries, separate execution-gate requirement, and blocked-output guardrails were found across touched Lane 296 files; scoped git diff check passed.",
+  "next_recommended_lane": "PM Lane 297 - Project Miner Temp Power Actuals And Customer Capture Execution Gate Design No-Live Packet",
+  "next_blocker": "STOPPED_AWAITING_PM_LANE_297_ACTUALS_CUSTOMER_CAPTURE_EXECUTION_GATE_DESIGN_NO_LIVE",
+  "current_status": "complete"
+}

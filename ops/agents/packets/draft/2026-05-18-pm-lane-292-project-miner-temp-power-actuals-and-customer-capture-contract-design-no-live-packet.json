@@ -1,0 +1,190 @@
+{
+  "packet_id": "2026-05-18-pm-lane-292",
+  "title": "PM Lane 292 - Project Miner Temp Power Actuals And Customer Capture Contract Design No-Live Packet",
+  "status": "complete",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_ACTUALS_CUSTOMER_CAPTURE_CONTRACT_DESIGN_NO_LIVE_NO_OUTPUT_WRITE",
+  "selected_outcome": "ACTUALS_CUSTOMER_CAPTURE_CONTRACT_DESIGN_READY_NO_LIVE",
+  "authority_basis": "Jason's 2026-05-18 standing PM blocker authority plus explicit permission to continue as PM and lane authority without per-step approval.",
+  "source_lane": {
+    "lane": "PM Lane 291 - Project Miner Temp Power Actuals And Customer Rules Intake And Capture Design No-Live Packet",
+    "selected_outcome": "ACTUALS_CUSTOMER_RULES_ONLY_NO_LIVE_CAPTURE_DESIGN_READY"
+  },
+  "project_context": {
+    "candidate_id": "pm-import-candidate-miner-temp-power",
+    "project_id": "pm-import-project-miner-temp-power",
+    "downstream_output_authority": "not_admitted",
+    "finance_design_scope": "blocked",
+    "source_writeback_scope": "blocked"
+  },
+  "actuals_capture_contract": {
+    "required_fields": [
+      "project_id",
+      "candidate_id",
+      "source_fingerprint",
+      "task_id",
+      "apparatus_id_or_task_day_fallback_reason",
+      "work_date",
+      "recorder_role",
+      "actual_labor_hours_preview",
+      "work_summary_note",
+      "evidence_bundle",
+      "correction_mode",
+      "supersedes_capture_id_when_replacing",
+      "replacement_reason_when_replacing",
+      "pm_billable_payroll_review_status",
+      "pm_billable_payroll_review_note"
+    ],
+    "recorder_role_values": [
+      "PM",
+      "FIELD_LEAD"
+    ],
+    "correction_mode_values": [
+      "NEW_ENTRY",
+      "VOID_AND_REPLACEMENT"
+    ],
+    "validators": [
+      "task_id required",
+      "apparatus_id required when apparatus-specific else task_day_fallback_reason required",
+      "recorder_role must be PM or FIELD_LEAD",
+      "actual_labor_hours_preview must be nonnegative",
+      "nonzero actual_labor_hours_preview requires evidence_bundle",
+      "VOID_AND_REPLACEMENT requires supersedes_capture_id and replacement_reason",
+      "PM review fields required before later billable or payroll relevance"
+    ]
+  },
+  "customer_preview_contract": {
+    "required_fields": [
+      "project_id",
+      "customer_preview_id",
+      "coverage_scope_task_ids",
+      "coverage_scope_apparatus_ids_when_present",
+      "preview_summary",
+      "approver_role",
+      "named_recipient_name",
+      "named_recipient_role",
+      "delivery_channel",
+      "preview_artifact_refs",
+      "future_delivery_proof_requirements",
+      "durable_delivery_event",
+      "delivery_block_reason"
+    ],
+    "approver_role_values": [
+      "PM"
+    ],
+    "delivery_channel_values": [
+      "CONTROLLED_EMAIL",
+      "LATER_APPROVED_PORTAL"
+    ],
+    "validators": [
+      "approver_role must be PM",
+      "named_recipient_name and named_recipient_role required",
+      "delivery_channel must be CONTROLLED_EMAIL or LATER_APPROVED_PORTAL",
+      "preview_artifact_refs must remain preview-only",
+      "durable_delivery_event must remain false",
+      "future_delivery_proof_requirements may not claim delivery occurred"
+    ]
+  },
+  "review_checklist": [
+    "Show project, candidate, and source identity",
+    "Show task and apparatus-or-fallback context",
+    "Show recorder-role restriction and PM review fields",
+    "Show evidence completeness before nonzero actuals",
+    "Show correction linkage when replacement is requested",
+    "Show named customer recipient and allowed delivery channel",
+    "Show durable_delivery_event=false",
+    "Show blocked finance, writeback, and live-output boundaries"
+  ],
+  "future_payload_templates": {
+    "actuals_capture_preview": {
+      "project_id": "pm-import-project-miner-temp-power",
+      "candidate_id": "pm-import-candidate-miner-temp-power",
+      "source_fingerprint": "<current-source-fingerprint>",
+      "task_id": "<task-id>",
+      "apparatus_id": "<apparatus-id-or-null>",
+      "task_day_fallback_reason": "<required-when-apparatus-id-null>",
+      "work_date": "YYYY-MM-DD",
+      "recorder_role": "PM",
+      "actual_labor_hours_preview": 0.0,
+      "work_summary_note": "<review-note>",
+      "evidence_bundle": {
+        "primary_evidence_type": "SIGNED_FIELD_TICKET",
+        "primary_evidence_ref": "<artifact-ref>",
+        "supporting_evidence_refs": []
+      },
+      "correction_mode": "NEW_ENTRY",
+      "supersedes_capture_id": null,
+      "replacement_reason": null,
+      "pm_billable_payroll_review_status": "PENDING_PM_REVIEW",
+      "pm_billable_payroll_review_note": "<pm-note>"
+    },
+    "customer_preview": {
+      "project_id": "pm-import-project-miner-temp-power",
+      "customer_preview_id": "<preview-id>",
+      "coverage_scope_task_ids": [
+        "<task-id>"
+      ],
+      "coverage_scope_apparatus_ids": [],
+      "preview_summary": "<preview-summary>",
+      "approver_role": "PM",
+      "named_recipient_name": "<recipient-name>",
+      "named_recipient_role": "<recipient-role>",
+      "delivery_channel": "CONTROLLED_EMAIL",
+      "preview_artifact_refs": [
+        "<preview-artifact-ref>"
+      ],
+      "future_delivery_proof_requirements": [
+        "EMAIL_RECEIPT",
+        "SIGNED_TRANSMITTAL"
+      ],
+      "durable_delivery_event": false,
+      "delivery_block_reason": "DELIVERY_REQUIRES_SEPARATE_ADMISSION"
+    }
+  },
+  "blocked_authority": [
+    "Product code",
+    "UI control",
+    "Route",
+    "Backend seam",
+    "Payload version",
+    "Hosted call",
+    "Hosted smoke",
+    "Browser live route access",
+    "Live mutation POST",
+    "Schema migration",
+    "Supabase/Render/Vercel/Olares action",
+    "Service/auth/ingress/secret change",
+    "Source workbook/PDF writeback",
+    "Workbook macro",
+    "Production quantity",
+    "Labor entry",
+    "Actual labor hour",
+    "Apparatus progress",
+    "Progress update",
+    "Customer report",
+    "Completion evidence",
+    "Customer delivery",
+    "Billing export",
+    "Payroll export",
+    "Invoice",
+    "Payroll record",
+    "Accounting record",
+    "Labor reconciliation",
+    "External finance sync",
+    "Customer billing delivery",
+    "Autonomous AI business-state mutation"
+  ],
+  "validation": [
+    "Packet JSON parse",
+    "Decision-label search across touched Lane 292 files",
+    "Selected-outcome search across touched Lane 292 files",
+    "Actuals capture contract field search",
+    "Customer preview contract field search",
+    "durable_delivery_event=false search",
+    "Blocked-output guardrail search",
+    "git diff --check on touched Lane 292 files"
+  ],
+  "validation_result": "PASS: packet JSON parsed; decision label, selected outcome, actuals capture contract fields, customer preview contract fields, durable_delivery_event=false, and blocked-output guardrails were found across touched Lane 292 files; scoped git diff check passed.",
+  "next_recommended_lane": "PM Lane 293 - Project Miner Temp Power Actuals And Customer Capture Review Surface Design No-Live Packet",
+  "next_blocker": "STOPPED_AWAITING_PM_LANE_293_ACTUALS_CUSTOMER_CAPTURE_REVIEW_SURFACE_DESIGN_NO_LIVE",
+  "current_status": "complete"
+}

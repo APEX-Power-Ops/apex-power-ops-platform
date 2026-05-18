@@ -1,0 +1,59 @@
+{
+  "packet_id": "2026-05-18-pm-lane-304",
+  "title": "PM Lane 304 - Project Miner Temp Power Actuals Capture Review First Write Mutation Seam Packet",
+  "status": "complete",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_ACTUALS_CAPTURE_REVIEW_FIRST_WRITE_MUTATION_SEAM_PACKET",
+  "selected_outcome": "ACTUALS_CAPTURE_REVIEW_FIRST_WRITE_IMPLEMENTED_AND_VALIDATED_LOCALLY",
+  "authority_basis": "Jason's explicit current instruction ADMIT_TEMP_POWER_ACTUALS_CUSTOMER_CAPTURE_REVIEW_FIRST_WRITE_PACKET_ONLY plus standing PM blocker authority and permission to continue as PM and repo technical authority without per-step approval.",
+  "source_lane": {
+    "lane": "PM Lane 303 - Project Miner Temp Power Actuals And Customer Capture Live-Gate Preflight Export No-Live Packet",
+    "selected_outcome": "ACTUALS_CUSTOMER_CAPTURE_LIVE_GATE_PREFLIGHT_EXPORT_READY_NO_LIVE_FINAL_STOP"
+  },
+  "chosen_route": {
+    "route": "POST /api/v1/mutations/temp-power-actuals-capture-reviews",
+    "action_type": "persist_temp_power_actuals_capture_review",
+    "status_route": "GET /api/v1/reads/temp-power-actuals-capture-review-status"
+  },
+  "implemented_files": [
+    "apps/mutation-seam/app/temp_power_actuals_capture_review_persistence.py",
+    "apps/mutation-seam/app/routers/temp_power_actuals_capture_reviews.py",
+    "apps/mutation-seam/app/routers/reads.py",
+    "apps/mutation-seam/app/main.py",
+    "apps/mutation-seam/migrations/008_pm_lane_304_actuals_capture_reviews.sql",
+    "apps/mutation-seam/tests/test_temp_power_actuals_capture_review_persistence.py",
+    "apps/mutation-seam/app/db/memory_store_original.py"
+  ],
+  "local_first_write_proof": [
+    "Accepted local write to POST /api/v1/mutations/temp-power-actuals-capture-reviews",
+    "Same-payload replay returns idempotent_hit",
+    "Replay preserves original mutation_id and audit_event_id",
+    "Paired GET /api/v1/reads/temp-power-actuals-capture-review-status returns actuals_capture_review_recorded_current_match",
+    "Stale source classification is explicit",
+    "Replacement-chain classification is explicit",
+    "Downstream project/workpackage/task/apparatus/assignment/hour/issue counts remain unchanged",
+    "customer_delivery_authority remains not_admitted",
+    "finance_authority remains not_admitted",
+    "source_writeback_authority remains not_admitted",
+    "durable_delivery_event remains false"
+  ],
+  "still_blocked": [
+    "POST /api/v1/mutations/temp-power-customer-preview-reviews",
+    "Any customer preview persistence",
+    "Any customer delivery event or delivery-proof recording",
+    "Any finance/export/accounting behavior",
+    "Any source workbook writeback or macro behavior",
+    "Any hosted promotion or hosted live-row proof"
+  ],
+  "validation": [
+    ".venv python -m pytest apps/mutation-seam/tests/test_temp_power_actuals_capture_review_persistence.py -q",
+    "get_errors on touched mutation-seam files",
+    "Packet JSON parse",
+    "Decision-label and selected-outcome marker search across touched Lane 304 files",
+    "Route, readback, migration, and blocked-boundary marker search across touched Lane 304 files",
+    "git diff --check on touched Lane 304 files"
+  ],
+  "validation_result": "PASS: focused local pytest returned 6 passed for the new actuals-capture review slice; touched mutation-seam files reported no diagnostics; packet JSON parsed; decision label, selected outcome, route/readback/migration markers, and blocked-boundary markers were found across touched Lane 304 files; scoped git diff check passed.",
+  "next_recommended_lane": "SEPARATE_ADMISSION_ONLY_PROJECT_MINER_TEMP_POWER_CUSTOMER_PREVIEW_REVIEW_FIRST_WRITE_PACKET",
+  "next_blocker": "CUSTOMER_PREVIEW_ROUTE_STILL_NOT_ADMITTED_OR_IMPLEMENTED",
+  "current_status": "complete"
+}

@@ -1,0 +1,39 @@
+{
+  "packet_id": "2026-05-18-pm-lane-312",
+  "title": "PM Lane 312 - Project Miner Temp Power Companion Doc Refresh",
+  "status": "complete",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_COMPANION_DOC_REFRESH",
+  "selected_outcome": "TEMP_POWER_COMPANION_DOCS_REFRESHED_TO_CURRENT_BRANCH",
+  "authority_basis": "Standing PM blocker authority and repo technical authority, constrained to documentation-only coordination for Temp Power companion guidance docs.",
+  "refreshed_docs": [
+    "docs/operations/APEX-OPS-VISUAL-SYSTEM-MAP-2026-05-15.md",
+    "docs/operations/APEX-PM-STAKEHOLDER-TIME-PROTECTION-AND-ACCELERATION-LANE-2026-05-15.md"
+  ],
+  "refresh_scope": [
+    "Older intake/parity tranches are background, not the current blocker.",
+    "The controlling actuals branch is Lane 304 through Lane 311.",
+    "The remaining blocker is the external Render-authenticated Lane 308 redeploy path.",
+    "Bounded hosted validation must use --include-temp-power-actuals-review."
+  ],
+  "current_truth": [
+    "Canonical plan, workflow runbook, visual map, and acceleration lane now agree on the current Temp Power branch.",
+    "Local actuals implementation and proof are complete.",
+    "Hosted smoke readiness and blocker classification are complete.",
+    "The remaining blocker is still external Render-authenticated execution for Lane 308."
+  ],
+  "not_allowed": [
+    "No hosted redeploy from this shell.",
+    "No hosted actuals POST execution.",
+    "No customer-preview route expansion.",
+    "No finance or source-writeback admission.",
+    "No SQL, schema, auth, ingress, or secret changes."
+  ],
+  "validation": [
+    "Packet JSON parse",
+    "Marker search across the Lane 312 files and refreshed companion-doc markers",
+    "git diff --check on touched Lane 312 files and companion docs"
+  ],
+  "validation_result": "PASS: the Temp Power companion guidance docs now route to the same current actuals branch as the canonical plan and workflow runbook without changing execution authority.",
+  "next_blocker": "RENDER_AUTHENTICATED_EXECUTION_REQUIRED_FOR_LANE_308",
+  "current_status": "complete"
+}

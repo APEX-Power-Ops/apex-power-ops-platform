@@ -1,0 +1,81 @@
+{
+  "packet_id": "2026-05-18-pm-lane-308",
+  "title": "PM Lane 308 - Project Miner Temp Power Actuals Capture Review Render-Authenticated Redeploy Gate",
+  "objective": "Use a Render-authenticated surface to inspect and redeploy only the existing mutation-seam service apex-platform-mutation-seam from current clean-main, then rerun the bounded Temp Power actuals hosted smoke without executing a hosted write.",
+  "domain": "pm-domain",
+  "active_role": "Hosted PM Runtime Coordinator",
+  "dependencies": [
+    "2026-05-18-pm-lane-304",
+    "2026-05-18-pm-lane-305",
+    "2026-05-18-pm-lane-306",
+    "2026-05-18-pm-lane-307",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-18-pm-lane-307-project-miner-temp-power-actuals-capture-review-hosted-route-redeploy-gate-packet-handoff.md"
+  ],
+  "repo_paths": [
+    "C:/APEX Platform/apex-power-ops-platform",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/render.yaml",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/scripts/smoke_deployed_mutation_seam.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/DEPLOYMENT_VALIDATION.md",
+    "C:/APEX Platform/apex-power-ops-platform/.github/workflows/deployed-mutation-seam-smoke.yml",
+    "C:/APEX Platform/apex-power-ops-platform/.vscode/tasks.json"
+  ],
+  "current_evidence": [
+    "Lane 304 implemented POST /api/v1/mutations/temp-power-actuals-capture-reviews and GET /api/v1/reads/temp-power-actuals-capture-review-status locally.",
+    "Lane 305 proved accepted local first write, stable idempotent replay, current-match readback, unchanged downstream counts, and blocked downstream authorities.",
+    "Lane 306 added --include-temp-power-actuals-review to the hosted smoke path without executing a hosted write.",
+    "Lane 307 ran the bounded hosted smoke against both https://mutation-seam.apexpowerops.com and https://apex-platform-mutation-seam.onrender.com; both hosts returned health/root/approval-queue/schedule reads 200 but omitted the Temp Power actuals routes from OpenAPI and returned framework 404 for the actuals readback route.",
+    "Local environment check returned RENDER_CLI_ABSENT and no RENDER_* environment names."
+  ],
+  "required_executor_capability": [
+    "Authenticated Render dashboard, API, or equivalent control surface with access to existing service apex-platform-mutation-seam.",
+    "Ability to inspect current service repo, branch, working directory, deploy commit, build command, start command, and health path without disclosing secrets.",
+    "Ability to trigger a redeploy of the existing service from current clean-main."
+  ],
+  "allowed_runtime_actions": [
+    "Inspect existing Render service apex-platform-mutation-seam.",
+    "Confirm service repo is jasonlswenson-sys/apex-power-ops, branch is clean-main, and working directory is apps/mutation-seam.",
+    "Trigger a redeploy of the existing service from current clean-main.",
+    "Run C:/APEX Platform/apex-power-ops-platform/.venv/Scripts/python.exe C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/scripts/smoke_deployed_mutation_seam.py --base-url https://mutation-seam.apexpowerops.com --include-temp-power-actuals-review.",
+    "If needed for disambiguation only, rerun the same bounded smoke against https://apex-platform-mutation-seam.onrender.com.",
+    "Inspect runtime logs only far enough to classify remaining blocker if the new routes still do not appear."
+  ],
+  "not_allowed": [
+    "No hosted actuals write POST.",
+    "No hosted idempotent replay POST.",
+    "No customer-preview route execution.",
+    "No SQL write or schema migration.",
+    "No auth widening.",
+    "No ingress widening.",
+    "No new Render service.",
+    "No secret disclosure."
+  ],
+  "stop_conditions": [
+    "Stop if Render auth is unavailable.",
+    "Stop if repair would require creating a new service, changing DNS, changing auth, widening CORS, widening ingress, rotating secrets, or changing public host topology.",
+    "Stop if hosted proof would require sending a live mutation POST.",
+    "Stop if the service is already on current clean-main and still lacks the routes, because that indicates a product-code or deploy-build defect requiring a new code packet."
+  ],
+  "validation_steps": [
+    "git rev-parse HEAD",
+    "git ls-remote origin clean-main",
+    "Render service inspection for apex-platform-mutation-seam: repo, branch, working directory, deploy commit, build command, start command, health path, autoDeploy, and non-secret env posture",
+    "Trigger existing-service redeploy from clean-main",
+    "Probe https://mutation-seam.apexpowerops.com/health",
+    "Probe https://mutation-seam.apexpowerops.com/openapi.json and confirm /api/v1/mutations/temp-power-actuals-capture-reviews and /api/v1/reads/temp-power-actuals-capture-review-status are present",
+    "C:/APEX Platform/apex-power-ops-platform/.venv/Scripts/python.exe C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/scripts/smoke_deployed_mutation_seam.py --base-url https://mutation-seam.apexpowerops.com --include-temp-power-actuals-review"
+  ],
+  "handoff_target": "Render-authenticated Copilot or Codex executor",
+  "status": "ready",
+  "execution_result": "PENDING_RENDER_AUTHENTICATED_EXECUTION",
+  "delegation_status": "ready_for_external_executor",
+  "output_artifacts": [
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-18-pm-lane-308-project-miner-temp-power-actuals-capture-review-render-authenticated-redeploy-gate-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-18-pm-lane-308-render-authenticated-actuals-route-redeploy-executor-copy-paste-prompt.md"
+  ],
+  "sql_permission": false,
+  "sql_permission_note": "This packet authorizes Render inspection/redeploy and bounded hosted smoke only. It does not authorize SQL writes, schema migration, hosted mutation POSTs, customer-preview execution, finance/delivery/writeback widening, or secret disclosure.",
+  "ai_mutation_authority": "not_admitted",
+  "created_at": "2026-05-18",
+  "updated_at": "2026-05-18"
+}

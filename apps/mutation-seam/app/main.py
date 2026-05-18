@@ -22,6 +22,7 @@ from app.routers import (
     schedule,
     snapshots,
     tasks,
+    temp_power_actuals_capture_reviews,
     workpackages,
 )
 
@@ -53,6 +54,7 @@ app.include_router(issues.router)
 app.include_router(production_tracking.router)
 app.include_router(project_import_approvals.router)
 app.include_router(project_imports.router)
+app.include_router(temp_power_actuals_capture_reviews.router)
 app.include_router(tasks.router)
 app.include_router(workpackages.router)
 app.include_router(snapshots.router)

@@ -30,6 +30,11 @@ def build_parser() -> argparse.ArgumentParser:
         action='store_true',
         help='Also validate Project Miner PM intake read routes and OpenAPI registration.',
     )
+    parser.add_argument(
+        '--include-temp-power-actuals-review',
+        action='store_true',
+        help='Also validate Temp Power actuals-capture review route registration and readback shape without sending a POST.',
+    )
     return parser
 
 
@@ -422,6 +427,82 @@ def main() -> int:
                             failures.append(f'{label} returned {authority_field}={payload.get(authority_field)}')
                 elif isinstance(payload, dict) and payload.get('mutation_authority') != 'not_admitted':
                     failures.append(f'{label} returned mutation_authority={payload.get("mutation_authority")}')
+
+    if args.include_temp_power_actuals_review:
+        actuals_paths = {
+            '/api/v1/reads/temp-power-actuals-capture-review-status',
+            '/api/v1/mutations/temp-power-actuals-capture-reviews',
+        }
+        actuals_methods = {
+            '/api/v1/reads/temp-power-actuals-capture-review-status': {'get'},
+            '/api/v1/mutations/temp-power-actuals-capture-reviews': {'post'},
+        }
+        status, payload = request_json(f'{base_url}/openapi.json', timeout_seconds=args.timeout_seconds)
+        expect_status(
+            label='openapi_temp_power_actuals_review',
+            status=status,
+            payload=payload,
+            allowed_statuses={200},
+            failures=failures,
+        )
+        if status == 200:
+            expect_openapi_paths(payload=payload, required_paths=actuals_paths, failures=failures)
+            expect_openapi_methods(payload=payload, required_methods=actuals_methods, failures=failures)
+
+        status, payload = request_json(
+            f'{base_url}/api/v1/reads/temp-power-actuals-capture-review-status',
+            timeout_seconds=args.timeout_seconds,
+            headers=pm_auth_header(),
+        )
+        expect_status(
+            label='temp_power_actuals_capture_review_status',
+            status=status,
+            payload=payload,
+            allowed_statuses={200},
+            failures=failures,
+        )
+        if status == 200:
+            expect_fields(
+                label='temp_power_actuals_capture_review_status',
+                payload=payload,
+                required_fields={
+                    'project_id',
+                    'candidate_id',
+                    'source_fingerprint',
+                    'current_candidate_match',
+                    'current_source_fingerprint_match',
+                    'status',
+                    'record_count',
+                    'storage_route_registered',
+                    'storage_source',
+                    'entity_type',
+                    'customer_delivery_authority',
+                    'finance_authority',
+                    'source_writeback_authority',
+                    'durable_delivery_event',
+                },
+                failures=failures,
+            )
+            if isinstance(payload, dict) and payload.get('storage_route_registered') is not True:
+                failures.append(
+                    'temp_power_actuals_capture_review_status returned '
+                    f'storage_route_registered={payload.get("storage_route_registered")}'
+                )
+            for authority_field in [
+                'customer_delivery_authority',
+                'finance_authority',
+                'source_writeback_authority',
+            ]:
+                if isinstance(payload, dict) and payload.get(authority_field) != 'not_admitted':
+                    failures.append(
+                        'temp_power_actuals_capture_review_status returned '
+                        f'{authority_field}={payload.get(authority_field)}'
+                    )
+            if isinstance(payload, dict) and payload.get('durable_delivery_event') is not False:
+                failures.append(
+                    'temp_power_actuals_capture_review_status returned '
+                    f'durable_delivery_event={payload.get("durable_delivery_event")}'
+                )
 
     if failures:
         print('RESULT FAIL')

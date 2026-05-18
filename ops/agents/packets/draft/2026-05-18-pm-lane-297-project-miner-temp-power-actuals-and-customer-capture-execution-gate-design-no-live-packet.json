@@ -1,0 +1,64 @@
+{
+  "packet_id": "2026-05-18-pm-lane-297",
+  "title": "PM Lane 297 - Project Miner Temp Power Actuals And Customer Capture Execution Gate Design No-Live Packet",
+  "status": "complete",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_ACTUALS_CUSTOMER_CAPTURE_EXECUTION_GATE_DESIGN_NO_LIVE_NO_OUTPUT_WRITE",
+  "selected_outcome": "ACTUALS_CUSTOMER_CAPTURE_EXECUTION_GATE_DEFINED_STOP_UNTIL_EXPLICIT_ADMISSION",
+  "authority_basis": "Jason's 2026-05-18 standing PM blocker authority plus explicit permission to continue as PM and lane authority without per-step approval.",
+  "source_lane": {
+    "lane": "PM Lane 296 - Project Miner Temp Power Actuals And Customer Capture Route And Payload Design No-Live Packet",
+    "selected_outcome": "ACTUALS_CUSTOMER_CAPTURE_ROUTE_AND_PAYLOAD_DESIGN_READY_NO_LIVE"
+  },
+  "exact_required_admission_phrase": "ADMIT_TEMP_POWER_ACTUALS_CUSTOMER_CAPTURE_REVIEW_FIRST_WRITE_PACKET_ONLY",
+  "covered_routes": [
+    "POST /api/v1/mutations/temp-power-actuals-capture-reviews",
+    "POST /api/v1/mutations/temp-power-customer-preview-reviews"
+  ],
+  "allowed_future_executor_sequence": [
+    "Confirm current project/candidate/source fingerprint match the packeted values",
+    "Run local mocked request validation for the chosen route",
+    "Confirm hosted promotion only if separately packeted and admitted",
+    "Send exactly one live request on one chosen route",
+    "Rerun the exact same payload once to prove idempotent_hit",
+    "Capture the paired status readback",
+    "Prove unchanged downstream no-delivery/no-finance/no-source-writeback posture",
+    "Publish closeout with exact request/replay/readback/unchanged-boundary evidence"
+  ],
+  "forced_stop_conditions": [
+    "Exact admission phrase absent",
+    "Project/candidate/source fingerprint stale or mismatched",
+    "Route not exactly one of the two designed routes",
+    "Request would set durable_delivery_event=true or delivery_proof_recorded=true",
+    "Request includes finance/export/accounting/source-writeback fields",
+    "Executor would need undeclared schema/adapter/service/auth/ingress/secret change"
+  ],
+  "required_post_execution_proof": [
+    "Request acceptance or rejection summary",
+    "Same-payload replay result",
+    "Status readback for the same canonical record",
+    "Current candidate/source match proof",
+    "durable_delivery_event=false and delivery_proof_recorded=false proof when customer preview route is used",
+    "Unchanged downstream proof for delivery/finance/source-writeback boundaries"
+  ],
+  "not_admitted_even_with_phrase": [
+    "Customer delivery or customer billing delivery",
+    "Billing/payroll/invoice/accounting/labor reconciliation/external finance sync",
+    "Source workbook/PDF writeback or workbook macros",
+    "Any second route beyond the one explicitly chosen for the first-write packet",
+    "Any unrelated mutation or autonomous AI business-state mutation"
+  ],
+  "validation": [
+    "Packet JSON parse",
+    "Decision-label search across touched Lane 297 files",
+    "Selected-outcome search across touched Lane 297 files",
+    "Exact admission phrase search",
+    "Forced stop conditions search",
+    "Covered routes search",
+    "Post-execution proof requirements search",
+    "git diff --check on touched Lane 297 files"
+  ],
+  "validation_result": "PASS: packet JSON parsed; decision label, selected outcome, exact admission phrase, covered routes, forced stop conditions, post-execution proof requirements, and blocked-output guardrails were found across touched Lane 297 files; scoped git diff check passed.",
+  "next_recommended_lane": "PM Lane 298 - Project Miner Temp Power Actuals And Customer Capture Local Mocked Request Dry Run No-Live Packet",
+  "next_blocker": "STOPPED_AWAITING_PM_LANE_298_ACTUALS_CUSTOMER_CAPTURE_LOCAL_MOCKED_REQUEST_DRY_RUN_NO_LIVE",
+  "current_status": "complete"
+}

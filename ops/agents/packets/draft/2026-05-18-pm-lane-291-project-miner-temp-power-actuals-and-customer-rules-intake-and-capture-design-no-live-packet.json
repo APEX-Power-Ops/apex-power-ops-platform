@@ -1,0 +1,170 @@
+{
+  "packet_id": "2026-05-18-pm-lane-291",
+  "title": "PM Lane 291 - Project Miner Temp Power Actuals And Customer Rules Intake And Capture Design No-Live Packet",
+  "status": "complete",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_ACTUALS_CUSTOMER_RULES_INTAKE_CAPTURE_DESIGN_NO_LIVE_NO_OUTPUT_WRITE",
+  "selected_outcome": "ACTUALS_CUSTOMER_RULES_ONLY_NO_LIVE_CAPTURE_DESIGN_READY",
+  "authority_basis": "Jason's 2026-05-18 standing PM blocker authority plus the explicit instruction to continue as PM and lane authority without per-step approval.",
+  "purpose": [
+    "Intake the latest downstream rule return after the PM Lane 289 relay prompt.",
+    "Classify the reply as actuals/customer only with no finance or source-writeback admission.",
+    "Record accepted no-live defaults for actuals/labor capture and customer report preview.",
+    "Keep all finance outputs, source writeback, and live output behavior blocked while queuing the next no-live capture-contract lane."
+  ],
+  "current_instruction_classification": {
+    "continuation_authority_present": true,
+    "equivalent_actuals_customer_return_present": true,
+    "interpreted_as_downstream_rule_answer": true,
+    "actuals_customer_rules_present": true,
+    "finance_rules_present": false,
+    "finance_rules_deferred_as_future_placeholders": true,
+    "output_write_request_present": false,
+    "source_writeback_request_present": false,
+    "downstream_output_authority": "not_admitted"
+  },
+  "source_lanes": {
+    "answer_card_lane": "PM Lane 287 - Project Miner Temp Power Downstream Rule Question Card No-Live Packet",
+    "relay_prompt_lane": "PM Lane 289 - Project Miner Temp Power Downstream Rule Answer Card Relay Prompt No-Live Packet",
+    "prior_post_relay_classifier": "PM Lane 290 - Project Miner Temp Power Downstream Rule Return Intake After Relay Prompt No-Live Packet"
+  },
+  "project_context": {
+    "candidate_id": "pm-import-candidate-miner-temp-power",
+    "project_id": "pm-import-project-miner-temp-power",
+    "source_fingerprint": "e111fdbe934bf9de07ed24c1",
+    "workpackage_count": 7,
+    "ready_task_count": 15,
+    "ready_apparatus_count": 184,
+    "assignment_count": 184,
+    "durable_field_record_count": 1,
+    "production_tracking_record_count": 1,
+    "customer_completion_record_count": 1,
+    "financial_handoff_record_count": 1,
+    "production_quantity_count": 0,
+    "labor_entry_count": 0,
+    "actual_labor_hours": 0.0,
+    "apparatus_progress_count": 0,
+    "progress_update_count": 0,
+    "customer_report_count": 0,
+    "completion_evidence_count": 0,
+    "customer_delivery_event_count": 0,
+    "billing_export_count": 0,
+    "payroll_export_count": 0,
+    "invoice_record_count": 0,
+    "payroll_record_count": 0,
+    "accounting_record_count": 0,
+    "labor_reconciliation_entry_count": 0,
+    "external_finance_sync_count": 0,
+    "customer_billing_delivery_count": 0
+  },
+  "accepted_actuals_and_labor_rules": {
+    "allowed_recorder_role": [
+      "PM",
+      "Field lead"
+    ],
+    "granularity": "Task plus apparatus when available; otherwise task and day.",
+    "required_evidence_before_nonzero_actuals": [
+      "Signed field ticket or daily field record",
+      "Supporting test sheet, PM-approved field note, or photo evidence when applicable"
+    ],
+    "correction_rule": "Append-only void and replacement only; no destructive edits.",
+    "approval_before_billable_or_payroll_relevance": "PM approval required"
+  },
+  "accepted_customer_report_and_delivery_rules": {
+    "customer_facing_artifact_required": true,
+    "artifact_scope": "Preview only in a later no-live design lane.",
+    "approver_before_delivery": "PM",
+    "recipient_and_authoritative_channel": "Named customer PM or owner representative through controlled email or a later approved portal.",
+    "durable_delivery_event_allowed": false,
+    "delivery_proof_required_later": [
+      "Email receipt",
+      "Signed transmittal",
+      "Portal timestamp once separately admitted"
+    ]
+  },
+  "explicit_deferred_placeholder_groups": [
+    "billing_and_invoice_rules",
+    "payroll_rules",
+    "accounting_and_external_finance_rules"
+  ],
+  "source_writeback_and_macro_posture": {
+    "source_writeback_requested": false,
+    "workbook_macro_requested": false,
+    "separate_source_authority_packet_required_before_any_future_action": true
+  },
+  "design_consequences": [
+    "Actuals capture may be designed only as a no-live contract and review surface.",
+    "Customer report may be designed only as a preview artifact with no durable delivery event.",
+    "No finance output behavior may be designed from this lane's accepted rules.",
+    "No source writeback or macro behavior may be designed from this lane's accepted rules.",
+    "Any future live or durable output path still requires separate explicit admission."
+  ],
+  "blocked_authority": [
+    "Product code",
+    "UI control",
+    "Route",
+    "Backend seam",
+    "Payload version",
+    "Hosted call",
+    "Hosted smoke",
+    "Browser live route access",
+    "Live mutation POST",
+    "Schema migration",
+    "Supabase/Render/Vercel/Olares action",
+    "Service/auth/ingress/secret change",
+    "Source workbook/PDF writeback",
+    "Workbook macro",
+    "Production quantity",
+    "Labor entry",
+    "Actual labor hour",
+    "Apparatus progress",
+    "Progress update",
+    "Customer report",
+    "Completion evidence",
+    "Customer delivery",
+    "Billing export",
+    "Payroll export",
+    "Invoice",
+    "Payroll record",
+    "Accounting record",
+    "Labor reconciliation",
+    "External finance sync",
+    "Customer billing delivery",
+    "Autonomous AI business-state mutation"
+  ],
+  "no_live_boundary": {
+    "product_code": false,
+    "ui_control": false,
+    "route": false,
+    "backend_seam": false,
+    "payload_version": false,
+    "hosted_call": false,
+    "hosted_smoke": false,
+    "browser_live_route_access": false,
+    "live_mutation_post": false,
+    "schema_migration": false,
+    "supabase_render_vercel_olares_action": false,
+    "service_auth_ingress_secret_change": false,
+    "source_workbook_pdf_writeback": false,
+    "workbook_macro": false,
+    "production_actuals": false,
+    "customer_delivery": false,
+    "finance_output": false,
+    "external_finance_sync": false,
+    "autonomous_ai_business_state_mutation": false
+  },
+  "next_recommended_lane": "PM Lane 292 - Project Miner Temp Power Actuals And Customer Capture Contract Design No-Live Packet",
+  "next_blocker": "STOPPED_AWAITING_PM_LANE_292_ACTUALS_CUSTOMER_CAPTURE_CONTRACT_DESIGN_NO_LIVE",
+  "validation": [
+    "Packet JSON parse",
+    "Decision-label search across touched Lane 291 files",
+    "Selected-outcome search across touched Lane 291 files",
+    "ACTUALS_CUSTOMER_RULES_ONLY_NO_LIVE classification search",
+    "Accepted actuals/labor defaults search",
+    "Accepted customer report/delivery defaults search",
+    "Deferred finance placeholder posture search",
+    "Blocked-output guardrail search",
+    "git diff --check on touched Lane 291 files"
+  ],
+  "validation_result": "PASS: packet JSON parsed; decision label, selected outcome, actuals/customer classification, accepted actuals/labor defaults, accepted customer preview defaults, deferred finance placeholder posture, and blocked-output guardrails were found across touched Lane 291 files; scoped git diff check passed.",
+  "current_status": "complete"
+}

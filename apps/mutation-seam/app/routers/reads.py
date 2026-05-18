@@ -21,6 +21,7 @@ from app.project_import_persistence import load_project_import_status
 from app.project_seed_sources import load_project_seed_sources
 from app.production_tracking_persistence import load_production_tracking_status
 from app.seed_workbooks import load_seed_data
+from app.temp_power_actuals_capture_review_persistence import load_temp_power_actuals_capture_review_status
 
 router = APIRouter(prefix="/api/v1/reads", tags=["reads"])
 
@@ -69,6 +70,14 @@ async def list_tasks(actor: Actor = Depends(get_current_actor)) -> List[Dict[str
 async def list_workpackages(actor: Actor = Depends(get_current_actor)) -> List[Dict[str, Any]]:
     """List all workpackages."""
     return list(store.workpackages.values())
+
+
+@router.get("/temp-power-actuals-capture-review-status")
+async def get_temp_power_actuals_capture_review_status(
+    actor: Actor = Depends(get_current_actor),
+) -> Dict[str, Any]:
+    """Return the latest admitted Temp Power actuals-capture review status readback."""
+    return load_temp_power_actuals_capture_review_status()
 
 
 @router.get("/issues")

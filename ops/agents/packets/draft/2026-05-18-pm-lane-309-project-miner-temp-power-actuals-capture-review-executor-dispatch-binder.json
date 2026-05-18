@@ -1,0 +1,43 @@
+{
+  "packet_id": "2026-05-18-pm-lane-309",
+  "title": "PM Lane 309 - Project Miner Temp Power Actuals Capture Review Executor Dispatch Binder",
+  "status": "complete",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_ACTUALS_CAPTURE_REVIEW_EXECUTOR_DISPATCH_BINDER",
+  "selected_outcome": "ACTUALS_ROUTE_EXECUTOR_DISPATCH_BINDER_READY",
+  "authority_basis": "Standing PM blocker authority and repo technical authority, constrained to dispatch-only orchestration with no hosted execution from this shell.",
+  "active_executor_lane": {
+    "lane": "PM Lane 308 - Project Miner Temp Power Actuals Capture Review Render-Authenticated Redeploy Gate",
+    "packet": "ops/agents/packets/draft/2026-05-18-pm-lane-308-project-miner-temp-power-actuals-capture-review-render-authenticated-redeploy-gate.json",
+    "handoff": "ops/agents/handoffs/2026-05-18-pm-lane-308-project-miner-temp-power-actuals-capture-review-render-authenticated-redeploy-gate-handoff.md",
+    "prompt": "ops/agents/handoffs/2026-05-18-pm-lane-308-render-authenticated-actuals-route-redeploy-executor-copy-paste-prompt.md",
+    "closeout_template": "ops/agents/handoffs/templates/pm-hosted-executor-closeout-template.md"
+  },
+  "current_hosted_truth": [
+    "Local actuals route implementation is complete.",
+    "Local first-write proof is complete.",
+    "Hosted smoke readiness is implemented with --include-temp-power-actuals-review.",
+    "Both live hosted mutation-seam hosts still omit the Temp Power actuals routes from OpenAPI.",
+    "Both live hosted mutation-seam hosts still return framework 404 Not Found for the actuals readback route.",
+    "Local coordinator workspace has no direct Render execution path."
+  ],
+  "dispatch_decision": [
+    "If the executor has Render-authenticated access, run PM Lane 308 exactly as written.",
+    "If the executor lacks Render-authenticated access, return a credential-unavailable hosted closeout instead of reopening repo-side discovery."
+  ],
+  "not_allowed": [
+    "No hosted actuals POST execution.",
+    "No customer-preview route execution.",
+    "No SQL or schema work.",
+    "No auth, ingress, or secret widening.",
+    "No new service creation.",
+    "No finance, delivery, or source-writeback admission."
+  ],
+  "validation": [
+    "Packet JSON parse",
+    "Decision-label and selected-outcome marker search across touched Lane 309 files",
+    "git diff --check on touched Lane 309 files"
+  ],
+  "validation_result": "PASS: the dispatch binder packages Lane 308 packet, handoff, prompt, and closeout template into one current coordination surface without widening execution authority.",
+  "next_blocker": "RENDER_AUTHENTICATED_EXECUTION_REQUIRED_FOR_LANE_308",
+  "current_status": "complete"
+}
