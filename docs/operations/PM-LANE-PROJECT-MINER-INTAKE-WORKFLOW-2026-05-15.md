@@ -34,9 +34,13 @@ Use that plan for the Temp Power delivery target, Olares One orchestration postu
 
 The original PM intake hosted-parity branch is no longer the controlling Temp Power blocker.
 
-As of 2026-05-18, the controlling Temp Power execution branch is the admitted actuals-capture-review path governed by:
+As of 2026-05-18, the hosted-green Temp Power execution baseline is the admitted actuals-capture/customer-preview-review path governed by:
 
 `ADMIT_TEMP_POWER_ACTUALS_CUSTOMER_CAPTURE_REVIEW_FIRST_WRITE_PACKET_ONLY`
+
+The current adjacent local implementation branch is the separately admitted customer-delivery/durable-proof review path governed by:
+
+`ADMIT_TEMP_POWER_CUSTOMER_DELIVERY_DURABLE_PROOF_REVIEW_FIRST_WRITE_PACKET_ONLY`
 
 Current controlling sequence:
 
@@ -48,6 +52,9 @@ Current controlling sequence:
 6. PM Lane 314 published the admitted actuals route slice to `clean-main` and Render promoted it to the existing mutation-seam service.
 7. PM Lane 315 published the admitted customer-preview review first-write slice to `clean-main` and Render promoted it to the existing mutation-seam service.
 8. The bounded hosted smoke now passes on both hosted seam URLs for the actuals and customer-preview review routes, so the admitted branch is complete within current scope.
+9. PM Lane 329 implements and locally validates the separately admitted customer-delivery/durable-proof review mutation/readback slice without opening hosted promotion or request send.
+10. PM Lane 330 extends hosted smoke/readiness with `--include-temp-power-customer-delivery-proof-review` plus matching workflow/task wiring for the delivery/proof review route.
+11. PM Lane 331 runs the bounded hosted smoke on both public hosts, proves the delivery/proof routes are still absent everywhere, and classifies the current blocker as publication of the admitted local slice.
 
 Current workflow truth:
 
@@ -62,7 +69,11 @@ Current workflow truth:
 9. PM Lane 320 turns that storage plan into a readback contract; route/payload design, schema, and runtime delivery still remain separate later packets.
 10. PM Lane 321 turns that readback/storage pair into an exact request contract; a separate execution gate, schema, and runtime delivery still remain later packets.
 11. PM Lane 322 turns that request contract into an exact execution gate; local mocked dry run, schema, and runtime delivery still remain later packets.
-12. PM Lanes 323 through 328 turn that gate into a complete no-live dry-run and preflight chain; the branch is now explicitly stopped until the exact separate delivery/proof admission phrase is present.
+12. PM Lanes 323 through 328 turn that gate into a complete no-live dry-run and preflight chain.
+13. PM Lane 329 executes the exact separate delivery/proof admission phrase as one bounded local mutation-seam implementation and focused pytest validation packet.
+14. PM Lane 330 prepares the bounded hosted smoke path for the delivery/proof review route without performing hosted promotion or hosted proof.
+15. PM Lane 331 proves the current hosted blocker is publication, because both public hosts still omit the new routes while the slice remains local-only worktree state.
+16. Hosted promotion, hosted/live request execution, finance behavior, source writeback, and customer billing delivery remain outside the current delivery/proof slice and require later separate admission.
 
 Use this section first when continuing the Temp Power workflow. The detailed PM intake sections below remain valid background, but they are not the controlling next move.
 

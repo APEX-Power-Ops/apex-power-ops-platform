@@ -1,0 +1,42 @@
+{
+  "packet_id": "2026-05-18-pm-lane-331",
+  "title": "PM Lane 331 - Project Miner Temp Power Customer Delivery And Durable Proof Review Publication Gate Packet",
+  "status": "complete",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_CUSTOMER_DELIVERY_DURABLE_PROOF_REVIEW_PUBLICATION_GATE_PACKET",
+  "selected_outcome": "CUSTOMER_DELIVERY_DURABLE_PROOF_REVIEW_PUBLICATION_GATE_READY",
+  "authority_basis": "Standing PM blocker authority and repo technical authority, used here to classify the current hosted blocker precisely and package the next step as publish-only follow-through for the separately admitted delivery/proof slice.",
+  "dependencies": [
+    "2026-05-18-pm-lane-329",
+    "2026-05-18-pm-lane-330"
+  ],
+  "activation_condition": [
+    "The separately admitted delivery/proof review route is implemented locally and validated by focused pytest.",
+    "Hosted smoke readiness exists with --include-temp-power-customer-delivery-proof-review.",
+    "No current published proof exists that the public mutation-seam hosts serve the new routes."
+  ],
+  "current_truth": [
+    "Bounded hosted smoke against both https://mutation-seam.apexpowerops.com and https://apex-platform-mutation-seam.onrender.com still omits the delivery/proof review routes from OpenAPI and returns framework 404 Not Found for the delivery/proof readback route.",
+    "The delivery/proof review slice and its hosted-smoke readiness surfaces remain modified or untracked local worktree state.",
+    "The next truthful blocker is publication of the admitted slice to clean-main, not vague hosted troubleshooting."
+  ],
+  "allowed_actions": [
+    "Publish only the admitted delivery/proof review slice to clean-main.",
+    "Use bounded hosted smoke with --include-temp-power-customer-delivery-proof-review to verify promotion on both public hosts.",
+    "Update PM lane docs and canonical status only after hosted truth is revalidated."
+  ],
+  "not_allowed": [
+    "No hosted delivery/proof POST.",
+    "No finance behavior, source writeback, or customer billing delivery work.",
+    "No auth, ingress, DNS, or secret changes.",
+    "No widening beyond the separately admitted delivery/proof review slice."
+  ],
+  "validation": [
+    "Hosted smoke on both the custom domain and the Render hostname using --include-temp-power-customer-delivery-proof-review",
+    "git status --short on the delivery/proof slice",
+    "Packet JSON parse",
+    "git diff --check on touched Lane 331 files"
+  ],
+  "validation_result": "PASS: both public hosts still omit the delivery/proof review routes, local publication state proves the slice is not yet published, and the next step is now packaged as a publish-only follow-up rather than an ambiguous hosted blocker.",
+  "next_blocker": "DELIVERY_PROOF_REVIEW_SLICE_STILL_UNPUBLISHED",
+  "current_status": "closed"
+}

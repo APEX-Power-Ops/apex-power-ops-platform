@@ -517,6 +517,11 @@ class SupabaseStore:
         self.production_tracking_records = PgDict("production_tracking_records")
         self.customer_completion_records = PgDict("customer_completion_records")
         self.financial_handoff_records = PgDict("financial_handoff_records")
+        self.temp_power_customer_preview_reviews = PgDict("pm_customer_preview_reviews", pk_col="review_id")
+        self.temp_power_customer_delivery_proof_reviews = PgDict(
+            "pm_customer_delivery_proof_reviews",
+            pk_col="customer_delivery_proof_review_id",
+        )
         self.tasks = PgDict("tasks")
         self.workpackages = PgDict("workpackages")
         self.snapshots = PgDict("snapshots")
@@ -555,6 +560,8 @@ class SupabaseStore:
             "seam.idempotency_keys",
             "seam.pm_import_candidate_approvals",
             "seam.audit_log",
+            "seam.pm_customer_delivery_proof_reviews",
+            "seam.pm_customer_preview_reviews",
             "seam.checklist_items",
             "seam.hours",
             "seam.financial_handoff_records",

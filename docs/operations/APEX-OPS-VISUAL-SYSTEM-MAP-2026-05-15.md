@@ -244,7 +244,12 @@ For the current Temp Power PM lane work, start here:
 11. Treat PM Lane 320 as the current readback-design marker: the next delivery/proof work is route/payload design, while schema and runtime admission stay deferred.
 12. Treat PM Lane 321 as the current request-contract marker: the next delivery/proof work is a separate execution gate, while schema and runtime admission stay deferred.
 13. Treat PM Lane 322 as the current gate marker: the next delivery/proof work is a local mocked dry run, while schema and runtime admission stay deferred.
-14. Treat PM Lanes 323 through 328 as the completed no-live dry-run and preflight chain: no further safe packet exists inside this branch unless the exact delivery/proof admission phrase is later present as current instruction.
+14. Treat PM Lanes 323 through 328 as completed no-live dry-run and preflight background for the delivery/proof branch.
+15. Treat `ADMIT_TEMP_POWER_CUSTOMER_DELIVERY_DURABLE_PROOF_REVIEW_FIRST_WRITE_PACKET_ONLY` as the exact separate phrase that opened the adjacent local delivery/proof first-write packet.
+16. Treat PM Lane 329 as the current local-runtime marker: `POST /api/v1/mutations/temp-power-customer-delivery-proof-reviews` and `GET /api/v1/reads/temp-power-customer-delivery-proof-status` now exist and focused pytest is green.
+17. Treat PM Lane 330 as the current hosted-readiness marker: bounded smoke now supports `--include-temp-power-customer-delivery-proof-review` without sending a hosted POST.
+18. Treat PM Lane 331 as the current hosted-blocker marker: both public hosts still omit the delivery/proof routes, and the next truthful move is publication of the admitted local slice.
+19. Do not infer hosted promotion, hosted/live request execution, finance behavior, source writeback, or customer billing delivery authority from Lanes 329 through 331; those remain separate later packets.
 
 For AI orchestration work, start here:
 

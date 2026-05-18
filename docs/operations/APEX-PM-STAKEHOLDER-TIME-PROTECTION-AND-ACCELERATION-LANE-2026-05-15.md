@@ -264,7 +264,7 @@ Stop and escalate instead of pushing through when:
 
 The older Temp Power intake, approval, hosted-source, and first-import tranches remain valid history, but they are no longer the controlling active blocker for this branch.
 
-As of 2026-05-18, the controlling Temp Power branch is the admitted actuals-capture-review path:
+As of 2026-05-18, the hosted-green Temp Power baseline is the admitted actuals-capture/customer-preview-review path, and the current adjacent local implementation branch is the separately admitted customer-delivery/durable-proof review path:
 
 1. PM Lane 304 implements local actuals capture review persistence and readback.
 2. PM Lane 305 proves first write, replay, and readback locally.
@@ -274,6 +274,9 @@ As of 2026-05-18, the controlling Temp Power branch is the admitted actuals-capt
 6. PM Lane 314 publishes the admitted actuals route slice to `clean-main` and closes the publication blocker.
 7. PM Lane 315 publishes the admitted customer-preview review first-write slice to `clean-main` and closes the hosted promotion blocker.
 8. The admitted actuals plus customer-preview review first-write slice is now hosted-green on both the custom domain and the Render hostname.
+9. PM Lane 329 implements and locally validates the separately admitted customer-delivery/durable-proof review mutation/readback slice without opening hosted promotion or request send.
+10. PM Lane 330 extends hosted smoke/readiness with `--include-temp-power-customer-delivery-proof-review` plus matching workflow/task wiring for the delivery/proof review route.
+11. PM Lane 331 runs the bounded hosted smoke on both public hosts, proves the delivery/proof routes are still absent everywhere, and classifies the current blocker as publication of the admitted local slice.
 
 Current blocker truth:
 
@@ -288,8 +291,11 @@ Current blocker truth:
 9. PM Lane 320 now fixes the next expected move as customer delivery and durable proof readback design,
 10. PM Lane 321 now fixes the next expected move as customer delivery and durable proof route-and-payload design,
 11. PM Lane 322 now fixes the next expected move as customer delivery and durable proof execution-gate design,
-12. PM Lanes 323 through 328 now fix the branch at a final no-live delivery/proof preflight stop pending exact separate admission,
-13. wider finance and source-writeback work still requires later separate admission beyond that adjacent delivery boundary.
+12. PM Lanes 323 through 328 now preserve the no-live delivery/proof dry-run and preflight chain as immediate background,
+13. PM Lane 329 now converts the exact separate delivery/proof admission phrase into one bounded local mutation-seam implementation with focused pytest proof,
+14. PM Lane 330 now prepares the bounded hosted smoke path for the delivery/proof review route without performing hosted promotion or hosted proof,
+15. PM Lane 331 now proves the current hosted blocker is publication, because both public hosts still omit the new routes while the admitted slice remains local-only worktree state,
+16. hosted promotion, hosted/live request execution, finance behavior, source writeback, and customer billing delivery still require later separate admission beyond that adjacent delivery boundary.
 
 Use the current active branch refresh above before following the historical tranche narrative below.
 

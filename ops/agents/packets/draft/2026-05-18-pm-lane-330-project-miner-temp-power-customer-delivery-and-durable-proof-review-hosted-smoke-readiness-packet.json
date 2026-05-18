@@ -1,0 +1,70 @@
+{
+  "packet_id": "2026-05-18-pm-lane-330",
+  "title": "PM Lane 330 - Project Miner Temp Power Customer Delivery And Durable Proof Review Hosted Smoke Readiness Packet",
+  "status": "complete",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_CUSTOMER_DELIVERY_DURABLE_PROOF_REVIEW_HOSTED_SMOKE_READINESS_PACKET",
+  "selected_outcome": "HOSTED_CUSTOMER_DELIVERY_DURABLE_PROOF_REVIEW_ROUTE_SMOKE_READINESS_IMPLEMENTED",
+  "authority_basis": "Standing PM blocker authority and standing repo technical authority to continue autonomously, constrained to no-live hosted-readiness work for the separately admitted delivery/proof review route.",
+  "scope": {
+    "target_files": [
+      "apps/mutation-seam/scripts/smoke_deployed_mutation_seam.py",
+      ".github/workflows/deployed-mutation-seam-smoke.yml",
+      ".vscode/tasks.json",
+      "apps/mutation-seam/DEPLOYMENT_VALIDATION.md"
+    ],
+    "new_flag": "--include-temp-power-customer-delivery-proof-review",
+    "behavior": "Verify hosted OpenAPI registration and readback shape for the Temp Power customer-delivery/durable-proof review route without sending a hosted POST request."
+  },
+  "hosted_checks_prepared": {
+    "openapi_paths": [
+      "/api/v1/mutations/temp-power-customer-delivery-proof-reviews",
+      "/api/v1/reads/temp-power-customer-delivery-proof-status"
+    ],
+    "openapi_methods": {
+      "/api/v1/mutations/temp-power-customer-delivery-proof-reviews": [
+        "post"
+      ],
+      "/api/v1/reads/temp-power-customer-delivery-proof-status": [
+        "get"
+      ]
+    },
+    "readback_required_fields": [
+      "project_id",
+      "candidate_id",
+      "source_fingerprint",
+      "preview_review_id",
+      "current_candidate_match",
+      "current_source_fingerprint_match",
+      "preview_review_lineage_match",
+      "status",
+      "record_count",
+      "storage_route_registered",
+      "storage_source",
+      "entity_type",
+      "finance_authority",
+      "source_writeback_authority",
+      "customer_billing_delivery_authority"
+    ],
+    "readback_expected_boundaries": {
+      "finance_authority": "not_admitted",
+      "source_writeback_authority": "not_admitted",
+      "customer_billing_delivery_authority": "not_admitted"
+    }
+  },
+  "validation": [
+    "python -m py_compile apps/mutation-seam/scripts/smoke_deployed_mutation_seam.py",
+    "Packet JSON parse",
+    "Decision-label and selected-outcome marker search across touched Lane 330 files",
+    "git diff --check on touched Lane 330 files"
+  ],
+  "validation_result": "PASS: the updated smoke script compiled successfully, workflow/task/doc surfaces now expose the delivery/proof readiness flag, and the lane records hosted-readiness only with no claim of hosted execution.",
+  "still_blocked": [
+    "Hosted delivery/proof review write execution",
+    "Hosted idempotent replay proof",
+    "Hosted persistence proof",
+    "Hosted promotion of the new delivery/proof route slice",
+    "Any finance behavior, source writeback, or customer billing delivery admission"
+  ],
+  "next_blocker": "STOPPED_AWAITING_SEPARATE_CUSTOMER_DELIVERY_DURABLE_PROOF_REVIEW_PUBLICATION_OR_HOSTED_PROOF_PACKET",
+  "current_status": "complete"
+}
