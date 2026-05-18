@@ -45,15 +45,15 @@ Current controlling sequence:
 3. PM Lane 306 extends hosted smoke/readiness with `--include-temp-power-actuals-review`.
 4. PM Lane 307 proves the hosted blocker is service-wide stale deployment, not custom-domain drift.
 5. PM Lane 308 executed the authenticated Render redeploy and proved current committed `clean-main` is live on the existing service.
-6. PM Lane 314 is now the controlling publication gate because the admitted actuals route slice remains unpublished local worktree state.
-7. PM Lane 310 refreshes the canonical Temp Power operating plan and must now be read with the Lane 314 blocker update.
+6. PM Lane 314 published the admitted actuals route slice to `clean-main` and Render promoted it to the existing mutation-seam service.
+7. The bounded hosted smoke now passes on both hosted seam URLs, so the admitted actuals slice is complete within current scope.
 
 Current workflow truth:
 
 1. PM intake hosted parity is already accepted and no longer the active blocker.
 2. Authenticated hosted redeploy is complete and no longer the active blocker.
-3. The remaining blocker is publication of the admitted Temp Power actuals route slice to `clean-main`, followed by a bounded hosted retry.
-4. The controlling publication handoff is `ops/agents/handoffs/2026-05-18-pm-lane-314-project-miner-temp-power-actuals-route-publication-gate-after-authenticated-redeploy-handoff.md`.
+3. Publication is complete: the admitted Temp Power actuals route slice is now hosted-green on both the custom domain and the Render hostname.
+4. There is no remaining blocker inside this admitted slice; any follow-on work requires a new explicit admission lane.
 
 Use this section first when continuing the Temp Power workflow. The detailed PM intake sections below remain valid background, but they are not the controlling next move.
 

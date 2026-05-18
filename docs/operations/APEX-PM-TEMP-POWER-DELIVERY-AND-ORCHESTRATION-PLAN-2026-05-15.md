@@ -202,8 +202,8 @@ Current controlling lanes:
 3. PM Lane 306 extends the hosted smoke/readiness surface with `--include-temp-power-actuals-review`.
 4. PM Lane 307 proves the hosted blocker is stale service deployment, not custom-domain drift, by matching failures on both the custom domain and Render hostname.
 5. PM Lane 308 executes authenticated Render inspection and redeploy against the existing service.
-6. That redeploy reaches live committed `clean-main` but still leaves both hosted seam URLs without the actuals routes.
-7. PM Lane 314 is now the controlling publication gate because the admitted actuals route slice is still local-only worktree state and therefore is not yet present in hosted `clean-main`.
+6. PM Lane 314 publishes the admitted actuals route slice to `clean-main` as commit `3d47834eb32aa29b80152df3973f91d7c62a2e30`.
+7. Render auto-deploy promotes that commit on the existing mutation-seam service and bounded hosted smoke passes on both the custom domain and the Render hostname.
 
 Current boundary of the active branch:
 
@@ -215,13 +215,12 @@ Current boundary of the active branch:
 
 Current blocker:
 
-1. authenticated Render execution is complete and no longer the blocker
-2. existing service `apex-platform-mutation-seam` is live on committed `clean-main` at `2bd07725d97d8b806d1c0e35e98e6595c5b1d584`
-3. both hosted seam URLs still omit the Temp Power actuals routes and still return framework `404 Not Found` for the actuals readback route
-4. the controlling blocker is publication of the admitted actuals route slice to `clean-main`
-5. the controlling publication handoff is `ops/agents/handoffs/2026-05-18-pm-lane-314-project-miner-temp-power-actuals-route-publication-gate-after-authenticated-redeploy-handoff.md`
+1. there is no remaining blocker inside the admitted Temp Power actuals capture-review slice
+2. existing service `apex-platform-mutation-seam` is live on committed `clean-main` at `3d47834eb32aa29b80152df3973f91d7c62a2e30`
+3. both hosted seam URLs now expose the Temp Power actuals routes and the bounded hosted smoke returns `RESULT PASS`
+4. any next move beyond this point requires a new explicit admission lane because customer-facing delivery, finance/payroll output, source writeback, and wider customer-preview execution remain out of scope
 
-Read this section first when continuing the Temp Power lane. The lane history below remains valid as background, but the active next move is publication of the admitted actuals slice, not another hosted-auth discovery pass.
+Read this section first when continuing the Temp Power lane. The lane history below remains valid as background, but the admitted actuals capture-review slice is now complete and hosted-green.
 
 ## Historical Branch Narrative
 

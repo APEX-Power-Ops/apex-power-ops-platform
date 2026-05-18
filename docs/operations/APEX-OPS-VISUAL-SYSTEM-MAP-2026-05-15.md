@@ -234,8 +234,8 @@ For the current Temp Power PM lane work, start here:
 1. Treat the original import-candidate and PM-intake parity branches as completed background, not as the current blocker.
 2. Use the controlling actuals-branch admission phrase `ADMIT_TEMP_POWER_ACTUALS_CUSTOMER_CAPTURE_REVIEW_FIRST_WRITE_PACKET_ONLY`.
 3. Treat authenticated Render redeploy as completed proof, not as the current blocker.
-4. Use PM Lane 314 as the current blocker surface because the admitted actuals route slice is still unpublished local worktree state.
-5. Publish the admitted actuals slice to `clean-main`, then rerun the bounded hosted smoke with `--include-temp-power-actuals-review`.
+4. Treat PM Lane 314 publication as completed proof: commit `3d47834eb32aa29b80152df3973f91d7c62a2e30` is live on the existing mutation-seam service.
+5. Both hosted seam URLs now pass the bounded `--include-temp-power-actuals-review` smoke, so the admitted actuals slice is complete within current scope.
 
 For AI orchestration work, start here:
 

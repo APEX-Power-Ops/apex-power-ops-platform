@@ -3,8 +3,8 @@
   "title": "PM Lane 314 - Project Miner Temp Power Actuals Route Publication Gate After Authenticated Redeploy",
   "status": "complete",
   "decision_label": "PROJECT_MINER_TEMP_POWER_ACTUALS_ROUTE_PUBLICATION_GATE_AFTER_AUTHENTICATED_REDEPLOY",
-  "selected_outcome": "ACTUALS_ROUTE_PUBLICATION_GATE_READY",
-  "authority_basis": "Standing PM blocker authority and repo technical authority, constrained to truthful blocker reclassification and bounded publication follow-through planning after authenticated Render execution succeeded.",
+  "selected_outcome": "ACTUALS_ROUTE_PUBLICATION_GATE_CLOSED_HOSTED_GREEN",
+  "authority_basis": "Standing PM blocker authority and repo technical authority, used here to publish the admitted Temp Power actuals slice to clean-main, let the existing Render service auto-deploy it, and close the publication gate with hosted smoke evidence.",
   "dependencies": [
     "2026-05-18-pm-lane-304",
     "2026-05-18-pm-lane-305",
@@ -25,10 +25,10 @@
     "The admitted actuals route slice remains modified or untracked in the local worktree rather than published in clean-main."
   ],
   "current_truth": [
-    "Render auth was not the real remaining blocker once browser-authenticated execution became available.",
-    "Manual redeploy of the existing service succeeded and produced live deploy dep-d85ipjjeo5us73f02c6g on commit 2bd07725d97d8b806d1c0e35e98e6595c5b1d584.",
-    "Both the custom domain and the Render hostname still omit the Temp Power actuals routes and return framework 404 for the actuals readback route.",
-    "The admitted actuals route implementation and proof slice are still local-only worktree changes, so current committed clean-main cannot expose those routes yet."
+    "The admitted Temp Power actuals route implementation and proof slice were published to clean-main as commit 3d47834eb32aa29b80152df3973f91d7c62a2e30.",
+    "Render auto-deploy picked up that commit as deployment dep-d85j0a37uimc738l7060 and the deploy reached live on the existing mutation-seam service.",
+    "Bounded hosted smoke now passes on both https://mutation-seam.apexpowerops.com and https://apex-platform-mutation-seam.onrender.com with the Temp Power actuals routes present and the actuals status readback returning 200.",
+    "There is no remaining blocker inside the admitted Temp Power actuals capture-review slice."
   ],
   "allowed_actions": [
     "Publish only the admitted Temp Power actuals route slice to clean-main using the existing repo boundary.",
@@ -44,11 +44,14 @@
     "No finance, delivery, or source-writeback widening."
   ],
   "validation": [
-    "Packet JSON parse",
-    "Decision-label and selected-outcome marker search across touched Lane 314 files",
-    "git diff --check on touched Lane 314 files"
+    "Focused pytest for temp power actuals capture review persistence",
+    "Local first-write proof runner",
+    "git diff --cached --check before publication",
+    "git push origin clean-main",
+    "Render deploy dep-d85j0a37uimc738l7060 reaches live on commit 3d47834eb32aa29b80152df3973f91d7c62a2e30",
+    "Bounded hosted smoke passes on both the custom domain and the Render hostname"
   ],
-  "validation_result": "PASS: the blocker is now truthfully reframed as a publication gate, not an external-auth gate, and the next bounded move is pre-packaged.",
-  "next_blocker": "PUBLISH_ADMITTED_ACTUALS_ROUTE_SLICE_TO_CLEAN_MAIN_BEFORE_HOSTED_RETRY",
-  "current_status": "complete"
+  "validation_result": "PASS: publication closed the blocker, Render promoted the admitted slice, and both hosted seam URLs now expose the Temp Power actuals routes with passing bounded smoke.",
+  "next_blocker": "NONE_WITHIN_ADMITTED_ACTUALS_CAPTURE_REVIEW_SCOPE",
+  "current_status": "closed"
 }

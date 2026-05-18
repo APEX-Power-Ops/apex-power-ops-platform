@@ -271,15 +271,15 @@ As of 2026-05-18, the controlling Temp Power branch is the admitted actuals-capt
 3. PM Lane 306 extends hosted smoke/readiness with `--include-temp-power-actuals-review`.
 4. PM Lane 307 proves the hosted blocker is stale service deployment across both the custom domain and the Render hostname.
 5. PM Lane 308 executes the authenticated Render redeploy and proves current committed `clean-main` is live on the existing service.
-6. PM Lane 314 is now the controlling publication gate because the admitted actuals route slice remains unpublished local worktree state.
-7. PM Lane 310 and PM Lane 311 remain the canonical plan/runbook surfaces but must now be read with the Lane 314 blocker update.
+6. PM Lane 314 publishes the admitted actuals route slice to `clean-main` and closes the publication blocker.
+7. The admitted actuals slice is now hosted-green on both the custom domain and the Render hostname.
 
 Current blocker truth:
 
 1. local implementation and proof are complete for the admitted actuals branch,
 2. hosted smoke readiness and blocker classification are complete,
-3. authenticated Render execution and hosted closeout are complete,
-4. the remaining blocker is publication of the admitted Temp Power actuals route slice to `clean-main` before the next hosted retry.
+3. authenticated Render execution, publication, and hosted closeout are complete,
+4. there is no remaining blocker inside the admitted actuals branch; wider Temp Power work still requires a new explicit admission lane.
 
 Use the current active branch refresh above before following the historical tranche narrative below.
 

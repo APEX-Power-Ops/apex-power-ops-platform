@@ -2,7 +2,7 @@
 
 Date: 2026-05-18
 
-Status: Current truthful blocker lane after authenticated Render execution
+Status: Executed and accepted closed after hosted promotion
 
 Decision label:
 
@@ -10,26 +10,27 @@ Decision label:
 
 ## Purpose
 
-PM Lane 314 replaces the earlier external-auth blocker classification.
+PM Lane 314 closed the publication gap that remained after authenticated Render execution proved the earlier blocker was no longer auth.
 
-Render-authenticated execution is no longer the blocker. The existing mutation-seam service was inspected and redeployed successfully, but the admitted Temp Power actuals route slice is still only present in local worktree changes and therefore is not yet eligible for hosted promotion.
+The admitted Temp Power actuals route slice has now been published to `clean-main`, auto-deployed on the existing mutation-seam service, and verified on both hosted seam URLs.
 
 ## Selected Outcome
 
 Selected outcome:
 
-`ACTUALS_ROUTE_PUBLICATION_GATE_READY`
+`ACTUALS_ROUTE_PUBLICATION_GATE_CLOSED_HOSTED_GREEN`
 
 ## Proven Facts
 
 1. existing service `apex-platform-mutation-seam` is bound to repo `jasonlswenson-sys/apex-power-ops`, branch `clean-main`, root directory `apps/mutation-seam`
-2. manual redeploy reached live deployment `dep-d85ipjjeo5us73f02c6g`
-3. that deploy is running commit `2bd07725d97d8b806d1c0e35e98e6595c5b1d584`
-4. both hosted seam URLs still omit the Temp Power actuals routes from OpenAPI and still return framework `404 Not Found` for the actuals readback route
-5. the admitted actuals route slice remains modified or untracked in the local worktree, so committed `clean-main` still does not contain the lane 304 implementation
+2. the admitted Temp Power actuals slice was published to `clean-main` as commit `3d47834eb32aa29b80152df3973f91d7c62a2e30`
+3. Render auto-deploy created deployment `dep-d85j0a37uimc738l7060`
+4. that deployment reached `live`
+5. bounded hosted smoke now passes on both `https://mutation-seam.apexpowerops.com` and `https://apex-platform-mutation-seam.onrender.com`
+6. the Temp Power actuals routes are now present in hosted OpenAPI and the actuals readback route returns `200`
 
-## Current Blocker
+## Resolution
 
-The current blocker is publication of the admitted Temp Power actuals route slice to `clean-main`.
+The publication blocker is closed.
 
-After publication, rerun the bounded hosted smoke. Only if the hosted route is still absent after publication should the branch reopen a bounded code/build-defect investigation.
+There is no remaining blocker inside the admitted Temp Power actuals capture-review slice. Any later work beyond this slice requires a new explicit admission lane rather than reopening publication or hosted-parity work for this branch.
