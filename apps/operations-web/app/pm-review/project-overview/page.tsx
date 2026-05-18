@@ -104,9 +104,16 @@ type StageCard = {
   tone: StageTone
   summary: string
   decision: string
+  when: string
   availableNow: string[]
   routeHref: string
   routeLabel: string
+}
+
+type AttentionItem = {
+  id: string
+  title: string
+  detail: string
 }
 
 const API_BASE =
@@ -207,6 +214,9 @@ function buildStageCards(packet: ProjectOverviewPacket): StageCard[] {
       decision: warningCount || decisionCount
         ? `Review ${formatCount(warningCount)} warnings and ${formatCount(decisionCount)} human decisions before treating the candidate as settled PM context.`
         : 'No source warning or decision queue is currently reported; confirm the candidate still reflects the intended testing package.',
+      when: warningCount || decisionCount
+        ? 'Before you rely on any downstream PM queue, field-prep, or customer delivery interpretation.'
+        : 'At the start of the PM review cycle or any time the source fingerprint changes.',
       availableNow: [
         'Review source-derived project shape',
         'Inspect warnings and required PM decisions',
@@ -224,6 +234,7 @@ function buildStageCards(packet: ProjectOverviewPacket): StageCard[] {
         ? 'Approval persistence and project import are still intentionally blocked. The current surface is design and readiness review only.'
         : 'Approval persistence has opened beyond the current default boundary.',
       decision: 'Review the future gate design, idempotency assumptions, and no-go checks. Do not treat route presence as live approval authority.',
+      when: 'Before any request to widen from read-only PM review into import or approval persistence authority.',
       availableNow: [
         'Review admission plan and no-go checks',
         'Review approval storage plan and contract shape',
@@ -241,6 +252,9 @@ function buildStageCards(packet: ProjectOverviewPacket): StageCard[] {
       decision: readyCount > 0
         ? 'Work the ready queue first, then use drivers, schedule, tracer, and variance drillthroughs where timing or dependency questions exist.'
         : 'Refresh the PM queue and confirm whether the current project still has actionable apparatus rows.',
+      when: readyCount > 0
+        ? 'Now. This is the live execution surface that tells you what can move without opening a new governance branch.'
+        : 'As soon as new ready work appears or blocked rows clear.',
       availableNow: [
         'Review the PM workfront queue',
         'Follow drillthroughs into drivers, schedule, tracer, and variance',
@@ -258,6 +272,9 @@ function buildStageCards(packet: ProjectOverviewPacket): StageCard[] {
         ? 'Field-facing context is available as planning material, but field authorization, assignments, and schedule or status writes are still separate authority branches.'
         : 'Field prep remains conceptual until the queue shows concrete ready work and the next branch selection is explicit.',
       decision: 'Use field prep artifacts and questions to prepare conversations, but do not treat them as field authorization or production tracking authority.',
+      when: readyCount > 0
+        ? 'As soon as PM-ready work needs customer, access, safety, or material clarification before field delay develops.'
+        : 'After the PM queue shows concrete ready work worth preparing around.',
       availableNow: [
         'Prepare field kickoff and observation context',
         'Capture open access, safety, material, and customer questions',
@@ -275,6 +292,9 @@ function buildStageCards(packet: ProjectOverviewPacket): StageCard[] {
         ? `The admitted customer delivery branch is current. Latest event ${packet.deliveryStatus.latest_customer_delivery_event_id || 'unknown'} was recorded at ${formatTimestamp(packet.deliveryStatus.latest_delivered_at_utc)}.`
         : 'The customer delivery branch exists, but the current hosted readback is not reporting the current-match proof state.',
       decision: 'Use this route only for the bounded delivery-event persistence and readback proof already admitted. Do not widen into billing or finance from here.',
+      when: deliveryCurrent
+        ? 'When you need to verify or append bounded customer delivery proof without widening into downstream finance or billing branches.'
+        : 'Only when delivery proof is the immediate operator need; otherwise keep attention on source and PM queue control.',
       availableNow: [
         'Review current customer delivery event readback',
         'Use the admitted bounded delivery execution route',
@@ -290,6 +310,7 @@ function buildStageCards(packet: ProjectOverviewPacket): StageCard[] {
       tone: 'blocked',
       summary: `Finance is placeholder-only, customer billing delivery remains ${formatLabel(packet.deliveryStatus.customer_billing_delivery_authority || 'not_admitted')}, and source writeback remains ${formatLabel(packet.deliveryStatus.source_writeback_authority || 'not_admitted')}.`,
       decision: 'Your next decision here is branch selection only: keep designing finance as placeholder, or later open a separate admitted packet for finance output, customer billing delivery, or source writeback.',
+      when: 'Only after you intentionally choose a new governance packet for a downstream write branch.',
       availableNow: [
         'Review the finance placeholder branch',
         'See the canonical route-to-authority map',
@@ -299,6 +320,57 @@ function buildStageCards(packet: ProjectOverviewPacket): StageCard[] {
       routeLabel: 'Open downstream planning context',
     },
   ]
+}
+
+function buildAttentionItems(packet: ProjectOverviewPacket): AttentionItem[] {
+  const items: AttentionItem[] = []
+  const decisionCount = packet.candidate.summary?.human_decision_count || 0
+  const warningCount = packet.candidate.summary?.warning_count || 0
+  const readyCount = packet.workfront.summary?.ready_count || 0
+  const blockedCount = packet.workfront.summary?.blocked_count || 0
+  const deliveryCurrent = packet.deliveryStatus.status === 'customer_delivery_event_recorded_current_match'
+
+  if (decisionCount || warningCount) {
+    items.push({
+      id: 'source-review',
+      title: 'Clear the source review queue first',
+      detail: `${formatCount(warningCount)} warnings and ${formatCount(decisionCount)} human decisions are still shaping the trusted PM starting point.`,
+    })
+  }
+
+  if (readyCount) {
+    items.push({
+      id: 'ready-queue',
+      title: 'Work the ready PM queue now',
+      detail: `${formatCount(readyCount)} apparatus rows are ready and can move without asking for a new governance branch.`,
+    })
+  }
+
+  if (blockedCount) {
+    items.push({
+      id: 'blocked-queue',
+      title: 'Resolve blocked PM rows before field delay',
+      detail: `${formatCount(blockedCount)} rows are blocked and should drive your schedule, dependency, and escalation follow-up.`,
+    })
+  }
+
+  if (!deliveryCurrent) {
+    items.push({
+      id: 'delivery-proof',
+      title: 'Treat delivery execution as bounded proof only',
+      detail: 'Customer delivery exists as an admitted slice, but the current readback is not yet the current-match proof state.',
+    })
+  }
+
+  if (!items.length) {
+    items.push({
+      id: 'monitor',
+      title: 'Monitor the current PM posture',
+      detail: 'No immediate escalations are visible in the overview, so keep the route as your current-state scan before opening a detail surface.',
+    })
+  }
+
+  return items.slice(0, 3)
 }
 
 export default function PmProjectOverviewPage() {
@@ -330,6 +402,9 @@ export default function PmProjectOverviewPage() {
   const location = packet?.candidate.project?.location || 'unknown location'
   const fingerprint = packet?.candidate.source_freshness?.aggregate_fingerprint || 'waiting for source fingerprint'
   const reviewGoal = packet?.candidate.review_guidance?.primary_review_goal || 'See the project from source intake through downstream blocked branches.'
+  const attentionItems = React.useMemo(() => (packet ? buildAttentionItems(packet) : []), [packet])
+  const drawingPackage = packet?.candidate.project?.drawing_package || 'waiting for drawing package'
+  const sourceSheet = packet?.candidate.project?.source_sheet || 'waiting for source sheet'
 
   return (
     <main className="shell-page pm-review-page">
@@ -355,6 +430,14 @@ export default function PmProjectOverviewPage() {
             <div>
               <dt>PM focus</dt>
               <dd>{loading ? 'Loading PM focus' : reviewGoal}</dd>
+            </div>
+            <div>
+              <dt>Drawing package</dt>
+              <dd>{loading ? 'Loading drawing package' : drawingPackage}</dd>
+            </div>
+            <div>
+              <dt>Source sheet</dt>
+              <dd>{loading ? 'Loading source sheet' : sourceSheet}</dd>
             </div>
           </dl>
         </div>
@@ -424,6 +507,25 @@ export default function PmProjectOverviewPage() {
           </article>
         </section>
 
+        <section className="notes-card pm-project-overview-attention-card">
+          <div className="pm-project-overview-attention-header">
+            <div>
+              <h2>What Needs Your Attention Next</h2>
+              <p>These are the immediate PM moves the current project state is asking you to make.</p>
+            </div>
+            <p className="pm-project-overview-section-label">In priority order</p>
+          </div>
+
+          <div className="pm-project-overview-attention-list">
+            {attentionItems.map((item) => (
+              <article key={item.id} className="pm-project-overview-attention-item">
+                <h3>{item.title}</h3>
+                <p>{item.detail}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
         <section className="pm-project-overview-stage-list" aria-label="Project overview stages">
           {loading && !stageCards.length ? (
             <div className="card pm-runtime-state">
@@ -449,6 +551,13 @@ export default function PmProjectOverviewPage() {
                   Decision you need to make
                 </p>
                 <p className="pm-project-overview-copy">{stage.decision}</p>
+              </div>
+
+              <div className="pm-project-overview-section">
+                <p className="pm-project-overview-section-label">
+                  When this matters
+                </p>
+                <p className="pm-project-overview-copy">{stage.when}</p>
               </div>
 
               <div className="pm-project-overview-section">

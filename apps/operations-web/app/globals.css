@@ -376,6 +376,45 @@ body {
   margin: 0;
 }
 
+.pm-project-overview-attention-card {
+  margin-bottom: 1rem;
+}
+
+.pm-project-overview-attention-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.pm-project-overview-attention-header h2,
+.pm-project-overview-attention-item h3 {
+  margin: 0;
+}
+
+.pm-project-overview-attention-header p,
+.pm-project-overview-attention-item p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.pm-project-overview-attention-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.pm-project-overview-attention-item {
+  border-radius: 22px;
+  border: 1px solid var(--border);
+  background: rgba(18, 62, 87, 0.04);
+  padding: 1rem;
+  display: grid;
+  gap: 0.45rem;
+}
+
 .pm-approval-route {
   width: min(1320px, calc(100% - 2rem));
 }
