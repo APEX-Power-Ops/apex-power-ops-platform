@@ -1,0 +1,81 @@
+{
+  "packet_id": "2026-05-17-pm-lane-267-project-miner-temp-power-live-admission-hosted-candidate-mismatch-hold",
+  "title": "PM Lane 267 - Project Miner Temp Power Live Admission Hosted Candidate Mismatch Hold",
+  "date": "2026-05-17",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_LIVE_ADMISSION_HOSTED_CANDIDATE_MISMATCH_HOLD",
+  "selected_outcome": "LIVE_ADMISSION_PRESENT_STOPPED_HOSTED_CANDIDATE_MISMATCH",
+  "source_packet": "PM Lane 266",
+  "live_admission_phrase": {
+    "present_as_current_instruction": true,
+    "phrase": "I explicitly admit PM Lane 142 live approval POST and first approval-row creation for the current Project Miner Temp Power import candidate."
+  },
+  "hosted_route_proof": {
+    "operations_web_smoke": "SMOKE_SUMMARY failed=0 passed=12 base_url=https://operations.apexpowerops.com/",
+    "paired_pm_intake_smoke": "PM_INTAKE_HOSTED_SUMMARY failed=0",
+    "mutation_seam_deployed_smoke": "RESULT PASS",
+    "approval_status_read_available": true
+  },
+  "expected_candidate_for_live_approval": {
+    "candidate_id": "pm-import-candidate-miner-temp-power",
+    "candidate_version": "pm_import_candidate_read_only_v1",
+    "task_count": 15,
+    "apparatus_candidate_count": 184,
+    "blocker_count": 0,
+    "accepted_warning_codes": [
+      "PROJECT_DATA_ENTRY_FORMULA_ERRORS"
+    ],
+    "mutation_authority": "not_admitted"
+  },
+  "hosted_candidate_readback": {
+    "candidate_id": "pm-import-candidate-project-miner",
+    "candidate_version": "pm_import_candidate_read_only_v1",
+    "task_count": 0,
+    "apparatus_candidate_count": 0,
+    "blocker_count": 2,
+    "warning_count": 3,
+    "accepted_warning_codes_from_hosted_contract": [
+      "MISSING_ESTIMATOR_WORKBOOK",
+      "MISSING_SLD_PDF",
+      "NO_ESTIMATOR_LINE_ITEMS"
+    ],
+    "mutation_authority": "not_admitted"
+  },
+  "hosted_approval_status_readback": {
+    "candidate_id": "pm-import-candidate-project-miner",
+    "classification": "no_approval_record",
+    "approval_record_count_for_candidate": 0,
+    "current_candidate_match": false
+  },
+  "stop_condition": "STOPPED_HOSTED_CURRENT_CANDIDATE_NOT_TEMP_POWER",
+  "write_execution": {
+    "approval_post_sent": false,
+    "approval_row_created": false,
+    "project_import_performed": false,
+    "supabase_write_performed": false,
+    "render_env_updated": false,
+    "render_deploy_performed": false,
+    "source_workbook_committed": false,
+    "source_pdf_committed": false,
+    "macro_run": false
+  },
+  "classification": {
+    "blocker_type": "hosted_candidate_freshness_source_hydration",
+    "render_route_access_blocker": false,
+    "approval_storage_blocker": false,
+    "pm_decision_blocker": false,
+    "likely_cause": "Hosted mutation-seam is not resolving the current Temp Power source files from the Project Miner planning source root or env overrides."
+  },
+  "next_safe_packet": "PM Lane 268 - Project Miner Temp Power Hosted Candidate Source Hydration And Freshness Repair Packet",
+  "validation": [
+    "hosted read-only candidate/contract/status preflight",
+    "hosted operations-web smoke",
+    "paired PM intake hosted smoke",
+    "deployed mutation-seam smoke with PM intake",
+    "packet JSON parse",
+    "PM Lane 267 text search",
+    "guardrail keyword scan",
+    "corrupted-token scan",
+    "git diff --check"
+  ],
+  "validation_result": "PASS"
+}

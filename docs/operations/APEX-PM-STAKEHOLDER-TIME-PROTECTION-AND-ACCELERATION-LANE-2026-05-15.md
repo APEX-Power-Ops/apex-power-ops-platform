@@ -936,6 +936,8 @@ PM Lane 265 refreshes the approval-readiness ledger after the accepted warning d
 
 PM Lane 266 packages the next true blocker for first approval-row execution. The branch is stopped at `STOPPED_AWAITING_EXACT_PM_LANE_142_LIVE_ADMISSION`; the exact later phrase is `I explicitly admit PM Lane 142 live approval POST and first approval-row creation for the current Project Miner Temp Power import candidate.` The live executor also needs PM decision value, review notes, and stop-boundary acknowledgement. This lane performs no hosted action, approval POST, approval row creation, project import, workbook content read/write, macro/writeback, Desktop Codex PM decision authority, or business-state mutation.
 
+PM Lane 267 records the first read-only hosted preflight after that exact phrase was supplied as a current instruction. Hosted access is not the blocker: operations-web hosted smoke, paired PM intake hosted smoke, deployed mutation-seam smoke, and approval-status readback are green. The blocker is candidate freshness/source hydration: hosted mutation-seam currently serves `pm-import-candidate-project-miner` with missing-source warnings, not `pm-import-candidate-miner-temp-power`. The live branch stops at `STOPPED_HOSTED_CURRENT_CANDIDATE_NOT_TEMP_POWER`, with no approval POST, approval row creation, project import, Supabase write, Render/Vercel/Olares action, source-file commit, workbook/PDF content read, macro/writeback, Desktop Codex PM decision authority, or business-state mutation admitted.
+
 The success standard is not just technical correctness. The candidate must reduce Jason's review burden by showing:
 
 1. what the system thinks the project is,
