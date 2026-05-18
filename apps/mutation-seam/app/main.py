@@ -10,6 +10,7 @@ from app.routers import (
     assignments,
     checklist,
     customer_completion,
+    temp_power_customer_delivery_events,
     temp_power_customer_delivery_proof_reviews,
     durable_field_records,
     financial_handoff,
@@ -49,6 +50,7 @@ app.include_router(apparatus.router)
 app.include_router(assignments.router)
 app.include_router(checklist.router)
 app.include_router(customer_completion.router)
+app.include_router(temp_power_customer_delivery_events.router)
 app.include_router(temp_power_customer_delivery_proof_reviews.router)
 app.include_router(durable_field_records.router)
 app.include_router(financial_handoff.router)

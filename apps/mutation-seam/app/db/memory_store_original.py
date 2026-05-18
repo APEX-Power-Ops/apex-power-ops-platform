@@ -26,6 +26,7 @@ class MemoryStore:
         self.temp_power_actuals_capture_reviews: Dict[str, Dict[str, Any]] = {}
         self.temp_power_customer_preview_reviews: Dict[str, Dict[str, Any]] = {}
         self.temp_power_customer_delivery_proof_reviews: Dict[str, Dict[str, Any]] = {}
+        self.temp_power_customer_delivery_events: Dict[str, Dict[str, Any]] = {}
         self.tasks: Dict[str, Dict[str, Any]] = {}
         self.workpackages: Dict[str, Dict[str, Any]] = {}
         self.snapshots: Dict[str, Dict[str, Any]] = {}

@@ -522,6 +522,10 @@ class SupabaseStore:
             "pm_customer_delivery_proof_reviews",
             pk_col="customer_delivery_proof_review_id",
         )
+        self.temp_power_customer_delivery_events = PgDict(
+            "pm_customer_delivery_events",
+            pk_col="customer_delivery_event_id",
+        )
         self.tasks = PgDict("tasks")
         self.workpackages = PgDict("workpackages")
         self.snapshots = PgDict("snapshots")
@@ -560,6 +564,7 @@ class SupabaseStore:
             "seam.idempotency_keys",
             "seam.pm_import_candidate_approvals",
             "seam.audit_log",
+            "seam.pm_customer_delivery_events",
             "seam.pm_customer_delivery_proof_reviews",
             "seam.pm_customer_preview_reviews",
             "seam.checklist_items",

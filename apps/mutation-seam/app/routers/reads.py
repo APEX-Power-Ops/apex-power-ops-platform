@@ -22,6 +22,7 @@ from app.project_seed_sources import load_project_seed_sources
 from app.production_tracking_persistence import load_production_tracking_status
 from app.seed_workbooks import load_seed_data
 from app.temp_power_actuals_capture_review_persistence import load_temp_power_actuals_capture_review_status
+from app.temp_power_customer_delivery_event_persistence import load_temp_power_customer_delivery_event_status
 from app.temp_power_customer_delivery_proof_review_persistence import (
     load_temp_power_customer_delivery_proof_review_status,
 )
@@ -98,6 +99,14 @@ async def get_temp_power_customer_delivery_proof_review_status(
 ) -> Dict[str, Any]:
     """Return the latest admitted Temp Power customer delivery/proof review status readback."""
     return load_temp_power_customer_delivery_proof_review_status()
+
+
+@router.get("/temp-power-customer-delivery-event-status")
+async def get_temp_power_customer_delivery_event_status(
+    actor: Actor = Depends(get_current_actor),
+) -> Dict[str, Any]:
+    """Return the latest admitted Temp Power customer-facing delivery execution status readback."""
+    return load_temp_power_customer_delivery_event_status()
 
 
 @router.get("/issues")
