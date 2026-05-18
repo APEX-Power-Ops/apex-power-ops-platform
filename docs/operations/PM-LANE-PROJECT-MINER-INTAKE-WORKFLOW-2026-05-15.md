@@ -60,6 +60,7 @@ Current workflow truth:
 7. PM Lane 318 turns that contract into an inspection-only PM-facing review-surface definition; storage and runtime delivery still remain separate later packets.
 8. PM Lane 319 turns that review definition into a storage-plan recommendation; readback, schema, and runtime delivery still remain separate later packets.
 9. PM Lane 320 turns that storage plan into a readback contract; route/payload design, schema, and runtime delivery still remain separate later packets.
+10. PM Lane 321 turns that readback/storage pair into an exact request contract; a separate execution gate, schema, and runtime delivery still remain later packets.
 
 Use this section first when continuing the Temp Power workflow. The detailed PM intake sections below remain valid background, but they are not the controlling next move.
 

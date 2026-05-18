@@ -224,7 +224,8 @@ Current blocker:
 6. PM Lane 318 now converts that contract into an inspection-only PM-facing review surface design without opening storage or runtime delivery
 7. PM Lane 319 now converts that review design into a storage-plan recommendation without opening schema or persistence admission
 8. PM Lane 320 now converts that storage plan into a readback contract without opening route implementation or runtime admission
-9. finance/payroll output, source writeback, and other downstream widening remain out of scope for that next adjacent candidate
+9. PM Lane 321 now converts that readback/storage pairing into an exact route-and-payload contract without opening implementation
+10. finance/payroll output, source writeback, and other downstream widening remain out of scope for that next adjacent candidate
 
 Read this section first when continuing the Temp Power lane. The lane history below remains valid as background, but the admitted actuals plus customer-preview review first-write slice is now complete and hosted-green.
 
