@@ -288,7 +288,8 @@ Current blocker truth:
 9. PM Lane 320 now fixes the next expected move as customer delivery and durable proof readback design,
 10. PM Lane 321 now fixes the next expected move as customer delivery and durable proof route-and-payload design,
 11. PM Lane 322 now fixes the next expected move as customer delivery and durable proof execution-gate design,
-12. wider finance and source-writeback work still requires later separate admission beyond that adjacent delivery boundary.
+12. PM Lanes 323 through 328 now fix the branch at a final no-live delivery/proof preflight stop pending exact separate admission,
+13. wider finance and source-writeback work still requires later separate admission beyond that adjacent delivery boundary.
 
 Use the current active branch refresh above before following the historical tranche narrative below.
 

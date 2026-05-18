@@ -1,0 +1,26 @@
+{
+  "packet_id": "2026-05-18-pm-lane-323",
+  "title": "PM Lane 323 - Project Miner Temp Power Customer Delivery And Durable Proof Local Mocked Request Dry Run No-Live Packet",
+  "status": "complete",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_CUSTOMER_DELIVERY_DURABLE_PROOF_LOCAL_MOCKED_REQUEST_DRY_RUN_NO_LIVE_NO_OUTPUT_WRITE",
+  "selected_outcome": "CUSTOMER_DELIVERY_DURABLE_PROOF_LOCAL_MOCKED_REQUEST_DRY_RUN_READY_NO_LIVE",
+  "authority_basis": "Standing PM blocker authority and repo technical authority, used here to convert Lane 321 and Lane 322 into a mock-only local request preview without admitting any runtime route or request send.",
+  "dependencies": [
+    "2026-05-18-pm-lane-321",
+    "2026-05-18-pm-lane-322"
+  ],
+  "current_truth": [
+    "Lane 321 defines the exact future request contract for the delivery/proof review route.",
+    "Lane 322 defines the exact future admission phrase and stop conditions for any later first-write packet.",
+    "The next bounded step is a local mock-only request preview that proves no network request or record creation occurred.",
+    "Finance export, source writeback, and customer billing delivery remain outside this lane."
+  ],
+  "validation": [
+    "Packet JSON parses",
+    "Decision label, selected outcome, dry-run builder rules, chosen route, action type, boundary flags, and blocked-domain boundaries are present across touched lane 323 files",
+    "Canonical PM docs/status route the next follow-on step through envelope export rather than any runtime send",
+    "git diff --check passes for touched lane 323 and canonical PM doc surfaces"
+  ],
+  "next_blocker": "STOPPED_AWAITING_CUSTOMER_DELIVERY_DURABLE_PROOF_DRY_RUN_ENVELOPE_EXPORT_NO_LIVE_PACKET",
+  "current_status": "closed"
+}

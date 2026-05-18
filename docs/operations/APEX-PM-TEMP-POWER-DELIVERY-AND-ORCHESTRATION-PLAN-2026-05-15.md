@@ -226,7 +226,8 @@ Current blocker:
 8. PM Lane 320 now converts that storage plan into a readback contract without opening route implementation or runtime admission
 9. PM Lane 321 now converts that readback/storage pairing into an exact route-and-payload contract without opening implementation
 10. PM Lane 322 now converts that request contract into a separate execution gate with an exact future admission phrase and bounded stop conditions
-11. finance/payroll output, source writeback, and other downstream widening remain out of scope for that next adjacent candidate
+11. PM Lanes 323 through 328 now complete the no-live dry-run, review-bundle, and live-gate preflight chain through a final local stop artifact
+12. finance/payroll output, source writeback, and other downstream widening remain out of scope until the exact separate delivery/proof admission phrase is current instruction
 
 Read this section first when continuing the Temp Power lane. The lane history below remains valid as background, but the admitted actuals plus customer-preview review first-write slice is now complete and hosted-green.
 

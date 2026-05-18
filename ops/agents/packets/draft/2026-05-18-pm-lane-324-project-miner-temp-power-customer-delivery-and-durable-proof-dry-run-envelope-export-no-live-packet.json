@@ -1,0 +1,24 @@
+{
+  "packet_id": "2026-05-18-pm-lane-324",
+  "title": "PM Lane 324 - Project Miner Temp Power Customer Delivery And Durable Proof Dry Run Envelope Export No-Live Packet",
+  "status": "complete",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_CUSTOMER_DELIVERY_DURABLE_PROOF_DRY_RUN_ENVELOPE_EXPORT_NO_LIVE_NO_OUTPUT_WRITE",
+  "selected_outcome": "CUSTOMER_DELIVERY_DURABLE_PROOF_DRY_RUN_ENVELOPE_EXPORT_READY_NO_LIVE",
+  "authority_basis": "Standing PM blocker authority and repo technical authority, used here to convert Lane 323's local mocked-request preview into one browser-local export artifact without admitting any runtime route or request send.",
+  "dependencies": [
+    "2026-05-18-pm-lane-323"
+  ],
+  "current_truth": [
+    "Lane 323 defines the local mocked request preview for the delivery/proof review route.",
+    "The next bounded step is to export that mock envelope locally for later packet context while proving no request was sent and no record was created.",
+    "Finance export, source writeback, and customer billing delivery remain outside this lane."
+  ],
+  "validation": [
+    "Packet JSON parses",
+    "Decision label, selected outcome, export artifact contract, artifact type, chosen route, boundary flags, and blocked-domain boundaries are present across touched lane 324 files",
+    "Canonical PM docs/status route the next follow-on step through readiness checkpointing rather than any runtime send",
+    "git diff --check passes for touched lane 324 and canonical PM doc surfaces"
+  ],
+  "next_blocker": "STOPPED_AWAITING_CUSTOMER_DELIVERY_DURABLE_PROOF_DRY_RUN_READINESS_CHECKPOINT_NO_LIVE_PACKET",
+  "current_status": "closed"
+}

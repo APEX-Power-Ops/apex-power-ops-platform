@@ -62,6 +62,7 @@ Current workflow truth:
 9. PM Lane 320 turns that storage plan into a readback contract; route/payload design, schema, and runtime delivery still remain separate later packets.
 10. PM Lane 321 turns that readback/storage pair into an exact request contract; a separate execution gate, schema, and runtime delivery still remain later packets.
 11. PM Lane 322 turns that request contract into an exact execution gate; local mocked dry run, schema, and runtime delivery still remain later packets.
+12. PM Lanes 323 through 328 turn that gate into a complete no-live dry-run and preflight chain; the branch is now explicitly stopped until the exact separate delivery/proof admission phrase is present.
 
 Use this section first when continuing the Temp Power workflow. The detailed PM intake sections below remain valid background, but they are not the controlling next move.
 

@@ -1,0 +1,26 @@
+{
+  "packet_id": "2026-05-18-pm-lane-327",
+  "title": "PM Lane 327 - Project Miner Temp Power Customer Delivery And Durable Proof Review Bundle Export No-Live Packet",
+  "status": "complete",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_CUSTOMER_DELIVERY_DURABLE_PROOF_REVIEW_BUNDLE_EXPORT_NO_LIVE_NO_OUTPUT_WRITE",
+  "selected_outcome": "CUSTOMER_DELIVERY_DURABLE_PROOF_REVIEW_BUNDLE_EXPORT_READY_NO_LIVE",
+  "authority_basis": "Standing PM blocker authority and repo technical authority, used here to combine the lane 324 dry-run envelope export and the lane 326 readiness export into one browser-local review bundle without admitting any runtime route or request send.",
+  "dependencies": [
+    "2026-05-18-pm-lane-324",
+    "2026-05-18-pm-lane-326"
+  ],
+  "required_admission_phrase": "ADMIT_TEMP_POWER_CUSTOMER_DELIVERY_DURABLE_PROOF_REVIEW_FIRST_WRITE_PACKET_ONLY",
+  "current_truth": [
+    "The delivery/proof dry-run branch now has both a dry-run envelope artifact and a readiness export artifact.",
+    "The next bounded step is to bundle those artifacts locally for review while keeping the admission phrase as future packet context only.",
+    "Finance export, source writeback, and customer billing delivery remain outside this lane."
+  ],
+  "validation": [
+    "Packet JSON parses",
+    "Decision label, selected outcome, review bundle contract, review sequence, admission phrase, boundary flags, and blocked-domain boundaries are present across touched lane 327 files",
+    "Canonical PM docs/status route the next follow-on step through live-gate preflight export rather than any runtime send",
+    "git diff --check passes for touched lane 327 and canonical PM doc surfaces"
+  ],
+  "next_blocker": "STOPPED_AWAITING_CUSTOMER_DELIVERY_DURABLE_PROOF_LIVE_GATE_PREFLIGHT_EXPORT_NO_LIVE_PACKET",
+  "current_status": "closed"
+}

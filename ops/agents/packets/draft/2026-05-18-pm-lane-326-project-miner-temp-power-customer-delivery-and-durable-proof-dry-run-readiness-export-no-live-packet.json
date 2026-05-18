@@ -1,0 +1,25 @@
+{
+  "packet_id": "2026-05-18-pm-lane-326",
+  "title": "PM Lane 326 - Project Miner Temp Power Customer Delivery And Durable Proof Dry Run Readiness Export No-Live Packet",
+  "status": "complete",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_CUSTOMER_DELIVERY_DURABLE_PROOF_DRY_RUN_READINESS_EXPORT_NO_LIVE_NO_OUTPUT_WRITE",
+  "selected_outcome": "CUSTOMER_DELIVERY_DURABLE_PROOF_DRY_RUN_READINESS_EXPORT_READY_NO_LIVE",
+  "authority_basis": "Standing PM blocker authority and repo technical authority, used here to convert Lane 325's readiness checkpoint into one browser-local JSON export artifact without admitting any runtime route or request send.",
+  "dependencies": [
+    "2026-05-18-pm-lane-325"
+  ],
+  "required_admission_phrase": "ADMIT_TEMP_POWER_CUSTOMER_DELIVERY_DURABLE_PROOF_REVIEW_FIRST_WRITE_PACKET_ONLY",
+  "current_truth": [
+    "Lane 325 defines the readiness categories and blocked live-write authority for the delivery/proof dry-run branch.",
+    "The next bounded step is to export that checkpoint locally while preserving the future admission phrase as packet context only.",
+    "Finance export, source writeback, and customer billing delivery remain outside this lane."
+  ],
+  "validation": [
+    "Packet JSON parses",
+    "Decision label, selected outcome, readiness export contract, readiness items, admission phrase, boundary flags, and blocked-domain boundaries are present across touched lane 326 files",
+    "Canonical PM docs/status route the next follow-on step through review-bundle export rather than any runtime send",
+    "git diff --check passes for touched lane 326 and canonical PM doc surfaces"
+  ],
+  "next_blocker": "STOPPED_AWAITING_CUSTOMER_DELIVERY_DURABLE_PROOF_REVIEW_BUNDLE_EXPORT_NO_LIVE_PACKET",
+  "current_status": "closed"
+}
