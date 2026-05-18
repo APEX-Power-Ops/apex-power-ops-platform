@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import json
 import os
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
+from decimal import Decimal
 from pathlib import Path
 from typing import Any, Dict, Mapping, Optional
 from uuid import uuid4
@@ -124,6 +125,20 @@ def _server_timestamp() -> str:
 
 def _stable_json(value: Any) -> str:
     return json.dumps(value, sort_keys=True, default=str, separators=(",", ":"))
+
+
+def _json_safe(value: Any) -> Any:
+    if isinstance(value, Decimal):
+        return float(value)
+    if isinstance(value, (date, datetime)):
+        return value.isoformat()
+    if isinstance(value, Mapping):
+        return {str(key): _json_safe(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [_json_safe(item) for item in value]
+    if isinstance(value, tuple):
+        return [_json_safe(item) for item in value]
+    return value
 
 
 def _ensure_customer_completion_schema() -> None:
@@ -542,7 +557,7 @@ def persist_customer_completion_record(request: MutationRequest, actor: Actor) -
         "route": CUSTOMER_COMPLETION_ROUTE,
         "status_route": CUSTOMER_COMPLETION_STATUS_ROUTE,
         "customer_completion_payload": normalized_payload,
-        "precondition_readback": preconditions,
+        "precondition_readback": _json_safe(preconditions),
         "customer_report_artifacts": [],
         "customer_report_count": 0,
         "completion_evidence_artifacts": [],

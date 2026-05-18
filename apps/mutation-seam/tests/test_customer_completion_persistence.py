@@ -1,5 +1,6 @@
 import base64
 import json
+from decimal import Decimal
 
 from app.customer_completion_persistence import (
     COMPLETION_EVIDENCE_AUTHORITY,
@@ -113,7 +114,7 @@ def _seed_production_tracking_record() -> None:
         "recorded_at_utc": "2026-05-18T04:30:00Z",
         "production_quantity_count": 0,
         "labor_entry_count": 0,
-        "actual_labor_hours": 0.0,
+        "actual_labor_hours": Decimal("0.00"),
         "apparatus_progress_count": 0,
         "progress_update_count": 0,
     }
@@ -222,6 +223,7 @@ def test_customer_completion_route_persists_zero_output_baseline_and_readback(cl
     assert len(store.customer_completion_records) == 1
     assert len(store.audit_log) == 1
     assert store.audit_log[0]["entity_type"] == "customer_completion_record"
+    json.dumps(store.customer_completion_records[LANE_283_CUSTOMER_COMPLETION_RECORD_ID]["precondition_readback"])
 
     status = client.get("/api/v1/reads/customer-completion-status", headers=_token()).json()
     assert status["classification"] == "customer_completion_baseline_recorded"
