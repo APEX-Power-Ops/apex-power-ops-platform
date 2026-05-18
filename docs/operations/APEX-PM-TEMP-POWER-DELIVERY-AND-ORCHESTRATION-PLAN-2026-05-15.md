@@ -189,58 +189,49 @@ Target sequence before field start:
 
 ## Current Active Branch Refresh
 
-As of 2026-05-18, the controlling Temp Power PM branch is no longer just the original import-candidate and approval-readiness stack.
+As of 2026-05-18 after PM Lane 349, the controlling Temp Power PM branch is the hosted-green actuals/customer-preview/customer-delivery/customer-proof/customer-delivery-event branch rather than the earlier publication gap branch.
 
 The hosted-green runtime baseline remains the bounded Temp Power actuals plus customer-preview review path admitted by:
 
 `ADMIT_TEMP_POWER_ACTUALS_CUSTOMER_CAPTURE_REVIEW_FIRST_WRITE_PACKET_ONLY`
 
-The current adjacent local implementation branch is the separately admitted customer-delivery and durable-proof review slice admitted by:
+The separately admitted customer-delivery/durable-proof review slice remains governed by:
 
-`ADMIT_TEMP_POWER_CUSTOMER_DELIVERY_DURABLE_PROOF_REVIEW_FIRST_WRITE_PACKET_ONLY`
+`ADMIT_TEMP_POWER_CUSTOMER_DELIVERY_DURABLE_PROOF_REVIEW_HOSTED_FIRST_ROW_PACKET_ONLY`
+
+The separately admitted customer-facing delivery execution implementation slice remains governed by:
+
+`ADMIT_TEMP_POWER_CUSTOMER_FACING_DELIVERY_EXECUTION_FIRST_PACKET_ONLY`
 
 Current controlling lanes:
 
-1. PM Lane 304 implements the admitted local mutation/readback slice for Temp Power actuals capture review only.
-2. PM Lane 305 proves first write, idempotent replay, and readback locally.
-3. PM Lane 306 extends the hosted smoke/readiness surface with `--include-temp-power-actuals-review`.
-4. PM Lane 307 proves the hosted blocker is stale service deployment, not custom-domain drift, by matching failures on both the custom domain and Render hostname.
-5. PM Lane 308 executes authenticated Render inspection and redeploy against the existing service.
-6. PM Lane 314 publishes the admitted actuals route slice to `clean-main` as commit `3d47834eb32aa29b80152df3973f91d7c62a2e30`.
-7. PM Lane 315 implements and publishes the admitted Temp Power customer-preview review first-write slice to `clean-main` as commit `666f649d020d19cc24d1a5e57b9a1796928f45d8`.
-8. Render auto-deploy promotes both admitted slices on the existing mutation-seam service and bounded hosted smoke passes on both the custom domain and the Render hostname.
-9. PM Lane 329 implements and locally validates the separately admitted Temp Power customer-delivery/durable-proof review mutation/readback slice without opening hosted promotion or request send.
-10. PM Lane 330 extends hosted smoke/readiness with `--include-temp-power-customer-delivery-proof-review` plus matching workflow/task wiring for the delivery/proof review route.
-11. PM Lane 331 runs the bounded hosted smoke on both public hosts, proves the delivery/proof routes are still absent everywhere, and classifies the current blocker as publication of the admitted local slice.
+1. PM Lane 314 closed hosted publication for the admitted actuals route slice.
+2. PM Lane 315 closed hosted publication for the admitted customer-preview review first-write slice.
+3. PM Lane 335 created the canonical hosted customer-preview review row `temp-power-customer-preview-review-1085e8e5fad27553463479f7`.
+4. PM Lane 336 created the canonical hosted customer-delivery/durable-proof review row `temp-power-customer-delivery-proof-review-2ec74d71b109cfb3f8b1fb60`.
+5. PM Lane 347 implemented the admitted local customer-facing delivery execution orchestration route, seam mutation route, and paired readback.
+6. PM Lane 348 added hosted smoke readiness for the customer-facing delivery execution slice.
+7. PM Lane 349 proved the public operations-web route `/pm-review/customer-delivery-execution` is published and that canonical hosted customer delivery event `pm-lane-337-temp-power-delivery-event-2026-05-18` is current across the operations-web alias plus both public mutation-seam hosts.
 
 Current boundary of the active branch:
 
-1. admitted: actuals capture review persistence and readback
-2. admitted: customer-preview review first-write persistence and readback
-3. admitted: local customer-delivery/durable-proof review persistence and paired readback inside `apps/mutation-seam`
-4. not admitted: hosted promotion or hosted/live request execution for the delivery/proof review route
-5. not admitted: finance, payroll, billing, invoice, or accounting output
-6. not admitted: source-system writeback or customer billing delivery
+1. admitted: actuals capture review persistence and hosted publication/readback
+2. admitted: customer-preview review first-write persistence and hosted first-row proof
+3. admitted: customer-delivery/durable-proof review hosted first-row proof
+4. admitted: local customer-facing delivery execution implementation plus hosted publication/current-match proof
+5. not admitted: finance, payroll, billing, invoice, accounting, or external finance output
+6. not admitted: source-system writeback or workbook macros
+7. not admitted: customer billing delivery
 
 Current blocker:
 
-1. there is no remaining blocker inside the admitted Temp Power actuals plus customer-preview review first-write slice
-2. existing service `apex-platform-mutation-seam` is live on committed `clean-main` at `666f649d020d19cc24d1a5e57b9a1796928f45d8`
-3. both hosted seam URLs now expose the Temp Power actuals routes and the Temp Power customer-preview review routes and the bounded hosted smoke returns `RESULT PASS`
-4. PM Lane 316 now defines the next explicit admission boundary: separate customer delivery completion and durable proof recording admission is the next adjacent candidate
-5. PM Lane 317 now resolves that next boundary as design-first and defines the customer delivery and durable proof contract without opening implementation
-6. PM Lane 318 now converts that contract into an inspection-only PM-facing review surface design without opening storage or runtime delivery
-7. PM Lane 319 now converts that review design into a storage-plan recommendation without opening schema or persistence admission
-8. PM Lane 320 now converts that storage plan into a readback contract without opening route implementation or runtime admission
-9. PM Lane 321 now converts that readback/storage pairing into an exact route-and-payload contract without opening implementation
-10. PM Lane 322 now converts that request contract into a separate execution gate with an exact future admission phrase and bounded stop conditions
-11. PM Lanes 323 through 328 now complete the no-live dry-run, review-bundle, and live-gate preflight chain through a final local stop artifact
-12. PM Lane 329 now converts that exact separate admission phrase into a bounded local mutation-seam implementation with focused pytest proof and no hosted promotion or live request send
-13. PM Lane 330 now prepares the bounded hosted smoke path for the delivery/proof route without performing hosted promotion or hosted proof
-14. PM Lane 331 now proves both public hosts still omit the delivery/proof routes and packages the next step as a publish-only follow-up prompt rather than a vague hosted blocker
-15. finance/payroll output, source writeback, customer billing delivery, and other downstream widening remain out of scope until later separate admission beyond Lanes 329 through 331
+1. there is no remaining blocker inside the admitted customer-facing delivery execution publication/current-match slice
+2. the earlier delivery/proof publication blocker is closed and should not be reopened as current work
+3. the next truthful blocker is separate downstream authority expansion beyond the current delivery-event proof branch
+4. no new downstream admission phrase is applicable yet because no later downstream authority packet has been authored from current business-rule proof
+5. finance/payroll output, source writeback, customer billing delivery, and other downstream widening remain out of scope until later separate admission
 
-Read this section first when continuing the Temp Power lane. The lane history below remains valid as background, but the hosted-green actuals/customer-preview slice is now baseline and the separately admitted delivery/proof review slice is implemented locally only.
+Read this section first when continuing the Temp Power lane. The lane history below remains valid as background, but the hosted customer-facing delivery execution slice is now current and the next move is a separate downstream authority packet rather than more publication troubleshooting.
 
 ## Historical Branch Narrative
 
