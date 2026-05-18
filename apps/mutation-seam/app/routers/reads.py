@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, Query
 from typing import Any, Dict, List
 
 from app.auth.jwt import Actor, get_current_actor
+from app.customer_completion_persistence import load_customer_completion_status
 from app.db.memory_store import store
 from app.durable_field_record_persistence import load_durable_field_record_status
 from app.pm_workfront_read_model import build_pm_workfront_read_model
@@ -109,6 +110,18 @@ async def list_production_tracking_records(actor: Actor = Depends(get_current_ac
 async def get_production_tracking_status(actor: Actor = Depends(get_current_actor)) -> Dict[str, Any]:
     """Return read-only production tracking status for the Temp Power pilot."""
     return load_production_tracking_status()
+
+
+@router.get("/customer-completion-records")
+async def list_customer_completion_records(actor: Actor = Depends(get_current_actor)) -> List[Dict[str, Any]]:
+    """List customer completion records."""
+    return list(store.customer_completion_records.values())
+
+
+@router.get("/customer-completion-status")
+async def get_customer_completion_status(actor: Actor = Depends(get_current_actor)) -> Dict[str, Any]:
+    """Return read-only customer completion status for the Temp Power pilot."""
+    return load_customer_completion_status()
 
 
 @router.get("/crew")

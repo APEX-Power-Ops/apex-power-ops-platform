@@ -158,17 +158,21 @@ def main() -> int:
             '/api/v1/reads/project-import-approval-status',
             '/api/v1/reads/durable-field-record-status',
             '/api/v1/reads/production-tracking-status',
+            '/api/v1/reads/customer-completion-status',
             '/api/v1/mutations/project-import-approvals',
             '/api/v1/mutations/durable-field-records',
             '/api/v1/mutations/production-tracking',
+            '/api/v1/mutations/customer-completion',
         }
         required_openapi_methods = {
             '/api/v1/reads/project-import-approval-status': {'get'},
             '/api/v1/reads/durable-field-record-status': {'get'},
             '/api/v1/reads/production-tracking-status': {'get'},
+            '/api/v1/reads/customer-completion-status': {'get'},
             '/api/v1/mutations/project-import-approvals': {'post'},
             '/api/v1/mutations/durable-field-records': {'post'},
             '/api/v1/mutations/production-tracking': {'post'},
+            '/api/v1/mutations/customer-completion': {'post'},
         }
         status, payload = request_json(f'{base_url}/openapi.json', timeout_seconds=args.timeout_seconds)
         expect_status(
@@ -247,6 +251,23 @@ def main() -> int:
                     'finance_authority',
                 },
             ),
+            (
+                'customer_completion_status',
+                '/api/v1/reads/customer-completion-status',
+                {
+                    'classification',
+                    'route',
+                    'production_tracking_authority',
+                    'customer_reporting_authority',
+                    'completion_evidence_authority',
+                    'customer_delivery_authority',
+                    'finance_authority',
+                    'billing_authority',
+                    'payroll_authority',
+                    'invoice_authority',
+                    'accounting_authority',
+                },
+            ),
         ]
         for label, path, required_fields in intake_checks:
             status, payload = request_json(
@@ -297,6 +318,53 @@ def main() -> int:
                             f'{payload.get("production_tracking_authority")}'
                         )
                     for authority_field in ['customer_reporting_authority', 'finance_authority']:
+                        if isinstance(payload, dict) and payload.get(authority_field) != 'not_admitted':
+                            failures.append(f'{label} returned {authority_field}={payload.get(authority_field)}')
+                elif label == 'customer_completion_status':
+                    if isinstance(payload, dict) and payload.get('storage_available') is not True:
+                        failures.append(f'{label} returned storage_available={payload.get("storage_available")}')
+                    if (
+                        isinstance(payload, dict)
+                        and payload.get('production_tracking_authority')
+                        != 'admitted_by_pm_lane_282_zero_actual_baseline'
+                    ):
+                        failures.append(
+                            f'{label} returned production_tracking_authority='
+                            f'{payload.get("production_tracking_authority")}'
+                        )
+                    if (
+                        isinstance(payload, dict)
+                        and payload.get('customer_reporting_authority')
+                        != 'admitted_by_pm_lane_283_customer_completion_baseline'
+                    ):
+                        failures.append(
+                            f'{label} returned customer_reporting_authority='
+                            f'{payload.get("customer_reporting_authority")}'
+                        )
+                    if (
+                        isinstance(payload, dict)
+                        and payload.get('completion_evidence_authority')
+                        != 'admitted_by_pm_lane_283_zero_evidence_baseline'
+                    ):
+                        failures.append(
+                            f'{label} returned completion_evidence_authority='
+                            f'{payload.get("completion_evidence_authority")}'
+                        )
+                    if (
+                        isinstance(payload, dict)
+                        and payload.get('customer_delivery_authority') != 'not_admitted_external_delivery'
+                    ):
+                        failures.append(
+                            f'{label} returned customer_delivery_authority='
+                            f'{payload.get("customer_delivery_authority")}'
+                        )
+                    for authority_field in [
+                        'finance_authority',
+                        'billing_authority',
+                        'payroll_authority',
+                        'invoice_authority',
+                        'accounting_authority',
+                    ]:
                         if isinstance(payload, dict) and payload.get(authority_field) != 'not_admitted':
                             failures.append(f'{label} returned {authority_field}={payload.get(authority_field)}')
                 elif isinstance(payload, dict) and payload.get('mutation_authority') != 'not_admitted':
