@@ -948,6 +948,8 @@ PM Lane 271 accepts Jason's new delegated posture for incremental PM-lane no-liv
 
 PM Lane 272 turns the snapshot fallback from a vague option into a bounded design that can be reviewed and implemented later without making the repo a source-file archive. The design keeps the full candidate and admission payloads as runtime-only artifacts, makes the manifest redacted and repo-facing safe, and defines "signed" as SHA-256 payload integrity proof rather than credential-backed identity signing. The next useful no-live move, only if the Render/source-file placement path is still unavailable, is a local exporter script and focused tests; live approval, approval rows, project import, hosted loaders, Render changes, and PM business-state writes stay closed.
 
+PM Lane 273 implements that local exporter and proves it with synthetic tests, which removes a technical unknown without asking Jason for another micro-approval. The exporter is now ready for a later admitted runtime export packet: it can write candidate, admission-plan, manifest, and checksum files; it redacts manifest paths; it blocks repo output by default; and it preserves `not_admitted` mutation authority. It has not touched the real Project Miner source files and has not created a durable snapshot. The next real blocker is therefore clear: either an authenticated Render executor completes PM Lane 270 source placement, or a later no-live packet explicitly admits real-source read plus transient snapshot creation.
+
 The success standard is not just technical correctness. The candidate must reduce Jason's review burden by showing:
 
 1. what the system thinks the project is,

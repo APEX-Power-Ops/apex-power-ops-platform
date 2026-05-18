@@ -1,0 +1,62 @@
+{
+  "packet_id": "2026-05-18-pm-lane-273-project-miner-temp-power-signed-source-snapshot-exporter-local-script-no-live",
+  "title": "PM Lane 273 - Project Miner Temp Power Signed Source Snapshot Exporter Local Script No-Live",
+  "date": "2026-05-18",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_SIGNED_SOURCE_SNAPSHOT_EXPORTER_LOCAL_SCRIPT_NO_LIVE",
+  "selected_outcome": "LOCAL_EXPORTER_SCRIPT_ADDED_SYNTHETIC_TESTED_NO_SOURCE_ARTIFACT_CREATED_NO_LIVE",
+  "source_packets": [
+    "PM Lane 270",
+    "PM Lane 271",
+    "PM Lane 272"
+  ],
+  "files_added": [
+    "apps/mutation-seam/scripts/export_pm_import_candidate_snapshot.py",
+    "apps/mutation-seam/tests/test_project_import_candidate_snapshot_exporter.py"
+  ],
+  "exporter_behavior": {
+    "requires_explicit_output_dir": true,
+    "blocks_repo_output_by_default": true,
+    "writes_candidate_json": true,
+    "writes_admission_plan_json": true,
+    "writes_manifest_json": true,
+    "writes_sha256sums": true,
+    "redacts_manifest_paths": true,
+    "authority_label": "derived_source_snapshot_no_live",
+    "preserves_mutation_authority_not_admitted": true,
+    "adds_hosted_loader": false,
+    "sets_snapshot_runtime_env_var": false
+  },
+  "test_boundary": {
+    "uses_synthetic_candidate_data": true,
+    "uses_real_project_miner_source_files": false,
+    "creates_durable_snapshot_artifact": false,
+    "creates_pytest_tmp_runtime_artifacts_only": true
+  },
+  "validation": {
+    "ambient_python_pytest_available": false,
+    "venv_pytest_command": ".venv/Scripts/python.exe -m pytest tests/test_project_import_candidate_snapshot_exporter.py tests/test_project_import_candidate.py tests/test_project_import_admission_plan.py",
+    "result": "8 passed, 7 warnings",
+    "warnings": [
+      "existing Pydantic class-based config deprecation",
+      "existing openpyxl data-validation warning"
+    ]
+  },
+  "write_execution": {
+    "approval_post_sent": false,
+    "approval_row_created": false,
+    "project_import_performed": false,
+    "supabase_write_performed": false,
+    "render_env_updated": false,
+    "render_deploy_performed": false,
+    "hosted_source_uploaded": false,
+    "signed_snapshot_artifact_created": false,
+    "snapshot_runtime_fallback_added": false,
+    "real_source_workbook_read": false,
+    "real_source_pdf_read": false,
+    "source_workbook_committed": false,
+    "source_pdf_committed": false,
+    "macro_run": false
+  },
+  "next_blocker": "STOPPED_AWAITING_RENDER_AUTHENTICATED_SOURCE_FILES_REPAIR_NO_APPROVAL_POST",
+  "recommended_future_packet": "PM Lane 274 - Project Miner Temp Power Runtime Snapshot Export No-Live"
+}
