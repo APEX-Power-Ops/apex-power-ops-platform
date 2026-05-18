@@ -104,7 +104,15 @@
     "C:/APEX Platform/apex-power-ops-platform/docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md",
     "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-17-desktop-codex-parallel-lane-orchestration-queue.md"
   ],
-  "live_post_permission": "after_route_deployed_and_preflight_matches",
+  "live_execution": {
+    "status": "executed",
+    "first_post_status": "accepted",
+    "replay_status": "idempotent_hit",
+    "import_status_readback": "imported",
+    "mutation_id": "mut-1529e376-4f5c-4c03-960d-4d38462312d9",
+    "audit_event_id": "audit-5035aeae-cd58-4290-b0a6-70a0eab97c1c"
+  },
+  "live_post_permission": "executed_after_route_deployed_and_preflight_matched",
   "project_import_permission": true,
   "sql_permission": false,
   "schema_permission": false,

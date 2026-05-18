@@ -1,5 +1,9 @@
 # PM Lane 278 - Render Project Import Route Deploy And Live Import Executor Prompt
 
+Status: Superseded by VS Code Codex live execution on 2026-05-18.
+
+Do not execute this prompt unless a later coordinator explicitly asks for replay-only evidence or recovery. The hosted route deployed after publication, the live import POST returned `accepted`, same-payload replay returned `idempotent_hit`, and import-status readback returned `imported`.
+
 You are the authenticated Render executor for PM Lane 278.
 
 ## Role
