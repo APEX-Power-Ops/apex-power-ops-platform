@@ -348,13 +348,15 @@ def _response(
     action_type: str,
     audit_event_id: Optional[str],
 ) -> MutationResponse:
+    new_state = dict(record)
+    new_state.setdefault("review_storage_status", "accepted_for_review_storage")
     return MutationResponse(
         status=status,
         mutation_id=mutation_id,
         entity_id=str(record["review_id"]),
         entity_type=TEMP_POWER_CUSTOMER_PREVIEW_REVIEW_ENTITY_TYPE,
         action_type=action_type,
-        new_state=dict(record),
+        new_state=new_state,
         audit_event_id=audit_event_id,
     )
 
@@ -624,7 +626,6 @@ async def persist_temp_power_customer_preview_review(
         "durable_delivery_event": False,
         "delivery_proof_recorded": False,
         "delivery_block_reason": normalized_payload["delivery_block_reason"],
-        "review_storage_status": "accepted_for_review_storage",
         "pm_review_status": normalized_payload["pm_review_status"],
         "pm_review_note": normalized_payload["pm_review_note"],
         "pm_actor": actor.actor_id,
