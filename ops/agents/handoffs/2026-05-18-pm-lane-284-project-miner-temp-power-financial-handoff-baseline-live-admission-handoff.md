@@ -130,8 +130,54 @@ corepack pnpm --dir "C:/APEX Platform/apex-power-ops-platform" --filter @apex/op
 
 ## Live Closeout
 
-Pending hosted deploy and live write.
+Complete.
+
+Hosted pre-write readback returned:
+
+- classification: `no_financial_handoff_record`
+- storage available: `true`
+- record count: `0`
+- customer completion record count: `1`
+
+The first hosted financial handoff POST returned:
+
+- status: `accepted`
+- mutation: `mut-b30e96ac-493c-4cfc-905d-57fffb1f0471`
+- audit: `audit-ca084e08-21fa-4885-bcc5-3329c45b06fe`
+
+Same-payload replay returned:
+
+- status: `idempotent_hit`
+- mutation: `mut-b30e96ac-493c-4cfc-905d-57fffb1f0471`
+- audit: `audit-ca084e08-21fa-4885-bcc5-3329c45b06fe`
+
+Final hosted mutation-seam readback returned:
+
+- classification: `financial_handoff_baseline_recorded`
+- record count: `1`
+- financial handoff record id: `pm-lane-284-financial-handoff-temp-power-2026-05-18`
+- financial handoff authority: `admitted_by_pm_lane_284_zero_finance_handoff_baseline`
+- labor reconciliation authority: `admitted_by_pm_lane_284_zero_labor_reconciliation_baseline`
+- finance/billing export/payroll export/invoice/accounting/external finance sync/customer billing delivery authorities: `not_admitted`
+- billing export count: `0`
+- payroll export count: `0`
+- invoice record count: `0`
+- payroll record count: `0`
+- accounting record count: `0`
+- labor reconciliation entry count: `0`
+- external finance sync count: `0`
+- customer billing delivery count: `0`
+- billable amount total: `0.00`
+- payroll amount total: `0.00`
+
+Hosted validation passed:
+
+- deployed mutation-seam smoke: `RESULT PASS`
+- hosted PM intake smoke: `PM_INTAKE_HOSTED_SUMMARY failed=0`
+- hosted operations routes smoke: `SMOKE_SUMMARY failed=0 passed=12`
 
 ## Next Blocker
 
-After PM Lane 284 closes, the next blocker should be selected from the post-pilot closeout path because actual billing, payroll, invoice, accounting, customer billing delivery, and external finance-system outputs remain separately blocked.
+`STOPPED_AWAITING_POST_PILOT_CLOSEOUT_SELECTION_AFTER_FINANCIAL_HANDOFF_BASELINE`
+
+The next blocker should be selected from the post-pilot closeout path because actual billing, payroll, invoice, accounting, customer billing delivery, and external finance-system outputs remain separately blocked.

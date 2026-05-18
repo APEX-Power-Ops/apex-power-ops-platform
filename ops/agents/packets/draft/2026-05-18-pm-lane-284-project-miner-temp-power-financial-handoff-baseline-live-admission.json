@@ -127,9 +127,9 @@
     "Hosted smokes: deployed mutation-seam smoke with PM intake, hosted PM intake smoke, hosted operations routes smoke.",
     "git diff --check"
   ],
-  "schema_result": "pending_hosted_deploy",
+  "schema_result": "PASS: hosted schema ensure completed through the existing mutation-seam app path; financial handoff pre-write readback returned storage_available=true and record_count=0.",
   "local_validation_result": "PASS: financial handoff tests passed, customer completion tests passed, production tracking tests passed, durable field record tests passed, import persistence tests passed, approval persistence tests passed, py_compile passed, packet JSON parsed, and scoped git diff check passed.",
-  "hosted_execution_result": "pending",
-  "current_status": "implementation_ready_pending_hosted_deploy",
-  "next_recommended_lane": "After live financial handoff baseline closeout, the next blocker should be selected from the post-pilot closeout path because billing, payroll, invoice, accounting, and external finance outputs remain blocked."
+  "hosted_execution_result": "PASS: hosted financial handoff POST accepted, same-payload replay returned idempotent_hit, final readback returned financial_handoff_baseline_recorded with record_count=1, mutation mut-b30e96ac-493c-4cfc-905d-57fffb1f0471, audit audit-ca084e08-21fa-4885-bcc5-3329c45b06fe, all billing/payroll/invoice/accounting/labor reconciliation/external finance/customer billing delivery counts zero, and output authorities not_admitted. Hosted smokes passed: mutation-seam RESULT PASS, PM_INTAKE_HOSTED_SUMMARY failed=0, operations routes failed=0 passed=12.",
+  "current_status": "complete",
+  "next_recommended_lane": "STOPPED_AWAITING_POST_PILOT_CLOSEOUT_SELECTION_AFTER_FINANCIAL_HANDOFF_BASELINE: select the post-pilot closeout path because billing, payroll, invoice, accounting, customer billing delivery, and external finance outputs remain blocked."
 }
