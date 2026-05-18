@@ -1,0 +1,192 @@
+{
+  "packet_id": "2026-05-18-pm-lane-286",
+  "title": "PM Lane 286 - Project Miner Temp Power Post-Pilot Reconciliation And Delivery Rules Binder No-Live Packet",
+  "status": "complete_pending_validation",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_POST_PILOT_RECONCILIATION_DELIVERY_RULES_BINDER_NO_LIVE_NO_OUTPUT_WRITE",
+  "default_classification": "BASELINE_PROOF_BOUND_RULES_MISSING_ROUTE_TO_RULE_QUESTION_CARD_NO_LIVE",
+  "selected_outcome": "ROUTE_TO_PM_LANE_287_DOWNSTREAM_RULE_QUESTION_CARD_NO_LIVE",
+  "authority_basis": "Jason's 2026-05-18 standing PM blocker authority as repo technical authority and project stakeholder.",
+  "purpose": [
+    "Collect PM Lane 277 through PM Lane 284 Temp Power proof into one post-pilot binder.",
+    "Reconcile positive baseline counts against zero downstream output counts.",
+    "Define rule questions required before actuals, customer delivery, billing, payroll, invoice, accounting, labor reconciliation, customer billing delivery, or external finance output can be admitted.",
+    "Select the next safe no-live question-card packet without creating output rows."
+  ],
+  "proof_tuple": {
+    "pm_lane_277": {
+      "proof": "approval row",
+      "classification": "approved_for_import_packet",
+      "approval_record_id": "pm-import-approval-03a1aea39afde71b44516f44",
+      "mutation_id": "mut-bc747179-0232-40a4-9288-2ee93381fd3f",
+      "audit_event_id": "audit-aca55758-2385-47f0-a026-7b012f9f5c1f",
+      "replay": "idempotent_hit"
+    },
+    "pm_lane_278": {
+      "proof": "project import",
+      "classification": "imported",
+      "project_id": "pm-import-project-miner-temp-power",
+      "mutation_id": "mut-1529e376-4f5c-4c03-960d-4d38462312d9",
+      "audit_event_id": "audit-5035aeae-cd58-4290-b0a6-70a0eab97c1c",
+      "replay": "idempotent_hit"
+    },
+    "pm_lane_279": {
+      "proof": "field authorization and assignment",
+      "accepted_assignment_count": 184,
+      "replay_idempotent_hit_count": 184,
+      "first_mutation_id": "mut-30ec549a-6141-4fec-bdba-1bfc48018272",
+      "last_mutation_id": "mut-5038f0d3-80e3-4d16-b557-a91ea467331a"
+    },
+    "pm_lane_280": {
+      "proof": "schedule/status readiness",
+      "task_accepted_count": 15,
+      "apparatus_accepted_count": 184,
+      "task_replay_idempotent_hit_count": 15,
+      "apparatus_replay_idempotent_hit_count": 184
+    },
+    "pm_lane_281": {
+      "proof": "durable field record",
+      "classification": "durable_field_recorded",
+      "record_id": "pm-lane-281-durable-field-record-temp-power-2026-05-18",
+      "mutation_id": "mut-76b3aeba-446f-4399-b452-21d98ab66d27",
+      "audit_event_id": "audit-70d8cc1f-151f-4730-b8db-4b3fc1b5765c",
+      "record_count": 1
+    },
+    "pm_lane_282": {
+      "proof": "production tracking baseline",
+      "classification": "production_tracking_baseline_recorded",
+      "record_id": "pm-lane-282-production-tracking-temp-power-2026-05-18",
+      "mutation_id": "mut-fcbdadd0-aa51-4fd3-9f36-ce55721189cf",
+      "audit_event_id": "audit-ce7cdcb5-a032-49b3-9059-d3f4975a25a4",
+      "record_count": 1
+    },
+    "pm_lane_283": {
+      "proof": "customer completion baseline",
+      "classification": "customer_completion_baseline_recorded",
+      "record_id": "pm-lane-283-customer-completion-temp-power-2026-05-18",
+      "mutation_id": "mut-6c633d45-a288-4ac9-8d69-d6bdeff5e811",
+      "audit_event_id": "audit-5607d1dd-aa46-4454-91d6-00737a1ac3c9",
+      "record_count": 1
+    },
+    "pm_lane_284": {
+      "proof": "financial handoff baseline",
+      "classification": "financial_handoff_baseline_recorded",
+      "record_id": "pm-lane-284-financial-handoff-temp-power-2026-05-18",
+      "mutation_id": "mut-b30e96ac-493c-4cfc-905d-57fffb1f0471",
+      "audit_event_id": "audit-ca084e08-21fa-4885-bcc5-3329c45b06fe",
+      "record_count": 1
+    }
+  },
+  "reconciliation_snapshot": {
+    "project_id": "pm-import-project-miner-temp-power",
+    "candidate_id": "pm-import-candidate-miner-temp-power",
+    "source_fingerprint": "e111fdbe934bf9de07ed24c1",
+    "positive_baseline": {
+      "imported_project_count": 1,
+      "workpackage_count": 7,
+      "task_ready_count": 15,
+      "apparatus_ready_count": 184,
+      "assignment_count": 184,
+      "unique_assignment_apparatus_count": 184,
+      "durable_field_record_count": 1,
+      "production_tracking_record_count": 1,
+      "customer_completion_record_count": 1,
+      "financial_handoff_record_count": 1,
+      "source_trace_row_count": 199,
+      "warning_review_row_count": 1
+    },
+    "zero_output": {
+      "production_quantity_count": 0,
+      "labor_entry_count": 0,
+      "actual_labor_hours": 0.0,
+      "apparatus_progress_count": 0,
+      "progress_update_count": 0,
+      "customer_report_count": 0,
+      "completion_evidence_count": 0,
+      "customer_delivery_event_count": 0,
+      "billing_export_count": 0,
+      "payroll_export_count": 0,
+      "invoice_record_count": 0,
+      "payroll_record_count": 0,
+      "accounting_record_count": 0,
+      "labor_reconciliation_entry_count": 0,
+      "external_finance_sync_count": 0,
+      "customer_billing_delivery_count": 0,
+      "billable_amount_total": 0.0,
+      "payroll_amount_total": 0.0
+    }
+  },
+  "missing_rule_question_groups": [
+    "production_actuals_and_labor_capture",
+    "customer_report_and_delivery",
+    "billing_and_invoice",
+    "payroll",
+    "accounting_and_external_finance"
+  ],
+  "selector_outcomes": [
+    "BASELINE_PROOF_BOUND_RULES_MISSING_ROUTE_TO_RULE_QUESTION_CARD_NO_LIVE",
+    "ACTUALS_AND_CUSTOMER_RULES_PRESENT_ROUTE_TO_CAPTURE_DESIGN_NO_LIVE",
+    "FINANCE_RULES_PRESENT_ROUTE_TO_FINANCE_OUTPUT_DESIGN_NO_LIVE",
+    "OUTPUT_WRITE_REQUEST_PRESENT_STOP_FOR_SEPARATE_ADMISSION",
+    "SOURCE_WRITEBACK_REQUEST_PRESENT_STOP_FOR_SOURCE_AUTHORITY_PACKET"
+  ],
+  "next_recommended_lane": "PM Lane 287 - Project Miner Temp Power Downstream Rule Question Card No-Live Packet",
+  "lane_287_allowed_purpose": [
+    "Convert the Lane 286 missing rule questions into a compact Jason-facing answer card.",
+    "Keep all answers no-live and non-mutating.",
+    "Classify returns as actuals/customer rules, finance rules, source writeback request, or output-write request.",
+    "Avoid product code, hosted calls, schema changes, and business-state mutation.",
+    "Preserve all blocked downstream outputs until a later explicit admission packet."
+  ],
+  "blocked_authority": [
+    "Production quantity writes",
+    "Labor entry or actual labor hour writes",
+    "Apparatus progress or progress update writes",
+    "Customer report creation or delivery",
+    "Completion evidence artifact storage",
+    "Customer commitment or customer billing delivery",
+    "Billing export writes",
+    "Payroll export writes",
+    "Invoice records",
+    "Payroll records",
+    "Accounting records",
+    "Nonzero labor reconciliation",
+    "External finance-system sync",
+    "Source workbook/PDF writeback",
+    "Workbook macros",
+    "New services, DNS, auth, ingress, or secret changes",
+    "Autonomous AI business-state mutation"
+  ],
+  "no_live_boundary": {
+    "product_code": false,
+    "ui_control": false,
+    "route": false,
+    "backend_seam": false,
+    "payload_version": false,
+    "hosted_call": false,
+    "hosted_smoke": false,
+    "browser_live_route_access": false,
+    "live_mutation_post": false,
+    "schema_migration": false,
+    "supabase_render_vercel_olares_action": false,
+    "service_auth_ingress_secret_change": false,
+    "source_workbook_pdf_writeback": false,
+    "workbook_macro": false,
+    "production_actuals": false,
+    "customer_delivery": false,
+    "finance_output": false,
+    "external_finance_sync": false,
+    "autonomous_ai_business_state_mutation": false
+  },
+  "validation": [
+    "Packet JSON parse",
+    "Decision-label search across touched Lane 286 files",
+    "Selected-outcome search across touched Lane 286 files",
+    "Lane 277 through Lane 284 proof-tuple search",
+    "PM Lane 287 next-packet search",
+    "Missing-rule-question search",
+    "Blocked-output guardrail search",
+    "git diff --check on touched Lane 286 files"
+  ],
+  "validation_result": "PASS: packet JSON parsed; decision label, selected outcome, Lane 277 through Lane 284 proof tuple, PM Lane 287 next-packet shape, missing rule questions, and blocked-output guardrails were found across touched Lane 286 files; scoped git diff check passed with only the repository's normal line-ending warning.",
+  "current_status": "complete"
+}
