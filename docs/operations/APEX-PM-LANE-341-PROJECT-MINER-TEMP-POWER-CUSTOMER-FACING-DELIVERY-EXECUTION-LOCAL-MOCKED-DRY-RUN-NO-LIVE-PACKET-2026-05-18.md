@@ -107,6 +107,12 @@ This lane does not admit:
 4. any external email send, portal release, or other customer-facing delivery execution
 5. any finance, export, accounting, source-writeback, or customer-billing behavior
 
+## Current Stop Boundary
+
+The PM lane is truthfully stopped at:
+
+`STOPPED_UNTIL_EXACT_CUSTOMER_FACING_DELIVERY_EXECUTION_ADMISSION_PHRASE_PRESENT`
+
 ## Validation Checks
 
 Required validation for this lane:
