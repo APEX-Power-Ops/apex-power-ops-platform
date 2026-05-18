@@ -14,6 +14,7 @@ from app.project_import_approval_contract import load_project_import_approval_co
 from app.project_import_approval_persistence import load_project_import_approval_status
 from app.project_import_approval_storage_plan import load_project_import_approval_storage_plan
 from app.project_import_candidate import load_project_import_candidate
+from app.project_import_persistence import load_project_import_status
 from app.project_seed_sources import load_project_seed_sources
 from app.seed_workbooks import load_seed_data
 
@@ -141,6 +142,12 @@ async def get_project_import_approval_storage_plan(actor: Actor = Depends(get_cu
 async def get_project_import_approval_status(actor: Actor = Depends(get_current_actor)) -> Dict[str, Any]:
     """Return read-only approval persistence status for the current Project Miner import candidate."""
     return load_project_import_approval_status()
+
+
+@router.get("/project-import-status")
+async def get_project_import_status(actor: Actor = Depends(get_current_actor)) -> Dict[str, Any]:
+    """Return read-only import persistence status for the current Project Miner import candidate."""
+    return load_project_import_status()
 
 
 @router.get("/pm-workfront")

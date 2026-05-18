@@ -5,7 +5,21 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
-from app.routers import apparatus, assignments, checklist, health, hours, issues, project_import_approvals, reads, schedule, snapshots, tasks, workpackages
+from app.routers import (
+    apparatus,
+    assignments,
+    checklist,
+    health,
+    hours,
+    issues,
+    project_import_approvals,
+    project_imports,
+    reads,
+    schedule,
+    snapshots,
+    tasks,
+    workpackages,
+)
 
 app = FastAPI(
     title=settings.SERVICE_NAME,
@@ -30,6 +44,7 @@ app.include_router(checklist.router)
 app.include_router(hours.router)
 app.include_router(issues.router)
 app.include_router(project_import_approvals.router)
+app.include_router(project_imports.router)
 app.include_router(tasks.router)
 app.include_router(workpackages.router)
 app.include_router(snapshots.router)

@@ -1,0 +1,114 @@
+{
+  "packet_id": "2026-05-18-pm-lane-278",
+  "title": "Project Miner Temp Power Approved Import Mutation Admission",
+  "objective": "Admit and implement the narrow Project Miner Temp Power import mutation route after the PM Lane 277 approval row, writing only governed project, workpackage, task, and apparatus rows with deterministic idempotency and downstream stop boundaries.",
+  "domain": "pm-domain",
+  "active_role": "VS Code Codex Technical Repo Authority / PM Stakeholder Delegate / Import Mutation Executor",
+  "source_floor": {
+    "branch": "clean-main",
+    "commit": "153ad3148a9e7649a77f20123a5fede10031e974",
+    "meaning": "PM Lane 277 first approval-row execution is complete; approval status is approved_for_import_packet with one current approval row and import_authority not_admitted."
+  },
+  "dependencies": [
+    "2026-05-18-pm-lane-276",
+    "2026-05-18-pm-lane-277"
+  ],
+  "stakeholder_authority": {
+    "authority_date": "2026-05-18",
+    "summary": "Jason instructed Codex to move forward with authority for approval of all blocker items that allows work on the predetermined PM lane framework and path end-to-end without stopping for approval at each step as repo technical authority and project stakeholder.",
+    "bounded_interpretation": "This packet is the separately packeted project-import admission required after PM Lane 277. It opens only the approved Temp Power import mutation route and preserves downstream write stops."
+  },
+  "admitted_write": {
+    "method": "POST",
+    "route": "/api/v1/mutations/project-imports",
+    "entity_type": "pm_import",
+    "action_type": "persist_project_import",
+    "target_existing_stores": [
+      "seam.projects",
+      "seam.workpackages",
+      "seam.tasks",
+      "seam.apparatus",
+      "seam.audit_log",
+      "seam.idempotency_keys"
+    ],
+    "deterministic_project_id": "pm-import-project-miner-temp-power",
+    "same_payload_replay_required": true,
+    "mismatched_replay_rejected": true,
+    "schema_change_permission": false,
+    "direct_sql_permission": false
+  },
+  "expected_candidate": {
+    "candidate_id": "pm-import-candidate-miner-temp-power",
+    "candidate_version": "pm_import_candidate_read_only_v1",
+    "workpackages": 7,
+    "tasks": 15,
+    "apparatus_candidates": 184,
+    "warning_codes": [
+      "PROJECT_DATA_ENTRY_FORMULA_ERRORS"
+    ],
+    "blockers": 0,
+    "source_stat_fingerprint": "e111fdbe934bf9de07ed24c1",
+    "candidate_shape_fingerprint": "ddc49565eb586af913ad48b2",
+    "idempotency_key": "pm-import:a2acafe8e9928899e8645736",
+    "approval_record_id": "pm-import-approval-03a1aea39afde71b44516f44"
+  },
+  "row_plan": {
+    "projects": 1,
+    "workpackages": 7,
+    "tasks": 15,
+    "apparatus": 184,
+    "source_trace_entries": 199,
+    "warning_review_entries": 1,
+    "source_trace_storage": "embedded_on_imported_task_and_apparatus_rows",
+    "warning_review_storage": "embedded_on_imported_project_row"
+  },
+  "preflight_requirements": [
+    "approval-status readback reports approved_for_import_packet and exactly one current approval row",
+    "hosted candidate readback matches pm-import-candidate-miner-temp-power and expected counts/fingerprints before any hosted import call",
+    "project-import route is deployed before hosted import call",
+    "downstream accessible counts are captured before hosted import call"
+  ],
+  "validation_steps": [
+    "Focused pytest for project import persistence, approval persistence, and admission plan",
+    "Route 404 proof before deploy or route availability proof after deploy",
+    "Packet JSON parse",
+    "PM Lane 278 text search",
+    "Guardrail keyword scan",
+    "git diff --check"
+  ],
+  "not_allowed": [
+    "No schema migration.",
+    "No direct SQL writes.",
+    "No assignments, field authorization, lead or crew selection, schedule/status mutation, durable field records, production tracking, customer reporting, completion evidence, billing, payroll, invoice, accounting, or external finance-system writes.",
+    "No source workbook or PDF edit or writeback.",
+    "No workbook macro execution.",
+    "No Render, Vercel, Olares, DNS, auth, ingress, or new service change from this shell.",
+    "No secret exposure.",
+    "No autonomous AI business-state mutation."
+  ],
+  "write_scope": [
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/project_import_persistence.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/routers/project_imports.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/main.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/app/routers/reads.py",
+    "C:/APEX Platform/apex-power-ops-platform/apps/mutation-seam/tests/test_project_import_persistence.py",
+    "C:/APEX Platform/apex-power-ops-platform/docs/authority/APEX-OPS-DELEGATED-AUTHORITY-AND-AI-ORCHESTRATION-PROTOCOL-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/APEX-PM-LANE-278-PROJECT-MINER-TEMP-POWER-APPROVED-IMPORT-MUTATION-ADMISSION-2026-05-18.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/packets/draft/2026-05-18-pm-lane-278-project-miner-temp-power-approved-import-mutation-admission.json",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-18-pm-lane-278-project-miner-temp-power-approved-import-mutation-admission-handoff.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-18-pm-lane-278-project-miner-temp-power-approved-import-mutation-admission-closeout.md",
+    "C:/APEX Platform/apex-power-ops-platform/PROJECT_STATUS.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/APEX-PM-STAKEHOLDER-TIME-PROTECTION-AND-ACCELERATION-LANE-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/APEX-PM-TEMP-POWER-DELIVERY-AND-ORCHESTRATION-PLAN-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/docs/operations/PM-LANE-PROJECT-MINER-INTAKE-WORKFLOW-2026-05-15.md",
+    "C:/APEX Platform/apex-power-ops-platform/ops/agents/handoffs/2026-05-17-desktop-codex-parallel-lane-orchestration-queue.md"
+  ],
+  "live_post_permission": "after_route_deployed_and_preflight_matches",
+  "project_import_permission": true,
+  "sql_permission": false,
+  "schema_permission": false,
+  "hosted_deploy_permission": false,
+  "ai_mutation_authority": "approved_import_only_not_downstream_business_state",
+  "created_at": "2026-05-18",
+  "updated_at": "2026-05-18"
+}
