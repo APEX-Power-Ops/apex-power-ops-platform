@@ -5,6 +5,7 @@ from uuid import uuid4
 from openpyxl import Workbook
 
 from app.db.memory_store import store
+from app.pm_workfront_read_model import build_pm_workfront_read_model
 
 
 def _make_token(actor_id: str = "pm-001", actor_role: str = "pm") -> dict[str, str]:
@@ -75,6 +76,48 @@ def test_pm_workfront_read_model_surfaces_blocked_unassigned_owner_and_next_acti
     assert assigned["designation"] == "Pole Disconnect"
     assert assigned["owner_name"] == "Alex Rivera"
     assert assigned["next_action"] == "Start field work"
+
+
+def test_pm_workfront_counts_assignment_row_owner_when_apparatus_is_not_denormalized():
+    workfront = build_pm_workfront_read_model(
+        apparatus_rows=[
+            {
+                "id": "app-assignment-only",
+                "name": "Assignment-only apparatus",
+                "status": "not_started",
+                "task_id": "task-assignment-only",
+                "assigned_to": None,
+            }
+        ],
+        assignment_rows=[
+            {
+                "id": "assignment-assignment-only",
+                "apparatus_id": "app-assignment-only",
+                "assigned_to": "tech-001",
+            }
+        ],
+        task_rows=[
+            {
+                "id": "task-assignment-only",
+                "name": "Assignment-only task",
+                "workpackage_id": "wp-assignment-only",
+            }
+        ],
+        workpackage_rows=[
+            {
+                "id": "wp-assignment-only",
+                "name": "Assignment-only workpackage",
+            }
+        ],
+        issue_rows=[],
+        checklist_rows=[],
+        audit_rows=[],
+    )
+
+    assert workfront["summary"]["unassigned_count"] == 0
+    assert workfront["summary"]["ready_count"] == 1
+    assert workfront["rows"][0]["owner_id"] == "tech-001"
+    assert "unassigned" not in workfront["rows"][0]["lens_tags"]
 
 
 def test_pm_workfront_surfaces_returned_followup_evidence(client):

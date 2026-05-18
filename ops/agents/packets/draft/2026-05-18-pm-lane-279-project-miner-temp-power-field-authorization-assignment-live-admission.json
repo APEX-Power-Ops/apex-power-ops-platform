@@ -1,0 +1,83 @@
+{
+  "packet_id": "2026-05-18-pm-lane-279",
+  "lane": "PM Lane 279",
+  "title": "Project Miner Temp Power Field Authorization Assignment Live Admission",
+  "created_at_local": "2026-05-18",
+  "authority_basis": "Jason's 2026-05-18 standing PM blocker authority as repo technical authority and project stakeholder.",
+  "objective": "Clear the post-import field authorization and assignment blocker for the imported Project Miner Temp Power work rows without opening downstream schedule/status, durable field record, production, customer, or finance writes.",
+  "execution_mode": "hosted_assignment_write_plus_readback_fix",
+  "preconditions": [
+    "PM Lane 277 approval row reads back as approved_for_import_packet.",
+    "PM Lane 278 import reads back as imported with current_candidate_match=true and counts_match=true.",
+    "Hosted reads show 7 workpackages, 15 tasks, 184 apparatus rows, and 0 assignments before the PM Lane 279 write.",
+    "Seeded crew reads show tech-001 Alex Rivera, tech-002 Sam Chen, and tech-003 Jordan Bell."
+  ],
+  "scope": [
+    "Use the existing POST /api/v1/mutations/assignments application path.",
+    "Use lead actor role, online source, mutation class B, and deterministic idempotency keys.",
+    "Create one assignment row for each imported Temp Power apparatus row.",
+    "Embed field authorization metadata on every assignment payload.",
+    "Use deterministic load balancing by lowest assigned planned hours, then assignment count, then tech id.",
+    "Patch the PM workfront read model so assignment-row owners count for readiness even when apparatus.assigned_to is not denormalized."
+  ],
+  "not_allowed": [
+    "No direct SQL.",
+    "No schema migration.",
+    "No task, workpackage, or apparatus status mutation.",
+    "No schedule or date mutation.",
+    "No durable field record write.",
+    "No production tracking write.",
+    "No customer report or customer commitment.",
+    "No billing, payroll, invoice, accounting, or external finance output.",
+    "No source workbook or PDF writeback.",
+    "No workbook macro execution.",
+    "No new service, DNS, auth, ingress, or secret change.",
+    "No autonomous AI business-state mutation beyond the assignment write explicitly admitted here."
+  ],
+  "assignment_policy": {
+    "policy_id": "deterministic_lowest_planned_hours_then_assignment_count_then_tech_id",
+    "field_authorization_record_id": "pm-lane-279-field-auth-temp-power-2026-05-18",
+    "source_import_candidate_id": "pm-import-candidate-miner-temp-power",
+    "source_import_fingerprint": "e111fdbe934bf9de07ed24c1",
+    "source_import_authority": "admitted_by_pm_lane_278",
+    "downstream_schedule_status_authority": "not_admitted",
+    "durable_field_record_authority": "not_admitted",
+    "production_tracking_authority": "not_admitted",
+    "customer_reporting_authority": "not_admitted",
+    "finance_authority": "not_admitted"
+  },
+  "expected_assignment_counts": {
+    "total_assignments": 184,
+    "unique_apparatus": 184,
+    "tech-001": {
+      "assignment_count": 66,
+      "planned_hours": 194.5
+    },
+    "tech-002": {
+      "assignment_count": 59,
+      "planned_hours": 217.5
+    },
+    "tech-003": {
+      "assignment_count": 59,
+      "planned_hours": 194.75
+    }
+  },
+  "changed_files": [
+    "apps/mutation-seam/app/pm_workfront_read_model.py",
+    "apps/mutation-seam/tests/test_pm_workfront_read_model.py",
+    "docs/authority/APEX-OPS-DELEGATED-AUTHORITY-AND-AI-ORCHESTRATION-PROTOCOL-2026-05-15.md",
+    "ops/agents/packets/draft/2026-05-18-pm-lane-279-project-miner-temp-power-field-authorization-assignment-live-admission.json",
+    "ops/agents/handoffs/2026-05-18-pm-lane-279-project-miner-temp-power-field-authorization-assignment-live-admission-handoff.md"
+  ],
+  "validation_plan": [
+    "C:/APEX Platform/apex-power-ops-platform/.venv/Scripts/python.exe -m pytest apps/mutation-seam/tests/test_pm_workfront_read_model.py -q",
+    "C:/APEX Platform/apex-power-ops-platform/.venv/Scripts/python.exe -m pytest apps/mutation-seam/tests/test_project_import_persistence.py -q",
+    "Hosted assignment readback: 184 assignments, 184 unique apparatus, all downstream authorities not_admitted.",
+    "Hosted assignment replay: idempotent_hit with no duplicate assignment rows.",
+    "Hosted PM workfront readback after Render deploy: unassigned_count=0 and ready_count=184.",
+    "Hosted smokes: deployed mutation-seam smoke, hosted PM intake smoke, hosted operations routes smoke.",
+    "git diff --check"
+  ],
+  "current_status": "assignment_write_accepted_readback_fix_pending_deploy_closeout",
+  "next_recommended_lane": "After PM Lane 279 closeout, the next blocker is the schedule/status mutation admission packet. Durable field records, production tracking, customer reporting, and finance remain blocked until separate packets."
+}

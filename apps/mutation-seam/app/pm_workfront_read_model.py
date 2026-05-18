@@ -47,11 +47,15 @@ def _crew_name_map() -> Dict[str, str]:
     }
 
 
-def _readiness(row: Dict[str, Any], blocking_issues: List[Dict[str, Any]]) -> str:
+def _readiness(
+    row: Dict[str, Any],
+    blocking_issues: List[Dict[str, Any]],
+    owner_id: Any = None,
+) -> str:
     status = str(row.get("status") or "").lower()
     if blocking_issues or status == "on_hold":
         return "blocked"
-    if not row.get("assigned_to"):
+    if not owner_id:
         return "unassigned"
     if status in {"ready", "not_started"}:
         return "ready"
@@ -193,7 +197,7 @@ def build_pm_workfront_read_model(
         checklist = checklist_by_apparatus.get(apparatus_id, [])
         checklist_complete_count = sum(1 for item in checklist if item.get("completed"))
         checklist_total_count = len(checklist)
-        readiness = _readiness(apparatus, blocking_issues)
+        readiness = _readiness(apparatus, blocking_issues, owner_id)
         next_action = _next_action(
             apparatus,
             readiness,
