@@ -1,0 +1,47 @@
+{
+  "packet_id": "2026-05-18-pm-lane-320",
+  "title": "PM Lane 320 - Project Miner Temp Power Customer Delivery And Durable Proof Readback Design No-Live Packet",
+  "status": "complete",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_CUSTOMER_DELIVERY_DURABLE_PROOF_READBACK_DESIGN_NO_LIVE_NO_OUTPUT_WRITE",
+  "selected_outcome": "CUSTOMER_DELIVERY_DURABLE_PROOF_READBACK_DESIGN_READY_NO_LIVE",
+  "authority_basis": "Standing PM blocker authority and repo technical authority, used here to convert Lane 319's storage plan into a future readback contract without admitting runtime reads, routes, or delivery execution.",
+  "dependencies": [
+    "2026-05-18-pm-lane-315",
+    "2026-05-18-pm-lane-317",
+    "2026-05-18-pm-lane-318",
+    "2026-05-18-pm-lane-319"
+  ],
+  "activation_condition": [
+    "Lane 319 already defines the future delivery/proof storage plan and dedicated readback requirement.",
+    "No Temp Power customer delivery and durable proof readback-design packet exists yet.",
+    "The next blocker after lane 319 remains design-only and does not yet justify route or runtime admission."
+  ],
+  "current_truth": [
+    "Lane 315 remains the hosted-green runtime baseline, and it still blocks actual delivery execution inside the current customer-preview review slice.",
+    "Lane 319 defines the future storage plan and requires a dedicated readback contract before schema or route admission can be considered.",
+    "The next bounded design step is readback only: define what the future delivery/proof status read must return, which classifications are allowed, how preview-review lineage and source matching must work, and how readback must prove separation from finance, source writeback, and customer billing delivery.",
+    "Runtime reads, registered routes, and hosted delivery/proof behavior remain separate later packets.",
+    "Finance/payroll/billing/invoice/accounting outputs and source writeback remain outside this lane."
+  ],
+  "allowed_actions": [
+    "Define the future readback route placeholder, status contract, allowed status values, and readback rules for customer delivery and durable proof review.",
+    "Keep readback design-only and no-live.",
+    "Preserve visible blocked boundaries for runtime delivery, finance, and source writeback."
+  ],
+  "not_allowed": [
+    "No product code, schema, route implementation, or hosted action.",
+    "No runtime read admission or persistence execution.",
+    "No live or local POST claiming customer delivery or proof recording occurred.",
+    "No finance, payroll, billing, invoice, accounting, external finance sync, or source writeback work.",
+    "No auth, ingress, DNS, or secret changes."
+  ],
+  "validation": [
+    "Packet JSON parses",
+    "Decision label, selected outcome, future readback route, allowed status values, readback rules, and blocked-domain boundaries are present across touched lane 320 files",
+    "Canonical PM docs/status route the next follow-on step through route and payload design rather than schema or runtime delivery admission",
+    "git diff --check passes for touched lane 320 and canonical PM doc surfaces"
+  ],
+  "validation_result": "PASS: lane 320 defines the future delivery/proof readback contract and keeps route implementation, schema, runtime delivery, finance, and source-writeback widening deferred.",
+  "next_blocker": "STOPPED_AWAITING_CUSTOMER_DELIVERY_DURABLE_PROOF_ROUTE_AND_PAYLOAD_DESIGN_NO_LIVE_PACKET",
+  "current_status": "closed"
+}

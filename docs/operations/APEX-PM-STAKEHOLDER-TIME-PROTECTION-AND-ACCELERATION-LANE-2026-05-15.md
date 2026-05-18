@@ -285,7 +285,8 @@ Current blocker truth:
 6. PM Lane 317 now fixes the next expected move as design-first customer delivery and durable proof contract definition,
 7. PM Lane 318 now fixes the next expected move as PM-facing customer delivery and durable proof review-surface design,
 8. PM Lane 319 now fixes the next expected move as customer delivery and durable proof storage-plan design,
-9. wider finance and source-writeback work still requires later separate admission beyond that adjacent delivery boundary.
+9. PM Lane 320 now fixes the next expected move as customer delivery and durable proof readback design,
+10. wider finance and source-writeback work still requires later separate admission beyond that adjacent delivery boundary.
 
 Use the current active branch refresh above before following the historical tranche narrative below.
 
