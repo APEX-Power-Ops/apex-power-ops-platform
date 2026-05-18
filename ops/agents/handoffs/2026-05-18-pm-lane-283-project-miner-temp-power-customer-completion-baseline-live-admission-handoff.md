@@ -117,7 +117,35 @@ corepack pnpm --dir "C:/APEX Platform/apex-power-ops-platform" --filter @apex/op
 
 ## Live Closeout
 
-Pending hosted deploy and live write.
+Hosted execution is complete.
+
+Results:
+
+- pre-write direct mutation-seam status: `no_customer_completion_record`, `storage_available=true`, `record_count=0`, `production_tracking_record_count=1`
+- pre-write operations-web status: `no_customer_completion_record`, `storage_available=true`, `record_count=0`, `production_tracking_record_count=1`
+- first POST after fix deployment: `accepted`
+- replay POST: `idempotent_hit`
+- mutation: `mut-6c633d45-a288-4ac9-8d69-d6bdeff5e811`
+- audit: `audit-5607d1dd-aa46-4454-91d6-00737a1ac3c9`
+- final direct mutation-seam status: `customer_completion_baseline_recorded`, `record_count=1`
+- final operations-web status: `customer_completion_baseline_recorded`, `record_count=1`
+- customer report count: `0`
+- completion evidence count: `0`
+- production quantity count: `0`
+- labor entry count: `0`
+- actual labor hours: `0.00`
+- apparatus progress count: `0`
+- progress update count: `0`
+- customer delivery authority: `not_admitted_external_delivery`
+- finance/billing/payroll/invoice/accounting authorities: `not_admitted`
+
+The first hosted POST attempts hit the pre-fix deployment and returned HTTP 500. Immediate readback confirmed no partial customer completion record. Commit `91a7f9a6` made the nested precondition evidence JSON-safe for hosted PostgreSQL values; after Render deployed that fix, the same admitted payload returned `accepted` and replay returned `idempotent_hit`.
+
+Hosted validation passed:
+
+- deployed mutation-seam smoke: `RESULT PASS`
+- hosted PM intake smoke: `PM_INTAKE_HOSTED_SUMMARY failed=0`
+- hosted operations routes smoke: `SMOKE_SUMMARY failed=0 passed=12`
 
 ## Next Blocker
 

@@ -103,9 +103,21 @@
     "Hosted smokes: deployed mutation-seam smoke with PM intake, hosted PM intake smoke, hosted operations routes smoke.",
     "git diff --check"
   ],
-  "schema_result": "pending_hosted_deploy",
+  "schema_result": {
+    "runtime_schema_ensure": "hosted status route returned no_customer_completion_record, storage_available=true, record_count=0 after migration 006 availability check.",
+    "hosted_pre_write_status": "direct mutation-seam and operations-web returned no_customer_completion_record, storage_available=true, record_count=0, production_tracking_record_count=1."
+  },
   "local_validation_result": "PASS: customer completion tests passed, production tracking tests passed, durable field record tests passed, import persistence tests passed, approval persistence tests passed, py_compile passed, packet JSON parsed, and scoped git diff check passed.",
-  "hosted_execution_result": "pending",
-  "current_status": "implementation_ready_pending_hosted_deploy",
+  "hosted_execution_result": {
+    "pre_fix_post_result": "Initial hosted POST attempts against the pre-fix deployment returned HTTP 500 with no partial customer completion record; status readback stayed no_customer_completion_record record_count=0.",
+    "fix_commit": "91a7f9a6 fixed JSON-safe precondition evidence before hosted retry.",
+    "first_live_post": "accepted",
+    "replay_post": "idempotent_hit",
+    "mutation_id": "mut-6c633d45-a288-4ac9-8d69-d6bdeff5e811",
+    "audit_event_id": "audit-5607d1dd-aa46-4454-91d6-00737a1ac3c9",
+    "final_status": "direct mutation-seam and operations-web returned customer_completion_baseline_recorded, record_count=1, customer_report_count=0, completion_evidence_count=0, customer_delivery_authority=not_admitted_external_delivery, and finance/billing/payroll/invoice/accounting authorities not_admitted.",
+    "hosted_validation": "deployed mutation-seam smoke RESULT PASS; hosted PM intake smoke PM_INTAKE_HOSTED_SUMMARY failed=0; hosted operations routes smoke SMOKE_SUMMARY failed=0 passed=12."
+  },
+  "current_status": "complete",
   "next_recommended_lane": "After live customer completion baseline closeout, the next blocker is financial handoff admission after customer completion proof."
 }
