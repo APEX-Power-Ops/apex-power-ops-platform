@@ -243,6 +243,7 @@ For the current Temp Power PM lane work, start here:
 10. Treat PM Lane 319 as the current storage-design marker: the next delivery/proof work is readback design, while schema and runtime admission stay deferred.
 11. Treat PM Lane 320 as the current readback-design marker: the next delivery/proof work is route/payload design, while schema and runtime admission stay deferred.
 12. Treat PM Lane 321 as the current request-contract marker: the next delivery/proof work is a separate execution gate, while schema and runtime admission stay deferred.
+13. Treat PM Lane 322 as the current gate marker: the next delivery/proof work is a local mocked dry run, while schema and runtime admission stay deferred.
 
 For AI orchestration work, start here:
 
