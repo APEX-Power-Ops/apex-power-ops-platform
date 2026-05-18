@@ -237,6 +237,7 @@ For the current Temp Power PM lane work, start here:
 4. Treat PM Lane 314 publication as completed proof: commit `3d47834eb32aa29b80152df3973f91d7c62a2e30` is live on the existing mutation-seam service.
 5. Treat PM Lane 315 publication as completed proof: commit `666f649d020d19cc24d1a5e57b9a1796928f45d8` is live on the existing mutation-seam service.
 6. Both hosted seam URLs now pass the bounded `--include-temp-power-actuals-review` and `--include-temp-power-customer-preview-review` smoke, so the admitted actuals plus customer-preview review first-write slice is complete within current scope.
+7. Treat PM Lane 316 as the next-boundary marker: any follow-on lane starts with customer delivery and durable proof admission, not finance or source writeback.
 
 For AI orchestration work, start here:
 

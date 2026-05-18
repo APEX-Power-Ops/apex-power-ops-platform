@@ -54,7 +54,8 @@ Current workflow truth:
 1. PM intake hosted parity is already accepted and no longer the active blocker.
 2. Authenticated hosted redeploy is complete and no longer the active blocker.
 3. Publication is complete: the admitted Temp Power actuals route slice and customer-preview review first-write slice are now hosted-green on both the custom domain and the Render hostname.
-4. There is no remaining blocker inside this admitted slice; any follow-on work requires a new explicit admission lane.
+4. There is no remaining blocker inside this admitted slice.
+5. PM Lane 316 now records the next follow-on boundary: any next move must start with a separate customer-delivery and durable-proof admission lane, not finance or source-writeback widening.
 
 Use this section first when continuing the Temp Power workflow. The detailed PM intake sections below remain valid background, but they are not the controlling next move.
 
