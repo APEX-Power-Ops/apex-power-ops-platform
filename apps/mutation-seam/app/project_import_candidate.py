@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from app.project_seed_sources import load_project_seed_sources
+from app.project_import_snapshot import clear_project_import_snapshot_cache, load_project_import_candidate_snapshot
 from app.project_tracker_sources import load_project_tracker_sources
 from app.seed_workbooks import load_seed_data
 
@@ -19,6 +20,7 @@ MUTATION_AUTHORITY = "not_admitted"
 
 def clear_project_import_candidate_cache() -> None:
     load_project_import_candidate.cache_clear()
+    clear_project_import_snapshot_cache()
 
 
 def _clean_text(value: Any) -> Optional[str]:
@@ -463,6 +465,22 @@ def load_project_import_candidate(
     project_data_entry_workbook_path: Optional[str] = None,
     reference_tracker_workbook_path: Optional[str] = None,
 ) -> Dict[str, Any]:
+    explicit_source_paths = any(
+        path is not None
+        for path in (
+            estimator_workbook_path,
+            sld_pdf_path,
+            equipment_workbook_path,
+            capability_workbook_path,
+            project_data_entry_workbook_path,
+            reference_tracker_workbook_path,
+        )
+    )
+    if not explicit_source_paths:
+        snapshot_candidate = load_project_import_candidate_snapshot()
+        if snapshot_candidate is not None:
+            return snapshot_candidate
+
     project = load_project_seed_sources(estimator_workbook_path, sld_pdf_path)
     trackers = load_project_tracker_sources(project_data_entry_workbook_path, reference_tracker_workbook_path)
     seed = load_seed_data(equipment_workbook_path, capability_workbook_path)

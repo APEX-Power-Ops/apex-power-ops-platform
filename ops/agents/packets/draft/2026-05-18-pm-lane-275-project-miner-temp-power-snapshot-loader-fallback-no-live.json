@@ -1,0 +1,67 @@
+{
+  "packet_id": "2026-05-18-pm-lane-275-project-miner-temp-power-snapshot-loader-fallback-no-live",
+  "title": "PM Lane 275 - Project Miner Temp Power Snapshot Loader Fallback No-Live",
+  "date": "2026-05-18",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_SNAPSHOT_LOADER_FALLBACK_NO_LIVE",
+  "selected_outcome": "SNAPSHOT_LOADER_IMPLEMENTED_AND_REAL_RUNTIME_SNAPSHOT_VERIFIED_NO_LIVE",
+  "source_packets": [
+    "PM Lane 270",
+    "PM Lane 271",
+    "PM Lane 272",
+    "PM Lane 273",
+    "PM Lane 274"
+  ],
+  "env_var": "APEX_PROJECT_IMPORT_CANDIDATE_SNAPSHOT_PATH",
+  "files_added": [
+    "apps/mutation-seam/app/project_import_snapshot.py",
+    "apps/mutation-seam/tests/test_project_import_snapshot_loader.py"
+  ],
+  "files_updated": [
+    "apps/mutation-seam/app/project_import_candidate.py",
+    "apps/mutation-seam/app/project_import_admission_plan.py"
+  ],
+  "loader_behavior": {
+    "default_source_reader_unchanged_when_env_unset": true,
+    "requires_candidate_json": true,
+    "requires_admission_plan_json": true,
+    "requires_manifest_json": true,
+    "requires_sha256sums": true,
+    "verifies_sha256sums": true,
+    "requires_manifest_schema_version": "pm_import_candidate_snapshot_manifest_v1",
+    "requires_authority": "derived_source_snapshot_no_live",
+    "requires_mutation_authority_not_admitted": true,
+    "explicit_source_paths_bypass_snapshot_env": true
+  },
+  "real_runtime_snapshot_probe": {
+    "path": "C:/APEX Platform/runtime/pm-lane-274-project-miner-temp-power-snapshot-2026-05-18",
+    "candidate_id": "pm-import-candidate-miner-temp-power",
+    "workpackage_count": 7,
+    "task_count": 15,
+    "apparatus_candidate_count": 184,
+    "source_stat_fingerprint": "e111fdbe934bf9de07ed24c1",
+    "candidate_shape_fingerprint": "ddc49565eb586af913ad48b2",
+    "mutation_authority": "not_admitted"
+  },
+  "validation": {
+    "pytest_command": ".venv/Scripts/python.exe -m pytest tests/test_project_import_snapshot_loader.py tests/test_project_import_candidate_snapshot_exporter.py tests/test_project_import_candidate.py tests/test_project_import_admission_plan.py",
+    "pytest_result": "11 passed, 8 warnings",
+    "warnings": [
+      "existing Pydantic class-based config deprecation",
+      "existing openpyxl data-validation warning"
+    ],
+    "actual_runtime_snapshot_probe_passed": true
+  },
+  "write_execution": {
+    "approval_post_sent": false,
+    "approval_row_created": false,
+    "project_import_performed": false,
+    "supabase_write_performed": false,
+    "render_env_updated": false,
+    "render_deploy_performed": false,
+    "hosted_source_uploaded": false,
+    "source_workbook_committed": false,
+    "source_pdf_committed": false,
+    "macro_run": false
+  },
+  "next_blocker": "STOPPED_AWAITING_RENDER_AUTHENTICATED_SOURCE_PLACEMENT_OR_SNAPSHOT_ENV_DEPLOY_NO_APPROVAL_POST"
+}

@@ -6,6 +6,7 @@ from collections import Counter
 from typing import Any, Dict, List
 
 from app.project_import_candidate import IMPORT_CANDIDATE_VERSION, MUTATION_AUTHORITY, load_project_import_candidate
+from app.project_import_snapshot import load_project_import_admission_plan_snapshot
 
 
 ADMISSION_PLAN_VERSION = "pm_import_admission_plan_read_only_v1"
@@ -279,4 +280,7 @@ def build_project_import_admission_plan(candidate: Dict[str, Any]) -> Dict[str, 
 
 
 def load_project_import_admission_plan() -> Dict[str, Any]:
+    snapshot_plan = load_project_import_admission_plan_snapshot()
+    if snapshot_plan is not None:
+        return snapshot_plan
     return build_project_import_admission_plan(load_project_import_candidate())

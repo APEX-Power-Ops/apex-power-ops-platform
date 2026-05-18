@@ -952,6 +952,8 @@ PM Lane 273 implements that local exporter and proves it with synthetic tests, w
 
 PM Lane 274 uses the delegated no-live authority to run that admitted runtime export. The generated payloads stay outside Git at `C:/APEX Platform/runtime/pm-lane-274-project-miner-temp-power-snapshot-2026-05-18`, while committed docs record only redacted source metadata, counts, fingerprints, and hashes. This gives the PM lane a portable derived snapshot of the current Temp Power candidate without turning the repo into a source-file archive or opening live approval authority. The remaining blocker is hosted consumption: either Render source placement returns clean, or a later no-live packet must admit a hosted snapshot loader behind an explicit runtime env var before any live approval retry.
 
+PM Lane 275 removes that loader unknown. The fallback is now implemented behind `APEX_PROJECT_IMPORT_CANDIDATE_SNAPSHOT_PATH`, validates checksums and derived-source authority before serving snapshot reads, and leaves normal source-file reads untouched when the env var is absent. The Render unblock is now operational rather than architectural: place the Lane 274 snapshot files on a governed hosted path, set the env var on the existing mutation-seam service, restart or redeploy, then prove hosted readback matches Temp Power before any live approval-row retry.
+
 The success standard is not just technical correctness. The candidate must reduce Jason's review burden by showing:
 
 1. what the system thinks the project is,
