@@ -78,6 +78,7 @@
     "Hosted smokes: deployed mutation-seam smoke, hosted PM intake smoke, hosted operations routes smoke.",
     "git diff --check"
   ],
-  "current_status": "assignment_write_accepted_readback_fix_pending_deploy_closeout",
+  "validation_result": "PASS: focused mutation-seam PM workfront tests passed, project import persistence tests passed, hosted assignment write accepted 184 rows, replay returned 184 idempotent_hit responses with assignment_count_after=184, hosted PM workfront returned unassigned_count=0 and ready_count=184 after Render auto-deploy, deployed mutation-seam smoke returned RESULT PASS, hosted PM intake smoke returned PM_INTAKE_HOSTED_SUMMARY failed=0, hosted operations routes smoke returned SMOKE_SUMMARY failed=0 passed=12, and scoped git diff checks passed.",
+  "current_status": "complete",
   "next_recommended_lane": "After PM Lane 279 closeout, the next blocker is the schedule/status mutation admission packet. Durable field records, production tracking, customer reporting, and finance remain blocked until separate packets."
 }
