@@ -1,0 +1,128 @@
+{
+  "packet_id": "2026-05-18-pm-lane-280",
+  "lane": "PM Lane 280",
+  "title": "Project Miner Temp Power Schedule Status Readiness Live Admission",
+  "created_at_local": "2026-05-18",
+  "authority_basis": "Jason's 2026-05-18 standing PM blocker authority as repo technical authority and project stakeholder.",
+  "objective": "Clear the post-assignment schedule/status blocker only as readiness status on imported Project Miner Temp Power task and apparatus rows, without opening schedule/date writes, workpackage status writes, durable field records, production tracking, customer reporting, or finance outputs.",
+  "execution_mode": "hosted_task_and_apparatus_status_readiness_write",
+  "preconditions": [
+    "PM Lane 277 approval row reads back as approved_for_import_packet.",
+    "PM Lane 278 import reads back as imported with current_candidate_match=true and counts_match=true.",
+    "PM Lane 279 field authorization and assignment reads back as 184 assignments for 184 unique imported apparatus rows.",
+    "Hosted preflight readback showed 15 imported tasks, 184 imported apparatus, 7 imported workpackages, 184 assignments, and 0 issues.",
+    "Hosted schedule routes remained read-only context with 1 project, 4 tasks-with-scope, and 3 relationships.",
+    "The existing application registry admits task.start and apparatus.update_status; it does not provide an existing governed workpackage start route or schedule/date write route."
+  ],
+  "scope": [
+    "Use existing POST /api/v1/mutations/tasks for imported Temp Power tasks only.",
+    "Use existing POST /api/v1/mutations/apparatus for imported Temp Power apparatus only.",
+    "Use lead actor role, online source, mutation class B, and deterministic idempotency keys.",
+    "Set task and apparatus status to ready.",
+    "Add Lane 280 metadata that records schedule/status readiness authority and preserves downstream not_admitted authorities."
+  ],
+  "not_allowed": [
+    "No direct SQL.",
+    "No schema migration.",
+    "No schedule/date write.",
+    "No schedule route change.",
+    "No workpackage status write.",
+    "No durable field record write.",
+    "No production tracking write.",
+    "No customer report, completion evidence, or customer commitment.",
+    "No billing, payroll, invoice, accounting, or external finance output.",
+    "No source workbook or PDF writeback.",
+    "No workbook macro execution.",
+    "No new service, DNS, auth, ingress, or secret change.",
+    "No autonomous AI business-state mutation beyond the task/apparatus readiness writes explicitly admitted here."
+  ],
+  "status_readiness_contract": {
+    "schedule_status_record_id": "pm-lane-280-status-readiness-temp-power-2026-05-18",
+    "schedule_status_authority": "admitted_by_pm_lane_280_standing_blocker_authority",
+    "task_idempotency_key_pattern": "pm-lane-280-task-ready:<task_id>",
+    "apparatus_idempotency_key_pattern": "pm-lane-280-apparatus-ready:<apparatus_id>",
+    "task_action": "start",
+    "apparatus_action": "update_status",
+    "target_status": "ready",
+    "actor_role": "lead",
+    "source": "online",
+    "mutation_class": "B",
+    "field_authorization_record_id": "pm-lane-279-field-auth-temp-power-2026-05-18",
+    "assignment_proof_required": "pm_lane_279_assignments_184_unique_apparatus",
+    "source_import_candidate_id": "pm-import-candidate-miner-temp-power",
+    "source_import_fingerprint": "e111fdbe934bf9de07ed24c1",
+    "schedule_date_authority": "not_admitted",
+    "workpackage_status_authority": "not_admitted_no_existing_start_route",
+    "durable_field_record_authority": "not_admitted",
+    "production_tracking_authority": "not_admitted",
+    "customer_reporting_authority": "not_admitted",
+    "finance_authority": "not_admitted"
+  },
+  "execution_result": {
+    "admitted_at_utc": "2026-05-18T02:51:37.9231947Z",
+    "task_attempted": 15,
+    "task_accepted": 15,
+    "apparatus_attempted": 184,
+    "apparatus_accepted": 184,
+    "failure_count": 0,
+    "first_task_mutation_id": "mut-54247a6b-44c1-40de-8054-47e2a644917b",
+    "last_task_mutation_id": "mut-9e83736e-08dc-41fb-bb19-052fa88397f2",
+    "first_apparatus_mutation_id": "mut-5af95789-a4ec-41b9-9a10-474d590ce9fb",
+    "last_apparatus_mutation_id": "mut-8ce22e8e-6fcd-4c63-89b1-bb8515c23477"
+  },
+  "hosted_readback": {
+    "tasks": {
+      "count": 15,
+      "status": "ready"
+    },
+    "apparatus": {
+      "count": 184,
+      "status": "ready"
+    },
+    "workpackages": {
+      "count": 7,
+      "status": "not_started"
+    },
+    "assignments": 184,
+    "unique_assignment_apparatus": 184,
+    "issues": 0,
+    "workfront_summary": {
+      "total_count": 184,
+      "blocked_count": 0,
+      "unassigned_count": 0,
+      "ready_count": 184,
+      "in_progress_count": 0,
+      "pm_review_count": 0,
+      "complete_count": 0
+    },
+    "import_status": {
+      "classification": "imported",
+      "current_candidate_match": true,
+      "counts_match": true
+    },
+    "schedule_read_only_counts": {
+      "projects": 1,
+      "tasks_with_scope": 4,
+      "relationships": 3
+    },
+    "downstream_authority_bad_count": 0
+  },
+  "idempotency_replay": {
+    "task_attempted": 15,
+    "task_idempotent_hit": 15,
+    "apparatus_attempted": 184,
+    "apparatus_idempotent_hit": 184,
+    "other_status_count": 0
+  },
+  "validation_plan": [
+    "Hosted readback for tasks, apparatus, workpackages, assignments, issues, PM workfront, project-import-status, and schedule read-only routes.",
+    "Hosted idempotency replay for all 15 task status requests and all 184 apparatus status requests.",
+    "C:/APEX Platform/apex-power-ops-platform/.venv/Scripts/python.exe apps/mutation-seam/scripts/smoke_deployed_mutation_seam.py --base-url https://mutation-seam.apexpowerops.com --include-pm-intake",
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform\" --filter @apex/operations-web exec node scripts/smoke-pm-intake-hosted.mjs --operations-web-base-url https://operations.apexpowerops.com --mutation-seam-base-url https://mutation-seam.apexpowerops.com --timeout-ms 20000",
+    "corepack pnpm --dir \"C:/APEX Platform/apex-power-ops-platform\" --filter @apex/operations-web exec node scripts/smoke-hosted-routes.mjs --base-url https://operations.apexpowerops.com",
+    "git diff --check"
+  ],
+  "validation_result": "PASS: hosted readback returned 15 ready tasks, 184 ready apparatus, 7 not_started workpackages, 184 assignments, 0 issues, PM workfront ready_count=184 and unassigned_count=0, import status imported/current_candidate_match/counts_match all true, schedule read-only counts unchanged, downstream authority bad counts were 0, replay returned 15 task idempotent_hit and 184 apparatus idempotent_hit, deployed mutation-seam smoke returned RESULT PASS, hosted PM intake smoke returned PM_INTAKE_HOSTED_SUMMARY failed=0, and hosted operations routes smoke returned SMOKE_SUMMARY failed=0 passed=12.",
+  "current_status": "complete",
+  "next_recommended_lane": "STOPPED_AWAITING_DURABLE_FIELD_RECORD_ADMISSION_PACKET_AFTER_SCHEDULE_STATUS_READINESS"
+}
