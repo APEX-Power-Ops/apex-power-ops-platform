@@ -1,0 +1,75 @@
+{
+  "packet_id": "2026-05-18-pm-lane-271-project-miner-temp-power-delegated-incremental-authority-and-signed-snapshot-scout-no-live",
+  "title": "PM Lane 271 - Project Miner Temp Power Delegated Incremental Authority And Signed Snapshot Scout",
+  "date": "2026-05-18",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_DELEGATED_INCREMENTAL_AUTHORITY_AND_SIGNED_SNAPSHOT_SCOUT_NO_LIVE",
+  "selected_outcome": "SIGNED_SOURCE_SNAPSHOT_SCOUT_APPROVED_RENDER_AUTH_CAPABILITY_GAP_REMAINS_NO_LIVE",
+  "source_packets": [
+    "PM Lane 268",
+    "PM Lane 270"
+  ],
+  "delegated_incremental_authority": {
+    "accepted_for_no_live_technical_blocker_classification": true,
+    "accepted_for_packet_sequencing": true,
+    "accepted_for_no_live_scout_selection": true,
+    "accepted_for_executor_prompt_authoring": true,
+    "accepted_for_live_approval_post": false,
+    "accepted_for_approval_row_creation": false,
+    "accepted_for_project_import": false,
+    "accepted_for_secret_access_or_rotation": false,
+    "accepted_for_business_state_mutation": false
+  },
+  "current_pm_lane_270_blocker": {
+    "next_blocker_review_point": "STOPPED_AWAITING_RENDER_AUTHENTICATED_SOURCE_FILES_REPAIR_NO_APPROVAL_POST",
+    "blocker_type": "capability_gap",
+    "render_cli_available": false,
+    "render_api_credentials_exposed_to_shell": false,
+    "render_authenticated_source_placement_surface_available": false
+  },
+  "self_approved_no_live_fallback_scout": {
+    "label": "APPROVE_SIGNED_SOURCE_SNAPSHOT_SCOUT_NO_APPROVAL_POST",
+    "approved_by": "VS Code Codex technical authority under delegated incremental no-live blocker authority",
+    "creates_snapshot_artifact": false,
+    "adds_snapshot_loader_code": false,
+    "uploads_hosted_source": false,
+    "changes_render_env": false,
+    "approval_post_allowed": false
+  },
+  "scout_findings": {
+    "candidate_export_script_exists": "apps/mutation-seam/scripts/preview_pm_import_candidate.py",
+    "candidate_builder": "apps/mutation-seam/app/project_import_candidate.py",
+    "admission_plan_builder": "apps/mutation-seam/app/project_import_admission_plan.py",
+    "candidate_json_contains_source_derived_business_data": true,
+    "candidate_json_contains_local_path_references": true,
+    "source_freshness_strategy": "path_size_mtime_fingerprint",
+    "snapshot_requires_explicit_derived_authority_label": true,
+    "path_redaction_or_normalization_required_for_repo_facing_manifest": true
+  },
+  "recommended_future_packet": "PM Lane 272 - Project Miner Temp Power Signed Source Snapshot Exporter Design No-Live",
+  "write_execution": {
+    "approval_post_sent": false,
+    "approval_row_created": false,
+    "project_import_performed": false,
+    "supabase_write_performed": false,
+    "render_env_updated": false,
+    "render_deploy_performed": false,
+    "hosted_source_uploaded": false,
+    "signed_snapshot_artifact_created": false,
+    "snapshot_loader_code_added": false,
+    "fixture_fallback_created": false,
+    "source_workbook_committed": false,
+    "source_pdf_committed": false,
+    "macro_run": false
+  },
+  "validation": [
+    "PM Lane 270 blocker review",
+    "source snapshot code-path inspection",
+    "PM-256 closeout absence check",
+    "PM Lane 271 text search",
+    "packet JSON parse",
+    "guardrail keyword scan",
+    "corrupted-token scan",
+    "git diff --check"
+  ],
+  "validation_result": "PASS"
+}
