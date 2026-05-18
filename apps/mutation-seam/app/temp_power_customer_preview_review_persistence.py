@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any, Dict, Mapping, Optional
 from uuid import uuid4
 
@@ -21,6 +23,12 @@ TEMP_POWER_CUSTOMER_PREVIEW_REVIEW_ROUTE = "/api/v1/mutations/temp-power-custome
 TEMP_POWER_CUSTOMER_PREVIEW_REVIEW_STATUS_ROUTE = "/api/v1/reads/temp-power-customer-preview-status"
 TEMP_POWER_CUSTOMER_PREVIEW_REVIEW_PERSISTENCE_VERSION = "pm_lane_315_customer_preview_review_v1"
 TEMP_POWER_CUSTOMER_PREVIEW_REVIEW_STATUS_SOURCE = "seam.pm_customer_preview_reviews"
+LANE_315_MIGRATION_PATH = (
+    Path(__file__).resolve().parents[1]
+    / "migrations"
+    / "009_pm_lane_315_customer_preview_reviews.sql"
+)
+_SCHEMA_READY = False
 
 TEMP_POWER_PROJECT_ID = "pm-import-project-miner-temp-power"
 TEMP_POWER_CANDIDATE_ID = "pm-import-candidate-miner-temp-power"
@@ -44,7 +52,26 @@ def _stable_hash(value: Any) -> str:
     return hashlib.sha256(_stable_json(value).encode("utf-8")).hexdigest()[:24]
 
 
+def _ensure_customer_preview_review_schema() -> None:
+    global _SCHEMA_READY
+    if _SCHEMA_READY or os.getenv("SEAM_STORE_BACKEND") == "memory":
+        return
+    if type(store).__name__ != "SupabaseStore":
+        _SCHEMA_READY = True
+        return
+
+    from app.db.supabase_store import _conn_get
+
+    with _conn_get().cursor() as cur:
+        cur.execute("SELECT to_regclass('seam.pm_customer_preview_reviews') IS NOT NULL")
+        exists = bool(cur.fetchone()[0])
+        if not exists:
+            cur.execute(LANE_315_MIGRATION_PATH.read_text(encoding="utf-8"))
+    _SCHEMA_READY = True
+
+
 def _records() -> Any:
+    _ensure_customer_preview_review_schema()
     if not hasattr(store, "temp_power_customer_preview_reviews"):
         store.temp_power_customer_preview_reviews = {}
     return store.temp_power_customer_preview_reviews
