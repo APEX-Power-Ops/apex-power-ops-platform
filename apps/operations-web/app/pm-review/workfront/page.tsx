@@ -620,6 +620,7 @@ export default function PmWorkfrontPage() {
           </div>
           <p className="pm-review-link-row">
             <Link href="/">Return to shell</Link>
+            <Link href="/pm-review/project-overview">Project overview</Link>
             <Link href="/lead-ops">Lead ops</Link>
             <Link href="/field-tech">Field tech</Link>
             <button className="btn btn-outline" onClick={() => void refresh()} disabled={loading}>

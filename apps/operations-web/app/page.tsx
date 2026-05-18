@@ -130,6 +130,7 @@ export default function HomePage() {
             <li>Hosts the promoted lead assignment app route at /lead-ops.</li>
             <li>Hosts the promoted field technician app route at /field-tech.</li>
             <li>Hosts the promoted PM drivers app route at /pm-review.</li>
+            <li>Hosts the visual PM project overview route at /pm-review/project-overview.</li>
             <li>Hosts the read-only PM workfront app route at /pm-review/workfront.</li>
             <li>Hosts the read-only Project Miner intake workbench at /pm-review/import-intake.</li>
             <li>Hosts the read-only PM import-candidate review route at /pm-review/import-candidate.</li>
@@ -173,6 +174,9 @@ export default function HomePage() {
         </p>
         <p>
           The promoted PM drivers route is available in the governed shell at <a href="/pm-review">/pm-review</a>.
+        </p>
+        <p>
+          The visual PM project overview route is available in the governed shell at <a href="/pm-review/project-overview">/pm-review/project-overview</a>.
         </p>
         <p>
           The read-only PM workfront route is available in the governed shell at <a href="/pm-review/workfront">/pm-review/workfront</a>.

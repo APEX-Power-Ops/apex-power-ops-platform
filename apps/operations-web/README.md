@@ -14,11 +14,12 @@ Current scope:
 8. host the promoted PM schedule app route under `/pm-review/schedule`
 9. host the promoted PM tracer app route under `/pm-review/tracer`
 10. host the promoted PM variance app route under `/pm-review/variance`
-11. host the first re-homed PM read-only review slice under `/pm-review/index.html`
-12. host the re-homed PM approval prototype shell under `/pm-review/approval-surface.html`
-13. host the re-homed PM schedule slice under `/pm-review/schedule.html`
-14. host the re-homed PM upstream tracer slice under `/pm-review/tracer.html`
-15. host the re-homed PM variance slice under `/pm-review/variance.html`
+11. host the visual PM project overview route under `/pm-review/project-overview`
+12. host the first re-homed PM read-only review slice under `/pm-review/index.html`
+13. host the re-homed PM approval prototype shell under `/pm-review/approval-surface.html`
+14. host the re-homed PM schedule slice under `/pm-review/schedule.html`
+15. host the re-homed PM upstream tracer slice under `/pm-review/tracer.html`
+16. host the re-homed PM variance slice under `/pm-review/variance.html`
 
 Current non-goals:
 

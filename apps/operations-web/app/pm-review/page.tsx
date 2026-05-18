@@ -165,6 +165,7 @@ export default function PmDriversPage() {
           </div>
           <p className="pm-review-link-row">
             <Link href="/">Return to shell</Link>
+            <Link href="/pm-review/project-overview">Project overview</Link>
             <Link href="/pm-review/workfront">Open PM workfront</Link>
             <Link href="/pm-review/import-intake">Project Miner intake</Link>
             <Link href="/pm-review/customer-delivery-execution">Customer delivery execution</Link>

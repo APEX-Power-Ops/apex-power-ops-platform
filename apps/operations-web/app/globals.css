@@ -320,6 +320,62 @@ body {
   background: rgba(255, 244, 238, 0.96);
 }
 
+.pm-project-overview-summary-grid {
+  margin-bottom: 1rem;
+}
+
+.pm-project-overview-stage-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.pm-project-overview-stage {
+  display: grid;
+  gap: 0.8rem;
+  border-left: 4px solid var(--brand);
+}
+
+.pm-project-overview-stage-header {
+  align-items: flex-start;
+}
+
+.pm-project-overview-step {
+  margin-bottom: 0.35rem;
+}
+
+.pm-project-overview-stage-title {
+  margin: 0;
+}
+
+.pm-project-overview-copy {
+  margin: 0;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.pm-project-overview-section {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.pm-project-overview-section-label {
+  margin: 0;
+  font-family: var(--font-mono), monospace;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  color: var(--brand);
+}
+
+.pm-project-overview-available-list {
+  margin: 0;
+  padding-left: 1.2rem;
+  line-height: 1.6;
+}
+
+.pm-project-overview-stage-links {
+  margin: 0;
+}
+
 .pm-approval-route {
   width: min(1320px, calc(100% - 2rem));
 }

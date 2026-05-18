@@ -617,6 +617,11 @@ const PM_INTAKE_ROUTE_LINKS: RouteLinkItem[] = [
     href: '/',
   },
   {
+    id: 'project-overview',
+    label: 'Project overview',
+    href: '/pm-review/project-overview',
+  },
+  {
     id: 'import-candidate',
     label: 'Import candidate',
     href: '/pm-review/import-candidate',
@@ -641,17 +646,17 @@ const PM_INTAKE_ROUTE_LINK_GROUPS: RouteLinkGroup[] = [
   {
     id: 'shell',
     label: 'Shell',
-    items: PM_INTAKE_ROUTE_LINKS.slice(0, 1),
+    items: PM_INTAKE_ROUTE_LINKS.slice(0, 2),
   },
   {
     id: 'intake-reads',
     label: 'Intake Reads',
-    items: PM_INTAKE_ROUTE_LINKS.slice(1, 4),
+    items: PM_INTAKE_ROUTE_LINKS.slice(2, 5),
   },
   {
     id: 'pm-workfront',
     label: 'PM Workfront',
-    items: PM_INTAKE_ROUTE_LINKS.slice(4),
+    items: PM_INTAKE_ROUTE_LINKS.slice(5),
   },
 ]
 const PM_INTAKE_QUICK_JUMPS: QuickJumpItem[] = [

@@ -229,6 +229,7 @@ export default function CustomerDeliveryExecutionPage() {
           </div>
           <p className="pm-review-link-row">
             <Link href="/pm-review">Return to PM drivers</Link>
+            <Link href="/pm-review/project-overview">Project overview</Link>
             <Link href="/pm-review/workfront">Open PM workfront</Link>
           </p>
         </div>
