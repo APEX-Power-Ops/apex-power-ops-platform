@@ -1,0 +1,207 @@
+{
+  "packet_id": "2026-05-18-pm-lane-287",
+  "title": "PM Lane 287 - Project Miner Temp Power Downstream Rule Question Card No-Live Packet",
+  "status": "complete",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_DOWNSTREAM_RULE_QUESTION_CARD_NO_LIVE_NO_OUTPUT_WRITE",
+  "default_classification": "DOWNSTREAM_RULES_MISSING_QUESTION_CARD_READY_NO_LIVE",
+  "selected_outcome": "DOWNSTREAM_RULE_QUESTION_CARD_READY_NO_LIVE",
+  "authority_basis": "Jason's 2026-05-18 standing PM blocker authority as repo technical authority and project stakeholder.",
+  "purpose": [
+    "Convert the PM Lane 286 missing downstream rule questions into a compact Jason-facing answer card.",
+    "Keep all returned answers no-live and non-mutating.",
+    "Classify any returned answer before a later design or live-admission packet.",
+    "Preserve all downstream output blocks until explicit separate admission."
+  ],
+  "source_baseline": {
+    "prior_lane": "PM Lane 286 - Project Miner Temp Power Post-Pilot Reconciliation And Delivery Rules Binder No-Live Packet",
+    "candidate_id": "pm-import-candidate-miner-temp-power",
+    "project_id": "pm-import-project-miner-temp-power",
+    "source_fingerprint": "e111fdbe934bf9de07ed24c1",
+    "positive_baseline": {
+      "imported_project_count": 1,
+      "workpackage_count": 7,
+      "task_ready_count": 15,
+      "apparatus_ready_count": 184,
+      "assignment_count": 184,
+      "unique_assignment_apparatus_count": 184,
+      "durable_field_record_count": 1,
+      "production_tracking_record_count": 1,
+      "customer_completion_record_count": 1,
+      "financial_handoff_record_count": 1,
+      "source_trace_row_count": 199,
+      "warning_review_row_count": 1
+    },
+    "zero_output": {
+      "production_quantity_count": 0,
+      "labor_entry_count": 0,
+      "actual_labor_hours": 0.0,
+      "apparatus_progress_count": 0,
+      "progress_update_count": 0,
+      "customer_report_count": 0,
+      "completion_evidence_count": 0,
+      "customer_delivery_event_count": 0,
+      "billing_export_count": 0,
+      "payroll_export_count": 0,
+      "invoice_record_count": 0,
+      "payroll_record_count": 0,
+      "accounting_record_count": 0,
+      "labor_reconciliation_entry_count": 0,
+      "external_finance_sync_count": 0,
+      "customer_billing_delivery_count": 0,
+      "billable_amount_total": 0.0,
+      "payroll_amount_total": 0.0
+    }
+  },
+  "answer_card": {
+    "return_labels": [
+      "HOLD_NO_RULES_NO_LIVE",
+      "ACTUALS_CUSTOMER_RULES_ONLY_NO_LIVE",
+      "FINANCE_RULES_ONLY_NO_LIVE",
+      "COMBINED_DOWNSTREAM_RULES_NO_LIVE",
+      "OUTPUT_WRITE_REQUEST_SEPARATE_ADMISSION_REQUIRED",
+      "SOURCE_WRITEBACK_REQUEST_SEPARATE_AUTHORITY_REQUIRED"
+    ],
+    "sections": {
+      "actuals_and_labor_rules": [
+        "Allowed recorder role",
+        "Granularity",
+        "Required evidence before nonzero actuals",
+        "Correction, void, or replacement rule",
+        "Approval required before billable or payroll relevance"
+      ],
+      "customer_report_and_delivery_rules": [
+        "Customer-facing artifact required",
+        "Approver before delivery",
+        "Recipient and authoritative delivery channel",
+        "Durable delivery event allowed",
+        "Evidence required to prove customer delivery"
+      ],
+      "billing_and_invoice_rules": [
+        "Authoritative billing rate source",
+        "Billable, non-billable, included, excluded, taxable, or withheld rows",
+        "Grouping rule",
+        "Billing export required before invoice creation",
+        "Approval required before invoice creation or customer delivery"
+      ],
+      "payroll_rules": [
+        "Authoritative labor source",
+        "Separate timekeeping source required",
+        "Payroll classifications, pay codes, overtime rules, and cutoff dates",
+        "Payroll export allowed, preview only, or blocked",
+        "Approval required before payroll export or payroll record creation"
+      ],
+      "accounting_and_external_finance_rules": [
+        "Accounting system, entity, customer account, item codes, GL codes, cost codes, and tax treatment",
+        "Action type",
+        "External finance sync allowed",
+        "Rollback or reversal rule",
+        "Secret, credential, endpoint, or integration boundary requiring separate admission"
+      ],
+      "source_writeback_and_macro_rules": [
+        "Source writeback requested",
+        "Target source file",
+        "Requested writeback or macro action",
+        "Separate source authority packet required before any action"
+      ]
+    }
+  },
+  "classifier": [
+    {
+      "classification": "HOLD_NO_RULES_NO_LIVE",
+      "condition": "Jason gives no downstream rules or selects hold.",
+      "next_move": "Keep all output blocked; route to a later hold, refresh, or answer-card return intake."
+    },
+    {
+      "classification": "ACTUALS_CUSTOMER_RULES_ONLY_NO_LIVE",
+      "condition": "Jason gives actuals, labor, progress, customer report, completion evidence, or customer delivery rules only.",
+      "next_move": "Prepare a no-live actuals/customer capture design packet; no writes."
+    },
+    {
+      "classification": "FINANCE_RULES_ONLY_NO_LIVE",
+      "condition": "Jason gives billing, payroll, invoice, accounting, labor reconciliation, customer billing delivery, or external finance rules only.",
+      "next_move": "Prepare a no-live finance output design packet; no exports or records."
+    },
+    {
+      "classification": "COMBINED_DOWNSTREAM_RULES_NO_LIVE",
+      "condition": "Jason gives both actuals/customer and finance rules.",
+      "next_move": "Split into bounded no-live design packets before any live admission."
+    },
+    {
+      "classification": "OUTPUT_WRITE_REQUEST_SEPARATE_ADMISSION_REQUIRED",
+      "condition": "Jason requests production, customer, billing, payroll, invoice, accounting, sync, or other output writes.",
+      "next_move": "Stop for a separate admitted write packet with exact proof gates."
+    },
+    {
+      "classification": "SOURCE_WRITEBACK_REQUEST_SEPARATE_AUTHORITY_REQUIRED",
+      "condition": "Jason requests source workbook/PDF writeback or macro execution.",
+      "next_move": "Stop for a separate source authority packet."
+    }
+  ],
+  "blocked_authority": [
+    "Product code",
+    "UI control",
+    "Route",
+    "Backend seam",
+    "Payload version",
+    "Hosted call",
+    "Hosted smoke",
+    "Browser live route access",
+    "Live mutation POST",
+    "Schema migration",
+    "Supabase/Render/Vercel/Olares action",
+    "Service/auth/ingress/secret change",
+    "Source workbook/PDF writeback",
+    "Workbook macro",
+    "Production quantity",
+    "Labor entry",
+    "Actual labor hour",
+    "Apparatus progress",
+    "Progress update",
+    "Customer report",
+    "Completion evidence",
+    "Customer delivery",
+    "Billing export",
+    "Payroll export",
+    "Invoice",
+    "Payroll record",
+    "Accounting record",
+    "Labor reconciliation",
+    "External finance sync",
+    "Customer billing delivery",
+    "Autonomous AI business-state mutation"
+  ],
+  "no_live_boundary": {
+    "product_code": false,
+    "ui_control": false,
+    "route": false,
+    "backend_seam": false,
+    "payload_version": false,
+    "hosted_call": false,
+    "hosted_smoke": false,
+    "browser_live_route_access": false,
+    "live_mutation_post": false,
+    "schema_migration": false,
+    "supabase_render_vercel_olares_action": false,
+    "service_auth_ingress_secret_change": false,
+    "source_workbook_pdf_writeback": false,
+    "workbook_macro": false,
+    "production_actuals": false,
+    "customer_delivery": false,
+    "finance_output": false,
+    "external_finance_sync": false,
+    "autonomous_ai_business_state_mutation": false
+  },
+  "next_recommended_lane": "PM Lane 288 - Project Miner Temp Power Downstream Rule Return Intake And Classification No-Live Packet",
+  "next_blocker": "STOPPED_AWAITING_PM_LANE_288_DOWNSTREAM_RULE_RETURN_INTAKE_AND_CLASSIFICATION_NO_LIVE",
+  "validation": [
+    "Packet JSON parse",
+    "Decision-label search across touched Lane 287 files",
+    "Selected-outcome search across touched Lane 287 files",
+    "Return-label search",
+    "Classifier search",
+    "Blocked-output guardrail search",
+    "git diff --check on touched Lane 287 files"
+  ],
+  "validation_result": "PASS: packet JSON parsed; decision label, selected outcome, PM Lane 288 next lane, return labels, classifier outcomes, and blocked-output guardrails were found across touched Lane 287 files; scoped git diff check passed with only the repository's normal line-ending warning.",
+  "current_status": "complete"
+}
