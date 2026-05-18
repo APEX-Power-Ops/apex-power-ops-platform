@@ -1,0 +1,100 @@
+{
+  "packet_id": "2026-05-18-pm-lane-270-project-miner-temp-power-hosted-source-files-env-repair-dispatch-no-approval-post",
+  "title": "PM Lane 270 - Project Miner Temp Power Hosted Source Files Env Repair Dispatch",
+  "date": "2026-05-18",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_HOSTED_SOURCE_FILES_ENV_REPAIR_DISPATCH_NO_APPROVAL_POST",
+  "admitted_return_label": "APPROVE_HOSTED_SOURCE_FILES_ENV_REPAIR_NO_APPROVAL_POST",
+  "selected_outcome": "HOSTED_SOURCE_FILES_ENV_REPAIR_DISPATCHED_AWAITING_RENDER_AUTH_EXECUTOR_NO_APPROVAL_POST",
+  "source_packets": [
+    "PM Lane 267",
+    "PM Lane 268",
+    "PM Lane 269"
+  ],
+  "admission": {
+    "exact_source_strategy_label_present": true,
+    "hosted_source_files_env_repair_admitted": true,
+    "approval_post_allowed": false,
+    "approval_row_creation_allowed": false,
+    "project_import_allowed": false,
+    "supabase_write_allowed": false
+  },
+  "target_service": {
+    "provider": "Render",
+    "service_name": "apex-platform-mutation-seam",
+    "root_directory": "apps/mutation-seam",
+    "base_url": "https://mutation-seam.apexpowerops.com",
+    "existing_service_only": true
+  },
+  "local_capability_check": {
+    "planning_folder_present": true,
+    "planning_folder": "C:/Users/jjswe/Desktop/Project Miner PM Planning",
+    "render_cli_available": false,
+    "render_api_credentials_exposed_to_shell": false,
+    "repo_local_render_credentials_found": false,
+    "render_dashboard_or_api_mutation_performed": false,
+    "hosted_source_uploaded_from_this_shell": false,
+    "render_env_updated_from_this_shell": false,
+    "render_deploy_performed_from_this_shell": false
+  },
+  "source_files_present": [
+    "15_ELECTRICAL_COMBINED.pdf",
+    "Building B IFC.pdf",
+    "Cupertino - Miner Estimator PHX Bldg A & B MV Rev9.xlsm",
+    "EQUIPMENT INVENTORY - 2026.xlsx",
+    "Estimator R3 - Project Miner Temp Power Testing.xlsm",
+    "Garney- Central Mesa Reuse Tracker #677562.xlsm",
+    "Miner Temp SLD-AP-BCARRASCO.pdf",
+    "Phx Tech Testing Capability Matrix 032726.xlsx",
+    "RESA Power - Project Data Entry MASTER.xlsm"
+  ],
+  "minimum_code_required_source_set": [
+    "Estimator R3 - Project Miner Temp Power Testing.xlsm",
+    "Miner Temp SLD-AP-BCARRASCO.pdf",
+    "RESA Power - Project Data Entry MASTER.xlsm",
+    "Garney- Central Mesa Reuse Tracker #677562.xlsm",
+    "EQUIPMENT INVENTORY - 2026.xlsx",
+    "Phx Tech Testing Capability Matrix 032726.xlsx"
+  ],
+  "env_vars_to_set_or_confirm": [
+    "APEX_PROJECT_MINER_PLANNING_ROOT",
+    "APEX_PROJECT_ESTIMATOR_WORKBOOK",
+    "APEX_PROJECT_SLD_PDF",
+    "APEX_PROJECT_DATA_ENTRY_WORKBOOK",
+    "APEX_REFERENCE_TRACKER_WORKBOOK",
+    "APEX_FIELD_SEED_EQUIPMENT_WORKBOOK",
+    "APEX_FIELD_SEED_CAPABILITY_WORKBOOK"
+  ],
+  "executor_prompt": "ops/agents/handoffs/2026-05-18-pm-lane-270-render-hosted-source-files-env-repair-executor-copy-paste-prompt.md",
+  "next_blocker_review_point": "STOPPED_AWAITING_RENDER_AUTHENTICATED_SOURCE_FILES_REPAIR_NO_APPROVAL_POST",
+  "expected_executor_outcomes": [
+    "HOSTED_SOURCE_FILES_ENV_REPAIR_PASS_NO_APPROVAL_POST",
+    "BLOCKED_RENDER_AUTH_UNAVAILABLE_NO_APPROVAL_POST",
+    "BLOCKED_NO_GOVERNED_HOSTED_SOURCE_STORAGE_NO_APPROVAL_POST",
+    "BLOCKED_HOSTED_CANDIDATE_STILL_NOT_TEMP_POWER_NO_APPROVAL_POST"
+  ],
+  "write_execution": {
+    "approval_post_sent": false,
+    "approval_row_created": false,
+    "project_import_performed": false,
+    "supabase_write_performed": false,
+    "render_env_updated_from_this_shell": false,
+    "render_deploy_performed_from_this_shell": false,
+    "hosted_source_uploaded_from_this_shell": false,
+    "fixture_fallback_created": false,
+    "derived_snapshot_created": false,
+    "source_workbook_committed": false,
+    "source_pdf_committed": false,
+    "macro_run": false
+  },
+  "validation": [
+    "local source-file presence metadata check",
+    "local Render capability check",
+    "current Render docs review",
+    "PM Lane 270 text search",
+    "packet JSON parse",
+    "guardrail keyword scan",
+    "corrupted-token scan",
+    "git diff --check"
+  ],
+  "validation_result": "PASS"
+}

@@ -942,6 +942,8 @@ PM Lane 268 converts that hosted mismatch into a compact blocker-review packet i
 
 PM Lane 269 keeps that blocker review crisp by classifying the current continuation instruction as PM lane continuation authority only. It is not an exact hosted source strategy return, so no hosted source-file placement, signed source snapshot, fixture fallback, Render env/deploy action, approval POST, approval row, or project import opens by implication. The branch remains stopped at `STOPPED_AWAITING_HOSTED_SOURCE_STRATEGY_DECISION_NO_LIVE`, with `APPROVE_HOSTED_SOURCE_FILES_ENV_REPAIR_NO_APPROVAL_POST` still recommended and no Desktop Codex PM decision authority admitted.
 
+PM Lane 270 records Jason's exact hosted source strategy return `APPROVE_HOSTED_SOURCE_FILES_ENV_REPAIR_NO_APPROVAL_POST` and converts it into an executor-ready repair packet. The aim is practical review-burden reduction: get hosted mutation-seam reading the same Temp Power source set before asking Jason to consider live approval-row creation again. VS Code Codex verified source-file presence metadata locally, confirmed the local shell does not expose Render control credentials, and dispatched an authenticated Render executor prompt for the existing `apex-platform-mutation-seam` service. The branch stops at `STOPPED_AWAITING_RENDER_AUTHENTICATED_SOURCE_FILES_REPAIR_NO_APPROVAL_POST`, with approval POST, approval row, project import, Supabase writes, Render actions from this shell, and Desktop Codex PM decision authority still closed.
+
 The success standard is not just technical correctness. The candidate must reduce Jason's review burden by showing:
 
 1. what the system thinks the project is,
