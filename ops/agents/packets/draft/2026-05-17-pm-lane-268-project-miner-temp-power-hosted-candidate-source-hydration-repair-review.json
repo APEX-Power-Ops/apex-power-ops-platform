@@ -1,0 +1,93 @@
+{
+  "packet_id": "2026-05-17-pm-lane-268-project-miner-temp-power-hosted-candidate-source-hydration-repair-review",
+  "title": "PM Lane 268 - Project Miner Temp Power Hosted Candidate Source Hydration Repair Review",
+  "date": "2026-05-17",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_HOSTED_CANDIDATE_SOURCE_HYDRATION_REPAIR_REVIEW",
+  "selected_outcome": "STOPPED_AWAITING_HOSTED_SOURCE_STRATEGY_DECISION_NO_LIVE",
+  "source_packet": "PM Lane 267",
+  "live_admission_phrase": {
+    "present_as_current_instruction": true,
+    "phrase": "I explicitly admit PM Lane 142 live approval POST and first approval-row creation for the current Project Miner Temp Power import candidate."
+  },
+  "current_blocker": {
+    "stop_condition_from_pm_lane_267": "STOPPED_HOSTED_CURRENT_CANDIDATE_NOT_TEMP_POWER",
+    "blocker_type": "hosted_candidate_freshness_source_hydration",
+    "hosted_candidate_id": "pm-import-candidate-project-miner",
+    "expected_candidate_id": "pm-import-candidate-miner-temp-power",
+    "approval_post_allowed": false,
+    "approval_row_creation_allowed": false,
+    "project_import_allowed": false
+  },
+  "code_inspection": {
+    "candidate_loader": "apps/mutation-seam/app/project_import_candidate.py",
+    "source_readers": [
+      "apps/mutation-seam/app/project_seed_sources.py",
+      "apps/mutation-seam/app/project_tracker_sources.py",
+      "apps/mutation-seam/app/seed_workbooks.py"
+    ],
+    "env_vars": [
+      "APEX_PROJECT_MINER_PLANNING_ROOT",
+      "APEX_PROJECT_ESTIMATOR_WORKBOOK",
+      "APEX_PROJECT_SLD_PDF",
+      "APEX_PROJECT_DATA_ENTRY_WORKBOOK",
+      "APEX_REFERENCE_TRACKER_WORKBOOK",
+      "APEX_FIELD_SEED_EQUIPMENT_WORKBOOK",
+      "APEX_FIELD_SEED_CAPABILITY_WORKBOOK"
+    ],
+    "finding": "Hosted mutation-seam must resolve the current Project Miner Temp Power source files or an explicitly admitted source snapshot before the hosted candidate can be used for live approval-row creation."
+  },
+  "source_set_needed_for_hosted_parity": [
+    "Estimator R3 - Project Miner Temp Power Testing.xlsm",
+    "Miner Temp SLD-AP-BCARRASCO.pdf",
+    "RESA Power - Project Data Entry MASTER.xlsm",
+    "Garney- Central Mesa Reuse Tracker #677562.xlsm",
+    "EQUIPMENT INVENTORY - 2026.xlsx",
+    "Phx Tech Testing Capability Matrix 032726.xlsx"
+  ],
+  "repair_options": [
+    {
+      "label": "APPROVE_HOSTED_SOURCE_FILES_ENV_REPAIR_NO_APPROVAL_POST",
+      "summary": "Place governed source files in a hosted runtime-accessible location and set existing Render env vars to those paths.",
+      "recommended": true
+    },
+    {
+      "label": "APPROVE_SIGNED_SOURCE_SNAPSHOT_SCOUT_NO_APPROVAL_POST",
+      "summary": "Scout a minimal signed derived source snapshot path for hosted readback if direct hosted source placement is impractical.",
+      "recommended": false
+    },
+    {
+      "label": "APPROVE_DERIVED_FIXTURE_FALLBACK_SCOUT_NO_APPROVAL_POST",
+      "summary": "Scout a fixture fallback only if lower source-freshness fidelity is explicitly accepted for non-authoritative use.",
+      "recommended": false
+    },
+    {
+      "label": "HOLD_HOSTED_SOURCE_REPAIR_NO_LIVE",
+      "summary": "Hold live approval execution until hosted source placement strategy is decided.",
+      "recommended": false
+    }
+  ],
+  "next_blocker_review_point": "STOPPED_AWAITING_HOSTED_SOURCE_STRATEGY_DECISION_NO_LIVE",
+  "write_execution": {
+    "approval_post_sent": false,
+    "approval_row_created": false,
+    "project_import_performed": false,
+    "supabase_write_performed": false,
+    "render_env_updated": false,
+    "render_deploy_performed": false,
+    "hosted_source_uploaded": false,
+    "fixture_fallback_created": false,
+    "derived_snapshot_created": false,
+    "source_workbook_committed": false,
+    "source_pdf_committed": false,
+    "macro_run": false
+  },
+  "validation": [
+    "repo-local code inspection of source path resolution",
+    "packet JSON parse",
+    "PM Lane 268 text search",
+    "guardrail keyword scan",
+    "corrupted-token scan",
+    "git diff --check"
+  ],
+  "validation_result": "PASS"
+}
