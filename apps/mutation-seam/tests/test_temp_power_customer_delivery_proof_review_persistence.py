@@ -168,11 +168,17 @@ def test_temp_power_customer_delivery_proof_review_route_persists_one_insert_onl
     assert status["status"] == "customer_delivery_proof_review_recorded_current_match"
     assert status["latest_customer_delivery_proof_review_id"] == data["entity_id"]
     assert status["record_count"] == 1
+    assert status["preview_review_id"] == preview_review_id
+    assert status["customer_preview_review_id"] == preview_review_id
     assert status["current_candidate_match"] is True
     assert status["current_source_fingerprint_match"] is True
     assert status["preview_review_lineage_match"] is True
     assert status["delivery_artifact_count"] == 1
+    assert status["storage_route_registered"] is True
     assert status["storage_source"] == "seam.pm_customer_delivery_proof_reviews"
+    assert status["finance_authority"] == "not_admitted"
+    assert status["source_writeback_authority"] == "not_admitted"
+    assert status["customer_billing_delivery_authority"] == "not_admitted"
     assert status["finance_export_recorded"] is False
     assert status["source_writeback_recorded"] is False
     assert status["customer_billing_delivery_recorded"] is False
@@ -286,7 +292,11 @@ def test_temp_power_customer_delivery_proof_review_status_read_classifies_storag
 
     assert status["status"] == "customer_delivery_proof_review_storage_unavailable"
     assert status["storage_available"] is False
-    assert status["storage_route_registered"] is False
+    assert status["storage_route_registered"] is True
+    assert status["preview_review_id"] is None
+    assert status["finance_authority"] == "not_admitted"
+    assert status["source_writeback_authority"] == "not_admitted"
+    assert status["customer_billing_delivery_authority"] == "not_admitted"
     assert status["error_type"] == "RuntimeError"
 
 
