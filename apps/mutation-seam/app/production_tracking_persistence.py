@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import json
+import os
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any, Dict, Mapping, Optional
 from uuid import uuid4
 
@@ -32,6 +34,12 @@ PRODUCTION_TRACKING_AUTHORITY = "admitted_by_pm_lane_282_zero_actual_baseline"
 
 LANE_282_PRODUCTION_TRACKING_RECORD_ID = "pm-lane-282-production-tracking-temp-power-2026-05-18"
 LANE_282_IDEMPOTENCY_KEY = "pm-lane-282-production-tracking:pm-import-project-miner-temp-power:2026-05-18"
+LANE_282_MIGRATION_PATH = (
+    Path(__file__).resolve().parents[1]
+    / "migrations"
+    / "005_pm_lane_282_production_tracking_records.sql"
+)
+_SCHEMA_READY = False
 
 EXPECTED_COUNTS = {
     "workpackage_count": 7,
@@ -97,8 +105,28 @@ def _stable_json(value: Any) -> str:
     return json.dumps(value, sort_keys=True, default=str, separators=(",", ":"))
 
 
+def _ensure_production_tracking_schema() -> None:
+    global _SCHEMA_READY
+    if _SCHEMA_READY or os.getenv("SEAM_STORE_BACKEND") == "memory":
+        return
+    if type(store).__name__ != "SupabaseStore":
+        _SCHEMA_READY = True
+        return
+
+    from app.db.supabase_store import _conn_get
+
+    with _conn_get().cursor() as cur:
+        cur.execute("SELECT to_regclass('seam.production_tracking_records') IS NOT NULL")
+        exists = bool(cur.fetchone()[0])
+        if not exists:
+            cur.execute(LANE_282_MIGRATION_PATH.read_text(encoding="utf-8"))
+    _SCHEMA_READY = True
+
+
 def _records() -> Any:
+    _ensure_production_tracking_schema()
     return store.production_tracking_records
+
 
 
 def _values(collection: Any) -> list[Dict[str, Any]]:
