@@ -77,6 +77,7 @@ export default function DurableFieldRecordPlaceholderPage() {
             <Link href="/pm-review">Return to PM drivers</Link>
             <Link href="/pm-review/project-overview">Project overview</Link>
             <Link href="/pm-review/schedule-status-placeholder">Schedule status placeholder</Link>
+            <Link href="/pm-review/production-tracking-placeholder">Production tracking placeholder</Link>
             <Link href="/pm-review/workfront">PM workfront</Link>
             <Link href="/pm-review/customer-delivery-execution">Customer delivery execution</Link>
           </p>
@@ -141,6 +142,11 @@ export default function DurableFieldRecordPlaceholderPage() {
               <li key={item}>{item}</li>
             ))}
           </ul>
+          <p>
+            <Link href="/pm-review/production-tracking-placeholder">Production tracking placeholder</Link> carries the
+            next separate no-live branch after durable field record planning. It does not admit quantity, labor, or
+            apparatus progress authority.
+          </p>
         </div>
       </section>
     </main>

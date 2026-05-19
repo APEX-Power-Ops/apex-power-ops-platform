@@ -327,9 +327,9 @@ function buildStageCards(packet: ProjectOverviewPacket): StageCard[] {
       title: 'Field prep and operational readiness',
       tone: readyCount > 0 ? 'attention' : 'blocked',
       summary: readyCount > 0
-        ? 'Field-facing context is available as planning material, schedule or status remains placeholder-only, and durable field record is now surfaced as the next separate no-live evidence branch.'
+        ? 'Field-facing context is available as planning material, durable field record remains placeholder-only, and production tracking is now surfaced as the next separate no-live progress branch.'
         : 'Field prep remains conceptual until the queue shows concrete ready work and the next branch selection is explicit.',
-      decision: 'Use field prep artifacts and questions to prepare conversations, keep schedule or status as an upstream placeholder branch, and keep durable field record as placeholder planning only until a later packet admits live field evidence authority.',
+      decision: 'Use field prep artifacts and questions to prepare conversations, keep durable field record as an upstream placeholder branch, and keep production tracking as placeholder planning only until a later packet admits live quantity, labor, and apparatus progress authority.',
       when: readyCount > 0
         ? 'As soon as PM-ready work needs customer, access, safety, or material clarification before field delay develops.'
         : 'After the PM queue shows concrete ready work worth preparing around.',
@@ -337,10 +337,10 @@ function buildStageCards(packet: ProjectOverviewPacket): StageCard[] {
         'Prepare field kickoff and observation context',
         'Capture open access, safety, material, and customer questions',
         'Draft field-facing prep artifacts without creating work state',
-        'Review the durable field record placeholder branch',
+        'Review the production tracking placeholder branch',
       ],
-      routeHref: '/pm-review/durable-field-record-placeholder',
-      routeLabel: 'Open durable field record placeholder branch',
+      routeHref: '/pm-review/production-tracking-placeholder',
+      routeLabel: 'Open production tracking placeholder branch',
     },
     {
       id: 'customer-delivery',
@@ -533,6 +533,7 @@ export default function PmProjectOverviewPage() {
             <Link href="/pm-review/field-authorization-placeholder">Field authorization placeholder</Link>
             <Link href="/pm-review/schedule-status-placeholder">Schedule status placeholder</Link>
             <Link href="/pm-review/durable-field-record-placeholder">Durable field record placeholder</Link>
+            <Link href="/pm-review/production-tracking-placeholder">Production tracking placeholder</Link>
             <Link href="/pm-review/customer-delivery-execution">Customer delivery execution</Link>
             <Link href="/pm-review/finance-placeholder">Finance placeholder</Link>
             <Link href="/pm-review/customer-billing-placeholder">Customer billing placeholder</Link>
