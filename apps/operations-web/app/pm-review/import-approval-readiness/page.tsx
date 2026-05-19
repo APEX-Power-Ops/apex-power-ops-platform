@@ -98,9 +98,25 @@ type ApprovalStoragePlan = {
   not_allowed_now?: string[]
 }
 
+type TaskPlanStatus = {
+  classification?: string
+  route?: string
+  task_plan_route?: string
+  task_plan_authority?: string
+  current_candidate_match?: boolean
+  planning_context_only?: boolean
+  persisted_row_counts?: {
+    projects?: number
+    workpackages?: number
+    tasks?: number
+    apparatus?: number
+  }
+}
+
 type ApprovalReadinessPacket = {
   contract: ApprovalContract
   storagePlan: ApprovalStoragePlan
+  taskPlanStatus: TaskPlanStatus
 }
 
 type ApprovalPreviewTaskGroup = {
@@ -150,9 +166,10 @@ function makeToken() {
 
 async function readApprovalReadiness(): Promise<ApprovalReadinessPacket> {
   const headers = { Authorization: makeToken() }
-  const [contractResponse, storagePlanResponse] = await Promise.all([
+  const [contractResponse, storagePlanResponse, taskPlanStatusResponse] = await Promise.all([
     fetch(`${READS_BASE}/project-import-approval-contract`, { headers }),
     fetch(`${READS_BASE}/project-import-approval-storage-plan`, { headers }),
+    fetch(`${READS_BASE}/project-import-task-plan-status`, { headers }),
   ])
 
   if (!contractResponse.ok) {
@@ -163,14 +180,23 @@ async function readApprovalReadiness(): Promise<ApprovalReadinessPacket> {
     throw new Error('Failed to read PM import approval storage plan')
   }
 
+  if (!taskPlanStatusResponse.ok) {
+    throw new Error('Failed to read PM import task plan status')
+  }
+
   return {
     contract: (await contractResponse.json()) as ApprovalContract,
     storagePlan: (await storagePlanResponse.json()) as ApprovalStoragePlan,
+    taskPlanStatus: (await taskPlanStatusResponse.json()) as TaskPlanStatus,
   }
 }
 
 function formatLabel(value?: string | null) {
   return (value || 'unknown').replace(/[_-]/g, ' ')
+}
+
+function formatCount(value?: number | null) {
+  return typeof value === 'number' && Number.isFinite(value) ? value.toLocaleString() : '0'
 }
 
 function formatValue(value: unknown): string {
@@ -187,22 +213,50 @@ function authorityTone(value?: string) {
   return 'status-backend-routed'
 }
 
+function taskPlanTone(status?: TaskPlanStatus | null) {
+  if (status?.classification === 'task_plan_persisted' && status.current_candidate_match !== false) {
+    return 'status-configured'
+  }
+
+  if (status?.classification === 'task_plan_record_stale') {
+    return 'status-awaiting-values'
+  }
+
+  return 'status-deferred'
+}
+
+function taskPlanSummary(status?: TaskPlanStatus | null) {
+  if (!status) {
+    return 'Waiting for durable task-plan baseline status.'
+  }
+
+  if (status.classification === 'task_plan_persisted' && status.current_candidate_match !== false) {
+    return `${formatCount(status.persisted_row_counts?.tasks)} durable planning-only tasks and ${formatCount(status.persisted_row_counts?.apparatus)} apparatus rows match the current candidate.`
+  }
+
+  if (status.classification === 'task_plan_record_stale') {
+    return 'The durable planning-only task baseline is stale against the current candidate and should be refreshed before approval review treats grouping as settled context.'
+  }
+
+  return 'No durable planning-only task baseline has been persisted for the current candidate yet.'
+}
+
 function renderKeyValueRows(values?: Record<string, unknown>) {
   const entries = Object.entries(values || {})
   if (!entries.length) {
     return (
-      <div>
+      <>
         <dt>Values</dt>
         <dd>none reported</dd>
-      </div>
+      </>
     )
   }
 
   return entries.map(([key, value]) => (
-    <div key={key}>
+    <React.Fragment key={key}>
       <dt>{formatLabel(key)}</dt>
       <dd>{formatValue(value)}</dd>
-    </div>
+    </React.Fragment>
   ))
 }
 
@@ -251,6 +305,7 @@ export default function PmImportApprovalReadinessPage() {
 
   const contract = packet?.contract
   const storagePlan = packet?.storagePlan
+  const taskPlanStatus = packet?.taskPlanStatus
   const approvalRecordContract = contract?.approval_record_contract || {}
   const humanPolicy = contract?.human_acceptance_policy || {}
   const futureMutation = contract?.future_mutation_contract || {}
@@ -339,6 +394,13 @@ export default function PmImportApprovalReadinessPage() {
               ? `Import candidate staged browser-local approval preview context at ${localPreview.generated_locally_at}.`
               : 'Use Import candidate export to stage browser-local PM review context before checking downstream approval readiness.'}
           </p>
+        </article>
+        <article className="status-card">
+          <div className="status-row">
+            <h2>Task Plan Baseline</h2>
+            <span className={`status-pill ${taskPlanTone(taskPlanStatus)}`}>{formatLabel(taskPlanStatus?.classification || 'not_persisted')}</span>
+          </div>
+          <p>{taskPlanSummary(taskPlanStatus)}</p>
         </article>
       </section>
 
@@ -431,6 +493,38 @@ export default function PmImportApprovalReadinessPage() {
               <div>
                 <dt>Contract role</dt>
                 <dd>{localPreview?.downstream_review_context?.contract_role || 'No local preview contract is currently staged.'}</dd>
+              </div>
+            </dl>
+          </article>
+          <article className="notes-card accent-card">
+            <h2>Durable Task Plan Context</h2>
+            <p className="pm-copy-muted pm-copy-main">
+              {taskPlanSummary(taskPlanStatus)}
+            </p>
+            <dl className="contract-panel">
+              <div>
+                <dt>Status seam</dt>
+                <dd>{taskPlanStatus?.route || '/api/v1/reads/project-import-task-plan-status'}</dd>
+              </div>
+              <div>
+                <dt>Task plan authority</dt>
+                <dd>{taskPlanStatus?.task_plan_authority || 'unknown'}</dd>
+              </div>
+              <div>
+                <dt>Current candidate match</dt>
+                <dd>{taskPlanStatus?.current_candidate_match ? 'yes' : 'no'}</dd>
+              </div>
+              <div>
+                <dt>Planning context only</dt>
+                <dd>{taskPlanStatus?.planning_context_only ? 'yes' : 'no'}</dd>
+              </div>
+              <div>
+                <dt>Persisted tasks</dt>
+                <dd>{formatCount(taskPlanStatus?.persisted_row_counts?.tasks)}</dd>
+              </div>
+              <div>
+                <dt>Persisted apparatus</dt>
+                <dd>{formatCount(taskPlanStatus?.persisted_row_counts?.apparatus)}</dd>
               </div>
             </dl>
           </article>

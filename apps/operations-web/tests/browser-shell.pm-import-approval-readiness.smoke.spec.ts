@@ -3,6 +3,7 @@ import { expect, test } from '@playwright/test'
 test('pm import approval readiness renders read-only approval and storage gates', async ({ page }) => {
   let contractReadCalls = 0
   let storagePlanReadCalls = 0
+  let taskPlanStatusReadCalls = 0
   const mutationRequests: string[] = []
 
   await page.addInitScript(() => {
@@ -278,8 +279,33 @@ test('pm import approval readiness renders read-only approval and storage gates'
     })
   })
 
+  await page.route('**/api/v1/reads/project-import-task-plan-status', async (route) => {
+    taskPlanStatusReadCalls += 1
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        classification: 'no_task_plan_record',
+        route: '/api/v1/reads/project-import-task-plan-status',
+        task_plan_route: '/api/v1/mutations/project-import-task-plans',
+        task_plan_authority: 'admitted_by_pm_lane_361_task_plan_persistence',
+        current_candidate_match: false,
+        planning_context_only: true,
+        persisted_row_counts: {
+          projects: 0,
+          workpackages: 0,
+          tasks: 0,
+          apparatus: 0,
+        },
+      }),
+    })
+  })
+
   const response = await page.goto('/pm-review/import-approval-readiness', { waitUntil: 'networkidle' })
   expect(response?.ok()).toBeTruthy()
+
+  const statusGrid = page.locator('.status-grid.status-grid-wide')
+  const candidateReviewContext = page.getByLabel('Candidate review context')
 
   await expect(page.getByRole('heading', { name: /Review the approval gate before it can persist/i })).toBeVisible()
   await expect(page.getByText(/pm-import-candidate-miner-temp-power-approval-persistence-contract/i).first()).toBeVisible()
@@ -288,6 +314,9 @@ test('pm import approval readiness renders read-only approval and storage gates'
   await expect(page.getByText(/design_only_not_admitted/i).first()).toBeVisible()
   await expect(page.getByText(/storage_decision_only_not_admitted/i).first()).toBeVisible()
   await expect(page.getByText(/Import candidate staged browser-local approval preview context at 2026-05-18T15:45:00.000Z/i)).toBeVisible()
+  await expect(statusGrid.getByRole('heading', { name: /Task Plan Baseline/i })).toBeVisible()
+  await expect(statusGrid.getByText('no task plan record', { exact: true })).toBeVisible()
+  await expect(statusGrid.getByText('No durable planning-only task baseline has been persisted for the current candidate yet.', { exact: true })).toBeVisible()
   await expect(page.getByText(/seam\.pm_import_candidate_approvals/i).first()).toBeVisible()
   await expect(page.getByText('/api/v1/mutations/project-import-approvals').first()).toBeVisible()
   await expect(page.getByText(/audit log only/i)).toBeVisible()
@@ -296,6 +325,12 @@ test('pm import approval readiness renders read-only approval and storage gates'
   await expect(page.getByText(/persist approval record/i)).toBeVisible()
   await expect(page.getByText(/autonomous ai business state mutation/i)).toBeVisible()
   await expect(page.getByRole('heading', { name: /Candidate Review Context/i })).toBeVisible()
+  await expect(candidateReviewContext.getByRole('heading', { name: /Durable Task Plan Context/i })).toBeVisible()
+  await expect(candidateReviewContext.getByText('No durable planning-only task baseline has been persisted for the current candidate yet.', { exact: true })).toBeVisible()
+  await expect(candidateReviewContext.getByText('/api/v1/reads/project-import-task-plan-status').first()).toBeVisible()
+  await expect(candidateReviewContext.getByText(/admitted_by_pm_lane_361_task_plan_persistence/i)).toBeVisible()
+  await expect(candidateReviewContext.getByText(/^no$/i)).toBeVisible()
+  await expect(candidateReviewContext.getByText(/^yes$/i)).toBeVisible()
   await expect(page.getByText(/Check PD-1 duplicate rows before future import approval./i)).toBeVisible()
   await expect(page.getByText(/Breaker lineup split/i)).toBeVisible()
   await expect(page.getByText(/Regrouped apparatus/i)).toBeVisible()
@@ -308,4 +343,5 @@ test('pm import approval readiness renders read-only approval and storage gates'
   expect(mutationRequests).toHaveLength(0)
   expect(contractReadCalls).toBe(1)
   expect(storagePlanReadCalls).toBe(1)
+  expect(taskPlanStatusReadCalls).toBe(1)
 })
