@@ -77,6 +77,7 @@ export default function ScheduleStatusPlaceholderPage() {
             <Link href="/pm-review">Return to PM drivers</Link>
             <Link href="/pm-review/project-overview">Project overview</Link>
             <Link href="/pm-review/field-authorization-placeholder">Field authorization placeholder</Link>
+            <Link href="/pm-review/durable-field-record-placeholder">Durable field record placeholder</Link>
             <Link href="/pm-review/workfront">PM workfront</Link>
             <Link href="/pm-review/schedule.html">Schedule review</Link>
           </p>
@@ -141,6 +142,11 @@ export default function ScheduleStatusPlaceholderPage() {
               <li key={item}>{item}</li>
             ))}
           </ul>
+          <p>
+            <Link href="/pm-review/durable-field-record-placeholder">Durable field record placeholder</Link> carries
+            the next separate no-live branch after schedule and status planning. It does not admit daily record writes
+            or field evidence authority.
+          </p>
         </div>
       </section>
     </main>
