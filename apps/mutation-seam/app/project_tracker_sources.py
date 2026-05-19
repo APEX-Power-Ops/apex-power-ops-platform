@@ -52,6 +52,25 @@ ALL_TASK_COLUMNS = [
 ]
 FORMULA_ERROR_SAMPLE_LIMIT = 5
 FORMULA_ERROR_SAMPLE_KEYS = ["scope", "task_id", "task", "apparatus", "designation"]
+ALL_TASKS_CACHE_BREAK_PATTERN = "all_tasks_formula_cache_break"
+ALL_TASKS_CACHE_BREAK_COLUMNS = {
+    "Drawing",
+    "Date Due",
+    "Notes",
+    "Assessment",
+    "DATASHEET",
+    "DATE COMPLETED",
+    "NOTES2",
+    "% COMPLETION",
+    "TASK DELAYS",
+    "Apparatus Hours",
+    "Remaining Hours",
+    "ACTUAL HOURS",
+    "STATUS",
+    "AVAILABILITY",
+    "PRIORITY",
+}
+ALL_TASKS_CACHE_BREAK_VBA_MODULES = ["BuildAll", "PopulateAllTasks_FromSheets"]
 
 
 def _clean_cell(value: Any) -> Any:
@@ -165,6 +184,48 @@ def _formula_error_summary(rows: List[Dict[str, Any]], columns: List[tuple[str, 
     }
 
 
+def _formula_error_context(
+    task_entry_rows: List[Dict[str, Any]],
+    all_tasks_rows: List[Dict[str, Any]],
+    error_counts: Dict[str, Any],
+) -> Dict[str, Any]:
+    row_count = int(error_counts.get("formula_error_row_count") or 0)
+    if row_count <= 0:
+        return {
+            "formula_error_pattern": None,
+            "formula_error_pattern_detail": None,
+            "formula_error_vba_lineage_modules": [],
+        }
+
+    all_tasks_count = len(all_tasks_rows)
+    column_counts = {
+        str(key): int(value)
+        for key, value in (error_counts.get("formula_error_column_counts") or {}).items()
+    }
+    columns = set(column_counts)
+    all_rows_affected = all_tasks_count > 0 and row_count == all_tasks_count
+    uniform_error_columns = bool(column_counts) and all(count == row_count for count in column_counts.values())
+    derived_columns_only = bool(columns) and columns.issubset(ALL_TASKS_CACHE_BREAK_COLUMNS)
+    task_entry_present = len(task_entry_rows) > 0
+
+    if all_rows_affected and uniform_error_columns and derived_columns_only and task_entry_present:
+        return {
+            "formula_error_pattern": ALL_TASKS_CACHE_BREAK_PATTERN,
+            "formula_error_pattern_detail": (
+                "All_Tasks appears to be carrying a uniform cached formula failure across derived workflow columns "
+                "while Task_Entry source rows remain present. This matches a stale or broken workbook build/cache "
+                "state more than a missing planning-source shape."
+            ),
+            "formula_error_vba_lineage_modules": list(ALL_TASKS_CACHE_BREAK_VBA_MODULES),
+        }
+
+    return {
+        "formula_error_pattern": None,
+        "formula_error_pattern_detail": None,
+        "formula_error_vba_lineage_modules": [],
+    }
+
+
 def _counter(values: List[Any]) -> Dict[str, int]:
     return {
         str(key): count
@@ -190,6 +251,9 @@ def _read_planning_workbook(path: Path) -> Dict[str, Any]:
             "formula_error_row_count": 0,
             "formula_error_column_counts": {},
             "formula_error_sample_rows": [],
+            "formula_error_pattern": None,
+            "formula_error_pattern_detail": None,
+            "formula_error_vba_lineage_modules": [],
             "task_entry_sample": [],
             "all_tasks_sample": [],
         }
@@ -214,6 +278,7 @@ def _read_planning_workbook(path: Path) -> Dict[str, Any]:
             else []
         )
         error_counts = _formula_error_summary(all_tasks_rows, ALL_TASK_COLUMNS)
+        error_context = _formula_error_context(task_entry_rows, all_tasks_rows, error_counts)
         return {
             "path": str(path),
             "found": True,
@@ -227,6 +292,7 @@ def _read_planning_workbook(path: Path) -> Dict[str, Any]:
             "availability_counts": _counter([row.get("availability") for row in all_tasks_rows]),
             "apparatus_category_counts": _counter([row.get("apparatus_category") for row in all_tasks_rows]),
             **error_counts,
+            **error_context,
             "task_entry_sample": task_entry_rows[:5],
             "all_tasks_sample": all_tasks_rows[:5],
         }

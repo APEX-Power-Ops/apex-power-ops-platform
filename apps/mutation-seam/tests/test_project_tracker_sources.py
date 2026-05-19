@@ -121,6 +121,95 @@ def _write_tracker_workbook(path, *, client="RESA", project="Tracker Project", s
         workbook.close()
 
 
+def _write_tracker_formula_cache_break_workbook(path, *, client="RESA", project="Tracker Project"):
+    workbook = Workbook()
+    try:
+        project_form = workbook.active
+        project_form.title = "Project_Form"
+        project_form["B4"] = "Client:"
+        project_form["C4"] = client
+        project_form["B5"] = "Project:"
+        project_form["C5"] = project
+        project_form["E4"] = "Scope_5"
+
+        task_entry = workbook.create_sheet("Task_Entry")
+        task_entry.append(
+            [
+                "Scope",
+                "NETA_Standard",
+                "Task_ID",
+                "Task",
+                "Apparatus",
+                "Designation",
+                "Drawing",
+                "Apparatus_Hourrs",
+            ]
+        )
+        task_entry.append(["Scope_5", "ATS", "5.1.1", "SWGR-GS", "Switchboard - Low Voltage", "SWGR-GS", None, 4])
+        task_entry.append(["Scope_5", "ATS", "5.1.2", None, "Circuit Breaker LV - EO (LSIG)", "GEN-A", None, 5])
+
+        all_tasks = workbook.create_sheet("All_Tasks")
+        all_tasks.append(
+            [
+                "Scope",
+                "NETA_Standard",
+                "Task_ID",
+                "Task",
+                "Apparatus",
+                "Designation",
+                "Drawing",
+                "Date Due",
+                "Notes",
+                "Assessment",
+                "DATASHEET",
+                "DATE COMPLETED",
+                "NOTES2",
+                "% COMPLETION",
+                "TASK DELAYS",
+                "Apparatus Hours",
+                "Remaining Hours",
+                "ACTUAL HOURS",
+                "STATUS",
+                "AVAILABILITY",
+                "PRIORITY",
+                "Apparatus Category",
+            ]
+        )
+        for task_id, apparatus, designation in [
+            ("5.1.1", "Switchboard - Low Voltage", "SWGR-GS"),
+            ("5.1.2", "Circuit Breaker LV - EO (LSIG)", "GEN-A"),
+        ]:
+            all_tasks.append(
+                [
+                    "Scope_5",
+                    "ATS",
+                    task_id,
+                    "SWGR-GS",
+                    apparatus,
+                    designation,
+                    "#REF!",
+                    "#REF!",
+                    "#REF!",
+                    "#REF!",
+                    "#REF!",
+                    "#REF!",
+                    "#REF!",
+                    "#REF!",
+                    "#REF!",
+                    "#REF!",
+                    "#REF!",
+                    "#REF!",
+                    "#REF!",
+                    "#REF!",
+                    "#REF!",
+                    None,
+                ]
+            )
+        workbook.save(path)
+    finally:
+        workbook.close()
+
+
 def test_load_project_tracker_sources_reads_task_entry_and_all_tasks(tmp_path):
     data_entry = tmp_path / "data-entry.xlsm"
     reference_tracker = tmp_path / "reference-tracker.xlsm"
@@ -189,3 +278,20 @@ def test_load_project_tracker_sources_uses_project_miner_planning_root(monkeypat
     assert data["metadata"]["reference_tracker_workbook_path"] == str(reference_tracker)
     assert data["project_data_entry"]["found"] is True
     assert data["reference_tracker"]["project_form"]["Client"] == "Garney"
+
+
+def test_load_project_tracker_sources_detects_all_tasks_formula_cache_break_pattern(tmp_path):
+    data_entry = tmp_path / "data-entry.xlsm"
+    reference_tracker = tmp_path / "reference-tracker.xlsm"
+    _write_tracker_formula_cache_break_workbook(data_entry, client="Blank", project="Template")
+    _write_tracker_formula_cache_break_workbook(reference_tracker, client="Garney", project="Central Mesa")
+
+    data = load_project_tracker_sources(str(data_entry), str(reference_tracker))
+
+    assert data["project_data_entry"]["formula_error_row_count"] == 2
+    assert data["project_data_entry"]["formula_error_pattern"] == "all_tasks_formula_cache_break"
+    assert data["project_data_entry"]["formula_error_vba_lineage_modules"] == [
+        "BuildAll",
+        "PopulateAllTasks_FromSheets",
+    ]
+    assert "Task_Entry source rows remain present" in data["project_data_entry"]["formula_error_pattern_detail"]

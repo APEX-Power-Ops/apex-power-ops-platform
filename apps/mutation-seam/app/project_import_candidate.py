@@ -259,17 +259,35 @@ def _build_warnings(
         row_count = int(source.get("formula_error_row_count") or 0)
         cell_count = int(source.get("formula_error_cell_count") or 0)
         if row_count:
+            formula_error_pattern = source.get("formula_error_pattern")
+            formula_error_pattern_detail = source.get("formula_error_pattern_detail")
+            formula_error_vba_lineage_modules = _json_safe(source.get("formula_error_vba_lineage_modules", []))
+            if formula_error_pattern == "all_tasks_formula_cache_break":
+                message = (
+                    f"All {row_count} All_Tasks row(s) in the planning workbook carry the same cached formula errors "
+                    f"across {cell_count} cell(s), while Task_Entry source rows are still present."
+                )
+                review_action = (
+                    "Treat Task_Entry as lineage source-of-truth evidence and rebuild or refresh the workbook's "
+                    "BuildAll/PopulateAllTasks macro output before relying on All_Tasks workflow columns."
+                )
+            else:
+                message = f"{row_count} planning-workbook row(s) include formula errors across {cell_count} cell(s)."
+                review_action = "Treat the tracker as lineage evidence only until formula errors are understood."
             warnings.append(
                 {
                     "severity": "warning",
                     "code": code,
-                    "message": f"{row_count} planning-workbook row(s) include formula errors across {cell_count} cell(s).",
-                    "review_action": "Treat the tracker as lineage evidence only until formula errors are understood.",
+                    "message": message,
+                    "review_action": review_action,
                     "source_path": source.get("path"),
                     "formula_error_row_count": row_count,
                     "formula_error_cell_count": cell_count,
                     "formula_error_column_counts": _json_safe(source.get("formula_error_column_counts", {})),
                     "formula_error_sample_rows": _json_safe(source.get("formula_error_sample_rows", [])),
+                    "formula_error_pattern": formula_error_pattern,
+                    "formula_error_pattern_detail": formula_error_pattern_detail,
+                    "formula_error_vba_lineage_modules": formula_error_vba_lineage_modules,
                 }
             )
 
