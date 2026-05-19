@@ -3,7 +3,6 @@
 import Link from 'next/link'
 
 const placeholderClasses = [
-  'FINANCE_HANDOFF_DRAFT',
   'BILLING_EXPORT_DRAFT',
   'PAYROLL_EXPORT_DRAFT',
   'ACCOUNTING_POST_DRAFT',
@@ -20,13 +19,15 @@ const guardrails = [
 ]
 
 const nextPlaceholderWork = [
-  'Define the minimum placeholder finance handoff contract PM expects after customer delivery execution.',
-  'Separate internal finance handoff planning from external customer billing delivery.',
+  'Define the minimum finance output contract PM expects after customer reporting and financial handoff planning are settled.',
+  'Separate finance output planning from the dedicated financial handoff placeholder branch and from external customer billing delivery.',
   'Define the evidence PM must retain before any later finance-output admission can be considered.',
   'Define explicit no-go conditions that keep finance placeholder work from being mistaken for live authority.',
 ]
 
 const separateBoundaries = [
+  'Customer reporting remains a separate upstream placeholder branch.',
+  'Financial handoff remains a separate upstream placeholder branch.',
   'Customer billing delivery remains a separate later downstream branch.',
   'Source workbook or PDF writeback and workbook macros remain a separate later source-authority branch.',
   'Approval, import, assignment, schedule or status, field authorization, durable field record, and production tracking remain governed by their own branches.',
@@ -41,10 +42,10 @@ export default function FinancePlaceholderPage() {
           <div>
             <h1>Finance is open only as a placeholder design branch.</h1>
             <p className="lede">
-              This route records the current downstream truth after the admitted customer-delivery slice: finance can
-              move forward only as placeholder taxonomy, guardrails, no-go checks, output-shape planning, and later
-              admission preparation. It does not admit billing, payroll, invoice, accounting, external finance sync,
-              customer billing delivery, or source writeback.
+              This route records the current downstream truth after customer reporting and the separate
+              financial-handoff placeholder branch: finance can move forward only as placeholder taxonomy, guardrails,
+              no-go checks, output-shape planning, and later admission preparation. It does not admit billing,
+              payroll, invoice, accounting, external finance sync, customer billing delivery, or source writeback.
             </p>
           </div>
           <dl className="contract-panel">
@@ -69,14 +70,16 @@ export default function FinancePlaceholderPage() {
           <div>
             <h2>Finance Placeholder Scope</h2>
             <p>
-              Use this surface when the PM decision is branch selection only: keep finance as placeholder planning, or
-              later open a separate admitted packet for finance output, customer billing delivery, or source writeback.
+              Use this surface when the PM decision is branch selection only: keep finance output as placeholder
+              planning, or later open a separate admitted packet for finance output, customer billing delivery, or
+              source writeback.
             </p>
           </div>
           <p className="pm-review-link-row">
             <Link href="/pm-review">Return to PM drivers</Link>
             <Link href="/pm-review/project-overview">Project overview</Link>
-            <Link href="/pm-review/import-admission-plan">Import admission plan</Link>
+            <Link href="/pm-review/customer-reporting-placeholder">Customer reporting placeholder</Link>
+            <Link href="/pm-review/financial-handoff-placeholder">Financial handoff placeholder</Link>
             <Link href="/pm-review/customer-delivery-execution">Customer delivery execution</Link>
             <Link href="/pm-review/customer-billing-placeholder">Customer billing placeholder</Link>
             <Link href="/pm-review/source-writeback-placeholder">Source writeback placeholder</Link>
@@ -142,6 +145,10 @@ export default function FinancePlaceholderPage() {
               <li key={item}>{item}</li>
             ))}
           </ul>
+          <p>
+            The separate financial-handoff placeholder route is available at{' '}
+            <Link href="/pm-review/financial-handoff-placeholder">/pm-review/financial-handoff-placeholder</Link>.
+          </p>
           <p>
             The separate customer-billing placeholder route is available at{' '}
             <Link href="/pm-review/customer-billing-placeholder">/pm-review/customer-billing-placeholder</Link>.

@@ -27,6 +27,7 @@ test('pm customer billing placeholder route renders downstream no-live planning 
   await expect(page.getByText(/Separate customer billing delivery from internal finance handoff, payroll, and accounting persistence/i)).toBeVisible()
   await expect(page.getByRole('heading', { name: /Separate Branches Still Held/i })).toBeVisible()
   await expect(page.getByRole('link', { name: /Project overview/i })).toHaveAttribute('href', '/pm-review/project-overview')
+  await expect(page.getByRole('link', { name: /Financial handoff placeholder/i })).toHaveAttribute('href', '/pm-review/financial-handoff-placeholder')
   await expect(page.getByRole('link', { name: /Finance placeholder/i })).toHaveAttribute('href', '/pm-review/finance-placeholder')
 
   expect(mutationRequests).toHaveLength(0)

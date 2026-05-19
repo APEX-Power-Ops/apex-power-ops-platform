@@ -26,7 +26,8 @@ const nextPlaceholderWork = [
 ]
 
 const separateBoundaries = [
-  'Finance handoff planning remains a separate placeholder branch.',
+  'Financial handoff remains a separate placeholder branch.',
+  'Finance output remains a separate placeholder branch.',
   'Customer billing delivery remains a separate placeholder branch.',
   'Customer delivery execution remains the admitted bounded proof branch and is not source authority.',
   'Approval, import, assignment, schedule or status, field authorization, durable field record, and production tracking remain governed by their own branches.',
@@ -41,11 +42,11 @@ export default function SourceWritebackPlaceholderPage() {
           <div>
             <h1>Source writeback stays blocked as a placeholder downstream branch.</h1>
             <p className="lede">
-              This route records the current downstream truth after the admitted customer-delivery slice plus the
-              finance and customer-billing placeholder branches: source writeback can move forward only as placeholder
-              taxonomy, guardrails, correction-package planning, and later admission preparation. It does not admit
-              workbook writeback, PDF overwrite, macro execution, source-system sync, finance writes, or customer
-              billing delivery.
+              This route records the current downstream truth after the financial-handoff, finance, and
+              customer-billing placeholder branches: source writeback can move forward only as placeholder taxonomy,
+              guardrails, correction-package planning, and later admission preparation. It does not admit workbook
+              writeback, PDF overwrite, macro execution, source-system sync, finance writes, or customer billing
+              delivery.
             </p>
           </div>
           <dl className="contract-panel">
@@ -77,6 +78,7 @@ export default function SourceWritebackPlaceholderPage() {
           <p className="pm-review-link-row">
             <Link href="/pm-review">Return to PM drivers</Link>
             <Link href="/pm-review/project-overview">Project overview</Link>
+            <Link href="/pm-review/financial-handoff-placeholder">Financial handoff placeholder</Link>
             <Link href="/pm-review/finance-placeholder">Finance placeholder</Link>
             <Link href="/pm-review/customer-billing-placeholder">Customer billing placeholder</Link>
             <Link href="/pm-review/customer-delivery-execution">Customer delivery execution</Link>
@@ -142,6 +144,10 @@ export default function SourceWritebackPlaceholderPage() {
               <li key={item}>{item}</li>
             ))}
           </ul>
+          <p>
+            The separate financial-handoff placeholder route is available at{' '}
+            <Link href="/pm-review/financial-handoff-placeholder">/pm-review/financial-handoff-placeholder</Link>.
+          </p>
         </div>
       </section>
     </main>

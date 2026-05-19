@@ -27,6 +27,7 @@ test('pm source writeback placeholder route renders downstream no-live planning 
   await expect(page.getByText(/Separate source writeback planning from finance handoff, customer billing delivery, and customer-facing delivery proof/i)).toBeVisible()
   await expect(page.getByRole('heading', { name: /Separate Branches Still Held/i })).toBeVisible()
   await expect(page.getByRole('link', { name: /Project overview/i })).toHaveAttribute('href', '/pm-review/project-overview')
+  await expect(page.getByRole('link', { name: /Financial handoff placeholder/i })).toHaveAttribute('href', '/pm-review/financial-handoff-placeholder')
   await expect(page.getByRole('link', { name: /Customer billing placeholder/i })).toHaveAttribute('href', '/pm-review/customer-billing-placeholder')
 
   expect(mutationRequests).toHaveLength(0)
