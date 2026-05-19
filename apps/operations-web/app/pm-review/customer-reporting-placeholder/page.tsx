@@ -78,6 +78,7 @@ export default function CustomerReportingPlaceholderPage() {
             <Link href="/pm-review">Return to PM drivers</Link>
             <Link href="/pm-review/project-overview">Project overview</Link>
             <Link href="/pm-review/production-tracking-placeholder">Production tracking placeholder</Link>
+            <Link href="/pm-review/financial-handoff-placeholder">Financial handoff placeholder</Link>
             <Link href="/pm-review/customer-delivery-execution">Customer delivery execution</Link>
             <Link href="/pm-review/finance-placeholder">Finance placeholder</Link>
           </p>
@@ -142,6 +143,11 @@ export default function CustomerReportingPlaceholderPage() {
               <li key={item}>{item}</li>
             ))}
           </ul>
+          <p>
+            <Link href="/pm-review/financial-handoff-placeholder">Financial handoff placeholder</Link> carries the
+            next separate no-live branch after customer reporting planning. It does not admit billing export, payroll
+            export, or accounting output.
+          </p>
         </div>
       </section>
     </main>

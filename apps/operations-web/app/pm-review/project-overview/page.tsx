@@ -367,10 +367,11 @@ function buildStageCards(packet: ProjectOverviewPacket): StageCard[] {
       step: '06',
       title: 'Downstream outputs and blocked branches',
       tone: 'blocked',
-      summary: `Customer reporting is placeholder-only, finance remains placeholder-only, customer billing delivery remains ${formatLabel(packet.deliveryStatus.customer_billing_delivery_authority || 'not_admitted')}, and source writeback remains ${formatLabel(packet.deliveryStatus.source_writeback_authority || 'not_admitted')}.`,
-      decision: 'Your next decision here is branch selection only: keep customer reporting as placeholder planning, or later open separate admitted packets for financial handoff, finance output, customer billing delivery, or source writeback.',
+      summary: `Financial handoff is placeholder-only, finance remains placeholder-only, customer billing delivery remains ${formatLabel(packet.deliveryStatus.customer_billing_delivery_authority || 'not_admitted')}, and source writeback remains ${formatLabel(packet.deliveryStatus.source_writeback_authority || 'not_admitted')}.`,
+      decision: 'Your next decision here is branch selection only: keep financial handoff as placeholder planning, or later open separate admitted packets for finance output, customer billing delivery, or source writeback.',
       when: 'Only after you intentionally choose a new governance packet for a downstream write branch.',
       availableNow: [
+        'Review the financial handoff placeholder branch',
         'Review the customer reporting placeholder branch',
         'Review the finance placeholder branch',
         'Review the customer billing placeholder branch',
@@ -378,8 +379,8 @@ function buildStageCards(packet: ProjectOverviewPacket): StageCard[] {
         'See the canonical route-to-authority map',
         'Keep downstream write branches separate until explicitly admitted',
       ],
-      routeHref: '/pm-review/customer-reporting-placeholder',
-      routeLabel: 'Open customer reporting placeholder branch',
+      routeHref: '/pm-review/financial-handoff-placeholder',
+      routeLabel: 'Open financial handoff placeholder branch',
     },
   ]
 }
@@ -536,6 +537,7 @@ export default function PmProjectOverviewPage() {
             <Link href="/pm-review/durable-field-record-placeholder">Durable field record placeholder</Link>
             <Link href="/pm-review/production-tracking-placeholder">Production tracking placeholder</Link>
             <Link href="/pm-review/customer-reporting-placeholder">Customer reporting placeholder</Link>
+            <Link href="/pm-review/financial-handoff-placeholder">Financial handoff placeholder</Link>
             <Link href="/pm-review/customer-delivery-execution">Customer delivery execution</Link>
             <Link href="/pm-review/finance-placeholder">Finance placeholder</Link>
             <Link href="/pm-review/customer-billing-placeholder">Customer billing placeholder</Link>
