@@ -168,6 +168,7 @@ export default function PmDriversPage() {
             <Link href="/pm-review/project-overview">Project overview</Link>
             <Link href="/pm-review/workfront">Open PM workfront</Link>
             <Link href="/pm-review/import-intake">Project Miner intake</Link>
+            <Link href="/pm-review/field-authorization-placeholder">Field authorization placeholder</Link>
             <Link href="/pm-review/customer-delivery-execution">Customer delivery execution</Link>
             <Link href="/pm-review/finance-placeholder">Finance placeholder</Link>
             <Link href="/pm-review/customer-billing-placeholder">Customer billing placeholder</Link>

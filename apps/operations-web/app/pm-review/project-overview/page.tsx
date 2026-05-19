@@ -327,9 +327,9 @@ function buildStageCards(packet: ProjectOverviewPacket): StageCard[] {
       title: 'Field prep and operational readiness',
       tone: readyCount > 0 ? 'attention' : 'blocked',
       summary: readyCount > 0
-        ? 'Field-facing context is available as planning material, but field authorization, assignments, and schedule or status writes are still separate authority branches.'
+        ? 'Field-facing context is available as planning material, and field authorization or assignment remains placeholder-only while schedule or status writes stay on separate authority branches.'
         : 'Field prep remains conceptual until the queue shows concrete ready work and the next branch selection is explicit.',
-      decision: 'Use field prep artifacts and questions to prepare conversations, but do not treat them as field authorization or production tracking authority.',
+      decision: 'Use field prep artifacts and questions to prepare conversations, and keep field authorization or assignment as placeholder planning only until a later packet admits work release authority.',
       when: readyCount > 0
         ? 'As soon as PM-ready work needs customer, access, safety, or material clarification before field delay develops.'
         : 'After the PM queue shows concrete ready work worth preparing around.',
@@ -337,9 +337,10 @@ function buildStageCards(packet: ProjectOverviewPacket): StageCard[] {
         'Prepare field kickoff and observation context',
         'Capture open access, safety, material, and customer questions',
         'Draft field-facing prep artifacts without creating work state',
+        'Review the field authorization placeholder branch',
       ],
-      routeHref: '/pm-review/import-intake',
-      routeLabel: 'Open field prep context in intake',
+      routeHref: '/pm-review/field-authorization-placeholder',
+      routeLabel: 'Open field authorization placeholder branch',
     },
     {
       id: 'customer-delivery',
@@ -529,6 +530,7 @@ export default function PmProjectOverviewPage() {
             <Link href="/pm-review/import-candidate">Open import candidate</Link>
             <Link href="/pm-review/workfront">Open PM workfront</Link>
             <Link href="/pm-review/import-intake">Open intake workbench</Link>
+            <Link href="/pm-review/field-authorization-placeholder">Field authorization placeholder</Link>
             <Link href="/pm-review/customer-delivery-execution">Customer delivery execution</Link>
             <Link href="/pm-review/finance-placeholder">Finance placeholder</Link>
             <Link href="/pm-review/customer-billing-placeholder">Customer billing placeholder</Link>
