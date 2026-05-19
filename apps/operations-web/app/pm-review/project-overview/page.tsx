@@ -371,11 +371,12 @@ function buildStageCards(packet: ProjectOverviewPacket): StageCard[] {
       when: 'Only after you intentionally choose a new governance packet for a downstream write branch.',
       availableNow: [
         'Review the finance placeholder branch',
+        'Review the customer billing placeholder branch',
         'See the canonical route-to-authority map',
         'Keep downstream write branches separate until explicitly admitted',
       ],
-      routeHref: '/pm-review/finance-placeholder',
-      routeLabel: 'Open finance placeholder branch',
+      routeHref: '/pm-review/customer-billing-placeholder',
+      routeLabel: 'Open customer billing placeholder branch',
     },
   ]
 }
@@ -529,6 +530,7 @@ export default function PmProjectOverviewPage() {
             <Link href="/pm-review/import-intake">Open intake workbench</Link>
             <Link href="/pm-review/customer-delivery-execution">Customer delivery execution</Link>
             <Link href="/pm-review/finance-placeholder">Finance placeholder</Link>
+            <Link href="/pm-review/customer-billing-placeholder">Customer billing placeholder</Link>
             <button className="btn btn-outline" onClick={() => void refresh()} disabled={loading}>
               {loading ? 'Refreshing...' : 'Refresh'}
             </button>

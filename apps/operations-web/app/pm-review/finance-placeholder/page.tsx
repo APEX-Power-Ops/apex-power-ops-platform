@@ -78,6 +78,7 @@ export default function FinancePlaceholderPage() {
             <Link href="/pm-review/project-overview">Project overview</Link>
             <Link href="/pm-review/import-admission-plan">Import admission plan</Link>
             <Link href="/pm-review/customer-delivery-execution">Customer delivery execution</Link>
+            <Link href="/pm-review/customer-billing-placeholder">Customer billing placeholder</Link>
           </p>
         </div>
 
@@ -140,6 +141,10 @@ export default function FinancePlaceholderPage() {
               <li key={item}>{item}</li>
             ))}
           </ul>
+          <p>
+            The separate customer-billing placeholder route is available at{' '}
+            <Link href="/pm-review/customer-billing-placeholder">/pm-review/customer-billing-placeholder</Link>.
+          </p>
         </div>
       </section>
     </main>
