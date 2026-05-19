@@ -59,6 +59,21 @@ type ApprovalPersistenceStatus = {
   import_authority?: string
 }
 
+type TaskPlanStatus = {
+  classification?: string
+  route?: string
+  task_plan_route?: string
+  task_plan_authority?: string
+  current_candidate_match?: boolean
+  planning_context_only?: boolean
+  persisted_row_counts?: {
+    projects?: number
+    workpackages?: number
+    tasks?: number
+    apparatus?: number
+  }
+}
+
 type WorkfrontSummary = {
   total_count?: number
   blocked_count?: number
@@ -91,6 +106,7 @@ type ProjectOverviewPacket = {
   approvalContract: ApprovalContract
   storagePlan: ApprovalStoragePlan
   approvalStatus: ApprovalPersistenceStatus
+  taskPlanStatus: TaskPlanStatus
   workfront: WorkfrontPayload
   deliveryStatus: DeliveryStatusReadback
 }
@@ -141,12 +157,13 @@ async function readJson<T>(path: string): Promise<T> {
 }
 
 async function readProjectOverview(): Promise<ProjectOverviewPacket> {
-  const [candidate, admissionPlan, approvalContract, storagePlan, approvalStatus, workfront, deliveryStatus] = await Promise.all([
+  const [candidate, admissionPlan, approvalContract, storagePlan, approvalStatus, taskPlanStatus, workfront, deliveryStatus] = await Promise.all([
     readJson<CandidatePayload>('project-import-candidate'),
     readJson<AdmissionPlan>('project-import-admission-plan'),
     readJson<ApprovalContract>('project-import-approval-contract'),
     readJson<ApprovalStoragePlan>('project-import-approval-storage-plan'),
     readJson<ApprovalPersistenceStatus>('project-import-approval-status'),
+    readJson<TaskPlanStatus>('project-import-task-plan-status'),
     readJson<WorkfrontPayload>('pm-workfront'),
     readJson<DeliveryStatusReadback>('temp-power-customer-delivery-event-status'),
   ])
@@ -157,6 +174,7 @@ async function readProjectOverview(): Promise<ProjectOverviewPacket> {
     approvalContract,
     storagePlan,
     approvalStatus,
+    taskPlanStatus,
     workfront,
     deliveryStatus,
   }
@@ -191,6 +209,38 @@ function toneClass(tone: StageTone) {
   }
 }
 
+function taskPlanCurrent(status?: TaskPlanStatus | null) {
+  return status?.classification === 'task_plan_persisted' && status.current_candidate_match !== false
+}
+
+function taskPlanSummary(status?: TaskPlanStatus | null) {
+  if (!status) {
+    return 'Waiting for the current planning-only task baseline.'
+  }
+
+  if (taskPlanCurrent(status)) {
+    return `${formatCount(status.persisted_row_counts?.tasks)} tasks and ${formatCount(status.persisted_row_counts?.apparatus)} apparatus rows are persisted as the current planning-only baseline.`
+  }
+
+  if (status.classification === 'task_plan_record_stale') {
+    return 'The last planning-only task baseline no longer matches the current candidate and should be refreshed before it is treated as settled PM grouping context.'
+  }
+
+  return 'No planning-only task baseline has been persisted for the current candidate yet.'
+}
+
+function taskPlanToneClass(status?: TaskPlanStatus | null) {
+  if (taskPlanCurrent(status)) {
+    return 'status-configured'
+  }
+
+  if (status?.classification === 'task_plan_record_stale') {
+    return 'status-awaiting-values'
+  }
+
+  return 'status-deferred'
+}
+
 function buildStageCards(packet: ProjectOverviewPacket): StageCard[] {
   const candidateSummary = packet.candidate.summary || {}
   const projectName = packet.candidate.project?.name || 'Current project candidate'
@@ -201,6 +251,11 @@ function buildStageCards(packet: ProjectOverviewPacket): StageCard[] {
   const blockedCount = workfrontSummary.blocked_count || 0
   const deliveryCurrent = packet.deliveryStatus.status === 'customer_delivery_event_recorded_current_match'
   const approvalBlocked = (packet.approvalContract.persistence_authority || 'not_admitted') === 'not_admitted'
+  const taskPlanStatus = packet.taskPlanStatus
+  const taskPlanCurrentMatch = taskPlanCurrent(taskPlanStatus)
+  const taskPlanStageSummary = taskPlanCurrentMatch
+    ? `The planning-only task baseline is current at ${formatCount(taskPlanStatus.persisted_row_counts?.tasks)} tasks and ${formatCount(taskPlanStatus.persisted_row_counts?.apparatus)} apparatus rows.`
+    : taskPlanSummary(taskPlanStatus)
 
   return [
     {
@@ -228,20 +283,23 @@ function buildStageCards(packet: ProjectOverviewPacket): StageCard[] {
     {
       id: 'approval-gate',
       step: '02',
-      title: 'Approval and import gate',
+      title: 'Task plan baseline and approval gate',
       tone: approvalBlocked ? 'blocked' : 'ready',
       summary: approvalBlocked
-        ? 'Approval persistence and project import are still intentionally blocked. The current surface is design and readiness review only.'
-        : 'Approval persistence has opened beyond the current default boundary.',
-      decision: 'Review the future gate design, idempotency assumptions, and no-go checks. Do not treat route presence as live approval authority.',
+        ? `${taskPlanStageSummary} Approval persistence and project import are still intentionally blocked. The current surface is design and readiness review only.`
+        : `${taskPlanStageSummary} Approval persistence has opened beyond the current default boundary.`,
+      decision: 'Treat task-plan persistence as planning-only PM context. Review the future approval gate design, idempotency assumptions, and no-go checks without treating route presence as live approval authority.',
       when: 'Before any request to widen from read-only PM review into import or approval persistence authority.',
       availableNow: [
+        taskPlanCurrentMatch
+          ? 'Review the current planning-only task baseline'
+          : 'Open import candidate review to persist or refresh the planning-only task baseline',
         'Review admission plan and no-go checks',
         'Review approval storage plan and contract shape',
         'Confirm zero approval rows remain the current truth',
       ],
-      routeHref: '/pm-review/import-intake',
-      routeLabel: 'Open intake workbench',
+      routeHref: '/pm-review/import-candidate',
+      routeLabel: 'Open task shaping and candidate review',
     },
     {
       id: 'pm-workfront',
@@ -326,6 +384,7 @@ function buildAttentionItems(packet: ProjectOverviewPacket): AttentionItem[] {
   const items: AttentionItem[] = []
   const decisionCount = packet.candidate.summary?.human_decision_count || 0
   const warningCount = packet.candidate.summary?.warning_count || 0
+  const taskPlanStatus = packet.taskPlanStatus
   const readyCount = packet.workfront.summary?.ready_count || 0
   const blockedCount = packet.workfront.summary?.blocked_count || 0
   const deliveryCurrent = packet.deliveryStatus.status === 'customer_delivery_event_recorded_current_match'
@@ -335,6 +394,17 @@ function buildAttentionItems(packet: ProjectOverviewPacket): AttentionItem[] {
       id: 'source-review',
       title: 'Clear the source review queue first',
       detail: `${formatCount(warningCount)} warnings and ${formatCount(decisionCount)} human decisions are still shaping the trusted PM starting point.`,
+    })
+  }
+
+  if (!taskPlanCurrent(taskPlanStatus)) {
+    items.push({
+      id: 'task-plan-baseline',
+      title: 'Refresh the durable task-plan baseline',
+      detail:
+        taskPlanStatus.classification === 'task_plan_record_stale'
+          ? 'The last planning-only task baseline is stale against the current candidate and should be refreshed before grouped tasks are treated as settled PM context.'
+          : 'No planning-only task baseline exists yet; persist it from import candidate review if the current grouping and designation plan is now the working baseline.',
     })
   }
 
@@ -454,6 +524,7 @@ export default function PmProjectOverviewPage() {
           </div>
           <p className="pm-review-link-row">
             <Link href="/pm-review">Return to PM drivers</Link>
+            <Link href="/pm-review/import-candidate">Open import candidate</Link>
             <Link href="/pm-review/workfront">Open PM workfront</Link>
             <Link href="/pm-review/import-intake">Open intake workbench</Link>
             <Link href="/pm-review/customer-delivery-execution">Customer delivery execution</Link>
@@ -488,6 +559,17 @@ export default function PmProjectOverviewPage() {
               </span>
             </div>
             <p>{formatCount(packet?.candidate.summary?.warning_count)} warnings and {formatCount(packet?.candidate.summary?.blocker_count)} blockers are currently reported.</p>
+          </article>
+          <article className="status-card">
+            <div className="status-row">
+              <h2>Task plan baseline</h2>
+              <span className={`status-pill ${taskPlanToneClass(packet?.taskPlanStatus)}`}>
+                {taskPlanCurrent(packet?.taskPlanStatus)
+                  ? 'current'
+                  : formatLabel(packet?.taskPlanStatus?.classification || 'not_persisted')}
+              </span>
+            </div>
+            <p>{taskPlanSummary(packet?.taskPlanStatus)}</p>
           </article>
           <article className="status-card">
             <div className="status-row">
