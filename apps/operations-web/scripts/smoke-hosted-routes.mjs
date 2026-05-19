@@ -2,6 +2,7 @@ const routeChecks = [
   { path: '/', marker: 'Validation Surface' },
   { path: '/integration-dashboard/index.html', marker: 'APEX Cross-Surface Integration Test Dashboard' },
   { path: '/lead-ops/index.html', marker: 'APEX Lead Surface' },
+  { path: '/pm-review/workfront', marker: 'PM workfront now has a governed read model.' },
   { path: '/pm-review/index.html', marker: 'APEX PM Drivers Review' },
   { path: '/pm-review/approval-surface.html', marker: 'APEX PM Approval Surface' },
   { path: '/pm-review/schedule.html', marker: 'APEX PM Schedule Review' },
