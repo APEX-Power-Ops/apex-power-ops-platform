@@ -374,8 +374,8 @@ function buildStageCards(packet: ProjectOverviewPacket): StageCard[] {
         'See the canonical route-to-authority map',
         'Keep downstream write branches separate until explicitly admitted',
       ],
-      routeHref: '/pm-review/import-admission-plan',
-      routeLabel: 'Open downstream planning context',
+      routeHref: '/pm-review/finance-placeholder',
+      routeLabel: 'Open finance placeholder branch',
     },
   ]
 }
@@ -528,6 +528,7 @@ export default function PmProjectOverviewPage() {
             <Link href="/pm-review/workfront">Open PM workfront</Link>
             <Link href="/pm-review/import-intake">Open intake workbench</Link>
             <Link href="/pm-review/customer-delivery-execution">Customer delivery execution</Link>
+            <Link href="/pm-review/finance-placeholder">Finance placeholder</Link>
             <button className="btn btn-outline" onClick={() => void refresh()} disabled={loading}>
               {loading ? 'Refreshing...' : 'Refresh'}
             </button>

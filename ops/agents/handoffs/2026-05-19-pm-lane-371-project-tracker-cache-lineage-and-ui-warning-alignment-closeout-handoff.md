@@ -2,11 +2,11 @@
 
 ## Outcome
 
-Executed and locally validated PM Lane 371 as a bounded PM-surface alignment slice.
+Executed PM Lane 371 as a bounded PM-surface alignment slice and completed the hosted/public verification follow-through.
 
-Selected outcome: `PM_PROJECT_TRACKER_CACHE_LINEAGE_AND_UI_WARNING_ALIGNMENT_LOCAL_CURRENT`
+Selected outcome: `PM_PROJECT_TRACKER_CACHE_LINEAGE_AND_UI_WARNING_ALIGNMENT_HOSTED_VERIFIED_CURRENT`
 
-The PM warning UI and exports now explain the Project Tracker issue as a macro-built `All_Tasks` cache/build break, and the repo now carries a packet that maps the failing columns back to the workbook lineage.
+The PM warning UI and exports now explain the Project Tracker issue as a macro-built `All_Tasks` cache/build break, the repo carries a packet that maps the failing columns back to the workbook lineage, and the hosted/public PM routes now render that richer explanation on the live domain.
 
 ## Scope
 
@@ -16,6 +16,7 @@ The PM warning UI and exports now explain the Project Tracker issue as a macro-b
 - Updated `/pm-review/import-candidate` to show the same pattern detail and workbook-lineage modules in Warning Review.
 - Refreshed the focused Playwright fixtures to use the `all_tasks_formula_cache_break` wording.
 - Authored the PM Lane 371 no-live packet documenting the failing `All_Tasks` columns, the `BuildAll` / `PopulateAllTasks_FromSheets` flow, the `Notes` anomaly, and the expected rebuild sequence.
+- Verified the hosted operations-web proxy now returns the full warning payload and that the hydrated public DOM on both PM routes renders `Pattern detail`, `Workbook lineage modules`, and the macro-remediation text.
 
 ## Files Changed
 
@@ -36,14 +37,21 @@ corepack pnpm --dir apps/operations-web exec playwright test tests/browser-shell
 
 corepack pnpm --dir apps/operations-web typecheck
 pass
+
+Invoke-RestMethod https://operations.apexpowerops.com/api/v1/reads/project-import-candidate
+returned formula_error_pattern=all_tasks_formula_cache_break,
+formula_error_pattern_detail, and formula_error_vba_lineage_modules=BuildAll,PopulateAllTasks_FromSheets
+
+Playwright browser verification against https://operations.apexpowerops.com/pm-review/import-candidate
+and https://operations.apexpowerops.com/pm-review/import-intake
+confirmed the hydrated DOM renders Pattern detail, Workbook lineage modules,
+BuildAll, and PopulateAllTasks_FromSheets on both hosted routes
 ```
 
 ## Guardrails Preserved
 
 - No workbook macro execution.
 - No workbook writeback.
-- No mutation-seam hosted deployment.
-- No operations-web hosted promotion.
 - No approval/import/assignment/schedule/status mutation.
 - No field, customer, finance, or production write authority widening.
 - No autonomous AI business-state mutation.
@@ -54,4 +62,4 @@ The new packet captures one important workbook-lineage nuance: `PopulateAllTasks
 
 ## Next Bounded Move
 
-If hosted PM surfaces need this same explanation, the next truthful move is a publication lane that promotes the already-local operations-web wording and verifies hosted mutation-seam is serving the classified warning payload.
+Lane 371 no longer needs a publication/parity follow-up. Any next move should be a new downstream PM governance slice, not more warning-publication verification.

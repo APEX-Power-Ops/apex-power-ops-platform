@@ -13,6 +13,7 @@ const routeChecks = [
   { path: '/pm-review/import-intake', marker: 'Run Project Miner intake from one workbench' },
   { path: '/pm-review/project-overview', marker: 'See the testing project top to bottom in one place.' },
   { path: '/pm-review/customer-delivery-execution', marker: 'PM customer delivery execution now has an admitted orchestration route.' },
+  { path: '/pm-review/finance-placeholder', marker: 'Finance is open only as a placeholder design branch.' },
 ];
 
 function parseArgs(argv) {
