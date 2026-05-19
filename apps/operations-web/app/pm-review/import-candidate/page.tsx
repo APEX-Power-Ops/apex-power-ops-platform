@@ -30,6 +30,12 @@ type CandidateWarning = {
   message?: string
   review_action?: string
   source_path?: string
+  formula_error_pattern?: string
+  formula_error_pattern_detail?: string
+  formula_error_vba_lineage_modules?: string[]
+  formula_error_row_count?: number
+  formula_error_cell_count?: number
+  formula_error_column_counts?: Record<string, number>
 }
 
 type CandidateSourceFile = {
@@ -319,6 +325,19 @@ function formatHours(value?: number | null) {
     minimumFractionDigits: Number.isInteger(value) ? 0 : 1,
     maximumFractionDigits: 1,
   })
+}
+
+function warningColumnSummary(warning: CandidateWarning) {
+  const counts = warning.formula_error_column_counts || {}
+  return Object.entries(counts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 4)
+    .map(([column, count]) => `${column}: ${formatCount(count)}`)
+    .join('; ')
+}
+
+function warningLineageSummary(warning: CandidateWarning) {
+  return (warning.formula_error_vba_lineage_modules || []).filter((module): module is string => Boolean(module)).join(', ')
 }
 
 function warningTone(severity?: string) {
@@ -1347,6 +1366,26 @@ export default function PmImportCandidatePage() {
                 <p className="pm-copy-muted pm-copy-main pm-copy-top-sm">
                   {warning.review_action || 'Review before import.'}
                 </p>
+                {warning.formula_error_pattern_detail ? (
+                  <p className="pm-copy-muted pm-copy-main pm-copy-top-sm">
+                    Pattern detail: {warning.formula_error_pattern_detail}
+                  </p>
+                ) : null}
+                {warningLineageSummary(warning) ? (
+                  <p className="pm-copy-muted pm-copy-main pm-copy-top-sm">
+                    Workbook lineage modules: {warningLineageSummary(warning)}.
+                  </p>
+                ) : null}
+                {warning.formula_error_row_count || warning.formula_error_cell_count ? (
+                  <p className="pm-copy-muted pm-copy-main pm-copy-top-sm">
+                    Formula detail: {formatCount(warning.formula_error_row_count)} row(s), {formatCount(warning.formula_error_cell_count)} cell(s).
+                  </p>
+                ) : null}
+                {warningColumnSummary(warning) ? (
+                  <p className="pm-copy-muted pm-copy-main pm-copy-top-sm">
+                    Affected columns: {warningColumnSummary(warning)}.
+                  </p>
+                ) : null}
               </article>
             ))}
             {!warnings.length ? <p className="pm-copy-muted">No warnings are currently reported.</p> : null}

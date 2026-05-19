@@ -151,8 +151,8 @@ test('pm import candidate route renders exception-first read-only review packet'
             decision_id: 'decision-warning-001',
             severity: 'warning',
             warning_code: 'PROJECT_DATA_ENTRY_FORMULA_ERRORS',
-            prompt: '234 planning-workbook rows include formula errors across 3510 cells.',
-            recommended_action: 'Treat the tracker as lineage evidence only until formula errors are understood.',
+            prompt: 'All 234 All_Tasks row(s) in the planning workbook carry the same cached formula errors across 3510 cell(s), while Task_Entry source rows are still present.',
+            recommended_action: "Treat Task_Entry as lineage source-of-truth evidence and rebuild or refresh the workbook's BuildAll/PopulateAllTasks macro output before relying on All_Tasks workflow columns.",
           },
         ],
         warnings: [
@@ -165,8 +165,20 @@ test('pm import candidate route renders exception-first read-only review packet'
           {
             severity: 'warning',
             code: 'PROJECT_DATA_ENTRY_FORMULA_ERRORS',
-            message: '234 planning-workbook row(s) include formula errors across 3510 cell(s).',
-            review_action: 'Treat the tracker as lineage evidence only until formula errors are understood.',
+            message: 'All 234 All_Tasks row(s) in the planning workbook carry the same cached formula errors across 3510 cell(s), while Task_Entry source rows are still present.',
+            review_action: "Treat Task_Entry as lineage source-of-truth evidence and rebuild or refresh the workbook's BuildAll/PopulateAllTasks macro output before relying on All_Tasks workflow columns.",
+            formula_error_pattern: 'all_tasks_formula_cache_break',
+            formula_error_pattern_detail:
+              'All_Tasks appears to be carrying a uniform cached formula failure across derived workflow columns while Task_Entry source rows remain present. This matches a stale or broken workbook build/cache state more than a missing planning-source shape.',
+            formula_error_vba_lineage_modules: ['BuildAll', 'PopulateAllTasks_FromSheets'],
+            formula_error_row_count: 234,
+            formula_error_cell_count: 3510,
+            formula_error_column_counts: {
+              Drawing: 234,
+              'Date Due': 234,
+              Notes: 234,
+              Assessment: 234,
+            },
           },
         ],
         workpackages: [
@@ -257,6 +269,8 @@ test('pm import candidate route renders exception-first read-only review packet'
 
   await warningReview.getByRole('button', { name: 'warning' }).click()
   await expect(warningReview.locator('article', { hasText: /PROJECT_DATA_ENTRY_FORMULA_ERRORS/i })).toHaveCount(1)
+  await expect(warningReview.getByText(/Pattern detail: All_Tasks appears to be carrying a uniform cached formula failure/i)).toBeVisible()
+  await expect(warningReview.getByText(/Workbook lineage modules: BuildAll, PopulateAllTasks_FromSheets/i)).toBeVisible()
   await expect(warningReview.locator('article', { hasText: /MISSING_DESIGNATIONS/i })).toHaveCount(0)
   await warningReview.getByLabel('Warning code filter').selectOption('MISSING_DESIGNATIONS')
   await expect(warningReview.getByText(/No warnings match the active filter/i)).toBeVisible()
@@ -277,7 +291,10 @@ test('pm import candidate route renders exception-first read-only review packet'
   const apparatusCard = taskShaping.locator('article', { hasText: /PD-1 02/i })
   const regroupedTaskValue = await apparatusCard.getByLabel('Local task group').locator('option').nth(1).getAttribute('value')
   expect(regroupedTaskValue).toBeTruthy()
-  await apparatusCard.getByLabel('Local task group').selectOption(regroupedTaskValue || undefined)
+  if (!regroupedTaskValue) {
+    throw new Error('Expected a regroup target option value for the apparatus task card.')
+  }
+  await apparatusCard.getByLabel('Local task group').selectOption(regroupedTaskValue)
   await apparatusCard.getByLabel('Apparatus designation').fill('PD-1B')
   await expect(taskShaping.getByText(/1 apparatus candidates have been moved away from the proposed source task/i)).toBeVisible()
   await expect(taskShaping.getByText(/1 local naming or designation overrides are staged/i)).toBeVisible()

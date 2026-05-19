@@ -576,7 +576,20 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
           {
             severity: 'warning',
             code: 'PROJECT_DATA_ENTRY_FORMULA_ERRORS',
-            message: '234 planning-workbook rows include formula errors.',
+            message: 'All 234 All_Tasks row(s) in the planning workbook carry the same cached formula errors across 3510 cell(s), while Task_Entry source rows are still present.',
+            review_action: "Treat Task_Entry as lineage source-of-truth evidence and rebuild or refresh the workbook's BuildAll/PopulateAllTasks macro output before relying on All_Tasks workflow columns.",
+            formula_error_pattern: 'all_tasks_formula_cache_break',
+            formula_error_pattern_detail:
+              'All_Tasks appears to be carrying a uniform cached formula failure across derived workflow columns while Task_Entry source rows remain present. This matches a stale or broken workbook build/cache state more than a missing planning-source shape.',
+            formula_error_vba_lineage_modules: ['BuildAll', 'PopulateAllTasks_FromSheets'],
+            formula_error_row_count: 234,
+            formula_error_cell_count: 3510,
+            formula_error_column_counts: {
+              Drawing: 234,
+              'Date Due': 234,
+              Notes: 234,
+              Assessment: 234,
+            },
           },
         ],
         human_decisions: [
@@ -1672,7 +1685,9 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(exceptionDecisionGroups.getByRole('heading', { name: 'Exception Review', exact: true })).toBeVisible()
   await expect(exceptionDecisionGroups.getByRole('heading', { name: 'PM Decisions', exact: true })).toBeVisible()
   await expect(exceptionDecisionDetail.getByText('PROJECT_DATA_ENTRY_FORMULA_ERRORS', { exact: true })).toBeVisible()
-  await expect(exceptionDecisionDetail.getByText('234 planning-workbook rows include formula errors.')).toBeVisible()
+  await expect(exceptionDecisionDetail.getByText('All 234 All_Tasks row(s) in the planning workbook carry the same cached formula errors across 3510 cell(s), while Task_Entry source rows are still present.')).toBeVisible()
+  await expect(exceptionDecisionDetail.getByText(/Pattern detail: All_Tasks appears to be carrying a uniform cached formula failure/i)).toBeVisible()
+  await expect(exceptionDecisionDetail.getByText(/Workbook lineage modules: BuildAll, PopulateAllTasks_FromSheets/i)).toBeVisible()
   const projectDataEntryDecisionGate = exceptionDecisionDetail.getByLabel('Project Data Entry decision gate')
   await expect(projectDataEntryDecisionGate).toBeVisible()
   const projectDataEntryAllowedLabels = projectDataEntryDecisionGate.locator('p').filter({ hasText: 'Allowed labels:' })
@@ -3202,7 +3217,9 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   expect(exceptionRegisterExport).toContain('Local decision draft evidence: covered')
   expect(exceptionRegisterExport).toContain('Future write boundary: blocked')
   expect(exceptionRegisterExport).toContain('## Warning Signals')
-  expect(exceptionRegisterExport).toContain('PROJECT_DATA_ENTRY_FORMULA_ERRORS: 234 planning-workbook rows include formula errors.')
+  expect(exceptionRegisterExport).toContain('PROJECT_DATA_ENTRY_FORMULA_ERRORS: All 234 All_Tasks row(s) in the planning workbook carry the same cached formula errors across 3510 cell(s), while Task_Entry source rows are still present.')
+  expect(exceptionRegisterExport).toContain('Pattern detail: All_Tasks appears to be carrying a uniform cached formula failure across derived workflow columns while Task_Entry source rows remain present.')
+  expect(exceptionRegisterExport).toContain('Workbook lineage modules: BuildAll, PopulateAllTasks_FromSheets')
   expect(exceptionRegisterExport).toContain('## Human Decision Prompts')
   expect(exceptionRegisterExport).toContain('Does this candidate correctly represent the project, workpackages, tasks, and apparatus?')
   expect(exceptionRegisterExport).toContain('## Project Data Entry Decision Gate')

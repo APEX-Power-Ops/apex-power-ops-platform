@@ -30,6 +30,9 @@ type CandidateWarning = {
   message?: string
   review_action?: string
   source_path?: string
+  formula_error_pattern?: string
+  formula_error_pattern_detail?: string
+  formula_error_vba_lineage_modules?: string[]
   formula_error_row_count?: number
   formula_error_cell_count?: number
   formula_error_column_counts?: Record<string, number>
@@ -1259,6 +1262,51 @@ function warningSampleSummary(warning: CandidateWarning) {
   })
 }
 
+function warningLineageSummary(warning: CandidateWarning) {
+  return (warning.formula_error_vba_lineage_modules || []).filter((module): module is string => Boolean(module)).join(', ')
+}
+
+function warningSummaryLine(warning: CandidateWarning) {
+  const code = warning.code || 'WARNING'
+  const message = warning.message || 'Review warning.'
+  const detail = warning.formula_error_pattern_detail?.trim()
+  return detail ? `${code}: ${message} Pattern detail: ${detail}` : `${code}: ${message}`
+}
+
+function warningDetailLines(warning: CandidateWarning) {
+  const lines = [`${warning.severity || 'unknown'} - ${warning.code || 'WARNING'}: ${warning.message || 'Review warning.'}`]
+
+  if (warning.review_action) {
+    lines.push(`Review action: ${warning.review_action}`)
+  }
+
+  if (warning.formula_error_pattern_detail) {
+    lines.push(`Pattern detail: ${warning.formula_error_pattern_detail}`)
+  }
+
+  const lineage = warningLineageSummary(warning)
+  if (lineage) {
+    lines.push(`Workbook lineage modules: ${lineage}`)
+  }
+
+  if (warning.formula_error_row_count || warning.formula_error_cell_count) {
+    lines.push(
+      `Formula detail: ${formatCount(warning.formula_error_row_count)} row(s), ${formatCount(warning.formula_error_cell_count)} cell(s).`,
+    )
+  }
+
+  const columns = warningColumnSummary(warning)
+  if (columns) {
+    lines.push(`Affected columns: ${columns}`)
+  }
+
+  for (const sample of warningSampleSummary(warning)) {
+    lines.push(`Sample: ${sample}`)
+  }
+
+  return lines
+}
+
 const PROJECT_DATA_ENTRY_WARNING_CODE = 'PROJECT_DATA_ENTRY_FORMULA_ERRORS'
 
 const PROJECT_DATA_ENTRY_DECISION_LABELS = [
@@ -2418,7 +2466,7 @@ function buildImportExceptionRegister(
       detail: warnings.length
         ? `${warnings.length} warning signal(s) are present for PM review.`
         : 'No candidate warnings are currently reported.',
-      evidence: warnings.map((warning) => `${warning.code || 'WARNING'}: ${warning.message || 'Review warning.'}`).join('; ') || 'none reported',
+      evidence: warnings.map((warning) => warningSummaryLine(warning)).join('; ') || 'none reported',
     },
     {
       id: 'human-decision-prompts',
@@ -4359,7 +4407,7 @@ function buildIntakeBrief(
   const targetRows = admissionPlan.target_row_plan || {}
 
   const targetRowLines = Object.entries(targetRows).map(([key, value]) => `${formatLabel(key)}: ${formatValue(value)}`)
-  const warningLines = warnings.map((warning) => `${warning.severity || 'unknown'} - ${warning.code || 'WARNING'}: ${warning.message || 'Review warning.'}`)
+  const warningLines = warnings.flatMap((warning) => warningDetailLines(warning))
   const decisionLines = decisions.map((decision) => `${formatLabel(decision.decision_id)}: ${decision.prompt || 'Decision prompt unavailable.'}`)
   const projectDataEntryDecisionGateLines = projectDataEntryDecisionGateExportLines(warnings, summary)
   const gateLines = workflowGates.map((gate) => `${gate.title}: ${formatLabel(gate.status)} - ${gate.detail}`)
@@ -4635,7 +4683,7 @@ function buildExecutorHandoff(
   const nextQueueItems = operatingQueue.filter((item) => item.status === 'next')
   const blockedQueueItems = operatingQueue.filter((item) => item.status === 'blocked')
   const blockedReadinessGates = persistenceReadinessGates.filter((gate) => gate.status === 'blocked')
-  const warningLines = warnings.map((warning) => `${warning.severity || 'unknown'} - ${warning.code || 'WARNING'}: ${warning.message || 'Review warning.'}`)
+  const warningLines = warnings.flatMap((warning) => warningDetailLines(warning))
   const decisionLines = decisions.map((decision) => `${formatLabel(decision.decision_id)}: ${decision.prompt || 'Decision prompt unavailable.'}`)
   const checkedLines = checkedItems.map((item) => `${item.label}: ${item.detail}`)
   const openChecklistLines = openChecklistItems.map((item) => `${item.label}: ${item.detail}`)
@@ -4821,7 +4869,7 @@ function buildFieldKickoffBrief(
   const fieldPrepCoverageLines = fieldPrepCoverageSnapshot.map((item) => `${item.title}: ${formatLabel(item.status)} - ${item.detail}`)
   const fieldPrepAgendaCount = fieldPrepAgendaCounts(fieldPrepConversationAgenda)
   const fieldPrepAgendaLines = fieldPrepConversationAgenda.map((item) => `${item.title}: ${formatLabel(item.status)} - ${item.detail}`)
-  const warningLines = warnings.map((warning) => `${warning.severity || 'unknown'} - ${warning.code || 'WARNING'}: ${warning.message || 'Review warning.'}`)
+  const warningLines = warnings.flatMap((warning) => warningDetailLines(warning))
   const decisionLines = decisions.map((decision) => `${formatLabel(decision.decision_id)}: ${decision.prompt || 'Decision prompt unavailable.'}`)
   const workpackageLines = workpackages.map((workpackage) => {
     const drawingRefs = workpackage.drawing_refs?.length ? workpackage.drawing_refs.join(', ') : 'drawing refs not listed'
@@ -7852,7 +7900,7 @@ function buildImportExceptionRegisterExport(
   const noGoChecks = admissionPlan.no_go_checks || []
   const registerCount = importExceptionRegisterCounts(importExceptionRegister)
   const registerLines = importExceptionRegister.map((item) => `${item.title}: ${formatLabel(item.status)} - ${item.detail} Evidence: ${item.evidence}`)
-  const warningLines = warnings.map((warning) => `${warning.severity || 'unknown'} - ${warning.code || 'WARNING'}: ${warning.message || 'Review warning.'}`)
+  const warningLines = warnings.flatMap((warning) => warningDetailLines(warning))
   const decisionLines = decisions.map((decision) => `${formatLabel(decision.decision_id)}: ${decision.prompt || 'Decision prompt unavailable.'} Recommended action: ${decision.recommended_action || 'Review before future import.'}`)
   const projectDataEntryDecisionGateLines = projectDataEntryDecisionGateExportLines(warnings, summary)
   const noGoLines = noGoChecks.map((check) => `${formatLabel(check.check_id)}: ${formatLabel(check.status)} - ${check.message || 'Review check.'}`)
@@ -10189,6 +10237,16 @@ export default function ProjectMinerIntakeWorkbenchPage() {
                           </div>
                           <p style={{ margin: '0.55rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{warning.message || 'Review warning.'}</p>
                           {warning.review_action ? <p style={{ margin: '0.35rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>{warning.review_action}</p> : null}
+                          {warning.formula_error_pattern_detail ? (
+                            <p style={{ margin: '0.35rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+                              Pattern detail: {warning.formula_error_pattern_detail}
+                            </p>
+                          ) : null}
+                          {warningLineageSummary(warning) ? (
+                            <p style={{ margin: '0.35rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
+                              Workbook lineage modules: {warningLineageSummary(warning)}.
+                            </p>
+                          ) : null}
                           {warning.formula_error_row_count || warning.formula_error_cell_count ? (
                             <p style={{ margin: '0.35rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
                               Formula detail: {formatCount(warning.formula_error_row_count)} row(s), {formatCount(warning.formula_error_cell_count)} cell(s).
