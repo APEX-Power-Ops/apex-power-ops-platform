@@ -1530,9 +1530,18 @@ function visibleDecisions(decisions: CandidateDecision[]) {
 }
 
 const DEFAULT_IMPORT_INTAKE_CANDIDATE_ID = 'import-intake'
+const DEFAULT_IMPORT_INTAKE_CONTEXT_LABEL = 'current import-intake candidate'
 
 function candidateFileStem(candidate?: CandidatePayload | null) {
   return (candidate?.candidate_id || DEFAULT_IMPORT_INTAKE_CANDIDATE_ID).replace(/[^a-zA-Z0-9.-]+/g, '-')
+}
+
+function candidateDisplayId(candidate?: CandidatePayload | null) {
+  return candidate?.candidate_id || DEFAULT_IMPORT_INTAKE_CANDIDATE_ID
+}
+
+function candidateContextLabel(candidate?: CandidatePayload | null, preferredProjectName?: string | null) {
+  return preferredProjectName || candidate?.project?.name || candidate?.candidate_id || DEFAULT_IMPORT_INTAKE_CONTEXT_LABEL
 }
 
 function briefFileName(candidate?: CandidatePayload | null) {
@@ -2737,7 +2746,7 @@ function buildPmIntakeDailyReviewScript(
   const completeFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'complete').length
   const nextFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'next').length
   const blockedFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'blocked').length
-  const projectName = candidate?.project?.name || candidate?.candidate_id || 'current Project Miner candidate'
+  const projectName = candidateContextLabel(candidate)
   const sourceFingerprint = candidate?.source_freshness?.aggregate_fingerprint || 'source fingerprint pending'
   const admissionAuthority = admissionPlan?.mutation_authority || 'not_admitted'
 
@@ -2795,7 +2804,7 @@ function buildFieldStartOperatorScript(
   fieldQuestionsDraft: FieldQuestionsDraft,
   fieldObservationScratchpad: FieldObservationScratchpad,
 ): FieldStartOperatorScriptItem[] {
-  const projectName = candidate?.project?.name || candidate?.candidate_id || 'current Project Miner candidate'
+  const projectName = candidateContextLabel(candidate)
   const completeFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'complete').length
   const nextFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'next').length
   const blockedFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'blocked').length
@@ -2853,7 +2862,7 @@ function buildFieldStartStopLineReview(
   fieldStartPreflight: ReturnType<typeof buildFieldStartPreflightExport> | null,
   notAllowed: string[],
 ): FieldStartStopLineReviewItem[] {
-  const projectName = candidate?.project?.name || candidate?.candidate_id || 'current Project Miner candidate'
+  const projectName = candidateContextLabel(candidate)
   const preflightSummary = fieldStartPreflight?.preflight_summary.summary || 'field-start preflight pending'
   const fieldStartStatus = fieldStartPreflight?.preflight_summary.field_start_status || 'blocked_until_field_authority_and_tracking_packet'
   const blockedBoundaryCount = fieldStartPreflight?.blocked_boundaries.length || notAllowed.length
@@ -2902,7 +2911,7 @@ function buildFieldStartCustomerSiteQuestions(
   fieldQuestionsDraft: FieldQuestionsDraft,
   fieldObservationScratchpad: FieldObservationScratchpad,
 ): FieldStartCustomerSiteQuestionItem[] {
-  const projectName = candidate?.project?.name || candidate?.candidate_id || 'current Project Miner candidate'
+  const projectName = candidateContextLabel(candidate)
   const drawingSourceQuestionsPresent = Boolean(fieldQuestionsDraft.drawing_source_questions.trim())
   const siteAccessQuestionsPresent = Boolean(fieldQuestionsDraft.site_access_safety_questions.trim() || fieldObservationScratchpad.access_safety_observations.trim())
   const materialStagingQuestionsPresent = Boolean(fieldQuestionsDraft.material_staging_questions.trim() || fieldObservationScratchpad.material_equipment_observations.trim())
@@ -2963,7 +2972,7 @@ function buildFieldStartPmFollowupPromptReview(
   fieldQuestionsDraft: FieldQuestionsDraft,
   fieldObservationScratchpad: FieldObservationScratchpad,
 ): FieldStartPmFollowupPromptReviewItem[] {
-  const projectName = candidate?.project?.name || candidate?.candidate_id || 'current Project Miner candidate'
+  const projectName = candidateContextLabel(candidate)
   const pmFollowupPromptPresent = Boolean(fieldQuestionsDraft.pm_followup_notes.trim() || fieldObservationScratchpad.open_questions_pm_followup.trim())
   const customerSitePromptContextPresent = Boolean(fieldQuestionsDraft.customer_constraint_questions.trim() || fieldQuestionsDraft.site_access_safety_questions.trim() || fieldObservationScratchpad.access_safety_observations.trim())
   const leadPromptContextPresent = Boolean(fieldQuestionsDraft.drawing_source_questions.trim() || fieldQuestionsDraft.crew_equipment_questions.trim() || fieldQuestionsDraft.material_staging_questions.trim() || fieldObservationScratchpad.material_equipment_observations.trim())
@@ -3021,7 +3030,7 @@ function buildFieldStartConversationCloseoutPrompts(
   fieldQuestionsDraft: FieldQuestionsDraft,
   fieldObservationScratchpad: FieldObservationScratchpad,
 ): FieldStartConversationCloseoutPromptItem[] {
-  const projectName = candidate?.project?.name || candidate?.candidate_id || 'current Project Miner candidate'
+  const projectName = candidateContextLabel(candidate)
   const hasConversationSource = Boolean(fieldObservationScratchpad.observer_source.trim() || fieldObservationScratchpad.observation_date_or_shift.trim())
   const hasCustomerSiteReturn = Boolean(fieldQuestionsDraft.customer_constraint_questions.trim() || fieldQuestionsDraft.site_access_safety_questions.trim() || fieldObservationScratchpad.access_safety_observations.trim())
   const hasLeadResourceReturn = Boolean(fieldQuestionsDraft.crew_equipment_questions.trim() || fieldQuestionsDraft.material_staging_questions.trim() || fieldObservationScratchpad.material_equipment_observations.trim())
@@ -3082,7 +3091,7 @@ function buildFieldStartBringBackReviewQueue(
   fieldQuestionsDraft: FieldQuestionsDraft,
   fieldObservationScratchpad: FieldObservationScratchpad,
 ): FieldStartBringBackReviewQueueItem[] {
-  const projectName = candidate?.project?.name || candidate?.candidate_id || 'current Project Miner candidate'
+  const projectName = candidateContextLabel(candidate)
   const sourceReviewContextPresent = Boolean(fieldQuestionsDraft.drawing_source_questions.trim() || fieldObservationScratchpad.observer_source.trim() || fieldObservationScratchpad.workpackage_area_reference.trim())
   const customerSiteClarificationPresent = Boolean(fieldQuestionsDraft.customer_constraint_questions.trim() || fieldQuestionsDraft.site_access_safety_questions.trim() || fieldObservationScratchpad.access_safety_observations.trim())
   const leadResourceClarificationPresent = Boolean(fieldQuestionsDraft.crew_equipment_questions.trim() || fieldQuestionsDraft.material_staging_questions.trim() || fieldObservationScratchpad.material_equipment_observations.trim())
@@ -3133,7 +3142,7 @@ function buildFieldStartBringBackSummaryTriageStrip(
   fieldQuestionsDraft: FieldQuestionsDraft,
   fieldObservationScratchpad: FieldObservationScratchpad,
 ): FieldStartBringBackSummaryTriageStripItem[] {
-  const projectName = candidate?.project?.name || candidate?.candidate_id || 'current Project Miner candidate'
+  const projectName = candidateContextLabel(candidate)
   const sourceReviewContextPresent = Boolean(fieldQuestionsDraft.drawing_source_questions.trim() || fieldObservationScratchpad.observer_source.trim() || fieldObservationScratchpad.workpackage_area_reference.trim())
   const customerSiteClarificationPresent = Boolean(fieldQuestionsDraft.customer_constraint_questions.trim() || fieldQuestionsDraft.site_access_safety_questions.trim() || fieldObservationScratchpad.access_safety_observations.trim())
   const leadResourceClarificationPresent = Boolean(fieldQuestionsDraft.crew_equipment_questions.trim() || fieldQuestionsDraft.material_staging_questions.trim() || fieldObservationScratchpad.material_equipment_observations.trim())
@@ -3267,7 +3276,7 @@ function buildFieldStartSourceReviewBringBackLens(
   fieldQuestionsDraft: FieldQuestionsDraft,
   fieldObservationScratchpad: FieldObservationScratchpad,
 ): FieldStartSourceReviewBringBackLensItem[] {
-  const projectName = candidate?.project?.name || candidate?.candidate_id || 'current Project Miner candidate'
+  const projectName = candidateContextLabel(candidate)
   const sourceFingerprint = candidate?.source_freshness?.aggregate_fingerprint || 'source fingerprint pending'
   const drawingWorkbookContextPresent = Boolean(fieldQuestionsDraft.drawing_source_questions.trim() || candidate?.source_freshness?.aggregate_fingerprint)
   const siteNoteContextPresent = Boolean(fieldObservationScratchpad.access_safety_observations.trim() || fieldObservationScratchpad.material_equipment_observations.trim() || fieldObservationScratchpad.open_questions_pm_followup.trim())
@@ -3329,7 +3338,7 @@ function buildFieldStartCustomerSiteClarificationBringBackLens(
   fieldQuestionsDraft: FieldQuestionsDraft,
   fieldObservationScratchpad: FieldObservationScratchpad,
 ): FieldStartCustomerSiteClarificationBringBackLensItem[] {
-  const projectName = candidate?.project?.name || candidate?.candidate_id || 'current Project Miner candidate'
+  const projectName = candidateContextLabel(candidate)
   const accessShutdownContextPresent = Boolean(fieldQuestionsDraft.customer_constraint_questions.trim() || fieldQuestionsDraft.site_access_safety_questions.trim() || fieldObservationScratchpad.access_safety_observations.trim())
   const escortContactContextPresent = Boolean(fieldQuestionsDraft.site_access_safety_questions.trim() || fieldQuestionsDraft.customer_constraint_questions.trim() || fieldObservationScratchpad.observer_source.trim() || fieldObservationScratchpad.open_questions_pm_followup.trim())
   const safetyLotoContextPresent = Boolean(fieldQuestionsDraft.site_access_safety_questions.trim() || fieldObservationScratchpad.access_safety_observations.trim())
@@ -3387,7 +3396,7 @@ function buildFieldStartLeadResourceClarificationBringBackLens(
   fieldQuestionsDraft: FieldQuestionsDraft,
   fieldObservationScratchpad: FieldObservationScratchpad,
 ): FieldStartLeadResourceClarificationBringBackLensItem[] {
-  const projectName = candidate?.project?.name || candidate?.candidate_id || 'current Project Miner candidate'
+  const projectName = candidateContextLabel(candidate)
   const leadConversationSourcePresent = Boolean(fieldObservationScratchpad.observer_source.trim() || fieldObservationScratchpad.observation_date_or_shift.trim())
   const crewEquipmentContextPresent = Boolean(fieldQuestionsDraft.crew_equipment_questions.trim())
   const materialStagingContextPresent = Boolean(fieldQuestionsDraft.material_staging_questions.trim() || fieldObservationScratchpad.material_equipment_observations.trim())
@@ -3437,7 +3446,7 @@ function buildFieldStartLaterBoundedPacketCandidateBringBackLens(
   fieldQuestionsDraft: FieldQuestionsDraft,
   fieldObservationScratchpad: FieldObservationScratchpad,
 ): FieldStartLaterBoundedPacketCandidateBringBackLensItem[] {
-  const projectName = candidate?.project?.name || candidate?.candidate_id || 'current Project Miner candidate'
+  const projectName = candidateContextLabel(candidate)
   const futurePacketContextPresent = Boolean(fieldQuestionsDraft.pm_followup_notes.trim() || fieldObservationScratchpad.open_questions_pm_followup.trim())
   const evidenceContextPresent = Boolean(fieldQuestionsDraft.drawing_source_questions.trim() || fieldObservationScratchpad.observer_source.trim() || fieldObservationScratchpad.workpackage_area_reference.trim())
   const ownerTimingContextPresent = Boolean(fieldQuestionsDraft.customer_constraint_questions.trim() || fieldObservationScratchpad.open_questions_pm_followup.trim())
@@ -3505,7 +3514,7 @@ function buildPmIntakeCommandCenter(
   const hasFieldObservations = hasFieldObservationScratchpadContent(fieldObservationScratchpad)
   const closeoutCheckedCount = CLOSEOUT_CHECKLIST_ITEMS.filter((item) => closeoutChecks[item.id]).length
   const blockedPersistenceGateCount = persistenceReadinessGates.filter((gate) => gate.status === 'blocked').length
-  const projectName = candidate?.project?.name || candidate?.candidate_id || 'current Project Miner candidate'
+  const projectName = candidateContextLabel(candidate)
   const sourceFingerprint = candidate?.source_freshness?.aggregate_fingerprint || 'source fingerprint pending'
   const admissionAuthority = admissionPlan?.mutation_authority || 'not_admitted'
   const nextFieldPrepMove = fieldPrepQueue.find((item) => item.status === 'next') || fieldPrepQueue.find((item) => item.status === 'blocked')
@@ -3581,7 +3590,7 @@ function buildPmIntakeMeetingReadout(
   const hasFieldObservations = hasFieldObservationScratchpadContent(fieldObservationScratchpad)
   const closeoutCheckedCount = CLOSEOUT_CHECKLIST_ITEMS.filter((item) => closeoutChecks[item.id]).length
   const blockedPersistenceGateCount = persistenceReadinessGates.filter((gate) => gate.status === 'blocked').length
-  const projectName = project.name || candidate?.candidate_id || 'current Project Miner candidate'
+  const projectName = candidateContextLabel(candidate, project.name)
   const location = project.location || 'unknown location'
   const sourceFingerprint = candidate?.source_freshness?.aggregate_fingerprint || 'source fingerprint pending'
   const admissionAuthority = admissionPlan?.mutation_authority || 'not_admitted'
@@ -4291,7 +4300,7 @@ function buildLocalApprovalSubmissionDryRun(
   const sourceFingerprint = candidate.source_freshness?.aggregate_fingerprint || 'source-fingerprint-missing'
   const draftComplete = Boolean(approvalDraft.decision && approvalDraft.review_notes.trim() && approvalDraft.local_attestation)
   const idempotencyBase = [
-    candidate.candidate_id || 'candidate-unknown',
+    candidateDisplayId(candidate),
     candidate.candidate_version || 'candidate-version-unknown',
     sourceFingerprint,
     approvalDraft.decision || 'decision-missing',
@@ -4444,7 +4453,7 @@ function buildIntakeBrief(
     '',
     '## Project',
     '',
-    `- Candidate: ${candidate.candidate_id || 'unknown'}`,
+    `- Candidate: ${candidateDisplayId(candidate)}`,
     `- Candidate version: ${candidate.candidate_version || 'unknown'}`,
     `- Candidate authority: ${candidate.mutation_authority || 'not_admitted'}`,
     `- Project: ${project.name || 'unknown project'}`,
@@ -4695,7 +4704,7 @@ function buildExecutorHandoff(
     '',
     '## Candidate Context',
     '',
-    `- Candidate: ${candidate.candidate_id || 'unknown'}`,
+    `- Candidate: ${candidateDisplayId(candidate)}`,
     `- Candidate version: ${candidate.candidate_version || 'unknown'}`,
     `- Candidate authority: ${candidate.mutation_authority || 'not_admitted'}`,
     `- Project: ${project.name || 'unknown project'}`,
@@ -4899,7 +4908,7 @@ function buildFieldKickoffBrief(
     '',
     '## Project Snapshot',
     '',
-    `- Candidate: ${candidate.candidate_id || 'unknown'}`,
+    `- Candidate: ${candidateDisplayId(candidate)}`,
     `- Candidate version: ${candidate.candidate_version || 'unknown'}`,
     `- Candidate authority: ${candidate.mutation_authority || 'not_admitted'}`,
     `- Project: ${project.name || 'unknown project'}`,
@@ -5079,7 +5088,7 @@ function buildFieldObservationNotes(
     '',
     '## Candidate Context',
     '',
-    `- Candidate: ${candidate.candidate_id || 'unknown'}`,
+    `- Candidate: ${candidateDisplayId(candidate)}`,
     `- Candidate version: ${candidate.candidate_version || 'unknown'}`,
     `- Candidate authority: ${candidate.mutation_authority || 'not_admitted'}`,
     `- Project: ${project.name || 'unknown project'}`,
@@ -5139,7 +5148,7 @@ function buildFieldPrepCoverageSnapshotExport(
     '',
     '## Candidate Context',
     '',
-    `- Candidate: ${candidate.candidate_id || 'unknown'}`,
+    `- Candidate: ${candidateDisplayId(candidate)}`,
     `- Candidate version: ${candidate.candidate_version || 'unknown'}`,
     `- Candidate authority: ${candidate.mutation_authority || 'not_admitted'}`,
     `- Project: ${project.name || 'unknown project'}`,
@@ -5208,7 +5217,7 @@ function buildFieldPrepConversationAgendaExport(
     '',
     '## Candidate Context',
     '',
-    `- Candidate: ${candidate.candidate_id || 'unknown'}`,
+    `- Candidate: ${candidateDisplayId(candidate)}`,
     `- Candidate version: ${candidate.candidate_version || 'unknown'}`,
     `- Candidate authority: ${candidate.mutation_authority || 'not_admitted'}`,
     `- Project: ${project.name || 'unknown project'}`,
@@ -5303,7 +5312,7 @@ function buildFieldPrepPacket(
     '',
     '## Candidate Context',
     '',
-    `- Candidate: ${candidate.candidate_id || 'unknown'}`,
+    `- Candidate: ${candidateDisplayId(candidate)}`,
     `- Candidate version: ${candidate.candidate_version || 'unknown'}`,
     `- Candidate authority: ${candidate.mutation_authority || 'not_admitted'}`,
     `- Project: ${project.name || 'unknown project'}`,
@@ -7899,7 +7908,7 @@ function buildImportExceptionRegisterExport(
     '',
     '## Candidate Context',
     '',
-    `- Candidate: ${candidate.candidate_id || 'unknown'}`,
+    `- Candidate: ${candidateDisplayId(candidate)}`,
     `- Candidate version: ${candidate.candidate_version || 'unknown'}`,
     `- Candidate authority: ${candidate.mutation_authority || 'not_admitted'}`,
     `- Project: ${project.name || 'unknown project'}`,
@@ -7986,7 +7995,7 @@ function buildPmIntakeSnapshotExport(
     '',
     '## Candidate Context',
     '',
-    `- Candidate: ${candidate.candidate_id || 'unknown'}`,
+    `- Candidate: ${candidateDisplayId(candidate)}`,
     `- Candidate version: ${candidate.candidate_version || 'unknown'}`,
     `- Candidate authority: ${candidate.mutation_authority || 'not_admitted'}`,
     `- Project: ${project.name || 'unknown project'}`,
