@@ -78,6 +78,7 @@ export default function FieldAuthorizationPlaceholderPage() {
             <Link href="/pm-review/project-overview">Project overview</Link>
             <Link href="/pm-review/import-intake">Intake workbench</Link>
             <Link href="/pm-review/import-candidate">Import candidate</Link>
+            <Link href="/pm-review/schedule-status-placeholder">Schedule status placeholder</Link>
             <Link href="/pm-review/customer-delivery-execution">Customer delivery execution</Link>
           </p>
         </div>
@@ -141,6 +142,11 @@ export default function FieldAuthorizationPlaceholderPage() {
               <li key={item}>{item}</li>
             ))}
           </ul>
+          <p>
+            <Link href="/pm-review/schedule-status-placeholder">Schedule status placeholder</Link> carries the next
+            separate no-live branch after field authorization planning. It does not admit schedule changes or status
+            writes.
+          </p>
         </div>
       </section>
     </main>
