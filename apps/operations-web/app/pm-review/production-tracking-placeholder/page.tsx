@@ -79,6 +79,7 @@ export default function ProductionTrackingPlaceholderPage() {
             <Link href="/pm-review">Return to PM drivers</Link>
             <Link href="/pm-review/project-overview">Project overview</Link>
             <Link href="/pm-review/durable-field-record-placeholder">Durable field record placeholder</Link>
+            <Link href="/pm-review/customer-reporting-placeholder">Customer reporting placeholder</Link>
             <Link href="/pm-review/workfront">PM workfront</Link>
             <Link href="/pm-review/customer-delivery-execution">Customer delivery execution</Link>
           </p>
@@ -143,6 +144,11 @@ export default function ProductionTrackingPlaceholderPage() {
               <li key={item}>{item}</li>
             ))}
           </ul>
+          <p>
+            <Link href="/pm-review/customer-reporting-placeholder">Customer reporting placeholder</Link> carries the
+            next separate no-live branch after production tracking planning. It does not admit customer-facing reports
+            or completion evidence publication.
+          </p>
         </div>
       </section>
     </main>

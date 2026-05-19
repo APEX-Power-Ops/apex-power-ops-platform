@@ -15,6 +15,7 @@ const routeChecks = [
   { path: '/pm-review/schedule-status-placeholder', marker: 'Schedule and status stay blocked as a placeholder control branch.' },
   { path: '/pm-review/durable-field-record-placeholder', marker: 'Durable field record stays blocked as a placeholder evidence branch.' },
   { path: '/pm-review/production-tracking-placeholder', marker: 'Production tracking stays blocked as a placeholder progress branch.' },
+  { path: '/pm-review/customer-reporting-placeholder', marker: 'Customer reporting stays blocked as a placeholder downstream branch.' },
   { path: '/pm-review/project-overview', marker: 'See the testing project top to bottom in one place.' },
   { path: '/pm-review/customer-delivery-execution', marker: 'PM customer delivery execution now has an admitted orchestration route.' },
   { path: '/pm-review/finance-placeholder', marker: 'Finance is open only as a placeholder design branch.' },

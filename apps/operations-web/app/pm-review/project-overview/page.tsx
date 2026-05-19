@@ -367,18 +367,19 @@ function buildStageCards(packet: ProjectOverviewPacket): StageCard[] {
       step: '06',
       title: 'Downstream outputs and blocked branches',
       tone: 'blocked',
-      summary: `Finance is placeholder-only, customer billing delivery remains ${formatLabel(packet.deliveryStatus.customer_billing_delivery_authority || 'not_admitted')}, and source writeback remains ${formatLabel(packet.deliveryStatus.source_writeback_authority || 'not_admitted')}.`,
-      decision: 'Your next decision here is branch selection only: keep designing finance as placeholder, or later open a separate admitted packet for finance output, customer billing delivery, or source writeback.',
+      summary: `Customer reporting is placeholder-only, finance remains placeholder-only, customer billing delivery remains ${formatLabel(packet.deliveryStatus.customer_billing_delivery_authority || 'not_admitted')}, and source writeback remains ${formatLabel(packet.deliveryStatus.source_writeback_authority || 'not_admitted')}.`,
+      decision: 'Your next decision here is branch selection only: keep customer reporting as placeholder planning, or later open separate admitted packets for financial handoff, finance output, customer billing delivery, or source writeback.',
       when: 'Only after you intentionally choose a new governance packet for a downstream write branch.',
       availableNow: [
+        'Review the customer reporting placeholder branch',
         'Review the finance placeholder branch',
         'Review the customer billing placeholder branch',
         'Review the source writeback placeholder branch',
         'See the canonical route-to-authority map',
         'Keep downstream write branches separate until explicitly admitted',
       ],
-      routeHref: '/pm-review/source-writeback-placeholder',
-      routeLabel: 'Open source writeback placeholder branch',
+      routeHref: '/pm-review/customer-reporting-placeholder',
+      routeLabel: 'Open customer reporting placeholder branch',
     },
   ]
 }
@@ -534,6 +535,7 @@ export default function PmProjectOverviewPage() {
             <Link href="/pm-review/schedule-status-placeholder">Schedule status placeholder</Link>
             <Link href="/pm-review/durable-field-record-placeholder">Durable field record placeholder</Link>
             <Link href="/pm-review/production-tracking-placeholder">Production tracking placeholder</Link>
+            <Link href="/pm-review/customer-reporting-placeholder">Customer reporting placeholder</Link>
             <Link href="/pm-review/customer-delivery-execution">Customer delivery execution</Link>
             <Link href="/pm-review/finance-placeholder">Finance placeholder</Link>
             <Link href="/pm-review/customer-billing-placeholder">Customer billing placeholder</Link>

@@ -172,6 +172,7 @@ export default function PmDriversPage() {
             <Link href="/pm-review/schedule-status-placeholder">Schedule status placeholder</Link>
             <Link href="/pm-review/durable-field-record-placeholder">Durable field record placeholder</Link>
             <Link href="/pm-review/production-tracking-placeholder">Production tracking placeholder</Link>
+            <Link href="/pm-review/customer-reporting-placeholder">Customer reporting placeholder</Link>
             <Link href="/pm-review/customer-delivery-execution">Customer delivery execution</Link>
             <Link href="/pm-review/finance-placeholder">Finance placeholder</Link>
             <Link href="/pm-review/customer-billing-placeholder">Customer billing placeholder</Link>
