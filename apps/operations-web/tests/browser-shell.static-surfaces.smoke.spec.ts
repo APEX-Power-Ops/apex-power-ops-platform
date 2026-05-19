@@ -16,6 +16,12 @@ test('re-homed browser surfaces render their expected headings in a real browser
   const promotedPmApprovalResponse = await page.goto('/pm-review/approval')
   expect(promotedPmApprovalResponse?.ok()).toBeTruthy()
   await expect(page.getByRole('heading', { name: /PM approval now has a real app route/i })).toBeVisible()
+  await expect(page.getByText(/Read-only approval review with bounded drillthroughs/i)).toBeVisible()
+  await expect(page.getByText(/Approval persistence and import remain separately admitted/i)).toBeVisible()
+  await expect(page.getByRole('link', { name: /\/pm-review\/customer-delivery-execution/i })).toHaveAttribute(
+    'href',
+    '/pm-review/customer-delivery-execution',
+  )
 
   const deepLinkedApprovalResponse = await page.goto('/pm-review/approval?screen=history')
   expect(deepLinkedApprovalResponse?.ok()).toBeTruthy()

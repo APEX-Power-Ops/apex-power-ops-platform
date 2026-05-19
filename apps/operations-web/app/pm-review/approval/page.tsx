@@ -1104,8 +1104,9 @@ export default function ApprovalRoutePage() {
           <div>
             <h1>PM approval now has a real app route.</h1>
             <p className="lede">
-              This promotes the approval prototype into the governed Next.js shell while preserving the same reads and
-              mutation seam contract used by the legacy static surface.
+              This promotes the approval prototype into the governed Next.js shell while keeping approval review itself
+              read-only. Route presence does not admit approval persistence, import, assignments, schedule changes, or
+              status mutation.
             </p>
           </div>
           <dl className="contract-panel">
@@ -1123,8 +1124,28 @@ export default function ApprovalRoutePage() {
               <dt>Backend seam</dt>
               <dd>/api/v1/reads/* and /api/v1/mutations/*</dd>
             </div>
+            <div>
+              <dt>Route class</dt>
+              <dd>Read-only approval review with bounded drillthroughs</dd>
+            </div>
+            <div>
+              <dt>Approval authority</dt>
+              <dd>Approval persistence and import remain separately admitted</dd>
+            </div>
+            <div>
+              <dt>Only admitted write slice</dt>
+              <dd>
+                <Link href="/pm-review/customer-delivery-execution">/pm-review/customer-delivery-execution</Link>
+              </dd>
+            </div>
           </dl>
         </div>
+        <p className="pm-review-link-row pm-review-link-row-start">
+          Current PM route truth: this approval route is a governed review surface. The only current admitted bounded
+          write slice is customer-facing delivery execution; approval persistence, import, field authorization,
+          production tracking, finance outputs, customer billing delivery, and source writeback remain outside this
+          route.
+        </p>
         {returnTo && (
           <p className="pm-review-link-row pm-review-link-row-start">
             <Link href={returnTo}>Return to {returnLabel}</Link>
