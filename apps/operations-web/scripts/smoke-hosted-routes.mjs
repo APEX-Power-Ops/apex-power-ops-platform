@@ -3,6 +3,12 @@ const routeChecks = [
   { path: '/integration-dashboard/index.html', marker: 'APEX Cross-Surface Integration Test Dashboard' },
   { path: '/lead-ops/index.html', marker: 'APEX Lead Surface' },
   { path: '/pm-review/workfront', marker: 'PM workfront now has a governed read model.' },
+  // Canonical clean-path PM review routes currently bail out to a shared client-side loading shell in raw HTML.
+  { path: '/pm-review', marker: 'Loading PM drivers route.' },
+  { path: '/pm-review/approval', marker: 'Loading PM drivers route.' },
+  { path: '/pm-review/schedule', marker: 'Loading PM drivers route.' },
+  { path: '/pm-review/tracer', marker: 'Loading PM drivers route.' },
+  { path: '/pm-review/variance', marker: 'Loading PM drivers route.' },
   { path: '/pm-review/index.html', marker: 'APEX PM Drivers Review' },
   { path: '/pm-review/approval-surface.html', marker: 'APEX PM Approval Surface' },
   { path: '/pm-review/schedule.html', marker: 'APEX PM Schedule Review' },
