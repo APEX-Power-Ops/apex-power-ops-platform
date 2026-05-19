@@ -49,7 +49,6 @@ type CandidateWarning = {
 
 type CandidateDecision = {
   decision_id?: string
-  severity?: string
   prompt?: string
   recommended_action?: string
   warning_code?: string
@@ -71,6 +70,14 @@ type CandidatePayload = {
   mutation_authority?: string
   project?: CandidateProject
   source_freshness?: {
+    strategy?: string
+    mutation_authority?: string
+    available_count?: number
+    missing_count?: number
+    aggregate_fingerprint?: string
+    review_action?: string
+  }
+  source_artifacts?: {
     strategy?: string
     mutation_authority?: string
     available_count?: number
@@ -3844,42 +3851,42 @@ function buildPmIntakeOutputSelector(
           id: 'field-authorization-assignment-output',
           title: 'Field Authorization Assignment Draft',
           status: fieldContextStatus,
-          href: '#field-prep',
+          href: '/pm-review/field-authorization-placeholder',
           detail: 'Use Field Authorization Assignment Draft as packet-design context only; it does not authorize work or assign people.',
         },
         {
           id: 'schedule-status-output',
           title: 'Schedule Status Controls Draft',
           status: fieldContextStatus,
-          href: '#field-prep',
+          href: '/pm-review/schedule-status-placeholder',
           detail: 'Use Schedule Status Controls Draft to review later schedule/status proof needs while schedule and status mutations stay blocked.',
         },
         {
           id: 'durable-field-record-output',
           title: 'Durable Field Record Draft',
           status: fieldContextStatus,
-          href: '#field-prep',
+          href: '/pm-review/durable-field-record-placeholder',
           detail: 'Use Durable Field Record Draft to review later daily record proof while durable record, evidence, production, customer, and finance writes stay blocked.',
         },
         {
           id: 'production-tracking-output',
           title: 'Production Tracking Draft',
           status: fieldContextStatus,
-          href: '#field-prep',
+          href: '/pm-review/production-tracking-placeholder',
           detail: 'Use Production Tracking Draft to review later quantity, labor, apparatus, progress, audit, and readback proof while production tracking stays blocked.',
         },
         {
           id: 'customer-reporting-output',
           title: 'Customer Reporting Draft',
           status: fieldContextStatus,
-          href: '#field-prep',
+          href: '/pm-review/customer-reporting-placeholder',
           detail: 'Use Customer Reporting Draft to review later report and completion evidence proof while customer-facing outputs stay blocked.',
         },
         {
           id: 'financial-handoff-output',
           title: 'Financial Handoff Draft',
           status: fieldContextStatus,
-          href: '#field-prep',
+          href: '/pm-review/financial-handoff-placeholder',
           detail: 'Use Financial Handoff Draft to review later billing, payroll, invoice/accounting, labor reconciliation, audit, and readback proof while finance writes stay blocked.',
         },
       ],
