@@ -171,6 +171,7 @@ export default function PmDriversPage() {
             <Link href="/pm-review/customer-delivery-execution">Customer delivery execution</Link>
             <Link href="/pm-review/finance-placeholder">Finance placeholder</Link>
             <Link href="/pm-review/customer-billing-placeholder">Customer billing placeholder</Link>
+            <Link href="/pm-review/source-writeback-placeholder">Source writeback placeholder</Link>
             {returnTo && <Link href={returnTo}>Return to {returnLabel}</Link>}
             <Link href="/pm-review/index.html">Open legacy static page</Link>
           </p>

@@ -78,6 +78,7 @@ export default function CustomerBillingPlaceholderPage() {
             <Link href="/pm-review">Return to PM drivers</Link>
             <Link href="/pm-review/project-overview">Project overview</Link>
             <Link href="/pm-review/finance-placeholder">Finance placeholder</Link>
+            <Link href="/pm-review/source-writeback-placeholder">Source writeback placeholder</Link>
             <Link href="/pm-review/customer-delivery-execution">Customer delivery execution</Link>
           </p>
         </div>
@@ -141,6 +142,10 @@ export default function CustomerBillingPlaceholderPage() {
               <li key={item}>{item}</li>
             ))}
           </ul>
+          <p>
+            The separate source-writeback placeholder route is available at{' '}
+            <Link href="/pm-review/source-writeback-placeholder">/pm-review/source-writeback-placeholder</Link>.
+          </p>
         </div>
       </section>
     </main>

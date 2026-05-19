@@ -79,6 +79,7 @@ export default function FinancePlaceholderPage() {
             <Link href="/pm-review/import-admission-plan">Import admission plan</Link>
             <Link href="/pm-review/customer-delivery-execution">Customer delivery execution</Link>
             <Link href="/pm-review/customer-billing-placeholder">Customer billing placeholder</Link>
+            <Link href="/pm-review/source-writeback-placeholder">Source writeback placeholder</Link>
           </p>
         </div>
 
@@ -144,6 +145,10 @@ export default function FinancePlaceholderPage() {
           <p>
             The separate customer-billing placeholder route is available at{' '}
             <Link href="/pm-review/customer-billing-placeholder">/pm-review/customer-billing-placeholder</Link>.
+          </p>
+          <p>
+            The separate source-writeback placeholder route is available at{' '}
+            <Link href="/pm-review/source-writeback-placeholder">/pm-review/source-writeback-placeholder</Link>.
           </p>
         </div>
       </section>

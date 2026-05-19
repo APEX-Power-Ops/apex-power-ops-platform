@@ -372,11 +372,12 @@ function buildStageCards(packet: ProjectOverviewPacket): StageCard[] {
       availableNow: [
         'Review the finance placeholder branch',
         'Review the customer billing placeholder branch',
+        'Review the source writeback placeholder branch',
         'See the canonical route-to-authority map',
         'Keep downstream write branches separate until explicitly admitted',
       ],
-      routeHref: '/pm-review/customer-billing-placeholder',
-      routeLabel: 'Open customer billing placeholder branch',
+      routeHref: '/pm-review/source-writeback-placeholder',
+      routeLabel: 'Open source writeback placeholder branch',
     },
   ]
 }
@@ -531,6 +532,7 @@ export default function PmProjectOverviewPage() {
             <Link href="/pm-review/customer-delivery-execution">Customer delivery execution</Link>
             <Link href="/pm-review/finance-placeholder">Finance placeholder</Link>
             <Link href="/pm-review/customer-billing-placeholder">Customer billing placeholder</Link>
+            <Link href="/pm-review/source-writeback-placeholder">Source writeback placeholder</Link>
             <button className="btn btn-outline" onClick={() => void refresh()} disabled={loading}>
               {loading ? 'Refreshing...' : 'Refresh'}
             </button>
