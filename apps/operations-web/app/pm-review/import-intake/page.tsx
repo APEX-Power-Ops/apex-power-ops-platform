@@ -1070,6 +1070,42 @@ function approvalStatusSummary(status?: ApprovalPersistenceStatus | null) {
   return `${formatLabel(status.classification)}; ${storage}; import authority ${formatLabel(status.import_authority || 'not_admitted')}`
 }
 
+function approvalRecordCount(status?: ApprovalPersistenceStatus | null) {
+  return status?.approval_record_count_for_candidate ?? 0
+}
+
+function approvalRecordCountSummary(status?: ApprovalPersistenceStatus | null) {
+  const count = approvalRecordCount(status)
+  return `${formatCount(count)} approval ${count === 1 ? 'record' : 'records'} for this candidate`
+}
+
+function hostedApprovalReadbackDetail(status?: ApprovalPersistenceStatus | null) {
+  const count = approvalRecordCount(status)
+  if (count === 0) {
+    return 'Hosted schema, approval status readback, approval POST route registration, and bounded MCP read proof are green with zero approval records for this candidate.'
+  }
+
+  return `Hosted schema, approval status readback, approval POST route registration, and bounded MCP read proof are green; current readback shows ${approvalRecordCountSummary(status)}.`
+}
+
+function approvalRowBoundaryDetail(status?: ApprovalPersistenceStatus | null) {
+  const count = approvalRecordCount(status)
+  if (count === 0) {
+    return 'The approval table is empty by proof; this workbench must not create the first hosted approval row.'
+  }
+
+  return `Current readback already shows ${approvalRecordCountSummary(status)}. This workbench must not create, replace, or mutate approval rows from the browser.`
+}
+
+function hostedApprovalHistoryDetail(status?: ApprovalPersistenceStatus | null) {
+  const count = approvalRecordCount(status)
+  if (count === 0) {
+    return 'PM Lane 138 closed the hosted schema gate with zero approval rows, and the bounded Supabase MCP read path is restored.'
+  }
+
+  return `PM Lane 138 closed the hosted schema gate, and the bounded Supabase MCP read path is restored. Current readback shows ${approvalRecordCountSummary(status)}.`
+}
+
 function taskPlanStatusTone(status?: TaskPlanStatus | null) {
   const classification = status?.classification || ''
   if (!status) return 'status-awaiting-values'
@@ -1716,6 +1752,7 @@ function buildPersistenceReadinessGates(
   const draftComplete = Boolean(approvalDraft.decision && approvalDraft.review_notes.trim() && approvalDraft.local_attestation)
   const checklistHasEvidence = REVIEW_CHECKLIST_ITEMS.some((item) => reviewChecks[item.id])
   const hasPacketContext = Boolean(packet && packet.candidate.candidate_id && packet.approvalContract && packet.storagePlan)
+  const approvalStatus = packet?.approvalStatus
 
   return [
     {
@@ -1738,7 +1775,7 @@ function buildPersistenceReadinessGates(
       id: 'hosted-schema-gate',
       title: 'Hosted schema gate',
       status: 'ready',
-      detail: 'PM Lane 138 applied migration 003 on hosted Supabase and proved the approval table plus insert-only triggers with zero approval rows.',
+      detail: `PM Lane 138 applied migration 003 on hosted Supabase and proved the approval table plus insert-only triggers; current readback shows ${approvalRecordCountSummary(approvalStatus)}.`,
     },
     {
       id: 'hosted-approval-route-gate',
@@ -2080,6 +2117,7 @@ function buildPmOperatingQueue(
   approvalDraft: ApprovalDecisionDraft,
   reviewChecks: Record<string, boolean>,
   persistenceReadinessGates: ReadinessGate[],
+  approvalStatus?: ApprovalPersistenceStatus | null,
 ): OperatingQueueItem[] {
   const sourceAndWarningReviewDone = Boolean(reviewChecks.source_freshness_reviewed && reviewChecks.exceptions_reviewed)
   const checklistHasEvidence = REVIEW_CHECKLIST_ITEMS.some((item) => reviewChecks[item.id])
@@ -2117,7 +2155,7 @@ function buildPmOperatingQueue(
       id: 'hosted-approval-gate-complete',
       title: 'Hosted approval gate complete',
       status: 'complete',
-      detail: 'Hosted schema, approval status readback, approval POST route registration, and bounded MCP read proof are green with zero approval rows.',
+      detail: hostedApprovalReadbackDetail(approvalStatus),
     },
     {
       id: 'browser-approval-submission-packet',
@@ -2129,7 +2167,7 @@ function buildPmOperatingQueue(
       id: 'approval-row-creation',
       title: 'Approval row creation',
       status: 'blocked',
-      detail: 'The approval table is empty by proof; this workbench must not create the first hosted approval row.',
+      detail: approvalRowBoundaryDetail(approvalStatus),
     },
     {
       id: 'project-import-packet',
@@ -8187,8 +8225,8 @@ export default function ProjectMinerIntakeWorkbenchPage() {
   )
   const approvalDryRunReadinessCount = approvalDryRunReadinessCounts(approvalDryRunReadiness)
   const operatingQueue = useMemo(
-    () => buildPmOperatingQueue(approvalDraft, reviewChecks, persistenceReadinessGates),
-    [approvalDraft, reviewChecks, persistenceReadinessGates],
+    () => buildPmOperatingQueue(approvalDraft, reviewChecks, persistenceReadinessGates, approvalStatus),
+    [approvalDraft, reviewChecks, persistenceReadinessGates, approvalStatus],
   )
   const operatingQueueGroups = useMemo(
     () => groupPmOperatingQueueItems(operatingQueue),
@@ -11251,7 +11289,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
                 Local readiness map for the future approval-persistence packet. It reflects review context and blockers only; it does not approve, persist, import, assign, schedule, change status, or mutate production state.
               </p>
               <p style={{ margin: '0.45rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
-                PM Lane 138 closed the hosted schema gate with zero approval rows, and the bounded Supabase MCP read path is restored. Browser approval submission and import mutation remain blocked until later packets explicitly admit them.
+                {hostedApprovalHistoryDetail(approvalStatus)} Browser approval submission and import mutation remain blocked until later packets explicitly admit them.
               </p>
               <div className="notes-grid" style={{ marginTop: '0.85rem' }}>
                 <article className="notes-card accent-card">
@@ -11320,7 +11358,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
                       <ol>
                         <li>Review candidate exceptions, source freshness, and required human decisions.</li>
                         <li>Confirm the Project Miner source files have not changed before any future approval packet is used.</li>
-                        <li>Treat hosted schema, hosted readback, and bounded Supabase read proof as green, with approval rows still at zero.</li>
+                        <li>{hostedApprovalReadbackDetail(approvalStatus)}</li>
                         <li>Keep browser approval submission and project import blocked until later packets explicitly admit those writes.</li>
                       </ol>
                     </article>
