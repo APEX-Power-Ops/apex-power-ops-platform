@@ -1529,144 +1529,122 @@ function visibleDecisions(decisions: CandidateDecision[]) {
   return decisions.slice(0, 3)
 }
 
+const DEFAULT_IMPORT_INTAKE_CANDIDATE_ID = 'import-intake'
+
+function candidateFileStem(candidate?: CandidatePayload | null) {
+  return (candidate?.candidate_id || DEFAULT_IMPORT_INTAKE_CANDIDATE_ID).replace(/[^a-zA-Z0-9.-]+/g, '-')
+}
+
 function briefFileName(candidate?: CandidatePayload | null) {
-  const candidateId = candidate?.candidate_id || 'project-miner-intake'
-  return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-intake-brief.md`
+  return `${candidateFileStem(candidate)}-intake-brief.md`
 }
 
 function approvalPreviewFileName(candidate?: CandidatePayload | null) {
-  const candidateId = candidate?.candidate_id || 'project-miner-intake'
-  return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-approval-packet-preview.json`
+  return `${candidateFileStem(candidate)}-approval-packet-preview.json`
 }
 
 function approvalDryRunEnvelopeFileName(candidate?: CandidatePayload | null) {
-  const candidateId = candidate?.candidate_id || 'project-miner-intake'
-  return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-approval-dry-run-envelope.json`
+  return `${candidateFileStem(candidate)}-approval-dry-run-envelope.json`
 }
 
 function approvalDryRunReadinessFileName(candidate?: CandidatePayload | null) {
-  const candidateId = candidate?.candidate_id || 'project-miner-intake'
-  return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-approval-dry-run-readiness.json`
+  return `${candidateFileStem(candidate)}-approval-dry-run-readiness.json`
 }
 
 function approvalReviewBundleFileName(candidate?: CandidatePayload | null) {
-  const candidateId = candidate?.candidate_id || 'project-miner-intake'
-  return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-approval-review-bundle.json`
+  return `${candidateFileStem(candidate)}-approval-review-bundle.json`
 }
 
 function approvalLiveGatePreflightFileName(candidate?: CandidatePayload | null) {
-  const candidateId = candidate?.candidate_id || 'project-miner-intake'
-  return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-approval-live-gate-preflight.json`
+  return `${candidateFileStem(candidate)}-approval-live-gate-preflight.json`
 }
 
 function executorHandoffFileName(candidate?: CandidatePayload | null) {
-  const candidateId = candidate?.candidate_id || 'project-miner-intake'
-  return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-executor-handoff.md`
+  return `${candidateFileStem(candidate)}-executor-handoff.md`
 }
 
 function fieldKickoffBriefFileName(candidate?: CandidatePayload | null) {
-  const candidateId = candidate?.candidate_id || 'project-miner-intake'
-  return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-field-kickoff-brief.md`
+  return `${candidateFileStem(candidate)}-field-kickoff-brief.md`
 }
 
 function fieldObservationNotesFileName(candidate?: CandidatePayload | null) {
-  const candidateId = candidate?.candidate_id || 'project-miner-intake'
-  return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-field-observation-notes.md`
+  return `${candidateFileStem(candidate)}-field-observation-notes.md`
 }
 
 function fieldPrepCoverageSnapshotFileName(candidate?: CandidatePayload | null) {
-  const candidateId = candidate?.candidate_id || 'project-miner-intake'
-  return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-field-prep-coverage-snapshot.md`
+  return `${candidateFileStem(candidate)}-field-prep-coverage-snapshot.md`
 }
 
 function fieldPrepConversationAgendaFileName(candidate?: CandidatePayload | null) {
-  const candidateId = candidate?.candidate_id || 'project-miner-intake'
-  return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-field-prep-conversation-agenda.md`
+  return `${candidateFileStem(candidate)}-field-prep-conversation-agenda.md`
 }
 
 function fieldPrepPacketFileName(candidate?: CandidatePayload | null) {
-  const candidateId = candidate?.candidate_id || 'project-miner-intake'
-  return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-field-prep-packet.md`
+  return `${candidateFileStem(candidate)}-field-prep-packet.md`
 }
 
 function fieldStartPreflightFileName(candidate?: CandidatePayload | null) {
-  const candidateId = candidate?.candidate_id || 'project-miner-intake'
-  return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-field-start-preflight.json`
+  return `${candidateFileStem(candidate)}-field-start-preflight.json`
 }
 
 function fieldExecutionGateDesignFileName(candidate?: CandidatePayload | null) {
-  const candidateId = candidate?.candidate_id || 'project-miner-intake'
-  return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-field-execution-gate-design.json`
+  return `${candidateFileStem(candidate)}-field-execution-gate-design.json`
 }
 
 function leadFieldAssignmentDraftFileName(candidate?: CandidatePayload | null) {
-  const candidateId = candidate?.candidate_id || 'project-miner-intake'
-  return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-lead-field-assignment-draft.json`
+  return `${candidateFileStem(candidate)}-lead-field-assignment-draft.json`
 }
 
 function fieldAuthorizationAssignmentDraftFileName(candidate?: CandidatePayload | null) {
-  const candidateId = candidate?.candidate_id || 'project-miner-intake'
-  return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-field-authorization-assignment-draft.json`
+  return `${candidateFileStem(candidate)}-field-authorization-assignment-draft.json`
 }
 
 function scheduleStatusControlsDraftFileName(candidate?: CandidatePayload | null) {
-  const candidateId = candidate?.candidate_id || 'project-miner-intake'
-  return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-schedule-status-controls-draft.json`
+  return `${candidateFileStem(candidate)}-schedule-status-controls-draft.json`
 }
 
 function durableFieldRecordDraftFileName(candidate?: CandidatePayload | null) {
-  const candidateId = candidate?.candidate_id || 'project-miner-intake'
-  return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-durable-field-record-draft.json`
+  return `${candidateFileStem(candidate)}-durable-field-record-draft.json`
 }
 
 function productionTrackingDraftFileName(candidate?: CandidatePayload | null) {
-  const candidateId = candidate?.candidate_id || 'project-miner-intake'
-  return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-production-tracking-draft.json`
+  return `${candidateFileStem(candidate)}-production-tracking-draft.json`
 }
 
 function customerReportingDraftFileName(candidate?: CandidatePayload | null) {
-  const candidateId = candidate?.candidate_id || 'project-miner-intake'
-  return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-customer-reporting-draft.json`
+  return `${candidateFileStem(candidate)}-customer-reporting-draft.json`
 }
 
 function financialHandoffDraftFileName(candidate?: CandidatePayload | null) {
-  const candidateId = candidate?.candidate_id || 'project-miner-intake'
-  return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-financial-handoff-draft.json`
+  return `${candidateFileStem(candidate)}-financial-handoff-draft.json`
 }
 
 function pilotLaunchBinderFileName(candidate?: CandidatePayload | null) {
-  const candidateId = candidate?.candidate_id || 'project-miner-intake'
-  return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-pilot-launch-binder.json`
+  return `${candidateFileStem(candidate)}-pilot-launch-binder.json`
 }
 
 function pilotLaunchDailyBriefFileName(candidate?: CandidatePayload | null) {
-  const candidateId = candidate?.candidate_id || 'project-miner-intake'
-  return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-pilot-launch-daily-brief.json`
+  return `${candidateFileStem(candidate)}-pilot-launch-daily-brief.json`
 }
 
 function pilotLaunchStandupCardFileName(candidate?: CandidatePayload | null) {
-  const candidateId = candidate?.candidate_id || 'project-miner-intake'
-  return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-pilot-launch-standup-card.json`
+  return `${candidateFileStem(candidate)}-pilot-launch-standup-card.json`
 }
 
 function pilotLaunchCaptureSheetFileName(candidate?: CandidatePayload | null) {
-  const candidateId = candidate?.candidate_id || 'project-miner-intake'
-  return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-pilot-launch-capture-sheet.json`
+  return `${candidateFileStem(candidate)}-pilot-launch-capture-sheet.json`
 }
 
 function pilotLaunchFollowupPacketFileName(candidate?: CandidatePayload | null) {
-  const candidateId = candidate?.candidate_id || 'project-miner-intake'
-  return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-pilot-launch-follow-up-packet.json`
+  return `${candidateFileStem(candidate)}-pilot-launch-follow-up-packet.json`
 }
 
 function importExceptionRegisterFileName(candidate?: CandidatePayload | null) {
-  const candidateId = candidate?.candidate_id || 'project-miner-intake'
-  return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-import-exception-register.md`
+  return `${candidateFileStem(candidate)}-import-exception-register.md`
 }
 
 function pmIntakeSnapshotFileName(candidate?: CandidatePayload | null) {
-  const candidateId = candidate?.candidate_id || 'project-miner-intake'
-  return `${candidateId.replace(/[^a-zA-Z0-9.-]+/g, '-')}-pm-intake-snapshot.md`
+  return `${candidateFileStem(candidate)}-pm-intake-snapshot.md`
 }
 
 function markdownList(items: string[]) {
