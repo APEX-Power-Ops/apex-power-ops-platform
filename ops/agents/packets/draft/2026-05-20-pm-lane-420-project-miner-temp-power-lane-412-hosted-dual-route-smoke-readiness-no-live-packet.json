@@ -1,0 +1,33 @@
+{
+  "packet_id": "2026-05-20-pm-lane-420-project-miner-temp-power-lane-412-hosted-dual-route-smoke-readiness-no-live-packet",
+  "lane": "PM Lane 420",
+  "title": "Project Miner Temp Power Lane 412 Hosted Dual-Route Smoke Readiness No-Live Packet",
+  "status": "blocked",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_LANE_412_HOSTED_DUAL_ROUTE_SMOKE_READINESS_NO_LIVE",
+  "selected_outcome": "LANE_412_HOSTED_DUAL_ROUTE_SMOKE_BLOCKED_NOT_PROMOTED_NO_LIVE",
+  "phase_0": {
+    "public_health_status": 200,
+    "openapi_status": 200,
+    "missing_openapi_paths": [
+      "/api/v1/mutations/project-import-contract-support",
+      "/api/v1/reads/project-import-contract-support-status"
+    ],
+    "direct_write_status": 404,
+    "direct_read_status": 404,
+    "hosted_auth_blocker": false,
+    "production_dry_run_flag_observation": "unknown",
+    "render_env_access_available": false,
+    "production_db_count_access_available": false
+  },
+  "artifacts": {
+    "runner": "apps/mutation-seam/scripts/lane_420_hosted_smoke/run_lane_420_hosted_smoke.py",
+    "readme": "apps/mutation-seam/scripts/lane_420_hosted_smoke/README.md",
+    "smoke_output": "apps/mutation-seam/scripts/lane_420_hosted_smoke/output/smoke_run_20260520T210513Z.json",
+    "packet": "docs/operations/APEX-PM-LANE-420-PROJECT-MINER-TEMP-POWER-LANE-412-HOSTED-DUAL-ROUTE-SMOKE-READINESS-NO-LIVE-PACKET-2026-05-20.md"
+  },
+  "validation": {
+    "command": "python apps/mutation-seam/scripts/lane_420_hosted_smoke/run_lane_420_hosted_smoke.py --poll-attempts 2 --poll-interval-seconds 1",
+    "result": "LANE_420_SMOKE_STATUS blocked"
+  },
+  "next_truth": "Authenticated Render deployment and env verification, then rerun the Lane 420 hosted smoke with explicit production DB row-count proof"
+}

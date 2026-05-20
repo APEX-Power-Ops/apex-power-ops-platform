@@ -1,0 +1,19 @@
+{
+  "apparatus_financial_row_count": 0,
+  "candidate_id": "pm-import-candidate-miner-temp-power",
+  "classification": "unavailable",
+  "counts_match": false,
+  "current_candidate_match": false,
+  "error": "Local mock storage intentionally unavailable for readback fixture coverage.",
+  "error_type": "RuntimeError",
+  "generated_at": "2026-05-20T21:15:00Z",
+  "http_status": 200,
+  "latest_project_contract_snapshot_id": null,
+  "project_id": "pm-import-project-miner-temp-power",
+  "record_count": 0,
+  "route": "/api/v1/reads/project-import-contract-support-status",
+  "scope_labor_detail_row_count": 0,
+  "source_fingerprint": "miner-temp-power-source-fingerprint-2026-05-20",
+  "status": "unavailable",
+  "storage_available": false
+}

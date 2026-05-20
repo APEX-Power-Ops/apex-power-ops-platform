@@ -1,0 +1,45 @@
+{
+  "action_type": "persist_project_import_contract_support",
+  "apparatus_financial_row_count": 4,
+  "audit_event_id": null,
+  "classification": "duplicate_business_payload_conflict",
+  "conflict": {
+    "queued_action": {
+      "classification": "duplicate_business_payload_conflict",
+      "incoming_mutation_id": "mut-1d764f75-87a8-49bc-ac73-cd4dabaf95df"
+    },
+    "resolution_hint": "Replay the committed mutation with the original mutation_id or change the business payload before retrying.",
+    "server_state": {
+      "classification": "import_contract_support_persisted",
+      "existing_mutation_id": "mut-6147fd7f-62f7-47b8-86a6-83c55114f611"
+    }
+  },
+  "conflict_reason": "same business payload supplied under a different mutation id",
+  "current_candidate_match": true,
+  "entity_id": "project-import-contract-support-dd18f8d19d73a01455c296e3",
+  "entity_type": "pm_project_import_contract_support",
+  "generated_at": "2026-05-20T21:15:00Z",
+  "http_status": 409,
+  "idempotent_hit": false,
+  "mutation_id": "mut-1d764f75-87a8-49bc-ac73-cd4dabaf95df",
+  "mutation_status": "rejected",
+  "new_state": {
+    "apparatus_financial_row_count": 4,
+    "audit_event_id": null,
+    "candidate_id": "pm-import-candidate-miner-temp-power",
+    "classification": "duplicate_business_payload_conflict",
+    "counts_match": true,
+    "current_candidate_match": true,
+    "mutation_id": "mut-1d764f75-87a8-49bc-ac73-cd4dabaf95df",
+    "project_id": "pm-import-project-miner-temp-power",
+    "route": "/api/v1/mutations/project-import-contract-support",
+    "scope_labor_detail_row_count": 2,
+    "snapshot_kind": "miner_temp_power_contract_support",
+    "source_fingerprint": "miner-temp-power-source-fingerprint-2026-05-20",
+    "status_route": "/api/v1/reads/project-import-contract-support-status"
+  },
+  "partial_commit": false,
+  "project_contract_snapshot_id": null,
+  "scope_labor_detail_row_count": 2,
+  "status": "conflict"
+}

@@ -7,7 +7,7 @@ import json
 from dataclasses import dataclass
 from typing import List, Optional
 
-from fastapi import Depends, Header, HTTPException, status
+from fastapi import Header, HTTPException, status
 
 
 @dataclass
@@ -17,6 +17,21 @@ class Actor:
     actor_id: str
     actor_role: str
     project_scope: List[str]
+
+
+DEV_FALLBACK_ACTOR_IDENTITY: tuple[str, str, tuple[str, ...]] = (
+    "tech-001",
+    "field_tech",
+    ("proj-001",),
+)
+
+
+def is_dev_fallback_actor(actor: Actor) -> bool:
+    return (
+        actor.actor_id,
+        actor.actor_role,
+        tuple(actor.project_scope),
+    ) == DEV_FALLBACK_ACTOR_IDENTITY
 
 
 async def get_current_actor(
@@ -39,10 +54,11 @@ async def get_current_actor(
     """
     # If no auth header, return default dev actor
     if not authorization:
+        actor_id, actor_role, project_scope = DEV_FALLBACK_ACTOR_IDENTITY
         return Actor(
-            actor_id="tech-001",
-            actor_role="field_tech",
-            project_scope=["proj-001"],
+            actor_id=actor_id,
+            actor_role=actor_role,
+            project_scope=list(project_scope),
         )
 
     # Extract token from "Bearer <token>"

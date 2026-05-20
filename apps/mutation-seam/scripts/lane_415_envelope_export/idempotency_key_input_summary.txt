@@ -1,0 +1,18 @@
+PM Lane 415 idempotency-key input summary
+project_id=pm-import-project-miner-temp-power
+candidate_id=pm-import-candidate-miner-temp-power
+source_fingerprint=miner-temp-power-source-fingerprint-2026-05-20
+snapshot_kind=miner_temp_power_contract_support
+contract_value=10000.0
+total_quoted_hours=100.0
+scope_labor_details_canonical=
+  1. {"quoted_hours":60.0,"scope_id":"scope-a","scope_name":"Switchgear Testing","scope_pool_amount":6000.0}
+  2. {"quoted_hours":40.0,"scope_id":"scope-b","scope_name":"Transformer Testing","scope_pool_amount":4000.0}
+apparatus_financials_canonical=
+  1. {"apparatus_id":"app-a-001","apparatus_name":"Main Switchgear Cell 1","quoted_hours":20.0,"quoted_revenue":2000.0,"recognition_rate_per_hour_snapshot":100.0,"scope_id":"scope-a"}
+  2. {"apparatus_id":"app-a-002","apparatus_name":"Main Switchgear Cell 2","quoted_hours":40.0,"quoted_revenue":4000.0,"recognition_rate_per_hour_snapshot":100.0,"scope_id":"scope-a"}
+  3. {"apparatus_id":"app-b-001","apparatus_name":"Transformer Bay 1","quoted_hours":25.0,"quoted_revenue":2500.0,"recognition_rate_per_hour_snapshot":100.0,"scope_id":"scope-b"}
+  4. {"apparatus_id":"app-b-002","apparatus_name":"Transformer Bay 2","quoted_hours":15.0,"quoted_revenue":1500.0,"recognition_rate_per_hour_snapshot":100.0,"scope_id":"scope-b"}
+sha256_concatenated_input=
+pm-import-project-miner-temp-power|pm-import-candidate-miner-temp-power|miner-temp-power-source-fingerprint-2026-05-20|miner_temp_power_contract_support|10000.0|100.0|[{"quoted_hours":60.0,"scope_id":"scope-a","scope_name":"Switchgear Testing","scope_pool_amount":6000.0},{"quoted_hours":40.0,"scope_id":"scope-b","scope_name":"Transformer Testing","scope_pool_amount":4000.0}]|[{"apparatus_id":"app-a-001","apparatus_name":"Main Switchgear Cell 1","quoted_hours":20.0,"quoted_revenue":2000.0,"recognition_rate_per_hour_snapshot":100.0,"scope_id":"scope-a"},{"apparatus_id":"app-a-002","apparatus_name":"Main Switchgear Cell 2","quoted_hours":40.0,"quoted_revenue":4000.0,"recognition_rate_per_hour_snapshot":100.0,"scope_id":"scope-a"},{"apparatus_id":"app-b-001","apparatus_name":"Transformer Bay 1","quoted_hours":25.0,"quoted_revenue":2500.0,"recognition_rate_per_hour_snapshot":100.0,"scope_id":"scope-b"},{"apparatus_id":"app-b-002","apparatus_name":"Transformer Bay 2","quoted_hours":15.0,"quoted_revenue":1500.0,"recognition_rate_per_hour_snapshot":100.0,"scope_id":"scope-b"}]
+sha256_digest=1859896bcbac1220d21266b19603a12eae710a6e9fbf553c132b7028e417026d

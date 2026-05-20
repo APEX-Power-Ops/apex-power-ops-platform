@@ -1,0 +1,41 @@
+{
+  "action_type": "persist_project_import_contract_support",
+  "apparatus_financial_row_count": 0,
+  "audit_event_id": null,
+  "classification": "transaction_rolled_back_apparatus_financial_validation_failed",
+  "current_candidate_match": true,
+  "entity_id": "project-import-contract-support-dd18f8d19d73a01455c296e3",
+  "entity_type": "pm_project_import_contract_support",
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "detail": {
+      "database_state_after_response": "completely_rolled_back",
+      "failed_write_group": "apparatus_financials"
+    },
+    "message": "An apparatus financial row failed internal consistency validation and the transaction was rolled back."
+  },
+  "generated_at": "2026-05-20T21:15:00Z",
+  "http_status": 422,
+  "idempotent_hit": false,
+  "mutation_id": "mut-2e2f58a8-8f9f-47b9-9cff-5e3d9bcac3f4",
+  "mutation_status": "rolled_back",
+  "new_state": {
+    "apparatus_financial_row_count": 0,
+    "audit_event_id": null,
+    "candidate_id": "pm-import-candidate-miner-temp-power",
+    "classification": "transaction_rolled_back_apparatus_financial_validation_failed",
+    "counts_match": true,
+    "current_candidate_match": true,
+    "mutation_id": "mut-2e2f58a8-8f9f-47b9-9cff-5e3d9bcac3f4",
+    "project_id": "pm-import-project-miner-temp-power",
+    "route": "/api/v1/mutations/project-import-contract-support",
+    "scope_labor_detail_row_count": 0,
+    "snapshot_kind": "miner_temp_power_contract_support",
+    "source_fingerprint": "miner-temp-power-source-fingerprint-2026-05-20",
+    "status_route": "/api/v1/reads/project-import-contract-support-status"
+  },
+  "partial_commit": false,
+  "project_contract_snapshot_id": null,
+  "scope_labor_detail_row_count": 0,
+  "status": "rejected"
+}

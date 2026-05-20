@@ -1,0 +1,516 @@
+{
+  "baseline_digest": "1859896bcbac1220d21266b19603a12eae710a6e9fbf553c132b7028e417026d",
+  "business_field_change_cases": [
+    {
+      "case": "scope_pool_amount_changed",
+      "change": "scope_labor_details[0].scope_pool_amount changed from 4000.0 to 4001.0",
+      "digest": "918a184f6f8d2a855f8e5b20620c8040c6c20dc35e3037b5a74ee62c27ffa2a8",
+      "input_payload": {
+        "apparatus_financials": [
+          {
+            "apparatus_id": "app-b-002",
+            "apparatus_name": "Transformer Bay 2",
+            "quoted_hours": 15.0,
+            "quoted_revenue": 1500.0,
+            "recognition_rate_per_hour_snapshot": 100.0,
+            "scope_id": "scope-b"
+          },
+          {
+            "apparatus_id": "app-a-002",
+            "apparatus_name": "Main Switchgear Cell 2",
+            "quoted_hours": 40.0,
+            "quoted_revenue": 4000.0,
+            "recognition_rate_per_hour_snapshot": 100.0,
+            "scope_id": "scope-a"
+          },
+          {
+            "apparatus_id": "app-b-001",
+            "apparatus_name": "Transformer Bay 1",
+            "quoted_hours": 25.0,
+            "quoted_revenue": 2500.0,
+            "recognition_rate_per_hour_snapshot": 100.0,
+            "scope_id": "scope-b"
+          },
+          {
+            "apparatus_id": "app-a-001",
+            "apparatus_name": "Main Switchgear Cell 1",
+            "quoted_hours": 20.0,
+            "quoted_revenue": 2000.0,
+            "recognition_rate_per_hour_snapshot": 100.0,
+            "scope_id": "scope-a"
+          }
+        ],
+        "candidate_id": "pm-import-candidate-miner-temp-power",
+        "contract_value": 10000.0,
+        "mutation_id": "mut-6147fd7f-62f7-47b8-86a6-83c55114f611",
+        "project_id": "pm-import-project-miner-temp-power",
+        "scope_labor_details": [
+          {
+            "quoted_hours": 40.0,
+            "scope_id": "scope-b",
+            "scope_name": "Transformer Testing",
+            "scope_pool_amount": 4001.0
+          },
+          {
+            "quoted_hours": 60.0,
+            "scope_id": "scope-a",
+            "scope_name": "Switchgear Testing",
+            "scope_pool_amount": 6000.0
+          }
+        ],
+        "snapshot_kind": "miner_temp_power_contract_support",
+        "source_fingerprint": "miner-temp-power-source-fingerprint-2026-05-20",
+        "total_quoted_hours": 100.0
+      },
+      "matches_baseline_digest": false
+    },
+    {
+      "case": "apparatus_quoted_revenue_changed",
+      "change": "apparatus_financials[0].quoted_revenue changed from 1500.0 to 1501.0",
+      "digest": "de2519a8e70b67fc774256cc38dd2919fd4f71453d5f11806f96e96f0bd257da",
+      "input_payload": {
+        "apparatus_financials": [
+          {
+            "apparatus_id": "app-b-002",
+            "apparatus_name": "Transformer Bay 2",
+            "quoted_hours": 15.0,
+            "quoted_revenue": 1501.0,
+            "recognition_rate_per_hour_snapshot": 100.0,
+            "scope_id": "scope-b"
+          },
+          {
+            "apparatus_id": "app-a-002",
+            "apparatus_name": "Main Switchgear Cell 2",
+            "quoted_hours": 40.0,
+            "quoted_revenue": 4000.0,
+            "recognition_rate_per_hour_snapshot": 100.0,
+            "scope_id": "scope-a"
+          },
+          {
+            "apparatus_id": "app-b-001",
+            "apparatus_name": "Transformer Bay 1",
+            "quoted_hours": 25.0,
+            "quoted_revenue": 2500.0,
+            "recognition_rate_per_hour_snapshot": 100.0,
+            "scope_id": "scope-b"
+          },
+          {
+            "apparatus_id": "app-a-001",
+            "apparatus_name": "Main Switchgear Cell 1",
+            "quoted_hours": 20.0,
+            "quoted_revenue": 2000.0,
+            "recognition_rate_per_hour_snapshot": 100.0,
+            "scope_id": "scope-a"
+          }
+        ],
+        "candidate_id": "pm-import-candidate-miner-temp-power",
+        "contract_value": 10000.0,
+        "mutation_id": "mut-6147fd7f-62f7-47b8-86a6-83c55114f611",
+        "project_id": "pm-import-project-miner-temp-power",
+        "scope_labor_details": [
+          {
+            "quoted_hours": 40.0,
+            "scope_id": "scope-b",
+            "scope_name": "Transformer Testing",
+            "scope_pool_amount": 4000.0
+          },
+          {
+            "quoted_hours": 60.0,
+            "scope_id": "scope-a",
+            "scope_name": "Switchgear Testing",
+            "scope_pool_amount": 6000.0
+          }
+        ],
+        "snapshot_kind": "miner_temp_power_contract_support",
+        "source_fingerprint": "miner-temp-power-source-fingerprint-2026-05-20",
+        "total_quoted_hours": 100.0
+      },
+      "matches_baseline_digest": false
+    },
+    {
+      "case": "apparatus_row_added",
+      "change": "one additional apparatus_financials row appended for scope-b",
+      "digest": "430511ee1803ca270de4fbd66dd806ff7e5508ac0f37c1ce834a1af636ffc08f",
+      "input_payload": {
+        "apparatus_financials": [
+          {
+            "apparatus_id": "app-b-002",
+            "apparatus_name": "Transformer Bay 2",
+            "quoted_hours": 15.0,
+            "quoted_revenue": 1500.0,
+            "recognition_rate_per_hour_snapshot": 100.0,
+            "scope_id": "scope-b"
+          },
+          {
+            "apparatus_id": "app-a-002",
+            "apparatus_name": "Main Switchgear Cell 2",
+            "quoted_hours": 40.0,
+            "quoted_revenue": 4000.0,
+            "recognition_rate_per_hour_snapshot": 100.0,
+            "scope_id": "scope-a"
+          },
+          {
+            "apparatus_id": "app-b-001",
+            "apparatus_name": "Transformer Bay 1",
+            "quoted_hours": 25.0,
+            "quoted_revenue": 2500.0,
+            "recognition_rate_per_hour_snapshot": 100.0,
+            "scope_id": "scope-b"
+          },
+          {
+            "apparatus_id": "app-a-001",
+            "apparatus_name": "Main Switchgear Cell 1",
+            "quoted_hours": 20.0,
+            "quoted_revenue": 2000.0,
+            "recognition_rate_per_hour_snapshot": 100.0,
+            "scope_id": "scope-a"
+          },
+          {
+            "apparatus_id": "app-b-003",
+            "apparatus_name": "Transformer Bay 3",
+            "quoted_hours": 5.0,
+            "quoted_revenue": 500.0,
+            "recognition_rate_per_hour_snapshot": 100.0,
+            "scope_id": "scope-b"
+          }
+        ],
+        "candidate_id": "pm-import-candidate-miner-temp-power",
+        "contract_value": 10000.0,
+        "mutation_id": "mut-6147fd7f-62f7-47b8-86a6-83c55114f611",
+        "project_id": "pm-import-project-miner-temp-power",
+        "scope_labor_details": [
+          {
+            "quoted_hours": 40.0,
+            "scope_id": "scope-b",
+            "scope_name": "Transformer Testing",
+            "scope_pool_amount": 4000.0
+          },
+          {
+            "quoted_hours": 60.0,
+            "scope_id": "scope-a",
+            "scope_name": "Switchgear Testing",
+            "scope_pool_amount": 6000.0
+          }
+        ],
+        "snapshot_kind": "miner_temp_power_contract_support",
+        "source_fingerprint": "miner-temp-power-source-fingerprint-2026-05-20",
+        "total_quoted_hours": 100.0
+      },
+      "matches_baseline_digest": false
+    },
+    {
+      "case": "apparatus_row_removed",
+      "change": "first apparatus_financials row removed from the business payload",
+      "digest": "2d961a22e433f5232df375dc1314a412bed32cd6642e9c820a5a70abf67f98dc",
+      "input_payload": {
+        "apparatus_financials": [
+          {
+            "apparatus_id": "app-a-002",
+            "apparatus_name": "Main Switchgear Cell 2",
+            "quoted_hours": 40.0,
+            "quoted_revenue": 4000.0,
+            "recognition_rate_per_hour_snapshot": 100.0,
+            "scope_id": "scope-a"
+          },
+          {
+            "apparatus_id": "app-b-001",
+            "apparatus_name": "Transformer Bay 1",
+            "quoted_hours": 25.0,
+            "quoted_revenue": 2500.0,
+            "recognition_rate_per_hour_snapshot": 100.0,
+            "scope_id": "scope-b"
+          },
+          {
+            "apparatus_id": "app-a-001",
+            "apparatus_name": "Main Switchgear Cell 1",
+            "quoted_hours": 20.0,
+            "quoted_revenue": 2000.0,
+            "recognition_rate_per_hour_snapshot": 100.0,
+            "scope_id": "scope-a"
+          }
+        ],
+        "candidate_id": "pm-import-candidate-miner-temp-power",
+        "contract_value": 10000.0,
+        "mutation_id": "mut-6147fd7f-62f7-47b8-86a6-83c55114f611",
+        "project_id": "pm-import-project-miner-temp-power",
+        "scope_labor_details": [
+          {
+            "quoted_hours": 40.0,
+            "scope_id": "scope-b",
+            "scope_name": "Transformer Testing",
+            "scope_pool_amount": 4000.0
+          },
+          {
+            "quoted_hours": 60.0,
+            "scope_id": "scope-a",
+            "scope_name": "Switchgear Testing",
+            "scope_pool_amount": 6000.0
+          }
+        ],
+        "snapshot_kind": "miner_temp_power_contract_support",
+        "source_fingerprint": "miner-temp-power-source-fingerprint-2026-05-20",
+        "total_quoted_hours": 100.0
+      },
+      "matches_baseline_digest": false
+    }
+  ],
+  "canonical_sort_orders": {
+    "apparatus_financials": [
+      "scope_id ascending",
+      "apparatus_id ascending",
+      "apparatus_name ascending"
+    ],
+    "scope_labor_details": [
+      "scope_id ascending",
+      "scope_name ascending"
+    ]
+  },
+  "reorder_stability_cases": [
+    {
+      "canonical_apparatus_order": [
+        "scope-a|app-a-001|Main Switchgear Cell 1",
+        "scope-a|app-a-002|Main Switchgear Cell 2",
+        "scope-b|app-b-001|Transformer Bay 1",
+        "scope-b|app-b-002|Transformer Bay 2"
+      ],
+      "canonical_scope_order": [
+        "scope-a|Switchgear Testing",
+        "scope-b|Transformer Testing"
+      ],
+      "case": "input_fixture_order",
+      "digest": "1859896bcbac1220d21266b19603a12eae710a6e9fbf553c132b7028e417026d",
+      "input_apparatus_order": [
+        "scope-b|app-b-002|Transformer Bay 2",
+        "scope-a|app-a-002|Main Switchgear Cell 2",
+        "scope-b|app-b-001|Transformer Bay 1",
+        "scope-a|app-a-001|Main Switchgear Cell 1"
+      ],
+      "input_payload": {
+        "apparatus_financials": [
+          {
+            "apparatus_id": "app-b-002",
+            "apparatus_name": "Transformer Bay 2",
+            "quoted_hours": 15.0,
+            "quoted_revenue": 1500.0,
+            "recognition_rate_per_hour_snapshot": 100.0,
+            "scope_id": "scope-b"
+          },
+          {
+            "apparatus_id": "app-a-002",
+            "apparatus_name": "Main Switchgear Cell 2",
+            "quoted_hours": 40.0,
+            "quoted_revenue": 4000.0,
+            "recognition_rate_per_hour_snapshot": 100.0,
+            "scope_id": "scope-a"
+          },
+          {
+            "apparatus_id": "app-b-001",
+            "apparatus_name": "Transformer Bay 1",
+            "quoted_hours": 25.0,
+            "quoted_revenue": 2500.0,
+            "recognition_rate_per_hour_snapshot": 100.0,
+            "scope_id": "scope-b"
+          },
+          {
+            "apparatus_id": "app-a-001",
+            "apparatus_name": "Main Switchgear Cell 1",
+            "quoted_hours": 20.0,
+            "quoted_revenue": 2000.0,
+            "recognition_rate_per_hour_snapshot": 100.0,
+            "scope_id": "scope-a"
+          }
+        ],
+        "candidate_id": "pm-import-candidate-miner-temp-power",
+        "contract_value": 10000.0,
+        "mutation_id": "mut-6147fd7f-62f7-47b8-86a6-83c55114f611",
+        "project_id": "pm-import-project-miner-temp-power",
+        "scope_labor_details": [
+          {
+            "quoted_hours": 40.0,
+            "scope_id": "scope-b",
+            "scope_name": "Transformer Testing",
+            "scope_pool_amount": 4000.0
+          },
+          {
+            "quoted_hours": 60.0,
+            "scope_id": "scope-a",
+            "scope_name": "Switchgear Testing",
+            "scope_pool_amount": 6000.0
+          }
+        ],
+        "snapshot_kind": "miner_temp_power_contract_support",
+        "source_fingerprint": "miner-temp-power-source-fingerprint-2026-05-20",
+        "total_quoted_hours": 100.0
+      },
+      "input_scope_order": [
+        "scope-b|Transformer Testing",
+        "scope-a|Switchgear Testing"
+      ],
+      "matches_baseline_digest": true
+    },
+    {
+      "canonical_apparatus_order": [
+        "scope-a|app-a-001|Main Switchgear Cell 1",
+        "scope-a|app-a-002|Main Switchgear Cell 2",
+        "scope-b|app-b-001|Transformer Bay 1",
+        "scope-b|app-b-002|Transformer Bay 2"
+      ],
+      "canonical_scope_order": [
+        "scope-a|Switchgear Testing",
+        "scope-b|Transformer Testing"
+      ],
+      "case": "reversed_input_order",
+      "digest": "1859896bcbac1220d21266b19603a12eae710a6e9fbf553c132b7028e417026d",
+      "input_apparatus_order": [
+        "scope-a|app-a-001|Main Switchgear Cell 1",
+        "scope-b|app-b-001|Transformer Bay 1",
+        "scope-a|app-a-002|Main Switchgear Cell 2",
+        "scope-b|app-b-002|Transformer Bay 2"
+      ],
+      "input_payload": {
+        "apparatus_financials": [
+          {
+            "apparatus_id": "app-a-001",
+            "apparatus_name": "Main Switchgear Cell 1",
+            "quoted_hours": 20.0,
+            "quoted_revenue": 2000.0,
+            "recognition_rate_per_hour_snapshot": 100.0,
+            "scope_id": "scope-a"
+          },
+          {
+            "apparatus_id": "app-b-001",
+            "apparatus_name": "Transformer Bay 1",
+            "quoted_hours": 25.0,
+            "quoted_revenue": 2500.0,
+            "recognition_rate_per_hour_snapshot": 100.0,
+            "scope_id": "scope-b"
+          },
+          {
+            "apparatus_id": "app-a-002",
+            "apparatus_name": "Main Switchgear Cell 2",
+            "quoted_hours": 40.0,
+            "quoted_revenue": 4000.0,
+            "recognition_rate_per_hour_snapshot": 100.0,
+            "scope_id": "scope-a"
+          },
+          {
+            "apparatus_id": "app-b-002",
+            "apparatus_name": "Transformer Bay 2",
+            "quoted_hours": 15.0,
+            "quoted_revenue": 1500.0,
+            "recognition_rate_per_hour_snapshot": 100.0,
+            "scope_id": "scope-b"
+          }
+        ],
+        "candidate_id": "pm-import-candidate-miner-temp-power",
+        "contract_value": 10000.0,
+        "mutation_id": "mut-6147fd7f-62f7-47b8-86a6-83c55114f611",
+        "project_id": "pm-import-project-miner-temp-power",
+        "scope_labor_details": [
+          {
+            "quoted_hours": 60.0,
+            "scope_id": "scope-a",
+            "scope_name": "Switchgear Testing",
+            "scope_pool_amount": 6000.0
+          },
+          {
+            "quoted_hours": 40.0,
+            "scope_id": "scope-b",
+            "scope_name": "Transformer Testing",
+            "scope_pool_amount": 4000.0
+          }
+        ],
+        "snapshot_kind": "miner_temp_power_contract_support",
+        "source_fingerprint": "miner-temp-power-source-fingerprint-2026-05-20",
+        "total_quoted_hours": 100.0
+      },
+      "input_scope_order": [
+        "scope-a|Switchgear Testing",
+        "scope-b|Transformer Testing"
+      ],
+      "matches_baseline_digest": true
+    },
+    {
+      "canonical_apparatus_order": [
+        "scope-a|app-a-001|Main Switchgear Cell 1",
+        "scope-a|app-a-002|Main Switchgear Cell 2",
+        "scope-b|app-b-001|Transformer Bay 1",
+        "scope-b|app-b-002|Transformer Bay 2"
+      ],
+      "canonical_scope_order": [
+        "scope-a|Switchgear Testing",
+        "scope-b|Transformer Testing"
+      ],
+      "case": "canonical_sorted_order",
+      "digest": "1859896bcbac1220d21266b19603a12eae710a6e9fbf553c132b7028e417026d",
+      "input_apparatus_order": [
+        "scope-a|app-a-001|Main Switchgear Cell 1",
+        "scope-a|app-a-002|Main Switchgear Cell 2",
+        "scope-b|app-b-001|Transformer Bay 1",
+        "scope-b|app-b-002|Transformer Bay 2"
+      ],
+      "input_payload": {
+        "apparatus_financials": [
+          {
+            "apparatus_id": "app-a-001",
+            "apparatus_name": "Main Switchgear Cell 1",
+            "quoted_hours": 20.0,
+            "quoted_revenue": 2000.0,
+            "recognition_rate_per_hour_snapshot": 100.0,
+            "scope_id": "scope-a"
+          },
+          {
+            "apparatus_id": "app-a-002",
+            "apparatus_name": "Main Switchgear Cell 2",
+            "quoted_hours": 40.0,
+            "quoted_revenue": 4000.0,
+            "recognition_rate_per_hour_snapshot": 100.0,
+            "scope_id": "scope-a"
+          },
+          {
+            "apparatus_id": "app-b-001",
+            "apparatus_name": "Transformer Bay 1",
+            "quoted_hours": 25.0,
+            "quoted_revenue": 2500.0,
+            "recognition_rate_per_hour_snapshot": 100.0,
+            "scope_id": "scope-b"
+          },
+          {
+            "apparatus_id": "app-b-002",
+            "apparatus_name": "Transformer Bay 2",
+            "quoted_hours": 15.0,
+            "quoted_revenue": 1500.0,
+            "recognition_rate_per_hour_snapshot": 100.0,
+            "scope_id": "scope-b"
+          }
+        ],
+        "candidate_id": "pm-import-candidate-miner-temp-power",
+        "contract_value": 10000.0,
+        "mutation_id": "mut-6147fd7f-62f7-47b8-86a6-83c55114f611",
+        "project_id": "pm-import-project-miner-temp-power",
+        "scope_labor_details": [
+          {
+            "quoted_hours": 60.0,
+            "scope_id": "scope-a",
+            "scope_name": "Switchgear Testing",
+            "scope_pool_amount": 6000.0
+          },
+          {
+            "quoted_hours": 40.0,
+            "scope_id": "scope-b",
+            "scope_name": "Transformer Testing",
+            "scope_pool_amount": 4000.0
+          }
+        ],
+        "snapshot_kind": "miner_temp_power_contract_support",
+        "source_fingerprint": "miner-temp-power-source-fingerprint-2026-05-20",
+        "total_quoted_hours": 100.0
+      },
+      "input_scope_order": [
+        "scope-a|Switchgear Testing",
+        "scope-b|Transformer Testing"
+      ],
+      "matches_baseline_digest": true
+    }
+  ]
+}

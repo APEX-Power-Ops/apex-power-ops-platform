@@ -1,0 +1,17 @@
+{
+  "apparatus_financial_row_count": 4,
+  "candidate_id": "pm-import-candidate-miner-temp-power-prior",
+  "classification": "stale_candidate",
+  "counts_match": true,
+  "current_candidate_match": false,
+  "generated_at": "2026-05-20T21:15:00Z",
+  "http_status": 200,
+  "latest_project_contract_snapshot_id": "pcs-1b4f9d69b6d1",
+  "project_id": "pm-import-project-miner-temp-power",
+  "record_count": 1,
+  "route": "/api/v1/reads/project-import-contract-support-status",
+  "scope_labor_detail_row_count": 2,
+  "source_fingerprint": "miner-temp-power-source-fingerprint-2026-05-19",
+  "status": "stale_candidate",
+  "storage_available": true
+}

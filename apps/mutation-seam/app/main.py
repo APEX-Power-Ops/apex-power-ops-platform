@@ -19,6 +19,7 @@ from app.routers import (
     issues,
     production_tracking,
     project_import_approvals,
+    project_import_contract_support,
     project_imports,
     project_import_task_plans,
     reads,
@@ -59,6 +60,7 @@ app.include_router(hours.router)
 app.include_router(issues.router)
 app.include_router(production_tracking.router)
 app.include_router(project_import_approvals.router)
+app.include_router(project_import_contract_support.router)
 app.include_router(project_imports.router)
 app.include_router(project_import_task_plans.router)
 app.include_router(temp_power_actuals_capture_reviews.router)

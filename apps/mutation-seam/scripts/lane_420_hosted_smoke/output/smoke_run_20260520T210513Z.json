@@ -1,0 +1,248 @@
+{
+  "lane": "PM Lane 420",
+  "smoke_kind": "hosted_dual_route_smoke_readiness_no_live",
+  "base_url": "https://mutation-seam.apexpowerops.com",
+  "started_at": "2026-05-20T21:05:13.699316+00:00",
+  "finished_at": "2026-05-20T21:05:16.032445+00:00",
+  "overall_status": "blocked",
+  "phase_0": {
+    "base_url": "https://mutation-seam.apexpowerops.com",
+    "dry_run_flag_observation": "unknown",
+    "render_env_inspection_available": false,
+    "db_row_count_access_available": false,
+    "token_sources": {
+      "pm": "LANE_420_PM_TOKEN",
+      "operations": "LANE_420_OPERATIONS_TOKEN",
+      "task_lead": "LANE_420_TASK_LEAD_TOKEN",
+      "field_tech": "LANE_420_FIELD_TECH_TOKEN"
+    },
+    "route_registration_poll": [
+      {
+        "attempt": 1,
+        "status": 200,
+        "missing_paths": [
+          "/api/v1/mutations/project-import-contract-support",
+          "/api/v1/reads/project-import-contract-support-status"
+        ]
+      },
+      {
+        "attempt": 2,
+        "status": 200,
+        "missing_paths": [
+          "/api/v1/mutations/project-import-contract-support",
+          "/api/v1/reads/project-import-contract-support-status"
+        ]
+      }
+    ]
+  },
+  "request_context": {
+    "write_route": "https://mutation-seam.apexpowerops.com/api/v1/mutations/project-import-contract-support",
+    "read_route": "https://mutation-seam.apexpowerops.com/api/v1/reads/project-import-contract-support-status",
+    "auth_headers": {
+      "pm": "Bearer <redacted>",
+      "operations": "Bearer <redacted>",
+      "task_lead": "Bearer <redacted>",
+      "field_tech": "Bearer <redacted>"
+    }
+  },
+  "before_row_counts": {
+    "available": false,
+    "counts": null,
+    "reason": "LANE_420_DB_DSN not supplied; production financial-table row counts cannot be captured from this workspace."
+  },
+  "after_row_counts": {
+    "available": false,
+    "counts": null,
+    "reason": "LANE_420_DB_DSN not supplied; after-count verification is unavailable."
+  },
+  "scenario_results": [
+    {
+      "name": "production_env_flag_verification",
+      "expected": "Production LANE_412_DRY_RUN_ENABLED is not set.",
+      "actual": "Hosted environment inspection is unavailable from this workspace; flag state remains unknown.",
+      "passed": false,
+      "status_code": null,
+      "response_match": null,
+      "blocked": true,
+      "skipped": false,
+      "details": null
+    },
+    {
+      "name": "route_registration_poll",
+      "expected": "OpenAPI advertises both Lane 420 routes before smoke scenarios run.",
+      "actual": "Hosted OpenAPI still does not advertise both contract-support routes after polling.",
+      "passed": false,
+      "status_code": null,
+      "response_match": null,
+      "blocked": true,
+      "skipped": false,
+      "details": {
+        "poll_history": [
+          {
+            "attempt": 1,
+            "status": 200,
+            "missing_paths": [
+              "/api/v1/mutations/project-import-contract-support",
+              "/api/v1/reads/project-import-contract-support-status"
+            ]
+          },
+          {
+            "attempt": 2,
+            "status": 200,
+            "missing_paths": [
+              "/api/v1/mutations/project-import-contract-support",
+              "/api/v1/reads/project-import-contract-support-status"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "write_route_reachability_no_auth",
+      "expected": "POST without auth returns 401.",
+      "actual": "POST without auth returned 404.",
+      "passed": false,
+      "status_code": 404,
+      "response_match": null,
+      "blocked": true,
+      "skipped": false,
+      "details": {
+        "response_text": "{\"detail\":\"Not Found\"}"
+      }
+    },
+    {
+      "name": "readback_route_reachability_no_auth",
+      "expected": "GET without auth returns 401.",
+      "actual": "GET without auth returned 404.",
+      "passed": false,
+      "status_code": 404,
+      "response_match": null,
+      "blocked": true,
+      "skipped": false,
+      "details": {
+        "response_text": "{\"detail\":\"Not Found\"}"
+      }
+    },
+    {
+      "name": "write_route_pm_success",
+      "expected": "POST with PM token returns 201 and matches response_success_first_write.json byte-identically.",
+      "actual": "Scenario skipped because the hosted route pair is not deployed on the target host.",
+      "passed": false,
+      "status_code": null,
+      "response_match": null,
+      "blocked": true,
+      "skipped": true,
+      "details": null
+    },
+    {
+      "name": "write_route_pm_replay",
+      "expected": "Replay POST with PM token returns 200 and matches response_success_idempotent_hit.json byte-identically.",
+      "actual": "Scenario skipped because the hosted route pair is not deployed on the target host.",
+      "passed": false,
+      "status_code": null,
+      "response_match": null,
+      "blocked": true,
+      "skipped": true,
+      "details": null
+    },
+    {
+      "name": "write_route_pm_conflict",
+      "expected": "Conflict POST with PM token returns 409 and matches response_conflict_duplicate_business_payload.json byte-identically.",
+      "actual": "Scenario skipped because the hosted route pair is not deployed on the target host.",
+      "passed": false,
+      "status_code": null,
+      "response_match": null,
+      "blocked": true,
+      "skipped": true,
+      "details": null
+    },
+    {
+      "name": "write_route_operations_success",
+      "expected": "Fresh POST with Operations token returns 201 to prove equal write authority.",
+      "actual": "Scenario skipped because the hosted route pair is not deployed on the target host.",
+      "passed": false,
+      "status_code": null,
+      "response_match": null,
+      "blocked": true,
+      "skipped": true,
+      "details": null
+    },
+    {
+      "name": "write_route_task_lead_rejected",
+      "expected": "POST with task_lead token returns 403.",
+      "actual": "Scenario skipped because the hosted route pair is not deployed on the target host.",
+      "passed": false,
+      "status_code": null,
+      "response_match": null,
+      "blocked": true,
+      "skipped": true,
+      "details": null
+    },
+    {
+      "name": "write_route_field_tech_rejected",
+      "expected": "POST with field_tech token returns 403.",
+      "actual": "Scenario skipped because the hosted route pair is not deployed on the target host.",
+      "passed": false,
+      "status_code": null,
+      "response_match": null,
+      "blocked": true,
+      "skipped": true,
+      "details": null
+    },
+    {
+      "name": "readback_route_pm",
+      "expected": "GET with PM token returns 200 and matches the appropriate Lane 415 readback fixture byte-identically.",
+      "actual": "Scenario skipped because the hosted route pair is not deployed on the target host.",
+      "passed": false,
+      "status_code": null,
+      "response_match": null,
+      "blocked": true,
+      "skipped": true,
+      "details": null
+    },
+    {
+      "name": "readback_route_operations",
+      "expected": "GET with Operations token returns 200 and matches the appropriate Lane 415 readback fixture byte-identically.",
+      "actual": "Scenario skipped because the hosted route pair is not deployed on the target host.",
+      "passed": false,
+      "status_code": null,
+      "response_match": null,
+      "blocked": true,
+      "skipped": true,
+      "details": null
+    },
+    {
+      "name": "readback_route_task_lead_rejected",
+      "expected": "GET with task_lead token returns 403.",
+      "actual": "Scenario skipped because the hosted route pair is not deployed on the target host.",
+      "passed": false,
+      "status_code": null,
+      "response_match": null,
+      "blocked": true,
+      "skipped": true,
+      "details": null
+    },
+    {
+      "name": "readback_route_field_tech_rejected",
+      "expected": "GET with field_tech token returns 403.",
+      "actual": "Scenario skipped because the hosted route pair is not deployed on the target host.",
+      "passed": false,
+      "status_code": null,
+      "response_match": null,
+      "blocked": true,
+      "skipped": true,
+      "details": null
+    },
+    {
+      "name": "db_row_count_delta_verification",
+      "expected": "All four financial-table row-count deltas remain zero before and after smoke.",
+      "actual": "Production DB DSN is unavailable, so before/after row counts could not be verified from this workspace.",
+      "passed": false,
+      "status_code": null,
+      "response_match": null,
+      "blocked": true,
+      "skipped": false,
+      "details": null
+    }
+  ]
+}
