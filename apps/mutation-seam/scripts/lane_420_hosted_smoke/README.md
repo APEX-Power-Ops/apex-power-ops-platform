@@ -37,7 +37,7 @@ The hosted mutation-seam auth layer accepts base64-encoded JSON bearer payloads,
 $env:LANE_420_PM_TOKEN = 'Bearer ' + [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes('{"actor_id":"pm-001","actor_role":"pm","project_scope":["proj-001"]}'))
 $env:LANE_420_OPERATIONS_TOKEN = 'Bearer ' + [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes('{"actor_id":"operations-001","actor_role":"operations","project_scope":["proj-001"]}'))
 $env:LANE_420_TASK_LEAD_TOKEN = 'Bearer ' + [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes('{"actor_id":"task-lead-001","actor_role":"task_lead","project_scope":["proj-001"]}'))
-$env:LANE_420_FIELD_TECH_TOKEN = 'Bearer ' + [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes('{"actor_id":"tech-001","actor_role":"field_tech","project_scope":["proj-001"]}'))
+$env:LANE_420_FIELD_TECH_TOKEN = 'Bearer ' + [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes('{"actor_id":"field-tech-002","actor_role":"field_tech","project_scope":["proj-001"]}'))
 ```
 
 ## Run
