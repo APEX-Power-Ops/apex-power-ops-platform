@@ -1,0 +1,66 @@
+{
+  "artifact_type": "pm_lane_421_atomic_transaction_probe",
+  "lane": 421,
+  "checked_at": "2026-05-21T01:11:02Z",
+  "probe_mode": "blocked_no_write_preflight",
+  "verification_surface": "supabase_sql_editor_manual_observation",
+  "anchor_inputs": {
+    "project_id": "pm-import-project-miner-temp-power",
+    "candidate_id": "pm-import-candidate-miner-temp-power",
+    "lane_415_digest": "1859896bcbac1220d21266b19603a12eae710a6e9fbf553c132b7028e417026d",
+    "apparatus_id": "pm-import-project-miner-temp-power-app-0001",
+    "task_id": "pm-import-project-miner-temp-power-task-0001",
+    "scope_id": null
+  },
+  "anchor_discovery": {
+    "seam_project_data_prefix_observed": true,
+    "seam_project_name": "Miner Temp Power",
+    "seam_project_location": "Santa Teresa, NM",
+    "apparatus_anchor_found": true,
+    "task_anchor_found": true,
+    "task_scope_id": null,
+    "public_projects_count": 1,
+    "public_scopes_count": 4,
+    "public_projects": [
+      {
+        "id": "33333333-0000-0000-0000-000000000001",
+        "project_number": "LASNAP16",
+        "project_name": "LASNAP Foods - Annual Maintenance Testing 2016",
+        "site_id": "22222222-0000-0000-0000-000000000001",
+        "client_id": "11111111-0000-0000-0000-000000000001"
+      }
+    ],
+    "public_scopes": [
+      {
+        "id": "44444444-0000-0000-0000-000000000001",
+        "project_id": "33333333-0000-0000-0000-000000000001",
+        "scope_number": "LASNAP16-01",
+        "scope_name": "Main Substation Testing"
+      },
+      {
+        "id": "44444444-0000-0000-0000-000000000002",
+        "project_id": "33333333-0000-0000-0000-000000000001",
+        "scope_number": "LASNAP16-02",
+        "scope_name": "Transformer Testing"
+      },
+      {
+        "id": "44444444-0000-0000-0000-000000000003",
+        "project_id": "33333333-0000-0000-0000-000000000001",
+        "scope_number": "LASNAP16-03",
+        "scope_name": "MCC Testing Building A"
+      },
+      {
+        "id": "44444444-0000-0000-0000-000000000004",
+        "project_id": "33333333-0000-0000-0000-000000000001",
+        "scope_number": "LASNAP16-04",
+        "scope_name": "MCC Testing Building B"
+      }
+    ]
+  },
+  "overall_status": "failed",
+  "failures": [
+    "Temp Power task anchor pm-import-project-miner-temp-power-task-0001 carries data->>'scope_id' = null.",
+    "Production canonical public.projects/public.scopes data contains only one LASNAP sample project and four LASNAP scopes; no Temp Power scope anchor exists in the UUID-backed public scope surface.",
+    "Rollback-only five-target atomic probe was not executed because no truthful Temp Power public.scopes.id anchor is available in production."
+  ]
+}

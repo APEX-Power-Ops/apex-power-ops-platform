@@ -1,0 +1,16 @@
+{
+  "http_status": 200,
+  "status": "ready",
+  "classification": "ready",
+  "route": "/api/v1/reads/project-import-contract-support-status",
+  "project_id": "pm-import-project-miner-temp-power",
+  "candidate_id": "pm-import-candidate-miner-temp-power",
+  "source_fingerprint": "miner-temp-power-source-fingerprint-2026-05-20",
+  "current_candidate_match": true,
+  "counts_match": true,
+  "record_count": 1,
+  "latest_project_contract_snapshot_id": "pcs-1b4f9d69b6d1",
+  "scope_labor_detail_row_count": 2,
+  "apparatus_financial_row_count": 4,
+  "storage_available": true
+}

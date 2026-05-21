@@ -1,0 +1,385 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-power-ops.local/mutation-seam/lane_501/intermediate_ingest_contract_v1.schema.json",
+  "title": "APEX seam.* Ingest Intermediate Contract v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "contract_version",
+    "source_provenance",
+    "project",
+    "scopes",
+    "apparatus",
+    "reconciliation"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "contract_version": {
+      "const": "v1"
+    },
+    "source_provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "extractor_version",
+        "workbook_path",
+        "workbook_sheets_used",
+        "extracted_at",
+        "source_format",
+        "source_sheet",
+        "scope_sheets",
+        "candidate_count"
+      ],
+      "properties": {
+        "extractor_version": {
+          "type": "string"
+        },
+        "workbook_path": {
+          "type": "string"
+        },
+        "workbook_sheets_used": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "extracted_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "source_format": {
+          "type": "string",
+          "enum": [
+            "flat_quote",
+            "scope_sheets"
+          ]
+        },
+        "source_sheet": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "scope_sheets": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "sld_pdf_path": {
+          "type": "string"
+        },
+        "topology_counts": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer"
+          }
+        },
+        "candidate_count": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "project": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "data"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^pm-import-project-[a-z0-9-]+$"
+        },
+        "name": {
+          "type": "string"
+        },
+        "data": {
+          "type": "object"
+        }
+      }
+    },
+    "scopes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "project_id",
+          "name",
+          "scope_type",
+          "total_hours",
+          "quoted_amount",
+          "multiplier",
+          "source_section",
+          "derivation_basis"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^pm-import-project-[a-z0-9-]+-scope-\\d{3}$"
+          },
+          "project_id": {
+            "type": "string",
+            "pattern": "^pm-import-project-[a-z0-9-]+$"
+          },
+          "name": {
+            "type": "string"
+          },
+          "scope_type": {
+            "type": "string",
+            "enum": [
+              "flat_quote_section_rollup"
+            ]
+          },
+          "total_hours": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "quoted_amount": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "multiplier": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "source_section": {
+            "type": [
+              "number",
+              "string",
+              "null"
+            ]
+          },
+          "derivation_basis": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "strategy",
+              "source_workpackage_id",
+              "source_candidate_workpackage_id",
+              "source_scope_sheet",
+              "source_drawing_refs",
+              "task_count",
+              "apparatus_count"
+            ],
+            "properties": {
+              "strategy": {
+                "type": "string"
+              },
+              "source_workpackage_id": {
+                "type": "string",
+                "pattern": "^pm-import-project-[a-z0-9-]+-wp-\\d{3}$"
+              },
+              "source_candidate_workpackage_id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "source_scope_sheet": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "source_drawing_refs": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "task_count": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "apparatus_count": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "apparatus": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "scope_id",
+          "match_status",
+          "match_confidence",
+          "matched_by",
+          "match_keys",
+          "existing_row_ref",
+          "extractor_candidate",
+          "source_traceability"
+        ],
+        "properties": {
+          "id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^pm-import-project-[a-z0-9-]+-app-\\d{4}$"
+          },
+          "scope_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^pm-import-project-[a-z0-9-]+-scope-\\d{3}$"
+          },
+          "match_status": {
+            "type": "string",
+            "enum": [
+              "matched",
+              "unmatched_extractor"
+            ]
+          },
+          "match_confidence": {
+            "type": "string",
+            "enum": [
+              "confident",
+              "probable",
+              "none"
+            ]
+          },
+          "matched_by": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "match_keys": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "existing_row_ref": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "extractor_candidate": {
+            "type": "object"
+          },
+          "source_traceability": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "workbook_path",
+              "source_sheet",
+              "source_format",
+              "scope_sheet",
+              "source_row",
+              "drawing_ref"
+            ],
+            "properties": {
+              "workbook_path": {
+                "type": "string"
+              },
+              "source_sheet": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "source_format": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "scope_sheet": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "source_row": {
+                "type": [
+                  "integer",
+                  "number",
+                  "null"
+                ]
+              },
+              "drawing_ref": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "reconciliation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "algorithm_version",
+        "report_content_sha256",
+        "outcome_counts"
+      ],
+      "properties": {
+        "algorithm_version": {
+          "type": "string"
+        },
+        "report_content_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "outcome_counts": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "matched",
+            "unmatched_existing",
+            "unmatched_extractor",
+            "conflicting"
+          ],
+          "properties": {
+            "matched": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "unmatched_existing": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "unmatched_extractor": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "conflicting": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        }
+      }
+    }
+  }
+}

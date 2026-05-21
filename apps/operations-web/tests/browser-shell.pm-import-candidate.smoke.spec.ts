@@ -169,7 +169,7 @@ test('pm import candidate route renders exception-first read-only review packet'
             review_action: "Treat Task_Entry as lineage source-of-truth evidence and rebuild or refresh the workbook's BuildAll/PopulateAllTasks macro output before relying on All_Tasks workflow columns.",
             formula_error_pattern: 'all_tasks_formula_cache_break',
             formula_error_pattern_detail:
-              'All_Tasks appears to be carrying a uniform cached formula failure across derived workflow columns while Task_Entry source rows remain present. This matches a stale or broken workbook build/cache state more than a missing planning-source shape.',
+              'All_Tasks appears to be carrying a uniform cached formula failure across derived workflow columns while Task_Entry source rows remain present. This matches a stale or broken workbook build/cache state more than a missing planning-source shape. Reference workbook example: Garney- Central Mesa Reuse Tracker #677562.xlsm currently loads without formula errors across 143 All_Tasks row(s) while retaining 6 Task_Entry row(s) (COMPLETED=99, NOT STARTED=34).',
             formula_error_vba_lineage_modules: ['BuildAll', 'PopulateAllTasks_FromSheets'],
             formula_error_row_count: 234,
             formula_error_cell_count: 3510,
@@ -270,6 +270,7 @@ test('pm import candidate route renders exception-first read-only review packet'
   await warningReview.getByRole('button', { name: 'warning' }).click()
   await expect(warningReview.locator('article', { hasText: /PROJECT_DATA_ENTRY_FORMULA_ERRORS/i })).toHaveCount(1)
   await expect(warningReview.getByText(/Pattern detail: All_Tasks appears to be carrying a uniform cached formula failure/i)).toBeVisible()
+  await expect(warningReview.getByText(/Reference workbook example: Garney- Central Mesa Reuse Tracker #677562\.xlsm currently loads without formula errors/i)).toBeVisible()
   await expect(warningReview.getByText(/Workbook lineage modules: BuildAll, PopulateAllTasks_FromSheets/i)).toBeVisible()
   await expect(warningReview.locator('article', { hasText: /MISSING_DESIGNATIONS/i })).toHaveCount(0)
   await warningReview.getByLabel('Warning code filter').selectOption('MISSING_DESIGNATIONS')

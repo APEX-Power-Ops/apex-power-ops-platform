@@ -162,6 +162,117 @@ def _write_tracker_formula_cache_break_workbook(path):
         workbook.close()
 
 
+def _write_clean_reference_tracker_workbook(path):
+    workbook = Workbook()
+    try:
+        project_form = workbook.active
+        project_form.title = "Project_Form"
+        project_form["B4"] = "Client:"
+        project_form["C4"] = "Garney"
+        project_form["B5"] = "Project:"
+        project_form["C5"] = "Central Mesa"
+        project_form["E4"] = "Scope_5"
+
+        task_entry = workbook.create_sheet("Task_Entry")
+        task_entry.append(
+            [
+                "Scope",
+                "NETA_Standard",
+                "Task_ID",
+                "Task",
+                "Apparatus",
+                "Designation",
+                "Drawing",
+                "Apparatus_Hourrs",
+            ]
+        )
+        task_entry.append(["Scope_5", "ATS", "5.1.1", "SWGR-GS", "Switchboard - Low Voltage", "SWGR-GS", "E01", 4])
+        task_entry.append(["Scope_5", "ATS", "5.1.2", "GEN-A", "Circuit Breaker LV - EO (LSIG)", "GEN-A", "E01", 5])
+
+        all_tasks = workbook.create_sheet("All_Tasks")
+        all_tasks.append(
+            [
+                "Scope",
+                "NETA_Standard",
+                "Task_ID",
+                "Task",
+                "Apparatus",
+                "Designation",
+                "Drawing",
+                "Date Due",
+                "Notes",
+                "Assessment",
+                "DATASHEET",
+                "DATE COMPLETED",
+                "NOTES2",
+                "% COMPLETION",
+                "TASK DELAYS",
+                "Apparatus Hours",
+                "Remaining Hours",
+                "ACTUAL HOURS",
+                "STATUS",
+                "AVAILABILITY",
+                "PRIORITY",
+                "Apparatus Category",
+            ]
+        )
+        all_tasks.append(
+            [
+                "Scope_5",
+                "ATS",
+                "5.1.1",
+                "SWGR-GS",
+                "Switchboard - Low Voltage",
+                "SWGR-GS",
+                "E01",
+                None,
+                None,
+                None,
+                False,
+                None,
+                None,
+                100,
+                None,
+                4,
+                0,
+                4,
+                "COMPLETED",
+                "READY",
+                "HIGH",
+                "Switchboard",
+            ]
+        )
+        all_tasks.append(
+            [
+                "Scope_5",
+                "ATS",
+                "5.1.2",
+                "GEN-A",
+                "Circuit Breaker LV - EO (LSIG)",
+                "GEN-A",
+                "E01",
+                None,
+                None,
+                None,
+                False,
+                None,
+                None,
+                0,
+                None,
+                5,
+                5,
+                0,
+                "NOT STARTED",
+                "READY",
+                "MEDIUM",
+                "CB Primary",
+            ]
+        )
+        workbook.save(path)
+    finally:
+        workbook.close()
+
+
 def test_load_project_import_candidate_groups_tasks_and_preserves_traceability(tmp_path):
     workbook_path = tmp_path / "estimator.xlsm"
     _write_candidate_estimator(workbook_path)
@@ -244,7 +355,7 @@ def test_project_import_candidate_flags_all_tasks_formula_cache_break(tmp_path, 
     reference_tracker_workbook = tmp_path / "reference-tracker.xlsm"
     _write_candidate_estimator(workbook_path)
     _write_tracker_formula_cache_break_workbook(data_entry_workbook)
-    _write_tracker_formula_cache_break_workbook(reference_tracker_workbook)
+    _write_clean_reference_tracker_workbook(reference_tracker_workbook)
 
     monkeypatch.setenv("APEX_PROJECT_DATA_ENTRY_WORKBOOK", str(data_entry_workbook))
     monkeypatch.setenv("APEX_REFERENCE_TRACKER_WORKBOOK", str(reference_tracker_workbook))
@@ -258,3 +369,10 @@ def test_project_import_candidate_flags_all_tasks_formula_cache_break(tmp_path, 
     assert "Task_Entry source rows are still present" in warning["message"]
     assert "BuildAll/PopulateAllTasks" in warning["review_action"]
     assert warning["formula_error_vba_lineage_modules"] == ["BuildAll", "PopulateAllTasks_FromSheets"]
+    assert "Reference workbook example: reference-tracker.xlsm currently loads without formula errors" in warning[
+        "formula_error_pattern_detail"
+    ]
+    assert "2 All_Tasks row(s)" in warning["formula_error_pattern_detail"]
+    assert "2 Task_Entry row(s)" in warning["formula_error_pattern_detail"]
+    warning_codes = {item["code"] for item in candidate["warnings"]}
+    assert "REFERENCE_TRACKER_FORMULA_ERRORS" not in warning_codes

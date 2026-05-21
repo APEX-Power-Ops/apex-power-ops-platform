@@ -1,0 +1,36 @@
+{
+  "packet_id": "2026-05-20-pm-lane-417",
+  "title": "PM Lane 417 - Project Miner Temp Power Lane 412 Dry-Run Readiness Export No-Live Packet",
+  "status": "complete",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_LANE_412_DRY_RUN_READINESS_EXPORT_NO_LIVE",
+  "selected_outcome": "IMPORT_CONTRACT_SUPPORT_DRY_RUN_READINESS_EXPORT_READY_NO_LIVE",
+  "predecessors": [
+    "2026-05-20-pm-lane-412",
+    "2026-05-20-pm-lane-412-revision-a",
+    "2026-05-20-pm-lane-412-revision-b",
+    "2026-05-20-pm-lane-413",
+    "2026-05-20-pm-lane-414",
+    "2026-05-20-pm-lane-415",
+    "2026-05-20-pm-lane-416"
+  ],
+  "inherits_lane_416_without_modification": true,
+  "implementation_path": "apps/mutation-seam/scripts/lane_417_readiness_export/generate_lane_417_readiness_export.py",
+  "bundle_path": "apps/mutation-seam/scripts/lane_417_readiness_export/readiness_export_bundle.json",
+  "entry_command": "python apps/mutation-seam/scripts/lane_417_readiness_export/generate_lane_417_readiness_export.py --verify-reproducible",
+  "source_artifact_paths": [
+    "apps/mutation-seam/scripts/lane_416_readiness_checkpoint/multi_scope_reconciliation.json",
+    "apps/mutation-seam/scripts/lane_416_readiness_checkpoint/rollback_expectation_matrix.json",
+    "apps/mutation-seam/scripts/lane_416_readiness_checkpoint/readiness_checklist.json"
+  ],
+  "gate_state": "ready",
+  "promotion_blockers": [],
+  "lane_412_family_baseline_digest": "1859896bcbac1220d21266b19603a12eae710a6e9fbf553c132b7028e417026d",
+  "validation_steps": [
+    "Run the Lane 417 entry command with --verify-reproducible and confirm the bundle rebuilds without byte drift",
+    "Inspect readiness_export_bundle.json and confirm gate_state=ready plus promotion_blockers=[] at top level",
+    "Inspect divergence_check and confirm each embedded payload matches its source artifact byte-for-byte",
+    "Inspect embedded_payload_sha256 and confirm per-payload digests are present",
+    "Confirm the legacy underscore revenue field token is absent from Lane 417 surfaces",
+    "Run git diff --check on Lane 417 surfaces and PROJECT_STATUS.md"
+  ]
+}

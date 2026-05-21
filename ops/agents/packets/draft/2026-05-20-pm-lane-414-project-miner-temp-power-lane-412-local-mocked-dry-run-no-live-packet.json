@@ -1,0 +1,53 @@
+{
+  "packet_id": "2026-05-20-pm-lane-414",
+  "title": "PM Lane 414 - Project Miner Temp Power Lane 412 Local Mocked Dry-Run No-Live Packet",
+  "status": "complete",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_LANE_412_LOCAL_MOCKED_DRY_RUN_NO_LIVE",
+  "selected_outcome": "IMPORT_CONTRACT_SUPPORT_LOCAL_MOCKED_DRY_RUN_READY_NO_LIVE",
+  "predecessors": [
+    "2026-05-20-pm-lane-412",
+    "2026-05-20-pm-lane-412-revision-a",
+    "2026-05-20-pm-lane-412-revision-b",
+    "2026-05-20-pm-lane-413"
+  ],
+  "phase_0_finding": {
+    "convention_exists": true,
+    "mutation_status_values": [
+      "accepted",
+      "idempotent_hit",
+      "conflict",
+      "rejected"
+    ],
+    "route_specific_state_examples": [
+      "accepted_for_review_storage",
+      "accepted_for_customer_delivery_event_storage",
+      "actuals_capture_review_recorded_current_match",
+      "customer_preview_delivery_blocked"
+    ],
+    "lane_414_inheritance": "Use repo-standard top-level status values while preserving Lane 413's planned names as top-level classification and mutation_status metadata for the Lane 412 family."
+  },
+  "implementation_path": "apps/mutation-seam/scripts/lane_414_local_mock/run_lane_414_local_mock.py",
+  "fixture_directory": "apps/mutation-seam/scripts/lane_414_local_mock",
+  "entry_command": "python apps/mutation-seam/scripts/lane_414_local_mock/run_lane_414_local_mock.py",
+  "fixtures": [
+    "success_first_write.json",
+    "success_idempotent_hit.json",
+    "conflict_duplicate_business_payload.json",
+    "rollback_scope_detail_conflict.json",
+    "rollback_apparatus_financial_validation_failed.json",
+    "rollback_audit_write_unavailable.json",
+    "rollback_idempotency_write_unavailable.json",
+    "readback_missing.json",
+    "readback_ready.json",
+    "readback_stale_candidate.json",
+    "readback_counts_mismatch.json",
+    "readback_unavailable.json"
+  ],
+  "trace_file": "apps/mutation-seam/scripts/lane_414_local_mock/local_trace_no_supabase_touch.txt",
+  "validation_steps": [
+    "Run the local mock entry command and confirm the trace file is written",
+    "Search Lane 414 surfaces for all 12 fixture names and for the Phase 0 naming conclusion",
+    "Confirm the legacy underscore revenue field token is absent from Lane 414 surfaces",
+    "Run git diff --check on Lane 414 surfaces and PROJECT_STATUS.md"
+  ]
+}

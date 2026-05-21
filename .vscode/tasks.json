@@ -314,8 +314,8 @@
       "command": "pwsh",
       "args": [
         "-NoProfile",
-        "-Command",
-        "$repoRoot = (Resolve-Path '${workspaceFolder}').Path; $lane = Join-Path $repoRoot 'apps/mutation-seam'; if (-not (Test-Path $lane)) { throw 'apps/mutation-seam is not present under the repo root for this bootstrap packet.' }; Set-Location $lane; & '${workspaceFolder}\\.venv\\Scripts\\python.exe' -m uvicorn app.main:app --host 127.0.0.1 --port 8000"
+        "-File",
+        "${workspaceFolder}\\tools\\shell\\run-mutation-seam-local.ps1"
       ],
       "isBackground": true,
       "problemMatcher": [],

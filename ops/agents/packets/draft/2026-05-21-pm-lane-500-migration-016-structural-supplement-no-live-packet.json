@@ -1,0 +1,65 @@
+{
+  "packet_id": "2026-05-21-pm-lane-500-migration-016-structural-supplement-no-live-packet",
+  "lane": "PM Lane 500",
+  "title": "Migration 016 Structural Supplement No-Live Packet",
+  "status": "complete",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_LANE_500_MIGRATION_016_STRUCTURAL_SUPPLEMENT_NO_LIVE",
+  "selected_outcome": "LANE_500_MIGRATION_016_APPLIED_SCOPE_ID_AND_OPERATIONAL_GRANTS_NO_LIVE",
+  "predecessor": "2026-05-21-pm-lane-500-project-onboarding-estimator-json-to-seam-structural-ingest-miner-temp-power-testing-no-live-financial-packet-blocked",
+  "phase_0": {
+    "lane_421_schema_correction_live": true,
+    "seam_scopes_exists_before_migration_016": true,
+    "apparatus_scope_id_column_exists_before_migration_016": false,
+    "apparatus_jsonb_scope_id_key_count_before_migration_016": 0,
+    "seam_projects_columns_before_migration_016": [
+      "id",
+      "created_at",
+      "updated_at",
+      "data"
+    ],
+    "seam_tasks_columns_before_migration_016": [
+      "id",
+      "created_at",
+      "updated_at",
+      "data",
+      "status",
+      "workpackage_id"
+    ],
+    "seam_apparatus_columns_before_migration_016": [
+      "id",
+      "created_at",
+      "updated_at",
+      "data"
+    ],
+    "seam_total_counts_before_migration_016": {
+      "projects": 1,
+      "tasks": 15,
+      "apparatus": 184,
+      "scopes": 0
+    },
+    "migration_015_tracked_in_supabase_migrations": true
+  },
+  "artifacts": {
+    "migration": "apps/mutation-seam/migrations/016_seam_apparatus_scope_id_and_operational_grants.sql",
+    "verification_runner": "apps/mutation-seam/scripts/lane_500_migration_016/run_migration_016_verification.py",
+    "verification_readme": "apps/mutation-seam/scripts/lane_500_migration_016/README.md",
+    "verification_output": "apps/mutation-seam/scripts/lane_500_migration_016/output/migration_016_verification_20260521T040158Z.json",
+    "packet": "docs/operations/APEX-PM-LANE-500-MIGRATION-016-STRUCTURAL-SUPPLEMENT-NO-LIVE-PACKET-2026-05-21.md",
+    "handoff": "ops/agents/handoffs/2026-05-21-pm-lane-500-migration-016-structural-supplement-closeout-handoff.md",
+    "blocked_packet": "docs/operations/APEX-PM-LANE-500-PROJECT-ONBOARDING-ESTIMATOR-JSON-TO-SEAM-STRUCTURAL-INGEST-MINER-TEMP-POWER-TESTING-NO-LIVE-FINANCIAL-PACKET-2026-05-21-BLOCKED.md",
+    "blocked_handoff": "ops/agents/handoffs/2026-05-21-pm-lane-500-blocked-phase-0-closeout-handoff.md"
+  },
+  "validation": {
+    "migration_apply_result": "MIGRATION_016_STATUS applied",
+    "verification_result": "overall_status = passed",
+    "seam_total_counts_after_migration_016": {
+      "projects": 1,
+      "tasks": 15,
+      "apparatus": 184,
+      "scopes": 0
+    },
+    "apparatus_scope_id_null_rows_after_migration_016": 184,
+    "apparatus_scope_id_non_null_rows_after_migration_016": 0
+  },
+  "next_truth": "Later onboarding redesign must choose a governed source/export contract and reconcile the already-present Temp Power seam rows before any write-admission discussion continues"
+}

@@ -1,0 +1,56 @@
+{
+  "artifact_type": "pm_lane_421_schema_correction_verification",
+  "lane": 421,
+  "checked_at": "2026-05-21T02:28:39.620939+00:00",
+  "verification_mode": "metadata_and_role_select_no_write",
+  "dsn_source": "LANE_421_SCHEMA_CORRECTION_ADMIN_DSN",
+  "seam_scopes": {
+    "exists": true,
+    "row_count": 0
+  },
+  "role_select_checks": [
+    {
+      "role_name": "pm",
+      "passed": false,
+      "row_count": null,
+      "error": "permission denied to set role \"pm\"\n"
+    },
+    {
+      "role_name": "operations",
+      "passed": false,
+      "row_count": null,
+      "error": "permission denied to set role \"operations\"\n"
+    }
+  ],
+  "fk_observations": {
+    "seam.apparatus_revenue_events": {
+      "column_name": "scope_id",
+      "constraint_name": "apparatus_revenue_events_scope_id_fkey",
+      "target": "seam.scopes.id"
+    },
+    "seam.scope_labor_details": {
+      "column_name": "scope_id",
+      "constraint_name": "scope_labor_details_scope_id_fkey",
+      "target": "seam.scopes.id"
+    }
+  },
+  "column_type_observations": {
+    "seam.apparatus_revenue_events.scope_id": {
+      "data_type": "text",
+      "udt_schema": "pg_catalog",
+      "udt_name": "text",
+      "is_nullable": "NO"
+    },
+    "seam.scope_labor_details.scope_id": {
+      "data_type": "text",
+      "udt_schema": "pg_catalog",
+      "udt_name": "text",
+      "is_nullable": "NO"
+    }
+  },
+  "overall_status": "failed",
+  "failures": [
+    "pm could not SELECT from seam.scopes: permission denied to set role \"pm\"\n",
+    "operations could not SELECT from seam.scopes: permission denied to set role \"operations\"\n"
+  ]
+}

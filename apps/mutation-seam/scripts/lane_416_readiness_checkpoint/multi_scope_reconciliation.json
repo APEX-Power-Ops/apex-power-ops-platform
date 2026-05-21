@@ -1,0 +1,99 @@
+{
+  "allocation_rule": "scope_pool_amount = project_pool_amount * (scope_hours / project_hours)",
+  "apparatus_results": [
+    {
+      "apparatus_id": "app-a-001",
+      "derived_quoted_revenue": 2000.0,
+      "quoted_hours": 20.0,
+      "quoted_revenue": 2000.0,
+      "quoted_revenue_difference": "0.000",
+      "quoted_revenue_matches_hours_times_rate": true,
+      "recognition_rate_difference": "0.000",
+      "recognition_rate_matches_project_rate": true,
+      "recognition_rate_per_hour_snapshot": 100.0,
+      "scope_id": "scope-a"
+    },
+    {
+      "apparatus_id": "app-a-002",
+      "derived_quoted_revenue": 4000.0,
+      "quoted_hours": 40.0,
+      "quoted_revenue": 4000.0,
+      "quoted_revenue_difference": "0.000",
+      "quoted_revenue_matches_hours_times_rate": true,
+      "recognition_rate_difference": "0.000",
+      "recognition_rate_matches_project_rate": true,
+      "recognition_rate_per_hour_snapshot": 100.0,
+      "scope_id": "scope-a"
+    },
+    {
+      "apparatus_id": "app-b-001",
+      "derived_quoted_revenue": 2500.0,
+      "quoted_hours": 25.0,
+      "quoted_revenue": 2500.0,
+      "quoted_revenue_difference": "0.000",
+      "quoted_revenue_matches_hours_times_rate": true,
+      "recognition_rate_difference": "0.000",
+      "recognition_rate_matches_project_rate": true,
+      "recognition_rate_per_hour_snapshot": 100.0,
+      "scope_id": "scope-b"
+    },
+    {
+      "apparatus_id": "app-b-002",
+      "derived_quoted_revenue": 1500.0,
+      "quoted_hours": 15.0,
+      "quoted_revenue": 1500.0,
+      "quoted_revenue_difference": "0.000",
+      "quoted_revenue_matches_hours_times_rate": true,
+      "recognition_rate_difference": "0.000",
+      "recognition_rate_matches_project_rate": true,
+      "recognition_rate_per_hour_snapshot": 100.0,
+      "scope_id": "scope-b"
+    }
+  ],
+  "input_fixture_path": "apps/mutation-seam/scripts/lane_415_envelope_export/lane_415_export_inputs.json",
+  "named_design_assumption": true,
+  "overall_pass": true,
+  "project": {
+    "candidate_id": "pm-import-candidate-miner-temp-power",
+    "contract_value": 10000.0,
+    "project_id": "pm-import-project-miner-temp-power",
+    "recognition_rate_per_hour": 100.0,
+    "total_quoted_hours": 100.0
+  },
+  "project_total": {
+    "contract_value": 10000.0,
+    "project_total_difference": "0.000",
+    "project_total_matches_contract_value": true,
+    "sum_of_all_apparatus_quoted_revenue": 10000.0
+  },
+  "scope_results": [
+    {
+      "derived_scope_pool_amount_from_formula": 6000.0,
+      "expected_scope_pool_amount": 6000.0,
+      "formula_difference": "0.000",
+      "quoted_hours": 60.0,
+      "scope_id": "scope-a",
+      "scope_name": "Switchgear Testing",
+      "scope_pool_matches_formula": true,
+      "sum_of_apparatus_difference": "0.000",
+      "sum_of_apparatus_matches_scope_pool_amount": true,
+      "sum_of_scope_apparatus_quoted_revenue": 6000.0
+    },
+    {
+      "derived_scope_pool_amount_from_formula": 4000.0,
+      "expected_scope_pool_amount": 4000.0,
+      "formula_difference": "0.000",
+      "quoted_hours": 40.0,
+      "scope_id": "scope-b",
+      "scope_name": "Transformer Testing",
+      "scope_pool_matches_formula": true,
+      "sum_of_apparatus_difference": "0.000",
+      "sum_of_apparatus_matches_scope_pool_amount": true,
+      "sum_of_scope_apparatus_quoted_revenue": 4000.0
+    }
+  ],
+  "tolerances": {
+    "money_difference_lt": "0.01",
+    "recognition_rate_difference_lt": "0.001"
+  }
+}

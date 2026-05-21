@@ -1,0 +1,54 @@
+{
+  "packet_id": "2026-05-20-pm-lane-412-revision-a",
+  "title": "PM Lane 412 Revision A - Project Miner Temp Power Lane 278 Sibling Import Contract Support No-Live Design Packet",
+  "status": "complete",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_LANE_278_SIBLING_IMPORT_CONTRACT_SUPPORT_NO_LIVE_DESIGN_REVISION_A",
+  "selected_outcome": "IMPORT_CONTRACT_SUPPORT_DESIGN_READY_NO_LIVE_REVISION_A",
+  "layers_on_top_of": "2026-05-20-pm-lane-412",
+  "governing_firewalls": [
+    "Recognition firewall: apparatus revenue recognition reads frozen-at-import quote data from seam.apparatus_financials only.",
+    "Role-based table separation: Field Tech and Field Lead roles have no SELECT on financial tables.",
+    "Vocabulary firewall: the legacy actual revenue term is not a valid concept in this design."
+  ],
+  "future_route": {
+    "method": "POST",
+    "route": "/api/v1/mutations/project-import-contract-support",
+    "entity_type": "pm_import_contract_support",
+    "action_type": "persist_import_contract_support"
+  },
+  "allowed_future_writes": [
+    "one seam.project_contract_snapshots row with snapshot_kind=original",
+    "the required seam.scope_labor_details rows",
+    "one seam.apparatus_financials row per apparatus per snapshot (INSERT only, never UPDATE)",
+    "one seam.audit_log event",
+    "one seam.idempotency_keys entry"
+  ],
+  "extractor_mapping": {
+    "Per-apparatus Hrs/Line": "apparatus_financials.quoted_hours",
+    "Per-apparatus quoted_revenue (derived)": "apparatus_financials.quoted_revenue = quoted_hours * snapshot.recognition_rate_per_hour",
+    "Snapshot rate captured for audit (denormalized)": "apparatus_financials.recognition_rate_per_hour_snapshot = snapshot.recognition_rate_per_hour",
+    "total_quoted_hours_formula": "SUM(apparatus_financials.quoted_hours)"
+  },
+  "readback_contract": {
+    "route": "/api/v1/reads/project-import-contract-support-status",
+    "apparatus_quote_coverage_count": "count of distinct apparatus_id values in seam.apparatus_financials for the project's snapshot",
+    "apparatus_missing_quote_count": "count of seam.apparatus rows for the project that have no seam.apparatus_financials row for the snapshot"
+  },
+  "rls_grants": {
+    "seam.apparatus_financials": "PM role and Finance role only for SELECT; PM role only for INSERT; no grants to Field Tech or Field Lead.",
+    "seam.project_contract_snapshots": "PM role and Finance role only for SELECT; no grants to Field Tech or Field Lead.",
+    "seam.scope_labor_details": "PM role and Finance role only for SELECT; no grants to Field Tech or Field Lead.",
+    "seam.apparatus_revenue_events": "PM role and Finance role only for SELECT; PM role only for INSERT; no grants to Field Tech or Field Lead."
+  },
+  "structural_eliminations": [
+    "apparatus.contract_snapshot_id nullability concern resolved because the foreign key now lives on seam.apparatus_financials and is NOT NULL",
+    "update-then-freeze concern resolved because the future import-support write is pure INSERT into seam.apparatus_financials"
+  ],
+  "validation_steps": [
+    "Search confirms allowed_future_writes is insert-only into seam.apparatus_financials",
+    "Search confirms extractor mapping references apparatus_financials fields",
+    "Search confirms readback semantics reference apparatus_financials",
+    "Search confirms Field Tech and Field Lead have no grants on financial tables",
+    "Search confirms structural eliminations are explicit"
+  ]
+}

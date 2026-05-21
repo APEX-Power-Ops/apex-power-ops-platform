@@ -1,0 +1,86 @@
+[01] migration_016_state VERB=SELECT PARAMS=[]
+SELECT
+                    EXISTS (
+                        SELECT 1
+                        FROM information_schema.columns
+                        WHERE table_schema = 'seam'
+                          AND table_name = 'apparatus'
+                          AND column_name = 'scope_id'
+                          AND data_type = 'text'
+                          AND is_nullable = 'YES'
+                    ) AS scope_id_text_nullable,
+                    EXISTS (
+                        SELECT 1
+                        FROM pg_constraint c
+                        JOIN pg_class source_table ON source_table.oid = c.conrelid
+                        JOIN pg_namespace source_ns ON source_ns.oid = source_table.relnamespace
+                        JOIN pg_class target_table ON target_table.oid = c.confrelid
+                        JOIN pg_namespace target_ns ON target_ns.oid = target_table.relnamespace
+                        WHERE c.contype = 'f'
+                          AND source_ns.nspname = 'seam'
+                          AND source_table.relname = 'apparatus'
+                          AND c.conname = 'apparatus_scope_id_fkey'
+                          AND target_ns.nspname = 'seam'
+                          AND target_table.relname = 'scopes'
+                    ) AS has_scope_fk,
+                    EXISTS (
+                        SELECT 1
+                        FROM pg_indexes
+                        WHERE schemaname = 'seam'
+                          AND tablename = 'apparatus'
+                          AND indexname = 'apparatus_scope_id_idx'
+                    ) AS has_scope_idx,
+                    has_table_privilege('pm', 'seam.projects', 'SELECT,INSERT,UPDATE') AS pm_projects_siu,
+                    has_table_privilege('pm', 'seam.tasks', 'SELECT,INSERT,UPDATE') AS pm_tasks_siu,
+                    has_table_privilege('pm', 'seam.apparatus', 'SELECT,INSERT,UPDATE') AS pm_apparatus_siu,
+                    has_table_privilege('operations', 'seam.projects', 'SELECT,INSERT,UPDATE') AS operations_projects_siu,
+                    has_table_privilege('operations', 'seam.tasks', 'SELECT,INSERT,UPDATE') AS operations_tasks_siu,
+                    has_table_privilege('operations', 'seam.apparatus', 'SELECT,INSERT,UPDATE') AS operations_apparatus_siu,
+                    has_table_privilege('anon', 'seam.projects', 'SELECT,INSERT,UPDATE') AS anon_projects_siu,
+                    has_table_privilege('anon', 'seam.tasks', 'SELECT,INSERT,UPDATE') AS anon_tasks_siu,
+                    has_table_privilege('anon', 'seam.apparatus', 'SELECT,INSERT,UPDATE') AS anon_apparatus_siu,
+                    has_table_privilege('authenticated', 'seam.projects', 'SELECT,INSERT,UPDATE') AS authenticated_projects_siu,
+                    has_table_privilege('authenticated', 'seam.tasks', 'SELECT,INSERT,UPDATE') AS authenticated_tasks_siu,
+                    has_table_privilege('authenticated', 'seam.apparatus', 'SELECT,INSERT,UPDATE') AS authenticated_apparatus_siu
+
+[02] row_counts VERB=SELECT PARAMS=[]
+SELECT
+                    (SELECT count(*) FROM seam.projects) AS projects,
+                    (SELECT count(*) FROM seam.tasks) AS tasks,
+                    (SELECT count(*) FROM seam.apparatus) AS apparatus,
+                    (SELECT count(*) FROM seam.scopes) AS scopes
+
+[03] project_rows VERB=SELECT PARAMS=[]
+SELECT id, data FROM seam.projects ORDER BY id
+
+[04] task_rows VERB=SELECT PARAMS=[]
+SELECT id, workpackage_id, status, data FROM seam.tasks ORDER BY id
+
+[05] apparatus_rows VERB=SELECT PARAMS=[]
+SELECT id, scope_id, data FROM seam.apparatus ORDER BY id
+
+[06] workpackage_rows VERB=SELECT PARAMS=[]
+SELECT id, data FROM seam.workpackages ORDER BY id
+
+[07] apparatus_key_probe VERB=SELECT PARAMS=[]
+SELECT
+                    count(*) FILTER (WHERE data ? 'source_row') AS has_source_row,
+                    count(*) FILTER (WHERE data ? 'source_line_id') AS has_source_line_id,
+                    count(*) FILTER (WHERE data ? 'source_designation') AS has_source_designation,
+                    count(*) FILTER (WHERE data ? 'source_apparatus_type') AS has_source_apparatus_type,
+                    count(*) FILTER (WHERE data ? 'source_drawing_ref') AS has_source_drawing_ref,
+                    count(*) FILTER (WHERE data ? 'source_candidate_apparatus_id') AS has_source_candidate_apparatus_id,
+                    count(*) FILTER (WHERE data ? 'task_id') AS has_task_id,
+                    count(*) FILTER (WHERE data ? 'name') AS has_name
+                FROM seam.apparatus
+
+[08] task_scope_probe VERB=SELECT PARAMS=[]
+SELECT
+                    count(*) FILTER (WHERE data ? 'scope_id') AS task_data_scope_id,
+                    count(*) FILTER (WHERE data ? 'scope_sheet') AS task_data_scope_sheet,
+                    count(*) FILTER (WHERE data ? 'scope_name') AS task_data_scope_name,
+                    count(*) FILTER (WHERE data ? 'scope_reference') AS task_data_scope_reference,
+                    count(*) FILTER (WHERE data ? 'source_line_id') AS task_data_source_line_id,
+                    count(*) FILTER (WHERE data ? 'source_designation') AS task_data_source_designation,
+                    count(*) FILTER (WHERE data ? 'source_apparatus_type') AS task_data_source_apparatus_type
+                FROM seam.tasks

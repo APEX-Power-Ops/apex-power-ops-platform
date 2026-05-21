@@ -1,0 +1,66 @@
+{
+  "packet_id": "2026-05-20-pm-lane-411-revision-b",
+  "title": "PM Lane 411 Revision B - Project Miner Temp Power Apparatus Completion Revenue Recognition No-Live Design Packet",
+  "status": "complete",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_APPARATUS_COMPLETION_REVENUE_RECOGNITION_NO_LIVE_DESIGN_REVISION_B",
+  "selected_outcome": "APPARATUS_COMPLETION_REVENUE_RECOGNITION_DESIGN_READY_NO_LIVE_REVISION_B",
+  "layers_on_top_of": [
+    "2026-05-20-pm-lane-411",
+    "2026-05-20-pm-lane-411-revision-a"
+  ],
+  "scope": "Lane 280 status-mutation extension admission-gate tightening only",
+  "inherits_unchanged": [
+    "recognition firewall",
+    "role-based table separation",
+    "vocabulary firewall",
+    "apparatus_financials topology",
+    "RLS grants",
+    "multi-scope view math",
+    "snapshot consistency checks",
+    "same-snapshot reversal discipline"
+  ],
+  "lane_280_extension": {
+    "preconditions": [
+      "PM-only actor",
+      "apparatus belongs to the admitted imported project and scope",
+      "apparatus has an associated seam.apparatus_financials row for the referenced contract_snapshot_id",
+      "snapshot belongs to the same project",
+      "recognition_percent = 100 for V1",
+      "no unreversed recognized event exists unless exact same-payload replay",
+      "project has a current GET /api/v1/reads/project-import-contract-support-status response with classification = ready, current_candidate_match = true, and counts_match = true; this precondition is evaluated at admission time, not at every mutation call"
+    ],
+    "admission_time_gate": "Live admission is undiscussable until Lane 412 readback returns classification = ready for the project in current production state. This is a one-time admission gate, not a runtime check on each recognition event.",
+    "runtime_safety_note": "Runtime safety continues to rely on the per-mutation requirement that the apparatus has an associated seam.apparatus_financials row for the referenced contract_snapshot_id.",
+    "readback_fields": [
+      "expected_quoted_revenue",
+      "recognized_amount",
+      "event_id",
+      "lane_412_readback_classification_at_admission_time"
+    ],
+    "audit_traceability": "lane_412_readback_classification_at_admission_time is captured once at admission time and stamped on every event row created under the extension"
+  },
+  "bidirectional_gate": {
+    "lane_411_side": "Lane 280 extension preconditions and admission-time gate language require Lane 412 readback ready before live admission is discussable.",
+    "lane_412_side": "Lane 412 readback downstream gate clause blocks later Lane 280 live admission until readback is ready.",
+    "rule": "Both directions must remain in place."
+  },
+  "boundaries": [
+    "No live revenue-event writes",
+    "No live schema migration",
+    "No public schema writes",
+    "No billing, invoice, payroll, accounting, customer-billing, or external-finance output",
+    "No source workbook writeback or macros",
+    "No change-order admission",
+    "No live operational hours tracking implementation",
+    "No autonomous AI business-state mutation",
+    "No live admission of the Lane 280 status-mutation extension unless Lane 412 readback has passed the one-time classification = ready gate"
+  ],
+  "validation_steps": [
+    "Search confirms the Lane 280 precondition list includes the Lane 412 readback ready requirement",
+    "Search confirms a dedicated admission-time gate language section exists separately from the precondition list",
+    "Search confirms the readback contract includes lane_412_readback_classification_at_admission_time",
+    "Search confirms the boundary list includes the Lane 412 readiness gate item",
+    "Search confirms inherited Revision A surfaces are unchanged in this revision packet family",
+    "Search confirms the legacy underscore revenue token is absent from Revision B surfaces"
+  ]
+}

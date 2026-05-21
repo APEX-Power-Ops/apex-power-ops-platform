@@ -1,0 +1,26 @@
+{
+  "http_status": 503,
+  "status": "rejected",
+  "classification": "transaction_rolled_back_audit_write_unavailable",
+  "mutation_status": "rolled_back",
+  "mutation_id": "mut-73d8fd4b-cbea-4901-aec3-443a8152d18b",
+  "entity_id": "project-import-contract-support-c0a8015b70a9d18a4d18cafe",
+  "entity_type": "pm_project_import_contract_support",
+  "action_type": "persist_project_import_contract_support",
+  "audit_event_id": null,
+  "project_contract_snapshot_id": null,
+  "scope_labor_detail_row_count": 0,
+  "apparatus_financial_row_count": 0,
+  "idempotent_hit": false,
+  "current_candidate_match": true,
+  "partial_commit": false,
+  "error": {
+    "code": "STORAGE_UNAVAILABLE",
+    "message": "Audit event persistence was unavailable and the transaction was rolled back.",
+    "detail": {
+      "database_state_after_response": "completely_rolled_back",
+      "failed_write_group": "audit_event"
+    }
+  },
+  "new_state": {}
+}

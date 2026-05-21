@@ -13,6 +13,10 @@ function parseArgs(argv) {
   for (let index = 0; index < argv.length; index += 1) {
     const argument = argv[index];
 
+    if (argument === '--') {
+      continue;
+    }
+
     if (argument === '--help' || argument === '-h') {
       parsed.help = true;
       continue;

@@ -235,6 +235,7 @@ type FieldObservationScratchpad = {
 
 type ApprovalDecisionDraft = {
   decision: string
+  project_data_entry_label: string
   review_notes: string
   local_attestation: boolean
 }
@@ -620,6 +621,7 @@ const READS_BASE = `${API_BASE}/reads`
 const PM_ACTOR = { actor_id: 'pm-001', actor_role: 'pm', project_scope: ['proj-001'] }
 const EMPTY_APPROVAL_DRAFT: ApprovalDecisionDraft = {
   decision: '',
+  project_data_entry_label: '',
   review_notes: '',
   local_attestation: false,
 }
@@ -1079,6 +1081,95 @@ function approvalRecordCountSummary(status?: ApprovalPersistenceStatus | null) {
   return `${formatCount(count)} approval ${count === 1 ? 'record' : 'records'} for this candidate`
 }
 
+function hasAcceptedApprovalRecord(status?: ApprovalPersistenceStatus | null) {
+  return approvalRecordCount(status) > 0 && status?.classification === 'approved_for_import_packet'
+}
+
+function acceptedApprovalRecordSentence(status?: ApprovalPersistenceStatus | null) {
+  return `Current readback shows ${approvalRecordCountSummary(status)} and the latest status is ${formatLabel(status?.classification)} for this candidate.`
+}
+
+function approvalMutationBoundaryText(status: ApprovalPersistenceStatus | null | undefined, tail: string) {
+  if (hasAcceptedApprovalRecord(status)) {
+    return `${acceptedApprovalRecordSentence(status)} Browser approval submission, additional approval-row mutation, ${tail}`
+  }
+
+  return `Browser approval submission, first approval-row creation, ${tail}`
+}
+
+function approvalRowPrerequisiteStatus(status?: ApprovalPersistenceStatus | null): ApprovalDryRunReadinessStatus {
+  return hasAcceptedApprovalRecord(status) ? 'ready' : 'blocked'
+}
+
+function approvalRowPrerequisiteDetail(
+  status: ApprovalPersistenceStatus | null | undefined,
+  readyDetail: string,
+  blockedDetail: string,
+) {
+  if (hasAcceptedApprovalRecord(status)) {
+    return `${acceptedApprovalRecordSentence(status)} ${readyDetail}`
+  }
+
+  if (approvalRecordCount(status) > 0) {
+    return `${acceptedApprovalRecordSentence(status)} ${blockedDetail}`
+  }
+
+  return blockedDetail
+}
+
+function browserApprovalSubmissionStatus(status?: ApprovalPersistenceStatus | null): ReadinessGateStatus {
+  return hasAcceptedApprovalRecord(status) ? 'ready' : 'blocked'
+}
+
+function browserApprovalSubmissionDetail(status?: ApprovalPersistenceStatus | null) {
+  if (hasAcceptedApprovalRecord(status)) {
+    return `${acceptedApprovalRecordSentence(status)} Keep browser approval POST and additional approval-row mutation blocked from this workbench; no new browser submission is required for the current candidate.`
+  }
+
+  return 'No browser approval button, approval POST wiring, or live approval-row creation is admitted until a later packet owns that UI submission path.'
+}
+
+function approvalPersistenceBoundaryEvidence(status?: ApprovalPersistenceStatus | null) {
+  if (hasAcceptedApprovalRecord(status)) {
+    return `${acceptedApprovalRecordSentence(status)} Browser approval submission remains unadmitted from this workbench, and import mutation remains blocked.`
+  }
+
+  return 'Hosted schema and approval route gates are ready; browser approval submission, first approval row creation, and import mutation remain blocked.'
+}
+
+function admissionPlanNoGoCheck(
+  admissionPlan: AdmissionPlan | null | undefined,
+  checkId: string,
+) {
+  return (admissionPlan?.no_go_checks || []).find((check) => check.check_id === checkId)
+}
+
+function projectImportAuthorityDetail(
+  admissionPlan: AdmissionPlan | null | undefined,
+  fallback: string,
+) {
+  const readinessStatus = admissionPlan?.readiness_status
+  const warningReviewCheck = admissionPlanNoGoCheck(admissionPlan, 'warnings-reviewed-by-pm')
+  const mutationAuthorityCheck = admissionPlanNoGoCheck(admissionPlan, 'mutation-path-not-admitted')
+  const blockingDesignCheck = (admissionPlan?.no_go_checks || []).find(
+    (check) => check.status === 'no_go' && check.check_id !== 'mutation-path-not-admitted',
+  )
+
+  if (readinessStatus === 'needs_human_acceptance_before_import_packet') {
+    return `Current admission plan is ${formatLabel(readinessStatus)}: ${warningReviewCheck?.message || 'warning review remains pending before a later import packet.'} ${mutationAuthorityCheck?.message || 'Import mutation authority remains not admitted.'}`
+  }
+
+  if (readinessStatus === 'blocked_before_admission_design') {
+    return `Current admission plan is ${formatLabel(readinessStatus)}: ${blockingDesignCheck?.message || 'candidate design blockers still remain.'} ${mutationAuthorityCheck?.message || 'Import mutation authority remains not admitted.'}`
+  }
+
+  if (readinessStatus === 'design_ready_write_not_admitted') {
+    return `Current admission plan is ${formatLabel(readinessStatus)}. ${mutationAuthorityCheck?.message || 'Import mutation authority remains not admitted.'}`
+  }
+
+  return fallback
+}
+
 function hostedApprovalReadbackDetail(status?: ApprovalPersistenceStatus | null) {
   const count = approvalRecordCount(status)
   if (count === 0) {
@@ -1529,20 +1620,33 @@ function projectDataEntryNextInputNeeded(present: boolean) {
   }
 }
 
-function projectDataEntryWarningDispositionGate(warnings: CandidateWarning[]) {
+function projectDataEntryWarningDispositionGate(warnings: CandidateWarning[], selectedLocalLabel = '') {
   const present = hasWarningCode(warnings, PROJECT_DATA_ENTRY_WARNING_CODE)
+  const selectedLocalLabelValid = present ? hasExactProjectDataEntryDecisionLabel(selectedLocalLabel) : false
 
   return {
     warning_code: PROJECT_DATA_ENTRY_WARNING_CODE,
     present,
-    disposition_status: present ? 'requires_exact_pm_label' : 'not_applicable',
+    disposition_status: present
+      ? selectedLocalLabelValid
+        ? 'local_exact_pm_label_recorded_no_live'
+        : 'requires_exact_pm_label'
+      : 'not_applicable',
     accepted_by_current_local_review: false,
     allowed_labels: present ? PROJECT_DATA_ENTRY_DECISION_LABELS : [],
     admission_prerequisites: present ? PROJECT_DATA_ENTRY_ADMISSION_PREREQUISITES : [],
+    outcome_routes: present ? PROJECT_DATA_ENTRY_DECISION_OUTCOME_ROUTES : [],
+    valid_return_checklist: present ? PROJECT_DATA_ENTRY_VALID_RETURN_CHECKLIST : [],
+    safe_no_live_continuation_moves: present ? PROJECT_DATA_ENTRY_SAFE_CONTINUATION_MOVES : [],
+    selected_local_label: present ? selectedLocalLabel || null : null,
+    selected_local_label_valid: present ? selectedLocalLabelValid : null,
+    local_selection_recorded: present ? Boolean(selectedLocalLabel) : false,
     source_correction_boundary: present ? projectDataEntrySourceCorrectionBoundary() : null,
     next_input_needed: projectDataEntryNextInputNeeded(present),
     detail: present
-      ? 'The Project Data Entry warning has been reviewed locally, but it is not accepted for approval context until Jason provides one exact allowed no-live label.'
+      ? selectedLocalLabelValid
+        ? `The Project Data Entry warning now carries local exact-label context only: ${selectedLocalLabel}. A later packet must still record that label before warning acceptance or live admission can proceed.`
+        : 'The Project Data Entry warning has been reviewed locally, but it is not accepted for approval context until Jason provides one exact allowed no-live label.'
       : 'The Project Data Entry warning is not present on this candidate.',
   }
 }
@@ -1702,7 +1806,77 @@ function formatMultilineMarkdown(value: string) {
 }
 
 function hasApprovalDraftContent(draft: ApprovalDecisionDraft) {
-  return Boolean(draft.decision || draft.review_notes.trim() || draft.local_attestation)
+  return Boolean(draft.decision || draft.project_data_entry_label || draft.review_notes.trim() || draft.local_attestation)
+}
+
+function hasExactProjectDataEntryDecisionLabel(label: string) {
+  return PROJECT_DATA_ENTRY_DECISION_LABELS.includes(label)
+}
+
+function approvalDraftRequiresProjectDataEntryLabel(warnings: CandidateWarning[]) {
+  return hasWarningCode(warnings, PROJECT_DATA_ENTRY_WARNING_CODE)
+}
+
+function approvalDraftHasRequiredProjectDataEntryLabel(
+  draft: ApprovalDecisionDraft,
+  warnings: CandidateWarning[],
+) {
+  return !approvalDraftRequiresProjectDataEntryLabel(warnings)
+    || hasExactProjectDataEntryDecisionLabel(draft.project_data_entry_label)
+}
+
+function approvalDraftIsComplete(draft: ApprovalDecisionDraft, warnings: CandidateWarning[]) {
+  return Boolean(
+    draft.decision
+      && draft.review_notes.trim()
+      && draft.local_attestation
+      && approvalDraftHasRequiredProjectDataEntryLabel(draft, warnings),
+  )
+}
+
+function approvalDraftRequirementPhrase(warnings: CandidateWarning[]) {
+  return approvalDraftRequiresProjectDataEntryLabel(warnings)
+    ? 'decision value, exact Project Data Entry PM Lane 238 label, review notes, and local-only attestation'
+    : 'decision value, review notes, and local-only attestation'
+}
+
+function upperFirst(value: string) {
+  return value ? `${value.slice(0, 1).toUpperCase()}${value.slice(1)}` : value
+}
+
+function approvalDraftPresentDetail(warnings: CandidateWarning[]) {
+  return `${upperFirst(approvalDraftRequirementPhrase(warnings))} are present.`
+}
+
+function approvalDraftNeededBeforeDryRunDetail(warnings: CandidateWarning[]) {
+  return `${upperFirst(approvalDraftRequirementPhrase(warnings))} are needed before this dry run is useful packet context.`
+}
+
+function approvalDraftLocalReviewCompleteDetail(warnings: CandidateWarning[]) {
+  return `Local decision draft has ${approvalDraftRequirementPhrase(warnings)} for this browser-local review.`
+}
+
+function approvalDraftLocalReviewPartialDetail(warnings: CandidateWarning[]) {
+  return approvalDraftRequiresProjectDataEntryLabel(warnings)
+    ? 'Local decision draft has partial browser-local context; confirm the missing decision, exact Project Data Entry PM Lane 238 label, review notes, or local-only attestation.'
+    : 'Local decision draft has partial browser-local context; confirm the missing decision, notes, or local-only attestation.'
+}
+
+function approvalDraftLocalReviewNotStartedDetail(warnings: CandidateWarning[]) {
+  return `Local decision draft has not started; capture ${approvalDraftRequirementPhrase(warnings)} before any future persistence packet.`
+}
+
+function approvalDraftNextStepDetail(warnings: CandidateWarning[]) {
+  return `Add a local ${approvalDraftRequirementPhrase(warnings)} for future packet context.`
+}
+
+function approvalDraftProjectDataEntryLabelValue(
+  draft: ApprovalDecisionDraft,
+  warnings: CandidateWarning[],
+) {
+  return approvalDraftRequiresProjectDataEntryLabel(warnings)
+    ? draft.project_data_entry_label || 'none selected'
+    : 'not required for current candidate'
 }
 
 function hasFieldQuestionsDraftContent(draft: FieldQuestionsDraft) {
@@ -1749,7 +1923,7 @@ function buildPersistenceReadinessGates(
   approvalDraft: ApprovalDecisionDraft,
   reviewChecks: Record<string, boolean>,
 ): ReadinessGate[] {
-  const draftComplete = Boolean(approvalDraft.decision && approvalDraft.review_notes.trim() && approvalDraft.local_attestation)
+  const draftComplete = approvalDraftIsComplete(approvalDraft, packet?.candidate?.warnings || [])
   const checklistHasEvidence = REVIEW_CHECKLIST_ITEMS.some((item) => reviewChecks[item.id])
   const hasPacketContext = Boolean(packet && packet.candidate.candidate_id && packet.approvalContract && packet.storagePlan)
   const approvalStatus = packet?.approvalStatus
@@ -1786,14 +1960,17 @@ function buildPersistenceReadinessGates(
     {
       id: 'browser-approval-submit-authority',
       title: 'Browser approval submit authority',
-      status: 'blocked',
-      detail: 'No browser approval button, approval POST wiring, or live approval-row creation is admitted until a later packet owns that UI submission path.',
+      status: browserApprovalSubmissionStatus(approvalStatus),
+      detail: browserApprovalSubmissionDetail(approvalStatus),
     },
     {
       id: 'import-mutation-authority',
       title: 'Import mutation authority',
       status: 'blocked',
-      detail: 'Project, workpackage, task, and apparatus import remain blocked until a later packet admits import after an approved approval record exists.',
+      detail: projectImportAuthorityDetail(
+        packet?.admissionPlan,
+        'Project, workpackage, task, and apparatus import remain blocked until a later packet admits import after an approved approval record exists.',
+      ),
     },
   ]
 }
@@ -1831,7 +2008,7 @@ function buildApprovalDryRunReadiness(
   const warnings = candidate?.warnings || []
   const noGoChecks = admissionPlan?.no_go_checks || []
   const sourceFingerprint = candidate?.source_freshness?.aggregate_fingerprint
-  const draftComplete = Boolean(approvalDraft.decision && approvalDraft.review_notes.trim() && approvalDraft.local_attestation)
+  const draftComplete = approvalDraftIsComplete(approvalDraft, warnings)
   const draftStarted = hasApprovalDraftContent(approvalDraft)
   const sourceAndWarningsReviewed = Boolean(reviewChecks.source_freshness_reviewed && reviewChecks.exceptions_reviewed)
   const dataEntryWarningUnresolved = hasWarningCode(warnings, PROJECT_DATA_ENTRY_WARNING_CODE)
@@ -1865,8 +2042,8 @@ function buildApprovalDryRunReadiness(
       title: 'Local decision draft',
       status: draftComplete ? 'ready' : draftStarted ? 'needs_review' : 'blocked',
       detail: draftComplete
-        ? `Decision draft is ${formatLabel(approvalDraft.decision)} with notes and local-only attestation present.`
-        : 'Decision value, review notes, and local-only attestation are all required before the dry-run envelope is useful.',
+        ? `Decision draft is ${formatLabel(approvalDraft.decision)} with ${approvalDraftRequirementPhrase(warnings)} present.`
+        : approvalDraftNeededBeforeDryRunDetail(warnings),
     },
     {
       id: 'admission-no-go-review',
@@ -1912,6 +2089,7 @@ function buildApprovalDryRunReadinessExport(
   readinessItems: ApprovalDryRunReadinessItem[],
   notAllowed: string[],
   futureRoute: string,
+  approvalDraft: ApprovalDecisionDraft,
 ) {
   const candidate = packet.candidate
   const admissionPlan = packet.admissionPlan
@@ -1936,7 +2114,7 @@ function buildApprovalDryRunReadinessExport(
       blocked_count: counts.blocked,
       summary: approvalDryRunReadinessSummary(counts),
     },
-    warning_disposition_gate: projectDataEntryWarningDispositionGate(warnings),
+    warning_disposition_gate: projectDataEntryWarningDispositionGate(warnings, approvalDraft.project_data_entry_label),
     readiness_items: readinessItems,
     approval_status_readback: {
       classification: approvalStatus.classification || null,
@@ -1978,7 +2156,7 @@ function buildApprovalReviewBundleExport(
 ) {
   const candidate = packet.candidate
   const dryRunEnvelope = buildLocalApprovalSubmissionDryRun(packet, notAllowed, futureRoute, reviewChecks, approvalDraft)
-  const readinessCheckpoint = buildApprovalDryRunReadinessExport(packet, readinessItems, notAllowed, futureRoute)
+  const readinessCheckpoint = buildApprovalDryRunReadinessExport(packet, readinessItems, notAllowed, futureRoute, approvalDraft)
 
   return {
     bundle_kind: 'pm_import_candidate_approval_local_review_bundle',
@@ -2030,7 +2208,7 @@ function buildApprovalLiveGatePreflightExport(
   const reviewBundle = buildApprovalReviewBundleExport(packet, readinessItems, notAllowed, futureRoute, reviewChecks, approvalDraft)
   const dryRunEnvelope = reviewBundle.dry_run_envelope
   const admissionNoGoReadiness = readinessItems.find((item) => item.id === 'admission-no-go-review')
-  const dataEntryWarningDisposition = projectDataEntryWarningDispositionGate(candidate.warnings || [])
+  const dataEntryWarningDisposition = projectDataEntryWarningDispositionGate(candidate.warnings || [], approvalDraft.project_data_entry_label)
   const preflightItems: ApprovalDryRunReadinessItem[] = [
     {
       id: 'candidate-identity',
@@ -2117,11 +2295,12 @@ function buildPmOperatingQueue(
   approvalDraft: ApprovalDecisionDraft,
   reviewChecks: Record<string, boolean>,
   persistenceReadinessGates: ReadinessGate[],
+  warnings: CandidateWarning[],
   approvalStatus?: ApprovalPersistenceStatus | null,
 ): OperatingQueueItem[] {
   const sourceAndWarningReviewDone = Boolean(reviewChecks.source_freshness_reviewed && reviewChecks.exceptions_reviewed)
   const checklistHasEvidence = REVIEW_CHECKLIST_ITEMS.some((item) => reviewChecks[item.id])
-  const draftComplete = Boolean(approvalDraft.decision && approvalDraft.review_notes.trim() && approvalDraft.local_attestation)
+  const draftComplete = approvalDraftIsComplete(approvalDraft, warnings)
   const previewContextReady = persistenceReadinessGates.some((gate) => gate.id === 'approval-preview-context' && gate.status === 'ready')
 
   return [
@@ -2138,9 +2317,9 @@ function buildPmOperatingQueue(
       title: 'Prepare local decision draft',
       status: draftComplete ? 'complete' : checklistHasEvidence ? 'next' : 'blocked',
       detail: draftComplete
-        ? 'A local decision value, review notes, and local-only attestation are present.'
+        ? approvalDraftPresentDetail(warnings)
         : checklistHasEvidence
-          ? 'Add a local decision value, review notes, and local-only attestation for future packet context.'
+          ? approvalDraftNextStepDetail(warnings)
           : 'Capture at least one local checklist item before preparing the decision draft.',
     },
     {
@@ -2160,13 +2339,15 @@ function buildPmOperatingQueue(
     {
       id: 'browser-approval-submission-packet',
       title: 'Browser approval submission packet',
-      status: 'blocked',
-      detail: 'A later packet must admit the browser approval control, live POST evidence, idempotent row creation, and rollback/return handling.',
+      status: hasAcceptedApprovalRecord(approvalStatus) ? 'complete' : 'blocked',
+      detail: hasAcceptedApprovalRecord(approvalStatus)
+        ? `${acceptedApprovalRecordSentence(approvalStatus)} No new browser approval submission packet is required for the current candidate; keep browser approval POST and additional approval-row mutation blocked from this workbench.`
+        : 'A later packet must admit the browser approval control, live POST evidence, idempotent row creation, and rollback/return handling.',
     },
     {
       id: 'approval-row-creation',
       title: 'Approval row creation',
-      status: 'blocked',
+      status: hasAcceptedApprovalRecord(approvalStatus) ? 'complete' : 'blocked',
       detail: approvalRowBoundaryDetail(approvalStatus),
     },
     {
@@ -2476,7 +2657,7 @@ function buildImportExceptionRegister(
   const warnings = candidate?.warnings || []
   const decisions = candidate?.human_decisions || []
   const noGoCheckItems = noGoChecks || []
-  const draftComplete = Boolean(approvalDraft.decision && approvalDraft.review_notes.trim() && approvalDraft.local_attestation)
+  const draftComplete = approvalDraftIsComplete(approvalDraft, warnings)
   const draftStarted = hasApprovalDraftContent(approvalDraft)
   const hasNoGoBlocker = noGoCheckItems.some((check) => (check.status || '').includes('no_go'))
   const noGoEvidence = noGoCheckItems.map((check) => `${formatLabel(check.check_id)}: ${formatLabel(check.status)} - ${check.message || 'Review check.'}`)
@@ -2523,9 +2704,9 @@ function buildImportExceptionRegister(
       title: 'Local decision draft evidence',
       status: draftComplete ? 'covered' : 'open',
       detail: draftComplete
-        ? 'A decision value, review notes, and local-only attestation are present.'
-        : 'Prepare a local decision value, review notes, and local-only attestation for future packet context.',
-      evidence: `Decision draft: ${approvalDraft.decision || 'none selected'}; notes: ${formatMultilineMarkdown(approvalDraft.review_notes)}; attestation: ${approvalDraft.local_attestation ? 'yes' : 'no'}`,
+        ? approvalDraftPresentDetail(warnings)
+        : `Prepare a local ${approvalDraftRequirementPhrase(warnings)} for future packet context.`,
+      evidence: `Decision draft: ${approvalDraft.decision || 'none selected'}; Project Data Entry exact label: ${approvalDraftProjectDataEntryLabelValue(approvalDraft, warnings)}; notes: ${formatMultilineMarkdown(approvalDraft.review_notes)}; attestation: ${approvalDraft.local_attestation ? 'yes' : 'no'}`,
     },
     {
       id: 'future-write-boundary',
@@ -2599,6 +2780,7 @@ function buildPmIntakeSnapshot(
   persistenceReadinessGates: ReadinessGate[],
   operatingQueue: OperatingQueueItem[],
   importExceptionRegister: ImportExceptionRegisterItem[],
+  warnings: CandidateWarning[],
   fieldPrepCoverageSnapshot: FieldPrepCoverageItem[],
   fieldPrepConversationAgenda: FieldPrepAgendaItem[],
   closeoutChecks: Record<string, boolean>,
@@ -2606,6 +2788,7 @@ function buildPmIntakeSnapshot(
   fieldQuestionsDraft: FieldQuestionsDraft,
   fieldObservationScratchpad: FieldObservationScratchpad,
   approvalDraft: ApprovalDecisionDraft,
+  approvalStatus?: ApprovalPersistenceStatus | null,
 ): PmIntakeSnapshotItem[] {
   const registerCount = importExceptionRegisterCounts(importExceptionRegister)
   const nextQueueItem = operatingQueue.find((item) => item.status === 'next')
@@ -2614,7 +2797,7 @@ function buildPmIntakeSnapshot(
   const fieldPrepAgendaCount = fieldPrepAgendaCounts(fieldPrepConversationAgenda)
   const closeoutCheckedCount = CLOSEOUT_CHECKLIST_ITEMS.filter((item) => closeoutChecks[item.id]).length
   const fieldReadinessCheckedCount = FIELD_READINESS_CHECKLIST_ITEMS.filter((item) => fieldReadinessChecks[item.id]).length
-  const decisionDraftComplete = Boolean(approvalDraft.decision && approvalDraft.review_notes.trim() && approvalDraft.local_attestation)
+  const decisionDraftComplete = approvalDraftIsComplete(approvalDraft, warnings)
   const fieldPrepContextPresent = Boolean(
     FIELD_READINESS_CHECKLIST_ITEMS.some((item) => fieldReadinessChecks[item.id])
       || hasFieldQuestionsDraftContent(fieldQuestionsDraft)
@@ -2636,8 +2819,8 @@ function buildPmIntakeSnapshot(
       title: 'Decision draft snapshot',
       status: decisionDraftComplete ? 'covered' : 'open',
       detail: decisionDraftComplete
-        ? 'Decision value, review notes, and local-only attestation are present.'
-        : 'Decision value, review notes, and local-only attestation still need local draft context.',
+        ? approvalDraftPresentDetail(warnings)
+        : `${upperFirst(approvalDraftRequirementPhrase(warnings))} still need local draft context.`,
       evidence: `Decision draft: ${approvalDraft.decision || 'none selected'}`,
     },
     {
@@ -2657,9 +2840,9 @@ function buildPmIntakeSnapshot(
     {
       id: 'approval-persistence-boundary',
       title: 'Approval persistence boundary',
-      status: 'blocked',
+      status: hasAcceptedApprovalRecord(approvalStatus) ? 'open' : 'blocked',
       detail: `Approval persistence readiness gates: ${readyPersistenceGateCount} of ${persistenceReadinessGates.length} ready.`,
-      evidence: 'Hosted schema and approval route gates are ready; browser approval submission, first approval row creation, and import mutation remain blocked.',
+      evidence: approvalPersistenceBoundaryEvidence(approvalStatus),
     },
     {
       id: 'hosted-parity-boundary',
@@ -2777,7 +2960,8 @@ function buildPmIntakeDailyReviewScript(
 ): DailyReviewScriptItem[] {
   const exceptionCount = importExceptionRegisterCounts(importExceptionRegister)
   const nextFieldPrepMove = fieldPrepQueue.find((item) => item.status === 'next') || fieldPrepQueue.find((item) => item.status === 'blocked')
-  const decisionDraftComplete = Boolean(approvalDraft.decision && approvalDraft.review_notes.trim() && approvalDraft.local_attestation)
+  const warnings = candidate?.warnings || []
+  const decisionDraftComplete = approvalDraftIsComplete(approvalDraft, warnings)
   const decisionDraftStarted = hasApprovalDraftContent(approvalDraft)
   const closeoutCheckedCount = CLOSEOUT_CHECKLIST_ITEMS.filter((item) => closeoutChecks[item.id]).length
   const blockedPersistenceGateCount = persistenceReadinessGates.filter((gate) => gate.status === 'blocked').length
@@ -2809,10 +2993,10 @@ function buildPmIntakeDailyReviewScript(
       status: decisionDraftComplete ? 'context' : decisionDraftStarted ? 'confirm' : 'do-now',
       href: '#pm-operating-queue',
       detail: decisionDraftComplete
-        ? 'Local decision draft has decision value, review notes, and local-only attestation for this browser-local review.'
+        ? approvalDraftLocalReviewCompleteDetail(warnings)
         : decisionDraftStarted
-          ? 'Local decision draft has partial browser-local context; confirm the missing decision, notes, or local-only attestation.'
-          : 'Local decision draft has not started; capture decision value, review notes, and local-only attestation before any future persistence packet.',
+          ? approvalDraftLocalReviewPartialDetail(warnings)
+          : approvalDraftLocalReviewNotStartedDetail(warnings),
     },
     {
       id: 'minute-3-check-field-prep-questions',
@@ -3544,7 +3728,8 @@ function buildPmIntakeCommandCenter(
   const exceptionCount = importExceptionRegisterCounts(importExceptionRegister)
   const reviewCheckedCount = REVIEW_CHECKLIST_ITEMS.filter((item) => reviewChecks[item.id]).length
   const sourceAndWarningReviewDone = Boolean(reviewChecks.source_freshness_reviewed && reviewChecks.exceptions_reviewed)
-  const decisionDraftComplete = Boolean(approvalDraft.decision && approvalDraft.review_notes.trim() && approvalDraft.local_attestation)
+  const warnings = candidate?.warnings || []
+  const decisionDraftComplete = approvalDraftIsComplete(approvalDraft, warnings)
   const completeFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'complete').length
   const nextFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'next').length
   const blockedFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'blocked').length
@@ -3565,7 +3750,7 @@ function buildPmIntakeCommandCenter(
     ? `${projectName}: start with source and exception review. Source fingerprint ${sourceFingerprint}; review checklist has ${reviewCheckedCount} of ${REVIEW_CHECKLIST_ITEMS.length} local checks marked and exceptions are ${importExceptionRegisterSummary(exceptionCount)}.`
     : decisionDraftComplete
       ? 'Local review context is captured; use the output selector to choose the existing local artifact for the next conversation or packet context.'
-      : 'Source and exception review have local checklist context; capture local decision value, review notes, and local-only attestation next.'
+      : `Source and exception review have local checklist context; capture local ${approvalDraftRequirementPhrase(warnings)} next.`
   const handoffContextPresent = decisionDraftComplete || closeoutCheckedCount > 0 || hasFieldQuestions || hasFieldObservations
 
   return [
@@ -3618,7 +3803,7 @@ function buildPmIntakeMeetingReadout(
   const project = candidate?.project || {}
   const summary = candidate?.summary || {}
   const exceptionCount = importExceptionRegisterCounts(importExceptionRegister)
-  const decisionDraftComplete = Boolean(approvalDraft.decision && approvalDraft.review_notes.trim() && approvalDraft.local_attestation)
+  const decisionDraftComplete = approvalDraftIsComplete(approvalDraft, candidate?.warnings || [])
   const decisionDraftStarted = hasApprovalDraftContent(approvalDraft)
   const nextFieldPrepMove = fieldPrepQueue.find((item) => item.status === 'next') || fieldPrepQueue.find((item) => item.status === 'blocked')
   const completeFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'complete').length
@@ -3685,7 +3870,7 @@ function buildPmIntakeConstraintRadar(
 ): ConstraintRadarItem[] {
   const exceptionCount = importExceptionRegisterCounts(importExceptionRegister)
   const reviewCheckedCount = REVIEW_CHECKLIST_ITEMS.filter((item) => reviewChecks[item.id]).length
-  const decisionDraftComplete = Boolean(approvalDraft.decision && approvalDraft.review_notes.trim() && approvalDraft.local_attestation)
+  const decisionDraftComplete = approvalDraftIsComplete(approvalDraft, candidate?.warnings || [])
   const decisionDraftStarted = hasApprovalDraftContent(approvalDraft)
   const completeFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'complete').length
   const nextFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'next').length
@@ -3736,13 +3921,14 @@ function buildPmIntakeConstraintRadar(
 
 function buildPmIntakeOutputSelector(
   approvalDraft: ApprovalDecisionDraft,
+  warnings: CandidateWarning[],
   reviewChecks: Record<string, boolean>,
   fieldPrepQueue: OperatingQueueItem[],
   closeoutChecks: Record<string, boolean>,
   fieldQuestionsDraft: FieldQuestionsDraft,
   fieldObservationScratchpad: FieldObservationScratchpad,
 ): OutputSelectorGroup[] {
-  const decisionDraftComplete = Boolean(approvalDraft.decision && approvalDraft.review_notes.trim() && approvalDraft.local_attestation)
+  const decisionDraftComplete = approvalDraftIsComplete(approvalDraft, warnings)
   const reviewCheckedCount = REVIEW_CHECKLIST_ITEMS.filter((item) => reviewChecks[item.id]).length
   const closeoutCheckedCount = CLOSEOUT_CHECKLIST_ITEMS.filter((item) => closeoutChecks[item.id]).length
   const completeFieldPrepQueueCount = fieldPrepQueue.filter((item) => item.status === 'complete').length
@@ -3963,15 +4149,16 @@ function buildPmIntakeOutputSelector(
 function buildPmIntakeHandoffGuide(
   importExceptionRegister: ImportExceptionRegisterItem[],
   approvalDraft: ApprovalDecisionDraft,
+  warnings: CandidateWarning[],
   fieldPrepQueue: OperatingQueueItem[],
   closeoutChecks: Record<string, boolean>,
   persistenceReadinessGates: ReadinessGate[],
   admissionPlan: AdmissionPlan | undefined,
 ): HandoffGuideGroup[] {
   const exceptionCount = importExceptionRegisterCounts(importExceptionRegister)
-  const decisionDraftComplete = Boolean(approvalDraft.decision && approvalDraft.review_notes.trim() && approvalDraft.local_attestation)
+  const decisionDraftComplete = approvalDraftIsComplete(approvalDraft, warnings)
   const decisionDraftState = decisionDraftComplete
-    ? 'local decision draft has decision value, review notes, and local-only attestation'
+    ? `local decision draft has ${approvalDraftRequirementPhrase(warnings)}`
     : hasApprovalDraftContent(approvalDraft)
       ? 'local decision draft has partial browser-local context'
       : 'local decision draft has not started'
@@ -4048,13 +4235,14 @@ function buildPmIntakeWorkflowMap(
   candidate: CandidatePayload | undefined,
   importExceptionRegister: ImportExceptionRegisterItem[],
   approvalDraft: ApprovalDecisionDraft,
+  warnings: CandidateWarning[],
   fieldPrepQueue: OperatingQueueItem[],
   closeoutChecks: Record<string, boolean>,
   persistenceReadinessGates: ReadinessGate[],
   admissionPlan: AdmissionPlan | undefined,
 ): WorkflowMapGroup[] {
   const exceptionCount = importExceptionRegisterCounts(importExceptionRegister)
-  const decisionDraftComplete = Boolean(approvalDraft.decision && approvalDraft.review_notes.trim() && approvalDraft.local_attestation)
+  const decisionDraftComplete = approvalDraftIsComplete(approvalDraft, warnings)
   const decisionDraftStarted = hasApprovalDraftContent(approvalDraft)
   const nextFieldPrepMove = fieldPrepQueue.find((item) => item.status === 'next') || fieldPrepQueue.find((item) => item.status === 'blocked')
   const closeoutCheckedCount = CLOSEOUT_CHECKLIST_ITEMS.filter((item) => closeoutChecks[item.id]).length
@@ -4089,7 +4277,7 @@ function buildPmIntakeWorkflowMap(
           status: decisionDraftComplete ? 'context' : decisionDraftStarted ? 'draft' : 'attention',
           href: '#pm-operating-queue',
           detail: decisionDraftComplete
-            ? 'Local decision draft has a decision value, review notes, and local-only attestation.'
+            ? `Local decision draft has ${approvalDraftRequirementPhrase(warnings)}.`
             : decisionDraftStarted
               ? 'Local decision draft has partial browser-local context.'
               : 'Decision draft has not started.',
@@ -4144,13 +4332,14 @@ function buildPmIntakeWorkflowMap(
 function buildPmIntakeOpenItemsLens(
   importExceptionRegister: ImportExceptionRegisterItem[],
   approvalDraft: ApprovalDecisionDraft,
+  warnings: CandidateWarning[],
   fieldPrepQueue: OperatingQueueItem[],
   closeoutChecks: Record<string, boolean>,
   persistenceReadinessGates: ReadinessGate[],
   admissionPlan: AdmissionPlan | undefined,
 ): OpenItemsLensGroup[] {
   const exceptionCount = importExceptionRegisterCounts(importExceptionRegister)
-  const decisionDraftComplete = Boolean(approvalDraft.decision && approvalDraft.review_notes.trim() && approvalDraft.local_attestation)
+  const decisionDraftComplete = approvalDraftIsComplete(approvalDraft, warnings)
   const fieldPrepNextCount = fieldPrepQueue.filter((item) => item.status === 'next').length
   const fieldPrepBlockedCount = fieldPrepQueue.filter((item) => item.status === 'blocked').length
   const closeoutCheckedCount = CLOSEOUT_CHECKLIST_ITEMS.filter((item) => closeoutChecks[item.id]).length
@@ -4179,8 +4368,8 @@ function buildPmIntakeOpenItemsLens(
           status: decisionDraftComplete ? 'context' : 'open',
           href: '#pm-operating-queue',
           detail: decisionDraftComplete
-            ? 'Local decision value, review notes, and local-only attestation are present.'
-            : 'Decision value, review notes, and local-only attestation still need local draft context.',
+            ? approvalDraftPresentDetail(warnings)
+            : `${upperFirst(approvalDraftRequirementPhrase(warnings))} still need local draft context.`,
         },
         {
           id: 'field-prep-open-items',
@@ -4244,7 +4433,7 @@ function buildApprovalPacketPreview(
   const warningCodes = warnings.map((warning) => warning.code).filter((code): code is string => Boolean(code))
   const unresolvedWarningCodes = unresolvedProjectDataEntryWarningCodes(warnings)
   const acceptedWarningCodes = acceptedWarningCodesForDryRun(warnings, Boolean(reviewChecks.exceptions_reviewed))
-  const draftComplete = Boolean(approvalDraft.decision && approvalDraft.review_notes.trim() && approvalDraft.local_attestation)
+  const draftComplete = approvalDraftIsComplete(approvalDraft, warnings)
 
   return {
     preview_kind: 'pm_import_candidate_approval_packet_preview',
@@ -4295,10 +4484,11 @@ function buildApprovalPacketPreview(
         reviewed_warning_codes: reviewChecks.exceptions_reviewed ? warningCodes : [],
         accepted_warning_codes: acceptedWarningCodes,
         unresolved_warning_codes: unresolvedWarningCodes,
-        warning_disposition_gate: projectDataEntryWarningDispositionGate(warnings),
+        warning_disposition_gate: projectDataEntryWarningDispositionGate(warnings, approvalDraft.project_data_entry_label),
       },
       decision_draft: {
         decision: approvalDraft.decision || null,
+        project_data_entry_label: approvalDraft.project_data_entry_label || null,
         review_notes: approvalDraft.review_notes.trim() || null,
         local_attestation: approvalDraft.local_attestation,
         draft_complete: draftComplete,
@@ -4336,7 +4526,7 @@ function buildLocalApprovalSubmissionDryRun(
   const acceptedWarningCodes = acceptedWarningCodesForDryRun(candidate.warnings || [], Boolean(reviewChecks.exceptions_reviewed))
   const noGoCheckIds = (admissionPlan.no_go_checks || []).map((check) => check.check_id).filter(Boolean)
   const sourceFingerprint = candidate.source_freshness?.aggregate_fingerprint || 'source-fingerprint-missing'
-  const draftComplete = Boolean(approvalDraft.decision && approvalDraft.review_notes.trim() && approvalDraft.local_attestation)
+  const draftComplete = approvalDraftIsComplete(approvalDraft, candidate.warnings || [])
   const idempotencyBase = [
     candidateDisplayId(candidate),
     candidate.candidate_version || 'candidate-version-unknown',
@@ -4373,11 +4563,12 @@ function buildLocalApprovalSubmissionDryRun(
       candidate_version: candidate.candidate_version || null,
       source_fingerprint: sourceFingerprint,
       decision: approvalDraft.decision || null,
+      project_data_entry_label: approvalDraft.project_data_entry_label || null,
       review_notes: approvalDraft.review_notes.trim() || null,
       local_attestation: approvalDraft.local_attestation,
       accepted_warning_codes: acceptedWarningCodes,
       unresolved_warning_codes: unresolvedWarningCodes,
-      warning_disposition_gate: projectDataEntryWarningDispositionGate(candidate.warnings || []),
+      warning_disposition_gate: projectDataEntryWarningDispositionGate(candidate.warnings || [], approvalDraft.project_data_entry_label),
       acknowledged_no_go_check_ids: reviewChecks.admission_no_go_reviewed ? noGoCheckIds : [],
       approval_contract_id: approvalContract.approval_contract_id || null,
       storage_table: storagePlan.recommended_table || null,
@@ -4389,6 +4580,7 @@ function buildLocalApprovalSubmissionDryRun(
     },
     local_validation: {
       decision_draft_complete: draftComplete,
+      project_data_entry_label_recorded: Boolean(approvalDraft.project_data_entry_label),
       checklist_checked_count: checkedItems.length,
       checklist_checked_items: checkedItems,
       warning_acceptance_ready: Boolean(reviewChecks.exceptions_reviewed) && unresolvedWarningCodes.length === 0,
@@ -4536,6 +4728,7 @@ function buildIntakeBrief(
     'This browser-local decision draft is review prep only. It is not approval, persistence, import, assignment, schedule, status, or production state.',
     '',
     `- Decision draft: ${approvalDraft.decision || 'none selected'}`,
+    `- Project Data Entry exact label: ${approvalDraftProjectDataEntryLabelValue(approvalDraft, warnings)}`,
     `- Local-only attestation checked: ${approvalDraft.local_attestation ? 'yes' : 'no'}`,
     `- Review notes draft: ${formatMultilineMarkdown(approvalDraft.review_notes)}`,
     '',
@@ -4659,16 +4852,12 @@ function buildIntakeBrief(
     markdownList(fieldQuestionLines),
     '',
     '## Local Field Observation Scratchpad',
-    '',
     `Scratchpad present: ${fieldObservationScratchpadPresent ? 'yes' : 'no'}.`,
     '',
     'This browser-local observation scratchpad is field-prep context only. It is not a task, issue, work authorization, approval, persistence, import, assignment, schedule, status, or production state.',
     '',
     markdownList(fieldObservationLines),
-    '',
     '## Admission And Approval',
-    '',
-    `- Admission plan: ${admissionPlan.admission_plan_id || 'unknown'}`,
     `- Admission authority: ${admissionPlan.mutation_authority || 'not_admitted'}`,
     `- Approval contract: ${approvalContract.approval_contract_id || 'unknown'}`,
     `- Approval storage/design authority: ${approvalContract.persistence_authority || storagePlan.persistence_authority || 'not_admitted'}`,
@@ -4761,6 +4950,7 @@ function buildExecutorHandoff(
     `- Checklist checked: ${checkedItems.length} of ${REVIEW_CHECKLIST_ITEMS.length}`,
     `- Closeout checks: ${checkedCloseoutItems.length} of ${CLOSEOUT_CHECKLIST_ITEMS.length}`,
     `- Decision draft: ${approvalDraft.decision || 'none selected'}`,
+    `- Project Data Entry exact label: ${approvalDraftProjectDataEntryLabelValue(approvalDraft, warnings)}`,
     `- Local-only attestation checked: ${approvalDraft.local_attestation ? 'yes' : 'no'}`,
     `- Review notes draft: ${formatMultilineMarkdown(approvalDraft.review_notes)}`,
     '',
@@ -4856,7 +5046,7 @@ function buildExecutorHandoff(
     '',
     '- Keep exact read-only source and candidate identity visible.',
     '- Preserve hosted schema, hosted readback, and bounded MCP proof as context only; do not treat them as browser approval authority.',
-    '- Keep browser approval submission, first approval-row creation, and import mutation blocked unless a later packet explicitly admits them.',
+    `- ${approvalMutationBoundaryText(packet.approvalStatus, 'and import mutation remain blocked unless a later packet explicitly admits them.')}`,
     '- Preserve zero mutation calls for review-only work.',
     '- Do not widen backend routes, auth, ingress, secrets, SQL, workbook macros, assignment, schedule, status, or autonomous AI business-state authority.',
   ].join('\n')
@@ -4991,6 +5181,7 @@ function buildFieldKickoffBrief(
     `- Executor closeout intake: ${checkedCloseoutItems.length} of ${CLOSEOUT_CHECKLIST_ITEMS.length} checked`,
     `- Field readiness prep: ${checkedFieldReadinessItems.length} of ${FIELD_READINESS_CHECKLIST_ITEMS.length} checked`,
     `- Decision draft: ${approvalDraft.decision || 'none selected'}`,
+    `- Project Data Entry exact label: ${approvalDraftProjectDataEntryLabelValue(approvalDraft, warnings)}`,
     `- Local-only attestation checked: ${approvalDraft.local_attestation ? 'yes' : 'no'}`,
     `- Review notes draft: ${formatMultilineMarkdown(approvalDraft.review_notes)}`,
     '',
@@ -5416,6 +5607,7 @@ function buildFieldPrepPacket(
     `- PM operating queue: ${completeQueueCount} complete, ${nextQueueCount} next, ${blockedQueueCount} blocked`,
     `- Decision draft present: ${approvalDraftPresent ? 'yes' : 'no'}`,
     `- Decision draft value: ${approvalDraft.decision || 'none selected'}`,
+    `- Project Data Entry exact label: ${approvalDraftProjectDataEntryLabelValue(approvalDraft, warnings)}`,
     `- Local-only attestation checked: ${approvalDraft.local_attestation ? 'yes' : 'no'}`,
     `- Review notes draft: ${formatMultilineMarkdown(approvalDraft.review_notes)}`,
     '',
@@ -5429,7 +5621,7 @@ function buildFieldPrepPacket(
     '',
     `- Hosted approval route: ${futureRoute}`,
     `- Hosted approval table: ${packet.storagePlan.recommended_table || 'not admitted'}`,
-    '- Browser approval submission, first approval-row creation, project import, assignment, schedule, status, issue, task, durable field record, and production tracking writes remain blocked.',
+    `- ${approvalMutationBoundaryText(packet.approvalStatus, 'project import, assignment, schedule, status, issue, task, durable field record, and production tracking writes remain blocked.')}`,
     '',
     '## Not Allowed',
     '',
@@ -5596,6 +5788,7 @@ function buildFieldExecutionGateDesignExport(
 ) {
   const candidate = packet.candidate
   const project = candidate.project || {}
+  const approvalStatus = packet.approvalStatus
   const fieldStartPreflight = buildFieldStartPreflightExport(packet, fieldPrepQueue, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, notAllowed, futureRoute, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad)
   const gateItems: ApprovalDryRunReadinessItem[] = [
     {
@@ -5607,14 +5800,21 @@ function buildFieldExecutionGateDesignExport(
     {
       id: 'approval-first-row-gate',
       title: 'Approval first-row gate',
-      status: 'blocked',
-      detail: 'PM Lane 142 exact live-write admission and first approval-row proof are still required before import or field execution can proceed.',
+      status: approvalRowPrerequisiteStatus(approvalStatus),
+      detail: approvalRowPrerequisiteDetail(
+        approvalStatus,
+        'Treat the approval-row prerequisite as satisfied; import, field execution, and downstream write packets remain separately blocked until their own admission packets complete.',
+        'PM Lane 142 exact live-write admission and first approval-row proof are still required before import or field execution can proceed.',
+      ),
     },
     {
       id: 'project-import-gate',
       title: 'Project import gate',
       status: 'blocked',
-      detail: 'Project, workpackage, task, and apparatus rows are not imported; no downstream field work can be assigned from this candidate yet.',
+      detail: projectImportAuthorityDetail(
+        packet.admissionPlan,
+        'Project, workpackage, task, and apparatus rows are not imported; no downstream field work can be assigned from this candidate yet.',
+      ),
     },
     {
       id: 'lead-assignment-gate',
@@ -5682,7 +5882,11 @@ function buildFieldExecutionGateDesignExport(
       {
         id: 'approval-first-row',
         required_before: 'project_import',
-        detail: 'Use the PM Lane 142 gate before any first approval row or live approval POST.',
+        detail: approvalRowPrerequisiteDetail(
+          approvalStatus,
+          'Treat the approval-row prerequisite as satisfied; keep browser approval POST and additional approval-row mutation blocked from this workbench, and move the remaining sequence to import admission.',
+          'Use the PM Lane 142 gate before any first approval row or live approval POST.',
+        ),
       },
       {
         id: 'project-import',
@@ -5744,6 +5948,7 @@ function buildLeadFieldAssignmentDraftExport(
   const candidate = packet.candidate
   const project = candidate.project || {}
   const summary = candidate.summary || {}
+  const approvalStatus = packet.approvalStatus
   const fieldStartPreflight = buildFieldStartPreflightExport(packet, fieldPrepQueue, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, notAllowed, futureRoute, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad)
   const fieldExecutionGateDesign = buildFieldExecutionGateDesignExport(packet, fieldPrepQueue, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, notAllowed, futureRoute, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad)
   const fieldPrepAgendaCount = fieldPrepAgendaCounts(fieldPrepConversationAgenda)
@@ -5775,8 +5980,12 @@ function buildLeadFieldAssignmentDraftExport(
     {
       id: 'approval-before-assignment',
       title: 'Approval before assignment',
-      status: 'blocked',
-      detail: 'The first approval row is still blocked until PM Lane 142 live-write admission and proof complete.',
+      status: approvalRowPrerequisiteStatus(approvalStatus),
+      detail: approvalRowPrerequisiteDetail(
+        approvalStatus,
+        'Treat the approval-row prerequisite as satisfied; lead or crew assignments still require separate import and assignment admission.',
+        'The first approval row is still blocked until PM Lane 142 live-write admission and proof complete.',
+      ),
     },
     {
       id: 'import-before-assignment',
@@ -5941,6 +6150,7 @@ function buildFieldAuthorizationAssignmentDraftExport(
   const candidate = packet.candidate
   const project = candidate.project || {}
   const summary = candidate.summary || {}
+  const approvalStatus = packet.approvalStatus
   const fieldExecutionGateDesign = buildFieldExecutionGateDesignExport(packet, fieldPrepQueue, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, notAllowed, futureRoute, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad)
   const leadFieldAssignmentDraft = buildLeadFieldAssignmentDraftExport(packet, fieldPrepQueue, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, notAllowed, futureRoute, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad)
   const admissionItems: ApprovalDryRunReadinessItem[] = [
@@ -5959,8 +6169,12 @@ function buildFieldAuthorizationAssignmentDraftExport(
     {
       id: 'approval-first-row-prerequisite',
       title: 'Approval first-row prerequisite',
-      status: 'blocked',
-      detail: 'The first approval row remains blocked until the explicit PM Lane 142 live-write gate is admitted and proved.',
+      status: approvalRowPrerequisiteStatus(approvalStatus),
+      detail: approvalRowPrerequisiteDetail(
+        approvalStatus,
+        'Treat the approval-row prerequisite as satisfied; field authorization and assignment writes still require separate import and admission packets.',
+        'The first approval row remains blocked until the explicit PM Lane 142 live-write gate is admitted and proved.',
+      ),
     },
     {
       id: 'project-import-prerequisite',
@@ -6061,8 +6275,12 @@ function buildFieldAuthorizationAssignmentDraftExport(
     proposed_packet_sequence: [
       {
         step: 'complete_approval_first_row_gate',
-        status: 'blocked',
-        detail: 'Use the PM Lane 142 exact admission phrase and proof before any live approval POST or first approval row.',
+        status: approvalRowPrerequisiteStatus(approvalStatus),
+        detail: approvalRowPrerequisiteDetail(
+          approvalStatus,
+          'Treat the approval-row prerequisite as satisfied; keep browser approval POST and additional approval-row mutation blocked from this workbench, and move the remaining sequence to project-import admission.',
+          'Use the PM Lane 142 exact admission phrase and proof before any live approval POST or first approval row.',
+        ),
       },
       {
         step: 'complete_project_import_gate',
@@ -7223,7 +7441,10 @@ function buildPilotLaunchBinderExport(
       id: 'project-import-authority',
       title: 'Project import authority',
       status: 'blocked',
-      detail: 'Project, workpackage, task, and apparatus import writes remain blocked until a later import packet is admitted after approval-row proof.',
+      detail: projectImportAuthorityDetail(
+        packet.admissionPlan,
+        'Project, workpackage, task, and apparatus import writes remain blocked until a later import packet is admitted after approval-row proof.',
+      ),
     },
     {
       id: 'field-production-customer-finance-authority',
@@ -7351,13 +7572,18 @@ function buildPilotLaunchDailyBriefExport(
   fieldObservationScratchpad: FieldObservationScratchpad,
 ) {
   const candidate = packet.candidate
+  const approvalStatus = packet.approvalStatus
   const binder = buildPilotLaunchBinderExport(packet, approvalDryRunReadiness, reviewChecks, approvalDraft, fieldPrepQueue, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, notAllowed, futureRoute, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad)
   const dailyBriefItems = [
     {
       id: 'approval-live-gate',
       title: 'Approval live gate',
       status: 'blocked',
-      detail: 'Do not send a browser approval POST or create the first approval row until the exact PM Lane 142 phrase is admitted.',
+      detail: approvalRowPrerequisiteDetail(
+        approvalStatus,
+        'Do not send a browser approval POST or mutate additional approval rows from this workbench; project import and downstream field or production writes still need separate admission.',
+        'Do not send a browser approval POST or create the first approval row until the exact PM Lane 142 phrase is admitted.',
+      ),
     },
     {
       id: 'field-start-context-review',
@@ -7990,6 +8216,7 @@ function buildImportExceptionRegisterExport(
     '## Local Decision Draft',
     '',
     `- Decision draft: ${approvalDraft.decision || 'none selected'}`,
+    `- Project Data Entry exact label: ${approvalDraftProjectDataEntryLabelValue(approvalDraft, packet.candidate.warnings || [])}`,
     `- Local-only attestation checked: ${approvalDraft.local_attestation ? 'yes' : 'no'}`,
     `- Review notes draft: ${formatMultilineMarkdown(approvalDraft.review_notes)}`,
     '',
@@ -7998,7 +8225,7 @@ function buildImportExceptionRegisterExport(
     `- Hosted approval table: ${storagePlan.recommended_table || 'not admitted'}`,
     `- Hosted approval route: ${storagePlan.recommended_route || 'not admitted'}`,
     `- Admission authority: ${admissionPlan.mutation_authority || 'not_admitted'}`,
-    '- Browser approval submission, first approval-row creation, import rows, assignment, schedule, status, issue, task, durable field record, and production tracking writes remain blocked.',
+    `- ${approvalMutationBoundaryText(packet.approvalStatus, 'import rows, assignment, schedule, status, issue, task, durable field record, and production tracking writes remain blocked.')}`,
     '',
     '## Not Allowed',
     '',
@@ -8056,7 +8283,7 @@ function buildPmIntakeSnapshotExport(
     `- Hosted approval table: ${storagePlan.recommended_table || 'not admitted'}`,
     `- Hosted approval route: ${futureRoute}`,
     `- Admission authority: ${admissionPlan.mutation_authority || 'not_admitted'}`,
-    '- Browser approval submission, first approval-row creation, project import, assignment, schedule, status, issue, task, durable field record, and production tracking writes remain blocked.',
+    `- ${approvalMutationBoundaryText(packet.approvalStatus, 'project import, assignment, schedule, status, issue, task, durable field record, and production tracking writes remain blocked.')}`,
     '',
     '## Not Allowed',
     '',
@@ -8225,8 +8452,8 @@ export default function ProjectMinerIntakeWorkbenchPage() {
   )
   const approvalDryRunReadinessCount = approvalDryRunReadinessCounts(approvalDryRunReadiness)
   const operatingQueue = useMemo(
-    () => buildPmOperatingQueue(approvalDraft, reviewChecks, persistenceReadinessGates, approvalStatus),
-    [approvalDraft, reviewChecks, persistenceReadinessGates, approvalStatus],
+    () => buildPmOperatingQueue(approvalDraft, reviewChecks, persistenceReadinessGates, warnings, approvalStatus),
+    [approvalDraft, reviewChecks, persistenceReadinessGates, warnings, approvalStatus],
   )
   const operatingQueueGroups = useMemo(
     () => groupPmOperatingQueueItems(operatingQueue),
@@ -8325,8 +8552,8 @@ export default function ProjectMinerIntakeWorkbenchPage() {
     [candidate, fieldQuestionsDraft, fieldObservationScratchpad],
   )
   const pmIntakeSnapshot = useMemo(
-    () => buildPmIntakeSnapshot(persistenceReadinessGates, operatingQueue, importExceptionRegister, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, closeoutChecks, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad, approvalDraft),
-    [persistenceReadinessGates, operatingQueue, importExceptionRegister, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, closeoutChecks, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad, approvalDraft],
+    () => buildPmIntakeSnapshot(persistenceReadinessGates, operatingQueue, importExceptionRegister, warnings, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, closeoutChecks, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad, approvalDraft, approvalStatus),
+    [persistenceReadinessGates, operatingQueue, importExceptionRegister, warnings, fieldPrepCoverageSnapshot, fieldPrepConversationAgenda, closeoutChecks, fieldReadinessChecks, fieldQuestionsDraft, fieldObservationScratchpad, approvalDraft, approvalStatus],
   )
   const pmIntakeSnapshotGroups = useMemo(
     () => groupPmIntakeSnapshotItems(pmIntakeSnapshot),
@@ -8353,20 +8580,20 @@ export default function ProjectMinerIntakeWorkbenchPage() {
     [candidate, importExceptionRegister, reviewChecks, approvalDraft, fieldPrepQueue, closeoutChecks, fieldQuestionsDraft, fieldObservationScratchpad, persistenceReadinessGates, admissionPlan],
   )
   const pmIntakeOutputSelector = useMemo(
-    () => buildPmIntakeOutputSelector(approvalDraft, reviewChecks, fieldPrepQueue, closeoutChecks, fieldQuestionsDraft, fieldObservationScratchpad),
-    [approvalDraft, reviewChecks, fieldPrepQueue, closeoutChecks, fieldQuestionsDraft, fieldObservationScratchpad],
+    () => buildPmIntakeOutputSelector(approvalDraft, warnings, reviewChecks, fieldPrepQueue, closeoutChecks, fieldQuestionsDraft, fieldObservationScratchpad),
+    [approvalDraft, warnings, reviewChecks, fieldPrepQueue, closeoutChecks, fieldQuestionsDraft, fieldObservationScratchpad],
   )
   const pmIntakeHandoffGuide = useMemo(
-    () => buildPmIntakeHandoffGuide(importExceptionRegister, approvalDraft, fieldPrepQueue, closeoutChecks, persistenceReadinessGates, admissionPlan),
-    [importExceptionRegister, approvalDraft, fieldPrepQueue, closeoutChecks, persistenceReadinessGates, admissionPlan],
+    () => buildPmIntakeHandoffGuide(importExceptionRegister, approvalDraft, warnings, fieldPrepQueue, closeoutChecks, persistenceReadinessGates, admissionPlan),
+    [importExceptionRegister, approvalDraft, warnings, fieldPrepQueue, closeoutChecks, persistenceReadinessGates, admissionPlan],
   )
   const pmIntakeWorkflowMap = useMemo(
-    () => buildPmIntakeWorkflowMap(candidate, importExceptionRegister, approvalDraft, fieldPrepQueue, closeoutChecks, persistenceReadinessGates, admissionPlan),
-    [candidate, importExceptionRegister, approvalDraft, fieldPrepQueue, closeoutChecks, persistenceReadinessGates, admissionPlan],
+    () => buildPmIntakeWorkflowMap(candidate, importExceptionRegister, approvalDraft, warnings, fieldPrepQueue, closeoutChecks, persistenceReadinessGates, admissionPlan),
+    [candidate, importExceptionRegister, approvalDraft, warnings, fieldPrepQueue, closeoutChecks, persistenceReadinessGates, admissionPlan],
   )
   const pmIntakeOpenItems = useMemo(
-    () => buildPmIntakeOpenItemsLens(importExceptionRegister, approvalDraft, fieldPrepQueue, closeoutChecks, persistenceReadinessGates, admissionPlan),
-    [importExceptionRegister, approvalDraft, fieldPrepQueue, closeoutChecks, persistenceReadinessGates, admissionPlan],
+    () => buildPmIntakeOpenItemsLens(importExceptionRegister, approvalDraft, warnings, fieldPrepQueue, closeoutChecks, persistenceReadinessGates, admissionPlan),
+    [importExceptionRegister, approvalDraft, warnings, fieldPrepQueue, closeoutChecks, persistenceReadinessGates, admissionPlan],
   )
   const completeQueueCount = operatingQueue.filter((item) => item.status === 'complete').length
   const nextQueueCount = operatingQueue.filter((item) => item.status === 'next').length
@@ -8601,7 +8828,7 @@ export default function ProjectMinerIntakeWorkbenchPage() {
       return
     }
 
-    const readiness = buildApprovalDryRunReadinessExport(packet, approvalDryRunReadiness, notAllowed, futureRoute)
+    const readiness = buildApprovalDryRunReadinessExport(packet, approvalDryRunReadiness, notAllowed, futureRoute, approvalDraft)
     const contents = `${JSON.stringify(readiness, null, 2)}\n`
     downloadTextFile(approvalDryRunReadinessFileName(candidate), contents, 'application/json')
     setApprovalDryRunStatus(`Local approval dry run readiness exported for ${candidate?.candidate_id || 'the current intake packet'}; no network request was sent.`)
@@ -10691,6 +10918,26 @@ export default function ProjectMinerIntakeWorkbenchPage() {
                       </select>
                       <span style={{ color: 'var(--muted)', lineHeight: 1.5 }}>Allowed by the read-only approval contract, but not persisted by this screen.</span>
                     </label>
+                    {hasProjectDataEntryWarning ? (
+                      <label className="card" style={{ display: 'grid', gap: '0.45rem', padding: '0.85rem', boxShadow: 'none' }}>
+                        <strong>Project Data Entry exact label</strong>
+                        <select
+                          value={approvalDraft.project_data_entry_label}
+                          onChange={(event) => updateApprovalDraft({ project_data_entry_label: event.target.value })}
+                          style={{ width: '100%', minHeight: '2.5rem' }}
+                        >
+                          <option value="">Select exact PM Lane 238 label</option>
+                          {PROJECT_DATA_ENTRY_DECISION_LABELS.map((label) => (
+                            <option key={label} value={label}>
+                              {label}
+                            </option>
+                          ))}
+                        </select>
+                        <span style={{ color: 'var(--muted)', lineHeight: 1.5 }}>
+                          Required for local draft completeness while {PROJECT_DATA_ENTRY_WARNING_CODE} remains present. Local only; no warning acceptance occurs on this screen.
+                        </span>
+                      </label>
+                    ) : null}
                   </div>
                 </section>
                 <section aria-label="Review Notes Context approval draft group">
@@ -10778,15 +11025,15 @@ export default function ProjectMinerIntakeWorkbenchPage() {
                     <article className="card" style={{ padding: '0.85rem', boxShadow: 'none' }}>
                       <h2>Local draft gate</h2>
                       <p style={{ margin: '0.45rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
-                        {approvalDraft.decision && approvalDraft.review_notes.trim() && approvalDraft.local_attestation
-                          ? 'Decision value, review notes, and local-only attestation are present.'
-                          : 'Decision value, review notes, and local-only attestation are needed before this dry run is useful packet context.'}
+                        {approvalDraftIsComplete(approvalDraft, warnings)
+                          ? approvalDraftPresentDetail(warnings)
+                          : approvalDraftNeededBeforeDryRunDetail(warnings)}
                       </p>
                     </article>
                     <article className="card" style={{ padding: '0.85rem', boxShadow: 'none' }}>
                       <h2>Write boundary</h2>
                       <p style={{ margin: '0.45rem 0 0', color: 'var(--muted)', lineHeight: 1.55 }}>
-                        Live approval POST, first approval-row creation, and project import remain blocked until a separate explicit admission.
+                        {approvalMutationBoundaryText(approvalStatus, 'and project import remain blocked until a separate explicit admission.')}
                       </p>
                     </article>
                   </div>

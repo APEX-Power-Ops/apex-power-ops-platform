@@ -1,0 +1,83 @@
+{
+  "packet_id": "2026-05-20-pm-lane-411-revision-c",
+  "title": "PM Lane 411 Revision C - Project Miner Temp Power Lane 280 Status Mutation Extension Role Contract Correction No-Live Packet",
+  "status": "complete",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_APPARATUS_COMPLETION_REVENUE_RECOGNITION_NO_LIVE_DESIGN_REVISION_C",
+  "selected_outcome": "APPARATUS_COMPLETION_REVENUE_RECOGNITION_DESIGN_READY_NO_LIVE_REVISION_C",
+  "layers_on_top_of": [
+    "2026-05-20-pm-lane-411",
+    "2026-05-20-pm-lane-411-revision-a",
+    "2026-05-20-pm-lane-411-revision-b"
+  ],
+  "scope": "Lane 411 financial-table role contract correction only",
+  "phase_0_discovery": {
+    "operations_role_identifier": "No existing auth-role literal 'operations' or 'ops' was found in apps/mutation-seam/app/auth; repo hits are hostnames, route names, documentation text, or natural-language labels.",
+    "finance_role_identifier": [
+      "Lane 411 Revision A role-separation section",
+      "Lane 411 Revision B inherited baseline",
+      "Lane 412 Revision A role-separation section"
+    ],
+    "grant_surface": "No repo-local migration creates the Lane 411 financial tables or applies PM-and-Finance grants; Revision A and Revision B are design-only for this surface.",
+    "finance_authority": "No repo-local seam.apparatus_financials.finance_authority definition was found; implemented finance_authority columns appear only on later downstream record tables where they track finance-output admission state."
+  },
+  "inherits_unchanged": [
+    "recognition firewall",
+    "vocabulary firewall",
+    "Lane 280 to Lane 412 bidirectional gate",
+    "apparatus_financials topology",
+    "insert-only revenue-event reversal discipline",
+    "Revision A CHECK and trigger contract",
+    "Field Tech and Field Lead exclusion from financial-table access"
+  ],
+  "role_contract_correction": {
+    "summary": "The PM-plus-Finance grant contract becomes PM-plus-Operations on the four named financial tables only.",
+    "table_contracts": [
+      "seam.apparatus_financials: SELECT and INSERT to pm and operations",
+      "seam.project_contract_snapshots: SELECT and INSERT to pm and operations",
+      "seam.scope_labor_details: SELECT and INSERT to pm and operations",
+      "seam.apparatus_revenue_events: SELECT and INSERT to pm and operations"
+    ],
+    "field_roles": "field_tech and field_lead remain excluded from SELECT and INSERT.",
+    "precision_note": "Revision C changes only the role name on the four-table financial grant contract from Finance to Operations and leaves every non-role Lane 411 Revision A and Revision B surface unchanged."
+  },
+  "platform_context": {
+    "owner": "APEX Power Operations LLC",
+    "current_roles": [
+      "pm",
+      "operations"
+    ],
+    "future_stub": "Any RESA Corporate accounting integration is a separate future service boundary, not a role on this platform."
+  },
+  "migration_contract": {
+    "artifact": "apps/mutation-seam/migrations/012_pm_lane_411_revision_c_role_contract_grants.md",
+    "kind": "migration-equivalent contract",
+    "reason": "No applied grant SQL exists for this surface in current repo migrations, so Revision C records the first truthful forward application plan instead of pretending to amend live SQL."
+  },
+  "boundaries": [
+    "No live route implementation",
+    "No hosted deployment",
+    "No live business writes",
+    "No apparatus status mutation",
+    "No public schema writes",
+    "No billing, invoice, payroll, accounting, customer-billing, or external-finance output",
+    "No RESA Corporate accounting integration",
+    "No source workbook writeback or macros",
+    "No change-order admission",
+    "No live operational-hours tracking",
+    "No autonomous AI business-state mutation",
+    "No modification to Lane 412, Lane 413, or Lane 414 through Lane 418 surfaces",
+    "No finance_authority rename"
+  ],
+  "validation_steps": [
+    "Phase 0 discovery findings are documented for operations, finance, grant surface, and finance_authority questions.",
+    "Role contract amendment is limited to the four named financial tables.",
+    "Field Tech and Field Lead exclusions remain unchanged.",
+    "Forward migration artifact is documented as first application because no prior grant SQL exists in repo migrations.",
+    "Operations is documented as pre-existing nowhere in repo auth and as created by the future migration contract if absent.",
+    "Platform-ownership context is explicit.",
+    "Future RESA Corporate accounting integration remains a documented non-admitted stub.",
+    "The finance_authority naming issue is recorded as a separate decision item and not renamed here.",
+    "Recognition firewall, vocabulary firewall, and Lane 280 to Lane 412 gate remain unchanged.",
+    "No Lane 412, Lane 413, or Lane 414 through Lane 418 artifact is modified."
+  ]
+}

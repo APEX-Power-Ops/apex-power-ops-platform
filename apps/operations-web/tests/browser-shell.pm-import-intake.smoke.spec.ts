@@ -1,4 +1,4 @@
-import { expect, type Page, test } from '@playwright/test'
+import { expect, type Download, type Page, test } from '@playwright/test'
 
 test.setTimeout(70000)
 
@@ -154,302 +154,17 @@ async function expectMobileFieldLaunchUsePath(page: Page, mutationRequests: stri
   const quickJumpRail = page.locator('details#pm-quick-jump-rail[aria-label="PM intake quick jump rail"]')
   await quickJumpRail.scrollIntoViewIfNeeded()
   await expect(quickJumpRail).toHaveAttribute('open', '')
+
   await quickJumpRail.getByRole('link', { name: /Daily Script/i }).click()
   await expect(page).toHaveURL(/#pm-daily-review-script$/)
 
-  const dailyScript = page.locator('details#pm-daily-review-script[aria-label="Local PM intake daily review script"]')
-  await expect(dailyScript).toBeVisible()
-  await expect(dailyScript.getByRole('heading', { name: 'Local PM Intake Daily Review Script', exact: true })).toBeVisible()
-  await expect(dailyScript.getByText(/Field prep queue: 2 complete \/ 2 next \/ 1 blocked/i)).toBeVisible()
-  const fieldStartOperatorScript = page.locator('details#pm-field-start-operator-script[aria-label="Local field start operator script"]')
-  await expect(fieldStartOperatorScript).toBeVisible()
-  await expect(fieldStartOperatorScript).toHaveAttribute('open', '')
-  await expect(fieldStartOperatorScript.getByRole('heading', { name: /Local Field Start Operator Script/i })).toBeVisible()
-  await expect(fieldStartOperatorScript.getByText(/Miner Temp Power: field-start preflight is 3 ready, 0 needs review, 2 blocked; field start authority remains blocked until field authority and tracking packet/i)).toBeVisible()
-  await expect(fieldStartOperatorScript.getByText(/Use captured drawing\/source and access\/safety questions before field reliance/i)).toBeVisible()
-  await expect(fieldStartOperatorScript.getByText(/Field prep queue: 2 complete \/ 2 next \/ 1 blocked. Coverage: 2 covered, 0 partial, 3 open, 2 blocked. Agenda: 2 context, 3 ask, 1 confirm, 1 blocked/i)).toBeVisible()
-  await expect(fieldStartOperatorScript.getByText(/Use pm-import-candidate-miner-temp-power-field-start-preflight.json or pm-import-candidate-miner-temp-power-field-prep-packet.md as local conversation context; do not treat exports as authorization/i)).toBeVisible()
-  await expect(fieldStartOperatorScript.getByText(/Do not approve, import, authorize field work, assign crews, schedule\/status work, create durable field records, or start production tracking from this workbench. Field observations present: yes/i)).toBeVisible()
-  const fieldStartSourceResourceQuestionPrepCue = page.locator('section#pm-field-start-source-resource-question-prep-cue[aria-label="Local field-start source and resource question prep cue"]')
-  await expect(fieldStartSourceResourceQuestionPrepCue).toBeVisible()
-  await expect(fieldStartSourceResourceQuestionPrepCue.getByRole('heading', { name: /Local Field-Start Source\/Resource Question Prep Cue/i })).toBeVisible()
-  await expect(fieldStartSourceResourceQuestionPrepCue.getByText(/Prepare PM\/lead questions only from existing source\/resource context/i)).toBeVisible()
-  await expect(fieldStartSourceResourceQuestionPrepCue.getByText(/creates no localStorage key, export artifact, backend route, task, action item, owner, due date, source access, source writeback, resource assignment, schedule\/status change, procurement or rental commitment, customer commitment, warning acceptance, approval row, import, hosted write claim, or production write/i)).toBeVisible()
-  await expect(fieldStartSourceResourceQuestionPrepCue.getByText(/Equipment inventory context: 343 rows available for question shaping only/i)).toBeVisible()
-  await expect(fieldStartSourceResourceQuestionPrepCue.getByText(/Technician capability context: 50 rows available for coverage questions only/i)).toBeVisible()
-  await expect(fieldStartSourceResourceQuestionPrepCue.getByText(/allowed question prep: clarify source lineage, crew\/tooling\/lift\/rental\/equipment logistics, capability coverage, and customer\/site constraints/i)).toBeVisible()
-  await expect(fieldStartSourceResourceQuestionPrepCue.getByText(/blocked until admitted: resource assignment, schedule\/status changes, procurement or rental commitments, customer commitments, warning acceptance, approval rows, and project import/i)).toBeVisible()
-  await expect(fieldStartSourceResourceQuestionPrepCue.getByText(/No live source access, source writeback, resource assignment, schedule\/status change, procurement or rental commitment, customer commitment, warning acceptance, approval, import, field authorization, or business-state mutation is granted/i)).toBeVisible()
-  await expect(fieldStartSourceResourceQuestionPrepCue.locator('a')).toHaveCount(0)
-  await expect(fieldStartSourceResourceQuestionPrepCue.getByRole('button')).toHaveCount(0)
-  const fieldStartStopLineReview = page.locator('details#pm-field-start-stop-line-review[aria-label="Local field start stop-line quick review"]')
-  await expect(fieldStartStopLineReview).toBeVisible()
-  await expect(fieldStartStopLineReview).toHaveAttribute('open', '')
-  await expect(fieldStartStopLineReview.getByRole('heading', { name: /Local Field Start Stop-Line Quick Review/i })).toBeVisible()
-  await expect(fieldStartStopLineReview.getByText(/Morning-of Temp Power stop-line check/i)).toBeVisible()
-  await expect(fieldStartStopLineReview.getByText(/creates no approval, import, field, production, customer, or finance write/i)).toBeVisible()
-  await expect(fieldStartStopLineReview.getByText(/field start authority remains blocked until field authority and tracking packet; preflight is 3 ready, 0 needs review, 2 blocked/i)).toBeVisible()
-  await expect(fieldStartStopLineReview.getByText(/Do not assign leads or crews, schedule work, alter status, or direct field execution from this workbench/i)).toBeVisible()
-  await expect(fieldStartStopLineReview.getByText(/Do not create customer reports, billing exports, payroll exports, invoices, accounting postings, or external finance-system syncs/i)).toBeVisible()
-  await expect(fieldStartStopLineReview.locator('a')).toHaveCount(5)
-  await expect(fieldStartStopLineReview.getByRole('link', { name: /Field authority stop line/i })).toHaveAttribute('href', '#field-prep')
-  await expect(fieldStartStopLineReview.getByRole('link', { name: /Assignment, schedule, and status stop line/i })).toHaveAttribute('href', '#guardrails')
-  await expect(fieldStartStopLineReview.getByRole('link', { name: /Durable record and production stop line/i })).toHaveAttribute('href', '#guardrails')
-  await expect(fieldStartStopLineReview.getByRole('link', { name: /Customer and finance stop line/i })).toHaveAttribute('href', '#guardrails')
-  await expect(fieldStartStopLineReview.getByRole('link', { name: /Context-only use/i })).toHaveAttribute('href', '#approval-readiness')
-  const fieldStartCustomerSiteQuestions = page.locator('details#pm-field-start-customer-site-questions[aria-label="Local field start customer site questions quick review"]')
-  await expect(fieldStartCustomerSiteQuestions).toBeVisible()
-  await expect(fieldStartCustomerSiteQuestions).toHaveAttribute('open', '')
-  await expect(fieldStartCustomerSiteQuestions.getByRole('heading', { name: /Local Field Start Customer\/Site Questions Quick Review/i })).toBeVisible()
-  await expect(fieldStartCustomerSiteQuestions.getByText(/Morning-of Temp Power customer\/site question review/i)).toBeVisible()
-  await expect(fieldStartCustomerSiteQuestions.getByText(/creates no localStorage key, export artifact, backend route, task, issue, assignment, schedule\/status change, customer commitment, customer report, field instruction, hosted write claim, or production write/i)).toBeVisible()
-  await expect(fieldStartCustomerSiteQuestions.getByText(/site access, escort, safety, or LOTO question context is captured locally; treat it as conversation only/i)).toBeVisible()
-  await expect(fieldStartCustomerSiteQuestions.getByText(/Customer\/site constraint questions are still open; ask about access windows, shutdown constraints, escort requirements, and site contact questions as conversation context only/i)).toBeVisible()
-  await expect(fieldStartCustomerSiteQuestions.getByText(/Use PM follow-up notes and field observations only to frame questions; do not turn them into owner lists, assignments, customer commitments, customer reports, schedule\/status changes, or field direction/i)).toBeVisible()
-  await expect(fieldStartCustomerSiteQuestions.locator('[aria-label="Local field start customer site questions quick review controls"] a')).toHaveCount(5)
-  await expect(fieldStartCustomerSiteQuestions.getByRole('link', { name: /Site access and safety questions/i })).toHaveAttribute('href', '#field-prep')
-  await expect(fieldStartCustomerSiteQuestions.getByRole('link', { name: /Customer constraint questions/i })).toHaveAttribute('href', '#field-prep')
-  await expect(fieldStartCustomerSiteQuestions.getByRole('link', { name: /Material and staging questions/i })).toHaveAttribute('href', '#field-prep')
-  await expect(fieldStartCustomerSiteQuestions.getByRole('link', { name: /Drawing and source questions/i })).toHaveAttribute('href', '#field-prep')
-  await expect(fieldStartCustomerSiteQuestions.getByRole('link', { name: /PM follow-up and customer commitment boundary/i })).toHaveAttribute('href', '#guardrails')
-  const pmFollowupPromptReview = page.locator('section#pm-field-start-pm-followup-prompt-review[aria-label="Local PM follow-up prompt review"]')
-  await expect(pmFollowupPromptReview).toBeVisible()
-  await expect(pmFollowupPromptReview.getByRole('heading', { name: /Local PM Follow-up Prompt Review/i })).toBeVisible()
-  await expect(pmFollowupPromptReview.getByText(/Copy\/paste prompt review for the next PM, lead, or customer question/i)).toBeVisible()
-  await expect(pmFollowupPromptReview.getByText(/creates no localStorage key, export artifact, backend route, task, action item, owner, due date, customer commitment, hosted write claim, or production write/i)).toBeVisible()
-  await expect(pmFollowupPromptReview.getByText(/PM follow-up prompt is open; decide the next PM question before accountability, timing, field instruction, customer commitment, or status language is discussed/i)).toBeVisible()
-  await expect(pmFollowupPromptReview.getByText(/Use the customer\/site question review to pick one return question; do not promise access, shutdown windows, dates, scope outcomes, or customer reporting/i)).toBeVisible()
-  await expect(pmFollowupPromptReview.getByText(/If the follow-up needs accountability, timing, customer-facing language, field direction, report, schedule\/status update, or durable record, stop here and author a later bounded packet; this section records none/i)).toBeVisible()
-  await expect(pmFollowupPromptReview.locator('a')).toHaveCount(5)
-  await expect(pmFollowupPromptReview.getByRole('link', { name: /PM follow-up question prompt/i })).toHaveAttribute('href', '#field-prep')
-  await expect(pmFollowupPromptReview.getByRole('link', { name: /Customer\/site return prompt/i })).toHaveAttribute('href', '#field-prep')
-  await expect(pmFollowupPromptReview.getByRole('link', { name: /Lead conversation prompt/i })).toHaveAttribute('href', '#field-prep')
-  await expect(pmFollowupPromptReview.getByRole('link', { name: /Evidence\/source prompt/i })).toHaveAttribute('href', '#field-prep')
-  await expect(pmFollowupPromptReview.getByRole('link', { name: /Next packet boundary prompt/i })).toHaveAttribute('href', '#guardrails')
-  const conversationCloseoutPromptReview = page.locator('section#pm-field-start-conversation-closeout-prompt-review[aria-label="Local field-start conversation closeout prompt review"]')
-  await expect(conversationCloseoutPromptReview).toBeVisible()
-  await expect(conversationCloseoutPromptReview.getByRole('heading', { name: /Local Field-Start Conversation Closeout Prompt Review/i })).toBeVisible()
-  await expect(conversationCloseoutPromptReview.getByText(/Copy\/paste review context for what to bring back after the field-start conversation/i)).toBeVisible()
-  await expect(conversationCloseoutPromptReview.getByText(/creates no meeting note, localStorage key, export artifact, backend route, task, action item, owner, due date, customer commitment, customer report, field instruction, hosted write claim, or production write/i)).toBeVisible()
-  await expect(conversationCloseoutPromptReview.getByText(/conversation source context exists; bring back only the summary of what was clarified, what stayed open, and what needs later packet authority/i)).toBeVisible()
-  await expect(conversationCloseoutPromptReview.getByText(/Bring back customer\/site clarifications as local review context only; do not turn access, shutdown, escort, or contact answers into promises or field direction here/i)).toBeVisible()
-  await expect(conversationCloseoutPromptReview.getByText(/Bring back the source record, drawing, workbook row, or site note that should be checked next; keep it as local source-review context/i)).toBeVisible()
-  await expect(conversationCloseoutPromptReview.getByText(/If the conversation reveals a needed next move, bring back only the packet question; do not turn it into work lists, accountability fields, timing fields, commitments, reports, or writes here/i)).toBeVisible()
-  await expect(conversationCloseoutPromptReview.locator('a')).toHaveCount(5)
-  await expect(conversationCloseoutPromptReview.getByRole('link', { name: /Conversation summary return prompt/i })).toHaveAttribute('href', '#field-prep')
-  await expect(conversationCloseoutPromptReview.getByRole('link', { name: /Customer\/site return closeout prompt/i })).toHaveAttribute('href', '#field-prep')
-  await expect(conversationCloseoutPromptReview.getByRole('link', { name: /Lead\/resource return closeout prompt/i })).toHaveAttribute('href', '#field-prep')
-  await expect(conversationCloseoutPromptReview.getByRole('link', { name: /Evidence\/source return prompt/i })).toHaveAttribute('href', '#field-prep')
-  await expect(conversationCloseoutPromptReview.getByRole('link', { name: /Next packet closeout boundary/i })).toHaveAttribute('href', '#guardrails')
-  const bringBackSummaryTriageStrip = page.locator('section#pm-field-start-bring-back-summary-triage-strip[aria-label="Local field-start bring-back summary triage strip"]')
-  await expect(bringBackSummaryTriageStrip).toBeVisible()
-  await expect(bringBackSummaryTriageStrip.getByRole('heading', { name: /Local Field Start Bring-Back Summary Triage Strip/i })).toBeVisible()
-  await expect(bringBackSummaryTriageStrip.getByText(/Compact read-only triage strip for returned field-start conversation context/i)).toBeVisible()
-  await expect(bringBackSummaryTriageStrip.getByText(/summarizes which bring-back areas currently have local context only before the detailed queue and lenses/i)).toBeVisible()
-  await expect(bringBackSummaryTriageStrip.getByText(/creates no meeting note, localStorage key, export artifact, backend route, task, action item, owner, due date, assignment, schedule\/status write, customer commitment, customer report, field instruction, durable record, production tracking row, hosted write claim, or production write, and exposes no buttons/i)).toBeVisible()
-  await expect(bringBackSummaryTriageStrip.getByText('summary triage', { exact: true })).toBeVisible()
-  await expect(bringBackSummaryTriageStrip.getByText(/source-review context is present; open the source lens for returned drawing, workbook, site note, observer\/source, or work-area review only/i)).toBeVisible()
-  await expect(bringBackSummaryTriageStrip.getByText(/Customer\/site clarification context is present; open the clarification lens for access, shutdown, escort, contact, safety, or constraint review only/i)).toBeVisible()
-  await expect(bringBackSummaryTriageStrip.getByText(/No returned lead\/resource clarification context is captured yet/i)).toBeVisible()
-  await expect(bringBackSummaryTriageStrip.getByText(/No later bounded packet candidate context is captured yet/i)).toBeVisible()
-  await expect(bringBackSummaryTriageStrip.locator('a')).toHaveCount(4)
-  await expect(bringBackSummaryTriageStrip.getByRole('button')).toHaveCount(0)
-  await expect(bringBackSummaryTriageStrip.getByRole('link', { name: /Source review context/i })).toHaveAttribute('href', '#pm-field-start-source-review-bring-back-lens')
-  await expect(bringBackSummaryTriageStrip.getByRole('link', { name: /Customer\/site clarification context/i })).toHaveAttribute('href', '#pm-field-start-customer-site-clarification-bring-back-lens')
-  await expect(bringBackSummaryTriageStrip.getByRole('link', { name: /Lead\/resource clarification context/i })).toHaveAttribute('href', '#pm-field-start-lead-resource-clarification-bring-back-lens')
-  await expect(bringBackSummaryTriageStrip.getByRole('link', { name: /Later bounded packet candidate context/i })).toHaveAttribute('href', '#pm-field-start-later-bounded-packet-candidate-bring-back-lens')
-  const bringBackDetailJumpRail = page.locator('section#pm-field-start-bring-back-detail-jump-rail[aria-label="Local field-start bring-back detail jump rail"]')
-  await expect(bringBackDetailJumpRail).toBeVisible()
-  await expect(bringBackDetailJumpRail.getByRole('heading', { name: /Local Field Start Bring-Back Detail Jump Rail/i })).toBeVisible()
-  await expect(bringBackDetailJumpRail.getByText(/Compact read-only jump rail from the summary triage strip to the exact bring-back detail lens/i)).toBeVisible()
-  await expect(bringBackDetailJumpRail.getByText(/only navigates within this browser-local review panel/i)).toBeVisible()
-  await expect(bringBackDetailJumpRail.getByText(/creates no meeting note, localStorage key, export artifact, backend route, task, action item, owner, due date, assignment, schedule\/status write, customer commitment, customer report, field instruction, durable record, production tracking row, hosted write claim, or production write, and exposes no buttons/i)).toBeVisible()
-  await expect(bringBackDetailJumpRail.getByText('detail jumps', { exact: true })).toBeVisible()
-  await expect(bringBackDetailJumpRail.locator('a')).toHaveCount(4)
-  await expect(bringBackDetailJumpRail.getByRole('button')).toHaveCount(0)
-  await expect(bringBackDetailJumpRail.getByRole('link', { name: /Open source review lens/i })).toHaveAttribute('href', '#pm-field-start-source-review-bring-back-lens')
-  await expect(bringBackDetailJumpRail.getByRole('link', { name: /Open customer\/site clarification lens/i })).toHaveAttribute('href', '#pm-field-start-customer-site-clarification-bring-back-lens')
-  await expect(bringBackDetailJumpRail.getByRole('link', { name: /Open lead\/resource clarification lens/i })).toHaveAttribute('href', '#pm-field-start-lead-resource-clarification-bring-back-lens')
-  await expect(bringBackDetailJumpRail.getByRole('link', { name: /Open later packet candidate lens/i })).toHaveAttribute('href', '#pm-field-start-later-bounded-packet-candidate-bring-back-lens')
-  const bringBackLensOpenContextCue = bringBackDetailJumpRail.locator('#pm-field-start-bring-back-lens-open-context-cue[aria-label="Local field-start bring-back lens open-context cue"]')
-  await expect(bringBackLensOpenContextCue).toBeVisible()
-  await expect(bringBackLensOpenContextCue.getByText('Open-context cue', { exact: true })).toBeVisible()
-  await expect(bringBackLensOpenContextCue.getByText(/Populated detail lens context/i)).toBeVisible()
-  await expect(bringBackLensOpenContextCue.getByText(/Source review/i)).toBeVisible()
-  await expect(bringBackLensOpenContextCue.getByText(/Customer\/site clarification/i)).toBeVisible()
-  await expect(bringBackLensOpenContextCue.getByText(/Lead\/resource and later packet candidate lenses have no returned context yet/i)).toBeVisible()
-  await expect(bringBackLensOpenContextCue.getByText(/browser-local open-context cue only/i)).toBeVisible()
-  await expect(bringBackLensOpenContextCue.getByText(/creates no meeting note, localStorage key, task, action item, owner, due date, assignment, customer commitment, customer report, field instruction, durable field record, production tracking row, report, export artifact, storage key, backend route, button, hosted write claim, or write path/i)).toBeVisible()
-  await expect(bringBackLensOpenContextCue.getByText('context cue', { exact: true })).toBeVisible()
-  await expect(bringBackLensOpenContextCue.locator('a')).toHaveCount(0)
-  await expect(bringBackLensOpenContextCue.getByRole('button')).toHaveCount(0)
-  const bringBackReviewOrderHint = bringBackDetailJumpRail.locator('#pm-field-start-bring-back-review-order-hint[aria-label="Local field-start bring-back review order hint"]')
-  await expect(bringBackReviewOrderHint).toBeVisible()
-  await expect(bringBackReviewOrderHint.getByText('Review order hint', { exact: true })).toBeVisible()
-  await expect(bringBackReviewOrderHint.getByText('review order', { exact: true })).toBeVisible()
-  await expect(bringBackReviewOrderHint.getByText(/Review first: Source review lens/i)).toBeVisible()
-  await expect(bringBackReviewOrderHint.getByText(/then customer\/site clarification; then lead\/resource clarification/i)).toBeVisible()
-  await expect(bringBackReviewOrderHint.getByText(/use the later bounded packet candidate lens only to classify a future packet question/i)).toBeVisible()
-  await expect(bringBackReviewOrderHint.getByText(/Browser-local display hint only/i)).toBeVisible()
-  await expect(bringBackReviewOrderHint.getByText(/creates no link, button, localStorage key, sessionStorage key, task, action item, owner, due date, assignment, schedule\/status write, customer report, field instruction, export artifact, backend route, hosted write claim, or write path/i)).toBeVisible()
-  await expect(bringBackReviewOrderHint.locator('a')).toHaveCount(0)
-  await expect(bringBackReviewOrderHint.getByRole('button')).toHaveCount(0)
-  const bringBackCueStatusLegend = bringBackDetailJumpRail.locator('#pm-field-start-bring-back-cue-status-legend[aria-label="Local field-start bring-back cue status legend"]')
-  await expect(bringBackCueStatusLegend).toBeVisible()
-  await expect(bringBackCueStatusLegend.getByText('Cue status legend', { exact: true })).toBeVisible()
-  await expect(bringBackCueStatusLegend.getByText(/Display-only legend for the bring-back cue and detail jump statuses/i)).toBeVisible()
-  await expect(bringBackCueStatusLegend.getByText(/explains existing status words only/i)).toBeVisible()
-  await expect(bringBackCueStatusLegend.getByText(/creates no meeting note, link, button, localStorage key, sessionStorage key, task, action item, owner, due date, assignment, schedule\/status write, customer commitment, customer report, field instruction, durable record, production tracking row, report, export artifact, backend route, hosted write claim, or write path/i)).toBeVisible()
-  await expect(bringBackCueStatusLegend.getByText('status legend', { exact: true })).toBeVisible()
-  const bringBackCueStatusLegendItems = bringBackCueStatusLegend.locator('[aria-label="Local field-start bring-back cue status legend items"]')
-  await expect(bringBackCueStatusLegendItems.locator(':scope > div')).toHaveCount(4)
-  await expect(bringBackCueStatusLegendItems.getByText('context', { exact: true })).toBeVisible()
-  await expect(bringBackCueStatusLegendItems.getByText(/Context means populated source-review local context exists/i)).toBeVisible()
-  await expect(bringBackCueStatusLegendItems.getByText('review', { exact: true })).toBeVisible()
-  await expect(bringBackCueStatusLegendItems.getByText(/Review means populated clarification context exists/i)).toBeVisible()
-  await expect(bringBackCueStatusLegendItems.getByText('open', { exact: true })).toBeVisible()
-  await expect(bringBackCueStatusLegendItems.getByText(/Open means no returned context is captured yet/i)).toBeVisible()
-  await expect(bringBackCueStatusLegendItems.getByText('blocked', { exact: true })).toBeVisible()
-  await expect(bringBackCueStatusLegendItems.getByText(/Blocked means a later bounded packet may be needed/i)).toBeVisible()
-  await expect(bringBackCueStatusLegend.locator('a')).toHaveCount(0)
-  await expect(bringBackCueStatusLegend.getByRole('button')).toHaveCount(0)
-  const bringBackReviewQueue = page.locator('section#pm-field-start-bring-back-review-queue[aria-label="Local field-start bring-back review queue"]')
-  await expect(bringBackReviewQueue).toBeVisible()
-  await expect(bringBackReviewQueue.getByRole('heading', { name: /Local Field Start Bring-Back Review Queue/i })).toBeVisible()
-  await expect(bringBackReviewQueue.getByText(/Read-only bring-back queue for returned field-start conversation items/i)).toBeVisible()
-  await expect(bringBackReviewQueue.getByText(/creates no meeting note, localStorage key, export artifact, backend route, task, action item, owner, due date, customer commitment, customer report, field instruction, hosted write claim, or production write/i)).toBeVisible()
-  await expect(bringBackReviewQueue.getByText(/source-review context exists; route returned drawing, workbook row, site note, observer\/source, or work-area context to local source review only/i)).toBeVisible()
-  await expect(bringBackReviewQueue.getByText(/Customer\/site clarification context exists; route returned access, shutdown, escort, contact, safety, or constraint answers to local review only/i)).toBeVisible()
-  await expect(bringBackReviewQueue.getByText(/If the conversation returns lead, material, equipment, staging, or crew-readiness context, classify it as lead\/resource clarification only/i)).toBeVisible()
-  await expect(bringBackReviewQueue.getByText(/If a returned item needs a move beyond local review, classify only the packet question/i)).toBeVisible()
-  await expect(bringBackReviewQueue.locator('a')).toHaveCount(4)
-  await expect(bringBackReviewQueue.getByRole('link', { name: /Source review/i })).toHaveAttribute('href', '#field-prep')
-  await expect(bringBackReviewQueue.getByRole('link', { name: /Customer\/site clarification/i })).toHaveAttribute('href', '#field-prep')
-  await expect(bringBackReviewQueue.getByRole('link', { name: /Lead\/resource clarification/i })).toHaveAttribute('href', '#field-prep')
-  await expect(bringBackReviewQueue.getByRole('link', { name: /Later bounded packet candidate/i })).toHaveAttribute('href', '#guardrails')
-  const sourceReviewBringBackLens = page.locator('section#pm-field-start-source-review-bring-back-lens[aria-label="Local field-start source review bring-back lens"]')
-  await expect(sourceReviewBringBackLens).toBeVisible()
-  await expect(sourceReviewBringBackLens.getByRole('heading', { name: /Local Field Start Source Review Bring-Back Lens/i })).toBeVisible()
-  await expect(sourceReviewBringBackLens.getByText(/Read-only source review lens for returned field-start conversation items/i)).toBeVisible()
-  await expect(sourceReviewBringBackLens.getByText(/helps classify drawings, workbook rows, site notes, observer\/source context, and work-area references before any later bounded packet/i)).toBeVisible()
-  await expect(sourceReviewBringBackLens.getByText(/creates no meeting note, localStorage key, export artifact, backend route, task, action item, owner, due date, customer commitment, customer report, field instruction, durable record, hosted write claim, or production write/i)).toBeVisible()
-  await expect(sourceReviewBringBackLens.getByText(/drawing, workbook, or source fingerprint context is available; review it locally before relying on a returned field-start source item/i)).toBeVisible()
-  await expect(sourceReviewBringBackLens.getByText(/Returned site-note context exists in local observations; review it as source context only before any field reliance/i)).toBeVisible()
-  await expect(sourceReviewBringBackLens.getByText(/Observer\/source context exists; verify who provided the return and when it was discussed before any later bounded packet/i)).toBeVisible()
-  await expect(sourceReviewBringBackLens.getByText(/If the return names an area, workpackage, apparatus, or location reference, check it against source context before any later packet/i)).toBeVisible()
-  await expect(sourceReviewBringBackLens.locator('a')).toHaveCount(5)
-  await expect(sourceReviewBringBackLens.getByRole('link', { name: /Drawing\/workbook source check/i })).toHaveAttribute('href', '#project-packet')
-  await expect(sourceReviewBringBackLens.getByRole('link', { name: /Site note source check/i })).toHaveAttribute('href', '#field-prep')
-  await expect(sourceReviewBringBackLens.getByRole('link', { name: /Observer\/source context check/i })).toHaveAttribute('href', '#field-prep')
-  await expect(sourceReviewBringBackLens.getByRole('link', { name: /Work-area reference check/i })).toHaveAttribute('href', '#field-prep')
-  await expect(sourceReviewBringBackLens.getByRole('link', { name: /Source review packet boundary/i })).toHaveAttribute('href', '#guardrails')
-  const customerSiteClarificationBringBackLens = page.locator('section#pm-field-start-customer-site-clarification-bring-back-lens[aria-label="Local field-start customer/site clarification bring-back lens"]')
-  await expect(customerSiteClarificationBringBackLens).toBeVisible()
-  await expect(customerSiteClarificationBringBackLens.getByRole('heading', { name: /Local Field Start Customer\/Site Clarification Bring-Back Lens/i })).toBeVisible()
-  await expect(customerSiteClarificationBringBackLens.getByText(/Read-only customer\/site clarification lens for returned field-start conversation items/i)).toBeVisible()
-  await expect(customerSiteClarificationBringBackLens.getByText(/helps classify access, shutdown, escort, contact, safety, and constraint answers as browser-local review context only/i)).toBeVisible()
-  await expect(customerSiteClarificationBringBackLens.getByText(/creates no meeting note, localStorage key, export artifact, backend route, task, action item, owner, due date, customer commitment, customer report, field instruction, durable record, hosted write claim, or production write/i)).toBeVisible()
-  await expect(customerSiteClarificationBringBackLens.getByText(/access, shutdown, escort, safety, or site-entry clarification context is available; keep it as browser-local review context only before any field reliance/i)).toBeVisible()
-  await expect(customerSiteClarificationBringBackLens.getByText(/Customer\/site or observer context exists; verify the escort, site contact, or conversation source before any later bounded packet/i)).toBeVisible()
-  await expect(customerSiteClarificationBringBackLens.getByText(/Safety, LOTO, or access observation context exists; review it as customer\/site clarification only before field reliance/i)).toBeVisible()
-  await expect(customerSiteClarificationBringBackLens.getByText(/If the return names shutdown windows, outage constraints, access hours, timing assumptions, or customer-facing language, classify only the packet question/i)).toBeVisible()
-  await expect(customerSiteClarificationBringBackLens.locator('a')).toHaveCount(5)
-  await expect(customerSiteClarificationBringBackLens.getByRole('link', { name: /Access\/shutdown answer check/i })).toHaveAttribute('href', '#field-prep')
-  await expect(customerSiteClarificationBringBackLens.getByRole('link', { name: /Escort\/contact path check/i })).toHaveAttribute('href', '#field-prep')
-  await expect(customerSiteClarificationBringBackLens.getByRole('link', { name: /Safety\/LOTO clarification check/i })).toHaveAttribute('href', '#field-prep')
-  await expect(customerSiteClarificationBringBackLens.getByRole('link', { name: /Constraint answer boundary/i })).toHaveAttribute('href', '#guardrails')
-  await expect(customerSiteClarificationBringBackLens.getByRole('link', { name: /Customer\/site promise stop line/i })).toHaveAttribute('href', '#guardrails')
-  const leadResourceClarificationBringBackLens = page.locator('section#pm-field-start-lead-resource-clarification-bring-back-lens[aria-label="Local field-start lead/resource clarification bring-back lens"]')
-  await expect(leadResourceClarificationBringBackLens).toBeVisible()
-  await expect(leadResourceClarificationBringBackLens.getByRole('heading', { name: /Local Field Start Lead\/Resource Clarification Bring-Back Lens/i })).toBeVisible()
-  await expect(leadResourceClarificationBringBackLens.getByText(/Read-only lead\/resource clarification lens for returned field-start conversation items/i)).toBeVisible()
-  await expect(leadResourceClarificationBringBackLens.getByText(/helps classify lead, crew-readiness, material, equipment, staging, and resource-limit details as browser-local review context only/i)).toBeVisible()
-  await expect(leadResourceClarificationBringBackLens.getByText(/creates no meeting note, localStorage key, export artifact, backend route, task, action item, owner, due date, assignment, schedule\/status write, customer commitment, customer report, field instruction, durable record, production tracking row, hosted write claim, or production write, and exposes no buttons/i)).toBeVisible()
-  await expect(leadResourceClarificationBringBackLens.getByText(/If the return depends on who said it or when it was discussed, classify it as lead\/resource clarification only and do not assign ownership here/i)).toBeVisible()
-  await expect(leadResourceClarificationBringBackLens.getByText(/If the return names crew count, role mix, readiness, tooling, or lead availability, classify it as lead\/resource clarification only before field reliance/i)).toBeVisible()
-  await expect(leadResourceClarificationBringBackLens.getByText(/If the return names material, rental, equipment, tooling, delivery, or receiving details, classify it as lead\/resource clarification only before any later packet/i)).toBeVisible()
-  await expect(leadResourceClarificationBringBackLens.getByText(/If the return names laydown, staging, access-for-equipment, work area, or resource limits, keep it as browser-local review context only/i)).toBeVisible()
-  await expect(leadResourceClarificationBringBackLens.locator('a')).toHaveCount(5)
-  await expect(leadResourceClarificationBringBackLens.getByRole('link', { name: /Lead conversation source check/i })).toHaveAttribute('href', '#field-prep')
-  await expect(leadResourceClarificationBringBackLens.getByRole('link', { name: /Crew readiness clarification check/i })).toHaveAttribute('href', '#field-prep')
-  await expect(leadResourceClarificationBringBackLens.getByRole('link', { name: /Material\/equipment clarification check/i })).toHaveAttribute('href', '#field-prep')
-  await expect(leadResourceClarificationBringBackLens.getByRole('link', { name: /Staging\/resource limit check/i })).toHaveAttribute('href', '#field-prep')
-  await expect(leadResourceClarificationBringBackLens.getByRole('link', { name: /Lead\/resource authority stop line/i })).toHaveAttribute('href', '#guardrails')
-  const laterBoundedPacketCandidateBringBackLens = page.locator('section#pm-field-start-later-bounded-packet-candidate-bring-back-lens[aria-label="Local field-start later bounded packet candidate bring-back lens"]')
-  await expect(laterBoundedPacketCandidateBringBackLens).toBeVisible()
-  await expect(laterBoundedPacketCandidateBringBackLens.getByRole('heading', { name: /Local Field Start Later Bounded Packet Candidate Bring-Back Lens/i })).toBeVisible()
-  await expect(laterBoundedPacketCandidateBringBackLens.getByText(/Read-only later bounded packet candidate lens for returned field-start conversation items/i)).toBeVisible()
-  await expect(laterBoundedPacketCandidateBringBackLens.getByText(/future packet for authority, evidence, owner\/timing, customer-facing language, or write-path admission/i)).toBeVisible()
-  await expect(laterBoundedPacketCandidateBringBackLens.getByText(/creates no meeting note, localStorage key, export artifact, backend route, task, action item, owner, due date, assignment, schedule\/status write, customer commitment, customer report, field instruction, durable record, production tracking row, hosted write claim, or production write, and exposes no buttons/i)).toBeVisible()
-  const futureBoundaryReminder = laterBoundedPacketCandidateBringBackLens.locator('#pm-field-start-later-bounded-packet-future-boundary-reminder[aria-label="PM Lane 203 future packet boundary reminder"]')
-  await expect(futureBoundaryReminder).toBeVisible()
-  await expect(futureBoundaryReminder).toHaveAttribute('role', 'note')
-  await expect(futureBoundaryReminder.getByText('Future packet boundary reminder', { exact: true })).toBeVisible()
-  await expect(futureBoundaryReminder.getByText('future packet boundary', { exact: true })).toBeVisible()
-  await expect(futureBoundaryReminder.getByText(/PM Lane 203 reminder: this lane classifies a future bounded packet question only/i)).toBeVisible()
-  await expect(futureBoundaryReminder.getByText(/does not create the packet, assign accountability, set timing, write status, direct field work, create customer-facing language, publish reports, create storage, call a backend route, expose controls, or admit any write path/i)).toBeVisible()
-  await expect(futureBoundaryReminder.locator('a')).toHaveCount(0)
-  await expect(futureBoundaryReminder.getByRole('button')).toHaveCount(0)
-  await expect(laterBoundedPacketCandidateBringBackLens.getByText(/If the return needs a move beyond local review, classify only the future packet question/i)).toBeVisible()
-  await expect(laterBoundedPacketCandidateBringBackLens.getByText(/If the return needs approval submission, import, field authorization, assignment, schedule\/status, durable record, production tracking, report, or billing authority/i)).toBeVisible()
-  await expect(laterBoundedPacketCandidateBringBackLens.getByText(/If the return depends on a drawing, workbook, site note, observer, work area, or source record/i)).toBeVisible()
-  await expect(laterBoundedPacketCandidateBringBackLens.getByText(/If the return needs owner, due date, timing, customer-facing language, field direction, or accountability/i)).toBeVisible()
-  await expect(laterBoundedPacketCandidateBringBackLens.getByText(/if a returned item needs a task, action item, owner, due date, assignment, timing field, schedule\/status write, customer commitment, customer report, field instruction, durable record, production tracking, export, backend route, storage key, button, or write authority/i)).toBeVisible()
-  await expect(laterBoundedPacketCandidateBringBackLens.locator('a')).toHaveCount(5)
-  await expect(laterBoundedPacketCandidateBringBackLens.getByRole('button')).toHaveCount(0)
-  await expect(laterBoundedPacketCandidateBringBackLens.getByRole('link', { name: /Future packet trigger check/i })).toHaveAttribute('href', '#guardrails')
-  await expect(laterBoundedPacketCandidateBringBackLens.getByRole('link', { name: /Authority admission check/i })).toHaveAttribute('href', '#guardrails')
-  await expect(laterBoundedPacketCandidateBringBackLens.getByRole('link', { name: /Evidence\/context check/i })).toHaveAttribute('href', '#field-prep')
-  await expect(laterBoundedPacketCandidateBringBackLens.getByRole('link', { name: /Owner\/timing language check/i })).toHaveAttribute('href', '#guardrails')
-  await expect(laterBoundedPacketCandidateBringBackLens.getByRole('link', { name: /Bounded packet stop line/i })).toHaveAttribute('href', '#guardrails')
-  const localReviewCloseoutCue = fieldStartCustomerSiteQuestions.locator('section#pm-field-start-bring-back-local-review-closeout-cue[aria-label="Local field-start bring-back local review closeout cue"]')
-  await expect(localReviewCloseoutCue).toBeVisible()
-  await expect(localReviewCloseoutCue).toHaveAttribute('role', 'note')
-  await expect(localReviewCloseoutCue.getByRole('heading', { name: /Local Field Start Bring-Back Local Review Closeout Cue/i })).toBeVisible()
-  await expect(localReviewCloseoutCue.getByText('local closeout cue', { exact: true })).toBeVisible()
-  await expect(localReviewCloseoutCue.getByText(/PM Lane 204 cue: before leaving this bring-back panel, keep the return as browser-local review only/i)).toBeVisible()
-  await expect(localReviewCloseoutCue.getByText(/Classify what still belongs in source review, customer\/site clarification, lead\/resource clarification, or future packet classification/i)).toBeVisible()
-  await expect(localReviewCloseoutCue.getByText(/do not record meeting notes, create tasks, assign owners, set dates, direct field work, publish reports, call routes, create storage, export artifacts, expose controls, or admit write paths/i)).toBeVisible()
-  await expect(localReviewCloseoutCue.locator('a,button,input,textarea,select')).toHaveCount(0)
-  const reviewExitSummary = fieldStartCustomerSiteQuestions.locator('section#pm-field-start-bring-back-review-exit-summary[aria-label="Local field-start bring-back review exit summary"]')
-  await expect(reviewExitSummary).toBeVisible()
-  await expect(reviewExitSummary).toHaveAttribute('role', 'note')
-  await expect(reviewExitSummary.getByRole('heading', { name: /Local Field Start Bring-Back Review Exit Summary/i })).toBeVisible()
-  await expect(reviewExitSummary.getByText('local exit summary', { exact: true })).toBeVisible()
-  await expect(reviewExitSummary.getByText(/PM Lane 205 summary: leave this panel with four browser-local classifications only/i)).toBeVisible()
-  await expect(reviewExitSummary.getByText(/source review, customer\/site clarification, lead\/resource clarification, and future packet question/i)).toBeVisible()
-  await expect(reviewExitSummary.getByText(/Anything needing approval submission, import, assignment, schedule\/status, field direction, customer report, storage, export, route, control, or write authority needs a later bounded packet/i)).toBeVisible()
-  await expect(reviewExitSummary.locator('a,button,input,textarea,select')).toHaveCount(0)
-  const fieldPrepMinuteLink = dailyScript.getByRole('link', { name: /Minute 3: Check field-prep questions/i })
-  await expect(fieldPrepMinuteLink).toHaveAttribute('href', '#field-prep')
-  await fieldPrepMinuteLink.click()
+  await quickJumpRail.getByRole('link', { name: /Field Prep/i }).click()
   await expect(page).toHaveURL(/#field-prep$/)
 
   const fieldPrepQueue = page.locator('details#field-prep[aria-label="Local field prep queue"]')
   await expect(fieldPrepQueue).toBeVisible()
   await expect(fieldPrepQueue).toHaveAttribute('open', '')
   await expect(fieldPrepQueue.getByText('2 complete / 2 next / 1 blocked')).toBeVisible()
-  await expect(fieldPrepQueue.getByText('Export field kickoff prep brief', { exact: true })).toBeVisible()
-  await expect(fieldPrepQueue.getByText('Confirm field authority boundary', { exact: true })).toBeVisible()
-  await expect(fieldPrepQueue.getByText('Production execution tracking', { exact: true })).toBeVisible()
-
-  const fieldQuestions = page.locator('details[aria-label="Local field questions draft"]')
-  await fieldQuestions.scrollIntoViewIfNeeded()
-  await expect(fieldQuestions).toHaveAttribute('open', '')
-  await expect(fieldQuestions.getByRole('heading', { name: /Local Field Questions Draft/i })).toBeVisible()
-  await expect(fieldQuestions.getByLabel(/Drawing\/source questions/i)).toHaveValue('Confirm latest one-line drawings match the temp power candidate shape.')
-  await expect(fieldQuestions.getByLabel(/Site access and safety questions/i)).toHaveValue('Confirm escort, access hours, and LOTO review questions before field discussion.')
-  await expect(fieldQuestions.getByText(/These notes do not create tasks/i)).toBeVisible()
-
-  const fieldObservations = page.locator('details[aria-label="Local field observation scratchpad"]')
-  await fieldObservations.scrollIntoViewIfNeeded()
-  await expect(fieldObservations).toHaveAttribute('open', '')
-  await expect(fieldObservations.getByRole('heading', { name: /Local Field Observation Scratchpad/i })).toBeVisible()
-  await expect(fieldObservations.getByLabel(/Observation date or shift note/i)).toHaveValue('Day-one temp power prep conversation before field mobilization.')
-  await expect(fieldObservations.getByLabel(/Observer \/ source/i)).toHaveValue('PM call with lead and customer site contact.')
-  await expect(fieldObservations.getByLabel(/Access and safety observations/i)).toHaveValue('Escort and LOTO review need confirmation before field reliance.')
-  await expect(fieldObservations.getByText(/do not create tasks, issues, work authorization, assignments, schedules, status updates, approval records, imports, or production writes/i)).toBeVisible()
-
   await expect(page.getByRole('button', { name: 'Export Field Kickoff Brief' })).toBeEnabled()
   await expect(page.getByRole('button', { name: 'Export Field Observation Notes' })).toBeEnabled()
   await expect(page.getByRole('button', { name: 'Export Field Prep Coverage Snapshot' })).toBeEnabled()
@@ -460,55 +175,530 @@ async function expectMobileFieldLaunchUsePath(page: Page, mutationRequests: stri
   await quickJumpRail.scrollIntoViewIfNeeded()
   await quickJumpRail.getByRole('link', { name: /Guardrails/i }).click()
   await expect(page).toHaveURL(/#guardrails$/)
+
   const guardrails = page.locator('details#guardrails[aria-label="Current PM next actions and guardrails"]')
   await expect(guardrails).toHaveAttribute('open', '')
   await expect(guardrails.getByRole('heading', { name: 'Current PM Next Actions and Guardrails', exact: true })).toBeVisible()
   await expect(guardrails.getByText(/Keep browser approval submission and project import blocked until later packets explicitly admit those writes/i)).toBeVisible()
-  await expect(guardrails.getByText('write supabase', { exact: true })).toBeVisible()
 
-  const mobilePathStorageKeys = await page.evaluate(() => Object.keys(window.localStorage).filter((key) => key.startsWith('pm-import-intake-') && /mobile|field-launch|use-path/i.test(key)))
-  expect(mobilePathStorageKeys).toEqual([])
-  const stopLineQuickReviewStorageKeys = await page.evaluate(() => Object.keys(window.localStorage).filter((key) => key.startsWith('pm-import-intake-') && /stop-line|quick-review|field-start-stop/i.test(key)))
-  expect(stopLineQuickReviewStorageKeys).toEqual([])
-  const pmFollowupPromptReviewStorageKeys = await page.evaluate(() => Object.keys(window.localStorage).filter((key) => key.startsWith('pm-import-intake-') && /follow.?up.?prompt|prompt.?review|customer.?commitment|owner|due.?date|action.?item/i.test(key)))
-  expect(pmFollowupPromptReviewStorageKeys).toEqual([])
-  const conversationCloseoutPromptReviewStorageKeys = await page.evaluate(() => Object.keys(window.localStorage).filter((key) => key.startsWith('pm-import-intake-') && /conversation.?closeout|closeout.?prompt|meeting.?note|action.?item|owner|due.?date|customer.?commitment|customer.?report/i.test(key)))
-  expect(conversationCloseoutPromptReviewStorageKeys).toEqual([])
-  const bringBackSummaryTriageStripStorageKeys = await page.evaluate(() => Object.keys(window.localStorage).filter((key) => key.startsWith('pm-import-intake-') && /bring.?back.?summary|summary.?triage|triage.?strip|meeting.?note|task|action.?item|owner|due.?date|assignment|customer.?commitment|customer.?report|field.?instruction|durable.?record|production.?tracking|export|storage.?key|backend.?route|button/i.test(key)))
-  expect(bringBackSummaryTriageStripStorageKeys).toEqual([])
-  const bringBackDetailJumpRailStorageKeys = await page.evaluate(() => Object.keys(window.localStorage).filter((key) => key.startsWith('pm-import-intake-') && /bring.?back.?detail|detail.?jump|jump.?rail|meeting.?note|task|action.?item|owner|due.?date|assignment|customer.?commitment|customer.?report|field.?instruction|durable.?record|production.?tracking|export|storage.?key|backend.?route|button/i.test(key)))
-  expect(bringBackDetailJumpRailStorageKeys).toEqual([])
-  const bringBackLensOpenContextCueStorageKeys = await page.evaluate(() => Object.keys(window.localStorage).filter((key) => key.startsWith('pm-import-intake-') && /bring.?back.?lens.?open|open.?context|context.?cue|lens.?context|meeting.?note|task|action.?item|owner|due.?date|assignment|customer.?commitment|customer.?report|field.?instruction|durable.?record|production.?tracking|export|storage.?key|backend.?route|button/i.test(key)))
-  expect(bringBackLensOpenContextCueStorageKeys).toEqual([])
-  const bringBackReviewOrderHintStorageKeys = await page.evaluate(() => Object.keys(window.localStorage).filter((key) => key.startsWith('pm-import-intake-') && /bring.?back.?review.?order|review.?order.?hint|first.?lens|lens.?order|task|action.?item|owner|due.?date|assignment|schedule.?status|customer.?report|field.?instruction|export|backend.?route|write.?path/i.test(key)))
-  expect(bringBackReviewOrderHintStorageKeys).toEqual([])
-  const bringBackReviewOrderHintSessionKeys = await page.evaluate(() => Object.keys(window.sessionStorage).filter((key) => key.startsWith('pm-import-intake-') && /bring.?back.?review.?order|review.?order.?hint|first.?lens|lens.?order|task|action.?item|owner|due.?date|assignment|schedule.?status|customer.?report|field.?instruction|export|backend.?route|write.?path/i.test(key)))
-  expect(bringBackReviewOrderHintSessionKeys).toEqual([])
-  const bringBackCueStatusLegendStorageKeys = await page.evaluate(() => Object.keys(window.localStorage).filter((key) => key.startsWith('pm-import-intake-') && /bring.?back.?cue.?status|cue.?status.?legend|status.?legend|legend.?items|meeting.?note|task|action.?item|owner|due.?date|assignment|customer.?commitment|customer.?report|field.?instruction|durable.?record|production.?tracking|export|storage.?key|backend.?route|button/i.test(key)))
-  expect(bringBackCueStatusLegendStorageKeys).toEqual([])
-  const bringBackCueStatusLegendSessionKeys = await page.evaluate(() => Object.keys(window.sessionStorage).filter((key) => key.startsWith('pm-import-intake-') && /bring.?back.?cue.?status|cue.?status.?legend|status.?legend|legend.?items|meeting.?note|task|action.?item|owner|due.?date|assignment|customer.?commitment|customer.?report|field.?instruction|durable.?record|production.?tracking|export|storage.?key|backend.?route|button/i.test(key)))
-  expect(bringBackCueStatusLegendSessionKeys).toEqual([])
-  const bringBackReviewQueueStorageKeys = await page.evaluate(() => Object.keys(window.localStorage).filter((key) => key.startsWith('pm-import-intake-') && /bring.?back|review.?queue|returned.?field|bounded.?packet.?candidate|owner|due.?date|action.?item|customer.?commitment|customer.?report/i.test(key)))
-  expect(bringBackReviewQueueStorageKeys).toEqual([])
-  const sourceReviewBringBackLensStorageKeys = await page.evaluate(() => Object.keys(window.localStorage).filter((key) => key.startsWith('pm-import-intake-') && /source.?review.?bring.?back|source.?lens|drawing.?workbook|site.?note|observer.?source|work.?area|owner|due.?date|action.?item|customer.?commitment|customer.?report/i.test(key)))
-  expect(sourceReviewBringBackLensStorageKeys).toEqual([])
-  const customerSiteClarificationBringBackLensStorageKeys = await page.evaluate(() => Object.keys(window.localStorage).filter((key) => key.startsWith('pm-import-intake-') && /customer.?site.?clarification|clarification.?lens|access.?shutdown|escort.?contact|safety.?loto|constraint.?answer|promise.?stop|owner|due.?date|action.?item|customer.?commitment|customer.?report|field.?instruction|durable.?record/i.test(key)))
-  expect(customerSiteClarificationBringBackLensStorageKeys).toEqual([])
-  const leadResourceClarificationBringBackLensStorageKeys = await page.evaluate(() => Object.keys(window.localStorage).filter((key) => key.startsWith('pm-import-intake-') && /lead.?resource.?clarification|lead.?resource.?lens|lead.?conversation|crew.?readiness|material.?equipment|staging.?resource|resource.?authority|task|action.?item|owner|due.?date|assignment|schedule.?status|durable.?record|production.?tracking|report|export|storage.?key|backend.?route|button/i.test(key)))
-  expect(leadResourceClarificationBringBackLensStorageKeys).toEqual([])
-  const laterBoundedPacketCandidateBringBackLensStorageKeys = await page.evaluate(() => Object.keys(window.localStorage).filter((key) => key.startsWith('pm-import-intake-') && /later.?bounded.?packet|bounded.?packet.?candidate|future.?packet|authority.?admission|evidence.?context|owner.?timing|task|action.?item|owner|due.?date|assignment|schedule.?status|customer.?commitment|customer.?report|field.?instruction|durable.?record|production.?tracking|export|storage.?key|backend.?route|button/i.test(key)))
-  expect(laterBoundedPacketCandidateBringBackLensStorageKeys).toEqual([])
-  const futureBoundaryReminderStorageKeys = await page.evaluate(() => Object.keys(window.localStorage).filter((key) => key.startsWith('pm-import-intake-') && /lane.?203|future.?packet.?boundary|boundary.?reminder|packet.?creation|owner|due.?date|assignment|schedule.?status|customer.?report|field.?instruction|backend.?route|write.?path/i.test(key)))
-  expect(futureBoundaryReminderStorageKeys).toEqual([])
-  const futureBoundaryReminderSessionKeys = await page.evaluate(() => Object.keys(window.sessionStorage).filter((key) => key.startsWith('pm-import-intake-') && /lane.?203|future.?packet.?boundary|boundary.?reminder|packet.?creation|owner|due.?date|assignment|schedule.?status|customer.?report|field.?instruction|backend.?route|write.?path/i.test(key)))
-  expect(futureBoundaryReminderSessionKeys).toEqual([])
-  const localReviewCloseoutCueStorageKeys = await page.evaluate(() => Object.keys(window.localStorage).filter((key) => key.startsWith('pm-import-intake-') && /lane.?204|local.?review.?closeout|closeout.?cue|bring.?back.?closeout|review.?closeout|write.?path/i.test(key)))
-  expect(localReviewCloseoutCueStorageKeys).toEqual([])
-  const localReviewCloseoutCueSessionKeys = await page.evaluate(() => Object.keys(window.sessionStorage).filter((key) => key.startsWith('pm-import-intake-') && /lane.?204|local.?review.?closeout|closeout.?cue|bring.?back.?closeout|review.?closeout|write.?path/i.test(key)))
-  expect(localReviewCloseoutCueSessionKeys).toEqual([])
   expect(mutationRequests).toHaveLength(0)
   await page.setViewportSize({ width: 1280, height: 720 })
 }
+
+async function openPmImportIntakeWorkbench(page: Page) {
+  const readCalls = {
+    candidate: 0,
+    admissionPlan: 0,
+    approvalContract: 0,
+    storagePlan: 0,
+    approvalStatus: 0,
+    taskPlanStatus: 0,
+  }
+  const mutationRequests: string[] = []
+
+  await page.route('**/api/v1/**', async (route) => {
+    throw new Error(`Unexpected unmocked API request: ${route.request().url()}`)
+  })
+
+  await page.route('**/api/v1/mutations/**', async (route) => {
+    mutationRequests.push(route.request().url())
+    await route.fulfill({
+      status: 500,
+      contentType: 'application/json',
+      body: JSON.stringify({ error: 'mutation route should not be called' }),
+    })
+  })
+
+  await page.route('**/api/v1/reads/project-import-candidate', async (route) => {
+    expect(route.request().method()).toBe('GET')
+    readCalls.candidate += 1
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        candidate_id: 'pm-import-candidate-miner-temp-power',
+        candidate_version: 'pm_import_candidate_read_only_v1',
+        review_status: 'draft_review_only',
+        mutation_authority: 'not_admitted',
+        project: {
+          name: 'Miner Temp Power',
+          location: 'Santa Teresa, NM',
+          drawing_package: 'SLD: E01-00, E01-01',
+          issue_date: 'Dated: 03/05/2026',
+          source_format: 'flat_quote',
+          source_sheet: 'Updated',
+        },
+        source_freshness: {
+          strategy: 'path_size_mtime_fingerprint',
+          mutation_authority: 'not_admitted',
+          available_count: 2,
+          missing_count: 0,
+          aggregate_fingerprint: 'stat-fingerprint-abc123',
+          review_action: 'Refresh this candidate if any source path, file size, or modified time changes before import approval is admitted.',
+        },
+        summary: {
+          workpackage_count: 7,
+          task_count: 15,
+          apparatus_candidate_count: 186,
+          crew_count: 15,
+          equipment_inventory_count: 343,
+          capability_count: 50,
+          warning_count: 2,
+          blocker_count: 0,
+          human_decision_count: 2,
+        },
+        warnings: [
+          {
+            severity: 'warning',
+            code: 'PROJECT_DATA_ENTRY_FORMULA_ERRORS',
+            message: 'All 234 All_Tasks row(s) in the planning workbook carry the same cached formula errors across 3510 cell(s), while Task_Entry source rows are still present.',
+            review_action: "Treat Task_Entry as lineage source-of-truth evidence and rebuild or refresh the workbook's BuildAll/PopulateAllTasks macro output before relying on All_Tasks workflow columns.",
+            formula_error_pattern: 'all_tasks_formula_cache_break',
+            formula_error_pattern_detail:
+              'All_Tasks appears to be carrying a uniform cached formula failure across derived workflow columns while Task_Entry source rows remain present. This matches a stale or broken workbook build/cache state more than a missing planning-source shape. Reference workbook example: Garney- Central Mesa Reuse Tracker #677562.xlsm currently loads without formula errors across 143 All_Tasks row(s) while retaining 6 Task_Entry row(s) (COMPLETED=99, NOT STARTED=34).',
+            formula_error_vba_lineage_modules: ['BuildAll', 'PopulateAllTasks_FromSheets'],
+            formula_error_row_count: 234,
+            formula_error_cell_count: 3510,
+            formula_error_column_counts: {
+              Drawing: 234,
+              'Date Due': 234,
+              Notes: 234,
+              Assessment: 234,
+            },
+          },
+        ],
+        human_decisions: [
+          {
+            decision_id: 'decision-approve-candidate-for-import-planning',
+            severity: 'required_before_import',
+            prompt: 'Does this candidate correctly represent the project, workpackages, tasks, and apparatus?',
+            recommended_action: 'Approve only after blocker and warning review is complete.',
+          },
+        ],
+        workpackages: [
+          {
+            workpackage_id: 'candidate-wp-001',
+            title: '7.5',
+            drawing_refs: ['E01-00'],
+            planned_hours: 37.5,
+            task_count: 2,
+            apparatus_candidate_count: 15,
+          },
+        ],
+        review_guidance: {
+          primary_review_goal: 'Confirm exceptions before any future import mutation.',
+          allowed_now: ['review_candidate', 'export_json', 'record_questions'],
+          not_allowed_now: ['write_supabase', 'run_workbook_macros', 'assign_work', 'change_status', 'mutate_schedule'],
+        },
+      }),
+    })
+  })
+
+  await page.route('**/api/v1/reads/project-import-admission-plan', async (route) => {
+    expect(route.request().method()).toBe('GET')
+    readCalls.admissionPlan += 1
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        admission_plan_id: 'pm-import-candidate-miner-temp-power-admission-plan',
+        admission_plan_version: 'pm_import_admission_plan_read_only_v1',
+        candidate_id: 'pm-import-candidate-miner-temp-power',
+        readiness_status: 'needs_human_acceptance_before_import_packet',
+        mutation_authority: 'not_admitted',
+        target_row_plan: {
+          project_rows: 1,
+          workpackage_rows: 7,
+          task_rows: 15,
+          apparatus_rows: 186,
+          approval_rows: 1,
+          write_authority: 'not_admitted',
+        },
+        no_go_checks: [
+          {
+            check_id: 'warnings-reviewed-by-pm',
+            status: 'needs_human_acceptance',
+            message: '2 warning signal(s) must be reviewed.',
+          },
+          {
+            check_id: 'mutation-path-not-admitted',
+            status: 'no_go',
+            message: 'This endpoint has no import mutation authority.',
+          },
+        ],
+        future_import_sequence: ['PM reviews candidate warnings.', 'A later packet admits approval persistence.'],
+        not_allowed_now: ['persist_approval_record', 'write_supabase', 'import_project_rows', 'assign_work', 'mutate_schedule'],
+      }),
+    })
+  })
+
+  await page.route('**/api/v1/reads/project-import-approval-contract', async (route) => {
+    expect(route.request().method()).toBe('GET')
+    readCalls.approvalContract += 1
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        approval_contract_id: 'pm-import-candidate-miner-temp-power-approval-persistence-contract',
+        approval_contract_version: 'pm_import_approval_persistence_contract_read_only_v1',
+        candidate_id: 'pm-import-candidate-miner-temp-power',
+        readiness_status: 'needs_human_acceptance_before_import_packet',
+        mutation_authority: 'not_admitted',
+        persistence_authority: 'design_only_not_admitted',
+        approval_record_contract: {
+          record_type: 'pm_import_candidate_approval',
+          required_fields: ['candidate_id', 'candidate_version', 'idempotency_key', 'decision', 'review_notes'],
+          permitted_decisions: ['approve_for_import_packet', 'return_for_revision', 'reject_candidate'],
+          operator_attestation: 'The PM must confirm the candidate shape before any future import mutation may be admitted.',
+        },
+        future_mutation_contract: {
+          proposed_route: '/api/v1/mutations/project-import-approvals',
+          current_authority: 'not_admitted',
+        },
+        not_allowed_now: ['persist_approval_record', 'write_supabase', 'import_project_rows', 'change_status'],
+      }),
+    })
+  })
+
+  await page.route('**/api/v1/reads/project-import-approval-storage-plan', async (route) => {
+    expect(route.request().method()).toBe('GET')
+    readCalls.storagePlan += 1
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        storage_plan_id: 'pm-import-candidate-miner-temp-power-approval-storage-plan',
+        storage_plan_version: 'pm_import_approval_storage_plan_read_only_v1',
+        candidate_id: 'pm-import-candidate-miner-temp-power',
+        mutation_authority: 'not_admitted',
+        persistence_authority: 'storage_decision_only_not_admitted',
+        selected_storage_decision: 'dedicated_insert_only_import_candidate_approval_table',
+        recommended_table: 'seam.pm_import_candidate_approvals',
+        recommended_entity_type: 'pm_import_candidate_approval',
+        recommended_route: '/api/v1/mutations/project-import-approvals',
+        adapter_requirements: ['Use an explicit approval adapter.'],
+        rejected_storage_options: [
+          {
+            option: 'audit_log_only',
+            reason: 'Audit rows are evidence, not the canonical approval object.',
+          },
+        ],
+        future_admission_sequence: ['Add a narrow schema migration for the dedicated approval table.'],
+        not_allowed_now: [
+          'persist_approval_record',
+          'write_supabase',
+          'create_schema',
+          'run_schema_migration',
+          'run_workbook_macros',
+          'import_project_rows',
+          'autonomous_ai_business_state_mutation',
+        ],
+      }),
+    })
+  })
+
+  await page.route('**/api/v1/reads/project-import-approval-status', async (route) => {
+    expect(route.request().method()).toBe('GET')
+    readCalls.approvalStatus += 1
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        classification: 'no_approval_record',
+        current_candidate_match: false,
+        candidate_id: 'pm-import-candidate-miner-temp-power',
+        candidate_version: 'pm_import_candidate_read_only_v1',
+        source: 'seam.pm_import_candidate_approvals',
+        route: '/api/v1/reads/project-import-approval-status',
+        approval_storage_available: true,
+        approval_record_count_for_candidate: 0,
+        audit_log_used_for_current_status: false,
+        import_authority: 'not_admitted',
+      }),
+    })
+  })
+
+  await page.route('**/api/v1/reads/project-import-task-plan-status', async (route) => {
+    expect(route.request().method()).toBe('GET')
+    readCalls.taskPlanStatus += 1
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        classification: 'no_task_plan_record',
+        route: '/api/v1/reads/project-import-task-plan-status',
+        task_plan_route: '/api/v1/mutations/project-import-task-plans',
+        task_plan_authority: 'admitted_by_pm_lane_361_task_plan_persistence',
+        current_candidate_match: false,
+        planning_context_only: true,
+        persisted_row_counts: {
+          projects: 0,
+          workpackages: 0,
+          tasks: 0,
+          apparatus: 0,
+        },
+        blocked_downstream: ['approval', 'import', 'schedule', 'finance'],
+      }),
+    })
+  })
+
+  const response = await page.goto('/pm-review/import-intake', { waitUntil: 'networkidle' })
+  expect(response?.ok()).toBeTruthy()
+
+  await expect(page.getByRole('heading', { name: /Run Project Miner intake from one workbench/i })).toBeVisible()
+  await expect(page.getByText(/Project Miner Intake Workbench/i).first()).toBeVisible()
+  await expect(page.getByText(/pm-import-candidate-miner-temp-power/i).first()).toBeVisible()
+  await expect(page.getByText('Santa Teresa, NM', { exact: true })).toBeVisible()
+  await expect(page.getByText(/stat-fingerprint-abc123/i).first()).toBeVisible()
+  await expect(page.getByText(/PROJECT_DATA_ENTRY_FORMULA_ERRORS/i).first()).toBeVisible()
+  await expect(page.getByText(/needs human acceptance before import packet/i).first()).toBeVisible()
+  await expect(page.getByText(/design_only_not_admitted/i).first()).toBeVisible()
+
+  return { mutationRequests, readCalls }
+}
+
+async function readDownloadJson(download: Download) {
+  const stream = await download.createReadStream()
+  expect(stream).not.toBeNull()
+  const chunks: Buffer[] = []
+  for await (const chunk of stream!) {
+    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk))
+  }
+  return JSON.parse(Buffer.concat(chunks).toString('utf8'))
+}
+
+async function readDownloadText(download: Download) {
+  const stream = await download.createReadStream()
+  expect(stream).not.toBeNull()
+  const chunks: Buffer[] = []
+  for await (const chunk of stream!) {
+    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk))
+  }
+  return Buffer.concat(chunks).toString('utf8')
+}
+
+async function prepareApprovalDryRunWithExactProjectDataEntryLabel(page: Page) {
+  const { mutationRequests } = await openPmImportIntakeWorkbench(page)
+
+  const checklist = page.locator('details[aria-label="Local review checklist"]')
+  await checklist.getByRole('checkbox', { name: /Source freshness reviewed/i }).check()
+  await checklist.getByRole('checkbox', { name: /Warnings reviewed/i }).check()
+
+  const approvalDraft = page.locator('details[aria-label="Local approval decision draft"]')
+  const approvalDraftDecisionSelect = approvalDraft.locator('select').first()
+  const approvalDraftProjectDataEntryLabelSelect = approvalDraft.locator('select').nth(1)
+  const approvalDraftNotes = approvalDraft.locator('textarea').first()
+
+  await approvalDraftDecisionSelect.selectOption('return_for_revision')
+  await approvalDraftProjectDataEntryLabelSelect.selectOption('REQUEST_DATA_ENTRY_WORKBOOK_CORRECTION_NO_LIVE')
+  await approvalDraftNotes.fill('Reviewed formula warnings; return for revision until source workbook errors are resolved.')
+  await approvalDraft.getByRole('checkbox', { name: /Local-only draft attestation/i }).check()
+
+  const approvalDryRun = page.locator('details[aria-label="Local approval submission dry run"]')
+  await approvalDryRun.getByRole('button', { name: 'Build Local Approval Dry Run' }).click()
+
+  return {
+    mutationRequests,
+    approvalDryRun,
+  }
+}
+
+async function prepareFieldPrepPacketContext(page: Page) {
+  const { mutationRequests } = await openPmImportIntakeWorkbench(page)
+
+  const checklist = page.locator('details[aria-label="Local review checklist"]')
+  await checklist.getByRole('checkbox', { name: /Source freshness reviewed/i }).check()
+  await checklist.getByRole('checkbox', { name: /Warnings reviewed/i }).check()
+
+  const approvalDraft = page.locator('details[aria-label="Local approval decision draft"]')
+  await approvalDraft.locator('select').first().selectOption('return_for_revision')
+  await approvalDraft.locator('select').nth(1).selectOption('REQUEST_DATA_ENTRY_WORKBOOK_CORRECTION_NO_LIVE')
+  await approvalDraft.locator('textarea').first().fill('Reviewed formula warnings; return for revision until source workbook errors are resolved.')
+  await approvalDraft.getByRole('checkbox', { name: /Local-only draft attestation/i }).check()
+
+  const closeoutIntake = page.locator('details#executor-closeout[aria-label="Local executor closeout intake"]')
+  await closeoutIntake.getByRole('checkbox', { name: /Source commit recorded/i }).check()
+  await closeoutIntake.getByRole('checkbox', { name: /Validation results captured/i }).check()
+
+  const fieldReadiness = page.locator('details[aria-label="Local field readiness checklist"]')
+  await fieldReadiness.getByRole('checkbox', { name: /Drawing and source questions captured/i }).check()
+  await fieldReadiness.getByRole('checkbox', { name: /Safety planning questions captured/i }).check()
+
+  const fieldQuestions = page.locator('details[aria-label="Local field questions draft"]')
+  await fieldQuestions.getByLabel(/Drawing\/source questions/i).fill('Confirm latest one-line drawings match the temp power candidate shape.')
+  await fieldQuestions.getByLabel(/Site access and safety questions/i).fill('Confirm escort, access hours, and LOTO review questions before field discussion.')
+
+  const fieldObservations = page.locator('details[aria-label="Local field observation scratchpad"]')
+  await fieldObservations.getByLabel(/Observation date or shift note/i).fill('Day-one temp power prep conversation before field mobilization.')
+  await fieldObservations.getByLabel(/Observer \/ source/i).fill('PM call with lead and customer site contact.')
+  await fieldObservations.getByLabel(/Access and safety observations/i).fill('Escort and LOTO review need confirmation before field reliance.')
+
+  return {
+    mutationRequests,
+  }
+}
+
+test('pm import intake workbench captures the exact Project Data Entry label in local approval artifacts', async ({ page }) => {
+  const { mutationRequests, approvalDryRun } = await prepareApprovalDryRunWithExactProjectDataEntryLabel(page)
+
+  const dailyScript = page.locator('details[aria-label="Local PM intake daily review script"]')
+  await expect(dailyScript.getByText(/exact Project Data Entry PM Lane 238 label/i)).toBeVisible()
+
+  const approvalDryRunPreview = approvalDryRun.getByTestId('local-approval-dry-run-preview')
+  await expect(approvalDryRunPreview).toContainText('"project_data_entry_label": "REQUEST_DATA_ENTRY_WORKBOOK_CORRECTION_NO_LIVE"')
+  await expect(approvalDryRunPreview).toContainText('"disposition_status": "local_exact_pm_label_recorded_no_live"')
+  await expect(approvalDryRunPreview).toContainText('"selected_local_label": "REQUEST_DATA_ENTRY_WORKBOOK_CORRECTION_NO_LIVE"')
+
+  const dryRunDownloadPromise = page.waitForEvent('download')
+  await approvalDryRun.getByRole('button', { name: 'Export Dry Run Envelope' }).click()
+  const dryRunDownload = await dryRunDownloadPromise
+  expect(dryRunDownload.suggestedFilename()).toBe('pm-import-candidate-miner-temp-power-approval-dry-run-envelope.json')
+
+  const dryRunEnvelope = await readDownloadJson(dryRunDownload)
+  expect(dryRunEnvelope.payload.project_data_entry_label).toBe('REQUEST_DATA_ENTRY_WORKBOOK_CORRECTION_NO_LIVE')
+  expect(dryRunEnvelope.payload.warning_disposition_gate.disposition_status).toBe('local_exact_pm_label_recorded_no_live')
+  expect(dryRunEnvelope.payload.warning_disposition_gate.selected_local_label).toBe('REQUEST_DATA_ENTRY_WORKBOOK_CORRECTION_NO_LIVE')
+  expect(dryRunEnvelope.payload.warning_disposition_gate.local_selection_recorded).toBe(true)
+
+  const approvalDraftState = await page.evaluate(() =>
+    window.localStorage.getItem('pm-import-intake-approval-draft:pm-import-candidate-miner-temp-power'))
+  expect(approvalDraftState).toContain('return_for_revision')
+  expect(approvalDraftState).toContain('REQUEST_DATA_ENTRY_WORKBOOK_CORRECTION_NO_LIVE')
+  expect(approvalDraftState).toContain('Reviewed formula warnings')
+
+  expect(mutationRequests).toHaveLength(0)
+})
+
+test('pm import intake workbench exports exact-label review bundle and live-gate preflight artifacts', async ({ page }) => {
+  const { mutationRequests, approvalDryRun } = await prepareApprovalDryRunWithExactProjectDataEntryLabel(page)
+
+  const reviewBundleDownloadPromise = page.waitForEvent('download')
+  await approvalDryRun.getByRole('button', { name: 'Export Review Bundle' }).click()
+  const reviewBundleDownload = await reviewBundleDownloadPromise
+  expect(reviewBundleDownload.suggestedFilename()).toBe('pm-import-candidate-miner-temp-power-approval-review-bundle.json')
+
+  const reviewBundle = await readDownloadJson(reviewBundleDownload)
+  expect(reviewBundle).toMatchObject({
+    bundle_kind: 'pm_import_candidate_approval_local_review_bundle',
+    bundle_version: 'pm_lane_146_local_review_bundle_v1',
+    candidate_identity: {
+      candidate_id: 'pm-import-candidate-miner-temp-power',
+      candidate_version: 'pm_import_candidate_read_only_v1',
+      source_fingerprint: 'stat-fingerprint-abc123',
+    },
+    dry_run_envelope: {
+      dry_run_kind: 'pm_import_candidate_browser_approval_dry_run',
+      payload: {
+        candidate_id: 'pm-import-candidate-miner-temp-power',
+        decision: 'return_for_revision',
+        project_data_entry_label: 'REQUEST_DATA_ENTRY_WORKBOOK_CORRECTION_NO_LIVE',
+      },
+    },
+    readiness_checkpoint: {
+      readiness_kind: 'pm_import_candidate_approval_dry_run_readiness',
+      warning_disposition_gate: {
+        disposition_status: 'local_exact_pm_label_recorded_no_live',
+        selected_local_label: 'REQUEST_DATA_ENTRY_WORKBOOK_CORRECTION_NO_LIVE',
+      },
+    },
+    authority_boundary: {
+      mutation_authority: 'not_admitted',
+      local_review_only: true,
+      bundle_export_only: true,
+      live_post_performed: false,
+      approval_row_created: false,
+      project_import_performed: false,
+      server_write_performed: false,
+    },
+  })
+  expect(reviewBundle.blocked_boundaries).toEqual(expect.arrayContaining(['live_approval_post', 'approval_row_creation', 'project_import']))
+  await expect(approvalDryRun.getByRole('status')).toContainText(/Local approval review bundle exported/i)
+
+  const preflightDownloadPromise = page.waitForEvent('download')
+  await approvalDryRun.getByRole('button', { name: 'Export Live Gate Preflight' }).click()
+  const preflightDownload = await preflightDownloadPromise
+  expect(preflightDownload.suggestedFilename()).toBe('pm-import-candidate-miner-temp-power-approval-live-gate-preflight.json')
+
+  const preflight = await readDownloadJson(preflightDownload)
+  expect(preflight).toMatchObject({
+    preflight_kind: 'pm_import_candidate_approval_live_gate_preflight',
+    preflight_version: 'pm_lane_147_local_live_gate_preflight_v1',
+    candidate_identity: {
+      candidate_id: 'pm-import-candidate-miner-temp-power',
+      candidate_version: 'pm_import_candidate_read_only_v1',
+      source_fingerprint: 'stat-fingerprint-abc123',
+    },
+    preflight_summary: {
+      live_gate_status: 'blocked_until_exact_phrase',
+      blocked_count: 2,
+    },
+    approval_review_bundle: {
+      bundle_kind: 'pm_import_candidate_approval_local_review_bundle',
+      dry_run_envelope: {
+        payload: {
+          candidate_id: 'pm-import-candidate-miner-temp-power',
+          decision: 'return_for_revision',
+        },
+      },
+      readiness_checkpoint: {
+        warning_disposition_gate: {
+          disposition_status: 'local_exact_pm_label_recorded_no_live',
+          selected_local_label: 'REQUEST_DATA_ENTRY_WORKBOOK_CORRECTION_NO_LIVE',
+        },
+      },
+    },
+    authority_boundary: {
+      mutation_authority: 'not_admitted',
+      local_preflight_only: true,
+      live_post_performed: false,
+      approval_row_created: false,
+      project_import_performed: false,
+      server_write_performed: false,
+    },
+  })
+  expect(preflight.preflight_items.map((item: { id: string; status: string }) => `${item.id}:${item.status}`)).toEqual([
+    'candidate-identity:ready',
+    'local-review-bundle:ready',
+    'approval-status-readback:ready',
+    'warning-disposition-gate:needs_review',
+    'admission-no-go-posture:needs_review',
+    'live-write-admission:blocked',
+    'downstream-import-boundary:blocked',
+  ])
+  await expect(approvalDryRun.getByRole('status')).toContainText(/Local approval live-gate preflight exported/i)
+
+  expect(mutationRequests).toHaveLength(0)
+})
+
+test('pm import intake workbench exports field-prep packet with exact-label review context', async ({ page }) => {
+  const { mutationRequests } = await prepareFieldPrepPacketContext(page)
+
+  const fieldPrepPacketDownloadPromise = page.waitForEvent('download')
+  await page.getByRole('button', { name: 'Export Field Prep Packet' }).click()
+  const fieldPrepPacketDownload = await fieldPrepPacketDownloadPromise
+  expect(fieldPrepPacketDownload.suggestedFilename()).toBe('pm-import-candidate-miner-temp-power-field-prep-packet.md')
+
+  const fieldPrepPacket = await readDownloadText(fieldPrepPacketDownload)
+  expect(fieldPrepPacket).toContain('# Project Miner Local Field Prep Packet')
+  expect(fieldPrepPacket).toContain('Field prep queue: 2 complete, 2 next, 1 blocked.')
+  expect(fieldPrepPacket).toContain('Coverage snapshot: 2 covered, 0 partial, 3 open, 2 blocked.')
+  expect(fieldPrepPacket).toContain('Conversation agenda: 2 context, 3 ask, 1 confirm, 1 blocked.')
+  expect(fieldPrepPacket).toContain('Field readiness checks: 2 of 8 checked.')
+  expect(fieldPrepPacket).toContain('Drawing/source questions: Confirm latest one-line drawings match the temp power candidate shape.')
+  expect(fieldPrepPacket).toContain('Site access and safety questions: Confirm escort, access hours, and LOTO review questions before field discussion.')
+  expect(fieldPrepPacket).toContain('Observation date or shift note: Day-one temp power prep conversation before field mobilization.')
+  expect(fieldPrepPacket).toContain('Observer / source: PM call with lead and customer site contact.')
+  expect(fieldPrepPacket).toContain('- Review checklist: 2 of 7 checked')
+  expect(fieldPrepPacket).toContain('- Executor closeout intake: 2 of 8 checked')
+  expect(fieldPrepPacket).toContain('- Decision draft value: return_for_revision')
+  expect(fieldPrepPacket).toContain('- Project Data Entry exact label: REQUEST_DATA_ENTRY_WORKBOOK_CORRECTION_NO_LIVE')
+  expect(fieldPrepPacket).toContain('## Hosted Approval Surface And Remaining Blocks')
+  expect(fieldPrepPacket).toContain('- Hosted approval route: /api/v1/mutations/project-import-approvals')
+  expect(fieldPrepPacket).toContain('Keep production execution tracking blocked until a later packet explicitly admits the required write path.')
+
+  await expect(page.getByText(/Field prep packet prepared from pm-import-candidate-miner-temp-power without a server write/i)).toBeVisible()
+  expect(mutationRequests).toHaveLength(0)
+})
 
 test('pm import intake workbench renders consolidated read-only Project Miner gates', async ({ page }) => {
   const readCalls = {
@@ -580,7 +770,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
             review_action: "Treat Task_Entry as lineage source-of-truth evidence and rebuild or refresh the workbook's BuildAll/PopulateAllTasks macro output before relying on All_Tasks workflow columns.",
             formula_error_pattern: 'all_tasks_formula_cache_break',
             formula_error_pattern_detail:
-              'All_Tasks appears to be carrying a uniform cached formula failure across derived workflow columns while Task_Entry source rows remain present. This matches a stale or broken workbook build/cache state more than a missing planning-source shape.',
+              'All_Tasks appears to be carrying a uniform cached formula failure across derived workflow columns while Task_Entry source rows remain present. This matches a stale or broken workbook build/cache state more than a missing planning-source shape. Reference workbook example: Garney- Central Mesa Reuse Tracker #677562.xlsm currently loads without formula errors across 143 All_Tasks row(s) while retaining 6 Task_Entry row(s) (COMPLETED=99, NOT STARTED=34).',
             formula_error_vba_lineage_modules: ['BuildAll', 'PopulateAllTasks_FromSheets'],
             formula_error_row_count: 234,
             formula_error_cell_count: 3510,
@@ -1178,7 +1368,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(dailyScript.getByRole('link', { name: /Minute 4: Name blocked future authority/i })).toHaveAttribute('href', '#approval-readiness')
   await expect(dailyScript.getByText(/Miner Temp Power: source fingerprint stat-fingerprint-abc123; candidate authority remains not admitted/i)).toBeVisible()
   await expect(dailyScript.getByText(/Import exception register: 0 covered, 4 open, 2 blocked/i)).toBeVisible()
-  await expect(dailyScript.getByText(/Local decision draft has not started; capture decision value, review notes, and local-only attestation before any future persistence packet/i)).toBeVisible()
+  await expect(dailyScript.getByText(/Local decision draft has not started; capture decision value, exact Project Data Entry PM Lane 238 label, review notes, and local-only attestation before any future persistence packet/i)).toBeVisible()
   await expect(dailyScript.getByText(/Field prep queue: 0 complete \/ 1 next \/ 4 blocked. Capture field questions draft: Capture drawing\/source, access\/safety, material, customer, or PM follow-up questions before the kickoff brief is used/i)).toBeVisible()
   await expect(dailyScript.getByText(/0 of 8 local closeout evidence checks are marked; 4 of 6 approval-persistence gates remain blocked and project import remains not admitted/i)).toBeVisible()
   const outputSelector = page.locator('details#pm-output-selector[aria-label="Local PM intake output selector"]')
@@ -1387,7 +1577,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(openItems.getByRole('link', { name: /Approval persistence boundary/i })).toHaveAttribute('href', '#approval-readiness')
   await expect(openItems.getByRole('link', { name: /Project import boundary/i })).toHaveAttribute('href', '#guardrails')
   await expect(openItems.getByText(/4 local exception item\(s\) still need attention; 2 future boundary item\(s\) remain blocked/i)).toBeVisible()
-  await expect(openItems.getByText(/Decision value, review notes, and local-only attestation still need local draft context/i)).toBeVisible()
+  await expect(openItems.getByText(/Decision value, exact Project Data Entry PM Lane 238 label, review notes, and local-only attestation still need local draft context/i)).toBeVisible()
   await expect(openItems.getByText(/1 field-prep item\(s\) are next; 4 field-prep item\(s\) are blocked/i)).toBeVisible()
   await expect(openItems.getByText(/0 of 8 local closeout evidence checks are marked/i)).toBeVisible()
   await expect(openItems.getByText(/4 of 6 approval-persistence gates remain blocked until a later packet admits that path/i)).toBeVisible()
@@ -1687,6 +1877,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(exceptionDecisionDetail.getByText('PROJECT_DATA_ENTRY_FORMULA_ERRORS', { exact: true })).toBeVisible()
   await expect(exceptionDecisionDetail.getByText('All 234 All_Tasks row(s) in the planning workbook carry the same cached formula errors across 3510 cell(s), while Task_Entry source rows are still present.')).toBeVisible()
   await expect(exceptionDecisionDetail.getByText(/Pattern detail: All_Tasks appears to be carrying a uniform cached formula failure/i)).toBeVisible()
+  await expect(exceptionDecisionDetail.getByText(/Reference workbook example: Garney- Central Mesa Reuse Tracker #677562\.xlsm currently loads without formula errors/i)).toBeVisible()
   await expect(exceptionDecisionDetail.getByText(/Workbook lineage modules: BuildAll, PopulateAllTasks_FromSheets/i)).toBeVisible()
   const projectDataEntryDecisionGate = exceptionDecisionDetail.getByLabel('Project Data Entry decision gate')
   await expect(projectDataEntryDecisionGate).toBeVisible()
@@ -1858,23 +2049,24 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   const approvalDraftGroups = approvalDraftControls.locator('[aria-label="Approval decision draft groups"]')
   await expect(approvalDraftGroups).toBeVisible()
   await expect(approvalDraftGroups.locator(':scope > section')).toHaveCount(3)
-  await expect(approvalDraftGroups.locator('label')).toHaveCount(3)
+  await expect(approvalDraftGroups.locator('label')).toHaveCount(4)
   const decisionValueContextGroup = approvalDraftGroups.locator('[aria-label="Decision Value Context approval draft group"]')
   const reviewNotesContextGroup = approvalDraftGroups.locator('[aria-label="Review Notes Context approval draft group"]')
   const localAttestationContextGroup = approvalDraftGroups.locator('[aria-label="Local Attestation Context approval draft group"]')
   await expect(decisionValueContextGroup.getByRole('heading', { name: 'Decision Value Context' })).toBeVisible()
   await expect(reviewNotesContextGroup.getByRole('heading', { name: 'Review Notes Context' })).toBeVisible()
   await expect(localAttestationContextGroup.getByRole('heading', { name: 'Local Attestation Context' })).toBeVisible()
-  await expect(decisionValueContextGroup.locator('[aria-label="Decision Value Context approval draft items"] label')).toHaveCount(1)
+  await expect(decisionValueContextGroup.locator('[aria-label="Decision Value Context approval draft items"] label')).toHaveCount(2)
   await expect(reviewNotesContextGroup.locator('[aria-label="Review Notes Context approval draft items"] label')).toHaveCount(1)
   await expect(localAttestationContextGroup.locator('[aria-label="Local Attestation Context approval draft items"] label')).toHaveCount(1)
-  await expect(approvalDraftGroups.locator('select')).toHaveCount(1)
+  await expect(approvalDraftGroups.locator('select')).toHaveCount(2)
   await expect(approvalDraftGroups.locator('textarea')).toHaveCount(1)
   await expect(approvalDraftGroups.getByRole('checkbox', { name: /Local-only draft attestation/i })).toHaveCount(1)
   await expect(approvalDraft.getByRole('heading', { name: /Local Approval Decision Draft/i })).toBeVisible()
   await expect(approvalDraft.getByText(/local review prep/i)).toBeVisible()
   await expect(approvalDraft.getByRole('button', { name: 'Clear decision draft' })).toBeDisabled()
-  const approvalDraftDecisionSelect = approvalDraft.locator('select')
+  const approvalDraftDecisionSelect = approvalDraft.locator('select').first()
+  const approvalDraftProjectDataEntryLabelSelect = approvalDraft.locator('select').nth(1)
   const approvalDraftNotes = approvalDraft.locator('textarea').first()
   await approvalDraft.locator(':scope > summary').click()
   await expect(approvalDraft).not.toHaveAttribute('open', '')
@@ -1889,8 +2081,9 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(approvalDraftControls).toBeVisible()
   await expect(approvalDraftGroups).toBeVisible()
   await expect(approvalDraftGroups.locator(':scope > section')).toHaveCount(3)
-  await expect(approvalDraftGroups.locator('label')).toHaveCount(3)
+  await expect(approvalDraftGroups.locator('label')).toHaveCount(4)
   await approvalDraftDecisionSelect.selectOption('return_for_revision')
+  await approvalDraftProjectDataEntryLabelSelect.selectOption('REQUEST_DATA_ENTRY_WORKBOOK_CORRECTION_NO_LIVE')
   await approvalDraftNotes.fill('Reviewed formula warnings; return for revision until source workbook errors are resolved.')
   await approvalDraft.getByRole('checkbox', { name: /Local-only draft attestation/i }).check()
   await expect(approvalDraft.getByRole('button', { name: 'Clear decision draft' })).toBeEnabled()
@@ -1898,7 +2091,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(startHere.getByText(/Export review artifacts: Use the PM brief and approval preview JSON as browser-local context for the next admitted packet/i)).toBeVisible()
   await expect(startHere.getByText(/Import exception register: 4 covered, 0 open, 2 blocked/i)).toBeVisible()
   await expect(dailyScript.getByText(/Import exception register: 4 covered, 0 open, 2 blocked/i)).toBeVisible()
-  await expect(dailyScript.getByText(/Local decision draft has decision value, review notes, and local-only attestation for this browser-local review/i)).toBeVisible()
+  await expect(dailyScript.getByText(/Local decision draft has decision value, exact Project Data Entry PM Lane 238 label, review notes, and local-only attestation for this browser-local review/i)).toBeVisible()
   await expect(outputSelector.getByText(/Approval Preview JSON has local decision draft context and 2 of 7 review checks for a later admitted approval-persistence packet/i)).toBeVisible()
   await expect(commandCenter.locator('a').filter({ hasText: /^Do now/ })).toHaveAttribute('href', '#pm-output-selector')
   await expect(commandCenter.locator('a').filter({ hasText: /^Prepare handoff context/ })).toHaveAttribute('href', '#pm-handoff-guide')
@@ -1908,12 +2101,12 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(meetingReadout.getByText(/Local review notes are captured; exceptions are 4 covered, 0 open, 2 blocked for later packet context/i)).toBeVisible()
   await expect(constraintRadar.getByText(/Source fingerprint stat-fingerprint-abc123; review checklist has 2 of 7 local checks marked; exceptions are 4 covered, 0 open, 2 blocked; local review notes are captured/i)).toBeVisible()
   await expect(constraintRadar.getByText(/2 of 6 approval-persistence gates remain blocked; project import remains not admitted; future write authority remains outside this browser-local workbench/i)).toBeVisible()
-  await expect(handoffGuide.getByText(/Use the workbench for Jason review while exceptions are 4 covered, 0 open, 2 blocked and local decision draft has decision value, review notes, and local-only attestation/i)).toBeVisible()
-  await expect(handoffGuide.getByText(/Existing Executor Handoff context has 0 of 8 local closeout evidence checks marked plus local decision draft has decision value, review notes, and local-only attestation/i)).toBeVisible()
+  await expect(handoffGuide.getByText(/Use the workbench for Jason review while exceptions are 4 covered, 0 open, 2 blocked and local decision draft has decision value, exact Project Data Entry PM Lane 238 label, review notes, and local-only attestation/i)).toBeVisible()
+  await expect(handoffGuide.getByText(/Existing Executor Handoff context has 0 of 8 local closeout evidence checks marked plus local decision draft has decision value, exact Project Data Entry PM Lane 238 label, review notes, and local-only attestation/i)).toBeVisible()
   await expect(workflowMap.getByText(/Import exception register: 4 covered, 0 open, 2 blocked/i)).toBeVisible()
-  await expect(workflowMap.getByText(/Local decision draft has a decision value, review notes, and local-only attestation/i)).toBeVisible()
+  await expect(workflowMap.getByText(/Local decision draft has decision value, exact Project Data Entry PM Lane 238 label, review notes, and local-only attestation/i)).toBeVisible()
   await expect(openItems.getByText(/Local exception attention is covered, but 2 future boundary item\(s\) remain blocked/i)).toBeVisible()
-  await expect(openItems.getByText(/Local decision value, review notes, and local-only attestation are present/i)).toBeVisible()
+  await expect(openItems.getByText(/Decision value, exact Project Data Entry PM Lane 238 label, review notes, and local-only attestation are present/i)).toBeVisible()
   const approvalDryRun = page.locator('details[aria-label="Local approval submission dry run"]')
   await expect(approvalDryRun).toHaveAttribute('open', '')
   const approvalDryRunBodyControls = approvalDryRun.locator('[aria-label="Local approval submission dry run controls"]')
@@ -1922,7 +2115,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(approvalDryRunControls).toBeVisible()
   await expect(approvalDryRun.getByRole('heading', { name: /Local Approval Submission Dry Run/i })).toBeVisible()
   await expect(approvalDryRun.getByText(/Builds the future approval POST envelope in this browser for review only/i)).toBeVisible()
-  await expect(approvalDryRun.getByText(/Live approval POST, first approval-row creation, and project import remain blocked/i)).toBeVisible()
+  await expect(approvalDryRun.getByText(/Browser approval submission, first approval-row creation, and project import remain blocked/i)).toBeVisible()
   await expect(approvalDryRun.getByText('3 ready, 2 needs review, 1 blocked')).toBeVisible()
   const approvalDryRunGroups = approvalDryRunControls.locator('[aria-label="Approval dry run groups"]')
   await expect(approvalDryRunGroups).toBeVisible()
@@ -1981,6 +2174,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(approvalDryRunPreview).toContainText('"live_post_performed": false')
   await expect(approvalDryRunPreview).toContainText('"approval_row_created": false')
   await expect(approvalDryRunPreview).toContainText('"decision": "return_for_revision"')
+  await expect(approvalDryRunPreview).toContainText('"project_data_entry_label": "REQUEST_DATA_ENTRY_WORKBOOK_CORRECTION_NO_LIVE"')
   await expect(approvalDryRunPreview).toContainText('"accepted_warning_codes"')
   await expect(approvalDryRun.getByRole('button', { name: 'Clear dry run' })).toBeEnabled()
   expect(mutationRequests).toHaveLength(0)
@@ -2014,6 +2208,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
     payload: {
       candidate_id: 'pm-import-candidate-miner-temp-power',
       decision: 'return_for_revision',
+      project_data_entry_label: 'REQUEST_DATA_ENTRY_WORKBOOK_CORRECTION_NO_LIVE',
       review_notes: 'Reviewed formula warnings; return for revision until source workbook errors are resolved.',
       local_attestation: true,
       accepted_warning_codes: [],
@@ -2021,8 +2216,20 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
       warning_disposition_gate: {
         warning_code: 'PROJECT_DATA_ENTRY_FORMULA_ERRORS',
         present: true,
-        disposition_status: 'requires_exact_pm_label',
+        disposition_status: 'local_exact_pm_label_recorded_no_live',
         accepted_by_current_local_review: false,
+        selected_local_label: 'REQUEST_DATA_ENTRY_WORKBOOK_CORRECTION_NO_LIVE',
+        selected_local_label_valid: true,
+        local_selection_recorded: true,
+        outcome_routes: expect.arrayContaining([
+          expect.objectContaining({
+            label: 'REQUEST_DATA_ENTRY_WORKBOOK_CORRECTION_NO_LIVE',
+            route: 'open a no-live workbook-correction packet before warning acceptance or live admission',
+          }),
+        ]),
+        valid_return_checklist: expect.arrayContaining([
+          expect.objectContaining({ term: 'accepted', detail: 'exactly one PM Lane 238 Data Entry label' }),
+        ]),
         source_correction_boundary: {
           prior_source_correction_label: 'REQUEST_SOURCE_CORRECTION_NO_LIVE',
           prior_source_correction_status: 'already_applied',
@@ -2045,6 +2252,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
     },
     local_validation: {
       decision_draft_complete: true,
+      project_data_entry_label_recorded: true,
       checklist_checked_count: 2,
       checklist_checked_items: ['source_freshness_reviewed', 'exceptions_reviewed'],
       warning_acceptance_ready: false,
@@ -2084,7 +2292,14 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
     warning_disposition_gate: {
       warning_code: 'PROJECT_DATA_ENTRY_FORMULA_ERRORS',
       present: true,
-      disposition_status: 'requires_exact_pm_label',
+      disposition_status: 'local_exact_pm_label_recorded_no_live',
+      selected_local_label: 'REQUEST_DATA_ENTRY_WORKBOOK_CORRECTION_NO_LIVE',
+      safe_no_live_continuation_moves: expect.arrayContaining([
+        expect.objectContaining({
+          term: 'requires exact PM label first',
+          detail: 'warning acceptance, workbook-correction action, live admission packet, approval POST, approval row, and project import',
+        }),
+      ]),
     },
     approval_status_readback: {
       classification: 'no_approval_record',
@@ -2147,6 +2362,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
       payload: {
         candidate_id: 'pm-import-candidate-miner-temp-power',
         decision: 'return_for_revision',
+        project_data_entry_label: 'REQUEST_DATA_ENTRY_WORKBOOK_CORRECTION_NO_LIVE',
         review_notes: 'Reviewed formula warnings; return for revision until source workbook errors are resolved.',
       },
     },
@@ -2289,7 +2505,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(commandCenter.getByText(/Local handoff context exists from decision draft: yes; closeout checks: 2 of 8; field questions: no; field observations: no/i)).toBeVisible()
   await expect(meetingReadout.getByText(/2 of 6 approval-persistence gates remain blocked; project import remains not admitted; executor closeout evidence is 2 of 8/i)).toBeVisible()
   await expect(constraintRadar.getByText(/Executor closeout intake is 2 of 8; hosted read, schema, approval status, and bounded MCP proof are green while closeout checks remain audit-prep context only/i)).toBeVisible()
-  await expect(handoffGuide.getByText(/Existing Executor Handoff context has 2 of 8 local closeout evidence checks marked plus local decision draft has decision value, review notes, and local-only attestation/i)).toBeVisible()
+  await expect(handoffGuide.getByText(/Existing Executor Handoff context has 2 of 8 local closeout evidence checks marked plus local decision draft has decision value, exact Project Data Entry PM Lane 238 label, review notes, and local-only attestation/i)).toBeVisible()
   await expect(workflowMap.getByText(/2 of 8 local closeout checks marked for returned executor evidence/i)).toBeVisible()
   await expect(openItems.getByText(/2 of 8 local closeout evidence checks are marked/i)).toBeVisible()
   const fieldStartOperatorScript = page.locator('details#pm-field-start-operator-script[aria-label="Local field start operator script"]')
@@ -2994,6 +3210,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   expect(localState.checklist).toContain('source_freshness_reviewed')
   expect(localState.checklist).toContain('exceptions_reviewed')
   expect(localState.draft).toContain('return_for_revision')
+  expect(localState.draft).toContain('REQUEST_DATA_ENTRY_WORKBOOK_CORRECTION_NO_LIVE')
   expect(localState.draft).toContain('Reviewed formula warnings')
   expect(localState.closeout).toContain('source_commit_recorded')
   expect(localState.closeout).toContain('validation_results_captured')
@@ -3055,7 +3272,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   await expect(readiness.getByText('Import mutation authority', { exact: true })).toBeVisible()
   await expect(
     readiness.getByText(
-      'PM Lane 138 closed the hosted schema gate with zero approval rows, and the bounded Supabase MCP read path is restored. Browser approval submission and import mutation remain blocked until later packets explicitly admit them.',
+      'Current admission plan is needs human acceptance before import packet: 2 warning signal(s) must be reviewed. This endpoint has no import mutation authority.',
       { exact: true },
     ),
   ).toBeVisible()
@@ -3096,6 +3313,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   expect(handoff).toContain('- Checklist checked: 2 of 7')
   expect(handoff).toContain('- Closeout checks: 2 of 8')
   expect(handoff).toContain('- Decision draft: return_for_revision')
+  expect(handoff).toContain('- Project Data Entry exact label: REQUEST_DATA_ENTRY_WORKBOOK_CORRECTION_NO_LIVE')
   expect(handoff).toContain('Reviewed formula warnings; return for revision until source workbook errors are resolved.')
   expect(handoff).toContain('## Operating Queue')
   expect(handoff).toContain('Export review artifacts: Use the PM brief and approval preview JSON as browser-local context for the next admitted packet.')
@@ -3126,7 +3344,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   expect(handoff).toContain('Guardrails confirmed: Executor return confirms no widened service, DNS, auth, ingress, secret, SQL, schema, approval, import, assignment, schedule, status, or AI mutation.')
   expect(handoff).toContain('## Remaining Approval Submission Blockers')
   expect(handoff).toContain('Browser approval submit authority: No browser approval button, approval POST wiring, or live approval-row creation is admitted until a later packet owns that UI submission path.')
-  expect(handoff).toContain('Import mutation authority: Project, workpackage, task, and apparatus import remain blocked until a later packet admits import after an approved approval record exists.')
+  expect(handoff).toContain('Import mutation authority: Current admission plan is needs human acceptance before import packet: 2 warning signal(s) must be reviewed. This endpoint has no import mutation authority.')
   expect(handoff).toContain('## Hosted Approval Surface And Remaining Blocks')
   expect(handoff).toContain('- Hosted approval route: /api/v1/mutations/project-import-approvals')
   expect(handoff).toContain('## Not Allowed')
@@ -3219,6 +3437,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   expect(exceptionRegisterExport).toContain('## Warning Signals')
   expect(exceptionRegisterExport).toContain('PROJECT_DATA_ENTRY_FORMULA_ERRORS: All 234 All_Tasks row(s) in the planning workbook carry the same cached formula errors across 3510 cell(s), while Task_Entry source rows are still present.')
   expect(exceptionRegisterExport).toContain('Pattern detail: All_Tasks appears to be carrying a uniform cached formula failure across derived workflow columns while Task_Entry source rows remain present.')
+  expect(exceptionRegisterExport).toContain('Reference workbook example: Garney- Central Mesa Reuse Tracker #677562.xlsm currently loads without formula errors across 143 All_Tasks row(s) while retaining 6 Task_Entry row(s) (COMPLETED=99, NOT STARTED=34).')
   expect(exceptionRegisterExport).toContain('Workbook lineage modules: BuildAll, PopulateAllTasks_FromSheets')
   expect(exceptionRegisterExport).toContain('## Human Decision Prompts')
   expect(exceptionRegisterExport).toContain('Does this candidate correctly represent the project, workpackages, tasks, and apparatus?')
@@ -3253,6 +3472,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   expect(exceptionRegisterExport).toContain('mutation path not admitted: no go - This endpoint has no import mutation authority.')
   expect(exceptionRegisterExport).toContain('## Local Decision Draft')
   expect(exceptionRegisterExport).toContain('- Decision draft: return_for_revision')
+  expect(exceptionRegisterExport).toContain('- Project Data Entry exact label: REQUEST_DATA_ENTRY_WORKBOOK_CORRECTION_NO_LIVE')
   expect(exceptionRegisterExport).toContain('Reviewed formula warnings; return for revision until source workbook errors are resolved.')
   expect(exceptionRegisterExport).toContain('## Not Allowed')
   expect(exceptionRegisterExport).toContain('- write supabase')
@@ -3294,6 +3514,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   expect(fieldBrief).toContain('- Executor closeout intake: 2 of 8 checked')
   expect(fieldBrief).toContain('- Field readiness prep: 2 of 8 checked')
   expect(fieldBrief).toContain('- Decision draft: return_for_revision')
+  expect(fieldBrief).toContain('- Project Data Entry exact label: REQUEST_DATA_ENTRY_WORKBOOK_CORRECTION_NO_LIVE')
   expect(fieldBrief).toContain('Checked review evidence:')
   expect(fieldBrief).toContain('Source freshness reviewed: Source paths, modified times, and aggregate fingerprint were checked before relying on this candidate.')
   expect(fieldBrief).toContain('Checked executor closeout evidence:')
@@ -3502,6 +3723,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   expect(fieldPrepPacket).toContain('- Review checklist: 2 of 7 checked')
   expect(fieldPrepPacket).toContain('- Executor closeout intake: 2 of 8 checked')
   expect(fieldPrepPacket).toContain('- Decision draft value: return_for_revision')
+  expect(fieldPrepPacket).toContain('- Project Data Entry exact label: REQUEST_DATA_ENTRY_WORKBOOK_CORRECTION_NO_LIVE')
   expect(fieldPrepPacket).toContain('## Hosted Approval Surface And Remaining Blocks')
   expect(fieldPrepPacket).toContain('- Hosted approval route: /api/v1/mutations/project-import-approvals')
   expect(fieldPrepPacket).toContain('## Not Allowed')
@@ -5190,8 +5412,20 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
         warning_disposition_gate: {
           warning_code: 'PROJECT_DATA_ENTRY_FORMULA_ERRORS',
           present: true,
-          disposition_status: 'requires_exact_pm_label',
+          disposition_status: 'local_exact_pm_label_recorded_no_live',
           accepted_by_current_local_review: false,
+          selected_local_label: 'REQUEST_DATA_ENTRY_WORKBOOK_CORRECTION_NO_LIVE',
+          selected_local_label_valid: true,
+          local_selection_recorded: true,
+          outcome_routes: expect.arrayContaining([
+            expect.objectContaining({
+              label: 'ACCEPT_DATA_ENTRY_WARNING_NON_BLOCKING_NO_LIVE',
+              route: 'record no-live warning acceptance context; keep live admission separate',
+            }),
+          ]),
+          valid_return_checklist: expect.arrayContaining([
+            expect.objectContaining({ term: 'after valid label', detail: 'record the label in a no-live decision packet and keep live admission separate' }),
+          ]),
           source_correction_boundary: {
             prior_source_correction_label: 'REQUEST_SOURCE_CORRECTION_NO_LIVE',
             prior_source_correction_status: 'already_applied',
@@ -5209,6 +5443,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
       },
       decision_draft: {
         decision: 'return_for_revision',
+        project_data_entry_label: 'REQUEST_DATA_ENTRY_WORKBOOK_CORRECTION_NO_LIVE',
         review_notes: 'Reviewed formula warnings; return for revision until source workbook errors are resolved.',
         local_attestation: true,
         draft_complete: true,
@@ -5281,6 +5516,7 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   expect(brief).toContain('## Local Approval Decision Draft')
   expect(brief).toContain('Draft present: yes.')
   expect(brief).toContain('- Decision draft: return_for_revision')
+  expect(brief).toContain('- Project Data Entry exact label: REQUEST_DATA_ENTRY_WORKBOOK_CORRECTION_NO_LIVE')
   expect(brief).toContain('- Local-only attestation checked: yes')
   expect(brief).toContain('Reviewed formula warnings; return for revision until source workbook errors are resolved.')
   expect(brief).toContain('## Approval Persistence Readiness')

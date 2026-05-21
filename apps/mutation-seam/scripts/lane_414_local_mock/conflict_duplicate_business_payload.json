@@ -1,0 +1,30 @@
+{
+  "http_status": 409,
+  "status": "conflict",
+  "classification": "duplicate_business_payload_conflict",
+  "mutation_status": "rejected",
+  "mutation_id": "mut-1d764f75-87a8-49bc-ac73-cd4dabaf95df",
+  "entity_id": "project-import-contract-support-c0a8015b70a9d18a4d18cafe",
+  "entity_type": "pm_project_import_contract_support",
+  "action_type": "persist_project_import_contract_support",
+  "audit_event_id": null,
+  "project_contract_snapshot_id": null,
+  "scope_labor_detail_row_count": 2,
+  "apparatus_financial_row_count": 4,
+  "idempotent_hit": false,
+  "current_candidate_match": true,
+  "partial_commit": false,
+  "conflict_reason": "same business payload supplied under a different mutation id",
+  "conflict": {
+    "server_state": {
+      "existing_mutation_id": "mut-6147fd7f-62f7-47b8-86a6-83c55114f611",
+      "classification": "import_contract_support_persisted"
+    },
+    "queued_action": {
+      "incoming_mutation_id": "mut-1d764f75-87a8-49bc-ac73-cd4dabaf95df",
+      "classification": "duplicate_business_payload_conflict"
+    },
+    "resolution_hint": "Replay the committed mutation with the original mutation_id or change the business payload before retrying."
+  },
+  "new_state": {}
+}

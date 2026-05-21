@@ -1,0 +1,16 @@
+{
+  "http_status": 200,
+  "status": "missing",
+  "classification": "missing",
+  "route": "/api/v1/reads/project-import-contract-support-status",
+  "project_id": "pm-import-project-miner-temp-power",
+  "candidate_id": "pm-import-candidate-miner-temp-power",
+  "source_fingerprint": "miner-temp-power-source-fingerprint-2026-05-20",
+  "current_candidate_match": false,
+  "counts_match": false,
+  "record_count": 0,
+  "latest_project_contract_snapshot_id": null,
+  "scope_labor_detail_row_count": 0,
+  "apparatus_financial_row_count": 0,
+  "storage_available": true
+}

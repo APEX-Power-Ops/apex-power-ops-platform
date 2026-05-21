@@ -1,0 +1,27 @@
+{
+  "http_status": 201,
+  "status": "accepted",
+  "classification": "import_contract_support_persisted",
+  "mutation_status": "committed",
+  "mutation_id": "mut-6147fd7f-62f7-47b8-86a6-83c55114f611",
+  "entity_id": "project-import-contract-support-c0a8015b70a9d18a4d18cafe",
+  "entity_type": "pm_project_import_contract_support",
+  "action_type": "persist_project_import_contract_support",
+  "audit_event_id": "audit-417ce346-a378-4b7a-95ba-2f9ffcffb1cd",
+  "project_contract_snapshot_id": "pcs-1b4f9d69b6d1",
+  "scope_labor_detail_row_count": 2,
+  "apparatus_financial_row_count": 4,
+  "idempotent_hit": false,
+  "current_candidate_match": true,
+  "partial_commit": false,
+  "new_state": {
+    "storage_status": "accepted_for_contract_support_storage",
+    "counts_match": true,
+    "classification": "import_contract_support_persisted",
+    "scope_labor_detail_row_count": 2,
+    "apparatus_financial_row_count": 4,
+    "customer_delivery_authority": "not_admitted",
+    "finance_authority": "not_admitted",
+    "source_writeback_authority": "not_admitted"
+  }
+}

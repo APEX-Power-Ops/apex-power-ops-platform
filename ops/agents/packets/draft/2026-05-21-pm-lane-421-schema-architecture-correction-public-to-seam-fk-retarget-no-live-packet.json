@@ -1,0 +1,48 @@
+{
+  "packet_id": "2026-05-21-pm-lane-421-schema-architecture-correction-public-to-seam-fk-retarget-no-live-packet",
+  "lane": "PM Lane 421",
+  "title": "Schema Architecture Correction - Public To Seam FK Retarget No-Live Packet",
+  "status": "complete",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_LANE_421_SCHEMA_ARCHITECTURE_CORRECTION_PUBLIC_TO_SEAM_FK_RETARGET_NO_LIVE",
+  "selected_outcome": "LANE_421_SCHEMA_ARCHITECTURE_CORRECTION_APPLIED_PUBLIC_TO_SEAM_FK_RETARGET_NO_LIVE",
+  "predecessor": "2026-05-21-pm-lane-421-live-gate-preflight-blocked-on-missing-temp-power-public-scope-anchor",
+  "phase_0": {
+    "blocked_packet_confirmed": true,
+    "migration_014_already_live": true,
+    "lane_412_dry_run_enabled_render_observation": "absent_via_same_day_authenticated_render_evidence",
+    "seam_scopes_existed_before_migration": false,
+    "seam_projects_exists": true,
+    "seam_side_public_scope_fk_targets_before_migration": [
+      "seam.scope_labor_details.scope_id -> public.scopes.id",
+      "seam.apparatus_revenue_events.scope_id -> public.scopes.id"
+    ],
+    "additional_public_scope_references_surfaced": [
+      "public.ahas.scope_id",
+      "public.apparatus.scope_id",
+      "public.apparatus_revenue.scope_id",
+      "public.resource_assignments.scope_id",
+      "public.scope_financial_summaries.scope_id",
+      "public.scope_labor_details.scope_id",
+      "public.tasks.scope_id"
+    ],
+    "financial_tables_empty_before_migration": true,
+    "legacy_scope_refs_present_in_seam": false,
+    "lane_412_design_body": "docs/operations/APEX-PM-LANE-412-REVISION-B-PROJECT-MINER-TEMP-POWER-LANE-278-SIBLING-IMPORT-CONTRACT-SUPPORT-NO-LIVE-DESIGN-PACKET-2026-05-20.md"
+  },
+  "artifacts": {
+    "migration": "apps/mutation-seam/migrations/015_seam_scopes_addition_and_fk_retarget.sql",
+    "verification_runner": "apps/mutation-seam/scripts/lane_421_schema_correction/run_lane_421_schema_correction_verification.py",
+    "verification_readme": "apps/mutation-seam/scripts/lane_421_schema_correction/README.md",
+    "verification_output": "apps/mutation-seam/scripts/lane_421_schema_correction/output/schema_correction_verification_20260521T023011Z.json",
+    "packet": "docs/operations/APEX-PM-LANE-421-SCHEMA-ARCHITECTURE-CORRECTION-PUBLIC-TO-SEAM-FK-RETARGET-NO-LIVE-PACKET-2026-05-21.md",
+    "handoff": "ops/agents/handoffs/2026-05-21-pm-lane-421-schema-architecture-correction-closeout-handoff.md",
+    "lane_421_atomic_probe_runner": "apps/mutation-seam/scripts/lane_421_grant_verification/run_lane_421_atomic_transaction_probe.py"
+  },
+  "validation": {
+    "migration_apply_result": "MIGRATION_015_STATUS applied",
+    "verification_result": "overall_status = passed",
+    "verification_mode": "metadata_and_role_access_no_write",
+    "role_probe_nuance": "pm and operations are NOLOGIN; admin DSN could not SET ROLE, so access was verified with role metadata and has_*_privilege checks"
+  },
+  "next_truth": "Populate real Miner Temp Power seam.projects/seam.scopes/seam.apparatus anchors in the future onboarding lane, then rerun the corrected Lane 421 rollback-only atomic probe against seam.scopes.id"
+}

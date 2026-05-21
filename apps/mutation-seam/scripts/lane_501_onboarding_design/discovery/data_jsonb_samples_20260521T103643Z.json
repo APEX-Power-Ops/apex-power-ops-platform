@@ -1,0 +1,1863 @@
+{
+  "generated_at": "2026-05-21T10:37:34.560253+00:00",
+  "phase_0_findings": {
+    "migration_016_clean_state": {
+      "scope_id_text_nullable": true,
+      "has_scope_fk": true,
+      "has_scope_idx": true,
+      "pm_projects_siu": true,
+      "pm_tasks_siu": true,
+      "pm_apparatus_siu": true,
+      "operations_projects_siu": true,
+      "operations_tasks_siu": true,
+      "operations_apparatus_siu": true,
+      "anon_projects_siu": false,
+      "anon_tasks_siu": false,
+      "anon_apparatus_siu": false,
+      "authenticated_projects_siu": false,
+      "authenticated_tasks_siu": false,
+      "authenticated_apparatus_siu": false
+    },
+    "production_row_count_sanity": {
+      "actual": {
+        "projects": 1,
+        "tasks": 15,
+        "apparatus": 184,
+        "scopes": 0
+      },
+      "expected": {
+        "projects": 1,
+        "tasks": 15,
+        "apparatus": 184,
+        "scopes": 0
+      },
+      "matches_expected": {
+        "projects": true,
+        "tasks": true,
+        "apparatus": true,
+        "scopes": true
+      }
+    },
+    "seam_projects_data_jsonb_sampling": {
+      "sample_rows": [
+        {
+          "id": "pm-import-project-miner-temp-power",
+          "data": {
+            "name": "Miner Temp Power",
+            "status": "not_started",
+            "location": "Santa Teresa, NM",
+            "issue_date": "Dated: 03/05/2026",
+            "imported_at": "2026-05-18T02:28:38.284035+00:00",
+            "scope_sheets": [],
+            "source_sheet": "Updated",
+            "source_bundle": {
+              "sld_pdf_path": "C:\\Users\\jjswe\\Desktop\\Project Miner PM Planning\\Miner Temp SLD-AP-BCARRASCO.pdf",
+              "sld_pdf_found": true,
+              "topology_counts": {
+                "MVS": 8,
+                "LVPP": 16,
+                "LVTX": 32,
+                "MVTX": 22,
+                "SWBD": 22,
+                "PWR SKID": 38
+              },
+              "reference_tracker": {
+                "path": "C:\\Users\\jjswe\\Desktop\\Project Miner PM Planning\\Garney- Central Mesa Reuse Tracker #677562.xlsm",
+                "found": true,
+                "status_counts": {
+                  "COMPLETED": 99,
+                  "NOT STARTED": 34
+                },
+                "all_tasks_count": 143,
+                "task_entry_count": 6,
+                "formula_error_row_count": 0
+              },
+              "project_data_entry": {
+                "path": "C:\\Users\\jjswe\\Desktop\\Project Miner PM Planning\\RESA Power - Project Data Entry MASTER.xlsm",
+                "found": true,
+                "all_tasks_count": 234,
+                "task_entry_count": 14,
+                "formula_error_row_count": 234
+              },
+              "topology_label_count": 138,
+              "estimator_scope_count": 0,
+              "equipment_workbook_path": "C:\\Users\\jjswe\\Desktop\\Project Miner PM Planning\\EQUIPMENT INVENTORY - 2026.xlsx",
+              "estimator_source_format": "flat_quote",
+              "estimator_workbook_path": "C:\\Users\\jjswe\\Desktop\\Project Miner PM Planning\\Estimator R3 - Project Miner Temp Power Testing.xlsm",
+              "capability_workbook_path": "C:\\Users\\jjswe\\Desktop\\Project Miner PM Planning\\Phx Tech Testing Capability Matrix 032726.xlsx",
+              "equipment_workbook_found": true,
+              "estimator_workbook_found": true,
+              "capability_workbook_found": true
+            },
+            "source_format": "flat_quote",
+            "import_payload": {
+              "candidate_id": "pm-import-candidate-miner-temp-power",
+              "import_notes": "Stakeholder/PM standing authority on 2026-05-18 admits the PM Lane 278 project import mutation for the current approved Temp Power candidate. Persist only project, workpackage, task, and apparatus rows; keep assignment, field, schedule/status, customer, production, finance, workbook, schema, and autonomous AI business-state writes blocked.",
+              "idempotency_key": "pm-import:a2acafe8e9928899e8645736",
+              "candidate_version": "pm_import_candidate_read_only_v1",
+              "approval_record_id": "pm-import-approval-03a1aea39afde71b44516f44",
+              "accepted_warning_codes": [
+                "PROJECT_DATA_ENTRY_FORMULA_ERRORS"
+              ],
+              "source_stat_fingerprint": "e111fdbe934bf9de07ed24c1",
+              "accepted_no_go_overrides": [
+                "warnings-reviewed-by-pm"
+              ],
+              "candidate_shape_fingerprint": "ddc49565eb586af913ad48b2"
+            },
+            "import_summary": {
+              "task_count": 15,
+              "warning_count": 1,
+              "source_trace_rows": 199,
+              "workpackage_count": 7,
+              "warning_review_rows": 1,
+              "apparatus_candidate_count": 184
+            },
+            "drawing_package": "SLD: E01-00, E01-01, E01-02",
+            "import_identity": {
+              "candidate_id": "pm-import-candidate-miner-temp-power",
+              "idempotency_key": "pm-import:a2acafe8e9928899e8645736",
+              "candidate_version": "pm_import_candidate_read_only_v1",
+              "approval_record_id": "pm-import-approval-03a1aea39afde71b44516f44",
+              "source_stat_fingerprint": "e111fdbe934bf9de07ed24c1",
+              "candidate_shape_fingerprint": "ddc49565eb586af913ad48b2"
+            },
+            "import_authority": "admitted_by_pm_lane_278",
+            "source_freshness": {
+              "strategy": "path_size_mtime_fingerprint",
+              "source_files": [
+                {
+                  "path": "C:\\Users\\jjswe\\Desktop\\Project Miner PM Planning\\Estimator R3 - Project Miner Temp Power Testing.xlsm",
+                  "found": true,
+                  "label": "Estimator workbook",
+                  "source_id": "estimator_workbook",
+                  "size_bytes": 914288,
+                  "fingerprint": "ab3aa955a4efe059ad7e983f",
+                  "modified_at": "2026-05-15T12:42:08.078548Z",
+                  "freshness_status": "available"
+                },
+                {
+                  "path": "C:\\Users\\jjswe\\Desktop\\Project Miner PM Planning\\Miner Temp SLD-AP-BCARRASCO.pdf",
+                  "found": true,
+                  "label": "SLD or drawing PDF",
+                  "source_id": "sld_pdf",
+                  "size_bytes": 6223173,
+                  "fingerprint": "71e4ee0f778a4e0599b9603c",
+                  "modified_at": "2026-04-17T03:14:30Z",
+                  "freshness_status": "available"
+                },
+                {
+                  "path": "C:\\Users\\jjswe\\Desktop\\Project Miner PM Planning\\RESA Power - Project Data Entry MASTER.xlsm",
+                  "found": true,
+                  "label": "Project data entry workbook",
+                  "source_id": "project_data_entry",
+                  "size_bytes": 4202870,
+                  "fingerprint": "3ffa77c5d073b0d5ba46ec9c",
+                  "modified_at": "2026-05-15T20:31:14.565766Z",
+                  "freshness_status": "available"
+                },
+                {
+                  "path": "C:\\Users\\jjswe\\Desktop\\Project Miner PM Planning\\Garney- Central Mesa Reuse Tracker #677562.xlsm",
+                  "found": true,
+                  "label": "Reference tracker workbook",
+                  "source_id": "reference_tracker",
+                  "size_bytes": 4513105,
+                  "fingerprint": "db224172d16c65a8d12a01a6",
+                  "modified_at": "2025-12-29T15:36:56.492568Z",
+                  "freshness_status": "available"
+                },
+                {
+                  "path": "C:\\Users\\jjswe\\Desktop\\Project Miner PM Planning\\EQUIPMENT INVENTORY - 2026.xlsx",
+                  "found": true,
+                  "label": "Equipment inventory workbook",
+                  "source_id": "equipment_workbook",
+                  "size_bytes": 50762,
+                  "fingerprint": "354785f06475cbb13a9cc1f0",
+                  "modified_at": "2026-05-13T15:09:38Z",
+                  "freshness_status": "available"
+                },
+                {
+                  "path": "C:\\Users\\jjswe\\Desktop\\Project Miner PM Planning\\Phx Tech Testing Capability Matrix 032726.xlsx",
+                  "found": true,
+                  "label": "Crew capability workbook",
+                  "source_id": "capability_workbook",
+                  "size_bytes": 29557,
+                  "fingerprint": "e23df187a1bffd66d592e8b9",
+                  "modified_at": "2026-04-24T17:14:08Z",
+                  "freshness_status": "available"
+                }
+              ],
+              "missing_count": 0,
+              "review_action": "Refresh this candidate if any source path, file size, or modified time changes before import approval is admitted.",
+              "available_count": 6,
+              "mutation_authority": "not_admitted",
+              "aggregate_fingerprint": "e111fdbe934bf9de07ed24c1"
+            },
+            "approval_record_id": "pm-import-approval-03a1aea39afde71b44516f44",
+            "import_mutation_id": "mut-1529e376-4f5c-4c03-960d-4d38462312d9",
+            "import_payload_hash": "d73ffde1a2feab68367b95a3",
+            "warning_review_rows": [
+              {
+                "message": "234 planning-workbook row(s) include formula errors across 3510 cell(s).",
+                "candidate_id": "pm-import-candidate-miner-temp-power",
+                "warning_code": "PROJECT_DATA_ENTRY_FORMULA_ERRORS",
+                "review_action": "Treat the tracker as lineage evidence only until formula errors are understood.",
+                "review_status": "accepted_for_import",
+                "warning_severity": "warning",
+                "warning_review_id": "pm-import-warning-review-001",
+                "approval_record_id": "pm-import-approval-03a1aea39afde71b44516f44"
+              }
+            ],
+            "approval_mutation_id": "mut-bc747179-0232-40a4-9288-2ee93381fd3f",
+            "imported_by_actor_id": "pm-001",
+            "source_trace_storage": "embedded_on_imported_task_and_apparatus_rows",
+            "import_audit_event_id": "audit-5035aeae-cd58-4290-b0a6-70a0eab97c1c",
+            "warning_review_storage": "embedded_on_imported_project_row",
+            "approval_audit_event_id": "audit-aca55758-2385-47f0-a026-7b012f9f5c1f",
+            "source_stat_fingerprint": "e111fdbe934bf9de07ed24c1",
+            "import_persistence_version": "pm_import_persistence_v1",
+            "source_import_candidate_id": "pm-import-candidate-miner-temp-power",
+            "candidate_shape_fingerprint": "ddc49565eb586af913ad48b2"
+          }
+        }
+      ],
+      "summary": {
+        "row_count_sampled": 1,
+        "key_types": {
+          "name": [
+            "str"
+          ],
+          "status": [
+            "str"
+          ],
+          "location": [
+            "str"
+          ],
+          "issue_date": [
+            "str"
+          ],
+          "imported_at": [
+            "str"
+          ],
+          "scope_sheets": [
+            "list"
+          ],
+          "source_sheet": [
+            "str"
+          ],
+          "source_bundle": [
+            "dict"
+          ],
+          "source_bundle.sld_pdf_path": [
+            "str"
+          ],
+          "source_bundle.sld_pdf_found": [
+            "bool"
+          ],
+          "source_bundle.topology_counts": [
+            "dict"
+          ],
+          "source_bundle.topology_counts.MVS": [
+            "int"
+          ],
+          "source_bundle.topology_counts.LVPP": [
+            "int"
+          ],
+          "source_bundle.topology_counts.LVTX": [
+            "int"
+          ],
+          "source_bundle.topology_counts.MVTX": [
+            "int"
+          ],
+          "source_bundle.topology_counts.SWBD": [
+            "int"
+          ],
+          "source_bundle.topology_counts.PWR SKID": [
+            "int"
+          ],
+          "source_bundle.reference_tracker": [
+            "dict"
+          ],
+          "source_bundle.reference_tracker.path": [
+            "str"
+          ],
+          "source_bundle.reference_tracker.found": [
+            "bool"
+          ],
+          "source_bundle.reference_tracker.status_counts": [
+            "dict"
+          ],
+          "source_bundle.reference_tracker.status_counts.COMPLETED": [
+            "int"
+          ],
+          "source_bundle.reference_tracker.status_counts.NOT STARTED": [
+            "int"
+          ],
+          "source_bundle.reference_tracker.all_tasks_count": [
+            "int"
+          ],
+          "source_bundle.reference_tracker.task_entry_count": [
+            "int"
+          ],
+          "source_bundle.reference_tracker.formula_error_row_count": [
+            "int"
+          ],
+          "source_bundle.project_data_entry": [
+            "dict"
+          ],
+          "source_bundle.project_data_entry.path": [
+            "str"
+          ],
+          "source_bundle.project_data_entry.found": [
+            "bool"
+          ],
+          "source_bundle.project_data_entry.all_tasks_count": [
+            "int"
+          ],
+          "source_bundle.project_data_entry.task_entry_count": [
+            "int"
+          ],
+          "source_bundle.project_data_entry.formula_error_row_count": [
+            "int"
+          ],
+          "source_bundle.topology_label_count": [
+            "int"
+          ],
+          "source_bundle.estimator_scope_count": [
+            "int"
+          ],
+          "source_bundle.equipment_workbook_path": [
+            "str"
+          ],
+          "source_bundle.estimator_source_format": [
+            "str"
+          ],
+          "source_bundle.estimator_workbook_path": [
+            "str"
+          ],
+          "source_bundle.capability_workbook_path": [
+            "str"
+          ],
+          "source_bundle.equipment_workbook_found": [
+            "bool"
+          ],
+          "source_bundle.estimator_workbook_found": [
+            "bool"
+          ],
+          "source_bundle.capability_workbook_found": [
+            "bool"
+          ],
+          "source_format": [
+            "str"
+          ],
+          "import_payload": [
+            "dict"
+          ],
+          "import_payload.candidate_id": [
+            "str"
+          ],
+          "import_payload.import_notes": [
+            "str"
+          ],
+          "import_payload.idempotency_key": [
+            "str"
+          ],
+          "import_payload.candidate_version": [
+            "str"
+          ],
+          "import_payload.approval_record_id": [
+            "str"
+          ],
+          "import_payload.accepted_warning_codes": [
+            "list"
+          ],
+          "import_payload.source_stat_fingerprint": [
+            "str"
+          ],
+          "import_payload.accepted_no_go_overrides": [
+            "list"
+          ],
+          "import_payload.candidate_shape_fingerprint": [
+            "str"
+          ],
+          "import_summary": [
+            "dict"
+          ],
+          "import_summary.task_count": [
+            "int"
+          ],
+          "import_summary.warning_count": [
+            "int"
+          ],
+          "import_summary.source_trace_rows": [
+            "int"
+          ],
+          "import_summary.workpackage_count": [
+            "int"
+          ],
+          "import_summary.warning_review_rows": [
+            "int"
+          ],
+          "import_summary.apparatus_candidate_count": [
+            "int"
+          ],
+          "drawing_package": [
+            "str"
+          ],
+          "import_identity": [
+            "dict"
+          ],
+          "import_identity.candidate_id": [
+            "str"
+          ],
+          "import_identity.idempotency_key": [
+            "str"
+          ],
+          "import_identity.candidate_version": [
+            "str"
+          ],
+          "import_identity.approval_record_id": [
+            "str"
+          ],
+          "import_identity.source_stat_fingerprint": [
+            "str"
+          ],
+          "import_identity.candidate_shape_fingerprint": [
+            "str"
+          ],
+          "import_authority": [
+            "str"
+          ],
+          "source_freshness": [
+            "dict"
+          ],
+          "source_freshness.strategy": [
+            "str"
+          ],
+          "source_freshness.source_files": [
+            "list"
+          ],
+          "source_freshness.source_files.path": [
+            "str"
+          ],
+          "source_freshness.source_files.found": [
+            "bool"
+          ],
+          "source_freshness.source_files.label": [
+            "str"
+          ],
+          "source_freshness.source_files.source_id": [
+            "str"
+          ],
+          "source_freshness.source_files.size_bytes": [
+            "int"
+          ],
+          "source_freshness.source_files.fingerprint": [
+            "str"
+          ],
+          "source_freshness.source_files.modified_at": [
+            "str"
+          ],
+          "source_freshness.source_files.freshness_status": [
+            "str"
+          ],
+          "source_freshness.missing_count": [
+            "int"
+          ],
+          "source_freshness.review_action": [
+            "str"
+          ],
+          "source_freshness.available_count": [
+            "int"
+          ],
+          "source_freshness.mutation_authority": [
+            "str"
+          ],
+          "source_freshness.aggregate_fingerprint": [
+            "str"
+          ],
+          "approval_record_id": [
+            "str"
+          ],
+          "import_mutation_id": [
+            "str"
+          ],
+          "import_payload_hash": [
+            "str"
+          ],
+          "warning_review_rows": [
+            "list"
+          ],
+          "warning_review_rows.message": [
+            "str"
+          ],
+          "warning_review_rows.candidate_id": [
+            "str"
+          ],
+          "warning_review_rows.warning_code": [
+            "str"
+          ],
+          "warning_review_rows.review_action": [
+            "str"
+          ],
+          "warning_review_rows.review_status": [
+            "str"
+          ],
+          "warning_review_rows.warning_severity": [
+            "str"
+          ],
+          "warning_review_rows.warning_review_id": [
+            "str"
+          ],
+          "warning_review_rows.approval_record_id": [
+            "str"
+          ],
+          "approval_mutation_id": [
+            "str"
+          ],
+          "imported_by_actor_id": [
+            "str"
+          ],
+          "source_trace_storage": [
+            "str"
+          ],
+          "import_audit_event_id": [
+            "str"
+          ],
+          "warning_review_storage": [
+            "str"
+          ],
+          "approval_audit_event_id": [
+            "str"
+          ],
+          "source_stat_fingerprint": [
+            "str"
+          ],
+          "import_persistence_version": [
+            "str"
+          ],
+          "source_import_candidate_id": [
+            "str"
+          ],
+          "candidate_shape_fingerprint": [
+            "str"
+          ]
+        },
+        "example": {
+          "name": "Miner Temp Power",
+          "status": "not_started",
+          "location": "Santa Teresa, NM",
+          "issue_date": "Dated: 03/05/2026"
+        }
+      }
+    },
+    "seam_tasks_data_jsonb_sampling": {
+      "sample_rows": [
+        {
+          "id": "pm-import-project-miner-temp-power-task-0001",
+          "workpackage_id": "pm-import-project-miner-temp-power-wp-001",
+          "status": "ready",
+          "data": {
+            "name": "Pole Disconnect - Switch MV - Fused Disconnect",
+            "title": "Pole Disconnect - Switch MV - Fused Disconnect",
+            "priority": 1.0,
+            "project_id": "pm-import-project-miner-temp-power",
+            "drawing_ref": "E01-00",
+            "imported_at": "2026-05-18T02:28:38.284035+00:00",
+            "source_trace": {
+              "trace_id": "pm-import-source-trace-6145fea062de997391296533",
+              "source_ref": {
+                "line_id": "miner-line-001",
+                "source_row": 6,
+                "drawing_ref": "E01-00",
+                "scope_sheet": null,
+                "source_sheet": "Updated",
+                "source_format": "flat_quote",
+                "estimator_workbook_path": "C:\\Users\\jjswe\\Desktop\\Project Miner PM Planning\\Estimator R3 - Project Miner Temp Power Testing.xlsm"
+              },
+              "entity_type": "task",
+              "source_line_id": "miner-line-001",
+              "candidate_task_id": "candidate-task-0001",
+              "source_trace_authority": "admitted_by_pm_lane_278"
+            },
+            "planned_hours": 7.5,
+            "source_line_id": "miner-line-001",
+            "import_identity": {
+              "candidate_id": "pm-import-candidate-miner-temp-power",
+              "idempotency_key": "pm-import:a2acafe8e9928899e8645736",
+              "candidate_version": "pm_import_candidate_read_only_v1",
+              "approval_record_id": "pm-import-approval-03a1aea39afde71b44516f44",
+              "source_stat_fingerprint": "e111fdbe934bf9de07ed24c1",
+              "candidate_shape_fingerprint": "ddc49565eb586af913ad48b2"
+            },
+            "import_authority": "admitted_by_pm_lane_278",
+            "finance_authority": "not_admitted",
+            "source_designation": "Pole Disconnect",
+            "status_ready_at_utc": "2026-05-18T02:51:37.9231947Z",
+            "schedule_status_scope": "task_readiness_only_no_date_write",
+            "source_apparatus_type": "Switch MV - Fused Disconnect",
+            "schedule_date_authority": "not_admitted",
+            "source_candidate_task_id": "candidate-task-0001",
+            "apparatus_candidate_count": 3,
+            "assignment_proof_required": "pm_lane_279_assignments_184_unique_apparatus",
+            "schedule_status_authority": "admitted_by_pm_lane_280_standing_blocker_authority",
+            "schedule_status_record_id": "pm-lane-280-status-readiness-temp-power-2026-05-18",
+            "source_import_fingerprint": "e111fdbe934bf9de07ed24c1",
+            "source_import_candidate_id": "pm-import-candidate-miner-temp-power",
+            "customer_reporting_authority": "not_admitted",
+            "workpackage_status_authority": "not_admitted_no_existing_start_route",
+            "field_authorization_record_id": "pm-lane-279-field-auth-temp-power-2026-05-18",
+            "production_tracking_authority": "not_admitted",
+            "durable_field_record_authority": "not_admitted"
+          }
+        },
+        {
+          "id": "pm-import-project-miner-temp-power-task-0002",
+          "workpackage_id": "pm-import-project-miner-temp-power-wp-001",
+          "status": "ready",
+          "data": {
+            "name": "MVS SWGR - Switch MV - Fused Disconnect",
+            "title": "MVS SWGR - Switch MV - Fused Disconnect",
+            "priority": 0.98,
+            "project_id": "pm-import-project-miner-temp-power",
+            "drawing_ref": "E01-00",
+            "imported_at": "2026-05-18T02:28:38.284035+00:00",
+            "source_trace": {
+              "trace_id": "pm-import-source-trace-891fbbc805295655f12e9cd3",
+              "source_ref": {
+                "line_id": "miner-line-004",
+                "source_row": 9,
+                "drawing_ref": "E01-00",
+                "scope_sheet": null,
+                "source_sheet": "Updated",
+                "source_format": "flat_quote",
+                "estimator_workbook_path": "C:\\Users\\jjswe\\Desktop\\Project Miner PM Planning\\Estimator R3 - Project Miner Temp Power Testing.xlsm"
+              },
+              "entity_type": "task",
+              "source_line_id": "miner-line-004",
+              "candidate_task_id": "candidate-task-0004",
+              "source_trace_authority": "admitted_by_pm_lane_278"
+            },
+            "planned_hours": 30.0,
+            "source_line_id": "miner-line-004",
+            "import_identity": {
+              "candidate_id": "pm-import-candidate-miner-temp-power",
+              "idempotency_key": "pm-import:a2acafe8e9928899e8645736",
+              "candidate_version": "pm_import_candidate_read_only_v1",
+              "approval_record_id": "pm-import-approval-03a1aea39afde71b44516f44",
+              "source_stat_fingerprint": "e111fdbe934bf9de07ed24c1",
+              "candidate_shape_fingerprint": "ddc49565eb586af913ad48b2"
+            },
+            "import_authority": "admitted_by_pm_lane_278",
+            "finance_authority": "not_admitted",
+            "source_designation": "MVS SWGR",
+            "status_ready_at_utc": "2026-05-18T02:51:37.9231947Z",
+            "schedule_status_scope": "task_readiness_only_no_date_write",
+            "source_apparatus_type": "Switch MV - Fused Disconnect",
+            "schedule_date_authority": "not_admitted",
+            "source_candidate_task_id": "candidate-task-0004",
+            "apparatus_candidate_count": 12,
+            "assignment_proof_required": "pm_lane_279_assignments_184_unique_apparatus",
+            "schedule_status_authority": "admitted_by_pm_lane_280_standing_blocker_authority",
+            "schedule_status_record_id": "pm-lane-280-status-readiness-temp-power-2026-05-18",
+            "source_import_fingerprint": "e111fdbe934bf9de07ed24c1",
+            "source_import_candidate_id": "pm-import-candidate-miner-temp-power",
+            "customer_reporting_authority": "not_admitted",
+            "workpackage_status_authority": "not_admitted_no_existing_start_route",
+            "field_authorization_record_id": "pm-lane-279-field-auth-temp-power-2026-05-18",
+            "production_tracking_authority": "not_admitted",
+            "durable_field_record_authority": "not_admitted"
+          }
+        },
+        {
+          "id": "pm-import-project-miner-temp-power-task-0003",
+          "workpackage_id": "pm-import-project-miner-temp-power-wp-002",
+          "status": "ready",
+          "data": {
+            "name": "MVS Incoming - Conductors MV - Set of 3 (VLF/Tan Delta)",
+            "title": "MVS Incoming - Conductors MV - Set of 3 (VLF/Tan Delta)",
+            "priority": 0.96,
+            "project_id": "pm-import-project-miner-temp-power",
+            "drawing_ref": "E01-00",
+            "imported_at": "2026-05-18T02:28:38.284035+00:00",
+            "source_trace": {
+              "trace_id": "pm-import-source-trace-b3c34e9b675853ad7b48d3f4",
+              "source_ref": {
+                "line_id": "miner-line-002",
+                "source_row": 7,
+                "drawing_ref": "E01-00",
+                "scope_sheet": null,
+                "source_sheet": "Updated",
+                "source_format": "flat_quote",
+                "estimator_workbook_path": "C:\\Users\\jjswe\\Desktop\\Project Miner PM Planning\\Estimator R3 - Project Miner Temp Power Testing.xlsm"
+              },
+              "entity_type": "task",
+              "source_line_id": "miner-line-002",
+              "candidate_task_id": "candidate-task-0002",
+              "source_trace_authority": "admitted_by_pm_lane_278"
+            },
+            "planned_hours": 13.5,
+            "source_line_id": "miner-line-002",
+            "import_identity": {
+              "candidate_id": "pm-import-candidate-miner-temp-power",
+              "idempotency_key": "pm-import:a2acafe8e9928899e8645736",
+              "candidate_version": "pm_import_candidate_read_only_v1",
+              "approval_record_id": "pm-import-approval-03a1aea39afde71b44516f44",
+              "source_stat_fingerprint": "e111fdbe934bf9de07ed24c1",
+              "candidate_shape_fingerprint": "ddc49565eb586af913ad48b2"
+            },
+            "import_authority": "admitted_by_pm_lane_278",
+            "finance_authority": "not_admitted",
+            "source_designation": "MVS Incoming",
+            "status_ready_at_utc": "2026-05-18T02:51:37.9231947Z",
+            "schedule_status_scope": "task_readiness_only_no_date_write",
+            "source_apparatus_type": "Conductors MV - Set of 3 (VLF/Tan Delta)",
+            "schedule_date_authority": "not_admitted",
+            "source_candidate_task_id": "candidate-task-0002",
+            "apparatus_candidate_count": 3,
+            "assignment_proof_required": "pm_lane_279_assignments_184_unique_apparatus",
+            "schedule_status_authority": "admitted_by_pm_lane_280_standing_blocker_authority",
+            "schedule_status_record_id": "pm-lane-280-status-readiness-temp-power-2026-05-18",
+            "source_import_fingerprint": "e111fdbe934bf9de07ed24c1",
+            "source_import_candidate_id": "pm-import-candidate-miner-temp-power",
+            "customer_reporting_authority": "not_admitted",
+            "workpackage_status_authority": "not_admitted_no_existing_start_route",
+            "field_authorization_record_id": "pm-lane-279-field-auth-temp-power-2026-05-18",
+            "production_tracking_authority": "not_admitted",
+            "durable_field_record_authority": "not_admitted"
+          }
+        },
+        {
+          "id": "pm-import-project-miner-temp-power-task-0004",
+          "workpackage_id": "pm-import-project-miner-temp-power-wp-002",
+          "status": "ready",
+          "data": {
+            "name": "MVTX Incoming - Conductors MV - Set of 3 (VLF/Tan Delta)",
+            "title": "MVTX Incoming - Conductors MV - Set of 3 (VLF/Tan Delta)",
+            "priority": 0.94,
+            "project_id": "pm-import-project-miner-temp-power",
+            "drawing_ref": "E01-00",
+            "imported_at": "2026-05-18T02:28:38.284035+00:00",
+            "source_trace": {
+              "trace_id": "pm-import-source-trace-2545fcfaf55c858e4d7c55c1",
+              "source_ref": {
+                "line_id": "miner-line-005",
+                "source_row": 10,
+                "drawing_ref": "E01-00",
+                "scope_sheet": null,
+                "source_sheet": "Updated",
+                "source_format": "flat_quote",
+                "estimator_workbook_path": "C:\\Users\\jjswe\\Desktop\\Project Miner PM Planning\\Estimator R3 - Project Miner Temp Power Testing.xlsm"
+              },
+              "entity_type": "task",
+              "source_line_id": "miner-line-005",
+              "candidate_task_id": "candidate-task-0005",
+              "source_trace_authority": "admitted_by_pm_lane_278"
+            },
+            "planned_hours": 36.0,
+            "source_line_id": "miner-line-005",
+            "import_identity": {
+              "candidate_id": "pm-import-candidate-miner-temp-power",
+              "idempotency_key": "pm-import:a2acafe8e9928899e8645736",
+              "candidate_version": "pm_import_candidate_read_only_v1",
+              "approval_record_id": "pm-import-approval-03a1aea39afde71b44516f44",
+              "source_stat_fingerprint": "e111fdbe934bf9de07ed24c1",
+              "candidate_shape_fingerprint": "ddc49565eb586af913ad48b2"
+            },
+            "import_authority": "admitted_by_pm_lane_278",
+            "finance_authority": "not_admitted",
+            "source_designation": "MVTX Incoming",
+            "status_ready_at_utc": "2026-05-18T02:51:37.9231947Z",
+            "schedule_status_scope": "task_readiness_only_no_date_write",
+            "source_apparatus_type": "Conductors MV - Set of 3 (VLF/Tan Delta)",
+            "schedule_date_authority": "not_admitted",
+            "source_candidate_task_id": "candidate-task-0005",
+            "apparatus_candidate_count": 8,
+            "assignment_proof_required": "pm_lane_279_assignments_184_unique_apparatus",
+            "schedule_status_authority": "admitted_by_pm_lane_280_standing_blocker_authority",
+            "schedule_status_record_id": "pm-lane-280-status-readiness-temp-power-2026-05-18",
+            "source_import_fingerprint": "e111fdbe934bf9de07ed24c1",
+            "source_import_candidate_id": "pm-import-candidate-miner-temp-power",
+            "customer_reporting_authority": "not_admitted",
+            "workpackage_status_authority": "not_admitted_no_existing_start_route",
+            "field_authorization_record_id": "pm-lane-279-field-auth-temp-power-2026-05-18",
+            "production_tracking_authority": "not_admitted",
+            "durable_field_record_authority": "not_admitted"
+          }
+        },
+        {
+          "id": "pm-import-project-miner-temp-power-task-0005",
+          "workpackage_id": "pm-import-project-miner-temp-power-wp-003",
+          "status": "ready",
+          "data": {
+            "name": "MVS - Switchgear - Medium Voltage",
+            "title": "MVS - Switchgear - Medium Voltage",
+            "priority": 0.92,
+            "project_id": "pm-import-project-miner-temp-power",
+            "drawing_ref": "E01-00",
+            "imported_at": "2026-05-18T02:28:38.284035+00:00",
+            "source_trace": {
+              "trace_id": "pm-import-source-trace-6c3c4429984df7161fd762de",
+              "source_ref": {
+                "line_id": "miner-line-003",
+                "source_row": 8,
+                "drawing_ref": "E01-00",
+                "scope_sheet": null,
+                "source_sheet": "Updated",
+                "source_format": "flat_quote",
+                "estimator_workbook_path": "C:\\Users\\jjswe\\Desktop\\Project Miner PM Planning\\Estimator R3 - Project Miner Temp Power Testing.xlsm"
+              },
+              "entity_type": "task",
+              "source_line_id": "miner-line-003",
+              "candidate_task_id": "candidate-task-0003",
+              "source_trace_authority": "admitted_by_pm_lane_278"
+            },
+            "planned_hours": 18.0,
+            "source_line_id": "miner-line-003",
+            "import_identity": {
+              "candidate_id": "pm-import-candidate-miner-temp-power",
+              "idempotency_key": "pm-import:a2acafe8e9928899e8645736",
+              "candidate_version": "pm_import_candidate_read_only_v1",
+              "approval_record_id": "pm-import-approval-03a1aea39afde71b44516f44",
+              "source_stat_fingerprint": "e111fdbe934bf9de07ed24c1",
+              "candidate_shape_fingerprint": "ddc49565eb586af913ad48b2"
+            },
+            "import_authority": "admitted_by_pm_lane_278",
+            "finance_authority": "not_admitted",
+            "source_designation": "MVS",
+            "status_ready_at_utc": "2026-05-18T02:51:37.9231947Z",
+            "schedule_status_scope": "task_readiness_only_no_date_write",
+            "source_apparatus_type": "Switchgear - Medium Voltage",
+            "schedule_date_authority": "not_admitted",
+            "source_candidate_task_id": "candidate-task-0003",
+            "apparatus_candidate_count": 3,
+            "assignment_proof_required": "pm_lane_279_assignments_184_unique_apparatus",
+            "schedule_status_authority": "admitted_by_pm_lane_280_standing_blocker_authority",
+            "schedule_status_record_id": "pm-lane-280-status-readiness-temp-power-2026-05-18",
+            "source_import_fingerprint": "e111fdbe934bf9de07ed24c1",
+            "source_import_candidate_id": "pm-import-candidate-miner-temp-power",
+            "customer_reporting_authority": "not_admitted",
+            "workpackage_status_authority": "not_admitted_no_existing_start_route",
+            "field_authorization_record_id": "pm-lane-279-field-auth-temp-power-2026-05-18",
+            "production_tracking_authority": "not_admitted",
+            "durable_field_record_authority": "not_admitted"
+          }
+        }
+      ],
+      "summary": {
+        "row_count_sampled": 5,
+        "key_types": {
+          "name": [
+            "str"
+          ],
+          "title": [
+            "str"
+          ],
+          "priority": [
+            "float"
+          ],
+          "project_id": [
+            "str"
+          ],
+          "drawing_ref": [
+            "str"
+          ],
+          "imported_at": [
+            "str"
+          ],
+          "source_trace": [
+            "dict"
+          ],
+          "source_trace.trace_id": [
+            "str"
+          ],
+          "source_trace.source_ref": [
+            "dict"
+          ],
+          "source_trace.source_ref.line_id": [
+            "str"
+          ],
+          "source_trace.source_ref.source_row": [
+            "int"
+          ],
+          "source_trace.source_ref.drawing_ref": [
+            "str"
+          ],
+          "source_trace.source_ref.scope_sheet": [
+            "NoneType"
+          ],
+          "source_trace.source_ref.source_sheet": [
+            "str"
+          ],
+          "source_trace.source_ref.source_format": [
+            "str"
+          ],
+          "source_trace.source_ref.estimator_workbook_path": [
+            "str"
+          ],
+          "source_trace.entity_type": [
+            "str"
+          ],
+          "source_trace.source_line_id": [
+            "str"
+          ],
+          "source_trace.candidate_task_id": [
+            "str"
+          ],
+          "source_trace.source_trace_authority": [
+            "str"
+          ],
+          "planned_hours": [
+            "float"
+          ],
+          "source_line_id": [
+            "str"
+          ],
+          "import_identity": [
+            "dict"
+          ],
+          "import_identity.candidate_id": [
+            "str"
+          ],
+          "import_identity.idempotency_key": [
+            "str"
+          ],
+          "import_identity.candidate_version": [
+            "str"
+          ],
+          "import_identity.approval_record_id": [
+            "str"
+          ],
+          "import_identity.source_stat_fingerprint": [
+            "str"
+          ],
+          "import_identity.candidate_shape_fingerprint": [
+            "str"
+          ],
+          "import_authority": [
+            "str"
+          ],
+          "finance_authority": [
+            "str"
+          ],
+          "source_designation": [
+            "str"
+          ],
+          "status_ready_at_utc": [
+            "str"
+          ],
+          "schedule_status_scope": [
+            "str"
+          ],
+          "source_apparatus_type": [
+            "str"
+          ],
+          "schedule_date_authority": [
+            "str"
+          ],
+          "source_candidate_task_id": [
+            "str"
+          ],
+          "apparatus_candidate_count": [
+            "int"
+          ],
+          "assignment_proof_required": [
+            "str"
+          ],
+          "schedule_status_authority": [
+            "str"
+          ],
+          "schedule_status_record_id": [
+            "str"
+          ],
+          "source_import_fingerprint": [
+            "str"
+          ],
+          "source_import_candidate_id": [
+            "str"
+          ],
+          "customer_reporting_authority": [
+            "str"
+          ],
+          "workpackage_status_authority": [
+            "str"
+          ],
+          "field_authorization_record_id": [
+            "str"
+          ],
+          "production_tracking_authority": [
+            "str"
+          ],
+          "durable_field_record_authority": [
+            "str"
+          ]
+        },
+        "example": {
+          "name": "Pole Disconnect - Switch MV - Fused Disconnect",
+          "title": "Pole Disconnect - Switch MV - Fused Disconnect",
+          "priority": 1.0,
+          "project_id": "pm-import-project-miner-temp-power"
+        }
+      },
+      "scope_probe": {
+        "task_data_scope_id": 0,
+        "task_data_scope_sheet": 0,
+        "task_data_scope_name": 0,
+        "task_data_scope_reference": 0,
+        "task_data_source_line_id": 15,
+        "task_data_source_designation": 15,
+        "task_data_source_apparatus_type": 15
+      }
+    },
+    "seam_apparatus_data_jsonb_sampling": {
+      "sample_rows": [
+        {
+          "id": "pm-import-project-miner-temp-power-app-0001",
+          "scope_id": null,
+          "data": {
+            "name": "Pole Disconnect 01",
+            "status": "ready",
+            "task_id": "pm-import-project-miner-temp-power-task-0001",
+            "project_id": "pm-import-project-miner-temp-power",
+            "source_row": 6,
+            "assigned_to": null,
+            "imported_at": "2026-05-18T02:28:38.284035+00:00",
+            "source_trace": {
+              "trace_id": "pm-import-source-trace-c3b21389e7e253a3a0e48af0",
+              "source_ref": {
+                "line_id": "miner-line-001",
+                "source_row": 6,
+                "drawing_ref": "E01-00",
+                "scope_sheet": null,
+                "source_sheet": "Updated",
+                "source_format": "flat_quote",
+                "source_line_id": "miner-line-001",
+                "estimator_workbook_path": "C:\\Users\\jjswe\\Desktop\\Project Miner PM Planning\\Estimator R3 - Project Miner Temp Power Testing.xlsm"
+              },
+              "entity_type": "apparatus",
+              "candidate_task_id": "candidate-task-0001",
+              "candidate_apparatus_id": "miner-app-0001",
+              "source_trace_authority": "admitted_by_pm_lane_278"
+            },
+            "planned_hours": 2.5,
+            "source_line_id": "miner-line-001",
+            "import_identity": {
+              "candidate_id": "pm-import-candidate-miner-temp-power",
+              "idempotency_key": "pm-import:a2acafe8e9928899e8645736",
+              "candidate_version": "pm_import_candidate_read_only_v1",
+              "approval_record_id": "pm-import-approval-03a1aea39afde71b44516f44",
+              "source_stat_fingerprint": "e111fdbe934bf9de07ed24c1",
+              "candidate_shape_fingerprint": "ddc49565eb586af913ad48b2"
+            },
+            "import_authority": "admitted_by_pm_lane_278",
+            "finance_authority": "not_admitted",
+            "source_designation": "Pole Disconnect",
+            "source_drawing_ref": "E01-00",
+            "source_scope_sheet": null,
+            "status_ready_at_utc": "2026-05-18T02:51:37.9231947Z",
+            "schedule_status_scope": "apparatus_readiness_only_no_date_write",
+            "source_apparatus_type": "Switch MV - Fused Disconnect",
+            "schedule_date_authority": "not_admitted",
+            "source_candidate_task_id": "candidate-task-0001",
+            "assignment_proof_required": "pm_lane_279_assignments_184_unique_apparatus",
+            "schedule_status_authority": "admitted_by_pm_lane_280_standing_blocker_authority",
+            "schedule_status_record_id": "pm-lane-280-status-readiness-temp-power-2026-05-18",
+            "source_import_fingerprint": "e111fdbe934bf9de07ed24c1",
+            "source_import_candidate_id": "pm-import-candidate-miner-temp-power",
+            "customer_reporting_authority": "not_admitted",
+            "workpackage_status_authority": "not_admitted_no_existing_start_route",
+            "field_authorization_record_id": "pm-lane-279-field-auth-temp-power-2026-05-18",
+            "production_tracking_authority": "not_admitted",
+            "source_candidate_apparatus_id": "miner-app-0001",
+            "durable_field_record_authority": "not_admitted"
+          }
+        },
+        {
+          "id": "pm-import-project-miner-temp-power-app-0002",
+          "scope_id": null,
+          "data": {
+            "name": "Pole Disconnect 02",
+            "status": "ready",
+            "task_id": "pm-import-project-miner-temp-power-task-0001",
+            "project_id": "pm-import-project-miner-temp-power",
+            "source_row": 6,
+            "assigned_to": null,
+            "imported_at": "2026-05-18T02:28:38.284035+00:00",
+            "source_trace": {
+              "trace_id": "pm-import-source-trace-2e575238e29aef65c61fa2fe",
+              "source_ref": {
+                "line_id": "miner-line-001",
+                "source_row": 6,
+                "drawing_ref": "E01-00",
+                "scope_sheet": null,
+                "source_sheet": "Updated",
+                "source_format": "flat_quote",
+                "source_line_id": "miner-line-001",
+                "estimator_workbook_path": "C:\\Users\\jjswe\\Desktop\\Project Miner PM Planning\\Estimator R3 - Project Miner Temp Power Testing.xlsm"
+              },
+              "entity_type": "apparatus",
+              "candidate_task_id": "candidate-task-0001",
+              "candidate_apparatus_id": "miner-app-0002",
+              "source_trace_authority": "admitted_by_pm_lane_278"
+            },
+            "planned_hours": 2.5,
+            "source_line_id": "miner-line-001",
+            "import_identity": {
+              "candidate_id": "pm-import-candidate-miner-temp-power",
+              "idempotency_key": "pm-import:a2acafe8e9928899e8645736",
+              "candidate_version": "pm_import_candidate_read_only_v1",
+              "approval_record_id": "pm-import-approval-03a1aea39afde71b44516f44",
+              "source_stat_fingerprint": "e111fdbe934bf9de07ed24c1",
+              "candidate_shape_fingerprint": "ddc49565eb586af913ad48b2"
+            },
+            "import_authority": "admitted_by_pm_lane_278",
+            "finance_authority": "not_admitted",
+            "source_designation": "Pole Disconnect",
+            "source_drawing_ref": "E01-00",
+            "source_scope_sheet": null,
+            "status_ready_at_utc": "2026-05-18T02:51:37.9231947Z",
+            "schedule_status_scope": "apparatus_readiness_only_no_date_write",
+            "source_apparatus_type": "Switch MV - Fused Disconnect",
+            "schedule_date_authority": "not_admitted",
+            "source_candidate_task_id": "candidate-task-0001",
+            "assignment_proof_required": "pm_lane_279_assignments_184_unique_apparatus",
+            "schedule_status_authority": "admitted_by_pm_lane_280_standing_blocker_authority",
+            "schedule_status_record_id": "pm-lane-280-status-readiness-temp-power-2026-05-18",
+            "source_import_fingerprint": "e111fdbe934bf9de07ed24c1",
+            "source_import_candidate_id": "pm-import-candidate-miner-temp-power",
+            "customer_reporting_authority": "not_admitted",
+            "workpackage_status_authority": "not_admitted_no_existing_start_route",
+            "field_authorization_record_id": "pm-lane-279-field-auth-temp-power-2026-05-18",
+            "production_tracking_authority": "not_admitted",
+            "source_candidate_apparatus_id": "miner-app-0002",
+            "durable_field_record_authority": "not_admitted"
+          }
+        },
+        {
+          "id": "pm-import-project-miner-temp-power-app-0003",
+          "scope_id": null,
+          "data": {
+            "name": "Pole Disconnect 03",
+            "status": "ready",
+            "task_id": "pm-import-project-miner-temp-power-task-0001",
+            "project_id": "pm-import-project-miner-temp-power",
+            "source_row": 6,
+            "assigned_to": null,
+            "imported_at": "2026-05-18T02:28:38.284035+00:00",
+            "source_trace": {
+              "trace_id": "pm-import-source-trace-47b6b81e8406b9723a86fa4d",
+              "source_ref": {
+                "line_id": "miner-line-001",
+                "source_row": 6,
+                "drawing_ref": "E01-00",
+                "scope_sheet": null,
+                "source_sheet": "Updated",
+                "source_format": "flat_quote",
+                "source_line_id": "miner-line-001",
+                "estimator_workbook_path": "C:\\Users\\jjswe\\Desktop\\Project Miner PM Planning\\Estimator R3 - Project Miner Temp Power Testing.xlsm"
+              },
+              "entity_type": "apparatus",
+              "candidate_task_id": "candidate-task-0001",
+              "candidate_apparatus_id": "miner-app-0003",
+              "source_trace_authority": "admitted_by_pm_lane_278"
+            },
+            "planned_hours": 2.5,
+            "source_line_id": "miner-line-001",
+            "import_identity": {
+              "candidate_id": "pm-import-candidate-miner-temp-power",
+              "idempotency_key": "pm-import:a2acafe8e9928899e8645736",
+              "candidate_version": "pm_import_candidate_read_only_v1",
+              "approval_record_id": "pm-import-approval-03a1aea39afde71b44516f44",
+              "source_stat_fingerprint": "e111fdbe934bf9de07ed24c1",
+              "candidate_shape_fingerprint": "ddc49565eb586af913ad48b2"
+            },
+            "import_authority": "admitted_by_pm_lane_278",
+            "finance_authority": "not_admitted",
+            "source_designation": "Pole Disconnect",
+            "source_drawing_ref": "E01-00",
+            "source_scope_sheet": null,
+            "status_ready_at_utc": "2026-05-18T02:51:37.9231947Z",
+            "schedule_status_scope": "apparatus_readiness_only_no_date_write",
+            "source_apparatus_type": "Switch MV - Fused Disconnect",
+            "schedule_date_authority": "not_admitted",
+            "source_candidate_task_id": "candidate-task-0001",
+            "assignment_proof_required": "pm_lane_279_assignments_184_unique_apparatus",
+            "schedule_status_authority": "admitted_by_pm_lane_280_standing_blocker_authority",
+            "schedule_status_record_id": "pm-lane-280-status-readiness-temp-power-2026-05-18",
+            "source_import_fingerprint": "e111fdbe934bf9de07ed24c1",
+            "source_import_candidate_id": "pm-import-candidate-miner-temp-power",
+            "customer_reporting_authority": "not_admitted",
+            "workpackage_status_authority": "not_admitted_no_existing_start_route",
+            "field_authorization_record_id": "pm-lane-279-field-auth-temp-power-2026-05-18",
+            "production_tracking_authority": "not_admitted",
+            "source_candidate_apparatus_id": "miner-app-0003",
+            "durable_field_record_authority": "not_admitted"
+          }
+        },
+        {
+          "id": "pm-import-project-miner-temp-power-app-0004",
+          "scope_id": null,
+          "data": {
+            "name": "MVS SWGR 01",
+            "status": "ready",
+            "task_id": "pm-import-project-miner-temp-power-task-0002",
+            "project_id": "pm-import-project-miner-temp-power",
+            "source_row": 9,
+            "assigned_to": null,
+            "imported_at": "2026-05-18T02:28:38.284035+00:00",
+            "source_trace": {
+              "trace_id": "pm-import-source-trace-ab1f6a4763b8c4ebfc0b9371",
+              "source_ref": {
+                "line_id": "miner-line-004",
+                "source_row": 9,
+                "drawing_ref": "E01-00",
+                "scope_sheet": null,
+                "source_sheet": "Updated",
+                "source_format": "flat_quote",
+                "source_line_id": "miner-line-004",
+                "estimator_workbook_path": "C:\\Users\\jjswe\\Desktop\\Project Miner PM Planning\\Estimator R3 - Project Miner Temp Power Testing.xlsm"
+              },
+              "entity_type": "apparatus",
+              "candidate_task_id": "candidate-task-0004",
+              "candidate_apparatus_id": "miner-app-0010",
+              "source_trace_authority": "admitted_by_pm_lane_278"
+            },
+            "planned_hours": 2.5,
+            "source_line_id": "miner-line-004",
+            "import_identity": {
+              "candidate_id": "pm-import-candidate-miner-temp-power",
+              "idempotency_key": "pm-import:a2acafe8e9928899e8645736",
+              "candidate_version": "pm_import_candidate_read_only_v1",
+              "approval_record_id": "pm-import-approval-03a1aea39afde71b44516f44",
+              "source_stat_fingerprint": "e111fdbe934bf9de07ed24c1",
+              "candidate_shape_fingerprint": "ddc49565eb586af913ad48b2"
+            },
+            "import_authority": "admitted_by_pm_lane_278",
+            "finance_authority": "not_admitted",
+            "source_designation": "MVS SWGR",
+            "source_drawing_ref": "E01-00",
+            "source_scope_sheet": null,
+            "status_ready_at_utc": "2026-05-18T02:51:37.9231947Z",
+            "schedule_status_scope": "apparatus_readiness_only_no_date_write",
+            "source_apparatus_type": "Switch MV - Fused Disconnect",
+            "schedule_date_authority": "not_admitted",
+            "source_candidate_task_id": "candidate-task-0004",
+            "assignment_proof_required": "pm_lane_279_assignments_184_unique_apparatus",
+            "schedule_status_authority": "admitted_by_pm_lane_280_standing_blocker_authority",
+            "schedule_status_record_id": "pm-lane-280-status-readiness-temp-power-2026-05-18",
+            "source_import_fingerprint": "e111fdbe934bf9de07ed24c1",
+            "source_import_candidate_id": "pm-import-candidate-miner-temp-power",
+            "customer_reporting_authority": "not_admitted",
+            "workpackage_status_authority": "not_admitted_no_existing_start_route",
+            "field_authorization_record_id": "pm-lane-279-field-auth-temp-power-2026-05-18",
+            "production_tracking_authority": "not_admitted",
+            "source_candidate_apparatus_id": "miner-app-0010",
+            "durable_field_record_authority": "not_admitted"
+          }
+        },
+        {
+          "id": "pm-import-project-miner-temp-power-app-0005",
+          "scope_id": null,
+          "data": {
+            "name": "MVS SWGR 02",
+            "status": "ready",
+            "task_id": "pm-import-project-miner-temp-power-task-0002",
+            "project_id": "pm-import-project-miner-temp-power",
+            "source_row": 9,
+            "assigned_to": null,
+            "imported_at": "2026-05-18T02:28:38.284035+00:00",
+            "source_trace": {
+              "trace_id": "pm-import-source-trace-c309f6e6c4bd83a4a654c2a0",
+              "source_ref": {
+                "line_id": "miner-line-004",
+                "source_row": 9,
+                "drawing_ref": "E01-00",
+                "scope_sheet": null,
+                "source_sheet": "Updated",
+                "source_format": "flat_quote",
+                "source_line_id": "miner-line-004",
+                "estimator_workbook_path": "C:\\Users\\jjswe\\Desktop\\Project Miner PM Planning\\Estimator R3 - Project Miner Temp Power Testing.xlsm"
+              },
+              "entity_type": "apparatus",
+              "candidate_task_id": "candidate-task-0004",
+              "candidate_apparatus_id": "miner-app-0011",
+              "source_trace_authority": "admitted_by_pm_lane_278"
+            },
+            "planned_hours": 2.5,
+            "source_line_id": "miner-line-004",
+            "import_identity": {
+              "candidate_id": "pm-import-candidate-miner-temp-power",
+              "idempotency_key": "pm-import:a2acafe8e9928899e8645736",
+              "candidate_version": "pm_import_candidate_read_only_v1",
+              "approval_record_id": "pm-import-approval-03a1aea39afde71b44516f44",
+              "source_stat_fingerprint": "e111fdbe934bf9de07ed24c1",
+              "candidate_shape_fingerprint": "ddc49565eb586af913ad48b2"
+            },
+            "import_authority": "admitted_by_pm_lane_278",
+            "finance_authority": "not_admitted",
+            "source_designation": "MVS SWGR",
+            "source_drawing_ref": "E01-00",
+            "source_scope_sheet": null,
+            "status_ready_at_utc": "2026-05-18T02:51:37.9231947Z",
+            "schedule_status_scope": "apparatus_readiness_only_no_date_write",
+            "source_apparatus_type": "Switch MV - Fused Disconnect",
+            "schedule_date_authority": "not_admitted",
+            "source_candidate_task_id": "candidate-task-0004",
+            "assignment_proof_required": "pm_lane_279_assignments_184_unique_apparatus",
+            "schedule_status_authority": "admitted_by_pm_lane_280_standing_blocker_authority",
+            "schedule_status_record_id": "pm-lane-280-status-readiness-temp-power-2026-05-18",
+            "source_import_fingerprint": "e111fdbe934bf9de07ed24c1",
+            "source_import_candidate_id": "pm-import-candidate-miner-temp-power",
+            "customer_reporting_authority": "not_admitted",
+            "workpackage_status_authority": "not_admitted_no_existing_start_route",
+            "field_authorization_record_id": "pm-lane-279-field-auth-temp-power-2026-05-18",
+            "production_tracking_authority": "not_admitted",
+            "source_candidate_apparatus_id": "miner-app-0011",
+            "durable_field_record_authority": "not_admitted"
+          }
+        }
+      ],
+      "summary": {
+        "row_count_sampled": 5,
+        "key_types": {
+          "name": [
+            "str"
+          ],
+          "status": [
+            "str"
+          ],
+          "task_id": [
+            "str"
+          ],
+          "project_id": [
+            "str"
+          ],
+          "source_row": [
+            "int"
+          ],
+          "assigned_to": [
+            "NoneType"
+          ],
+          "imported_at": [
+            "str"
+          ],
+          "source_trace": [
+            "dict"
+          ],
+          "source_trace.trace_id": [
+            "str"
+          ],
+          "source_trace.source_ref": [
+            "dict"
+          ],
+          "source_trace.source_ref.line_id": [
+            "str"
+          ],
+          "source_trace.source_ref.source_row": [
+            "int"
+          ],
+          "source_trace.source_ref.drawing_ref": [
+            "str"
+          ],
+          "source_trace.source_ref.scope_sheet": [
+            "NoneType"
+          ],
+          "source_trace.source_ref.source_sheet": [
+            "str"
+          ],
+          "source_trace.source_ref.source_format": [
+            "str"
+          ],
+          "source_trace.source_ref.source_line_id": [
+            "str"
+          ],
+          "source_trace.source_ref.estimator_workbook_path": [
+            "str"
+          ],
+          "source_trace.entity_type": [
+            "str"
+          ],
+          "source_trace.candidate_task_id": [
+            "str"
+          ],
+          "source_trace.candidate_apparatus_id": [
+            "str"
+          ],
+          "source_trace.source_trace_authority": [
+            "str"
+          ],
+          "planned_hours": [
+            "float"
+          ],
+          "source_line_id": [
+            "str"
+          ],
+          "import_identity": [
+            "dict"
+          ],
+          "import_identity.candidate_id": [
+            "str"
+          ],
+          "import_identity.idempotency_key": [
+            "str"
+          ],
+          "import_identity.candidate_version": [
+            "str"
+          ],
+          "import_identity.approval_record_id": [
+            "str"
+          ],
+          "import_identity.source_stat_fingerprint": [
+            "str"
+          ],
+          "import_identity.candidate_shape_fingerprint": [
+            "str"
+          ],
+          "import_authority": [
+            "str"
+          ],
+          "finance_authority": [
+            "str"
+          ],
+          "source_designation": [
+            "str"
+          ],
+          "source_drawing_ref": [
+            "str"
+          ],
+          "source_scope_sheet": [
+            "NoneType"
+          ],
+          "status_ready_at_utc": [
+            "str"
+          ],
+          "schedule_status_scope": [
+            "str"
+          ],
+          "source_apparatus_type": [
+            "str"
+          ],
+          "schedule_date_authority": [
+            "str"
+          ],
+          "source_candidate_task_id": [
+            "str"
+          ],
+          "assignment_proof_required": [
+            "str"
+          ],
+          "schedule_status_authority": [
+            "str"
+          ],
+          "schedule_status_record_id": [
+            "str"
+          ],
+          "source_import_fingerprint": [
+            "str"
+          ],
+          "source_import_candidate_id": [
+            "str"
+          ],
+          "customer_reporting_authority": [
+            "str"
+          ],
+          "workpackage_status_authority": [
+            "str"
+          ],
+          "field_authorization_record_id": [
+            "str"
+          ],
+          "production_tracking_authority": [
+            "str"
+          ],
+          "source_candidate_apparatus_id": [
+            "str"
+          ],
+          "durable_field_record_authority": [
+            "str"
+          ]
+        },
+        "example": {
+          "name": "Pole Disconnect 01",
+          "status": "ready",
+          "task_id": "pm-import-project-miner-temp-power-task-0001",
+          "project_id": "pm-import-project-miner-temp-power"
+        }
+      },
+      "key_probe": {
+        "has_source_row": 184,
+        "has_source_line_id": 184,
+        "has_source_designation": 184,
+        "has_source_apparatus_type": 184,
+        "has_source_drawing_ref": 184,
+        "has_source_candidate_apparatus_id": 184,
+        "has_task_id": 184,
+        "has_name": 184
+      }
+    },
+    "extractor_rerun": {
+      "source_format": "flat_quote",
+      "source_sheet": "Updated",
+      "scope_sheets": [],
+      "scope_count": 0,
+      "line_item_count": 15,
+      "apparatus_candidate_count": 184,
+      "metadata": {
+        "estimator_workbook_path": "C:\\Users\\jjswe\\Desktop\\Project Miner PM Planning\\Estimator R3 - Project Miner Temp Power Testing.xlsm",
+        "estimator_workbook_found": true,
+        "sld_pdf_path": "C:\\Users\\jjswe\\Desktop\\Project Miner PM Planning\\Miner Temp SLD-AP-BCARRASCO.pdf",
+        "sld_pdf_found": true,
+        "estimator_source_format": "flat_quote",
+        "estimator_scope_count": 0
+      }
+    },
+    "lane_029_extractor_compatibility": {
+      "command": [
+        "C:\\APEX Platform\\apex-power-ops-platform\\.venv\\Scripts\\pytest.exe",
+        "apps/mutation-seam/tests/test_project_seed_sources.py",
+        "apps/mutation-seam/tests/test_workbook_seed_reads.py",
+        "apps/mutation-seam/tests/test_pm_lane_seed.py"
+      ],
+      "returncode": 0,
+      "stdout": "..........                                                               [100%]\n============================== warnings summary ===============================\napps\\mutation-seam\\app\\envelope\\request.py:9\n  C:\\APEX Platform\\apex-power-ops-platform\\apps\\mutation-seam\\app\\envelope\\request.py:9: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/\n    class MutationRequest(BaseModel):\n\napps\\mutation-seam\\app\\envelope\\response.py:43\n  C:\\APEX Platform\\apex-power-ops-platform\\apps\\mutation-seam\\app\\envelope\\response.py:43: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/\n    class MutationResponse(BaseModel):\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n10 passed, 2 warnings in 0.29s\n",
+      "stderr": "",
+      "passed": true
+    },
+    "match_key_candidate_enumeration": [
+      {
+        "field_name": "source_candidate_apparatus_id",
+        "jsonb_field": "data.source_candidate_apparatus_id",
+        "extractor_field": "expanded_apparatus_candidates[].candidate_id",
+        "uniqueness_assumption": "Exact candidate identifier survives unchanged from extractor to imported apparatus row.",
+        "collision_stats": {
+          "existing_non_null": 184,
+          "extractor_non_null": 184,
+          "existing_duplicate_entries": 0,
+          "extractor_duplicate_entries": 0,
+          "expected_collision_rate": {
+            "existing": 0.0,
+            "extractor": 0.0
+          }
+        }
+      },
+      {
+        "field_name": "source_line_id_plus_name",
+        "jsonb_field": "data.source_line_id + data.name",
+        "extractor_field": "expanded_apparatus_candidates[].line_id + display_name",
+        "uniqueness_assumption": "Line identity plus expanded display name stays unique within one workbook version.",
+        "collision_stats": {
+          "existing_non_null": 184,
+          "extractor_non_null": 184,
+          "existing_duplicate_entries": 0,
+          "extractor_duplicate_entries": 0,
+          "expected_collision_rate": {
+            "existing": 0.0,
+            "extractor": 0.0
+          }
+        }
+      },
+      {
+        "field_name": "source_row_designation_type_name",
+        "jsonb_field": "data.source_row + data.source_designation + data.source_apparatus_type + data.name",
+        "extractor_field": "expanded_apparatus_candidates[].source_row + designation + apparatus_type + display_name",
+        "uniqueness_assumption": "Workbook row, designation, apparatus type, and expanded display name together disambiguate repeated quantities.",
+        "collision_stats": {
+          "existing_non_null": 184,
+          "extractor_non_null": 184,
+          "existing_duplicate_entries": 0,
+          "extractor_duplicate_entries": 0,
+          "expected_collision_rate": {
+            "existing": 0.0,
+            "extractor": 0.0
+          }
+        }
+      },
+      {
+        "field_name": "source_row_designation_type_only",
+        "jsonb_field": "data.source_row + data.source_designation + data.source_apparatus_type",
+        "extractor_field": "expanded_apparatus_candidates[].source_row + designation + apparatus_type",
+        "uniqueness_assumption": "Weak fallback only; repeated quantity rows collide because the same source row expands to multiple apparatus rows.",
+        "collision_stats": {
+          "existing_non_null": 184,
+          "extractor_non_null": 184,
+          "existing_duplicate_entries": 169,
+          "extractor_duplicate_entries": 169,
+          "expected_collision_rate": {
+            "existing": 0.9185,
+            "extractor": 0.9185
+          }
+        }
+      }
+    ],
+    "identifier_scheme_verification": {
+      "project_ids": [
+        "pm-import-project-miner-temp-power"
+      ],
+      "task_id_samples": [
+        "pm-import-project-miner-temp-power-task-0001",
+        "pm-import-project-miner-temp-power-task-0002",
+        "pm-import-project-miner-temp-power-task-0003",
+        "pm-import-project-miner-temp-power-task-0004",
+        "pm-import-project-miner-temp-power-task-0005"
+      ],
+      "apparatus_id_samples": [
+        "pm-import-project-miner-temp-power-app-0001",
+        "pm-import-project-miner-temp-power-app-0002",
+        "pm-import-project-miner-temp-power-app-0003",
+        "pm-import-project-miner-temp-power-app-0004",
+        "pm-import-project-miner-temp-power-app-0005"
+      ],
+      "workpackage_id_samples": [
+        "pm-import-project-miner-temp-power-wp-001",
+        "pm-import-project-miner-temp-power-wp-002",
+        "pm-import-project-miner-temp-power-wp-003",
+        "pm-import-project-miner-temp-power-wp-004",
+        "pm-import-project-miner-temp-power-wp-005"
+      ],
+      "documented_patterns": {
+        "project": "^pm-import-project-[a-z0-9-]+$",
+        "task": "^pm-import-project-[a-z0-9-]+-task-\\d{4}$",
+        "apparatus": "^pm-import-project-[a-z0-9-]+-app-\\d{4}$",
+        "workpackage": "^pm-import-project-[a-z0-9-]+-wp-\\d{3}$",
+        "proposed_scope": "^pm\\-import\\-project\\-miner\\-temp\\-power-scope-\\d{3}$"
+      },
+      "proposed_scope_examples": [
+        "pm-import-project-miner-temp-power-scope-001",
+        "pm-import-project-miner-temp-power-scope-002",
+        "pm-import-project-miner-temp-power-scope-003"
+      ]
+    },
+    "existing_workpackage_sampling": {
+      "sample_rows": [
+        {
+          "id": "pm-import-project-miner-temp-power-wp-001",
+          "data": {
+            "name": "7.5",
+            "status": "not_started",
+            "project_id": "pm-import-project-miner-temp-power",
+            "task_count": 2,
+            "imported_at": "2026-05-18T02:28:38.284035+00:00",
+            "planned_hours": 37.5,
+            "source_section": 7.5,
+            "apparatus_count": 15,
+            "import_identity": {
+              "candidate_id": "pm-import-candidate-miner-temp-power",
+              "idempotency_key": "pm-import:a2acafe8e9928899e8645736",
+              "candidate_version": "pm_import_candidate_read_only_v1",
+              "approval_record_id": "pm-import-approval-03a1aea39afde71b44516f44",
+              "source_stat_fingerprint": "e111fdbe934bf9de07ed24c1",
+              "candidate_shape_fingerprint": "ddc49565eb586af913ad48b2"
+            },
+            "import_authority": "admitted_by_pm_lane_278",
+            "percent_complete": 0,
+            "source_scope_sheet": null,
+            "source_drawing_refs": [
+              "E01-00"
+            ],
+            "source_import_candidate_id": "pm-import-candidate-miner-temp-power",
+            "source_candidate_workpackage_id": "candidate-wp-001"
+          }
+        },
+        {
+          "id": "pm-import-project-miner-temp-power-wp-002",
+          "data": {
+            "name": "7.3",
+            "status": "not_started",
+            "project_id": "pm-import-project-miner-temp-power",
+            "task_count": 2,
+            "imported_at": "2026-05-18T02:28:38.284035+00:00",
+            "planned_hours": 49.5,
+            "source_section": 7.3,
+            "apparatus_count": 11,
+            "import_identity": {
+              "candidate_id": "pm-import-candidate-miner-temp-power",
+              "idempotency_key": "pm-import:a2acafe8e9928899e8645736",
+              "candidate_version": "pm_import_candidate_read_only_v1",
+              "approval_record_id": "pm-import-approval-03a1aea39afde71b44516f44",
+              "source_stat_fingerprint": "e111fdbe934bf9de07ed24c1",
+              "candidate_shape_fingerprint": "ddc49565eb586af913ad48b2"
+            },
+            "import_authority": "admitted_by_pm_lane_278",
+            "percent_complete": 0,
+            "source_scope_sheet": null,
+            "source_drawing_refs": [
+              "E01-00"
+            ],
+            "source_import_candidate_id": "pm-import-candidate-miner-temp-power",
+            "source_candidate_workpackage_id": "candidate-wp-002"
+          }
+        },
+        {
+          "id": "pm-import-project-miner-temp-power-wp-003",
+          "data": {
+            "name": "7.1",
+            "status": "not_started",
+            "project_id": "pm-import-project-miner-temp-power",
+            "task_count": 3,
+            "imported_at": "2026-05-18T02:28:38.284035+00:00",
+            "planned_hours": 57.75,
+            "source_section": 7.1,
+            "apparatus_count": 32,
+            "import_identity": {
+              "candidate_id": "pm-import-candidate-miner-temp-power",
+              "idempotency_key": "pm-import:a2acafe8e9928899e8645736",
+              "candidate_version": "pm_import_candidate_read_only_v1",
+              "approval_record_id": "pm-import-approval-03a1aea39afde71b44516f44",
+              "source_stat_fingerprint": "e111fdbe934bf9de07ed24c1",
+              "candidate_shape_fingerprint": "ddc49565eb586af913ad48b2"
+            },
+            "import_authority": "admitted_by_pm_lane_278",
+            "percent_complete": 0,
+            "source_scope_sheet": null,
+            "source_drawing_refs": [
+              "E01-00",
+              "E01-01 & 02",
+              "E01-02"
+            ],
+            "source_import_candidate_id": "pm-import-candidate-miner-temp-power",
+            "source_candidate_workpackage_id": "candidate-wp-003"
+          }
+        },
+        {
+          "id": "pm-import-project-miner-temp-power-wp-004",
+          "data": {
+            "name": "7.2",
+            "status": "not_started",
+            "project_id": "pm-import-project-miner-temp-power",
+            "task_count": 2,
+            "imported_at": "2026-05-18T02:28:38.284035+00:00",
+            "planned_hours": 92.0,
+            "source_section": 7.2,
+            "apparatus_count": 24,
+            "import_identity": {
+              "candidate_id": "pm-import-candidate-miner-temp-power",
+              "idempotency_key": "pm-import:a2acafe8e9928899e8645736",
+              "candidate_version": "pm_import_candidate_read_only_v1",
+              "approval_record_id": "pm-import-approval-03a1aea39afde71b44516f44",
+              "source_stat_fingerprint": "e111fdbe934bf9de07ed24c1",
+              "candidate_shape_fingerprint": "ddc49565eb586af913ad48b2"
+            },
+            "import_authority": "admitted_by_pm_lane_278",
+            "percent_complete": 0,
+            "source_scope_sheet": null,
+            "source_drawing_refs": [
+              "E01-00",
+              "E01-02"
+            ],
+            "source_import_candidate_id": "pm-import-candidate-miner-temp-power",
+            "source_candidate_workpackage_id": "candidate-wp-004"
+          }
+        },
+        {
+          "id": "pm-import-project-miner-temp-power-wp-005",
+          "data": {
+            "name": "7.6",
+            "status": "not_started",
+            "project_id": "pm-import-project-miner-temp-power",
+            "task_count": 3,
+            "imported_at": "2026-05-18T02:28:38.284035+00:00",
+            "planned_hours": 166.0,
+            "source_section": 7.6,
+            "apparatus_count": 71,
+            "import_identity": {
+              "candidate_id": "pm-import-candidate-miner-temp-power",
+              "idempotency_key": "pm-import:a2acafe8e9928899e8645736",
+              "candidate_version": "pm_import_candidate_read_only_v1",
+              "approval_record_id": "pm-import-approval-03a1aea39afde71b44516f44",
+              "source_stat_fingerprint": "e111fdbe934bf9de07ed24c1",
+              "candidate_shape_fingerprint": "ddc49565eb586af913ad48b2"
+            },
+            "import_authority": "admitted_by_pm_lane_278",
+            "percent_complete": 0,
+            "source_scope_sheet": null,
+            "source_drawing_refs": [
+              "E01-01 & 02",
+              "E01-02"
+            ],
+            "source_import_candidate_id": "pm-import-candidate-miner-temp-power",
+            "source_candidate_workpackage_id": "candidate-wp-005"
+          }
+        }
+      ],
+      "summary": {
+        "row_count_sampled": 5,
+        "key_types": {
+          "name": [
+            "str"
+          ],
+          "status": [
+            "str"
+          ],
+          "project_id": [
+            "str"
+          ],
+          "task_count": [
+            "int"
+          ],
+          "imported_at": [
+            "str"
+          ],
+          "planned_hours": [
+            "float"
+          ],
+          "source_section": [
+            "float"
+          ],
+          "apparatus_count": [
+            "int"
+          ],
+          "import_identity": [
+            "dict"
+          ],
+          "import_identity.candidate_id": [
+            "str"
+          ],
+          "import_identity.idempotency_key": [
+            "str"
+          ],
+          "import_identity.candidate_version": [
+            "str"
+          ],
+          "import_identity.approval_record_id": [
+            "str"
+          ],
+          "import_identity.source_stat_fingerprint": [
+            "str"
+          ],
+          "import_identity.candidate_shape_fingerprint": [
+            "str"
+          ],
+          "import_authority": [
+            "str"
+          ],
+          "percent_complete": [
+            "int"
+          ],
+          "source_scope_sheet": [
+            "NoneType"
+          ],
+          "source_drawing_refs": [
+            "list"
+          ],
+          "source_import_candidate_id": [
+            "str"
+          ],
+          "source_candidate_workpackage_id": [
+            "str"
+          ]
+        },
+        "example": {
+          "name": "7.5",
+          "status": "not_started",
+          "project_id": "pm-import-project-miner-temp-power",
+          "task_count": 2
+        }
+      }
+    },
+    "no_write_verification": {
+      "statement_count": 8,
+      "non_select_statements": [],
+      "passed": true
+    }
+  }
+}

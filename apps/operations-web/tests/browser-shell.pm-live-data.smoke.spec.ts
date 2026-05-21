@@ -1,5 +1,12 @@
 import { expect, test, type APIRequestContext } from '@playwright/test'
 
+const pmLiveDataSmokeEnabled = process.env.OPERATIONS_WEB_ENABLE_PM_LIVE_DATA_SMOKE === '1'
+
+test.skip(
+  !pmLiveDataSmokeEnabled,
+  'PM live-data smoke is a dedicated seam-backed proof; use smoke:pm-live-data to run it explicitly.',
+)
+
 type ScheduleProject = {
   project_id?: string
   project_name?: string

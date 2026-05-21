@@ -267,6 +267,16 @@ def _query_row_counts(dsn: str) -> dict[str, int]:
         conn.autocommit = False
         with conn.cursor() as cur:
             cur.execute("SET default_transaction_read_only = on;")
+            missing_tables: list[str] = []
+            for table in TABLES:
+                cur.execute("SELECT to_regclass(%s)", (table,))
+                if cur.fetchone()[0] is None:
+                    missing_tables.append(table)
+            if missing_tables:
+                raise SmokeFailure(
+                    "Production DB row-count verification is blocked because the required tables are missing: "
+                    + ", ".join(missing_tables)
+                )
             for table in TABLES:
                 cur.execute(f"SELECT count(*) FROM {table}")
                 counts[table] = int(cur.fetchone()[0])
@@ -359,12 +369,21 @@ def _run() -> tuple[int, dict[str, Any]]:
         )
 
     before_counts: dict[str, Any]
+    row_count_failure_reason: str | None = None
     if args.db_dsn:
-        before_counts = {
-            "available": True,
-            "counts": _query_row_counts(args.db_dsn),
-            "dsn": "<redacted>",
-        }
+        try:
+            before_counts = {
+                "available": True,
+                "counts": _query_row_counts(args.db_dsn),
+                "dsn": "<redacted>",
+            }
+        except SmokeFailure as exc:
+            row_count_failure_reason = str(exc)
+            before_counts = {
+                "available": False,
+                "counts": None,
+                "reason": row_count_failure_reason,
+            }
     else:
         before_counts = {
             "available": False,
@@ -672,24 +691,57 @@ def _run() -> tuple[int, dict[str, Any]]:
                 blocked=True,
             )
 
-    if args.db_dsn:
+    if args.db_dsn and row_count_failure_reason is None:
+        try:
+            after_counts = {
+                "available": True,
+                "counts": _query_row_counts(args.db_dsn),
+                "dsn": "<redacted>",
+            }
+        except SmokeFailure as exc:
+            row_count_failure_reason = str(exc)
+            after_counts = {
+                "available": False,
+                "counts": None,
+                "reason": row_count_failure_reason,
+            }
+
+        if row_count_failure_reason is None:
+            deltas = {
+                table: after_counts["counts"][table] - before_counts["counts"][table]
+                for table in TABLES
+            }
+            deltas_zero = all(delta == 0 for delta in deltas.values())
+            _append_result(
+                scenario_results,
+                name="db_row_count_delta_verification",
+                expected="All four financial-table row-count deltas remain zero before and after smoke.",
+                actual=f"Observed deltas: {deltas}",
+                passed=deltas_zero,
+                details={"before": before_counts["counts"], "after": after_counts["counts"], "deltas": deltas},
+            )
+        else:
+            _append_result(
+                scenario_results,
+                name="db_row_count_delta_verification",
+                expected="All four financial-table row-count deltas remain zero before and after smoke.",
+                actual=row_count_failure_reason,
+                passed=False,
+                blocked=True,
+            )
+    elif args.db_dsn and row_count_failure_reason is not None:
         after_counts = {
-            "available": True,
-            "counts": _query_row_counts(args.db_dsn),
-            "dsn": "<redacted>",
+            "available": False,
+            "counts": None,
+            "reason": row_count_failure_reason,
         }
-        deltas = {
-            table: after_counts["counts"][table] - before_counts["counts"][table]
-            for table in TABLES
-        }
-        deltas_zero = all(delta == 0 for delta in deltas.values())
         _append_result(
             scenario_results,
             name="db_row_count_delta_verification",
             expected="All four financial-table row-count deltas remain zero before and after smoke.",
-            actual=f"Observed deltas: {deltas}",
-            passed=deltas_zero,
-            details={"before": before_counts["counts"], "after": after_counts["counts"], "deltas": deltas},
+            actual=row_count_failure_reason,
+            passed=False,
+            blocked=True,
         )
     else:
         after_counts = {

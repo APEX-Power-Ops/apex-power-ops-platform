@@ -1,0 +1,222 @@
+{
+  "timestamp_utc": "2026-05-21T11:00:38.340736+00:00",
+  "operator": "GitHub Copilot",
+  "admission_phrase_validation": {
+    "required_fields_present": {
+      "passed": true,
+      "expected_fields": [
+        "INTERMEDIATE_JSON_PATH",
+        "OPERATOR",
+        "RECONCILIATION_REPORT_HASH",
+        "TIMESTAMP"
+      ],
+      "observed_fields": [
+        "INTERMEDIATE_JSON_PATH",
+        "OPERATOR",
+        "RECONCILIATION_REPORT_HASH",
+        "TIMESTAMP"
+      ]
+    },
+    "reconciliation_report_hash_matches_runtime": {
+      "passed": true,
+      "expected": "1b87397b17ffecd27679073d9645012d5663533ad344e15110c91258993d6130",
+      "observed": "1b87397b17ffecd27679073d9645012d5663533ad344e15110c91258993d6130"
+    },
+    "intermediate_json_linkage_matches_report_hash": {
+      "passed": true,
+      "expected_path": "apps/mutation-seam/scripts/lane_501_onboarding_design/sample/miner_temp_power_testing_intermediate_20260521T103643Z.json",
+      "observed_path": "apps/mutation-seam/scripts/lane_501_onboarding_design/sample/miner_temp_power_testing_intermediate_20260521T103643Z.json",
+      "expected_report_hash": "1b87397b17ffecd27679073d9645012d5663533ad344e15110c91258993d6130",
+      "embedded_report_hash": "1b87397b17ffecd27679073d9645012d5663533ad344e15110c91258993d6130",
+      "note": "Lane 501 froze the report hash inside the intermediate JSON but did not freeze a separate intermediate-file hash inside the reconciliation report."
+    },
+    "operator_present": {
+      "passed": true,
+      "observed": "GitHub Copilot"
+    },
+    "timestamp_is_iso8601_utc": {
+      "passed": true,
+      "observed": "2026-05-21T00:00:00Z",
+      "error": null
+    }
+  },
+  "reconciliation_report_hash": "1b87397b17ffecd27679073d9645012d5663533ad344e15110c91258993d6130",
+  "intermediate_json_path": "C:\\APEX Platform\\apex-power-ops-platform\\apps\\mutation-seam\\scripts\\lane_501_onboarding_design\\sample\\miner_temp_power_testing_intermediate_20260521T103643Z.json",
+  "intermediate_json_hash": "3ec18cff513a79090bd6a65b4f04ebb23d0fa983d59f784b67f35b2da7dce6a6",
+  "connection_role": {
+    "current_user": "postgres",
+    "session_user": "postgres",
+    "pm_can_login": false,
+    "operations_can_login": false
+  },
+  "pre_write_state": {
+    "seam": {
+      "projects": 1,
+      "tasks": 15,
+      "scopes": 0,
+      "apparatus": 184,
+      "apparatus_scope_id_null": 184,
+      "apparatus_scope_id_non_null": 0
+    },
+    "financial": {
+      "seam.project_contract_snapshots": 0,
+      "seam.scope_labor_details": 0,
+      "seam.apparatus_financials": 0,
+      "seam.apparatus_revenue_events": 0
+    },
+    "public": {
+      "public.projects": 1,
+      "public.scopes": 4
+    }
+  },
+  "inserted_scope_ids": [],
+  "updated_apparatus_ids": [],
+  "skipped_unmatched_existing": {
+    "count": 0,
+    "sample_ids": []
+  },
+  "skipped_unmatched_extractor": {
+    "count": 0,
+    "sample_ids": []
+  },
+  "aborted_conflicting": {
+    "count": 0
+  },
+  "post_write_state": {
+    "seam": {
+      "projects": 1,
+      "tasks": 15,
+      "scopes": 0,
+      "apparatus": 184,
+      "apparatus_scope_id_null": 184,
+      "apparatus_scope_id_non_null": 0
+    },
+    "financial": {
+      "seam.project_contract_snapshots": 0,
+      "seam.scope_labor_details": 0,
+      "seam.apparatus_financials": 0,
+      "seam.apparatus_revenue_events": 0
+    },
+    "public": {
+      "public.projects": 1,
+      "public.scopes": 4
+    }
+  },
+  "post_write_verification": {
+    "scopes_count_matches_expected": false,
+    "apparatus_scope_id_count_matches_expected": false,
+    "apparatus_scope_id_null_count_zero": false,
+    "fk_integrity": {
+      "passed": false,
+      "joined_count": 0,
+      "non_null_scope_id_count": 0
+    },
+    "financial_tables_unchanged": true,
+    "seam_tasks_unchanged": true,
+    "public_unchanged": true
+  },
+  "transaction_status": "aborted_pre_transaction",
+  "verdict": {
+    "status": "failed",
+    "rationale": "Phase 0 blocked before transaction open: scope_insertability_check"
+  },
+  "phase_0_findings": {
+    "lane_501_artifact_drift_check": {
+      "passed": true,
+      "expected": "1b87397b17ffecd27679073d9645012d5663533ad344e15110c91258993d6130",
+      "observed": "1b87397b17ffecd27679073d9645012d5663533ad344e15110c91258993d6130"
+    },
+    "intermediate_json_validation": {
+      "passed": true,
+      "schema_path": "C:\\APEX Platform\\apex-power-ops-platform\\apps\\mutation-seam\\scripts\\lane_501_onboarding_design\\contract\\intermediate_ingest_contract_v1.schema.json"
+    },
+    "reconciliation_report_category_counts": {
+      "passed": true,
+      "observed": {
+        "matched": 184,
+        "unmatched_existing": 0,
+        "unmatched_extractor": 0,
+        "conflicting": 0
+      }
+    },
+    "scope_identifier_pattern_check": {
+      "passed": true,
+      "scope_ids": [
+        "pm-import-project-miner-temp-power-scope-001",
+        "pm-import-project-miner-temp-power-scope-002",
+        "pm-import-project-miner-temp-power-scope-003",
+        "pm-import-project-miner-temp-power-scope-004",
+        "pm-import-project-miner-temp-power-scope-005",
+        "pm-import-project-miner-temp-power-scope-006",
+        "pm-import-project-miner-temp-power-scope-007"
+      ],
+      "expected_scope_ids": [
+        "pm-import-project-miner-temp-power-scope-001",
+        "pm-import-project-miner-temp-power-scope-002",
+        "pm-import-project-miner-temp-power-scope-003",
+        "pm-import-project-miner-temp-power-scope-004",
+        "pm-import-project-miner-temp-power-scope-005",
+        "pm-import-project-miner-temp-power-scope-006",
+        "pm-import-project-miner-temp-power-scope-007"
+      ]
+    },
+    "scope_insertability_check": {
+      "passed": false,
+      "reason": "Frozen Lane 501 contract does not provide non-null quoted_amount values required by the insert-only seam.scopes table.",
+      "error": "Frozen Lane 501 scope contract is not insertable into seam.scopes: quoted_amount is null for scope ids pm-import-project-miner-temp-power-scope-001, pm-import-project-miner-temp-power-scope-002, pm-import-project-miner-temp-power-scope-003, pm-import-project-miner-temp-power-scope-004, pm-import-project-miner-temp-power-scope-005, pm-import-project-miner-temp-power-scope-006, pm-import-project-miner-temp-power-scope-007"
+    },
+    "admission_phrase_discovery": {
+      "passed": true,
+      "matching_environment_variables": [],
+      "matching_repo_files": []
+    },
+    "migration_016_state": {
+      "passed": true,
+      "details": {
+        "scope_id_text_nullable": true,
+        "has_scope_fk": true,
+        "has_scope_idx": true,
+        "pm_projects_siu": true,
+        "pm_tasks_siu": true,
+        "pm_apparatus_siu": true,
+        "operations_projects_siu": true,
+        "operations_tasks_siu": true,
+        "operations_apparatus_siu": true,
+        "anon_projects_siu": false,
+        "anon_tasks_siu": false,
+        "anon_apparatus_siu": false,
+        "authenticated_projects_siu": false,
+        "authenticated_tasks_siu": false,
+        "authenticated_apparatus_siu": false
+      }
+    },
+    "production_row_count_drift_check": {
+      "passed": {
+        "projects": true,
+        "tasks": true,
+        "apparatus": true,
+        "scopes": true
+      },
+      "observed": {
+        "projects": 1,
+        "tasks": 15,
+        "apparatus": 184,
+        "scopes": 0,
+        "apparatus_scope_id_non_null": 0
+      }
+    },
+    "seam_apparatus_scope_id_baseline": {
+      "passed": true,
+      "non_null_count": 0
+    },
+    "connection_role_for_writes": {
+      "passed": true,
+      "details": {
+        "current_user": "postgres",
+        "session_user": "postgres",
+        "pm_can_login": false,
+        "operations_can_login": false
+      }
+    }
+  }
+}

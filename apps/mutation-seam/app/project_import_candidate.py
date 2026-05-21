@@ -55,6 +55,49 @@ def _json_safe(value: Any) -> Any:
     return str(value)
 
 
+def _status_count_summary(status_counts: Any) -> str:
+    summary_parts: List[str] = []
+    for status, count in (_json_safe(status_counts) or {}).items():
+        try:
+            numeric_count = int(count)
+        except Exception:
+            continue
+        if numeric_count > 0:
+            summary_parts.append(f"{status}={numeric_count}")
+    return ", ".join(summary_parts)
+
+
+def _formula_error_pattern_detail(
+    code: str,
+    source: Dict[str, Any],
+    trackers: Dict[str, Any],
+) -> Optional[str]:
+    detail = _clean_text(source.get("formula_error_pattern_detail"))
+    if code != "PROJECT_DATA_ENTRY_FORMULA_ERRORS":
+        return detail
+
+    reference_tracker = trackers.get("reference_tracker", {})
+    if int(reference_tracker.get("formula_error_row_count") or 0) > 0:
+        return detail
+
+    task_entry_count = int(reference_tracker.get("task_entry_count") or 0)
+    all_tasks_count = int(reference_tracker.get("all_tasks_count") or 0)
+    if task_entry_count <= 0 or all_tasks_count <= 0:
+        return detail
+
+    workbook_name = Path(_clean_text(reference_tracker.get("path")) or "reference tracker workbook").name
+    status_summary = _status_count_summary(reference_tracker.get("status_counts"))
+    comparison_detail = (
+        f"Reference workbook example: {workbook_name} currently loads without formula errors across "
+        f"{all_tasks_count} All_Tasks row(s) while retaining {task_entry_count} Task_Entry row(s)"
+    )
+    if status_summary:
+        comparison_detail = f"{comparison_detail} ({status_summary})"
+    comparison_detail = f"{comparison_detail}."
+
+    return f"{detail} {comparison_detail}" if detail else comparison_detail
+
+
 def _source_file_state(source_id: str, label: str, path_value: Any) -> Dict[str, Any]:
     path_text = _clean_text(path_value)
     state: Dict[str, Any] = {
@@ -260,7 +303,7 @@ def _build_warnings(
         cell_count = int(source.get("formula_error_cell_count") or 0)
         if row_count:
             formula_error_pattern = source.get("formula_error_pattern")
-            formula_error_pattern_detail = source.get("formula_error_pattern_detail")
+            formula_error_pattern_detail = _formula_error_pattern_detail(code, source, trackers)
             formula_error_vba_lineage_modules = _json_safe(source.get("formula_error_vba_lineage_modules", []))
             if formula_error_pattern == "all_tasks_formula_cache_break":
                 message = (

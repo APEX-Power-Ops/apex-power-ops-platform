@@ -1,0 +1,82 @@
+{
+  "packet_id": "2026-05-20-pm-lane-413-revision-a",
+  "title": "PM Lane 413 Revision A - Project Miner Temp Power Lane 412 Live Admission Roadmap Amendment No-Live Packet",
+  "status": "complete",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_LANE_412_LIVE_ADMISSION_ROADMAP_AMENDMENT_NO_LIVE_REVISION_A",
+  "selected_outcome": "LANE_412_LIVE_ADMISSION_ROADMAP_AMENDMENT_READY_NO_LIVE_REVISION_A",
+  "layers_on_top_of": [
+    "2026-05-20-pm-lane-413",
+    "2026-05-20-pm-lane-411-revision-c"
+  ],
+  "phase_0_discovery": {
+    "original_roadmap": "Historical Lane 413 remains the canonical nine-lane roadmap from PM Lane 414 through PM Lane 422.",
+    "render_topology_precedent": "APEX Ops Visual System Map still documents Render as the governed mutation-seam and API boundary.",
+    "auth_precedent": "apps/mutation-seam/app/auth/jwt.py still provides the bearer-token actor dependency pattern.",
+    "route_role_precedent": "The route-owned role precedent now truthfully resolves through apps/mutation-seam/app/routers/project_import_approvals.py plus apps/mutation-seam/app/project_import_approval_persistence.py rather than a flat app/project_import_approvals.py path.",
+    "route_pair_gap": "No project-import-contract-support write or readback route exists in apps/mutation-seam/app/** today.",
+    "lane_411_revision_c": "Lane 411 Revision C records PM+Operations as the corrected role contract for the financial-table family."
+  },
+  "inherits_unchanged": [
+    "purpose and selected outcome of the historical Lane 413 planning packet",
+    "failure-mode contract and sha256 idempotency-key construction",
+    "multi-scope fixture requirement with PM Lane 416 as the latest mandatory gate",
+    "Option B single-feature-unit deployment decision",
+    "cross-lane gate inheritance for later Lane 280 admission",
+    "full boundaries list"
+  ],
+  "amended_roadmap": [
+    "PM Lane 414 - Local Mocked Dry-Run Packet",
+    "PM Lane 415 - Dry-Run Envelope Export Packet",
+    "PM Lane 416 - Dry-Run Readiness Checkpoint Packet",
+    "PM Lane 417 - Dry-Run Readiness Export Packet",
+    "PM Lane 418 - Review Bundle Export Packet",
+    "PM Lane 419 - Route Pair Implementation Packet",
+    "PM Lane 420 - Hosted Dual-Route Smoke Readiness Packet",
+    "PM Lane 421 - Live-Gate Preflight Packet",
+    "PM Lane 422 - First-Write Mutation Seam Packet",
+    "PM Lane 423 - Production Proof Packet"
+  ],
+  "new_lane_419": {
+    "summary": "Implement the real Lane 412 route pair in the seam app before any hosted smoke or live-write packet is discussable.",
+    "evidence_required": [
+      "Both routes implemented in apps/mutation-seam/app/** and registered with the seam app router",
+      "Bearer-token auth wired through the jwt.py actor dependency pattern",
+      "Route-owned PM+Operations role enforcement following the project_import_approvals router plus persistence precedent",
+      "Business logic mirrors Lane 414 mock digest, envelope validation, and Lane 415 response-shape contract",
+      "dry_run and force_failure are env-gated behind LANE_412_DRY_RUN_ENABLED or a truthfully documented equivalent",
+      "When the flag is absent, dry_run and force_failure are ignored",
+      "Focused unit tests run against Lane 415 frozen envelope fixtures",
+      "Unit tests prove no-write response-shape parity with Lane 414 and Lane 415 artifacts"
+    ],
+    "gate_to_next_step": "The route pair exists in the deployable seam surface, is route-enforced with the PM+Operations contract, supports env-gated dry-run behavior, and passes fixture-backed parity tests without live writes.",
+    "blocks_promotion": [
+      "Routes not present in apps/mutation-seam/app/**",
+      "Routes not registered with the seam app router",
+      "Auth not wired through the jwt.py actor dependency pattern",
+      "Role enforcement deferred only to DB-layer grants",
+      "Role contract still uses Finance instead of Operations",
+      "dry_run and force_failure are not env-gated",
+      "Response envelopes diverge from Lane 415 frozen exports",
+      "Routes attempt live Supabase writes before PM Lane 422"
+    ]
+  },
+  "renumbered_lane_mapping": {
+    "old_419": "new_420",
+    "old_420": "new_421",
+    "old_421": "new_422",
+    "old_422": "new_423"
+  },
+  "cross_lane_gate_note": "Generic Lane 280 and Lane 412 references remain unchanged because they describe the bidirectional admission gate, not the implementation-lane numbering.",
+  "validation_steps": [
+    "Phase 0 confirms historical Lane 413 remains the canonical nine-lane roadmap.",
+    "Phase 0 confirms the Render, jwt.py, and router-plus-persistence precedents remain accurate.",
+    "Phase 0 confirms Lane 411 Revision C records PM+Operations.",
+    "Roadmap enumeration expands to ten lanes, PM Lane 414 through PM Lane 423.",
+    "New PM Lane 419 has explicit evidence, gate, and eight blocks-promotion items.",
+    "Renumbered PM Lanes 420 through 423 preserve original criteria with lane-number updates only.",
+    "First-live-write references shift from PM Lane 421 to PM Lane 422.",
+    "Generic Lane 280 and Lane 412 references remain unchanged.",
+    "Multi-scope gate at PM Lane 416 remains unchanged.",
+    "Failure-mode contract and Option B sequencing remain unchanged."
+  ]
+}

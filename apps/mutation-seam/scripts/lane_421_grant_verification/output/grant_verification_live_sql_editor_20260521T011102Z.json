@@ -1,0 +1,195 @@
+{
+  "artifact_type": "pm_lane_421_grant_verification",
+  "lane": 421,
+  "checked_at": "2026-05-21T01:11:02Z",
+  "verification_mode": "metadata_only_no_write",
+  "verification_surface": "supabase_sql_editor_manual_observation",
+  "dsn_source": "supabase_sql_editor_authenticated_session",
+  "table_metadata_basis": "Table existence was re-proved in the Lane 420 production schema-floor closeout, and migration 013 plus the prior live DDL application recorded row-level security enabled on all four financial tables. Lane 421 did not re-query force_row_level_security.",
+  "financial_tables": {
+    "seam.project_contract_snapshots": {
+      "exists": true,
+      "row_level_security_enabled": true,
+      "force_row_level_security": null
+    },
+    "seam.scope_labor_details": {
+      "exists": true,
+      "row_level_security_enabled": true,
+      "force_row_level_security": null
+    },
+    "seam.apparatus_financials": {
+      "exists": true,
+      "row_level_security_enabled": true,
+      "force_row_level_security": null
+    },
+    "seam.apparatus_revenue_events": {
+      "exists": true,
+      "row_level_security_enabled": true,
+      "force_row_level_security": null
+    }
+  },
+  "role_observations": [
+    {
+      "role_name": "pm",
+      "exists": true,
+      "schema_usage": true,
+      "table_privileges": {
+        "seam.project_contract_snapshots": {
+          "select": true,
+          "insert": true,
+          "update": false,
+          "delete": false
+        },
+        "seam.scope_labor_details": {
+          "select": true,
+          "insert": true,
+          "update": false,
+          "delete": false
+        },
+        "seam.apparatus_financials": {
+          "select": true,
+          "insert": true,
+          "update": false,
+          "delete": false
+        },
+        "seam.apparatus_revenue_events": {
+          "select": true,
+          "insert": true,
+          "update": false,
+          "delete": false
+        }
+      }
+    },
+    {
+      "role_name": "operations",
+      "exists": true,
+      "schema_usage": true,
+      "table_privileges": {
+        "seam.project_contract_snapshots": {
+          "select": true,
+          "insert": true,
+          "update": false,
+          "delete": false
+        },
+        "seam.scope_labor_details": {
+          "select": true,
+          "insert": true,
+          "update": false,
+          "delete": false
+        },
+        "seam.apparatus_financials": {
+          "select": true,
+          "insert": true,
+          "update": false,
+          "delete": false
+        },
+        "seam.apparatus_revenue_events": {
+          "select": true,
+          "insert": true,
+          "update": false,
+          "delete": false
+        }
+      }
+    },
+    {
+      "role_name": "field_tech",
+      "exists": false,
+      "observed_contract": "missing_role"
+    },
+    {
+      "role_name": "field_lead",
+      "exists": false,
+      "observed_contract": "missing_role"
+    },
+    {
+      "role_name": "task_lead",
+      "exists": false,
+      "observed_contract": "missing_role"
+    },
+    {
+      "role_name": "anon",
+      "exists": true,
+      "schema_usage": null,
+      "table_privileges": {
+        "seam.project_contract_snapshots": {
+          "select": false,
+          "insert": false,
+          "update": null,
+          "delete": null
+        },
+        "seam.scope_labor_details": {
+          "select": false,
+          "insert": false,
+          "update": null,
+          "delete": null
+        },
+        "seam.apparatus_financials": {
+          "select": false,
+          "insert": false,
+          "update": null,
+          "delete": null
+        },
+        "seam.apparatus_revenue_events": {
+          "select": false,
+          "insert": false,
+          "update": null,
+          "delete": null
+        }
+      }
+    },
+    {
+      "role_name": "authenticated",
+      "exists": true,
+      "schema_usage": null,
+      "table_privileges": {
+        "seam.project_contract_snapshots": {
+          "select": false,
+          "insert": false,
+          "update": null,
+          "delete": null
+        },
+        "seam.scope_labor_details": {
+          "select": false,
+          "insert": false,
+          "update": null,
+          "delete": null
+        },
+        "seam.apparatus_financials": {
+          "select": false,
+          "insert": false,
+          "update": null,
+          "delete": null
+        },
+        "seam.apparatus_revenue_events": {
+          "select": false,
+          "insert": false,
+          "update": null,
+          "delete": null
+        }
+      }
+    }
+  ],
+  "expected_contract": {
+    "granted_roles": [
+      "pm",
+      "operations"
+    ],
+    "denied_roles": [
+      "field_tech",
+      "field_lead",
+      "task_lead",
+      "anon",
+      "authenticated"
+    ],
+    "table_privileges_required": [
+      "SELECT",
+      "INSERT"
+    ],
+    "table_privileges_forbidden": [
+      "UPDATE",
+      "DELETE"
+    ]
+  },
+  "overall_status": "passed",
+  "failures": []
+}

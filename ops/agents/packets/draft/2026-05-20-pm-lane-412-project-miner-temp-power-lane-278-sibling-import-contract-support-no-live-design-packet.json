@@ -1,0 +1,156 @@
+{
+  "packet_id": "2026-05-20-pm-lane-412",
+  "title": "PM Lane 412 - Project Miner Temp Power Lane 278 Sibling Import Contract Support No-Live Design Packet",
+  "status": "complete",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_LANE_278_SIBLING_IMPORT_CONTRACT_SUPPORT_NO_LIVE_DESIGN",
+  "selected_outcome": "IMPORT_CONTRACT_SUPPORT_DESIGN_READY_NO_LIVE",
+  "authority_basis": "Lane 352 return-label classification as OUTPUT_WRITE_REQUEST_SEPARATE_ADMISSION_REQUIRED plus standing PM coordination authority for no-live design authoring only.",
+  "dependencies": [
+    "2026-05-18-pm-lane-278",
+    "2026-05-20-pm-lane-411"
+  ],
+  "source_floor": {
+    "core_import_lane": "PM Lane 278 - Project Miner Temp Power Approved Import Mutation Admission",
+    "core_import_status": "imported",
+    "project_id": "pm-import-project-miner-temp-power",
+    "candidate_id": "pm-import-candidate-miner-temp-power",
+    "counts": {
+      "projects": 1,
+      "workpackages": 7,
+      "tasks": 15,
+      "apparatus": 184
+    },
+    "meaning": "PM Lane 278 remains historically closed as the bounded core import lane. Additional contract-support persistence is treated as a separate sibling admission question."
+  },
+  "source_classification": {
+    "source_lane": "PM Lane 352 - Project Miner Temp Power Remaining Finance And Source Rule Question Card No-Live Packet",
+    "return_label": "OUTPUT_WRITE_REQUEST_SEPARATE_ADMISSION_REQUIRED",
+    "reason": "The extractor would create additional persistent support rows and apparatus quote fields beyond the already-admitted Lane 278 import surface."
+  },
+  "branching_decision": {
+    "selected_path": "new_sibling_import_contract_support_packet",
+    "selected_follow_on_lane": "PM Lane 412",
+    "rejected_paths": [
+      "retroactive_lane_278_widening",
+      "lane_280_status_mutation_coupling"
+    ],
+    "reason": "Scope-pool allocation, project snapshoting, and apparatus quoted revenue are import-side prerequisites and should not be introduced by the later Complete-status mutation branch."
+  },
+  "future_route": {
+    "method": "POST",
+    "route": "/api/v1/mutations/project-import-contract-support",
+    "entity_type": "pm_import_contract_support",
+    "action_type": "persist_import_contract_support",
+    "same_payload_replay_required": true,
+    "mismatched_replay_rejected": true
+  },
+  "preconditions": [
+    "PM actor",
+    "online source",
+    "mutation class C",
+    "PM Lane 278 import-status readback reports classification=imported",
+    "current_candidate_match=true",
+    "counts_match=true",
+    "project_id=pm-import-project-miner-temp-power",
+    "contract-support no-go checks pass"
+  ],
+  "allowed_future_writes": [
+    "one seam.project_contract_snapshots row with snapshot_kind=original",
+    "the required seam.scope_labor_details rows for the four estimator pools after scope allocation",
+    "seam.apparatus.quoted_hours",
+    "seam.apparatus.quoted_revenue",
+    "seam.apparatus.contract_snapshot_id",
+    "one seam.audit_log event",
+    "one seam.idempotency_keys entry"
+  ],
+  "not_allowed": [
+    "No seam.apparatus_revenue_events write.",
+    "No apparatus status mutation.",
+    "No billing, payroll, invoice, accounting, or customer billing delivery.",
+    "No source workbook writeback or workbook macros.",
+    "No Render, Vercel, Olares, auth, ingress, DNS, or secret changes.",
+    "No autonomous AI business-state mutation."
+  ],
+  "extractor_contract": {
+    "required_extracts": [
+      "Onsite Labor Total (adjusted)",
+      "Offsite Labor Total (adjusted)",
+      "Travel Total",
+      "Outside Services Total",
+      "Per-apparatus Hrs/Line",
+      "Total Sheet $$$ Adjusted",
+      "Contract sign date when extractable"
+    ],
+    "mapping": {
+      "Onsite Labor Total (adjusted)": "scope_labor_details labor_category=Onsite Labor",
+      "Offsite Labor Total (adjusted)": "scope_labor_details labor_category=Offsite Labor",
+      "Travel Total": "scope_labor_details labor_category=Travel",
+      "Outside Services Total": "scope_labor_details labor_category=Outside Services",
+      "Per-apparatus Hrs/Line": "apparatus.quoted_hours",
+      "Total Sheet $$$ Adjusted": "project_contract_snapshots.contract_value"
+    },
+    "derived_values": {
+      "total_quoted_hours_formula": "SUM(apparatus.quoted_hours)",
+      "recognition_rate_per_hour_formula": "contract_value / total_quoted_hours",
+      "apparatus_quoted_revenue_formula": "apparatus.quoted_hours * recognition_rate_per_hour"
+    }
+  },
+  "multi_scope_rule": {
+    "allocation_formula": "scope_pool_amount = project_pool_amount * (scope_hours / project_hours)",
+    "named_design_assumption": true,
+    "fixture_requirement": "Include an explicit multi-scope fixture so single-scope Miner data cannot mask normalization defects."
+  },
+  "required_no_go_checks": [
+    "contract_value > 0",
+    "total_quoted_hours > 0",
+    "all apparatus quoted_hours >= 0",
+    "sum of scope-level pool amounts equals project snapshot contract_value",
+    "sum of apparatus quoted_revenue reconciles to project snapshot contract_value within rounding tolerance",
+    "multi-scope fixture proves allocation beyond the single-scope Miner case"
+  ],
+  "readback_contract": {
+    "method": "GET",
+    "route": "/api/v1/reads/project-import-contract-support-status",
+    "classifications": [
+      "missing",
+      "ready",
+      "stale_candidate",
+      "counts_mismatch",
+      "unavailable"
+    ],
+    "required_fields": [
+      "project_id",
+      "candidate_id",
+      "classification",
+      "current_candidate_match",
+      "counts_match",
+      "contract_snapshot_count",
+      "scope_labor_detail_count",
+      "apparatus_quote_coverage_count",
+      "apparatus_missing_quote_count",
+      "snapshot_kind",
+      "source_fingerprint",
+      "scope_allocation_rule",
+      "contract_value_reconciles",
+      "total_quoted_hours_reconciles",
+      "apparatus_quoted_revenue_reconciles",
+      "revenue_recognition_authority",
+      "billing_export_authority",
+      "invoice_authority",
+      "accounting_authority",
+      "external_finance_sync_authority"
+    ],
+    "downstream_gate": "Later Lane 280 or Lane 411 live implementation must require classification=ready before any status-triggered revenue behavior is allowed."
+  },
+  "validation_steps": [
+    "Packet JSON parse",
+    "Decision-label search across touched Lane 412 files",
+    "Selected-outcome search across touched Lane 412 files",
+    "Branching-decision search for retroactive Lane 278 rejection and Lane 280 decoupling",
+    "Future route and readback route search",
+    "Multi-scope allocation-rule search",
+    "Multi-scope fixture requirement search",
+    "No revenue-event and no status-mutation boundary search",
+    "git diff --check on touched Lane 412 files"
+  ]
+}

@@ -1,0 +1,19 @@
+PM Lane 414 local trace - no Supabase touch proof
+generated_at=2026-05-20T15:45:56Z
+entry_point=run_lane_414_local_mock.py
+mutation_route=/api/v1/mutations/project-import-contract-support
+readback_route=/api/v1/reads/project-import-contract-support-status
+computed_business_payload_digest=1859896bcbac1220d21266b19603a12eae710a6e9fbf553c132b7028e417026d
+supabase_imports_present=False
+scanned_python_files=run_lane_414_local_mock.py
+network_calls_observed=false
+external_state_used=false
+state_storage=in_memory_python_dict
+state_persists_across_process_exit=false
+first_write_status=accepted
+replay_status=idempotent_hit
+conflict_status=conflict
+rollback_statuses=scope_detail_conflict:transaction_rolled_back_scope_detail_conflict, apparatus_financial_validation_failed:transaction_rolled_back_apparatus_financial_validation_failed, audit_write_unavailable:transaction_rolled_back_audit_write_unavailable, idempotency_write_unavailable:transaction_rolled_back_idempotency_write_unavailable
+readback_statuses=missing:missing, ready:ready, stale_candidate:stale_candidate, counts_mismatch:counts_mismatch, unavailable:unavailable
+verification_method=source-token scan plus direct inspection of this self-contained local mock; no HTTP client library or Supabase SDK import path exists in the mock directory.
+phase_0_note=repo mutation envelope convention uses status=accepted|idempotent_hit|conflict|rejected; Lane 413 planned names are preserved here as route-specific classification metadata.

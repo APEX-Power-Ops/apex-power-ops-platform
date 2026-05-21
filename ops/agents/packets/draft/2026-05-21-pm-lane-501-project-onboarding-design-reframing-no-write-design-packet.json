@@ -1,0 +1,57 @@
+{
+  "packet_id": "2026-05-21-pm-lane-501-project-onboarding-design-reframing-no-write-design-packet",
+  "lane": "PM Lane 501",
+  "title": "Project Onboarding Design Reframing No-Write Design Packet",
+  "status": "complete",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_LANE_501_PROJECT_ONBOARDING_DESIGN_REFRAMING_NO_WRITE",
+  "selected_outcome": "LANE_501_PROJECT_ONBOARDING_DESIGN_REFRAMING_COMPLETED_NO_WRITE",
+  "predecessor": "2026-05-21-pm-lane-500-migration-016-structural-supplement-no-live-packet",
+  "phase_0": {
+    "migration_016_clean_state_confirmed": true,
+    "production_row_counts_confirmed": {
+      "projects": 1,
+      "tasks": 15,
+      "apparatus": 184,
+      "scopes": 0
+    },
+    "extractor_source_format": "flat_quote",
+    "extractor_scope_sheets": [],
+    "existing_workpackage_count": 7,
+    "match_key_primary": "source_candidate_apparatus_id",
+    "lane_029_tests_passed": true,
+    "no_write_sql_log_clean": true
+  },
+  "artifacts": {
+    "generator": "apps/mutation-seam/scripts/lane_501_onboarding_design/generate_lane_501_design_artifacts.py",
+    "readme": "apps/mutation-seam/scripts/lane_501_onboarding_design/README.md",
+    "extractor_output": "apps/mutation-seam/scripts/lane_501_onboarding_design/discovery/extractor_output_r3_temp_power_20260521T103643Z.json",
+    "data_samples": "apps/mutation-seam/scripts/lane_501_onboarding_design/discovery/data_jsonb_samples_20260521T103643Z.json",
+    "sql_log": "apps/mutation-seam/scripts/lane_501_onboarding_design/discovery/no_write_sql_log_20260521T103643Z.txt",
+    "contract_schema": "apps/mutation-seam/scripts/lane_501_onboarding_design/contract/intermediate_ingest_contract_v1.schema.json",
+    "strategy": "apps/mutation-seam/scripts/lane_501_onboarding_design/strategy/reconciliation_strategy.md",
+    "sample_intermediate": "apps/mutation-seam/scripts/lane_501_onboarding_design/sample/miner_temp_power_testing_intermediate_20260521T103643Z.json",
+    "sample_reconciliation_json": "apps/mutation-seam/scripts/lane_501_onboarding_design/sample/miner_temp_power_testing_reconciliation_20260521T103643Z.json",
+    "sample_reconciliation_md": "apps/mutation-seam/scripts/lane_501_onboarding_design/sample/miner_temp_power_testing_reconciliation_20260521T103643Z.md",
+    "lane_502_requirements": "docs/operations/APEX-PM-LANE-501-LANE-502-IMPLEMENTATION-REQUIREMENTS-2026-05-21.md",
+    "packet": "docs/operations/APEX-PM-LANE-501-PROJECT-ONBOARDING-DESIGN-REFRAMING-NO-WRITE-DESIGN-PACKET-2026-05-21.md",
+    "handoff": "ops/agents/handoffs/2026-05-21-pm-lane-501-project-onboarding-design-reframing-handoff.md",
+    "closeout_handoff": "ops/agents/handoffs/2026-05-21-pm-lane-501-project-onboarding-design-reframing-closeout-handoff.md"
+  },
+  "validation": {
+    "row_counts_after_phase_0": {
+      "projects": 1,
+      "tasks": 15,
+      "apparatus": 184,
+      "scopes": 0
+    },
+    "lane_029_test_result": "10 passed",
+    "reconciliation_report_content_sha256": "1b87397b17ffecd27679073d9645012d5663533ad344e15110c91258993d6130",
+    "reconciliation_outcome_counts": {
+      "matched": 184,
+      "unmatched_existing": 0,
+      "unmatched_extractor": 0,
+      "conflicting": 0
+    }
+  },
+  "next_truth": "Lane 502 can implement scope inserts plus apparatus.scope_id updates only against the frozen intermediate contract and reconciliation hash produced by Lane 501"
+}

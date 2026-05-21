@@ -1,0 +1,97 @@
+{
+  "packet_id": "2026-05-20-pm-lane-411-revision-a",
+  "title": "PM Lane 411 Revision A - Project Miner Temp Power Apparatus Completion Revenue Recognition No-Live Design Packet",
+  "status": "complete",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_APPARATUS_COMPLETION_REVENUE_RECOGNITION_NO_LIVE_DESIGN_REVISION_A",
+  "selected_outcome": "APPARATUS_COMPLETION_REVENUE_RECOGNITION_DESIGN_READY_NO_LIVE_REVISION_A",
+  "layers_on_top_of": "2026-05-20-pm-lane-411",
+  "governing_firewalls": [
+    "Recognition firewall: apparatus revenue recognition reads frozen-at-import quote data from seam.apparatus_financials only.",
+    "Role-based table separation: Field Tech and Field Lead roles have no SELECT on financial tables.",
+    "Vocabulary firewall: the legacy actual revenue term is not a valid concept in this design."
+  ],
+  "financial_topology": {
+    "seam_apparatus_contains_financial_columns": false,
+    "removed_from_seam_apparatus": [
+      "quoted_hours",
+      "quoted_revenue",
+      "contract_snapshot_id"
+    ],
+    "new_table": "seam.apparatus_financials"
+  },
+  "apparatus_financials": {
+    "fields": [
+      "id",
+      "apparatus_id",
+      "contract_snapshot_id",
+      "quoted_hours",
+      "quoted_revenue",
+      "recognition_rate_per_hour_snapshot",
+      "mutation_authority",
+      "revenue_recognition_authority",
+      "billing_export_authority",
+      "invoice_authority",
+      "accounting_authority",
+      "external_finance_sync_authority",
+      "created_at",
+      "created_by",
+      "audit_event_id",
+      "mutation_id"
+    ],
+    "constraints": [
+      "quoted_hours >= 0",
+      "quoted_revenue >= 0",
+      "recognition_rate_per_hour_snapshot >= 0",
+      "unique (apparatus_id, contract_snapshot_id)",
+      "unique mutation_id",
+      "unique audit_event_id",
+      "ABS(quoted_revenue - (quoted_hours * recognition_rate_per_hour_snapshot)) < 0.01",
+      "trigger enforces recognition_rate_per_hour_snapshot equals referenced project snapshot rate",
+      "insert-only trigger",
+      "RLS enabled"
+    ]
+  },
+  "recognition_model": {
+    "snapshot_rate_formula": "project_contract_snapshot.contract_value / project_contract_snapshot.total_quoted_hours",
+    "apparatus_quote_source": "seam.apparatus_financials",
+    "quoted_revenue_formula": "quoted_hours * recognition_rate_per_hour_snapshot",
+    "recognized_amount_source": "seam.apparatus_financials.quoted_revenue",
+    "recognition_percent_v1": 100.0,
+    "legacyActualRevenueTerm": "removed"
+  },
+  "rls_grants": {
+    "seam.apparatus_financials": "SELECT granted to PM role and Finance role only; INSERT granted to PM role only; no grants to Field Tech, Field Lead, anon, or authenticated.",
+    "seam.project_contract_snapshots": "SELECT granted to PM role and Finance role only; no grants to Field Tech or Field Lead.",
+    "seam.scope_labor_details": "SELECT granted to PM role and Finance role only; no grants to Field Tech or Field Lead.",
+    "seam.apparatus_revenue_events": "SELECT granted to PM role and Finance role only; INSERT granted to PM role only; no grants to Field Tech or Field Lead.",
+    "seam.apparatus": "Field Tech and Field Lead read grants remain because the table no longer contains financial data."
+  },
+  "scope_financials_view": {
+    "scope_quoted_source": "seam.apparatus_financials joined to seam.apparatus by apparatus_id",
+    "multi_scope_denominator": "NULLIF(total_scope_pool_amount, 0)"
+  },
+  "lane_280_extension": {
+    "precondition": "apparatus has an associated seam.apparatus_financials row for the referenced contract_snapshot_id",
+    "expected_quoted_revenue_source": "seam.apparatus_financials.quoted_revenue",
+    "recognized_amount_source": "seam.apparatus_financials.quoted_revenue",
+    "event_id_in_readback": true
+  },
+  "reserved_future_lane": {
+    "topic": "operational hours tracking",
+    "reserved_fields": [
+      "actual_hours",
+      "delay_hours",
+      "delay_categories",
+      "change-order justification context"
+    ],
+    "rule": "Operational tables have no data path into recognition behavior."
+  },
+  "validation_steps": [
+    "Search confirms seam.apparatus carries no quoted_hours, quoted_revenue, or contract_snapshot_id in this revision packet",
+    "Search confirms apparatus_financials includes unique (apparatus_id, contract_snapshot_id) and the internal-consistency CHECK",
+    "Search confirms Field Tech and Field Lead have no grants on financial tables",
+    "Search confirms scope_quoted CTE reads from seam.apparatus_financials",
+    "Search confirms Lane 280 extension references seam.apparatus_financials.quoted_revenue",
+    "Search confirms the legacy underscore revenue token is absent from Lane 411 Revision A and Lane 412 Revision A"
+  ]
+}

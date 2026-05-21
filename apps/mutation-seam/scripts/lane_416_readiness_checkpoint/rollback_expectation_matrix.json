@@ -1,0 +1,62 @@
+[
+  {
+    "case": "scope_detail_conflict",
+    "expected_classification": "transaction_rolled_back_scope_detail_conflict",
+    "expected_database_state": "completely rolled back: no snapshot row, no scope rows, no apparatus financial rows, no audit event, no idempotency cache entry",
+    "expected_http_status": 409,
+    "expected_mutation_status": "rolled_back",
+    "expected_partial_commit": false,
+    "expected_status": "rejected",
+    "lane_414_response_fixture_path": "apps/mutation-seam/scripts/lane_414_local_mock/rollback_scope_detail_conflict.json",
+    "lane_415_response_export_path": "apps/mutation-seam/scripts/lane_415_envelope_export/response_rollback_scope_detail_conflict.json",
+    "trigger_condition": "scope labor detail validation failed inside the transaction"
+  },
+  {
+    "case": "apparatus_financial_validation_failed",
+    "expected_classification": "transaction_rolled_back_apparatus_financial_validation_failed",
+    "expected_database_state": "completely rolled back: no snapshot row, no scope rows, no apparatus financial rows, no audit event, no idempotency cache entry",
+    "expected_http_status": 422,
+    "expected_mutation_status": "rolled_back",
+    "expected_partial_commit": false,
+    "expected_status": "rejected",
+    "lane_414_response_fixture_path": "apps/mutation-seam/scripts/lane_414_local_mock/rollback_apparatus_financial_validation_failed.json",
+    "lane_415_response_export_path": "apps/mutation-seam/scripts/lane_415_envelope_export/response_rollback_apparatus_financial_validation_failed.json",
+    "trigger_condition": "apparatus financial validation or envelope digest validation failed before commit"
+  },
+  {
+    "case": "audit_write_unavailable",
+    "expected_classification": "transaction_rolled_back_audit_write_unavailable",
+    "expected_database_state": "completely rolled back: no snapshot row, no scope rows, no apparatus financial rows, no audit event, no idempotency cache entry",
+    "expected_http_status": 503,
+    "expected_mutation_status": "rolled_back",
+    "expected_partial_commit": false,
+    "expected_status": "rejected",
+    "lane_414_response_fixture_path": "apps/mutation-seam/scripts/lane_414_local_mock/rollback_audit_write_unavailable.json",
+    "lane_415_response_export_path": "apps/mutation-seam/scripts/lane_415_envelope_export/response_rollback_audit_write_unavailable.json",
+    "trigger_condition": "audit append became unavailable during the governed write path"
+  },
+  {
+    "case": "idempotency_write_unavailable",
+    "expected_classification": "transaction_rolled_back_idempotency_write_unavailable",
+    "expected_database_state": "completely rolled back: no snapshot row, no scope rows, no apparatus financial rows, no audit event, no idempotency cache entry",
+    "expected_http_status": 503,
+    "expected_mutation_status": "rolled_back",
+    "expected_partial_commit": false,
+    "expected_status": "rejected",
+    "lane_414_response_fixture_path": "apps/mutation-seam/scripts/lane_414_local_mock/rollback_idempotency_write_unavailable.json",
+    "lane_415_response_export_path": "apps/mutation-seam/scripts/lane_415_envelope_export/response_rollback_idempotency_write_unavailable.json",
+    "trigger_condition": "idempotency cache persistence became unavailable during the governed write path"
+  },
+  {
+    "case": "duplicate_business_payload_conflict",
+    "expected_classification": "duplicate_business_payload_conflict",
+    "expected_database_state": "existing committed state preserved: no additional snapshot row, no additional scope rows, no additional apparatus financial rows, no new audit event, no new idempotency cache entry for the conflicting mutation",
+    "expected_http_status": 409,
+    "expected_mutation_status": "rejected",
+    "expected_partial_commit": false,
+    "expected_status": "conflict",
+    "lane_414_response_fixture_path": "apps/mutation-seam/scripts/lane_414_local_mock/conflict_duplicate_business_payload.json",
+    "lane_415_response_export_path": "apps/mutation-seam/scripts/lane_415_envelope_export/response_conflict_duplicate_business_payload.json",
+    "trigger_condition": "same business payload replayed with a different mutation_id after an earlier committed write"
+  }
+]

@@ -1,0 +1,43 @@
+{
+  "packet_id": "2026-05-20-pm-lane-412-revision-b",
+  "title": "PM Lane 412 Revision B - Project Miner Temp Power Lane 278 Sibling Import Contract Support No-Live Design Packet",
+  "status": "complete",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_LANE_278_SIBLING_IMPORT_CONTRACT_SUPPORT_NO_LIVE_DESIGN_REVISION_B",
+  "selected_outcome": "IMPORT_CONTRACT_SUPPORT_DESIGN_READY_NO_LIVE_REVISION_B",
+  "layers_on_top_of": [
+    "2026-05-20-pm-lane-412",
+    "2026-05-20-pm-lane-412-revision-a"
+  ],
+  "scope": "Explicit downstream-gate clause on the Lane 412 readback contract only",
+  "inherits_unchanged": [
+    "recognition firewall",
+    "role-based table separation",
+    "vocabulary firewall",
+    "apparatus_financials topology",
+    "insert-only write discipline",
+    "extractor mapping",
+    "readback classifications",
+    "readback coverage semantics",
+    "structural eliminations"
+  ],
+  "readback_contract": {
+    "route": "/api/v1/reads/project-import-contract-support-status",
+    "classifications": [
+      "missing",
+      "ready",
+      "stale_candidate",
+      "counts_mismatch",
+      "unavailable"
+    ],
+    "downstream_gate": "Any later Lane 280 status-mutation extension live admission is undiscussable until this readback returns classification = ready for the project in current production state.",
+    "downstream_gate_type": "one-time live-admission gate, not a per-mutation runtime check",
+    "paired_lane": "2026-05-20-pm-lane-411-revision-b"
+  },
+  "validation_steps": [
+    "Search confirms the readback contract includes the explicit downstream-gate clause",
+    "Search confirms the clause is framed as a live-admission gate, not a per-mutation runtime check",
+    "Search confirms the Revision A readback classifications remain unchanged",
+    "Search confirms the revision pairs with Lane 411 Revision B's explicit admission-time gate",
+    "Search confirms the legacy underscore revenue token is absent from Revision B surfaces"
+  ]
+}

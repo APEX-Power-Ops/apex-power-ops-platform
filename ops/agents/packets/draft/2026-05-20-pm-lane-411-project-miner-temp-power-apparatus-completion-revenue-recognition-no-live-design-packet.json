@@ -1,0 +1,285 @@
+{
+  "packet_id": "2026-05-20-pm-lane-411",
+  "title": "PM Lane 411 - Project Miner Temp Power Apparatus Completion Revenue Recognition No-Live Design Packet",
+  "status": "complete",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_APPARATUS_COMPLETION_REVENUE_RECOGNITION_NO_LIVE_DESIGN_NO_OUTPUT_WRITE",
+  "selected_outcome": "APPARATUS_COMPLETION_REVENUE_RECOGNITION_DESIGN_READY_NO_LIVE",
+  "authority_basis": "Lane 352 return-label classification as OUTPUT_WRITE_REQUEST_SEPARATE_ADMISSION_REQUIRED plus standing PM coordination authority for no-live design authoring only.",
+  "source_classification": {
+    "source_lane": "PM Lane 352 - Project Miner Temp Power Remaining Finance And Source Rule Question Card No-Live Packet",
+    "return_label": "OUTPUT_WRITE_REQUEST_SEPARATE_ADMISSION_REQUIRED",
+    "reason": "The request describes future revenue-recognition writes and therefore requires a separate packet, but this lane stops at design only."
+  },
+  "project_context": {
+    "candidate_id": "pm-import-candidate-miner-temp-power",
+    "project_id": "pm-import-project-miner-temp-power",
+    "recognition_trigger": "apparatus status disposition to Complete",
+    "downstream_finance_authority": "not_admitted",
+    "customer_billing_delivery_authority": "not_admitted",
+    "source_writeback_authority": "not_admitted"
+  },
+  "recognition_model": {
+    "recognition_rate_per_hour_formula": "project_contract_snapshot.contract_value / project_contract_snapshot.total_quoted_hours",
+    "contract_value_formula": "SUM(scope_labor_details.quoted_amount)",
+    "total_quoted_hours_formula": "SUM(apparatus.quoted_hours)",
+    "apparatus_quoted_revenue_formula": "apparatus.quoted_hours * snapshot.recognition_rate_per_hour",
+    "completion_rule": "recognized_amount = apparatus.quoted_revenue",
+    "recognition_percent_v1": 100.0,
+    "pool_recognition_derivation": "scope_recognized_total * (scope_pool_amount / total_scope_pool_amount)",
+    "mixed_rate_note": "No schema special-casing is required because estimator bid-time blending is already embedded in the adjusted pool totals."
+  },
+  "snapshot_strategy": {
+    "v1_snapshot_kind": "original",
+    "future_snapshot_pattern": "change_order_N",
+    "design_correction": "Keep snapshot_kind as a field name but store it as constrained text rather than a literal PostgreSQL enum so future change orders do not require enum migrations.",
+    "recommended_snapshot_kind_check": "snapshot_kind = 'original' OR snapshot_kind ~ '^change_order_[1-9][0-9]*$'"
+  },
+  "import_contract_amendment": {
+    "lane_278_change_required": false,
+    "selected_follow_on_lane": "PM Lane 412",
+    "selected_path": "sibling import-contract-support packet after Lane 278 core import",
+    "required_extracts": [
+      "Onsite Labor Total (adjusted)",
+      "Offsite Labor Total (adjusted)",
+      "Travel Total",
+      "Outside Services Total",
+      "Per-apparatus Hrs/Line",
+      "Total Sheet $$$ Adjusted",
+      "Contract sign date when extractable"
+    ],
+    "multi_scope_rule": "Allocate pool totals to scopes by scope_hours / project_hours weight at import time.",
+    "named_design_assumption": "Multi-scope pool allocation is governed by scope_hours / project_hours unless a later lane explicitly supersedes it.",
+    "implementation_fixture_required": "Include an explicit multi-scope fixture so single-scope Miner data cannot mask scope-normalization bugs.",
+    "required_no_go_checks": [
+      "contract_value > 0",
+      "total_quoted_hours > 0",
+      "all apparatus quoted_hours >= 0",
+      "sum of scope pool totals equals snapshot contract_value",
+      "sum of apparatus quoted_revenue reconciles to snapshot contract_value within rounding tolerance"
+    ]
+  },
+  "schema_shapes": {
+    "project_contract_snapshots": {
+      "key_fields": [
+        "id",
+        "project_id",
+        "snapshot_kind",
+        "contract_value",
+        "total_quoted_hours",
+        "recognition_rate_per_hour",
+        "effective_date",
+        "source_fingerprint",
+        "mutation_authority",
+        "revenue_recognition_authority",
+        "billing_export_authority",
+        "invoice_authority",
+        "accounting_authority",
+        "external_finance_sync_authority",
+        "created_at",
+        "created_by",
+        "audit_event_id",
+        "mutation_id"
+      ],
+      "constraints": [
+        "one original snapshot per project",
+        "unique project_id + snapshot_kind",
+        "snapshot_kind check pattern",
+        "contract_value >= 0",
+        "total_quoted_hours > 0",
+        "recognition_rate_per_hour >= 0",
+        "stored recognition_rate_per_hour must reconcile to contract_value / total_quoted_hours within tolerance",
+        "revenue_recognition_authority default stays not_admitted and the inserting route must set any admitted authority explicitly",
+        "insert-only trigger",
+        "RLS on; anon/authenticated revoked"
+      ]
+    },
+    "scope_labor_details": {
+      "key_fields": [
+        "id",
+        "scope_id",
+        "contract_snapshot_id",
+        "labor_category",
+        "quoted_amount",
+        "actual_amount",
+        "quoted_hours",
+        "rate",
+        "created_at",
+        "created_by",
+        "audit_event_id",
+        "mutation_id"
+      ],
+      "labor_categories": [
+        "Onsite Labor",
+        "Offsite Labor",
+        "Travel",
+        "Outside Services"
+      ],
+      "constraints": [
+        "quoted_hours required for Onsite Labor and Offsite Labor",
+        "quoted_hours null for Travel and Outside Services",
+        "quoted_amount >= 0",
+        "actual_amount >= 0"
+      ]
+    },
+    "apparatus_additions": {
+      "fields": [
+        "quoted_hours",
+        "quoted_revenue",
+        "contract_snapshot_id"
+      ],
+      "constraints": [
+        "quoted_hours >= 0",
+        "quoted_revenue >= 0"
+      ],
+      "rollout_rule": "Recognition events are allowed only when apparatus.contract_snapshot_id is non-null; later implementation must either backfill legacy rows explicitly or keep event creation gated."
+    },
+    "apparatus_revenue_events": {
+      "record_kinds": [
+        "apparatus_revenue_zero_baseline",
+        "apparatus_revenue_recognized",
+        "apparatus_revenue_reversed"
+      ],
+      "key_fields": [
+        "id",
+        "record_kind",
+        "apparatus_id",
+        "scope_id",
+        "project_id",
+        "contract_snapshot_id",
+        "recognized_amount",
+        "recognition_percent",
+        "recognition_date",
+        "reverses_event_id",
+        "source_status_from",
+        "source_status_to",
+        "revenue_recognition_authority",
+        "billing_export_authority",
+        "invoice_authority",
+        "accounting_authority",
+        "external_finance_sync_authority",
+        "idempotency_key",
+        "mutation_id",
+        "audit_event_id",
+        "created_at",
+        "created_by"
+      ],
+      "constraints": [
+        "zero baseline forces zero amount, zero percent, and null reverses_event_id",
+        "recognized events require positive amount, recognition_percent=100.00, and null reverses_event_id in v1",
+        "reversed events require negative amount and reverses_event_id",
+        "insert-only trigger",
+        "RLS on; anon/authenticated revoked",
+        "unique idempotency_key",
+        "unique mutation_id",
+        "unique audit_event_id"
+      ],
+      "cross_row_trigger_rules": [
+        "reverses_event_id must reference an original apparatus_revenue_recognized row",
+        "reversal contract_snapshot_id must equal original event contract_snapshot_id",
+        "v1 disallows double reversal of an already-reversed recognized row"
+      ]
+    }
+  },
+  "scope_financials_view": {
+    "derived_columns": [
+      "total_quoted_revenue",
+      "total_recognized_revenue",
+      "revenue_recognition_percent",
+      "total_labor_cost",
+      "gross_margin",
+      "gross_margin_percent",
+      "onsite_labor_recognized_revenue",
+      "offsite_labor_recognized_revenue",
+      "travel_recognized_revenue",
+      "outside_services_recognized_revenue"
+    ],
+    "derivation_rule": "Net apparatus_revenue_events excluding zero-baseline rows, then multiply scope recognition by each scope pool amount divided by total_scope_pool_amount.",
+    "critical_note": "Per-pool recognized revenue must normalize inside the scope, not against the full project contract value, or multi-scope projects will underreport by the scope-share factor.",
+    "ui_note": "Until actuals populate actual_amount, consuming UI should show Cost data pending or suppress gross-margin display.",
+    "implementation_fixture_required": true
+  },
+  "lane_280_status_extension": {
+    "route": "existing apparatus status mutation route extended for PM disposition to Complete",
+    "same_transaction_requirement": true,
+    "required_payload_fields": [
+      "project_id",
+      "apparatus_id",
+      "target_status",
+      "contract_snapshot_id",
+      "recognition_percent",
+      "recognition_date",
+      "expected_quoted_revenue",
+      "expected_current_status",
+      "mutation_id",
+      "audit_event_id"
+    ],
+    "preconditions": [
+      "PM-only actor",
+      "apparatus belongs to admitted imported project and scope",
+      "quoted_hours, quoted_revenue, and contract_snapshot_id already frozen",
+      "snapshot belongs to the same project",
+      "recognition_percent = 100 for v1",
+      "no unreversed recognized event exists unless exact same payload replay"
+    ],
+    "idempotency_derivation_components": [
+      "project_id",
+      "apparatus_id",
+      "target_status",
+      "contract_snapshot_id",
+      "expected_quoted_revenue",
+      "recognition_percent",
+      "recognition_date"
+    ],
+    "replay_status": "idempotent_hit",
+    "readback_fields": [
+      "event_id",
+      "recognized_amount",
+      "recognition_percent",
+      "recognition_date",
+      "current_net_recognized_amount_for_apparatus",
+      "unreversed_recognition_event_count",
+      "billing_export_authority",
+      "invoice_authority",
+      "accounting_authority",
+      "external_finance_sync_authority"
+    ]
+  },
+  "reversal_and_baseline": {
+    "reversal_pattern": "Insert a new apparatus_revenue_reversed row with negative recognized_amount and reverses_event_id pointing at the original event.",
+    "baseline_pattern": "Seed one apparatus_revenue_zero_baseline row per apparatus and snapshot with zero amount and zero percent.",
+    "same_snapshot_rule": "Reversal rows must inherit the original event contract_snapshot_id and may not cross snapshots.",
+    "double_reversal_v1": "not_allowed",
+    "netting_rule": "Sum recognized_amount for all non-baseline rows; reversal rows remain negative."
+  },
+  "blocked_authority": [
+    "Live revenue event write",
+    "Schema migration",
+    "Public schema write",
+    "Billing export",
+    "Payroll export",
+    "Invoice",
+    "Accounting post",
+    "Customer billing delivery",
+    "External finance sync",
+    "Source workbook/PDF writeback",
+    "Workbook macro",
+    "Change-order admission",
+    "Autonomous AI business-state mutation"
+  ],
+  "validation": [
+    "Packet JSON parse",
+    "Decision-label search across touched Lane 411 files",
+    "Selected-outcome search across touched Lane 411 files",
+    "Lane 352 return-label classification search",
+    "Multi-scope scope-level denominator search",
+    "Snapshot-kind design-correction search",
+    "Stored snapshot-rate consistency-check search",
+    "not_admitted authority-default search",
+    "Lane 278 import-amendment search",
+    "Lane 280 extension-contract search",
+    "Reversal, same-snapshot, and zero-baseline search",
+    "git diff --check on touched Lane 411 files"
+  ],
+  "current_status": "complete",
+  "next_truth": "A separate later admission packet is required before schema creation, import amendments, status-mutation extension, baseline seeding, or live apparatus revenue recognition writes can occur."
+}

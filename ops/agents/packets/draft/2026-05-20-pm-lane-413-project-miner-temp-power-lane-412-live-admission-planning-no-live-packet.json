@@ -1,0 +1,79 @@
+{
+  "packet_id": "2026-05-20-pm-lane-413",
+  "title": "PM Lane 413 - Project Miner Temp Power Lane 412 Live Admission Planning No-Live Packet",
+  "status": "complete",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_LANE_412_LIVE_ADMISSION_PLANNING_NO_LIVE",
+  "selected_outcome": "LANE_412_LIVE_ADMISSION_PLAN_READY_NO_LIVE",
+  "layers_on_top_of": [
+    "2026-05-20-pm-lane-412",
+    "2026-05-20-pm-lane-412-revision-a",
+    "2026-05-20-pm-lane-412-revision-b"
+  ],
+  "roadmap": [
+    "PM Lane 414 - Local Mocked Dry-Run Packet",
+    "PM Lane 415 - Dry-Run Envelope Export Packet",
+    "PM Lane 416 - Dry-Run Readiness Checkpoint Packet",
+    "PM Lane 417 - Dry-Run Readiness Export Packet",
+    "PM Lane 418 - Review Bundle Export Packet",
+    "PM Lane 419 - Hosted Dual-Route Smoke Readiness Packet",
+    "PM Lane 420 - Live-Gate Preflight Packet",
+    "PM Lane 421 - First-Write Mutation Seam Packet",
+    "PM Lane 422 - Production Proof Packet"
+  ],
+  "sequencing_decision": {
+    "option": "B",
+    "summary": "Deploy the write route and readback route together as a single feature unit.",
+    "reason": "The readback is the canonical verification surface for the write route, and separate deployments would create non-verifiable intermediate state."
+  },
+  "failure_mode_contract": {
+    "transaction_boundary": "single Postgres transaction wrapping snapshot, scope_labor_details, apparatus_financials, audit event, and idempotency cache writes",
+    "success": "201 import_contract_support_persisted with committed ids and row counts",
+    "idempotent_retry": "200 idempotent_hit returning original committed ids and row counts",
+    "constraint_failure_scope_detail": "409 transaction_rolled_back_scope_detail_conflict with complete rollback",
+    "check_failure_apparatus_financial": "422 transaction_rolled_back_apparatus_financial_validation_failed with complete rollback",
+    "audit_failure": "503 transaction_rolled_back_audit_write_unavailable with complete rollback",
+    "idempotency_failure": "503 transaction_rolled_back_idempotency_write_unavailable with complete rollback",
+    "same_payload_different_mutation_id": "409 duplicate_business_payload_conflict, never a 500",
+    "idempotency_key": "sha256(project_id|candidate_id|source_fingerprint|snapshot_kind|contract_value|total_quoted_hours|ordered scope_labor_details rows|ordered apparatus_financials rows)"
+  },
+  "multi_scope_fixture": {
+    "required_by_packet": "PM Lane 416 - Dry-Run Readiness Checkpoint Packet",
+    "project_contract_value": 10000.0,
+    "scope_hours": {
+      "scope_a": 60.0,
+      "scope_b": 40.0
+    },
+    "expected_scope_pool_amounts": {
+      "scope_a": 6000.0,
+      "scope_b": 4000.0
+    },
+    "verification": [
+      "sum of apparatus_financials.quoted_revenue by scope equals scope_pool_amount for each scope",
+      "project-level sum of apparatus_financials.quoted_revenue equals contract_value",
+      "recognition_rate_per_hour_snapshot reproduces each row's quoted_revenue"
+    ]
+  },
+  "cross_lane_gate_inheritance": {
+    "planning_packet_gate": "none; Lane 412 is the readback surface being implemented",
+    "downstream_lane_280_gate": "later Lane 280 admission requires Lane 412 readback classification = ready",
+    "canonical_source": "2026-05-20-pm-lane-412-revision-b"
+  },
+  "inherits_unchanged": [
+    "insert-only apparatus_financials with per-row internal-consistency CHECK",
+    "project_contract_snapshots rate CHECK",
+    "PM-and-Finance-only RLS grants on financial tables",
+    "five readback classifications",
+    "explicit downstream gate from Lane 412 Revision B",
+    "multi-scope allocation rule with named_design_assumption"
+  ],
+  "validation_steps": [
+    "Search confirms the roadmap enumerates every packet in order",
+    "Search confirms the failure-mode contract states response and rollback state for each named partial failure",
+    "Search confirms the multi-scope fixture is mandatory by PM Lane 416 at the latest",
+    "Search confirms each named packet has gate criteria and blockers",
+    "Search confirms cross-lane gate inheritance is explicit",
+    "Search confirms the sequencing decision is named and justified",
+    "Search confirms the inherited baseline section lists unchanged Revision A + B facts",
+    "Search confirms the legacy underscore revenue token is absent from planning packet surfaces"
+  ]
+}

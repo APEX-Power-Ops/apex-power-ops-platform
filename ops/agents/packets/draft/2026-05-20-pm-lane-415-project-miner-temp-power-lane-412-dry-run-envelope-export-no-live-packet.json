@@ -1,0 +1,58 @@
+{
+  "packet_id": "2026-05-20-pm-lane-415",
+  "title": "PM Lane 415 - Project Miner Temp Power Lane 412 Dry-Run Envelope Export No-Live Packet",
+  "status": "complete",
+  "decision_label": "PROJECT_MINER_TEMP_POWER_LANE_412_DRY_RUN_ENVELOPE_EXPORT_NO_LIVE",
+  "selected_outcome": "IMPORT_CONTRACT_SUPPORT_DRY_RUN_ENVELOPE_EXPORT_READY_NO_LIVE",
+  "predecessors": [
+    "2026-05-20-pm-lane-412",
+    "2026-05-20-pm-lane-412-revision-a",
+    "2026-05-20-pm-lane-412-revision-b",
+    "2026-05-20-pm-lane-413",
+    "2026-05-20-pm-lane-414"
+  ],
+  "inherits_lane_414_without_modification": true,
+  "implementation_path": "apps/mutation-seam/scripts/lane_415_envelope_export/generate_lane_415_envelope_export.py",
+  "input_fixture": "apps/mutation-seam/scripts/lane_415_envelope_export/lane_415_export_inputs.json",
+  "entry_command": "python apps/mutation-seam/scripts/lane_415_envelope_export/generate_lane_415_envelope_export.py --verify-reproducible",
+  "output_directory": "apps/mutation-seam/scripts/lane_415_envelope_export",
+  "request_export": "request_envelope.json",
+  "response_exports": [
+    "response_success_first_write.json",
+    "response_success_idempotent_hit.json",
+    "response_conflict_duplicate_business_payload.json",
+    "response_rollback_scope_detail_conflict.json",
+    "response_rollback_apparatus_financial_validation_failed.json",
+    "response_rollback_audit_write_unavailable.json",
+    "response_rollback_idempotency_write_unavailable.json",
+    "response_readback_missing.json",
+    "response_readback_ready.json",
+    "response_readback_stale_candidate.json",
+    "response_readback_counts_mismatch.json",
+    "response_readback_unavailable.json"
+  ],
+  "supporting_artifacts": [
+    "ordering_proof.json",
+    "idempotency_key_input_summary.txt"
+  ],
+  "canonical_sort_orders": {
+    "scope_labor_details": [
+      "scope_id ascending",
+      "scope_name ascending"
+    ],
+    "apparatus_financials": [
+      "scope_id ascending",
+      "apparatus_id ascending",
+      "apparatus_name ascending"
+    ]
+  },
+  "baseline_digest": "1859896bcbac1220d21266b19603a12eae710a6e9fbf553c132b7028e417026d",
+  "validation_steps": [
+    "Run the Lane 415 entry command with --verify-reproducible and confirm the bundle builds twice without byte drift",
+    "Inspect request_envelope.json and confirm canonical list ordering plus fixed envelope wrapper values",
+    "Inspect ordering_proof.json and confirm reorder stability plus changed-input digest divergence",
+    "Inspect idempotency_key_input_summary.txt and confirm the concatenated input string and digest are present",
+    "Confirm the legacy underscore revenue field token is absent from Lane 415 surfaces",
+    "Run git diff --check on Lane 415 surfaces and PROJECT_STATUS.md"
+  ]
+}

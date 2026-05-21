@@ -1,0 +1,26 @@
+{
+  "http_status": 409,
+  "status": "rejected",
+  "classification": "transaction_rolled_back_scope_detail_conflict",
+  "mutation_status": "rolled_back",
+  "mutation_id": "mut-7f1ad2cc-618f-4d9d-a3f6-05c1e5c2a810",
+  "entity_id": "project-import-contract-support-c0a8015b70a9d18a4d18cafe",
+  "entity_type": "pm_project_import_contract_support",
+  "action_type": "persist_project_import_contract_support",
+  "audit_event_id": null,
+  "project_contract_snapshot_id": null,
+  "scope_labor_detail_row_count": 0,
+  "apparatus_financial_row_count": 0,
+  "idempotent_hit": false,
+  "current_candidate_match": true,
+  "partial_commit": false,
+  "error": {
+    "code": "TRANSITION_CONFLICT",
+    "message": "Scope labor detail validation failed and the transaction was rolled back.",
+    "detail": {
+      "database_state_after_response": "completely_rolled_back",
+      "failed_write_group": "scope_labor_details"
+    }
+  },
+  "new_state": {}
+}

@@ -1,0 +1,162 @@
+[
+  {
+    "evidence": [
+      {
+        "path": "apps/mutation-seam/scripts/lane_415_envelope_export/request_envelope.json",
+        "sha256": "6d20d9bc2304162367e99561ba1492bc31bebd118cde1f1f65a7641cdd44050e"
+      }
+    ],
+    "item": "Request envelope frozen",
+    "ready": true
+  },
+  {
+    "evidence": [
+      {
+        "path": "apps/mutation-seam/scripts/lane_415_envelope_export/response_conflict_duplicate_business_payload.json",
+        "sha256": "6afbbab00811fc6338444da5fb4defb1a9215cd8dd4ce13622cfe55b096b6969"
+      },
+      {
+        "path": "apps/mutation-seam/scripts/lane_415_envelope_export/response_readback_counts_mismatch.json",
+        "sha256": "b2c59d3c0847e8d425fef351b6e9a3344b80b29c970524fc470a23641d5e4e0a"
+      },
+      {
+        "path": "apps/mutation-seam/scripts/lane_415_envelope_export/response_readback_missing.json",
+        "sha256": "19bfdade718367bd2d1b922a3555ccd595aa13691f0d210c26531acdbce02ff0"
+      },
+      {
+        "path": "apps/mutation-seam/scripts/lane_415_envelope_export/response_readback_ready.json",
+        "sha256": "b911b1eaf21c84f0854dd455298c37657da9a37f595bce542391f82c8e788589"
+      },
+      {
+        "path": "apps/mutation-seam/scripts/lane_415_envelope_export/response_readback_stale_candidate.json",
+        "sha256": "56eb77c968d063ca5abf0de7034b9839cce38f830419d5e27117e6723441a04d"
+      },
+      {
+        "path": "apps/mutation-seam/scripts/lane_415_envelope_export/response_readback_unavailable.json",
+        "sha256": "75686d1937981cbbb9e40124d85f8c73044a44885b2e64dee82864b0e582534e"
+      },
+      {
+        "path": "apps/mutation-seam/scripts/lane_415_envelope_export/response_rollback_apparatus_financial_validation_failed.json",
+        "sha256": "d474dac01bb88be7eeb46c2a0bb6b77043a15fc31531733554aa72c116e6bfdd"
+      },
+      {
+        "path": "apps/mutation-seam/scripts/lane_415_envelope_export/response_rollback_audit_write_unavailable.json",
+        "sha256": "87d30433fe145fb8de574d62a0f68f8ab9894d1aa75ef7034b3352d226126ad4"
+      },
+      {
+        "path": "apps/mutation-seam/scripts/lane_415_envelope_export/response_rollback_idempotency_write_unavailable.json",
+        "sha256": "0aa84efc71da64c5f9ff6a25244807a4a916e4ea5afddf00a09f0123a7f5e43f"
+      },
+      {
+        "path": "apps/mutation-seam/scripts/lane_415_envelope_export/response_rollback_scope_detail_conflict.json",
+        "sha256": "86f4b8ddba72ebbd7846b6c7c4e45c01857f869072fd4b41a415a1cb76fd4cee"
+      },
+      {
+        "path": "apps/mutation-seam/scripts/lane_415_envelope_export/response_success_first_write.json",
+        "sha256": "4406c792abb221e45228338907c2abcb7d27018cbf4f938ac1cc21e7733a4d1d"
+      },
+      {
+        "path": "apps/mutation-seam/scripts/lane_415_envelope_export/response_success_idempotent_hit.json",
+        "sha256": "ba27ffa53716d6311283ef10bab7b25ea83b6a3ae568fff70803729bbc77b0b0"
+      }
+    ],
+    "item": "All 12 response envelopes frozen",
+    "ready": true
+  },
+  {
+    "evidence": [
+      {
+        "path": "apps/mutation-seam/scripts/lane_415_envelope_export/ordering_proof.json",
+        "section": "canonical_sort_orders",
+        "sha256": "5a051172d9b889ecd49b67616f35cb5224ede523a21ccdda07cddfaa3283f998"
+      }
+    ],
+    "item": "Canonical sort orders documented",
+    "ready": true
+  },
+  {
+    "evidence": [
+      {
+        "path": "apps/mutation-seam/scripts/lane_415_envelope_export/ordering_proof.json",
+        "section": "reorder_stability_cases",
+        "sha256": "5a051172d9b889ecd49b67616f35cb5224ede523a21ccdda07cddfaa3283f998"
+      }
+    ],
+    "item": "Digest stability proven under reordering",
+    "ready": true
+  },
+  {
+    "evidence": [
+      {
+        "path": "apps/mutation-seam/scripts/lane_415_envelope_export/ordering_proof.json",
+        "section": "business_field_change_cases",
+        "sha256": "5a051172d9b889ecd49b67616f35cb5224ede523a21ccdda07cddfaa3283f998"
+      }
+    ],
+    "item": "Digest sensitivity to business changes proven",
+    "ready": true
+  },
+  {
+    "evidence": [
+      {
+        "path": "apps/mutation-seam/scripts/lane_415_envelope_export/idempotency_key_input_summary.txt",
+        "sha256": "6ec7bc8afa0f7d1e319fb7a6f64efc81134c6a39d9657f4a3dea4193a808e06a"
+      }
+    ],
+    "item": "Idempotency-key input summary frozen",
+    "ready": true
+  },
+  {
+    "evidence": [
+      {
+        "path": "apps/mutation-seam/scripts/lane_415_envelope_export/generate_lane_415_envelope_export.py",
+        "proof": "Run with --verify-reproducible to rebuild the full export bundle twice and fail on byte drift.",
+        "sha256": "76d3e42fc9b3d0877ee0e6726bf986f6a1892d2730affa542dce18e04c4b0ab6"
+      }
+    ],
+    "item": "Exporter reproducibility proven",
+    "ready": true
+  },
+  {
+    "evidence": [
+      {
+        "path": "apps/mutation-seam/scripts/lane_416_readiness_checkpoint/multi_scope_reconciliation.json",
+        "sha256": "2dbe4dbf05f6a031dad40f96ed16382663714502b284941d50f8db5f9b7e9bb0"
+      }
+    ],
+    "item": "Multi-scope fixture reconciliation passes",
+    "ready": true
+  },
+  {
+    "evidence": [
+      {
+        "path": "apps/mutation-seam/scripts/lane_416_readiness_checkpoint/rollback_expectation_matrix.json",
+        "sha256": "bbe621e24e0b8a5aa1b33a7417e0cf7c9e647a04ee5d621e26d2d577acfec180"
+      }
+    ],
+    "item": "Rollback expectation matrix complete for all five failure cases",
+    "ready": true
+  },
+  {
+    "evidence": [
+      {
+        "path": "docs/operations/APEX-PM-LANE-412-REVISION-A-PROJECT-MINER-TEMP-POWER-LANE-278-SIBLING-IMPORT-CONTRACT-SUPPORT-NO-LIVE-DESIGN-PACKET-2026-05-20.md",
+        "section": "Boundaries"
+      },
+      {
+        "path": "docs/operations/APEX-PM-LANE-413-PROJECT-MINER-TEMP-POWER-LANE-412-LIVE-ADMISSION-PLANNING-NO-LIVE-PACKET-2026-05-20.md",
+        "section": "Boundaries"
+      },
+      {
+        "path": "docs/operations/APEX-PM-LANE-414-PROJECT-MINER-TEMP-POWER-LANE-412-LOCAL-MOCKED-DRY-RUN-NO-LIVE-PACKET-2026-05-20.md",
+        "section": "Boundaries"
+      },
+      {
+        "path": "docs/operations/APEX-PM-LANE-415-PROJECT-MINER-TEMP-POWER-LANE-412-DRY-RUN-ENVELOPE-EXPORT-NO-LIVE-PACKET-2026-05-20.md",
+        "section": "Boundaries"
+      }
+    ],
+    "item": "No live writes admitted",
+    "ready": true
+  }
+]

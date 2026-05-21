@@ -188,6 +188,7 @@ function runPlaywright(operationsWebBaseUrl) {
       cwd: APP_ROOT,
       env: {
         ...process.env,
+        OPERATIONS_WEB_ENABLE_PM_LIVE_DATA_SMOKE: '1',
         OPERATIONS_WEB_BROWSER_SMOKE_BASE_URL: operationsWebBaseUrl,
       },
       stdio: 'inherit',

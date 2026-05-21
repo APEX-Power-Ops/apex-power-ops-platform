@@ -1,0 +1,132 @@
+{
+  "packet_id": "2026-05-21-pm-lane-500-migration-016-structural-supplement-no-live-packet",
+  "generated_at": "2026-05-21T04:01:59.740885+00:00",
+  "verification_kind": "pm_lane_500_migration_016_structural_supplement",
+  "overall_status": "passed",
+  "db_identity": {
+    "current_user": "postgres",
+    "current_database": "postgres",
+    "current_schema": "public"
+  },
+  "artifacts": {
+    "migration": "apps/mutation-seam/migrations/016_seam_apparatus_scope_id_and_operational_grants.sql",
+    "verification_runner": "apps/mutation-seam/scripts/lane_500_migration_016/run_migration_016_verification.py",
+    "output_file": "apps/mutation-seam/scripts/lane_500_migration_016/output/migration_016_verification_20260521T040158Z.json"
+  },
+  "checks": {
+    "apparatus_scope_column_ok": true,
+    "apparatus_scope_fk_ok": true,
+    "apparatus_scope_index_ok": true,
+    "seam_totals_match_expected": true,
+    "temp_power_counts_match_expected": true,
+    "apparatus_scope_values_all_null": true,
+    "pm_operations_grants_ok": true,
+    "anon_authenticated_revokes_ok": true
+  },
+  "apparatus_scope_column": [
+    {
+      "column_name": "scope_id",
+      "data_type": "text",
+      "udt_name": "text",
+      "is_nullable": "YES"
+    }
+  ],
+  "apparatus_scope_fk": [
+    {
+      "conname": "apparatus_scope_id_fkey",
+      "source_schema": "seam",
+      "source_table": "apparatus",
+      "source_column": "scope_id",
+      "target_schema": "seam",
+      "target_table": "scopes",
+      "target_column": "id"
+    }
+  ],
+  "apparatus_scope_index": [
+    {
+      "indexname": "apparatus_scope_id_idx",
+      "indexdef": "CREATE INDEX apparatus_scope_id_idx ON seam.apparatus USING btree (scope_id)"
+    }
+  ],
+  "seam_totals": {
+    "projects": 1,
+    "tasks": 15,
+    "apparatus": 184,
+    "scopes": 0
+  },
+  "expected_total_counts": {
+    "projects": 1,
+    "tasks": 15,
+    "apparatus": 184,
+    "scopes": 0
+  },
+  "temp_power_counts": {
+    "projects": 1,
+    "tasks": 15,
+    "apparatus": 184,
+    "scopes": 0
+  },
+  "apparatus_scope_nulls": {
+    "total_rows": 184,
+    "null_scope_id_rows": 184,
+    "non_null_scope_id_rows": 0
+  },
+  "role_checks": {
+    "pm": {
+      "role_exists": true,
+      "can_login": false,
+      "seam_usage": true,
+      "projects_select": true,
+      "projects_insert": true,
+      "projects_update": true,
+      "tasks_select": true,
+      "tasks_insert": true,
+      "tasks_update": true,
+      "apparatus_select": true,
+      "apparatus_insert": true,
+      "apparatus_update": true
+    },
+    "operations": {
+      "role_exists": true,
+      "can_login": false,
+      "seam_usage": true,
+      "projects_select": true,
+      "projects_insert": true,
+      "projects_update": true,
+      "tasks_select": true,
+      "tasks_insert": true,
+      "tasks_update": true,
+      "apparatus_select": true,
+      "apparatus_insert": true,
+      "apparatus_update": true
+    },
+    "anon": {
+      "role_exists": true,
+      "can_login": false,
+      "seam_usage": false,
+      "projects_select": false,
+      "projects_insert": false,
+      "projects_update": false,
+      "tasks_select": false,
+      "tasks_insert": false,
+      "tasks_update": false,
+      "apparatus_select": false,
+      "apparatus_insert": false,
+      "apparatus_update": false
+    },
+    "authenticated": {
+      "role_exists": true,
+      "can_login": false,
+      "seam_usage": false,
+      "projects_select": false,
+      "projects_insert": false,
+      "projects_update": false,
+      "tasks_select": false,
+      "tasks_insert": false,
+      "tasks_update": false,
+      "apparatus_select": false,
+      "apparatus_insert": false,
+      "apparatus_update": false
+    }
+  }
+}
