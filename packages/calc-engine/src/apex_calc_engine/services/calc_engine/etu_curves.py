@@ -42,6 +42,7 @@ import math
 from dataclasses import dataclass
 from typing import Optional
 
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from apex_calc_engine.models.etu_equations import ETUSTDEquation, ETUGFDEquation
@@ -217,16 +218,13 @@ class IEEEInverseTimeSolver:
         Returns:
             List of dicts with 'ordinal', 'label', 'in_out' for each equation.
         """
-        model = ETUSTDEquation if equation_type == 'std' else ETUGFDEquation
-        rows = (
-            self.session.query(model.ordinal, model.label, model.in_out)
-            .filter(model.sensor_id == sensor_id)
-            .order_by(model.ordinal)
-            .all()
-        )
         return [
-            {'ordinal': r.ordinal, 'label': r.label, 'in_out': r.in_out}
-            for r in rows
+            {
+                'ordinal': row['ordinal'],
+                'label': row['label'],
+                'in_out': row['in_out'],
+            }
+            for row in self._load_equation_rows(sensor_id, equation_type)
         ]
 
     # ------------------------------------------------------------------
@@ -244,24 +242,140 @@ class IEEEInverseTimeSolver:
         if variant not in VARIANTS:
             raise ValueError(f"Invalid variant '{variant}'. Must be one of {VARIANTS}")
 
-        model = ETUSTDEquation if equation_type == 'std' else ETUGFDEquation
-        eq = (
-            self.session.query(model)
-            .filter(model.sensor_id == sensor_id, model.ordinal == ordinal)
-            .one_or_none()
+        row = next(
+            (
+                equation_row
+                for equation_row in self._load_equation_rows(sensor_id, equation_type)
+                if int(equation_row['ordinal']) == int(ordinal)
+            ),
+            None,
         )
-        if eq is None:
+        if row is None:
             return None
 
         # Column names follow pattern: {variant}_1 .. {variant}_6
         def _col(n: int) -> float:
-            val = getattr(eq, f'{variant}_{n}', None)
+            val = row.get(f'{variant}_{n}')
             return float(val) if val is not None else 0.0
 
         return Coefficients(
             c1=_col(1), c2=_col(2), c3=_col(3),
             c4=_col(4), c5=_col(5), c6=_col(6),
         )
+
+    def _load_equation_rows(
+        self,
+        sensor_id: int,
+        equation_type: str,
+    ) -> list[dict[str, object]]:
+        """Load source-faithful equation rows, falling back to package ORM rows.
+
+        Promoted from the tcc source-domain compatibility path per matrix
+        #30(b). The SQL path accepts rebuilt/source-faithful column names
+        (`eq_desc`, `fd_op_*`, `fd_cl_*`, `id_op_*`, `id_cl_*`), while the
+        fallback preserves the package's existing ORM-backed row contract.
+        """
+        table_name = 'tcc_etu_std_equations' if equation_type == 'std' else 'tcc_etu_gfd_equations'
+        params = {'sensor_id': sensor_id}
+
+        try:
+            rows = self.session.execute(
+                text(
+                    f"""
+                    SELECT eq_desc AS label,
+                           in_out,
+                           fd_op_1 AS fd_open_1,
+                           fd_op_2 AS fd_open_2,
+                           fd_op_3 AS fd_open_3,
+                           fd_op_4 AS fd_open_4,
+                           fd_op_5 AS fd_open_5,
+                           fd_op_6 AS fd_open_6,
+                           fd_cl_1 AS fd_clear_1,
+                           fd_cl_2 AS fd_clear_2,
+                           fd_cl_3 AS fd_clear_3,
+                           fd_cl_4 AS fd_clear_4,
+                           fd_cl_5 AS fd_clear_5,
+                           fd_cl_6 AS fd_clear_6,
+                           id_op_1 AS id_open_1,
+                           id_op_2 AS id_open_2,
+                           id_op_3 AS id_open_3,
+                           id_op_4 AS id_open_4,
+                           id_op_5 AS id_open_5,
+                           id_op_6 AS id_open_6,
+                           id_cl_1 AS id_clear_1,
+                           id_cl_2 AS id_clear_2,
+                           id_cl_3 AS id_clear_3,
+                           id_cl_4 AS id_clear_4,
+                           id_cl_5 AS id_clear_5,
+                           id_cl_6 AS id_clear_6
+                    FROM {table_name}
+                    WHERE sensor_id = :sensor_id
+                    ORDER BY CASE
+                               WHEN eq_desc ~ '^-?[0-9]+(\\.[0-9]+)?$' THEN eq_desc::numeric
+                               ELSE NULL
+                             END NULLS LAST,
+                             eq_desc
+                    """
+                ),
+                params,
+            ).fetchall()
+            return self._normalize_equation_rows(rows)
+        except Exception:
+            if hasattr(self.session, 'rollback'):
+                self.session.rollback()
+
+        model = ETUSTDEquation if equation_type == 'std' else ETUGFDEquation
+        rows = (
+            self.session.query(model)
+            .filter(model.sensor_id == sensor_id)
+            .order_by(model.ordinal)
+            .all()
+        )
+        return self._normalize_equation_rows(rows)
+
+    @staticmethod
+    def _normalize_equation_rows(rows) -> list[dict[str, object]]:
+        normalized: list[dict[str, object]] = []
+
+        def _read(row, key: str, default=None):
+            if hasattr(row, '_mapping'):
+                return row._mapping.get(key, default)
+            if isinstance(row, dict):
+                return row.get(key, default)
+            return getattr(row, key, default)
+
+        for index, row in enumerate(rows, start=1):
+            ordinal = _read(row, 'ordinal', index)
+            normalized.append({
+                'ordinal': int(ordinal) if ordinal is not None else index,
+                'label': _read(row, 'label'),
+                'in_out': _read(row, 'in_out'),
+                'fd_open_1': _read(row, 'fd_open_1'),
+                'fd_open_2': _read(row, 'fd_open_2'),
+                'fd_open_3': _read(row, 'fd_open_3'),
+                'fd_open_4': _read(row, 'fd_open_4'),
+                'fd_open_5': _read(row, 'fd_open_5'),
+                'fd_open_6': _read(row, 'fd_open_6'),
+                'fd_clear_1': _read(row, 'fd_clear_1'),
+                'fd_clear_2': _read(row, 'fd_clear_2'),
+                'fd_clear_3': _read(row, 'fd_clear_3'),
+                'fd_clear_4': _read(row, 'fd_clear_4'),
+                'fd_clear_5': _read(row, 'fd_clear_5'),
+                'fd_clear_6': _read(row, 'fd_clear_6'),
+                'id_open_1': _read(row, 'id_open_1'),
+                'id_open_2': _read(row, 'id_open_2'),
+                'id_open_3': _read(row, 'id_open_3'),
+                'id_open_4': _read(row, 'id_open_4'),
+                'id_open_5': _read(row, 'id_open_5'),
+                'id_open_6': _read(row, 'id_open_6'),
+                'id_clear_1': _read(row, 'id_clear_1'),
+                'id_clear_2': _read(row, 'id_clear_2'),
+                'id_clear_3': _read(row, 'id_clear_3'),
+                'id_clear_4': _read(row, 'id_clear_4'),
+                'id_clear_5': _read(row, 'id_clear_5'),
+                'id_clear_6': _read(row, 'id_clear_6'),
+            })
+        return normalized
 
     @staticmethod
     def _evaluate(

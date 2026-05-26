@@ -38,10 +38,11 @@ from dataclasses import dataclass
 from decimal import Decimal
 from typing import Any, Optional
 
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from apex_calc_engine.models.etu_core import ETUSensor, ETUPlug
-from apex_calc_engine.models.etu_curves import ETUSensorMaint
+from apex_calc_engine.models.etu_curves import ETUSensorMaint, ETUSTPUOverride
 from apex_calc_engine.models.etu_pickups import (
     ETULTPUPickup, ETULTPUMultiplier,
     ETUSTPUPickup, ETUInstPickup, ETUGFPUPickup,
@@ -76,6 +77,9 @@ class PickupResult:
     reduction: Optional[float] = None
     delay_opening: Optional[float] = None
     delay_clearing: Optional[float] = None
+    override_applied: bool = False
+    override_open_time: Optional[float] = None
+    override_clear_time: Optional[float] = None
 
 
 @dataclass
@@ -115,6 +119,7 @@ class ETUPickupCalculator:
             .order_by(ETUSensorMaint.id.desc())
             .first()
         )
+        self.stpu_override: dict = self._load_stpu_override(sensor_id)
 
     def calculate(
         self,
@@ -184,24 +189,33 @@ class ETUPickupCalculator:
 
         # STPU may cascade from LTPU (method=4)
         ltpu_current = ltpu_result.current if ltpu_result else 0.0
-        stpu_result = self._calc_element(
-            calc_method=sensor.stpu_calc,
-            setting=stpu_setting,
-            plug_value=plug_value,
-            multiplier=multiplier_value,
-            c_factor=c_factor,
-            tol_lo=sensor.stpu_tol_lo,
-            tol_hi=sensor.stpu_tol_hi,
-            cascade_current=ltpu_current,
-            element_name=sensor.stpu_name,
-            current_factor=(
-                maint_profile["stpu_reduction"] if effective_maint and maint_profile["stpu_reduction"] is not None else 1.0
-            ),
-            maint_mode=effective_maint,
-            reduction=(
-                maint_profile["stpu_reduction"] if effective_maint else None
-            ),
-        )
+        if self.stpu_override.get("applied"):
+            stpu_result = self._build_override_stpu_result(
+                maint_mode=effective_maint and maint_profile["stpu_reduction"] is not None,
+            )
+            if effective_maint and maint_profile["stpu_reduction"] is not None:
+                warnings.append(
+                    "STPU override active - MAINT reduction factor not applied to override amps"
+                )
+        else:
+            stpu_result = self._calc_element(
+                calc_method=sensor.stpu_calc,
+                setting=stpu_setting,
+                plug_value=plug_value,
+                multiplier=multiplier_value,
+                c_factor=c_factor,
+                tol_lo=sensor.stpu_tol_lo,
+                tol_hi=sensor.stpu_tol_hi,
+                cascade_current=ltpu_current,
+                element_name=sensor.stpu_name,
+                current_factor=(
+                    maint_profile["stpu_reduction"] if effective_maint and maint_profile["stpu_reduction"] is not None else 1.0
+                ),
+                maint_mode=effective_maint,
+                reduction=(
+                    maint_profile["stpu_reduction"] if effective_maint else None
+                ),
+            )
 
         # INST can cascade from LTPU (method=4) or STPU (method=10)
         stpu_current = stpu_result.current if stpu_result else 0.0
@@ -280,6 +294,102 @@ class ETUPickupCalculator:
     # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
+
+    def _load_stpu_override(self, sensor_id: int) -> dict:
+        """Read the flat tcc_etu_stpu_overrides row for a sensor.
+
+        Promoted from tcc_v5_backend per matrix #30(c). A present row with
+        non-null override amps bypasses the normal STPU formula and carries
+        override-specific tolerances/open/clear times into PickupResult.
+        """
+        try:
+            row = self.session.execute(
+                text(
+                    """
+                    SELECT ovr_amps,
+                           ovr_toler_low_pct,
+                           ovr_toler_high_pct,
+                           ovr_open_sec,
+                           ovr_clear_sec
+                    FROM tcc_etu_stpu_overrides
+                    WHERE sensor_id = :sensor_id
+                    LIMIT 1
+                    """
+                ),
+                {'sensor_id': sensor_id},
+            ).fetchone()
+            mapping = row._mapping if hasattr(row, '_mapping') else row
+            if row is not None and mapping.get("ovr_amps") is not None:
+                return {
+                    "applied": True,
+                    "amps": float(mapping.get("ovr_amps")),
+                    "tolerance_low": (
+                        float(mapping.get("ovr_toler_low_pct"))
+                        if mapping.get("ovr_toler_low_pct") is not None else None
+                    ),
+                    "tolerance_high": (
+                        float(mapping.get("ovr_toler_high_pct"))
+                        if mapping.get("ovr_toler_high_pct") is not None else None
+                    ),
+                    "open_time": (
+                        float(mapping.get("ovr_open_sec"))
+                        if mapping.get("ovr_open_sec") is not None else None
+                    ),
+                    "clear_time": (
+                        float(mapping.get("ovr_clear_sec"))
+                        if mapping.get("ovr_clear_sec") is not None else None
+                    ),
+                }
+        except Exception:
+            if hasattr(self.session, 'rollback'):
+                self.session.rollback()
+
+        rows = (
+            self.session.query(ETUSTPUOverride)
+            .filter(ETUSTPUOverride.sensor_id == sensor_id)
+            .all()
+        )
+        values = {getattr(row, "type_", None): getattr(row, "value", None) for row in rows}
+        amps = values.get("amps")
+        if amps is None:
+            return {
+                "applied": False,
+                "amps": None,
+                "tolerance_low": None,
+                "tolerance_high": None,
+                "open_time": None,
+                "clear_time": None,
+            }
+        return {
+            "applied": True,
+            "amps": float(amps),
+            "tolerance_low": float(values["tolerance_low"]) if values.get("tolerance_low") is not None else None,
+            "tolerance_high": float(values["tolerance_high"]) if values.get("tolerance_high") is not None else None,
+            "open_time": float(values["open_time"]) if values.get("open_time") is not None else None,
+            "clear_time": float(values["clear_time"]) if values.get("clear_time") is not None else None,
+        }
+
+    def _build_override_stpu_result(self, maint_mode: bool) -> PickupResult:
+        """Build an STPU PickupResult directly from override amps/tolerances."""
+        amps = float(self.stpu_override["amps"] or 0.0)
+        tol_lo = self.stpu_override.get("tolerance_low")
+        tol_hi = self.stpu_override.get("tolerance_high")
+        lo_pct = float(tol_lo) if tol_lo is not None else 0.0
+        hi_pct = float(tol_hi) if tol_hi is not None else 0.0
+        min_limit = amps * (1.0 + lo_pct / 100.0)
+        max_limit = amps * (1.0 + hi_pct / 100.0)
+        return PickupResult(
+            current=round(amps, 2),
+            min_limit=round(min_limit, 2),
+            max_limit=round(max_limit, 2),
+            method=int(ETUCalcMethod.AMPS),
+            method_name="OVERRIDE",
+            maint_mode=maint_mode,
+            reduction=None,
+            override_applied=True,
+            override_open_time=self.stpu_override.get("open_time"),
+            override_clear_time=self.stpu_override.get("clear_time"),
+        )
 
     def _get_plug_value(self, plug_id: Optional[int]) -> Optional[int]:
         """Fetch plug rating value by ID."""

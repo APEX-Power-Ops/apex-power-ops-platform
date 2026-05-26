@@ -33,8 +33,10 @@ Usage:
 
 import math
 from dataclasses import dataclass
+from types import SimpleNamespace
 from typing import Optional
 
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from apex_calc_engine.models.etu_core import ETUSensor
@@ -193,45 +195,78 @@ class ETULTDCalculator:
 
     def get_ltd_info(self) -> list[dict]:
         """Get available LTD curve configurations for this sensor."""
-        rows = (
-            self.session.query(ETULTDParam)
-            .filter_by(sensor_id=self.sensor.id)
-            .order_by(ETULTDParam.ordinal)
-            .all()
-        )
         return [
             {
-                'ordinal': r.ordinal,
-                'method': r.method,
-                'curve_name': r.curve_name,
-                'tol_hi': float(r.tol_hi) if r.tol_hi is not None else None,
-                'tol_lo': float(r.tol_lo) if r.tol_lo is not None else None,
-                'delay_priority': r.delay_priority,
+                'ordinal': row['ordinal'],
+                'method': row['method'],
+                'curve_name': row['curve_name'],
+                'tol_hi': float(row['tol_hi']) if row['tol_hi'] is not None else None,
+                'tol_lo': float(row['tol_lo']) if row['tol_lo'] is not None else None,
+                'delay_priority': row['delay_priority'],
             }
-            for r in rows
+            for row in self._load_ltd_param_rows()
         ]
 
     def get_band_info(self, curve_id: Optional[int] = None) -> list[dict]:
         """Get available LTD delay bands for this sensor."""
-        q = (
-            self.session.query(ETULTDBand)
-            .filter_by(sensor_id=self.sensor.id)
-        )
+        params = {'sensor_id': self.sensor.id}
+        curve_filter = ''
+        if curve_id is not None:
+            params['curve_id'] = curve_id
+            curve_filter = ' AND curve_id = :curve_id'
+
+        try:
+            rows = self.session.execute(
+                text(
+                    f"""
+                    SELECT ordinal,
+                           band,
+                           band_label,
+                           open_time,
+                           clear_time,
+                           curve_id,
+                           COALESCE(is_default, FALSE) AS is_default
+                    FROM tcc_etu_ltd_bands
+                    WHERE sensor_id = :sensor_id{curve_filter}
+                    ORDER BY ordinal NULLS LAST,
+                             sort_order NULLS LAST,
+                             open_time NULLS LAST,
+                             id
+                    """
+                ),
+                params,
+            ).fetchall()
+            return self._normalize_ltd_band_rows(rows)
+        except Exception:
+            if hasattr(self.session, 'rollback'):
+                self.session.rollback()
+
+        try:
+            rows = self.session.execute(
+                text(
+                    f"""
+                    SELECT curve_id,
+                           ltd_desc AS band_label,
+                           ltd_setting AS open_time
+                    FROM tcc_etu_ltd_bands
+                    WHERE sensor_id = :sensor_id{curve_filter}
+                    ORDER BY curve_id NULLS LAST,
+                             ltd_setting NULLS LAST,
+                             id
+                    """
+                ),
+                params,
+            ).fetchall()
+            return self._normalize_ltd_band_rows(rows, legacy=True)
+        except Exception:
+            if hasattr(self.session, 'rollback'):
+                self.session.rollback()
+
+        q = self.session.query(ETULTDBand).filter_by(sensor_id=self.sensor.id)
         if curve_id is not None:
             q = q.filter(ETULTDBand.curve_id == curve_id)
         rows = q.order_by(ETULTDBand.ordinal).all()
-        return [
-            {
-                'ordinal': r.ordinal,
-                'band': r.band,
-                'band_label': r.band_label,
-                'open_time': float(r.open_time) if r.open_time is not None else None,
-                'clear_time': float(r.clear_time) if r.clear_time is not None else None,
-                'curve_id': r.curve_id,
-                'is_default': r.is_default,
-            }
-            for r in rows
-        ]
+        return self._normalize_ltd_band_rows(rows)
 
     # ------------------------------------------------------------------
     # Method 1: Thermal (CalcThermEq2)
@@ -633,30 +668,157 @@ class ETULTDCalculator:
     # Internal helpers
     # ------------------------------------------------------------------
 
-    def _get_ltd_param(self, ordinal: int) -> Optional[ETULTDParam]:
-        """Load LTD param row by ordinal."""
-        return (
-            self.session.query(ETULTDParam)
-            .filter_by(sensor_id=self.sensor.id, ordinal=ordinal)
-            .one_or_none()
-        )
+    def _load_ltd_param_rows(self) -> list[dict[str, object]]:
+        """Load source-faithful LTD parameter rows, with package ORM fallback.
 
-    def _get_ltd_band(self, ordinal: int) -> Optional[ETULTDBand]:
-        """Load LTD band row by ordinal."""
-        return (
-            self.session.query(ETULTDBand)
-            .filter_by(sensor_id=self.sensor.id, ordinal=ordinal)
-            .one_or_none()
+        Promoted from the tcc source-domain compatibility path per matrix
+        #30(b). The SQL path accepts rebuilt/source-faithful column names and
+        aliases them back into the package calculator contract.
+        """
+        params = {'sensor_id': self.sensor.id}
+
+        try:
+            rows = self.session.execute(
+                text(
+                    """
+                    SELECT curve_name,
+                           curve_id,
+                           ordinal,
+                           setting_method AS method,
+                           sec2_ltf AS ltf,
+                           ds2_tol_high AS tol_hi,
+                           ds2_tol_low AS tol_lo,
+                           setting_val AS value,
+                           setting_type AS type,
+                           slope,
+                           ds2_step_size AS step,
+                           ds2_dly_pty AS delay_priority,
+                           ds2_force_i2x_out AS force_i2x_out
+                    FROM tcc_etu_ltd_params
+                    WHERE sensor_id = :sensor_id
+                    ORDER BY ordinal NULLS LAST, curve_name
+                    """
+                ),
+                params,
+            ).fetchall()
+            return self._normalize_ltd_param_rows(rows)
+        except Exception:
+            if hasattr(self.session, 'rollback'):
+                self.session.rollback()
+
+        rows = (
+            self.session.query(ETULTDParam)
+            .filter_by(sensor_id=self.sensor.id)
+            .order_by(ETULTDParam.ordinal)
+            .all()
         )
+        return self._normalize_ltd_param_rows(rows)
+
+    @staticmethod
+    def _normalize_ltd_param_rows(rows) -> list[dict[str, object]]:
+        normalized: list[dict[str, object]] = []
+
+        def _read(row, key: str, default=None):
+            if hasattr(row, '_mapping'):
+                return row._mapping.get(key, default)
+            if isinstance(row, dict):
+                return row.get(key, default)
+            return getattr(row, key, default)
+
+        for index, row in enumerate(rows, start=1):
+            ordinal = _read(row, 'ordinal', index)
+            normalized.append({
+                'curve_name': _read(row, 'curve_name'),
+                'curve_id': _read(row, 'curve_id'),
+                'ordinal': int(ordinal) if ordinal is not None else index,
+                'method': _read(row, 'method'),
+                'ltf': _read(row, 'ltf'),
+                'tol_hi': _read(row, 'tol_hi'),
+                'tol_lo': _read(row, 'tol_lo'),
+                'value': _read(row, 'value'),
+                'type': _read(row, 'type'),
+                'slope': _read(row, 'slope'),
+                'step': _read(row, 'step'),
+                'delay_priority': _read(row, 'delay_priority'),
+                'force_i2x_out': _read(row, 'force_i2x_out'),
+            })
+        return normalized
+
+    @staticmethod
+    def _normalize_ltd_band_rows(rows, legacy: bool = False) -> list[dict]:
+        normalized: list[dict] = []
+
+        def _read(row, key: str, default=None):
+            if hasattr(row, '_mapping'):
+                return row._mapping.get(key, default)
+            if isinstance(row, dict):
+                return row.get(key, default)
+            return getattr(row, key, default)
+
+        for index, row in enumerate(rows, start=1):
+            open_time = _read(row, 'open_time')
+            clear_time = _read(row, 'clear_time') if not legacy else open_time
+            band_label = _read(row, 'band_label')
+            ordinal = _read(row, 'ordinal', index)
+            normalized.append({
+                'ordinal': int(ordinal) if ordinal is not None else index,
+                'band': _read(row, 'band') or band_label or f'Band {index}',
+                'band_label': band_label,
+                'open_time': float(open_time) if open_time is not None else None,
+                'clear_time': float(clear_time) if clear_time is not None else None,
+                'curve_id': _read(row, 'curve_id'),
+                'is_default': bool(_read(row, 'is_default')) if not legacy else index == 1,
+            })
+        return normalized
+
+    def _get_ltd_param(self, ordinal: int):
+        """Load LTD param row by ordinal."""
+        row = next(
+            (param_row for param_row in self._load_ltd_param_rows() if int(param_row['ordinal']) == int(ordinal)),
+            None,
+        )
+        return SimpleNamespace(**row) if row is not None else None
+
+    def _get_ltd_band(self, ordinal: int):
+        """Load LTD band row by ordinal."""
+        band = next(
+            (band_row for band_row in self.get_band_info() if int(band_row['ordinal']) == int(ordinal)),
+            None,
+        )
+        return SimpleNamespace(**band) if band is not None else None
 
     def _get_min_stdb_time(self, is_clear: bool) -> Optional[float]:
         """Get minimum time from STD band data (open or clear)."""
-        from sqlalchemy import func as sqlfunc
+        time_column = 'clear_time' if is_clear else 'open_time'
+        legacy_time_column = 'std_clear' if is_clear else 'std_open'
 
-        col = ETUSTDBand.clear_time if is_clear else ETUSTDBand.open_time
-        result = (
-            self.session.query(sqlfunc.min(col))
-            .filter(ETUSTDBand.sensor_id == self.sensor.id)
-            .scalar()
-        )
-        return float(result) if result is not None else None
+        try:
+            result = self.session.execute(
+                text(
+                    f"""
+                    SELECT MIN({time_column}) AS min_time
+                    FROM tcc_etu_std_bands
+                    WHERE sensor_id = :sensor_id
+                    """
+                ),
+                {'sensor_id': self.sensor.id},
+            ).fetchone()
+        except Exception:
+            if hasattr(self.session, 'rollback'):
+                self.session.rollback()
+            result = self.session.execute(
+                text(
+                    f"""
+                    SELECT MIN({legacy_time_column}) AS min_time
+                    FROM tcc_etu_std_bands
+                    WHERE sensor_id = :sensor_id
+                    """
+                ),
+                {'sensor_id': self.sensor.id},
+            ).fetchone()
+
+        if result is None:
+            return None
+        mapping = result._mapping if hasattr(result, '_mapping') else result
+        min_time = mapping.get('min_time')
+        return float(min_time) if min_time is not None else None

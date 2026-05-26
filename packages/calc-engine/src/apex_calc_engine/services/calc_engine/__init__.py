@@ -7,6 +7,7 @@ Services:
 - etu_pickup: ETU pickup current calculator (11 calc methods)
 - etu_curves: IEEE inverse-time equation solver (STD/GFD curves)
 - etu_ltd: 5 LTD calculation methods (Thermal, IEEE, GE-SMR, TU, TUF)
+- etu_delay_routing: SSTDelayCalc dispatch for STD/GFD delay curves
 - tmt_curves: TMT Catmull-Rom spline interpolation
 - etu_merge: Curve segment assembly with fillet transitions
 """
@@ -14,6 +15,14 @@ Services:
 from .etu_pickup import ETUCalcMethod, ETUPickupCalculator, PickupResult, AllPickupResults
 from .etu_curves import IEEEInverseTimeSolver, Coefficients, CurvePoint
 from .etu_ltd import ETULTDCalculator, LTDCurvePoint
+from .etu_delay_routing import (
+    DelayDispatch,
+    RoutedDelayCurve,
+    DelayCurvePoint,
+    dispatch_std_delay,
+    dispatch_gfd_delay,
+    route_delay_curve,
+)
 from .tmt_curves import TMTCurveGenerator, TMTCurvePoint, fillet
 from .etu_merge import merge_sst_curves, log_log_intersect
 from .relay_dispatch import (
@@ -44,6 +53,12 @@ __all__ = [
     'CurvePoint',
     'ETULTDCalculator',
     'LTDCurvePoint',
+    'DelayDispatch',
+    'RoutedDelayCurve',
+    'DelayCurvePoint',
+    'dispatch_std_delay',
+    'dispatch_gfd_delay',
+    'route_delay_curve',
     'TMTCurveGenerator',
     'TMTCurvePoint',
     'fillet',
