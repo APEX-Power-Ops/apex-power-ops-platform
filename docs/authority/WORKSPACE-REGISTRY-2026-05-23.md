@@ -71,7 +71,7 @@ Each repo entry should declare:
 - Allowed executor classes: human operator, VS Code Copilot, Desktop Claude, Codex for bounded packets, local AI by default for proprietary logic exploration
 - Passport status: `provisional`
 - Key cross-repo dependencies: `apex-power-ops-platform`
-- Notes: strong early candidate for the first cross-repo vertical slice because the domain already shows higher contract maturity than the less-normalized source domains
+- Notes: strong early candidate for the first cross-repo vertical slice because the domain already shows higher contract maturity than the less-normalized source domains. **Matrix #28 4th tier (added 2026-05-26 PM cycle 3 via matrix #65 discovery):** the Supabase `public.*` schema contains a TCC Reference domain (~50 `tcc_*` tables including `tcc_brk_*`/`tcc_emt_*`/`tcc_etu_*`/`tcc_tmt_*` plus `*_pre_rebuild` snapshots) that functions as a 4th tier alongside the existing three-tier TCC posture (NETA source-domain authority + tcc_v5_backend implementation provenance + apex-power-ops-platform/packages/calc-engine canonical promoted). Matrix #28 1A→1D arc closed 2026-05-26 without addressing this tier; reconciliation pending future matrix item.
 
 ### 3. `neta-ett-study-material`
 

@@ -126,6 +126,8 @@ Required behavior:
 
 This duty does not mean every convenience tool should be installed. It means any real limitation must become visible decision material instead of hidden execution debt.
 
+**PATTERN-005 cross-reference (added 2026-05-26 PM cycle 3):** This duty is the established repo-owned ancestor of PATTERN-005 (Continuous-improvement audit posture; "nothing is sacred"), captured in the platform workspace umbrella substrate at `METHODOLOGY_PATTERNS.md` (outer `.claude/PLATFORM/` substrate; resolves on operator workstation; not in this repo's git history per matrix #32 outer-repo local-only divergence; reference shape preserved for operator-workstation discoverability). PATTERN-005 formalizes and extends this principle: every dispatched executor across all repos must surface what was working well, what wasn't, and how things could be enhanced; no prior artifact is sacred including matrix closures, plan drafts, methodology patterns themselves, dispatches, or references. Every dispatch wrapper authored from 2026-05-26 forward includes PATTERN-005 §"What worked / What didn't / What could be enhanced" subsection requirement. The principles compose: §7A targets capability gaps blocking the best execution path; PATTERN-005 targets continuous-improvement surfacing across all execution.
+
 ## 7B. Stakeholder Time Protection And PM Acceleration
 
 The PM lane must treat stakeholder time as a constrained project resource.

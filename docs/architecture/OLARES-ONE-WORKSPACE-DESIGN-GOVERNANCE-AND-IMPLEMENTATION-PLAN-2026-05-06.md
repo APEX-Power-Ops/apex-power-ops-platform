@@ -31,6 +31,12 @@ Companion surface:
 
 Use that cockpit for rapid lane selection and validation routing. It does not override the authority order below.
 
+Front-door workspace companions:
+
+1. `docs/authority/WORKSPACE-REGISTRY-2026-05-23.md`
+2. `docs/authority/REPO-PASSPORT-STANDARD-2026-05-23.md`
+3. `REPO_PASSPORT.md`
+
 ## Current Program Decision
 
 The Olares One is the durable development anchor for APEX.
@@ -40,6 +46,8 @@ That anchor is now also the governing migration direction for the whole program.
 Repo structure now has explicit first priority inside that migration direction.
 
 The remaining parent-root publication residue is now signed-off closeout provenance to preserve, demote further when needed, or later archive by explicit packet; it is not an acceptable steady-state repository model.
+
+**Substrate-currency update (added 2026-05-26 PM cycle 3 via matrix #31 + #65):** Matrix #31 closed 2026-05-26 with parent-root `apps/+packages/` archived to `_archive/Apr2026_PreTranche/` (canonical operating boundary is now `apex-power-ops-platform/` nested inner repo + `source-domains/*`). Matrix #65 PM Schema Foundation Plan v2 hybrid synthesis dispatch was authored 2026-05-26 (Codex Cloud executor; ~8-15 hr execution; PATTERN-005 inaugural application) and will reconcile current PM substrate (foundation plan v1 dated 2026-05-26) against live `public.*` (125 tables) and `seam.*` (28 tables; Lane 411 Rev A-C revrec architecture with "recognition firewall" principle) Supabase schemas. When matrix #65 v2 plan lands, this OLARES-ONE plan SHOULD be revisited for substrate-currency refresh (tracked as matrix #69; Tier 3 deferred).
 
 At the current repo-owned evidence floor, that residue no longer blocks the laptop-to-Olares migration signoff.
 

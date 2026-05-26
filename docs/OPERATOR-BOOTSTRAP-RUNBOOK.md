@@ -16,6 +16,8 @@ Use `APEX Power Ops Platform.code-workspace` at the repo root as the default VS 
 
 Do not assume sibling legacy repositories are the default execution surface.
 
+**Substrate-currency update (added 2026-05-26 PM cycle 3):** Per matrix #31 closure (2026-05-26), parent-root `apps/+packages/` directories under `C:/APEX Platform/` have been archived to `_archive/Apr2026_PreTranche/`. Canonical operating boundary for all active Apex Ops repo work is now `C:/APEX Platform/apex-power-ops-platform/` (nested inner repo with its own `.git`) plus `C:/APEX Platform/source-domains/*` for the 3 source-domain repos (`tcc_v5_backend`, `neta-ett-study-material`, `neta-forms`). Outer `C:/APEX Platform/` umbrella container is local-only divergence (matrix #32) and remains UNPUSHED indefinitely. Always use `apex-power-ops-platform/` or `source-domains/<repo>/` path prefixes for git operations.
+
 ## Git Scope
 
 Use the platform root as the primary implementation, staging, and publication surface.
@@ -73,8 +75,8 @@ For historical context on the completed first parent-root introduction packet, u
 
 Treat the historical parent-root task trios as provenance helpers only. They are not routine staging surfaces for current repo-root work.
 
-Current repo-boundary constraint:
-- this standalone repo does not yet contain every active platform lane under the broader umbrella workspace; parent-root-only lanes remain separate provenance or reconciliation residue and are not part of the default repo contract
+Current repo-boundary constraint (updated 2026-05-26 PM cycle 3 per matrix #31 closure):
+- post matrix #31 closure (2026-05-26), parent-root `apps/+packages/` are archived to `_archive/Apr2026_PreTranche/` — this standalone repo IS now the canonical operating boundary for active Apex Ops repo work; the 3 source-domain repos (`tcc_v5_backend`, `neta-ett-study-material`, `neta-forms`) live at `C:/APEX Platform/source-domains/<repo>/` per the workspace registry; outer `C:/APEX Platform/` umbrella is local-only divergence (matrix #32) and remains UNPUSHED indefinitely; remaining "parent-root-only lanes" language from earlier framing is historical residue, not current constraint
 
 Git safety rules:
 - do not use `git add .` from `C:/APEX Platform/apex-power-ops-platform` unless an explicit broad repo change is intended
@@ -206,6 +208,8 @@ That surface reports:
 3. materialized host toolchain presence,
 4. minimal MCP trio readiness,
 5. current hold-boundary result from the host posture.
+
+**GHCR PAT model (added 2026-05-26 PM cycle 3 per matrix #2 closure 2026-05-25):** Olares image-service GHCR authentication now uses an operator-managed long-lived `read:packages` PAT stored in the `image-service-ghcr-auth` secret (Kubernetes Secret in `os-framework` namespace). PAT shape is `containers/auth.json` format mounted at `/root/.config/containers/auth.json` (NOT `imagePullSecrets`). Replaces prior ephemeral PAT pattern. Reference memory: `reference_credential_handling_pat_out_of_band_discipline.md`. Operator-side PAT rotation procedure is out-of-band (never paste PAT into AI conversation context per MASTER.md § CREDENTIAL_HANDLING_PROTOCOL).
 
 ## Local Contract Sources
 
