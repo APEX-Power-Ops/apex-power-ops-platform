@@ -29,3 +29,9 @@ build/
 # Per OPERATOR_DECISION_MATRIX #15 closure 2026-05-26 - track .claude/ framework substrate
 # EXCEPT per-user state (permissions, local overrides).
 .claude/settings.local.json
+
+# Reference materials (PM schema substrate inputs + corpora; tracking not required per operator)
+# Per OPERATOR_DECISION_MATRIX #64 closure 2026-05-26 - PM-Pro-Guide-xer-Templates (Primavera P6 XER
+# sample corpus + Apr 2026 parser-output snapshots; informs matrix #19 PM Schema Foundation Plan
+# but not part of code/commit substrate).
+reference/
