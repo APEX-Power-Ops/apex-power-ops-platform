@@ -24,3 +24,8 @@ build/
 .agents/skills/**/.claude/
 .agents/skills/**/.junie/
 .agents/skills/**/.windsurf/
+
+# Per-user editor + AI assistant local settings (NOT shared substrate)
+# Per OPERATOR_DECISION_MATRIX #15 closure 2026-05-26 - track .claude/ framework substrate
+# EXCEPT per-user state (permissions, local overrides).
+.claude/settings.local.json

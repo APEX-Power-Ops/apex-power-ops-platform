@@ -1,0 +1,13 @@
+# READING_ORDER.md
+
+<!-- INSTRUCTION: Boot sequence for any AI executor or human entering this repo. Read in the order listed. Each step has a purpose; do not skip without explicit reason. -->
+
+1. `<repo-root>/REPO_PASSPORT.md` - front-door contract.
+2. `<repo-root>/.claude/MASTER.md` - repo-scope authority and per-repo declarations.
+3. Authority docs declared in passport section 3, "Authority order" - read in declared order.
+4. `<repo-root>/ops/agents/packets/active/` - currently in-flight packets.
+5. `<repo-root>/ops/agents/packets/blocked/` - currently blocked packets.
+6. Most recent `<repo-root>/ops/agents/handoffs/<latest>-handoff.md` - most recent closeout.
+7. `<canonical platform repo>/.claude/PLATFORM/PROTOCOLS_AND_NOMENCLATURE.md` - framework conventions when work is cross-repo, skeleton-touching, or convention-touching.
+
+<!-- INSTRUCTION: If a required surface is absent, record that truthfully in the repo passport current frontier or the packet handoff. Do not invent maturity. -->

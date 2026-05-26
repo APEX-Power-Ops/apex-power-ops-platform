@@ -1,0 +1,17 @@
+# Agent Instructions
+
+This repo's authoritative agent instructions live at:
+
+**`.claude/MASTER.md`**
+
+Read that file before any substantive work. All conventions, authority order, per-repo declarations, and operating discipline are governed there.
+
+Framework-level conventions are referenced from `.claude/MASTER.md` and live in the canonical platform repo at:
+
+**`apex-power-ops-platform/.claude/PLATFORM/PROTOCOLS_AND_NOMENCLATURE.md`**
+
+Repo-level boot sequence: see `.claude/READING_ORDER.md`.
+
+---
+
+*This file is a thin shim. Substantive content lives in `.claude/MASTER.md`. Do not duplicate content here; update `.claude/MASTER.md` instead.*

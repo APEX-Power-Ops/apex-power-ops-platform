@@ -1,0 +1,78 @@
+# MASTER.md
+
+<!-- INSTRUCTION: This template is the canonical repo-scope authority file. Era 3.1 propagation authors a real .claude/MASTER.md per enrolled repo following this shape. Substantive content lives here; root shims are pure pointers to this file. -->
+
+## 1. Repo identity
+
+{{REPO_NAME}} at `{{CANONICAL_PATH}}` with status `{{REPO_STATUS}}`.
+
+## 2. Authority chain
+
+<!-- INSTRUCTION: Keep this chain in supersession order. Repo-specific legacy files are named by REPO_PASSPORT.md section 3. -->
+
+1. `<repo-root>/REPO_PASSPORT.md`
+2. `<canonical platform repo>/.claude/PLATFORM/PROTOCOLS_AND_NOMENCLATURE.md`
+3. {{REPO_SPECIFIC_LEGACY_GOVERNANCE_FILES_OR_NONE}}
+4. `<repo-root>/.claude/MASTER.md`
+
+## 3. Per-repo declarations
+
+<!-- INSTRUCTION: Use function-not-filename mapping. Preserve legacy names by declaring their function; do not migrate content during scaffolding. -->
+
+```yaml
+governing-rules-file: {{GOVERNING_RULES_FILE}}
+state-file: {{STATE_SURFACE}}
+handoffs-directory: {{HANDOFFS_DIRECTORY}}
+packet-directory: {{PACKET_DIRECTORY}}
+content-authority: {{CONTENT_AUTHORITY}}
+```
+
+## 4. `ops/agents/` layout participation
+
+<!-- INSTRUCTION: Declare mandatory-core directories and any optional-rest directories already present or admitted. -->
+
+Mandatory-core:
+- `ops/agents/packets/draft/`
+- `ops/agents/packets/active/`
+- `ops/agents/packets/blocked/`
+- `ops/agents/packets/review/`
+- `ops/agents/packets/done/`
+- `ops/agents/packets/archive/`
+- `ops/agents/handoffs/`
+- `ops/agents/policies/`
+
+Optional-rest present: {{OPTIONAL_REST_DIRECTORIES_OR_NONE}}
+
+## 5. `apex-jobs` ledger participation
+
+<!-- INSTRUCTION: Use yes, no, or future. Physical ledger location is runtime-resolved by PROTOCOLS_AND_NOMENCLATURE.md section 9. -->
+
+ledger-writes-from-this-repo: {{LEDGER_WRITES_FROM_THIS_REPO}}
+
+## 6. MCP scope
+
+<!-- INSTRUCTION: Point to the per-repo MCP topology file. Do not include credentials, URLs with secrets, or OAuth values. -->
+
+Per-repo MCP advertisement is declared in `.claude/MCP_TOPOLOGY.md`.
+Per-user stdio MCPs at `~/.claude.json` are user-scoped and are not repo-propagated.
+
+## 7. Credential discipline
+
+<!-- INSTRUCTION: Reference the framework credential protocol. Restate by-name-only handling for local readability. -->
+
+Credential handling is governed by `C:\APEX Platform\.claude\PLATFORM\MASTER.md` section `CREDENTIAL_HANDLING_PROTOCOL`.
+AI assistants reference credentials by environment variable name only and do not read production credential env files.
+
+## 8. Boot order
+
+<!-- INSTRUCTION: Point cold sessions to the repo boot sequence. -->
+
+Read `.claude/READING_ORDER.md` before substantive work.
+
+## 9. Open per-repo carry-forward items
+
+<!-- INSTRUCTION: Keep no more than three entries here. Larger lists belong in the repo state surface declared by the passport current-frontier section. -->
+
+1. {{CARRY_FORWARD_ITEM_1_OR_NONE}}
+2. {{CARRY_FORWARD_ITEM_2_OR_NONE}}
+3. {{CARRY_FORWARD_ITEM_3_OR_NONE}}

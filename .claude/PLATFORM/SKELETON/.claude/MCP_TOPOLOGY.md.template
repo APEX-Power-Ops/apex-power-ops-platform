@@ -1,0 +1,39 @@
+# MCP_TOPOLOGY.md
+
+<!-- INSTRUCTION: This file declares the repo's relationship to the three MCP surfaces. No credential values, no API keys, no OAuth tokens. Pointer-shaped only. -->
+
+## 1. Per-user stdio MCPs
+
+<!-- INSTRUCTION: This surface lives at ~/.claude.json mcpServers. It is operator-scoped and not repo-propagated. Name server ids only if helpful. -->
+
+Location: `~/.claude.json` `mcpServers`
+Scope: operator/user scoped
+Repo propagation: no
+
+Common server-name examples: `MCP_DOCKER`, `playwright`, `tcc-fidelity-staging`
+
+## 2. Repo-root HTTP MCPs
+
+<!-- INSTRUCTION: Declare whether this repo advertises HTTP MCPs through <repo-root>/.mcp.json. Name server ids only; no URLs with secrets, headers, or tokens. -->
+
+Location: `<repo-root>/.mcp.json`
+Present in this repo: {{REPO_ROOT_MCP_PRESENT_YES_NO}}
+Advertised server ids: {{REPO_ROOT_MCP_SERVER_IDS_OR_NONE}}
+
+Example: NETA ETT advertises `supabase` as a repo-root HTTP MCP.
+
+## 3. Claude.ai OAuth-brokered integrations
+
+<!-- INSTRUCTION: This surface is user-scoped by OAuth construction and not repo-propagated. Name product classes only when useful. -->
+
+Location: `~/.claude/mcp-needs-auth-cache.json` and related user cache
+Scope: user scoped
+Repo propagation: no
+
+Common integration examples: Box, Figma, Vercel, Supabase, Mermaid Chart
+
+## 4. Disjointness rule
+
+Server names should remain disjoint across surfaces. If a same-name collision occurs in future, repo-root config wins for that repo.
+
+No credential values belong in this file.

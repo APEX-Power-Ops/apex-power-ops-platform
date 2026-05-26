@@ -1,0 +1,93 @@
+# REPO_PASSPORT.md
+
+<!-- INSTRUCTION: This template is a starting point. Era 3.1 propagation authors a real REPO_PASSPORT.md per enrolled repo following this shape. All 12 sections are required; none may be left blank. Use unresolved or not-enrolled explicitly when truthful. -->
+
+## 1. Repo identity
+
+<!-- INSTRUCTION: State repo name, canonical git boundary, canonical paths, and current status using active, provisional, historical, or not-enrolled. -->
+
+```yaml
+name: {{REPO_NAME}}
+canonical_remote: {{CANONICAL_REMOTE}}
+canonical_local_path: {{CANONICAL_PATH}}
+authoritative_host_path: {{AUTHORITATIVE_HOST_PATH_OR_NONE}}
+status: {{REPO_STATUS}}
+```
+
+## 2. Purpose
+
+<!-- INSTRUCTION: State what this repo owns and what it does not own. -->
+
+{{REPO_NAME}} owns {{OWNED_SURFACES}}. It does not own {{NON_OWNED_SURFACES}}.
+
+## 3. Authority order
+
+<!-- INSTRUCTION: List governing documents in supersession order. Name legacy-tolerated root files here when they exist. -->
+
+1. `{{REPO_ROOT}}/REPO_PASSPORT.md`
+2. `{{CANONICAL_PLATFORM_REPO}}/.claude/PLATFORM/PROTOCOLS_AND_NOMENCLATURE.md`
+3. `{{LEGACY_GOVERNANCE_FILE_OR_NONE}}`
+4. `{{REPO_ROOT}}/.claude/MASTER.md`
+
+## 4. Canonical paths and environments
+
+<!-- INSTRUCTION: State canonical local path, authoritative host path if relevant, observe-only paths, and whether laptop/Olares/cloud paths are canonical or client surfaces. -->
+
+| Path | Role |
+|---|---|
+| `{{CANONICAL_LOCAL_PATH}}` | canonical local path |
+| `{{AUTHORITATIVE_HOST_PATH_OR_NONE}}` | authoritative host path |
+| `{{OBSERVE_ONLY_PATHS_OR_NONE}}` | observe-only or historical |
+
+## 5. Deployment and runtime posture
+
+<!-- INSTRUCTION: State where this repo publishes and runs: cloud, Olares, hybrid, or N/A. -->
+
+Deployment posture: {{DEPLOYMENT_POSTURE}}
+Runtime posture: {{RUNTIME_POSTURE}}
+
+## 6. Data classes
+
+<!-- INSTRUCTION: Declare dominant data classes using public, internal, customer-sensitive, and ip-core. -->
+
+Dominant data classes: {{DATA_CLASSES}}
+
+## 7. Allowed executor classes
+
+<!-- INSTRUCTION: Declare normally allowed executors using workspace registry vocabulary. -->
+
+Allowed executor classes: {{ALLOWED_EXECUTOR_CLASSES}}
+
+Local AI default: {{LOCAL_AI_DEFAULT_OR_NOT_ADMITTED}}
+
+## 8. Validation entrypoints
+
+<!-- INSTRUCTION: List the narrowest truthful validation families and where to look first. -->
+
+| Validation family | Entrypoint |
+|---|---|
+| {{VALIDATION_FAMILY}} | `{{VALIDATION_ENTRYPOINT}}` |
+
+## 9. Cross-repo dependencies
+
+<!-- INSTRUCTION: Name repos or shared services this repo depends on operationally. -->
+
+- {{DEPENDENCY_OR_NONE}}
+
+## 10. No-go boundaries
+
+<!-- INSTRUCTION: State boundaries requiring separate admitting packets, such as auth widening, ingress widening, schema mutation, live data mutation, cross-repo scope changes, or autonomous business-state mutation. -->
+
+- {{NO_GO_BOUNDARY}}
+
+## 11. Closeout requirements
+
+<!-- INSTRUCTION: State repo-visible evidence required for truthful completion. -->
+
+Closeout requires: {{CLOSEOUT_REQUIREMENTS}}
+
+## 12. Current frontier
+
+<!-- INSTRUCTION: State the current active role of the repo in one short section. This is the canonical per-repo state pointer; do not introduce a separate .claude/STATE.md unless a repo-specific authority already owns one. -->
+
+{{CURRENT_FRONTIER}}
