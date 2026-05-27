@@ -1,5 +1,6 @@
 """Tests for local-only test auth bootstrap used by unattended browser automation."""
 
+import io
 import os
 import sys
 from unittest.mock import MagicMock
@@ -310,6 +311,38 @@ def test_oidc_userinfo_fallback_handles_jwks_client_key_lookup_failures(monkeypa
 
     assert user.email == "user@example.com"
     assert user.claims["scope"] == "openid profile email"
+
+
+def test_default_surface_falls_back_to_supabase_userinfo_when_oidc_userinfo_rejects_token(monkeypatch):
+    monkeypatch.setenv("APP_ENV", "production")
+    monkeypatch.setenv("PUBLIC_OAUTH_ISSUER", "https://dev-cxahx0lfpdvwnayd.us.auth0.com/")
+    monkeypatch.setenv("PUBLIC_OAUTH_JWKS_URL", "https://dev-cxahx0lfpdvwnayd.us.auth0.com/.well-known/jwks.json")
+    monkeypatch.setenv("PUBLIC_OAUTH_USERINFO_URL", "https://dev-cxahx0lfpdvwnayd.us.auth0.com/userinfo")
+    monkeypatch.setenv("PUBLIC_OAUTH_SCOPES", "openid profile email")
+    monkeypatch.setenv("SUPABASE_URL", "https://example.supabase.co")
+    monkeypatch.setenv("SUPABASE_ANON_KEY", "supabase-anon-key")
+    _reset_auth_caches()
+
+    class _MissingKidJwksClient:
+        def get_signing_key_from_jwt(self, token):
+            raise auth.PyJWKClientError("Unable to find a signing key that matches: 'supabase-kid'")
+
+    monkeypatch.setattr(auth, "_get_jwks_client_for_url", lambda url: _MissingKidJwksClient())
+
+    def _fake_urlopen(request, timeout=10):
+        if request.full_url == "https://dev-cxahx0lfpdvwnayd.us.auth0.com/userinfo":
+            raise HTTPError(request.full_url, 401, "Unauthorized", hdrs=None, fp=io.BytesIO(b'{"error":"unauthorized"}'))
+        if request.full_url == "https://example.supabase.co/auth/v1/user":
+            return _FakeUserinfoResponse(b'{"id":"33333333-3333-3333-3333-333333333333","email":"supabase-user@example.com","app_metadata":{"role":"authenticated"}}')
+        raise AssertionError(f"Unexpected userinfo URL: {request.full_url}")
+
+    monkeypatch.setattr(auth, "urlopen", _fake_urlopen)
+
+    user = auth.verify_bearer_jwt("opaque-token")
+
+    assert str(user.user_id) == "33333333-3333-3333-3333-333333333333"
+    assert user.email == "supabase-user@example.com"
+    assert user.role == "authenticated"
 
 
 def test_local_test_auth_session_allows_owner_scoped_plan_access(monkeypatch):

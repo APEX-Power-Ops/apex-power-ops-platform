@@ -981,6 +981,39 @@ def _should_use_supabase_userinfo_fallback() -> bool:
     return _get_issuer() == supabase_issuer
 
 
+def _has_supabase_userinfo_fallback_inputs() -> bool:
+    return bool(
+        os.getenv("SUPABASE_URL", "").strip()
+        and os.getenv("SUPABASE_ANON_KEY", "").strip()
+    )
+
+
+def _try_default_surface_userinfo_fallbacks(token: str) -> AuthenticatedUser | None:
+    if _should_use_supabase_userinfo_fallback():
+        return _verify_with_supabase_userinfo(token)
+
+    oidc_userinfo_url = _get_surface_oidc_userinfo_url(DEFAULT_OAUTH_SURFACE_ENV)
+    primary_error: InvalidTokenError | None = None
+    if oidc_userinfo_url:
+        try:
+            return _verify_with_oidc_userinfo(token, surface_env=DEFAULT_OAUTH_SURFACE_ENV)
+        except InvalidTokenError as exc:
+            primary_error = exc
+
+    if _has_supabase_userinfo_fallback_inputs():
+        try:
+            return _verify_with_supabase_userinfo(token)
+        except InvalidTokenError:
+            if primary_error is not None:
+                raise primary_error
+            raise
+
+    if primary_error is not None:
+        raise primary_error
+
+    return None
+
+
 @lru_cache(maxsize=1)
 def _get_oidc_userinfo_url() -> str | None:
     return _resolve_public_oauth_userinfo_url(require_https=_is_production_env())
@@ -1142,13 +1175,19 @@ def verify_bearer_jwt(token: str, *, surface_env: OAuthSurfaceEnv = DEFAULT_OAUT
             claims=claims,
         )
     except (PyJWKSetError, PyJWKClientError) as exc:
-        if surface_env == DEFAULT_OAUTH_SURFACE_ENV and _should_use_supabase_userinfo_fallback():
-            return _verify_with_supabase_userinfo(token)
-        if _get_surface_oidc_userinfo_url(surface_env):
+        if surface_env == DEFAULT_OAUTH_SURFACE_ENV:
+            fallback_user = _try_default_surface_userinfo_fallbacks(token)
+            if fallback_user is not None:
+                return fallback_user
+        elif _get_surface_oidc_userinfo_url(surface_env):
             return _verify_with_oidc_userinfo(token, surface_env=surface_env)
         raise InvalidTokenError("OAuth JWKS verification failed") from exc
     except InvalidTokenError:
-        if _get_surface_oidc_userinfo_url(surface_env):
+        if surface_env == DEFAULT_OAUTH_SURFACE_ENV:
+            fallback_user = _try_default_surface_userinfo_fallbacks(token)
+            if fallback_user is not None:
+                return fallback_user
+        elif _get_surface_oidc_userinfo_url(surface_env):
             return _verify_with_oidc_userinfo(token, surface_env=surface_env)
         raise
 
