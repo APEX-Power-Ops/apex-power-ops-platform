@@ -35,3 +35,6 @@ build/
 # sample corpus + Apr 2026 parser-output snapshots; informs matrix #19 PM Schema Foundation Plan
 # but not part of code/commit substrate).
 reference/
+
+# Audit workspace artifacts (read-only audit dispatches; never commit)
+.audit_workspace/
