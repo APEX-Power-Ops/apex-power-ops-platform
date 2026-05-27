@@ -1,0 +1,51 @@
+# gitleaks configuration — apex-power-ops-platform
+# Authored 2026-05-27 per matrix #81 audit + filter-repo execution closeout
+#
+# Strategy:
+#   - HIGH-priority RESA-era secrets: REMOVED FROM HISTORY via filter-repo
+#     (16 findings redacted; commits 770ca662 outer-repo + c1591b55 platform)
+#   - 54 false-positive findings: suppressed via [allowlist] paths below
+#   - Net post-rewrite + .gitleaks.toml: 0 actionable findings
+#
+# This config EXTENDS the default gitleaks ruleset (does not replace).
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Triaged false-positive findings per matrix #81 audit 2026-05-27"
+
+# OAuthSurfaceEnv config metadata (ENV VAR NAMES + OIDC scope identifiers; not credentials)
+# Same pattern verified false-positive in tcc-v5-backend triage.
+# 9 historical findings; will recur on fresh scans without suppression.
+
+# Test fixture files (mock supabase URL + fake test JWT for pytest)
+# 36+ findings across 4 control-plane-api test files.
+
+# Example/placeholder .env file (canonical placeholder format)
+# 1 finding for Supabase/.env.example
+
+# Kubernetes-style secretRef indirection (no embedded credential)
+# 4 findings across OlaresManifest.yaml path variants
+
+# Mocked dry-run envelope JSON (SHA-256-shaped idempotency_key flagged
+# by generic-api-key rule but is hash, not credential; lane 414/418 test data)
+# 3 findings
+
+# Azure AD environment identifier UUIDs (not credential values; referenced
+# in PROJECT_CONTEXT.json via secretId field which is Azure secret ID not value)
+# 1 finding
+
+paths = [
+    '''apps/control-plane-api/services/auth\.py$''',
+    '''apps/control-plane-api/tests/test_supabase_mcp_transport\.py$''',
+    '''apps/control-plane-api/tests/test_ops_pm_idempotency_by_route_integration\.py$''',
+    '''apps/control-plane-api/tests/test_ops_pm_idempotency_stats_integration\.py$''',
+    '''apps/control-plane-api/tests/test_work_idempotency_durable_integration\.py$''',
+    '''Supabase/\.env\.example$''',
+    '''infra/olares/p6-ingest/OlaresManifest\.yaml$''',
+    '''tests/canary/p6-ingest-staging-manifest/actual/OlaresManifest\.yaml$''',
+    '''apps/mutation-seam/scripts/lane_415_envelope_export/request_envelope\.json$''',
+    '''apps/mutation-seam/scripts/lane_418_review_bundle/review_bundle\.json$''',
+    '''PROJECT_CONTEXT\.json$''',
+]
