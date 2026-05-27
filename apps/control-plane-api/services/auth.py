@@ -18,7 +18,7 @@ import jwt
 from fastapi import Depends, HTTPException, Request as FastAPIRequest, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jwt import InvalidTokenError, PyJWKClient
-from jwt.exceptions import PyJWKSetError
+from jwt.exceptions import PyJWKClientError, PyJWKSetError
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -1141,7 +1141,7 @@ def verify_bearer_jwt(token: str, *, surface_env: OAuthSurfaceEnv = DEFAULT_OAUT
             role=claims.get("role"),
             claims=claims,
         )
-    except PyJWKSetError as exc:
+    except (PyJWKSetError, PyJWKClientError) as exc:
         if surface_env == DEFAULT_OAUTH_SURFACE_ENV and _should_use_supabase_userinfo_fallback():
             return _verify_with_supabase_userinfo(token)
         if _get_surface_oidc_userinfo_url(surface_env):

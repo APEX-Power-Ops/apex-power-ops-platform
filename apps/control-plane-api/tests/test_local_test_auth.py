@@ -285,6 +285,33 @@ def test_oidc_userinfo_fallback_populates_surface_scopes_when_scope_claim_missin
     assert auth.user_has_required_scopes(user, ["openid", "profile", "email"]) is True
 
 
+def test_oidc_userinfo_fallback_handles_jwks_client_key_lookup_failures(monkeypatch):
+    monkeypatch.setenv("APP_ENV", "production")
+    monkeypatch.setenv("PUBLIC_OAUTH_ISSUER", "https://dev-cxahx0lfpdvwnayd.us.auth0.com/")
+    monkeypatch.setenv("PUBLIC_OAUTH_JWKS_URL", "https://dev-cxahx0lfpdvwnayd.us.auth0.com/.well-known/jwks.json")
+    monkeypatch.setenv("PUBLIC_OAUTH_USERINFO_URL", "https://dev-cxahx0lfpdvwnayd.us.auth0.com/userinfo")
+    monkeypatch.setenv("PUBLIC_OAUTH_SCOPES", "openid profile email")
+    _reset_auth_caches()
+
+    class _MissingKidJwksClient:
+        def get_signing_key_from_jwt(self, token):
+            raise auth.PyJWKClientError("Unable to find a signing key that matches: 'rotated-kid'")
+
+    monkeypatch.setattr(auth, "_get_jwks_client_for_url", lambda url: _MissingKidJwksClient())
+    monkeypatch.setattr(
+        auth,
+        "urlopen",
+        lambda request, timeout=10: _FakeUserinfoResponse(
+            b'{"sub":"auth0|1234567890","email":"user@example.com"}'
+        ),
+    )
+
+    user = auth.verify_bearer_jwt("opaque-token")
+
+    assert user.email == "user@example.com"
+    assert user.claims["scope"] == "openid profile email"
+
+
 def test_local_test_auth_session_allows_owner_scoped_plan_access(monkeypatch):
     monkeypatch.setenv("APP_ENV", "development")
     monkeypatch.setenv("ENABLE_LOCAL_TEST_AUTH", "true")
