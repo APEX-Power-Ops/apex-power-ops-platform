@@ -78,6 +78,22 @@ _REQUIRED_IMAGE_TABLES = (
     "mcp_validation_artifacts",
 )
 
+_REQUIRED_TASK_PACKET_RELATIONS = (
+    "mcp_task_packets",
+    "mcp_task_packet_summary_v",
+    "mcp_review_decisions",
+)
+
+_REQUIRED_LANE_PRIORITY_RELATIONS = (
+    "mcp_lane_priorities",
+)
+
+_REQUIRED_JOB_RELATIONS = (
+    "mcp_local_action_queue",
+    "mcp_job_runs",
+    "mcp_job_run_summary_v",
+)
+
 _MODEL_TIER_COSTS = {
     "tier-a": {"input_per_million": 5.0, "output_per_million": 15.0, "base_output": 4500, "duration": 18},
     "tier-b": {"input_per_million": 1.5, "output_per_million": 6.0, "base_output": 2500, "duration": 10},
@@ -479,6 +495,28 @@ def _require_image_tables(db: Session) -> None:
         )
 
 
+def _require_control_plane_relations(db: Session, relation_names: tuple[str, ...]) -> None:
+    relation_select_sql = ",\n                ".join(
+        f"to_regclass('public.{relation_name}') AS {relation_name}"
+        for relation_name in relation_names
+    )
+    row = db.execute(
+        text(
+            f"""
+            SELECT
+                {relation_select_sql}
+            """
+        )
+    ).fetchone()
+    payload = _row_mapping(row)
+    missing = [relation_name for relation_name in relation_names if payload.get(relation_name) is None]
+    if missing:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Control-plane dependencies missing in database: " + ", ".join(missing),
+        )
+
+
 def _require_image_asset_row(db: Session, asset_id: str) -> Any:
     row = db.execute(
         text(
@@ -636,6 +674,7 @@ def list_task_packets(
     current_user: AuthenticatedUser = Depends(get_current_user),
 ):
     del current_user
+    _require_control_plane_relations(db, _REQUIRED_TASK_PACKET_RELATIONS)
     rows = db.execute(
         text(
             """
@@ -697,6 +736,7 @@ def fetch_task_packet(
     current_user: AuthenticatedUser = Depends(get_current_user),
 ):
     del current_user
+    _require_control_plane_relations(db, _REQUIRED_TASK_PACKET_RELATIONS)
     packet = _require_packet_row(db, task_id)
     decision_rows = db.execute(
         text(
@@ -871,6 +911,7 @@ def list_lane_priorities(
     current_user: AuthenticatedUser = Depends(get_current_user),
 ):
     del current_user
+    _require_control_plane_relations(db, _REQUIRED_LANE_PRIORITY_RELATIONS)
     rows = db.execute(
         text(
             """
@@ -903,6 +944,7 @@ def fetch_priority_item(
     current_user: AuthenticatedUser = Depends(get_current_user),
 ):
     del current_user
+    _require_control_plane_relations(db, _REQUIRED_LANE_PRIORITY_RELATIONS)
     row = db.execute(
         text(
             """
@@ -1196,6 +1238,7 @@ def list_job_runs(
     current_user: AuthenticatedUser = Depends(get_current_user),
 ):
     del current_user
+    _require_control_plane_relations(db, _REQUIRED_JOB_RELATIONS)
     rows = db.execute(
         text(
             """
@@ -1233,6 +1276,7 @@ def fetch_job_run(
     current_user: AuthenticatedUser = Depends(get_current_user),
 ):
     del current_user
+    _require_control_plane_relations(db, _REQUIRED_JOB_RELATIONS)
     queue_row = db.execute(
         text(
             """

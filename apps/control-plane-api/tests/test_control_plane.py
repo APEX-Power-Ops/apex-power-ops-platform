@@ -46,6 +46,7 @@ class _FakeControlPlaneDb:
     def __init__(self):
         self.execute_calls = []
         self.commit_called = False
+        self.missing_relations = set()
         self.updated_status_params = None
         self.audit_params = None
         self.queued_local_action_params = None
@@ -76,6 +77,25 @@ class _FakeControlPlaneDb:
         sql = " ".join(str(statement).split())
         self.execute_calls.append((sql, params))
         result = MagicMock()
+
+        if "to_regclass('public.mcp_task_packets') AS mcp_task_packets" in sql or "to_regclass('public.mcp_lane_priorities') AS mcp_lane_priorities" in sql or "to_regclass('public.mcp_local_action_queue') AS mcp_local_action_queue" in sql:
+            relation_names = [
+                "mcp_task_packets",
+                "mcp_task_packet_summary_v",
+                "mcp_review_decisions",
+                "mcp_lane_priorities",
+                "mcp_local_action_queue",
+                "mcp_job_runs",
+                "mcp_job_run_summary_v",
+            ]
+            result.fetchone.return_value = _FakeRow(
+                {
+                    relation_name: (None if relation_name in self.missing_relations else relation_name)
+                    for relation_name in relation_names
+                    if f"AS {relation_name}" in sql
+                }
+            )
+            return result
 
         if "FROM public.mcp_task_packets" in sql and "WHERE task_id = :task_id" in sql:
             result.fetchone.return_value = _FakeRow(self.task_packet_row)
@@ -306,6 +326,21 @@ def test_control_plane_requires_authentication():
         assert response.status_code == 401
     finally:
         app.dependency_overrides.clear()
+
+
+def test_control_plane_task_packets_reports_missing_relations_as_service_unavailable():
+    fake_db = _FakeControlPlaneDb()
+    fake_db.missing_relations.add("mcp_task_packet_summary_v")
+    app.dependency_overrides[get_current_user] = lambda: _make_authenticated_user()
+    app.dependency_overrides[get_db] = lambda: fake_db
+    try:
+        client = TestClient(app)
+        response = client.get("/api/v1/control-plane/task-packets")
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 503
+    assert "mcp_task_packet_summary_v" in response.json()["detail"]
 
 
 def test_plan_preview_recommends_tier_a_for_governance_work(client):
