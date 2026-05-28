@@ -76,6 +76,28 @@ def test_ltd_calculator_reads_source_faithful_ltd_param_rows():
     assert calc._get_ltd_param(1).curve_name == "I2T"
 
 
+def test_ltd_calculator_reads_sensor_param_rows_without_surrogate_id():
+    session = MagicMock()
+    session.execute.return_value = _mock_result(rows=[
+        {"sensor_id": 25, "section": 2, "curve_id": None, "idx": 0, "value": 1.5},
+        {"sensor_id": 25, "section": 2, "curve_id": 7, "idx": 3, "value": 9.25},
+    ])
+
+    calc = ETULTDCalculator.__new__(ETULTDCalculator)
+    calc.session = session
+    calc.sensor = SimpleNamespace(id=25)
+    calc._params = {}
+    calc._params_by_curve = {}
+
+    calc._load_sensor_params()
+
+    sql_text = str(session.execute.call_args.args[0])
+    assert "SELECT sensor_id, section, curve_id, idx, value" in sql_text
+    assert "tcc_etu_sensor_params.id" not in sql_text
+    assert calc._params == {0: 1.5, 3: 9.25}
+    assert calc._params_by_curve == {0: {0: 1.5}, 7: {3: 9.25}}
+
+
 def test_ltd_calculator_supports_legacy_ltd_band_and_std_band_rows():
     session = MagicMock()
     session.rollback = MagicMock()

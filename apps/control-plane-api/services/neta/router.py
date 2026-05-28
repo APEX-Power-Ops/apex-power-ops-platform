@@ -2,21 +2,22 @@
 FastAPI router for NETA ETT Testing Service.
 
 Endpoints:
-  GET  /api/v1/neta/cascade              — Cascade drill-down selection
-  GET  /api/v1/neta/context/{sensor_id}  — Full sensor calculation context
-  GET  /api/v1/neta/settings/{sensor_id} — Available settings for dropdowns
-  POST /api/v1/neta/calculate            — Calculate test currents + tolerance bands
-  POST /api/v1/neta/evaluate             — Evaluate measured values → pass/fail
+    GET  /api/v1/neta/cascade              — Cascade drill-down selection
+    GET  /api/v1/neta/context/{sensor_id}  — Full sensor calculation context
+    GET  /api/v1/neta/settings/{sensor_id} — Available settings for dropdowns
+    POST /api/v1/neta/calculate            — Calculate test currents + tolerance bands
+    POST /api/v1/neta/evaluate             — Evaluate measured values → pass/fail
 
-All endpoints consume PostgreSQL views/functions via raw SQL (not ORM),
-since the views and functions live in Supabase and are decoupled from
-the SQLAlchemy model layer.
+The router uses raw SQL against Supabase-backed views/functions where that is
+the stable contract, while keeping ETU settings expansion and measured pickup
+evaluation in-process so the API surface stays deterministic even if the live
+SQL helper functions evolve independently.
 """
 
 import json
 import logging
 from collections import Counter, defaultdict
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 from typing import Optional
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -42,7 +43,15 @@ from .schemas import (
     CascadeTripType,
     CascadeTripStyle,
     CascadeSensor,
+    CascadePlugOption,
     CascadeResponse,
+    EtuBreakerCascadeResponse,
+    EtuBreakerClassOption,
+    EtuBreakerManufacturer,
+    EtuBreakerOption,
+    EtuBreakerStyleOption,
+    EtuSearchResult,
+    EtuSearchResponse,
     SensorCalcContext,
     AvailableSettingsResponse,
     ApparatusStudyResource,
@@ -1024,24 +1033,76 @@ def _dedupe_delay_settings(bands: list[dict] | None) -> list[dict]:
 
 
 def _load_delay_band_settings(db: Session, table_name: str, sensor_id: int) -> list[dict]:
-    rows = db.execute(
-        text(
-            f"""
-            SELECT band,
-                   band_label AS label,
-                   open_time,
-                   clear_time,
-                   COALESCE(is_default, false) AS is_default
-            FROM {table_name}
-            WHERE sensor_id = :sensor_id
-            ORDER BY sort_order NULLS LAST,
-                     ordinal NULLS LAST,
-                     open_time NULLS LAST,
-                     id
-            """
-        ),
-        {"sensor_id": sensor_id},
-    ).fetchall()
+    if table_name == "tcc_etu_ltd_bands":
+        rows = db.execute(
+            text(
+                """
+                SELECT
+                    ltd_desc AS band,
+                    ltd_desc AS label,
+                    ltd_setting AS open_time,
+                    NULL::numeric AS clear_time,
+                    false AS is_default
+                FROM tcc_etu_ltd_bands
+                WHERE sensor_id = :sensor_id
+                ORDER BY ltd_setting NULLS LAST, id
+                """
+            ),
+            {"sensor_id": sensor_id},
+        ).fetchall()
+    elif table_name == "tcc_etu_std_bands":
+        rows = db.execute(
+            text(
+                """
+                SELECT
+                    std_desc AS band,
+                    std_desc AS label,
+                    std_open AS open_time,
+                    std_clear AS clear_time,
+                    false AS is_default
+                FROM tcc_etu_std_bands
+                WHERE sensor_id = :sensor_id
+                ORDER BY ordinal NULLS LAST, std_open NULLS LAST
+                """
+            ),
+            {"sensor_id": sensor_id},
+        ).fetchall()
+    elif table_name == "tcc_etu_gfd_bands":
+        rows = db.execute(
+            text(
+                """
+                SELECT
+                    gfd_desc AS band,
+                    gfd_desc AS label,
+                    gfd_open AS open_time,
+                    gfd_clear AS clear_time,
+                    false AS is_default
+                FROM tcc_etu_gfd_bands
+                WHERE sensor_id = :sensor_id
+                ORDER BY ordinal NULLS LAST, gfd_open NULLS LAST
+                """
+            ),
+            {"sensor_id": sensor_id},
+        ).fetchall()
+    else:
+        rows = db.execute(
+            text(
+                f"""
+                SELECT band,
+                       band_label AS label,
+                       open_time,
+                       clear_time,
+                       COALESCE(is_default, false) AS is_default
+                FROM {table_name}
+                WHERE sensor_id = :sensor_id
+                ORDER BY sort_order NULLS LAST,
+                         ordinal NULLS LAST,
+                         open_time NULLS LAST,
+                         id
+                """
+            ),
+            {"sensor_id": sensor_id},
+        ).fetchall()
 
     return [
         {
@@ -1082,6 +1143,35 @@ def _filter_valid_plug_values(values: list[float], sensor_rating: float | None) 
     return [value for value in values if float(value) <= sensor_rating]
 
 
+def _load_direct_numeric_settings(db: Session, table_name: str, value_column: str, sensor_id: int) -> list[float]:
+    rows = db.execute(
+        text(
+            f"""
+            SELECT DISTINCT {value_column} AS value
+            FROM {table_name}
+            WHERE sensor_id = :sensor_id
+              AND {value_column} IS NOT NULL
+            ORDER BY {value_column}
+            """
+        ),
+        {"sensor_id": sensor_id},
+    ).fetchall()
+
+    return [float(row._mapping["value"]) for row in rows]
+
+
+def _load_direct_available_settings(db: Session, sensor_id: int) -> dict[str, object]:
+    return {
+        "plug_values": _load_direct_numeric_settings(db, "tcc_etu_plugs", "value", sensor_id),
+        "ltpu_settings": _load_direct_numeric_settings(db, "tcc_etu_ltpu_pickups", "ltd_setting", sensor_id),
+        "ltd_settings": _load_delay_band_settings(db, "tcc_etu_ltd_bands", sensor_id),
+        "ltd_multipliers": _load_direct_numeric_settings(db, "tcc_etu_ltpu_multipliers", "ltd_c", sensor_id),
+        "stpu_settings": _load_direct_numeric_settings(db, "tcc_etu_stpu_pickups", "stp_setting", sensor_id),
+        "inst_settings": _load_direct_numeric_settings(db, "tcc_etu_inst_pickups", "ip_setting", sensor_id),
+        "gfpu_settings": _load_direct_numeric_settings(db, "tcc_etu_gfpu_pickups", "gfp_setting", sensor_id),
+    }
+
+
 def _enforce_plug_within_sensor_rating(sensor_id: int, plug_rating: float, db: Session) -> None:
     ctx_row = db.execute(
         text("SELECT rating FROM vw_sensor_calc_context WHERE sensor_id = :sid"),
@@ -1109,6 +1199,114 @@ def _load_direct_delay_band(
     sensor_id: int,
     setting: Optional[float],
 ):
+    if table_name == "tcc_etu_ltd_bands":
+        if setting is not None:
+            matched_row = db.execute(
+                text(
+                    """
+                    SELECT ltd_setting AS open_time,
+                           NULL::numeric AS clear_time,
+                           id AS ordinal,
+                           false AS is_default
+                    FROM tcc_etu_ltd_bands
+                    WHERE sensor_id = :sensor_id AND ltd_setting = :setting
+                    ORDER BY id
+                    LIMIT 1
+                    """
+                ),
+                {"sensor_id": sensor_id, "setting": setting},
+            ).fetchone()
+            if matched_row is not None:
+                return matched_row
+
+        return db.execute(
+            text(
+                """
+                SELECT ltd_setting AS open_time,
+                       NULL::numeric AS clear_time,
+                       id AS ordinal,
+                       false AS is_default
+                FROM tcc_etu_ltd_bands
+                WHERE sensor_id = :sensor_id
+                ORDER BY ltd_setting, id
+                LIMIT 1
+                """
+            ),
+            {"sensor_id": sensor_id},
+        ).fetchone()
+
+    if table_name == "tcc_etu_std_bands":
+        if setting is not None:
+            matched_row = db.execute(
+                text(
+                    """
+                    SELECT std_open AS open_time,
+                           std_clear AS clear_time,
+                           ordinal,
+                           false AS is_default
+                    FROM tcc_etu_std_bands
+                    WHERE sensor_id = :sensor_id AND std_open = :setting
+                    ORDER BY ordinal
+                    LIMIT 1
+                    """
+                ),
+                {"sensor_id": sensor_id, "setting": setting},
+            ).fetchone()
+            if matched_row is not None:
+                return matched_row
+
+        return db.execute(
+            text(
+                """
+                SELECT std_open AS open_time,
+                       std_clear AS clear_time,
+                       ordinal,
+                       false AS is_default
+                FROM tcc_etu_std_bands
+                WHERE sensor_id = :sensor_id
+                ORDER BY ordinal, std_open
+                LIMIT 1
+                """
+            ),
+            {"sensor_id": sensor_id},
+        ).fetchone()
+
+    if table_name == "tcc_etu_gfd_bands":
+        if setting is not None:
+            matched_row = db.execute(
+                text(
+                    """
+                    SELECT gfd_open AS open_time,
+                           gfd_clear AS clear_time,
+                           ordinal,
+                           false AS is_default
+                    FROM tcc_etu_gfd_bands
+                    WHERE sensor_id = :sensor_id AND gfd_open = :setting
+                    ORDER BY ordinal
+                    LIMIT 1
+                    """
+                ),
+                {"sensor_id": sensor_id, "setting": setting},
+            ).fetchone()
+            if matched_row is not None:
+                return matched_row
+
+        return db.execute(
+            text(
+                """
+                SELECT gfd_open AS open_time,
+                       gfd_clear AS clear_time,
+                       ordinal,
+                       false AS is_default
+                FROM tcc_etu_gfd_bands
+                WHERE sensor_id = :sensor_id
+                ORDER BY ordinal, gfd_open
+                LIMIT 1
+                """
+            ),
+            {"sensor_id": sensor_id},
+        ).fetchone()
+
     if setting is not None:
         matched_row = db.execute(
             text(f"""
@@ -1169,7 +1367,73 @@ def _band_row_to_delay_surface(band_row) -> tuple[Optional[float], Optional[floa
     return expected_time, time_low, time_high
 
 
-def _build_cascade_where(filters: dict[str, Optional[int]], exclude: set[str] | None = None) -> tuple[str, dict[str, int]]:
+def _round_deviation_pct(measured_value: float, expected_value: float) -> Optional[float]:
+    if expected_value in (None, 0):
+        return None
+
+    deviation = (
+        (Decimal(str(measured_value)) - Decimal(str(expected_value)))
+        / Decimal(str(expected_value))
+    ) * Decimal("100")
+    return float(deviation.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP))
+
+
+def _build_python_pickup_eval_data(
+    calc_data: dict[str, object],
+    measured: dict[str, object],
+    warning: Optional[str] = None,
+) -> dict[str, object]:
+    data: dict[str, object] = {
+        "sensor_desc": calc_data.get("sensor_desc", ""),
+        "maint_mode": calc_data.get("maint_mode", False),
+        "maint_capable": calc_data.get("maint_capable", False),
+        "maint_support_level": calc_data.get("maint_support_level", "none"),
+        "manufacturer": calc_data.get("manufacturer"),
+        "trip_type": calc_data.get("trip_type"),
+        "trip_style": calc_data.get("trip_style"),
+        "breaker_context_label": calc_data.get("breaker_context_label"),
+        "warnings": [warning] if warning else [],
+    }
+
+    pickup_results: list[bool] = []
+    for key in ("ltpu", "stpu", "inst", "gfpu"):
+        calc_elem = calc_data.get(key)
+        measurement = measured.get(key.upper())
+        if calc_elem is None or measurement is None or measurement.measured_current is None:
+            continue
+
+        measured_current = measurement.measured_current
+        limit_low = calc_elem.get("limit_low")
+        limit_high = calc_elem.get("limit_high")
+        lower_ok = True if limit_low is None else measured_current >= limit_low
+        upper_ok = True if limit_high is None else measured_current <= limit_high
+        passed = bool(lower_ok and upper_ok)
+        expected = calc_elem.get("test_current")
+        deviation_pct = None
+        if expected not in (None, 0):
+            deviation_pct = _round_deviation_pct(measured_current, expected)
+
+        data[key] = {
+            "expected": expected,
+            "measured": measured_current,
+            "limit_low": limit_low,
+            "limit_high": limit_high,
+            "pass": passed,
+            "deviation_pct": deviation_pct,
+        }
+        pickup_results.append(passed)
+
+    data["overall_pass"] = all(pickup_results) if pickup_results else False
+    return data
+
+    return expected_time, time_low, time_high
+
+
+def _build_cascade_where(
+    filters: dict[str, Optional[int]],
+    exclude: set[str] | None = None,
+    prefix: str = "",
+) -> tuple[str, dict[str, int]]:
     exclude = exclude or set()
     clauses: list[str] = []
     params: dict[str, int] = {}
@@ -1180,7 +1444,7 @@ def _build_cascade_where(filters: dict[str, Optional[int]], exclude: set[str] | 
         value = filters.get(field)
         if value is None:
             continue
-        clauses.append(f"{field} = :{field}")
+        clauses.append(f"{prefix}{field} = :{field}")
         params[field] = value
 
     where_sql = f"WHERE {' AND '.join(clauses)}" if clauses else ""
@@ -1196,6 +1460,215 @@ def _cascade_level(filters: dict[str, Optional[int]]) -> str:
         return "trip_types"
     if filters.get("manufacturer_id") is not None:
         return "manufacturers"
+    return "manufacturers"
+
+
+_ETU_BREAKER_CASCADE_CTE = """
+WITH etu_breaker_combined AS (
+    SELECT
+        'ICCB'::text AS breaker_class,
+        m.id AS manufacturer_id,
+        m.mfr_name AS manufacturer_name,
+        b.id AS breaker_id,
+        b.name AS breaker_name,
+        s.id AS breaker_style_id,
+        s.frame AS breaker_style_name
+    FROM tcc_brk_iccb b
+    INNER JOIN tcc_brk_iccb_styles s ON s.breaker_id = b.id
+    INNER JOIN tcc_manufacturers m ON m.id = b.manufacturer_id
+    UNION ALL
+    SELECT
+        'MCCB'::text,
+        m.id,
+        m.mfr_name,
+        b.id,
+        b.name,
+        s.id,
+        s.frame
+    FROM tcc_brk_mccb b
+    INNER JOIN tcc_brk_mccb_styles s ON s.breaker_id = b.id
+    INNER JOIN tcc_manufacturers m ON m.id = b.manufacturer_id
+    UNION ALL
+    SELECT
+        'PCB'::text,
+        m.id,
+        m.mfr_name,
+        b.id,
+        b.name,
+        s.id,
+        s.frame
+    FROM tcc_brk_pcb b
+    INNER JOIN tcc_brk_pcb_styles s ON s.breaker_id = b.id
+    INNER JOIN tcc_manufacturers m ON m.id = b.manufacturer_id
+)
+"""
+
+_ETU_BREAKER_CASCADE_CLASSES = ("ICCB", "MCCB", "PCB")
+
+
+def _build_cross_half_breaker_filter(
+    breaker_class: Optional[str],
+    breaker_id: Optional[int],
+    breaker_style_id: Optional[int],
+) -> tuple[str, dict[str, object], str]:
+    parts: list[str] = []
+    params: dict[str, object] = {}
+    if breaker_class is not None:
+        parts.append("breaker_class = :xh_breaker_class")
+        params["xh_breaker_class"] = breaker_class
+    if breaker_id is not None:
+        parts.append("breaker_id = :xh_breaker_id")
+        params["xh_breaker_id"] = breaker_id
+    if breaker_style_id is not None:
+        parts.append("breaker_style_id = :xh_breaker_style_id")
+        params["xh_breaker_style_id"] = breaker_style_id
+    if not parts:
+        return "", {}, ""
+
+    inner_where = " AND ".join(parts)
+    clause = (
+        " AND v.manufacturer_id IN ("
+        "SELECT DISTINCT manufacturer_id FROM etu_breaker_combined "
+        f"WHERE {inner_where})"
+    )
+    return clause, params, _ETU_BREAKER_CASCADE_CTE
+
+
+def _build_cross_half_trip_unit_filter(
+    trip_type_id: Optional[int],
+    trip_style_id: Optional[int],
+    sensor_id: Optional[int],
+) -> tuple[str, dict[str, object]]:
+    parts: list[str] = []
+    params: dict[str, object] = {}
+    if trip_type_id is not None:
+        parts.append("trip_type_id = :xh_trip_type_id")
+        params["xh_trip_type_id"] = trip_type_id
+    if trip_style_id is not None:
+        parts.append("trip_style_id = :xh_trip_style_id")
+        params["xh_trip_style_id"] = trip_style_id
+    if sensor_id is not None:
+        parts.append("sensor_id = :xh_sensor_id")
+        params["xh_sensor_id"] = sensor_id
+    if not parts:
+        return "", {}
+
+    inner_where = " AND ".join(parts)
+    clause = (
+        " AND manufacturer_id IN ("
+        "SELECT DISTINCT manufacturer_id FROM vw_trip_unit_cascade "
+        f"WHERE {inner_where})"
+    )
+    return clause, params
+
+
+def _build_cascade_plug_join(
+    plug_value: Optional[float],
+    *,
+    alias: str = "",
+) -> tuple[str, dict[str, object]]:
+    if plug_value is None:
+        return "", {}
+
+    qualified_sensor_id = f"{alias}.sensor_id" if alias else "sensor_id"
+    return (
+        f"JOIN tcc_etu_plugs p_filter ON p_filter.sensor_id = {qualified_sensor_id} AND p_filter.value = :plug_value",
+        {"plug_value": float(plug_value)},
+    )
+
+
+def _build_etu_search_where(
+    scope_filters: dict[str, Optional[int]],
+    *,
+    q: Optional[str] = None,
+    prefix: str = "v.",
+) -> tuple[str, dict[str, object]]:
+    where_sql, params = _build_cascade_where(scope_filters, prefix=prefix)
+    if q and q.strip():
+        query_sql = (
+            f"({prefix}manufacturer_name ILIKE :q "
+            f"OR {prefix}trip_type_name ILIKE :q "
+            f"OR {prefix}trip_style_name ILIKE :q "
+            f"OR {prefix}sensor_desc ILIKE :q)"
+        )
+        if where_sql:
+            where_sql = f"{where_sql} AND {query_sql}"
+        else:
+            where_sql = f"WHERE {query_sql}"
+        params["q"] = f"%{q.strip()}%"
+    return where_sql, params
+
+
+def _load_etu_plug_value_map_sql(db: Session, sensor_ids: list[int]) -> dict[int, list[float]]:
+    if not sensor_ids:
+        return {}
+
+    placeholder_names = [f"sensor_id_{index}" for index, _ in enumerate(sensor_ids)]
+    in_clause = ", ".join(f":{name}" for name in placeholder_names)
+    params: dict[str, object] = {
+        name: sensor_id for name, sensor_id in zip(placeholder_names, sensor_ids)
+    }
+    rows = db.execute(
+        text(
+            f"""
+            SELECT sensor_id, value
+            FROM tcc_etu_plugs
+            WHERE sensor_id IN ({in_clause})
+            ORDER BY sensor_id, value
+            """
+        ),
+        params,
+    ).fetchall()
+
+    plug_map: dict[int, list[float]] = {}
+    seen_pairs: set[tuple[int, float]] = set()
+    for row in rows:
+        mapping = row._mapping if hasattr(row, "_mapping") else row
+        sensor_id = mapping.get("sensor_id")
+        value = mapping.get("value")
+        if sensor_id is None or value is None:
+            continue
+        sensor_id = int(sensor_id)
+        plug_value = float(value)
+        pair = (sensor_id, plug_value)
+        if pair in seen_pairs:
+            continue
+        seen_pairs.add(pair)
+        plug_map.setdefault(sensor_id, []).append(plug_value)
+
+    return plug_map
+
+
+def _build_etu_breaker_cascade_where(
+    scope: dict[str, Optional[object]],
+    excluded: set[str] | None = None,
+) -> tuple[str, dict[str, object]]:
+    excluded = excluded or set()
+    clauses: list[str] = []
+    params: dict[str, object] = {}
+
+    if scope.get("manufacturer_id") is not None and "manufacturer_id" not in excluded:
+        clauses.append("manufacturer_id = :manufacturer_id")
+        params["manufacturer_id"] = scope["manufacturer_id"]
+    if scope.get("breaker_class") is not None and "breaker_class" not in excluded:
+        clauses.append("breaker_class = :breaker_class")
+        params["breaker_class"] = scope["breaker_class"]
+    if scope.get("breaker_id") is not None and "breaker_id" not in excluded:
+        clauses.append("breaker_id = :breaker_id")
+        params["breaker_id"] = scope["breaker_id"]
+    if scope.get("breaker_style_id") is not None and "breaker_style_id" not in excluded:
+        clauses.append("breaker_style_id = :breaker_style_id")
+        params["breaker_style_id"] = scope["breaker_style_id"]
+
+    where_sql = f"WHERE {' AND '.join(clauses)}" if clauses else ""
+    return where_sql, params
+
+
+def _etu_breaker_cascade_level(scope: dict[str, Optional[object]]) -> str:
+    if scope.get("breaker_id") is not None or scope.get("breaker_style_id") is not None:
+        return "breaker_styles"
+    if scope.get("manufacturer_id") is not None or scope.get("breaker_class") is not None:
+        return "breakers"
     return "manufacturers"
 
 
@@ -1298,6 +1771,9 @@ def _generate_nominal_plot_curves(
                             points=[PlotCurvePoint(amps=p.amps, seconds=p.seconds) for p in points],
                         ))
         except Exception as exc:
+            rollback = getattr(db, "rollback", None)
+            if callable(rollback):
+                rollback()
             logger.warning("LTD curve generation failed: %s", exc)
             warnings.append(f"LTD curve unavailable: {exc}")
 
@@ -1365,9 +1841,15 @@ def _generate_nominal_plot_curves(
                             points=[PlotCurvePoint(amps=p.amps, seconds=p.seconds) for p in points],
                         ))
         except Exception as exc:
+            rollback = getattr(db, "rollback", None)
+            if callable(rollback):
+                rollback()
             logger.warning("IEEE curve generation failed: %s", exc)
             warnings.append(f"Curve generation unavailable: {exc}")
     except Exception as exc:
+        rollback = getattr(db, "rollback", None)
+        if callable(rollback):
+            rollback()
         logger.warning("Curve generation failed: %s", exc)
         warnings.append(f"Curve generation unavailable: {exc}")
 
@@ -1752,7 +2234,7 @@ def _search_emt_frames(
             e.id AS emt_id,
             f.id AS frame_id,
             e.{cols['emt']['manufacturer_id']} AS manufacturer_id,
-            m.name AS manufacturer_name,
+            m.mfr_name AS manufacturer_name,
             e.{cols['emt']['type_name']} AS type_name,
             e.{cols['emt']['style_name']} AS style_name,
             e.{cols['emt']['tcc_number']} AS tcc_number,
@@ -1776,7 +2258,7 @@ def _search_emt_frames(
             GROUP BY {cols['sections']['frame_id']}
         ) sec_counts ON sec_counts.frame_id = f.id
         {where_sql}
-        ORDER BY m.name NULLS LAST, e.{cols['emt']['type_name']}, e.{cols['emt']['style_name']}, f.id
+        ORDER BY m.mfr_name NULLS LAST, e.{cols['emt']['type_name']}, e.{cols['emt']['style_name']}, f.id
         LIMIT :limit
         """
     )
@@ -1795,7 +2277,7 @@ def _load_emt_frame_context_bundle(db: Session, frame_id: int) -> dict[str, obje
                 e.id AS emt_id,
                 f.id AS frame_id,
                 e.{cols['emt']['manufacturer_id']} AS manufacturer_id,
-                m.name AS manufacturer_name,
+                m.mfr_name AS manufacturer_name,
                 e.{cols['emt']['type_name']} AS type_name,
                 e.{cols['emt']['style_name']} AS style_name,
                 e.{cols['emt']['tcc_number']} AS tcc_number,
@@ -1983,7 +2465,7 @@ def _load_emt_plot_bundle(db: Session, section_id: int, band_id: int) -> dict[st
                 s.id AS section_id,
                 b.id AS band_id,
                 e.{cols['emt']['manufacturer_id']} AS manufacturer_id,
-                m.name AS manufacturer_name,
+                m.mfr_name AS manufacturer_name,
                 e.{cols['emt']['type_name']} AS type_name,
                 e.{cols['emt']['style_name']} AS style_name,
                 e.{cols['emt']['tcc_number']} AS tcc_number,
@@ -2098,6 +2580,10 @@ def get_cascade(
     trip_type_id: Optional[int] = Query(None, description="Filter by trip type"),
     trip_style_id: Optional[int] = Query(None, description="Filter by trip style"),
     sensor_id: Optional[int] = Query(None, description="Filter to specific sensor"),
+    plug_value: Optional[float] = Query(None, description="Optional compatible-plug lens"),
+    breaker_class: Optional[str] = Query(None, description="Cross-half filter by breaker class"),
+    breaker_id: Optional[int] = Query(None, description="Cross-half filter by breaker"),
+    breaker_style_id: Optional[int] = Query(None, description="Cross-half filter by breaker style"),
     db: Session = Depends(get_db),
 ):
     """
@@ -2109,6 +2595,12 @@ def get_cascade(
     filtered option lists for the entire ETU selection path based on the
     current selection state.
     """
+    if breaker_class is not None and breaker_class not in _ETU_BREAKER_CASCADE_CLASSES:
+        raise HTTPException(
+            status_code=422,
+            detail="breaker_class must be one of 'ICCB', 'MCCB', 'PCB'.",
+        )
+
     filters = {
         "manufacturer_id": manufacturer_id,
         "trip_type_id": trip_type_id,
@@ -2116,76 +2608,116 @@ def get_cascade(
         "sensor_id": sensor_id,
     }
 
+    xh_clause, xh_params, xh_cte = _build_cross_half_breaker_filter(
+        breaker_class,
+        breaker_id,
+        breaker_style_id,
+    )
+    plug_join, plug_params = _build_cascade_plug_join(plug_value, alias="v")
+
+    def _apply_xh(where_sql: str) -> str:
+        if not xh_clause:
+            return where_sql
+        if where_sql:
+            return where_sql + xh_clause
+        return "WHERE 1=1" + xh_clause
+
     full_where, full_params = _build_cascade_where(filters)
     match_count = db.execute(
         text(
             f"""
+            {xh_cte}
             SELECT COUNT(DISTINCT sensor_id)
-            FROM vw_trip_unit_cascade
-            {full_where}
+            FROM vw_trip_unit_cascade v
+            {plug_join}
+            {_apply_xh(full_where)}
             """
         ),
-        full_params,
+        {**full_params, **plug_params, **xh_params},
     ).scalar() or 0
 
     manufacturer_where, manufacturer_params = _build_cascade_where(filters, {"manufacturer_id"})
     manufacturer_rows = db.execute(
         text(
             f"""
+            {xh_cte}
             SELECT
-                manufacturer_id,
-                manufacturer_name,
-                COUNT(DISTINCT trip_type_id) AS trip_type_count
-            FROM vw_trip_unit_cascade
-            {manufacturer_where}
-            GROUP BY manufacturer_id, manufacturer_name
-            ORDER BY manufacturer_name
+                v.manufacturer_id AS manufacturer_id,
+                v.manufacturer_name AS manufacturer_name,
+                COUNT(DISTINCT v.trip_type_id) AS trip_type_count
+            FROM vw_trip_unit_cascade v
+            {plug_join}
+            {_apply_xh(manufacturer_where)}
+            GROUP BY v.manufacturer_id, v.manufacturer_name
+            ORDER BY v.manufacturer_name
             """
         ),
-        manufacturer_params,
+        {**manufacturer_params, **plug_params, **xh_params},
     ).fetchall()
 
     trip_type_where, trip_type_params = _build_cascade_where(filters, {"trip_type_id"})
     trip_type_rows = db.execute(
         text(
             f"""
+            {xh_cte}
             SELECT
-                trip_type_id,
-                trip_type_name,
-                manufacturer_id,
-                manufacturer_name,
-                COUNT(DISTINCT trip_style_id) AS trip_style_count
-            FROM vw_trip_unit_cascade
-            {trip_type_where}
-            GROUP BY trip_type_id, trip_type_name,
-                     manufacturer_id, manufacturer_name
-            ORDER BY manufacturer_name, trip_type_name
+                v.trip_type_id AS trip_type_id,
+                v.trip_type_name AS trip_type_name,
+                v.manufacturer_id AS manufacturer_id,
+                v.manufacturer_name AS manufacturer_name,
+                COUNT(DISTINCT v.trip_style_id) AS trip_style_count
+            FROM vw_trip_unit_cascade v
+            {plug_join}
+            {_apply_xh(trip_type_where)}
+            GROUP BY v.trip_type_id, v.trip_type_name,
+                     v.manufacturer_id, v.manufacturer_name
+            ORDER BY v.manufacturer_name, v.trip_type_name
             """
         ),
-        trip_type_params,
+        {**trip_type_params, **plug_params, **xh_params},
     ).fetchall()
 
     trip_style_where, trip_style_params = _build_cascade_where(filters, {"trip_style_id"})
     trip_style_rows = db.execute(
         text(
             f"""
+            {xh_cte}
             SELECT
-                trip_style_id,
-                trip_style_name,
-                trip_type_id,
-                trip_type_name,
-                manufacturer_id,
-                manufacturer_name,
-                COUNT(DISTINCT sensor_id) AS sensor_count
-            FROM vw_trip_unit_cascade
-            {trip_style_where}
-            GROUP BY trip_style_id, trip_style_name,
-                     trip_type_id, trip_type_name,
-                     manufacturer_id, manufacturer_name
-            ORDER BY manufacturer_name, trip_type_name, trip_style_name
+                v.trip_style_id AS trip_style_id,
+                v.trip_style_name AS trip_style_name,
+                v.trip_type_id AS trip_type_id,
+                v.trip_type_name AS trip_type_name,
+                v.manufacturer_id AS manufacturer_id,
+                v.manufacturer_name AS manufacturer_name,
+                COUNT(DISTINCT v.sensor_id) AS sensor_count
+            FROM vw_trip_unit_cascade v
+            {plug_join}
+            {_apply_xh(trip_style_where)}
+            GROUP BY v.trip_style_id, v.trip_style_name,
+                     v.trip_type_id, v.trip_type_name,
+                     v.manufacturer_id, v.manufacturer_name
+            ORDER BY v.manufacturer_name, v.trip_type_name, v.trip_style_name
             """
         ),
-        trip_style_params,
+        {**trip_style_params, **plug_params, **xh_params},
+    ).fetchall()
+
+    plug_scope_where, plug_scope_params = _build_cascade_where(filters, prefix="v.")
+    plug_rows = db.execute(
+        text(
+            f"""
+            {xh_cte}
+            SELECT
+                p.value AS plug_value,
+                COUNT(DISTINCT v.sensor_id) AS sensor_count
+            FROM vw_trip_unit_cascade v
+            JOIN tcc_etu_plugs p ON p.sensor_id = v.sensor_id
+            {_apply_xh(plug_scope_where)}
+            GROUP BY p.value
+            ORDER BY p.value
+            """
+        ),
+        {**plug_scope_params, **xh_params},
     ).fetchall()
 
     sensors: list[CascadeSensor] = []
@@ -2194,26 +2726,28 @@ def get_cascade(
         sensor_rows = db.execute(
             text(
                 f"""
+                {xh_cte}
                 SELECT DISTINCT
-                    sensor_id,
-                    sensor_rating,
-                    sensor_desc,
-                    trip_style_id,
-                    trip_style_name,
-                    trip_type_id,
-                    trip_type_name,
-                    manufacturer_id,
-                    manufacturer_name,
-                    has_ltpu,
-                    has_stpu,
-                    has_inst,
-                    has_gfpu
-                FROM vw_trip_unit_cascade
-                {sensor_where}
-                ORDER BY sensor_rating NULLS LAST, sensor_desc
+                    v.sensor_id AS sensor_id,
+                    v.sensor_rating AS sensor_rating,
+                    v.sensor_desc AS sensor_desc,
+                    v.trip_style_id AS trip_style_id,
+                    v.trip_style_name AS trip_style_name,
+                    v.trip_type_id AS trip_type_id,
+                    v.trip_type_name AS trip_type_name,
+                    v.manufacturer_id AS manufacturer_id,
+                    v.manufacturer_name AS manufacturer_name,
+                    v.has_ltpu AS has_ltpu,
+                    v.has_stpu AS has_stpu,
+                    v.has_inst AS has_inst,
+                    v.has_gfpu AS has_gfpu
+                FROM vw_trip_unit_cascade v
+                {plug_join}
+                {_apply_xh(sensor_where)}
+                ORDER BY v.sensor_rating NULLS LAST, v.sensor_desc
                 """
             ),
-            sensor_params,
+            {**sensor_params, **plug_params, **xh_params},
         ).fetchall()
         sensors = [CascadeSensor(**dict(row._mapping)) for row in sensor_rows]
 
@@ -2224,6 +2758,231 @@ def get_cascade(
         trip_types=[CascadeTripType(**dict(row._mapping)) for row in trip_type_rows],
         trip_styles=[CascadeTripStyle(**dict(row._mapping)) for row in trip_style_rows],
         sensors=sensors,
+        plug_values=[CascadePlugOption(**dict(row._mapping)) for row in plug_rows],
+    )
+
+
+@router.get("/etu/search", response_model=EtuSearchResponse)
+def search_etu(
+    manufacturer_id: Optional[int] = Query(None, description="Optional manufacturer filter"),
+    trip_type_id: Optional[int] = Query(None, description="Optional trip-type filter"),
+    trip_style_id: Optional[int] = Query(None, description="Optional trip-style filter"),
+    sensor_id: Optional[int] = Query(None, description="Optional sensor filter"),
+    plug_value: Optional[float] = Query(None, description="Optional plug-compatibility filter"),
+    q: Optional[str] = Query(None, description="Case-insensitive search within the current ETU scope"),
+    limit: int = Query(50, ge=1, le=100, description="Maximum number of ETU matches to return"),
+    db: Session = Depends(get_db),
+):
+    scope_filters = {
+        "manufacturer_id": manufacturer_id,
+        "trip_type_id": trip_type_id,
+        "trip_style_id": trip_style_id,
+        "sensor_id": sensor_id,
+    }
+    where_sql, params = _build_etu_search_where(scope_filters, q=q)
+    plug_join, plug_params = _build_cascade_plug_join(plug_value, alias="v")
+
+    count = db.execute(
+        text(
+            f"""
+            SELECT COUNT(DISTINCT v.sensor_id)
+            FROM vw_trip_unit_cascade v
+            {plug_join}
+            {where_sql}
+            """
+        ),
+        {**params, **plug_params},
+    ).scalar() or 0
+
+    rows = db.execute(
+        text(
+            f"""
+            SELECT DISTINCT
+                v.sensor_id AS sensor_id,
+                v.sensor_rating AS sensor_rating,
+                v.sensor_desc AS sensor_desc,
+                v.trip_style_id AS trip_style_id,
+                v.trip_style_name AS trip_style_name,
+                v.trip_type_id AS trip_type_id,
+                v.trip_type_name AS trip_type_name,
+                v.manufacturer_id AS manufacturer_id,
+                v.manufacturer_name AS manufacturer_name
+            FROM vw_trip_unit_cascade v
+            {plug_join}
+            {where_sql}
+            ORDER BY v.manufacturer_name, v.trip_type_name, v.trip_style_name,
+                     v.sensor_rating NULLS LAST, v.sensor_desc
+            LIMIT :limit
+            """
+        ),
+        {**params, **plug_params, "limit": limit},
+    ).fetchall()
+
+    sensor_ids = [int(row._mapping["sensor_id"]) for row in rows]
+    plug_map = _load_etu_plug_value_map_sql(db, sensor_ids)
+
+    return EtuSearchResponse(
+        count=count,
+        results=[
+            EtuSearchResult(
+                **dict(row._mapping),
+                compatible_plug_values=plug_map.get(int(row._mapping["sensor_id"]), []),
+            )
+            for row in rows
+        ],
+    )
+
+
+@router.get("/etu/breaker-cascade", response_model=EtuBreakerCascadeResponse)
+def get_etu_breaker_cascade(
+    manufacturer_id: Optional[int] = Query(None, description="Optional manufacturer filter"),
+    breaker_class: Optional[str] = Query(None, description="Optional breaker class: ICCB, MCCB, or PCB"),
+    breaker_id: Optional[int] = Query(None, description="Optional breaker filter"),
+    breaker_style_id: Optional[int] = Query(None, description="Optional breaker-style filter"),
+    trip_type_id: Optional[int] = Query(None, description="Cross-half filter by trip type"),
+    trip_style_id: Optional[int] = Query(None, description="Cross-half filter by trip style"),
+    sensor_id: Optional[int] = Query(None, description="Cross-half filter by sensor"),
+    db: Session = Depends(get_db),
+):
+    if breaker_class is not None and breaker_class not in _ETU_BREAKER_CASCADE_CLASSES:
+        raise HTTPException(
+            status_code=422,
+            detail="breaker_class must be one of 'ICCB', 'MCCB', 'PCB'.",
+        )
+
+    scope: dict[str, Optional[object]] = {
+        "manufacturer_id": manufacturer_id,
+        "breaker_class": breaker_class,
+        "breaker_id": breaker_id,
+        "breaker_style_id": breaker_style_id,
+    }
+
+    xh_clause, xh_params = _build_cross_half_trip_unit_filter(
+        trip_type_id,
+        trip_style_id,
+        sensor_id,
+    )
+
+    def _apply_xh(where_sql: str) -> str:
+        if not xh_clause:
+            return where_sql
+        if where_sql:
+            return where_sql + xh_clause
+        return "WHERE 1=1" + xh_clause
+
+    full_where, full_params = _build_etu_breaker_cascade_where(scope)
+    count_value = db.execute(
+        text(
+            f"""
+            {_ETU_BREAKER_CASCADE_CTE}
+            SELECT COUNT(*)
+            FROM etu_breaker_combined
+            {_apply_xh(full_where)}
+            """
+        ),
+        {**full_params, **xh_params},
+    ).scalar() or 0
+
+    manufacturer_where, manufacturer_params = _build_etu_breaker_cascade_where(scope, {"manufacturer_id"})
+    manufacturer_rows = db.execute(
+        text(
+            f"""
+            {_ETU_BREAKER_CASCADE_CTE}
+            SELECT
+                manufacturer_id,
+                manufacturer_name,
+                COUNT(DISTINCT breaker_id) AS breaker_count
+            FROM etu_breaker_combined
+            {_apply_xh(manufacturer_where)}
+            GROUP BY manufacturer_id, manufacturer_name
+            ORDER BY manufacturer_name
+            """
+        ),
+        {**manufacturer_params, **xh_params},
+    ).fetchall()
+
+    class_where, class_params = _build_etu_breaker_cascade_where(scope, {"breaker_class"})
+    class_rows = db.execute(
+        text(
+            f"""
+            {_ETU_BREAKER_CASCADE_CTE}
+            SELECT
+                breaker_class,
+                COUNT(DISTINCT breaker_id) AS breaker_count
+            FROM etu_breaker_combined
+            {_apply_xh(class_where)}
+            GROUP BY breaker_class
+            ORDER BY breaker_class
+            """
+        ),
+        {**class_params, **xh_params},
+    ).fetchall()
+
+    breakers: list[EtuBreakerOption] = []
+    if manufacturer_id is not None or breaker_class is not None or breaker_id is not None or breaker_style_id is not None:
+        breaker_where, breaker_params = _build_etu_breaker_cascade_where(scope, {"breaker_id"})
+        breaker_rows = db.execute(
+            text(
+                f"""
+                {_ETU_BREAKER_CASCADE_CTE}
+                SELECT
+                    breaker_id,
+                    breaker_name,
+                    breaker_class,
+                    manufacturer_id,
+                    manufacturer_name,
+                    COUNT(DISTINCT breaker_style_id) AS style_count
+                FROM etu_breaker_combined
+                {_apply_xh(breaker_where)}
+                GROUP BY breaker_id, breaker_name, breaker_class,
+                         manufacturer_id, manufacturer_name
+                ORDER BY manufacturer_name, breaker_class, breaker_name
+                """
+            ),
+            {**breaker_params, **xh_params},
+        ).fetchall()
+        breakers = [EtuBreakerOption(**dict(row._mapping)) for row in breaker_rows]
+
+    breaker_styles: list[EtuBreakerStyleOption] = []
+    if breaker_id is not None or breaker_style_id is not None:
+        style_where, style_params = _build_etu_breaker_cascade_where(scope, {"breaker_style_id"})
+        style_rows = db.execute(
+            text(
+                f"""
+                {_ETU_BREAKER_CASCADE_CTE}
+                SELECT DISTINCT
+                    breaker_style_id,
+                    breaker_style_name,
+                    breaker_id,
+                    breaker_name,
+                    breaker_class,
+                    manufacturer_id,
+                    manufacturer_name
+                FROM etu_breaker_combined
+                {_apply_xh(style_where)}
+                ORDER BY manufacturer_name, breaker_class, breaker_name, breaker_style_name
+                """
+            ),
+            {**style_params, **xh_params},
+        ).fetchall()
+        breaker_styles = [EtuBreakerStyleOption(**dict(row._mapping)) for row in style_rows]
+
+    return EtuBreakerCascadeResponse(
+        level=_etu_breaker_cascade_level(scope),
+        count=int(count_value),
+        scope={
+            "manufacturer_id": manufacturer_id,
+            "breaker_class": breaker_class,
+            "breaker_id": breaker_id,
+            "breaker_style_id": breaker_style_id,
+            "trip_type_id": trip_type_id,
+            "trip_style_id": trip_style_id,
+            "sensor_id": sensor_id,
+        },
+        manufacturers=[EtuBreakerManufacturer(**dict(row._mapping)) for row in manufacturer_rows],
+        breaker_classes=[EtuBreakerClassOption(**dict(row._mapping)) for row in class_rows],
+        breakers=breakers,
+        breaker_styles=breaker_styles,
     )
 
 
@@ -2278,22 +3037,25 @@ def get_available_settings(sensor_id: int, db: Session = Depends(get_db)):
     """
     Return available dropdown/slider values for each protection element.
 
-    Calls fn_sensor_available_settings(p_sensor_id) which queries the
-    section tables (DatSection1, DatSection3, DatSection4, DatSection1GF)
-    and plug table to return valid setting arrays.
+    Read directly from the active ETU tables and expand the persisted boundary
+    rows into full UI-facing option sets. The SQL helper function can now be
+    repaired independently, but the route keeps its direct-table contract so the
+    UI receives the same expanded option inventory the app validates locally.
     """
-    row = db.execute(
-        text("SELECT fn_sensor_available_settings(:sid) AS result"),
-        {"sid": sensor_id},
-    ).fetchone()
-
-    if not row or row.result is None:
+    data = _load_direct_available_settings(db, sensor_id)
+    if not any(data.get(key) for key in (
+        "plug_values",
+        "ltpu_settings",
+        "ltd_settings",
+        "ltd_multipliers",
+        "stpu_settings",
+        "inst_settings",
+        "gfpu_settings",
+    )):
         raise HTTPException(
             status_code=404,
             detail=f"No settings found for sensor {sensor_id}",
         )
-
-    data = row.result
 
     # Some catalog families store only boundary pickup rows and rely on step metadata
     # from the calc-context view, sometimes only on the maintenance columns. Expand
@@ -2320,10 +3082,9 @@ def get_available_settings(sensor_id: int, db: Session = Depends(get_db)):
     std_settings = _load_delay_band_settings(db, "tcc_etu_std_bands", sensor_id)
     gfd_settings = _load_delay_band_settings(db, "tcc_etu_gfd_bands", sensor_id)
 
-    # fn_sensor_available_settings returns JSON with keys:
-    # plug_values, ltpu_settings, ltd_settings (objects), ltd_multipliers,
-    # stpu_settings, inst_settings, gfpu_settings. STD/GFD band rows are
-    # loaded directly here so the UI can use strict per-sensor delay options.
+    # The direct ETU loader returns pickup arrays plus LTD settings. STD/GFD band
+    # rows are loaded separately here so the UI can use strict per-sensor delay
+    # options without relying on stale RPC wiring.
     return AvailableSettingsResponse(
         sensor_id=sensor_id,
         plug_values=plug_values,
@@ -3099,65 +3860,15 @@ def evaluate_test_results(req: EvaluateRequest, db: Session = Depends(get_db)):
     Evaluate measured values from current injection testing against calculated
     tolerance bands. Returns per-element pass/fail with deviation percentages.
 
-    Calls fn_evaluate_test_results() which:
-      1. Recalculates expected test currents (same as /calculate)
-      2. Compares each measurement against limit_low / limit_high
-      3. Computes deviation percentage from expected
-      4. Returns overall_pass (all elements must pass)
+        Reuses the authoritative pickup calculations from /calculate and performs
+        pickup pass/fail comparison in-process. That keeps the route aligned with
+        the delay-aware API contract even when the live SQL evaluation helper is
+        repaired or revised on its own cadence.
     """
     _enforce_plug_within_sensor_rating(req.sensor_id, req.plug_rating, db)
 
     # Extract individual measured values from measurements list
     measured = {m.element.upper(): m for m in req.measurements}
-
-    row = db.execute(
-        text("""
-            SELECT fn_evaluate_test_results(
-                p_sensor_id     := :p_sensor_id,
-                p_plug_rating   := :p_plug_rating,
-                p_ltpu_setting  := :p_ltpu_setting,
-                p_stpu_setting  := :p_stpu_setting,
-                p_inst_setting  := :p_inst_setting,
-                p_gfpu_setting  := :p_gfpu_setting,
-                p_multiplier_value := :p_multiplier_value,
-                p_c_factor      := :p_c_factor,
-                p_ltpu_measured := :p_ltpu_measured,
-                p_stpu_measured := :p_stpu_measured,
-                p_inst_measured := :p_inst_measured,
-                p_gfpu_measured := :p_gfpu_measured,
-                p_ltd_trip_time := :p_ltd_trip_time,
-                p_std_trip_time := :p_std_trip_time,
-                p_gfd_trip_time := :p_gfd_trip_time,
-                p_maint_mode    := :p_maint_mode
-            ) AS result
-        """),
-        {
-            "p_sensor_id": req.sensor_id,
-            "p_plug_rating": req.plug_rating,
-            "p_ltpu_setting": req.ltpu_setting,
-            "p_stpu_setting": req.stpu_setting,
-            "p_inst_setting": req.inst_setting,
-            "p_gfpu_setting": req.gfpu_setting,
-            "p_multiplier_value": req.multiplier_value,
-            "p_c_factor": req.c_factor,
-            "p_ltpu_measured": measured["LTPU"].measured_current if "LTPU" in measured else None,
-            "p_stpu_measured": measured["STPU"].measured_current if "STPU" in measured else None,
-            "p_inst_measured": measured["INST"].measured_current if "INST" in measured else None,
-            "p_gfpu_measured": measured["GFPU"].measured_current if "GFPU" in measured else None,
-            "p_ltd_trip_time": measured["LTD"].measured_time if "LTD" in measured else None,
-            "p_std_trip_time": measured["STD"].measured_time if "STD" in measured else None,
-            "p_gfd_trip_time": measured["GFD"].measured_time if "GFD" in measured else None,
-            "p_maint_mode": req.maint_mode,
-        },
-    ).fetchone()
-
-    if not row or row.result is None:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Evaluation failed for sensor {req.sensor_id}",
-        )
-
-    data = row.result
 
     calc_row = db.execute(
         text("""
@@ -3192,6 +3903,13 @@ def evaluate_test_results(req: EvaluateRequest, db: Session = Depends(get_db)):
         },
     ).fetchone()
     calc_data = calc_row.result if calc_row and calc_row.result is not None else None
+    if calc_data is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Calculation failed for sensor {req.sensor_id}",
+        )
+
+    data = _build_python_pickup_eval_data(calc_data, measured)
 
     # SQL function returns flat per-element keys (ltpu, stpu, inst, gfpu),
     # each either a JSON object with {expected, measured, limit_low, limit_high, pass, deviation_pct} or null.
@@ -3265,7 +3983,7 @@ def evaluate_test_results(req: EvaluateRequest, db: Session = Depends(get_db)):
 
             deviation_pct = None
             if expected_time not in (None, 0):
-                deviation_pct = round(((measured_time - expected_time) / expected_time) * 100, 2)
+                deviation_pct = _round_deviation_pct(measured_time, expected_time)
 
             elements.append(ElementResult(
                 element=element_name,
@@ -3321,14 +4039,16 @@ def plot_tcc(req: PlotTccRequest, db: Session = Depends(get_db)):
     """
     Return a single, frontend-ready TCC plot payload.
 
-    Combines:
-      - Breaker curve segments from the calc engine (LTD, STD, INST, GFD)
-      - Expected test markers from fn_calculate_test_currents
-      - Measured result markers from fn_evaluate_test_results (when measurements provided)
-      - Companion summary table for the numeric sidebar
+        Combines:
+            - Breaker curve segments from the calc engine (LTD, STD, INST, GFD)
+            - Expected test markers from fn_calculate_test_currents
+            - Measured result markers from in-process pickup evaluation
+            - Companion summary table for the numeric sidebar
 
-    This endpoint reuses existing NETA calculate/evaluate SQL functions for
-    marker and tolerance data, and calc engine services for curve generation.
+        This endpoint reuses the existing NETA calculate SQL function for marker
+        data and the calc engine services for curve generation, while evaluating
+        measured pickup results in-process so the plot response stays aligned
+        with the route-owned marker and summary contract.
     """
 
     _enforce_plug_within_sensor_rating(req.sensor_id, req.plug_rating, db)
@@ -3383,40 +4103,9 @@ def plot_tcc(req: PlotTccRequest, db: Session = Depends(get_db)):
     overall_pass = None
     if req.measurements and req.include_measured_markers:
         meas_map = {m.element.upper(): m for m in req.measurements}
-        eval_row = db.execute(
-            text("""
-                SELECT fn_evaluate_test_results(
-                    p_sensor_id     := :sid, p_plug_rating := :pr,
-                    p_ltpu_setting  := :ls, p_ltd_trip_time := :ltd_tm,
-                    p_stpu_setting  := :ss, p_std_trip_time := :std_tm,
-                    p_inst_setting  := :is, p_gfpu_setting := :gs,
-                    p_multiplier_value := :mv, p_c_factor := :cf,
-                    p_gfd_trip_time := :gfd_tm,
-                    p_ltpu_measured := :lm, p_stpu_measured := :sm,
-                    p_inst_measured := :im, p_gfpu_measured := :gm,
-                    p_maint_mode    := :mm
-                ) AS result
-            """),
-            {
-                "sid": req.sensor_id, "pr": req.plug_rating,
-                "ls": req.ltpu_setting, "ss": req.stpu_setting,
-                "is": req.inst_setting, "gs": req.gfpu_setting,
-                "mv": req.multiplier_value, "cf": req.c_factor,
-                "ltd_tm": meas_map["LTD"].measured_time if "LTD" in meas_map else None,
-                "std_tm": meas_map["STD"].measured_time if "STD" in meas_map else None,
-                "gfd_tm": meas_map["GFD"].measured_time if "GFD" in meas_map else None,
-                "lm": meas_map["LTPU"].measured_current if "LTPU" in meas_map else None,
-                "sm": meas_map["STPU"].measured_current if "STPU" in meas_map else None,
-                "im": meas_map["INST"].measured_current if "INST" in meas_map else None,
-                "gm": meas_map["GFPU"].measured_current if "GFPU" in meas_map else None,
-                "mm": req.maint_mode,
-            },
-        ).fetchone()
-        if eval_row and eval_row.result:
-            eval_data = eval_row.result
-            overall_pass = eval_data.get("overall_pass")
-            # Merge evaluate-path warnings (MAINT degradation, tolerance notes, etc.)
-            warnings.extend(eval_data.get("warnings", []))
+        eval_data = _build_python_pickup_eval_data(calc_data, meas_map)
+        overall_pass = eval_data.get("overall_pass")
+        warnings.extend(eval_data.get("warnings", []))
 
     # ── Step 3: Build meta ──
     maint_mode = calc_data.get("maint_mode", False)
@@ -3619,7 +4308,7 @@ def plot_tcc(req: PlotTccRequest, db: Session = Depends(get_db)):
                     upper_ok = True if tr.time_limit_high is None else measurement.measured_time <= tr.time_limit_high
                     tr.passed = bool(lower_ok and upper_ok)
                     if tr.expected_time not in (None, 0):
-                        tr.deviation_pct = round(((measurement.measured_time - tr.expected_time) / tr.expected_time) * 100, 2)
+                        tr.deviation_pct = _round_deviation_pct(measurement.measured_time, tr.expected_time)
                     measured_markers.append(PlotMeasuredMarker(
                         id=f"{elem_name.lower()}_measured",
                         element=elem_name,

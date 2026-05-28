@@ -40,7 +40,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from apex_calc_engine.models.etu_core import ETUSensor
-from apex_calc_engine.models.etu_curves import ETUSensorParam, ETULTDParam
+from apex_calc_engine.models.etu_curves import ETULTDParam
 from apex_calc_engine.models.etu_bands import ETULTDBand, ETUSTDBand
 from apex_calc_engine.services.calc_engine.etu_curves import IEEEInverseTimeSolver, CurvePoint
 
@@ -85,24 +85,43 @@ class ETULTDCalculator:
         self._load_sensor_params()
 
     def _load_sensor_params(self):
-        """Load section=2 sensor params, grouped by curve_id."""
-        rows = (
-            self.session.query(ETUSensorParam)
-            .filter_by(sensor_id=self.sensor.id, section=2)
-            .all()
-        )
+        """Load section=2 sensor params, grouped by curve_id.
+
+        The live Supabase surface no longer exposes a surrogate ``id`` column on
+        ``tcc_etu_sensor_params``. Read the flat table directly so LTD curve
+        generation remains aligned with the active schema instead of depending on
+        the older ORM shape.
+        """
+        rows = self.session.execute(
+            text(
+                """
+                SELECT sensor_id, section, curve_id, idx, value
+                FROM tcc_etu_sensor_params
+                WHERE sensor_id = :sensor_id
+                  AND section = 2
+                ORDER BY curve_id NULLS FIRST, idx
+                """
+            ),
+            {"sensor_id": self.sensor.id},
+        ).fetchall()
         for row in rows:
-            if row.value is None:
+            mapping = row._mapping if hasattr(row, "_mapping") else row
+            value = mapping.get("value")
+            if value is None:
                 continue
-            val = float(row.value)
+            idx = mapping.get("idx")
+            if idx is None:
+                continue
+            val = float(value)
             # Global fallback (first value per idx)
-            if row.idx not in self._params:
-                self._params[row.idx] = val
+            if idx not in self._params:
+                self._params[idx] = val
             # Per-curve_id grouping
-            cid = row.curve_id if row.curve_id is not None else 0
+            curve_id = mapping.get("curve_id")
+            cid = curve_id if curve_id is not None else 0
             bucket = self._params_by_curve.setdefault(cid, {})
-            if row.idx not in bucket:
-                bucket[row.idx] = val
+            if idx not in bucket:
+                bucket[idx] = val
 
     def _p(self, idx: int, default: float = 0.0) -> float:
         """Get sensor param value by index (global/fallback)."""

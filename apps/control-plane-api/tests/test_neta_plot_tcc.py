@@ -248,6 +248,14 @@ def _last_sql_params(mock_session, function_name: str):
     return matching[-1]
 
 
+def _sql_call_count(mock_session, function_name: str) -> int:
+    return sum(
+        1
+        for call_args in mock_session.execute.call_args_list
+        if len(call_args.args) >= 1 and function_name in str(call_args.args[0])
+    )
+
+
 @pytest.fixture
 def client():
     """FastAPI test client with mocked DB dependency."""
@@ -442,7 +450,8 @@ class TestExpectedOnlyShape:
 
 class TestMeasuredPathWarnings:
     """When measurements are provided, overall_pass must be populated and
-    evaluate warnings must be merged into response warnings."""
+    in-process evaluation should populate pass/fail markers without reviving
+    the old SQL-eval warning surface."""
 
     def test_eval_warnings_merged(self, client, base_request):
         tc, _ = client
@@ -470,10 +479,26 @@ class TestMeasuredPathWarnings:
         assert ltpu_m["passed"] is True
         assert ltpu_m["measured_current"] == 950.0
 
-        # Both calc AND eval warnings merged
-        assert "calc warning A" in body["warnings"]
-        assert "eval warning B" in body["warnings"]
-        assert "maint note C" in body["warnings"]
+        # Only calculate warnings survive; the in-process evaluator does not
+        # emit the old SQL warning strings.
+        assert body["warnings"] == ["calc warning A"]
+
+    def test_plot_does_not_call_sql_evaluate_helper(self, client, base_request):
+        tc, mock_session = client
+        req = {
+            **base_request,
+            "measurements": [
+                {"element": "LTPU", "measured_current": 950.0},
+                {"element": "STPU", "measured_current": 4850.0},
+            ],
+        }
+
+        patches, _ = _patch_calc_engine()
+        with patches["pickup"], patches["ltd"], patches["ieee"]:
+            resp = tc.post("/api/v1/neta/plot-tcc", json=req)
+
+        assert resp.status_code == 200
+        assert _sql_call_count(mock_session, "fn_evaluate_test_results") == 0
 
 
 # ──────────────────────────────────────────────────
@@ -599,6 +624,48 @@ class TestCalculateEvaluateParity:
             assert ltpu["kind"] == "pickup"
             assert ltpu["measured_current"] == 950.0
             assert ltpu["passed"] is True
+            assert _sql_call_count(mock_session, "fn_evaluate_test_results") == 0
+        finally:
+            app.dependency_overrides.clear()
+
+    def test_evaluate_rounds_pickup_deviation_like_sql_helper(self):
+        mock_session = MagicMock()
+        mock_session.execute = MagicMock(
+            side_effect=_make_fake_execute(calc_data=GE_PRESET_CLEAN_CALC_DATA, eval_data=EVAL_DATA)
+        )
+
+        def override_db():
+            yield mock_session
+
+        app.dependency_overrides[get_db] = override_db
+        try:
+            tc = TestClient(app)
+            req = {
+                "sensor_id": 25,
+                "plug_rating": 800.0,
+                "ltpu_setting": 0.8,
+                "ltd_setting": 6.0,
+                "stpu_setting": 4.0,
+                "std_setting": 0.21,
+                "inst_setting": 10.0,
+                "gfpu_setting": 0.4,
+                "gfd_setting": 0.21,
+                "maint_mode": False,
+                "measurements": [
+                    {"element": "LTPU", "measured_current": 650.0},
+                    {"element": "STPU", "measured_current": 3100.0},
+                    {"element": "GFPU", "measured_current": 310.0},
+                ],
+            }
+
+            patches, _ = _patch_calc_engine()
+            with patches["pickup"], patches["ltd"], patches["ieee"]:
+                resp = tc.post("/api/v1/neta/evaluate", json=req)
+
+            assert resp.status_code == 200
+            body = resp.json()
+            elements = {e["element"]: e for e in body["elements"]}
+            assert elements["GFPU"]["deviation_pct"] == -3.13
         finally:
             app.dependency_overrides.clear()
 
@@ -696,7 +763,7 @@ class TestFactorizedInputPassThrough:
             resp = tc.post("/api/v1/neta/evaluate", json=req)
 
         assert resp.status_code == 200
-        params = _last_sql_params(mock_session, "fn_evaluate_test_results")
+        params = _last_sql_params(mock_session, "fn_calculate_test_currents")
         assert params["p_multiplier_value"] == 8.0
         assert params["p_c_factor"] == 4.0
 
@@ -967,6 +1034,66 @@ GOLDEN_DEGRADED_CALC_DATA = {
     "warnings": ["calc warning A", "plug_rating mismatch: using nominal curves only"],
 }
 
+GE_PRESET_CLEAN_CALC_DATA = {
+    "sensor_desc": "800",
+    "manufacturer": "GE",
+    "trip_type": "MVT RMS-9",
+    "trip_style": "ICCB",
+    "maint_mode": False,
+    "maint_capable": False,
+    "maint_support_level": "none",
+    "warnings": [],
+    "ltpu": {
+        "test_current": 640.0,
+        "limit_low": 640.0,
+        "limit_high": 768.0,
+        "test_multiplier": 1,
+        "calc_method": 1,
+        "setting": 0.8,
+    },
+    "ltd": {
+        "test_current": 3840.0,
+        "test_multiplier": 3.0,
+        "calc_method": 0,
+    },
+    "stpu": {
+        "test_current": 2560.0,
+        "limit_low": 2304.0,
+        "limit_high": 2816.0,
+        "test_multiplier": 1,
+        "calc_method": 4,
+        "setting": 4.0,
+    },
+    "std": {
+        "test_current": 537.6,
+        "test_multiplier": 1.5,
+        "calc_method": 0,
+    },
+    "inst": {
+        "test_current": 8000.0,
+        "limit_low": 7200.0,
+        "limit_high": 8800.0,
+        "test_multiplier": 1,
+        "calc_method": 1,
+        "setting": 10.0,
+        "delay_opening": 0.01,
+        "delay_clearing": 0.08,
+    },
+    "gfpu": {
+        "test_current": 320.0,
+        "limit_low": 288.0,
+        "limit_high": 352.0,
+        "test_multiplier": 1,
+        "calc_method": 0,
+        "setting": 0.4,
+    },
+    "gfd": {
+        "test_current": 67.2,
+        "test_multiplier": 1.5,
+        "calc_method": 0,
+    },
+}
+
 
 class TestGoldenNormalSST:
     """GOLDEN: Normal SST — full 4-element pickup + delay coordination.
@@ -1002,6 +1129,109 @@ class TestGoldenNormalSST:
                            if m["element"] == "LTPU" and m["kind"] == "pickup")
         assert ltpu_marker["limit_low"] == 864.0
         assert ltpu_marker["limit_high"] == 1056.0
+
+
+class TestGEPresetNoWarningContract:
+    """Lock the local demo GE preset route behavior without depending on the
+    full live smoke script.
+
+    This contract should stay aligned with sensor 25 after the ETU cleanup:
+    calculate and plot-tcc emit no warnings, and measured evaluation remains
+    red only on STPU.
+    """
+
+    def test_sensor_25_ge_preset_stays_warning_free_except_real_stpu_fail(self):
+        mock_session = MagicMock()
+
+        def fake_execute(stmt, params=None):
+            sql_text = str(stmt) if not isinstance(stmt, str) else stmt
+            result = MagicMock()
+            if "vw_sensor_calc_context" in sql_text:
+                row = MagicMock()
+                row._mapping = {"rating": 800.0}
+                result.fetchone.return_value = row
+            elif "fn_calculate_test_currents" in sql_text:
+                row = MagicMock()
+                row.result = GE_PRESET_CLEAN_CALC_DATA
+                result.fetchone.return_value = row
+            elif "FROM tcc_etu_ltd_bands" in sql_text:
+                row = MagicMock()
+                row._mapping = {"open_time": 6.0, "clear_time": None, "ordinal": 4, "is_default": False}
+                result.fetchone.return_value = row
+            elif "FROM tcc_etu_std_bands" in sql_text:
+                row = MagicMock()
+                row._mapping = {"open_time": 0.21, "clear_time": 0.31, "ordinal": 2, "is_default": False}
+                result.fetchone.return_value = row
+            elif "FROM tcc_etu_gfd_bands" in sql_text:
+                row = MagicMock()
+                row._mapping = {"open_time": 0.21, "clear_time": 0.31, "ordinal": 2, "is_default": False}
+                result.fetchone.return_value = row
+            else:
+                result.fetchone.return_value = None
+            return result
+
+        mock_session.execute = MagicMock(side_effect=fake_execute)
+
+        def override_db():
+            yield mock_session
+
+        app.dependency_overrides[get_db] = override_db
+        try:
+            tc = TestClient(app)
+            req = {
+                "sensor_id": 25,
+                "plug_rating": 800.0,
+                "ltpu_setting": 0.8,
+                "ltd_setting": 6.0,
+                "stpu_setting": 4.0,
+                "std_setting": 0.21,
+                "inst_setting": 10.0,
+                "gfpu_setting": 0.4,
+                "gfd_setting": 0.21,
+                "maint_mode": False,
+                "measurements": [
+                    {"element": "LTPU", "measured_current": 650.0},
+                    {"element": "STPU", "measured_current": 3100.0},
+                    {"element": "GFPU", "measured_current": 310.0},
+                ],
+                "include_nominal_curve": True,
+                "include_expected_markers": True,
+                "include_measured_markers": True,
+            }
+
+            patches, _ = _patch_calc_engine()
+            with patches["pickup"], patches["ltd"], patches["ieee"]:
+                calc_resp = tc.post("/api/v1/neta/calculate", json={k: v for k, v in req.items() if k != "measurements" and not k.startswith("include_")})
+                plot_resp = tc.post("/api/v1/neta/plot-tcc", json=req)
+
+            assert calc_resp.status_code == 200
+            calc_body = calc_resp.json()
+            assert calc_body["sensor_id"] == 25
+            assert calc_body["sensor_desc"] == "800"
+            assert calc_body["warnings"] == []
+            calc_elements = {element["element"]: element for element in calc_body["elements"]}
+            assert calc_elements["LTPU"]["test_current"] == 640.0
+            assert calc_elements["STPU"]["test_current"] == 2560.0
+            assert calc_elements["GFPU"]["test_current"] == 320.0
+            assert calc_elements["LTD"]["delay_seconds"] == 6.0
+            assert calc_elements["LTD"]["notes"] == "timing_source=band_table"
+
+            assert plot_resp.status_code == 200
+            plot_body = plot_resp.json()
+            assert plot_body["warnings"] == []
+            assert plot_body["meta"]["sensor_desc"] == "800"
+            assert plot_body["meta"]["manufacturer"] == "GE"
+            assert plot_body["meta"]["trip_type"] == "MVT RMS-9"
+            assert plot_body["meta"]["trip_style"] == "ICCB"
+            assert plot_body["meta"]["overall_pass"] is False
+            assert len(plot_body["curves"]) == 8
+
+            measured = {marker["element"]: marker for marker in plot_body["measured_markers"]}
+            assert measured["LTPU"]["passed"] is True
+            assert measured["STPU"]["passed"] is False
+            assert measured["GFPU"]["passed"] is True
+        finally:
+            app.dependency_overrides.clear()
 
     def test_evaluate_pass_fail_propagation(self, client, base_request):
         """Evaluate overall_pass and per-element pass state propagate
@@ -1093,8 +1323,8 @@ class TestGoldenMaintSST:
             app.dependency_overrides.clear()
 
     def test_maint_warnings_propagated(self, base_request):
-        """MAINT-specific warnings from calculate and evaluate must both
-        appear in the final response warnings list."""
+        """MAINT plot warnings should reflect the calculate path only; the
+        in-process evaluator should not reintroduce stale SQL warning text."""
         tc, _ = self._make_maint_client()
         try:
             req = {
@@ -1112,8 +1342,8 @@ class TestGoldenMaintSST:
             body = resp.json()
             # Calc warnings
             assert "Reduction factors not available — using 1.0" in body["warnings"]
-            # Eval warnings
-            assert "MAINT mode: INST tolerances from maint table (±10%)" in body["warnings"]
+            assert "GFPU maint calc inactive (-1) — using normal GFPU" in body["warnings"]
+            assert "MAINT mode: INST tolerances from maint table (±10%)" not in body["warnings"]
         finally:
             app.dependency_overrides.clear()
 

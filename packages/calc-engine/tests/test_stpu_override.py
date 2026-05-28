@@ -76,6 +76,50 @@ def test_load_stpu_override_falls_back_to_existing_eav_model_shape():
     assert result["open_time"] == OVERRIDE_OPEN_TIME
 
 
+def test_load_stpu_override_returns_not_applied_when_flat_table_has_no_row():
+    calc = ETUPickupCalculator.__new__(ETUPickupCalculator)
+    calc.session = MagicMock()
+    calc.session.execute.return_value = _mock_result(row=None)
+
+    result = calc._load_stpu_override(sensor_id=3629)
+
+    assert result == {
+        "applied": False,
+        "amps": None,
+        "tolerance_low": None,
+        "tolerance_high": None,
+        "open_time": None,
+        "clear_time": None,
+    }
+    calc.session.query.assert_not_called()
+
+
+def test_get_plugs_for_style_reads_live_sensor_based_flat_table_shape():
+    calc = ETUPickupCalculator.__new__(ETUPickupCalculator)
+    calc.session = MagicMock()
+    calc.sensor = SimpleNamespace(id=3629, trip_style_id=536)
+    result = MagicMock()
+    result.fetchall.return_value = [{"value": 300}, {"value": 400}]
+    calc.session.execute.return_value = result
+
+    plugs = calc.get_plugs_for_style()
+
+    assert plugs == [{"id": 300, "value": 300}, {"id": 400, "value": 400}]
+    calc.session.query.assert_not_called()
+
+
+def test_get_plug_value_reads_live_sensor_based_flat_table_shape():
+    calc = ETUPickupCalculator.__new__(ETUPickupCalculator)
+    calc.session = MagicMock()
+    calc.sensor = SimpleNamespace(id=3629)
+    calc.session.execute.return_value = _mock_result(row={"value": 400})
+
+    value = calc._get_plug_value(400)
+
+    assert value == 400
+    calc.session.query.assert_not_called()
+
+
 def test_build_override_stpu_result_uses_override_amps_and_asymmetric_tolerance():
     calc = _stub_calculator()
     result = calc._build_override_stpu_result(maint_mode=False)

@@ -318,6 +318,15 @@ class ETUPickupCalculator:
                 ),
                 {'sensor_id': sensor_id},
             ).fetchone()
+            if row is None:
+                return {
+                    "applied": False,
+                    "amps": None,
+                    "tolerance_low": None,
+                    "tolerance_high": None,
+                    "open_time": None,
+                    "clear_time": None,
+                }
             mapping = row._mapping if hasattr(row, '_mapping') else row
             if row is not None and mapping.get("ovr_amps") is not None:
                 return {
@@ -340,6 +349,14 @@ class ETUPickupCalculator:
                         if mapping.get("ovr_clear_sec") is not None else None
                     ),
                 }
+            return {
+                "applied": False,
+                "amps": None,
+                "tolerance_low": None,
+                "tolerance_high": None,
+                "open_time": None,
+                "clear_time": None,
+            }
         except Exception:
             if hasattr(self.session, 'rollback'):
                 self.session.rollback()
@@ -395,6 +412,27 @@ class ETUPickupCalculator:
         """Fetch plug rating value by ID."""
         if plug_id is None:
             return None
+        try:
+            row = self.session.execute(
+                text(
+                    """
+                    SELECT value
+                    FROM tcc_etu_plugs
+                    WHERE sensor_id = :sensor_id
+                      AND value = :value
+                    LIMIT 1
+                    """
+                ),
+                {"sensor_id": self.sensor.id, "value": plug_id},
+            ).fetchone()
+            if row is not None:
+                mapping = row._mapping if hasattr(row, '_mapping') else row
+                value = mapping.get("value") if hasattr(mapping, 'get') else None
+                if value is not None:
+                    return int(value)
+        except Exception:
+            if hasattr(self.session, 'rollback'):
+                self.session.rollback()
         plug = (
             self.session.query(ETUPlug)
             .filter(ETUPlug.id == plug_id)
@@ -689,6 +727,33 @@ class ETUPickupCalculator:
 
     def get_plugs_for_style(self) -> list[dict]:
         """Get available rating plugs for this sensor's trip style."""
+        try:
+            rows = self.session.execute(
+                text(
+                    """
+                    SELECT value
+                    FROM tcc_etu_plugs
+                    WHERE sensor_id = :sensor_id
+                      AND value IS NOT NULL
+                    ORDER BY value
+                    """
+                ),
+                {"sensor_id": self.sensor.id},
+            ).fetchall()
+            if rows:
+                results = []
+                for row in rows:
+                    mapping = row._mapping if hasattr(row, '_mapping') else row
+                    value = mapping.get("value") if hasattr(mapping, 'get') else None
+                    if value is None:
+                        continue
+                    numeric_value = int(value)
+                    results.append({'id': numeric_value, 'value': numeric_value})
+                if results:
+                    return results
+        except Exception:
+            if hasattr(self.session, 'rollback'):
+                self.session.rollback()
         rows = (
             self.session.query(ETUPlug)
             .filter(ETUPlug.trip_style_id == self.sensor.trip_style_id)
