@@ -99,6 +99,8 @@ apps/control-plane-api/
 
 5. Create a local `.env` from `.env.example` and set the canonical environment values for your target mode.
 
+   Runtime DSN precedence: the control-plane runtime will use the first populated variable from `APEX_OLARES_LIVE_DSN`, `SEAM_DATABASE_URL`, `APEX_DB_CONNECTION_STRING`, then `DATABASE_URL`. This lets a bounded live-validation session override a stale local `.env` without editing repo files.
+
    Local runtime:
    ```
    DATABASE_URL
