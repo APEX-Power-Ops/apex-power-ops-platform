@@ -67,6 +67,11 @@ class CascadeSensor(BaseModel):
     has_gfpu: bool
 
 
+class CascadePlugOption(BaseModel):
+    plug_value: float
+    sensor_count: int
+
+
 class CascadeResponse(BaseModel):
     """Response for cascade drill-down at any level."""
     level: str = Field(
@@ -78,6 +83,65 @@ class CascadeResponse(BaseModel):
     trip_types: Optional[list[CascadeTripType]] = None
     trip_styles: Optional[list[CascadeTripStyle]] = None
     sensors: Optional[list[CascadeSensor]] = None
+    plug_values: list[CascadePlugOption] = Field(default_factory=list)
+
+
+class EtuSearchResult(BaseModel):
+    sensor_id: int
+    sensor_rating: Optional[int] = None
+    sensor_desc: str
+    trip_style_id: int
+    trip_style_name: str
+    trip_type_id: int
+    trip_type_name: str
+    manufacturer_id: int
+    manufacturer_name: str
+    compatible_plug_values: list[float] = Field(default_factory=list)
+
+
+class EtuSearchResponse(BaseModel):
+    count: int
+    results: list[EtuSearchResult] = Field(default_factory=list)
+
+
+class EtuBreakerManufacturer(BaseModel):
+    manufacturer_id: int
+    manufacturer_name: str
+    breaker_count: int
+
+
+class EtuBreakerClassOption(BaseModel):
+    breaker_class: str
+    breaker_count: int
+
+
+class EtuBreakerOption(BaseModel):
+    breaker_id: int
+    breaker_name: str
+    breaker_class: str
+    manufacturer_id: int
+    manufacturer_name: str
+    style_count: int
+
+
+class EtuBreakerStyleOption(BaseModel):
+    breaker_style_id: int
+    breaker_style_name: str
+    breaker_id: int
+    breaker_name: str
+    breaker_class: str
+    manufacturer_id: int
+    manufacturer_name: str
+
+
+class EtuBreakerCascadeResponse(BaseModel):
+    level: str
+    count: int
+    scope: dict[str, Any] = Field(default_factory=dict)
+    manufacturers: list[EtuBreakerManufacturer] = Field(default_factory=list)
+    breaker_classes: list[EtuBreakerClassOption] = Field(default_factory=list)
+    breakers: list[EtuBreakerOption] = Field(default_factory=list)
+    breaker_styles: list[EtuBreakerStyleOption] = Field(default_factory=list)
 
 
 class ResolvedBreakerContext(BaseModel):

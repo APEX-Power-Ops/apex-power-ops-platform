@@ -32,8 +32,10 @@ class FakeResult:
 class FakeCascadeDb:
     def __init__(self, results):
         self._results = list(results)
+        self.calls = []
 
     def execute(self, _statement, _params=None):
+        self.calls.append({"statement": str(_statement), "params": _params or {}})
         if not self._results:
             raise AssertionError("Unexpected SQL execution in cascade test")
         return self._results.pop(0)
@@ -69,6 +71,10 @@ def test_cascade_returns_cross_filtered_option_sets(client):
                 "manufacturer_name": "GE",
                 "sensor_count": 2,
             },
+        ]),
+        FakeResult(rows=[
+            {"plug_value": 800, "sensor_count": 2},
+            {"plug_value": 1200, "sensor_count": 1},
         ]),
         FakeResult(rows=[
             {
@@ -113,6 +119,7 @@ def test_cascade_returns_cross_filtered_option_sets(client):
         assert body["manufacturers"][0]["manufacturer_name"] == "GE"
         assert body["trip_types"][0]["trip_type_name"] == "MVT RMS-9"
         assert body["trip_styles"][0]["sensor_count"] == 2
+        assert body["plug_values"][0]["plug_value"] == 800
         assert body["sensors"][0]["sensor_rating"] == 800
         assert body["sensors"][1]["sensor_desc"] == "1200"
     finally:
@@ -145,6 +152,9 @@ def test_cascade_leaves_sensor_options_empty_until_style_selected(client):
                 "sensor_count": 4,
             },
         ]),
+        FakeResult(rows=[
+            {"plug_value": 800, "sensor_count": 4},
+        ]),
     ])
 
     try:
@@ -154,6 +164,7 @@ def test_cascade_leaves_sensor_options_empty_until_style_selected(client):
         assert body["count"] == 4
         assert body["trip_types"][0]["trip_style_count"] == 2
         assert body["trip_styles"][0]["sensor_count"] == 4
+        assert body["plug_values"] == [{"plug_value": 800.0, "sensor_count": 4}]
         assert body["sensors"] == []
     finally:
         app.dependency_overrides.clear()
@@ -186,6 +197,9 @@ def test_cascade_sensor_filter_revalidates_exact_path(client):
             },
         ]),
         FakeResult(rows=[
+            {"plug_value": 800, "sensor_count": 1},
+        ]),
+        FakeResult(rows=[
             {
                 "sensor_id": 25,
                 "sensor_rating": 800,
@@ -214,6 +228,7 @@ def test_cascade_sensor_filter_revalidates_exact_path(client):
         assert body["trip_types"][0]["trip_type_id"] == 75
         assert body["trip_styles"][0]["trip_style_id"] == 3
         assert body["trip_styles"][0]["sensor_count"] == 1
+        assert body["plug_values"] == [{"plug_value": 800.0, "sensor_count": 1}]
         assert body["sensors"] == [
             {
                 "sensor_id": 25,
@@ -242,6 +257,7 @@ def test_cascade_surfaces_zero_match_empty_state(client):
         FakeResult(rows=[]),
         FakeResult(rows=[]),
         FakeResult(rows=[]),
+        FakeResult(rows=[]),
     ])
 
     try:
@@ -253,6 +269,113 @@ def test_cascade_surfaces_zero_match_empty_state(client):
         assert body["manufacturers"] == []
         assert body["trip_types"] == []
         assert body["trip_styles"] == []
+        assert body["plug_values"] == []
         assert body["sensors"] == []
+    finally:
+        app.dependency_overrides.clear()
+
+
+def test_cascade_accepts_breaker_half_cross_filters(client):
+    fake_db = FakeCascadeDb([
+        FakeResult(scalar_value=2),
+        FakeResult(rows=[
+            {"manufacturer_id": 9, "manufacturer_name": "GE", "trip_type_count": 1},
+        ]),
+        FakeResult(rows=[
+            {
+                "trip_type_id": 75,
+                "trip_type_name": "MVT RMS-9",
+                "manufacturer_id": 9,
+                "manufacturer_name": "GE",
+                "trip_style_count": 1,
+            },
+        ]),
+        FakeResult(rows=[
+            {
+                "trip_style_id": 3,
+                "trip_style_name": "ICCB",
+                "trip_type_id": 75,
+                "trip_type_name": "MVT RMS-9",
+                "manufacturer_id": 9,
+                "manufacturer_name": "GE",
+                "sensor_count": 2,
+            },
+        ]),
+        FakeResult(rows=[
+            {"plug_value": 800, "sensor_count": 2},
+        ]),
+    ])
+    app.dependency_overrides[get_db] = lambda: fake_db
+
+    try:
+        resp = client.get("/api/v1/neta/cascade", params={"breaker_class": "ICCB", "breaker_id": 101})
+        assert resp.status_code == 200
+        assert resp.json()["count"] == 2
+        assert any(call["params"].get("xh_breaker_class") == "ICCB" for call in fake_db.calls)
+        assert any(call["params"].get("xh_breaker_id") == 101 for call in fake_db.calls)
+    finally:
+        app.dependency_overrides.clear()
+
+
+def test_cascade_accepts_plug_filter_and_returns_scope_plug_values(client):
+    fake_db = FakeCascadeDb([
+        FakeResult(scalar_value=1),
+        FakeResult(rows=[
+            {"manufacturer_id": 9, "manufacturer_name": "GE", "trip_type_count": 1},
+        ]),
+        FakeResult(rows=[
+            {
+                "trip_type_id": 75,
+                "trip_type_name": "MVT RMS-9",
+                "manufacturer_id": 9,
+                "manufacturer_name": "GE",
+                "trip_style_count": 1,
+            },
+        ]),
+        FakeResult(rows=[
+            {
+                "trip_style_id": 3,
+                "trip_style_name": "ICCB",
+                "trip_type_id": 75,
+                "trip_type_name": "MVT RMS-9",
+                "manufacturer_id": 9,
+                "manufacturer_name": "GE",
+                "sensor_count": 1,
+            },
+        ]),
+        FakeResult(rows=[
+            {"plug_value": 800, "sensor_count": 2},
+            {"plug_value": 1200, "sensor_count": 1},
+        ]),
+        FakeResult(rows=[
+            {
+                "sensor_id": 25,
+                "sensor_rating": 800,
+                "sensor_desc": "800",
+                "trip_style_id": 3,
+                "trip_style_name": "ICCB",
+                "trip_type_id": 75,
+                "trip_type_name": "MVT RMS-9",
+                "manufacturer_id": 9,
+                "manufacturer_name": "GE",
+                "has_ltpu": True,
+                "has_stpu": True,
+                "has_inst": True,
+                "has_gfpu": True,
+            },
+        ]),
+    ])
+    app.dependency_overrides[get_db] = lambda: fake_db
+
+    try:
+        resp = client.get("/api/v1/neta/cascade", params={"trip_style_id": 3, "plug_value": 800})
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["count"] == 1
+        assert body["plug_values"] == [
+            {"plug_value": 800.0, "sensor_count": 2},
+            {"plug_value": 1200.0, "sensor_count": 1},
+        ]
+        assert any(call["params"].get("plug_value") == 800.0 for call in fake_db.calls)
     finally:
         app.dependency_overrides.clear()

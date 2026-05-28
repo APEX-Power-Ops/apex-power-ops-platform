@@ -62,10 +62,20 @@ def test_demo_uses_delay_band_selectors_for_section_two_td_controls(demo_body):
 
 def test_demo_uses_equipment_match_labels_for_etu_selection(demo_body):
     """The ETU selection surface must distinguish trip-unit labels and bounded breaker context."""
+    assert "Breaker-Half Identity" in demo_body
+    assert "etu-step-indicator" in demo_body
+    assert "etu-cross-half-advisory" in demo_body
+    assert "Breaker Manufacturer" in demo_body
+    assert "Breaker Class" in demo_body
+    assert "sel-brk-name" in demo_body
+    assert "sel-brk-style" in demo_body
     assert "Trip Unit Manufacturer" in demo_body
     assert "Trip Unit Type" in demo_body
     assert "Trip Unit Style" in demo_body
     assert "Sensor / Rating" in demo_body
+    assert "Plug Compatibility Lens" in demo_body
+    assert "ETU Browse / Search" in demo_body
+    assert "etu-browse-results" in demo_body
     assert "Breaker Context:" in demo_body
     assert "getCurrentEtuIdentity" in demo_body
 
@@ -73,6 +83,8 @@ def test_demo_uses_equipment_match_labels_for_etu_selection(demo_body):
 def test_demo_wires_all_five_api_paths(demo_body):
     """The page must reference ETU, TMT, and EMT workflow endpoints."""
     assert "/api/v1/neta/cascade" in demo_body
+    assert "/api/v1/neta/etu/breaker-cascade" in demo_body
+    assert "/api/v1/neta/etu/search" in demo_body
     assert "/api/v1/neta/settings/" in demo_body
     assert "/api/v1/neta/calculate" in demo_body
     assert "/api/v1/neta/evaluate" in demo_body

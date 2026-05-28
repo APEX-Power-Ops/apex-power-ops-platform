@@ -25,7 +25,7 @@ class Manufacturer(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
 
     # Data columns
-    name = Column(String(100), nullable=False, unique=True)
+    name = Column('mfr_name', String(100), nullable=False, unique=True)
     created_at = Column(DateTime, server_default=func.now())
 
     # Relationships
