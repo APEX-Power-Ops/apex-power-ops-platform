@@ -126,6 +126,41 @@ def test_cascade_returns_cross_filtered_option_sets(client):
         app.dependency_overrides.clear()
 
 
+def test_cascade_qualifies_sensor_count_when_plug_filter_and_cross_half_filters_are_active(client):
+    fake_db = FakeCascadeDb([
+        FakeResult(scalar_value=1),
+        FakeResult(rows=[]),
+        FakeResult(rows=[]),
+        FakeResult(rows=[]),
+        FakeResult(rows=[]),
+        FakeResult(rows=[]),
+    ])
+    app.dependency_overrides[get_db] = lambda: fake_db
+
+    try:
+        resp = client.get(
+            "/api/v1/neta/cascade",
+            params={
+                "manufacturer_id": 9,
+                "trip_type_id": 75,
+                "trip_style_id": 3,
+                "sensor_id": 25,
+                "plug_value": 300,
+                "breaker_id": 24,
+                "breaker_style_id": 327,
+            },
+        )
+        assert resp.status_code == 200
+        first_call = fake_db.calls[0]
+        assert "COUNT(DISTINCT v.sensor_id)" in first_call["statement"]
+        assert "v.sensor_id = :sensor_id" in first_call["statement"]
+        assert first_call["params"]["plug_value"] == 300.0
+        assert first_call["params"]["xh_breaker_id"] == 24
+        assert first_call["params"]["xh_breaker_style_id"] == 327
+    finally:
+        app.dependency_overrides.clear()
+
+
 def test_cascade_leaves_sensor_options_empty_until_style_selected(client):
     app.dependency_overrides[get_db] = lambda: FakeCascadeDb([
         FakeResult(scalar_value=4),

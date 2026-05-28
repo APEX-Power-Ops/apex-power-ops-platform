@@ -188,6 +188,204 @@ def _mock_demo_bootstrap(page, catalog="fallback", manufacturer_count=0, sensor_
     )
 
 
+def _mock_etu_phase_c_routes(page):
+    def cascade_payload(url: str):
+        params = parse_qs(urlparse(url).query)
+        manufacturer_id = params.get("manufacturer_id", [None])[0]
+        trip_type_id = params.get("trip_type_id", [None])[0]
+        trip_style_id = params.get("trip_style_id", [None])[0]
+        return {
+            "level": "sensors" if trip_style_id == "3" else "manufacturers",
+            "count": 2,
+            "manufacturers": [
+                {"manufacturer_id": 9, "manufacturer_name": "GE", "trip_type_count": 1},
+            ],
+            "trip_types": [
+                {
+                    "trip_type_id": 75,
+                    "trip_type_name": "MVT RMS-9",
+                    "manufacturer_id": 9,
+                    "manufacturer_name": "GE",
+                    "trip_style_count": 1,
+                }
+            ] if manufacturer_id == "9" or trip_type_id == "75" or trip_style_id == "3" else [],
+            "trip_styles": [
+                {
+                    "trip_style_id": 3,
+                    "trip_style_name": "ICCB",
+                    "trip_type_id": 75,
+                    "trip_type_name": "MVT RMS-9",
+                    "manufacturer_id": 9,
+                    "manufacturer_name": "GE",
+                    "sensor_count": 2,
+                }
+            ] if trip_type_id == "75" or trip_style_id == "3" else [],
+            "plug_values": [
+                {"plug_value": 800, "sensor_count": 2},
+                {"plug_value": 1200, "sensor_count": 1},
+            ] if trip_style_id == "3" or params.get("sensor_id", [None])[0] == "25" else [],
+            "sensors": [
+                {
+                    "sensor_id": 25,
+                    "sensor_rating": 800,
+                    "sensor_desc": "800",
+                    "trip_style_id": 3,
+                    "trip_style_name": "ICCB",
+                    "trip_type_id": 75,
+                    "trip_type_name": "MVT RMS-9",
+                    "manufacturer_id": 9,
+                    "manufacturer_name": "GE",
+                    "has_ltpu": True,
+                    "has_stpu": True,
+                    "has_inst": True,
+                    "has_gfpu": True,
+                },
+                {
+                    "sensor_id": 26,
+                    "sensor_rating": 1200,
+                    "sensor_desc": "1200",
+                    "trip_style_id": 3,
+                    "trip_style_name": "ICCB",
+                    "trip_type_id": 75,
+                    "trip_type_name": "MVT RMS-9",
+                    "manufacturer_id": 9,
+                    "manufacturer_name": "GE",
+                    "has_ltpu": True,
+                    "has_stpu": True,
+                    "has_inst": True,
+                    "has_gfpu": True,
+                },
+            ] if trip_style_id == "3" else [],
+        }
+
+    def breaker_cascade_payload(url: str):
+        params = parse_qs(urlparse(url).query)
+        manufacturer_id = params.get("manufacturer_id", [None])[0]
+        breaker_id = params.get("breaker_id", [None])[0]
+        return {
+            "count": 1,
+            "manufacturers": [
+                {"manufacturer_id": 9, "manufacturer_name": "GE", "breaker_count": 1},
+            ],
+            "breaker_classes": [
+                {"breaker_class": "ICCB", "breaker_count": 1},
+            ],
+            "breakers": [
+                {"breaker_id": 501, "breaker_name": "AKR-9", "manufacturer_name": "GE", "style_count": 1},
+            ] if manufacturer_id == "9" else [],
+            "breaker_styles": [
+                {"breaker_style_id": 701, "breaker_style_name": "Compartment Switch"},
+            ] if breaker_id == "501" else [],
+        }
+
+    def etu_search_payload(url: str):
+        params = parse_qs(urlparse(url).query)
+        plug_value = params.get("plug_value", [None])[0]
+        all_results = [
+            {
+                "sensor_id": 25,
+                "sensor_rating": 800,
+                "sensor_desc": "800",
+                "trip_style_id": 3,
+                "trip_style_name": "ICCB",
+                "trip_type_id": 75,
+                "trip_type_name": "MVT RMS-9",
+                "manufacturer_id": 9,
+                "manufacturer_name": "GE",
+                "compatible_plug_values": [800.0],
+            },
+            {
+                "sensor_id": 26,
+                "sensor_rating": 1200,
+                "sensor_desc": "1200",
+                "trip_style_id": 3,
+                "trip_style_name": "ICCB",
+                "trip_type_id": 75,
+                "trip_type_name": "MVT RMS-9",
+                "manufacturer_id": 9,
+                "manufacturer_name": "GE",
+                "compatible_plug_values": [800.0, 1200.0],
+            },
+        ]
+        results = [all_results[1]] if plug_value == "1200" else all_results
+        return {
+            "count": len(results),
+            "results": results,
+        }
+
+    page.route(
+        "**/api/v1/neta/cascade*",
+        lambda route: _fulfill_json(route, cascade_payload(route.request.url)),
+    )
+    page.route(
+        "**/api/v1/neta/etu/breaker-cascade*",
+        lambda route: _fulfill_json(route, breaker_cascade_payload(route.request.url)),
+    )
+    page.route(
+        "**/api/v1/neta/settings/25",
+        lambda route: _fulfill_json(
+            route,
+            {
+                "plug_values": [800, 1200],
+                "ltpu_settings": [0.8, 1.0],
+                "ltd_settings": [{"label": "6x", "open_time": 0.5, "band": "6x"}],
+                "stpu_settings": [4.0],
+                "std_settings": [{"label": "I2T", "open_time": 0.21, "band": "I2T"}],
+                "inst_settings": [8.0, 10.0],
+                "gfpu_settings": [0.2, 0.4],
+                "gfd_settings": [{"label": "I2T", "open_time": 0.21, "band": "I2T"}],
+            },
+        ),
+    )
+    page.route(
+        "**/api/v1/neta/context/25",
+        lambda route: _fulfill_json(
+            route,
+            {
+                "sensor_id": 25,
+                "sensor_desc": "800",
+                "rating": 800,
+                "has_ltpu": True,
+                "has_stpu": True,
+                "has_inst": True,
+                "has_gfpu": True,
+                "maint_capable": True,
+                "resolved_equipment": {
+                    "family": "etu",
+                    "family_label": "ETU",
+                    "resolved_id": "sensor:25",
+                    "primary_label": "GE MVT RMS-9",
+                    "secondary_label": "ICCB · 800A",
+                    "breaker_context": {
+                        "label": "ICCB · 800A",
+                        "source": "trip_style_sensor_rating",
+                        "manufacturer_name": "GE",
+                        "breaker_class": "ICCB",
+                        "breaker_name": None,
+                        "breaker_style_name": "ICCB",
+                    },
+                    "trip_unit": {
+                        "manufacturer_name": "GE",
+                        "trip_type_name": "MVT RMS-9",
+                        "trip_style_name": "ICCB",
+                        "label": "GE MVT RMS-9 ICCB",
+                    },
+                    "rating_context": {
+                        "label": "Sensor 800",
+                        "sensor_id": 25,
+                        "sensor_desc": "800",
+                        "sensor_rating": 800,
+                    },
+                },
+            },
+        ),
+    )
+    page.route(
+        "**/api/v1/neta/etu/search*",
+        lambda route: _fulfill_json(route, etu_search_payload(route.request.url)),
+    )
+
+
 # ── Tests ──
 
 class TestDemoBrowserWorkflow:
@@ -1675,6 +1873,66 @@ class TestDemoBrowserWorkflow:
             "Changing the TMT trip class should invalidate the stale nominal plot"
         assert page.locator("#tmt-summary").is_visible(), \
             "Resolved TMT summary should stay visible while downstream state changes"
+
+    def test_etu_summary_discloses_breaker_context_provenance(self, server, page):
+        """The ETU summary should disclose whether breaker context is derived or based on an active breaker-half selection."""
+        _mock_demo_bootstrap(page, catalog="live", manufacturer_count=1, sensor_count=2)
+        _mock_etu_phase_c_routes(page)
+
+        page.goto(f"{server}/demo/neta-tcc")
+        page.wait_for_load_state("networkidle")
+        page.locator("#preset-select").select_option(index=1)
+        page.locator("#btn-load-preset").click()
+        page.locator("#sensor-summary").wait_for(state="visible", timeout=10000)
+
+        provenance_tag = page.locator("#sensor-summary .provenance-tag")
+        assert provenance_tag.inner_text() == "(derived)"
+        assert provenance_tag.get_attribute("data-source") == "trip_style_sensor_rating"
+
+        page.locator("#sel-brk-mfr").select_option("9")
+        page.locator("#sel-brk-class").select_option("ICCB")
+        page.wait_for_function(
+            "() => document.querySelector('#sel-brk-name option[value=\"501\"]') !== null",
+            timeout=10000,
+        )
+        page.locator("#sel-brk-name").select_option("501")
+        page.wait_for_function(
+            "() => document.querySelector('#sel-brk-style option[value=\"701\"]') !== null",
+            timeout=10000,
+        )
+        page.locator("#sel-brk-style").select_option("701")
+
+        assert provenance_tag.inner_text() == "(selected)"
+        assert provenance_tag.get_attribute("data-source") == "breaker_half_selection"
+        assert "AKR-9" in page.locator("#sensor-summary").inner_text()
+
+    def test_etu_plug_compatibility_check_reuses_search_contract_and_explains_scope_impact(self, server, page):
+        """The bounded plug-compatibility workflow should reuse ETU search and explain how a plug change narrows the ETU browse space."""
+        _mock_demo_bootstrap(page, catalog="live", manufacturer_count=1, sensor_count=2)
+        _mock_etu_phase_c_routes(page)
+
+        page.goto(f"{server}/demo/neta-tcc")
+        page.wait_for_load_state("networkidle")
+        page.locator("#preset-select").select_option(index=1)
+        page.locator("#btn-load-preset").click()
+        page.locator("#settings-section").wait_for(state="visible", timeout=10000)
+
+        compat_button = page.locator("#btn-plug-compat-check")
+        assert compat_button.is_enabled()
+        compat_button.click()
+        page.locator("#plug-compat-result").wait_for(state="visible", timeout=10000)
+        assert "2 compatible sensors" in page.locator("#plug-compat-result").inner_text()
+
+        page.locator("#set-plug").select_option("1200")
+        page.locator("#etu-plug-impact").wait_for(state="visible", timeout=10000)
+        assert "narrowed the ETU space" in page.locator("#etu-plug-impact").inner_text()
+        assert "Validate plug 1200A" in page.locator("#plug-compat-summary").inner_text()
+
+        compat_button.click()
+        page.locator("#plug-compat-result").wait_for(state="visible", timeout=10000)
+        compat_result = page.locator("#plug-compat-result").inner_text()
+        assert "1 compatible sensor" in compat_result
+        assert "1200" in compat_result
 
     def test_emt_settings_hide_non_applicable_section_controls(self, server, page):
         """EMT should show only the section controls that the selected band context actually supports."""

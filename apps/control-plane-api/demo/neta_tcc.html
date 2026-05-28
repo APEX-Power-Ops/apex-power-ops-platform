@@ -144,6 +144,10 @@
   .family-note { font-size: 12px; color: var(--muted); margin-top: 8px; }
   .family-summary { margin-top: 12px; }
   .inline-note { font-size: 12px; color: var(--muted); }
+  .provenance-tag { display: inline-block; padding: 1px 6px; margin-left: 4px; border-radius: 3px; font-size: 11px; font-weight: 500; line-height: 1.4; border: 1px solid transparent; cursor: help; }
+  .provenance-tag.provenance-derived { color: #92400e; background: #fef3c7; border-color: #fde68a; }
+  .provenance-tag.provenance-catalog { color: #065f46; background: #d1fae5; border-color: #a7f3d0; }
+  .provenance-tag.provenance-unknown { color: #6b7280; background: #f3f4f6; border-color: #e5e7eb; }
   .etu-step-indicator { list-style: none; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 12px 0; padding: 0; }
   .etu-step-indicator li { border: 1px solid var(--border); border-radius: var(--radius); padding: 10px; background: #f8fafc; display: flex; flex-direction: column; gap: 4px; min-height: 84px; }
   .etu-step-indicator li.is-current { border-color: var(--primary); background: #eff6ff; }
@@ -319,6 +323,7 @@
       <div id="etu-plug-filter-summary" class="inline-note" style="margin-top:6px;">
         Compatible plug ratings load from the current ETU scope. Applying one narrows the live trip-unit matches without changing the core manufacturer → type → style → sensor workflow.
       </div>
+      <div id="etu-plug-impact" class="inline-note hidden" style="margin-top:6px; padding:6px 8px; background:#eff6ff; border:1px solid #bfdbfe; border-radius:4px; color:#1d4ed8;"></div>
     </div>
     <div class="section" style="margin-top:12px; background:#f8fafc; border-color:#cbd5e1;">
       <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap;">
@@ -450,6 +455,14 @@
         </div>
         <div id="maint-banner" class="maint-banner">
           MAINT MODE ACTIVE — INST/GFPU will use maintenance tolerances and timing
+        </div>
+        <div class="section" style="margin-top:12px; padding:12px; background:#f8fafc; border-color:#cbd5e1;">
+          <h3 style="margin:0 0 6px 0; font-size:14px;">Plug Compatibility Check</h3>
+          <div id="plug-compat-summary" class="inline-note" style="margin-bottom:8px;">Select a plug rating to validate compatibility.</div>
+          <div class="btn-row" style="margin-top:0;">
+            <button class="btn btn-sm btn-outline" id="btn-plug-compat-check" type="button" disabled>Check Compatibility</button>
+          </div>
+          <div id="plug-compat-result" class="family-note hidden" style="margin-top:8px;"></div>
         </div>
       </div>
       <div>
@@ -1089,6 +1102,7 @@ function clearEtuExecutionState() {
   $('btn-save-plan').disabled = true;
   $('btn-save-result').disabled = true;
   $('save-plan-name').value = '';
+  syncPlugCompatibilityControl();
   setActivePlan(null, null, null);
 }
 
@@ -1317,10 +1331,105 @@ function renderCascadePlugFilterSummary(cascadeData, resolvedPlugValue) {
 function syncSettingsPlugFromCascadeFilter(preferredPlugValue = selectedCascadePlugValue()) {
   const settingsPlug = $('set-plug');
   if (!settingsPlug) return;
-  if (preferredPlugValue == null || preferredPlugValue === '') return;
+  if (preferredPlugValue == null || preferredPlugValue === '') {
+    syncPlugCompatibilityControl();
+    return;
+  }
   if (!setSelectValueIfPresent(settingsPlug, preferredPlugValue)) {
     settingsPlug.value = '';
   }
+  syncPlugCompatibilityControl();
+}
+
+function selectedPlugValue() {
+  const raw = $('set-plug')?.value;
+  if (raw == null || raw === '') return null;
+  const value = Number(raw);
+  return Number.isFinite(value) ? value : null;
+}
+
+function syncPlugCompatibilityControl() {
+  const btn = $('btn-plug-compat-check');
+  const summary = $('plug-compat-summary');
+  const result = $('plug-compat-result');
+  if (!btn || !summary || !result) return;
+  const plug = selectedPlugValue();
+  btn.disabled = plug == null;
+  summary.textContent = plug == null
+    ? 'Select a plug rating to validate compatibility.'
+    : `Validate plug ${fmt(plug)}A against the current upstream scope.`;
+  result.classList.add('hidden');
+  result.innerHTML = '';
+}
+
+function renderEtuPlugImpactExplanation({ changeSource, previousCascadeData, currentCascadeData, previousBrowseResponse, browseResponse }) {
+  const host = $('etu-plug-impact');
+  if (!host) return;
+  const plug = selectedCascadePlugValue();
+  if (!plug || !['plug-filter', 'settings-plug'].includes(changeSource) || !previousCascadeData || !currentCascadeData || !previousBrowseResponse) {
+    host.classList.add('hidden');
+    host.innerHTML = '';
+    return;
+  }
+
+  const deltas = [
+    { label: 'manufacturer', amount: Math.max((previousCascadeData.manufacturers || []).length - (currentCascadeData.manufacturers || []).length, 0) },
+    { label: 'trip type', amount: Math.max((previousCascadeData.trip_types || []).length - (currentCascadeData.trip_types || []).length, 0) },
+    { label: 'trip style', amount: Math.max((previousCascadeData.trip_styles || []).length - (currentCascadeData.trip_styles || []).length, 0) },
+    { label: 'browse match', amount: Math.max((previousBrowseResponse.count || 0) - (browseResponse.count || 0), 0) },
+  ].filter(item => item.amount > 0);
+  const reason = `Only sensors whose stored plug catalog contains ${fmt(plug)}A remain eligible.`;
+  if (!deltas.length) {
+    host.classList.remove('hidden');
+    host.innerHTML = `<strong>Plug lens impact:</strong> Plug ${esc(fmt(plug))}A did not remove any current ETU options. ${esc(reason)}`;
+    return;
+  }
+  const detail = deltas.map(item => `${item.amount} ${item.label}${item.amount === 1 ? '' : 's'}`).join(', ');
+  host.classList.remove('hidden');
+  host.innerHTML = `<strong>Plug lens impact:</strong> Plug ${esc(fmt(plug))}A narrowed the ETU space by removing ${esc(detail)}. ${esc(reason)}`;
+}
+
+async function runPlugCompatibilityCheck() {
+  const plug = selectedPlugValue();
+  if (plug == null) return;
+  const result = $('plug-compat-result');
+  const scope = currentCascadeSelection();
+  const params = new URLSearchParams({ plug_value: String(plug), limit: '25' });
+  ['manufacturer_id', 'trip_type_id', 'trip_style_id'].forEach((key) => {
+    if (scope[key] != null) params.set(key, String(scope[key]));
+  });
+  result.classList.remove('hidden');
+  result.innerHTML = '<em>Checking compatibility...</em>';
+  try {
+    const data = await get(`/api/v1/neta/etu/search?${params.toString()}`);
+    renderPlugCompatibilityResult(data, plug);
+  } catch (e) {
+    console.error('Plug compatibility check failed:', e);
+    result.innerHTML = `<span style="color:#b91c1c;">Compatibility check failed: ${esc(e?.message || 'unknown error')}</span>`;
+  }
+}
+
+function renderPlugCompatibilityResult(data, plug) {
+  const result = $('plug-compat-result');
+  if (!result) return;
+  const matches = data?.results || [];
+  const advisory = 'Compatibility-validation only - plug remains downstream of upstream identity resolution.';
+  if (!matches.length) {
+    result.innerHTML = `
+      <div><strong>No matching sensors</strong> for plug ${esc(fmt(plug))}A in the current scope.</div>
+      <div style="margin-top:4px; color:var(--muted);">${esc(advisory)}</div>
+    `;
+    return;
+  }
+  const rows = matches.slice(0, 25).map((row) => {
+    const sensorLabel = row.sensor_rating != null ? ` (${esc(row.sensor_rating)}A)` : '';
+    return `<li><strong>${esc(row.manufacturer_name)}</strong> - ${esc(row.trip_type_name)} - ${esc(row.trip_style_name)} - sensor <strong>${esc(row.sensor_desc)}</strong>${sensorLabel}</li>`;
+  }).join('');
+  result.innerHTML = `
+    <div><strong>${data.count}</strong> compatible sensor${data.count === 1 ? '' : 's'} for plug ${esc(fmt(plug))}A.</div>
+    <ul style="margin:6px 0 0 18px; padding:0;">${rows}</ul>
+    <div style="margin-top:6px; color:var(--muted);">${esc(advisory)}</div>
+  `;
 }
 
 function syncCascadePlugFromSettings() {
@@ -1354,11 +1463,13 @@ function renderEtuBrowseSummary(response) {
     host.textContent = 'Matching ETU results will appear here as the current scope changes.';
     return;
   }
-  const queryNote = q ? ` for search “${q}”` : '';
+  const queryNote = q ? ` for search "${q}"` : '';
   host.textContent = `${response.count} ETU match${response.count === 1 ? '' : 'es'} remain in the current scope${queryNote}. Select one below to drive the main ETU workflow.`;
 }
 
-async function refreshEtuBrowseResults() {
+async function refreshEtuBrowseResults(options = {}) {
+  const { changeSource = 'cascade', previousCascadeData = null } = options;
+  const previousBrowseResponse = lastEtuBrowseResponse;
   const params = new URLSearchParams();
   Object.entries(currentCascadeSelection()).forEach(([key, value]) => {
     if (value != null && value !== '') params.set(key, String(value));
@@ -1378,16 +1489,23 @@ async function refreshEtuBrowseResults() {
     response.results?.length ? 'Choose a matching ETU result...' : 'No ETU matches found',
   );
   $('btn-apply-browse-match').disabled = !($('etu-browse-results').value);
+  renderEtuPlugImpactExplanation({
+    changeSource,
+    previousCascadeData,
+    currentCascadeData: lastCascadeResponse,
+    previousBrowseResponse,
+    browseResponse: response,
+  });
 }
 
-function queueEtuBrowseRefresh() {
+function queueEtuBrowseRefresh(changeSource = 'browse-query') {
   if (etuBrowseDebounceHandle) {
     clearTimeout(etuBrowseDebounceHandle);
   }
   etuBrowseDebounceHandle = setTimeout(async () => {
     etuBrowseDebounceHandle = null;
     try {
-      await refreshEtuBrowseResults();
+      await refreshEtuBrowseResults({ changeSource, previousCascadeData: lastCascadeResponse });
     } catch (e) {
       console.error('Failed to refresh ETU browse results:', e);
     }
@@ -1464,6 +1582,7 @@ async function refreshCascadeOptions(preferredSelection = null, options = {}) {
   const { loadSensor = true, preserveActivePlan = false, changeSource = 'cascade' } = options;
   const desiredSelection = preferredSelection || currentCascadeSelection();
   const query = buildCascadeQuery(desiredSelection, currentBreakerHalfSelection());
+  const previousCascadeData = lastCascadeResponse;
   const data = await get(`/api/v1/neta/cascade${query ? `?${query}` : ''}`);
   lastCascadeResponse = data;
   renderEtuStepIndicator(data, desiredSelection, lastBreakerCascadeResponse, currentBreakerHalfSelection());
@@ -1520,7 +1639,7 @@ async function refreshCascadeOptions(preferredSelection = null, options = {}) {
     if (preserveActivePlan) {
       updateAuthDependentUi();
     }
-    await refreshEtuBrowseResults();
+    await refreshEtuBrowseResults({ changeSource, previousCascadeData });
     return data;
   }
 
@@ -1540,9 +1659,7 @@ async function refreshCascadeOptions(preferredSelection = null, options = {}) {
     setActivePlan(null, null, null);
   }
 
-  if (changeSource) {
-    await refreshEtuBrowseResults();
-  }
+  await refreshEtuBrowseResults({ changeSource, previousCascadeData });
 
   return data;
 }
@@ -1614,7 +1731,7 @@ async function applyEtuCascadeSelection(cascade, options = {}) {
 selSensor.addEventListener('change', handleCascadeChange);
 
 $('etu-browse-query').addEventListener('input', () => {
-  queueEtuBrowseRefresh();
+  queueEtuBrowseRefresh('browse-query');
 });
 
 $('etu-browse-results').addEventListener('change', () => {
@@ -1642,6 +1759,7 @@ $('btn-apply-browse-match').addEventListener('click', async () => {
 $('set-plug').addEventListener('change', async () => {
   clearEtuStaleExecutionResults();
   syncCascadePlugFromSettings();
+  syncPlugCompatibilityControl();
   try {
     await refreshCascadeOptions(null, { loadSensor: false, preserveActivePlan: true, changeSource: 'settings-plug' });
     await refreshBreakerCascadeOptions();
@@ -1675,6 +1793,8 @@ $('btn-clear-etu-filters').addEventListener('click', async () => {
   }
 });
 
+$('btn-plug-compat-check').addEventListener('click', runPlugCompatibilityCheck);
+
 
 // ─── 2. Settings ───
 
@@ -1692,7 +1812,7 @@ async function loadSettings(sensorId, options = {}) {
 
     // Populate dropdowns
     fillNumSelect($('set-plug'), settings.plug_values, 'Select plug...');
-  syncSettingsPlugFromCascadeFilter(preferredPlugValue);
+    syncSettingsPlugFromCascadeFilter(preferredPlugValue);
     fillNumSelect($('set-ltpu'), settings.ltpu_settings, 'Select LTPU...');
     fillLtdSelect($('set-ltd'), settings.ltd_settings);
     fillNumSelect($('set-stpu'), settings.stpu_settings, 'Select STPU...');
@@ -1701,6 +1821,7 @@ async function loadSettings(sensorId, options = {}) {
     fillNumSelect($('set-gfpu'), settings.gfpu_settings, 'Select GFPU...');
     fillDelayBandSelect($('set-gfd'), settings.gfd_settings, 'Select GFD band...');
     syncEtuApplicableRows(settings, ctx);
+    syncPlugCompatibilityControl();
 
     $('settings-section').classList.remove('hidden');
     $('btn-calc').disabled = false;
@@ -1718,7 +1839,7 @@ function renderCurrentEtuSummary() {
   const sum = $('sensor-summary');
   if (!sum || !ctx) return;
   const identity = getCurrentEtuIdentity();
-  const resolvedEquipment = ctx.resolved_equipment || getCurrentEtuResolvedEquipment();
+  const resolvedEquipment = getCurrentEtuResolvedEquipment();
   sum.classList.remove('hidden');
   sum.innerHTML = renderFamilySummaryMarkup(resolvedEquipment, {
     primaryLabel: identity.sensorDesc || ctx.sensor_desc,
@@ -1936,8 +2057,38 @@ function getCurrentEtuIdentity() {
 }
 
 function getCurrentEtuResolvedEquipment() {
-  if (currentSensorContext?.resolved_equipment) return currentSensorContext.resolved_equipment;
   const identity = getCurrentEtuIdentity();
+  if (currentSensorContext?.resolved_equipment) {
+    const resolved = currentSensorContext.resolved_equipment;
+    return {
+      ...resolved,
+      primary_label: resolved.primary_label || identity.tripUnitLabel || identity.sensorDesc || null,
+      secondary_label: identity.breakerContextLabel || resolved.secondary_label || (identity.sensorDesc ? `Sensor ${identity.sensorDesc}` : null),
+      breaker_context: {
+        ...(resolved.breaker_context || {}),
+        label: identity.breakerContextLabel || resolved.breaker_context?.label || null,
+        source: identity.breakerContextSource || resolved.breaker_context?.source || null,
+        manufacturer_name: identity.breakerManufacturerName || resolved.breaker_context?.manufacturer_name || identity.manufacturerName || null,
+        breaker_class: identity.breakerClass || resolved.breaker_context?.breaker_class || null,
+        breaker_name: identity.breakerName || resolved.breaker_context?.breaker_name || null,
+        breaker_style_name: identity.breakerStyleName || resolved.breaker_context?.breaker_style_name || identity.tripStyleName || null,
+      },
+      trip_unit: {
+        ...(resolved.trip_unit || {}),
+        manufacturer_name: identity.manufacturerName || resolved.trip_unit?.manufacturer_name || null,
+        trip_type_name: identity.tripTypeName || resolved.trip_unit?.trip_type_name || null,
+        trip_style_name: identity.tripStyleName || resolved.trip_unit?.trip_style_name || null,
+        label: identity.tripUnitLabel || resolved.trip_unit?.label || null,
+      },
+      rating_context: {
+        ...(resolved.rating_context || {}),
+        label: resolved.rating_context?.label || (identity.sensorDesc ? `Sensor ${identity.sensorDesc}` : null),
+        sensor_id: currentSensorId || resolved.rating_context?.sensor_id || null,
+        sensor_desc: identity.sensorDesc || resolved.rating_context?.sensor_desc || null,
+        sensor_rating: identity.sensorRating ?? resolved.rating_context?.sensor_rating ?? null,
+      },
+    };
+  }
   return {
     family: 'etu',
     family_label: 'ETU',
@@ -1973,13 +2124,47 @@ function renderFamilySummaryMarkup(summary, fallbacks = {}) {
   const ratingLabel = summary?.rating_context?.label || fallbacks.ratingLabel || '—';
   const primaryLabel = summary?.primary_label || fallbacks.primaryLabel || 'Resolved equipment';
   const tags = fallbacks.tags || '';
+  let breakerProvenance = '';
+  if (summary?.family === 'etu') {
+    const provenance = classifyEtuBreakerContextSource(summary?.breaker_context?.source);
+    breakerProvenance = ` <span class="provenance-tag provenance-${esc(provenance.kind)}" title="${esc(provenance.title)}" data-source="${esc(summary?.breaker_context?.source || '')}">${esc(provenance.label)}</span>`;
+  }
   return `
       <span><strong>${esc(primaryLabel)}</strong></span>
-      <span>Breaker Context: ${esc(breakerLabel)}</span>
+      <span>Breaker Context: ${esc(breakerLabel)}${breakerProvenance}</span>
       <span>Trip Unit: ${esc(tripUnitLabel)}</span>
       <span>Rating Context: ${esc(ratingLabel)}</span>
       ${tags}
     `;
+}
+
+function classifyEtuBreakerContextSource(source) {
+  if (!source) {
+    return {
+      kind: 'unknown',
+      label: '(source unknown)',
+      title: 'Breaker-context source string is missing - runtime did not record provenance.',
+    };
+  }
+  if (source === 'breaker_half_selection') {
+    return {
+      kind: 'catalog',
+      label: '(selected)',
+      title: 'Selected breaker-half label - rendered from the current breaker manufacturer, breaker type, and breaker style selection.',
+    };
+  }
+  if (source === 'trip_style_sensor_rating') {
+    return {
+      kind: 'derived',
+      label: '(derived)',
+      title: 'Derived label - synthesized from trip-style name plus sensor rating because no actual breaker-half selection is active in the ETU summary.',
+    };
+  }
+  return {
+    kind: 'catalog',
+    label: '(catalog)',
+    title: `Catalog-backed label - source: ${source}`,
+  };
 }
 
 

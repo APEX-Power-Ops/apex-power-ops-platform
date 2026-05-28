@@ -80,6 +80,18 @@ def test_demo_uses_equipment_match_labels_for_etu_selection(demo_body):
     assert "getCurrentEtuIdentity" in demo_body
 
 
+def test_demo_exposes_etu_provenance_and_plug_compatibility_hooks(demo_body):
+    """The ETU demo should disclose breaker-context provenance and provide the bounded plug-compatibility UI without adding a new backend route."""
+    assert "classifyEtuBreakerContextSource" in demo_body
+    assert "provenance-tag" in demo_body
+    assert "btn-plug-compat-check" in demo_body
+    assert "plug-compat-summary" in demo_body
+    assert "plug-compat-result" in demo_body
+    assert "etu-plug-impact" in demo_body
+    assert "/api/v1/neta/etu/search" in demo_body
+    assert "/api/v1/neta/etu/sensors-matching-plug" not in demo_body
+
+
 def test_demo_wires_all_five_api_paths(demo_body):
     """The page must reference ETU, TMT, and EMT workflow endpoints."""
     assert "/api/v1/neta/cascade" in demo_body

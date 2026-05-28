@@ -2622,12 +2622,12 @@ def get_cascade(
             return where_sql + xh_clause
         return "WHERE 1=1" + xh_clause
 
-    full_where, full_params = _build_cascade_where(filters)
+    full_where, full_params = _build_cascade_where(filters, prefix="v.")
     match_count = db.execute(
         text(
             f"""
             {xh_cte}
-            SELECT COUNT(DISTINCT sensor_id)
+            SELECT COUNT(DISTINCT v.sensor_id)
             FROM vw_trip_unit_cascade v
             {plug_join}
             {_apply_xh(full_where)}
@@ -2636,7 +2636,7 @@ def get_cascade(
         {**full_params, **plug_params, **xh_params},
     ).scalar() or 0
 
-    manufacturer_where, manufacturer_params = _build_cascade_where(filters, {"manufacturer_id"})
+    manufacturer_where, manufacturer_params = _build_cascade_where(filters, {"manufacturer_id"}, prefix="v.")
     manufacturer_rows = db.execute(
         text(
             f"""
@@ -2655,7 +2655,7 @@ def get_cascade(
         {**manufacturer_params, **plug_params, **xh_params},
     ).fetchall()
 
-    trip_type_where, trip_type_params = _build_cascade_where(filters, {"trip_type_id"})
+    trip_type_where, trip_type_params = _build_cascade_where(filters, {"trip_type_id"}, prefix="v.")
     trip_type_rows = db.execute(
         text(
             f"""
@@ -2677,7 +2677,7 @@ def get_cascade(
         {**trip_type_params, **plug_params, **xh_params},
     ).fetchall()
 
-    trip_style_where, trip_style_params = _build_cascade_where(filters, {"trip_style_id"})
+    trip_style_where, trip_style_params = _build_cascade_where(filters, {"trip_style_id"}, prefix="v.")
     trip_style_rows = db.execute(
         text(
             f"""
@@ -2722,7 +2722,7 @@ def get_cascade(
 
     sensors: list[CascadeSensor] = []
     if trip_style_id is not None or sensor_id is not None:
-        sensor_where, sensor_params = _build_cascade_where(filters, {"sensor_id"})
+        sensor_where, sensor_params = _build_cascade_where(filters, {"sensor_id"}, prefix="v.")
         sensor_rows = db.execute(
             text(
                 f"""
