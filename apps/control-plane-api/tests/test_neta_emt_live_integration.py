@@ -14,6 +14,7 @@ import sys
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import inspect
+from sqlalchemy.exc import SQLAlchemyError
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -37,8 +38,9 @@ def _emt_tables_available() -> bool:
         inspector = inspect(engine)
         existing = set(inspector.get_table_names())
         return all(table in existing for table in EMT_TABLES)
-    except Exception:
-        return False
+    except SQLAlchemyError as exc:
+        message = str(exc.orig).splitlines()[0] if getattr(exc, "orig", None) else exc.__class__.__name__
+        pytest.fail(f"EMT live database connection failed: {message}", pytrace=False)
 
 
 @pytest.mark.integration
