@@ -65,7 +65,7 @@ Focused route validation passed with the repo-local interpreter because `pytest`
    - after first cascade hardening patch: `42 passed in 3.91s`
    - final post-fix pass: `42 passed in 1.83s`
 
-Focused browser pytest was present but not executable in this environment because browser binaries were unavailable:
+Focused browser pytest was present but not executable in that repo-local venv because the Playwright package was missing; the required browser binaries were already cached on the workstation:
 
 1. `.venv\Scripts\python.exe -m pytest apps/control-plane-api/tests/test_demo_browser.py -k "provenance or plug" -q`
    - result: `2 skipped, 18 deselected in 1.79s`

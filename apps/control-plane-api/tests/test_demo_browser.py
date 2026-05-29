@@ -1916,6 +1916,11 @@ class TestDemoBrowserWorkflow:
         page.locator("#preset-select").select_option(index=1)
         page.locator("#btn-load-preset").click()
         page.locator("#settings-section").wait_for(state="visible", timeout=10000)
+        page.locator("#set-plug").select_option("800")
+        page.wait_for_function(
+            "() => { const btn = document.querySelector('#btn-plug-compat-check'); return !!btn && !btn.disabled; }",
+            timeout=10000,
+        )
 
         compat_button = page.locator("#btn-plug-compat-check")
         assert compat_button.is_enabled()
@@ -1926,7 +1931,7 @@ class TestDemoBrowserWorkflow:
         page.locator("#set-plug").select_option("1200")
         page.locator("#etu-plug-impact").wait_for(state="visible", timeout=10000)
         assert "narrowed the ETU space" in page.locator("#etu-plug-impact").inner_text()
-        assert "Validate plug 1200A" in page.locator("#plug-compat-summary").inner_text()
+        assert "Validate plug 1,200A" in page.locator("#plug-compat-summary").inner_text()
 
         compat_button.click()
         page.locator("#plug-compat-result").wait_for(state="visible", timeout=10000)
