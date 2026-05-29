@@ -23,6 +23,8 @@ import subprocess
 import threading
 import time
 import json
+from copy import deepcopy
+from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -66,6 +68,23 @@ pytestmark = pytest.mark.skipif(
     not (_HAS_PLAYWRIGHT and _HAS_UVICORN and _HAS_BROWSER),
     reason=" and ".join(_SKIP_REASON_PARTS) if _SKIP_REASON_PARTS else "",
 )
+
+
+SENSOR25_SCENARIO = json.loads(
+    (Path(__file__).resolve().parent / "fixtures" / "etu_scenario_sensor25.json").read_text(encoding="utf-8")
+)
+
+
+def _sensor25_browser_cascade_sensor():
+    return deepcopy(SENSOR25_SCENARIO["browser"]["cascade_sensor"])
+
+
+def _sensor25_browser_context_response():
+    return deepcopy(SENSOR25_SCENARIO["browser"]["context_response"])
+
+
+def _sensor25_browser_settings_response():
+    return deepcopy(SENSOR25_SCENARIO["browser"]["settings_response"])
 
 
 # ── Fixtures ──
@@ -189,6 +208,8 @@ def _mock_demo_bootstrap(page, catalog="fallback", manufacturer_count=0, sensor_
 
 
 def _mock_etu_phase_c_routes(page):
+    sensor_25 = _sensor25_browser_cascade_sensor()
+
     def cascade_payload(url: str):
         params = parse_qs(urlparse(url).query)
         manufacturer_id = params.get("manufacturer_id", [None])[0]
@@ -225,21 +246,7 @@ def _mock_etu_phase_c_routes(page):
                 {"plug_value": 1200, "sensor_count": 1},
             ] if trip_style_id == "3" or params.get("sensor_id", [None])[0] == "25" else [],
             "sensors": [
-                {
-                    "sensor_id": 25,
-                    "sensor_rating": 800,
-                    "sensor_desc": "800",
-                    "trip_style_id": 3,
-                    "trip_style_name": "ICCB",
-                    "trip_type_id": 75,
-                    "trip_type_name": "MVT RMS-9",
-                    "manufacturer_id": 9,
-                    "manufacturer_name": "GE",
-                    "has_ltpu": True,
-                    "has_stpu": True,
-                    "has_inst": True,
-                    "has_gfpu": True,
-                },
+                sensor_25,
                 {
                     "sensor_id": 26,
                     "sensor_rating": 1200,
@@ -283,15 +290,7 @@ def _mock_etu_phase_c_routes(page):
         plug_value = params.get("plug_value", [None])[0]
         all_results = [
             {
-                "sensor_id": 25,
-                "sensor_rating": 800,
-                "sensor_desc": "800",
-                "trip_style_id": 3,
-                "trip_style_name": "ICCB",
-                "trip_type_id": 75,
-                "trip_type_name": "MVT RMS-9",
-                "manufacturer_id": 9,
-                "manufacturer_name": "GE",
+                **sensor_25,
                 "compatible_plug_values": [800.0],
             },
             {
@@ -323,62 +322,11 @@ def _mock_etu_phase_c_routes(page):
     )
     page.route(
         "**/api/v1/neta/settings/25",
-        lambda route: _fulfill_json(
-            route,
-            {
-                "plug_values": [800, 1200],
-                "ltpu_settings": [0.8, 1.0],
-                "ltd_settings": [{"label": "6x", "open_time": 0.5, "band": "6x"}],
-                "stpu_settings": [4.0],
-                "std_settings": [{"label": "I2T", "open_time": 0.21, "band": "I2T"}],
-                "inst_settings": [8.0, 10.0],
-                "gfpu_settings": [0.2, 0.4],
-                "gfd_settings": [{"label": "I2T", "open_time": 0.21, "band": "I2T"}],
-            },
-        ),
+        lambda route: _fulfill_json(route, _sensor25_browser_settings_response()),
     )
     page.route(
         "**/api/v1/neta/context/25",
-        lambda route: _fulfill_json(
-            route,
-            {
-                "sensor_id": 25,
-                "sensor_desc": "800",
-                "rating": 800,
-                "has_ltpu": True,
-                "has_stpu": True,
-                "has_inst": True,
-                "has_gfpu": True,
-                "maint_capable": True,
-                "resolved_equipment": {
-                    "family": "etu",
-                    "family_label": "ETU",
-                    "resolved_id": "sensor:25",
-                    "primary_label": "GE MVT RMS-9",
-                    "secondary_label": "ICCB · 800A",
-                    "breaker_context": {
-                        "label": "ICCB · 800A",
-                        "source": "trip_style_sensor_rating",
-                        "manufacturer_name": "GE",
-                        "breaker_class": "ICCB",
-                        "breaker_name": None,
-                        "breaker_style_name": "ICCB",
-                    },
-                    "trip_unit": {
-                        "manufacturer_name": "GE",
-                        "trip_type_name": "MVT RMS-9",
-                        "trip_style_name": "ICCB",
-                        "label": "GE MVT RMS-9 ICCB",
-                    },
-                    "rating_context": {
-                        "label": "Sensor 800",
-                        "sensor_id": 25,
-                        "sensor_desc": "800",
-                        "sensor_rating": 800,
-                    },
-                },
-            },
-        ),
+        lambda route: _fulfill_json(route, _sensor25_browser_context_response()),
     )
     page.route(
         "**/api/v1/neta/etu/search*",
@@ -1309,21 +1257,7 @@ class TestDemoBrowserWorkflow:
         calculate, evaluate, and TCC results instead of leaving the old branch visible."""
         _mock_demo_bootstrap(page, catalog="live", manufacturer_count=1, sensor_count=2)
 
-        sensor_25 = {
-            "sensor_id": 25,
-            "sensor_rating": 800,
-            "sensor_desc": "800",
-            "trip_style_id": 3,
-            "trip_style_name": "ICCB",
-            "trip_type_id": 75,
-            "trip_type_name": "MVT RMS-9",
-            "manufacturer_id": 9,
-            "manufacturer_name": "GE",
-            "has_ltpu": True,
-            "has_stpu": True,
-            "has_inst": True,
-            "has_gfpu": True,
-        }
+        sensor_25 = _sensor25_browser_cascade_sensor()
         sensor_26 = {
             "sensor_id": 26,
             "sensor_rating": 1200,
@@ -1381,26 +1315,7 @@ class TestDemoBrowserWorkflow:
         )
         page.route(
             "**/api/v1/neta/context/25",
-            lambda route: _fulfill_json(
-                route,
-                {
-                    "sensor_id": 25,
-                    "sensor_desc": "800",
-                    "rating": 800,
-                    "has_ltpu": True,
-                    "has_stpu": True,
-                    "has_inst": True,
-                    "has_gfpu": True,
-                    "maint_capable": True,
-                    "resolved_equipment": {
-                        "family": "etu",
-                        "family_label": "ETU",
-                        "resolved_id": "sensor:25",
-                        "primary_label": "GE · MVT RMS-9",
-                        "secondary_label": "ICCB · Sensor 800",
-                    },
-                },
-            ),
+            lambda route: _fulfill_json(route, _sensor25_browser_context_response()),
         )
         page.route(
             "**/api/v1/neta/context/26",
@@ -1427,19 +1342,7 @@ class TestDemoBrowserWorkflow:
         )
         page.route(
             "**/api/v1/neta/settings/25",
-            lambda route: _fulfill_json(
-                route,
-                {
-                    "plug_values": [800],
-                    "ltpu_settings": [0.8],
-                    "ltd_settings": [{"band": "C-2", "label": "C-2", "open_time": 6.0, "is_default": True}],
-                    "stpu_settings": [4.0],
-                    "std_settings": [{"band": "I2T Min", "label": "Min", "open_time": 0.21, "is_default": True}],
-                    "inst_settings": [10.0],
-                    "gfpu_settings": [0.4],
-                    "gfd_settings": [{"band": "GF Min", "label": "Min", "open_time": 0.21, "is_default": True}],
-                },
-            ),
+            lambda route: _fulfill_json(route, _sensor25_browser_settings_response()),
         )
         page.route(
             "**/api/v1/neta/settings/26",

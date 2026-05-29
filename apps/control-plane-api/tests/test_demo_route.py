@@ -7,12 +7,19 @@ wires all five expected API paths in the correct workflow order.
 
 import sys
 import os
+import json
+from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import pytest
 from fastapi.testclient import TestClient
 from main import app
+
+
+SENSOR25_SCENARIO = json.loads(
+    (Path(__file__).resolve().parent / "fixtures" / "etu_scenario_sensor25.json").read_text(encoding="utf-8")
+)
 
 
 @pytest.fixture
@@ -138,10 +145,10 @@ def test_demo_has_preset_mechanism(demo_body):
 def test_demo_preset_contains_real_sensor(demo_body):
     """The built-in preset must reference a real sensor with cascade IDs
     and complete settings, not placeholder data."""
-    # Sensor 25: GE MVT RMS-9 ICCB 800A
-    assert "sensor_id: 25" in demo_body
-    assert "manufacturer_id: 9" in demo_body
-    assert "plug_rating: 800" in demo_body
+    preset = SENSOR25_SCENARIO["preset"]
+    assert f"sensor_id: {preset['sensor_id']}" in demo_body
+    assert f"manufacturer_id: {preset['manufacturer_id']}" in demo_body
+    assert f"plug_rating: {preset['plug_rating']}" in demo_body
     assert "ltpu_setting:" in demo_body
     assert "stpu_setting:" in demo_body
     assert "inst_setting:" in demo_body
@@ -167,13 +174,12 @@ def test_demo_has_maint_preset(demo_body):
 
 def test_demo_maint_preset_uses_real_sensor(demo_body):
     """The MAINT preset must reference a real sensor, not placeholder data."""
-    # The MAINT preset reuses sensor 25 with maint_mode: true
-    # Verify it has complete settings and measurements including INST measured
+    preset = SENSOR25_SCENARIO["preset"]
     maint_idx = demo_body.index("MAINT Mode")
     after_maint = demo_body[maint_idx:]
-    assert "sensor_id: 25" in after_maint
+    assert f"sensor_id: {preset['sensor_id']}" in after_maint
     assert "maint_mode: true" in after_maint
-    assert "inst: 7800" in after_maint  # MAINT exercises INST measured
+    assert f"inst: {preset['measurements']['inst']}" in after_maint
 
 
 def test_demo_maint_banner_exists(demo_body):

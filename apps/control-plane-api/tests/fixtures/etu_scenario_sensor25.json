@@ -1,0 +1,109 @@
+{
+  "preset": {
+    "manufacturer_id": 9,
+    "manufacturer_name": "GE",
+    "trip_type_id": 75,
+    "trip_type_name": "MVT RMS-9",
+    "trip_style_id": 3,
+    "trip_style_name": "ICCB",
+    "sensor_id": 25,
+    "sensor_desc": "800",
+    "plug_rating": 800,
+    "ltpu_setting": 0.8,
+    "ltd_setting": 6.0,
+    "stpu_setting": 4.0,
+    "std_setting": 0.21,
+    "inst_setting": 10.0,
+    "gfpu_setting": 0.4,
+    "gfd_setting": 0.21,
+    "maint_mode": false,
+    "measurements": {
+      "ltpu": 650,
+      "stpu": 3100,
+      "gfpu": 310,
+      "inst": 7800
+    }
+  },
+  "browser": {
+    "cascade_sensor": {
+      "sensor_id": 25,
+      "sensor_rating": 800,
+      "sensor_desc": "800",
+      "trip_style_id": 3,
+      "trip_style_name": "ICCB",
+      "trip_type_id": 75,
+      "trip_type_name": "MVT RMS-9",
+      "manufacturer_id": 9,
+      "manufacturer_name": "GE",
+      "has_ltpu": true,
+      "has_stpu": true,
+      "has_inst": true,
+      "has_gfpu": true
+    },
+    "context_response": {
+      "sensor_id": 25,
+      "sensor_desc": "800",
+      "rating": 800,
+      "has_ltpu": true,
+      "has_stpu": true,
+      "has_inst": true,
+      "has_gfpu": true,
+      "maint_capable": true,
+      "resolved_equipment": {
+        "family": "etu",
+        "family_label": "ETU",
+        "resolved_id": "sensor:25",
+        "primary_label": "GE MVT RMS-9",
+        "secondary_label": "ICCB · 800A",
+        "breaker_context": {
+          "label": "ICCB · 800A",
+          "source": "trip_style_sensor_rating",
+          "manufacturer_name": "GE",
+          "breaker_class": "ICCB",
+          "breaker_name": null,
+          "breaker_style_name": "ICCB"
+        },
+        "trip_unit": {
+          "manufacturer_name": "GE",
+          "trip_type_name": "MVT RMS-9",
+          "trip_style_name": "ICCB",
+          "label": "GE MVT RMS-9 ICCB"
+        },
+        "rating_context": {
+          "label": "Sensor 800",
+          "sensor_id": 25,
+          "sensor_desc": "800",
+          "sensor_rating": 800
+        }
+      }
+    },
+    "settings_response": {
+      "plug_values": [800, 1200],
+      "ltpu_settings": [0.8, 1.0],
+      "ltd_settings": [
+        {
+          "label": "6x",
+          "open_time": 0.5,
+          "band": "6x"
+        }
+      ],
+      "stpu_settings": [4.0],
+      "std_settings": [
+        {
+          "label": "I2T",
+          "open_time": 0.21,
+          "band": "I2T"
+        }
+      ],
+      "inst_settings": [8.0, 10.0],
+      "gfpu_settings": [0.2, 0.4],
+      "gfd_settings": [
+        {
+          "label": "I2T",
+          "open_time": 0.21,
+          "band": "I2T"
+        }
+      ]
+    }
+  }
+}
