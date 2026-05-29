@@ -21,32 +21,14 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_BASE_URL = "http://127.0.0.1:8010"
 DEFAULT_TIMEOUT_SECONDS = 30
 DEFAULT_ARTIFACT_PATH = REPO_ROOT / "output" / "dev" / "control-plane-live-etu-sql-parity.json"
-
-KNOWN_ETU_PAYLOAD = {
-    "sensor_id": 25,
-    "plug_rating": 800.0,
-    "ltpu_setting": 0.8,
-    "ltd_setting": 6.0,
-    "stpu_setting": 4.0,
-    "std_setting": 0.21,
-    "inst_setting": 10.0,
-    "gfpu_setting": 0.4,
-    "gfd_setting": 0.21,
-    "maint_mode": False,
-}
-
-KNOWN_ETU_MEASUREMENTS = [
-    {"element": "LTPU", "measured_current": 650.0},
-    {"element": "STPU", "measured_current": 3100.0},
-    {"element": "GFPU", "measured_current": 310.0},
-]
+DEFAULT_MATRIX_PATH = APP_ROOT / "scripts" / "etu_parity_matrix.json"
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=(
             "Compare the repaired live ETU SQL helper functions against the active "
-            "route-owned API contract for the known sensor 25 scenario."
+            "route-owned API contract for each seeded ETU scenario in the parity matrix."
         )
     )
     parser.add_argument("--base-url", default=DEFAULT_BASE_URL, help="Base URL for the control-plane runtime.")
@@ -55,6 +37,11 @@ def build_parser() -> argparse.ArgumentParser:
         type=int,
         default=DEFAULT_TIMEOUT_SECONDS,
         help="HTTP timeout for each request.",
+    )
+    parser.add_argument(
+        "--matrix-path",
+        default=str(DEFAULT_MATRIX_PATH),
+        help="Scenario matrix describing the ETU parity probes to run.",
     )
     parser.add_argument(
         "--artifact-path",
@@ -136,15 +123,41 @@ def _assert_equal(actual: Any, expected: Any, label: str) -> None:
         )
 
 
+def _equality_error(actual: Any, expected: Any, label: str) -> str | None:
+    normalized_actual = _normalize_value(actual)
+    normalized_expected = _normalize_value(expected)
+    if normalized_actual == normalized_expected:
+        return None
+    return f"{label} mismatch. Expected {normalized_expected!r}, got {normalized_actual!r}"
+
+
+def _resolve_path(path_text: str) -> Path:
+    candidate = Path(path_text)
+    if candidate.is_absolute():
+        return candidate
+    return (REPO_ROOT / candidate).resolve()
+
+
 def _write_artifact(report: dict[str, Any], artifact_path: str | None) -> str | None:
     if not artifact_path:
         return None
-    target = Path(artifact_path)
-    if not target.is_absolute():
-        target = (REPO_ROOT / target).resolve()
+    target = _resolve_path(artifact_path)
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return str(target)
+
+
+def _load_matrix(matrix_path: str) -> dict[str, Any]:
+    target = _resolve_path(matrix_path)
+    payload = json.loads(target.read_text(encoding="utf-8"))
+    _ensure(isinstance(payload, dict), "ETU parity matrix must be a JSON object")
+    scenarios = payload.get("scenarios")
+    _ensure(isinstance(scenarios, list) and scenarios, "ETU parity matrix must define scenarios")
+    for scenario in scenarios:
+        _ensure(isinstance(scenario, dict), "Each ETU parity scenario must be an object")
+        _ensure(isinstance(scenario.get("payload"), dict), "Each ETU parity scenario must define a payload")
+        _ensure(isinstance(scenario.get("measurements") or [], list), "Each ETU parity scenario measurements value must be a list")
+    return payload
 
 
 def _fetch_sql_settings(sensor_id: int) -> dict[str, Any]:
@@ -158,27 +171,27 @@ def _fetch_sql_settings(sensor_id: int) -> dict[str, Any]:
     return result
 
 
-def _measurement_current(element: str) -> float | None:
-    for item in KNOWN_ETU_MEASUREMENTS:
+def _measurement_current(measurements: list[dict[str, Any]], element: str) -> float | None:
+    for item in measurements:
         if item.get("element") == element:
             return item.get("measured_current")
     return None
 
 
-def _fetch_sql_evaluate(payload: dict[str, Any]) -> dict[str, Any]:
+def _fetch_sql_evaluate(payload: dict[str, Any], measurements: list[dict[str, Any]]) -> dict[str, Any]:
     params = {
         "p_sensor_id": payload["sensor_id"],
         "p_plug_rating": payload["plug_rating"],
         "p_ltpu_setting": payload["ltpu_setting"],
-        "p_stpu_setting": payload["stpu_setting"],
-        "p_inst_setting": payload["inst_setting"],
-        "p_gfpu_setting": payload["gfpu_setting"],
+        "p_stpu_setting": payload.get("stpu_setting"),
+        "p_inst_setting": payload.get("inst_setting"),
+        "p_gfpu_setting": payload.get("gfpu_setting"),
         "p_multiplier_value": payload.get("multiplier_value"),
         "p_c_factor": payload.get("c_factor"),
-        "p_ltpu_measured": _measurement_current("LTPU"),
-        "p_stpu_measured": _measurement_current("STPU"),
-        "p_inst_measured": _measurement_current("INST"),
-        "p_gfpu_measured": _measurement_current("GFPU"),
+        "p_ltpu_measured": _measurement_current(measurements, "LTPU"),
+        "p_stpu_measured": _measurement_current(measurements, "STPU"),
+        "p_inst_measured": _measurement_current(measurements, "INST"),
+        "p_gfpu_measured": _measurement_current(measurements, "GFPU"),
         "p_ltd_trip_time": None,
         "p_std_trip_time": None,
         "p_gfd_trip_time": None,
@@ -273,29 +286,40 @@ def _project_sql_evaluate(payload: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def probe_parity(base_url: str, *, timeout_seconds: int) -> dict[str, Any]:
-    sensor_id = KNOWN_ETU_PAYLOAD["sensor_id"]
+def probe_parity(base_url: str, scenario: dict[str, Any], *, timeout_seconds: int) -> dict[str, Any]:
+    payload = dict(scenario["payload"])
+    measurements = list(scenario.get("measurements") or [])
+    sensor_id = payload["sensor_id"]
 
     api_settings = _project_api_settings(
         _get_json(base_url, f"/api/v1/neta/settings/{sensor_id}", timeout_seconds=timeout_seconds)
     )
     sql_settings = _project_sql_settings(_fetch_sql_settings(sensor_id))
-    _assert_equal(api_settings, sql_settings, "ETU settings parity")
+    _assert_equal(api_settings, sql_settings, f"ETU settings parity for sensor {sensor_id}")
 
     api_evaluate = _project_api_evaluate(
         _post_json(
             base_url,
             "/api/v1/neta/evaluate",
-            {**KNOWN_ETU_PAYLOAD, "measurements": KNOWN_ETU_MEASUREMENTS},
+            {**payload, "measurements": measurements},
             timeout_seconds=timeout_seconds,
         )
     )
-    sql_evaluate = _project_sql_evaluate(_fetch_sql_evaluate(KNOWN_ETU_PAYLOAD))
-    _assert_equal(api_evaluate, sql_evaluate, "ETU evaluate parity")
+    sql_evaluate = _project_sql_evaluate(_fetch_sql_evaluate(payload, measurements))
+    evaluate_warning = _equality_error(api_evaluate, sql_evaluate, f"ETU evaluate parity for sensor {sensor_id}")
+
+    warnings: list[str] = []
+    if evaluate_warning:
+        warnings.append(evaluate_warning)
 
     return {
+        "scenario_id": scenario.get("scenario_id") or f"sensor-{sensor_id}",
         "base_url": base_url,
         "sensor_id": sensor_id,
+        "seed_note": scenario.get("seed_note"),
+        "trip_style_id_or_plug_family": scenario.get("trip_style_id_or_plug_family"),
+        "status": "warn" if warnings else "pass",
+        "warnings": warnings,
         "settings": {
             "api": _normalize_value(api_settings),
             "sql": _normalize_value(sql_settings),
@@ -312,7 +336,23 @@ def main() -> int:
     args = parser.parse_args()
 
     try:
-        report = probe_parity(args.base_url.rstrip("/"), timeout_seconds=args.timeout_seconds)
+        matrix = _load_matrix(args.matrix_path)
+        scenario_reports = [
+            probe_parity(args.base_url.rstrip("/"), scenario, timeout_seconds=args.timeout_seconds)
+            for scenario in matrix["scenarios"]
+        ]
+        report = {
+            "base_url": args.base_url.rstrip("/"),
+            "matrix_path": str(_resolve_path(args.matrix_path)),
+            "summary": {
+                "scenario_count": len(scenario_reports),
+                "pass_count": sum(1 for item in scenario_reports if item["status"] == "pass"),
+                "warn_count": sum(1 for item in scenario_reports if item["status"] == "warn"),
+                "warning_count": sum(len(item["warnings"]) for item in scenario_reports),
+                "blocked_requirements": matrix.get("blocked_requirements") or [],
+            },
+            "scenarios": scenario_reports,
+        }
         artifact_path = _write_artifact(report, args.artifact_path)
     except Exception as exc:
         print(f"RESULT FAIL: {exc}", file=sys.stderr)
@@ -320,9 +360,15 @@ def main() -> int:
 
     if artifact_path:
         print(f"ARTIFACT {artifact_path}")
+    summary = report["summary"]
+    blocked_suffix = ""
+    if summary["blocked_requirements"]:
+        blocked_suffix = f"; blocked requirements: {len(summary['blocked_requirements'])}"
     print(
-        "RESULT PASS: live ETU SQL helpers match the active API contract for "
-        f"sensor {KNOWN_ETU_PAYLOAD['sensor_id']}"
+        "RESULT PASS: live ETU SQL settings parity holds across "
+        f"{summary['scenario_count']} seeded scenario(s)"
+        f"; evaluate warnings: {summary['warning_count']}"
+        f"{blocked_suffix}"
     )
     return 0
 
