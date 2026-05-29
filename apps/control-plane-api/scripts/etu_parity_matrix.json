@@ -4,6 +4,7 @@
     {
       "scenario_id": "sensor-25-ge-mvt-rms9-800-normal",
       "seed_note": "Repo-owned GE preset truth source from demo preset and ETU route tests.",
+      "source_of_truth": "Live route revalidated on 2026-05-29 against /api/v1/neta/settings/25 and /api/v1/neta/evaluate with the canonical demo preset payload.",
       "trip_style_id_or_plug_family": "trip_style:3/ICCB",
       "payload": {
         "sensor_id": 25,
@@ -33,29 +34,73 @@
       ]
     },
     {
-      "scenario_id": "sensor-26-ge-mvt-rms9-1200-minimal",
-      "seed_note": "Repo-owned browser contract covers sensor 26 as the secondary ETU sensor with a single 1200A plug and LT-only settings surface.",
+      "scenario_id": "sensor-26-ge-mvt-rms9-600-live-derived",
+      "seed_note": "Live route-derived trip_style:3 expansion row replacing the earlier mock-era minimal seed.",
+      "source_of_truth": "Derived on 2026-05-29 from live /api/v1/neta/settings/26 plus /api/v1/neta/calculate using the first available settings for each active ETU section.",
       "trip_style_id_or_plug_family": "trip_style:3/ICCB",
       "payload": {
         "sensor_id": 26,
-        "plug_rating": 1200.0,
-        "ltpu_setting": 1.0,
-        "ltd_setting": 12.0,
-        "stpu_setting": null,
-        "std_setting": null,
-        "inst_setting": null,
+        "plug_rating": 600.0,
+        "ltpu_setting": 0.5,
+        "ltd_setting": 3.0,
+        "stpu_setting": 1.5,
+        "std_setting": 0.1,
+        "inst_setting": 1.5,
+        "gfpu_setting": 0.2,
+        "gfd_setting": 0.1,
+        "maint_mode": false
+      },
+      "measurements": [
+        {
+          "element": "LTPU",
+          "measured_current": 300.0
+        },
+        {
+          "element": "STPU",
+          "measured_current": 450.0
+        },
+        {
+          "element": "INST",
+          "measured_current": 900.0
+        },
+        {
+          "element": "GFPU",
+          "measured_current": 240.0
+        }
+      ]
+    },
+    {
+      "scenario_id": "sensor-17892-abb-ekip-dip-lvpcb-lsi-100-live-derived",
+      "seed_note": "Alternate trip-style and alternate plug-family row admitted from the live cascade catalog on 2026-05-29.",
+      "source_of_truth": "Derived on 2026-05-29 from live vw_trip_unit_cascade discovery plus /api/v1/neta/settings/17892 and /api/v1/neta/calculate with route-returned pickup currents reused as measurements.",
+      "trip_style_id_or_plug_family": "trip_style:1541/LVPCB LSI/fixed-plug:100A",
+      "payload": {
+        "sensor_id": 17892,
+        "plug_rating": 100.0,
+        "ltpu_setting": 0.4,
+        "ltd_setting": 3.0,
+        "stpu_setting": 0.6,
+        "std_setting": 0.09,
+        "inst_setting": 1.5,
         "gfpu_setting": null,
         "gfd_setting": null,
         "maint_mode": false
       },
-      "measurements": []
+      "measurements": [
+        {
+          "element": "LTPU",
+          "measured_current": 40.0
+        },
+        {
+          "element": "STPU",
+          "measured_current": 60.0
+        },
+        {
+          "element": "INST",
+          "measured_current": 150.0
+        }
+      ]
     }
   ],
-  "blocked_requirements": [
-    {
-      "requirement": "Add one alternate-plug-family ETU sensor under a different trip_style_id than sensor 25.",
-      "status": "blocked",
-      "reason": "No trusted repo-owned seed values for a non-trip_style-3 ETU sensor were present locally, and the live discovery prerequisites were unavailable in this shell (APEX_OLARES_LIVE_DSN unset, route 127.0.0.1:8010 unavailable)."
-    }
-  ]
+  "blocked_requirements": []
 }

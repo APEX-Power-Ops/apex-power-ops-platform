@@ -317,6 +317,7 @@ def probe_parity(base_url: str, scenario: dict[str, Any], *, timeout_seconds: in
         "base_url": base_url,
         "sensor_id": sensor_id,
         "seed_note": scenario.get("seed_note"),
+        "source_of_truth": scenario.get("source_of_truth"),
         "trip_style_id_or_plug_family": scenario.get("trip_style_id_or_plug_family"),
         "status": "warn" if warnings else "pass",
         "warnings": warnings,
