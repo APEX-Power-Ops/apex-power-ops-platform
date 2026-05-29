@@ -66,8 +66,11 @@ BEGIN
     RETURN json_build_object('error', 'Sensor not found');
   END IF;
 
-  eff_inst_tol_lo := COALESCE(ctx.inst_ovrtol_min, -10);
-  eff_inst_tol_hi := COALESCE(ctx.inst_ovrtol_max, 10);
+  -- Normal-mode INST tolerances come from DS4_TOL_LOW/HIGH (inst_tol_lo/hi).
+  -- inst_ovrtol_min/max are the separate override-only band and should not
+  -- drive the standard evaluate surface.
+  eff_inst_tol_lo := COALESCE(ctx.inst_tol_lo, -10);
+  eff_inst_tol_hi := COALESCE(ctx.inst_tol_hi, 10);
   eff_gfpu_tol_lo := COALESCE(ctx.gfpu_tol_lo, -10);
   eff_gfpu_tol_hi := COALESCE(ctx.gfpu_tol_hi, 10);
 
