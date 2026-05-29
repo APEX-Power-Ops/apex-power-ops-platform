@@ -55,6 +55,8 @@ Optional-rest present:
 
 - `ops/agents/legacy-governance/` — pre-Era-2.3 governance content preserved as provenance; not part of mandatory-core vocabulary; legacy-tolerated.
 
+**Dispatch inbox — session-start self-serve (added 2026-05-29):** `ops/agents/inbox/` is the executor dispatch queue (`pending/` → `claimed/` → `done/`). **Every executor session (CC / Codex / Cowork) MUST, at session start, run the self-serve protocol in `ops/agents/inbox/README.md`:** `git pull`, then drain `inbox/pending/` for dispatches addressed to it via `target:` frontmatter — claim by `git mv` to `claimed/` + commit + push (git is the claim mutex; first-push-wins), execute, write the closeout under `ops/agents/handoffs/`, then `git mv` to `done/`. This replaces operator-relayed dispatches. `authority: gated` dispatches (the default) still wait for the operator's explicit "go" before executing.
+
 ## 5. `apex-jobs` ledger participation
 
 ledger-writes-from-this-repo: yes
