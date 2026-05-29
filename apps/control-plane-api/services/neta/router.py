@@ -72,8 +72,12 @@ from .schemas import (
     PlotTableRow,
     TMTAmpOption,
     TMTFrameContext,
+    TMTFacet,
+    TMTFacetsResponse,
     TMTFrameSearchResponse,
     TMTFrameSearchResult,
+    EMTFacet,
+    EMTFacetsResponse,
     EMTBandOption,
     EMTFrameContext,
     EMTPlotCurve,
@@ -1943,6 +1947,65 @@ _TMT_STYLE_MODELS = {
     "PCB": BrkPCBStyle,
 }
 
+_TMT_FACET_NAMES = (
+    "breaker_class",
+    "manufacturer_id",
+    "breaker_id",
+    "breaker_style_id",
+    "frame_size",
+    "amp_rating",
+)
+
+_TMT_FACET_CTE = """
+WITH tmt_catalog AS (
+    SELECT
+        f.id AS frame_id,
+        UPPER(f.breaker_class) AS breaker_class,
+        b.manufacturer_id AS manufacturer_id,
+        b.id AS breaker_id,
+        s.id AS breaker_style_id,
+        f.size AS frame_size,
+        a.rating AS amp_rating
+    FROM tcc_tmt_frames f
+    INNER JOIN tcc_brk_iccb_styles s ON s.id = f.breaker_style_id
+    INNER JOIN tcc_brk_iccb b ON b.id = s.breaker_id
+    LEFT JOIN tcc_tmt_amps a ON a.frame_id = f.id
+    WHERE UPPER(f.breaker_class) = 'ICCB'
+
+    UNION ALL
+
+    SELECT
+        f.id AS frame_id,
+        UPPER(f.breaker_class) AS breaker_class,
+        b.manufacturer_id AS manufacturer_id,
+        b.id AS breaker_id,
+        s.id AS breaker_style_id,
+        f.size AS frame_size,
+        a.rating AS amp_rating
+    FROM tcc_tmt_frames f
+    INNER JOIN tcc_brk_mccb_styles s ON s.id = f.breaker_style_id
+    INNER JOIN tcc_brk_mccb b ON b.id = s.breaker_id
+    LEFT JOIN tcc_tmt_amps a ON a.frame_id = f.id
+    WHERE UPPER(f.breaker_class) = 'MCCB'
+
+    UNION ALL
+
+    SELECT
+        f.id AS frame_id,
+        UPPER(f.breaker_class) AS breaker_class,
+        b.manufacturer_id AS manufacturer_id,
+        b.id AS breaker_id,
+        s.id AS breaker_style_id,
+        f.size AS frame_size,
+        a.rating AS amp_rating
+    FROM tcc_tmt_frames f
+    INNER JOIN tcc_brk_pcb_styles s ON s.id = f.breaker_style_id
+    INNER JOIN tcc_brk_pcb b ON b.id = s.breaker_id
+    LEFT JOIN tcc_tmt_amps a ON a.frame_id = f.id
+    WHERE UPPER(f.breaker_class) = 'PCB'
+)
+"""
+
 
 def _float_matches(left: Optional[float], right: Optional[float], tolerance: float = 1e-6) -> bool:
     if left is None or right is None:
@@ -2002,6 +2065,80 @@ def _load_tmt_contract_bundle(db: Session, frame_id: int) -> dict[str, object]:
         "amp_ratings": amp_ratings,
         "settings": settings,
         "thermal_adjustments": thermal_adjustments,
+    }
+
+
+def _build_tmt_facet_where(
+    filters: dict[str, object],
+    *,
+    excluded: tuple[str, ...] = (),
+) -> tuple[str, dict[str, object]]:
+    clauses: list[str] = []
+    params: dict[str, object] = {}
+
+    if filters.get("breaker_class") is not None and "breaker_class" not in excluded:
+        clauses.append("c.breaker_class = :breaker_class")
+        params["breaker_class"] = filters["breaker_class"]
+
+    for key in ("manufacturer_id", "breaker_id", "breaker_style_id"):
+        if filters.get(key) is not None and key not in excluded:
+            clauses.append(f"c.{key} = :{key}")
+            params[key] = filters[key]
+
+    if filters.get("frame_size") is not None and "frame_size" not in excluded:
+        clauses.append("c.frame_size = :frame_size")
+        params["frame_size"] = filters["frame_size"]
+
+    if filters.get("amp_rating") is not None and "amp_rating" not in excluded:
+        clauses.append("c.amp_rating = :amp_rating")
+        params["amp_rating"] = filters["amp_rating"]
+
+    where_sql = f"WHERE {' AND '.join(clauses)}" if clauses else ""
+    return where_sql, params
+
+
+def _load_tmt_facets(db: Session, filters: dict[str, object]) -> dict[str, object]:
+    where_sql, params = _build_tmt_facet_where(filters)
+    total_matching_frames = db.execute(
+        text(
+            f"""
+            {_TMT_FACET_CTE}
+            SELECT COUNT(DISTINCT c.frame_id) AS total_matching_frames
+            FROM tmt_catalog c
+            {where_sql}
+            """
+        ),
+        params,
+    ).scalar() or 0
+
+    facets: list[TMTFacet] = []
+    for facet_name in _TMT_FACET_NAMES:
+        facet_where_sql, facet_params = _build_tmt_facet_where(filters, excluded=(facet_name,))
+        rows = db.execute(
+            text(
+                f"""
+                {_TMT_FACET_CTE}
+                SELECT DISTINCT c.{facet_name} AS value
+                FROM tmt_catalog c
+                {facet_where_sql}
+                {'AND' if facet_where_sql else 'WHERE'} c.{facet_name} IS NOT NULL
+                ORDER BY c.{facet_name}
+                """
+            ),
+            facet_params,
+        ).fetchall()
+
+        values = [_normalize_scalar(row._mapping["value"]) for row in rows]
+        facets.append(TMTFacet(name=facet_name, values=values, cardinality=len(values)))
+
+    return {
+        "facets": facets,
+        "total_matching_frames": int(total_matching_frames),
+        "active_filters": {
+            key: _normalize_scalar(value)
+            for key, value in filters.items()
+            if value is not None
+        },
     }
 
 
@@ -2265,6 +2402,76 @@ def _search_emt_frames(
 
     rows = db.execute(sql, params).fetchall()
     return [_normalize_mapping(dict(row._mapping)) for row in rows]
+
+
+def _load_emt_facets(
+    db: Session,
+    filters: dict[str, object],
+) -> dict[str, object]:
+    cols = _resolve_emt_contract_columns(db)
+    facet_specs = (
+        ("manufacturer_id", f"e.{cols['emt']['manufacturer_id']}"),
+        ("trip_char", f"e.{cols['emt']['trip_char']}"),
+        ("trip_plug", f"e.{cols['emt']['trip_plug']}"),
+        ("frame_desc", f"f.{cols['frames']['frame_desc']}"),
+        ("type_name", f"e.{cols['emt']['type_name']}"),
+    )
+
+    def build_where(excluded: tuple[str, ...] = ()) -> tuple[str, dict[str, object]]:
+        clauses: list[str] = []
+        params: dict[str, object] = {}
+        for facet_name, sql_expr in facet_specs:
+            if filters.get(facet_name) is None or facet_name in excluded:
+                continue
+            clauses.append(f"{sql_expr} = :{facet_name}")
+            params[facet_name] = filters[facet_name]
+        where_sql = f"WHERE {' AND '.join(clauses)}" if clauses else ""
+        return where_sql, params
+
+    from_sql = (
+        "FROM tcc_emt_frames f "
+        f"INNER JOIN tcc_emt e ON f.{cols['frames']['emt_id']} = e.id"
+    )
+
+    where_sql, params = build_where()
+    total_matching_frames = db.execute(
+        text(
+            f"""
+            SELECT COUNT(DISTINCT f.id) AS total_matching_frames
+            {from_sql}
+            {where_sql}
+            """
+        ),
+        params,
+    ).scalar() or 0
+
+    facets: list[EMTFacet] = []
+    for facet_name, sql_expr in facet_specs:
+        facet_where_sql, facet_params = build_where((facet_name,))
+        rows = db.execute(
+            text(
+                f"""
+                SELECT DISTINCT {sql_expr} AS value
+                {from_sql}
+                {facet_where_sql}
+                {'AND' if facet_where_sql else 'WHERE'} {sql_expr} IS NOT NULL
+                ORDER BY {sql_expr}
+                """
+            ),
+            facet_params,
+        ).fetchall()
+        values = [_normalize_scalar(row._mapping["value"]) for row in rows]
+        facets.append(EMTFacet(name=facet_name, values=values, cardinality=len(values)))
+
+    return {
+        "facets": facets,
+        "total_matching_frames": int(total_matching_frames),
+        "active_filters": {
+            key: _normalize_scalar(value)
+            for key, value in filters.items()
+            if value is not None
+        },
+    }
 
 
 def _load_emt_frame_context_bundle(db: Session, frame_id: int) -> dict[str, object]:
@@ -3148,6 +3355,35 @@ def get_apparatus_study_resources(apparatus_id: UUID, db: Session = Depends(get_
 # GET /tmt/context/{frame_id} — TMT Frame Context
 # ──────────────────────────────────────────────
 
+@router.get("/tmt/facets", response_model=TMTFacetsResponse)
+def get_tmt_facets(
+    breaker_class: Optional[str] = Query(None, description="Filter by ICCB, MCCB, or PCB"),
+    manufacturer_id: Optional[int] = Query(None, description="Filter by manufacturer id"),
+    breaker_id: Optional[int] = Query(None, description="Filter by breaker id"),
+    breaker_style_id: Optional[int] = Query(None, description="Filter by breaker style id"),
+    frame_size: Optional[str] = Query(None, description="Filter by exact TMT frame size"),
+    amp_rating: Optional[float] = Query(None, description="Filter by exact supported amp rating"),
+    db: Session = Depends(get_db),
+):
+    """Return cross-filtered TMT facet values for the current selection state."""
+    class_filter = breaker_class.upper() if breaker_class else None
+    if class_filter is not None and class_filter not in _TMT_STYLE_MODELS:
+        raise HTTPException(status_code=400, detail="breaker_class must be one of ICCB, MCCB, or PCB")
+
+    return TMTFacetsResponse(
+        **_load_tmt_facets(
+            db,
+            {
+                "breaker_class": class_filter,
+                "manufacturer_id": manufacturer_id,
+                "breaker_id": breaker_id,
+                "breaker_style_id": breaker_style_id,
+                "frame_size": frame_size,
+                "amp_rating": amp_rating,
+            },
+        )
+    )
+
 @router.get("/tmt/frames", response_model=TMTFrameSearchResponse)
 def search_tmt_frames(
     breaker_class: Optional[str] = Query(None, description="Filter by ICCB, MCCB, or PCB"),
@@ -3353,6 +3589,29 @@ def plot_tmt_tcc(req: TMTPlotRequest, db: Session = Depends(get_db)):
 # ──────────────────────────────────────────────
 # GET /emt/frames — EMT Frame Search
 # ──────────────────────────────────────────────
+
+@router.get("/emt/facets", response_model=EMTFacetsResponse)
+def get_emt_facets(
+    manufacturer_id: Optional[int] = Query(None, description="Filter by manufacturer id"),
+    trip_char: Optional[int] = Query(None, description="Filter by EMT TripChar value"),
+    trip_plug: Optional[int] = Query(None, description="Filter by EMT TripPlug value"),
+    frame_desc: Optional[str] = Query(None, description="Filter by exact EMT frame description"),
+    type_name: Optional[str] = Query(None, description="Filter by exact EMT type name"),
+    db: Session = Depends(get_db),
+):
+    """Return cross-filtered EMT facet values for the current selection state."""
+    return EMTFacetsResponse(
+        **_load_emt_facets(
+            db,
+            {
+                "manufacturer_id": manufacturer_id,
+                "trip_char": trip_char,
+                "trip_plug": trip_plug,
+                "frame_desc": frame_desc,
+                "type_name": type_name,
+            },
+        )
+    )
 
 @router.get("/emt/frames", response_model=EMTFrameSearchResponse)
 def search_emt_frames(

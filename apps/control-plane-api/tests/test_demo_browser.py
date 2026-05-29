@@ -28,6 +28,7 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+os.environ.setdefault("DATABASE_URL", "postgresql://postgres:postgres@localhost/test")
 
 import pytest
 
@@ -202,6 +203,33 @@ def _mock_demo_bootstrap(page, catalog="fallback", manufacturer_count=0, sensor_
                 "catalog": catalog,
                 "manufacturer_count": manufacturer_count,
                 "sensor_count": sensor_count,
+            },
+        ),
+    )
+
+
+def _mock_etu_auxiliary_routes(page, browse_results=None, breaker_cascade=None):
+    page.route(
+        "**/api/v1/neta/etu/breaker-cascade*",
+        lambda route: _fulfill_json(
+            route,
+            breaker_cascade
+            or {
+                "count": 0,
+                "manufacturers": [],
+                "breaker_classes": [],
+                "breakers": [],
+                "breaker_styles": [],
+            },
+        ),
+    )
+    page.route(
+        "**/api/v1/neta/etu/search*",
+        lambda route: _fulfill_json(
+            route,
+            {
+                "count": len(browse_results or []),
+                "results": browse_results or [],
             },
         ),
     )
@@ -1039,6 +1067,7 @@ class TestDemoBrowserWorkflow:
         """Changing ETU sensors should trim the settings and measured rows down to
         the newly resolved device capability instead of keeping stale ETU-only values alive."""
         _mock_demo_bootstrap(page)
+        _mock_etu_auxiliary_routes(page)
         page.route(
             "**/api/v1/neta/catalog/status",
             lambda route: _fulfill_json(
@@ -1256,6 +1285,7 @@ class TestDemoBrowserWorkflow:
         """Changing the resolved ETU sensor after execution should clear stale
         calculate, evaluate, and TCC results instead of leaving the old branch visible."""
         _mock_demo_bootstrap(page, catalog="live", manufacturer_count=1, sensor_count=2)
+        _mock_etu_auxiliary_routes(page)
 
         sensor_25 = _sensor25_browser_cascade_sensor()
         sensor_26 = {

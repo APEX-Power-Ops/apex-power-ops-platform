@@ -1,7 +1,7 @@
 # TCC Runtime 017 Phase D ETU Needs-Evidence Review
 
 Date: 2026-05-29
-Status: Partial PASS for active-runtime behavior evidence; NO-GO for promoting the lineage helper set as active contract
+Status: PASS for fresh host-run active-runtime capability-gating proof; NO-GO for promoting the lineage helper set as active contract
 Purpose: Record the repo-local evidence review for the Phase D ETU `needs-evidence` slice defined in the Runtime 017 remaining-task list
 
 ---
@@ -73,6 +73,27 @@ The 2026-05-29 ETU hardening closeout also records this as an admitted PASS surf
 
 ---
 
+## 4A. Fresh Host-Run Browser Proof
+
+The active Olares host now also has fresh executable proof for the same Phase D behavior.
+
+Focused command:
+
+1. `PYTHONPATH=apps/control-plane-api .venv/bin/python -m pytest apps/control-plane-api/tests/test_demo_browser.py -k "sensor_change_hides_non_applicable_rows_and_clears_stale_values or upstream_sensor_change_clears_stale_execution_sections" -q`
+
+Fresh host-run result:
+
+1. `2 passed, 18 deselected, 2 warnings in 3.63s`
+
+Local enabling repair required before the host proof could run:
+
+1. `apps/control-plane-api/tests/test_demo_browser.py` now sets a placeholder `DATABASE_URL` for app import, matching nearby control-plane test practice.
+2. the same test module now mocks `/api/v1/neta/etu/breaker-cascade` and `/api/v1/neta/etu/search` for the focused ETU sensor-change slice so the startup path remains fully governed on a DB-less host.
+
+This closes the earlier evidence gap for the active runtime behavior itself: the capability-gating and stale-state-clearing path is now proven in a fresh host-run browser loop, not only inferred from previously committed notes.
+
+---
+
 ## 5. What Is Not Proven
 
 The named lineage helper set itself is not evidenced as active contract.
@@ -92,7 +113,7 @@ The practical result is:
 
 ## 6. Decision
 
-Decision: partial PASS.
+Decision: PASS for the active-runtime Phase D behavior under fresh host-run proof.
 
 Accepted as evidenced in the active contract:
 

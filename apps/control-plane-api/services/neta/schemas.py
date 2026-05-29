@@ -365,6 +365,18 @@ class TMTFrameSearchResponse(BaseModel):
     frames: list[TMTFrameSearchResult] = Field(default_factory=list)
 
 
+class TMTFacet(BaseModel):
+    name: str
+    values: list[int | float | str] = Field(default_factory=list)
+    cardinality: int = 0
+
+
+class TMTFacetsResponse(BaseModel):
+    facets: list[TMTFacet] = Field(default_factory=list)
+    total_matching_frames: int = 0
+    active_filters: dict[str, int | float | str] = Field(default_factory=dict)
+
+
 class TMTSettingsResponse(BaseModel):
     frame_id: int
     available_trip_classes: list[int] = Field(default_factory=list)
@@ -451,6 +463,18 @@ class EMTFrameSearchResult(BaseModel):
 class EMTFrameSearchResponse(BaseModel):
     count: int
     frames: list[EMTFrameSearchResult] = Field(default_factory=list)
+
+
+class EMTFacet(BaseModel):
+    name: str
+    values: list[int | float | str] = Field(default_factory=list)
+    cardinality: int = 0
+
+
+class EMTFacetsResponse(BaseModel):
+    facets: list[EMTFacet] = Field(default_factory=list)
+    total_matching_frames: int = 0
+    active_filters: dict[str, int | float | str] = Field(default_factory=dict)
 
 
 class EMTSectionSummary(BaseModel):
