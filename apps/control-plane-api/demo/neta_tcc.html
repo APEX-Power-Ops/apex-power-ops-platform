@@ -356,19 +356,15 @@
     <div class="grid-3">
       <div class="field">
         <label for="tmt-breaker-class">Breaker Class</label>
-        <select id="tmt-breaker-class">
-          <option value="">Any class</option>
-          <option value="ICCB">ICCB</option>
-          <option value="MCCB">MCCB</option>
-          <option value="PCB">PCB</option>
-        </select>
+        <select id="tmt-breaker-class" disabled><option value="">Refreshing TMT facets...</option></select>
       </div>
-      <div class="field"><label for="tmt-manufacturer">Manufacturer</label><input type="text" id="tmt-manufacturer" placeholder="Square D"></div>
-      <div class="field"><label for="tmt-breaker-name">Breaker Type</label><input type="text" id="tmt-breaker-name" placeholder="PowerPact"></div>
-      <div class="field"><label for="tmt-style-name">Breaker Style</label><input type="text" id="tmt-style-name" placeholder="PXR"></div>
-      <div class="field"><label for="tmt-frame-size">Frame Size</label><input type="text" id="tmt-frame-size" placeholder="600AF"></div>
-      <div class="field"><label for="tmt-amp-filter">Amp Rating</label><input type="number" id="tmt-amp-filter" placeholder="600"></div>
+      <div class="field"><label for="tmt-manufacturer">Manufacturer</label><select id="tmt-manufacturer" disabled><option value="">Refreshing TMT facets...</option></select></div>
+      <div class="field"><label for="tmt-breaker-name">Breaker</label><select id="tmt-breaker-name" disabled><option value="">Refreshing TMT facets...</option></select></div>
+      <div class="field"><label for="tmt-style-name">Breaker Style</label><select id="tmt-style-name" disabled><option value="">Refreshing TMT facets...</option></select></div>
+      <div class="field"><label for="tmt-frame-size">Frame Size</label><select id="tmt-frame-size" disabled><option value="">Refreshing TMT facets...</option></select></div>
+      <div class="field"><label for="tmt-amp-filter">Amp Rating</label><select id="tmt-amp-filter" disabled><option value="">Refreshing TMT facets...</option></select></div>
     </div>
+    <div id="tmt-facet-summary" class="inline-note" style="margin-top:8px;">Open the TMT panel to load the live facet scope.</div>
     <div class="btn-row">
       <button class="btn btn-primary" id="btn-tmt-search">Search TMT Frames</button>
     </div>
@@ -400,12 +396,14 @@
   <!-- ───── EMT Selection ───── -->
   <div id="emt-selection-section" class="section family-panel">
     <h2>1 &middot; EMT Frame And Section Selection</h2>
-    <div class="grid-4">
-      <div class="field"><label for="emt-manufacturer-id">Manufacturer ID</label><input type="number" id="emt-manufacturer-id" placeholder="10"></div>
-      <div class="field"><label for="emt-trip-char">Trip Char</label><input type="number" id="emt-trip-char" placeholder="7"></div>
-      <div class="field"><label for="emt-trip-plug">Trip Plug</label><input type="number" id="emt-trip-plug" placeholder="0"></div>
-      <div class="field"><label for="emt-query">Search</label><input type="text" id="emt-query" placeholder="EMT"></div>
+    <div class="grid-3">
+      <div class="field"><label for="emt-manufacturer-id">Manufacturer ID</label><select id="emt-manufacturer-id" disabled><option value="">Refreshing EMT facets...</option></select></div>
+      <div class="field"><label for="emt-trip-char">Trip Char</label><select id="emt-trip-char" disabled><option value="">Refreshing EMT facets...</option></select></div>
+      <div class="field"><label for="emt-trip-plug">Trip Plug</label><select id="emt-trip-plug" disabled><option value="">Refreshing EMT facets...</option></select></div>
+      <div class="field"><label for="emt-frame-desc">Frame Description</label><select id="emt-frame-desc" disabled><option value="">Refreshing EMT facets...</option></select></div>
+      <div class="field"><label for="emt-type-name">Type Name</label><select id="emt-type-name" disabled><option value="">Refreshing EMT facets...</option></select></div>
     </div>
+    <div id="emt-facet-summary" class="inline-note" style="margin-top:8px;">Open the EMT panel to load the live facet scope.</div>
     <div class="btn-row">
       <button class="btn btn-primary" id="btn-emt-search">Search EMT Frames</button>
     </div>
@@ -973,6 +971,16 @@ function setFamily(family) {
   setActivePlan(null, null, null);
   setSavedPlanStatus();
   updateFamilyUi();
+  if (family === 'tmt') {
+    refreshTmtFacets().catch((e) => {
+      console.error('Failed to refresh TMT facets:', e);
+    });
+  }
+  if (family === 'emt') {
+    refreshEmtFacets().catch((e) => {
+      console.error('Failed to refresh EMT facets:', e);
+    });
+  }
 }
 
 $('family-tabs').addEventListener('click', (event) => {
@@ -2825,6 +2833,69 @@ function fillSimpleSelect(el, values, placeholder, formatter = (v) => String(v),
   return resolvedValue;
 }
 
+function selectedFloat(el) {
+  if (!el.value) return null;
+  const num = Number(el.value);
+  return Number.isFinite(num) ? num : null;
+}
+
+function buildFacetMap(facets) {
+  return Object.fromEntries((facets || []).map((facet) => [facet.name, facet.values || []]));
+}
+
+function buildQueryFromFilters(filters) {
+  const params = new URLSearchParams();
+  Object.entries(filters || {}).forEach(([key, value]) => {
+    if (value == null || value === '') return;
+    params.set(key, String(value));
+  });
+  return params;
+}
+
+function facetSelectionsMatch(left, right) {
+  const keys = Array.from(new Set([...Object.keys(left || {}), ...Object.keys(right || {})]));
+  return keys.every((key) => String(left?.[key] ?? '') === String(right?.[key] ?? ''));
+}
+
+function captureTmtFacetSelection() {
+  return {
+    breaker_class: $('tmt-breaker-class').value || null,
+    manufacturer_id: selectedInt($('tmt-manufacturer')),
+    breaker_id: selectedInt($('tmt-breaker-name')),
+    breaker_style_id: selectedInt($('tmt-style-name')),
+    frame_size: $('tmt-frame-size').value || null,
+    amp_rating: selectedFloat($('tmt-amp-filter')),
+  };
+}
+
+function captureEmtFacetSelection() {
+  return {
+    manufacturer_id: selectedInt($('emt-manufacturer-id')),
+    trip_char: selectedInt($('emt-trip-char')),
+    trip_plug: selectedInt($('emt-trip-plug')),
+    frame_desc: $('emt-frame-desc').value || null,
+    type_name: $('emt-type-name').value || null,
+  };
+}
+
+function renderTmtFacetSummary(response) {
+  const host = $('tmt-facet-summary');
+  if (!host) return;
+  const total = response?.total_matching_frames || 0;
+  host.textContent = total
+    ? `${total} TMT frame${total === 1 ? '' : 's'} match the current facet scope.`
+    : 'No TMT frames match the current facet scope.';
+}
+
+function renderEmtFacetSummary(response) {
+  const host = $('emt-facet-summary');
+  if (!host) return;
+  const total = response?.total_matching_frames || 0;
+  host.textContent = total
+    ? `${total} EMT frame${total === 1 ? '' : 's'} match the current facet scope.`
+    : 'No EMT frames match the current facet scope.';
+}
+
 function valuesMatch(a, b) {
   return String(a ?? '') === String(b ?? '');
 }
@@ -2878,29 +2949,94 @@ function syncTmtApplicableRows(settings) {
   setControlVisibility('tmt-row-thermal-adjustment', (settings.thermal_adjustments || []).length > 0, ['tmt-thermal-adjustment']);
 }
 
+async function refreshTmtFacets(preferredSelection = null, options = {}) {
+  const { allowRetry = true } = options;
+  const desiredSelection = preferredSelection || captureTmtFacetSelection();
+  const response = await get(`/api/v1/neta/tmt/facets?${buildQueryFromFilters(desiredSelection).toString()}`);
+  const facets = buildFacetMap(response.facets);
+
+  const resolvedSelection = {
+    breaker_class: fillSimpleSelect(
+      $('tmt-breaker-class'),
+      facets.breaker_class || [],
+      'Any class',
+      (value) => String(value),
+      desiredSelection.breaker_class,
+    ) || null,
+    manufacturer_id: null,
+    breaker_id: null,
+    breaker_style_id: null,
+    frame_size: fillSimpleSelect(
+      $('tmt-frame-size'),
+      facets.frame_size || [],
+      'Any frame size',
+      (value) => String(value),
+      desiredSelection.frame_size,
+    ) || null,
+    amp_rating: null,
+  };
+
+  fillSimpleSelect(
+    $('tmt-manufacturer'),
+    facets.manufacturer_id || [],
+    'Any manufacturer',
+    (value) => `Manufacturer #${value}`,
+    desiredSelection.manufacturer_id,
+  );
+  fillSimpleSelect(
+    $('tmt-breaker-name'),
+    facets.breaker_id || [],
+    'Any breaker',
+    (value) => `Breaker #${value}`,
+    desiredSelection.breaker_id,
+  );
+  fillSimpleSelect(
+    $('tmt-style-name'),
+    facets.breaker_style_id || [],
+    'Any breaker style',
+    (value) => `Style #${value}`,
+    desiredSelection.breaker_style_id,
+  );
+  fillSimpleSelect(
+    $('tmt-amp-filter'),
+    facets.amp_rating || [],
+    'Any amp rating',
+    (value) => String(value),
+    desiredSelection.amp_rating,
+  );
+
+  resolvedSelection.manufacturer_id = selectedInt($('tmt-manufacturer'));
+  resolvedSelection.breaker_id = selectedInt($('tmt-breaker-name'));
+  resolvedSelection.breaker_style_id = selectedInt($('tmt-style-name'));
+  resolvedSelection.amp_rating = selectedFloat($('tmt-amp-filter'));
+
+  renderTmtFacetSummary(response);
+
+  if (allowRetry && !facetSelectionsMatch(desiredSelection, resolvedSelection)) {
+    return refreshTmtFacets(resolvedSelection, { allowRetry: false });
+  }
+
+  return response;
+}
+
 async function searchTmtFrames() {
   const previousSelections = captureCurrentTmtSelections();
-  const params = new URLSearchParams();
-  const mappings = [
-    ['tmt-breaker-class', 'breaker_class'],
-    ['tmt-manufacturer', 'manufacturer_name'],
-    ['tmt-breaker-name', 'breaker_name'],
-    ['tmt-style-name', 'breaker_style_name'],
-    ['tmt-frame-size', 'frame_size'],
-    ['tmt-amp-filter', 'amp_rating'],
-  ];
-  mappings.forEach(([id, key]) => {
-    const value = $(id).value.trim();
-    if (value) params.set(key, value);
-  });
+  const filters = captureTmtFacetSelection();
+  const params = buildQueryFromFilters(filters);
 
   const resp = await get(`/api/v1/neta/tmt/frames?${params.toString()}`);
+  const filteredFrames = (resp.frames || []).filter((frame) => {
+    if (filters.breaker_style_id != null && String(frame.breaker_style_id) !== String(filters.breaker_style_id)) {
+      return false;
+    }
+    return true;
+  });
   fillTextSelect(
     $('tmt-frame-select'),
-    resp.frames,
+    filteredFrames,
     'frame_id',
     (frame) => `${frame.manufacturer_name || '—'} · ${frame.breaker_name || '—'} · ${frame.breaker_style_name || '—'} · ${frame.frame_size || '—'}`,
-    resp.frames.length ? 'Choose a TMT frame...' : 'No TMT frames found',
+    filteredFrames.length ? 'Choose a TMT frame...' : 'No TMT frames found',
     previousSelections.frameId,
   );
   const resolvedFrameId = $('tmt-frame-select').value;
@@ -3020,21 +3156,93 @@ function renderTmtPlot(resp) {
 
 // ─── EMT Workflow ───
 
+async function refreshEmtFacets(preferredSelection = null, options = {}) {
+  const { allowRetry = true } = options;
+  const desiredSelection = preferredSelection || captureEmtFacetSelection();
+  const response = await get(`/api/v1/neta/emt/facets?${buildQueryFromFilters(desiredSelection).toString()}`);
+  const facets = buildFacetMap(response.facets);
+
+  const resolvedSelection = {
+    manufacturer_id: null,
+    trip_char: null,
+    trip_plug: null,
+    frame_desc: fillSimpleSelect(
+      $('emt-frame-desc'),
+      facets.frame_desc || [],
+      'Any frame description',
+      (value) => String(value),
+      desiredSelection.frame_desc,
+    ) || null,
+    type_name: fillSimpleSelect(
+      $('emt-type-name'),
+      facets.type_name || [],
+      'Any type name',
+      (value) => String(value),
+      desiredSelection.type_name,
+    ) || null,
+  };
+
+  fillSimpleSelect(
+    $('emt-manufacturer-id'),
+    facets.manufacturer_id || [],
+    'Any manufacturer',
+    (value) => String(value),
+    desiredSelection.manufacturer_id,
+  );
+  fillSimpleSelect(
+    $('emt-trip-char'),
+    facets.trip_char || [],
+    'Any trip char',
+    (value) => String(value),
+    desiredSelection.trip_char,
+  );
+  fillSimpleSelect(
+    $('emt-trip-plug'),
+    facets.trip_plug || [],
+    'Any trip plug',
+    (value) => String(value),
+    desiredSelection.trip_plug,
+  );
+
+  resolvedSelection.manufacturer_id = selectedInt($('emt-manufacturer-id'));
+  resolvedSelection.trip_char = selectedInt($('emt-trip-char'));
+  resolvedSelection.trip_plug = selectedInt($('emt-trip-plug'));
+
+  renderEmtFacetSummary(response);
+
+  if (allowRetry && !facetSelectionsMatch(desiredSelection, resolvedSelection)) {
+    return refreshEmtFacets(resolvedSelection, { allowRetry: false });
+  }
+
+  return response;
+}
+
 async function searchEmtFrames() {
   const previousSelections = captureCurrentEmtSelections();
-  const params = new URLSearchParams();
-  [['emt-manufacturer-id', 'manufacturer_id'], ['emt-trip-char', 'trip_char'], ['emt-trip-plug', 'trip_plug'], ['emt-query', 'q']].forEach(([id, key]) => {
-    const value = $(id).value.trim();
-    if (value) params.set(key, value);
+  const filters = captureEmtFacetSelection();
+  const params = buildQueryFromFilters({
+    manufacturer_id: filters.manufacturer_id,
+    trip_char: filters.trip_char,
+    trip_plug: filters.trip_plug,
+    q: filters.type_name || filters.frame_desc,
   });
 
   const resp = await get(`/api/v1/neta/emt/frames?${params.toString()}`);
+  const filteredFrames = (resp.frames || []).filter((frame) => {
+    if (filters.frame_desc && !valuesMatch(frame.frame_desc, filters.frame_desc)) {
+      return false;
+    }
+    if (filters.type_name && !valuesMatch(frame.type_name, filters.type_name)) {
+      return false;
+    }
+    return true;
+  });
   fillTextSelect(
     $('emt-frame-select'),
-    resp.frames,
+    filteredFrames,
     'frame_id',
     (frame) => `${frame.manufacturer_name || '—'} · ${frame.style_name || '—'} · ${frame.frame_desc || frame.frame_size || '—'}`,
-    resp.frames.length ? 'Choose an EMT frame...' : 'No EMT frames found',
+    filteredFrames.length ? 'Choose an EMT frame...' : 'No EMT frames found',
     previousSelections.frameId,
   );
   const resolvedFrameId = $('emt-frame-select').value;
@@ -3227,6 +3435,17 @@ $('btn-tmt-search').addEventListener('click', async () => {
   }
 });
 
+['tmt-breaker-class', 'tmt-manufacturer', 'tmt-breaker-name', 'tmt-style-name', 'tmt-frame-size', 'tmt-amp-filter'].forEach((id) => {
+  $(id).addEventListener('change', async () => {
+    clearTmtResolvedState();
+    try {
+      await refreshTmtFacets();
+    } catch (e) {
+      console.error('TMT facet refresh failed:', e);
+    }
+  });
+});
+
 $('tmt-frame-select').addEventListener('change', async () => {
   if (!$('tmt-frame-select').value) {
     clearTmtResolvedState({ preserveFrameOptions: true });
@@ -3273,6 +3492,17 @@ $('btn-emt-search').addEventListener('click', async () => {
   } catch (e) {
     alert('EMT frame search failed: ' + e.message);
   }
+});
+
+['emt-manufacturer-id', 'emt-trip-char', 'emt-trip-plug', 'emt-frame-desc', 'emt-type-name'].forEach((id) => {
+  $(id).addEventListener('change', async () => {
+    clearEmtFrameState();
+    try {
+      await refreshEmtFacets();
+    } catch (e) {
+      console.error('EMT facet refresh failed:', e);
+    }
+  });
 });
 
 $('emt-frame-select').addEventListener('change', async () => {

@@ -362,6 +362,51 @@ def _mock_etu_phase_c_routes(page):
     )
 
 
+def _mock_tmt_facet_routes(page):
+    def tmt_facets_payload(url: str):
+        params = parse_qs(urlparse(url).query)
+        manufacturer_id = params.get("manufacturer_id", [None])[0]
+        return {
+            "total_matching_frames": 1 if manufacturer_id == "9" else 2,
+            "active_filters": {**({"manufacturer_id": 9} if manufacturer_id == "9" else {})},
+            "facets": [
+                {"name": "breaker_class", "values": ["ICCB", "MCCB"], "cardinality": 2},
+                {"name": "manufacturer_id", "values": [9, 10], "cardinality": 2},
+                {"name": "breaker_id", "values": [101] if manufacturer_id == "9" else [101, 202], "cardinality": 1 if manufacturer_id == "9" else 2},
+                {"name": "breaker_style_id", "values": [501] if manufacturer_id == "9" else [501, 601], "cardinality": 1 if manufacturer_id == "9" else 2},
+                {"name": "frame_size", "values": ["800AF"] if manufacturer_id == "9" else ["800AF", "1200AF"], "cardinality": 1 if manufacturer_id == "9" else 2},
+                {"name": "amp_rating", "values": [800.0] if manufacturer_id == "9" else [800.0, 1200.0], "cardinality": 1 if manufacturer_id == "9" else 2},
+            ],
+        }
+
+    page.route(
+        "**/api/v1/neta/tmt/facets*",
+        lambda route: _fulfill_json(route, tmt_facets_payload(route.request.url)),
+    )
+
+
+def _mock_emt_facet_routes(page):
+    def emt_facets_payload(url: str):
+        params = parse_qs(urlparse(url).query)
+        manufacturer_id = params.get("manufacturer_id", [None])[0]
+        return {
+            "total_matching_frames": 1 if manufacturer_id == "10" else 2,
+            "active_filters": {**({"manufacturer_id": 10} if manufacturer_id == "10" else {})},
+            "facets": [
+                {"name": "manufacturer_id", "values": [10, 11], "cardinality": 2},
+                {"name": "trip_char", "values": [7] if manufacturer_id == "10" else [7, 8], "cardinality": 1 if manufacturer_id == "10" else 2},
+                {"name": "trip_plug", "values": [0] if manufacturer_id == "10" else [0, 1], "cardinality": 1 if manufacturer_id == "10" else 2},
+                {"name": "frame_desc", "values": ["Frame A"] if manufacturer_id == "10" else ["Frame A", "Frame B"], "cardinality": 1 if manufacturer_id == "10" else 2},
+                {"name": "type_name", "values": ["EMT Type A"] if manufacturer_id == "10" else ["EMT Type A", "EMT Type B"], "cardinality": 1 if manufacturer_id == "10" else 2},
+            ],
+        }
+
+    page.route(
+        "**/api/v1/neta/emt/facets*",
+        lambda route: _fulfill_json(route, emt_facets_payload(route.request.url)),
+    )
+
+
 # ── Tests ──
 
 class TestDemoBrowserWorkflow:
@@ -1569,6 +1614,7 @@ class TestDemoBrowserWorkflow:
     def test_tmt_settings_hide_empty_optional_rows(self, server, page):
         """TMT should keep its bounded frame-rooted plot flow while hiding empty optional setting rows."""
         _mock_demo_bootstrap(page)
+        _mock_tmt_facet_routes(page)
 
         page.route(
             "**/api/v1/neta/tmt/frames*",
@@ -1652,6 +1698,7 @@ class TestDemoBrowserWorkflow:
         """Refreshing TMT search results should retain a still-valid frame selection,
         but changing a downstream plot-driving choice must invalidate the old plot."""
         _mock_demo_bootstrap(page)
+        _mock_tmt_facet_routes(page)
 
         resolved_equipment = {
             "family": "tmt",
@@ -1807,6 +1854,58 @@ class TestDemoBrowserWorkflow:
         assert page.locator("#tmt-summary").is_visible(), \
             "Resolved TMT summary should stay visible while downstream state changes"
 
+    def test_tmt_facet_grid_cross_filters_before_frame_search(self, server, page):
+        """TMT should narrow the facet grid before the user searches for matching frames."""
+        _mock_demo_bootstrap(page)
+        _mock_tmt_facet_routes(page)
+
+        page.route(
+            "**/api/v1/neta/tmt/frames*",
+            lambda route: _fulfill_json(
+                route,
+                {
+                    "count": 1,
+                    "frames": [
+                        {
+                            "frame_id": 101,
+                            "breaker_style_id": 501,
+                            "breaker_class": "ICCB",
+                            "frame_size": "800AF",
+                            "manufacturer_name": "GE",
+                            "breaker_name": "AKR",
+                            "breaker_style_name": "AKR-9",
+                            "standard": 800.0,
+                            "matched_amp_rating": 800.0,
+                        }
+                    ],
+                },
+            ),
+        )
+
+        page.goto(f"{server}/demo/neta-tcc")
+        page.wait_for_load_state("networkidle")
+        page.locator('[data-family="tmt"]').click()
+        page.wait_for_function(
+            "() => document.querySelector('#tmt-manufacturer option[value=\"9\"]') !== null",
+            timeout=10000,
+        )
+
+        assert "2 TMT frames" in page.locator("#tmt-facet-summary").inner_text()
+        page.locator("#tmt-manufacturer").select_option("9")
+        page.wait_for_function(
+            "() => document.querySelector('#tmt-breaker-name option[value=\"202\"]') === null && document.querySelector('#tmt-breaker-name option[value=\"101\"]') !== null",
+            timeout=10000,
+        )
+        assert "1 TMT frame" in page.locator("#tmt-facet-summary").inner_text()
+
+        page.locator("#btn-tmt-search").click()
+        page.wait_for_function(
+            "() => document.querySelector('#tmt-frame-select option[value=\"101\"]') !== null",
+            timeout=10000,
+        )
+        page.locator("#tmt-frame-select").select_option("101")
+        assert page.locator("#tmt-frame-select").input_value() == "101"
+
     def test_etu_summary_discloses_breaker_context_provenance(self, server, page):
         """The ETU summary should disclose whether breaker context is derived or based on an active breaker-half selection."""
         _mock_demo_bootstrap(page, catalog="live", manufacturer_count=1, sensor_count=2)
@@ -1858,7 +1957,10 @@ class TestDemoBrowserWorkflow:
         compat_button = page.locator("#btn-plug-compat-check")
         assert compat_button.is_enabled()
         compat_button.click()
-        page.locator("#plug-compat-result").wait_for(state="visible", timeout=10000)
+        page.wait_for_function(
+            "() => document.querySelector('#plug-compat-result')?.innerText.includes('compatible sensor')",
+            timeout=10000,
+        )
         assert "2 compatible sensors" in page.locator("#plug-compat-result").inner_text()
 
         page.locator("#set-plug").select_option("1200")
@@ -1867,7 +1969,10 @@ class TestDemoBrowserWorkflow:
         assert "Validate plug 1,200A" in page.locator("#plug-compat-summary").inner_text()
 
         compat_button.click()
-        page.locator("#plug-compat-result").wait_for(state="visible", timeout=10000)
+        page.wait_for_function(
+            "() => document.querySelector('#plug-compat-result')?.innerText.includes('compatible sensor')",
+            timeout=10000,
+        )
         compat_result = page.locator("#plug-compat-result").inner_text()
         assert "1 compatible sensor" in compat_result
         assert "1200" in compat_result
@@ -1875,6 +1980,7 @@ class TestDemoBrowserWorkflow:
     def test_emt_settings_hide_non_applicable_section_controls(self, server, page):
         """EMT should show only the section controls that the selected band context actually supports."""
         _mock_demo_bootstrap(page)
+        _mock_emt_facet_routes(page)
 
         page.route(
             "**/api/v1/neta/emt/frames*",
@@ -1986,6 +2092,7 @@ class TestDemoBrowserWorkflow:
         """Refreshing EMT search results should retain a still-valid frame and section,
         while a band change must clear a stale plot and drop an invalid curve-class selection."""
         _mock_demo_bootstrap(page)
+        _mock_emt_facet_routes(page)
 
         resolved_equipment = {
             "family": "emt",
@@ -2190,3 +2297,59 @@ class TestDemoBrowserWorkflow:
             "Changing the EMT band should invalidate the stale raw-point plot"
         assert page.locator("#emt-summary").is_visible(), \
             "Resolved EMT summary should stay visible while downstream state changes"
+
+    def test_emt_facet_grid_cross_filters_before_frame_search(self, server, page):
+        """EMT should narrow the facet grid before the user searches for matching frames."""
+        _mock_demo_bootstrap(page)
+        _mock_emt_facet_routes(page)
+
+        page.route(
+            "**/api/v1/neta/emt/frames*",
+            lambda route: _fulfill_json(
+                route,
+                {
+                    "count": 1,
+                    "frames": [
+                        {
+                            "emt_id": 42,
+                            "frame_id": 201,
+                            "manufacturer_id": 10,
+                            "manufacturer_name": "ABB",
+                            "type_name": "EMT Type A",
+                            "style_name": "Style 1",
+                            "tcc_number": "EMT-42",
+                            "trip_char": 7,
+                            "trip_plug": 0,
+                            "frame_size": 800.0,
+                            "frame_desc": "Frame A",
+                            "amp_rating_count": 1,
+                            "section_count": 1,
+                        }
+                    ],
+                },
+            ),
+        )
+
+        page.goto(f"{server}/demo/neta-tcc")
+        page.wait_for_load_state("networkidle")
+        page.locator('[data-family="emt"]').click()
+        page.wait_for_function(
+            "() => document.querySelector('#emt-manufacturer-id option[value=\"10\"]') !== null",
+            timeout=10000,
+        )
+
+        assert "2 EMT frames" in page.locator("#emt-facet-summary").inner_text()
+        page.locator("#emt-manufacturer-id").select_option("10")
+        page.wait_for_function(
+            "() => document.querySelector('#emt-type-name option[value=\"EMT Type B\"]') === null && document.querySelector('#emt-type-name option[value=\"EMT Type A\"]') !== null",
+            timeout=10000,
+        )
+        assert "1 EMT frame" in page.locator("#emt-facet-summary").inner_text()
+
+        page.locator("#btn-emt-search").click()
+        page.wait_for_function(
+            "() => document.querySelector('#emt-frame-select option[value=\"201\"]') !== null",
+            timeout=10000,
+        )
+        page.locator("#emt-frame-select").select_option("201")
+        assert page.locator("#emt-frame-select").input_value() == "201"
