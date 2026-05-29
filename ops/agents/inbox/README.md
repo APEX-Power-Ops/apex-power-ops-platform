@@ -35,11 +35,17 @@ On session start, substitute your own `target` (CC | CODEX | COWORK) and run:
 1. `git pull` this repo.
 2. List `ops/agents/inbox/pending/*.md`; filter frontmatter `target == <me>`.
 3. Sort by `(priority, dispatch_id)`; take the first. Respect `predecessor` — skip if its predecessor is not yet in `done/`.
-4. **Claim:** `git mv pending/<f> claimed/<f>`; commit `claim: <dispatch_id> by <me>`; **push**. If the push is rejected (someone claimed first) → `git pull`, drop that file, retry from step 2.
-5. Execute the dispatch. Write the closeout to the `closeout:` path under `ops/agents/handoffs/`.
-6. **Close:** `git mv claimed/<f> done/<f>`; commit `done: <dispatch_id>`; push.
+4. Check visible prerequisites before claim. If the dispatch body requires an out-of-band dependency that is plainly absent on the current host or clone, do **not** claim it. Leave it in `pending/` and return a narrow status report to Desktop such as: `next dispatch is eligible by predecessor but not executable here because <prerequisite> is unmet`.
+5. **Claim:** `git mv pending/<f> claimed/<f>`; commit `claim: <dispatch_id> by <me>`; **push**. If the push is rejected (someone claimed first) → `git pull`, drop that file, retry from step 2.
+6. Execute the dispatch. Write the closeout to the `closeout:` path under `ops/agents/handoffs/`.
+7. **Close:** `git mv claimed/<f> done/<f>`; commit `done: <dispatch_id>`; push.
 
 **`authority: gated` is the default** — wait for the operator's explicit "go" before executing. Only `autonomous-safe` dispatches may run unattended (a later, not-yet-enabled phase).
+
+## Unmet prerequisites
+- If the blocker is visible **before claim**: leave the dispatch in `pending/`; do not create a claim commit just to discover the same blocker again.
+- The expected response is a repo-truthful status note, not ad hoc replanning. Example: `E3 closed successfully. F is next in queue but remains pending because APEX_OLARES_LIVE_DSN is unset on this host.`
+- This inbox currently has no `blocked/` state. Until one is explicitly added, avoid claiming work that is already known to be unexecutable from the current repo state or host environment.
 
 ## Per-executor notes
 - **CC** (host-resident, Remote-SSH, this workspace): runs all 6 steps in its own clone — the inbox is inside the repo it already has open. No extra setup.
