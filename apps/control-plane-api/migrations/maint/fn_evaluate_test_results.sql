@@ -70,14 +70,18 @@ BEGIN
     RETURN json_build_object('error', 'Sensor not found');
   END IF;
 
-  -- Default tolerances
-  -- Normal-mode INST tolerances come from DS4_TOL_LOW/HIGH (inst_tol_lo/hi).
-  -- inst_ovrtol_min/max are the separate override-only band and should not
-  -- drive the standard evaluate surface.
-  eff_inst_tol_lo := COALESCE(ctx.inst_tol_lo, -10);
-  eff_inst_tol_hi := COALESCE(ctx.inst_tol_hi, 10);
-  eff_gfpu_tol_lo := COALESCE(ctx.gfpu_tol_lo, -10);
-  eff_gfpu_tol_hi := COALESCE(ctx.gfpu_tol_hi, 10);
+  -- Pickup tolerances are per-device manufacturer data (DS4_TOL_LOW/HIGH ->
+  -- inst_tol_lo/hi, DS1GF_TOL_LOW/HIGH -> gfpu_tol_lo/hi). Per NETA the general
+  -- +/-10% applies ONLY in the absence of manufacturer data; we have that data,
+  -- so the band is read straight from the tables with NO numeric default.
+  -- Invariant (verified across the full 17,831-row DatSensor catalog): a present
+  -- element always carries its tolerance -- tolerance is NULL only where
+  -- PICKUP_CALC = -1 (element absent), which the calc gate below skips entirely.
+  -- inst_ovrtol_min/max remain the separate override-only band, not used here.
+  eff_inst_tol_lo := ctx.inst_tol_lo;
+  eff_inst_tol_hi := ctx.inst_tol_hi;
+  eff_gfpu_tol_lo := ctx.gfpu_tol_lo;
+  eff_gfpu_tol_hi := ctx.gfpu_tol_hi;
 
   -- MAINT MODE: use maint_capable (derived from data presence), not maint_available (runtime toggle)
   IF p_maint_mode THEN
@@ -145,6 +149,9 @@ BEGIN
     eff_inst_calc, p_inst_setting, ctx.rating, p_plug_rating, ltpu_test_i, stpu_test_i, p_multiplier_value, p_c_factor
   );
   IF inst_test_i IS NOT NULL THEN
+    IF eff_inst_tol_lo IS NULL OR eff_inst_tol_hi IS NULL THEN
+      warnings := array_append(warnings, 'INST element is active but carries no manufacturer tolerance in source data (band indeterminate; no default applied)');
+    END IF;
     inst_lo := inst_test_i * (1 + eff_inst_tol_lo / 100.0);
     inst_hi := inst_test_i * (1 + eff_inst_tol_hi / 100.0);
   END IF;
@@ -153,6 +160,9 @@ BEGIN
     eff_gfpu_calc, p_gfpu_setting, ctx.rating, p_plug_rating, ltpu_test_i, stpu_test_i, p_multiplier_value, p_c_factor
   );
   IF gfpu_test_i IS NOT NULL THEN
+    IF eff_gfpu_tol_lo IS NULL OR eff_gfpu_tol_hi IS NULL THEN
+      warnings := array_append(warnings, 'GFPU element is active but carries no manufacturer tolerance in source data (band indeterminate; no default applied)');
+    END IF;
     gfpu_lo := gfpu_test_i * (1 + eff_gfpu_tol_lo / 100.0);
     gfpu_hi := gfpu_test_i * (1 + eff_gfpu_tol_hi / 100.0);
   END IF;

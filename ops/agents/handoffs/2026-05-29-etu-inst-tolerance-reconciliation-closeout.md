@@ -100,3 +100,40 @@ Operator-authorized follow-on only:
 3. confirm the live artifact resolves from `2 pass / 1 warn` to `3 pass / 0 warn`
 
 Until that explicit cutover happens, no live-parity pass claim should be made for sensor `17892`.
+
+---
+
+## 6. Addendum (2026-05-29, operator-directed) — fallback eliminated, derive-from-tables enforced
+
+Operator review challenged the residual `±10` *fallback* left in the helper (`COALESCE(ctx.inst_tol_lo, -10)`), on the principle that **NETA general tolerances apply only in the absence of manufacturer data; we have that data, so the band must be derived from the tables.** `NETA_TEST_PLAN_SPEC.md:149` states it directly: "Always use the per-sensor values, never assume ±10%." (Contrast STD/GFD *timing* at `:158-159`, which have **no** manufacturer column and legitimately use a ±10% service default.)
+
+### 6.1 Hypothesis + evidence
+Operator hypothesis: a NULL pickup tolerance means **the element isn't present on that trip unit**. Substantiated against the raw manufacturer source (`DatSensor`, 17,831 rows, in the fidelity-staging Postgres mirror of the same Access source; the governed Supabase MCP is read-blocked for SQL, so staging — identical reference data — was used; 17892 cross-checked = same `±15` as live):
+
+INST (`DS4_PICKUP_CALC` × `DS4_TOL_LOW/HIGH`):
+| inst_calc | sensors | tol NULL | tol present |
+|---|---|---|---|
+| −1 (no calc / absent) | 653 | 65 | 588 |
+| 0,1,4,5,6,7 (valid) | 17,178 | **0** | 17,178 |
+
+GFPU (`DS1GF_PICKUP_CALC` × `DS1GF_TOL_LOW/HIGH`):
+| gfpu_calc | sensors | tol NULL | tol present |
+|---|---|---|---|
+| −1 (no calc / absent) | 6,424 | 397 | 6,027 |
+| 0,1,5,6,7 (valid) | 11,407 | **0** | 11,407 |
+
+- A NULL pickup tolerance occurs **only** where `PICKUP_CALC = −1` (65/65 INST, 397/397 GFPU). The element-present-but-tolerance-NULL case is **exactly 0**.
+- Observed present-element tolerances are genuinely per-device, several asymmetric: −12.7/+11, −8/8, −20/20, −15/15 — never a uniform ±10.
+- 17892 = StyleID 1541: `Inst Pickup` calc=1 tol=−15/+15 (present); `GF Pickup` calc=−1 (absent, stale −10/10 ignored). An LSI-class unit: instantaneous present, ground fault absent.
+
+### 6.2 Mechanism (why the fallback was already dead)
+`fn_calc_etu_pickup_current` returns NULL when `p_calc_method = −1` (or NULL). The evaluate helper computes bands only inside `IF *_test_i IS NOT NULL`. So an absent element (calc=−1) yields a NULL test current and is **skipped entirely** (no band, no JSON block, excluded from `overall_pass`). The `±10` fallback could therefore only ever be reached for an absent element that was already being skipped → **dead code** that produced no wrong evaluation, but violated the spec in principle and was a latent trap.
+
+### 6.3 Corrected change (behavior-neutral, spec-clean)
+- Dropped the `±10` magic fallback for the manufacturer-data elements: `COALESCE(ctx.inst_tol_lo, -10)` → `ctx.inst_tol_lo` (and hi / GFPU). **Provably behavior-neutral** across the full catalog (NULL tol only co-occurs with the skipped calc=−1 path), while removing the spec-violating default and codifying derive-from-tables.
+- Added a defensive guard: if a *present* element ever lacks a tolerance (data says never; catches a future import regression), append a warning and leave the band indeterminate rather than fabricate a default.
+- STD/GFD timing `±10` retained (spec-sanctioned; no manufacturer column).
+- Files: `fn_evaluate_test_results.sql` (maint) + `20260528_000011_reapply_etu_evaluate_function.sql`. Route untouched.
+
+### 6.4 Status
+Design corrected in-repo. Live apply still pending operator-authorized cutover (now routed to CC on the proven governed DSN): apply the migration → rerun the probe → confirm `2 pass / 1 warn` → `3 pass / 0 warn`. No live mutation performed in this addendum.
