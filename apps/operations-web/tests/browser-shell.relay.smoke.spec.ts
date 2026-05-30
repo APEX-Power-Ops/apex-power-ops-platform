@@ -225,6 +225,14 @@ test('relay browser requires explicit selection before loading bounded compare d
 
   await page.route('**/api/v1/neta/relay/plot-tcc', async (route) => {
     relayPlotRequests += 1
+    const requestBody = route.request().postDataJSON() as {
+      candidate_overrides?: {
+        pickup_multiplier?: number
+        time_dial?: number
+        voltage_threshold_multiplier?: number
+      }
+    }
+    const isCandidate = Boolean(requestBody.candidate_overrides)
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -248,24 +256,29 @@ test('relay browser requires explicit selection before loading bounded compare d
           selected_source_ordinal: null,
           selected_time_dial: 1,
           selected_td_desc: null,
+          candidate_applied: isCandidate,
+          candidate_pickup_multiplier: requestBody.candidate_overrides?.pickup_multiplier ?? null,
+          candidate_time_dial: requestBody.candidate_overrides?.time_dial ?? null,
+          candidate_voltage_threshold_multiplier:
+            requestBody.candidate_overrides?.voltage_threshold_multiplier ?? null,
           plot_disclaimer: 'Preview uses the governed relay API output.',
         },
         warnings: [],
         curves: [
           {
-            id: 'curve-101',
+            id: isCandidate ? 'curve-101-candidate' : 'curve-101',
             family_name: 'iec',
             storage_kind: 'constants',
-            curve_name: 'IEC Very Inverse',
+            curve_name: isCandidate ? 'IEC Very Inverse what-if' : 'IEC Very Inverse',
             curve_parent_source_id: 7001,
             curve_ordinal: 1,
             source_ordinal: null,
             time_dial: 1,
             td_desc: null,
             points: [
-              { current_multiple: 2, seconds: 13.5 },
-              { current_multiple: 5, seconds: 4.2 },
-              { current_multiple: 10, seconds: 1.5 },
+              { current_multiple: 2, seconds: isCandidate ? 18.1 : 13.5 },
+              { current_multiple: 5, seconds: isCandidate ? 5.4 : 4.2 },
+              { current_multiple: 10, seconds: isCandidate ? 2.1 : 1.5 },
             ],
           },
         ],
@@ -355,6 +368,21 @@ test('relay browser requires explicit selection before loading bounded compare d
   expect(relaySettingsRequests).toBe(2)
   expect(relayPlotRequests).toBe(1)
 
+  await expect(page.locator('[data-relay-what-if-panel="controls"]')).toBeVisible()
+  await expect(page.locator('[data-relay-what-if-panel="preview"]')).toContainText('Baseline')
+  await page.locator('#relay-pickup-multiplier').focus()
+  for (let index = 0; index < 20; index += 1) {
+    await page.keyboard.press('ArrowRight')
+  }
+  await expect(page.locator('#relay-pickup-multiplier')).toHaveValue('1.2')
+  await expect.poll(() => relayPlotRequests).toBe(2)
+  await expect(page.locator('[data-relay-what-if-panel="preview"]')).toContainText('What-if')
+  await expect(page.getByText('server recalculated')).toBeVisible()
+  await page.locator('.relay-envelope-chart').click({ position: { x: 320, y: 120 } })
+  await expect(page.getByText('Fault markers')).toBeVisible()
+  await page.getByRole('button', { name: 'Clear Markers' }).click()
+  await expect(page.getByText('Fault markers')).toHaveCount(0)
+
   await page.getByRole('button', { name: 'Clear Relay Selection' }).click()
   await expect(page.locator('.relay-selection-panel')).toHaveCount(0)
   await expect(primaryDetail).toBeHidden()
@@ -364,7 +392,7 @@ test('relay browser requires explicit selection before loading bounded compare d
 
   expect(relayContextRequests).toBe(2)
   expect(relaySettingsRequests).toBe(2)
-  expect(relayPlotRequests).toBe(1)
+  expect(relayPlotRequests).toBe(2)
 
   await page.getByLabel('Primary TD-section').selectOption('101')
   await page.getByLabel('Compare TD-section').selectOption('202')
@@ -386,5 +414,5 @@ test('relay browser requires explicit selection before loading bounded compare d
 
   expect(relayContextRequests).toBe(2)
   expect(relaySettingsRequests).toBe(2)
-  expect(relayPlotRequests).toBe(1)
+  expect(relayPlotRequests).toBe(2)
 })

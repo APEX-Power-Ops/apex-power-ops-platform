@@ -1,5 +1,6 @@
 import {
   RelayContextResponse,
+  RelayPlotRequest,
   RelayPlotResponse,
   RelaySectionSearchResponse,
   RelaySettingsResponse,
@@ -18,6 +19,7 @@ export type RelaySelectionData = {
   context: RelayContextResponse
   settings: RelaySettingsResponse
   plot: RelayPlotResponse | null
+  plotRequest: RelayPlotRequest | null
   currentMultiples: number[]
 }
 

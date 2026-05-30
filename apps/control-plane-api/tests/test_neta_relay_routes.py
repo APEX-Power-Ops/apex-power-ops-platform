@@ -257,6 +257,61 @@ def test_relay_plot_returns_preview_curve(client):
     assert body["curves"][0]["points"][1]["seconds"] == pytest.approx(2.9705986243944098)
 
 
+def test_relay_plot_candidate_overrides_are_stateless_route_extension(client):
+    baseline_payload = {
+        "td_section_source_id": TD_SECTION_SOURCE_ID,
+        "curve_parent_source_id": 34480,
+        "curve_ordinal": 10,
+        "time_dial": 1.0,
+        "current_multiples": [2.0, 10.0],
+    }
+
+    with patch("services.neta.router._load_relay_settings_bundle", return_value=_relay_settings_bundle()):
+        baseline_resp = client.post("/api/v1/neta/relay/plot-tcc", json=baseline_payload)
+        candidate_resp = client.post(
+            "/api/v1/neta/relay/plot-tcc",
+            json={
+                **baseline_payload,
+                "candidate_overrides": {
+                    "pickup_multiplier": 1.25,
+                    "time_dial": 1.2,
+                    "voltage_threshold_multiplier": 1.0,
+                },
+            },
+        )
+
+    assert baseline_resp.status_code == 200
+    assert candidate_resp.status_code == 200
+    baseline_body = baseline_resp.json()
+    candidate_body = candidate_resp.json()
+
+    assert baseline_body["meta"]["candidate_applied"] is False
+    assert candidate_body["meta"]["candidate_applied"] is True
+    assert candidate_body["meta"]["candidate_pickup_multiplier"] == pytest.approx(1.25)
+    assert candidate_body["meta"]["candidate_time_dial"] == pytest.approx(1.2)
+    assert candidate_body["curves"][0]["points"][1]["current_multiple"] == pytest.approx(10.0)
+    assert candidate_body["curves"][0]["points"][1]["evaluated_current_multiple"] == pytest.approx(8.0)
+    assert candidate_body["curves"][0]["points"][1]["seconds"] != pytest.approx(
+        baseline_body["curves"][0]["points"][1]["seconds"]
+    )
+
+
+def test_relay_plot_invalid_candidate_override_returns_validation_error(client):
+    resp = client.post(
+        "/api/v1/neta/relay/plot-tcc",
+        json={
+            "td_section_source_id": TD_SECTION_SOURCE_ID,
+            "curve_parent_source_id": 34480,
+            "curve_ordinal": 10,
+            "time_dial": 1.0,
+            "current_multiples": [2.0, 10.0],
+            "candidate_overrides": {"pickup_multiplier": 0},
+        },
+    )
+
+    assert resp.status_code == 422
+
+
 def test_relay_plot_returns_explicit_unsupported_outcome(client):
     with patch("services.neta.router._load_relay_preview_bundle", return_value=_relay_unsupported_preview_bundle()):
         resp = client.post(

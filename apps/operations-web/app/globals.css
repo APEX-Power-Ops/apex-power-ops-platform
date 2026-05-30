@@ -1223,6 +1223,141 @@ body {
   color: var(--brand);
 }
 
+.relay-what-if-panel {
+  display: grid;
+  gap: 1rem;
+  padding: 1.1rem;
+  border-radius: 22px;
+  border: 1px solid rgba(18, 62, 87, 0.12);
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.relay-slider-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.relay-slider-field {
+  display: grid;
+  gap: 0.55rem;
+  padding: 0.9rem;
+  border-radius: 18px;
+  background: rgba(18, 62, 87, 0.04);
+  border: 1px solid rgba(18, 62, 87, 0.08);
+}
+
+.relay-slider-field input[type='range'] {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+.relay-slider-field strong {
+  color: var(--brand);
+}
+
+.relay-candidate-status,
+.relay-overlay-legend,
+.relay-marker-strip {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.relay-envelope-chart {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 7;
+  min-height: 220px;
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(216, 229, 234, 0.55), rgba(255, 252, 246, 0.86));
+  border: 1px solid rgba(18, 62, 87, 0.12);
+  cursor: crosshair;
+}
+
+.relay-envelope-chart line {
+  stroke: rgba(18, 62, 87, 0.26);
+  stroke-width: 1.25;
+}
+
+.relay-envelope-chart text {
+  fill: var(--muted);
+  font-size: 12px;
+}
+
+.relay-envelope-baseline,
+.relay-envelope-candidate {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 4;
+}
+
+.relay-envelope-baseline {
+  stroke: var(--brand);
+}
+
+.relay-envelope-candidate {
+  stroke: #2f8f6b;
+  stroke-dasharray: 9 7;
+}
+
+.relay-envelope-marker line {
+  stroke: var(--accent);
+  stroke-dasharray: 4 5;
+  stroke-width: 2;
+}
+
+.relay-envelope-marker text {
+  fill: var(--accent);
+  font-weight: 700;
+}
+
+.relay-legend-item {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.74rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.relay-legend-baseline {
+  color: var(--brand);
+}
+
+.relay-legend-candidate {
+  color: #2f8f6b;
+}
+
+.relay-legend-marker {
+  color: var(--accent);
+}
+
+.relay-legend-loading {
+  color: var(--muted);
+}
+
+.relay-marker-strip {
+  justify-content: space-between;
+  padding: 0.8rem 0.9rem;
+  border-radius: 16px;
+  background: rgba(189, 109, 47, 0.1);
+}
+
+.relay-marker-strip strong {
+  color: var(--brand);
+}
+
+.relay-marker-strip button {
+  border: 0;
+  border-radius: 14px;
+  padding: 0.7rem 0.9rem;
+  background: var(--brand);
+  color: white;
+  font: inherit;
+  cursor: pointer;
+}
+
 .relay-nested-card h5 {
   margin: 0.6rem 0 0.6rem;
   font-size: 0.95rem;
@@ -1266,6 +1401,7 @@ body {
   .relay-summary-grid,
   .relay-grid,
   .relay-detail-grid,
+  .relay-slider-grid,
   .relay-selection-controls,
   .relay-search-results,
   .relay-compare-grid-double,

@@ -658,6 +658,24 @@ class RelayPreviewOption(BaseModel):
     coefficients: dict[str, Optional[float]] = Field(default_factory=dict)
 
 
+class RelayCandidateOverrides(BaseModel):
+    pickup_multiplier: Optional[float] = Field(
+        None,
+        gt=0,
+        description="Ephemeral pickup multiplier for read-only what-if evaluation",
+    )
+    time_dial: Optional[float] = Field(
+        None,
+        gt=0,
+        description="Ephemeral analytical time-dial value for read-only what-if evaluation",
+    )
+    voltage_threshold_multiplier: Optional[float] = Field(
+        None,
+        gt=0,
+        description="Ephemeral voltage-threshold multiplier for read-only what-if evaluation",
+    )
+
+
 class RelaySectionSearchResult(BaseModel):
     manufacturer_source_id: int
     relay_type: Optional[str] = None
@@ -739,11 +757,16 @@ class RelayPlotRequest(BaseModel):
         default_factory=lambda: [2.0, 3.0, 5.0, 10.0, 20.0],
         description="Current multiples of pickup to evaluate or interpolate",
     )
+    candidate_overrides: Optional[RelayCandidateOverrides] = Field(
+        None,
+        description="Ephemeral read-only candidate settings; never persisted",
+    )
 
 
 class RelayPlotCurvePoint(BaseModel):
     current_multiple: float
     seconds: float
+    evaluated_current_multiple: Optional[float] = None
 
 
 class RelayPlotCurve(BaseModel):
@@ -780,6 +803,10 @@ class RelayPlotMeta(BaseModel):
     selected_source_ordinal: Optional[int] = None
     selected_time_dial: Optional[float] = None
     selected_td_desc: Optional[str] = None
+    candidate_applied: bool = False
+    candidate_pickup_multiplier: Optional[float] = None
+    candidate_time_dial: Optional[float] = None
+    candidate_voltage_threshold_multiplier: Optional[float] = None
     plot_disclaimer: Optional[str] = None
     resolved_equipment: Optional[ResolvedEquipmentSummary] = None
 

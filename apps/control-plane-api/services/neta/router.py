@@ -93,6 +93,7 @@ from .schemas import (
     RelayPlotMeta,
     RelayPlotRequest,
     RelayPlotResponse,
+    RelayCandidateOverrides,
     RelayPreviewOption,
     RelayRangeDiscreteValue,
     RelayRangeOption,
@@ -795,6 +796,30 @@ def _load_tcp_stored_points(db: Session, curve_parent_source_id: int, source_ord
     return [_normalize_mapping(_row_mapping(row)) for row in rows]
 
 
+def _relay_candidate_values(candidate_overrides: Optional[RelayCandidateOverrides]) -> dict[str, float]:
+    if candidate_overrides is None:
+        return {}
+
+    values = candidate_overrides.model_dump(exclude_none=True)
+    normalized: dict[str, float] = {}
+    for key, value in values.items():
+        numeric_value = float(value)
+        if numeric_value <= 0:
+            raise HTTPException(status_code=422, detail=f"{key} must be greater than 0")
+        normalized[key] = numeric_value
+    return normalized
+
+
+def _relay_effective_current_multiples(
+    current_multiples: list[float],
+    candidate_values: dict[str, float],
+) -> list[float]:
+    pickup_multiplier = candidate_values.get("pickup_multiplier", 1.0)
+    voltage_threshold_multiplier = candidate_values.get("voltage_threshold_multiplier", 1.0)
+    normalization_multiplier = pickup_multiplier * voltage_threshold_multiplier
+    return [float(current_multiple) / normalization_multiplier for current_multiple in current_multiples]
+
+
 def _load_relay_preview_bundle(
     db: Session,
     *,
@@ -804,11 +829,17 @@ def _load_relay_preview_bundle(
     source_ordinal: Optional[int],
     time_dial: Optional[float],
     current_multiples: list[float],
+    candidate_overrides: Optional[RelayCandidateOverrides] = None,
 ) -> dict[str, object]:
     settings_bundle = _load_relay_settings_bundle(db, td_section_source_id)
+    candidate_values = _relay_candidate_values(candidate_overrides)
+    effective_current_multiples = _relay_effective_current_multiples(current_multiples, candidate_values)
     bundle = {
         **settings_bundle,
         "warnings": [],
+        "candidate_values": candidate_values,
+        "requested_current_multiples": list(current_multiples),
+        "evaluated_current_multiples": effective_current_multiples,
     }
     family_code = int(bundle["family_code"])
     unsupported_reason = bundle.get("unsupported_reason")
@@ -840,6 +871,16 @@ def _load_relay_preview_bundle(
 
     try:
         if family == RelayFormulaCode.TCP:
+            selected_time_dial = float(selected_option["time_dial"])
+            candidate_time_dial = candidate_values.get("time_dial")
+            if candidate_time_dial is not None and not _float_matches(candidate_time_dial, selected_time_dial):
+                raise HTTPException(
+                    status_code=400,
+                    detail=(
+                        "TCP candidate time_dial cannot be evaluated against a stored point row; "
+                        "select a stored TCP time-dial row or omit the candidate time_dial override."
+                    ),
+                )
             stored_points = _load_tcp_stored_points(
                 db,
                 int(selected_option["curve_parent_source_id"]),
@@ -869,11 +910,12 @@ def _load_relay_preview_bundle(
             )
             evaluated = evaluate_curve_definition(
                 definition,
-                current_multiples,
-                time_dial=float(selected_option["time_dial"]),
+                effective_current_multiples,
+                time_dial=selected_time_dial,
             )
         else:
-            analytical_time_dial = float(time_dial) if time_dial is not None else 1.0
+            baseline_time_dial = float(time_dial) if time_dial is not None else 1.0
+            analytical_time_dial = candidate_values.get("time_dial", baseline_time_dial)
             definition = RelayCurveDefinition(
                 family=family,
                 curve_name=selected_option.get("curve_name") or f"curve_{selected_option['curve_ordinal']}",
@@ -885,7 +927,7 @@ def _load_relay_preview_bundle(
                     for key, value in selected_option.get("coefficients", {}).items()
                 },
             )
-            evaluated = evaluate_curve_definition(definition, current_multiples, time_dial=analytical_time_dial)
+            evaluated = evaluate_curve_definition(definition, effective_current_multiples, time_dial=analytical_time_dial)
         bundle["status"] = evaluated.status.value
         bundle["result"] = evaluated
         bundle["selected_option"] = selected_option
@@ -3867,6 +3909,7 @@ def plot_relay_tcc(req: RelayPlotRequest, db: Session = Depends(get_db)):
         source_ordinal=req.source_ordinal,
         time_dial=req.time_dial,
         current_multiples=req.current_multiples,
+        candidate_overrides=req.candidate_overrides,
     )
 
     meta = RelayPlotMeta(
@@ -3900,8 +3943,12 @@ def plot_relay_tcc(req: RelayPlotRequest, db: Session = Depends(get_db)):
         ),
         selected_time_dial=(preview_bundle["selected_option"].get("time_dial") if preview_bundle.get("selected_option") else None),
         selected_td_desc=(preview_bundle["selected_option"].get("td_desc") if preview_bundle.get("selected_option") else None),
+        candidate_applied=bool(preview_bundle.get("candidate_values")),
+        candidate_pickup_multiplier=preview_bundle.get("candidate_values", {}).get("pickup_multiplier"),
+        candidate_time_dial=preview_bundle.get("candidate_values", {}).get("time_dial"),
+        candidate_voltage_threshold_multiplier=preview_bundle.get("candidate_values", {}).get("voltage_threshold_multiplier"),
         plot_disclaimer=(
-            "Read-only relay preview. Stored analytical constants or normalized TCP points are evaluated through the shared calc package; no write path or browser surface is opened."
+            "Read-only relay preview. Stored analytical constants or normalized TCP points are evaluated through the shared calc package; candidate overrides are ephemeral and no write path is opened."
         ),
         resolved_equipment=preview_bundle.get("resolved_equipment"),
     )
@@ -3915,6 +3962,9 @@ def plot_relay_tcc(req: RelayPlotRequest, db: Session = Depends(get_db)):
         )
 
     selected_option = preview_bundle["selected_option"]
+    requested_current_multiples = preview_bundle.get("requested_current_multiples") or [
+        point.current_multiple for point in result.points
+    ]
     curve = RelayPlotCurve(
         id=(
             f"relay_{preview_bundle['family_name']}_{selected_option['curve_parent_source_id']}_"
@@ -3937,8 +3987,19 @@ def plot_relay_tcc(req: RelayPlotRequest, db: Session = Depends(get_db)):
         time_dial=selected_option.get("time_dial") if selected_option.get("time_dial") is not None else result.time_dial,
         td_desc=selected_option.get("td_desc"),
         points=[
-            RelayPlotCurvePoint(current_multiple=point.current_multiple, seconds=point.trip_time_seconds)
-            for point in result.points
+            RelayPlotCurvePoint(
+                current_multiple=float(requested_current_multiples[index]),
+                seconds=point.trip_time_seconds,
+                evaluated_current_multiple=(
+                    point.current_multiple
+                    if not _float_matches(
+                        point.current_multiple,
+                        float(requested_current_multiples[index]),
+                    )
+                    else None
+                ),
+            )
+            for index, point in enumerate(result.points)
         ],
     )
 

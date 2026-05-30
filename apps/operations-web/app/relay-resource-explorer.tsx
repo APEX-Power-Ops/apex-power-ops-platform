@@ -1,8 +1,10 @@
 'use client'
 
-import { FormEvent, useState } from 'react'
+import { FormEvent, useEffect, useMemo, useRef, useState } from 'react'
 import {
+  RelayPlotCurvePoint,
   RelayPlotRequest,
+  RelayPlotResponse,
   RelayResourcesError,
   RelaySectionSearchResponse,
   RelaySettingsResponse,
@@ -119,8 +121,185 @@ async function loadSelectionData(
     context: contextResult,
     settings: settingsResult,
     plot: plotResult,
+    plotRequest,
     currentMultiples,
   }
+}
+
+function formatPreviewNumber(value: number, digits = 2) {
+  return Number.isFinite(value) ? value.toFixed(digits) : 'n/a'
+}
+
+function numbersAreClose(left: number, right: number, tolerance = 0.000001) {
+  return Math.abs(left - right) <= tolerance
+}
+
+function resolveBaselineTimeDial(selection: RelaySelectionData | null) {
+  return (
+    selection?.plot?.meta.selected_time_dial ??
+    selection?.plot?.curves[0]?.time_dial ??
+    selection?.plotRequest?.time_dial ??
+    1
+  )
+}
+
+function isTcpSelection(selection: RelaySelectionData | null) {
+  return selection?.settings.family_name === 'tcp' || selection?.settings.storage_kind === 'points'
+}
+
+function collectPositivePoints(plot: RelayPlotResponse | null) {
+  return (plot?.curves[0]?.points ?? []).filter((point) => point.current_multiple > 0 && point.seconds > 0)
+}
+
+type TripEnvelopePreviewProps = {
+  baselinePlot: RelayPlotResponse | null
+  candidatePlot: RelayPlotResponse | null
+  loading: boolean
+  errorMessage: string | null
+  markers: number[]
+  onAddMarker: (currentMultiple: number) => void
+  onClearMarkers: () => void
+}
+
+function TripEnvelopePreview({
+  baselinePlot,
+  candidatePlot,
+  loading,
+  errorMessage,
+  markers,
+  onAddMarker,
+  onClearMarkers,
+}: TripEnvelopePreviewProps) {
+  const svgRef = useRef<SVGSVGElement | null>(null)
+  const chart = useMemo(() => {
+    const baselinePoints = collectPositivePoints(baselinePlot)
+    const candidatePoints = collectPositivePoints(candidatePlot)
+    const allPoints = [...baselinePoints, ...candidatePoints]
+
+    if (allPoints.length === 0) {
+      return null
+    }
+
+    const xValues = allPoints.map((point) => point.current_multiple)
+    const yValues = allPoints.map((point) => point.seconds)
+    let minX = Math.min(...xValues)
+    let maxX = Math.max(...xValues)
+    let minY = Math.min(...yValues)
+    let maxY = Math.max(...yValues)
+
+    if (numbersAreClose(minX, maxX)) {
+      minX = Math.max(0.1, minX * 0.8)
+      maxX = maxX * 1.2
+    }
+    if (numbersAreClose(minY, maxY)) {
+      minY = Math.max(0.01, minY * 0.8)
+      maxY = maxY * 1.2
+    }
+
+    const minLogX = Math.log10(minX)
+    const maxLogX = Math.log10(maxX)
+    const minLogY = Math.log10(minY)
+    const maxLogY = Math.log10(maxY)
+    const width = 640
+    const height = 280
+    const pad = 34
+
+    const xFor = (value: number) => {
+      const ratio = (Math.log10(value) - minLogX) / (maxLogX - minLogX)
+      return pad + ratio * (width - pad * 2)
+    }
+    const yFor = (value: number) => {
+      const ratio = (Math.log10(value) - minLogY) / (maxLogY - minLogY)
+      return height - pad - ratio * (height - pad * 2)
+    }
+    const pathFor = (points: RelayPlotCurvePoint[]) =>
+      points.map((point) => `${xFor(point.current_multiple)},${yFor(point.seconds)}`).join(' ')
+
+    return {
+      width,
+      height,
+      pad,
+      minLogX,
+      maxLogX,
+      baselinePath: pathFor(baselinePoints),
+      candidatePath: pathFor(candidatePoints),
+      xFor,
+      yFor,
+      xMin: minX,
+      xMax: maxX,
+      yMin: minY,
+      yMax: maxY,
+    }
+  }, [baselinePlot, candidatePlot])
+
+  return (
+    <section className="relay-what-if-panel" data-relay-what-if-panel="preview">
+      <header className="relay-compare-section-header">
+        <span className="relay-compare-section-eyebrow">Trip envelope</span>
+        <h3 className="relay-compare-section-title">Baseline / What-if Overlay</h3>
+      </header>
+
+      {errorMessage ? <p className="resource-banner resource-banner-error">{errorMessage}</p> : null}
+
+      <div className="relay-overlay-legend" aria-label="Relay trip envelope curves">
+        <span className="relay-legend-item relay-legend-baseline">Baseline</span>
+        <span className="relay-legend-item relay-legend-candidate">What-if</span>
+        <span className="relay-legend-item relay-legend-marker">Fault marker</span>
+        {loading ? <span className="relay-legend-item relay-legend-loading">Recalculating</span> : null}
+      </div>
+
+      {chart ? (
+        <svg
+          ref={svgRef}
+          className="relay-envelope-chart"
+          viewBox={`0 0 ${chart.width} ${chart.height}`}
+          role="img"
+          aria-label="Relay trip envelope overlay"
+          onClick={(event) => {
+            const bounds = event.currentTarget.getBoundingClientRect()
+            const ratio = Math.min(Math.max((event.clientX - bounds.left) / bounds.width, 0), 1)
+            const currentMultiple = 10 ** (chart.minLogX + ratio * (chart.maxLogX - chart.minLogX))
+            onAddMarker(Number(currentMultiple.toFixed(2)))
+          }}
+        >
+          <line x1={chart.pad} y1={chart.height - chart.pad} x2={chart.width - chart.pad} y2={chart.height - chart.pad} />
+          <line x1={chart.pad} y1={chart.pad} x2={chart.pad} y2={chart.height - chart.pad} />
+          <text x={chart.pad} y={chart.height - 8}>{formatPreviewNumber(chart.xMin, 1)}x</text>
+          <text x={chart.width - chart.pad - 42} y={chart.height - 8}>{formatPreviewNumber(chart.xMax, 1)}x</text>
+          <text x={8} y={chart.pad}>{formatPreviewNumber(chart.yMax, 2)}s</text>
+          <text x={8} y={chart.height - chart.pad}>{formatPreviewNumber(chart.yMin, 2)}s</text>
+          {chart.baselinePath ? <polyline className="relay-envelope-baseline" points={chart.baselinePath} /> : null}
+          {chart.candidatePath ? <polyline className="relay-envelope-candidate" points={chart.candidatePath} /> : null}
+          {markers.map((marker, index) => {
+            if (marker < chart.xMin || marker > chart.xMax) {
+              return null
+            }
+            const x = chart.xFor(marker)
+            return (
+              <g key={`${marker}-${index}`} className="relay-envelope-marker">
+                <line x1={x} y1={chart.pad} x2={x} y2={chart.height - chart.pad} />
+                <text x={x + 5} y={chart.pad + 16}>{formatPreviewNumber(marker, 2)}x</text>
+              </g>
+            )
+          })}
+        </svg>
+      ) : (
+        <p className="resource-banner resource-banner-neutral relay-inline-banner">
+          No preview curve is available for the selected TD-section.
+        </p>
+      )}
+
+      {markers.length > 0 ? (
+        <div className="relay-marker-strip">
+          <span className="resource-summary-label">Fault markers</span>
+          <strong>{markers.map((marker) => `${formatPreviewNumber(marker, 2)}x`).join(', ')}</strong>
+          <button type="button" onClick={onClearMarkers}>
+            Clear Markers
+          </button>
+        </div>
+      ) : null}
+    </section>
+  )
 }
 
 export function RelayResourceExplorer() {
@@ -134,6 +313,86 @@ export function RelayResourceExplorer() {
   const [compareSectionId, setCompareSectionId] = useState('')
   const [primarySelection, setPrimarySelection] = useState<RelaySelectionData | null>(null)
   const [compareSelection, setCompareSelection] = useState<RelaySelectionData | null>(null)
+  const [candidatePickupMultiplier, setCandidatePickupMultiplier] = useState(1)
+  const [candidateTimeDial, setCandidateTimeDial] = useState(1)
+  const [candidateVoltageThresholdMultiplier, setCandidateVoltageThresholdMultiplier] = useState(1)
+  const [candidatePlot, setCandidatePlot] = useState<RelayPlotResponse | null>(null)
+  const [candidateErrorMessage, setCandidateErrorMessage] = useState<string | null>(null)
+  const [isLoadingCandidate, setIsLoadingCandidate] = useState(false)
+  const [faultMarkers, setFaultMarkers] = useState<number[]>([])
+
+  const baselineTimeDial = resolveBaselineTimeDial(primarySelection)
+  const candidateTimeDialDisabled = isTcpSelection(primarySelection)
+  const candidateDirty = Boolean(
+    primarySelection?.plotRequest &&
+      (!numbersAreClose(candidatePickupMultiplier, 1) ||
+        !numbersAreClose(candidateVoltageThresholdMultiplier, 1) ||
+        (!candidateTimeDialDisabled && !numbersAreClose(candidateTimeDial, baselineTimeDial))),
+  )
+
+  useEffect(() => {
+    const nextBaselineTimeDial = resolveBaselineTimeDial(primarySelection)
+    setCandidatePickupMultiplier(1)
+    setCandidateTimeDial(nextBaselineTimeDial)
+    setCandidateVoltageThresholdMultiplier(1)
+    setCandidatePlot(null)
+    setCandidateErrorMessage(null)
+    setIsLoadingCandidate(false)
+    setFaultMarkers([])
+  }, [primarySelection])
+
+  useEffect(() => {
+    const plotRequest = primarySelection?.plotRequest
+    if (!plotRequest || !candidateDirty) {
+      setCandidatePlot(null)
+      setCandidateErrorMessage(null)
+      setIsLoadingCandidate(false)
+      return
+    }
+
+    const timeoutId = window.setTimeout(async () => {
+      const candidate_overrides: RelayPlotRequest['candidate_overrides'] = {}
+      if (!numbersAreClose(candidatePickupMultiplier, 1)) {
+        candidate_overrides.pickup_multiplier = candidatePickupMultiplier
+      }
+      if (!candidateTimeDialDisabled && !numbersAreClose(candidateTimeDial, baselineTimeDial)) {
+        candidate_overrides.time_dial = candidateTimeDial
+      }
+      if (!numbersAreClose(candidateVoltageThresholdMultiplier, 1)) {
+        candidate_overrides.voltage_threshold_multiplier = candidateVoltageThresholdMultiplier
+      }
+
+      setIsLoadingCandidate(true)
+      setCandidateErrorMessage(null)
+
+      try {
+        const response = await fetchRelayPlot({
+          ...plotRequest,
+          candidate_overrides,
+        })
+        setCandidatePlot(response)
+      } catch (error) {
+        setCandidatePlot(null)
+        if (error instanceof RelayResourcesError) {
+          setCandidateErrorMessage(error.message)
+        } else {
+          setCandidateErrorMessage('The governed relay backend seam could not recalculate the what-if envelope.')
+        }
+      } finally {
+        setIsLoadingCandidate(false)
+      }
+    }, 350)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [
+    baselineTimeDial,
+    candidateDirty,
+    candidatePickupMultiplier,
+    candidateTimeDial,
+    candidateTimeDialDisabled,
+    candidateVoltageThresholdMultiplier,
+    primarySelection,
+  ])
 
   async function handleSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -248,7 +507,13 @@ export function RelayResourceExplorer() {
     setCompareSelection(null)
   }
 
+  function handleAddFaultMarker(currentMultiple: number) {
+    setFaultMarkers((previousMarkers) => [...previousMarkers.slice(-4), currentMultiple])
+  }
+
   const hasSelectionState = Boolean(primarySectionId || compareSectionId || primarySelection || compareSelection)
+  const timeDialSliderMin = Math.max(0.05, baselineTimeDial * 0.5)
+  const timeDialSliderMax = Math.max(timeDialSliderMin + 0.01, baselineTimeDial * 1.5)
 
   return (
     <section className="resource-lane-card">
@@ -421,6 +686,74 @@ export function RelayResourceExplorer() {
           {primarySelection ? (
             <>
               <RelayPrimaryDetail selection={primarySelection} />
+              <section className="relay-what-if-panel" data-relay-what-if-panel="controls">
+                <header className="relay-compare-section-header">
+                  <span className="relay-compare-section-eyebrow">Read-only what-if</span>
+                  <h3 className="relay-compare-section-title">Candidate Settings</h3>
+                </header>
+                <div className="relay-slider-grid">
+                  <label className="relay-slider-field" htmlFor="relay-pickup-multiplier">
+                    <span className="resource-field">Pickup multiplier</span>
+                    <input
+                      id="relay-pickup-multiplier"
+                      type="range"
+                      min="0.5"
+                      max="1.5"
+                      step="0.01"
+                      value={candidatePickupMultiplier}
+                      onChange={(event) => setCandidatePickupMultiplier(Number(event.target.value))}
+                    />
+                    <strong>{formatPreviewNumber(candidatePickupMultiplier, 2)}x</strong>
+                  </label>
+                  <label className="relay-slider-field" htmlFor="relay-time-dial">
+                    <span className="resource-field">Time dial</span>
+                    <input
+                      id="relay-time-dial"
+                      type="range"
+                      min={timeDialSliderMin}
+                      max={timeDialSliderMax}
+                      step="0.01"
+                      value={candidateTimeDial}
+                      disabled={candidateTimeDialDisabled}
+                      onChange={(event) => setCandidateTimeDial(Number(event.target.value))}
+                    />
+                    <strong>
+                      {candidateTimeDialDisabled
+                        ? 'stored TCP row'
+                        : `${formatPreviewNumber(candidateTimeDial, 2)} s`}
+                    </strong>
+                  </label>
+                  <label className="relay-slider-field" htmlFor="relay-voltage-threshold">
+                    <span className="resource-field">Voltage threshold</span>
+                    <input
+                      id="relay-voltage-threshold"
+                      type="range"
+                      min="0.5"
+                      max="1.5"
+                      step="0.01"
+                      value={candidateVoltageThresholdMultiplier}
+                      onChange={(event) => setCandidateVoltageThresholdMultiplier(Number(event.target.value))}
+                    />
+                    <strong>{formatPreviewNumber(candidateVoltageThresholdMultiplier, 2)}x</strong>
+                  </label>
+                </div>
+                <div className="relay-candidate-status">
+                  <span className="resource-chip">{candidateDirty ? 'candidate active' : 'baseline'}</span>
+                  <span className="resource-chip resource-chip-muted">ephemeral</span>
+                  {candidatePlot?.meta.candidate_applied ? (
+                    <span className="resource-chip resource-chip-muted">server recalculated</span>
+                  ) : null}
+                </div>
+              </section>
+              <TripEnvelopePreview
+                baselinePlot={primarySelection.plot}
+                candidatePlot={candidatePlot}
+                loading={isLoadingCandidate}
+                errorMessage={candidateErrorMessage}
+                markers={faultMarkers}
+                onAddMarker={handleAddFaultMarker}
+                onClearMarkers={() => setFaultMarkers([])}
+              />
               <div className={`relay-compare-grid${compareSelection ? ' relay-compare-grid-double' : ''}`}>
                 <RelaySelectionPanel selection={primarySelection} />
                 {compareSelection ? <RelaySelectionPanel selection={compareSelection} /> : null}

@@ -119,6 +119,7 @@ export type RelaySettingsResponse = {
 export type RelayPlotCurvePoint = {
   current_multiple: number
   seconds: number
+  evaluated_current_multiple?: number | null
 }
 
 export type RelayPlotCurve = {
@@ -153,6 +154,10 @@ export type RelayPlotMeta = {
   selected_source_ordinal: number | null
   selected_time_dial: number | null
   selected_td_desc: string | null
+  candidate_applied: boolean
+  candidate_pickup_multiplier: number | null
+  candidate_time_dial: number | null
+  candidate_voltage_threshold_multiplier: number | null
   plot_disclaimer: string
 }
 
@@ -169,6 +174,11 @@ export type RelayPlotRequest = {
   source_ordinal?: number
   time_dial?: number
   current_multiples: number[]
+  candidate_overrides?: {
+    pickup_multiplier?: number
+    time_dial?: number
+    voltage_threshold_multiplier?: number
+  }
 }
 
 export class RelayResourcesError extends Error {
