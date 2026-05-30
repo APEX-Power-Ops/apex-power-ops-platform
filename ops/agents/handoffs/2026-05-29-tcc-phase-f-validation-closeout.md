@@ -2,7 +2,7 @@
 
 Date: 2026-05-30
 Status: PASS after DSN rerun; all five Phase F surfaces green
-Purpose: Record the bounded Phase F read-only validation pass for Runtime 017, including the initial failed auth attempt and the successful rerun once the governed DSN was loaded correctly in the `olares` shell
+Purpose: Record the bounded Phase F read-only validation pass for Runtime 017, including the initial failed auth attempt and the successful rerun once the governed DSN was loaded correctly in the `olares` shell from the canonical host secrets path
 
 ---
 
@@ -33,7 +33,7 @@ This closeout supersedes the earlier same-day fail assessment that was captured 
 Read-only live posture used for the final passing run:
 
 1. app config was already confirmed to prefer `APEX_OLARES_LIVE_DSN`
-2. the governed DSN was loaded into the `olares` shell from `/home/olares/.apex-live.env`
+2. the canonical governed DSN loader path on this host is `/home/olares/apex-secrets/olares/ai-live-dsn.env`
 3. no local Postgres was started
 4. live integration ran directly against governed Supabase
 5. smoke and parity ran against the local host on `http://127.0.0.1:8010`, backed by the same governed DSN
@@ -41,8 +41,9 @@ Read-only live posture used for the final passing run:
 Host note:
 
 1. the first failure was caused by DSN/auth setup not being usable from the actual `olares` shell context
-2. once the env file was owned by `olares` and sourced in that shell, live auth succeeded
-3. the later smoke/parity issue was not DB auth; it was only local host lifecycle in a one-terminal UI
+2. `/home/olares/.apex-live.env` was created only as a temporary expedient during rerun recovery and should not remain the long-term host source of truth
+3. once the DSN was loaded correctly in the `olares` shell, live auth succeeded
+4. the later smoke/parity issue was not DB auth; it was only local host lifecycle in a one-terminal UI
 
 ---
 
@@ -66,7 +67,7 @@ Interpretation:
 
 Command:
 
-1. `source /home/olares/.apex-live.env && ../../.venv/bin/pytest tests/test_neta_tmt_live_integration.py tests/test_neta_emt_live_integration.py -q -rs`
+1. `source /home/olares/apex-secrets/olares/ai-live-dsn.env && ../../.venv/bin/pytest tests/test_neta_tmt_live_integration.py tests/test_neta_emt_live_integration.py -q -rs`
 
 Result:
 
@@ -81,7 +82,7 @@ Interpretation:
 
 Command:
 
-1. `source /home/olares/.apex-live.env && .venv/bin/python - <<'PY' ... PY`
+1. `source /home/olares/apex-secrets/olares/ai-live-dsn.env && .venv/bin/python - <<'PY' ... PY`
 2. the one-terminal rerun started `uvicorn`, waited for `/api/v1/neta/catalog/status`, then executed the smoke script against `http://127.0.0.1:8010`
 
 Result:
@@ -98,7 +99,7 @@ Observed passing evidence:
 
 Command:
 
-1. `source /home/olares/.apex-live.env && .venv/bin/python apps/control-plane-api/scripts/probe_live_etu_sql_parity.py --base-url http://127.0.0.1:8010`
+1. `source /home/olares/apex-secrets/olares/ai-live-dsn.env && .venv/bin/python apps/control-plane-api/scripts/probe_live_etu_sql_parity.py --base-url http://127.0.0.1:8010`
 
 Result:
 
@@ -134,9 +135,10 @@ Initial same-day failure mode:
 
 What changed:
 
-1. `/home/olares/.apex-live.env` was created, ownership was corrected to `olares`, and the env file was sourced in the actual `olares` shell
-2. live integration immediately turned green
-3. a one-terminal host orchestration rerun kept `uvicorn` alive long enough for smoke and parity to execute cleanly
+1. the host already had an established secrets location at `/home/olares/apex-secrets/olares/ai-live-dsn.env`, which should remain canonical
+2. `/home/olares/.apex-live.env` was created only as a temporary duplicate during operator recovery and should be removed by host owner once no longer needed
+3. live integration immediately turned green once the DSN was loaded correctly in the `olares` shell
+4. a one-terminal host orchestration rerun kept `uvicorn` alive long enough for smoke and parity to execute cleanly
 
 Conclusion:
 

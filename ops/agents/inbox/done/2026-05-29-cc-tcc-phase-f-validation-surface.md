@@ -17,6 +17,8 @@ This done packet was first closed with a stale fail closeout before the governed
 
 Final status is now PASS.
 
+Canonical host DSN path should remain `/home/olares/apex-secrets/olares/ai-live-dsn.env`; the temporary `/home/olares/.apex-live.env` duplicate was only an expedient recovery step and should be retired by host owner.
+
 Superseding evidence lives in the same closeout path referenced in frontmatter:
 
 1. offline routes: PASS
