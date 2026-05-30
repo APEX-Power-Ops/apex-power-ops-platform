@@ -10,6 +10,7 @@ import os
 from typing import Optional
 
 from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from sqlalchemy import text
@@ -56,6 +57,29 @@ app = FastAPI(
     version="5.2.0",
     description="Platform control-plane, governed MCP, and calculation surfaces "
                 "for Apex Power Ops.",
+)
+
+_DEFAULT_CORS_ORIGINS = [
+    "https://operations.apexpowerops.com",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:8765",
+    "http://127.0.0.1:8765",
+]
+_cors_origins = [
+    origin.strip()
+    for origin in os.getenv(
+        "CORS_ALLOWED_ORIGINS",
+        ",".join(_DEFAULT_CORS_ORIGINS),
+    ).split(",")
+    if origin.strip()
+]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=_cors_origins,
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["*"],
 )
 
 app.include_router(calc_router)
