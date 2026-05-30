@@ -2,7 +2,7 @@
 
 Date: 2026-05-30
 Dispatch: `2026-05-30-cc-tcc-phase-g-hosted-parity-and-relay-guard`
-Status: Closed with one credential blocker recorded
+Status: Complete after canonical DSN repair and SQL parity rerun
 
 ## Claim
 
@@ -55,19 +55,20 @@ ETU SQL parity:
 set -a; source /home/olares/apex-secrets/olares/ai-live-dsn.env; set +a; export APEX_OLARES_LIVE_DSN
 cd apps/control-plane-api
 PYTHONPATH=. .venv/bin/python scripts/probe_live_etu_sql_parity.py --base-url https://control.apexpowerops.com --artifact-path ''
-RESULT FAIL
-psycopg2.OperationalError: password authentication failed for user "postgres"
+RESULT PASS: live ETU SQL settings parity holds across 3 seeded scenario(s); evaluate warnings: 0
 ```
 
-Credential interpretation:
+Credential correction history:
 
-1. the canonical loader file exists,
-2. `APEX_OLARES_LIVE_DSN` is present after sourcing/exporting,
-3. no DSN value was printed,
-4. the selected DSN metadata points at the governed Supabase pooler shape,
-5. the failure is PostgreSQL authentication for the sourced credential, not a hosted route parity mismatch.
+1. the initial Phase G SQL parity run failed because the host-local canonical loader content was malformed or stale,
+2. the operator repaired `/home/olares/apex-secrets/olares/ai-live-dsn.env` out of band,
+3. `/home/olares/.apex-live.env` is absent,
+4. the canonical file is mode `600`,
+5. the canonical loader has one line, one `postgresql://` scheme, and exports `APEX_OLARES_LIVE_DSN`,
+6. no DSN value was printed,
+7. the hosted SQL parity probe is now green with `3 seeded scenario(s); evaluate warnings: 0`.
 
-Because of that credential failure, the expected `3 pass / 0 warn` SQL-parity result could not be reproduced in this run. The blocker is out-of-band credential material, not repo code.
+This closes the prior credential blocker. Breaker hosted parity is now complete for the Phase G surfaces.
 
 ## G-2 Relay Prod 500 Guard
 
@@ -155,14 +156,19 @@ Read-only boundary held:
 
 Scoped staging was used. Existing unrelated residue remained excluded: `pnpm-lock.yaml`, `output/`, and canary actual artifacts.
 
-## Next Required Action
+## DSN Repair Follow-Up
 
-Rotate or repair `/home/olares/apex-secrets/olares/ai-live-dsn.env` out of band, then rerun:
+The out-of-band DSN repair requested by this closeout was completed on 2026-05-30. Verification without printing the secret:
+
+```text
+{'mode': '0o600', 'line_count': 1, 'postgresql_scheme_count': 1, 'exports_live_dsn': True}
+```
+
+Rerun proof:
 
 ```text
 set -a; source /home/olares/apex-secrets/olares/ai-live-dsn.env; set +a; export APEX_OLARES_LIVE_DSN
 cd apps/control-plane-api
 PYTHONPATH=. .venv/bin/python scripts/probe_live_etu_sql_parity.py --base-url https://control.apexpowerops.com --artifact-path ''
+RESULT PASS: live ETU SQL settings parity holds across 3 seeded scenario(s); evaluate warnings: 0
 ```
-
-Expected after credential repair: `RESULT PASS: live ETU SQL settings parity holds across 3 seeded scenario(s); evaluate warnings: 0`.
