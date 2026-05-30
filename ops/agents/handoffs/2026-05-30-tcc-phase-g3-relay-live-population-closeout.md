@@ -3,7 +3,7 @@
 Dispatch: `2026-05-30-cc-tcc-phase-g3-relay-live-population`
 Executor: Codex
 Date: 2026-05-30
-Status: STOPPED by governed preflight; no live write performed.
+Status: Initially STOPPED by governed preflight; completed after operator-approved live DDL follow-up.
 
 ## Claim
 
@@ -73,3 +73,51 @@ Relay live integration was not run after the STOP because the preflight prevente
 ## Required Follow-Up
 
 Create or restore the governed live `work` schema / PM base for the same Supabase project, then rerun the G-3 relay population packet from the preflight step.
+
+## Operator-Approved Continuation
+
+After the initial STOP closeout was pushed, the operator explicitly authorized the missing live DDL prerequisites in chat:
+
+- `CREATE SCHEMA work`
+- `CREATE TYPE work.provenance_source_enum`
+- `CREATE TYPE work.provenance_status_enum`
+- all enum blockers required by the relay schema
+
+Applied live DDL/results:
+
+| Step | Result |
+| --- | --- |
+| `CREATE SCHEMA work` | succeeded; `work_schema_count=1`, `pg_namespace` contains `work` |
+| `work.provenance_source_enum` | created with labels `manual,p6_import,api,automation,migration,bulk_upload` |
+| `work.provenance_status_enum` | created with labels `curated,imported,provisional,validated,rejected` |
+| relay-local enum blockers | already present from the partial `010` attempt: `relay_range_parent_kind_enum`, `relay_voltage_restraint_kind_enum` |
+
+The first replay attempt of `010_tcc_relay_tables.sql` had created the two relay-local enums, then stopped because the PM/work provenance enum dependency was absent. After the operator-approved enum DDL, the live relay table state was still clean: 21 relay tables absent / 0 relay rows loaded. To avoid dropping the already-created relay enum objects, the remaining table body of `010_tcc_relay_tables.sql` was applied from the canonical file after its enum block, then `011_tcc_relay_indexes.sql` was applied normally.
+
+`012_tcc_relay_staged_population.sql` initially stopped during `\copy` on `Relays.csv` with `invalid byte sequence for encoding "UTF8": 0x96`. The tracked CSV snapshot is extended-ASCII/Windows-1252 for that file, so the migration was rerun unchanged with `PGCLIENTENCODING=WIN1252`. `012` is designed to truncate/reload only `work.tcc_relay_*`; the rerun completed successfully.
+
+Final live relay counts:
+
+| Metric | Count |
+| --- | ---: |
+| relay tables | 21 |
+| relays | 1,442 |
+| devices | 6,850 |
+| ranges | 34,213 |
+| TCP points | 1,570,700 |
+
+Hosted runtime verification:
+
+- `GET https://control.apexpowerops.com/api/v1/neta/relay/sections?q=SEL` returned HTTP `200` with relay data.
+- Hosted discovery/settings/preview probe returned HTTP `200` end to end using TD-section `5075`; preview meta status was `supported` and one curve was returned.
+
+Live integration test result:
+
+- Command: `PYTHONPATH=../../packages/calc-engine/src:. .venv/bin/python -m pytest tests/test_neta_relay_live_integration.py -q -rs`
+- Result: `1 skipped, 1 warning`
+- Skip reason: the test selects first supported section `82782`, which has no stored preview options. This is no longer the previous table-absence skip. A manual sample showed subsequent supported sections do expose preview options, including `5075`, `30154`, `30148`, `5078`, `30156`, `30706`, `5084`, `5085`, and `5171`.
+
+Final live DB write boundary:
+
+- touched `work` schema creation, the two required PM/work provenance enums, relay-local enums, and `work.tcc_relay_*` relay tables/indexes/data
+- did not change PM/breaker/ETU data, app code, routes, or tracked source snapshot files
