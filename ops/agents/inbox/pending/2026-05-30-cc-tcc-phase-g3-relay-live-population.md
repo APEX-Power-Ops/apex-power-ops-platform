@@ -22,18 +22,20 @@ The deployed relay routes return 503 because `work.tcc_relay_*` is absent from t
 
 ## Connection (out-of-band — CRITICAL)
 - Target = the **governed live Supabase that `control.apexpowerops.com` connects to** (the SAME project Render uses — confirm; applying to a different project will "succeed" but leave the prod 503 in place).
-- Use the **DIRECT** connection (`host=db.<ref>.supabase.co port=5432 ... sslmode=require`) — **NOT the pooler**; `012`'s `\copy` needs a real session. If the host's `ai-live-dsn.env` is the pooler, or stale after the recent credential rotation, obtain a **current direct write DSN out-of-band**; never print or commit it.
+- **Use the DIRECT write DSN, from the dedicated host key `ai-direct-dsn.env`:** `source /home/olares/apex-secrets/olares/ai-direct-dsn.env` → exposes `$APEX_OLARES_DIRECT_DSN` (direct, port 5432, write-capable).
+- **Do NOT use the pooler key** (`ai-live-dsn.env` / `APEX_OLARES_LIVE_DSN`, port 6543) — `012`'s `\copy` needs a real session the pooler can't hold. If `ai-direct-dsn.env` is missing or stale after the recent rotation, STOP and request it (operator stages it out-of-band; never print or commit the value).
 
 ## Steps (psql, from the repo's `infra/database/migrations/work/` directory)
+0. **Set up:** `source /home/olares/apex-secrets/olares/ai-direct-dsn.env` (→ `$APEX_OLARES_DIRECT_DSN`), then `cd` into `infra/database/migrations/work/`. Every psql call below connects via `psql "$APEX_OLARES_DIRECT_DSN" …`.
 1. **Pre-flight (read-only):**
    - `SELECT count(*) FROM information_schema.schemata WHERE schema_name='work';` → want **1**.
      - If **0** → STOP, surface to Desktop (the `work` schema / PM base isn't on prod; needs `CREATE SCHEMA work;` first).
    - `SELECT count(*) FROM information_schema.tables WHERE table_schema='work' AND table_name LIKE 'tcc_relay%';` → want **0**.
      - If **>0** → STOP, surface (already partially populated).
 2. **Apply (the write), in order:**
-   - `psql "<DIRECT_DSN>" -v ON_ERROR_STOP=1 -f 010_tcc_relay_tables.sql`
-   - `psql "<DIRECT_DSN>" -v ON_ERROR_STOP=1 -f 011_tcc_relay_indexes.sql`
-   - `psql "<DIRECT_DSN>" -v ON_ERROR_STOP=1 -f 012_tcc_relay_staged_population.sql`  (~1.57M rows; a few minutes)
+   - `psql "$APEX_OLARES_DIRECT_DSN" -v ON_ERROR_STOP=1 -f 010_tcc_relay_tables.sql`
+   - `psql "$APEX_OLARES_DIRECT_DSN" -v ON_ERROR_STOP=1 -f 011_tcc_relay_indexes.sql`
+   - `psql "$APEX_OLARES_DIRECT_DSN" -v ON_ERROR_STOP=1 -f 012_tcc_relay_staged_population.sql`  (~1.57M rows; a few minutes)
 3. **Verify (read-only):** relay_tables = 21; relays 1442, devices 6850, ranges 34213, tcp_points 1,570,700 (match local).
 
 ## Guardrails
