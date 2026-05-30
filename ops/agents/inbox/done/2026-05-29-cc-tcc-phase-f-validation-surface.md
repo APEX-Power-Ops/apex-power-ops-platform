@@ -11,6 +11,20 @@ closeout: ops/agents/handoffs/2026-05-29-tcc-phase-f-validation-closeout.md
 
 # TCC Runtime 017 Phase F — end-to-end validation surface
 
+## Status addendum
+
+This done packet was first closed with a stale fail closeout before the governed DSN had been loaded correctly into the `olares` shell and before the local host rerun had been executed with a stable one-terminal workflow.
+
+Final status is now PASS.
+
+Superseding evidence lives in the same closeout path referenced in frontmatter:
+
+1. offline routes: PASS
+2. live integration: PASS
+3. family smoke: PASS
+4. ETU parity: PASS
+5. E3 browser proof: PASS
+
 **Lane:** TCC Runtime 017 (matrix #83), Phase F per `ops/agents/handoffs/2026-05-28-tcc-runtime-017-remaining-end-to-end-task-list.md` §3.F. **Predecessor:** E3 (`2026-05-29-cc-tcc-phase-e3-demo-facet-wiring`) must be in `done/` first.
 
 ## DB posture — DECIDED (read this first)

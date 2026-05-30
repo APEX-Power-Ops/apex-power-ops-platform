@@ -1,45 +1,48 @@
 # TCC Phase F - Validation Surface Closeout
 
 Date: 2026-05-30
-Status: FAIL for live validation due governed Supabase authentication failure; PASS for offline and browser surfaces
-Purpose: Record the bounded Phase F read-only validation attempt for Runtime 017 and distinguish repo-green surfaces from the external live-DB authentication blocker
+Status: PASS after DSN rerun; all five Phase F surfaces green
+Purpose: Record the bounded Phase F read-only validation pass for Runtime 017, including the initial failed auth attempt and the successful rerun once the governed DSN was loaded correctly in the `olares` shell
 
 ---
 
 ## 1. Outcome
 
-Phase F was executed as a read-only validation pass against the governed Supabase posture.
+Phase F is green after a bounded rerun against the governed Supabase posture.
 
-Surface summary:
+Final surface summary:
 
 1. offline route surface: PASS
-2. live integration surface: FAIL
-3. family smoke surface: FAIL
-4. ETU parity surface: FAIL
+2. live integration surface: PASS
+3. family smoke surface: PASS
+4. ETU parity surface: PASS
 5. E3 browser proof: PASS
 
-The failing surfaces all collapsed for the same reason:
+Final outcome:
 
-1. the sourced governed DSN produced Supabase pooler authentication failures before any family-specific contract disagreement could be evaluated
+1. all five Phase F surfaces agree
+2. DB posture remained read-only against governed Supabase via `APEX_OLARES_LIVE_DSN`
+3. no local Postgres was used
 
-This is not a truthful repo-green Phase F close. It is a truthful read-only failure report caused by live credential/auth posture.
+This closeout supersedes the earlier same-day fail assessment that was captured before the DSN had been loaded correctly into the `olares` shell and before the one-terminal local-host rerun proved the remaining live-backed surfaces.
 
 ---
 
 ## 2. DB Posture Used
 
-Read-only live posture used for this attempt:
+Read-only live posture used for the final passing run:
 
-1. sourced host env file before live commands
-2. app config confirmed it prefers `APEX_OLARES_LIVE_DSN`
+1. app config was already confirmed to prefer `APEX_OLARES_LIVE_DSN`
+2. the governed DSN was loaded into the `olares` shell from `/home/olares/.apex-live.env`
 3. no local Postgres was started
-4. smoke and parity were executed against the local host on `http://127.0.0.1:8010`
+4. live integration ran directly against governed Supabase
+5. smoke and parity ran against the local host on `http://127.0.0.1:8010`, backed by the same governed DSN
 
 Host note:
 
-1. the shorthand path `~/.apex-live.env` was not present on this host
-2. the actual host file used for this run was `/home/olares/apex-secrets/olares/ai-live-dsn.env`
-3. sourcing that file set `APEX_OLARES_LIVE_DSN`, but the live surfaces still failed authentication at the Supabase pooler
+1. the first failure was caused by DSN/auth setup not being usable from the actual `olares` shell context
+2. once the env file was owned by `olares` and sourced in that shell, live auth succeeded
+3. the later smoke/parity issue was not DB auth; it was only local host lifecycle in a one-terminal UI
 
 ---
 
@@ -63,46 +66,48 @@ Interpretation:
 
 Command:
 
-1. `source /home/olares/apex-secrets/olares/ai-live-dsn.env && ../../.venv/bin/pytest tests/test_neta_tmt_live_integration.py tests/test_neta_emt_live_integration.py -q -rs`
+1. `source /home/olares/.apex-live.env && ../../.venv/bin/pytest tests/test_neta_tmt_live_integration.py tests/test_neta_emt_live_integration.py -q -rs`
 
 Result:
 
-1. `2 failed`
+1. `2 passed, 1 warning`
 
-Observed failure:
+Interpretation:
 
-1. `psycopg2.OperationalError: ... password authentication failed for user "postgres"`
-2. both TMT and EMT failed before family-specific live assertions ran
+1. governed Supabase auth succeeded from the `olares` shell
+2. TMT and EMT both passed the live search -> context -> settings -> plot surface
 
 ### 3.3 Family Smoke Surface
 
 Command:
 
-1. `source /home/olares/apex-secrets/olares/ai-live-dsn.env && .venv/bin/python -m uvicorn main:app --app-dir apps/control-plane-api --host 0.0.0.0 --port 8010`
-2. `source /home/olares/apex-secrets/olares/ai-live-dsn.env && .venv/bin/python apps/control-plane-api/scripts/smoke_local_neta_family_routes.py --base-url http://127.0.0.1:8010`
+1. `source /home/olares/.apex-live.env && .venv/bin/python - <<'PY' ... PY`
+2. the one-terminal rerun started `uvicorn`, waited for `/api/v1/neta/catalog/status`, then executed the smoke script against `http://127.0.0.1:8010`
 
 Result:
 
-1. FAIL at catalog-status gate
+1. PASS
 
-Observed failure:
+Observed passing evidence:
 
-1. `Catalog is not live: {'catalog': 'unavailable', ... 'error': '(psycopg2.OperationalError) ... password authentication failed ...'}`
+1. `catalog-status: {"catalog":"live","manufacturer_count":63,"sensor_count":17831}`
+2. artifact written to `/home/olares/code/apex/apex-power-ops-platform/output/dev/control-plane-local-neta-family-smoke.json`
+3. ETU, TMT, and EMT known-scenario validation all returned green output
 
 ### 3.4 ETU Parity Surface
 
 Command:
 
-1. `source /home/olares/apex-secrets/olares/ai-live-dsn.env && .venv/bin/python apps/control-plane-api/scripts/probe_live_etu_sql_parity.py --base-url http://127.0.0.1:8010`
+1. `source /home/olares/.apex-live.env && .venv/bin/python apps/control-plane-api/scripts/probe_live_etu_sql_parity.py --base-url http://127.0.0.1:8010`
 
 Result:
 
-1. FAIL before parity comparisons could run
+1. PASS
 
-Observed failure:
+Observed passing evidence:
 
-1. `RESULT FAIL: GET /api/v1/neta/settings/25 returned HTTP 500: {'detail': 'Internal Server Error'}`
-2. server log showed the same Supabase pooler password-auth failure when the route tried to load ETU settings
+1. artifact written to `/home/olares/code/apex/apex-power-ops-platform/output/dev/control-plane-live-etu-sql-parity.json`
+2. `RESULT PASS: live ETU SQL settings parity holds across 3 seeded scenario(s); evaluate warnings: 0`
 
 ### 3.5 E3 Browser Proof
 
@@ -120,30 +125,35 @@ Interpretation:
 
 ---
 
-## 4. Root Cause Assessment
+## 4. Rerun History
 
-Most likely blocker:
+Initial same-day failure mode:
 
-1. the governed DSN currently sourced on this host does not authenticate successfully against the Supabase pooler used by the control-plane runtime
+1. live surfaces first failed because the governed DSN was not being consumed from the correct usable shell context
+2. that produced a misleading temporary conclusion that live auth was bad on the host
 
-Evidence supporting that assessment:
+What changed:
 
-1. live integration tests fail immediately on DB connect with password-auth errors
-2. local host starts, but catalog/status and ETU settings calls fail on first DB access with the same auth error
-3. offline route tests and browser proof remain green, which argues against a recent repo regression in the bounded TCC code paths
+1. `/home/olares/.apex-live.env` was created, ownership was corrected to `olares`, and the env file was sourced in the actual `olares` shell
+2. live integration immediately turned green
+3. a one-terminal host orchestration rerun kept `uvicorn` alive long enough for smoke and parity to execute cleanly
+
+Conclusion:
+
+1. there was no TCC runtime regression in the bounded Phase F slice
+2. the stale fail assessment was procedural and is superseded by the passing rerun evidence above
 
 ---
 
 ## 5. Truthful Next Move
 
-Phase F cannot be promoted from this run.
+Phase F is complete and green from the rerun evidence captured above.
 
-Next required action:
+Admitted from this slice:
 
-1. Desktop must refresh or replace the governed read-only DSN / auth material on the host
-2. rerun the same five Phase F surfaces unchanged once Supabase authentication succeeds
+1. Phase F acceptance is satisfied
+2. no code changes were required for the runtime itself; the fix was correct DSN loading plus correct local-host execution procedure
 
-Not admitted from this slice:
+Still not admitted from this slice:
 
-1. no Phase G hosted decision
-2. no code changes were required or made for the validation attempt itself
+1. no Phase G hosted-parity decision
