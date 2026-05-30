@@ -23,9 +23,10 @@ def client():
     def override_db():
         yield mock_session
 
-    app.dependency_overrides[get_db] = override_db
-    yield TestClient(app)
-    app.dependency_overrides.clear()
+    with patch("services.neta.router._relay_work_schema_tables_available", return_value=True):
+        app.dependency_overrides[get_db] = override_db
+        yield TestClient(app)
+        app.dependency_overrides.clear()
 
 
 def _relay_search_rows():
@@ -255,6 +256,31 @@ def test_relay_plot_returns_preview_curve(client):
     assert body["curves"][0]["curve_name"] == "NI"
     assert body["curves"][0]["points"][0]["current_multiple"] == 2.0
     assert body["curves"][0]["points"][1]["seconds"] == pytest.approx(2.9705986243944098)
+
+
+@pytest.mark.parametrize(
+    ("method", "path", "json_payload"),
+    [
+        ("get", "/api/v1/neta/relay/sections", None),
+        ("get", f"/api/v1/neta/relay/context/{TD_SECTION_SOURCE_ID}", None),
+        ("get", f"/api/v1/neta/relay/settings/{TD_SECTION_SOURCE_ID}", None),
+        (
+            "post",
+            "/api/v1/neta/relay/plot-tcc",
+            {
+                "td_section_source_id": TD_SECTION_SOURCE_ID,
+                "current_multiples": [2.0, 10.0],
+            },
+        ),
+    ],
+)
+def test_relay_routes_return_503_when_work_schema_tables_are_absent(client, method, path, json_payload):
+    with patch("services.neta.router._relay_work_schema_tables_available", return_value=False):
+        request_method = getattr(client, method)
+        resp = request_method(path, json=json_payload) if json_payload is not None else request_method(path)
+
+    assert resp.status_code == 503
+    assert resp.json() == {"detail": "relay catalog unavailable: work-schema tables not present"}
 
 
 def test_relay_plot_candidate_overrides_are_stateless_route_extension(client):

@@ -13,37 +13,16 @@ import sys
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import inspect
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from config import engine
 from main import app
-
-
-RELAY_TABLES = [
-    "tcc_relays",
-    "tcc_relay_devices",
-    "tcc_relay_line_sections",
-    "tcc_relay_td_sections",
-    "tcc_relay_ranges",
-    "tcc_relay_curves_iec",
-    "tcc_relay_curve_rows_iec",
-    "tcc_relay_curves_tcp",
-    "tcc_relay_curve_points_tcp",
-]
+from services.neta.router import _relay_work_schema_tables_available
 
 
 def _relay_tables_available() -> bool:
-    try:
-        inspector = inspect(engine)
-        schemas = set(inspector.get_schema_names())
-        if "work" not in schemas:
-            return False
-        existing = set(inspector.get_table_names(schema="work"))
-        return all(table in existing for table in RELAY_TABLES)
-    except Exception:
-        return False
+    return _relay_work_schema_tables_available(engine)
 
 
 @pytest.mark.integration

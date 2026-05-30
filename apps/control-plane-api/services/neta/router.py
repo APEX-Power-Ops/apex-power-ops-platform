@@ -22,7 +22,7 @@ from typing import Optional
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import func, text
+from sqlalchemy import func, inspect as sqlalchemy_inspect, text
 from sqlalchemy.exc import NoResultFound
 
 from apex_calc_engine.services.calc_engine import (
@@ -188,6 +188,18 @@ _RELAY_ANALYTICAL_FAMILY_CONFIG = {
         "coefficients": ("v_a", "v_b", "v_c"),
     },
 }
+_RELAY_WORK_SCHEMA_TABLES = [
+    "tcc_relays",
+    "tcc_relay_devices",
+    "tcc_relay_line_sections",
+    "tcc_relay_td_sections",
+    "tcc_relay_ranges",
+    "tcc_relay_curves_iec",
+    "tcc_relay_curve_rows_iec",
+    "tcc_relay_curves_tcp",
+    "tcc_relay_curve_points_tcp",
+]
+_RELAY_CATALOG_UNAVAILABLE_DETAIL = "relay catalog unavailable: work-schema tables not present"
 
 
 def _row_mapping(row):
@@ -319,6 +331,24 @@ def _relay_storage_kind(model_code: int) -> str:
 
 def _relay_is_supported(model_code: int) -> bool:
     return int(model_code) in _RELAY_SUPPORTED_MODEL_CODES
+
+
+def _relay_work_schema_tables_available(db_or_bind: object) -> bool:
+    try:
+        bind = db_or_bind.get_bind() if hasattr(db_or_bind, "get_bind") else db_or_bind
+        inspector = sqlalchemy_inspect(bind)
+        schemas = set(inspector.get_schema_names())
+        if "work" not in schemas:
+            return False
+        existing = set(inspector.get_table_names(schema="work"))
+        return all(table in existing for table in _RELAY_WORK_SCHEMA_TABLES)
+    except Exception:
+        return False
+
+
+def _ensure_relay_catalog_available(db: Session) -> None:
+    if not _relay_work_schema_tables_available(db):
+        raise HTTPException(status_code=503, detail=_RELAY_CATALOG_UNAVAILABLE_DETAIL)
 
 
 def _relay_unsupported_reason(model_code: int) -> Optional[str]:
@@ -3819,6 +3849,7 @@ def search_relay_sections(
     limit: int = Query(50, ge=1, le=200, description="Maximum number of matching relay sections"),
     db: Session = Depends(get_db),
 ):
+    _ensure_relay_catalog_available(db)
     sections = _search_relay_sections(
         db,
         relay_type=relay_type,
@@ -3840,6 +3871,7 @@ def search_relay_sections(
 
 @router.get("/relay/context/{td_section_source_id}", response_model=RelayContext)
 def get_relay_context(td_section_source_id: int, db: Session = Depends(get_db)):
+    _ensure_relay_catalog_available(db)
     bundle = _load_relay_context_bundle(db, td_section_source_id)
     return RelayContext(
         manufacturer_source_id=int(bundle["manufacturer_source_id"]),
@@ -3872,6 +3904,7 @@ def get_relay_context(td_section_source_id: int, db: Session = Depends(get_db)):
 
 @router.get("/relay/settings/{td_section_source_id}", response_model=RelaySettingsResponse)
 def get_relay_settings(td_section_source_id: int, db: Session = Depends(get_db)):
+    _ensure_relay_catalog_available(db)
     bundle = _load_relay_settings_bundle(db, td_section_source_id)
     return RelaySettingsResponse(
         td_section_source_id=int(bundle["td_section_source_id"]),
@@ -3901,6 +3934,7 @@ def get_relay_settings(td_section_source_id: int, db: Session = Depends(get_db))
 
 @router.post("/relay/plot-tcc", response_model=RelayPlotResponse)
 def plot_relay_tcc(req: RelayPlotRequest, db: Session = Depends(get_db)):
+    _ensure_relay_catalog_available(db)
     preview_bundle = _load_relay_preview_bundle(
         db,
         td_section_source_id=req.td_section_source_id,
