@@ -1673,6 +1673,7 @@ def _build_etu_search_where(
 ) -> tuple[str, dict[str, object]]:
     where_sql, params = _build_cascade_where(scope_filters, prefix=prefix)
     if q and q.strip():
+        stripped_query = q.strip()
         query_sql = (
             f"({prefix}manufacturer_name ILIKE :q "
             f"OR {prefix}trip_type_name ILIKE :q "
@@ -1683,8 +1684,32 @@ def _build_etu_search_where(
             where_sql = f"{where_sql} AND {query_sql}"
         else:
             where_sql = f"WHERE {query_sql}"
-        params["q"] = f"%{q.strip()}%"
+        params["q"] = f"%{stripped_query}%"
+        params["q_exact"] = stripped_query
+        params["q_prefix"] = f"{stripped_query}%"
     return where_sql, params
+
+
+def _etu_search_order_by(q: Optional[str], *, prefix: str = "v.") -> str:
+    base_order = (
+        f"{prefix}manufacturer_name, {prefix}trip_type_name, {prefix}trip_style_name, "
+        f"{prefix}sensor_rating NULLS LAST, {prefix}sensor_desc"
+    )
+    if not q or not q.strip():
+        return base_order
+
+    return (
+        "CASE "
+        f"WHEN LOWER(COALESCE({prefix}manufacturer_name, '')) = LOWER(:q_exact) THEN 0 "
+        f"WHEN {prefix}manufacturer_name ILIKE :q_prefix THEN 1 "
+        f"WHEN {prefix}manufacturer_name ILIKE :q THEN 2 "
+        f"WHEN {prefix}trip_type_name ILIKE :q THEN 3 "
+        f"WHEN {prefix}trip_style_name ILIKE :q THEN 4 "
+        f"WHEN {prefix}sensor_desc ILIKE :q THEN 5 "
+        "ELSE 6 END, "
+        f"{prefix}manufacturer_name, {prefix}trip_type_name, {prefix}trip_style_name, "
+        f"{prefix}sensor_rating NULLS LAST, {prefix}sensor_desc"
+    )
 
 
 def _load_etu_plug_value_map_sql(db: Session, sensor_ids: list[int]) -> dict[int, list[float]]:
@@ -3076,6 +3101,7 @@ def search_etu(
     }
     where_sql, params = _build_etu_search_where(scope_filters, q=q)
     plug_join, plug_params = _build_cascade_plug_join(plug_value, alias="v")
+    order_sql = _etu_search_order_by(q)
 
     count = db.execute(
         text(
@@ -3105,8 +3131,7 @@ def search_etu(
             FROM vw_trip_unit_cascade v
             {plug_join}
             {where_sql}
-            ORDER BY v.manufacturer_name, v.trip_type_name, v.trip_style_name,
-                     v.sensor_rating NULLS LAST, v.sensor_desc
+            ORDER BY {order_sql}
             LIMIT :limit
             """
         ),

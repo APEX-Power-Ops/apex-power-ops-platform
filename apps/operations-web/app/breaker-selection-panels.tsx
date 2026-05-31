@@ -10,6 +10,7 @@ import type {
   EtuBreakerCascadeResponse,
   EtuPlotRequest,
   EtuPlotResponse,
+  EtuPlotTableRow,
   EtuSearchResult,
   SensorCalcContext,
   TMTFacetsResponse,
@@ -75,12 +76,27 @@ type FacetPanelProps = {
   facets: TMTFacetsResponse['facets'] | EMTFacetsResponse['facets']
 }
 
+type TestPlanDisplayRow = {
+  key: string
+  element: string
+  setting: string
+  testCurrent: string
+  expectedPickup: string
+  limitLow: string
+  limitHigh: string
+  expectedTime: string
+  timeLimitLow: string
+  timeLimitHigh: string
+  method: string
+}
+
 function formatNumber(value: number | null | undefined, digits = 2) {
   if (typeof value !== 'number' || Number.isNaN(value)) {
     return 'n/a'
   }
 
-  return Number.isInteger(value) ? String(value) : value.toFixed(digits)
+  const rounded = Math.round(value)
+  return Math.abs(value - rounded) < 0.000001 ? String(rounded) : value.toFixed(digits)
 }
 
 function formatNullable(value: number | string | null | undefined) {
@@ -89,6 +105,199 @@ function formatNullable(value: number | string | null | undefined) {
   }
 
   return String(value)
+}
+
+function formatUnitValue(value: number | null | undefined, unit: string, digits = 2) {
+  if (typeof value !== 'number' || Number.isNaN(value)) {
+    return 'n/a'
+  }
+
+  return `${formatNumber(value, digits)}${unit}`
+}
+
+function formatMultiplier(value: number | null | undefined) {
+  return formatUnitValue(value, 'x', 2)
+}
+
+function formatCurrent(value: number | null | undefined) {
+  return formatUnitValue(value, 'A', 2)
+}
+
+function formatSeconds(value: number | null | undefined) {
+  return formatUnitValue(value, 's', 3)
+}
+
+function bandLimit(expected: number | null | undefined, tolerance: number | null | undefined) {
+  if (typeof expected !== 'number' || Number.isNaN(expected) || typeof tolerance !== 'number' || Number.isNaN(tolerance)) {
+    return null
+  }
+
+  return expected * (1 + tolerance / 100)
+}
+
+function formatToleranceBand(
+  expected: number | null | undefined,
+  toleranceLow: number | null | undefined,
+  toleranceHigh: number | null | undefined,
+  unit = '',
+) {
+  const low = bandLimit(expected, toleranceLow)
+  const high = bandLimit(expected, toleranceHigh)
+  if (typeof expected === 'number' && !Number.isNaN(expected) && low !== null && high !== null) {
+    return `${formatUnitValue(expected, unit)} -> [${formatUnitValue(low, unit)}, ${formatUnitValue(high, unit)}]`
+  }
+
+  if (typeof toleranceLow === 'number' || typeof toleranceHigh === 'number') {
+    return `tolerance ${formatNumber(toleranceLow, 1)}% to ${formatNumber(toleranceHigh, 1)}%`
+  }
+
+  return 'n/a'
+}
+
+function isActiveEtuTestRow(row: EtuPlotTableRow) {
+  const method = row.calc_method?.trim().toLowerCase()
+  if (method === '-1' || method === 'none' || method === 'absent') {
+    return false
+  }
+
+  return row.expected_current !== null || row.expected_time !== null
+}
+
+function etuTestPlanRows(rows: EtuPlotTableRow[]): TestPlanDisplayRow[] {
+  return rows.filter(isActiveEtuTestRow).map((row, index) => ({
+    key: `${row.element}-${row.kind}-${index}`,
+    element: row.element,
+    setting: formatNullable(row.setting),
+    testCurrent: formatMultiplier(row.test_multiple),
+    expectedPickup: formatCurrent(row.expected_current),
+    limitLow: formatCurrent(row.limit_low),
+    limitHigh: formatCurrent(row.limit_high),
+    expectedTime: formatSeconds(row.expected_time),
+    timeLimitLow: formatSeconds(row.time_limit_low),
+    timeLimitHigh: formatSeconds(row.time_limit_high),
+    method: [row.calc_method, row.notes].filter(Boolean).join(' · ') || 'server',
+  }))
+}
+
+function tmtTestPlanRows(selection: Extract<BreakerSelectionData, { family: 'tmt' }>): TestPlanDisplayRow[] {
+  const expectedPickup =
+    typeof selection.plot?.meta.selected_amp_rating === 'number' && typeof selection.plot.meta.selected_setting === 'number'
+      ? selection.plot.meta.selected_amp_rating * selection.plot.meta.selected_setting
+      : null
+  const low = bandLimit(expectedPickup, selection.plot?.meta.selected_setting_tol_lo)
+  const high = bandLimit(expectedPickup, selection.plot?.meta.selected_setting_tol_hi)
+  const selectedSetting = selection.plot?.meta.selected_setting ?? selection.settings.settings[0]?.value ?? null
+  const selectedLabel = selection.plot?.meta.selected_setting_label ?? selection.settings.settings[0]?.label ?? null
+
+  if (
+    expectedPickup === null &&
+    selectedSetting === null &&
+    selection.plot?.meta.selected_setting_tol_lo === null &&
+    selection.plot?.meta.selected_setting_tol_hi === null
+  ) {
+    return []
+  }
+
+  return [
+    {
+      key: 'tmt-selected-setting',
+      element: 'TMT pickup',
+      setting: selectedLabel ?? formatNullable(selectedSetting),
+      testCurrent: formatMultiplier(selectedSetting),
+      expectedPickup: formatCurrent(expectedPickup),
+      limitLow: formatCurrent(low),
+      limitHigh: formatCurrent(high),
+      expectedTime: 'n/a',
+      timeLimitLow: 'n/a',
+      timeLimitHigh: 'n/a',
+      method: 'selected setting tolerance',
+    },
+  ]
+}
+
+function emtTestPlanRows(selection: Extract<BreakerSelectionData, { family: 'emt' }>): TestPlanDisplayRow[] {
+  if (!selection.settings) {
+    return []
+  }
+
+  const pickup = selection.settings.pickups.find((option) => typeof option.setting === 'number')?.setting ?? null
+  const expectedPickup = pickup ?? (typeof selection.settings.pickup_setting === 'number' ? selection.settings.pickup_setting : null)
+  const low = bandLimit(expectedPickup, selection.settings.pickup_tol_lo)
+  const high = bandLimit(expectedPickup, selection.settings.pickup_tol_hi)
+
+  if (expectedPickup === null && selection.settings.pickup_tol_lo === null && selection.settings.pickup_tol_hi === null) {
+    return []
+  }
+
+  return [
+    {
+      key: 'emt-section-pickup',
+      element: selection.settings.name ?? 'EMT pickup',
+      setting: formatNullable(selection.settings.pickup_setting ?? pickup),
+      testCurrent: formatMultiplier(selection.settings.current_calc),
+      expectedPickup: formatCurrent(expectedPickup),
+      limitLow: formatCurrent(low),
+      limitHigh: formatCurrent(high),
+      expectedTime: 'n/a',
+      timeLimitLow: 'n/a',
+      timeLimitHigh: 'n/a',
+      method: 'section pickup tolerance',
+    },
+  ]
+}
+
+function NetaTestPlanTable({
+  rows,
+  caption,
+}: {
+  rows: TestPlanDisplayRow[]
+  caption: string
+}) {
+  return (
+    <BreakerCompareSection title="NETA Test Plan" view="neta-test-plan">
+      {rows.length > 0 ? (
+        <div className="breaker-test-plan-table-wrap" data-neta-test-plan-table>
+          <table className="breaker-test-plan-table">
+            <caption>{caption}</caption>
+            <thead>
+              <tr>
+                <th>Element</th>
+                <th>Setting</th>
+                <th>Test current (xmult)</th>
+                <th>Expected pickup</th>
+                <th>Lo</th>
+                <th>Hi</th>
+                <th>Expected time</th>
+                <th>Time-lo</th>
+                <th>Time-hi</th>
+                <th>Method</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
+                <tr key={row.key}>
+                  <td>{row.element}</td>
+                  <td>{row.setting}</td>
+                  <td>{row.testCurrent}</td>
+                  <td>{row.expectedPickup}</td>
+                  <td>{row.limitLow}</td>
+                  <td>{row.limitHigh}</td>
+                  <td>{row.expectedTime}</td>
+                  <td>{row.timeLimitLow}</td>
+                  <td>{row.timeLimitHigh}</td>
+                  <td>{row.method}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <p className="resource-banner resource-banner-neutral relay-inline-banner">
+          No per-element tolerance rows were returned for this selection.
+        </p>
+      )}
+    </BreakerCompareSection>
+  )
 }
 
 function countSettings(settings: AvailableSettingsResponse) {
@@ -481,6 +690,11 @@ function EtuSelectionPanel({
 
       <BreakerStaticCurveChart title="ETU server plot" curves={curves} markers={markers} />
 
+      <NetaTestPlanTable
+        rows={etuTestPlanRows(selection.plot?.table_rows ?? [])}
+        caption="Server-returned pickup and time-delay tolerances for this ETU selection."
+      />
+
       <BreakerCompareSection title="Context" view="context">
         <div className="resource-grid relay-grid">
           <article className="resource-item relay-nested-card">
@@ -621,6 +835,11 @@ function TmtSelectionPanel({
 
       <BreakerStaticCurveChart title="TMT nominal server plot" curves={curves} />
 
+      <NetaTestPlanTable
+        rows={tmtTestPlanRows(selection)}
+        caption="Available TMT tolerance fields surfaced as a NETA pickup band equivalent."
+      />
+
       <BreakerCompareSection title="Context" view="context">
         <div className="resource-grid relay-grid">
           <article className="resource-item relay-nested-card">
@@ -703,7 +922,7 @@ function TmtSelectionPanel({
               {selection.settings.settings.slice(0, 6).map((option, index) => (
                 <li key={`${option.value ?? 'null'}-${index}`}>
                   <strong>{option.label ?? formatNumber(option.value, 2)}</strong>
-                  <span>tol {formatNumber(option.tol_lo, 1)} to {formatNumber(option.tol_hi, 1)}</span>
+                  <span>{formatToleranceBand(option.value, option.tol_lo, option.tol_hi, 'x')}</span>
                 </li>
               ))}
             </ul>
@@ -748,6 +967,11 @@ function EmtSelectionPanel({
       </div>
 
       <BreakerStaticCurveChart title="EMT raw point-data server plot" curves={curves} />
+
+      <NetaTestPlanTable
+        rows={emtTestPlanRows(selection)}
+        caption="Available EMT section pickup tolerance fields surfaced as a NETA pickup band equivalent."
+      />
 
       <BreakerCompareSection title="Context" view="context">
         <div className="resource-grid relay-grid">
@@ -816,7 +1040,10 @@ function EmtSelectionPanel({
               {selection.context.sections.slice(0, 5).map((section) => (
                 <li key={section.section_id}>
                   <strong>{section.name ?? `Section ${section.section_id}`}</strong>
-                  <span>bands {section.band_count} · pickups {section.pickup_count}</span>
+                  <span>
+                    bands {section.band_count} · pickups {section.pickup_count} ·{' '}
+                    {formatToleranceBand(section.pickup_setting, section.pickup_tol_lo, section.pickup_tol_hi)}
+                  </span>
                 </li>
               ))}
             </ul>

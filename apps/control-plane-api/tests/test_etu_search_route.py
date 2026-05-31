@@ -81,6 +81,12 @@ def test_etu_search_returns_matches_with_compatible_plugs(client):
         assert body["results"][0]["compatible_plug_values"] == [800.0, 1200.0]
         assert any(call["params"].get("plug_value") == 800.0 for call in fake_db.calls)
         assert any(call["params"].get("q") == "%rms%" for call in fake_db.calls)
+        assert any(call["params"].get("q_exact") == "rms" for call in fake_db.calls)
+        assert any(call["params"].get("q_prefix") == "rms%" for call in fake_db.calls)
         assert any(call["params"].get("limit") == 25 for call in fake_db.calls)
+        row_query = str(fake_db.calls[1]["statement"])
+        assert "WHEN LOWER(COALESCE(v.manufacturer_name, '')) = LOWER(:q_exact) THEN 0" in row_query
+        assert "WHEN v.manufacturer_name ILIKE :q_prefix THEN 1" in row_query
+        assert "WHEN v.trip_style_name ILIKE :q THEN 4" in row_query
     finally:
         app.dependency_overrides.clear()

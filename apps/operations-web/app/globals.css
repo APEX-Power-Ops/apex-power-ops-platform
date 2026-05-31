@@ -1583,6 +1583,51 @@ body {
   font-weight: 700;
 }
 
+.breaker-test-plan-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.breaker-test-plan-table {
+  width: 100%;
+  min-width: 860px;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+
+.breaker-test-plan-table caption {
+  caption-side: top;
+  margin-bottom: 0.7rem;
+  color: var(--muted);
+  text-align: left;
+  line-height: 1.45;
+}
+
+.breaker-test-plan-table th,
+.breaker-test-plan-table td {
+  padding: 0.65rem 0.7rem;
+  border-bottom: 1px solid rgba(18, 62, 87, 0.1);
+  text-align: left;
+  vertical-align: top;
+}
+
+.breaker-test-plan-table th {
+  color: var(--brand);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.breaker-test-plan-table td {
+  color: var(--muted);
+}
+
+.breaker-test-plan-table td:first-child {
+  color: var(--brand);
+  font-weight: 700;
+}
+
 @media (max-width: 900px) {
   .hero-grid,
   .status-grid,

@@ -187,8 +187,8 @@ export type EtuPlotTableRow = {
   element: string
   kind: string
   setting: number | null
-  test_multiple: number
-  expected_current: number
+  test_multiple: number | null
+  expected_current: number | null
   limit_low: number | null
   limit_high: number | null
   expected_time: number | null

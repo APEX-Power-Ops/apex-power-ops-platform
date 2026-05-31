@@ -239,7 +239,36 @@ test('breaker browser loads ETU, TMT, and EMT context settings and static curves
             label: 'LTPU 1x',
           },
         ],
-        table_rows: [],
+        table_rows: [
+          {
+            element: 'LTPU',
+            kind: 'pickup',
+            setting: 0.5,
+            test_multiple: 1,
+            expected_current: 150,
+            limit_low: 150,
+            limit_high: 180,
+            expected_time: null,
+            time_limit_low: null,
+            time_limit_high: null,
+            calc_method: 'plugtap',
+            notes: 'ramp pickup',
+          },
+          {
+            element: 'LTD',
+            kind: 'delay',
+            setting: 2.4,
+            test_multiple: 3,
+            expected_current: 450,
+            limit_low: null,
+            limit_high: null,
+            expected_time: 8.5,
+            time_limit_low: 8.5,
+            time_limit_high: 12.75,
+            calc_method: 'delay',
+            notes: 'long-time delay',
+          },
+        ],
       }),
     })
   })
@@ -593,12 +622,17 @@ test('breaker browser loads ETU, TMT, and EMT context settings and static curves
   await expect(page.locator('[data-breaker-selection-panel="etu"]')).toBeVisible()
   await expect(page.locator('[data-breaker-selection-panel="etu"] [data-breaker-curve-chart]')).toBeVisible()
   await expect(page.locator('[data-breaker-selection-panel="etu"]')).toContainText('Breaker matches')
+  await expect(page.locator('[data-breaker-selection-panel="etu"] [data-neta-test-plan-table]')).toBeVisible()
+  await expect(page.locator('[data-breaker-selection-panel="etu"]')).toContainText('NETA Test Plan')
+  await expect(page.locator('[data-breaker-selection-panel="etu"]')).toContainText('LTPU')
+  await expect(page.locator('[data-breaker-selection-panel="etu"]')).toContainText('150A')
+  await expect(page.locator('[data-breaker-selection-panel="etu"]')).toContainText('8.500s')
   expect(etuContextRequests).toBe(1)
   expect(etuSettingsRequests).toBe(1)
   expect(etuBreakerCascadeRequests).toBe(1)
   expect(etuPlotRequests).toBe(1)
 
-  await page.getByLabel('Breaker family').selectOption('tmt')
+  await page.getByLabel('Trip Unit Type').selectOption('tmt')
   await page.getByRole('button', { name: 'Browse TMT' }).click()
   await expect(page.getByLabel('TMT resource')).toBeVisible()
   await page.getByLabel('TMT resource').selectOption('8038')
@@ -606,13 +640,16 @@ test('breaker browser loads ETU, TMT, and EMT context settings and static curves
   await expect(page.locator('[data-breaker-selection-panel="tmt"]')).toBeVisible()
   await expect(page.locator('[data-breaker-selection-panel="tmt"] [data-breaker-curve-chart]')).toBeVisible()
   await expect(page.locator('[data-breaker-selection-panel="tmt"]')).toContainText('TMT selections validated')
+  await expect(page.locator('[data-breaker-selection-panel="tmt"]')).toContainText('800A')
+  await expect(page.locator('[data-breaker-selection-panel="tmt"]')).toContainText('720A')
+  await expect(page.locator('[data-breaker-selection-panel="tmt"]')).toContainText('880A')
   expect(tmtFacetRequests).toBe(1)
   expect(tmtFrameRequests).toBe(1)
   expect(tmtContextRequests).toBe(1)
   expect(tmtSettingsRequests).toBe(1)
   expect(tmtPlotRequests).toBe(1)
 
-  await page.getByLabel('Breaker family').selectOption('emt')
+  await page.getByLabel('Trip Unit Type').selectOption('emt')
   await page.getByRole('button', { name: 'Browse EMT' }).click()
   await expect(page.getByLabel('EMT resource')).toBeVisible()
   await page.getByLabel('EMT resource').selectOption('2953')
@@ -620,6 +657,8 @@ test('breaker browser loads ETU, TMT, and EMT context settings and static curves
   await expect(page.locator('[data-breaker-selection-panel="emt"]')).toBeVisible()
   await expect(page.locator('[data-breaker-selection-panel="emt"] [data-breaker-curve-chart]')).toBeVisible()
   await expect(page.locator('[data-breaker-selection-panel="emt"]')).toContainText('Multiple stored EMT curve classes')
+  await expect(page.locator('[data-breaker-selection-panel="emt"]')).toContainText('0.72A')
+  await expect(page.locator('[data-breaker-selection-panel="emt"]')).toContainText('0.88A')
   expect(emtFacetRequests).toBe(1)
   expect(emtFrameRequests).toBe(1)
   expect(emtContextRequests).toBe(1)

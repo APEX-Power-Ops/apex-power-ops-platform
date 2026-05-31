@@ -47,7 +47,7 @@ const familyLabels: Record<BreakerFamily, string> = {
 }
 
 const defaultQueries: Record<BreakerFamily, string> = {
-  etu: 'GE',
+  etu: '',
   tmt: '',
   emt: '',
 }
@@ -420,7 +420,7 @@ export function BreakerResourceExplorer() {
       <form className="resource-form breaker-resource-form" onSubmit={handleBrowse}>
         <div className="breaker-control-grid">
           <label className="relay-selection-field" htmlFor="breaker-family">
-            <span className="resource-field">Breaker family</span>
+            <span className="resource-field">Trip Unit Type</span>
             <select
               id="breaker-family"
               name="breakerFamily"
@@ -480,7 +480,7 @@ export function BreakerResourceExplorer() {
 
       {resultCount === 0 && !errorMessage ? (
         <p className="resource-banner resource-banner-neutral">
-          Browse a breaker family, select one returned row, then load the governed context, settings, and static trip curve.
+          Browse a trip unit type, select one returned row, then load the governed context, settings, and static trip curve.
         </p>
       ) : null}
 
