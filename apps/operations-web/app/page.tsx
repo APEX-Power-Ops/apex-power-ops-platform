@@ -2,6 +2,7 @@ import { browserEnv, hasSupabaseBrowserConfig } from '../lib/browser-env'
 import { ApparatusResourceExplorer } from './apparatus-resource-explorer'
 import { ApparatusByCategoryExplorer } from './apparatus-by-category-explorer'
 import { BlockersSummaryExplorer } from './blockers-summary-explorer'
+import { BreakerResourceExplorer } from './breaker-resource-explorer'
 import { MasterOperationsExplorer } from './master-operations-explorer'
 import { ProjectApparatusSummaryExplorer } from './project-apparatus-summary-explorer'
 import { RelayResourceExplorer } from './relay-resource-explorer'
@@ -29,6 +30,11 @@ const shellChecks = [
     label: 'Relay browser slice',
     status: 'backend-routed',
     detail: 'Relay browse and preview now stay inside the browser shell by consuming the mounted read-only relay API.',
+  },
+  {
+    label: 'Breaker browser slice',
+    status: 'backend-routed',
+    detail: 'ETU, TMT, and EMT breaker resource browsing now consumes governed context, settings, and static plot routes.',
   },
   {
     label: 'Operations visibility seam',
@@ -125,6 +131,7 @@ export default function HomePage() {
             <li>Consumes the adjacent Operations Visibility category rollup through the same governed ops API boundary.</li>
             <li>Consumes the adjacent Operations Visibility blocker aggregation through the same governed ops API boundary.</li>
             <li>Consumes the bounded relay discovery, context, settings, and preview seam through the same governed API boundary.</li>
+            <li>Consumes bounded ETU, TMT, and EMT breaker resource discovery, settings, and static plot seams through the same governed API boundary.</li>
             <li>Hosts the preserved cross-surface validation dashboard at /integration-dashboard/index.html.</li>
             <li>Hosts the re-homed lead operations prototype at /lead-ops/index.html.</li>
             <li>Hosts the promoted lead assignment app route at /lead-ops.</li>
@@ -228,6 +235,7 @@ export default function HomePage() {
       <ApparatusByCategoryExplorer />
       <BlockersSummaryExplorer />
       <ApparatusResourceExplorer />
+      <BreakerResourceExplorer />
       <RelayResourceExplorer />
     </main>
   )

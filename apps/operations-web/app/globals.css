@@ -1059,6 +1059,17 @@ body {
   font: inherit;
 }
 
+.relay-selection-field input {
+  width: 100%;
+  min-width: 0;
+  padding: 0.95rem 1rem;
+  border-radius: 16px;
+  border: 1px solid rgba(18, 62, 87, 0.18);
+  background: #fffdf8;
+  color: var(--ink);
+  font: inherit;
+}
+
 .relay-selection-actions {
   display: flex;
 }
@@ -1363,6 +1374,215 @@ body {
   font-size: 0.95rem;
 }
 
+.breaker-catalog-summary {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-bottom: 1rem;
+}
+
+.breaker-control-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr) minmax(12rem, auto) auto;
+  gap: 0.9rem;
+  align-items: end;
+}
+
+.breaker-form-actions,
+.breaker-selection-actions {
+  display: flex;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.breaker-form-actions button,
+.breaker-selection-actions button {
+  border: 0;
+  border-radius: 16px;
+  padding: 0.95rem 1.15rem;
+  background: var(--brand);
+  color: white;
+  font: inherit;
+  cursor: pointer;
+}
+
+.breaker-form-actions button:disabled,
+.breaker-selection-actions button:disabled {
+  cursor: wait;
+  opacity: 0.72;
+}
+
+.breaker-result-summary {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.breaker-selection-controls {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.breaker-search-results {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.breaker-search-card {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(216, 229, 234, 0.34));
+}
+
+.breaker-search-card-selected {
+  border-color: rgba(18, 62, 87, 0.34);
+  box-shadow: inset 0 0 0 1px rgba(18, 62, 87, 0.14);
+}
+
+.breaker-facet-panel {
+  margin-bottom: 1rem;
+  padding: 1.1rem;
+  border-radius: 22px;
+  border: 1px solid rgba(18, 62, 87, 0.12);
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.breaker-facet-panel h3 {
+  margin: 0.7rem 0;
+  font-size: 1rem;
+  color: var(--brand);
+}
+
+.breaker-facet-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.breaker-facet-grid div {
+  min-width: 0;
+  padding: 0.75rem;
+  border-radius: 16px;
+  background: rgba(18, 62, 87, 0.04);
+}
+
+.breaker-facet-grid strong {
+  display: block;
+  margin-top: 0.3rem;
+  color: var(--brand);
+}
+
+.breaker-facet-grid p {
+  margin: 0.3rem 0 0;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.breaker-selection-panel {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(244, 222, 203, 0.26));
+}
+
+.breaker-curve-panel {
+  display: grid;
+  gap: 0.85rem;
+  padding: 1.1rem;
+  border-radius: 22px;
+  border: 1px solid rgba(18, 62, 87, 0.12);
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.breaker-curve-legend {
+  display: flex;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.breaker-legend-item {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.74rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.breaker-legend-0 {
+  color: var(--brand);
+}
+
+.breaker-legend-1 {
+  color: #2f8f6b;
+}
+
+.breaker-legend-2 {
+  color: var(--accent);
+}
+
+.breaker-legend-3 {
+  color: var(--warn);
+}
+
+.breaker-legend-4,
+.breaker-marker-legend {
+  color: var(--muted);
+}
+
+.breaker-curve-chart {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 7;
+  min-height: 220px;
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(216, 229, 234, 0.52), rgba(255, 252, 246, 0.88));
+  border: 1px solid rgba(18, 62, 87, 0.12);
+}
+
+.breaker-curve-chart line {
+  stroke: rgba(18, 62, 87, 0.26);
+  stroke-width: 1.25;
+}
+
+.breaker-curve-chart text {
+  fill: var(--muted);
+  font-size: 12px;
+}
+
+.breaker-curve-line {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 4;
+}
+
+.breaker-curve-line-0 {
+  stroke: var(--brand);
+}
+
+.breaker-curve-line-1 {
+  stroke: #2f8f6b;
+}
+
+.breaker-curve-line-2 {
+  stroke: var(--accent);
+}
+
+.breaker-curve-line-3 {
+  stroke: var(--warn);
+}
+
+.breaker-curve-line-4 {
+  stroke: var(--muted);
+}
+
+.breaker-curve-marker line {
+  stroke: var(--accent);
+  stroke-dasharray: 4 5;
+  stroke-width: 2;
+}
+
+.breaker-curve-marker circle {
+  fill: var(--accent);
+  stroke: #fffdf8;
+  stroke-width: 2;
+}
+
+.breaker-curve-marker text {
+  fill: var(--accent);
+  font-weight: 700;
+}
+
 @media (max-width: 900px) {
   .hero-grid,
   .status-grid,
@@ -1405,6 +1625,12 @@ body {
   .relay-selection-controls,
   .relay-search-results,
   .relay-compare-grid-double,
+  .breaker-catalog-summary,
+  .breaker-control-grid,
+  .breaker-result-summary,
+  .breaker-selection-controls,
+  .breaker-search-results,
+  .breaker-facet-grid,
   .status-grid-wide {
     grid-template-columns: 1fr;
   }
