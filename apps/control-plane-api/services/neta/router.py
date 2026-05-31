@@ -22,7 +22,7 @@ from typing import Optional
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import func, inspect as sqlalchemy_inspect, text
+from sqlalchemy import case, func, inspect as sqlalchemy_inspect, text
 from sqlalchemy.exc import NoResultFound
 
 from apex_calc_engine.services.calc_engine import (
@@ -36,6 +36,7 @@ from apex_calc_engine.services.calc_engine import (
 )
 from config import get_db
 from models.breakers import BrkICCBStyle, BrkMCCBStyle, BrkPCBStyle
+from models.reference import Manufacturer
 from models.tmt import TMTFrame
 from .schemas import (
     CascadeQuery,
@@ -3503,6 +3504,9 @@ def get_tmt_facets(
 @router.get("/tmt/frames", response_model=TMTFrameSearchResponse)
 def search_tmt_frames(
     breaker_class: Optional[str] = Query(None, description="Filter by ICCB, MCCB, or PCB"),
+    manufacturer_id: Optional[int] = Query(None, description="Filter by manufacturer id"),
+    breaker_id: Optional[int] = Query(None, description="Filter by breaker id"),
+    breaker_style_id: Optional[int] = Query(None, description="Filter by breaker style id"),
     manufacturer_name: Optional[str] = Query(None, description="Filter by manufacturer name"),
     breaker_name: Optional[str] = Query(None, description="Filter by breaker name"),
     breaker_style_name: Optional[str] = Query(None, description="Filter by breaker style frame name"),
@@ -3525,18 +3529,42 @@ def search_tmt_frames(
             break
 
         style_model = _TMT_STYLE_MODELS[class_key]
+        breaker_model = style_model.breaker.property.mapper.class_
         query = (
             db.query(TMTFrame)
             .filter(func.upper(TMTFrame.breaker_class) == class_key)
             .join(style_model, style_model.id == TMTFrame.breaker_style_id)
+            .join(breaker_model, breaker_model.id == style_model.breaker_id)
+            .join(Manufacturer, Manufacturer.id == breaker_model.manufacturer_id)
         )
 
         if frame_size:
             query = query.filter(TMTFrame.size.ilike(f"%{frame_size}%"))
+        if manufacturer_id is not None:
+            query = query.filter(breaker_model.manufacturer_id == manufacturer_id)
+        if breaker_id is not None:
+            query = query.filter(breaker_model.id == breaker_id)
+        if breaker_style_id is not None:
+            query = query.filter(TMTFrame.breaker_style_id == breaker_style_id)
+        if manufacturer_name:
+            query = query.filter(Manufacturer.name.ilike(f"%{manufacturer_name}%"))
+        if breaker_name:
+            query = query.filter(breaker_model.name.ilike(f"%{breaker_name}%"))
         if breaker_style_name:
             query = query.filter(style_model.frame.ilike(f"%{breaker_style_name}%"))
 
-        candidate_rows = query.order_by(TMTFrame.id).limit(limit * 4).all()
+        order_by = []
+        if manufacturer_name:
+            normalized_manufacturer_name = manufacturer_name.lower()
+            order_by.append(
+                case(
+                    (func.lower(Manufacturer.name) == normalized_manufacturer_name, 0),
+                    (Manufacturer.name.ilike(f"{manufacturer_name}%"), 1),
+                    else_=2,
+                )
+            )
+
+        candidate_rows = query.order_by(*order_by, TMTFrame.id).limit(limit * 4).all()
         for frame in candidate_rows:
             if frame.id in seen_frame_ids:
                 continue

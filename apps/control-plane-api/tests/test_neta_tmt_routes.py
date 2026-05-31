@@ -190,6 +190,45 @@ def test_tmt_frame_search_returns_matching_frames():
     assert body["frames"][0]["matched_amp_rating"] == 600.0
 
 
+def test_tmt_frame_search_applies_hardware_id_filters():
+    mock_session = MagicMock()
+    query = MagicMock()
+    frame = SimpleNamespace(id=FRAME_ID, breaker_class="MCCB", breaker_style_id=9001, size="600AF")
+    query.filter.return_value = query
+    query.join.return_value = query
+    query.order_by.return_value = query
+    query.limit.return_value = query
+    query.all.return_value = [frame]
+    mock_session.query.return_value = query
+
+    def override_db():
+        yield mock_session
+
+    app.dependency_overrides[get_db] = override_db
+    try:
+        with TestClient(app) as test_client:
+            with patch("services.neta.router._load_tmt_contract_bundle", return_value=_bundle()):
+                resp = test_client.get(
+                    "/api/v1/neta/tmt/frames",
+                    params={
+                        "breaker_class": "MCCB",
+                        "manufacturer_id": 9,
+                        "breaker_id": 122,
+                        "breaker_style_id": 9001,
+                    },
+                )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert resp.status_code == 200
+    assert resp.json()["count"] == 1
+
+    filter_clauses = [str(call.args[0]) for call in query.filter.call_args_list]
+    assert any("manufacturer_id" in clause for clause in filter_clauses)
+    assert any("brk_mccb.id" in clause for clause in filter_clauses)
+    assert any("tmt_frames.breaker_style_id" in clause for clause in filter_clauses)
+
+
 def test_tmt_plot_rejects_invalid_selected_setting(client):
     with patch("services.neta.router._load_tmt_contract_bundle", return_value=_bundle()):
         resp = client.post(
