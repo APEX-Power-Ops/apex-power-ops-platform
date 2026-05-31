@@ -9,7 +9,7 @@ Result: PASS
 
 Added the guided ETU selection path to operations-web using the existing read-only `GET /api/v1/neta/cascade` route. The ETU browser now lets a tech drill from trip manufacturer to trip type, trip style, and sensor before loading the existing context/settings/plot flow. The free-text `/etu/search` path remains available as a fallback.
 
-Implementation commit: `776861ca`
+Implementation commit: `e388c8eb`
 
 ## Cascade Contract Used
 

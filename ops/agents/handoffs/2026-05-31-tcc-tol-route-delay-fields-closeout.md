@@ -9,7 +9,7 @@ Result: PASS
 
 Separated `/api/v1/neta/plot-tcc` delay-band selection from NETA delay test multiples. The route remains backward-compatible with the legacy overloaded `ltd_setting`, `std_setting`, and `gfd_setting` fields, while new callers can now send explicit band/open-time fields and explicit delay test multiples.
 
-Implementation commit: `776861ca`
+Implementation commit: `e388c8eb`
 
 ## Request Contract
 
