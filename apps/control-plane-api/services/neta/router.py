@@ -1690,13 +1690,9 @@ def _build_etu_search_where(
     return where_sql, params
 
 
-def _etu_search_order_by(q: Optional[str], *, prefix: str = "v.") -> str:
-    base_order = (
-        f"{prefix}manufacturer_name, {prefix}trip_type_name, {prefix}trip_style_name, "
-        f"{prefix}sensor_rating NULLS LAST, {prefix}sensor_desc"
-    )
+def _etu_search_rank_sql(q: Optional[str], *, prefix: str = "v.") -> str:
     if not q or not q.strip():
-        return base_order
+        return "0"
 
     return (
         "CASE "
@@ -1706,9 +1702,14 @@ def _etu_search_order_by(q: Optional[str], *, prefix: str = "v.") -> str:
         f"WHEN {prefix}trip_type_name ILIKE :q THEN 3 "
         f"WHEN {prefix}trip_style_name ILIKE :q THEN 4 "
         f"WHEN {prefix}sensor_desc ILIKE :q THEN 5 "
-        "ELSE 6 END, "
-        f"{prefix}manufacturer_name, {prefix}trip_type_name, {prefix}trip_style_name, "
-        f"{prefix}sensor_rating NULLS LAST, {prefix}sensor_desc"
+        "ELSE 6 END"
+    )
+
+
+def _etu_search_order_by() -> str:
+    return (
+        "search_rank, v.manufacturer_name, v.trip_type_name, v.trip_style_name, "
+        "v.sensor_rating NULLS LAST, v.sensor_desc"
     )
 
 
@@ -3101,7 +3102,8 @@ def search_etu(
     }
     where_sql, params = _build_etu_search_where(scope_filters, q=q)
     plug_join, plug_params = _build_cascade_plug_join(plug_value, alias="v")
-    order_sql = _etu_search_order_by(q)
+    rank_sql = _etu_search_rank_sql(q)
+    order_sql = _etu_search_order_by()
 
     count = db.execute(
         text(
@@ -3127,7 +3129,8 @@ def search_etu(
                 v.trip_type_id AS trip_type_id,
                 v.trip_type_name AS trip_type_name,
                 v.manufacturer_id AS manufacturer_id,
-                v.manufacturer_name AS manufacturer_name
+                v.manufacturer_name AS manufacturer_name,
+                {rank_sql} AS search_rank
             FROM vw_trip_unit_cascade v
             {plug_join}
             {where_sql}
@@ -3145,7 +3148,7 @@ def search_etu(
         count=count,
         results=[
             EtuSearchResult(
-                **dict(row._mapping),
+                **{key: value for key, value in dict(row._mapping).items() if key != "search_rank"},
                 compatible_plug_values=plug_map.get(int(row._mapping["sensor_id"]), []),
             )
             for row in rows
