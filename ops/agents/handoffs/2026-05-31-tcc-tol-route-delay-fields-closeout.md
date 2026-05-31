@@ -84,9 +84,14 @@ Hosted no-regression gates:
 
 ## Hosted Deploy
 
-Render deploy confirmation: `TO_BE_FILLED`
+Render deploy confirmation: PASS. After push, polling `https://control.apexpowerops.com/api/v1/neta/plot-tcc` showed the new behavior on attempt 4.
 
-Post-deploy route check: `TO_BE_FILLED`
+Post-deploy route check:
+
+- STD `expected_current`: `9000.0`
+- GFD `expected_current`: `960.0`
+- LTD `time_limit_low`: `8.399999999999999`
+- LTD `time_limit_high`: `12.0`
 
 ## Notes
 

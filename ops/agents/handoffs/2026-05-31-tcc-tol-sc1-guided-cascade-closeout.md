@@ -88,9 +88,16 @@ Backend and hosted no-regression gates:
 
 ## Hosted Deploy
 
-Vercel deploy confirmation: `TO_BE_FILLED`
+Vercel deploy confirmation: PASS. Hosted operations-web breaker smoke passed against `https://operations.apexpowerops.com`.
 
-Hosted cascade drill-down check: `TO_BE_FILLED`
+Hosted cascade drill-down check:
+
+```text
+OPERATIONS_WEB_BROWSER_SMOKE_BASE_URL=https://operations.apexpowerops.com npx playwright test tests/browser-shell.breaker.smoke.spec.ts
+1 passed
+```
+
+The hosted smoke exercised the guided ETU cascade selectors, loaded the selected ETU context/settings/plot flow, and verified the confirmation surface. The test intercepts API calls to keep the browser proof deterministic; the live `/cascade` contract was separately verified above.
 
 ## Notes
 
