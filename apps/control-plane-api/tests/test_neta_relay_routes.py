@@ -11,9 +11,28 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from config import get_db
 from main import app
+from services.neta.router import _RELAY_WORK_SCHEMA_TABLES, _relay_work_schema_tables_available
 
 
 TD_SECTION_SOURCE_ID = 30154
+
+
+class _FakeInspector:
+    def __init__(self, *, schemas=("work",), tables=(), views=()):
+        self._schemas = list(schemas)
+        self._tables = list(tables)
+        self._views = list(views)
+
+    def get_schema_names(self):
+        return self._schemas
+
+    def get_table_names(self, *, schema=None):
+        assert schema == "work"
+        return self._tables
+
+    def get_view_names(self, *, schema=None):
+        assert schema == "work"
+        return self._views
 
 
 @pytest.fixture
@@ -48,6 +67,27 @@ def _relay_search_rows():
             "supported": True,
         }
     ]
+
+
+def test_relay_work_schema_guard_accepts_base_tables():
+    inspector = _FakeInspector(tables=_RELAY_WORK_SCHEMA_TABLES)
+
+    with patch("services.neta.router.sqlalchemy_inspect", return_value=inspector):
+        assert _relay_work_schema_tables_available(object()) is True
+
+
+def test_relay_work_schema_guard_accepts_views_only():
+    inspector = _FakeInspector(views=_RELAY_WORK_SCHEMA_TABLES)
+
+    with patch("services.neta.router.sqlalchemy_inspect", return_value=inspector):
+        assert _relay_work_schema_tables_available(object()) is True
+
+
+def test_relay_work_schema_guard_rejects_missing_tables_and_views():
+    inspector = _FakeInspector()
+
+    with patch("services.neta.router.sqlalchemy_inspect", return_value=inspector):
+        assert _relay_work_schema_tables_available(object()) is False
 
 
 def _resolved_equipment():

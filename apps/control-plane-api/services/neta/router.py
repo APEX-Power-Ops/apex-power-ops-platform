@@ -340,7 +340,7 @@ def _relay_work_schema_tables_available(db_or_bind: object) -> bool:
         schemas = set(inspector.get_schema_names())
         if "work" not in schemas:
             return False
-        existing = set(inspector.get_table_names(schema="work"))
+        existing = set(inspector.get_table_names(schema="work")) | set(inspector.get_view_names(schema="work"))
         return all(table in existing for table in _RELAY_WORK_SCHEMA_TABLES)
     except Exception:
         return False
