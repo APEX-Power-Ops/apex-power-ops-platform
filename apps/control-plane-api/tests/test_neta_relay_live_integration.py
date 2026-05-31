@@ -1,7 +1,7 @@
 """Live relay integration checks.
 
 These tests are intentionally conditional:
-- skip if the active database does not yet have the governed relay work-schema tables
+- skip if the active database does not yet have the governed relay tcc-schema tables
 - skip if the relay tables exist but expose no searchable supported TD-sections
 
 Once relay data is available, they validate the bounded read-only discovery ->
@@ -28,7 +28,7 @@ def _relay_tables_available() -> bool:
 @pytest.mark.integration
 def test_relay_live_discovery_context_settings_preview_surface():
     if not _relay_tables_available():
-        pytest.skip("Relay work-schema tables are not present in the active database")
+        pytest.skip("Relay tcc-schema tables are not present in the active database")
 
     with TestClient(app) as client:
         search_resp = client.get("/api/v1/neta/relay/sections", params={"supported_only": True, "limit": 12})

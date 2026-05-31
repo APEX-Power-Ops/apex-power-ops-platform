@@ -11,14 +11,14 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from config import get_db
 from main import app
-from services.neta.router import _RELAY_WORK_SCHEMA_TABLES, _relay_work_schema_tables_available
+from services.neta.router import _RELAY_TCC_SCHEMA_TABLES, _relay_work_schema_tables_available
 
 
 TD_SECTION_SOURCE_ID = 30154
 
 
 class _FakeInspector:
-    def __init__(self, *, schemas=("work",), tables=(), views=()):
+    def __init__(self, *, schemas=("tcc",), tables=(), views=()):
         self._schemas = list(schemas)
         self._tables = list(tables)
         self._views = list(views)
@@ -27,11 +27,11 @@ class _FakeInspector:
         return self._schemas
 
     def get_table_names(self, *, schema=None):
-        assert schema == "work"
+        assert schema == "tcc"
         return self._tables
 
     def get_view_names(self, *, schema=None):
-        assert schema == "work"
+        assert schema == "tcc"
         return self._views
 
 
@@ -69,21 +69,21 @@ def _relay_search_rows():
     ]
 
 
-def test_relay_work_schema_guard_accepts_base_tables():
-    inspector = _FakeInspector(tables=_RELAY_WORK_SCHEMA_TABLES)
+def test_relay_tcc_schema_guard_accepts_base_tables():
+    inspector = _FakeInspector(tables=_RELAY_TCC_SCHEMA_TABLES)
 
     with patch("services.neta.router.sqlalchemy_inspect", return_value=inspector):
         assert _relay_work_schema_tables_available(object()) is True
 
 
-def test_relay_work_schema_guard_accepts_views_only():
-    inspector = _FakeInspector(views=_RELAY_WORK_SCHEMA_TABLES)
+def test_relay_tcc_schema_guard_accepts_views_only():
+    inspector = _FakeInspector(views=_RELAY_TCC_SCHEMA_TABLES)
 
     with patch("services.neta.router.sqlalchemy_inspect", return_value=inspector):
         assert _relay_work_schema_tables_available(object()) is True
 
 
-def test_relay_work_schema_guard_rejects_missing_tables_and_views():
+def test_relay_tcc_schema_guard_rejects_missing_tables_and_views():
     inspector = _FakeInspector()
 
     with patch("services.neta.router.sqlalchemy_inspect", return_value=inspector):
@@ -314,13 +314,13 @@ def test_relay_plot_returns_preview_curve(client):
         ),
     ],
 )
-def test_relay_routes_return_503_when_work_schema_tables_are_absent(client, method, path, json_payload):
+def test_relay_routes_return_503_when_tcc_schema_tables_are_absent(client, method, path, json_payload):
     with patch("services.neta.router._relay_work_schema_tables_available", return_value=False):
         request_method = getattr(client, method)
         resp = request_method(path, json=json_payload) if json_payload is not None else request_method(path)
 
     assert resp.status_code == 503
-    assert resp.json() == {"detail": "relay catalog unavailable: work-schema tables not present"}
+    assert resp.json() == {"detail": "relay catalog unavailable: tcc-schema tables not present"}
 
 
 def test_relay_plot_candidate_overrides_are_stateless_route_extension(client):

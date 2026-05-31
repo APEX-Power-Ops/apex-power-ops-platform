@@ -242,9 +242,9 @@ def _fetch_tcp_reference(scenario: dict[str, Any]) -> dict[str, Any]:
                     p.td_desc,
                     p.current_value,
                     p.trip_time_seconds
-                FROM work.tcc_relay_td_sections t
-                JOIN work.tcc_relay_curves_tcp c ON c.relay_td_section_id = t.relay_td_section_id
-                JOIN work.tcc_relay_curve_points_tcp p ON p.relay_curve_tcp_id = c.relay_curve_tcp_id
+                FROM tcc.relay_td_sections t
+                JOIN tcc.relay_curves_tcp c ON c.relay_td_section_id = t.relay_td_section_id
+                JOIN tcc.relay_curve_points_tcp p ON p.relay_curve_tcp_id = c.relay_curve_tcp_id
                 WHERE t.source_row_id = :td_section_source_id
                   AND c.source_row_id = :curve_parent_source_id
                   AND p.source_ordinal = :source_ordinal
@@ -274,7 +274,7 @@ def _fetch_tcp_reference(scenario: dict[str, Any]) -> dict[str, Any]:
 
     first = rows[0]
     return {
-        "method": "stored SQL points from work.tcc_relay_curve_points_tcp",
+        "method": "stored SQL points from tcc.relay_curve_points_tcp",
         "storage_kind": "points",
         "family": "tcp",
         "curve_name": first["curve_name"],
@@ -303,10 +303,10 @@ def _fetch_analytical_coefficients(scenario: dict[str, Any]) -> dict[str, Any]:
                     rows.curve_name,
                     rows.ordinal AS curve_ordinal,
                     {coefficient_select}
-                FROM work.tcc_relay_td_sections t
-                JOIN work.tcc_relay_curves_{table_suffix} parent
+                FROM tcc.relay_td_sections t
+                JOIN tcc.relay_curves_{table_suffix} parent
                   ON parent.relay_td_section_id = t.relay_td_section_id
-                JOIN work.tcc_relay_curve_rows_{table_suffix} rows
+                JOIN tcc.relay_curve_rows_{table_suffix} rows
                   ON rows.{parent_pk} = parent.{parent_pk}
                 WHERE t.source_row_id = :td_section_source_id
                   AND parent.source_row_id = :curve_parent_source_id

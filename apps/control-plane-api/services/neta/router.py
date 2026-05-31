@@ -158,48 +158,60 @@ _RELAY_STORAGE_KINDS = {
 }
 _RELAY_ANALYTICAL_FAMILY_CONFIG = {
     2: {
-        "parent_table": "work.tcc_relay_curves_iec",
-        "row_table": "work.tcc_relay_curve_rows_iec",
+        "parent_table": "tcc.relay_curves_iec",
+        "row_table": "tcc.relay_curve_rows_iec",
         "parent_pk": "relay_curve_iec_id",
         "coefficients": ("v_k", "v_e", "dt_after", "dt_min_time"),
     },
     3: {
-        "parent_table": "work.tcc_relay_curves_meq",
-        "row_table": "work.tcc_relay_curve_rows_meq",
+        "parent_table": "tcc.relay_curves_meq",
+        "row_table": "tcc.relay_curve_rows_meq",
         "parent_pk": "relay_curve_meq_id",
         "coefficients": ("v_a", "v_b", "v_c", "v_d", "v_e"),
     },
     4: {
-        "parent_table": "work.tcc_relay_curves_bsl",
-        "row_table": "work.tcc_relay_curve_rows_bsl",
+        "parent_table": "tcc.relay_curves_bsl",
+        "row_table": "tcc.relay_curve_rows_bsl",
         "parent_pk": "relay_curve_bsl_id",
         "coefficients": ("v_a", "v_b", "v_c", "v_d", "v_n", "v_k", "v_r"),
     },
     5: {
-        "parent_table": "work.tcc_relay_curves_swz",
-        "row_table": "work.tcc_relay_curve_rows_swz",
+        "parent_table": "tcc.relay_curves_swz",
+        "row_table": "tcc.relay_curve_rows_swz",
         "parent_pk": "relay_curve_swz_id",
         "coefficients": ("v_a", "v_b", "v_e"),
     },
     6: {
-        "parent_table": "work.tcc_relay_curves_pcd",
-        "row_table": "work.tcc_relay_curve_rows_pcd",
+        "parent_table": "tcc.relay_curves_pcd",
+        "row_table": "tcc.relay_curve_rows_pcd",
         "parent_pk": "relay_curve_pcd_id",
         "coefficients": ("v_a", "v_b", "v_c"),
     },
 }
-_RELAY_WORK_SCHEMA_TABLES = [
-    "tcc_relays",
-    "tcc_relay_devices",
-    "tcc_relay_line_sections",
-    "tcc_relay_td_sections",
-    "tcc_relay_ranges",
-    "tcc_relay_curves_iec",
-    "tcc_relay_curve_rows_iec",
-    "tcc_relay_curves_tcp",
-    "tcc_relay_curve_points_tcp",
+_RELAY_TCC_SCHEMA_TABLES = [
+    "relays",
+    "relay_devices",
+    "relay_line_sections",
+    "relay_td_sections",
+    "relay_ranges",
+    "relay_discrete_values",
+    "relay_curves_iec",
+    "relay_curves_swz",
+    "relay_curves_bsl",
+    "relay_curves_meq",
+    "relay_curves_pcd",
+    "relay_curves_lrm",
+    "relay_curves_rxd",
+    "relay_curves_egc",
+    "relay_curves_tcp",
+    "relay_curve_rows_iec",
+    "relay_curve_rows_swz",
+    "relay_curve_rows_bsl",
+    "relay_curve_rows_meq",
+    "relay_curve_rows_pcd",
+    "relay_curve_points_tcp",
 ]
-_RELAY_CATALOG_UNAVAILABLE_DETAIL = "relay catalog unavailable: work-schema tables not present"
+_RELAY_CATALOG_UNAVAILABLE_DETAIL = "relay catalog unavailable: tcc-schema tables not present"
 
 
 def _row_mapping(row):
@@ -338,10 +350,10 @@ def _relay_work_schema_tables_available(db_or_bind: object) -> bool:
         bind = db_or_bind.get_bind() if hasattr(db_or_bind, "get_bind") else db_or_bind
         inspector = sqlalchemy_inspect(bind)
         schemas = set(inspector.get_schema_names())
-        if "work" not in schemas:
+        if "tcc" not in schemas:
             return False
-        existing = set(inspector.get_table_names(schema="work")) | set(inspector.get_view_names(schema="work"))
-        return all(table in existing for table in _RELAY_WORK_SCHEMA_TABLES)
+        existing = set(inspector.get_table_names(schema="tcc")) | set(inspector.get_view_names(schema="tcc"))
+        return all(table in existing for table in _RELAY_TCC_SCHEMA_TABLES)
     except Exception:
         return False
 
@@ -399,9 +411,9 @@ def _load_relay_base_bundle(db: Session, td_section_source_id: int) -> dict[str,
                 t.source_row_id AS td_section_source_id,
                 t.section_name AS td_section_name,
                 t.model_code AS family_code
-            FROM work.tcc_relay_td_sections t
-            JOIN work.tcc_relay_devices d ON d.relay_device_id = t.relay_device_id
-            JOIN work.tcc_relays r ON r.relay_id = d.relay_id
+            FROM tcc.relay_td_sections t
+            JOIN tcc.relay_devices d ON d.relay_device_id = t.relay_device_id
+            JOIN tcc.relays r ON r.relay_id = d.relay_id
             WHERE t.source_row_id = :td_section_source_id
             """
         ),
@@ -432,7 +444,7 @@ def _load_relay_line_sections(db: Session, relay_device_id: str) -> list[dict[st
                 secondary_i_code,
                 amps_calc_mode,
                 use_toc_multiplier
-            FROM work.tcc_relay_line_sections
+            FROM tcc.relay_line_sections
             WHERE relay_device_id = :relay_device_id
             ORDER BY section_number, source_row_id
             """
@@ -459,13 +471,13 @@ def _load_relay_ranges(db: Session, relay_device_id: str, td_section_source_id: 
                 r.relative_unit_code,
                 r.use_range,
                 r.scales_with_time_multiplier
-            FROM work.tcc_relay_ranges r
-            LEFT JOIN work.tcc_relay_line_sections ls ON ls.source_row_id = r.line_section_source_id
-            LEFT JOIN work.tcc_relay_td_sections ts ON ts.source_row_id = r.td_section_source_id
+            FROM tcc.relay_ranges r
+            LEFT JOIN tcc.relay_line_sections ls ON ls.source_row_id = r.line_section_source_id
+            LEFT JOIN tcc.relay_td_sections ts ON ts.source_row_id = r.td_section_source_id
             WHERE r.td_section_source_id = :td_section_source_id
                OR r.line_section_source_id IN (
                     SELECT source_row_id
-                    FROM work.tcc_relay_line_sections
+                    FROM tcc.relay_line_sections
                     WHERE relay_device_id = :relay_device_id
                )
             ORDER BY r.parent_kind, r.source_parent_id, r.aux_key, r.ordinal
@@ -484,12 +496,12 @@ def _load_relay_ranges(db: Session, relay_device_id: str, td_section_source_id: 
                 r.source_row_id AS range_source_id,
                 d.discrete_value,
                 d.discrete_description
-            FROM work.tcc_relay_ranges r
-            JOIN work.tcc_relay_discrete_values d ON d.relay_range_id = r.relay_range_id
+            FROM tcc.relay_ranges r
+            JOIN tcc.relay_discrete_values d ON d.relay_range_id = r.relay_range_id
             WHERE r.td_section_source_id = :td_section_source_id
                OR r.line_section_source_id IN (
                     SELECT source_row_id
-                    FROM work.tcc_relay_line_sections
+                    FROM tcc.relay_line_sections
                     WHERE relay_device_id = :relay_device_id
                )
             ORDER BY r.source_row_id, d.discrete_value NULLS LAST, d.discrete_description
@@ -587,7 +599,7 @@ def _load_relay_tcp_preview_surface(db: Session, td_section_source_id: int) -> t
                     COUNT(*) AS point_count,
                     MIN(current_value) AS current_min,
                     MAX(current_value) AS current_max
-                FROM work.tcc_relay_curve_points_tcp
+                FROM tcc.relay_curve_points_tcp
                 GROUP BY relay_curve_tcp_id, source_ordinal, time_dial, td_desc
             )
             SELECT
@@ -603,7 +615,7 @@ def _load_relay_tcp_preview_surface(db: Session, td_section_source_id: int) -> t
                 grouped.point_count,
                 grouped.current_min,
                 grouped.current_max
-            FROM work.tcc_relay_curves_tcp parents
+            FROM tcc.relay_curves_tcp parents
             JOIN grouped ON grouped.relay_curve_tcp_id = parents.relay_curve_tcp_id
             WHERE parents.relay_td_section_source_id = :td_section_source_id
             ORDER BY parents.ordinal, grouped.source_ordinal
@@ -699,9 +711,9 @@ def _search_relay_sections(
                 t.source_row_id AS td_section_source_id,
                 t.section_name AS td_section_name,
                 t.model_code AS family_code
-            FROM work.tcc_relay_td_sections t
-            JOIN work.tcc_relay_devices d ON d.relay_device_id = t.relay_device_id
-            JOIN work.tcc_relays r ON r.relay_id = d.relay_id
+            FROM tcc.relay_td_sections t
+            JOIN tcc.relay_devices d ON d.relay_device_id = t.relay_device_id
+            JOIN tcc.relays r ON r.relay_id = d.relay_id
             WHERE (:relay_type IS NULL OR r.relay_type ILIKE '%' || :relay_type || '%')
               AND (:device_function IS NULL OR d.device_function ILIKE '%' || :device_function || '%')
               AND (:family_code IS NULL OR t.model_code = :family_code)
@@ -811,8 +823,8 @@ def _load_tcp_stored_points(db: Session, curve_parent_source_id: int, source_ord
                 p.current_index,
                 p.current_value,
                 p.trip_time_seconds
-            FROM work.tcc_relay_curve_points_tcp p
-            JOIN work.tcc_relay_curves_tcp c ON c.relay_curve_tcp_id = p.relay_curve_tcp_id
+            FROM tcc.relay_curve_points_tcp p
+            JOIN tcc.relay_curves_tcp c ON c.relay_curve_tcp_id = p.relay_curve_tcp_id
             WHERE c.source_row_id = :curve_parent_source_id
               AND p.source_ordinal = :source_ordinal
             ORDER BY p.current_index
