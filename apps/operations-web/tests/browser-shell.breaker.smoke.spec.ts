@@ -2,13 +2,15 @@ import { expect, test } from '@playwright/test'
 
 test('breaker browser loads ETU, TMT, and EMT context settings and static curves', async ({ page }) => {
   let catalogRequests = 0
+  let etuCascadeRequests = 0
   let etuSearchRequests = 0
   let etuContextRequests = 0
   let etuSettingsRequests = 0
   let etuBreakerCascadeRequests = 0
+  const etuCascadeUrls: string[] = []
   const etuBreakerCascadeUrls: string[] = []
-  const etuSearchUrls: string[] = []
   let etuPlotRequests = 0
+  const etuPlotBodies: Array<Record<string, unknown>> = []
   let tmtFacetRequests = 0
   let tmtFrameRequests = 0
   let tmtContextRequests = 0
@@ -33,9 +35,84 @@ test('breaker browser loads ETU, TMT, and EMT context settings and static curves
     })
   })
 
+  await page.route('**/api/v1/neta/cascade**', async (route) => {
+    etuCascadeRequests += 1
+    etuCascadeUrls.push(route.request().url())
+    const url = new URL(route.request().url())
+    const hasManufacturer = url.searchParams.has('manufacturer_id')
+    const hasTripType = url.searchParams.has('trip_type_id')
+    const hasTripStyle = url.searchParams.has('trip_style_id')
+    const hasSensor = url.searchParams.has('sensor_id')
+
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        level: hasSensor ? 'sensors' : hasTripStyle ? 'sensors' : hasTripType ? 'trip_styles' : hasManufacturer ? 'trip_types' : 'manufacturers',
+        count: hasSensor ? 1 : hasTripStyle ? 1 : hasTripType ? 2 : hasManufacturer ? 3 : 17831,
+        manufacturers: [
+          { manufacturer_id: 9, manufacturer_name: 'GE', trip_type_count: 1 },
+          { manufacturer_id: 10, manufacturer_name: 'ABB', trip_type_count: 1 },
+        ],
+        trip_types: hasManufacturer
+          ? [
+              {
+                trip_type_id: 390,
+                trip_type_name: 'Std',
+                manufacturer_id: 9,
+                manufacturer_name: 'GE',
+                trip_style_count: 1,
+              },
+            ]
+          : [],
+        trip_styles: hasTripType
+          ? [
+              {
+                trip_style_id: 536,
+                trip_style_name: 'Std',
+                trip_type_id: 390,
+                trip_type_name: 'Std',
+                manufacturer_id: 9,
+                manufacturer_name: 'GE',
+                sensor_count: 1,
+              },
+            ]
+          : [],
+        sensors: hasTripStyle
+          ? [
+              {
+                sensor_id: 3629,
+                sensor_rating: 800,
+                sensor_desc: '800 A',
+                trip_style_id: 536,
+                trip_style_name: 'Std',
+                trip_type_id: 390,
+                trip_type_name: 'Std',
+                manufacturer_id: 9,
+                manufacturer_name: 'GE',
+                has_ltpu: true,
+                has_stpu: true,
+                has_inst: true,
+                has_gfpu: true,
+              },
+            ]
+          : [],
+        plug_values: hasTripStyle
+          ? [
+              { plug_value: 300, sensor_count: 1 },
+              { plug_value: 400, sensor_count: 1 },
+              { plug_value: 500, sensor_count: 1 },
+              { plug_value: 600, sensor_count: 1 },
+              { plug_value: 700, sensor_count: 1 },
+              { plug_value: 800, sensor_count: 1 },
+            ]
+          : [],
+      }),
+    })
+  })
+
   await page.route('**/api/v1/neta/etu/search?*', async (route) => {
     etuSearchRequests += 1
-    etuSearchUrls.push(route.request().url())
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -222,6 +299,7 @@ test('breaker browser loads ETU, TMT, and EMT context settings and static curves
 
   await page.route('**/api/v1/neta/plot-tcc', async (route) => {
     etuPlotRequests += 1
+    etuPlotBodies.push(route.request().postDataJSON() as Record<string, unknown>)
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -633,7 +711,7 @@ test('breaker browser loads ETU, TMT, and EMT context settings and static curves
   await expect(
     page.getByRole('heading', { name: 'Browse breaker resources through ETU, TMT, and EMT routes.' }),
   ).toBeVisible()
-  await expect(page.getByText('17831')).toBeVisible()
+  await expect(page.getByText('17831', { exact: true })).toBeVisible()
   expect(catalogRequests).toBe(1)
   await expect(page.getByLabel('Breaker Manufacturer')).toContainText('GE')
 
@@ -645,25 +723,22 @@ test('breaker browser loads ETU, TMT, and EMT context settings and static curves
   await expect(page.locator('#breaker-axis-style')).toContainText('AKR-30')
   await page.locator('#breaker-axis-style').selectOption('777')
 
-  await page.getByLabel('ETU search').fill('   ')
-  await page.getByRole('button', { name: 'Browse ETU' }).click()
-  await expect(page.locator('[data-breaker-results]')).toContainText('GE')
-  expect(etuSearchRequests).toBe(1)
-  expect(etuSearchUrls[0]).toContain('manufacturer_id=9')
+  await expect(page.locator('#etu-cascade-manufacturer')).toContainText('GE')
+  await page.locator('#etu-cascade-manufacturer').selectOption('9')
+  await expect(page.locator('#etu-cascade-trip-type')).toContainText('Std')
+  await page.locator('#etu-cascade-trip-type').selectOption('390')
+  await expect(page.locator('#etu-cascade-trip-style')).toContainText('Std')
+  await page.locator('#etu-cascade-trip-style').selectOption('536')
+  await expect(page.locator('#etu-cascade-sensor')).toContainText('3629')
+  await page.locator('#etu-cascade-sensor').selectOption('3629')
+  await expect(page.getByLabel('ETU resource')).toContainText('3629')
+  expect(etuSearchRequests).toBe(0)
 
-  await page.getByLabel('ETU search').fill('GE')
-  await page.getByRole('button', { name: 'Browse ETU' }).click()
-  await expect(page.locator('[data-breaker-results]')).toContainText('GE')
-  expect(etuSearchRequests).toBe(2)
-  expect(etuContextRequests).toBe(0)
-
-  await page.getByRole('button', { name: 'Load Context + Curve' }).click()
-  await expect(page.getByText('Select an ETU result before loading context, settings, and plot data.')).toBeVisible()
-
-  await page.getByLabel('ETU resource').selectOption('3629')
   await page.getByRole('button', { name: 'Load Context + Curve' }).click()
   await expect(page.locator('[data-breaker-selection-panel="etu"]')).toBeVisible()
   await expect(page.locator('[data-breaker-selection-panel="etu"] [data-breaker-curve-chart]')).toBeVisible()
+  await expect(page.locator('[data-breaker-selection-confirmation]')).toContainText('Compatible plugs')
+  await expect(page.locator('[data-breaker-selection-confirmation]')).toContainText('Std')
   await expect(page.locator('[data-breaker-selection-panel="etu"]')).toContainText('Breaker matches')
   await expect(page.locator('[data-breaker-selection-panel="etu"] [data-neta-test-plan-table]')).toBeVisible()
   await expect(page.locator('[data-breaker-selection-panel="etu"]')).toContainText('NETA Test Plan')
@@ -675,7 +750,21 @@ test('breaker browser loads ETU, TMT, and EMT context settings and static curves
   expect(etuBreakerCascadeRequests).toBeGreaterThanOrEqual(5)
   expect(etuBreakerCascadeUrls.some((url) => url.includes('sensor_id=3629'))).toBe(true)
   expect(etuBreakerCascadeUrls.some((url) => url.includes('breaker_style_id=777'))).toBe(true)
+  expect(etuCascadeRequests).toBeGreaterThanOrEqual(4)
+  expect(etuCascadeUrls.some((url) => url.includes('manufacturer_id=9'))).toBe(true)
+  expect(etuCascadeUrls.some((url) => url.includes('trip_type_id=390'))).toBe(true)
+  expect(etuCascadeUrls.some((url) => url.includes('trip_style_id=536'))).toBe(true)
+  expect(etuCascadeUrls.some((url) => url.includes('breaker_style_id=777'))).toBe(true)
   expect(etuPlotRequests).toBe(1)
+  expect(etuPlotBodies[0].ltd_delay_setting).toBe(2.4)
+  expect(etuPlotBodies[0].ltd_test_multiple).toBe(3)
+  expect(etuPlotBodies[0].std_delay_setting).toBe(0.1)
+  expect(etuPlotBodies[0].std_test_multiple).toBe(1.5)
+  expect(etuPlotBodies[0].gfd_delay_setting).toBe(0.1)
+  expect(etuPlotBodies[0].gfd_test_multiple).toBe(1.5)
+  expect(etuPlotBodies[0].ltd_setting).toBeUndefined()
+  expect(etuPlotBodies[0].std_setting).toBeUndefined()
+  expect(etuPlotBodies[0].gfd_setting).toBeUndefined()
 
   await page.getByLabel('Trip Unit Type').selectOption('tmt')
   await page.getByRole('button', { name: 'Browse TMT' }).click()

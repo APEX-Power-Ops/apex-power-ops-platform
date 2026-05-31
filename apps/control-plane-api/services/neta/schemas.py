@@ -1011,6 +1011,30 @@ class PlotTccRequest(BaseModel):
     inst_setting: Optional[float] = None
     gfpu_setting: Optional[float] = None
     gfd_setting: Optional[float] = None
+    ltd_delay_setting: Optional[float] = Field(
+        None,
+        description="Selected LTD delay band/open-time setting; separates band selection from test multiple.",
+    )
+    std_delay_setting: Optional[float] = Field(
+        None,
+        description="Selected STD delay band/open-time setting; separates band selection from test multiple.",
+    )
+    gfd_delay_setting: Optional[float] = Field(
+        None,
+        description="Selected GFD delay band/open-time setting; separates band selection from test multiple.",
+    )
+    ltd_test_multiple: Optional[float] = Field(
+        None,
+        description="NETA LTD test multiple used to compute delay test current.",
+    )
+    std_test_multiple: Optional[float] = Field(
+        None,
+        description="NETA STD test multiple used to compute delay test current.",
+    )
+    gfd_test_multiple: Optional[float] = Field(
+        None,
+        description="NETA GFD test multiple used to compute delay test current.",
+    )
     multiplier_value: Optional[float] = None
     c_factor: Optional[float] = None
     maint_mode: bool = False

@@ -5,6 +5,9 @@ import {
   AvailableSettingsResponse,
   BreakerFamily,
   BreakerResourcesError,
+  CascadePlugOption,
+  CascadeResponse,
+  CascadeSensor,
   CatalogStatusResponse,
   DelayBandOption,
   EMTFrameSearchResponse,
@@ -16,6 +19,7 @@ import {
   TMTFrameSearchResponse,
   TMTPlotRequest,
   TMTSettingsResponse,
+  fetchCascade,
   fetchCatalogStatus,
   fetchEmtContext,
   fetchEmtFacets,
@@ -59,7 +63,12 @@ function toResultId(value: number) {
 }
 
 function toOptionalNumber(value: string) {
-  const parsed = Number(value)
+  const normalized = value.trim()
+  if (normalized.length === 0) {
+    return null
+  }
+
+  const parsed = Number(normalized)
   return Number.isFinite(parsed) ? parsed : null
 }
 
@@ -79,6 +88,35 @@ function optionalNumber(target: object, key: string, value: number | null) {
   }
 }
 
+function cascadeSensorToSearchResult(sensor: CascadeSensor, plugValues: CascadePlugOption[]): EtuSearchResult {
+  return {
+    sensor_id: sensor.sensor_id,
+    sensor_rating: sensor.sensor_rating,
+    sensor_desc: sensor.sensor_desc,
+    trip_style_id: sensor.trip_style_id,
+    trip_style_name: sensor.trip_style_name,
+    trip_type_id: sensor.trip_type_id,
+    trip_type_name: sensor.trip_type_name,
+    manufacturer_id: sensor.manufacturer_id,
+    manufacturer_name: sensor.manufacturer_name,
+    compatible_plug_values: plugValues.map((option) => option.plug_value),
+  }
+}
+
+function fetchCountLabel<T extends { count: number }>(
+  response: T | null,
+  isLoading: boolean,
+  errorMessage: string | null,
+) {
+  if (isLoading) {
+    return 'loading'
+  }
+  if (errorMessage || response === null) {
+    return 'unavailable'
+  }
+  return `${response.count} matches`
+}
+
 function buildEtuPlotRequest(settings: AvailableSettingsResponse, contextLabel: string | null): EtuPlotRequest | null {
   const plugRating = firstFiniteNumber(settings.plug_values)
   if (plugRating === null) {
@@ -95,12 +133,19 @@ function buildEtuPlotRequest(settings: AvailableSettingsResponse, contextLabel: 
   }
 
   optionalNumber(request, 'ltpu_setting', firstFiniteNumber(settings.ltpu_settings))
-  optionalNumber(request, 'ltd_setting', firstDelayValue(settings.ltd_settings))
   optionalNumber(request, 'stpu_setting', firstFiniteNumber(settings.stpu_settings))
-  optionalNumber(request, 'std_setting', firstDelayValue(settings.std_settings))
   optionalNumber(request, 'inst_setting', firstFiniteNumber(settings.inst_settings))
   optionalNumber(request, 'gfpu_setting', firstFiniteNumber(settings.gfpu_settings))
-  optionalNumber(request, 'gfd_setting', firstDelayValue(settings.gfd_settings))
+
+  const ltdDelay = firstDelayValue(settings.ltd_settings)
+  const stdDelay = firstDelayValue(settings.std_settings)
+  const gfdDelay = firstDelayValue(settings.gfd_settings)
+  optionalNumber(request, 'ltd_delay_setting', ltdDelay)
+  optionalNumber(request, 'std_delay_setting', stdDelay)
+  optionalNumber(request, 'gfd_delay_setting', gfdDelay)
+  optionalNumber(request, 'ltd_test_multiple', ltdDelay === null ? null : 3)
+  optionalNumber(request, 'std_test_multiple', stdDelay === null ? null : 1.5)
+  optionalNumber(request, 'gfd_test_multiple', gfdDelay === null ? null : 1.5)
 
   if (contextLabel) {
     request.breaker_context_label = contextLabel
@@ -177,6 +222,13 @@ export function BreakerResourceExplorer() {
   const [breakerClass, setBreakerClass] = useState('')
   const [breakerId, setBreakerId] = useState('')
   const [breakerStyleId, setBreakerStyleId] = useState('')
+  const [etuCascade, setEtuCascade] = useState<CascadeResponse | null>(null)
+  const [etuCascadeError, setEtuCascadeError] = useState<string | null>(null)
+  const [isEtuCascadeLoading, setIsEtuCascadeLoading] = useState(false)
+  const [etuManufacturerId, setEtuManufacturerId] = useState('')
+  const [etuTripTypeId, setEtuTripTypeId] = useState('')
+  const [etuTripStyleId, setEtuTripStyleId] = useState('')
+  const [etuSensorId, setEtuSensorId] = useState('')
 
   useEffect(() => {
     let cancelled = false
@@ -206,6 +258,40 @@ export function BreakerResourceExplorer() {
     }
   }, [])
 
+  const breakerManufacturerFilter = useMemo(() => toOptionalNumber(breakerManufacturerId), [breakerManufacturerId])
+  const breakerIdFilter = useMemo(() => toOptionalNumber(breakerId), [breakerId])
+  const breakerStyleIdFilter = useMemo(() => toOptionalNumber(breakerStyleId), [breakerStyleId])
+  const etuManufacturerFilter = useMemo(() => toOptionalNumber(etuManufacturerId), [etuManufacturerId])
+  const etuTripTypeFilter = useMemo(() => toOptionalNumber(etuTripTypeId), [etuTripTypeId])
+  const etuTripStyleFilter = useMemo(() => toOptionalNumber(etuTripStyleId), [etuTripStyleId])
+  const etuSensorFilter = useMemo(() => toOptionalNumber(etuSensorId), [etuSensorId])
+  const selectedCascadeSensor = useMemo(
+    () => etuCascade?.sensors.find((sensor) => toResultId(sensor.sensor_id) === etuSensorId) ?? null,
+    [etuCascade, etuSensorId],
+  )
+  const selectedGuidedEtuResult = useMemo(
+    () => (selectedCascadeSensor ? cascadeSensorToSearchResult(selectedCascadeSensor, etuCascade?.plug_values ?? []) : null),
+    [etuCascade?.plug_values, selectedCascadeSensor],
+  )
+  const selectedEtuResult = useMemo<EtuSearchResult | null>(() => {
+    if (family !== 'etu' || !selectedId) {
+      return null
+    }
+    if (selectedGuidedEtuResult && toResultId(selectedGuidedEtuResult.sensor_id) === selectedId) {
+      return selectedGuidedEtuResult
+    }
+    return etuResults?.results.find((result) => toResultId(result.sensor_id) === selectedId) ?? null
+  }, [etuResults, family, selectedGuidedEtuResult, selectedId])
+  const etuResourceOptions = useMemo(() => {
+    const results = etuResults?.results ?? []
+    if (!selectedGuidedEtuResult) {
+      return results
+    }
+    if (results.some((result) => result.sensor_id === selectedGuidedEtuResult.sensor_id)) {
+      return results
+    }
+    return [selectedGuidedEtuResult, ...results]
+  }, [etuResults, selectedGuidedEtuResult])
   const resultCount = useMemo(() => {
     if (family === 'etu') {
       return etuResults?.count ?? 0
@@ -215,16 +301,10 @@ export function BreakerResourceExplorer() {
     }
     return emtResults?.count ?? 0
   }, [emtResults, etuResults, family, tmtResults])
-
-  const breakerManufacturerFilter = useMemo(() => toOptionalNumber(breakerManufacturerId), [breakerManufacturerId])
-  const breakerIdFilter = useMemo(() => toOptionalNumber(breakerId), [breakerId])
-  const breakerStyleIdFilter = useMemo(() => toOptionalNumber(breakerStyleId), [breakerStyleId])
-  const selectedEtuResult = useMemo<EtuSearchResult | null>(() => {
-    if (family !== 'etu' || !selectedId) {
-      return null
-    }
-    return etuResults?.results.find((result) => toResultId(result.sensor_id) === selectedId) ?? null
-  }, [etuResults, family, selectedId])
+  const displayResultCount = family === 'etu' && selectedGuidedEtuResult && resultCount === 0 ? 1 : resultCount
+  const hasResultRows = displayResultCount > 0
+  const breakerAxisCountLabel = fetchCountLabel(breakerAxis, isBreakerAxisLoading, breakerAxisError)
+  const etuCascadeCountLabel = fetchCountLabel(etuCascade, isEtuCascadeLoading, etuCascadeError)
   const selectedBreakerStyle = useMemo(
     () => breakerAxis?.breaker_styles.find((style) => toResultId(style.breaker_style_id) === breakerStyleId) ?? null,
     [breakerAxis, breakerStyleId],
@@ -232,6 +312,55 @@ export function BreakerResourceExplorer() {
   const selectedBreakerContextLabel = selectedBreakerStyle
     ? `${selectedBreakerStyle.breaker_name} · ${selectedBreakerStyle.breaker_style_name}`
     : null
+
+  useEffect(() => {
+    if (family !== 'etu') {
+      return
+    }
+
+    let cancelled = false
+
+    setIsEtuCascadeLoading(true)
+    fetchCascade({
+      manufacturerId: etuManufacturerFilter,
+      tripTypeId: etuTripTypeFilter,
+      tripStyleId: etuTripStyleFilter,
+      sensorId: etuSensorFilter,
+      breakerClass: breakerClass || null,
+      breakerId: breakerIdFilter,
+      breakerStyleId: breakerStyleIdFilter,
+    })
+      .then((cascade) => {
+        if (!cancelled) {
+          setEtuCascade(cascade)
+          setEtuCascadeError(null)
+        }
+      })
+      .catch((error: unknown) => {
+        if (!cancelled) {
+          setEtuCascade(null)
+          setEtuCascadeError(getErrorMessage(error, 'The guided ETU cascade could not be reached.'))
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setIsEtuCascadeLoading(false)
+        }
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [
+    breakerClass,
+    breakerIdFilter,
+    breakerStyleIdFilter,
+    etuManufacturerFilter,
+    etuSensorFilter,
+    etuTripStyleFilter,
+    etuTripTypeFilter,
+    family,
+  ])
 
   useEffect(() => {
     let cancelled = false
@@ -288,6 +417,18 @@ export function BreakerResourceExplorer() {
     setEmtResults(null)
     setTmtFacets(null)
     setEmtFacets(null)
+    setEtuManufacturerId('')
+    setEtuTripTypeId('')
+    setEtuTripStyleId('')
+    setEtuSensorId('')
+  }
+
+  function clearEtuGuidedPath() {
+    setEtuManufacturerId('')
+    setEtuTripTypeId('')
+    setEtuTripStyleId('')
+    setEtuSensorId('')
+    setEtuResults(null)
   }
 
   function handleBreakerManufacturerChange(value: string) {
@@ -297,6 +438,7 @@ export function BreakerResourceExplorer() {
     setBreakerStyleId('')
     setSelectedId('')
     setSelection(null)
+    clearEtuGuidedPath()
   }
 
   function handleBreakerClassChange(value: string) {
@@ -305,17 +447,66 @@ export function BreakerResourceExplorer() {
     setBreakerStyleId('')
     setSelectedId('')
     setSelection(null)
+    clearEtuGuidedPath()
   }
 
   function handleBreakerIdChange(value: string) {
     setBreakerId(value)
     setBreakerStyleId('')
+    setSelectedId('')
     setSelection(null)
+    clearEtuGuidedPath()
   }
 
   function handleBreakerStyleChange(value: string) {
     setBreakerStyleId(value)
+    setSelectedId('')
     setSelection(null)
+    setEtuSensorId('')
+    setEtuResults(null)
+  }
+
+  function handleEtuManufacturerChange(value: string) {
+    setEtuManufacturerId(value)
+    setEtuTripTypeId('')
+    setEtuTripStyleId('')
+    setEtuSensorId('')
+    setSelectedId('')
+    setSelection(null)
+    setEtuResults(null)
+  }
+
+  function handleEtuTripTypeChange(value: string) {
+    setEtuTripTypeId(value)
+    setEtuTripStyleId('')
+    setEtuSensorId('')
+    setSelectedId('')
+    setSelection(null)
+    setEtuResults(null)
+  }
+
+  function handleEtuTripStyleChange(value: string) {
+    setEtuTripStyleId(value)
+    setEtuSensorId('')
+    setSelectedId('')
+    setSelection(null)
+    setEtuResults(null)
+  }
+
+  function handleEtuSensorChange(value: string) {
+    setEtuSensorId(value)
+    setSelectedId(value)
+    setSelection(null)
+    setEtuResults(null)
+  }
+
+  function handleSelectedResourceChange(value: string) {
+    setSelectedId(value)
+    setSelection(null)
+    if (family === 'etu') {
+      const cascadeHasSensor = (etuCascade?.sensors ?? []).some((sensor) => toResultId(sensor.sensor_id) === value)
+      setEtuSensorId(cascadeHasSensor ? value : '')
+    }
   }
 
   async function handleBrowse(event: FormEvent<HTMLFormElement>) {
@@ -325,6 +516,7 @@ export function BreakerResourceExplorer() {
     setErrorMessage(null)
     setSelectedId('')
     setSelection(null)
+    setEtuSensorId('')
     setIsSearching(true)
 
     try {
@@ -394,9 +586,9 @@ export function BreakerResourceExplorer() {
 
     try {
       if (family === 'etu') {
-        const searchResult = etuResults?.results.find((result) => toResultId(result.sensor_id) === selectedId)
+        const searchResult = selectedEtuResult
         if (!searchResult) {
-          setErrorMessage('The selected ETU sensor is no longer present in the current browse results.')
+          setErrorMessage('The selected ETU sensor is no longer present in the current guided cascade or browse results.')
           return
         }
 
@@ -492,6 +684,9 @@ export function BreakerResourceExplorer() {
     setErrorMessage(null)
     setSelectedId('')
     setSelection(null)
+    if (family === 'etu') {
+      setEtuSensorId('')
+    }
   }
 
   function handleResetBrowse() {
@@ -536,9 +731,7 @@ export function BreakerResourceExplorer() {
           <div className="resource-item-row">
             <span className="resource-chip">Axis 1</span>
             <span className="resource-chip resource-chip-muted">Breaker</span>
-            <span className="resource-chip resource-chip-muted">
-              {isBreakerAxisLoading ? 'loading' : `${breakerAxis?.count ?? 0} matches`}
-            </span>
+            <span className="resource-chip resource-chip-muted">{breakerAxisCountLabel}</span>
           </div>
           <div className="breaker-control-grid breaker-axis-control-grid">
             <label className="relay-selection-field" htmlFor="breaker-axis-manufacturer">
@@ -616,72 +809,184 @@ export function BreakerResourceExplorer() {
           <div className="resource-item-row">
             <span className="resource-chip">Axis 2</span>
             <span className="resource-chip resource-chip-muted">Trip unit</span>
+            {family === 'etu' ? <span className="resource-chip resource-chip-muted">{etuCascadeCountLabel}</span> : null}
             {breakerManufacturerFilter !== null ? (
               <span className="resource-chip resource-chip-muted">manufacturer filtered</span>
             ) : null}
           </div>
-          <div className="breaker-control-grid">
-          <label className="relay-selection-field" htmlFor="breaker-family">
-            <span className="resource-field">Trip Unit Type</span>
-            <select
-              id="breaker-family"
-              name="breakerFamily"
-              value={family}
-              onChange={(event) => resetFamilyState(event.target.value as BreakerFamily)}
-            >
-              <option value="etu">ETU sensors</option>
-              <option value="tmt">TMT frames</option>
-              <option value="emt">EMT frames</option>
-            </select>
-          </label>
-
-          <label className="relay-selection-field" htmlFor="breaker-query">
-            <span className="resource-field">
-              {family === 'etu' ? 'ETU search' : family === 'tmt' ? 'TMT manufacturer' : 'EMT search'}
-            </span>
-            <input
-              id="breaker-query"
-              name="breakerQuery"
-              type="text"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder={family === 'etu' ? 'GE, Square D, trip style' : family === 'tmt' ? 'ABB, Eaton' : 'SOC, frame, style'}
-              autoComplete="off"
-              spellCheck={false}
-            />
-          </label>
-
-          {family === 'tmt' ? (
-            <label className="relay-selection-field" htmlFor="tmt-breaker-class">
-              <span className="resource-field">TMT class</span>
+          <div className={`breaker-control-grid${family === 'etu' ? ' breaker-etu-cascade-grid' : ''}`}>
+            <label className="relay-selection-field" htmlFor="breaker-family">
+              <span className="resource-field">Trip Unit Type</span>
               <select
-                id="tmt-breaker-class"
-                name="tmtBreakerClass"
-                value={tmtBreakerClass}
-                onChange={(event) => setTmtBreakerClass(event.target.value)}
+                id="breaker-family"
+                name="breakerFamily"
+                value={family}
+                onChange={(event) => resetFamilyState(event.target.value as BreakerFamily)}
               >
-                <option value="MCCB">MCCB</option>
-                <option value="ICCB">ICCB</option>
-                <option value="PCB">PCB</option>
+                <option value="etu">ETU sensors</option>
+                <option value="tmt">TMT frames</option>
+                <option value="emt">EMT frames</option>
               </select>
             </label>
-          ) : null}
 
-          <div className="breaker-form-actions">
-            <button type="submit" disabled={isSearching}>
-              {isSearching ? 'Browsing…' : `Browse ${familyLabels[family]}`}
-            </button>
-            <button type="button" onClick={handleResetBrowse} disabled={isSearching || isLoadingSelection}>
-              Reset
-            </button>
+            {family === 'etu' ? (
+              <>
+                <label className="relay-selection-field" htmlFor="etu-cascade-manufacturer">
+                  <span className="resource-field">Trip Manufacturer</span>
+                  <select
+                    id="etu-cascade-manufacturer"
+                    name="etuCascadeManufacturer"
+                    value={etuManufacturerId}
+                    onChange={(event) => handleEtuManufacturerChange(event.target.value)}
+                  >
+                    <option value="">Choose manufacturer</option>
+                    {(etuCascade?.manufacturers ?? []).map((manufacturer) => (
+                      <option key={manufacturer.manufacturer_id} value={toResultId(manufacturer.manufacturer_id)}>
+                        {manufacturer.manufacturer_name} ({manufacturer.trip_type_count})
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="relay-selection-field" htmlFor="etu-cascade-trip-type">
+                  <span className="resource-field">Trip Type</span>
+                  <select
+                    id="etu-cascade-trip-type"
+                    name="etuCascadeTripType"
+                    value={etuTripTypeId}
+                    onChange={(event) => handleEtuTripTypeChange(event.target.value)}
+                    disabled={!etuManufacturerId}
+                  >
+                    <option value="">{etuManufacturerId ? 'Choose trip type' : 'Select manufacturer first'}</option>
+                    {etuManufacturerId
+                      ? (etuCascade?.trip_types ?? []).map((tripType) => (
+                          <option key={tripType.trip_type_id} value={toResultId(tripType.trip_type_id)}>
+                            {tripType.trip_type_name} ({tripType.trip_style_count})
+                          </option>
+                        ))
+                      : null}
+                  </select>
+                </label>
+
+                <label className="relay-selection-field" htmlFor="etu-cascade-trip-style">
+                  <span className="resource-field">Trip Style</span>
+                  <select
+                    id="etu-cascade-trip-style"
+                    name="etuCascadeTripStyle"
+                    value={etuTripStyleId}
+                    onChange={(event) => handleEtuTripStyleChange(event.target.value)}
+                    disabled={!etuTripTypeId}
+                  >
+                    <option value="">{etuTripTypeId ? 'Choose trip style' : 'Select trip type first'}</option>
+                    {etuTripTypeId
+                      ? (etuCascade?.trip_styles ?? []).map((tripStyle) => (
+                          <option key={tripStyle.trip_style_id} value={toResultId(tripStyle.trip_style_id)}>
+                            {tripStyle.trip_style_name} ({tripStyle.sensor_count})
+                          </option>
+                        ))
+                      : null}
+                  </select>
+                </label>
+
+                <label className="relay-selection-field" htmlFor="etu-cascade-sensor">
+                  <span className="resource-field">Sensor</span>
+                  <select
+                    id="etu-cascade-sensor"
+                    name="etuCascadeSensor"
+                    value={etuSensorId}
+                    onChange={(event) => handleEtuSensorChange(event.target.value)}
+                    disabled={!etuTripStyleId}
+                  >
+                    <option value="">{etuTripStyleId ? 'Choose sensor' : 'Select trip style first'}</option>
+                    {etuTripStyleId
+                      ? (etuCascade?.sensors ?? []).map((sensor) => (
+                          <option key={sensor.sensor_id} value={toResultId(sensor.sensor_id)}>
+                            {sensor.sensor_id} · {sensor.sensor_desc} · {sensor.sensor_rating ?? 'n/a'}A
+                          </option>
+                        ))
+                      : null}
+                  </select>
+                </label>
+              </>
+            ) : (
+              <>
+                <label className="relay-selection-field" htmlFor="breaker-query">
+                  <span className="resource-field">{family === 'tmt' ? 'TMT manufacturer' : 'EMT search'}</span>
+                  <input
+                    id="breaker-query"
+                    name="breakerQuery"
+                    type="text"
+                    value={query}
+                    onChange={(event) => setQuery(event.target.value)}
+                    placeholder={family === 'tmt' ? 'ABB, Eaton' : 'SOC, frame, style'}
+                    autoComplete="off"
+                    spellCheck={false}
+                  />
+                </label>
+
+                {family === 'tmt' ? (
+                  <label className="relay-selection-field" htmlFor="tmt-breaker-class">
+                    <span className="resource-field">TMT class</span>
+                    <select
+                      id="tmt-breaker-class"
+                      name="tmtBreakerClass"
+                      value={tmtBreakerClass}
+                      onChange={(event) => setTmtBreakerClass(event.target.value)}
+                    >
+                      <option value="MCCB">MCCB</option>
+                      <option value="ICCB">ICCB</option>
+                      <option value="PCB">PCB</option>
+                    </select>
+                  </label>
+                ) : null}
+
+                <div className="breaker-form-actions">
+                  <button type="submit" disabled={isSearching}>
+                    {isSearching ? 'Browsing...' : `Browse ${familyLabels[family]}`}
+                  </button>
+                  <button type="button" onClick={handleResetBrowse} disabled={isSearching || isLoadingSelection}>
+                    Reset
+                  </button>
+                </div>
+              </>
+            )}
           </div>
-          </div>
+
+          {family === 'etu' ? (
+            <div className="breaker-control-grid breaker-etu-fallback-grid">
+              <label className="relay-selection-field" htmlFor="breaker-query">
+                <span className="resource-field">ETU search fallback</span>
+                <input
+                  id="breaker-query"
+                  name="breakerQuery"
+                  type="text"
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  placeholder="GE, Square D, trip style"
+                  autoComplete="off"
+                  spellCheck={false}
+                />
+              </label>
+
+              <div className="breaker-form-actions">
+                <button type="submit" disabled={isSearching}>
+                  {isSearching ? 'Browsing...' : 'Browse ETU'}
+                </button>
+                <button type="button" onClick={handleResetBrowse} disabled={isSearching || isLoadingSelection}>
+                  Reset
+                </button>
+              </div>
+            </div>
+          ) : null}
+          {etuCascadeError && family === 'etu' ? (
+            <p className="resource-banner resource-banner-error relay-inline-banner">{etuCascadeError}</p>
+          ) : null}
         </div>
       </form>
 
       {errorMessage ? <p className="resource-banner resource-banner-error">{errorMessage}</p> : null}
 
-      {resultCount === 0 && !errorMessage ? (
+      {!hasResultRows && !errorMessage ? (
         <p className="resource-banner resource-banner-neutral">
           Browse a trip unit type, select one returned row, then load the governed context, settings, and static trip curve.
         </p>
@@ -703,12 +1008,12 @@ export function BreakerResourceExplorer() {
         />
       ) : null}
 
-      {resultCount > 0 ? (
+      {hasResultRows ? (
         <div className="resource-results">
           <div className="resource-summary breaker-result-summary">
             <div>
               <span className="resource-summary-label">Browse matches</span>
-              <strong>{resultCount}</strong>
+              <strong>{displayResultCount}</strong>
             </div>
             <div>
               <span className="resource-summary-label">Selected row</span>
@@ -727,11 +1032,11 @@ export function BreakerResourceExplorer() {
                 id="breaker-selected-resource"
                 name="breakerSelectedResource"
                 value={selectedId}
-                onChange={(event) => setSelectedId(event.target.value)}
+                onChange={(event) => handleSelectedResourceChange(event.target.value)}
               >
                 <option value="">Select one row</option>
                 {family === 'etu'
-                  ? etuResults?.results.map((result) => (
+                  ? etuResourceOptions.map((result) => (
                       <option key={result.sensor_id} value={toResultId(result.sensor_id)}>
                         {result.sensor_id} · {result.manufacturer_name} · {result.trip_type_name} · {result.sensor_desc}
                       </option>
@@ -768,7 +1073,7 @@ export function BreakerResourceExplorer() {
 
           <div className="breaker-search-results" data-breaker-results>
             {family === 'etu'
-              ? etuResults?.results.map((result) => (
+              ? etuResourceOptions.map((result) => (
                   <EtuSearchCard
                     key={result.sensor_id}
                     result={result}

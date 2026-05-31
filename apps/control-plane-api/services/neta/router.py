@@ -1287,6 +1287,7 @@ def _load_direct_delay_band(
     table_name: str,
     sensor_id: int,
     setting: Optional[float],
+    allow_fallback: bool = True,
 ):
     if table_name == "tcc.etu_ltd_bands":
         if setting is not None:
@@ -1307,6 +1308,8 @@ def _load_direct_delay_band(
             ).fetchone()
             if matched_row is not None:
                 return matched_row
+        if not allow_fallback:
+            return None
 
         return db.execute(
             text(
@@ -1343,6 +1346,8 @@ def _load_direct_delay_band(
             ).fetchone()
             if matched_row is not None:
                 return matched_row
+        if not allow_fallback:
+            return None
 
         return db.execute(
             text(
@@ -1379,6 +1384,8 @@ def _load_direct_delay_band(
             ).fetchone()
             if matched_row is not None:
                 return matched_row
+        if not allow_fallback:
+            return None
 
         return db.execute(
             text(
@@ -1409,6 +1416,8 @@ def _load_direct_delay_band(
         ).fetchone()
         if matched_row is not None:
             return matched_row
+    if not allow_fallback:
+        return None
 
     default_row = db.execute(
         text(f"""
@@ -1433,6 +1442,66 @@ def _load_direct_delay_band(
         """),
         {"sensor_id": sensor_id},
     ).fetchone()
+
+
+def _delay_band_table_name(element_key: str) -> str:
+    if element_key == "ltd":
+        return "tcc.etu_ltd_bands"
+    if element_key == "std":
+        return "tcc.etu_std_bands"
+    if element_key == "gfd":
+        return "tcc.etu_gfd_bands"
+    raise ValueError(f"Unsupported delay element {element_key!r}")
+
+
+def _resolve_plot_delay_inputs(
+    db: Session,
+    sensor_id: int,
+    element_key: str,
+    legacy_setting: Optional[float],
+    delay_setting: Optional[float],
+    test_multiple: Optional[float],
+    default_test_multiple: float,
+) -> tuple[Optional[float], float, Optional[float]]:
+    """Resolve backward-compatible delay band and test-multiple inputs.
+
+    The legacy request fields used one number for two concepts. If a legacy value
+    matches a live delay-band open time, treat it as the selected band and use the
+    NETA default multiple. Otherwise keep treating it as the old test multiple.
+    Explicit new fields always win.
+    """
+    explicit_delay = delay_setting is not None
+    explicit_multiple = test_multiple is not None
+    if explicit_delay or explicit_multiple:
+        selected_delay = delay_setting if explicit_delay else legacy_setting
+        selected_multiple = test_multiple if explicit_multiple else default_test_multiple
+        return selected_delay, selected_multiple, selected_delay
+
+    if legacy_setting is None:
+        return None, default_test_multiple, None
+
+    matched_band = _load_direct_delay_band(
+        db,
+        _delay_band_table_name(element_key),
+        sensor_id,
+        legacy_setting,
+        allow_fallback=False,
+    )
+    if matched_band is not None:
+        return legacy_setting, default_test_multiple, legacy_setting
+
+    return None, legacy_setting, legacy_setting
+
+
+def _ltd_reference_delay_surface(
+    delay_setting: Optional[float],
+    test_multiple: Optional[float],
+) -> tuple[Optional[float], Optional[float], Optional[float]]:
+    if delay_setting is None or test_multiple in (None, 0):
+        return None, None, None
+
+    nominal = float(delay_setting) * (6.0 / float(test_multiple)) ** 2
+    return nominal, 0.7 * nominal, nominal
 
 
 def _band_row_to_delay_surface(band_row) -> tuple[Optional[float], Optional[float], Optional[float]]:
@@ -2004,14 +2073,20 @@ def _authoritative_delay_surface(
     sensor_id: int,
     element_key: str,
     setting: Optional[float],
+    test_multiple: Optional[float],
     curves: list[PlotCurve],
     expected_current: float,
     maint_mode: bool = False,
     maint_profile: Optional[dict[str, object]] = None,
     fallback_open: Optional[float] = None,
     fallback_clear: Optional[float] = None,
+    use_ltd_reference_window: bool = False,
 ) -> tuple[Optional[float], Optional[float], Optional[float], str]:
     if element_key == "ltd":
+        if use_ltd_reference_window and setting is not None and test_multiple not in (None, 0):
+            expected_time, time_low, time_high = _ltd_reference_delay_surface(setting, test_multiple)
+            return expected_time, time_low, time_high, "ltd_reference_window"
+
         band_row = _load_direct_delay_band(db, "tcc.etu_ltd_bands", sensor_id, setting)
         if band_row is not None:
             expected_time, time_low, time_high = _band_row_to_delay_surface(band_row)
@@ -4231,6 +4306,7 @@ def calculate_test_currents(req: CalculateRequest, db: Session = Depends(get_db)
             sensor_id=req.sensor_id,
             element_key=key,
             setting=delay_setting,
+            test_multiple=elem.get("test_multiplier", default_mult),
             curves=curves,
             expected_current=elem["test_current"],
             maint_mode=bool(data.get("maint_mode", False)),
@@ -4395,6 +4471,7 @@ def evaluate_test_results(req: EvaluateRequest, db: Session = Depends(get_db)):
                 sensor_id=req.sensor_id,
                 element_key=key,
                 setting=delay_setting,
+                test_multiple=calc_elem.get("test_multiplier", default_mult),
                 curves=curves,
                 expected_current=calc_elem["test_current"],
                 maint_mode=bool(calc_data.get("maint_mode", False)),
@@ -4480,6 +4557,33 @@ def plot_tcc(req: PlotTccRequest, db: Session = Depends(get_db)):
     _enforce_plug_within_sensor_rating(req.sensor_id, req.plug_rating, db)
 
     warnings: list[str] = []
+    ltd_delay_setting, ltd_test_multiple, ltd_curve_setting = _resolve_plot_delay_inputs(
+        db=db,
+        sensor_id=req.sensor_id,
+        element_key="ltd",
+        legacy_setting=req.ltd_setting,
+        delay_setting=req.ltd_delay_setting,
+        test_multiple=req.ltd_test_multiple,
+        default_test_multiple=3.0,
+    )
+    std_delay_setting, std_test_multiple, std_curve_setting = _resolve_plot_delay_inputs(
+        db=db,
+        sensor_id=req.sensor_id,
+        element_key="std",
+        legacy_setting=req.std_setting,
+        delay_setting=req.std_delay_setting,
+        test_multiple=req.std_test_multiple,
+        default_test_multiple=1.5,
+    )
+    gfd_delay_setting, gfd_test_multiple, gfd_curve_setting = _resolve_plot_delay_inputs(
+        db=db,
+        sensor_id=req.sensor_id,
+        element_key="gfd",
+        legacy_setting=req.gfd_setting,
+        delay_setting=req.gfd_delay_setting,
+        test_multiple=req.gfd_test_multiple,
+        default_test_multiple=1.5,
+    )
 
     # ── Step 1: Call fn_calculate_test_currents for expected markers ──
     calc_row = db.execute(
@@ -4503,12 +4607,12 @@ def plot_tcc(req: PlotTccRequest, db: Session = Depends(get_db)):
             "p_sensor_id": req.sensor_id,
             "p_plug_rating": req.plug_rating,
             "p_ltpu_setting": req.ltpu_setting,
-            "p_ltd_setting": req.ltd_setting,
+            "p_ltd_setting": ltd_test_multiple,
             "p_stpu_setting": req.stpu_setting,
-            "p_std_setting": req.std_setting,
+            "p_std_setting": std_test_multiple,
             "p_inst_setting": req.inst_setting,
             "p_gfpu_setting": req.gfpu_setting,
-            "p_gfd_setting": req.gfd_setting,
+            "p_gfd_setting": gfd_test_multiple,
             "p_multiplier_value": req.multiplier_value,
             "p_c_factor": req.c_factor,
             "p_maint_mode": req.maint_mode,
@@ -4629,6 +4733,11 @@ def plot_tcc(req: PlotTccRequest, db: Session = Depends(get_db)):
         if elem is None:
             continue
         test_mult = elem.get("test_multiplier", default_mult)
+        delay_setting = {
+            "ltd": ltd_delay_setting,
+            "std": std_delay_setting,
+            "gfd": gfd_delay_setting,
+        }[key]
         if req.include_expected_markers:
             expected_markers.append(PlotExpectedMarker(
                 id=f"{key}_expected",
@@ -4644,6 +4753,7 @@ def plot_tcc(req: PlotTccRequest, db: Session = Depends(get_db)):
         table_rows.append(PlotTableRow(
             element=elem_name,
             kind="delay",
+            setting=delay_setting,
             test_multiple=test_mult,
             expected_current=elem["test_current"],
         ))
@@ -4683,12 +4793,12 @@ def plot_tcc(req: PlotTccRequest, db: Session = Depends(get_db)):
             sensor_id=req.sensor_id,
             plug_rating=req.plug_rating,
             ltpu_setting=req.ltpu_setting,
-            ltd_setting=req.ltd_setting,
+            ltd_setting=ltd_curve_setting,
             stpu_setting=req.stpu_setting,
-            std_setting=req.std_setting,
+            std_setting=std_curve_setting,
             inst_setting=req.inst_setting,
             gfpu_setting=req.gfpu_setting,
-            gfd_setting=req.gfd_setting,
+            gfd_setting=gfd_curve_setting,
             multiplier_value=req.multiplier_value,
             c_factor=req.c_factor,
         )
@@ -4698,19 +4808,26 @@ def plot_tcc(req: PlotTccRequest, db: Session = Depends(get_db)):
             if marker.kind != "delay" or marker.expected_time is not None:
                 continue
             delay_setting = {
-                "LTD": req.ltd_setting,
-                "STD": req.std_setting,
-                "GFD": req.gfd_setting,
+                "LTD": ltd_delay_setting,
+                "STD": std_delay_setting,
+                "GFD": gfd_delay_setting,
+            }.get(marker.element)
+            delay_test_multiple = {
+                "LTD": ltd_test_multiple,
+                "STD": std_test_multiple,
+                "GFD": gfd_test_multiple,
             }.get(marker.element)
             expected_time, time_low, time_high, _timing_source = _authoritative_delay_surface(
                 db=db,
                 sensor_id=req.sensor_id,
                 element_key=marker.element.lower(),
                 setting=delay_setting,
+                test_multiple=delay_test_multiple,
                 curves=curves,
                 expected_current=marker.expected_current,
                 maint_mode=maint_mode,
                 maint_profile=maint_profile,
+                use_ltd_reference_window=True,
             )
             marker.expected_time = expected_time
             for tr in table_rows:

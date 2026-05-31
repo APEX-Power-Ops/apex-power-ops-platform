@@ -666,6 +666,14 @@ function EtuSelectionPanel({
     seconds: marker.expected_time,
     renderHint: marker.render_hint,
   }))
+  const compatiblePlugValues =
+    selection.settings.plug_values.length > 0
+      ? selection.settings.plug_values
+      : selection.searchResult.compatible_plug_values
+  const tccNumber =
+    selection.context.resolved_equipment?.breaker_context?.tcc_number ??
+    selection.plot?.meta.resolved_equipment?.breaker_context?.tcc_number ??
+    null
 
   return (
     <>
@@ -685,6 +693,35 @@ function EtuSelectionPanel({
         <div>
           <span className="resource-summary-label">Curve segments</span>
           <strong>{selection.plot?.curves.length ?? 0}</strong>
+        </div>
+      </div>
+
+      <div className="resource-summary breaker-confirmation-summary" data-breaker-selection-confirmation>
+        <div>
+          <span className="resource-summary-label">Manufacturer</span>
+          <strong>{selection.context.manufacturer_name}</strong>
+        </div>
+        <div>
+          <span className="resource-summary-label">Trip type</span>
+          <strong>{selection.context.trip_type_name}</strong>
+        </div>
+        <div>
+          <span className="resource-summary-label">Trip style</span>
+          <strong>{selection.context.trip_style_name}</strong>
+        </div>
+        <div>
+          <span className="resource-summary-label">TCC number</span>
+          <strong>{formatNullable(tccNumber)}</strong>
+        </div>
+        <div>
+          <span className="resource-summary-label">Sensor</span>
+          <strong>
+            {selection.context.sensor_desc} / {formatNumber(selection.context.rating ?? selection.searchResult.sensor_rating, 0)}A
+          </strong>
+        </div>
+        <div>
+          <span className="resource-summary-label">Compatible plugs</span>
+          <strong>{compatiblePlugValues.slice(0, 8).map((value) => formatNumber(value, 0)).join(', ') || 'n/a'}</strong>
         </div>
       </div>
 

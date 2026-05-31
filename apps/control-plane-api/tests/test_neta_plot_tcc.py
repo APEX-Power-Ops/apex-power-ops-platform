@@ -220,17 +220,29 @@ def _make_fake_execute(calc_data=CALC_DATA, eval_data=EVAL_DATA):
             row.result = eval_data
             result.fetchone.return_value = row
         elif "tcc.etu_ltd_bands" in sql_text:
-            row = MagicMock()
-            row._mapping = {"open_time": 3.5, "clear_time": 3.0, "ordinal": 2, "is_default": False}
-            result.fetchone.return_value = row
+            setting = (params or {}).get("setting")
+            if "AND ltd_setting = :setting" in sql_text and setting != 3.5:
+                result.fetchone.return_value = None
+            else:
+                row = MagicMock()
+                row._mapping = {"open_time": 3.5, "clear_time": 3.0, "ordinal": 2, "is_default": False}
+                result.fetchone.return_value = row
         elif "tcc.etu_std_bands" in sql_text:
-            row = MagicMock()
-            row._mapping = {"open_time": 2.0, "clear_time": 2.5, "ordinal": 1, "is_default": True}
-            result.fetchone.return_value = row
+            setting = (params or {}).get("setting")
+            if "AND std_open = :setting" in sql_text and setting != 2.0:
+                result.fetchone.return_value = None
+            else:
+                row = MagicMock()
+                row._mapping = {"open_time": 2.0, "clear_time": 2.5, "ordinal": 1, "is_default": True}
+                result.fetchone.return_value = row
         elif "tcc.etu_gfd_bands" in sql_text:
-            row = MagicMock()
-            row._mapping = {"open_time": 1.5, "clear_time": 1.8, "ordinal": 1, "is_default": True}
-            result.fetchone.return_value = row
+            setting = (params or {}).get("setting")
+            if "AND gfd_open = :setting" in sql_text and setting != 1.5:
+                result.fetchone.return_value = None
+            else:
+                row = MagicMock()
+                row._mapping = {"open_time": 1.5, "clear_time": 1.8, "ordinal": 1, "is_default": True}
+                result.fetchone.return_value = row
         else:
             result.fetchone.return_value = None
         return result
@@ -918,14 +930,68 @@ class TestSTDGFDSelection:
             assert c.kwargs["time_dial"] == 1.0
 
 
+class TestSeparatedDelayInputs:
+    """Delay band selection must be independent from NETA test multiples."""
+
+    def test_explicit_delay_fields_keep_test_multiples_for_sql(self, client, base_request):
+        tc, mock_session = client
+        req = {
+            **base_request,
+            "ltd_delay_setting": 3.5,
+            "ltd_test_multiple": 3.0,
+            "std_delay_setting": 2.0,
+            "std_test_multiple": 1.5,
+            "gfd_delay_setting": 1.5,
+            "gfd_test_multiple": 1.5,
+            "measurements": None,
+            "include_measured_markers": False,
+        }
+
+        patches, mocks = _patch_calc_engine()
+        with patches["pickup"], patches["ltd"], patches["ieee"]:
+            resp = tc.post("/api/v1/neta/plot-tcc", json=req)
+
+        assert resp.status_code == 200
+        params = _last_sql_params(mock_session, "fn_calculate_test_currents")
+        assert params["p_ltd_setting"] == 3.0
+        assert params["p_std_setting"] == 1.5
+        assert params["p_gfd_setting"] == 1.5
+
+        std_calls = [
+            c for c in mocks["ieee_inst"].generate_curve.call_args_list
+            if c.kwargs.get("equation_type", "std") == "std"
+        ]
+        for c in std_calls:
+            assert c.kwargs["time_dial"] == 2.0
+
+    def test_legacy_band_open_time_uses_default_test_multiple(self, client, base_request):
+        tc, mock_session = client
+        req = {
+            **base_request,
+            "std_setting": 2.0,
+            "gfd_setting": 1.5,
+            "measurements": None,
+            "include_measured_markers": False,
+        }
+
+        patches, _ = _patch_calc_engine()
+        with patches["pickup"], patches["ltd"], patches["ieee"]:
+            resp = tc.post("/api/v1/neta/plot-tcc", json=req)
+
+        assert resp.status_code == 200
+        params = _last_sql_params(mock_session, "fn_calculate_test_currents")
+        assert params["p_std_setting"] == 1.5
+        assert params["p_gfd_setting"] == 1.5
+
+
 # ──────────────────────────────────────────────────
 # Test 6: Delay marker enrichment from curve interpolation
 # ──────────────────────────────────────────────────
 
 class TestDelayMarkerEnrichment:
-    """Verify delay expected markers prefer direct band timing when available."""
+    """Verify delay expected markers use selected band timing surfaces."""
 
-    def test_ltd_marker_gets_direct_band_time(self, client, base_request):
+    def test_ltd_marker_gets_reference_window(self, client, base_request):
         tc, _ = client
         req = {**base_request, "measurements": None, "include_measured_markers": False}
 
@@ -943,7 +1009,7 @@ class TestDelayMarkerEnrichment:
         )
         assert ltd_marker is not None
         assert ltd_marker["expected_time"] is not None
-        assert ltd_marker["expected_time"] == 3.5
+        assert ltd_marker["expected_time"] == 14.0
 
         # Table row should also be enriched
         ltd_row = next(
@@ -951,10 +1017,12 @@ class TestDelayMarkerEnrichment:
         )
         assert ltd_row is not None
         assert ltd_row["expected_time"] is not None
-        assert ltd_row["expected_time"] == 3.5
+        assert ltd_row["expected_time"] == 14.0
+        assert ltd_row["time_limit_low"] == pytest.approx(9.8)
+        assert ltd_row["time_limit_high"] == 14.0
 
-    def test_direct_band_time_wins_even_if_curve_is_narrow(self, client, base_request):
-        """Direct band timing should still populate the marker even when the
+    def test_ltd_reference_window_wins_even_if_curve_is_narrow(self, client, base_request):
+        """LTD reference timing should still populate the marker even when the
         nominal curve would not support interpolation."""
         tc, _ = client
         req = {**base_request, "measurements": None, "include_measured_markers": False}
@@ -977,7 +1045,7 @@ class TestDelayMarkerEnrichment:
             None,
         )
         assert ltd_marker is not None
-        assert ltd_marker["expected_time"] == 3.5
+        assert ltd_marker["expected_time"] == 14.0
 
 
 # ══════════════════════════════════════════════════

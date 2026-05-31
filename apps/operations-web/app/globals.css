@@ -1403,6 +1403,14 @@ body {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
+.breaker-etu-cascade-grid {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.breaker-etu-fallback-grid {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
 .breaker-form-actions,
 .breaker-selection-actions {
   display: flex;
@@ -1428,6 +1436,10 @@ body {
 }
 
 .breaker-result-summary {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.breaker-confirmation-summary {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
@@ -1690,7 +1702,10 @@ body {
   .breaker-catalog-summary,
   .breaker-control-grid,
   .breaker-axis-control-grid,
+  .breaker-etu-cascade-grid,
+  .breaker-etu-fallback-grid,
   .breaker-result-summary,
+  .breaker-confirmation-summary,
   .breaker-selection-controls,
   .breaker-search-results,
   .breaker-facet-grid,

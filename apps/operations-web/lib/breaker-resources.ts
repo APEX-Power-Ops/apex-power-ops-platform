@@ -64,6 +64,72 @@ export type EtuSearchResponse = {
   results: EtuSearchResult[]
 }
 
+export type CascadeManufacturer = {
+  manufacturer_id: number
+  manufacturer_name: string
+  trip_type_count: number
+}
+
+export type CascadeTripType = {
+  trip_type_id: number
+  trip_type_name: string
+  manufacturer_id: number
+  manufacturer_name: string
+  trip_style_count: number
+}
+
+export type CascadeTripStyle = {
+  trip_style_id: number
+  trip_style_name: string
+  trip_type_id: number
+  trip_type_name: string
+  manufacturer_id: number
+  manufacturer_name: string
+  sensor_count: number
+}
+
+export type CascadeSensor = {
+  sensor_id: number
+  sensor_rating: number | null
+  sensor_desc: string
+  trip_style_id: number
+  trip_style_name: string
+  trip_type_id: number
+  trip_type_name: string
+  manufacturer_id: number
+  manufacturer_name: string
+  has_ltpu: boolean
+  has_stpu: boolean
+  has_inst: boolean
+  has_gfpu: boolean
+}
+
+export type CascadePlugOption = {
+  plug_value: number
+  sensor_count: number
+}
+
+export type CascadeResponse = {
+  level: string
+  count: number
+  manufacturers: CascadeManufacturer[]
+  trip_types: CascadeTripType[]
+  trip_styles: CascadeTripStyle[]
+  sensors: CascadeSensor[]
+  plug_values: CascadePlugOption[]
+}
+
+export type CascadeParams = {
+  manufacturerId?: number | null
+  tripTypeId?: number | null
+  tripStyleId?: number | null
+  sensorId?: number | null
+  plugValue?: number | null
+  breakerClass?: string | null
+  breakerId?: number | null
+  breakerStyleId?: number | null
+}
+
 export type EtuBreakerCascadeResponse = {
   level: string
   count: number
@@ -243,6 +309,12 @@ export type EtuPlotRequest = {
   inst_setting?: number
   gfpu_setting?: number
   gfd_setting?: number
+  ltd_delay_setting?: number
+  std_delay_setting?: number
+  gfd_delay_setting?: number
+  ltd_test_multiple?: number
+  std_test_multiple?: number
+  gfd_test_multiple?: number
   multiplier_value?: number
   c_factor?: number
   maint_mode?: boolean
@@ -605,6 +677,20 @@ export async function fetchEtuSearch(
   appendOptionalParam(search, 'q', query)
   appendOptionalParam(search, 'manufacturer_id', options.manufacturerId)
   return getJson<EtuSearchResponse>(`/api/v1/neta/etu/search?${search.toString()}`)
+}
+
+export async function fetchCascade(params: CascadeParams = {}): Promise<CascadeResponse> {
+  const search = new URLSearchParams()
+  appendOptionalParam(search, 'manufacturer_id', params.manufacturerId)
+  appendOptionalParam(search, 'trip_type_id', params.tripTypeId)
+  appendOptionalParam(search, 'trip_style_id', params.tripStyleId)
+  appendOptionalParam(search, 'sensor_id', params.sensorId)
+  appendOptionalParam(search, 'plug_value', params.plugValue)
+  appendOptionalParam(search, 'breaker_class', params.breakerClass)
+  appendOptionalParam(search, 'breaker_id', params.breakerId)
+  appendOptionalParam(search, 'breaker_style_id', params.breakerStyleId)
+  const suffix = search.toString()
+  return getJson<CascadeResponse>(`/api/v1/neta/cascade${suffix ? `?${suffix}` : ''}`)
 }
 
 export async function fetchEtuBreakerCascade(
