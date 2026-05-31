@@ -1386,6 +1386,23 @@ body {
   align-items: end;
 }
 
+.breaker-axis-panel {
+  display: grid;
+  gap: 0.9rem;
+  padding: 1rem;
+  border-radius: 18px;
+  border: 1px solid rgba(18, 62, 87, 0.1);
+  background: rgba(255, 255, 255, 0.68);
+}
+
+.breaker-axis-panel + .breaker-axis-panel {
+  margin-top: 1rem;
+}
+
+.breaker-axis-control-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
 .breaker-form-actions,
 .breaker-selection-actions {
   display: flex;
@@ -1672,6 +1689,7 @@ body {
   .relay-compare-grid-double,
   .breaker-catalog-summary,
   .breaker-control-grid,
+  .breaker-axis-control-grid,
   .breaker-result-summary,
   .breaker-selection-controls,
   .breaker-search-results,

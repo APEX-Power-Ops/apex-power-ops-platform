@@ -8,8 +8,10 @@ import {
   CatalogStatusResponse,
   DelayBandOption,
   EMTFrameSearchResponse,
+  EtuBreakerCascadeResponse,
   EMTSectionSettingsResponse,
   EtuPlotRequest,
+  EtuSearchResult,
   EtuSearchResponse,
   TMTFrameSearchResponse,
   TMTPlotRequest,
@@ -54,6 +56,11 @@ const defaultQueries: Record<BreakerFamily, string> = {
 
 function toResultId(value: number) {
   return String(value)
+}
+
+function toOptionalNumber(value: string) {
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? parsed : null
 }
 
 function firstFiniteNumber(values: number[]) {
@@ -163,6 +170,13 @@ export function BreakerResourceExplorer() {
   const [tmtFacets, setTmtFacets] = useState<Awaited<ReturnType<typeof fetchTmtFacets>> | null>(null)
   const [emtFacets, setEmtFacets] = useState<Awaited<ReturnType<typeof fetchEmtFacets>> | null>(null)
   const [selection, setSelection] = useState<BreakerSelectionData | null>(null)
+  const [breakerAxis, setBreakerAxis] = useState<EtuBreakerCascadeResponse | null>(null)
+  const [breakerAxisError, setBreakerAxisError] = useState<string | null>(null)
+  const [isBreakerAxisLoading, setIsBreakerAxisLoading] = useState(false)
+  const [breakerManufacturerId, setBreakerManufacturerId] = useState('')
+  const [breakerClass, setBreakerClass] = useState('')
+  const [breakerId, setBreakerId] = useState('')
+  const [breakerStyleId, setBreakerStyleId] = useState('')
 
   useEffect(() => {
     let cancelled = false
@@ -202,6 +216,67 @@ export function BreakerResourceExplorer() {
     return emtResults?.count ?? 0
   }, [emtResults, etuResults, family, tmtResults])
 
+  const breakerManufacturerFilter = useMemo(() => toOptionalNumber(breakerManufacturerId), [breakerManufacturerId])
+  const breakerIdFilter = useMemo(() => toOptionalNumber(breakerId), [breakerId])
+  const breakerStyleIdFilter = useMemo(() => toOptionalNumber(breakerStyleId), [breakerStyleId])
+  const selectedEtuResult = useMemo<EtuSearchResult | null>(() => {
+    if (family !== 'etu' || !selectedId) {
+      return null
+    }
+    return etuResults?.results.find((result) => toResultId(result.sensor_id) === selectedId) ?? null
+  }, [etuResults, family, selectedId])
+  const selectedBreakerStyle = useMemo(
+    () => breakerAxis?.breaker_styles.find((style) => toResultId(style.breaker_style_id) === breakerStyleId) ?? null,
+    [breakerAxis, breakerStyleId],
+  )
+  const selectedBreakerContextLabel = selectedBreakerStyle
+    ? `${selectedBreakerStyle.breaker_name} · ${selectedBreakerStyle.breaker_style_name}`
+    : null
+
+  useEffect(() => {
+    let cancelled = false
+
+    setIsBreakerAxisLoading(true)
+    fetchEtuBreakerCascade({
+      manufacturerId: breakerManufacturerFilter,
+      breakerClass: breakerClass || null,
+      breakerId: breakerIdFilter,
+      breakerStyleId: breakerStyleIdFilter,
+      tripTypeId: selectedEtuResult?.trip_type_id ?? null,
+      tripStyleId: selectedEtuResult?.trip_style_id ?? null,
+      sensorId: selectedEtuResult?.sensor_id ?? null,
+    })
+      .then((cascade) => {
+        if (!cancelled) {
+          setBreakerAxis(cascade)
+          setBreakerAxisError(null)
+        }
+      })
+      .catch((error: unknown) => {
+        if (!cancelled) {
+          setBreakerAxis(null)
+          setBreakerAxisError(getErrorMessage(error, 'The breaker construction cascade could not be reached.'))
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setIsBreakerAxisLoading(false)
+        }
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [
+    breakerClass,
+    breakerIdFilter,
+    breakerManufacturerFilter,
+    breakerStyleIdFilter,
+    selectedEtuResult?.sensor_id,
+    selectedEtuResult?.trip_style_id,
+    selectedEtuResult?.trip_type_id,
+  ])
+
   function resetFamilyState(nextFamily: BreakerFamily) {
     setFamily(nextFamily)
     setQuery(defaultQueries[nextFamily])
@@ -215,6 +290,34 @@ export function BreakerResourceExplorer() {
     setEmtFacets(null)
   }
 
+  function handleBreakerManufacturerChange(value: string) {
+    setBreakerManufacturerId(value)
+    setBreakerClass('')
+    setBreakerId('')
+    setBreakerStyleId('')
+    setSelectedId('')
+    setSelection(null)
+  }
+
+  function handleBreakerClassChange(value: string) {
+    setBreakerClass(value)
+    setBreakerId('')
+    setBreakerStyleId('')
+    setSelectedId('')
+    setSelection(null)
+  }
+
+  function handleBreakerIdChange(value: string) {
+    setBreakerId(value)
+    setBreakerStyleId('')
+    setSelection(null)
+  }
+
+  function handleBreakerStyleChange(value: string) {
+    setBreakerStyleId(value)
+    setSelection(null)
+  }
+
   async function handleBrowse(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
@@ -226,13 +329,9 @@ export function BreakerResourceExplorer() {
 
     try {
       if (family === 'etu') {
-        if (!normalizedQuery) {
-          setEtuResults(null)
-          setErrorMessage('Enter an ETU search term before browsing governed sensor rows.')
-          return
-        }
-
-        const response = await fetchEtuSearch(normalizedQuery)
+        const response = await fetchEtuSearch(normalizedQuery, {
+          manufacturerId: breakerManufacturerFilter,
+        })
         setEtuResults(response)
         setTmtResults(null)
         setEmtResults(null)
@@ -242,10 +341,12 @@ export function BreakerResourceExplorer() {
       }
 
       if (family === 'tmt') {
+        const effectiveBreakerClass = breakerClass || tmtBreakerClass
         const [facetsResponse, framesResponse] = await Promise.all([
-          fetchTmtFacets(tmtBreakerClass),
+          fetchTmtFacets(effectiveBreakerClass),
           fetchTmtFrames({
-            breakerClass: tmtBreakerClass,
+            breakerClass: effectiveBreakerClass,
+            manufacturerId: breakerManufacturerFilter,
             manufacturerName: normalizedQuery || undefined,
           }),
         ])
@@ -259,7 +360,9 @@ export function BreakerResourceExplorer() {
 
       const [facetsResponse, framesResponse] = await Promise.all([
         fetchEmtFacets(),
-        fetchEmtFrames(normalizedQuery),
+        fetchEmtFrames(normalizedQuery, {
+          manufacturerId: breakerManufacturerFilter,
+        }),
       ])
       setEmtFacets(facetsResponse)
       setEmtResults(framesResponse)
@@ -300,9 +403,20 @@ export function BreakerResourceExplorer() {
         const [context, settings, breakerCascade] = await Promise.all([
           fetchEtuContext(searchResult.sensor_id),
           fetchEtuSettings(searchResult.sensor_id),
-          fetchEtuBreakerCascade(searchResult.manufacturer_id, searchResult.sensor_id),
+          fetchEtuBreakerCascade({
+            manufacturerId: breakerManufacturerFilter ?? searchResult.manufacturer_id,
+            breakerClass: breakerClass || null,
+            breakerId: breakerIdFilter,
+            breakerStyleId: breakerStyleIdFilter,
+            tripTypeId: searchResult.trip_type_id,
+            tripStyleId: searchResult.trip_style_id,
+            sensorId: searchResult.sensor_id,
+          }),
         ])
-        const contextLabel = context.resolved_equipment?.breaker_context?.label ?? context.trip_style_name
+        const contextLabel =
+          selectedBreakerContextLabel ??
+          context.resolved_equipment?.breaker_context?.label ??
+          context.trip_style_name
         const plotRequest = buildEtuPlotRequest(settings, contextLabel)
         const plot = plotRequest ? await fetchEtuPlot(plotRequest) : null
 
@@ -418,7 +532,95 @@ export function BreakerResourceExplorer() {
       {catalogError ? <p className="resource-banner resource-banner-error">{catalogError}</p> : null}
 
       <form className="resource-form breaker-resource-form" onSubmit={handleBrowse}>
-        <div className="breaker-control-grid">
+        <div className="breaker-axis-panel" data-breaker-axis="breaker">
+          <div className="resource-item-row">
+            <span className="resource-chip">Axis 1</span>
+            <span className="resource-chip resource-chip-muted">Breaker</span>
+            <span className="resource-chip resource-chip-muted">
+              {isBreakerAxisLoading ? 'loading' : `${breakerAxis?.count ?? 0} matches`}
+            </span>
+          </div>
+          <div className="breaker-control-grid breaker-axis-control-grid">
+            <label className="relay-selection-field" htmlFor="breaker-axis-manufacturer">
+              <span className="resource-field">Breaker Manufacturer</span>
+              <select
+                id="breaker-axis-manufacturer"
+                name="breakerAxisManufacturer"
+                value={breakerManufacturerId}
+                onChange={(event) => handleBreakerManufacturerChange(event.target.value)}
+              >
+                <option value="">Any manufacturer</option>
+                {(breakerAxis?.manufacturers ?? []).map((manufacturer) => (
+                  <option key={manufacturer.manufacturer_id} value={toResultId(manufacturer.manufacturer_id)}>
+                    {manufacturer.manufacturer_name} ({manufacturer.breaker_count})
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="relay-selection-field" htmlFor="breaker-axis-class">
+              <span className="resource-field">Breaker Class</span>
+              <select
+                id="breaker-axis-class"
+                name="breakerAxisClass"
+                value={breakerClass}
+                onChange={(event) => handleBreakerClassChange(event.target.value)}
+              >
+                <option value="">Any class</option>
+                {(breakerAxis?.breaker_classes ?? []).map((option) => (
+                  <option key={option.breaker_class} value={option.breaker_class}>
+                    {option.breaker_class} ({option.breaker_count})
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="relay-selection-field" htmlFor="breaker-axis-breaker">
+              <span className="resource-field">Breaker</span>
+              <select
+                id="breaker-axis-breaker"
+                name="breakerAxisBreaker"
+                value={breakerId}
+                onChange={(event) => handleBreakerIdChange(event.target.value)}
+              >
+                <option value="">Any breaker</option>
+                {(breakerAxis?.breakers ?? []).map((option) => (
+                  <option key={option.breaker_id} value={toResultId(option.breaker_id)}>
+                    {option.manufacturer_name} · {option.breaker_name} ({option.style_count})
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="relay-selection-field" htmlFor="breaker-axis-style">
+              <span className="resource-field">Breaker Style</span>
+              <select
+                id="breaker-axis-style"
+                name="breakerAxisStyle"
+                value={breakerStyleId}
+                onChange={(event) => handleBreakerStyleChange(event.target.value)}
+              >
+                <option value="">Any style</option>
+                {(breakerAxis?.breaker_styles ?? []).map((style) => (
+                  <option key={style.breaker_style_id} value={toResultId(style.breaker_style_id)}>
+                    {style.breaker_name} · {style.breaker_style_name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+          {breakerAxisError ? <p className="resource-banner resource-banner-error relay-inline-banner">{breakerAxisError}</p> : null}
+        </div>
+
+        <div className="breaker-axis-panel" data-breaker-axis="trip-unit">
+          <div className="resource-item-row">
+            <span className="resource-chip">Axis 2</span>
+            <span className="resource-chip resource-chip-muted">Trip unit</span>
+            {breakerManufacturerFilter !== null ? (
+              <span className="resource-chip resource-chip-muted">manufacturer filtered</span>
+            ) : null}
+          </div>
+          <div className="breaker-control-grid">
           <label className="relay-selection-field" htmlFor="breaker-family">
             <span className="resource-field">Trip Unit Type</span>
             <select
@@ -472,6 +674,7 @@ export function BreakerResourceExplorer() {
             <button type="button" onClick={handleResetBrowse} disabled={isSearching || isLoadingSelection}>
               Reset
             </button>
+          </div>
           </div>
         </div>
       </form>

@@ -6,6 +6,8 @@ test('breaker browser loads ETU, TMT, and EMT context settings and static curves
   let etuContextRequests = 0
   let etuSettingsRequests = 0
   let etuBreakerCascadeRequests = 0
+  const etuBreakerCascadeUrls: string[] = []
+  const etuSearchUrls: string[] = []
   let etuPlotRequests = 0
   let tmtFacetRequests = 0
   let tmtFrameRequests = 0
@@ -33,6 +35,7 @@ test('breaker browser loads ETU, TMT, and EMT context settings and static curves
 
   await page.route('**/api/v1/neta/etu/search?*', async (route) => {
     etuSearchRequests += 1
+    etuSearchUrls.push(route.request().url())
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -47,8 +50,8 @@ test('breaker browser loads ETU, TMT, and EMT context settings and static curves
             trip_style_name: 'Std',
             trip_type_id: 390,
             trip_type_name: 'Std',
-            manufacturer_id: 62,
-            manufacturer_name: '(Generic)',
+            manufacturer_id: 9,
+            manufacturer_name: 'GE',
             compatible_plug_values: [300, 400, 500, 600, 700, 800],
           },
         ],
@@ -67,18 +70,18 @@ test('breaker browser loads ETU, TMT, and EMT context settings and static curves
         trip_style_id: 536,
         trip_style_name: 'Std',
         trip_type_name: 'Std',
-        manufacturer_name: '(Generic)',
+        manufacturer_name: 'GE',
         rating: 800,
         resolved_equipment: {
           family: 'etu',
           family_label: 'ETU',
           resolved_id: 'sensor:3629',
-          primary_label: '(Generic) · Std · Std',
+          primary_label: 'GE · Std · Std',
           secondary_label: 'Std · 800A',
           breaker_context: {
             label: 'Std · 800A',
             source: 'trip_style_sensor_rating',
-            manufacturer_name: '(Generic)',
+            manufacturer_name: 'GE',
             breaker_class: null,
             breaker_name: null,
             breaker_style_name: 'Std',
@@ -87,10 +90,10 @@ test('breaker browser loads ETU, TMT, and EMT context settings and static curves
             tcc_number: null,
           },
           trip_unit: {
-            manufacturer_name: '(Generic)',
+            manufacturer_name: 'GE',
             trip_type_name: 'Std',
             trip_style_name: 'Std',
-            label: '(Generic) · Std · Std',
+            label: 'GE · Std · Std',
           },
           rating_context: {
             label: 'Sensor · 800 A',
@@ -157,16 +160,34 @@ test('breaker browser loads ETU, TMT, and EMT context settings and static curves
     })
   })
 
-  await page.route('**/api/v1/neta/etu/breaker-cascade?*', async (route) => {
+  await page.route('**/api/v1/neta/etu/breaker-cascade**', async (route) => {
     etuBreakerCascadeRequests += 1
+    etuBreakerCascadeUrls.push(route.request().url())
+    const url = new URL(route.request().url())
+    const hasManufacturer = url.searchParams.has('manufacturer_id')
+    const hasClass = url.searchParams.has('breaker_class')
+    const hasBreaker = url.searchParams.has('breaker_id')
+    const hasStyle = url.searchParams.has('breaker_style_id')
+    const hasSensor = url.searchParams.has('sensor_id')
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify({
-        level: 'breakers',
-        count: 3,
-        scope: { manufacturer_id: 62, sensor_id: 3629 },
-        manufacturers: [{ manufacturer_id: 62, manufacturer_name: '(Generic)', breaker_count: 3 }],
+        level: hasStyle ? 'breaker_styles' : hasBreaker ? 'breaker_styles' : hasClass || hasManufacturer ? 'breakers' : 'manufacturers',
+        count: hasSensor ? 1 : hasStyle ? 1 : hasBreaker ? 2 : hasClass || hasManufacturer ? 3 : 4,
+        scope: {
+          manufacturer_id: url.searchParams.get('manufacturer_id') ? Number(url.searchParams.get('manufacturer_id')) : null,
+          breaker_class: url.searchParams.get('breaker_class'),
+          breaker_id: url.searchParams.get('breaker_id') ? Number(url.searchParams.get('breaker_id')) : null,
+          breaker_style_id: url.searchParams.get('breaker_style_id') ? Number(url.searchParams.get('breaker_style_id')) : null,
+          sensor_id: url.searchParams.get('sensor_id') ? Number(url.searchParams.get('sensor_id')) : null,
+        },
+        manufacturers: hasSensor
+          ? [{ manufacturer_id: 9, manufacturer_name: 'GE', breaker_count: 1 }]
+          : [
+              { manufacturer_id: 9, manufacturer_name: 'GE', breaker_count: 3 },
+              { manufacturer_id: 10, manufacturer_name: 'ABB', breaker_count: 1 },
+            ],
         breaker_classes: [
           { breaker_class: 'ICCB', breaker_count: 1 },
           { breaker_class: 'MCCB', breaker_count: 1 },
@@ -175,14 +196,26 @@ test('breaker browser loads ETU, TMT, and EMT context settings and static curves
         breakers: [
           {
             breaker_id: 122,
-            breaker_name: 'Std',
-            breaker_class: 'MCCB',
-            manufacturer_id: 62,
-            manufacturer_name: '(Generic)',
-            style_count: 11,
+            breaker_name: 'AKR',
+            breaker_class: 'ICCB',
+            manufacturer_id: 9,
+            manufacturer_name: 'GE',
+            style_count: 2,
           },
         ],
-        breaker_styles: [],
+        breaker_styles: hasBreaker || hasStyle
+          ? [
+              {
+                breaker_style_id: 777,
+                breaker_style_name: 'AKR-30',
+                breaker_id: 122,
+                breaker_name: 'AKR',
+                breaker_class: 'ICCB',
+                manufacturer_id: 9,
+                manufacturer_name: 'GE',
+              },
+            ]
+          : [],
       }),
     })
   })
@@ -198,10 +231,10 @@ test('breaker browser loads ETU, TMT, and EMT context settings and static curves
           sensor_desc: '800 A',
           breaker_context_label: 'Std',
           breaker_context_source: 'operations_web_breaker_explorer',
-          manufacturer: '(Generic)',
+          manufacturer: 'GE',
           trip_type: 'Std',
           trip_style: 'Std',
-          trip_unit_manufacturer: '(Generic)',
+          trip_unit_manufacturer: 'GE',
           trip_unit_type: 'Std',
           trip_unit_style: 'Std',
           plug_rating: 300,
@@ -602,16 +635,26 @@ test('breaker browser loads ETU, TMT, and EMT context settings and static curves
   ).toBeVisible()
   await expect(page.getByText('17831')).toBeVisible()
   expect(catalogRequests).toBe(1)
+  await expect(page.getByLabel('Breaker Manufacturer')).toContainText('GE')
+
+  await page.getByLabel('Breaker Manufacturer').selectOption('9')
+  await expect(page.getByLabel('Breaker Class')).toContainText('ICCB')
+  await page.getByLabel('Breaker Class').selectOption('ICCB')
+  await expect(page.locator('#breaker-axis-breaker')).toContainText('AKR')
+  await page.locator('#breaker-axis-breaker').selectOption('122')
+  await expect(page.locator('#breaker-axis-style')).toContainText('AKR-30')
+  await page.locator('#breaker-axis-style').selectOption('777')
 
   await page.getByLabel('ETU search').fill('   ')
   await page.getByRole('button', { name: 'Browse ETU' }).click()
-  await expect(page.getByText('Enter an ETU search term before browsing governed sensor rows.')).toBeVisible()
-  expect(etuSearchRequests).toBe(0)
+  await expect(page.locator('[data-breaker-results]')).toContainText('GE')
+  expect(etuSearchRequests).toBe(1)
+  expect(etuSearchUrls[0]).toContain('manufacturer_id=9')
 
   await page.getByLabel('ETU search').fill('GE')
   await page.getByRole('button', { name: 'Browse ETU' }).click()
-  await expect(page.locator('[data-breaker-results]')).toContainText('(Generic)')
-  expect(etuSearchRequests).toBe(1)
+  await expect(page.locator('[data-breaker-results]')).toContainText('GE')
+  expect(etuSearchRequests).toBe(2)
   expect(etuContextRequests).toBe(0)
 
   await page.getByRole('button', { name: 'Load Context + Curve' }).click()
@@ -629,7 +672,9 @@ test('breaker browser loads ETU, TMT, and EMT context settings and static curves
   await expect(page.locator('[data-breaker-selection-panel="etu"]')).toContainText('8.500s')
   expect(etuContextRequests).toBe(1)
   expect(etuSettingsRequests).toBe(1)
-  expect(etuBreakerCascadeRequests).toBe(1)
+  expect(etuBreakerCascadeRequests).toBeGreaterThanOrEqual(5)
+  expect(etuBreakerCascadeUrls.some((url) => url.includes('sensor_id=3629'))).toBe(true)
+  expect(etuBreakerCascadeUrls.some((url) => url.includes('breaker_style_id=777'))).toBe(true)
   expect(etuPlotRequests).toBe(1)
 
   await page.getByLabel('Trip Unit Type').selectOption('tmt')
