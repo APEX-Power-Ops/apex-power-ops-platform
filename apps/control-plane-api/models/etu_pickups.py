@@ -4,11 +4,11 @@ ETU Pickups Models - Pickup Settings
 Models for ETU pickup settings tables.
 
 Tables:
-- tcc_etu_ltpu_pickups: Long-Time Pickup settings (147,936 rows)
-- tcc_etu_ltpu_multipliers: Long-Time Delay multipliers (242,220 rows)
-- tcc_etu_stpu_pickups: Short-Time Pickup settings (80,127 rows)
-- tcc_etu_inst_pickups: Instantaneous settings (67,155 rows)
-- tcc_etu_gfpu_pickups: Ground Fault Pickup settings (29,336 rows)
+- tcc.etu_ltpu_pickups: Long-Time Pickup settings (147,936 rows)
+- tcc.etu_ltpu_multipliers: Long-Time Delay multipliers (242,220 rows)
+- tcc.etu_stpu_pickups: Short-Time Pickup settings (80,127 rows)
+- tcc.etu_inst_pickups: Instantaneous settings (67,155 rows)
+- tcc.etu_gfpu_pickups: Ground Fault Pickup settings (29,336 rows)
 
 Total: ~567K rows
 
@@ -35,14 +35,14 @@ class ETULTPUPickup(Base):
     - Used by many test_plans (TestPlan)
     """
 
-    __tablename__ = 'tcc_etu_ltpu_pickups'
+    __tablename__ = 'etu_ltpu_pickups'
 
     # Primary Key
     id = Column(Integer, primary_key=True, autoincrement=True,
                 comment='Auto-increment primary key')
 
     # Foreign Keys
-    sensor_id = Column(Integer, ForeignKey('tcc_etu_sensors.id', ondelete='CASCADE'),
+    sensor_id = Column(Integer, ForeignKey('tcc.etu_sensors.id', ondelete='CASCADE'),
                        nullable=False, index=True,
                        comment='FK to etu_sensors')
 
@@ -60,7 +60,7 @@ class ETULTPUPickup(Base):
 
     # Table Metadata
     __table_args__ = (
-        {'comment': 'Long-time pickup settings'}
+        {'schema': 'tcc', 'comment': 'Long-time pickup settings'}
     )
 
     # Relationships
@@ -85,14 +85,14 @@ class ETULTPUMultiplier(Base):
     - Belongs to one sensor (ETUSensor)
     """
 
-    __tablename__ = 'tcc_etu_ltpu_multipliers'
+    __tablename__ = 'etu_ltpu_multipliers'
 
     # Primary Key
     id = Column(Integer, primary_key=True, autoincrement=True,
                 comment='Auto-increment primary key')
 
     # Foreign Keys
-    sensor_id = Column(Integer, ForeignKey('tcc_etu_sensors.id', ondelete='CASCADE'),
+    sensor_id = Column(Integer, ForeignKey('tcc.etu_sensors.id', ondelete='CASCADE'),
                        nullable=False, index=True,
                        comment='FK to etu_sensors')
 
@@ -110,7 +110,7 @@ class ETULTPUMultiplier(Base):
 
     # Table Metadata
     __table_args__ = (
-        {'comment': 'Long-time multiplier/C values'}
+        {'schema': 'tcc', 'comment': 'Long-time multiplier/C values'}
     )
 
     # Relationships
@@ -135,14 +135,14 @@ class ETUSTPUPickup(Base):
     - Used by many test_plans (TestPlan)
     """
 
-    __tablename__ = 'tcc_etu_stpu_pickups'
+    __tablename__ = 'etu_stpu_pickups'
 
     # Primary Key
     id = Column(Integer, primary_key=True, autoincrement=True,
                 comment='Auto-increment primary key')
 
     # Foreign Keys
-    sensor_id = Column(Integer, ForeignKey('tcc_etu_sensors.id', ondelete='CASCADE'),
+    sensor_id = Column(Integer, ForeignKey('tcc.etu_sensors.id', ondelete='CASCADE'),
                        nullable=False, index=True,
                        comment='FK to etu_sensors')
 
@@ -162,7 +162,7 @@ class ETUSTPUPickup(Base):
 
     # Table Metadata
     __table_args__ = (
-        {'comment': 'Short-time pickup settings'}
+        {'schema': 'tcc', 'comment': 'Short-time pickup settings'}
     )
 
     # Relationships
@@ -189,14 +189,14 @@ class ETUInstPickup(Base):
     - Used by many test_plans (TestPlan)
     """
 
-    __tablename__ = 'tcc_etu_inst_pickups'
+    __tablename__ = 'etu_inst_pickups'
 
     # Primary Key
     id = Column(Integer, primary_key=True, autoincrement=True,
                 comment='Auto-increment primary key')
 
     # Foreign Keys
-    sensor_id = Column(Integer, ForeignKey('tcc_etu_sensors.id', ondelete='CASCADE'),
+    sensor_id = Column(Integer, ForeignKey('tcc.etu_sensors.id', ondelete='CASCADE'),
                        nullable=False, index=True,
                        comment='FK to etu_sensors')
 
@@ -218,7 +218,7 @@ class ETUInstPickup(Base):
 
     # Table Metadata
     __table_args__ = (
-        {'comment': 'Instantaneous pickup settings'}
+        {'schema': 'tcc', 'comment': 'Instantaneous pickup settings'}
     )
 
     # Relationships
@@ -245,14 +245,14 @@ class ETUGFPUPickup(Base):
     - Used by many test_plans (TestPlan)
     """
 
-    __tablename__ = 'tcc_etu_gfpu_pickups'
+    __tablename__ = 'etu_gfpu_pickups'
 
     # Primary Key
     id = Column(Integer, primary_key=True, autoincrement=True,
                 comment='Auto-increment primary key')
 
     # Foreign Keys
-    sensor_id = Column(Integer, ForeignKey('tcc_etu_sensors.id', ondelete='CASCADE'),
+    sensor_id = Column(Integer, ForeignKey('tcc.etu_sensors.id', ondelete='CASCADE'),
                        nullable=False, index=True,
                        comment='FK to etu_sensors')
 
@@ -274,7 +274,7 @@ class ETUGFPUPickup(Base):
 
     # Table Metadata
     __table_args__ = (
-        {'comment': 'Ground fault pickup settings'}
+        {'schema': 'tcc', 'comment': 'Ground fault pickup settings'}
     )
 
     # Relationships

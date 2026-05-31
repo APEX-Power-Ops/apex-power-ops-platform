@@ -29,13 +29,13 @@ class BrkICCB(Base):
 
     Total records: 312 breakers
     """
-    __tablename__ = 'tcc_brk_iccb'
+    __tablename__ = 'brk_iccb'
 
     # Primary key
     id = Column(Integer, primary_key=True, autoincrement=True)
 
     # Foreign keys
-    manufacturer_id = Column(Integer, ForeignKey('tcc_manufacturers.id', ondelete='CASCADE'), nullable=False)
+    manufacturer_id = Column(Integer, ForeignKey('tcc.manufacturers.id', ondelete='CASCADE'), nullable=False)
 
     # Data columns
     name = Column(String(100), nullable=False)
@@ -50,6 +50,7 @@ class BrkICCB(Base):
     __table_args__ = (
         Index('idx_brk_iccb_manufacturer', 'manufacturer_id'),
         Index('idx_brk_iccb_name', 'name'),
+        {'schema': 'tcc'},
     )
 
     def __repr__(self):
@@ -68,13 +69,13 @@ class BrkMCCB(Base):
 
     Total records: 376 breakers
     """
-    __tablename__ = 'tcc_brk_mccb'
+    __tablename__ = 'brk_mccb'
 
     # Primary key
     id = Column(Integer, primary_key=True, autoincrement=True)
 
     # Foreign keys
-    manufacturer_id = Column(Integer, ForeignKey('tcc_manufacturers.id', ondelete='CASCADE'), nullable=False)
+    manufacturer_id = Column(Integer, ForeignKey('tcc.manufacturers.id', ondelete='CASCADE'), nullable=False)
 
     # Data columns
     name = Column(String(100), nullable=False)
@@ -89,6 +90,7 @@ class BrkMCCB(Base):
     __table_args__ = (
         Index('idx_brk_mccb_manufacturer', 'manufacturer_id'),
         Index('idx_brk_mccb_name', 'name'),
+        {'schema': 'tcc'},
     )
 
     def __repr__(self):
@@ -107,13 +109,13 @@ class BrkPCB(Base):
 
     Total records: 138 breakers
     """
-    __tablename__ = 'tcc_brk_pcb'
+    __tablename__ = 'brk_pcb'
 
     # Primary key
     id = Column(Integer, primary_key=True, autoincrement=True)
 
     # Foreign keys
-    manufacturer_id = Column(Integer, ForeignKey('tcc_manufacturers.id', ondelete='CASCADE'), nullable=False)
+    manufacturer_id = Column(Integer, ForeignKey('tcc.manufacturers.id', ondelete='CASCADE'), nullable=False)
 
     # Data columns
     name = Column(String(100), nullable=False)
@@ -128,6 +130,7 @@ class BrkPCB(Base):
     __table_args__ = (
         Index('idx_brk_pcb_manufacturer', 'manufacturer_id'),
         Index('idx_brk_pcb_name', 'name'),
+        {'schema': 'tcc'},
     )
 
     def __repr__(self):
@@ -152,13 +155,13 @@ class BrkICCBStyle(Base):
 
     Total records: 5,420 styles
     """
-    __tablename__ = 'tcc_brk_iccb_styles'
+    __tablename__ = 'brk_iccb_styles'
 
     # Primary key
     id = Column(Integer, primary_key=True, autoincrement=True)
 
     # Foreign keys
-    breaker_id = Column(Integer, ForeignKey('tcc_brk_iccb.id', ondelete='CASCADE'), nullable=False)
+    breaker_id = Column(Integer, ForeignKey('tcc.brk_iccb.id', ondelete='CASCADE'), nullable=False)
 
     # Data columns
     frame = Column(String(100), nullable=False)
@@ -176,6 +179,7 @@ class BrkICCBStyle(Base):
     __table_args__ = (
         Index('idx_iccb_styles_breaker', 'breaker_id'),
         Index('idx_iccb_styles_frame', 'frame'),
+        {'schema': 'tcc'},
     )
 
     def __repr__(self):
@@ -197,13 +201,13 @@ class BrkMCCBStyle(Base):
 
     Total records: 7,946 styles
     """
-    __tablename__ = 'tcc_brk_mccb_styles'
+    __tablename__ = 'brk_mccb_styles'
 
     # Primary key
     id = Column(Integer, primary_key=True, autoincrement=True)
 
     # Foreign keys
-    breaker_id = Column(Integer, ForeignKey('tcc_brk_mccb.id', ondelete='CASCADE'), nullable=False)
+    breaker_id = Column(Integer, ForeignKey('tcc.brk_mccb.id', ondelete='CASCADE'), nullable=False)
 
     # Data columns
     frame = Column(String(100), nullable=False)
@@ -224,6 +228,7 @@ class BrkMCCBStyle(Base):
     __table_args__ = (
         Index('idx_mccb_styles_breaker', 'breaker_id'),
         Index('idx_mccb_styles_frame', 'frame'),
+        {'schema': 'tcc'},
     )
 
     def __repr__(self):
@@ -244,13 +249,13 @@ class BrkPCBStyle(Base):
 
     Total records: 856 styles
     """
-    __tablename__ = 'tcc_brk_pcb_styles'
+    __tablename__ = 'brk_pcb_styles'
 
     # Primary key
     id = Column(Integer, primary_key=True, autoincrement=True)
 
     # Foreign keys
-    breaker_id = Column(Integer, ForeignKey('tcc_brk_pcb.id', ondelete='CASCADE'), nullable=False)
+    breaker_id = Column(Integer, ForeignKey('tcc.brk_pcb.id', ondelete='CASCADE'), nullable=False)
 
     # Data columns
     frame = Column(String(100), nullable=False)
@@ -268,6 +273,7 @@ class BrkPCBStyle(Base):
     __table_args__ = (
         Index('idx_pcb_styles_breaker', 'breaker_id'),
         Index('idx_pcb_styles_frame', 'frame'),
+        {'schema': 'tcc'},
     )
 
     def __repr__(self):

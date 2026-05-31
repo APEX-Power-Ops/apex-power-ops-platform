@@ -6,7 +6,7 @@ SQLAlchemy ORM models for TCC v5.0 Supabase PostgreSQL database.
 This package contains models for the 33-table active ORM-backed backend slice.
 
 The live Supabase database currently contains additional accepted TCC tables,
-including EMT tables and `tcc_etu_settings`, that remain intentionally outside
+including EMT tables and `tcc.etu_settings`, that remain intentionally outside
 this active model package until Phase 3 reconciliation or later runtime work
 requires ORM coverage.
 

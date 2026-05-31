@@ -19,7 +19,7 @@ class Manufacturer(Base):
     Examples: ABB, Eaton, Schneider Electric, Siemens, GE, Square D, etc.
     Total records: 450 manufacturers
     """
-    __tablename__ = 'tcc_manufacturers'
+    __tablename__ = 'manufacturers'
 
     # Primary key
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -27,6 +27,8 @@ class Manufacturer(Base):
     # Data columns
     name = Column('mfr_name', String(100), nullable=False, unique=True)
     created_at = Column(DateTime, server_default=func.now())
+
+    __table_args__ = {'schema': 'tcc'}
 
     # Relationships
     trip_types = relationship("TripType", back_populates="manufacturer", cascade="all, delete-orphan")
@@ -50,13 +52,13 @@ class TripType(Base):
 
     Total records: 1,276 trip types
     """
-    __tablename__ = 'tcc_trip_types'
+    __tablename__ = 'trip_types'
 
     # Primary key
     id = Column(Integer, primary_key=True, autoincrement=True)
 
     # Foreign keys
-    manufacturer_id = Column(Integer, ForeignKey('tcc_manufacturers.id', ondelete='CASCADE'), nullable=False)
+    manufacturer_id = Column(Integer, ForeignKey('tcc.manufacturers.id', ondelete='CASCADE'), nullable=False)
 
     # Data columns
     name = Column(String(100), nullable=False)
@@ -71,6 +73,7 @@ class TripType(Base):
         UniqueConstraint('manufacturer_id', 'name', name='trip_types_mfg_id_name_key'),
         Index('idx_trip_types_manufacturer', 'manufacturer_id'),
         Index('idx_trip_types_name', 'name'),
+        {'schema': 'tcc'},
     )
 
     def __repr__(self):
@@ -93,14 +96,14 @@ class TripStyle(Base):
 
     Total records: 1,368 trip styles
     """
-    __tablename__ = 'tcc_trip_styles'
+    __tablename__ = 'trip_styles'
 
     # Primary key
     id = Column(Integer, primary_key=True, autoincrement=True)
 
     # Foreign keys
-    trip_type_id = Column(Integer, ForeignKey('tcc_trip_types.id', ondelete='CASCADE'), nullable=False)
-    manufacturer_id = Column(Integer, ForeignKey('tcc_manufacturers.id', ondelete='CASCADE'), nullable=False)
+    trip_type_id = Column(Integer, ForeignKey('tcc.trip_types.id', ondelete='CASCADE'), nullable=False)
+    manufacturer_id = Column(Integer, ForeignKey('tcc.manufacturers.id', ondelete='CASCADE'), nullable=False)
 
     # Data columns
     name = Column(String(100), nullable=False)
@@ -120,6 +123,7 @@ class TripStyle(Base):
         Index('idx_trip_styles_type', 'trip_type_id'),
         Index('idx_trip_styles_manufacturer', 'manufacturer_id'),
         Index('idx_trip_styles_name', 'name'),
+        {'schema': 'tcc'},
     )
 
     def __repr__(self):

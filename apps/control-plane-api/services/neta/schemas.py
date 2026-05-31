@@ -247,7 +247,7 @@ class SensorCalcContext(BaseModel):
     ltd_tol_hi: Optional[float] = None
     ltd_tol_lo: Optional[float] = None
 
-    # Maintenance mode context (from LEFT JOIN to tcc_etu_sensor_maint)
+    # Maintenance mode context (from LEFT JOIN to tcc.etu_sensor_maint)
     maint_available: bool = False          # runtime toggle (original Access DB value)
     maint_capable: bool = False            # derived: True when MAINT config data exists
     maint_ltpu_reduction: Optional[float] = None
@@ -280,7 +280,7 @@ class DelayBandOption(BaseModel):
 
 
 class LtdMultiplierOption(BaseModel):
-    """An LTD multiplier from tcc_etu_ltpu_multipliers."""
+    """An LTD multiplier from tcc.etu_ltpu_multipliers."""
     value: float
     label: Optional[str] = None
 
