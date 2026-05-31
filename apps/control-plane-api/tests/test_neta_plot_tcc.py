@@ -219,15 +219,15 @@ def _make_fake_execute(calc_data=CALC_DATA, eval_data=EVAL_DATA):
             row = MagicMock()
             row.result = eval_data
             result.fetchone.return_value = row
-        elif "tcc_etu_ltd_bands" in sql_text:
+        elif "tcc.etu_ltd_bands" in sql_text:
             row = MagicMock()
             row._mapping = {"open_time": 3.5, "clear_time": 3.0, "ordinal": 2, "is_default": False}
             result.fetchone.return_value = row
-        elif "tcc_etu_std_bands" in sql_text:
+        elif "tcc.etu_std_bands" in sql_text:
             row = MagicMock()
             row._mapping = {"open_time": 2.0, "clear_time": 2.5, "ordinal": 1, "is_default": True}
             result.fetchone.return_value = row
-        elif "tcc_etu_gfd_bands" in sql_text:
+        elif "tcc.etu_gfd_bands" in sql_text:
             row = MagicMock()
             row._mapping = {"open_time": 1.5, "clear_time": 1.8, "ordinal": 1, "is_default": True}
             result.fetchone.return_value = row
@@ -1154,15 +1154,15 @@ class TestGEPresetNoWarningContract:
                 row = MagicMock()
                 row.result = GE_PRESET_CLEAN_CALC_DATA
                 result.fetchone.return_value = row
-            elif "FROM tcc_etu_ltd_bands" in sql_text:
+            elif "FROM tcc.etu_ltd_bands" in sql_text:
                 row = MagicMock()
                 row._mapping = {"open_time": 6.0, "clear_time": None, "ordinal": 4, "is_default": False}
                 result.fetchone.return_value = row
-            elif "FROM tcc_etu_std_bands" in sql_text:
+            elif "FROM tcc.etu_std_bands" in sql_text:
                 row = MagicMock()
                 row._mapping = {"open_time": 0.21, "clear_time": 0.31, "ordinal": 2, "is_default": False}
                 result.fetchone.return_value = row
-            elif "FROM tcc_etu_gfd_bands" in sql_text:
+            elif "FROM tcc.etu_gfd_bands" in sql_text:
                 row = MagicMock()
                 row._mapping = {"open_time": 0.21, "clear_time": 0.31, "ordinal": 2, "is_default": False}
                 result.fetchone.return_value = row

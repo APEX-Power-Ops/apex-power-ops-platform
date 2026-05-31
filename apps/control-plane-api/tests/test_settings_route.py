@@ -83,25 +83,25 @@ class _FakeSettingsDb:
             return _Result(_MappingRow(result=self.settings_payload))
         if "vw_sensor_calc_context" in sql:
             return _Result(_MappingRow(mapping=self.context_mapping))
-        if "FROM tcc_etu_" in sql and "GROUP BY p.sensor_id" in sql:
+        if "FROM tcc.etu_" in sql and "GROUP BY p.sensor_id" in sql:
             return _Result([])
-        if "FROM tcc_etu_plugs" in sql:
+        if "FROM tcc.etu_plugs" in sql:
             return _Result(self.direct_rows.get("plugs", []))
-        if "FROM tcc_etu_ltpu_pickups" in sql:
+        if "FROM tcc.etu_ltpu_pickups" in sql:
             return _Result(self.direct_rows.get("ltpu", []))
-        if "FROM tcc_etu_ltpu_multipliers" in sql:
+        if "FROM tcc.etu_ltpu_multipliers" in sql:
             return _Result(self.direct_rows.get("multipliers", []))
-        if "FROM tcc_etu_stpu_pickups" in sql:
+        if "FROM tcc.etu_stpu_pickups" in sql:
             return _Result(self.direct_rows.get("stpu", []))
-        if "FROM tcc_etu_inst_pickups" in sql:
+        if "FROM tcc.etu_inst_pickups" in sql:
             return _Result(self.direct_rows.get("inst", []))
-        if "FROM tcc_etu_gfpu_pickups" in sql:
+        if "FROM tcc.etu_gfpu_pickups" in sql:
             return _Result(self.direct_rows.get("gfpu", []))
-        if "FROM tcc_etu_ltd_bands" in sql:
+        if "FROM tcc.etu_ltd_bands" in sql:
             return _Result(self.ltd_band_rows)
-        if "FROM tcc_etu_std_bands" in sql:
+        if "FROM tcc.etu_std_bands" in sql:
             return _Result(self.std_band_rows)
-        if "FROM tcc_etu_gfd_bands" in sql:
+        if "FROM tcc.etu_gfd_bands" in sql:
             return _Result(self.gfd_band_rows)
         raise AssertionError(f"Unexpected SQL: {sql}")
 

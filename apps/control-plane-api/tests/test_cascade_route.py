@@ -390,7 +390,7 @@ def test_cascade_count_query_combines_cross_half_cte_and_plug_join(client):
         first_call = fake_db.calls[0]
         assert "etu_breaker_combined" in first_call["statement"]
         assert "SELECT DISTINCT manufacturer_id FROM etu_breaker_combined" in first_call["statement"]
-        assert "JOIN tcc_etu_plugs p_filter ON p_filter.sensor_id = v.sensor_id AND p_filter.value = :plug_value" in first_call["statement"]
+        assert "JOIN tcc.etu_plugs p_filter ON p_filter.sensor_id = v.sensor_id AND p_filter.value = :plug_value" in first_call["statement"]
         assert "COUNT(DISTINCT v.sensor_id)" in first_call["statement"]
         assert first_call["params"] == {
             "manufacturer_id": 9,
@@ -488,7 +488,7 @@ def test_cascade_plug_scope_query_stays_independent_from_selected_plug(client):
         plug_scope_call = fake_db.calls[4]
         assert "p_filter.value = :plug_value" in count_call["statement"]
         assert count_call["params"]["plug_value"] == 800.0
-        assert "JOIN tcc_etu_plugs p ON p.sensor_id = v.sensor_id" in plug_scope_call["statement"]
+        assert "JOIN tcc.etu_plugs p ON p.sensor_id = v.sensor_id" in plug_scope_call["statement"]
         assert "p_filter" not in plug_scope_call["statement"]
         assert "plug_value" not in plug_scope_call["params"]
         assert plug_scope_call["params"] == {"trip_style_id": 3}
@@ -529,7 +529,7 @@ def test_etu_search_count_query_reuses_plug_join_and_scope_filters(client):
         results_call = fake_db.calls[1]
         plug_map_call = fake_db.calls[2]
         assert "COUNT(DISTINCT v.sensor_id)" in count_call["statement"]
-        assert "JOIN tcc_etu_plugs p_filter ON p_filter.sensor_id = v.sensor_id AND p_filter.value = :plug_value" in count_call["statement"]
+        assert "JOIN tcc.etu_plugs p_filter ON p_filter.sensor_id = v.sensor_id AND p_filter.value = :plug_value" in count_call["statement"]
         assert "v.trip_style_id = :trip_style_id" in count_call["statement"]
         assert "v.sensor_id = :sensor_id" in count_call["statement"]
         assert count_call["params"] == {

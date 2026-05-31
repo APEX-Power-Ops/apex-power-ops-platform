@@ -32,7 +32,7 @@ SELECT
     COUNT(*) FILTER (
         WHERE POSITION('reduction' IN COALESCE(params_json::text, '')) > 0
     ) AS params_has_any_reduction_text
-FROM tcc_etu_sensor_maint
+FROM tcc.etu_sensor_maint
 """
 
 
@@ -44,7 +44,7 @@ SELECT
     maint_ltpu_reduction,
     maint_stpu_reduction,
     params_json::text AS params_json
-FROM tcc_etu_sensor_maint
+FROM tcc.etu_sensor_maint
 WHERE maint_ltpu_reduction IS NOT NULL
    OR maint_stpu_reduction IS NOT NULL
    OR POSITION('reduction' IN COALESCE(params_json::text, '')) > 0

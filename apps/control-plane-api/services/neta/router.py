@@ -124,10 +124,10 @@ router = APIRouter(prefix="/api/v1/neta", tags=["neta"])
 
 
 _PICKUP_TABLES = {
-    "ltpu": "tcc_etu_ltpu_pickups",
-    "stpu": "tcc_etu_stpu_pickups",
-    "inst": "tcc_etu_inst_pickups",
-    "gfpu": "tcc_etu_gfpu_pickups",
+    "ltpu": "tcc.etu_ltpu_pickups",
+    "stpu": "tcc.etu_stpu_pickups",
+    "inst": "tcc.etu_inst_pickups",
+    "gfpu": "tcc.etu_gfpu_pickups",
 }
 
 _RELAY_SUPPORTED_MODEL_CODES = {1, 2, 3, 4, 5, 6}
@@ -1042,7 +1042,7 @@ def _recover_catalog_pickup_values(
                 f"""
                 SELECT array_agg(p.value ORDER BY p.value) AS values
                 FROM {table_name} p
-                JOIN tcc_etu_sensors s ON s.id = p.sensor_id
+                JOIN tcc.etu_sensors s ON s.id = p.sensor_id
                 WHERE {where_clause}
                 GROUP BY p.sensor_id
                 HAVING count(*) > 2 AND min(p.value) = :lower AND max(p.value) = :upper
@@ -1109,7 +1109,7 @@ def _dedupe_delay_settings(bands: list[dict] | None) -> list[dict]:
 
 
 def _load_delay_band_settings(db: Session, table_name: str, sensor_id: int) -> list[dict]:
-    if table_name == "tcc_etu_ltd_bands":
+    if table_name == "tcc.etu_ltd_bands":
         rows = db.execute(
             text(
                 """
@@ -1119,14 +1119,14 @@ def _load_delay_band_settings(db: Session, table_name: str, sensor_id: int) -> l
                     ltd_setting AS open_time,
                     NULL::numeric AS clear_time,
                     false AS is_default
-                FROM tcc_etu_ltd_bands
+                FROM tcc.etu_ltd_bands
                 WHERE sensor_id = :sensor_id
                 ORDER BY ltd_setting NULLS LAST, id
                 """
             ),
             {"sensor_id": sensor_id},
         ).fetchall()
-    elif table_name == "tcc_etu_std_bands":
+    elif table_name == "tcc.etu_std_bands":
         rows = db.execute(
             text(
                 """
@@ -1136,14 +1136,14 @@ def _load_delay_band_settings(db: Session, table_name: str, sensor_id: int) -> l
                     std_open AS open_time,
                     std_clear AS clear_time,
                     false AS is_default
-                FROM tcc_etu_std_bands
+                FROM tcc.etu_std_bands
                 WHERE sensor_id = :sensor_id
                 ORDER BY ordinal NULLS LAST, std_open NULLS LAST
                 """
             ),
             {"sensor_id": sensor_id},
         ).fetchall()
-    elif table_name == "tcc_etu_gfd_bands":
+    elif table_name == "tcc.etu_gfd_bands":
         rows = db.execute(
             text(
                 """
@@ -1153,7 +1153,7 @@ def _load_delay_band_settings(db: Session, table_name: str, sensor_id: int) -> l
                     gfd_open AS open_time,
                     gfd_clear AS clear_time,
                     false AS is_default
-                FROM tcc_etu_gfd_bands
+                FROM tcc.etu_gfd_bands
                 WHERE sensor_id = :sensor_id
                 ORDER BY ordinal NULLS LAST, gfd_open NULLS LAST
                 """
@@ -1238,13 +1238,13 @@ def _load_direct_numeric_settings(db: Session, table_name: str, value_column: st
 
 def _load_direct_available_settings(db: Session, sensor_id: int) -> dict[str, object]:
     return {
-        "plug_values": _load_direct_numeric_settings(db, "tcc_etu_plugs", "value", sensor_id),
-        "ltpu_settings": _load_direct_numeric_settings(db, "tcc_etu_ltpu_pickups", "ltd_setting", sensor_id),
-        "ltd_settings": _load_delay_band_settings(db, "tcc_etu_ltd_bands", sensor_id),
-        "ltd_multipliers": _load_direct_numeric_settings(db, "tcc_etu_ltpu_multipliers", "ltd_c", sensor_id),
-        "stpu_settings": _load_direct_numeric_settings(db, "tcc_etu_stpu_pickups", "stp_setting", sensor_id),
-        "inst_settings": _load_direct_numeric_settings(db, "tcc_etu_inst_pickups", "ip_setting", sensor_id),
-        "gfpu_settings": _load_direct_numeric_settings(db, "tcc_etu_gfpu_pickups", "gfp_setting", sensor_id),
+        "plug_values": _load_direct_numeric_settings(db, "tcc.etu_plugs", "value", sensor_id),
+        "ltpu_settings": _load_direct_numeric_settings(db, "tcc.etu_ltpu_pickups", "ltd_setting", sensor_id),
+        "ltd_settings": _load_delay_band_settings(db, "tcc.etu_ltd_bands", sensor_id),
+        "ltd_multipliers": _load_direct_numeric_settings(db, "tcc.etu_ltpu_multipliers", "ltd_c", sensor_id),
+        "stpu_settings": _load_direct_numeric_settings(db, "tcc.etu_stpu_pickups", "stp_setting", sensor_id),
+        "inst_settings": _load_direct_numeric_settings(db, "tcc.etu_inst_pickups", "ip_setting", sensor_id),
+        "gfpu_settings": _load_direct_numeric_settings(db, "tcc.etu_gfpu_pickups", "gfp_setting", sensor_id),
     }
 
 
@@ -1275,7 +1275,7 @@ def _load_direct_delay_band(
     sensor_id: int,
     setting: Optional[float],
 ):
-    if table_name == "tcc_etu_ltd_bands":
+    if table_name == "tcc.etu_ltd_bands":
         if setting is not None:
             matched_row = db.execute(
                 text(
@@ -1284,7 +1284,7 @@ def _load_direct_delay_band(
                            NULL::numeric AS clear_time,
                            id AS ordinal,
                            false AS is_default
-                    FROM tcc_etu_ltd_bands
+                    FROM tcc.etu_ltd_bands
                     WHERE sensor_id = :sensor_id AND ltd_setting = :setting
                     ORDER BY id
                     LIMIT 1
@@ -1302,7 +1302,7 @@ def _load_direct_delay_band(
                        NULL::numeric AS clear_time,
                        id AS ordinal,
                        false AS is_default
-                FROM tcc_etu_ltd_bands
+                FROM tcc.etu_ltd_bands
                 WHERE sensor_id = :sensor_id
                 ORDER BY ltd_setting, id
                 LIMIT 1
@@ -1311,7 +1311,7 @@ def _load_direct_delay_band(
             {"sensor_id": sensor_id},
         ).fetchone()
 
-    if table_name == "tcc_etu_std_bands":
+    if table_name == "tcc.etu_std_bands":
         if setting is not None:
             matched_row = db.execute(
                 text(
@@ -1320,7 +1320,7 @@ def _load_direct_delay_band(
                            std_clear AS clear_time,
                            ordinal,
                            false AS is_default
-                    FROM tcc_etu_std_bands
+                    FROM tcc.etu_std_bands
                     WHERE sensor_id = :sensor_id AND std_open = :setting
                     ORDER BY ordinal
                     LIMIT 1
@@ -1338,7 +1338,7 @@ def _load_direct_delay_band(
                        std_clear AS clear_time,
                        ordinal,
                        false AS is_default
-                FROM tcc_etu_std_bands
+                FROM tcc.etu_std_bands
                 WHERE sensor_id = :sensor_id
                 ORDER BY ordinal, std_open
                 LIMIT 1
@@ -1347,7 +1347,7 @@ def _load_direct_delay_band(
             {"sensor_id": sensor_id},
         ).fetchone()
 
-    if table_name == "tcc_etu_gfd_bands":
+    if table_name == "tcc.etu_gfd_bands":
         if setting is not None:
             matched_row = db.execute(
                 text(
@@ -1356,7 +1356,7 @@ def _load_direct_delay_band(
                            gfd_clear AS clear_time,
                            ordinal,
                            false AS is_default
-                    FROM tcc_etu_gfd_bands
+                    FROM tcc.etu_gfd_bands
                     WHERE sensor_id = :sensor_id AND gfd_open = :setting
                     ORDER BY ordinal
                     LIMIT 1
@@ -1374,7 +1374,7 @@ def _load_direct_delay_band(
                        gfd_clear AS clear_time,
                        ordinal,
                        false AS is_default
-                FROM tcc_etu_gfd_bands
+                FROM tcc.etu_gfd_bands
                 WHERE sensor_id = :sensor_id
                 ORDER BY ordinal, gfd_open
                 LIMIT 1
@@ -1549,9 +1549,9 @@ WITH etu_breaker_combined AS (
         b.name AS breaker_name,
         s.id AS breaker_style_id,
         s.frame AS breaker_style_name
-    FROM tcc_brk_iccb b
-    INNER JOIN tcc_brk_iccb_styles s ON s.breaker_id = b.id
-    INNER JOIN tcc_manufacturers m ON m.id = b.manufacturer_id
+    FROM tcc.brk_iccb b
+    INNER JOIN tcc.brk_iccb_styles s ON s.breaker_id = b.id
+    INNER JOIN tcc.manufacturers m ON m.id = b.manufacturer_id
     UNION ALL
     SELECT
         'MCCB'::text,
@@ -1561,9 +1561,9 @@ WITH etu_breaker_combined AS (
         b.name,
         s.id,
         s.frame
-    FROM tcc_brk_mccb b
-    INNER JOIN tcc_brk_mccb_styles s ON s.breaker_id = b.id
-    INNER JOIN tcc_manufacturers m ON m.id = b.manufacturer_id
+    FROM tcc.brk_mccb b
+    INNER JOIN tcc.brk_mccb_styles s ON s.breaker_id = b.id
+    INNER JOIN tcc.manufacturers m ON m.id = b.manufacturer_id
     UNION ALL
     SELECT
         'PCB'::text,
@@ -1573,9 +1573,9 @@ WITH etu_breaker_combined AS (
         b.name,
         s.id,
         s.frame
-    FROM tcc_brk_pcb b
-    INNER JOIN tcc_brk_pcb_styles s ON s.breaker_id = b.id
-    INNER JOIN tcc_manufacturers m ON m.id = b.manufacturer_id
+    FROM tcc.brk_pcb b
+    INNER JOIN tcc.brk_pcb_styles s ON s.breaker_id = b.id
+    INNER JOIN tcc.manufacturers m ON m.id = b.manufacturer_id
 )
 """
 
@@ -1648,7 +1648,7 @@ def _build_cascade_plug_join(
 
     qualified_sensor_id = f"{alias}.sensor_id" if alias else "sensor_id"
     return (
-        f"JOIN tcc_etu_plugs p_filter ON p_filter.sensor_id = {qualified_sensor_id} AND p_filter.value = :plug_value",
+        f"JOIN tcc.etu_plugs p_filter ON p_filter.sensor_id = {qualified_sensor_id} AND p_filter.value = :plug_value",
         {"plug_value": float(plug_value)},
     )
 
@@ -1688,7 +1688,7 @@ def _load_etu_plug_value_map_sql(db: Session, sensor_ids: list[int]) -> dict[int
         text(
             f"""
             SELECT sensor_id, value
-            FROM tcc_etu_plugs
+            FROM tcc.etu_plugs
             WHERE sensor_id IN ({in_clause})
             ORDER BY sensor_id, value
             """
@@ -1973,13 +1973,13 @@ def _authoritative_delay_surface(
     fallback_clear: Optional[float] = None,
 ) -> tuple[Optional[float], Optional[float], Optional[float], str]:
     if element_key == "ltd":
-        band_row = _load_direct_delay_band(db, "tcc_etu_ltd_bands", sensor_id, setting)
+        band_row = _load_direct_delay_band(db, "tcc.etu_ltd_bands", sensor_id, setting)
         if band_row is not None:
             expected_time, time_low, time_high = _band_row_to_delay_surface(band_row)
             return expected_time, time_low, time_high, "band_table"
 
     if element_key == "std":
-        band_row = _load_direct_delay_band(db, "tcc_etu_std_bands", sensor_id, setting)
+        band_row = _load_direct_delay_band(db, "tcc.etu_std_bands", sensor_id, setting)
         if band_row is not None:
             expected_time, time_low, time_high = _band_row_to_delay_surface(band_row)
             return expected_time, time_low, time_high, "band_table"
@@ -1998,7 +1998,7 @@ def _authoritative_delay_surface(
                     time_high = direct_clear
                 return expected_time, time_low, time_high, "maint_profile"
 
-        band_row = _load_direct_delay_band(db, "tcc_etu_gfd_bands", sensor_id, setting)
+        band_row = _load_direct_delay_band(db, "tcc.etu_gfd_bands", sensor_id, setting)
         if band_row is not None:
             expected_time, time_low, time_high = _band_row_to_delay_surface(band_row)
             return expected_time, time_low, time_high, "band_table"
@@ -2038,10 +2038,10 @@ WITH tmt_catalog AS (
         s.id AS breaker_style_id,
         f.size AS frame_size,
         a.rating AS amp_rating
-    FROM tcc_tmt_frames f
-    INNER JOIN tcc_brk_iccb_styles s ON s.id = f.breaker_style_id
-    INNER JOIN tcc_brk_iccb b ON b.id = s.breaker_id
-    LEFT JOIN tcc_tmt_amps a ON a.frame_id = f.id
+    FROM tcc.tmt_frames f
+    INNER JOIN tcc.brk_iccb_styles s ON s.id = f.breaker_style_id
+    INNER JOIN tcc.brk_iccb b ON b.id = s.breaker_id
+    LEFT JOIN tcc.tmt_amps a ON a.frame_id = f.id
     WHERE UPPER(f.breaker_class) = 'ICCB'
 
     UNION ALL
@@ -2054,10 +2054,10 @@ WITH tmt_catalog AS (
         s.id AS breaker_style_id,
         f.size AS frame_size,
         a.rating AS amp_rating
-    FROM tcc_tmt_frames f
-    INNER JOIN tcc_brk_mccb_styles s ON s.id = f.breaker_style_id
-    INNER JOIN tcc_brk_mccb b ON b.id = s.breaker_id
-    LEFT JOIN tcc_tmt_amps a ON a.frame_id = f.id
+    FROM tcc.tmt_frames f
+    INNER JOIN tcc.brk_mccb_styles s ON s.id = f.breaker_style_id
+    INNER JOIN tcc.brk_mccb b ON b.id = s.breaker_id
+    LEFT JOIN tcc.tmt_amps a ON a.frame_id = f.id
     WHERE UPPER(f.breaker_class) = 'MCCB'
 
     UNION ALL
@@ -2070,10 +2070,10 @@ WITH tmt_catalog AS (
         s.id AS breaker_style_id,
         f.size AS frame_size,
         a.rating AS amp_rating
-    FROM tcc_tmt_frames f
-    INNER JOIN tcc_brk_pcb_styles s ON s.id = f.breaker_style_id
-    INNER JOIN tcc_brk_pcb b ON b.id = s.breaker_id
-    LEFT JOIN tcc_tmt_amps a ON a.frame_id = f.id
+    FROM tcc.tmt_frames f
+    INNER JOIN tcc.brk_pcb_styles s ON s.id = f.breaker_style_id
+    INNER JOIN tcc.brk_pcb b ON b.id = s.breaker_id
+    LEFT JOIN tcc.tmt_amps a ON a.frame_id = f.id
     WHERE UPPER(f.breaker_class) = 'PCB'
 )
 """
@@ -2286,15 +2286,19 @@ def _normalize_mapping(data: dict[str, object]) -> dict[str, object]:
 
 
 def _get_table_columns(db: Session, table_name: str) -> set[str]:
+    table_schema, bare_table_name = (
+        table_name.split(".", 1) if "." in table_name else (None, table_name)
+    )
     rows = db.execute(
         text(
             """
             SELECT column_name
             FROM information_schema.columns
             WHERE table_name = :table_name
+              AND (:table_schema IS NULL OR table_schema = :table_schema)
             """
         ),
-        {"table_name": table_name},
+        {"table_schema": table_schema, "table_name": bare_table_name},
     ).fetchall()
     return {row[0] for row in rows}
 
@@ -2328,13 +2332,13 @@ def _select_expr(table_alias: str, column_name: Optional[str], result_alias: str
 
 def _resolve_emt_contract_columns(db: Session) -> dict[str, dict[str, Optional[str]]]:
     table_columns = {
-        "tcc_emt": _get_table_columns(db, "tcc_emt"),
-        "tcc_emt_frames": _get_table_columns(db, "tcc_emt_frames"),
-        "tcc_emt_frame_amps": _get_table_columns(db, "tcc_emt_frame_amps"),
-        "tcc_emt_sections": _get_table_columns(db, "tcc_emt_sections"),
-        "tcc_emt_pickups": _get_table_columns(db, "tcc_emt_pickups"),
-        "tcc_emt_band_names": _get_table_columns(db, "tcc_emt_band_names"),
-        "tcc_emt_curves": _get_table_columns(db, "tcc_emt_curves"),
+        "tcc.emt": _get_table_columns(db, "tcc.emt"),
+        "tcc.emt_frames": _get_table_columns(db, "tcc.emt_frames"),
+        "tcc.emt_frame_amps": _get_table_columns(db, "tcc.emt_frame_amps"),
+        "tcc.emt_sections": _get_table_columns(db, "tcc.emt_sections"),
+        "tcc.emt_pickups": _get_table_columns(db, "tcc.emt_pickups"),
+        "tcc.emt_band_names": _get_table_columns(db, "tcc.emt_band_names"),
+        "tcc.emt_curves": _get_table_columns(db, "tcc.emt_curves"),
     }
 
     if any(not columns for columns in table_columns.values()):
@@ -2346,34 +2350,34 @@ def _resolve_emt_contract_columns(db: Session) -> dict[str, dict[str, Optional[s
             ),
         )
 
-    emt_cols = table_columns["tcc_emt"]
-    frame_cols = table_columns["tcc_emt_frames"]
-    amp_cols = table_columns["tcc_emt_frame_amps"]
-    section_cols = table_columns["tcc_emt_sections"]
-    pickup_cols = table_columns["tcc_emt_pickups"]
-    band_cols = table_columns["tcc_emt_band_names"]
-    curve_cols = table_columns["tcc_emt_curves"]
+    emt_cols = table_columns["tcc.emt"]
+    frame_cols = table_columns["tcc.emt_frames"]
+    amp_cols = table_columns["tcc.emt_frame_amps"]
+    section_cols = table_columns["tcc.emt_sections"]
+    pickup_cols = table_columns["tcc.emt_pickups"]
+    band_cols = table_columns["tcc.emt_band_names"]
+    curve_cols = table_columns["tcc.emt_curves"]
 
     return {
         "emt": {
-            "manufacturer_id": _pick_required_column("tcc_emt", emt_cols, "manufacturer id", ("manufacturer_id", "mfr_id")),
-            "type_name": _pick_required_column("tcc_emt", emt_cols, "type name", ("type_name", "type")),
-            "style_name": _pick_required_column("tcc_emt", emt_cols, "style name", ("style_name", "style")),
-            "tcc_number": _pick_required_column("tcc_emt", emt_cols, "TCC number", ("tcc_number", "tcc_no", "tccnumber")),
-            "trip_char": _pick_required_column("tcc_emt", emt_cols, "trip characteristic", ("trip_char",)),
-            "trip_plug": _pick_required_column("tcc_emt", emt_cols, "trip plug", ("trip_plug",)),
+            "manufacturer_id": _pick_required_column("tcc.emt", emt_cols, "manufacturer id", ("manufacturer_id", "mfr_id")),
+            "type_name": _pick_required_column("tcc.emt", emt_cols, "type name", ("type_name", "type")),
+            "style_name": _pick_required_column("tcc.emt", emt_cols, "style name", ("style_name", "style")),
+            "tcc_number": _pick_required_column("tcc.emt", emt_cols, "TCC number", ("tcc_number", "tcc_no", "tccnumber")),
+            "trip_char": _pick_required_column("tcc.emt", emt_cols, "trip characteristic", ("trip_char",)),
+            "trip_plug": _pick_required_column("tcc.emt", emt_cols, "trip plug", ("trip_plug",)),
         },
         "frames": {
-            "emt_id": _pick_required_column("tcc_emt_frames", frame_cols, "EMT parent", ("emt_id", "style_id")),
-            "frame_size": _pick_required_column("tcc_emt_frames", frame_cols, "frame size", ("frame_size", "size", "framesize")),
-            "frame_desc": _pick_required_column("tcc_emt_frames", frame_cols, "frame description", ("frame_desc", "frame_description", "framedesc")),
+            "emt_id": _pick_required_column("tcc.emt_frames", frame_cols, "EMT parent", ("emt_id", "style_id")),
+            "frame_size": _pick_required_column("tcc.emt_frames", frame_cols, "frame size", ("frame_size", "size", "framesize")),
+            "frame_desc": _pick_required_column("tcc.emt_frames", frame_cols, "frame description", ("frame_desc", "frame_description", "framedesc")),
         },
         "amps": {
-            "frame_id": _pick_required_column("tcc_emt_frame_amps", amp_cols, "frame parent", ("frame_id", "frameid")),
-            "rating": _pick_required_column("tcc_emt_frame_amps", amp_cols, "amp rating", ("rating", "trip_amp", "tripamp")),
+            "frame_id": _pick_required_column("tcc.emt_frame_amps", amp_cols, "frame parent", ("frame_id", "frameid")),
+            "rating": _pick_required_column("tcc.emt_frame_amps", amp_cols, "amp rating", ("rating", "trip_amp", "tripamp")),
         },
         "sections": {
-            "frame_id": _pick_required_column("tcc_emt_sections", section_cols, "frame parent", ("frame_id", "frameid")),
+            "frame_id": _pick_required_column("tcc.emt_sections", section_cols, "frame parent", ("frame_id", "frameid")),
             "name": _pick_optional_column(section_cols, ("name", "section_name")),
             "sec_char": _pick_optional_column(section_cols, ("sec_char", "section_char")),
             "curve_type": _pick_optional_column(section_cols, ("curve_type", "curvetype")),
@@ -2385,18 +2389,18 @@ def _resolve_emt_contract_columns(db: Session) -> dict[str, dict[str, Optional[s
             "pickup_tol_hi": _pick_optional_column(section_cols, ("pickup_tol_hi", "pickup_toler_high", "pickuptolerhigh")),
         },
         "pickups": {
-            "section_id": _pick_required_column("tcc_emt_pickups", pickup_cols, "section parent", ("section_id", "sec_id", "secid")),
+            "section_id": _pick_required_column("tcc.emt_pickups", pickup_cols, "section parent", ("section_id", "sec_id", "secid")),
             "setting": _pick_optional_column(pickup_cols, ("setting",)),
             "description": _pick_optional_column(pickup_cols, ("description", "label")),
         },
         "bands": {
-            "section_id": _pick_required_column("tcc_emt_band_names", band_cols, "section parent", ("section_id", "sec_id", "secid")),
+            "section_id": _pick_required_column("tcc.emt_band_names", band_cols, "section parent", ("section_id", "sec_id", "secid")),
             "band_name": _pick_optional_column(band_cols, ("band_name", "name")),
             "ordinal": _pick_optional_column(band_cols, ("ordinal",)),
             "current_at": _pick_optional_column(band_cols, ("current_at", "currentat")),
         },
         "curves": {
-            "band_id": _pick_required_column("tcc_emt_curves", curve_cols, "band parent", ("band_id", "parent_id", "parentid")),
+            "band_id": _pick_required_column("tcc.emt_curves", curve_cols, "band parent", ("band_id", "parent_id", "parentid")),
             "class": _pick_optional_column(curve_cols, ("class", "class_")),
         },
     }
@@ -2453,17 +2457,17 @@ def _search_emt_frames(
             f.{cols['frames']['frame_desc']} AS frame_desc,
             COALESCE(amp_counts.amp_rating_count, 0) AS amp_rating_count,
             COALESCE(sec_counts.section_count, 0) AS section_count
-        FROM tcc_emt_frames f
-        INNER JOIN tcc_emt e ON f.{cols['frames']['emt_id']} = e.id
-        LEFT JOIN tcc_manufacturers m ON m.id = e.{cols['emt']['manufacturer_id']}
+        FROM tcc.emt_frames f
+        INNER JOIN tcc.emt e ON f.{cols['frames']['emt_id']} = e.id
+        LEFT JOIN tcc.manufacturers m ON m.id = e.{cols['emt']['manufacturer_id']}
         LEFT JOIN (
             SELECT {cols['amps']['frame_id']} AS frame_id, COUNT(*) AS amp_rating_count
-            FROM tcc_emt_frame_amps
+            FROM tcc.emt_frame_amps
             GROUP BY {cols['amps']['frame_id']}
         ) amp_counts ON amp_counts.frame_id = f.id
         LEFT JOIN (
             SELECT {cols['sections']['frame_id']} AS frame_id, COUNT(*) AS section_count
-            FROM tcc_emt_sections
+            FROM tcc.emt_sections
             GROUP BY {cols['sections']['frame_id']}
         ) sec_counts ON sec_counts.frame_id = f.id
         {where_sql}
@@ -2501,8 +2505,8 @@ def _load_emt_facets(
         return where_sql, params
 
     from_sql = (
-        "FROM tcc_emt_frames f "
-        f"INNER JOIN tcc_emt e ON f.{cols['frames']['emt_id']} = e.id"
+        "FROM tcc.emt_frames f "
+        f"INNER JOIN tcc.emt e ON f.{cols['frames']['emt_id']} = e.id"
     )
 
     where_sql, params = build_where()
@@ -2564,9 +2568,9 @@ def _load_emt_frame_context_bundle(db: Session, frame_id: int) -> dict[str, obje
                 e.{cols['emt']['trip_plug']} AS trip_plug,
                 f.{cols['frames']['frame_size']} AS frame_size,
                 f.{cols['frames']['frame_desc']} AS frame_desc
-            FROM tcc_emt_frames f
-            INNER JOIN tcc_emt e ON f.{cols['frames']['emt_id']} = e.id
-            LEFT JOIN tcc_manufacturers m ON m.id = e.{cols['emt']['manufacturer_id']}
+            FROM tcc.emt_frames f
+            INNER JOIN tcc.emt e ON f.{cols['frames']['emt_id']} = e.id
+            LEFT JOIN tcc.manufacturers m ON m.id = e.{cols['emt']['manufacturer_id']}
             WHERE f.id = :frame_id
             """
         ),
@@ -2580,7 +2584,7 @@ def _load_emt_frame_context_bundle(db: Session, frame_id: int) -> dict[str, obje
         text(
             f"""
             SELECT {cols['amps']['rating']} AS rating
-            FROM tcc_emt_frame_amps
+            FROM tcc.emt_frame_amps
             WHERE {cols['amps']['frame_id']} = :frame_id
             ORDER BY {cols['amps']['rating']}
             """
@@ -2604,15 +2608,15 @@ def _load_emt_frame_context_bundle(db: Session, frame_id: int) -> dict[str, obje
                 {_select_expr('s', cols['sections']['pickup_tol_hi'], 'pickup_tol_hi')},
                 COALESCE(band_counts.band_count, 0) AS band_count,
                 COALESCE(pickup_counts.pickup_count, 0) AS pickup_count
-            FROM tcc_emt_sections s
+            FROM tcc.emt_sections s
             LEFT JOIN (
                 SELECT {cols['bands']['section_id']} AS section_id, COUNT(*) AS band_count
-                FROM tcc_emt_band_names
+                FROM tcc.emt_band_names
                 GROUP BY {cols['bands']['section_id']}
             ) band_counts ON band_counts.section_id = s.id
             LEFT JOIN (
                 SELECT {cols['pickups']['section_id']} AS section_id, COUNT(*) AS pickup_count
-                FROM tcc_emt_pickups
+                FROM tcc.emt_pickups
                 GROUP BY {cols['pickups']['section_id']}
             ) pickup_counts ON pickup_counts.section_id = s.id
             WHERE s.{cols['sections']['frame_id']} = :frame_id
@@ -2646,7 +2650,7 @@ def _load_emt_section_settings_bundle(db: Session, section_id: int) -> dict[str,
                 {_select_expr('s', cols['sections']['current_calc'], 'current_calc')},
                 {_select_expr('s', cols['sections']['pickup_tol_lo'], 'pickup_tol_lo')},
                 {_select_expr('s', cols['sections']['pickup_tol_hi'], 'pickup_tol_hi')}
-            FROM tcc_emt_sections s
+            FROM tcc.emt_sections s
             WHERE s.id = :section_id
             """
         ),
@@ -2662,7 +2666,7 @@ def _load_emt_section_settings_bundle(db: Session, section_id: int) -> dict[str,
             SELECT
                 {_select_expr('p', cols['pickups']['setting'], 'setting')},
                 {_select_expr('p', cols['pickups']['description'], 'description')}
-            FROM tcc_emt_pickups p
+            FROM tcc.emt_pickups p
             WHERE p.{cols['pickups']['section_id']} = :section_id
             ORDER BY p.{cols['pickups']['setting']} NULLS LAST, p.{cols['pickups']['description']} NULLS LAST
             """
@@ -2678,7 +2682,7 @@ def _load_emt_section_settings_bundle(db: Session, section_id: int) -> dict[str,
                 {_select_expr('b', cols['bands']['band_name'], 'band_name')},
                 {_select_expr('b', cols['bands']['ordinal'], 'ordinal')},
                 {_select_expr('b', cols['bands']['current_at'], 'current_at')}
-            FROM tcc_emt_band_names b
+            FROM tcc.emt_band_names b
             WHERE b.{cols['bands']['section_id']} = :section_id
             ORDER BY b.id
             """
@@ -2696,7 +2700,7 @@ def _load_emt_section_settings_bundle(db: Session, section_id: int) -> dict[str,
                     COUNT(*) AS curve_point_count,
                     ARRAY_AGG(DISTINCT {cols['curves']['class']} ORDER BY {cols['curves']['class']})
                         FILTER (WHERE {cols['curves']['class']} IS NOT NULL) AS curve_classes
-                FROM tcc_emt_curves
+                FROM tcc.emt_curves
                 WHERE {cols['curves']['band_id']} = :band_id
                 """
             ),
@@ -2759,11 +2763,11 @@ def _load_emt_plot_bundle(db: Session, section_id: int, band_id: int) -> dict[st
                 {_select_expr('b', cols['bands']['band_name'], 'band_name')},
                 {_select_expr('b', cols['bands']['ordinal'], 'band_ordinal')},
                 {_select_expr('b', cols['bands']['current_at'], 'current_at')}
-            FROM tcc_emt_band_names b
-            INNER JOIN tcc_emt_sections s ON b.{cols['bands']['section_id']} = s.id
-            INNER JOIN tcc_emt_frames f ON s.{cols['sections']['frame_id']} = f.id
-            INNER JOIN tcc_emt e ON f.{cols['frames']['emt_id']} = e.id
-            LEFT JOIN tcc_manufacturers m ON m.id = e.{cols['emt']['manufacturer_id']}
+            FROM tcc.emt_band_names b
+            INNER JOIN tcc.emt_sections s ON b.{cols['bands']['section_id']} = s.id
+            INNER JOIN tcc.emt_frames f ON s.{cols['sections']['frame_id']} = f.id
+            INNER JOIN tcc.emt e ON f.{cols['frames']['emt_id']} = e.id
+            LEFT JOIN tcc.manufacturers m ON m.id = e.{cols['emt']['manufacturer_id']}
             WHERE s.id = :section_id AND b.id = :band_id
             """
         ),
@@ -2783,7 +2787,7 @@ def _load_emt_plot_bundle(db: Session, section_id: int, band_id: int) -> dict[st
                 {_select_expr('c', cols['curves']['class'], 'curve_class')},
                 c.current_amp AS current_amp,
                 c.time_sec AS time_sec
-            FROM tcc_emt_curves c
+            FROM tcc.emt_curves c
             WHERE c.{cols['curves']['band_id']} = :band_id
             ORDER BY c.{cols['curves']['class']} NULLS FIRST, c.current_amp, c.time_sec
             """
@@ -2990,7 +2994,7 @@ def get_cascade(
                 p.value AS plug_value,
                 COUNT(DISTINCT v.sensor_id) AS sensor_count
             FROM vw_trip_unit_cascade v
-            JOIN tcc_etu_plugs p ON p.sensor_id = v.sensor_id
+            JOIN tcc.etu_plugs p ON p.sensor_id = v.sensor_id
             {_apply_xh(plug_scope_where)}
             GROUP BY p.value
             ORDER BY p.value
@@ -3358,8 +3362,8 @@ def get_available_settings(sensor_id: int, db: Session = Depends(get_db)):
     sensor_rating = _sensor_rating_limit(ctx)
     plug_values = _filter_valid_plug_values(data.get("plug_values", []), sensor_rating)
 
-    std_settings = _load_delay_band_settings(db, "tcc_etu_std_bands", sensor_id)
-    gfd_settings = _load_delay_band_settings(db, "tcc_etu_gfd_bands", sensor_id)
+    std_settings = _load_delay_band_settings(db, "tcc.etu_std_bands", sensor_id)
+    gfd_settings = _load_delay_band_settings(db, "tcc.etu_gfd_bands", sensor_id)
 
     # The direct ETU loader returns pickup arrays plus LTD settings. STD/GFD band
     # rows are loaded separately here so the UI can use strict per-sensor delay

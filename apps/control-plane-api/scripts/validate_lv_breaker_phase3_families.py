@@ -15,38 +15,38 @@ from config import engine
 
 
 ETU_REQUIRED_TABLES = {
-    "tcc_etu_sensors",
-    "tcc_trip_styles",
-    "tcc_trip_types",
-    "tcc_manufacturers",
+    "tcc.etu_sensors",
+    "tcc.trip_styles",
+    "tcc.trip_types",
+    "tcc.manufacturers",
 }
 ETU_REQUIRED_VIEWS = {"vw_sensor_calc_context"}
 
-MAINT_REQUIRED_TABLES = {"tcc_etu_sensor_maint"}
+MAINT_REQUIRED_TABLES = {"tcc.etu_sensor_maint"}
 
 TMT_REQUIRED_TABLES = {
-    "tcc_tmt_frames",
-    "tcc_tmt_amps",
-    "tcc_tmt_settings",
-    "tcc_tmt_curves",
-    "tcc_tmt_thermal_adj",
-    "tcc_brk_iccb",
-    "tcc_brk_mccb",
-    "tcc_brk_pcb",
-    "tcc_brk_iccb_styles",
-    "tcc_brk_mccb_styles",
-    "tcc_brk_pcb_styles",
-    "tcc_manufacturers",
+    "tcc.tmt_frames",
+    "tcc.tmt_amps",
+    "tcc.tmt_settings",
+    "tcc.tmt_curves",
+    "tcc.tmt_thermal_adj",
+    "tcc.brk_iccb",
+    "tcc.brk_mccb",
+    "tcc.brk_pcb",
+    "tcc.brk_iccb_styles",
+    "tcc.brk_mccb_styles",
+    "tcc.brk_pcb_styles",
+    "tcc.manufacturers",
 }
 
 EMT_REQUIRED_TABLES = {
-    "tcc_emt",
-    "tcc_emt_frames",
-    "tcc_emt_frame_amps",
-    "tcc_emt_sections",
-    "tcc_emt_band_names",
-    "tcc_emt_pickups",
-    "tcc_emt_curves",
+    "tcc.emt",
+    "tcc.emt_frames",
+    "tcc.emt_frame_amps",
+    "tcc.emt_sections",
+    "tcc.emt_band_names",
+    "tcc.emt_pickups",
+    "tcc.emt_curves",
 }
 
 
@@ -54,10 +54,9 @@ ETU_SUMMARY_SQL = """
 SELECT
     COUNT(*) AS sensor_count,
     COUNT(DISTINCT s.trip_style_id) AS trip_style_count,
-    COUNT(DISTINCT tt.manufacturer_id) AS manufacturer_count
-FROM tcc_etu_sensors s
-JOIN tcc_trip_styles ts ON ts.id = s.trip_style_id
-JOIN tcc_trip_types tt ON tt.id = ts.trip_type_id
+    COUNT(DISTINCT ts.mfg_id) AS manufacturer_count
+FROM tcc.etu_sensors s
+JOIN tcc.trip_styles ts ON ts.id = s.trip_style_id
 """
 
 ETU_METHOD_SQL = """
@@ -84,36 +83,36 @@ SELECT
     COUNT(*) FILTER (
         WHERE POSITION('reduction' IN COALESCE(params_json::text, '')) > 0
     ) AS params_has_any_reduction_text
-FROM tcc_etu_sensor_maint
+FROM tcc.etu_sensor_maint
 """
 
 TMT_SUMMARY_SQL = """
 SELECT
-    (SELECT COUNT(*) FROM tcc_tmt_frames) AS frame_count,
-    (SELECT COUNT(*) FROM tcc_tmt_amps) AS amp_row_count,
-    (SELECT COUNT(*) FROM tcc_tmt_settings) AS setting_row_count,
-    (SELECT COUNT(*) FROM tcc_tmt_curves) AS curve_row_count,
-    (SELECT COUNT(*) FROM tcc_tmt_thermal_adj) AS thermal_row_count
+    (SELECT COUNT(*) FROM tcc.tmt_frames) AS frame_count,
+    (SELECT COUNT(*) FROM tcc.tmt_amps) AS amp_row_count,
+    (SELECT COUNT(*) FROM tcc.tmt_settings) AS setting_row_count,
+    (SELECT COUNT(*) FROM tcc.tmt_curves) AS curve_row_count,
+    (SELECT COUNT(*) FROM tcc.tmt_thermal_adj) AS thermal_row_count
 """
 
 TMT_CLASS_SQL = """
 SELECT
     UPPER(COALESCE(breaker_class, '<null>')) AS breaker_class,
     COUNT(*) AS frame_count
-FROM tcc_tmt_frames
+FROM tcc.tmt_frames
 GROUP BY UPPER(COALESCE(breaker_class, '<null>'))
 ORDER BY breaker_class
 """
 
 EMT_SUMMARY_SQL = """
 SELECT
-    (SELECT COUNT(*) FROM tcc_emt) AS emt_root_count,
-    (SELECT COUNT(*) FROM tcc_emt_frames) AS frame_count,
-    (SELECT COUNT(*) FROM tcc_emt_frame_amps) AS frame_amp_row_count,
-    (SELECT COUNT(*) FROM tcc_emt_sections) AS section_count,
-    (SELECT COUNT(*) FROM tcc_emt_band_names) AS band_count,
-    (SELECT COUNT(*) FROM tcc_emt_pickups) AS pickup_count,
-    (SELECT COUNT(*) FROM tcc_emt_curves) AS curve_count
+    (SELECT COUNT(*) FROM tcc.emt) AS emt_root_count,
+    (SELECT COUNT(*) FROM tcc.emt_frames) AS frame_count,
+    (SELECT COUNT(*) FROM tcc.emt_frame_amps) AS frame_amp_row_count,
+    (SELECT COUNT(*) FROM tcc.emt_sections) AS section_count,
+    (SELECT COUNT(*) FROM tcc.emt_band_names) AS band_count,
+    (SELECT COUNT(*) FROM tcc.emt_pickups) AS pickup_count,
+    (SELECT COUNT(*) FROM tcc.emt_curves) AS curve_count
 """
 
 
@@ -172,7 +171,7 @@ def validate_positive_counts(family_name: str, summary: dict[str, object], requi
 
 def main() -> int:
     inspector = inspect(engine)
-    existing_tables = set(inspector.get_table_names())
+    existing_tables = {f"tcc.{table}" for table in inspector.get_table_names(schema="tcc")}
     existing_views = set(inspector.get_view_names())
 
     failures: list[str] = []
@@ -228,7 +227,7 @@ def main() -> int:
         )
     )
     if not tmt_classes:
-        failures.append("tmt: expected at least one breaker_class group in tcc_tmt_frames")
+        failures.append("tmt: expected at least one breaker_class group in tcc.tmt_frames")
 
     failures.extend(
         validate_positive_counts(

@@ -275,10 +275,10 @@ def write_calc7_matrix_artifacts(matrix_rows: list[dict[str, object]]) -> dict[s
 
 def load_sensor_rows() -> tuple[list[dict[str, object]], dict[str, bool]]:
     inspector = inspect(engine)
-    sensor_columns = {column["name"] for column in inspector.get_columns("tcc_etu_sensors")}
+    sensor_columns = {column["name"] for column in inspector.get_columns("etu_sensors", schema="tcc")}
     maint_columns = set()
-    if "tcc_etu_sensor_maint" in inspector.get_table_names():
-        maint_columns = {column["name"] for column in inspector.get_columns("tcc_etu_sensor_maint")}
+    if "etu_sensor_maint" in inspector.get_table_names(schema="tcc"):
+        maint_columns = {column["name"] for column in inspector.get_columns("etu_sensor_maint", schema="tcc")}
 
     has_pickup_max = "gfpu_pickup_max" in sensor_columns
     has_gfpu_func = "gfpu_func" in sensor_columns
@@ -301,11 +301,11 @@ def load_sensor_rows() -> tuple[list[dict[str, object]], dict[str, bool]]:
             else "NULL::numeric AS maint_gfpu_pickup_max"
         ),
         "m.id AS manufacturer_id",
-        "m.name AS manufacturer_name",
+        "m.mfr_name AS manufacturer_name",
         "tt.id AS trip_type_id",
         "tt.name AS trip_type_name",
         "ts.id AS trip_style_id_joined",
-        "ts.name AS trip_style_name",
+        "ts.style AS trip_style_name",
         "COALESCE(pu.pickup_count, 0) AS pickup_count",
         "pu.min_setting",
         "pu.max_setting",
@@ -317,15 +317,15 @@ def load_sensor_rows() -> tuple[list[dict[str, object]], dict[str, bool]]:
 
     maint_join = ""
     if has_maint_pickup_max:
-        maint_join = "LEFT JOIN tcc_etu_sensor_maint mtn ON mtn.sensor_id = s.id"
+        maint_join = "LEFT JOIN tcc.etu_sensor_maint mtn ON mtn.sensor_id = s.id"
 
     query = f"""
         SELECT
             {', '.join(select_columns)}
-        FROM tcc_etu_sensors s
-        JOIN tcc_trip_styles ts ON ts.id = s.trip_style_id
-        JOIN tcc_trip_types tt ON tt.id = ts.trip_type_id
-        JOIN tcc_manufacturers m ON m.id = ts.manufacturer_id
+        FROM tcc.etu_sensors s
+        JOIN tcc.trip_styles ts ON ts.id = s.trip_style_id
+        JOIN tcc.trip_types tt ON tt.manufacturer_id = ts.mfg_id AND tt.name = ts.type
+        JOIN tcc.manufacturers m ON m.id = ts.mfg_id
         LEFT JOIN (
             SELECT
                 sensor_id,
@@ -333,7 +333,7 @@ def load_sensor_rows() -> tuple[list[dict[str, object]], dict[str, bool]]:
                 MIN(value) AS min_setting,
                 MAX(value) AS max_setting,
                 STRING_AGG(value::text, ', ' ORDER BY value) AS settings_csv
-            FROM tcc_etu_gfpu_pickups
+            FROM tcc.etu_gfpu_pickups
             GROUP BY sensor_id
         ) pu ON pu.sensor_id = s.id
         LEFT JOIN (
@@ -342,15 +342,15 @@ def load_sensor_rows() -> tuple[list[dict[str, object]], dict[str, bool]]:
                 COUNT(*) AS valid_plug_count,
                 MIN(p.value) AS min_valid_plug,
                 MAX(p.value) AS max_valid_plug
-            FROM tcc_etu_sensors s_inner
-            JOIN tcc_etu_plugs p
+            FROM tcc.etu_sensors s_inner
+            JOIN tcc.etu_plugs p
               ON p.trip_style_id = s_inner.trip_style_id
              AND p.value <= s_inner.rating
             GROUP BY s_inner.id
         ) vp ON vp.sensor_id = s.id
         {maint_join}
         WHERE s.gfpu_name IS NOT NULL OR s.gfpu_calc IS NOT NULL
-        ORDER BY m.name, tt.name, ts.name, s.rating, s.id
+        ORDER BY m.mfr_name, tt.name, ts.style, s.rating, s.id
     """
 
     with engine.connect() as connection:
