@@ -1,0 +1,140 @@
+{
+  "version": 1,
+  "generated_from": "governed live Supabase work.tcc_relay_* catalog via APEX_OLARES_LIVE_DSN on 2026-05-31",
+  "reference_contract": "TCP scenarios compare route output to stored live SQL points at exact stored current multiples. Analytical scenarios compare route output to independent from-spec equation implementations evaluated from live SQL coefficients.",
+  "tolerances": {
+    "points": {
+      "abs_seconds": 1e-6,
+      "rel_seconds": 1e-9
+    },
+    "constants": {
+      "abs_seconds": 1e-6,
+      "rel_seconds": 1e-6
+    }
+  },
+  "scenarios": [
+    {
+      "scenario_id": "relay-live-tcp-digitrip-mv-i4t-5084",
+      "seed_note": "First TCP section with preview options and a domain covering exact stored current multiples near the browser defaults.",
+      "td_section_source_id": 5084,
+      "family": "tcp",
+      "storage_kind": "points",
+      "curve_parent_source_id": 18922,
+      "source_ordinal": 2,
+      "time_dial": 0.2,
+      "current_multiples": [
+        0.8,
+        1.6,
+        3.0,
+        4.24
+      ],
+      "expected_seconds": [
+        39.55,
+        2.47,
+        0.2,
+        0.05
+      ]
+    },
+    {
+      "scenario_id": "relay-live-iec-bulletin-857fd-ni-34479",
+      "seed_note": "First IEC section with preview options; NI row selected.",
+      "td_section_source_id": 34479,
+      "family": "iec",
+      "storage_kind": "constants",
+      "curve_parent_source_id": 34480,
+      "curve_ordinal": 10,
+      "time_dial": 1.0,
+      "current_multiples": [
+        2.0,
+        5.0,
+        10.0
+      ],
+      "expected_seconds": [
+        10.02902702,
+        4.279720071,
+        2.970598624
+      ]
+    },
+    {
+      "scenario_id": "relay-live-meq-bulletin-857fd-mi-34493",
+      "seed_note": "First MEQ section with preview options; MI row selected.",
+      "td_section_source_id": 34493,
+      "family": "meq",
+      "storage_kind": "constants",
+      "curve_parent_source_id": 34494,
+      "curve_ordinal": 10,
+      "time_dial": 1.0,
+      "current_multiples": [
+        2.0,
+        5.0,
+        10.0
+      ],
+      "expected_seconds": [
+        0.742222222,
+        0.326608358,
+        0.242035013
+      ]
+    },
+    {
+      "scenario_id": "relay-live-bsl-dt3000-ansi-mod-inv-5075",
+      "seed_note": "First BSL section with preview options; ANSI Mod Inv row selected.",
+      "td_section_source_id": 5075,
+      "family": "bsl",
+      "storage_kind": "constants",
+      "curve_parent_source_id": 16157,
+      "curve_ordinal": 10,
+      "time_dial": 1.0,
+      "current_multiples": [
+        2.0,
+        5.0,
+        10.0
+      ],
+      "expected_seconds": [
+        3.691795364,
+        1.638471454,
+        1.17092808
+      ]
+    },
+    {
+      "scenario_id": "relay-live-swz-bulletin-857fd-lti-34486",
+      "seed_note": "First SWZ section with preview options; LTI row selected.",
+      "td_section_source_id": 34486,
+      "family": "swz",
+      "storage_kind": "constants",
+      "curve_parent_source_id": 34487,
+      "curve_ordinal": 10,
+      "time_dial": 1.0,
+      "current_multiples": [
+        2.0,
+        5.0,
+        10.0
+      ],
+      "expected_seconds": [
+        5.910872583,
+        2.625554326,
+        1.877484928
+      ]
+    },
+    {
+      "scenario_id": "relay-live-pcd-dpu445h-ext-inverse-35216",
+      "seed_note": "First PCD section with preview options; Ext Inverse row selected.",
+      "td_section_source_id": 35216,
+      "family": "pcd",
+      "storage_kind": "constants",
+      "curve_parent_source_id": 35217,
+      "curve_ordinal": 10,
+      "time_dial": 1.0,
+      "current_multiples": [
+        2.0,
+        5.0,
+        10.0
+      ],
+      "expected_seconds": [
+        2.153333333,
+        0.286666667,
+        0.084646465
+      ]
+    }
+  ],
+  "blocked_requirements": []
+}

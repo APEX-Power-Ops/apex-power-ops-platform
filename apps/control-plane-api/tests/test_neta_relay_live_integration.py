@@ -31,33 +31,39 @@ def test_relay_live_discovery_context_settings_preview_surface():
         pytest.skip("Relay work-schema tables are not present in the active database")
 
     with TestClient(app) as client:
-        search_resp = client.get("/api/v1/neta/relay/sections", params={"supported_only": True, "limit": 5})
+        search_resp = client.get("/api/v1/neta/relay/sections", params={"supported_only": True, "limit": 12})
         assert search_resp.status_code == 200
         search_body = search_resp.json()
 
         if search_body["count"] == 0:
             pytest.skip("Relay tables exist but no supported relay TD-sections are loaded yet")
 
-        section = search_body["sections"][0]
-        td_section_source_id = section["td_section_source_id"]
+        selected = None
+        for section in search_body["sections"]:
+            td_section_source_id = section["td_section_source_id"]
+            context_resp = client.get(f"/api/v1/neta/relay/context/{td_section_source_id}")
+            assert context_resp.status_code == 200
+            context_body = context_resp.json()
+            assert context_body["td_section_source_id"] == td_section_source_id
+            assert context_body["supported"] is True
+            assert isinstance(context_body["line_sections"], list)
 
-        context_resp = client.get(f"/api/v1/neta/relay/context/{td_section_source_id}")
-        assert context_resp.status_code == 200
-        context_body = context_resp.json()
-        assert context_body["td_section_source_id"] == td_section_source_id
-        assert context_body["supported"] is True
-        assert isinstance(context_body["line_sections"], list)
+            settings_resp = client.get(f"/api/v1/neta/relay/settings/{td_section_source_id}")
+            assert settings_resp.status_code == 200
+            settings_body = settings_resp.json()
+            assert settings_body["td_section_source_id"] == td_section_source_id
+            assert settings_body["supported"] is True
+            assert isinstance(settings_body["curve_parents"], list)
+            assert isinstance(settings_body["preview_options"], list)
 
-        settings_resp = client.get(f"/api/v1/neta/relay/settings/{td_section_source_id}")
-        assert settings_resp.status_code == 200
-        settings_body = settings_resp.json()
-        assert settings_body["td_section_source_id"] == td_section_source_id
-        assert settings_body["supported"] is True
-        assert isinstance(settings_body["curve_parents"], list)
-        assert isinstance(settings_body["preview_options"], list)
+            if settings_body["preview_options"]:
+                selected = (td_section_source_id, settings_body)
+                break
 
-        if not settings_body["preview_options"]:
-            pytest.skip(f"Relay TD-section {td_section_source_id} has no stored preview options loaded yet")
+        if selected is None:
+            pytest.skip("Relay tables exist but sampled supported TD-sections have no stored preview options yet")
+
+        td_section_source_id, settings_body = selected
 
         preview_option = settings_body["preview_options"][0]
         payload = {
