@@ -68,20 +68,25 @@ ALTER TABLE public.tcc_emt        DROP CONSTRAINT emt_manufacturer_id_fkey;
 ALTER TABLE public.tcc_trip_types DROP CONSTRAINT trip_types_manufacturer_id_fkey;
 
 -- 4. Reverse the name-based remap (canonical id-space -> _pre_rebuild id-space, by name)
+-- TWO-PHASE reverse-remap (same UNIQUE(manufacturer_id,name) collision avoidance as UP).
 DO $$
-DECLARE tbl text; updated int;
+DECLARE tbl text; n1 int; n2 int;
 BEGIN
   FOREACH tbl IN ARRAY ARRAY['tcc_brk_iccb','tcc_brk_mccb','tcc_brk_pcb','tcc_emt','tcc_trip_types'] LOOP
     EXECUTE format($f$
       UPDATE public.%I b
-         SET manufacturer_id = p.id
+         SET manufacturer_id = p.id + 100000
         FROM public.tcc_manufacturers c
         JOIN public.tcc_manufacturers_pre_rebuild p ON p.name = c.mfr_name
        WHERE c.id = b.manufacturer_id
-         AND p.id <> b.manufacturer_id
     $f$, tbl);
-    GET DIAGNOSTICS updated = ROW_COUNT;
-    RAISE NOTICE 'reverse-remap %: % row(s)', tbl, updated;
+    GET DIAGNOSTICS n1 = ROW_COUNT;
+    EXECUTE format('UPDATE public.%I SET manufacturer_id = manufacturer_id - 100000 WHERE manufacturer_id > 100000', tbl);
+    GET DIAGNOSTICS n2 = ROW_COUNT;
+    IF n1 <> n2 THEN
+      RAISE EXCEPTION 'reverse-remap %: phase A % rows, phase B % (temp-space leak).', tbl, n1, n2;
+    END IF;
+    RAISE NOTICE 'reverse-remap %: % row(s) translated via temp space', tbl, n1;
   END LOOP;
 END $$;
 

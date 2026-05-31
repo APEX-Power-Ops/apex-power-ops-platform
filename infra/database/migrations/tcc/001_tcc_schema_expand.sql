@@ -95,22 +95,32 @@ ALTER TABLE public.tcc_brk_pcb    DROP CONSTRAINT tcc_brk_pcb_manufacturer_id_fk
 ALTER TABLE public.tcc_emt        DROP CONSTRAINT tcc_emt_manufacturer_id_fkey;
 ALTER TABLE public.tcc_trip_types DROP CONSTRAINT tcc_trip_types_manufacturer_id_fkey;
 
+-- TWO-PHASE remap (avoids intermediate UNIQUE(manufacturer_id,name) collisions):
+-- these tables carry a UNIQUE(manufacturer_id, name) key; the renumber is a monotonic
+-- +2/+4 shift, so an in-place single UPDATE collides with a not-yet-shifted row even
+-- though the FINAL state is collision-free (names are unique per table + the id->canonical
+-- map is injective, verified). Phase A maps every row into a disjoint temp id-space
+-- (+100000, disjoint from real ids <=454); Phase B brings it back to canonical id-space.
 DO $$
 DECLARE
-  tbl   text;
-  updated int;
+  tbl  text;
+  n1 int; n2 int;
 BEGIN
   FOREACH tbl IN ARRAY ARRAY['tcc_brk_iccb','tcc_brk_mccb','tcc_brk_pcb','tcc_emt','tcc_trip_types'] LOOP
     EXECUTE format($f$
       UPDATE public.%I b
-         SET manufacturer_id = c.id
+         SET manufacturer_id = c.id + 100000
         FROM public.tcc_manufacturers_pre_rebuild p
         JOIN public.tcc_manufacturers c ON c.mfr_name = p.name
        WHERE p.id = b.manufacturer_id
-         AND c.id <> b.manufacturer_id
     $f$, tbl);
-    GET DIAGNOSTICS updated = ROW_COUNT;
-    RAISE NOTICE 'remap %: % row(s) retargeted', tbl, updated;
+    GET DIAGNOSTICS n1 = ROW_COUNT;
+    EXECUTE format('UPDATE public.%I SET manufacturer_id = manufacturer_id - 100000 WHERE manufacturer_id > 100000', tbl);
+    GET DIAGNOSTICS n2 = ROW_COUNT;
+    IF n1 <> n2 THEN
+      RAISE EXCEPTION 'remap %: phase A moved % rows, phase B returned % (temp-space leak).', tbl, n1, n2;
+    END IF;
+    RAISE NOTICE 'remap %: % row(s) translated via temp space', tbl, n1;
   END LOOP;
 END $$;
 
