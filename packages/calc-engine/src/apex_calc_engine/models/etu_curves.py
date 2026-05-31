@@ -4,11 +4,11 @@ ETU Curves & Parameters Models
 Models for ETU curve points, indexed parameters, overrides, and maintenance.
 
 Tables:
-- tcc_etu_inst_curves: Instantaneous time-current curve points (94,873 rows)
-- tcc_etu_sensor_params: Indexed sensor parameters (66,156 rows)
-- tcc_etu_ltd_params: Section 2 (LTD) additional parameters (74,147 rows)
-- tcc_etu_stpu_overrides: Short-time pickup overrides (3 rows)
-- tcc_etu_sensor_maint: Sensor maintenance settings and persisted MAINT payload
+- tcc.etu_inst_curves: Instantaneous time-current curve points (94,873 rows)
+- tcc.etu_sensor_params: Indexed sensor parameters (66,156 rows)
+- tcc.etu_ltd_params: Section 2 (LTD) additional parameters (74,147 rows)
+- tcc.etu_stpu_overrides: Short-time pickup overrides (3 rows)
+- tcc.etu_sensor_maint: Sensor maintenance settings and persisted MAINT payload
 
 Total: ~235K rows
 
@@ -37,14 +37,14 @@ class ETUInstCurve(Base):
     - Belongs to one sensor (ETUSensor)
     """
 
-    __tablename__ = 'tcc_etu_inst_curves'
+    __tablename__ = 'etu_inst_curves'
 
     # Primary Key
     id = Column(Integer, primary_key=True, autoincrement=True,
                 comment='Auto-increment primary key')
 
     # Foreign Keys
-    sensor_id = Column(Integer, ForeignKey('tcc_etu_sensors.id', ondelete='CASCADE'),
+    sensor_id = Column(Integer, ForeignKey('tcc.etu_sensors.id', ondelete='CASCADE'),
                        nullable=False, index=True,
                        comment='FK to etu_sensors')
 
@@ -64,7 +64,7 @@ class ETUInstCurve(Base):
 
     # Table Metadata
     __table_args__ = (
-        {'comment': 'Instantaneous time-current curve points'}
+        {'schema': 'tcc', 'comment': 'Instantaneous time-current curve points'}
     )
 
     # Relationships
@@ -94,14 +94,14 @@ class ETUSensorParam(Base):
     - Belongs to one sensor (ETUSensor)
     """
 
-    __tablename__ = 'tcc_etu_sensor_params'
+    __tablename__ = 'etu_sensor_params'
 
     # Primary Key
     id = Column(Integer, primary_key=True, autoincrement=True,
                 comment='Auto-increment primary key')
 
     # Foreign Keys
-    sensor_id = Column(Integer, ForeignKey('tcc_etu_sensors.id', ondelete='CASCADE'),
+    sensor_id = Column(Integer, ForeignKey('tcc.etu_sensors.id', ondelete='CASCADE'),
                        nullable=False, index=True,
                        comment='FK to etu_sensors')
 
@@ -121,7 +121,7 @@ class ETUSensorParam(Base):
 
     # Table Metadata
     __table_args__ = (
-        {'comment': 'Indexed sensor parameters (curve constants)'}
+        {'schema': 'tcc', 'comment': 'Indexed sensor parameters (curve constants)'}
     )
 
     # Relationships
@@ -143,14 +143,14 @@ class ETULTDParam(Base):
     - Belongs to one sensor (ETUSensor)
     """
 
-    __tablename__ = 'tcc_etu_ltd_params'
+    __tablename__ = 'etu_ltd_params'
 
     # Primary Key
     id = Column(Integer, primary_key=True, autoincrement=True,
                 comment='Auto-increment primary key')
 
     # Foreign Keys
-    sensor_id = Column(Integer, ForeignKey('tcc_etu_sensors.id', ondelete='CASCADE'),
+    sensor_id = Column(Integer, ForeignKey('tcc.etu_sensors.id', ondelete='CASCADE'),
                        nullable=False, index=True,
                        comment='FK to etu_sensors')
 
@@ -188,7 +188,7 @@ class ETULTDParam(Base):
 
     # Table Metadata
     __table_args__ = (
-        {'comment': 'Section 2 (LTD) additional parameters'}
+        {'schema': 'tcc', 'comment': 'Section 2 (LTD) additional parameters'}
     )
 
     # Relationships
@@ -217,14 +217,14 @@ class ETUSTPUOverride(Base):
     - Belongs to one sensor (ETUSensor)
     """
 
-    __tablename__ = 'tcc_etu_stpu_overrides'
+    __tablename__ = 'etu_stpu_overrides'
 
     # Primary Key
     id = Column(Integer, primary_key=True, autoincrement=True,
                 comment='Auto-increment primary key')
 
     # Foreign Keys
-    sensor_id = Column(Integer, ForeignKey('tcc_etu_sensors.id', ondelete='CASCADE'),
+    sensor_id = Column(Integer, ForeignKey('tcc.etu_sensors.id', ondelete='CASCADE'),
                        index=True,
                        comment='FK to etu_sensors')
 
@@ -242,7 +242,7 @@ class ETUSTPUOverride(Base):
 
     # Table Metadata
     __table_args__ = (
-        {'comment': 'Short-time pickup overrides'}
+        {'schema': 'tcc', 'comment': 'Short-time pickup overrides'}
     )
 
     # Relationships
@@ -274,14 +274,14 @@ class ETUSensorMaint(Base):
     - Belongs to one sensor (ETUSensor)
     """
 
-    __tablename__ = 'tcc_etu_sensor_maint'
+    __tablename__ = 'etu_sensor_maint'
 
     # Primary Key
     id = Column(Integer, primary_key=True, autoincrement=True,
                 comment='Auto-increment primary key')
 
     # Foreign Keys
-    sensor_id = Column(Integer, ForeignKey('tcc_etu_sensors.id', ondelete='CASCADE'),
+    sensor_id = Column(Integer, ForeignKey('tcc.etu_sensors.id', ondelete='CASCADE'),
                        nullable=False, index=True,
                        comment='FK to etu_sensors')
 
@@ -314,7 +314,7 @@ class ETUSensorMaint(Base):
     # Constraints
     __table_args__ = (
         UniqueConstraint('sensor_id', 'alarm_type', name='uq_etu_maint_sensor_alarm'),
-        {'comment': 'Sensor maintenance and alarm settings'}
+        {'schema': 'tcc', 'comment': 'Sensor maintenance and alarm settings'}
     )
 
     # Relationships

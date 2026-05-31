@@ -6,16 +6,16 @@ Thermal-Magnetic Trip (TMT) breakers via Catmull-Rom spline
 interpolation in log-log space.
 
 Algorithm:
-  1. Load raw control points from tcc_tmt_curves, ordered by time DESC
+  1. Load raw control points from tcc.tmt_curves, ordered by time DESC
      (traces the curve from high-time asymptote to low-time end).
   2. If < 4 points: return them directly (no interpolation possible).
   3. If >= 4 points: apply Catmull-Rom spline in log-log space.
 
 Tables:
-  tcc_tmt_curves  — raw (current, time) control points per frame/class
-  tcc_tmt_frames  — frame size metadata
-  tcc_tmt_amps    — available amp ratings per frame
-  tcc_tmt_settings — trip settings with tolerance ranges
+  tcc.tmt_curves  — raw (current, time) control points per frame/class
+  tcc.tmt_frames  — frame size metadata
+  tcc.tmt_amps    — available amp ratings per frame
+  tcc.tmt_settings — trip settings with tolerance ranges
 
 Usage:
     from config import SessionLocal

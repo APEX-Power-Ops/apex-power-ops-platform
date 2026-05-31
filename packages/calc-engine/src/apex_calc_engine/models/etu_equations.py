@@ -4,8 +4,8 @@ ETU Inverse Equation Models - IEEE Inverse Time Curves
 Models for ETU inverse time equation tables.
 
 Tables:
-- tcc_etu_std_equations: STD inverse time equations (15,687 rows)
-- tcc_etu_gfd_equations: GFD inverse time equations (15,483 rows)
+- tcc.etu_std_equations: STD inverse time equations (15,687 rows)
+- tcc.etu_gfd_equations: GFD inverse time equations (15,483 rows)
 
 Total: ~31K rows
 
@@ -45,14 +45,14 @@ class ETUSTDEquation(Base):
     - Belongs to one sensor (ETUSensor)
     """
 
-    __tablename__ = 'tcc_etu_std_equations'
+    __tablename__ = 'etu_std_equations'
 
     # Primary Key
     id = Column(Integer, primary_key=True, autoincrement=True,
                 comment='Auto-increment primary key')
 
     # Foreign Keys
-    sensor_id = Column(Integer, ForeignKey('tcc_etu_sensors.id', ondelete='CASCADE'),
+    sensor_id = Column(Integer, ForeignKey('tcc.etu_sensors.id', ondelete='CASCADE'),
                        nullable=False, index=True,
                        comment='FK to etu_sensors')
 
@@ -142,7 +142,7 @@ class ETUSTDEquation(Base):
 
     # Table Metadata
     __table_args__ = (
-        {'comment': 'STD inverse time equations (IEEE curves)'}
+        {'schema': 'tcc', 'comment': 'STD inverse time equations (IEEE curves)'}
     )
 
     # Relationships
@@ -172,14 +172,14 @@ class ETUGFDEquation(Base):
     - Belongs to one sensor (ETUSensor)
     """
 
-    __tablename__ = 'tcc_etu_gfd_equations'
+    __tablename__ = 'etu_gfd_equations'
 
     # Primary Key
     id = Column(Integer, primary_key=True, autoincrement=True,
                 comment='Auto-increment primary key')
 
     # Foreign Keys
-    sensor_id = Column(Integer, ForeignKey('tcc_etu_sensors.id', ondelete='CASCADE'),
+    sensor_id = Column(Integer, ForeignKey('tcc.etu_sensors.id', ondelete='CASCADE'),
                        nullable=False, index=True,
                        comment='FK to etu_sensors')
 
@@ -269,7 +269,7 @@ class ETUGFDEquation(Base):
 
     # Table Metadata
     __table_args__ = (
-        {'comment': 'GFD inverse time equations (IEEE curves)'}
+        {'schema': 'tcc', 'comment': 'GFD inverse time equations (IEEE curves)'}
     )
 
     # Relationships

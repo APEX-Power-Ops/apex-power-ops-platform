@@ -10,8 +10,8 @@ unchanged per matrix #28 SOURCE-DOMAIN/PROVENANCE posture.
 The integer columns previously surfaced as boolean-shaped `i2t_enabled` /
 `i2t_type` metadata actually encode the SSTDelayCalc enum from the Access DLL:
 
-    STD  (tcc_etu_sensors.stpu_delay_calc_code)   0=NONE, 1=I2X, 2=INVEQ, 3=TUSTD
-    GFD  (tcc_etu_sensors.ground_delay_calc_code) 0=NONE, 1=I2X, 2=INVEQ, 4=TUG
+    STD  (tcc.etu_sensors.stpu_delay_calc_code)   0=NONE, 1=I2X, 2=INVEQ, 3=TUSTD
+    GFD  (tcc.etu_sensors.ground_delay_calc_code) 0=NONE, 1=I2X, 2=INVEQ, 4=TUG
 
 Phase 5 Tier A (2026-04-26) renamed the storage columns from the legacy
 `stpu_i2t` / `gfpu_i2t` identifiers; per-row values, type, and lineage to
@@ -136,7 +136,7 @@ class DelayDispatch:
 
     Fields:
         path: 'std' or 'gfd'
-        code: raw SSTDelayCalc integer from tcc_etu_sensors (None if column null)
+        code: raw SSTDelayCalc integer from tcc.etu_sensors (None if column null)
         name: canonical name ('NONE', 'I2X', 'INVEQ', 'TUSTD', 'TUG', or 'UNKNOWN')
         supported: True only when this code resolves to a solver in this codebase
         solver_path: 'flat' for NONE, 'i2x_band' for I2X,
@@ -501,7 +501,7 @@ def _dispatch(path: str, code: Optional[int], valid_codes: frozenset) -> DelayDi
 
 
 def dispatch_std_delay(stpu_delay_calc_code: Optional[int]) -> DelayDispatch:
-    """Resolve STD delay routing from tcc_etu_sensors.stpu_delay_calc_code.
+    """Resolve STD delay routing from tcc.etu_sensors.stpu_delay_calc_code.
 
     The argument keeps an SSTDelayCalc integer; the parameter name was
     previously `stpu_i2t` to match the legacy storage column. Phase 5 Tier A
@@ -515,7 +515,7 @@ def dispatch_gfd_delay(
     ground_delay_calc_code: Optional[int],
     gf_pickup_calc_code: Optional[int] = None,
 ) -> DelayDispatch:
-    """Resolve GFD delay routing from tcc_etu_sensors.ground_delay_calc_code.
+    """Resolve GFD delay routing from tcc.etu_sensors.ground_delay_calc_code.
 
     The argument keeps an SSTDelayCalc integer; the parameter name was
     previously `gfpu_i2t` to match the legacy storage column. Phase 5 Tier A
@@ -675,11 +675,11 @@ def route_delay_curve(
 
     Args:
         solver: an IEEEInverseTimeSolver instance bound to a session
-        delay_calc_code: integer from tcc_etu_sensors.stpu_delay_calc_code or
+        delay_calc_code: integer from tcc.etu_sensors.stpu_delay_calc_code or
             .ground_delay_calc_code (renamed from legacy stpu_i2t/gfpu_i2t at
             Phase 5 Tier A 2026-04-26)
         path: 'std' or 'gfd' — selects equation_type and validates the code set
-        gf_pickup_calc_code: optional integer from tcc_etu_sensors gfpu pickup
+        gf_pickup_calc_code: optional integer from tcc.etu_sensors gfpu pickup
             calc column; when ``path == 'gfd'`` and value == 6 (WEG OCR Type
             A per spec §N.4), the function surfaces an unresolved-pickup
             diagnostic and returns no curve. Ignored on the STD path.

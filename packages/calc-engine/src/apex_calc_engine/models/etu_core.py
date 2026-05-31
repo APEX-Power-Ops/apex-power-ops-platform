@@ -4,8 +4,8 @@ ETU Core Models - Rating Plugs and Sensors
 Models for ETU (formerly SST - Solid State Trip) core configuration tables.
 
 Tables:
-- tcc_etu_plugs: Rating plugs per style (1,576 rows)
-- tcc_etu_sensors: Master sensor configuration (66,156 rows)
+- tcc.etu_plugs: Rating plugs per style (1,576 rows)
+- tcc.etu_sensors: Master sensor configuration (66,156 rows)
 
 These are the foundation for all ETU trip unit calculations.
 """
@@ -27,14 +27,14 @@ class ETUPlug(Base):
     - Belongs to one trip_style (TripStyle)
     """
 
-    __tablename__ = 'tcc_etu_plugs'
+    __tablename__ = 'etu_plugs'
 
     # Primary Key
     id = Column(Integer, primary_key=True, autoincrement=True,
                 comment='Auto-increment primary key')
 
     # Foreign Keys
-    trip_style_id = Column(Integer, ForeignKey('tcc_trip_styles.id', ondelete='CASCADE'),
+    trip_style_id = Column(Integer, ForeignKey('tcc.trip_styles.id', ondelete='CASCADE'),
                            nullable=False, index=True,
                            comment='FK to trip_styles - trip unit style')
 
@@ -49,7 +49,7 @@ class ETUPlug(Base):
     # Constraints
     __table_args__ = (
         UniqueConstraint('trip_style_id', 'value', name='uq_etu_plugs_style_value'),
-        {'comment': 'ETU rating plugs per style'}
+        {'schema': 'tcc', 'comment': 'ETU rating plugs per style'}
     )
 
     # Relationships
@@ -95,14 +95,14 @@ class ETUSensor(Base):
     - Has many test_plans (TestPlan)
     """
 
-    __tablename__ = 'tcc_etu_sensors'
+    __tablename__ = 'etu_sensors'
 
     # Primary Key
     id = Column(Integer, primary_key=True, autoincrement=True,
                 comment='Auto-increment primary key')
 
     # Foreign Keys
-    trip_style_id = Column(Integer, ForeignKey('tcc_trip_styles.id', ondelete='CASCADE'),
+    trip_style_id = Column(Integer, ForeignKey('tcc.trip_styles.id', ondelete='CASCADE'),
                            nullable=False, index=True,
                            comment='FK to trip_styles - trip unit style')
 
@@ -167,7 +167,7 @@ class ETUSensor(Base):
     # Constraints
     __table_args__ = (
         UniqueConstraint('trip_style_id', 'rating', name='uq_etu_sensors_style_rating'),
-        {'comment': 'ETU sensor master configuration'}
+        {'schema': 'tcc', 'comment': 'ETU sensor master configuration'}
     )
 
     # Relationships

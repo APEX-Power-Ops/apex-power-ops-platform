@@ -12,10 +12,10 @@ ETULTDParam.method:
   5  — Thermal-TUF (CalcThermTUF2)
 
 Tables:
-  tcc_etu_ltd_params   — Method dispatch + tolerances
-  tcc_etu_ltd_bands    — Delay band settings (band_mult from open_time)
-  tcc_etu_sensor_params — Equation coefficients (section=2, idx 0-15)
-  tcc_etu_std_bands    — Min time floors (for GetMinOpenSTDB/GetMinClearSTDB)
+  tcc.etu_ltd_params   — Method dispatch + tolerances
+  tcc.etu_ltd_bands    — Delay band settings (band_mult from open_time)
+  tcc.etu_sensor_params — Equation coefficients (section=2, idx 0-15)
+  tcc.etu_std_bands    — Min time floors (for GetMinOpenSTDB/GetMinClearSTDB)
 
 Usage:
     from config import SessionLocal
@@ -55,7 +55,7 @@ class LTDCurvePoint:
 class ETULTDCalculator:
     """
     Generates Long-Time Delay curves using the method specified in
-    tcc_etu_ltd_params for the given sensor.
+    tcc.etu_ltd_params for the given sensor.
     """
 
     POINTS_PER_DECADE = 50
@@ -88,7 +88,7 @@ class ETULTDCalculator:
         """Load section=2 sensor params, grouped by curve_id.
 
         The live Supabase surface no longer exposes a surrogate ``id`` column on
-        ``tcc_etu_sensor_params``. Read the flat table directly so LTD curve
+        ``tcc.etu_sensor_params``. Read the flat table directly so LTD curve
         generation remains aligned with the active schema instead of depending on
         the older ORM shape.
         """
@@ -96,7 +96,7 @@ class ETULTDCalculator:
             text(
                 """
                 SELECT sensor_id, section, curve_id, idx, value
-                FROM tcc_etu_sensor_params
+                FROM tcc.etu_sensor_params
                 WHERE sensor_id = :sensor_id
                   AND section = 2
                 ORDER BY curve_id NULLS FIRST, idx
@@ -151,8 +151,8 @@ class ETULTDCalculator:
         Generate LTD curve points for a given param ordinal and band.
 
         Args:
-            ltd_param_ordinal: Which LTD curve type (ordinal in tcc_etu_ltd_params)
-            ltd_band_ordinal: Which delay band (ordinal in tcc_etu_ltd_bands)
+            ltd_param_ordinal: Which LTD curve type (ordinal in tcc.etu_ltd_params)
+            ltd_band_ordinal: Which delay band (ordinal in tcc.etu_ltd_bands)
             pickup_current: LTPU pickup current in amps
             is_clear: True for clearing curve, False for opening
             max_amps: Maximum current in amps
@@ -245,7 +245,7 @@ class ETULTDCalculator:
                            clear_time,
                            curve_id,
                            COALESCE(is_default, FALSE) AS is_default
-                    FROM tcc_etu_ltd_bands
+                    FROM tcc.etu_ltd_bands
                     WHERE sensor_id = :sensor_id{curve_filter}
                     ORDER BY ordinal NULLS LAST,
                              sort_order NULLS LAST,
@@ -267,7 +267,7 @@ class ETULTDCalculator:
                     SELECT curve_id,
                            ltd_desc AS band_label,
                            ltd_setting AS open_time
-                    FROM tcc_etu_ltd_bands
+                    FROM tcc.etu_ltd_bands
                     WHERE sensor_id = :sensor_id{curve_filter}
                     ORDER BY curve_id NULLS LAST,
                              ltd_setting NULLS LAST,
@@ -713,7 +713,7 @@ class ETULTDCalculator:
                            ds2_step_size AS step,
                            ds2_dly_pty AS delay_priority,
                            ds2_force_i2x_out AS force_i2x_out
-                    FROM tcc_etu_ltd_params
+                    FROM tcc.etu_ltd_params
                     WHERE sensor_id = :sensor_id
                     ORDER BY ordinal NULLS LAST, curve_name
                     """
@@ -816,7 +816,7 @@ class ETULTDCalculator:
                 text(
                     f"""
                     SELECT MIN({time_column}) AS min_time
-                    FROM tcc_etu_std_bands
+                    FROM tcc.etu_std_bands
                     WHERE sensor_id = :sensor_id
                     """
                 ),
@@ -829,7 +829,7 @@ class ETULTDCalculator:
                 text(
                     f"""
                     SELECT MIN({legacy_time_column}) AS min_time
-                    FROM tcc_etu_std_bands
+                    FROM tcc.etu_std_bands
                     WHERE sensor_id = :sensor_id
                     """
                 ),

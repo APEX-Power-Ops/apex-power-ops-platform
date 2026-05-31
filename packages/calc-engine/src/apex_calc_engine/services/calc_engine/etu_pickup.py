@@ -50,7 +50,7 @@ from apex_calc_engine.models.etu_pickups import (
 
 
 class ETUCalcMethod(IntEnum):
-    """Calculation method enum — mirrors tcc_etu_sensors.*_calc columns."""
+    """Calculation method enum — mirrors tcc.etu_sensors.*_calc columns."""
     NONE = -1
     SENSORFRAME = 0
     PLUGTAP = 1
@@ -296,7 +296,7 @@ class ETUPickupCalculator:
     # ------------------------------------------------------------------
 
     def _load_stpu_override(self, sensor_id: int) -> dict:
-        """Read the flat tcc_etu_stpu_overrides row for a sensor.
+        """Read the flat tcc.etu_stpu_overrides row for a sensor.
 
         Promoted from tcc_v5_backend per matrix #30(c). A present row with
         non-null override amps bypasses the normal STPU formula and carries
@@ -311,7 +311,7 @@ class ETUPickupCalculator:
                            ovr_toler_high_pct,
                            ovr_open_sec,
                            ovr_clear_sec
-                    FROM tcc_etu_stpu_overrides
+                    FROM tcc.etu_stpu_overrides
                     WHERE sensor_id = :sensor_id
                     LIMIT 1
                     """
@@ -417,7 +417,7 @@ class ETUPickupCalculator:
                 text(
                     """
                     SELECT value
-                    FROM tcc_etu_plugs
+                    FROM tcc.etu_plugs
                     WHERE sensor_id = :sensor_id
                       AND value = :value
                     LIMIT 1
@@ -732,7 +732,7 @@ class ETUPickupCalculator:
                 text(
                     """
                     SELECT value
-                    FROM tcc_etu_plugs
+                    FROM tcc.etu_plugs
                     WHERE sensor_id = :sensor_id
                       AND value IS NOT NULL
                     ORDER BY value

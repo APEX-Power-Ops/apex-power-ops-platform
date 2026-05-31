@@ -4,9 +4,9 @@ ETU Delay Band Models - Time Delay Settings
 Models for ETU delay band tables containing time-current curve parameters.
 
 Tables:
-- tcc_etu_ltd_bands: Long-Time Delay bands (189,618 rows)
-- tcc_etu_std_bands: Short-Time Delay bands (119,780 rows)
-- tcc_etu_gfd_bands: Ground Fault Delay bands (60,783 rows)
+- tcc.etu_ltd_bands: Long-Time Delay bands (189,618 rows)
+- tcc.etu_std_bands: Short-Time Delay bands (119,780 rows)
+- tcc.etu_gfd_bands: Ground Fault Delay bands (60,783 rows)
 
 Total: ~370K rows
 
@@ -38,14 +38,14 @@ class ETULTDBand(Base):
     - Used by many test_plans (TestPlan)
     """
 
-    __tablename__ = 'tcc_etu_ltd_bands'
+    __tablename__ = 'etu_ltd_bands'
 
     # Primary Key
     id = Column(Integer, primary_key=True, autoincrement=True,
                 comment='Auto-increment primary key')
 
     # Foreign Keys
-    sensor_id = Column(Integer, ForeignKey('tcc_etu_sensors.id', ondelete='CASCADE'),
+    sensor_id = Column(Integer, ForeignKey('tcc.etu_sensors.id', ondelete='CASCADE'),
                        nullable=False, index=True,
                        comment='FK to etu_sensors')
 
@@ -101,7 +101,7 @@ class ETULTDBand(Base):
 
     # Table Metadata
     __table_args__ = (
-        {'comment': 'Long-time delay band settings'}
+        {'schema': 'tcc', 'comment': 'Long-time delay band settings'}
     )
 
     # Relationships
@@ -130,14 +130,14 @@ class ETUSTDBand(Base):
     - Used by many test_plans (TestPlan)
     """
 
-    __tablename__ = 'tcc_etu_std_bands'
+    __tablename__ = 'etu_std_bands'
 
     # Primary Key
     id = Column(Integer, primary_key=True, autoincrement=True,
                 comment='Auto-increment primary key')
 
     # Foreign Keys
-    sensor_id = Column(Integer, ForeignKey('tcc_etu_sensors.id', ondelete='CASCADE'),
+    sensor_id = Column(Integer, ForeignKey('tcc.etu_sensors.id', ondelete='CASCADE'),
                        nullable=False, index=True,
                        comment='FK to etu_sensors')
 
@@ -189,7 +189,7 @@ class ETUSTDBand(Base):
 
     # Table Metadata
     __table_args__ = (
-        {'comment': 'Short-time delay band settings'}
+        {'schema': 'tcc', 'comment': 'Short-time delay band settings'}
     )
 
     # Relationships
@@ -216,14 +216,14 @@ class ETUGFDBand(Base):
     - Used by many test_plans (TestPlan)
     """
 
-    __tablename__ = 'tcc_etu_gfd_bands'
+    __tablename__ = 'etu_gfd_bands'
 
     # Primary Key
     id = Column(Integer, primary_key=True, autoincrement=True,
                 comment='Auto-increment primary key')
 
     # Foreign Keys
-    sensor_id = Column(Integer, ForeignKey('tcc_etu_sensors.id', ondelete='CASCADE'),
+    sensor_id = Column(Integer, ForeignKey('tcc.etu_sensors.id', ondelete='CASCADE'),
                        nullable=False, index=True,
                        comment='FK to etu_sensors')
 
@@ -275,7 +275,7 @@ class ETUGFDBand(Base):
 
     # Table Metadata
     __table_args__ = (
-        {'comment': 'Ground fault delay band settings'}
+        {'schema': 'tcc', 'comment': 'Ground fault delay band settings'}
     )
 
     # Relationships

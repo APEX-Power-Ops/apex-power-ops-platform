@@ -8,7 +8,7 @@ that use:
 
 These tables store the time-current characteristics for TMT breakers.
 
-WARNING: tcc_tmt_curves has 1.1M rows - largest table in database!
+WARNING: tcc.tmt_curves has 1.1M rows - largest table in database!
 """
 from sqlalchemy import Column, Integer, String, Numeric, ForeignKey, DateTime, Index
 from sqlalchemy.orm import relationship
@@ -27,7 +27,7 @@ class TMTFrame(Base):
 
     Total records: ~5,300 frame sizes
     """
-    __tablename__ = 'tcc_tmt_frames'
+    __tablename__ = 'tmt_frames'
 
     # Primary key
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -50,6 +50,7 @@ class TMTFrame(Base):
     __table_args__ = (
         Index('idx_tmt_frames_style', 'breaker_style_id'),
         Index('idx_tmt_frames_size', 'size'),
+        {'schema': 'tcc'},
     )
 
     def __repr__(self):
@@ -70,13 +71,13 @@ class TMTAmp(Base):
 
     Total records: ~93,000 amp ratings
     """
-    __tablename__ = 'tcc_tmt_amps'
+    __tablename__ = 'tmt_amps'
 
     # Primary key
     id = Column(Integer, primary_key=True, autoincrement=True)
 
     # Foreign keys
-    frame_id = Column(Integer, ForeignKey('tcc_tmt_frames.id', ondelete='CASCADE'), nullable=False)
+    frame_id = Column(Integer, ForeignKey('tcc.tmt_frames.id', ondelete='CASCADE'), nullable=False)
 
     # Data columns
     rating = Column(Numeric(10, 2), nullable=False)
@@ -90,6 +91,7 @@ class TMTAmp(Base):
     __table_args__ = (
         Index('idx_tmt_amps_frame', 'frame_id'),
         Index('idx_tmt_amps_rating', 'rating'),
+        {'schema': 'tcc'},
     )
 
     def __repr__(self):
@@ -116,13 +118,13 @@ class TMTCurve(Base):
 
     Total records: 1,143,458 curve points (46% of all database rows!)
     """
-    __tablename__ = 'tcc_tmt_curves'
+    __tablename__ = 'tmt_curves'
 
     # Primary key
     id = Column(Integer, primary_key=True, autoincrement=True)
 
     # Foreign keys
-    frame_id = Column(Integer, ForeignKey('tcc_tmt_frames.id', ondelete='CASCADE'), nullable=False)
+    frame_id = Column(Integer, ForeignKey('tcc.tmt_frames.id', ondelete='CASCADE'), nullable=False)
 
     # Data columns
     class_ = Column('class', Integer)
@@ -138,6 +140,7 @@ class TMTCurve(Base):
         Index('idx_tmt_curves_frame', 'frame_id'),
         Index('idx_tmt_curves_class', 'class'),
         Index('idx_tmt_curves_frame_class', 'frame_id', 'class'),  # Composite for common queries
+        {'schema': 'tcc'},
     )
 
     def __repr__(self):
@@ -161,13 +164,13 @@ class TMTSetting(Base):
 
     Total records: ~86,000 settings
     """
-    __tablename__ = 'tcc_tmt_settings'
+    __tablename__ = 'tmt_settings'
 
     # Primary key
     id = Column(Integer, primary_key=True, autoincrement=True)
 
     # Foreign keys
-    frame_id = Column(Integer, ForeignKey('tcc_tmt_frames.id', ondelete='CASCADE'), nullable=False)
+    frame_id = Column(Integer, ForeignKey('tcc.tmt_frames.id', ondelete='CASCADE'), nullable=False)
 
     # Data columns
     value = Column(Numeric(10, 4))
@@ -182,6 +185,7 @@ class TMTSetting(Base):
     # Indexes
     __table_args__ = (
         Index('idx_tmt_settings_frame', 'frame_id'),
+        {'schema': 'tcc'},
     )
 
     def __repr__(self):
@@ -206,13 +210,13 @@ class TMTThermalAdj(Base):
 
     Total records: ~4,200 thermal adjustments
     """
-    __tablename__ = 'tcc_tmt_thermal_adj'
+    __tablename__ = 'tmt_thermal_adj'
 
     # Primary key
     id = Column(Integer, primary_key=True, autoincrement=True)
 
     # Foreign keys
-    frame_id = Column(Integer, ForeignKey('tcc_tmt_frames.id', ondelete='CASCADE'), nullable=False)
+    frame_id = Column(Integer, ForeignKey('tcc.tmt_frames.id', ondelete='CASCADE'), nullable=False)
 
     # Data columns
     adjustment = Column(Numeric(7, 4))
@@ -224,6 +228,7 @@ class TMTThermalAdj(Base):
     # Indexes
     __table_args__ = (
         Index('idx_tmt_thermal_frame', 'frame_id'),
+        {'schema': 'tcc'},
     )
 
     def __repr__(self):

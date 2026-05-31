@@ -9,7 +9,7 @@ Core equation:
 
 Where:
     I = fault_current / pickup_current  (normalized, must be > 1.0)
-    C1..C6 = coefficients from tcc_etu_std_equations or tcc_etu_gfd_equations
+    C1..C6 = coefficients from tcc.etu_std_equations or tcc.etu_gfd_equations
     time_dial = LTD band multiplier (1.0 = no scaling)
 
 Each equation row stores 4 curve variants:
@@ -275,7 +275,7 @@ class IEEEInverseTimeSolver:
         (`eq_desc`, `fd_op_*`, `fd_cl_*`, `id_op_*`, `id_cl_*`), while the
         fallback preserves the package's existing ORM-backed row contract.
         """
-        table_name = 'tcc_etu_std_equations' if equation_type == 'std' else 'tcc_etu_gfd_equations'
+        table_name = 'tcc.etu_std_equations' if equation_type == 'std' else 'tcc.etu_gfd_equations'
         params = {'sensor_id': sensor_id}
 
         try:
