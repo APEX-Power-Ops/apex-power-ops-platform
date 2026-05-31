@@ -11,8 +11,8 @@ from .base import Base
 
 
 class RelayTDSection(Base):
-    __tablename__ = 'tcc_relay_td_sections'
-    __table_args__ = {'schema': 'work'}
+    __tablename__ = 'relay_td_sections'
+    __table_args__ = {'schema': 'tcc'}
 
     relay_td_section_id = Column(UUID(as_uuid=True), primary_key=True)
     relay_device_id = Column(UUID(as_uuid=True), nullable=False)
@@ -39,11 +39,11 @@ class RelayTDSection(Base):
 
 
 class RelayCurveIEC(Base):
-    __tablename__ = 'tcc_relay_curves_iec'
-    __table_args__ = {'schema': 'work'}
+    __tablename__ = 'relay_curves_iec'
+    __table_args__ = {'schema': 'tcc'}
 
     relay_curve_iec_id = Column(UUID(as_uuid=True), primary_key=True)
-    relay_td_section_id = Column(UUID(as_uuid=True), ForeignKey('work.tcc_relay_td_sections.relay_td_section_id'), nullable=False)
+    relay_td_section_id = Column(UUID(as_uuid=True), ForeignKey('tcc.relay_td_sections.relay_td_section_id'), nullable=False)
     relay_td_section_source_id = Column(Integer, nullable=False)
     source_row_id = Column(Integer, nullable=False, unique=True)
     min_pickup = Column(Numeric(20, 6))
@@ -58,11 +58,11 @@ class RelayCurveIEC(Base):
 
 
 class RelayCurveSWZ(Base):
-    __tablename__ = 'tcc_relay_curves_swz'
-    __table_args__ = {'schema': 'work'}
+    __tablename__ = 'relay_curves_swz'
+    __table_args__ = {'schema': 'tcc'}
 
     relay_curve_swz_id = Column(UUID(as_uuid=True), primary_key=True)
-    relay_td_section_id = Column(UUID(as_uuid=True), ForeignKey('work.tcc_relay_td_sections.relay_td_section_id'), nullable=False)
+    relay_td_section_id = Column(UUID(as_uuid=True), ForeignKey('tcc.relay_td_sections.relay_td_section_id'), nullable=False)
     relay_td_section_source_id = Column(Integer, nullable=False)
     source_row_id = Column(Integer, nullable=False, unique=True)
     min_pickup = Column(Numeric(20, 6))
@@ -77,11 +77,11 @@ class RelayCurveSWZ(Base):
 
 
 class RelayCurveBSL(Base):
-    __tablename__ = 'tcc_relay_curves_bsl'
-    __table_args__ = {'schema': 'work'}
+    __tablename__ = 'relay_curves_bsl'
+    __table_args__ = {'schema': 'tcc'}
 
     relay_curve_bsl_id = Column(UUID(as_uuid=True), primary_key=True)
-    relay_td_section_id = Column(UUID(as_uuid=True), ForeignKey('work.tcc_relay_td_sections.relay_td_section_id'), nullable=False)
+    relay_td_section_id = Column(UUID(as_uuid=True), ForeignKey('tcc.relay_td_sections.relay_td_section_id'), nullable=False)
     relay_td_section_source_id = Column(Integer, nullable=False)
     source_row_id = Column(Integer, nullable=False, unique=True)
     min_pickup = Column(Numeric(20, 6))
@@ -96,11 +96,11 @@ class RelayCurveBSL(Base):
 
 
 class RelayCurveMEQ(Base):
-    __tablename__ = 'tcc_relay_curves_meq'
-    __table_args__ = {'schema': 'work'}
+    __tablename__ = 'relay_curves_meq'
+    __table_args__ = {'schema': 'tcc'}
 
     relay_curve_meq_id = Column(UUID(as_uuid=True), primary_key=True)
-    relay_td_section_id = Column(UUID(as_uuid=True), ForeignKey('work.tcc_relay_td_sections.relay_td_section_id'), nullable=False)
+    relay_td_section_id = Column(UUID(as_uuid=True), ForeignKey('tcc.relay_td_sections.relay_td_section_id'), nullable=False)
     relay_td_section_source_id = Column(Integer, nullable=False)
     source_row_id = Column(Integer, nullable=False, unique=True)
     min_pickup = Column(Numeric(20, 6))
@@ -115,11 +115,11 @@ class RelayCurveMEQ(Base):
 
 
 class RelayCurvePCD(Base):
-    __tablename__ = 'tcc_relay_curves_pcd'
-    __table_args__ = {'schema': 'work'}
+    __tablename__ = 'relay_curves_pcd'
+    __table_args__ = {'schema': 'tcc'}
 
     relay_curve_pcd_id = Column(UUID(as_uuid=True), primary_key=True)
-    relay_td_section_id = Column(UUID(as_uuid=True), ForeignKey('work.tcc_relay_td_sections.relay_td_section_id'), nullable=False)
+    relay_td_section_id = Column(UUID(as_uuid=True), ForeignKey('tcc.relay_td_sections.relay_td_section_id'), nullable=False)
     relay_td_section_source_id = Column(Integer, nullable=False)
     source_row_id = Column(Integer, nullable=False, unique=True)
     min_pickup = Column(Numeric(20, 6))
@@ -134,11 +134,11 @@ class RelayCurvePCD(Base):
 
 
 class RelayCurveLRM(Base):
-    __tablename__ = 'tcc_relay_curves_lrm'
-    __table_args__ = {'schema': 'work'}
+    __tablename__ = 'relay_curves_lrm'
+    __table_args__ = {'schema': 'tcc'}
 
     relay_curve_lrm_id = Column(UUID(as_uuid=True), primary_key=True)
-    relay_td_section_id = Column(UUID(as_uuid=True), ForeignKey('work.tcc_relay_td_sections.relay_td_section_id'), nullable=False)
+    relay_td_section_id = Column(UUID(as_uuid=True), ForeignKey('tcc.relay_td_sections.relay_td_section_id'), nullable=False)
     relay_td_section_source_id = Column(Integer, nullable=False)
     source_row_id = Column(Integer, nullable=False, unique=True)
     min_pickup = Column(Numeric(20, 6))
@@ -153,11 +153,11 @@ class RelayCurveLRM(Base):
 
 
 class RelayCurveRXD(Base):
-    __tablename__ = 'tcc_relay_curves_rxd'
-    __table_args__ = {'schema': 'work'}
+    __tablename__ = 'relay_curves_rxd'
+    __table_args__ = {'schema': 'tcc'}
 
     relay_curve_rxd_id = Column(UUID(as_uuid=True), primary_key=True)
-    relay_td_section_id = Column(UUID(as_uuid=True), ForeignKey('work.tcc_relay_td_sections.relay_td_section_id'), nullable=False)
+    relay_td_section_id = Column(UUID(as_uuid=True), ForeignKey('tcc.relay_td_sections.relay_td_section_id'), nullable=False)
     relay_td_section_source_id = Column(Integer, nullable=False)
     source_row_id = Column(Integer, nullable=False, unique=True)
     min_pickup = Column(Numeric(20, 6))
@@ -171,11 +171,11 @@ class RelayCurveRXD(Base):
 
 
 class RelayCurveEGC(Base):
-    __tablename__ = 'tcc_relay_curves_egc'
-    __table_args__ = {'schema': 'work'}
+    __tablename__ = 'relay_curves_egc'
+    __table_args__ = {'schema': 'tcc'}
 
     relay_curve_egc_id = Column(UUID(as_uuid=True), primary_key=True)
-    relay_td_section_id = Column(UUID(as_uuid=True), ForeignKey('work.tcc_relay_td_sections.relay_td_section_id'), nullable=False)
+    relay_td_section_id = Column(UUID(as_uuid=True), ForeignKey('tcc.relay_td_sections.relay_td_section_id'), nullable=False)
     relay_td_section_source_id = Column(Integer, nullable=False)
     source_row_id = Column(Integer, nullable=False, unique=True)
     min_pickup = Column(Numeric(20, 6))
@@ -189,11 +189,11 @@ class RelayCurveEGC(Base):
 
 
 class RelayCurveTCP(Base):
-    __tablename__ = 'tcc_relay_curves_tcp'
-    __table_args__ = {'schema': 'work'}
+    __tablename__ = 'relay_curves_tcp'
+    __table_args__ = {'schema': 'tcc'}
 
     relay_curve_tcp_id = Column(UUID(as_uuid=True), primary_key=True)
-    relay_td_section_id = Column(UUID(as_uuid=True), ForeignKey('work.tcc_relay_td_sections.relay_td_section_id'), nullable=False)
+    relay_td_section_id = Column(UUID(as_uuid=True), ForeignKey('tcc.relay_td_sections.relay_td_section_id'), nullable=False)
     relay_td_section_source_id = Column(Integer, nullable=False)
     source_row_id = Column(Integer, nullable=False, unique=True)
     curve_name = Column(Text, nullable=False)
@@ -212,11 +212,11 @@ class RelayCurveTCP(Base):
 
 
 class RelayCurveRowIEC(Base):
-    __tablename__ = 'tcc_relay_curve_rows_iec'
-    __table_args__ = {'schema': 'work'}
+    __tablename__ = 'relay_curve_rows_iec'
+    __table_args__ = {'schema': 'tcc'}
 
     relay_curve_row_iec_id = Column(UUID(as_uuid=True), primary_key=True)
-    relay_curve_iec_id = Column(UUID(as_uuid=True), ForeignKey('work.tcc_relay_curves_iec.relay_curve_iec_id'), nullable=False)
+    relay_curve_iec_id = Column(UUID(as_uuid=True), ForeignKey('tcc.relay_curves_iec.relay_curve_iec_id'), nullable=False)
     relay_curve_iec_source_id = Column(Integer, nullable=False)
     curve_name = Column(Text, nullable=False)
     ordinal = Column(Integer, nullable=False)
@@ -233,11 +233,11 @@ class RelayCurveRowIEC(Base):
 
 
 class RelayCurveRowSWZ(Base):
-    __tablename__ = 'tcc_relay_curve_rows_swz'
-    __table_args__ = {'schema': 'work'}
+    __tablename__ = 'relay_curve_rows_swz'
+    __table_args__ = {'schema': 'tcc'}
 
     relay_curve_row_swz_id = Column(UUID(as_uuid=True), primary_key=True)
-    relay_curve_swz_id = Column(UUID(as_uuid=True), ForeignKey('work.tcc_relay_curves_swz.relay_curve_swz_id'), nullable=False)
+    relay_curve_swz_id = Column(UUID(as_uuid=True), ForeignKey('tcc.relay_curves_swz.relay_curve_swz_id'), nullable=False)
     relay_curve_swz_source_id = Column(Integer, nullable=False)
     curve_name = Column(Text, nullable=False)
     ordinal = Column(Integer, nullable=False)
@@ -253,11 +253,11 @@ class RelayCurveRowSWZ(Base):
 
 
 class RelayCurveRowBSL(Base):
-    __tablename__ = 'tcc_relay_curve_rows_bsl'
-    __table_args__ = {'schema': 'work'}
+    __tablename__ = 'relay_curve_rows_bsl'
+    __table_args__ = {'schema': 'tcc'}
 
     relay_curve_row_bsl_id = Column(UUID(as_uuid=True), primary_key=True)
-    relay_curve_bsl_id = Column(UUID(as_uuid=True), ForeignKey('work.tcc_relay_curves_bsl.relay_curve_bsl_id'), nullable=False)
+    relay_curve_bsl_id = Column(UUID(as_uuid=True), ForeignKey('tcc.relay_curves_bsl.relay_curve_bsl_id'), nullable=False)
     relay_curve_bsl_source_id = Column(Integer, nullable=False)
     curve_name = Column(Text, nullable=False)
     ordinal = Column(Integer, nullable=False)
@@ -277,11 +277,11 @@ class RelayCurveRowBSL(Base):
 
 
 class RelayCurveRowMEQ(Base):
-    __tablename__ = 'tcc_relay_curve_rows_meq'
-    __table_args__ = {'schema': 'work'}
+    __tablename__ = 'relay_curve_rows_meq'
+    __table_args__ = {'schema': 'tcc'}
 
     relay_curve_row_meq_id = Column(UUID(as_uuid=True), primary_key=True)
-    relay_curve_meq_id = Column(UUID(as_uuid=True), ForeignKey('work.tcc_relay_curves_meq.relay_curve_meq_id'), nullable=False)
+    relay_curve_meq_id = Column(UUID(as_uuid=True), ForeignKey('tcc.relay_curves_meq.relay_curve_meq_id'), nullable=False)
     relay_curve_meq_source_id = Column(Integer, nullable=False)
     curve_name = Column(Text, nullable=False)
     ordinal = Column(Integer, nullable=False)
@@ -299,11 +299,11 @@ class RelayCurveRowMEQ(Base):
 
 
 class RelayCurveRowPCD(Base):
-    __tablename__ = 'tcc_relay_curve_rows_pcd'
-    __table_args__ = {'schema': 'work'}
+    __tablename__ = 'relay_curve_rows_pcd'
+    __table_args__ = {'schema': 'tcc'}
 
     relay_curve_row_pcd_id = Column(UUID(as_uuid=True), primary_key=True)
-    relay_curve_pcd_id = Column(UUID(as_uuid=True), ForeignKey('work.tcc_relay_curves_pcd.relay_curve_pcd_id'), nullable=False)
+    relay_curve_pcd_id = Column(UUID(as_uuid=True), ForeignKey('tcc.relay_curves_pcd.relay_curve_pcd_id'), nullable=False)
     relay_curve_pcd_source_id = Column(Integer, nullable=False)
     curve_name = Column(Text, nullable=False)
     ordinal = Column(Integer, nullable=False)
@@ -319,11 +319,11 @@ class RelayCurveRowPCD(Base):
 
 
 class RelayCurvePointTCP(Base):
-    __tablename__ = 'tcc_relay_curve_points_tcp'
-    __table_args__ = {'schema': 'work'}
+    __tablename__ = 'relay_curve_points_tcp'
+    __table_args__ = {'schema': 'tcc'}
 
     relay_curve_point_tcp_id = Column(UUID(as_uuid=True), primary_key=True)
-    relay_curve_tcp_id = Column(UUID(as_uuid=True), ForeignKey('work.tcc_relay_curves_tcp.relay_curve_tcp_id'), nullable=False)
+    relay_curve_tcp_id = Column(UUID(as_uuid=True), ForeignKey('tcc.relay_curves_tcp.relay_curve_tcp_id'), nullable=False)
     relay_curve_tcp_source_id = Column(Integer, nullable=False)
     time_dial = Column(Numeric(20, 6), nullable=False)
     td_desc = Column(Text)
