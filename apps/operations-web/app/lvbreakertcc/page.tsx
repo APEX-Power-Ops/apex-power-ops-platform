@@ -1,17 +1,58 @@
 'use client'
 
 /**
- * TCC Calculator — UI layout/formatting MOCKUP (clean-slate; placeholder shell is NOT a constraint).
- * Self-contained: frozen sample device (Square D P-Frame PX 2500A / Micrologic 6.0H MCCB),
- * own styling (not the operations-web globals), inline-SVG log-log curve (no chart dep).
- * Purpose: react to LAYOUT/FORMATTING. Numbers are representative placeholders; real values come
- * from the validated backend (DB per-sensor tolerances + /plot-tcc) at port time.
- * Mirrors the Excel concept's 3-screen flow: Specifications -> Protection Settings -> TCC Curve.
+ * LV Breaker TCC — operator-facing field-tolerance tool.
+ * 3-screen flow: Specifications -> Protection Settings -> TCC Curve.
+ *
+ * Stage A (this build): Screen 1 (Specifications) is LIVE — family-polymorphic
+ * (ETU / TMT / EMT) selection wired to the control-plane API via lib/breaker-resources.
+ *   - ETU uses the recovered SST bridge (GET /etu/bridge-sensors) to narrow a chosen
+ *     breaker style to its compatible ETU sensor set (D1 / migration 006).
+ *   - TMT / EMT use their existing frame/section browse routes.
+ * Screens 2-3 still render the frozen SAMPLE configuration (badged) until Stage B
+ * (live per-family settings/tolerances) and Stage C (live per-family curve) land.
  */
 
-import { useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import {
+  fetchEtuBreakerCascade,
+  fetchEtuBridgeSensors,
+  fetchEtuSettings,
+  fetchTmtFrames,
+  fetchEmtFrames,
+  fetchEmtContext,
+  type EtuBreakerCascadeResponse,
+  type EtuBridgeSensorsResponse,
+  type TMTFrameSearchResult,
+  type EMTFrameSearchResult,
+  type EMTFrameContext,
+} from '../../lib/breaker-resources'
 
-// ── frozen sample (from the operator's TCC_Calculator_v5.xlsx) ──────────────
+// ── families ────────────────────────────────────────────────────────────────
+type Family = 'etu' | 'tmt' | 'emt'
+const FAMILIES: { key: Family; label: string; sub: string }[] = [
+  { key: 'etu', label: 'ETU', sub: 'Electronic Trip Unit' },
+  { key: 'tmt', label: 'TMT', sub: 'Thermal-Magnetic' },
+  { key: 'emt', label: 'EMT', sub: 'Electro-Mechanical' },
+]
+
+// What a completed Screen-1 selection resolves to (downstream key + nameplate labels).
+type LiveSelection = {
+  family: Family
+  sensorId?: number // etu
+  frameId?: number // tmt, emt
+  sectionId?: number // emt
+  breakerLabel: string
+  tripLabel: string
+  ratingLabel: string
+  bridgeStatus?: 'matched' | 'unmatched'
+  plugs: number[]
+  trustNote: string
+}
+
+const errMsg = (e: unknown) => (e instanceof Error ? e.message : 'Request failed')
+
+// ── frozen sample (operator's TCC_Calculator_v5.xlsx) — Screens 2-3 until Stage B/C ──
 const DEVICE = {
   breakerClass: 'MCCB',
   breakerMfr: 'Square D',
@@ -33,12 +74,11 @@ type Elt = {
   label: string
   kind: 'PICKUP' | 'DELAY' | 'INSTANT' | 'GROUND' | 'GF DELAY' | 'ARC MODE'
   setting: string
-  base?: number          // pickup current (A) the Test @ multiple is applied to
-  delay?: DelayKey       // delay element -> Test @ is a selectable multiplier
+  base?: number
+  delay?: DelayKey
   disabled?: boolean
 }
 
-// NETA defaults: every pickup tests @ 1× (ramp to pickup); LTD @ 3×; STD/GFD @ 1.5×.
 const ELEMENTS: Elt[] = [
   { code: 'LTPU', label: 'Long-Time Pickup', kind: 'PICKUP', setting: '0.90 × Ir', base: 2250 },
   { code: 'LTD', label: 'Long-Time Delay', kind: 'DELAY', setting: '12 s', base: 2250, delay: 'ltd' },
@@ -50,7 +90,6 @@ const ELEMENTS: Elt[] = [
   { code: 'MAINT', label: 'Maintenance / ARMS', kind: 'ARC MODE', setting: 'Disabled', disabled: true },
 ]
 
-// Delay Test @ choices: 0.5× increments, 1×–6× (LTD spec'd to 6×; STD/GFD share the range).
 const MULT_OPTS = [1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6]
 const DELAY_DEFAULT: Record<DelayKey, number> = { ltd: 3, std: 1.5, gfd: 1.5 }
 const fmtA = (n: number) => `${Math.round(n).toLocaleString('en-US')} A`
@@ -58,7 +97,6 @@ const fmtMult = (m: number) => `${Number.isInteger(m) ? m : m.toFixed(1)}×`
 
 type Unit = 'A' | 's' | ''
 type Band = { el: string; nominal: number; min: number; max: number; unit: Unit; status: 'ready' | 'disabled' }
-// nominal = expected value (band midpoint); measured field result -> % error = (measured − nominal)/nominal.
 const BANDS: Band[] = [
   { el: 'LTPU', nominal: 2250, min: 2025, max: 2475, unit: 'A', status: 'ready' },
   { el: 'LTD', nominal: 12, min: 9.6, max: 14.4, unit: 's', status: 'ready' },
@@ -74,11 +112,10 @@ const fmtVal = (n: number, unit: Unit) =>
 const SETTING_BY_EL: Record<string, string> = Object.fromEntries(ELEMENTS.map((e) => [e.code, e.setting]))
 const BASE_BY_EL: Record<string, number> = Object.fromEntries(ELEMENTS.filter((e) => e.base).map((e) => [e.code, e.base as number]))
 
-// ── log-log curve geometry ──────────────────────────────────────────────────
-const PLOT = { ml: 58, mt: 18, w: 600, h: 430, x0: 2, x1: 5, y0: -2, y1: 3 } // current 100..100k A · time .01..1000 s
+// ── log-log curve geometry (sample, Stage C wires live /plot-tcc) ─────────────
+const PLOT = { ml: 58, mt: 18, w: 600, h: 430, x0: 2, x1: 5, y0: -2, y1: 3 }
 const px = (a: number) => PLOT.ml + ((Math.log10(a) - PLOT.x0) / (PLOT.x1 - PLOT.x0)) * PLOT.w
 const py = (s: number) => PLOT.mt + ((PLOT.y1 - Math.log10(s)) / (PLOT.y1 - PLOT.y0)) * PLOT.h
-
 const NOMINAL: [number, number][] = [
   [2475, 1000], [2700, 360], [3200, 110], [4500, 38], [6000, 16], [7600, 7.5],
   [8000, 5.5], [8200, 0.42], [11000, 0.34], [12000, 0.30], [12800, 0.30], [12800, 0.012], [60000, 0.012],
@@ -87,7 +124,6 @@ const bandUp = NOMINAL.map(([a, s]) => [a * 1.12, s * 1.55] as [number, number])
 const bandLo = NOMINAL.map(([a, s]) => [a * 0.9, s * 0.62] as [number, number])
 const toPath = (pts: [number, number][]) => pts.map(([a, s], i) => `${i ? 'L' : 'M'}${px(a).toFixed(1)},${py(s).toFixed(1)}`).join(' ')
 const bandPath = `${toPath(bandUp)} L${bandLo.slice().reverse().map(([a, s]) => `${px(a).toFixed(1)},${py(s).toFixed(1)}`).join(' L')} Z`
-
 const MARKERS = [
   { label: 'LTPU 1×', a: 2250, s: 1000, color: '#2f8f5b' },
   { label: 'LTD 3×', a: 6750, s: 12, color: '#d98324' },
@@ -98,35 +134,39 @@ const X_TICKS = [100, 1000, 10000, 100000]
 const Y_TICKS = [0.01, 0.1, 1, 10, 100, 1000]
 
 const STEPS = ['Equipment Specifications', 'Protection Settings', 'Time-Current Curve']
-
 const KIND_CLASS: Record<Elt['kind'], string> = {
   PICKUP: 'pill-green', DELAY: 'pill-green', INSTANT: 'pill-blue',
   GROUND: 'pill-blue', 'GF DELAY': 'pill-blue', 'ARC MODE': 'pill-amber',
 }
 
-export default function TccMockup() {
+// ──────────────────────────────────────────────────────────────────────────────
+export default function LvBreakerTcc() {
   const [step, setStep] = useState(0)
   const [maint, setMaint] = useState(false)
+  const [family, setFamily] = useState<Family>('etu')
+  const [selection, setSelection] = useState<LiveSelection | null>(null)
+
+  const chip = selection
+    ? `${selection.breakerLabel} · ${selection.tripLabel}`
+    : `${DEVICE.breakerMfr} ${DEVICE.breakerType} ${DEVICE.breakerStyle} · ${DEVICE.tripDetail}`
 
   return (
     <div className="tccx">
       <style>{CSS}</style>
 
-      {/* App bar */}
       <header className="bar">
         <div className="brand">
           <span className="mark">⚡</span>
           <div>
-            <div className="title">TCC Calculator</div>
+            <div className="title">LV Breaker TCC</div>
             <div className="sub">NETA breaker / trip-unit test configuration</div>
           </div>
         </div>
         <div className="device-chip">
-          <span className="dot" /> {DEVICE.breakerMfr} {DEVICE.breakerType} {DEVICE.breakerStyle} · {DEVICE.tripDetail}
+          <span className="dot" /> {chip}
         </div>
       </header>
 
-      {/* Stepper */}
       <nav className="steps">
         {STEPS.map((s, i) => (
           <button key={s} className={`step ${i === step ? 'on' : ''} ${i < step ? 'done' : ''}`} onClick={() => setStep(i)}>
@@ -136,13 +176,17 @@ export default function TccMockup() {
       </nav>
 
       <main className="wrap">
-        {step === 0 && <Specifications />}
-        {step === 1 && <Settings maint={maint} setMaint={setMaint} />}
-        {step === 2 && <Curve />}
+        {step === 0 && (
+          <Specifications family={family} setFamily={setFamily} selection={selection} setSelection={setSelection} />
+        )}
+        {step === 1 && <Settings maint={maint} setMaint={setMaint} selection={selection} />}
+        {step === 2 && <Curve selection={selection} />}
       </main>
 
       <footer className="foot">
-        <span>LV Breaker TCC · sample configuration — values are representative (live selection &amp; calc to follow)</span>
+        <span>
+          LV Breaker TCC · {selection ? 'live selection' : 'select equipment to begin'} — protection &amp; curve data ships in Stage B/C
+        </span>
         <div className="nav-btns">
           <button className="btn ghost" disabled={step === 0} onClick={() => setStep((s) => Math.max(0, s - 1))}>← Back</button>
           <button className="btn" disabled={step === 2} onClick={() => setStep((s) => Math.min(2, s + 1))}>Next →</button>
@@ -161,63 +205,333 @@ function Field({ label, value }: { label: string; value: string }) {
   )
 }
 
-function Specifications() {
+// Reusable labelled dropdown.
+function Picker({ label, value, onChange, options, placeholder, disabled, busy }: {
+  label: string
+  value: string
+  onChange: (v: string) => void
+  options: { value: string; label: string }[]
+  placeholder?: string
+  disabled?: boolean
+  busy?: boolean
+}) {
+  return (
+    <label className="pick">
+      <span className="pick-l">{label}{busy ? <span className="spin" /> : null}</span>
+      <select className="pick-s" value={value} disabled={disabled} onChange={(e) => onChange(e.target.value)}>
+        <option value="">{placeholder ?? 'Select…'}</option>
+        {options.map((o) => (<option key={o.value} value={o.value}>{o.label}</option>))}
+      </select>
+    </label>
+  )
+}
+
+// ── Screen 1: Specifications (LIVE) ───────────────────────────────────────────
+function Specifications({ family, setFamily, selection, setSelection }: {
+  family: Family
+  setFamily: (f: Family) => void
+  selection: LiveSelection | null
+  setSelection: (s: LiveSelection | null) => void
+}) {
+  const onFamily = (f: Family) => {
+    if (f === family) return
+    setSelection(null)
+    setFamily(f)
+  }
   return (
     <>
-      <div className="grid2">
-        <section className="card">
-          <div className="card-h"><span className="idx">1</span> Breaker Selection</div>
-          <div className="card-b">
-            <Field label="Breaker Class" value={DEVICE.breakerClass} />
-            <Field label="Manufacturer" value={DEVICE.breakerMfr} />
-            <Field label="Breaker Type" value={DEVICE.breakerType} />
-            <Field label="Breaker Style" value={DEVICE.breakerStyle} />
-            <Field label="Frame Size" value={DEVICE.frameSize} />
+      <section className="card">
+        <div className="card-h"><span className="idx">1</span> Trip Family &amp; Equipment</div>
+        <div className="card-b">
+          <div className="fam-tabs" role="tablist">
+            {FAMILIES.map((f) => (
+              <button
+                key={f.key}
+                role="tab"
+                aria-selected={family === f.key}
+                className={`fam-tab ${family === f.key ? 'on' : ''}`}
+                onClick={() => onFamily(f.key)}
+              >
+                <b>{f.label}</b><span>{f.sub}</span>
+              </button>
+            ))}
           </div>
-        </section>
-        <section className="card">
-          <div className="card-h"><span className="idx">2</span> Trip Unit Selection</div>
-          <div className="card-b">
-            <Field label="Trip Type" value={DEVICE.tripType} />
-            <Field label="Trip Manufacturer" value={DEVICE.tripMfr} />
-            <Field label="Trip Type Detail" value={DEVICE.tripDetail} />
-            <Field label="Trip Style" value={DEVICE.tripStyle} />
-            <Field label="Sensor Rating (Ir)" value={DEVICE.sensorIr} />
-          </div>
-        </section>
-      </div>
-
-      <div className="grid2">
-        <section className="card soft">
-          <div className="card-h light">🔗 Reference Material Links</div>
-          <div className="card-b muted-b">
-            <a className="ref">Square D Micrologic 6.0H — instruction bulletin (PDF)</a>
-            <a className="ref">P-Frame PX field test procedure</a>
-            <a className="ref">NETA ATS Table 100.7 — breaker tolerances</a>
-          </div>
-        </section>
-        <section className="card soft">
-          <div className="card-h light">📝 Trip Unit Notes &amp; TCC</div>
-          <div className="card-b muted-b">
-            <p className="note">Micrologic 6.0H provides LTPU/LTD/STPU/STD/INST + ground-fault. ARMS maintenance mode available. Confirm plug rating matches the installed sensor before testing.</p>
-          </div>
-        </section>
-      </div>
-
-      <section className="summary">
-        <div className="summary-h">✓ Equipment Configuration — matched &amp; ready</div>
-        <div className="summary-grid">
-          <div><span>Breaker</span>{DEVICE.breakerMfr} {DEVICE.breakerType} {DEVICE.breakerStyle} {DEVICE.frameSize}</div>
-          <div><span>Trip Unit</span>{DEVICE.tripMfr} {DEVICE.tripDetail} {DEVICE.tripStyle}</div>
-          <div><span>Sensor</span>{DEVICE.sensorIr} (plug {DEVICE.plug})</div>
-          <div><span>Status</span><b className="ok-text">● Configuration valid</b></div>
+          {family === 'etu' && <EtuSelector onSelect={setSelection} onClear={() => setSelection(null)} />}
+          {family === 'tmt' && <TmtSelector onSelect={setSelection} onClear={() => setSelection(null)} />}
+          {family === 'emt' && <EmtSelector onSelect={setSelection} onClear={() => setSelection(null)} />}
         </div>
       </section>
+
+      {selection ? (
+        <section className="summary">
+          <div className="summary-h">✓ Equipment Configuration — matched &amp; ready</div>
+          <div className="summary-grid">
+            <div><span>Breaker</span>{selection.breakerLabel}</div>
+            <div><span>Trip Unit</span>{selection.tripLabel}</div>
+            <div><span>Rating</span>{selection.ratingLabel}</div>
+            <div><span>Plugs</span>{selection.plugs.length ? selection.plugs.map((p) => `${p}A`).join(' · ') : '—'}</div>
+          </div>
+          {selection.bridgeStatus === 'unmatched' && (
+            <div className="summary-warn">No SST-bridge match for this style — sensor list may be incomplete; verify against the trip-unit catalog.</div>
+          )}
+        </section>
+      ) : (
+        <section className="card soft">
+          <div className="card-b muted-b">
+            <p className="note">
+              Pick a trip family, then narrow to the exact breaker and trip unit. ETU uses the recovered SST bridge to
+              show only the sensors compatible with the chosen breaker style. Your selection carries into Protection
+              Settings and the Curve.
+            </p>
+          </div>
+        </section>
+      )}
     </>
   )
 }
 
-function Settings({ maint, setMaint }: { maint: boolean; setMaint: (v: boolean) => void }) {
+// ETU: breaker cascade (mfr → class → breaker → style) → SST-bridge sensor narrowing.
+function EtuSelector({ onSelect, onClear }: { onSelect: (s: LiveSelection) => void; onClear: () => void }) {
+  const [cascade, setCascade] = useState<EtuBreakerCascadeResponse | null>(null)
+  const [bridge, setBridge] = useState<EtuBridgeSensorsResponse | null>(null)
+  const [mfrId, setMfrId] = useState('')
+  const [bClass, setBClass] = useState('')
+  const [breakerId, setBreakerId] = useState('')
+  const [styleId, setStyleId] = useState('')
+  const [sensorId, setSensorId] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [bridgeBusy, setBridgeBusy] = useState(false)
+  const [err, setErr] = useState<string | null>(null)
+
+  useEffect(() => {
+    let active = true
+    setLoading(true)
+    setErr(null)
+    fetchEtuBreakerCascade({
+      manufacturerId: mfrId ? Number(mfrId) : null,
+      breakerClass: bClass || null,
+      breakerId: breakerId ? Number(breakerId) : null,
+    })
+      .then((r) => { if (active) setCascade(r) })
+      .catch((e) => { if (active) setErr(errMsg(e)) })
+      .finally(() => { if (active) setLoading(false) })
+    return () => { active = false }
+  }, [mfrId, bClass, breakerId])
+
+  useEffect(() => {
+    if (!styleId) { setBridge(null); return }
+    let active = true
+    setBridgeBusy(true)
+    fetchEtuBridgeSensors({ breakerStyleId: Number(styleId) })
+      .then((r) => { if (active) setBridge(r) })
+      .catch((e) => { if (active) setErr(errMsg(e)) })
+      .finally(() => { if (active) setBridgeBusy(false) })
+    return () => { active = false }
+  }, [styleId])
+
+  const resolveSensor = useCallback(async (sid: string) => {
+    setSensorId(sid)
+    if (!sid || !bridge) { onClear(); return }
+    const row = bridge.sensors.find((s) => String(s.sensor_id) === sid)
+    if (!row) { onClear(); return }
+    const mfrName = cascade?.manufacturers.find((m) => String(m.manufacturer_id) === mfrId)?.manufacturer_name ?? row.tmt_sst_mfr ?? ''
+    const breakerName = cascade?.breakers.find((b) => String(b.breaker_id) === breakerId)?.breaker_name ?? ''
+    const frame = row.breaker_style_frame ?? ''
+    let plugs: number[] = []
+    try {
+      const settings = await fetchEtuSettings(row.sensor_id)
+      plugs = settings.plug_values ?? []
+    } catch {
+      plugs = []
+    }
+    onSelect({
+      family: 'etu',
+      sensorId: row.sensor_id,
+      breakerLabel: [mfrName, row.breaker_class?.toUpperCase(), breakerName, frame].filter(Boolean).join(' '),
+      tripLabel: [row.tmt_sst_mfr, row.tmt_sst_type, row.tmt_sst_style].filter(Boolean).join(' '),
+      ratingLabel: `${row.sensor_description ?? '—'}${row.sensor_rating ? ` · Ir ${row.sensor_rating} A` : ''}`,
+      bridgeStatus: bridge.bridge_match_status,
+      plugs,
+      trustNote: 'ETU per-sensor NETA pickup tolerances are field-sheet authoritative (G4).',
+    })
+  }, [bridge, cascade, mfrId, breakerId, onSelect, onClear])
+
+  const mfrOpts = (cascade?.manufacturers ?? []).map((m) => ({ value: String(m.manufacturer_id), label: `${m.manufacturer_name} (${m.breaker_count})` }))
+  const classOpts = (cascade?.breaker_classes ?? []).map((c) => ({ value: c.breaker_class, label: `${c.breaker_class} (${c.breaker_count})` }))
+  const breakerOpts = (cascade?.breakers ?? []).map((b) => ({ value: String(b.breaker_id), label: `${b.breaker_name} · ${b.breaker_class}` }))
+  const styleOpts = (cascade?.breaker_styles ?? []).map((s) => ({ value: String(s.breaker_style_id), label: s.breaker_style_name }))
+  const sensorOpts = (bridge?.sensors ?? []).map((s) => ({
+    value: String(s.sensor_id),
+    label: `${s.tmt_sst_type ?? ''} ${s.tmt_sst_style ?? ''} — ${s.sensor_description ?? ''}${s.sensor_rating ? ` (${s.sensor_rating}A)` : ''}`.trim(),
+  }))
+
+  return (
+    <div className="selwrap">
+      <div className="selrow">
+        <Picker label="Manufacturer" value={mfrId} busy={loading} options={mfrOpts} placeholder="All manufacturers"
+          onChange={(v) => { setMfrId(v); setBreakerId(''); setStyleId(''); setSensorId(''); onClear() }} />
+        <Picker label="Breaker Class" value={bClass} options={classOpts} placeholder="All classes"
+          onChange={(v) => { setBClass(v); setBreakerId(''); setStyleId(''); setSensorId(''); onClear() }} />
+        <Picker label="Breaker" value={breakerId} options={breakerOpts} placeholder="Select breaker…" disabled={!breakerOpts.length}
+          onChange={(v) => { setBreakerId(v); setStyleId(''); setSensorId(''); onClear() }} />
+        <Picker label="Breaker Style" value={styleId} options={styleOpts} placeholder="Select style…" disabled={!styleOpts.length}
+          onChange={(v) => { setStyleId(v); setSensorId(''); onClear() }} />
+        <Picker label="Trip Unit / Sensor (SST bridge)" value={sensorId} options={sensorOpts} busy={bridgeBusy}
+          placeholder={styleId ? 'Select sensor…' : 'Choose a style first'} disabled={!sensorOpts.length}
+          onChange={resolveSensor} />
+      </div>
+      {styleId && bridge && bridge.bridge_match_status === 'unmatched' && (
+        <div className="sel-status warn">This style has no SST-bridge target in catalog — try the manufacturer axis or trip-unit search.</div>
+      )}
+      {err && <div className="sel-status err">⚠ {err}</div>}
+    </div>
+  )
+}
+
+// TMT: breaker class (+ optional manufacturer text) → frame.
+function TmtSelector({ onSelect, onClear }: { onSelect: (s: LiveSelection) => void; onClear: () => void }) {
+  const [bClass, setBClass] = useState('')
+  const [mfr, setMfr] = useState('')
+  const [frames, setFrames] = useState<TMTFrameSearchResult[]>([])
+  const [frameId, setFrameId] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!bClass) { setFrames([]); return }
+    let active = true
+    setBusy(true)
+    setErr(null)
+    fetchTmtFrames({ breakerClass: bClass, manufacturerName: mfr.trim() || undefined })
+      .then((r) => { if (active) setFrames(r.frames) })
+      .catch((e) => { if (active) setErr(errMsg(e)) })
+      .finally(() => { if (active) setBusy(false) })
+    return () => { active = false }
+  }, [bClass, mfr])
+
+  const pickFrame = (fid: string) => {
+    setFrameId(fid)
+    if (!fid) { onClear(); return }
+    const f = frames.find((x) => String(x.frame_id) === fid)
+    if (!f) { onClear(); return }
+    onSelect({
+      family: 'tmt',
+      frameId: f.frame_id,
+      breakerLabel: [f.manufacturer_name, f.breaker_class, f.breaker_name, f.breaker_style_name].filter(Boolean).join(' '),
+      tripLabel: 'Thermal-Magnetic (breaker-integral)',
+      ratingLabel: f.frame_size ?? '—',
+      plugs: [],
+      trustNote: 'TMT trip is breaker-integral; settings/tolerances ship in Stage B.',
+    })
+  }
+
+  const classOpts = ['ICCB', 'MCCB', 'PCB'].map((c) => ({ value: c, label: c }))
+  const frameOpts = frames.map((f) => ({
+    value: String(f.frame_id),
+    label: `${f.manufacturer_name ?? ''} ${f.breaker_name ?? ''} ${f.breaker_style_name ?? ''} — ${f.frame_size ?? ''}`.trim(),
+  }))
+
+  return (
+    <div className="selwrap">
+      <div className="selrow">
+        <Picker label="Breaker Class" value={bClass} options={classOpts} placeholder="Select class…"
+          onChange={(v) => { setBClass(v); setFrameId(''); onClear() }} />
+        <label className="pick">
+          <span className="pick-l">Manufacturer filter{busy ? <span className="spin" /> : null}</span>
+          <input className="pick-s" value={mfr} placeholder="optional, e.g. Square D"
+            onChange={(e) => { setMfr(e.target.value); setFrameId(''); onClear() }} />
+        </label>
+        <Picker label="Frame" value={frameId} options={frameOpts} placeholder={bClass ? 'Select frame…' : 'Choose a class first'}
+          disabled={!frameOpts.length} onChange={pickFrame} />
+      </div>
+      {bClass && !busy && !frameOpts.length && <div className="sel-status">No frames matched — broaden the filter.</div>}
+      {err && <div className="sel-status err">⚠ {err}</div>}
+    </div>
+  )
+}
+
+// EMT: free-text frame search → frame → section.
+function EmtSelector({ onSelect, onClear }: { onSelect: (s: LiveSelection) => void; onClear: () => void }) {
+  const [q, setQ] = useState('')
+  const [frames, setFrames] = useState<EMTFrameSearchResult[]>([])
+  const [frameId, setFrameId] = useState('')
+  const [ctx, setCtx] = useState<EMTFrameContext | null>(null)
+  const [sectionId, setSectionId] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState<string | null>(null)
+  const debounce = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    if (q.trim().length < 2) { setFrames([]); return }
+    if (debounce.current) clearTimeout(debounce.current)
+    let active = true
+    debounce.current = setTimeout(() => {
+      setBusy(true)
+      setErr(null)
+      fetchEmtFrames(q.trim())
+        .then((r) => { if (active) setFrames(r.frames) })
+        .catch((e) => { if (active) setErr(errMsg(e)) })
+        .finally(() => { if (active) setBusy(false) })
+    }, 280)
+    return () => { active = false; if (debounce.current) clearTimeout(debounce.current) }
+  }, [q])
+
+  const pickFrame = async (fid: string) => {
+    setFrameId(fid)
+    setSectionId('')
+    setCtx(null)
+    onClear()
+    if (!fid) return
+    try {
+      const c = await fetchEmtContext(Number(fid))
+      setCtx(c)
+    } catch (e) {
+      setErr(errMsg(e))
+    }
+  }
+
+  const pickSection = (sid: string) => {
+    setSectionId(sid)
+    if (!sid || !ctx) { onClear(); return }
+    const sec = ctx.sections.find((s) => String(s.section_id) === sid)
+    onSelect({
+      family: 'emt',
+      frameId: ctx.frame_id,
+      sectionId: ctx.sections.find((s) => String(s.section_id) === sid)?.section_id,
+      breakerLabel: [ctx.manufacturer_name, ctx.type_name, ctx.style_name].filter(Boolean).join(' '),
+      tripLabel: `Electro-Mechanical${ctx.tcc_number ? ` · TCC ${ctx.tcc_number}` : ''}`,
+      ratingLabel: `${ctx.frame_desc ?? ctx.frame_size ?? '—'}${sec?.name ? ` · ${sec.name}` : ''}`,
+      plugs: [],
+      trustNote: 'EMT has no stored breaker default (G0); runtime-selected catalog path.',
+    })
+  }
+
+  const frameOpts = frames.map((f) => ({
+    value: String(f.frame_id),
+    label: `${f.manufacturer_name ?? ''} ${f.type_name ?? ''} ${f.style_name ?? ''} — ${f.frame_desc ?? f.frame_size ?? ''}`.trim(),
+  }))
+  const sectionOpts = (ctx?.sections ?? []).map((s) => ({ value: String(s.section_id), label: s.name ?? `Section ${s.section_id}` }))
+
+  return (
+    <div className="selwrap">
+      <div className="selrow">
+        <label className="pick wide">
+          <span className="pick-l">Search EMT frames{busy ? <span className="spin" /> : null}</span>
+          <input className="pick-s" value={q} placeholder="type ≥2 chars, e.g. AKR, Mag-Break…"
+            onChange={(e) => { setQ(e.target.value); setFrameId(''); setSectionId(''); onClear() }} />
+        </label>
+        <Picker label="Frame" value={frameId} options={frameOpts} placeholder={frames.length ? 'Select frame…' : 'Search first'}
+          disabled={!frameOpts.length} onChange={pickFrame} />
+        <Picker label="Section" value={sectionId} options={sectionOpts} placeholder={ctx ? 'Select section…' : 'Choose a frame first'}
+          disabled={!sectionOpts.length} onChange={pickSection} />
+      </div>
+      {err && <div className="sel-status err">⚠ {err}</div>}
+    </div>
+  )
+}
+
+// ── Screen 2: Protection Settings (sample until Stage B) ──────────────────────
+function Settings({ maint, setMaint, selection }: { maint: boolean; setMaint: (v: boolean) => void; selection: LiveSelection | null }) {
   const [mult, setMult] = useState<Record<DelayKey, number>>(DELAY_DEFAULT)
   const [measured, setMeasured] = useState<Record<string, string>>({})
   const bandTestAt = (el: string) => {
@@ -231,11 +545,21 @@ function Settings({ maint, setMaint }: { maint: boolean; setMaint: (v: boolean) 
   return (
     <>
       <div className="eq-strip">
-        <div><span>Breaker</span>{DEVICE.breakerMfr} {DEVICE.breakerType} {DEVICE.breakerStyle} {DEVICE.frameSize}</div>
-        <div><span>Trip Unit</span>{DEVICE.tripMfr} {DEVICE.tripDetail}</div>
-        <div><span>Sensor</span>{DEVICE.sensorIr}</div>
-        <div><span>Plug</span>{DEVICE.plug}</div>
-        <div><span>Effective Ir</span>{DEVICE.effectiveIr}</div>
+        {selection ? (
+          <>
+            <div><span>Breaker</span>{selection.breakerLabel}</div>
+            <div><span>Trip Unit</span>{selection.tripLabel}</div>
+            <div><span>Rating</span>{selection.ratingLabel}</div>
+            <div><span className="badge">SAMPLE</span>settings &amp; tolerances below are placeholder (Stage B)</div>
+          </>
+        ) : (
+          <>
+            <div><span>Breaker</span>{DEVICE.breakerMfr} {DEVICE.breakerType} {DEVICE.breakerStyle} {DEVICE.frameSize}</div>
+            <div><span>Trip Unit</span>{DEVICE.tripMfr} {DEVICE.tripDetail}</div>
+            <div><span>Sensor</span>{DEVICE.sensorIr}</div>
+            <div><span className="badge">SAMPLE</span>no live selection</div>
+          </>
+        )}
       </div>
 
       <div className={`maint-banner ${maint ? 'on' : ''}`}>
@@ -249,11 +573,7 @@ function Settings({ maint, setMaint }: { maint: boolean; setMaint: (v: boolean) 
       <div className="grid2 elgrid">
         {ELEMENTS.map((e) => {
           const isDelay = !!e.delay && !e.disabled
-          const testCurrent = e.disabled
-            ? '—'
-            : e.delay
-              ? fmtA(mult[e.delay] * (e.base ?? 0))
-              : fmtA(e.base ?? 0)
+          const testCurrent = e.disabled ? '—' : e.delay ? fmtA(mult[e.delay] * (e.base ?? 0)) : fmtA(e.base ?? 0)
           return (
             <div key={e.code} className={`el-card ${e.disabled ? 'off' : ''}`}>
               <div className="el-h">
@@ -268,11 +588,7 @@ function Settings({ maint, setMaint }: { maint: boolean; setMaint: (v: boolean) 
                     {e.disabled ? (
                       <div className="el-mult muted">—</div>
                     ) : isDelay ? (
-                      <select
-                        className="el-select"
-                        value={mult[e.delay!]}
-                        onChange={(ev) => setMult((m) => ({ ...m, [e.delay!]: Number(ev.target.value) }))}
-                      >
+                      <select className="el-select" value={mult[e.delay!]} onChange={(ev) => setMult((m) => ({ ...m, [e.delay!]: Number(ev.target.value) }))}>
                         {MULT_OPTS.map((m) => (<option key={m} value={m}>{fmtMult(m)}</option>))}
                       </select>
                     ) : (
@@ -288,7 +604,7 @@ function Settings({ maint, setMaint }: { maint: boolean; setMaint: (v: boolean) 
       </div>
 
       <section className="card">
-        <div className="card-h">📊 NETA Tolerance Bands &amp; Field Results</div>
+        <div className="card-h">📊 NETA Tolerance Bands &amp; Field Results <span className="badge inline">SAMPLE — live in Stage B</span></div>
         <div className="bands-wrap">
           <table className="bands">
             <thead><tr><th>Element</th><th>Setting</th><th>Test @</th><th>Min Limit</th><th>Max Limit</th><th>Measured</th><th>% Error</th><th>Status</th></tr></thead>
@@ -309,13 +625,8 @@ function Settings({ maint, setMaint }: { maint: boolean; setMaint: (v: boolean) 
                     <td className="num">{disabled ? '—' : fmtVal(b.max, b.unit)}</td>
                     <td>{disabled ? <span className="muted2">—</span> : (
                       <div className="meas">
-                        <input
-                          className="meas-in"
-                          inputMode="decimal"
-                          value={raw}
-                          placeholder="—"
-                          onChange={(ev) => setMeasured((m) => ({ ...m, [b.el]: ev.target.value }))}
-                        />
+                        <input className="meas-in" inputMode="decimal" value={raw} placeholder="—"
+                          onChange={(ev) => setMeasured((m) => ({ ...m, [b.el]: ev.target.value }))} />
                         <span className="meas-u">{b.unit}</span>
                       </div>
                     )}</td>
@@ -324,10 +635,8 @@ function Settings({ maint, setMaint }: { maint: boolean; setMaint: (v: boolean) 
                       : <span className="muted2">—</span>}</td>
                     <td>{disabled
                       ? <span className="status off">Disabled</span>
-                      : !hasM
-                        ? <span className="status ready">● Ready</span>
-                        : inBand
-                          ? <span className="status pass">✓ PASS</span>
+                      : !hasM ? <span className="status ready">● Ready</span>
+                        : inBand ? <span className="status pass">✓ PASS</span>
                           : <span className="status fail">✗ FAIL</span>}</td>
                   </tr>
                 )
@@ -338,15 +647,16 @@ function Settings({ maint, setMaint }: { maint: boolean; setMaint: (v: boolean) 
       </section>
 
       <div className="method">
-        <b>Test methodology.</b> Pickup elements (LTPU, STPU, INST, GFPU) use ramping tests starting ~80% of the calculated value, verified at <b>1×</b> pickup.
-        Delay elements use fixed-current injection: <b>LTD defaults to 3×</b> (selectable to 6× in 0.5× steps); <b>STD &amp; GFD to 1.5×</b>. Instantaneous elements trip in ≤ 0.03 s.
-        Tolerance bands are authoritative per-sensor values; measured results fill the Status column at evaluate time.
+        <b>Test methodology.</b> Pickup elements (LTPU, STPU, INST, GFPU) use ramping tests verified at <b>1×</b> pickup.
+        Delay elements use fixed-current injection: <b>LTD defaults to 3×</b> (selectable to 6× in 0.5× steps); <b>STD &amp; GFD to 1.5×</b>.
+        {selection ? ` ${selection.trustNote}` : ' Select live equipment on Screen 1 to drive these from DB-authoritative per-sensor values.'}
       </div>
     </>
   )
 }
 
-function Curve() {
+// ── Screen 3: Curve (sample until Stage C) ────────────────────────────────────
+function Curve({ selection }: { selection: LiveSelection | null }) {
   const legend = [
     { c: '#14507d', t: 'Nominal Curve' },
     { c: '#2f8f5b', t: 'LTPU @ 1×' },
@@ -364,12 +674,22 @@ function Curve() {
     <>
       <div className="curve-grid">
         <aside className="card side">
-          <div className="card-h">Device Info</div>
+          <div className="card-h">Device Info <span className="badge inline">SAMPLE</span></div>
           <div className="card-b">
-            <Field label="Breaker" value={`${DEVICE.breakerMfr} ${DEVICE.breakerType} ${DEVICE.breakerStyle}`} />
-            <Field label="Frame" value={DEVICE.frameSize} />
-            <Field label="Trip Unit" value={DEVICE.tripDetail} />
-            <Field label="Sensor Rating" value={`Ir ${DEVICE.sensorIr} · plug ${DEVICE.plug}`} />
+            {selection ? (
+              <>
+                <Field label="Breaker" value={selection.breakerLabel} />
+                <Field label="Trip Unit" value={selection.tripLabel} />
+                <Field label="Rating" value={selection.ratingLabel} />
+              </>
+            ) : (
+              <>
+                <Field label="Breaker" value={`${DEVICE.breakerMfr} ${DEVICE.breakerType} ${DEVICE.breakerStyle}`} />
+                <Field label="Frame" value={DEVICE.frameSize} />
+                <Field label="Trip Unit" value={DEVICE.tripDetail} />
+                <Field label="Sensor Rating" value={`Ir ${DEVICE.sensorIr} · plug ${DEVICE.plug}`} />
+              </>
+            )}
           </div>
           <div className="card-h" style={{ marginTop: 8 }}>Curve Elements</div>
           <div className="legend">
@@ -378,10 +698,9 @@ function Curve() {
         </aside>
 
         <section className="card plot-card">
-          <div className="card-h">Trip Characteristic Curve</div>
+          <div className="card-h">Trip Characteristic Curve <span className="badge inline">SAMPLE — live /plot-tcc in Stage C</span></div>
           <div className="plot-wrap">
             <svg viewBox="0 0 700 480" className="plot" role="img" aria-label="Time-current curve">
-              {/* grid */}
               {X_TICKS.map((t) => (
                 <g key={`x${t}`}>
                   <line x1={px(t)} y1={PLOT.mt} x2={px(t)} y2={PLOT.mt + PLOT.h} className="grid" />
@@ -391,17 +710,13 @@ function Curve() {
               {Y_TICKS.map((t) => (
                 <g key={`y${t}`}>
                   <line x1={PLOT.ml} y1={py(t)} x2={PLOT.ml + PLOT.w} y2={py(t)} className="grid" />
-                  <text x={PLOT.ml - 8} y={py(t) + 3} className="axt" textAnchor="end">{t < 1 ? t : t}</text>
+                  <text x={PLOT.ml - 8} y={py(t) + 3} className="axt" textAnchor="end">{t}</text>
                 </g>
               ))}
               <text x={PLOT.ml + PLOT.w / 2} y={PLOT.mt + PLOT.h + 38} className="axl" textAnchor="middle">Current (A)</text>
               <text transform={`translate(16 ${PLOT.mt + PLOT.h / 2}) rotate(-90)`} className="axl" textAnchor="middle">Time (s)</text>
-
-              {/* tolerance band + nominal */}
               <path d={bandPath} className="band" />
               <path d={toPath(NOMINAL)} className="nominal" />
-
-              {/* markers */}
               {MARKERS.map((m) => (
                 <g key={m.label}>
                   <rect x={px(m.a) - 5} y={py(m.s) - 5} width={10} height={10} transform={`rotate(45 ${px(m.a)} ${py(m.s)})`} fill={m.color} stroke="#fff" strokeWidth={1.5} />
@@ -430,8 +745,8 @@ const CSS = `
 .mark{font-size:22px;width:40px;height:40px;display:grid;place-items:center;background:rgba(255,255,255,.14);border-radius:10px;}
 .title{font-size:18px;font-weight:700;letter-spacing:.2px;}
 .sub{font-size:12px;opacity:.8;margin-top:1px;}
-.device-chip{display:flex;align-items:center;gap:8px;font-size:12.5px;background:rgba(255,255,255,.12);padding:7px 13px;border-radius:999px;}
-.device-chip .dot{width:7px;height:7px;border-radius:50%;background:#5fdca0;box-shadow:0 0 0 3px rgba(95,220,160,.25);}
+.device-chip{display:flex;align-items:center;gap:8px;font-size:12.5px;background:rgba(255,255,255,.12);padding:7px 13px;border-radius:999px;max-width:46vw;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+.device-chip .dot{width:7px;height:7px;border-radius:50%;background:#5fdca0;box-shadow:0 0 0 3px rgba(95,220,160,.25);flex:none;}
 .steps{display:flex;gap:6px;padding:14px 28px 0;flex-wrap:wrap;}
 .step{display:flex;align-items:center;gap:9px;border:1px solid var(--line);background:var(--surface);color:var(--muted);
  padding:9px 16px;border-radius:10px;font-size:13.5px;font-weight:600;cursor:pointer;transition:.15s;}
@@ -447,26 +762,48 @@ const CSS = `
 .card-h{font-size:13.5px;font-weight:700;color:var(--brand-d);padding:13px 18px;border-bottom:1px solid var(--line-2);display:flex;align-items:center;gap:9px;background:#fafbfd;}
 .card-h.light{color:var(--brand);}
 .idx{width:20px;height:20px;border-radius:6px;background:var(--brand);color:#fff;display:grid;place-items:center;font-size:12px;font-weight:700;}
-.card-b{padding:8px 18px 16px;}
+.card-b{padding:14px 18px 16px;}
 .field{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:9px 0;border-bottom:1px dashed var(--line-2);}
 .field:last-child{border-bottom:none;}
 .flabel{font-size:12.5px;color:var(--muted);font-weight:600;}
 .fvalue{font-size:13.5px;font-weight:600;color:var(--ink);background:var(--line-2);padding:5px 12px;border-radius:7px;min-width:130px;text-align:right;}
 .soft .card-b{padding-top:14px;}
 .muted-b{display:flex;flex-direction:column;gap:9px;}
-.ref{font-size:13px;color:var(--brand-l);text-decoration:none;border:1px solid var(--line);border-radius:8px;padding:9px 12px;cursor:pointer;background:#fafdff;}
-.ref:hover{border-color:var(--brand-l);}
 .note{font-size:13px;color:var(--muted);line-height:1.55;margin:0;}
+/* family tabs */
+.fam-tabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
+.fam-tab{flex:1;min-width:140px;display:flex;flex-direction:column;gap:1px;align-items:flex-start;border:1px solid var(--line);background:#fafbfd;border-radius:11px;padding:11px 15px;cursor:pointer;transition:.15s;}
+.fam-tab b{font-size:15px;color:var(--ink);letter-spacing:.3px;}
+.fam-tab span{font-size:11.5px;color:var(--muted);}
+.fam-tab:hover{border-color:var(--brand-l);}
+.fam-tab.on{border-color:var(--brand);background:#eaf2fb;box-shadow:inset 0 0 0 1px var(--brand);}
+.fam-tab.on b{color:var(--brand-d);}
+/* selectors */
+.selwrap{display:flex;flex-direction:column;gap:12px;}
+.selrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;}
+.pick{display:flex;flex-direction:column;gap:5px;}
+.pick.wide{grid-column:1 / -1;}
+.pick-l{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:700;display:flex;align-items:center;gap:7px;}
+.pick-s{width:100%;font-size:13.5px;font-weight:600;color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:8px;padding:9px 11px;cursor:pointer;}
+.pick-s:focus{outline:2px solid var(--brand-l);outline-offset:-1px;border-color:var(--brand-l);}
+.pick-s:disabled{background:var(--line-2);color:#9aa7b3;cursor:default;}
+.spin{width:11px;height:11px;border-radius:50%;border:2px solid var(--line);border-top-color:var(--brand);display:inline-block;animation:sp .7s linear infinite;}
+@keyframes sp{to{transform:rotate(360deg);}}
+.sel-status{font-size:12.5px;color:var(--muted);background:var(--line-2);border-radius:8px;padding:9px 12px;}
+.sel-status.warn{color:#8a5a00;background:var(--amber-s);border:1px solid var(--amber);}
+.sel-status.err{color:#fff;background:var(--red);}
 .summary{background:linear-gradient(100deg,#1f7a4d,#2f8f5b);color:#fff;border-radius:14px;padding:16px 20px;box-shadow:0 10px 24px rgba(47,143,91,.22);}
 .summary-h{font-size:14px;font-weight:700;margin-bottom:12px;}
 .summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 28px;}
 @media(max-width:820px){.summary-grid{grid-template-columns:1fr;}}
 .summary-grid div{font-size:13.5px;display:flex;gap:10px;align-items:baseline;}
-.summary-grid span{font-size:11.5px;text-transform:uppercase;letter-spacing:.6px;opacity:.85;min-width:74px;font-weight:700;}
-.ok-text{color:#d6ffe9;}
+.summary-grid span{font-size:11.5px;text-transform:uppercase;letter-spacing:.6px;opacity:.85;min-width:64px;font-weight:700;}
+.summary-warn{margin-top:12px;font-size:12.5px;background:rgba(255,255,255,.16);border-radius:8px;padding:9px 12px;}
 .eq-strip{display:flex;flex-wrap:wrap;gap:8px 26px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:13px 18px;}
 .eq-strip div{font-size:13px;display:flex;gap:8px;align-items:baseline;}
 .eq-strip span{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:700;}
+.badge{background:var(--amber);color:#fff;border-radius:5px;padding:2px 7px;font-size:10px;letter-spacing:.5px;font-weight:800;}
+.badge.inline{margin-left:auto;}
 .maint-banner{display:flex;align-items:center;justify-content:space-between;gap:16px;border:1px solid var(--line);border-radius:12px;padding:13px 18px;background:var(--surface);}
 .maint-banner.on{background:var(--amber-s);border-color:var(--amber);}
 .maint-banner b{font-size:13.5px;}
@@ -490,7 +827,7 @@ const CSS = `
 .el-row span{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:700;display:block;margin-bottom:4px;}
 .el-row.two{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
 .el-input{border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-size:13.5px;font-weight:600;background:#fff;}
-.el-mult{font-size:13.5px;font-weight:700;color:var(--brand);background:var(--brand-soft,#e6eef5);padding:8px 12px;border-radius:8px;text-align:center;}
+.el-mult{font-size:13.5px;font-weight:700;color:var(--brand);background:#e6eef5;padding:8px 12px;border-radius:8px;text-align:center;}
 .el-mult.muted{color:#9aa7b3;background:var(--line-2);}
 .el-select{width:100%;font-size:13.5px;font-weight:700;color:var(--brand);background:#fff;border:1px solid var(--brand-l);border-radius:8px;padding:7px 10px;cursor:pointer;}
 .el-select:focus{outline:2px solid var(--brand-l);outline-offset:-1px;}

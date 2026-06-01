@@ -172,6 +172,34 @@ export type EtuBreakerCascadeParams = {
   sensorId?: number | null
 }
 
+// SST-bridge narrowing: breaker style -> compatible ETU sensor set (D1 / migration 006).
+export type EtuBridgeSensor = {
+  breaker_class: string
+  breaker_id: number
+  breaker_style_id: number
+  breaker_style_frame: string | null
+  tmt_sst_mfr: string | null
+  tmt_sst_type: string | null
+  tmt_sst_style: string | null
+  trip_style_id: number
+  sensor_id: number
+  sensor_rating: number | null
+  sensor_description: string | null
+}
+
+export type EtuBridgeSensorsResponse = {
+  breaker_style_id: number | null
+  breaker_id: number | null
+  bridge_match_status: 'matched' | 'unmatched'
+  count: number
+  sensors: EtuBridgeSensor[]
+}
+
+export type EtuBridgeSensorsParams = {
+  breakerStyleId?: number | null
+  breakerId?: number | null
+}
+
 export type SensorCalcContext = {
   sensor_id: number
   sensor_desc: string
@@ -707,6 +735,17 @@ export async function fetchEtuBreakerCascade(
   const suffix = search.toString()
   return getJson<EtuBreakerCascadeResponse>(
     `/api/v1/neta/etu/breaker-cascade${suffix ? `?${suffix}` : ''}`,
+  )
+}
+
+export async function fetchEtuBridgeSensors(
+  params: EtuBridgeSensorsParams = {},
+): Promise<EtuBridgeSensorsResponse> {
+  const search = new URLSearchParams()
+  appendOptionalParam(search, 'breaker_style_id', params.breakerStyleId)
+  appendOptionalParam(search, 'breaker_id', params.breakerId)
+  return getJson<EtuBridgeSensorsResponse>(
+    `/api/v1/neta/etu/bridge-sensors?${search.toString()}`,
   )
 }
 
