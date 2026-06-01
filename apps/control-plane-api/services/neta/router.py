@@ -1670,26 +1670,53 @@ def _build_cross_half_breaker_filter(
     breaker_class: Optional[str],
     breaker_id: Optional[int],
     breaker_style_id: Optional[int],
+    *,
+    bridge_xfilter: bool = False,
 ) -> tuple[str, dict[str, object], str]:
-    parts: list[str] = []
+    """Cross-filter the trip-unit cascade by a breaker-side selection.
+
+    bridge_xfilter=True narrows trips to the sensors actually COMPATIBLE with the
+    selected breaker via tcc.vw_breaker_sst_bridge (the real BG-5 cross-filter).
+    bridge_xfilter=False keeps the legacy manufacturer-only narrowing (the explorer's
+    behavior — left intact). Returns (clause, params, cte_to_prepend).
+    """
     params: dict[str, object] = {}
     if breaker_class is not None:
-        parts.append("breaker_class = :xh_breaker_class")
         params["xh_breaker_class"] = breaker_class
     if breaker_id is not None:
-        parts.append("breaker_id = :xh_breaker_id")
         params["xh_breaker_id"] = breaker_id
     if breaker_style_id is not None:
-        parts.append("breaker_style_id = :xh_breaker_style_id")
         params["xh_breaker_style_id"] = breaker_style_id
-    if not parts:
+    if not params:
         return "", {}, ""
 
-    inner_where = " AND ".join(parts)
+    if bridge_xfilter:
+        # (class, id) pair-safe: style/breaker ids overlap across classes.
+        parts: list[str] = []
+        if breaker_class is not None:
+            parts.append("lower(breaker_class) = lower(:xh_breaker_class)")
+        if breaker_id is not None:
+            parts.append("breaker_id = :xh_breaker_id")
+        if breaker_style_id is not None:
+            parts.append("breaker_style_id = :xh_breaker_style_id")
+        clause = (
+            " AND v.sensor_id IN ("
+            "SELECT sensor_id FROM tcc.vw_breaker_sst_bridge "
+            f"WHERE {' AND '.join(parts)})"
+        )
+        return clause, params, ""
+
+    parts = []
+    if breaker_class is not None:
+        parts.append("breaker_class = :xh_breaker_class")
+    if breaker_id is not None:
+        parts.append("breaker_id = :xh_breaker_id")
+    if breaker_style_id is not None:
+        parts.append("breaker_style_id = :xh_breaker_style_id")
     clause = (
         " AND v.manufacturer_id IN ("
         "SELECT DISTINCT manufacturer_id FROM etu_breaker_combined "
-        f"WHERE {inner_where})"
+        f"WHERE {' AND '.join(parts)})"
     )
     return clause, params, _ETU_BREAKER_CASCADE_CTE
 
@@ -1698,7 +1725,16 @@ def _build_cross_half_trip_unit_filter(
     trip_type_id: Optional[int],
     trip_style_id: Optional[int],
     sensor_id: Optional[int],
+    *,
+    bridge_xfilter: bool = False,
 ) -> tuple[str, dict[str, object]]:
+    """Cross-filter the breaker cascade (etu_breaker_combined) by a trip-unit selection.
+
+    bridge_xfilter=True narrows breakers to the (class, style) pairs actually COMPATIBLE
+    with the selected trip unit via tcc.vw_breaker_sst_bridge (resolving trip_type via
+    vw_trip_unit_cascade since the bridge keys on sensor/trip_style, not trip_type).
+    bridge_xfilter=False keeps the legacy manufacturer-only narrowing.
+    """
     parts: list[str] = []
     params: dict[str, object] = {}
     if trip_type_id is not None:
@@ -1714,6 +1750,15 @@ def _build_cross_half_trip_unit_filter(
         return "", {}
 
     inner_where = " AND ".join(parts)
+    if bridge_xfilter:
+        clause = (
+            " AND (breaker_class, breaker_style_id) IN ("
+            "SELECT upper(b.breaker_class), b.breaker_style_id "
+            "FROM tcc.vw_breaker_sst_bridge b WHERE b.sensor_id IN ("
+            f"SELECT sensor_id FROM vw_trip_unit_cascade WHERE {inner_where}))"
+        )
+        return clause, params
+
     clause = (
         " AND manufacturer_id IN ("
         "SELECT DISTINCT manufacturer_id FROM vw_trip_unit_cascade "
@@ -2994,6 +3039,10 @@ def get_cascade(
     breaker_class: Optional[str] = Query(None, description="Cross-half filter by breaker class"),
     breaker_id: Optional[int] = Query(None, description="Cross-half filter by breaker"),
     breaker_style_id: Optional[int] = Query(None, description="Cross-half filter by breaker style"),
+    bridge_xfilter: bool = Query(
+        False,
+        description="Cross-filter by SST-bridge COMPATIBILITY (not just manufacturer) when a breaker is selected",
+    ),
     db: Session = Depends(get_db),
 ):
     """
@@ -3022,6 +3071,7 @@ def get_cascade(
         breaker_class,
         breaker_id,
         breaker_style_id,
+        bridge_xfilter=bridge_xfilter,
     )
     plug_join, plug_params = _build_cascade_plug_join(plug_value, alias="v")
 
@@ -3258,6 +3308,10 @@ def get_etu_breaker_cascade(
         False,
         description="ETU tab: show only breakers/styles with an electronic trip unit (SST-bridge target)",
     ),
+    bridge_xfilter: bool = Query(
+        False,
+        description="Cross-filter breakers by SST-bridge COMPATIBILITY (not just manufacturer) when a trip unit is selected",
+    ),
     db: Session = Depends(get_db),
 ):
     if breaker_class is not None and breaker_class not in _ETU_BREAKER_CASCADE_CLASSES:
@@ -3278,6 +3332,7 @@ def get_etu_breaker_cascade(
         trip_type_id,
         trip_style_id,
         sensor_id,
+        bridge_xfilter=bridge_xfilter,
     )
 
     def _apply_xh(where_sql: str) -> str:

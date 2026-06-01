@@ -134,6 +134,33 @@ def test_breaker_cascade_accepts_trip_unit_cross_filters(client):
         app.dependency_overrides.clear()
 
 
+def test_breaker_cascade_bridge_xfilter_narrows_by_compatibility_not_manufacturer(client):
+    # A trip-unit selection must narrow breakers to bridge-COMPATIBLE styles, not the
+    # trip unit's whole manufacturer (the old manufacturer-only cross-filter).
+    fake_db = FakeBreakerCascadeDb([
+        FakeResult(scalar_value=4),
+        FakeResult(rows=[{"manufacturer_id": 1, "manufacturer_name": "ABB", "breaker_count": 4}]),
+        FakeResult(rows=[{"breaker_class": "ICCB", "breaker_count": 4}]),
+    ])
+    app.dependency_overrides[get_db] = lambda: fake_db
+
+    try:
+        resp = client.get(
+            "/api/v1/neta/etu/breaker-cascade",
+            params={"trip_style_id": 1230, "bridge_xfilter": "true"},
+        )
+        assert resp.status_code == 200
+        assert all("vw_breaker_sst_bridge" in c["statement"] for c in fake_db.calls)
+        assert any("(breaker_class, breaker_style_id) IN" in c["statement"] for c in fake_db.calls)
+        # legacy manufacturer-only narrowing must NOT be used when bridge_xfilter is on
+        assert not any(
+            "manufacturer_id IN (SELECT DISTINCT manufacturer_id FROM vw_trip_unit_cascade" in c["statement"]
+            for c in fake_db.calls
+        )
+    finally:
+        app.dependency_overrides.clear()
+
+
 def test_breaker_cascade_bridge_only_filters_to_etu_capable(client):
     fake_db = FakeBreakerCascadeDb([
         FakeResult(scalar_value=130),
