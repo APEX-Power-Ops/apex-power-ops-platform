@@ -93,10 +93,15 @@ name-hygiene — `UCASE+TRIM` rescues 0. Fall back to manufacturer-scope + flag 
 SST = **ABB / PR332/P / ICCB-LSIG** → exactly **1 `DatStyle`** (STYLE_ID 1230) → **5 `DatSensor`** + 18
 plugs. (Contrast the manufacturer-only UI, which offered 117 ABB trips.) `[VERIFIED-LIVE 2026-05-31]` `[04]`
 
-> **Status of the persisted catalog:** the 4 bridge columns (`tmt_use_sst`, `tmt_sst_mfr/type/style`)
-> are **NOT** in `tcc.brk_*_styles` today — dropped at load. Recovering them is a tracked schema gap
-> (see G1 dropped-column register + G2 governance). Until then, the deployed cross-filter is
-> manufacturer-axis only. `[VERIFIED-LIVE 2026-05-31]` `[HANDOFF 2026-04-29-tcc-etu-stage1-slice-gamma]`
+> **Status of the persisted catalog — RECOVERED 2026-06-01 (D1, migration `006`):** the 4 bridge columns
+> (`tmt_use_sst`, `tmt_sst_mfr/type/style`) are now **carried** on all 3 `tcc.brk_*_styles` tables
+> (source-faithful NAME strings, re-carried from Access via the proven `rank=id` mapping). The stitch is
+> realized by the BG-4 view **`tcc.vw_breaker_sst_bridge`** (breaker style → compatible sensor set), and the
+> 325 day-one orphan MCCB styles were repointed (0 orphans). Match-rates vs the Access live-join: ICCB 100 /
+> MCCB 95.6 / PCB 97.5% (non-null triples; residual = catalog gaps). Worked example holds live:
+> `T8V-1600` (ICCB) → ABB/PR332/P/ICCB-LSIG → 5 sensors. **The deployed cross-filter UX is still
+> manufacturer-axis only** — wiring it to consume this surface is the separate Phase D / BG-5 follow-on.
+> See G1 dropped-column register D1 + G2 governance §4.3. `[VERIFIED-LIVE 2026-06-01]`
 
 **Same pattern, other domains** (for awareness; mapped in G1): `RelayDevices.SST_*` and
 `DsgnProtEqp.SST*` use the identical "borrow-an-SST" shape (the latter via numeric `MFG_ID`). `[01]`
