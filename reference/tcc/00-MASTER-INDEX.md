@@ -5,7 +5,7 @@
 > and cites the guide section it relies on. If reality and a guide disagree, the guide is fixed
 > *first* (see the Single-Source-of-Truth Law below) — never silently worked around.
 
-- **Status:** VALIDATED-CORE — all guides DRAFTED + deep-validated 2026-05-31; **G0/G3/G4 vs the `EasyPower.DeviceLibrary` primary source · G1/G2 deep-validated vs BOTH live DBs (Access OLEDB + Supabase `tcc.*`)**. This pass: EMT edge **RESOLVED** (standalone-only), relay-bridge D2 **reversed** (carried, not dropped), INVEQ parity **split** into a now-fixable Ansi defect + a bounded *local* Ghidra Therm check. Evidence: `_discovery/_validation/`. Remaining open items are host-independent + scoped.
+- **Status:** VALIDATED-CORE — all guides DRAFTED + deep-validated 2026-05-31; **G0/G3/G4 vs the `EasyPower.DeviceLibrary` primary source · G1/G2 deep-validated vs BOTH live DBs (Access OLEDB + Supabase `tcc.*`)**. This pass: EMT edge **RESOLVED** (standalone-only), relay-bridge D2 **reversed** (carried, not dropped), INVEQ parity **split** into a now-fixable Ansi defect + a bounded *local* Ghidra Therm check. Evidence: `_discovery/_validation/`. **Relay lane added (2026-05-31):** GR — Relay Reference authored + validated vs Access + `tcc.*` + EasyPower official docs (`[EZPDOC]`); the relay flagship `RelayTDSection.Model` is a **0–8 curve-family dispatcher** (DB-described "0/1"); the relay calc **kernel is native-only + UNRECOVERED** → relay curves are BOUNDED (weaker than breakers), ship-now = stored data. Evidence `_discovery/_relay/`. Remaining open items are host-independent + scoped.
 - **Owner:** APEX TCC lane (Desktop authors; executors cite + amend)
 - **Home:** `apex-power-ops-platform/reference/tcc/` (version-controlled, beside the packets that cite it)
 
@@ -43,15 +43,19 @@ Every non-trivial statement in a guide carries one tag so any reader can re-veri
 |---|---|
 | `[VERIFIED-LIVE <date>]` | Re-queried against the live source (Access `D:\TCC_NEW.accdb` via OLEDB/DAO, or governed Supabase `fxoyniqnrlkxfligbxmg`) on that date. |
 | `[DLL <file:line>]` | Recovered from decompiled EasyPower source under `D:\Access DB\DLL Decomp\`. |
+| `[EZPDOC <page>]` | From EasyPower's **official help documentation** (`help.easypower.com/ezp/25.0/…`) — the vendor's authoritative field/behavior descriptions. Corroborates `[DLL]`; where no DLL exists (e.g. relays), it is a **primary** authority. |
 | `[DVL-DB <table.col>]` | From an Access field DESCRIPTION (the design-layer "DVL flag" metadata). |
 | `[HANDOFF <id>]` | Established by a prior dispatch closeout under `ops/agents/handoffs/`. |
 | `[INFERENCE]` | Reasoned from evidence, not directly attested — treat as provisional. |
 | `[DEFERRED]` | Known-incomplete by decision; see the deferred-work ledger (G2). |
 | `[OPEN-VALIDATION]` | Cannot be validated from currently-accessible sources (e.g. needs the host-only `neta-ett-study-material` artifacts). |
 
-**Conflict rule:** when sources disagree, **engine source (`[DLL]`) outranks DB description (`[DVL-DB]`)
-outranks inference.** The flagship case: `DS3_SEC3_I2T`/`DS1GF_SEC3_I2T` are described "0 or 1" in
-the DB but the engine casts them to a 0..4 routing enum — the engine wins. Record both and the win.
+**Conflict rule:** when sources disagree, **engine source (`[DLL]`) ≥ vendor doc (`[EZPDOC]`) > DB
+description (`[DVL-DB]`) > inference.** `[DLL]` and `[EZPDOC]` are both authoritative and corroborate; where
+no DLL exists (the **relay** lane — GR), `[EZPDOC]` + live data lead. The flagship case: `DS3_SEC3_I2T`/
+`DS1GF_SEC3_I2T` are described "0 or 1" in the DB but the engine casts them to a 0..4 routing enum — the
+engine wins (and `[EZPDOC]` confirms it via the "(I^x)t In/Out" control). The relay analog: `RelayTDSection.Model`
+is DB-described "0/1" but is a 0..8 curve-family dispatcher (GR §3). Record both and the win.
 
 ---
 
@@ -64,6 +68,7 @@ the DB but the engine casts them to a 0..4 routing enum — the engine wins. Rec
 | **[G2 — Rules Guide](G2-RULES-GUIDE.md)** | Invariants, frozen baselines, the deferred-work ledger + reopen-triggers, governance (incl. reference-of-record vs forward-port) | deciding whether something is settled, frozen, or open | **✅ DB-checkable subset 100% validated 2026-05-31** (ledger remainder = handoff-historical/host-only, tagged) |
 | **[G3 — Routing Guide](G3-ROUTING-GUIDE.md)** | **Selection routing** (cascade, the GetDefaultTripInfo stitch, cross-filter) and **calc-dispatch routing** (`DS*_PICKUP_CALC`→SSTCalcMethod, `DS*_SEC3_I2T`→SSTDelayCalc) | building/altering a selection flow or a calc dispatch | DRAFT · ✅ validated vs DeviceLibrary 2026-05-31 |
 | **[G4 — Calc Guide](G4-CALC-GUIDE.md)** | Pickup formulas, tolerance derivation, the delay/curve solvers, and the **field-trust matrix** (proven \| bounded \| deferred \| stub) | computing or shipping any pickup/delay/tolerance value | **✅ validated vs SSTSensorRecord · INVEQ evaluator characterized live 2026-05-31** |
+| **[GR — Relay Reference](GR-RELAY-REFERENCE.md)** | The **relay** protective-device domain (the parallel to G0–G4 for relays): selection model, schema + join graph, the `RelayTDSection.Model` curve-family routing, calc + the **relay field-trust matrix**, the SST-2 bridge | any relay selection / schema / calc decision | **✅ authored + validated vs Access + `tcc.*` + `[EZPDOC]` 2026-05-31** (native relay kernel UNRECOVERED → curves BOUNDED, weaker than breakers) |
 
 ---
 
@@ -100,6 +105,7 @@ These cannot be fully closed from currently-accessible sources and are tagged `[
 - **`neta-ett-study-material` is host-only** — not on this clone. The calc-engine spec (§G/§J/§N/§O), the breaker-trip-unit workflow audit, and the `R-1..R-8` risk register live on the Olares host; guides cite the handoffs' verbatim excerpts until the host artifacts are read. *(No longer blocks INVEQ parity — see below.)*
 - **InvEq numerical parity — RE-SCOPED 2026-05-31, NO LONGER HOST-BLOCKED (G4 §3e/§5).** Corpus is STD 100% Therm / GF 8,450 Therm + **100 Ansi**; the managed solver ignores coeffs c4/c5 and **emits no curve for the 100 Ansi sensors** (a now-fixable defect → hard-exclude). The residual = one bounded **local** Ghidra fn (`CalcThermEq` in `D:\EasyPower\EasyPower.exe`) to move the 31,070-row Therm corpus BOUNDED→PROVEN. Still open, but bounded + locally runnable.
 - ~~**EMT breaker-selection edge**~~ — **RESOLVED 2026-05-31: standalone-only** (no breaker entry point; G0 §5). Closed.
+- **Relay calc kernel UNRECOVERED (GR §7)** — the native relay evaluator (`CTccRelayCurveBase` + the per-family curve classes) decompiled to size-only native shells; **no `[DLL]` relay formula exists.** Relay analytical curves (Models 1–6) are BOUNDED (platform solvers validated on synthetic fixtures only); ship-now = stored data. Close = a Ghidra-headless run on `EasyPower.exe` + EasyPower-captured fixtures (a larger lane than the breaker INVEQ close). The non-Basler family constant tables also live only in `EasyPower.DeviceLibrary` (not public help).
 - **No physical `.h` headers** — the constants the DB defers to ("source header files") survive only as the decompiled C# mirror; that mirror is treated as authoritative (`[DLL]`).
 
 ---

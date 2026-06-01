@@ -107,7 +107,15 @@ All `DatSection*` key on `SensorID → DatSensor.SensorID`; some also carry `Cur
 | `RelaySec2TCPCurves` | 29 | 146,912 | `ParentID → RelaySec2TCP.ID` |
 | `RelaySec2{BSL,EGC,IEC,LRM,MEQ,PCD,RXD,SWZ}` | 4–5 | various | each `Section_ID`-keyed (`RelaySec2EGC` is **empty**) |
 | `RelaySec2{BSL,IEC,MEQ,PCD,SWZ}Curves` | 6–10 | various | each `ParentID → RelaySec2*.ID` |
-| `RelayID` | 1 | 1 | single `UniqueID` sequence holder |
+| `RelayID` | 1 | 1 | single `UniqueID` sequence holder (not migrated to `tcc.*`) |
+
+> **Relay deep-dive → GR.** The relay domain now has its own validated reference:
+> **[GR — Relay Reference](GR-RELAY-REFERENCE.md)** (selection model, full schema + join graph, the
+> `RelayTDSection.Model` **0–8 curve-family dispatcher**, calc + the relay field-trust matrix, the SST-2
+> bridge). Live counts re-confirmed 2026-05-31 (`Relays`=1,442, `RelayDevices`=7,192, `RelayTDSection`=6,956,
+> `RelaySec2TCPCurves` 146,912 wide → `relay_curve_points_tcp` 1,570,700 long). The relay calc **kernel is
+> native-only + UNRECOVERED** → relay analytical curves are BOUNDED (weaker than breakers); ship-now =
+> stored data. Relay SST-2 bridge **carried** (the precedent for the breaker D1 fix). `[VERIFIED-LIVE 2026-05-31]` `[GR]`
 
 ### 1H. Generic curves / MOC / stability (adjacent device libraries — NOT in tcc.* TCC scope)
 `GenCurveTypes/Styles/Points`, `MOCTypes/Styles/StyleGrid`, `StabilityNames/Types/Data`. `[01 §1H]`
@@ -205,7 +213,7 @@ Edges are `TableA.col = TableB.col`. **Kind:** `B` = declared FK in the live `.a
 | `RelayDiscreteValues.Range_ID = RelayRanges.ID` | B | `[DVL-DB RelayDiscreteValues.Range_ID]` |
 | `RelaySec2{BSL,IEC,MEQ,SWZ,TCP}.Section_ID = RelayTDSection.ID` | B | `[DVL-DB RelaySec2*.Section_ID]` |
 | `RelaySec2TCPCurves.ParentID = RelaySec2TCP.ID` | B | `[DVL-DB]` `[02]` |
-| `RelaySec2MEQCurves.ParentID = RelaySec2IEC.ID` | B | DB description points MEQ-curves' parent at `RelaySec2IEC.ID` (shared-curve design or doc carry-over — flagged) `[DVL-DB RelaySec2MEQCurves.ParentID]` `[INFERENCE]` |
+| `RelaySec2MEQCurves.ParentID = RelaySec2MEQ.ID` | B (100%) | **RESOLVED 2026-05-31:** live 1,644/1,644 join to `RelaySec2MEQ.ID` (IEC = 0%); the DB-description `→ RelaySec2IEC.ID` was a doc carry-over and is WRONG. `[VERIFIED-LIVE 2026-05-31]` `[GR §2]` |
 
 ### 2F. The logical composite bridges (the cross-domain edges — NOT declared FKs)
 These are the high-value, un-declared joins the engine resolves in **application code** (zero saved Access queries walk them — full-text grep for `TMT`/`SST_Mfr`/etc. across all 33 queries returned 0 hits). `[02 §3 verdict]`

@@ -20,6 +20,13 @@
 > (electronic trip unit, the field/NETA term) are the **same family**. The DB/engine use *SST*; the
 > platform UI uses *ETU*. `[DLL EasyPower.DeviceLibrary]` `[DVL-DB]`
 
+> **Vendor-doc confirmation `[EZPDOC]` (2026-05-31):** EasyPower's official LV-Breaker help names the three
+> trip categories **Solid State Trip · Thermal Magnetic · Non-Solid State Trip** — exactly our SST/ETU ·
+> TMT · EMT. Two refinements from the vendor docs: **Thermal Magnetic is offered for ICCB/MCCB classes
+> only** (not LVPCB), and **Non-Solid State** is the LVPCB/EMT path. The Specifications cascade
+> `Class → Mfr → Type → Style → Frame → Trip → Trip-unit Mfr/Type/Style → Sensor/Plug` is the vendor's own
+> description of our dual-axis selection. `[EZPDOC LV_Breaker/Specifications_Tab]` `[EZPDOC LV_Breaker/Phase_Trip_Tab]`
+
 ---
 
 ## 2. The Breaker × Family interaction matrix  ← the core of this guide
