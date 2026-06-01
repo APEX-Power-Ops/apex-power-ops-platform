@@ -7,7 +7,7 @@
 >
 > Status: DRAFT (agent-authored 2026-05-31; DB-checkable subset deep-validated 2026-05-31)
 >
-> Last validated · 2026-05-31 · Desktop (DB-checkable subset **100% MATCH, 0 discrepancies** — `_discovery/_validation/v2-g2-rules-validation.md`) · Open gaps · **(1)** R-1..R-8 residual-risk per-risk prose is host-only `[OPEN-VALIDATION]`; **(2)** InvEq numeric parity (D-11) now **precisely characterized + a now-fixable Ansi defect found** (G4 §5) `[DEFERRED]`; **(3)** SST-bridge governance entry §4.3 stands — D1 confirmed dropped live, D2 (relay) **reversed → carried**; **(4)** EMT breaker-selection edge **REFINED** — no *stored* breaker→EMT default, but a runtime-selectable trip type per `[EZPDOC]` (G0 §5). *Live-confirmed: anchors 4604/16671/4174 present + 6258-absent (F-8 holds); D-11 sizing exact (4,524+1,713=6,237); `tcc`=60/0; `tcc.manufacturers`=450.*
+> Last validated · 2026-06-01 · Desktop (DB-checkable subset **100% MATCH, 0 discrepancies** — `_discovery/_validation/v2-g2-rules-validation.md`) · Open gaps · **(1)** R-1..R-8 residual-risk per-risk prose is host-only `[OPEN-VALIDATION]`; **(2)** InvEq numeric parity (D-11) **SPLIT + half-closed 2026-06-01** — the Ansi half (100 rows / 23 sensors) is **✅ hard-excluded (lean 1)**, the Therm half remains the one bounded Ghidra fn (G4 §5) `[DEFERRED]`; **(3)** SST-bridge governance entry §4.3 stands — D1 confirmed dropped live, D2 (relay) **reversed → carried**; **(4)** EMT breaker-selection edge **REFINED** — no *stored* breaker→EMT default, but a runtime-selectable trip type per `[EZPDOC]` (G0 §5); **(5)** `tcc.brk_mccb` 41-row drop **characterized (lean 2)** — too-narrow `UNIQUE(manufacturer_id,name)` collapsed AC/DC+ANSI/IEC twins, reload deferred to the breaker load-path packet (§4.6); **(6)** deployed-catalog RLS posture **✅ COMPLETED 2026-06-01 (lean 3)** — all 60 `tcc.*` RLS-on, public-read/service-write (§4.7). *Live-confirmed: anchors 4604/16671/4174 present + 6258-absent (F-8 holds); D-11 sizing exact (4,524+1,713=6,237); `tcc`=60/0; `tcc.manufacturers`=450; `brk_mccb`=599/`brk_iccb`=29/`brk_pcb`=157.*
 
 ---
 
@@ -126,7 +126,7 @@ deferred. A field-tolerance sheet must respect every "DEFERRED/STUB" row (INV-7)
 
 | # | Calc deferral | Reopen trigger / condition | Tag |
 |---|---|---|---|
-| **D-11** | **InvEq numerical parity** — `IEEEInverseTimeSolver` vs EasyPower native `CalcThermEq`/`CalcAnsiEqGF` on ~6,200 InvEq sensors (4,524 STD-side + 1,713 GF-side) | A **point-for-point kernel-formula parity packet** — *named as the next move and never authored.* **This is the #1 calc gap** (risk R1) and must close before InvEq sensors ship on a field sheet | `[DEFERRED]` `[06]` — **PRECISELY CHARACTERIZED 2026-05-31** (G4 §5; `_validation/v4-inveq-parity-scoping.md`): corpus = **STD 100% Therm, GF 8,450 Therm + 100 Ansi** (Federal Pioneer). The managed solver **ignores coeffs c4/c5** and **produces no curve for the 100 Ansi sensors** (a now-fixable defect). Residual splits: (a) 100-row Ansi hard-exclude (do now); (b) one bounded Ghidra fn (`CalcThermEq`) to move the 31,070-row Therm corpus BOUNDED→PROVEN. Native evaluator absent from decomp → Ghidra-headless on `EasyPower.exe` (local, tractable). `[VERIFIED-LIVE 2026-05-31]` |
+| **D-11** | **InvEq numerical parity** — `IEEEInverseTimeSolver` vs EasyPower native `CalcThermEq`/`CalcAnsiEqGF` on ~6,200 InvEq sensors (4,524 STD-side + 1,713 GF-side) | A **point-for-point kernel-formula parity packet** — *named as the next move.* **This is the #1 calc gap** (risk R1) and must close before InvEq sensors ship on a field sheet | `[DEFERRED]` `[06]` — **PRECISELY CHARACTERIZED 2026-05-31, SPLIT + HALF-CLOSED 2026-06-01** (G4 §3e/§5; `_validation/v4-inveq-parity-scoping.md`): corpus = **STD 100% Therm, GF 8,450 Therm + 100 Ansi ROWS / 23 sensors / 3 trip styles** (count corrected 2026-06-01 — was misstated as "100 sensors"; the "Federal Pioneer" attribution is `[OPEN-VALIDATION]`). The managed solver **ignores coeffs c4/c5** and **mis-evaluates the ANSI rows** (empty curve on `id_open` c2=0; wrong curve on the others — the IEEE C37.112 exponent sits in the ignored c5 slot). **(a) Ansi half — ✅ CLOSED 2026-06-01 (lean 1):** hard-excluded at the dispatch layer (`etu_delay_routing.py`; INV-7; 54/54 tests). **(b) Therm half — OPEN:** one bounded Ghidra fn (`CalcThermEq`) moves the 31,070-row Therm corpus BOUNDED→PROVEN; native evaluator absent from decomp → Ghidra-headless on `EasyPower.exe` (local, tractable; see the CalcThermEq packet). `[VERIFIED-LIVE 2026-06-01]` |
 | **D-12** | **GE-TU-STD / GE-TU-Gnd solver** (`SSTDelayCalc = 3 / 4`; `DS1GF_SEC3_I2T = 4` TUG) | A dedicated solver RE/implementation packet; currently diagnostic fall-through only | `[DEFERRED]` (NOT IMPLEMENTED) `[06]` |
 | **D-13** | **I2X = 255 solver** (§N.2) | I2X open question never closed; needs its own RE pass | `[DEFERRED]` `[06]` |
 | **D-14** | **WEG OCR Type A pickup** (`DS1GF_PICKUP_CALC = 6`, §N.4) — 7 SensorIDs | Pickup formula UNKNOWN; only a separate RE pass lifts the exclusion. Until then **hard-exclude** these sensors (show "unsupported") | `[DEFERRED]` (STUB/DIAGNOSTIC) `[06]` (INV-7) |
@@ -217,6 +217,32 @@ This guide is the *settled/frozen/open* authority, but it lives **under** the SS
 3. **No orphan truth** — handoffs and discovery artifacts (05/06/07) are **evidence**, not the source of
    truth; they feed the guides.
 4. **Date what you validate** — see §4.4.5.
+
+### 4.6 Governed-load unique-key drop governance entry — `tcc.brk_mccb` AC/DC twins *(new 2026-06-01, lean 2)*
+
+A second instance of the §4.2 "silent gap below a frozen baseline" rule (the first was §4.3's dropped SST
+bridge columns). Surfaced + characterized under §98 lean 2.
+
+| Field | Value |
+|---|---|
+| **What was dropped** | **41 of 640 `BreakerMCCB` parent rows** did not load into `tcc.brk_mccb` (599 present). `[VERIFIED-LIVE 2026-06-01]` |
+| **Root cause** | The governed table carries `UNIQUE (manufacturer_id, name)`, but the Access natural key is the **4-tuple `(Mfr_ID, Type, cStandard, Acdc)`** (0 dups there; unique only at the full tuple). 43 `(Mfr_ID, Type)` pairs have a second row differing **only by `Acdc` (AC↔DC) and/or `cStandard` (ANSI↔IEC)** — e.g. ABB `Formula`/`Tmax [IEC]`, GE `E100`, Siemens `Sentron`. The too-narrow unique index collapsed them. **41, not 43:** 2 pairs survived because their `name` differs only by letter-case (`Multi 9`/`MULTI 9`, `ComPact [IEC]`/`COMPACT [IEC]`) — Access groups case-insensitively, the Postgres unique index is case-sensitive. `[VERIFIED-LIVE 2026-06-01]` |
+| **NOT the D1 cause** | This is **not** the D1 manufacturer-name-vs-id drop: `manufacturer_id` is preserved 1:1 (Access `Mfr_ID` == Supabase `manufacturer_id`) and all FKs resolve. `brk_iccb` (29→29) and `brk_pcb` (157→157) loaded fully — they have **no** `(Mfr_ID, Type)` collisions. |
+| **Impact** | Mostly the **DC twin** (and some IEC twin) of a manufacturer+type is missing; `ac_dc_code`/`standard` exist as columns but were not part of the dedup key. Low impact for AC LV NETA work; a real catalog-completeness gap for DC / IEC selection. |
+| **Status / remediation** | `[OPEN-VALIDATION]` — **characterized, reload deferred (lean 2 directive: characterize now, reload with the breaker-style load-path packet).** Fix = widen the unique key to `(manufacturer_id, name, standard, ac_dc_code)` on `brk_{mccb,iccb,pcb}` + reload the dropped twins. Bundle with the §4.3 SST-bridge reload (both re-touch the breaker load path). |
+| **Cross-refs** | §4.2 (the silent-gap rule) · §4.3 (the sibling SST-bridge entry) · G1 load-delta register · the breaker load-path packet. |
+
+### 4.7 Deployed-catalog RLS posture — public read-only, service-role writes *(decided + applied 2026-06-01, lean 3)*
+
+The governed `tcc.*` catalog's row-level-security posture, completed under §98 lean 3.
+
+| Field | Value |
+|---|---|
+| **Posture (now uniform)** | **Public read-only reference catalog, service-role writes.** Every `tcc.*` table carries two policies: `tcc_<t>_select` (`FOR SELECT TO public USING (true)`) + `tcc_<t>_service` (`FOR ALL ... USING (auth.role() = 'service_role')`). This was the **established** pattern on 12 tables (brk_*/tmt_*/trip_types); lean 3 applied the identical pattern to the remaining 48 so all **60/60 are RLS-on with ≥2 policies** (0 RLS-off, 0 RLS-on-without-policy). `[VERIFIED-LIVE 2026-06-01]` |
+| **Why safe / behavior-preserving** | Grants were **not** touched. The advisor finding was **defense-in-depth, not an active leak**: `anon` lacks `USAGE` on schema `tcc` (verified — `SET ROLE anon` → "permission denied for schema tcc"), so anon never reached `tcc.*` directly; the live explorer reads via the privileged/service-role path, which the `_service` policy preserves (privileged sanity reads post-change: `etu_sensors`=17,831, `relay_devices`=6,850). |
+| **What it closes** | The Supabase security advisor `rls_disabled_in_public` for all 48 previously-RLS-off `tcc.*` tables (27 ETU/EMT/`manufacturers`/`trip_styles` + 21 `relay_*`). Migration `tcc_enable_rls_public_read_catalog_lean3` (idempotent). |
+| **Deliberately NOT changed** | The 21 `relay_*` tables have **no `anon` SELECT grant** (backend-only) — left as-is. If the relay explorer is meant to be client-side/anon like the breaker explorer, that is a **separate, deliberate exposure decision** (a grant change), not part of closing the RLS advisor. Flagged for the operator. |
+| **Cross-refs** | G1 (deployed `tcc.*` catalog) · the 12-table precedent this completes. |
 
 ---
 
