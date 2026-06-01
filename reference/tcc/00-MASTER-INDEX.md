@@ -5,7 +5,7 @@
 > and cites the guide section it relies on. If reality and a guide disagree, the guide is fixed
 > *first* (see the Single-Source-of-Truth Law below) — never silently worked around.
 
-- **Status:** UNDER CONSTRUCTION — all guides DRAFTED 2026-05-31; live re-validation + ratification in progress
+- **Status:** UNDER CONSTRUCTION — all guides DRAFTED 2026-05-31; **G0/G3/G4 validated vs the `EasyPower.DeviceLibrary` primary source · G1 vs live `tcc.*` (60 tables/0 views)** · G1/G2 deep-validation + full ratification in progress
 - **Owner:** APEX TCC lane (Desktop authors; executors cite + amend)
 - **Home:** `apex-power-ops-platform/reference/tcc/` (version-controlled, beside the packets that cite it)
 
