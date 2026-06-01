@@ -27,38 +27,48 @@ const DEVICE = {
   effectiveIr: '2500 A',
 }
 
+type DelayKey = 'ltd' | 'std' | 'gfd'
 type Elt = {
   code: string
   label: string
   kind: 'PICKUP' | 'DELAY' | 'INSTANT' | 'GROUND' | 'GF DELAY' | 'ARC MODE'
   setting: string
-  testAt: string
-  testCurrent: string
+  base?: number          // pickup current (A) the Test @ multiple is applied to
+  delay?: DelayKey       // delay element -> Test @ is a selectable multiplier
   disabled?: boolean
 }
 
+// NETA defaults: every pickup tests @ 1× (ramp to pickup); LTD @ 3×; STD/GFD @ 1.5×.
 const ELEMENTS: Elt[] = [
-  { code: 'LTPU', label: 'Long-Time Pickup', kind: 'PICKUP', setting: '0.90 × Ir', testAt: '1×', testCurrent: '2,250 A' },
-  { code: 'LTD', label: 'Long-Time Delay', kind: 'DELAY', setting: '12 s', testAt: '3×', testCurrent: '6,750 A' },
-  { code: 'STPU', label: 'Short-Time Pickup', kind: 'PICKUP', setting: '3.2 × Ir', testAt: '1.5×', testCurrent: '12,000 A' },
-  { code: 'STD', label: 'Short-Time Delay', kind: 'DELAY', setting: '0.30 s (I²t)', testAt: '1.5×', testCurrent: '12,000 A' },
-  { code: 'INST', label: 'Instantaneous', kind: 'INSTANT', setting: '5.1 × Ir', testAt: '—', testCurrent: '12,800 A' },
-  { code: 'GFPU', label: 'Ground-Fault Pickup', kind: 'GROUND', setting: 'Disabled', testAt: '—', testCurrent: '—', disabled: true },
-  { code: 'GFD', label: 'Ground-Fault Delay', kind: 'GF DELAY', setting: 'Disabled', testAt: '—', testCurrent: '—', disabled: true },
-  { code: 'MAINT', label: 'Maintenance / ARMS', kind: 'ARC MODE', setting: 'Disabled', testAt: '—', testCurrent: '—', disabled: true },
+  { code: 'LTPU', label: 'Long-Time Pickup', kind: 'PICKUP', setting: '0.90 × Ir', base: 2250 },
+  { code: 'LTD', label: 'Long-Time Delay', kind: 'DELAY', setting: '12 s', base: 2250, delay: 'ltd' },
+  { code: 'STPU', label: 'Short-Time Pickup', kind: 'PICKUP', setting: '3.2 × Ir', base: 8000 },
+  { code: 'STD', label: 'Short-Time Delay', kind: 'DELAY', setting: '0.30 s (I²t)', base: 8000, delay: 'std' },
+  { code: 'INST', label: 'Instantaneous', kind: 'INSTANT', setting: '5.1 × Ir', base: 12800 },
+  { code: 'GFPU', label: 'Ground-Fault Pickup', kind: 'GROUND', setting: 'Disabled', disabled: true },
+  { code: 'GFD', label: 'Ground-Fault Delay', kind: 'GF DELAY', setting: 'Disabled', delay: 'gfd', disabled: true },
+  { code: 'MAINT', label: 'Maintenance / ARMS', kind: 'ARC MODE', setting: 'Disabled', disabled: true },
 ]
 
-type Band = { el: string; setting: string; testAt: string; min: string; max: string; unit: string; status: 'ready' | 'disabled' }
+// Delay Test @ choices: 0.5× increments, 1×–6× (LTD spec'd to 6×; STD/GFD share the range).
+const MULT_OPTS = [1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6]
+const DELAY_DEFAULT: Record<DelayKey, number> = { ltd: 3, std: 1.5, gfd: 1.5 }
+const fmtA = (n: number) => `${Math.round(n).toLocaleString('en-US')} A`
+const fmtMult = (m: number) => `${Number.isInteger(m) ? m : m.toFixed(1)}×`
+
+type Band = { el: string; min: string; max: string; unit: string; status: 'ready' | 'disabled' }
 const BANDS: Band[] = [
-  { el: 'LTPU', setting: '0.90 × Ir', testAt: '1× (2,250 A)', min: '2,025', max: '2,475', unit: 'A', status: 'ready' },
-  { el: 'LTD', setting: '12 s', testAt: '3× (6,750 A)', min: '9.6', max: '14.4', unit: 's', status: 'ready' },
-  { el: 'STPU', setting: '3.2 × Ir', testAt: '1.5× (12,000 A)', min: '7,200', max: '8,800', unit: 'A', status: 'ready' },
-  { el: 'STD', setting: '0.30 s', testAt: '1.5× (12,000 A)', min: '0.21', max: '0.39', unit: 's', status: 'ready' },
-  { el: 'INST', setting: '5.1 × Ir', testAt: '— (12,800 A)', min: '10,880', max: '14,720', unit: 'A', status: 'ready' },
-  { el: 'GFPU', setting: 'Disabled', testAt: '—', min: '—', max: '—', unit: '', status: 'disabled' },
-  { el: 'GFD', setting: 'Disabled', testAt: '—', min: '—', max: '—', unit: '', status: 'disabled' },
-  { el: 'MAINT', setting: 'Disabled', testAt: '—', min: '—', max: '—', unit: '', status: 'disabled' },
+  { el: 'LTPU', min: '2,025', max: '2,475', unit: 'A', status: 'ready' },
+  { el: 'LTD', min: '9.6', max: '14.4', unit: 's', status: 'ready' },
+  { el: 'STPU', min: '7,200', max: '8,800', unit: 'A', status: 'ready' },
+  { el: 'STD', min: '0.21', max: '0.39', unit: 's', status: 'ready' },
+  { el: 'INST', min: '10,880', max: '14,720', unit: 'A', status: 'ready' },
+  { el: 'GFPU', min: '—', max: '—', unit: '', status: 'disabled' },
+  { el: 'GFD', min: '—', max: '—', unit: '', status: 'disabled' },
+  { el: 'MAINT', min: '—', max: '—', unit: '', status: 'disabled' },
 ]
+const SETTING_BY_EL: Record<string, string> = Object.fromEntries(ELEMENTS.map((e) => [e.code, e.setting]))
+const BASE_BY_EL: Record<string, number> = Object.fromEntries(ELEMENTS.filter((e) => e.base).map((e) => [e.code, e.base as number]))
 
 // ── log-log curve geometry ──────────────────────────────────────────────────
 const PLOT = { ml: 58, mt: 18, w: 600, h: 430, x0: 2, x1: 5, y0: -2, y1: 3 } // current 100..100k A · time .01..1000 s
@@ -75,10 +85,10 @@ const toPath = (pts: [number, number][]) => pts.map(([a, s], i) => `${i ? 'L' : 
 const bandPath = `${toPath(bandUp)} L${bandLo.slice().reverse().map(([a, s]) => `${px(a).toFixed(1)},${py(s).toFixed(1)}`).join(' L')} Z`
 
 const MARKERS = [
-  { label: 'LTPU 1.1×', a: 2475, s: 1000, color: '#2f8f5b' },
-  { label: 'LTD 3×', a: 6750, s: 11, color: '#d98324' },
-  { label: 'STPU 1.5×', a: 12000, s: 0.33, color: '#d24b4b' },
-  { label: 'INST 1.5×', a: 12800, s: 0.012, color: '#7c5cc4' },
+  { label: 'LTPU 1×', a: 2250, s: 1000, color: '#2f8f5b' },
+  { label: 'LTD 3×', a: 6750, s: 12, color: '#d98324' },
+  { label: 'STD 1.5×', a: 12000, s: 0.33, color: '#d24b4b' },
+  { label: 'INST 1×', a: 12800, s: 0.012, color: '#7c5cc4' },
 ]
 const X_TICKS = [100, 1000, 10000, 100000]
 const Y_TICKS = [0.01, 0.1, 1, 10, 100, 1000]
@@ -128,7 +138,7 @@ export default function TccMockup() {
       </main>
 
       <footer className="foot">
-        <span>Mockup · frozen sample data · clean-slate layout for review</span>
+        <span>LV Breaker TCC · sample configuration — values are representative (live selection &amp; calc to follow)</span>
         <div className="nav-btns">
           <button className="btn ghost" disabled={step === 0} onClick={() => setStep((s) => Math.max(0, s - 1))}>← Back</button>
           <button className="btn" disabled={step === 2} onClick={() => setStep((s) => Math.min(2, s + 1))}>Next →</button>
@@ -204,6 +214,15 @@ function Specifications() {
 }
 
 function Settings({ maint, setMaint }: { maint: boolean; setMaint: (v: boolean) => void }) {
+  const [mult, setMult] = useState<Record<DelayKey, number>>(DELAY_DEFAULT)
+  const bandTestAt = (el: string) => {
+    if (el === 'LTD') return `${fmtMult(mult.ltd)} (${fmtA(mult.ltd * BASE_BY_EL.LTPU)})`
+    if (el === 'STD') return `${fmtMult(mult.std)} (${fmtA(mult.std * BASE_BY_EL.STPU)})`
+    if (el === 'LTPU') return `1× (${fmtA(BASE_BY_EL.LTPU)})`
+    if (el === 'STPU') return `1× (${fmtA(BASE_BY_EL.STPU)})`
+    if (el === 'INST') return `1× (${fmtA(BASE_BY_EL.INST)})`
+    return '—'
+  }
   return (
     <>
       <div className="eq-strip">
@@ -223,21 +242,44 @@ function Settings({ maint, setMaint }: { maint: boolean; setMaint: (v: boolean) 
       </div>
 
       <div className="grid2 elgrid">
-        {ELEMENTS.map((e) => (
-          <div key={e.code} className={`el-card ${e.disabled ? 'off' : ''}`}>
-            <div className="el-h">
-              <div className="el-code"><b>{e.code}</b><span>{e.label}</span></div>
-              <span className={`pill ${KIND_CLASS[e.kind]}`}>{e.kind}</span>
-            </div>
-            <div className="el-b">
-              <div className="el-row"><span>Setting</span><div className="el-input">{e.setting}</div></div>
-              <div className="el-row two">
-                <div><span>Test @</span><div className="el-mult">{e.testAt}</div></div>
-                <div><span>Test Current</span><div className="el-cur">{e.testCurrent}</div></div>
+        {ELEMENTS.map((e) => {
+          const isDelay = !!e.delay && !e.disabled
+          const testCurrent = e.disabled
+            ? '—'
+            : e.delay
+              ? fmtA(mult[e.delay] * (e.base ?? 0))
+              : fmtA(e.base ?? 0)
+          return (
+            <div key={e.code} className={`el-card ${e.disabled ? 'off' : ''}`}>
+              <div className="el-h">
+                <div className="el-code"><b>{e.code}</b><span>{e.label}</span></div>
+                <span className={`pill ${KIND_CLASS[e.kind]}`}>{e.kind}</span>
+              </div>
+              <div className="el-b">
+                <div className="el-row"><span>Setting</span><div className="el-input">{e.setting}</div></div>
+                <div className="el-row two">
+                  <div>
+                    <span>Test @</span>
+                    {e.disabled ? (
+                      <div className="el-mult muted">—</div>
+                    ) : isDelay ? (
+                      <select
+                        className="el-select"
+                        value={mult[e.delay!]}
+                        onChange={(ev) => setMult((m) => ({ ...m, [e.delay!]: Number(ev.target.value) }))}
+                      >
+                        {MULT_OPTS.map((m) => (<option key={m} value={m}>{fmtMult(m)}</option>))}
+                      </select>
+                    ) : (
+                      <div className="el-mult">1×</div>
+                    )}
+                  </div>
+                  <div><span>Test Current</span><div className="el-cur">{testCurrent}</div></div>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
 
       <section className="card">
@@ -248,8 +290,8 @@ function Settings({ maint, setMaint }: { maint: boolean; setMaint: (v: boolean) 
             {BANDS.map((b) => (
               <tr key={b.el} className={b.status === 'disabled' ? 'row-off' : ''}>
                 <td><b>{b.el}</b></td>
-                <td>{b.setting}</td>
-                <td>{b.testAt}</td>
+                <td>{SETTING_BY_EL[b.el] ?? '—'}</td>
+                <td>{b.status === 'disabled' ? '—' : bandTestAt(b.el)}</td>
                 <td className="num">{b.min}{b.unit && b.min !== '—' ? ` ${b.unit}` : ''}</td>
                 <td className="num">{b.max}{b.unit && b.max !== '—' ? ` ${b.unit}` : ''}</td>
                 <td>{b.status === 'ready'
@@ -262,8 +304,8 @@ function Settings({ maint, setMaint }: { maint: boolean; setMaint: (v: boolean) 
       </section>
 
       <div className="method">
-        <b>Test methodology.</b> Pickup elements (LTPU, STPU, INST, GFPU) use ramping tests starting ~80% of the calculated value.
-        Delay elements (LTD, STD, GFD) use fixed-current injection. Instantaneous elements trip in ≤ 0.03 s.
+        <b>Test methodology.</b> Pickup elements (LTPU, STPU, INST, GFPU) use ramping tests starting ~80% of the calculated value, verified at <b>1×</b> pickup.
+        Delay elements use fixed-current injection: <b>LTD defaults to 3×</b> (selectable to 6× in 0.5× steps); <b>STD &amp; GFD to 1.5×</b>. Instantaneous elements trip in ≤ 0.03 s.
         Tolerance bands are authoritative per-sensor values; measured results fill the Status column at evaluate time.
       </div>
     </>
@@ -273,10 +315,10 @@ function Settings({ maint, setMaint }: { maint: boolean; setMaint: (v: boolean) 
 function Curve() {
   const legend = [
     { c: '#14507d', t: 'Nominal Curve' },
-    { c: '#2f8f5b', t: 'LTPU @ 1.1×' },
+    { c: '#2f8f5b', t: 'LTPU @ 1×' },
     { c: '#d98324', t: 'LTD @ 3×' },
-    { c: '#d24b4b', t: 'STPU @ 1.5×' },
-    { c: '#7c5cc4', t: 'INST @ 1.5×' },
+    { c: '#d24b4b', t: 'STD @ 1.5×' },
+    { c: '#7c5cc4', t: 'INST @ 1×' },
   ]
   const stats = [
     { k: 'Test Points', v: '5 Active' },
@@ -415,6 +457,9 @@ const CSS = `
 .el-row.two{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
 .el-input{border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-size:13.5px;font-weight:600;background:#fff;}
 .el-mult{font-size:13.5px;font-weight:700;color:var(--brand);background:var(--brand-soft,#e6eef5);padding:8px 12px;border-radius:8px;text-align:center;}
+.el-mult.muted{color:#9aa7b3;background:var(--line-2);}
+.el-select{width:100%;font-size:13.5px;font-weight:700;color:var(--brand);background:#fff;border:1px solid var(--brand-l);border-radius:8px;padding:7px 10px;cursor:pointer;}
+.el-select:focus{outline:2px solid var(--brand-l);outline-offset:-1px;}
 .el-cur{font-size:13.5px;font-weight:700;padding:8px 12px;border-radius:8px;background:var(--line-2);text-align:center;}
 .bands{width:100%;border-collapse:collapse;font-size:13px;}
 .bands th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);padding:11px 18px;border-bottom:1px solid var(--line);background:#fafbfd;}
