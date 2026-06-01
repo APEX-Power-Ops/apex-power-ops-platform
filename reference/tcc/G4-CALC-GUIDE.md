@@ -7,7 +7,7 @@
 > packet that computes or ships a pickup/delay/tolerance value cites this guide.
 >
 > Status: DRAFT — agent-authored 2026-05-31; **pickup formulas validated against `SSTSensorRecord` primary source 2026-05-31 (Desktop)**
-> Last validated · 2026-05-31 (pickup formulas vs `SSTSensorRecord.cs`; enum vs `SSTCalcMethod.cs`) · Desktop · Open gaps: **InvEq numeric parity `[OPEN-VALIDATION]` (the #1 calc gap; §5)** · GE-TU-STD/Gnd · I2X-255 · WEG OCR-A pickup `[STUB]` · INST `Sec4Inst*` `[DEFERRED]` · LTD `DS2_DLY_PTY` `[DEFERRED]`
+> Last validated · 2026-05-31 (pickup formulas vs `SSTSensorRecord.cs`; enum vs `SSTCalcMethod.cs`; INVEQ loader reconciled vs the pass-2..5 RE handoffs) · Desktop · Open gaps: **InvEq *evaluator* parity `[OPEN-VALIDATION]` (loader/mechanism §O-CLOSED + uniform per §3d; residual = a bounded 2-form evaluator check; §5)** · GE-TU-STD/Gnd · I2X-255 · WEG OCR-A pickup `[STUB]` · INST `Sec4Inst*` `[DEFERRED]` · LTD `DS2_DLY_PTY` `[DEFERRED]`
 
 ---
 
@@ -205,6 +205,32 @@ LTD (long-time delay) is **not** routed by `SSTDelayCalc`; it dispatches on a pe
 implemented but its delay-priority/parity edge was never characterized. Treat LTD as **implemented,
 direct-band-class** for the window; flag `DS2_DLY_PTY` as `[DEFERRED]`. `[06 §matrix §N.3]`
 
+### 3d. The INVEQ mechanism is UNIFORM and the loader is fully recovered (§O CLOSED)
+
+**All inverse equations are loaded + dispatched the same way** — one mechanism, not a per-sensor zoo.
+The GF-side INVEQ loader blocker (spec §O) was **CLOSED 2026-04-29** by Ghidra-headless native
+disassembly of `EasyPower.exe` — the "producers and consumers" recovery the late-April lane was built
+around. `[HANDOFF 2026-04-29-tcc-gf-side-inverse-equation-easypower-exe-ghidra-headless-thunk-xref-recovery — §O CLOSED]` `[HANDOFF …-populator-consumer-recovery]` `[HANDOFF …-hypothesis-validation]` `[06]`
+
+Recovered with direct native evidence (the producer→consumer chain):
+- **One chain:** populator `FUN_01207bf0` → wrapper `FUN_011e2710` (pushes `nSection`) → DvlEng
+  `dvlSSTGetInvEqDelays(…, nSection, &delays)` fills `TdbPtrArray<dvlDatInveqDelay>` → the populator
+  iterates the rows + dispatches to the 8 setters. **STD uses `nSection=3`, GF `nSection=5` — the same
+  chain, only the section literal differs.**
+- **One row layout, 4 sub-blocks** (FdOp / FdCl / IdOp / IdCl = Flat/Inverse × Open/Clear): byte0 `*Eq`
+  (`0=Therm` / `≠0=Ansi`), byte1 `*ICalc`, then **5 Therm floats** (`rTmin, rX, rTref, rIref, rM`) **or
+  6 Ansi floats** (`rTmin, rA, rB, rC, rD, rE`). Therm-vs-Ansi for the whole row = the IdOp `*Eq` byte (row offset 0x70).
+- **One translation:** `byICalc = (in==0)?2 : (in==1)?1 : 0` (`FUN_01208640`), applied at every setter
+  site; on DB `*ICalc ∈ {1,4,8,10}` → `{1→1, 4→0, 8→0, 10→0}`.
+- **Binding BOUND × 3** (4 sub-blocks × Therm/Ansi), from in-function `MOVSS [ESI+offset]` reads
+  immediately followed by the matching setter `CALL` — direct, not name-correspondence.
+
+**Consequence for trust:** INVEQ is **not** an open-ended unknown. The dispatch, the two coefficient
+forms, the discriminators, and the translation are decoded and **uniform** across every INVEQ sensor
+(STD + GF, all 4 sub-blocks). The *only* residual (§5) is whether the platform evaluator reproduces
+EasyPower's native curve NUMBERS for those two known coefficient forms — a single bounded **two-form**
+check, not a 6,200-sensor mystery.
+
 ---
 
 ## 4. THE FIELD-TRUST MATRIX  ← the centerpiece
@@ -249,6 +275,15 @@ slot/setter, the `byICalc` translation) is PROVEN from native disassembly; the *
 numbers* are validated for **routing consistency only** — TASK-C found no divergence on a **13-InvEq-row
 + 7-WEG** representative cohort, which is *not* point-for-point kernel parity and is a thin sample
 against 6,200 sensors. `[06 §synthesis-4, §R1, §R2, §top-question-1]`
+
+> **Scope of the residual — bounded, not open-ended (reconciled 2026-05-31 vs the pass-2..5 RE handoffs).**
+> Per §3d the INVEQ *loader/mechanism* is **§O-CLOSED** and **all inverse equations are calculated the
+> same** (one uniform Therm-5-coef / Ansi-6-coef form across STD + GF + all 4 sub-blocks, with a
+> recovered `byICalc` translation + Therm/Ansi selector). So this gap is **not** "we don't know how
+> INVEQ works" — it is the single, well-defined question of whether `IEEEInverseTimeSolver` reproduces
+> the native evaluator's NUMBERS for the **two** known coefficient forms. That is a tractable two-form
+> parity check, not a per-sensor unknown. Until it is run, INVEQ TD windows stay withheld (§6 gating) —
+> but the work to close it is bounded and its inputs are fully decoded.
 
 **Why it matters for the field sheet:** a tolerance sheet derives PU/TD bands *from* curve values. If
 the InvEq curve generator diverges from EasyPower native even slightly, **the tolerance window itself
