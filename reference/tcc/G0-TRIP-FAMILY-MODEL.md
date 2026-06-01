@@ -4,7 +4,7 @@
 > selection — *does choosing a breaker determine its trip unit, and if so, how?* The answer is
 > **different for each family.** Every selection/compatibility decision cites this guide.
 >
-> Last validated · 2026-05-31 (EMT edge **RESOLVED** — standalone-only, via decomp RE + live DB triangulation) · Desktop · Open gaps: **none** (the EMT edge is closed; see §5)
+> Last validated · 2026-05-31 (EMT edge **REFINED vs EasyPower vendor docs** — no *stored* breaker→EMT default, but EMT *is* a runtime-selectable breaker trip type; §5) · Desktop · Open gaps: how "non-solid-state breakers" are represented in the library (the blank-`TMT_SST_Style` rows) `[OPEN-VALIDATION]`
 
 ---
 
@@ -35,12 +35,12 @@
 |---|---|---|---|
 | **SST / ETU** | **Yes — the breaker style *points* to its compatible trip** | `TMT_Use_SST = 1` | `BreakerXXXStyles.(TMT_SST_Mfr, TMT_SST_Type, TMT_SST_Style)` → name-join → `DatStyle (Mfr_Name, TYPE, STYLE)` → `DatStyle.STYLE_ID` → `DatSensor.StyleID` → sections/plugs |
 | **TMT** | **Yes — the breaker style *is* the trip** | `TMT_Use_SST = 0` | `BreakerXXXStyles.ID` → `Breaker_TMTFrameSizes.StyleID` → frame amps/settings (the thermal-mag curve is intrinsic to the frame) |
-| **EMT** | **No — standalone-only.** A breaker selection **never** resolves to EMT `[VERIFIED-LIVE 2026-05-31]` | (no breaker-style→EMT pointer column exists; `EMT` carries no breaker back-reference) | EMT is reached ONLY via its **own** `EMT → EMT_Frames → EMT_Sections` manufacturer/frame/section browse. The managed `DeviceLibrary` (100% of engine device-SQL) has **zero** EMT references; no `EMT_*` column on any `BreakerXXXStyles`. `[DLL DevLibBreakerStyle.cs:135-159]` `[04]` |
+| **EMT** (= EasyPower **"Non-Solid State Trip"**) | **No *stored* default — but YES as a runtime user choice.** No breaker-style row carries a persisted breaker→EMT link (`TMT_SST_*` resolves **0** to the EMT catalog across ICCB/MCCB/PCB), so a catalog-driven selector can't *narrow* to a breaker's EMT trip; EMT stays manufacturer-scoped. But the vendor UI **does** let a user attach a Non-Solid-State (EMT) trip to a breaker. `[EZPDOC LV_Breaker/Specifications_Tab]` `[VERIFIED-LIVE 2026-05-31]` | breaker **Trip** field (LVPCB → {SS, NSS}; ICCB/MCCB → {SS, NSS, TM}), then trip-unit **Mfr/Type/Style** from the EMT catalog (no Sensor/Plug — SS-only) | a **runtime** selection from the `EMT*` catalog — **not** a library-stored default like the solid-state `TMT_SST_*` bridge. `TMT_Use_SST` is binary (1=has SS default / 0=thermal-mag) and does **not** encode the non-solid-state case. |
 
 **Plain-language summary for the field/UI:**
 - **ETU breaker** → the breaker tells you exactly which electronic trip belongs to it (one trip family, a handful of sensors). *This is what makes "T8V-1600 → ABB PR332/P → 5 sensors" possible — and what was lost when the bridge columns were dropped (see §3).*
 - **TMT breaker** → there is no separate trip to pick; the breaker frame **is** the trip.
-- **EMT breaker** → **there is no "EMT breaker" in the breaker→trip sense.** EMT is its own self-contained family, selected directly from the `EMT*` catalog; no `Breaker*` row ever points to an EMT trip. `[VERIFIED-LIVE 2026-05-31]`
+- **EMT breaker** → the breaker **library** stores no breaker→EMT default (the `TMT_SST_*` bridge resolves 0 to EMT), so a data-driven selector offers EMT **manufacturer-scoped**. But EasyPower's UI **does** let a user attach a Non-Solid-State (= EMT) trip to a breaker at runtime (Trip field + EMT-catalog Mfr/Type/Style). `[EZPDOC]` `[VERIFIED-LIVE 2026-05-31]`
 
 ---
 
@@ -127,18 +127,34 @@ and browsed via EMT facets — **never via `BreakerXXXStyles`.** `[01]` `[VERIFI
 - `EMT.TripPlug` — `0 = Trip`, `1 = Plug`.
 - `EMT PickupCalc = 0 → Ipu × TripAmps`; `EMT_Sections` carry conditional gates ("Delay/Radius used if `SecChar=4`").
 
-**The open edge — RESOLVED 2026-05-31: standalone-only.** A `Breaker*` selection **never** resolves to
-an EMT trip. Triangulated across all three surfaces (`[VERIFIED-LIVE 2026-05-31]` `[DLL]` `[04]` — see
-`_discovery/_validation/v3-emt-edge.md`):
-- **Engine (authoritative):** the managed `EasyPower.DeviceLibrary` — which centralizes 100% of the
-  engine's device SQL — has **zero** EMT references (no token, no `GetEMT*` method, no EMT SQL). The
-  breaker-style reader (`DevLibBreakerStyle.cs:135-159`) projects only `TMT_Use_SST`/`TMT_SST_*`/
-  `TMT_Thermal*`; `GetDefaultTripInfo` returns only `useSST` + the SST triple. A breaker resolves to
-  exactly **two** outcomes — borrow-an-SST (`TMT_Use_SST=1`) or TMT-frame (`=0`) — never a third. EMT has
-  no managed class at all (only native `DvlEng\CdbDvlEMT*` nameless raw-IL shells). `[DLL DevLibBreakerStyle.cs:135-159]`
-- **Access (both directions):** no `EMT_*` pointer column on `BreakerICCB/MCCB/PCBStyles` (68/68/76 cols);
-  `EMT` carries no breaker back-reference (only `Mfr_ID`). `[04]`
-- **Supabase:** no EMT-pointer column on any `tcc.brk_*_styles`. `[VERIFIED-LIVE 2026-05-31]`
+**The open edge — REFINED 2026-05-31 (vendor doc + data probe): no STORED breaker→EMT default, but EMT
+*is* a runtime-selectable breaker trip type.** This **corrects** the earlier "standalone-only" framing —
+which was right about the *data* but overstated in *words*. Two facts, both verified: `[EZPDOC]` `[VERIFIED-LIVE 2026-05-31]`
+
+**(a) There is NO persisted breaker→EMT link in the data** — so our catalog-driven selection cannot
+*narrow* a breaker to its EMT trip; EMT stays manufacturer-scoped. Triangulated (`[DLL]` `[04]`
+`[VERIFIED-LIVE 2026-05-31]` — `_discovery/_validation/v3-emt-edge.md`):
+- the managed `DeviceLibrary` (100% of device-SQL) has **zero** EMT references; the breaker-style reader
+  `GetDefaultTripInfo` returns only `useSST` + the SST triple. `[DLL DevLibBreakerStyle.cs:135-159]`
+- no `EMT_*` pointer column on any `BreakerICCB/MCCB/PCBStyles`; `EMT` has no breaker back-reference; and
+  the **`TMT_SST_*` bridge resolves 0 to the EMT catalog** across all three classes (vs 515 / 1,576 / 2,162
+  → DatStyle) — the bridge is purely a *solid-state* (DatStyle) bridge. `[VERIFIED-LIVE 2026-05-31]`
+
+**(b) BUT EasyPower's UI lets a user attach a Non-Solid-State (= EMT) trip to a breaker at runtime.**
+`[EZPDOC LV_Breaker/Specifications_Tab]` The breaker **Trip** field offers, by class: **LVPCB → {Solid
+State, Non-Solid State}**; **ICCB/MCCB → {Solid State, Non-Solid State, Thermal Magnetic}**. "Non-Solid
+State" **= EMT** (confirmed: the sample style `THMM-LSI` lives in `EMT`, not `DatStyle`). Both Solid-State
+and Non-Solid-State are picked through the trip-unit **Mfr/Type/Style** section (Sensor/Plug are
+**solid-state-only**). So the breaker↔EMT pairing is a **runtime user selection from the `EMT*` catalog**,
+not a library-stored default like the solid-state `TMT_SST_*` bridge.
+
+**Consequence for our platform:** `TMT_Use_SST` is binary (1 = has a solid-state default trip → DatStyle;
+0 = thermal-magnetic frame) and does **not** encode the non-solid-state case — EasyPower simply doesn't
+persist a default breaker→EMT mapping. So a data-driven selector offers EMT trips **manufacturer-scoped**
+(matching the explorer-realign "EMT = construction-agnostic / manufacturer-only"), with the breaker→EMT
+pairing left to the user. **Open refinement `[OPEN-VALIDATION]`:** how "non-solid-state breakers" (e.g. the
+975 `Use_SST=1` PCB rows with a blank `TMT_SST_Style`) are represented in the library is not yet fully
+characterized.
 
 **Residual caveat (does not weaken the verdict):** the native EMT C++ reader internals are unreadable
 (decompiled to size-only struct shells) — but the breaker→trip dispatch lives entirely in the readable
