@@ -144,6 +144,40 @@ class EtuBreakerCascadeResponse(BaseModel):
     breaker_styles: list[EtuBreakerStyleOption] = Field(default_factory=list)
 
 
+class EtuBridgeSensor(BaseModel):
+    """One compatible ETU sensor for a breaker style, via the recovered SST bridge.
+
+    Backed by tcc.vw_breaker_sst_bridge (migration 006). The tmt_sst_* triple is the
+    bridged trip-unit identity (manufacturer / type / style); the sensor_* fields are
+    the compatible sensor narrowed by that bridge.
+    """
+    breaker_class: str
+    breaker_id: int
+    breaker_style_id: int
+    breaker_style_frame: Optional[str] = None
+    tmt_sst_mfr: Optional[str] = None
+    tmt_sst_type: Optional[str] = None
+    tmt_sst_style: Optional[str] = None
+    trip_style_id: int
+    sensor_id: int
+    sensor_rating: Optional[int] = None
+    sensor_description: Optional[str] = None
+
+
+class EtuBridgeSensorsResponse(BaseModel):
+    """Breaker-style -> compatible ETU sensor set (SST bridge narrowing).
+
+    bridge_match_status == 'unmatched' (empty sensors) means the caller should fall
+    back to the manufacturer axis (/etu/breaker-cascade) or free-text (/etu/search):
+    the style either does not use the SST bridge or its bridged target is not in catalog.
+    """
+    breaker_style_id: Optional[int] = None
+    breaker_id: Optional[int] = None
+    bridge_match_status: str = "unmatched"
+    count: int = 0
+    sensors: list[EtuBridgeSensor] = Field(default_factory=list)
+
+
 class ResolvedBreakerContext(BaseModel):
     label: Optional[str] = None
     source: Optional[str] = None

@@ -51,6 +51,8 @@ from .schemas import (
     EtuBreakerManufacturer,
     EtuBreakerOption,
     EtuBreakerStyleOption,
+    EtuBridgeSensor,
+    EtuBridgeSensorsResponse,
     EtuSearchResult,
     EtuSearchResponse,
     SensorCalcContext,
@@ -3382,6 +3384,68 @@ def get_etu_breaker_cascade(
         breaker_classes=[EtuBreakerClassOption(**dict(row._mapping)) for row in class_rows],
         breakers=breakers,
         breaker_styles=breaker_styles,
+    )
+
+
+# ──────────────────────────────────────────────
+# GET /etu/bridge-sensors — SST-bridge sensor narrowing
+# ──────────────────────────────────────────────
+
+@router.get("/etu/bridge-sensors", response_model=EtuBridgeSensorsResponse)
+def get_etu_bridge_sensors(
+    breaker_style_id: Optional[int] = Query(
+        None, description="Breaker style to narrow compatible ETU sensors via the SST bridge"
+    ),
+    breaker_id: Optional[int] = Query(
+        None, description="Alternative: all bridged sensors across a breaker's styles"
+    ),
+    db: Session = Depends(get_db),
+):
+    """Return the ETU sensor set compatible with a breaker style via the recovered SST bridge.
+
+    This is the breaker -> ETU narrowing the manufacturer-axis /etu/breaker-cascade cannot do
+    (root cause of the mfr-only cross-filter, Master Reference §97; bridge recovered in D1 /
+    migration 006, surfaced as tcc.vw_breaker_sst_bridge). An empty result
+    (bridge_match_status='unmatched') tells the caller to fall back to the manufacturer axis
+    or /etu/search.
+    """
+    if breaker_style_id is None and breaker_id is None:
+        raise HTTPException(
+            status_code=422,
+            detail="Provide breaker_style_id or breaker_id.",
+        )
+
+    clauses: list[str] = []
+    params: dict[str, object] = {}
+    if breaker_style_id is not None:
+        clauses.append("breaker_style_id = :bsid")
+        params["bsid"] = breaker_style_id
+    if breaker_id is not None:
+        clauses.append("breaker_id = :bid")
+        params["bid"] = breaker_id
+    where_sql = "WHERE " + " AND ".join(clauses)
+
+    rows = db.execute(
+        text(
+            f"""
+            SELECT breaker_class, breaker_id, breaker_style_id, breaker_style_frame,
+                   tmt_sst_mfr, tmt_sst_type, tmt_sst_style,
+                   trip_style_id, sensor_id, sensor_rating, sensor_description
+            FROM tcc.vw_breaker_sst_bridge
+            {where_sql}
+            ORDER BY breaker_style_id, sensor_rating, sensor_id
+            """
+        ),
+        params,
+    ).fetchall()
+
+    sensors = [EtuBridgeSensor(**dict(row._mapping)) for row in rows]
+    return EtuBridgeSensorsResponse(
+        breaker_style_id=breaker_style_id,
+        breaker_id=breaker_id,
+        bridge_match_status="matched" if sensors else "unmatched",
+        count=len(sensors),
+        sensors=sensors,
     )
 
 
