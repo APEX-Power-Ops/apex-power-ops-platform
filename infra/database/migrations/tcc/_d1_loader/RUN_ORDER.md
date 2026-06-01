@@ -10,8 +10,10 @@ ordered by `ID` asc) is **proven** — see the closeout. All loads are integrity
 - `d1_04_triples_{iccb,pcb,mccb}.sql` — 431 distinct SST `(mfr,type,style)` triples → `tcc._stg_d1_triples`.
 - `d1_05_sst_{iccb,mccb,pcb}.sql` — 5,412 `(style_id,triple_id)` assignments → `tcc._stg_d1_sst`.
 - `d1_06_orphan.sql` — 325 orphan `(style_id → twin 4-tuple)` rows → `tcc._stg_d1_orphan`.
-- `d1_90_srcid_{mccb,iccb,pcb}.sql` — **DEFERRED, un-applied** `source_id` population
-  (rank=id array UPDATE). Apply only when source_id is wanted; not required by the bridge.
+- `d1_90_srcid_{iccb,pcb}.sql` + `d1_90_srcid_mccb_p1..p4.sql` — `source_id` population
+  (rank=id array UPDATE; mccb chunked into 4 rank-offset parts for tool-surfacing limits).
+  **APPLIED 2026-06-01** → migration `007_brk_styles_source_id.sql` then sets NOT NULL + UNIQUE.
+  Per-class md5: iccb `26e21a93…` · pcb `f6b00f02…` · mccb `67a8c051…`.
 - `conn_test.py` / `.venv/` — one-off write-path probe (NOT committed; see `.gitignore`).
 
 ## Apply order (against governed Supabase, service-role / MCP)

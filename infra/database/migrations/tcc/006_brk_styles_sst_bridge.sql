@@ -29,7 +29,7 @@
 --
 -- tmt_use_sst boolean = (Access TMT_Use_SST <> 0): mccb 1704 / iccb 515 / pcb 3193.
 -- (1680x value=1 + 2x value=2 + 22x value=255 [=-1 byte-wrapped True]; 725 NULL=false.)
--- source_id population is DEFERRED — ready, un-applied, in _d1_loader/d1_90_srcid_*.sql.
+-- source_id population: done in the follow-on 007_brk_styles_source_id.sql (+ NOT NULL/UNIQUE).
 -- =============================================================================
 
 -- (A) DDL — additive, reversible (DROP COLUMN ...).
