@@ -329,6 +329,47 @@ export type EtuPlotResponse = {
   table_rows: EtuPlotTableRow[]
 }
 
+export type EtuCalculateRequest = {
+  sensor_id: number
+  plug_rating: number
+  ltpu_setting?: number
+  ltd_setting?: number
+  stpu_setting?: number
+  std_setting?: number
+  inst_setting?: number
+  gfpu_setting?: number
+  gfd_setting?: number
+  multiplier_value?: number
+  c_factor?: number
+  maint_mode?: boolean
+}
+
+export type EtuTestCurrentElement = {
+  element: string
+  kind: string
+  test_current: number
+  limit_low: number | null
+  limit_high: number | null
+  multiplier: number
+  calc_method: string | null
+  time_limit_low: number | null
+  time_limit_high: number | null
+  delay_seconds: number | null
+  notes: string | null
+}
+
+export type EtuCalculateResponse = {
+  sensor_id: number
+  sensor_desc: string
+  plug_rating: number
+  maint_mode: boolean
+  maint_capable: boolean
+  maint_support_level: string
+  resolved_equipment: ResolvedEquipmentSummary | null
+  elements: EtuTestCurrentElement[]
+  warnings: string[]
+}
+
 export type EtuPlotRequest = {
   sensor_id: number
   plug_rating: number
@@ -765,6 +806,10 @@ export async function fetchEtuSettings(sensorId: number): Promise<AvailableSetti
 
 export async function fetchEtuPlot(request: EtuPlotRequest): Promise<EtuPlotResponse> {
   return postJson<EtuPlotResponse, EtuPlotRequest>('/api/v1/neta/plot-tcc', request)
+}
+
+export async function fetchEtuCalculate(request: EtuCalculateRequest): Promise<EtuCalculateResponse> {
+  return postJson<EtuCalculateResponse, EtuCalculateRequest>('/api/v1/neta/calculate', request)
 }
 
 export async function fetchTmtFacets(breakerClass: string): Promise<TMTFacetsResponse> {

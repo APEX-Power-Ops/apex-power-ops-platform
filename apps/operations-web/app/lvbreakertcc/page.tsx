@@ -18,11 +18,17 @@ import {
   fetchEtuBreakerCascade,
   fetchEtuBridgeSensors,
   fetchEtuSettings,
+  fetchEtuContext,
+  fetchEtuCalculate,
   fetchTmtFrames,
   fetchEmtFrames,
   fetchEmtContext,
   type EtuBreakerCascadeResponse,
   type EtuBridgeSensorsResponse,
+  type AvailableSettingsResponse,
+  type SensorCalcContext,
+  type DelayBandOption,
+  type EtuCalculateResponse,
   type TMTFrameSearchResult,
   type EMTFrameSearchResult,
   type EMTFrameContext,
@@ -533,6 +539,190 @@ function EmtSelector({ onSelect, onClear }: { onSelect: (s: LiveSelection) => vo
 
 // ── Screen 2: Protection Settings (sample until Stage B) ──────────────────────
 function Settings({ maint, setMaint, selection }: { maint: boolean; setMaint: (v: boolean) => void; selection: LiveSelection | null }) {
+  if (selection?.family === 'etu' && selection.sensorId != null) {
+    return <EtuSettings maint={maint} setMaint={setMaint} selection={selection} />
+  }
+  return <SampleSettings maint={maint} setMaint={setMaint} selection={selection} />
+}
+
+// ── Screen 2 ETU (LIVE): editable settings -> /calculate -> DB-authoritative bands ──
+type PickKey = 'ltpu' | 'stpu' | 'inst' | 'gfpu'
+type BandKey = 'ltd' | 'std' | 'gfd'
+type EtuChosen = { plug: number; ltpu?: number; stpu?: number; inst?: number; gfpu?: number; ltd?: number; std?: number; gfd?: number }
+const EL_META: { code: string; label: string; kind: Elt['kind']; pick?: PickKey; band?: BandKey }[] = [
+  { code: 'LTPU', label: 'Long-Time Pickup', kind: 'PICKUP', pick: 'ltpu' },
+  { code: 'LTD', label: 'Long-Time Delay', kind: 'DELAY', band: 'ltd' },
+  { code: 'STPU', label: 'Short-Time Pickup', kind: 'PICKUP', pick: 'stpu' },
+  { code: 'STD', label: 'Short-Time Delay', kind: 'DELAY', band: 'std' },
+  { code: 'INST', label: 'Instantaneous', kind: 'INSTANT', pick: 'inst' },
+  { code: 'GFPU', label: 'Ground-Fault Pickup', kind: 'GROUND', pick: 'gfpu' },
+  { code: 'GFD', label: 'Ground-Fault Delay', kind: 'GF DELAY', band: 'gfd' },
+]
+const fmtAmp = (n: number | null | undefined) => (n == null ? '—' : `${Math.round(n).toLocaleString('en-US')} A`)
+
+function EtuSettings({ maint, setMaint, selection }: { maint: boolean; setMaint: (v: boolean) => void; selection: LiveSelection }) {
+  const sensorId = selection.sensorId as number
+  const [settings, setSettings] = useState<AvailableSettingsResponse | null>(null)
+  const [chosen, setChosen] = useState<EtuChosen | null>(null)
+  const [calc, setCalc] = useState<EtuCalculateResponse | null>(null)
+  const [measured, setMeasured] = useState<Record<string, string>>({})
+  const [loading, setLoading] = useState(true)
+  const [calcBusy, setCalcBusy] = useState(false)
+  const [err, setErr] = useState<string | null>(null)
+
+  useEffect(() => {
+    let active = true
+    setLoading(true); setErr(null); setCalc(null); setChosen(null); setMeasured({})
+    Promise.all([fetchEtuSettings(sensorId), fetchEtuContext(sensorId)])
+      .then(([s]: [AvailableSettingsResponse, SensorCalcContext]) => {
+        if (!active) return
+        setSettings(s)
+        const mid = (arr: number[]): number | undefined => (arr.length ? arr[Math.floor(arr.length / 2)] : undefined)
+        const bandDefault = (bs: DelayBandOption[]): number | undefined => {
+          const b = bs.find((x) => x.is_default) ?? bs[0]
+          return b ? Number(b.band) : undefined
+        }
+        setChosen({
+          plug: s.plug_values[0] ?? 0,
+          ltpu: mid(s.ltpu_settings), stpu: mid(s.stpu_settings), inst: mid(s.inst_settings), gfpu: mid(s.gfpu_settings),
+          ltd: bandDefault(s.ltd_settings), std: bandDefault(s.std_settings), gfd: bandDefault(s.gfd_settings),
+        })
+      })
+      .catch((e) => { if (active) setErr(errMsg(e)) })
+      .finally(() => { if (active) setLoading(false) })
+    return () => { active = false }
+  }, [sensorId])
+
+  useEffect(() => {
+    if (!chosen || !chosen.plug) return
+    let active = true
+    setCalcBusy(true)
+    fetchEtuCalculate({
+      sensor_id: sensorId, plug_rating: chosen.plug,
+      ltpu_setting: chosen.ltpu, stpu_setting: chosen.stpu, inst_setting: chosen.inst, gfpu_setting: chosen.gfpu,
+      ltd_setting: chosen.ltd, std_setting: chosen.std, gfd_setting: chosen.gfd, maint_mode: maint,
+    })
+      .then((r) => { if (active) setCalc(r) })
+      .catch((e) => { if (active) setErr(errMsg(e)) })
+      .finally(() => { if (active) setCalcBusy(false) })
+    return () => { active = false }
+  }, [chosen, maint, sensorId])
+
+  if (loading || !settings || !chosen) {
+    return <div className="loadbox">{err ? <span className="sel-status err">⚠ {err}</span> : <><span className="spin" /> Loading sensor settings…</>}</div>
+  }
+
+  const listFor = (pk: PickKey): number[] =>
+    pk === 'ltpu' ? settings.ltpu_settings : pk === 'stpu' ? settings.stpu_settings : pk === 'inst' ? settings.inst_settings : settings.gfpu_settings
+  const bandsFor = (bk: BandKey): DelayBandOption[] =>
+    bk === 'ltd' ? settings.ltd_settings : bk === 'std' ? settings.std_settings : settings.gfd_settings
+  const elByCode = (code: string) => calc?.elements.find((e) => e.element.toUpperCase() === code)
+
+  return (
+    <>
+      <div className="eq-strip">
+        <div><span>Breaker</span>{selection.breakerLabel}</div>
+        <div><span>Trip Unit</span>{selection.tripLabel}</div>
+        <div><span>Sensor</span>{calc?.sensor_desc ?? selection.ratingLabel}</div>
+        <div className="plugpick">
+          <span>Plug (Ir)</span>
+          <select className="el-select" value={String(chosen.plug)} onChange={(e) => setChosen((c) => (c ? { ...c, plug: Number(e.target.value) } : c))}>
+            {settings.plug_values.map((p) => (<option key={p} value={p}>{p} A</option>))}
+          </select>
+        </div>
+        <div><span className="badge live">LIVE</span>DB-authoritative</div>
+      </div>
+
+      <div className={`maint-banner ${maint ? 'on' : ''}`}>
+        <div>
+          <b>Maintenance Mode (ARMS)</b>
+          <span>{!calc?.maint_capable ? 'This trip unit reports no maintenance mode.' : maint ? 'Reduced instantaneous trip applied.' : 'Nominal mode. Toggle to model the reduced arc-flash trip.'}</span>
+        </div>
+        <button className={`toggle ${maint ? 'on' : ''}`} disabled={!calc?.maint_capable} onClick={() => setMaint(!maint)} aria-label="toggle maintenance mode"><span /></button>
+      </div>
+
+      <div className="grid2 elgrid">
+        {EL_META.map((m) => {
+          const present = m.pick ? listFor(m.pick).length > 0 : m.band ? bandsFor(m.band).length > 0 : false
+          const el = elByCode(m.code)
+          return (
+            <div key={m.code} className={`el-card ${present ? '' : 'off'}`}>
+              <div className="el-h">
+                <div className="el-code"><b>{m.code}</b><span>{m.label}</span></div>
+                <span className={`pill ${KIND_CLASS[m.kind]}`}>{m.kind}</span>
+              </div>
+              <div className="el-b">
+                <div className="el-row">
+                  <span>Setting</span>
+                  {!present ? (
+                    <div className="el-mult muted">Not available</div>
+                  ) : m.pick ? (
+                    <select className="el-select" value={String(chosen[m.pick] ?? '')} onChange={(e) => setChosen((c) => (c ? { ...c, [m.pick!]: e.target.value ? Number(e.target.value) : undefined } : c))}>
+                      {listFor(m.pick).map((v) => (<option key={v} value={v}>{v} × Ir</option>))}
+                    </select>
+                  ) : (
+                    <select className="el-select" value={String(chosen[m.band!] ?? '')} onChange={(e) => setChosen((c) => (c ? { ...c, [m.band!]: e.target.value ? Number(e.target.value) : undefined } : c))}>
+                      {bandsFor(m.band!).map((b) => (<option key={b.band} value={Number(b.band)}>{b.label}</option>))}
+                    </select>
+                  )}
+                </div>
+                <div className="el-row"><span>Test Current</span><div className="el-cur">{present && el ? fmtAmp(el.test_current) : '—'}</div></div>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      <section className="card">
+        <div className="card-h">📊 NETA Tolerance Bands &amp; Field Results {calcBusy ? <span className="spin" /> : <span className="badge inline live">LIVE</span>}</div>
+        <div className="bands-wrap">
+          <table className="bands">
+            <thead><tr><th>Element</th><th>Trust</th><th>Test @</th><th>Test Current</th><th>Min Limit</th><th>Max Limit</th><th>Measured</th><th>% Error</th><th>Status</th></tr></thead>
+            <tbody>
+              {(calc?.elements ?? []).map((e) => {
+                const delay = e.kind === 'delay'
+                const lo = delay ? e.time_limit_low : e.limit_low
+                const hi = delay ? e.time_limit_high : e.limit_high
+                const expected = delay ? e.delay_seconds : e.test_current
+                const unit = delay ? 's' : 'A'
+                const raw = measured[e.element] ?? ''
+                const mv = parseFloat(raw)
+                const hasM = raw.trim() !== '' && !Number.isNaN(mv)
+                const pct = hasM && expected ? ((mv - expected) / expected) * 100 : null
+                const inBand = hasM && lo != null && hi != null ? mv >= lo && mv <= hi : null
+                return (
+                  <tr key={e.element}>
+                    <td><b>{e.element}</b></td>
+                    <td>{delay ? <span className="trust verify" title="Delay-band route fidelity pending (G4)">verify</span> : <span className="trust ok" title="DB-authoritative per-sensor tolerance">DB</span>}</td>
+                    <td>{fmtMult(e.multiplier)}</td>
+                    <td className="num">{fmtAmp(e.test_current)}</td>
+                    <td className="num">{lo == null ? '—' : delay ? `${lo} s` : fmtAmp(lo)}</td>
+                    <td className="num">{hi == null ? '—' : delay ? `${hi} s` : fmtAmp(hi)}</td>
+                    <td><div className="meas"><input className="meas-in" inputMode="decimal" value={raw} placeholder="—" onChange={(ev) => setMeasured((m) => ({ ...m, [e.element]: ev.target.value }))} /><span className="meas-u">{unit}</span></div></td>
+                    <td className="num">{pct !== null ? <span className={`pct ${inBand ? 'ok' : 'bad'}`}>{pct >= 0 ? '+' : ''}{pct.toFixed(1)}%</span> : <span className="muted2">—</span>}</td>
+                    <td>{!hasM ? <span className="status ready">● Ready</span> : inBand ? <span className="status pass">✓ PASS</span> : <span className="status fail">✗ FAIL</span>}</td>
+                  </tr>
+                )
+              })}
+              {!calc?.elements.length && (
+                <tr><td colSpan={9} className="muted2" style={{ padding: '16px 18px' }}>{calcBusy ? 'Calculating…' : 'Adjust settings to compute the test plan.'}</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      {err && <div className="sel-status err">⚠ {err}</div>}
+      {calc?.warnings?.length ? <div className="sel-status warn">{calc.warnings.join(' · ')}</div> : null}
+
+      <div className="method">
+        <b>Field-trust (G4).</b> Pickup bands (LTPU/STPU/INST/GFPU) are <b>DB-authoritative per-sensor tolerances</b> — field-sheet safe. Delay rows (LTD/STD/GFD) are computed but the delay-band route still conflates band vs NETA test multiplier — <b>verify before field use.</b> {selection.trustNote}
+      </div>
+    </>
+  )
+}
+
+function SampleSettings({ maint, setMaint, selection }: { maint: boolean; setMaint: (v: boolean) => void; selection: LiveSelection | null }) {
   const [mult, setMult] = useState<Record<DelayKey, number>>(DELAY_DEFAULT)
   const [measured, setMeasured] = useState<Record<string, string>>({})
   const bandTestAt = (el: string) => {
@@ -805,6 +995,13 @@ const CSS = `
 .eq-strip span{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:700;}
 .badge{background:var(--amber);color:#fff;border-radius:5px;padding:2px 7px;font-size:10px;letter-spacing:.5px;font-weight:800;}
 .badge.inline{margin-left:auto;}
+.badge.live{background:var(--green);}
+.loadbox{display:flex;align-items:center;gap:10px;justify-content:center;padding:44px;color:var(--muted);font-size:13.5px;font-weight:600;}
+.plugpick{display:flex;align-items:center;gap:8px;}
+.plugpick .el-select{width:auto;min-width:88px;}
+.trust{font-size:10px;font-weight:800;letter-spacing:.4px;padding:2px 7px;border-radius:5px;display:inline-block;}
+.trust.ok{color:var(--green);background:var(--green-s);}
+.trust.verify{color:#8a5a00;background:var(--amber-s);}
 .maint-banner{display:flex;align-items:center;justify-content:space-between;gap:16px;border:1px solid var(--line);border-radius:12px;padding:13px 18px;background:var(--surface);}
 .maint-banner.on{background:var(--amber-s);border-color:var(--amber);}
 .maint-banner b{font-size:13.5px;}
