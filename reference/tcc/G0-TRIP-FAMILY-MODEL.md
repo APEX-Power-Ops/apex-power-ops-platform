@@ -4,7 +4,7 @@
 > selection — *does choosing a breaker determine its trip unit, and if so, how?* The answer is
 > **different for each family.** Every selection/compatibility decision cites this guide.
 >
-> Last validated · 2026-05-31 · Desktop · Open gaps: **EMT breaker-selection edge `[OPEN-VALIDATION]`**
+> Last validated · 2026-05-31 (EMT edge **RESOLVED** — standalone-only, via decomp RE + live DB triangulation) · Desktop · Open gaps: **none** (the EMT edge is closed; see §5)
 
 ---
 
@@ -28,12 +28,12 @@
 |---|---|---|---|
 | **SST / ETU** | **Yes — the breaker style *points* to its compatible trip** | `TMT_Use_SST = 1` | `BreakerXXXStyles.(TMT_SST_Mfr, TMT_SST_Type, TMT_SST_Style)` → name-join → `DatStyle (Mfr_Name, TYPE, STYLE)` → `DatStyle.STYLE_ID` → `DatSensor.StyleID` → sections/plugs |
 | **TMT** | **Yes — the breaker style *is* the trip** | `TMT_Use_SST = 0` | `BreakerXXXStyles.ID` → `Breaker_TMTFrameSizes.StyleID` → frame amps/settings (the thermal-mag curve is intrinsic to the frame) |
-| **EMT** | **`[OPEN-VALIDATION]`** — not yet mapped | (no `TMT_Use_SST` analog confirmed on a breaker-style table) | EMT appears to be browsed via its **own** `EMT*` catalog (manufacturer/frame/section), not via `BreakerXXXStyles`. Whether/how a `Breaker*` row selects an EMT trip is the one open edge. |
+| **EMT** | **No — standalone-only.** A breaker selection **never** resolves to EMT `[VERIFIED-LIVE 2026-05-31]` | (no breaker-style→EMT pointer column exists; `EMT` carries no breaker back-reference) | EMT is reached ONLY via its **own** `EMT → EMT_Frames → EMT_Sections` manufacturer/frame/section browse. The managed `DeviceLibrary` (100% of engine device-SQL) has **zero** EMT references; no `EMT_*` column on any `BreakerXXXStyles`. `[DLL DevLibBreakerStyle.cs:135-159]` `[04]` |
 
 **Plain-language summary for the field/UI:**
 - **ETU breaker** → the breaker tells you exactly which electronic trip belongs to it (one trip family, a handful of sensors). *This is what makes "T8V-1600 → ABB PR332/P → 5 sensors" possible — and what was lost when the bridge columns were dropped (see §3).*
 - **TMT breaker** → there is no separate trip to pick; the breaker frame **is** the trip.
-- **EMT breaker** → currently selected as its own thing; the breaker↔EMT relationship needs mapping before we assert compatibility behavior.
+- **EMT breaker** → **there is no "EMT breaker" in the breaker→trip sense.** EMT is its own self-contained family, selected directly from the `EMT*` catalog; no `Breaker*` row ever points to an EMT trip. `[VERIFIED-LIVE 2026-05-31]`
 
 ---
 
@@ -65,7 +65,7 @@ binds `TMT_Use_SST`/`TMT_SST_*` → `DefaultUseSST`/`DefaultTrip{Manufacturer,Ty
 | Class | Styles | `Use_SST=1` | matched to `DatStyle` | match rate |
 |---|---:|---:|---:|---:|
 | ICCB | 608 | 515 | 515 | **100%** |
-| MCCB | 10,335 | 1,704 | 1,576 | **95.6%** |
+| MCCB | 10,335 | 1,680 | 1,576 | **95.6%** |
 | PCB | 3,279 | 3,193 | 2,162 | **97.5%** |
 
 Unmatched rows are **genuine source catalog gaps** (missing `DatStyle` TYPE/STYLE combos), *not*
@@ -112,20 +112,37 @@ These are **undescribed** in the DB and map to the engine's breaker-override mec
 
 ## 5. EMT — own catalog (detailed, with the open edge)
 
-EMT is modeled by its own tables (`EMT`, `EMT_Frames`, `EMT_Sections`, `EMT_Curves`) and browsed via
-EMT facets, not (yet shown to be) via `BreakerXXXStyles`. `[01]`
+EMT is modeled by its own tables (`EMT`, `EMT_Frames`, `EMT_Sections`, `EMT_BandNames`, `EMT_Curves`)
+and browsed via EMT facets — **never via `BreakerXXXStyles`.** `[01]` `[VERIFIED-LIVE 2026-05-31]`
 
 **EMT discriminators** `[DVL-DB]` `[08]`:
 - `EMT.TripChar` — **bitmap** `1=LT, 2=ST, 4=Inst` (OR-combined: `3`=LT+ST, `7`=all). **Decode bitwise, not as an ordinal.**
 - `EMT.TripPlug` — `0 = Trip`, `1 = Plug`.
 - `EMT PickupCalc = 0 → Ipu × TripAmps`; `EMT_Sections` carry conditional gates ("Delay/Radius used if `SecChar=4`").
 
-**Open edge `[OPEN-VALIDATION]`:** whether a `Breaker*` selection ever resolves to an EMT trip (and
-by what key), or EMT is always a standalone selection, is unmapped. Resolution path: the `EMT*` table
-schema + descriptions (have) + the EMT selection workflow in the decomp (`D:\Access DB\DLL Decomp`,
-unread for EMT) + the host calc-engine spec (`[OPEN-VALIDATION]`). Until resolved, treat EMT as
-**bounded** (nominal-curve/raw-point surface; `selections_applied_to_curve=False`).
-`[HANDOFF 2026-04-25-tcc-runtime-013]` `[HANDOFF 2026-04-25-tcc-runtime-014]`
+**The open edge — RESOLVED 2026-05-31: standalone-only.** A `Breaker*` selection **never** resolves to
+an EMT trip. Triangulated across all three surfaces (`[VERIFIED-LIVE 2026-05-31]` `[DLL]` `[04]` — see
+`_discovery/_validation/v3-emt-edge.md`):
+- **Engine (authoritative):** the managed `EasyPower.DeviceLibrary` — which centralizes 100% of the
+  engine's device SQL — has **zero** EMT references (no token, no `GetEMT*` method, no EMT SQL). The
+  breaker-style reader (`DevLibBreakerStyle.cs:135-159`) projects only `TMT_Use_SST`/`TMT_SST_*`/
+  `TMT_Thermal*`; `GetDefaultTripInfo` returns only `useSST` + the SST triple. A breaker resolves to
+  exactly **two** outcomes — borrow-an-SST (`TMT_Use_SST=1`) or TMT-frame (`=0`) — never a third. EMT has
+  no managed class at all (only native `DvlEng\CdbDvlEMT*` nameless raw-IL shells). `[DLL DevLibBreakerStyle.cs:135-159]`
+- **Access (both directions):** no `EMT_*` pointer column on `BreakerICCB/MCCB/PCBStyles` (68/68/76 cols);
+  `EMT` carries no breaker back-reference (only `Mfr_ID`). `[04]`
+- **Supabase:** no EMT-pointer column on any `tcc.brk_*_styles`. `[VERIFIED-LIVE 2026-05-31]`
+
+**Residual caveat (does not weaken the verdict):** the native EMT C++ reader internals are unreadable
+(decompiled to size-only struct shells) — but the breaker→trip dispatch lives entirely in the readable
+managed layer, and that layer offers EMT no entry point.
+
+**EMT load + curve chain (corrected 2026-05-31):** EMT **IS** loaded into `tcc.*` (7 populated tables:
+`emt` 174, `emt_frames` 805, `emt_frame_amps` 1691, `emt_sections` 1765, `emt_band_names` 2971,
+`emt_pickups` 6587, `emt_curves` 40735 — small RI-orphan deltas vs Access). The earlier "not yet
+loaded" reading was stale; only browsable-UI *exposure* is a separate open question. The curve chain is
+`EMT_Curves → EMT_BandNames(SecID) → EMT_Sections → EMT_Frames → EMT` (G1 §2D — `EMT_Curves.ParentID →
+EMT_BandNames.ID`, 100%). `[VERIFIED-LIVE 2026-05-31]`
 
 ---
 

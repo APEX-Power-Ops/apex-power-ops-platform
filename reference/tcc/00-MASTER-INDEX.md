@@ -5,7 +5,7 @@
 > and cites the guide section it relies on. If reality and a guide disagree, the guide is fixed
 > *first* (see the Single-Source-of-Truth Law below) — never silently worked around.
 
-- **Status:** UNDER CONSTRUCTION — all guides DRAFTED 2026-05-31; **G0/G3/G4 validated vs the `EasyPower.DeviceLibrary` primary source · G1 vs live `tcc.*` (60 tables/0 views)** · G1/G2 deep-validation + full ratification in progress
+- **Status:** VALIDATED-CORE — all guides DRAFTED + deep-validated 2026-05-31; **G0/G3/G4 vs the `EasyPower.DeviceLibrary` primary source · G1/G2 deep-validated vs BOTH live DBs (Access OLEDB + Supabase `tcc.*`)**. This pass: EMT edge **RESOLVED** (standalone-only), relay-bridge D2 **reversed** (carried, not dropped), INVEQ parity **split** into a now-fixable Ansi defect + a bounded *local* Ghidra Therm check. Evidence: `_discovery/_validation/`. Remaining open items are host-independent + scoped.
 - **Owner:** APEX TCC lane (Desktop authors; executors cite + amend)
 - **Home:** `apex-power-ops-platform/reference/tcc/` (version-controlled, beside the packets that cite it)
 
@@ -59,11 +59,11 @@ the DB but the engine casts them to a 0..4 routing enum — the engine wins. Rec
 
 | Guide | Owns | Cite it when… | Status |
 |---|---|---|---|
-| **[G0 — Trip-Family Model](G0-TRIP-FAMILY-MODEL.md)** | The three trip families (SST/ETU · TMT · EMT) and **how breaker selection does/doesn't determine the trip** for each | deciding selection/compatibility behavior across breaker ↔ trip-unit | **DRAFT · ✅ validated vs DeviceLibrary 2026-05-31** |
-| **[G1 — Schema Guide](G1-SCHEMA-GUIDE.md)** | The data model end-to-end (Access → staging → Supabase `tcc.*`), the full join graph, the **DVL-flag data dictionary**, source→persisted lineage + the **dropped-column register** | touching tables/columns, loaders, or migrations | DRAFT · ✅ validated vs live `tcc.*` |
-| **[G2 — Rules Guide](G2-RULES-GUIDE.md)** | Invariants, frozen baselines, the deferred-work ledger + reopen-triggers, governance (incl. reference-of-record vs forward-port) | deciding whether something is settled, frozen, or open | DRAFT · synthesized ledger (deep-validation pending) |
+| **[G0 — Trip-Family Model](G0-TRIP-FAMILY-MODEL.md)** | The three trip families (SST/ETU · TMT · EMT) and **how breaker selection does/doesn't determine the trip** for each | deciding selection/compatibility behavior across breaker ↔ trip-unit | **✅ validated vs DeviceLibrary + live DB · EMT edge RESOLVED 2026-05-31** |
+| **[G1 — Schema Guide](G1-SCHEMA-GUIDE.md)** | The data model end-to-end (Access → staging → Supabase `tcc.*`), the full join graph, the **DVL-flag data dictionary**, source→persisted lineage + the **dropped-column register** | touching tables/columns, loaders, or migrations | **✅ deep-validated vs Access OLEDB + live `tcc.*` 2026-05-31** (64 claims; 4 counts corrected, D2 reversed) |
+| **[G2 — Rules Guide](G2-RULES-GUIDE.md)** | Invariants, frozen baselines, the deferred-work ledger + reopen-triggers, governance (incl. reference-of-record vs forward-port) | deciding whether something is settled, frozen, or open | **✅ DB-checkable subset 100% validated 2026-05-31** (ledger remainder = handoff-historical/host-only, tagged) |
 | **[G3 — Routing Guide](G3-ROUTING-GUIDE.md)** | **Selection routing** (cascade, the GetDefaultTripInfo stitch, cross-filter) and **calc-dispatch routing** (`DS*_PICKUP_CALC`→SSTCalcMethod, `DS*_SEC3_I2T`→SSTDelayCalc) | building/altering a selection flow or a calc dispatch | DRAFT · ✅ validated vs DeviceLibrary 2026-05-31 |
-| **[G4 — Calc Guide](G4-CALC-GUIDE.md)** | Pickup formulas, tolerance derivation, the delay/curve solvers, and the **field-trust matrix** (proven \| bounded \| deferred \| stub) | computing or shipping any pickup/delay/tolerance value | DRAFT · ✅ validated vs SSTSensorRecord 2026-05-31 |
+| **[G4 — Calc Guide](G4-CALC-GUIDE.md)** | Pickup formulas, tolerance derivation, the delay/curve solvers, and the **field-trust matrix** (proven \| bounded \| deferred \| stub) | computing or shipping any pickup/delay/tolerance value | **✅ validated vs SSTSensorRecord · INVEQ evaluator characterized live 2026-05-31** |
 
 ---
 
@@ -83,6 +83,8 @@ the DB but the engine casts them to a 0..4 routing enum — the engine wins. Rec
 | 08 | `08-dvl-flag-dictionary.md` (+ `_dvl_raw.csv`, `_all_fields.csv`) | Live `.accdb` design layer — field descriptions (DVL flags), 110 described / 952 total fields |
 | 09 | `09-dvl-constants-and-enums.md` | DLL decomp — authoritative `DVL_SST_SETTING_*` / `SSTDelayCalc` constant tables |
 
+**Validation campaign** — `_discovery/_validation/` (2026-05-31): `00-VALIDATION-SUMMARY.md` + `v1`–`v4` per-stream reports (G1 schema · G2 ledger · EMT edge · INVEQ scoping). Deep-validation against both live DBs; subordinate to the guides per the SSoT Law.
+
 **Authoritative live/source surfaces:**
 - Access master: `D:\TCC_NEW.accdb` (79 user tables; sole behavioral authority) — query read-only via `Microsoft.ACE.OLEDB.16.0` / DAO 120.
 - Decompiled engine: `D:\Access DB\DLL Decomp\` (EasyPower.DeviceLibrary etc. — the managed mirror of the calc/selection logic).
@@ -95,9 +97,9 @@ the DB but the engine casts them to a 0..4 routing enum — the engine wins. Rec
 
 These cannot be fully closed from currently-accessible sources and are tagged `[OPEN-VALIDATION]` wherever they appear:
 
-- **`neta-ett-study-material` is host-only** — not on this clone. The calc-engine spec (§G/§J/§N/§O), the breaker-trip-unit workflow audit, and the `R-1..R-8` risk register live on the Olares host; guides cite the handoffs' verbatim excerpts until the host artifacts are read.
-- **InvEq numerical parity** — the inverse-equation *dispatch* is proven, but the emitted curve/delay **numbers** (~6,200 sensors) were never validated row-for-row against EasyPower's native kernel. This is the #1 calc gap (see G4).
-- **EMT breaker-selection edge** — how a breaker selects an EMT trip is not yet mapped (see G0).
+- **`neta-ett-study-material` is host-only** — not on this clone. The calc-engine spec (§G/§J/§N/§O), the breaker-trip-unit workflow audit, and the `R-1..R-8` risk register live on the Olares host; guides cite the handoffs' verbatim excerpts until the host artifacts are read. *(No longer blocks INVEQ parity — see below.)*
+- **InvEq numerical parity — RE-SCOPED 2026-05-31, NO LONGER HOST-BLOCKED (G4 §3e/§5).** Corpus is STD 100% Therm / GF 8,450 Therm + **100 Ansi**; the managed solver ignores coeffs c4/c5 and **emits no curve for the 100 Ansi sensors** (a now-fixable defect → hard-exclude). The residual = one bounded **local** Ghidra fn (`CalcThermEq` in `D:\EasyPower\EasyPower.exe`) to move the 31,070-row Therm corpus BOUNDED→PROVEN. Still open, but bounded + locally runnable.
+- ~~**EMT breaker-selection edge**~~ — **RESOLVED 2026-05-31: standalone-only** (no breaker entry point; G0 §5). Closed.
 - **No physical `.h` headers** — the constants the DB defers to ("source header files") survive only as the decompiled C# mirror; that mirror is treated as authoritative (`[DLL]`).
 
 ---

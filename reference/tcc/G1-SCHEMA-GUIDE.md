@@ -2,12 +2,13 @@
 
 > **Owns:** the TCC data model end-to-end — the 79 Access user tables and their domains, the declared + logical join graph, the decoded DVL-flag / engine-constant dictionary, the `DatX → *_aligned → tcc.*` lineage, and the register of columns that exist in source Access but are absent in the governed Supabase `tcc.*`. Cite this guide when touching any table, column, loader, or migration.
 >
-> **Status: DRAFT (agent-authored 2026-05-31, pending Desktop live-validation)**
-> Last validated · — · Validator · — · Open gaps:
-> - the 4 dropped SST-bridge columns on `tcc.brk_*_styles` need a live `information_schema` re-confirm (Supabase MCP was unauthorized this session) `[OPEN-VALIDATION]`
-> - the Relay/Dsgn SST-bridge "dropped" status in `tcc.*` is inferred from the loader pattern, not live-queried `[OPEN-VALIDATION]`
-> - `DatStyle` row count differs between two live runs (2,094 in artifact 04 vs 14,248 CSV-line estimate in artifact 01) — pick the OLEDB figure, flag the discrepancy `[OPEN-VALIDATION]`
-> - EMT breaker-selection edge unmapped (inherited from G0) `[OPEN-VALIDATION]`
+> **Status: DRAFT (agent-authored 2026-05-31; deep-validated vs both live DBs 2026-05-31)**
+> Last validated · 2026-05-31 · Desktop (Access OLEDB + Supabase `tcc.*`; 64 claims: 56 MATCH / 4 corrected / 4 refined — `_discovery/_validation/v1-g1-schema-validation.md`) · Open gaps — **all four prior gaps CLOSED:**
+> - (1) the 4 SST-bridge columns are **confirmed ABSENT** from `tcc.brk_*_styles` (0/4 live) `[VERIFIED-LIVE 2026-05-31]`
+> - (2) the **relay** SST-bridge was **CARRIED, not dropped** — D2 reversed (`tcc.relay_devices` has `use_sst`/`sst_manufacturer`/`sst_type`/`sst_style`) `[VERIFIED-LIVE 2026-05-31]`
+> - (3) `DatStyle` = **2,094** (OLEDB authoritative + `tcc.trip_styles`=2,094; the 14,248 CSV estimate discarded) `[VERIFIED-LIVE 2026-05-31]`
+> - (4) the EMT breaker-selection edge is **RESOLVED** standalone-only (G0 §5) `[VERIFIED-LIVE 2026-05-31]`
+> - count corrections applied below: `EMT` 1,177→**174**, `Relays` 8,395→**1,442**, MCCB `Use_SST=1` 1,704→**1,680** (load-relevant figures unchanged). Governed-load delta flagged: `tcc.brk_mccb` 599 vs Access 640.
 
 **Tag legend** (per 00-MASTER-INDEX §2; conflict rule `[DLL]` > `[DVL-DB]` > inference):
 `[VERIFIED-LIVE <date>]` re-queried live · `[DLL <file:line>]` decompiled engine · `[DVL-DB <table.col>]` Access field description · `[HANDOFF <id>]` prior closeout · `[INFERENCE]` reasoned · `[DEFERRED]` known-incomplete · `[OPEN-VALIDATION]` not closable from current sources.
@@ -49,7 +50,7 @@ Row counts are the authoritative OLEDB counts; CSV line-counts were 6× inflated
 ### 1C. SST/ETU trip units / sensors — the solid-state core (IN SCOPE)
 | Table | #Cols | ~Rows | Role |
 |---|---:|---:|---|
-| `DatStyle` | 9 | **2,094** | trip-unit identity hub: `STYLE_ID, MFG_ID, TYPE, STYLE, NOTES, TCC_NO, TCC2_NO, SENSOR_NAME, SENSOR_TYPE`. The `TMT_SST_*` triple resolves here. *(row count: OLEDB 2,094; artifact 01 CSV-estimate 14,248 — `[OPEN-VALIDATION]` discrepancy, trust OLEDB)* |
+| `DatStyle` | 9 | **2,094** | trip-unit identity hub: `STYLE_ID, MFG_ID, TYPE, STYLE, NOTES, TCC_NO, TCC2_NO, SENSOR_NAME, SENSOR_TYPE`. The `TMT_SST_*` triple resolves here. *(**2,094** confirmed OLEDB live + `tcc.trip_styles`=2,094; the artifact-01 CSV-estimate 14,248 was multi-line-memo inflation, discarded)* `[VERIFIED-LIVE 2026-05-31]` |
 | `DatSensor` | 93 | 17,831 | sensor/plug core (the 93-col table). `StyleID → DatStyle.STYLE_ID` |
 | `DatSensorMaint` | 59 | 2,572 | maintenance-mode per-sensor overrides. `SensorID → DatSensor` |
 | `DatSensorParms` | 5 | 136,384 | generic per-sensor params (`Section, Index, Value, CurveID`) |
@@ -78,7 +79,7 @@ All `DatSection*` key on `SensorID → DatSensor.SensorID`; some also carry `Cur
 ### 1E. EMT — Electro-Mechanical Trip family (own catalog) (IN SCOPE)
 | Table | #Cols | ~Rows | Role |
 |---|---:|---:|---|
-| `EMT` | 8 | 1,177 | EMT trip identity (`ID, Mfr_ID, Type, Style, TCCNumber, TripChar, TripPlug, …`) |
+| `EMT` | 8 | **174** | EMT trip identity (`ID, Mfr_ID, Type, Style, TCCNumber, Note, TripChar, TripPlug`). *(corrected 2026-05-31: was 1,177)* `[VERIFIED-LIVE 2026-05-31]` |
 | `EMT_Frames` | 5 | 806 | frames; `StyleID → EMT.ID` |
 | `EMT_FrameAmps` | 2 | 1,704 | trip amps per `FrameID` |
 | `EMT_Sections` | 16 | 1,768 | section defs; `FrameID → EMT_Frames.ID` (15 described cols — richest EMT routing table) |
@@ -86,7 +87,7 @@ All `DatSection*` key on `SensorID → DatSensor.SensorID`; some also carry `Cur
 | `EMT_Pickups` | 3 | 6,593 | pickups per `SecID → EMT_Sections.ID` |
 | `EMT_Curves` | 4 | 40,808 | curve points per `ParentID → EMT_Sections.ID` |
 
-> **EMT migration status:** EMT tables are mapped in Access but the EMT family is **not yet loaded into `tcc.*`** as a first-class browsable catalog in the same way ETU/TMT are; EMT is the next-family queue per the DLL mapping open-items. `[DEFERRED]` `[DLL_END_TO_END_MAPPING §Summary]`
+> **EMT migration status (corrected 2026-05-31):** EMT **IS loaded into `tcc.*`** — all 7 tables exist and are populated under FK enforcement (`emt` 174, `emt_frames` 805, `emt_frame_amps` 1691, `emt_sections` 1765, `emt_band_names` 2971, `emt_pickups` 6587, `emt_curves` 40735; small RI-orphan deltas vs Access). The prior "not yet loaded" reading was stale. What remains open is browsable-UI *exposure* (a frontend question), **not** the data load. The breaker→EMT selection edge is RESOLVED standalone-only (G0 §5). `[VERIFIED-LIVE 2026-05-31]`
 
 ### 1F. Manufacturers — shared dimension (IN SCOPE)
 | Table | #Cols | ~Rows | Role |
@@ -96,7 +97,7 @@ All `DatSection*` key on `SensorID → DatSensor.SensorID`; some also carry `Cur
 ### 1G. Relays — separate protective-device domain (has the same SST bridge) (PARTIAL SCOPE — relay catalog migrated; loaded live per matrix #80 G-3)
 | Table | #Cols | ~Rows | Notable links |
 |---|---:|---:|---|
-| `Relays` | 8 | 8,395 | `Mfr_ID → Manufacturers` |
+| `Relays` | 8 | **1,442** | `Mfr_ID → Manufacturers` *(corrected 2026-05-31: was 8,395; `tcc.relays`=1,442 corroborates)* `[VERIFIED-LIVE 2026-05-31]` |
 | `RelayDevices` | 10 | 7,192 | `Relay_ID → Relays`; **`Use_SST, SST_Mfr, SST_Type, SST_Style` bridge** |
 | `RelayRanges` | 11 | 34,955 | `ParentID` (polymorphic — points at section or device) |
 | `RelayDiscreteValues` | 3 | 40,348 | `Range_ID → RelayRanges.ID` |
@@ -190,7 +191,8 @@ Edges are `TableA.col = TableB.col`. **Kind:** `B` = declared FK in the live `.a
 | `EMT_Sections.FrameID = EMT_Frames.ID` | B | `[DVL-DB EMT_Sections.FrameID]` |
 | `EMT_BandNames.SecID = EMT_Sections.ID` | B | `[DVL-DB EMT_BandNames.SecID]` |
 | `EMT_Pickups.SecID = EMT_Sections.ID` | B | `[DVL-DB EMT_Pickups.SecID]` |
-| `EMT_Curves.ParentID = EMT_Sections.ID` | B | `[01 §2D]` — note DB description says "link to EMT_Bands.ID"; artifact 01 resolves the live parent as `EMT_Sections.ID` `[DVL-DB EMT_Curves.ParentID]` `[INFERENCE]` reconcile |
+| `EMT_Curves.ParentID = EMT_BandNames.ID` | B (100%) | **RESOLVED 2026-05-31:** the DB description ("`EMT_Bands.ID`" = the physically-named `EMT_BandNames`) was RIGHT; artifact 01's "`EMT_Sections.ID`" was WRONG — 100% of 40,808 rows join to `EMT_BandNames.ID` (only 2.7% coincidental overlap with `EMT_Sections.ID`). `[VERIFIED-LIVE 2026-05-31]` `[DVL-DB EMT_Curves.ParentID]` |
+| `EMT_BandNames.SecID = EMT_Sections.ID` | B (100%) | the intermediate edge — full chain `EMT_Curves → EMT_BandNames → EMT_Sections → EMT_Frames → EMT` `[VERIFIED-LIVE 2026-05-31]` |
 
 ### 2E. Relay chain (parallel SST bridge)
 | Edge | Kind | Provenance |
@@ -220,7 +222,7 @@ These are the high-value, un-declared joins the engine resolves in **application
 | Class | Total styles | `Use_SST=1` | non-blank style | matched to `DatStyle` (non-blank denom) | match rate |
 |---|---:|---:|---:|---:|---:|
 | ICCB | 608 | 515 | 515 | 515 | **100.0%** |
-| MCCB | 10,335 | 1,704 | 1,648 | 1,576 | **95.6%** |
+| MCCB | 10,335 | 1,680 | 1,648 | 1,576 | **95.6%** |
 | PCB | 3,279 | 3,193 | 2,218 | 2,162 | **97.5%** |
 
 Unmatched non-blank rows are **genuine `DatStyle` catalog gaps** (missing TYPE/STYLE combos — e.g. Cutler-Hammer "DT 310+" LG-Frame, Siemens "ETU25B [IEC]" 3WL11), **not** name-hygiene: manufacturer name resolves for 100% of misses and `UCASE+TRIM` rescues 0. PCB also has 975 `Use_SST=1` rows with a **blank** `TMT_SST_Style` that can never bridge (drags the all-rows PCB rate to 67.7%). `[04 Task 4c]`
@@ -429,7 +431,7 @@ The two flagship routing columns: `DatSensor.DS3_SEC3_I2T` → `tcc_etu_sensors.
 | (trip types — derived) | `tcc_trip_types` | — |
 | (thermal adj — derived) | `tcc_tmt_thermal_adj` | — |
 
-**Supabase-only (no Access source):** `tcc_test_plans`, `tcc_test_results` (NETA storage, new for v5). **Relay catalog** loaded live in governed Supabase per matrix #80 G-3 (counts 21/1442/6850/34213/1,570,700). `[HANDOFF matrix-80-G-3]`
+**Supabase-only (no Access source):** `tcc_test_plans`, `tcc_test_results` (NETA storage, new for v5) — **note: these live in `public.*`, NOT `tcc.*`** `[VERIFIED-LIVE 2026-05-31]`. **Relay catalog** loaded live in governed Supabase per matrix #80 G-3; relay parent `tcc.relays`=1,442. The relay SST-bridge (`use_sst`/`sst_manufacturer`/`sst_type`/`sst_style`) **was carried** (see §5 D2). `[HANDOFF matrix-80-G-3]` `[VERIFIED-LIVE 2026-05-31]`
 
 ---
 
@@ -440,13 +442,15 @@ Columns that exist in source Access but are **not** present in the deployed `tcc
 | # | Column(s) | Source table(s) | Target `tcc.*` | Why it matters | Root cause | Status |
 |---|---|---|---|---|---|---|
 | **D1** | `tmt_use_sst`, `tmt_sst_mfr`, `tmt_sst_type`, `tmt_sst_style` | `BreakerICCBStyles` / `BreakerMCCBStyles` / `BreakerPCBStyles` | `tcc.brk_iccb_styles` / `brk_mccb_styles` / `brk_pcb_styles` | This is the **SST-1 breaker→ETU bridge** — the columns that make "T8V-1600 → ABB PR332/P → exactly 5 sensors" possible. Without them the deployed cross-filter is **manufacturer-axis only** (offered 117 ABB trips instead of the 1 correct trip). | **Name-vs-id loader assumption:** `tmt_sst_mfr` is a manufacturer **NAME** string, but the loader expected a numeric `Manufacturers.ID` FK, so the bridge join silently dropped and the 4 columns were not carried. | **ANCHOR / OPEN.** Confirmed missing live (G0 §3) `[VERIFIED-LIVE 2026-05-31]`; recovery is a tracked schema gap (G2 governance). Needs `information_schema` re-confirm `[OPEN-VALIDATION]` |
-| **D2** | `Use_SST`, `SST_Mfr`, `SST_Type`, `SST_Style` | `RelayDevices` | relay catalog in `tcc.*` (matrix #80 G-3 load) | The **SST-2 relay→ETU bridge** (same "borrow-an-SST" shape, name-based). Relay devices that delegate their curve to an electronic trip unit can't resolve it without these. | Same name-vs-id pattern as D1; relay load was catalog-only (live counts), bridge columns not confirmed carried. | **INFERRED DROPPED.** Not live-queried against the relay `tcc.*` tables this session `[OPEN-VALIDATION]` `[INFERENCE]` |
+| **D2** | `Use_SST`, `SST_Mfr`, `SST_Type`, `SST_Style` | `RelayDevices` | `tcc.relay_devices` (matrix #80 G-3 load) | The **SST-2 relay→ETU bridge** (same "borrow-an-SST" shape, name-based). | n/a — bridge was preserved. | **CARRIED, NOT DROPPED — D2 REVERSED 2026-05-31.** Live `tcc.relay_devices` HAS the bridge: `use_sst`, `sst_manufacturer` (renamed from `sst_mfr`), `sst_type`, `sst_style`. The relay G-3 loader preserved the name-key; only the **breaker** loader (D1) dropped it. This narrows the "name-vs-id drop" to the breaker-style load specifically. `[VERIFIED-LIVE 2026-05-31]` |
 | **D3** | `SSTOpt`, `SSTMfrID`, `SSTType`, `SSTStyle` (+ `Prot*`, `Moc*` parallels) | `DsgnProtEqp` | (none — `Dsgn*` is non-TCC, not migrated) | The **SST-3 design-layer bridge** (uses numeric `MFG_ID`, so it would NOT hit the D1 name-vs-id trap). Matters only if/when the design/estimating layer is brought into scope. | `DsgnProtEqp` is in the non-TCC design domain and was never migrated to `tcc.*`. | **OUT OF SCOPE / not dropped-by-bug.** Documented for completeness `[INFERENCE]` |
 | **D4** | TMT helper cols `TMT_TCCNumber`, `TMT_Notes`, `TMT_TripPlug`, `TMT_BreakerType`, `TMT_ThermalMagnetic`, `TMT_Thermal` (ICCB/MCCB only) | `BreakerICCBStyles` / `BreakerMCCBStyles` | `tcc.brk_iccb_styles` / `brk_mccb_styles` | These describe the **thermal-magnetic alternative** used when `TMT_Use_SST=0` and decode the TMT breaker sub-type (`0=Thermal Magnetic / 1=Motor Circuit Protector`, etc.). Their absence weakens TMT-breaker characterization. | Carried along with the D1 drop (same `TMT_*` column block) / not part of the migrated `brk_*_styles` projection. | **LIKELY DROPPED.** Co-located with D1; not individually live-confirmed `[OPEN-VALIDATION]` `[INFERENCE]` |
 | **D5** | `InstOvr*` + `NInstOvr*` inst-override blocks (≈16 cols each); `BrkTimes*50/60`; LV `r_int_*` / `r_iec_*` rating columns | `BreakerICCB/MCCB/PCBStyles` | `tcc.brk_*_styles` | Frame-limited instantaneous override (amps/tolerances/open-clear delay+radius) + mechanism timing + interrupt ratings. Needed for full breaker-override fidelity + ANSI/IEC rating display. | Undescribed columns outside the minimal migrated projection (`FindMatchingBreakerStyles` selects only `Mfr_Name, Type, Style`). | **DEFERRED.** Inst-override is a known deferred item (G0 §4) `[DEFERRED]` `[INFERENCE]` |
-| **D6** | `DatSettings` (3,514 rows / 235 sensors) | `DatSettings` | `tcc.etu_settings` | Per-sensor setting descriptions. Source has 3,514 rows; live legacy `tcc_etu_settings` was loaded with **0 rows** (rebuilt `_v2` got 3,514 but no runtime dependency was proven). | Phase-2/3 governance gated the live load pending an identified runtime dependency. | **EMPTY-LOAD / reserved.** Per DLL mapping shortfall L4 `[HANDOFF Phase-2/3]` |
+| **D6** | `DatSettings` (3,514 rows / 235 sensors) | `DatSettings` | `tcc.etu_settings` | Per-sensor setting descriptions. | Phase-2/3 governance gated the live load pending an identified runtime dependency. | **NOW LOADED (updated 2026-05-31):** `tcc.etu_settings` = **3,514 rows** (no longer the legacy 0-row empty load). The rebuilt corpus carried it; no runtime consumer was ever proven, so it is loaded-but-unconsumed, not a dropped gap. `[VERIFIED-LIVE 2026-05-31]` |
 
-> **Pattern note (D1/D2/D4):** all three are the *same* `TMT_*`/`SST_*` text-bridge column block on the style tables, dropped by the *same* name-vs-id loader assumption. Recovering D1 is the gating fix; D4 rides along on the same projection widen. The fix is a **name→ID resolution hop** through `Manufacturers` at load time (or carrying the raw name columns and resolving at query time), per the bridge mechanism in G0 §3. `[INFERENCE]`
+> **Pattern note (D1/D4) — refined 2026-05-31:** D1 and D4 are the *same* `TMT_*`/`SST_*` text-bridge column block on the **breaker-style** tables, dropped by the *same* name-vs-id loader assumption. **D2 is NO LONGER part of this pattern** — the relay loader (a separate matrix-#80 G-3 load) preserved its bridge (with the `sst_mfr`→`sst_manufacturer` rename). So the drop is specific to the **breaker-style** load path, not a universal loader trait. Recovering D1 is the gating fix; D4 rides along on the same projection widen. The fix is a **name→ID resolution hop** through `Manufacturers` at load time (or carrying the raw name columns and resolving at query time), per the bridge mechanism in G0 §3 — and the relay loader (D2) is the working precedent for how to carry it. `[VERIFIED-LIVE 2026-05-31]`
+
+> **Governed-load deltas (NOT dropped columns — row-count shortfalls vs Access source):** a handful of `tcc.*` tables carry fewer rows than their Access source, from referential-integrity orphan drops at load. Flagged 2026-05-31: `tcc.brk_mccb` = **599** vs Access `BreakerMCCB` = **640** (41-row MCCB-parent shortfall — worth an operator look: investigate vs accept); `tcc.tmt_thermal_adj` 14,620 vs 21,790; EMT child tables a few rows under Access (RI orphans). These are *load-completeness* notes distinct from the *dropped-column* (schema-projection) gaps D1–D6. `[VERIFIED-LIVE 2026-05-31]`
 
 ---
 
