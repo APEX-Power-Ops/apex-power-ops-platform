@@ -56,17 +56,21 @@ const DELAY_DEFAULT: Record<DelayKey, number> = { ltd: 3, std: 1.5, gfd: 1.5 }
 const fmtA = (n: number) => `${Math.round(n).toLocaleString('en-US')} A`
 const fmtMult = (m: number) => `${Number.isInteger(m) ? m : m.toFixed(1)}×`
 
-type Band = { el: string; min: string; max: string; unit: string; status: 'ready' | 'disabled' }
+type Unit = 'A' | 's' | ''
+type Band = { el: string; nominal: number; min: number; max: number; unit: Unit; status: 'ready' | 'disabled' }
+// nominal = expected value (band midpoint); measured field result -> % error = (measured − nominal)/nominal.
 const BANDS: Band[] = [
-  { el: 'LTPU', min: '2,025', max: '2,475', unit: 'A', status: 'ready' },
-  { el: 'LTD', min: '9.6', max: '14.4', unit: 's', status: 'ready' },
-  { el: 'STPU', min: '7,200', max: '8,800', unit: 'A', status: 'ready' },
-  { el: 'STD', min: '0.21', max: '0.39', unit: 's', status: 'ready' },
-  { el: 'INST', min: '10,880', max: '14,720', unit: 'A', status: 'ready' },
-  { el: 'GFPU', min: '—', max: '—', unit: '', status: 'disabled' },
-  { el: 'GFD', min: '—', max: '—', unit: '', status: 'disabled' },
-  { el: 'MAINT', min: '—', max: '—', unit: '', status: 'disabled' },
+  { el: 'LTPU', nominal: 2250, min: 2025, max: 2475, unit: 'A', status: 'ready' },
+  { el: 'LTD', nominal: 12, min: 9.6, max: 14.4, unit: 's', status: 'ready' },
+  { el: 'STPU', nominal: 8000, min: 7200, max: 8800, unit: 'A', status: 'ready' },
+  { el: 'STD', nominal: 0.3, min: 0.21, max: 0.39, unit: 's', status: 'ready' },
+  { el: 'INST', nominal: 12800, min: 10880, max: 14720, unit: 'A', status: 'ready' },
+  { el: 'GFPU', nominal: 0, min: 0, max: 0, unit: '', status: 'disabled' },
+  { el: 'GFD', nominal: 0, min: 0, max: 0, unit: '', status: 'disabled' },
+  { el: 'MAINT', nominal: 0, min: 0, max: 0, unit: '', status: 'disabled' },
 ]
+const fmtVal = (n: number, unit: Unit) =>
+  unit === 'A' ? `${Math.round(n).toLocaleString('en-US')} A` : unit === 's' ? `${n} s` : '—'
 const SETTING_BY_EL: Record<string, string> = Object.fromEntries(ELEMENTS.map((e) => [e.code, e.setting]))
 const BASE_BY_EL: Record<string, number> = Object.fromEntries(ELEMENTS.filter((e) => e.base).map((e) => [e.code, e.base as number]))
 
@@ -215,6 +219,7 @@ function Specifications() {
 
 function Settings({ maint, setMaint }: { maint: boolean; setMaint: (v: boolean) => void }) {
   const [mult, setMult] = useState<Record<DelayKey, number>>(DELAY_DEFAULT)
+  const [measured, setMeasured] = useState<Record<string, string>>({})
   const bandTestAt = (el: string) => {
     if (el === 'LTD') return `${fmtMult(mult.ltd)} (${fmtA(mult.ltd * BASE_BY_EL.LTPU)})`
     if (el === 'STD') return `${fmtMult(mult.std)} (${fmtA(mult.std * BASE_BY_EL.STPU)})`
@@ -283,24 +288,53 @@ function Settings({ maint, setMaint }: { maint: boolean; setMaint: (v: boolean) 
       </div>
 
       <section className="card">
-        <div className="card-h">📊 NETA Tolerance Bands</div>
-        <table className="bands">
-          <thead><tr><th>Element</th><th>Setting</th><th>Test @</th><th>Min Limit</th><th>Max Limit</th><th>Status</th></tr></thead>
-          <tbody>
-            {BANDS.map((b) => (
-              <tr key={b.el} className={b.status === 'disabled' ? 'row-off' : ''}>
-                <td><b>{b.el}</b></td>
-                <td>{SETTING_BY_EL[b.el] ?? '—'}</td>
-                <td>{b.status === 'disabled' ? '—' : bandTestAt(b.el)}</td>
-                <td className="num">{b.min}{b.unit && b.min !== '—' ? ` ${b.unit}` : ''}</td>
-                <td className="num">{b.max}{b.unit && b.max !== '—' ? ` ${b.unit}` : ''}</td>
-                <td>{b.status === 'ready'
-                  ? <span className="status ready">● Ready to test</span>
-                  : <span className="status off">Disabled</span>}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div className="card-h">📊 NETA Tolerance Bands &amp; Field Results</div>
+        <div className="bands-wrap">
+          <table className="bands">
+            <thead><tr><th>Element</th><th>Setting</th><th>Test @</th><th>Min Limit</th><th>Max Limit</th><th>Measured</th><th>% Error</th><th>Status</th></tr></thead>
+            <tbody>
+              {BANDS.map((b) => {
+                const disabled = b.status === 'disabled'
+                const raw = measured[b.el] ?? ''
+                const mv = parseFloat(raw)
+                const hasM = raw.trim() !== '' && !Number.isNaN(mv)
+                const pct = hasM && b.nominal ? ((mv - b.nominal) / b.nominal) * 100 : null
+                const inBand = hasM ? mv >= b.min && mv <= b.max : null
+                return (
+                  <tr key={b.el} className={disabled ? 'row-off' : ''}>
+                    <td><b>{b.el}</b></td>
+                    <td>{SETTING_BY_EL[b.el] ?? '—'}</td>
+                    <td>{disabled ? '—' : bandTestAt(b.el)}</td>
+                    <td className="num">{disabled ? '—' : fmtVal(b.min, b.unit)}</td>
+                    <td className="num">{disabled ? '—' : fmtVal(b.max, b.unit)}</td>
+                    <td>{disabled ? <span className="muted2">—</span> : (
+                      <div className="meas">
+                        <input
+                          className="meas-in"
+                          inputMode="decimal"
+                          value={raw}
+                          placeholder="—"
+                          onChange={(ev) => setMeasured((m) => ({ ...m, [b.el]: ev.target.value }))}
+                        />
+                        <span className="meas-u">{b.unit}</span>
+                      </div>
+                    )}</td>
+                    <td className="num">{!disabled && pct !== null
+                      ? <span className={`pct ${inBand ? 'ok' : 'bad'}`}>{pct >= 0 ? '+' : ''}{pct.toFixed(1)}%</span>
+                      : <span className="muted2">—</span>}</td>
+                    <td>{disabled
+                      ? <span className="status off">Disabled</span>
+                      : !hasM
+                        ? <span className="status ready">● Ready</span>
+                        : inBand
+                          ? <span className="status pass">✓ PASS</span>
+                          : <span className="status fail">✗ FAIL</span>}</td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
       </section>
 
       <div className="method">
@@ -470,6 +504,17 @@ const CSS = `
 .status{font-size:12px;font-weight:700;padding:4px 11px;border-radius:999px;display:inline-block;}
 .status.ready{color:var(--green);background:var(--green-s);}
 .status.off{color:#9aa7b3;background:var(--line-2);}
+.status.pass{color:#fff;background:var(--green);}
+.status.fail{color:#fff;background:var(--red);}
+.bands-wrap{overflow-x:auto;}
+.meas{display:flex;align-items:center;gap:6px;}
+.meas-in{width:84px;border:1px solid var(--line);border-radius:7px;padding:6px 9px;font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;background:#fff;}
+.meas-in:focus{outline:2px solid var(--brand-l);outline-offset:-1px;border-color:var(--brand-l);}
+.meas-u{font-size:11px;color:var(--muted);font-weight:700;}
+.pct{font-weight:700;}
+.pct.ok{color:var(--green);}
+.pct.bad{color:var(--red);}
+.muted2{color:#9aa7b3;}
 .method{font-size:12.5px;color:#3a4a58;line-height:1.6;background:#eaf2fb;border:1px solid #d3e3f5;border-left:3px solid var(--brand-l);border-radius:10px;padding:13px 18px;}
 .curve-grid{display:grid;grid-template-columns:248px 1fr;gap:18px;}
 @media(max-width:820px){.curve-grid{grid-template-columns:1fr;}}
