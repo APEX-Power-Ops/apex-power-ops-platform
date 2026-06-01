@@ -59,11 +59,11 @@ the DB but the engine casts them to a 0..4 routing enum — the engine wins. Rec
 
 | Guide | Owns | Cite it when… | Status |
 |---|---|---|---|
-| **[G0 — Trip-Family Model](G0-TRIP-FAMILY-MODEL.md)** | The three trip families (SST/ETU · TMT · EMT) and **how breaker selection does/doesn't determine the trip** for each | deciding selection/compatibility behavior across breaker ↔ trip-unit | **DRAFT 2026-05-31** |
-| **[G1 — Schema Guide](G1-SCHEMA-GUIDE.md)** | The data model end-to-end (Access → staging → Supabase `tcc.*`), the full join graph, the **DVL-flag data dictionary**, source→persisted lineage + the **dropped-column register** | touching tables/columns, loaders, or migrations | DRAFT 2026-05-31 · pending validation |
-| **[G2 — Rules Guide](G2-RULES-GUIDE.md)** | Invariants, frozen baselines, the deferred-work ledger + reopen-triggers, governance (incl. reference-of-record vs forward-port) | deciding whether something is settled, frozen, or open | DRAFT 2026-05-31 · pending validation |
-| **[G3 — Routing Guide](G3-ROUTING-GUIDE.md)** | **Selection routing** (cascade, the GetDefaultTripInfo stitch, cross-filter) and **calc-dispatch routing** (`DS*_PICKUP_CALC`→SSTCalcMethod, `DS*_SEC3_I2T`→SSTDelayCalc) | building/altering a selection flow or a calc dispatch | DRAFT 2026-05-31 · pending validation |
-| **[G4 — Calc Guide](G4-CALC-GUIDE.md)** | Pickup formulas, tolerance derivation, the delay/curve solvers, and the **field-trust matrix** (proven \| bounded \| deferred \| stub) | computing or shipping any pickup/delay/tolerance value | DRAFT 2026-05-31 · pending validation |
+| **[G0 — Trip-Family Model](G0-TRIP-FAMILY-MODEL.md)** | The three trip families (SST/ETU · TMT · EMT) and **how breaker selection does/doesn't determine the trip** for each | deciding selection/compatibility behavior across breaker ↔ trip-unit | **DRAFT · ✅ validated vs DeviceLibrary 2026-05-31** |
+| **[G1 — Schema Guide](G1-SCHEMA-GUIDE.md)** | The data model end-to-end (Access → staging → Supabase `tcc.*`), the full join graph, the **DVL-flag data dictionary**, source→persisted lineage + the **dropped-column register** | touching tables/columns, loaders, or migrations | DRAFT · ✅ validated vs live `tcc.*` |
+| **[G2 — Rules Guide](G2-RULES-GUIDE.md)** | Invariants, frozen baselines, the deferred-work ledger + reopen-triggers, governance (incl. reference-of-record vs forward-port) | deciding whether something is settled, frozen, or open | DRAFT · synthesized ledger (deep-validation pending) |
+| **[G3 — Routing Guide](G3-ROUTING-GUIDE.md)** | **Selection routing** (cascade, the GetDefaultTripInfo stitch, cross-filter) and **calc-dispatch routing** (`DS*_PICKUP_CALC`→SSTCalcMethod, `DS*_SEC3_I2T`→SSTDelayCalc) | building/altering a selection flow or a calc dispatch | DRAFT · ✅ validated vs DeviceLibrary 2026-05-31 |
+| **[G4 — Calc Guide](G4-CALC-GUIDE.md)** | Pickup formulas, tolerance derivation, the delay/curve solvers, and the **field-trust matrix** (proven \| bounded \| deferred \| stub) | computing or shipping any pickup/delay/tolerance value | DRAFT · ✅ validated vs SSTSensorRecord 2026-05-31 |
 
 ---
 
