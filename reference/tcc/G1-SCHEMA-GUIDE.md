@@ -7,7 +7,7 @@
 > - (1) the 4 SST-bridge columns are **confirmed ABSENT** from `tcc.brk_*_styles` (0/4 live) `[VERIFIED-LIVE 2026-05-31]`
 > - (2) the **relay** SST-bridge was **CARRIED, not dropped** — D2 reversed (`tcc.relay_devices` has `use_sst`/`sst_manufacturer`/`sst_type`/`sst_style`) `[VERIFIED-LIVE 2026-05-31]`
 > - (3) `DatStyle` = **2,094** (OLEDB authoritative + `tcc.trip_styles`=2,094; the 14,248 CSV estimate discarded) `[VERIFIED-LIVE 2026-05-31]`
-> - (4) the EMT breaker-selection edge is **RESOLVED** standalone-only (G0 §5) `[VERIFIED-LIVE 2026-05-31]`
+> - (4) the EMT breaker-selection edge is **REFINED** — no *stored* breaker→EMT default (the `TMT_SST_*` bridge resolves 0 to EMT), but a **runtime-selectable** trip type per the vendor docs (G0 §5) `[VERIFIED-LIVE 2026-05-31]` `[EZPDOC]`
 > - count corrections applied below: `EMT` 1,177→**174**, `Relays` 8,395→**1,442**, MCCB `Use_SST=1` 1,704→**1,680** (load-relevant figures unchanged). Governed-load delta flagged: `tcc.brk_mccb` 599 vs Access 640.
 
 **Tag legend** (per 00-MASTER-INDEX §2; conflict rule `[DLL]` > `[DVL-DB]` > inference):
@@ -87,7 +87,7 @@ All `DatSection*` key on `SensorID → DatSensor.SensorID`; some also carry `Cur
 | `EMT_Pickups` | 3 | 6,593 | pickups per `SecID → EMT_Sections.ID` |
 | `EMT_Curves` | 4 | 40,808 | curve points per `ParentID → EMT_Sections.ID` |
 
-> **EMT migration status (corrected 2026-05-31):** EMT **IS loaded into `tcc.*`** — all 7 tables exist and are populated under FK enforcement (`emt` 174, `emt_frames` 805, `emt_frame_amps` 1691, `emt_sections` 1765, `emt_band_names` 2971, `emt_pickups` 6587, `emt_curves` 40735; small RI-orphan deltas vs Access). The prior "not yet loaded" reading was stale. What remains open is browsable-UI *exposure* (a frontend question), **not** the data load. The breaker→EMT selection edge is RESOLVED standalone-only (G0 §5). `[VERIFIED-LIVE 2026-05-31]`
+> **EMT migration status (corrected 2026-05-31):** EMT **IS loaded into `tcc.*`** — all 7 tables exist and are populated under FK enforcement (`emt` 174, `emt_frames` 805, `emt_frame_amps` 1691, `emt_sections` 1765, `emt_band_names` 2971, `emt_pickups` 6587, `emt_curves` 40735; small RI-orphan deltas vs Access). The prior "not yet loaded" reading was stale. What remains open is browsable-UI *exposure* (a frontend question), **not** the data load. The breaker→EMT selection edge is REFINED — no *stored* breaker→EMT default, but a runtime-selectable trip type (G0 §5). `[VERIFIED-LIVE 2026-05-31]`
 
 ### 1F. Manufacturers — shared dimension (IN SCOPE)
 | Table | #Cols | ~Rows | Role |

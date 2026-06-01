@@ -7,7 +7,7 @@
 >
 > Status: DRAFT (agent-authored 2026-05-31; DB-checkable subset deep-validated 2026-05-31)
 >
-> Last validated · 2026-05-31 · Desktop (DB-checkable subset **100% MATCH, 0 discrepancies** — `_discovery/_validation/v2-g2-rules-validation.md`) · Open gaps · **(1)** R-1..R-8 residual-risk per-risk prose is host-only `[OPEN-VALIDATION]`; **(2)** InvEq numeric parity (D-11) now **precisely characterized + a now-fixable Ansi defect found** (G4 §5) `[DEFERRED]`; **(3)** SST-bridge governance entry §4.3 stands — D1 confirmed dropped live, D2 (relay) **reversed → carried**; **(4)** EMT breaker-selection edge **RESOLVED** standalone-only (G0 §5) — CLOSED. *Live-confirmed: anchors 4604/16671/4174 present + 6258-absent (F-8 holds); D-11 sizing exact (4,524+1,713=6,237); `tcc`=60/0; `tcc.manufacturers`=450.*
+> Last validated · 2026-05-31 · Desktop (DB-checkable subset **100% MATCH, 0 discrepancies** — `_discovery/_validation/v2-g2-rules-validation.md`) · Open gaps · **(1)** R-1..R-8 residual-risk per-risk prose is host-only `[OPEN-VALIDATION]`; **(2)** InvEq numeric parity (D-11) now **precisely characterized + a now-fixable Ansi defect found** (G4 §5) `[DEFERRED]`; **(3)** SST-bridge governance entry §4.3 stands — D1 confirmed dropped live, D2 (relay) **reversed → carried**; **(4)** EMT breaker-selection edge **REFINED** — no *stored* breaker→EMT default, but a runtime-selectable trip type per `[EZPDOC]` (G0 §5). *Live-confirmed: anchors 4604/16671/4174 present + 6258-absent (F-8 holds); D-11 sizing exact (4,524+1,713=6,237); `tcc`=60/0; `tcc.manufacturers`=450.*
 
 ---
 
