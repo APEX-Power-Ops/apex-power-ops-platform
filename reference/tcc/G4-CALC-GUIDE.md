@@ -91,6 +91,9 @@ From `DeviceLibrary.ReadSSTSensorRecordBySensorId` (the 13-column SELECT, array�
 > override value that depends on the device style"* — i.e. our `DS4_OVR_*` path (field-trust matrix row 12).
 > And **Maint-Inst / Maint-GF** (ARMS / RELT / Quick-Trip, manufacturer-specific names) = the
 > `DatSensorMaint` maintenance-mode overrides. `[EZPDOC LV_Breaker/Phase_Trip_Tab]` `[EZPDOC LV_Breaker/Ground_Trip_Tab]`
+> **ETAP cross-confirms both:** the Inst Override and normal Inst pickup are **mutually exclusive** ("if
+> Override is enabled, Inst pickup is grayed out and vice versa"), and Maintenance Mode applies a temporary
+> low setting "to reduce arc-flash incident energy" (handled as separate curves). `[ETAPDOC LVCB_Setting]`
 
 ### 1c. Trust statement for pickup currents
 
@@ -147,7 +150,10 @@ ground-fault (GFD) path — and **despite the misleading `_I2T` suffix, each cas
 > has a slope of minus 'x'. When you select Out, the (I^x)t function is disabled and the delay is
 > independent of the current."* That is the plain-English form of the `SSTDelayCalc` 0 (NONE / flat,
 > current-independent) vs 1 (I2X / Iˣ·t slope) routing — the vendor confirms the "0/1" the DB *partially*
-> describes, while the engine extends it to the full 0..4. `[EZPDOC LV_Breaker/Phase_Trip_Tab]`
+> describes, while the engine extends it to the full 0..4. `[EZPDOC LV_Breaker/Phase_Trip_Tab]` **ETAP (a
+> different vendor) independently confirms the identical control** — "the short-time I^xT band has IN and
+> OUT settings, **default OUT**; IN shifts the curve inward (sloped), OUT outward (L-shaped)" (same for
+> Ground) — a second-vendor confirmation of the same routing. `[ETAPDOC LVSST]`
 
 ### 3a. The delay-routing enum (`SSTDelayCalc` / `DB_SST_DLCALC_*`, 0..4)
 

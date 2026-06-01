@@ -44,6 +44,7 @@ Every non-trivial statement in a guide carries one tag so any reader can re-veri
 | `[VERIFIED-LIVE <date>]` | Re-queried against the live source (Access `D:\TCC_NEW.accdb` via OLEDB/DAO, or governed Supabase `fxoyniqnrlkxfligbxmg`) on that date. |
 | `[DLL <file:line>]` | Recovered from decompiled EasyPower source under `D:\Access DB\DLL Decomp\`. |
 | `[EZPDOC <page>]` | From EasyPower's **official help documentation** (`help.easypower.com/ezp/25.0/…`) — the vendor's authoritative field/behavior descriptions. Corroborates `[DLL]`; where no DLL exists (e.g. relays), it is a **primary** authority. |
+| `[ETAPDOC <page>]` | From **ETAP's** official LVCB help — a *different* vendor. **Cross-vendor corroboration**: raises confidence in the conceptual model (families, breaker→trip narrowing, I^xT, INVEQ). Does NOT override EasyPower for our platform's schema/values (our data *is* EasyPower's). |
 | `[DVL-DB <table.col>]` | From an Access field DESCRIPTION (the design-layer "DVL flag" metadata). |
 | `[HANDOFF <id>]` | Established by a prior dispatch closeout under `ops/agents/handoffs/`. |
 | `[INFERENCE]` | Reasoned from evidence, not directly attested — treat as provisional. |

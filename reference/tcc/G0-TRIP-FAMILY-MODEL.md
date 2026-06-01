@@ -27,6 +27,17 @@
 > `Class → Mfr → Type → Style → Frame → Trip → Trip-unit Mfr/Type/Style → Sensor/Plug` is the vendor's own
 > description of our dual-axis selection. `[EZPDOC LV_Breaker/Specifications_Tab]` `[EZPDOC LV_Breaker/Phase_Trip_Tab]`
 
+> **Cross-vendor confirmation `[ETAPDOC]` (2026-05-31):** ETAP (a *different* power-system tool)
+> independently models the same LV trip-device types — **Thermal Magnetic · Solid-state · Motor Circuit
+> Protector · Electro-mechanical** = our TMT · SST/ETU · (a TMT sub-type) · EMT. **MCP** (Motor Circuit
+> Protector — magnetic/instantaneous-only) is a peer type in ETAP but folded into TMT in EasyPower via
+> `TMT_BreakerType` (0=Thermal Magnetic / 1=Motor Circuit Protector, §4). Crucially, **ETAP confirms the
+> breaker→compatible-trip narrowing** (the SST-bridge premise, §3): with a breaker selected, *"the Trip
+> Device Library … will be limited to trip devices assigned to the selected circuit breaker size"*; with
+> none selected, *all* are available. A second vendor's independent model of the bridge → strong evidence
+> the narrowing is the **industry-standard** model, not an EasyPower quirk (it validates the SST-bridge fix
+> direction). `[ETAPDOC LVCB_Setting]` See `_discovery/_validation/v5-etap-cross-vendor.md`.
+
 ---
 
 ## 2. The Breaker × Family interaction matrix  ← the core of this guide
