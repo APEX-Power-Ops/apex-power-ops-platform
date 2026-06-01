@@ -34,7 +34,9 @@ build/
 # Per OPERATOR_DECISION_MATRIX #64 closure 2026-05-26 - PM-Pro-Guide-xer-Templates (Primavera P6 XER
 # sample corpus + Apr 2026 parser-output snapshots; informs matrix #19 PM Schema Foundation Plan
 # but not part of code/commit substrate).
-reference/
+reference/*
+# EXCEPT the canonical TCC Master Reference (the version-controlled single source of truth — must be tracked).
+!reference/tcc/
 
 # Audit workspace artifacts (read-only audit dispatches; never commit)
 .audit_workspace/
