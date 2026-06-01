@@ -128,6 +128,9 @@ export type CascadeParams = {
   breakerClass?: string | null
   breakerId?: number | null
   breakerStyleId?: number | null
+  // When true and a breaker selection is present, narrow the trip-unit cascade by actual
+  // SST-bridge COMPATIBILITY (not just manufacturer) — the bidirectional BG-5 cross-filter.
+  bridgeXfilter?: boolean
 }
 
 export type EtuBreakerCascadeResponse = {
@@ -171,6 +174,9 @@ export type EtuBreakerCascadeParams = {
   tripStyleId?: number | null
   sensorId?: number | null
   bridgeOnly?: boolean
+  // When true and a trip-unit selection is present, narrow the breaker cascade by actual
+  // SST-bridge COMPATIBILITY (the (class, style) pairs reachable from the chosen trip unit).
+  bridgeXfilter?: boolean
 }
 
 // SST-bridge narrowing: breaker style -> compatible ETU sensor set (D1 / migration 006).
@@ -760,6 +766,9 @@ export async function fetchCascade(params: CascadeParams = {}): Promise<CascadeR
   appendOptionalParam(search, 'breaker_class', params.breakerClass)
   appendOptionalParam(search, 'breaker_id', params.breakerId)
   appendOptionalParam(search, 'breaker_style_id', params.breakerStyleId)
+  if (params.bridgeXfilter) {
+    search.set('bridge_xfilter', 'true')
+  }
   const suffix = search.toString()
   return getJson<CascadeResponse>(`/api/v1/neta/cascade${suffix ? `?${suffix}` : ''}`)
 }
@@ -777,6 +786,9 @@ export async function fetchEtuBreakerCascade(
   appendOptionalParam(search, 'sensor_id', params.sensorId)
   if (params.bridgeOnly) {
     search.set('bridge_only', 'true')
+  }
+  if (params.bridgeXfilter) {
+    search.set('bridge_xfilter', 'true')
   }
   const suffix = search.toString()
   return getJson<EtuBreakerCascadeResponse>(

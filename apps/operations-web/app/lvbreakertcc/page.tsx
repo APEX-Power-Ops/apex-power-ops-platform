@@ -16,6 +16,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   fetchEtuBreakerCascade,
+  fetchCascade,
   fetchEtuBridgeSensors,
   fetchEtuSettings,
   fetchEtuContext,
@@ -24,6 +25,7 @@ import {
   fetchEmtFrames,
   fetchEmtContext,
   type EtuBreakerCascadeResponse,
+  type CascadeResponse,
   type EtuBridgeSensorsResponse,
   type AvailableSettingsResponse,
   type SensorCalcContext,
@@ -296,54 +298,123 @@ function Specifications({ family, setFamily, selection, setSelection }: {
   )
 }
 
-// ETU: breaker cascade (mfr → class → breaker → style) → SST-bridge sensor narrowing.
+// ETU: CO-EQUAL dual-axis selection (operator decision 2026-06-01, BG-5).
+//   Axis A — Breaker:   Mfr → Class → Breaker → Frame   via /etu/breaker-cascade
+//   Axis B — Trip Unit: Mfr → Type → Style              via /cascade
+// Each axis passes the OTHER's selection as a bridge_xfilter cross-half, so both
+// narrow each other through the recovered SST bridge. Every dropdown therefore lists
+// only cross-compatible options. The compatible-sensor pool (the intersection) is the
+// trip cascade's sensors[]; picking a sensor finalizes — reachable from either end.
+// /cascade only emits sensors[] once a trip-style leaf is chosen, so the breaker lane
+// gets its own sensor source via /etu/bridge-sensors — either terminal yields sensors.
+const SENSOR_CAP = 250
+
 function EtuSelector({ onSelect, onClear }: { onSelect: (s: LiveSelection) => void; onClear: () => void }) {
-  const [cascade, setCascade] = useState<EtuBreakerCascadeResponse | null>(null)
-  const [bridge, setBridge] = useState<EtuBridgeSensorsResponse | null>(null)
-  const [mfrId, setMfrId] = useState('')
+  // Axis A — breaker
+  const [bMfr, setBMfr] = useState('')
   const [bClass, setBClass] = useState('')
-  const [breakerId, setBreakerId] = useState('')
-  const [styleId, setStyleId] = useState('')
+  const [bId, setBId] = useState('')
+  const [bStyle, setBStyle] = useState('')
+  // Axis B — trip unit
+  const [tMfr, setTMfr] = useState('')
+  const [tType, setTType] = useState('')
+  const [tStyle, setTStyle] = useState('')
+  // shared terminal
   const [sensorId, setSensorId] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [bridgeBusy, setBridgeBusy] = useState(false)
+
+  const [bCascade, setBCascade] = useState<EtuBreakerCascadeResponse | null>(null)
+  const [tCascade, setTCascade] = useState<CascadeResponse | null>(null)
+  const [bBusy, setBBusy] = useState(false)
+  const [tBusy, setTBusy] = useState(false)
+  const [resolving, setResolving] = useState(false)
   const [err, setErr] = useState<string | null>(null)
 
+  const dropSensor = useCallback(() => { setSensorId(''); onClear() }, [onClear])
+
+  // Axis A cascade — narrowed by the trip-axis selection (cross-half + bridge_xfilter).
   useEffect(() => {
     let active = true
-    setLoading(true)
-    setErr(null)
+    setBBusy(true); setErr(null)
     fetchEtuBreakerCascade({
-      manufacturerId: mfrId ? Number(mfrId) : null,
+      manufacturerId: bMfr ? Number(bMfr) : null,
       breakerClass: bClass || null,
-      breakerId: breakerId ? Number(breakerId) : null,
-      bridgeOnly: true, // ETU tab: only breakers/styles that actually have an electronic trip unit
+      breakerId: bId ? Number(bId) : null,
+      tripTypeId: tType ? Number(tType) : null,
+      tripStyleId: tStyle ? Number(tStyle) : null,
+      bridgeOnly: true, // ETU tab: only breakers that actually carry an electronic trip unit
+      bridgeXfilter: true,
     })
-      .then((r) => { if (active) setCascade(r) })
+      .then((r) => { if (active) setBCascade(r) })
       .catch((e) => { if (active) setErr(errMsg(e)) })
-      .finally(() => { if (active) setLoading(false) })
+      .finally(() => { if (active) setBBusy(false) })
     return () => { active = false }
-  }, [mfrId, bClass, breakerId])
+  }, [bMfr, bClass, bId, tType, tStyle])
 
+  // Axis B cascade — narrowed by the breaker-axis selection (cross-half + bridge_xfilter).
+  // Its sensors[] is the compatible-sensor intersection (the shared terminal).
   useEffect(() => {
-    if (!styleId) { setBridge(null); return }
+    let active = true
+    setTBusy(true); setErr(null)
+    fetchCascade({
+      manufacturerId: tMfr ? Number(tMfr) : null,
+      tripTypeId: tType ? Number(tType) : null,
+      tripStyleId: tStyle ? Number(tStyle) : null,
+      breakerClass: bClass || null,
+      breakerId: bId ? Number(bId) : null,
+      breakerStyleId: bStyle ? Number(bStyle) : null,
+      bridgeXfilter: true,
+    })
+      .then((r) => { if (active) setTCascade(r) })
+      .catch((e) => { if (active) setErr(errMsg(e)) })
+      .finally(() => { if (active) setTBusy(false) })
+    return () => { active = false }
+  }, [tMfr, tType, tStyle, bClass, bId, bStyle])
+
+  // Breaker-axis terminal -> sensors directly via the SST bridge, so the breaker lane
+  // surfaces sensors without requiring a trip-style tap. Skip when a trip-style leaf is
+  // set (then /cascade is the more specific breaker∩trip intersection).
+  const [bridge, setBridge] = useState<EtuBridgeSensorsResponse | null>(null)
+  const [bridgeBusy, setBridgeBusy] = useState(false)
+  useEffect(() => {
+    if (!bStyle || tStyle) { setBridge(null); return }
     let active = true
     setBridgeBusy(true)
-    fetchEtuBridgeSensors({ breakerStyleId: Number(styleId), breakerClass: bClass || null })
+    fetchEtuBridgeSensors({ breakerStyleId: Number(bStyle), breakerClass: bClass || null })
       .then((r) => { if (active) setBridge(r) })
       .catch((e) => { if (active) setErr(errMsg(e)) })
       .finally(() => { if (active) setBridgeBusy(false) })
     return () => { active = false }
-  }, [styleId, bClass])
+  }, [bStyle, tStyle, bClass])
+
+  // Normalized compatible-sensor pool, from whichever terminal fired (trip-style wins as
+  // the breaker∩trip intersection; else the breaker frame's bridge sensors).
+  type PoolItem = { sensor_id: number; rating: number | null; desc: string; tripMfr: string; tripType: string; tripStyle: string; label: string }
+  const pool = useMemo<PoolItem[]>(() => {
+    const src: PoolItem[] = tStyle && tCascade
+      ? tCascade.sensors.map((s) => ({
+          sensor_id: s.sensor_id, rating: s.sensor_rating, desc: s.sensor_desc ?? '',
+          tripMfr: s.manufacturer_name ?? '', tripType: s.trip_type_name ?? '', tripStyle: s.trip_style_name ?? '',
+          label: `${s.manufacturer_name ?? ''} ${s.trip_type_name ?? ''} ${s.trip_style_name ?? ''} — ${s.sensor_desc ?? ''}${s.sensor_rating ? ` (${s.sensor_rating}A)` : ''}`.trim(),
+        }))
+      : bStyle && bridge
+        ? bridge.sensors.map((s) => ({
+            sensor_id: s.sensor_id, rating: s.sensor_rating, desc: s.sensor_description ?? '',
+            tripMfr: s.tmt_sst_mfr ?? '', tripType: s.tmt_sst_type ?? '', tripStyle: s.tmt_sst_style ?? '',
+            label: `${s.tmt_sst_mfr ?? ''} ${s.tmt_sst_type ?? ''} ${s.tmt_sst_style ?? ''} — ${s.sensor_description ?? ''}${s.sensor_rating ? ` (${s.sensor_rating}A)` : ''}`.trim(),
+          }))
+        : []
+    return src.slice(0, SENSOR_CAP)
+  }, [tStyle, tCascade, bStyle, bridge])
 
   const resolveSensor = useCallback(async (sid: string) => {
     setSensorId(sid)
-    if (!sid || !bridge) { onClear(); return }
-    const row = bridge.sensors.find((s) => String(s.sensor_id) === sid)
-    if (!row) { onClear(); return }
-    const mfrName = cascade?.manufacturers.find((m) => String(m.manufacturer_id) === mfrId)?.manufacturer_name ?? row.tmt_sst_mfr ?? ''
-    const breakerName = cascade?.breakers.find((b) => String(b.breaker_id) === breakerId)?.breaker_name ?? ''
-    const frame = row.breaker_style_frame ?? ''
+    const row = pool.find((p) => String(p.sensor_id) === sid)
+    if (!sid || !row) { onClear(); return }
+    const bMfrName = bCascade?.manufacturers.find((m) => String(m.manufacturer_id) === bMfr)?.manufacturer_name ?? ''
+    const bName = bCascade?.breakers.find((b) => String(b.breaker_id) === bId)?.breaker_name ?? ''
+    const frame = bCascade?.breaker_styles.find((s) => String(s.breaker_style_id) === bStyle)?.breaker_style_name ?? ''
+    const breakerLabel = [bMfrName, bClass, bName, frame].filter(Boolean).join(' ') || 'Compatible breaker (any)'
+    setResolving(true)
     let plugs: number[] = []
     try {
       const settings = await fetchEtuSettings(row.sensor_id)
@@ -351,45 +422,79 @@ function EtuSelector({ onSelect, onClear }: { onSelect: (s: LiveSelection) => vo
     } catch {
       plugs = []
     }
+    setResolving(false)
     onSelect({
       family: 'etu',
       sensorId: row.sensor_id,
-      breakerLabel: [mfrName, row.breaker_class?.toUpperCase(), breakerName, frame].filter(Boolean).join(' '),
-      tripLabel: [row.tmt_sst_mfr, row.tmt_sst_type, row.tmt_sst_style].filter(Boolean).join(' '),
-      ratingLabel: `${row.sensor_description ?? '—'}${row.sensor_rating ? ` · Ir ${row.sensor_rating} A` : ''}`,
-      bridgeStatus: bridge.bridge_match_status,
+      breakerLabel,
+      tripLabel: [row.tripMfr, row.tripType, row.tripStyle].filter(Boolean).join(' '),
+      ratingLabel: `${row.desc || '—'}${row.rating ? ` · Ir ${row.rating} A` : ''}`,
+      bridgeStatus: 'matched',
       plugs,
       trustNote: 'ETU per-sensor NETA pickup tolerances are field-sheet authoritative (G4).',
     })
-  }, [bridge, cascade, mfrId, breakerId, onSelect, onClear])
+  }, [pool, bCascade, bMfr, bId, bStyle, bClass, onSelect, onClear])
 
-  const mfrOpts = (cascade?.manufacturers ?? []).map((m) => ({ value: String(m.manufacturer_id), label: `${m.manufacturer_name} (${m.breaker_count})` }))
-  const classOpts = (cascade?.breaker_classes ?? []).map((c) => ({ value: c.breaker_class, label: `${c.breaker_class} (${c.breaker_count})` }))
-  const breakerOpts = (cascade?.breakers ?? []).map((b) => ({ value: String(b.breaker_id), label: `${b.breaker_name} · ${b.breaker_class}` }))
-  const styleOpts = (cascade?.breaker_styles ?? []).map((s) => ({ value: String(s.breaker_style_id), label: s.breaker_style_name }))
-  const sensorOpts = (bridge?.sensors ?? []).map((s) => ({
-    value: String(s.sensor_id),
-    label: `${s.tmt_sst_type ?? ''} ${s.tmt_sst_style ?? ''} — ${s.sensor_description ?? ''}${s.sensor_rating ? ` (${s.sensor_rating}A)` : ''}`.trim(),
-  }))
+  // Axis A options
+  const bMfrOpts = (bCascade?.manufacturers ?? []).map((m) => ({ value: String(m.manufacturer_id), label: `${m.manufacturer_name} (${m.breaker_count})` }))
+  const bClassOpts = (bCascade?.breaker_classes ?? []).map((c) => ({ value: c.breaker_class, label: `${c.breaker_class} (${c.breaker_count})` }))
+  const bBreakerOpts = (bCascade?.breakers ?? []).map((b) => ({ value: String(b.breaker_id), label: `${b.breaker_name} · ${b.breaker_class}` }))
+  const bStyleOpts = (bCascade?.breaker_styles ?? []).map((s) => ({ value: String(s.breaker_style_id), label: s.breaker_style_name }))
+  // Axis B options
+  const tMfrOpts = (tCascade?.manufacturers ?? []).map((m) => ({ value: String(m.manufacturer_id), label: `${m.manufacturer_name} (${m.trip_type_count})` }))
+  const tTypeOpts = (tCascade?.trip_types ?? []).map((t) => ({ value: String(t.trip_type_id), label: t.trip_type_name }))
+  const tStyleOpts = (tCascade?.trip_styles ?? []).map((t) => ({ value: String(t.trip_style_id), label: `${t.trip_style_name} (${t.sensor_count})` }))
+
+  // shared sensor terminal
+  const poolCount = tCascade?.count ?? 0 // distinct sensors compatible with the current selection (both halves)
+  const sensorReady = pool.length > 0
+  const sensorOpts = pool.map((p) => ({ value: String(p.sensor_id), label: p.label }))
+  const anySel = !!(bMfr || bClass || bId || bStyle || tMfr || tType || tStyle)
+  const sensorPlaceholder = sensorReady
+    ? 'Select sensor…'
+    : !anySel
+      ? 'Narrow either axis to begin…'
+      : poolCount === 0
+        ? 'No compatible sensors'
+        : 'Pick a frame or trip style to list sensors'
 
   return (
     <div className="selwrap">
-      <div className="selrow">
-        <Picker label="Manufacturer" value={mfrId} busy={loading} options={mfrOpts} placeholder="All manufacturers"
-          onChange={(v) => { setMfrId(v); setBreakerId(''); setStyleId(''); setSensorId(''); onClear() }} />
-        <Picker label="Breaker Class" value={bClass} options={classOpts} placeholder="All classes"
-          onChange={(v) => { setBClass(v); setBreakerId(''); setStyleId(''); setSensorId(''); onClear() }} />
-        <Picker label="Breaker" value={breakerId} options={breakerOpts} placeholder="Select breaker…" disabled={!breakerOpts.length}
-          onChange={(v) => { setBreakerId(v); setStyleId(''); setSensorId(''); onClear() }} />
-        <Picker label="Frame Size" value={styleId} options={styleOpts} placeholder="Select frame…" disabled={!styleOpts.length}
-          onChange={(v) => { setStyleId(v); setSensorId(''); onClear() }} />
-        <Picker label="Trip Unit / Sensor (SST bridge)" value={sensorId} options={sensorOpts} busy={bridgeBusy}
-          placeholder={styleId ? 'Select sensor…' : 'Choose a style first'} disabled={!sensorOpts.length}
-          onChange={resolveSensor} />
+      <div className="axes">
+        <div className="axis brk">
+          <div className="axis-h"><span className="ax-ic">⬛</span> Breaker {bBusy ? <span className="spin" /> : null}</div>
+          <Picker label="Manufacturer" value={bMfr} options={bMfrOpts} placeholder="All manufacturers"
+            onChange={(v) => { setBMfr(v); setBClass(''); setBId(''); setBStyle(''); dropSensor() }} />
+          <Picker label="Breaker Class" value={bClass} options={bClassOpts} placeholder="All classes"
+            onChange={(v) => { setBClass(v); setBId(''); setBStyle(''); dropSensor() }} />
+          <Picker label="Breaker" value={bId} options={bBreakerOpts} placeholder="Select breaker…" disabled={!bBreakerOpts.length}
+            onChange={(v) => { setBId(v); setBStyle(''); dropSensor() }} />
+          <Picker label="Frame Size" value={bStyle} options={bStyleOpts} placeholder="Select frame…" disabled={!bStyleOpts.length}
+            onChange={(v) => { setBStyle(v); dropSensor() }} />
+        </div>
+
+        <div className="axis trp">
+          <div className="axis-h"><span className="ax-ic">⚙</span> Trip Unit {tBusy ? <span className="spin" /> : null}</div>
+          <Picker label="Trip Manufacturer" value={tMfr} options={tMfrOpts} placeholder="All manufacturers"
+            onChange={(v) => { setTMfr(v); setTType(''); setTStyle(''); dropSensor() }} />
+          <Picker label="Trip Type" value={tType} options={tTypeOpts} placeholder="All types" disabled={!tTypeOpts.length}
+            onChange={(v) => { setTType(v); setTStyle(''); dropSensor() }} />
+          <Picker label="Trip Style" value={tStyle} options={tStyleOpts} placeholder="All styles" disabled={!tStyleOpts.length}
+            onChange={(v) => { setTStyle(v); dropSensor() }} />
+        </div>
       </div>
-      {styleId && bridge && bridge.bridge_match_status === 'unmatched' && (
-        <div className="sel-status warn">This style has no SST-bridge target in catalog — try the manufacturer axis or trip-unit search.</div>
-      )}
+
+      <div className="sensor-term">
+        <Picker label="Compatible Sensor (SST bridge intersection)" value={sensorId} options={sensorOpts} busy={resolving || bridgeBusy}
+          placeholder={sensorPlaceholder} disabled={!sensorReady} onChange={resolveSensor} />
+        {anySel && (
+          <div className={`xf-status ${poolCount === 0 ? 'empty' : sensorReady ? 'ok' : ''}`}>
+            {poolCount === 0
+              ? '✗ No sensors are bridge-compatible with this combination — relax one axis.'
+              : <>↔ <span className="xf-count">{poolCount.toLocaleString('en-US')}</span> compatible sensor{poolCount === 1 ? '' : 's'} — both axes narrow each other.</>}
+          </div>
+        )}
+      </div>
       {err && <div className="sel-status err">⚠ {err}</div>}
     </div>
   )
@@ -983,6 +1088,22 @@ const CSS = `
 .sel-status{font-size:12.5px;color:var(--muted);background:var(--line-2);border-radius:8px;padding:9px 12px;}
 .sel-status.warn{color:#8a5a00;background:var(--amber-s);border:1px solid var(--amber);}
 .sel-status.err{color:#fff;background:var(--red);}
+/* co-equal dual axes */
+.axes{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+@media(max-width:820px){.axes{grid-template-columns:1fr;}}
+.axis{border:1px solid var(--line);border-radius:12px;padding:13px 15px;background:#fafbfd;display:flex;flex-direction:column;gap:11px;}
+.axis.brk{border-top:3px solid var(--brand-l);}
+.axis.trp{border-top:3px solid var(--green);}
+.axis-h{display:flex;align-items:center;gap:9px;font-size:12px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--brand-d);}
+.ax-ic{width:22px;height:22px;border-radius:6px;display:grid;place-items:center;color:#fff;font-size:12px;flex:none;}
+.axis.brk .ax-ic{background:var(--brand-l);}
+.axis.trp .ax-ic{background:var(--green);}
+.sensor-term{border:1px solid var(--brand-l);border-radius:12px;padding:13px 15px;background:#eef5fb;display:flex;flex-direction:column;gap:9px;}
+.sensor-term .pick-l{color:var(--brand-d);}
+.xf-status{font-size:12px;font-weight:600;color:var(--muted);}
+.xf-status.ok{color:var(--brand-d);}
+.xf-status.empty{color:#8a2a2a;}
+.xf-count{font-weight:800;color:var(--brand);font-variant-numeric:tabular-nums;}
 .summary{background:linear-gradient(100deg,#1f7a4d,#2f8f5b);color:#fff;border-radius:14px;padding:16px 20px;box-shadow:0 10px 24px rgba(47,143,91,.22);}
 .summary-h{font-size:14px;font-weight:700;margin-bottom:12px;}
 .summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 28px;}
