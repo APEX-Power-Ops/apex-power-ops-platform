@@ -132,3 +132,21 @@ def test_breaker_cascade_accepts_trip_unit_cross_filters(client):
         assert any(call["params"].get("xh_trip_type_id") == 75 for call in fake_db.calls)
     finally:
         app.dependency_overrides.clear()
+
+
+def test_breaker_cascade_bridge_only_filters_to_etu_capable(client):
+    fake_db = FakeBreakerCascadeDb([
+        FakeResult(scalar_value=130),
+        FakeResult(rows=[{"manufacturer_id": 9, "manufacturer_name": "GE", "breaker_count": 1}]),
+        FakeResult(rows=[{"breaker_class": "MCCB", "breaker_count": 1}]),
+    ])
+    app.dependency_overrides[get_db] = lambda: fake_db
+
+    try:
+        resp = client.get("/api/v1/neta/etu/breaker-cascade", params={"bridge_only": "true"})
+        assert resp.status_code == 200
+        # Every cascade query must restrict to (class, style) pairs present in the bridge view.
+        assert all("vw_breaker_sst_bridge" in call["statement"] for call in fake_db.calls)
+        assert any("(breaker_class, breaker_style_id) IN" in call["statement"] for call in fake_db.calls)
+    finally:
+        app.dependency_overrides.clear()

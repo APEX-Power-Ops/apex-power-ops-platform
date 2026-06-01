@@ -1846,6 +1846,17 @@ def _build_etu_breaker_cascade_where(
         clauses.append("breaker_style_id = :breaker_style_id")
         params["breaker_style_id"] = scope["breaker_style_id"]
 
+    # bridge_only is an ETU-tab filter: restrict to breaker styles that actually have an
+    # electronic trip unit (an SST-bridge target). Always applies (never excluded), so the
+    # whole cascade — manufacturers/classes/breakers/styles — reflects only ETU-capable
+    # breakers. Match on the (class, style_id) PAIR: style ids are per-class serials and
+    # overlap across brk_{iccb,mccb,pcb}_styles, so a bare id IN would cross-match classes.
+    if scope.get("bridge_only"):
+        clauses.append(
+            "(breaker_class, breaker_style_id) IN "
+            "(SELECT upper(breaker_class), breaker_style_id FROM tcc.vw_breaker_sst_bridge)"
+        )
+
     where_sql = f"WHERE {' AND '.join(clauses)}" if clauses else ""
     return where_sql, params
 
@@ -3243,6 +3254,10 @@ def get_etu_breaker_cascade(
     trip_type_id: Optional[int] = Query(None, description="Cross-half filter by trip type"),
     trip_style_id: Optional[int] = Query(None, description="Cross-half filter by trip style"),
     sensor_id: Optional[int] = Query(None, description="Cross-half filter by sensor"),
+    bridge_only: bool = Query(
+        False,
+        description="ETU tab: show only breakers/styles with an electronic trip unit (SST-bridge target)",
+    ),
     db: Session = Depends(get_db),
 ):
     if breaker_class is not None and breaker_class not in _ETU_BREAKER_CASCADE_CLASSES:
@@ -3256,6 +3271,7 @@ def get_etu_breaker_cascade(
         "breaker_class": breaker_class,
         "breaker_id": breaker_id,
         "breaker_style_id": breaker_style_id,
+        "bridge_only": bridge_only,
     }
 
     xh_clause, xh_params = _build_cross_half_trip_unit_filter(

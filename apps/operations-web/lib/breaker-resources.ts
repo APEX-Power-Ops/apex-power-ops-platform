@@ -170,6 +170,7 @@ export type EtuBreakerCascadeParams = {
   tripTypeId?: number | null
   tripStyleId?: number | null
   sensorId?: number | null
+  bridgeOnly?: boolean
 }
 
 // SST-bridge narrowing: breaker style -> compatible ETU sensor set (D1 / migration 006).
@@ -732,6 +733,9 @@ export async function fetchEtuBreakerCascade(
   appendOptionalParam(search, 'trip_type_id', params.tripTypeId)
   appendOptionalParam(search, 'trip_style_id', params.tripStyleId)
   appendOptionalParam(search, 'sensor_id', params.sensorId)
+  if (params.bridgeOnly) {
+    search.set('bridge_only', 'true')
+  }
   const suffix = search.toString()
   return getJson<EtuBreakerCascadeResponse>(
     `/api/v1/neta/etu/breaker-cascade${suffix ? `?${suffix}` : ''}`,

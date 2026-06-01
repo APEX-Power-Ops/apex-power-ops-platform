@@ -311,6 +311,7 @@ function EtuSelector({ onSelect, onClear }: { onSelect: (s: LiveSelection) => vo
       manufacturerId: mfrId ? Number(mfrId) : null,
       breakerClass: bClass || null,
       breakerId: breakerId ? Number(breakerId) : null,
+      bridgeOnly: true, // ETU tab: only breakers/styles that actually have an electronic trip unit
     })
       .then((r) => { if (active) setCascade(r) })
       .catch((e) => { if (active) setErr(errMsg(e)) })
@@ -374,7 +375,7 @@ function EtuSelector({ onSelect, onClear }: { onSelect: (s: LiveSelection) => vo
           onChange={(v) => { setBClass(v); setBreakerId(''); setStyleId(''); setSensorId(''); onClear() }} />
         <Picker label="Breaker" value={breakerId} options={breakerOpts} placeholder="Select breaker…" disabled={!breakerOpts.length}
           onChange={(v) => { setBreakerId(v); setStyleId(''); setSensorId(''); onClear() }} />
-        <Picker label="Breaker Style" value={styleId} options={styleOpts} placeholder="Select style…" disabled={!styleOpts.length}
+        <Picker label="Frame Size" value={styleId} options={styleOpts} placeholder="Select frame…" disabled={!styleOpts.length}
           onChange={(v) => { setStyleId(v); setSensorId(''); onClear() }} />
         <Picker label="Trip Unit / Sensor (SST bridge)" value={sensorId} options={sensorOpts} busy={bridgeBusy}
           placeholder={styleId ? 'Select sensor…' : 'Choose a style first'} disabled={!sensorOpts.length}
