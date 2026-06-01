@@ -536,6 +536,8 @@ def test_etu_search_count_query_reuses_plug_join_and_scope_filters(client):
             "trip_style_id": 3,
             "sensor_id": 25,
             "q": "%rms%",
+            "q_exact": "rms",
+            "q_prefix": "rms%",
             "plug_value": 800.0,
         }
         assert "LIMIT :limit" in results_call["statement"]
