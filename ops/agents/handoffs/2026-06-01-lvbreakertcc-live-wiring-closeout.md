@@ -2,7 +2,7 @@
 
 Date: 2026-06-01
 Lane: TCC LV Breaker MVP → the field-tolerance product
-Status: **Stages A + B (ETU) + dual-axis backend SHIPPED + verified live on prod.** Dual-axis frontend + Stage C remain.
+Status: **Stages A + B (ETU) + dual-axis backend + dual-axis FRONTEND SHIPPED + verified live on prod.** TMT/EMT Screen 2 + Stage C remain.
 Predecessor: `2026-06-01-codex-lvbreakertcc-wiring-scoping` (`WIRING_SCOPING.md`) + the D1 SST-bridge recovery (STATE §104).
 
 This is the authoritative record of the live-wiring build. The reference guides (G0–G4/00) and STATE/memory summarize from here.
@@ -17,6 +17,7 @@ This is the authoritative record of the live-wiring build. The reference guides 
 | **collision** | `fda37944` | `/etu/bridge-sensors` cross-class id collision fixed (`breaker_class` disambiguation) — **operator-caught** |
 | **Stage B** | `f4e6a227` | Screen 2 **LIVE** for ETU — editable settings (`/settings`) → `POST /calculate` → DB-authoritative NETA tolerance bands; measured %Error + PASS/FAIL vs live limits; per-row G4 trust labels |
 | **bridge_xfilter** | `05fe82f8` | bridge-aware **bidirectional** cross-filter (opt-in) on `/cascade` + `/etu/breaker-cascade` — replaces manufacturer-only (130→1 / 1562→4) |
+| **dual-axis UI** | `99d0dc88` | **co-equal dual-axis ETU selector** — Breaker lane (`/etu/breaker-cascade`) + Trip-Unit lane (`/cascade`), each passing `bridge_xfilter` with the opposite axis as cross-half; shared "Compatible Sensor" terminal from whichever axis reaches a leaf (`/cascade.sensors` intersection, else `/etu/bridge-sensors`); live compatible-count badge. Plumbs `bridgeXfilter` through `fetchCascade` + `fetchEtuBreakerCascade` |
 
 ## Live verification (prod: `control.apexpowerops.com` + `operations.apexpowerops.com`)
 - `/etu/bridge-sensors?breaker_style_id=311&breaker_class=ICCB` → 5 ABB PR332/P sensors (`T8V-1600`).
@@ -24,6 +25,7 @@ This is the authoritative record of the live-wiring build. The reference guides 
 - collision: style `1510` → **3 DT 510 R-Frame (MCCB) only**, not the 13 with the foreign PCB MPS-C-2000 bleed-in.
 - Stage B: LTPU 0.9×1000 → 900 A test, band **945–1080** (DB-authoritative); STPU/INST likewise.
 - `bridge_xfilter`: breaker→trip **130 trip styles → 1**; trip→breaker **1562 breakers → 4**.
+- **dual-axis UI (live browser, prod):** trip-first — Trip Style 155 (R-Frame) narrowed Breaker Manufacturer **44 → 2** (Cutler Hammer / West) and surfaced **3** DT 510 sensors; picking sensor 1195 finalized (Trip *Cutler-Hammer DT 510 R-Frame*, Ir 2000 A, plugs 1000–2000A) and Screen 2 computed live DB bands. Breaker-first — Breaker Class ICCB narrowed the compatible-sensor pool **~17,831 → 444**. No console errors. The asymmetry (dense breaker→sensor, sparse sensor→breaker) is correct bridge data; both flows still finalize on a sensor.
 
 ## Key findings (propagated to the guides)
 1. **Per-class serial-id OVERLAP hazard.** `brk_{iccb,mccb,pcb}` and their `*_styles` use independent per-class serial ids that **collide** (style `1510` is both an MCCB *DT 510* and a PCB *MPS-C-2000*). The real key is the **`(class, id)` pair**. Now applied in `bridge_only`, `/etu/bridge-sensors`, and `bridge_xfilter`. → **G1 hazard note.**
@@ -31,7 +33,7 @@ This is the authoritative record of the live-wiring build. The reference guides 
 3. **Field-trust on the LV page (G4).** Pickup bands (LTPU/STPU/INST/GFPU) = DB-authoritative per-sensor tolerances (field-safe, "DB" badge); delay rows (LTD/STD/GFD) flagged **"verify"** pending the delay-band route fix (the route still conflates the selected band with the NETA test multiplier).
 
 ## Residuals / next
-- **Dual-axis FRONTEND** (the visible payoff; task #25): add the trip-unit axis to the ETU selector, **co-equal**, both axes passing `bridge_xfilter` so each narrows the other; sensor reachable from either end. (Operator decision 2026-06-01: co-equal.)
+- ✅ **Dual-axis FRONTEND** — SHIPPED `99d0dc88`, live-verified (co-equal, both axes narrow each other; sensor reachable from either end). The §97 manufacturer-only ceiling is now closed end-to-end in the UX.
 - **TMT/EMT Screen 2** — bounded settings/context display (G4: bounded surfaces).
 - **Stage C** — live per-family curve (`/plot-tcc`) + the `route_delay_curve` engine patch (promotes delay rows from "verify" → "DB").
 - **D4** (`TMT_*` helper cols) still open — now a trivial `source_id`-join.

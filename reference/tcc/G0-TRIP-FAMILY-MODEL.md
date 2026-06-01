@@ -101,7 +101,9 @@ plugs. (Contrast the manufacturer-only UI, which offered 117 ABB trips.) `[VERIF
 > MCCB 95.6 / PCB 97.5% (non-null triples; residual = catalog gaps). Worked example holds live:
 > `T8V-1600` (ICCB) → ABB/PR332/P/ICCB-LSIG → 5 sensors. **The cross-filter UX now consumes this surface
 > (2026-06-01, BG-5):** `/lvbreakertcc` is live with bridge-narrowed ETU selection (`/etu/bridge-sensors`,
-> `bridge_only`) and a bridge-aware **bidirectional** cross-filter (`bridge_xfilter`); the legacy *explorer*
+> `bridge_only`) and a bridge-aware **bidirectional** cross-filter (`bridge_xfilter`), now surfaced as a
+> **co-equal dual-axis selector** (`99d0dc88`) — Breaker lane + Trip-Unit lane each narrow the other through
+> the bridge, the sensor reachable from either end (live-verified both directions); the legacy *explorer*
 > keeps manufacturer-axis only (opt-in). See G1 register D1 + the per-class `(class,id)` hazard (§2B), G2
 > §4.3/BG-5, G3 §A3c, and handoff `2026-06-01-lvbreakertcc-live-wiring-closeout`. `[VERIFIED-LIVE 2026-06-01]`
 
