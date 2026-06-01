@@ -99,9 +99,11 @@ plugs. (Contrast the manufacturer-only UI, which offered 117 ABB trips.) `[VERIF
 > realized by the BG-4 view **`tcc.vw_breaker_sst_bridge`** (breaker style → compatible sensor set), and the
 > 325 day-one orphan MCCB styles were repointed (0 orphans). Match-rates vs the Access live-join: ICCB 100 /
 > MCCB 95.6 / PCB 97.5% (non-null triples; residual = catalog gaps). Worked example holds live:
-> `T8V-1600` (ICCB) → ABB/PR332/P/ICCB-LSIG → 5 sensors. **The deployed cross-filter UX is still
-> manufacturer-axis only** — wiring it to consume this surface is the separate Phase D / BG-5 follow-on.
-> See G1 dropped-column register D1 + G2 governance §4.3. `[VERIFIED-LIVE 2026-06-01]`
+> `T8V-1600` (ICCB) → ABB/PR332/P/ICCB-LSIG → 5 sensors. **The cross-filter UX now consumes this surface
+> (2026-06-01, BG-5):** `/lvbreakertcc` is live with bridge-narrowed ETU selection (`/etu/bridge-sensors`,
+> `bridge_only`) and a bridge-aware **bidirectional** cross-filter (`bridge_xfilter`); the legacy *explorer*
+> keeps manufacturer-axis only (opt-in). See G1 register D1 + the per-class `(class,id)` hazard (§2B), G2
+> §4.3/BG-5, G3 §A3c, and handoff `2026-06-01-lvbreakertcc-live-wiring-closeout`. `[VERIFIED-LIVE 2026-06-01]`
 
 **Same pattern, other domains** (for awareness; mapped in G1): `RelayDevices.SST_*` and
 `DsgnProtEqp.SST*` use the identical "borrow-an-SST" shape (the latter via numeric `MFG_ID`). `[01]`

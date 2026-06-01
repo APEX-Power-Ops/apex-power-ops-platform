@@ -9,8 +9,8 @@
 > **Last validated · 2026-05-31 (vs `DevLibBreaker*`/`DevLibTrip*`/`DevLibTMTFrameSize`/`SSTSensorRecord`/`ManufacturerAliases` source) · Desktop · Open gaps:**
 > - Pickup/delay routing constant tables are `[DLL]`-sourced (engine mirror) but **not yet re-queried
 >   row-for-row against live `tcc.*`** for this guide → `[OPEN-VALIDATION]`.
-> - Cross-filter "fix path" (reload 4 dropped bridge columns + new bridge surface) is a **proposed**
->   design, not implemented → `[DEFERRED]` (G2 governance owns the reopen decision).
+> - Cross-filter "fix path" (reload 4 dropped bridge columns + new bridge surface) — **✅ SHIPPED 2026-06-01**
+>   (D1 migration `006` + `bridge_only`/`bridge_xfilter`/`/etu/bridge-sensors`; see A3c). `[VERIFIED-LIVE 2026-06-01]`
 > - EMT calc-dispatch routing (does an EMT trip ever route through `SSTCalcMethod`/`SSTDelayCalc`?) is
 >   unmapped → `[OPEN-VALIDATION]` (cross-ref G0 §5 EMT open edge).
 > - `SSTCalcMethod` values **8/9/10** (GFPU/MULTWTH/STPU) are declared but not dispatched in the managed
@@ -164,7 +164,7 @@ Resolver methods: `GetPreferredName(name)`, `GetLVBreakerName(acdc, class, name)
 
 ## A3. The cross-filter contract (current state, ceiling, fix path)
 
-### A3a. Current state — manufacturer-axis IN-subquery, both directions
+### A3a. Legacy default — manufacturer-axis IN-subquery, both directions *(superseded by the opt-in bridge-aware filter — see A3c, shipped 2026-06-01; this manufacturer-only path is retained as the default so the explorer is untouched)*
 
 When both the breaker half and the trip-unit half carry a selection, each cascade narrows the other by a
 single shared axis — **manufacturer only**: `[HANDOFF stage1-slice-gamma]` `[05 #28]`
@@ -193,9 +193,15 @@ in `tcc.brk_*_styles` today — dropped at load (a loader expecting a numeric `M
 dropped a name-composite key). The ceiling is therefore *recoverable*, not inherent. `[VERIFIED-LIVE 2026-05-31]`
 `[HANDOFF schema-augmentation-lane1 / sst-breaker-trip-unit stage1-slice-gamma]` `[G0 §3]` `[05 §4]`
 
-### A3c. The fix path (proposed — `[DEFERRED]`, G2 governance owns the call)
+### A3c. The fix path — ✅ SHIPPED 2026-06-01
 
-To lift the ceiling from manufacturer-axis to true breaker-style→sensor narrowing: `[INFERENCE]` from `[05 §4]` + `[G0 §3]`
+**All three steps below are DONE** (D1 + the LV-wiring lane; handoff `2026-06-01-lvbreakertcc-live-wiring-closeout`). The ceiling is lifted from manufacturer-axis to true breaker-style→sensor narrowing, **bidirectional and opt-in**: `[VERIFIED-LIVE 2026-06-01]`
+- `tcc.vw_breaker_sst_bridge` (BG-4) is the new bridge surface; **`GET /etu/bridge-sensors`** narrows a breaker style → its compatible ETU sensors directly (`?breaker_style_id&breaker_class`).
+- **`bridge_only`** on `/etu/breaker-cascade` restricts the ETU breaker list to ETU-capable breakers (MCCB 640→130).
+- **`bridge_xfilter`** on `/cascade` + `/etu/breaker-cascade` makes the cross-filter **bridge-compatibility-aware both directions** (130 trip styles→1, 1562 breakers→4), replacing the manufacturer-axis IN-subquery. The legacy manufacturer-only path is the default (explorer untouched).
+- **Per-class id hazard:** breaker / style ids are per-class serials that OVERLAP across ICCB/MCCB/PCB — every bridge filter keys on the **`(class, id)` PAIR** (see G1). A bare id-only filter cross-matches classes (e.g. style `1510` = MCCB *DT 510* + PCB *MPS-C-2000*).
+
+The original plan, now executed: `[INFERENCE→VERIFIED-LIVE]` from `[05 §4]` + `[G0 §3]`
 1. **Re-load the 4 dropped columns** (`TMT_Use_SST`, `TMT_SST_Mfr/Type/Style`) onto `tcc.brk_*_styles`,
    carrying the **`TMT_SST_*` name-composite verbatim** (do not coerce to a numeric FK — that drop is what lost it).
 2. **Add a new bridge surface** (e.g. `vw_etu_breaker_contract_bridge`) — the bridge **cannot** be bolted onto
@@ -212,8 +218,9 @@ To lift the ceiling from manufacturer-axis to true breaker-style→sensor narrow
 
 | Route | Half / family | Backing surface | Cross-filter behavior |
 |---|---|---|---|
-| `/cascade` | trip-unit (ETU) | `vw_trip_unit_cascade` | accepts breaker-half filters; narrows by manufacturer-axis IN-subquery (SQL path; REST fallback lacks γ) `[05 #28]` |
-| `/etu/breaker-cascade` | breaker (ETU) | `etu_breaker_combined` (`tcc_brk_*`) | accepts trip-unit filters; manufacturer-axis IN-subquery; `?acdc=0\|1` truthful filter `[05 #10/#24/#28]` |
+| `/cascade` | trip-unit (ETU) | `vw_trip_unit_cascade` | accepts breaker-half filters; manufacturer-axis IN-subquery by default, **`?bridge_xfilter=true` → bridge-compatibility narrowing** (sensors in `vw_breaker_sst_bridge` for the breaker scope) `[VERIFIED-LIVE 2026-06-01]` |
+| `/etu/breaker-cascade` | breaker (ETU) | `etu_breaker_combined` (`tcc_brk_*`) | accepts trip-unit filters; manufacturer-axis by default, **`?bridge_xfilter=true` → bridge narrowing** ((class,style) pairs in the bridge for the trip scope); **`?bridge_only=true` → only ETU-capable breakers**; `?acdc=0\|1` truthful filter `[VERIFIED-LIVE 2026-06-01]` `[05 #10/#24/#28]` |
+| `/etu/bridge-sensors` | breaker→ETU (D1) | `tcc.vw_breaker_sst_bridge` | **NEW 2026-06-01.** `?breaker_style_id&breaker_class` → the compatible ETU sensor set for a breaker style (the one-way crosswalk Screen 1 consumes); `bridge_match_status=unmatched` ⇒ fall back to manufacturer axis / search `[VERIFIED-LIVE 2026-06-01]` |
 | `/tmt/facets` · `/tmt/frames` | TMT | `_TMT_BROWSE_SQL` (3-CTE) + `tcc_tmt_*` | facet co-population; plot is nominal-class curve (setting validated, not applied) `[05 #1/#3]` |
 | `/emt/facets` | EMT | `tcc_emt_*` | own-catalog facets; bounded to frame/context/section-settings/plot `[05 #2/#3]` |
 | `/plot-tcc` | all | calc engine | consumes the resolved sensor/frame record; curves generated at calc-time, never user-selected `[05 #12]` |

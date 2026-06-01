@@ -180,6 +180,15 @@ Edges are `TableA.col = TableB.col`. **Kind:** `B` = declared FK in the live `.a
 | `Breaker_SelCoord.StyleID (+StyleClass) = BreakerXXXStyles.ID` | P | downstream coord; `DnMfrID → Manufacturers.ID`, `DnType/DnStyle` text `[01 §5.6]` |
 | `Breaker_SeriesRated.StyleID (+StyleClass) = BreakerXXXStyles.ID` | P | `DnMfrID → Manufacturers.ID`, `DnType/DnStyle` text `[01]` |
 
+> **⚠ Per-class serial-id OVERLAP — the `(class, id)` pair is the real key.** `BreakerICCB/MCCB/PCB` and their
+> `*Styles` tables each use **independent per-class serial ids that COLLIDE** across classes — e.g. style `1510`
+> is both an MCCB *Cutler-Hammer DT 510 R-Frame* and a PCB *ABB MPS-C-2000 LSIG*. Access itself keys downstream
+> edges on **`StyleID + StyleClass`** (see `Breaker_SelCoord` / `Breaker_SeriesRated` above), and
+> `tcc.vw_breaker_sst_bridge` carries `breaker_class`. **Any breaker/style filter MUST key on the `(class, id)`
+> PAIR** — a bare `breaker_style_id` / `breaker_id` IN cross-matches classes. This bit `/etu/bridge-sensors` once
+> (foreign-class sensor bleed-in; fixed 2026-06-01 with a `breaker_class` param); `bridge_only` and
+> `bridge_xfilter` key on the pair by construction. `[VERIFIED-LIVE 2026-06-01]`
+
 ### 2C. TMT (thermal-magnetic) chain — breaker → integral curve
 | Edge | Kind | Provenance |
 |---|---|---|
