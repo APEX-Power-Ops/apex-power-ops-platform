@@ -4,11 +4,16 @@ IEEE Inverse-Time Equation Solver
 Evaluates the 6-coefficient IEEE inverse-time equation used by
 STD (Short-Time Delay) and GFD (Ground Fault Delay) curves.
 
-Core equation:
+Core IEEE equation:
     T = (C1 / (I^C2 - 1) + C3 + C6) × time_dial
 
+Recovered native Therm equation:
+    T = C3 × ln(1 / (1 - (C5 / I)^C2)) /
+             ln(1 / (1 - (C5 / C4)^C2))
+
 Where:
-    I = fault_current / pickup_current  (normalized, must be > 1.0)
+    I = fault_current / pickup_current  (normalized; IEEE must be > 1.0,
+        native Therm must be > C5, where C5 is rM)
     C1..C6 = coefficients from tcc.etu_std_equations or tcc.etu_gfd_equations
     time_dial = LTD band multiplier (1.0 = no scaling)
 
@@ -121,13 +126,16 @@ class IEEEInverseTimeSolver:
         if pickup_current <= 0:
             return None
 
-        I_norm = fault_current / pickup_current
-        if I_norm <= 1.0:
-            return None  # Below pickup — no trip
-
         coeff = self._load_coefficients(sensor_id, ordinal, variant, equation_type)
         if coeff is None or coeff.is_zero:
             return None
+
+        I_norm = fault_current / pickup_current
+        if self._uses_native_therm_eq(coeff):
+            if I_norm <= coeff.c5:
+                return None
+        elif I_norm <= 1.0:
+            return None  # Below pickup — no trip
 
         return self._evaluate(coeff, I_norm, time_dial, tolerance_pct)
 
@@ -169,10 +177,13 @@ class IEEEInverseTimeSolver:
         if coeff is None or coeff.is_zero:
             return []
 
-        floor = min_time if min_time is not None else self.MIN_TIME
+        uses_native_therm = self._uses_native_therm_eq(coeff)
+        floor = min_time if min_time is not None else (
+            coeff.c1 if uses_native_therm else self.MIN_TIME
+        )
 
         # Log-spaced current sweep from just above pickup to max_amps
-        I_start = 1.01  # Just above pickup
+        I_start = coeff.c5 * 1.01 if uses_native_therm else 1.01
         I_end = max_amps / pickup_current
         if I_end <= I_start:
             return []
@@ -384,19 +395,23 @@ class IEEEInverseTimeSolver:
         time_dial: float,
         tolerance_pct: float,
     ) -> Optional[float]:
-        """
-        Evaluate the IEEE inverse-time equation.
+        """Evaluate the recovered native Therm equation or IEEE fallback.
 
-        Full equation (from C# CalcIeeeEq2):
+        Native Therm equation (from TccBase.dll CTccLVBreakerCurveGF.CalcThermEq,
+        recovered 2026-06-01):
+            T = C3 * ln(1 / (1 - (C5 / I)^C2)) /
+                     ln(1 / (1 - (C5 / C4)^C2))
+            floor = C1
+
+        IEEE fallback:
             T_base = (C1 / (I^C2 - 1) + C3 + C6) × time_dial
             T_tol  = T_base × (1 + tolerance_pct / 100)
 
-        The extended polynomial terms (C4*I + C5*I²) are available
-        but rarely used in the standard IEEE formulation. When present,
-        they add fixed-time offsets.
-
         Returns None if the denominator is invalid (I^C2 ≈ 1).
         """
+        if IEEEInverseTimeSolver._uses_native_therm_eq(coeff):
+            return IEEEInverseTimeSolver._evaluate_native_therm(coeff, I_norm)
+
         # Compute I^C2
         try:
             I_pow = I_norm ** coeff.c2
@@ -419,3 +434,53 @@ class IEEEInverseTimeSolver:
             return None
 
         return T_base
+
+    @staticmethod
+    def _uses_native_therm_eq(coeff: Coefficients) -> bool:
+        """True for the native Therm 5-float row shape.
+
+        TccBase.dll stores Therm rows as C1=rTmin, C2=rX, C3=rTref,
+        C4=rIref, C5=rM, with C6 unused. ANSI rows and legacy IEEE rows stay
+        on the IEEE fallback until their family bit is threaded through the
+        solver call path.
+        """
+        return (
+            coeff.c1 > 0.0
+            and coeff.c2 > 0.0
+            and coeff.c3 > 0.0
+            and coeff.c4 > 0.0
+            and coeff.c5 > 0.0
+            and abs(coeff.c6) < 1e-12
+        )
+
+    @staticmethod
+    def _evaluate_native_therm(
+        coeff: Coefficients,
+        I_norm: float,
+    ) -> Optional[float]:
+        """Evaluate TccBase.dll CTccLVBreakerCurveGF.CalcThermEq in normalized form."""
+        r_iref = coeff.c4
+        if abs(coeff.c5 - r_iref) < 0.0001:
+            r_iref += 0.001
+
+        if I_norm <= coeff.c5 or r_iref <= coeff.c5:
+            return None
+
+        try:
+            numerator_inner = 1.0 - (coeff.c5 / I_norm) ** coeff.c2
+            denominator_inner = 1.0 - (coeff.c5 / r_iref) ** coeff.c2
+            if numerator_inner <= 0.0 or denominator_inner <= 0.0:
+                return None
+
+            numerator = math.log(1.0 / numerator_inner)
+            denominator = math.log(1.0 / denominator_inner)
+        except (OverflowError, ValueError):
+            return None
+
+        if abs(denominator) < 1e-12:
+            return None
+
+        seconds = coeff.c3 * numerator / denominator
+        if seconds < 0:
+            return None
+        return max(seconds, coeff.c1)

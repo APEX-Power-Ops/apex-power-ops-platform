@@ -7,7 +7,7 @@
 > packet that computes or ships a pickup/delay/tolerance value cites this guide.
 >
 > Status: DRAFT — agent-authored 2026-05-31; **pickup formulas validated against `SSTSensorRecord` primary source 2026-05-31 (Desktop)**
-> Last validated · 2026-06-01 (pickup formulas vs `SSTSensorRecord.cs`; enum vs `SSTCalcMethod.cs`; INVEQ loader reconciled vs pass-2..5; **INVEQ managed-evaluator characterized live + corpus distribution measured — §3e; GF-InvEq ANSI cohort re-measured (100 rows / 23 sensors / 3 styles) + hard-excluded — lean 1**) · Desktop · Open gaps: **InvEq *evaluator* parity — SPLIT (§3e/§5): (a) GF Ansi (100 rows / 23 sensors) BROKEN → ✅ HARD-EXCLUDED 2026-06-01 (lean 1; `etu_delay_routing.py`, 54/54); (b) 31,070-row Therm corpus is one bounded LOCAL Ghidra fn from PROVEN (`EasyPower.exe` on disk → no longer host-blocked)** · GE-TU-STD/Gnd · I2X-255 · WEG OCR-A pickup `[STUB]` · INST `Sec4Inst*` `[DEFERRED]` · LTD `DS2_DLY_PTY` `[DEFERRED]`
+> Last validated · 2026-06-01 (pickup formulas vs `SSTSensorRecord.cs`; enum vs `SSTCalcMethod.cs`; INVEQ loader reconciled vs pass-2..5; **INVEQ managed-evaluator characterized live + corpus distribution measured — §3e; GF-InvEq ANSI cohort re-measured (100 rows / 23 sensors / 3 styles) + hard-excluded — lean 1; Therm `CalcThermEq` recovered from `TccBase.dll` + patched in `etu_curves.py`**) · Desktop · Open gaps: **InvEq captured-fixture parity — SPLIT (§3e/§5): (a) GF Ansi (100 rows / 23 sensors) formula recovered but ✅ HARD-EXCLUDED 2026-06-01 until family-aware captured parity; (b) 31,070-row Therm formula recovered + patched, captured EasyPower point fixtures still required before field-sheet trust promotion** · GE-TU-STD/Gnd · I2X-255 · WEG OCR-A pickup `[STUB]` · INST `Sec4Inst*` `[DEFERRED]` · LTD `DS2_DLY_PTY` `[DEFERRED]`
 
 ---
 
@@ -263,32 +263,24 @@ tractable and more concerning** than the prior framing:
   *(The §98 "Federal Pioneer" attribution is `[OPEN-VALIDATION]` — the trip-style names above are the
   verified identity; the manufacturer was not re-confirmed and is no longer asserted.)* So Ansi = 100 rows /
   23 sensors of the corpus; the other 31,070 rows (STD 22,620 + GF 8,450) are Therm. `[VERIFIED-LIVE 2026-06-01]`
-- **The managed formula** (`etu_curves.py:405-446`): `T = (c1 / (I_norm^c2 − 1) + c3 + c6) × time_dial`,
-  then `× (1 + tol/100)`. It loads 6 slots into `c1..c6` but **uses only c1, c2, c3, c6 — silently
-  ignoring c4 and c5** (the DB `*4`/`*5` slots = native `rIref`/`rM`). `[VERIFIED-LIVE 2026-05-31 — code read]`
-- **Two defects provable TODAY (no native work):**
-  1. **Ansi → empty-OR-wrong curve (corrected 2026-06-01).** The managed solver implements only the
-     IEEE/Therm form; for ANSI (IEEE C37.112) rows the exponent lives in the **c5 slot** (verified live:
-     e.g. sensor 16367 `IdOp5 = 1.05`) which the solver **ignores**, while the c2 slot it *treats* as the
-     exponent is **0 on the `id_open` variant** (60 of 100 rows → `I^0 − 1 = 0` singularity → `_evaluate`
-     returns `None` → **empty curve**) and **nonzero on the other variants** (`FdOp2`/`IdCl2`/`FdCl2` ≠ 0 on
-     all 100 rows → the Therm formula is applied to ANSI coefficients → a numerically **wrong** curve). So
-     the earlier "every Ansi row has c2=0 → empty curve" was an oversimplification: the real failure is a
-     **mix of empty and plausibly-wrong curves** — *more* dangerous than uniformly-blank. **Hard-excluded
-     2026-06-01 (lean 1)** at the dispatch layer (`etu_delay_routing.py`: `gf_inveq_is_excluded_ansi` →
-     `dispatch_gfd_delay(..., id_open_eq=)` → `route_delay_curve(..., id_open_eq=)`), mirroring the WEG OCR
-     Type A exclusion; 11 new tests (`test_etu_delay_routing.py` 54/54). The kernel `etu_curves.py` is
-     untouched (INV-7). `[VERIFIED-LIVE 2026-06-01]`
-  2. **Therm c4/c5 dropped.** STD and GF Therm rows yield **identical** managed output despite `c4`
-     differing (STD `rIref`=10 vs GF `rIref`=1) — because c4 is ignored. Whether native `CalcThermEq`
-     actually uses `rIref`/`rM` is exactly what the bounded Ghidra fn must settle; if it does, managed
-     Therm is *wrong*, not merely unvalidated. `[INFERENCE → Ghidra-confirm]`
-- **Native side: GO (bounded).** The evaluator math is **confirmed absent on disk** (the decomp tree
-  holds only empty `[NativeCppClass]` stubs; passes 1–5 recovered only the loader/dispatch). A
-  Ghidra-headless run on `D:\EasyPower\EasyPower.exe` is needed but **bounded to 2 functions** —
-  `CalcThermEq` + `CalcAnsiEqGF` (+ ≤4 setters for slot order) — seeded from pass-5 populator
-  `FUN_01207bf0`. Independent `[DLL]` corroboration of the 5/6 split: `GFInverseEqDelayData.cs` declares
-  `sTherm`=40B and `sAnsi`=48B (exactly +1 float). `[VERIFIED-LIVE 2026-05-31]` `[06 pass-5]`
+- **The pre-patch managed formula** (`etu_curves.py`, before 2026-06-01): `T = (c1 / (I_norm^c2 − 1) + c3 + c6) × time_dial`,
+  then `× (1 + tol/100)`. It loaded 6 slots into `c1..c6` but used only `c1`, `c2`, `c3`, `c6`, silently
+  ignoring `c4` and `c5` (native `rIref`/`rM`). `[VERIFIED-LIVE 2026-05-31 — code read]`
+- **Native recovery 2026-06-01 (`TccBase.dll`, ILSpy/Mono):**
+  - **`CalcThermEq` formula recovered and patched.** Native consumes **both** `rIref` and `rM`:
+    `T = rTref × ln(1 / (1 - (rM / I_norm)^rX)) / ln(1 / (1 - (rM / rIref)^rX))`, floored at `rTmin`
+    for emitted curve points. Therefore the old managed Therm branch was **wrong**, not merely unvalidated.
+    `IEEEInverseTimeSolver` now detects Therm-shaped rows (`c1=rTmin`, `c2=rX`, `c3=rTref`, `c4=rIref`,
+    `c5=rM`, `c6=0`) and evaluates this native form. Focused tests: `test_source_faithful_adapters.py`
+    + `test_etu_delay_routing.py` = 12/12. `[DLL TccBase.dll CTccLVBreakerCurveGF.CalcThermEq]`
+  - **`CalcAnsiEqGF` formula recovered, but still excluded.** Native ANSI uses tolerance-adjusted current
+    and `T = A + B/(I-C) + D/(I-C)^2 + E/(I-C)^3`, with a `Tmin` floor/extension. The 100 Ansi rows remain
+    hard-excluded by `gf_inveq_is_excluded_ansi(id_open_eq)` until a family-aware ANSI solver path has
+    captured EasyPower fixtures; no silent IEEE/Therm fallback is allowed. `[DLL TccBase.dll CTccLVBreakerCurveGF.CalcAnsiEqGF]`
+- **Residual parity gate.** The c4/c5 question is closed. What remains is captured EasyPower point parity
+  for representative Therm rows (and an ANSI path decision if the excluded cohort must be reintroduced).
+  Independent `[DLL]` corroboration of the 5/6 split remains: `GFInverseEqDelayData.cs` declares
+  `sTherm`=40B and `sAnsi`=48B (exactly +1 float). `[VERIFIED-LIVE 2026-06-01]` `[06 pass-5]`
 
 ---
 
@@ -308,8 +300,8 @@ withheld with a diagnostic, pickup/curve unknown.
 | 3 | **STD direct-band** | `DS3_SEC3_I2T = 0` | **PROVEN** | **YES.** Row-for-row Series B parity. | SE `(10,10,2)`/MX `(6,6,1)`/PX-6B mixed; TASK-C 8/8 `[06]` |
 | 4 | **GFD direct-band** | `DS1GF_SEC3_I2T = 0` | **PROVEN** | **YES.** Literal-amps anchor validated. | Full-SE `2000A` ×4 ordinals; TASK-C `[06]` |
 | 5 | **LTD window** | LTD method 1-5 | **PROVEN (impl. complete)** | **YES** for the window; **flag** `DS2_DLY_PTY` parity. | `etu_ltd.py` 5 methods COMPLETE `[DLL_SEMANTIC_FINDINGS §3]`; §N.3 deferred `[06]` |
-| 6 | **STD-side INVEQ curve NUMBERS** | `DS3_SEC3_I2T = 2` (4,524 sensors, **100% Therm**) | **BOUNDED** (managed ignores coeffs c4/c5; one local Ghidra fn from PROVEN — §3e/§5) | **NO — withhold the TD window; dispatch-only** until the `CalcThermEq` parity check runs. | dispatch PROVEN, numbers NOT `[06 §synthesis-4, R1]` `[VERIFIED-LIVE 2026-05-31]` |
-| 7 | **GF-side INVEQ curve NUMBERS** | `DS1GF_SEC3_I2T = 2` (1,713 sensors = **1,690 Therm + 23 Ansi**; 100 Ansi rows) | **Therm = BOUNDED** (as row 6); **Ansi = BROKEN → STUB (hard-excluded — IMPLEMENTED 2026-06-01)** | **Therm: withhold (as row 6). The 23 Ansi sensors / 100 rows (3 trip styles): HARD-EXCLUDED in `etu_delay_routing.py` (lean 1) — the IEEE/Therm solver yields empty (`id_open`, c2=0) or wrong (other variants) curves; surfaced unsupported, never silently shipped (INV-7).** | pass-5 BOUND ×3; Ansi defect + exclude `[VERIFIED-LIVE 2026-06-01]` `[06 R1]` |
+| 6 | **STD-side INVEQ curve NUMBERS** | `DS3_SEC3_I2T = 2` (4,524 sensors, **100% Therm**) | **FORMULA RECOVERED + PATCHED; captured fixtures pending** | **NO field-sheet promotion yet** until representative EasyPower-captured points validate the patched native formula path. Solver no longer uses the known-wrong c4/c5-dropping formula. | `CalcThermEq` recovered from `TccBase.dll`; `etu_curves.py` patched; focused tests 12/12 `[VERIFIED-LIVE 2026-06-01]` |
+| 7 | **GF-side INVEQ curve NUMBERS** | `DS1GF_SEC3_I2T = 2` (1,713 sensors = **1,690 Therm + 23 Ansi**; 100 Ansi rows) | **Therm = FORMULA RECOVERED + PATCHED; Ansi = FORMULA RECOVERED BUT STUB/excluded** | **Therm: withhold field-sheet promotion pending captured fixtures. Ansi: HARD-EXCLUDED in `etu_delay_routing.py` (`id_open_eq != 0`) until a family-aware `CalcAnsiEqGF` path has captured parity fixtures.** | pass-5 BOUND ×3; `CalcThermEq` + `CalcAnsiEqGF` recovered `[VERIFIED-LIVE 2026-06-01]` |
 | 8 | **WEG OCR Type A pickup** | `DS1GF_PICKUP_CALC = 6` (§N.4, 7 sensors) | **STUB** | **NO — hard-exclude.** Pickup formula UNKNOWN; curve deliberately withheld. Show "unsupported". | diagnostic exclusion `[06 §matrix §N.4]` |
 | 9 | **GE-TU-STD** | `DS3_SEC3_I2T = 3` (235 sensors) | **DEFERRED / STUB** | **NO — hard-exclude.** Fall-through diagnostic only; not solved. | "Enteliguard not supported" `[06]` `[DLL_END_TO_END_MAPPING]` |
 | 10 | **GE-TU-Gnd** | `DS1GF_SEC3_I2T = 4` (209 sensors) | **DEFERRED / STUB** | **NO — hard-exclude.** Fall-through diagnostic only. | `[06 §matrix]` |
@@ -318,8 +310,8 @@ withheld with a diagnostic, pickup/curve unknown.
 | 13 | **STPU override (band routing)** | `tcc.etu_stpu_overrides` (3 sensors) | **PARTIAL** | **Constant-mode override pickup + override tolerances OK; decreasing-mode curve = withhold.** Override *routing* covered in TASK-C; broader override math deferred. | `[06 §matrix]` `[DLL_SEMANTIC_FINDINGS §4]` |
 
 **The one-line rule the matrix encodes:** *ship rows 1-5 (and constant-mode override 13); withhold
-rows 6-7 Therm-INVEQ (flag, do not emit numbers); **hard-exclude the 23 GF Ansi sensors / 100 rows
-(broken — empty-or-wrong; exclusion implemented 2026-06-01) and rows 8-12.***
+rows 6-7 Therm-INVEQ until captured EasyPower fixtures promote them; **hard-exclude the 23 GF Ansi sensors / 100 rows
+(formula recovered but solver path not yet shipped) and rows 8-12.***
 
 ---
 
@@ -340,22 +332,19 @@ against 6,200 sensors. `[06 §synthesis-4, §R1, §R2, §top-question-1]`
 > (sharpened 2026-05-31; `_discovery/_validation/v4-inveq-parity-scoping.md`).** Per §3d/§3e the INVEQ
 > *loader/mechanism* is **§O-CLOSED + uniform**; the *managed evaluator* was then read directly and the
 > gap resolves to two concrete pieces, NOT a 6,200-sensor mystery:
-> 1. **The Ansi half is BROKEN — and was CLOSED 2026-06-01 (lean 1).** Only **100 rows / 23 sensors / 3
->    trip styles** corpus-wide are Ansi (`IdOpEq=1`; §3e). The managed IEEE/Therm solver yields an **empty**
->    curve on the `id_open` variant (c2=0 singularity) and a **numerically wrong** curve on the others
->    (Therm formula on ANSI coefficients; the real exponent sits in the ignored c5 slot). **Done:** the
->    ANSI family is hard-excluded at the dispatch layer (`etu_delay_routing.py` `gf_inveq_is_excluded_ansi`)
->    with an INV-7 diagnostic, exactly like WEG OCR Type A; 11 new tests, `test_etu_delay_routing.py` 54/54.
->    The *dangerous* half is closed — no Ansi sensor can ship an empty-or-wrong curve. `[VERIFIED-LIVE 2026-06-01]`
-> 2. **The Therm half (31,070 rows) is one bounded Ghidra function from PROVEN.** The managed solver
->    drops coeffs c4/c5; whether native `CalcThermEq` uses `rIref`/`rM` decides whether managed Therm is
->    merely unvalidated or actually wrong. The native evaluator is **absent from the decomp** (only
->    stubs), so a Ghidra-headless run on `D:\EasyPower\EasyPower.exe` — **local and tractable**, bounded
->    to `CalcThermEq` (+`CalcAnsiEqGF` only if a Federal Pioneer GF job appears) — is the close.
->    `[INFERENCE → Ghidra-confirm]`
+> 1. **The Ansi half is formula-recovered but still excluded.** Only **100 rows / 23 sensors / 3
+>    trip styles** corpus-wide are Ansi (`IdOpEq=1`; §3e). `CalcAnsiEqGF` is now recovered from `TccBase.dll`
+>    as `A + B/(I-C) + D/(I-C)^2 + E/(I-C)^3` over tolerance-adjusted current, with a `Tmin` floor.
+>    Because the runtime still lacks a family-aware ANSI solver path with captured EasyPower fixtures,
+>    the ANSI family is hard-excluded at the dispatch layer (`gf_inveq_is_excluded_ansi` / `id_open_eq`)
+>    with an INV-7 diagnostic, exactly like WEG OCR Type A. `[VERIFIED-LIVE 2026-06-01]`
+> 2. **The Therm half (31,070 rows) is formula-recovered and patched.** Native `CalcThermEq` uses both
+>    `rIref` and `rM`, so the old managed solver was wrong. The patched `IEEEInverseTimeSolver` now uses
+>    the native Therm form; captured EasyPower point fixtures remain the field-sheet promotion gate.
+>    `[DLL TccBase.dll CTccLVBreakerCurveGF.CalcThermEq]`
 >
-> So this gap is **no longer host-blocked**: the earlier "needs host-only spec" framing is superseded —
-> `EasyPower.exe` is on disk. It is a bounded, locally-runnable check.
+> So this gap is **no longer a c4/c5 mystery**: the native kernel formula was recovered from `TccBase.dll`,
+> and the remaining work is captured-fixture validation plus the Ansi ship/keep-excluded decision.
 
 **Why it matters for the field sheet:** a tolerance sheet derives PU/TD bands *from* curve values. If
 the InvEq curve generator diverges from EasyPower native even slightly, **the tolerance window itself
@@ -363,16 +352,16 @@ is wrong** — a worse failure than emitting nothing. The dispatch is trustworth
 on InvEq curves is not yet certified.
 
 **What closes it (split — half 1 DONE 2026-06-01):**
-1. **DONE (no native, no host spec):** the Ansi hard-exclude diagnostic is implemented (the 100 Ansi rows
-   / 23 sensors) so the broken half never ships an empty-or-wrong curve, and the Therm half is unblocked
-   for the field sheet as BOUNDED-pending-Ghidra. Landed as a backward-compatible dispatch-layer guard in
-   `etu_delay_routing.py` (`gf_inveq_is_excluded_ansi`, `id_open_eq` threaded through `dispatch_gfd_delay`
-   + `route_delay_curve`); kernel untouched; `test_etu_delay_routing.py` 54/54. `[VERIFIED-LIVE 2026-06-01]`
-2. **Then (one bounded local Ghidra run — the remaining half):** decompile native `CalcThermEq` from
-   `D:\EasyPower\EasyPower.exe`, resolve whether it uses c4 (`rIref`) / c5 (`rM`), and confirm-or-patch
-   the managed solver — moving the 31,070-row Therm corpus BOUNDED→PROVEN. Seed from pass-5 §12 binding
-   matrix + §8 translator + populator `FUN_01207bf0`. The host-only `EASYPOWER-CALC-ENGINE-SPEC.md`
-   (§G/§J/§N/§O) would *corroborate* but is **no longer required** — the binary is local.
+1. **DONE:** the Ansi hard-exclude diagnostic is implemented (the 100 Ansi rows / 23 sensors), and
+   `CalcAnsiEqGF` is formula-recovered but intentionally not shipped without captured parity fixtures.
+   Landed as a backward-compatible dispatch-layer guard in `etu_delay_routing.py`
+   (`gf_inveq_is_excluded_ansi`, `id_open_eq` threaded through `dispatch_gfd_delay` + `route_delay_curve`).
+2. **DONE:** `CalcThermEq` was recovered from `TccBase.dll`, the c4/c5 verdict is **uses both**, and the
+   managed solver was patched in `etu_curves.py`. Focused tests: `test_source_faithful_adapters.py` +
+   `test_etu_delay_routing.py` = 12/12.
+3. **REMAINING FIELD-TRUST GATE:** add captured EasyPower point fixtures for a representative Therm cohort
+   before promoting rows 6-7 Therm to field-sheet-shippable; decide whether to wire `CalcAnsiEqGF` or keep
+   the 23 Ansi sensors permanently excluded.
 `[VERIFIED-LIVE 2026-05-31]` `[06 §R1, §provenance-notes]` `[00-MASTER-INDEX §5]`
 
 **Secondary InvEq residual `[OPEN-VALIDATION]`:** pass-5 proved the translator branch `*ICalc=0 →

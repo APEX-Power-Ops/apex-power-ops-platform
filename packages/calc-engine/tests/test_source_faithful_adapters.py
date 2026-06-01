@@ -1,6 +1,8 @@
+import math
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
+from apex_calc_engine.services.calc_engine.etu_curves import Coefficients
 from apex_calc_engine.services.calc_engine.etu_curves import IEEEInverseTimeSolver
 from apex_calc_engine.services.calc_engine.etu_ltd import ETULTDCalculator
 
@@ -43,6 +45,47 @@ def test_ieee_solver_reads_source_faithful_equation_rows():
     assert coeff.c1 == 0.35
     assert coeff.c2 == 2.0
     assert coeff.c3 == 0.014
+
+
+def test_ieee_solver_uses_recovered_native_therm_formula_when_c4_c5_present():
+    coeff = Coefficients(c1=0.08, c2=2.0, c3=0.08, c4=10.0, c5=0.9, c6=0.0)
+
+    seconds = IEEEInverseTimeSolver._evaluate(
+        coeff,
+        I_norm=2.0,
+        time_dial=1.0,
+        tolerance_pct=0.0,
+    )
+
+    assert seconds is not None
+    assert math.isclose(seconds, 2.2257362438248176, rel_tol=1e-12)
+
+
+def test_ieee_solver_native_therm_honors_riref_and_rm_floor():
+    gf_coeff = Coefficients(c1=0.08, c2=2.0, c3=0.08, c4=1.0, c5=0.9, c6=0.0)
+
+    seconds = IEEEInverseTimeSolver._evaluate(
+        gf_coeff,
+        I_norm=2.0,
+        time_dial=1.0,
+        tolerance_pct=0.0,
+    )
+
+    assert seconds == 0.08
+
+
+def test_ieee_solver_keeps_legacy_ieee_fallback_without_native_therm_shape():
+    coeff = Coefficients(c1=0.08, c2=2.0, c3=0.08, c4=0.0, c5=0.0, c6=0.0)
+
+    seconds = IEEEInverseTimeSolver._evaluate(
+        coeff,
+        I_norm=2.0,
+        time_dial=1.0,
+        tolerance_pct=0.0,
+    )
+
+    assert seconds is not None
+    assert math.isclose(seconds, (0.08 / (2.0**2.0 - 1.0)) + 0.08, rel_tol=1e-12)
 
 
 def test_ltd_calculator_reads_source_faithful_ltd_param_rows():
@@ -137,4 +180,3 @@ def test_ltd_calculator_supports_legacy_ltd_band_and_std_band_rows():
     ]
     assert calc._get_min_stdb_time(is_clear=False) == 0.12
     assert session.rollback.call_count == 2
-

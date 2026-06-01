@@ -234,6 +234,17 @@ def gf_inveq_family(id_open_eq: Optional[int]) -> GFInvEqFamily:
     return GFInvEqFamily.ANSI if id_open_eq else GFInvEqFamily.THERM
 
 
+def gf_inveq_is_excluded_ansi(id_open_eq: Optional[int]) -> bool:
+    """True when the GF InvEq row selects the ANSI native family.
+
+    CalcAnsiEqGF is now formula-recovered, but the runtime path still lacks
+    family-aware solver plumbing and real captured parity fixtures for the
+    100-row ANSI cohort, so the ANSI branch remains an explicit unsupported
+    diagnostic instead of falling through to the Therm/IEEE evaluator.
+    """
+    return gf_inveq_family(id_open_eq) == GFInvEqFamily.ANSI
+
+
 def gf_inveq_byicalc(in_value: Optional[int]) -> int:
     """Native FUN_01208640 translator: `byICalc = (in == 0) ? 2 : (in == 1) ? 1 : 0`.
 
@@ -514,6 +525,7 @@ def dispatch_std_delay(stpu_delay_calc_code: Optional[int]) -> DelayDispatch:
 def dispatch_gfd_delay(
     ground_delay_calc_code: Optional[int],
     gf_pickup_calc_code: Optional[int] = None,
+    id_open_eq: Optional[int] = None,
 ) -> DelayDispatch:
     """Resolve GFD delay routing from tcc.etu_sensors.ground_delay_calc_code.
 
@@ -539,6 +551,22 @@ def dispatch_gfd_delay(
                 "WEG OCR Type A pickup unresolved (DS1GF_PICKUP_CALC = 6); "
                 "see EASYPOWER-CALC-ENGINE-SPEC.md §N.4. GF curve withheld "
                 "until a separately authored RE pass closes the pickup formula."
+            ),
+        )
+    if (
+        ground_delay_calc_code == SSTDelayCalc.INVEQ
+        and gf_inveq_is_excluded_ansi(id_open_eq)
+    ):
+        return DelayDispatch(
+            path="gfd",
+            code=ground_delay_calc_code,
+            name=delay_calc_name(ground_delay_calc_code),
+            supported=False,
+            solver_path=None,
+            unsupported_reason=(
+                "GF InvEq ANSI family selected (IdOpEq != 0); CalcAnsiEqGF is "
+                "recovered but not yet wired to a captured-parity solver path. "
+                "Curve withheld per INV-7."
             ),
         )
     return _dispatch("gfd", ground_delay_calc_code, _VALID_GFD_CODES)
@@ -663,6 +691,7 @@ def route_delay_curve(
     time_dial: float = 1.0,
     tolerance_pct: float = 0.0,
     gf_pickup_calc_code: Optional[int] = None,
+    id_open_eq: Optional[int] = None,
     band_rows: Optional[list[Mapping[str, Any]]] = None,
 ) -> RoutedDelayCurve:
     """Generate a delay curve by dispatching on the stored SSTDelayCalc code.
@@ -683,6 +712,9 @@ def route_delay_curve(
             calc column; when ``path == 'gfd'`` and value == 6 (WEG OCR Type
             A per spec §N.4), the function surfaces an unresolved-pickup
             diagnostic and returns no curve. Ignored on the STD path.
+        id_open_eq: optional IdOpEq byte for GF InvEq rows. Nonzero selects
+            the ANSI family, which is explicitly withheld until a family-aware
+            ANSI solver path has captured parity fixtures.
 
     The function never coerces an unsupported code into the IEEE path; if a
     caller needs IEEE evaluation regardless of the stored code, they must call
@@ -692,7 +724,11 @@ def route_delay_curve(
         dispatch = dispatch_std_delay(delay_calc_code)
         equation_type = "std"
     elif path == "gfd":
-        dispatch = dispatch_gfd_delay(delay_calc_code, gf_pickup_calc_code=gf_pickup_calc_code)
+        dispatch = dispatch_gfd_delay(
+            delay_calc_code,
+            gf_pickup_calc_code=gf_pickup_calc_code,
+            id_open_eq=id_open_eq,
+        )
         equation_type = "gfd"
     else:
         raise ValueError(f"path must be 'std' or 'gfd', got {path!r}")
