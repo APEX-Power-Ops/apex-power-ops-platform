@@ -115,3 +115,30 @@ def test_bridge_sensors_requires_a_selector(client):
     resp = client.get("/api/v1/neta/etu/bridge-sensors")
     assert resp.status_code == 422
     assert "breaker_style_id or breaker_id" in resp.json()["detail"]
+
+
+def test_bridge_sensors_disambiguates_by_breaker_class(client):
+    # style ids are per-class serials that overlap; the class filter prevents foreign-class bleed-in.
+    fake_db = FakeBridgeDb([FakeResult(rows=_T8V_1600_SENSORS)])
+    app.dependency_overrides[get_db] = lambda: fake_db
+
+    try:
+        resp = client.get(
+            "/api/v1/neta/etu/bridge-sensors",
+            params={"breaker_style_id": 1510, "breaker_class": "MCCB"},
+        )
+        assert resp.status_code == 200
+        stmt = fake_db.calls[0]["statement"]
+        assert "lower(breaker_class) = lower(:bclass)" in stmt
+        assert fake_db.calls[0]["params"].get("bclass") == "MCCB"
+    finally:
+        app.dependency_overrides.clear()
+
+
+def test_bridge_sensors_rejects_invalid_breaker_class(client):
+    resp = client.get(
+        "/api/v1/neta/etu/bridge-sensors",
+        params={"breaker_style_id": 1510, "breaker_class": "foo"},
+    )
+    assert resp.status_code == 422
+    assert "breaker_class must be one of" in resp.json()["detail"]

@@ -323,12 +323,12 @@ function EtuSelector({ onSelect, onClear }: { onSelect: (s: LiveSelection) => vo
     if (!styleId) { setBridge(null); return }
     let active = true
     setBridgeBusy(true)
-    fetchEtuBridgeSensors({ breakerStyleId: Number(styleId) })
+    fetchEtuBridgeSensors({ breakerStyleId: Number(styleId), breakerClass: bClass || null })
       .then((r) => { if (active) setBridge(r) })
       .catch((e) => { if (active) setErr(errMsg(e)) })
       .finally(() => { if (active) setBridgeBusy(false) })
     return () => { active = false }
-  }, [styleId])
+  }, [styleId, bClass])
 
   const resolveSensor = useCallback(async (sid: string) => {
     setSensorId(sid)

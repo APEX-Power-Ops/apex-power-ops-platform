@@ -3415,6 +3415,11 @@ def get_etu_bridge_sensors(
     breaker_id: Optional[int] = Query(
         None, description="Alternative: all bridged sensors across a breaker's styles"
     ),
+    breaker_class: Optional[str] = Query(
+        None,
+        description="REQUIRED to disambiguate: breaker/style ids are per-class serials that "
+        "overlap across ICCB/MCCB/PCB. Omitting it returns foreign-class sensors.",
+    ),
     db: Session = Depends(get_db),
 ):
     """Return the ETU sensor set compatible with a breaker style via the recovered SST bridge.
@@ -3424,11 +3429,20 @@ def get_etu_bridge_sensors(
     migration 006, surfaced as tcc.vw_breaker_sst_bridge). An empty result
     (bridge_match_status='unmatched') tells the caller to fall back to the manufacturer axis
     or /etu/search.
+
+    breaker_class is required for a correct result: brk_{iccb,mccb,pcb} ids and their style ids
+    are independent per-class serials that COLLIDE (e.g. style 1510 is both an MCCB DT 510 and a
+    PCB MPS-C-2000), so an id-only filter mixes in foreign-class sensors.
     """
     if breaker_style_id is None and breaker_id is None:
         raise HTTPException(
             status_code=422,
             detail="Provide breaker_style_id or breaker_id.",
+        )
+    if breaker_class is not None and breaker_class.upper() not in _ETU_BREAKER_CASCADE_CLASSES:
+        raise HTTPException(
+            status_code=422,
+            detail="breaker_class must be one of 'ICCB', 'MCCB', 'PCB'.",
         )
 
     clauses: list[str] = []
@@ -3439,6 +3453,9 @@ def get_etu_bridge_sensors(
     if breaker_id is not None:
         clauses.append("breaker_id = :bid")
         params["bid"] = breaker_id
+    if breaker_class is not None:
+        clauses.append("lower(breaker_class) = lower(:bclass)")
+        params["bclass"] = breaker_class
     where_sql = "WHERE " + " AND ".join(clauses)
 
     rows = db.execute(

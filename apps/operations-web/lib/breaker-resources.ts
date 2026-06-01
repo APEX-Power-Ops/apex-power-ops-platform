@@ -199,6 +199,7 @@ export type EtuBridgeSensorsResponse = {
 export type EtuBridgeSensorsParams = {
   breakerStyleId?: number | null
   breakerId?: number | null
+  breakerClass?: string | null
 }
 
 export type SensorCalcContext = {
@@ -748,6 +749,7 @@ export async function fetchEtuBridgeSensors(
   const search = new URLSearchParams()
   appendOptionalParam(search, 'breaker_style_id', params.breakerStyleId)
   appendOptionalParam(search, 'breaker_id', params.breakerId)
+  appendOptionalParam(search, 'breaker_class', params.breakerClass)
   return getJson<EtuBridgeSensorsResponse>(
     `/api/v1/neta/etu/bridge-sensors?${search.toString()}`,
   )
