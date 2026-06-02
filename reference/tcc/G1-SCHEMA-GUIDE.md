@@ -2,7 +2,7 @@
 
 > **Owns:** the TCC data model end-to-end — the 79 Access user tables and their domains, the declared + logical join graph, the decoded DVL-flag / engine-constant dictionary, the `DatX → *_aligned → tcc.*` lineage, and the register of columns that exist in source Access but are absent in the governed Supabase `tcc.*`. Cite this guide when touching any table, column, loader, or migration.
 >
-> **Status: DRAFT (agent-authored 2026-05-31; deep-validated vs both live DBs 2026-05-31)**
+> **Status: DRAFT (agent-authored 2026-05-31; deep-validated vs both live DBs 2026-05-31; §7 settings-storage model + validated catalog added 2026-06-02)**
 > Last validated · 2026-05-31 · Desktop (Access OLEDB + Supabase `tcc.*`; 64 claims: 56 MATCH / 4 corrected / 4 refined — `_discovery/_validation/v1-g1-schema-validation.md`) · Open gaps — **all four prior gaps CLOSED:**
 > - (1) the 4 SST-bridge columns are **confirmed ABSENT** from `tcc.brk_*_styles` (0/4 live) `[VERIFIED-LIVE 2026-05-31]`
 > - (2) the **relay** SST-bridge was **CARRIED, not dropped** — D2 reversed (`tcc.relay_devices` has `use_sst`/`sst_manufacturer`/`sst_type`/`sst_style`) `[VERIFIED-LIVE 2026-05-31]`
@@ -479,3 +479,29 @@ Columns that exist in source Access but are **not** present in the deployed `tcc
 - Frozen-baseline status of the D1 bridge gap + the deferred-work ledger (D5/D6) + reopen triggers → **G2**
 - Selection-routing + calc-dispatch constant tables (`*_PICKUP_CALC`→SSTCalcMethod, `*_SEC3_I2T`→SSTDelayCalc) in dispatch context → **G3**
 - Per-family pickup/delay formulas + the field-trust matrix → **G4**
+- Settings storage model (discrete vs envelope-only) + the validated setting catalog → **§7 below**
+
+---
+
+## 7. Settings storage model — discrete taps vs envelope-only + the validated setting catalog
+
+**The finding (2026-06-02).** The per-sensor adjustable-setting tables — `DatSection1Sett` (LTPU/Ir), `DatSection2LTD` (LTD/tr), `DatSection3STP` (STPU/Isd), `DatSection4InstPickup` (INST/Ii); loaded into `tcc.etu_ltpu_pickups` / `etu_ltd_bands` / `etu_stpu_pickups` / `etu_inst_pickups` — store settings in **two different shapes**:
+
+| Shape | Population | What's stored | Example |
+|---|---|---|---|
+| **Discrete** (the dial taps, one row per position) | **~77%** of ETU sensors | every settable value as its own row | Schneider MicroLogic 5.0A (sensor 1806): LTD = `0.5, 1, 2, 4, 8, 12, 16, 20, 24` |
+| **Envelope-only** (min + max endpoints) | **~23%** | just the two boundary rows + an internal step on `DatSensor.DS*_STEP_SIZE` | Eaton PXR2 20D/25 LSI (sensors 28020–28023): LTPU `[80,225]`, LTD `[0.5,24]`, STPU `[1.5,12]`, INST `[2,9.3]` — 2 rows each |
+
+Row-count distribution across the DB `[VERIFIED-LIVE 2026-06-02]` (staging copy of `D:\TCC_NEW.accdb`, corroborated against the live `/settings` API): LTD `>2` rows in **13,551 / 17,657** sensors (max 104, avg 8.95); LTPU 76% (max 31); STPU 82% (max 35); INST 71% (max 438). The envelope-only minority is **~4,106 sensors** spanning newer/digital families — Eaton PXR2, M-Pact (M-PRO), OPTIM 750, Seltronic, Spectra RMS, Tembreak-2, AC-PRO-MP, etc.
+
+**Why envelope-only exists + the trap.** EasyPower is a coordination/curve tool: for these trip units it stores only the *band envelope* (min→max) it needs to draw the curve, plus `DS*_STEP_SIZE` as an internal curve-drawing granularity. **`DS*_STEP_SIZE` is NOT the trip unit's dial increment** — the real taps are non-uniform (PXR2 Ir jumps `80→90→100→110→125→150→160→175→200→225`, which no single step reproduces). `DatSensorParms`, `DatSettings`, and `DatSensorSec2` are all empty for sensor 28023; the only per-sensor setting data is the 2 endpoint rows. `[VERIFIED-LIVE 2026-06-02]` So the discrete dial positions for envelope-only sensors are **not in EasyPower at all** — they live only in the OEM's documentation (`[VENDOR-DOC]`).
+
+**The pre-fix defect.** `GET /api/v1/neta/settings/{id}` serves the discrete rows directly for the 77% (correct), but for envelope-only sensors it synthesized a dense uniform option list from `(min, max, DS*_STEP_SIZE)` — e.g. PXR2 LTPU `80, 81, …, 225` (146 values, **including settings the breaker cannot hold** like 153 A) — and LTD, which has no expansion path, collapsed to its two endpoints (`0.5`, `24`). A NETA tech could "set" a value the trip unit has no dial position for.
+
+**The remediation — the validated setting catalog** (`apps/control-plane-api/services/neta/setting_catalog.py`). A cited override keyed by `(trip_style_id, rating)` holding the real discrete dial taps, sourced to OEM docs (`[VENDOR-DOC]`). When an entry exists the `/settings` endpoint serves its taps instead of the synthesized range and returns a `validated_source` citation; the discrete-data 77% and all other sensors are untouched. Per field-trust (G4), catalog taps are authoritative because they are vendor-doc-validated.
+
+- **Seeded 2026-06-02: Eaton Power Defense PXR2 20D/25 LSI @225A** `[VENDOR-DOC TD012064EN]` — LTPU `80,90,100,110,125,150,160,175,200,225 A`; STPU `1.5,2,3,4,5,6,8,10,12 ×Ir`; LTD `0.5,2,4,7,10,12,15,20,24 s @6×Ir`; INST `2,3,4,5,6,7,8,9 ×In`.
+- **Pickup display unit is sensor-dependent**, driven by `DatSensor.*_calc` (the `ETUCalcMethod` enum, G4): `7`=AMPS→"A", `4`=LTPU-cascade→"× Ir", `10`=STPU-cascade→"× Isd", `0/1/2/3/5/6/8`=frame/plug→"× In". PXR2 LTPU is `calc=7` (amperes); MicroLogic LTPU is `calc=1` (× In) — so LTPU **cannot** be labelled uniformly. `setting_catalog.pickup_unit()` encodes this map; `/settings` returns a per-element `units` object and the UI labels from it (replacing the prior hardcoded "× Ir"). `[DLL etu_pickup.py ETUCalcMethod]` `[VERIFIED-LIVE 2026-06-02]`
+- **Bounded follow-ons** (`[VENDOR-DOC]` backfill, one family/rating at a time): the PXR2 60/100/150 A Ir taps (Ir is rating-specific where `ltpu_calc=7`); the OFF (STPU) / MAX (INST) special dial positions; STD FLAT/I²t reconciliation (STD currently retains its EasyPower rows); and the rest of the ~4,106 envelope-only population.
+
+Regression coverage: `tests/test_settings_route.py` (PXR2 catalog taps + units + citation; sibling-rating-without-entry untouched; the 6 prior discrete/range cases unchanged). `[HANDOFF 2026-06-02-lvbreakertcc-setting-catalog]`

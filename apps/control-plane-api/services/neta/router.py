@@ -126,6 +126,7 @@ from .delay_trust import (
     delay_route_for,
     delay_trust_reason,
 )
+from . import setting_catalog
 
 logger = logging.getLogger(__name__)
 
@@ -1101,6 +1102,23 @@ def _expand_pickup_values(
     if len(expanded) != 2:
         return expanded
     return _recover_catalog_pickup_values(db, sensor_id, ctx, pickup_name, expanded)
+
+
+def _delay_band_from_value(value) -> dict:
+    """Build a delay-band option dict from a single numeric tap.
+
+    Used by the validated-catalog override (e.g. Eaton PXR2 LTD) to render the
+    discrete dial seconds in the same shape as persisted band rows.
+    """
+    v = float(value)
+    label = str(int(v)) if v.is_integer() else f"{v:g}"
+    return {
+        "band": label,
+        "label": label,
+        "open_time": v,
+        "clear_time": None,
+        "is_default": False,
+    }
 
 
 def _dedupe_delay_settings(bands: list[dict] | None) -> list[dict]:
@@ -3638,6 +3656,33 @@ def get_available_settings(sensor_id: int, db: Session = Depends(get_db)):
 
     std_settings = _load_delay_band_settings(db, "tcc.etu_std_bands", sensor_id)
     gfd_settings = _load_delay_band_settings(db, "tcc.etu_gfd_bands", sensor_id)
+    ltd_settings = _dedupe_delay_settings(data.get("ltd_settings", []))
+
+    # Validated vendor-doc catalog override for envelope-only sensors (e.g. Eaton
+    # PXR2): EasyPower stores only the min/max envelope for these trip units, so the
+    # expansion above synthesises dial positions the breaker cannot be set to. When a
+    # cited catalog entry exists, serve its real discrete taps instead.
+    validated_source = None
+    catalog = setting_catalog.lookup(ctx.get("trip_style_id"), sensor_rating)
+    if catalog is not None:
+        validated_source = catalog.source
+        if catalog.ltpu is not None:
+            ltpu_settings = [float(v) for v in catalog.ltpu]
+        if catalog.stpu is not None:
+            stpu_settings = [float(v) for v in catalog.stpu]
+        if catalog.inst is not None:
+            inst_settings = [float(v) for v in catalog.inst]
+        if catalog.ltd is not None:
+            ltd_settings = [_delay_band_from_value(v) for v in catalog.ltd]
+
+    # Per-element display unit, derived from the sensor's calc method so the UI can
+    # label pickups correctly (LTPU may be amperes or a multiple of In/Ir per family).
+    units = {
+        "ltpu": setting_catalog.pickup_unit(ctx.get("ltpu_calc")),
+        "stpu": setting_catalog.pickup_unit(ctx.get("stpu_calc")),
+        "inst": setting_catalog.pickup_unit(ctx.get("inst_calc")),
+        "gfpu": setting_catalog.pickup_unit(ctx.get("gfpu_calc")),
+    }
 
     # The direct ETU loader returns pickup arrays plus LTD settings. STD/GFD band
     # rows are loaded separately here so the UI can use strict per-sensor delay
@@ -3646,13 +3691,15 @@ def get_available_settings(sensor_id: int, db: Session = Depends(get_db)):
         sensor_id=sensor_id,
         plug_values=plug_values,
         ltpu_settings=ltpu_settings,
-        ltd_settings=_dedupe_delay_settings(data.get("ltd_settings", [])),
+        ltd_settings=ltd_settings,
         std_settings=_dedupe_delay_settings(std_settings),
         gfd_settings=_dedupe_delay_settings(gfd_settings),
         ltd_multipliers=data.get("ltd_multipliers", []),
         stpu_settings=stpu_settings,
         inst_settings=inst_settings,
         gfpu_settings=gfpu_settings,
+        units=units,
+        validated_source=validated_source,
     )
 
 

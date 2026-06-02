@@ -351,6 +351,14 @@ class AvailableSettingsResponse(BaseModel):
     stpu_settings: list[float] = Field(default_factory=list, description="STPU multiplier options")
     inst_settings: list[float] = Field(default_factory=list, description="INST pickup options")
     gfpu_settings: list[float] = Field(default_factory=list, description="GFPU multiplier options")
+    units: dict[str, str] = Field(
+        default_factory=dict,
+        description="Display unit per pickup element (ltpu/stpu/inst/gfpu): 'A' | 'x Ir' | 'x In' | 'x Isd'",
+    )
+    validated_source: Optional[str] = Field(
+        None,
+        description="Citation when settings come from the validated vendor-doc catalog (envelope-only sensors)",
+    )
 
 
 class ApparatusStudyResource(BaseModel):

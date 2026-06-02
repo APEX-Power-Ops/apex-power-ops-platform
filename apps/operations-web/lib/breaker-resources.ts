@@ -268,6 +268,8 @@ export type AvailableSettingsResponse = {
   stpu_settings: number[]
   inst_settings: number[]
   gfpu_settings: number[]
+  units?: Partial<Record<'ltpu' | 'stpu' | 'inst' | 'gfpu', string>>
+  validated_source?: string | null
 }
 
 export type PlotCurvePoint = {

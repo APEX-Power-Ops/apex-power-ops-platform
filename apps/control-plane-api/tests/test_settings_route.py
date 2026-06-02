@@ -365,3 +365,88 @@ def test_settings_route_reads_direct_etu_tables_without_touching_stale_sql_funct
         assert data["gfd_settings"][0]["clear_time"] == 0.3
     finally:
         app.dependency_overrides.pop(get_db, None)
+
+
+def test_settings_route_applies_validated_catalog_for_pxr2_envelope_only_sensor():
+    """Eaton PXR2 20D/25 LSI @225A: EasyPower stores only envelope endpoints, so the
+    synthesized ranges are replaced by the validated Eaton-PD2 dial taps (catalog)."""
+    client = TestClient(app)
+    fake_db = _FakeSettingsDb(
+        settings_payload={
+            "plug_values": [225],
+            "ltpu_settings": [80, 225],
+            "ltd_settings": [
+                {"band": "0.5", "label": "0.5", "open_time": 0.5},
+                {"band": "24", "label": "24", "open_time": 24.0},
+            ],
+            "ltd_multipliers": [],
+            "stpu_settings": [1.5, 12.0],
+            "inst_settings": [2.0, 9.3],
+            "gfpu_settings": [],
+        },
+        context_mapping={
+            "manufacturer_name": "Eaton",
+            "trip_type_name": "PXR20/25",
+            "trip_style_name": "PXR2 20D/25 LSI",
+            "trip_style_id": 2204,
+            "rating": 225,
+            "ltpu_calc": 7, "stpu_calc": 4, "inst_calc": 0, "gfpu_calc": 5,
+            "ltpu_step": 1.0, "stpu_step": 0.1, "inst_step": 0.1, "gfpu_step": None,
+            "maint_inst_step": None, "maint_gfpu_step": None,
+        },
+    )
+    app.dependency_overrides[get_db] = lambda: fake_db
+    try:
+        resp = client.get("/api/v1/neta/settings/28023")
+        assert resp.status_code == 200
+        data = resp.json()
+        # Validated discrete dial taps replace the synthesized/endpoint-only lists
+        assert data["ltpu_settings"] == [80, 90, 100, 110, 125, 150, 160, 175, 200, 225]
+        assert data["stpu_settings"] == [1.5, 2, 3, 4, 5, 6, 8, 10, 12]
+        assert data["inst_settings"] == [2, 3, 4, 5, 6, 7, 8, 9]
+        assert [b["open_time"] for b in data["ltd_settings"]] == [0.5, 2, 4, 7, 10, 12, 15, 20, 24]
+        assert data["ltd_settings"][0]["label"] == "0.5"
+        assert data["ltd_settings"][1]["label"] == "2"
+        # Units driven by calc method: LTPU amperes, STPU × Ir, INST × In
+        assert data["units"]["ltpu"] == "A"
+        assert data["units"]["stpu"] == "x Ir"
+        assert data["units"]["inst"] == "x In"
+        assert "TD012064EN" in data["validated_source"]
+    finally:
+        app.dependency_overrides.pop(get_db, None)
+
+
+def test_settings_route_catalog_does_not_touch_uncatalogued_rating():
+    """A sibling rating of the same style without a catalog entry keeps prior behavior."""
+    client = TestClient(app)
+    fake_db = _FakeSettingsDb(
+        settings_payload={
+            "plug_values": [60],
+            "ltpu_settings": [40, 60],
+            "ltd_settings": [],
+            "ltd_multipliers": [],
+            "stpu_settings": [1.5, 12.0],
+            "inst_settings": [2.0, 9.3],
+            "gfpu_settings": [],
+        },
+        context_mapping={
+            "trip_style_id": 2204,
+            "rating": 60,
+            "ltpu_calc": 7, "stpu_calc": 4, "inst_calc": 0, "gfpu_calc": 5,
+            "ltpu_step": 1.0, "stpu_step": 0.1, "inst_step": 0.1, "gfpu_step": None,
+            "maint_inst_step": None, "maint_gfpu_step": None,
+        },
+    )
+    app.dependency_overrides[get_db] = lambda: fake_db
+    try:
+        resp = client.get("/api/v1/neta/settings/28020")
+        assert resp.status_code == 200
+        data = resp.json()
+        # No catalog entry for (2204, 60) → synthesized range preserved, no override
+        assert data["validated_source"] is None
+        assert data["ltpu_settings"][0] == 40 and data["ltpu_settings"][-1] == 60
+        assert len(data["ltpu_settings"]) > 10  # still the expanded range, not 10 taps
+        # units are still derived from calc method even without a catalog entry
+        assert data["units"]["ltpu"] == "A"
+    finally:
+        app.dependency_overrides.pop(get_db, None)

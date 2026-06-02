@@ -736,6 +736,14 @@ function EtuSettings({ maint, setMaint, selection }: { maint: boolean; setMaint:
     pk === 'ltpu' ? settings.ltpu_settings : pk === 'stpu' ? settings.stpu_settings : pk === 'inst' ? settings.inst_settings : settings.gfpu_settings
   const bandsFor = (bk: BandKey): DelayBandOption[] =>
     bk === 'ltd' ? settings.ltd_settings : bk === 'std' ? settings.std_settings : settings.gfd_settings
+  // Per-element pickup option label. The unit comes from the backend (driven by the
+  // sensor's calc method): LTPU may be amperes ("A") or a multiple of In/Ir per family.
+  const pickLabel = (pk: PickKey, v: number): string => {
+    const u = settings.units?.[pk]
+    if (u === 'A') return `${v} A`
+    if (u) return `${v} ${u.replace(/^x /, '× ')}`
+    return `${v} × Ir`
+  }
   const elByCode = (code: string) => calc?.elements.find((e) => e.element.toUpperCase() === code)
 
   // NETA ATS test points (NETA_TEST_PLAN_SPEC §2/§11): pickups ramp @ 1×; each delay injects a FIXED
@@ -817,7 +825,7 @@ function EtuSettings({ maint, setMaint, selection }: { maint: boolean; setMaint:
                     <div className="el-mult muted">Not available</div>
                   ) : m.pick ? (
                     <select className="el-select" value={String(chosen[m.pick] ?? '')} onChange={(e) => setChosen((c) => (c ? { ...c, [m.pick!]: e.target.value ? Number(e.target.value) : undefined } : c))}>
-                      {listFor(m.pick).map((v) => (<option key={v} value={v}>{v} × Ir</option>))}
+                      {listFor(m.pick).map((v) => (<option key={v} value={v}>{pickLabel(m.pick!, v)}</option>))}
                     </select>
                   ) : (
                     <select className="el-select" value={String(chosen[m.band!] ?? '')} onChange={(e) => setChosen((c) => (c ? { ...c, [m.band!]: e.target.value ? Number(e.target.value) : undefined } : c))}>
