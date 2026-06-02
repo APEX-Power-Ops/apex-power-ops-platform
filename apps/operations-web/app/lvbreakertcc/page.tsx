@@ -22,8 +22,10 @@ import {
   fetchEtuContext,
   fetchEtuCalculate,
   fetchTmtFrames,
+  fetchTmtSettings,
   fetchEmtFrames,
   fetchEmtContext,
+  fetchEmtSettings,
   type EtuBreakerCascadeResponse,
   type CascadeResponse,
   type EtuBridgeSensorsResponse,
@@ -33,8 +35,10 @@ import {
   type EtuCalculateResponse,
   type EtuTestCurrentElement,
   type TMTFrameSearchResult,
+  type TMTSettingsResponse,
   type EMTFrameSearchResult,
   type EMTFrameContext,
+  type EMTSectionSettingsResponse,
 } from '../../lib/breaker-resources'
 
 // ── families ────────────────────────────────────────────────────────────────
@@ -648,6 +652,12 @@ function Settings({ maint, setMaint, selection }: { maint: boolean; setMaint: (v
   if (selection?.family === 'etu' && selection.sensorId != null) {
     return <EtuSettings maint={maint} setMaint={setMaint} selection={selection} />
   }
+  if (selection?.family === 'tmt' && selection.frameId != null) {
+    return <TmtSettings selection={selection} />
+  }
+  if (selection?.family === 'emt' && selection.sectionId != null) {
+    return <EmtSettings selection={selection} />
+  }
   return <SampleSettings maint={maint} setMaint={setMaint} selection={selection} />
 }
 
@@ -842,6 +852,194 @@ function EtuSettings({ maint, setMaint, selection }: { maint: boolean; setMaint:
 
       <div className="method">
         <b>NETA test points.</b> Pickups (LTPU/STPU/INST/GFPU) are ramp-tested <b>@ 1×</b> against <b>DB-authoritative per-sensor tolerances</b> (field-sheet safe). Delays inject a fixed multiple of their pickup — <b>LTD @ 3× LTPU, STD @ 1.5× STPU, GFD @ 1.5× GFPU</b> (NETA ATS) — so the <b>Test @ and inject current are correct</b>. The expected trip <b>time</b> is still <b>verify</b>-flagged: the delay-band → curve recompute at the test point lands with Stage C. {selection.trustNote}
+      </div>
+    </>
+  )
+}
+
+// ── Screen 2 TMT (LIVE, bounded): thermal-magnetic settings + magnetic ±tol (DB) ──
+// Bounded surface (G4): the magnetic pickup ±tolerance is DB-sourced (per-setting tol_lo/tol_hi);
+// the thermal long-time band/time is curve-governed (Stage C). Test points are NETA procedure × the
+// definitional pickups (thermal LT @ 3× rating; magnetic INST @ 1× ramp).
+function TmtSettings({ selection }: { selection: LiveSelection }) {
+  const frameId = selection.frameId as number
+  const [settings, setSettings] = useState<TMTSettingsResponse | null>(null)
+  const [tripClass, setTripClass] = useState<number | null>(null)
+  const [ampRating, setAmpRating] = useState<number | null>(null)
+  const [magSetting, setMagSetting] = useState<number | null>(null)
+  const [thermalAdj, setThermalAdj] = useState<number | null>(null)
+  const [measured, setMeasured] = useState<Record<string, string>>({})
+  const [loading, setLoading] = useState(true)
+  const [err, setErr] = useState<string | null>(null)
+
+  useEffect(() => {
+    let active = true
+    setLoading(true); setErr(null); setMeasured({})
+    fetchTmtSettings(frameId)
+      .then((s) => {
+        if (!active) return
+        setSettings(s)
+        setTripClass(s.available_trip_classes[0] ?? null)
+        setAmpRating(s.amp_ratings[0]?.rating ?? null)
+        setMagSetting(s.settings[Math.floor(s.settings.length / 2)]?.value ?? s.settings[0]?.value ?? null)
+        setThermalAdj(s.thermal_adjustments[0] ?? null)
+      })
+      .catch((e) => { if (active) setErr(errMsg(e)) })
+      .finally(() => { if (active) setLoading(false) })
+    return () => { active = false }
+  }, [frameId])
+
+  if (loading || !settings) {
+    return <div className="loadbox">{err ? <span className="sel-status err">⚠ {err}</span> : <><span className="spin" /> Loading TMT frame…</>}</div>
+  }
+
+  const setting = settings.settings.find((s) => s.value === magSetting) ?? null
+  const thermalPickup = ampRating
+  const magPickup = magSetting != null && ampRating != null ? magSetting * ampRating : null
+  const tolLo = setting?.tol_lo ?? null
+  const tolHi = setting?.tol_hi ?? null
+  const magMin = magPickup != null && tolLo != null ? magPickup * (1 + tolLo / 100) : null
+  const magMax = magPickup != null && tolHi != null ? magPickup * (1 + tolHi / 100) : null
+  const thermalTest = thermalPickup != null ? 3 * thermalPickup : null
+
+  const ampOpts = settings.amp_ratings.map((a) => ({ value: String(a.rating), label: `${a.rating} A${a.max_override ? ` (max ${a.max_override})` : ''}` }))
+  const magOpts = settings.settings.filter((s) => s.value != null).map((s) => ({ value: String(s.value), label: s.label ?? `${s.value}×` }))
+  const classOpts = settings.available_trip_classes.map((c) => ({ value: String(c), label: `Class ${c}` }))
+  const adjOpts = settings.thermal_adjustments.map((t) => ({ value: String(t), label: String(t) }))
+
+  type TmtRow = { code: string; label: string; pickup: number | null; mult: number; testCur: number | null; min: number | null; max: number | null; trust: 'DB' | 'verify'; unit: 'A' }
+  const rows: TmtRow[] = [
+    { code: 'LT', label: 'Thermal (Long-Time)', pickup: thermalPickup, mult: 3, testCur: thermalTest, min: null, max: null, trust: 'verify', unit: 'A' },
+    { code: 'INST', label: 'Magnetic (Instantaneous)', pickup: magPickup, mult: 1, testCur: magPickup, min: magMin, max: magMax, trust: 'DB', unit: 'A' },
+  ]
+
+  return (
+    <>
+      <div className="eq-strip">
+        <div><span>Breaker</span>{selection.breakerLabel}</div>
+        <div><span>Trip Unit</span>{selection.tripLabel}</div>
+        <div><span>Frame</span>{selection.ratingLabel}</div>
+        <div><span className="badge">BOUNDED</span>settings + magnetic ±tol DB-sourced</div>
+      </div>
+
+      <section className="card">
+        <div className="card-h">Thermal-Magnetic Settings</div>
+        <div className="card-b">
+          <div className="selrow">
+            <Picker label="Trip Class" value={String(tripClass ?? '')} options={classOpts} onChange={(v) => setTripClass(v ? Number(v) : null)} />
+            <Picker label="Amp Rating (thermal)" value={String(ampRating ?? '')} options={ampOpts} onChange={(v) => setAmpRating(v ? Number(v) : null)} />
+            <Picker label="Magnetic Setting" value={String(magSetting ?? '')} options={magOpts} onChange={(v) => setMagSetting(v ? Number(v) : null)} />
+            {adjOpts.length ? <Picker label="Thermal Adj." value={String(thermalAdj ?? '')} options={adjOpts} onChange={(v) => setThermalAdj(v ? Number(v) : null)} /> : null}
+          </div>
+        </div>
+      </section>
+
+      <section className="card">
+        <div className="card-h">📊 NETA Test Plan &amp; Field Results <span className="badge inline">BOUNDED</span></div>
+        <div className="bands-wrap">
+          <table className="bands">
+            <thead><tr><th>Element</th><th>Trust</th><th>Pickup</th><th>Test @</th><th>Test Current</th><th>Min Limit</th><th>Max Limit</th><th>Measured</th><th>% Error</th><th>Status</th></tr></thead>
+            <tbody>
+              {rows.map((r) => {
+                const raw = measured[r.code] ?? ''
+                const mv = parseFloat(raw)
+                const hasM = raw.trim() !== '' && !Number.isNaN(mv)
+                const pct = hasM && r.pickup ? ((mv - r.pickup) / r.pickup) * 100 : null
+                const inBand = hasM && r.min != null && r.max != null ? mv >= r.min && mv <= r.max : null
+                const bandKnown = r.min != null && r.max != null
+                return (
+                  <tr key={r.code}>
+                    <td><b>{r.code}</b><div className="el-sub">{r.label}</div></td>
+                    <td>{r.trust === 'DB' ? <span className="trust ok" title="Magnetic pickup ±tolerance is DB-sourced">DB</span> : <span className="trust verify" title="Thermal long-time band is curve-governed (Stage C)">verify</span>}</td>
+                    <td className="num">{fmtAmp(r.pickup)}</td>
+                    <td>{fmtMult(r.mult)}</td>
+                    <td className="num">{fmtAmp(r.testCur)}</td>
+                    <td className="num">{r.min == null ? '—' : fmtAmp(r.min)}</td>
+                    <td className="num">{r.max == null ? '—' : fmtAmp(r.max)}</td>
+                    <td><div className="meas"><input className="meas-in" inputMode="decimal" value={raw} placeholder="—" onChange={(ev) => setMeasured((m) => ({ ...m, [r.code]: ev.target.value }))} /><span className="meas-u">A</span></div></td>
+                    <td className="num">{pct !== null ? <span className={`pct ${inBand ? 'ok' : 'bad'}`}>{pct >= 0 ? '+' : ''}{pct.toFixed(1)}%</span> : <span className="muted2">—</span>}</td>
+                    <td>{!hasM ? <span className="status ready">● Ready</span> : !bandKnown ? <span className="status off">band: verify</span> : inBand ? <span className="status pass">✓ PASS</span> : <span className="status fail">✗ FAIL</span>}</td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      {err && <div className="sel-status err">⚠ {err}</div>}
+
+      <div className="method">
+        <b>Thermal-Magnetic (bounded).</b> The <b>magnetic</b> instantaneous pickup ({magSetting}× rating) carries a <b>DB-sourced ±tolerance</b> ({tolLo ?? '−?'}% / +{tolHi ?? '?'}%) — field-usable. The <b>thermal</b> long-time element picks up at the amp rating and is NETA-tested @ <b>3×</b> (300%); its time/band is <b>curve-governed</b> and lands with the live curve (Stage C). Test currents = NETA procedure × the definitional pickups. {selection.trustNote}
+      </div>
+    </>
+  )
+}
+
+// ── Screen 2 EMT (LIVE, context-only): per-section pickup options + ±tol% ──────
+// Context display (G4): EMT pickup setting + ±tolerance are DB-sourced, but the EMT pickup→test-current
+// calc is not yet validated against the engine, so no computed amps / PASS-FAIL here (deliberately bounded).
+function EmtSettings({ selection }: { selection: LiveSelection }) {
+  const sectionId = selection.sectionId as number
+  const [settings, setSettings] = useState<EMTSectionSettingsResponse | null>(null)
+  const [pickup, setPickup] = useState<number | null>(null)
+  const [bandId, setBandId] = useState<number | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [err, setErr] = useState<string | null>(null)
+
+  useEffect(() => {
+    let active = true
+    setLoading(true); setErr(null)
+    fetchEmtSettings(sectionId)
+      .then((s) => {
+        if (!active) return
+        setSettings(s)
+        setPickup(s.pickups[0]?.setting ?? s.pickup_setting ?? null)
+        setBandId(s.bands[0]?.band_id ?? null)
+      })
+      .catch((e) => { if (active) setErr(errMsg(e)) })
+      .finally(() => { if (active) setLoading(false) })
+    return () => { active = false }
+  }, [sectionId])
+
+  if (loading || !settings) {
+    return <div className="loadbox">{err ? <span className="sel-status err">⚠ {err}</span> : <><span className="spin" /> Loading EMT section…</>}</div>
+  }
+
+  const pickupOpts = settings.pickups.filter((p) => p.setting != null).map((p) => ({ value: String(p.setting), label: p.description ?? String(p.setting) }))
+  const bandOpts = settings.bands.map((b) => ({ value: String(b.band_id), label: b.band_name ?? `Band ${b.band_id}` }))
+  const tolLo = settings.pickup_tol_lo
+  const tolHi = settings.pickup_tol_hi
+
+  return (
+    <>
+      <div className="eq-strip">
+        <div><span>Breaker</span>{selection.breakerLabel}</div>
+        <div><span>Trip Unit</span>{selection.tripLabel}</div>
+        <div><span>Section</span>{settings.name ?? selection.ratingLabel}</div>
+        <div><span className="badge">CONTEXT</span>settings + ±tol DB-sourced</div>
+      </div>
+
+      <section className="card">
+        <div className="card-h">Electro-Mechanical — {settings.name ?? 'Section'} <span className="badge inline">CONTEXT</span></div>
+        <div className="card-b">
+          <div className="selrow">
+            <Picker label="Pickup Setting" value={String(pickup ?? '')} options={pickupOpts} placeholder="Select pickup…" disabled={!pickupOpts.length} onChange={(v) => setPickup(v ? Number(v) : null)} />
+            <Picker label="Time Band" value={String(bandId ?? '')} options={bandOpts} placeholder={bandOpts.length ? 'Select band…' : 'No bands'} disabled={!bandOpts.length} onChange={(v) => setBandId(v ? Number(v) : null)} />
+          </div>
+          <div className="tol-strip">
+            <div><span>Selected pickup</span><b>{pickup ?? '—'}</b></div>
+            <div><span>Pickup tolerance</span><b>{tolLo != null && tolHi != null ? `${tolLo}% / +${tolHi}%` : '—'}</b></div>
+            <div><span>Bands</span><b>{settings.bands.length}</b></div>
+            <div><span>Pickup options</span><b>{settings.pickups.length}</b></div>
+          </div>
+        </div>
+      </section>
+
+      {err && <div className="sel-status err">⚠ {err}</div>}
+
+      <div className="method">
+        <b>Electro-Mechanical (context only).</b> The section's <b>pickup setting and ±tolerance</b> are DB-sourced. EMT is selected per <b>section</b> (the protection element) on Screen 1; the pickup → test-current conversion and the live curve are not yet engine-validated, so computed test currents + PASS/FAIL are deliberately withheld here (bounded) and land with Stage C. {selection.trustNote}
       </div>
     </>
   )
@@ -1192,6 +1390,11 @@ const CSS = `
 .pct.bad{color:var(--red);}
 .muted2{color:#9aa7b3;}
 .method{font-size:12.5px;color:#3a4a58;line-height:1.6;background:#eaf2fb;border:1px solid #d3e3f5;border-left:3px solid var(--brand-l);border-radius:10px;padding:13px 18px;}
+.el-sub{font-size:11px;color:var(--muted);font-weight:600;margin-top:2px;}
+.tol-strip{display:flex;flex-wrap:wrap;gap:10px 26px;margin-top:14px;padding-top:13px;border-top:1px solid var(--line-2);}
+.tol-strip div{display:flex;flex-direction:column;gap:3px;}
+.tol-strip span{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:700;}
+.tol-strip b{font-size:15px;color:var(--ink);}
 .curve-grid{display:grid;grid-template-columns:248px 1fr;gap:18px;}
 @media(max-width:820px){.curve-grid{grid-template-columns:1fr;}}
 .side .card-h{margin-top:0;}
