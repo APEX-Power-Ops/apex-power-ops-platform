@@ -843,16 +843,36 @@ export async function fetchTmtFrames({
   breakerClass,
   manufacturerId,
   manufacturerName,
+  limit = 12,
 }: {
   breakerClass: string
   manufacturerId?: number | null
   manufacturerName?: string
+  limit?: number
 }): Promise<TMTFrameSearchResponse> {
-  const search = new URLSearchParams({ limit: '12' })
+  const search = new URLSearchParams({ limit: String(limit) })
   appendOptionalParam(search, 'breaker_class', breakerClass)
   appendOptionalParam(search, 'manufacturer_id', manufacturerId)
   appendOptionalParam(search, 'manufacturer_name', manufacturerName)
   return getJson<TMTFrameSearchResponse>(`/api/v1/neta/tmt/frames?${search.toString()}`)
+}
+
+export type ManufacturerFacetOption = {
+  manufacturer_id: number
+  manufacturer_name: string | null
+  frame_count: number
+}
+export type ManufacturersResponse = { manufacturers: ManufacturerFacetOption[] }
+
+export async function fetchTmtManufacturers(breakerClass: string): Promise<ManufacturersResponse> {
+  const search = new URLSearchParams()
+  appendOptionalParam(search, 'breaker_class', breakerClass)
+  const suffix = search.toString()
+  return getJson<ManufacturersResponse>(`/api/v1/neta/tmt/manufacturers${suffix ? `?${suffix}` : ''}`)
+}
+
+export async function fetchEmtManufacturers(): Promise<ManufacturersResponse> {
+  return getJson<ManufacturersResponse>(`/api/v1/neta/emt/manufacturers`)
 }
 
 export async function fetchTmtContext(frameId: number): Promise<TMTFrameContext> {
@@ -875,9 +895,10 @@ export async function fetchEmtFrames(
   query: string,
   options: {
     manufacturerId?: number | null
+    limit?: number
   } = {},
 ): Promise<EMTFrameSearchResponse> {
-  const search = new URLSearchParams({ limit: '12' })
+  const search = new URLSearchParams({ limit: String(options.limit ?? 12) })
   appendOptionalParam(search, 'q', query)
   appendOptionalParam(search, 'manufacturer_id', options.manufacturerId)
   return getJson<EMTFrameSearchResponse>(`/api/v1/neta/emt/frames?${search.toString()}`)

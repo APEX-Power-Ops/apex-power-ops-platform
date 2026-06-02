@@ -13,7 +13,7 @@
  * (live per-family settings/tolerances) and Stage C (live per-family curve) land.
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   fetchEtuBreakerCascade,
   fetchCascade,
@@ -23,9 +23,11 @@ import {
   fetchEtuCalculate,
   fetchEtuPlot,
   fetchTmtFrames,
+  fetchTmtManufacturers,
   fetchTmtSettings,
   fetchTmtPlot,
   fetchEmtFrames,
+  fetchEmtManufacturers,
   fetchEmtContext,
   fetchEmtSettings,
   type EtuBreakerCascadeResponse,
@@ -38,6 +40,7 @@ import {
   type EtuTestCurrentElement,
   type EtuPlotResponse,
   type TMTFrameSearchResult,
+  type ManufacturerFacetOption,
   type TMTSettingsResponse,
   type TMTPlotResponse,
   type EMTFrameSearchResult,
@@ -509,26 +512,41 @@ function EtuSelector({ onSelect, onClear }: { onSelect: (s: LiveSelection) => vo
   )
 }
 
-// TMT: breaker class (+ optional manufacturer text) → frame.
+// TMT: breaker class → manufacturer → frame (guided dropdowns; no free-text).
 function TmtSelector({ onSelect, onClear }: { onSelect: (s: LiveSelection) => void; onClear: () => void }) {
   const [bClass, setBClass] = useState('')
-  const [mfr, setMfr] = useState('')
+  const [mfrs, setMfrs] = useState<ManufacturerFacetOption[]>([])
+  const [mfrId, setMfrId] = useState('')
   const [frames, setFrames] = useState<TMTFrameSearchResult[]>([])
   const [frameId, setFrameId] = useState('')
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
 
+  // class → manufacturers
   useEffect(() => {
-    if (!bClass) { setFrames([]); return }
+    if (!bClass) { setMfrs([]); return }
     let active = true
     setBusy(true)
     setErr(null)
-    fetchTmtFrames({ breakerClass: bClass, manufacturerName: mfr.trim() || undefined })
+    fetchTmtManufacturers(bClass)
+      .then((r) => { if (active) setMfrs(r.manufacturers) })
+      .catch((e) => { if (active) setErr(errMsg(e)) })
+      .finally(() => { if (active) setBusy(false) })
+    return () => { active = false }
+  }, [bClass])
+
+  // manufacturer → frames
+  useEffect(() => {
+    if (!bClass || !mfrId) { setFrames([]); return }
+    let active = true
+    setBusy(true)
+    setErr(null)
+    fetchTmtFrames({ breakerClass: bClass, manufacturerId: Number(mfrId), limit: 200 })
       .then((r) => { if (active) setFrames(r.frames) })
       .catch((e) => { if (active) setErr(errMsg(e)) })
       .finally(() => { if (active) setBusy(false) })
     return () => { active = false }
-  }, [bClass, mfr])
+  }, [bClass, mfrId])
 
   const pickFrame = (fid: string) => {
     setFrameId(fid)
@@ -547,55 +565,67 @@ function TmtSelector({ onSelect, onClear }: { onSelect: (s: LiveSelection) => vo
   }
 
   const classOpts = ['ICCB', 'MCCB', 'PCB'].map((c) => ({ value: c, label: c }))
+  const mfrOpts = mfrs.map((m) => ({
+    value: String(m.manufacturer_id),
+    label: `${m.manufacturer_name ?? `Mfr ${m.manufacturer_id}`} (${m.frame_count})`,
+  }))
   const frameOpts = frames.map((f) => ({
     value: String(f.frame_id),
-    label: `${f.manufacturer_name ?? ''} ${f.breaker_name ?? ''} ${f.breaker_style_name ?? ''} — ${f.frame_size ?? ''}`.trim(),
+    label: `${f.breaker_name ?? ''} ${f.breaker_style_name ?? ''} — ${f.frame_size ?? ''}`.trim(),
   }))
 
   return (
     <div className="selwrap">
       <div className="selrow">
         <Picker label="Breaker Class" value={bClass} options={classOpts} placeholder="Select class…"
-          onChange={(v) => { setBClass(v); setFrameId(''); onClear() }} />
-        <label className="pick">
-          <span className="pick-l">Manufacturer filter{busy ? <span className="spin" /> : null}</span>
-          <input className="pick-s" value={mfr} placeholder="optional, e.g. Square D"
-            onChange={(e) => { setMfr(e.target.value); setFrameId(''); onClear() }} />
-        </label>
-        <Picker label="Frame" value={frameId} options={frameOpts} placeholder={bClass ? 'Select frame…' : 'Choose a class first'}
+          onChange={(v) => { setBClass(v); setMfrId(''); setFrameId(''); onClear() }} />
+        <Picker label="Manufacturer" busy={busy} value={mfrId} options={mfrOpts}
+          placeholder={bClass ? 'Select manufacturer…' : 'Choose a class first'}
+          disabled={!mfrOpts.length} onChange={(v) => { setMfrId(v); setFrameId(''); onClear() }} />
+        <Picker label="Frame" value={frameId} options={frameOpts} placeholder={mfrId ? 'Select frame…' : 'Choose a manufacturer first'}
           disabled={!frameOpts.length} onChange={pickFrame} />
       </div>
-      {bClass && !busy && !frameOpts.length && <div className="sel-status">No frames matched — broaden the filter.</div>}
+      {bClass && mfrId && !busy && !frameOpts.length && <div className="sel-status">No frames for this manufacturer.</div>}
       {err && <div className="sel-status err">⚠ {err}</div>}
     </div>
   )
 }
 
-// EMT: free-text frame search → frame → section.
+// EMT: manufacturer → frame → section (guided dropdowns; no free-text).
 function EmtSelector({ onSelect, onClear }: { onSelect: (s: LiveSelection) => void; onClear: () => void }) {
-  const [q, setQ] = useState('')
+  const [mfrs, setMfrs] = useState<ManufacturerFacetOption[]>([])
+  const [mfrId, setMfrId] = useState('')
   const [frames, setFrames] = useState<EMTFrameSearchResult[]>([])
   const [frameId, setFrameId] = useState('')
   const [ctx, setCtx] = useState<EMTFrameContext | null>(null)
   const [sectionId, setSectionId] = useState('')
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
-  const debounce = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  // load manufacturers once
   useEffect(() => {
-    if (q.trim().length < 2) { setFrames([]); return }
-    if (debounce.current) clearTimeout(debounce.current)
     let active = true
-    debounce.current = setTimeout(() => {
-      setBusy(true)
-      setErr(null)
-      fetchEmtFrames(q.trim())
-        .then((r) => { if (active) setFrames(r.frames) })
-        .catch((e) => { if (active) setErr(errMsg(e)) })
-        .finally(() => { if (active) setBusy(false) })
-    }, 280)
-    return () => { active = false; if (debounce.current) clearTimeout(debounce.current) }
-  }, [q])
+    setBusy(true)
+    setErr(null)
+    fetchEmtManufacturers()
+      .then((r) => { if (active) setMfrs(r.manufacturers) })
+      .catch((e) => { if (active) setErr(errMsg(e)) })
+      .finally(() => { if (active) setBusy(false) })
+    return () => { active = false }
+  }, [])
+
+  // manufacturer → frames
+  useEffect(() => {
+    if (!mfrId) { setFrames([]); return }
+    let active = true
+    setBusy(true)
+    setErr(null)
+    fetchEmtFrames('', { manufacturerId: Number(mfrId), limit: 200 })
+      .then((r) => { if (active) setFrames(r.frames) })
+      .catch((e) => { if (active) setErr(errMsg(e)) })
+      .finally(() => { if (active) setBusy(false) })
+    return () => { active = false }
+  }, [mfrId])
 
   const pickFrame = async (fid: string) => {
     setFrameId(fid)
@@ -618,7 +648,7 @@ function EmtSelector({ onSelect, onClear }: { onSelect: (s: LiveSelection) => vo
     onSelect({
       family: 'emt',
       frameId: ctx.frame_id,
-      sectionId: ctx.sections.find((s) => String(s.section_id) === sid)?.section_id,
+      sectionId: sec?.section_id,
       breakerLabel: [ctx.manufacturer_name, ctx.type_name, ctx.style_name].filter(Boolean).join(' '),
       tripLabel: `Electro-Mechanical${ctx.tcc_number ? ` · TCC ${ctx.tcc_number}` : ''}`,
       ratingLabel: `${ctx.frame_desc ?? ctx.frame_size ?? '—'}${sec?.name ? ` · ${sec.name}` : ''}`,
@@ -627,21 +657,23 @@ function EmtSelector({ onSelect, onClear }: { onSelect: (s: LiveSelection) => vo
     })
   }
 
+  const mfrOpts = mfrs.map((m) => ({
+    value: String(m.manufacturer_id),
+    label: `${m.manufacturer_name ?? `Mfr ${m.manufacturer_id}`} (${m.frame_count})`,
+  }))
   const frameOpts = frames.map((f) => ({
     value: String(f.frame_id),
-    label: `${f.manufacturer_name ?? ''} ${f.type_name ?? ''} ${f.style_name ?? ''} — ${f.frame_desc ?? f.frame_size ?? ''}`.trim(),
+    label: `${f.type_name ?? ''} ${f.style_name ?? ''} — ${f.frame_desc ?? f.frame_size ?? ''}`.trim(),
   }))
   const sectionOpts = (ctx?.sections ?? []).map((s) => ({ value: String(s.section_id), label: s.name ?? `Section ${s.section_id}` }))
 
   return (
     <div className="selwrap">
       <div className="selrow">
-        <label className="pick wide">
-          <span className="pick-l">Search EMT frames{busy ? <span className="spin" /> : null}</span>
-          <input className="pick-s" value={q} placeholder="type ≥2 chars, e.g. AKR, Mag-Break…"
-            onChange={(e) => { setQ(e.target.value); setFrameId(''); setSectionId(''); onClear() }} />
-        </label>
-        <Picker label="Frame" value={frameId} options={frameOpts} placeholder={frames.length ? 'Select frame…' : 'Search first'}
+        <Picker label="Manufacturer" busy={busy} value={mfrId} options={mfrOpts}
+          placeholder={mfrs.length ? 'Select manufacturer…' : busy ? 'Loading…' : 'No manufacturers'}
+          disabled={!mfrOpts.length} onChange={(v) => { setMfrId(v); setFrameId(''); setSectionId(''); onClear() }} />
+        <Picker label="Frame" value={frameId} options={frameOpts} placeholder={mfrId ? 'Select frame…' : 'Choose a manufacturer first'}
           disabled={!frameOpts.length} onChange={pickFrame} />
         <Picker label="Section" value={sectionId} options={sectionOpts} placeholder={ctx ? 'Select section…' : 'Choose a frame first'}
           disabled={!sectionOpts.length} onChange={pickSection} />

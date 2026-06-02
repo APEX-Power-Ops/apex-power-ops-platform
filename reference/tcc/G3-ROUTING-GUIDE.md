@@ -89,6 +89,18 @@ trip_chars / trip_plugs` — over `EMT / EMT_Frames / EMT_Sections / EMT_Curves`
 Whether a breaker selection ever resolves to an EMT trip is the one open selection edge. `[HANDOFF runtime-013]`
 `[G0 §5]` `[OPEN-VALIDATION]`
 
+### A1e. Guided-dropdown selection surface for TMT/EMT (no free-text) — 2026-06-02
+
+The lvbreakertcc TMT/EMT selectors are **dropdown cascades**, not free-text inputs (a field tech should pick,
+not recall verbiage). Two read-only manufacturer-list endpoints back the first dropdown:
+- `GET /api/v1/neta/tmt/manufacturers?breaker_class=` → `[{manufacturer_id, manufacturer_name, frame_count}]`
+  (aggregation over the TMT catalog CTE joined to `tcc.manufacturers`). Cascade: **class → manufacturer →
+  frame** (`/tmt/frames?manufacturer_id`).
+- `GET /api/v1/neta/emt/manufacturers` → same shape (over `tcc.emt_frames ⋈ tcc.emt ⋈ tcc.manufacturers`).
+  Cascade: **manufacturer → frame** (`/emt/frames?manufacturer_id`, `q` omitted) **→ section**.
+The cross-filter/selection *logic* is unchanged — this is the selection *surface* (the manufacturer axis is now
+enumerated server-side instead of typed). `[HANDOFF 2026-06-02-lvbreakertcc-tmt-emt-dropdowns]` `[VERIFIED-LIVE 2026-06-02]`
+
 ---
 
 ## A2. The GetDefaultTripInfo stitch (breaker style → trip seed)

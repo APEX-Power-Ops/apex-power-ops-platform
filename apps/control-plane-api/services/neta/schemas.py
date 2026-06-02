@@ -539,6 +539,23 @@ class EMTFacetsResponse(BaseModel):
     active_filters: dict[str, int | float | str] = Field(default_factory=dict)
 
 
+class ManufacturerFacetOption(BaseModel):
+    """A manufacturer option for a guided dropdown (TMT/EMT selectors)."""
+    manufacturer_id: int
+    manufacturer_name: Optional[str] = None
+    frame_count: int = 0
+
+
+class TMTManufacturersResponse(BaseModel):
+    """TMT manufacturers available for a breaker class (drives the TMT selector dropdown)."""
+    manufacturers: list[ManufacturerFacetOption] = Field(default_factory=list)
+
+
+class EMTManufacturersResponse(BaseModel):
+    """EMT manufacturers available (drives the EMT selector dropdown)."""
+    manufacturers: list[ManufacturerFacetOption] = Field(default_factory=list)
+
+
 class EMTSectionSummary(BaseModel):
     section_id: int
     name: Optional[str] = None

@@ -77,6 +77,9 @@ from .schemas import (
     TMTFrameContext,
     TMTFacet,
     TMTFacetsResponse,
+    TMTManufacturersResponse,
+    EMTManufacturersResponse,
+    ManufacturerFacetOption,
     TMTFrameSearchResponse,
     TMTFrameSearchResult,
     EMTFacet,
@@ -3781,6 +3784,54 @@ def get_tmt_facets(
         )
     )
 
+def _load_tmt_manufacturers(db: Session, breaker_class: Optional[str]) -> list[dict]:
+    """Distinct manufacturers (with names + frame counts) for the TMT selector dropdown."""
+    conditions = ["c.manufacturer_id IS NOT NULL"]
+    params: dict[str, object] = {}
+    if breaker_class:
+        conditions.append("c.breaker_class = :bc")
+        params["bc"] = breaker_class.upper()
+    where_sql = "WHERE " + " AND ".join(conditions)
+    rows = db.execute(
+        text(
+            f"""
+            {_TMT_FACET_CTE}
+            SELECT c.manufacturer_id AS manufacturer_id,
+                   m.mfr_name AS manufacturer_name,
+                   COUNT(DISTINCT c.frame_id) AS frame_count
+            FROM tmt_catalog c
+            LEFT JOIN tcc.manufacturers m ON m.id = c.manufacturer_id
+            {where_sql}
+            GROUP BY c.manufacturer_id, m.mfr_name
+            ORDER BY m.mfr_name NULLS LAST
+            """
+        ),
+        params,
+    ).fetchall()
+    return [
+        {
+            "manufacturer_id": int(row._mapping["manufacturer_id"]),
+            "manufacturer_name": row._mapping["manufacturer_name"],
+            "frame_count": int(row._mapping["frame_count"] or 0),
+        }
+        for row in rows
+    ]
+
+
+@router.get("/tmt/manufacturers", response_model=TMTManufacturersResponse)
+def get_tmt_manufacturers(
+    breaker_class: Optional[str] = Query(None, description="Filter by ICCB, MCCB, or PCB"),
+    db: Session = Depends(get_db),
+):
+    """Manufacturers (id + name + frame count) for the TMT selector's guided dropdown."""
+    class_filter = breaker_class.upper() if breaker_class else None
+    if class_filter is not None and class_filter not in _TMT_STYLE_MODELS:
+        raise HTTPException(status_code=400, detail="breaker_class must be one of ICCB, MCCB, or PCB")
+    return TMTManufacturersResponse(
+        manufacturers=[ManufacturerFacetOption(**row) for row in _load_tmt_manufacturers(db, class_filter)]
+    )
+
+
 @router.get("/tmt/frames", response_model=TMTFrameSearchResponse)
 def search_tmt_frames(
     breaker_class: Optional[str] = Query(None, description="Filter by ICCB, MCCB, or PCB"),
@@ -4036,6 +4087,44 @@ def get_emt_facets(
             },
         )
     )
+
+def _load_emt_manufacturers(db: Session) -> list[dict]:
+    """Distinct EMT manufacturers (with names + frame counts) for the EMT selector dropdown."""
+    cols = _resolve_emt_contract_columns(db)
+    mid = cols["emt"]["manufacturer_id"]
+    emt_id_col = cols["frames"]["emt_id"]
+    rows = db.execute(
+        text(
+            f"""
+            SELECT e.{mid} AS manufacturer_id,
+                   m.mfr_name AS manufacturer_name,
+                   COUNT(DISTINCT f.id) AS frame_count
+            FROM tcc.emt_frames f
+            INNER JOIN tcc.emt e ON f.{emt_id_col} = e.id
+            LEFT JOIN tcc.manufacturers m ON m.id = e.{mid}
+            WHERE e.{mid} IS NOT NULL
+            GROUP BY e.{mid}, m.mfr_name
+            ORDER BY m.mfr_name NULLS LAST
+            """
+        )
+    ).fetchall()
+    return [
+        {
+            "manufacturer_id": int(row._mapping["manufacturer_id"]),
+            "manufacturer_name": row._mapping["manufacturer_name"],
+            "frame_count": int(row._mapping["frame_count"] or 0),
+        }
+        for row in rows
+    ]
+
+
+@router.get("/emt/manufacturers", response_model=EMTManufacturersResponse)
+def get_emt_manufacturers(db: Session = Depends(get_db)):
+    """Manufacturers (id + name + frame count) for the EMT selector's guided dropdown."""
+    return EMTManufacturersResponse(
+        manufacturers=[ManufacturerFacetOption(**row) for row in _load_emt_manufacturers(db)]
+    )
+
 
 @router.get("/emt/frames", response_model=EMTFrameSearchResponse)
 def search_emt_frames(
