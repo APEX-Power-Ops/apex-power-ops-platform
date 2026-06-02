@@ -310,8 +310,23 @@ Decisive results:
   → `byICalc=1` → `num3 = field[13] ≠ pickup`, scaling the denominator's effective `rIRef` by
   `num6/field[13]`; and every `rIRef < rM` GF row (e.g. `rIRef=0.48`) makes `rM/rIRef > 1` so the managed
   `num3=num6` form returns **None** outright. Native produces a valid curve there only via the `field[13]`
-  basis. So GF route-2 Therm stays **"verify"** (not promoted); the open item is `field[13]` provenance
-  (the device current basis) → thread it into the solver → re-validate via this same oracle.
+  basis. So GF route-2 Therm stays **"verify"** (not promoted); the open item is `field[13]` provenance.
+- **GF `field[13]` characterized (2026-06-01) — the GF promotion is a bounded-but-not-cheap follow-up.**
+  In `CTccLVBreakerCurveGF` (`{ctor}` ~line 7694), fields `[12]/[13]/[16]` are three pickup-basis currents
+  (init to the `3.123…E38` "not set" sentinel that `CalcThermEq` checks); `byICalc` selects among them
+  (`{2→[12], 1→[13], 0→[16]}`), and `field[16]` is always the main pickup (`num6`). The InvEq setter
+  `SetTherm_InverseDelayOpen` (~18965) stores only the coeffs + `byICalc` — it does **not** set the bases;
+  they are loaded earlier in the device→curve build path (not cheaply locatable in the flat decomp).
+  Geometric handle: the native curve passes through **`(amps = field[num3]·rIRef, T = rTref)`** — so
+  `field[13]·rIRef` is the GF curve's **reference current**, and since GFPU pickup is a fraction of the
+  sensor/frame rating and the `rIRef<rM` rows require `field[13] > pickup`, `field[13]` is plausibly the
+  **sensor/frame rating** (hypothesis, NOT yet `[DLL]`-confirmed). **To promote GF Therm, resolve
+  `field[13]/pickup` by EITHER (a) tracing the device→curve pickup-load that sets `[12]/[13]/[16]`, OR (b)
+  a handful of EasyPower-GUI-exported GF-InvEq curve points** (find the `field[13]` that makes the native
+  oracle match the GUI, then apply the `field[13]/pickup` correction to the managed denominator's `rIRef`
+  and re-validate). Promoting on the unconfirmed hypothesis is **disallowed** (field-trust law). NOTE GF
+  InvEq sensors carry no direct GFD bands → no field-table GFD delay row surfaces; promotion would certify
+  the Screen-3 GF-InvEq curve only.
 - **Secondary residual `*ICalc=0` CLOSED.** Direct `[VERIFIED-LIVE]` count: **zero rows** in
   `DatSection3InvEq` or `DatSection1GfInvEq` store any `*ICalc = 0`. STD `IdOpICalc ≡ 4`; GF `∈ {1→6760,
   4→1690, 8→100(Ansi)}`. The pass-5 translator branch `*ICalc=0 → byICalc=2 → ref[12]` is correct but
