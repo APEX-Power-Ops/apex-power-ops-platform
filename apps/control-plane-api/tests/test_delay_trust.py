@@ -35,7 +35,7 @@ def test_ltd_is_always_db(std_route, gfd_route):
     "route,expected",
     [
         (0, TRUST_DB),           # direct-band DatSection3STD — PROVEN (row 3)
-        (2, TRUST_VERIFY),       # INVEQ Therm — dispatch-wired, fixtures pending (row 6)
+        (2, TRUST_DB),           # INVEQ Therm — BIT-EXACT native parity, PROMOTED (row 6, G4 §5)
         (1, TRUST_UNSUPPORTED),  # I2X — solver not built (row 11)
         (3, TRUST_UNSUPPORTED),  # GE-TU STD — fall-through diagnostic (row 9)
         (None, TRUST_UNSUPPORTED),
@@ -90,11 +90,14 @@ def test_delay_route_for():
 
 def test_reasons_present_and_distinct():
     db = delay_trust_reason("std", TRUST_DB, route=0)
-    verify = delay_trust_reason("std", TRUST_VERIFY, route=2)
+    db_inveq = delay_trust_reason("std", TRUST_DB, route=2)
+    verify = delay_trust_reason("gfd", TRUST_VERIFY, route=2)
     unsup = delay_trust_reason("std", TRUST_UNSUPPORTED, route=1)
     ansi = delay_trust_reason("gfd", TRUST_UNSUPPORTED, route=2, gfd_is_ansi=True)
-    for r in (db, verify, unsup, ansi):
+    for r in (db, db_inveq, verify, unsup, ansi):
         assert isinstance(r, str) and r.strip()
-    assert len({db, verify, unsup, ansi}) == 4
+    assert len({db, db_inveq, verify, unsup, ansi}) == 5
     assert "ANSI" in ansi
+    # STD route-2 db reason must cite the native-kernel parity, not "direct-band"
+    assert "BIT-EXACT" in db_inveq and "direct-band" not in db_inveq.lower()
     assert delay_trust_reason("ltd", TRUST_DB).startswith("LTD")

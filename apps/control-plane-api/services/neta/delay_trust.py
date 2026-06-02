@@ -8,13 +8,19 @@ uncertified delay TIME as field-authoritative.
 Three trust tiers (G4 §0 / §4):
 
   - ``"db"``          PROVEN. Direct-band solvers (STD route 0 ``DatSection3STD`` /
-                      GFD route 0 ``DatSection1GfGFD``) and the LTD window
-                      (methods 1-5, implementation complete). Numerically validated
-                      row-for-row — field-safe. (G4 rows 3/4/5.)
-  - ``"verify"``      DISPATCH-WIRED, fixtures pending. INVEQ (route 2) Therm: the
-                      native ``CalcThermEq`` formula is recovered + patched but not
-                      yet validated against captured EasyPower points (G4 §5,
-                      rows 6/7-Therm). Show the engine's best estimate, flagged.
+                      GFD route 0 ``DatSection1GfGFD``), the LTD window (methods 1-5,
+                      implementation complete), and **STD INVEQ (route 2) Therm** —
+                      validated BIT-EXACT against the native EasyPower ``TccBase.dll``
+                      ``CalcThermEq``/``CalcThermEq3`` kernel over the complete STD
+                      Therm 4-dial corpus (G4 §5; captured-fixture parity closed
+                      2026-06-01). Numerically validated — field-safe. (G4 rows 3/4/5/6.)
+  - ``"verify"``      DISPATCH-WIRED, parity not yet closed. **GFD INVEQ (route 2)
+                      Therm** only: the native ``CalcThermEq`` formula is recovered +
+                      patched, but the GF runtime path uses ``byICalc=1``
+                      (``num3=field13`` ≠ pickup) which the managed solver's
+                      ``num3=num6`` form does not reproduce, and ``rIRef<rM`` GF rows
+                      return None outright (G4 §5, row 7-Therm). Show the engine's best
+                      estimate, flagged; promotion pending ``field13`` provenance.
   - ``"unsupported"`` NOT IMPLEMENTED / hard-excluded. I2X (route 1, I²t solver not
                       built), GE trip-unit STD/Gnd (routes 3/4, fall-through
                       diagnostic only), and the GF-INVEQ ANSI family
@@ -85,7 +91,11 @@ def _classify_std(route: Optional[int]) -> str:
     if route == 0:
         return TRUST_DB
     if route == 2:
-        return TRUST_VERIFY  # STD INVEQ is 100% Therm corpus-wide (G4 §3e)
+        # STD INVEQ is 100% Therm corpus-wide (G4 §3e) and runs byICalc=0
+        # (IdOpICalc=4 → num3=field16=pickup). The managed solver reproduces the
+        # native CalcThermEq kernel BIT-EXACT over the entire STD Therm corpus
+        # (only 4 dial curves; G4 §5, captured-fixture parity closed 2026-06-01).
+        return TRUST_DB
     return TRUST_UNSUPPORTED  # 1 I2X / 3 TUSTD / None / other
 
 
@@ -93,6 +103,11 @@ def _classify_gfd(route: Optional[int], is_ansi: bool) -> str:
     if route == 0:
         return TRUST_DB
     if route == 2:
+        # GFD INVEQ: ANSI family hard-excluded (G4 §3e). GF Therm stays "verify"
+        # (NOT promoted with STD): the GF runtime path is byICalc=1
+        # (num3=field13 ≠ pickup), which the managed num3=num6 form does not
+        # reproduce, and rIRef<rM GF rows yield None (G4 §5). Promotion to "db"
+        # is gated on field13 provenance + native-oracle re-validation.
         return TRUST_UNSUPPORTED if is_ansi else TRUST_VERIFY
     return TRUST_UNSUPPORTED  # 1 I2X / 4 TUG / None / other
 
@@ -126,11 +141,17 @@ def delay_trust_reason(
         return "LTD long-time window (methods 1-5) is implementation-complete and proven (G4 row 5)."
     route_name = _ROUTE_NAME.get(route, "unknown") if route is not None else "n/a"
     if trust == TRUST_DB:
+        if route == 2:
+            return (
+                "Inverse-equation (Therm) delay — validated BIT-EXACT against the native "
+                "EasyPower CalcThermEq kernel over the complete STD Therm corpus (G4 §5)."
+            )
         return f"Direct-band delay ({route_name}) — numerically validated row-for-row (G4)."
     if trust == TRUST_VERIFY:
         return (
             f"Inverse-equation delay ({route_name}) — dispatch-wired, native CalcThermEq "
-            "recovered + patched, captured-fixture validation pending (G4 §5)."
+            "recovered + patched; GF byICalc=1 (num3=field13) not yet reproduced by the "
+            "managed solver, captured-fixture promotion pending (G4 §5)."
         )
     if gfd_is_ansi:
         return (
