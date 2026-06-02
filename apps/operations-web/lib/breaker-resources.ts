@@ -237,6 +237,8 @@ export type SensorCalcContext = {
   stpu_step: number | null
   inst_step: number | null
   gfpu_step: number | null
+  stpu_delay_calc_code: number | null
+  ground_delay_calc_code: number | null
   stpu_i2t: number | null
   gfpu_i2t: number | null
   ltd_func: number | null
@@ -362,6 +364,10 @@ export type EtuTestCurrentElement = {
   time_limit_high: number | null
   delay_seconds: number | null
   notes: string | null
+  // G4 per-sensor delay-route field-trust (delay elements only)
+  delay_route: number | null
+  trust: string | null // "db" | "verify" | "unsupported"
+  trust_reason: string | null
 }
 
 export type EtuCalculateResponse = {

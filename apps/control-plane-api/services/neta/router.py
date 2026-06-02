@@ -120,6 +120,12 @@ from .schemas import (
     ResolvedRatingContext,
     ResolvedTripUnitIdentity,
 )
+from .delay_trust import (
+    TIME_WITHHELD,
+    classify_delay_trust,
+    delay_route_for,
+    delay_trust_reason,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -4425,6 +4431,29 @@ def calculate_test_currents(req: CalculateRequest, db: Session = Depends(get_db)
     )
     warnings.extend(curve_warnings)
 
+    # G4 per-sensor delay-route field-trust: each delay element's expected TIME is
+    # classified by its SSTDelayCalc route (the matrix in services/neta/delay_trust.py).
+    # Route bytes are authoritative per-sensor data (G4-CALC-GUIDE §3a/§4/§6).
+    route_row = db.execute(
+        text(
+            """
+            SELECT s.stpu_delay_calc_code AS std_route,
+                   s.ground_delay_calc_code AS gfd_route,
+                   EXISTS (
+                       SELECT 1 FROM tcc.etu_gfd_equations eq
+                       WHERE eq.sensor_id = s.id AND eq.id_op_eq <> 0
+                   ) AS gfd_is_ansi
+            FROM tcc.etu_sensors s
+            WHERE s.id = :sid
+            """
+        ),
+        {"sid": req.sensor_id},
+    ).fetchone()
+    _route_map = route_row._mapping if route_row is not None else {}
+    std_route = _route_map.get("std_route")
+    gfd_route = _route_map.get("gfd_route")
+    gfd_is_ansi = bool(_route_map.get("gfd_is_ansi"))
+
     for key in _CALC_ELEMENT_KEYS:
         elem = data.get(key)
         if elem is None:
@@ -4466,6 +4495,20 @@ def calculate_test_currents(req: CalculateRequest, db: Session = Depends(get_db)
             fallback_open=elem.get("delay_opening"),
             fallback_clear=elem.get("delay_clearing"),
         )
+        trust = classify_delay_trust(
+            key, std_route=std_route, gfd_route=gfd_route, gfd_is_ansi=gfd_is_ansi
+        )
+        delay_route = delay_route_for(key, std_route=std_route, gfd_route=gfd_route)
+        trust_reason = delay_trust_reason(
+            key, trust, route=delay_route, gfd_is_ansi=gfd_is_ansi
+        )
+        # Field-trust withholding (G4 §6 step 6): a not-implemented / hard-excluded
+        # solver's fall-through band value is NOT a certified curve — withhold the TIME
+        # on the field-authoritative surface. The inject current (test point) stays valid.
+        if trust in TIME_WITHHELD:
+            expected_time = None
+            time_low = None
+            time_high = None
         elements.append(TestCurrentElement(
             element=element_name,
             kind="delay",
@@ -4480,6 +4523,9 @@ def calculate_test_currents(req: CalculateRequest, db: Session = Depends(get_db)
             time_limit_high=time_high,
             delay_seconds=expected_time,
             notes=f"timing_source={timing_source}",
+            delay_route=delay_route,
+            trust=trust,
+            trust_reason=trust_reason,
         ))
 
     return CalculateResponse(

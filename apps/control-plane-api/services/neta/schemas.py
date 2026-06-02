@@ -271,7 +271,11 @@ class SensorCalcContext(BaseModel):
     inst_step: Optional[float] = None
     gfpu_step: Optional[float] = None
 
-    # Delay curve routing (SSTDelayCalc enum)
+    # Delay curve routing (SSTDelayCalc enum). Canonical names match the view
+    # (renamed from legacy *_i2t at Phase 5 Tier A); the *_i2t aliases stay
+    # populated for backward compatibility via the validator below.
+    stpu_delay_calc_code: Optional[int] = None
+    ground_delay_calc_code: Optional[int] = None
     stpu_i2t: Optional[int] = None
     gfpu_i2t: Optional[int] = None
 
@@ -292,6 +296,22 @@ class SensorCalcContext(BaseModel):
     maint_gfpu_calc: Optional[int] = None
     maint_gfpu_tol_hi: Optional[float] = None
     maint_gfpu_tol_lo: Optional[float] = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def _backfill_legacy_delay_route_aliases(cls, values):
+        """Keep the legacy *_i2t aliases populated from the canonical view columns.
+
+        The view emits stpu_delay_calc_code / ground_delay_calc_code (renamed from
+        legacy stpu_i2t / gfpu_i2t at Phase 5 Tier A). Older clients still read the
+        *_i2t names, so mirror the canonical value into them when absent.
+        """
+        if isinstance(values, dict):
+            if values.get("stpu_i2t") is None and values.get("stpu_delay_calc_code") is not None:
+                values["stpu_i2t"] = values["stpu_delay_calc_code"]
+            if values.get("gfpu_i2t") is None and values.get("ground_delay_calc_code") is not None:
+                values["gfpu_i2t"] = values["ground_delay_calc_code"]
+        return values
 
 
 # ──────────────────────────────────────────────
@@ -917,6 +937,10 @@ class TestCurrentElement(BaseModel):
     time_limit_high: Optional[float] = Field(None, description="Upper time tolerance limit (seconds)")
     delay_seconds: Optional[float] = Field(None, description="Expected delay time for time-delay elements")
     notes: Optional[str] = None
+    # G4 per-sensor delay-route field-trust (delay elements only; see services/neta/delay_trust.py)
+    delay_route: Optional[int] = Field(None, description="SSTDelayCalc route byte governing this delay element (STD/GFD; null for LTD or pickups)")
+    trust: Optional[str] = Field(None, description="G4 field-trust tier for the expected delay TIME: db | verify | unsupported")
+    trust_reason: Optional[str] = Field(None, description="Short field-tech explanation of the trust tier")
 
 
 class CalculateResponse(BaseModel):

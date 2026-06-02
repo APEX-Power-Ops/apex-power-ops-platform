@@ -757,6 +757,26 @@ function EtuSettings({ maint, setMaint, selection }: { maint: boolean; setMaint:
     return e.test_current
   }
 
+  // G4 per-sensor delay-route trust (backend services/neta/delay_trust.py): /calculate now
+  // carries `trust` per delay element. Direct-band (route 0) + LTD → DB; INVEQ Therm (route 2)
+  // → verify; I2X / GE-TU / GF-INVEQ-Ansi → unsupported, and the engine WITHHOLDS the expected
+  // time (only the inject current stays field-valid). Pickups remain DB-authoritative.
+  const delayTrust = (e: EtuTestCurrentElement): string => (e.trust ?? 'verify').toLowerCase()
+  const isWithheld = (e: EtuTestCurrentElement): boolean => e.kind === 'delay' && delayTrust(e) === 'unsupported'
+  const trustCell = (e: EtuTestCurrentElement) => {
+    if (e.kind !== 'delay') return <span className="trust ok" title="DB-authoritative per-sensor tolerance">DB</span>
+    const t = delayTrust(e)
+    const title = e.trust_reason ?? ''
+    if (t === 'db') return <span className="trust ok" title={title || 'Direct-band delay — numerically validated row-for-row (G4)'}>DB</span>
+    if (t === 'unsupported') return <span className="trust no" title={title || 'Delay solver not implemented — expected trip time withheld (G4)'}>n/a</span>
+    return <span className="trust verify" title={title || 'Inverse-equation delay — captured-fixture validation pending (G4)'}>verify</span>
+  }
+  const limitCell = (val: number | null, e: EtuTestCurrentElement) => {
+    if (isWithheld(e)) return <span className="muted2">withheld</span>
+    if (val == null) return '—'
+    return e.kind === 'delay' ? `${val} s` : fmtAmp(val)
+  }
+
   return (
     <>
       <div className="eq-strip">
@@ -832,14 +852,14 @@ function EtuSettings({ maint, setMaint, selection }: { maint: boolean; setMaint:
                 return (
                   <tr key={e.element}>
                     <td><b>{e.element}</b></td>
-                    <td>{delay ? <span className="trust verify" title="Delay-band route fidelity pending (G4)">verify</span> : <span className="trust ok" title="DB-authoritative per-sensor tolerance">DB</span>}</td>
+                    <td>{trustCell(e)}</td>
                     <td>{fmtMult(displayTestMult(e))}</td>
                     <td className="num">{fmtAmp(displayTestCurrent(e))}</td>
-                    <td className="num">{lo == null ? '—' : delay ? `${lo} s` : fmtAmp(lo)}</td>
-                    <td className="num">{hi == null ? '—' : delay ? `${hi} s` : fmtAmp(hi)}</td>
-                    <td><div className="meas"><input className="meas-in" inputMode="decimal" value={raw} placeholder="—" onChange={(ev) => setMeasured((m) => ({ ...m, [e.element]: ev.target.value }))} /><span className="meas-u">{unit}</span></div></td>
+                    <td className="num">{limitCell(lo, e)}</td>
+                    <td className="num">{limitCell(hi, e)}</td>
+                    <td><div className="meas"><input className="meas-in" inputMode="decimal" value={raw} placeholder="—" disabled={isWithheld(e)} onChange={(ev) => setMeasured((m) => ({ ...m, [e.element]: ev.target.value }))} /><span className="meas-u">{unit}</span></div></td>
                     <td className="num">{pct !== null ? <span className={`pct ${inBand ? 'ok' : 'bad'}`}>{pct >= 0 ? '+' : ''}{pct.toFixed(1)}%</span> : <span className="muted2">—</span>}</td>
-                    <td>{!hasM ? <span className="status ready">● Ready</span> : inBand ? <span className="status pass">✓ PASS</span> : <span className="status fail">✗ FAIL</span>}</td>
+                    <td>{isWithheld(e) ? <span className="status off">withheld</span> : !hasM ? <span className="status ready">● Ready</span> : inBand ? <span className="status pass">✓ PASS</span> : <span className="status fail">✗ FAIL</span>}</td>
                   </tr>
                 )
               })}
@@ -855,7 +875,7 @@ function EtuSettings({ maint, setMaint, selection }: { maint: boolean; setMaint:
       {calc?.warnings?.length ? <div className="sel-status warn">{calc.warnings.join(' · ')}</div> : null}
 
       <div className="method">
-        <b>NETA test points.</b> Pickups (LTPU/STPU/INST/GFPU) are ramp-tested <b>@ 1×</b> against <b>DB-authoritative per-sensor tolerances</b> (field-sheet safe). Delays inject a fixed multiple of their pickup — <b>LTD @ 3× LTPU, STD @ 1.5× STPU, GFD @ 1.5× GFPU</b> (NETA ATS) — so the <b>Test @ and inject current are correct</b>. The expected trip <b>time</b> is still <b>verify</b>-flagged: the delay-band → curve recompute at the test point lands with Stage C. {selection.trustNote}
+        <b>NETA test points.</b> Pickups (LTPU/STPU/INST/GFPU) ramp-test <b>@ 1×</b> against <b>DB-authoritative per-sensor tolerances</b> (field-safe). Delays inject a fixed multiple of their pickup — <b>LTD @ 3× LTPU, STD @ 1.5× STPU, GFD @ 1.5× GFPU</b> (NETA ATS) — so the <b>Test @ and inject current are always field-correct</b>. The expected trip <b>time</b> is now <b>gated per the G4 field-trust matrix</b> by each element&apos;s delay-calc route: <b>DB</b> = direct-band (route 0) + LTD — validated row-for-row; <b>verify</b> = inverse-equation (route 2) — native formula recovered, captured-fixture validation pending; <b>n/a</b> = I²t / GE-trip-unit / GF-ANSI routes whose solver is not built, so the time is <b>withheld</b> (the inject current stays valid). {selection.trustNote}
       </div>
     </>
   )
@@ -1608,6 +1628,7 @@ const CSS = `
 .trust{font-size:10px;font-weight:800;letter-spacing:.4px;padding:2px 7px;border-radius:5px;display:inline-block;}
 .trust.ok{color:var(--green);background:var(--green-s);}
 .trust.verify{color:#8a5a00;background:var(--amber-s);}
+.trust.no{color:#b42318;background:#fde8e6;}
 .maint-banner{display:flex;align-items:center;justify-content:space-between;gap:16px;border:1px solid var(--line);border-radius:12px;padding:13px 18px;background:var(--surface);}
 .maint-banner.on{background:var(--amber-s);border-color:var(--amber);}
 .maint-banner b{font-size:13.5px;}

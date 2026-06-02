@@ -320,10 +320,19 @@ rows 6-7 Therm-INVEQ until captured EasyPower fixtures promote them; **hard-excl
 > the *proven* pickup current of row 2), independent of curve-number trust; and **(b) the expected trip
 > time** at that point, which inherits this matrix's delay-status (PROVEN for direct-band rows 3-5; rows 6-7
 > Therm-INVEQ withheld pending fixtures). The LV page (`/lvbreakertcc`) renders (a) directly (NETA multiple +
-> inject current, field-correct) and badges (b) **"verify"** until the band→curve recompute at the point
-> lands (Stage C). Earlier the page conflated the selected delay *band* value with the test multiple (the
-> `/calculate` `p_*_multiplier` param), so it showed e.g. STD "0.1× / 1,200 A" (below pickup); now corrected.
-> `[VERIFIED-LIVE 2026-06-01]`
+> inject current, field-correct) and **route-gates (b) per the per-sensor delay-calc route** (the §6 gating
+> algorithm, encoded once in `apps/control-plane-api/services/neta/delay_trust.py`): **DB** for direct-band
+> (STD/GFD route 0) + LTD (methods 1-5); **"verify"** for INVEQ (route 2) Therm — native `CalcThermEq`
+> recovered/patched, captured-fixture validation pending; and **"n/a" (time withheld)** for the
+> not-implemented / hard-excluded routes — I2X (route 1), GE-TU STD/Gnd (routes 3/4), and the GF-INVEQ ANSI
+> family (`id_op_eq ≠ 0`). `/calculate` now returns a per-delay-element **`trust` + `delay_route` + `trust_reason`**
+> and **nulls the expected time for unsupported routes** (the fall-through band value is not a certified curve;
+> G4 §6 step 6) — so an I2X sensor like XT2 LSIG (STD/GFD route 1) no longer shows a fall-through `band_table`
+> time under a "verify" badge. The inject current (the test point) stays valid in every tier. `/context` also
+> now surfaces the route codes as `stpu_delay_calc_code` / `ground_delay_calc_code` (the legacy `*_i2t`
+> response aliases had silently dropped to NULL after the Phase 5 Tier A rename). Earlier the page conflated the
+> selected delay *band* value with the test multiple (the `/calculate` `p_*_multiplier` param), so it showed
+> e.g. STD "0.1× / 1,200 A" (below pickup); now corrected. `[VERIFIED-LIVE 2026-06-01]`
 
 ---
 
