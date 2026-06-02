@@ -31,6 +31,7 @@ import {
   type SensorCalcContext,
   type DelayBandOption,
   type EtuCalculateResponse,
+  type EtuTestCurrentElement,
   type TMTFrameSearchResult,
   type EMTFrameSearchResult,
   type EMTFrameContext,
@@ -723,6 +724,25 @@ function EtuSettings({ maint, setMaint, selection }: { maint: boolean; setMaint:
     bk === 'ltd' ? settings.ltd_settings : bk === 'std' ? settings.std_settings : settings.gfd_settings
   const elByCode = (code: string) => calc?.elements.find((e) => e.element.toUpperCase() === code)
 
+  // NETA ATS test points (NETA_TEST_PLAN_SPEC §2/§11): pickups ramp @ 1×; each delay injects a FIXED
+  // multiple of its own pickup — LTD @ 3× LTPU, STD @ 1.5× STPU, GFD @ 1.5× GFPU.
+  // The /calculate engine currently echoes the selected delay BAND as `multiplier` (the band↔multiplier
+  // conflation, G4), so its delay `multiplier`/`test_current` are wrong. Override the DISPLAY with the NETA
+  // multiple and inject-current (= multiple × the element's pickup current). The expected trip TIME stays
+  // engine-sourced under the "verify" badge (recompute-at-multiple is the gated Stage C curve work).
+  const NETA_DELAY_MULT: Record<string, number> = { LTD: 3, STD: 1.5, GFD: 1.5 }
+  const DELAY_PICKUP: Record<string, string> = { LTD: 'LTPU', STD: 'STPU', GFD: 'GFPU' }
+  const displayTestMult = (e: EtuTestCurrentElement): number =>
+    e.kind === 'delay' ? (NETA_DELAY_MULT[e.element.toUpperCase()] ?? e.multiplier) : (e.multiplier ?? 1)
+  const displayTestCurrent = (e: EtuTestCurrentElement): number | null => {
+    if (e.kind === 'delay') {
+      const mult = NETA_DELAY_MULT[e.element.toUpperCase()]
+      const pickup = elByCode(DELAY_PICKUP[e.element.toUpperCase()])?.test_current
+      if (mult != null && pickup != null) return mult * pickup
+    }
+    return e.test_current
+  }
+
   return (
     <>
       <div className="eq-strip">
@@ -771,7 +791,7 @@ function EtuSettings({ maint, setMaint, selection }: { maint: boolean; setMaint:
                     </select>
                   )}
                 </div>
-                <div className="el-row"><span>Test Current</span><div className="el-cur">{present && el ? fmtAmp(el.test_current) : '—'}</div></div>
+                <div className="el-row"><span>Test Current</span><div className="el-cur">{present && el ? fmtAmp(displayTestCurrent(el)) : '—'}</div></div>
               </div>
             </div>
           )
@@ -799,8 +819,8 @@ function EtuSettings({ maint, setMaint, selection }: { maint: boolean; setMaint:
                   <tr key={e.element}>
                     <td><b>{e.element}</b></td>
                     <td>{delay ? <span className="trust verify" title="Delay-band route fidelity pending (G4)">verify</span> : <span className="trust ok" title="DB-authoritative per-sensor tolerance">DB</span>}</td>
-                    <td>{fmtMult(e.multiplier)}</td>
-                    <td className="num">{fmtAmp(e.test_current)}</td>
+                    <td>{fmtMult(displayTestMult(e))}</td>
+                    <td className="num">{fmtAmp(displayTestCurrent(e))}</td>
                     <td className="num">{lo == null ? '—' : delay ? `${lo} s` : fmtAmp(lo)}</td>
                     <td className="num">{hi == null ? '—' : delay ? `${hi} s` : fmtAmp(hi)}</td>
                     <td><div className="meas"><input className="meas-in" inputMode="decimal" value={raw} placeholder="—" onChange={(ev) => setMeasured((m) => ({ ...m, [e.element]: ev.target.value }))} /><span className="meas-u">{unit}</span></div></td>
@@ -821,7 +841,7 @@ function EtuSettings({ maint, setMaint, selection }: { maint: boolean; setMaint:
       {calc?.warnings?.length ? <div className="sel-status warn">{calc.warnings.join(' · ')}</div> : null}
 
       <div className="method">
-        <b>Field-trust (G4).</b> Pickup bands (LTPU/STPU/INST/GFPU) are <b>DB-authoritative per-sensor tolerances</b> — field-sheet safe. Delay rows (LTD/STD/GFD) are computed but the delay-band route still conflates band vs NETA test multiplier — <b>verify before field use.</b> {selection.trustNote}
+        <b>NETA test points.</b> Pickups (LTPU/STPU/INST/GFPU) are ramp-tested <b>@ 1×</b> against <b>DB-authoritative per-sensor tolerances</b> (field-sheet safe). Delays inject a fixed multiple of their pickup — <b>LTD @ 3× LTPU, STD @ 1.5× STPU, GFD @ 1.5× GFPU</b> (NETA ATS) — so the <b>Test @ and inject current are correct</b>. The expected trip <b>time</b> is still <b>verify</b>-flagged: the delay-band → curve recompute at the test point lands with Stage C. {selection.trustNote}
       </div>
     </>
   )
