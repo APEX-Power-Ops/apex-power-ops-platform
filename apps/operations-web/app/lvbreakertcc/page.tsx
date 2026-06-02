@@ -24,6 +24,7 @@ import {
   fetchEtuPlot,
   fetchTmtFrames,
   fetchTmtSettings,
+  fetchTmtPlot,
   fetchEmtFrames,
   fetchEmtContext,
   fetchEmtSettings,
@@ -38,6 +39,7 @@ import {
   type EtuPlotResponse,
   type TMTFrameSearchResult,
   type TMTSettingsResponse,
+  type TMTPlotResponse,
   type EMTFrameSearchResult,
   type EMTFrameContext,
   type EMTSectionSettingsResponse,
@@ -1177,7 +1179,141 @@ function Curve({ selection }: { selection: LiveSelection | null }) {
   if (selection?.family === 'etu' && selection.sensorId != null) {
     return <EtuCurve selection={selection} />
   }
+  if (selection?.family === 'tmt' && selection.frameId != null) {
+    return <TmtCurve selection={selection} />
+  }
+  if (selection?.family === 'emt' && selection.sectionId != null) {
+    return <EmtCurve selection={selection} />
+  }
   return <SampleCurve selection={selection} />
+}
+
+// ── Screen 3 TMT (LIVE, bounded): nominal thermal class curve from /tmt/plot-tcc ──
+// The TMT plot returns the nominal class curve in PER-UNIT (× rating); the engine surfaces the
+// amp-rating/setting selections in metadata but does NOT apply them to the plotted shape (its
+// disclaimer). We scale per-unit × the selected thermal amp rating for an absolute nominal curve —
+// consistent with the TMT Screen-2 model (magnetic pickup = setting × rating). Nominal illustration.
+function TmtCurve({ selection }: { selection: LiveSelection }) {
+  const frameId = selection.frameId as number
+  const [plot, setPlot] = useState<TMTPlotResponse | null>(null)
+  const [ampRating, setAmpRating] = useState<number>(0)
+  const [loading, setLoading] = useState(true)
+  const [err, setErr] = useState<string | null>(null)
+
+  useEffect(() => {
+    let active = true
+    setLoading(true); setErr(null); setPlot(null)
+    fetchTmtSettings(frameId)
+      .then((s) => {
+        const cls = s.available_trip_classes[0]
+        const amp = s.amp_ratings[0]?.rating ?? 0
+        const setting = s.settings[Math.floor(s.settings.length / 2)]?.value ?? s.settings[0]?.value ?? undefined
+        if (active) setAmpRating(amp)
+        return fetchTmtPlot({ frame_id: frameId, trip_class: cls, amp_rating: amp || undefined, setting_value: setting ?? undefined, include_raw_points: false })
+      })
+      .then((r) => { if (active) setPlot(r) })
+      .catch((e) => { if (active) setErr(errMsg(e)) })
+      .finally(() => { if (active) setLoading(false) })
+    return () => { active = false }
+  }, [frameId])
+
+  if (loading) return <div className="loadbox"><span className="spin" /> Generating curve…</div>
+  if (err || !plot) return <div className="loadbox"><span className="sel-status err">⚠ {err ?? 'No curve data'}</span></div>
+
+  const scale = ampRating || 1
+  const curves = plot.curves ?? []
+  const allAmps = curves.flatMap((c) => c.points.map((p) => p.amps * scale)).filter((a) => a > 0)
+  const stats = [
+    { k: 'Curves', v: String(curves.length) },
+    { k: 'Amp Rating', v: ampRating ? `${ampRating} A` : '—' },
+    { k: 'Max Current', v: allAmps.length ? `${Math.round(Math.max(...allAmps)).toLocaleString('en-US')} A` : '—' },
+    { k: 'Class', v: String(plot.meta.selected_trip_class ?? '—') },
+  ]
+
+  return (
+    <>
+      <div className="curve-grid">
+        <aside className="card side">
+          <div className="card-h">Device Info <span className="badge inline">BOUNDED</span></div>
+          <div className="card-b">
+            <Field label="Breaker" value={selection.breakerLabel} />
+            <Field label="Trip Unit" value={selection.tripLabel} />
+            <Field label="Frame" value={selection.ratingLabel} />
+            <Field label="Amp Rating" value={ampRating ? `${ampRating} A` : '—'} />
+          </div>
+          <div className="card-h" style={{ marginTop: 8 }}>Curve Elements</div>
+          <div className="legend"><div className="leg"><span className="sw" style={{ background: '#14507d' }} />Thermal class curve</div></div>
+        </aside>
+
+        <section className="card plot-card">
+          <div className="card-h">Trip Characteristic Curve <span className="badge inline">BOUNDED · nominal class curve</span></div>
+          <div className="plot-wrap">
+            <svg viewBox="0 0 700 480" className="plot" role="img" aria-label="Time-current curve">
+              {X_TICKS.map((t) => (
+                <g key={`x${t}`}>
+                  <line x1={px(t)} y1={PLOT.mt} x2={px(t)} y2={PLOT.mt + PLOT.h} className="grid" />
+                  <text x={px(t)} y={PLOT.mt + PLOT.h + 16} className="axt" textAnchor="middle">{t >= 1000 ? `${t / 1000}k` : t}</text>
+                </g>
+              ))}
+              {Y_TICKS.map((t) => (
+                <g key={`y${t}`}>
+                  <line x1={PLOT.ml} y1={py(t)} x2={PLOT.ml + PLOT.w} y2={py(t)} className="grid" />
+                  <text x={PLOT.ml - 8} y={py(t) + 3} className="axt" textAnchor="end">{t}</text>
+                </g>
+              ))}
+              <text x={PLOT.ml + PLOT.w / 2} y={PLOT.mt + PLOT.h + 38} className="axl" textAnchor="middle">Current (A)</text>
+              <text transform={`translate(16 ${PLOT.mt + PLOT.h / 2}) rotate(-90)`} className="axl" textAnchor="middle">Time (s)</text>
+              {curves.map((c) => (
+                <path key={c.id} d={livePath(c.points.map((p) => ({ amps: p.amps * scale, seconds: p.seconds })))} fill="none" stroke="#14507d" strokeWidth={2.6} strokeLinejoin="round" strokeLinecap="round" />
+              ))}
+            </svg>
+          </div>
+        </section>
+      </div>
+
+      {plot.warnings?.length ? <div className="sel-status warn">{plot.warnings.join(' · ')}</div> : null}
+      <div className="method">
+        <b>Nominal class curve (bounded).</b> Rendered from the engine (`/tmt/plot-tcc`) as the nominal thermal class curve, scaled to absolute amps by the selected amp rating ({ampRating || '—'} A). Per the engine, the amp-rating / setting / thermal-adjustment selections are surfaced but <b>not yet applied to the plotted shape</b>, and the magnetic step isn't overlaid — use the <b>NETA test plan</b> (Protection Settings) for field values. {selection.trustNote}
+      </div>
+
+      <div className="stats">
+        {stats.map((s) => (<div key={s.k} className="stat"><span>{s.k}</span><b>{s.v}</b></div>))}
+      </div>
+    </>
+  )
+}
+
+// ── Screen 3 EMT (context-only): curve withheld (pickup→current calc not engine-validated) ──
+function EmtCurve({ selection }: { selection: LiveSelection }) {
+  return (
+    <>
+      <div className="curve-grid">
+        <aside className="card side">
+          <div className="card-h">Device Info <span className="badge inline">CONTEXT</span></div>
+          <div className="card-b">
+            <Field label="Breaker" value={selection.breakerLabel} />
+            <Field label="Trip Unit" value={selection.tripLabel} />
+            <Field label="Section" value={selection.ratingLabel} />
+          </div>
+        </aside>
+
+        <section className="card plot-card">
+          <div className="card-h">Trip Characteristic Curve <span className="badge inline">CONTEXT — curve pending Stage C</span></div>
+          <div className="card-b" style={{ minHeight: 220, display: 'grid', placeItems: 'center', textAlign: 'center' }}>
+            <div style={{ maxWidth: 460 }}>
+              <div style={{ fontSize: 32, marginBottom: 10 }}>📈</div>
+              <p className="note">
+                The stored EMT curve data is per-unit of pickup, and the EMT pickup → test-current conversion
+                isn't engine-validated yet — so an absolute time-current curve is <b>deliberately withheld</b> here
+                (same bounded posture as the EMT settings on Screen 2). It lands with the Stage C engine work.
+                Use the section's pickup setting + ±tolerance on Protection Settings for field values.
+              </p>
+            </div>
+          </div>
+        </section>
+      </div>
+    </>
+  )
 }
 
 // ── Screen 3 ETU (LIVE): nominal-illustration curve from /plot-tcc ─────────────
