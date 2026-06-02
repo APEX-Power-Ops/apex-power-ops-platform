@@ -21,6 +21,7 @@ import {
   fetchEtuSettings,
   fetchEtuContext,
   fetchEtuCalculate,
+  fetchEtuPlot,
   fetchTmtFrames,
   fetchTmtSettings,
   fetchEmtFrames,
@@ -34,6 +35,7 @@ import {
   type DelayBandOption,
   type EtuCalculateResponse,
   type EtuTestCurrentElement,
+  type EtuPlotResponse,
   type TMTFrameSearchResult,
   type TMTSettingsResponse,
   type EMTFrameSearchResult,
@@ -1170,7 +1172,136 @@ function SampleSettings({ maint, setMaint, selection }: { maint: boolean; setMai
 }
 
 // ── Screen 3: Curve (sample until Stage C) ────────────────────────────────────
+// ── Screen 3: Curve dispatcher ────────────────────────────────────────────────
 function Curve({ selection }: { selection: LiveSelection | null }) {
+  if (selection?.family === 'etu' && selection.sensorId != null) {
+    return <EtuCurve selection={selection} />
+  }
+  return <SampleCurve selection={selection} />
+}
+
+// ── Screen 3 ETU (LIVE): nominal-illustration curve from /plot-tcc ─────────────
+// The curve is a NOMINAL ILLUSTRATION (G4 / NETA_TCC_OVERLAY_SPEC): the field-authoritative
+// surface is the NETA tolerance table (Screen 2). InvEq curve numbers are G4-withheld pending
+// captured fixtures, so this is labelled non-authoritative. Markers use the NETA test points
+// (LTD 3× / STD·GFD 1.5×) via /plot-tcc's separate test_multiple params.
+const CURVE_COLORS: Record<string, string> = {
+  ltpu: '#2f8f5b', lt: '#2f8f5b', ltd: '#d98324', stpu: '#1d6fb8', std: '#d24b4b',
+  inst: '#7c5cc4', gfpu: '#0d8f8f', gfd: '#b06fc4', nominal: '#14507d',
+}
+const clampX = (a: number) => Math.max(PLOT.ml, Math.min(PLOT.ml + PLOT.w, px(a)))
+const clampY = (s: number) => Math.max(PLOT.mt, Math.min(PLOT.mt + PLOT.h, py(s)))
+const livePath = (pts: { amps: number; seconds: number }[]) =>
+  pts.filter((p) => p.amps > 0 && p.seconds > 0)
+    .map((p, i) => `${i ? 'L' : 'M'}${clampX(p.amps).toFixed(1)},${clampY(p.seconds).toFixed(1)}`).join(' ')
+
+function EtuCurve({ selection }: { selection: LiveSelection }) {
+  const sensorId = selection.sensorId as number
+  const [plot, setPlot] = useState<EtuPlotResponse | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [err, setErr] = useState<string | null>(null)
+
+  useEffect(() => {
+    let active = true
+    setLoading(true); setErr(null); setPlot(null)
+    fetchEtuSettings(sensorId)
+      .then((s) => {
+        const mid = (arr: number[]) => (arr.length ? arr[Math.floor(arr.length / 2)] : undefined)
+        const band = (bs: DelayBandOption[]) => { const b = bs.find((x) => x.is_default) ?? bs[0]; return b ? Number(b.band) : undefined }
+        return fetchEtuPlot({
+          sensor_id: sensorId,
+          plug_rating: s.plug_values[0] ?? 0,
+          ltpu_setting: mid(s.ltpu_settings), stpu_setting: mid(s.stpu_settings),
+          inst_setting: mid(s.inst_settings), gfpu_setting: mid(s.gfpu_settings),
+          ltd_setting: band(s.ltd_settings), std_setting: band(s.std_settings), gfd_setting: band(s.gfd_settings),
+          ltd_test_multiple: 3, std_test_multiple: 1.5, gfd_test_multiple: 1.5,
+          include_nominal_curve: true, include_expected_markers: true, include_measured_markers: false,
+        })
+      })
+      .then((r) => { if (active) setPlot(r) })
+      .catch((e) => { if (active) setErr(errMsg(e)) })
+      .finally(() => { if (active) setLoading(false) })
+    return () => { active = false }
+  }, [sensorId])
+
+  if (loading) return <div className="loadbox"><span className="spin" /> Generating curve…</div>
+  if (err || !plot) return <div className="loadbox"><span className="sel-status err">⚠ {err ?? 'No curve data'}</span></div>
+
+  const curves = plot.curves ?? []
+  const markers = (plot.expected_markers ?? []).filter((m) => m.expected_current > 0 && m.expected_time != null && (m.expected_time as number) > 0)
+  const colorFor = (el: string) => CURVE_COLORS[(el ?? '').toLowerCase()] ?? '#14507d'
+  const legendItems = Array.from(new Map(curves.map((c) => [c.element, { c: colorFor(c.element), t: c.element.toUpperCase() }])).values())
+  const allAmps = curves.flatMap((c) => c.points.map((p) => p.amps)).filter((a) => a > 0)
+  const stats = [
+    { k: 'Curves', v: String(curves.length) },
+    { k: 'Test Points', v: String(markers.length) },
+    { k: 'Max Current', v: allAmps.length ? `${Math.round(Math.max(...allAmps)).toLocaleString('en-US')} A` : '—' },
+    { k: 'Plug', v: `${plot.meta.plug_rating} A` },
+  ]
+
+  return (
+    <>
+      <div className="curve-grid">
+        <aside className="card side">
+          <div className="card-h">Device Info <span className="badge inline live">LIVE</span></div>
+          <div className="card-b">
+            <Field label="Breaker" value={selection.breakerLabel} />
+            <Field label="Trip Unit" value={selection.tripLabel} />
+            <Field label="Sensor" value={plot.meta.sensor_desc || selection.ratingLabel} />
+            <Field label="Plug (Ir)" value={`${plot.meta.plug_rating} A`} />
+          </div>
+          <div className="card-h" style={{ marginTop: 8 }}>Curve Elements</div>
+          <div className="legend">
+            {legendItems.length ? legendItems.map((l) => (<div key={l.t} className="leg"><span className="sw" style={{ background: l.c }} />{l.t}</div>)) : <div className="leg muted2">No curve segments</div>}
+          </div>
+        </aside>
+
+        <section className="card plot-card">
+          <div className="card-h">Trip Characteristic Curve <span className="badge inline">LIVE · nominal illustration</span></div>
+          <div className="plot-wrap">
+            <svg viewBox="0 0 700 480" className="plot" role="img" aria-label="Time-current curve">
+              {X_TICKS.map((t) => (
+                <g key={`x${t}`}>
+                  <line x1={px(t)} y1={PLOT.mt} x2={px(t)} y2={PLOT.mt + PLOT.h} className="grid" />
+                  <text x={px(t)} y={PLOT.mt + PLOT.h + 16} className="axt" textAnchor="middle">{t >= 1000 ? `${t / 1000}k` : t}</text>
+                </g>
+              ))}
+              {Y_TICKS.map((t) => (
+                <g key={`y${t}`}>
+                  <line x1={PLOT.ml} y1={py(t)} x2={PLOT.ml + PLOT.w} y2={py(t)} className="grid" />
+                  <text x={PLOT.ml - 8} y={py(t) + 3} className="axt" textAnchor="end">{t}</text>
+                </g>
+              ))}
+              <text x={PLOT.ml + PLOT.w / 2} y={PLOT.mt + PLOT.h + 38} className="axl" textAnchor="middle">Current (A)</text>
+              <text transform={`translate(16 ${PLOT.mt + PLOT.h / 2}) rotate(-90)`} className="axl" textAnchor="middle">Time (s)</text>
+              {curves.map((c) => (
+                <path key={c.id} d={livePath(c.points)} fill="none" stroke={colorFor(c.element)} strokeWidth={2.4} strokeLinejoin="round" strokeLinecap="round" opacity={0.92} />
+              ))}
+              {markers.map((m) => (
+                <rect key={m.id} x={clampX(m.expected_current) - 5} y={clampY(m.expected_time as number) - 5} width={10} height={10}
+                  transform={`rotate(45 ${clampX(m.expected_current)} ${clampY(m.expected_time as number)})`}
+                  fill={colorFor(m.element)} stroke="#fff" strokeWidth={1.5}>
+                  <title>{`${m.element} ${fmtMult(m.test_multiple)} — ${Math.round(m.expected_current).toLocaleString('en-US')} A`}</title>
+                </rect>
+              ))}
+            </svg>
+          </div>
+        </section>
+      </div>
+
+      {plot.warnings?.length ? <div className="sel-status warn">{plot.warnings.join(' · ')}</div> : null}
+      <div className="method">
+        <b>Nominal illustration.</b> This curve is rendered live from the engine (`/plot-tcc`) at the sensor's nominal settings — it is <b>supplemental</b>, not the field-authoritative surface. Use the <b>NETA Tolerance Bands</b> table (Protection Settings) for field values; InvEq curve numbers remain pending captured-fixture validation (G4). Markers are placed at the NETA test points (LTD 3× · STD/GFD 1.5×). {plot.meta.plot_disclaimer ? ` ${plot.meta.plot_disclaimer}` : ''}
+      </div>
+
+      <div className="stats">
+        {stats.map((s) => (<div key={s.k} className="stat"><span>{s.k}</span><b>{s.v}</b></div>))}
+      </div>
+    </>
+  )
+}
+
+function SampleCurve({ selection }: { selection: LiveSelection | null }) {
   const legend = [
     { c: '#14507d', t: 'Nominal Curve' },
     { c: '#2f8f5b', t: 'LTPU @ 1×' },
