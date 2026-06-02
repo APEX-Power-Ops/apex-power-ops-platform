@@ -313,6 +313,18 @@ withheld with a diagnostic, pickup/curve unknown.
 rows 6-7 Therm-INVEQ until captured EasyPower fixtures promote them; **hard-exclude the 23 GF Ansi sensors / 100 rows
 (formula recovered but solver path not yet shipped) and rows 8-12.***
 
+> **Test-POINT vs expected-TIME (NETA sheet column-trust).** For a delay element the test sheet has two
+> separable quantities, with *different* trust sources: **(a) the test point** — the NETA test multiple
+> (LTD 3× LTPU · STD 1.5× STPU · GFD 1.5× GFPU; `NETA_TEST_PLAN_SPEC §2/§11`) and the **inject current** =
+> multiple × the element's pickup current — is **always field-correct** (a fixed NETA procedure applied to
+> the *proven* pickup current of row 2), independent of curve-number trust; and **(b) the expected trip
+> time** at that point, which inherits this matrix's delay-status (PROVEN for direct-band rows 3-5; rows 6-7
+> Therm-INVEQ withheld pending fixtures). The LV page (`/lvbreakertcc`) renders (a) directly (NETA multiple +
+> inject current, field-correct) and badges (b) **"verify"** until the band→curve recompute at the point
+> lands (Stage C). Earlier the page conflated the selected delay *band* value with the test multiple (the
+> `/calculate` `p_*_multiplier` param), so it showed e.g. STD "0.1× / 1,200 A" (below pickup); now corrected.
+> `[VERIFIED-LIVE 2026-06-01]`
+
 ---
 
 ## 5. The InvEq numeric-parity gap (the #1 open calc question)
