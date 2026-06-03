@@ -7,8 +7,7 @@ hand-derived from the decompiled native ``CIxt`` closed form
 multiples — an independent spec, not a restatement of the evaluator.
 
 This is the I2X-3 parity foundation: it proves the managed Iˣt math + the
-flat/ramp/composite shape dispatch + the field-trust gating (composite withheld)
-BEFORE any live promotion.
+flat/ramp/composite shape dispatch + the field-trust gating BEFORE any live promotion.
 
 NATIVE CAPSTONE — I2X-4 (2026-06-03, STATE §116): the evaluator was additionally
 confirmed **bit-exact (max 0 ULP)** against the *actual* native TccBase.dll
@@ -17,8 +16,14 @@ local oracle (``output/inveq-parity/oracle/ixt_oracle.exe``; licensed DLL stays
 out of git). The fixture literals below are now native-exact (the one 1-ULP
 hand-derivation, s8915 clear @ M=1.5, was corrected). The 1e-9 tolerance here is
 retained only for cross-platform ``Math.Pow`` robustness — on the validation host
-the match is exact. The I2X=2 composite combine-rule pinning (I2X-5) remains the
-one open residual; composite stays WITHHELD until then.
+the match is exact.
+
+COMPOSITE — I2X-5 (2026-06-03, STATE §116): the I2X=2 composite combine rule is
+RECOVERED + implemented as ``t(M) = max(ixt_ramp(M), std_floor)`` — decompile-confirmed
+(the native floor clamp; the explicit ``max(rTmin,dMinTime)`` lambda). Now SUPPORTED;
+the ramp is native-bit-exact (I2X-4) and the floor is the stored ``std_open/std_clear``.
+The remaining promotion gate for live ``db`` trust is a render spot-check (a captured
+EasyPower composite curve); until then composite ships at the ``verify`` field-trust tier.
 """
 import json
 import os
@@ -132,18 +137,37 @@ def test_surface_ramp_supported_matches_evaluator():
     assert surf.time_high == pytest.approx(10.399999618530273)
 
 
-def test_surface_composite_is_withheld():
-    """I2X=2 composite combine rule is unconfirmed -> must be UNSUPPORTED (withheld)."""
-    scn = _by_label()["s17-i2x2-x2-composite"]
-    surf = i2x_delay_surface(
-        test_multiple=1.5, i2x_flag=2, exp_x=scn["exp_x"],
-        i_open=scn["i_open"], t_open=scn["t_open"],
-        i_clear=scn["i_clear"], t_clear=scn["t_clear"],
-        std_open=scn["std_open"], std_clear=scn["std_clear"],
-    )
-    assert surf.supported is False
-    assert surf.shape == SHAPE_COMPOSITE
-    assert "composite" in surf.reason.lower()
+@pytest.mark.parametrize("scn", [s for s in _scenarios() if s["shape"] == "composite"],
+                         ids=lambda s: s["label"])
+def test_surface_composite_max_ramp_floor(scn):
+    """I2X=2 composite = max(Iˣt ramp, definite-time floor) — the recovered combine
+    rule (G4 §3b·I2X / STATE §116). SUPPORTED; ramp dominates at low current, the
+    floor clamps at high current."""
+    for chk in scn["checks"]:
+        surf = i2x_delay_surface(
+            test_multiple=chk["m"], i2x_flag=2, exp_x=scn["exp_x"],
+            i_open=scn["i_open"], t_open=scn["t_open"],
+            i_clear=scn["i_clear"], t_clear=scn["t_clear"],
+            std_open=scn["std_open"], std_clear=scn["std_clear"],
+        )
+        assert surf.supported and surf.shape == SHAPE_COMPOSITE, (scn["label"], chk["m"])
+        # expected_time is the OPEN surface; lo/hi bracket open & clear.
+        assert surf.expected_time == pytest.approx(chk["expected_open"], abs=_TOL), (scn["label"], chk["m"])
+        lo = min(chk["expected_open"], chk["expected_clear"])
+        hi = max(chk["expected_open"], chk["expected_clear"])
+        assert surf.time_low == pytest.approx(lo, abs=_TOL)
+        assert surf.time_high == pytest.approx(hi, abs=_TOL)
+
+
+def test_composite_floor_clamps_at_high_current():
+    """The defining composite property: above the ramp/floor crossover the time stops
+    decreasing and holds at the definite-time floor."""
+    # ramp 0.4·(6/M)² hits the 0.1 floor at M=12; beyond that it stays clamped.
+    deep = i2x_delay_surface(test_multiple=48.0, i2x_flag=2, exp_x=2.0,
+                             i_open=6.0, t_open=0.4, i_clear=6.0, t_clear=0.6,
+                             std_open=0.1, std_clear=0.16)
+    assert deep.supported
+    assert deep.expected_time == pytest.approx(0.1)  # floor, not the tiny ramp value
 
 
 def test_surface_flat_is_current_independent():

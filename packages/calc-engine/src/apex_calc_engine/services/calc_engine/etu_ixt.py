@@ -168,9 +168,24 @@ def i2x_delay_surface(
                                "I2X Iˣt ramp — t = T_anchor·(I_anchor/M)^X (G4 §3b·I2X).")
 
     if shape == SHAPE_COMPOSITE:
-        return IxtDelaySurface(None, None, None, shape, False,
-                               "I2X=2 composite (ramp + definite-time floor) combine rule "
-                               "pending native-render parity (G4 §3b·I2X residual).")
+        # Composite (I2X=2): the Iˣt ramp clamped below at the band's definite-time
+        # floor. Combine rule t(M) = max(ramp(M), floor) — RECOVERED + decompile-
+        # confirmed (G4 §3b·I2X / STATE §116): the native renderers apply the floor as
+        # a minimum-time clamp on the curve (the explicit max(rTmin, dMinTime) lambda in
+        # CalcThermEq2, the universal *prMin clamp across CalcIeeeEq2/CalcGESMREq2). The
+        # ramp is native-bit-exact (I2X-4); the floor is the stored std_open/std_clear.
+        ramp_open = ixt_time(test_multiple, i_open, t_open, exp_x)
+        ramp_clear = ixt_time(test_multiple, i_clear, t_clear, exp_x)
+        floor_open = float(std_open) if _usable(std_open) else None
+        floor_clear = float(std_clear) if _usable(std_clear) else None
+        open_t = _max_opt(ramp_open, floor_open)
+        clear_t = _max_opt(ramp_clear, floor_clear)
+        if open_t is None and clear_t is None:
+            return IxtDelaySurface(None, None, None, shape, False,
+                                   "I2X composite band has no usable ramp anchor or floor.")
+        lo, hi = _lo_hi(open_t, clear_t)
+        return IxtDelaySurface(open_t, lo, hi, shape, True,
+                               "I2X composite — max(Iˣt ramp, definite-time floor) (G4 §3b·I2X).")
 
     return IxtDelaySurface(None, None, None, shape, False,
                            f"I2X shape {i2x_flag!r} unrecognised — withheld.")
@@ -180,3 +195,12 @@ def _lo_hi(a: Optional[float], b: Optional[float]) -> tuple[Optional[float], Opt
     if a is not None and b is not None:
         return (min(a, b), max(a, b))
     return (a, b)
+
+
+def _max_opt(a: Optional[float], b: Optional[float]) -> Optional[float]:
+    """max() that ignores None (the composite ramp-vs-floor clamp)."""
+    if a is None:
+        return b
+    if b is None:
+        return a
+    return max(a, b)
