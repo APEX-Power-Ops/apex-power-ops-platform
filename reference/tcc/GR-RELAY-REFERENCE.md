@@ -252,6 +252,15 @@ foundation the relay field sheet will gate against. Forward plan: **`GR-RELAY-RO
 - **`RelayLineSection.{Pickup, SecondaryI}` are DESIGN-OPEN in the DB itself** ("Chet to decide" / "To
   decide") — unfinished source fields; do not rely on them. `[DVL-DB]` `[DEFERRED]`
 - **BSL `v_a`/`v_b` column-order vs DB row-order** caveat — verify before shipping any BSL curve. `[R3]`
+- **Relays carry NO tolerance/accuracy data — RESOLVED (triangulated) `[VERIFIED-LIVE 2026-06-03]`.** Checked
+  across all three sources + the breaker contrast: governed `tcc.relay_*` (no tol column), source Access
+  `D:\TCC_NEW.accdb` (154 fields, 30 DVL descriptions, **none** tolerance-related — see
+  `GR-RELAY-FIELD-DICTIONARY.md`), and the `TccBase`/`dbBase` DLL (`CdbRELRow` = size-only shell; no `*Relay*`
+  file references tolerance). The **same Access file + DLL DO model breaker/ETU/EMT tolerance**
+  (`DatSensor.DS*_TOL_*`, `Breaker*Styles.InstOvr*Tolerance`, `EMT_Sections.PickupToler*`,
+  `DatSection3STOvr.OvrToler*Pct`) → EasyPower **deliberately renders relays as nominal curves**, no tolerance.
+  **Consequence:** relay NETA tolerances must be sourced **externally** (NETA standard floor + per-mfr
+  `[VENDOR-DOC]` OEM accuracy) — there is no EasyPower-DB relay-tolerance path (unlike breakers). Roadmap Chip 3.
 
 **Close path (the relay equivalent of the breaker INVEQ §5 plan):** one **Ghidra-headless run on
 `D:\EasyPower\EasyPower.exe`** for `CTccRelayCurveBase` + the per-family curve evaluators, **plus
