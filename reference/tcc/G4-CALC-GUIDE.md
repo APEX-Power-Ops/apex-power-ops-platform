@@ -327,6 +327,17 @@ Decisive results:
   and re-validate). Promoting on the unconfirmed hypothesis is **disallowed** (field-trust law). NOTE GF
   InvEq sensors carry no direct GFD bands → no field-table GFD delay row surfaces; promotion would certify
   the Screen-3 GF-InvEq curve only.
+- **GF-Ansi shares the SAME `field[13]` basis → GF-Therm and GF-Ansi are ONE field[13]-gated lane (NEW 2026-06-02).**
+  Decomp of `CalcAnsiEqGF` (line 18392) shows its pickup-basis selection is **byte-identical to `CalcThermEq`**:
+  `byICalc {0→field[16], 1→field[13], 2→field[12]}` (Ansi lines 18400-18419 vs Therm 18305-18324), and the
+  Ansi current axis is likewise normalized by that basis (`num10 = field[16]·(rTol+1)/num4`, `num4 = field[<sel>]`;
+  line 18448). So the GF runtime (`byICalc=1`) anchors **both** families on `field[13]` — the Ansi family carries
+  the **same unresolved `field[13]` blocker** as Therm, **not** an independent one. **Consequence:** GF-INVEQ Therm
+  (1,690) **and** GF-INVEQ Ansi (23 sensors / 100 rows) promote **together** in one motion once `field[13]` is
+  resolved; there is no standalone Ansi ship. The recovered `CalcAnsiEqGF` curve is `T(M) = rA + rB/M' + rD/M'² +
+  rE/M'³` with `M' = (I/field[<sel>])/(rTol+1) − rC`, plus a flat/definite degenerate branch (`rB=rD=rE=0` →
+  `T = rTmin` from `field[16]·(rTol+1)`); the form is **structure-validated** (monotone inverse-time, C37.112
+  shape) `[VERIFIED 2026-06-02]`, leaving `field[13]` as the sole blocker shared with Therm. `[DLL TccBase.dll CTccLVBreakerCurveGF.CalcAnsiEqGF 18392-18490 · CalcThermEq 18298-18324]`
 - **Secondary residual `*ICalc=0` CLOSED.** Direct `[VERIFIED-LIVE]` count: **zero rows** in
   `DatSection3InvEq` or `DatSection1GfInvEq` store any `*ICalc = 0`. STD `IdOpICalc ≡ 4`; GF `∈ {1→6760,
   4→1690, 8→100(Ansi)}`. The pass-5 translator branch `*ICalc=0 → byICalc=2 → ref[12]` is correct but

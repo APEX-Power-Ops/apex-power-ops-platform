@@ -52,8 +52,8 @@ every stage; the punch list is about *coverage*, not *safety*.
 | — | **Direct-band delay (STD/GFD route 0)** | STD 4,364 / GFD 9,933 | **db** ✓ | open/clear (mfr) ✓ | — | **BANKED** |
 | — | **LTD delay** | all ETU | **db** ✓ (I²t window §111) | engine window | — | **BANKED** (band → L5) |
 | — | **STD-INVEQ Therm** | ~4,524 | **db** ✓ (native §107) | — | — | **BANKED** |
-| L1 | GF-INVEQ Therm | ~1,690 GFD | verify | — | S | **PAUSED** — `field[13]` evidence (you) |
-| L2 | GF-INVEQ Ansi | 23 sensors / 100 rows | withheld | — | XS | OPEN — formula recovered, ship decision |
+| L1 | **GF-INVEQ Therm + Ansi** (one field[13] lane) | ~1,690 GFD + 23 Ansi | verify / withheld | — | S | **PAUSED** — `field[13]` evidence (you); both promote together |
+| ~~L2~~ | ~~GF-INVEQ Ansi (standalone)~~ | — | — | — | — | **MERGED INTO L1** (2026-06-02) — shares `field[13]`, not independent |
 | L3 | GE-TU delay solver | STD 235 / GFD 209 | withheld | — | M | OPEN — separate trip-unit math |
 | L4 | **I2X / Iˣt delay solver** | STD 8,708 / GFD 5,976 (~15k) | withheld | — | **L (the monster)** | OPEN — biggest single lever |
 | L5 | Delay tolerance BANDS (per-mfr ± on time) | LTD + derived rows | — | engine window | M | OPEN — per-mfr time tolerance |
@@ -67,17 +67,20 @@ every stage; the punch list is about *coverage*, not *safety*.
 
 ## The lanes (detail + the proven path to close each)
 
-### L1 — GF-INVEQ Therm → db  ·  ~1,690 GFD  ·  PAUSED (operator evidence)
-GF runtime is `byICalc=1` (`num3=field[13]` ≠ pickup), so the managed `num3=num6` form isn't native-faithful;
-`rIRef<rM` GF rows return None. **Blocker:** `field[13]` provenance (hypothesis: sensor/frame rating — not
-yet `[DLL]`-confirmed). **Close:** confirm `field[13]/pickup` from operator evidence (or sweep it in the
-oracle vs an EasyPower-GUI GF reference curve) → correct the managed `rIRef` → re-validate bit-exact →
-promote. Oracle harness preserved at `output/inveq-parity/oracle/`. `[G4 §3f/§5]`
+### L1 — GF-INVEQ Therm **+ Ansi** → db  ·  ~1,690 GFD + 23 Ansi  ·  PAUSED (operator evidence)
+**One lane, two families, one blocker (merged 2026-06-02 — see below).** GF runtime is `byICalc=1`
+(`num3/num4 = field[13]` ≠ pickup), so the managed `num3=num6` form isn't native-faithful; `rIRef<rM` GF rows
+return None. **Blocker:** `field[13]` provenance (hypothesis: sensor/frame rating — not yet `[DLL]`-confirmed).
+**Close:** confirm `field[13]/pickup` from operator evidence (or sweep it in the oracle vs an EasyPower-GUI GF
+reference curve) → correct the managed `field[13]` basis → re-validate **both** families bit-exact → promote.
+Oracle harness preserved at `output/inveq-parity/oracle/`. `[G4 §3f/§5]`
 
-### L2 — GF-INVEQ Ansi → ship or keep-excluded  ·  23 sensors / 100 rows  ·  XS
-`CalcAnsiEqGF` already recovered (C37.112 exponent in the c5 slot the IEEE form ignored). **Close:** a
-family-aware Ansi solver branch + oracle parity over the 100 rows → ship `db`, or formally keep-excluded.
-Smallest real bite on the board. `[G4 §3f/§5]`
+> **L2 (GF-Ansi) MERGED into L1 — finding 2026-06-02.** Decomp of `CalcAnsiEqGF` proved its pickup-basis
+> selection is **byte-identical to `CalcThermEq`** (`byICalc {0→field[16], 1→field[13], 2→field[12]}`), so GF-Ansi
+> anchors on the **same `field[13]`** at runtime — it is **not** an independent ship. The recovered Ansi formula
+> `T(M)=rA+rB/M′+rD/M′²+rE/M′³` (C37.112 inverse-time) + its flat-degenerate branch are now **banked in G4 §3f**
+> and **structure-validated** (monotone inverse curve). When `field[13]` lands, the 1,690 Therm + 23 Ansi rows
+> promote **together** in one motion. Net effect: removed a phantom "XS standalone" bite; de-risked the GF lane.
 
 ### L3 — GE-TU delay solver → db  ·  STD 235 + GFD 209  ·  M
 GE trip-unit STD/Gnd (routes 3/4) use a separate solver not built. **Close:** RE the GE-TU delay math
@@ -134,8 +137,16 @@ These are closed and locked in the guides; reopening only on a cited reason:
 - **Per-sensor delay-route field-trust gating** live (withhold-not-fabricate) `[G4 §6 · §106]`.
 
 ## Suggested sequence (smallest durable bites first)
-**L2** (GF-Ansi, XS) → **L1** (GF-Therm, on your evidence) → **L7/L5** (band validation/per-mfr time tol,
-bounded) → **L6** (catalog, one family per bite — open-ended but always-additive) → **L3** (GE-TU) →
-**L4** (I2X — the deliberate big campaign) → **L8/L9** (TMT/EMT) → **L10** (relays — its own large lane).
+**L1** (GF Therm **+** Ansi, one motion — gated on your `field[13]` evidence; formula side already banked +
+structure-validated 2026-06-02) → **L7/L5** (band validation / per-mfr time tol, bounded) → **L6** (catalog,
+one cited family per bite — open-ended but always-additive) → **L3** (GE-TU) → **L4** (I2X — the deliberate big
+campaign, the ~15k lever) → **L8/L9** (TMT/EMT) → **L10** (relays — its own large lane).
+
+> **What an autonomous bite can/can't do right now (2026-06-02):** L1 is gated on operator `field[13]` evidence
+> (field-trust law forbids promoting on the unconfirmed hypothesis); L5/L7/L6/L8/L9 need OEM/vendor tolerance
+> data not yet in hand; L3/L4/L10 are RE campaigns needing the native-kernel oracle build. So the next *new
+> coverage* most likely comes from either (a) your `field[13]` evidence unlocking L1 (both GF families), or
+> (b) scheduling the L4 I2X campaign (RE + oracle, the §107 recipe — no external inputs needed). The GF formula
+> RE is now fully banked, so L1's remaining work is just the `field[13]` anchor + a re-validate.
 
 *Last updated 2026-06-02 — created. Update status + bump counts (`[VERIFIED-LIVE]`) as lanes close.*

@@ -237,10 +237,15 @@ def gf_inveq_family(id_open_eq: Optional[int]) -> GFInvEqFamily:
 def gf_inveq_is_excluded_ansi(id_open_eq: Optional[int]) -> bool:
     """True when the GF InvEq row selects the ANSI native family.
 
-    CalcAnsiEqGF is now formula-recovered, but the runtime path still lacks
-    family-aware solver plumbing and real captured parity fixtures for the
-    100-row ANSI cohort, so the ANSI branch remains an explicit unsupported
-    diagnostic instead of falling through to the Therm/IEEE evaluator.
+    CalcAnsiEqGF is formula-recovered and banked (G4 §3f: T(M) = rA + rB/M' +
+    rD/M'^2 + rE/M'^3, C37.112 inverse-time). It is NOT promotable independently:
+    decomp (TccBase.dll 18392-18419) shows CalcAnsiEqGF selects its pickup basis
+    byICalc {0->field[16], 1->field[13], 2->field[12]} byte-identically to
+    CalcThermEq, so the GF runtime (byICalc=1) anchors ANSI on the SAME field[13]
+    that gates GF Therm. ANSI therefore shares GF Therm's single open blocker
+    (field[13] provenance) and promotes WITH it in one motion once field[13] is
+    resolved (punch list L1). Until then the ANSI branch stays an explicit
+    unsupported diagnostic — never a silent Therm/IEEE fallback.
     """
     return gf_inveq_family(id_open_eq) == GFInvEqFamily.ANSI
 
