@@ -455,9 +455,19 @@ solver not native-faithful for the GF `byICalc=1` basis); **hard-exclude the 23 
 > band↔multiplier conflation specific to `/calculate`'s delay rows: it had echoed the LTD band value as the
 > multiplier (e.g. a 12 s band → "12× / 11,520 A" inject) and shown the 6×-anchored time under a 3× label.
 > LTD stays **DB** (the band value is DB; I²t scaling between 3× and 6× is the definitional long-time
-> characteristic, both points well inside the I²t region). **Open follow-ons:** the reference window's
-> tolerance band is `(0.7·nominal, nominal)` (−30 % / 0) — the engine's LTD window, carried for curve↔table
-> consistency; a NETA-specific LTD time tolerance is a future refinement. `/evaluate` still uses the band-table
+> characteristic, both points well inside the I²t region).
+>
+> **LTD time tolerance now per-manufacturer (L5, 2026-06-03).** The reference window's band is no longer the
+> hardcoded `(0.7·nominal, nominal)` (−30 % / 0) placeholder. `_authoritative_delay_surface` now loads the
+> **per-sensor DB tolerance** `tcc.etu_ltd_params.ds2_tol_low/ds2_tol_high` and applies it as
+> `nominal·(1 + tol/100)`. **LTD tolerance is stored PER CURVE TYPE** (I²T vs IEEE V/Mod/Ext vs IEC A/B/C vs
+> I⁴T — I²T ≈ −27/+0, IEEE/IEC ±10 %, I⁴T −38.81/+9.7), so `_load_ltd_time_tolerance` pairs the **I²T-curve-type
+> row** with the I²t-rendered window; else it accepts only an unambiguous sensor-wide value; else falls back to
+> the generic −30/+0 **flagged** `timing_source=ltd_reference_window_generic` (UI shows an `est` marker so a
+> placeholder never reads as DB-authoritative). **Open follow-ons:** (a) **ET 1.0 family** (no `ds2_tol` row,
+> e.g. PowerPact M-frame MGA36600) — source ±10 % from curve 613-14 via the validated-library, gated on the
+> ET 1.0 bridge `[L5-LTD-C]`; (b) **curve-type-aware render** — the window assumes I²t for every sensor, an
+> approximation for sensors whose active LTD curve is IEEE/IEC `[L5-LTD-B]`. `/evaluate` still uses the band-table
 > LTD path (the LV page computes PASS/FAIL client-side from `/calculate`, so it is unaffected) — reconcile it
 > to the reference window if `/evaluate` is ever wired into the page. `[VERIFIED-LIVE 2026-06-02]`
 

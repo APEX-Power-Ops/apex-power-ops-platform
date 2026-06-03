@@ -56,7 +56,7 @@ every stage; the punch list is about *coverage*, not *safety*.
 | ~~L2~~ | ~~GF-INVEQ Ansi (standalone)~~ | — | — | — | — | **MERGED INTO L1** (2026-06-02) — shares `field[13]`, not independent |
 | L3 | GE-TU delay solver | STD 235 / GFD 209 | withheld | — | M | OPEN — separate trip-unit math |
 | L4 | **I2X / Iˣt delay solver** | STD 8,708 / GFD 5,976 (~15k) | withheld | — | **M (resized 06-03; ~98% = banked I²t)** | OPEN — biggest single lever; gating verify DONE §113 |
-| L5 | Delay tolerance BANDS (per-mfr ± on time) | LTD + derived rows | — | engine window | M | OPEN — per-mfr time tolerance |
+| L5 | Delay tolerance BANDS (per-mfr ± on time) | LTD + derived rows | **LTD: db (per-mfr DS2_TOL)** | per-mfr DB band | M | **LTD DONE §114**; STD/GFD + ET 1.0 remain |
 | L6 | Envelope-only setting+tolerance catalog | ~4,106 families (PXR2 seeded) | — | `[VENDOR-DOC]` | L (incremental) | IN PROGRESS — validated-library loop |
 | L7 | Pickup BAND validation vs OEM | per family | db | per-sensor DB | M | OPEN — confirm DB = true OEM per-mfr |
 | L8 | TMT thermal time/band | TMT population | thermal verify | mag DB ✓ | M | OPEN |
@@ -123,10 +123,16 @@ kernel reading `X` from `I2T_VAL`. No `CalcThermEq`, no polynomial root-find.
 `[G4 §3a/§3c/§4 · DLL TccBase.dll CIxt 24248-24297 / SetSTDB_* 24440-24531 / IsSTDB_Ixt 24196,26398-26442 ·
 DatSection3STD + DatSensor.DS3_I2T_VAL/DS1GF_I2T_VAL · §113]`
 
-### L5 — Delay tolerance BANDS (per-manufacturer ± on time)  ·  M
-Direct-band STD/GFD carry the manufacturer open/clear band; LTD currently uses the engine's
-`(0.7·nominal, nominal)` window. **Close:** source per-manufacturer LTD/delay *time* tolerances (OEM curve
-bands) so the ± is per-mfr, not a generic window. `[G4 §4 — §111 note]`
+### L5 — Delay tolerance BANDS (per-manufacturer ± on time)  ·  **LTD DONE 2026-06-03; STD/GFD + ET 1.0 remain**
+- **DONE — LTD time band now per-manufacturer.** Replaced the hardcoded `(0.7·nominal, nominal)` placeholder
+  with the per-sensor DB tolerance `tcc.etu_ltd_params.ds2_tol_low/high`, applied as `nominal·(1 + tol/100)`.
+  Tolerance is stored **per LTD curve TYPE** (I²T ≈ −27/+0, IEEE/IEC ±10 %, I⁴T −38.81/+9.7), so the loader pairs
+  the **I²T row** with the §111 I²t-rendered window (`_load_ltd_time_tolerance`: prefer I²T → else unambiguous
+  sensor value → else generic). Generic fallback is **flagged** (`timing_source=…_generic`, UI `est` marker).
+  Tests green, deployed + live-verified. `[G4 §4 · router `_load_ltd_time_tolerance` · §114]`
+- **Remaining:** (a) **ET 1.0 family** (no `ds2_tol` row — e.g. MGA36600) → source ±10 % from curve 613-14
+  `[L5-LTD-C, gated on the ET 1.0 bridge]`; (b) **curve-type-aware render** (don't assume I²t for IEEE/IEC
+  sensors) `[L5-LTD-B]`; (c) **STD/GFD direct-band** time tolerances — confirm the open/clear band is per-mfr.
 
 ### L6 — Envelope-only setting + tolerance catalog  ·  ~4,106 families  ·  L (incremental)
 ~23% of ETU sensors store only min/max envelopes; their real dial taps **and** tolerances live in OEM docs
