@@ -876,6 +876,113 @@ class TestPlugIdResolution:
         )
 
 
+class TestPlugRatingPlugTruncationBug:
+    """§110 regression: rating plugs that exceed the *nominal* sensor rating are
+    still valid — EasyPower's per-sensor ``tcc.etu_plugs`` (sourced 1:1 from
+    ``DatPlugs``) is authoritative. e.g. sensor 17223 is "6000(I^4T)" (nominal
+    rating 6000 A) yet legitimately offers a 6300 A rating plug. Such plugs must
+    not be dropped from the served list, nor 422'd on /calculate."""
+
+    def test_settings_endpoint_serves_rating_plug_above_nominal(self):
+        # Serving must trust the authoritative plug table, not clamp by nominal rating.
+        def fake(stmt, params=None):
+            sql = str(stmt)
+            result = MagicMock()
+            if "tcc.etu_plugs" in sql:
+                rows = []
+                for v in (5000.0, 6000.0, 6300.0):
+                    r = MagicMock()
+                    r._mapping = {"value": v}
+                    rows.append(r)
+                result.fetchall.return_value = rows
+            elif "vw_sensor_calc_context" in sql:
+                row = MagicMock()
+                row._mapping = {
+                    "rating": 6000.0,
+                    "trip_style_id": 1419,
+                    "ltpu_calc": 1,
+                    "stpu_calc": 1,
+                    "inst_calc": 1,
+                    "gfpu_calc": 7,
+                }
+                result.fetchone.return_value = row
+            else:
+                result.fetchall.return_value = []
+                result.fetchone.return_value = None
+            return result
+
+        mock_session = MagicMock()
+        mock_session.execute = MagicMock(side_effect=fake)
+
+        def override_db():
+            yield mock_session
+
+        app.dependency_overrides[get_db] = override_db
+        try:
+            with patch(
+                "services.neta.router._expand_pickup_values",
+                side_effect=lambda db, sid, ctx, kind, vals: vals,
+            ), patch(
+                "services.neta.router.setting_catalog.lookup", return_value=None
+            ):
+                tc = TestClient(app)
+                resp = tc.get("/api/v1/neta/settings/17223")
+        finally:
+            app.dependency_overrides.clear()
+
+        assert resp.status_code == 200, resp.text
+        plug_values = resp.json()["plug_values"]
+        assert 6300.0 in plug_values, plug_values
+        assert plug_values == [5000.0, 6000.0, 6300.0]
+
+    def _enforce_db(self, rating, max_plug):
+        def fake(stmt, params=None):
+            sql = str(stmt)
+            result = MagicMock()
+            if "vw_sensor_calc_context" in sql:
+                row = MagicMock()
+                row._mapping = {"rating": rating}
+                result.fetchone.return_value = row
+            elif "tcc.etu_plugs" in sql:
+                row = MagicMock()
+                row._mapping = {"max_plug": max_plug}
+                result.fetchone.return_value = row
+            else:
+                result.fetchone.return_value = None
+            return result
+
+        db = MagicMock()
+        db.execute = MagicMock(side_effect=fake)
+        return db
+
+    def test_enforce_allows_rating_plug_above_nominal(self):
+        from services.neta.router import _enforce_plug_within_sensor_rating
+
+        db = self._enforce_db(rating=6000.0, max_plug=6300.0)
+        # 6300 A is the sensor's max valid plug → must NOT raise though > nominal 6000.
+        _enforce_plug_within_sensor_rating(17223, 6300.0, db)
+
+    def test_enforce_rejects_plug_above_max_valid_plug(self):
+        from fastapi import HTTPException
+        from services.neta.router import _enforce_plug_within_sensor_rating
+
+        db = self._enforce_db(rating=6000.0, max_plug=6300.0)
+        with pytest.raises(HTTPException) as exc:
+            _enforce_plug_within_sensor_rating(17223, 9999.0, db)
+        assert exc.value.status_code == 422
+
+    def test_enforce_no_plugs_falls_back_to_nominal_rating(self):
+        from fastapi import HTTPException
+        from services.neta.router import _enforce_plug_within_sensor_rating
+
+        db = self._enforce_db(rating=6000.0, max_plug=None)
+        # No plug set on file → fall back to the nominal rating bound.
+        _enforce_plug_within_sensor_rating(17223, 5000.0, db)
+        with pytest.raises(HTTPException) as exc:
+            _enforce_plug_within_sensor_rating(17223, 7000.0, db)
+        assert exc.value.status_code == 422
+
+
 class TestFactorizedInputPassThrough:
     def test_calculate_route_passes_factor_inputs_to_sql(self, client, base_request):
         tc, mock_session = client

@@ -354,7 +354,9 @@ def test_settings_route_reads_direct_etu_tables_without_touching_stale_sql_funct
         assert resp.status_code == 200
         data = resp.json()
         assert fake_db.function_calls == 0
-        assert data["plug_values"] == [300, 400]
+        # §110: tcc.etu_plugs is authoritative — the 900 A plug is a valid rating
+        # plug and must NOT be clamped away by the nominal 800 A sensor rating.
+        assert data["plug_values"] == [300, 400, 900]
         assert data["ltpu_settings"] == [0.5, 0.6]
         assert data["ltd_settings"][0]["open_time"] == 2.4
         assert data["ltd_multipliers"] == [1]

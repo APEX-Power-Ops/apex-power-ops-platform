@@ -1255,12 +1255,6 @@ def _sensor_rating_limit(ctx: dict) -> float | None:
         return None
 
 
-def _filter_valid_plug_values(values: list[float], sensor_rating: float | None) -> list[float]:
-    if sensor_rating is None:
-        return values
-    return [value for value in values if float(value) <= sensor_rating]
-
-
 def _load_direct_numeric_settings(db: Session, table_name: str, value_column: str, sensor_id: int) -> list[float]:
     rows = db.execute(
         text(
@@ -1298,15 +1292,32 @@ def _enforce_plug_within_sensor_rating(sensor_id: int, plug_rating: float, db: S
     if not ctx_row:
         raise HTTPException(status_code=404, detail=f"Sensor {sensor_id} not found")
 
-    sensor_rating = _sensor_rating_limit(_row_mapping(ctx_row))
-    if sensor_rating is None:
+    # §110: the authoritative upper bound for a rating plug is the sensor's max
+    # *valid plug* (tcc.etu_plugs, 1:1 from EasyPower DatPlugs), which can
+    # legitimately exceed the nominal sensor rating (e.g. a 6000(I^4T) sensor
+    # offers a 6300 A rating plug). Fall back to the nominal rating only when the
+    # sensor has no plug set on file.
+    max_plug_row = db.execute(
+        text("SELECT MAX(value) AS max_plug FROM tcc.etu_plugs WHERE sensor_id = :sid"),
+        {"sid": sensor_id},
+    ).fetchone()
+    max_plug = _row_mapping(max_plug_row).get("max_plug")
+
+    if max_plug is not None:
+        upper = float(max_plug)
+        bound_label = "maximum valid plug rating"
+    else:
+        upper = _sensor_rating_limit(_row_mapping(ctx_row))
+        bound_label = "sensor rating"
+
+    if upper is None:
         return
-    if plug_rating > sensor_rating:
+    if plug_rating > upper + 1e-6:
         raise HTTPException(
             status_code=422,
             detail=(
-                f"Plug rating {plug_rating:g} exceeds sensor rating {sensor_rating:g}. "
-                "Plug rating must be less than or equal to the selected sensor rating."
+                f"Plug rating {plug_rating:g} exceeds the {bound_label} {upper:g}. "
+                "Plug rating must be less than or equal to the sensor's maximum valid plug."
             ),
         )
 
@@ -3736,7 +3747,12 @@ def get_available_settings(sensor_id: int, db: Session = Depends(get_db)):
     gfpu_settings = _expand_pickup_values(db, sensor_id, ctx, "gfpu", gfpu_settings)
 
     sensor_rating = _sensor_rating_limit(ctx)
-    plug_values = _filter_valid_plug_values(data.get("plug_values", []), sensor_rating)
+    # §110: serve the authoritative per-sensor plug set verbatim. tcc.etu_plugs is
+    # a 1:1 copy of EasyPower DatPlugs, so every value is a valid rating plug — and
+    # a valid plug can legitimately exceed the *nominal* sensor rating (e.g. a
+    # 6000(I^4T) sensor offers a 6300 A plug). Clamping by the nominal rating here
+    # silently dropped those top plugs from the Screen-2 selector.
+    plug_values = data.get("plug_values", [])
 
     std_settings = _load_delay_band_settings(db, "tcc.etu_std_bands", sensor_id)
     gfd_settings = _load_delay_band_settings(db, "tcc.etu_gfd_bands", sensor_id)
