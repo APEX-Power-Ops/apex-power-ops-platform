@@ -199,15 +199,21 @@ FAKE_GFD_CURVE = [
 # Fixtures
 # ──────────────────────────────────────────────────
 
-def _make_fake_execute(calc_data=CALC_DATA, eval_data=EVAL_DATA):
+def _make_fake_execute(calc_data=CALC_DATA, eval_data=EVAL_DATA, ltd_tol_rows=None):
     """Return a side_effect function for Session.execute that returns
-    deterministic payloads for the two SQL function calls."""
+    deterministic payloads for the two SQL function calls.
+
+    ``ltd_tol_rows`` mocks the per-sensor LTD time-tolerance query
+    (``tcc.etu_ltd_params``); each row is a dict with ``curve_name``/``tol_lo``/
+    ``tol_hi``. Default empty → no DB tol → the flagged generic window."""
     call_count = {"n": 0}
 
     def fake_execute(stmt, params=None):
         sql_text = str(stmt) if not isinstance(stmt, str) else stmt
         result = MagicMock()
-        if "vw_sensor_calc_context" in sql_text:
+        if "tcc.etu_ltd_params" in sql_text:
+            result.fetchall.return_value = list(ltd_tol_rows or [])
+        elif "vw_sensor_calc_context" in sql_text:
             row = MagicMock()
             row._mapping = {"rating": PLUG_RATING}
             result.fetchone.return_value = row
@@ -554,9 +560,11 @@ class TestCalculateEvaluateParity:
         # now agrees with the Screen-3 curve: t = setting * (6/3)^2 = 3.5 * 4 = 14.0 s.
         assert ltd["multiplier"] == 3.0
         assert ltd["delay_seconds"] == 14.0
+        # No per-sensor LTD tolerance is mocked here, so the band is the flagged
+        # generic −30%/+0% estimate (9.8 = 0.7·14, 14.0 = nominal).
         assert ltd["time_limit_low"] == pytest.approx(9.8)
         assert ltd["time_limit_high"] == 14.0
-        assert ltd["notes"] == "timing_source=ltd_reference_window"
+        assert ltd["notes"] == "timing_source=ltd_reference_window_generic"
 
         inst = elements["INST"]
         assert inst["kind"] == "pickup"
@@ -595,9 +603,9 @@ class TestCalculateEvaluateParity:
         assert ltd6["multiplier"] == 6.0
         assert ltd6["delay_seconds"] == pytest.approx(3.5)            # 3.5 * (6/6)^2
         assert ltd6["test_current"] == pytest.approx(5760.0)         # 6 * 960 LTPU pickup
-        assert ltd6["time_limit_low"] == pytest.approx(2.45)          # 0.7 * 3.5
+        assert ltd6["time_limit_low"] == pytest.approx(2.45)          # 0.7 * 3.5 (generic)
         assert ltd6["time_limit_high"] == pytest.approx(3.5)
-        assert ltd6["notes"] == "timing_source=ltd_reference_window"
+        assert ltd6["notes"] == "timing_source=ltd_reference_window_generic"
         assert ltd6["trust"] == "db"
 
         # 3x trips 4x slower (I2t), and injects half the 6x current.
@@ -605,6 +613,87 @@ class TestCalculateEvaluateParity:
         assert ltd3["delay_seconds"] == pytest.approx(14.0)          # 3.5 * (6/3)^2
         assert ltd3["test_current"] == pytest.approx(2880.0)         # 3 * 960
         assert ltd3["delay_seconds"] == pytest.approx(ltd6["delay_seconds"] * 4)
+
+    def _calc_ltd_with_tol(self, ltd_tol_rows):
+        mock_session = MagicMock()
+        mock_session.execute = MagicMock(
+            side_effect=_make_fake_execute(ltd_tol_rows=ltd_tol_rows)
+        )
+
+        def override_db():
+            yield mock_session
+
+        app.dependency_overrides[get_db] = override_db
+        try:
+            tc = TestClient(app)
+            req = {
+                "sensor_id": SENSOR_ID, "plug_rating": PLUG_RATING,
+                "ltpu_setting": 0.8, "ltd_setting": 3.5, "stpu_setting": 4.0,
+                "std_setting": 2.0, "inst_setting": 10.0, "gfpu_setting": 0.4,
+                "gfd_setting": 1.5, "maint_mode": False,
+            }
+            patches, _ = _patch_calc_engine()
+            with patches["pickup"], patches["ltd"], patches["ieee"]:
+                resp = tc.post("/api/v1/neta/calculate", json=req)
+            assert resp.status_code == 200
+            return {e["element"]: e for e in resp.json()["elements"]}["LTD"]
+        finally:
+            app.dependency_overrides.clear()
+
+    def test_calculate_ltd_uses_db_tolerance_band(self):
+        """A per-sensor LTD tolerance (tcc.etu_ltd_params) yields a real
+        nominal·(1±tol) band — not the generic −30/+0 — and an unflagged source.
+        nominal = 3.5·(6/3)² = 14.0 s; tol −20/+0 → 11.2 .. 14.0 s."""
+        ltd = self._calc_ltd_with_tol(
+            [{"curve_name": "I^2T", "tol_lo": -20.0, "tol_hi": 0.0}]
+        )
+        assert ltd["delay_seconds"] == pytest.approx(14.0)
+        assert ltd["time_limit_low"] == pytest.approx(11.2)   # 14 · 0.80
+        assert ltd["time_limit_high"] == pytest.approx(14.0)  # 14 · 1.00
+        assert ltd["notes"] == "timing_source=ltd_reference_window"
+
+    def test_calculate_ltd_tolerance_prefers_i2t_curve_row(self):
+        """LTD tolerance is per curve TYPE; the I²t reference window must pair
+        with the I^2T row, not the IEEE/IEC ±10% rows that share the sensor."""
+        ltd = self._calc_ltd_with_tol([
+            {"curve_name": "IEEE V Inv", "tol_lo": -10.0, "tol_hi": 10.0},
+            {"curve_name": "I^2T", "tol_lo": -20.0, "tol_hi": 0.0},
+            {"curve_name": "IEC-A (N Inv)", "tol_lo": -10.0, "tol_hi": 10.0},
+        ])
+        # I^2T (−20/+0) chosen, not IEEE ±10 (which would give 12.6 .. 15.4).
+        assert ltd["time_limit_low"] == pytest.approx(11.2)
+        assert ltd["time_limit_high"] == pytest.approx(14.0)
+        assert ltd["notes"] == "timing_source=ltd_reference_window"
+
+    def test_load_ltd_time_tolerance_branches(self):
+        """Helper: prefer I^2T row; else accept only an unambiguous sensor-wide
+        value; else None (→ generic window)."""
+        from services.neta.router import _load_ltd_time_tolerance
+
+        def _db(rows):
+            s = MagicMock()
+            res = MagicMock()
+            res.fetchall.return_value = rows
+            s.execute.return_value = res
+            return s
+
+        # prefers the I^2T curve type over IEEE rows
+        assert _load_ltd_time_tolerance(_db([
+            {"curve_name": "IEEE V Inv", "tol_lo": -10.0, "tol_hi": 10.0},
+            {"curve_name": "I^2T", "tol_lo": -26.83, "tol_hi": 0.0},
+        ]), 1) == pytest.approx((-26.83, 0.0))
+        # no I^2T, all rows agree → that value
+        assert _load_ltd_time_tolerance(_db([
+            {"curve_name": "IEEE V Inv", "tol_lo": -10.0, "tol_hi": 10.0},
+            {"curve_name": "IEC-A", "tol_lo": -10.0, "tol_hi": 10.0},
+        ]), 1) == pytest.approx((-10.0, 10.0))
+        # no I^2T, rows disagree → None (caller uses flagged generic window)
+        assert _load_ltd_time_tolerance(_db([
+            {"curve_name": "IEEE V Inv", "tol_lo": -10.0, "tol_hi": 10.0},
+            {"curve_name": "I^4T", "tol_lo": -38.81, "tol_hi": 9.7},
+        ]), 1) is None
+        # no rows at all → None
+        assert _load_ltd_time_tolerance(_db([]), 1) is None
 
     def test_evaluate_includes_delay_time_results(self):
         eval_data = {
@@ -1331,7 +1420,7 @@ class TestGEPresetNoWarningContract:
             # LTD time is the I2t long-time characteristic (setting = trip time at 6x Ir).
             # At the NETA default 3x: 6.0 * (6/3)^2 = 24.0 s (agrees with the Screen-3 curve).
             assert calc_elements["LTD"]["delay_seconds"] == 24.0
-            assert calc_elements["LTD"]["notes"] == "timing_source=ltd_reference_window"
+            assert calc_elements["LTD"]["notes"] == "timing_source=ltd_reference_window_generic"
 
             assert plot_resp.status_code == 200
             plot_body = plot_resp.json()

@@ -805,10 +805,19 @@ function EtuSettings({ maint, setMaint, selection }: { maint: boolean; setMaint:
     if (t === 'unsupported') return <span className="trust no" title={title || 'Delay solver not implemented — expected trip time withheld (G4)'}>n/a</span>
     return <span className="trust verify" title={title || 'Inverse-equation delay — captured-fixture validation pending (G4)'}>verify</span>
   }
+  // A delay band built from the flagged generic −30/+0 estimate (no per-manufacturer
+  // LTD tolerance on file) vs a real DB-sourced per-mfr band (G4 §4 / L5).
+  const isGenericDelayBand = (e: EtuTestCurrentElement): boolean =>
+    e.kind === 'delay' && (e.notes ?? '').includes('_generic')
+  const fmtSec = (v: number): string => (Number.isInteger(v) ? `${v}` : v.toFixed(2))
   const limitCell = (val: number | null, e: EtuTestCurrentElement) => {
     if (isWithheld(e)) return <span className="muted2">withheld</span>
     if (val == null) return '—'
-    return e.kind === 'delay' ? `${val} s` : fmtAmp(val)
+    if (e.kind !== 'delay') return fmtAmp(val)
+    const t = `${fmtSec(val)} s`
+    return isGenericDelayBand(e)
+      ? <span title="Generic ±estimate — no per-manufacturer delay tolerance on file (G4 L5)">{t} <span className="muted2">est</span></span>
+      : t
   }
 
   return (
@@ -922,7 +931,7 @@ function EtuSettings({ maint, setMaint, selection }: { maint: boolean; setMaint:
       {calc?.warnings?.length ? <div className="sel-status warn">{calc.warnings.join(' · ')}</div> : null}
 
       <div className="method">
-        <b>NETA test points.</b> Pickups (LTPU/STPU/INST/GFPU) ramp-test <b>@ 1×</b> against <b>DB-authoritative per-sensor tolerances</b> (field-safe). Each delay injects a <b>selectable multiple of its pickup</b> (the <b>Test @</b> dropdown) — NETA defaults <b>LTD 3× LTPU, STD/GFD 1.5×</b> — and the <b>inject current is always field-correct</b> (the proven pickup × your chosen multiple). For <b>long-time delay</b> the expected trip <b>time follows the I²t law</b> t = setting·(6/N)²: the stored band setting is the trip time at <b>6× Ir</b>, so testing at <b>6×</b> gives a time equal to the dial setting (the practical, directly-measurable point), while 3× is four times longer. The expected <b>time</b> stays <b>gated per the G4 field-trust matrix</b>: <b>DB</b> = direct-band (route 0) + LTD; <b>verify</b> = inverse-equation (route 2) pending captured-fixture validation; <b>n/a</b> = I²t / GE-trip-unit / GF-ANSI routes whose solver is not built, so the time is <b>withheld</b> (the inject current stays valid). {selection.trustNote}
+        <b>NETA test points.</b> Pickups (LTPU/STPU/INST/GFPU) ramp-test <b>@ 1×</b> against <b>DB-authoritative per-sensor tolerances</b> (field-safe). Each delay injects a <b>selectable multiple of its pickup</b> (the <b>Test @</b> dropdown) — NETA defaults <b>LTD 3× LTPU, STD/GFD 1.5×</b> — and the <b>inject current is always field-correct</b> (the proven pickup × your chosen multiple). For <b>long-time delay</b> the expected trip <b>time follows the I²t law</b> t = setting·(6/N)²: the stored band setting is the trip time at <b>6× Ir</b>, so testing at <b>6×</b> gives a time equal to the dial setting (the practical, directly-measurable point), while 3× is four times longer. The <b>delay time tolerance band</b> (Min/Max Limit) is the <b>per-manufacturer DB value</b> (`DS2_TOL`, matched to the I²t curve type) when on file; where none exists it falls back to a generic ±estimate, marked <b>est</b>. The expected <b>time</b> stays <b>gated per the G4 field-trust matrix</b>: <b>DB</b> = direct-band (route 0) + LTD; <b>verify</b> = inverse-equation (route 2) pending captured-fixture validation; <b>n/a</b> = I²t / GE-trip-unit / GF-ANSI routes whose solver is not built, so the time is <b>withheld</b> (the inject current stays valid). {selection.trustNote}
       </div>
     </>
   )

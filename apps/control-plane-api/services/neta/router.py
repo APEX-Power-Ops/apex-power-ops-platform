@@ -1522,15 +1522,87 @@ def _resolve_plot_delay_inputs(
     return None, legacy_setting, legacy_setting
 
 
+# Generic LTD time window applied when no per-manufacturer tolerance is on file
+# (the legacy −30%/+0% placeholder). Real per-sensor bands come from
+# `_load_ltd_time_tolerance`; this is only the flagged estimate fallback.
+_LTD_GENERIC_TOL_LOW = -30.0
+_LTD_GENERIC_TOL_HIGH = 0.0
+
+
+def _load_ltd_time_tolerance(
+    db: Session, sensor_id: int
+) -> Optional[tuple[float, float]]:
+    """Per-sensor LTD *time* tolerance band (G4 §4 / punch-list L5).
+
+    The lvbreakertcc LTD element renders the I²t reference window
+    (`_ltd_reference_delay_surface`), so the matching tolerance is the row for
+    the **I²T curve type** in `tcc.etu_ltd_params` (`ds2_tol_low/ds2_tol_high`).
+    LTD tolerance is stored *per curve type* (I²T vs IEEE/IEC vs I⁴T), each
+    different, so we cannot just take any row:
+
+      * prefer the explicit ``I^2T`` curve-type row (matches the rendered shape);
+      * else, only if every LTD param row agrees, use that single value;
+      * else return None → caller shows the flagged generic window.
+
+    Returns ``(tol_low_pct, tol_high_pct)`` (low is negative) or ``None``.
+    """
+    try:
+        rows = db.execute(
+            text(
+                """
+                SELECT curve_name, ds2_tol_low AS tol_lo, ds2_tol_high AS tol_hi
+                FROM tcc.etu_ltd_params
+                WHERE sensor_id = :sid
+                  AND ds2_tol_low IS NOT NULL
+                  AND ds2_tol_high IS NOT NULL
+                """
+            ),
+            {"sid": sensor_id},
+        ).fetchall()
+    except Exception:
+        if hasattr(db, "rollback"):
+            db.rollback()
+        return None
+
+    if not rows:
+        return None
+
+    def _vals(r):
+        m = r._mapping if hasattr(r, "_mapping") else r
+        return float(m["tol_lo"]), float(m["tol_hi"])
+
+    def _name(r):
+        m = r._mapping if hasattr(r, "_mapping") else r
+        return (m.get("curve_name") or "").strip().upper()
+
+    for r in rows:
+        if _name(r) in ("I^2T", "I2T", "I^2 T"):
+            return _vals(r)
+
+    distinct = {_vals(r) for r in rows}
+    if len(distinct) == 1:
+        return next(iter(distinct))
+    return None
+
+
 def _ltd_reference_delay_surface(
     delay_setting: Optional[float],
     test_multiple: Optional[float],
+    tol_low: Optional[float] = None,
+    tol_high: Optional[float] = None,
 ) -> tuple[Optional[float], Optional[float], Optional[float]]:
+    """I²t reference window: nominal = setting·(6/N)²; band = nominal·(1 ± tol).
+
+    ``tol_low``/``tol_high`` are signed percentages (e.g. −26.83 / +0). When
+    omitted, the generic −30%/+0% placeholder is used (the caller flags it).
+    """
     if delay_setting is None or test_multiple in (None, 0):
         return None, None, None
 
     nominal = float(delay_setting) * (6.0 / float(test_multiple)) ** 2
-    return nominal, 0.7 * nominal, nominal
+    lo_pct = tol_low if tol_low is not None else _LTD_GENERIC_TOL_LOW
+    hi_pct = tol_high if tol_high is not None else _LTD_GENERIC_TOL_HIGH
+    return nominal, nominal * (1.0 + lo_pct / 100.0), nominal * (1.0 + hi_pct / 100.0)
 
 
 def _band_row_to_delay_surface(band_row) -> tuple[Optional[float], Optional[float], Optional[float]]:
@@ -2169,8 +2241,17 @@ def _authoritative_delay_surface(
 ) -> tuple[Optional[float], Optional[float], Optional[float], str]:
     if element_key == "ltd":
         if use_ltd_reference_window and setting is not None and test_multiple not in (None, 0):
-            expected_time, time_low, time_high = _ltd_reference_delay_surface(setting, test_multiple)
-            return expected_time, time_low, time_high, "ltd_reference_window"
+            ltd_tol = _load_ltd_time_tolerance(db, sensor_id)
+            tol_low, tol_high = ltd_tol if ltd_tol else (None, None)
+            expected_time, time_low, time_high = _ltd_reference_delay_surface(
+                setting, test_multiple, tol_low, tol_high
+            )
+            # Distinguish a real per-manufacturer band from the flagged generic
+            # estimate so the field surface never presents a placeholder as DB-authoritative.
+            timing_source = (
+                "ltd_reference_window" if ltd_tol else "ltd_reference_window_generic"
+            )
+            return expected_time, time_low, time_high, timing_source
 
         band_row = _load_direct_delay_band(db, "tcc.etu_ltd_bands", sensor_id, setting)
         if band_row is not None:
