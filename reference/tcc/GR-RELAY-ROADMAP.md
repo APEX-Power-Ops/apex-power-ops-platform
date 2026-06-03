@@ -140,10 +140,14 @@ The durable per-manufacturer relay-accuracy north-star (the relay rows of the pu
   catalog.
 - **2026-06-03** — **Chip 3 tier-0 BUILT: `Relays.Note` tolerance parser** (`services/neta/relay_note_tolerance.py`,
   19 tests, `apex 97d8adc7`). Precision-gated extraction of element/facet/low/high/unit/confidence. **Coverage
-  (live): 24 of 1442 relays (~1.7%) / 12 mfrs** — a thin seed (Brown Boveri, Cooper, Siemens 7SK88, G&W, S&C,
-  C-H GFR/Digitrip, Westinghouse GFR, Fed Pioneer per-element table, Areva, McGraw Edison, GE TGSR, Federal
-  Pacific). **Confirms: the NETA generic floor (+ external catalogs e.g. Enoserv RTS) is the PRIMARY source for
-  the other ~98%, not a backstop. Next: the NETA floor values + Enoserv RTS fold-in, then the serving layer.**
+  (live): 24 of 1442 relays (~1.7%) / 12 mfrs** — a thin seed.
+- **2026-06-03** — **Enoserv RTS = PRIMARY structured tolerance source (STATE §127).** `D:\Enoserv RTS`
+  FasData7 SQLite (`.dbrts`, specs byte-(−10) obfuscated, read-only): **588 relays / 14 mfrs (SEL 61, GE 282,
+  WH/ABB 149, Basler 44, Siemens 30…)**, per-element pickup+timing tolerances — `MIN/MAX_RANGE` (%) +
+  `MIN/MAX_RANGE2` (absolute). **SEL-751 covered: pickup ±5%, timing ±5%/±0.03 s** (fills the Y1202C gap).
+  **Tier order revised: Enoserv PRIMARY > Notes seed (24) > NETA floor > datasheet.** Next: the FasData7
+  harvester + Enoserv↔`tcc.relays` match, on operator confirm (IP + match key). (RESA bench-day copies in the
+  same folder left untouched.)
 
 ## Cross-references
 - The relay G0–G4 (selection · schema · `Model` 0–8 dispatcher · SST-2 · field-trust) → **`GR-RELAY-REFERENCE.md`**.
