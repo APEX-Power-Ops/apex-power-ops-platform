@@ -1,0 +1,85 @@
+{
+  "provenance": {
+    "kernel": "CIxt power law t(M) = T_anchor*(I_anchor/M)**X  (TccBase.dll CIxt.{ctor}/ComputeT 24248-24297)",
+    "reference": "G4 §3b·I2X / STATE §113 / TOLERANCE-COVERAGE-PUNCHLIST L4",
+    "anchor_source": "DatSection3STD (I_OPEN/T_OPEN/I_CLEAR/T_CLEAR, I2X shape) JOIN DatSensor.DS3_I2T_VAL (exponent X), tcc-fidelity-staging 2026-06-03",
+    "note": "Expected times are hand-derived from the decompiled CIxt closed form at binary-exact multiples (anchor, ×/÷ powers of two) so they are an independent spec, not a restatement of the Python evaluator. The NETA point (M=1.5) is the real STD/GFD field test multiple and is checked to formula within 1e-9.",
+    "exponent_caveat": "X = DS3_I2T_VAL: 2.0 for ~96.9% of route-1 STD sensors, 1.0 for the largest non-2 group, a small variable tail otherwise.",
+    "shippable_subset": "shape flat (definite-time) + ramp (Ixt) are SUPPORTED; composite (I2X=2, ramp+floor) is UNSUPPORTED pending native-render combine-rule parity."
+  },
+  "scenarios": [
+    {
+      "label": "s46-i2x1-x2-ramp",
+      "sensor_id": 46,
+      "shape": "ramp",
+      "i2x_flag": 1,
+      "exp_x": 2.0,
+      "i_open": 6.0,
+      "t_open": 0.4000000059604645,
+      "i_clear": 6.0,
+      "t_clear": 0.6499999761581421,
+      "std_open": null,
+      "std_clear": null,
+      "supported": true,
+      "checks": [
+        {"m": 6.0,  "expected_open": 0.4000000059604645, "expected_clear": 0.6499999761581421, "kind": "anchor"},
+        {"m": 3.0,  "expected_open": 1.600000023841858,  "expected_clear": 2.5999999046325684, "kind": "exact"},
+        {"m": 12.0, "expected_open": 0.10000000149011612, "expected_clear": 0.16249999403953552, "kind": "exact"},
+        {"m": 1.5,  "expected_open": 6.400000095367432,  "expected_clear": 10.399999618530273, "kind": "neta"}
+      ]
+    },
+    {
+      "label": "s8915-i2x1-x1-ramp",
+      "sensor_id": 8915,
+      "shape": "ramp",
+      "i2x_flag": 1,
+      "exp_x": 1.0,
+      "i_open": 2.0,
+      "t_open": 0.10999999940395355,
+      "i_clear": 2.0,
+      "t_clear": 0.15000000596046448,
+      "std_open": null,
+      "std_clear": null,
+      "supported": true,
+      "checks": [
+        {"m": 2.0, "expected_open": 0.10999999940395355, "expected_clear": 0.15000000596046448, "kind": "anchor"},
+        {"m": 4.0, "expected_open": 0.054999999701976776, "expected_clear": 0.07500000298023224, "kind": "exact"},
+        {"m": 1.0, "expected_open": 0.2199999988079071,  "expected_clear": 0.30000001192092896, "kind": "exact"},
+        {"m": 1.5, "expected_open": 0.14666666587193807, "expected_clear": 0.20000000794728596, "kind": "neta"}
+      ]
+    },
+    {
+      "label": "s15946-i2x1-x1-ramp-band0.5",
+      "sensor_id": 15946,
+      "shape": "ramp",
+      "i2x_flag": 1,
+      "exp_x": 1.0,
+      "i_open": 1.5,
+      "t_open": 0.4076080024242401,
+      "i_clear": 1.5,
+      "t_clear": 0.6018850207328796,
+      "std_open": 0.4000000059604645,
+      "std_clear": 0.6000000238418579,
+      "supported": true,
+      "checks": [
+        {"m": 1.5, "expected_open": 0.4076080024242401, "expected_clear": 0.6018850207328796, "kind": "anchor"},
+        {"m": 3.0, "expected_open": 0.20380400121212006, "expected_clear": 0.3009425103664398, "kind": "exact"}
+      ]
+    },
+    {
+      "label": "s17-i2x2-x2-composite",
+      "sensor_id": 17,
+      "shape": "composite",
+      "i2x_flag": 2,
+      "exp_x": 2.0,
+      "i_open": 6.0,
+      "t_open": 0.4000000059604645,
+      "i_clear": 6.0,
+      "t_clear": 0.6000000238418579,
+      "std_open": 0.10000000149011612,
+      "std_clear": 0.1599999964237213,
+      "supported": false,
+      "checks": []
+    }
+  ]
+}

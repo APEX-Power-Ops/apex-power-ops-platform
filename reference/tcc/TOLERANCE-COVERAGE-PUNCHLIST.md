@@ -104,11 +104,22 @@ floor)**.
   ~235 (mostly x=1 linear `I·t`; a few 5.0/2.09/2.17/0.49…); ~48 disabled (`-1.0`/NULL → withhold).
 **Implication — L4 is M, not the monster.** ~98% collapse to the **exact I²t closed form already shipped +
 live-verified for LTD (§111)**, generalized to read the per-band anchor; the variable-x tail is the SAME one-line
-kernel reading `X` from `I2T_VAL`. No `CalcThermEq`, no polynomial root-find. **Remaining work:** (a) generalize
-the banked I²t evaluator to read per-band `(I_anchor, T_anchor)` + sensor `X`; (b) pin the **I2X=2 composite
-combination rule** (ramp-vs-floor: looks like `t = max(ramp, floor)` definite-time minimum — confirm by parity,
-do not guess) + the variable-x tail via the §107 native-oracle recipe; (c) parity-prove, promote route-1
-withheld→db in `delay_trust.py`, SSoT-reconcile, deploy, live-verify.
+kernel reading `X` from `I2T_VAL`. No `CalcThermEq`, no polynomial root-find.
+- **DONE (I2X-3, 2026-06-03):** the validated Iˣt evaluator `packages/calc-engine/.../etu_ixt.py`
+  (`t = T_anchor·(I_anchor/M)^X`, mirroring native `CIxt` semantics — `|x|`, sentinel/zero guards — + the
+  flat/ramp/composite shape dispatch + field-trust gating: flat & ramp SUPPORTED, composite & unknown WITHHELD)
+  + DB-anchored parity fixtures + 19-test parity suite (`test_etu_ixt_parity.py`, all green) whose expected times
+  are hand-derived from the decompiled `CIxt` at binary-exact multiples (independent spec, not a restatement).
+  Prod schema confirmed provisioned (`tcc.etu_{std,gfd,ltd}_bands.i_open/i_clear/t_open/t_clear/i2x/exp_x`; the
+  002 migration maps the extraction layer's `std_x`/`i_open`/`t_open`/`i2x`). Threading = the proven LTD §111
+  convention (anchor ×pickup, test ×pickup → pickup cancels).
+- **Remaining (gated):** (a) **native-CIxt oracle capstone** — extend `output/inveq-parity/oracle` to invoke
+  `CIxt.ComputeT` (the §107 recipe) for native parity beyond the clean-room/DB check; (b) **pin the I2X=2
+  composite combine rule** (provisional `t = max(ramp, floor)` definite-time minimum) + spot-check one captured
+  EasyPower curve to confirm the anchor-units convention; (c) **confirm prod data is populated** (non-null
+  `exp_x`/anchors for route-1 sensors — needs Supabase/live-API; the band-selection for I2X=1 needs handling since
+  ramp bands have NULL `std_open`); (d) wire `etu_ixt` into `/calculate` (std/gfd ramp branch), promote route-1
+  flat+ramp `withheld`→`db` in `delay_trust.py`, frontend un-withhold, SSoT-reconcile, deploy, live-verify.
 `[G4 §3a/§3c/§4 · DLL TccBase.dll CIxt 24248-24297 / SetSTDB_* 24440-24531 / IsSTDB_Ixt 24196,26398-26442 ·
 DatSection3STD + DatSensor.DS3_I2T_VAL/DS1GF_I2T_VAL · §113]`
 

@@ -236,7 +236,15 @@ shipped + live-verified for LTD (§4 / §111)**, generalized to a per-band ancho
 resized **L → M**. The one residual deliberately deferred to the §107 native-oracle parity pass (do not guess):
 the **I2X=2 composite combination rule** (ramp-vs-floor — provisional `t = max(ramp, floor)` definite-time
 minimum) and the ~235-sensor variable-X tail. Until that pass promotes route-1 in `delay_trust.py`, route-1
-stays **withheld** (the §6 field-trust gate holds). `[G4 §3a/§3b/§4 · §113 · DLL CIxt 24248-24297 / SetSTDB_*
+stays **withheld** (the §6 field-trust gate holds).
+
+**Evaluator built (I2X-3, 2026-06-03):** the validated managed kernel is
+`packages/calc-engine/src/apex_calc_engine/services/calc_engine/etu_ixt.py` (`ixt_time` =
+`t_anchor·(i_anchor/M)^|X|` mirroring native `CIxt`; `i2x_delay_surface` dispatches flat / ramp [SUPPORTED] vs
+composite / unknown [WITHHELD]). Parity-proven against DB-anchored fixtures hand-derived from the decompiled
+`CIxt` at binary-exact multiples (`tests/test_etu_ixt_parity.py`, 19 tests). Prod band tables carry the inputs
+(`i_open/i_clear/t_open/t_clear/i2x/exp_x`). NOT yet wired into `/calculate` (gated on prod-data confirmation +
+the I2X=2 rule + the native-CIxt oracle capstone). `[G4 §3a/§3b/§4 · §113 · DLL CIxt 24248-24297 / SetSTDB_*
 24440-24531 / IsSTDB_Ixt 24196,26398-26442]`
 
 ### 3c. The LTD delay window (separate two-table model)
