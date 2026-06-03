@@ -135,10 +135,15 @@ The durable per-manufacturer relay-accuracy north-star (the relay rows of the pu
   join + `standard_code` map + cardinalities.
 - **2026-06-03** — **Chip 3 tolerance-source TRIANGULATED (with a correction)**: no STRUCTURED tolerance
   (governed + Access DVL descriptions + DLL), **but OEM tolerance IS in `Relays.Note`** for a legacy/GF-heavy
-  subset (~17 explicit ±) — surfaced by the operator's challenge (a column-name probe ≠ proof of absence).
+  subset — surfaced by the operator's challenge (a column-name probe ≠ proof of absence).
   Captured `GR-RELAY-FIELD-DICTIONARY.md` + GR §7. Source model = parse-Note seed + NETA floor + datasheet
-  catalog. **Next: the generic-NETA-band values + first OEM(s) (operator), then build the serving layer + the
-  Note-parser.**
+  catalog.
+- **2026-06-03** — **Chip 3 tier-0 BUILT: `Relays.Note` tolerance parser** (`services/neta/relay_note_tolerance.py`,
+  19 tests, `apex 97d8adc7`). Precision-gated extraction of element/facet/low/high/unit/confidence. **Coverage
+  (live): 24 of 1442 relays (~1.7%) / 12 mfrs** — a thin seed (Brown Boveri, Cooper, Siemens 7SK88, G&W, S&C,
+  C-H GFR/Digitrip, Westinghouse GFR, Fed Pioneer per-element table, Areva, McGraw Edison, GE TGSR, Federal
+  Pacific). **Confirms: the NETA generic floor (+ external catalogs e.g. Enoserv RTS) is the PRIMARY source for
+  the other ~98%, not a backstop. Next: the NETA floor values + Enoserv RTS fold-in, then the serving layer.**
 
 ## Cross-references
 - The relay G0–G4 (selection · schema · `Model` 0–8 dispatcher · SST-2 · field-trust) → **`GR-RELAY-REFERENCE.md`**.
