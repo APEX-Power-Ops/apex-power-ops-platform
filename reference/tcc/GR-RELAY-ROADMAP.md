@@ -88,8 +88,14 @@ GR §1 banked the join + mapping + cardinalities. (Frontend dropdowns = Chip 4.)
 ### Chip 3 — relay NETA serving layer
 Per protection function: pickup/tap + time-dial + **NETA tolerance bands** + test points,
 each tagged with `classify_relay_trust(...)`. **⚠️ Decision gate (the real research item):
-where do relay tolerances come from?** — per-mfr accuracy specs (datasheets) vs NETA tables
-vs any stored DB field. Characterize-before-test.
+where do relay tolerances come from?** **Characterized `[VERIFIED-LIVE 2026-06-03]`: the relay schema
+carries NO test-tolerance fields** — the only `min/max`-type columns are setting *ranges*
+(`relay_ranges.min_value`/`max_value`, curve `min_pickup`/`max_pickup`) and the IEC `dt_min_time` clamp,
+none of which are NETA acceptance bands. **So there is NO DB-authoritative tolerance path (unlike breakers,
+where `DatSensor` carried per-sensor tol).** → tolerances must be sourced externally: NETA/standard generic
+band (the always-available floor) and/or per-manufacturer OEM accuracy specs (`[VENDOR-DOC]`, the
+validated-library loop — mirrors breaker L5/L6). **Decision PENDING operator** (the source model + the
+actual generic NETA relay values + which OEMs to seed first, e.g. SEL for Y1202C).
 
 ### Chip 4 — the `relaytcc` field-sheet UI
 3-screen parallel to `lvbreakertcc` (select → settings/tolerances → curve + NETA markers),
