@@ -45,7 +45,7 @@ Counts `[VERIFIED-LIVE 2026-06-03]` via the governed `tcc.relay_*` schema (proje
 | 1 | **Reference SSoT** (G0–G4 + index) | ✅ **Done** — `GR-RELAY-REFERENCE.md` |
 | 2 | **DB: unified schema + clean load** | ✅ **Done** — 21 `tcc.relay_*` tables, live (relays **1,442** / devices **6,850** / TD-sections **6,635** / TCP points **1,570,700**) |
 | 3 | **DB: the bridge** (→ ETU sensor world) | ✅ **Done** — SST-2 carried; **39** relays (`use_sst=true`) route into breaker G4 |
-| 4 | **Backend: selection cascade** (no-free-text) | ⚠️ **Partial** — read-only `/relay/{sections,context,settings,plot-tcc}` exist; selection is search-style, **not** structured cascade endpoints |
+| 4 | **Backend: selection cascade** (no-free-text) | ✅ **Chip 2 DONE** — `/relay/manufacturers` + `/relay/facets` (cross-filtered) + `manufacturer`/`standard`-filterable `/relay/sections`; live-verified on prod |
 | 5 | **Backend: NETA calc/serving** (pickup + tolerance bands + test points) | ⚠️ **Partial** — `/relay/settings` + `/plot-tcc` exist; **no** per-function tolerance-band + NETA-test-point serving like breaker `/calculate` |
 | 6 | **Backend: field-trust gating wired** | 🟡 **Chip 1 DONE** — `relay_trust.py` classifier built (was on-paper-only in GR §6); not yet consumed by a serving route |
 | 7 | **UI: the field sheet** (3 screens) | ⚠️ **Partial** — `RelayResourceExplorer` = what-if *exploration* (the breaker-resource-explorer parallel), **not** the `lvbreakertcc` field sheet |
@@ -75,10 +75,15 @@ stored settings + raw TCP grid → `db`; analytical/TCP-interpolation families
 yet** — it is the foundation every later chip gates against. Refines GR §6 row 4 ("withhold"
 → "verify/show-flagged", justified by the §69 parity).
 
-### Chip 2 — selection cascade backend
-`Mfr → Type → Device-Function → Curve` dropdown endpoints (relay parallel to
-`/etu|tmt|emt/manufacturers`), no free-text. Characterize the existing `/relay/*` routes +
-the `tcc.relay_*` cascade columns first.
+### Chip 2 — selection cascade backend ✅ DONE (2026-06-03)
+Guided, no-free-text dropdowns on the governed `tcc.relay_*` schema (relay parallel to the breaker
+`/tmt|emt/manufacturers`): `GET /relay/manufacturers` (cascade top, 119 mfrs with curve sections) →
+`GET /relay/facets` (cross-filtered `relay_types` / `device_functions` / `standards` / `families`, proper
+faceted-search exclusion) → `GET /relay/sections` (now `manufacturer_source_id`- + `standard_code`-
+filterable, backward-compatible). `relays.manufacturer_source_id = manufacturers.id` (100%);
+`standard_code` = `0 ANSI / 1 IEC / 2 Both`. **115 relay unit tests + SQL validated live + the 3 routes
+live-verified on prod** (Schweitzer → swz-dominated families, SEL-151 sections). Commit `apex 331b4e37`.
+GR §1 banked the join + mapping + cardinalities. (Frontend dropdowns = Chip 4.)
 
 ### Chip 3 — relay NETA serving layer
 Per protection function: pickup/tap + time-dial + **NETA tolerance bands** + test points,
@@ -117,6 +122,10 @@ The durable per-manufacturer relay-accuracy north-star (the relay rows of the pu
 ## Status log
 - **2026-06-03** — Roadmap created; **Chip 1 DONE** (`relay_trust.py` + 108 tests; GR §6 row-4
   reconciliation). Live counts re-confirmed via the governed `tcc.relay_*` schema.
+- **2026-06-03** — **Chip 2 DONE** (`/relay/manufacturers` + `/relay/facets` + filterable
+  `/relay/sections`; 115 unit tests; live-verified on prod; `apex 331b4e37`). GR §1 banked the cascade
+  join + `standard_code` map + cardinalities. **Next: Chip 3** (NETA serving — first the tolerance-source
+  decision).
 
 ## Cross-references
 - The relay G0–G4 (selection · schema · `Model` 0–8 dispatcher · SST-2 · field-trust) → **`GR-RELAY-REFERENCE.md`**.

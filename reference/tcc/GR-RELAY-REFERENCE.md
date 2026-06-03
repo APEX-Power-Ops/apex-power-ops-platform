@@ -72,6 +72,19 @@ Style / Standard dropdown** — ANSI-vs-IEC is pushed down into the **device-fun
 **`RelayClass` is a calc input, not a cascade step:** it sets the **pickup-multiplier basis** — FLA for
 Generator/Motor, CT-ratio/rating for Other. `[EZPDOC]` `[DVL-DB Relays.RelayClass]`
 
+**Governed cascade — served (Chip 2) `[VERIFIED-LIVE 2026-06-03]`.** The cascade is implemented as
+guided, no-free-text dropdowns on the governed `tcc.relay_*` schema (relay parallel to the breaker
+`/tmt|emt/manufacturers`): `GET /relay/manufacturers` (cascade top) → `GET /relay/facets`
+(cross-filtered `relay_types` / `device_functions` / `standards` / `families`) → `GET /relay/sections`
+(now `manufacturer_source_id`- and `standard_code`-filterable, not just free-text). Join graph:
+`relay_td_sections.relay_device_id → relay_devices.relay_device_id`, `relay_devices.relay_id →
+relays.relay_id`, **`relays.manufacturer_source_id` = `tcc.manufacturers.id` (matches 100%, 1442/1442)**.
+Live cardinalities: **126** manufacturers · **1,331** `relay_type` · **916** `device_function` · **3**
+`standard_code` · **9** `model_code`. **`standard_code` map = `0 ANSI / 1 IEC / 2 Both`** (live counts
+4254 / 1533 / 1063, governed level — corroborates the §1 ANSI>IEC>Both distribution). Cross-filter
+verified: manufacturer = Schweitzer (55) → families **SWZ(5)-dominated** (259 sections). Forward plan +
+status: `GR-RELAY-ROADMAP.md` Chip 2.
+
 ---
 
 ## 2. The relay schema + join graph `[VERIFIED-LIVE 2026-05-31]`
