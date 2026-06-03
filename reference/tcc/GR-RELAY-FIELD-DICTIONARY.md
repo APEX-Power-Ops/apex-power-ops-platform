@@ -13,28 +13,34 @@
 
 ---
 
-## Headline — relay tolerances are NOT in EasyPower (triangulated)
+## Headline — no STRUCTURED relay tolerance, but OEM tolerance IS recorded in `Relays.Note` (a subset)
 
-A keyword scan of governed column *names* alone is not enough to conclude this, so it was checked across
-**all three sources** + the breaker contrast:
+The *structured-schema* and the *free-text* questions have **different answers** — both were checked
+(the initial probe only did structured column-names, which missed the Note text; the operator's challenge
+surfaced it — a cite-and-fix).
 
-1. **Governed `tcc.relay_*`** (21 tables, full column inventory) — **no** tolerance/accuracy column.
-2. **Source Access `D:\TCC_NEW.accdb`** (22 tables, 154 fields **+ the DVL descriptions below**) — **no**
-   tolerance column and **no description mentions tolerance/accuracy/percent/band**. The relay model is
-   purely **settings** (`RelayRanges` adjustable range + `RelayDiscreteValues`) **+ curves** (per-family
-   coefficients or the TCP point grid).
-3. **DLL (`TccBase`/`dbBase` decompile)** — no `*Relay*`/`*REL*` file references tolerance; `CdbRELRow` is a
-   **size-only `[NativeCppClass]` shell** (empty struct, `Size=516`). No native relay tolerance logic.
-4. **The decisive contrast (same Access file + same DLL):** the **breaker/ETU/EMT** side DOES carry
-   tolerance — `DatSensor.DS1/DS2/DS3/DS4_TOL_HIGH/LOW` + `DS4_OVRTOL_MIN/MAX`, `DatSensorSec2.DS2_TOL_*`,
-   `DatSensorMaint.DS*_TOL_*`, `Breaker{ICCB,MCCB,PCB}Styles.{,N}InstOvr{Min,Max}Tolerance`,
-   `EMT_Sections.PickupToler{High,Low}`, `DatSection3STOvr.OvrToler{High,Low}Pct`.
+**Structured tolerance: NONE** (triangulated) — governed `tcc.relay_*` full inventory, source Access (154
+fields / 30 DVL descriptions below, none tolerance-related), and the DLL (`CdbRELRow` = size-only
+`[NativeCppClass]` shell, `Size=516`; no `*Relay*` file references tolerance). The model is purely
+**settings** (`RelayRanges` range + `RelayDiscreteValues`) **+ curves** (coefficients / TCP grid). The
+**same Access+DLL DO carry breaker/ETU/EMT structured tolerance** (`DatSensor.DS*_TOL_*`+`DS4_OVRTOL_*`,
+`DatSensorSec2/Maint.DS*_TOL_*`, `Breaker*Styles.{,N}InstOvr{Min,Max}Tolerance`,
+`EMT_Sections.PickupToler*`, `DatSection3STOvr.OvrToler*Pct`) — so EasyPower does **not COMPUTE/PLOT** a
+relay tolerance band; relays plot as nominal curves.
 
-**Conclusion:** EasyPower **deliberately** models breaker tolerance bands but renders **relays as nominal
-curves** (no tolerance). → Relay NETA tolerances must be sourced **externally** — the NETA standard
-acceptance band (the always-available floor) + the relay manufacturer's published accuracy spec
-(`[VENDOR-DOC]`, the validated-library loop). There is **no EasyPower-DB tolerance path for relays**
-(unlike breakers). This confirms the roadmap **Chip 3** two-tier source model is the only viable one.
+**Unstructured tolerance: YES — in `Relays.Note`** `[VERIFIED-LIVE 2026-06-03]`. EasyPower records the OEM's
+stated accuracy as **free text** for a small subset: **~17 relays carry an explicit ± pickup/time
+tolerance**; up to **~49** carry some tolerance/percent signal (a few are *"Percentage Differential"*
+type-name false positives, not tolerances). **Legacy/GF-heavy.** Examples: Brown Boveri HB/HK
+("TOC pickup ±5%, Inst ±10%, Time ±0.1 s"), Fed Pioneer Digital 600 (per-element table: LT/ST ±5%, Inst
+±10%, GF ±8/16%), Siemens 7SK88 ("TOCPU ~15%, InstPU ~10%"), Cutler-Hammer GFR/D64RPB100, Westinghouse GFR,
+Cooper iDP-210 ("±10%"), S&C Vista, G&W PVI ("±5%"), GE TGSR.
+
+**Conclusion (corrected).** EasyPower does not *plot* relay tolerance, but it *records* OEM tolerance in the
+Note for a **partial, legacy/GF-heavy** subset. → Chip 3's per-manufacturer OEM tier can be **seeded by
+PARSING `Relays.Note`** (a `[VENDOR-DOC]`-already-in-DB source, ~dozens of relays), with a NETA generic
+**floor** for the rest and a datasheet catalog to extend coverage. The two-tier model stands; the in-DB
+Note adds a **tier-0 seed**.
 
 ---
 

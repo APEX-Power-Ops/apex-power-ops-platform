@@ -88,16 +88,16 @@ GR §1 banked the join + mapping + cardinalities. (Frontend dropdowns = Chip 4.)
 ### Chip 3 — relay NETA serving layer
 Per protection function: pickup/tap + time-dial + **NETA tolerance bands** + test points,
 each tagged with `classify_relay_trust(...)`. **⚠️ Decision gate (the real research item):
-where do relay tolerances come from?** **TRIANGULATED `[VERIFIED-LIVE 2026-06-03]` — relays carry NO
-tolerance data in EasyPower, confirmed across all 3 sources + the breaker contrast** (governed `tcc.relay_*`,
-source Access incl. all 154 DVL field descriptions, and the `TccBase` DLL — `CdbRELRow` is a size-only shell;
-the SAME Access+DLL DO carry breaker/ETU/EMT tolerance, so the relay omission is deliberate — EasyPower
-renders relays as nominal curves). Evidence banked in **`GR-RELAY-FIELD-DICTIONARY.md`** + GR §7. **So there
-is NO EasyPower tolerance path for relays** (DB *or* DLL). → tolerances must be sourced externally:
-**two-tier (operator-approved)** = NETA/standard generic band (always-available floor, flagged `est`) +
-per-manufacturer OEM accuracy specs (`[VENDOR-DOC]`, the validated-library loop — mirrors breaker L5/L6).
-**Remaining input (operator):** the actual generic NETA relay band values + which OEMs to seed first (e.g.
-SEL for Y1202C). Then build the serving layer.
+where do relay tolerances come from?** **TRIANGULATED `[VERIFIED-LIVE 2026-06-03]`:** **(a) no STRUCTURED
+tolerance** anywhere (governed `tcc.relay_*` + source Access 154 DVL descriptions + DLL `CdbRELRow` shell; the
+SAME Access+DLL DO carry breaker tolerance → EasyPower plots relays as nominal curves), **but (b) OEM tolerance
+IS recorded as free text in `Relays.Note`** for a small legacy/GF-heavy subset (~17 explicit ±; up to ~49 with
+a %/± signal — Brown Boveri, Fed Pioneer Digital 600, Siemens 7SK88, C-H/Westinghouse GFR…). Evidence:
+**`GR-RELAY-FIELD-DICTIONARY.md`** + GR §7. → **three-tier source:** **(0) parse `Relays.Note`** for the
+embedded per-relay OEM tolerance (a `[VENDOR-DOC]`-already-in-DB seed, ~dozens of relays); **(1) NETA generic
+floor** for the rest (flagged `est`); **(2) datasheet catalog** to extend. The operator-approved two-tier
+holds; the in-DB Note adds a tier-0 seed. **Remaining input (operator):** the generic NETA relay band values +
+which OEMs to prioritise (e.g. SEL for Y1202C). Then build the serving layer + the Note-parser.
 
 ### Chip 4 — the `relaytcc` field-sheet UI
 3-screen parallel to `lvbreakertcc` (select → settings/tolerances → curve + NETA markers),
@@ -133,10 +133,12 @@ The durable per-manufacturer relay-accuracy north-star (the relay rows of the pu
 - **2026-06-03** — **Chip 2 DONE** (`/relay/manufacturers` + `/relay/facets` + filterable
   `/relay/sections`; 115 unit tests; live-verified on prod; `apex 331b4e37`). GR §1 banked the cascade
   join + `standard_code` map + cardinalities.
-- **2026-06-03** — **Chip 3 tolerance-source RESOLVED (triangulated)**: relays carry NO tolerance in
-  EasyPower (governed + Access source DVL descriptions + DLL; breaker contrast = deliberate). Captured
-  `GR-RELAY-FIELD-DICTIONARY.md` + GR §7. Two-tier external model confirmed as the only path. **Next: the
-  generic-NETA-band values + first OEM(s) (operator), then build the serving layer.**
+- **2026-06-03** — **Chip 3 tolerance-source TRIANGULATED (with a correction)**: no STRUCTURED tolerance
+  (governed + Access DVL descriptions + DLL), **but OEM tolerance IS in `Relays.Note`** for a legacy/GF-heavy
+  subset (~17 explicit ±) — surfaced by the operator's challenge (a column-name probe ≠ proof of absence).
+  Captured `GR-RELAY-FIELD-DICTIONARY.md` + GR §7. Source model = parse-Note seed + NETA floor + datasheet
+  catalog. **Next: the generic-NETA-band values + first OEM(s) (operator), then build the serving layer + the
+  Note-parser.**
 
 ## Cross-references
 - The relay G0–G4 (selection · schema · `Model` 0–8 dispatcher · SST-2 · field-trust) → **`GR-RELAY-REFERENCE.md`**.
