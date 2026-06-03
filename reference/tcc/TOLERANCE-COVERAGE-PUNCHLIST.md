@@ -87,9 +87,17 @@ GE trip-unit STD/Gnd (routes 3/4) use a separate solver not built. **Close:** RE
 (check for a `TccBase.dll` kernel to oracle, same as §107) → managed solver → parity → promote. `[G4 §3a]`
 
 ### L4 — I2X / Iˣt delay solver → db  ·  STD 8,708 + GFD 5,976 (~15k)  ·  L  ·  THE BIG LEVER
-The I²t / Iˣ·t slope family (route 1) solver isn't built — this is ~half of all withheld delay cells. **Not
-open-ended:** it's one equation family, closeable by the §107 recipe (oracle the native kernel, prove the
-managed slope solver bit-exact). Schedule deliberately; biggest coverage jump per lane. `[G4 §3a/§3c]`
+The I²t / Iˣ·t slope family (route 1) solver isn't built — this is ~half of all withheld delay cells. **Risk
+re-characterized by a 2026-06-02 decomp scout (de-risk):** there is **no separate native breaker I2X kernel** —
+`grep` of `TccBase.dll` finds the only `*I2tEquation` functions are **relay** ones (`CTccRelayCurveBase.*LockedRotorConstantI2tEquation`,
+GR lane), not breaker. Breaker STD delay curves are parameterized by the `CTccLVBreakerCurveSST.SetSTDB_{Flat,Inverse}Delay{Open,Clear}[ZSI]`
+**setters** (24440-24531), which store the **same `(byICalc, rTmin, rX, rTref, rIref, rM)` Therm-shape params**
+and are rendered by the **`CalcThermEq`/`CalcThermEq3` family we already recovered + executed bit-exact in §107**.
+**Implication:** L4 is likely *"wire the route-1 I2X data → the already-recovered §107 kernel + oracle-validate,"*
+not a from-scratch kernel RE — so it may be **M, not the monster**. **One verification gates the resize:**
+confirm how the route-1 populator natively maps I2X (the `i2x`/`exp_x` slope) onto `SetSTDB_Flat` vs
+`SetSTDB_Inverse` (i.e. flat-I²t vs a genuine Iˣt power law). That single check is L4's first step; everything
+after reuses the §107 oracle recipe. `[G4 §3a/§3c · DLL TccBase.dll SetSTDB_* 24440-24531]`
 
 ### L5 — Delay tolerance BANDS (per-manufacturer ± on time)  ·  M
 Direct-band STD/GFD carry the manufacturer open/clear band; LTD currently uses the engine's
