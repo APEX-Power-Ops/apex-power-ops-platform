@@ -466,8 +466,17 @@ solver not native-faithful for the GF `byICalc=1` basis); **hard-exclude the 23 
 > the generic −30/+0 **flagged** `timing_source=ltd_reference_window_generic` (UI shows an `est` marker so a
 > placeholder never reads as DB-authoritative). **Open follow-ons:** (a) **ET 1.0 family** (no `ds2_tol` row,
 > e.g. PowerPact M-frame MGA36600) — source ±10 % from curve 613-14 via the validated-library, gated on the
-> ET 1.0 bridge `[L5-LTD-C]`; (b) **curve-type-aware render** — the window assumes I²t for every sensor, an
-> approximation for sensors whose active LTD curve is IEEE/IEC `[L5-LTD-B]`. `/evaluate` still uses the band-table
+> ET 1.0 bridge `[L5-LTD-C, DEFERRED 2026-06-03 — the breaker→trip-unit bridge that makes the whole ETU-library
+> family selectable is the real lift; band sourcing is trivial once unblocked]`; (b) **curve-type-aware render**
+> `[L5-LTD-B — INVESTIGATED + DEFERRED 2026-06-03, optional feature not a correctness gap]`. DB characterization
+> (`DatSensorSec2`): only **1,127** of ~17,831 sensors carry any LTD curve/tol data; of those, **all 110
+> single-curve (deterministic-active) sensors are I²t** (62 Thermal-I²T, 48 I2T) → the §111 I²t window is **exact**
+> for every sensor whose active LTD curve is determinable; **1,009** multi-curve sensors offer I²t as a selectable
+> option (valid default, and I²t is the standard LV long-time characteristic, usually fixed by design not a field
+> setting); the **only** non-I²t-only sensors are **8 exotic MTX1/"MODpower" units** (`DELAY AT 6×/7.2× IR` defs,
+> almost certainly unserved). So curve-type-aware render is a **product feature** (a Screen-2 LTD curve-type
+> selector for multi-curve sensors + per-shape math: power-law exponent from the curve name, IEEE/IEC inverse-time
+> equations later), **not** a bug fix — deferred pending operator product call. `/evaluate` still uses the band-table
 > LTD path (the LV page computes PASS/FAIL client-side from `/calculate`, so it is unaffected) — reconcile it
 > to the reference window if `/evaluate` is ever wired into the page. `[VERIFIED-LIVE 2026-06-02]`
 

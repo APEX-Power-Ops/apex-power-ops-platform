@@ -123,7 +123,7 @@ kernel reading `X` from `I2T_VAL`. No `CalcThermEq`, no polynomial root-find.
 `[G4 §3a/§3c/§4 · DLL TccBase.dll CIxt 24248-24297 / SetSTDB_* 24440-24531 / IsSTDB_Ixt 24196,26398-26442 ·
 DatSection3STD + DatSensor.DS3_I2T_VAL/DS1GF_I2T_VAL · §113]`
 
-### L5 — Delay tolerance BANDS (per-manufacturer ± on time)  ·  **LTD DONE 2026-06-03; STD/GFD + ET 1.0 remain**
+### L5 — Delay tolerance BANDS (per-manufacturer ± on time)  ·  **LTD DONE 2026-06-03; B/C re-scoped+deferred; STD/GFD direct-band remains**
 - **DONE — LTD time band now per-manufacturer.** Replaced the hardcoded `(0.7·nominal, nominal)` placeholder
   with the per-sensor DB tolerance `tcc.etu_ltd_params.ds2_tol_low/high`, applied as `nominal·(1 + tol/100)`.
   Tolerance is stored **per LTD curve TYPE** (I²T ≈ −27/+0, IEEE/IEC ±10 %, I⁴T −38.81/+9.7), so the loader pairs
@@ -131,8 +131,14 @@ DatSection3STD + DatSensor.DS3_I2T_VAL/DS1GF_I2T_VAL · §113]`
   sensor value → else generic). Generic fallback is **flagged** (`timing_source=…_generic`, UI `est` marker).
   Tests green, deployed + live-verified. `[G4 §4 · router `_load_ltd_time_tolerance` · §114]`
 - **Remaining:** (a) **ET 1.0 family** (no `ds2_tol` row — e.g. MGA36600) → source ±10 % from curve 613-14
-  `[L5-LTD-C, gated on the ET 1.0 bridge]`; (b) **curve-type-aware render** (don't assume I²t for IEEE/IEC
-  sensors) `[L5-LTD-B]`; (c) **STD/GFD direct-band** time tolerances — confirm the open/clear band is per-mfr.
+  `[L5-LTD-C — DEFERRED 2026-06-03: gated on the ET 1.0 → trip-unit bridge; that bridge (whole ETU-library family
+  becomes selectable) is the real lift, band sourcing trivial once unblocked]`; (b) **curve-type-aware render**
+  `[L5-LTD-B — INVESTIGATED + DEFERRED 2026-06-03]`: `DatSensorSec2` shows the §111 I²t render is **exact** for all
+  **110 single-curve** sensors (100 % I²t — 62 Thermal-I²T, 48 I2T) and a valid default for the **1,009** multi-curve
+  sensors that offer I²t (I²t = the standard LV long-time characteristic, usually fixed by design); the **only**
+  non-I²t-only sensors are **8 exotic MTX1 "delay-at-6×/7.2×" units** (likely unserved) → **not a correctness gap**,
+  it's an optional Screen-2 LTD curve-selector feature (operator product call); (c) **STD/GFD direct-band** time
+  tolerances — confirm the open/clear band is per-mfr **(the real remaining L5 engineering)**.
 
 ### L6 — Envelope-only setting + tolerance catalog  ·  ~4,106 families  ·  L (incremental)
 ~23% of ETU sensors store only min/max envelopes; their real dial taps **and** tolerances live in OEM docs
