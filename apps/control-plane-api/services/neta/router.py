@@ -4609,6 +4609,18 @@ def calculate_test_currents(req: CalculateRequest, db: Session = Depends(get_db)
             delay_seconds=elem.get("delay_opening"),  # INST delay; None for others
         ))
 
+    # Inject-current basis for each delay element = (selected test multiple) x (its
+    # pickup test current). NETA ATS: LTD injects a multiple of LTPU pickup, STD of
+    # STPU, GFD of GFPU. The pickup elements were appended above, so read their
+    # already-computed 1x test currents here.
+    _DELAY_PICKUP_ELEMENT = {"ltd": "LTPU", "std": "STPU", "gfd": "GFPU"}
+    pickup_current_by_name = {e.element: e.test_current for e in elements if e.kind != "delay"}
+    selected_test_multiple = {
+        "ltd": req.ltd_test_multiple,
+        "std": req.std_test_multiple,
+        "gfd": req.gfd_test_multiple,
+    }
+
     for key, element_name, curve_ref, default_mult in _DELAY_ELEMENT_SPECS:
         elem = data.get(key)
         if elem is None:
@@ -4618,18 +4630,35 @@ def calculate_test_currents(req: CalculateRequest, db: Session = Depends(get_db)
             "std": req.std_setting,
             "gfd": req.gfd_setting,
         }[key]
+        # Operator-selectable delay test current (the "bigger delay test current"
+        # option). Falls back to the NETA default when the request omits it.
+        chosen_multiple = selected_test_multiple.get(key)
+        test_mult = float(chosen_multiple) if chosen_multiple is not None else default_mult
+        # Inject current = test multiple x the element's pickup current (always
+        # field-correct per G4 §4 — NETA procedure x the proven pickup).
+        pickup_current = pickup_current_by_name.get(_DELAY_PICKUP_ELEMENT[key])
+        if pickup_current is not None:
+            inject_current = test_mult * pickup_current
+        else:
+            inject_current = elem["test_current"]
+        # use_ltd_reference_window=True routes LTD through the engine's I2t reference
+        # window (t = setting * (6/N)^2; setting = the stored time at 6x Ir) so the
+        # bands table agrees with the validated Screen-3 curve at the SAME multiple.
+        # STD/GFD ignore the flag (definite-time band table); their inject current
+        # still scales with the selected multiple.
         expected_time, time_low, time_high, timing_source = _authoritative_delay_surface(
             db=db,
             sensor_id=req.sensor_id,
             element_key=key,
             setting=delay_setting,
-            test_multiple=elem.get("test_multiplier", default_mult),
+            test_multiple=test_mult,
             curves=curves,
-            expected_current=elem["test_current"],
+            expected_current=inject_current,
             maint_mode=bool(data.get("maint_mode", False)),
             maint_profile=maint_profile,
             fallback_open=elem.get("delay_opening"),
             fallback_clear=elem.get("delay_clearing"),
+            use_ltd_reference_window=True,
         )
         trust = classify_delay_trust(
             key, std_route=std_route, gfd_route=gfd_route, gfd_is_ansi=gfd_is_ansi
@@ -4648,10 +4677,10 @@ def calculate_test_currents(req: CalculateRequest, db: Session = Depends(get_db)
         elements.append(TestCurrentElement(
             element=element_name,
             kind="delay",
-            test_current=elem["test_current"],
+            test_current=inject_current,
             limit_low=None,
             limit_high=None,
-            multiplier=elem.get("test_multiplier", default_mult),
+            multiplier=test_mult,
             calc_method=(
                 str(elem["calc_method"]) if elem.get("calc_method") is not None else None
             ),

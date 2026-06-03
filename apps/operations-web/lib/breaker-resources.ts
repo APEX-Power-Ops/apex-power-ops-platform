@@ -349,6 +349,12 @@ export type EtuCalculateRequest = {
   inst_setting?: number
   gfpu_setting?: number
   gfd_setting?: number
+  // Operator-selectable delay test current (× the element's pickup). Defaults to the
+  // NETA point (LTD 3×, STD/GFD 1.5×). For LTD, 6× is the band reference where the
+  // expected trip time equals the dial setting (t = setting·(6/N)²).
+  ltd_test_multiple?: number
+  std_test_multiple?: number
+  gfd_test_multiple?: number
   multiplier_value?: number
   c_factor?: number
   maint_mode?: boolean

@@ -718,13 +718,17 @@ function EtuSettings({ maint, setMaint, selection }: { maint: boolean; setMaint:
   const [chosen, setChosen] = useState<EtuChosen | null>(null)
   const [calc, setCalc] = useState<EtuCalculateResponse | null>(null)
   const [measured, setMeasured] = useState<Record<string, string>>({})
+  // Operator-selectable delay test current (× the element's pickup). NETA defaults:
+  // LTD 3×, STD/GFD 1.5×. LTD 6× = the band reference where the expected trip time
+  // equals the dial setting and is practically measurable.
+  const [testMult, setTestMult] = useState<Record<BandKey, number>>(DELAY_DEFAULT)
   const [loading, setLoading] = useState(true)
   const [calcBusy, setCalcBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
 
   useEffect(() => {
     let active = true
-    setLoading(true); setErr(null); setCalc(null); setChosen(null); setMeasured({})
+    setLoading(true); setErr(null); setCalc(null); setChosen(null); setMeasured({}); setTestMult(DELAY_DEFAULT)
     Promise.all([fetchEtuSettings(sensorId), fetchEtuContext(sensorId)])
       .then(([s]: [AvailableSettingsResponse, SensorCalcContext]) => {
         if (!active) return
@@ -752,13 +756,15 @@ function EtuSettings({ maint, setMaint, selection }: { maint: boolean; setMaint:
     fetchEtuCalculate({
       sensor_id: sensorId, plug_rating: chosen.plug,
       ltpu_setting: chosen.ltpu, stpu_setting: chosen.stpu, inst_setting: chosen.inst, gfpu_setting: chosen.gfpu,
-      ltd_setting: chosen.ltd, std_setting: chosen.std, gfd_setting: chosen.gfd, maint_mode: maint,
+      ltd_setting: chosen.ltd, std_setting: chosen.std, gfd_setting: chosen.gfd,
+      ltd_test_multiple: testMult.ltd, std_test_multiple: testMult.std, gfd_test_multiple: testMult.gfd,
+      maint_mode: maint,
     })
       .then((r) => { if (active) setCalc(r) })
       .catch((e) => { if (active) setErr(errMsg(e)) })
       .finally(() => { if (active) setCalcBusy(false) })
     return () => { active = false }
-  }, [chosen, maint, sensorId])
+  }, [chosen, maint, sensorId, testMult])
 
   if (loading || !settings || !chosen) {
     return <div className="loadbox">{err ? <span className="sel-status err">⚠ {err}</span> : <><span className="spin" /> Loading sensor settings…</>}</div>
@@ -778,24 +784,12 @@ function EtuSettings({ maint, setMaint, selection }: { maint: boolean; setMaint:
   }
   const elByCode = (code: string) => calc?.elements.find((e) => e.element.toUpperCase() === code)
 
-  // NETA ATS test points (NETA_TEST_PLAN_SPEC §2/§11): pickups ramp @ 1×; each delay injects a FIXED
-  // multiple of its own pickup — LTD @ 3× LTPU, STD @ 1.5× STPU, GFD @ 1.5× GFPU.
-  // The /calculate engine currently echoes the selected delay BAND as `multiplier` (the band↔multiplier
-  // conflation, G4), so its delay `multiplier`/`test_current` are wrong. Override the DISPLAY with the NETA
-  // multiple and inject-current (= multiple × the element's pickup current). The expected trip TIME stays
-  // engine-sourced under the "verify" badge (recompute-at-multiple is the gated Stage C curve work).
-  const NETA_DELAY_MULT: Record<string, number> = { LTD: 3, STD: 1.5, GFD: 1.5 }
-  const DELAY_PICKUP: Record<string, string> = { LTD: 'LTPU', STD: 'STPU', GFD: 'GFPU' }
-  const displayTestMult = (e: EtuTestCurrentElement): number =>
-    e.kind === 'delay' ? (NETA_DELAY_MULT[e.element.toUpperCase()] ?? e.multiplier) : (e.multiplier ?? 1)
-  const displayTestCurrent = (e: EtuTestCurrentElement): number | null => {
-    if (e.kind === 'delay') {
-      const mult = NETA_DELAY_MULT[e.element.toUpperCase()]
-      const pickup = elByCode(DELAY_PICKUP[e.element.toUpperCase()])?.test_current
-      if (mult != null && pickup != null) return mult * pickup
-    }
-    return e.test_current
-  }
+  // NETA ATS test points (NETA_TEST_PLAN_SPEC §2/§11): pickups ramp @ 1×; each delay injects a
+  // multiple of its own pickup — LTD @ 3× LTPU (default), STD @ 1.5× STPU, GFD @ 1.5× GFPU. The
+  // delay test current is now operator-selectable (testMult); /calculate returns the correct
+  // multiplier, inject current, and — for LTD — the expected trip time recomputed at that multiple
+  // via the I²t reference window (t = setting·(6/N)²; setting = the trip time at 6× Ir), agreeing
+  // with the Screen-3 curve. So read multiplier / test_current / delay_seconds straight off the row.
 
   // G4 per-sensor delay-route trust (backend services/neta/delay_trust.py): /calculate now
   // carries `trust` per delay element. Direct-band (route 0) + LTD → DB; INVEQ Therm (route 2)
@@ -865,7 +859,20 @@ function EtuSettings({ maint, setMaint, selection }: { maint: boolean; setMaint:
                     </select>
                   )}
                 </div>
-                <div className="el-row"><span>Test Current</span><div className="el-cur">{present && el ? fmtAmp(displayTestCurrent(el)) : '—'}</div></div>
+                {present && m.band ? (
+                  <div className="el-row">
+                    <span>Test @</span>
+                    <select
+                      className="el-select"
+                      value={testMult[m.band]}
+                      onChange={(e) => setTestMult((t) => ({ ...t, [m.band!]: Number(e.target.value) }))}
+                      title={m.band === 'ltd' ? 'Long-time delay test current. 6× = the band reference where expected time equals the dial setting.' : 'Delay test current (× pickup).'}
+                    >
+                      {MULT_OPTS.map((mm) => (<option key={mm} value={mm}>{fmtMult(mm)}</option>))}
+                    </select>
+                  </div>
+                ) : null}
+                <div className="el-row"><span>Test Current</span><div className="el-cur">{present && el ? fmtAmp(el.test_current) : '—'}</div></div>
               </div>
             </div>
           )
@@ -893,8 +900,8 @@ function EtuSettings({ maint, setMaint, selection }: { maint: boolean; setMaint:
                   <tr key={e.element}>
                     <td><b>{e.element}</b></td>
                     <td>{trustCell(e)}</td>
-                    <td>{fmtMult(displayTestMult(e))}</td>
-                    <td className="num">{fmtAmp(displayTestCurrent(e))}</td>
+                    <td>{fmtMult(e.multiplier)}</td>
+                    <td className="num">{fmtAmp(e.test_current)}</td>
                     <td className="num">{limitCell(lo, e)}</td>
                     <td className="num">{limitCell(hi, e)}</td>
                     <td><div className="meas"><input className="meas-in" inputMode="decimal" value={raw} placeholder="—" disabled={isWithheld(e)} onChange={(ev) => setMeasured((m) => ({ ...m, [e.element]: ev.target.value }))} /><span className="meas-u">{unit}</span></div></td>
@@ -915,7 +922,7 @@ function EtuSettings({ maint, setMaint, selection }: { maint: boolean; setMaint:
       {calc?.warnings?.length ? <div className="sel-status warn">{calc.warnings.join(' · ')}</div> : null}
 
       <div className="method">
-        <b>NETA test points.</b> Pickups (LTPU/STPU/INST/GFPU) ramp-test <b>@ 1×</b> against <b>DB-authoritative per-sensor tolerances</b> (field-safe). Delays inject a fixed multiple of their pickup — <b>LTD @ 3× LTPU, STD @ 1.5× STPU, GFD @ 1.5× GFPU</b> (NETA ATS) — so the <b>Test @ and inject current are always field-correct</b>. The expected trip <b>time</b> is now <b>gated per the G4 field-trust matrix</b> by each element&apos;s delay-calc route: <b>DB</b> = direct-band (route 0) + LTD — validated row-for-row; <b>verify</b> = inverse-equation (route 2) — native formula recovered, captured-fixture validation pending; <b>n/a</b> = I²t / GE-trip-unit / GF-ANSI routes whose solver is not built, so the time is <b>withheld</b> (the inject current stays valid). {selection.trustNote}
+        <b>NETA test points.</b> Pickups (LTPU/STPU/INST/GFPU) ramp-test <b>@ 1×</b> against <b>DB-authoritative per-sensor tolerances</b> (field-safe). Each delay injects a <b>selectable multiple of its pickup</b> (the <b>Test @</b> dropdown) — NETA defaults <b>LTD 3× LTPU, STD/GFD 1.5×</b> — and the <b>inject current is always field-correct</b> (the proven pickup × your chosen multiple). For <b>long-time delay</b> the expected trip <b>time follows the I²t law</b> t = setting·(6/N)²: the stored band setting is the trip time at <b>6× Ir</b>, so testing at <b>6×</b> gives a time equal to the dial setting (the practical, directly-measurable point), while 3× is four times longer. The expected <b>time</b> stays <b>gated per the G4 field-trust matrix</b>: <b>DB</b> = direct-band (route 0) + LTD; <b>verify</b> = inverse-equation (route 2) pending captured-fixture validation; <b>n/a</b> = I²t / GE-trip-unit / GF-ANSI routes whose solver is not built, so the time is <b>withheld</b> (the inject current stays valid). {selection.trustNote}
       </div>
     </>
   )

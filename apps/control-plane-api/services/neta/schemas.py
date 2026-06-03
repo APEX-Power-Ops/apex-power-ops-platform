@@ -911,6 +911,23 @@ class CalculateRequest(BaseModel):
     inst_setting: Optional[float] = Field(None, description="Instantaneous pickup setting")
     gfpu_setting: Optional[float] = Field(None, description="GFPU multiplier setting")
     gfd_setting: Optional[float] = Field(None, description="GFD delay setting")
+    ltd_test_multiple: Optional[float] = Field(
+        None,
+        description=(
+            "LTD delay-test current multiple (x LTPU pickup). Defaults to the NETA "
+            "default (3x). 6x is the long-time band reference where the expected trip "
+            "time equals the stored dial setting; LTD time scales by the I2t law "
+            "t = setting * (6/N)^2."
+        ),
+    )
+    std_test_multiple: Optional[float] = Field(
+        None,
+        description="STD delay-test current multiple (x STPU pickup). Defaults to NETA 1.5x.",
+    )
+    gfd_test_multiple: Optional[float] = Field(
+        None,
+        description="GFD delay-test current multiple (x GFPU pickup). Defaults to NETA 1.5x.",
+    )
     multiplier_value: Optional[float] = Field(
         None,
         description="Optional ETU multiplier used by calc methods 2 and 3",

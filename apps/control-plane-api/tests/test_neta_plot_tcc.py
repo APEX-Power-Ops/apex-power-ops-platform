@@ -549,15 +549,62 @@ class TestCalculateEvaluateParity:
         assert ltd["kind"] == "delay"
         assert ltd["limit_low"] is None
         assert ltd["limit_high"] is None
-        assert ltd["delay_seconds"] == 3.5
-        assert ltd["time_limit_low"] == 3.0
-        assert ltd["time_limit_high"] == 3.5
-        assert ltd["notes"] == "timing_source=band_table"
+        # LTD time is the I2t long-time characteristic anchored at 6x Ir (the stored
+        # band setting = the trip time at 6x). At the NETA default 3x the bands table
+        # now agrees with the Screen-3 curve: t = setting * (6/3)^2 = 3.5 * 4 = 14.0 s.
+        assert ltd["multiplier"] == 3.0
+        assert ltd["delay_seconds"] == 14.0
+        assert ltd["time_limit_low"] == pytest.approx(9.8)
+        assert ltd["time_limit_high"] == 14.0
+        assert ltd["notes"] == "timing_source=ltd_reference_window"
 
         inst = elements["INST"]
         assert inst["kind"] == "pickup"
         assert inst["limit_low"] == 10800.0
         assert inst["delay_seconds"] == 0.05
+
+    def test_calculate_bigger_delay_test_multiple_scales_i2t_and_inject(self, client):
+        """The operator-selectable 'bigger delay test current' option: a larger LTD
+        test multiple shortens the expected trip time by the I2t law and scales the
+        inject current. At 6x Ir (the band reference) the expected time == the stored
+        dial setting; at 3x it is 4x longer. The inject current = multiple x pickup."""
+        tc, _ = client
+
+        def _calc(ltd_mult):
+            req = {
+                "sensor_id": SENSOR_ID,
+                "plug_rating": PLUG_RATING,
+                "ltpu_setting": 0.8,
+                "ltd_setting": 3.5,
+                "stpu_setting": 4.0,
+                "std_setting": 2.0,
+                "inst_setting": 10.0,
+                "gfpu_setting": 0.4,
+                "gfd_setting": 1.5,
+                "ltd_test_multiple": ltd_mult,
+                "maint_mode": False,
+            }
+            patches, _ = _patch_calc_engine()
+            with patches["pickup"], patches["ltd"], patches["ieee"]:
+                resp = tc.post("/api/v1/neta/calculate", json=req)
+            assert resp.status_code == 200
+            return {e["element"]: e for e in resp.json()["elements"]}
+
+        # 6x = the long-time band reference: expected time equals the dial setting.
+        ltd6 = _calc(6.0)["LTD"]
+        assert ltd6["multiplier"] == 6.0
+        assert ltd6["delay_seconds"] == pytest.approx(3.5)            # 3.5 * (6/6)^2
+        assert ltd6["test_current"] == pytest.approx(5760.0)         # 6 * 960 LTPU pickup
+        assert ltd6["time_limit_low"] == pytest.approx(2.45)          # 0.7 * 3.5
+        assert ltd6["time_limit_high"] == pytest.approx(3.5)
+        assert ltd6["notes"] == "timing_source=ltd_reference_window"
+        assert ltd6["trust"] == "db"
+
+        # 3x trips 4x slower (I2t), and injects half the 6x current.
+        ltd3 = _calc(3.0)["LTD"]
+        assert ltd3["delay_seconds"] == pytest.approx(14.0)          # 3.5 * (6/3)^2
+        assert ltd3["test_current"] == pytest.approx(2880.0)         # 3 * 960
+        assert ltd3["delay_seconds"] == pytest.approx(ltd6["delay_seconds"] * 4)
 
     def test_evaluate_includes_delay_time_results(self):
         eval_data = {
@@ -1281,8 +1328,10 @@ class TestGEPresetNoWarningContract:
             assert calc_elements["LTPU"]["test_current"] == 640.0
             assert calc_elements["STPU"]["test_current"] == 2560.0
             assert calc_elements["GFPU"]["test_current"] == 320.0
-            assert calc_elements["LTD"]["delay_seconds"] == 6.0
-            assert calc_elements["LTD"]["notes"] == "timing_source=band_table"
+            # LTD time is the I2t long-time characteristic (setting = trip time at 6x Ir).
+            # At the NETA default 3x: 6.0 * (6/3)^2 = 24.0 s (agrees with the Screen-3 curve).
+            assert calc_elements["LTD"]["delay_seconds"] == 24.0
+            assert calc_elements["LTD"]["notes"] == "timing_source=ltd_reference_window"
 
             assert plot_resp.status_code == 200
             plot_body = plot_resp.json()
