@@ -193,7 +193,7 @@ recorded against the 17,831-sensor corpus]` `[DLL_SEMANTIC_FINDINGS §1 / §2]`:
 |---|---|---|---|---|
 | **STD direct-band** `DS3_SEC3_I2T = 0` | `DatSection3STD` flat/Out-In bands | yes | **yes — row-for-row** | Series B SE `(10,10,2)` / MX `(6,6,1)` / PX-6B mixed; TASK-C 8/8 PASS `[06 §matrix]` |
 | **GFD direct-band** `DS1GF_SEC3_I2T = 0` | `DatSection1GfGFD` bands | yes | **yes — literal anchor** | Full-SE `I_OPEN = 2000A` literal ×4 ordinals; TASK-C PASS `[06 §matrix]` |
-| **I2X** route `= 1` | `DatSection3STD` `i2x`/`exp_x` slope | **no — not implemented** | no | I²t solver not built `[DLL_END_TO_END_MAPPING §6/§16, "I²t solver value 1 not implemented"]` |
+| **I2X** route `= 1` | `DatSection3STD` Iˣt ramp + flat floor → **`CIxt` power law** (§3b·I2X) | **no — withheld** (kernel **characterized** 2026-06-03 §113) | no — pending §107 oracle parity | Kernel = `t=T_anchor·(I_anchor/M)^X`, X=`DS3_I2T_VAL` (≈2 for 98%); NOT `CalcThermEq`. ~98% = banked I²t (§4). `[§3b·I2X · §113]` |
 | **INVEQ** route `= 2` (STD) | `DatSection3InvEq` → `IEEEInverseTimeSolver` | **yes — dispatch wired** | **NO — dispatch only, numbers not validated** | `*Eq=0` uniform, `*ICalc=(10,10,4,4)` integrity, `InOut∈{0,2}` switch → IEEE solver; 4,524 sensors `[06 §matrix / §synthesis-4]` |
 | **INVEQ** route `= 2` (GFD) | `DatSection1GfInvEq` → `IEEEInverseTimeSolver` | **yes — full chain bound** | **NO — dispatch only, numbers not validated** | populator `FUN_01207bf0` → reader `nSection=5` → 8 setters; slot matrix BOUND ×3; `byICalc=(in==0)?2:(in==1)?1:0`; Therm/Ansi = IdOp `*Eq` byte; 1,713 sensors `[06 §matrix, pass-5]` |
 | **TUSTD** route `= 3` | GE trip-unit STD | **no — fall-through diagnostic only** | no | "Enteliguard not supported", 235 sensors `[DLL_END_TO_END_MAPPING §6/§summary]` `[06 §matrix]` |
@@ -203,6 +203,41 @@ recorded against the 17,831-sensor corpus]` `[DLL_SEMANTIC_FINDINGS §1 / §2]`:
 - **`*ICalc → byICalc` translator** `FUN_01208640`: `byICalc = (in==0)?2 : (in==1)?1 : 0` → on `{1,4,8,10}` gives `1→1, 4→0, 8→0, 10→0`. **PROVEN** (native + Python verbatim). `[06 §matrix, pass-5]`
 - **Slot identity** (slot1=flat-open … slot4=inverse-clear; row offsets 0x08/0x3C/0x70/0xA4). **PROVEN** (in-function MOVSS+CALL). `[06 §matrix, pass-5]`
 - **Therm-vs-Ansi selector** = IdOp `*Eq` byte at row offset 0x70 (whole-row). **PROVEN.** `[06 §pass-5]`
+
+### 3b·I2X. The route-1 Iˣt kernel — RECOVERED 2026-06-03 (`CIxt` power law, **NOT** `CalcThermEq`)
+
+The I2X gating verification (punch-list L4 / STATE §113, tasks I2X-1+I2X-2) triangulated the **decompile +
+staging DB + managed routing** and **corrects the 2026-06-02 scout hypothesis** that route-1 reused the
+`CalcThermEq` polynomial. It does not. Route-1 is a **simple power law**:
+
+> **`t(M) = T_anchor · (I_anchor / M)^X`** — equivalently `K = I_anchor^X · T_anchor`, `t = K / I^X`.
+
+- **Kernel** = `CTccLVBreakerCurveSST`'s `CIxt` class `[DLL TccBase.dll CIxt.{ctor}/ComputeT 24248-24297]`:
+  ctor stores `K = pow(I, |x|)·t`; `ComputeT(I) = K / pow(I, x)`. The `SetSTDB_{Flat,Inverse}Delay{Open,Clear}[ZSI]`
+  setters `[24440-24531]` carry `(byICalc, rTmin, rX, rTref, rIref, rM)` where **`rX` = exponent X**,
+  **`rIref/rTref` = the anchor (I,T)**, `rTmin` = definite-time floor — a power law, not a Therm shape.
+- **Flat-vs-Inverse discriminator** = `IsSTDB_Ixt` (`bool[709]`) `[24196]`, read by `GetMin{Open,Clear}STDB`
+  `[26398-26442]`: **true → Inverse block (the Iˣt ramp); false → Flat block (definite-time floor).** This is
+  the native render of the `[EZPDOC]`/`[ETAPDOC]` **(I^x)t In/Out** control documented above (§3 note): In =
+  sloped Iˣt ramp, Out = current-independent flat.
+- **Per-band shape** = `DatSection3STD.I2X` smallint `[VERIFIED-LIVE — staging tcc-fidelity-staging, 2026-06-03]`:
+  **0 / NULL = flat-only** (time = `STD_OPEN`/`STD_CLEAR`, current-independent); **1 = Iˣt-ramp-only**
+  (anchor `I_OPEN`/`T_OPEN` open, `I_CLEAR`/`T_CLEAR` clear); **2 = composite** (Iˣt ramp **+** flat floor).
+  Band counts: I2X 0→49,916 / 1→14,181 / 2→64,840 / 255→2 (sentinel) / NULL→10,704 rows over 10,425 sensors.
+  **The anchor multiple varies per band** (top groups `I_OPEN/I_CLEAR` = 12/14.4, 10/10, 8/8, 6/6, 7/7, 7/8,
+  8.3/12 …) and open≠clear — **read it from the row; do NOT hardcode 6×** (the LTD §4 model's 6× is LTD-specific).
+- **Exponent X** = sensor-level `DatSensor.DS3_I2T_VAL` (STD) / `DS1GF_I2T_VAL` (GFD), active when `DS{3,1GF}_SEC3_I2T=1`.
+  `[VERIFIED-LIVE]` **X = 2.0 for 8,439/8,708 STD (96.9%) and 5,953/5,976 GFD (99.6%) — ~14,392/14,684 (98%) pure I²t.**
+  Variable tail ~235 (mostly x=1 linear `I·t`; a few 5.0 / 2.09 / 2.17 / 0.49 …); ~48 disabled (`-1.0` / NULL).
+  This is why the family is **"I2X" = Iˣt** (variable exponent), even though the bands' `STD_DESC` read "I2T = …".
+
+**Status / implication:** route-1 is no longer an unknown-cost RE — its kernel is the **I²t closed form already
+shipped + live-verified for LTD (§4 / §111)**, generalized to a per-band anchor + sensor `X`. Punch-list L4 is
+resized **L → M**. The one residual deliberately deferred to the §107 native-oracle parity pass (do not guess):
+the **I2X=2 composite combination rule** (ramp-vs-floor — provisional `t = max(ramp, floor)` definite-time
+minimum) and the ~235-sensor variable-X tail. Until that pass promotes route-1 in `delay_trust.py`, route-1
+stays **withheld** (the §6 field-trust gate holds). `[G4 §3a/§3b/§4 · §113 · DLL CIxt 24248-24297 / SetSTDB_*
+24440-24531 / IsSTDB_Ixt 24196,26398-26442]`
 
 ### 3c. The LTD delay window (separate two-table model)
 

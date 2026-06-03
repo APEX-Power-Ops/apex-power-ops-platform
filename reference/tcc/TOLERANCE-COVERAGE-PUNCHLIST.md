@@ -55,7 +55,7 @@ every stage; the punch list is about *coverage*, not *safety*.
 | L1 | **GF-INVEQ Therm + Ansi** (one field[13] lane) | ~1,690 GFD + 23 Ansi | verify / withheld | — | S | **PAUSED** — `field[13]` evidence (you); both promote together |
 | ~~L2~~ | ~~GF-INVEQ Ansi (standalone)~~ | — | — | — | — | **MERGED INTO L1** (2026-06-02) — shares `field[13]`, not independent |
 | L3 | GE-TU delay solver | STD 235 / GFD 209 | withheld | — | M | OPEN — separate trip-unit math |
-| L4 | **I2X / Iˣt delay solver** | STD 8,708 / GFD 5,976 (~15k) | withheld | — | **L (the monster)** | OPEN — biggest single lever |
+| L4 | **I2X / Iˣt delay solver** | STD 8,708 / GFD 5,976 (~15k) | withheld | — | **M (resized 06-03; ~98% = banked I²t)** | OPEN — biggest single lever; gating verify DONE §113 |
 | L5 | Delay tolerance BANDS (per-mfr ± on time) | LTD + derived rows | — | engine window | M | OPEN — per-mfr time tolerance |
 | L6 | Envelope-only setting+tolerance catalog | ~4,106 families (PXR2 seeded) | — | `[VENDOR-DOC]` | L (incremental) | IN PROGRESS — validated-library loop |
 | L7 | Pickup BAND validation vs OEM | per family | db | per-sensor DB | M | OPEN — confirm DB = true OEM per-mfr |
@@ -86,18 +86,31 @@ Oracle harness preserved at `output/inveq-parity/oracle/`. `[G4 §3f/§5]`
 GE trip-unit STD/Gnd (routes 3/4) use a separate solver not built. **Close:** RE the GE-TU delay math
 (check for a `TccBase.dll` kernel to oracle, same as §107) → managed solver → parity → promote. `[G4 §3a]`
 
-### L4 — I2X / Iˣt delay solver → db  ·  STD 8,708 + GFD 5,976 (~15k)  ·  L  ·  THE BIG LEVER
-The I²t / Iˣ·t slope family (route 1) solver isn't built — this is ~half of all withheld delay cells. **Risk
-re-characterized by a 2026-06-02 decomp scout (de-risk):** there is **no separate native breaker I2X kernel** —
-`grep` of `TccBase.dll` finds the only `*I2tEquation` functions are **relay** ones (`CTccRelayCurveBase.*LockedRotorConstantI2tEquation`,
-GR lane), not breaker. Breaker STD delay curves are parameterized by the `CTccLVBreakerCurveSST.SetSTDB_{Flat,Inverse}Delay{Open,Clear}[ZSI]`
-**setters** (24440-24531), which store the **same `(byICalc, rTmin, rX, rTref, rIref, rM)` Therm-shape params**
-and are rendered by the **`CalcThermEq`/`CalcThermEq3` family we already recovered + executed bit-exact in §107**.
-**Implication:** L4 is likely *"wire the route-1 I2X data → the already-recovered §107 kernel + oracle-validate,"*
-not a from-scratch kernel RE — so it may be **M, not the monster**. **One verification gates the resize:**
-confirm how the route-1 populator natively maps I2X (the `i2x`/`exp_x` slope) onto `SetSTDB_Flat` vs
-`SetSTDB_Inverse` (i.e. flat-I²t vs a genuine Iˣt power law). That single check is L4's first step; everything
-after reuses the §107 oracle recipe. `[G4 §3a/§3c · DLL TccBase.dll SetSTDB_* 24440-24531]`
+### L4 — I2X / Iˣt delay solver → db  ·  STD 8,708 + GFD 5,976 (~15k)  ·  **M (re-sized down 2026-06-03)**  ·  THE BIG LEVER
+The Iˣt slope family (route 1) solver isn't wired — this is ~half of all withheld delay cells. **Gating
+verification DONE 2026-06-03 (I2X-1/I2X-2, STATE §113) — triangulated decompile + staging DB + managed
+routing, and it CORRECTS the 2026-06-02 scout hypothesis:** route-1 is **NOT** the `CalcThermEq` polynomial.
+It is the **`CIxt` power-law kernel** (`TccBase.dll` 24248-24297): `t(M) = T_anchor·(I_anchor/M)^X`
+(equivalently `K = I_anchor^X·T_anchor`, `t = K/Iˣ`). The `SetSTDB_{Flat,Inverse}Delay*` setters (24440-24531)
+store `(byICalc, rTmin, rX, rTref, rIref, rM)` where **`rX` is the exponent, `rIref/rTref` the anchor** — a
+power law, not a Therm shape. The native render discriminator is `IsSTDB_Ixt` (`bool[709]`, read by
+`GetMin{Open,Clear}STDB` 26398-26442): **true → Inverse block (the Iˣt ramp), false → Flat block (definite-time
+floor)**.
+- **Per-band shape** = `DatSection3STD.I2X` smallint: **0/NULL = flat-only** (time = `STD_OPEN`/`STD_CLEAR`, definite);
+  **1 = Iˣt-ramp-only** (anchor `I_OPEN`/`T_OPEN`, `I_CLEAR`/`T_CLEAR`); **2 = composite** (ramp **+** flat floor).
+  Anchor multiple varies per band (12/14.4, 10, 8, 6, 7, 8.3/12 …) and open≠clear — **read it, do not hardcode 6×**.
+- **Exponent X** = sensor-level `DatSensor.DS3_I2T_VAL` (STD) / `DS1GF_I2T_VAL` (GFD), gated by `DS{3,1GF}_SEC3_I2T=1`.
+  **X = 2.0 for 8,439/8,708 STD (96.9%) and 5,953/5,976 GFD (99.6%) — ~14,392/14,684 (98%).** Variable tail
+  ~235 (mostly x=1 linear `I·t`; a few 5.0/2.09/2.17/0.49…); ~48 disabled (`-1.0`/NULL → withhold).
+**Implication — L4 is M, not the monster.** ~98% collapse to the **exact I²t closed form already shipped +
+live-verified for LTD (§111)**, generalized to read the per-band anchor; the variable-x tail is the SAME one-line
+kernel reading `X` from `I2T_VAL`. No `CalcThermEq`, no polynomial root-find. **Remaining work:** (a) generalize
+the banked I²t evaluator to read per-band `(I_anchor, T_anchor)` + sensor `X`; (b) pin the **I2X=2 composite
+combination rule** (ramp-vs-floor: looks like `t = max(ramp, floor)` definite-time minimum — confirm by parity,
+do not guess) + the variable-x tail via the §107 native-oracle recipe; (c) parity-prove, promote route-1
+withheld→db in `delay_trust.py`, SSoT-reconcile, deploy, live-verify.
+`[G4 §3a/§3c/§4 · DLL TccBase.dll CIxt 24248-24297 / SetSTDB_* 24440-24531 / IsSTDB_Ixt 24196,26398-26442 ·
+DatSection3STD + DatSensor.DS3_I2T_VAL/DS1GF_I2T_VAL · §113]`
 
 ### L5 — Delay tolerance BANDS (per-manufacturer ± on time)  ·  M
 Direct-band STD/GFD carry the manufacturer open/clear band; LTD currently uses the engine's
@@ -152,9 +165,12 @@ campaign, the ~15k lever) → **L8/L9** (TMT/EMT) → **L10** (relays — its ow
 
 > **What an autonomous bite can/can't do right now (2026-06-02):** L1 is gated on operator `field[13]` evidence
 > (field-trust law forbids promoting on the unconfirmed hypothesis); L5/L7/L6/L8/L9 need OEM/vendor tolerance
-> data not yet in hand; L3/L4/L10 are RE campaigns needing the native-kernel oracle build. So the next *new
-> coverage* most likely comes from either (a) your `field[13]` evidence unlocking L1 (both GF families), or
-> (b) scheduling the L4 I2X campaign (RE + oracle, the §107 recipe — no external inputs needed). The GF formula
-> RE is now fully banked, so L1's remaining work is just the `field[13]` anchor + a re-validate.
+> data not yet in hand; L3/L10 are RE campaigns needing the native-kernel oracle build. **L4's gating RE is now
+> DONE (§113)** — its kernel is the banked I²t closed form (~98% x=2) generalized to per-band anchors + sensor `X`,
+> so L4 no longer needs a from-scratch kernel; remaining L4 work is implementation + the §107 oracle parity pass
+> (no external inputs needed). So the next *new coverage* most likely comes from either (a) your `field[13]`
+> evidence unlocking L1 (both GF families), or (b) building the L4 I2X solver (now an M-sized implementation, not
+> a monster RE). The GF formula RE is fully banked, so L1's remaining work is just the `field[13]` anchor + a
+> re-validate.
 
 *Last updated 2026-06-02 — created. Update status + bump counts (`[VERIFIED-LIVE]`) as lanes close.*
