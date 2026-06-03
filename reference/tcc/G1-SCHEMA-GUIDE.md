@@ -360,6 +360,16 @@ The DB descriptions point at "`DVL_SST_SETTING_*` constants in source header fil
 | 9 | `DVL_SST_SETTING_MULTWTH` | "mult-with"; maps to `0.0` in managed amps switch |
 | 10 | `DVL_SST_SETTING_STPU` | STPU-relative variant (declared; native-side) |
 
+> **Plug authority (§110 — fixed 2026-06-03).** `SensorValue` is the sensor's **nominal**
+> rating (= prod `vw_sensor_calc_context.rating`; e.g. `6000` for `SensorDesc "6000(I^4T)"`),
+> **not** the upper bound for valid plugs. The authoritative per-sensor valid-plug set is
+> **`DatPlugs` → `tcc.etu_plugs`** (1:1 load), and a rating plug can legitimately **exceed**
+> `SensorValue` (e.g. a 6000 A sensor offering a 6300 A plug — **49 sensors / 55 plugs** do).
+> So **never clamp the served or validated plug list by `SensorValue`** — trust `tcc.etu_plugs`;
+> cap a *submitted* plug only by the sensor's `MAX(value)` valid plug (fall back to the nominal
+> rating only when a sensor has no plug set). A nominal-rating clamp silently dropped those top
+> plugs from the Screen-2 selector. `[router serving + `_enforce_plug_within_sensor_rating` · STATE §115]`
+
 **`SSTDelayCalc` / `DB_SST_DLCALC_*` — short-time/ground delay-curve routing (0..4).** The enum the `*_SEC3_I2T` columns actually cast to. `[DLL DeviceLibrary.cs:67-75]` `[DLL DeviceLibrary.cs:1220,1230,1279,1299]`
 | Val | Constant | Routing | Delay table the engine reads |
 |---:|---|---|---|
