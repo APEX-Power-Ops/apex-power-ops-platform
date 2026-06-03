@@ -781,6 +781,55 @@ class RelaySectionSearchResponse(BaseModel):
     sections: list[RelaySectionSearchResult] = Field(default_factory=list)
 
 
+# ── Relay selection cascade (Chip 2): guided, no-free-text dropdowns ──
+# Mirrors the breaker TMT/EMT manufacturer-cascade pattern for relays
+# (Mfr → Type → Device Function → Standard / Curve family). GR §1.
+
+class RelayManufacturerOption(BaseModel):
+    """A manufacturer option for the relay selector's guided dropdown (cascade top)."""
+    manufacturer_source_id: int
+    manufacturer_name: Optional[str] = None
+    relay_count: int = 0
+    section_count: int = 0
+
+
+class RelayManufacturersResponse(BaseModel):
+    """Manufacturers available for the relay selector dropdown (GR §1 cascade step 1)."""
+    manufacturers: list[RelayManufacturerOption] = Field(default_factory=list)
+
+
+class RelayFacetOption(BaseModel):
+    """A cross-filtered text cascade option (relay_type / device_function)."""
+    value: str
+    count: int = 0
+
+
+class RelayStandardOption(BaseModel):
+    """A standard facet option (ANSI / IEC / Both)."""
+    standard_code: int
+    label: str
+    count: int = 0
+
+
+class RelayFamilyOption(BaseModel):
+    """A curve-family facet option (RelayTDSection.Model 0-9), trust-tagged."""
+    family_code: int
+    family_name: str
+    storage_kind: str
+    supported: bool = False
+    count: int = 0
+
+
+class RelayFacetsResponse(BaseModel):
+    """Cross-filtered relay cascade options for the current partial selection (GR §1)."""
+    relay_types: list[RelayFacetOption] = Field(default_factory=list)
+    device_functions: list[RelayFacetOption] = Field(default_factory=list)
+    standards: list[RelayStandardOption] = Field(default_factory=list)
+    families: list[RelayFamilyOption] = Field(default_factory=list)
+    total_matching_sections: int = 0
+    active_filters: dict[str, int | str] = Field(default_factory=dict)
+
+
 class RelayContext(BaseModel):
     manufacturer_source_id: int
     relay_type: Optional[str] = None

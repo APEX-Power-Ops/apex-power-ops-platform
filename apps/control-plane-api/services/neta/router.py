@@ -107,6 +107,12 @@ from .schemas import (
     RelaySectionSearchResponse,
     RelaySectionSearchResult,
     RelaySettingsResponse,
+    RelayManufacturerOption,
+    RelayManufacturersResponse,
+    RelayFacetOption,
+    RelayStandardOption,
+    RelayFamilyOption,
+    RelayFacetsResponse,
     EMTFrameSearchResponse,
     EMTFrameSearchResult,
     EMTPickupOption,
@@ -170,6 +176,8 @@ _RELAY_STORAGE_KINDS = {
     8: "unsupported",
     9: "unsupported",
 }
+# RelayDevices.standard_code → label (GR §1; live distribution 0 ANSI > 1 IEC > 2 Both).
+_RELAY_STANDARD_LABELS = {0: "ANSI", 1: "IEC", 2: "Both"}
 _RELAY_ANALYTICAL_FAMILY_CONFIG = {
     2: {
         "parent_table": "tcc.relay_curves_iec",
@@ -703,8 +711,10 @@ def _load_relay_context_bundle(db: Session, td_section_source_id: int) -> dict[s
 def _search_relay_sections(
     db: Session,
     *,
+    manufacturer_source_id: Optional[int] = None,
     relay_type: Optional[str],
     device_function: Optional[str],
+    standard_code: Optional[int] = None,
     family_code: Optional[int],
     q: Optional[str],
     supported_only: bool,
@@ -728,8 +738,10 @@ def _search_relay_sections(
             FROM tcc.relay_td_sections t
             JOIN tcc.relay_devices d ON d.relay_device_id = t.relay_device_id
             JOIN tcc.relays r ON r.relay_id = d.relay_id
-            WHERE (:relay_type IS NULL OR r.relay_type ILIKE '%' || :relay_type || '%')
+            WHERE (:manufacturer_source_id IS NULL OR r.manufacturer_source_id = :manufacturer_source_id)
+              AND (:relay_type IS NULL OR r.relay_type ILIKE '%' || :relay_type || '%')
               AND (:device_function IS NULL OR d.device_function ILIKE '%' || :device_function || '%')
+              AND (:standard_code IS NULL OR d.standard_code = :standard_code)
               AND (:family_code IS NULL OR t.model_code = :family_code)
               AND (
                     :q IS NULL OR r.relay_type ILIKE '%' || :q || '%'
@@ -742,8 +754,10 @@ def _search_relay_sections(
             """
         ),
         {
+            "manufacturer_source_id": manufacturer_source_id,
             "relay_type": relay_type,
             "device_function": device_function,
+            "standard_code": standard_code,
             "family_code": family_code,
             "q": q,
             "supported_only": supported_only,
@@ -760,6 +774,147 @@ def _search_relay_sections(
         payload["supported"] = _relay_is_supported(family_code_value)
         sections.append(payload)
     return sections
+
+
+# ──────────────────────────────────────────────
+# Relay selection cascade (Chip 2) — guided, no-free-text dropdowns
+# Mfr → Type → Device Function → Standard / Curve family (GR §1). The relay
+# parallel to the breaker TMT/EMT manufacturer cascade.
+# ──────────────────────────────────────────────
+
+_RELAY_CASCADE_FROM = """
+    FROM tcc.relay_td_sections t
+    JOIN tcc.relay_devices d ON d.relay_device_id = t.relay_device_id
+    JOIN tcc.relays r ON r.relay_id = d.relay_id
+"""
+
+# Each cascade filter and the SQL predicate it contributes.
+_RELAY_CASCADE_FILTERS = (
+    ("manufacturer_source_id", "r.manufacturer_source_id = :manufacturer_source_id"),
+    ("relay_type", "r.relay_type = :relay_type"),
+    ("device_function", "d.device_function = :device_function"),
+    ("standard_code", "d.standard_code = :standard_code"),
+    ("family_code", "t.model_code = :family_code"),
+)
+
+
+def _relay_cascade_conditions(
+    filters: dict[str, object], *, exclude: Optional[str] = None
+) -> tuple[list[str], dict[str, object]]:
+    """Build WHERE clauses + params from the active cascade filters, optionally
+    excluding one facet's own filter (so that facet's dropdown shows all options
+    compatible with the OTHER selections — standard faceted-search behaviour)."""
+    clauses: list[str] = []
+    params: dict[str, object] = {}
+    for key, clause in _RELAY_CASCADE_FILTERS:
+        if key == exclude:
+            continue
+        value = filters.get(key)
+        if value is not None:
+            clauses.append(clause)
+            params[key] = value
+    return clauses, params
+
+
+def _load_relay_manufacturers(db: Session) -> list[dict[str, object]]:
+    """Distinct manufacturers (id + name + relay/section counts) for the relay
+    selector's top-of-cascade dropdown. Manufacturer is the first cascade step,
+    so it is not cross-filtered (GR §1)."""
+    rows = db.execute(
+        text(
+            """
+            SELECT
+                r.manufacturer_source_id AS manufacturer_source_id,
+                m.mfr_name AS manufacturer_name,
+                COUNT(DISTINCT r.relay_id) AS relay_count,
+                COUNT(DISTINCT t.source_row_id) AS section_count
+            FROM tcc.relays r
+            JOIN tcc.manufacturers m ON m.id = r.manufacturer_source_id
+            JOIN tcc.relay_devices d ON d.relay_id = r.relay_id
+            JOIN tcc.relay_td_sections t ON t.relay_device_id = d.relay_device_id
+            GROUP BY r.manufacturer_source_id, m.mfr_name
+            ORDER BY m.mfr_name NULLS LAST
+            """
+        )
+    ).fetchall()
+    return [
+        {
+            "manufacturer_source_id": int(row._mapping["manufacturer_source_id"]),
+            "manufacturer_name": row._mapping["manufacturer_name"],
+            "relay_count": int(row._mapping["relay_count"] or 0),
+            "section_count": int(row._mapping["section_count"] or 0),
+        }
+        for row in rows
+    ]
+
+
+def _relay_facet_rows(db: Session, value_sql: str, exclude: str, filters: dict[str, object]):
+    """Distinct value + section count for one cascade facet, cross-filtered by the
+    OTHER active selections."""
+    clauses, params = _relay_cascade_conditions(filters, exclude=exclude)
+    clauses.insert(0, f"{value_sql} IS NOT NULL")
+    where_sql = "WHERE " + " AND ".join(clauses)
+    return db.execute(
+        text(
+            f"""
+            SELECT {value_sql} AS value, COUNT(DISTINCT t.source_row_id) AS cnt
+            {_RELAY_CASCADE_FROM}
+            {where_sql}
+            GROUP BY {value_sql}
+            ORDER BY {value_sql}
+            """
+        ),
+        params,
+    ).fetchall()
+
+
+def _load_relay_facets(db: Session, filters: dict[str, object]) -> dict[str, object]:
+    """Cross-filtered cascade options for the current partial relay selection."""
+    relay_types = [
+        {"value": str(row._mapping["value"]), "count": int(row._mapping["cnt"] or 0)}
+        for row in _relay_facet_rows(db, "r.relay_type", "relay_type", filters)
+    ]
+    device_functions = [
+        {"value": str(row._mapping["value"]), "count": int(row._mapping["cnt"] or 0)}
+        for row in _relay_facet_rows(db, "d.device_function", "device_function", filters)
+    ]
+    standards = [
+        {
+            "standard_code": int(row._mapping["value"]),
+            "label": _RELAY_STANDARD_LABELS.get(int(row._mapping["value"]), f"code {int(row._mapping['value'])}"),
+            "count": int(row._mapping["cnt"] or 0),
+        }
+        for row in _relay_facet_rows(db, "d.standard_code", "standard_code", filters)
+    ]
+    families = []
+    for row in _relay_facet_rows(db, "t.model_code", "family_code", filters):
+        code = int(row._mapping["value"])
+        families.append(
+            {
+                "family_code": code,
+                "family_name": _relay_family_name(code),
+                "storage_kind": _relay_storage_kind(code),
+                "supported": _relay_is_supported(code),
+                "count": int(row._mapping["cnt"] or 0),
+            }
+        )
+
+    clauses, params = _relay_cascade_conditions(filters)
+    where_sql = ("WHERE " + " AND ".join(clauses)) if clauses else ""
+    total = db.execute(
+        text(f"SELECT COUNT(DISTINCT t.source_row_id) AS cnt {_RELAY_CASCADE_FROM} {where_sql}"),
+        params,
+    ).scalar()
+    active = {key: value for key, _ in _RELAY_CASCADE_FILTERS if (value := filters.get(key)) is not None}
+
+    return {
+        "relay_types": relay_types,
+        "device_functions": device_functions,
+        "standards": standards,
+        "families": families,
+        "total_matching_sections": int(total or 0),
+        "active_filters": active,
+    }
 
 
 def _select_relay_preview_option(
@@ -4421,10 +4576,53 @@ def plot_emt_tcc(req: EMTPlotRequest, db: Session = Depends(get_db)):
 # GET /relay/sections — Relay Section Search
 # ──────────────────────────────────────────────
 
+@router.get("/relay/manufacturers", response_model=RelayManufacturersResponse)
+def get_relay_manufacturers(db: Session = Depends(get_db)):
+    """Manufacturers (source id + name + relay/section counts) for the relay
+    selector's guided dropdown — the top of the GR §1 cascade."""
+    _ensure_relay_catalog_available(db)
+    return RelayManufacturersResponse(
+        manufacturers=[RelayManufacturerOption(**row) for row in _load_relay_manufacturers(db)]
+    )
+
+
+@router.get("/relay/facets", response_model=RelayFacetsResponse)
+def get_relay_facets(
+    manufacturer_source_id: Optional[int] = Query(None, description="Filter by relay manufacturer source id"),
+    relay_type: Optional[str] = Query(None, description="Exact relay type (model name)"),
+    device_function: Optional[str] = Query(None, description="Exact ANSI device function"),
+    standard_code: Optional[int] = Query(None, description="Standard: 0 ANSI / 1 IEC / 2 Both"),
+    family_code: Optional[int] = Query(None, description="Curve family / model code (0-9)"),
+    db: Session = Depends(get_db),
+):
+    """Cross-filtered cascade options (relay types / device functions / standards /
+    curve families) for the current partial relay selection — drives the guided,
+    no-free-text dropdowns (GR §1). Each facet is filtered by the OTHER selections."""
+    _ensure_relay_catalog_available(db)
+    filters = {
+        "manufacturer_source_id": manufacturer_source_id,
+        "relay_type": relay_type,
+        "device_function": device_function,
+        "standard_code": standard_code,
+        "family_code": family_code,
+    }
+    bundle = _load_relay_facets(db, filters)
+    return RelayFacetsResponse(
+        relay_types=[RelayFacetOption(**row) for row in bundle["relay_types"]],
+        device_functions=[RelayFacetOption(**row) for row in bundle["device_functions"]],
+        standards=[RelayStandardOption(**row) for row in bundle["standards"]],
+        families=[RelayFamilyOption(**row) for row in bundle["families"]],
+        total_matching_sections=bundle["total_matching_sections"],
+        active_filters=bundle["active_filters"],
+    )
+
+
 @router.get("/relay/sections", response_model=RelaySectionSearchResponse)
 def search_relay_sections(
+    manufacturer_source_id: Optional[int] = Query(None, description="Filter by relay manufacturer source id"),
     relay_type: Optional[str] = Query(None, description="Filter by relay type"),
     device_function: Optional[str] = Query(None, description="Filter by source device function"),
+    standard_code: Optional[int] = Query(None, description="Filter by standard: 0 ANSI / 1 IEC / 2 Both"),
     family_code: Optional[int] = Query(None, description="Filter by relay family / model code"),
     q: Optional[str] = Query(None, description="Free-text match against relay type, device function, or TD-section name"),
     supported_only: bool = Query(False, description="Limit results to supported preview families only"),
@@ -4434,8 +4632,10 @@ def search_relay_sections(
     _ensure_relay_catalog_available(db)
     sections = _search_relay_sections(
         db,
+        manufacturer_source_id=manufacturer_source_id,
         relay_type=relay_type,
         device_function=device_function,
+        standard_code=standard_code,
         family_code=family_code,
         q=q,
         supported_only=supported_only,
