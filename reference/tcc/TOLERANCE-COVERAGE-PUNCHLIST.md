@@ -184,7 +184,10 @@ EMT pickup setting + ±tol are DB; the pickup→test-current conversion is not e
 The native relay evaluator (`CTccRelayCurveBase` + per-family classes) decompiled to size-only shells — **no
 `[DLL]` relay formula.** Platform solvers (TCP/IEC/MEQ/BSL/SWZ/PCD) validated on synthetic fixtures only →
 BOUNDED. **Close:** Ghidra-headless on `EasyPower.exe` + EasyPower-captured fixtures (larger than the breaker
-INVEQ close). Ship-now relay layer = stored data (settings + raw TCP grid). `[GR §7]`
+INVEQ close). Ship-now relay layer = stored data (settings + raw TCP grid). `[GR §7]` **L10 is the
+*fidelity* climb of the relay lane; the *product* climb (cascade → NETA serving → field-sheet UI) is
+tracked in [`GR-RELAY-ROADMAP.md`](GR-RELAY-ROADMAP.md) (they meet at roadmap Chip 5 = this lane). The
+roadmap's Chip 1 (`relay_trust.py` field-trust classifier) is DONE (2026-06-03).**
 
 ---
 

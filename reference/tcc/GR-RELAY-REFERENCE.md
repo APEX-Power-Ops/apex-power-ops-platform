@@ -207,13 +207,24 @@ unrecovered and the platform solvers are validated only on synthetic fixtures. `
 | 1 | **Discrete settings (tap/pickup/time-dial values)** | stored `RelayDiscreteValues` / settings | **PROVEN (data)** | **YES — always.** Stored data, no solver. |
 | 2 | **Raw Time/Current point grid (TCP)** | `Model=1` `relay_curve_points_tcp` | **PROVEN (data, as stored)** | **YES** to display the stored points verbatim; **interpolation between them is BOUNDED.** |
 | 3 | **TCP interpolation curve** | `Model=1` | **BOUNDED** | **Flag.** Interpolation logic not parity-checked vs native. |
-| 4 | **IEC / BSL / SWZ / MEQ / PCD analytical curves** | `Model ∈ {2,3,4,5,6}` | **BOUNDED** | **Flag — withhold numbers.** Solver implemented; fixtures synthetic, not EasyPower-captured. |
+| 4 | **IEC / BSL / SWZ / MEQ / PCD analytical curves** | `Model ∈ {2,3,4,5,6}` | **BOUNDED** | **Flag (`verify`) — show, not withhold.** Solver implemented + formula-parity-validated (§69, 6/6 vs published eq + live data); not yet EasyPower-render-proven. |
 | 5 | **Bassler-0 / RXD / LRM** | `Model ∈ {0,7,8}` | **DEFERRED / STUB** | **NO — hard-exclude.** Platform explicitly UNSUPPORTED (RXD/LRM) or legacy (Bassler-0). |
 | 6 | **EGC** | (empty) | **N/A** | no data either surface. |
 | 7 | **SST-2 bridge relays (41 devices)** | `Use_SST=1` | **defer to G4** | route into the **breaker ETU** matrix; gate by sensor delay-calc code (G4). |
 
-**One-line rule:** *ship the stored discrete settings + the raw TCP point grid; flag-and-withhold every
-computed analytical curve (Models 1–6); hard-exclude Bassler-0/RXD/LRM; route the 41 SST-2 relays into G4.*
+**One-line rule:** *ship the stored discrete settings + the raw TCP point grid; flag (`verify`) every
+computed analytical curve (Models 1–6); hard-exclude Bassler-0/RXD/LRM; route the SST-2 relays into G4.*
+
+**Trust-tier encoding (Chip 1, `[VERIFIED-LIVE 2026-06-03]`).** This §6 matrix is now
+machine-encoded in `apps/control-plane-api/services/neta/relay_trust.py` — the relay parallel to
+the breaker `delay_trust.py` (`classify_relay_trust(element_key, model_code, use_sst)` →
+`db`/`verify`/`unsupported`/`defer_g4`; 108 tests + a calc-engine drift guard). **Reconciliation:**
+rows 3–4 (TCP interpolation + analytical Models 1–6) map to the **`verify`** tier — *shown flagged,
+not silently withheld* — justified by the §69 non-circular parity (6/6 families vs the published
+equation + live data; IEC matched IEC-60255 to 4 sig figs). True `withhold` (`unsupported`) is rows
+5–6 (Bassler-0 / RXD / LRM / EGC). The **`verify`→`db` gate** is the captured-EasyPower-fixture close
+(roadmap **Chip 5** / punch-list **L10**). The classifier has **no serving effect yet** — it is the
+foundation the relay field sheet will gate against. Forward plan: **`GR-RELAY-ROADMAP.md`**.
 
 ---
 
