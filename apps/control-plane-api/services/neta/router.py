@@ -16,6 +16,7 @@ SQL helper functions evolve independently.
 
 import json
 import logging
+import re
 from collections import Counter, defaultdict
 from decimal import Decimal, ROUND_HALF_UP
 from typing import Optional
@@ -3581,6 +3582,46 @@ def get_etu_breaker_cascade(
 # GET /etu/bridge-sensors — SST-bridge sensor narrowing
 # ──────────────────────────────────────────────
 
+
+def _largest_amp_in_name(name: Optional[str]) -> Optional[int]:
+    """Best-effort breaker-frame nameplate amp rating from a style/frame name.
+
+    Returns the largest integer >= 50 in the name (a plausible breaker amp rating),
+    so poles/series digits (e.g. the "2/3P" in "PDG2-F PXR 2/3P", or the "6" in
+    "PDG6") don't masquerade as a rating. Returns None when nothing qualifies.
+    """
+    if not name:
+        return None
+    candidates = [int(n) for n in re.findall(r"\d+", name) if int(n) >= 50]
+    return max(candidates) if candidates else None
+
+
+def _bridge_rating_warning(
+    frame: Optional[str], sensor_ratings: list[Optional[float]]
+) -> Optional[str]:
+    """Interim SST-bridge mismatch flag (the §104 re-carry scramble, under repair).
+
+    When a breaker frame's nameplate rating is clearly inconsistent with the sensor
+    ratings the bridge maps it to — the largest compatible sensor is far below
+    (≤½×) or far above (≥2×) the frame rating — the bridged trip style is almost
+    certainly wrong (e.g. a 2500 A frame offered only 60–225 A sensors). Conservative:
+    no warning unless the frame name yields a parseable amp rating AND the gap is wide.
+    """
+    frame_amp = _largest_amp_in_name(frame)
+    ratings = [float(r) for r in sensor_ratings if r is not None]
+    if frame_amp is None or not ratings:
+        return None
+    max_sensor = max(ratings)
+    if max_sensor < 0.5 * frame_amp or max_sensor > 2.0 * frame_amp:
+        return (
+            f"Suspected trip-unit mismatch: this breaker frame is rated ~{frame_amp:g} A, "
+            f"but the compatible sensors top out at {max_sensor:g} A. Verify the trip-unit "
+            f"selection before testing — the bridged trip style may be incorrect for this "
+            f"frame (known SST-bridge data issue under repair)."
+        )
+    return None
+
+
 @router.get("/etu/bridge-sensors", response_model=EtuBridgeSensorsResponse)
 def get_etu_bridge_sensors(
     breaker_style_id: Optional[int] = Query(
@@ -3647,12 +3688,15 @@ def get_etu_bridge_sensors(
     ).fetchall()
 
     sensors = [EtuBridgeSensor(**dict(row._mapping)) for row in rows]
+    frame = sensors[0].breaker_style_frame if sensors else None
+    rating_warning = _bridge_rating_warning(frame, [s.sensor_rating for s in sensors])
     return EtuBridgeSensorsResponse(
         breaker_style_id=breaker_style_id,
         breaker_id=breaker_id,
         bridge_match_status="matched" if sensors else "unmatched",
         count=len(sensors),
         sensors=sensors,
+        rating_warning=rating_warning,
     )
 
 

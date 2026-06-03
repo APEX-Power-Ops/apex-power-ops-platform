@@ -200,6 +200,8 @@ export type EtuBridgeSensorsResponse = {
   bridge_match_status: 'matched' | 'unmatched'
   count: number
   sensors: EtuBridgeSensor[]
+  // Interim SST-bridge mismatch flag (frame rating vs. bridged sensor ratings, under repair).
+  rating_warning?: string | null
 }
 
 export type EtuBridgeSensorsParams = {

@@ -506,6 +506,13 @@ function EtuSelector({ onSelect, onClear }: { onSelect: (s: LiveSelection) => vo
               : <>↔ <span className="xf-count">{poolCount.toLocaleString('en-US')}</span> compatible sensor{poolCount === 1 ? '' : 's'} — both axes narrow each other.</>}
           </div>
         )}
+        {bridge?.rating_warning && (
+          <div role="alert" style={{ marginTop: 8, padding: '8px 10px', borderRadius: 6,
+               background: '#FEF3C7', border: '1px solid #F59E0B', color: '#92400E',
+               fontSize: 13, lineHeight: 1.35 }}>
+            ⚠ {bridge.rating_warning}
+          </div>
+        )}
       </div>
       {err && <div className="sel-status err">⚠ {err}</div>}
     </div>

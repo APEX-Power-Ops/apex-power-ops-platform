@@ -983,6 +983,40 @@ class TestPlugRatingPlugTruncationBug:
         assert exc.value.status_code == 422
 
 
+class TestBridgeRatingWarning:
+    """Interim safety flag for the SST-bridge scramble bug: when a breaker frame's
+    nameplate rating is clearly inconsistent with the sensor ratings the bridge maps
+    it to (e.g. a 2500 A frame offered only 60-225 A sensors), warn the tech rather
+    than let them unknowingly test against the wrong sensor. Conservative — only
+    flags clear mismatches; skips frames whose name carries no parseable amp rating."""
+
+    def test_flags_sensors_far_below_frame_rating(self):
+        from services.neta.router import _bridge_rating_warning
+        # PDG6-P PXR 2500 frame, but bridge maps it to 60-225 A sensors (the live bug).
+        w = _bridge_rating_warning("PDG6-P PXR 2500", [60.0, 100.0, 150.0, 225.0])
+        assert w is not None
+        assert "2500" in w and "225" in w
+
+    def test_flags_sensors_far_above_frame_rating(self):
+        from services.neta.router import _bridge_rating_warning
+        # PDG3-F PXR 600A frame mapped to NRX 800-4000 A sensors.
+        w = _bridge_rating_warning("PDG3-F PXR 600A", [800.0, 1600.0, 4000.0])
+        assert w is not None
+        assert "600" in w
+
+    def test_consistent_mapping_no_warning(self):
+        from services.neta.router import _bridge_rating_warning
+        # PDG2 ~250 A frame with 60-225 A sensors — physically consistent.
+        assert _bridge_rating_warning("PDG2-F PXR 250", [60.0, 100.0, 225.0]) is None
+
+    def test_unparseable_frame_rating_no_warning(self):
+        from services.neta.router import _bridge_rating_warning
+        # No amp >= 50 in the name (poles only) -> cannot judge -> no false flag.
+        assert _bridge_rating_warning("PDG2-F PXR 2/3P", [60.0, 225.0]) is None
+        assert _bridge_rating_warning(None, [60.0, 225.0]) is None
+        assert _bridge_rating_warning("PDG6-P PXR 2500", []) is None
+
+
 class TestFactorizedInputPassThrough:
     def test_calculate_route_passes_factor_inputs_to_sql(self, client, base_request):
         tc, mock_session = client

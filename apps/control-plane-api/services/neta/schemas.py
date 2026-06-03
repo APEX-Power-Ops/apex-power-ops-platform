@@ -176,6 +176,10 @@ class EtuBridgeSensorsResponse(BaseModel):
     bridge_match_status: str = "unmatched"
     count: int = 0
     sensors: list[EtuBridgeSensor] = Field(default_factory=list)
+    # Interim SST-bridge mismatch flag (the §104 re-carry scramble, under repair):
+    # set when the frame nameplate rating is clearly inconsistent with the bridged
+    # sensor ratings, so the page can warn the tech before they test a wrong sensor.
+    rating_warning: Optional[str] = None
 
 
 class ResolvedBreakerContext(BaseModel):
