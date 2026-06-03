@@ -110,9 +110,10 @@ kernel reading `X` from `I2T_VAL`. No `CalcThermEq`, no polynomial root-find.
   flat/ramp/composite shape dispatch + field-trust gating: flat & ramp SUPPORTED, composite & unknown WITHHELD)
   + DB-anchored parity fixtures + 19-test parity suite (`test_etu_ixt_parity.py`, all green) whose expected times
   are hand-derived from the decompiled `CIxt` at binary-exact multiples (independent spec, not a restatement).
-  Prod schema confirmed provisioned (`tcc.etu_{std,gfd,ltd}_bands.i_open/i_clear/t_open/t_clear/i2x/exp_x`; the
-  002 migration maps the extraction layer's `std_x`/`i_open`/`t_open`/`i2x`). Threading = the proven LTD §111
-  convention (anchor ×pickup, test ×pickup → pickup cancels).
+  Prod band tables carry `i_open/i_clear/t_open/t_clear/i2x` (+ STD `std_open/std_clear` floor). **CORRECTION
+  (I2X-6 prod read, 2026-06-03, STATE §117):** there is **no `exp_x`/`std_x` on `tcc.etu_std_bands`** — the exponent
+  is a **sensor** field (`DS3_I2T_VAL`), so the wiring sources X from the sensor (default 2). Threading = the proven
+  LTD §111 convention (anchor ×pickup, test ×pickup → pickup cancels).
 - **DONE (I2X-4 native-CIxt oracle capstone, 2026-06-03, STATE §116):** built `output/inveq-parity/oracle/ixt_oracle.exe`
   (the §107 recipe — `CIxt.{ctor}`+`ComputeT` invoked by reflection over `TccBase.dll`) and confirmed `etu_ixt.ixt_time`
   **BIT-EXACT (max 0 ULP / 20 ramp points)** to the native kernel. Fixture corrected to native-exact (one 1-ULP literal);
@@ -125,12 +126,17 @@ kernel reading `X` from `I2T_VAL`. No `CalcThermEq`, no polynomial root-find.
   `max(rTmin,dMinTime)` lambda in `CalcThermEq2` 27228-27240). DB map: floor ← `STD_OPEN/STD_CLEAR`, ramp anchor ←
   `I_OPEN/T_OPEN`·`I_CLEAR/T_CLEAR`, X ← `DS3_I2T_VAL`. **Still WITHHELD** pending the one open capstone: a native
   composite **render** spot-check (the I2X-4-equivalent for the floor clamp) or a captured EasyPower curve. `[G4 §3b·I2X]`
+- **DONE (I2X-6 prod data check, 2026-06-03, STATE §117 — via dispatch):** Codex ran the prod read.
+  **STD route-1 is well-populated** (ramp anchors 14,161/14,181; composite anchors 64,558/64,840 + floor 100%);
+  **GFD is gappier** (ramp 7,769/12,104 NULL anchors; no composite `gfd_x`). The exponent is **on the sensor**
+  (`DS3_I2T_VAL`), not the band → source X from the sensor (default 2 for ~98%); withhold the NULL-anchor gaps;
+  wire **STD-first**, defer GFD pending a load fix.
 - **Remaining (gated):** (b) **validate the composite render** — native composite-band render spot-check confirming
-  `max(ramp, floor)`, then promote composite from WITHHELD; (c) **confirm prod data is populated** (non-null
-  `exp_x`/anchors for route-1 — needs **Supabase re-auth**;
-  unauthorized 2026-06-03; handle I2X=1 ramp bands' NULL `std_open`); (d) wire `etu_ixt` into `/calculate`, promote
-  route-1 flat+ramp `withheld`→`db` in `delay_trust.py`, frontend un-withhold, SSoT-reconcile, deploy, live-verify
-  (**operator decision boundary** — flips field-tech-facing trust).
+  `max(ramp, floor)`, then promote composite from WITHHELD; (c) confirm the **sensor exponent** column is in prod
+  `tcc.etu_sensors` + populated (one more read; default 2 covers ~98%); (d) wire `etu_ixt` into `/calculate`
+  (STD-first; source X from sensor; withhold NULL-anchor + GFD), promote route-1 flat+ramp `withheld`→`db` in
+  `delay_trust.py`, frontend un-withhold, SSoT-reconcile, deploy, live-verify (**operator decision boundary** —
+  flips field-tech-facing trust).
 `[G4 §3a/§3c/§4 · DLL TccBase.dll CIxt 24248-24297 / SetSTDB_* 24440-24531 / IsSTDB_Ixt 24196,26398-26442 ·
 DatSection3STD + DatSensor.DS3_I2T_VAL/DS1GF_I2T_VAL · §113]`
 

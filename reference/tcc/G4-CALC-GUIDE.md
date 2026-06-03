@@ -261,8 +261,15 @@ evaluator until that render validation, then promotes with the I2X-6 live wiring
 `packages/calc-engine/src/apex_calc_engine/services/calc_engine/etu_ixt.py` (`ixt_time` =
 `t_anchor·(i_anchor/M)^|X|` mirroring native `CIxt`; `i2x_delay_surface` dispatches flat / ramp [SUPPORTED] vs
 composite / unknown [WITHHELD]). Parity-proven against DB-anchored fixtures hand-derived from the decompiled
-`CIxt` at binary-exact multiples (`tests/test_etu_ixt_parity.py`, 19 tests). Prod band tables carry the inputs
-(`i_open/i_clear/t_open/t_clear/i2x/exp_x`).
+`CIxt` at binary-exact multiples (`tests/test_etu_ixt_parity.py`, 19 tests).
+
+**Prod data state — verified 2026-06-03 (I2X-6 read, STATE §117) — CORRECTS the §113 "bands carry exp_x" claim.**
+The prod band tables carry `i_open/i_clear/t_open/t_clear/i2x` (+ STD `std_open/std_clear` floor) but **NOT the
+exponent**: there is **no `exp_x`/`std_x` column on `tcc.etu_std_bands`** (GFD has a partial `gfd_x`: 7,745/12,104
+ramp, 0/35,522 composite). The exponent is a **SENSOR** field (`DS3_I2T_VAL`/`DS1GF_I2T_VAL`), so the `/calculate`
+wiring must source X from the sensor (default `X=2` for ~98%), not the band. STD route-1 is otherwise well-populated
+(ramp anchors 14,161/14,181; composite anchors 64,558/64,840 + floor 64,840/64,840 = 100%); **GFD is gappier**
+(ramp 7,769/12,104 NULL anchors, no composite `gfd_x`) → wire **STD-first**, defer GFD pending a load fix.
 
 **Native-CIxt oracle capstone DONE (I2X-4, 2026-06-03, STATE §116):** `etu_ixt.ixt_time` was confirmed
 **BIT-EXACT (max 0 ULP over all 20 ramp open/clear points)** against the *actual* native `TccBase.dll`
