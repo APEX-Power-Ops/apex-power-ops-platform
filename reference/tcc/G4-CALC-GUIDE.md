@@ -388,6 +388,25 @@ solver not native-faithful for the GF `byICalc=1` basis); **hard-exclude the 23 
 > selected delay *band* value with the test multiple (the `/calculate` `p_*_multiplier` param), so it showed
 > e.g. STD "0.1× / 1,200 A" (below pickup); now corrected. `[VERIFIED-LIVE 2026-06-01]`
 
+> **Operator-selectable delay test current + the LTD I²t model (the "bigger delay test current" option).**
+> The delay **test point (a)** is now operator-selectable per element via `/calculate`'s new
+> `ltd_test_multiple` / `std_test_multiple` / `gfd_test_multiple` inputs (default = the NETA points above);
+> the inject current scales as `multiple × pickup` and stays field-correct at any multiple. For **LTD the
+> expected time (b)** is the long-time **I²t characteristic** `t = setting · (6/N)²`, where the stored LTD
+> band setting **is the trip time at 6× Ir** (the industry band reference — confirmed: source `DatSection2LTD.LTD_DESC`
+> = whole seconds "2s…24s", and the engine's `_ltd_reference_delay_surface` anchors at 6×). So testing at **6×**
+> yields a time equal to the dial setting (the practical, directly-measurable point), while **3× is 4× longer**.
+> `/calculate` for LTD now routes through that **reference window** (`use_ltd_reference_window=True`), so the
+> Screen-2 bands table **agrees with the Screen-3 curve** at the same multiple. This also fixed a residual
+> band↔multiplier conflation specific to `/calculate`'s delay rows: it had echoed the LTD band value as the
+> multiplier (e.g. a 12 s band → "12× / 11,520 A" inject) and shown the 6×-anchored time under a 3× label.
+> LTD stays **DB** (the band value is DB; I²t scaling between 3× and 6× is the definitional long-time
+> characteristic, both points well inside the I²t region). **Open follow-ons:** the reference window's
+> tolerance band is `(0.7·nominal, nominal)` (−30 % / 0) — the engine's LTD window, carried for curve↔table
+> consistency; a NETA-specific LTD time tolerance is a future refinement. `/evaluate` still uses the band-table
+> LTD path (the LV page computes PASS/FAIL client-side from `/calculate`, so it is unaffected) — reconcile it
+> to the reference window if `/evaluate` is ever wired into the page. `[VERIFIED-LIVE 2026-06-02]`
+
 ---
 
 ## 5. The InvEq numeric-parity gap (the #1 open calc question)

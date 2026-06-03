@@ -236,6 +236,7 @@ The original plan, now executed: `[INFERENCE→VERIFIED-LIVE]` from `[05 §4]` +
 | `/tmt/facets` · `/tmt/frames` | TMT | `_TMT_BROWSE_SQL` (3-CTE) + `tcc_tmt_*` | facet co-population; plot is nominal-class curve (setting validated, not applied) `[05 #1/#3]` |
 | `/emt/facets` | EMT | `tcc_emt_*` | own-catalog facets; bounded to frame/context/section-settings/plot `[05 #2/#3]` |
 | `/plot-tcc` | all | calc engine | consumes the resolved sensor/frame record; curves generated at calc-time, never user-selected `[05 #12]` |
+| `/calculate` | ETU | calc engine + `fn_calculate_test_currents` | NETA test plan per element. **2026-06-02:** accepts optional `ltd_test_multiple` / `std_test_multiple` / `gfd_test_multiple` (operator-selectable delay test current; default = NETA 3×/1.5×/1.5×). Inject current scales `multiple × pickup`; **LTD time recomputed via the I²t reference window** (`use_ltd_reference_window`) so the bands table agrees with `/plot-tcc` (G4 §4) `[VERIFIED-LIVE 2026-06-02]` |
 
 ---
 
