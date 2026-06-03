@@ -233,10 +233,29 @@ staging DB + managed routing** and **corrects the 2026-06-02 scout hypothesis** 
 
 **Status / implication:** route-1 is no longer an unknown-cost RE — its kernel is the **I²t closed form already
 shipped + live-verified for LTD (§4 / §111)**, generalized to a per-band anchor + sensor `X`. Punch-list L4 is
-resized **L → M**. The one residual deliberately deferred to the §107 native-oracle parity pass (do not guess):
-the **I2X=2 composite combination rule** (ramp-vs-floor — provisional `t = max(ramp, floor)` definite-time
-minimum) and the ~235-sensor variable-X tail. Until that pass promotes route-1 in `delay_trust.py`, route-1
-stays **withheld** (the §6 field-trust gate holds).
+resized **L → M**. The residuals: the **I2X=2 composite combination rule** (now RECOVERED — see below) and the
+~235-sensor variable-X tail. Until route-1 is promoted in `delay_trust.py`, route-1 stays **withheld** (the §6
+field-trust gate holds).
+
+**I2X=2 composite combine rule — RECOVERED 2026-06-03 (I2X-5, decompile-confirmed, NOT a guess):**
+`t(M) = max( ixt_ramp(M), floor )` — the Iˣt ramp clamped below at a **definite-time floor**. Evidence chain:
+- A composite band stores an **Inverse block** (the ramp: `SetSTDB_InverseDelay{Open,Clear}` 24466-24489 → slots
+  185-189/192-196 = `rTmin`,`rX`,`rTref`,`rIref`,`rM`; the `CIxt` anchor is `(rIref,rTref)`, exponent `rX`) **and**
+  a `rTmin` **floor**. `GetMin{Open,Clear}STDB` (26398-26442) returns that floor (the active block's `rTmin`).
+- The floor is applied as a **minimum-time clamp** on the rendered curve, IDENTICALLY across every SST renderer:
+  `*prMin = max(GetMin*STDB, default_slot)` then the curve is clamped at `prMin` — seen in `CalcIeeeEq2`
+  (27005-27017), `CalcGESMREq2` (27251-27281), and the explicit combine lambda in `CalcThermEq2`
+  (27228-27240: `return (!(rTmin > dMinTime)) ? dMinTime : rTmin` = **`max(rTmin, dMinTime)`**, with sentinel
+  handling). So the composite = the `CIxt` Iˣt ramp clamped so `t ≥ floor`.
+- **DB mapping:** floor = `rTmin` ← `DatSection3STD.STD_OPEN/STD_CLEAR` (prod `tcc.etu_std_bands.std_open/std_clear`),
+  ramp anchor = `I_OPEN/T_OPEN` (open) `I_CLEAR/T_CLEAR` (clear), exponent = `DS3_I2T_VAL`. The evaluator already
+  carries all of these (`std_open/std_clear` + `i_open/t_open/…` + `exp_x`).
+
+So the recovered evaluator form is `i2x_composite(M) = max(ixt_time(M, i_anchor, t_anchor, x), std_floor)`.
+**Validation gate (still open, I2X-5 capstone):** a native composite **render** spot-check (populate a
+`CTccLVBreakerCurveSST` composite band + invoke its CIxt-using renderer, the I2X-4-equivalent for the floor
+clamp) OR a captured EasyPower curve — pending. The rule is recovered; composite stays **WITHHELD** in the
+evaluator until that render validation, then promotes with the I2X-6 live wiring.
 
 **Evaluator built (I2X-3, 2026-06-03):** the validated managed kernel is
 `packages/calc-engine/src/apex_calc_engine/services/calc_engine/etu_ixt.py` (`ixt_time` =
@@ -251,9 +270,9 @@ composite / unknown [WITHHELD]). Parity-proven against DB-anchored fixtures hand
 `CIxt.{ctor}`+`ComputeT` by reflection; licensed DLL stays out of git). The hand-derived fixture matched native
 within 1 ULP; the one 1-ULP literal was corrected → the fixture is now native-exact. So the **flat + ramp** subset
 is native-grade validated (the §107 "db" bar). **Still NOT wired into `/calculate`** — the two remaining gates are
-**I2X-5** (the I2X=2 **composite** combine rule — the *largest* band group at 64,840, so this is the bulk of route-1
-coverage, not a tail; native mechanism = the `IsSTDB_Ixt` Flat-vs-Inverse blocks + `rTmin` floor, combine rule to
-pin from `GetMin{Open,Clear}STDB` 26398-26442) and **I2X-6** (prod-data confirmation [needs Supabase re-auth] +
+**I2X-5** (the I2X=2 **composite** combine rule — the *largest* band group at 64,840, so the bulk of route-1
+coverage, not a tail — whose rule is now **RECOVERED above** as `max(ixt_ramp, std_floor)`; only its native-render
+spot-check validation remains) and **I2X-6** (prod-data confirmation [needs Supabase re-auth] +
 wire + trust flip [operator decision boundary]). `[G4 §3a/§3b/§4 · §113/§116 · DLL CIxt 24248-24297 / SetSTDB_*
 24440-24531 / IsSTDB_Ixt 24196,26398-26442]`
 

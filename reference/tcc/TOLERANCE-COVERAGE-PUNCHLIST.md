@@ -117,11 +117,17 @@ kernel reading `X` from `I2T_VAL`. No `CalcThermEq`, no polynomial root-find.
   (the §107 recipe — `CIxt.{ctor}`+`ComputeT` invoked by reflection over `TccBase.dll`) and confirmed `etu_ixt.ixt_time`
   **BIT-EXACT (max 0 ULP / 20 ramp points)** to the native kernel. Fixture corrected to native-exact (one 1-ULP literal);
   19 parity tests green. **Flat + ramp are now native-grade validated** (§107 "db" bar). Licensed DLL stays in git-ignored `output/`.
-- **Remaining (gated):** (b) **pin the I2X=2 composite combine rule** — **NOTE: composite is the *largest* band group
-  (64,840 vs ramp 14,181 / flat 49,916), so this is the BULK of route-1 coverage, not a tail.** Native mechanism is
-  already mapped (the `IsSTDB_Ixt` Flat-vs-Inverse blocks + the `rTmin` definite-time floor); pin the ramp-vs-floor
-  combine rule (provisional `t = max(ramp, floor)`) by reading `GetMin{Open,Clear}STDB` 26398-26442 + a captured-curve
-  spot-check; (c) **confirm prod data is populated** (non-null `exp_x`/anchors for route-1 — needs **Supabase re-auth**;
+- **DONE (I2X-5 composite combine rule RECOVERED, 2026-06-03, STATE §116):** the I2X=2 composite (the *largest* band
+  group at 64,840 — the BULK of route-1, not a tail) combine rule is **`t(M) = max(ixt_ramp(M), std_floor)`**,
+  decompile-confirmed (not a guess): the Inverse block carries the `CIxt` ramp anchor + an `rTmin` floor
+  (`GetMin{Open,Clear}STDB` 26398-26442), and that floor is applied as a min-time clamp on the rendered curve
+  identically across every SST renderer (`CalcIeeeEq2` 27005-27017, `CalcGESMREq2` 27251-27281, and the explicit
+  `max(rTmin,dMinTime)` lambda in `CalcThermEq2` 27228-27240). DB map: floor ← `STD_OPEN/STD_CLEAR`, ramp anchor ←
+  `I_OPEN/T_OPEN`·`I_CLEAR/T_CLEAR`, X ← `DS3_I2T_VAL`. **Still WITHHELD** pending the one open capstone: a native
+  composite **render** spot-check (the I2X-4-equivalent for the floor clamp) or a captured EasyPower curve. `[G4 §3b·I2X]`
+- **Remaining (gated):** (b) **validate the composite render** — native composite-band render spot-check confirming
+  `max(ramp, floor)`, then promote composite from WITHHELD; (c) **confirm prod data is populated** (non-null
+  `exp_x`/anchors for route-1 — needs **Supabase re-auth**;
   unauthorized 2026-06-03; handle I2X=1 ramp bands' NULL `std_open`); (d) wire `etu_ixt` into `/calculate`, promote
   route-1 flat+ramp `withheld`→`db` in `delay_trust.py`, frontend un-withhold, SSoT-reconcile, deploy, live-verify
   (**operator decision boundary** — flips field-tech-facing trust).
