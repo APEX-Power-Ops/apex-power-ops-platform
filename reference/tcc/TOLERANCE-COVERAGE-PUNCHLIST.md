@@ -124,8 +124,11 @@ kernel reading `X` from `I2T_VAL`. No `CalcThermEq`, no polynomial root-find.
   (`GetMin{Open,Clear}STDB` 26398-26442), and that floor is applied as a min-time clamp on the rendered curve
   identically across every SST renderer (`CalcIeeeEq2` 27005-27017, `CalcGESMREq2` 27251-27281, and the explicit
   `max(rTmin,dMinTime)` lambda in `CalcThermEq2` 27228-27240). DB map: floor ← `STD_OPEN/STD_CLEAR`, ramp anchor ←
-  `I_OPEN/T_OPEN`·`I_CLEAR/T_CLEAR`, X ← `DS3_I2T_VAL`. **Still WITHHELD** pending the one open capstone: a native
-  composite **render** spot-check (the I2X-4-equivalent for the floor clamp) or a captured EasyPower curve. `[G4 §3b·I2X]`
+  `I_OPEN/T_OPEN`·`I_CLEAR/T_CLEAR`, X ← `DS3_I2T_VAL`. **IMPLEMENTED in `etu_ixt` (commit `apex aa9b89ea`)** —
+  `i2x_delay_surface` now SUPPORTS composite (s17 fixture + floor-clamp test, 20 parity green). **Field-trust tier =
+  `verify`** (combine rule decompile-confirmed + ramp native-bit-exact, but full render not spot-checked). Capture
+  scout: `ComputeIXT` is the *inverse* (amps-from-time) so a native render means driving a full `RecalcCurve_*`
+  (heavy) → the **`verify`→`db` gate is a captured EasyPower curve** spot-check (deferred). `[G4 §3b·I2X · STATE §120]`
 - **DONE (I2X-6 prod data check, 2026-06-03, STATE §117 — via dispatch):** Codex ran the prod read.
   **STD route-1 is well-populated** (ramp anchors 14,161/14,181; composite anchors 64,558/64,840 + floor 100%);
   **GFD is gappier** (ramp 7,769/12,104 NULL anchors; no composite `gfd_x`). The exponent is **on the sensor**

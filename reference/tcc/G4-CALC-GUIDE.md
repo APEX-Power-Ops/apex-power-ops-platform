@@ -252,10 +252,17 @@ field-trust gate holds).
   carries all of these (`std_open/std_clear` + `i_open/t_open/…` + `exp_x`).
 
 So the recovered evaluator form is `i2x_composite(M) = max(ixt_time(M, i_anchor, t_anchor, x), std_floor)`.
-**Validation gate (still open, I2X-5 capstone):** a native composite **render** spot-check (populate a
-`CTccLVBreakerCurveSST` composite band + invoke its CIxt-using renderer, the I2X-4-equivalent for the floor
-clamp) OR a captured EasyPower curve — pending. The rule is recovered; composite stays **WITHHELD** in the
-evaluator until that render validation, then promotes with the I2X-6 live wiring.
+**IMPLEMENTED 2026-06-03 (commit `apex aa9b89ea`):** `etu_ixt.i2x_delay_surface` now SUPPORTS composite (the s17
+fixture carries hand-derived `max(ramp,floor)` checks — ramp dominates at low current, floor clamps at high — + a
+dedicated floor-clamp test; 20 parity tests green). **Field-trust tier = `verify`** (not full `db`): the combine rule
+is decompile-confirmed (the `max(rTmin,dMinTime)` lambda) and the ramp is native-bit-exact (I2X-4), but the full
+native composite **render** has not been spot-checked. **Render-capture feasibility (scouted 2026-06-03):** there is
+no clean per-point native evaluator — `CTccLVBreakerCurveSST.ComputeIXT` is the *inverse* (amps-from-time, →
+`ComputeAmps`), so a native capture means driving a full `RecalcCurve_SSTT_LT_STDB_INST`/`RecalcCurve_STT_*` with the
+complete ~2592-byte object state (heavy). → the **`verify`→`db` promotion gate** is a **captured EasyPower curve**
+spot-check (the lighter path), deferred. The evaluator is **ready** but **NOT yet wired into `/calculate`** — the
+STD-first wiring + the live un-withhold is the **I2X-6** step (an operator trust-flip boundary: show composite at the
+`verify` tier, or hold it until the captured-curve `db` promotion).
 
 **Evaluator built (I2X-3, 2026-06-03):** the validated managed kernel is
 `packages/calc-engine/src/apex_calc_engine/services/calc_engine/etu_ixt.py` (`ixt_time` =
