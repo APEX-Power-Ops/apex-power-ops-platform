@@ -243,8 +243,18 @@ stays **withheld** (the §6 field-trust gate holds).
 `t_anchor·(i_anchor/M)^|X|` mirroring native `CIxt`; `i2x_delay_surface` dispatches flat / ramp [SUPPORTED] vs
 composite / unknown [WITHHELD]). Parity-proven against DB-anchored fixtures hand-derived from the decompiled
 `CIxt` at binary-exact multiples (`tests/test_etu_ixt_parity.py`, 19 tests). Prod band tables carry the inputs
-(`i_open/i_clear/t_open/t_clear/i2x/exp_x`). NOT yet wired into `/calculate` (gated on prod-data confirmation +
-the I2X=2 rule + the native-CIxt oracle capstone). `[G4 §3a/§3b/§4 · §113 · DLL CIxt 24248-24297 / SetSTDB_*
+(`i_open/i_clear/t_open/t_clear/i2x/exp_x`).
+
+**Native-CIxt oracle capstone DONE (I2X-4, 2026-06-03, STATE §116):** `etu_ixt.ixt_time` was confirmed
+**BIT-EXACT (max 0 ULP over all 20 ramp open/clear points)** against the *actual* native `TccBase.dll`
+`CIxt.ComputeT`, invoked in-process via `output/inveq-parity/oracle/ixt_oracle.exe` (the §107 oracle pattern,
+`CIxt.{ctor}`+`ComputeT` by reflection; licensed DLL stays out of git). The hand-derived fixture matched native
+within 1 ULP; the one 1-ULP literal was corrected → the fixture is now native-exact. So the **flat + ramp** subset
+is native-grade validated (the §107 "db" bar). **Still NOT wired into `/calculate`** — the two remaining gates are
+**I2X-5** (the I2X=2 **composite** combine rule — the *largest* band group at 64,840, so this is the bulk of route-1
+coverage, not a tail; native mechanism = the `IsSTDB_Ixt` Flat-vs-Inverse blocks + `rTmin` floor, combine rule to
+pin from `GetMin{Open,Clear}STDB` 26398-26442) and **I2X-6** (prod-data confirmation [needs Supabase re-auth] +
+wire + trust flip [operator decision boundary]). `[G4 §3a/§3b/§4 · §113/§116 · DLL CIxt 24248-24297 / SetSTDB_*
 24440-24531 / IsSTDB_Ixt 24196,26398-26442]`
 
 ### 3c. The LTD delay window (separate two-table model)

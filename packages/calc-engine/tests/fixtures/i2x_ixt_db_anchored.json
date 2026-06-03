@@ -5,7 +5,8 @@
     "anchor_source": "DatSection3STD (I_OPEN/T_OPEN/I_CLEAR/T_CLEAR, I2X shape) JOIN DatSensor.DS3_I2T_VAL (exponent X), tcc-fidelity-staging 2026-06-03",
     "note": "Expected times are hand-derived from the decompiled CIxt closed form at binary-exact multiples (anchor, ×/÷ powers of two) so they are an independent spec, not a restatement of the Python evaluator. The NETA point (M=1.5) is the real STD/GFD field test multiple and is checked to formula within 1e-9.",
     "exponent_caveat": "X = DS3_I2T_VAL: 2.0 for ~96.9% of route-1 STD sensors, 1.0 for the largest non-2 group, a small variable tail otherwise.",
-    "shippable_subset": "shape flat (definite-time) + ramp (Ixt) are SUPPORTED; composite (I2X=2, ramp+floor) is UNSUPPORTED pending native-render combine-rule parity."
+    "shippable_subset": "shape flat (definite-time) + ramp (Ixt) are SUPPORTED; composite (I2X=2, ramp+floor) is UNSUPPORTED pending native-render combine-rule parity.",
+    "native_capstone": "I2X-4 (2026-06-03): the production etu_ixt.ixt_time was confirmed BIT-EXACT (max 0 ULP over all 20 ramp open/clear points) against the actual native TccBase.dll CIxt.ComputeT, invoked in-process via output/inveq-parity/oracle/ixt_oracle.exe (CIxt.{ctor}+ComputeT, 24248-24297). The hand-derived expecteds matched native within 1 ULP; the single 1-ULP literal (s8915 clear @ M=1.5) was corrected to the native value below, so every fixture literal is now native-exact. The committed parity test keeps a 1e-9 tolerance for cross-platform Math.Pow robustness."
   },
   "scenarios": [
     {
@@ -45,7 +46,7 @@
         {"m": 2.0, "expected_open": 0.10999999940395355, "expected_clear": 0.15000000596046448, "kind": "anchor"},
         {"m": 4.0, "expected_open": 0.054999999701976776, "expected_clear": 0.07500000298023224, "kind": "exact"},
         {"m": 1.0, "expected_open": 0.2199999988079071,  "expected_clear": 0.30000001192092896, "kind": "exact"},
-        {"m": 1.5, "expected_open": 0.14666666587193807, "expected_clear": 0.20000000794728596, "kind": "neta"}
+        {"m": 1.5, "expected_open": 0.14666666587193807, "expected_clear": 0.20000000794728598, "kind": "neta"}
       ]
     },
     {

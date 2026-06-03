@@ -113,13 +113,18 @@ kernel reading `X` from `I2T_VAL`. No `CalcThermEq`, no polynomial root-find.
   Prod schema confirmed provisioned (`tcc.etu_{std,gfd,ltd}_bands.i_open/i_clear/t_open/t_clear/i2x/exp_x`; the
   002 migration maps the extraction layer's `std_x`/`i_open`/`t_open`/`i2x`). Threading = the proven LTD §111
   convention (anchor ×pickup, test ×pickup → pickup cancels).
-- **Remaining (gated):** (a) **native-CIxt oracle capstone** — extend `output/inveq-parity/oracle` to invoke
-  `CIxt.ComputeT` (the §107 recipe) for native parity beyond the clean-room/DB check; (b) **pin the I2X=2
-  composite combine rule** (provisional `t = max(ramp, floor)` definite-time minimum) + spot-check one captured
-  EasyPower curve to confirm the anchor-units convention; (c) **confirm prod data is populated** (non-null
-  `exp_x`/anchors for route-1 sensors — needs Supabase/live-API; the band-selection for I2X=1 needs handling since
-  ramp bands have NULL `std_open`); (d) wire `etu_ixt` into `/calculate` (std/gfd ramp branch), promote route-1
-  flat+ramp `withheld`→`db` in `delay_trust.py`, frontend un-withhold, SSoT-reconcile, deploy, live-verify.
+- **DONE (I2X-4 native-CIxt oracle capstone, 2026-06-03, STATE §116):** built `output/inveq-parity/oracle/ixt_oracle.exe`
+  (the §107 recipe — `CIxt.{ctor}`+`ComputeT` invoked by reflection over `TccBase.dll`) and confirmed `etu_ixt.ixt_time`
+  **BIT-EXACT (max 0 ULP / 20 ramp points)** to the native kernel. Fixture corrected to native-exact (one 1-ULP literal);
+  19 parity tests green. **Flat + ramp are now native-grade validated** (§107 "db" bar). Licensed DLL stays in git-ignored `output/`.
+- **Remaining (gated):** (b) **pin the I2X=2 composite combine rule** — **NOTE: composite is the *largest* band group
+  (64,840 vs ramp 14,181 / flat 49,916), so this is the BULK of route-1 coverage, not a tail.** Native mechanism is
+  already mapped (the `IsSTDB_Ixt` Flat-vs-Inverse blocks + the `rTmin` definite-time floor); pin the ramp-vs-floor
+  combine rule (provisional `t = max(ramp, floor)`) by reading `GetMin{Open,Clear}STDB` 26398-26442 + a captured-curve
+  spot-check; (c) **confirm prod data is populated** (non-null `exp_x`/anchors for route-1 — needs **Supabase re-auth**;
+  unauthorized 2026-06-03; handle I2X=1 ramp bands' NULL `std_open`); (d) wire `etu_ixt` into `/calculate`, promote
+  route-1 flat+ramp `withheld`→`db` in `delay_trust.py`, frontend un-withhold, SSoT-reconcile, deploy, live-verify
+  (**operator decision boundary** — flips field-tech-facing trust).
 `[G4 §3a/§3c/§4 · DLL TccBase.dll CIxt 24248-24297 / SetSTDB_* 24440-24531 / IsSTDB_Ixt 24196,26398-26442 ·
 DatSection3STD + DatSensor.DS3_I2T_VAL/DS1GF_I2T_VAL · §113]`
 

@@ -8,8 +8,17 @@ multiples — an independent spec, not a restatement of the evaluator.
 
 This is the I2X-3 parity foundation: it proves the managed Iˣt math + the
 flat/ramp/composite shape dispatch + the field-trust gating (composite withheld)
-BEFORE any live promotion. The native-CIxt oracle pass and the I2X=2 combine-rule
-pinning remain the capstones (see fixture provenance).
+BEFORE any live promotion.
+
+NATIVE CAPSTONE — I2X-4 (2026-06-03, STATE §116): the evaluator was additionally
+confirmed **bit-exact (max 0 ULP)** against the *actual* native TccBase.dll
+``CIxt.ComputeT`` over every ramp open/clear point, invoked in-process via the
+local oracle (``output/inveq-parity/oracle/ixt_oracle.exe``; licensed DLL stays
+out of git). The fixture literals below are now native-exact (the one 1-ULP
+hand-derivation, s8915 clear @ M=1.5, was corrected). The 1e-9 tolerance here is
+retained only for cross-platform ``Math.Pow`` robustness — on the validation host
+the match is exact. The I2X=2 composite combine-rule pinning (I2X-5) remains the
+one open residual; composite stays WITHHELD until then.
 """
 import json
 import os
