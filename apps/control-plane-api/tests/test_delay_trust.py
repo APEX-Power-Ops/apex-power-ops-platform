@@ -68,6 +68,30 @@ def test_gfd_ansi_only_matters_on_route_2():
     assert classify_delay_trust("gfd", gfd_route=0, gfd_is_ansi=True) == TRUST_DB
 
 
+# ── Route-1 (I2X) shape-aware tier (I2X-6 wiring, G4 §3b·I2X / STATE §120) ──
+
+@pytest.mark.parametrize("element,route_kw", [("std", "std_route"), ("gfd", "gfd_route")])
+@pytest.mark.parametrize(
+    "shape,expected",
+    [
+        ("flat", TRUST_DB),        # definite-time band — db-proven, current-independent
+        ("ramp", TRUST_DB),        # pure Iˣt — native-bit-exact to CIxt.ComputeT (I2X-4)
+        ("composite", TRUST_VERIFY),  # max(ramp, floor) — rule confirmed, render spot-check pending
+        ("unknown", TRUST_UNSUPPORTED),
+        (None, TRUST_UNSUPPORTED),  # legacy withhold: no shape supplied
+    ],
+)
+def test_i2x_route1_shape_classification(element, route_kw, shape, expected):
+    assert classify_delay_trust(element, **{route_kw: 1}, i2x_shape=shape) == expected
+
+
+def test_i2x_shape_ignored_off_route_1():
+    # A composite shape must NOT upgrade a route-0/2 element (shape only governs route 1).
+    assert classify_delay_trust("std", std_route=0, i2x_shape="composite") == TRUST_DB
+    assert classify_delay_trust("std", std_route=2, i2x_shape="unknown") == TRUST_DB
+    assert classify_delay_trust("gfd", gfd_route=0, i2x_shape="composite") == TRUST_DB
+
+
 def test_unknown_element_is_unsupported():
     assert classify_delay_trust("inst", std_route=0) == TRUST_UNSUPPORTED
     assert classify_delay_trust("", std_route=0) == TRUST_UNSUPPORTED

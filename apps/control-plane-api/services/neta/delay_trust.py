@@ -65,6 +65,7 @@ def classify_delay_trust(
     std_route: Optional[int] = None,
     gfd_route: Optional[int] = None,
     gfd_is_ansi: bool = False,
+    i2x_shape: Optional[str] = None,
 ) -> str:
     """Return the G4 field-trust tier for one delay element.
 
@@ -72,6 +73,9 @@ def classify_delay_trust(
     ``std_route`` / ``gfd_route`` are the persisted ``SSTDelayCalc`` route bytes.
     ``gfd_is_ansi`` marks a GFD route-2 sensor whose GF-INVEQ family is ANSI
     (``id_op_eq != 0``) — hard-excluded per G4 §3e.
+    ``i2x_shape`` is the per-band I2X shape (``"flat"``/``"ramp"``/``"composite"``/
+    ``"unknown"``) for a route-1 element — set once ``etu_ixt`` is wired (I2X-6); it
+    governs the route-1 tier (see ``_classify_i2x``).
     """
     key = (element_key or "").lower()
     if key == "ltd":
@@ -81,27 +85,54 @@ def classify_delay_trust(
         # window itself.
         return TRUST_DB
     if key == "std":
-        return _classify_std(std_route)
+        return _classify_std(std_route, i2x_shape)
     if key == "gfd":
-        return _classify_gfd(gfd_route, gfd_is_ansi)
+        return _classify_gfd(gfd_route, gfd_is_ansi, i2x_shape)
     return TRUST_UNSUPPORTED
 
 
-def _classify_std(route: Optional[int]) -> str:
+def _classify_i2x(shape: Optional[str]) -> str:
+    """Route-1 (I2X / Iˣt) per-band field-trust tier (G4 §3b·I2X · STATE §120).
+
+    - ``flat`` (definite-time band, current-independent) → ``db`` — identical to the
+      db-proven route-0 direct band.
+    - ``ramp`` (pure Iˣt) → ``db`` — ``etu_ixt.ixt_time`` is native-bit-exact to the
+      EasyPower ``CIxt.ComputeT`` kernel (I2X-4, max 0 ULP).
+    - ``composite`` (max(ramp, floor)) → ``verify`` — the combine rule is
+      decompile-confirmed and the ramp native-validated, but the full native render
+      has not been spot-checked (the captured-EasyPower-curve gate, I2X-5).
+    - anything else (``unknown`` / variable-X-unsupported / NULL anchors / None) →
+      ``unsupported``: the evaluator withheld it, so the time is not certified.
+    """
+    s = (shape or "").lower()
+    if s in ("flat", "ramp"):
+        return TRUST_DB
+    if s == "composite":
+        return TRUST_VERIFY
+    return TRUST_UNSUPPORTED
+
+
+def _classify_std(route: Optional[int], i2x_shape: Optional[str] = None) -> str:
     if route == 0:
         return TRUST_DB
+    if route == 1:
+        # I2X / Iˣt route — shape-gated once etu_ixt is wired (I2X-6). Until a shape
+        # is supplied this stays unsupported (the legacy withhold).
+        return _classify_i2x(i2x_shape)
     if route == 2:
         # STD INVEQ is 100% Therm corpus-wide (G4 §3e) and runs byICalc=0
         # (IdOpICalc=4 → num3=field16=pickup). The managed solver reproduces the
         # native CalcThermEq kernel BIT-EXACT over the entire STD Therm corpus
         # (only 4 dial curves; G4 §5, captured-fixture parity closed 2026-06-01).
         return TRUST_DB
-    return TRUST_UNSUPPORTED  # 1 I2X / 3 TUSTD / None / other
+    return TRUST_UNSUPPORTED  # 3 TUSTD / None / other
 
 
-def _classify_gfd(route: Optional[int], is_ansi: bool) -> str:
+def _classify_gfd(route: Optional[int], is_ansi: bool, i2x_shape: Optional[str] = None) -> str:
     if route == 0:
         return TRUST_DB
+    if route == 1:
+        return _classify_i2x(i2x_shape)
     if route == 2:
         # GFD INVEQ: ANSI family hard-excluded (G4 §3e). GF Therm stays "verify"
         # (NOT promoted with STD): the GF runtime path is byICalc=1
@@ -109,7 +140,7 @@ def _classify_gfd(route: Optional[int], is_ansi: bool) -> str:
         # reproduce, and rIRef<rM GF rows yield None (G4 §5). Promotion to "db"
         # is gated on field13 provenance + native-oracle re-validation.
         return TRUST_UNSUPPORTED if is_ansi else TRUST_VERIFY
-    return TRUST_UNSUPPORTED  # 1 I2X / 4 TUG / None / other
+    return TRUST_UNSUPPORTED  # 4 TUG / None / other
 
 
 def delay_route_for(
