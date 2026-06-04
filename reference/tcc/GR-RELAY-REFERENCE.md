@@ -263,6 +263,14 @@ foundation the relay field sheet will gate against. Forward plan: **`GR-RELAY-RO
   GFR ±10%, Cooper, G&W ±5%). **Consequence:** Chip 3 seeds the per-mfr OEM tolerance tier by **parsing the Note**
   (a `[VENDOR-DOC]`-already-in-DB source) + a NETA generic floor for the rest. (Corrects the initial "carries
   none" read — the structured-only probe missed the Note text.) Roadmap Chip 3.
+- **Relay tolerance — the PRIMARY source + serving layer SHIPPED (Chip 3, `[VERIFIED-LIVE 2026-06-03]`).** The
+  structured tolerance EasyPower lacks comes from **Enoserv RTS** (the operator's licensed install): per-element
+  pickup/timing acceptance bands (`MIN/MAX_RANGE` % + `MIN/MAX_RANGE2` abs), harvested **values only** into a
+  cited `[VENDOR-DOC]` catalog (`data/relay_tolerance_catalog.json`, 583 entries). **Pickup ≈ ±5% near-universal;
+  timing ±5% (SEL/ABB/Basler/Beckwith/Multilin/Siemens) or ±10% (Westinghouse/GE/BBC).** `GET /relay/tolerances/{tsid}`
+  serves it tier-resolved (**Enoserv → Note seed → withheld**, never a fabricated band) + trust-tagged. **Name-match
+  coverage: 155 exact + ~12 canonical ≈ 167 of 1,442 governed relays** (the workhorse legacy + modern US families);
+  the ~1,287 Enoserv doesn't cover await the NETA floor / datasheet tiers. `services/neta/relay_tolerance.py`.
 
 **Close path (the relay equivalent of the breaker INVEQ §5 plan):** one **Ghidra-headless run on
 `D:\EasyPower\EasyPower.exe`** for `CTccRelayCurveBase` + the per-family curve evaluators, **plus

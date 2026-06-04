@@ -46,11 +46,11 @@ Counts `[VERIFIED-LIVE 2026-06-03]` via the governed `tcc.relay_*` schema (proje
 | 2 | **DB: unified schema + clean load** | ✅ **Done** — 21 `tcc.relay_*` tables, live (relays **1,442** / devices **6,850** / TD-sections **6,635** / TCP points **1,570,700**) |
 | 3 | **DB: the bridge** (→ ETU sensor world) | ✅ **Done** — SST-2 carried; **39** relays (`use_sst=true`) route into breaker G4 |
 | 4 | **Backend: selection cascade** (no-free-text) | ✅ **Chip 2 DONE** — `/relay/manufacturers` + `/relay/facets` (cross-filtered) + `manufacturer`/`standard`-filterable `/relay/sections`; live-verified on prod |
-| 5 | **Backend: NETA calc/serving** (pickup + tolerance bands + test points) | ⚠️ **Partial** — `/relay/settings` + `/plot-tcc` exist; **no** per-function tolerance-band + NETA-test-point serving like breaker `/calculate` |
-| 6 | **Backend: field-trust gating wired** | 🟡 **Chip 1 DONE** — `relay_trust.py` classifier built (was on-paper-only in GR §6); not yet consumed by a serving route |
-| 7 | **UI: the field sheet** (3 screens) | ⚠️ **Partial** — `RelayResourceExplorer` = what-if *exploration* (the breaker-resource-explorer parallel), **not** the `lvbreakertcc` field sheet |
+| 5 | **Backend: NETA calc/serving** (pickup + tolerance bands + test points) | ✅ **Chip 3 DONE (tolerance serving)** — `GET /relay/tolerances/{tsid}` serves per-relay pickup/timing acceptance bands, tier-resolved + trust-tagged; live-verified. (Per-element NETA-test-point serving like breaker `/calculate` still to come.) |
+| 6 | **Backend: field-trust gating wired** | ✅ **Chips 1+3 DONE** — `relay_trust.py` classifier built **and** the tolerance serving route emits `trust=validated/withheld` (never a fabricated band) |
+| 7 | **UI: the field sheet** (3 screens) | ⚠️ **Partial** — `RelayResourceExplorer` = what-if *exploration* (the breaker-resource-explorer parallel), **not** the `lvbreakertcc` field sheet (= Chip 4) |
 | 8 | **Fidelity: native-kernel validation** → BOUNDED→PROVEN | ❌ **Not started** — kernel unrecovered (GR §7); = punch-list **L10** |
-| 9 | **Coverage: per-mfr tolerance north-star** | ❌ **Not started** — no relay tolerance source yet (Chip 3 decision) |
+| 9 | **Coverage: per-mfr tolerance north-star** | 🟡 **Source secured** — Enoserv [VENDOR-DOC] catalog (155 exact + ~12 canonical ≈ 167 governed relays); per-mfr coverage tracking = Chip 6 |
 
 **Gap to parity = rungs 4–9.** Heavy lifts: 5 (NETA serving), 7 (the field-sheet UI), 8 (the close).
 
@@ -85,7 +85,22 @@ filterable, backward-compatible). `relays.manufacturer_source_id = manufacturers
 live-verified on prod** (Schweitzer → swz-dominated families, SEL-151 sections). Commit `apex 331b4e37`.
 GR §1 banked the join + mapping + cardinalities. (Frontend dropdowns = Chip 4.)
 
-### Chip 3 — relay NETA serving layer
+### Chip 3 — relay NETA serving layer ✅ DONE (2026-06-03)
+**Tolerance serving SHIPPED + live-verified.** `services/neta/relay_tolerance.py` +
+`data/relay_tolerance_catalog.json` (583 cited `[VENDOR-DOC]` entries) + `GET /relay/tolerances/{tsid}`
+(`apex 464fbe9a`, 11 unit tests, relay suite 156 green). Given `(manufacturer, relay_type)` it resolves a
+per-relay pickup/timing acceptance band, tier-resolved **Enoserv catalog (PRIMARY) → `Relays.Note` OEM seed
+→ withheld** and trust-tagged (`validated` | `withheld`, **never a fabricated band**). Matching = exact
+normalized type, then a conservative *canonical* match (strips revision parentheticals / trailing year —
+`CO-11(92)`→CO-11, `SEL-751 - 2017`→SEL-751; no family bridging). **Coverage: 155 exact + ~12 canonical ≈
+167 governed relays**, on the workhorse families (SEL 34, Westinghouse 31, ABB 31, GE 28, Basler 13,
+Beckwith 8, Multilin 4, Alstom 3, Siemens 3). Live-verified: SEL-751 (exact, ±5%/±5%), ABB CO-11(92)
+(canonical, ±5%/±10%), Toshiba ICO17D (withheld). The Enoserv catalog is harvested **values only** from the
+operator's licensed install (not Enoserv's library). **Remaining (later):** per-element NETA test-point
+serving (the breaker `/calculate` parallel) + the NETA generic floor for the ~1,287 Enoserv doesn't cover.
+
+<details><summary>Original Chip-3 decision gate (resolved) — tolerance source triangulation</summary>
+
 Per protection function: pickup/tap + time-dial + **NETA tolerance bands** + test points,
 each tagged with `classify_relay_trust(...)`. **⚠️ Decision gate (the real research item):
 where do relay tolerances come from?** **TRIANGULATED `[VERIFIED-LIVE 2026-06-03]`:** **(a) no STRUCTURED
@@ -98,6 +113,7 @@ embedded per-relay OEM tolerance (a `[VENDOR-DOC]`-already-in-DB seed, ~dozens o
 floor** for the rest (flagged `est`); **(2) datasheet catalog** to extend. The operator-approved two-tier
 holds; the in-DB Note adds a tier-0 seed. **Remaining input (operator):** the generic NETA relay band values +
 which OEMs to prioritise (e.g. SEL for Y1202C). Then build the serving layer + the Note-parser.
+</details>
 
 ### Chip 4 — the `relaytcc` field-sheet UI
 3-screen parallel to `lvbreakertcc` (select → settings/tolerances → curve + NETA markers),
@@ -148,6 +164,17 @@ The durable per-manufacturer relay-accuracy north-star (the relay rows of the pu
   **Tier order revised: Enoserv PRIMARY > Notes seed (24) > NETA floor > datasheet.** Next: the FasData7
   harvester + Enoserv↔`tcc.relays` match, on operator confirm (IP + match key). (RESA bench-day copies in the
   same folder left untouched.)
+- **2026-06-03** — **Enoserv harvester + match + coverage (STATE §128).** Harvested 631 routines (88% carry
+  structured tolerance); curated 463/535 clean-accuracy distinct. Server-side normalized-name + manufacturer-alias
+  join → **155 of 1,442 governed relays exact-match** (high-precision floor; only 2 ambiguous outliers). Pickup
+  ≈ ±5% universal; timing ±5%/±10% by family. By family w/ tol: SEL 34, Westinghouse 31, ABB 31, GE 28,
+  Basler 13, Beckwith 8, Multilin 4, Alstom 3, Siemens 3.
+- **2026-06-03** — **Chip 3 DONE: tolerance serving layer SHIPPED + live-verified (STATE §129).** Operator gave
+  the IP go-ahead (persist Enoserv-derived **values** as a cited `[VENDOR-DOC]` catalog) + accepted leans
+  (new `relaytcc` page; ship the floor). Built `relay_tolerance.py` + `data/relay_tolerance_catalog.json` (583
+  entries) + `GET /relay/tolerances/{tsid}` (tier resolver, exact+canonical match, trust-tagged; `apex 464fbe9a`,
+  11 tests). Canonical match lifts the floor +12 → **≈167 served**. Live-verified exact / canonical / withheld.
+  GR §7 + this roadmap updated. **Next = Chip 4 (the `relaytcc` field-sheet UI).**
 
 ## Cross-references
 - The relay G0–G4 (selection · schema · `Model` 0–8 dispatcher · SST-2 · field-trust) → **`GR-RELAY-REFERENCE.md`**.
