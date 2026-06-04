@@ -180,6 +180,12 @@ class EtuBridgeSensorsResponse(BaseModel):
     # set when the frame nameplate rating is clearly inconsistent with the bridged
     # sensor ratings, so the page can warn the tech before they test a wrong sensor.
     rating_warning: Optional[str] = None
+    # The breaker-style continuous rating (Access r_cont_current, migration 011) used
+    # to rating-narrow the bridged sensor set (#75). Set for a single-style query.
+    breaker_rating: Optional[float] = None
+    # True when the sensor set was narrowed to the sensor(s) matching breaker_rating
+    # (an exact match existed); False = full style set served (no exact match / no rating).
+    rating_narrowed: bool = False
 
 
 class ResolvedBreakerContext(BaseModel):

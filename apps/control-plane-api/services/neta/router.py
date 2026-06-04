@@ -17,7 +17,7 @@ SQL helper functions evolve independently.
 import json
 import logging
 import re
-from collections import Counter, defaultdict
+from collections import Counter, OrderedDict, defaultdict
 from decimal import Decimal, ROUND_HALF_UP
 from typing import Optional
 from uuid import UUID
@@ -4150,6 +4150,34 @@ def _bridge_rating_warning(
     return None
 
 
+def narrow_bridge_sensors_by_rating(
+    sensors: list[EtuBridgeSensor], r_cont_current: Optional[float]
+) -> tuple[list[EtuBridgeSensor], bool]:
+    """Narrow a bridged sensor set to the breaker's continuous rating (#75 / §145).
+
+    ``r_cont_current`` (the breaker-style continuous rating, carried from Access in
+    migration 011) is the field EasyPower uses to pick the ONE sensor within a
+    borrowed SST trip-style — so a correct mapping should surface just that sensor,
+    not the whole style set. Return only the sensor(s) whose ``sensor_rating`` equals
+    it, but **safe by construction**: if ``r_cont_current`` is NULL/unparseable or no
+    sensor matches exactly, return the full set unchanged (never hide the right
+    sensor — the ~357 in-range/out-of-range mismatches fall back here). Returns
+    ``(sensors, rating_narrowed)``."""
+    if r_cont_current is None:
+        return sensors, False
+    try:
+        rcc = float(r_cont_current)
+    except (TypeError, ValueError):
+        return sensors, False
+    matches = [
+        s for s in sensors
+        if s.sensor_rating is not None and float(s.sensor_rating) == rcc
+    ]
+    if matches:
+        return matches, True
+    return sensors, False
+
+
 @router.get("/etu/bridge-sensors", response_model=EtuBridgeSensorsResponse)
 def get_etu_bridge_sensors(
     breaker_style_id: Optional[int] = Query(
@@ -4206,7 +4234,8 @@ def get_etu_bridge_sensors(
             f"""
             SELECT breaker_class, breaker_id, breaker_style_id, breaker_style_frame,
                    tmt_sst_mfr, tmt_sst_type, tmt_sst_style,
-                   trip_style_id, sensor_id, sensor_rating, sensor_description
+                   trip_style_id, sensor_id, sensor_rating, sensor_description,
+                   r_cont_current
             FROM tcc.vw_breaker_sst_bridge
             {where_sql}
             ORDER BY breaker_style_id, sensor_rating, sensor_id
@@ -4215,7 +4244,29 @@ def get_etu_bridge_sensors(
         params,
     ).fetchall()
 
-    sensors = [EtuBridgeSensor(**dict(row._mapping)) for row in rows]
+    # Rating-narrow per breaker-style (#75): r_cont_current is the breaker's continuous
+    # rating; surface only the sensor matching it, else the full set (safe fall-back).
+    # Group by style so a breaker_id query spanning multiple styles narrows each group.
+    groups: "OrderedDict[int, list[dict]]" = OrderedDict()
+    for row in rows:
+        m = dict(row._mapping)
+        groups.setdefault(m["breaker_style_id"], []).append(m)
+
+    sensors: list[EtuBridgeSensor] = []
+    any_narrowed = False
+    breaker_rating: Optional[float] = None
+    for sid, grp in groups.items():
+        rcc = grp[0].get("r_cont_current")
+        grp_sensors = [
+            EtuBridgeSensor(**{k: v for k, v in m.items() if k != "r_cont_current"})
+            for m in grp
+        ]
+        kept, narrowed = narrow_bridge_sensors_by_rating(grp_sensors, rcc)
+        any_narrowed = any_narrowed or narrowed
+        sensors.extend(kept)
+        if breaker_style_id is not None and rcc is not None:
+            breaker_rating = float(rcc)
+
     frame = sensors[0].breaker_style_frame if sensors else None
     rating_warning = _bridge_rating_warning(frame, [s.sensor_rating for s in sensors])
     return EtuBridgeSensorsResponse(
@@ -4225,6 +4276,8 @@ def get_etu_bridge_sensors(
         count=len(sensors),
         sensors=sensors,
         rating_warning=rating_warning,
+        breaker_rating=breaker_rating,
+        rating_narrowed=any_narrowed,
     )
 
 
