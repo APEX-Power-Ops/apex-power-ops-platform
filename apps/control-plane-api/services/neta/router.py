@@ -1803,6 +1803,84 @@ def _ltd_reference_delay_surface(
     return nominal, nominal * (1.0 + lo_pct / 100.0), nominal * (1.0 + hi_pct / 100.0)
 
 
+# Long-time delay (tr) is defined as the trip time at 6×Ir (IEC 60947-2 long-time
+# reference; the §111 reference-window law, validated bit-exact vs the native CIxt
+# kernel in I2X-4).
+_LONGTIME_I2T_REF_MULT = 6.0
+
+
+def _resolve_longtime_tr(ltd_setting, bands) -> Optional[float]:
+    """The long-time reference time ``tr`` (trip time at 6×Ir).
+
+    For Micrologic-style trip units the LTD band value *is* ``tr`` (seconds at
+    6×Ir), so the selected ``ltd_setting`` is used directly; otherwise fall back to
+    the default (or first) band's ``open_time``."""
+    if ltd_setting is not None:
+        try:
+            tr = float(ltd_setting)
+            if tr > 0:
+                return tr
+        except (TypeError, ValueError):
+            pass
+    for band in bands or []:
+        if isinstance(band, dict) and band.get("is_default"):
+            try:
+                ot = float(band.get("open_time"))
+                if ot > 0:
+                    return ot
+            except (TypeError, ValueError):
+                pass
+    for band in bands or []:
+        if isinstance(band, dict) and band.get("open_time") is not None:
+            try:
+                ot = float(band.get("open_time"))
+                if ot > 0:
+                    return ot
+            except (TypeError, ValueError):
+                pass
+    return None
+
+
+def _synthesize_longtime_i2t(
+    ir_amps: float,
+    tr_seconds: float,
+    upper_amps: float,
+    *,
+    lo_mult: float = 1.1,
+    min_time: float = 0.004,
+    n_points: int = 48,
+) -> list[PlotCurvePoint]:
+    """Published I²t long-time characteristic: ``t(I) = tr·(6·Ir/I)²``.
+
+    ``tr`` is the long-time delay setting defined as the trip time at 6×Ir
+    (IEC 60947-2; the §111 reference-window law, validated bit-exact against the
+    native CIxt kernel in I2X-4). Used to render the long-time sweep for trip units
+    (e.g. Square D Micrologic) whose EasyPower record carries the LTD bands but no
+    ``etu_ltd_params`` curve method — serving the validated characteristic instead
+    of withholding it (the Eaton-PXR2 "cited, nothing fabricated" pattern).
+
+    Sweeps from just above pickup (``lo_mult·Ir``) up to ``upper_amps`` (the
+    short-time pickup, instantaneous pickup, or a 12×Ir cap), log-spaced, clamping
+    the trip time to ``min_time``.
+    """
+    if ir_amps <= 0 or tr_seconds <= 0:
+        return []
+    lo = ir_amps * lo_mult
+    hi = float(upper_amps)
+    if hi <= lo:
+        return []
+    ref_i = _LONGTIME_I2T_REF_MULT * ir_amps
+    pts: list[PlotCurvePoint] = []
+    for k in range(n_points):
+        frac = k / (n_points - 1)
+        amps = lo * (hi / lo) ** frac
+        seconds = tr_seconds * (ref_i / amps) ** 2
+        if seconds < min_time:
+            seconds = min_time
+        pts.append(PlotCurvePoint(amps=amps, seconds=seconds))
+    return pts
+
+
 def _band_row_to_delay_surface(band_row) -> tuple[Optional[float], Optional[float], Optional[float]]:
     if band_row is None:
         return None, None, None
@@ -2232,13 +2310,19 @@ def _generate_nominal_plot_curves(
     multiplier_value: Optional[float] = None,
     c_factor: Optional[float] = None,
     available_delays: Optional[set[str]] = None,
+    synthesize_i2t_longtime: bool = False,
 ) -> tuple[list[PlotCurve], list[str], Optional[dict[str, object]]]:
     """Generate the nominal curves used for delay-band interpolation.
 
     ``available_delays`` (subset of {"ltd","std","gfd"}) gates which delay curves
     may be drawn so the plot stays consistent with the Screen-2 element inventory —
     a delay element the settings screen reports "Not available" must not appear
-    here even when its equation/param coefficients exist. ``None`` = no gating."""
+    here even when its equation/param coefficients exist. ``None`` = no gating.
+
+    ``synthesize_i2t_longtime`` renders the validated published I²t long-time
+    characteristic (t = tr·(6·Ir/I)²) when the sensor exposes LTD bands but no
+    ``etu_ltd_params`` curve method (Square D Micrologic) — only when the DB curve
+    generator produced no LTD curve, so it never double-draws."""
     curves: list[PlotCurve] = []
     warnings: list[str] = []
     maint_profile: Optional[dict[str, object]] = None
@@ -2317,6 +2401,30 @@ def _generate_nominal_plot_curves(
                             phase=phase,
                             line_style="solid" if phase == "open" else "dashed",
                             points=[PlotCurvePoint(amps=p.amps, seconds=p.seconds) for p in points],
+                        ))
+
+            # Validated I²t long-time fallback: Micrologic-style trip units expose LTD
+            # bands but carry no etu_ltd_params curve method, so the generator above
+            # emits nothing. Render the published I²t long-time t(I)=tr·(6·Ir/I)² (the
+            # §111 reference-window law, native-CIxt bit-exact) instead of withholding
+            # it — the Eaton-PXR2 "serve the validated characteristic, cite it" pattern.
+            if (
+                "ltd" in allowed_delays
+                and synthesize_i2t_longtime
+                and ltpu_i > 0
+                and not any(c.element == "LTD" for c in curves)
+            ):
+                tr = _resolve_longtime_tr(ltd_setting, ltd_calc.get_band_info())
+                if tr:
+                    upper = stpu_i if stpu_i > 0 else (inst_i if inst_i > 0 else ltpu_i * 12.0)
+                    lt_pts = _synthesize_longtime_i2t(ltpu_i, tr, upper)
+                    if lt_pts:
+                        curves.append(PlotCurve(
+                            id="ltd_open",
+                            element="LTD",
+                            phase="open",
+                            line_style="solid",
+                            points=lt_pts,
                         ))
         except Exception as exc:
             rollback = getattr(db, "rollback", None)
@@ -5607,6 +5715,13 @@ def plot_tcc(req: PlotTccRequest, db: Session = Depends(get_db)):
                     break
 
     # ── Step 6: Generate curves from calc engine ──
+    # Square D Micrologic carries LTD bands but no etu_ltd_params curve method, so
+    # the generic generator can't draw the long-time sweep. For that family, render
+    # the validated published I²t long-time characteristic instead (cited).
+    synthesize_i2t_longtime = bool(
+        trip_unit_style and "micrologic" in str(trip_unit_style).lower()
+    )
+
     curves: list[PlotCurve] = []
     if req.include_nominal_curve:
         curves, curve_warnings, maint_profile = _generate_nominal_plot_curves(
@@ -5623,6 +5738,7 @@ def plot_tcc(req: PlotTccRequest, db: Session = Depends(get_db)):
             multiplier_value=req.multiplier_value,
             c_factor=req.c_factor,
             available_delays=available_delays,
+            synthesize_i2t_longtime=synthesize_i2t_longtime,
         )
         warnings.extend(curve_warnings)
 

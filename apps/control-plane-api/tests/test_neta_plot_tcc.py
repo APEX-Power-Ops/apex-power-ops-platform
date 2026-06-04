@@ -1369,6 +1369,84 @@ class TestDelayAvailabilityGating:
 
 
 # ──────────────────────────────────────────────────
+# Test 5c: Micrologic validated I²t long-time synthesis ("curves per the PXR2")
+# ──────────────────────────────────────────────────
+
+class TestMicrologicLongtimeI2t:
+    """Square D Micrologic (and any trip unit with LTD bands but no
+    ``etu_ltd_params`` curve method) must still render the long-time sweep — the
+    published I²t characteristic t(I) = tr·(6·Ir/I)² (the validated §111
+    reference-window law, native-CIxt-oracle bit-exact). Per the Eaton-PXR2
+    pattern: serve the validated characteristic where EasyPower's record lacks the
+    curve method; cited, nothing fabricated. Only when no DB LTD curve was produced
+    and only for the Micrologic family (the validated I²t long-time)."""
+
+    def test_synthesize_longtime_i2t_obeys_i2t_law(self):
+        from services.neta.router import _synthesize_longtime_i2t
+
+        pts = _synthesize_longtime_i2t(2000.0, 0.5, 8000.0)
+        assert len(pts) >= 8
+        # Monotonic: trip time falls as current rises.
+        times = [p.seconds for p in pts]
+        assert times == sorted(times, reverse=True)
+        # I²t invariant t·I² = tr·(6·Ir)² away from any min-time clamp.
+        ref = 0.5 * (6 * 2000.0) ** 2
+        for p in pts:
+            if p.seconds > 0.01:
+                assert p.seconds * p.amps ** 2 == pytest.approx(ref, rel=1e-6)
+        # All points within the swept current band [>Ir, upper].
+        assert all(2000.0 < p.amps <= 8000.0 + 1e-6 for p in pts)
+
+    def test_synthesize_longtime_i2t_guards(self):
+        from services.neta.router import _synthesize_longtime_i2t
+        assert _synthesize_longtime_i2t(0.0, 0.5, 8000.0) == []
+        assert _synthesize_longtime_i2t(2000.0, 0.0, 8000.0) == []
+        assert _synthesize_longtime_i2t(2000.0, 0.5, 1000.0) == []  # upper below pickup
+
+    def test_plot_synthesizes_ltd_for_micrologic_without_params(self, client, base_request):
+        tc, _ = client
+        req = {**base_request, "trip_unit_style_name": "Micrologic 6.0A",
+               "measurements": None, "include_measured_markers": False}
+        # No DB curve method (Micrologic: etu_ltd_params empty) but LTD bands exist.
+        patches, _ = _patch_calc_engine(ltd_info=[])
+        with patches["pickup"], patches["ltd"], patches["ieee"]:
+            resp = tc.post("/api/v1/neta/plot-tcc", json=req)
+
+        assert resp.status_code == 200
+        body = resp.json()
+        ltd = [c for c in body["curves"] if c["element"] == "LTD"]
+        assert ltd, body["curves"]
+        pts = ltd[0]["points"]
+        assert len(pts) >= 8
+        ts = [p["seconds"] for p in pts]
+        assert ts == sorted(ts, reverse=True)
+
+    def test_no_synthesis_for_non_micrologic_without_params(self, client, base_request):
+        tc, _ = client
+        req = {**base_request, "trip_unit_style_name": "Generic PCB",
+               "measurements": None, "include_measured_markers": False}
+        patches, _ = _patch_calc_engine(ltd_info=[])
+        with patches["pickup"], patches["ltd"], patches["ieee"]:
+            resp = tc.post("/api/v1/neta/plot-tcc", json=req)
+
+        assert resp.status_code == 200
+        body = resp.json()
+        assert not [c for c in body["curves"] if c["element"] == "LTD"]
+
+    def test_no_double_ltd_when_db_params_present(self, client, base_request):
+        # Micrologic-labelled but DB params present → use the DB curve, don't also synthesize.
+        tc, _ = client
+        req = {**base_request, "trip_unit_style_name": "Micrologic 6.0A",
+               "measurements": None, "include_measured_markers": False}
+        patches, _ = _patch_calc_engine()  # default ltd_info present + ltd_curve
+        with patches["pickup"], patches["ltd"], patches["ieee"]:
+            resp = tc.post("/api/v1/neta/plot-tcc", json=req)
+
+        body = resp.json()
+        assert len([c for c in body["curves"] if c["id"] == "ltd_open"]) == 1
+
+
+# ──────────────────────────────────────────────────
 # Test 6: Delay marker enrichment from curve interpolation
 # ──────────────────────────────────────────────────
 
