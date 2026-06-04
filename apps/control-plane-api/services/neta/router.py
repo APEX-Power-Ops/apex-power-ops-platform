@@ -1881,6 +1881,110 @@ def _synthesize_longtime_i2t(
     return pts
 
 
+def _sensor_i2x_exponent(db: Session, sensor_id: int, column: str) -> float:
+    """Per-sensor Iˣt exponent X (``stpu_i2t_val`` / ``gfpu_i2t_val`` = the native
+    ``DS3_I2T_VAL`` / ``DS1GF_I2T_VAL``); defaults to 2.0 (I²t) for ~98% of the corpus."""
+    try:
+        row = db.execute(
+            text(f"SELECT {column} AS x FROM tcc.etu_sensors WHERE id = :sid"),
+            {"sid": sensor_id},
+        ).fetchone()
+    except Exception:
+        rb = getattr(db, "rollback", None)
+        if callable(rb):
+            rb()
+        return 2.0
+    mapping = _row_mapping(row)
+    try:
+        x = float(mapping.get("x")) if mapping.get("x") is not None else 2.0
+    except (TypeError, ValueError):
+        return 2.0
+    return x if x > 0 else 2.0
+
+
+def _load_i2x_curve_band(
+    db: Session, table: str, floor_col: str, clear_col: str, sensor_id: int, setting: Optional[float]
+) -> Optional[dict]:
+    """Load the selected route-1 (I2X) STD/GFD band's shape + ramp anchors + floor.
+
+    Returns the band whose definite-time floor matches ``setting`` (the selected
+    delay), else the first band. Carries ``i2x`` (shape), ``i_open``/``t_open``
+    (the Iˣt ramp anchor), and ``floor_open`` (the definite-time clamp) for
+    ``etu_ixt.i2x_delay_surface``."""
+    try:
+        rows = db.execute(
+            text(
+                f"""
+                SELECT i2x, i_open, t_open, i_clear, t_clear,
+                       {floor_col} AS floor_open, {clear_col} AS floor_clear, ordinal
+                FROM {table}
+                WHERE sensor_id = :sid
+                ORDER BY ordinal NULLS LAST, {floor_col} NULLS LAST
+                """
+            ),
+            {"sid": sensor_id},
+        ).fetchall()
+    except Exception:
+        rb = getattr(db, "rollback", None)
+        if callable(rb):
+            rb()
+        return None
+
+    bands = [dict(_row_mapping(r)) for r in rows]
+    bands = [b for b in bands if b.get("floor_open") is not None]
+    if not bands:
+        return None
+    if setting is not None:
+        for b in bands:
+            try:
+                if abs(float(b["floor_open"]) - float(setting)) < 1e-6:
+                    return b
+            except (TypeError, ValueError):
+                continue
+    return bands[0]
+
+
+def _synthesize_i2x_delay_curve(
+    band: Optional[dict],
+    exp_x: float,
+    ref_amps: float,
+    lo_amps: float,
+    hi_amps: float,
+    *,
+    n_points: int = 56,
+    min_time: float = 0.004,
+) -> list[PlotCurvePoint]:
+    """Sweep a route-1 (I2X) STD/GFD band into a composite curve via the validated
+    ``etu_ixt`` kernel — ``t = max(Iˣt ramp, definite floor)`` (the datasheet's
+    I²t-ON ramp clamped to the I²t-OFF floor, native bit-exact per I2X-4).
+
+    ``M = I / ref_amps`` — STD references Ir (``ltpu_i``), GFD references In
+    (the plug rating); the band's ``i_open`` anchor is the multiple of that
+    reference where the ramp meets the floor (10×Ir for STD, 1×In for GFD on the
+    Micrologic 6.0A). Sweeps log-spaced from the element pickup to the upper bound."""
+    if not band or ref_amps <= 0 or lo_amps <= 0 or hi_amps <= lo_amps:
+        return []
+    from apex_calc_engine.services.calc_engine import etu_ixt
+
+    pts: list[PlotCurvePoint] = []
+    for k in range(n_points):
+        frac = k / (n_points - 1)
+        amps = lo_amps * (hi_amps / lo_amps) ** frac
+        m = amps / ref_amps
+        surface = etu_ixt.i2x_delay_surface(
+            test_multiple=m,
+            i2x_flag=band.get("i2x"),
+            i_open=band.get("i_open"),
+            t_open=band.get("t_open"),
+            std_open=band.get("floor_open"),
+            exp_x=exp_x,
+        )
+        if surface.expected_time is None:
+            continue
+        pts.append(PlotCurvePoint(amps=amps, seconds=max(float(surface.expected_time), min_time)))
+    return pts
+
+
 def _band_row_to_delay_surface(band_row) -> tuple[Optional[float], Optional[float], Optional[float]]:
     if band_row is None:
         return None, None, None
@@ -2436,7 +2540,21 @@ def _generate_nominal_plot_curves(
         try:
             ieee = IEEEInverseTimeSolver(db)
             std_pickup = stpu_i if stpu_i > 0 else ltpu_i
-            if "std" in allowed_delays and std_pickup > 0:
+            if "std" in allowed_delays and synthesize_i2t_longtime and stpu_i > 0 and ltpu_i > 0:
+                # Micrologic short-time = route-1 (I2X) composite: the I²t-ON ramp
+                # clamped to the I²t-OFF definite floor, max(ramp, floor). Swept via
+                # the validated etu_ixt kernel; M references Ir (the ×Ir datasheet axis).
+                std_band = _load_i2x_curve_band(db, "tcc.etu_std_bands", "std_open", "std_clear", sensor_id, std_setting)
+                if std_band is not None:
+                    x = _sensor_i2x_exponent(db, sensor_id, "stpu_i2t_val")
+                    upper = inst_i if inst_i > 0 else stpu_i * 6.0
+                    pts = _synthesize_i2x_delay_curve(std_band, x, ltpu_i, stpu_i, upper)
+                    if pts:
+                        curves.append(PlotCurve(
+                            id="std_open", element="STD", phase="open",
+                            line_style="solid", points=pts,
+                        ))
+            elif "std" in allowed_delays and std_pickup > 0:
                 std_eqs = ieee.get_equation_info(sensor_id, "std")
                 std_ord = std_eqs[0]["ordinal"] if std_eqs else 1
                 std_time_dial = float(std_setting) if std_setting else 1.0
@@ -2474,7 +2592,22 @@ def _generate_nominal_plot_curves(
                         ],
                     ))
 
-            if "gfd" in allowed_delays and gfpu_i > 0:
+            if "gfd" in allowed_delays and synthesize_i2t_longtime and gfpu_i > 0:
+                # Micrologic ground-fault = route-1 (I2X) composite, same kernel as STD
+                # but M references In (the plug rating — the ×In datasheet axis); the
+                # GF ramp anchor is 1×In on the 6.0A.
+                gfd_band = _load_i2x_curve_band(db, "tcc.etu_gfd_bands", "gfd_open", "gfd_clear", sensor_id, gfd_setting)
+                if gfd_band is not None:
+                    x = _sensor_i2x_exponent(db, sensor_id, "gfpu_i2t_val")
+                    ref_in = float(plug_rating) if plug_rating else (inst_i if inst_i > 0 else gfpu_i)
+                    upper = max(inst_i, ref_in * 3.0) if (inst_i > 0 or ref_in > 0) else gfpu_i * 6.0
+                    pts = _synthesize_i2x_delay_curve(gfd_band, x, ref_in, gfpu_i, upper)
+                    if pts:
+                        curves.append(PlotCurve(
+                            id="gfd_open", element="GFD", phase="open",
+                            line_style="solid", points=pts,
+                        ))
+            elif "gfd" in allowed_delays and gfpu_i > 0:
                 gfd_eqs = ieee.get_equation_info(sensor_id, "gfd")
                 gfd_ord = gfd_eqs[0]["ordinal"] if gfd_eqs else 1
                 gfd_time_dial = float(gfd_setting) if gfd_setting else 1.0

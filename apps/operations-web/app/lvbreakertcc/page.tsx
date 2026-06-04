@@ -74,9 +74,14 @@ type LiveSelection = {
 // misleading frozen sample. Square D Masterpact NW · Micrologic 6.0A (LSIG, so GF renders),
 // 2500 A — verified against live /settings (real taps + GF present). The user overrides it on
 // Screen 1; clearing the selection shows the honest "select equipment" prompt instead.
+// Sensor 3947 = Square D Masterpact NW / Micrologic 6.0A, 2500 A frame, the
+// COMPLETE-data style record (tcc trip_style 246): carries the LTD bands + the
+// route-1 (I2X) STD/GFD composite bands, so the curve renders the full LSIG
+// characteristic (long-time I²t · short-time + ground-fault I²t-ramp/floor composite
+// · instantaneous). (The earlier 25506 record lacks the STD/GFD delay bands.)
 const DEFAULT_SELECTION: LiveSelection = {
   family: 'etu',
-  sensorId: 25506,
+  sensorId: 3947,
   breakerLabel: 'Square D Masterpact NW',
   tripLabel: 'Micrologic 6.0A',
   ratingLabel: 'Ir 2500 A',

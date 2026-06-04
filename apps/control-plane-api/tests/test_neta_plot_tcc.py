@@ -1447,6 +1447,75 @@ class TestMicrologicLongtimeI2t:
 
 
 # ──────────────────────────────────────────────────
+# Test 5d: Micrologic STD/GFD route-1 (I2X) composite curve ("both delays built in")
+# ──────────────────────────────────────────────────
+
+class TestMicrologicI2XComposite:
+    """Micrologic STD and GFD are NOT pure definite-time — each has an I²t-ON ramp
+    AND an I²t-OFF definite floor (the dial's `I²t on/off`). The composite is the
+    validated etu_ixt rule t = max(Iˣt ramp, floor), swept across current. M
+    references Ir for STD (×Ir datasheet axis) and In for GFD (×In axis); the band's
+    i_open anchor is where the ramp meets the floor (10×Ir / 1×In on the 6.0A)."""
+
+    def test_synthesize_i2x_composite_ramp_then_floor(self):
+        from services.neta.router import _synthesize_i2x_delay_curve
+
+        band = {"i2x": 2, "i_open": 10, "t_open": 0.16, "floor_open": 0.14}
+        # STD: M = I/Ir, Ir=2000, sweep Isd=8000 .. 24000 (past the 10×Ir=20000 knee).
+        pts = _synthesize_i2x_delay_curve(band, 2.0, 2000.0, 8000.0, 24000.0)
+        assert len(pts) >= 16
+        times = [p.seconds for p in pts]
+        assert times == sorted(times, reverse=True)  # ramp descends, then flat
+        for p in pts:
+            ramp = 0.16 * (10.0 * 2000.0 / p.amps) ** 2
+            assert p.seconds == pytest.approx(max(ramp, 0.14), rel=1e-6)
+        assert pts[-1].seconds == pytest.approx(0.14)  # clamped to the floor at high current
+
+    def test_synthesize_i2x_flat_band_is_definite_time(self):
+        from services.neta.router import _synthesize_i2x_delay_curve
+        band = {"i2x": 0, "i_open": None, "t_open": None, "floor_open": 0.1}  # I²t OFF
+        pts = _synthesize_i2x_delay_curve(band, 2.0, 2000.0, 8000.0, 16000.0)
+        assert pts and all(p.seconds == pytest.approx(0.1) for p in pts)
+
+    def test_synthesize_i2x_guards(self):
+        from services.neta.router import _synthesize_i2x_delay_curve
+        assert _synthesize_i2x_delay_curve(None, 2.0, 2000.0, 8000.0, 16000.0) == []
+        assert _synthesize_i2x_delay_curve({"i2x": 2}, 2.0, 0.0, 8000.0, 16000.0) == []
+        assert _synthesize_i2x_delay_curve({"i2x": 2}, 2.0, 2000.0, 8000.0, 4000.0) == []
+
+    def test_load_i2x_curve_band_matches_floor_setting(self):
+        from services.neta.router import _load_i2x_curve_band
+
+        def fake(stmt, params=None):
+            r = MagicMock()
+            rows = []
+            for o, (fo, io, to) in enumerate([(0.08, 10, 0.08), (0.14, 10, 0.16), (0.23, 10, 0.24)]):
+                m = MagicMock()
+                m._mapping = {"i2x": 2, "i_open": io, "t_open": to, "i_clear": io,
+                              "t_clear": to, "floor_open": fo, "floor_clear": fo, "ordinal": o}
+                rows.append(m)
+            r.fetchall.return_value = rows
+            return r
+
+        db = MagicMock(); db.execute = MagicMock(side_effect=fake)
+        assert _load_i2x_curve_band(db, "tcc.etu_std_bands", "std_open", "std_clear", 1, 0.14)["floor_open"] == 0.14
+        assert _load_i2x_curve_band(db, "tcc.etu_std_bands", "std_open", "std_clear", 1, None)["floor_open"] == 0.08
+
+    def test_sensor_i2x_exponent_default_2(self):
+        from services.neta.router import _sensor_i2x_exponent
+
+        def fake_x(stmt, params=None):
+            r = MagicMock(); row = MagicMock(); row._mapping = {"x": 4.0}; r.fetchone.return_value = row; return r
+        db = MagicMock(); db.execute = MagicMock(side_effect=fake_x)
+        assert _sensor_i2x_exponent(db, 1, "stpu_i2t_val") == 4.0
+
+        def fake_none(stmt, params=None):
+            r = MagicMock(); r.fetchone.return_value = None; return r
+        db2 = MagicMock(); db2.execute = MagicMock(side_effect=fake_none)
+        assert _sensor_i2x_exponent(db2, 1, "stpu_i2t_val") == 2.0
+
+
+# ──────────────────────────────────────────────────
 # Test 6: Delay marker enrichment from curve interpolation
 # ──────────────────────────────────────────────────
 
