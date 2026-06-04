@@ -134,12 +134,14 @@ kernel reading `X` from `I2T_VAL`. No `CalcThermEq`, no polynomial root-find.
   **GFD is gappier** (ramp 7,769/12,104 NULL anchors; no composite `gfd_x`). The exponent is **on the sensor**
   (`DS3_I2T_VAL`), not the band → source X from the sensor (default 2 for ~98%); withhold the NULL-anchor gaps;
   wire **STD-first**, defer GFD pending a load fix.
+- **DONE (I2X-6 `/calculate` wiring, 2026-06-03, STATE §137 — task #55):** `etu_ixt` is wired into `/calculate`
+  (`_i2x_field_delay`; M=inject/Ir STD, inject/In GFD); the band **shape** drives `classify_delay_trust` —
+  **flat/ramp → `db`, composite → `verify`**, NULL-anchor/unknown → withheld. Live-verified (s3947 route-1: STD
+  `verify` 0.444 s, GFD `verify` 0.694 s, both `i2x_composite`, exact). The kernel self-guards the gappy GFD (§117).
 - **Remaining (gated):** (b) **validate the composite render** — native composite-band render spot-check confirming
-  `max(ramp, floor)`, then promote composite from WITHHELD; (c) confirm the **sensor exponent** column is in prod
-  `tcc.etu_sensors` + populated (one more read; default 2 covers ~98%); (d) wire `etu_ixt` into `/calculate`
-  (STD-first; source X from sensor; withhold NULL-anchor + GFD), promote route-1 flat+ramp `withheld`→`db` in
-  `delay_trust.py`, frontend un-withhold, SSoT-reconcile, deploy, live-verify (**operator decision boundary** —
-  flips field-tech-facing trust).
+  `max(ramp, floor)`, then promote composite `verify`→`db` (**operator AUTHORIZED the native-renderer RE 2026-06-04,
+  task #72 — unstarted**; drive `RecalcCurve_SSTT_LT_STDB_INST` with the full object state vs `etu_ixt`); the flat+ramp
+  `db` promotion + frontend un-withhold for STD-first is the remaining serving step.
 `[G4 §3a/§3c/§4 · DLL TccBase.dll CIxt 24248-24297 / SetSTDB_* 24440-24531 / IsSTDB_Ixt 24196,26398-26442 ·
 DatSection3STD + DatSensor.DS3_I2T_VAL/DS1GF_I2T_VAL · §113]`
 
@@ -199,8 +201,16 @@ These are closed and locked in the guides; reopening only on a cited reason:
 - **Direct-band STD/GFD (route 0)** VALUE+band `db` (open/clear manufacturer band) `[G4 §3a]`.
 - **LTD** VALUE `db` — the I²t reference window, band setting = trip time at 6× Ir `[G4 §4 · §111]`.
 - **STD-INVEQ Therm** VALUE `db` — native-kernel bit-exact `[G4 §3f · §107]`.
-- **Envelope-only catalog framework** shipped; PXR2 seeded `[G1 §7 · §108]`.
-- **The breaker→ETU SST bridge** recovered end-to-end `[G0 §3 / G1 D1 / §104]`.
+- **Envelope-only catalog framework** shipped; PXR2 seeded `[G1 §7 · §108]`. **Extended to the full Eaton
+  Power Defense family** — `services/neta/pxr_curves.py` (PD2–6 PXR 10/20/20D/25 curve+setting+tolerance model,
+  cited `[VENDOR-DOC]` TD012064/065/067/068EN + PXPM) `[EATON-POWER-DEFENSE-PXR.md · §140–§141]`.
+- **The breaker→ETU SST bridge** recovered end-to-end `[G0 §3 / G1 D1 / §104]`; the §104 re-carry is
+  **proven bit-faithful** and the mis-mappings are **native to EasyPower's source** (NOT a load defect) —
+  **all 31 Eaton PD defective rows corrected** (migr `009`/`010`) `[G1 §2D · §138–§141]`.
+- **Micrologic 6.0 curve** (L I²t · S/G I2X composite) validated + served; band-backfill packet `008` queued
+  for the band-less styles `[MICROLOGIC-6.0A.md · §135–§137 · §141]`.
+- **Route-1 (I2X) field-time at `/calculate`** wired via `etu_ixt` (flat/ramp `db`, composite `verify`)
+  `[delay_trust.py · §137]`.
 - **Per-sensor delay-route field-trust gating** live (withhold-not-fabricate) `[G4 §6 · §106]`.
 
 ## Suggested sequence (smallest durable bites first)
@@ -219,4 +229,5 @@ campaign, the ~15k lever) → **L8/L9** (TMT/EMT) → **L10** (relays — its ow
 > a monster RE). The GF formula RE is fully banked, so L1's remaining work is just the `field[13]` anchor + a
 > re-validate.
 
-*Last updated 2026-06-02 — created. Update status + bump counts (`[VERIFIED-LIVE]`) as lanes close.*
+*Last updated 2026-06-04 — reconciled the SST-bridge data-quality finding + Eaton PD catalog + Micrologic
+band-backfill + I2X-6 `/calculate` wiring (STATE §138–§141). Update status + bump counts (`[VERIFIED-LIVE]`) as lanes close.*
