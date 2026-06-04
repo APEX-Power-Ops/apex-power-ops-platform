@@ -1333,7 +1333,13 @@ function TmtCurve({ selection }: { selection: LiveSelection }) {
 
   const scale = ampRating || 1
   const curves = plot.curves ?? []
-  const allAmps = curves.flatMap((c) => c.points.map((p) => p.amps * scale)).filter((a) => a > 0)
+  // Pre-scale per-unit points to absolute amps, then auto-fit the log-log axes to the
+  // device's envelope (same makeScale treatment as the ETU chart) so the class curve
+  // fills the plot instead of floating inside a fixed 100 A–100 kA / 0.01–1000 s frame.
+  const scaledCurves = curves.map((c) => ({ ...c, points: c.points.map((p) => ({ amps: p.amps * scale, seconds: p.seconds })) }))
+  const allAmps = scaledCurves.flatMap((c) => c.points.map((p) => p.amps)).filter((a) => a > 0)
+  const allTimes = scaledCurves.flatMap((c) => c.points.map((p) => p.seconds)).filter((t) => t > 0)
+  const sc = makeScale(allAmps, allTimes)
   const stats = [
     { k: 'Curves', v: String(curves.length) },
     { k: 'Amp Rating', v: ampRating ? `${ampRating} A` : '—' },
@@ -1360,22 +1366,22 @@ function TmtCurve({ selection }: { selection: LiveSelection }) {
           <div className="card-h">Trip Characteristic Curve <span className="badge inline">BOUNDED · nominal class curve</span></div>
           <div className="plot-wrap">
             <svg viewBox="0 0 700 480" className="plot" role="img" aria-label="Time-current curve">
-              {X_TICKS.map((t) => (
+              {sc.xTicks.map((t) => (
                 <g key={`x${t}`}>
-                  <line x1={px(t)} y1={PLOT.mt} x2={px(t)} y2={PLOT.mt + PLOT.h} className="grid" />
-                  <text x={px(t)} y={PLOT.mt + PLOT.h + 16} className="axt" textAnchor="middle">{t >= 1000 ? `${t / 1000}k` : t}</text>
+                  <line x1={sc.px(t)} y1={PLOT.mt} x2={sc.px(t)} y2={PLOT.mt + PLOT.h} className="grid" />
+                  <text x={sc.px(t)} y={PLOT.mt + PLOT.h + 16} className="axt" textAnchor="middle">{fmtAmpTick(t)}</text>
                 </g>
               ))}
-              {Y_TICKS.map((t) => (
+              {sc.yTicks.map((t) => (
                 <g key={`y${t}`}>
-                  <line x1={PLOT.ml} y1={py(t)} x2={PLOT.ml + PLOT.w} y2={py(t)} className="grid" />
-                  <text x={PLOT.ml - 8} y={py(t) + 3} className="axt" textAnchor="end">{t}</text>
+                  <line x1={PLOT.ml} y1={sc.py(t)} x2={PLOT.ml + PLOT.w} y2={sc.py(t)} className="grid" />
+                  <text x={PLOT.ml - 8} y={sc.py(t) + 3} className="axt" textAnchor="end">{fmtSecTick(t)}</text>
                 </g>
               ))}
               <text x={PLOT.ml + PLOT.w / 2} y={PLOT.mt + PLOT.h + 38} className="axl" textAnchor="middle">Current (A)</text>
               <text transform={`translate(16 ${PLOT.mt + PLOT.h / 2}) rotate(-90)`} className="axl" textAnchor="middle">Time (s)</text>
-              {curves.map((c) => (
-                <path key={c.id} d={livePath(c.points.map((p) => ({ amps: p.amps * scale, seconds: p.seconds })))} fill="none" stroke="#14507d" strokeWidth={2.6} strokeLinejoin="round" strokeLinecap="round" />
+              {scaledCurves.map((c) => (
+                <path key={c.id} d={sc.livePath(c.points)} fill="none" stroke="#14507d" strokeWidth={2.6} strokeLinejoin="round" strokeLinecap="round" />
               ))}
             </svg>
           </div>

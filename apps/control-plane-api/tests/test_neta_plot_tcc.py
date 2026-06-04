@@ -199,13 +199,33 @@ FAKE_GFD_CURVE = [
 # Fixtures
 # ──────────────────────────────────────────────────
 
-def _make_fake_execute(calc_data=CALC_DATA, eval_data=EVAL_DATA, ltd_tol_rows=None):
+def _avail_band_row(open_time=0.06, clear_time=0.13):
+    """One delay-band row for the Screen-2-style availability list query
+    (``_load_delay_band_settings``). Only ``open_time`` presence matters for the
+    plot's delay-availability gate."""
+    r = MagicMock()
+    r._mapping = {
+        "band": "x", "label": "x", "open_time": open_time,
+        "clear_time": clear_time, "is_default": False,
+    }
+    return r
+
+
+def _make_fake_execute(calc_data=CALC_DATA, eval_data=EVAL_DATA, ltd_tol_rows=None,
+                       avail_bands=("ltd", "std", "gfd")):
     """Return a side_effect function for Session.execute that returns
     deterministic payloads for the two SQL function calls.
 
     ``ltd_tol_rows`` mocks the per-sensor LTD time-tolerance query
     (``tcc.etu_ltd_params``); each row is a dict with ``curve_name``/``tol_lo``/
-    ``tol_hi``. Default empty → no DB tol → the flagged generic window."""
+    ``tol_hi``. Default empty → no DB tol → the flagged generic window.
+
+    ``avail_bands`` controls the per-sensor delay-band *availability* list query
+    (``_load_delay_band_settings``) that drives the plot's delay-availability gate:
+    a delay element absent from this set returns an empty band list (the Screen-2
+    "Not available" state), so the plot must not draw it even though the
+    equation/param mocks would otherwise yield a curve."""
+    avail_bands = set(avail_bands or ())
     call_count = {"n": 0}
 
     def fake_execute(stmt, params=None):
@@ -226,29 +246,45 @@ def _make_fake_execute(calc_data=CALC_DATA, eval_data=EVAL_DATA, ltd_tol_rows=No
             row.result = eval_data
             result.fetchone.return_value = row
         elif "tcc.etu_ltd_bands" in sql_text:
-            setting = (params or {}).get("setting")
-            if "AND ltd_setting = :setting" in sql_text and setting != 3.5:
-                result.fetchone.return_value = None
+            if "AND ltd_setting = :setting" not in sql_text:
+                # Screen-2 availability list query (drives the delay-availability gate).
+                result.fetchall.return_value = (
+                    [_avail_band_row(3.5, None)] if "ltd" in avail_bands else []
+                )
             else:
-                row = MagicMock()
-                row._mapping = {"open_time": 3.5, "clear_time": 3.0, "ordinal": 2, "is_default": False}
-                result.fetchone.return_value = row
+                setting = (params or {}).get("setting")
+                if setting != 3.5:
+                    result.fetchone.return_value = None
+                else:
+                    row = MagicMock()
+                    row._mapping = {"open_time": 3.5, "clear_time": 3.0, "ordinal": 2, "is_default": False}
+                    result.fetchone.return_value = row
         elif "tcc.etu_std_bands" in sql_text:
-            setting = (params or {}).get("setting")
-            if "AND std_open = :setting" in sql_text and setting != 2.0:
-                result.fetchone.return_value = None
+            if "AND std_open = :setting" not in sql_text:
+                result.fetchall.return_value = (
+                    [_avail_band_row(0.06, 0.13)] if "std" in avail_bands else []
+                )
             else:
-                row = MagicMock()
-                row._mapping = {"open_time": 2.0, "clear_time": 2.5, "ordinal": 1, "is_default": True}
-                result.fetchone.return_value = row
+                setting = (params or {}).get("setting")
+                if setting != 2.0:
+                    result.fetchone.return_value = None
+                else:
+                    row = MagicMock()
+                    row._mapping = {"open_time": 2.0, "clear_time": 2.5, "ordinal": 1, "is_default": True}
+                    result.fetchone.return_value = row
         elif "tcc.etu_gfd_bands" in sql_text:
-            setting = (params or {}).get("setting")
-            if "AND gfd_open = :setting" in sql_text and setting != 1.5:
-                result.fetchone.return_value = None
+            if "AND gfd_open = :setting" not in sql_text:
+                result.fetchall.return_value = (
+                    [_avail_band_row(0.06, 0.13)] if "gfd" in avail_bands else []
+                )
             else:
-                row = MagicMock()
-                row._mapping = {"open_time": 1.5, "clear_time": 1.8, "ordinal": 1, "is_default": True}
-                result.fetchone.return_value = row
+                setting = (params or {}).get("setting")
+                if setting != 1.5:
+                    result.fetchone.return_value = None
+                else:
+                    row = MagicMock()
+                    row._mapping = {"open_time": 1.5, "clear_time": 1.8, "ordinal": 1, "is_default": True}
+                    result.fetchone.return_value = row
         else:
             result.fetchone.return_value = None
         return result
@@ -1262,6 +1298,77 @@ class TestSeparatedDelayInputs:
 
 
 # ──────────────────────────────────────────────────
+# Test 5b: Delay-availability gating (plot ⇄ Screen-2 consistency)
+# ──────────────────────────────────────────────────
+
+class TestDelayAvailabilityGating:
+    """The TCC plot must match Screen-2 availability: a delay element (LTD/STD/GFD)
+    whose per-sensor delay-band inventory is empty must NOT be drawn — neither as a
+    swept curve nor as a test-point marker/table row — even though the independent
+    equation/param tables may still carry coefficients for it.
+
+    Real case: Square D Micrologic sensors carry STD/GFD *equations* (so the engine
+    would gladly draw an STD/GFD curve) but no STD/GFD *band settings*, so Screen 2
+    reports them "Not available". The plot was drawing them anyway — the operator's
+    "don't plot elements that are disabled by default"."""
+
+    def _plot_with_avail(self, base_request, avail_bands):
+        mock_session = MagicMock()
+        mock_session.execute = MagicMock(
+            side_effect=_make_fake_execute(avail_bands=avail_bands)
+        )
+
+        def override_db():
+            yield mock_session
+
+        app.dependency_overrides[get_db] = override_db
+        try:
+            tc = TestClient(app)
+            req = {**base_request, "measurements": None, "include_measured_markers": False}
+            patches, _ = _patch_calc_engine()
+            with patches["pickup"], patches["ltd"], patches["ieee"]:
+                resp = tc.post("/api/v1/neta/plot-tcc", json=req)
+            assert resp.status_code == 200, resp.text
+            return resp.json()
+        finally:
+            app.dependency_overrides.clear()
+
+    def test_std_gfd_suppressed_when_bands_absent(self, base_request):
+        # Micrologic-like sensor: only LTD has band settings; STD/GFD "Not available".
+        body = self._plot_with_avail(base_request, avail_bands={"ltd"})
+
+        curve_els = {c["element"] for c in body["curves"]}
+        assert "STD" not in curve_els, curve_els
+        assert "GFD" not in curve_els, curve_els
+        assert "INST" in curve_els  # pickup-driven element, unaffected
+
+        marker_els = {m["element"] for m in body["expected_markers"]}
+        assert "STD" not in marker_els, marker_els
+        assert "GFD" not in marker_els, marker_els
+        assert "LTD" in marker_els  # LTD bands present → still shown
+
+        row_els = {r["element"] for r in body["table_rows"]}
+        assert "STD" not in row_els
+        assert "GFD" not in row_els
+
+    def test_all_delays_shown_when_bands_present(self, base_request):
+        body = self._plot_with_avail(base_request, avail_bands={"ltd", "std", "gfd"})
+
+        curve_els = {c["element"] for c in body["curves"]}
+        assert {"LTD", "STD", "GFD", "INST"} <= curve_els, curve_els
+
+        marker_els = {m["element"] for m in body["expected_markers"]}
+        assert {"LTD", "STD", "GFD"} <= marker_els, marker_els
+
+    def test_available_delay_elements_helper(self):
+        from services.neta.router import _available_delay_elements
+
+        db = MagicMock()
+        db.execute = MagicMock(side_effect=_make_fake_execute(avail_bands={"ltd", "gfd"}))
+        assert _available_delay_elements(db, SENSOR_ID) == {"ltd", "gfd"}
+
+
+# ──────────────────────────────────────────────────
 # Test 6: Delay marker enrichment from curve interpolation
 # ──────────────────────────────────────────────────
 
@@ -1503,14 +1610,17 @@ class TestGEPresetNoWarningContract:
                 row = MagicMock()
                 row._mapping = {"open_time": 6.0, "clear_time": None, "ordinal": 4, "is_default": False}
                 result.fetchone.return_value = row
+                result.fetchall.return_value = [_avail_band_row(6.0, None)]  # delay available
             elif "FROM tcc.etu_std_bands" in sql_text:
                 row = MagicMock()
                 row._mapping = {"open_time": 0.21, "clear_time": 0.31, "ordinal": 2, "is_default": False}
                 result.fetchone.return_value = row
+                result.fetchall.return_value = [_avail_band_row(0.21, 0.31)]  # delay available
             elif "FROM tcc.etu_gfd_bands" in sql_text:
                 row = MagicMock()
                 row._mapping = {"open_time": 0.21, "clear_time": 0.31, "ordinal": 2, "is_default": False}
                 result.fetchone.return_value = row
+                result.fetchall.return_value = [_avail_band_row(0.21, 0.31)]  # delay available
             else:
                 result.fetchone.return_value = None
             return result

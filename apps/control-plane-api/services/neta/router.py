@@ -1397,6 +1397,34 @@ def _load_delay_band_settings(db: Session, table_name: str, sensor_id: int) -> l
     ]
 
 
+def _available_delay_elements(db: Session, sensor_id: int) -> set[str]:
+    """Delay elements (LTD/STD/GFD) the sensor actually exposes, using the SAME
+    per-sensor delay-band source the Screen-2 ``/settings`` endpoint uses.
+
+    The TCC plot must not draw a delay element the settings screen reports as
+    "Not available". The swept curves come from independent tables — STD/GFD from
+    ``tcc.etu_std_equations``/``etu_gfd_equations`` and LTD from
+    ``tcc.etu_ltd_params`` — which can carry coefficients even when the per-sensor
+    *band* inventory is empty (e.g. Square D Micrologic: STD/GFD equations present,
+    band settings absent). Gating the plot on band availability keeps Screen 3
+    consistent with Screen 2 and honours "don't plot elements disabled by default"."""
+    available: set[str] = set()
+    for key, table in (
+        ("ltd", "tcc.etu_ltd_bands"),
+        ("std", "tcc.etu_std_bands"),
+        ("gfd", "tcc.etu_gfd_bands"),
+    ):
+        try:
+            if _load_delay_band_settings(db, table, sensor_id):
+                available.add(key)
+        except Exception as exc:  # pragma: no cover - defensive
+            rollback = getattr(db, "rollback", None)
+            if callable(rollback):
+                rollback()
+            logger.warning("delay-availability probe failed for %s: %s", table, exc)
+    return available
+
+
 def _pickup_step(ctx: dict, pickup_name: str):
     primary = ctx.get(f"{pickup_name}_step")
     if primary not in (None, 0, 0.0):
@@ -2203,11 +2231,20 @@ def _generate_nominal_plot_curves(
     gfd_setting: Optional[float],
     multiplier_value: Optional[float] = None,
     c_factor: Optional[float] = None,
+    available_delays: Optional[set[str]] = None,
 ) -> tuple[list[PlotCurve], list[str], Optional[dict[str, object]]]:
-    """Generate the nominal curves used for delay-band interpolation."""
+    """Generate the nominal curves used for delay-band interpolation.
+
+    ``available_delays`` (subset of {"ltd","std","gfd"}) gates which delay curves
+    may be drawn so the plot stays consistent with the Screen-2 element inventory —
+    a delay element the settings screen reports "Not available" must not appear
+    here even when its equation/param coefficients exist. ``None`` = no gating."""
     curves: list[PlotCurve] = []
     warnings: list[str] = []
     maint_profile: Optional[dict[str, object]] = None
+    allowed_delays = (
+        {"ltd", "std", "gfd"} if available_delays is None else available_delays
+    )
 
     try:
         from apex_calc_engine.services.calc_engine import ETUPickupCalculator
@@ -2247,7 +2284,7 @@ def _generate_nominal_plot_curves(
         try:
             ltd_calc = ETULTDCalculator(db, sensor_id)
             ltd_info = ltd_calc.get_ltd_info()
-            if ltd_info and ltpu_i > 0:
+            if "ltd" in allowed_delays and ltd_info and ltpu_i > 0:
                 ltd_param_ord = ltd_info[0]["ordinal"]
                 bands = ltd_calc.get_band_info()
                 band_ord = bands[0]["ordinal"] if bands else 1
@@ -2291,7 +2328,7 @@ def _generate_nominal_plot_curves(
         try:
             ieee = IEEEInverseTimeSolver(db)
             std_pickup = stpu_i if stpu_i > 0 else ltpu_i
-            if std_pickup > 0:
+            if "std" in allowed_delays and std_pickup > 0:
                 std_eqs = ieee.get_equation_info(sensor_id, "std")
                 std_ord = std_eqs[0]["ordinal"] if std_eqs else 1
                 std_time_dial = float(std_setting) if std_setting else 1.0
@@ -2329,7 +2366,7 @@ def _generate_nominal_plot_curves(
                         ],
                     ))
 
-            if gfpu_i > 0:
+            if "gfd" in allowed_delays and gfpu_i > 0:
                 gfd_eqs = ieee.get_equation_info(sensor_id, "gfd")
                 gfd_ord = gfd_eqs[0]["ordinal"] if gfd_eqs else 1
                 gfd_time_dial = float(gfd_setting) if gfd_setting else 1.0
@@ -5329,6 +5366,13 @@ def plot_tcc(req: PlotTccRequest, db: Session = Depends(get_db)):
 
     _enforce_plug_within_sensor_rating(req.sensor_id, req.plug_rating, db)
 
+    # Which delay elements the sensor actually exposes (same band source as the
+    # Screen-2 /settings inventory). The plot must not draw a delay element the
+    # settings screen reports "Not available" — its swept curve and test-point
+    # marker are both gated on this set. (Pickup elements stay self-gating via the
+    # calc payload.)
+    available_delays = _available_delay_elements(db, req.sensor_id)
+
     warnings: list[str] = []
     ltd_delay_setting, ltd_test_multiple, ltd_curve_setting = _resolve_plot_delay_inputs(
         db=db,
@@ -5505,6 +5549,10 @@ def plot_tcc(req: PlotTccRequest, db: Session = Depends(get_db)):
         elem = calc_data.get(key)
         if elem is None:
             continue
+        if key not in available_delays:
+            # Settings screen reports this delay element "Not available" — do not
+            # surface a marker/table row for it (keeps Screen 3 ⇄ Screen 2 consistent).
+            continue
         test_mult = elem.get("test_multiplier", default_mult)
         delay_setting = {
             "ltd": ltd_delay_setting,
@@ -5574,6 +5622,7 @@ def plot_tcc(req: PlotTccRequest, db: Session = Depends(get_db)):
             gfd_setting=gfd_curve_setting,
             multiplier_value=req.multiplier_value,
             c_factor=req.c_factor,
+            available_delays=available_delays,
         )
         warnings.extend(curve_warnings)
 
