@@ -66,14 +66,27 @@ definite-time flat:
 | 0.3 | 2 | 0.24 | 0.30 | 0.23 | 0.32 |
 | 0.4 | 2 | 0.32 | 0.40 | 0.35 | 0.50 |
 
-## 4. Data-quality note (the band-less style records)
+## 4. Data-quality note (the band-less style records) — GENUINE source gap, NOT a load gap `[VERIFIED 2026-06-04]`
 
-"MICROLOGIC 6.0A" spans **three** `tcc` trip-style records: **246** carries the S/G bands above; **238**
-and **1919** (~158 sensors, incl. the former default 25506) are **band-less** (a load gap — the same
-device, but the `etu_std_bands` / `etu_gfd_bands` rows weren't loaded). Until those styles are reloaded
-from the source library (the durable fix — governed prod write), the serving layer falls back to the
-canonical spec above (cited) for both Screen 2 (`/settings`) and the plot, so a band-less 6.0A still
-renders the full LSIG (STATE §137; the Eaton-PXR2 "serve the validated characteristic" pattern, G1 §7).
+The Micrologic 6.0 family spans several `tcc` trip-style records; only **two carry S/G delay bands** — **246**
+(Square D Compact NS 6.0A, 9 sensors) + **366** (Merlin Gerin Masterpact NW 6.0, 12 sensors). The rest are
+**band-less**: **238** (MG Compact NS 6.0A), **2173** (Schneider Compact NS 6.0A), and the large Masterpact NW
+records **1919 / 1920 / 1921 / 1922** (6.0A/E/H/P, ~570 sensors incl. the former default 25506).
+
+**This is a genuine gap in EasyPower's source, not a load defect.** Verified directly against raw Access
+`D:\TCC_NEW.accdb` (STATE §138): `DatStyle`→`DatSensor`→`DatSection3STD`/`DatSection1GfGFD` shows **0 STD / 0
+GFD band rows** at the source for styles 238/1919/1920/1921/1922/2173, and full coverage for 246/366 — and
+**prod matches the source exactly** (faithful load). EasyPower simply never banded the newer/bigger Micrologic
+6.0 records (mirrors §134: these carry STD/GFD *equations* but no *band settings*). So there is **nothing to
+reload** — a "durable DB fix" could only **persist the cited canonical bands above as augmented `[VENDOR-DOC]`
+rows**, a governed write of non-EasyPower data.
+
+The serving layer already falls back to the canonical spec (cited) across all three serving points — Screen 2
+(`/settings`), the plot curve, and the delay markers/gate — for any `is_micrologic_6_0(style)`, so a band-less
+6.0A renders the full LSIG **at runtime today** (STATE §137; the Eaton-PXR2 "serve the validated characteristic"
+pattern, G1 §7). The runtime fallback is the durable solution; the DB-persist is optional. **Caveat:** only the
+**6.0A** band table is datasheet-validated — the fallback also serves 6.0E/H/P (shared L/S/I/G delay structure,
+not separately datasheet-checked).
 
 ## 5. Field-trust posture (G4)
 
