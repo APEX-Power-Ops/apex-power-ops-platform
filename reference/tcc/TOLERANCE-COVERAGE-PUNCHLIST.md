@@ -210,9 +210,16 @@ These are closed and locked in the guides; reopening only on a cited reason:
   serving source `[EATON-POWER-DEFENSE-PXR.md §6 · §142]`.
 - **The breaker→ETU SST bridge** recovered end-to-end `[G0 §3 / G1 D1 / §104]`; the §104 re-carry is
   **proven bit-faithful** and the mis-mappings are **native to EasyPower's source** (NOT a load defect) —
-  **all 31 Eaton PD defective rows corrected** (migr `009`/`010`) `[G1 §2D · §138–§141]`.
-- **Micrologic 6.0 curve** (L I²t · S/G I2X composite) validated + served; band-backfill packet `008` queued
-  for the band-less styles `[MICROLOGIC-6.0A.md · §135–§137 · §141]`.
+  **all 31 Eaton PD defective rows corrected AND APPLIED to governed prod** (migr `009`/`010` via
+  `apply_migration`; PDG3→125-600 · PDG5→800-1600 · PDG6→1600-2500 A, LIVE) `[G1 §2D · §138–§144]`.
+- **SST-bridge `r_cont_current` rating-narrow SHIPPED+LIVE (§145, migr `011`/`012`):** re-carried the breaker
+  continuous rating onto `brk_*_styles` (5412 bridged rows, checksum-exact) + `/etu/bridge-sensors` narrows to
+  the matching sensor (~89% of 4382 narrow-or-singular; safe fall-back) `[G1 §2D · §145]`.
+- **Micrologic 6.0 curve** (L I²t · S/G I2X composite) validated + served; band-backfill packet `008`
+  **APPLIED to prod** (593 band-less styles → 4 STD + 5 GFD each, §143) `[MICROLOGIC-6.0A.md · §135–§137 · §143]`.
+- **ETAP decoded catalog = `[ETAPDOC]` corroboration ONLY (§146, operator-gated):** independently corroborates
+  our I²t/I⁴t curve model + the 6× reference window; **persist nothing into the product** (OTI proprietary,
+  DRM-decoded — outputs stay in gitignored `.audit_workspace/`) `[STATE §146]`.
 - **Route-1 (I2X) field-time at `/calculate`** wired via `etu_ixt` (flat/ramp `db`, composite `verify`)
   `[delay_trust.py · §137]`.
 - **Per-sensor delay-route field-trust gating** live (withhold-not-fabricate) `[G4 §6 · §106]`.
@@ -233,6 +240,8 @@ campaign, the ~15k lever) → **L8/L9** (TMT/EMT) → **L10** (relays — its ow
 > a monster RE). The GF formula RE is fully banked, so L1's remaining work is just the `field[13]` anchor + a
 > re-validate.
 
-*Last updated 2026-06-04 — reconciled the SST-bridge data-quality finding + Eaton PD catalog + Micrologic
-band-backfill + I2X-6 `/calculate` wiring (STATE §138–§141) + the #73 PD-LSI curve-fidelity verification
-(premise overturned, §142). Update status + bump counts (`[VERIFIED-LIVE]`) as lanes close.*
+*Last updated 2026-06-04 — reconciled STATE §138–§146: SST-bridge data-quality finding + Eaton PD catalog +
+#73 PD-LSI curve-fidelity (premise overturned, §142) + the 3 prod-write packets APPLIED (`008` Micrologic
+bands §143; `009`/`010` all 31 Eaton PD SST corrections §144) + the `r_cont_current` rating-narrow shipped
+(§145) + ETAP decoded catalog gated to internal cross-val only (§146). Update status + bump counts
+(`[VERIFIED-LIVE]`) as lanes close.*
