@@ -1501,6 +1501,33 @@ class TestMicrologicI2XComposite:
         assert _load_i2x_curve_band(db, "tcc.etu_std_bands", "std_open", "std_clear", 1, 0.14)["floor_open"] == 0.14
         assert _load_i2x_curve_band(db, "tcc.etu_std_bands", "std_open", "std_clear", 1, None)["floor_open"] == 0.08
 
+    def test_i2x_field_delay_composite_time_and_shape(self):
+        """I2X-6: the route-1 field expected-time = the validated etu_ixt surface,
+        with the shape that gates the trust (composite → verify)."""
+        from services.neta.router import _i2x_field_delay
+
+        def fake(stmt, params=None):
+            sql = str(stmt); r = MagicMock()
+            if "i_open" in sql:  # _load_i2x_curve_band
+                m = MagicMock()
+                m._mapping = {"i2x": 2, "i_open": 10, "t_open": 0.16, "i_clear": 10,
+                              "t_clear": 0.2, "floor_open": 0.14, "floor_clear": 0.2, "ordinal": 1}
+                r.fetchall.return_value = [m]
+            elif "stpu_i2t_val" in sql:  # _sensor_i2x_exponent
+                row = MagicMock(); row._mapping = {"x": 2.0}; r.fetchone.return_value = row
+            else:
+                r.fetchall.return_value = []; r.fetchone.return_value = None
+            return r
+
+        db = MagicMock(); db.execute = MagicMock(side_effect=fake)
+        # STD inject 12000 A, Ir=2000 → M=6; composite max(ramp, floor)=max(0.16·(10/6)², 0.14).
+        t, lo, hi, shape, ok = _i2x_field_delay(db, 1, "std", 12000.0, 2000.0, 0.14, False)
+        assert ok and shape == "composite"
+        assert t == pytest.approx(0.16 * (10 / 6) ** 2)
+        # Degenerate ref → not supported (caller withholds).
+        _, _, _, _, ok2 = _i2x_field_delay(db, 1, "std", 12000.0, 0.0, 0.14, False)
+        assert ok2 is False
+
     def test_sensor_i2x_exponent_default_2(self):
         from services.neta.router import _sensor_i2x_exponent
 
@@ -1513,6 +1540,48 @@ class TestMicrologicI2XComposite:
             r = MagicMock(); r.fetchone.return_value = None; return r
         db2 = MagicMock(); db2.execute = MagicMock(side_effect=fake_none)
         assert _sensor_i2x_exponent(db2, 1, "stpu_i2t_val") == 2.0
+
+
+class TestMicrologicBandlessFallback:
+    """Band-less Micrologic 6.0A style records (load gap, tcc styles 238/1919) serve
+    the cited canonical I2X bands so the plot composite + Screen 2 still render the
+    full LSIG (the same device; style 246 carries the bands)."""
+
+    def test_canonical_module_spec(self):
+        from services.neta import micrologic_curves as mc
+        assert mc.is_micrologic_6_0("MICROLOGIC 6.0A")
+        assert mc.is_micrologic_6_0("Micrologic 6.0H")
+        assert not mc.is_micrologic_6_0("MICROLOGIC 5.0A")
+        assert not mc.is_micrologic_6_0("Micrologic 7.2E")
+        assert not mc.is_micrologic_6_0(None)
+
+        std = mc.canonical_i2x_bands("std")
+        assert std and all(b["i2x"] == 2 and b["i_open"] == 10 for b in std)
+        gfd = mc.canonical_i2x_bands("gfd")
+        assert gfd and gfd[0]["i2x"] is None  # the "Off" flat band
+        assert any(b["i2x"] == 2 and b["i_open"] == 1 for b in gfd)
+
+        s = mc.delay_bands_as_settings("std")
+        assert s and s[0]["is_default"] is True and "open_time" in s[0]
+
+    def test_load_i2x_curve_band_canonical_fallback(self):
+        from services.neta.router import _load_i2x_curve_band
+
+        def empty(stmt, params=None):
+            r = MagicMock(); r.fetchall.return_value = []; return r
+        db = MagicMock(); db.execute = MagicMock(side_effect=empty)
+
+        # No DB bands + no canonical → None.
+        assert _load_i2x_curve_band(db, "tcc.etu_std_bands", "std_open", "std_clear", 1, None) is None
+        # No DB bands + canonical "std" → the canonical band matching the setting.
+        b = _load_i2x_curve_band(db, "tcc.etu_std_bands", "std_open", "std_clear", 1, 0.14, canonical_element="std")
+        assert b and b["i2x"] == 2 and b["floor_open"] == 0.14
+
+    def test_available_delay_elements_micrologic_6_0_adds_std_gfd(self):
+        from services.neta.router import _available_delay_elements
+        db = MagicMock(); db.execute = MagicMock(side_effect=_make_fake_execute(avail_bands=set()))
+        assert _available_delay_elements(db, SENSOR_ID, micrologic_6_0=True) >= {"std", "gfd"}
+        assert _available_delay_elements(db, SENSOR_ID, micrologic_6_0=False) == set()
 
 
 # ──────────────────────────────────────────────────

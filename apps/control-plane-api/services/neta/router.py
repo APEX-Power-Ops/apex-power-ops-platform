@@ -139,6 +139,7 @@ from .delay_trust import (
     delay_trust_reason,
 )
 from . import setting_catalog
+from . import micrologic_curves
 from .relay_tolerance import serve_relay_tolerance
 
 logger = logging.getLogger(__name__)
@@ -1397,7 +1398,31 @@ def _load_delay_band_settings(db: Session, table_name: str, sensor_id: int) -> l
     ]
 
 
-def _available_delay_elements(db: Session, sensor_id: int) -> set[str]:
+def _sensor_trip_style_name(db: Session, sensor_id: int) -> Optional[str]:
+    """The sensor's trip-style label (``tcc.trip_styles.style``), e.g. 'MICROLOGIC 6.0A'."""
+    try:
+        row = db.execute(
+            text(
+                """
+                SELECT ts.style AS style
+                FROM tcc.etu_sensors s
+                JOIN tcc.trip_styles ts ON ts.id = s.trip_style_id
+                WHERE s.id = :sid
+                """
+            ),
+            {"sid": sensor_id},
+        ).fetchone()
+    except Exception:
+        rb = getattr(db, "rollback", None)
+        if callable(rb):
+            rb()
+        return None
+    mapping = _row_mapping(row)
+    value = mapping.get("style")
+    return str(value) if value is not None else None
+
+
+def _available_delay_elements(db: Session, sensor_id: int, micrologic_6_0: bool = False) -> set[str]:
     """Delay elements (LTD/STD/GFD) the sensor actually exposes, using the SAME
     per-sensor delay-band source the Screen-2 ``/settings`` endpoint uses.
 
@@ -1422,6 +1447,10 @@ def _available_delay_elements(db: Session, sensor_id: int) -> set[str]:
             if callable(rollback):
                 rollback()
             logger.warning("delay-availability probe failed for %s: %s", table, exc)
+    if micrologic_6_0:
+        # A band-less 6.0A style record (load gap) still has STD + GFD — the cited
+        # canonical I2X bands apply, so the plot + Screen 2 must offer them.
+        available.update({"std", "gfd"})
     return available
 
 
@@ -1903,7 +1932,8 @@ def _sensor_i2x_exponent(db: Session, sensor_id: int, column: str) -> float:
 
 
 def _load_i2x_curve_band(
-    db: Session, table: str, floor_col: str, clear_col: str, sensor_id: int, setting: Optional[float]
+    db: Session, table: str, floor_col: str, clear_col: str, sensor_id: int, setting: Optional[float],
+    canonical_element: Optional[str] = None,
 ) -> Optional[dict]:
     """Load the selected route-1 (I2X) STD/GFD band's shape + ramp anchors + floor.
 
@@ -1932,6 +1962,10 @@ def _load_i2x_curve_band(
 
     bands = [dict(_row_mapping(r)) for r in rows]
     bands = [b for b in bands if b.get("floor_open") is not None]
+    if not bands and canonical_element:
+        # Band-less Micrologic 6.0A style record (load gap) — fall back to the cited
+        # canonical 6.0A I2X band spec (the same device; tcc style 246 carries it).
+        bands = micrologic_curves.canonical_i2x_bands(canonical_element) or []
     if not bands:
         return None
     if setting is not None:
@@ -1988,6 +2022,52 @@ def _synthesize_i2x_delay_curve(
         seconds = min(max(float(surface.expected_time), min_time), max_time)
         pts.append(PlotCurvePoint(amps=amps, seconds=seconds))
     return pts
+
+
+def _i2x_field_delay(
+    db: Session,
+    sensor_id: int,
+    element: str,
+    inject_current: float,
+    ref_amps: float,
+    setting: Optional[float],
+    micrologic_6_0: bool,
+) -> tuple[Optional[float], Optional[float], Optional[float], Optional[str], bool]:
+    """Route-1 (I2X) field expected-time for one STD/GFD test point, via the validated
+    ``etu_ixt`` kernel (I2X-6). ``M = inject_current / ref_amps`` (STD ref=Ir, GFD
+    ref=In — the datasheet axes). Returns ``(time, low, high, shape, supported)``;
+    ``supported=False`` (composite-unknown / NULL-anchor / degenerate) → the caller
+    withholds. The ``shape`` is fed to ``classify_delay_trust`` for the route-1 tier."""
+    if element == "std":
+        table, floor_col, clear_col, exp_col = "tcc.etu_std_bands", "std_open", "std_clear", "stpu_i2t_val"
+    elif element == "gfd":
+        table, floor_col, clear_col, exp_col = "tcc.etu_gfd_bands", "gfd_open", "gfd_clear", "gfpu_i2t_val"
+    else:
+        return None, None, None, None, False
+
+    band = _load_i2x_curve_band(
+        db, table, floor_col, clear_col, sensor_id, setting,
+        canonical_element=(element if micrologic_6_0 else None),
+    )
+    if band is None or ref_amps <= 0 or inject_current <= 0:
+        return None, None, None, None, False
+
+    from apex_calc_engine.services.calc_engine import etu_ixt
+
+    x = _sensor_i2x_exponent(db, sensor_id, exp_col)
+    m = inject_current / ref_amps
+    surface = etu_ixt.i2x_delay_surface(
+        test_multiple=m,
+        i2x_flag=band.get("i2x"),
+        i_open=band.get("i_open"),
+        t_open=band.get("t_open"),
+        i_clear=band.get("i_clear"),
+        t_clear=band.get("t_clear"),
+        std_open=band.get("floor_open"),
+        std_clear=band.get("floor_clear"),
+        exp_x=x,
+    )
+    return surface.expected_time, surface.time_low, surface.time_high, surface.shape, surface.supported
 
 
 def _band_row_to_delay_surface(band_row) -> tuple[Optional[float], Optional[float], Optional[float]]:
@@ -2420,6 +2500,7 @@ def _generate_nominal_plot_curves(
     c_factor: Optional[float] = None,
     available_delays: Optional[set[str]] = None,
     synthesize_i2t_longtime: bool = False,
+    micrologic_6_0: bool = False,
 ) -> tuple[list[PlotCurve], list[str], Optional[dict[str, object]]]:
     """Generate the nominal curves used for delay-band interpolation.
 
@@ -2549,7 +2630,10 @@ def _generate_nominal_plot_curves(
                 # Micrologic short-time = route-1 (I2X) composite: the I²t-ON ramp
                 # clamped to the I²t-OFF definite floor, max(ramp, floor). Swept via
                 # the validated etu_ixt kernel; M references Ir (the ×Ir datasheet axis).
-                std_band = _load_i2x_curve_band(db, "tcc.etu_std_bands", "std_open", "std_clear", sensor_id, std_setting)
+                std_band = _load_i2x_curve_band(
+                    db, "tcc.etu_std_bands", "std_open", "std_clear", sensor_id, std_setting,
+                    canonical_element="std" if micrologic_6_0 else None,
+                )
                 if std_band is not None:
                     x = _sensor_i2x_exponent(db, sensor_id, "stpu_i2t_val")
                     upper = inst_i if inst_i > 0 else stpu_i * 6.0
@@ -2601,7 +2685,10 @@ def _generate_nominal_plot_curves(
                 # Micrologic ground-fault = route-1 (I2X) composite, same kernel as STD
                 # but M references In (the plug rating — the ×In datasheet axis); the
                 # GF ramp anchor is 1×In on the 6.0A.
-                gfd_band = _load_i2x_curve_band(db, "tcc.etu_gfd_bands", "gfd_open", "gfd_clear", sensor_id, gfd_setting)
+                gfd_band = _load_i2x_curve_band(
+                    db, "tcc.etu_gfd_bands", "gfd_open", "gfd_clear", sensor_id, gfd_setting,
+                    canonical_element="gfd" if micrologic_6_0 else None,
+                )
                 if gfd_band is not None:
                     x = _sensor_i2x_exponent(db, sensor_id, "gfpu_i2t_val")
                     ref_in = float(plug_rating) if plug_rating else (inst_i if inst_i > 0 else gfpu_i)
@@ -4243,6 +4330,17 @@ def get_available_settings(sensor_id: int, db: Session = Depends(get_db)):
     gfd_settings = _load_delay_band_settings(db, "tcc.etu_gfd_bands", sensor_id)
     ltd_settings = _dedupe_delay_settings(data.get("ltd_settings", []))
 
+    # Band-less Micrologic 6.0A style records (load gap, tcc styles 238/1919) carry no
+    # STD/GFD delay bands though the device has them — serve the cited canonical 6.0A
+    # delays so Screen 2 stays consistent with the (canonical) plot composite.
+    if (not std_settings or not gfd_settings) and micrologic_curves.is_micrologic_6_0(
+        _sensor_trip_style_name(db, sensor_id)
+    ):
+        if not std_settings:
+            std_settings = micrologic_curves.delay_bands_as_settings("std") or []
+        if not gfd_settings:
+            gfd_settings = micrologic_curves.delay_bands_as_settings("gfd") or []
+
     # Validated vendor-doc catalog override for envelope-only sensors (e.g. Eaton
     # PXR2): EasyPower stores only the min/max envelope for these trip units, so the
     # expansion above synthesises dial positions the breaker cannot be set to. When a
@@ -5282,6 +5380,9 @@ def calculate_test_currents(req: CalculateRequest, db: Session = Depends(get_db)
     std_route = _route_map.get("std_route")
     gfd_route = _route_map.get("gfd_route")
     gfd_is_ansi = bool(_route_map.get("gfd_is_ansi"))
+    _calc_micrologic_6_0 = micrologic_curves.is_micrologic_6_0(
+        _sensor_trip_style_name(db, req.sensor_id)
+    )
 
     for key in _CALC_ELEMENT_KEYS:
         elem = data.get(key)
@@ -5353,8 +5454,26 @@ def calculate_test_currents(req: CalculateRequest, db: Session = Depends(get_db)
             fallback_clear=elem.get("delay_clearing"),
             use_ltd_reference_window=True,
         )
+        # Route-1 (I2X) STD/GFD field time (I2X-6): replace the legacy withhold with
+        # the validated etu_ixt surface (flat=db · ramp=db · composite=verify), shape-
+        # gating the trust. M references Ir (STD) / In (GFD). When the kernel can't
+        # certify the band (NULL anchor / unknown shape) the shape stays None →
+        # route-1 classifies unsupported → time withheld (G4 §6, safe).
+        i2x_shape = None
+        _route = std_route if key == "std" else (gfd_route if key == "gfd" else None)
+        if key in ("std", "gfd") and _route == 1:
+            _ref = pickup_current_by_name.get("LTPU") if key == "std" else req.plug_rating
+            i2x_time, i2x_lo, i2x_hi, _shape, _ok = _i2x_field_delay(
+                db, req.sensor_id, key, inject_current, float(_ref or 0),
+                delay_setting, _calc_micrologic_6_0,
+            )
+            if _ok:
+                expected_time, time_low, time_high = i2x_time, i2x_lo, i2x_hi
+                timing_source = f"i2x_{_shape}"
+                i2x_shape = _shape
         trust = classify_delay_trust(
-            key, std_route=std_route, gfd_route=gfd_route, gfd_is_ansi=gfd_is_ansi
+            key, std_route=std_route, gfd_route=gfd_route, gfd_is_ansi=gfd_is_ansi,
+            i2x_shape=i2x_shape,
         )
         delay_route = delay_route_for(key, std_route=std_route, gfd_route=gfd_route)
         trust_reason = delay_trust_reason(
@@ -5616,8 +5735,11 @@ def plot_tcc(req: PlotTccRequest, db: Session = Depends(get_db)):
     # Screen-2 /settings inventory). The plot must not draw a delay element the
     # settings screen reports "Not available" — its swept curve and test-point
     # marker are both gated on this set. (Pickup elements stay self-gating via the
-    # calc payload.)
-    available_delays = _available_delay_elements(db, req.sensor_id)
+    # calc payload.) A band-less Micrologic 6.0A style record (load gap) still has
+    # STD/GFD via the cited canonical I2X spec, so it is treated as available.
+    _trip_style_name = _sensor_trip_style_name(db, req.sensor_id)
+    micrologic_6_0 = micrologic_curves.is_micrologic_6_0(_trip_style_name)
+    available_delays = _available_delay_elements(db, req.sensor_id, micrologic_6_0=micrologic_6_0)
 
     warnings: list[str] = []
     ltd_delay_setting, ltd_test_multiple, ltd_curve_setting = _resolve_plot_delay_inputs(
@@ -5877,6 +5999,7 @@ def plot_tcc(req: PlotTccRequest, db: Session = Depends(get_db)):
             c_factor=req.c_factor,
             available_delays=available_delays,
             synthesize_i2t_longtime=synthesize_i2t_longtime,
+            micrologic_6_0=micrologic_6_0,
         )
         warnings.extend(curve_warnings)
 
