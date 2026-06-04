@@ -70,6 +70,21 @@ type LiveSelection = {
   trustNote: string
 }
 
+// Default device so Screens 2-3 land on a real LIVE selection on first load — never the
+// misleading frozen sample. Square D Masterpact NW · Micrologic 6.0A (LSIG, so GF renders),
+// 2500 A — verified against live /settings (real taps + GF present). The user overrides it on
+// Screen 1; clearing the selection shows the honest "select equipment" prompt instead.
+const DEFAULT_SELECTION: LiveSelection = {
+  family: 'etu',
+  sensorId: 25506,
+  breakerLabel: 'Square D Masterpact NW',
+  tripLabel: 'Micrologic 6.0A',
+  ratingLabel: 'Ir 2500 A',
+  bridgeStatus: 'matched',
+  plugs: [2500],
+  trustNote: 'ETU per-sensor NETA pickup tolerances are field-sheet authoritative (G4).',
+}
+
 const errMsg = (e: unknown) => (e instanceof Error ? e.message : 'Request failed')
 
 // ── frozen sample (operator's TCC_Calculator_v5.xlsx) — Screens 2-3 until Stage B/C ──
@@ -164,11 +179,11 @@ export default function LvBreakerTcc() {
   const [step, setStep] = useState(0)
   const [maint, setMaint] = useState(false)
   const [family, setFamily] = useState<Family>('etu')
-  const [selection, setSelection] = useState<LiveSelection | null>(null)
+  const [selection, setSelection] = useState<LiveSelection | null>(DEFAULT_SELECTION)
 
   const chip = selection
     ? `${selection.breakerLabel} · ${selection.tripLabel}`
-    : `${DEVICE.breakerMfr} ${DEVICE.breakerType} ${DEVICE.breakerStyle} · ${DEVICE.tripDetail}`
+    : 'Select equipment to begin'
 
   return (
     <div className="tccx">
@@ -690,6 +705,19 @@ function EmtSelector({ onSelect, onClear }: { onSelect: (s: LiveSelection) => vo
   )
 }
 
+// Honest empty state for Screens 2-3 when the operator has cleared the selection — no fabricated
+// settings/curve is ever shown (replaces the old frozen SAMPLE render).
+function SelectPrompt({ kind }: { kind: 'settings' | 'curve' }) {
+  return (
+    <div className="loadbox">
+      <span className="sel-status">
+        ↑ Select equipment on <b>Equipment Specifications</b> to load the live{' '}
+        {kind === 'settings' ? 'protection settings' : 'time-current curve'}.
+      </span>
+    </div>
+  )
+}
+
 // ── Screen 2: Protection Settings (sample until Stage B) ──────────────────────
 function Settings({ maint, setMaint, selection }: { maint: boolean; setMaint: (v: boolean) => void; selection: LiveSelection | null }) {
   if (selection?.family === 'etu' && selection.sensorId != null) {
@@ -701,7 +729,7 @@ function Settings({ maint, setMaint, selection }: { maint: boolean; setMaint: (v
   if (selection?.family === 'emt' && selection.sectionId != null) {
     return <EmtSettings selection={selection} />
   }
-  return <SampleSettings maint={maint} setMaint={setMaint} selection={selection} />
+  return <SelectPrompt kind="settings" />
 }
 
 // ── Screen 2 ETU (LIVE): editable settings -> /calculate -> DB-authoritative bands ──
@@ -1268,7 +1296,7 @@ function Curve({ selection }: { selection: LiveSelection | null }) {
   if (selection?.family === 'emt' && selection.sectionId != null) {
     return <EmtCurve selection={selection} />
   }
-  return <SampleCurve selection={selection} />
+  return <SelectPrompt kind="curve" />
 }
 
 // ── Screen 3 TMT (LIVE, bounded): nominal thermal class curve from /tmt/plot-tcc ──
@@ -1414,6 +1442,32 @@ const livePath = (pts: { amps: number; seconds: number }[]) =>
   pts.filter((p) => p.amps > 0 && p.seconds > 0)
     .map((p, i) => `${i ? 'L' : 'M'}${clampX(p.amps).toFixed(1)},${clampY(p.seconds).toFixed(1)}`).join(' ')
 
+// Decade-snapped log-log scale fit to the actual curve envelope — replaces the fixed
+// 100 A–100 kA / 0.01–1000 s domain so a device fills the plot instead of floating in a corner.
+// Snaps each axis out to whole decades, guarantees a minimum span so a sparse curve still reads,
+// and returns the matching px/py/clamp/path closures + decade tick lists.
+function makeScale(amps: number[], times: number[], minXDecades = 2, minYDecades = 3) {
+  const a = amps.filter((n) => n > 0 && Number.isFinite(n))
+  const t = times.filter((n) => n > 0 && Number.isFinite(n))
+  let x0 = a.length ? Math.floor(Math.log10(Math.min(...a))) : 1
+  let x1 = a.length ? Math.ceil(Math.log10(Math.max(...a))) : 5
+  let y0 = t.length ? Math.floor(Math.log10(Math.min(...t))) : -2
+  let y1 = t.length ? Math.ceil(Math.log10(Math.max(...t))) : 3
+  if (x1 - x0 < minXDecades) x1 = x0 + minXDecades
+  if (y1 - y0 < minYDecades) y1 = y0 + minYDecades
+  const sx = (n: number) => PLOT.ml + ((Math.log10(n) - x0) / (x1 - x0)) * PLOT.w
+  const sy = (s: number) => PLOT.mt + ((y1 - Math.log10(s)) / (y1 - y0)) * PLOT.h
+  const cX = (n: number) => Math.max(PLOT.ml, Math.min(PLOT.ml + PLOT.w, sx(n)))
+  const cY = (s: number) => Math.max(PLOT.mt, Math.min(PLOT.mt + PLOT.h, sy(s)))
+  const path = (pts: { amps: number; seconds: number }[]) =>
+    pts.filter((p) => p.amps > 0 && p.seconds > 0)
+      .map((p, i) => `${i ? 'L' : 'M'}${cX(p.amps).toFixed(1)},${cY(p.seconds).toFixed(1)}`).join(' ')
+  const decades = (lo: number, hi: number) => { const out: number[] = []; for (let d = lo; d <= hi; d++) out.push(10 ** d); return out }
+  return { px: sx, py: sy, clampX: cX, clampY: cY, livePath: path, xTicks: decades(x0, x1), yTicks: decades(y0, y1) }
+}
+const fmtAmpTick = (a: number) => (a >= 1000 ? `${+(a / 1000).toPrecision(3)}k` : `${a}`)
+const fmtSecTick = (s: number) => (s >= 1 ? `${s}` : `${+s.toPrecision(2)}`)
+
 function EtuCurve({ selection }: { selection: LiveSelection }) {
   const sensorId = selection.sensorId as number
   const [plot, setPlot] = useState<EtuPlotResponse | null>(null)
@@ -1451,6 +1505,13 @@ function EtuCurve({ selection }: { selection: LiveSelection }) {
   const colorFor = (el: string) => CURVE_COLORS[(el ?? '').toLowerCase()] ?? '#14507d'
   const legendItems = Array.from(new Map(curves.map((c) => [c.element, { c: colorFor(c.element), t: c.element.toUpperCase() }])).values())
   const allAmps = curves.flatMap((c) => c.points.map((p) => p.amps)).filter((a) => a > 0)
+  const allTimes = curves.flatMap((c) => c.points.map((p) => p.seconds)).filter((t) => t > 0)
+  // Auto-fit the log-log axes to this device's actual envelope (incl. the test markers) so the
+  // curve fills the plot instead of floating inside a fixed 100 A–100 kA / 0.01–1000 s frame.
+  const scale = makeScale(
+    [...allAmps, ...markers.map((m) => m.expected_current)],
+    [...allTimes, ...markers.map((m) => m.expected_time as number)],
+  )
   const stats = [
     { k: 'Curves', v: String(curves.length) },
     { k: 'Test Points', v: String(markers.length) },
@@ -1479,26 +1540,26 @@ function EtuCurve({ selection }: { selection: LiveSelection }) {
           <div className="card-h">Trip Characteristic Curve <span className="badge inline">LIVE · nominal illustration</span></div>
           <div className="plot-wrap">
             <svg viewBox="0 0 700 480" className="plot" role="img" aria-label="Time-current curve">
-              {X_TICKS.map((t) => (
+              {scale.xTicks.map((t) => (
                 <g key={`x${t}`}>
-                  <line x1={px(t)} y1={PLOT.mt} x2={px(t)} y2={PLOT.mt + PLOT.h} className="grid" />
-                  <text x={px(t)} y={PLOT.mt + PLOT.h + 16} className="axt" textAnchor="middle">{t >= 1000 ? `${t / 1000}k` : t}</text>
+                  <line x1={scale.px(t)} y1={PLOT.mt} x2={scale.px(t)} y2={PLOT.mt + PLOT.h} className="grid" />
+                  <text x={scale.px(t)} y={PLOT.mt + PLOT.h + 16} className="axt" textAnchor="middle">{fmtAmpTick(t)}</text>
                 </g>
               ))}
-              {Y_TICKS.map((t) => (
+              {scale.yTicks.map((t) => (
                 <g key={`y${t}`}>
-                  <line x1={PLOT.ml} y1={py(t)} x2={PLOT.ml + PLOT.w} y2={py(t)} className="grid" />
-                  <text x={PLOT.ml - 8} y={py(t) + 3} className="axt" textAnchor="end">{t}</text>
+                  <line x1={PLOT.ml} y1={scale.py(t)} x2={PLOT.ml + PLOT.w} y2={scale.py(t)} className="grid" />
+                  <text x={PLOT.ml - 8} y={scale.py(t) + 3} className="axt" textAnchor="end">{fmtSecTick(t)}</text>
                 </g>
               ))}
               <text x={PLOT.ml + PLOT.w / 2} y={PLOT.mt + PLOT.h + 38} className="axl" textAnchor="middle">Current (A)</text>
               <text transform={`translate(16 ${PLOT.mt + PLOT.h / 2}) rotate(-90)`} className="axl" textAnchor="middle">Time (s)</text>
               {curves.map((c) => (
-                <path key={c.id} d={livePath(c.points)} fill="none" stroke={colorFor(c.element)} strokeWidth={2.4} strokeLinejoin="round" strokeLinecap="round" opacity={0.92} />
+                <path key={c.id} d={scale.livePath(c.points)} fill="none" stroke={colorFor(c.element)} strokeWidth={2.4} strokeLinejoin="round" strokeLinecap="round" opacity={0.92} />
               ))}
               {markers.map((m) => (
-                <rect key={m.id} x={clampX(m.expected_current) - 5} y={clampY(m.expected_time as number) - 5} width={10} height={10}
-                  transform={`rotate(45 ${clampX(m.expected_current)} ${clampY(m.expected_time as number)})`}
+                <rect key={m.id} x={scale.clampX(m.expected_current) - 5} y={scale.clampY(m.expected_time as number) - 5} width={10} height={10}
+                  transform={`rotate(45 ${scale.clampX(m.expected_current)} ${scale.clampY(m.expected_time as number)})`}
                   fill={colorFor(m.element)} stroke="#fff" strokeWidth={1.5}>
                   <title>{`${m.element} ${fmtMult(m.test_multiple)} — ${Math.round(m.expected_current).toLocaleString('en-US')} A`}</title>
                 </rect>
