@@ -16,6 +16,11 @@ loop, extended to the rest of the family).
   - `…frame5-pd5-td012067en.pdf` (**TD012067EN** — PD5)
   - `…frame6-pd6-td012068en.pdf` (**TD012068EN** — PD6)
   - `series-nrx-with-pxr-nf-and-rf-frames-AD013001EN.pdf` · `magnum-pxr-tcc-td013172en-2023_05.pdf` (NRX/Magnum)
+- **Eaton Consulting Application Guide Vol. 4 / Tab 2 MCCB catalog — `CA08100005E` (V4-T2)** (operator-supplied
+  2026-06-04): the consolidated Power Defense + Series G + MCP reference. Confirms the canonical frame→rating:
+  **Frame Size 1 = 15–125 A (PDG1) · 2 = 15–225 A (PDG2) · 3 = 45–600 A (PDG3) · 4 = 300–800 A (PDG4) ·
+  5 = 320–1200 A (PDG5) · 6 = 700–2500 A (PDG6)** · MCP 3–600 A; trip units Basic = PXR 10 (B), Standard =
+  PXR 20 (E), Energy/programmable = PXR 25 (P). Used to authoritatively resolve the §151 PXR10/PDF3 SST residual.
 
 ## 2. Frame → rating structure (authoritative)
 
@@ -56,7 +61,14 @@ EasyPower's own correct sibling (no new judgment); PDG3/PDG6 are migration `010`
 TD012065EN/068EN). The PD6 LSI→LSIGM **over-offers a G element** for a PD6-LSI breaker (a selection nuance,
 documented in `010`'s header — not a curve error). **`r_cont_current` rating-narrow** of the bridge (so a
 correct mapping surfaces the ONE matching sensor, not the whole style set) needs a governed re-load — prod
-`brk_*_styles` dropped the column (STATE §138) — tracked under #74.
+`brk_*_styles` dropped the column (STATE §138) — tracked under #74. **`r_cont_current` re-load DONE (§145).**
+
+**§151 — PXR10 PDF3/600 A frame-size residual fixed (2026-06-04, #74 Tier 4).** One Eaton PXR bridge style
+survived §144: `brk_mccb_styles` id 10126, frame **`PDF3-N PXR 600A`** (rcc 600), was assigned `PXR 10 ·
+PDG2-LSI` (60–225 A sensors). Per **CA08100005E** (Frame Size 3 = 45–600 A) the 600 A PDF3 frame is **PDG3**;
+re-pointed `tmt_sst_style` `PDG2-LSI`→`PDG3-LSI` (prod PDG3-LSI carries the 600 A sensor; the §145 narrow now
+serves it). Migration `fix_eaton_pxr10_pdf3_frame_size_mismatch` (in-migration assert: 1 row + resolves to a
+600 A sensor). It was the **only** `PDF<n>`≠`PDG<m>` frame-size mismatch across all Eaton PXR bridge rows.
 
 > **The earlier "SD-slope fidelity gap" was OVERTURNED by source data — see §6.** EasyPower's `i2x` is its
 > per-band SHAPE code (`0`=flat · `1`=Iˣt ramp · `2`=composite), **not** the authoritative doc's slope
