@@ -16,9 +16,17 @@ Sources (operator-supplied, on host; values extracted, files NOT committed):
 
 Key authoritative facts (TD012065EN/068EN):
   * The PXR trip is **selectable-slope** — long delay I2t *or* I4t; short delay
-    **flat (definite)** *or* **I2t**. So a single fixed EasyPower `i2x` is an
-    approximation; this module records the real (selectable) model.
+    **flat (definite)** *or* **I2t**. This module records that (selectable) model.
   * Per-frame ratings differ; the per-unit curve model is shared by PXR variant.
+
+VERIFIED (STATE §142, 2026-06-04): EasyPower already encodes that selectable model
+faithfully — the PD-LSI sensors carry BOTH the flat (`etu_std_bands.i2x=0`) AND the
+I2t-ramp (`i2x=1`, X=2) SD bands, each served at field-trust ``db`` (flat = direct
+band; ramp = native-bit-exact CIxt power law, I2X-4). EasyPower's ``i2x`` is a
+per-band SHAPE code (0 flat / 1 ramp / 2 composite), NOT the doc's slope exponent,
+so the earlier "i2x=1 is an approximation" reading was a conflation. This module is
+therefore the cited VALIDATION REFERENCE (confirming the EasyPower record is faithful)
++ the SST-correction driver (``correct_sst_target``), NOT a curve-override source.
 """
 
 from __future__ import annotations

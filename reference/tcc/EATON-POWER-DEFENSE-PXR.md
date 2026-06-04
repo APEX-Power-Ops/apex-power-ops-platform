@@ -42,7 +42,8 @@ The PXR 10/20/20D/25 trip is **selectable-slope**, not a single fixed curve:
 
 EasyPower's source mis-maps the newer PD frames (native to its library; rank=id is bit-exact, prod is
 bit-faithful — STATE §138). EasyPower **already carries rating-correct PDG-named styles** (PXR20 family:
-PDG2/3/4/5-LSI + PDG6-LSIGM, `i2x=1`), so the gross fix is re-pointing the breaker style. Verdicts:
+PDG2/3/4/5-LSI + PDG6-LSIGM; STD/GFD route 1 (I2X), exponent X=2, with both flat and Iˣt-ramp bands —
+see §6), so the gross fix is re-pointing the breaker style. Verdicts:
 
 | Frame (rows) | current (wrong) | rating-correct EP target | status |
 |---|---|---|---|
@@ -50,15 +51,47 @@ PDG2/3/4/5-LSI + PDG6-LSIGM, `i2x=1`), so the gross fix is re-pointing the break
 | **PDG3** (12) | PXR20/25 · NRX-LSI(RF) [800–4000, `i2x=2`] | PXR20 · PDG3-LSI [125–600, `i2x=1`] | **rating-confirmed; SD-slope tradeoff** (`i2x=2`→`i2x=1`) — see below |
 | **PDG6** (9) | PXR 10 · PDG2-LSI [60–225] | PXR20 · PDG6-LSIGM [1600–2500, `i2x=1`] | **rating-confirmed; over-offers G** (LSI→LSIG) — see below |
 
-**The fidelity gap (the proper fix):** EasyPower's PXR20 PDG-LSI styles encode SD as `i2x=1`, but the
-authoritative PXR SD is **flat or I²t** (`i2x=0`/`i2x=2`), and EasyPower lacks (a) a PXR20/25 `i2x=2` PD3
-curve at 125–600 A and (b) a PD6 **LSI** (no-ground) style. So a fully-faithful PD3/PD6 fix = **import the
-authoritative Eaton PXR curves** from TD012065EN/TD012068EN as cited `[VENDOR-DOC]` styles (the §108 loop,
-extended), rather than re-binning to imperfect existing styles. PDG5 shipped because it matched EasyPower's
-own correct sibling (no new judgment). **Next:** the PD2–6 PXR curve-catalog build (operator-directed scope).
+**The residual fix = the rating re-point only (no curve-override).** PDG5 shipped because it matched
+EasyPower's own correct sibling (no new judgment); PDG3/PDG6 are migration `010` (rating-confirmed against
+TD012065EN/068EN). The PD6 LSI→LSIGM **over-offers a G element** for a PD6-LSI breaker (a selection nuance,
+documented in `010`'s header — not a curve error). **`r_cont_current` rating-narrow** of the bridge (so a
+correct mapping surfaces the ONE matching sensor, not the whole style set) needs a governed re-load — prod
+`brk_*_styles` dropped the column (STATE §138) — tracked under #74.
+
+> **The earlier "SD-slope fidelity gap" was OVERTURNED by source data — see §6.** EasyPower's `i2x` is its
+> per-band SHAPE code (`0`=flat · `1`=Iˣt ramp · `2`=composite), **not** the authoritative doc's slope
+> exponent. The PD-LSI sensors already carry BOTH the flat (`i2x=0`) and the I²t-ramp (`i2x=1`, X=2)
+> selectable SD bands — i.e. the authoritative selectable flat-or-I²t model is **already faithfully encoded**,
+> both tiers `db`. There is no PXR curve to import (an `i2x=2` *composite* is not a PXR SD mode at all).
 
 ## 5. Field-trust posture
 
 PDG5 re-map = a data correction to EasyPower's own rating-correct style (faithful, internally consistent).
-PDG3/PDG6 re-maps and any imported PXR curves are `[VENDOR-DOC]` (cited to TD0120xxEN/PXPM), the same trust
-class as the §108 PXR2 setting catalog — VALUE-trusted, plotted as the nominal characteristic.
+PDG3/PDG6 re-maps are `[VENDOR-DOC]` (cited to TD0120xxEN/PXPM), the same trust class as the §108 PXR2
+setting catalog — VALUE-trusted, plotted as the nominal characteristic.
+
+## 6. Curve-fidelity verification (STATE §142) — the PD-LSI styles are already faithful
+
+The #73 "render the authoritative PXR curve because EasyPower's `i2x=1` is an approximation" premise was
+**falsified against live prod** (read-only, 2026-06-04) — the third overturned premise in this arc (after
+#59 "scramble" and #71 "load gap"). For the SST-correction targets — **PXR20 PDG3-LSI (style 2466), PXR20
+PDG5-LSI (2439), PXR20 PDG6-LSIGM (2377), PXR20D/25 PDG6-LSIGM (2376)**:
+
+- **STD + GFD route = 1 (I2X)**, `stpu_i2t_val`/`gfpu_i2t_val` = **X = 2** (I²t).
+- Each sensor carries a **full selectable SD band set**, not one fixed slope:
+  - **`i2x=0`** bands (STD ordinals 0–6; GFD 343 rows) = the **flat / definite-time** SD options
+    (0.05–0.5 s). Shape → `flat` → **`db`** (identical to a route-0 direct band).
+  - **`i2x=1`** bands (STD ordinals 7–9; GFD 105 rows) = the **Iˣt ramp** = the **I²t** SD slope
+    (`t = t_open·(i_open/M)^X`, X=2; `i_open=8`). Shape → `ramp` → **`db`** — native-bit-exact to the
+    EasyPower `CIxt.ComputeT` kernel (I2X-4, 0 ULP).
+- **Both SD slope options of the authoritative PXR model (flat OR I²t) are therefore already encoded and
+  already `db`-trusted.** EasyPower's `i2x` is a band-SHAPE code (0/1/2), *not* the doc's slope exponent; an
+  `i2x=2` *composite* (ramp clamped to a floor) is not a PXR SD mode, so there is nothing to import.
+- **Tolerances match the authoritative doc** (§3): SD pickup ±5%, INST ±10%, GF ±10%; LD time −30/+0 on the
+  PXR20D/25 style and curve-type −10/+10 on PXR20 (per §114's curve-type grading); LTPU stored as the
+  pickup must-trip band (+5/+15%, the standard EP representation), not the setpoint ±5%.
+
+**⇒ No `pxr_curves` curve-override is built** — doing so would diverge from a faithful EasyPower record (the
+anti-pattern). `services/neta/pxr_curves.py` stands as the cited `[VENDOR-DOC]` **validation reference**
+(confirming EasyPower is faithful) and the **SST-correction driver** (`correct_sst_target`, used for migr
+009/010). #73 is resolved by investigation; the only PD residual is the #74 `r_cont_current` rating-narrow.

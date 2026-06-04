@@ -204,6 +204,10 @@ These are closed and locked in the guides; reopening only on a cited reason:
 - **Envelope-only catalog framework** shipped; PXR2 seeded `[G1 §7 · §108]`. **Extended to the full Eaton
   Power Defense family** — `services/neta/pxr_curves.py` (PD2–6 PXR 10/20/20D/25 curve+setting+tolerance model,
   cited `[VENDOR-DOC]` TD012064/065/067/068EN + PXPM) `[EATON-POWER-DEFENSE-PXR.md · §140–§141]`.
+- **PD-LSI curve fidelity VERIFIED faithful (#73 premise overturned, §142):** the PXR20 PD3/PD5/PD6-LSI(GM)
+  styles already encode the authoritative selectable SD (flat `i2x=0` **+** I²t-ramp `i2x=1`, X=2), both served
+  `db`; tolerances match the doc. **No curve-override** — `pxr_curves` is the cited validation reference, not a
+  serving source `[EATON-POWER-DEFENSE-PXR.md §6 · §142]`.
 - **The breaker→ETU SST bridge** recovered end-to-end `[G0 §3 / G1 D1 / §104]`; the §104 re-carry is
   **proven bit-faithful** and the mis-mappings are **native to EasyPower's source** (NOT a load defect) —
   **all 31 Eaton PD defective rows corrected** (migr `009`/`010`) `[G1 §2D · §138–§141]`.
@@ -230,4 +234,5 @@ campaign, the ~15k lever) → **L8/L9** (TMT/EMT) → **L10** (relays — its ow
 > re-validate.
 
 *Last updated 2026-06-04 — reconciled the SST-bridge data-quality finding + Eaton PD catalog + Micrologic
-band-backfill + I2X-6 `/calculate` wiring (STATE §138–§141). Update status + bump counts (`[VERIFIED-LIVE]`) as lanes close.*
+band-backfill + I2X-6 `/calculate` wiring (STATE §138–§141) + the #73 PD-LSI curve-fidelity verification
+(premise overturned, §142). Update status + bump counts (`[VERIFIED-LIVE]`) as lanes close.*
