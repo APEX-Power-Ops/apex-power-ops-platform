@@ -119,6 +119,21 @@ which OEMs to prioritise (e.g. SEL for Y1202C). Then build the serving layer + t
 3-screen parallel to `lvbreakertcc` (select → settings/tolerances → curve + NETA markers),
 consuming Chips 2–3, badged at the honest tiers from Chip 1. (New page; see deferred decision.)
 
+**KEY DESIGN DRIVER (operator, 2026-06-03) — variant / available-element handling.** This is where the
+relay sheet *diverges* from the breaker sheet, and the crux of Chip 4. Breakers have a **fixed** element
+model (LTPU/STPU/INST/GF); relays do **not** — the **available protection elements vary by relay model and
+variant** (e.g. SEL-751 exposes 50/51 phase·ground·neg-seq·neutral + 27/59/81…; a CO-11 exposes one OC
+element; SEL-751 vs SEL-751A vs model-style/firmware variants expose *different* element sets). So the UI
+must, per selected relay/variant: (1) **enumerate the available elements** from the governed graph
+(`relay_td_sections` → `relay_devices.device_function` per the selected `relays` row / variant), not a fixed
+template; (2) render per-element settings + tolerance + test-points **only for elements that exist**; (3)
+treat the **variant axis** as first-class (the selection cascade already reaches a TD-section, but the sheet
+needs the *set* of a relay's elements, and to disambiguate variant when one `relay_type` has model-style
+sub-variants). The Chip 3 tolerance serving is per-relay (uniform across elements) — fine; the *element list*
+is what's variant-dependent. **Open for Chip 4 kickoff:** confirm the element-enumeration query + how variant
+(model-style / `SEL-751` vs `SEL-751A` vs `SEL-751 - 2017`) maps to a distinct available-element set vs a
+cosmetic label. **PAUSED here 2026-06-03** (operator pivoting to the breaker `lvbreakertcc` TCC plot screen).
+
 ### Chip 5 — fidelity close (parallel / after) = punch-list L10
 Promote Models 1–6 BOUNDED→PROVEN. **Captured EasyPower relay-curve fixtures first** (export
 real plotted curves, diff vs our 6 solvers — the lighter path we proved on the breaker
