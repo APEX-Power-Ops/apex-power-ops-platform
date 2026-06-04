@@ -1953,6 +1953,7 @@ def _synthesize_i2x_delay_curve(
     *,
     n_points: int = 56,
     min_time: float = 0.004,
+    max_time: float = 1.0e5,
 ) -> list[PlotCurvePoint]:
     """Sweep a route-1 (I2X) STD/GFD band into a composite curve via the validated
     ``etu_ixt`` kernel — ``t = max(Iˣt ramp, definite floor)`` (the datasheet's
@@ -1981,7 +1982,11 @@ def _synthesize_i2x_delay_curve(
         )
         if surface.expected_time is None:
             continue
-        pts.append(PlotCurvePoint(amps=amps, seconds=max(float(surface.expected_time), min_time)))
+        # Clamp to a sane window: a degenerate pickup (e.g. a bad API setting that
+        # resolves to ~1 A) would otherwise drive the ramp to absurd times and wreck
+        # the plot's auto-scaled axis.
+        seconds = min(max(float(surface.expected_time), min_time), max_time)
+        pts.append(PlotCurvePoint(amps=amps, seconds=seconds))
     return pts
 
 
